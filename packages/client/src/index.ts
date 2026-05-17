@@ -1,10 +1,12 @@
 import type {
   Audit,
   Costing,
+  CreateOverrideInput,
   CreateProjectInput,
   Design,
   Output,
   OutputKind,
+  Override,
   PlantPalette,
   Project,
   RateCard,
@@ -71,6 +73,25 @@ export class WalkthroughClient {
       `/projects/${projectId}/recordings`
     );
     return res.recordings;
+  }
+
+  async createOverride(
+    projectId: string,
+    input: CreateOverrideInput,
+  ): Promise<{ override: Override; audit: Audit }> {
+    return this.request(
+      "POST",
+      `/projects/${projectId}/overrides`,
+      input,
+    );
+  }
+
+  async listOverrides(projectId: string): Promise<Override[]> {
+    const res = await this.request<{ overrides: Override[] }>(
+      "GET",
+      `/projects/${projectId}/overrides`
+    );
+    return res.overrides;
   }
 
   async runOutput(projectId: string, kind: OutputKind): Promise<Output> {

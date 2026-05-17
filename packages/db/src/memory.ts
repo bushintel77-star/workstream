@@ -4,6 +4,7 @@ import type {
   CreateProjectInput,
   Design,
   Output,
+  Override,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -25,6 +26,7 @@ export function createMemoryStore(): Store & {
   _costings: Costing[];
   _audits: Audit[];
   _outputs: Output[];
+  _overrides: Override[];
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
@@ -35,6 +37,7 @@ export function createMemoryStore(): Store & {
   const _costings: Costing[] = [];
   const _audits: Audit[] = [];
   const _outputs: Output[] = [];
+  const _overrides: Override[] = [];
   let seeded = false;
 
   return {
@@ -47,6 +50,7 @@ export function createMemoryStore(): Store & {
     _costings,
     _audits,
     _outputs,
+    _overrides,
 
     async seedDefaults() {
       if (seeded) return;
@@ -312,6 +316,71 @@ export function createMemoryStore(): Store & {
       return _outputs
         .filter((o) => o.project_id === projectId)
         .sort((a, b) => a.kind.localeCompare(b.kind));
+    },
+
+    async createOverride(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+
+      const design = _designs.find((d) => d.project_id === projectId);
+      if (!design) throw new Error("Audit not found for this project.");
+      const audit = _audits.find((a) => a.design_id === design.id);
+      if (!audit) throw new Error("Audit not found for this project.");
+
+      const finding = audit.findings[input.finding_index];
+      if (!finding) {
+        throw new Error(
+          `Finding index ${input.finding_index} out of range.`,
+        );
+      }
+      if (finding.severity !== "blocking") {
+        throw new Error("Only blocking findings can be overridden.");
+      }
+
+      const alreadyOverridden = _overrides.some(
+        (o) =>
+          o.audit_id === audit.id &&
+          o.finding_index === input.finding_index,
+      );
+      if (alreadyOverridden) {
+        throw new Error("This finding is already overridden.");
+      }
+
+      const override: Override = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        audit_id: audit.id,
+        finding_index: input.finding_index,
+        category: finding.category,
+        location: finding.location,
+        reason: input.reason,
+        created_at: new Date().toISOString(),
+      };
+      _overrides.push(override);
+
+      const overriddenCount = _overrides.filter(
+        (o) => o.audit_id === audit.id,
+      ).length;
+      const remaining = audit.blocking_count - overriddenCount;
+      audit.passed = remaining <= 0;
+
+      return { override, audit };
+    },
+
+    async listOverrides(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) return [];
+      return _overrides
+        .filter((o) => o.project_id === projectId)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime(),
+        );
     },
   };
 }

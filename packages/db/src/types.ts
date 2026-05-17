@@ -1,10 +1,12 @@
 import type {
   Audit,
   Costing,
+  CreateOverrideInput,
   CreateProjectInput,
   Design,
   Output,
   OutputKind,
+  Override,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -16,10 +18,12 @@ import type {
 export type {
   Audit,
   Costing,
+  CreateOverrideInput,
   CreateProjectInput,
   Design,
   Output,
   OutputKind,
+  Override,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -91,5 +95,11 @@ export interface Store {
     input: OutputInput,
   ): Promise<Output>;
   listOutputs(ownerId: string, projectId: string): Promise<Output[]>;
+  createOverride(
+    ownerId: string,
+    projectId: string,
+    input: CreateOverrideInput,
+  ): Promise<{ override: Override; audit: Audit }>;
+  listOverrides(ownerId: string, projectId: string): Promise<Override[]>;
   seedDefaults(): Promise<void>;
 }

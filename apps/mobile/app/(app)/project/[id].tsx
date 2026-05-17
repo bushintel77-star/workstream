@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Linking } from "react-native";
+import { Linking, Modal, TextInput } from "react-native";
 import type {
   Audit,
   AuditFinding,
@@ -22,6 +22,7 @@ import type {
   LineItem,
   Output,
   OutputKind,
+  Override,
   Project,
   Recording,
   Survey,
@@ -189,6 +190,10 @@ export default function ProjectDetailScreen() {
   const [auditRunning, setAuditRunning] = useState(false);
   const [outputs, setOutputs] = useState<Output[]>([]);
   const [outputRunning, setOutputRunning] = useState<OutputKind | null>(null);
+  const [overrides, setOverrides] = useState<Override[]>([]);
+  const [overrideTarget, setOverrideTarget] = useState<number | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideSaving, setOverrideSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -198,7 +203,7 @@ export default function ProjectDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [p, recs, s, d, costs, a, outs] = await Promise.all([
+      const [p, recs, s, d, costs, a, outs, ovs] = await Promise.all([
         api.getProject(id),
         api.listRecordings(id),
         api.getSurvey(id),
@@ -206,6 +211,7 @@ export default function ProjectDetailScreen() {
         api.listCostings(id),
         api.getAudit(id),
         api.listOutputs(id),
+        api.listOverrides(id),
       ]);
       setProject(p);
       setRecordings(recs);
@@ -214,6 +220,7 @@ export default function ProjectDetailScreen() {
       setCostings(costs);
       setAudit(a);
       setOutputs(outs);
+      setOverrides(ovs);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
@@ -284,6 +291,39 @@ export default function ProjectDetailScreen() {
       setAuditRunning(false);
     }
   }, [api, id]);
+
+  const openOverride = useCallback((findingIndex: number) => {
+    setOverrideTarget(findingIndex);
+    setOverrideReason("");
+  }, []);
+
+  const closeOverride = useCallback(() => {
+    setOverrideTarget(null);
+    setOverrideReason("");
+  }, []);
+
+  const submitOverride = useCallback(async () => {
+    if (!id || overrideTarget == null) return;
+    if (overrideReason.trim().length < 8) {
+      setError("Override reason must be at least 8 characters.");
+      return;
+    }
+    setOverrideSaving(true);
+    setError(null);
+    try {
+      const result = await api.createOverride(id, {
+        finding_index: overrideTarget,
+        reason: overrideReason.trim(),
+      });
+      setOverrides((prev) => [result.override, ...prev]);
+      setAudit(result.audit);
+      closeOverride();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Override failed");
+    } finally {
+      setOverrideSaving(false);
+    }
+  }, [api, id, overrideTarget, overrideReason, closeOverride]);
 
   const handleRunOutput = useCallback(
     async (kind: OutputKind) => {
@@ -434,8 +474,10 @@ export default function ProjectDetailScreen() {
           {costings.length > 0 && (
             <AuditSection
               audit={audit}
+              overrides={overrides}
               running={auditRunning}
               onRun={handleRunAudit}
+              onOverride={openOverride}
             />
           )}
 
@@ -480,6 +522,64 @@ export default function ProjectDetailScreen() {
           </Pressable>
         </ScrollView>
       )}
+
+      <Modal
+        visible={overrideTarget != null}
+        transparent
+        animationType="slide"
+        onRequestClose={closeOverride}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <Text style={styles.cardLabel}>OVERRIDE FINDING</Text>
+            {overrideTarget != null && audit?.findings[overrideTarget] && (
+              <Text style={styles.findingStatement}>
+                {audit.findings[overrideTarget].statement}
+              </Text>
+            )}
+            <Text style={styles.modalHint}>
+              Reason is recorded on the project ledger. Minimum 8 characters.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              multiline
+              numberOfLines={4}
+              value={overrideReason}
+              onChangeText={setOverrideReason}
+              placeholder="e.g. Client accepts unresolved POA item, will firm up post-deposit."
+              placeholderTextColor={tokens.color.ink.tertiary}
+              editable={!overrideSaving}
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={closeOverride}
+                disabled={overrideSaving}
+                style={styles.secondaryBtnFull}
+              >
+                <Text style={styles.secondaryBtnText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={submitOverride}
+                disabled={
+                  overrideSaving || overrideReason.trim().length < 8
+                }
+                style={[
+                  styles.primaryBtnLarge,
+                  { flex: 1, marginTop: 0 },
+                  overrideReason.trim().length < 8 && {
+                    backgroundColor: tokens.color.line.strong,
+                  },
+                ]}
+              >
+                <Text style={styles.primaryBtnText}>
+                  {overrideSaving ? "Recording…" : "Override"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -720,12 +820,16 @@ const CATEGORY_LABEL: Record<AuditFinding["category"], string> = {
 
 function AuditSection({
   audit,
+  overrides,
   running,
   onRun,
+  onOverride,
 }: {
   audit: Audit | null;
+  overrides: Override[];
   running: boolean;
   onRun: () => void;
+  onOverride: (findingIndex: number) => void;
 }) {
   if (!audit) {
     return (
@@ -779,15 +883,61 @@ function AuditSection({
           scope.
         </Text>
       ) : (
-        audit.findings.map((f, i) => <FindingRow key={i} finding={f} />)
+        audit.findings.map((f, i) => {
+          const overridden = overrides.find(
+            (o) => o.audit_id === audit.id && o.finding_index === i,
+          );
+          return (
+            <FindingRow
+              key={i}
+              finding={f}
+              overridden={overridden}
+              onOverride={
+                f.severity === "blocking" && !overridden
+                  ? () => onOverride(i)
+                  : undefined
+              }
+            />
+          );
+        })
+      )}
+
+      {overrides.length > 0 && (
+        <View style={styles.overrideLedger}>
+          <Text style={styles.cardLabel}>OVERRIDE LEDGER · {overrides.length}</Text>
+          {overrides.map((o) => (
+            <View key={o.id} style={styles.ledgerEntry}>
+              <Text style={styles.ledgerEntryHead}>
+                {o.category.toUpperCase()} · {o.location} ·{" "}
+                {new Date(o.created_at).toLocaleString("en-AU", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </Text>
+              <Text style={styles.ledgerEntryReason}>{o.reason}</Text>
+            </View>
+          ))}
+        </View>
       )}
     </View>
   );
 }
 
-function FindingRow({ finding }: { finding: AuditFinding }) {
+function FindingRow({
+  finding,
+  overridden,
+  onOverride,
+}: {
+  finding: AuditFinding;
+  overridden?: Override;
+  onOverride?: () => void;
+}) {
   const blocking = finding.severity === "blocking";
-  const tone = blocking ? tokens.color.semantic.block : tokens.color.semantic.warn;
+  const tone = overridden
+    ? tokens.color.ink.tertiary
+    : blocking
+      ? tokens.color.semantic.block
+      : tokens.color.semantic.warn;
   return (
     <View style={styles.findingRow}>
       <View style={[styles.findingBar, { backgroundColor: tone }]} />
@@ -795,11 +945,26 @@ function FindingRow({ finding }: { finding: AuditFinding }) {
         <View style={styles.findingHeader}>
           <Text style={[styles.findingCategory, { color: tone }]}>
             {CATEGORY_LABEL[finding.category]}
+            {overridden ? " · OVERRIDDEN" : ""}
           </Text>
           <Text style={styles.findingLocation}>· {finding.location}</Text>
         </View>
-        <Text style={styles.findingStatement}>{finding.statement}</Text>
-        <Text style={styles.findingAction}>→ {finding.suggested_action}</Text>
+        <Text
+          style={[
+            styles.findingStatement,
+            overridden && { textDecorationLine: "line-through", color: tokens.color.ink.tertiary },
+          ]}
+        >
+          {finding.statement}
+        </Text>
+        {!overridden && (
+          <Text style={styles.findingAction}>→ {finding.suggested_action}</Text>
+        )}
+        {onOverride && (
+          <Pressable onPress={onOverride} hitSlop={8} style={styles.overrideBtn}>
+            <Text style={styles.overrideBtnText}>Override with reason →</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -1515,5 +1680,69 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.caption.fontSize,
     fontWeight: "600",
     color: tokens.color.ink.inverted,
+  },
+  overrideBtn: {
+    marginTop: tokens.space[2],
+    alignSelf: "flex-start",
+  },
+  overrideBtnText: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: "600",
+    color: tokens.color.accent.default,
+  },
+  overrideLedger: {
+    marginTop: tokens.space[3],
+    paddingTop: tokens.space[3],
+    borderTopWidth: 1,
+    borderTopColor: tokens.color.line.hairline,
+    gap: tokens.space[3],
+  },
+  ledgerEntry: {
+    paddingLeft: tokens.space[3],
+    borderLeftWidth: 2,
+    borderLeftColor: tokens.color.line.strong,
+    gap: 4,
+  },
+  ledgerEntryHead: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+  },
+  ledgerEntryReason: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.color.ink.primary,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(24,24,27,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    backgroundColor: tokens.color.surface.elevated,
+    padding: tokens.space[5],
+    borderTopLeftRadius: tokens.radius.lg,
+    borderTopRightRadius: tokens.radius.lg,
+    gap: tokens.space[3],
+  },
+  modalHint: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.tertiary,
+  },
+  modalInput: {
+    minHeight: 96,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space[3],
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.color.ink.primary,
+    textAlignVertical: "top",
+    backgroundColor: tokens.color.surface.sunken,
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: tokens.space[3],
+    marginTop: tokens.space[2],
   },
 });

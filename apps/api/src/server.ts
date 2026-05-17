@@ -15,6 +15,7 @@ import designRoutes from './routes/designs';
 import costingRoutes from './routes/costings';
 import auditRoutes from './routes/audits';
 import outputRoutes from './routes/outputs';
+import overrideRoutes from './routes/overrides';
 
 const server = Fastify({ logger: true });
 
@@ -44,6 +45,7 @@ async function start() {
   await server.register(costingRoutes, { prefix: '/projects' });
   await server.register(auditRoutes, { prefix: '/projects' });
   await server.register(outputRoutes, { prefix: '/projects' });
+  await server.register(overrideRoutes, { prefix: '/projects' });
   await server.register(settingsRoutes, { prefix: '/settings' });
 
   const port = Number(process.env.PORT) || 3001;
