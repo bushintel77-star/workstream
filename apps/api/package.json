@@ -17,6 +17,7 @@
     "@fastify/websocket": "^11.0.0",
     "@walkthrough/contracts": "workspace:*",
     "@walkthrough/db": "workspace:*",
+    "@walkthrough/domain": "workspace:*",
     "zod": "^3.24.0",
     "@clerk/fastify": "^2.0.0",
     "@clerk/backend": "^1.21.0",

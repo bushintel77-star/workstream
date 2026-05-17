@@ -41,6 +41,9 @@ importers:
       '@walkthrough/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@walkthrough/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       fastify:
         specifier: ^5.2.0
         version: 5.8.5

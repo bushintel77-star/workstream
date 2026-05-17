@@ -11,9 +11,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type {
+  Costing,
+  CostScenario,
   Design,
   DesignMode,
   GapFlag,
+  LineItem,
   Project,
   Recording,
   Survey,
@@ -174,6 +177,9 @@ export default function ProjectDetailScreen() {
   const [surveyRunning, setSurveyRunning] = useState(false);
   const [design, setDesign] = useState<Design | null>(null);
   const [designRunning, setDesignRunning] = useState(false);
+  const [costings, setCostings] = useState<Costing[]>([]);
+  const [costingRunning, setCostingRunning] = useState(false);
+  const [scenario, setScenario] = useState<CostScenario>("standard");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -183,16 +189,18 @@ export default function ProjectDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [p, recs, s, d] = await Promise.all([
+      const [p, recs, s, d, costs] = await Promise.all([
         api.getProject(id),
         api.listRecordings(id),
         api.getSurvey(id),
         api.getDesign(id),
+        api.listCostings(id),
       ]);
       setProject(p);
       setRecordings(recs);
       setSurvey(s);
       setDesign(d);
+      setCostings(costs);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
@@ -229,6 +237,22 @@ export default function ProjectDetailScreen() {
       setError(e instanceof Error ? e.message : "Design failed");
     } finally {
       setDesignRunning(false);
+    }
+  }, [api, id]);
+
+  const handleRunCosting = useCallback(async () => {
+    if (!id) return;
+    setCostingRunning(true);
+    setError(null);
+    try {
+      const cs = await api.runCosting(id);
+      setCostings(cs);
+      const p = await api.getProject(id);
+      setProject(p);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Costing failed");
+    } finally {
+      setCostingRunning(false);
     }
   }, [api, id]);
 
@@ -343,6 +367,16 @@ export default function ProjectDetailScreen() {
               design={design}
               running={designRunning}
               onRun={handleRunDesign}
+            />
+          )}
+
+          {design && (
+            <CostSection
+              costings={costings}
+              scenario={scenario}
+              onScenarioChange={setScenario}
+              running={costingRunning}
+              onRun={handleRunCosting}
             />
           )}
 
@@ -540,6 +574,170 @@ function GapRow({ gap }: { gap: GapFlag }) {
         <Text style={styles.gapDescription}>{gap.description}</Text>
         <Text style={styles.gapFill}>→ {gap.proposed_fill}</Text>
       </View>
+    </View>
+  );
+}
+
+const SCENARIO_ORDER: CostScenario[] = ["lean", "standard", "buffer"];
+const SCENARIO_LABEL: Record<CostScenario, string> = {
+  lean: "Lean",
+  standard: "Standard",
+  buffer: "Buffer",
+};
+
+const formatAud = (n: number) =>
+  new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency: "AUD",
+    maximumFractionDigits: 0,
+  }).format(n);
+
+const formatAudCents = (n: number) =>
+  new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency: "AUD",
+    minimumFractionDigits: 2,
+  }).format(n);
+
+function CostSection({
+  costings,
+  scenario,
+  onScenarioChange,
+  running,
+  onRun,
+}: {
+  costings: Costing[];
+  scenario: CostScenario;
+  onScenarioChange: (s: CostScenario) => void;
+  running: boolean;
+  onRun: () => void;
+}) {
+  if (costings.length === 0) {
+    return (
+      <View style={styles.designCard}>
+        <Text style={styles.cardLabel}>COSTING</Text>
+        <Text style={styles.intakeBody}>
+          Cost the design against the rate card. Generates three scenarios:
+          Lean (no lighting/irrigation, 3% contingency), Standard (5%), Buffer
+          (upgraded pleach stock, engineering allowance, 8%).
+        </Text>
+        <Pressable
+          style={styles.primaryBtnLarge}
+          onPress={onRun}
+          disabled={running}
+        >
+          <Text style={styles.primaryBtnText}>
+            {running ? "Costing…" : "Generate costing"}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const active =
+    costings.find((c) => c.scenario === scenario) ?? costings[0];
+  const provisional = active.line_items.filter((l) => l.is_provisional);
+  const billable = active.line_items.filter((l) => !l.is_provisional);
+
+  return (
+    <View style={styles.designCard}>
+      <View style={styles.designHeader}>
+        <Text style={styles.cardLabel}>COSTING</Text>
+        <Pressable onPress={onRun} disabled={running} hitSlop={12}>
+          <Text style={styles.tertiaryAction}>
+            {running ? "Recosting…" : "Recost"}
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.scenarioTabs}>
+        {SCENARIO_ORDER.map((s) => {
+          const cost = costings.find((c) => c.scenario === s);
+          const isActive = s === active.scenario;
+          return (
+            <Pressable
+              key={s}
+              style={[styles.scenarioTab, isActive && styles.scenarioTabActive]}
+              onPress={() => onScenarioChange(s)}
+            >
+              <Text
+                style={[
+                  styles.scenarioTabLabel,
+                  isActive && styles.scenarioTabLabelActive,
+                ]}
+              >
+                {SCENARIO_LABEL[s]}
+              </Text>
+              <Text
+                style={[
+                  styles.scenarioTabTotal,
+                  isActive && styles.scenarioTabTotalActive,
+                ]}
+              >
+                {cost ? formatAud(cost.total) : "—"}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={styles.totalBlock}>
+        <Text style={styles.totalLabel}>{SCENARIO_LABEL[active.scenario].toUpperCase()} · TOTAL EX GST + GST</Text>
+        <Text style={styles.totalAmount}>{formatAudCents(active.total)}</Text>
+        <Text style={styles.totalSub}>
+          Subtotal {formatAudCents(active.subtotal)} · GST{" "}
+          {formatAudCents(active.gst)}
+        </Text>
+      </View>
+
+      <View style={styles.lineItemsBlock}>
+        <Text style={styles.cardLabel}>LINE ITEMS · {billable.length}</Text>
+        {billable.map((li, i) => (
+          <LineItemRow key={`${li.sku}-${i}`} item={li} />
+        ))}
+      </View>
+
+      {provisional.length > 0 && (
+        <View style={styles.lineItemsBlock}>
+          <Text style={[styles.cardLabel, { color: tokens.color.semantic.warn }]}>
+            PROVISIONAL · {provisional.length} · resolve before quote
+          </Text>
+          {provisional.map((li, i) => (
+            <LineItemRow key={`prov-${li.sku}-${i}`} item={li} provisional />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function LineItemRow({
+  item,
+  provisional,
+}: {
+  item: LineItem;
+  provisional?: boolean;
+}) {
+  return (
+    <View style={styles.lineRow}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.lineLabel} numberOfLines={2}>
+          {item.label}
+        </Text>
+        <Text style={styles.lineMeta}>
+          {item.sku} · {item.qty}
+          {item.unit !== "ea" ? ` ${item.unit}` : ""} @{" "}
+          {provisional ? "POA" : formatAudCents(item.rate)}
+        </Text>
+      </View>
+      <Text
+        style={[
+          styles.lineTotal,
+          provisional && { color: tokens.color.semantic.warn },
+        ]}
+      >
+        {provisional ? "POA" : formatAud(item.total)}
+      </Text>
     </View>
   );
 }
@@ -903,5 +1101,101 @@ const styles = StyleSheet.create({
     borderColor: tokens.color.line.strong,
     justifyContent: "center",
     alignItems: "center",
+  },
+  tertiaryAction: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.accent.default,
+  },
+  scenarioTabs: {
+    flexDirection: "row",
+    gap: tokens.space[2],
+  },
+  scenarioTab: {
+    flex: 1,
+    padding: tokens.space[3],
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    backgroundColor: tokens.color.surface.sunken,
+    alignItems: "center",
+    gap: 2,
+  },
+  scenarioTabActive: {
+    borderColor: tokens.color.accent.default,
+    backgroundColor: tokens.color.accent.soft,
+  },
+  scenarioTabLabel: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.type.caption.fontWeight,
+    color: tokens.color.ink.tertiary,
+  },
+  scenarioTabLabelActive: {
+    color: tokens.color.accent.ink,
+  },
+  scenarioTabTotal: {
+    fontSize: tokens.type.bodyMono.fontSize,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: tokens.color.ink.secondary,
+  },
+  scenarioTabTotalActive: {
+    color: tokens.color.accent.ink,
+  },
+  totalBlock: {
+    paddingVertical: tokens.space[3],
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    alignItems: "flex-start",
+    gap: 4,
+  },
+  totalLabel: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+  },
+  totalAmount: {
+    fontSize: tokens.type.displayL.fontSize,
+    fontWeight: tokens.type.displayL.fontWeight,
+    color: tokens.color.ink.primary,
+    fontVariant: ["tabular-nums"],
+    letterSpacing: tokens.type.displayL.letterSpacing,
+  },
+  totalSub: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.secondary,
+    fontVariant: ["tabular-nums"],
+  },
+  lineItemsBlock: {
+    gap: tokens.space[2],
+  },
+  lineRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: tokens.space[3],
+    paddingVertical: tokens.space[2],
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.color.line.hairline,
+  },
+  lineLabel: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.color.ink.primary,
+  },
+  lineMeta: {
+    marginTop: 2,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.tertiary,
+    fontVariant: ["tabular-nums"],
+  },
+  lineTotal: {
+    fontSize: tokens.type.bodyMono.fontSize,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    color: tokens.color.ink.primary,
+    minWidth: 70,
+    textAlign: "right",
   },
 });

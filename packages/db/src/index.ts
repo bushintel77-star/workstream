@@ -11,6 +11,8 @@ export type {
   SurveyInput,
   Design,
   DesignInput,
+  Costing,
+  CostingInput,
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 

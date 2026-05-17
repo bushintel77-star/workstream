@@ -1,4 +1,5 @@
 import type {
+  Costing,
   CreateProjectInput,
   Design,
   PlantPalette,
@@ -10,6 +11,7 @@ import type {
 } from "@walkthrough/contracts";
 
 export type {
+  Costing,
   CreateProjectInput,
   Design,
   PlantPalette,
@@ -22,6 +24,7 @@ export type {
 
 export type SurveyInput = Omit<Survey, "id" | "project_id">;
 export type DesignInput = Omit<Design, "id" | "project_id" | "version">;
+export type CostingInput = Omit<Costing, "id" | "design_id">;
 
 export interface Store {
   listProjects(ownerId: string): Promise<Project[]>;
@@ -59,5 +62,12 @@ export interface Store {
     input: DesignInput,
   ): Promise<Design>;
   getDesign(ownerId: string, projectId: string): Promise<Design | null>;
+  upsertCosting(
+    ownerId: string,
+    projectId: string,
+    designId: string,
+    input: CostingInput,
+  ): Promise<Costing>;
+  listCostings(ownerId: string, projectId: string): Promise<Costing[]>;
   seedDefaults(): Promise<void>;
 }

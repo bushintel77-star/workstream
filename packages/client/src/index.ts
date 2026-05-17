@@ -1,4 +1,5 @@
 import type {
+  Costing,
   CreateProjectInput,
   Design,
   PlantPalette,
@@ -67,6 +68,22 @@ export class WalkthroughClient {
       `/projects/${projectId}/recordings`
     );
     return res.recordings;
+  }
+
+  async runCosting(projectId: string): Promise<Costing[]> {
+    const res = await this.request<{ costings: Costing[] }>(
+      "POST",
+      `/projects/${projectId}/costing`
+    );
+    return res.costings;
+  }
+
+  async listCostings(projectId: string): Promise<Costing[]> {
+    const res = await this.request<{ costings: Costing[] }>(
+      "GET",
+      `/projects/${projectId}/costing`
+    );
+    return res.costings;
   }
 
   async runDesign(projectId: string): Promise<Design> {

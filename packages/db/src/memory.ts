@@ -1,4 +1,5 @@
 import type {
+  Costing,
   CreateProjectInput,
   Design,
   PlantPalette,
@@ -19,6 +20,7 @@ export function createMemoryStore(): Store & {
   _plantPalette: PlantPalette[];
   _surveys: Survey[];
   _designs: Design[];
+  _costings: Costing[];
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
@@ -26,6 +28,7 @@ export function createMemoryStore(): Store & {
   const _plantPalette: PlantPalette[] = [];
   const _surveys: Survey[] = [];
   const _designs: Design[] = [];
+  const _costings: Costing[] = [];
   let seeded = false;
 
   return {
@@ -35,6 +38,7 @@ export function createMemoryStore(): Store & {
     _plantPalette,
     _surveys,
     _designs,
+    _costings,
 
     async seedDefaults() {
       if (seeded) return;
@@ -203,6 +207,40 @@ export function createMemoryStore(): Store & {
       );
       if (!project) return null;
       return _designs.find((d) => d.project_id === projectId) ?? null;
+    },
+
+    async upsertCosting(ownerId, projectId, designId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+
+      const existing = _costings.find(
+        (c) => c.design_id === designId && c.scenario === input.scenario,
+      );
+      if (existing) {
+        Object.assign(existing, input);
+        return existing;
+      }
+      const costing: Costing = {
+        id: crypto.randomUUID(),
+        design_id: designId,
+        ...input,
+      };
+      _costings.push(costing);
+      return costing;
+    },
+
+    async listCostings(ownerId, projectId) {
+      const design = _designs.find((d) => d.project_id === projectId);
+      if (!design) return [];
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) return [];
+      return _costings
+        .filter((c) => c.design_id === design.id)
+        .sort((a, b) => a.scenario.localeCompare(b.scenario));
     },
   };
 }

@@ -12,6 +12,7 @@ import recordingRoutes from './routes/recordings';
 import settingsRoutes from './routes/settings';
 import surveyRoutes from './routes/surveys';
 import designRoutes from './routes/designs';
+import costingRoutes from './routes/costings';
 
 const server = Fastify({ logger: true });
 
@@ -33,6 +34,7 @@ async function start() {
   await server.register(recordingRoutes, { prefix: '/projects' });
   await server.register(surveyRoutes, { prefix: '/projects' });
   await server.register(designRoutes, { prefix: '/projects' });
+  await server.register(costingRoutes, { prefix: '/projects' });
   await server.register(settingsRoutes, { prefix: '/settings' });
 
   const port = Number(process.env.PORT) || 3001;
