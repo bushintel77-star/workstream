@@ -1,5 +1,6 @@
 import type {
   CreateProjectInput,
+  Design,
   PlantPalette,
   Project,
   RateCard,
@@ -66,6 +67,36 @@ export class WalkthroughClient {
       `/projects/${projectId}/recordings`
     );
     return res.recordings;
+  }
+
+  async runDesign(projectId: string): Promise<Design> {
+    const res = await this.request<{ design: Design }>(
+      "POST",
+      `/projects/${projectId}/design`
+    );
+    return res.design;
+  }
+
+  async getDesign(projectId: string): Promise<Design | null> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (this.options.getToken) {
+      const token = await this.options.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch(
+      `${this.options.baseUrl}/projects/${projectId}/design`,
+      { method: "GET", headers }
+    );
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      throw new Error(
+        `GET /projects/${projectId}/design failed: ${res.status} ${await res.text()}`
+      );
+    }
+    const json = (await res.json()) as { design: Design };
+    return json.design;
   }
 
   async runSurvey(projectId: string): Promise<Survey> {

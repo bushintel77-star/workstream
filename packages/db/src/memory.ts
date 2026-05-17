@@ -1,5 +1,6 @@
 import type {
   CreateProjectInput,
+  Design,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -17,12 +18,14 @@ export function createMemoryStore(): Store & {
   _rateCard: RateCard[];
   _plantPalette: PlantPalette[];
   _surveys: Survey[];
+  _designs: Design[];
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
   const _rateCard: RateCard[] = [];
   const _plantPalette: PlantPalette[] = [];
   const _surveys: Survey[] = [];
+  const _designs: Design[] = [];
   let seeded = false;
 
   return {
@@ -31,6 +34,7 @@ export function createMemoryStore(): Store & {
     _rateCard,
     _plantPalette,
     _surveys,
+    _designs,
 
     async seedDefaults() {
       if (seeded) return;
@@ -163,6 +167,42 @@ export function createMemoryStore(): Store & {
       );
       if (!project) return null;
       return _surveys.find((s) => s.project_id === projectId) ?? null;
+    },
+
+    async upsertDesign(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) {
+        throw new Error(`Project not found: ${projectId}`);
+      }
+      const existing = _designs.find((d) => d.project_id === projectId);
+      if (existing) {
+        const next: Design = {
+          ...existing,
+          ...input,
+          version: existing.version + 1,
+        };
+        const idx = _designs.indexOf(existing);
+        _designs[idx] = next;
+        return next;
+      }
+      const design: Design = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        version: 1,
+        ...input,
+      };
+      _designs.push(design);
+      return design;
+    },
+
+    async getDesign(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) return null;
+      return _designs.find((d) => d.project_id === projectId) ?? null;
     },
   };
 }

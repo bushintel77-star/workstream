@@ -9,6 +9,8 @@ export type {
   PlantPalette,
   Survey,
   SurveyInput,
+  Design,
+  DesignInput,
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 

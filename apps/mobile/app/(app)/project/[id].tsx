@@ -10,7 +10,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import type { Project, Recording, Survey } from "@walkthrough/contracts";
+import type {
+  Design,
+  DesignMode,
+  GapFlag,
+  Project,
+  Recording,
+  Survey,
+} from "@walkthrough/contracts";
 import { tokens } from "@walkthrough/ui";
 import { useWalkthroughApi } from "../../../src/lib/api";
 
@@ -165,6 +172,8 @@ export default function ProjectDetailScreen() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [surveyRunning, setSurveyRunning] = useState(false);
+  const [design, setDesign] = useState<Design | null>(null);
+  const [designRunning, setDesignRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -174,14 +183,16 @@ export default function ProjectDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [p, recs, s] = await Promise.all([
+      const [p, recs, s, d] = await Promise.all([
         api.getProject(id),
         api.listRecordings(id),
         api.getSurvey(id),
+        api.getDesign(id),
       ]);
       setProject(p);
       setRecordings(recs);
       setSurvey(s);
+      setDesign(d);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
@@ -202,6 +213,22 @@ export default function ProjectDetailScreen() {
       setError(e instanceof Error ? e.message : "Survey failed");
     } finally {
       setSurveyRunning(false);
+    }
+  }, [api, id]);
+
+  const handleRunDesign = useCallback(async () => {
+    if (!id) return;
+    setDesignRunning(true);
+    setError(null);
+    try {
+      const d = await api.runDesign(id);
+      setDesign(d);
+      const p = await api.getProject(id);
+      setProject(p);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Design failed");
+    } finally {
+      setDesignRunning(false);
     }
   }, [api, id]);
 
@@ -311,6 +338,14 @@ export default function ProjectDetailScreen() {
             </View>
           )}
 
+          {survey && (
+            <DesignSection
+              design={design}
+              running={designRunning}
+              onRun={handleRunDesign}
+            />
+          )}
+
           {latest?.transcript ? (
             <View style={styles.transcriptCard}>
               <Text style={styles.cardLabel}>WALKTHROUGH TRANSCRIPT</Text>
@@ -345,6 +380,167 @@ export default function ProjectDetailScreen() {
         </ScrollView>
       )}
     </SafeAreaView>
+  );
+}
+
+const MODE_COPY: Record<DesignMode, { label: string; tone: "ok" | "warn" | "info" }> = {
+  auto: { label: "AUTO-DESIGN", tone: "info" },
+  gapfill: { label: "GAP-FILL", tone: "warn" },
+  validate: { label: "VALIDATE", tone: "ok" },
+};
+
+function DesignSection({
+  design,
+  running,
+  onRun,
+}: {
+  design: Design | null;
+  running: boolean;
+  onRun: () => void;
+}) {
+  if (!design) {
+    return (
+      <View style={styles.designCard}>
+        <Text style={styles.cardLabel}>DESIGN</Text>
+        <Text style={styles.intakeBody}>
+          Generate a proposal from the walkthrough transcript and the survey.
+          Mode is detected automatically.
+        </Text>
+        <Pressable
+          style={styles.primaryBtnLarge}
+          onPress={onRun}
+          disabled={running}
+        >
+          <Text style={styles.primaryBtnText}>
+            {running ? "Designing…" : "Generate design"}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const proposal = design.proposal as {
+    zones?: Array<{
+      id: string;
+      name: string;
+      treatment: string;
+      plantings: Array<{ count: number; common_name: string }>;
+      hardscape: Array<{ qty: number; unit: string; item: string }>;
+      lighting: Array<{ count: number; fixture: string }>;
+      irrigation: Array<{ qty: number; unit: string; item: string }>;
+    }>;
+    estimated_complexity?: string;
+  };
+
+  const mode = MODE_COPY[design.mode];
+  const zones = proposal.zones ?? [];
+
+  return (
+    <View style={styles.designCard}>
+      <View style={styles.designHeader}>
+        <Text style={styles.cardLabel}>DESIGN  ·  V{design.version}</Text>
+        <View style={[styles.modePill, modeToneStyle(mode.tone)]}>
+          <Text style={[styles.modePillText, modeTextStyle(mode.tone)]}>
+            {mode.label}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.rationale}>{design.rationale}</Text>
+
+      {zones.map((z) => (
+        <View key={z.id} style={styles.zoneBlock}>
+          <Text style={styles.zoneName}>{z.name}</Text>
+          <Text style={styles.zoneTreatment}>{z.treatment}</Text>
+          <View style={styles.zoneCounts}>
+            <ZoneCount
+              label="Plants"
+              value={z.plantings.reduce((s, p) => s + p.count, 0).toString()}
+            />
+            <ZoneCount
+              label="Hard"
+              value={z.hardscape
+                .map((h) => `${h.qty}${h.unit}`)
+                .join(" · ") || "—"}
+            />
+            <ZoneCount
+              label="Lights"
+              value={z.lighting
+                .reduce((s, l) => s + l.count, 0)
+                .toString()}
+            />
+            <ZoneCount
+              label="Irrig"
+              value={z.irrigation
+                .map((i) => `${i.qty}${i.unit}`)
+                .join(" · ") || "—"}
+            />
+          </View>
+        </View>
+      ))}
+
+      {design.gaps.length > 0 && (
+        <View style={styles.gapsBlock}>
+          <Text style={styles.cardLabel}>GAPS  ·  {design.gaps.length}</Text>
+          {design.gaps.map((g, i) => (
+            <GapRow key={`${g.zone}-${i}`} gap={g} />
+          ))}
+        </View>
+      )}
+
+      <Pressable
+        style={styles.secondaryBtnFull}
+        onPress={onRun}
+        disabled={running}
+      >
+        <Text style={styles.secondaryBtnText}>
+          {running ? "Re-generating…" : "Re-generate design"}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function modeToneStyle(tone: "ok" | "warn" | "info") {
+  switch (tone) {
+    case "ok":
+      return { backgroundColor: "rgba(21,128,61,0.12)" };
+    case "warn":
+      return { backgroundColor: "rgba(180,83,9,0.14)" };
+    case "info":
+      return { backgroundColor: "rgba(29,78,216,0.12)" };
+  }
+}
+
+function modeTextStyle(tone: "ok" | "warn" | "info") {
+  switch (tone) {
+    case "ok":
+      return { color: tokens.color.semantic.ok };
+    case "warn":
+      return { color: tokens.color.semantic.warn };
+    case "info":
+      return { color: tokens.color.semantic.info };
+  }
+}
+
+function ZoneCount({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.zoneCount}>
+      <Text style={styles.zoneCountLabel}>{label}</Text>
+      <Text style={styles.zoneCountValue}>{value}</Text>
+    </View>
+  );
+}
+
+function GapRow({ gap }: { gap: GapFlag }) {
+  return (
+    <View style={styles.gapRow}>
+      <View style={styles.gapBullet} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.gapDescription}>{gap.description}</Text>
+        <Text style={styles.gapFill}>→ {gap.proposed_fill}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -603,5 +799,109 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
     color: tokens.color.accent.default,
+  },
+  designCard: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[5],
+    padding: tokens.space[5],
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    gap: tokens.space[4],
+  },
+  designHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  modePill: {
+    paddingHorizontal: tokens.space[3],
+    paddingVertical: 4,
+    borderRadius: tokens.radius.pill,
+  },
+  modePillText: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+  },
+  rationale: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.secondary,
+  },
+  zoneBlock: {
+    paddingTop: tokens.space[3],
+    borderTopWidth: 1,
+    borderTopColor: tokens.color.line.hairline,
+    gap: tokens.space[2],
+  },
+  zoneName: {
+    fontSize: tokens.type.title.fontSize,
+    fontWeight: tokens.type.title.fontWeight,
+    color: tokens.color.ink.primary,
+  },
+  zoneTreatment: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.secondary,
+  },
+  zoneCounts: {
+    flexDirection: "row",
+    gap: tokens.space[4],
+    marginTop: tokens.space[2],
+  },
+  zoneCount: {
+    minWidth: 60,
+  },
+  zoneCountLabel: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+  },
+  zoneCountValue: {
+    marginTop: 2,
+    fontSize: tokens.type.bodyMono.fontSize,
+    fontWeight: tokens.type.bodyMono.fontWeight,
+    fontVariant: ["tabular-nums"],
+    color: tokens.color.ink.primary,
+  },
+  gapsBlock: {
+    paddingTop: tokens.space[3],
+    borderTopWidth: 1,
+    borderTopColor: tokens.color.line.hairline,
+    gap: tokens.space[3],
+  },
+  gapRow: {
+    flexDirection: "row",
+    gap: tokens.space[3],
+    alignItems: "flex-start",
+  },
+  gapBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
+    backgroundColor: tokens.color.semantic.warn,
+  },
+  gapDescription: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.primary,
+  },
+  gapFill: {
+    marginTop: tokens.space[1],
+    fontSize: tokens.type.caption.fontSize,
+    lineHeight: tokens.type.caption.lineHeight,
+    color: tokens.color.ink.secondary,
+  },
+  secondaryBtnFull: {
+    height: 44,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: tokens.color.line.strong,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

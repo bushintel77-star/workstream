@@ -1,5 +1,6 @@
 import type {
   CreateProjectInput,
+  Design,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -10,6 +11,7 @@ import type {
 
 export type {
   CreateProjectInput,
+  Design,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -19,6 +21,7 @@ export type {
 };
 
 export type SurveyInput = Omit<Survey, "id" | "project_id">;
+export type DesignInput = Omit<Design, "id" | "project_id" | "version">;
 
 export interface Store {
   listProjects(ownerId: string): Promise<Project[]>;
@@ -50,5 +53,11 @@ export interface Store {
     input: SurveyInput,
   ): Promise<Survey>;
   getSurvey(ownerId: string, projectId: string): Promise<Survey | null>;
+  upsertDesign(
+    ownerId: string,
+    projectId: string,
+    input: DesignInput,
+  ): Promise<Design>;
+  getDesign(ownerId: string, projectId: string): Promise<Design | null>;
   seedDefaults(): Promise<void>;
 }
