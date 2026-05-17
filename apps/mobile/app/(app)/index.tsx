@@ -9,11 +9,42 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
-import type { Project } from "@walkthrough/contracts";
+import type { Project, ProjectStatus } from "@walkthrough/contracts";
+import { tokens } from "@walkthrough/ui";
 import { useWalkthroughApi } from "../../src/lib/api";
 
-function statusLabel(status: Project["status"]): string {
-  return status.replace(/_/g, " ");
+const STATUS_TONE: Record<
+  ProjectStatus,
+  { label: string; tone: "neutral" | "accent" | "ok" }
+> = {
+  draft: { label: "Draft", tone: "neutral" },
+  recording: { label: "Recording", tone: "accent" },
+  processing: { label: "Processing", tone: "accent" },
+  survey_review: { label: "Survey review", tone: "accent" },
+  design_review: { label: "Design review", tone: "accent" },
+  cost_review: { label: "Cost review", tone: "accent" },
+  audit: { label: "Audit", tone: "accent" },
+  outputs: { label: "Outputs", tone: "ok" },
+  complete: { label: "Complete", tone: "ok" },
+};
+
+function statusStyle(tone: "neutral" | "accent" | "ok") {
+  if (tone === "ok") {
+    return {
+      bg: "rgba(21,128,61,0.12)",
+      fg: tokens.color.semantic.ok,
+    };
+  }
+  if (tone === "accent") {
+    return {
+      bg: tokens.color.accent.soft,
+      fg: tokens.color.accent.ink,
+    };
+  }
+  return {
+    bg: tokens.color.surface.sunken,
+    fg: tokens.color.ink.secondary,
+  };
 }
 
 export default function HomeScreen() {
@@ -39,7 +70,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load])
+    }, [load]),
   );
 
   return (
@@ -47,7 +78,9 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Walkthrough</Text>
         <View style={styles.headerRow}>
-          <Text style={styles.subtitle}>Projects</Text>
+          <Text style={styles.subtitle}>
+            {loading ? "—" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
+          </Text>
           <Pressable onPress={() => router.push("/(app)/settings")}>
             <Text style={styles.settingsLink}>Settings</Text>
           </Pressable>
@@ -56,7 +89,7 @@ export default function HomeScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C2410C" />
+          <ActivityIndicator size="large" color={tokens.color.accent.default} />
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -67,24 +100,49 @@ export default function HomeScreen() {
         </View>
       ) : projects.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyText}>No projects yet</Text>
+          <Text style={styles.emptyKicker}>NEW STUDIO</Text>
+          <Text style={styles.emptyText}>
+            Start a project by entering an address. The walkthrough is the
+            brief.
+          </Text>
         </View>
       ) : (
         <FlatList
           data={projects}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.card}
-              onPress={() => router.push(`/(app)/project/${item.id}`)}
-            >
-              <Text style={styles.cardAddress} numberOfLines={2}>
-                {item.address}
-              </Text>
-              <Text style={styles.cardMeta}>{statusLabel(item.status)}</Text>
-            </Pressable>
-          )}
+          renderItem={({ item }) => {
+            const meta = STATUS_TONE[item.status];
+            const palette = statusStyle(meta.tone);
+            return (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.card,
+                  pressed && { backgroundColor: tokens.color.surface.sunken },
+                ]}
+                onPress={() => router.push(`/(app)/project/${item.id}`)}
+              >
+                <Text style={styles.cardAddress} numberOfLines={2}>
+                  {item.address}
+                </Text>
+                <View style={styles.cardMetaRow}>
+                  <View
+                    style={[styles.statusPill, { backgroundColor: palette.bg }]}
+                  >
+                    <Text style={[styles.statusPillText, { color: palette.fg }]}>
+                      {meta.label.toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.cardDate}>
+                    {new Date(item.created_at).toLocaleDateString("en-AU", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          }}
         />
       )}
 
@@ -101,97 +159,118 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFAF7",
+    backgroundColor: tokens.color.surface.base,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: tokens.space[5],
+    paddingTop: tokens.space[4],
+    paddingBottom: tokens.space[2],
   },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: tokens.space[1],
   },
   title: {
-    fontSize: 32,
-    fontWeight: "600",
-    color: "#18181B",
+    fontSize: tokens.type.displayL.fontSize,
+    fontWeight: tokens.type.displayL.fontWeight,
+    color: tokens.color.ink.primary,
+    letterSpacing: tokens.type.displayL.letterSpacing,
   },
   subtitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#52525B",
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.type.caption.fontWeight,
+    color: tokens.color.ink.secondary,
   },
   settingsLink: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#C2410C",
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: "600",
+    color: tokens.color.accent.default,
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: tokens.space[5],
+    gap: tokens.space[3],
+  },
+  emptyKicker: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
   },
   emptyText: {
-    fontSize: 15,
-    color: "#A1A1AA",
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.secondary,
+    textAlign: "center",
+    maxWidth: 280,
   },
   errorText: {
-    fontSize: 15,
-    color: "#B91C1C",
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.color.semantic.block,
     textAlign: "center",
-    marginBottom: 12,
   },
   retry: {
-    fontSize: 15,
+    fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
-    color: "#C2410C",
+    color: tokens.color.accent.default,
   },
   list: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-    gap: 10,
+    paddingHorizontal: tokens.space[5],
+    paddingBottom: 96,
+    gap: tokens.space[2],
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
     borderWidth: 1,
-    borderColor: "#E4E4E7",
-    padding: 16,
+    borderColor: tokens.color.line.hairline,
+    padding: tokens.space[4],
+    gap: tokens.space[2],
   },
   cardAddress: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#18181B",
-    marginBottom: 6,
+    fontSize: tokens.type.title.fontSize,
+    fontWeight: tokens.type.title.fontWeight,
+    color: tokens.color.ink.primary,
   },
-  cardMeta: {
-    fontSize: 13,
-    color: "#52525B",
-    textTransform: "capitalize",
+  cardMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  statusPill: {
+    paddingHorizontal: tokens.space[2],
+    paddingVertical: 2,
+    borderRadius: tokens.radius.pill,
+  },
+  statusPillText: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+  },
+  cardDate: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.tertiary,
+    fontVariant: ["tabular-nums"],
   },
   fab: {
     position: "absolute",
-    bottom: 32,
-    right: 20,
+    bottom: tokens.space[6],
+    right: tokens.space[5],
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "#C2410C",
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.accent.default,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    ...tokens.elevation[2],
   },
   fabIcon: {
     fontSize: 28,
-    color: "#FFFFFF",
+    color: tokens.color.ink.inverted,
     lineHeight: 30,
   },
 });
