@@ -1,3 +1,4 @@
+import path from "path";
 import { createMemoryStore } from "./memory";
 import type { Store } from "./types";
 
@@ -23,17 +24,28 @@ export type {
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 
-let store: Store | null = null;
+let store: ReturnType<typeof createMemoryStore> | null = null;
+
+function defaultPersistPath(): string {
+  return path.join(process.cwd(), "data", "store.json");
+}
 
 export function getStore(): Store {
   if (!store) {
-    store = createMemoryStore();
+    const persistPath =
+      process.env.WALKTHROUGH_PERSIST_PATH ?? defaultPersistPath();
+    store = createMemoryStore({ persistPath });
   }
   return store;
 }
 
 export async function initStore(): Promise<Store> {
-  const s = getStore();
-  await s.seedDefaults();
-  return s;
+  if (!store) {
+    const persistPath =
+      process.env.WALKTHROUGH_PERSIST_PATH ?? defaultPersistPath();
+    store = createMemoryStore({ persistPath });
+  }
+  store._loadSnapshot();
+  await store.seedDefaults();
+  return store;
 }

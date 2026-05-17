@@ -13,10 +13,15 @@ import type {
   Survey,
 } from "./types";
 import type { Store } from "./types";
+import { loadSnapshotInto, makeFlusher } from "./persist";
 
 export const SYSTEM_OWNER = "system";
 
-export function createMemoryStore(): Store & {
+export type CreateStoreOptions = {
+  persistPath?: string;
+};
+
+export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _projects: Project[];
   _recordings: Recording[];
   _rateCard: RateCard[];
@@ -27,6 +32,7 @@ export function createMemoryStore(): Store & {
   _audits: Audit[];
   _outputs: Output[];
   _overrides: Override[];
+  _loadSnapshot: () => boolean;
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
@@ -40,6 +46,35 @@ export function createMemoryStore(): Store & {
   const _overrides: Override[] = [];
   let seeded = false;
 
+  const arrays = {
+    _projects,
+    _recordings,
+    _rateCard,
+    _plantPalette,
+    _surveys,
+    _designs,
+    _costings,
+    _audits,
+    _outputs,
+    _overrides,
+  };
+
+  const flush = opts.persistPath
+    ? makeFlusher(opts.persistPath, arrays as Record<string, unknown[]>)
+    : () => {};
+
+  const loadSnapshot = (): boolean => {
+    if (!opts.persistPath) return false;
+    const loaded = loadSnapshotInto(
+      opts.persistPath,
+      arrays as Record<string, unknown[]>,
+    );
+    if (loaded && _rateCard.length > 0 && _plantPalette.length > 0) {
+      seeded = true;
+    }
+    return loaded;
+  };
+
   return {
     _projects,
     _recordings,
@@ -51,6 +86,7 @@ export function createMemoryStore(): Store & {
     _audits,
     _outputs,
     _overrides,
+    _loadSnapshot: loadSnapshot,
 
     async seedDefaults() {
       if (seeded) return;
@@ -58,6 +94,7 @@ export function createMemoryStore(): Store & {
       _rateCard.push(...seedRateCard());
       _plantPalette.push(...seedPlantPalette());
       seeded = true;
+      flush();
     },
 
     async listProjects(ownerId) {
@@ -80,6 +117,7 @@ export function createMemoryStore(): Store & {
         status: "draft",
       };
       _projects.push(project);
+      flush();
       return project;
     },
 
@@ -94,6 +132,7 @@ export function createMemoryStore(): Store & {
       );
       if (!p) return null;
       p.status = status;
+      flush();
       return p;
     },
 
@@ -125,6 +164,7 @@ export function createMemoryStore(): Store & {
       };
       _recordings.push(recording);
       project.status = "processing";
+      flush();
       return recording;
     },
 
@@ -135,6 +175,7 @@ export function createMemoryStore(): Store & {
       r.transcription_confidence = confidence;
       const project = _projects.find((p) => p.id === r.project_id);
       if (project) project.status = "draft";
+      flush();
       return r;
     },
 
@@ -166,6 +207,7 @@ export function createMemoryStore(): Store & {
       const existing = _surveys.find((s) => s.project_id === projectId);
       if (existing) {
         Object.assign(existing, input);
+        flush();
         return existing;
       }
       const survey: Survey = {
@@ -174,6 +216,7 @@ export function createMemoryStore(): Store & {
         ...input,
       };
       _surveys.push(survey);
+      flush();
       return survey;
     },
 
@@ -201,6 +244,7 @@ export function createMemoryStore(): Store & {
         };
         const idx = _designs.indexOf(existing);
         _designs[idx] = next;
+        flush();
         return next;
       }
       const design: Design = {
@@ -210,6 +254,7 @@ export function createMemoryStore(): Store & {
         ...input,
       };
       _designs.push(design);
+      flush();
       return design;
     },
 
@@ -232,6 +277,7 @@ export function createMemoryStore(): Store & {
       );
       if (existing) {
         Object.assign(existing, input);
+        flush();
         return existing;
       }
       const costing: Costing = {
@@ -240,6 +286,7 @@ export function createMemoryStore(): Store & {
         ...input,
       };
       _costings.push(costing);
+      flush();
       return costing;
     },
 
@@ -264,6 +311,7 @@ export function createMemoryStore(): Store & {
       const existing = _audits.find((a) => a.design_id === designId);
       if (existing) {
         Object.assign(existing, input);
+        flush();
         return existing;
       }
       const audit: Audit = {
@@ -272,6 +320,7 @@ export function createMemoryStore(): Store & {
         ...input,
       };
       _audits.push(audit);
+      flush();
       return audit;
     },
 
@@ -296,6 +345,7 @@ export function createMemoryStore(): Store & {
       );
       if (existing) {
         Object.assign(existing, input);
+        flush();
         return existing;
       }
       const output: Output = {
@@ -305,6 +355,7 @@ export function createMemoryStore(): Store & {
         ...input,
       };
       _outputs.push(output);
+      flush();
       return output;
     },
 
@@ -366,6 +417,7 @@ export function createMemoryStore(): Store & {
       const remaining = audit.blocking_count - overriddenCount;
       audit.passed = remaining <= 0;
 
+      flush();
       return { override, audit };
     },
 
