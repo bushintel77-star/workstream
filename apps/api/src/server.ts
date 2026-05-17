@@ -14,6 +14,7 @@ import surveyRoutes from './routes/surveys';
 import designRoutes from './routes/designs';
 import costingRoutes from './routes/costings';
 import auditRoutes from './routes/audits';
+import outputRoutes from './routes/outputs';
 
 const server = Fastify({ logger: true });
 
@@ -27,6 +28,11 @@ async function start() {
     prefix: '/uploads/',
     decorateReply: false,
   });
+  await server.register(fastifyStatic, {
+    root: path.join(process.cwd(), 'data', 'outputs'),
+    prefix: '/outputs/',
+    decorateReply: false,
+  });
   await server.register(websocket);
   await server.register(authPlugin);
   await server.register(storePlugin);
@@ -37,6 +43,7 @@ async function start() {
   await server.register(designRoutes, { prefix: '/projects' });
   await server.register(costingRoutes, { prefix: '/projects' });
   await server.register(auditRoutes, { prefix: '/projects' });
+  await server.register(outputRoutes, { prefix: '/projects' });
   await server.register(settingsRoutes, { prefix: '/settings' });
 
   const port = Number(process.env.PORT) || 3001;

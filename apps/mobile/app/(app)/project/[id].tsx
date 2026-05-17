@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Linking } from "react-native";
 import type {
   Audit,
   AuditFinding,
@@ -19,6 +20,8 @@ import type {
   DesignMode,
   GapFlag,
   LineItem,
+  Output,
+  OutputKind,
   Project,
   Recording,
   Survey,
@@ -184,6 +187,8 @@ export default function ProjectDetailScreen() {
   const [scenario, setScenario] = useState<CostScenario>("standard");
   const [audit, setAudit] = useState<Audit | null>(null);
   const [auditRunning, setAuditRunning] = useState(false);
+  const [outputs, setOutputs] = useState<Output[]>([]);
+  const [outputRunning, setOutputRunning] = useState<OutputKind | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -193,13 +198,14 @@ export default function ProjectDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [p, recs, s, d, costs, a] = await Promise.all([
+      const [p, recs, s, d, costs, a, outs] = await Promise.all([
         api.getProject(id),
         api.listRecordings(id),
         api.getSurvey(id),
         api.getDesign(id),
         api.listCostings(id),
         api.getAudit(id),
+        api.listOutputs(id),
       ]);
       setProject(p);
       setRecordings(recs);
@@ -207,6 +213,7 @@ export default function ProjectDetailScreen() {
       setDesign(d);
       setCostings(costs);
       setAudit(a);
+      setOutputs(outs);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
@@ -277,6 +284,28 @@ export default function ProjectDetailScreen() {
       setAuditRunning(false);
     }
   }, [api, id]);
+
+  const handleRunOutput = useCallback(
+    async (kind: OutputKind) => {
+      if (!id) return;
+      setOutputRunning(kind);
+      setError(null);
+      try {
+        const o = await api.runOutput(id, kind);
+        setOutputs((prev) => {
+          const others = prev.filter((p) => p.kind !== kind);
+          return [...others, o].sort((a, b) => a.kind.localeCompare(b.kind));
+        });
+        const p = await api.getProject(id);
+        setProject(p);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Output failed");
+      } finally {
+        setOutputRunning(null);
+      }
+    },
+    [api, id],
+  );
 
   useEffect(() => {
     load();
@@ -407,6 +436,14 @@ export default function ProjectDetailScreen() {
               audit={audit}
               running={auditRunning}
               onRun={handleRunAudit}
+            />
+          )}
+
+          {audit?.passed && (
+            <OutputsSection
+              outputs={outputs}
+              running={outputRunning}
+              onRun={handleRunOutput}
             />
           )}
 
@@ -604,6 +641,70 @@ function GapRow({ gap }: { gap: GapFlag }) {
         <Text style={styles.gapDescription}>{gap.description}</Text>
         <Text style={styles.gapFill}>→ {gap.proposed_fill}</Text>
       </View>
+    </View>
+  );
+}
+
+const OUTPUT_ORDER: OutputKind[] = ["task_list", "schedule", "quote", "scope"];
+const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
+  task_list: { title: "Task list", sub: "Site sequence for the crew" },
+  schedule: { title: "Schedule", sub: "Indicative week-by-week plan" },
+  quote: { title: "Client quote", sub: "Branded summary at Standard total" },
+  scope: { title: "Scope (internal)", sub: "Design rationale, gaps, audit" },
+  brochure: { title: "Brochure", sub: "Deferred to Phase 8" },
+};
+
+function OutputsSection({
+  outputs,
+  running,
+  onRun,
+}: {
+  outputs: Output[];
+  running: OutputKind | null;
+  onRun: (k: OutputKind) => void;
+}) {
+  return (
+    <View style={styles.designCard}>
+      <Text style={styles.cardLabel}>OUTPUTS</Text>
+      <Text style={styles.intakeBody}>
+        Audit passed. Generate any of the artefacts below — each is produced
+        from the same design and costing.
+      </Text>
+      {OUTPUT_ORDER.map((kind) => {
+        const meta = OUTPUT_LABEL[kind];
+        const existing = outputs.find((o) => o.kind === kind);
+        const isRunning = running === kind;
+        return (
+          <View key={kind} style={styles.outputRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.outputTitle}>{meta.title}</Text>
+              <Text style={styles.outputSub}>
+                {existing
+                  ? `Generated · ${new Date(existing.generated_at).toLocaleDateString("en-AU")}`
+                  : meta.sub}
+              </Text>
+            </View>
+            {existing && (
+              <Pressable
+                onPress={() => Linking.openURL(existing.uri)}
+                hitSlop={8}
+                style={styles.outputViewBtn}
+              >
+                <Text style={styles.outputViewText}>Open</Text>
+              </Pressable>
+            )}
+            <Pressable
+              style={styles.outputGenBtn}
+              onPress={() => onRun(kind)}
+              disabled={isRunning}
+            >
+              <Text style={styles.outputGenText}>
+                {isRunning ? "…" : existing ? "Regen" : "Generate"}
+              </Text>
+            </Pressable>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -1373,5 +1474,46 @@ const styles = StyleSheet.create({
   findingAction: {
     fontSize: tokens.type.caption.fontSize,
     color: tokens.color.ink.secondary,
+  },
+  outputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.space[3],
+    paddingVertical: tokens.space[3],
+    borderTopWidth: 1,
+    borderTopColor: tokens.color.line.hairline,
+  },
+  outputTitle: {
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: "600",
+    color: tokens.color.ink.primary,
+  },
+  outputSub: {
+    marginTop: 2,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.tertiary,
+  },
+  outputViewBtn: {
+    paddingHorizontal: tokens.space[3],
+    paddingVertical: tokens.space[2],
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: tokens.color.line.strong,
+  },
+  outputViewText: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: "600",
+    color: tokens.color.ink.secondary,
+  },
+  outputGenBtn: {
+    paddingHorizontal: tokens.space[3],
+    paddingVertical: tokens.space[2],
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.color.accent.default,
+  },
+  outputGenText: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: "600",
+    color: tokens.color.ink.inverted,
   },
 });

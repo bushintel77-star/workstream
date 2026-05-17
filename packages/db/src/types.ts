@@ -3,6 +3,8 @@ import type {
   Costing,
   CreateProjectInput,
   Design,
+  Output,
+  OutputKind,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -16,6 +18,8 @@ export type {
   Costing,
   CreateProjectInput,
   Design,
+  Output,
+  OutputKind,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -28,6 +32,7 @@ export type SurveyInput = Omit<Survey, "id" | "project_id">;
 export type DesignInput = Omit<Design, "id" | "project_id" | "version">;
 export type CostingInput = Omit<Costing, "id" | "design_id">;
 export type AuditInput = Omit<Audit, "id" | "design_id">;
+export type OutputInput = Omit<Output, "id" | "project_id" | "kind">;
 
 export interface Store {
   listProjects(ownerId: string): Promise<Project[]>;
@@ -79,5 +84,12 @@ export interface Store {
     input: AuditInput,
   ): Promise<Audit>;
   getAudit(ownerId: string, projectId: string): Promise<Audit | null>;
+  upsertOutput(
+    ownerId: string,
+    projectId: string,
+    kind: OutputKind,
+    input: OutputInput,
+  ): Promise<Output>;
+  listOutputs(ownerId: string, projectId: string): Promise<Output[]>;
   seedDefaults(): Promise<void>;
 }

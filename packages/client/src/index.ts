@@ -3,6 +3,8 @@ import type {
   Costing,
   CreateProjectInput,
   Design,
+  Output,
+  OutputKind,
   PlantPalette,
   Project,
   RateCard,
@@ -69,6 +71,23 @@ export class WalkthroughClient {
       `/projects/${projectId}/recordings`
     );
     return res.recordings;
+  }
+
+  async runOutput(projectId: string, kind: OutputKind): Promise<Output> {
+    const res = await this.request<{ output: Output }>(
+      "POST",
+      `/projects/${projectId}/outputs`,
+      { kind }
+    );
+    return res.output;
+  }
+
+  async listOutputs(projectId: string): Promise<Output[]> {
+    const res = await this.request<{ outputs: Output[] }>(
+      "GET",
+      `/projects/${projectId}/outputs`
+    );
+    return res.outputs;
   }
 
   async runAudit(projectId: string): Promise<Audit> {

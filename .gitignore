@@ -10,6 +10,6 @@ dist/
 ios/
 android/
 
-# Runtime audio uploads & local test fixtures
-apps/api/data/uploads/
+# Runtime artifacts (audio uploads, generated outputs)
+apps/api/data/
 data/*.m4a

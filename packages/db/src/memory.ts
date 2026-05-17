@@ -3,6 +3,7 @@ import type {
   Costing,
   CreateProjectInput,
   Design,
+  Output,
   PlantPalette,
   Project,
   ProjectStatus,
@@ -23,6 +24,7 @@ export function createMemoryStore(): Store & {
   _designs: Design[];
   _costings: Costing[];
   _audits: Audit[];
+  _outputs: Output[];
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
@@ -32,6 +34,7 @@ export function createMemoryStore(): Store & {
   const _designs: Design[] = [];
   const _costings: Costing[] = [];
   const _audits: Audit[] = [];
+  const _outputs: Output[] = [];
   let seeded = false;
 
   return {
@@ -43,6 +46,7 @@ export function createMemoryStore(): Store & {
     _designs,
     _costings,
     _audits,
+    _outputs,
 
     async seedDefaults() {
       if (seeded) return;
@@ -275,6 +279,39 @@ export function createMemoryStore(): Store & {
       );
       if (!project) return null;
       return _audits.find((a) => a.design_id === design.id) ?? null;
+    },
+
+    async upsertOutput(ownerId, projectId, kind, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+
+      const existing = _outputs.find(
+        (o) => o.project_id === projectId && o.kind === kind,
+      );
+      if (existing) {
+        Object.assign(existing, input);
+        return existing;
+      }
+      const output: Output = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        kind,
+        ...input,
+      };
+      _outputs.push(output);
+      return output;
+    },
+
+    async listOutputs(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) return [];
+      return _outputs
+        .filter((o) => o.project_id === projectId)
+        .sort((a, b) => a.kind.localeCompare(b.kind));
     },
   };
 }
