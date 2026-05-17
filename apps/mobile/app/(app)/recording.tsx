@@ -4,19 +4,31 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Easing,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { tokens } from "@walkthrough/ui";
 import { useWalkthroughApi } from "../../src/lib/api";
 
 const MAX_DURATION_S = 30 * 60;
+const METERING_WINDOW = 48;
+const METERING_INTERVAL_MS = 80;
+const LIVE_DOT_PULSE_MS = 900;
 
 function formatElapsed(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function levelFromDb(db: number | undefined | null): number {
+  if (db == null || !Number.isFinite(db)) return 0;
+  const normalized = (db + 60) / 60;
+  return Math.max(0, Math.min(1, normalized));
 }
 
 export default function RecordingScreen() {
@@ -29,9 +41,17 @@ export default function RecordingScreen() {
   const [isPaused, setIsPaused] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [levels, setLevels] = useState<number[]>(() =>
+    new Array(METERING_WINDOW).fill(0),
+  );
+  const [currentLevel, setCurrentLevel] = useState(0);
+  const [ambientWarn, setAmbientWarn] = useState(false);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const levelsRef = useRef<number[]>(new Array(METERING_WINDOW).fill(0));
+  const ambientSamplesRef = useRef<number[]>([]);
+  const dotOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Audio.requestPermissionsAsync().then(({ granted }) => {
@@ -46,6 +66,31 @@ export default function RecordingScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isRecording || isPaused) {
+      dotOpacity.setValue(1);
+      return;
+    }
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dotOpacity, {
+          toValue: 0.25,
+          duration: LIVE_DOT_PULSE_MS / 2,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(dotOpacity, {
+          toValue: 1,
+          duration: LIVE_DOT_PULSE_MS / 2,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [isRecording, isPaused, dotOpacity]);
+
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -57,19 +102,47 @@ export default function RecordingScreen() {
     stopTimer();
     timerRef.current = setInterval(() => {
       setElapsed((e) => {
-        if (e + 1 >= MAX_DURATION_S) {
-          return MAX_DURATION_S;
-        }
+        if (e + 1 >= MAX_DURATION_S) return MAX_DURATION_S;
         return e + 1;
       });
     }, 1000);
   }, [stopTimer]);
 
+  const onStatusUpdate = useCallback((status: Audio.RecordingStatus) => {
+    if (!status.isRecording) return;
+    const level = levelFromDb(status.metering);
+    const next = levelsRef.current.slice(1);
+    next.push(level);
+    levelsRef.current = next;
+    setLevels(next);
+    setCurrentLevel(level);
+
+    const samples = ambientSamplesRef.current;
+    samples.push(level);
+    if (samples.length > 24) samples.shift();
+    if (samples.length === 24) {
+      const sorted = [...samples].sort((a, b) => a - b);
+      const median = sorted[Math.floor(sorted.length / 2)];
+      setAmbientWarn(median > 0.55);
+    }
+  }, []);
+
   const startRecording = useCallback(async () => {
     if (!permission || !projectId) return;
     try {
+      const recordingOptions: Audio.RecordingOptions = {
+        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        isMeteringEnabled: true,
+      };
+      levelsRef.current = new Array(METERING_WINDOW).fill(0);
+      ambientSamplesRef.current = [];
+      setLevels(levelsRef.current);
+      setAmbientWarn(false);
+
       const { recording: rec } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+        recordingOptions,
+        onStatusUpdate,
+        METERING_INTERVAL_MS,
       );
       recordingRef.current = rec;
       setIsRecording(true);
@@ -77,9 +150,12 @@ export default function RecordingScreen() {
       setElapsed(0);
       startTimer();
     } catch (e) {
-      Alert.alert("Recording failed", e instanceof Error ? e.message : "Unknown error");
+      Alert.alert(
+        "Recording failed",
+        e instanceof Error ? e.message : "Unknown error",
+      );
     }
-  }, [permission, projectId, startTimer]);
+  }, [permission, projectId, startTimer, onStatusUpdate]);
 
   const pauseRecording = useCallback(async () => {
     const rec = recordingRef.current;
@@ -104,9 +180,7 @@ export default function RecordingScreen() {
     try {
       await rec.stopAndUnloadAsync();
       const uri = rec.getURI();
-      if (!uri) {
-        throw new Error("No recording file");
-      }
+      if (!uri) throw new Error("No recording file");
       const durationS = Math.max(1, elapsed);
 
       await api.uploadRecording(projectId, uri, durationS);
@@ -116,7 +190,7 @@ export default function RecordingScreen() {
     } catch (e) {
       Alert.alert(
         "Upload failed",
-        e instanceof Error ? e.message : "Could not upload recording"
+        e instanceof Error ? e.message : "Could not upload recording",
       );
     } finally {
       setUploading(false);
@@ -155,9 +229,9 @@ export default function RecordingScreen() {
   if (!projectId) {
     return (
       <View style={styles.container}>
-        <Text style={styles.status}>Missing project</Text>
+        <Text style={styles.statusLabel}>Missing project</Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.pauseLabel}>Go back</Text>
+          <Text style={styles.cancel}>Go back</Text>
         </Pressable>
       </View>
     );
@@ -166,52 +240,102 @@ export default function RecordingScreen() {
   if (permission === false) {
     return (
       <View style={styles.container}>
-        <Text style={styles.status}>Microphone permission required</Text>
+        <Text style={styles.statusLabel}>Microphone permission required</Text>
       </View>
     );
   }
 
+  const liveStatus = !isRecording
+    ? "Ready"
+    : isPaused
+      ? "Paused"
+      : ambientWarn
+        ? "Listening · ambient noise high"
+        : "Listening";
+
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <Pressable onPress={confirmCancel} disabled={uploading}>
-          <Text style={styles.cancel}>Cancel</Text>
-        </Pressable>
+      <View style={styles.topStrip}>
+        <View style={styles.liveRow}>
+          <Animated.View
+            style={[
+              styles.liveDot,
+              { opacity: isRecording && !isPaused ? dotOpacity : 0.25 },
+            ]}
+          />
+          <Text style={styles.liveLabel}>{liveStatus.toUpperCase()}</Text>
+        </View>
+        <Text style={styles.transcriptStrip} numberOfLines={1}>
+          {isRecording
+            ? "Live transcript continues after upload"
+            : "Live transcript appears here while you record"}
+        </Text>
       </View>
 
       <View style={styles.timerArea}>
         <Text style={styles.elapsed}>{formatElapsed(elapsed)}</Text>
-        <Text style={styles.status}>
-          {uploading
-            ? "Uploading…"
-            : isRecording
-              ? isPaused
-                ? "Paused"
-                : "Recording"
-              : "Tap to record"}
-        </Text>
+        <View style={styles.waveformRow}>
+          {levels.map((lv, i) => {
+            const h = 4 + Math.round(lv * 36);
+            const isHead = i >= levels.length - 6;
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.waveformBar,
+                  {
+                    height: h,
+                    backgroundColor: isHead
+                      ? tokens.color.accent.default
+                      : tokens.color.ink.tertiary,
+                    opacity: isRecording ? 1 : 0.35,
+                  },
+                ]}
+              />
+            );
+          })}
+        </View>
       </View>
 
       <View style={styles.controls}>
-        {isRecording && (
+        {isRecording ? (
           <Pressable
-            style={styles.pauseButton}
             onPress={pauseRecording}
             disabled={uploading}
+            hitSlop={16}
+            style={styles.pauseHit}
           >
-            <Text style={styles.pauseLabel}>{isPaused ? "Resume" : "Pause"}</Text>
+            <Text style={styles.pauseLabel}>
+              {isPaused ? "RESUME" : "PAUSE"}
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={confirmCancel} hitSlop={16} style={styles.pauseHit}>
+            <Text style={styles.pauseLabel}>CANCEL</Text>
           </Pressable>
         )}
 
         {uploading ? (
-          <ActivityIndicator size="large" color="#C2410C" />
+          <View style={styles.recordButton}>
+            <ActivityIndicator size="large" color={tokens.color.ink.inverted} />
+          </View>
         ) : (
           <Pressable
-            style={[styles.recordButton, isRecording && styles.recordButtonActive]}
-            onPress={
-              isRecording ? finishAndUpload : startRecording
-            }
+            style={[
+              styles.recordButton,
+              isRecording && styles.recordButtonActive,
+              {
+                transform: [
+                  { scale: isRecording ? 1 + currentLevel * 0.04 : 1 },
+                ],
+              },
+            ]}
+            onPress={isRecording ? finishAndUpload : startRecording}
             disabled={permission !== true}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isRecording ? "Stop and upload" : "Start recording"
+            }
           >
             <View
               style={[
@@ -222,9 +346,13 @@ export default function RecordingScreen() {
           </Pressable>
         )}
 
-        {isRecording && (
-          <Text style={styles.hint}>Tap to stop & upload</Text>
-        )}
+        <Text style={styles.hint}>
+          {uploading
+            ? "Uploading…"
+            : isRecording
+              ? "Tap to stop & upload"
+              : "Tap to start"}
+        </Text>
       </View>
     </View>
   );
@@ -233,73 +361,112 @@ export default function RecordingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#18181B",
-  },
-  topBar: {
+    backgroundColor: tokens.color.surface.inverted,
     paddingTop: 56,
-    paddingHorizontal: 20,
-    alignItems: "flex-start",
+    paddingHorizontal: tokens.space[5],
+    paddingBottom: tokens.space[7],
   },
-  cancel: {
-    fontSize: 15,
-    color: "#A1A1AA",
+  topStrip: {
+    minHeight: 60,
+  },
+  liveRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.space[2],
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.accent.default,
+  },
+  liveLabel: {
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+  },
+  transcriptStrip: {
+    marginTop: tokens.space[3],
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.bodyMono.fontSize,
+    fontWeight: tokens.type.bodyMono.fontWeight,
+    fontVariant: ["tabular-nums"],
+    opacity: 0.7,
   },
   timerArea: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: tokens.space[6],
   },
   elapsed: {
-    fontSize: 32,
+    fontSize: 56,
+    lineHeight: 60,
     fontWeight: "600",
-    color: "#FAFAF7",
+    color: tokens.color.ink.inverted,
     fontVariant: ["tabular-nums"],
-    letterSpacing: 2,
+    letterSpacing: -1,
   },
-  status: {
-    fontSize: 12,
-    color: "#A1A1AA",
-    marginTop: 8,
+  waveformRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 44,
+    gap: 2,
+  },
+  waveformBar: {
+    width: 3,
+    borderRadius: 1.5,
   },
   controls: {
-    paddingBottom: 64,
     alignItems: "center",
-    gap: 16,
+    gap: tokens.space[4],
   },
-  pauseButton: {
-    marginBottom: 8,
+  pauseHit: {
+    paddingVertical: tokens.space[2],
+    paddingHorizontal: tokens.space[4],
   },
   pauseLabel: {
-    fontSize: 14,
-    color: "#A1A1AA",
-    fontWeight: "500",
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
   },
   recordButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#C2410C",
+    width: 132,
+    height: 132,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.accent.default,
     justifyContent: "center",
     alignItems: "center",
   },
   recordButtonActive: {
-    backgroundColor: "#FAFAF7",
+    backgroundColor: tokens.color.ink.inverted,
   },
   recordInner: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#FAFAF7",
+    width: 44,
+    height: 44,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.ink.inverted,
   },
   recordInnerStop: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    backgroundColor: "#C2410C",
+    width: 36,
+    height: 36,
+    borderRadius: tokens.radius.sm,
+    backgroundColor: tokens.color.accent.default,
   },
   hint: {
-    fontSize: 12,
-    color: "#52525B",
-    marginTop: 8,
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.type.caption.fontWeight,
+  },
+  cancel: {
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.body.fontSize,
+  },
+  statusLabel: {
+    color: tokens.color.ink.tertiary,
+    textAlign: "center",
+    marginTop: tokens.space[7],
   },
 });

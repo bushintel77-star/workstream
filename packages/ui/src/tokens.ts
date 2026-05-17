@@ -65,7 +65,7 @@ export const tokens = {
       fontSize: 14,
       lineHeight: 22,
       letterSpacing: 0,
-      fontWeight: '450' as const,
+      fontWeight: '500' as const,
     },
     caption: {
       fontSize: 13,

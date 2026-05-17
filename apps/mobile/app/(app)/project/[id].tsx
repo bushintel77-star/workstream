@@ -11,7 +11,151 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Project, Recording, Survey } from "@walkthrough/contracts";
+import { tokens } from "@walkthrough/ui";
 import { useWalkthroughApi } from "../../../src/lib/api";
+
+const AERIAL_ASPECT = 1;
+const SURVEY_INSET_PCT = 0.12;
+
+function isRealAerial(uri: string): boolean {
+  return uri.startsWith("http") && !uri.startsWith("https://placeholder");
+}
+
+function metresFormat(n: number): string {
+  return Number.isInteger(n) ? `${n}` : n.toFixed(1);
+}
+
+function deriveSummary(survey: Survey) {
+  const front = survey.measurements.find((m) => m.edge_id === "front");
+  const sides = survey.measurements.filter(
+    (m) => m.edge_id === "east" || m.edge_id === "west",
+  );
+  const frontage = front?.length_m ?? survey.measurements[0]?.length_m ?? 0;
+  const depth =
+    sides.length > 0
+      ? sides.reduce((s, m) => s + m.length_m, 0) / sides.length
+      : 0;
+  return { frontage, depth };
+}
+
+function SurveyHero({ survey }: { survey: Survey }) {
+  const lotCoords = survey.title_polygon.coordinates[0];
+  const houseCoords = survey.house_polygon.coordinates[0];
+
+  const lngs = lotCoords.map((c) => c[0]);
+  const lats = lotCoords.map((c) => c[1]);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const lotDegW = maxLng - minLng;
+  const lotDegH = maxLat - minLat;
+
+  const houseLngs = houseCoords.map((c) => c[0]);
+  const houseLats = houseCoords.map((c) => c[1]);
+  const houseMinLng = Math.min(...houseLngs);
+  const houseMaxLng = Math.max(...houseLngs);
+  const houseMinLat = Math.min(...houseLats);
+  const houseMaxLat = Math.max(...houseLats);
+
+  const lotAspect = lotDegW / lotDegH;
+
+  const innerArea = 1 - 2 * SURVEY_INSET_PCT;
+  let lotWidthPct = innerArea;
+  let lotHeightPct = lotWidthPct / lotAspect;
+  if (lotHeightPct > innerArea) {
+    lotHeightPct = innerArea;
+    lotWidthPct = lotHeightPct * lotAspect;
+  }
+  const lotLeftPct = (1 - lotWidthPct) / 2;
+  const lotTopPct = (1 - lotHeightPct) / 2;
+
+  const housePct = (lng: number, lat: number) => {
+    const xPct = (lng - minLng) / lotDegW;
+    const yPct = (maxLat - lat) / lotDegH;
+    return { xPct, yPct };
+  };
+  const houseTL = housePct(houseMinLng, houseMaxLat);
+  const houseBR = housePct(houseMaxLng, houseMinLat);
+  const houseLeftPct = lotLeftPct + houseTL.xPct * lotWidthPct;
+  const houseTopPct = lotTopPct + houseTL.yPct * lotHeightPct;
+  const houseWidthPct = (houseBR.xPct - houseTL.xPct) * lotWidthPct;
+  const houseHeightPct = (houseBR.yPct - houseTL.yPct) * lotHeightPct;
+
+  const front = survey.measurements.find((m) => m.edge_id === "front");
+  const back = survey.measurements.find((m) => m.edge_id === "back");
+  const east = survey.measurements.find((m) => m.edge_id === "east");
+  const west = survey.measurements.find((m) => m.edge_id === "west");
+
+  return (
+    <View style={styles.heroAerial}>
+      {isRealAerial(survey.aerial_uri) ? (
+        <Image
+          source={{ uri: survey.aerial_uri }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.heroPlaceholder]}>
+          <Text style={styles.heroPlaceholderText}>
+            SATELLITE  ·  DEV MODE
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.heroScrim} pointerEvents="none" />
+
+      <View
+        style={[
+          styles.lotOverlay,
+          {
+            left: `${lotLeftPct * 100}%`,
+            top: `${lotTopPct * 100}%`,
+            width: `${lotWidthPct * 100}%`,
+            height: `${lotHeightPct * 100}%`,
+          },
+        ]}
+        pointerEvents="none"
+      >
+        <View style={StyleSheet.absoluteFill}>
+          <View style={[StyleSheet.absoluteFill, styles.gardenFill]} />
+          <View
+            style={[
+              styles.houseSilhouette,
+              {
+                left: `${(houseLeftPct - lotLeftPct) / lotWidthPct * 100}%`,
+                top: `${(houseTopPct - lotTopPct) / lotHeightPct * 100}%`,
+                width: `${(houseWidthPct / lotWidthPct) * 100}%`,
+                height: `${(houseHeightPct / lotHeightPct) * 100}%`,
+              },
+            ]}
+          />
+        </View>
+      </View>
+
+      {front && (
+        <Text style={[styles.edgeLabel, styles.edgeLabelBottom]}>
+          {metresFormat(front.length_m)} m
+        </Text>
+      )}
+      {back && (
+        <Text style={[styles.edgeLabel, styles.edgeLabelTop]}>
+          {metresFormat(back.length_m)} m
+        </Text>
+      )}
+      {east && (
+        <Text style={[styles.edgeLabel, styles.edgeLabelRight]}>
+          {metresFormat(east.length_m)} m
+        </Text>
+      )}
+      {west && (
+        <Text style={[styles.edgeLabel, styles.edgeLabelLeft]}>
+          {metresFormat(west.length_m)} m
+        </Text>
+      )}
+    </View>
+  );
+}
 
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -94,100 +238,96 @@ export default function ProjectDetailScreen() {
   }, [api, id, pendingTranscript]);
 
   const latest = recordings[0];
+  const summary = survey ? deriveSummary(survey) : null;
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C2410C" />
+          <ActivityIndicator size="large" color={tokens.color.accent.default} />
         </View>
       ) : error || !project ? (
         <View style={styles.center}>
-          <Text style={styles.error}>{error ?? "Not found"}</Text>
+          <Text style={styles.errorText}>{error ?? "Not found"}</Text>
           <Pressable onPress={() => router.back()}>
             <Text style={styles.link}>Go back</Text>
           </Pressable>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.address}>{project.address}</Text>
-          <Text style={styles.meta}>Status: {project.status}</Text>
-          <Text style={styles.meta}>
-            Created: {new Date(project.created_at).toLocaleDateString("en-AU")}
-          </Text>
+          {survey ? (
+            <>
+              <SurveyHero survey={survey} />
+              <View style={styles.summaryCard}>
+                <Text style={styles.addressLine}>{project.address}</Text>
+                <View style={styles.metricsLedger}>
+                  <LedgerRow label="Lot" value={`${survey.lot_area_m2} m²`} />
+                  <LedgerRow label="House" value={`${survey.house_area_m2} m²`} />
+                  <LedgerRow label="Garden" value={`${survey.garden_area_m2} m²`} />
+                  <View style={styles.ledgerDivider} />
+                  <LedgerRow
+                    label="Frontage"
+                    value={`${metresFormat(summary?.frontage ?? 0)} m`}
+                  />
+                  <LedgerRow
+                    label="Depth"
+                    value={`${metresFormat(summary?.depth ?? 0)} m`}
+                  />
+                </View>
+
+                <View style={styles.surveyActions}>
+                  <Pressable style={styles.primaryBtn} disabled>
+                    <Text style={styles.primaryBtnText}>Looks right →</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.secondaryBtn}
+                    onPress={handleRunSurvey}
+                    disabled={surveyRunning}
+                  >
+                    <Text style={styles.secondaryBtnText}>
+                      {surveyRunning ? "Re-running…" : "Adjust"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </>
+          ) : (
+            <View style={styles.intakeCard}>
+              <Text style={styles.kicker}>NEW PROJECT</Text>
+              <Text style={styles.addressLine}>{project.address}</Text>
+              <Text style={styles.intakeBody}>
+                Survey will derive lot, house, and garden geometry from the
+                address. Record a walkthrough at any time.
+              </Text>
+              <Pressable
+                style={styles.primaryBtnLarge}
+                onPress={handleRunSurvey}
+                disabled={surveyRunning}
+              >
+                <Text style={styles.primaryBtnText}>
+                  {surveyRunning ? "Running survey…" : "Run survey"}
+                </Text>
+              </Pressable>
+            </View>
+          )}
 
           {latest?.transcript ? (
             <View style={styles.transcriptCard}>
-              <Text style={styles.transcriptLabel}>Transcript</Text>
+              <Text style={styles.cardLabel}>WALKTHROUGH TRANSCRIPT</Text>
               <Text style={styles.transcript}>{latest.transcript}</Text>
               {latest.transcription_confidence != null && (
                 <Text style={styles.confidence}>
-                  Confidence:{" "}
+                  Confidence ·{" "}
                   {Math.round(latest.transcription_confidence * 100)}%
                 </Text>
               )}
             </View>
           ) : latest && !latest.transcript ? (
             <View style={styles.transcriptCard}>
-              <ActivityIndicator color="#C2410C" />
+              <ActivityIndicator color={tokens.color.accent.default} />
               <Text style={styles.processing}>Transcribing walkthrough…</Text>
             </View>
           ) : null}
-
-          <View style={styles.surveyCard}>
-            <Text style={styles.transcriptLabel}>Survey</Text>
-            {survey ? (
-              <>
-                {survey.aerial_uri.startsWith("http") &&
-                !survey.aerial_uri.startsWith("https://placeholder") ? (
-                  <Image
-                    source={{ uri: survey.aerial_uri }}
-                    style={styles.aerial}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.aerial, styles.aerialPlaceholder]}>
-                    <Text style={styles.placeholderText}>
-                      Aerial preview (dev mode — set MAPBOX_TOKEN)
-                    </Text>
-                  </View>
-                )}
-                <View style={styles.metricsRow}>
-                  <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
-                  <Metric label="House" value={`${survey.house_area_m2} m²`} />
-                  <Metric label="Garden" value={`${survey.garden_area_m2} m²`} />
-                </View>
-                <View style={styles.metricsRow}>
-                  {survey.measurements.map((m) => (
-                    <Metric
-                      key={m.edge_id}
-                      label={m.label ?? m.edge_id}
-                      value={`${m.length_m} m`}
-                    />
-                  ))}
-                </View>
-                <Pressable
-                  style={styles.secondaryButton}
-                  onPress={handleRunSurvey}
-                  disabled={surveyRunning}
-                >
-                  <Text style={styles.secondaryButtonText}>
-                    {surveyRunning ? "Re-running…" : "Re-run survey"}
-                  </Text>
-                </Pressable>
-              </>
-            ) : (
-              <Pressable
-                style={styles.recordButton}
-                onPress={handleRunSurvey}
-                disabled={surveyRunning}
-              >
-                <Text style={styles.recordButtonText}>
-                  {surveyRunning ? "Running survey…" : "Run survey"}
-                </Text>
-              </Pressable>
-            )}
-          </View>
 
           <Pressable
             style={styles.recordButton}
@@ -199,7 +339,7 @@ export default function ProjectDetailScreen() {
             }
           >
             <Text style={styles.recordButtonText}>
-              {latest ? "Record again" : "Start recording"}
+              {latest ? "Record again" : "Start walkthrough"}
             </Text>
           </Pressable>
         </ScrollView>
@@ -208,11 +348,12 @@ export default function ProjectDetailScreen() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function LedgerRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.metric}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
+    <View style={styles.ledgerRow}>
+      <Text style={styles.ledgerLabel}>{label}</Text>
+      <View style={styles.ledgerDots} />
+      <Text style={styles.ledgerValue}>{value}</Text>
     </View>
   );
 }
@@ -220,145 +361,247 @@ function Metric({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFAF7",
+    backgroundColor: tokens.color.surface.base,
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: tokens.space[5],
   },
   content: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingBottom: tokens.space[7],
   },
-  address: {
-    fontSize: 24,
+  heroAerial: {
+    width: "100%",
+    aspectRatio: AERIAL_ASPECT,
+    backgroundColor: tokens.color.surface.inverted,
+    overflow: "hidden",
+  },
+  heroPlaceholder: {
+    backgroundColor: "#2A2A2E",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroPlaceholderText: {
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+  },
+  heroScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(24,24,27,0.18)",
+  },
+  lotOverlay: {
+    position: "absolute",
+    borderColor: tokens.color.line.ink,
+    borderWidth: 2,
+  },
+  gardenFill: {
+    backgroundColor: "rgba(194,65,12,0.12)",
+  },
+  houseSilhouette: {
+    position: "absolute",
+    backgroundColor: "rgba(24,24,27,0.72)",
+  },
+  edgeLabel: {
+    position: "absolute",
+    color: tokens.color.ink.inverted,
+    fontSize: tokens.type.bodyMono.fontSize,
+    fontWeight: tokens.type.bodyMono.fontWeight,
+    fontVariant: ["tabular-nums"],
+    backgroundColor: "rgba(24,24,27,0.78)",
+    paddingHorizontal: tokens.space[2],
+    paddingVertical: 2,
+    borderRadius: tokens.radius.sm,
+  },
+  edgeLabelTop: {
+    top: tokens.space[3],
+    alignSelf: "center",
+    left: "50%",
+    transform: [{ translateX: -32 }],
+  },
+  edgeLabelBottom: {
+    bottom: tokens.space[3],
+    alignSelf: "center",
+    left: "50%",
+    transform: [{ translateX: -32 }],
+  },
+  edgeLabelLeft: {
+    left: tokens.space[3],
+    top: "50%",
+    transform: [{ translateY: -12 }],
+  },
+  edgeLabelRight: {
+    right: tokens.space[3],
+    top: "50%",
+    transform: [{ translateY: -12 }],
+  },
+  summaryCard: {
+    marginHorizontal: tokens.space[5],
+    marginTop: -tokens.space[5],
+    padding: tokens.space[5],
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    ...tokens.elevation[1],
+  },
+  intakeCard: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[6],
+    padding: tokens.space[5],
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    gap: tokens.space[3],
+  },
+  kicker: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+  },
+  addressLine: {
+    fontSize: tokens.type.displayM.fontSize,
+    lineHeight: tokens.type.displayM.lineHeight,
+    fontWeight: tokens.type.displayM.fontWeight,
+    color: tokens.color.ink.primary,
+  },
+  intakeBody: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.secondary,
+  },
+  metricsLedger: {
+    marginTop: tokens.space[4],
+    gap: tokens.space[2],
+  },
+  ledgerRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: tokens.space[2],
+  },
+  ledgerLabel: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.type.caption.fontWeight,
+    color: tokens.color.ink.secondary,
+  },
+  ledgerDots: {
+    flex: 1,
+    height: 1,
+    borderStyle: "dotted",
+    borderBottomWidth: 1,
+    borderColor: tokens.color.line.hairline,
+  },
+  ledgerValue: {
+    fontSize: tokens.type.bodyMono.fontSize,
+    fontWeight: tokens.type.bodyMono.fontWeight,
+    color: tokens.color.ink.primary,
+    fontVariant: ["tabular-nums"],
+  },
+  ledgerDivider: {
+    height: 1,
+    backgroundColor: tokens.color.line.hairline,
+    marginVertical: tokens.space[2],
+  },
+  surveyActions: {
+    flexDirection: "row",
+    gap: tokens.space[3],
+    marginTop: tokens.space[5],
+  },
+  primaryBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.color.accent.default,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  primaryBtnLarge: {
+    height: 48,
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.color.accent.default,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: tokens.space[3],
+  },
+  primaryBtnText: {
+    color: tokens.color.ink.inverted,
+    fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
-    color: "#18181B",
-    marginBottom: 12,
   },
-  meta: {
-    fontSize: 15,
-    color: "#52525B",
-    marginBottom: 6,
+  secondaryBtn: {
+    height: 48,
+    paddingHorizontal: tokens.space[5],
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: tokens.color.line.strong,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  secondaryBtnText: {
+    color: tokens.color.ink.secondary,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: "500",
   },
   transcriptCard: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[5],
+    padding: tokens.space[5],
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
     borderWidth: 1,
-    borderColor: "#E4E4E7",
+    borderColor: tokens.color.line.hairline,
   },
-  transcriptLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#52525B",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 8,
+  cardLabel: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+    marginBottom: tokens.space[3],
   },
   transcript: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "#18181B",
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.primary,
   },
   confidence: {
-    fontSize: 12,
-    color: "#A1A1AA",
-    marginTop: 12,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.tertiary,
+    marginTop: tokens.space[3],
     fontVariant: ["tabular-nums"],
   },
   processing: {
-    fontSize: 14,
-    color: "#52525B",
-    marginTop: 12,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.color.ink.secondary,
+    marginTop: tokens.space[3],
   },
   recordButton: {
-    marginTop: 32,
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: "#C2410C",
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[6],
+    height: 56,
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.color.surface.inverted,
     justifyContent: "center",
     alignItems: "center",
   },
   recordButtonText: {
-    fontSize: 15,
+    fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: tokens.color.ink.inverted,
   },
-  error: {
-    fontSize: 15,
-    color: "#B91C1C",
-    marginBottom: 12,
+  errorText: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.color.semantic.block,
+    marginBottom: tokens.space[3],
     textAlign: "center",
   },
   link: {
-    fontSize: 15,
+    fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
-    color: "#C2410C",
-  },
-  surveyCard: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E4E4E7",
-  },
-  aerial: {
-    width: "100%",
-    aspectRatio: 1,
-    borderRadius: 6,
-    backgroundColor: "#F4F4F1",
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  aerialPlaceholder: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-  },
-  placeholderText: {
-    fontSize: 12,
-    color: "#A1A1AA",
-    textAlign: "center",
-  },
-  metricsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    marginBottom: 12,
-  },
-  metric: {
-    minWidth: 80,
-  },
-  metricLabel: {
-    fontSize: 11,
-    color: "#A1A1AA",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  metricValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#18181B",
-    fontVariant: ["tabular-nums"],
-    marginTop: 2,
-  },
-  secondaryButton: {
-    marginTop: 8,
-    height: 40,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E4E4E7",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#52525B",
+    color: tokens.color.accent.default,
   },
 });
