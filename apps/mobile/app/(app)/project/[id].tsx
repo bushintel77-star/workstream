@@ -11,6 +11,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type {
+  Audit,
+  AuditFinding,
   Costing,
   CostScenario,
   Design,
@@ -180,6 +182,8 @@ export default function ProjectDetailScreen() {
   const [costings, setCostings] = useState<Costing[]>([]);
   const [costingRunning, setCostingRunning] = useState(false);
   const [scenario, setScenario] = useState<CostScenario>("standard");
+  const [audit, setAudit] = useState<Audit | null>(null);
+  const [auditRunning, setAuditRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -189,18 +193,20 @@ export default function ProjectDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [p, recs, s, d, costs] = await Promise.all([
+      const [p, recs, s, d, costs, a] = await Promise.all([
         api.getProject(id),
         api.listRecordings(id),
         api.getSurvey(id),
         api.getDesign(id),
         api.listCostings(id),
+        api.getAudit(id),
       ]);
       setProject(p);
       setRecordings(recs);
       setSurvey(s);
       setDesign(d);
       setCostings(costs);
+      setAudit(a);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
@@ -253,6 +259,22 @@ export default function ProjectDetailScreen() {
       setError(e instanceof Error ? e.message : "Costing failed");
     } finally {
       setCostingRunning(false);
+    }
+  }, [api, id]);
+
+  const handleRunAudit = useCallback(async () => {
+    if (!id) return;
+    setAuditRunning(true);
+    setError(null);
+    try {
+      const a = await api.runAudit(id);
+      setAudit(a);
+      const p = await api.getProject(id);
+      setProject(p);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Audit failed");
+    } finally {
+      setAuditRunning(false);
     }
   }, [api, id]);
 
@@ -377,6 +399,14 @@ export default function ProjectDetailScreen() {
               onScenarioChange={setScenario}
               running={costingRunning}
               onRun={handleRunCosting}
+            />
+          )}
+
+          {costings.length > 0 && (
+            <AuditSection
+              audit={audit}
+              running={auditRunning}
+              onRun={handleRunAudit}
             />
           )}
 
@@ -573,6 +603,102 @@ function GapRow({ gap }: { gap: GapFlag }) {
       <View style={{ flex: 1 }}>
         <Text style={styles.gapDescription}>{gap.description}</Text>
         <Text style={styles.gapFill}>→ {gap.proposed_fill}</Text>
+      </View>
+    </View>
+  );
+}
+
+const CATEGORY_LABEL: Record<AuditFinding["category"], string> = {
+  fidelity: "FIDELITY",
+  completeness: "COMPLETENESS",
+  coherence: "COHERENCE",
+  cost: "COST",
+  safety: "SAFETY",
+  scope: "SCOPE",
+};
+
+function AuditSection({
+  audit,
+  running,
+  onRun,
+}: {
+  audit: Audit | null;
+  running: boolean;
+  onRun: () => void;
+}) {
+  if (!audit) {
+    return (
+      <View style={styles.designCard}>
+        <Text style={styles.cardLabel}>AUDIT</Text>
+        <Text style={styles.intakeBody}>
+          Self-audit checks the design against the transcript and costing for
+          fidelity, completeness, coherence, cost, safety, and scope issues.
+          Blocking findings prevent output generation.
+        </Text>
+        <Pressable
+          style={styles.primaryBtnLarge}
+          onPress={onRun}
+          disabled={running}
+        >
+          <Text style={styles.primaryBtnText}>
+            {running ? "Auditing…" : "Run audit"}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const tone = audit.passed
+    ? tokens.color.semantic.ok
+    : tokens.color.semantic.block;
+
+  return (
+    <View style={styles.designCard}>
+      <View style={styles.designHeader}>
+        <Text style={styles.cardLabel}>AUDIT</Text>
+        <Pressable onPress={onRun} disabled={running} hitSlop={12}>
+          <Text style={styles.tertiaryAction}>
+            {running ? "Re-auditing…" : "Re-audit"}
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={[styles.auditVerdict, { borderColor: tone }]}>
+        <Text style={[styles.auditVerdictLabel, { color: tone }]}>
+          {audit.passed ? "PASSED" : "BLOCKED"}
+        </Text>
+        <Text style={styles.auditVerdictMeta}>
+          {audit.blocking_count} blocking · {audit.advisory_count} advisory
+        </Text>
+      </View>
+
+      {audit.findings.length === 0 ? (
+        <Text style={styles.intakeBody}>
+          No findings. The design and costing are internally consistent and on
+          scope.
+        </Text>
+      ) : (
+        audit.findings.map((f, i) => <FindingRow key={i} finding={f} />)
+      )}
+    </View>
+  );
+}
+
+function FindingRow({ finding }: { finding: AuditFinding }) {
+  const blocking = finding.severity === "blocking";
+  const tone = blocking ? tokens.color.semantic.block : tokens.color.semantic.warn;
+  return (
+    <View style={styles.findingRow}>
+      <View style={[styles.findingBar, { backgroundColor: tone }]} />
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={styles.findingHeader}>
+          <Text style={[styles.findingCategory, { color: tone }]}>
+            {CATEGORY_LABEL[finding.category]}
+          </Text>
+          <Text style={styles.findingLocation}>· {finding.location}</Text>
+        </View>
+        <Text style={styles.findingStatement}>{finding.statement}</Text>
+        <Text style={styles.findingAction}>→ {finding.suggested_action}</Text>
       </View>
     </View>
   );
@@ -1197,5 +1323,55 @@ const styles = StyleSheet.create({
     color: tokens.color.ink.primary,
     minWidth: 70,
     textAlign: "right",
+  },
+  auditVerdict: {
+    padding: tokens.space[3],
+    borderRadius: tokens.radius.md,
+    borderWidth: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  auditVerdictLabel: {
+    fontSize: tokens.type.title.fontSize,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  auditVerdictMeta: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.secondary,
+    fontVariant: ["tabular-nums"],
+  },
+  findingRow: {
+    flexDirection: "row",
+    gap: tokens.space[3],
+    alignItems: "stretch",
+  },
+  findingBar: {
+    width: 3,
+    borderRadius: 1.5,
+  },
+  findingHeader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+  },
+  findingCategory: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+  },
+  findingLocation: {
+    fontSize: tokens.type.micro.fontSize,
+    color: tokens.color.ink.tertiary,
+  },
+  findingStatement: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.primary,
+  },
+  findingAction: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.secondary,
   },
 });

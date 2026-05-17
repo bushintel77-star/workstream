@@ -13,6 +13,8 @@ export type {
   DesignInput,
   Costing,
   CostingInput,
+  Audit,
+  AuditInput,
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 

@@ -1,4 +1,5 @@
 import type {
+  Audit,
   Costing,
   CreateProjectInput,
   Design,
@@ -68,6 +69,36 @@ export class WalkthroughClient {
       `/projects/${projectId}/recordings`
     );
     return res.recordings;
+  }
+
+  async runAudit(projectId: string): Promise<Audit> {
+    const res = await this.request<{ audit: Audit }>(
+      "POST",
+      `/projects/${projectId}/audit`
+    );
+    return res.audit;
+  }
+
+  async getAudit(projectId: string): Promise<Audit | null> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (this.options.getToken) {
+      const token = await this.options.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch(
+      `${this.options.baseUrl}/projects/${projectId}/audit`,
+      { method: "GET", headers }
+    );
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      throw new Error(
+        `GET /projects/${projectId}/audit failed: ${res.status} ${await res.text()}`
+      );
+    }
+    const json = (await res.json()) as { audit: Audit };
+    return json.audit;
   }
 
   async runCosting(projectId: string): Promise<Costing[]> {

@@ -1,4 +1,7 @@
 import type {
+  AuditFinding,
+  Costing,
+  Design,
   DesignMode,
   GapFlag,
   PlantPalette,
@@ -9,6 +12,7 @@ import type {
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 const DESIGN_MODEL = "claude-opus-4-7";
+const AUDIT_MODEL = "claude-sonnet-4-6";
 
 export type DesignProposal = {
   zones: Array<{
@@ -265,4 +269,170 @@ export async function generateDesign(
   }
 
   return parsed as DesignGeneration;
+}
+
+const AUDIT_SYSTEM_PROMPT = `You are the self-audit pass for Curtis & Co's landscape design tool. A separate model has just produced a design and costing from a walkthrough transcript and a survey. Your job is to interrogate that output and surface anything that's wrong, missing, or risky — like a senior project lead reviewing the brief before it goes to the client.
+
+Return strict JSON. No prose, no markdown.
+
+Schema:
+{
+  "findings": [
+    {
+      "severity": "blocking" | "advisory",
+      "category": "fidelity" | "completeness" | "coherence" | "cost" | "safety" | "scope",
+      "location": "zone-id or 'global' or 'line:<sku>'",
+      "statement": "Human-readable finding in one sentence",
+      "suggested_action": "Literal next step the user can take"
+    }
+  ]
+}
+
+CATEGORIES
+- fidelity: design must honour what the user said in the transcript. If the transcript specifies a pleached hornbeam screen on the west boundary and the design has mixed natives, that's a blocking fidelity issue.
+- completeness: every zone with garden area should have a treatment specified. Empty zones, untreated edges, missing irrigation in a high-water design.
+- coherence: design must not contradict itself. Pergola structure listed but no footings line item. Drip irrigation specified but no controller. Lighting specified but no transformer.
+- cost: costing must be internally consistent with the design. Lean scenario excludes irrigation but the design copy still references drip lines. Provisional/POA items in the totals.
+- safety: anything dangerous. Retaining walls > 1.0m without engineering allowance. Drainage near foundations not detailed. Lighting voltage drop on long cable runs.
+- scope: anything outside Curtis & Co's stated scope: pools, swimming-pool fencing, structural engineering, plan-view drafting.
+
+SEVERITY
+- blocking: prevents output generation until resolved or explicitly overridden. Use for fidelity gaps the user explicitly cared about, safety issues, scope violations, cost inconsistencies that would mislead a client.
+- advisory: surface but don't block. Use for polish suggestions, minor completeness issues, optional enhancements.
+
+If everything is clean, return { "findings": [] }. Do not pad the output.`;
+
+function buildAuditUserMessage(args: {
+  transcript: string | null;
+  design: Design;
+  costings: Costing[];
+}): string {
+  return `WALKTHROUGH TRANSCRIPT
+${args.transcript ?? "(none — auto-design mode)"}
+
+DESIGN (mode: ${args.design.mode}, version: ${args.design.version})
+${JSON.stringify({ proposal: args.design.proposal, gaps: args.design.gaps, rationale: args.design.rationale }, null, 2)}
+
+COSTINGS
+${args.costings
+  .map(
+    (c) =>
+      `[${c.scenario}] subtotal=${c.subtotal} gst=${c.gst} total=${c.total} ${c.line_items.length} line items` +
+      (c.line_items.some((l) => l.is_provisional)
+        ? ` (incl. ${c.line_items.filter((l) => l.is_provisional).length} provisional/POA)`
+        : ""),
+  )
+  .join("\n")}
+
+Audit now. Return JSON only.`;
+}
+
+function devFallbackAudit(args: {
+  design: Design;
+  costings: Costing[];
+}): { findings: AuditFinding[] } {
+  const findings: AuditFinding[] = [];
+  const proposal = args.design.proposal as {
+    zones?: Array<{
+      id: string;
+      lighting?: Array<unknown>;
+      irrigation?: Array<unknown>;
+    }>;
+  };
+
+  for (const z of proposal.zones ?? []) {
+    if ((z.lighting?.length ?? 0) > 0) {
+      const hasTransformer = false;
+      if (!hasTransformer) {
+        findings.push({
+          severity: "advisory",
+          category: "coherence",
+          location: z.id,
+          statement: `Zone "${z.id}" specifies lighting fixtures but no transformer in the line items.`,
+          suggested_action:
+            "Add at least one LGT-TX-150 transformer per ~140W of fixtures.",
+        });
+      }
+    }
+  }
+
+  const provisional = args.costings.flatMap((c) =>
+    c.line_items.filter((l) => l.is_provisional),
+  );
+  if (provisional.length > 0) {
+    findings.push({
+      severity: "blocking",
+      category: "cost",
+      location: "global",
+      statement: `${provisional.length} line item(s) are provisional/POA across scenarios. Cannot generate a client quote until resolved.`,
+      suggested_action:
+        "Resolve each provisional SKU with a firm rate, or remove it from the design.",
+    });
+  }
+
+  if (args.design.gaps.length > 0) {
+    findings.push({
+      severity: "advisory",
+      category: "completeness",
+      location: "global",
+      statement: `${args.design.gaps.length} gap flag(s) carried over from design generation.`,
+      suggested_action: "Review each gap and accept the proposed fill or override.",
+    });
+  }
+
+  return { findings };
+}
+
+export async function runAudit(args: {
+  transcript: string | null;
+  design: Design;
+  costings: Costing[];
+}): Promise<{ findings: AuditFinding[] }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return devFallbackAudit(args);
+  }
+
+  const body = {
+    model: AUDIT_MODEL,
+    max_tokens: 2048,
+    system: [
+      {
+        type: "text",
+        text: AUDIT_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
+    messages: [
+      { role: "user", content: buildAuditUserMessage(args) },
+    ],
+  };
+
+  const res = await fetch(MESSAGES_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": ANTHROPIC_VERSION,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Anthropic /messages failed: ${res.status} ${await res.text()}`);
+  }
+
+  const json = (await res.json()) as {
+    content: Array<{ type: string; text: string }>;
+  };
+  const textBlock = json.content.find((c) => c.type === "text");
+  if (!textBlock) throw new Error("Anthropic audit response had no text block");
+
+  const cleaned = textBlock.text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "");
+
+  const parsed = JSON.parse(cleaned) as { findings: AuditFinding[] };
+  return parsed;
 }

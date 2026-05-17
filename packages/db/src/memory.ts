@@ -1,4 +1,5 @@
 import type {
+  Audit,
   Costing,
   CreateProjectInput,
   Design,
@@ -21,6 +22,7 @@ export function createMemoryStore(): Store & {
   _surveys: Survey[];
   _designs: Design[];
   _costings: Costing[];
+  _audits: Audit[];
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
@@ -29,6 +31,7 @@ export function createMemoryStore(): Store & {
   const _surveys: Survey[] = [];
   const _designs: Design[] = [];
   const _costings: Costing[] = [];
+  const _audits: Audit[] = [];
   let seeded = false;
 
   return {
@@ -39,6 +42,7 @@ export function createMemoryStore(): Store & {
     _surveys,
     _designs,
     _costings,
+    _audits,
 
     async seedDefaults() {
       if (seeded) return;
@@ -241,6 +245,36 @@ export function createMemoryStore(): Store & {
       return _costings
         .filter((c) => c.design_id === design.id)
         .sort((a, b) => a.scenario.localeCompare(b.scenario));
+    },
+
+    async upsertAudit(ownerId, projectId, designId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+
+      const existing = _audits.find((a) => a.design_id === designId);
+      if (existing) {
+        Object.assign(existing, input);
+        return existing;
+      }
+      const audit: Audit = {
+        id: crypto.randomUUID(),
+        design_id: designId,
+        ...input,
+      };
+      _audits.push(audit);
+      return audit;
+    },
+
+    async getAudit(ownerId, projectId) {
+      const design = _designs.find((d) => d.project_id === projectId);
+      if (!design) return null;
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) return null;
+      return _audits.find((a) => a.design_id === design.id) ?? null;
     },
   };
 }
