@@ -190,6 +190,21 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return rows.sort((a, b) => a.sku.localeCompare(b.sku));
     },
 
+    async updateRateCardItem(ownerId, sku, patch) {
+      const visible = _rateCard.filter(
+        (r) =>
+          r.sku === sku &&
+          (r.owner_id === ownerId || r.owner_id === SYSTEM_OWNER),
+      );
+      if (visible.length === 0) return null;
+      const target = visible.find((r) => r.owner_id === ownerId) ?? visible[0];
+      if (patch.rate != null) target.rate = patch.rate;
+      if (patch.notes != null) target.notes = patch.notes;
+      target.effective_from = new Date().toISOString();
+      flush();
+      return target;
+    },
+
     async listPlantPalette(ownerId) {
       const rows = _plantPalette.filter(
         (p) => p.owner_id === SYSTEM_OWNER || p.owner_id === ownerId

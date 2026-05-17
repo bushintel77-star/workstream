@@ -61,6 +61,11 @@ export interface Store {
   ): Promise<Recording | null>;
   getRecording(recordingId: string): Promise<Recording | null>;
   listRateCard(ownerId: string): Promise<RateCard[]>;
+  updateRateCardItem(
+    ownerId: string,
+    sku: string,
+    patch: { rate?: number; notes?: string },
+  ): Promise<RateCard | null>;
   listPlantPalette(ownerId: string): Promise<PlantPalette[]>;
   upsertSurvey(
     ownerId: string,

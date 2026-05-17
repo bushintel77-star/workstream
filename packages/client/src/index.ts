@@ -59,6 +59,18 @@ export class WalkthroughClient {
     return res.items;
   }
 
+  async updateRateCardItem(
+    sku: string,
+    patch: { rate?: number; notes?: string },
+  ): Promise<RateCard> {
+    const res = await this.request<{ item: RateCard }>(
+      "PATCH",
+      `/settings/rate-card/${encodeURIComponent(sku)}`,
+      patch,
+    );
+    return res.item;
+  }
+
   async listPlantPalette(): Promise<PlantPalette[]> {
     const res = await this.request<{ items: PlantPalette[] }>(
       "GET",
