@@ -1,0 +1,377 @@
+[
+  {
+    "species": "Carpinus betulus 'Frans Fontaine'",
+    "common_name": "Pleached European Hornbeam",
+    "category": "boundary_tree",
+    "form": "Hedge / pleach",
+    "mature_h_m": 8,
+    "mature_w_m": 1.5,
+    "use_description": "Boundary screen, pleached at 2.4–4.5 m",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Pyrus calleryana 'Capital'",
+    "common_name": "Capital Pear",
+    "category": "boundary_tree",
+    "form": "Columnar tree",
+    "mature_h_m": 11,
+    "mature_w_m": 3,
+    "use_description": "Tight upright screen, deciduous",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Quercus palustris 'Green Pillar'",
+    "common_name": "Pin Oak fastigiate",
+    "category": "boundary_tree",
+    "form": "Columnar tree",
+    "mature_h_m": 14,
+    "mature_w_m": 4,
+    "use_description": "Larger lots, deciduous",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Tilia cordata 'Greenspire'",
+    "common_name": "Small-leaved Lime",
+    "category": "boundary_tree",
+    "form": "Tree, pleachable",
+    "mature_h_m": 12,
+    "mature_w_m": 6,
+    "use_description": "Pleached avenue, deciduous",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Ulmus parvifolia 'Murray Cane'",
+    "common_name": "Chinese Elm",
+    "category": "boundary_tree",
+    "form": "Tree",
+    "mature_h_m": 10,
+    "mature_w_m": 7,
+    "use_description": "Semi-evergreen screen",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Photinia robusta",
+    "common_name": "Red-leaf Photinia",
+    "category": "hedge",
+    "mature_h_m": 4,
+    "mature_w_m": 2,
+    "use_description": "Workhorse hedge",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Murraya paniculata",
+    "common_name": "Orange Jessamine",
+    "category": "hedge",
+    "mature_h_m": 3,
+    "mature_w_m": 2,
+    "use_description": "Dense, fragrant",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Camellia sasanqua 'Setsugekka'",
+    "common_name": "Sasanqua Camellia",
+    "category": "hedge",
+    "mature_h_m": 3,
+    "mature_w_m": 2,
+    "use_description": "Flowering screen, shade-tolerant",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Westringia 'Wynyabbie Gem'",
+    "common_name": "Coastal Rosemary",
+    "category": "hedge",
+    "mature_h_m": 1.5,
+    "mature_w_m": 1.5,
+    "use_description": "Native, drought-tolerant",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Pittosporum tenuifolium 'Silver Sheen'",
+    "common_name": "Silver Sheen",
+    "category": "hedge",
+    "mature_h_m": 5,
+    "mature_w_m": 2,
+    "use_description": "Light, fine-leafed screen",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Viburnum tinus",
+    "common_name": "Laurustinus",
+    "category": "hedge",
+    "mature_h_m": 3,
+    "mature_w_m": 2,
+    "use_description": "Shade-tolerant, evergreen",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Magnolia grandiflora 'Little Gem'",
+    "common_name": "Little Gem Magnolia",
+    "category": "feature_tree",
+    "mature_h_m": 6,
+    "mature_w_m": 3,
+    "use_description": "Compact evergreen",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Magnolia grandiflora 'Kay Parris'",
+    "common_name": "Kay Parris Magnolia",
+    "category": "feature_tree",
+    "mature_h_m": 6,
+    "mature_w_m": 4,
+    "use_description": "Improved Little Gem, denser foliage",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Acer palmatum 'Sango Kaku'",
+    "common_name": "Coral Bark Maple",
+    "category": "feature_tree",
+    "mature_h_m": 5,
+    "mature_w_m": 4,
+    "use_description": "Deciduous, winter interest",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Olea europaea 'Tolley's Upright'",
+    "common_name": "Upright Olive",
+    "category": "feature_tree",
+    "mature_h_m": 6,
+    "mature_w_m": 2,
+    "use_description": "Architectural, evergreen, drought-tolerant",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Lagerstroemia indica 'Tuscarora'",
+    "common_name": "Crepe Myrtle",
+    "category": "feature_tree",
+    "mature_h_m": 6,
+    "mature_w_m": 4,
+    "use_description": "Summer flowering, deciduous",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Cercis canadensis 'Forest Pansy'",
+    "common_name": "Forest Pansy Redbud",
+    "category": "feature_tree",
+    "mature_h_m": 5,
+    "mature_w_m": 5,
+    "use_description": "Deciduous, spring flower, dark foliage",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Buxus sempervirens",
+    "common_name": "English Box",
+    "category": "structural_shrub",
+    "mature_h_m": 1.5,
+    "mature_w_m": 1.5,
+    "use_description": "Clipped, formal",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Buxus microphylla 'Faulkner'",
+    "common_name": "Japanese Box",
+    "category": "structural_shrub",
+    "mature_h_m": 1.2,
+    "mature_w_m": 1,
+    "use_description": "Clipped, blight-resistant",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Westringia 'Grey Box'",
+    "common_name": "Native Box",
+    "category": "structural_shrub",
+    "mature_h_m": 1,
+    "mature_w_m": 1,
+    "use_description": "Native alternative to box",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Camellia japonica",
+    "common_name": "Japanese Camellia",
+    "category": "structural_shrub",
+    "mature_h_m": 3,
+    "mature_w_m": 2,
+    "use_description": "Shade specimen, formal",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Agonis flexuosa 'Burgundy'",
+    "common_name": "Willow Myrtle",
+    "category": "structural_shrub",
+    "mature_h_m": 7,
+    "mature_w_m": 5,
+    "use_description": "Architectural native",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Liriope muscari 'Just Right'",
+    "common_name": "Lilyturf",
+    "category": "mass_understory",
+    "mature_h_m": 0.4,
+    "mature_w_m": 0.45,
+    "use_description": "Workhorse mass, deep green",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Lomandra 'Tanika'",
+    "common_name": "Fine-leaf Mat Rush",
+    "category": "mass_understory",
+    "mature_h_m": 0.6,
+    "mature_w_m": 0.6,
+    "use_description": "Native grass mass",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Lomandra 'Lime Tuff'",
+    "common_name": "Compact Mat Rush",
+    "category": "mass_understory",
+    "mature_h_m": 0.4,
+    "mature_w_m": 0.4,
+    "use_description": "Smaller mass",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Dianella 'Little Jess'",
+    "common_name": "Native Flax Lily",
+    "category": "mass_understory",
+    "mature_h_m": 0.4,
+    "mature_w_m": 0.4,
+    "use_description": "Native, low, hardy",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Miscanthus sinensis 'Adagio'",
+    "common_name": "Compact Miscanthus",
+    "category": "ornamental_grass",
+    "mature_h_m": 1.2,
+    "mature_w_m": 0.8,
+    "use_description": "Architectural verticals",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Pennisetum alopecuroides 'Nafray'",
+    "common_name": "Native Fountain Grass",
+    "category": "ornamental_grass",
+    "mature_h_m": 0.8,
+    "mature_w_m": 0.8,
+    "use_description": "Mass, native cultivar",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Calamagrostis x acutiflora 'Karl Foerster'",
+    "common_name": "Feather Reed Grass",
+    "category": "ornamental_grass",
+    "mature_h_m": 1.5,
+    "mature_w_m": 0.6,
+    "use_description": "Strong vertical line",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Dichondra repens",
+    "common_name": "Kidney Weed",
+    "category": "groundcover",
+    "mature_h_m": 0.05,
+    "mature_w_m": 0.5,
+    "use_description": "Lawn alternative",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Trachelospermum jasminoides",
+    "common_name": "Star Jasmine (ground form)",
+    "category": "groundcover",
+    "mature_h_m": 0.3,
+    "mature_w_m": 1,
+    "use_description": "Groundcover or climber",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Myoporum parvifolium",
+    "common_name": "Creeping Boobialla",
+    "category": "groundcover",
+    "mature_h_m": 0.1,
+    "mature_w_m": 2,
+    "use_description": "Native, dense mat",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Trachelospermum jasminoides",
+    "common_name": "Star Jasmine",
+    "category": "climber",
+    "mature_h_m": 6,
+    "mature_w_m": 2,
+    "use_description": "Wall cover, fragrant",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Parthenocissus tricuspidata 'Veitchii'",
+    "common_name": "Boston Ivy",
+    "category": "climber",
+    "mature_h_m": 15,
+    "mature_w_m": 5,
+    "use_description": "Deciduous wall, autumn colour",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Ficus pumila",
+    "common_name": "Creeping Fig",
+    "category": "climber",
+    "mature_h_m": 8,
+    "mature_w_m": 3,
+    "use_description": "Aggressive — use only on dedicated walls with control plan",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Stenotaphrum secundatum 'Sir Walter'",
+    "common_name": "Sir Walter Buffalo",
+    "category": "lawn",
+    "mature_h_m": 0.1,
+    "mature_w_m": 1,
+    "use_description": "Shade-tolerant warm-season turf",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Festuca arundinacea",
+    "common_name": "Tall Fescue",
+    "category": "lawn",
+    "mature_h_m": 0.15,
+    "mature_w_m": 1,
+    "use_description": "Cool-season turf",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  }
+]

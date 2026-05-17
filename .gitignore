@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.turbo/
+.expo/
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
+*.log
+ios/
+android/
+
+# Runtime audio uploads & local test fixtures
+apps/api/data/uploads/
+data/*.m4a

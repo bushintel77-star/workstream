@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Walkthrough",
+    "slug": "walkthrough",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "scheme": "walkthrough",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.curtisandco.walkthrough"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FAFAF7"
+      },
+      "package": "com.curtisandco.walkthrough"
+    },
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}

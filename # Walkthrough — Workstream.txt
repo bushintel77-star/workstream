@@ -1,0 +1,1566 @@
+# Walkthrough — Workstream
+
+> A landscaping project management tool. Voice-first capture, AI-driven survey, costed outputs.
+> Working codename: **Walkthrough**. Rename later.
+
+-----
+
+## 0. Thesis
+
+One voice note, captured on site, becomes the source of truth for the entire job.
+
+From a single recording plus an address, the system derives the survey (title, house footprint, garden area, boundary measurements), the design (full proposal, gap-filled refinement, or pure validation depending on the brief), the costing, and every downstream artifact: task list, crew schedule, scope document, client quote letter, brochure.
+
+No surveyor visit. No drafting back-and-forth before pricing. No re-keying between estimating, scheduling, and client comms. The walkthrough *is* the brief.
+
+-----
+
+## 1. Three Operating Modes
+
+The same pipeline runs in three modes, branched on what the user provided.
+
+|Mode             |Input                   |Behaviour                                                                                             |
+|-----------------|------------------------|------------------------------------------------------------------------------------------------------|
+|**Auto-design**  |Address only, no voice  |AI proposes a full design from site conditions, lot geometry, orientation, and Curtis & Co house style|
+|**Gap-fill**     |Address + partial voice |AI honours every specified element, flags omissions, proposes fills for each gap with rationale       |
+|**Validate-only**|Address + complete voice|AI checks coherence, costs the design, runs the self-audit, generates outputs                         |
+
+The user is never forced to choose a mode. The system detects coverage from the transcript and selects automatically. A toggle on the design review screen lets the user override.
+
+-----
+
+## 2. UX Flow (Mobile, End-to-End)
+
+### 2.1 Screen inventory
+
+1. **Home** — project list, new project CTA
+1. **New project** — address entry, optional voice capture
+1. **Recording** — full-screen dictation
+1. **Processing** — survey + transcription progress
+1. **Survey review** — aerial with title overlay, garden area, measurements
+1. **Design review** — proposal, gap flags, mode indicator
+1. **Cost review** — line items, totals, scenario toggle
+1. **Audit** — self-audit findings, blocking issues, advisories
+1. **Outputs** — generate task list / schedule / quote / brochure
+1. **Project detail** — full project record, version history
+1. **Settings** — rate card, plant palette, materials catalogue, crew
+
+### 2.2 Happy path (voice + address)
+
+```
+Home
+ └─ + New project
+     └─ Enter address → autocomplete (Google Places, AU restricted)
+         └─ Confirm pin on aerial
+             └─ Start recording (or skip)
+                 └─ Record walkthrough (max 30 min)
+                     └─ Stop → upload
+                         └─ Processing screen (survey + transcription run in parallel)
+                             └─ Survey review (boundary, house cut-out, garden area, edge measurements)
+                                 └─ Design review (proposal + gap flags + mode badge)
+                                     └─ Cost review (Lean / Standard / Buffer scenarios)
+                                         └─ Audit (must clear blocking issues to proceed)
+                                             └─ Outputs (pick artefacts to generate)
+                                                 └─ Share / export
+```
+
+Every step from Processing onward is **resumable**. The user can leave and the project sits at its current state on the home screen.
+
+### 2.3 Recording screen — the most important screen
+
+- Full-bleed surface
+- One large record button (single tap to start, hold for waveform feedback)
+- Live transcription strip at the top, scrolling, low-emphasis
+- Elapsed time prominent, centered top
+- A single tertiary action: “Pause”
+- No other UI. No menus. No back button while live. (Confirm-to-cancel only.)
+
+Rationale: the user is walking a site, hands sometimes dirty, attention split. The screen must tolerate accidental touches, glove use, and bright sun.
+
+### 2.4 Survey review — the magic moment
+
+This is where the user sees the AI has *understood the site*. It must feel correct on first read.
+
+Layout: aerial fills the upper two-thirds. Title boundary drawn as a 2px sharp line. House footprint subtracted, shown as a darker silhouette. Garden polygon highlighted with the accent at 12% opacity. Edge measurements rendered along each boundary segment in mono.
+
+Lower third: a single summary card.
+
+```
+Lot          624 m²
+House         168 m²
+Garden        456 m²
+Frontage       15.2 m
+Depth          41.1 m
+```
+
+One CTA: “Looks right →”. One secondary: “Adjust” (opens a corrections sheet for boundary nudging — rare).
+
+-----
+
+## 3. Visual Language
+
+### 3.1 Direction
+
+Bald. Tool-grade. Architectural restraint. Nothing decorative. The aesthetic of a precision instrument, not a consumer app.
+
+Reference vocabulary: surveyor’s notebook, architectural mark-up, measurement tape, ledger.
+
+### 3.2 Token library
+
+#### Colour — achromatic + single accent
+
+```
+--surface-base          #FAFAF7   /* warm ivory, app background */
+--surface-elevated      #FFFFFF   /* cards, sheets */
+--surface-sunken        #F4F4F1   /* input wells, sub-panels */
+--surface-inverted      #18181B   /* dark mode base, recording screen */
+
+--ink-primary           #18181B   /* body text */
+--ink-secondary         #52525B   /* secondary text, metadata */
+--ink-tertiary          #A1A1AA   /* placeholders, disabled */
+--ink-inverted          #FAFAF7   /* on dark surfaces */
+
+--line-hairline         #E4E4E7   /* default border */
+--line-strong           #D4D4D8   /* emphasised border */
+--line-ink              #18181B   /* survey overlays, measurement lines */
+
+--accent                #C2410C   /* burnt sienna — single accent */
+--accent-soft           #FED7AA   /* accent at low emphasis */
+--accent-ink            #7C2D12   /* accent text on light bg */
+
+--semantic-ok           #15803D
+--semantic-warn         #B45309
+--semantic-block        #B91C1C
+--semantic-info         #1D4ED8
+```
+
+One accent. Used for: primary actions, active states, garden polygon fill, mode badges, audit pass markers. Nothing else gets colour.
+
+#### Typography
+
+```
+--font-display    "Söhne", "Inter Display", -apple-system, sans-serif
+--font-body       "Inter", -apple-system, sans-serif
+--font-mono       "JetBrains Mono", "ABC Diatype Mono", ui-monospace, monospace
+```
+
+Mono is non-negotiable for all numeric data: areas, dimensions, costs, dates. It signals measurement, makes columns align, reads as authoritative.
+
+Type scale (mobile):
+
+```
+display-l   32 / 36   -0.02em   600
+display-m   24 / 28   -0.01em   600
+title       18 / 24    0em      600
+body        15 / 22    0em      400
+body-mono   14 / 22    0em      450
+caption     13 / 18    0em      500
+micro       11 / 14    0.04em   600  /* uppercase labels */
+```
+
+#### Spacing — 4px base
+
+```
+--space-1   4px
+--space-2   8px
+--space-3   12px
+--space-4   16px
+--space-5   24px
+--space-6   32px
+--space-7   48px
+--space-8   64px
+```
+
+Default screen padding: `--space-5`. Default card padding: `--space-5`. Default vertical rhythm between sections: `--space-6`.
+
+#### Radius
+
+```
+--radius-sm   4px    /* inputs, chips */
+--radius-md   8px    /* buttons, small cards */
+--radius-lg   12px   /* surfaces, sheets */
+--radius-pill 999px  /* only for the record button */
+```
+
+#### Elevation
+
+Two levels. No glassmorphism, no heavy shadows.
+
+```
+--elev-1   0 1px 2px rgba(24,24,27,0.06)
+--elev-2   0 8px 24px rgba(24,24,27,0.08)
+```
+
+#### Motion
+
+```
+--ease-standard   cubic-bezier(0.2, 0, 0, 1)
+--ease-emphasis   cubic-bezier(0.2, 0, 0.2, 1)
+--dur-fast        120ms
+--dur-base        200ms
+--dur-slow        320ms
+```
+
+Default everything to `--dur-base --ease-standard`. Reserve `--ease-emphasis` for screen transitions and the survey reveal animation.
+
+### 3.3 Component primitives
+
+- **Button** — primary (accent fill), secondary (line strong border), tertiary (text only). 48px tap target minimum.
+- **Field** — bottom-line input on `--surface-sunken`, label sits above in `micro` uppercase.
+- **Card** — `--surface-elevated`, `--radius-lg`, `--elev-1`, `--space-5` padding.
+- **Sheet** — bottom sheet for any flow that returns the user to the previous screen. Full screen for any flow that progresses them.
+- **Metric** — `caption` micro label uppercase, value in `display-m` mono. Used everywhere a number appears.
+- **Flag** — pill-shaped, semantic colour, used for gap flags, audit findings, mode badges.
+
+### 3.4 Dark mode
+
+The recording screen and the survey overlay are dark-mode native (always rendered on `--surface-inverted`). The rest of the app respects system preference. Same token names, swapped values.
+
+-----
+
+## 4. Technical Architecture
+
+### 4.1 Stack
+
+```
+Client          React Native (Expo, managed workflow → eject when needed)
+Backend         Fly.io, Sydney (syd) region
+Runtime         Node.js (Fastify) for API gateway
+ML/Vision       Python FastAPI service for CV pipeline (familiar territory)
+Database        Postgres on Neon (re-use the KellyBet operational pattern)
+Storage         Tigris (S3-compatible, Fly-native) for audio + image artefacts
+Queue           BullMQ on Redis (Fly Redis) for the long-running pipeline
+Auth            Clerk or Supabase Auth (don't roll your own)
+Transcription   OpenAI Whisper API (or Deepgram for streaming if needed)
+LLM             Anthropic Claude (Sonnet 4 default, Opus for design generation)
+Aerial          Google Maps Static API + Building Insights (where available)
+Title           Land.vic.gov.au — see §4.4
+Geocoding       Google Places API (AU-restricted)
+PDF             react-pdf on the backend for client artefacts
+```
+
+### 4.2 Service layout (monorepo, pnpm + Turborepo — re-use the Aegis pattern)
+
+```
+apps/
+  mobile/              React Native app
+  api/                 Fastify gateway, REST + WebSocket
+  worker/              Pipeline worker, BullMQ consumer
+  ml/                  Python FastAPI, vision + measurement
+packages/
+  ui/                  Design system, token library, primitives
+  contracts/           Zod schemas, OpenAPI emission
+  domain/              Pure functions: geometry, costing, plant rules
+  client/              Generated API client for the mobile app
+```
+
+### 4.3 Data model (initial)
+
+```
+projects
+  id, owner_id, address, lat, lng, created_at, status
+
+recordings
+  id, project_id, audio_uri, duration_s, transcript, transcription_confidence
+
+surveys
+  id, project_id, aerial_uri, title_polygon (geojson), house_polygon (geojson),
+  garden_polygon (geojson), lot_area_m2, house_area_m2, garden_area_m2,
+  measurements (jsonb)
+
+designs
+  id, project_id, mode (auto|gapfill|validate), proposal (jsonb), gaps (jsonb),
+  rationale (text), version
+
+costings
+  id, design_id, scenario (lean|standard|buffer), line_items (jsonb),
+  subtotal, gst, total
+
+audits
+  id, design_id, findings (jsonb), blocking_count, advisory_count, passed
+
+outputs
+  id, project_id, kind (task_list|schedule|quote|brochure|scope), uri, generated_at
+
+rate_card
+  id, owner_id, category, sku, label, unit, rate, supplier, notes
+
+plant_palette
+  id, owner_id, species, common_name, mature_h_m, mature_w_m, climate_zones,
+  notes, curtis_approved (bool)
+```
+
+### 4.4 Land.vic integration — the unknown
+
+Land.vic.gov.au exposes property data via the **Property and Parcel Search** and **Vicmap** services. Three options, in order of preference:
+
+1. **Vicmap Property Polygon WFS** — official spatial service. Returns parcel polygons as GeoJSON given a lat/lng or address. Requires Vicmap subscription (free for some tiers, paid for commercial use). **Verify licensing before launch.**
+1. **PSMA / Geoscape G-NAF + Cadastre** — national property dataset. Paid, but well-documented and stable. Probably the right answer for a commercial product.
+1. **Scrape** — last resort. Land.vic’s public viewer renders polygons client-side; reverse-engineering is possible but fragile and likely against ToS. Don’t ship this.
+
+**Action**: Phase 0 spike to confirm Vicmap licensing for commercial use. If blocked, switch to Geoscape from day one. Either way, the system never depends on a scrape in production.
+
+### 4.5 House footprint
+
+Two approaches, run in series:
+
+1. **Google Maps Building Insights** — where available, returns a building polygon. Free tier exists. Try first.
+1. **Vision fallback** — Claude vision (or a fine-tuned segmentation model) reads the aerial and segments roofs. Run only if Building Insights returns nothing.
+
+Subtract house polygon from title polygon using Turf.js (`turf.difference`). The result is the garden polygon. Measurements are computed off the garden polygon edges.
+
+-----
+
+## 5. Automation Pipeline
+
+End-to-end, the pipeline runs as a sequence of idempotent stages on the worker. Each stage writes to Postgres and emits a WebSocket event the mobile app subscribes to.
+
+```
+[1]  Capture          recording uploaded → audio_uri persisted
+[2]  Transcribe       Whisper → transcript + confidence
+[3]  Geocode          address → lat/lng (validated)
+[4]  Aerial           Google Maps Static → aerial_uri
+[5]  Title            Vicmap/Geoscape → title polygon (geojson)
+[6]  House            Building Insights or vision → house polygon
+[7]  Garden           turf.difference → garden polygon + areas
+[8]  Measure          edge measurements, frontage, depth, key lines
+[9]  Mode detect      analyse transcript coverage → auto|gapfill|validate
+[10] Design           Claude → proposal (zones, planting, hardscape, lighting)
+[11] Gap flag         Claude → explicit gaps with proposed fills
+[12] Cost             rate card + plant palette + line items → 3 scenarios
+[13] Audit            self-audit pass (see §6.2)
+[14] Outputs          generated on demand from the design + costing
+```
+
+Stages 1–8 run in parallel where possible. Stages 9–14 are sequential and depend on the artefacts upstream. A failure in any stage halts the pipeline at that point and surfaces a recoverable error state to the user.
+
+-----
+
+## 6. Guardrails and Self-Audit
+
+### 6.1 Guardrails (pre-flight, prevent bad data entering the pipeline)
+
+- **Address must geocode to a single AU result.** Ambiguous → user confirms on a map.
+- **Aerial must be ≥ 18 zoom.** Otherwise re-fetch at higher zoom or abort with a clear error.
+- **Title polygon must close.** Open polygons reject the survey.
+- **Title area must be 100 m² ≤ A ≤ 50,000 m².** Outside that range, flag for manual review.
+- **House polygon must be 15% ≤ H/T ≤ 70% of title.** Outside, flag (might be an apartment, vacant lot, or detection error).
+- **Garden area must be ≥ 20 m².** Below, the tool isn’t useful — surface a friendly message.
+- **Transcription confidence must be ≥ 0.85 average.** Below, prompt the user to re-record or proceed with caution.
+- **Plant species must exist in the palette or in a known Melbourne climate-tolerant list.** Unknown species generate a gap flag, never silent failure.
+- **Cost line items must have an SKU match on the rate card.** No match → flag as “estimate only”.
+- **Quote totals must be within ±25% of Curtis & Co historical median for similar lot size.** Outside, flag for manual review before client send.
+
+### 6.2 Self-audit (post-design, validates the AI’s own work)
+
+After the design and costing are generated, a separate Claude pass runs the audit. It receives the full transcript, the design proposal, the gap flags, and the costing. It returns a structured findings list.
+
+```
+Audit findings shape:
+  - severity: blocking | advisory
+  - category: fidelity | completeness | coherence | cost | safety | scope
+  - location: zone / line item / boundary segment
+  - statement: human-readable finding
+  - suggested_action: literal next step the user can take
+```
+
+Categories:
+
+- **Fidelity** — does the design honour what the user said? (“Voice mentions a pleached hornbeam screen along the west boundary; design shows mixed natives. Reconcile.”)
+- **Completeness** — are there zones with no treatment? (“North-east corner has no planting or hardscape specified.”)
+- **Coherence** — does the design contradict itself? (“Pergola structure specified but no footings in line items.”)
+- **Cost** — are totals internally consistent? (“Standard scenario excludes irrigation but design includes drip lines.”)
+- **Safety** — anything dangerous? (“Retaining wall >1.0m specified, no engineering allowance noted.”)
+- **Scope** — is the proposal in or out of Curtis & Co’s stated capabilities? (“Concrete pool specified — outside scope. Refer to specialist.”)
+
+**Blocking findings prevent output generation.** The user must resolve or explicitly override (with a recorded reason). Advisories are shown but do not block.
+
+### 6.3 The override ledger
+
+Every override is recorded against the project. The audit page on the project detail screen shows the full history. This is the equivalent of an immutable diary — what was flagged, what was overridden, by whom, when, why. It exists so that a job that goes sideways six months later has a reconstructible record.
+
+-----
+
+## 7. Phases
+
+### Phase 0 — Foundation (Week 1)
+
+- Monorepo scaffold (pnpm + Turborepo), `apps/mobile`, `apps/api`, `packages/ui`, `packages/contracts`
+- Fly.io project + Postgres (Neon) + Redis + Tigris bucket
+- Clerk auth wired into mobile and API
+- Design system in `packages/ui`: tokens, button, field, card, metric, flag
+- **Seed plant palette v1** (Appendix A) loaded into `plant_palette` table on first run
+- **Seed rate card v1** (Appendix B) loaded into `rate_card` table on first run
+- **Spike (parallel): Vicmap WFS commercial licence + Geoscape G-NAF evaluation account.** First Phase 2 vendor is whichever clears commercial use cleanly.
+- **Spike: Building Insights coverage** on three sample Melbourne addresses.
+
+Exit criteria: empty React Native app launches, signs in, hits an authenticated `/healthz` on Fly. Design system Storybook deployed. Plant palette and rate card visible (read-only) in the Settings screen.
+
+### Phase 1 — Capture (Week 2)
+
+- New project flow (address entry only)
+- Recording screen, audio upload to Tigris
+- Project list, project detail (skeleton)
+- Whisper transcription stage wired up
+
+Exit criteria: user can create a project, record a voice note, and see the transcript on the project detail screen.
+
+### Phase 2 — Survey (Week 3)
+
+- Aerial fetch
+- Title polygon fetch (Vicmap or Geoscape)
+- House footprint via Building Insights, vision fallback stubbed
+- Garden geometry, area calculations, edge measurements
+- Survey review screen
+
+Exit criteria: address in, aerial with title overlay and garden area out, on three test Melbourne addresses including 36 Wrights Terrace, Prahran. Manual visual check passes.
+
+### Phase 3 — Analysis (Week 4)
+
+- Mode detection from transcript coverage
+- Design generation (Claude, prompt-engineered)
+- Gap flagging
+- Design review screen
+
+Exit criteria: voice note + survey → coherent design proposal with mode badge and gap flags. Run on five sample projects, two of which are validate-only, two gap-fill, one auto-design.
+
+### Phase 4 — Cost (Week 5)
+
+- Rate card management (settings screen)
+- Plant palette management
+- Costing engine, three scenarios
+- Cost review screen
+
+Exit criteria: design + rate card → three costed scenarios that pass internal review against Curtis & Co historical pricing.
+
+### Phase 5 — Audit (Week 6)
+
+- Self-audit Claude pass
+- Audit screen
+- Blocking vs advisory enforcement
+- Override ledger
+
+Exit criteria: audit pass runs on every project, surfaces blocking issues correctly on a deliberately broken test case, allows override with reason logged.
+
+### Phase 6 — Outputs (Week 7)
+
+- Task list generation (markdown + PDF)
+- Schedule generation (Gantt-style PDF)
+- Client quote letter (branded PDF, Curtis & Co letterhead)
+- Scope document (internal PDF)
+- Brochure (client-facing PDF with renders — renders deferred to Phase 8)
+
+Exit criteria: a complete project, end-to-end, produces all five artefacts.
+
+### Phase 7 — Crew (Week 8–9)
+
+- Crew accounts, assignments per task
+- Mobile task view for crew, check-in / check-out
+- Time tracking against tasks
+- Material delivery confirmations
+
+Exit criteria: one real Curtis & Co job runs through the system from walkthrough to crew completion.
+
+### Phase 8 — Client portal (Week 10–11)
+
+- Magic-link client login (no signup)
+- Live quote view, accept / request changes
+- Stripe payments for deposit / progress / final
+- Render generation for the brochure (Imagen or similar)
+
+Exit criteria: one client signs a quote and pays a deposit through the portal.
+
+### Phase 9 — Hardening (Week 12)
+
+- Full audit of rate card defaults
+- Plant palette validated against Melbourne climate zones
+- Override ledger UI polish
+- Performance pass: cold-start, image load, audio upload on poor connections
+- Accessibility pass: WCAG 2.1 AA, screen reader on iOS and Android
+
+Exit criteria: ready to run on every Curtis & Co bid going forward.
+
+-----
+
+## 8. Decisions Locked
+
+|Decision            |Resolution                                                                                                                                            |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+|Working name        |**Walkthrough** (placeholder, rename pre-launch)                                                                                                      |
+|Single accent       |Burnt sienna `#C2410C`                                                                                                                                |
+|Title data spike    |**Parallel**: Vicmap WFS commercial licence enquiry + Geoscape G-NAF evaluation account in Phase 0. First vendor to clear commercial use wins Phase 2.|
+|Rate card source    |**Build from scratch.** Seed v1 in Appendix B, ~85 line items at current Melbourne 2026 rates. Tim refines in app once live.                          |
+|Plant palette source|**Build from scratch.** Seed v1 in Appendix A, ~35 species derived from Curtis & Co stated design philosophy. Tim refines in app once live.           |
+
+Phase 0 is unblocked.
+
+-----
+
+## 9. Risks (called early, not at the end)
+
+- **Title data licensing.** Single biggest risk. Spike in Phase 0, not later.
+- **Building Insights coverage in Melbourne.** Some suburbs have it, some don’t. Vision fallback must work on day one, not as a Phase 9 nice-to-have.
+- **Transcription quality outdoors.** Wind, traffic, generator noise. The recording screen should test microphone gain and warn if ambient noise is high.
+- **AI design plausibility.** The first two or three auto-designs will be wrong in instructive ways. Don’t ship to clients in Phase 3. Internal use only until Phase 6.
+- **Rate-card drift.** If pricing isn’t kept current, the costing engine generates confident garbage. Make rate-card updates a first-class flow, not a settings afterthought.
+- **Liability on engineering items.** Retaining walls, drainage, anything structural — the audit must flag these out to a qualified engineer. Don’t let the AI quote them.
+
+-----
+
+## 10. Out of Scope (explicit)
+
+- Web app. Mobile only until Phase 9 ships.
+- iPad layout. Phone-only initially.
+- Multi-language. English AU only.
+- Non-Victoria properties. NSW/QLD title data needs separate integrations.
+- Pools, structural engineering, swimming-pool fencing certification.
+- Plan-view drafting. Drafting stays with the draftsperson. The app produces brief, costing, and schedule — not survey-grade drawings.
+
+The last point is non-negotiable and matches the division of labour you’ve already set with Curtis & Co.
+
+-----
+
+## Appendix A — Plant Palette v1 (seed dataset)
+
+Derived from Curtis & Co’s stated design philosophy: singular species in disciplined mass blocks, architectural restraint, Melbourne climate (temperate, dry summer, occasional frost). Every entry below is “approved” and selectable by the design engine without a gap flag.
+
+Format below is read-friendly. The seed file ships as JSON matching the `plant_palette` table shape.
+
+### A.1 Boundary trees — pleached / columnar (Curtis & Co signature)
+
+|Species                          |Common name               |Form           |Mature H × W|Use                                   |
+|---------------------------------|--------------------------|---------------|------------|--------------------------------------|
+|Carpinus betulus ‘Frans Fontaine’|Pleached European Hornbeam|Hedge / pleach |8 × 1.5 m   |Boundary screen, pleached at 2.4–4.5 m|
+|Pyrus calleryana ‘Capital’       |Capital Pear              |Columnar tree  |11 × 3 m    |Tight upright screen, deciduous       |
+|Quercus palustris ‘Green Pillar’ |Pin Oak fastigiate        |Columnar tree  |14 × 4 m    |Larger lots, deciduous                |
+|Tilia cordata ‘Greenspire’       |Small-leaved Lime         |Tree, plachable|12 × 6 m    |Pleached avenue, deciduous            |
+|Ulmus parvifolia ‘Murray Cane’   |Chinese Elm               |Tree           |10 × 7 m    |Semi-evergreen screen                 |
+
+### A.2 Hedge species
+
+|Species                               |Common name      |Mature H × W|Use                             |
+|--------------------------------------|-----------------|------------|--------------------------------|
+|Photinia robusta                      |Red-leaf Photinia|4 × 2 m     |Workhorse hedge                 |
+|Murraya paniculata                    |Orange Jessamine |3 × 2 m     |Dense, fragrant                 |
+|Camellia sasanqua ‘Setsugekka’        |Sasanqua Camellia|3 × 2 m     |Flowering screen, shade-tolerant|
+|Westringia ‘Wynyabbie Gem’            |Coastal Rosemary |1.5 × 1.5 m |Native, drought-tolerant        |
+|Pittosporum tenuifolium ‘Silver Sheen’|Silver Sheen     |5 × 2 m     |Light, fine-leafed screen       |
+|Viburnum tinus                        |Laurustinus      |3 × 2 m     |Shade-tolerant, evergreen       |
+
+### A.3 Feature trees
+
+|Species                          |Common name        |Mature H × W|Use                                       |
+|---------------------------------|-------------------|------------|------------------------------------------|
+|Magnolia grandiflora ‘Little Gem’|Little Gem Magnolia|6 × 3 m     |Compact evergreen                         |
+|Magnolia grandiflora ‘Kay Parris’|Kay Parris Magnolia|6 × 4 m     |Improved Little Gem, denser foliage       |
+|Acer palmatum ‘Sango Kaku’       |Coral Bark Maple   |5 × 4 m     |Deciduous, winter interest                |
+|Olea europaea ‘Tolley’s Upright’ |Upright Olive      |6 × 2 m     |Architectural, evergreen, drought-tolerant|
+|Lagerstroemia indica ‘Tuscarora’ |Crepe Myrtle       |6 × 4 m     |Summer flowering, deciduous               |
+|Cercis canadensis ‘Forest Pansy’ |Forest Pansy Redbud|5 × 5 m     |Deciduous, spring flower, dark foliage    |
+
+### A.4 Structural shrubs / specimen
+
+|Species                     |Common name      |Mature H × W|Use                      |
+|----------------------------|-----------------|------------|-------------------------|
+|Buxus sempervirens          |English Box      |1.5 × 1.5 m |Clipped, formal          |
+|Buxus microphylla ‘Faulkner’|Japanese Box     |1.2 × 1 m   |Clipped, blight-resistant|
+|Westringia ‘Grey Box’       |Native Box       |1 × 1 m     |Native alternative to box|
+|Camellia japonica           |Japanese Camellia|3 × 2 m     |Shade specimen, formal   |
+|Agonis flexuosa ‘Burgundy’  |Willow Myrtle    |7 × 5 m     |Architectural native     |
+
+### A.5 Mass block understory
+
+|Species                     |Common name       |Mature H × W|Use                       |
+|----------------------------|------------------|------------|--------------------------|
+|Liriope muscari ‘Just Right’|Lilyturf          |0.4 × 0.45 m|Workhorse mass, deep green|
+|Lomandra ‘Tanika’           |Fine-leaf Mat Rush|0.6 × 0.6 m |Native grass mass         |
+|Lomandra ‘Lime Tuff’        |Compact Mat Rush  |0.4 × 0.4 m |Smaller mass              |
+|Dianella ‘Little Jess’      |Native Flax Lily  |0.4 × 0.4 m |Native, low, hardy        |
+
+### A.6 Ornamental grasses (mass only)
+
+|Species                                   |Common name          |Mature H × W|Use                    |
+|------------------------------------------|---------------------|------------|-----------------------|
+|Miscanthus sinensis ‘Adagio’              |Compact Miscanthus   |1.2 × 0.8 m |Architectural verticals|
+|Pennisetum alopecuroides ‘Nafray’         |Native Fountain Grass|0.8 × 0.8 m |Mass, native cultivar  |
+|Calamagrostis x acutiflora ‘Karl Foerster’|Feather Reed Grass   |1.5 × 0.6 m |Strong vertical line   |
+
+### A.7 Groundcovers (mass only, never scatter)
+
+|Species                    |Common name               |Mature H × W|Use                   |
+|---------------------------|--------------------------|------------|----------------------|
+|Dichondra repens           |Kidney Weed               |0.05 × 0.5 m|Lawn alternative      |
+|Trachelospermum jasminoides|Star Jasmine (ground form)|0.3 × 1 m   |Groundcover or climber|
+|Myoporum parvifolium       |Creeping Boobialla        |0.1 × 2 m   |Native, dense mat     |
+
+### A.8 Climbers
+
+|Species                               |Common name |Use                                                       |
+|--------------------------------------|------------|----------------------------------------------------------|
+|Trachelospermum jasminoides           |Star Jasmine|Wall cover, fragrant                                      |
+|Parthenocissus tricuspidata ‘Veitchii’|Boston Ivy  |Deciduous wall, autumn colour                             |
+|Ficus pumila                          |Creeping Fig|Aggressive — use only on dedicated walls with control plan|
+
+### A.9 Lawn
+
+|Species                                |Common name       |Use                            |
+|---------------------------------------|------------------|-------------------------------|
+|Stenotaphrum secundatum ‘Sir Walter’   |Sir Walter Buffalo|Shade-tolerant warm-season turf|
+|Festuca arundinacea (tall fescue blend)|Tall Fescue       |Cool-season turf               |
+
+### A.10 Anti-list (encoded as prompt blocklist, not in the palette)
+
+- Strelitzia nicolai / reginae — tropical aesthetic outside the philosophy
+- Agapanthus praecox — only on explicit client request
+- Ophiopogon japonicus ‘Nigrescens’ (black mondo) — never as a feature
+- Cordyline australis — overused, dated
+- Phoenix canariensis / Washingtonia — tropical, off-style
+- Scattered ornamentals of any kind in lieu of mass blocks
+- Cottage / informal mixed perennial beds
+
+-----
+
+## Appendix B — Rate Card v1 (seed dataset)
+
+Current Melbourne 2026 rates, drawn from typical inner-suburban landscape construction pricing. Inclusive of supply where noted. Labour is Curtis & Co assumed rates. All AUD ex GST unless stated.
+
+### B.1 Plants — by pot / bag size
+
+|SKU      |Item                      |Unit|Rate|
+|---------|--------------------------|----|----|
+|PLT-140  |Plant, 140mm pot — generic|ea  |$11 |
+|PLT-200  |Plant, 200mm pot — generic|ea  |$24 |
+|PLT-300  |Plant, 300mm pot — generic|ea  |$48 |
+|PLT-400  |Plant, 400mm pot — generic|ea  |$75 |
+|PLT-100L |Plant, 100L bag — generic |ea  |$210|
+|PLT-200L |Plant, 200L bag — generic |ea  |$460|
+|PLT-400L |Plant, 400L bag — generic |ea  |$920|
+|PLT-1000L|Plant, 1000L+ advanced    |ea  |POA |
+
+### B.2 Plants — Curtis & Co signature stock (specific)
+
+|SKU           |Item                                              |Unit|Rate |
+|--------------|--------------------------------------------------|----|-----|
+|PLT-CARP-PL24 |Carpinus ‘Frans Fontaine’, pleached 2.4m std, 100L|ea  |$480 |
+|PLT-CARP-PL30 |Carpinus ‘Frans Fontaine’, pleached 3.0m std, 200L|ea  |$880 |
+|PLT-PYR-100   |Pyrus ‘Capital’, 100L                             |ea  |$320 |
+|PLT-PYR-200   |Pyrus ‘Capital’, 200L                             |ea  |$560 |
+|PLT-MAG-LG-100|Magnolia ‘Little Gem’, 100L                       |ea  |$280 |
+|PLT-MAG-LG-200|Magnolia ‘Little Gem’, 200L                       |ea  |$580 |
+|PLT-MAG-KP-100|Magnolia ‘Kay Parris’, 100L                       |ea  |$320 |
+|PLT-MAG-KP-200|Magnolia ‘Kay Parris’, 200L                       |ea  |$640 |
+|PLT-OLI-200   |Olea ‘Tolley’s Upright’, 200L                     |ea  |$420 |
+|PLT-PHO-200   |Photinia robusta, 200mm                           |ea  |$22  |
+|PLT-LIR-140   |Liriope ‘Just Right’, 140mm                       |ea  |$9.50|
+|PLT-LOM-140   |Lomandra ‘Tanika’, 140mm                          |ea  |$11  |
+|PLT-BUX-200   |Buxus sempervirens, 200mm                         |ea  |$26  |
+
+### B.3 Soft materials
+
+|SKU        |Item                        |Unit|Rate|
+|-----------|----------------------------|----|----|
+|SOIL-TOP   |Topsoil, screened, delivered|m³  |$85 |
+|SOIL-COMP  |Compost, delivered          |m³  |$95 |
+|MULCH-PINE |Pine bark mulch             |m³  |$75 |
+|MULCH-SUGAR|Sugar cane mulch (bale)     |bale|$14 |
+|ROCK-DRAIN |Drainage rock, 20mm         |m³  |$110|
+
+### B.4 Hard materials — supply
+
+|SKU           |Item                                       |Unit|Rate|
+|--------------|-------------------------------------------|----|----|
+|PAV-BLUE-SAWN |Bluestone paving, sawn, 600×400×30         |m²  |$120|
+|PAV-BLUE-FLAME|Bluestone paving, flamed, 600×300×30       |m²  |$135|
+|PAV-BLUE-COBB |Bluestone cobblestone                      |m²  |$180|
+|PAV-GRAN      |Granite paving                             |m²  |$145|
+|PAV-TRAV      |Travertine paving                          |m²  |$110|
+|CONC-EDGE     |In-situ concrete edge, off-form, 150×150   |lm  |$70 |
+|CONC-PAD      |In-situ concrete pad, standard finish      |m²  |$180|
+|COR-PNL       |Corten steel panel, 4mm, 1m h              |lm  |$220|
+|COR-EDGE      |Corten edging strip, 100mm h               |lm  |$45 |
+|WALL-BLUE     |Bluestone wall, 200mm thick, face          |m²  |$580|
+|WALL-RNDR     |Rendered block wall, 1.2m h                |lm  |$480|
+|TIM-DECK-SUP  |Spotted gum decking, 90×19, supply         |m²  |$185|
+|TIM-BATT-ARAB |Pine batten screen, arabica-stained, 1.8m h|lm  |$260|
+
+### B.5 Irrigation
+
+|SKU          |Item                          |Unit|Rate|
+|-------------|------------------------------|----|----|
+|IRR-DRIP     |Drip line, 13mm, with emitters|lm  |$4  |
+|IRR-CTRL-WIFI|4-station wifi controller     |ea  |$480|
+|IRR-VALVE    |Solenoid valve                |ea  |$95 |
+|IRR-MAIN-25  |Mainline poly, 25mm           |lm  |$9  |
+|IRR-TAP-BFLW |Tap connection + RPZ backflow |ea  |$380|
+
+### B.6 Lighting
+
+|SKU           |Item                             |Unit|Rate|
+|--------------|---------------------------------|----|----|
+|LGT-UP-BRASS  |12V brass spike uplight, 4W 3000K|ea  |$145|
+|LGT-DOWN-BRASS|12V brass downlight              |ea  |$165|
+|LGT-GRAZE-TAPE|12V LED tape grazer, 3000K, 8W/m |lm  |$85 |
+|LGT-TX-150    |12V transformer, 150W            |ea  |$280|
+|LGT-CABLE     |Low-voltage cable, 2-core        |lm  |$6  |
+
+### B.7 Drainage
+
+|SKU        |Item                                    |Unit|Rate  |
+|-----------|----------------------------------------|----|------|
+|DRN-AG-100 |AG drain, 100mm slotted PVC             |lm  |$18   |
+|DRN-AG-INST|AG drain installation, trench + backfill|lm  |$35   |
+|DRN-CHAN   |Grated channel drain, 100mm             |lm  |$185  |
+|DRN-PIT-450|Drainage pit, 450mm, supply + install   |ea  |$320  |
+|DRN-CONN   |Stormwater connection allowance         |ea  |$1,200|
+
+### B.8 Labour — base rates
+
+|SKU         |Item                 |Unit|Rate  |
+|------------|---------------------|----|------|
+|LAB-SR      |Senior tradesman     |hr  |$115  |
+|LAB-TRADE   |Tradesman            |hr  |$95   |
+|LAB-APP     |Apprentice / labourer|hr  |$65   |
+|LAB-CREW-DAY|Crew of 4, day rate  |day |$2,800|
+
+### B.9 Labour — by task
+
+|SKU             |Item                       |Unit        |Rate|
+|----------------|---------------------------|------------|----|
+|TSK-PREP        |Site prep + setout         |m² of garden|$18 |
+|TSK-EXC-HAND    |Excavation, by hand        |m³          |$180|
+|TSK-EXC-MX      |Excavation, mini-excavator |m³          |$85 |
+|TSK-PAV         |Paving installation        |m²          |$85 |
+|TSK-CONC-EDGE   |Concrete edge form + pour  |lm          |$55 |
+|TSK-CONC-PAD    |Concrete pad form + pour   |m²          |$95 |
+|TSK-PLNT-ADV    |Plant advanced tree (100L+)|ea          |$180|
+|TSK-PLNT-MASS   |Plant mass block           |m²          |$32 |
+|TSK-PLNT-HEDGE  |Plant hedge                |lm          |$48 |
+|TSK-PLEACH-TRAIN|Pleach training, first year|lm          |$85 |
+|TSK-LGT-INST    |Light fixture install      |ea          |$95 |
+|TSK-IRR-ZONE    |Irrigation zone install    |zone        |$380|
+|TSK-DECK-INST   |Decking install            |m²          |$145|
+
+### B.10 Hire / plant
+
+|SKU     |Item                     |Unit|Rate|
+|--------|-------------------------|----|----|
+|HIR-MX  |Mini-excavator + operator|day |$850|
+|HIR-BOB |Bobcat                   |day |$750|
+|HIR-COMP|Compactor                |day |$180|
+|HIR-TIP |Tipper truck             |day |$480|
+
+### B.11 Disposal
+
+|SKU       |Item                     |Unit|Rate|
+|----------|-------------------------|----|----|
+|DSP-SKIP-4|Skip, 4 m³               |ea  |$480|
+|DSP-SKIP-8|Skip, 8 m³               |ea  |$720|
+|DSP-GREEN |Green waste removal      |m³  |$95 |
+|DSP-RUBB  |Concrete / rubble removal|m³  |$145|
+
+### B.12 Allowances
+
+|SKU            |Item                                |Unit         |Rate  |
+|---------------|------------------------------------|-------------|------|
+|ALW-CONT-LEAN  |Contingency — Lean scenario         |% of subtotal|3%    |
+|ALW-CONT-STD   |Contingency — Standard scenario     |% of subtotal|5%    |
+|ALW-CONT-BUF   |Contingency — Buffer scenario       |% of subtotal|8%    |
+|ALW-PRM-STON   |Stonnington stormwater permit       |ea           |$850  |
+|ALW-PRM-YARRA  |Yarra City permit                   |ea           |$750  |
+|ALW-HER-CONSULT|Heritage consultant                 |ea           |POA   |
+|ALW-ENG-RW     |Engineering cert, retaining wall >1m|ea           |$2,400|
+
+### B.13 Notes for the costing engine
+
+- Three scenarios pull from the **same** design but different rate-card subsets. Lean strips lighting wash, irrigation upgrades, and the contingency. Buffer adds engineering allowances by default, upgrades pleach stock by one size, and uses the 8% contingency.
+- Plant stock SKUs (B.2) take precedence over generic pot-size SKUs (B.1) when a species match exists. The generic SKUs are the fallback for species in the palette but without a specific stock entry.
+- POA items never appear silently in a total. The costing engine surfaces them as a separate “Provisional” section the user must resolve before quote generation.
+- Rates are stored with an `effective_from` date. The costing engine always uses the rate effective on the project’s `created_at`. This protects historical projects from rate drift.
+
+
+Sent from Yahoo Mail for iPhone
+Message 2 of 2.For JAWS, turn virtual PC Cursor on if needed.
+
+tim garbis
+To:  me
+ · 
+Fri, 15 May at 3:48 am
+Message Body
+# Walkthrough — Workstream
+
+> A landscaping project management tool. Voice-first capture, AI-driven survey, costed outputs.
+> Working codename: **Walkthrough**. Rename later.
+
+-----
+
+## 0. Thesis
+
+One voice note, captured on site, becomes the source of truth for the entire job.
+
+From a single recording plus an address, the system derives the survey (title, house footprint, garden area, boundary measurements), the design (full proposal, gap-filled refinement, or pure validation depending on the brief), the costing, and every downstream artifact: task list, crew schedule, scope document, client quote letter, brochure.
+
+No surveyor visit. No drafting back-and-forth before pricing. No re-keying between estimating, scheduling, and client comms. The walkthrough *is* the brief.
+
+-----
+
+## 1. Three Operating Modes
+
+The same pipeline runs in three modes, branched on what the user provided.
+
+|Mode             |Input                   |Behaviour                                                                                             |
+|-----------------|------------------------|------------------------------------------------------------------------------------------------------|
+|**Auto-design**  |Address only, no voice  |AI proposes a full design from site conditions, lot geometry, orientation, and Curtis & Co house style|
+|**Gap-fill**     |Address + partial voice |AI honours every specified element, flags omissions, proposes fills for each gap with rationale       |
+|**Validate-only**|Address + complete voice|AI checks coherence, costs the design, runs the self-audit, generates outputs                         |
+
+The user is never forced to choose a mode. The system detects coverage from the transcript and selects automatically. A toggle on the design review screen lets the user override.
+
+-----
+
+## 2. UX Flow (Mobile, End-to-End)
+
+### 2.1 Screen inventory
+
+1. **Home** — project list, new project CTA
+1. **New project** — address entry, optional voice capture
+1. **Recording** — full-screen dictation
+1. **Processing** — survey + transcription progress
+1. **Survey review** — aerial with title overlay, garden area, measurements
+1. **Design review** — proposal, gap flags, mode indicator
+1. **Cost review** — line items, totals, scenario toggle
+1. **Audit** — self-audit findings, blocking issues, advisories
+1. **Outputs** — generate task list / schedule / quote / brochure
+1. **Project detail** — full project record, version history
+1. **Settings** — rate card, plant palette, materials catalogue, crew
+
+### 2.2 Happy path (voice + address)
+
+```
+Home
+ └─ + New project
+     └─ Enter address → autocomplete (Google Places, AU restricted)
+         └─ Confirm pin on aerial
+             └─ Start recording (or skip)
+                 └─ Record walkthrough (max 30 min)
+                     └─ Stop → upload
+                         └─ Processing screen (survey + transcription run in parallel)
+                             └─ Survey review (boundary, house cut-out, garden area, edge measurements)
+                                 └─ Design review (proposal + gap flags + mode badge)
+                                     └─ Cost review (Lean / Standard / Buffer scenarios)
+                                         └─ Audit (must clear blocking issues to proceed)
+                                             └─ Outputs (pick artefacts to generate)
+                                                 └─ Share / export
+```
+
+Every step from Processing onward is **resumable**. The user can leave and the project sits at its current state on the home screen.
+
+### 2.3 Recording screen — the most important screen
+
+- Full-bleed surface
+- One large record button (single tap to start, hold for waveform feedback)
+- Live transcription strip at the top, scrolling, low-emphasis
+- Elapsed time prominent, centered top
+- A single tertiary action: “Pause”
+- No other UI. No menus. No back button while live. (Confirm-to-cancel only.)
+
+Rationale: the user is walking a site, hands sometimes dirty, attention split. The screen must tolerate accidental touches, glove use, and bright sun.
+
+### 2.4 Survey review — the magic moment
+
+This is where the user sees the AI has *understood the site*. It must feel correct on first read.
+
+Layout: aerial fills the upper two-thirds. Title boundary drawn as a 2px sharp line. House footprint subtracted, shown as a darker silhouette. Garden polygon highlighted with the accent at 12% opacity. Edge measurements rendered along each boundary segment in mono.
+
+Lower third: a single summary card.
+
+```
+Lot          624 m²
+House         168 m²
+Garden        456 m²
+Frontage       15.2 m
+Depth          41.1 m
+```
+
+One CTA: “Looks right →”. One secondary: “Adjust” (opens a corrections sheet for boundary nudging — rare).
+
+-----
+
+## 3. Visual Language
+
+### 3.1 Direction
+
+Bald. Tool-grade. Architectural restraint. Nothing decorative. The aesthetic of a precision instrument, not a consumer app.
+
+Reference vocabulary: surveyor’s notebook, architectural mark-up, measurement tape, ledger.
+
+### 3.2 Token library
+
+#### Colour — achromatic + single accent
+
+```
+--surface-base          #FAFAF7   /* warm ivory, app background */
+--surface-elevated      #FFFFFF   /* cards, sheets */
+--surface-sunken        #F4F4F1   /* input wells, sub-panels */
+--surface-inverted      #18181B   /* dark mode base, recording screen */
+
+--ink-primary           #18181B   /* body text */
+--ink-secondary         #52525B   /* secondary text, metadata */
+--ink-tertiary          #A1A1AA   /* placeholders, disabled */
+--ink-inverted          #FAFAF7   /* on dark surfaces */
+
+--line-hairline         #E4E4E7   /* default border */
+--line-strong           #D4D4D8   /* emphasised border */
+--line-ink              #18181B   /* survey overlays, measurement lines */
+
+--accent                #C2410C   /* burnt sienna — single accent */
+--accent-soft           #FED7AA   /* accent at low emphasis */
+--accent-ink            #7C2D12   /* accent text on light bg */
+
+--semantic-ok           #15803D
+--semantic-warn         #B45309
+--semantic-block        #B91C1C
+--semantic-info         #1D4ED8
+```
+
+One accent. Used for: primary actions, active states, garden polygon fill, mode badges, audit pass markers. Nothing else gets colour.
+
+#### Typography
+
+```
+--font-display    "Söhne", "Inter Display", -apple-system, sans-serif
+--font-body       "Inter", -apple-system, sans-serif
+--font-mono       "JetBrains Mono", "ABC Diatype Mono", ui-monospace, monospace
+```
+
+Mono is non-negotiable for all numeric data: areas, dimensions, costs, dates. It signals measurement, makes columns align, reads as authoritative.
+
+Type scale (mobile):
+
+```
+display-l   32 / 36   -0.02em   600
+display-m   24 / 28   -0.01em   600
+title       18 / 24    0em      600
+body        15 / 22    0em      400
+body-mono   14 / 22    0em      450
+caption     13 / 18    0em      500
+micro       11 / 14    0.04em   600  /* uppercase labels */
+```
+
+#### Spacing — 4px base
+
+```
+--space-1   4px
+--space-2   8px
+--space-3   12px
+--space-4   16px
+--space-5   24px
+--space-6   32px
+--space-7   48px
+--space-8   64px
+```
+
+Default screen padding: `--space-5`. Default card padding: `--space-5`. Default vertical rhythm between sections: `--space-6`.
+
+#### Radius
+
+```
+--radius-sm   4px    /* inputs, chips */
+--radius-md   8px    /* buttons, small cards */
+--radius-lg   12px   /* surfaces, sheets */
+--radius-pill 999px  /* only for the record button */
+```
+
+#### Elevation
+
+Two levels. No glassmorphism, no heavy shadows.
+
+```
+--elev-1   0 1px 2px rgba(24,24,27,0.06)
+--elev-2   0 8px 24px rgba(24,24,27,0.08)
+```
+
+#### Motion
+
+```
+--ease-standard   cubic-bezier(0.2, 0, 0, 1)
+--ease-emphasis   cubic-bezier(0.2, 0, 0.2, 1)
+--dur-fast        120ms
+--dur-base        200ms
+--dur-slow        320ms
+```
+
+Default everything to `--dur-base --ease-standard`. Reserve `--ease-emphasis` for screen transitions and the survey reveal animation.
+
+### 3.3 Component primitives
+
+- **Button** — primary (accent fill), secondary (line strong border), tertiary (text only). 48px tap target minimum.
+- **Field** — bottom-line input on `--surface-sunken`, label sits above in `micro` uppercase.
+- **Card** — `--surface-elevated`, `--radius-lg`, `--elev-1`, `--space-5` padding.
+- **Sheet** — bottom sheet for any flow that returns the user to the previous screen. Full screen for any flow that progresses them.
+- **Metric** — `caption` micro label uppercase, value in `display-m` mono. Used everywhere a number appears.
+- **Flag** — pill-shaped, semantic colour, used for gap flags, audit findings, mode badges.
+
+### 3.4 Dark mode
+
+The recording screen and the survey overlay are dark-mode native (always rendered on `--surface-inverted`). The rest of the app respects system preference. Same token names, swapped values.
+
+-----
+
+## 4. Technical Architecture
+
+### 4.1 Stack
+
+```
+Client          React Native (Expo, managed workflow → eject when needed)
+Backend         Fly.io, Sydney (syd) region
+Runtime         Node.js (Fastify) for API gateway
+ML/Vision       Python FastAPI service for CV pipeline (familiar territory)
+Database        Postgres on Neon (re-use the KellyBet operational pattern)
+Storage         Tigris (S3-compatible, Fly-native) for audio + image artefacts
+Queue           BullMQ on Redis (Fly Redis) for the long-running pipeline
+Auth            Clerk or Supabase Auth (don't roll your own)
+Transcription   OpenAI Whisper API (or Deepgram for streaming if needed)
+LLM             Anthropic Claude (Sonnet 4 default, Opus for design generation)
+Aerial          Google Maps Static API + Building Insights (where available)
+Title           Land.vic.gov.au — see §4.4
+Geocoding       Google Places API (AU-restricted)
+PDF             react-pdf on the backend for client artefacts
+```
+
+### 4.2 Service layout (monorepo, pnpm + Turborepo — re-use the Aegis pattern)
+
+```
+apps/
+  mobile/              React Native app
+  api/                 Fastify gateway, REST + WebSocket
+  worker/              Pipeline worker, BullMQ consumer
+  ml/                  Python FastAPI, vision + measurement
+packages/
+  ui/                  Design system, token library, primitives
+  contracts/           Zod schemas, OpenAPI emission
+  domain/              Pure functions: geometry, costing, plant rules
+  client/              Generated API client for the mobile app
+```
+
+### 4.3 Data model (initial)
+
+```
+projects
+  id, owner_id, address, lat, lng, created_at, status
+
+recordings
+  id, project_id, audio_uri, duration_s, transcript, transcription_confidence
+
+surveys
+  id, project_id, aerial_uri, title_polygon (geojson), house_polygon (geojson),
+  garden_polygon (geojson), lot_area_m2, house_area_m2, garden_area_m2,
+  measurements (jsonb)
+
+designs
+  id, project_id, mode (auto|gapfill|validate), proposal (jsonb), gaps (jsonb),
+  rationale (text), version
+
+costings
+  id, design_id, scenario (lean|standard|buffer), line_items (jsonb),
+  subtotal, gst, total
+
+audits
+  id, design_id, findings (jsonb), blocking_count, advisory_count, passed
+
+outputs
+  id, project_id, kind (task_list|schedule|quote|brochure|scope), uri, generated_at
+
+rate_card
+  id, owner_id, category, sku, label, unit, rate, supplier, notes
+
+plant_palette
+  id, owner_id, species, common_name, mature_h_m, mature_w_m, climate_zones,
+  notes, curtis_approved (bool)
+```
+
+### 4.4 Land.vic integration — the unknown
+
+Land.vic.gov.au exposes property data via the **Property and Parcel Search** and **Vicmap** services. Three options, in order of preference:
+
+1. **Vicmap Property Polygon WFS** — official spatial service. Returns parcel polygons as GeoJSON given a lat/lng or address. Requires Vicmap subscription (free for some tiers, paid for commercial use). **Verify licensing before launch.**
+1. **PSMA / Geoscape G-NAF + Cadastre** — national property dataset. Paid, but well-documented and stable. Probably the right answer for a commercial product.
+1. **Scrape** — last resort. Land.vic’s public viewer renders polygons client-side; reverse-engineering is possible but fragile and likely against ToS. Don’t ship this.
+
+**Action**: Phase 0 spike to confirm Vicmap licensing for commercial use. If blocked, switch to Geoscape from day one. Either way, the system never depends on a scrape in production.
+
+### 4.5 House footprint
+
+Two approaches, run in series:
+
+1. **Google Maps Building Insights** — where available, returns a building polygon. Free tier exists. Try first.
+1. **Vision fallback** — Claude vision (or a fine-tuned segmentation model) reads the aerial and segments roofs. Run only if Building Insights returns nothing.
+
+Subtract house polygon from title polygon using Turf.js (`turf.difference`). The result is the garden polygon. Measurements are computed off the garden polygon edges.
+
+-----
+
+## 5. Automation Pipeline
+
+End-to-end, the pipeline runs as a sequence of idempotent stages on the worker. Each stage writes to Postgres and emits a WebSocket event the mobile app subscribes to.
+
+```
+[1]  Capture          recording uploaded → audio_uri persisted
+[2]  Transcribe       Whisper → transcript + confidence
+[3]  Geocode          address → lat/lng (validated)
+[4]  Aerial           Google Maps Static → aerial_uri
+[5]  Title            Vicmap/Geoscape → title polygon (geojson)
+[6]  House            Building Insights or vision → house polygon
+[7]  Garden           turf.difference → garden polygon + areas
+[8]  Measure          edge measurements, frontage, depth, key lines
+[9]  Mode detect      analyse transcript coverage → auto|gapfill|validate
+[10] Design           Claude → proposal (zones, planting, hardscape, lighting)
+[11] Gap flag         Claude → explicit gaps with proposed fills
+[12] Cost             rate card + plant palette + line items → 3 scenarios
+[13] Audit            self-audit pass (see §6.2)
+[14] Outputs          generated on demand from the design + costing
+```
+
+Stages 1–8 run in parallel where possible. Stages 9–14 are sequential and depend on the artefacts upstream. A failure in any stage halts the pipeline at that point and surfaces a recoverable error state to the user.
+
+-----
+
+## 6. Guardrails and Self-Audit
+
+### 6.1 Guardrails (pre-flight, prevent bad data entering the pipeline)
+
+- **Address must geocode to a single AU result.** Ambiguous → user confirms on a map.
+- **Aerial must be ≥ 18 zoom.** Otherwise re-fetch at higher zoom or abort with a clear error.
+- **Title polygon must close.** Open polygons reject the survey.
+- **Title area must be 100 m² ≤ A ≤ 50,000 m².** Outside that range, flag for manual review.
+- **House polygon must be 15% ≤ H/T ≤ 70% of title.** Outside, flag (might be an apartment, vacant lot, or detection error).
+- **Garden area must be ≥ 20 m².** Below, the tool isn’t useful — surface a friendly message.
+- **Transcription confidence must be ≥ 0.85 average.** Below, prompt the user to re-record or proceed with caution.
+- **Plant species must exist in the palette or in a known Melbourne climate-tolerant list.** Unknown species generate a gap flag, never silent failure.
+- **Cost line items must have an SKU match on the rate card.** No match → flag as “estimate only”.
+- **Quote totals must be within ±25% of Curtis & Co historical median for similar lot size.** Outside, flag for manual review before client send.
+
+### 6.2 Self-audit (post-design, validates the AI’s own work)
+
+After the design and costing are generated, a separate Claude pass runs the audit. It receives the full transcript, the design proposal, the gap flags, and the costing. It returns a structured findings list.
+
+```
+Audit findings shape:
+  - severity: blocking | advisory
+  - category: fidelity | completeness | coherence | cost | safety | scope
+  - location: zone / line item / boundary segment
+  - statement: human-readable finding
+  - suggested_action: literal next step the user can take
+```
+
+Categories:
+
+- **Fidelity** — does the design honour what the user said? (“Voice mentions a pleached hornbeam screen along the west boundary; design shows mixed natives. Reconcile.”)
+- **Completeness** — are there zones with no treatment? (“North-east corner has no planting or hardscape specified.”)
+- **Coherence** — does the design contradict itself? (“Pergola structure specified but no footings in line items.”)
+- **Cost** — are totals internally consistent? (“Standard scenario excludes irrigation but design includes drip lines.”)
+- **Safety** — anything dangerous? (“Retaining wall >1.0m specified, no engineering allowance noted.”)
+- **Scope** — is the proposal in or out of Curtis & Co’s stated capabilities? (“Concrete pool specified — outside scope. Refer to specialist.”)
+
+**Blocking findings prevent output generation.** The user must resolve or explicitly override (with a recorded reason). Advisories are shown but do not block.
+
+### 6.3 The override ledger
+
+Every override is recorded against the project. The audit page on the project detail screen shows the full history. This is the equivalent of an immutable diary — what was flagged, what was overridden, by whom, when, why. It exists so that a job that goes sideways six months later has a reconstructible record.
+
+-----
+
+## 7. Phases
+
+### Phase 0 — Foundation (Week 1)
+
+- Monorepo scaffold (pnpm + Turborepo), `apps/mobile`, `apps/api`, `packages/ui`, `packages/contracts`
+- Fly.io project + Postgres (Neon) + Redis + Tigris bucket
+- Clerk auth wired into mobile and API
+- Design system in `packages/ui`: tokens, button, field, card, metric, flag
+- **Seed plant palette v1** (Appendix A) loaded into `plant_palette` table on first run
+- **Seed rate card v1** (Appendix B) loaded into `rate_card` table on first run
+- **Spike (parallel): Vicmap WFS commercial licence + Geoscape G-NAF evaluation account.** First Phase 2 vendor is whichever clears commercial use cleanly.
+- **Spike: Building Insights coverage** on three sample Melbourne addresses.
+
+Exit criteria: empty React Native app launches, signs in, hits an authenticated `/healthz` on Fly. Design system Storybook deployed. Plant palette and rate card visible (read-only) in the Settings screen.
+
+### Phase 1 — Capture (Week 2)
+
+- New project flow (address entry only)
+- Recording screen, audio upload to Tigris
+- Project list, project detail (skeleton)
+- Whisper transcription stage wired up
+
+Exit criteria: user can create a project, record a voice note, and see the transcript on the project detail screen.
+
+### Phase 2 — Survey (Week 3)
+
+- Aerial fetch
+- Title polygon fetch (Vicmap or Geoscape)
+- House footprint via Building Insights, vision fallback stubbed
+- Garden geometry, area calculations, edge measurements
+- Survey review screen
+
+Exit criteria: address in, aerial with title overlay and garden area out, on three test Melbourne addresses including 36 Wrights Terrace, Prahran. Manual visual check passes.
+
+### Phase 3 — Analysis (Week 4)
+
+- Mode detection from transcript coverage
+- Design generation (Claude, prompt-engineered)
+- Gap flagging
+- Design review screen
+
+Exit criteria: voice note + survey → coherent design proposal with mode badge and gap flags. Run on five sample projects, two of which are validate-only, two gap-fill, one auto-design.
+
+### Phase 4 — Cost (Week 5)
+
+- Rate card management (settings screen)
+- Plant palette management
+- Costing engine, three scenarios
+- Cost review screen
+
+Exit criteria: design + rate card → three costed scenarios that pass internal review against Curtis & Co historical pricing.
+
+### Phase 5 — Audit (Week 6)
+
+- Self-audit Claude pass
+- Audit screen
+- Blocking vs advisory enforcement
+- Override ledger
+
+Exit criteria: audit pass runs on every project, surfaces blocking issues correctly on a deliberately broken test case, allows override with reason logged.
+
+### Phase 6 — Outputs (Week 7)
+
+- Task list generation (markdown + PDF)
+- Schedule generation (Gantt-style PDF)
+- Client quote letter (branded PDF, Curtis & Co letterhead)
+- Scope document (internal PDF)
+- Brochure (client-facing PDF with renders — renders deferred to Phase 8)
+
+Exit criteria: a complete project, end-to-end, produces all five artefacts.
+
+### Phase 7 — Crew (Week 8–9)
+
+- Crew accounts, assignments per task
+- Mobile task view for crew, check-in / check-out
+- Time tracking against tasks
+- Material delivery confirmations
+
+Exit criteria: one real Curtis & Co job runs through the system from walkthrough to crew completion.
+
+### Phase 8 — Client portal (Week 10–11)
+
+- Magic-link client login (no signup)
+- Live quote view, accept / request changes
+- Stripe payments for deposit / progress / final
+- Render generation for the brochure (Imagen or similar)
+
+Exit criteria: one client signs a quote and pays a deposit through the portal.
+
+### Phase 9 — Hardening (Week 12)
+
+- Full audit of rate card defaults
+- Plant palette validated against Melbourne climate zones
+- Override ledger UI polish
+- Performance pass: cold-start, image load, audio upload on poor connections
+- Accessibility pass: WCAG 2.1 AA, screen reader on iOS and Android
+
+Exit criteria: ready to run on every Curtis & Co bid going forward.
+
+-----
+
+## 8. Decisions Locked
+
+|Decision            |Resolution                                                                                                                                            |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+|Working name        |**Walkthrough** (placeholder, rename pre-launch)                                                                                                      |
+|Single accent       |Burnt sienna `#C2410C`                                                                                                                                |
+|Title data spike    |**Parallel**: Vicmap WFS commercial licence enquiry + Geoscape G-NAF evaluation account in Phase 0. First vendor to clear commercial use wins Phase 2.|
+|Rate card source    |**Build from scratch.** Seed v1 in Appendix B, ~85 line items at current Melbourne 2026 rates. Tim refines in app once live.                          |
+|Plant palette source|**Build from scratch.** Seed v1 in Appendix A, ~35 species derived from Curtis & Co stated design philosophy. Tim refines in app once live.           |
+
+Phase 0 is unblocked.
+
+-----
+
+## 9. Risks (called early, not at the end)
+
+- **Title data licensing.** Single biggest risk. Spike in Phase 0, not later.
+- **Building Insights coverage in Melbourne.** Some suburbs have it, some don’t. Vision fallback must work on day one, not as a Phase 9 nice-to-have.
+- **Transcription quality outdoors.** Wind, traffic, generator noise. The recording screen should test microphone gain and warn if ambient noise is high.
+- **AI design plausibility.** The first two or three auto-designs will be wrong in instructive ways. Don’t ship to clients in Phase 3. Internal use only until Phase 6.
+- **Rate-card drift.** If pricing isn’t kept current, the costing engine generates confident garbage. Make rate-card updates a first-class flow, not a settings afterthought.
+- **Liability on engineering items.** Retaining walls, drainage, anything structural — the audit must flag these out to a qualified engineer. Don’t let the AI quote them.
+
+-----
+
+## 10. Out of Scope (explicit)
+
+- Web app. Mobile only until Phase 9 ships.
+- iPad layout. Phone-only initially.
+- Multi-language. English AU only.
+- Non-Victoria properties. NSW/QLD title data needs separate integrations.
+- Pools, structural engineering, swimming-pool fencing certification.
+- Plan-view drafting. Drafting stays with the draftsperson. The app produces brief, costing, and schedule — not survey-grade drawings.
+
+The last point is non-negotiable and matches the division of labour you’ve already set with Curtis & Co.
+
+-----
+
+## Appendix A — Plant Palette v1 (seed dataset)
+
+Derived from Curtis & Co’s stated design philosophy: singular species in disciplined mass blocks, architectural restraint, Melbourne climate (temperate, dry summer, occasional frost). Every entry below is “approved” and selectable by the design engine without a gap flag.
+
+Format below is read-friendly. The seed file ships as JSON matching the `plant_palette` table shape.
+
+### A.1 Boundary trees — pleached / columnar (Curtis & Co signature)
+
+|Species                          |Common name               |Form           |Mature H × W|Use                                   |
+|---------------------------------|--------------------------|---------------|------------|--------------------------------------|
+|Carpinus betulus ‘Frans Fontaine’|Pleached European Hornbeam|Hedge / pleach |8 × 1.5 m   |Boundary screen, pleached at 2.4–4.5 m|
+|Pyrus calleryana ‘Capital’       |Capital Pear              |Columnar tree  |11 × 3 m    |Tight upright screen, deciduous       |
+|Quercus palustris ‘Green Pillar’ |Pin Oak fastigiate        |Columnar tree  |14 × 4 m    |Larger lots, deciduous                |
+|Tilia cordata ‘Greenspire’       |Small-leaved Lime         |Tree, plachable|12 × 6 m    |Pleached avenue, deciduous            |
+|Ulmus parvifolia ‘Murray Cane’   |Chinese Elm               |Tree           |10 × 7 m    |Semi-evergreen screen                 |
+
+### A.2 Hedge species
+
+|Species                               |Common name      |Mature H × W|Use                             |
+|--------------------------------------|-----------------|------------|--------------------------------|
+|Photinia robusta                      |Red-leaf Photinia|4 × 2 m     |Workhorse hedge                 |
+|Murraya paniculata                    |Orange Jessamine |3 × 2 m     |Dense, fragrant                 |
+|Camellia sasanqua ‘Setsugekka’        |Sasanqua Camellia|3 × 2 m     |Flowering screen, shade-tolerant|
+|Westringia ‘Wynyabbie Gem’            |Coastal Rosemary |1.5 × 1.5 m |Native, drought-tolerant        |
+|Pittosporum tenuifolium ‘Silver Sheen’|Silver Sheen     |5 × 2 m     |Light, fine-leafed screen       |
+|Viburnum tinus                        |Laurustinus      |3 × 2 m     |Shade-tolerant, evergreen       |
+
+### A.3 Feature trees
+
+|Species                          |Common name        |Mature H × W|Use                                       |
+|---------------------------------|-------------------|------------|------------------------------------------|
+|Magnolia grandiflora ‘Little Gem’|Little Gem Magnolia|6 × 3 m     |Compact evergreen                         |
+|Magnolia grandiflora ‘Kay Parris’|Kay Parris Magnolia|6 × 4 m     |Improved Little Gem, denser foliage       |
+|Acer palmatum ‘Sango Kaku’       |Coral Bark Maple   |5 × 4 m     |Deciduous, winter interest                |
+|Olea europaea ‘Tolley’s Upright’ |Upright Olive      |6 × 2 m     |Architectural, evergreen, drought-tolerant|
+|Lagerstroemia indica ‘Tuscarora’ |Crepe Myrtle       |6 × 4 m     |Summer flowering, deciduous               |
+|Cercis canadensis ‘Forest Pansy’ |Forest Pansy Redbud|5 × 5 m     |Deciduous, spring flower, dark foliage    |
+
+### A.4 Structural shrubs / specimen
+
+|Species                     |Common name      |Mature H × W|Use                      |
+|----------------------------|-----------------|------------|-------------------------|
+|Buxus sempervirens          |English Box      |1.5 × 1.5 m |Clipped, formal          |
+|Buxus microphylla ‘Faulkner’|Japanese Box     |1.2 × 1 m   |Clipped, blight-resistant|
+|Westringia ‘Grey Box’       |Native Box       |1 × 1 m     |Native alternative to box|
+|Camellia japonica           |Japanese Camellia|3 × 2 m     |Shade specimen, formal   |
+|Agonis flexuosa ‘Burgundy’  |Willow Myrtle    |7 × 5 m     |Architectural native     |
+
+### A.5 Mass block understory
+
+|Species                     |Common name       |Mature H × W|Use                       |
+|----------------------------|------------------|------------|--------------------------|
+|Liriope muscari ‘Just Right’|Lilyturf          |0.4 × 0.45 m|Workhorse mass, deep green|
+|Lomandra ‘Tanika’           |Fine-leaf Mat Rush|0.6 × 0.6 m |Native grass mass         |
+|Lomandra ‘Lime Tuff’        |Compact Mat Rush  |0.4 × 0.4 m |Smaller mass              |
+|Dianella ‘Little Jess’      |Native Flax Lily  |0.4 × 0.4 m |Native, low, hardy        |
+
+### A.6 Ornamental grasses (mass only)
+
+|Species                                   |Common name          |Mature H × W|Use                    |
+|------------------------------------------|---------------------|------------|-----------------------|
+|Miscanthus sinensis ‘Adagio’              |Compact Miscanthus   |1.2 × 0.8 m |Architectural verticals|
+|Pennisetum alopecuroides ‘Nafray’         |Native Fountain Grass|0.8 × 0.8 m |Mass, native cultivar  |
+|Calamagrostis x acutiflora ‘Karl Foerster’|Feather Reed Grass   |1.5 × 0.6 m |Strong vertical line   |
+
+### A.7 Groundcovers (mass only, never scatter)
+
+|Species                    |Common name               |Mature H × W|Use                   |
+|---------------------------|--------------------------|------------|----------------------|
+|Dichondra repens           |Kidney Weed               |0.05 × 0.5 m|Lawn alternative      |
+|Trachelospermum jasminoides|Star Jasmine (ground form)|0.3 × 1 m   |Groundcover or climber|
+|Myoporum parvifolium       |Creeping Boobialla        |0.1 × 2 m   |Native, dense mat     |
+
+### A.8 Climbers
+
+|Species                               |Common name |Use                                                       |
+|--------------------------------------|------------|----------------------------------------------------------|
+|Trachelospermum jasminoides           |Star Jasmine|Wall cover, fragrant                                      |
+|Parthenocissus tricuspidata ‘Veitchii’|Boston Ivy  |Deciduous wall, autumn colour                             |
+|Ficus pumila                          |Creeping Fig|Aggressive — use only on dedicated walls with control plan|
+
+### A.9 Lawn
+
+|Species                                |Common name       |Use                            |
+|---------------------------------------|------------------|-------------------------------|
+|Stenotaphrum secundatum ‘Sir Walter’   |Sir Walter Buffalo|Shade-tolerant warm-season turf|
+|Festuca arundinacea (tall fescue blend)|Tall Fescue       |Cool-season turf               |
+
+### A.10 Anti-list (encoded as prompt blocklist, not in the palette)
+
+- Strelitzia nicolai / reginae — tropical aesthetic outside the philosophy
+- Agapanthus praecox — only on explicit client request
+- Ophiopogon japonicus ‘Nigrescens’ (black mondo) — never as a feature
+- Cordyline australis — overused, dated
+- Phoenix canariensis / Washingtonia — tropical, off-style
+- Scattered ornamentals of any kind in lieu of mass blocks
+- Cottage / informal mixed perennial beds
+
+-----
+
+## Appendix B — Rate Card v1 (seed dataset)
+
+Current Melbourne 2026 rates, drawn from typical inner-suburban landscape construction pricing. Inclusive of supply where noted. Labour is Curtis & Co assumed rates. All AUD ex GST unless stated.
+
+### B.1 Plants — by pot / bag size
+
+|SKU      |Item                      |Unit|Rate|
+|---------|--------------------------|----|----|
+|PLT-140  |Plant, 140mm pot — generic|ea  |$11 |
+|PLT-200  |Plant, 200mm pot — generic|ea  |$24 |
+|PLT-300  |Plant, 300mm pot — generic|ea  |$48 |
+|PLT-400  |Plant, 400mm pot — generic|ea  |$75 |
+|PLT-100L |Plant, 100L bag — generic |ea  |$210|
+|PLT-200L |Plant, 200L bag — generic |ea  |$460|
+|PLT-400L |Plant, 400L bag — generic |ea  |$920|
+|PLT-1000L|Plant, 1000L+ advanced    |ea  |POA |
+
+### B.2 Plants — Curtis & Co signature stock (specific)
+
+|SKU           |Item                                              |Unit|Rate |
+|--------------|--------------------------------------------------|----|-----|
+|PLT-CARP-PL24 |Carpinus ‘Frans Fontaine’, pleached 2.4m std, 100L|ea  |$480 |
+|PLT-CARP-PL30 |Carpinus ‘Frans Fontaine’, pleached 3.0m std, 200L|ea  |$880 |
+|PLT-PYR-100   |Pyrus ‘Capital’, 100L                             |ea  |$320 |
+|PLT-PYR-200   |Pyrus ‘Capital’, 200L                             |ea  |$560 |
+|PLT-MAG-LG-100|Magnolia ‘Little Gem’, 100L                       |ea  |$280 |
+|PLT-MAG-LG-200|Magnolia ‘Little Gem’, 200L                       |ea  |$580 |
+|PLT-MAG-KP-100|Magnolia ‘Kay Parris’, 100L                       |ea  |$320 |
+|PLT-MAG-KP-200|Magnolia ‘Kay Parris’, 200L                       |ea  |$640 |
+|PLT-OLI-200   |Olea ‘Tolley’s Upright’, 200L                     |ea  |$420 |
+|PLT-PHO-200   |Photinia robusta, 200mm                           |ea  |$22  |
+|PLT-LIR-140   |Liriope ‘Just Right’, 140mm                       |ea  |$9.50|
+|PLT-LOM-140   |Lomandra ‘Tanika’, 140mm                          |ea  |$11  |
+|PLT-BUX-200   |Buxus sempervirens, 200mm                         |ea  |$26  |
+
+### B.3 Soft materials
+
+|SKU        |Item                        |Unit|Rate|
+|-----------|----------------------------|----|----|
+|SOIL-TOP   |Topsoil, screened, delivered|m³  |$85 |
+|SOIL-COMP  |Compost, delivered          |m³  |$95 |
+|MULCH-PINE |Pine bark mulch             |m³  |$75 |
+|MULCH-SUGAR|Sugar cane mulch (bale)     |bale|$14 |
+|ROCK-DRAIN |Drainage rock, 20mm         |m³  |$110|
+
+### B.4 Hard materials — supply
+
+|SKU           |Item                                       |Unit|Rate|
+|--------------|-------------------------------------------|----|----|
+|PAV-BLUE-SAWN |Bluestone paving, sawn, 600×400×30         |m²  |$120|
+|PAV-BLUE-FLAME|Bluestone paving, flamed, 600×300×30       |m²  |$135|
+|PAV-BLUE-COBB |Bluestone cobblestone                      |m²  |$180|
+|PAV-GRAN      |Granite paving                             |m²  |$145|
+|PAV-TRAV      |Travertine paving                          |m²  |$110|
+|CONC-EDGE     |In-situ concrete edge, off-form, 150×150   |lm  |$70 |
+|CONC-PAD      |In-situ concrete pad, standard finish      |m²  |$180|
+|COR-PNL       |Corten steel panel, 4mm, 1m h              |lm  |$220|
+|COR-EDGE      |Corten edging strip, 100mm h               |lm  |$45 |
+|WALL-BLUE     |Bluestone wall, 200mm thick, face          |m²  |$580|
+|WALL-RNDR     |Rendered block wall, 1.2m h                |lm  |$480|
+|TIM-DECK-SUP  |Spotted gum decking, 90×19, supply         |m²  |$185|
+|TIM-BATT-ARAB |Pine batten screen, arabica-stained, 1.8m h|lm  |$260|
+
+### B.5 Irrigation
+
+|SKU          |Item                          |Unit|Rate|
+|-------------|------------------------------|----|----|
+|IRR-DRIP     |Drip line, 13mm, with emitters|lm  |$4  |
+|IRR-CTRL-WIFI|4-station wifi controller     |ea  |$480|
+|IRR-VALVE    |Solenoid valve                |ea  |$95 |
+|IRR-MAIN-25  |Mainline poly, 25mm           |lm  |$9  |
+|IRR-TAP-BFLW |Tap connection + RPZ backflow |ea  |$380|
+
+### B.6 Lighting
+
+|SKU           |Item                             |Unit|Rate|
+|--------------|---------------------------------|----|----|
+|LGT-UP-BRASS  |12V brass spike uplight, 4W 3000K|ea  |$145|
+|LGT-DOWN-BRASS|12V brass downlight              |ea  |$165|
+|LGT-GRAZE-TAPE|12V LED tape grazer, 3000K, 8W/m |lm  |$85 |
+|LGT-TX-150    |12V transformer, 150W            |ea  |$280|
+|LGT-CABLE     |Low-voltage cable, 2-core        |lm  |$6  |
+
+### B.7 Drainage
+
+|SKU        |Item                                    |Unit|Rate  |
+|-----------|----------------------------------------|----|------|
+|DRN-AG-100 |AG drain, 100mm slotted PVC             |lm  |$18   |
+|DRN-AG-INST|AG drain installation, trench + backfill|lm  |$35   |
+|DRN-CHAN   |Grated channel drain, 100mm             |lm  |$185  |
+|DRN-PIT-450|Drainage pit, 450mm, supply + install   |ea  |$320  |
+|DRN-CONN   |Stormwater connection allowance         |ea  |$1,200|
+
+### B.8 Labour — base rates
+
+|SKU         |Item                 |Unit|Rate  |
+|------------|---------------------|----|------|
+|LAB-SR      |Senior tradesman     |hr  |$115  |
+|LAB-TRADE   |Tradesman            |hr  |$95   |
+|LAB-APP     |Apprentice / labourer|hr  |$65   |
+|LAB-CREW-DAY|Crew of 4, day rate  |day |$2,800|
+
+### B.9 Labour — by task
+
+|SKU             |Item                       |Unit        |Rate|
+|----------------|---------------------------|------------|----|
+|TSK-PREP        |Site prep + setout         |m² of garden|$18 |
+|TSK-EXC-HAND    |Excavation, by hand        |m³          |$180|
+|TSK-EXC-MX      |Excavation, mini-excavator |m³          |$85 |
+|TSK-PAV         |Paving installation        |m²          |$85 |
+|TSK-CONC-EDGE   |Concrete edge form + pour  |lm          |$55 |
+|TSK-CONC-PAD    |Concrete pad form + pour   |m²          |$95 |
+|TSK-PLNT-ADV    |Plant advanced tree (100L+)|ea          |$180|
+|TSK-PLNT-MASS   |Plant mass block           |m²          |$32 |
+|TSK-PLNT-HEDGE  |Plant hedge                |lm          |$48 |
+|TSK-PLEACH-TRAIN|Pleach training, first year|lm          |$85 |
+|TSK-LGT-INST    |Light fixture install      |ea          |$95 |
+|TSK-IRR-ZONE    |Irrigation zone install    |zone        |$380|
+|TSK-DECK-INST   |Decking install            |m²          |$145|
+
+### B.10 Hire / plant
+
+|SKU     |Item                     |Unit|Rate|
+|--------|-------------------------|----|----|
+|HIR-MX  |Mini-excavator + operator|day |$850|
+|HIR-BOB |Bobcat                   |day |$750|
+|HIR-COMP|Compactor                |day |$180|
+|HIR-TIP |Tipper truck             |day |$480|
+
+### B.11 Disposal
+
+|SKU       |Item                     |Unit|Rate|
+|----------|-------------------------|----|----|
+|DSP-SKIP-4|Skip, 4 m³               |ea  |$480|
+|DSP-SKIP-8|Skip, 8 m³               |ea  |$720|
+|DSP-GREEN |Green waste removal      |m³  |$95 |
+|DSP-RUBB  |Concrete / rubble removal|m³  |$145|
+
+### B.12 Allowances
+
+|SKU            |Item                                |Unit         |Rate  |
+|---------------|------------------------------------|-------------|------|
+|ALW-CONT-LEAN  |Contingency — Lean scenario         |% of subtotal|3%    |
+|ALW-CONT-STD   |Contingency — Standard scenario     |% of subtotal|5%    |
+|ALW-CONT-BUF   |Contingency — Buffer scenario       |% of subtotal|8%    |
+|ALW-PRM-STON   |Stonnington stormwater permit       |ea           |$850  |
+|ALW-PRM-YARRA  |Yarra City permit                   |ea           |$750  |
+|ALW-HER-CONSULT|Heritage consultant                 |ea           |POA   |
+|ALW-ENG-RW     |Engineering cert, retaining wall >1m|ea           |$2,400|
+
+### B.13 Notes for the costing engine
+
+- Three scenarios pull from the **same** design but different rate-card subsets. Lean strips lighting wash, irrigation upgrades, and the contingency. Buffer adds engineering allowances by default, upgrades pleach stock by one size, and uses the 8% contingency.
+- Plant stock SKUs (B.2) take precedence over generic pot-size SKUs (B.1) when a species match exists. The generic SKUs are the fallback for species in the palette but without a specific stock entry.
+- POA items never appear silently in a total. The costing engine surfaces them as a separate “Provisional” section the user must resolve before quote generation.
+- Rates are stored with an `effective_from` date. The costing engine always uses the rate effective on the project’s `created_at`. This protects historical projects from rate drift.
