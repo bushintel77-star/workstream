@@ -1,8 +1,14 @@
 import type { Store } from "@walkthrough/db";
-import type { Survey } from "@walkthrough/contracts";
+import type { GeoJsonPolygon, Survey } from "@walkthrough/contracts";
+import { edgeLengths, polygonArea } from "@walkthrough/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
+import {
+  fetchBuildingPolygon,
+  fetchTitlePolygon,
+  isVicmapEnabled,
+} from "./vicmap";
 
-const METERS_PER_DEG_LAT = 110_940;
+const METERS_PER_DEG_LAT = 110_540;
 const FRONTAGE_M = 15;
 const DEPTH_M = 40;
 const HOUSE_W_M = 8;
@@ -15,7 +21,22 @@ function metersToDegrees(lat: number) {
   return { latDeg, lngDeg };
 }
 
-function buildSurveyGeometry(center: { lat: number; lng: number }) {
+type SurveyGeometry = {
+  title_polygon: GeoJsonPolygon;
+  house_polygon: GeoJsonPolygon;
+  garden_polygon: GeoJsonPolygon;
+  lot_area_m2: number;
+  house_area_m2: number;
+  garden_area_m2: number;
+  measurements: Array<{
+    edge_id: string;
+    length_m: number;
+    bearing_deg: number;
+    label?: string;
+  }>;
+};
+
+function buildMockGeometry(center: { lat: number; lng: number }): SurveyGeometry {
   const { latDeg, lngDeg } = metersToDegrees(center.lat);
 
   const halfFront = (FRONTAGE_M / 2) * lngDeg;
@@ -47,31 +68,89 @@ function buildSurveyGeometry(center: { lat: number; lng: number }) {
     [houseWest, houseSouth],
   ];
 
-  const lotArea = FRONTAGE_M * DEPTH_M;
-  const houseArea = HOUSE_W_M * HOUSE_D_M;
-
   return {
-    title_polygon: {
-      type: "Polygon" as const,
-      coordinates: [lotRing],
-    },
-    house_polygon: {
-      type: "Polygon" as const,
-      coordinates: [houseRing],
-    },
-    garden_polygon: {
-      type: "Polygon" as const,
-      coordinates: [lotRing, houseRing],
-    },
-    lot_area_m2: lotArea,
-    house_area_m2: houseArea,
-    garden_area_m2: lotArea - houseArea,
+    title_polygon: { type: "Polygon", coordinates: [lotRing] },
+    house_polygon: { type: "Polygon", coordinates: [houseRing] },
+    garden_polygon: { type: "Polygon", coordinates: [lotRing, houseRing] },
+    lot_area_m2: FRONTAGE_M * DEPTH_M,
+    house_area_m2: HOUSE_W_M * HOUSE_D_M,
+    garden_area_m2: FRONTAGE_M * DEPTH_M - HOUSE_W_M * HOUSE_D_M,
     measurements: [
       { edge_id: "front", length_m: FRONTAGE_M, bearing_deg: 90, label: "Frontage" },
       { edge_id: "east", length_m: DEPTH_M, bearing_deg: 0, label: "East boundary" },
       { edge_id: "back", length_m: FRONTAGE_M, bearing_deg: 270, label: "Rear" },
       { edge_id: "west", length_m: DEPTH_M, bearing_deg: 180, label: "West boundary" },
     ],
+  };
+}
+
+function buildMeasurements(
+  ring: [number, number][],
+): Array<{ edge_id: string; length_m: number; bearing_deg: number; label?: string }> {
+  const edges = edgeLengths(ring);
+  if (edges.length === 0) return [];
+
+  // Identify the four most distinctive edges by cycling the ring start to its
+  // longest edge, then walking. Suburban lots are usually quadrilateral with
+  // two long sides (depth) and two short (frontage). For irregular shapes we
+  // still return all edges so the caller has something to render.
+  return edges.map((e, i) => ({
+    edge_id: `edge_${i + 1}`,
+    length_m: e.length_m,
+    bearing_deg: e.bearing_deg,
+    label: `Edge ${i + 1}`,
+  }));
+}
+
+async function buildVicmapGeometry(center: {
+  lat: number;
+  lng: number;
+}): Promise<SurveyGeometry | null> {
+  const titlePoly = await fetchTitlePolygon(center.lat, center.lng);
+  if (!titlePoly) return null;
+
+  const titleRing = titlePoly.coordinates[0];
+  if (!titleRing || titleRing.length < 4) return null;
+
+  let housePoly: GeoJsonPolygon | null = null;
+  try {
+    housePoly = await fetchBuildingPolygon(titleRing);
+  } catch (err) {
+    console.warn("[vicmap] building lookup failed:", err);
+  }
+
+  const lotArea = Math.round(polygonArea(titleRing));
+  const houseArea =
+    housePoly && housePoly.coordinates[0]
+      ? Math.round(polygonArea(housePoly.coordinates[0]))
+      : 0;
+
+  const fallbackHouse: GeoJsonPolygon = {
+    type: "Polygon",
+    coordinates: [
+      [
+        [center.lng - 0.00005, center.lat - 0.00005],
+        [center.lng + 0.00005, center.lat - 0.00005],
+        [center.lng + 0.00005, center.lat + 0.00005],
+        [center.lng - 0.00005, center.lat + 0.00005],
+        [center.lng - 0.00005, center.lat - 0.00005],
+      ],
+    ],
+  };
+
+  const house = housePoly ?? fallbackHouse;
+
+  return {
+    title_polygon: titlePoly,
+    house_polygon: house,
+    garden_polygon: {
+      type: "Polygon",
+      coordinates: [titleRing, house.coordinates[0]],
+    },
+    lot_area_m2: Math.max(1, lotArea),
+    house_area_m2: Math.max(1, houseArea),
+    garden_area_m2: Math.max(1, lotArea - houseArea),
+    measurements: buildMeasurements(titleRing),
   };
 }
 
@@ -90,8 +169,19 @@ export async function runSurvey(
       ? { lat: project.lat, lng: project.lng }
       : await geocodeAddress(project.address);
 
+  let geometry: SurveyGeometry | null = null;
+  if (isVicmapEnabled()) {
+    try {
+      geometry = await buildVicmapGeometry(center);
+    } catch (err) {
+      console.warn("[survey] Vicmap fetch failed, falling back to mock:", err);
+    }
+  }
+  if (!geometry) {
+    geometry = buildMockGeometry(center);
+  }
+
   const aerial_uri = aerialImageUrl(center.lat, center.lng);
-  const geometry = buildSurveyGeometry(center);
 
   const survey = await store.upsertSurvey(ownerId, projectId, {
     aerial_uri,
@@ -99,6 +189,5 @@ export async function runSurvey(
   });
 
   await store.updateProjectStatus(ownerId, projectId, "survey_review");
-
   return survey;
 }

@@ -1,0 +1,125 @@
+import type { GeoJsonPolygon } from "@walkthrough/contracts";
+import { polygonArea } from "@walkthrough/domain";
+
+const WFS_BASE = "https://opendata.maps.vic.gov.au/geoserver/wfs";
+
+const COMMON_PARAMS = {
+  service: "WFS",
+  version: "2.0.0",
+  request: "GetFeature",
+  outputFormat: "application/json",
+  srsName: "EPSG:4326",
+  count: "20",
+};
+
+type Coord = [number, number];
+type Ring = Coord[];
+
+type RawGeometry =
+  | { type: "Polygon"; coordinates: Ring[] }
+  | { type: "MultiPolygon"; coordinates: Ring[][] };
+
+type RawFeature = {
+  type: "Feature";
+  geometry: RawGeometry;
+  properties?: Record<string, unknown>;
+};
+
+type FeatureCollection = {
+  type: "FeatureCollection";
+  features: RawFeature[];
+};
+
+export function isVicmapEnabled(): boolean {
+  return process.env.VICMAP_ENABLED === "true";
+}
+
+function buildUrl(typeName: string, cqlFilter: string): string {
+  const params = new URLSearchParams({
+    ...COMMON_PARAMS,
+    typeNames: typeName,
+    CQL_FILTER: cqlFilter,
+  });
+  return `${WFS_BASE}?${params.toString()}`;
+}
+
+async function wfsFetch(url: string): Promise<FeatureCollection> {
+  const res = await fetch(url, { headers: { accept: "application/json" } });
+  if (!res.ok) {
+    throw new Error(`Vicmap WFS ${res.status}: ${await res.text()}`);
+  }
+  return (await res.json()) as FeatureCollection;
+}
+
+function largestPolygonRing(geom: RawGeometry): Ring | null {
+  if (geom.type === "Polygon") {
+    return geom.coordinates[0] ?? null;
+  }
+  let best: Ring | null = null;
+  let bestArea = 0;
+  for (const poly of geom.coordinates) {
+    const ring = poly[0];
+    if (!ring) continue;
+    const area = polygonArea(ring as Coord[]);
+    if (area > bestArea) {
+      bestArea = area;
+      best = ring;
+    }
+  }
+  return best;
+}
+
+function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
+  return { type: "Polygon", coordinates: [ring] };
+}
+
+/** Fetch the property polygon enclosing a lat/lng. Returns null on miss. */
+export async function fetchTitlePolygon(
+  lat: number,
+  lng: number,
+): Promise<GeoJsonPolygon | null> {
+  const cql = `INTERSECTS(geom, SRID=4326;POINT(${lng} ${lat}))`;
+  const url = buildUrl("open-data-platform:property_view", cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return null;
+
+  let bestRing: Ring | null = null;
+  let bestArea = 0;
+  for (const f of fc.features) {
+    const ring = largestPolygonRing(f.geometry);
+    if (!ring) continue;
+    const area = polygonArea(ring as Coord[]);
+    if (area > bestArea) {
+      bestRing = ring;
+      bestArea = area;
+    }
+  }
+  return bestRing ? toGeoJsonPolygon(bestRing) : null;
+}
+
+/** Fetch the building footprint(s) intersecting a property polygon. Returns the
+ * largest one as a Polygon. Returns null if no buildings found. */
+export async function fetchBuildingPolygon(
+  titleRing: Ring,
+): Promise<GeoJsonPolygon | null> {
+  const wkt = `POLYGON((${titleRing
+    .map(([x, y]) => `${x} ${y}`)
+    .join(", ")}))`;
+  const cql = `INTERSECTS(geom, SRID=4326;${wkt})`;
+  const url = buildUrl("open-data-platform:building_polygon", cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return null;
+
+  let bestRing: Ring | null = null;
+  let bestArea = 0;
+  for (const f of fc.features) {
+    const ring = largestPolygonRing(f.geometry);
+    if (!ring) continue;
+    const area = polygonArea(ring as Coord[]);
+    if (area > bestArea) {
+      bestRing = ring;
+      bestArea = area;
+    }
+  }
+  return bestRing ? toGeoJsonPolygon(bestRing) : null;
+}
