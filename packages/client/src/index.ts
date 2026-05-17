@@ -4,6 +4,7 @@ import type {
   Project,
   RateCard,
   Recording,
+  Survey,
 } from "@walkthrough/contracts";
 
 export type ApiClientOptions = {
@@ -65,6 +66,36 @@ export class WalkthroughClient {
       `/projects/${projectId}/recordings`
     );
     return res.recordings;
+  }
+
+  async runSurvey(projectId: string): Promise<Survey> {
+    const res = await this.request<{ survey: Survey }>(
+      "POST",
+      `/projects/${projectId}/survey`
+    );
+    return res.survey;
+  }
+
+  async getSurvey(projectId: string): Promise<Survey | null> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (this.options.getToken) {
+      const token = await this.options.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch(
+      `${this.options.baseUrl}/projects/${projectId}/survey`,
+      { method: "GET", headers }
+    );
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      throw new Error(
+        `GET /projects/${projectId}/survey failed: ${res.status} ${await res.text()}`
+      );
+    }
+    const json = (await res.json()) as { survey: Survey };
+    return json.survey;
   }
 
   async uploadRecording(

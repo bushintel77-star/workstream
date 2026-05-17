@@ -10,6 +10,7 @@ import healthRoutes from './routes/health';
 import projectRoutes from './routes/projects';
 import recordingRoutes from './routes/recordings';
 import settingsRoutes from './routes/settings';
+import surveyRoutes from './routes/surveys';
 
 const server = Fastify({ logger: true });
 
@@ -29,6 +30,7 @@ async function start() {
   await server.register(healthRoutes);
   await server.register(projectRoutes, { prefix: '/projects' });
   await server.register(recordingRoutes, { prefix: '/projects' });
+  await server.register(surveyRoutes, { prefix: '/projects' });
   await server.register(settingsRoutes, { prefix: '/settings' });
 
   const port = Number(process.env.PORT) || 3001;

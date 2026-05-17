@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import type { Project, Recording } from "@walkthrough/contracts";
+import type { Project, Recording, Survey } from "@walkthrough/contracts";
 import { useWalkthroughApi } from "../../../src/lib/api";
 
 export default function ProjectDetailScreen() {
@@ -18,6 +19,8 @@ export default function ProjectDetailScreen() {
   const api = useWalkthroughApi();
   const [project, setProject] = useState<Project | null>(null);
   const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [survey, setSurvey] = useState<Survey | null>(null);
+  const [surveyRunning, setSurveyRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -27,16 +30,34 @@ export default function ProjectDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [p, recs] = await Promise.all([
+      const [p, recs, s] = await Promise.all([
         api.getProject(id),
         api.listRecordings(id),
+        api.getSurvey(id),
       ]);
       setProject(p);
       setRecordings(recs);
+      setSurvey(s);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
       setLoading(false);
+    }
+  }, [api, id]);
+
+  const handleRunSurvey = useCallback(async () => {
+    if (!id) return;
+    setSurveyRunning(true);
+    setError(null);
+    try {
+      const s = await api.runSurvey(id);
+      setSurvey(s);
+      const p = await api.getProject(id);
+      setProject(p);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Survey failed");
+    } finally {
+      setSurveyRunning(false);
     }
   }, [api, id]);
 
@@ -113,6 +134,61 @@ export default function ProjectDetailScreen() {
             </View>
           ) : null}
 
+          <View style={styles.surveyCard}>
+            <Text style={styles.transcriptLabel}>Survey</Text>
+            {survey ? (
+              <>
+                {survey.aerial_uri.startsWith("http") &&
+                !survey.aerial_uri.startsWith("https://placeholder") ? (
+                  <Image
+                    source={{ uri: survey.aerial_uri }}
+                    style={styles.aerial}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.aerial, styles.aerialPlaceholder]}>
+                    <Text style={styles.placeholderText}>
+                      Aerial preview (dev mode — set MAPBOX_TOKEN)
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.metricsRow}>
+                  <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
+                  <Metric label="House" value={`${survey.house_area_m2} m²`} />
+                  <Metric label="Garden" value={`${survey.garden_area_m2} m²`} />
+                </View>
+                <View style={styles.metricsRow}>
+                  {survey.measurements.map((m) => (
+                    <Metric
+                      key={m.edge_id}
+                      label={m.label ?? m.edge_id}
+                      value={`${m.length_m} m`}
+                    />
+                  ))}
+                </View>
+                <Pressable
+                  style={styles.secondaryButton}
+                  onPress={handleRunSurvey}
+                  disabled={surveyRunning}
+                >
+                  <Text style={styles.secondaryButtonText}>
+                    {surveyRunning ? "Re-running…" : "Re-run survey"}
+                  </Text>
+                </Pressable>
+              </>
+            ) : (
+              <Pressable
+                style={styles.recordButton}
+                onPress={handleRunSurvey}
+                disabled={surveyRunning}
+              >
+                <Text style={styles.recordButtonText}>
+                  {surveyRunning ? "Running survey…" : "Run survey"}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
           <Pressable
             style={styles.recordButton}
             onPress={() =>
@@ -129,6 +205,15 @@ export default function ProjectDetailScreen() {
         </ScrollView>
       )}
     </SafeAreaView>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.metric}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={styles.metricValue}>{value}</Text>
+    </View>
   );
 }
 
@@ -213,5 +298,67 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#C2410C",
+  },
+  surveyCard: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E4E4E7",
+  },
+  aerial: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: 6,
+    backgroundColor: "#F4F4F1",
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  aerialPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  placeholderText: {
+    fontSize: 12,
+    color: "#A1A1AA",
+    textAlign: "center",
+  },
+  metricsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 12,
+  },
+  metric: {
+    minWidth: 80,
+  },
+  metricLabel: {
+    fontSize: 11,
+    color: "#A1A1AA",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  metricValue: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#18181B",
+    fontVariant: ["tabular-nums"],
+    marginTop: 2,
+  },
+  secondaryButton: {
+    marginTop: 8,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E4E4E7",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  secondaryButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#52525B",
   },
 });

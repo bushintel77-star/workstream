@@ -1,7 +1,15 @@
 import { createMemoryStore } from "./memory";
 import type { Store } from "./types";
 
-export type { Store, CreateProjectInput, Project, RateCard, PlantPalette } from "./types";
+export type {
+  Store,
+  CreateProjectInput,
+  Project,
+  RateCard,
+  PlantPalette,
+  Survey,
+  SurveyInput,
+} from "./types";
 export { SYSTEM_OWNER } from "./memory";
 
 let store: Store | null = null;

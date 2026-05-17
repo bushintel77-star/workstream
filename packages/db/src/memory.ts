@@ -5,6 +5,7 @@ import type {
   ProjectStatus,
   RateCard,
   Recording,
+  Survey,
 } from "./types";
 import type { Store } from "./types";
 
@@ -15,11 +16,13 @@ export function createMemoryStore(): Store & {
   _recordings: Recording[];
   _rateCard: RateCard[];
   _plantPalette: PlantPalette[];
+  _surveys: Survey[];
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
   const _rateCard: RateCard[] = [];
   const _plantPalette: PlantPalette[] = [];
+  const _surveys: Survey[] = [];
   let seeded = false;
 
   return {
@@ -27,6 +30,7 @@ export function createMemoryStore(): Store & {
     _recordings,
     _rateCard,
     _plantPalette,
+    _surveys,
 
     async seedDefaults() {
       if (seeded) return;
@@ -130,6 +134,35 @@ export function createMemoryStore(): Store & {
         (p) => p.owner_id === SYSTEM_OWNER || p.owner_id === ownerId
       );
       return rows.sort((a, b) => a.species.localeCompare(b.species));
+    },
+
+    async upsertSurvey(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) {
+        throw new Error(`Project not found: ${projectId}`);
+      }
+      const existing = _surveys.find((s) => s.project_id === projectId);
+      if (existing) {
+        Object.assign(existing, input);
+        return existing;
+      }
+      const survey: Survey = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        ...input,
+      };
+      _surveys.push(survey);
+      return survey;
+    },
+
+    async getSurvey(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) return null;
+      return _surveys.find((s) => s.project_id === projectId) ?? null;
     },
   };
 }
