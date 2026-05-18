@@ -195,6 +195,7 @@ export default function ProjectDetailScreen() {
   const [overrideTarget, setOverrideTarget] = useState<number | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideSaving, setOverrideSaving] = useState(false);
+  const [pipelineRunning, setPipelineRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -244,6 +245,28 @@ export default function ProjectDetailScreen() {
       setSurveyRunning(false);
     }
   }, [api, id]);
+
+  const handleRunPipeline = useCallback(async () => {
+    if (!id) return;
+    setPipelineRunning(true);
+    setError(null);
+    try {
+      const result = await api.runPipeline(id);
+      if (!result.ok) {
+        const last = result.events[result.events.length - 1];
+        const reason =
+          last && "error" in last
+            ? `${last.stage}: ${last.error}`
+            : "Pipeline halted";
+        setError(reason);
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Pipeline failed");
+    } finally {
+      setPipelineRunning(false);
+    }
+  }, [api, id, load]);
 
   const handleRunDesign = useCallback(async () => {
     if (!id) return;
@@ -439,16 +462,37 @@ export default function ProjectDetailScreen() {
               <Text style={styles.kicker}>NEW PROJECT</Text>
               <Text style={styles.addressLine}>{project.address}</Text>
               <Text style={styles.intakeBody}>
-                Survey will derive lot, house, and garden geometry from the
-                address. Record a walkthrough at any time.
+                One tap runs the whole pipeline: survey, design, costing and
+                self-audit. Or run survey only and record a walkthrough first.
               </Text>
               <Pressable
-                style={styles.primaryBtnLarge}
-                onPress={handleRunSurvey}
-                disabled={surveyRunning}
+                style={[
+                  styles.primaryBtnLarge,
+                  pipelineRunning && { opacity: 0.85 },
+                ]}
+                onPress={handleRunPipeline}
+                disabled={pipelineRunning || surveyRunning}
               >
-                <Text style={styles.primaryBtnText}>
-                  {surveyRunning ? "Running survey…" : "Run survey"}
+                {pipelineRunning ? (
+                  <View style={styles.runningRow}>
+                    <ActivityIndicator color={tokens.color.ink.inverted} />
+                    <Text style={styles.primaryBtnText}>
+                      Running pipeline…
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.primaryBtnText}>
+                    Run full pipeline →
+                  </Text>
+                )}
+              </Pressable>
+              <Pressable
+                style={styles.secondaryBtnFull}
+                onPress={handleRunSurvey}
+                disabled={surveyRunning || pipelineRunning}
+              >
+                <Text style={styles.secondaryBtnText}>
+                  {surveyRunning ? "Surveying…" : "Survey only"}
                 </Text>
               </Pressable>
             </View>
@@ -1212,6 +1256,11 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.lg,
     borderWidth: 1,
     borderColor: tokens.color.line.hairline,
+    gap: tokens.space[3],
+  },
+  runningRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: tokens.space[3],
   },
   kicker: {

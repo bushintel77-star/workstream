@@ -127,6 +127,16 @@ export class WalkthroughClient {
     return res.overrides;
   }
 
+  async runPipeline(projectId: string): Promise<{
+    events: Array<
+      | { stage: string; status: "running" | "ok" }
+      | { stage: string; status: "error"; error: string }
+    >;
+    ok: boolean;
+  }> {
+    return this.request("POST", `/projects/${projectId}/pipeline`);
+  }
+
   async runOutput(projectId: string, kind: OutputKind): Promise<Output> {
     const res = await this.request<{ output: Output }>(
       "POST",
