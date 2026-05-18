@@ -1,5 +1,5 @@
 {
-  "name": "@walkthrough/db",
+  "name": "@construct/db",
   "version": "0.0.1",
   "private": true,
   "main": "./dist/index.js",
@@ -10,8 +10,8 @@
     "lint": "echo ok"
   },
   "dependencies": {
-    "@walkthrough/contracts": "workspace:*",
-    "@walkthrough/domain": "workspace:*"
+    "@construct/contracts": "workspace:*",
+    "@construct/domain": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

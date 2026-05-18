@@ -15,14 +15,14 @@ import {
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { tokens } from "@walkthrough/ui";
+import { tokens } from "@construct/ui";
 import type {
   Project,
   Survey,
   Task,
   TaskPriority,
-} from "@walkthrough/contracts";
-import { useWalkthroughApi } from "../../src/lib/api";
+} from "@construct/contracts";
+import { useConstructApi } from "../../src/lib/api";
 
 type LedgerEntry = {
   id: string;
@@ -66,7 +66,7 @@ function formatQuantity(n: number): string {
 export default function GridSoilScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const router = useRouter();
-  const api = useWalkthroughApi();
+  const api = useConstructApi();
 
   const [project, setProject] = useState<Project | null>(null);
   const [survey, setSurvey] = useState<Survey | null>(null);

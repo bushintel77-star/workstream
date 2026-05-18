@@ -14,8 +14,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { tokens } from "@walkthrough/ui";
-import { useWalkthroughApi } from "../../src/lib/api";
+import { tokens } from "@construct/ui";
+import { useConstructApi } from "../../src/lib/api";
 
 const MAX_DURATION_S = 30 * 60;
 const METERING_WINDOW = 56;
@@ -60,7 +60,7 @@ function median(arr: number[]): number {
 export default function RecordingScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const router = useRouter();
-  const api = useWalkthroughApi();
+  const api = useConstructApi();
 
   const [permission, setPermission] = useState<boolean | null>(null);
   const [permissionAsked, setPermissionAsked] = useState(false);

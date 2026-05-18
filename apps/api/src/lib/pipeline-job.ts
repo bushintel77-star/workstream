@@ -1,4 +1,4 @@
-import type { Store } from "@walkthrough/db";
+import type { Store } from "@construct/db";
 import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";

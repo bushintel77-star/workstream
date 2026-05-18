@@ -11,9 +11,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
-import type { RateCard } from "@walkthrough/contracts";
-import { tokens } from "@walkthrough/ui";
-import { useWalkthroughApi } from "../../../src/lib/api";
+import type { RateCard } from "@construct/contracts";
+import { tokens } from "@construct/ui";
+import { useConstructApi } from "../../../src/lib/api";
 
 const formatRate = (item: RateCard) => {
   if (item.notes === "POA") return "POA";
@@ -23,7 +23,7 @@ const formatRate = (item: RateCard) => {
 };
 
 export default function RateCardScreen() {
-  const api = useWalkthroughApi();
+  const api = useConstructApi();
   const [items, setItems] = useState<RateCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<RateCard | null>(null);

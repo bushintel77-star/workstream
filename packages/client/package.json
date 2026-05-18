@@ -1,5 +1,5 @@
 {
-  "name": "@walkthrough/client",
+  "name": "@construct/client",
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.ts",
@@ -9,7 +9,7 @@
     "lint": "echo ok"
   },
   "dependencies": {
-    "@walkthrough/contracts": "workspace:*"
+    "@construct/contracts": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

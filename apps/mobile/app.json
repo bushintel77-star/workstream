@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "Walkthrough",
-    "slug": "walkthrough",
+    "name": "Construct",
+    "slug": "construct",
     "version": "0.0.1",
     "orientation": "portrait",
-    "scheme": "walkthrough",
+    "scheme": "construct",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.curtisandco.walkthrough"
+      "bundleIdentifier": "com.curtisandco.construct"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FAFAF7"
       },
-      "package": "com.curtisandco.walkthrough"
+      "package": "com.curtisandco.construct"
     },
     "plugins": ["expo-router", "expo-secure-store"]
   }

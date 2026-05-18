@@ -6,7 +6,7 @@ import type {
   Project,
   Survey,
   Zone,
-} from "@walkthrough/contracts";
+} from "@construct/contracts";
 
 type Args = {
   project: Project;

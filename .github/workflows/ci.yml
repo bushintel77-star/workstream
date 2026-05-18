@@ -47,6 +47,6 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
-          tags: walkthrough-api:ci
+          tags: construct-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max

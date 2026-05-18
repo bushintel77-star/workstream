@@ -1,8 +1,8 @@
-import type { Store } from "@walkthrough/db";
+import type { Store } from "@construct/db";
 import type {
   CreateTaskInput,
   TaskPriority,
-} from "@walkthrough/contracts";
+} from "@construct/contracts";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";

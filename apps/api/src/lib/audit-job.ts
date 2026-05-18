@@ -1,5 +1,5 @@
-import type { Store } from "@walkthrough/db";
-import type { Audit } from "@walkthrough/contracts";
+import type { Store } from "@construct/db";
+import type { Audit } from "@construct/contracts";
 import { runAudit } from "./claude";
 
 export async function runProjectAudit(

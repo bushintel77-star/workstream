@@ -1,4 +1,4 @@
-import { plantPalette, rateCard } from "@walkthrough/domain";
+import { plantPalette, rateCard } from "@construct/domain";
 import type { PlantPalette, RateCard } from "./types";
 import { SYSTEM_OWNER } from "./memory";
 

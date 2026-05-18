@@ -1,6 +1,6 @@
 import fp from "fastify-plugin";
 import { FastifyInstance } from "fastify";
-import { getStore, initStore, type Store } from "@walkthrough/db";
+import { getStore, initStore, type Store } from "@construct/db";
 
 declare module "fastify" {
   interface FastifyInstance {

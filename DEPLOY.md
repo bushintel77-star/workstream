@@ -1,4 +1,4 @@
-# Deploying Walkthrough / WorkSteam
+# Deploying Construct
 
 The repo deploys as two services:
 
@@ -30,19 +30,19 @@ flyctl launch \
   --no-deploy \
   --copy-config \
   --config apps/api/fly.toml \
-  --name walkthrough-api \
+  --name construct-api \
   --region syd
 
 # 2. Create the persistent volume for data/store.json and data/outputs/
-flyctl volumes create walkthrough_data \
+flyctl volumes create construct_data \
   --region syd \
   --size 1 \
   --config apps/api/fly.toml
 
 # 3. Set the required + optional secrets
 flyctl secrets set \
-  CORS_ORIGIN="https://walkthrough-api.fly.dev" \
-  PUBLIC_API_URL="https://walkthrough-api.fly.dev" \
+  CORS_ORIGIN="https://construct-api.fly.dev" \
+  PUBLIC_API_URL="https://construct-api.fly.dev" \
   --config apps/api/fly.toml
 
 # Optional — without these the API runs in dev-fallback mode
@@ -80,7 +80,7 @@ eas submit -p android
 Set the EAS env vars to point at the deployed API:
 
 ```
-EXPO_PUBLIC_API_URL=https://walkthrough-api.fly.dev
+EXPO_PUBLIC_API_URL=https://construct-api.fly.dev
 EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_…
 ```
 

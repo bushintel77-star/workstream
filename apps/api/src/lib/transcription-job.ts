@@ -1,4 +1,4 @@
-import type { Store } from "@walkthrough/db";
+import type { Store } from "@construct/db";
 import { transcribeAudio } from "./transcribe";
 
 export async function runTranscription(

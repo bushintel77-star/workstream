@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   CreateTaskInputSchema,
   UpdateTaskStatusInputSchema,
-} from "@walkthrough/contracts";
+} from "@construct/contracts";
 import { requireAuth } from "../plugins/auth";
 
 export default async function taskRoutes(fastify: FastifyInstance) {

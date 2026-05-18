@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
-import type { Store } from "@walkthrough/db";
-import type { Output, OutputKind } from "@walkthrough/contracts";
+import type { Store } from "@construct/db";
+import type { Output, OutputKind } from "@construct/contracts";
 import { generateForKind } from "./output-generators";
 
 const OUTPUT_DIR = path.join(process.cwd(), "data", "outputs");

@@ -1,5 +1,5 @@
-import type { Store } from "@walkthrough/db";
-import type { Design } from "@walkthrough/contracts";
+import type { Store } from "@construct/db";
+import type { Design } from "@construct/contracts";
 import { detectMode } from "./mode-detect";
 import { generateDesign } from "./claude";
 

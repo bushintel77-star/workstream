@@ -1,16 +1,16 @@
 import { useMemo } from "react";
-import { WalkthroughClient } from "@walkthrough/client";
+import { ConstructClient } from "@construct/client";
 import { useAppAuth } from "./auth";
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
 
-export function useWalkthroughApi(): WalkthroughClient {
+export function useConstructApi(): ConstructClient {
   const { getToken } = useAppAuth();
 
   return useMemo(
     () =>
-      new WalkthroughClient({
+      new ConstructClient({
         baseUrl: API_URL,
         getToken: () => getToken(),
       }),

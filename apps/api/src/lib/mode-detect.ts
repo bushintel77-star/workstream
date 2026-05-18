@@ -1,4 +1,4 @@
-import type { DesignMode } from "@walkthrough/contracts";
+import type { DesignMode } from "@construct/contracts";
 
 const COVERAGE_TERMS = [
   ["front", "frontage", "street", "verge"],

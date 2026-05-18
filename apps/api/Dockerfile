@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 #
-# Multi-stage build for the @walkthrough/api Fastify service.
-# Built from the monorepo root so workspace deps (@walkthrough/contracts,
+# Multi-stage build for the @construct/api Fastify service.
+# Built from the monorepo root so workspace deps (@construct/contracts,
 # /db, /domain) can be hoisted via pnpm. Resulting image runs the prebuilt
 # JS on Node 22 with only production deps installed.
 
@@ -25,7 +25,7 @@ COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/db/package.json ./packages/db/
 COPY packages/domain/package.json ./packages/domain/
 
-RUN pnpm install --frozen-lockfile --filter=@walkthrough/api...
+RUN pnpm install --frozen-lockfile --filter=@construct/api...
 
 # Copy sources after install so dep churn doesn't bust the install layer
 COPY apps/api ./apps/api
@@ -33,7 +33,7 @@ COPY packages/contracts ./packages/contracts
 COPY packages/db ./packages/db
 COPY packages/domain ./packages/domain
 
-RUN pnpm --filter=@walkthrough/api... build
+RUN pnpm --filter=@construct/api... build
 
 # ---- runtime ---------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS runtime
@@ -58,7 +58,7 @@ COPY --from=builder /repo/packages/db/dist ./packages/db/dist
 COPY --from=builder /repo/packages/domain/package.json ./packages/domain/
 COPY --from=builder /repo/packages/domain/dist ./packages/domain/dist
 
-RUN pnpm install --prod --frozen-lockfile --filter=@walkthrough/api...
+RUN pnpm install --prod --frozen-lockfile --filter=@construct/api...
 
 EXPOSE 3001
 

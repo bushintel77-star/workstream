@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useSignUp } from "@clerk/clerk-expo";
-import { tokens } from "@walkthrough/ui";
+import { tokens } from "@construct/ui";
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -65,7 +65,7 @@ export default function SignUpScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
-          <Text style={styles.kicker}>WALKTHROUGH</Text>
+          <Text style={styles.kicker}>CONSTRUCT</Text>
           <Text style={styles.title}>Verify email</Text>
 
           <View style={styles.field}>

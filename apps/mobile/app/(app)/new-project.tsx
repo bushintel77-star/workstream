@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { tokens } from "@walkthrough/ui";
-import { useWalkthroughApi } from "../../src/lib/api";
+import { tokens } from "@construct/ui";
+import { useConstructApi } from "../../src/lib/api";
 
 type Suggestion = {
   id: string;
@@ -24,7 +24,7 @@ type Suggestion = {
 
 export default function NewProjectScreen() {
   const router = useRouter();
-  const api = useWalkthroughApi();
+  const api = useConstructApi();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);

@@ -28,9 +28,9 @@ import type {
   Project,
   Recording,
   Survey,
-} from "@walkthrough/contracts";
-import { tokens } from "@walkthrough/ui";
-import { useWalkthroughApi } from "../../../src/lib/api";
+} from "@construct/contracts";
+import { tokens } from "@construct/ui";
+import { useConstructApi } from "../../../src/lib/api";
 
 const AERIAL_ASPECT = 1;
 const SURVEY_INSET_PCT = 0.12;
@@ -178,7 +178,7 @@ function SurveyHero({ survey }: { survey: Survey }) {
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const api = useWalkthroughApi();
+  const api = useConstructApi();
   const [project, setProject] = useState<Project | null>(null);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [survey, setSurvey] = useState<Survey | null>(null);

@@ -16,7 +16,7 @@ import type {
   Survey,
   Task,
   TaskStatus,
-} from "@walkthrough/contracts";
+} from "@construct/contracts";
 
 export type {
   Audit,

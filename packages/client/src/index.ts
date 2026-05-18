@@ -15,14 +15,14 @@ import type {
   Survey,
   Task,
   TaskStatus,
-} from "@walkthrough/contracts";
+} from "@construct/contracts";
 
 export type ApiClientOptions = {
   baseUrl: string;
   getToken?: () => Promise<string | null>;
 };
 
-export class WalkthroughClient {
+export class ConstructClient {
   constructor(private options: ApiClientOptions) {}
 
   async healthz(): Promise<{ status: string; timestamp: string }> {

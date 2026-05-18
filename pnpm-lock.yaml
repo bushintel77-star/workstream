@@ -23,6 +23,15 @@ importers:
       '@clerk/fastify':
         specifier: ^2.0.0
         version: 2.6.31(fastify@5.8.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@construct/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@construct/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@construct/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@fastify/cors':
         specifier: ^11.0.0
         version: 11.2.0
@@ -35,15 +44,6 @@ importers:
       '@fastify/websocket':
         specifier: ^11.0.0
         version: 11.2.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@walkthrough/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@walkthrough/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@walkthrough/domain':
-        specifier: workspace:*
-        version: link:../../packages/domain
       fastify:
         specifier: ^5.2.0
         version: 5.8.5
@@ -69,13 +69,13 @@ importers:
       '@clerk/clerk-expo':
         specifier: ^2.9.0
         version: 2.19.31(egbsveekzscmlx7q3qrypmqbo4)
-      '@walkthrough/client':
+      '@construct/client':
         specifier: workspace:*
         version: link:../../packages/client
-      '@walkthrough/contracts':
+      '@construct/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@walkthrough/ui':
+      '@construct/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       expo:
@@ -139,7 +139,7 @@ importers:
 
   packages/client:
     dependencies:
-      '@walkthrough/contracts':
+      '@construct/contracts':
         specifier: workspace:*
         version: link:../contracts
     devDependencies:
@@ -159,10 +159,10 @@ importers:
 
   packages/db:
     dependencies:
-      '@walkthrough/contracts':
+      '@construct/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@walkthrough/domain':
+      '@construct/domain':
         specifier: workspace:*
         version: link:../domain
     devDependencies:
@@ -175,7 +175,7 @@ importers:
 
   packages/domain:
     dependencies:
-      '@walkthrough/contracts':
+      '@construct/contracts':
         specifier: workspace:*
         version: link:../contracts
     devDependencies:

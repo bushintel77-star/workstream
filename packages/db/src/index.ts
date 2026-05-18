@@ -36,7 +36,7 @@ function defaultPersistPath(): string {
 export function getStore(): Store {
   if (!store) {
     const persistPath =
-      process.env.WALKTHROUGH_PERSIST_PATH ?? defaultPersistPath();
+      process.env.CONSTRUCT_PERSIST_PATH ?? defaultPersistPath();
     store = createMemoryStore({ persistPath });
   }
   return store;
@@ -45,7 +45,7 @@ export function getStore(): Store {
 export async function initStore(): Promise<Store> {
   if (!store) {
     const persistPath =
-      process.env.WALKTHROUGH_PERSIST_PATH ?? defaultPersistPath();
+      process.env.CONSTRUCT_PERSIST_PATH ?? defaultPersistPath();
     store = createMemoryStore({ persistPath });
   }
   store._loadSnapshot();

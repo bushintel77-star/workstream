@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useSignIn } from "@clerk/clerk-expo";
-import { tokens } from "@walkthrough/ui";
+import { tokens } from "@construct/ui";
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -41,7 +41,7 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.kicker}>WALKTHROUGH</Text>
+        <Text style={styles.kicker}>CONSTRUCT</Text>
         <Text style={styles.title}>Sign in</Text>
 
         <View style={styles.field}>

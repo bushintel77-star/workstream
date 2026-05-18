@@ -1,7 +1,7 @@
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { tokens } from "@walkthrough/ui";
+import { tokens } from "@construct/ui";
 import { tokenCache } from "../src/lib/clerk";
 import { isAuthEnabled } from "../src/lib/auth";
 

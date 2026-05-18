@@ -5,14 +5,14 @@ import {
   calculateSubtotal,
   calculateTotal,
   type CostScenario,
-} from "@walkthrough/domain";
+} from "@construct/domain";
 import type {
   Costing,
   LineItem,
   RateCard,
   Zone,
-} from "@walkthrough/contracts";
-import type { Store } from "@walkthrough/db";
+} from "@construct/contracts";
+import type { Store } from "@construct/db";
 
 const CONTINGENCY_SKU: Record<CostScenario, string> = {
   lean: "ALW-CONT-LEAN",

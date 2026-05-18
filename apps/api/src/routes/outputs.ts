@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { OutputKindSchema } from "@walkthrough/contracts";
+import { OutputKindSchema } from "@construct/contracts";
 import { requireAuth } from "../plugins/auth";
 import { runOutput } from "../lib/output-job";
 import { publicBaseUrl } from "../lib/public-url";
