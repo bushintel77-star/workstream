@@ -11,11 +11,14 @@ import type {
   PlantPalette,
   Project,
   ProjectStatus,
+  ProjectMyobLink,
   RateCard,
   Recording,
+  SkuLink,
   Survey,
   Task,
   TaskStatus,
+  UpsertSkuLinkInput,
 } from "@construct/contracts";
 
 export type {
@@ -31,11 +34,14 @@ export type {
   PlantPalette,
   Project,
   ProjectStatus,
+  ProjectMyobLink,
   RateCard,
   Recording,
+  SkuLink,
   Survey,
   Task,
   TaskStatus,
+  UpsertSkuLinkInput,
 };
 
 export type SurveyInput = Omit<Survey, "id" | "project_id">;
@@ -124,5 +130,20 @@ export interface Store {
     taskId: string,
     status: TaskStatus,
   ): Promise<Task | null>;
+  listSkuLinks(ownerId: string): Promise<SkuLink[]>;
+  upsertSkuLink(
+    ownerId: string,
+    input: UpsertSkuLinkInput,
+  ): Promise<SkuLink>;
+  removeSkuLink(ownerId: string, construct_sku: string): Promise<boolean>;
+  getProjectMyobLink(
+    ownerId: string,
+    projectId: string,
+  ): Promise<ProjectMyobLink | null>;
+  upsertProjectMyobLink(
+    ownerId: string,
+    projectId: string,
+    patch: Partial<Omit<ProjectMyobLink, "project_id">>,
+  ): Promise<ProjectMyobLink>;
   seedDefaults(): Promise<void>;
 }

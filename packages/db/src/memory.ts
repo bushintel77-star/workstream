@@ -7,9 +7,11 @@ import type {
   Override,
   PlantPalette,
   Project,
+  ProjectMyobLink,
   ProjectStatus,
   RateCard,
   Recording,
+  SkuLink,
   Survey,
   Task,
 } from "./types";
@@ -34,6 +36,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _outputs: Output[];
   _overrides: Override[];
   _tasks: Task[];
+  _skuLinks: SkuLink[];
+  _projectMyobLinks: ProjectMyobLink[];
   _loadSnapshot: () => boolean;
 } {
   const _projects: Project[] = [];
@@ -47,6 +51,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _outputs: Output[] = [];
   const _overrides: Override[] = [];
   const _tasks: Task[] = [];
+  const _skuLinks: SkuLink[] = [];
+  const _projectMyobLinks: ProjectMyobLink[] = [];
   let seeded = false;
 
   const arrays = {
@@ -61,6 +67,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _outputs,
     _overrides,
     _tasks,
+    _skuLinks,
+    _projectMyobLinks,
   };
 
   const flush = opts.persistPath
@@ -91,6 +99,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _outputs,
     _overrides,
     _tasks,
+    _skuLinks,
+    _projectMyobLinks,
     _loadSnapshot: loadSnapshot,
 
     async seedDefaults() {
@@ -157,6 +167,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       removeWhere(_outputs, (o) => o.project_id === id);
       removeWhere(_overrides, (o) => o.project_id === id);
       removeWhere(_tasks, (t) => t.project_id === id);
+      removeWhere(_projectMyobLinks, (l) => l.project_id === id);
 
       flush();
       return true;
@@ -531,6 +542,92 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       task.status = status;
       flush();
       return task;
+    },
+
+    async listSkuLinks(ownerId) {
+      return _skuLinks
+        .filter((l) => l.owner_id === ownerId)
+        .sort((a, b) => a.construct_sku.localeCompare(b.construct_sku));
+    },
+
+    async upsertSkuLink(ownerId, input) {
+      const existing = _skuLinks.find(
+        (l) => l.owner_id === ownerId && l.construct_sku === input.construct_sku,
+      );
+      const now = new Date().toISOString();
+      if (existing) {
+        existing.myob_uid = input.myob_uid;
+        existing.myob_item_number = input.myob_item_number;
+        existing.last_synced_at = now;
+        flush();
+        return existing;
+      }
+      const link: SkuLink = {
+        id: crypto.randomUUID(),
+        owner_id: ownerId,
+        construct_sku: input.construct_sku,
+        myob_uid: input.myob_uid,
+        myob_item_number: input.myob_item_number,
+        last_synced_at: now,
+      };
+      _skuLinks.push(link);
+      flush();
+      return link;
+    },
+
+    async removeSkuLink(ownerId, construct_sku) {
+      const idx = _skuLinks.findIndex(
+        (l) => l.owner_id === ownerId && l.construct_sku === construct_sku,
+      );
+      if (idx < 0) return false;
+      _skuLinks.splice(idx, 1);
+      flush();
+      return true;
+    },
+
+    async getProjectMyobLink(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      return (
+        _projectMyobLinks.find((l) => l.project_id === projectId) ?? null
+      );
+    },
+
+    async upsertProjectMyobLink(ownerId, projectId, patch) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const existing = _projectMyobLinks.find(
+        (l) => l.project_id === projectId,
+      );
+      const now = new Date().toISOString();
+      if (existing) {
+        if (patch.myob_customer_uid != null)
+          existing.myob_customer_uid = patch.myob_customer_uid;
+        if (patch.myob_job_number !== undefined)
+          existing.myob_job_number = patch.myob_job_number;
+        if (patch.invoice_uid !== undefined)
+          existing.invoice_uid = patch.invoice_uid;
+        existing.last_synced_at = now;
+        flush();
+        return existing;
+      }
+      if (!patch.myob_customer_uid) {
+        throw new Error("myob_customer_uid required for first link");
+      }
+      const link: ProjectMyobLink = {
+        project_id: projectId,
+        myob_customer_uid: patch.myob_customer_uid,
+        myob_job_number: patch.myob_job_number ?? null,
+        invoice_uid: patch.invoice_uid ?? null,
+        last_synced_at: now,
+      };
+      _projectMyobLinks.push(link);
+      flush();
+      return link;
     },
   };
 }

@@ -17,6 +17,7 @@ export default function SettingsLayout() {
         name="plant-palette"
         options={{ title: "Plant Palette" }}
       />
+      <Stack.Screen name="myob" options={{ title: "MYOB" }} />
     </Stack>
   );
 }

@@ -197,6 +197,12 @@ export default function ProjectDetailScreen() {
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideSaving, setOverrideSaving] = useState(false);
   const [pipelineRunning, setPipelineRunning] = useState(false);
+  const [myobSending, setMyobSending] = useState(false);
+  const [myobInvoice, setMyobInvoice] = useState<{
+    invoice_number: string;
+    mode: "live" | "dev_fallback";
+    total_incl_gst: number;
+  } | null>(null);
   const [pipelineSlow, setPipelineSlow] = useState(false);
   const pipelinePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pipelineSlowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -405,6 +411,37 @@ export default function ProjectDetailScreen() {
       setOverrideSaving(false);
     }
   }, [api, id, overrideTarget, overrideReason, closeOverride]);
+
+  const handleSendToMyob = useCallback(async () => {
+    if (!id) return;
+    setMyobSending(true);
+    setError(null);
+    try {
+      // ensure a customer link exists; for v1 we silently bind to the first
+      // MYOB customer if none has been picked yet. Phase 2 wires a picker UI.
+      const customers = await api.myobCustomers();
+      if (customers.length === 0) {
+        throw new Error("No MYOB customers available — connect MYOB first.");
+      }
+      await api.myobLinkProjectCustomer(id, customers[0].uid);
+      const invoice = await api.myobDraftInvoice(id);
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success,
+      ).catch(() => {});
+      setMyobInvoice({
+        invoice_number: invoice.invoice_number,
+        mode: invoice.mode,
+        total_incl_gst: invoice.total_incl_gst,
+      });
+    } catch (e) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
+        () => {},
+      );
+      setError(e instanceof Error ? e.message : "MYOB send failed");
+    } finally {
+      setMyobSending(false);
+    }
+  }, [api, id]);
 
   const handleRunOutput = useCallback(
     async (kind: OutputKind) => {
@@ -623,6 +660,53 @@ export default function ProjectDetailScreen() {
               running={outputRunning}
               onRun={handleRunOutput}
             />
+          )}
+
+          {audit?.passed && (
+            <View style={styles.myobCard}>
+              <Text style={styles.cardLabel}>MYOB</Text>
+              {myobInvoice ? (
+                <>
+                  <Text style={styles.myobSuccess}>
+                    Draft invoice {myobInvoice.invoice_number} created
+                  </Text>
+                  <Text style={styles.myobMeta}>
+                    {myobInvoice.mode === "live" ? "Live MYOB" : "Dev fallback"}
+                    {" · "}
+                    {new Intl.NumberFormat("en-AU", {
+                      style: "currency",
+                      currency: "AUD",
+                      maximumFractionDigits: 0,
+                    }).format(myobInvoice.total_incl_gst)}{" "}
+                    incl. GST
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.intakeBody}>
+                  Drafts a sales invoice on the linked MYOB company file from
+                  the Standard scenario costing. GST-coded, customer auto-
+                  linked.
+                </Text>
+              )}
+              <Pressable
+                style={[
+                  styles.primaryBtnLarge,
+                  myobSending && { opacity: 0.85 },
+                ]}
+                onPress={handleSendToMyob}
+                disabled={myobSending}
+                accessibilityRole="button"
+                accessibilityLabel="Send quote to MYOB"
+              >
+                <Text style={styles.primaryBtnText}>
+                  {myobSending
+                    ? "Sending…"
+                    : myobInvoice
+                      ? "Resend to MYOB"
+                      : "Send to MYOB →"}
+                </Text>
+              </Pressable>
+            </View>
           )}
 
           {latest?.transcript ? (
@@ -1731,6 +1815,26 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.body.fontSize,
     lineHeight: tokens.type.body.lineHeight,
     color: tokens.color.ink.tertiary,
+  },
+  myobCard: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[5],
+    padding: tokens.space[5],
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    gap: tokens.space[3],
+  },
+  myobSuccess: {
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: "600",
+    color: tokens.color.semantic.ok,
+  },
+  myobMeta: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.tertiary,
+    fontVariant: ["tabular-nums"],
   },
   errorText: {
     fontSize: tokens.type.body.fontSize,

@@ -5,16 +5,22 @@ import type {
   CreateProjectInput,
   CreateTaskInput,
   Design,
+  MyobCustomer,
+  MyobItem,
+  MyobSyncStatus,
   Output,
   OutputKind,
   Override,
   PlantPalette,
   Project,
+  ProjectMyobLink,
   RateCard,
   Recording,
+  SkuLink,
   Survey,
   Task,
   TaskStatus,
+  UpsertSkuLinkInput,
 } from "@construct/contracts";
 
 export type ApiClientOptions = {
@@ -174,6 +180,72 @@ export class ConstructClient {
     return this.request("POST", `/projects/${projectId}/dictation`, {
       transcript,
     });
+  }
+
+  async myobStatus(): Promise<MyobSyncStatus> {
+    return this.request("GET", "/myob/status");
+  }
+
+  async myobCustomers(): Promise<MyobCustomer[]> {
+    const res = await this.request<{ customers: MyobCustomer[] }>(
+      "GET",
+      "/myob/customers",
+    );
+    return res.customers;
+  }
+
+  async myobItems(): Promise<MyobItem[]> {
+    const res = await this.request<{ items: MyobItem[] }>(
+      "GET",
+      "/myob/items",
+    );
+    return res.items;
+  }
+
+  async myobSkuLinks(): Promise<SkuLink[]> {
+    const res = await this.request<{ links: SkuLink[] }>(
+      "GET",
+      "/myob/sku-links",
+    );
+    return res.links;
+  }
+
+  async myobUpsertSkuLink(input: UpsertSkuLinkInput): Promise<SkuLink> {
+    const res = await this.request<{ link: SkuLink }>(
+      "PUT",
+      "/myob/sku-links",
+      input,
+    );
+    return res.link;
+  }
+
+  async myobLinkProjectCustomer(
+    projectId: string,
+    myob_customer_uid: string,
+  ): Promise<ProjectMyobLink> {
+    const res = await this.request<{ link: ProjectMyobLink }>(
+      "POST",
+      `/myob/projects/${projectId}/customer`,
+      { myob_customer_uid },
+    );
+    return res.link;
+  }
+
+  async myobDraftInvoice(projectId: string): Promise<{
+    invoice_uid: string;
+    invoice_number: string;
+    mode: "live" | "dev_fallback";
+    total_incl_gst: number;
+  }> {
+    const res = await this.request<{
+      invoice: {
+        invoice_uid: string;
+        invoice_number: string;
+        mode: "live" | "dev_fallback";
+        total_incl_gst: number;
+      };
+    }>("POST", `/myob/projects/${projectId}/invoice`);
+    return res.invoice;
   }
 
   async listTasks(projectId: string): Promise<Task[]> {

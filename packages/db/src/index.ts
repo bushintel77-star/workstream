@@ -24,6 +24,9 @@ export type {
   Task,
   TaskStatus,
   CreateTaskInput,
+  SkuLink,
+  UpsertSkuLinkInput,
+  ProjectMyobLink,
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 
