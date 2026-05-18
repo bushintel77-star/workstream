@@ -14,6 +14,7 @@ const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 const DESIGN_MODEL = "claude-opus-4-7";
 const AUDIT_MODEL = "claude-sonnet-4-6";
+const VISION_MODEL = "claude-sonnet-4-6";
 
 export type { DesignProposal };
 
@@ -419,4 +420,150 @@ export async function runAudit(args: {
 
   const parsed = JSON.parse(cleaned) as { findings: AuditFinding[] };
   return parsed;
+}
+
+// ---------- Vision: photo → measurement -----------------------------------
+
+const VISION_SYSTEM_PROMPT = `You are a precise measurement extractor for site photographs from a landscape construction project. Given an image plus an optional reference scale ("the paver is 600mm wide", "the door is 820mm"), extract every clear dimension visible: lengths, widths, depths, areas, plant heights, gap distances. If no reference is given, prefer common known objects (standard brick = 230mm, AU pavers = typically 400-600mm, door frames = 820-870mm wide).
+
+Output strict JSON, no prose:
+{
+  "items": [
+    {
+      "description": "Short noun phrase (e.g. 'Boundary fence height', 'Existing paving run')",
+      "value": number,
+      "unit": "meters" | "centimeters" | "millimeters" | "square_meters" | "cubic_meters" | "unknown",
+      "confidence": number between 0 and 1,
+      "reference_used": "What you used to scale (e.g. 'standard 230mm brick course', 'user-supplied paver 600mm')"
+    }
+  ],
+  "notes": "One short sentence on caveats, perspective issues, or anything ambiguous"
+}
+
+Rules:
+- Confidence 0.85+ only when a clear reference is in frame.
+- Skip items where you can't pick a scale — return [] rather than guess.
+- For uncertain perspective (no orthogonal view), confidence ≤ 0.65.
+- Prefer SI base units; only use cm or mm when the user phrased it that way.`;
+
+export type PhotoMeasurementCallArgs = {
+  image_base64: string;
+  mime_type: "image/jpeg" | "image/png" | "image/webp";
+  user_hint?: string;
+};
+
+export type PhotoMeasurementCallResult = {
+  items: Array<{
+    description: string;
+    value: number;
+    unit:
+      | "meters"
+      | "centimeters"
+      | "millimeters"
+      | "square_meters"
+      | "cubic_meters"
+      | "unknown";
+    confidence: number;
+    reference_used: string | null;
+  }>;
+  notes: string | null;
+};
+
+function devFallbackMeasurement(): PhotoMeasurementCallResult {
+  return {
+    items: [
+      {
+        description: "Existing paving run",
+        value: 6.2,
+        unit: "meters",
+        confidence: 0.78,
+        reference_used: "Standard AU paver 600mm",
+      },
+      {
+        description: "Garden bed depth",
+        value: 1.4,
+        unit: "meters",
+        confidence: 0.71,
+        reference_used: "Standard AU paver 600mm",
+      },
+      {
+        description: "Boundary fence height",
+        value: 1.8,
+        unit: "meters",
+        confidence: 0.82,
+        reference_used: "Brick course 230mm",
+      },
+    ],
+    notes:
+      "Dev fallback — ANTHROPIC_API_KEY not configured. Real Claude Vision would extract from the actual image.",
+  };
+}
+
+export async function measurePhoto(
+  args: PhotoMeasurementCallArgs,
+): Promise<PhotoMeasurementCallResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return devFallbackMeasurement();
+  }
+
+  const userContent: Array<Record<string, unknown>> = [
+    {
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: args.mime_type,
+        data: args.image_base64,
+      },
+    },
+  ];
+  if (args.user_hint) {
+    userContent.push({
+      type: "text",
+      text: `Reference / hint: ${args.user_hint}`,
+    });
+  } else {
+    userContent.push({
+      type: "text",
+      text: "No reference provided. Use common objects in frame.",
+    });
+  }
+
+  const body = {
+    model: VISION_MODEL,
+    max_tokens: 1024,
+    system: [
+      {
+        type: "text",
+        text: VISION_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
+    messages: [{ role: "user", content: userContent }],
+  };
+
+  const res = await fetch(MESSAGES_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": ANTHROPIC_VERSION,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Anthropic vision failed: ${res.status} ${await res.text()}`,
+    );
+  }
+  const json = (await res.json()) as {
+    content: Array<{ type: string; text: string }>;
+  };
+  const textBlock = json.content.find((c) => c.type === "text");
+  if (!textBlock) throw new Error("Anthropic vision response had no text block");
+  const cleaned = textBlock.text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "");
+  return JSON.parse(cleaned) as PhotoMeasurementCallResult;
 }

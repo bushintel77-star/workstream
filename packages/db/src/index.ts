@@ -30,6 +30,8 @@ export type {
   CrewMember,
   CreateCrewMemberInput,
   UpdateCrewMemberInput,
+  PhotoMeasurement,
+  PhotoMeasurementInput,
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 

@@ -23,6 +23,7 @@ import dictationRoutes from './routes/dictation';
 import myobRoutes from './routes/myob';
 import crewRoutes from './routes/crew';
 import weatherRoutes from './routes/weather';
+import measurementRoutes from './routes/measurements';
 
 const server = Fastify({ logger: true });
 
@@ -75,6 +76,12 @@ async function start() {
   await server.register(myobRoutes, { prefix: '/myob' });
   await server.register(crewRoutes, { prefix: '/crew' });
   await server.register(weatherRoutes, { prefix: '/projects' });
+  await server.register(measurementRoutes, { prefix: '/projects' });
+  await server.register(fastifyStatic, {
+    root: path.join(process.cwd(), 'data', 'photos'),
+    prefix: '/photos/',
+    decorateReply: false,
+  });
   await server.register(settingsRoutes, { prefix: '/settings' });
 
   const port = Number(process.env.PORT) || 3001;

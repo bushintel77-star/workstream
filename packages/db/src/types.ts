@@ -22,6 +22,7 @@ import type {
   CrewMember,
   CreateCrewMemberInput,
   UpdateCrewMemberInput,
+  PhotoMeasurement,
 } from "@construct/contracts";
 
 export type {
@@ -48,7 +49,13 @@ export type {
   CrewMember,
   CreateCrewMemberInput,
   UpdateCrewMemberInput,
+  PhotoMeasurement,
 };
+
+export type PhotoMeasurementInput = Omit<
+  PhotoMeasurement,
+  "id" | "created_at"
+>;
 
 export type SurveyInput = Omit<Survey, "id" | "project_id">;
 export type DesignInput = Omit<Design, "id" | "project_id" | "version">;
@@ -162,5 +169,14 @@ export interface Store {
     patch: UpdateCrewMemberInput,
   ): Promise<CrewMember | null>;
   deleteCrewMember(ownerId: string, id: string): Promise<boolean>;
+  createPhotoMeasurement(
+    ownerId: string,
+    projectId: string,
+    input: PhotoMeasurementInput,
+  ): Promise<PhotoMeasurement>;
+  listPhotoMeasurements(
+    ownerId: string,
+    projectId: string,
+  ): Promise<PhotoMeasurement[]>;
   seedDefaults(): Promise<void>;
 }

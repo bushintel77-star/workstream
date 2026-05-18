@@ -6,6 +6,7 @@ import type {
   Design,
   Output,
   Override,
+  PhotoMeasurement,
   PlantPalette,
   Project,
   ProjectMyobLink,
@@ -40,6 +41,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _skuLinks: SkuLink[];
   _projectMyobLinks: ProjectMyobLink[];
   _crew: CrewMember[];
+  _photoMeasurements: PhotoMeasurement[];
   _loadSnapshot: () => boolean;
 } {
   const _projects: Project[] = [];
@@ -56,6 +58,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _skuLinks: SkuLink[] = [];
   const _projectMyobLinks: ProjectMyobLink[] = [];
   const _crew: CrewMember[] = [];
+  const _photoMeasurements: PhotoMeasurement[] = [];
   let seeded = false;
 
   const arrays = {
@@ -73,6 +76,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _skuLinks,
     _projectMyobLinks,
     _crew,
+    _photoMeasurements,
   };
 
   const flush = opts.persistPath
@@ -106,6 +110,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _skuLinks,
     _projectMyobLinks,
     _crew,
+    _photoMeasurements,
     _loadSnapshot: loadSnapshot,
 
     async seedDefaults() {
@@ -173,6 +178,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       removeWhere(_overrides, (o) => o.project_id === id);
       removeWhere(_tasks, (t) => t.project_id === id);
       removeWhere(_projectMyobLinks, (l) => l.project_id === id);
+      removeWhere(_photoMeasurements, (m) => m.project_id === id);
 
       flush();
       return true;
@@ -637,6 +643,35 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       if (patch.active !== undefined) member.active = patch.active;
       flush();
       return member;
+    },
+
+    async createPhotoMeasurement(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const row: PhotoMeasurement = {
+        id: crypto.randomUUID(),
+        ...input,
+        created_at: new Date().toISOString(),
+      };
+      _photoMeasurements.push(row);
+      flush();
+      return row;
+    },
+
+    async listPhotoMeasurements(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      return _photoMeasurements
+        .filter((m) => m.project_id === projectId)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime(),
+        );
     },
 
     async deleteCrewMember(ownerId, id) {
