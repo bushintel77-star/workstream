@@ -251,22 +251,42 @@ export default function ProjectDetailScreen() {
     setPipelineRunning(true);
     setError(null);
     try {
-      const result = await api.runPipeline(id);
-      if (!result.ok) {
-        const last = result.events[result.events.length - 1];
-        const reason =
-          last && "error" in last
-            ? `${last.stage}: ${last.error}`
-            : "Pipeline halted";
-        setError(reason);
-      }
-      await load();
+      await api.runPipeline(id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Pipeline failed");
-    } finally {
       setPipelineRunning(false);
+      return;
     }
-  }, [api, id, load]);
+
+    const start = Date.now();
+    const TIMEOUT_MS = 180_000;
+    const interval = setInterval(async () => {
+      try {
+        const [p, s, d, costs, a] = await Promise.all([
+          api.getProject(id),
+          api.getSurvey(id),
+          api.getDesign(id),
+          api.listCostings(id),
+          api.getAudit(id),
+        ]);
+        setProject(p);
+        setSurvey(s);
+        setDesign(d);
+        setCostings(costs);
+        setAudit(a);
+        if (a) {
+          clearInterval(interval);
+          setPipelineRunning(false);
+        } else if (Date.now() - start > TIMEOUT_MS) {
+          clearInterval(interval);
+          setPipelineRunning(false);
+          setError("Pipeline timed out before audit completed.");
+        }
+      } catch {
+        /* keep polling */
+      }
+    }, 1500);
+  }, [api, id]);
 
   const handleRunDesign = useCallback(async () => {
     if (!id) return;
@@ -421,6 +441,15 @@ export default function ProjectDetailScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
+          {pipelineRunning && (
+            <PipelineProgress
+              survey={survey != null}
+              design={design != null}
+              costings={costings.length > 0}
+              audit={audit != null}
+            />
+          )}
+
           {survey ? (
             <>
               <SurveyHero survey={survey} />
@@ -785,6 +814,77 @@ function GapRow({ gap }: { gap: GapFlag }) {
       <View style={{ flex: 1 }}>
         <Text style={styles.gapDescription}>{gap.description}</Text>
         <Text style={styles.gapFill}>→ {gap.proposed_fill}</Text>
+      </View>
+    </View>
+  );
+}
+
+function PipelineProgress({
+  survey,
+  design,
+  costings,
+  audit,
+}: {
+  survey: boolean;
+  design: boolean;
+  costings: boolean;
+  audit: boolean;
+}) {
+  const stages: Array<{ label: string; done: boolean }> = [
+    { label: "Survey", done: survey },
+    { label: "Design", done: design },
+    { label: "Costing", done: costings },
+    { label: "Audit", done: audit },
+  ];
+  const currentIdx = stages.findIndex((s) => !s.done);
+
+  return (
+    <View style={styles.pipelineBanner}>
+      <View style={styles.pipelineHeader}>
+        <View style={styles.pipelineLiveDot} />
+        <Text style={styles.pipelineKicker}>PIPELINE RUNNING</Text>
+      </View>
+      <View style={styles.pipelineStages}>
+        {stages.map((s, i) => {
+          const isCurrent = i === currentIdx;
+          return (
+            <View key={s.label} style={styles.pipelineStage}>
+              <View
+                style={[
+                  styles.stageDot,
+                  s.done && styles.stageDotDone,
+                  isCurrent && styles.stageDotActive,
+                ]}
+              >
+                {s.done ? (
+                  <Text style={styles.stageCheck}>✓</Text>
+                ) : isCurrent ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={tokens.color.ink.inverted}
+                  />
+                ) : null}
+              </View>
+              <Text
+                style={[
+                  styles.stageLabel,
+                  s.done && styles.stageLabelDone,
+                  isCurrent && styles.stageLabelActive,
+                ]}
+              >
+                {s.label}
+              </Text>
+              {i < stages.length - 1 && (
+                <View
+                  style={[
+                    styles.stageConnector,
+                    s.done && styles.stageConnectorDone,
+                  ]}
+                />
+              )}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -1262,6 +1362,89 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.space[3],
+  },
+  pipelineBanner: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[5],
+    padding: tokens.space[4],
+    backgroundColor: tokens.color.surface.inverted,
+    borderRadius: tokens.radius.lg,
+    gap: tokens.space[3],
+  },
+  pipelineHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.space[2],
+  },
+  pipelineLiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.accent.default,
+  },
+  pipelineKicker: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.inverted,
+  },
+  pipelineStages: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  pipelineStage: {
+    flex: 1,
+    alignItems: "center",
+    gap: tokens.space[2],
+    position: "relative",
+  },
+  stageDot: {
+    width: 28,
+    height: 28,
+    borderRadius: tokens.radius.pill,
+    borderWidth: 1,
+    borderColor: tokens.color.ink.tertiary,
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stageDotActive: {
+    borderColor: tokens.color.accent.default,
+    backgroundColor: tokens.color.accent.default,
+  },
+  stageDotDone: {
+    borderColor: tokens.color.semantic.ok,
+    backgroundColor: tokens.color.semantic.ok,
+  },
+  stageCheck: {
+    color: tokens.color.ink.inverted,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  stageLabel: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+  },
+  stageLabelActive: {
+    color: tokens.color.accent.soft,
+  },
+  stageLabelDone: {
+    color: tokens.color.ink.inverted,
+  },
+  stageConnector: {
+    position: "absolute",
+    top: 14,
+    left: "65%",
+    right: "-35%",
+    height: 1,
+    backgroundColor: tokens.color.ink.tertiary,
+    zIndex: -1,
+  },
+  stageConnectorDone: {
+    backgroundColor: tokens.color.semantic.ok,
   },
   kicker: {
     fontSize: tokens.type.micro.fontSize,

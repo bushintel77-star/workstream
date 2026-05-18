@@ -127,13 +127,7 @@ export class WalkthroughClient {
     return res.overrides;
   }
 
-  async runPipeline(projectId: string): Promise<{
-    events: Array<
-      | { stage: string; status: "running" | "ok" }
-      | { stage: string; status: "error"; error: string }
-    >;
-    ok: boolean;
-  }> {
+  async runPipeline(projectId: string): Promise<{ accepted: true }> {
     return this.request("POST", `/projects/${projectId}/pipeline`);
   }
 
