@@ -651,11 +651,36 @@ export default function ProjectDetailScreen() {
                 params: { projectId: project.id },
               })
             }
+            accessibilityRole="button"
+            accessibilityLabel={
+              latest ? "Record walkthrough again" : "Start walkthrough"
+            }
           >
             <Text style={styles.recordButtonText}>
               {latest ? "Record again" : "Start walkthrough"}
             </Text>
           </Pressable>
+
+          {survey && (
+            <Pressable
+              style={styles.buildModeButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/(app)/grid-soil",
+                  params: { projectId: project.id },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Open Grid and Soil build mode"
+            >
+              <Text style={styles.buildModeKicker}>BUILD MODE</Text>
+              <Text style={styles.buildModeTitle}>Grid &amp; Soil →</Text>
+              <Text style={styles.buildModeBody}>
+                On-site dictation. Tasks and material ledger update as you
+                speak.
+              </Text>
+            </Pressable>
+          )}
         </ScrollView>
       )}
 
@@ -1682,6 +1707,30 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
     color: tokens.color.ink.inverted,
+  },
+  buildModeButton: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[5],
+    padding: tokens.space[5],
+    borderRadius: tokens.radius.lg,
+    backgroundColor: tokens.color.surface.inverted,
+    gap: tokens.space[2],
+  },
+  buildModeKicker: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.accent.default,
+  },
+  buildModeTitle: {
+    fontSize: tokens.type.displayM.fontSize,
+    fontWeight: tokens.type.displayM.fontWeight,
+    color: tokens.color.ink.inverted,
+  },
+  buildModeBody: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.tertiary,
   },
   errorText: {
     fontSize: tokens.type.body.fontSize,
