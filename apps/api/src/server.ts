@@ -5,6 +5,7 @@ import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import authPlugin from './plugins/auth';
+import requestIdPlugin from './plugins/request-id';
 import storePlugin from './plugins/store';
 import healthRoutes from './routes/health';
 import projectRoutes from './routes/projects';
@@ -29,6 +30,7 @@ import aerialRoutes from './routes/aerial';
 import xeroRoutes from './routes/xero';
 import carbonRoutes from './routes/carbon';
 import portalRoutes from './routes/portal';
+import stripeWebhookRoutes from './routes/stripe-webhook';
 
 const server = Fastify({ logger: true });
 
@@ -63,6 +65,7 @@ async function start() {
     decorateReply: false,
   });
   await server.register(websocket);
+  await server.register(requestIdPlugin);
   await server.register(authPlugin);
   await server.register(storePlugin);
   await server.register(healthRoutes);
@@ -87,6 +90,7 @@ async function start() {
   await server.register(xeroRoutes, { prefix: '/xero' });
   await server.register(carbonRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);
+  await server.register(stripeWebhookRoutes);
   await server.register(fastifyStatic, {
     root: path.join(process.cwd(), 'data', 'photos'),
     prefix: '/photos/',

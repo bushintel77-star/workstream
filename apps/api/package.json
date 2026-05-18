@@ -21,7 +21,8 @@
     "zod": "^3.24.0",
     "@clerk/fastify": "^2.0.0",
     "@clerk/backend": "^1.21.0",
-    "fastify-plugin": "^5.0.0"
+    "fastify-plugin": "^5.0.0",
+    "marked": "^15.0.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

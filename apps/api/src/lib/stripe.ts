@@ -6,6 +6,7 @@
  * fallback returns a fake URL so the UI flow can be exercised zero-keys.
  */
 
+import { createHmac, timingSafeEqual } from "crypto";
 import type { Costing, Project } from "@construct/contracts";
 
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -13,6 +14,58 @@ const STRIPE_API = "https://api.stripe.com/v1";
 export function isStripeLive(): boolean {
   return !!process.env.STRIPE_SECRET_KEY;
 }
+
+/**
+ * Verify a Stripe webhook signature. Stripe sends a header:
+ *   Stripe-Signature: t=<timestamp>,v1=<sig>[,v1=<sig>...]
+ * The signed payload is `<t>.<rawBody>`, HMAC-SHA256 with the endpoint
+ * secret as the key. Tolerance defaults to 5 minutes.
+ */
+export function verifyStripeWebhook(
+  rawBody: string,
+  signatureHeader: string | undefined,
+  toleranceMs = 5 * 60 * 1000,
+): { ok: true } | { ok: false; reason: string } {
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      return { ok: false, reason: "STRIPE_WEBHOOK_SECRET not configured" };
+    }
+    return { ok: true };
+  }
+  if (!signatureHeader) return { ok: false, reason: "no signature header" };
+
+  const parts = Object.fromEntries(
+    signatureHeader
+      .split(",")
+      .map((p) => p.trim().split("="))
+      .filter((pair): pair is [string, string] => pair.length === 2),
+  );
+  const timestamp = parts.t;
+  const v1 = parts.v1;
+  if (!timestamp || !v1) return { ok: false, reason: "malformed signature" };
+
+  const ageMs = Date.now() - Number(timestamp) * 1000;
+  if (Number.isNaN(ageMs) || Math.abs(ageMs) > toleranceMs) {
+    return { ok: false, reason: "stale signature" };
+  }
+
+  const expected = createHmac("sha256", secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest("hex");
+  const a = Buffer.from(expected, "hex");
+  const b = Buffer.from(v1, "hex");
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    return { ok: false, reason: "signature mismatch" };
+  }
+  return { ok: true };
+}
+
+export type StripeEvent = {
+  id: string;
+  type: string;
+  data: { object: Record<string, unknown> };
+};
 
 export type DepositArgs = {
   project: Project;

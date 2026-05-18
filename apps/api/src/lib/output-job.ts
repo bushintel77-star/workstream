@@ -1,13 +1,20 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, rename, writeFile } from "fs/promises";
 import path from "path";
 import type { Store } from "@construct/db";
 import type { Output, OutputKind } from "@construct/contracts";
 import { generateForKind, type GeneratorArgs } from "./output-generators";
+import { renderHtml } from "./html-render";
 
 const OUTPUT_DIR = path.join(process.cwd(), "data", "outputs");
 
 export function outputPublicUrl(baseUrl: string, outputId: string): string {
-  return `${baseUrl}/outputs/${outputId}.md`;
+  return `${baseUrl}/outputs/${outputId}.html`;
+}
+
+async function atomicWrite(filePath: string, body: string): Promise<void> {
+  const tmp = `${filePath}.tmp`;
+  await writeFile(tmp, body, "utf8");
+  await rename(tmp, filePath);
 }
 
 const NEEDS_DESIGN: OutputKind[] = [
@@ -68,6 +75,7 @@ export async function runOutput(
     tasks,
   };
   const markdown = generateForKind(kind, args);
+  const html = renderHtml({ kind, project, markdown });
 
   await mkdir(OUTPUT_DIR, { recursive: true });
 
@@ -76,8 +84,13 @@ export async function runOutput(
     generated_at: new Date().toISOString(),
   });
 
-  const filePath = path.join(OUTPUT_DIR, `${output.id}.md`);
-  await writeFile(filePath, markdown, "utf8");
+  // Write both .md (machine-readable, integrations, ledger of record) and
+  // .html (client-facing, opens in any browser, prints to clean PDF).
+  // Atomic writes via .tmp + rename so a crash mid-write can't poison the
+  // file the next deploy serves.
+  const mdPath = path.join(OUTPUT_DIR, `${output.id}.md`);
+  const htmlPath = path.join(OUTPUT_DIR, `${output.id}.html`);
+  await Promise.all([atomicWrite(mdPath, markdown), atomicWrite(htmlPath, html)]);
 
   const uri = outputPublicUrl(baseUrl, output.id);
   const saved = await store.upsertOutput(ownerId, projectId, kind, {
