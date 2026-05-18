@@ -2,13 +2,23 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import type { Store } from "@construct/db";
 import type { Output, OutputKind } from "@construct/contracts";
-import { generateForKind } from "./output-generators";
+import { generateForKind, type GeneratorArgs } from "./output-generators";
 
 const OUTPUT_DIR = path.join(process.cwd(), "data", "outputs");
 
 export function outputPublicUrl(baseUrl: string, outputId: string): string {
   return `${baseUrl}/outputs/${outputId}.md`;
 }
+
+const NEEDS_DESIGN: OutputKind[] = [
+  "task_list",
+  "schedule",
+  "quote",
+  "scope",
+  "permit_stonnington_stormwater",
+  "permit_yarra_heritage",
+];
+const NEEDS_AUDIT_PASS: OutputKind[] = ["quote"];
 
 export async function runOutput(
   store: Store,
@@ -25,30 +35,39 @@ export async function runOutput(
   if (!project) throw new Error(`Project not found: ${projectId}`);
 
   const survey = await store.getSurvey(ownerId, projectId);
-  if (!survey) throw new Error("Survey is required before generating outputs.");
-
   const design = await store.getDesign(ownerId, projectId);
-  if (!design) throw new Error("Design is required before generating outputs.");
-
   const costings = await store.listCostings(ownerId, projectId);
-  if (costings.length === 0) {
-    throw new Error("Costing is required before generating outputs.");
-  }
-
   const audit = await store.getAudit(ownerId, projectId);
-  if (audit && !audit.passed) {
-    throw new Error(
-      "Audit has blocking findings. Resolve or override before generating outputs.",
-    );
+  const tasks = await store.listTasks(ownerId, projectId);
+
+  if (NEEDS_DESIGN.includes(kind)) {
+    if (!survey) {
+      throw new Error("Survey is required before generating outputs.");
+    }
+    if (!design) {
+      throw new Error("Design is required before generating outputs.");
+    }
+  }
+  if (NEEDS_AUDIT_PASS.includes(kind)) {
+    if (costings.length === 0) {
+      throw new Error("Costing is required before generating outputs.");
+    }
+    if (audit && !audit.passed) {
+      throw new Error(
+        "Audit has blocking findings. Resolve or override before generating outputs.",
+      );
+    }
   }
 
-  const markdown = generateForKind(kind, {
+  const args: GeneratorArgs = {
     project,
     survey,
     design,
     costings,
     audit,
-  });
+    tasks,
+  };
+  const markdown = generateForKind(kind, args);
 
   await mkdir(OUTPUT_DIR, { recursive: true });
 

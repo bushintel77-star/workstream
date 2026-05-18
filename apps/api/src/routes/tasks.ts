@@ -4,6 +4,7 @@ import {
   UpdateTaskStatusInputSchema,
 } from "@construct/contracts";
 import { requireAuth } from "../plugins/auth";
+import { notifyTaskAssignment } from "../lib/task-notify";
 
 export default async function taskRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -33,6 +34,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
           projectId,
           parsed.data,
         );
+        void notifyTaskAssignment(fastify.store, request.userId!, task);
         return reply.code(201).send({ task });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Create failed";

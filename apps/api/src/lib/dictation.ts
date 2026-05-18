@@ -3,6 +3,7 @@ import type {
   CreateTaskInput,
   TaskPriority,
 } from "@construct/contracts";
+import { notifyTaskAssignment } from "./task-notify";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -180,6 +181,7 @@ async function executeToolCalls(
         technical_specifications: specs,
         source: "dictation",
       });
+      void notifyTaskAssignment(store, ownerId, task);
       events.push({
         kind: "task_created",
         task_id: task.id,

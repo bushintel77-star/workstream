@@ -1058,12 +1058,32 @@ function PipelineProgress({
   );
 }
 
-const OUTPUT_ORDER: OutputKind[] = ["task_list", "schedule", "quote", "scope"];
+const OUTPUT_ORDER: OutputKind[] = [
+  "task_list",
+  "schedule",
+  "quote",
+  "scope",
+  "daily_site_report",
+  "permit_stonnington_stormwater",
+  "permit_yarra_heritage",
+];
 const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
   task_list: { title: "Task list", sub: "Site sequence for the crew" },
   schedule: { title: "Schedule", sub: "Indicative week-by-week plan" },
   quote: { title: "Client quote", sub: "Branded summary at Standard total" },
   scope: { title: "Scope (internal)", sub: "Design rationale, gaps, audit" },
+  daily_site_report: {
+    title: "Daily site report",
+    sub: "Today's new + open + completed tasks",
+  },
+  permit_stonnington_stormwater: {
+    title: "Stonnington stormwater permit",
+    sub: "Pre-filled draft application",
+  },
+  permit_yarra_heritage: {
+    title: "Yarra heritage application",
+    sub: "Pre-filled draft application",
+  },
   brochure: { title: "Brochure", sub: "Deferred to Phase 8" },
 };
 

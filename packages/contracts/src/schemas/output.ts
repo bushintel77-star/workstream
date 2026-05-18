@@ -6,6 +6,9 @@ export const OutputKindSchema = z.enum([
   "quote",
   "brochure",
   "scope",
+  "daily_site_report",
+  "permit_stonnington_stormwater",
+  "permit_yarra_heritage",
 ]);
 export type OutputKind = z.infer<typeof OutputKindSchema>;
 
