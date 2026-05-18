@@ -26,6 +26,27 @@ export class WalkthroughClient {
     return this.request("GET", "/healthz");
   }
 
+  async geocodeSearch(query: string): Promise<
+    Array<{
+      id: string;
+      place_name: string;
+      text: string;
+      lat: number;
+      lng: number;
+    }>
+  > {
+    const res = await this.request<{
+      suggestions: Array<{
+        id: string;
+        place_name: string;
+        text: string;
+        lat: number;
+        lng: number;
+      }>;
+    }>("GET", `/geocode/search?q=${encodeURIComponent(query)}`);
+    return res.suggestions;
+  }
+
   async listProjects(): Promise<Project[]> {
     const res = await this.request<{ projects: Project[] }>(
       "GET",

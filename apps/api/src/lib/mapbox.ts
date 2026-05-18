@@ -7,6 +7,50 @@ const DEV_FALLBACK_LATLNG = { lat: -37.8497, lng: 145.0189 };
 
 export type GeocodeResult = { lat: number; lng: number };
 
+export type GeocodeSuggestion = {
+  id: string;
+  place_name: string;
+  text: string;
+  lat: number;
+  lng: number;
+};
+
+export async function geocodeSearch(
+  query: string,
+  limit = 5,
+): Promise<GeocodeSuggestion[]> {
+  const token = process.env.MAPBOX_TOKEN;
+  if (!token) return [];
+  const trimmed = query.trim();
+  if (trimmed.length < 3) return [];
+
+  const url =
+    `${MAPBOX_GEOCODE_URL}/${encodeURIComponent(trimmed)}.json` +
+    `?access_token=${token}` +
+    `&country=AU&autocomplete=true&types=address` +
+    `&limit=${Math.min(Math.max(limit, 1), 10)}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Mapbox autocomplete failed: ${res.status} ${await res.text()}`);
+  }
+  const json = (await res.json()) as {
+    features: Array<{
+      id: string;
+      place_name: string;
+      text: string;
+      center: [number, number];
+    }>;
+  };
+  return json.features.map((f) => ({
+    id: f.id,
+    place_name: f.place_name,
+    text: f.text,
+    lng: f.center[0],
+    lat: f.center[1],
+  }));
+}
+
 export async function geocodeAddress(address: string): Promise<GeocodeResult> {
   const token = process.env.MAPBOX_TOKEN;
   if (!token) {
