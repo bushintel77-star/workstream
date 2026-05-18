@@ -32,6 +32,8 @@ jobs:
 
       - run: pnpm typecheck
 
+      - run: pnpm test
+
   build-api:
     name: build api docker image
     runs-on: ubuntu-latest
