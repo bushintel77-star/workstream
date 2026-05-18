@@ -1,8 +1,9 @@
-import { useAuth } from "@clerk/clerk-expo";
 import { Redirect, Stack } from "expo-router";
+import { tokens } from "@walkthrough/ui";
+import { useAppAuth } from "../../src/lib/auth";
 
 export default function AppLayout() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn } = useAppAuth();
 
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
@@ -16,8 +17,8 @@ export default function AppLayout() {
         options={{
           headerShown: true,
           title: "Project",
-          headerStyle: { backgroundColor: "#FAFAF7" },
-          headerTintColor: "#18181B",
+          headerStyle: { backgroundColor: tokens.color.surface.base },
+          headerTintColor: tokens.color.ink.primary,
         }}
       />
       <Stack.Screen
@@ -25,8 +26,8 @@ export default function AppLayout() {
         options={{
           headerShown: true,
           title: "New Project",
-          headerStyle: { backgroundColor: "#FAFAF7" },
-          headerTintColor: "#18181B",
+          headerStyle: { backgroundColor: tokens.color.surface.base },
+          headerTintColor: tokens.color.ink.primary,
         }}
       />
       <Stack.Screen

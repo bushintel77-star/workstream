@@ -1,14 +1,15 @@
-import { useAuth } from "@clerk/clerk-expo";
 import { Redirect } from "expo-router";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { tokens } from "@walkthrough/ui";
+import { useAppAuth } from "../src/lib/auth";
 
 export default function RootIndex() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded } = useAppAuth();
 
   if (!isLoaded) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#C2410C" />
+        <ActivityIndicator size="large" color={tokens.color.accent.default} />
       </View>
     );
   }
@@ -25,6 +26,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FAFAF7",
+    backgroundColor: tokens.color.surface.base,
   },
 });

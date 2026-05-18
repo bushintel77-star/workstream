@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAppAuth } from "../../../src/lib/auth";
 
 const ROWS = [
   { label: "Rate Card", href: "/(app)/settings/rate-card" as const },
@@ -9,7 +9,7 @@ const ROWS = [
 
 export default function SettingsIndexScreen() {
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { signOut } = useAppAuth();
 
   return (
     <View style={styles.container}>
