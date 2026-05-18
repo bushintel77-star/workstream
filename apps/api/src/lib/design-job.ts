@@ -34,7 +34,7 @@ export async function runDesign(
 
   const design = await store.upsertDesign(ownerId, projectId, {
     mode: detected.mode,
-    proposal: generation.proposal as unknown as Record<string, unknown>,
+    proposal: generation.proposal,
     gaps: generation.gaps,
     rationale: generation.rationale,
   });

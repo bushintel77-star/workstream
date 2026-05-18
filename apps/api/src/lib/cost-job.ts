@@ -10,22 +10,9 @@ import type {
   Costing,
   LineItem,
   RateCard,
+  Zone,
 } from "@walkthrough/contracts";
 import type { Store } from "@walkthrough/db";
-
-type ZonePlanting = { species?: string; common_name?: string; count: number; sku?: string };
-type ZoneHardscape = { item: string; qty: number; unit: string; sku?: string };
-type ZoneLighting = { fixture: string; count: number; sku?: string };
-type ZoneIrrigation = { item: string; qty: number; unit: string; sku?: string };
-
-type Zone = {
-  id: string;
-  name: string;
-  plantings: ZonePlanting[];
-  hardscape: ZoneHardscape[];
-  lighting: ZoneLighting[];
-  irrigation: ZoneIrrigation[];
-};
 
 const CONTINGENCY_SKU: Record<CostScenario, string> = {
   lean: "ALW-CONT-LEAN",
@@ -177,9 +164,7 @@ export async function runCosting(
 
   const rates = await store.listRateCard(ownerId);
   const rateIndex = rateCardIndex(rates);
-  const zones = ((design.proposal as { zones?: Zone[] }).zones ?? []).filter(
-    Boolean,
-  );
+  const zones = design.proposal.zones ?? [];
 
   const scenarios: CostScenario[] = ["lean", "standard", "buffer"];
   const costings: Costing[] = [];

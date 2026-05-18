@@ -5,6 +5,7 @@ import type {
   OutputKind,
   Project,
   Survey,
+  Zone,
 } from "@walkthrough/contracts";
 
 type Args = {
@@ -29,18 +30,8 @@ const aud2 = (n: number) =>
     minimumFractionDigits: 2,
   }).format(n);
 
-type ZoneProposal = {
-  id: string;
-  name: string;
-  treatment: string;
-  plantings: Array<{ species?: string; common_name?: string; count: number; sku?: string }>;
-  hardscape: Array<{ item: string; qty: number; unit: string; sku?: string }>;
-  lighting: Array<{ fixture: string; count: number; sku?: string }>;
-  irrigation: Array<{ item: string; qty: number; unit: string; sku?: string }>;
-};
-
-function zones(design: Design): ZoneProposal[] {
-  return ((design.proposal as { zones?: ZoneProposal[] }).zones ?? []).filter(Boolean);
+function zones(design: Design): Zone[] {
+  return design.proposal.zones ?? [];
 }
 
 export function buildTaskList(args: Args): string {

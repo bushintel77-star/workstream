@@ -3,6 +3,7 @@ import type {
   Costing,
   Design,
   DesignMode,
+  DesignProposal,
   GapFlag,
   PlantPalette,
   RateCard,
@@ -14,24 +15,7 @@ const ANTHROPIC_VERSION = "2023-06-01";
 const DESIGN_MODEL = "claude-opus-4-7";
 const AUDIT_MODEL = "claude-sonnet-4-6";
 
-export type DesignProposal = {
-  zones: Array<{
-    id: string;
-    name: string;
-    treatment: string;
-    plantings: Array<{
-      species: string;
-      common_name: string;
-      count: number;
-      form: string;
-      sku?: string;
-    }>;
-    hardscape: Array<{ item: string; qty: number; unit: string; sku?: string }>;
-    lighting: Array<{ fixture: string; count: number; sku?: string }>;
-    irrigation: Array<{ item: string; qty: number; unit: string; sku?: string }>;
-  }>;
-  estimated_complexity: "simple" | "standard" | "complex";
-};
+export type { DesignProposal };
 
 export type DesignGeneration = {
   proposal: DesignProposal;
