@@ -18,6 +18,8 @@ import outputRoutes from './routes/outputs';
 import overrideRoutes from './routes/overrides';
 import geocodeRoutes from './routes/geocode';
 import pipelineRoutes from './routes/pipeline';
+import taskRoutes from './routes/tasks';
+import dictationRoutes from './routes/dictation';
 
 const server = Fastify({ logger: true });
 
@@ -65,6 +67,8 @@ async function start() {
   await server.register(overrideRoutes, { prefix: '/projects' });
   await server.register(geocodeRoutes, { prefix: '/geocode' });
   await server.register(pipelineRoutes, { prefix: '/projects' });
+  await server.register(taskRoutes, { prefix: '/projects' });
+  await server.register(dictationRoutes, { prefix: '/projects' });
   await server.register(settingsRoutes, { prefix: '/settings' });
 
   const port = Number(process.env.PORT) || 3001;

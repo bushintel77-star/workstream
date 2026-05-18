@@ -3,6 +3,7 @@ import type {
   Costing,
   CreateOverrideInput,
   CreateProjectInput,
+  CreateTaskInput,
   Design,
   Output,
   OutputKind,
@@ -13,6 +14,8 @@ import type {
   RateCard,
   Recording,
   Survey,
+  Task,
+  TaskStatus,
 } from "@walkthrough/contracts";
 
 export type {
@@ -20,6 +23,7 @@ export type {
   Costing,
   CreateOverrideInput,
   CreateProjectInput,
+  CreateTaskInput,
   Design,
   Output,
   OutputKind,
@@ -30,6 +34,8 @@ export type {
   RateCard,
   Recording,
   Survey,
+  Task,
+  TaskStatus,
 };
 
 export type SurveyInput = Omit<Survey, "id" | "project_id">;
@@ -107,5 +113,16 @@ export interface Store {
     input: CreateOverrideInput,
   ): Promise<{ override: Override; audit: Audit }>;
   listOverrides(ownerId: string, projectId: string): Promise<Override[]>;
+  createTask(
+    ownerId: string,
+    projectId: string,
+    input: CreateTaskInput,
+  ): Promise<Task>;
+  listTasks(ownerId: string, projectId: string): Promise<Task[]>;
+  updateTaskStatus(
+    ownerId: string,
+    taskId: string,
+    status: TaskStatus,
+  ): Promise<Task | null>;
   seedDefaults(): Promise<void>;
 }

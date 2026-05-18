@@ -21,6 +21,9 @@ export type {
   OutputInput,
   Override,
   CreateOverrideInput,
+  Task,
+  TaskStatus,
+  CreateTaskInput,
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 

@@ -11,6 +11,7 @@ import type {
   RateCard,
   Recording,
   Survey,
+  Task,
 } from "./types";
 import type { Store } from "./types";
 import { loadSnapshotInto, makeFlusher } from "./persist";
@@ -32,6 +33,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _audits: Audit[];
   _outputs: Output[];
   _overrides: Override[];
+  _tasks: Task[];
   _loadSnapshot: () => boolean;
 } {
   const _projects: Project[] = [];
@@ -44,6 +46,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _audits: Audit[] = [];
   const _outputs: Output[] = [];
   const _overrides: Override[] = [];
+  const _tasks: Task[] = [];
   let seeded = false;
 
   const arrays = {
@@ -57,6 +60,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _audits,
     _outputs,
     _overrides,
+    _tasks,
   };
 
   const flush = opts.persistPath
@@ -86,6 +90,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _audits,
     _outputs,
     _overrides,
+    _tasks,
     _loadSnapshot: loadSnapshot,
 
     async seedDefaults() {
@@ -151,6 +156,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       removeWhere(_audits, (a) => designIds.includes(a.design_id));
       removeWhere(_outputs, (o) => o.project_id === id);
       removeWhere(_overrides, (o) => o.project_id === id);
+      removeWhere(_tasks, (t) => t.project_id === id);
 
       flush();
       return true;
@@ -478,6 +484,53 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
             new Date(b.created_at).getTime() -
             new Date(a.created_at).getTime(),
         );
+    },
+
+    async createTask(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const task: Task = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        title: input.title,
+        assignee_name: input.assignee_name ?? null,
+        priority: input.priority ?? "medium",
+        technical_specifications: input.technical_specifications ?? null,
+        status: "pending",
+        source: input.source ?? "manual",
+        created_at: new Date().toISOString(),
+      };
+      _tasks.push(task);
+      flush();
+      return task;
+    },
+
+    async listTasks(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId
+      );
+      if (!project) return [];
+      return _tasks
+        .filter((t) => t.project_id === projectId)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime(),
+        );
+    },
+
+    async updateTaskStatus(ownerId, taskId, status) {
+      const task = _tasks.find((t) => t.id === taskId);
+      if (!task) return null;
+      const project = _projects.find(
+        (p) => p.id === task.project_id && p.owner_id === ownerId
+      );
+      if (!project) return null;
+      task.status = status;
+      flush();
+      return task;
     },
   };
 }

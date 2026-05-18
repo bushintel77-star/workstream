@@ -3,6 +3,7 @@ import type {
   Costing,
   CreateOverrideInput,
   CreateProjectInput,
+  CreateTaskInput,
   Design,
   Output,
   OutputKind,
@@ -12,6 +13,8 @@ import type {
   RateCard,
   Recording,
   Survey,
+  Task,
+  TaskStatus,
 } from "@walkthrough/contracts";
 
 export type ApiClientOptions = {
@@ -142,6 +145,61 @@ export class WalkthroughClient {
       `/projects/${projectId}/overrides`
     );
     return res.overrides;
+  }
+
+  async runDictation(
+    projectId: string,
+    transcript: string,
+  ): Promise<{
+    reply: string;
+    events: Array<
+      | { kind: "task_created"; task_id: string; payload: CreateTaskInput }
+      | {
+          kind: "ledger_updated";
+          entry: {
+            id: string;
+            material_type: string;
+            measurement_type:
+              | "area_sqm"
+              | "volume_cum"
+              | "linear_meters"
+              | "unit_count";
+            quantity: number;
+            zone: string | null;
+            created_at: string;
+          };
+        }
+    >;
+  }> {
+    return this.request("POST", `/projects/${projectId}/dictation`, {
+      transcript,
+    });
+  }
+
+  async listTasks(projectId: string): Promise<Task[]> {
+    const res = await this.request<{ tasks: Task[] }>(
+      "GET",
+      `/projects/${projectId}/tasks`
+    );
+    return res.tasks;
+  }
+
+  async createTask(projectId: string, input: CreateTaskInput): Promise<Task> {
+    const res = await this.request<{ task: Task }>(
+      "POST",
+      `/projects/${projectId}/tasks`,
+      input,
+    );
+    return res.task;
+  }
+
+  async updateTaskStatus(taskId: string, status: TaskStatus): Promise<Task> {
+    const res = await this.request<{ task: Task }>(
+      "PATCH",
+      `/projects/tasks/${taskId}/status`,
+      { status },
+    );
+    return res.task;
   }
 
   async runPipeline(projectId: string): Promise<{ accepted: true }> {

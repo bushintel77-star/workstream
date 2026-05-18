@@ -7,3 +7,4 @@ export * from "./schemas/audit";
 export * from "./schemas/output";
 export * from "./schemas/rate-card";
 export * from "./schemas/plant-palette";
+export * from "./schemas/task";
