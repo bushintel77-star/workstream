@@ -27,6 +27,9 @@ export type {
   SkuLink,
   UpsertSkuLinkInput,
   ProjectMyobLink,
+  CrewMember,
+  CreateCrewMemberInput,
+  UpdateCrewMemberInput,
 } from "./types";
 export { SYSTEM_OWNER } from "./memory";
 

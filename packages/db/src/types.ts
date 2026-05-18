@@ -19,6 +19,9 @@ import type {
   Task,
   TaskStatus,
   UpsertSkuLinkInput,
+  CrewMember,
+  CreateCrewMemberInput,
+  UpdateCrewMemberInput,
 } from "@construct/contracts";
 
 export type {
@@ -42,6 +45,9 @@ export type {
   Task,
   TaskStatus,
   UpsertSkuLinkInput,
+  CrewMember,
+  CreateCrewMemberInput,
+  UpdateCrewMemberInput,
 };
 
 export type SurveyInput = Omit<Survey, "id" | "project_id">;
@@ -145,5 +151,16 @@ export interface Store {
     projectId: string,
     patch: Partial<Omit<ProjectMyobLink, "project_id">>,
   ): Promise<ProjectMyobLink>;
+  listCrew(ownerId: string): Promise<CrewMember[]>;
+  createCrewMember(
+    ownerId: string,
+    input: CreateCrewMemberInput,
+  ): Promise<CrewMember>;
+  updateCrewMember(
+    ownerId: string,
+    id: string,
+    patch: UpdateCrewMemberInput,
+  ): Promise<CrewMember | null>;
+  deleteCrewMember(ownerId: string, id: string): Promise<boolean>;
   seedDefaults(): Promise<void>;
 }

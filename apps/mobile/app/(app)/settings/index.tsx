@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useAppAuth } from "../../../src/lib/auth";
 
 const ROWS = [
+  { label: "Crew", href: "/(app)/settings/crew" as const },
   { label: "Rate Card", href: "/(app)/settings/rate-card" as const },
   { label: "Plant Palette", href: "/(app)/settings/plant-palette" as const },
   { label: "MYOB", href: "/(app)/settings/myob" as const },

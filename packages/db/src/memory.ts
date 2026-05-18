@@ -2,6 +2,7 @@ import type {
   Audit,
   Costing,
   CreateProjectInput,
+  CrewMember,
   Design,
   Output,
   Override,
@@ -38,6 +39,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _tasks: Task[];
   _skuLinks: SkuLink[];
   _projectMyobLinks: ProjectMyobLink[];
+  _crew: CrewMember[];
   _loadSnapshot: () => boolean;
 } {
   const _projects: Project[] = [];
@@ -53,6 +55,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _tasks: Task[] = [];
   const _skuLinks: SkuLink[] = [];
   const _projectMyobLinks: ProjectMyobLink[] = [];
+  const _crew: CrewMember[] = [];
   let seeded = false;
 
   const arrays = {
@@ -69,6 +72,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _tasks,
     _skuLinks,
     _projectMyobLinks,
+    _crew,
   };
 
   const flush = opts.persistPath
@@ -101,6 +105,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _tasks,
     _skuLinks,
     _projectMyobLinks,
+    _crew,
     _loadSnapshot: loadSnapshot,
 
     async seedDefaults() {
@@ -593,6 +598,55 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return (
         _projectMyobLinks.find((l) => l.project_id === projectId) ?? null
       );
+    },
+
+    async listCrew(ownerId) {
+      return _crew
+        .filter((c) => c.owner_id === ownerId)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    },
+
+    async createCrewMember(ownerId, input) {
+      const member: CrewMember = {
+        id: crypto.randomUUID(),
+        owner_id: ownerId,
+        name: input.name,
+        role: input.role ?? "tradesperson",
+        phone: input.phone ?? null,
+        email: input.email ?? null,
+        hourly_rate: input.hourly_rate ?? 0,
+        active: true,
+        created_at: new Date().toISOString(),
+      };
+      _crew.push(member);
+      flush();
+      return member;
+    },
+
+    async updateCrewMember(ownerId, id, patch) {
+      const member = _crew.find(
+        (c) => c.id === id && c.owner_id === ownerId,
+      );
+      if (!member) return null;
+      if (patch.name !== undefined) member.name = patch.name;
+      if (patch.role !== undefined) member.role = patch.role;
+      if (patch.phone !== undefined) member.phone = patch.phone ?? null;
+      if (patch.email !== undefined) member.email = patch.email ?? null;
+      if (patch.hourly_rate !== undefined)
+        member.hourly_rate = patch.hourly_rate;
+      if (patch.active !== undefined) member.active = patch.active;
+      flush();
+      return member;
+    },
+
+    async deleteCrewMember(ownerId, id) {
+      const idx = _crew.findIndex(
+        (c) => c.id === id && c.owner_id === ownerId,
+      );
+      if (idx < 0) return false;
+      _crew.splice(idx, 1);
+      flush();
+      return true;
     },
 
     async upsertProjectMyobLink(ownerId, projectId, patch) {

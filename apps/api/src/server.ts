@@ -21,6 +21,7 @@ import pipelineRoutes from './routes/pipeline';
 import taskRoutes from './routes/tasks';
 import dictationRoutes from './routes/dictation';
 import myobRoutes from './routes/myob';
+import crewRoutes from './routes/crew';
 
 const server = Fastify({ logger: true });
 
@@ -71,6 +72,7 @@ async function start() {
   await server.register(taskRoutes, { prefix: '/projects' });
   await server.register(dictationRoutes, { prefix: '/projects' });
   await server.register(myobRoutes, { prefix: '/myob' });
+  await server.register(crewRoutes, { prefix: '/crew' });
   await server.register(settingsRoutes, { prefix: '/settings' });
 
   const port = Number(process.env.PORT) || 3001;

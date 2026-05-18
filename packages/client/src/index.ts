@@ -1,9 +1,11 @@
 import type {
   Audit,
   Costing,
+  CreateCrewMemberInput,
   CreateOverrideInput,
   CreateProjectInput,
   CreateTaskInput,
+  CrewMember,
   Design,
   MyobCustomer,
   MyobItem,
@@ -20,6 +22,7 @@ import type {
   Survey,
   Task,
   TaskStatus,
+  UpdateCrewMemberInput,
   UpsertSkuLinkInput,
 } from "@construct/contracts";
 
@@ -180,6 +183,47 @@ export class ConstructClient {
     return this.request("POST", `/projects/${projectId}/dictation`, {
       transcript,
     });
+  }
+
+  async listCrew(): Promise<CrewMember[]> {
+    const res = await this.request<{ crew: CrewMember[] }>("GET", "/crew");
+    return res.crew;
+  }
+
+  async createCrewMember(input: CreateCrewMemberInput): Promise<CrewMember> {
+    const res = await this.request<{ member: CrewMember }>(
+      "POST",
+      "/crew",
+      input,
+    );
+    return res.member;
+  }
+
+  async updateCrewMember(
+    id: string,
+    patch: UpdateCrewMemberInput,
+  ): Promise<CrewMember> {
+    const res = await this.request<{ member: CrewMember }>(
+      "PATCH",
+      `/crew/${id}`,
+      patch,
+    );
+    return res.member;
+  }
+
+  async deleteCrewMember(id: string): Promise<void> {
+    const headers: Record<string, string> = {};
+    if (this.options.getToken) {
+      const token = await this.options.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch(`${this.options.baseUrl}/crew/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok && res.status !== 204) {
+      throw new Error(`DELETE /crew/${id} failed: ${res.status}`);
+    }
   }
 
   async myobStatus(): Promise<MyobSyncStatus> {

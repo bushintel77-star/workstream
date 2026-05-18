@@ -9,3 +9,4 @@ export * from "./schemas/rate-card";
 export * from "./schemas/plant-palette";
 export * from "./schemas/task";
 export * from "./schemas/myob";
+export * from "./schemas/crew";
