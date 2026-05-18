@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useSignIn } from "@clerk/clerk-expo";
+import { tokens } from "@walkthrough/ui";
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -40,6 +41,7 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <Text style={styles.kicker}>WALKTHROUGH</Text>
         <Text style={styles.title}>Sign in</Text>
 
         <View style={styles.field}>
@@ -49,7 +51,7 @@ export default function SignInScreen() {
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
-            placeholderTextColor="#A1A1AA"
+            placeholderTextColor={tokens.color.ink.tertiary}
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
@@ -63,20 +65,16 @@ export default function SignInScreen() {
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor="#A1A1AA"
+            placeholderTextColor={tokens.color.ink.tertiary}
             secureTextEntry
           />
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Pressable
-          style={styles.button}
-          onPress={onSignIn}
-          disabled={loading}
-        >
+        <Pressable style={styles.button} onPress={onSignIn} disabled={loading}>
           {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={tokens.color.ink.inverted} />
           ) : (
             <Text style={styles.buttonText}>Sign in</Text>
           )}
@@ -84,7 +82,8 @@ export default function SignInScreen() {
 
         <Pressable onPress={() => router.push("/(auth)/sign-up")}>
           <Text style={styles.link}>
-            Don't have an account? <Text style={styles.linkAccent}>Sign up</Text>
+            Don't have an account?{" "}
+            <Text style={styles.linkAccent}>Sign up</Text>
           </Text>
         </Pressable>
       </View>
@@ -95,64 +94,69 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFAF7",
+    backgroundColor: tokens.color.surface.base,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 48,
+    paddingHorizontal: tokens.space[5],
+    paddingTop: tokens.space[7],
+    gap: tokens.space[3],
+  },
+  kicker: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#18181B",
-    marginBottom: 32,
+    fontSize: tokens.type.displayM.fontSize,
+    fontWeight: tokens.type.displayM.fontWeight,
+    color: tokens.color.ink.primary,
+    marginBottom: tokens.space[5],
   },
   field: {
-    marginBottom: 20,
+    gap: tokens.space[2],
   },
   label: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#52525B",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.secondary,
   },
   input: {
     height: 48,
-    borderRadius: 4,
-    backgroundColor: "#F4F4F1",
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: "#18181B",
+    backgroundColor: tokens.color.surface.sunken,
+    paddingHorizontal: tokens.space[4],
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.color.ink.primary,
+    borderBottomWidth: 2,
+    borderBottomColor: tokens.color.ink.primary,
   },
   error: {
-    fontSize: 13,
-    color: "#B91C1C",
-    marginBottom: 12,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.semantic.block,
   },
   button: {
     height: 48,
-    borderRadius: 8,
-    backgroundColor: "#C2410C",
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.color.accent.default,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 24,
+    marginTop: tokens.space[3],
   },
   buttonText: {
-    fontSize: 15,
+    fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: tokens.color.ink.inverted,
   },
   link: {
-    fontSize: 13,
-    color: "#52525B",
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.secondary,
     textAlign: "center",
-    marginTop: 16,
+    marginTop: tokens.space[4],
   },
   linkAccent: {
-    color: "#C2410C",
-    fontWeight: "500",
+    color: tokens.color.accent.default,
+    fontWeight: "600",
   },
 });
