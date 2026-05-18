@@ -11,3 +11,4 @@ export * from "./schemas/task";
 export * from "./schemas/myob";
 export * from "./schemas/crew";
 export * from "./schemas/photo-measurement";
+export * from "./schemas/xero";

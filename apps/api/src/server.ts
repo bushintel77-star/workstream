@@ -26,6 +26,8 @@ import weatherRoutes from './routes/weather';
 import measurementRoutes from './routes/measurements';
 import supplierRoutes from './routes/suppliers';
 import aerialRoutes from './routes/aerial';
+import xeroRoutes from './routes/xero';
+import carbonRoutes from './routes/carbon';
 
 const server = Fastify({ logger: true });
 
@@ -81,6 +83,8 @@ async function start() {
   await server.register(measurementRoutes, { prefix: '/projects' });
   await server.register(supplierRoutes, { prefix: '/suppliers' });
   await server.register(aerialRoutes, { prefix: '/projects' });
+  await server.register(xeroRoutes, { prefix: '/xero' });
+  await server.register(carbonRoutes, { prefix: '/projects' });
   await server.register(fastifyStatic, {
     root: path.join(process.cwd(), 'data', 'photos'),
     prefix: '/photos/',

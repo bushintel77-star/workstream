@@ -8,6 +8,7 @@ import type {
   Task,
   Zone,
 } from "@construct/contracts";
+import { totalEmbodiedCarbon } from "@construct/domain";
 
 export type GeneratorArgs = {
   project: Project;
@@ -163,6 +164,30 @@ export function buildQuote(args: Args): string {
   for (const c of args.costings) {
     lines.push(`- ${c.scenario.toUpperCase()} — ${aud0(c.total)} incl. GST`);
   }
+  lines.push("");
+  lines.push("## Embodied carbon (estimate)");
+  lines.push("");
+  const carbon = totalEmbodiedCarbon(
+    standard.line_items.map((li) => ({ sku: li.sku, qty: li.qty })),
+  );
+  lines.push(`- Net: ${carbon.net_kg_co2e} kg CO₂e`);
+  if (carbon.emitting_kg_co2e > 0) {
+    lines.push(`- Emitting materials: +${carbon.emitting_kg_co2e} kg CO₂e`);
+  }
+  if (carbon.sequestering_kg_co2e < 0) {
+    lines.push(
+      `- Sequestering (planting + compost): ${carbon.sequestering_kg_co2e} kg CO₂e`,
+    );
+  }
+  if (carbon.unknown_skus.length > 0) {
+    lines.push(
+      `- Coefficients pending for: ${carbon.unknown_skus.slice(0, 6).join(", ")}${carbon.unknown_skus.length > 6 ? "…" : ""}`,
+    );
+  }
+  lines.push("");
+  lines.push(
+    "Estimates use the EPiC database (epicdatabase.com.au) for AU construction materials and ICE v3 where local data is missing. Plant biogenic uptake is a lifecycle stub — replace with EPDs when supplier data is available.",
+  );
   lines.push("");
   lines.push("Quote valid 30 days. Pricing reflects rate card effective on project creation.");
   return lines.join("\n");
