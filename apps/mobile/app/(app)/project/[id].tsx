@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, Modal, TextInput } from "react-native";
+import Svg, { Polygon as SvgPolygon } from "react-native-svg";
 import type {
   Audit,
   AuditFinding,
@@ -64,44 +65,58 @@ function SurveyHero({ survey }: { survey: Survey }) {
   const maxLng = Math.max(...lngs);
   const minLat = Math.min(...lats);
   const maxLat = Math.max(...lats);
-  const lotDegW = maxLng - minLng;
-  const lotDegH = maxLat - minLat;
-
-  const houseLngs = houseCoords.map((c) => c[0]);
-  const houseLats = houseCoords.map((c) => c[1]);
-  const houseMinLng = Math.min(...houseLngs);
-  const houseMaxLng = Math.max(...houseLngs);
-  const houseMinLat = Math.min(...houseLats);
-  const houseMaxLat = Math.max(...houseLats);
+  const lotDegW = Math.max(maxLng - minLng, 1e-9);
+  const lotDegH = Math.max(maxLat - minLat, 1e-9);
 
   const lotAspect = lotDegW / lotDegH;
-
   const innerArea = 1 - 2 * SURVEY_INSET_PCT;
-  let lotWidthPct = innerArea;
-  let lotHeightPct = lotWidthPct / lotAspect;
-  if (lotHeightPct > innerArea) {
+  let lotWidthPct: number;
+  let lotHeightPct: number;
+  if (lotAspect >= 1) {
+    lotWidthPct = innerArea;
+    lotHeightPct = innerArea / lotAspect;
+  } else {
     lotHeightPct = innerArea;
-    lotWidthPct = lotHeightPct * lotAspect;
+    lotWidthPct = innerArea * lotAspect;
   }
   const lotLeftPct = (1 - lotWidthPct) / 2;
   const lotTopPct = (1 - lotHeightPct) / 2;
 
-  const housePct = (lng: number, lat: number) => {
-    const xPct = (lng - minLng) / lotDegW;
-    const yPct = (maxLat - lat) / lotDegH;
-    return { xPct, yPct };
+  const project = (lng: number, lat: number): [number, number] => {
+    const xN = (lng - minLng) / lotDegW;
+    const yN = (maxLat - lat) / lotDegH;
+    return [
+      (lotLeftPct + xN * lotWidthPct) * 100,
+      (lotTopPct + yN * lotHeightPct) * 100,
+    ];
   };
-  const houseTL = housePct(houseMinLng, houseMaxLat);
-  const houseBR = housePct(houseMaxLng, houseMinLat);
-  const houseLeftPct = lotLeftPct + houseTL.xPct * lotWidthPct;
-  const houseTopPct = lotTopPct + houseTL.yPct * lotHeightPct;
-  const houseWidthPct = (houseBR.xPct - houseTL.xPct) * lotWidthPct;
-  const houseHeightPct = (houseBR.yPct - houseTL.yPct) * lotHeightPct;
 
-  const front = survey.measurements.find((m) => m.edge_id === "front");
-  const back = survey.measurements.find((m) => m.edge_id === "back");
-  const east = survey.measurements.find((m) => m.edge_id === "east");
-  const west = survey.measurements.find((m) => m.edge_id === "west");
+  const lotPoints = lotCoords
+    .map(([lng, lat]) => project(lng, lat).join(","))
+    .join(" ");
+  const housePoints = houseCoords
+    .map(([lng, lat]) => project(lng, lat).join(","))
+    .join(" ");
+
+  const edgeMidpoints: Array<{ x: number; y: number; length_m: number }> = [];
+  const closedLot =
+    lotCoords.length >= 2 &&
+    lotCoords[0][0] === lotCoords[lotCoords.length - 1][0] &&
+    lotCoords[0][1] === lotCoords[lotCoords.length - 1][1];
+  const lotEdges = closedLot ? lotCoords.slice(0, -1) : lotCoords;
+  for (let i = 0; i < lotEdges.length; i++) {
+    const a = lotEdges[i];
+    const b = lotEdges[(i + 1) % lotEdges.length];
+    const [ax, ay] = project(a[0], a[1]);
+    const [bx, by] = project(b[0], b[1]);
+    const measurement = survey.measurements[i];
+    if (!measurement) continue;
+    edgeMidpoints.push({
+      x: (ax + bx) / 2,
+      y: (ay + by) / 2,
+      length_m: measurement.length_m,
+    });
+  }
 
   return (
     <View style={styles.heroAerial}>
@@ -121,54 +136,40 @@ function SurveyHero({ survey }: { survey: Survey }) {
 
       <View style={styles.heroScrim} pointerEvents="none" />
 
-      <View
-        style={[
-          styles.lotOverlay,
-          {
-            left: `${lotLeftPct * 100}%`,
-            top: `${lotTopPct * 100}%`,
-            width: `${lotWidthPct * 100}%`,
-            height: `${lotHeightPct * 100}%`,
-          },
-        ]}
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       >
-        <View style={StyleSheet.absoluteFill}>
-          <View style={[StyleSheet.absoluteFill, styles.gardenFill]} />
-          <View
-            style={[
-              styles.houseSilhouette,
-              {
-                left: `${(houseLeftPct - lotLeftPct) / lotWidthPct * 100}%`,
-                top: `${(houseTopPct - lotTopPct) / lotHeightPct * 100}%`,
-                width: `${(houseWidthPct / lotWidthPct) * 100}%`,
-                height: `${(houseHeightPct / lotHeightPct) * 100}%`,
-              },
-            ]}
-          />
-        </View>
-      </View>
+        <SvgPolygon
+          points={lotPoints}
+          fill="rgba(194,65,12,0.12)"
+          stroke={tokens.color.line.ink}
+          strokeWidth={0.6}
+          strokeLinejoin="miter"
+          vectorEffect="non-scaling-stroke"
+        />
+        <SvgPolygon
+          points={housePoints}
+          fill="rgba(24,24,27,0.78)"
+        />
+      </Svg>
 
-      {front && (
-        <Text style={[styles.edgeLabel, styles.edgeLabelBottom]}>
-          {metresFormat(front.length_m)} m
-        </Text>
-      )}
-      {back && (
-        <Text style={[styles.edgeLabel, styles.edgeLabelTop]}>
-          {metresFormat(back.length_m)} m
-        </Text>
-      )}
-      {east && (
-        <Text style={[styles.edgeLabel, styles.edgeLabelRight]}>
-          {metresFormat(east.length_m)} m
-        </Text>
-      )}
-      {west && (
-        <Text style={[styles.edgeLabel, styles.edgeLabelLeft]}>
-          {metresFormat(west.length_m)} m
-        </Text>
-      )}
+      {edgeMidpoints.map((m, i) => (
+        <View
+          key={i}
+          style={[
+            styles.edgeLabelHost,
+            { left: `${m.x}%`, top: `${m.y}%` },
+          ]}
+          pointerEvents="none"
+        >
+          <Text style={styles.edgeLabel}>{metresFormat(m.length_m)} m</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -1179,50 +1180,19 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(24,24,27,0.18)",
   },
-  lotOverlay: {
+  edgeLabelHost: {
     position: "absolute",
-    borderColor: tokens.color.line.ink,
-    borderWidth: 2,
-  },
-  gardenFill: {
-    backgroundColor: "rgba(194,65,12,0.12)",
-  },
-  houseSilhouette: {
-    position: "absolute",
-    backgroundColor: "rgba(24,24,27,0.72)",
+    transform: [{ translateX: -22 }, { translateY: -10 }],
   },
   edgeLabel: {
-    position: "absolute",
     color: tokens.color.ink.inverted,
     fontSize: tokens.type.bodyMono.fontSize,
     fontWeight: tokens.type.bodyMono.fontWeight,
     fontVariant: ["tabular-nums"],
-    backgroundColor: "rgba(24,24,27,0.78)",
+    backgroundColor: "rgba(24,24,27,0.82)",
     paddingHorizontal: tokens.space[2],
     paddingVertical: 2,
     borderRadius: tokens.radius.sm,
-  },
-  edgeLabelTop: {
-    top: tokens.space[3],
-    alignSelf: "center",
-    left: "50%",
-    transform: [{ translateX: -32 }],
-  },
-  edgeLabelBottom: {
-    bottom: tokens.space[3],
-    alignSelf: "center",
-    left: "50%",
-    transform: [{ translateX: -32 }],
-  },
-  edgeLabelLeft: {
-    left: tokens.space[3],
-    top: "50%",
-    transform: [{ translateY: -12 }],
-  },
-  edgeLabelRight: {
-    right: tokens.space[3],
-    top: "50%",
-    transform: [{ translateY: -12 }],
   },
   summaryCard: {
     marginHorizontal: tokens.space[5],
