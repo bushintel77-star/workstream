@@ -141,6 +141,8 @@ export default function NewProjectScreen() {
                   pressed && { backgroundColor: tokens.color.surface.sunken },
                 ]}
                 onPress={() => pickSuggestion(s)}
+                accessibilityRole="button"
+                accessibilityLabel={s.place_name}
               >
                 <Text style={styles.suggestionPrimary}>{s.text}</Text>
                 <Text style={styles.suggestionSecondary} numberOfLines={1}>
@@ -169,6 +171,9 @@ export default function NewProjectScreen() {
           style={[styles.button, !canContinue && styles.buttonDisabled]}
           onPress={handleContinue}
           disabled={!canContinue}
+          accessibilityRole="button"
+          accessibilityLabel="Create project"
+          accessibilityState={{ disabled: !canContinue, busy: submitting }}
         >
           {submitting ? (
             <ActivityIndicator color={tokens.color.ink.inverted} />

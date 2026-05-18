@@ -1,7 +1,9 @@
 import { Audio } from "expo-av";
+import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   Alert,
   Animated,
@@ -46,6 +48,7 @@ export default function RecordingScreen() {
   );
   const [currentLevel, setCurrentLevel] = useState(0);
   const [ambientWarn, setAmbientWarn] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -61,13 +64,19 @@ export default function RecordingScreen() {
       allowsRecordingIOS: true,
       playsInSilentModeIOS: true,
     });
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const sub = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduceMotion,
+    );
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      sub.remove();
     };
   }, []);
 
   useEffect(() => {
-    if (!isRecording || isPaused) {
+    if (!isRecording || isPaused || reduceMotion) {
       dotOpacity.setValue(1);
       return;
     }
@@ -89,7 +98,7 @@ export default function RecordingScreen() {
     );
     pulse.start();
     return () => pulse.stop();
-  }, [isRecording, isPaused, dotOpacity]);
+  }, [isRecording, isPaused, dotOpacity, reduceMotion]);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -129,6 +138,7 @@ export default function RecordingScreen() {
 
   const startRecording = useCallback(async () => {
     if (!permission || !projectId) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     try {
       const recordingOptions: Audio.RecordingOptions = {
         ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
@@ -175,6 +185,9 @@ export default function RecordingScreen() {
     const rec = recordingRef.current;
     if (!rec || !projectId) return;
 
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+      () => {},
+    );
     stopTimer();
     setUploading(true);
     try {

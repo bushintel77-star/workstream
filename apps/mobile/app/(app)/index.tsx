@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 import type { Project, ProjectStatus } from "@walkthrough/contracts";
@@ -76,6 +77,7 @@ export default function HomeScreen() {
 
   const confirmDelete = useCallback(
     (project: Project) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       Alert.alert(
         "Delete project?",
         `${project.address}\n\nAll recordings, survey, design, costing, audit and outputs for this project will be removed. Cannot be undone.`,
@@ -85,6 +87,9 @@ export default function HomeScreen() {
             text: "Delete",
             style: "destructive",
             onPress: async () => {
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Warning,
+              ).catch(() => {});
               try {
                 await api.deleteProject(project.id);
                 setProjects((prev) =>
@@ -112,7 +117,12 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>
             {loading ? "—" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}${projects.length > 0 ? "  ·  long-press to delete" : ""}`}
           </Text>
-          <Pressable onPress={() => router.push("/(app)/settings")}>
+          <Pressable
+            onPress={() => router.push("/(app)/settings")}
+            accessibilityRole="link"
+            accessibilityLabel="Open settings"
+            hitSlop={12}
+          >
             <Text style={styles.settingsLink}>Settings</Text>
           </Pressable>
         </View>
@@ -154,6 +164,9 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/(app)/project/${item.id}`)}
                 onLongPress={() => confirmDelete(item)}
                 delayLongPress={350}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.address}, ${STATUS_TONE[item.status].label}`}
+                accessibilityHint="Double tap to open, long press to delete"
               >
                 <Text style={styles.cardAddress} numberOfLines={2}>
                   {item.address}
@@ -182,6 +195,8 @@ export default function HomeScreen() {
       <Pressable
         style={styles.fab}
         onPress={() => router.push("/(app)/new-project")}
+        accessibilityRole="button"
+        accessibilityLabel="New project"
       >
         <Text style={styles.fabIcon}>+</Text>
       </Pressable>

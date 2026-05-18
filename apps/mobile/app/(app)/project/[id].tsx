@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, Modal, TextInput } from "react-native";
+import * as Haptics from "expo-haptics";
 import Svg, { Polygon as SvgPolygon } from "react-native-svg";
 import type {
   Audit,
@@ -196,6 +197,11 @@ export default function ProjectDetailScreen() {
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideSaving, setOverrideSaving] = useState(false);
   const [pipelineRunning, setPipelineRunning] = useState(false);
+  const [pipelineSlow, setPipelineSlow] = useState(false);
+  const pipelinePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pipelineSlowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -246,9 +252,23 @@ export default function ProjectDetailScreen() {
     }
   }, [api, id]);
 
+  const stopPipelinePolling = useCallback(() => {
+    if (pipelinePollRef.current) {
+      clearInterval(pipelinePollRef.current);
+      pipelinePollRef.current = null;
+    }
+    if (pipelineSlowTimerRef.current) {
+      clearTimeout(pipelineSlowTimerRef.current);
+      pipelineSlowTimerRef.current = null;
+    }
+  }, []);
+
   const handleRunPipeline = useCallback(async () => {
     if (!id) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    stopPipelinePolling();
     setPipelineRunning(true);
+    setPipelineSlow(false);
     setError(null);
     try {
       await api.runPipeline(id);
@@ -260,7 +280,12 @@ export default function ProjectDetailScreen() {
 
     const start = Date.now();
     const TIMEOUT_MS = 180_000;
-    const interval = setInterval(async () => {
+    const SLOW_MS = 90_000;
+    pipelineSlowTimerRef.current = setTimeout(() => {
+      setPipelineSlow(true);
+    }, SLOW_MS);
+
+    pipelinePollRef.current = setInterval(async () => {
       try {
         const [p, s, d, costs, a] = await Promise.all([
           api.getProject(id),
@@ -275,18 +300,24 @@ export default function ProjectDetailScreen() {
         setCostings(costs);
         setAudit(a);
         if (a) {
-          clearInterval(interval);
+          stopPipelinePolling();
           setPipelineRunning(false);
+          setPipelineSlow(false);
         } else if (Date.now() - start > TIMEOUT_MS) {
-          clearInterval(interval);
+          stopPipelinePolling();
           setPipelineRunning(false);
-          setError("Pipeline timed out before audit completed.");
+          setPipelineSlow(false);
+          setError(
+            "Pipeline timed out before audit completed. Tap Retry to try again.",
+          );
         }
       } catch {
         /* keep polling */
       }
     }, 1500);
-  }, [api, id]);
+  }, [api, id, stopPipelinePolling]);
+
+  useEffect(() => stopPipelinePolling, [stopPipelinePolling]);
 
   const handleRunDesign = useCallback(async () => {
     if (!id) return;
@@ -359,10 +390,16 @@ export default function ProjectDetailScreen() {
         finding_index: overrideTarget,
         reason: overrideReason.trim(),
       });
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success,
+      ).catch(() => {});
       setOverrides((prev) => [result.override, ...prev]);
       setAudit(result.audit);
       closeOverride();
     } catch (e) {
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Error,
+      ).catch(() => {});
       setError(e instanceof Error ? e.message : "Override failed");
     } finally {
       setOverrideSaving(false);
@@ -432,21 +469,40 @@ export default function ProjectDetailScreen() {
         <View style={styles.center}>
           <ActivityIndicator size="large" color={tokens.color.accent.default} />
         </View>
-      ) : error || !project ? (
+      ) : !project ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>{error ?? "Not found"}</Text>
-          <Pressable onPress={() => router.back()}>
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.link}>Go back</Text>
           </Pressable>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
+          {error && (
+            <View style={styles.inlineErrorBanner}>
+              <Text style={styles.inlineErrorText}>{error}</Text>
+              <Pressable
+                onPress={handleRunPipeline}
+                style={styles.inlineErrorAction}
+                accessibilityRole="button"
+                accessibilityLabel="Retry pipeline"
+              >
+                <Text style={styles.inlineErrorActionText}>Retry</Text>
+              </Pressable>
+            </View>
+          )}
+
           {pipelineRunning && (
             <PipelineProgress
               survey={survey != null}
               design={design != null}
               costings={costings.length > 0}
               audit={audit != null}
+              slow={pipelineSlow}
             />
           )}
 
@@ -501,6 +557,9 @@ export default function ProjectDetailScreen() {
                 ]}
                 onPress={handleRunPipeline}
                 disabled={pipelineRunning || surveyRunning}
+                accessibilityRole="button"
+                accessibilityLabel="Run full pipeline"
+                accessibilityState={{ busy: pipelineRunning }}
               >
                 {pipelineRunning ? (
                   <View style={styles.runningRow}>
@@ -519,6 +578,9 @@ export default function ProjectDetailScreen() {
                 style={styles.secondaryBtnFull}
                 onPress={handleRunSurvey}
                 disabled={surveyRunning || pipelineRunning}
+                accessibilityRole="button"
+                accessibilityLabel="Run survey only"
+                accessibilityState={{ busy: surveyRunning }}
               >
                 <Text style={styles.secondaryBtnText}>
                   {surveyRunning ? "Surveying…" : "Survey only"}
@@ -694,21 +756,8 @@ function DesignSection({
     );
   }
 
-  const proposal = design.proposal as {
-    zones?: Array<{
-      id: string;
-      name: string;
-      treatment: string;
-      plantings: Array<{ count: number; common_name: string }>;
-      hardscape: Array<{ qty: number; unit: string; item: string }>;
-      lighting: Array<{ count: number; fixture: string }>;
-      irrigation: Array<{ qty: number; unit: string; item: string }>;
-    }>;
-    estimated_complexity?: string;
-  };
-
   const mode = MODE_COPY[design.mode];
-  const zones = proposal.zones ?? [];
+  const zones = design.proposal.zones ?? [];
 
   return (
     <View style={styles.designCard}>
@@ -779,23 +828,25 @@ function DesignSection({
 function modeToneStyle(tone: "ok" | "warn" | "info") {
   switch (tone) {
     case "ok":
-      return { backgroundColor: "rgba(21,128,61,0.12)" };
+      return {
+        backgroundColor: "rgba(21,128,61,0.22)",
+        borderColor: tokens.color.semantic.ok,
+      };
     case "warn":
-      return { backgroundColor: "rgba(180,83,9,0.14)" };
+      return {
+        backgroundColor: "rgba(180,83,9,0.22)",
+        borderColor: tokens.color.semantic.warn,
+      };
     case "info":
-      return { backgroundColor: "rgba(29,78,216,0.12)" };
+      return {
+        backgroundColor: "rgba(29,78,216,0.22)",
+        borderColor: tokens.color.semantic.info,
+      };
   }
 }
 
-function modeTextStyle(tone: "ok" | "warn" | "info") {
-  switch (tone) {
-    case "ok":
-      return { color: tokens.color.semantic.ok };
-    case "warn":
-      return { color: tokens.color.semantic.warn };
-    case "info":
-      return { color: tokens.color.semantic.info };
-  }
+function modeTextStyle(_tone: "ok" | "warn" | "info") {
+  return { color: tokens.color.ink.primary };
 }
 
 function ZoneCount({ label, value }: { label: string; value: string }) {
@@ -824,11 +875,13 @@ function PipelineProgress({
   design,
   costings,
   audit,
+  slow,
 }: {
   survey: boolean;
   design: boolean;
   costings: boolean;
   audit: boolean;
+  slow?: boolean;
 }) {
   const stages: Array<{ label: string; done: boolean }> = [
     { label: "Survey", done: survey },
@@ -839,10 +892,16 @@ function PipelineProgress({
   const currentIdx = stages.findIndex((s) => !s.done);
 
   return (
-    <View style={styles.pipelineBanner}>
+    <View
+      style={styles.pipelineBanner}
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={`Pipeline running. ${stages.filter((s) => s.done).length} of ${stages.length} stages complete.`}
+    >
       <View style={styles.pipelineHeader}>
         <View style={styles.pipelineLiveDot} />
-        <Text style={styles.pipelineKicker}>PIPELINE RUNNING</Text>
+        <Text style={styles.pipelineKicker}>
+          {slow ? "STILL PROCESSING · STAY ON SCREEN" : "PIPELINE RUNNING"}
+        </Text>
       </View>
       <View style={styles.pipelineStages}>
         {stages.map((s, i) => {
@@ -1006,7 +1065,13 @@ function AuditSection({
     <View style={styles.designCard}>
       <View style={styles.designHeader}>
         <Text style={styles.cardLabel}>AUDIT</Text>
-        <Pressable onPress={onRun} disabled={running} hitSlop={12}>
+        <Pressable
+          onPress={onRun}
+          disabled={running}
+          hitSlop={16}
+          style={styles.tertiaryHit}
+          accessibilityRole="button"
+        >
           <Text style={styles.tertiaryAction}>
             {running ? "Re-auditing…" : "Re-audit"}
           </Text>
@@ -1180,7 +1245,13 @@ function CostSection({
     <View style={styles.designCard}>
       <View style={styles.designHeader}>
         <Text style={styles.cardLabel}>COSTING</Text>
-        <Pressable onPress={onRun} disabled={running} hitSlop={12}>
+        <Pressable
+          onPress={onRun}
+          disabled={running}
+          hitSlop={16}
+          style={styles.tertiaryHit}
+          accessibilityRole="button"
+        >
           <Text style={styles.tertiaryAction}>
             {running ? "Recosting…" : "Recost"}
           </Text>
@@ -1370,6 +1441,37 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.surface.inverted,
     borderRadius: tokens.radius.lg,
     gap: tokens.space[3],
+  },
+  inlineErrorBanner: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[5],
+    padding: tokens.space[4],
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: tokens.color.semantic.block,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.space[3],
+  },
+  inlineErrorText: {
+    flex: 1,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.primary,
+  },
+  inlineErrorAction: {
+    paddingHorizontal: tokens.space[3],
+    paddingVertical: tokens.space[2],
+    minHeight: 36,
+    borderRadius: tokens.radius.sm,
+    backgroundColor: tokens.color.semantic.block,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  inlineErrorActionText: {
+    color: tokens.color.ink.inverted,
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: "600",
   },
   pipelineHeader: {
     flexDirection: "row",
@@ -1611,6 +1713,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[3],
     paddingVertical: 4,
     borderRadius: tokens.radius.pill,
+    borderWidth: 1,
   },
   modePillText: {
     fontSize: tokens.type.micro.fontSize,
@@ -1701,6 +1804,10 @@ const styles = StyleSheet.create({
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
     color: tokens.color.accent.default,
+  },
+  tertiaryHit: {
+    minHeight: 44,
+    justifyContent: "center",
   },
   scenarioTabs: {
     flexDirection: "row",
