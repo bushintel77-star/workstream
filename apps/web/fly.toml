@@ -1,0 +1,33 @@
+# Fly.io app config for the Construct web client portal (Next.js 15).
+#
+# Deploy from the repo root:
+#   flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile
+
+app = "construct-web"
+primary_region = "syd"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3002"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 3002
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
