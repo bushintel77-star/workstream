@@ -1,0 +1,14 @@
+# Force LF line endings for all text files so the git CRLF warnings stop
+# blowing up the console on Windows checkouts. Native shell scripts and
+# yaml stay LF; everything else normalised.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.m4a binary
+*.mp3 binary
+*.wav binary

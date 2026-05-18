@@ -1,0 +1,59 @@
+# Fly.io app config for the WorkSteam / Walkthrough API.
+# Region: Sydney (syd) per the original spec §4.1.
+#
+# Deploy from the repo root so the Dockerfile can reach workspace packages:
+#   flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile
+#
+# First-time provisioning:
+#   flyctl launch --no-deploy --copy-config --config apps/api/fly.toml \
+#     --name walkthrough-api --region syd
+#
+# Required secrets before deploy:
+#   flyctl secrets set CORS_ORIGIN="https://app.example.com"
+#   flyctl secrets set PUBLIC_API_URL="https://walkthrough-api.fly.dev"
+#   flyctl secrets set CLERK_SECRET_KEY="…"          # optional; dev fallback present
+#   flyctl secrets set CLERK_PUBLISHABLE_KEY="…"     # optional
+#   flyctl secrets set MAPBOX_TOKEN="…"              # optional; mock survey if absent
+#   flyctl secrets set ANTHROPIC_API_KEY="…"         # optional; mock design/audit if absent
+#   flyctl secrets set OPENAI_API_KEY="…"            # optional; canned transcript if absent
+#   flyctl secrets set VICMAP_ENABLED="true"         # optional; toggles real cadastral polygons
+
+app = "walkthrough-api"
+primary_region = "syd"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3001"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+[mounts]
+  source = "walkthrough_data"
+  destination = "/repo/apps/api/data"

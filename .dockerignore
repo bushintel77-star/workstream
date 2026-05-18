@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.turbo
+**/.expo
+**/ios
+**/android
+**/.git
+**/.env
+**/.env.local
+**/*.log
+**/data
+apps/mobile
