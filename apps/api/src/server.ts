@@ -24,6 +24,8 @@ import myobRoutes from './routes/myob';
 import crewRoutes from './routes/crew';
 import weatherRoutes from './routes/weather';
 import measurementRoutes from './routes/measurements';
+import supplierRoutes from './routes/suppliers';
+import aerialRoutes from './routes/aerial';
 
 const server = Fastify({ logger: true });
 
@@ -77,9 +79,16 @@ async function start() {
   await server.register(crewRoutes, { prefix: '/crew' });
   await server.register(weatherRoutes, { prefix: '/projects' });
   await server.register(measurementRoutes, { prefix: '/projects' });
+  await server.register(supplierRoutes, { prefix: '/suppliers' });
+  await server.register(aerialRoutes, { prefix: '/projects' });
   await server.register(fastifyStatic, {
     root: path.join(process.cwd(), 'data', 'photos'),
     prefix: '/photos/',
+    decorateReply: false,
+  });
+  await server.register(fastifyStatic, {
+    root: path.join(process.cwd(), 'data', 'aerial'),
+    prefix: '/aerial/',
     decorateReply: false,
   });
   await server.register(settingsRoutes, { prefix: '/settings' });
