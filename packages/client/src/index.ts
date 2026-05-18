@@ -13,6 +13,7 @@ import type {
   Output,
   OutputKind,
   Override,
+  PhotoMeasurement,
   PlantPalette,
   Project,
   ProjectMyobLink,
@@ -183,6 +184,49 @@ export class ConstructClient {
     return this.request("POST", `/projects/${projectId}/dictation`, {
       transcript,
     });
+  }
+
+  async listMeasurements(projectId: string): Promise<PhotoMeasurement[]> {
+    const res = await this.request<{ measurements: PhotoMeasurement[] }>(
+      "GET",
+      `/projects/${projectId}/measurements`,
+    );
+    return res.measurements;
+  }
+
+  async measurePhoto(
+    projectId: string,
+    fileUri: string,
+    mimeType: "image/jpeg" | "image/png" | "image/webp" = "image/jpeg",
+    hint?: string,
+  ): Promise<PhotoMeasurement> {
+    const form = new FormData();
+    const ext =
+      mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+    form.append("file", {
+      uri: fileUri,
+      type: mimeType,
+      name: `measurement.${ext}`,
+    } as unknown as Blob);
+    if (hint) form.append("hint", hint);
+
+    const headers: Record<string, string> = {};
+    if (this.options.getToken) {
+      const token = await this.options.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+
+    const res = await fetch(
+      `${this.options.baseUrl}/projects/${projectId}/measurements/photo`,
+      { method: "POST", headers, body: form },
+    );
+    if (!res.ok) {
+      throw new Error(
+        `POST /projects/${projectId}/measurements/photo failed: ${res.status} ${await res.text()}`,
+      );
+    }
+    const json = (await res.json()) as { measurement: PhotoMeasurement };
+    return json.measurement;
   }
 
   async listCrew(): Promise<CrewMember[]> {

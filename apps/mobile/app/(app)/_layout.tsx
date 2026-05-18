@@ -45,6 +45,16 @@ export default function AppLayout() {
           presentation: "fullScreenModal",
         }}
       />
+      <Stack.Screen
+        name="measure-photo"
+        options={{
+          headerShown: true,
+          title: "Measure",
+          presentation: "modal",
+          headerStyle: { backgroundColor: tokens.color.surface.base },
+          headerTintColor: tokens.color.ink.primary,
+        }}
+      />
     </Stack>
   );
 }

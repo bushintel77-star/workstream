@@ -765,6 +765,29 @@ export default function ProjectDetailScreen() {
               </Text>
             </Pressable>
           )}
+
+          {survey && (
+            <Pressable
+              style={styles.measurePhotoButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/(app)/measure-photo",
+                  params: { projectId: project.id },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Measure from photo"
+            >
+              <Text style={styles.measurePhotoKicker}>VISION</Text>
+              <Text style={styles.measurePhotoTitle}>
+                Measure from photo →
+              </Text>
+              <Text style={styles.measurePhotoBody}>
+                Snap or pick a site photo. Claude extracts dimensions,
+                confidence-scored against the reference you provide.
+              </Text>
+            </Pressable>
+          )}
         </ScrollView>
       )}
 
@@ -1835,6 +1858,32 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.body.fontSize,
     lineHeight: tokens.type.body.lineHeight,
     color: tokens.color.ink.tertiary,
+  },
+  measurePhotoButton: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[3],
+    padding: tokens.space[5],
+    borderRadius: tokens.radius.lg,
+    backgroundColor: tokens.color.surface.elevated,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    gap: tokens.space[2],
+  },
+  measurePhotoKicker: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.accent.default,
+  },
+  measurePhotoTitle: {
+    fontSize: tokens.type.displayM.fontSize,
+    fontWeight: tokens.type.displayM.fontWeight,
+    color: tokens.color.ink.primary,
+  },
+  measurePhotoBody: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.secondary,
   },
   myobCard: {
     marginHorizontal: tokens.space[5],
