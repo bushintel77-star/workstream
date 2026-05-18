@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -73,13 +74,43 @@ export default function HomeScreen() {
     }, [load]),
   );
 
+  const confirmDelete = useCallback(
+    (project: Project) => {
+      Alert.alert(
+        "Delete project?",
+        `${project.address}\n\nAll recordings, survey, design, costing, audit and outputs for this project will be removed. Cannot be undone.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await api.deleteProject(project.id);
+                setProjects((prev) =>
+                  prev.filter((p) => p.id !== project.id),
+                );
+              } catch (e) {
+                Alert.alert(
+                  "Delete failed",
+                  e instanceof Error ? e.message : "Unknown error",
+                );
+              }
+            },
+          },
+        ],
+      );
+    },
+    [api],
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Walkthrough</Text>
         <View style={styles.headerRow}>
           <Text style={styles.subtitle}>
-            {loading ? "—" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
+            {loading ? "—" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}${projects.length > 0 ? "  ·  long-press to delete" : ""}`}
           </Text>
           <Pressable onPress={() => router.push("/(app)/settings")}>
             <Text style={styles.settingsLink}>Settings</Text>
@@ -121,6 +152,8 @@ export default function HomeScreen() {
                   pressed && { backgroundColor: tokens.color.surface.sunken },
                 ]}
                 onPress={() => router.push(`/(app)/project/${item.id}`)}
+                onLongPress={() => confirmDelete(item)}
+                delayLongPress={350}
               >
                 <Text style={styles.cardAddress} numberOfLines={2}>
                   {item.address}

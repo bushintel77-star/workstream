@@ -42,6 +42,7 @@ export interface Store {
   listProjects(ownerId: string): Promise<Project[]>;
   createProject(ownerId: string, input: CreateProjectInput): Promise<Project>;
   getProject(ownerId: string, id: string): Promise<Project | null>;
+  deleteProject(ownerId: string, id: string): Promise<boolean>;
   updateProjectStatus(
     ownerId: string,
     projectId: string,

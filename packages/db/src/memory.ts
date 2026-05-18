@@ -126,6 +126,36 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return p ?? null;
     },
 
+    async deleteProject(ownerId, id) {
+      const idx = _projects.findIndex(
+        (x) => x.id === id && x.owner_id === ownerId,
+      );
+      if (idx < 0) return false;
+      _projects.splice(idx, 1);
+
+      // Cascade: gather design ids first so we can clean costings/audits
+      const designIds = _designs
+        .filter((d) => d.project_id === id)
+        .map((d) => d.id);
+
+      const removeWhere = <T>(arr: T[], pred: (x: T) => boolean) => {
+        for (let i = arr.length - 1; i >= 0; i--) {
+          if (pred(arr[i])) arr.splice(i, 1);
+        }
+      };
+
+      removeWhere(_recordings, (r) => r.project_id === id);
+      removeWhere(_surveys, (s) => s.project_id === id);
+      removeWhere(_designs, (d) => d.project_id === id);
+      removeWhere(_costings, (c) => designIds.includes(c.design_id));
+      removeWhere(_audits, (a) => designIds.includes(a.design_id));
+      removeWhere(_outputs, (o) => o.project_id === id);
+      removeWhere(_overrides, (o) => o.project_id === id);
+
+      flush();
+      return true;
+    },
+
     async updateProjectStatus(ownerId, projectId, status) {
       const p = _projects.find(
         (x) => x.id === projectId && x.owner_id === ownerId

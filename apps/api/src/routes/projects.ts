@@ -30,4 +30,17 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     }
     return reply.send({ project });
   });
+
+  fastify.delete(
+    "/:id",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const ok = await fastify.store.deleteProject(request.userId!, id);
+      if (!ok) {
+        return reply.code(404).send({ error: "Project not found" });
+      }
+      return reply.code(204).send();
+    },
+  );
 }

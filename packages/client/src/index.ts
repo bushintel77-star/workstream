@@ -72,6 +72,23 @@ export class WalkthroughClient {
     return res.project;
   }
 
+  async deleteProject(id: string): Promise<void> {
+    const headers: Record<string, string> = {};
+    if (this.options.getToken) {
+      const token = await this.options.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch(`${this.options.baseUrl}/projects/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok && res.status !== 204) {
+      throw new Error(
+        `DELETE /projects/${id} failed: ${res.status} ${await res.text()}`,
+      );
+    }
+  }
+
   async listRateCard(): Promise<RateCard[]> {
     const res = await this.request<{ items: RateCard[] }>(
       "GET",
