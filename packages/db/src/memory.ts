@@ -4,6 +4,7 @@ import type {
   CreateProjectInput,
   CrewMember,
   Design,
+  IntegrationSecret,
   Output,
   Override,
   PhotoMeasurement,
@@ -59,6 +60,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _projectMyobLinks: ProjectMyobLink[] = [];
   const _crew: CrewMember[] = [];
   const _photoMeasurements: PhotoMeasurement[] = [];
+  const _integrations: IntegrationSecret[] = [];
   let seeded = false;
 
   const arrays = {
@@ -672,6 +674,49 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
             new Date(b.created_at).getTime() -
             new Date(a.created_at).getTime(),
         );
+    },
+
+    async listIntegrations(ownerId) {
+      return _integrations
+        .filter((i) => i.owner_id === ownerId)
+        .sort((a, b) => a.key.localeCompare(b.key))
+        .map((i) => ({ ...i }));
+    },
+
+    async getIntegration(ownerId, key) {
+      const found = _integrations.find(
+        (i) => i.owner_id === ownerId && i.key === key,
+      );
+      return found ? { ...found } : null;
+    },
+
+    async setIntegration(ownerId, key, value) {
+      const existing = _integrations.find(
+        (i) => i.owner_id === ownerId && i.key === key,
+      );
+      const now = new Date().toISOString();
+      if (existing) {
+        existing.value = value;
+        existing.updated_at = now;
+        return { ...existing };
+      }
+      const row: IntegrationSecret = {
+        owner_id: ownerId,
+        key,
+        value,
+        updated_at: now,
+      };
+      _integrations.push(row);
+      return { ...row };
+    },
+
+    async deleteIntegration(ownerId, key) {
+      const idx = _integrations.findIndex(
+        (i) => i.owner_id === ownerId && i.key === key,
+      );
+      if (idx < 0) return false;
+      _integrations.splice(idx, 1);
+      return true;
     },
 
     async deleteCrewMember(ownerId, id) {

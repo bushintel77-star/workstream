@@ -60,6 +60,8 @@ COPY --from=builder /repo/packages/domain/dist ./packages/domain/dist
 
 RUN pnpm install --prod --frozen-lockfile --filter=@construct/api...
 
+RUN mkdir -p /repo/apps/api/data/uploads /repo/apps/api/data/outputs /repo/apps/api/data/photos /repo/apps/api/data/aerial
+
 EXPOSE 3001
 
 WORKDIR /repo/apps/api

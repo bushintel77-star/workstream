@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
@@ -8,6 +8,17 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.PORTAL_BASE_URL ?? "http://localhost:3002",
   ),
+  applicationName: "Construct",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Construct",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-touch-icon.svg" }],
+  },
   openGraph: {
     title: "Construct — Curtis & Co",
     description:
@@ -16,6 +27,18 @@ export const metadata: Metadata = {
     locale: "en_AU",
   },
   robots: { index: false, follow: false },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#18181B" },
+    { media: "(prefers-color-scheme: dark)", color: "#18181B" },
+  ],
 };
 
 export default function RootLayout({

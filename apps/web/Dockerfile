@@ -42,7 +42,7 @@ ENV HOSTNAME=0.0.0.0
 # need pnpm at runtime.
 COPY --from=builder /repo/apps/web/.next/standalone ./
 COPY --from=builder /repo/apps/web/.next/static ./apps/web/.next/static
-# (no apps/web/public — Next.js doesn't require it and the dir doesn't exist)
+COPY --from=builder /repo/apps/web/public ./apps/web/public
 
 EXPOSE 3002
 

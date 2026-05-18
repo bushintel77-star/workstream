@@ -1,88 +1,130 @@
-import styles from "./landing.module.css";
+import Link from "next/link";
+import { listProjects, type ProjectStatus } from "../lib/api";
+import s from "../styles/app.module.css";
+import d from "./dashboard.module.css";
+import { createProjectAction, deleteProjectAction } from "./actions";
+import { SubmitButton } from "../components/SubmitButton";
 
-export default function LandingPage() {
+export const dynamic = "force-dynamic";
+
+const STATUS_LABEL: Record<ProjectStatus, string> = {
+  draft: "Draft",
+  recording: "Recording",
+  processing: "Processing",
+  survey_review: "Survey",
+  design_review: "Design",
+  cost_review: "Costing",
+  audit: "Audit",
+  outputs: "Outputs",
+  complete: "Complete",
+};
+
+const STATUS_PILL: Record<ProjectStatus, string> = {
+  draft: s.pillMuted,
+  recording: s.pillInfo,
+  processing: s.pillInfo,
+  survey_review: s.pillInfo,
+  design_review: s.pillAccent,
+  cost_review: s.pillAccent,
+  audit: s.pillWarn,
+  outputs: s.pillOk,
+  complete: s.pillOk,
+};
+
+export default async function DashboardPage() {
+  let projects: Awaited<ReturnType<typeof listProjects>> = [];
+  let loadError: string | null = null;
+  try {
+    projects = await listProjects();
+  } catch (err) {
+    loadError = err instanceof Error ? err.message : "Could not reach the API.";
+  }
+
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-AU", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
   return (
-    <main className={styles.page}>
-      <header className={styles.masthead}>
-        <div className={styles.brand}>
+    <main className={s.pageNarrow}>
+      <header className={s.masthead}>
+        <div className={s.brand}>
           Curtis &amp; Co
-          <span className={styles.brandSub}>
-            Boutique Landscape Design · Melbourne
-          </span>
+          <span className={s.brandSub}>Construct · Projects</span>
         </div>
-        <span className={styles.kicker}>POWERED BY CONSTRUCT</span>
+        <span className={s.crumb}>
+          {projects.length} {projects.length === 1 ? "project" : "projects"}
+        </span>
       </header>
 
-      <section className={styles.hero}>
-        <span className={styles.eyebrow}>VOICE-FIRST DESIGN STUDIO</span>
-        <h1 className={styles.headline}>
-          One walkthrough.
-          <br />
-          The whole job.
-        </h1>
-        <p className={styles.lede}>
-          Tim Curtis walks the site, talks. By the time he's at the car
-          the survey, design, costing, audit and quote are ready —
-          Stonnington stormwater pack drafted, MYOB invoice queued,
-          Mick on his way with the trencher.
-        </p>
-      </section>
+      <h1 className={s.headline}>Projects</h1>
+      <p className={s.lede}>
+        Every site Tim walks. Add a new address to start a project — survey,
+        design, costing, audit and outputs flow from there.
+      </p>
 
-      <section className={styles.grid}>
-        <Feature
-          kicker="SURVEY"
-          title="Lot, house, garden in seconds"
-          body="Address in, Vicmap cadastre out. Building footprint subtracted automatically. Edge measurements rendered along every boundary."
+      <form action={createProjectAction} className={d.form}>
+        <input
+          className={`${s.input} ${d.formInput}`}
+          name="address"
+          type="text"
+          placeholder="Site address — e.g. 22 Smith St, Carlton VIC 3053"
+          required
+          minLength={5}
+          autoComplete="off"
         />
-        <Feature
-          kicker="DESIGN"
-          title="Curtis house style, every time"
-          body="Claude Opus drafts the proposal in Curtis & Co's vocabulary: pleached hornbeam screens, mass-planted Lomandra, bluestone paving. Off-style species rejected at the gate."
-        />
-        <Feature
-          kicker="COSTING"
-          title="Lean · Standard · Buffer"
-          body="Every line matched to the live rate card. Pleach stock upgrades on Buffer. POA items surfaced separately, never silent in totals."
-        />
-        <Feature
-          kicker="AUDIT"
-          title="Fidelity, safety, scope"
-          body="A second Claude pass interrogates its own work. Blocking findings stop output generation. Overrides recorded forever in the project ledger."
-        />
-        <Feature
-          kicker="OUTPUTS"
-          title="Quote, schedule, scope, task list"
-          body="Branded, printable, ready to hand the client. Permit packs pre-filled from the survey for Stonnington and Yarra heritage."
-        />
-        <Feature
-          kicker="GRID & SOIL"
-          title="Live build-phase dictation"
-          body="On site, mid-build. The operator dictates — tasks land in the crew app, the material ledger updates, the invoice draft adjusts. No clipboard."
-        />
-      </section>
+        <SubmitButton className={s.btn} pendingLabel="Creating…">
+          New project
+        </SubmitButton>
+      </form>
 
-      <footer className={styles.colophon}>
+      {loadError && (
+        <div className={s.error}>Couldn&apos;t load projects: {loadError}</div>
+      )}
+
+      <h2 className={s.sectionHeading}>Active</h2>
+
+      {projects.length === 0 && !loadError ? (
+        <div className={s.empty}>
+          No projects yet. Add a site address above to start one.
+        </div>
+      ) : (
+        <ul className={s.list}>
+          {projects.map((p) => (
+            <li key={p.id} className={`${s.card} ${d.row}`}>
+              <Link href={`/projects/${p.id}`} className={d.rowLink}>
+                <span className={d.rowAddress}>{p.address}</span>
+                <span className={`${s.brandSub} ${d.rowMeta}`}>
+                  <span className={`${s.pill} ${STATUS_PILL[p.status]}`}>
+                    {STATUS_LABEL[p.status]}
+                  </span>
+                  <span>{fmtDate(p.created_at)}</span>
+                </span>
+              </Link>
+              <form action={deleteProjectAction}>
+                <input type="hidden" name="id" value={p.id} />
+                <button
+                  type="submit"
+                  className={`${s.btnDanger} ${d.rowDelete}`}
+                  aria-label={`Delete ${p.address}`}
+                  title="Delete"
+                >
+                  Delete
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <footer className={s.colophon}>
         <span>Curtis &amp; Co · Melbourne</span>
-        <span>Prepared with Construct</span>
+        <span>
+          <Link href="/settings">Settings →</Link>
+        </span>
       </footer>
     </main>
-  );
-}
-
-function Feature({
-  kicker,
-  title,
-  body,
-}: {
-  kicker: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <article className={styles.feature}>
-      <span className={styles.featureKicker}>{kicker}</span>
-      <h2 className={styles.featureTitle}>{title}</h2>
-      <p className={styles.featureBody}>{body}</p>
-    </article>
   );
 }

@@ -178,5 +178,23 @@ export interface Store {
     ownerId: string,
     projectId: string,
   ): Promise<PhotoMeasurement[]>;
+  listIntegrations(ownerId: string): Promise<IntegrationSecret[]>;
+  getIntegration(
+    ownerId: string,
+    key: string,
+  ): Promise<IntegrationSecret | null>;
+  setIntegration(
+    ownerId: string,
+    key: string,
+    value: string,
+  ): Promise<IntegrationSecret>;
+  deleteIntegration(ownerId: string, key: string): Promise<boolean>;
   seedDefaults(): Promise<void>;
+}
+
+export interface IntegrationSecret {
+  owner_id: string;
+  key: string;
+  value: string;
+  updated_at: string;
 }

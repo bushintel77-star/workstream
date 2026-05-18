@@ -1,0 +1,58 @@
+.form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: var(--s-6);
+  flex-wrap: wrap;
+}
+
+.formInput {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.row {
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.rowLink {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  min-height: 64px;
+  justify-content: center;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.rowLink:active {
+  background: var(--surface-sunken);
+}
+
+.rowAddress {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rowDelete {
+  padding: 10px 14px !important;
+  font-size: 12px !important;
+  min-height: 44px !important;
+  margin-right: 12px;
+}
