@@ -3,6 +3,7 @@ import { z } from "zod";
 import { OutputKindSchema } from "@walkthrough/contracts";
 import { requireAuth } from "../plugins/auth";
 import { runOutput } from "../lib/output-job";
+import { publicBaseUrl } from "../lib/public-url";
 
 const RunBodySchema = z.object({
   kind: OutputKindSchema,
@@ -20,9 +21,15 @@ export default async function outputRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: "Invalid body", issues: parsed.error.issues });
       }
 
-      const host = request.headers.host ?? "localhost:3001";
-      const protocol = request.protocol;
-      const baseUrl = process.env.PUBLIC_API_URL ?? `${protocol}://${host}`;
+      let baseUrl: string;
+      try {
+        baseUrl = publicBaseUrl(request);
+      } catch (err) {
+        request.log.error(err, "Could not derive public base URL");
+        return reply.code(500).send({
+          error: "Server misconfigured: PUBLIC_API_URL not set",
+        });
+      }
 
       try {
         const output = await runOutput(

@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { audioPublicUrl, saveAudio } from "../lib/storage";
+import { publicBaseUrl } from "../lib/public-url";
 import { runTranscription } from "../lib/transcription-job";
 
 export default async function recordingRoutes(fastify: FastifyInstance) {
@@ -24,7 +25,15 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
       const durationField = file.fields.duration_s;
       let durationS = 0;
       if (durationField && "value" in durationField) {
-        durationS = Number(durationField.value) || 0;
+        const parsed = Number(durationField.value);
+        if (Number.isFinite(parsed) && parsed > 0 && parsed <= 60 * 60) {
+          durationS = Math.round(parsed);
+        }
+      }
+      if (durationS <= 0) {
+        return reply
+          .code(400)
+          .send({ error: "duration_s must be a positive integer ≤ 3600" });
       }
 
       const buffer = await file.toBuffer();
@@ -43,9 +52,7 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
 
       const filePath = await saveAudio(recording.id, buffer, ext);
 
-      const host = request.headers.host ?? "localhost:3001";
-      const protocol = request.protocol;
-      const baseUrl = process.env.PUBLIC_API_URL ?? `${protocol}://${host}`;
+      const baseUrl = publicBaseUrl(request);
       recording.audio_uri = audioPublicUrl(baseUrl, recording.id, ext);
 
       runTranscription(fastify.store, recording.id, filePath).catch((err) => {

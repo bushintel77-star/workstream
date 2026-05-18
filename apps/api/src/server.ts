@@ -21,8 +21,23 @@ import pipelineRoutes from './routes/pipeline';
 
 const server = Fastify({ logger: true });
 
+function resolveCorsOrigin(): boolean | string | string[] {
+  const raw = process.env.CORS_ORIGIN;
+  if (raw == null || raw === "") {
+    if (process.env.NODE_ENV === "production") {
+      server.log.warn(
+        "CORS_ORIGIN unset in production — refusing all cross-origin requests. Set CORS_ORIGIN to an explicit comma-separated allowlist.",
+      );
+      return false;
+    }
+    return true; // dev convenience
+  }
+  if (raw === "*") return true;
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 async function start() {
-  await server.register(cors, { origin: true });
+  await server.register(cors, { origin: resolveCorsOrigin(), credentials: true });
   await server.register(multipart, {
     limits: { fileSize: 100 * 1024 * 1024 },
   });
