@@ -186,6 +186,24 @@ export class ConstructClient {
     });
   }
 
+  async getWeather(projectId: string): Promise<{
+    forecast: {
+      fetched_at: string;
+      days: Array<{
+        date: string;
+        precipitation_mm: number;
+        temp_max_c: number;
+        temp_min_c: number;
+        wind_max_kph: number;
+      }>;
+      rain_within_24h: boolean;
+      wind_warning: boolean;
+      source: "open-meteo" | "dev_fallback";
+    };
+  }> {
+    return this.request("GET", `/projects/${projectId}/weather`);
+  }
+
   async listMeasurements(projectId: string): Promise<PhotoMeasurement[]> {
     const res = await this.request<{ measurements: PhotoMeasurement[] }>(
       "GET",

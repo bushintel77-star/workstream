@@ -203,6 +203,18 @@ export default function ProjectDetailScreen() {
     mode: "live" | "dev_fallback";
     total_incl_gst: number;
   } | null>(null);
+  const [weather, setWeather] = useState<{
+    days: Array<{
+      date: string;
+      precipitation_mm: number;
+      temp_max_c: number;
+      temp_min_c: number;
+      wind_max_kph: number;
+    }>;
+    rain_within_24h: boolean;
+    wind_warning: boolean;
+    source: "open-meteo" | "dev_fallback";
+  } | null>(null);
   const [pipelineSlow, setPipelineSlow] = useState(false);
   const pipelinePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pipelineSlowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -235,6 +247,7 @@ export default function ProjectDetailScreen() {
       setAudit(a);
       setOutputs(outs);
       setOverrides(ovs);
+      api.getWeather(id).then((w) => setWeather(w.forecast)).catch(() => {});
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
@@ -626,6 +639,10 @@ export default function ProjectDetailScreen() {
             </View>
           )}
 
+          {survey && weather && (
+            <WeatherCard forecast={weather} />
+          )}
+
           {survey && (
             <DesignSection
               design={design}
@@ -997,6 +1014,76 @@ function GapRow({ gap }: { gap: GapFlag }) {
       <View style={{ flex: 1 }}>
         <Text style={styles.gapDescription}>{gap.description}</Text>
         <Text style={styles.gapFill}>→ {gap.proposed_fill}</Text>
+      </View>
+    </View>
+  );
+}
+
+function WeatherCard({
+  forecast,
+}: {
+  forecast: {
+    days: Array<{
+      date: string;
+      precipitation_mm: number;
+      temp_max_c: number;
+      temp_min_c: number;
+      wind_max_kph: number;
+    }>;
+    rain_within_24h: boolean;
+    wind_warning: boolean;
+    source: "open-meteo" | "dev_fallback";
+  };
+}) {
+  const hasWarning = forecast.rain_within_24h || forecast.wind_warning;
+  return (
+    <View style={styles.weatherCard}>
+      <View style={styles.weatherHeader}>
+        <Text style={styles.cardLabel}>
+          5-DAY WEATHER · {forecast.source === "open-meteo" ? "OPEN-METEO" : "DEV"}
+        </Text>
+        {hasWarning && (
+          <View style={styles.weatherWarn}>
+            <Text style={styles.weatherWarnText}>
+              {forecast.rain_within_24h ? "RAIN <24H" : ""}
+              {forecast.rain_within_24h && forecast.wind_warning ? " · " : ""}
+              {forecast.wind_warning ? "HIGH WIND" : ""}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.weatherDays}>
+        {forecast.days.map((d) => {
+          const day = new Date(d.date).toLocaleDateString("en-AU", {
+            weekday: "short",
+          });
+          const wet = d.precipitation_mm > 1;
+          const windy = d.wind_max_kph > 40;
+          return (
+            <View key={d.date} style={styles.weatherDay}>
+              <Text style={styles.weatherDayLabel}>{day.toUpperCase()}</Text>
+              <Text style={styles.weatherTemp}>
+                {Math.round(d.temp_max_c)}°
+              </Text>
+              <Text style={styles.weatherTempLow}>
+                {Math.round(d.temp_min_c)}°
+              </Text>
+              <Text
+                style={[
+                  styles.weatherRain,
+                  wet && { color: tokens.color.semantic.info },
+                ]}
+              >
+                {d.precipitation_mm.toFixed(1)} mm
+              </Text>
+              {windy && (
+                <Text style={styles.weatherWind}>
+                  {Math.round(d.wind_max_kph)} km/h
+                </Text>
+              )}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -1884,6 +1971,73 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.body.fontSize,
     lineHeight: tokens.type.body.lineHeight,
     color: tokens.color.ink.secondary,
+  },
+  weatherCard: {
+    marginHorizontal: tokens.space[5],
+    marginTop: tokens.space[5],
+    padding: tokens.space[4],
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    gap: tokens.space[3],
+  },
+  weatherHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  weatherWarn: {
+    paddingHorizontal: tokens.space[2],
+    paddingVertical: 2,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: "rgba(180,83,9,0.18)",
+    borderWidth: 1,
+    borderColor: tokens.color.semantic.warn,
+  },
+  weatherWarnText: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.semantic.warn,
+  },
+  weatherDays: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  weatherDay: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+  },
+  weatherDayLabel: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+  },
+  weatherTemp: {
+    fontSize: tokens.type.bodyMono.fontSize,
+    fontWeight: "600",
+    color: tokens.color.ink.primary,
+    fontVariant: ["tabular-nums"],
+  },
+  weatherTempLow: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.color.ink.tertiary,
+    fontVariant: ["tabular-nums"],
+  },
+  weatherRain: {
+    fontSize: tokens.type.micro.fontSize,
+    fontWeight: tokens.type.micro.fontWeight,
+    letterSpacing: tokens.type.micro.letterSpacing,
+    color: tokens.color.ink.tertiary,
+    fontVariant: ["tabular-nums"],
+  },
+  weatherWind: {
+    fontSize: tokens.type.micro.fontSize,
+    color: tokens.color.semantic.warn,
+    fontVariant: ["tabular-nums"],
   },
   myobCard: {
     marginHorizontal: tokens.space[5],
