@@ -11,18 +11,18 @@ Single track: **operator clarity** + **client confidence**. Everything else wait
 
 Brand: **Curtis & Co** on portal — **Workstream** in studio chrome.
 
-## Studio � done / next
+## Studio — done / next
 
 | Priority | Item | Status |
 |----------|------|--------|
 | P0 | Operator nav (Projects, Settings) on every studio page | In progress |
-| P0 | Pipeline rail � one obvious next step | In progress |
+| P0 | Pipeline rail — one obvious next step | In progress |
 | P0 | Costing scenario cards (match portal) | In progress |
 | P1 | Site walk checklist collapsible on hub | In progress |
-| P1 | Outputs as card grid + primary �Send quote� | Backlog |
+| P1 | Outputs as card grid + primary "Send quote" | Backlog |
 | P2 | Design page zone cards + photo placeholders | Backlog |
 
-## Portal � done / next
+## Portal — done / next
 
 | Priority | Item | Status |
 |----------|------|--------|
