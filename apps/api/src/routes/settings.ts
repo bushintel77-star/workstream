@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
+import { clearEnvSecret, setEnvSecret } from "../lib/runtime-secrets";
 
 const RatePatchSchema = z.object({
   rate: z.number().nonnegative().optional(),
@@ -180,6 +181,7 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
         key,
         trimmed,
       );
+      setEnvSecret(key, trimmed);
       const mask = maskValue(row.value);
       return reply.send({
         item: {
@@ -203,6 +205,7 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: "Unknown integration key" });
       }
       await fastify.store.deleteIntegration(request.userId!, key);
+      clearEnvSecret(key);
       return reply.code(204).send();
     },
   );

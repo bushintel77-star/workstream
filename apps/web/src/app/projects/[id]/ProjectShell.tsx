@@ -12,6 +12,8 @@ const TABS: Array<{ slug: string; label: string }> = [
   { slug: "outputs", label: "Outputs" },
   { slug: "tasks", label: "Tasks" },
   { slug: "recordings", label: "Recordings" },
+  { slug: "measurements", label: "Measurements" },
+  { slug: "carbon", label: "Carbon" },
 ];
 
 export function ProjectMasthead({
@@ -19,7 +21,17 @@ export function ProjectMasthead({
   active,
 }: {
   project: Project;
-  active: "overview" | "survey" | "design" | "costing" | "audit" | "outputs" | "tasks" | "recordings";
+  active:
+    | "overview"
+    | "survey"
+    | "design"
+    | "costing"
+    | "audit"
+    | "outputs"
+    | "tasks"
+    | "recordings"
+    | "measurements"
+    | "carbon";
 }) {
   return (
     <>

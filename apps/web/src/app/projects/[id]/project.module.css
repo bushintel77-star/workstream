@@ -526,3 +526,69 @@
 .bottomCta {
   width: 100%;
 }
+
+.overrideRecorded {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-hairline);
+}
+
+.overrideReason {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--ink-secondary);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.overrideForm {
+  margin-top: 10px;
+}
+
+.overrideSummary {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.overrideSummary::-webkit-details-marker { display: none; }
+
+.overrideSummary::before {
+  content: "+ ";
+  color: var(--ink-tertiary);
+}
+
+.overrideActions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.measurementCard {
+  padding: 16px;
+  border: 1px solid var(--line-hairline);
+  border-radius: 12px;
+  background: var(--surface-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.measurementHead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.measurementImage {
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line-hairline);
+}

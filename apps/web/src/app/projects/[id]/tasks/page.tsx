@@ -1,5 +1,6 @@
 import {
   getProject,
+  listCrew,
   listTasks,
   type Task,
   type TaskStatus,
@@ -36,7 +37,11 @@ export default async function TasksPage({
   const project = await getProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const tasks = await listTasks(id);
+  const [tasks, crew] = await Promise.all([
+    listTasks(id),
+    listCrew().catch(() => []),
+  ]);
+  const activeCrew = crew.filter((c) => c.active);
   const byStatus = new Map<TaskStatus, Task[]>();
   for (const c of COLUMNS) byStatus.set(c.status, []);
   for (const t of tasks) {
@@ -66,12 +71,28 @@ export default async function TasksPage({
           required
           minLength={1}
         />
-        <input
-          className={s.input}
-          name="assignee_name"
-          type="text"
-          placeholder="Assignee"
-        />
+        {activeCrew.length > 0 ? (
+          <select
+            className={s.select}
+            name="assignee_name"
+            defaultValue=""
+            aria-label="Assignee"
+          >
+            <option value="">Unassigned</option>
+            {activeCrew.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name} · {c.role}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            className={s.input}
+            name="assignee_name"
+            type="text"
+            placeholder="Assignee"
+          />
+        )}
         <select
           className={s.select}
           name="priority"

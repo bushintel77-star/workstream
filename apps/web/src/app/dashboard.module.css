@@ -56,3 +56,8 @@
   min-height: 44px !important;
   margin-right: 12px;
 }
+
+.footerLinks {
+  display: flex;
+  gap: 12px;
+}

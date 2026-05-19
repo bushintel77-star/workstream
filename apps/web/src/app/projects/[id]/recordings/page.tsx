@@ -2,6 +2,7 @@ import { getProject, listRecordings } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { RecordingCapture } from "../../../../components/RecordingCapture";
 
 export const dynamic = "force-dynamic";
 
@@ -28,20 +29,20 @@ export default async function RecordingsPage({
 
       <h1 className={s.headline}>Recordings</h1>
       <p className={s.lede}>
-        Site-walk audio captures. Whisper transcribes on upload — the dictation
-        pipeline reads from the transcript to pull tasks, materials and
+        Capture a site-walk dictation. Whisper transcribes on upload — the
+        dictation pipeline reads the transcript to pull tasks, materials and
         observations.
       </p>
 
-      <div className={s.banner}>
-        Audio uploads happen from the operator app (mobile). This page lists
-        what&apos;s already been captured and shows transcripts as they finish.
-      </div>
+      <RecordingCapture
+        projectId={id}
+        uploadUrl={`/api/projects/${id}/recordings`}
+      />
 
       {recordings.length === 0 ? (
         <div className={s.empty}>
-          No recordings yet. The mobile app uploads audio to{" "}
-          <span className={s.mono}>POST /projects/{id}/recordings</span>.
+          No recordings yet. Tap <strong>Start recording</strong> above (grant
+          microphone access when prompted).
         </div>
       ) : (
         <ul className={s.list}>

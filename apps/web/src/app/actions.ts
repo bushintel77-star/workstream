@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   createCrewApi,
+  createOverrideApi,
   createProjectApi,
   createTaskApi,
   deleteCrewApi,
@@ -79,6 +80,24 @@ export async function runOutputAction(formData: FormData) {
   await runOutput(projectId, kind);
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/outputs`);
+}
+
+export async function createOverrideAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const findingIndexRaw = String(formData.get("finding_index") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const finding_index = Number(findingIndexRaw);
+  if (
+    !projectId ||
+    !Number.isInteger(finding_index) ||
+    finding_index < 0 ||
+    reason.length < 8
+  ) {
+    return;
+  }
+  await createOverrideApi(projectId, { finding_index, reason });
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/audit`);
 }
 
 /* -- Tasks ------------------------------------------------------------ */

@@ -9,12 +9,20 @@
     "typecheck": "turbo typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "tsc --noEmit -p tsconfig.base.json --pretty false || true"
+    ]
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0",
-    "@vitest/coverage-v8": "^2.1.0"
+    "vitest": "^2.1.0"
   }
 }

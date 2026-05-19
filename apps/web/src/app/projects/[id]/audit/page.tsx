@@ -1,7 +1,7 @@
-import { getAudit, getProject } from "../../../../lib/api";
+import { getAudit, getProject, listOverrides } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
-import { runAuditAction } from "../../../actions";
+import { createOverrideAction, runAuditAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
 import { SubmitButton } from "../../../../components/SubmitButton";
 
@@ -16,7 +16,19 @@ export default async function AuditPage({
   const project = await getProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const audit = await getAudit(id);
+  const [audit, overrides] = await Promise.all([
+    getAudit(id),
+    listOverrides(id),
+  ]);
+  const overrideByIndex = new Map(overrides.map((o) => [o.finding_index, o]));
+
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleString("en-AU", {
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
 
   return (
     <main className={s.page}>
@@ -25,8 +37,9 @@ export default async function AuditPage({
       <h1 className={s.headline}>Audit</h1>
       <p className={s.lede}>
         A second Claude pass interrogates the design and costing for fidelity,
-        safety, scope and cost. Blocking findings stop outputs from being
-        generated until an override is recorded.
+        safety, scope and cost. Blocking findings stop outputs until either the
+        design is fixed or each finding is explicitly overridden — overrides
+        are recorded forever in the project ledger.
       </p>
 
       <div className={s.actionBar}>
@@ -74,27 +87,74 @@ export default async function AuditPage({
               <h2 className={s.sectionHeading}>
                 Findings ({audit.findings.length})
               </h2>
-              {audit.findings.map((f, i) => (
-                <div
-                  key={i}
-                  className={`${p.finding} ${f.severity === "blocking" ? p.findingBlocking : p.findingAdvisory}`}
-                >
-                  <div className={p.findingHead}>
-                    <span className={p.findingLocation}>
-                      {f.category} · {f.location}
-                    </span>
-                    <span
-                      className={`${s.pill} ${f.severity === "blocking" ? s.pillBlock : s.pillWarn}`}
-                    >
-                      {f.severity}
-                    </span>
+              {audit.findings.map((f, i) => {
+                const override = overrideByIndex.get(i);
+                const isBlocking = f.severity === "blocking";
+                return (
+                  <div
+                    key={i}
+                    className={`${p.finding} ${isBlocking ? p.findingBlocking : p.findingAdvisory}`}
+                  >
+                    <div className={p.findingHead}>
+                      <span className={p.findingLocation}>
+                        {f.category} · {f.location}
+                      </span>
+                      <span
+                        className={`${s.pill} ${isBlocking ? s.pillBlock : s.pillWarn}`}
+                      >
+                        {f.severity}
+                      </span>
+                    </div>
+                    <p className={p.findingStatement}>{f.statement}</p>
+                    <p className={p.findingAction}>
+                      <strong>Suggested:</strong> {f.suggested_action}
+                    </p>
+
+                    {override ? (
+                      <div className={p.overrideRecorded}>
+                        <span className={`${s.pill} ${s.pillOk}`}>
+                          Overridden
+                        </span>{" "}
+                        <span className={s.dim}>{fmtDate(override.created_at)}</span>
+                        <p className={p.overrideReason}>{override.reason}</p>
+                      </div>
+                    ) : (
+                      isBlocking && (
+                        <details className={p.overrideForm}>
+                          <summary className={p.overrideSummary}>
+                            Override this finding
+                          </summary>
+                          <form action={createOverrideAction}>
+                            <input type="hidden" name="projectId" value={id} />
+                            <input
+                              type="hidden"
+                              name="finding_index"
+                              value={i}
+                            />
+                            <textarea
+                              name="reason"
+                              className={s.textarea}
+                              placeholder="Why is this finding acceptable? Minimum 8 characters. This is recorded forever in the project ledger."
+                              minLength={8}
+                              required
+                              rows={3}
+                              aria-label={`Override reason for finding ${i + 1}`}
+                            />
+                            <div className={p.overrideActions}>
+                              <SubmitButton
+                                className={s.btnDanger}
+                                pendingLabel="Recording…"
+                              >
+                                Record override
+                              </SubmitButton>
+                            </div>
+                          </form>
+                        </details>
+                      )
+                    )}
                   </div>
-                  <p className={p.findingStatement}>{f.statement}</p>
-                  <p className={p.findingAction}>
-                    <strong>Suggested:</strong> {f.suggested_action}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </>
           )}
         </>

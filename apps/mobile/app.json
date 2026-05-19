@@ -7,16 +7,41 @@
     "scheme": "construct",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.curtisandco.construct"
+      "bundleIdentifier": "com.curtisandco.construct",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Construct uses the microphone to capture site-walk dictation.",
+        "NSCameraUsageDescription": "Construct uses the camera to photograph site features for measurement.",
+        "NSPhotoLibraryUsageDescription": "Construct attaches photos from your library to project measurements.",
+        "NSLocationWhenInUseUsageDescription": "Construct uses your location to pre-fill site addresses while you're on site.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FAFAF7"
       },
-      "package": "com.curtisandco.construct"
+      "package": "com.curtisandco.construct",
+      "permissions": [
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
-    "plugins": ["expo-router", "expo-secure-store"]
+    "plugins": ["expo-router", "expo-secure-store"],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_AFTER_eas_init"
+      }
+    }
   }
 }

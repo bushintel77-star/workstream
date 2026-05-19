@@ -121,7 +121,9 @@ export default async function DashboardPage() {
 
       <footer className={s.colophon}>
         <span>Curtis &amp; Co · Melbourne</span>
-        <span>
+        <span className={d.footerLinks}>
+          <Link href="/legal/privacy">Privacy</Link>
+          <Link href="/legal/terms">Terms</Link>
           <Link href="/settings">Settings →</Link>
         </span>
       </footer>

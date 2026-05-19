@@ -54,10 +54,11 @@ kill_timeout = "5s"
   size = "shared-cpu-1x"
   memory = "512mb"
 
-# [mounts] intentionally disabled: Fly syd zone bd82 is unreachable today and the
-# scheduler keeps placing new volumes there. SQLite writes to ephemeral container
-# storage. Re-add this block (and `flyctl volume create construct_storage --region syd`)
-# once syd has another zone with capacity.
+# Persistence: the JSON-snapshot store at packages/db/src/persist.ts writes to
+# /repo/apps/api/data/store.json on every mutation. To turn on durability,
+# (1) scale the app to a single machine (`flyctl scale count 1 -a construct-api`),
+# then (2) enable this mount block and redeploy. Volume `construct_data` already
+# exists in syd. Multi-machine durability needs managed Postgres instead.
 # [mounts]
-#   source = "construct_storage"
+#   source = "construct_data"
 #   destination = "/repo/apps/api/data"

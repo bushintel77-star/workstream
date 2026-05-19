@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
+import { ToastHost } from "../components/ToastHost";
 
 export const metadata: Metadata = {
   title: "Construct — Curtis & Co",
@@ -60,7 +61,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <ToastHost>{children}</ToastHost>
+      </body>
     </html>
   );
 }

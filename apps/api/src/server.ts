@@ -1,9 +1,13 @@
 import path from 'path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
+import { loadEnv } from './env';
+import { captureError, initSentry } from './lib/sentry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
 import storePlugin from './plugins/store';
@@ -34,6 +38,11 @@ import stripeWebhookRoutes from './routes/stripe-webhook';
 
 const server = Fastify({ logger: true });
 
+loadEnv({
+  warn: (m) => server.log.warn(m),
+  error: (m) => server.log.error(m),
+});
+
 function resolveCorsOrigin(): boolean | string | string[] {
   const raw = process.env.CORS_ORIGIN;
   if (raw == null || raw === "") {
@@ -50,6 +59,29 @@ function resolveCorsOrigin(): boolean | string | string[] {
 }
 
 async function start() {
+  await server.register(helmet, {
+    /* The API serves JSON + the occasional static file (uploads, branded
+     * HTML outputs at /outputs/*). A real CSP is enforced on the Next.js
+     * client portal instead — keeping it off here so the rendered HTML
+     * outputs (which inline styles) load cleanly. */
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  });
+
+  await server.register(rateLimit, {
+    max: Number(process.env.RATE_LIMIT_MAX ?? 300),
+    timeWindow: process.env.RATE_LIMIT_WINDOW ?? "1 minute",
+    keyGenerator: (req) => {
+      /* Prefer authenticated user, fall back to remote IP. Keeps a
+       * shared office on Tim's WiFi from collectively tripping the
+       * limit when one ratbag automates the dashboard. */
+      return req.userId ?? req.ip;
+    },
+    skipOnError: true,
+    enableDraftSpec: true,
+  });
+
   await server.register(cors, { origin: resolveCorsOrigin(), credentials: true });
   await server.register(multipart, {
     limits: { fileSize: 100 * 1024 * 1024 },
@@ -108,8 +140,24 @@ async function start() {
   server.log.info(`API listening on http://0.0.0.0:${port}`);
 }
 
+void initSentry();
+
+server.setErrorHandler((err: Error & { statusCode?: number }, request, reply) => {
+  captureError(err, {
+    method: request.method,
+    url: request.url,
+    requestId: request.id,
+  });
+  request.log.error(err);
+  if (!reply.sent) {
+    const status = err.statusCode && err.statusCode >= 400 ? err.statusCode : 500;
+    reply.code(status).send({ error: err.message || "Internal error" });
+  }
+});
+
 start().catch((err) => {
   server.log.error(err);
+  captureError(err, { phase: "startup" });
   process.exit(1);
 });
 

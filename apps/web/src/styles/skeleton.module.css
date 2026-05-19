@@ -1,0 +1,79 @@
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skel {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 0%,
+    color-mix(in srgb, var(--surface-sunken) 50%, var(--surface-elevated)) 50%,
+    var(--surface-sunken) 100%
+  );
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  border-radius: 6px;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
+    background: var(--surface-sunken);
+  }
+}
+
+.line {
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.lineSm { height: 11px; margin-bottom: 6px; }
+.lineLg { height: 24px; margin-bottom: 10px; }
+
+.card {
+  height: 80px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+
+.stage {
+  height: 72px;
+  border-radius: 10px;
+}
+
+.metric {
+  height: 80px;
+  border-radius: 10px;
+}
+
+.pipelineRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 700px) {
+  .pipelineRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.metricsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .metricsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.w20 { width: 20%; }
+.w40 { width: 40%; }
+.w60 { width: 60%; }
+.w80 { width: 80%; }

@@ -55,6 +55,36 @@
   --dur-slow: 320ms;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-base: #0B0B0E;
+    --surface-elevated: #1A1A1F;
+    --surface-sunken: #050507;
+    --surface-inverted: #FAFAF7;
+
+    --ink-primary: #FAFAF7;
+    --ink-secondary: #D4D4D8;
+    --ink-tertiary: #71717A;
+    --ink-inverted: #18181B;
+
+    --line-hairline: #27272A;
+    --line-strong: #3F3F46;
+    --line-ink: #FAFAF7;
+
+    --accent: #FB923C;
+    --accent-soft: #431407;
+    --accent-ink: #FED7AA;
+
+    --ok: #4ADE80;
+    --warn: #FBBF24;
+    --block: #F87171;
+    --info: #60A5FA;
+
+    --elev-1: 0 1px 2px rgba(0,0,0,0.5);
+    --elev-2: 0 8px 24px rgba(0,0,0,0.5);
+  }
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -129,4 +159,9 @@ button:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

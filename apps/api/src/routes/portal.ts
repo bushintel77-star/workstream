@@ -34,7 +34,16 @@ export default async function portalRoutes(fastify: FastifyInstance) {
   );
 
   // --- Public: client side (token-gated, NO requireAuth) ---
-  fastify.get("/portal/quote/:token", async (request, reply) => {
+  // Stricter rate-limit here — these are the only endpoints reachable
+  // without auth and would otherwise be the primary brute-force target.
+  fastify.get("/portal/quote/:token", {
+    config: {
+      rateLimit: {
+        max: 30,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const { token } = request.params as { token: string };
     const verify = verifyPortalToken(token);
     if (!verify.ok) return reply.code(401).send({ error: verify.reason });
@@ -58,7 +67,14 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     return reply.send({ project, survey, design, costing: standard });
   });
 
-  fastify.post("/portal/deposit/:token", async (request, reply) => {
+  fastify.post("/portal/deposit/:token", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const { token } = request.params as { token: string };
     const verify = verifyPortalToken(token);
     if (!verify.ok) return reply.code(401).send({ error: verify.reason });

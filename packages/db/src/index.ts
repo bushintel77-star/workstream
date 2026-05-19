@@ -33,7 +33,7 @@ export type {
   PhotoMeasurement,
   PhotoMeasurementInput,
 } from "./types";
-export { SYSTEM_OWNER } from "./memory";
+export { SYSTEM_OWNER, createMemoryStore } from "./memory";
 
 let store: ReturnType<typeof createMemoryStore> | null = null;
 

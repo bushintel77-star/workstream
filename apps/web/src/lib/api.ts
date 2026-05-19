@@ -257,6 +257,34 @@ export async function runAudit(projectId: string): Promise<Audit> {
   return body.audit;
 }
 
+export type Override = {
+  id: string;
+  project_id: string;
+  audit_id: string;
+  finding_index: number;
+  category: AuditFinding["category"];
+  location: string;
+  reason: string;
+  created_at: string;
+};
+
+export async function listOverrides(projectId: string): Promise<Override[]> {
+  const body = await apiGet<{ overrides: Override[] }>(
+    `/projects/${projectId}/overrides`,
+  );
+  return body.overrides;
+}
+
+export async function createOverrideApi(
+  projectId: string,
+  input: { finding_index: number; reason: string },
+): Promise<{ override: Override; audit: Audit }> {
+  return apiPost<{ override: Override; audit: Audit }>(
+    `/projects/${projectId}/overrides`,
+    input,
+  );
+}
+
 /* -- Outputs ----------------------------------------------------------- */
 
 export type OutputKind =
@@ -347,6 +375,40 @@ export async function updateTaskStatusApi(
   return body.task;
 }
 
+/* -- Photo measurements ------------------------------------------------ */
+
+export type PhotoMeasurementItem = {
+  description: string;
+  value: number;
+  unit:
+    | "meters"
+    | "centimeters"
+    | "millimeters"
+    | "square_meters"
+    | "cubic_meters"
+    | "unknown";
+  confidence: number;
+  reference_used: string | null;
+};
+
+export type PhotoMeasurement = {
+  id: string;
+  project_id: string;
+  image_uri: string;
+  items: PhotoMeasurementItem[];
+  notes: string | null;
+  created_at: string;
+};
+
+export async function listPhotoMeasurements(
+  projectId: string,
+): Promise<PhotoMeasurement[]> {
+  const body = await apiGet<{ measurements: PhotoMeasurement[] }>(
+    `/projects/${projectId}/measurements`,
+  );
+  return body.measurements;
+}
+
 /* -- Recordings -------------------------------------------------------- */
 
 export type Recording = {
@@ -363,6 +425,62 @@ export async function listRecordings(projectId: string): Promise<Recording[]> {
     `/projects/${projectId}/recordings`,
   );
   return body.recordings;
+}
+
+/* -- Accounting ------------------------------------------------------- */
+
+export type AccountingStatus = {
+  connected: boolean;
+  mode: "live" | "dev_fallback";
+  company_file_id?: string | null;
+  tenant_id?: string | null;
+  contacts_cached?: number;
+  customers_cached?: number;
+  items_cached?: number;
+  sku_match_pct?: number;
+  last_sync_at: string | null;
+};
+
+export async function getMyobStatus(): Promise<AccountingStatus | null> {
+  try {
+    return await apiGet<AccountingStatus>("/myob/status");
+  } catch {
+    return null;
+  }
+}
+
+export async function getXeroStatus(): Promise<AccountingStatus | null> {
+  try {
+    return await apiGet<AccountingStatus>("/xero/status");
+  } catch {
+    return null;
+  }
+}
+
+/* -- Carbon ----------------------------------------------------------- */
+
+export type CarbonBreakdownLine = {
+  sku: string;
+  label: string;
+  qty: number;
+  unit: string;
+  factor_kg_co2e: number;
+  total_kg_co2e: number;
+};
+
+export type CarbonReport = {
+  scenario: string;
+  total_kg_co2e: number;
+  by_category: Record<string, number>;
+  lines: CarbonBreakdownLine[];
+};
+
+export async function getCarbon(projectId: string): Promise<CarbonReport | null> {
+  try {
+    return await apiGet<CarbonReport>(`/projects/${projectId}/carbon`);
+  } catch {
+    return null;
+  }
 }
 
 /* -- Weather ----------------------------------------------------------- */

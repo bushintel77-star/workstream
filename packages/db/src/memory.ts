@@ -79,6 +79,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _projectMyobLinks,
     _crew,
     _photoMeasurements,
+    _integrations,
   };
 
   const flush = opts.persistPath
@@ -698,6 +699,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       if (existing) {
         existing.value = value;
         existing.updated_at = now;
+        flush();
         return { ...existing };
       }
       const row: IntegrationSecret = {
@@ -707,6 +709,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         updated_at: now,
       };
       _integrations.push(row);
+      flush();
       return { ...row };
     },
 
@@ -716,6 +719,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       );
       if (idx < 0) return false;
       _integrations.splice(idx, 1);
+      flush();
       return true;
     },
 
