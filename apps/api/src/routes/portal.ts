@@ -30,9 +30,16 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         project_id: projectId,
         scope: validScope,
       });
-      const portalUrl =
-        (process.env.PORTAL_BASE_URL ?? "http://localhost:3002/portal") +
-        `/${validScope}/${token}`;
+      const portalBase = (
+        process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
+      ).replace(/\/$/, "");
+      const scopePath =
+        validScope === "quote_view"
+          ? "quote"
+          : validScope === "deposit_checkout"
+            ? "deposit"
+            : validScope;
+      const portalUrl = `${portalBase}/portal/${scopePath}/${token}`;
       return reply.send({ token, portal_url: portalUrl, scope: validScope });
     },
   );
@@ -111,15 +118,16 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         .send({ error: "Costing required before deposit." });
     }
 
-    const portalBase =
-      process.env.PORTAL_BASE_URL ?? "http://localhost:3002/portal";
+    const portalBase = (
+      process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
+    ).replace(/\/$/, "");
     try {
       const session = await createDepositSession({
         project,
         costing: standard,
         deposit_pct: Number(process.env.DEPOSIT_PCT ?? 20),
-        success_url: `${portalBase}/deposit-success`,
-        cancel_url: `${portalBase}/deposit-cancel`,
+        success_url: `${portalBase}/portal/deposit-success`,
+        cancel_url: `${portalBase}/portal/deposit-cancel`,
       });
       return reply.send({ session });
     } catch (err) {

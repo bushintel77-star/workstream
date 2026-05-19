@@ -670,7 +670,18 @@ export async function deleteIntegrationApi(key: string): Promise<void> {
   await apiDelete(`/settings/integrations/${key}`);
 }
 
-/* -- Portal (kept from previous build) -------------------------------- */
+/* -- Portal links (studio → client) ----------------------------------- */
+
+export type PortalLinkScope = "quote_view" | "deposit_checkout" | "change_request";
+
+export async function createPortalMagicLink(
+  projectId: string,
+  scope: PortalLinkScope = "quote_view",
+): Promise<{ token: string; portal_url: string; scope: PortalLinkScope }> {
+  return apiPost(`/projects/${projectId}/magic-link`, { scope });
+}
+
+/* -- Portal (client-facing) ------------------------------------------- */
 
 export async function fetchPortalQuote(token: string): Promise<
   import("../components/QuotePortal").PortalQuoteData | { error: string }
