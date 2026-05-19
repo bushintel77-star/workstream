@@ -5,17 +5,19 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P0 — Blocks first paying customer
 
-- [ ] **Persistence on Fly** — re-enable `[mounts]` block in
-      [apps/api/fly.toml](apps/api/fly.toml), scale to 1 machine, deploy.
-      Volume `construct_data` already provisioned in syd.
-- [ ] **Auth on** — set `CLERK_SECRET_KEY` + `CLERK_PUBLISHABLE_KEY` Fly
-      secrets on `construct-api`. Add `<SignedIn>` / `<SignedOut>` gates
-      around the web dashboard.
+- [x] **Persistence on Fly** — `[mounts]` block live in
+      [apps/api/fly.toml](apps/api/fly.toml) against `construct_data_v2`.
+      Still needs `flyctl scale count 1 -a construct-api` + deploy.
+- [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
+      `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
+      dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`
+      (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
 - [ ] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`.
-- [ ] **Secret scanning** — gitleaks GitHub Action or push-protection on the
-      repo.
-- [ ] **Stripe key validation on save** — `GET /v1/balance` round-trip when
-      operator pastes a key; fail fast on bad keys.
+- [x] **Secret scanning** — gitleaks GitHub Action at
+      [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
+- [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
+      [apps/api/src/routes/settings.ts](apps/api/src/routes/settings.ts) via
+      `validateStripeKey()`; rejects bad keys with Stripe's own error message.
 - [ ] **Sentry DSN** — add `SENTRY_DSN` to both apps' Fly secrets. Scaffold is
       in place under `apps/api/src/env.ts`.
 
