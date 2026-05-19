@@ -6,23 +6,23 @@ Single track: **operator clarity** + **client confidence**. Everything else wait
 
 | Surface | User | Job |
 |---------|------|-----|
-| **Studio** (operator web) | Tim / Morgan | Walk site, manage pipeline, send quote |
+| **Studio** (operator web) | Tim / Morgan | Walk site → pipeline → send quote |
 | **Portal** (token links) | Homeowner | Understand design, compare price, pay deposit |
 
 Brand: **Curtis & Co** on portal — **Workstream** in studio chrome.
 
-## Studio — done / next
+## Studio — status
 
 | Priority | Item | Status |
 |----------|------|--------|
-| P0 | Operator nav (Projects, Settings) on every studio page | In progress |
-| P0 | Pipeline rail — one obvious next step | In progress |
-| P0 | Costing scenario cards (match portal) | In progress |
-| P1 | Site walk checklist collapsible on hub | In progress |
-| P1 | Outputs as card grid + primary "Send quote" | Backlog |
-| P2 | Design page zone cards + photo placeholders | Backlog |
+| P0 | Operator nav (Projects, Settings) | Shipped |
+| P0 | Pipeline rail — one obvious next step | Shipped |
+| P0 | Costing scenario cards (match portal) | Shipped |
+| P1 | Site walk checklist on project hub | Shipped |
+| P1 | Outputs card grid + Send quote panel | Shipped |
+| P2 | Design page zone cards + Tier-1 styling | Shipped |
 
-## Portal — done / next
+## Portal — status
 
 | Priority | Item | Status |
 |----------|------|--------|

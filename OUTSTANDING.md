@@ -13,6 +13,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`
       (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
 - [ ] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`.
+- [ ] **NEXT_PUBLIC_API_URL** baked into web Docker build (see `apps/web/Dockerfile`);
+      CI deploy passes `--build-arg`. Redeploy `construct-web` after merge.
 - [x] **Secret scanning** — gitleaks GitHub Action at
       [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
@@ -28,9 +30,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] **BullMQ + Upstash Redis** — move pipeline jobs off the HTTP request
       thread.
 - [ ] **Litestream → R2/B2** — DR backup of the JSON snapshot.
-- [ ] **CI deploy job** — `flyctl deploy` gated on `main`, `FLY_API_TOKEN`
-      stored as a GH secret.
-- [ ] **Dependabot / Renovate** for both pnpm + GitHub Actions.
+- [x] **CI deploy job** — `flyctl deploy` on push to `main` when CI is green;
+      token via `FLY_API_TOKEN` or `BROKKER` GitHub secret.
+- [x] **Dependabot** — enabled for pnpm + GitHub Actions (see open/merged PRs).
 - [ ] **Branch protection on `main`** — require CI green.
 - [ ] **Playwright e2e** for the operator happy path.
 - [ ] **Contract tests** — every API response shape parsed by its Zod schema.
