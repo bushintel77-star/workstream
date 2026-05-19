@@ -19,14 +19,17 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc tsconfig.base.json t
 
 COPY apps/web/package.json ./apps/web/
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/domain/package.json ./packages/domain/
 
 RUN pnpm install --frozen-lockfile --filter=@workstream/web...
 
 COPY apps/web ./apps/web
 COPY packages/contracts ./packages/contracts
+COPY packages/domain ./packages/domain
 
-# contracts must be built first so Next can resolve its types
+# Workspace packages must be built before Next resolves them
 RUN pnpm --filter=@workstream/contracts build
+RUN pnpm --filter=@workstream/domain build
 RUN pnpm --filter=@workstream/web build
 
 # ---- runtime ---------------------------------------------------------------
