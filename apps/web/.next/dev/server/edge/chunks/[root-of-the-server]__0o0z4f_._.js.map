@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 16, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/apps/web/src/middleware.ts"],"sourcesContent":["import { clerkMiddleware, createRouteMatcher } from \"@clerk/nextjs/server\";\n\nconst isProtectedRoute = createRouteMatcher([\n  \"/\",\n  \"/projects(.*)\",\n  \"/settings(.*)\",\n]);\n\nexport default clerkMiddleware(async (auth, req) => {\n  if (!process.env.CLERK_SECRET_KEY) return;\n  if (isProtectedRoute(req)) {\n    await auth.protect();\n  }\n});\n\nexport const config = {\n  matcher: [\n    \"/((?!_next|.*\\\\.(?:ico|png|jpg|jpeg|svg|gif|webp|webmanifest|woff2?|ttf|css|js|map)$).*)\",\n  ],\n};\n"],"names":["isProtectedRoute","auth","req","process","env","CLERK_SECRET_KEY","protect","config","matcher"],"mappings":";;;;;;AAAA;AAAA;;AAEA,MAAMA,mBAAmB,IAAA,2ZAAkB,EAAC;IAC1C;IACA;IACA;CACD;uCAEc,IAAA,2ZAAe,EAAC,OAAOC,MAAMC;IAC1C,IAAI,CAACC,QAAQC,GAAG,CAACC,gBAAgB,EAAE;IACnC,IAAIL,iBAAiBE,MAAM;QACzB,MAAMD,KAAKK,OAAO;IACpB;AACF;AAEO,MAAMC,SAAS;IACpBC,SAAS;QACP;KACD;AACH"}}]
-}
