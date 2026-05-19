@@ -1,0 +1,20 @@
+.portal-root {
+  min-height: 100dvh;
+  background: linear-gradient(
+    165deg,
+    #fafaf7 0%,
+    #f4f0eb 45%,
+    #fafaf7 100%
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  .portal-root {
+    background: linear-gradient(
+      165deg,
+      #0b0b0e 0%,
+      #141210 45%,
+      #0b0b0e 100%
+    );
+  }
+}

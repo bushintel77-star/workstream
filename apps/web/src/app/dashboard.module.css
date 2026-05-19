@@ -1,3 +1,15 @@
+.dashboardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.dashboardHead .headline {
+  margin: 0;
+}
+
 .form {
   display: flex;
   gap: 8px;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StudioShell } from "../components/StudioShell";
 import { listProjects, type ProjectStatus } from "../lib/api";
 import s from "../styles/app.module.css";
 import d from "./dashboard.module.css";
@@ -50,18 +51,14 @@ export default async function DashboardPage() {
     });
 
   return (
+    <StudioShell>
     <main className={s.pageNarrow}>
-      <header className={s.masthead}>
-        <div className={s.brand}>
-          Curtis &amp; Co
-          <span className={s.brandSub}>Workstream · Projects</span>
-        </div>
+      <header className={d.dashboardHead}>
+        <h1 className={s.headline}>Projects</h1>
         <span className={s.crumb}>
-          {projects.length} {projects.length === 1 ? "project" : "projects"}
+          {projects.length} {projects.length === 1 ? "site" : "sites"}
         </span>
       </header>
-
-      <h1 className={s.headline}>Projects</h1>
       <p className={s.lede}>
         Every site Tim walks. Add a new address to start a project — survey,
         design, costing, audit and outputs flow from there.
@@ -130,5 +127,6 @@ export default async function DashboardPage() {
         </span>
       </footer>
     </main>
+    </StudioShell>
   );
 }

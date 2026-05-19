@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   getProject,
   listCostings,
@@ -8,6 +7,7 @@ import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { runCostingAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { CostingScenarios } from "../../../../components/CostingScenarios";
 import { SubmitButton } from "../../../../components/SubmitButton";
 
 export const dynamic = "force-dynamic";
@@ -82,21 +82,13 @@ export default async function CostingPage({
         </div>
       ) : (
         <>
-          <div className={p.scenarioTabs}>
-            {SCENARIOS.map((sc) => {
-              const found = costings.find((c) => c.scenario === sc);
-              return (
-                <Link
-                  key={sc}
-                  href={`/projects/${id}/costing?scenario=${sc}`}
-                  className={`${p.scenarioTab} ${activeScenario === sc ? p.scenarioTabActive : ""}`}
-                >
-                  {sc[0].toUpperCase() + sc.slice(1)}
-                  {found ? ` · ${aud0(found.total)}` : ""}
-                </Link>
-              );
-            })}
-          </div>
+          <CostingScenarios
+            projectId={id}
+            active={activeScenario}
+            totals={Object.fromEntries(
+              costings.map((c) => [c.scenario, c.total]),
+            )}
+          />
 
           {active && (
             <>

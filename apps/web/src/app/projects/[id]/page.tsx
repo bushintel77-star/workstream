@@ -20,6 +20,7 @@ import {
   runSurveyAction,
 } from "../../actions";
 import { NotFoundPage, ProjectMasthead } from "./ProjectShell";
+import { PipelineRail } from "../../../components/PipelineRail";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { SiteWalkChecklist } from "../../../components/SiteWalkChecklist";
 
@@ -116,87 +117,75 @@ export default async function ProjectHubPage({
         produce the artefacts.
       </p>
 
-      <div className={p.pipeline}>
-        <Stage
-          n={1}
-          label="Survey"
-          status={survey ? "done" : "todo"}
-          href={`/projects/${id}/survey`}
-          meta={
-            survey
+      <PipelineRail
+        stages={[
+          {
+            n: 1,
+            label: "Survey",
+            status: survey ? "done" : "todo",
+            href: `/projects/${id}/survey`,
+            meta: survey
               ? `Lot ${Math.round(survey.lot_area_m2)} m²`
-              : "Not run yet"
-          }
-        />
-        <Stage
-          n={2}
-          label="Design"
-          status={design ? "done" : survey ? "todo" : "locked"}
-          href={`/projects/${id}/design`}
-          meta={
-            design
+              : "Not run yet",
+          },
+          {
+            n: 2,
+            label: "Design",
+            status: design ? "done" : survey ? "todo" : "locked",
+            href: `/projects/${id}/design`,
+            meta: design
               ? `${design.proposal.zones.length} zones · v${design.version}`
               : survey
                 ? "Ready"
-                : "Needs survey"
-          }
-        />
-        <Stage
-          n={3}
-          label="Costing"
-          status={
-            costings.length > 0 ? "done" : design ? "todo" : "locked"
-          }
-          href={`/projects/${id}/costing`}
-          meta={
-            standardCosting
+                : "Needs survey",
+          },
+          {
+            n: 3,
+            label: "Costing",
+            status: costings.length > 0 ? "done" : design ? "todo" : "locked",
+            href: `/projects/${id}/costing`,
+            meta: standardCosting
               ? aud0(standardCosting.total)
               : design
                 ? "Ready"
-                : "Needs design"
-          }
-        />
-        <Stage
-          n={4}
-          label="Audit"
-          status={
-            audit
+                : "Needs design",
+          },
+          {
+            n: 4,
+            label: "Audit",
+            status: audit
               ? audit.blocking_count > 0
                 ? "blocked"
                 : "done"
               : costings.length > 0
                 ? "todo"
-                : "locked"
-          }
-          href={`/projects/${id}/audit`}
-          meta={
-            audit
+                : "locked",
+            href: `/projects/${id}/audit`,
+            meta: audit
               ? `${audit.blocking_count} blocking · ${audit.advisory_count} advisory`
               : costings.length > 0
                 ? "Ready"
-                : "Needs costing"
-          }
-        />
-        <Stage
-          n={5}
-          label="Outputs"
-          status={
-            outputs.length > 0
-              ? "done"
-              : audit && audit.passed
-                ? "todo"
-                : "locked"
-          }
-          href={`/projects/${id}/outputs`}
-          meta={
-            outputs.length > 0
-              ? `${outputs.length} generated`
-              : audit?.passed
-                ? "Ready"
-                : "Needs clean audit"
-          }
-        />
-      </div>
+                : "Needs costing",
+          },
+          {
+            n: 5,
+            label: "Outputs",
+            status:
+              outputs.length > 0
+                ? "done"
+                : audit && audit.passed
+                  ? "todo"
+                  : "locked",
+            href: `/projects/${id}/outputs`,
+            meta:
+              outputs.length > 0
+                ? `${outputs.length} generated`
+                : audit?.passed
+                  ? "Ready"
+                  : "Needs clean audit",
+          },
+        ]}
+      />
 
       {nextAction && (
         <div className={`${s.actionBar} ${p.actionBarDesktopOnly}`}>
@@ -306,30 +295,3 @@ export default async function ProjectHubPage({
   );
 }
 
-function Stage({
-  n,
-  label,
-  status,
-  href,
-  meta,
-}: {
-  n: number;
-  label: string;
-  status: "done" | "todo" | "locked" | "blocked";
-  href: string;
-  meta: string;
-}) {
-  const cls =
-    status === "done"
-      ? p.stageDone
-      : status === "blocked"
-        ? p.stageBlocked
-        : "";
-  return (
-    <Link href={href} className={`${p.stage} ${cls}`}>
-      <span className={p.stageNum}>0{n}</span>
-      <span className={p.stageLabel}>{label}</span>
-      <span className={p.stageMeta}>{meta}</span>
-    </Link>
-  );
-}

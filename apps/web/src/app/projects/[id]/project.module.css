@@ -45,11 +45,17 @@
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08);
 }
 
+.pipelineWrap {
+  margin-bottom: var(--s-5);
+}
+
 .pipeline {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--s-2);
-  margin-bottom: var(--s-5);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 @media (max-width: 700px) {
@@ -81,6 +87,29 @@
 
 .stageBlocked {
   background: color-mix(in srgb, #fee2e2 30%, var(--surface-elevated));
+}
+
+.stageLocked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.stageNext {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.stageNextBadge {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
 }
 
 .stageNum {
@@ -595,8 +624,42 @@
 
 .siteWalk {
   margin-top: var(--s-6);
-  padding-top: var(--s-5);
-  border-top: 1px solid var(--line-hairline);
+  padding: var(--s-4);
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-elevated);
+}
+
+.siteWalkSummary {
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.siteWalkSummary::-webkit-details-marker {
+  display: none;
+}
+
+.siteWalkHint {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+}
+
+.siteWalk[open] .siteWalkHint {
+  display: none;
+}
+
+.siteWalk .checklist {
+  margin-top: var(--s-4);
 }
 
 .checklist {
