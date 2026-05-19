@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useSignUp } from "@clerk/clerk-expo";
-import { tokens } from "@construct/ui";
+import { tokens } from "@workstream/ui";
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();

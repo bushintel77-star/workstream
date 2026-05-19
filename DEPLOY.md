@@ -1,4 +1,4 @@
-# Deploying Construct
+# Deploying Workstream
 
 The repo deploys as two services:
 

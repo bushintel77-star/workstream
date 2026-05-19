@@ -47,7 +47,7 @@ export default async function SettingsPage() {
 
       <h1 className={s.headline}>Integrations</h1>
       <p className={s.lede}>
-        Tokens for the external services Construct talks to. Saved here for
+        Tokens for the external services Workstream talks to. Saved here for
         operator review; the API also reads any matching Fly secret as a
         fallback.
       </p>

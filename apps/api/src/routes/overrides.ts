@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { CreateOverrideInputSchema } from "@construct/contracts";
+import { CreateOverrideInputSchema } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 
 export default async function overrideRoutes(fastify: FastifyInstance) {

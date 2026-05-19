@@ -8,9 +8,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
-import type { PlantPalette } from "@construct/contracts";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../../src/lib/api";
+import type { PlantPalette } from "@workstream/contracts";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../../src/lib/api";
 
 const CATEGORY_LABEL: Record<string, string> = {
   "boundary tree": "BOUNDARY · PLEACHED",
@@ -33,7 +33,7 @@ function categoryFor(item: PlantPalette): string {
 }
 
 export default function PlantPaletteScreen() {
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [items, setItems] = useState<PlantPalette[]>([]);
   const [loading, setLoading] = useState(true);
 

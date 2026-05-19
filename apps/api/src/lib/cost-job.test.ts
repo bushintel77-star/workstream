@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createMemoryStore } from "@construct/db";
+import { createMemoryStore } from "@workstream/db";
 import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";

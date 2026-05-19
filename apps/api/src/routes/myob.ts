@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   LinkCustomerInputSchema,
   UpsertSkuLinkInputSchema,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 import {
   draftInvoiceFromCosting,

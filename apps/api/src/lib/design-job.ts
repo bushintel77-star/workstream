@@ -1,5 +1,5 @@
-import type { Store } from "@construct/db";
-import type { Design } from "@construct/contracts";
+import type { Store } from "@workstream/db";
+import type { Design } from "@workstream/contracts";
 import { detectMode } from "./mode-detect";
 import { generateDesign } from "./claude";
 

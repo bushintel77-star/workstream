@@ -1,6 +1,6 @@
 # On-site capture integration map
 
-How each capture method in the brainstorm plugs into Construct, and what's
+How each capture method in the brainstorm plugs into Workstream, and what's
 actually buildable in the current Expo managed workflow vs. needs ejection.
 
 ## Status legend
@@ -24,12 +24,12 @@ actually buildable in the current Expo managed workflow vs. needs ejection.
 
 ## What "needs native module" requires
 
-Construct currently uses Expo's managed workflow. The capture methods that
+Workstream currently uses Expo's managed workflow. The capture methods that
 need native modules need one of:
 
 1. **`expo prebuild`** to generate `ios/` + `android/` projects, then add an
    Expo Module wrapping the native APIs (RoomPlan, Vision Pro spatial APIs,
-   Meta's Wearable SDK). The Construct team can still develop in JS — the
+   Meta's Wearable SDK). The Workstream team can still develop in JS — the
    native module is a thin bridge.
 2. **Bare React Native** (eject) — full control but loses Expo's OTA
    updates and managed build pipeline.
@@ -71,11 +71,11 @@ Two routes possible:
 
 - **Pass-through voice** — the eyewear app captures voice, transcribes
   locally or via its own pipeline, then POSTs the transcript text to
-  `/projects/:id/dictation`. Construct doesn't need to know about the
+  `/projects/:id/dictation`. Workstream doesn't need to know about the
   hardware.
 - **First-party voice + image** — the eyewear app POSTs both the audio
   blob (to `/recordings`) and key frames (to `/measurements/photo`).
-  Construct treats it like a phone client with a different form factor.
+  Workstream treats it like a phone client with a different form factor.
 
 The first route ships today by giving the eyewear app the API URL and
 a service token.
@@ -83,6 +83,6 @@ a service token.
 ## DJI drone imagery
 
 Shipped path: pilot exports orthomosaic JPEG/PNG from DJI Fly or third-party
-software, then `POST /projects/:id/aerial/upload` from any client. Construct
+software, then `POST /projects/:id/aerial/upload` from any client. Workstream
 overwrites the Mapbox satellite tile with the up-to-date drone image. No
 direct DJI SDK integration required — file-based handoff is sufficient.

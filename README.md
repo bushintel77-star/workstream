@@ -1,6 +1,11 @@
-# Construct
+# Workstream
 
 Voice-first landscape design and build co-pilot for **Curtis & Co** (Melbourne).
+
+**Naming:** the product is **Workstream** everywhere in UI and docs. Curtis & Co
+stays on client-facing quotes and portal pages. Legacy Fly app hostnames
+(`construct-api`, `construct-web`) and mobile bundle IDs (`com.curtisandco.construct`)
+are unchanged until the next deploy / store submission so production does not break.
 
 Tim walks a site and talks. By the time he's at the car the survey, design,
 costing, audit and quote are ready — Stonnington stormwater pack drafted,
@@ -34,12 +39,12 @@ cp apps/api/.env.example apps/api/.env
 cp apps/mobile/.env.example apps/mobile/.env
 
 # 4. Build the workspace packages once
-pnpm --filter '@construct/*' build
+pnpm --filter '@workstream/*' build
 
 # 5. Run
-pnpm --filter @construct/api dev          # http://localhost:3001
-pnpm --filter @construct/web dev          # http://localhost:3002
-pnpm --filter @construct/mobile dev       # Expo dev server
+pnpm --filter @workstream/api dev          # http://localhost:3001
+pnpm --filter @workstream/web dev          # http://localhost:3002
+pnpm --filter @workstream/mobile dev       # Expo dev server
 ```
 
 ## Repository layout

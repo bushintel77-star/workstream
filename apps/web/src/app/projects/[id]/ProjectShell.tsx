@@ -79,7 +79,7 @@ export function NotFoundPage({ message }: { message: string }) {
       <header className={s.masthead}>
         <div className={s.brand}>
           Project not found
-          <span className={s.brandSub}>Construct</span>
+          <span className={s.brandSub}>Workstream</span>
         </div>
         <Link href="/" className={s.crumb}>
           ← Projects

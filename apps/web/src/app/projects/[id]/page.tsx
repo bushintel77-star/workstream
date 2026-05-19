@@ -21,6 +21,7 @@ import {
 } from "../../actions";
 import { NotFoundPage, ProjectMasthead } from "./ProjectShell";
 import { SubmitButton } from "../../../components/SubmitButton";
+import { SiteWalkChecklist } from "../../../components/SiteWalkChecklist";
 
 export const dynamic = "force-dynamic";
 
@@ -253,6 +254,8 @@ export default async function ProjectHubPage({
           <span className={s.metricValue}>{outputs.length}</span>
         </div>
       </div>
+
+      <SiteWalkChecklist />
 
       {weather && weather.days.length > 0 && (
         <>

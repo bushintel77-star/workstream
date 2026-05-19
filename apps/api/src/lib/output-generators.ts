@@ -7,8 +7,12 @@ import type {
   Survey,
   Task,
   Zone,
-} from "@construct/contracts";
-import { totalEmbodiedCarbon } from "@construct/domain";
+} from "@workstream/contracts";
+import {
+  isTier1WrightsTerrace,
+  TIER1_WRIGHTS_SAVINGS,
+  totalEmbodiedCarbon,
+} from "@workstream/domain";
 
 export type GeneratorArgs = {
   project: Project;
@@ -132,6 +136,14 @@ export function buildQuote(args: Args): string {
   lines.push("");
   lines.push("Curtis & Co — Boutique Landscape Design, Melbourne.");
   lines.push("");
+  if (isTier1WrightsTerrace(args.project.address)) {
+    lines.push("## Tier-1 architectural massing");
+    lines.push("");
+    lines.push(
+      `Value reallocation saves **${aud0(Math.abs(TIER1_WRIGHTS_SAVINGS.net_inc_gst))} incl. GST** vs cottage-scatter scope. Architecture locked.`,
+    );
+    lines.push("");
+  }
   lines.push(`**Project total (Standard scenario, incl. GST): ${aud0(standard.total)}**`);
   lines.push("");
   lines.push(`Subtotal ${aud2(standard.subtotal)}  ·  GST ${aud2(standard.gst)}`);
@@ -323,7 +335,7 @@ export function buildStonningtonStormwaterPermit(args: Args): string {
   lines.push("- No discharge to neighbouring properties.");
   lines.push("- Site to be re-vegetated within 4 weeks of works completion.");
   lines.push("");
-  lines.push("> DRAFT — generated from Construct survey + design data. Verify before lodgement.");
+  lines.push("> DRAFT — generated from Workstream survey + design data. Verify before lodgement.");
   return lines.join("\n");
 }
 
@@ -351,7 +363,7 @@ export function buildYarraHeritagePermit(args: Args): string {
   lines.push("## Heritage compatibility statement");
   lines.push("Works are confined to the garden and rear of the property. No alteration to dwelling fabric, fenestration, roofline or street-facing elevation. Plant palette and hard materials selected to be sympathetic to the period character of the property and surrounding streetscape, in line with the City of Yarra Heritage Design Guidelines.");
   lines.push("");
-  lines.push("> DRAFT — generated from Construct survey + design data. Verify before lodgement and append site photographs.");
+  lines.push("> DRAFT — generated from Workstream survey + design data. Verify before lodgement and append site photographs.");
   return lines.join("\n");
 }
 

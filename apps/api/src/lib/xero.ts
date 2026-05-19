@@ -1,6 +1,6 @@
 /**
  * Xero parallel integration. Sister to apps/api/src/lib/myob.ts; same dev-
- * fallback pattern, same Construct↔accounting entity mapping. Curtis & Co
+ * fallback pattern, same Workstream↔accounting entity mapping. Curtis & Co
  * picks one (MYOB or Xero) at deploy time; both can be configured but the
  * UI currently prefers MYOB if both are connected.
  *
@@ -16,7 +16,7 @@ import type {
   Project,
   XeroContact,
   XeroItem,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 
 const XERO_API = "https://api.xero.com/api.xro/2.0";
 
@@ -124,7 +124,7 @@ export async function draftInvoiceFromCosting(
     Contact: { ContactID: args.contactId },
     Date: new Date().toISOString().slice(0, 10),
     Status: "DRAFT",
-    Reference: `Construct · ${args.project.address}`,
+    Reference: `Workstream · ${args.project.address}`,
     LineAmountTypes: "Exclusive",
     LineItems: args.costing.line_items
       .filter((li) => !li.is_provisional)

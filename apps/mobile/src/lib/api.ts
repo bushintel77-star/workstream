@@ -1,16 +1,16 @@
 import { useMemo } from "react";
-import { ConstructClient } from "@construct/client";
+import { WorkstreamClient } from "@workstream/client";
 import { useAppAuth } from "./auth";
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
 
-export function useConstructApi(): ConstructClient {
+export function useWorkstreamApi(): WorkstreamClient {
   const { getToken } = useAppAuth();
 
   return useMemo(
     () =>
-      new ConstructClient({
+      new WorkstreamClient({
         baseUrl: API_URL,
         getToken: () => getToken(),
       }),

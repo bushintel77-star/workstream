@@ -1,5 +1,5 @@
 import { Redirect, Stack } from "expo-router";
-import { tokens } from "@construct/ui";
+import { tokens } from "@workstream/ui";
 import { useAppAuth } from "../../src/lib/auth";
 
 export default function AppLayout() {

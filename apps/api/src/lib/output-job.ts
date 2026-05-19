@@ -1,7 +1,7 @@
 import { mkdir, rename, writeFile } from "fs/promises";
 import path from "path";
-import type { Store } from "@construct/db";
-import type { Output, OutputKind } from "@construct/contracts";
+import type { Store } from "@workstream/db";
+import type { Output, OutputKind } from "@workstream/contracts";
 import { generateForKind, type GeneratorArgs } from "./output-generators";
 import { renderHtml } from "./html-render";
 

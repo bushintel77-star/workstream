@@ -373,5 +373,71 @@
     "use_description": "Cool-season turf",
     "climate_zones": ["temperate"],
     "curtis_approved": true
+  },
+  {
+    "species": "Cycas revoluta",
+    "common_name": "Sago palm",
+    "category": "specimen",
+    "form": "Specimen / anchor",
+    "mature_h_m": 2.5,
+    "mature_w_m": 2,
+    "use_description": "Biological sculpture against masonry — Tier-1 anchor",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Ligularia reniformis",
+    "common_name": "Tractor seat plant",
+    "category": "mass",
+    "form": "Mass block",
+    "mature_h_m": 0.6,
+    "mature_w_m": 0.6,
+    "use_description": "Monoblock foliage — not cottage scatter",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Buxus microphylla",
+    "common_name": "Japanese box",
+    "category": "structure",
+    "form": "Clipped sphere",
+    "mature_h_m": 0.5,
+    "mature_w_m": 0.5,
+    "use_description": "Structural spheres in grid planting",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Ophiopogon japonicus 'Nana'",
+    "common_name": "Dwarf mondo",
+    "category": "groundcover",
+    "form": "Ground matrix",
+    "mature_h_m": 0.1,
+    "mature_w_m": 0.15,
+    "use_description": "Strict grid ground plane — textile, not meadow",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Philodendron 'Rojo Congo'",
+    "common_name": "Rojo Congo",
+    "category": "mass",
+    "form": "Upright foliage",
+    "mature_h_m": 1.2,
+    "mature_w_m": 1,
+    "use_description": "Burgundy mass against green render",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
+  },
+  {
+    "species": "Parthenocissus tricuspidata",
+    "common_name": "Boston ivy",
+    "category": "climber",
+    "form": "Wall climber",
+    "mature_h_m": 8,
+    "mature_w_m": 3,
+    "use_description": "Flat on brick — dissolves boundary",
+    "climate_zones": ["temperate"],
+    "curtis_approved": true
   }
 ]

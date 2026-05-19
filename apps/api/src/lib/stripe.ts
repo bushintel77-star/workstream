@@ -7,7 +7,7 @@
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
-import type { Costing, Project } from "@construct/contracts";
+import type { Costing, Project } from "@workstream/contracts";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 

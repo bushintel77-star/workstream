@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   CreateTaskInputSchema,
   UpdateTaskStatusInputSchema,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 import { notifyTaskAssignment } from "../lib/task-notify";
 

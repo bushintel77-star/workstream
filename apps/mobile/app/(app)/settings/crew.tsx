@@ -12,9 +12,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import type { CrewMember, CrewRole } from "@construct/contracts";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../../src/lib/api";
+import type { CrewMember, CrewRole } from "@workstream/contracts";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../../src/lib/api";
 
 const ROLE_LABEL: Record<CrewRole, string> = {
   lead: "LEAD",
@@ -35,7 +35,7 @@ const ROLES: CrewRole[] = [
 ];
 
 export default function CrewScreen() {
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

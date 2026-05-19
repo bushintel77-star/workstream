@@ -16,7 +16,7 @@ import type {
   MyobCustomer,
   MyobItem,
   Project,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 
 const MYOB_BASE = "https://api.myob.com/accountright";
 
@@ -160,8 +160,8 @@ export async function draftInvoiceFromCosting(
     Date: new Date().toISOString().slice(0, 10),
     Customer: { UID: args.customerUid },
     Status: "Open",
-    Comment: `Construct quote · ${args.project.address}`,
-    JournalMemo: `Construct ${args.costing.scenario} scenario`,
+    Comment: `Workstream quote · ${args.project.address}`,
+    JournalMemo: `Workstream ${args.costing.scenario} scenario`,
     Lines: args.costing.line_items
       .filter((li) => !li.is_provisional)
       .map((li) => ({

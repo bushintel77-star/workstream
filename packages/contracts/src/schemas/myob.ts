@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Minimal subset of MYOB AccountRight / MYOB Business entities Construct
+// Minimal subset of MYOB AccountRight / MYOB Business entities Workstream
 // actually reads from or writes to. Mirrors the field names the MYOB REST API
 // returns so the serialiser is the identity function.
 

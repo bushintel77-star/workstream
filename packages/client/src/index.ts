@@ -25,14 +25,14 @@ import type {
   TaskStatus,
   UpdateCrewMemberInput,
   UpsertSkuLinkInput,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 
 export type ApiClientOptions = {
   baseUrl: string;
   getToken?: () => Promise<string | null>;
 };
 
-export class ConstructClient {
+export class WorkstreamClient {
   constructor(private options: ApiClientOptions) {}
 
   async healthz(): Promise<{ status: string; timestamp: string }> {

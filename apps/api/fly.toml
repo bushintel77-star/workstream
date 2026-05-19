@@ -1,4 +1,4 @@
-# Fly.io app config for the Construct API.
+# Fly.io app config for the Workstream API.
 # Region: Sydney (syd) per the original spec §4.1.
 #
 # Deploy from the repo root so the Dockerfile can reach workspace packages:

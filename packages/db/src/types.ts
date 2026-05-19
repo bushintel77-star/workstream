@@ -23,7 +23,7 @@ import type {
   CreateCrewMemberInput,
   UpdateCrewMemberInput,
   PhotoMeasurement,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 
 export type {
   Audit,

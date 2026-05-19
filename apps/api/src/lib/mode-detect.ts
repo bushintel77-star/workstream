@@ -1,4 +1,4 @@
-import type { DesignMode } from "@construct/contracts";
+import type { DesignMode } from "@workstream/contracts";
 
 const COVERAGE_TERMS = [
   ["front", "frontage", "street", "verge"],

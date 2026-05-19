@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   CreateCrewMemberInputSchema,
   UpdateCrewMemberInputSchema,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 
 export default async function crewRoutes(fastify: FastifyInstance) {

@@ -5,17 +5,17 @@ import { clerkEnabled } from "../lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
-  title: "Construct — Curtis & Co",
+  title: "Workstream — Curtis & Co",
   description:
     "Voice-first landscape design and build co-pilot. Curtis & Co, Melbourne.",
   metadataBase: new URL(
     process.env.PORTAL_BASE_URL ?? "http://localhost:3002",
   ),
-  applicationName: "Construct",
+  applicationName: "Workstream",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Construct",
+    title: "Workstream",
     statusBarStyle: "black-translucent",
   },
   icons: {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.svg" }],
   },
   openGraph: {
-    title: "Construct — Curtis & Co",
+    title: "Workstream — Curtis & Co",
     description:
       "Voice-first landscape design and build co-pilot. Curtis & Co, Melbourne.",
     type: "website",

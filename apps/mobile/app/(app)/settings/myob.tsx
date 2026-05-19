@@ -15,12 +15,12 @@ import type {
   MyobSyncStatus,
   RateCard,
   SkuLink,
-} from "@construct/contracts";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../../src/lib/api";
+} from "@workstream/contracts";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../../src/lib/api";
 
 export default function MyobScreen() {
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [status, setStatus] = useState<MyobSyncStatus | null>(null);
   const [rateCard, setRateCard] = useState<RateCard[]>([]);
   const [items, setItems] = useState<MyobItem[]>([]);

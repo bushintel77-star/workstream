@@ -1,5 +1,5 @@
-import type { GeoJsonPolygon } from "@construct/contracts";
-import { polygonArea } from "@construct/domain";
+import type { GeoJsonPolygon } from "@workstream/contracts";
+import { polygonArea } from "@workstream/domain";
 
 const WFS_BASE = "https://opendata.maps.vic.gov.au/geoserver/wfs";
 

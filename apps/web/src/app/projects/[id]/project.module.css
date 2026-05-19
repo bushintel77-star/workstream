@@ -592,3 +592,35 @@
   border-radius: 8px;
   border: 1px solid var(--line-hairline);
 }
+
+.siteWalk {
+  margin-top: var(--s-6);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--line-hairline);
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-2);
+}
+
+.checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-secondary);
+}
+
+.checkBox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-sm);
+}

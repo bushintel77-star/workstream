@@ -1,6 +1,6 @@
-# Construct — guidance for AI assistants
+# Workstream — guidance for AI assistants
 
-This repo is the Construct app — a voice-first landscape design + build
+This repo is the Workstream app — a voice-first landscape design + build
 co-pilot for Curtis & Co (Melbourne).
 
 ## Architecture facts (don't relitigate)

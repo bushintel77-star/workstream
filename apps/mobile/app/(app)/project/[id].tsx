@@ -28,9 +28,9 @@ import type {
   Project,
   Recording,
   Survey,
-} from "@construct/contracts";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../../src/lib/api";
+} from "@workstream/contracts";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../../src/lib/api";
 
 const AERIAL_ASPECT = 1;
 const SURVEY_INSET_PCT = 0.12;
@@ -178,7 +178,7 @@ function SurveyHero({ survey }: { survey: Survey }) {
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [project, setProject] = useState<Project | null>(null);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [survey, setSurvey] = useState<Survey | null>(null);

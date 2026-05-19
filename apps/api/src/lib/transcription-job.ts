@@ -1,4 +1,4 @@
-import type { Store } from "@construct/db";
+import type { Store } from "@workstream/db";
 import { transcribeAudio } from "./transcribe";
 
 export async function runTranscription(

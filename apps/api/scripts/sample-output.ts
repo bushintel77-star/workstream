@@ -4,7 +4,7 @@
  * to open in any browser.
  *
  * Run from repo root:
- *   pnpm --filter @construct/api exec tsx scripts/sample-output.ts
+ *   pnpm --filter @workstream/api exec tsx scripts/sample-output.ts
  */
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";

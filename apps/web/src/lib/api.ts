@@ -672,34 +672,9 @@ export async function deleteIntegrationApi(key: string): Promise<void> {
 
 /* -- Portal (kept from previous build) -------------------------------- */
 
-export async function fetchPortalQuote(token: string): Promise<{
-  project: { id: string; address: string; created_at: string };
-  survey: {
-    lot_area_m2: number;
-    house_area_m2: number;
-    garden_area_m2: number;
-  } | null;
-  design: {
-    rationale: string;
-    proposal: {
-      zones: Array<{ id: string; name: string; treatment: string }>;
-    };
-  } | null;
-  costing: {
-    scenario: string;
-    subtotal: number;
-    gst: number;
-    total: number;
-    line_items: Array<{
-      label: string;
-      qty: number;
-      unit: string;
-      rate: number;
-      total: number;
-      is_provisional: boolean;
-    }>;
-  } | null;
-} | { error: string }> {
+export async function fetchPortalQuote(token: string): Promise<
+  import("../components/QuotePortal").PortalQuoteData | { error: string }
+> {
   const res = await fetch(`${API_URL}/portal/quote/${token}`, {
     cache: "no-store",
   });

@@ -1,5 +1,5 @@
-import type { Store } from "@construct/db";
-import type { Audit } from "@construct/contracts";
+import type { Store } from "@workstream/db";
+import type { Audit } from "@workstream/contracts";
 import { runAudit } from "./claude";
 
 export async function runProjectAudit(

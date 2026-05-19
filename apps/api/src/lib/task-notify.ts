@@ -1,4 +1,4 @@
-import type { Store, Task } from "@construct/db";
+import type { Store, Task } from "@workstream/db";
 import { send } from "./notify";
 
 /**
@@ -26,7 +26,7 @@ export async function notifyTaskAssignment(
       (task.technical_specifications
         ? `\n${task.technical_specifications}`
         : "") +
-      `\n— Construct`;
+      `\n— Workstream`;
     await send({ channel: "whatsapp", to: member.phone, body });
   } catch (err) {
     console.warn("[notify] task assignment notification failed:", err);

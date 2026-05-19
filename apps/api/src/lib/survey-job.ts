@@ -1,6 +1,6 @@
-import type { Store } from "@construct/db";
-import type { GeoJsonPolygon, Survey } from "@construct/contracts";
-import { edgeLengths, polygonArea } from "@construct/domain";
+import type { Store } from "@workstream/db";
+import type { GeoJsonPolygon, Survey } from "@workstream/contracts";
+import { edgeLengths, polygonArea } from "@workstream/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
 import {
   fetchBuildingPolygon,

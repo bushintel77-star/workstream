@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { CreateProjectInputSchema } from "@construct/contracts";
+import { CreateProjectInputSchema } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 
 export default async function projectRoutes(fastify: FastifyInstance) {
