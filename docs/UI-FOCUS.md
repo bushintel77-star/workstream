@@ -9,20 +9,20 @@ Single track: **operator clarity** + **client confidence**. Everything else wait
 | **Studio** (operator web) | Tim / Morgan | Walk site ? pipeline ? send quote |
 | **Portal** (token links) | Homeowner | Understand design, compare price, pay deposit |
 
-Brand: **Curtis & Co** on portal ù **Workstream** in studio chrome.
+Brand: **Curtis & Co** on portal ‚Äî **Workstream** in studio chrome.
 
-## Studio ù done / next
+## Studio ÔøΩ done / next
 
 | Priority | Item | Status |
 |----------|------|--------|
 | P0 | Operator nav (Projects, Settings) on every studio page | In progress |
-| P0 | Pipeline rail ù one obvious next step | In progress |
+| P0 | Pipeline rail ÔøΩ one obvious next step | In progress |
 | P0 | Costing scenario cards (match portal) | In progress |
 | P1 | Site walk checklist collapsible on hub | In progress |
-| P1 | Outputs as card grid + primary ùSend quoteù | Backlog |
+| P1 | Outputs as card grid + primary ÔøΩSend quoteÔøΩ | Backlog |
 | P2 | Design page zone cards + photo placeholders | Backlog |
 
-## Portal ù done / next
+## Portal ÔøΩ done / next
 
 | Priority | Item | Status |
 |----------|------|--------|
