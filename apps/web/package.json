@@ -14,11 +14,12 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "@clerk/nextjs": "^6.0.0",
-    "@workstream/contracts": "workspace:*"
+    "@workstream/contracts": "workspace:*",
+    "@workstream/domain": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3"
   }

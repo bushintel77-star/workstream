@@ -47,7 +47,7 @@ export function SendQuotePanel({
       <div className={o.sendPanelHead}>
         <span className={o.sendPanelTitle}>Send to client</span>
         <span className={o.sendPanelSub}>
-          Secure link · 7-day expiry · Lean / Standard / Buffer on the portal
+          Secure link - 7-day expiry - Lean / Standard / Buffer on the portal
         </span>
       </div>
 
@@ -62,7 +62,7 @@ export function SendQuotePanel({
               className={`${s.btn} ${s.btnAccent}`}
               disabled={pending}
             >
-              {pending ? "Creating link…" : "Create client quote link"}
+              {pending ? "Creating link..." : "Create client quote link"}
             </button>
           </form>
 

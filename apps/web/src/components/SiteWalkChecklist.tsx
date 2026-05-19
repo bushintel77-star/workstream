@@ -3,7 +3,7 @@ import p from "../app/projects/[id]/project.module.css";
 const ITEMS = [
   "Measure paving area exactly (biggest cost driver)",
   "Mark steel edge linear metres front + rear",
-  "Confirm gravel m² and depth at bin + decorative areas",
+  "Confirm gravel m2 and depth at bin + decorative areas",
   "Photograph decking - cut-back line and repair allowance",
   "Locate water feature - protection plan during works",
   "Retained vegetation root zones - no excavation inside dripline",
@@ -25,7 +25,9 @@ export function SiteWalkChecklist() {
     <details className={p.siteWalk}>
       <summary className={p.siteWalkSummary}>
         Site walk checklist
-        <span className={p.siteWalkHint}>17 items � expand before going firm</span>
+        <span className={p.siteWalkHint}>
+          17 items - expand before going firm
+        </span>
       </summary>
       <ul className={p.checklist}>
         {ITEMS.map((item) => (

@@ -138,9 +138,9 @@ export function QuotePortal({
 
       {survey && (
         <section className={styles.summary}>
-          <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
-          <Metric label="House" value={`${survey.house_area_m2} m²`} />
-          <Metric label="Garden" value={`${survey.garden_area_m2} m²`} />
+          <Metric label="Lot" value={`${survey.lot_area_m2} m2`} />
+          <Metric label="House" value={`${survey.house_area_m2} m2`} />
+          <Metric label="Garden" value={`${survey.garden_area_m2} m2`} />
         </section>
       )}
 
@@ -263,7 +263,7 @@ export function QuotePortal({
 
       <section className={styles.acceptSection}>
         <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
-          Accept &amp; pay deposit ?
+          Accept &amp; pay deposit
         </Link>
         <p className={styles.acceptNote}>
           A 20% deposit secures your project on the Standard scenario. Balance
