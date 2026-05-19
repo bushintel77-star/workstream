@@ -52,7 +52,8 @@ kill_timeout = "5s"
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "512mb"
+  # 1 GB avoids secret-rollout / machine-update OOM on shared-cpu-1x.
+  memory = "1gb"
 
 # Persistence: the JSON-snapshot store at packages/db/src/persist.ts writes to
 # /repo/apps/api/data/store.json on every mutation. Single-machine pattern —

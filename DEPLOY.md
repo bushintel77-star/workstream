@@ -102,9 +102,13 @@ production.
 `.github/workflows/ci.yml` runs on every PR and push to `main`:
 
 1. `pnpm install --frozen-lockfile`
-2. `pnpm typecheck` across all 10 workspaces
-3. `docker build` against `apps/api/Dockerfile` (no push) to catch
-   Docker-only regressions before deploy.
+2. `pnpm typecheck` + `pnpm test`
+3. `docker build` for `apps/api/Dockerfile` and `apps/web/Dockerfile` (web
+   passes `NEXT_PUBLIC_API_URL=https://construct-api.fly.dev`)
+4. On `main` push: `flyctl deploy` both apps + smoke `curl` health checks
+
+Local mirror: `pnpm ci` and `pnpm build:docker`. Full gap audit:
+[docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md).
 
 ## Local dev
 

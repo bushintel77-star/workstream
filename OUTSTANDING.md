@@ -3,18 +3,22 @@
 Living doc of work between today's state and gold-standard
 end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
+**Gap analysis (detailed):** [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md)
+
 ## P0 — Blocks first paying customer
 
 - [x] **Persistence on Fly** — `[mounts]` block live in
       [apps/api/fly.toml](apps/api/fly.toml) against `construct_data_v2`.
-      Still needs `flyctl scale count 1 -a construct-api` + deploy.
+      Run `flyctl scale count 1 -a construct-api` after deploy.
 - [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
       `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
       dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`
       (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
-- [ ] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`.
-- [ ] **NEXT_PUBLIC_API_URL** baked into web Docker build (see `apps/web/Dockerfile`);
-      CI deploy passes `--build-arg`. Redeploy `construct-web` after merge.
+- [ ] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`
+      (staged; redeploy after API VM bumped to 1 GB).
+- [x] **NEXT_PUBLIC_API_URL** baked into web Docker build + CI `--build-arg`.
+- [x] **Build automation** — `pnpm ci`, `pnpm build:docker`, `docker-compose.yml`,
+      `scripts/deploy-fly.*`, CI smoke tests, `workflow_dispatch` deploy.
 - [x] **Secret scanning** — gitleaks GitHub Action at
       [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
@@ -38,6 +42,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] **Contract tests** — every API response shape parsed by its Zod schema.
 - [ ] **Unit tests on pipeline jobs** (survey, design, cost, audit, output).
 - [ ] **Visual regression** on the rendered quote/scope/permit HTML outputs.
+- [ ] **Tier-1 costing parity** — rate-card pipeline totals vs proposal workbook
+      (design + savings ledger done; see `docs/GAP-ANALYSIS.md`).
 
 ## P2 — Scale + cost
 
@@ -53,7 +59,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 ## P3 — Nice to have
 
 - [ ] Storybook for web primitives.
-- [ ] Local `docker-compose` for new contributors.
+- [x] **Local docker-compose** — [docker-compose.yml](docker-compose.yml).
 - [ ] Bundle-size budget in CI.
 - [ ] PostgreSQL migration once the data model stabilises.
 - [ ] Multi-region Fly deploy for HA.
@@ -64,8 +70,8 @@ The sandbox blocked these as production-affecting; they're code-only above but
 need a one-time human action to take effect:
 
 - `flyctl scale count 1 -a construct-api`
-- `flyctl secrets set CORS_ORIGIN=… -a construct-api`
+- `flyctl secrets deploy -a construct-api` (after CORS staged)
 - `flyctl secrets set CLERK_SECRET_KEY=… -a construct-api`
-- `flyctl secrets set SENTRY_DSN=… -a construct-api`
-- `flyctl secrets set SENTRY_DSN=… -a construct-web`
-- Add `FLY_API_TOKEN` to the GitHub repo secrets.
+- `flyctl secrets set CLERK_* -a construct-web`
+- `flyctl secrets set SENTRY_DSN=… -a construct-api` / `construct-web`
+- Valid `BROKKER` or `FLY_API_TOKEN` in GitHub repo secrets

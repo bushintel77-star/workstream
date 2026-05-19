@@ -5,10 +5,19 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy to Fly after CI (main only)
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_API_URL: https://construct-api.fly.dev
 
 jobs:
   typecheck:
@@ -68,20 +77,23 @@ jobs:
           file: apps/web/Dockerfile
           push: false
           tags: construct-web:ci
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
     name: deploy api + web to fly
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     needs: [typecheck, build-api, build-web]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy == true)
     concurrency:
       group: fly-deploy
       cancel-in-progress: false
     env:
-      # Accept either name; flyctl reads FLY_API_TOKEN from the environment.
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN || secrets.BROKKER }}
     steps:
       - uses: actions/checkout@v6
@@ -89,4 +101,12 @@ jobs:
       - name: Deploy API
         run: flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api --remote-only
       - name: Deploy Web
-        run: flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web --remote-only --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+        run: |
+          flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web --remote-only \
+            --build-arg NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+      - name: Smoke test API
+        run: curl -sfS https://construct-api.fly.dev/healthz
+      - name: Smoke test Web
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" https://construct-web.fly.dev/)
+          test "$code" = "200" -o "$code" = "307" -o "$code" = "308"

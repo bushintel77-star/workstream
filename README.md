@@ -74,16 +74,20 @@ the **Project hub** and surfaces the single next-step CTA on mobile.
 
 ## Deploying
 
-```bash
-# API
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api
+**CI (automatic):** push to `main` runs typecheck, tests, Docker builds, then
+deploys `construct-api` + `construct-web` when the Fly token secret is set.
+Manual re-deploy: Actions → CI → **Run workflow** → enable **Deploy to Fly**.
 
-# Web
-flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web
+**Local / script:**
+
+```bash
+pnpm ci                    # mirror GitHub typecheck + test
+pnpm build:docker          # both images
+docker compose up --build  # localhost :3001 / :3002
+pnpm deploy:fly            # scripts/deploy-fly (needs flyctl auth)
 ```
 
-CI runs typecheck + test + Docker build on every PR; deploy is manual today
-(see [audit](#outstanding) for the planned automation).
+See [DEPLOY.md](DEPLOY.md) for first-time Fly provisioning and secrets.
 
 ### Persistence
 
@@ -94,8 +98,8 @@ Without that, the API restarts wipe state.
 
 ## Outstanding
 
-See `OUTSTANDING.md` for the production punch list — auth, monitoring,
-mobile distribution, queue, EAS, etc.
+See `OUTSTANDING.md` (checkbox punch list) and `docs/GAP-ANALYSIS.md`
+(build automation, production gaps, Tier-1 Wrights Terrace).
 
 ## Conventions
 
