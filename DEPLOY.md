@@ -41,7 +41,7 @@ flyctl volumes create construct_data \
 
 # 3. Set the required + optional secrets
 flyctl secrets set \
-  CORS_ORIGIN="https://construct-api.fly.dev" \
+  CORS_ORIGIN="https://construct-web.fly.dev" \
   PUBLIC_API_URL="https://construct-api.fly.dev" \
   --config apps/api/fly.toml
 
