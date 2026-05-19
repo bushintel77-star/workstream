@@ -15,6 +15,47 @@ export function isStripeLive(): boolean {
   return !!process.env.STRIPE_SECRET_KEY;
 }
 
+export type StripeKeyCheck =
+  | { ok: true; livemode: boolean }
+  | { ok: false; status: number; message: string };
+
+/**
+ * Verify a Stripe secret key by hitting GET /v1/balance. Fails fast when an
+ * operator pastes a bad key in settings instead of waiting for the first
+ * Checkout call to blow up.
+ */
+export async function validateStripeKey(
+  secretKey: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<StripeKeyCheck> {
+  const key = secretKey.trim();
+  if (!key.startsWith("sk_")) {
+    return { ok: false, status: 400, message: "Key must start with sk_" };
+  }
+  let res: Response;
+  try {
+    res = await fetchImpl(`${STRIPE_API}/balance`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${key}` },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "network error";
+    return { ok: false, status: 502, message };
+  }
+  if (!res.ok) {
+    let message = `Stripe rejected key (${res.status})`;
+    try {
+      const body = (await res.json()) as { error?: { message?: string } };
+      if (body.error?.message) message = body.error.message;
+    } catch {
+      /* response not JSON */
+    }
+    return { ok: false, status: res.status, message };
+  }
+  const body = (await res.json()) as { livemode?: boolean };
+  return { ok: true, livemode: !!body.livemode };
+}
+
 /**
  * Verify a Stripe webhook signature. Stripe sends a header:
  *   Stripe-Signature: t=<timestamp>,v1=<sig>[,v1=<sig>...]

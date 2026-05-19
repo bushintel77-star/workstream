@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
 import { clearEnvSecret, setEnvSecret } from "../lib/runtime-secrets";
+import { validateStripeKey } from "../lib/stripe";
 
 const RatePatchSchema = z.object({
   rate: z.number().nonnegative().optional(),
@@ -175,6 +176,15 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
       const trimmed = parsed.data.value.trim();
       if (trimmed.length === 0) {
         return reply.code(400).send({ error: "Value cannot be blank" });
+      }
+      if (key === "STRIPE_SECRET_KEY") {
+        const check = await validateStripeKey(trimmed);
+        if (!check.ok) {
+          return reply.code(400).send({
+            error: "Stripe rejected this key",
+            detail: check.message,
+          });
+        }
       }
       const row = await fastify.store.setIntegration(
         request.userId!,

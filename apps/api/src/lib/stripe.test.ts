@@ -1,6 +1,6 @@
 import { createHmac } from "crypto";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { verifyStripeWebhook } from "./stripe";
+import { validateStripeKey, verifyStripeWebhook } from "./stripe";
 
 const SECRET = "whsec_test_1234567890abcdef";
 
@@ -65,5 +65,52 @@ describe("verifyStripeWebhook", () => {
     expect(result.ok).toBe(true);
     process.env.STRIPE_WEBHOOK_SECRET = previous;
     process.env.NODE_ENV = previousEnv;
+  });
+});
+
+describe("validateStripeKey", () => {
+  it("rejects keys that don't start with sk_ without making a request", async () => {
+    const fetchImpl = (() => {
+      throw new Error("should not be called");
+    }) as unknown as typeof fetch;
+    const result = await validateStripeKey("pk_live_abc", fetchImpl);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.status).toBe(400);
+  });
+
+  it("accepts a key that Stripe's /v1/balance accepts", async () => {
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify({ livemode: false }), {
+        status: 200,
+      })) as unknown as typeof fetch;
+    const result = await validateStripeKey("sk_test_abc", fetchImpl);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.livemode).toBe(false);
+  });
+
+  it("surfaces Stripe's rejection message when /v1/balance returns 401", async () => {
+    const fetchImpl = (async () =>
+      new Response(
+        JSON.stringify({ error: { message: "Invalid API Key provided" } }),
+        { status: 401 },
+      )) as unknown as typeof fetch;
+    const result = await validateStripeKey("sk_test_bad", fetchImpl);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(401);
+      expect(result.message).toBe("Invalid API Key provided");
+    }
+  });
+
+  it("returns a 502 when the network call throws", async () => {
+    const fetchImpl = (async () => {
+      throw new Error("ECONNREFUSED");
+    }) as unknown as typeof fetch;
+    const result = await validateStripeKey("sk_test_abc", fetchImpl);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(502);
+      expect(result.message).toBe("ECONNREFUSED");
+    }
   });
 });
