@@ -6,7 +6,7 @@ Single track: **operator clarity** + **client confidence**. Everything else wait
 
 | Surface | User | Job |
 |---------|------|-----|
-| **Studio** (operator web) | Tim / Morgan | Walk site ? pipeline ? send quote |
+| **Studio** (operator web) | Tim / Morgan | Walk site, manage pipeline, send quote |
 | **Portal** (token links) | Homeowner | Understand design, compare price, pay deposit |
 
 Brand: **Curtis & Co** on portal — **Workstream** in studio chrome.
