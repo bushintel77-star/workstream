@@ -8,7 +8,7 @@ type Scenario = "lean" | "standard" | "buffer";
 const META: Record<Scenario, { label: string; note: string }> = {
   lean: {
     label: "Lean",
-    note: "Competitive — disclosed substitutions on pavers, bin, lights.",
+    note: "Competitive - disclosed substitutions on pavers, bin, lights.",
   },
   standard: {
     label: "Standard",
