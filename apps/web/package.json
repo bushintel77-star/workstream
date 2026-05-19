@@ -14,7 +14,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "@clerk/nextjs": "^6.0.0",
-    "@workstream/contracts": "workspace:*"
+    "@workstream/contracts": "workspace:*",
+    "@workstream/domain": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
