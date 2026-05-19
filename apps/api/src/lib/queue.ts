@@ -38,15 +38,14 @@ export async function enqueuePipelineJob(
 ): Promise<{ enqueued: boolean; jobId?: string }> {
   if (!isQueueEnabled()) return { enqueued: false };
   try {
-    /* @ts-expect-error — bullmq optional install */
     const { Queue } = await import("bullmq");
     if (!queueRef) {
       queueRef = new Queue("construct-pipeline", {
         connection: { url: process.env.REDIS_URL },
       });
     }
-    /* @ts-expect-error */
-    const job = await queueRef.add(payload.kind, payload, {
+    const queue = queueRef as InstanceType<typeof Queue>;
+    const job = await queue.add(payload.kind, payload, {
       attempts: 3,
       backoff: { type: "exponential", delay: 2000 },
       removeOnComplete: { age: 24 * 60 * 60, count: 1000 },
