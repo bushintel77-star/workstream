@@ -48,7 +48,7 @@ const SCENARIOS = [
   {
     id: "lean",
     label: "Lean",
-    note: "Tighter materials ù pavers, bin, lights substituted with disclosure.",
+    note: "Tighter materials - pavers, bin, lights substituted with disclosure.",
   },
   {
     id: "standard",
@@ -113,7 +113,7 @@ export function QuotePortal({
         <div className={styles.brand}>
           Curtis &amp; Co
           <span className={styles.brandSub}>
-            Boutique Landscape Design ù Melbourne
+            Boutique Landscape Design - Melbourne
           </span>
         </div>
         <div className={styles.docMeta}>
@@ -138,9 +138,9 @@ export function QuotePortal({
 
       {survey && (
         <section className={styles.summary}>
-          <Metric label="Lot" value={`${survey.lot_area_m2} mù`} />
-          <Metric label="House" value={`${survey.house_area_m2} mù`} />
-          <Metric label="Garden" value={`${survey.garden_area_m2} mù`} />
+          <Metric label="Lot" value={`${survey.lot_area_m2} m2`} />
+          <Metric label="House" value={`${survey.house_area_m2} m2`} />
+          <Metric label="Garden" value={`${survey.garden_area_m2} m2`} />
         </section>
       )}
 
@@ -219,11 +219,11 @@ export function QuotePortal({
             <>
               <div className={styles.total}>
                 <span className={styles.totalKicker}>
-                  {active.scenario.toUpperCase()} ù TOTAL INCL. GST
+                  {active.scenario.toUpperCase()} - TOTAL INCL. GST
                 </span>
                 <span className={styles.totalAmount}>{aud0(active.total)}</span>
                 <span className={styles.totalSub}>
-                  Subtotal {aud2(active.subtotal)} ù GST {aud2(active.gst)}
+                  Subtotal {aud2(active.subtotal)} - GST {aud2(active.gst)}
                 </span>
               </div>
 
@@ -256,14 +256,14 @@ export function QuotePortal({
 
           <p className={styles.transparency}>
             Every line links to the live rate card. Substitution levers are
-            disclosed ù nothing silent.
+            disclosed - nothing silent.
           </p>
         </section>
       )}
 
       <section className={styles.acceptSection}>
         <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
-          Accept &amp; pay deposit ?
+          Accept &amp; pay deposit
         </Link>
         <p className={styles.acceptNote}>
           A 20% deposit secures your project on the Standard scenario. Balance
@@ -272,7 +272,7 @@ export function QuotePortal({
       </section>
 
       <footer className={styles.colophon}>
-        <span>Curtis &amp; Co ù {project.address}</span>
+        <span>Curtis &amp; Co - {project.address}</span>
         <span>Quote valid 30 days</span>
       </footer>
     </main>
