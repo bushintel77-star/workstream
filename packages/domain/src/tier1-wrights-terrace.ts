@@ -19,8 +19,10 @@ export type Tier1DesignContext = {
   mode: string;
 };
 
-/** Tier-1 architectural massing — front entry + rear courtyard (proposal v3). */
-export function tier1WrightsTerraceDesign(ctx: Tier1DesignContext): DesignGeneration {
+/** Tier-1 architectural massing - front entry + rear courtyard (proposal v3). */
+export function tier1WrightsTerraceDesign(
+  _ctx: Tier1DesignContext,
+): DesignGeneration {
   return {
     proposal: {
       zones: [
@@ -28,7 +30,7 @@ export function tier1WrightsTerraceDesign(ctx: Tier1DesignContext): DesignGenera
           id: "front-entry",
           name: "Front entry",
           treatment:
-            "Architecture locked under the lacework. 7 mm bluestone screenings ground plane, Cycas anchors against masonry, Ligularia monoblock, Buxus spheres, and a strict Ophiopogon Nana grid — no cottage scatter, no organic mulch.",
+            "Architecture locked under the lacework. 7 mm bluestone screenings ground plane, Cycas anchors against masonry, Ligularia monoblock, Buxus spheres, and a strict Ophiopogon Nana grid - no cottage scatter, no organic mulch.",
           plantings: [
             {
               species: "Cycas revoluta",
@@ -63,7 +65,7 @@ export function tier1WrightsTerraceDesign(ctx: Tier1DesignContext): DesignGenera
             {
               item: "7 mm bluestone screenings",
               qty: 4,
-              unit: "m³",
+              unit: "m3",
               sku: "SCREEN-BLUE-7MM",
             },
           ],
@@ -109,7 +111,7 @@ export function tier1WrightsTerraceDesign(ctx: Tier1DesignContext): DesignGenera
             {
               item: "7 mm bluestone screenings",
               qty: 2,
-              unit: "m³",
+              unit: "m3",
               sku: "SCREEN-BLUE-7MM",
             },
           ],
@@ -129,9 +131,11 @@ export function tier1WrightsTerraceDesign(ctx: Tier1DesignContext): DesignGenera
     gaps: [
       {
         zone: "front-entry",
-        description: "Luma drawings are concept only — confirm step nosing detail on site walk.",
+        description:
+          "Luma drawings are concept only - confirm step nosing detail on site walk.",
         proposed_fill: "Separate riser stone or 60 mm nose course (variation V1).",
-        rationale: "Mitred 30 mm paver nosing chips within 12 months on entry traffic.",
+        rationale:
+          "Mitred 30 mm paver nosing chips within 12 months on entry traffic.",
       },
     ],
     rationale:

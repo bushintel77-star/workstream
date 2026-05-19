@@ -14,8 +14,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
       dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`
       (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
-- [ ] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`
-      (staged; redeploy after API VM bumped to 1 GB).
+- [x] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`
 - [x] **NEXT_PUBLIC_API_URL** baked into web Docker build + CI `--build-arg`.
 - [x] **Build automation** — `pnpm ci`, `pnpm build:docker`, `docker-compose.yml`,
       `scripts/deploy-fly.*`, CI smoke tests, `workflow_dispatch` deploy.

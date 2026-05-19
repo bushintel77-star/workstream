@@ -14,7 +14,7 @@ Last reviewed: 2026-05-20.
 | Fly deploy | **Automated on main** | Token + machine health |
 | API persistence | **Configured** | Volume mount; single machine recommended |
 | Auth (Clerk) | Code ready | Fly secrets on api + web |
-| CORS | Staged on Fly | Redeploy after VM memory fix |
+| CORS | **Deployed** on Fly | `https://construct-web.fly.dev` |
 | Tier-1 Wrights Terrace | **Product-complete** | Costing line-items vs workbook = P1 |
 | Mobile / queue / e2e | Backlog | P1 |
 
@@ -34,7 +34,7 @@ Last reviewed: 2026-05-20.
 | --- | --- |
 | CI: typecheck + test | `.github/workflows/ci.yml` |
 | CI: Docker build api + web | same; web passes `build-args` |
-| CI: deploy api + web on `main` | same; web `--build-arg NEXT_PUBLIC_API_URL=Ö` |
+| CI: deploy api + web on `main` | same; web `--build-arg NEXT_PUBLIC_API_URL=ù` |
 | CI: post-deploy smoke | `curl` `/healthz` + web home |
 | Manual deploy dispatch | `workflow_dispatch` on CI workflow |
 | Local CI mirror | `pnpm ci` |
@@ -44,8 +44,8 @@ Last reviewed: 2026-05-20.
 
 ### Remaining (human / org)
 
-- [ ] GitHub secret `BROKKER` or `FLY_API_TOKEN` ó valid Fly deploy token
-- [ ] Branch protection on `main` ó require CI green (repo settings)
+- [ ] GitHub secret `BROKKER` or `FLY_API_TOKEN` ù valid Fly deploy token
+- [ ] Branch protection on `main` ù require CI green (repo settings)
 
 ## 2. Production runtime (P0)
 
@@ -65,9 +65,9 @@ Last reviewed: 2026-05-20.
 | --- | --- |
 | Operator UI | https://construct-web.fly.dev |
 | API + health | https://construct-api.fly.dev/healthz |
-| API root in browser | 404 JSON ó expected |
+| API root in browser | 404 JSON ù expected |
 
-## 3. Tier-1 ó 36 Wrights Terrace, Prahran
+## 3. Tier-1 ù 36 Wrights Terrace, Prahran
 
 Reference assets: `clients/wrights-terrace/` (proposal v3 PDF, workbook).
 
@@ -87,7 +87,7 @@ Reference assets: `clients/wrights-terrace/` (proposal v3 PDF, workbook).
 
 | Gap | Impact | Suggested fix |
 | --- | --- | --- |
-| Pipeline **costing totals** vs workbook | Portal may show rate-card math ? $58,410.35 target | Seed Tier-1 scenario or override in cost job when `isTier1Ö` |
+| Pipeline **costing totals** vs workbook | Portal may show rate-card math ? $58,410.35 target | Seed Tier-1 scenario or override in cost job when `isTier1ù` |
 | Portal **hero image** slot | Editorial quote lacks site photo | `outputs` or portal `hero_url` field |
 | Mobile site-walk for this job | Capture endpoints exist; UI thin | `docs/CAPTURE.md` roadmap |
 | Lidar / eyewear | Documented TODOs | Native modules |
@@ -97,14 +97,14 @@ Reference assets: `clients/wrights-terrace/` (proposal v3 PDF, workbook).
 `packages/domain/src/tier1-wrights-terrace.test.ts` locks savings math and
 zone structure so proposal numbers do not drift silently.
 
-## 4. Quality & scale (P1ñP3)
+## 4. Quality & scale (P1ùP3)
 
 See `OUTSTANDING.md` for the full punch list. Highest leverage next:
 
-1. Playwright ó operator happy path (create project ? design ? quote link).
-2. Contract tests ó parse every API response with its Zod schema.
-3. BullMQ + Redis ó async pipeline jobs.
-4. EAS / TestFlight ó mobile distribution.
+1. Playwright ù operator happy path (create project ? design ? quote link).
+2. Contract tests ù parse every API response with its Zod schema.
+3. BullMQ + Redis ù async pipeline jobs.
+4. EAS / TestFlight ù mobile distribution.
 5. Real ESLint per workspace (today `lint` is a no-op echo).
 
 ## 5. How to verify after a change
