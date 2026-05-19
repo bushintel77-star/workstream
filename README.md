@@ -36,6 +36,7 @@ pnpm install
 
 # 3. Env (each app has a .env.example)
 cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
 cp apps/mobile/.env.example apps/mobile/.env
 
 # 4. Build the workspace packages once

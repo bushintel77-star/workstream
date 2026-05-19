@@ -2,6 +2,7 @@ node_modules/
 dist/
 .turbo/
 .expo/
+.next/
 *.tsbuildinfo
 .env
 .env.local
@@ -9,6 +10,9 @@ dist/
 *.log
 ios/
 android/
+coverage/
+.DS_Store
+Thumbs.db
 
 # Runtime artifacts (audio uploads, generated outputs)
 apps/api/data/
