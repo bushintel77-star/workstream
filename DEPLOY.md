@@ -58,7 +58,16 @@ flyctl secrets set \
 flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile
 ```
 
-Subsequent deploys are just `flyctl deploy --config apps/api/fly.toml`.
+Subsequent deploys:
+
+```bash
+flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api
+
+flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web \
+  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+```
+
+Set on **construct-web** (runtime): `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 
 ## Mobile (Expo)
 

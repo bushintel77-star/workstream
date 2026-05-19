@@ -6,11 +6,14 @@
 
 ARG NODE_VERSION=22.11.0
 ARG PNPM_VERSION=9.15.4
+ARG NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
 
 # ---- builder ---------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS builder
 
 ARG PNPM_VERSION
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /repo
