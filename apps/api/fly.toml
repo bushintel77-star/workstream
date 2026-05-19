@@ -55,10 +55,8 @@ kill_timeout = "5s"
   memory = "512mb"
 
 # Persistence: the JSON-snapshot store at packages/db/src/persist.ts writes to
-# /repo/apps/api/data/store.json on every mutation. To turn on durability,
-# (1) scale the app to a single machine (`flyctl scale count 1 -a construct-api`),
-# then (2) enable this mount block and redeploy. Volume `construct_data` already
-# exists in syd. Multi-machine durability needs managed Postgres instead.
-# [mounts]
-#   source = "construct_data"
-#   destination = "/repo/apps/api/data"
+# /repo/apps/api/data/store.json on every mutation. Single-machine pattern —
+# scale to >1 only after migrating to managed Postgres (or Litestream → R2).
+[mounts]
+  source = "construct_data_v2"
+  destination = "/repo/apps/api/data"
