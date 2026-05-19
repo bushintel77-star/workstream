@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 import { ToastHost } from "../components/ToastHost";
+import { clerkEnabled } from "../lib/auth";
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   title: "Construct — Curtis & Co",
@@ -62,7 +64,13 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ToastHost>{children}</ToastHost>
+        {clerkEnabled ? (
+          <ClerkProvider>
+            <ToastHost>{children}</ToastHost>
+          </ClerkProvider>
+        ) : (
+          <ToastHost>{children}</ToastHost>
+        )}
       </body>
     </html>
   );

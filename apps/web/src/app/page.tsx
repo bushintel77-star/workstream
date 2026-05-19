@@ -4,6 +4,7 @@ import s from "../styles/app.module.css";
 import d from "./dashboard.module.css";
 import { createProjectAction, deleteProjectAction } from "./actions";
 import { SubmitButton } from "../components/SubmitButton";
+import { requireSignedIn } from "../lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ const STATUS_PILL: Record<ProjectStatus, string> = {
 };
 
 export default async function DashboardPage() {
+  await requireSignedIn();
   let projects: Awaited<ReturnType<typeof listProjects>> = [];
   let loadError: string | null = null;
   try {
