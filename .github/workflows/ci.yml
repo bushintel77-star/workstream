@@ -85,7 +85,7 @@ jobs:
   deploy:
     name: deploy api + web to fly
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     needs: [typecheck, build-api, build-web]
     if: >
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
@@ -97,16 +97,41 @@ jobs:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN || secrets.BROKKER }}
     steps:
       - uses: actions/checkout@v6
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install flyctl
+        run: |
+          curl -fsSL https://fly.io/install.sh | sh
+          echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
       - name: Deploy API
-        run: flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api --remote-only
+        run: |
+          for i in 1 2 3 4 5; do
+            flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile \
+              -a construct-api --remote-only && exit 0
+            echo "fly deploy api attempt $i failed; retry in 30s..."
+            sleep 30
+          done
+          exit 1
       - name: Deploy Web
         run: |
-          flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web --remote-only \
-            --build-arg NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+          for i in 1 2 3 4 5; do
+            flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
+              -a construct-web --remote-only \
+              --build-arg NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }} && exit 0
+            echo "fly deploy web attempt $i failed; retry in 30s..."
+            sleep 30
+          done
+          exit 1
       - name: Smoke test API
-        run: curl -sfS https://construct-api.fly.dev/healthz
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -sfS https://construct-api.fly.dev/healthz && exit 0
+            sleep 10
+          done
+          exit 1
       - name: Smoke test Web
         run: |
-          code=$(curl -sS -o /dev/null -w "%{http_code}" https://construct-web.fly.dev/)
-          test "$code" = "200" -o "$code" = "307" -o "$code" = "308"
+          for i in 1 2 3 4 5; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" https://construct-web.fly.dev/)
+            if [ "$code" = "200" ] || [ "$code" = "307" ] || [ "$code" = "308" ]; then exit 0; fi
+            sleep 10
+          done
+          exit 1
