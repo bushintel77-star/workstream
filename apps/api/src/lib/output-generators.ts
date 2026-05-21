@@ -14,6 +14,8 @@ import type {
 import {
   buildEnvelopeBrief,
   formatSitePlanQuoteSection,
+  isTier1WrightsTerrace,
+  TIER1_WRIGHTS_SAVINGS,
   totalEmbodiedCarbon,
   type RateCardLookup,
 } from "@workstream/domain";
@@ -153,6 +155,14 @@ export function buildQuote(args: Args): string {
   lines.push("");
   lines.push("Curtis & Co — Boutique Landscape Design, Melbourne.");
   lines.push("");
+  if (isTier1WrightsTerrace(args.project.address)) {
+    lines.push("## Tier-1 architectural massing");
+    lines.push("");
+    lines.push(
+      `Value reallocation saves **${aud0(Math.abs(TIER1_WRIGHTS_SAVINGS.net_inc_gst))} incl. GST** vs cottage-scatter scope. Architecture locked.`,
+    );
+    lines.push("");
+  }
   lines.push(`**Project total (Standard scenario, incl. GST): ${aud0(standard.total)}**`);
   lines.push("");
   lines.push(`Subtotal ${aud2(standard.subtotal)}  ·  GST ${aud2(standard.gst)}`);

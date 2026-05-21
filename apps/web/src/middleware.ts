@@ -1,41 +1,31 @@
-import {
-  clerkMiddleware,
-  createRouteMatcher,
-} from "@clerk/nextjs/server";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 
-const isProtectedRoute = createRouteMatcher([
-  "/",
-  "/projects(.*)",
-  "/settings(.*)",
-]);
-
-const authRequired =
-  process.env.AUTH_REQUIRED === "true" ||
-  (process.env.AUTH_REQUIRED !== "false" &&
-    process.env.NODE_ENV === "production");
-
-const clerkConfigured =
-  !!process.env.CLERK_SECRET_KEY &&
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-function devBypass(req: NextRequest) {
-  if (authRequired && isProtectedRoute(req)) {
-    return new Response("Authentication is not configured", { status: 503 });
-  }
-  return NextResponse.next();
+/** Clerk only when both keys are present; otherwise dev-mode passthrough. */
+function isClerkConfigured(): boolean {
+  const sk = process.env.CLERK_SECRET_KEY;
+  const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  return (
+    typeof sk === "string" &&
+    sk.startsWith("sk_") &&
+    typeof pk === "string" &&
+    pk.startsWith("pk_")
+  );
 }
-
-export default clerkConfigured
-  ? clerkMiddleware(async (auth, req) => {
-      if (isProtectedRoute(req)) {
-        await auth.protect();
-      }
-    })
-  : devBypass;
 
 export const config = {
   matcher: [
     "/((?!_next|.*\\.(?:ico|png|jpg|jpeg|svg|gif|webp|webmanifest|woff2?|ttf|css|js|map)$).*)",
   ],
 };
+
+export default async function middleware(
+  req: NextRequest,
+  event: NextFetchEvent,
+) {
+  if (!isClerkConfigured()) {
+    return NextResponse.next();
+  }
+  const { default: clerkHandler } = await import("./middleware.clerk");
+  return clerkHandler(req, event);
+}

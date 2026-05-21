@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -95,6 +96,11 @@ async function start() {
   await server.register(multipart, {
     limits: { fileSize: 100 * 1024 * 1024 },
   });
+
+  for (const dir of ['uploads', 'outputs', 'photos', 'aerial']) {
+    fs.mkdirSync(path.join(process.cwd(), 'data', dir), { recursive: true });
+  }
+
   await server.register(fastifyStatic, {
     root: path.join(process.cwd(), 'data', 'uploads'),
     prefix: '/uploads/',

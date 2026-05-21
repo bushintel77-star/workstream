@@ -18,9 +18,9 @@
     "@workstream/domain": "workspace:*",
     "@fastify/cors": "^11.0.0",
     "@fastify/helmet": "^13.0.2",
-    "@fastify/multipart": "^9.0.0",
+    "@fastify/multipart": "^10.0.0",
     "@fastify/rate-limit": "^10.3.0",
-    "@fastify/static": "^8.0.0",
+    "@fastify/static": "^9.1.3",
     "@fastify/websocket": "^11.0.0",
     "@sentry/node": "^10.53.1",
     "bullmq": "^5.76.10",
@@ -31,7 +31,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^25.9.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }

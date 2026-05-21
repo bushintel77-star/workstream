@@ -5,10 +5,19 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy to Fly after CI (main only)
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_API_URL: https://construct-api.fly.dev
 
 jobs:
   typecheck:
@@ -16,14 +25,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 9.15.4
           run_install: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -41,15 +50,15 @@ jobs:
     needs: typecheck
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
       - name: Build (no push)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/api/Dockerfile
           push: false
-          tags: workstream-api:ci
+          tags: construct-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -60,41 +69,69 @@ jobs:
     needs: typecheck
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           push: false
-          tags: workstream-web:ci
+          tags: construct-web:ci
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
     name: deploy api + web to fly
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: [typecheck, build-api, build-web]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy == true)
     concurrency:
       group: fly-deploy
       cancel-in-progress: false
     env:
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN || secrets.BROKKER }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: actions/checkout@v6
+      - name: Install flyctl
+        run: |
+          curl -fsSL https://fly.io/install.sh | sh
+          echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
       - name: Deploy API
-        run: flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api --remote-only
-      - name: Ensure single API machine (JSON store)
-        run: flyctl scale count 1 -a construct-api
+        run: |
+          for i in 1 2 3 4 5; do
+            flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile \
+              -a construct-api --remote-only && exit 0
+            echo "fly deploy api attempt $i failed; retry in 30s..."
+            sleep 30
+          done
+          exit 1
       - name: Deploy Web
         run: |
-          flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
-            -a construct-web --remote-only \
-            --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
-      - name: Smoke check API
-        run: curl -sfS https://construct-api.fly.dev/healthz
-      - name: Smoke check Web
-        run: curl -sfS -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/ | grep -E "^(200|307|302)"
+          for i in 1 2 3 4 5; do
+            flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
+              -a construct-web --remote-only \
+              --build-arg NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }} && exit 0
+            echo "fly deploy web attempt $i failed; retry in 30s..."
+            sleep 30
+          done
+          exit 1
+      - name: Smoke test API
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -sfS https://construct-api.fly.dev/healthz && exit 0
+            sleep 10
+          done
+          exit 1
+      - name: Smoke test Web
+        run: |
+          for i in 1 2 3 4 5; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" https://construct-web.fly.dev/)
+            if [ "$code" = "200" ] || [ "$code" = "307" ] || [ "$code" = "308" ]; then exit 0; fi
+            sleep 10
+          done
+          exit 1

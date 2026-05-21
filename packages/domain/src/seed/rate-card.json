@@ -21,6 +21,12 @@
   { "category": "plants_signature", "sku": "PLT-LIR-140", "label": "Liriope 140mm", "unit": "ea", "rate": 9.5, "is_poa": false },
   { "category": "plants_signature", "sku": "PLT-LOM-140", "label": "Lomandra 140mm", "unit": "ea", "rate": 11, "is_poa": false },
   { "category": "plants_signature", "sku": "PLT-BUX-200", "label": "Buxus 200mm", "unit": "ea", "rate": 26, "is_poa": false },
+  { "category": "plants_signature", "sku": "PLT-CYCAS-400", "label": "Cycas revoluta 400mm", "unit": "ea", "rate": 250, "is_poa": false },
+  { "category": "plants_signature", "sku": "PLT-BUX-SPHERE-400", "label": "Buxus microphylla sphere 400mm", "unit": "ea", "rate": 120, "is_poa": false },
+  { "category": "plants_signature", "sku": "PLT-LIGULARIA-140", "label": "Ligularia reniformis 140mm", "unit": "ea", "rate": 11, "is_poa": false },
+  { "category": "plants_signature", "sku": "PLT-MONDO-NANA-50", "label": "Ophiopogon japonicus Nana 50mm tube", "unit": "ea", "rate": 3.5, "is_poa": false },
+  { "category": "plants_signature", "sku": "PLT-ROJO-CONGO-200", "label": "Philodendron Rojo Congo 200mm", "unit": "ea", "rate": 35, "is_poa": false },
+  { "category": "plants_signature", "sku": "PLT-BOSTON-IVY", "label": "Parthenocissus tricuspidata 140mm", "unit": "ea", "rate": 14, "is_poa": false },
 
   { "category": "soft_materials", "sku": "SOIL-TOP", "label": "Premium topsoil", "unit": "m³", "rate": 85, "is_poa": false },
   { "category": "soft_materials", "sku": "SOIL-COMP", "label": "Compost blend", "unit": "m³", "rate": 95, "is_poa": false },
@@ -31,6 +37,7 @@
   { "category": "hard_materials", "sku": "PAV-BLUE-SAWN", "label": "Bluestone sawn", "unit": "m²", "rate": 120, "is_poa": false },
   { "category": "hard_materials", "sku": "PAV-BLUE-FLAME", "label": "Bluestone flamed", "unit": "m²", "rate": 135, "is_poa": false },
   { "category": "hard_materials", "sku": "PAV-BLUE-COBB", "label": "Bluestone cobble", "unit": "m²", "rate": 180, "is_poa": false },
+  { "category": "hard_materials", "sku": "SCREEN-BLUE-7MM", "label": "7 mm bluestone screenings", "unit": "m³", "rate": 180, "is_poa": false },
   { "category": "hard_materials", "sku": "PAV-GRAN", "label": "Granite paving", "unit": "m²", "rate": 145, "is_poa": false },
   { "category": "hard_materials", "sku": "PAV-TRAV", "label": "Travertine paving", "unit": "m²", "rate": 110, "is_poa": false },
   { "category": "hard_materials", "sku": "CONC-EDGE", "label": "Concrete edging", "unit": "lm", "rate": 70, "is_poa": false },
@@ -44,6 +51,7 @@
 
   { "category": "irrigation", "sku": "IRR-DRIP", "label": "Drip line (inline emitter)", "unit": "lm", "rate": 4, "is_poa": false },
   { "category": "irrigation", "sku": "IRR-CTRL-WIFI", "label": "Wi-Fi irrigation controller", "unit": "ea", "rate": 480, "is_poa": false },
+  { "category": "irrigation", "sku": "IRR-CTRL-4", "label": "4-station irrigation controller + RPZ", "unit": "ea", "rate": 950, "is_poa": false },
   { "category": "irrigation", "sku": "IRR-VALVE", "label": "Solenoid valve assembly", "unit": "ea", "rate": 95, "is_poa": false },
   { "category": "irrigation", "sku": "IRR-MAIN-25", "label": "25 mm mainline", "unit": "lm", "rate": 9, "is_poa": false },
   { "category": "irrigation", "sku": "IRR-TAP-BFLW", "label": "Tap & backflow assembly", "unit": "ea", "rate": 380, "is_poa": false },
@@ -51,6 +59,7 @@
   { "category": "lighting", "sku": "LGT-UP-BRASS", "label": "Brass up-light", "unit": "ea", "rate": 145, "is_poa": false },
   { "category": "lighting", "sku": "LGT-DOWN-BRASS", "label": "Brass down-light (bollard)", "unit": "ea", "rate": 165, "is_poa": false },
   { "category": "lighting", "sku": "LGT-GRAZE-TAPE", "label": "LED graze tape", "unit": "lm", "rate": 85, "is_poa": false },
+  { "category": "lighting", "sku": "LGT-DECK-STRIP", "label": "Concealed deck strip IP67", "unit": "lm", "rate": 95, "is_poa": false },
   { "category": "lighting", "sku": "LGT-TX-150", "label": "150 W transformer", "unit": "ea", "rate": 280, "is_poa": false },
   { "category": "lighting", "sku": "LGT-CABLE", "label": "Low-voltage cable", "unit": "lm", "rate": 6, "is_poa": false },
 

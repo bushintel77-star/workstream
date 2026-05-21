@@ -24,7 +24,7 @@ export type FetchRetryOptions = {
   signal?: AbortSignal;
 };
 
-const DEFAULT_USER_AGENT = "Workstream/1.0 (+https://workstream-api.fly.dev)";
+const DEFAULT_USER_AGENT = "Workstream/1.0 (+https://construct-api.fly.dev)";
 
 const defaultRetryOn = (status: number): boolean =>
   status === 408 || status === 429 || (status >= 500 && status <= 599);

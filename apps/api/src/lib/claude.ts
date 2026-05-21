@@ -9,6 +9,10 @@ import type {
   RateCard,
   Survey,
 } from "@workstream/contracts";
+import {
+  isTier1WrightsTerrace,
+  tier1WrightsTerraceDesign,
+} from "@workstream/domain";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -200,6 +204,13 @@ function devFallbackDesign(ctx: DesignContext): DesignGeneration {
 export async function generateDesign(
   ctx: DesignContext,
 ): Promise<DesignGeneration> {
+  if (isTier1WrightsTerrace(ctx.address)) {
+    return tier1WrightsTerraceDesign({
+      address: ctx.address,
+      mode: ctx.mode,
+    });
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return devFallbackDesign(ctx);

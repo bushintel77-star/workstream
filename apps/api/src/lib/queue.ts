@@ -7,7 +7,7 @@
  *
  *   1. Provision Redis (Upstash, Redis Cloud, Fly Redis — any).
  *   2. `pnpm --filter @workstream/api add bullmq ioredis`
- *   3. `flyctl secrets set REDIS_URL=rediss://… -a workstream-api`
+ *   3. `flyctl secrets set REDIS_URL=rediss://… -a construct-api`
  *   4. Start a worker process on a separate Fly machine via
  *      `[processes]` in fly.toml — e.g. `worker = "node dist/worker.js"`.
  *      A worker.js wrapper that calls `startWorker()` from this file is

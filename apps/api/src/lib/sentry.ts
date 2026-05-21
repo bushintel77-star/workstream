@@ -4,7 +4,7 @@
  *
  *   1. Sign up at sentry.io, create a Node.js project, copy the DSN.
  *   2. `pnpm --filter @workstream/api add @sentry/node`
- *   3. `flyctl secrets set SENTRY_DSN=… -a workstream-api`
+ *   3. `flyctl secrets set SENTRY_DSN=… -a construct-api`
  *   4. Redeploy.
  *
  * The dynamic import keeps @sentry/node out of the bundle when DSN is

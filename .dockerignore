@@ -2,6 +2,7 @@
 **/dist
 **/.turbo
 **/.expo
+**/.next
 **/ios
 **/android
 **/.git

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
-export const clerkEnabled = !!process.env.CLERK_SECRET_KEY;
+export const clerkEnabled =
+  (process.env.CLERK_SECRET_KEY?.startsWith("sk_") ?? false) &&
+  (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_") ?? false);
 
 function authRequired(): boolean {
   if (process.env.AUTH_REQUIRED === "true") return true;

@@ -6,11 +6,14 @@
 
 ARG NODE_VERSION=22.11.0
 ARG PNPM_VERSION=9.15.4
+ARG NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
 
 # ---- builder ---------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS builder
 
 ARG PNPM_VERSION
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /repo
@@ -19,17 +22,17 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc tsconfig.base.json t
 
 COPY apps/web/package.json ./apps/web/
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/domain/package.json ./packages/domain/
 
 RUN pnpm install --frozen-lockfile --filter=@workstream/web...
 
-ARG NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
 COPY apps/web ./apps/web
 COPY packages/contracts ./packages/contracts
+COPY packages/domain ./packages/domain
 
-# contracts must be built first so Next can resolve its types
+# Workspace packages must be built before Next resolves them
 RUN pnpm --filter=@workstream/contracts build
+RUN pnpm --filter=@workstream/domain build
 RUN pnpm --filter=@workstream/web build
 
 # ---- runtime ---------------------------------------------------------------

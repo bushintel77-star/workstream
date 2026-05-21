@@ -11,9 +11,9 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "next": "^15.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "@clerk/nextjs": "^6.0.0",
     "@workstream/contracts": "workspace:*",
     "@workstream/domain": "workspace:*"
@@ -21,8 +21,8 @@
   "devDependencies": {
     "@playwright/test": "^1.51.1",
     "typescript": "^5.7.0",
-    "@types/node": "^22.0.0",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0"
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3"
   }
 }

@@ -10,15 +10,20 @@
     "test": "vitest run",
     "test:e2e": "pnpm --filter @workstream/web test:e2e",
     "test:watch": "vitest",
+    "ci": "pnpm install --frozen-lockfile && pnpm typecheck && pnpm test",
+    "build:docker:api": "docker build -f apps/api/Dockerfile -t construct-api:local .",
+    "build:docker:web": "docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev -t construct-web:local .",
+    "build:docker": "pnpm build:docker:api && pnpm build:docker:web",
+    "deploy:fly": "node -e \"require('child_process').execSync(process.platform==='win32'?'powershell -File scripts/deploy-fly.ps1':'bash scripts/deploy-fly.sh',{stdio:'inherit'})\"",
     "clean": "turbo clean",
     "prepare": "husky || true"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^2.1.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.9"
   }
 }

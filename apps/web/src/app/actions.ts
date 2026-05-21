@@ -418,6 +418,28 @@ export async function startStudioCheckoutAction(): Promise<{
   return startStudioCheckoutApi();
 }
 
+export type PortalLinkState = {
+  url?: string;
+  error?: string;
+};
+
+export async function createQuotePortalLinkAction(
+  _prev: PortalLinkState | null,
+  formData: FormData,
+): Promise<PortalLinkState> {
+  const projectId = String(formData.get("projectId") ?? "");
+  if (!projectId) return { error: "Missing project." };
+  try {
+    const { createPortalLinkApi } = await import("../lib/api");
+    const res = await createPortalLinkApi(projectId);
+    return { url: res.portal_url };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Could not create client link.";
+    return { error: message };
+  }
+}
+
 export async function copyPortalLinkAction(projectId: string): Promise<string> {
   const { createPortalLinkApi } = await import("../lib/api");
   const { portal_url } = await createPortalLinkApi(projectId);
