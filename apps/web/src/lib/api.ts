@@ -1,10 +1,30 @@
+import { clerkEnabled } from "./auth";
+
 const API_URL =
   process.env.API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
   "http://localhost:3001";
 
+async function apiHeaders(json = false): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {};
+  if (json) headers["Content-Type"] = "application/json";
+  if (!clerkEnabled) return headers;
+  try {
+    const { auth } = await import("@clerk/nextjs/server");
+    const { getToken } = await auth();
+    const token = await getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  } catch {
+    /* Clerk not configured — API accepts dev-user when AUTH_REQUIRED=false */
+  }
+  return headers;
+}
+
 async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}${path}`, {
+    cache: "no-store",
+    headers: await apiHeaders(),
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`API ${res.status} on GET ${path}: ${text}`);
@@ -15,7 +35,7 @@ async function apiGet<T>(path: string): Promise<T> {
 async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: body ? { "Content-Type": "application/json" } : {},
+    headers: await apiHeaders(body != null),
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
@@ -29,7 +49,7 @@ async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: await apiHeaders(true),
     body: JSON.stringify(body),
     cache: "no-store",
   });
@@ -40,10 +60,25 @@ async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "PUT",
+    headers: await apiHeaders(true),
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API ${res.status} on PUT ${path}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 async function apiDelete(path: string): Promise<void> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "DELETE",
     cache: "no-store",
+    headers: await apiHeaders(),
   });
   if (!res.ok && res.status !== 404) {
     throw new Error(`API ${res.status} on DELETE ${path}`);
@@ -63,6 +98,8 @@ export type ProjectStatus =
   | "outputs"
   | "complete";
 
+export type CrmStage = "enquiry" | "quote_sent" | "won" | "lost";
+
 export type Project = {
   id: string;
   owner_id: string;
@@ -71,7 +108,26 @@ export type Project = {
   lng: number | null;
   created_at: string;
   status: ProjectStatus;
+  client_name?: string | null;
+  client_email?: string | null;
+  crm_stage?: CrmStage | null;
+  crm_synced_at?: string | null;
 };
+
+export async function updateProjectClientApi(
+  projectId: string,
+  patch: {
+    client_name?: string | null;
+    client_email?: string | null;
+    crm_stage?: CrmStage | null;
+  },
+): Promise<Project> {
+  const body = await apiPatch<{ project: Project }>(
+    `/projects/${projectId}/client`,
+    patch,
+  );
+  return body.project;
+}
 
 export async function listProjects(): Promise<Project[]> {
   const body = await apiGet<{ projects: Project[] }>("/projects/");
@@ -86,6 +142,34 @@ export async function getProject(id: string): Promise<Project | null> {
     if (err instanceof Error && /API 404/.test(err.message)) return null;
     throw err;
   }
+}
+
+export type GeocodeSuggestion = {
+  id: string;
+  place_name: string;
+  text: string;
+  lat: number;
+  lng: number;
+};
+
+export async function geocodePreviewApi(
+  lat: number,
+  lng: number,
+): Promise<{ aerial_uri: string; lat: number; lng: number }> {
+  return apiGet<{ aerial_uri: string; lat: number; lng: number }>(
+    `/geocode/preview?lat=${lat}&lng=${lng}`,
+  );
+}
+
+export async function geocodeSearchApi(
+  query: string,
+): Promise<GeocodeSuggestion[]> {
+  const q = query.trim();
+  if (q.length < 3) return [];
+  const body = await apiGet<{ suggestions: GeocodeSuggestion[] }>(
+    `/geocode/search?q=${encodeURIComponent(q)}`,
+  );
+  return body.suggestions;
 }
 
 export async function createProjectApi(input: {
@@ -103,10 +187,18 @@ export async function deleteProjectApi(id: string): Promise<void> {
 
 /* -- Survey ------------------------------------------------------------ */
 
+export type GeoJsonPolygon = {
+  type: "Polygon";
+  coordinates: [number, number][][];
+};
+
 export type Survey = {
   id: string;
   project_id: string;
   aerial_uri: string;
+  title_polygon: GeoJsonPolygon;
+  house_polygon: GeoJsonPolygon;
+  garden_polygon: GeoJsonPolygon;
   lot_area_m2: number;
   house_area_m2: number;
   garden_area_m2: number;
@@ -184,6 +276,117 @@ export async function runDesign(projectId: string): Promise<Design> {
   return body.design;
 }
 
+/* -- Design studio (catalog + canvas) ---------------------------------- */
+
+export type CatalogGlyphLayer = {
+  d: string;
+  fill?: string;
+  stroke?: string;
+  stroke_width?: number;
+  opacity?: number;
+};
+
+export type CatalogAsset = {
+  view_box: string;
+  layers: CatalogGlyphLayer[];
+  preview_bg?: string;
+  accent?: string;
+};
+
+export type CatalogCategory =
+  | "planting"
+  | "paving"
+  | "structure"
+  | "water"
+  | "annotation"
+  | "furniture";
+
+export type CatalogSymbol = {
+  id: string;
+  label: string;
+  category: CatalogCategory;
+  path_d: string;
+  asset?: CatalogAsset;
+  description?: string;
+  keywords?: string[];
+  default_width_m?: number;
+  rate_card_sku?: string;
+};
+
+export type CatalogPlacement = {
+  id: string;
+  symbol_id: string;
+  x_pct: number;
+  y_pct: number;
+  rotation_deg: number;
+  scale: number;
+  label?: string;
+};
+
+export type DesignCanvas = {
+  id: string;
+  project_id: string;
+  placements: CatalogPlacement[];
+  strokes: Array<{
+    id: string;
+    points: Array<{ x_pct: number; y_pct: number }>;
+    color: string;
+    width_px: number;
+  }>;
+  updated_at: string;
+};
+
+export async function listCatalogSymbols(): Promise<CatalogSymbol[]> {
+  const body = await apiGet<{ symbols: CatalogSymbol[] }>("/catalog/symbols");
+  return body.symbols;
+}
+
+export type CreateCatalogSymbolInput = {
+  label: string;
+  category: CatalogCategory;
+  path_d: string;
+  description?: string;
+  rate_card_sku?: string;
+  preview_bg?: string;
+  accent?: string;
+};
+
+export async function createCatalogSymbolApi(
+  input: CreateCatalogSymbolInput,
+): Promise<CatalogSymbol> {
+  const body = await apiPost<{ symbol: CatalogSymbol }>(
+    "/catalog/symbols",
+    input,
+  );
+  return body.symbol;
+}
+
+export async function deleteCatalogSymbolApi(id: string): Promise<void> {
+  await apiDelete(`/catalog/symbols/${id}`);
+}
+
+export async function getDesignCanvas(
+  projectId: string,
+): Promise<DesignCanvas | null> {
+  const body = await apiGet<{
+    canvas: DesignCanvas & { id: string | null };
+  }>(`/projects/${projectId}/design-canvas`);
+  if (!body.canvas?.id) return null;
+  return body.canvas as DesignCanvas;
+}
+
+export async function saveDesignCanvasApi(
+  projectId: string,
+  placements: CatalogPlacement[],
+  strokes: DesignCanvas["strokes"] = [],
+): Promise<DesignCanvas> {
+  const body = await apiPut<{ canvas: DesignCanvas }>(
+    `/projects/${projectId}/design-canvas`,
+    { placements, strokes },
+  );
+  return body.canvas;
+}
+
 /* -- Costing ----------------------------------------------------------- */
 
 export type CostScenario = "lean" | "standard" | "buffer";
@@ -214,6 +417,54 @@ export async function listCostings(projectId: string): Promise<Costing[]> {
     `/projects/${projectId}/costing`,
   );
   return body.costings;
+}
+
+export type PlanningFlag = {
+  id: string;
+  category: string;
+  severity: "likely" | "review" | "clear";
+  title: string;
+  detail: string;
+  output_kind?: string;
+};
+
+export type EnvelopeBrief = {
+  markdown: string;
+  budget_low: number;
+  budget_high: number;
+  budget_mid: number;
+  planning_flags: PlanningFlag[];
+};
+
+export async function getEnvelopeBrief(
+  projectId: string,
+): Promise<EnvelopeBrief | null> {
+  try {
+    const body = await apiGet<{ envelope: EnvelopeBrief }>(
+      `/projects/${projectId}/envelope`,
+    );
+    return body.envelope;
+  } catch (err) {
+    if (err instanceof Error && /API 404/.test(err.message)) return null;
+    throw err;
+  }
+}
+
+export async function runSketchCosting(projectId: string): Promise<{
+  costing: Costing;
+  envelope: EnvelopeBrief;
+}> {
+  return apiPost<{ costing: Costing; envelope: EnvelopeBrief }>(
+    `/projects/${projectId}/costing/sketch`,
+  );
+}
+
+export async function runDevelopFromSketchPipeline(
+  projectId: string,
+): Promise<{ accepted: boolean }> {
+  return apiPost<{ accepted: boolean }>(
+    `/projects/${projectId}/pipeline/develop`,
+  );
 }
 
 export async function runCosting(projectId: string): Promise<Costing[]> {
@@ -483,6 +734,52 @@ export async function getCarbon(projectId: string): Promise<CarbonReport | null>
   }
 }
 
+/* -- Site context (season, sun, planning badges) ----------------------- */
+
+export type TitlePlanningBadge = {
+  id: string;
+  category:
+    | "tree_protection"
+    | "stormwater"
+    | "heritage"
+    | "permit"
+    | "council";
+  label: string;
+  severity: "likely" | "review" | "clear";
+};
+
+export type SiteContext = {
+  fetched_at: string;
+  season: { label: string; month: string; day_of_year: number };
+  sun: {
+    date_iso: string;
+    sunrise_local: string;
+    sunset_local: string;
+    daylight_hours: number;
+    solar_noon_altitude_deg: number;
+    now_altitude_deg: number;
+    now_azimuth_deg: number;
+    now_azimuth_label: string;
+    marker_x_pct: number;
+    marker_y_pct: number;
+  };
+  planning_badges: TitlePlanningBadge[];
+  weather_note?: string | null;
+};
+
+export async function getSiteContext(
+  projectId: string,
+): Promise<SiteContext | null> {
+  try {
+    const body = await apiGet<{ context: SiteContext }>(
+      `/projects/${projectId}/site-context`,
+    );
+    return body.context;
+  } catch {
+    return null;
+  }
+}
+
 /* -- Weather ----------------------------------------------------------- */
 
 export type WeatherDay = {
@@ -632,22 +929,149 @@ export async function listPlantPalette(): Promise<PlantPaletteItem[]> {
 
 /* -- Integrations ------------------------------------------------------ */
 
+export type IntegrationCategory =
+  | "ai"
+  | "payments"
+  | "geo"
+  | "auth"
+  | "accounting"
+  | "crm"
+  | "email";
+
+export type WorkspaceBilling = {
+  owner_id: string;
+  plan: "lite" | "studio";
+  seat_limit: number;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  updated_at: string;
+};
+
+export type IntegrationSummary = {
+  plan: "lite" | "studio";
+  seat_limit: number;
+  live_channels: number;
+  total_channels: number;
+  needs_attention: boolean;
+  next_steps: Array<{
+    id: string;
+    label: string;
+    href: string;
+    done: boolean;
+  }>;
+};
+
 export type Integration = {
   key: string;
   label: string;
   description: string;
-  category: "ai" | "payments" | "geo" | "auth" | "accounting";
+  category: IntegrationCategory;
   placeholder: string;
+  channel: string | null;
   configured: boolean;
+  live: boolean;
   source: "store" | "env" | "none";
   last4: string | null;
   length: number | null;
   updated_at: string | null;
 };
 
-export async function listIntegrations(): Promise<Integration[]> {
-  const body = await apiGet<{ items: Integration[] }>("/settings/integrations");
-  return body.items;
+export async function listIntegrations(): Promise<{
+  items: Integration[];
+  billing: WorkspaceBilling;
+}> {
+  const body = await apiGet<{ items: Integration[]; billing: WorkspaceBilling }>(
+    "/settings/integrations",
+  );
+  return { items: body.items, billing: body.billing };
+}
+
+export type IntegrationChannelStatus = {
+  channel: string;
+  label: string;
+  live: boolean;
+  configured: boolean;
+  note: string;
+};
+
+export type IntegrationEvent = {
+  id: string;
+  event: string;
+  channel: string;
+  ok: boolean;
+  detail: string;
+  created_at: string;
+  project_id: string | null;
+};
+
+export async function getIntegrationSummary(): Promise<IntegrationSummary> {
+  const body = await apiGet<{ summary: IntegrationSummary }>(
+    "/integrations/summary",
+  );
+  return body.summary;
+}
+
+export async function getIntegrationHub(): Promise<{
+  billing: WorkspaceBilling;
+  channels: IntegrationChannelStatus[];
+  events: IntegrationEvent[];
+  summary: IntegrationSummary;
+}> {
+  return apiGet("/integrations/hub");
+}
+
+export async function startStudioCheckoutApi(): Promise<{
+  checkout_url: string;
+  mode: "live" | "dev_fallback";
+}> {
+  const webBase =
+    process.env.NEXT_PUBLIC_WEB_URL ??
+    process.env.PORTAL_BASE_URL ??
+    "http://localhost:3002";
+  return apiPost("/integrations/plan/checkout", {
+    success_url: `${webBase}/settings?studio=success`,
+    cancel_url: `${webBase}/settings?studio=cancel`,
+  });
+}
+
+export async function createPortalLinkApi(
+  projectId: string,
+): Promise<{ portal_url: string }> {
+  return apiPost(`/projects/${projectId}/magic-link`, {
+    scope: "quote_view",
+  });
+}
+
+export async function testIntegrationApi(
+  channel: string,
+  toEmail?: string,
+): Promise<{ ok: boolean; detail: string }> {
+  const body = await apiPost<{ ok: boolean; detail: string }>(
+    "/integrations/hub/test",
+    { channel, to_email: toEmail },
+  );
+  return { ok: body.ok, detail: body.detail };
+}
+
+export async function upgradeWorkspacePlanApi(
+  plan: "lite" | "studio",
+): Promise<WorkspaceBilling> {
+  const body = await apiPost<{ billing: WorkspaceBilling }>(
+    "/integrations/plan/upgrade",
+    { plan },
+  );
+  return body.billing;
+}
+
+export async function syncProjectIntegrationsApi(
+  projectId: string,
+  input: {
+    to_email?: string;
+    client_name?: string;
+    include_portal?: boolean;
+  },
+): Promise<{ ok: boolean; crm: boolean; email: boolean }> {
+  return apiPost(`/projects/${projectId}/integrations/sync`, input);
 }
 
 export async function setIntegrationApi(
@@ -668,6 +1092,54 @@ export async function setIntegrationApi(
 
 export async function deleteIntegrationApi(key: string): Promise<void> {
   await apiDelete(`/settings/integrations/${key}`);
+}
+
+/* -- Filing / gallery ------------------------------------------------- */
+
+export type GalleryItem = {
+  id: string;
+  source: "filing" | "aerial" | "measurement" | "output";
+  kind: string;
+  title: string;
+  mime_type: string;
+  uri: string;
+  viewable: boolean;
+  created_at: string;
+};
+
+export type ProjectFileKind =
+  | "plan"
+  | "design"
+  | "site_photo"
+  | "permit"
+  | "reference"
+  | "other";
+
+export type ProjectFile = {
+  id: string;
+  project_id: string;
+  owner_id: string;
+  kind: ProjectFileKind;
+  title: string;
+  mime_type: string;
+  uri: string;
+  created_at: string;
+};
+
+export async function getProjectGallery(projectId: string): Promise<{
+  items: GalleryItem[];
+  viewable: GalleryItem[];
+}> {
+  return apiGet(`/projects/${projectId}/gallery`);
+}
+
+export async function listProjectFiles(
+  projectId: string,
+): Promise<ProjectFile[]> {
+  const body = await apiGet<{ files: ProjectFile[] }>(
+    `/projects/${projectId}/files`,
+  );
+  return body.files;
 }
 
 /* -- Portal (kept from previous build) -------------------------------- */

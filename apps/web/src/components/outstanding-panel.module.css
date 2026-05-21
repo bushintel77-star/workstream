@@ -1,0 +1,112 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(24, 24, 27, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .backdrop {
+    align-items: center;
+  }
+}
+
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow: auto;
+  background: var(--surface-elevated);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: var(--elev-2);
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    border-radius: var(--r-lg);
+  }
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--line-hairline);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.close {
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0 var(--s-2);
+}
+
+.body {
+  padding: var(--s-4);
+}
+
+.section {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin: 0 0 var(--s-2);
+}
+
+.next {
+  margin: 0 0 var(--s-4);
+  font-size: 15px;
+  color: var(--ink-secondary);
+}
+
+.steps,
+.tasks {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--s-4);
+}
+
+.steps li,
+.tasks li {
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid var(--line-hairline);
+  font-size: 14px;
+}
+
+.stepDone {
+  color: var(--ink-tertiary);
+  text-decoration: line-through;
+}
+
+.taskTitle {
+  display: block;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.taskMeta {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+
+.empty {
+  font-style: italic;
+  color: var(--ink-secondary);
+}

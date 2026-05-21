@@ -1,5 +1,5 @@
 {
-  "name": "@construct/domain",
+  "name": "@workstream/domain",
   "version": "0.0.1",
   "private": true,
   "main": "./dist/index.js",
@@ -10,7 +10,8 @@
     "lint": "echo ok"
   },
   "dependencies": {
-    "@construct/contracts": "workspace:*"
+    "@workstream/contracts": "workspace:*",
+    "perfect-freehand": "^1.2.2"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

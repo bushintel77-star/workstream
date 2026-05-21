@@ -1,5 +1,6 @@
-import type { Store } from "@construct/db";
-import type { Design } from "@construct/contracts";
+import type { Store } from "@workstream/db";
+import type { Design } from "@workstream/contracts";
+import { formatSketchBriefForAi } from "@workstream/domain";
 import { detectMode } from "./mode-detect";
 import { generateDesign } from "./claude";
 
@@ -22,6 +23,14 @@ export async function runDesign(
   const detected = detectMode(transcript);
   const palette = await store.listPlantPalette(ownerId);
   const rates = await store.listRateCard(ownerId);
+  const canvas = await store.getDesignCanvas(ownerId, projectId);
+  const catalogSymbols = await store.listCatalogSymbols(ownerId);
+  const sketch_brief = formatSketchBriefForAi(
+    canvas,
+    catalogSymbols,
+    survey,
+    project.address,
+  );
 
   const generation = await generateDesign({
     address: project.address,
@@ -30,6 +39,7 @@ export async function runDesign(
     mode: detected.mode,
     plant_palette: palette,
     rate_card: rates,
+    sketch_brief,
   });
 
   const design = await store.upsertDesign(ownerId, projectId, {

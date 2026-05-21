@@ -61,6 +61,13 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _crew: CrewMember[] = [];
   const _photoMeasurements: PhotoMeasurement[] = [];
   const _integrations: IntegrationSecret[] = [];
+  const _workspaceBilling: import("./types").WorkspaceBilling[] = [];
+  const _integrationEvents: import("./types").IntegrationEvent[] = [];
+  const _projectFiles: import("./types").ProjectFile[] = [];
+  const _designCanvases: import("@workstream/contracts").DesignCanvas[] = [];
+  const _catalogCustom: Array<
+    import("@workstream/contracts").CatalogSymbol & { owner_id: string }
+  > = [];
   let seeded = false;
 
   const arrays = {
@@ -80,6 +87,11 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _crew,
     _photoMeasurements,
     _integrations,
+    _workspaceBilling,
+    _integrationEvents,
+    _projectFiles,
+    _designCanvases,
+    _catalogCustom,
   };
 
   const flush = opts.persistPath
@@ -92,8 +104,16 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       opts.persistPath,
       arrays as Record<string, unknown[]>,
     );
-    if (loaded && _rateCard.length > 0 && _plantPalette.length > 0) {
-      seeded = true;
+    if (loaded) {
+      for (const link of _skuLinks) {
+        const row = link as SkuLink & { construct_sku?: string };
+        if (!row.rate_card_sku && row.construct_sku) {
+          row.rate_card_sku = row.construct_sku;
+        }
+      }
+      if (_rateCard.length > 0 && _plantPalette.length > 0) {
+        seeded = true;
+      }
     }
     return loaded;
   };
@@ -143,6 +163,10 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         lng: input.lng ?? null,
         created_at: new Date().toISOString(),
         status: "draft",
+        client_name: null,
+        client_email: null,
+        crm_stage: "enquiry",
+        crm_synced_at: null,
       };
       _projects.push(project);
       flush();
@@ -151,7 +175,39 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
 
     async getProject(ownerId, id) {
       const p = _projects.find((x) => x.id === id && x.owner_id === ownerId);
-      return p ?? null;
+      if (!p) return null;
+      return {
+        ...p,
+        client_name: p.client_name ?? null,
+        client_email: p.client_email ?? null,
+        crm_stage: p.crm_stage ?? null,
+        crm_synced_at: p.crm_synced_at ?? null,
+      };
+    },
+
+    async updateProjectClient(ownerId, projectId, patch) {
+      const p = _projects.find(
+        (x) => x.id === projectId && x.owner_id === ownerId,
+      );
+      if (!p) return null;
+      if (patch.client_name !== undefined) p.client_name = patch.client_name;
+      if (patch.client_email !== undefined) p.client_email = patch.client_email;
+      if (patch.crm_stage !== undefined) p.crm_stage = patch.crm_stage;
+      flush();
+      return { ...p };
+    },
+
+    async touchProjectCrmSync(ownerId, projectId) {
+      const p = _projects.find(
+        (x) => x.id === projectId && x.owner_id === ownerId,
+      );
+      if (!p) return null;
+      p.crm_synced_at = new Date().toISOString();
+      if (!p.crm_stage || p.crm_stage === "enquiry") {
+        p.crm_stage = "quote_sent";
+      }
+      flush();
+      return { ...p };
     },
 
     async deleteProject(ownerId, id) {
@@ -182,6 +238,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       removeWhere(_tasks, (t) => t.project_id === id);
       removeWhere(_projectMyobLinks, (l) => l.project_id === id);
       removeWhere(_photoMeasurements, (m) => m.project_id === id);
+      removeWhere(_projectFiles, (f) => f.project_id === id);
 
       flush();
       return true;
@@ -224,7 +281,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         transcription_confidence: null,
       };
       _recordings.push(recording);
-      project.status = "processing";
+      project.status = "recording";
       flush();
       return recording;
     },
@@ -234,8 +291,6 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       if (!r) return null;
       r.transcript = transcript;
       r.transcription_confidence = confidence;
-      const project = _projects.find((p) => p.id === r.project_id);
-      if (project) project.status = "draft";
       flush();
       return r;
     },
@@ -561,12 +616,12 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     async listSkuLinks(ownerId) {
       return _skuLinks
         .filter((l) => l.owner_id === ownerId)
-        .sort((a, b) => a.construct_sku.localeCompare(b.construct_sku));
+        .sort((a, b) => a.rate_card_sku.localeCompare(b.rate_card_sku));
     },
 
     async upsertSkuLink(ownerId, input) {
       const existing = _skuLinks.find(
-        (l) => l.owner_id === ownerId && l.construct_sku === input.construct_sku,
+        (l) => l.owner_id === ownerId && l.rate_card_sku === input.rate_card_sku,
       );
       const now = new Date().toISOString();
       if (existing) {
@@ -579,7 +634,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       const link: SkuLink = {
         id: crypto.randomUUID(),
         owner_id: ownerId,
-        construct_sku: input.construct_sku,
+        rate_card_sku: input.rate_card_sku,
         myob_uid: input.myob_uid,
         myob_item_number: input.myob_item_number,
         last_synced_at: now,
@@ -589,9 +644,9 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return link;
     },
 
-    async removeSkuLink(ownerId, construct_sku) {
+    async removeSkuLink(ownerId, rate_card_sku) {
       const idx = _skuLinks.findIndex(
-        (l) => l.owner_id === ownerId && l.construct_sku === construct_sku,
+        (l) => l.owner_id === ownerId && l.rate_card_sku === rate_card_sku,
       );
       if (idx < 0) return false;
       _skuLinks.splice(idx, 1);
@@ -721,6 +776,167 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _integrations.splice(idx, 1);
       flush();
       return true;
+    },
+
+    async getWorkspaceBilling(ownerId) {
+      const found = _workspaceBilling.find((w) => w.owner_id === ownerId);
+      if (found) {
+        return {
+          ...found,
+          stripe_customer_id: found.stripe_customer_id ?? null,
+          stripe_subscription_id: found.stripe_subscription_id ?? null,
+        };
+      }
+      const row: import("./types").WorkspaceBilling = {
+        owner_id: ownerId,
+        plan: "lite",
+        seat_limit: 1,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        updated_at: new Date().toISOString(),
+      };
+      _workspaceBilling.push(row);
+      flush();
+      return { ...row };
+    },
+
+    async setWorkspacePlan(ownerId, plan) {
+      return this.patchWorkspaceBilling(ownerId, { plan });
+    },
+
+    async patchWorkspaceBilling(ownerId, patch) {
+      const existing = await this.getWorkspaceBilling(ownerId);
+      const idx = _workspaceBilling.findIndex((w) => w.owner_id === ownerId);
+      const row: import("./types").WorkspaceBilling = {
+        ...existing,
+        ...patch,
+        owner_id: ownerId,
+        updated_at: new Date().toISOString(),
+      };
+      if (idx >= 0) _workspaceBilling[idx] = row;
+      flush();
+      return { ...row };
+    },
+
+    async appendIntegrationEvent(ownerId, input) {
+      const row: import("./types").IntegrationEvent = {
+        id: crypto.randomUUID(),
+        owner_id: ownerId,
+        created_at: new Date().toISOString(),
+        ...input,
+      };
+      _integrationEvents.push(row);
+      flush();
+      return { ...row };
+    },
+
+    async listIntegrationEvents(ownerId, limit = 50) {
+      return _integrationEvents
+        .filter((e) => e.owner_id === ownerId)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
+        .slice(0, limit)
+        .map((e) => ({ ...e }));
+    },
+
+    async listProjectFiles(ownerId, projectId) {
+      return _projectFiles
+        .filter((f) => f.owner_id === ownerId && f.project_id === projectId)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
+        .map((f) => ({ ...f }));
+    },
+
+    async createProjectFile(ownerId, projectId, input) {
+      const row: import("./types").ProjectFile = {
+        id: crypto.randomUUID(),
+        owner_id: ownerId,
+        project_id: projectId,
+        created_at: new Date().toISOString(),
+        ...input,
+      };
+      _projectFiles.push(row);
+      flush();
+      return { ...row };
+    },
+
+    async deleteProjectFile(ownerId, projectId, fileId) {
+      const idx = _projectFiles.findIndex(
+        (f) =>
+          f.id === fileId &&
+          f.project_id === projectId &&
+          f.owner_id === ownerId,
+      );
+      if (idx < 0) return false;
+      _projectFiles.splice(idx, 1);
+      flush();
+      return true;
+    },
+
+    async getDesignCanvas(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      return _designCanvases.find((c) => c.project_id === projectId) ?? null;
+    },
+
+    async listCatalogSymbols(ownerId) {
+      const { CURTIS_CATALOG_SYMBOLS } = await import("@workstream/domain");
+      const custom = _catalogCustom
+        .filter((s) => s.owner_id === ownerId)
+        .map(({ owner_id: _o, ...sym }) => sym);
+      return [...CURTIS_CATALOG_SYMBOLS, ...custom];
+    },
+
+    async createCustomCatalogSymbol(ownerId, input) {
+      const { symbolFromUpload } = await import("@workstream/domain");
+      const id = `custom-${crypto.randomUUID()}`;
+      const sym = symbolFromUpload(id, input);
+      _catalogCustom.push({ ...sym, owner_id: ownerId });
+      flush();
+      return sym;
+    },
+
+    async deleteCustomCatalogSymbol(ownerId, id) {
+      if (!id.startsWith("custom-")) return false;
+      const idx = _catalogCustom.findIndex(
+        (s) => s.owner_id === ownerId && s.id === id,
+      );
+      if (idx < 0) return false;
+      _catalogCustom.splice(idx, 1);
+      flush();
+      return true;
+    },
+
+    async upsertDesignCanvas(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const now = new Date().toISOString();
+      const existing = _designCanvases.find((c) => c.project_id === projectId);
+      if (existing) {
+        existing.placements = input.placements;
+        if (input.strokes) existing.strokes = input.strokes;
+        existing.updated_at = now;
+        flush();
+        return { ...existing };
+      }
+      const canvas: import("@workstream/contracts").DesignCanvas = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        placements: input.placements,
+        strokes: input.strokes ?? [],
+        updated_at: now,
+      };
+      _designCanvases.push(canvas);
+      flush();
+      return canvas;
     },
 
     async deleteCrewMember(ownerId, id) {

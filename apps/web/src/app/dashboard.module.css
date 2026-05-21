@@ -3,11 +3,96 @@
   gap: 8px;
   margin-bottom: var(--s-6);
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .formInput {
   flex: 1 1 240px;
   min-width: 0;
+}
+
+.addressField {
+  position: relative;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.addressSpinner {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--ink-tertiary);
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.suggestionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.suggestionBtn:hover,
+.suggestionBtn:focus-visible {
+  background: var(--surface-sunken);
+  outline: none;
+}
+
+.suggestionPrimary {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink-primary);
+}
+
+.suggestionSecondary {
+  font-size: 12px;
+  color: var(--ink-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.addressPinned {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--ink-tertiary);
+}
+
+.addressHint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-secondary);
 }
 
 .row {

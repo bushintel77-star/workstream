@@ -27,7 +27,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         scope: validScope,
       });
       const portalUrl =
-        (process.env.PORTAL_BASE_URL ?? "https://construct.example/portal") +
+        (process.env.PORTAL_BASE_URL ?? "https://workstream-web.fly.dev/portal") +
         `/${validScope}/${token}`;
       return reply.send({ token, portal_url: portalUrl, scope: validScope });
     },
@@ -98,7 +98,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     }
 
     const portalBase =
-      process.env.PORTAL_BASE_URL ?? "https://construct.example/portal";
+      process.env.PORTAL_BASE_URL ?? "https://workstream-web.fly.dev/portal";
     try {
       const session = await createDepositSession({
         project,

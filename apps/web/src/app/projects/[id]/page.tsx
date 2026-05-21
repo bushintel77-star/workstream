@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   getAudit,
   getDesign,
   getProject,
   getSurvey,
+  getDesignCanvas,
+  getEnvelopeBrief,
+  getSiteContext,
   getWeather,
   listCostings,
   listOutputs,
@@ -20,7 +24,12 @@ import {
   runSurveyAction,
 } from "../../actions";
 import { NotFoundPage, ProjectMasthead } from "./ProjectShell";
-import { SubmitButton } from "../../../components/SubmitButton";
+import { PipelineActionForm } from "../../../components/PipelineActionForm";
+import { ProjectTitleHero } from "../../../components/ProjectTitleSiteMap";
+import { SiteProjectWidgets } from "../../../components/SiteProjectWidgets";
+import { AppNav } from "../../../components/AppNav";
+import { ProjectClientHandoff } from "../../../components/ProjectClientHandoff";
+import { getIntegrationHub, getIntegrationSummary } from "../../../lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -37,17 +46,54 @@ export default async function ProjectHubPage({
     );
   }
 
-  const [survey, design, costings, audit, outputs, weather, tasks, recordings] =
-    await Promise.all([
-      getSurvey(id),
-      getDesign(id),
-      listCostings(id),
-      getAudit(id),
-      listOutputs(id),
-      getWeather(id),
-      listTasks(id),
-      listRecordings(id),
-    ]);
+  if (project.status === "processing") {
+    redirect(`/projects/${id}/processing`);
+  }
+
+  const [
+    survey,
+    design,
+    costings,
+    audit,
+    outputs,
+    weather,
+    siteContext,
+    tasks,
+    recordings,
+    summary,
+    canvas,
+  ] = await Promise.all([
+    getSurvey(id),
+    getDesign(id),
+    listCostings(id),
+    getAudit(id),
+    listOutputs(id),
+    getWeather(id),
+    getSiteContext(id),
+    listTasks(id),
+    listRecordings(id),
+    getIntegrationSummary().catch(() => null),
+    getDesignCanvas(id).catch(() => null),
+  ]);
+
+  const envelope =
+    survey != null
+      ? await getEnvelopeBrief(id).catch(() => null)
+      : null;
+
+  const quoteOutput = outputs.find((o) => o.kind === "quote");
+  const hasCanvas = (canvas?.placements?.length ?? 0) > 0;
+
+  let lastCrmDetail: string | null = null;
+  try {
+    const hub = await getIntegrationHub();
+    const ev = hub.events.find(
+      (e) => e.project_id === id && e.channel === "crm",
+    );
+    lastCrmDetail = ev?.detail ?? null;
+  } catch {
+    /* hub optional */
+  }
 
   const standardCosting =
     costings.find((c) => c.scenario === "standard") ?? costings[0] ?? null;
@@ -106,7 +152,15 @@ export default async function ProjectHubPage({
 
   return (
     <main className={s.page}>
+      <AppNav summary={summary} />
       <ProjectMasthead project={project} active="overview" />
+
+      <ProjectClientHandoff
+        project={project}
+        quoteUrl={quoteOutput?.uri ?? null}
+        hasQuote={!!quoteOutput}
+        lastCrmDetail={lastCrmDetail}
+      />
 
       <h1 className={s.headline}>Pipeline</h1>
       <p className={s.lede}>
@@ -114,6 +168,29 @@ export default async function ProjectHubPage({
         zones, costing prices it three ways, audit checks the work, outputs
         produce the artefacts.
       </p>
+
+      <ProjectTitleHero
+        survey={survey}
+        address={project.address}
+        siteContext={siteContext}
+        kicker="Landscape project"
+      />
+
+      <SiteProjectWidgets
+        project={project}
+        siteContext={siteContext}
+        tasks={tasks}
+        envelope={envelope}
+        standardTotal={standardCosting?.total ?? null}
+        hasSurvey={survey != null}
+        hasDesign={design != null}
+        hasCosting={costings.length > 0}
+        auditPassed={audit?.passed ?? false}
+        hasQuote={quoteOutput != null}
+        hasCanvas={(canvas?.placements?.length ?? 0) > 0}
+        weatherRain={weather?.days?.[0]?.precipitation_mm != null && weather.days[0].precipitation_mm > 1}
+        weatherWind={weather?.days?.some((d) => d.wind_speed_kmh > 40) ?? false}
+      />
 
       <div className={p.pipeline}>
         <Stage
@@ -199,18 +276,16 @@ export default async function ProjectHubPage({
 
       {nextAction && (
         <div className={`${s.actionBar} ${p.actionBarDesktopOnly}`}>
-          <form action={nextAction.action}>
-            <input type="hidden" name="projectId" value={id} />
-            {nextAction.kind && (
-              <input type="hidden" name="kind" value={nextAction.kind} />
-            )}
-            <SubmitButton
-              className={`${s.btn} ${nextAction.accent ? s.btnAccent : ""}`}
-              pendingLabel={nextAction.pending}
-            >
-              {nextAction.label}
-            </SubmitButton>
-          </form>
+          <PipelineActionForm
+            projectId={id}
+            action={nextAction.action}
+            label={nextAction.label}
+            pendingLabel={nextAction.pending}
+            successMessage={`${nextAction.label} complete`}
+            className={nextAction.accent ? s.btnAccent : ""}
+            accent={nextAction.accent}
+            kind={nextAction.kind}
+          />
         </div>
       )}
 
@@ -284,18 +359,16 @@ export default async function ProjectHubPage({
         <>
           <div className={s.bottomBarSpacer} />
           <div className={s.bottomBar}>
-            <form action={nextAction.action}>
-              <input type="hidden" name="projectId" value={id} />
-              {nextAction.kind && (
-                <input type="hidden" name="kind" value={nextAction.kind} />
-              )}
-              <SubmitButton
-                className={`${s.btn} ${nextAction.accent ? s.btnAccent : ""} ${p.bottomCta}`}
-                pendingLabel={nextAction.pending}
-              >
-                {nextAction.label}
-              </SubmitButton>
-            </form>
+            <PipelineActionForm
+              projectId={id}
+              action={nextAction.action}
+              label={nextAction.label}
+              pendingLabel={nextAction.pending}
+              successMessage={`${nextAction.label} complete`}
+              className={`${p.bottomCta} ${nextAction.accent ? s.btnAccent : ""}`}
+              accent={nextAction.accent}
+              kind={nextAction.kind}
+            />
           </div>
         </>
       )}

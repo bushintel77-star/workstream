@@ -1,5 +1,5 @@
 import { marked } from "marked";
-import type { OutputKind, Project } from "@construct/contracts";
+import type { OutputKind, Project } from "@workstream/contracts";
 
 /**
  * Wrap markdown output in a Curtis & Co–branded HTML document.
@@ -218,7 +218,7 @@ export function renderHtml(args: Args): string {
   ${body}
   <footer class="colophon">
     <div>Curtis &amp; Co · ${escapeHtml(args.project.address)}</div>
-    <div>Prepared with Construct</div>
+    <div>Prepared with Workstream</div>
   </footer>
 </div>
 </body>

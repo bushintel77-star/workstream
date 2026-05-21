@@ -3,6 +3,8 @@ import type {
   Costing,
   CreateOverrideInput,
   CreateProjectInput,
+  UpdateProjectClientInput,
+  CrmStage,
   CreateTaskInput,
   Design,
   Output,
@@ -23,13 +25,26 @@ import type {
   CreateCrewMemberInput,
   UpdateCrewMemberInput,
   PhotoMeasurement,
-} from "@construct/contracts";
+  DesignCanvas,
+  UpsertDesignCanvasInput,
+  CatalogSymbol,
+  CreateCatalogSymbolInput,
+  WorkspaceBilling,
+  WorkspacePlan,
+  IntegrationEvent,
+  IntegrationEventType,
+  IntegrationChannel,
+  ProjectFile,
+  ProjectFileKind,
+} from "@workstream/contracts";
 
 export type {
   Audit,
   Costing,
   CreateOverrideInput,
   CreateProjectInput,
+  UpdateProjectClientInput,
+  CrmStage,
   CreateTaskInput,
   Design,
   Output,
@@ -50,6 +65,17 @@ export type {
   CreateCrewMemberInput,
   UpdateCrewMemberInput,
   PhotoMeasurement,
+  DesignCanvas,
+  UpsertDesignCanvasInput,
+  CatalogSymbol,
+  CreateCatalogSymbolInput,
+  WorkspaceBilling,
+  WorkspacePlan,
+  IntegrationEvent,
+  IntegrationEventType,
+  IntegrationChannel,
+  ProjectFile,
+  ProjectFileKind,
 };
 
 export type PhotoMeasurementInput = Omit<
@@ -73,6 +99,12 @@ export interface Store {
     projectId: string,
     status: ProjectStatus
   ): Promise<Project | null>;
+  updateProjectClient(
+    ownerId: string,
+    projectId: string,
+    patch: UpdateProjectClientInput,
+  ): Promise<Project | null>;
+  touchProjectCrmSync(ownerId: string, projectId: string): Promise<Project | null>;
   listRecordings(ownerId: string, projectId: string): Promise<Recording[]>;
   createRecording(
     ownerId: string,
@@ -148,7 +180,7 @@ export interface Store {
     ownerId: string,
     input: UpsertSkuLinkInput,
   ): Promise<SkuLink>;
-  removeSkuLink(ownerId: string, construct_sku: string): Promise<boolean>;
+  removeSkuLink(ownerId: string, rate_card_sku: string): Promise<boolean>;
   getProjectMyobLink(
     ownerId: string,
     projectId: string,
@@ -189,6 +221,51 @@ export interface Store {
     value: string,
   ): Promise<IntegrationSecret>;
   deleteIntegration(ownerId: string, key: string): Promise<boolean>;
+  getWorkspaceBilling(ownerId: string): Promise<WorkspaceBilling>;
+  setWorkspacePlan(ownerId: string, plan: WorkspacePlan): Promise<WorkspaceBilling>;
+  patchWorkspaceBilling(
+    ownerId: string,
+    patch: Partial<
+      Pick<
+        WorkspaceBilling,
+        "plan" | "seat_limit" | "stripe_customer_id" | "stripe_subscription_id"
+      >
+    >,
+  ): Promise<WorkspaceBilling>;
+  appendIntegrationEvent(
+    ownerId: string,
+    input: Omit<IntegrationEvent, "id" | "owner_id" | "created_at">,
+  ): Promise<IntegrationEvent>;
+  listIntegrationEvents(
+    ownerId: string,
+    limit?: number,
+  ): Promise<IntegrationEvent[]>;
+  getDesignCanvas(
+    ownerId: string,
+    projectId: string,
+  ): Promise<DesignCanvas | null>;
+  upsertDesignCanvas(
+    ownerId: string,
+    projectId: string,
+    input: UpsertDesignCanvasInput,
+  ): Promise<DesignCanvas>;
+  listCatalogSymbols(ownerId: string): Promise<CatalogSymbol[]>;
+  createCustomCatalogSymbol(
+    ownerId: string,
+    input: CreateCatalogSymbolInput,
+  ): Promise<CatalogSymbol>;
+  deleteCustomCatalogSymbol(ownerId: string, id: string): Promise<boolean>;
+  listProjectFiles(ownerId: string, projectId: string): Promise<ProjectFile[]>;
+  createProjectFile(
+    ownerId: string,
+    projectId: string,
+    input: Omit<ProjectFile, "id" | "owner_id" | "project_id" | "created_at">,
+  ): Promise<ProjectFile>;
+  deleteProjectFile(
+    ownerId: string,
+    projectId: string,
+    fileId: string,
+  ): Promise<boolean>;
   seedDefaults(): Promise<void>;
 }
 

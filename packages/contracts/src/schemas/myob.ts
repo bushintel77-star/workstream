@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Minimal subset of MYOB AccountRight / MYOB Business entities Construct
+// Minimal subset of MYOB AccountRight / MYOB Business entities Workstream
 // actually reads from or writes to. Mirrors the field names the MYOB REST API
 // returns so the serialiser is the identity function.
 
@@ -27,7 +27,7 @@ export type MyobItem = z.infer<typeof MyobItemSchema>;
 export const SkuLinkSchema = z.object({
   id: z.string().uuid(),
   owner_id: z.string(),
-  construct_sku: z.string(),
+  rate_card_sku: z.string(),
   myob_uid: z.string(),
   myob_item_number: z.string(),
   last_synced_at: z.string().datetime(),
@@ -60,7 +60,7 @@ export const LinkCustomerInputSchema = z.object({
 export type LinkCustomerInput = z.infer<typeof LinkCustomerInputSchema>;
 
 export const UpsertSkuLinkInputSchema = z.object({
-  construct_sku: z.string().min(1),
+  rate_card_sku: z.string().min(1),
   myob_uid: z.string().min(1),
   myob_item_number: z.string().min(1),
 });

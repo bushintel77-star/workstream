@@ -272,6 +272,29 @@
 
 .btnDanger:hover { color: var(--block); border-color: var(--block); opacity: 1; }
 
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: var(--s-4);
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: 14px;
+  margin-bottom: var(--s-4);
+  min-height: 44px;
+}
+
+.checkboxRow input {
+  width: 18px;
+  height: 18px;
+}
+
 .input, .textarea, .select {
   width: 100%;
   min-height: 44px;

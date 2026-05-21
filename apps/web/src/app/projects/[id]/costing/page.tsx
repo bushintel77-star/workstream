@@ -8,7 +8,7 @@ import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { runCostingAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
-import { SubmitButton } from "../../../../components/SubmitButton";
+import { PipelineActionForm } from "../../../../components/PipelineActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -64,15 +64,13 @@ export default async function CostingPage({
       </p>
 
       <div className={s.actionBar}>
-        <form action={runCostingAction}>
-          <input type="hidden" name="projectId" value={id} />
-          <SubmitButton
-            className={costings.length > 0 ? s.btnGhost : s.btn}
-            pendingLabel="Pricing…"
-          >
-            {costings.length > 0 ? "Re-price" : "Price it"}
-          </SubmitButton>
-        </form>
+        <PipelineActionForm
+          projectId={id}
+          action={runCostingAction}
+          label={costings.length > 0 ? "Re-price" : "Price it"}
+          pendingLabel="Pricing…"
+          successMessage="Costing complete"
+        />
       </div>
 
       {costings.length === 0 ? (

@@ -8,6 +8,7 @@ type Props = {
   pendingLabel?: string;
   formAction?: (formData: FormData) => void | Promise<void>;
   ariaLabel?: string;
+  disabled?: boolean;
 };
 
 export function SubmitButton({
@@ -16,13 +17,14 @@ export function SubmitButton({
   pendingLabel,
   formAction,
   ariaLabel,
+  disabled = false,
 }: Props) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       className={className}
-      disabled={pending}
+      disabled={pending || disabled}
       aria-busy={pending}
       aria-label={ariaLabel}
       formAction={formAction}

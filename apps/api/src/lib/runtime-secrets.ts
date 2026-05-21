@@ -1,4 +1,4 @@
-import type { Store } from "@construct/db";
+import type { Store } from "@workstream/db";
 
 /**
  * Hydrate process.env with every saved integration token for `ownerId`.

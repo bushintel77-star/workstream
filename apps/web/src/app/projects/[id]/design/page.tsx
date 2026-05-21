@@ -1,9 +1,23 @@
-import { getDesign, getProject, getSurvey } from "../../../../lib/api";
+import Link from "next/link";
+import {
+  getDesign,
+  getDesignCanvas,
+  getEnvelopeBrief,
+  getProject,
+  getSurvey,
+  listCostings,
+} from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
-import { runDesignAction } from "../../../actions";
+import {
+  runDesignAction,
+  runDevelopFromSketchAction,
+  runSketchCostingAction,
+} from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
-import { SubmitButton } from "../../../../components/SubmitButton";
+import { PipelineActionForm } from "../../../../components/PipelineActionForm";
+import { QuoteWorkflowSteps } from "../../../../components/QuoteWorkflowSteps";
+import { EnvelopeBriefPanel } from "../../../../components/EnvelopeBriefPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +30,15 @@ export default async function DesignPage({
   const project = await getProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const [survey, design] = await Promise.all([getSurvey(id), getDesign(id)]);
+  const [survey, design, canvas, costings] = await Promise.all([
+    getSurvey(id),
+    getDesign(id),
+    getDesignCanvas(id),
+    listCostings(id).catch(() => []),
+  ]);
+  const hasCanvas = (canvas?.placements?.length ?? 0) > 0;
+  const envelope =
+    survey && hasCanvas ? await getEnvelopeBrief(id) : null;
 
   return (
     <main className={s.page}>
@@ -24,10 +46,24 @@ export default async function DesignPage({
 
       <h1 className={s.headline}>Design</h1>
       <p className={s.lede}>
-        Claude drafts the proposal in Curtis &amp; Co&apos;s vocabulary —
-        pleached screens, mass-planted understorey, bluestone hardscape.
-        Off-palette species are rejected before they reach you.
+        Back-of-envelope flow: rough sketch on the aerial, ballpark budget and
+        planning flags (tree root protection, council stormwater, heritage), then
+        AI develops the design from your layout.
       </p>
+
+      {envelope && hasCanvas && (
+        <EnvelopeBriefPanel projectId={id} envelope={envelope} />
+      )}
+
+      {survey && (
+        <QuoteWorkflowSteps
+          projectId={id}
+          hasSurvey={!!survey}
+          hasCanvas={hasCanvas}
+          hasDesign={!!design}
+          hasCosting={costings.length > 0}
+        />
+      )}
 
       <div className={s.actionBar}>
         {!survey ? (
@@ -35,15 +71,35 @@ export default async function DesignPage({
             Run survey first
           </button>
         ) : (
-          <form action={runDesignAction}>
-            <input type="hidden" name="projectId" value={id} />
-            <SubmitButton
-              className={design ? s.btnGhost : s.btn}
+          <>
+            <Link href={`/projects/${id}/design/studio`} className={s.btn}>
+              Open design studio
+            </Link>
+            <PipelineActionForm
+              projectId={id}
+              action={runSketchCostingAction}
+              label="Envelope estimate"
+              pendingLabel="Estimating…"
+              successMessage="Sketch estimate ready"
+              disabled={!hasCanvas}
+            />
+            <PipelineActionForm
+              projectId={id}
+              action={runDevelopFromSketchAction}
+              label={design ? "Re-develop from sketch" : "Develop from sketch"}
+              pendingLabel="Developing…"
+              successMessage="Pipeline started"
+              disabled={!hasCanvas}
+              redirectToProcessing
+            />
+            <PipelineActionForm
+              projectId={id}
+              action={runDesignAction}
+              label="Design only (no pipeline)"
               pendingLabel="Designing…"
-            >
-              {design ? "Regenerate design" : "Generate design"}
-            </SubmitButton>
-          </form>
+              successMessage="Design complete"
+            />
+          </>
         )}
         {design && (
           <span className={`${s.pill} ${s.pillInfo}`}>

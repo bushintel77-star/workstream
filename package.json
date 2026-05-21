@@ -1,5 +1,5 @@
 {
-  "name": "construct",
+  "name": "workstream",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
@@ -8,6 +8,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "vitest run",
+    "test:e2e": "pnpm --filter @workstream/web test:e2e",
     "test:watch": "vitest",
     "clean": "turbo clean",
     "prepare": "husky || true"

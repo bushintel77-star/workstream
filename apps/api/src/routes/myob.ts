@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   LinkCustomerInputSchema,
   UpsertSkuLinkInputSchema,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 import {
   draftInvoiceFromCosting,
@@ -22,7 +22,7 @@ export default async function myobRoutes(fastify: FastifyInstance) {
         listItems().catch(() => []),
         fastify.store.listSkuLinks(ownerId),
       ]);
-      const linkedSkus = new Set(skuLinks.map((l) => l.construct_sku));
+      const linkedSkus = new Set(skuLinks.map((l) => l.rate_card_sku));
       const rateCard = await fastify.store.listRateCard(ownerId);
       const matchPct =
         rateCard.length === 0

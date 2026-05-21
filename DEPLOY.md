@@ -1,115 +1,89 @@
-# Deploying Construct
+# Deploying Workstream
 
-The repo deploys as two services:
+Two Fly apps (Sydney), one Expo mobile app. Studio brand on quotes remains **Curtis & Co**; product infra uses **Workstream** names.
 
-| Surface | Where it runs | What you run |
-| --- | --- | --- |
-| `apps/api` (Fastify) | Fly.io, Sydney region | `flyctl deploy` |
-| `apps/mobile` (Expo Router) | Expo / EAS Build | `eas build` / `eas submit` |
+| App | Fly name (production today) | URL |
+|-----|---------------------------|-----|
+| API | `construct-api` | https://construct-api.fly.dev |
+| Web | `construct-web` | https://construct-web.fly.dev |
 
-The contracts, db, domain, ui, and client packages have no deploy
-target — they're consumed by the two apps at build time.
+Target names after cutover: `workstream-api` / `workstream-web` — see [CONSOLIDATION.md](CONSOLIDATION.md) and [PRODUCTION.md](PRODUCTION.md).
+
+**Staging without Clerk:** both `fly.toml` files set `AUTH_REQUIRED=false`; web middleware bypasses Clerk until publishable + secret keys are present.
 
 ## Prerequisites
 
 ```bash
-gh --version      # GitHub CLI, authed with repo + workflow scopes
-flyctl version    # ≥ 0.4 for `--copy-config`
-node --version    # ≥ 22
-pnpm --version    # ≥ 9.15
+flyctl version
+pnpm 9.15.4
+node 22
 ```
 
-You also need a Fly.io account on the `tgarbis@yahoo.com.au` org (or
-update `app =` in `apps/api/fly.toml`).
-
-## First-time API provision
+## First-time API
 
 ```bash
-# 1. Create the Fly app (no VMs yet)
-flyctl launch \
-  --no-deploy \
-  --copy-config \
-  --config apps/api/fly.toml \
-  --name construct-api \
-  --region syd
+flyctl launch --no-deploy --copy-config --config apps/api/fly.toml \
+  --name workstream-api --region syd
 
-# 2. Create the persistent volume for data/store.json and data/outputs/
-flyctl volumes create construct_data \
-  --region syd \
-  --size 1 \
-  --config apps/api/fly.toml
+flyctl volumes create workstream_data --region syd --size 1 -a workstream-api
 
-# 3. Set the required + optional secrets
 flyctl secrets set \
-  CORS_ORIGIN="https://construct-api.fly.dev" \
-  PUBLIC_API_URL="https://construct-api.fly.dev" \
-  --config apps/api/fly.toml
-
-# Optional — without these the API runs in dev-fallback mode
-flyctl secrets set \
-  CLERK_SECRET_KEY="sk_…" \
+  CORS_ORIGIN="https://workstream-web.fly.dev" \
+  PUBLIC_API_URL="https://workstream-api.fly.dev" \
+  WORKSTREAM_PORTAL_SECRET="$(openssl rand -hex 32)" \
+  PORTAL_BASE_URL="https://workstream-web.fly.dev" \
+  CLERK_SECRET_KEY="sk_live_…" \
   MAPBOX_TOKEN="pk.…" \
-  ANTHROPIC_API_KEY="sk-ant-…" \
   OPENAI_API_KEY="sk-…" \
+  ANTHROPIC_API_KEY="sk-ant-…" \
   VICMAP_ENABLED="true" \
-  --config apps/api/fly.toml
+  -a workstream-api
 
-# 4. First deploy
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile
+flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a workstream-api
+flyctl scale count 1 -a workstream-api
 ```
 
-Subsequent deploys are just `flyctl deploy --config apps/api/fly.toml`.
+## First-time Web
 
-## Mobile (Expo)
+```bash
+flyctl launch --no-deploy --copy-config --config apps/web/fly.toml \
+  --name workstream-web --region syd
+
+flyctl secrets set \
+  CLERK_SECRET_KEY="sk_live_…" \
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_…" \
+  API_URL="https://workstream-api.fly.dev" \
+  NEXT_PUBLIC_API_URL="https://workstream-api.fly.dev" \
+  PORTAL_BASE_URL="https://workstream-web.fly.dev" \
+  -a workstream-web
+
+flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a workstream-web
+```
+
+## Mobile (EAS)
 
 ```bash
 cd apps/mobile
-
-# Expo iOS/Android development build
-pnpm dev
-
-# Production build via EAS
 eas build --platform ios --profile production
-eas build --platform android --profile production
-
-# Optional submit to stores
-eas submit -p ios
-eas submit -p android
 ```
 
-Set the EAS env vars to point at the deployed API:
+EAS env (production profile):
 
 ```
-EXPO_PUBLIC_API_URL=https://construct-api.fly.dev
-EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_…
+EXPO_PUBLIC_API_URL=https://workstream-api.fly.dev
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_…
+EXPO_PUBLIC_AUTH_REQUIRED=true
 ```
 
-Without `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` the app launches in
-dev-mode auth (permanent `dev-user`) — useful for previews, not for
-production.
+Bundle ID: `com.curtisandco.workstream`
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every PR and push to `main`:
+Push to `main` runs typecheck, tests, Docker builds, and deploys both Fly apps when `FLY_API_TOKEN` is set in GitHub secrets.
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm typecheck` across all 10 workspaces
-3. `docker build` against `apps/api/Dockerfile` (no push) to catch
-   Docker-only regressions before deploy.
+## Migrating from Construct Fly apps
 
-## Local dev
-
-```bash
-pnpm install
-pnpm typecheck      # all packages
-
-# API only
-cd apps/api && pnpm dev   # http://localhost:3001, dev-fallback mode
-
-# Mobile only
-cd apps/mobile && pnpm dev
-```
-
-Without env vars set, the API uses dev fallbacks (mock survey,
-heuristic dictation, canned transcript) and the mobile app uses
-dev-mode auth.
+1. `flyctl secrets list -a construct-api` → copy values to `workstream-api`.
+2. Copy volume data or re-seed; attach new volume `workstream_data` on first deploy.
+3. Point mobile/web env at `workstream-api.fly.dev`.
+4. Retire `construct-*` apps when traffic is zero.

@@ -11,9 +11,9 @@ import {
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
-import type { Project, ProjectStatus } from "@construct/contracts";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../src/lib/api";
+import type { Project, ProjectStatus } from "@workstream/contracts";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../src/lib/api";
 
 const STATUS_TONE: Record<
   ProjectStatus,
@@ -51,7 +51,7 @@ function statusStyle(tone: "neutral" | "accent" | "ok") {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Construct</Text>
+        <Text style={styles.title}>Workstream</Text>
         <View style={styles.headerRow}>
           <Text style={styles.subtitle}>
             {loading ? "—" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}${projects.length > 0 ? "  ·  long-press to delete" : ""}`}

@@ -1,5 +1,5 @@
 {
-  "name": "@construct/mobile",
+  "name": "@workstream/mobile",
   "version": "0.0.1",
   "private": true,
   "main": "expo-router/entry",
@@ -28,9 +28,10 @@
     "react-native-reanimated": "~3.16.0",
     "react-native-gesture-handler": "~2.20.0",
     "react-native-svg": "15.8.0",
-    "@construct/ui": "workspace:*",
-    "@construct/contracts": "workspace:*",
-    "@construct/client": "workspace:*"
+    "@workstream/ui": "workspace:*",
+    "@workstream/contracts": "workspace:*",
+    "@workstream/client": "workspace:*",
+    "@workstream/domain": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

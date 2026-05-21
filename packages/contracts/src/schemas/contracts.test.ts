@@ -47,6 +47,10 @@ describe("ProjectSchema", () => {
       lng: 144.96,
       created_at: ISO,
       status: "draft",
+      client_name: null,
+      client_email: null,
+      crm_stage: "enquiry",
+      crm_synced_at: null,
     });
     expect(ok.success).toBe(true);
   });

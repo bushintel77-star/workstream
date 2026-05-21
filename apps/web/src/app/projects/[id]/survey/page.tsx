@@ -1,8 +1,10 @@
+import { redirect } from "next/navigation";
 import { getProject, getSurvey } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import { runSurveyAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
-import { SubmitButton } from "../../../../components/SubmitButton";
+import { PipelineActionForm } from "../../../../components/PipelineActionForm";
+import { SitePlanFigure } from "../../../../components/SitePlanFigure";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,9 @@ export default async function SurveyPage({
   if (!project) {
     return <NotFoundPage message="Project not found." />;
   }
+  if (project.status === "processing") {
+    redirect(`/projects/${id}/processing`);
+  }
   const survey = await getSurvey(id);
 
   return (
@@ -24,31 +29,30 @@ export default async function SurveyPage({
 
       <h1 className={s.headline}>Survey</h1>
       <p className={s.lede}>
-        Vicmap cadastre fetched for the address. Building footprint subtracted,
-        garden polygon derived. Edge measurements rendered along every boundary.
+        Satellite lot plan with boundary dimensions. Lot polygon from Vicmap when
+        enabled, otherwise a rectangular mock for the pinned coordinates.
       </p>
 
       <div className={s.actionBar}>
-        <form action={runSurveyAction}>
-          <input type="hidden" name="projectId" value={id} />
-          <SubmitButton
-            className={survey ? s.btnGhost : s.btn}
-            pendingLabel="Running survey…"
-          >
-            {survey ? "Re-run survey" : "Run survey"}
-          </SubmitButton>
-        </form>
+        <PipelineActionForm
+          projectId={id}
+          action={runSurveyAction}
+          label={survey ? "Re-run survey" : "Run survey"}
+          pendingLabel="Running survey…"
+          successMessage="Survey complete"
+        />
       </div>
 
       {!survey ? (
         <div className={s.empty}>
-          Survey hasn&apos;t been run for this project yet. Click{" "}
-          <strong>Run survey</strong> above — the API will geocode the address
-          and pull the lot polygon from Vicmap (or use a mock if Mapbox is
-          unconfigured).
+          Survey hasn&apos;t been run for this project yet. Confirm the address
+          on the aerial when creating the project, or click{" "}
+          <strong>Run survey</strong> above.
         </div>
       ) : (
         <>
+          <SitePlanFigure survey={survey} caption="Site plan · lot & building" />
+
           <div className={s.grid3}>
             <div className={s.metric}>
               <span className={s.metricLabel}>Lot</span>

@@ -14,8 +14,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../src/lib/api";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../src/lib/api";
 
 const MAX_DURATION_S = 30 * 60;
 const METERING_WINDOW = 56;
@@ -60,7 +60,7 @@ function median(arr: number[]): number {
 export default function RecordingScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const router = useRouter();
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
 
   const [permission, setPermission] = useState<boolean | null>(null);
   const [permissionAsked, setPermissionAsked] = useState(false);
@@ -317,7 +317,7 @@ export default function RecordingScreen() {
       await api.uploadRecording(projectId, uri, durationS);
       recordingRef.current = null;
       setIsRecording(false);
-      router.replace(`/(app)/project/${projectId}`);
+      router.replace(`/(app)/processing/${projectId}`);
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
         () => {},
@@ -442,7 +442,7 @@ export default function RecordingScreen() {
         <Text style={styles.permKicker}>WALKTHROUGH</Text>
         <Text style={styles.permHeading}>Microphone access needed</Text>
         <Text style={styles.permBody}>
-          Walkthrough captures your voice notes on site so the AI can turn the
+          Workstream captures your voice notes on site so the AI can turn the
           brief into a design and costing. Enable microphone access in Settings
           to continue.
         </Text>

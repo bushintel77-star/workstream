@@ -1,4 +1,4 @@
-# Fly.io app config for the Construct web client portal (Next.js 15).
+# Fly.io app config for the Workstream web client portal (Next.js 15).
 #
 # Deploy from the repo root:
 #   flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile
@@ -14,6 +14,8 @@ kill_timeout = "5s"
 [env]
   PORT = "3002"
   NODE_ENV = "production"
+  # Until Clerk keys are on Fly, run open with dev-user (see DEPLOY.md).
+  AUTH_REQUIRED = "false"
 
 [http_service]
   internal_port = 3002

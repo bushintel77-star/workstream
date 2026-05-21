@@ -3,6 +3,7 @@ import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { createOverrideAction, runAuditAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { PipelineActionForm } from "../../../../components/PipelineActionForm";
 import { SubmitButton } from "../../../../components/SubmitButton";
 
 export const dynamic = "force-dynamic";
@@ -43,15 +44,13 @@ export default async function AuditPage({
       </p>
 
       <div className={s.actionBar}>
-        <form action={runAuditAction}>
-          <input type="hidden" name="projectId" value={id} />
-          <SubmitButton
-            className={audit ? s.btnGhost : s.btn}
-            pendingLabel="Auditing…"
-          >
-            {audit ? "Re-run audit" : "Run audit"}
-          </SubmitButton>
-        </form>
+        <PipelineActionForm
+          projectId={id}
+          action={runAuditAction}
+          label={audit ? "Re-run audit" : "Run audit"}
+          pendingLabel="Auditing…"
+          successMessage="Audit complete"
+        />
         {audit && (
           <span
             className={`${s.pill} ${audit.passed ? s.pillOk : s.pillBlock}`}

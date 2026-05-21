@@ -10,6 +10,7 @@ const TABS: Array<{ slug: string; label: string }> = [
   { slug: "costing", label: "Costing" },
   { slug: "audit", label: "Audit" },
   { slug: "outputs", label: "Outputs" },
+  { slug: "filing", label: "Filing" },
   { slug: "tasks", label: "Tasks" },
   { slug: "recordings", label: "Recordings" },
   { slug: "measurements", label: "Measurements" },
@@ -28,6 +29,7 @@ export function ProjectMasthead({
     | "costing"
     | "audit"
     | "outputs"
+    | "filing"
     | "tasks"
     | "recordings"
     | "measurements"
@@ -79,7 +81,7 @@ export function NotFoundPage({ message }: { message: string }) {
       <header className={s.masthead}>
         <div className={s.brand}>
           Project not found
-          <span className={s.brandSub}>Construct</span>
+          <span className={s.brandSub}>Workstream</span>
         </div>
         <Link href="/" className={s.crumb}>
           ← Projects

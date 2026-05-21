@@ -9,7 +9,7 @@ export default function SignUpPage() {
       <header className={s.masthead}>
         <div className={s.brand}>
           Curtis &amp; Co
-          <span className={s.brandSub}>Construct · Sign up</span>
+          <span className={s.brandSub}>Workstream · Sign up</span>
         </div>
       </header>
       <SignUp />

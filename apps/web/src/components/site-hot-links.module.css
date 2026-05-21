@@ -1,0 +1,93 @@
+.wrap {
+  margin: var(--s-4) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.nextCard {
+  display: block;
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  background: var(--accent);
+  color: var(--ink-inverted);
+  text-decoration: none;
+}
+
+.nextCard:hover {
+  filter: brightness(1.05);
+}
+
+.nextKicker {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+}
+
+.nextLabel {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.nextSub {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.widget {
+  min-height: 72px;
+  padding: var(--s-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-hairline);
+  background: var(--surface-elevated);
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.widget:hover {
+  border-color: var(--line-strong);
+}
+
+.widgetAccent {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface-elevated));
+}
+
+.widgetLabel {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+
+.widgetValue {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}

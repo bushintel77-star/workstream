@@ -1,23 +1,44 @@
 import type {
   Audit,
+  CatalogSymbol,
   Costing,
   Design,
+  DesignCanvas,
   OutputKind,
   Project,
+  RateCard,
   Survey,
   Task,
   Zone,
-} from "@construct/contracts";
-import { totalEmbodiedCarbon } from "@construct/domain";
+} from "@workstream/contracts";
+import {
+  buildEnvelopeBrief,
+  formatSitePlanQuoteSection,
+  totalEmbodiedCarbon,
+  type RateCardLookup,
+} from "@workstream/domain";
 
 export type GeneratorArgs = {
   project: Project;
   survey: Survey | null;
   design: Design | null;
+  designCanvas: DesignCanvas | null;
+  catalogSymbols: CatalogSymbol[];
+  rateCard: RateCard[];
   costings: Costing[];
   audit: Audit | null;
   tasks: Task[];
 };
+
+function rateCardLookup(rows: RateCard[]): RateCardLookup {
+  const map: RateCardLookup = new Map();
+  for (const row of rows) {
+    if (!map.has(row.sku)) {
+      map.set(row.sku, { label: row.label, unit: row.unit, rate: row.rate });
+    }
+  }
+  return map;
+}
 
 type Args = GeneratorArgs;
 
@@ -144,6 +165,47 @@ export function buildQuote(args: Args): string {
     lines.push(`${z.treatment}`);
     lines.push("");
   }
+  const sitePlan = formatSitePlanQuoteSection(
+    args.designCanvas,
+    args.catalogSymbols,
+    rateCardLookup(args.rateCard),
+  );
+  if (sitePlan.length > 0) {
+    lines.push(...sitePlan);
+  }
+
+  if (args.survey && args.designCanvas?.placements?.length) {
+    const envelope = buildEnvelopeBrief({
+      project: args.project,
+      survey: args.survey,
+      canvas: args.designCanvas,
+      symbols: args.catalogSymbols,
+      sketchCosting:
+        args.costings.find((c) =>
+          c.line_items.some((li) => li.label.includes("sketch ·")),
+        ) ?? null,
+    });
+    const planning = envelope.planning_flags.filter(
+      (f) => f.id !== "scope-envelope",
+    );
+    if (planning.length > 0) {
+      lines.push("## Planning & permits (from envelope sketch)");
+      lines.push("");
+      for (const f of planning) {
+        const tag =
+          f.severity === "likely" ? "**Likely**" : f.severity === "review" ? "**Review**" : "OK";
+        lines.push(`- ${f.title} — ${tag}: ${f.detail}`);
+      }
+      lines.push("");
+    }
+    if (envelope.budget_mid > 0) {
+      lines.push(
+        `_Envelope budget band (sketch, provisional): ${aud0(envelope.budget_low)} – ${aud0(envelope.budget_high)} incl. GST — formal quote below supersedes for contract._`,
+      );
+      lines.push("");
+    }
+  }
+
   lines.push("## Inclusions (Standard)");
   lines.push("");
   for (const li of standard.line_items.filter((l) => !l.is_provisional)) {
@@ -206,6 +268,14 @@ export function buildScope(args: Args): string {
   lines.push(`- House: ${survey.house_area_m2} m²`);
   lines.push(`- Garden: ${survey.garden_area_m2} m²`);
   lines.push("");
+  const sitePlan = formatSitePlanQuoteSection(
+    args.designCanvas,
+    args.catalogSymbols,
+    rateCardLookup(args.rateCard),
+  );
+  if (sitePlan.length > 0) {
+    lines.push(...sitePlan);
+  }
   lines.push("## Rationale");
   lines.push("");
   lines.push(design.rationale);
@@ -323,7 +393,7 @@ export function buildStonningtonStormwaterPermit(args: Args): string {
   lines.push("- No discharge to neighbouring properties.");
   lines.push("- Site to be re-vegetated within 4 weeks of works completion.");
   lines.push("");
-  lines.push("> DRAFT — generated from Construct survey + design data. Verify before lodgement.");
+  lines.push("> DRAFT — generated from Workstream survey + design data. Verify before lodgement.");
   return lines.join("\n");
 }
 
@@ -351,7 +421,7 @@ export function buildYarraHeritagePermit(args: Args): string {
   lines.push("## Heritage compatibility statement");
   lines.push("Works are confined to the garden and rear of the property. No alteration to dwelling fabric, fenestration, roofline or street-facing elevation. Plant palette and hard materials selected to be sympathetic to the period character of the property and surrounding streetscape, in line with the City of Yarra Heritage Design Guidelines.");
   lines.push("");
-  lines.push("> DRAFT — generated from Construct survey + design data. Verify before lodgement and append site photographs.");
+  lines.push("> DRAFT — generated from Workstream survey + design data. Verify before lodgement and append site photographs.");
   return lines.join("\n");
 }
 

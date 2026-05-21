@@ -6,6 +6,7 @@ const TABS: Array<{ slug: string; label: string }> = [
   { slug: "", label: "Integrations" },
   { slug: "rate-card", label: "Rate card" },
   { slug: "plant-palette", label: "Plant palette" },
+  { slug: "design-assets", label: "Design assets" },
   { slug: "crew", label: "Crew" },
   { slug: "suppliers", label: "Suppliers" },
   { slug: "accounting", label: "Accounting" },
@@ -19,6 +20,7 @@ export function SettingsMasthead({
     | "integrations"
     | "rate-card"
     | "plant-palette"
+    | "design-assets"
     | "crew"
     | "suppliers"
     | "accounting";

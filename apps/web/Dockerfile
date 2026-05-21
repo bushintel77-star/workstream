@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 #
-# Multi-stage build for @construct/web (Next.js 15, standalone output).
-# Built from the monorepo root so the workspace dep @construct/contracts
+# Multi-stage build for @workstream/web (Next.js 15, standalone output).
+# Built from the monorepo root so the workspace dep @workstream/contracts
 # can be hoisted via pnpm.
 
 ARG NODE_VERSION=22.11.0
@@ -20,14 +20,17 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc tsconfig.base.json t
 COPY apps/web/package.json ./apps/web/
 COPY packages/contracts/package.json ./packages/contracts/
 
-RUN pnpm install --frozen-lockfile --filter=@construct/web...
+RUN pnpm install --frozen-lockfile --filter=@workstream/web...
+
+ARG NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 COPY apps/web ./apps/web
 COPY packages/contracts ./packages/contracts
 
 # contracts must be built first so Next can resolve its types
-RUN pnpm --filter=@construct/contracts build
-RUN pnpm --filter=@construct/web build
+RUN pnpm --filter=@workstream/contracts build
+RUN pnpm --filter=@workstream/web build
 
 # ---- runtime ---------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS runtime

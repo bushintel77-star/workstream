@@ -1,8 +1,8 @@
-import type { Store } from "@construct/db";
+import type { Store } from "@workstream/db";
 import type {
   CreateTaskInput,
   TaskPriority,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 import { notifyTaskAssignment } from "./task-notify";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";

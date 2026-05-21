@@ -1,4 +1,4 @@
-# Fly.io app config for the Construct API.
+# Fly.io app config for the Workstream API.
 # Region: Sydney (syd) per the original spec §4.1.
 #
 # Deploy from the repo root so the Dockerfile can reach workspace packages:
@@ -6,11 +6,12 @@
 #
 # First-time provisioning:
 #   flyctl launch --no-deploy --copy-config --config apps/api/fly.toml \
-#     --name construct-api --region syd
+#     --name workstream-api --region syd
 #
 # Required secrets before deploy:
 #   flyctl secrets set CORS_ORIGIN="https://app.example.com"
-#   flyctl secrets set PUBLIC_API_URL="https://construct-api.fly.dev"
+#   flyctl secrets set PUBLIC_API_URL="https://workstream-api.fly.dev"
+#   flyctl secrets set CORS_ORIGIN="https://workstream-web.fly.dev"
 #   flyctl secrets set CLERK_SECRET_KEY="…"          # optional; dev fallback present
 #   flyctl secrets set CLERK_PUBLISHABLE_KEY="…"     # optional
 #   flyctl secrets set MAPBOX_TOKEN="…"              # optional; mock survey if absent
@@ -29,13 +30,14 @@ kill_timeout = "5s"
 [env]
   PORT = "3001"
   NODE_ENV = "production"
+  AUTH_REQUIRED = "false"
 
 [http_service]
   internal_port = 3001
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ["app"]
 
   [http_service.concurrency]

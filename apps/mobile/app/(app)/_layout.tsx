@@ -1,5 +1,5 @@
 import { Redirect, Stack } from "expo-router";
-import { tokens } from "@construct/ui";
+import { tokens } from "@workstream/ui";
 import { useAppAuth } from "../../src/lib/auth";
 
 export default function AppLayout() {
@@ -31,6 +31,22 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen
+        name="confirm-pin"
+        options={{
+          headerShown: true,
+          title: "Confirm site",
+          headerStyle: { backgroundColor: tokens.color.surface.base },
+          headerTintColor: tokens.color.ink.primary,
+        }}
+      />
+      <Stack.Screen
+        name="processing/[id]"
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
         name="recording"
         options={{
           headerShown: false,
@@ -51,6 +67,24 @@ export default function AppLayout() {
           headerShown: true,
           title: "Measure",
           presentation: "modal",
+          headerStyle: { backgroundColor: tokens.color.surface.base },
+          headerTintColor: tokens.color.ink.primary,
+        }}
+      />
+      <Stack.Screen
+        name="filing/[id]"
+        options={{
+          headerShown: true,
+          title: "Plans & pics",
+          headerStyle: { backgroundColor: tokens.color.surface.base },
+          headerTintColor: tokens.color.ink.primary,
+        }}
+      />
+      <Stack.Screen
+        name="design-studio/[id]"
+        options={{
+          headerShown: true,
+          title: "Design studio",
           headerStyle: { backgroundColor: tokens.color.surface.base },
           headerTintColor: tokens.color.ink.primary,
         }}

@@ -1,0 +1,85 @@
+.wrap {
+  padding: var(--s-4);
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  margin-bottom: var(--s-5);
+}
+
+.wrapCompact {
+  padding: var(--s-3);
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  margin-bottom: var(--s-4);
+}
+
+.stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stageRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line-hairline);
+  flex-shrink: 0;
+}
+
+.dotDone {
+  background: var(--semantic-ok, #16a34a);
+}
+
+.dotActive {
+  background: var(--accent, #c2410c);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.label {
+  font-size: 14px;
+  color: var(--ink-secondary);
+}
+
+.labelDone {
+  color: var(--ink-primary);
+}
+
+.labelActive {
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.working {
+  margin: var(--s-3) 0 0;
+  font-size: 13px;
+  color: var(--ink-secondary);
+}
+
+.slow {
+  margin: var(--s-2) 0 0;
+  font-size: 13px;
+  color: var(--ink-tertiary);
+}
+
+.retry {
+  margin-top: var(--s-2);
+}

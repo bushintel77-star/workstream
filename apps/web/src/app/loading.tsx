@@ -7,7 +7,7 @@ export default function DashboardLoading() {
       <header className={s.masthead}>
         <div className={s.brand}>
           Curtis &amp; Co
-          <span className={s.brandSub}>Construct · Projects</span>
+          <span className={s.brandSub}>Workstream · Projects</span>
         </div>
       </header>
       <div className={`${sk.skel} ${sk.lineLg} ${sk.w40}`} />

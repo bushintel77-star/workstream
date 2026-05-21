@@ -35,15 +35,6 @@ importers:
       '@clerk/fastify':
         specifier: ^2.0.0
         version: 2.6.31(fastify@5.8.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@construct/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@construct/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@construct/domain':
-        specifier: workspace:*
-        version: link:../../packages/domain
       '@fastify/cors':
         specifier: ^11.0.0
         version: 11.2.0
@@ -65,6 +56,15 @@ importers:
       '@sentry/node':
         specifier: ^10.53.1
         version: 10.53.1
+      '@workstream/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@workstream/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@workstream/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       bullmq:
         specifier: ^5.76.10
         version: 5.76.10
@@ -99,13 +99,16 @@ importers:
       '@clerk/clerk-expo':
         specifier: ^2.9.0
         version: 2.19.31(egbsveekzscmlx7q3qrypmqbo4)
-      '@construct/client':
+      '@workstream/client':
         specifier: workspace:*
         version: link:../../packages/client
-      '@construct/contracts':
+      '@workstream/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@construct/ui':
+      '@workstream/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@workstream/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       expo:
@@ -174,13 +177,16 @@ importers:
     dependencies:
       '@clerk/nextjs':
         specifier: ^6.0.0
-        version: 6.39.3(next@15.5.18(@opentelemetry/api@1.9.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@construct/contracts':
+        version: 6.39.3(next@15.5.18(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@workstream/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@workstream/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       next:
         specifier: ^15.0.0
-        version: 15.5.18(@opentelemetry/api@1.9.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 15.5.18(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -188,6 +194,9 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.51.1
+        version: 1.60.0
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19
@@ -203,9 +212,12 @@ importers:
 
   packages/client:
     dependencies:
-      '@construct/contracts':
+      '@workstream/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@workstream/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       typescript:
         specifier: ^5.7.0
@@ -223,10 +235,10 @@ importers:
 
   packages/db:
     dependencies:
-      '@construct/contracts':
+      '@workstream/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@construct/domain':
+      '@workstream/domain':
         specifier: workspace:*
         version: link:../domain
     devDependencies:
@@ -239,9 +251,12 @@ importers:
 
   packages/domain:
     dependencies:
-      '@construct/contracts':
+      '@workstream/contracts':
         specifier: workspace:*
         version: link:../contracts
+      perfect-freehand:
+        specifier: ^1.2.2
+        version: 1.2.3
     devDependencies:
       typescript:
         specifier: ^5.7.0
@@ -1462,7 +1477,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.22.28':
     resolution: {integrity: sha512-lvt72KNitGuixYD2l3SZmRKVu2G4zJpmg5V7WfUBNpmUU5oODBw/6qmiJ6kSLAlfDozscUk+BBGknBBzxUrwrA==}
@@ -2137,6 +2152,11 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
+
+  '@playwright/test@1.60.0':
+    resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@prisma/instrumentation@7.6.0':
     resolution: {integrity: sha512-ZPW2gRiwpPzEfgeZgaekhqXrbW+Y2RJKHVqUmlhZhKzRNCcvR6DykzylDrynpArKKRQtLxoZy36fK7U0p3pdgQ==}
@@ -4028,6 +4048,11 @@ packages:
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -5117,6 +5142,9 @@ packages:
     resolution: {integrity: sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ==}
     engines: {node: '>= 14.16'}
 
+  perfect-freehand@1.2.3:
+    resolution: {integrity: sha512-bHZSfqDHGNlPpgH2yxXgPHlQSPpEbo+qg7li0M78J9vNAi2yjwLeA4x79BEQhX44lEWpCLSFCeRZwpw0niiXPA==}
+
   pg-int8@1.0.1:
     resolution: {integrity: sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==}
     engines: {node: '>=4.0.0'}
@@ -5164,6 +5192,16 @@ packages:
   pkg-dir@3.0.0:
     resolution: {integrity: sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==}
     engines: {node: '>=6'}
+
+  playwright-core@1.60.0:
+    resolution: {integrity: sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.60.0:
+    resolution: {integrity: sha512-hheHdokM8cdqCb0lcE3s+zT4t4W+vvjpGxsZlDnikarzx8tSzMebh3UiFtgqwFwnTnjYQcsyMF8ei2mCO/tpeA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   plist@3.1.1:
     resolution: {integrity: sha512-ZIfcLJC+7E7FBFnDxm9MPmt7D+DidyQ26lewieO75AdhA2ayMtsJSES0iWzqJQbcVRSrTufQoy0DR94xHue0oA==}
@@ -7467,13 +7505,13 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/nextjs@6.39.3(next@15.5.18(@opentelemetry/api@1.9.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@clerk/nextjs@6.39.3(next@15.5.18(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@clerk/backend': 2.33.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clerk/clerk-react': 5.61.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clerk/shared': 3.47.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clerk/types': 4.101.23(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      next: 15.5.18(@opentelemetry/api@1.9.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 15.5.18(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       server-only: 0.0.1
@@ -8656,6 +8694,10 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
+  '@playwright/test@1.60.0':
+    dependencies:
+      playwright: 1.60.0
+
   '@prisma/instrumentation@7.6.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -8762,7 +8804,7 @@ snapshots:
       execa: 5.1.1
       invariant: 2.2.4
       metro: 0.81.5(bufferutil@4.1.0)
-      metro-config: 0.81.5(bufferutil@4.1.0)
+      metro-config: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.5
       node-fetch: 2.7.0
       readline: 1.3.0
@@ -8783,7 +8825,7 @@ snapshots:
       execa: 5.1.1
       invariant: 2.2.4
       metro: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      metro-config: 0.81.5(bufferutil@4.1.0)
+      metro-config: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.5
       node-fetch: 2.7.0
       readline: 1.3.0
@@ -10881,6 +10923,9 @@ snapshots:
 
   fs.realpath@1.0.0: {}
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -11582,13 +11627,13 @@ snapshots:
       flow-enums-runtime: 0.0.6
       metro-core: 0.81.5
 
-  metro-config@0.81.5(bufferutil@4.1.0):
+  metro-config@0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       connect: 3.7.0
       cosmiconfig: 5.2.1
       flow-enums-runtime: 0.0.6
       jest-validate: 29.7.0
-      metro: 0.81.5(bufferutil@4.1.0)
+      metro: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-cache: 0.81.5
       metro-core: 0.81.5
       metro-runtime: 0.81.5
@@ -11734,7 +11779,7 @@ snapshots:
       metro-babel-transformer: 0.81.5
       metro-cache: 0.81.5
       metro-cache-key: 0.81.5
-      metro-config: 0.81.5(bufferutil@4.1.0)
+      metro-config: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.5
       metro-file-map: 0.81.5
       metro-resolver: 0.81.5
@@ -11781,7 +11826,7 @@ snapshots:
       metro-babel-transformer: 0.81.5
       metro-cache: 0.81.5
       metro-cache-key: 0.81.5
-      metro-config: 0.81.5(bufferutil@4.1.0)
+      metro-config: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.5
       metro-file-map: 0.81.5
       metro-resolver: 0.81.5
@@ -11908,7 +11953,7 @@ snapshots:
 
   nested-error-stacks@2.0.1: {}
 
-  next@15.5.18(@opentelemetry/api@1.9.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@15.5.18(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 15.5.18
       '@swc/helpers': 0.5.15
@@ -11927,6 +11972,7 @@ snapshots:
       '@next/swc-win32-arm64-msvc': 15.5.18
       '@next/swc-win32-x64-msvc': 15.5.18
       '@opentelemetry/api': 1.9.1
+      '@playwright/test': 1.60.0
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
@@ -12149,6 +12195,8 @@ snapshots:
 
   pathval@2.0.1: {}
 
+  perfect-freehand@1.2.3: {}
+
   pg-int8@1.0.1: {}
 
   pg-protocol@1.14.0: {}
@@ -12196,6 +12244,14 @@ snapshots:
   pkg-dir@3.0.0:
     dependencies:
       find-up: 3.0.0
+
+  playwright-core@1.60.0: {}
+
+  playwright@1.60.0:
+    dependencies:
+      playwright-core: 1.60.0
+    optionalDependencies:
+      fsevents: 2.3.2
 
   plist@3.1.1:
     dependencies:

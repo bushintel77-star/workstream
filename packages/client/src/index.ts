@@ -3,10 +3,15 @@ import type {
   Costing,
   CreateCrewMemberInput,
   CreateOverrideInput,
+  CatalogPlacement,
+  CatalogSymbol,
   CreateProjectInput,
   CreateTaskInput,
   CrewMember,
   Design,
+  DesignCanvas,
+  UpsertDesignCanvasInput,
+  CreateCatalogSymbolInput,
   MyobCustomer,
   MyobItem,
   MyobSyncStatus,
@@ -17,6 +22,7 @@ import type {
   PlantPalette,
   Project,
   ProjectMyobLink,
+  ProjectStatus,
   RateCard,
   Recording,
   SkuLink,
@@ -25,18 +31,40 @@ import type {
   TaskStatus,
   UpdateCrewMemberInput,
   UpsertSkuLinkInput,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 
 export type ApiClientOptions = {
   baseUrl: string;
   getToken?: () => Promise<string | null>;
 };
 
-export class ConstructClient {
+export class WorkstreamClient {
   constructor(private options: ApiClientOptions) {}
 
   async healthz(): Promise<{ status: string; timestamp: string }> {
     return this.request("GET", "/healthz");
+  }
+
+  async geocodePreview(
+    lat: number,
+    lng: number,
+  ): Promise<{ aerial_uri: string; lat: number; lng: number }> {
+    return this.request(
+      "GET",
+      `/geocode/preview?lat=${lat}&lng=${lng}`,
+    );
+  }
+
+  async updateProjectStatus(
+    projectId: string,
+    status: ProjectStatus,
+  ): Promise<Project> {
+    const res = await this.request<{ project: Project }>(
+      "PATCH",
+      `/projects/${projectId}/status`,
+      { status },
+    );
+    return res.project;
   }
 
   async geocodeSearch(query: string): Promise<
@@ -184,6 +212,12 @@ export class ConstructClient {
     return this.request("POST", `/projects/${projectId}/dictation`, {
       transcript,
     });
+  }
+
+  async getSiteContext(projectId: string): Promise<{
+    context: import("@workstream/contracts").SiteContext;
+  }> {
+    return this.request("GET", `/projects/${projectId}/site-context`);
   }
 
   async getWeather(projectId: string): Promise<{
@@ -354,6 +388,46 @@ export class ConstructClient {
     return res.invoice;
   }
 
+  async getEnvelopeBrief(
+    projectId: string,
+  ): Promise<import("@workstream/domain").EnvelopeBrief | null> {
+    try {
+      const res = await this.request<{
+        envelope: import("@workstream/domain").EnvelopeBrief;
+      }>("GET", `/projects/${projectId}/envelope`);
+      return res.envelope;
+    } catch {
+      return null;
+    }
+  }
+
+  async createPortalLink(
+    projectId: string,
+  ): Promise<{ portal_url: string }> {
+    return this.request("POST", `/projects/${projectId}/magic-link`, {
+      scope: "quote_view",
+    });
+  }
+
+  async getProjectGallery(projectId: string): Promise<{
+    items: Array<{
+      id: string;
+      title: string;
+      uri: string;
+      mime_type: string;
+      viewable: boolean;
+    }>;
+    viewable: Array<{
+      id: string;
+      title: string;
+      uri: string;
+      mime_type: string;
+      viewable: boolean;
+    }>;
+  }> {
+    return this.request("GET", `/projects/${projectId}/gallery`);
+  }
+
   async listTasks(projectId: string): Promise<Task[]> {
     const res = await this.request<{ tasks: Task[] }>(
       "GET",
@@ -475,6 +549,49 @@ export class ConstructClient {
     }
     const json = (await res.json()) as { design: Design };
     return json.design;
+  }
+
+  async listCatalogSymbols(): Promise<CatalogSymbol[]> {
+    const res = await this.request<{ symbols: CatalogSymbol[] }>(
+      "GET",
+      "/catalog/symbols",
+    );
+    return res.symbols;
+  }
+
+  async createCatalogSymbol(
+    input: CreateCatalogSymbolInput,
+  ): Promise<CatalogSymbol> {
+    const res = await this.request<{ symbol: CatalogSymbol }>(
+      "POST",
+      "/catalog/symbols",
+      input,
+    );
+    return res.symbol;
+  }
+
+  async deleteCatalogSymbol(id: string): Promise<void> {
+    await this.request("DELETE", `/catalog/symbols/${id}`);
+  }
+
+  async getDesignCanvas(projectId: string): Promise<DesignCanvas | null> {
+    const res = await this.request<{
+      canvas: DesignCanvas & { id: string | null };
+    }>("GET", `/projects/${projectId}/design-canvas`);
+    if (!res.canvas?.id) return null;
+    return res.canvas as DesignCanvas;
+  }
+
+  async saveDesignCanvas(
+    projectId: string,
+    input: UpsertDesignCanvasInput,
+  ): Promise<DesignCanvas> {
+    const res = await this.request<{ canvas: DesignCanvas }>(
+      "PUT",
+      `/projects/${projectId}/design-canvas`,
+      input,
+    );
+    return res.canvas;
   }
 
   async runSurvey(projectId: string): Promise<Survey> {

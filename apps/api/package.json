@@ -1,20 +1,21 @@
 {
-  "name": "@construct/api",
+  "name": "@workstream/api",
   "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "start:worker": "node dist/worker.js",
     "typecheck": "tsc --noEmit",
     "lint": "echo ok"
   },
   "dependencies": {
     "@clerk/backend": "^1.21.0",
     "@clerk/fastify": "^2.0.0",
-    "@construct/contracts": "workspace:*",
-    "@construct/db": "workspace:*",
-    "@construct/domain": "workspace:*",
+    "@workstream/contracts": "workspace:*",
+    "@workstream/db": "workspace:*",
+    "@workstream/domain": "workspace:*",
     "@fastify/cors": "^11.0.0",
     "@fastify/helmet": "^13.0.2",
     "@fastify/multipart": "^9.0.0",

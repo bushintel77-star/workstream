@@ -1,4 +1,4 @@
-import type { Store } from "@construct/db";
+import type { Store } from "@workstream/db";
 import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";
@@ -33,6 +33,8 @@ export async function runFullPipeline(
     onEvent?.(e);
   };
 
+  await store.updateProjectStatus(ownerId, projectId, "processing");
+
   const stages: Array<{
     name: Exclude<PipelineStage, "complete">;
     run: () => Promise<unknown>;
@@ -56,5 +58,9 @@ export async function runFullPipeline(
   }
 
   emit({ stage: "complete", status: "ok" });
+  const project = await store.getProject(ownerId, projectId);
+  if (project && project.status === "processing") {
+    await store.updateProjectStatus(ownerId, projectId, "audit");
+  }
   return { events, ok: true };
 }

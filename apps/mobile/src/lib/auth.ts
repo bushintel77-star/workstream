@@ -1,12 +1,15 @@
 import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 
 /**
- * True when the app is configured with a Clerk publishable key. When false,
- * the app runs in dev mode with a permanent "dev-user" signed in — matches
- * the API's CLERK_SECRET_KEY-absent fallback so the full flow works without
- * provisioning Clerk for a demo.
+ * Production builds and EXPO_PUBLIC_AUTH_REQUIRED require Clerk. Local dev
+ * without keys still uses dev-user (matches API when AUTH_REQUIRED is unset).
  */
+export const isAuthRequired =
+  !__DEV__ || process.env.EXPO_PUBLIC_AUTH_REQUIRED === "true";
+
 export const isAuthEnabled = !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+export const isAuthMisconfigured = isAuthRequired && !isAuthEnabled;
 
 type AuthShape = {
   isLoaded: boolean;

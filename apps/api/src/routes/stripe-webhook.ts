@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { verifyStripeWebhook, type StripeEvent } from "../lib/stripe";
+import { applyStudioFromCheckoutSession } from "../lib/stripe-studio";
 
 /**
  * Stripe webhook receiver. Mounted at /webhooks/stripe with a custom raw-body
@@ -61,9 +62,31 @@ export default async function stripeWebhookRoutes(fastify: FastifyInstance) {
       case "checkout.session.completed": {
         const session = event.data.object as {
           id: string;
-          metadata?: { project_id?: string; deposit_pct?: string };
+          metadata?: {
+            project_id?: string;
+            deposit_pct?: string;
+            owner_id?: string;
+            purpose?: string;
+          };
           payment_status?: string;
+          customer?: string;
+          subscription?: string;
         };
+
+        if (session.metadata?.purpose === "studio_upgrade") {
+          const upgraded = await applyStudioFromCheckoutSession(
+            fastify.store,
+            session,
+          );
+          if (upgraded) {
+            request.log.info(
+              { ownerId: session.metadata?.owner_id, sessionId: session.id },
+              "studio plan activated via Stripe",
+            );
+          }
+          break;
+        }
+
         const projectId = session.metadata?.project_id;
         if (!projectId) {
           request.log.warn(
@@ -97,6 +120,20 @@ export default async function stripeWebhookRoutes(fastify: FastifyInstance) {
             { projectId, sessionId: session.id },
             "stripe webhook for unknown project",
           );
+        }
+        break;
+      }
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as {
+          metadata?: { owner_id?: string };
+        };
+        const ownerId = sub.metadata?.owner_id;
+        if (ownerId) {
+          await fastify.store.patchWorkspaceBilling(ownerId, {
+            plan: "lite",
+            stripe_subscription_id: null,
+          });
+          request.log.info({ ownerId }, "studio subscription ended — lite plan");
         }
         break;
       }

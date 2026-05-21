@@ -15,12 +15,12 @@ import type {
   MyobSyncStatus,
   RateCard,
   SkuLink,
-} from "@construct/contracts";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../../src/lib/api";
+} from "@workstream/contracts";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../../src/lib/api";
 
 export default function MyobScreen() {
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [status, setStatus] = useState<MyobSyncStatus | null>(null);
   const [rateCard, setRateCard] = useState<RateCard[]>([]);
   const [items, setItems] = useState<MyobItem[]>([]);
@@ -57,7 +57,7 @@ export default function MyobScreen() {
 
   const linkBySku = useMemo(() => {
     const m = new Map<string, SkuLink>();
-    for (const l of links) m.set(l.construct_sku, l);
+    for (const l of links) m.set(l.rate_card_sku, l);
     return m;
   }, [links]);
 
@@ -72,12 +72,12 @@ export default function MyobScreen() {
     setSaving(true);
     try {
       const link = await api.myobUpsertSkuLink({
-        construct_sku: picker.sku,
+        rate_card_sku: picker.sku,
         myob_uid: item.uid,
         myob_item_number: item.number,
       });
       setLinks((prev) => {
-        const others = prev.filter((l) => l.construct_sku !== link.construct_sku);
+        const others = prev.filter((l) => l.rate_card_sku !== link.rate_card_sku);
         return [...others, link];
       });
       Haptics.notificationAsync(

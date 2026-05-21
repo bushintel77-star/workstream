@@ -1,0 +1,69 @@
+.dock {
+  position: sticky;
+  bottom: 88px;
+  z-index: 80;
+  margin: var(--s-4) 0;
+  padding: var(--s-3);
+  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(8px);
+}
+
+.hint {
+  margin: 0 0 var(--s-2);
+  font-size: 10px;
+  text-align: center;
+  color: var(--ink-tertiary);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.pill {
+  flex: 1 1 140px;
+  min-height: 48px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-hairline);
+  background: var(--surface-sunken);
+  text-decoration: none;
+  color: inherit;
+}
+
+.pill:hover {
+  border-color: var(--accent);
+}
+
+.pillTitle {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.pillSub {
+  display: block;
+  font-size: 10px;
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+
+.compact {
+  min-height: 48px;
+  padding: 0 var(--s-4);
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--surface-inverted);
+  color: var(--ink-inverted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.compact:hover {
+  opacity: 0.92;
+}

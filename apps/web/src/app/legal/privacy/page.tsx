@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       <header className={s.masthead}>
         <div className={s.brand}>
           Privacy
-          <span className={s.brandSub}>Curtis &amp; Co · Construct</span>
+          <span className={s.brandSub}>Curtis &amp; Co · Workstream</span>
         </div>
         <Link href="/" className={s.crumb}>← Home</Link>
       </header>
@@ -26,10 +26,10 @@ export default function PrivacyPage() {
 
       <h2 className={s.sectionHeading}>Who we are</h2>
       <p>
-        {TRADING_NAME} (ABN {ABN}) operates Construct — a landscape design and
+        {TRADING_NAME} (ABN {ABN}) operates Workstream — a landscape design and
         build co-pilot used internally by our studio and by clients we issue
         quote links to. This policy explains what personal information we
-        collect when you use Construct, why we collect it, and your rights
+        collect when you use Workstream, why we collect it, and your rights
         under the Australian Privacy Principles (APPs).
       </p>
 
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
 
       <h2 className={s.sectionHeading}>Where it lives</h2>
       <p>
-        Construct runs on Fly.io in the Sydney (syd) region. Recordings and
+        Workstream runs on Fly.io in the Sydney (syd) region. Recordings and
         outputs are stored on attached SSD volumes; backups follow our internal
         retention schedule (90 days for recordings, 7 years for accounting
         artefacts to meet ATO requirements).

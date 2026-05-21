@@ -14,7 +14,7 @@ export default function TermsPage() {
       <header className={s.masthead}>
         <div className={s.brand}>
           Terms
-          <span className={s.brandSub}>Curtis &amp; Co · Construct</span>
+          <span className={s.brandSub}>Curtis &amp; Co · Workstream</span>
         </div>
         <Link href="/" className={s.crumb}>← Home</Link>
       </header>
@@ -24,7 +24,7 @@ export default function TermsPage() {
 
       <h2 className={s.sectionHeading}>Quote validity</h2>
       <p>
-        Quotes issued via Construct are valid for 30 days from the date of
+        Quotes issued via Workstream are valid for 30 days from the date of
         issue. Prices reflect our rate card and supplier pricing at the time of
         quoting. Price changes after acceptance for genuinely provisional (POA)
         items will be communicated and signed off before the work proceeds.

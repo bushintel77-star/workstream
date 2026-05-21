@@ -7,6 +7,7 @@ import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
+import { assertAuthConfigured } from './lib/auth-config';
 import { captureError, initSentry } from './lib/sentry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
@@ -28,13 +29,20 @@ import dictationRoutes from './routes/dictation';
 import myobRoutes from './routes/myob';
 import crewRoutes from './routes/crew';
 import weatherRoutes from './routes/weather';
+import siteContextRoutes from './routes/site-context';
 import measurementRoutes from './routes/measurements';
 import supplierRoutes from './routes/suppliers';
 import aerialRoutes from './routes/aerial';
 import xeroRoutes from './routes/xero';
 import carbonRoutes from './routes/carbon';
+import catalogRoutes from './routes/catalog';
+import designCanvasRoutes from './routes/design-canvas';
+import projectFileRoutes from './routes/project-files';
 import portalRoutes from './routes/portal';
 import stripeWebhookRoutes from './routes/stripe-webhook';
+import integrationHubRoutes, {
+  registerProjectIntegrationRoutes,
+} from './routes/integration-hub';
 
 const server = Fastify({ logger: true });
 
@@ -42,6 +50,7 @@ loadEnv({
   warn: (m) => server.log.warn(m),
   error: (m) => server.log.error(m),
 });
+assertAuthConfigured();
 
 function resolveCorsOrigin(): boolean | string | string[] {
   const raw = process.env.CORS_ORIGIN;
@@ -116,11 +125,15 @@ async function start() {
   await server.register(myobRoutes, { prefix: '/myob' });
   await server.register(crewRoutes, { prefix: '/crew' });
   await server.register(weatherRoutes, { prefix: '/projects' });
+  await server.register(siteContextRoutes, { prefix: '/projects' });
   await server.register(measurementRoutes, { prefix: '/projects' });
   await server.register(supplierRoutes, { prefix: '/suppliers' });
   await server.register(aerialRoutes, { prefix: '/projects' });
   await server.register(xeroRoutes, { prefix: '/xero' });
   await server.register(carbonRoutes, { prefix: '/projects' });
+  await server.register(catalogRoutes, { prefix: '/catalog' });
+  await server.register(designCanvasRoutes, { prefix: '/projects' });
+  await server.register(projectFileRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);
   await server.register(stripeWebhookRoutes);
   await server.register(fastifyStatic, {
@@ -133,7 +146,19 @@ async function start() {
     prefix: '/aerial/',
     decorateReply: false,
   });
+  await server.register(fastifyStatic, {
+    root: path.join(process.cwd(), 'data', 'filings'),
+    prefix: '/filings/',
+    decorateReply: false,
+  });
   await server.register(settingsRoutes, { prefix: '/settings' });
+  await server.register(integrationHubRoutes, { prefix: '/integrations' });
+  await server.register(
+    async (scope) => {
+      await registerProjectIntegrationRoutes(scope);
+    },
+    { prefix: '/projects' },
+  );
 
   const port = Number(process.env.PORT) || 3001;
   await server.listen({ port, host: '0.0.0.0' });

@@ -1,0 +1,228 @@
+.mockBanner {
+  margin: 0 0 var(--s-3);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--semantic-warn, #ca8a04) 45%, var(--line-hairline));
+  background: color-mix(in srgb, var(--semantic-warn, #ca8a04) 12%, var(--surface-elevated));
+  font-size: 13px;
+  color: var(--ink-secondary);
+  line-height: 1.45;
+}
+
+.figureHost {
+  position: relative;
+  margin: 0 0 var(--s-5);
+}
+
+.planSkeleton {
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  max-height: min(72vh, 520px);
+  border-radius: var(--radius-md);
+}
+
+.figureHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.figureVisible {
+  position: relative;
+}
+
+.figure {
+  margin: 0;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  max-height: min(72vh, 520px);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--line-hairline);
+  background: var(--surface-sunken);
+}
+
+.aerial {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(
+    145deg,
+    var(--surface-sunken) 0%,
+    color-mix(in srgb, var(--accent) 8%, var(--surface-elevated)) 100%
+  );
+}
+
+.placeholderKicker {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+
+.placeholderText {
+  font-size: 14px;
+  color: var(--ink-secondary);
+  text-align: center;
+  padding: 0 var(--s-4);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.lotGlow {
+  fill: rgba(255, 0, 200, 0.08);
+  stroke: #ccff00;
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(204, 255, 0, 0.85));
+}
+
+.lotPoly {
+  fill: rgba(255, 45, 220, 0.2);
+  stroke: #ff2ef6;
+  stroke-width: 2.25;
+  stroke-linejoin: miter;
+}
+
+.sunArc {
+  fill: none;
+  stroke: color-mix(in srgb, #eab308 70%, transparent);
+  stroke-width: 1.25;
+  stroke-dasharray: 4 3;
+  opacity: 0.85;
+}
+
+.sunDot {
+  fill: #facc15;
+  stroke: #ca8a04;
+  stroke-width: 0.6;
+  filter: drop-shadow(0 0 3px rgba(250, 204, 21, 0.9));
+}
+
+.sunLabel {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #713f12;
+  background: color-mix(in srgb, #fef9c3 92%, white);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, #ca8a04 40%, transparent);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.gardenPoly {
+  fill: color-mix(in srgb, #4ade80 42%, transparent);
+  stroke: #16a34a;
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+}
+
+.housePoly {
+  fill: rgba(24, 24, 27, 0.82);
+  stroke: #ffffff;
+  stroke-width: 1;
+  stroke-linejoin: miter;
+}
+
+.edgeLabel {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+  color: #18181b;
+  background: #ccff00;
+  padding: 3px 7px;
+  border-radius: 4px;
+  border: 1px solid #ff2ef6;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-top: var(--s-2);
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+
+.caption > span:first-child {
+  font-weight: 600;
+  color: var(--ink-primary);
+  font-size: 13px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.legendLot::before,
+.legendHouse::before,
+.legendGarden::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.legendLot::before {
+  background: rgba(255, 45, 220, 0.35);
+  border: 2px solid #ff2ef6;
+  box-shadow: 0 0 0 1px #ccff00;
+}
+
+.legendHouse::before {
+  background: color-mix(in srgb, var(--ink-primary) 70%, transparent);
+}
+
+.legendGarden::before {
+  background: color-mix(in srgb, #4ade80 40%, transparent);
+}
+
+.areas {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  flex: 1 1 100%;
+}

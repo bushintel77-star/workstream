@@ -7,7 +7,13 @@ import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { runOutputAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
-import { SubmitButton } from "../../../../components/SubmitButton";
+import { PipelineActionForm } from "../../../../components/PipelineActionForm";
+import { AppNav } from "../../../../components/AppNav";
+import { ProjectClientHandoff } from "../../../../components/ProjectClientHandoff";
+import {
+  getIntegrationHub,
+  getIntegrationSummary,
+} from "../../../../lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -53,8 +59,23 @@ export default async function OutputsPage({
   const project = await getProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const outputs = await listOutputs(id);
+  const [outputs, summary] = await Promise.all([
+    listOutputs(id),
+    getIntegrationSummary().catch(() => null),
+  ]);
   const byKind = new Map(outputs.map((o) => [o.kind, o]));
+  const quoteOutput = outputs.find((o) => o.kind === "quote");
+
+  let lastCrmDetail: string | null = null;
+  try {
+    const hub = await getIntegrationHub();
+    const ev = hub.events.find(
+      (e) => e.project_id === id && e.channel === "crm",
+    );
+    lastCrmDetail = ev?.detail ?? null;
+  } catch {
+    /* optional */
+  }
 
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString("en-AU", {
@@ -66,7 +87,15 @@ export default async function OutputsPage({
 
   return (
     <main className={s.page}>
+      <AppNav summary={summary} />
       <ProjectMasthead project={project} active="outputs" />
+
+      <ProjectClientHandoff
+        project={project}
+        quoteUrl={quoteOutput?.uri ?? null}
+        hasQuote={!!quoteOutput}
+        lastCrmDetail={lastCrmDetail}
+      />
 
       <h1 className={s.headline}>Outputs</h1>
       <p className={s.lede}>
@@ -100,21 +129,20 @@ export default async function OutputsPage({
                     Open
                   </a>
                 )}
-                <form action={runOutputAction}>
-                  <input type="hidden" name="projectId" value={id} />
-                  <input type="hidden" name="kind" value={k} />
-                  <SubmitButton
-                    className={existing ? s.btnGhost : s.btn}
-                    pendingLabel="Working…"
-                  >
-                    {existing ? "Regenerate" : "Generate"}
-                  </SubmitButton>
-                </form>
+                <PipelineActionForm
+                  projectId={id}
+                  action={runOutputAction}
+                  kind={k}
+                  label={existing ? "Regenerate" : "Generate"}
+                  pendingLabel="Generating…"
+                  successMessage={`${k} generated`}
+                />
               </div>
             </li>
           );
         })}
       </ul>
+
     </main>
   );
 }

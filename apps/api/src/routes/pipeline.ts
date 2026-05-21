@@ -1,8 +1,30 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runFullPipeline } from "../lib/pipeline-job";
+import { runDevelopFromSketchPipeline } from "../lib/develop-pipeline";
 
 export default async function pipelineRoutes(fastify: FastifyInstance) {
+  fastify.post(
+    "/:projectId/pipeline/develop",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await fastify.store.getProject(ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send({ error: "Project not found" });
+      }
+
+      void runDevelopFromSketchPipeline(fastify.store, ownerId, projectId).catch(
+        (err) => {
+          request.log.error(err, "develop-from-sketch pipeline failed");
+        },
+      );
+
+      return reply.code(202).send({ accepted: true, pipeline: "develop" });
+    },
+  );
+
   fastify.post(
     "/:projectId/pipeline",
     { preHandler: requireAuth },

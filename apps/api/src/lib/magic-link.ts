@@ -8,7 +8,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "crypto";
  *
  * Scope discriminates what the link unlocks (quote view, deposit checkout,
  * change request). Expiry is enforced in verify(). The secret is
- * CONSTRUCT_PORTAL_SECRET — generate a long random string per deploy.
+ * WORKSTREAM_PORTAL_SECRET — generate a long random string per deploy.
  */
 
 export type PortalScope = "quote_view" | "deposit_checkout" | "change_request";
@@ -21,11 +21,13 @@ export type PortalTokenPayload = {
 };
 
 function secret(): string {
-  const s = process.env.CONSTRUCT_PORTAL_SECRET;
+  const s =
+    process.env.WORKSTREAM_PORTAL_SECRET ??
+    process.env.CONSTRUCT_PORTAL_SECRET;
   if (!s) {
     if (process.env.NODE_ENV === "production") {
       throw new Error(
-        "CONSTRUCT_PORTAL_SECRET is required in production to sign portal links.",
+        "WORKSTREAM_PORTAL_SECRET is required in production to sign portal links.",
       );
     }
     return "dev-portal-secret-do-not-use-in-prod";

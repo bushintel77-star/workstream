@@ -1,7 +1,9 @@
-# Construct — guidance for AI assistants
+# Workstream — guidance for AI assistants
 
-This repo is the Construct app — a voice-first landscape design + build
-co-pilot for Curtis & Co (Melbourne).
+This repo is **Workstream** — a voice-first landscape design + build co-pilot
+for Curtis & Co (Melbourne). Curtis & Co is the studio brand on client-facing
+artefacts only; do not use the retired codenames Construct or Walkthrough as
+product names.
 
 ## Architecture facts (don't relitigate)
 
@@ -52,6 +54,14 @@ co-pilot for Curtis & Co (Melbourne).
 - Domain math (`packages/domain`) and pure libs (`apps/api/src/lib/*.ts`) should
   be testable without a server. The pipeline jobs (`*-job.ts`) take a store
   + ownerId + projectId; pass a fresh memory store in tests.
+
+## Open source
+
+- Prefer MIT/Apache dependencies and web standards (SVG, HTML, OSS drawing libs).
+- Avoid proprietary native SDKs for features we can cover with OSS (e.g. use
+  react-native-skia + perfect-freehand for design-studio strokes, not PencilKit).
+- External *services* (Clerk, Mapbox, Fly) are fine when required; drawing,
+  PDF, and catalog assets should stay OSS-friendly.
 
 ## Don't
 

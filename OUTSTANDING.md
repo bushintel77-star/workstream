@@ -1,69 +1,52 @@
 # Production punch list
 
-Living doc of work between today's state and gold-standard
-end-to-end production. Owned alongside the codebase; tick items as PRs land.
+Product: **Workstream**. Studio: **Curtis & Co**. See [CONSOLIDATION.md](CONSOLIDATION.md).
 
 ## P0 — Blocks first paying customer
 
-- [x] **Persistence on Fly** — `[mounts]` block live in
-      [apps/api/fly.toml](apps/api/fly.toml) against `construct_data_v2`.
-      Still needs `flyctl scale count 1 -a construct-api` + deploy.
-- [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
-      `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
-      dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`
-      (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
-- [ ] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`.
-- [x] **Secret scanning** — gitleaks GitHub Action at
-      [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
-- [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
-      [apps/api/src/routes/settings.ts](apps/api/src/routes/settings.ts) via
-      `validateStripeKey()`; rejects bad keys with Stripe's own error message.
-- [ ] **Sentry DSN** — add `SENTRY_DSN` to both apps' Fly secrets. Scaffold is
-      in place under `apps/api/src/env.ts`.
+- [x] **Persistence on Fly** — volume `workstream_data`, `min_machines_running = 1`, CI runs `fly scale count 1`.
+- [x] **Auth (code)** — Clerk required in production on API, web, mobile.
+- [ ] **Fly secrets** — Clerk, OpenAI, Anthropic, Mapbox on `construct-api` / `construct-web` (see [PRODUCTION.md](PRODUCTION.md)).
+- [x] **Fly deploy (construct-*)** — API + web live; `AUTH_REQUIRED=false` staging mode.
+- [ ] **Cutover from legacy** — retire `construct-api` / `construct-web` hostnames when new apps are live.
+- [x] **Secret scanning** — gitleaks in CI.
+- [x] **Stripe key validation on save**.
+- [ ] **Sentry DSN** on both Fly apps (`@sentry/node` on API; add `@sentry/nextjs` on web when ready).
+
+## Commercial
+
+- [x] **Plans doc** — Lite = 1 user free + dev fallbacks; Studio = paid live integrations ([docs/PLANS.md](docs/PLANS.md)).
+- [x] **Integration hub** — CRM webhook, Resend email, MYOB/Xero/Stripe/AI keys in Settings; event log ([docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)).
+- [x] **Plan gating (code)** — `WorkspaceBilling` lite/studio; live connectors only on Studio; dev upgrade endpoint.
+- [x] **Stripe Studio checkout** — `STRIPE_STUDIO_PRICE_ID` + webhook activates Studio.
+- [ ] **Stripe per-seat** — extra seat price + Clerk org enforcement.
+- [ ] **Extra seats** — Clerk org + seat limit enforcement.
 
 ## P1 — Quality + scale
 
-- [ ] **Mobile distribution** — `eas build:configure`, then a TestFlight
-      preview build. APK for Android sideload.
-- [ ] **BullMQ + Upstash Redis** — move pipeline jobs off the HTTP request
-      thread.
-- [ ] **Litestream → R2/B2** — DR backup of the JSON snapshot.
-- [ ] **CI deploy job** — `flyctl deploy` gated on `main`, `FLY_API_TOKEN`
-      stored as a GH secret.
-- [ ] **Dependabot / Renovate** for both pnpm + GitHub Actions.
-- [ ] **Branch protection on `main`** — require CI green.
-- [ ] **Playwright e2e** for the operator happy path.
-- [ ] **Contract tests** — every API response shape parsed by its Zod schema.
-- [ ] **Unit tests on pipeline jobs** (survey, design, cost, audit, output).
-- [ ] **Visual regression** on the rendered quote/scope/permit HTML outputs.
+- [ ] **Mobile distribution** — EAS production build + TestFlight.
+- [ ] **BullMQ + Redis** — `REDIS_URL` + `pnpm start:worker` on a worker machine.
+- [ ] **Litestream → R2** — DR for JSON snapshot.
+- [x] **CI deploy** — `.github/workflows/ci.yml` deploys `workstream-api` + `workstream-web` on `main`.
+- [x] **Dependabot** — `.github/dependabot.yml`.
+- [ ] **Branch protection on `main`**.
+- [x] **Playwright e2e** — design studio + asset upload (`apps/web/e2e/design-studio.spec.ts`, `pnpm test:e2e`).
+- [ ] **Contract tests** — all route responses through Zod.
+- [x] **capture-pipeline test** — `capture-pipeline.test.ts`.
+- [ ] **Visual regression** on HTML outputs.
+- [x] **Design studio phase 1** — catalog + canvas API, web drag-drop, mobile tap-to-place ([docs/DESIGN_STUDIO.md](docs/DESIGN_STUDIO.md)).
+- [x] **Design asset widget library** — 18 visual plants/hardscape/structure glyphs, category tabs, search (web + mobile).
+- [x] **Design studio phase 2** — OSS freehand: perfect-freehand (web + mobile `CanvasStroke`).
+- [x] **Design studio phase 3** — quote/scope site-plan table from canvas placements + SKU.
+- [x] **Design asset admin** — Settings → Design assets, POST/DELETE `/catalog/symbols`.
 
-## P2 — Scale + cost
+## Human actions (Fly / GitHub / Apple)
 
-- [ ] **Multi-tenant authorization** — per-owner store queries on every route.
-- [ ] **Real ESLint configs** per workspace (currently `lint: echo ok`).
-- [ ] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
-- [ ] **Real-user monitoring** on web (Sentry Performance or Plausible).
-- [ ] **Audio compression** before upload (opus quality cap).
-- [ ] **Edge runtime** for `/portal/*` pages.
-- [ ] **Soft delete + audit trail** on every destructive action.
-- [ ] **Idempotency keys** on pipeline POSTs.
-
-## P3 — Nice to have
-
-- [ ] Storybook for web primitives.
-- [ ] Local `docker-compose` for new contributors.
-- [ ] Bundle-size budget in CI.
-- [ ] PostgreSQL migration once the data model stabilises.
-- [ ] Multi-region Fly deploy for HA.
-
-## Sandbox-blocked actions (need the user)
-
-The sandbox blocked these as production-affecting; they're code-only above but
-need a one-time human action to take effect:
-
-- `flyctl scale count 1 -a construct-api`
-- `flyctl secrets set CORS_ORIGIN=… -a construct-api`
-- `flyctl secrets set CLERK_SECRET_KEY=… -a construct-api`
-- `flyctl secrets set SENTRY_DSN=… -a construct-api`
-- `flyctl secrets set SENTRY_DSN=… -a construct-web`
-- Add `FLY_API_TOKEN` to the GitHub repo secrets.
+```bash
+flyctl apps create workstream-api   # or launch per DEPLOY.md
+flyctl volumes create workstream_data -a workstream-api --region syd --size 1
+flyctl secrets set … -a workstream-api
+flyctl secrets set … -a workstream-web
+gh secret set FLY_API_TOKEN
+eas init   # set projectId in app.json extra.eas
+```

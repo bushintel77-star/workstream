@@ -1,10 +1,17 @@
 import Link from "next/link";
-import { listProjects, type ProjectStatus } from "../lib/api";
+import {
+  getIntegrationSummary,
+  listProjects,
+  type ProjectStatus,
+} from "../lib/api";
 import s from "../styles/app.module.css";
 import d from "./dashboard.module.css";
-import { createProjectAction, deleteProjectAction } from "./actions";
+import { deleteProjectAction } from "./actions";
+import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
 import { SubmitButton } from "../components/SubmitButton";
 import { requireSignedIn } from "../lib/auth";
+import { AppNav } from "../components/AppNav";
+import { IntegrationSetupChecklist } from "../components/IntegrationSetupChecklist";
 
 export const dynamic = "force-dynamic";
 
@@ -35,9 +42,13 @@ const STATUS_PILL: Record<ProjectStatus, string> = {
 export default async function DashboardPage() {
   await requireSignedIn();
   let projects: Awaited<ReturnType<typeof listProjects>> = [];
+  let summary: Awaited<ReturnType<typeof getIntegrationSummary>> | null = null;
   let loadError: string | null = null;
   try {
-    projects = await listProjects();
+    [projects, summary] = await Promise.all([
+      listProjects(),
+      getIntegrationSummary(),
+    ]);
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Could not reach the API.";
   }
@@ -51,10 +62,12 @@ export default async function DashboardPage() {
 
   return (
     <main className={s.pageNarrow}>
+      <AppNav summary={summary} />
+      {summary && <IntegrationSetupChecklist summary={summary} />}
       <header className={s.masthead}>
         <div className={s.brand}>
           Curtis &amp; Co
-          <span className={s.brandSub}>Construct · Projects</span>
+          <span className={s.brandSub}>Workstream · Projects</span>
         </div>
         <span className={s.crumb}>
           {projects.length} {projects.length === 1 ? "project" : "projects"}
@@ -67,20 +80,7 @@ export default async function DashboardPage() {
         design, costing, audit and outputs flow from there.
       </p>
 
-      <form action={createProjectAction} className={d.form}>
-        <input
-          className={`${s.input} ${d.formInput}`}
-          name="address"
-          type="text"
-          placeholder="Site address — e.g. 22 Smith St, Carlton VIC 3053"
-          required
-          minLength={5}
-          autoComplete="off"
-        />
-        <SubmitButton className={s.btn} pendingLabel="Creating…">
-          New project
-        </SubmitButton>
-      </form>
+      <NewProjectAddressForm />
 
       {loadError && (
         <div className={s.error}>Couldn&apos;t load projects: {loadError}</div>

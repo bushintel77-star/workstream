@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../src/lib/api";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../src/lib/api";
 
 type Suggestion = {
   id: string;
@@ -24,18 +24,16 @@ type Suggestion = {
 
 export default function NewProjectScreen() {
   const router = useRouter();
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Suggestion | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [autocompleteAvailable, setAutocompleteAvailable] = useState(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const canContinue =
-    (selected != null || query.trim().length >= 5) && !submitting;
+  const canContinue = selected != null;
 
   useEffect(() => {
     if (selected && selected.place_name === query) return;
@@ -77,23 +75,21 @@ export default function NewProjectScreen() {
     Keyboard.dismiss();
   }
 
-  async function handleContinue() {
+  function handleContinue() {
     if (!canContinue) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const address = selected?.place_name ?? query.trim();
-      const project = await api.createProject({
-        address,
-        lat: selected?.lat,
-        lng: selected?.lng,
+    const address = selected?.place_name ?? query.trim();
+    if (selected?.lat != null && selected?.lng != null) {
+      router.push({
+        pathname: "/(app)/confirm-pin",
+        params: {
+          address,
+          lat: String(selected.lat),
+          lng: String(selected.lng),
+        },
       });
-      router.replace(`/(app)/project/${project.id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create project");
-    } finally {
-      setSubmitting(false);
+      return;
     }
+    setError("Pick an address from the list so we can pin the lot on the aerial.");
   }
 
   return (
@@ -172,14 +168,10 @@ export default function NewProjectScreen() {
           onPress={handleContinue}
           disabled={!canContinue}
           accessibilityRole="button"
-          accessibilityLabel="Create project"
-          accessibilityState={{ disabled: !canContinue, busy: submitting }}
+          accessibilityLabel="Confirm address on aerial"
+          accessibilityState={{ disabled: !canContinue }}
         >
-          {submitting ? (
-            <ActivityIndicator color={tokens.color.ink.inverted} />
-          ) : (
-            <Text style={styles.buttonText}>Create project →</Text>
-          )}
+          <Text style={styles.buttonText}>Confirm on aerial →</Text>
         </Pressable>
       </View>
     </SafeAreaView>

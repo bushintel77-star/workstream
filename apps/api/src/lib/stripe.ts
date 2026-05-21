@@ -7,7 +7,7 @@
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
-import type { Costing, Project } from "@construct/contracts";
+import type { Costing, Project } from "@workstream/contracts";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
@@ -132,7 +132,7 @@ export async function createDepositSession(
   if (!isStripeLive()) {
     return {
       session_id: `dev-cs-${Date.now()}`,
-      checkout_url: `https://construct.example/portal/dev-checkout/${Date.now()}`,
+      checkout_url: `https://workstream-web.fly.dev/portal/dev-checkout/${Date.now()}`,
       deposit_amount_aud: depositAud,
       mode: "dev_fallback",
     };

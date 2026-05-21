@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Construct",
-    "slug": "construct",
+    "name": "Workstream",
+    "slug": "workstream",
     "version": "0.0.1",
     "orientation": "portrait",
-    "scheme": "construct",
+    "scheme": "workstream",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "updates": {
@@ -16,12 +16,12 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.curtisandco.construct",
+      "bundleIdentifier": "com.curtisandco.workstream",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Construct uses the microphone to capture site-walk dictation.",
-        "NSCameraUsageDescription": "Construct uses the camera to photograph site features for measurement.",
-        "NSPhotoLibraryUsageDescription": "Construct attaches photos from your library to project measurements.",
-        "NSLocationWhenInUseUsageDescription": "Construct uses your location to pre-fill site addresses while you're on site.",
+        "NSMicrophoneUsageDescription": "Workstream uses the microphone to capture site-walk dictation.",
+        "NSCameraUsageDescription": "Workstream uses the camera to photograph site features for measurement.",
+        "NSPhotoLibraryUsageDescription": "Workstream attaches photos from your library to project measurements.",
+        "NSLocationWhenInUseUsageDescription": "Workstream uses your location to pre-fill site addresses while you're on site.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -29,7 +29,7 @@
       "adaptiveIcon": {
         "backgroundColor": "#FAFAF7"
       },
-      "package": "com.curtisandco.construct",
+      "package": "com.curtisandco.workstream",
       "permissions": [
         "RECORD_AUDIO",
         "CAMERA",

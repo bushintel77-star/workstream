@@ -1,40 +1,69 @@
-import { listIntegrations, type Integration } from "../../lib/api";
-import s from "../../styles/app.module.css";
 import {
-  clearIntegrationAction,
-  setIntegrationAction,
-} from "../actions";
+  getIntegrationHub,
+  listIntegrations,
+  type Integration,
+  type IntegrationCategory,
+} from "../../lib/api";
+import s from "../../styles/app.module.css";
 import styles from "./settings.module.css";
 import { SettingsMasthead } from "./SettingsShell";
+import { IntegrationCard } from "../../components/IntegrationCard";
+import { IntegrationHubPanel } from "../../components/IntegrationHubPanel";
+import { IntegrationEventsList } from "../../components/IntegrationEventsList";
+import { AppNav } from "../../components/AppNav";
+import { getIntegrationSummary } from "../../lib/api";
+import { SettingsUpgradeToast } from "../../components/SettingsUpgradeToast";
 
 export const dynamic = "force-dynamic";
 
-const CATEGORY_LABELS: Record<Integration["category"], string> = {
+const CATEGORY_LABELS: Record<IntegrationCategory, string> = {
   ai: "AI services",
   payments: "Payments",
   geo: "Geocoding & mapping",
   auth: "Auth",
   accounting: "Accounting",
+  crm: "CRM — Zoho (via n8n)",
+  email: "Email",
 };
 
-const CATEGORY_ORDER: Integration["category"][] = [
+const CATEGORY_ORDER: IntegrationCategory[] = [
   "ai",
   "geo",
   "payments",
   "auth",
   "accounting",
+  "crm",
+  "email",
 ];
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ studio?: string }>;
+}) {
+  const sp = await searchParams;
   let integrations: Integration[] = [];
+  let billing = null as Awaited<ReturnType<typeof listIntegrations>>["billing"] | null;
+  let hub: Awaited<ReturnType<typeof getIntegrationHub>> | null = null;
+  let navSummary: Awaited<ReturnType<typeof getIntegrationSummary>> | null =
+    null;
   let loadError: string | null = null;
   try {
-    integrations = await listIntegrations();
+    const listed = await listIntegrations();
+    integrations = listed.items;
+    billing = listed.billing;
+    hub = await getIntegrationHub();
+    navSummary = hub.summary;
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Could not reach the API.";
+    try {
+      navSummary = await getIntegrationSummary();
+    } catch {
+      /* optional */
+    }
   }
 
-  const grouped = new Map<Integration["category"], Integration[]>();
+  const grouped = new Map<IntegrationCategory, Integration[]>();
   for (const i of integrations) {
     const arr = grouped.get(i.category) ?? [];
     arr.push(i);
@@ -43,11 +72,13 @@ export default async function SettingsPage() {
 
   return (
     <main className={s.pageNarrow}>
+      <AppNav summary={navSummary} />
+      <SettingsUpgradeToast status={sp.studio} />
       <SettingsMasthead active="integrations" subtitle="Integrations" />
 
       <h1 className={s.headline}>Integrations</h1>
       <p className={s.lede}>
-        Tokens for the external services Construct talks to. Saved here for
+        Tokens for the external services Workstream talks to. Saved here for
         operator review; the API also reads any matching Fly secret as a
         fallback.
       </p>
@@ -64,11 +95,27 @@ export default async function SettingsPage() {
         </div>
       )}
 
+      {billing && hub && (
+        <IntegrationHubPanel
+          billing={billing}
+          channels={hub.channels}
+          events={hub.events}
+          summary={hub.summary}
+        />
+      )}
+
+      {hub && hub.events.length > 0 && (
+        <section className={s.card}>
+          <h2 className={s.sectionHeading}>Recent activity</h2>
+          <IntegrationEventsList events={hub.events} />
+        </section>
+      )}
+
       {CATEGORY_ORDER.map((cat) => {
         const items = grouped.get(cat);
         if (!items || items.length === 0) return null;
         return (
-          <section key={cat}>
+          <section key={cat} id={cat}>
             <h2 className={s.sectionHeading}>{CATEGORY_LABELS[cat]}</h2>
             <ul className={styles.list}>
               {items.map((i) => (
@@ -79,74 +126,5 @@ export default async function SettingsPage() {
         );
       })}
     </main>
-  );
-}
-
-function IntegrationCard({ integration: i }: { integration: Integration }) {
-  const pillClass =
-    i.source === "store"
-      ? s.pillOk
-      : i.source === "env"
-        ? s.pillInfo
-        : s.pillMuted;
-  const pillText =
-    i.source === "store"
-      ? "Saved"
-      : i.source === "env"
-        ? "Fly secret"
-        : "Not set";
-  const fmtUpdated = i.updated_at
-    ? new Date(i.updated_at).toLocaleString("en-AU", {
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : null;
-
-  return (
-    <li className={styles.card}>
-      <div className={styles.cardHead}>
-        <div>
-          <span className={styles.label}>{i.label}</span>
-          <span className={styles.envName}>{i.key}</span>
-        </div>
-        <span className={`${s.pill} ${pillClass}`}>{pillText}</span>
-      </div>
-
-      <p className={styles.description}>{i.description}</p>
-
-      {i.configured && i.last4 && (
-        <div className={styles.maskRow}>
-          {"•".repeat(Math.min(20, (i.length ?? 4) - 4))}
-          {i.last4}
-          {fmtUpdated && i.source === "store" ? ` · updated ${fmtUpdated}` : ""}
-        </div>
-      )}
-
-      <form action={setIntegrationAction} className={styles.form}>
-        <input type="hidden" name="key" value={i.key} />
-        <input
-          className={styles.input}
-          name="value"
-          type="password"
-          placeholder={i.placeholder}
-          autoComplete="off"
-          spellCheck={false}
-        />
-        <button type="submit" className={s.btn}>
-          {i.source === "store" ? "Replace" : "Save"}
-        </button>
-        {i.source === "store" && (
-          <button
-            type="submit"
-            className={s.btnDanger}
-            formAction={clearIntegrationAction}
-          >
-            Clear
-          </button>
-        )}
-      </form>
-    </li>
   );
 }

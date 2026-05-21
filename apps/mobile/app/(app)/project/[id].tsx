@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,7 +11,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, Modal, TextInput } from "react-native";
 import * as Haptics from "expo-haptics";
-import Svg, { Polygon as SvgPolygon } from "react-native-svg";
+import {
+  countOpenTasks,
+  deriveSiteNextAction,
+  fitSurveyToPercentView,
+  gardenPolygonToSvgPath,
+  ringToSvgPoints,
+  type EnvelopeBrief,
+} from "@workstream/domain";
+import { SiteHotLinks } from "../../../src/components/site/SiteHotLinks";
+import { PersistentVoiceDock } from "../../../src/components/site/PersistentVoiceDock";
+import { OutstandingSheet } from "../../../src/components/site/OutstandingSheet";
+import {
+  buildWhatsAppShareUrl,
+  quoteOutputUrl,
+} from "../../../src/lib/share-client";
+import Svg, { Circle, Path, Polygon as SvgPolygon } from "react-native-svg";
+import type { SiteContext } from "@workstream/contracts";
 import type {
   Audit,
   AuditFinding,
@@ -28,16 +43,13 @@ import type {
   Project,
   Recording,
   Survey,
-} from "@construct/contracts";
-import { tokens } from "@construct/ui";
-import { useConstructApi } from "../../../src/lib/api";
+  Task,
+  DesignCanvas,
+} from "@workstream/contracts";
+import { tokens } from "@workstream/ui";
+import { useWorkstreamApi } from "../../../src/lib/api";
 
-const AERIAL_ASPECT = 1;
-const SURVEY_INSET_PCT = 0.12;
-
-function isRealAerial(uri: string): boolean {
-  return uri.startsWith("http") && !uri.startsWith("https://placeholder");
-}
+const TITLE_ASPECT = 5 / 3;
 
 function metresFormat(n: number): string {
   return Number.isInteger(n) ? `${n}` : n.toFixed(1);
@@ -56,121 +68,107 @@ function deriveSummary(survey: Survey) {
   return { frontage, depth };
 }
 
-function SurveyHero({ survey }: { survey: Survey }) {
-  const lotCoords = survey.title_polygon.coordinates[0];
-  const houseCoords = survey.house_polygon.coordinates[0];
-
-  const lngs = lotCoords.map((c) => c[0]);
-  const lats = lotCoords.map((c) => c[1]);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const lotDegW = Math.max(maxLng - minLng, 1e-9);
-  const lotDegH = Math.max(maxLat - minLat, 1e-9);
-
-  const lotAspect = lotDegW / lotDegH;
-  const innerArea = 1 - 2 * SURVEY_INSET_PCT;
-  let lotWidthPct: number;
-  let lotHeightPct: number;
-  if (lotAspect >= 1) {
-    lotWidthPct = innerArea;
-    lotHeightPct = innerArea / lotAspect;
-  } else {
-    lotHeightPct = innerArea;
-    lotWidthPct = innerArea * lotAspect;
+function ProjectTitleHero({
+  address,
+  survey,
+  siteContext,
+}: {
+  address: string;
+  survey: Survey | null;
+  siteContext: SiteContext | null;
+}) {
+  if (!survey) {
+    return (
+      <View style={styles.heroTitle} accessibilityRole="header">
+        <Text style={styles.heroKicker}>LANDSCAPE PROJECT</Text>
+        <Text style={styles.heroBrand}>Curtis & Co</Text>
+        <Text style={styles.heroAddress}>{address}</Text>
+        <Text style={styles.heroSub}>
+          Run survey to map the backyard on the title
+        </Text>
+      </View>
+    );
   }
-  const lotLeftPct = (1 - lotWidthPct) / 2;
-  const lotTopPct = (1 - lotHeightPct) / 2;
 
-  const project = (lng: number, lat: number): [number, number] => {
-    const xN = (lng - minLng) / lotDegW;
-    const yN = (maxLat - lat) / lotDegH;
-    return [
-      (lotLeftPct + xN * lotWidthPct) * 100,
-      (lotTopPct + yN * lotHeightPct) * 100,
-    ];
-  };
-
-  const lotPoints = lotCoords
-    .map(([lng, lat]) => project(lng, lat).join(","))
-    .join(" ");
-  const housePoints = houseCoords
-    .map(([lng, lat]) => project(lng, lat).join(","))
-    .join(" ");
-
-  const edgeMidpoints: Array<{ x: number; y: number; length_m: number }> = [];
-  const closedLot =
-    lotCoords.length >= 2 &&
-    lotCoords[0][0] === lotCoords[lotCoords.length - 1][0] &&
-    lotCoords[0][1] === lotCoords[lotCoords.length - 1][1];
-  const lotEdges = closedLot ? lotCoords.slice(0, -1) : lotCoords;
-  for (let i = 0; i < lotEdges.length; i++) {
-    const a = lotEdges[i];
-    const b = lotEdges[(i + 1) % lotEdges.length];
-    const [ax, ay] = project(a[0], a[1]);
-    const [bx, by] = project(b[0], b[1]);
-    const measurement = survey.measurements[i];
-    if (!measurement) continue;
-    edgeMidpoints.push({
-      x: (ax + bx) / 2,
-      y: (ay + by) / 2,
-      length_m: measurement.length_m,
-    });
-  }
+  const project = fitSurveyToPercentView(survey, 12);
+  const lotRing = survey.title_polygon.coordinates[0] ?? [];
+  const houseRing = survey.house_polygon.coordinates[0] ?? [];
+  const lotPoints = ringToSvgPoints(lotRing, project);
+  const housePoints = ringToSvgPoints(houseRing, project);
+  const gardenPath = gardenPolygonToSvgPath(survey.garden_polygon, project);
 
   return (
-    <View style={styles.heroAerial}>
-      {isRealAerial(survey.aerial_uri) ? (
-        <Image
-          source={{ uri: survey.aerial_uri }}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.heroPlaceholder]}>
-          <Text style={styles.heroPlaceholderText}>
-            SATELLITE  ·  DEV MODE
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.heroScrim} pointerEvents="none" />
-
-      <Svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      >
-        <SvgPolygon
-          points={lotPoints}
-          fill="rgba(194,65,12,0.12)"
-          stroke={tokens.color.line.ink}
-          strokeWidth={0.6}
-          strokeLinejoin="miter"
-          vectorEffect="non-scaling-stroke"
-        />
-        <SvgPolygon
-          points={housePoints}
-          fill="rgba(24,24,27,0.78)"
-        />
-      </Svg>
-
-      {edgeMidpoints.map((m, i) => (
-        <View
-          key={i}
-          style={[
-            styles.edgeLabelHost,
-            { left: `${m.x}%`, top: `${m.y}%` },
-          ]}
-          pointerEvents="none"
+    <View style={styles.heroTitle} accessibilityRole="header">
+      <View style={styles.heroMapGrid} pointerEvents="none" />
+      <View style={styles.heroMap} pointerEvents="none">
+        <Svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid meet"
         >
-          <Text style={styles.edgeLabel}>{metresFormat(m.length_m)} m</Text>
-        </View>
-      ))}
+          {gardenPath ? (
+            <Path
+              d={gardenPath}
+              fill="rgba(74,222,128,0.42)"
+              stroke="#16a34a"
+              strokeWidth={0.6}
+              fillRule="evenodd"
+            />
+          ) : null}
+          <SvgPolygon
+            points={lotPoints}
+            fill="rgba(255,45,220,0.18)"
+            stroke="#ff2ef6"
+            strokeWidth={0.8}
+          />
+          <SvgPolygon points={housePoints} fill="rgba(24,24,27,0.88)" />
+          {siteContext ? (
+            <Circle
+              cx={siteContext.sun.marker_x_pct}
+              cy={siteContext.sun.marker_y_pct}
+              r={2.4}
+              fill="#facc15"
+              stroke="#ca8a04"
+              strokeWidth={0.5}
+            />
+          ) : null}
+        </Svg>
+      </View>
+      {siteContext ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.heroChips}
+          contentContainerStyle={styles.heroChipsContent}
+        >
+          <Text style={styles.heroChip}>
+            {siteContext.season.label} · {siteContext.season.month}
+          </Text>
+          <Text style={styles.heroChip}>
+            Sun {siteContext.sun.now_azimuth_label}{" "}
+            {siteContext.sun.now_altitude_deg}° ·{" "}
+            {siteContext.sun.sunrise_local}–{siteContext.sun.sunset_local}
+          </Text>
+          {siteContext.planning_badges.map((b) => (
+            <Text key={b.id} style={styles.heroChip}>
+              {b.label}
+            </Text>
+          ))}
+        </ScrollView>
+      ) : null}
+      <View style={styles.heroBadge} pointerEvents="none">
+        <Text style={styles.heroBadgeText}>Backyard mapped</Text>
+      </View>
+      <View style={styles.heroTitleBand}>
+        <Text style={styles.heroKicker}>LANDSCAPE PROJECT</Text>
+        <Text style={styles.heroBrand}>Curtis & Co</Text>
+        <Text style={styles.heroAddress}>{address}</Text>
+        <Text style={styles.heroSub}>
+          Backyard {Math.round(survey.garden_area_m2)} m² · Lot{" "}
+          {Math.round(survey.lot_area_m2)} m²
+        </Text>
+      </View>
     </View>
   );
 }
@@ -178,7 +176,7 @@ function SurveyHero({ survey }: { survey: Survey }) {
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
   const [project, setProject] = useState<Project | null>(null);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [survey, setSurvey] = useState<Survey | null>(null);
@@ -203,6 +201,11 @@ export default function ProjectDetailScreen() {
     mode: "live" | "dev_fallback";
     total_incl_gst: number;
   } | null>(null);
+  const [siteContext, setSiteContext] = useState<SiteContext | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [envelope, setEnvelope] = useState<EnvelopeBrief | null>(null);
+  const [canvas, setCanvas] = useState<DesignCanvas | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [weather, setWeather] = useState<{
     days: Array<{
       date: string;
@@ -248,12 +251,40 @@ export default function ProjectDetailScreen() {
       setOutputs(outs);
       setOverrides(ovs);
       api.getWeather(id).then((w) => setWeather(w.forecast)).catch(() => {});
+      api
+        .getSiteContext(id)
+        .then((r) => setSiteContext(r.context))
+        .catch(() => setSiteContext(null));
+      api.listTasks(id).then(setTasks).catch(() => setTasks([]));
+      api.getDesignCanvas(id).then(setCanvas).catch(() => setCanvas(null));
+      api.getEnvelopeBrief(id).then(setEnvelope).catch(() => setEnvelope(null));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
     } finally {
       setLoading(false);
     }
   }, [api, id]);
+
+  const handleAdvanceStatus = useCallback(
+    async (next: Project["status"]) => {
+      if (!id) return;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      try {
+        const p = await api.updateProjectStatus(id, next);
+        setProject(p);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not advance project");
+      }
+    },
+    [api, id],
+  );
+
+  useEffect(() => {
+    if (!project || !id) return;
+    if (project.status === "processing") {
+      router.replace(`/(app)/processing/${id}`);
+    }
+  }, [project?.status, id, router]);
 
   const handleRunSurvey = useCallback(async () => {
     if (!id) return;
@@ -512,6 +543,111 @@ export default function ProjectDetailScreen() {
 
   const latest = recordings[0];
   const summary = survey ? deriveSummary(survey) : null;
+  const quoteOutput = outputs.find((o) => o.kind === "quote");
+  const standardCosting = costings.find((c) => c.scenario === "standard");
+  const hasCanvas = (canvas?.placements?.length ?? 0) > 0;
+  const siteNext = deriveSiteNextAction({
+    status: project?.status ?? "draft",
+    hasSurvey: survey != null,
+    hasDesign: design != null,
+    hasCosting: costings.length > 0,
+    auditPassed: audit?.passed ?? false,
+    hasQuote: quoteOutput != null,
+    hasCanvas,
+  });
+  const openTaskCount = countOpenTasks(tasks);
+  const workflowSteps = [
+    { label: "Survey / backyard mapped", done: survey != null },
+    { label: "Back-of-envelope sketch", done: hasCanvas },
+    { label: "Design developed", done: design != null },
+    { label: "Priced (Lean / Standard / Buffer)", done: costings.length > 0 },
+    { label: "Audit passed", done: audit?.passed ?? false },
+    { label: "Quote generated", done: quoteOutput != null },
+  ];
+
+  const handleSiteNext = useCallback(() => {
+    if (!id || !project) return;
+    switch (siteNext.kind) {
+      case "record":
+        router.push({
+          pathname: "/(app)/recording",
+          params: { projectId: id },
+        });
+        break;
+      case "sketch":
+        router.push({
+          pathname: "/(app)/design-studio/[id]",
+          params: { id },
+        });
+        break;
+      case "survey_ok":
+        void handleAdvanceStatus("design_review");
+        break;
+      case "develop":
+        void handleRunDesign();
+        break;
+      case "cost":
+        void handleRunCosting();
+        break;
+      case "audit":
+        void handleRunAudit();
+        break;
+      case "quote":
+        void handleRunOutput("quote");
+        break;
+      case "share":
+        void (async () => {
+          if (!quoteOutput) return;
+          try {
+            const { portal_url } = await api.createPortalLink(id);
+            const url = buildWhatsAppShareUrl({
+              address: project.address,
+              quoteUrl: quoteOutput.uri ?? quoteOutputUrl(quoteOutput.id),
+              portalUrl: portal_url,
+              clientName: project.client_name,
+            });
+            await Linking.openURL(url);
+          } catch (e) {
+            setError(e instanceof Error ? e.message : "Share failed");
+          }
+        })();
+        break;
+    }
+  }, [
+    id,
+    project,
+    siteNext.kind,
+    router,
+    quoteOutput,
+    api,
+    handleAdvanceStatus,
+    handleRunDesign,
+    handleRunCosting,
+    handleRunAudit,
+    handleRunOutput,
+  ]);
+
+  const handleWhatsApp = useCallback(() => {
+    if (!id || !project) return;
+    void (async () => {
+      try {
+        if (quoteOutput) {
+          const { portal_url } = await api.createPortalLink(id);
+          const url = buildWhatsAppShareUrl({
+            address: project.address,
+            quoteUrl: quoteOutput.uri ?? quoteOutputUrl(quoteOutput.id),
+            portalUrl: portal_url,
+            clientName: project.client_name,
+          });
+          await Linking.openURL(url);
+        } else if (project.client_email) {
+          await Linking.openURL(`mailto:${project.client_email}`);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not open client");
+      }
+    })();
+  }, [id, project, quoteOutput, api]);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
@@ -531,7 +667,8 @@ export default function ProjectDetailScreen() {
           </Pressable>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content}>
+        <>
+        <ScrollView contentContainerStyle={[styles.content, styles.contentDockPad]}>
           {error && (
             <View style={styles.inlineErrorBanner}>
               <Text style={styles.inlineErrorText}>{error}</Text>
@@ -556,11 +693,34 @@ export default function ProjectDetailScreen() {
             />
           )}
 
+          <ProjectTitleHero
+            address={project.address}
+            survey={survey}
+            siteContext={siteContext}
+          />
+
+          <SiteHotLinks
+            projectId={id!}
+            address={project.address}
+            clientName={project.client_name}
+            clientEmail={project.client_email}
+            lat={project.lat}
+            lng={project.lng}
+            next={siteNext}
+            openTaskCount={openTaskCount}
+            siteContext={siteContext}
+            weatherRain={weather?.rain_within_24h ?? false}
+            weatherWind={weather?.wind_warning ?? false}
+            envelope={envelope}
+            standardTotal={standardCosting?.total ?? null}
+            onWhatsApp={handleWhatsApp}
+            onShowOutstanding={() => setSheetOpen(true)}
+            onNextAction={handleSiteNext}
+          />
+
           {survey ? (
             <>
-              <SurveyHero survey={survey} />
               <View style={styles.summaryCard}>
-                <Text style={styles.addressLine}>{project.address}</Text>
                 <View style={styles.metricsLedger}>
                   <LedgerRow label="Lot" value={`${survey.lot_area_m2} m²`} />
                   <LedgerRow label="House" value={`${survey.house_area_m2} m²`} />
@@ -577,13 +737,24 @@ export default function ProjectDetailScreen() {
                 </View>
 
                 <View style={styles.surveyActions}>
-                  <Pressable style={styles.primaryBtn} disabled>
+                  <Pressable
+                    style={styles.primaryBtn}
+                    onPress={() => void handleAdvanceStatus("design_review")}
+                    disabled={
+                      project.status !== "survey_review" &&
+                      project.status !== "processing"
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel="Confirm survey looks right"
+                  >
                     <Text style={styles.primaryBtnText}>Looks right →</Text>
                   </Pressable>
                   <Pressable
                     style={styles.secondaryBtn}
                     onPress={handleRunSurvey}
                     disabled={surveyRunning}
+                    accessibilityRole="button"
+                    accessibilityLabel="Re-run survey"
                   >
                     <Text style={styles.secondaryBtnText}>
                       {surveyRunning ? "Re-running…" : "Adjust"}
@@ -594,46 +765,37 @@ export default function ProjectDetailScreen() {
             </>
           ) : (
             <View style={styles.intakeCard}>
-              <Text style={styles.kicker}>NEW PROJECT</Text>
-              <Text style={styles.addressLine}>{project.address}</Text>
+              <Text style={styles.kicker}>NEXT STEP</Text>
               <Text style={styles.intakeBody}>
-                One tap runs the whole pipeline: survey, design, costing and
-                self-audit. Or run survey only and record a walkthrough first.
+                Spin a site yarn first — we transcribe it and map the backyard.
+                Design, costing and audit come after, when you are ready.
               </Text>
               <Pressable
-                style={[
-                  styles.primaryBtnLarge,
-                  pipelineRunning && { opacity: 0.85 },
-                ]}
-                onPress={handleRunPipeline}
-                disabled={pipelineRunning || surveyRunning}
+                style={styles.primaryBtnLarge}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(app)/recording",
+                    params: { projectId: id },
+                  })
+                }
                 accessibilityRole="button"
-                accessibilityLabel="Run full pipeline"
-                accessibilityState={{ busy: pipelineRunning }}
+                accessibilityLabel="Start recording walkthrough"
               >
-                {pipelineRunning ? (
-                  <View style={styles.runningRow}>
-                    <ActivityIndicator color={tokens.color.ink.inverted} />
-                    <Text style={styles.primaryBtnText}>
-                      Running pipeline…
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.primaryBtnText}>
-                    Run full pipeline →
-                  </Text>
-                )}
+                <Text style={styles.primaryBtnText}>Start recording →</Text>
               </Pressable>
               <Pressable
                 style={styles.secondaryBtnFull}
-                onPress={handleRunSurvey}
-                disabled={surveyRunning || pipelineRunning}
+                onPress={handleRunPipeline}
+                disabled={pipelineRunning || !latest?.transcript}
                 accessibilityRole="button"
-                accessibilityLabel="Run survey only"
-                accessibilityState={{ busy: surveyRunning }}
+                accessibilityLabel="Re-run automated pipeline"
               >
                 <Text style={styles.secondaryBtnText}>
-                  {surveyRunning ? "Surveying…" : "Survey only"}
+                  {pipelineRunning
+                    ? "Re-running pipeline…"
+                    : latest?.transcript
+                      ? "Re-run pipeline"
+                      : "Record first, then pipeline runs"}
                 </Text>
               </Pressable>
             </View>
@@ -645,6 +807,7 @@ export default function ProjectDetailScreen() {
 
           {survey && (
             <DesignSection
+              projectId={id}
               design={design}
               running={designRunning}
               onRun={handleRunDesign}
@@ -806,6 +969,31 @@ export default function ProjectDetailScreen() {
             </Pressable>
           )}
         </ScrollView>
+
+          <PersistentVoiceDock
+            mode="idle"
+            onYarn={() =>
+              router.push({
+                pathname: "/(app)/recording",
+                params: { projectId: id! },
+              })
+            }
+            onNote={() =>
+              router.push({
+                pathname: "/(app)/grid-soil",
+                params: { projectId: id! },
+              })
+            }
+            onWhatsLeft={() => setSheetOpen(true)}
+          />
+          <OutstandingSheet
+            visible={sheetOpen}
+            onClose={() => setSheetOpen(false)}
+            tasks={tasks}
+            workflow={workflowSteps}
+            next={siteNext}
+          />
+        </>
       )}
 
       <Modal
@@ -876,14 +1064,18 @@ const MODE_COPY: Record<DesignMode, { label: string; tone: "ok" | "warn" | "info
 };
 
 function DesignSection({
+  projectId,
   design,
   running,
   onRun,
 }: {
+  projectId: string;
   design: Design | null;
   running: boolean;
   onRun: () => void;
 }) {
+  const router = useRouter();
+
   if (!design) {
     return (
       <View style={styles.designCard}>
@@ -900,6 +1092,12 @@ function DesignSection({
           <Text style={styles.primaryBtnText}>
             {running ? "Designing…" : "Generate design"}
           </Text>
+        </Pressable>
+        <Pressable
+          style={styles.secondaryBtnFull}
+          onPress={() => router.push(`/(app)/design-studio/${projectId}`)}
+        >
+          <Text style={styles.secondaryBtnText}>Open design studio</Text>
         </Pressable>
       </View>
     );
@@ -960,6 +1158,13 @@ function DesignSection({
           ))}
         </View>
       )}
+
+      <Pressable
+        style={styles.secondaryBtnFull}
+        onPress={() => router.push(`/(app)/design-studio/${projectId}`)}
+      >
+        <Text style={styles.secondaryBtnText}>Open design studio</Text>
+      </Pressable>
 
       <Pressable
         style={styles.secondaryBtnFull}
@@ -1613,40 +1818,104 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: tokens.space[7],
   },
-  heroAerial: {
+  contentDockPad: {
+    paddingBottom: 120,
+  },
+  heroTitle: {
     width: "100%",
-    aspectRatio: AERIAL_ASPECT,
-    backgroundColor: tokens.color.surface.inverted,
+    aspectRatio: TITLE_ASPECT,
+    backgroundColor: tokens.color.surface.sunken,
     overflow: "hidden",
   },
-  heroPlaceholder: {
-    backgroundColor: "#2A2A2E",
-    alignItems: "center",
-    justifyContent: "center",
+  heroMapGrid: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: tokens.color.surface.sunken,
+    opacity: 0.9,
   },
-  heroPlaceholderText: {
-    color: tokens.color.ink.tertiary,
+  heroMap: {
+    position: "absolute",
+    left: "6%",
+    right: "6%",
+    top: "8%",
+    bottom: "30%",
+  },
+  heroChips: {
+    position: "absolute",
+    top: tokens.space[2],
+    left: tokens.space[2],
+    right: tokens.space[2],
+    maxHeight: 36,
+  },
+  heroChipsContent: {
+    gap: tokens.space[2],
+    paddingRight: tokens.space[2],
+  },
+  heroChip: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: tokens.color.ink.primary,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
+    paddingHorizontal: tokens.space[2],
+    paddingVertical: 4,
+    borderRadius: tokens.radius.sm,
+    overflow: "hidden",
+  },
+  heroBadge: {
+    position: "absolute",
+    top: 44,
+    right: tokens.space[3],
+    backgroundColor: "rgba(74,222,128,0.22)",
+    borderWidth: 1,
+    borderColor: "rgba(22,163,74,0.55)",
+    borderRadius: tokens.radius.sm,
+    paddingHorizontal: tokens.space[2],
+    paddingVertical: 4,
+  },
+  heroBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    color: tokens.color.semantic.ok,
+  },
+  heroTitleBand: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: tokens.space[5],
+    paddingBottom: tokens.space[5],
+    paddingTop: tokens.space[6],
+    backgroundColor: "rgba(24,24,27,0.88)",
+  },
+  heroKicker: {
+    color: tokens.color.accent.soft,
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
+    textTransform: "uppercase",
+    marginBottom: tokens.space[2],
   },
-  heroScrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(24,24,27,0.18)",
-  },
-  edgeLabelHost: {
-    position: "absolute",
-    transform: [{ translateX: -22 }, { translateY: -10 }],
-  },
-  edgeLabel: {
+  heroBrand: {
     color: tokens.color.ink.inverted,
-    fontSize: tokens.type.bodyMono.fontSize,
-    fontWeight: tokens.type.bodyMono.fontWeight,
-    fontVariant: ["tabular-nums"],
-    backgroundColor: "rgba(24,24,27,0.82)",
-    paddingHorizontal: tokens.space[2],
-    paddingVertical: 2,
-    borderRadius: tokens.radius.sm,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: "600",
+    marginBottom: tokens.space[3],
+    opacity: 0.9,
+  },
+  heroAddress: {
+    color: tokens.color.ink.inverted,
+    fontSize: 26,
+    fontWeight: "600",
+    letterSpacing: -0.5,
+    lineHeight: 30,
+  },
+  heroSub: {
+    marginTop: tokens.space[3],
+    color: "rgba(250,250,247,0.72)",
+    fontSize: tokens.type.body.fontSize,
   },
   summaryCard: {
     marginHorizontal: tokens.space[5],

@@ -3,78 +3,16 @@ import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
 import { clearEnvSecret, setEnvSecret } from "../lib/runtime-secrets";
 import { validateStripeKey } from "../lib/stripe";
+import {
+  ALLOWED_INTEGRATION_KEYS,
+  INTEGRATION_REGISTRY,
+} from "../lib/integration-registry";
+import { canUseLiveIntegration } from "@workstream/domain";
 
 const RatePatchSchema = z.object({
   rate: z.number().nonnegative().optional(),
   notes: z.string().optional(),
 });
-
-type IntegrationDef = {
-  key: string;
-  label: string;
-  description: string;
-  env: string;
-  category: "ai" | "payments" | "geo" | "auth" | "accounting";
-  placeholder: string;
-};
-
-const INTEGRATIONS: ReadonlyArray<IntegrationDef> = [
-  {
-    key: "ANTHROPIC_API_KEY",
-    label: "Anthropic (Claude)",
-    description:
-      "Drives the design proposal and the second-pass audit. Without it the API falls back to canned outputs.",
-    env: "ANTHROPIC_API_KEY",
-    category: "ai",
-    placeholder: "sk-ant-…",
-  },
-  {
-    key: "OPENAI_API_KEY",
-    label: "OpenAI (Whisper)",
-    description:
-      "Transcribes site-walk recordings. Without it dictation uses a canned transcript.",
-    env: "OPENAI_API_KEY",
-    category: "ai",
-    placeholder: "sk-…",
-  },
-  {
-    key: "MAPBOX_TOKEN",
-    label: "Mapbox",
-    description:
-      "Address geocoding for new projects. Without it surveys fall back to mock geometry.",
-    env: "MAPBOX_TOKEN",
-    category: "geo",
-    placeholder: "pk.eyJ…",
-  },
-  {
-    key: "STRIPE_SECRET_KEY",
-    label: "Stripe (secret)",
-    description:
-      "Creates real deposit checkout sessions from the client portal. Without it the portal uses a dev-fallback link.",
-    env: "STRIPE_SECRET_KEY",
-    category: "payments",
-    placeholder: "sk_live_… or sk_test_…",
-  },
-  {
-    key: "STRIPE_WEBHOOK_SECRET",
-    label: "Stripe webhook secret",
-    description: "Verifies Stripe webhook signatures for payment events.",
-    env: "STRIPE_WEBHOOK_SECRET",
-    category: "payments",
-    placeholder: "whsec_…",
-  },
-  {
-    key: "CLERK_SECRET_KEY",
-    label: "Clerk (secret)",
-    description:
-      "Enables real user auth. Without it the API runs in dev-mode and accepts any caller as 'dev-user'.",
-    env: "CLERK_SECRET_KEY",
-    category: "auth",
-    placeholder: "sk_live_… or sk_test_…",
-  },
-] as const;
-
-const ALLOWED_KEYS = new Set(INTEGRATIONS.map((i) => i.key));
 
 const SetIntegrationSchema = z.object({
   value: z.string().min(1).max(2048),
@@ -93,7 +31,7 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const items = await fastify.store.listRateCard(request.userId!);
       return reply.send({ items, count: items.length });
-    }
+    },
   );
 
   fastify.patch(
@@ -123,16 +61,18 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const items = await fastify.store.listPlantPalette(request.userId!);
       return reply.send({ items, count: items.length });
-    }
+    },
   );
 
   fastify.get(
     "/integrations",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const stored = await fastify.store.listIntegrations(request.userId!);
+      const ownerId = request.userId!;
+      const billing = await fastify.store.getWorkspaceBilling(ownerId);
+      const stored = await fastify.store.listIntegrations(ownerId);
       const byKey = new Map(stored.map((s) => [s.key, s]));
-      const items = INTEGRATIONS.map((def) => {
+      const items = INTEGRATION_REGISTRY.map((def) => {
         const storeRow = byKey.get(def.key);
         const envValue = process.env[def.env];
         const source: "store" | "env" | "none" = storeRow
@@ -142,20 +82,24 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
             : "none";
         const effective = storeRow?.value ?? envValue ?? null;
         const mask = effective ? maskValue(effective) : null;
+        const live =
+          source !== "none" && canUseLiveIntegration(billing.plan, def.key);
         return {
           key: def.key,
           label: def.label,
           description: def.description,
           category: def.category,
           placeholder: def.placeholder,
+          channel: def.channel,
           configured: source !== "none",
+          live,
           source,
           last4: mask?.last4 ?? null,
           length: mask?.length ?? null,
           updated_at: storeRow?.updated_at ?? null,
         };
       });
-      return reply.send({ items });
+      return reply.send({ items, billing });
     },
   );
 
@@ -164,7 +108,7 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { key } = request.params as { key: string };
-      if (!ALLOWED_KEYS.has(key)) {
+      if (!ALLOWED_INTEGRATION_KEYS.has(key)) {
         return reply.code(404).send({ error: "Unknown integration key" });
       }
       const parsed = SetIntegrationSchema.safeParse(request.body);
@@ -191,17 +135,24 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
         key,
         trimmed,
       );
+      const billing = await fastify.store.getWorkspaceBilling(request.userId!);
       setEnvSecret(key, trimmed);
       const mask = maskValue(row.value);
+      const live = canUseLiveIntegration(billing.plan, key);
       return reply.send({
         item: {
           key: row.key,
           configured: true,
+          live,
           source: "store" as const,
           last4: mask.last4,
           length: mask.length,
           updated_at: row.updated_at,
         },
+        billing,
+        note: live
+          ? null
+          : "Saved — goes live on Studio plan (Lite keeps dev fallbacks).",
       });
     },
   );
@@ -211,7 +162,7 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { key } = request.params as { key: string };
-      if (!ALLOWED_KEYS.has(key)) {
+      if (!ALLOWED_INTEGRATION_KEYS.has(key)) {
         return reply.code(404).send({ error: "Unknown integration key" });
       }
       await fastify.store.deleteIntegration(request.userId!, key);

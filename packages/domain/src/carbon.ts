@@ -1,5 +1,5 @@
 /**
- * Embodied carbon per Construct rate-card SKU.
+ * Embodied carbon per Workstream rate-card SKU.
  *
  * Values are kg CO2e per supply unit, sourced from the EPiC database
  * (epicdatabase.com.au) and ICE v3 where AU-specific data is missing.

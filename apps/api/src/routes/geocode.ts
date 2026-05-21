@@ -1,13 +1,37 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
-import { geocodeSearch } from "../lib/mapbox";
+import { aerialImageUrl, geocodeSearch } from "../lib/mapbox";
+
+const PreviewQuerySchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+});
 
 const SearchQuerySchema = z.object({
   q: z.string().trim().min(1).max(200).optional(),
 });
 
 export default async function geocodeRoutes(fastify: FastifyInstance) {
+  fastify.get(
+    "/preview",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const parsed = PreviewQuerySchema.safeParse(request.query);
+      if (!parsed.success) {
+        return reply
+          .code(400)
+          .send({ error: "Invalid coordinates", issues: parsed.error.issues });
+      }
+      const { lat, lng } = parsed.data;
+      return reply.send({
+        aerial_uri: aerialImageUrl(lat, lng, 800, 480, 18),
+        lat,
+        lng,
+      });
+    },
+  );
+
   fastify.get(
     "/search",
     { preHandler: requireAuth },

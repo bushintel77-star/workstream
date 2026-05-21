@@ -1,6 +1,6 @@
-import type { Store } from "@construct/db";
-import type { GeoJsonPolygon, Survey } from "@construct/contracts";
-import { edgeLengths, polygonArea } from "@construct/domain";
+import type { Store } from "@workstream/db";
+import type { GeoJsonPolygon, Survey } from "@workstream/contracts";
+import { edgeLengths, polygonArea } from "@workstream/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
 import {
   fetchBuildingPolygon,
@@ -181,7 +181,7 @@ export async function runSurvey(
     geometry = buildMockGeometry(center);
   }
 
-  const aerial_uri = aerialImageUrl(center.lat, center.lng);
+  const aerial_uri = aerialImageUrl(center.lat, center.lng, 800, 480, 19);
 
   const survey = await store.upsertSurvey(ownerId, projectId, {
     aerial_uri,

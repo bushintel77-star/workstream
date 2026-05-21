@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { tokens } from "@construct/ui";
+import { tokens } from "@workstream/ui";
 import { useAppAuth } from "../src/lib/auth";
 
 export default function RootIndex() {

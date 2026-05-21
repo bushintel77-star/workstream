@@ -107,10 +107,10 @@ export function RecordingCapture({ projectId, uploadUrl }: Props) {
         const text = await res.text().catch(() => "");
         throw new Error(`Upload failed (${res.status}): ${text || res.statusText}`);
       }
-      toast.show("Recording uploaded — transcript pending", "success", 3000);
+      toast.show("Recording uploaded — pipeline started", "success", 2500);
       setPhase("idle");
       setElapsedSec(0);
-      router.refresh();
+      router.push(`/projects/${projectId}/processing`);
     } catch (err) {
       setPhase("error");
       const msg = err instanceof Error ? err.message : "Upload failed";

@@ -213,3 +213,16 @@
   color: var(--block);
   border-color: var(--block);
 }
+
+.hubActions {
+  display: flex;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+
+.channelNote {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin-top: 4px;
+}

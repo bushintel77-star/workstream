@@ -9,7 +9,7 @@ export default function SignInPage() {
       <header className={s.masthead}>
         <div className={s.brand}>
           Curtis &amp; Co
-          <span className={s.brandSub}>Construct · Sign in</span>
+          <span className={s.brandSub}>Workstream · Sign in</span>
         </div>
       </header>
       <SignIn />

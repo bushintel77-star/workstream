@@ -49,7 +49,7 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
-          tags: construct-api:ci
+          tags: workstream-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -67,7 +67,7 @@ jobs:
           context: .
           file: apps/web/Dockerfile
           push: false
-          tags: construct-web:ci
+          tags: workstream-web:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -87,5 +87,14 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy API
         run: flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api --remote-only
+      - name: Ensure single API machine (JSON store)
+        run: flyctl scale count 1 -a construct-api
       - name: Deploy Web
-        run: flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web --remote-only
+        run: |
+          flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
+            -a construct-web --remote-only \
+            --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+      - name: Smoke check API
+        run: curl -sfS https://construct-api.fly.dev/healthz
+      - name: Smoke check Web
+        run: curl -sfS -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/ | grep -E "^(200|307|302)"

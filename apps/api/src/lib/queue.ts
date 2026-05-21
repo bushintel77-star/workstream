@@ -6,8 +6,8 @@
  * To enable async pipeline execution:
  *
  *   1. Provision Redis (Upstash, Redis Cloud, Fly Redis — any).
- *   2. `pnpm --filter @construct/api add bullmq ioredis`
- *   3. `flyctl secrets set REDIS_URL=rediss://… -a construct-api`
+ *   2. `pnpm --filter @workstream/api add bullmq ioredis`
+ *   3. `flyctl secrets set REDIS_URL=rediss://… -a workstream-api`
  *   4. Start a worker process on a separate Fly machine via
  *      `[processes]` in fly.toml — e.g. `worker = "node dist/worker.js"`.
  *      A worker.js wrapper that calls `startWorker()` from this file is
@@ -16,7 +16,7 @@
  * Until then this file is a no-op safety net.
  */
 
-import type { Store } from "@construct/db";
+import type { Store } from "@workstream/db";
 
 type JobKind = "survey" | "design" | "costing" | "audit" | "output";
 
@@ -40,7 +40,7 @@ export async function enqueuePipelineJob(
   try {
     const { Queue } = await import("bullmq");
     if (!queueRef) {
-      queueRef = new Queue("construct-pipeline", {
+      queueRef = new Queue("workstream-pipeline", {
         connection: { url: process.env.REDIS_URL },
       });
     }

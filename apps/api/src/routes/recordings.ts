@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { audioPublicUrl, saveAudio } from "../lib/storage";
 import { publicBaseUrl } from "../lib/public-url";
-import { runTranscription } from "../lib/transcription-job";
+import { runCapturePipeline } from "../lib/capture-pipeline";
 
 export default async function recordingRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -55,8 +55,15 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
       const baseUrl = publicBaseUrl(request);
       recording.audio_uri = audioPublicUrl(baseUrl, recording.id, ext);
 
-      runTranscription(fastify.store, recording.id, filePath).catch((err) => {
-        fastify.log.error(err, "Transcription failed");
+      void runCapturePipeline(
+        fastify.store,
+        ownerId,
+        projectId,
+        recording.id,
+        filePath,
+        fastify.log,
+      ).catch((err) => {
+        fastify.log.error(err, "Capture pipeline failed");
       });
 
       return reply.code(201).send({ recording });

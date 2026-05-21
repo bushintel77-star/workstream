@@ -2,7 +2,8 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { signPortalToken, verifyPortalToken } from "./magic-link";
 
 beforeAll(() => {
-  process.env.CONSTRUCT_PORTAL_SECRET = "test-secret-key-with-sufficient-entropy-1234";
+  process.env.WORKSTREAM_PORTAL_SECRET =
+    "test-secret-key-with-sufficient-entropy-1234";
 });
 
 describe("portal tokens", () => {

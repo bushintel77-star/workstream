@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { totalEmbodiedCarbon } from "@construct/domain";
+import { totalEmbodiedCarbon } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
 
 export default async function carbonRoutes(fastify: FastifyInstance) {

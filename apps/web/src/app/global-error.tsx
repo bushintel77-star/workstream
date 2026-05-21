@@ -29,7 +29,7 @@ export default function GlobalError({
               margin: "0 0 12px",
             }}
           >
-            Construct hit a hard error
+            Workstream hit a hard error
           </h1>
           <p style={{ color: "#52525B", lineHeight: 1.55 }}>
             Something at the root of the app failed to render. Reload, and if it

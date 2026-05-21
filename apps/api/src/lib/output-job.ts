@@ -1,9 +1,10 @@
 import { mkdir, rename, writeFile } from "fs/promises";
 import path from "path";
-import type { Store } from "@construct/db";
-import type { Output, OutputKind } from "@construct/contracts";
+import type { Store } from "@workstream/db";
+import type { Output, OutputKind } from "@workstream/contracts";
 import { generateForKind, type GeneratorArgs } from "./output-generators";
 import { renderHtml } from "./html-render";
+import { dispatchQuoteGenerated } from "./integration-dispatch";
 
 const OUTPUT_DIR = path.join(process.cwd(), "data", "outputs");
 
@@ -46,6 +47,9 @@ export async function runOutput(
   const costings = await store.listCostings(ownerId, projectId);
   const audit = await store.getAudit(ownerId, projectId);
   const tasks = await store.listTasks(ownerId, projectId);
+  const designCanvas = await store.getDesignCanvas(ownerId, projectId);
+  const catalogSymbols = await store.listCatalogSymbols(ownerId);
+  const rateCard = await store.listRateCard(ownerId);
 
   if (NEEDS_DESIGN.includes(kind)) {
     if (!survey) {
@@ -70,6 +74,9 @@ export async function runOutput(
     project,
     survey,
     design,
+    designCanvas,
+    catalogSymbols,
+    rateCard,
     costings,
     audit,
     tasks,
@@ -99,5 +106,14 @@ export async function runOutput(
   });
 
   await store.updateProjectStatus(ownerId, projectId, "outputs");
+
+  if (kind === "quote") {
+    void dispatchQuoteGenerated(store, ownerId, project, {
+      quote_url: uri,
+    }).catch(() => {
+      /* logged per-channel in integration events */
+    });
+  }
+
   return saved;
 }

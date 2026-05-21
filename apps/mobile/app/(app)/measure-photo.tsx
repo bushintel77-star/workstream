@@ -16,13 +16,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { tokens } from "@construct/ui";
+import { tokens } from "@workstream/ui";
 import type {
   PhotoMeasurement,
   PhotoMeasurementItem,
   PhotoMeasurementUnit,
-} from "@construct/contracts";
-import { useConstructApi } from "../../src/lib/api";
+} from "@workstream/contracts";
+import { useWorkstreamApi } from "../../src/lib/api";
 
 const UNIT_LABEL: Record<PhotoMeasurementUnit, string> = {
   meters: "m",
@@ -48,7 +48,7 @@ function pickedMime(asset: ImagePicker.ImagePickerAsset):
 export default function MeasurePhotoScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const router = useRouter();
-  const api = useConstructApi();
+  const api = useWorkstreamApi();
 
   const [picked, setPicked] = useState<ImagePicker.ImagePickerAsset | null>(
     null,

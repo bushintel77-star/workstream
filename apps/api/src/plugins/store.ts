@@ -1,6 +1,6 @@
 import fp from "fastify-plugin";
 import { FastifyInstance } from "fastify";
-import { getStore, initStore, type Store } from "@construct/db";
+import { getStore, initStore, type Store } from "@workstream/db";
 import { hydrateEnvFromStore } from "../lib/runtime-secrets";
 
 declare module "fastify" {

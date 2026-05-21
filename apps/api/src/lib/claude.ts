@@ -8,7 +8,7 @@ import type {
   PlantPalette,
   RateCard,
   Survey,
-} from "@construct/contracts";
+} from "@workstream/contracts";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -31,6 +31,8 @@ export type DesignContext = {
   mode: DesignMode;
   plant_palette: PlantPalette[];
   rate_card: RateCard[];
+  /** Operator layout from design studio — AI should expand, not ignore. */
+  sketch_brief?: string | null;
 };
 
 const SYSTEM_PROMPT = `You are the design engine for Curtis & Co, a Melbourne boutique landscape design studio.
@@ -45,6 +47,8 @@ OPERATING MODES
 - auto: address only. Propose a full plausible design from lot geometry + Curtis house style.
 - gapfill: partial voice brief. Honour every specified element. Flag missing decisions as gaps with proposed fills.
 - validate: complete voice brief. Convert the brief faithfully into structured zones. Gaps should be rare; only flag genuine ambiguities.
+
+When SITE SKETCH is provided, treat it as the operator's spatial brief: expand pin placements into proper zones and quantities; do not discard the layout.
 
 OUTPUT
 Return strict JSON only. Schema:
@@ -101,7 +105,7 @@ SURVEY
 WALKTHROUGH TRANSCRIPT
 ${ctx.transcript ?? "(none — auto mode)"}
 
-PLANT PALETTE (approved species)
+${ctx.sketch_brief ? `SITE SKETCH (operator layout on aerial)\n${ctx.sketch_brief}\n\n` : ""}PLANT PALETTE (approved species)
 ${palette}
 
 RATE CARD (available SKUs)
@@ -566,4 +570,95 @@ export async function measurePhoto(
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "");
   return JSON.parse(cleaned) as PhotoMeasurementCallResult;
+}
+
+// ---------- Vision: photo → client email/name (not for email attachment) ----
+
+const CONTACT_SCAN_PROMPT = `You read Australian site photos for a landscape studio. Find a client or owner name and email if visible (business card, letterhead, plan title block, site sign, invoice header).
+
+Output strict JSON only:
+{
+  "client_name": "string or null",
+  "client_email": "valid email or null",
+  "notes": "one short sentence — where you read it from, or why null"
+}
+
+Rules:
+- Do not invent emails. null if unreadable or absent.
+- Normalise emails to lowercase.
+- Ignore builder/trades emails unless clearly the property owner.`;
+
+export async function scanImageContact(args: {
+  image_base64: string;
+  mime_type: "image/jpeg" | "image/png" | "image/webp";
+}): Promise<{
+  client_name: string | null;
+  client_email: string | null;
+  notes: string | null;
+}> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return {
+      client_name: "Eleanor Marsh",
+      client_email: "eleanor@example.com.au",
+      notes: "Dev fallback — configure ANTHROPIC_API_KEY for real OCR.",
+    };
+  }
+
+  const body = {
+    model: VISION_MODEL,
+    max_tokens: 512,
+    system: [{ type: "text", text: CONTACT_SCAN_PROMPT }],
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: args.mime_type,
+              data: args.image_base64,
+            },
+          },
+          {
+            type: "text",
+            text: "Extract property owner or client contact details only.",
+          },
+        ],
+      },
+    ],
+  };
+
+  const res = await fetch(MESSAGES_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": ANTHROPIC_VERSION,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Anthropic contact scan failed: ${res.status}`);
+  }
+  const json = (await res.json()) as {
+    content: Array<{ type: string; text: string }>;
+  };
+  const textBlock = json.content.find((c) => c.type === "text");
+  if (!textBlock) throw new Error("No text in contact scan response");
+  const cleaned = textBlock.text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "");
+  const parsed = JSON.parse(cleaned) as {
+    client_name?: string | null;
+    client_email?: string | null;
+    notes?: string | null;
+  };
+  return {
+    client_name: parsed.client_name ?? null,
+    client_email: parsed.client_email ?? null,
+    notes: parsed.notes ?? null,
+  };
 }
