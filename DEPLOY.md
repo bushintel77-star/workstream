@@ -107,6 +107,18 @@ production.
    passes `NEXT_PUBLIC_API_URL=https://construct-api.fly.dev`)
 4. On `main` push: `flyctl deploy` both apps + smoke `curl` health checks
 
+**CI web deploy `unauthorized`:** The GitHub secret (`FLY_API_TOKEN` or
+`BROKKER`) must be a Fly token with deploy access to **both**
+`construct-api` and `construct-web` on the same org. Tokens scoped to API
+only pass the API step and fail on web. Until the secret is updated, deploy
+web from a machine with `flyctl auth login`:
+
+```bash
+flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
+  -a construct-web --remote-only \
+  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+```
+
 Local mirror: `pnpm ci` and `pnpm build:docker`. Full gap audit:
 [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md).
 

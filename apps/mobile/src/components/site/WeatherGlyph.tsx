@@ -11,12 +11,9 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Circle, Ellipse, Line, Path } from "react-native-svg";
 import { tokens } from "@workstream/ui";
-import {
-  weatherConditionFromDay,
-  type WeatherCondition,
-} from "@workstream/domain";
+import { type WeatherCondition } from "@workstream/domain";
 
-export { weatherConditionFromDay, type WeatherCondition };
+export type { WeatherCondition };
 
 const CLOUD_LOBE = tokens.color.line.strong;
 const CLOUD_LOBE_LIGHT = tokens.color.line.hairline;
