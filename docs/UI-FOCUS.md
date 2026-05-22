@@ -35,8 +35,9 @@ Brand: **Curtis & Co** on portal — **Workstream** in studio chrome.
 
 | Priority | Item | Status |
 |----------|------|--------|
-| P0 | Match studio tokens from `@workstream/ui` | Existing |
-| P1 | Single next-step CTA on project screen | Existing |
+| P0 | Match studio tokens from `@workstream/ui` | Shipped (site cockpit) |
+| P1 | Single next-step CTA on project screen | Shipped (`ProjectBottomChrome`) |
+| P1 | Site status panel (3 tiles, not 8) | Shipped — see `docs/MOBILE-SITE-COCKPIT.md` |
 | P2 | TestFlight distribution | Backlog |
 
 ## Out of scope (distractions)

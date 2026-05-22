@@ -5,7 +5,7 @@ export const GARDEN_COPY = {
   widgets: {
     rightJob: "Right job?",
     whatsNext: "What's next?",
-    workToday: "Work today?",
+    workToday: "Outstanding",
     backyard: "Backyard",
     biteLater: "Bite you later",
     money: "Money story",
@@ -15,6 +15,16 @@ export const GARDEN_COPY = {
     sketch: "Back-of-envelope",
     filing: "Plans & pics",
     share: "Send to client",
+  },
+  /** Plain-language hints for VoiceOver (folksy labels stay on screen). */
+  widgetHints: {
+    rightJob: "Open maps to this site address",
+    workToday: "Open the outstanding tasks panel for this project",
+    money: "Open design studio for sketch and costing",
+    sketch: "Open the design studio aerial sketch",
+    filing: "Open plans and photos for this site",
+    reachClient: "Message or email the client",
+    whatsNext: "Run the next step in the project pipeline",
   },
   voice: {
     dockTitle: "Voice",

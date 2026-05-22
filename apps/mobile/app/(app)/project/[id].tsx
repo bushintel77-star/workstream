@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, Modal, TextInput } from "react-native";
 import * as Haptics from "expo-haptics";
 import {
@@ -20,7 +20,12 @@ import {
   type EnvelopeBrief,
 } from "@workstream/domain";
 import { SiteHotLinks } from "../../../src/components/site/SiteHotLinks";
-import { PersistentVoiceDock } from "../../../src/components/site/PersistentVoiceDock";
+import { HeroMetaStrip } from "../../../src/components/site/HeroMetaStrip";
+import type { WeatherForecastSlice } from "../../../src/components/site/HeroMetaStrip";
+import {
+  ProjectBottomChrome,
+  PROJECT_BOTTOM_CHROME_HEIGHT,
+} from "../../../src/components/site/ProjectBottomChrome";
 import { OutstandingSheet } from "../../../src/components/site/OutstandingSheet";
 import {
   buildWhatsAppShareUrl,
@@ -72,20 +77,32 @@ function ProjectTitleHero({
   address,
   survey,
   siteContext,
+  weather,
+  motionEnabled,
 }: {
   address: string;
   survey: Survey | null;
   siteContext: SiteContext | null;
+  weather: WeatherForecastSlice | null;
+  motionEnabled: boolean;
 }) {
   if (!survey) {
     return (
       <View style={styles.heroTitle} accessibilityRole="header">
-        <Text style={styles.heroKicker}>LANDSCAPE PROJECT</Text>
-        <Text style={styles.heroBrand}>Curtis & Co</Text>
-        <Text style={styles.heroAddress}>{address}</Text>
-        <Text style={styles.heroSub}>
-          Run survey to map the backyard on the title
-        </Text>
+        <View style={styles.heroMapGrid} pointerEvents="none" />
+        <HeroMetaStrip
+          siteContext={siteContext}
+          weather={weather}
+          motionEnabled={motionEnabled}
+        />
+        <View style={styles.heroTitleBand}>
+          <Text style={styles.heroKicker}>LANDSCAPE PROJECT</Text>
+          <Text style={styles.heroBrand}>Curtis & Co</Text>
+          <Text style={styles.heroAddress}>{address}</Text>
+          <Text style={styles.heroSub}>
+            Run survey to map the backyard on the title
+          </Text>
+        </View>
       </View>
     );
   }
@@ -110,16 +127,16 @@ function ProjectTitleHero({
           {gardenPath ? (
             <Path
               d={gardenPath}
-              fill="rgba(74,222,128,0.42)"
-              stroke="#16a34a"
+              fill={tokens.color.accent.soft}
+              stroke={tokens.color.accent.default}
               strokeWidth={0.6}
               fillRule="evenodd"
             />
           ) : null}
           <SvgPolygon
             points={lotPoints}
-            fill="rgba(255,45,220,0.18)"
-            stroke="#ff2ef6"
+            fill="rgba(254, 215, 170, 0.45)"
+            stroke={tokens.color.accent.default}
             strokeWidth={0.8}
           />
           <SvgPolygon points={housePoints} fill="rgba(24,24,27,0.88)" />
@@ -135,28 +152,11 @@ function ProjectTitleHero({
           ) : null}
         </Svg>
       </View>
-      {siteContext ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.heroChips}
-          contentContainerStyle={styles.heroChipsContent}
-        >
-          <Text style={styles.heroChip}>
-            {siteContext.season.label} · {siteContext.season.month}
-          </Text>
-          <Text style={styles.heroChip}>
-            Sun {siteContext.sun.now_azimuth_label}{" "}
-            {siteContext.sun.now_altitude_deg}° ·{" "}
-            {siteContext.sun.sunrise_local}–{siteContext.sun.sunset_local}
-          </Text>
-          {siteContext.planning_badges.map((b) => (
-            <Text key={b.id} style={styles.heroChip}>
-              {b.label}
-            </Text>
-          ))}
-        </ScrollView>
-      ) : null}
+      <HeroMetaStrip
+        siteContext={siteContext}
+        weather={weather}
+        motionEnabled={motionEnabled}
+      />
       <View style={styles.heroBadge} pointerEvents="none">
         <Text style={styles.heroBadgeText}>Backyard mapped</Text>
       </View>
@@ -225,7 +225,15 @@ export default function ProjectDetailScreen() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [motionEnabled, setMotionEnabled] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      setMotionEnabled(true);
+      return () => setMotionEnabled(false);
+    }, []),
+  );
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -697,25 +705,33 @@ export default function ProjectDetailScreen() {
             address={project.address}
             survey={survey}
             siteContext={siteContext}
+            weather={weather}
+            motionEnabled={motionEnabled}
           />
 
           <SiteHotLinks
             projectId={id!}
             address={project.address}
             clientName={project.client_name}
-            clientEmail={project.client_email}
             lat={project.lat}
             lng={project.lng}
-            next={siteNext}
             openTaskCount={openTaskCount}
-            siteContext={siteContext}
-            weatherRain={weather?.rain_within_24h ?? false}
-            weatherWind={weather?.wind_warning ?? false}
             envelope={envelope}
             standardTotal={standardCosting?.total ?? null}
-            onWhatsApp={handleWhatsApp}
             onShowOutstanding={() => setSheetOpen(true)}
-            onNextAction={handleSiteNext}
+            onSketch={() =>
+              router.push({
+                pathname: "/(app)/design-studio/[id]",
+                params: { id: id! },
+              })
+            }
+            onFiling={() =>
+              router.push({
+                pathname: "/(app)/filing/[id]",
+                params: { id: id! },
+              })
+            }
+            onReachClient={handleWhatsApp}
           />
 
           {survey ? (
@@ -799,10 +815,6 @@ export default function ProjectDetailScreen() {
                 </Text>
               </Pressable>
             </View>
-          )}
-
-          {survey && weather && (
-            <WeatherCard forecast={weather} />
           )}
 
           {survey && (
@@ -970,8 +982,9 @@ export default function ProjectDetailScreen() {
           )}
         </ScrollView>
 
-          <PersistentVoiceDock
-            mode="idle"
+          <ProjectBottomChrome
+            next={siteNext}
+            onNextAction={handleSiteNext}
             onYarn={() =>
               router.push({
                 pathname: "/(app)/recording",
@@ -984,7 +997,6 @@ export default function ProjectDetailScreen() {
                 params: { projectId: id! },
               })
             }
-            onWhatsLeft={() => setSheetOpen(true)}
           />
           <OutstandingSheet
             visible={sheetOpen}
@@ -1219,76 +1231,6 @@ function GapRow({ gap }: { gap: GapFlag }) {
       <View style={{ flex: 1 }}>
         <Text style={styles.gapDescription}>{gap.description}</Text>
         <Text style={styles.gapFill}>→ {gap.proposed_fill}</Text>
-      </View>
-    </View>
-  );
-}
-
-function WeatherCard({
-  forecast,
-}: {
-  forecast: {
-    days: Array<{
-      date: string;
-      precipitation_mm: number;
-      temp_max_c: number;
-      temp_min_c: number;
-      wind_max_kph: number;
-    }>;
-    rain_within_24h: boolean;
-    wind_warning: boolean;
-    source: "open-meteo" | "dev_fallback";
-  };
-}) {
-  const hasWarning = forecast.rain_within_24h || forecast.wind_warning;
-  return (
-    <View style={styles.weatherCard}>
-      <View style={styles.weatherHeader}>
-        <Text style={styles.cardLabel}>
-          5-DAY WEATHER · {forecast.source === "open-meteo" ? "OPEN-METEO" : "DEV"}
-        </Text>
-        {hasWarning && (
-          <View style={styles.weatherWarn}>
-            <Text style={styles.weatherWarnText}>
-              {forecast.rain_within_24h ? "RAIN <24H" : ""}
-              {forecast.rain_within_24h && forecast.wind_warning ? " · " : ""}
-              {forecast.wind_warning ? "HIGH WIND" : ""}
-            </Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.weatherDays}>
-        {forecast.days.map((d) => {
-          const day = new Date(d.date).toLocaleDateString("en-AU", {
-            weekday: "short",
-          });
-          const wet = d.precipitation_mm > 1;
-          const windy = d.wind_max_kph > 40;
-          return (
-            <View key={d.date} style={styles.weatherDay}>
-              <Text style={styles.weatherDayLabel}>{day.toUpperCase()}</Text>
-              <Text style={styles.weatherTemp}>
-                {Math.round(d.temp_max_c)}°
-              </Text>
-              <Text style={styles.weatherTempLow}>
-                {Math.round(d.temp_min_c)}°
-              </Text>
-              <Text
-                style={[
-                  styles.weatherRain,
-                  wet && { color: tokens.color.semantic.info },
-                ]}
-              >
-                {d.precipitation_mm.toFixed(1)} mm
-              </Text>
-              {windy && (
-                <Text style={styles.weatherWind}>
-                  {Math.round(d.wind_max_kph)} km/h
-                </Text>
-              )}
-            </View>
-          );
-        })}
       </View>
     </View>
   );
@@ -1819,13 +1761,15 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.space[7],
   },
   contentDockPad: {
-    paddingBottom: 120,
+    paddingBottom: PROJECT_BOTTOM_CHROME_HEIGHT + 24,
   },
   heroTitle: {
     width: "100%",
     aspectRatio: TITLE_ASPECT,
     backgroundColor: tokens.color.surface.sunken,
     overflow: "hidden",
+    borderBottomLeftRadius: tokens.radius.lg,
+    borderBottomRightRadius: tokens.radius.lg,
   },
   heroMapGrid: {
     ...StyleSheet.absoluteFillObject,
@@ -1837,39 +1781,16 @@ const styles = StyleSheet.create({
     left: "6%",
     right: "6%",
     top: "8%",
-    bottom: "30%",
-  },
-  heroChips: {
-    position: "absolute",
-    top: tokens.space[2],
-    left: tokens.space[2],
-    right: tokens.space[2],
-    maxHeight: 36,
-  },
-  heroChipsContent: {
-    gap: tokens.space[2],
-    paddingRight: tokens.space[2],
-  },
-  heroChip: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: tokens.color.ink.primary,
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderWidth: 1,
-    borderColor: tokens.color.line.hairline,
-    paddingHorizontal: tokens.space[2],
-    paddingVertical: 4,
-    borderRadius: tokens.radius.sm,
-    overflow: "hidden",
+    bottom: "32%",
   },
   heroBadge: {
     position: "absolute",
-    top: 44,
+    top: tokens.space[3],
     right: tokens.space[3],
-    backgroundColor: "rgba(74,222,128,0.22)",
+    backgroundColor: tokens.color.accent.soft,
     borderWidth: 1,
-    borderColor: "rgba(22,163,74,0.55)",
-    borderRadius: tokens.radius.sm,
+    borderColor: tokens.color.accent.default,
+    borderRadius: tokens.radius.md,
     paddingHorizontal: tokens.space[2],
     paddingVertical: 4,
   },
@@ -1878,7 +1799,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.6,
     textTransform: "uppercase",
-    color: tokens.color.semantic.ok,
+    color: tokens.color.accent.ink,
   },
   heroTitleBand: {
     position: "absolute",
@@ -1888,7 +1809,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[5],
     paddingBottom: tokens.space[5],
     paddingTop: tokens.space[6],
-    backgroundColor: "rgba(24,24,27,0.88)",
+    backgroundColor: "rgba(24,24,27,0.86)",
+    borderTopLeftRadius: tokens.radius.lg,
+    borderTopRightRadius: tokens.radius.lg,
   },
   heroKicker: {
     color: tokens.color.accent.soft,
@@ -1918,7 +1841,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.body.fontSize,
   },
   summaryCard: {
-    marginHorizontal: tokens.space[5],
+    marginHorizontal: tokens.space[4],
     marginTop: -tokens.space[5],
     padding: tokens.space[5],
     backgroundColor: tokens.color.surface.elevated,
@@ -1928,7 +1851,7 @@ const styles = StyleSheet.create({
     ...tokens.elevation[1],
   },
   intakeCard: {
-    marginHorizontal: tokens.space[5],
+    marginHorizontal: tokens.space[4],
     marginTop: tokens.space[6],
     padding: tokens.space[5],
     backgroundColor: tokens.color.surface.elevated,
@@ -1943,7 +1866,7 @@ const styles = StyleSheet.create({
     gap: tokens.space[3],
   },
   pipelineBanner: {
-    marginHorizontal: tokens.space[5],
+    marginHorizontal: tokens.space[4],
     marginTop: tokens.space[5],
     padding: tokens.space[4],
     backgroundColor: tokens.color.surface.inverted,
@@ -2136,7 +2059,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[5],
     borderRadius: tokens.radius.md,
     borderWidth: 1,
-    borderColor: tokens.color.line.strong,
+    borderColor: tokens.color.line.hairline,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -2216,7 +2139,7 @@ const styles = StyleSheet.create({
     color: tokens.color.ink.tertiary,
   },
   measurePhotoButton: {
-    marginHorizontal: tokens.space[5],
+    marginHorizontal: tokens.space[4],
     marginTop: tokens.space[3],
     padding: tokens.space[5],
     borderRadius: tokens.radius.lg,
@@ -2241,75 +2164,8 @@ const styles = StyleSheet.create({
     lineHeight: tokens.type.body.lineHeight,
     color: tokens.color.ink.secondary,
   },
-  weatherCard: {
-    marginHorizontal: tokens.space[5],
-    marginTop: tokens.space[5],
-    padding: tokens.space[4],
-    backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.lg,
-    borderWidth: 1,
-    borderColor: tokens.color.line.hairline,
-    gap: tokens.space[3],
-  },
-  weatherHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  weatherWarn: {
-    paddingHorizontal: tokens.space[2],
-    paddingVertical: 2,
-    borderRadius: tokens.radius.pill,
-    backgroundColor: "rgba(180,83,9,0.18)",
-    borderWidth: 1,
-    borderColor: tokens.color.semantic.warn,
-  },
-  weatherWarnText: {
-    fontSize: tokens.type.micro.fontSize,
-    fontWeight: tokens.type.micro.fontWeight,
-    letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.semantic.warn,
-  },
-  weatherDays: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  weatherDay: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-  },
-  weatherDayLabel: {
-    fontSize: tokens.type.micro.fontSize,
-    fontWeight: tokens.type.micro.fontWeight,
-    letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
-  },
-  weatherTemp: {
-    fontSize: tokens.type.bodyMono.fontSize,
-    fontWeight: "600",
-    color: tokens.color.ink.primary,
-    fontVariant: ["tabular-nums"],
-  },
-  weatherTempLow: {
-    fontSize: tokens.type.caption.fontSize,
-    color: tokens.color.ink.tertiary,
-    fontVariant: ["tabular-nums"],
-  },
-  weatherRain: {
-    fontSize: tokens.type.micro.fontSize,
-    fontWeight: tokens.type.micro.fontWeight,
-    letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
-    fontVariant: ["tabular-nums"],
-  },
-  weatherWind: {
-    fontSize: tokens.type.micro.fontSize,
-    color: tokens.color.semantic.warn,
-    fontVariant: ["tabular-nums"],
-  },
   myobCard: {
-    marginHorizontal: tokens.space[5],
+    marginHorizontal: tokens.space[4],
     marginTop: tokens.space[5],
     padding: tokens.space[5],
     backgroundColor: tokens.color.surface.elevated,
@@ -2340,7 +2196,7 @@ const styles = StyleSheet.create({
     color: tokens.color.accent.default,
   },
   designCard: {
-    marginHorizontal: tokens.space[5],
+    marginHorizontal: tokens.space[4],
     marginTop: tokens.space[5],
     padding: tokens.space[5],
     backgroundColor: tokens.color.surface.elevated,
@@ -2440,7 +2296,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: tokens.radius.md,
     borderWidth: 1,
-    borderColor: tokens.color.line.strong,
+    borderColor: tokens.color.line.hairline,
     justifyContent: "center",
     alignItems: "center",
   },
