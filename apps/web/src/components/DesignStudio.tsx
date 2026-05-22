@@ -41,6 +41,12 @@ function clientPct(
   };
 }
 
+/** Legacy pink strokes render as survey ink (visual only; payload unchanged). */
+function markupStrokeClass(color: string): string | undefined {
+  if (color === "#ff2ef6") return s.markupStroke;
+  return undefined;
+}
+
 type Props = {
   projectId: string;
   aerialUri: string;
@@ -249,7 +255,7 @@ export function DesignStudio({
       <p className={s.helper}>
         {mode === "place"
           ? "Pick an asset from the library, then click or drag onto the aerial."
-          : "Markup with mouse, trackpad, or stylus — Curtis pink (OSS perfect-freehand)."}
+          : "Markup with mouse, trackpad, or stylus — survey ink (concept sketch only)."}
       </p>
 
       <div
@@ -287,15 +293,18 @@ export function DesignStudio({
           {strokes.map((stroke) => (
             <path
               key={stroke.id}
+              className={markupStrokeClass(stroke.color)}
               d={canvasStrokeToPathD(
                 stroke,
                 canvasSize.width,
                 canvasSize.height,
               )}
-              fill={stroke.color}
+              fill={markupStrokeClass(stroke.color) ? undefined : stroke.color}
             />
           ))}
-          {draftPath ? <path d={draftPath} fill="#ff2ef6" opacity={0.85} /> : null}
+          {draftPath ? (
+            <path d={draftPath} className={s.markupStroke} />
+          ) : null}
         </svg>
         {placements.map((p) => {
           const sym = symbolById.get(p.symbol_id);

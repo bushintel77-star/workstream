@@ -58,7 +58,7 @@ export function DesignAssetPalette({
       <div className={s.header}>
         <h2 className={s.title}>Asset library</h2>
         <p className={s.subtitle}>
-          Plants, hardscape, and structures — Curtis palette
+          Achromatic tiles — codes in mono. Accent only when armed for placement.
         </p>
       </div>
 
@@ -109,13 +109,11 @@ export function DesignAssetPalette({
         <div className={s.grid}>
           {filtered.map((sym) => {
             const active = selectedId === sym.id;
-            const bg = sym.asset?.preview_bg ?? "var(--surface-sunken)";
             return (
               <button
                 key={sym.id}
                 type="button"
                 className={`${s.card} ${active ? s.cardActive : ""}`}
-                style={{ background: bg }}
                 draggable={!disabled}
                 disabled={disabled}
                 onDragStart={() => onDragStart?.(sym.id)}
@@ -124,7 +122,12 @@ export function DesignAssetPalette({
                 aria-pressed={active}
                 data-testid={`catalog-${sym.id}`}
               >
-                <DesignAssetGlyph symbol={sym} size="lg" />
+                <div className={s.cardPreview}>
+                  <DesignAssetGlyph symbol={sym} size="lg" />
+                </div>
+                <span className={s.cardCategory}>
+                  {CATALOG_CATEGORY_LABELS[sym.category]}
+                </span>
                 <span className={s.cardLabel}>{sym.label}</span>
                 {sym.description && (
                   <span className={s.cardDesc}>{sym.description}</span>
