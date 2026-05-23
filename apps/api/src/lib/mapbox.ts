@@ -1,3 +1,5 @@
+import { getOwnerEnv } from "./owner-secrets";
+
 const MAPBOX_GEOCODE_URL =
   "https://api.mapbox.com/geocoding/v5/mapbox.places";
 const MAPBOX_STATIC_URL =
@@ -19,7 +21,7 @@ export async function geocodeSearch(
   query: string,
   limit = 5,
 ): Promise<GeocodeSuggestion[]> {
-  const token = process.env.MAPBOX_TOKEN;
+  const token = getOwnerEnv("MAPBOX_TOKEN");
   if (!token) return [];
   const trimmed = query.trim();
   if (trimmed.length < 3) return [];
@@ -52,7 +54,7 @@ export async function geocodeSearch(
 }
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult> {
-  const token = process.env.MAPBOX_TOKEN;
+  const token = getOwnerEnv("MAPBOX_TOKEN");
   if (!token) {
     return DEV_FALLBACK_LATLNG;
   }
@@ -83,7 +85,7 @@ export function aerialImageUrl(
   height = 600,
   zoom = 19,
 ): string {
-  const token = process.env.MAPBOX_TOKEN;
+  const token = getOwnerEnv("MAPBOX_TOKEN");
   if (!token) {
     return `https://placeholder.aerial/satellite/${lat},${lng}?z=${zoom}&w=${width}&h=${height}`;
   }

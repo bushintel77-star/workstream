@@ -42,6 +42,7 @@ export type PortalQuoteData = {
     net_inc_gst: number;
     target_total_inc_gst: number;
   } | null;
+  hero_url?: string | null;
 };
 
 const SCENARIOS = [
@@ -123,6 +124,12 @@ export function QuotePortal({
       </header>
 
       <section className={styles.hero}>
+        {data.hero_url ? (
+          <div className={styles.heroVisual}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={data.hero_url} alt="Site aerial" />
+          </div>
+        ) : null}
         <span className={styles.kicker}>
           {tier1 ? "TIER-1 ARCHITECTURAL MASSING" : "PREPARED FOR YOU"}
         </span>

@@ -68,15 +68,12 @@
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--s-2);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
   padding-bottom: var(--s-1);
-  -webkit-overflow-scrolling: touch;
 }
 
 .tab {
-  flex-shrink: 0;
   scroll-snap-align: start;
   min-height: 40px;
   padding: var(--s-2) var(--s-3);
@@ -148,6 +145,45 @@
 .cardActive {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+.cardPlanning {
+  border-style: dashed;
+}
+
+.cardCode {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-primary);
+}
+
+.planningTag {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.planningBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line-hairline);
+}
+
+.planningHeading {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
 }
 
 .cardPreview {

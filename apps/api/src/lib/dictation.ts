@@ -4,6 +4,7 @@ import type {
   TaskPriority,
 } from "@workstream/contracts";
 import { notifyTaskAssignment } from "./task-notify";
+import { getOwnerEnv } from "./owner-secrets";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -330,7 +331,7 @@ export async function runDictation(
     return { reply: "Listening.", events: [] };
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
 
   let calls: Array<{
     id: string;

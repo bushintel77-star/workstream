@@ -69,6 +69,12 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     const tier1 = isTier1WrightsTerrace(project?.address ?? "")
       ? TIER1_WRIGHTS_SAVINGS
       : null;
+    const heroUrl =
+      survey?.aerial_uri &&
+      survey.aerial_uri.startsWith("http") &&
+      !survey.aerial_uri.includes("placeholder")
+        ? survey.aerial_uri
+        : null;
 
     return reply.send({
       project,
@@ -77,6 +83,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       costing: standard,
       costings,
       tier1,
+      hero_url: heroUrl,
     });
   });
 

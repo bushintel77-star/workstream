@@ -53,6 +53,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P2 — Scale + cost
 
+- [x] **Per-request owner secrets** — `owner-secrets.ts` AsyncLocalStorage; no
+      `process.env` mutation in auth path.
 - [ ] **Multi-tenant authorization** — per-owner store queries on every route (pattern
       in place; audit remaining handlers).
 - [x] **Protected file delivery** — auth or portal token on `/uploads`, `/outputs`,
@@ -65,8 +67,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       needs DSN + `@sentry/nextjs` package.
 - [ ] **Audio compression** before upload (opus quality cap).
 - [ ] **Edge runtime** for `/portal/*` pages.
+- [x] **Portal hero image** — `hero_url` from survey aerial on quote portal payload.
 - [ ] **Soft delete + audit trail** on every destructive action.
-- [x] **Dashboard delete undo** — 5 s grace + toast Undo on project list.
+- [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
+- [x] **Dashboard delete undo** — toast restores via restore endpoint.
 - [ ] **Idempotency keys** on pipeline POSTs.
 
 ## P3 — Nice to have
@@ -84,7 +88,10 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 
 - [x] Phase 2 brand re-skin (Aegis tokens)
 - [x] Phase 3 layout (toolbar save, aerial hero, 320px rail)
-- [ ] Phases 4–8 palette, modeless canvas, honesty UI, docs
+- [x] Phase 4 asset library (code on tiles, search by code, planning pin)
+- [x] Phase 7 honesty UI (caption, save hand-off, clear confirms)
+- [ ] Phases 5–6 modeless canvas, AI assist (deferred)
+- [ ] Phase 8 brochure output (deferred in spec)
 
 ## Human-only checklist (not code)
 

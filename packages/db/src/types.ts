@@ -100,6 +100,7 @@ export interface Store {
   ): Promise<{ ownerId: string; projectId: string } | null>;
   reloadSnapshot(): void;
   deleteProject(ownerId: string, id: string): Promise<boolean>;
+  restoreProject(ownerId: string, id: string): Promise<Project | null>;
   updateProjectStatus(
     ownerId: string,
     projectId: string,

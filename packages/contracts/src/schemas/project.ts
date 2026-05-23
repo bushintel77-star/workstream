@@ -33,6 +33,7 @@ export const ProjectSchema = z.object({
   client_email: z.string().email().nullable().optional(),
   crm_stage: CrmStageSchema.nullable().optional(),
   crm_synced_at: z.string().datetime().nullable().optional(),
+  deleted_at: z.string().datetime().nullable().optional(),
 });
 export type Project = z.infer<typeof ProjectSchema>;
 

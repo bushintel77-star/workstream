@@ -421,6 +421,17 @@ export const CATALOG_CATEGORY_ORDER: CatalogCategory[] = [
   "annotation",
 ];
 
+/** TRP / council planning symbols — pinned in the asset library. */
+export const CATALOG_PLANNING_SYMBOL_IDS = new Set([
+  "existing-tree-retain",
+  "tree-root-protection",
+]);
+
+export function catalogAssetCode(sym: CatalogSymbol): string {
+  if (sym.rate_card_sku) return sym.rate_card_sku;
+  return sym.id.replace(/-/g, " ").toUpperCase();
+}
+
 export function filterCatalogSymbols(
   symbols: CatalogSymbol[],
   opts: { category?: CatalogCategory | "all"; query?: string },
@@ -431,9 +442,13 @@ export function filterCatalogSymbols(
       return false;
     }
     if (!q) return true;
+    const code = catalogAssetCode(sym).toLowerCase();
     const hay = [
       sym.label,
+      sym.id,
+      code,
       sym.description ?? "",
+      sym.rate_card_sku ?? "",
       ...(sym.keywords ?? []),
     ]
       .join(" ")

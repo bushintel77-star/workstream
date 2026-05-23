@@ -12,6 +12,8 @@ export * from './catalog';
 export {
   CURTIS_DESIGN_ASSETS,
   CATALOG_CATEGORY_ORDER,
+  CATALOG_PLANNING_SYMBOL_IDS,
+  catalogAssetCode,
   filterCatalogSymbols,
 } from './catalog-assets';
 export * from './catalog-glyph';

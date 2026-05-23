@@ -13,6 +13,7 @@ import {
   isTier1WrightsTerrace,
   tier1WrightsTerraceDesign,
 } from "@workstream/domain";
+import { getOwnerEnv } from "./owner-secrets";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -211,7 +212,7 @@ export async function generateDesign(
     });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
   if (!apiKey) {
     return devFallbackDesign(ctx);
   }
@@ -388,7 +389,7 @@ export async function runAudit(args: {
   design: Design;
   costings: Costing[];
 }): Promise<{ findings: AuditFinding[] }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
   if (!apiKey) {
     return devFallbackAudit(args);
   }
@@ -517,7 +518,7 @@ function devFallbackMeasurement(): PhotoMeasurementCallResult {
 export async function measurePhoto(
   args: PhotoMeasurementCallArgs,
 ): Promise<PhotoMeasurementCallResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
   if (!apiKey) {
     return devFallbackMeasurement();
   }
@@ -607,7 +608,7 @@ export async function scanImageContact(args: {
   client_email: string | null;
   notes: string | null;
 }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
   if (!apiKey) {
     return {
       client_name: "Eleanor Marsh",

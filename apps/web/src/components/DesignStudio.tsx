@@ -182,6 +182,18 @@ export function DesignStudio({
     setStrokes((prev) => prev.slice(0, -1));
   }
 
+  function clearStrokes() {
+    if (strokes.length === 0) return;
+    if (!confirm(`Clear ${strokes.length} markup stroke(s)?`)) return;
+    setStrokes([]);
+  }
+
+  function clearPlacements() {
+    if (placements.length === 0) return;
+    if (!confirm(`Clear ${placements.length} symbol(s)?`)) return;
+    setPlacements([]);
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
@@ -192,7 +204,10 @@ export function DesignStudio({
           minute: "2-digit",
         }),
       );
-      toast.show("Site plan saved", "success");
+      toast.show(
+        "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
+        "success",
+      );
       router.refresh();
     } catch (err) {
       toast.show(err instanceof Error ? err.message : "Save failed", "error");
@@ -242,14 +257,14 @@ export function DesignStudio({
           <button
             type="button"
             className={s.toolBtn}
-            onClick={() => setStrokes([])}
+            onClick={clearStrokes}
           >
             Clear markup
           </button>
           <button
             type="button"
             className={s.toolBtn}
-            onClick={() => setPlacements([])}
+            onClick={clearPlacements}
           >
             Clear symbols
           </button>
@@ -348,6 +363,9 @@ export function DesignStudio({
           );
         })}
       </div>
+      <p className={s.honestyCaption}>
+        Concept sketch for estimating — not a construction drawing.
+      </p>
       </div>
 
       <DesignAssetPalette

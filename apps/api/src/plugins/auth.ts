@@ -2,7 +2,7 @@ import fp from 'fastify-plugin';
 import { clerkPlugin, getAuth } from '@clerk/fastify';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { assertAuthConfigured, isAuthRequired } from '../lib/auth-config';
-import { hydrateEnvForOwner } from '../lib/integration-secrets';
+import { bindOwnerSecrets } from '../lib/owner-secrets';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -24,7 +24,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
       });
     }
     request.userId = DEV_USER_ID;
-    await hydrateEnvForOwner(request.server.store, DEV_USER_ID);
+    await bindOwnerSecrets(request.server.store, DEV_USER_ID);
     return;
   }
 
@@ -34,7 +34,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
   }
 
   request.userId = auth.userId;
-  await hydrateEnvForOwner(request.server.store, auth.userId);
+  await bindOwnerSecrets(request.server.store, auth.userId);
 }
 
 export default fp(

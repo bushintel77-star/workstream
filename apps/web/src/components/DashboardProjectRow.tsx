@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { deleteProjectAction } from "../app/actions";
+import { useState } from "react";
+import { deleteProjectAction, restoreProjectAction } from "../app/actions";
 import { useToast } from "./ToastHost";
 import s from "../styles/app.module.css";
 import d from "../app/dashboard.module.css";
@@ -27,16 +27,7 @@ export function DashboardProjectRow({
 }: Props) {
   const router = useRouter();
   const toast = useToast();
-  const [pendingDelete, setPendingDelete] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function cancelPendingDelete() {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    setPendingDelete(false);
-  }
+  const [hidden, setHidden] = useState(false);
 
   function requestDelete() {
     if (
@@ -47,34 +38,45 @@ export function DashboardProjectRow({
       return;
     }
 
-    setPendingDelete(true);
-    timerRef.current = setTimeout(() => {
-      timerRef.current = null;
-      void (async () => {
-        try {
-          const fd = new FormData();
-          fd.set("id", projectId);
-          await deleteProjectAction(fd);
-          router.refresh();
-        } catch (err) {
-          setPendingDelete(false);
-          toast.show(
-            err instanceof Error ? err.message : "Delete failed",
-            "error",
-          );
-        }
-      })();
-    }, UNDO_MS);
+    setHidden(true);
+    void (async () => {
+      try {
+        const fd = new FormData();
+        fd.set("id", projectId);
+        await deleteProjectAction(fd);
+        router.refresh();
+      } catch (err) {
+        setHidden(false);
+        toast.show(err instanceof Error ? err.message : "Delete failed", "error");
+        return;
+      }
 
-    toast.show(`Deleted "${address}"`, "info", UNDO_MS, {
-      action: {
-        label: "Undo",
-        onClick: cancelPendingDelete,
-      },
-    });
+      toast.show(`Deleted "${address}"`, "info", UNDO_MS, {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            void (async () => {
+              try {
+                const fd = new FormData();
+                fd.set("id", projectId);
+                await restoreProjectAction(fd);
+                setHidden(false);
+                router.refresh();
+                toast.show(`Restored "${address}"`, "success");
+              } catch (err) {
+                toast.show(
+                  err instanceof Error ? err.message : "Restore failed",
+                  "error",
+                );
+              }
+            })();
+          },
+        },
+      });
+    })();
   }
 
-  if (pendingDelete) {
+  if (hidden) {
     return null;
   }
 

@@ -11,6 +11,7 @@ import {
   deleteCrewApi,
   deleteIntegrationApi,
   deleteProjectApi,
+  restoreProjectApi,
   getAudit,
   getDesign,
   getProject,
@@ -148,6 +149,13 @@ export async function deleteProjectAction(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
   await deleteProjectApi(id);
+  revalidatePath("/");
+}
+
+export async function restoreProjectAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  await restoreProjectApi(id);
   revalidatePath("/");
 }
 

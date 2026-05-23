@@ -147,7 +147,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
 
     async listProjects(ownerId) {
       return _projects
-        .filter((p) => p.owner_id === ownerId)
+        .filter((p) => p.owner_id === ownerId && !p.deleted_at)
         .sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -167,6 +167,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         client_email: null,
         crm_stage: "enquiry",
         crm_synced_at: null,
+        deleted_at: null,
       };
       _projects.push(project);
       flush();
@@ -174,7 +175,9 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     },
 
     async getProject(ownerId, id) {
-      const p = _projects.find((x) => x.id === id && x.owner_id === ownerId);
+      const p = _projects.find(
+        (x) => x.id === id && x.owner_id === ownerId && !x.deleted_at,
+      );
       if (!p) return null;
       return {
         ...p,
@@ -211,7 +214,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     },
 
     async resolveProjectOwner(projectId) {
-      const p = _projects.find((x) => x.id === projectId);
+      const p = _projects.find((x) => x.id === projectId && !x.deleted_at);
       return p?.owner_id ?? null;
     },
 
@@ -260,38 +263,23 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     },
 
     async deleteProject(ownerId, id) {
-      const idx = _projects.findIndex(
-        (x) => x.id === id && x.owner_id === ownerId,
+      const p = _projects.find(
+        (x) => x.id === id && x.owner_id === ownerId && !x.deleted_at,
       );
-      if (idx < 0) return false;
-      _projects.splice(idx, 1);
-
-      // Cascade: gather design ids first so we can clean costings/audits
-      const designIds = _designs
-        .filter((d) => d.project_id === id)
-        .map((d) => d.id);
-
-      const removeWhere = <T>(arr: T[], pred: (x: T) => boolean) => {
-        for (let i = arr.length - 1; i >= 0; i--) {
-          if (pred(arr[i])) arr.splice(i, 1);
-        }
-      };
-
-      removeWhere(_recordings, (r) => r.project_id === id);
-      removeWhere(_surveys, (s) => s.project_id === id);
-      removeWhere(_designs, (d) => d.project_id === id);
-      removeWhere(_costings, (c) => designIds.includes(c.design_id));
-      removeWhere(_audits, (a) => designIds.includes(a.design_id));
-      removeWhere(_outputs, (o) => o.project_id === id);
-      removeWhere(_overrides, (o) => o.project_id === id);
-      removeWhere(_tasks, (t) => t.project_id === id);
-      removeWhere(_projectMyobLinks, (l) => l.project_id === id);
-      removeWhere(_photoMeasurements, (m) => m.project_id === id);
-      removeWhere(_projectFiles, (f) => f.project_id === id);
-      removeWhere(_designCanvases, (c) => c.project_id === id);
-
+      if (!p) return false;
+      p.deleted_at = new Date().toISOString();
       flush();
       return true;
+    },
+
+    async restoreProject(ownerId, id) {
+      const p = _projects.find(
+        (x) => x.id === id && x.owner_id === ownerId && x.deleted_at,
+      );
+      if (!p) return null;
+      p.deleted_at = null;
+      flush();
+      return p;
     },
 
     async updateProjectStatus(ownerId, projectId, status) {

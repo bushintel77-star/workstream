@@ -8,7 +8,7 @@ import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";
 import { runProjectAudit } from "./audit-job";
-import { hydrateEnvForOwner } from "./integration-secrets";
+import { bindOwnerSecrets } from "./owner-secrets";
 
 type JobKind =
   | "survey"
@@ -61,7 +61,7 @@ export async function enqueuePipelineJob(
 
 async function runJob(store: Store, payload: PipelineJobPayload): Promise<void> {
   store.reloadSnapshot();
-  await hydrateEnvForOwner(store, payload.ownerId);
+  await bindOwnerSecrets(store, payload.ownerId);
   const { kind, ownerId, projectId } = payload;
   switch (kind) {
     case "pipeline":

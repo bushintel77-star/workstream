@@ -185,6 +185,11 @@ export async function deleteProjectApi(id: string): Promise<void> {
   await apiDelete(`/projects/${id}`);
 }
 
+export async function restoreProjectApi(id: string): Promise<Project> {
+  const body = await apiPost<{ project: Project }>(`/projects/${id}/restore`, {});
+  return body.project;
+}
+
 /* -- Survey ------------------------------------------------------------ */
 
 export type GeoJsonPolygon = {

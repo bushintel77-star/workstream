@@ -119,4 +119,17 @@ export default async function projectRoutes(fastify: FastifyInstance) {
       return reply.code(204).send();
     },
   );
+
+  fastify.post(
+    "/:id/restore",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const project = await fastify.store.restoreProject(request.userId!, id);
+      if (!project) {
+        return reply.code(404).send({ error: "Project not found or not deleted" });
+      }
+      return reply.send({ project });
+    },
+  );
 }

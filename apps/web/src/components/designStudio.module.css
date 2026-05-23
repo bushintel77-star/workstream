@@ -133,6 +133,14 @@
   color: var(--ink-secondary);
 }
 
+.honestyCaption {
+  margin: var(--s-2) 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  text-align: center;
+}
+
 .canvas {
   position: relative;
   flex: 1;

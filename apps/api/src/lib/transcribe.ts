@@ -1,4 +1,5 @@
 import { readFile } from "fs/promises";
+import { getOwnerEnv } from "./owner-secrets";
 
 const DEV_TRANSCRIPT =
   "Pleached hornbeam screen along the west boundary at about two point four metres. " +
@@ -8,7 +9,7 @@ const DEV_TRANSCRIPT =
 export async function transcribeAudio(
   filePath: string
 ): Promise<{ transcript: string; confidence: number }> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = getOwnerEnv("OPENAI_API_KEY");
   if (!apiKey) {
     return { transcript: DEV_TRANSCRIPT, confidence: 0.92 };
   }
