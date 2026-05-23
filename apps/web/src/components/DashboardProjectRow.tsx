@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { deleteProjectApi } from "../lib/api";
+import { deleteProjectAction } from "../app/actions";
 import { useToast } from "./ToastHost";
 import s from "../styles/app.module.css";
 import d from "../app/dashboard.module.css";
@@ -52,7 +52,9 @@ export function DashboardProjectRow({
       timerRef.current = null;
       void (async () => {
         try {
-          await deleteProjectApi(projectId);
+          const fd = new FormData();
+          fd.set("id", projectId);
+          await deleteProjectAction(fd);
           router.refresh();
         } catch (err) {
           setPendingDelete(false);
