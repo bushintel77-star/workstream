@@ -36,6 +36,7 @@ export default defineConfig({
       timeout: 180_000,
       env: {
         AUTH_REQUIRED: "false",
+        API_URL,
         NEXT_PUBLIC_API_URL: API_URL,
       },
     },
