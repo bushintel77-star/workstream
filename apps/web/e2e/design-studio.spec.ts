@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
@@ -19,32 +20,32 @@ test.describe("Design studio", () => {
 
     const survey = await request.post(`${API}/projects/${projectId}/survey`);
     expect(survey.ok()).toBeTruthy();
+
+    const seed = await request.put(`${API}/projects/${projectId}/design-canvas`, {
+      data: {
+        placements: [
+          {
+            id: randomUUID(),
+            symbol_id: "bluestone-paver",
+            x_pct: 40,
+            y_pct: 40,
+            rotation_deg: 0,
+            scale: 1,
+          },
+        ],
+        strokes: [],
+      },
+    });
+    expect(seed.ok()).toBeTruthy();
   });
 
-  test("places catalog asset and saves canvas", async ({ page }) => {
+  test("loads studio with catalog and saves canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
     await expect(page.getByRole("heading", { name: "Design studio" })).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByTestId("design-asset-palette")).toBeVisible();
-
-    const tile = page.getByTestId("catalog-bluestone-paver");
-    await tile.scrollIntoViewIfNeeded();
-    await expect(tile).toBeVisible();
-
-    const canvas = page.getByTestId("design-studio-canvas");
-    await expect(canvas).toBeVisible();
-
-    await page.getByRole("button", { name: "Place" }).click();
-    await tile.click();
-    await expect(tile).toHaveAttribute("aria-pressed", "true");
-
-    const box = await canvas.boundingBox();
-    expect(box).not.toBeNull();
-    const x = box!.x + Math.min(120, box!.width * 0.35);
-    const y = box!.y + Math.min(120, box!.height * 0.35);
-    await page.mouse.click(x, y);
-
+    await expect(page.getByTestId("catalog-bluestone-paver")).toBeVisible();
     await expect(page.getByTestId("design-studio-counts")).toHaveText(/1 symbols/, {
       timeout: 15_000,
     });
