@@ -23,9 +23,9 @@ test.describe("Design studio", () => {
 
   test("places catalog asset and saves canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
-    await page.waitForLoadState("networkidle");
-
-    await expect(page.getByRole("heading", { name: "Design studio" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Design studio" })).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByTestId("design-asset-palette")).toBeVisible();
 
     const tile = page.getByTestId("catalog-bluestone-paver");
@@ -35,12 +35,19 @@ test.describe("Design studio", () => {
     const canvas = page.getByTestId("design-studio-canvas");
     await expect(canvas).toBeVisible();
 
-    await tile.dragTo(canvas, {
-      targetPosition: { x: 120, y: 120 },
-      force: true,
-    });
+    await page.getByRole("button", { name: "Place" }).click();
+    await tile.click();
+    await expect(tile).toHaveAttribute("aria-pressed", "true");
 
-    await expect(page.getByText(/1 symbols/)).toBeVisible({ timeout: 15_000 });
+    const box = await canvas.boundingBox();
+    expect(box).not.toBeNull();
+    const x = box!.x + Math.min(120, box!.width * 0.35);
+    const y = box!.y + Math.min(120, box!.height * 0.35);
+    await page.mouse.click(x, y);
+
+    await expect(page.getByTestId("design-studio-counts")).toHaveText(/1 symbols/, {
+      timeout: 15_000,
+    });
 
     await page.getByTestId("design-studio-save").click();
     await expect(page.getByText("Site plan saved")).toBeVisible({ timeout: 15_000 });

@@ -245,7 +245,7 @@ export function DesignStudio({
         >
           Clear symbols
         </button>
-        <span className={s.counts}>
+        <span className={s.counts} data-testid="design-studio-counts">
           {placements.length} symbols · {strokes.length} strokes
         </span>
       </div>
