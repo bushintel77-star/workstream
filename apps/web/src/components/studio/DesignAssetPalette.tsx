@@ -118,6 +118,9 @@ export function DesignAssetPalette({
                 disabled={disabled}
                 onDragStart={() => onDragStart?.(sym.id)}
                 onDragEnd={() => onDragEnd?.()}
+                onPointerDown={() => {
+                  if (!disabled) onSelect(sym.id);
+                }}
                 onClick={() => onSelect(sym.id)}
                 aria-pressed={active}
                 data-testid={`catalog-${sym.id}`}
