@@ -50,7 +50,17 @@ not drawing engines).
 **Not using:** Apple PencilKit (native, closed), proprietary CAD viewers, paid
 symbol libraries unless Curtis buys assets and we only store SVG files.
 
-## Phase 2 (planned)
+## Phase 3+ (web redesign — shipped)
+
+See `CHANGES.md` and `AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`.
+
+- **Layout** — aerial hero, 320px asset rail, toolbar Save with autosave status.
+- **Asset library** — codes on every tile, search by code/SKU, pinned Planning (TRP) group.
+- **Canvas** — modeless place/select, move/rotate/scale handles, indicative scale bar.
+- **Honesty UX** — “not a construction drawing” caption, draftsperson hand-off on save.
+- **Freehand** — survey ink strokes (legacy `#ff2ef6` stored; rendered as ink token).
+
+## Phase 2 (planned — mobile polish)
 
 - **Freehand on web + iPad** — `perfect-freehand` on web; Skia stroke layer on
   mobile. Strokes stored in `CanvasStroke` on the same canvas document.

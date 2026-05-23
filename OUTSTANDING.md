@@ -91,8 +91,9 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 - [x] Phase 4 asset library (code on tiles, search by code, planning pin)
 - [x] Phase 5 modeless canvas (select/move/rotate/scale, scale bar, context label)
 - [x] Phase 7 honesty UI (caption, save hand-off, clear confirms, keyboard legend)
+- [x] Phase 8 docs + E2E (`CHANGES.md`, extended Playwright)
 - [ ] Phases 6 AI assist (deferred)
-- [ ] Phase 8 brochure output (deferred in spec)
+- [ ] Brochure output (deferred in spec)
 
 ## Human-only checklist (not code)
 

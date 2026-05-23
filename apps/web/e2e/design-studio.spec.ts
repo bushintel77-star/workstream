@@ -53,6 +53,32 @@ test.describe("Design studio", () => {
     await expect(page.getByTestId("design-studio-save")).toBeVisible();
   });
 
+  test("shows indicative scale bar on canvas", async ({ page }) => {
+    await page.goto(`/projects/${projectId}/design/studio`);
+    await expect(page.getByTestId("design-studio-scale-bar")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByTestId("design-studio-scale-bar")).toContainText(/m/);
+  });
+
+  test("places symbol from catalog click", async ({ page }) => {
+    await page.goto(`/projects/${projectId}/design/studio`);
+    await expect(page.getByTestId("design-studio-counts")).toHaveText(/1 symbols/, {
+      timeout: 30_000,
+    });
+    await page.getByTestId("catalog-lomandra-mass").click();
+    const canvas = page.getByTestId("design-studio-canvas");
+    const box = await canvas.boundingBox();
+    expect(box).not.toBeNull();
+    await canvas.click({
+      position: { x: (box?.width ?? 400) / 2, y: (box?.height ?? 280) / 2 },
+    });
+    await expect(page.getByTestId("design-studio-counts")).toHaveText(/2 symbols/, {
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("canvas-placement")).toHaveCount(2);
+  });
+
   test("save plan from toolbar", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
     await expect(page.getByTestId("design-studio-save")).toBeVisible({

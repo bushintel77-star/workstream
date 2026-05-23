@@ -32,12 +32,13 @@ Until CI web deploy works, each `apps/web` phase may need a manual `flyctl deplo
 
 ## Re-sequenced phases
 
-1. Phase 2 — Brand re-skin (**shipped** — stop for review)
-2. Phase 3 — Layout
-3. Phase 4 — Planning palette + search by code
-4. Phase 5 — Modeless canvas + scale bar
-5. Phase 7 — States, honesty UI, a11y
-6. Phase 8 — Docs + E2E
+1. Phase 2 — Brand re-skin (**shipped**)
+2. Phase 3 — Layout (**shipped**)
+3. Phase 4 — Planning palette + search by code (**shipped**)
+4. Phase 5 — Modeless canvas + scale bar (**shipped**)
+5. Phase 7 — States, honesty UI, a11y (**shipped**)
+6. Phase 8 — Docs + E2E (**shipped** — see `CHANGES.md`; brochure deferred)
+7. Phase 6 — AI assist (**deferred** — `PROPOSAL.md`)
 
 ## File map
 
@@ -63,9 +64,11 @@ Until CI web deploy works, each `apps/web` phase may need a manual `flyctl deplo
 
 ## State management
 
-- **Client-only React state** in `DesignStudio.tsx`: `mode` (`place` \| `draw`), `placements`, `strokes`, `draftPoints`, `selectedId`, `dragSymbolId`, `saving`.
-- **No global store** (Zustand/Redux). Persist on Save via server action → API → in-memory `_designCanvases`.
-- **Modes:** explicit toolbar toggle Place / Draw; placement blocked when `mode === "draw"`.
+- **Client-only React state** in `DesignStudio.tsx`: `toolOverride` (auto/place/draw/select),
+  `placements`, `strokes`, `draftPoints`, `armedSymbolId`, `selectedPlacementId`, `saving`.
+- **No global store.** Persist on Save via server action → API → in-memory `_designCanvases`.
+- **Modes:** Auto (modeless) default; explicit Place / Draw / Select fallback toolbar.
+  Draw blocks palette; select blocks placement.
 
 ## Save payload
 
@@ -83,18 +86,18 @@ Already in `catalog-assets.ts`:
 - `tree-root-protection` — Tree protection zone  
 - `existing-tree-retain` — Existing tree (retain)  
 
-Category is `annotation` today, not a dedicated **Planning** group in the palette UI.
+Category includes `annotation` for TRP symbols; palette UI pins a **Planning** group.
 
 ## Search / codes
 
-- `filterCatalogSymbols` in domain filters by category + query on **label, description, keywords** — not `rate_card_sku` / asset code unless keyword overlap.
-- Tiles show **label**; SKU/code display is inconsistent (brief wants `PLT-HORN` on every tile).
+- `filterCatalogSymbols` + `catalogAssetCode()` — search matches label, id, SKU, keywords.
+- Every tile shows asset code (`PLT-HORN`, `TRP-TPZ`, etc.).
 
 ## Aerial / Mapbox
 
-- Studio uses `<img src={aerialUri}>` + percent-positioned SVG/div overlays.
-- **No Mapbox GL JS** in the studio component today.
-- Indicative scale from “Mapbox zoom” in the brief implies either parsing static URL zoom (`mapView.ts`) or adopting Mapbox GL — **verify before Phase 5/6**.
+- Studio uses `<img src={aerialUri}>` + percent-positioned overlays.
+- **No Mapbox GL JS.** Indicative scale from `mapView.ts` (`MAPBOX_TILE_PX = 256`).
+- Geographic overlay alignment via `projectLngLatToPercent` (see `SitePlan.tsx`).
 
 ## Brand (resolved)
 
@@ -102,8 +105,8 @@ Aegis / Workstream tokens only. Studio chrome uses glass panels (`backdrop-filte
 
 ## Remaining gates
 
-1. **Mapbox** — static image + `parseMapboxStaticAerial` for scale (Phase 5).
-2. **AI** — write `PROPOSAL.md` when scheduled; no detection libraries this run.
+1. **AI assist** — `PROPOSAL.md` when scheduled; no detection libraries shipped.
+2. **Brochure output** — product spec TBD; not in current web studio.
 
 ## Not STOP
 
