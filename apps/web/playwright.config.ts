@@ -9,6 +9,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
+  timeout: 120_000,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: WEB_URL,
@@ -18,16 +19,25 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: "pnpm --filter @workstream/api exec tsx src/server.ts",
+      command:
+        "pnpm exec turbo run build --filter=@workstream/contracts --filter=@workstream/domain && pnpm --filter @workstream/api exec tsx src/server.ts",
       url: `${API_URL}/healthz`,
       reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      timeout: 180_000,
+      env: {
+        AUTH_REQUIRED: "false",
+        NODE_ENV: "test",
+      },
     },
     {
       command: "pnpm --filter @workstream/web dev",
       url: WEB_URL,
       reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      timeout: 180_000,
+      env: {
+        AUTH_REQUIRED: "false",
+        NEXT_PUBLIC_API_URL: API_URL,
+      },
     },
   ],
 });
