@@ -41,7 +41,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions.
 - [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
       from API). Enable manually: Settings → Branches → require CI green.
-- [x] **Playwright e2e** — `design-studio.spec.ts`, `operator-happy-path.spec.ts`;
+- [x] **Playwright e2e** — `design-studio.spec.ts` (load + save), `operator-happy-path.spec.ts`;
       CI job `playwright e2e` on PR + main.
 - [x] **Contract tests (core)** — Zod boundary tests + [`contract.test.ts`](apps/api/src/routes/contract.test.ts)
       (health + projects). Extend per route as APIs stabilise.
@@ -53,14 +53,20 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P2 — Scale + cost
 
-- [ ] **Multi-tenant authorization** — per-owner store queries on every route.
+- [ ] **Multi-tenant authorization** — per-owner store queries on every route (pattern
+      in place; audit remaining handlers).
+- [x] **Protected file delivery** — auth or portal token on `/uploads`, `/outputs`,
+      `/photos`, `/aerial`, `/filings` ([protected-files.ts](apps/api/src/routes/protected-files.ts)).
+- [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
 - [ ] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
-- [x] **Real-user monitoring (web scaffold)** — Sentry web instrumentation; needs DSN.
+- [x] **Real-user monitoring (web scaffold)** — [`instrumentation.ts`](apps/web/src/instrumentation.ts);
+      needs DSN + `@sentry/nextjs` package.
 - [ ] **Audio compression** before upload (opus quality cap).
 - [ ] **Edge runtime** for `/portal/*` pages.
 - [ ] **Soft delete + audit trail** on every destructive action.
+- [x] **Dashboard delete undo** — 5 s grace + toast Undo on project list.
 - [ ] **Idempotency keys** on pipeline POSTs.
 
 ## P3 — Nice to have
@@ -77,7 +83,8 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 [`RECON.md`](RECON.md), [`PROPOSAL.md`](PROPOSAL.md) (AI Phase 6 deferred).
 
 - [x] Phase 2 brand re-skin (Aegis tokens)
-- [ ] Phases 3–8 layout, palette, modeless canvas, honesty UI, docs
+- [x] Phase 3 layout (toolbar save, aerial hero, 320px rail)
+- [ ] Phases 4–8 palette, modeless canvas, honesty UI, docs
 
 ## Human-only checklist (not code)
 

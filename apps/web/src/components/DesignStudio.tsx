@@ -73,6 +73,7 @@ export function DesignStudio({
   const [dragSymbolId, setDragSymbolId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [lastSavedLabel, setLastSavedLabel] = useState<string | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 400, height: 280 });
   const drawingRef = useRef(false);
 
@@ -185,6 +186,12 @@ export function DesignStudio({
     setSaving(true);
     try {
       await saveDesignCanvasAction(projectId, placements, strokes);
+      setLastSavedLabel(
+        new Date().toLocaleTimeString("en-AU", {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      );
       toast.show("Site plan saved", "success");
       router.refresh();
     } catch (err) {
@@ -228,26 +235,46 @@ export function DesignStudio({
             Draw
           </button>
         </div>
-        <button type="button" className={s.toolBtn} onClick={undo}>
-          Undo
-        </button>
-        <button
-          type="button"
-          className={s.toolBtn}
-          onClick={() => setStrokes([])}
-        >
-          Clear markup
-        </button>
-        <button
-          type="button"
-          className={s.toolBtn}
-          onClick={() => setPlacements([])}
-        >
-          Clear symbols
-        </button>
+        <div className={s.toolbarDestructive}>
+          <button type="button" className={s.toolBtn} onClick={undo}>
+            Undo
+          </button>
+          <button
+            type="button"
+            className={s.toolBtn}
+            onClick={() => setStrokes([])}
+          >
+            Clear markup
+          </button>
+          <button
+            type="button"
+            className={s.toolBtn}
+            onClick={() => setPlacements([])}
+          >
+            Clear symbols
+          </button>
+        </div>
         <span className={s.counts} data-testid="design-studio-counts">
           {placements.length} symbols · {strokes.length} strokes
         </span>
+        <div className={s.toolbarActions}>
+          <span className={s.saveStatus} aria-live="polite">
+            {saving
+              ? "Saving…"
+              : lastSavedLabel
+                ? `All changes saved ${lastSavedLabel}`
+                : "Unsaved changes"}
+          </span>
+          <button
+            type="button"
+            className={s.btnPrimary}
+            disabled={saving}
+            onClick={() => void handleSave()}
+            data-testid="design-studio-save"
+          >
+            {saving ? "Saving…" : "Save plan"}
+          </button>
+        </div>
       </div>
 
       <div className={s.workspace}>
@@ -320,18 +347,6 @@ export function DesignStudio({
             </div>
           );
         })}
-      </div>
-
-      <div className={s.actions}>
-        <button
-          type="button"
-          className={s.btnPrimary}
-          disabled={saving}
-          onClick={() => void handleSave()}
-          data-testid="design-studio-save"
-        >
-          {saving ? "Saving…" : "Save plan"}
-        </button>
       </div>
       </div>
 

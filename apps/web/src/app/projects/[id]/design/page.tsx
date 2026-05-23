@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isTier1WrightsTerrace } from "@workstream/domain";
 import { requireProject } from "../../../../lib/project-guard";
 import {
   getDesign,
@@ -8,7 +9,6 @@ import {
   listCostings,
 } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
-import p from "../project.module.css";
 import {
   runDesignAction,
   runDevelopFromSketchAction,
@@ -18,6 +18,7 @@ import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
 import { PipelineActionForm } from "../../../../components/PipelineActionForm";
 import { QuoteWorkflowSteps } from "../../../../components/QuoteWorkflowSteps";
 import { EnvelopeBriefPanel } from "../../../../components/EnvelopeBriefPanel";
+import { DesignProposalView } from "../../../../components/DesignProposalView";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,8 @@ export default async function DesignPage({
   const hasCanvas = (canvas?.placements?.length ?? 0) > 0;
   const envelope =
     survey && hasCanvas ? await getEnvelopeBrief(id) : null;
+  const tier1 = isTier1WrightsTerrace(project.address);
+  const aerialUri = survey?.aerial_uri ?? null;
 
   return (
     <main className={s.page}>
@@ -118,93 +121,7 @@ export default async function DesignPage({
           No design yet. Run the survey first, then generate a design.
         </div>
       ) : (
-        <>
-          <div className={s.card}>
-            <h3 className={s.cardTitle}>Rationale</h3>
-            <p className={p.rationale}>{design.rationale}</p>
-          </div>
-
-          <h2 className={s.sectionHeading}>
-            Zones ({design.proposal.zones.length})
-          </h2>
-          {design.proposal.zones.map((z) => (
-            <div key={z.id} className={p.zone}>
-              <h3 className={p.zoneName}>{z.name}</h3>
-              <p className={p.zoneTreatment}>{z.treatment}</p>
-
-              {z.plantings.length > 0 && (
-                <>
-                  <div className={p.zoneSubhead}>Plantings</div>
-                  <ul className={p.zoneItems}>
-                    {z.plantings.map((pl, i) => (
-                      <li key={i}>
-                        <strong>{pl.count}×</strong> {pl.common_name}{" "}
-                        <em className={p.species}>{pl.species}</em> — {pl.form}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-
-              {z.hardscape.length > 0 && (
-                <>
-                  <div className={p.zoneSubhead}>Hardscape</div>
-                  <ul className={p.zoneItems}>
-                    {z.hardscape.map((h, i) => (
-                      <li key={i}>
-                        {h.item} — {h.qty} {h.unit}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-
-              {z.lighting.length > 0 && (
-                <>
-                  <div className={p.zoneSubhead}>Lighting</div>
-                  <ul className={p.zoneItems}>
-                    {z.lighting.map((l, i) => (
-                      <li key={i}>
-                        {l.count}× {l.fixture}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-
-              {z.irrigation.length > 0 && (
-                <>
-                  <div className={p.zoneSubhead}>Irrigation</div>
-                  <ul className={p.zoneItems}>
-                    {z.irrigation.map((ir, i) => (
-                      <li key={i}>
-                        {ir.item} — {ir.qty} {ir.unit}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          ))}
-
-          {design.gaps.length > 0 && (
-            <>
-              <h2 className={s.sectionHeading}>Gap flags</h2>
-              {design.gaps.map((g, i) => (
-                <div key={i} className={`${p.finding} ${p.findingAdvisory}`}>
-                  <div className={p.findingHead}>
-                    <span className={p.findingLocation}>{g.zone}</span>
-                    <span className={`${s.pill} ${s.pillWarn}`}>Gap</span>
-                  </div>
-                  <p className={p.findingStatement}>{g.description}</p>
-                  <p className={p.findingAction}>
-                    Proposed: {g.proposed_fill} — {g.rationale}
-                  </p>
-                </div>
-              ))}
-            </>
-          )}
-        </>
+        <DesignProposalView design={design} aerialUri={aerialUri} tier1={tier1} />
       )}
     </main>
   );
