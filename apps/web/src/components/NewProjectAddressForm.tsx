@@ -77,6 +77,9 @@ export function NewProjectAddressForm() {
         <input
           className={`${s.input} ${d.formInput}`}
           type="text"
+          id="project-address"
+          aria-label="Project address"
+          role="combobox"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Start typing — e.g. 36 Wrights Terrace, Prahran"
@@ -95,7 +98,7 @@ export function NewProjectAddressForm() {
         {suggestions.length > 0 && (
           <ul id={listId} className={d.suggestions} role="listbox">
             {suggestions.map((item) => (
-              <li key={item.id} role="option">
+              <li key={item.id} role="option" aria-selected={selected?.id === item.id}>
                 <button
                   type="button"
                   className={d.suggestionBtn}

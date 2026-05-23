@@ -1,5 +1,4 @@
 import type {
-  CatalogPlacement,
   CatalogSymbol,
   Costing,
   DesignCanvas,

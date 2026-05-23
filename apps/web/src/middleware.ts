@@ -1,17 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
-
-/** Clerk only when both keys are present; otherwise dev-mode passthrough. */
-function isClerkConfigured(): boolean {
-  const sk = process.env.CLERK_SECRET_KEY;
-  const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  return (
-    typeof sk === "string" &&
-    sk.startsWith("sk_") &&
-    typeof pk === "string" &&
-    pk.startsWith("pk_")
-  );
-}
+import { isClerkConfigured } from "./lib/auth";
 
 export const config = {
   matcher: [

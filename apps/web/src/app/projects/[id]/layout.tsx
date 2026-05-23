@@ -1,4 +1,7 @@
-import { getProject, listOutputs } from "../../../lib/api";
+import { notFound } from "next/navigation";
+import { requireSignedIn } from "../../../lib/auth";
+import { getIntegrationSummary, getProject, listOutputs } from "../../../lib/api";
+import { AppNav } from "../../../components/AppNav";
 import { ProjectShareFab } from "../../../components/ProjectShareFab";
 import layout from "./project-layout.module.css";
 
@@ -11,20 +14,23 @@ export default async function ProjectLayout({
   children: React.ReactNode;
   params: Promise<{ id: string }>;
 }) {
+  await requireSignedIn();
   const { id } = await params;
-  const [project, outputs] = await Promise.all([
+  const [project, outputs, summary] = await Promise.all([
     getProject(id),
     listOutputs(id).catch(() => []),
+    getIntegrationSummary().catch(() => null),
   ]);
 
   if (!project) {
-    return <>{children}</>;
+    notFound();
   }
 
   const quoteOutput = outputs.find((o) => o.kind === "quote");
 
   return (
     <>
+      <AppNav summary={summary} />
       <div className={layout.content}>{children}</div>
       <ProjectShareFab
         projectId={id}

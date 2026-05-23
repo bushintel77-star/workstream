@@ -1,29 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_URL =
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:3001";
+import { getApiUrl, upstreamAuthHeaders } from "../../../../../lib/upstream-api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* Same-origin proxy for audio uploads from the web app. The browser
- * POSTs multipart/form-data to /api/projects/<id>/recordings on the
- * Next host, this handler forwards the raw body to the API. Keeps the
- * browser side free of CORS concerns and the API URL out of the bundle. */
+/* Same-origin proxy for audio uploads from the web app. Forwards auth to the API. */
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params;
-  const upstream = `${API_URL}/projects/${id}/recordings`;
+  const upstream = `${getApiUrl()}/projects/${id}/recordings`;
 
-  const headers = new Headers();
+  const extra = new Headers();
   const contentType = req.headers.get("content-type");
-  if (contentType) headers.set("content-type", contentType);
+  if (contentType) extra.set("content-type", contentType);
   const contentLength = req.headers.get("content-length");
-  if (contentLength) headers.set("content-length", contentLength);
+  if (contentLength) extra.set("content-length", contentLength);
+
+  const headers = await upstreamAuthHeaders(extra);
 
   const res = await fetch(upstream, {
     method: "POST",

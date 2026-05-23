@@ -8,10 +8,12 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const canvas = await fastify.store.getDesignCanvas(
-        request.userId!,
-        projectId,
-      );
+      const ownerId = request.userId!;
+      const project = await fastify.store.getProject(ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send({ error: "Project not found" });
+      }
+      const canvas = await fastify.store.getDesignCanvas(ownerId, projectId);
       if (!canvas) {
         return reply.send({
           canvas: {

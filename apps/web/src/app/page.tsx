@@ -6,7 +6,7 @@ import {
 } from "../lib/api";
 import s from "../styles/app.module.css";
 import d from "./dashboard.module.css";
-import { deleteProjectAction } from "./actions";
+import { DashboardProjectRow } from "../components/DashboardProjectRow";
 import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
 import { SubmitButton } from "../components/SubmitButton";
 import { requireSignedIn } from "../lib/auth";
@@ -95,28 +95,14 @@ export default async function DashboardPage() {
       ) : (
         <ul className={s.list}>
           {projects.map((p) => (
-            <li key={p.id} className={`${s.card} ${d.row}`}>
-              <Link href={`/projects/${p.id}`} className={d.rowLink}>
-                <span className={d.rowAddress}>{p.address}</span>
-                <span className={`${s.brandSub} ${d.rowMeta}`}>
-                  <span className={`${s.pill} ${STATUS_PILL[p.status]}`}>
-                    {STATUS_LABEL[p.status]}
-                  </span>
-                  <span>{fmtDate(p.created_at)}</span>
-                </span>
-              </Link>
-              <form action={deleteProjectAction}>
-                <input type="hidden" name="id" value={p.id} />
-                <button
-                  type="submit"
-                  className={`${s.btnDanger} ${d.rowDelete}`}
-                  aria-label={`Delete ${p.address}`}
-                  title="Delete"
-                >
-                  Delete
-                </button>
-              </form>
-            </li>
+            <DashboardProjectRow
+              key={p.id}
+              projectId={p.id}
+              address={p.address}
+              statusPill={STATUS_PILL[p.status]}
+              statusLabel={STATUS_LABEL[p.status]}
+              createdLabel={fmtDate(p.created_at)}
+            />
           ))}
         </ul>
       )}

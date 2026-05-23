@@ -95,22 +95,13 @@ export default async function stripeWebhookRoutes(fastify: FastifyInstance) {
           );
           break;
         }
-        // Cross-tenant lookup — owner not in the webhook payload.
-        const owners = ["dev-user"];
-        let advanced = false;
-        for (const ownerId of owners) {
-          const project = await fastify.store.getProject(ownerId, projectId);
-          if (project) {
-            await fastify.store.updateProjectStatus(
-              ownerId,
-              projectId,
-              "complete",
-            );
-            advanced = true;
-            break;
-          }
-        }
-        if (advanced) {
+        const ownerId = await fastify.store.resolveProjectOwner(projectId);
+        if (ownerId) {
+          await fastify.store.updateProjectStatus(
+            ownerId,
+            projectId,
+            "complete",
+          );
           request.log.info(
             { projectId, sessionId: session.id, event: event.type },
             "deposit paid, project marked complete",

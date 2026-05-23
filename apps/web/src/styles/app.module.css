@@ -483,3 +483,11 @@
   font-size: 12px;
   color: var(--ink-primary);
 }
+
+.globalErrorBody {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--surface-base);
+  color: var(--ink-primary);
+  font-family: var(--font-body);
+}

@@ -2,8 +2,9 @@ import Link from "next/link";
 import s from "../../../styles/app.module.css";
 import p from "./project.module.css";
 import type { Project } from "../../../lib/api";
+import { NotFoundView } from "../../../components/NotFoundView";
 
-const TABS: Array<{ slug: string; label: string }> = [
+const BASE_TABS: Array<{ slug: string; label: string }> = [
   { slug: "", label: "Overview" },
   { slug: "survey", label: "Survey" },
   { slug: "design", label: "Design" },
@@ -17,24 +18,36 @@ const TABS: Array<{ slug: string; label: string }> = [
   { slug: "carbon", label: "Carbon" },
 ];
 
+export type ProjectTab =
+  | "overview"
+  | "processing"
+  | "survey"
+  | "design"
+  | "costing"
+  | "audit"
+  | "outputs"
+  | "filing"
+  | "tasks"
+  | "recordings"
+  | "measurements"
+  | "carbon";
+
+function projectTabs(project: Project) {
+  if (project.status !== "processing") return BASE_TABS;
+  const tabs = [...BASE_TABS];
+  tabs.splice(1, 0, { slug: "processing", label: "Processing" });
+  return tabs;
+}
+
 export function ProjectMasthead({
   project,
   active,
 }: {
   project: Project;
-  active:
-    | "overview"
-    | "survey"
-    | "design"
-    | "costing"
-    | "audit"
-    | "outputs"
-    | "filing"
-    | "tasks"
-    | "recordings"
-    | "measurements"
-    | "carbon";
+  active: ProjectTab;
 }) {
+  const tabs = projectTabs(project);
+
   return (
     <>
       <header className={s.masthead}>
@@ -54,7 +67,7 @@ export function ProjectMasthead({
         </Link>
       </header>
       <nav className={p.subnav} aria-label="Project sections">
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const slug = t.slug || "overview";
           const href = t.slug
             ? `/projects/${project.id}/${t.slug}`
@@ -62,9 +75,10 @@ export function ProjectMasthead({
           const isActive = active === slug;
           return (
             <Link
-              key={t.slug}
+              key={t.slug || "overview"}
               href={href}
               className={`${p.subnavItem} ${isActive ? p.subnavItemActive : ""}`}
+              aria-current={isActive ? "page" : undefined}
             >
               {t.label}
             </Link>
@@ -76,18 +90,5 @@ export function ProjectMasthead({
 }
 
 export function NotFoundPage({ message }: { message: string }) {
-  return (
-    <main className={s.pageNarrow}>
-      <header className={s.masthead}>
-        <div className={s.brand}>
-          Project not found
-          <span className={s.brandSub}>Workstream</span>
-        </div>
-        <Link href="/" className={s.crumb}>
-          ← Projects
-        </Link>
-      </header>
-      <div className={s.empty}>{message}</div>
-    </main>
-  );
+  return <NotFoundView title="Project not found" message={message} />;
 }

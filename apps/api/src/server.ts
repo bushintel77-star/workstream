@@ -5,7 +5,6 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
 import { assertAuthConfigured } from './lib/auth-config';
@@ -44,6 +43,7 @@ import stripeWebhookRoutes from './routes/stripe-webhook';
 import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from './routes/integration-hub';
+import protectedFileRoutes from './routes/protected-files';
 
 const server = Fastify({ logger: true });
 
@@ -97,24 +97,15 @@ async function start() {
     limits: { fileSize: 100 * 1024 * 1024 },
   });
 
-  for (const dir of ['uploads', 'outputs', 'photos', 'aerial']) {
+  for (const dir of ['uploads', 'outputs', 'photos', 'aerial', 'filings']) {
     fs.mkdirSync(path.join(process.cwd(), 'data', dir), { recursive: true });
   }
 
-  await server.register(fastifyStatic, {
-    root: path.join(process.cwd(), 'data', 'uploads'),
-    prefix: '/uploads/',
-    decorateReply: false,
-  });
-  await server.register(fastifyStatic, {
-    root: path.join(process.cwd(), 'data', 'outputs'),
-    prefix: '/outputs/',
-    decorateReply: false,
-  });
   await server.register(websocket);
   await server.register(requestIdPlugin);
   await server.register(authPlugin);
   await server.register(storePlugin);
+  await server.register(protectedFileRoutes);
   await server.register(healthRoutes);
   await server.register(projectRoutes, { prefix: '/projects' });
   await server.register(recordingRoutes, { prefix: '/projects' });
@@ -142,21 +133,6 @@ async function start() {
   await server.register(projectFileRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);
   await server.register(stripeWebhookRoutes);
-  await server.register(fastifyStatic, {
-    root: path.join(process.cwd(), 'data', 'photos'),
-    prefix: '/photos/',
-    decorateReply: false,
-  });
-  await server.register(fastifyStatic, {
-    root: path.join(process.cwd(), 'data', 'aerial'),
-    prefix: '/aerial/',
-    decorateReply: false,
-  });
-  await server.register(fastifyStatic, {
-    root: path.join(process.cwd(), 'data', 'filings'),
-    prefix: '/filings/',
-    decorateReply: false,
-  });
   await server.register(settingsRoutes, { prefix: '/settings' });
   await server.register(integrationHubRoutes, { prefix: '/integrations' });
   await server.register(

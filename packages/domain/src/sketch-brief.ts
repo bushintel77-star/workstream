@@ -1,5 +1,4 @@
 import type {
-  CatalogPlacement,
   CatalogSymbol,
   DesignCanvas,
   Survey,

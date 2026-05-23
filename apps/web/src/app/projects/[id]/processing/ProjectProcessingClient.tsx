@@ -13,7 +13,6 @@ import p from "../project.module.css";
 
 export function ProjectProcessingClient({
   projectId,
-  address,
 }: {
   projectId: string;
   address: string;
@@ -72,17 +71,7 @@ export function ProjectProcessingClient({
   });
 
   return (
-    <main className={s.page}>
-      <header className={s.masthead}>
-        <div className={s.brand}>
-          {address}
-          <span className={s.brandSub}>Processing walkthrough</span>
-        </div>
-        <Link href={`/projects/${projectId}`} className={s.crumb}>
-          ← Project
-        </Link>
-      </header>
-
+    <>
       <h1 className={s.headline}>Turning your walkthrough into a job</h1>
       <p className={s.lede}>
         Transcription, survey, design, costing and audit run automatically.
@@ -106,6 +95,6 @@ export function ProjectProcessingClient({
         {" · "}
         Safe to leave — open the project later from the dashboard.
       </p>
-    </main>
+    </>
   );
 }

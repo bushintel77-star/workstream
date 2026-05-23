@@ -17,8 +17,7 @@ export async function initSentry(): Promise<void> {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn) return;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Sentry: any = await import(
+    const Sentry: { init?: (opts: unknown) => void } | null = await import(
       /* webpackIgnore: true */
       "@sentry/node" as string
     ).catch(() => null);
@@ -44,8 +43,8 @@ export function captureError(err: unknown, context?: Record<string, unknown>): v
   if (!sentryReady) return;
   void (async () => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Sentry: any = await import("@sentry/node" as string).catch(
+      const Sentry: { captureException?: (err: unknown, ctx: unknown) => void } | null =
+        await import("@sentry/node" as string).catch(
         () => null,
       );
       Sentry?.captureException?.(err, { extra: context });

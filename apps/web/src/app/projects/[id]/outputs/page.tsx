@@ -1,5 +1,5 @@
+import { requireProject } from "../../../../lib/project-guard";
 import {
-  getProject,
   listOutputs,
   type OutputKind,
 } from "../../../../lib/api";
@@ -8,12 +8,8 @@ import p from "../project.module.css";
 import { runOutputAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
 import { PipelineActionForm } from "../../../../components/PipelineActionForm";
-import { AppNav } from "../../../../components/AppNav";
 import { ProjectClientHandoff } from "../../../../components/ProjectClientHandoff";
-import {
-  getIntegrationHub,
-  getIntegrationSummary,
-} from "../../../../lib/api";
+import { getIntegrationHub } from "../../../../lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -56,13 +52,10 @@ export default async function OutputsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const [outputs, summary] = await Promise.all([
-    listOutputs(id),
-    getIntegrationSummary().catch(() => null),
-  ]);
+  const outputs = await listOutputs(id);
   const byKind = new Map(outputs.map((o) => [o.kind, o]));
   const quoteOutput = outputs.find((o) => o.kind === "quote");
 
@@ -87,7 +80,6 @@ export default async function OutputsPage({
 
   return (
     <main className={s.page}>
-      <AppNav summary={summary} />
       <ProjectMasthead project={project} active="outputs" />
 
       <ProjectClientHandoff

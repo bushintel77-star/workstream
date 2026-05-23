@@ -1,5 +1,5 @@
+import { requireProject } from "../../../../lib/project-guard";
 import {
-  getProject,
   listCrew,
   listTasks,
   type Task,
@@ -34,7 +34,7 @@ export default async function TasksPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
   const [tasks, crew] = await Promise.all([
@@ -63,14 +63,18 @@ export default async function TasksPage({
 
       <form action={createTaskAction} className={p.taskNewForm}>
         <input type="hidden" name="projectId" value={id} />
-        <input
-          className={s.input}
-          name="title"
-          type="text"
-          placeholder="New task — e.g. Set out front bed"
-          required
-          minLength={1}
-        />
+        <label className={s.label} htmlFor="new-task-title">
+          Task title
+          <input
+            id="new-task-title"
+            className={s.input}
+            name="title"
+            type="text"
+            placeholder="New task — e.g. Set out front bed"
+            required
+            minLength={1}
+          />
+        </label>
         {activeCrew.length > 0 ? (
           <select
             className={s.select}

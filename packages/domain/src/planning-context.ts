@@ -4,7 +4,6 @@ import type {
   DesignCanvas,
   Survey,
 } from "@workstream/contracts";
-import { summarizePlacementsForQuote } from "./catalog-quote";
 import { sketchQtyForSymbol } from "./sketch-costing";
 
 export type Municipality = "stonnington" | "yarra" | "unknown";

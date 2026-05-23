@@ -4,6 +4,10 @@ export const clerkEnabled =
   (process.env.CLERK_SECRET_KEY?.startsWith("sk_") ?? false) &&
   (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_") ?? false);
 
+export function isClerkConfigured(): boolean {
+  return clerkEnabled;
+}
+
 function authRequired(): boolean {
   if (process.env.AUTH_REQUIRED === "true") return true;
   if (process.env.AUTH_REQUIRED === "false") return false;

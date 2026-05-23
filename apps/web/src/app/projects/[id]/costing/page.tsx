@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { requireProject } from "../../../../lib/project-guard";
 import {
-  getProject,
   listCostings,
   type CostScenario,
 } from "../../../../lib/api";
@@ -28,7 +28,7 @@ export default async function CostingPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
   const costings = await listCostings(id);

@@ -5,12 +5,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
+  min-height: min(72vh, 820px);
 }
 
 .workspace {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .canvasCol {
@@ -18,14 +21,17 @@
   flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
+  min-height: 0;
+  flex: 1;
 }
 
 @media (min-width: 960px) {
   .workspace {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: stretch;
     gap: 1.5rem;
+    min-height: min(68vh, 760px);
   }
 }
 
@@ -95,11 +101,29 @@
 }
 
 .counts {
-  margin-left: auto;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--ink-secondary);
+}
+
+.toolbarDestructive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-left: auto;
+}
+
+.saveStatus {
+  font-size: 0.75rem;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
 }
 
 .helper {
@@ -111,7 +135,8 @@
 
 .canvas {
   position: relative;
-  min-height: 280px;
+  flex: 1;
+  min-height: 320px;
   border-radius: var(--r-md);
   overflow: hidden;
   border: 1px solid var(--line-strong);
@@ -136,8 +161,8 @@
 .aerial {
   display: block;
   width: 100%;
-  height: auto;
-  min-height: 280px;
+  height: 100%;
+  min-height: 320px;
   object-fit: cover;
   pointer-events: none;
   user-select: none;
@@ -229,8 +254,7 @@
 }
 
 .btnPrimary {
-  flex: 1;
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 var(--s-5);
   border-radius: var(--r-sm);
   border: none;

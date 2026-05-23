@@ -52,4 +52,15 @@ test.describe("Design studio", () => {
     });
     await expect(page.getByTestId("design-studio-save")).toBeVisible();
   });
+
+  test("save plan from toolbar", async ({ page }) => {
+    await page.goto(`/projects/${projectId}/design/studio`);
+    await expect(page.getByTestId("design-studio-save")).toBeVisible({
+      timeout: 30_000,
+    });
+    await page.getByTestId("design-studio-save").click();
+    await expect(page.getByText(/All changes saved/i)).toBeVisible({
+      timeout: 15_000,
+    });
+  });
 });

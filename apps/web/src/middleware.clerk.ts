@@ -4,6 +4,7 @@ const isProtectedRoute = createRouteMatcher([
   "/",
   "/projects(.*)",
   "/settings(.*)",
+  "/confirm-pin",
 ]);
 
 const handler = clerkMiddleware(async (auth, req) => {

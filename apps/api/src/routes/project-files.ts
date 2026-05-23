@@ -2,7 +2,6 @@ import { FastifyInstance } from "fastify";
 import { mkdir, writeFile, unlink } from "fs/promises";
 import path from "path";
 import {
-  CreateProjectFileInputSchema,
   ProjectFileKindSchema,
 } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";

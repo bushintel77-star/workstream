@@ -93,6 +93,12 @@ export interface Store {
   listProjects(ownerId: string): Promise<Project[]>;
   createProject(ownerId: string, input: CreateProjectInput): Promise<Project>;
   getProject(ownerId: string, id: string): Promise<Project | null>;
+  resolveProjectOwner(projectId: string): Promise<string | null>;
+  resolveAssetOwner(
+    kind: "uploads" | "outputs" | "photos" | "aerial" | "filings",
+    assetId: string,
+  ): Promise<{ ownerId: string; projectId: string } | null>;
+  reloadSnapshot(): void;
   deleteProject(ownerId: string, id: string): Promise<boolean>;
   updateProjectStatus(
     ownerId: string,

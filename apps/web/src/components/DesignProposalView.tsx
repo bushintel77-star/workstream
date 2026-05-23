@@ -63,7 +63,7 @@ function ZoneCard({
                   <span className={d.specLabel}>{pl.common_name}</span>
                   <span className={d.specDetail}>{pl.species}</span>
                   <span className={d.specQty}>
-                    {pl.count} &middot; {pl.form}
+                    {pl.count} · {pl.form}
                   </span>
                 </li>
               ))}
@@ -173,7 +173,7 @@ export function DesignProposalView({
               </div>
               <p className={p.findingStatement}>{g.description}</p>
               <p className={p.findingAction}>
-                Proposed: {g.proposed_fill} &mdash; {g.rationale}
+                Proposed: {g.proposed_fill} — {g.rationale}
               </p>
             </div>
           ))}

@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import s from "../styles/app.module.css";
+
 export default function GlobalError({
   error,
   reset,
@@ -9,60 +12,37 @@ export default function GlobalError({
 }) {
   return (
     <html lang="en-AU">
-      <body
-        style={{
-          fontFamily:
-            "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          background: "#FAFAF7",
-          color: "#18181B",
-          margin: 0,
-          padding: "48px 24px",
-          minHeight: "100vh",
-        }}
-      >
-        <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <h1
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-              margin: "0 0 12px",
-            }}
-          >
-            Workstream hit a hard error
-          </h1>
-          <p style={{ color: "#52525B", lineHeight: 1.55 }}>
-            Something at the root of the app failed to render. Reload, and if it
-            keeps happening let us know.
+      <body className={s.globalErrorBody}>
+        <main className={s.pageNarrow}>
+          <header className={s.masthead}>
+            <div className={s.brand}>
+              Workstream
+              <span className={s.brandSub}>Hard error</span>
+            </div>
+            <Link href="/" className={s.crumb}>
+              ← Projects
+            </Link>
+          </header>
+
+          <h1 className={s.headline}>Workstream hit a hard error</h1>
+          <p className={s.lede}>
+            Something at the root of the app failed to render. Reload, or head
+            back to projects if the problem persists.
           </p>
-          {error.digest && (
-            <p
-              style={{
-                fontFamily: "JetBrains Mono, monospace",
-                fontSize: 12,
-                color: "#A1A1AA",
-              }}
-            >
-              ref: {error.digest}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => reset()}
-            style={{
-              marginTop: 16,
-              padding: "12px 18px",
-              background: "#18181B",
-              color: "#FAFAF7",
-              border: "none",
-              borderRadius: 10,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Reload
-          </button>
-        </div>
+
+          {error.digest ? (
+            <p className={`${s.mono} ${s.dim} ${s.tiny}`}>ref: {error.digest}</p>
+          ) : null}
+
+          <div className={s.actionBar}>
+            <button type="button" className={s.btn} onClick={() => reset()}>
+              Reload
+            </button>
+            <Link href="/" className={s.btnGhost}>
+              Back to projects
+            </Link>
+          </div>
+        </main>
       </body>
     </html>
   );

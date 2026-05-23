@@ -4,15 +4,30 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 
 type ToastKind = "info" | "success" | "error";
 
+type ToastAction = {
+  label: string;
+  onClick: () => void;
+};
+
 type Toast = {
   id: number;
   kind: ToastKind;
   message: string;
   ttlMs: number;
+  action?: ToastAction;
+};
+
+type ShowOptions = {
+  action?: ToastAction;
 };
 
 type ToastContextValue = {
-  show: (message: string, kind?: ToastKind, ttlMs?: number) => void;
+  show: (
+    message: string,
+    kind?: ToastKind,
+    ttlMs?: number,
+    options?: ShowOptions,
+  ) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -33,9 +48,17 @@ export function ToastHost({ children }: { children: React.ReactNode }) {
   }, []);
 
   const show = useCallback(
-    (message: string, kind: ToastKind = "info", ttlMs = 4000) => {
+    (
+      message: string,
+      kind: ToastKind = "info",
+      ttlMs = 4000,
+      options?: ShowOptions,
+    ) => {
       const id = nextId++;
-      setToasts((cur) => [...cur, { id, kind, message, ttlMs }]);
+      setToasts((cur) => [
+        ...cur,
+        { id, kind, message, ttlMs, action: options?.action },
+      ]);
       const timer = setTimeout(() => dismiss(id), ttlMs);
       timers.current.set(id, timer);
     },
@@ -54,7 +77,7 @@ export function ToastHost({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ show }}>
       {children}
       <div
-        aria-live="polite"
+        aria-live={toasts.some((t) => t.kind === "error") ? "assertive" : "polite"}
         aria-atomic="true"
         style={{
           position: "fixed",
@@ -92,11 +115,12 @@ function ToastItem({
   }[toast.kind];
 
   return (
-    <button
-      type="button"
-      onClick={onDismiss}
+    <div
       style={{
         pointerEvents: "auto",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
         background: palette.bg,
         color: palette.fg,
         border: "none",
@@ -106,22 +130,54 @@ function ToastItem({
         fontWeight: 500,
         boxShadow: "0 8px 24px rgba(24,24,27,0.15)",
         maxWidth: 480,
-        cursor: "pointer",
         fontFamily: "inherit",
         animation: "toastIn 200ms ease-out",
       }}
     >
-      {toast.message}
-    </button>
+      <button
+        type="button"
+        onClick={onDismiss}
+        style={{
+          background: "transparent",
+          border: "none",
+          color: "inherit",
+          cursor: "pointer",
+          padding: 0,
+          font: "inherit",
+          textAlign: "left",
+        }}
+      >
+        {toast.message}
+      </button>
+      {toast.action ? (
+        <button
+          type="button"
+          onClick={() => {
+            toast.action?.onClick();
+            onDismiss();
+          }}
+          style={{
+            background: "rgba(255,255,255,0.14)",
+            border: "none",
+            borderRadius: 6,
+            color: "inherit",
+            cursor: "pointer",
+            font: "inherit",
+            fontWeight: 600,
+            padding: "6px 10px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {toast.action.label}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) {
-    /* During initial render before the provider mounts, fall back to a
-     * silent shim rather than throwing. Lets server components hand a
-     * page off without crashing on hydration. */
     return {
       show: () => {
         /* no-op */

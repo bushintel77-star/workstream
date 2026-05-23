@@ -13,6 +13,20 @@ import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 export type PortalScope = "quote_view" | "deposit_checkout" | "change_request";
 
+/** Public portal URL for a signed token (matches Next `/portal/{scope}/[token]` routes). */
+export function buildPortalUrl(scope: PortalScope, token: string): string {
+  const portalBase = (
+    process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
+  ).replace(/\/$/, "");
+  const scopePath =
+    scope === "quote_view"
+      ? "quote"
+      : scope === "deposit_checkout"
+        ? "deposit"
+        : "change_request";
+  return `${portalBase}/portal/${scopePath}/${token}`;
+}
+
 export type PortalTokenPayload = {
   project_id: string;
   scope: PortalScope;

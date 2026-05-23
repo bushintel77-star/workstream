@@ -15,12 +15,12 @@ Brand: **Curtis & Co** on portal — **Workstream** in studio chrome.
 
 | Priority | Item | Status |
 |----------|------|--------|
-| P0 | Operator nav (Projects, Settings) | Shipped |
-| P0 | Pipeline rail — one obvious next step | Shipped |
-| P0 | Costing scenario cards (match portal) | Shipped |
+| P0 | Operator nav (Projects, Settings) | Shipped — unified `AppNav` in layouts |
+| P0 | Pipeline rail — one obvious next step | Shipped — inline on project hub + locked stages |
+| P0 | Costing scenario cards (match portal) | Shipped — inline on `costing/page.tsx` |
 | P1 | Site walk checklist on project hub | Shipped |
-| P1 | Outputs card grid + Send quote panel | Shipped |
-| P2 | Design page zone cards + Tier-1 styling | Shipped |
+| P1 | Outputs card grid + client handoff | Shipped — `outputs/page.tsx` + `ProjectClientHandoff` |
+| P2 | Design page zone cards + Tier-1 styling | Shipped — `DesignProposalView` |
 
 ## Portal — status
 
