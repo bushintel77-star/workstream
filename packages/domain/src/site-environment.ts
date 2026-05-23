@@ -61,11 +61,14 @@ export function melbourneSeason(
   }).format(when);
   const doy = dayOfYear(when);
 
-  let label: string;
-  if (month === 12 || month <= 2) label = "Summer";
-  else if (month <= 5) label = "Autumn";
-  else if (month <= 8) label = "Winter";
-  else label = "Spring";
+  const _seasonLabel =
+    month === 12 || month <= 2
+      ? "Summer"
+      : month <= 5
+        ? "Autumn"
+        : month <= 8
+          ? "Winter"
+          : "Spring";
 
   const fine =
     month === 12 || month === 1 || month === 2
