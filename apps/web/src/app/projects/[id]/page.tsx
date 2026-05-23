@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { requireProject } from "../../../lib/project-guard";
 import {
   getAudit,
   getDesign,
-  getProject,
   getSurvey,
   getDesignCanvas,
   getEnvelopeBrief,
@@ -27,9 +26,8 @@ import { NotFoundPage, ProjectMasthead } from "./ProjectShell";
 import { PipelineActionForm } from "../../../components/PipelineActionForm";
 import { ProjectTitleHero } from "../../../components/ProjectTitleSiteMap";
 import { SiteProjectWidgets } from "../../../components/SiteProjectWidgets";
-import { AppNav } from "../../../components/AppNav";
 import { ProjectClientHandoff } from "../../../components/ProjectClientHandoff";
-import { getIntegrationHub, getIntegrationSummary } from "../../../lib/api";
+import { getIntegrationHub } from "../../../lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -39,15 +37,11 @@ export default async function ProjectHubPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) {
     return (
       <NotFoundPage message="That project couldn't be loaded — it may have been deleted or the API just restarted." />
     );
-  }
-
-  if (project.status === "processing") {
-    redirect(`/projects/${id}/processing`);
   }
 
   const [
@@ -60,7 +54,6 @@ export default async function ProjectHubPage({
     siteContext,
     tasks,
     recordings,
-    summary,
     canvas,
   ] = await Promise.all([
     getSurvey(id),
@@ -72,7 +65,6 @@ export default async function ProjectHubPage({
     getSiteContext(id),
     listTasks(id),
     listRecordings(id),
-    getIntegrationSummary().catch(() => null),
     getDesignCanvas(id).catch(() => null),
   ]);
 
@@ -152,7 +144,6 @@ export default async function ProjectHubPage({
 
   return (
     <main className={s.page}>
-      <AppNav summary={summary} />
       <ProjectMasthead project={project} active="overview" />
 
       <ProjectClientHandoff
@@ -395,6 +386,15 @@ function Stage({
       : status === "blocked"
         ? p.stageBlocked
         : "";
+  if (status === "locked") {
+    return (
+      <div className={`${p.stage} ${p.stageLocked}`} aria-disabled="true">
+        <span className={p.stageNum}>0{n}</span>
+        <span className={p.stageLabel}>{label}</span>
+        <span className={p.stageMeta}>{meta}</span>
+      </div>
+    );
+  }
   return (
     <Link href={href} className={`${p.stage} ${cls}`}>
       <span className={p.stageNum}>0{n}</span>

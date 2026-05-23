@@ -30,7 +30,7 @@
   white-space: nowrap;
   transition: all var(--dur-fast) var(--ease);
   scroll-snap-align: start;
-  min-height: 36px;
+  min-height: 44px;
   display: flex;
   align-items: center;
 }
@@ -87,6 +87,12 @@
 
 .stageBlocked {
   background: color-mix(in srgb, #fee2e2 30%, var(--surface-elevated));
+}
+
+.stageLocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .stageNum {

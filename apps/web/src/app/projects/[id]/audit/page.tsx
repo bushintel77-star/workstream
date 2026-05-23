@@ -1,4 +1,5 @@
-import { getAudit, getProject, listOverrides } from "../../../../lib/api";
+import { requireProject } from "../../../../lib/project-guard";
+import { getAudit, listOverrides } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { createOverrideAction, runAuditAction } from "../../../actions";
@@ -14,7 +15,7 @@ export default async function AuditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
   const [audit, overrides] = await Promise.all([

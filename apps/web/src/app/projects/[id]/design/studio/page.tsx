@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { requireProject } from "../../../../../lib/project-guard";
 import {
   getDesignCanvas,
-  getProject,
   getSurvey,
   listCatalogSymbols,
 } from "../../../../../lib/api";
@@ -17,7 +17,7 @@ export default async function DesignStudioPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
   const survey = await getSurvey(id);

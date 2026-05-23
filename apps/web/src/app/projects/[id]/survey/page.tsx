@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
-import { getProject, getSurvey } from "../../../../lib/api";
+import { requireProject } from "../../../../lib/project-guard";
+import { getSurvey } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import { runSurveyAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
@@ -14,12 +14,9 @@ export default async function SurveyPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) {
     return <NotFoundPage message="Project not found." />;
-  }
-  if (project.status === "processing") {
-    redirect(`/projects/${id}/processing`);
   }
   const survey = await getSurvey(id);
 

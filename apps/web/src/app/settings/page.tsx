@@ -10,8 +10,6 @@ import { SettingsMasthead } from "./SettingsShell";
 import { IntegrationCard } from "../../components/IntegrationCard";
 import { IntegrationHubPanel } from "../../components/IntegrationHubPanel";
 import { IntegrationEventsList } from "../../components/IntegrationEventsList";
-import { AppNav } from "../../components/AppNav";
-import { getIntegrationSummary } from "../../lib/api";
 import { SettingsUpgradeToast } from "../../components/SettingsUpgradeToast";
 
 export const dynamic = "force-dynamic";
@@ -45,22 +43,14 @@ export default async function SettingsPage({
   let integrations: Integration[] = [];
   let billing = null as Awaited<ReturnType<typeof listIntegrations>>["billing"] | null;
   let hub: Awaited<ReturnType<typeof getIntegrationHub>> | null = null;
-  let navSummary: Awaited<ReturnType<typeof getIntegrationSummary>> | null =
-    null;
   let loadError: string | null = null;
   try {
     const listed = await listIntegrations();
     integrations = listed.items;
     billing = listed.billing;
     hub = await getIntegrationHub();
-    navSummary = hub.summary;
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Could not reach the API.";
-    try {
-      navSummary = await getIntegrationSummary();
-    } catch {
-      /* optional */
-    }
   }
 
   const grouped = new Map<IntegrationCategory, Integration[]>();
@@ -72,7 +62,6 @@ export default async function SettingsPage({
 
   return (
     <main className={s.pageNarrow}>
-      <AppNav summary={navSummary} />
       <SettingsUpgradeToast status={sp.studio} />
       <SettingsMasthead active="integrations" subtitle="Integrations" />
 

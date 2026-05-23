@@ -1,13 +1,11 @@
+import { requireProject } from "../../../../lib/project-guard";
 import {
-  getProject,
   getProjectGallery,
   getSiteContext,
   getSurvey,
   listProjectFiles,
-  getIntegrationSummary,
 } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
-import { AppNav } from "../../../../components/AppNav";
 import { FilingUploadForm } from "../../../../components/FilingUploadForm";
 import { SwipeGallery } from "../../../../components/SwipeGallery";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
@@ -20,20 +18,18 @@ export default async function FilingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProject(id);
+  const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const [gallery, files, summary, survey, siteContext] = await Promise.all([
+  const [gallery, files, survey, siteContext] = await Promise.all([
     getProjectGallery(id).catch(() => ({ items: [], viewable: [] })),
     listProjectFiles(id).catch(() => []),
-    getIntegrationSummary().catch(() => null),
     getSurvey(id).catch(() => null),
     getSiteContext(id).catch(() => null),
   ]);
 
   return (
     <main className={s.page}>
-      <AppNav summary={summary} />
       <ProjectMasthead project={project} active="filing" />
 
       <h1 className={s.headline}>Filing</h1>

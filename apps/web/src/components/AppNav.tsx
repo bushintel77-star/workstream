@@ -3,11 +3,13 @@ import type { IntegrationSummary } from "../lib/api";
 import s from "../styles/app.module.css";
 import nav from "./app-nav.module.css";
 
-export function AppNav({
-  summary,
-}: {
+type Props = {
   summary: IntegrationSummary | null;
-}) {
+  /** Show Curtis & Co subtitle under the wordmark (settings context). */
+  brandSub?: boolean;
+};
+
+export function AppNav({ summary, brandSub = false }: Props) {
   const plan = summary?.plan ?? "lite";
   const attention = summary?.needs_attention ?? false;
 
@@ -15,6 +17,9 @@ export function AppNav({
     <nav className={nav.bar} aria-label="Workstream">
       <Link href="/" className={nav.brand}>
         Workstream
+        {brandSub ? (
+          <span className={nav.brandSub}>Curtis &amp; Co</span>
+        ) : null}
       </Link>
       <div className={nav.links}>
         <Link href="/" className={nav.link}>
@@ -22,9 +27,12 @@ export function AppNav({
         </Link>
         <Link href="/settings" className={nav.link}>
           Integrations
-          {attention && (
-            <span className={nav.dot} aria-label="Setup incomplete" />
-          )}
+          {attention ? (
+            <>
+              <span className={nav.dot} aria-hidden />
+              <span className={nav.srOnly}>Setup incomplete</span>
+            </>
+          ) : null}
         </Link>
         <Link href="/settings/accounting" className={nav.link}>
           Accounting
