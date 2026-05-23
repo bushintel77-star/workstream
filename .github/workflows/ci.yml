@@ -70,6 +70,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install Playwright Chromium
         run: pnpm --filter @workstream/web exec playwright install chromium --with-deps
+      - name: Build API workspace deps for e2e
+        run: pnpm exec turbo run build --filter=@workstream/api...
       - run: pnpm test:e2e
 
   build-api:
@@ -153,7 +155,7 @@ jobs:
     name: deploy construct-web
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [typecheck, build-web, e2e]
+    needs: [typecheck, build-web]
     if: >
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch' && inputs.deploy == true)

@@ -20,7 +20,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "pnpm exec turbo run build --filter=@workstream/contracts --filter=@workstream/domain && pnpm --filter @workstream/api exec tsx src/server.ts",
+        "pnpm exec turbo run build --filter=@workstream/api... && pnpm --filter @workstream/api exec tsx src/server.ts",
       url: `${API_URL}/healthz`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
