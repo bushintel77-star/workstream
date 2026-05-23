@@ -4,7 +4,11 @@ import {
   TIER1_WRIGHTS_SAVINGS,
 } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
-import { signPortalToken, verifyPortalToken } from "../lib/magic-link";
+import {
+  buildPortalUrl,
+  signPortalToken,
+  verifyPortalToken,
+} from "../lib/magic-link";
 import { createDepositSession } from "../lib/stripe";
 
 export default async function portalRoutes(fastify: FastifyInstance) {
@@ -30,16 +34,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         project_id: projectId,
         scope: validScope,
       });
-      const portalBase = (
-        process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
-      ).replace(/\/$/, "");
-      const scopePath =
-        validScope === "quote_view"
-          ? "quote"
-          : validScope === "deposit_checkout"
-            ? "deposit"
-            : validScope;
-      const portalUrl = `${portalBase}/portal/${scopePath}/${token}`;
+      const portalUrl = buildPortalUrl(validScope, token);
       return reply.send({ token, portal_url: portalUrl, scope: validScope });
     },
   );
@@ -62,10 +57,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ error: "Token scope does not allow quote view" });
     }
     const projectId = verify.payload.project_id;
-    // The portal serves what the client should see — owner_id is whoever owns
-    // the project, looked up via the cross-tenant store accessor.
-    const owners = await listAllOwnersForProject(fastify, projectId);
-    const ownerId = owners[0];
+    const ownerId = await fastify.store.resolveProjectOwner(projectId);
     if (!ownerId) return reply.code(404).send({ error: "Project not found" });
 
     const project = await fastify.store.getProject(ownerId, projectId);
@@ -103,8 +95,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ error: "Token scope does not allow deposit" });
     }
     const projectId = verify.payload.project_id;
-    const owners = await listAllOwnersForProject(fastify, projectId);
-    const ownerId = owners[0];
+    const ownerId = await fastify.store.resolveProjectOwner(projectId);
     if (!ownerId) return reply.code(404).send({ error: "Project not found" });
 
     const project = await fastify.store.getProject(ownerId, projectId);
@@ -136,21 +127,4 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       return reply.code(502).send({ error: message });
     }
   });
-}
-
-// Helper: the in-memory store doesn't expose project ownership lookup. Walk
-// through known owners (currently just "dev-user" + any Clerk user ids that
-// have created projects) to find the project. Acceptable for the single-tenant
-// demo; revisit when persistence moves to Postgres.
-async function listAllOwnersForProject(
-  fastify: FastifyInstance,
-  projectId: string,
-): Promise<string[]> {
-  const owners: string[] = [];
-  const candidates = ["dev-user"];
-  for (const ownerId of candidates) {
-    const project = await fastify.store.getProject(ownerId, projectId);
-    if (project) owners.push(ownerId);
-  }
-  return owners;
 }

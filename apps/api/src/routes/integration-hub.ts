@@ -19,7 +19,7 @@ import { crmPayloadFromProject, postCrmWebhook } from "../lib/crm-webhook";
 import { sendQuotePackEmail } from "../lib/email-resend";
 import { hydrateEnvForOwner, resolveSecret } from "../lib/integration-secrets";
 import { validateStripeKey } from "../lib/stripe";
-import { signPortalToken } from "../lib/magic-link";
+import { signPortalToken, buildPortalUrl } from "../lib/magic-link";
 
 const TestBodySchema = z.object({
   channel: IntegrationChannelSchema,
@@ -172,6 +172,17 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
       if (!parsed.success) {
         return reply.code(400).send({ error: "plan must be lite or studio" });
       }
+      if (parsed.data === "studio") {
+        const devBypass =
+          process.env.AUTH_REQUIRED === "false" ||
+          process.env.NODE_ENV !== "production";
+        if (!devBypass) {
+          return reply.code(402).send({
+            error: "Studio requires Stripe checkout",
+            hint: "POST /integrations/plan/checkout with success_url and cancel_url",
+          });
+        }
+      }
       const billing = await fastify.store.setWorkspacePlan(
         request.userId!,
         parsed.data,
@@ -221,10 +232,7 @@ export async function registerProjectIntegrationRoutes(
           project_id: projectId,
           scope: "quote_view",
         });
-        const base =
-          process.env.PORTAL_BASE_URL ??
-          "https://workstream-web.fly.dev/portal";
-        portalUrl = `${base}/quote_view/${token}`;
+        portalUrl = buildPortalUrl("quote_view", token);
       }
 
       await hydrateEnvForOwner(fastify.store, ownerId);

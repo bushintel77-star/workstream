@@ -210,6 +210,11 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return { ...p };
     },
 
+    async resolveProjectOwner(projectId) {
+      const p = _projects.find((x) => x.id === projectId);
+      return p?.owner_id ?? null;
+    },
+
     async deleteProject(ownerId, id) {
       const idx = _projects.findIndex(
         (x) => x.id === id && x.owner_id === ownerId,
@@ -239,6 +244,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       removeWhere(_projectMyobLinks, (l) => l.project_id === id);
       removeWhere(_photoMeasurements, (m) => m.project_id === id);
       removeWhere(_projectFiles, (f) => f.project_id === id);
+      removeWhere(_designCanvases, (c) => c.project_id === id);
 
       flush();
       return true;
@@ -852,6 +858,12 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     },
 
     async createProjectFile(ownerId, projectId, input) {
+      const project = _projects.find(
+        (x) => x.id === projectId && x.owner_id === ownerId,
+      );
+      if (!project) {
+        throw new Error(`Project not found: ${projectId}`);
+      }
       const row: import("./types").ProjectFile = {
         id: crypto.randomUUID(),
         owner_id: ownerId,
