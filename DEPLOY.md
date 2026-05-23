@@ -1,14 +1,18 @@
 # Deploying Workstream
 
-The repo deploys as two services:
+The repo has **three deploy surfaces**:
 
 | Surface | Where it runs | What you run |
 | --- | --- | --- |
-| `apps/api` (Fastify) | Fly.io, Sydney region | `flyctl deploy` |
+| `apps/api` (Fastify) | Fly.io `construct-api`, Sydney | `flyctl deploy` (see below) |
+| `apps/web` (Next.js) | Fly.io `construct-web`, Sydney | `flyctl deploy` (see below) |
 | `apps/mobile` (Expo Router) | Expo / EAS Build | `eas build` / `eas submit` |
 
+**Aerial Design Studio** and operator studio UI live in **`apps/web`**
+(`https://construct-web.fly.dev`). API + mobile are separate targets.
+
 The contracts, db, domain, ui, and client packages have no deploy
-target — they're consumed by the two apps at build time.
+target — they're consumed by the apps at build time.
 
 ## Prerequisites
 
@@ -107,11 +111,17 @@ production.
    passes `NEXT_PUBLIC_API_URL=https://construct-api.fly.dev`)
 4. On `main` push: `flyctl deploy` both apps + smoke `curl` health checks
 
-**CI web deploy `unauthorized`:** The GitHub secret (`FLY_API_TOKEN` or
-`BROKKER`) must be a Fly token with deploy access to **both**
-`construct-api` and `construct-web` on the same org. Tokens scoped to API
-only pass the API step and fail on web. Until the secret is updated, deploy
-web from a machine with `flyctl auth login`:
+**CI web deploy `unauthorized`:** Use **two per-app deploy tokens** in GitHub
+secrets (regenerate with `flyctl tokens create deploy -a <app>`):
+
+| Secret | Fly app |
+|--------|---------|
+| `FLY_API_TOKEN` (or legacy `BROKKER`) | `construct-api` |
+| `FLY_API_WEB` | `construct-web` |
+
+CI job `deploy construct-web` reads `FLY_API_WEB` first. Tokens must be deploy-scoped
+for the named app on the same Fly org. Until both secrets are valid, deploy web from
+a machine with `flyctl auth login`:
 
 ```bash
 flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \

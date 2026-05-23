@@ -33,8 +33,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] **BullMQ + Upstash Redis** — move pipeline jobs off the HTTP request
       thread.
 - [ ] **Litestream → R2/B2** — DR backup of the JSON snapshot.
-- [x] **CI deploy job** — `flyctl deploy` on push to `main` when CI is green;
-      token via `FLY_API_TOKEN` or `BROKKER` GitHub secret.
+- [x] **CI deploy job** — split `deploy-api` + `deploy-web` jobs; web uses
+      `FLY_API_WEB` secret (per-app deploy token). Regenerate with
+      `flyctl tokens create deploy -a construct-web`.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions (see open/merged PRs).
 - [ ] **Branch protection on `main`** — require CI green.
 - [ ] **Playwright e2e** for the operator happy path.

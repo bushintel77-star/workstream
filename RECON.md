@@ -1,7 +1,26 @@
 # Aerial Design Studio — recon (Phase 1)
 
-**Date:** 2026-05-22  
-**Brief:** `AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`
+**Date:** 2026-05-22 (updated after deploy review)  
+**Brief:** `AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`  
+**Deploy reference:** `DEPLOY.md`
+
+## Deploy surfaces (corrected)
+
+Phase 1 undercounted deploy targets. The repo has **three** surfaces, not two:
+
+| App | Production | This brief |
+|-----|------------|------------|
+| `apps/api` | `construct-api.fly.dev` | Aerial static URL from `mapbox.ts` / survey |
+| `apps/web` | `construct-web.fly.dev` | **All studio UI work here** |
+| `apps/mobile` | EAS / Expo | Separate `design-studio/[id]` — out of scope |
+
+**CI:** On `main` push, workflow deploys API + web. GitHub `FLY_API_TOKEN` / `BROKKER` is
+currently scoped to API only — web step fails with `unauthorized`. **Human fixes token**
+(see `DEPLOY.md`); agents must **not** edit `.github/workflows/ci.yml` or Fly secrets as
+part of this redesign.
+
+Until CI web deploy works, each `apps/web` phase may need a manual `flyctl deploy` for
+`construct-web` after merge.
 
 ## Product decisions (2026-05-22)
 

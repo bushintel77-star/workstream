@@ -1,7 +1,38 @@
-# Cursor Agent Brief — Aerial Design Studio Redesign (Curtis & Co)
+# Cursor Agent Brief — Aerial Design Studio Redesign
 
 > **Audience:** Autonomous coding agent (Cursor). Execute this brief end to end without
 > further instruction unless a STOP condition is hit. Work in small, reviewable commits.
+
+### Agent context (read first)
+
+- **Repo:** Workstream / Aegis monorepo — **not** the Curtis brand spec in §1 below (that
+  block is legacy; superseded by product decision **B**).
+- **Studio code:** `apps/web` only → deploys to **`construct-web`** on Fly.io. See
+  `RECON.md` and `DEPLOY.md`.
+- **Three deploy surfaces:** `apps/api`, `apps/web`, `apps/mobile` — not two. Do not
+  assume studio ships via API or mobile.
+- **Brand (locked):** `@workstream/ui` + `apps/web/src/styles/globals.css` — achromatic +
+  single `--accent` (`#C2410C`), ≤3% signal surface (Save + armed mode). Walkthrough §3.2.
+- **Mapbox:** Static aerial image only; scale from `apps/web/src/lib/mapView.ts`. No
+  Mapbox GL.
+- **CI / infra (out of scope):** Do **not** change `.github/workflows/ci.yml`, GitHub
+  secrets, or `fly.toml` to “fix” deploy. Known issue: CI token cannot deploy
+  `construct-web` — human regenerates Fly token with both-app scope. Manual web deploy:
+  `DEPLOY.md`.
+- **Phase 6 AI:** Skip implementation this run; write approach to `PROPOSAL.md` only if
+  scheduled. `ANTHROPIC_API_KEY` on API is optional future plumbing, not a green light.
+
+### Re-sequenced execution (2026-05-22)
+
+| Phase | Status |
+|-------|--------|
+| 2 Brand re-skin (Aegis tokens) | **Shipped** (`80e7c07`) — human review before layout |
+| 3 Layout | Next |
+| 4 Planning palette + search by code | |
+| 5 Modeless canvas + scale bar | |
+| 7 States, honesty UI, a11y | |
+| 8 Docs + E2E | |
+| 6 AI detection | **Skipped** (proposal only) |
 
 ---
 
@@ -45,14 +76,14 @@ substitute for a draftsperson. The redesign must make that limit legible, not hi
 
 **In scope**
 - Layout: aerial-as-hero, fixed right rail (~320px), slim top toolbar, no dead black space.
-- Re-skin to the Curtis brand system (tokens, type, single accent).
+- Re-skin to Aegis / `@workstream/ui` tokens (see agent context; §1 legacy text superseded).
 - Asset library: contrast fixes, consistent asset codes on every tile, search by name+code,
   category chips without the horizontal scrollbar, pinned "Planning" group for TRP symbols.
 - Modeless / intent-aware canvas: click-empty-with-asset = place, click-symbol = select,
   drag-empty = marquee/pan; mode bar demoted to fallback.
 - Symbol manipulation: select / move / rotate / scale / delete handles.
 - TPZ symbol resizable with an indicative metre readout (labelled "indicative only").
-- Indicative scale bar derived from Mapbox zoom.
+- Indicative scale bar derived from static aerial bounds (`mapView.ts`).
 - AI assist layer (suggestion-only): aerial detection ghosts for building / trees / paving;
   `Cmd+K` command bar for bulk placement and "estimate this plan".
 - States: empty canvas prompt, Mapbox load failure + retry, saving spinner + success/fail.
@@ -67,6 +98,8 @@ substitute for a draftsperson. The redesign must make that limit legible, not hi
 - 3D / immersive / photoreal rendering.
 - Backend / API changes beyond the saved-plan payload shape.
 - Authentication, routing outside the Studio + Design pages.
+- **CI, Fly.io secrets, workflow edits** — deploy token scope is human/infra (`DEPLOY.md`).
+- **Mobile** `apps/mobile` design studio — separate surface; do not block web phases on it.
 
 ---
 
@@ -80,13 +113,12 @@ substitute for a draftsperson. The redesign must make that limit legible, not hi
 - **STOP and report** if: no design-token file exists, the asset list is hardcoded with no
   single source of truth, or the saved-plan type is undocumented.
 
-### Phase 2 — Brand re-skin (visual only, no behaviour change)
-- Apply Curtis tokens: Deep Canopy surface, bone text, single corten accent.
-- Cormorant Garamond headings, DM Mono labels/codes/readouts.
+### Phase 2 — Brand re-skin (visual only, no behaviour change) — **DONE**
+- Apply **Aegis / `@workstream/ui`** tokens via CSS variables (see agent context).
 - Unify asset tiles to one card treatment; category shown by a small chip, not whole-tile tint.
 - **Fix all contrast failures** — faint asset labels on tinted tiles currently fail AA.
 - Glassy floating chrome: subtle backdrop blur + soft shadow on toolbar/panels over the aerial.
-- Commit: `redesign: apply Curtis brand system to Studio`
+- Commit: `redesign(web): apply Aegis tokens to design studio`
 
 ### Phase 3 — Layout
 - Aerial fills available height; right rail fixed ~320px; slim top toolbar.
@@ -111,20 +143,15 @@ substitute for a draftsperson. The redesign must make that limit legible, not hi
 - Pointer-aware floating context label ("Place Olive standard" / "Move TPZ").
 - Selection handles: move, rotate, scale, delete. `Delete` key removes selection, `Esc` cancels.
 - TPZ resizable; show indicative metre value labelled "indicative only".
-- Indicative scale bar from Mapbox zoom.
+- Indicative scale bar from static aerial bounds (`mapView.ts`), not Mapbox GL zoom.
 - Support both drag-from-library and click-to-place.
 - Commit: `feat: modeless canvas, symbol manipulation, scale reference`
 
-### Phase 6 — AI assist (suggestion-only)
-- On aerial load, run lightweight detection → pre-place **dismissible ghost** symbols for
-  building footprint, tree canopies, paving. Ghost opacity varies by confidence.
-- Detected canopy → offer a pre-tagged `Existing tree (retain)` with an indicative TPZ ring
-  scaled to canopy radius; user confirms.
-- Hover on any ghost shows a one-line "why" ("Detected canopy ~6 m — TPZ set to canopy edge").
-- `Cmd+K` command bar: natural-language bulk placement + "estimate this plan".
-- Ghosts never enter the saved payload until confirmed.
-- **STOP and report** before adding any detection library/model — propose the approach first.
-- Commit: `feat: AI suggestion layer (ghost detection, command bar)`
+### Phase 6 — AI assist (suggestion-only) — **DEFERRED THIS RUN**
+- Do **not** implement detection or command bar in this pass.
+- If asked later: write `PROPOSAL.md` only (approach, cost, libraries) — **STOP** before
+  adding any model/SDK. Optional API secret `ANTHROPIC_API_KEY` does not authorize shipping.
+- Original scope (ghosts, `Cmd+K`, etc.) remains in §2 for a future pass.
 
 ### Phase 7 — States, honesty UI, a11y, shortcuts
 - Empty canvas centred prompt; Mapbox failure state + retry; Save spinner + success/fail.
@@ -171,8 +198,8 @@ substitute for a draftsperson. The redesign must make that limit legible, not hi
 
 **Brand / a11y**
 - [ ] All text passes WCAG AA contrast (verify the previously-faint asset labels specifically).
-- [ ] Only one accent colour used; ≤5% surface area.
-- [ ] Cormorant Garamond headings, DM Mono labels — no other fonts.
+- [ ] Only one accent colour used; ≤3% signal surface (Save + armed mode).
+- [ ] Inter / Inter Display / JetBrains Mono per `globals.css` — no stray fonts.
 - [ ] No hex literals in component styles.
 - [ ] Full keyboard path; visible focus rings; `prefers-reduced-motion` honoured.
 
@@ -188,6 +215,8 @@ Raise a report and wait for a human before proceeding if any of these occur:
 5. The brand system as specified conflicts with what's actually in the codebase.
 6. A required Mapbox capability (e.g. zoom-to-metres) is not available on the current plan/SDK.
 7. Achieving an acceptance gate would require a dependency not already present.
+8. You are tempted to “fix” CI web deploy or Fly secrets — **do not**; report and continue
+   UI work; human owns infra per `DEPLOY.md`.
 
 ---
 
