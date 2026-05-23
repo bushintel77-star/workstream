@@ -393,6 +393,8 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#fdf0fc",
       "#ff2ef6",
     ),
+    default_width_m: 12,
+    rate_card_sku: "TRP-TPZ",
   },
   {
     id: "north",

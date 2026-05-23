@@ -99,3 +99,53 @@ export function resolveStaticMapView(
   const c = ringCentroid(lotRing);
   return { lng: c.lng, lat: c.lat, zoom: 19, width: 800, height: 480 };
 }
+
+/** Ground span covered by the static image frame (metres, north-up). */
+export function groundSpanMetres(view: StaticMapView): {
+  widthM: number;
+  heightM: number;
+} {
+  const latRad = (view.lat * Math.PI) / 180;
+  const metresPerWorldPx =
+    (40_075_016.686 * Math.cos(latRad)) / (512 * 2 ** view.zoom);
+  return {
+    widthM: view.width * metresPerWorldPx,
+    heightM: view.height * metresPerWorldPx,
+  };
+}
+
+export function metresPerCanvasPixel(
+  view: StaticMapView,
+  canvasWidthPx: number,
+  canvasHeightPx: number,
+): { x: number; y: number } {
+  const ground = groundSpanMetres(view);
+  return {
+    x: ground.widthM / Math.max(canvasWidthPx, 1),
+    y: ground.heightM / Math.max(canvasHeightPx, 1),
+  };
+}
+
+const SCALE_BAR_NICE = [1, 2, 5, 10, 20, 50, 100] as const;
+
+/** Indicative scale bar for overlay (not survey-grade). */
+export function indicativeScaleBar(
+  view: StaticMapView,
+  canvasWidthPx: number,
+  targetBarPx = 120,
+): { metres: number; barPx: number } {
+  const mpp = metresPerCanvasPixel(view, canvasWidthPx, 1).x;
+  let best: number = SCALE_BAR_NICE[0];
+  for (const m of SCALE_BAR_NICE) {
+    const px = m / mpp;
+    if (px <= targetBarPx) best = m;
+  }
+  return { metres: best, barPx: Math.max(24, Math.round(best / mpp)) };
+}
+
+export function placementIndicativeMetres(
+  baseMetres: number,
+  scale: number,
+): number {
+  return Math.round(baseMetres * scale * 10) / 10;
+}
