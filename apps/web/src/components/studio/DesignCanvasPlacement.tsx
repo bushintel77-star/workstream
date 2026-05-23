@@ -1,8 +1,11 @@
 "use client";
 
+import { useRef } from "react";
 import type { CatalogPlacement, CatalogSymbol } from "../../lib/api";
 import { DesignAssetGlyph } from "./DesignAssetGlyph";
 import s from "../designStudio.module.css";
+
+const DRAG_THRESHOLD_PX = 4;
 
 type Props = {
   placement: CatalogPlacement;
@@ -11,7 +14,7 @@ type Props = {
   isTpz: boolean;
   indicativeMetres: number | null;
   onSelect: () => void;
-  onMoveStart: (e: React.PointerEvent) => void;
+  onMovePointerDown: (e: React.PointerEvent) => void;
   onRotateStart: (e: React.PointerEvent) => void;
   onScaleStart: (e: React.PointerEvent) => void;
   onDelete: () => void;
@@ -24,11 +27,13 @@ export function DesignCanvasPlacement({
   isTpz,
   indicativeMetres,
   onSelect,
-  onMoveStart,
+  onMovePointerDown,
   onRotateStart,
   onScaleStart,
   onDelete,
 }: Props) {
+  const downRef = useRef<{ x: number; y: number } | null>(null);
+
   return (
     <div
       className={`${s.placed} ${selected ? s.placedSelected : ""} ${isTpz ? s.placedTpz : ""}`}
@@ -39,16 +44,34 @@ export function DesignCanvasPlacement({
       }}
       data-testid="canvas-placement"
       data-placement-id={placement.id}
-      role="button"
+      role="group"
       tabIndex={0}
       aria-label={`${symbol.label}, placed on plan`}
-      aria-pressed={selected}
+      aria-selected={selected}
       onPointerDown={(e) => {
         e.stopPropagation();
         onSelect();
-        onMoveStart(e);
+        downRef.current = { x: e.clientX, y: e.clientY };
+      }}
+      onPointerMove={(e) => {
+        if (!downRef.current) return;
+        const moved = Math.hypot(
+          e.clientX - downRef.current.x,
+          e.clientY - downRef.current.y,
+        );
+        if (moved >= DRAG_THRESHOLD_PX) {
+          downRef.current = null;
+          onMovePointerDown(e);
+        }
+      }}
+      onPointerUp={() => {
+        downRef.current = null;
+      }}
+      onPointerCancel={() => {
+        downRef.current = null;
       }}
       onKeyDown={(e) => {
+        // Delete/Backspace handled by parent canvas keydown listener.
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect();
@@ -57,7 +80,8 @@ export function DesignCanvasPlacement({
     >
       <DesignAssetGlyph symbol={symbol} size="pin" />
       {selected ? (
-        <div className={s.selectionRing} aria-hidden>
+        <>
+          <span className={s.selectionRingDecor} aria-hidden />
           <button
             type="button"
             className={`${s.selectionHandle} ${s.handleRotate}`}
@@ -80,20 +104,19 @@ export function DesignCanvasPlacement({
             type="button"
             className={s.selectionDelete}
             aria-label={`Remove ${symbol.label}`}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
+            onPointerDown={(e) => {
               e.stopPropagation();
               onDelete();
             }}
           >
-            ×
+            ✕
           </button>
           {isTpz && indicativeMetres != null ? (
-            <span className={s.tpzReadout}>
+            <span className={s.tpzReadout} aria-live="polite">
               ~{indicativeMetres} m indicative only
             </span>
           ) : null}
-        </div>
+        </>
       ) : null}
     </div>
   );

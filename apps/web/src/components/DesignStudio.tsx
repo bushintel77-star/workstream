@@ -10,8 +10,8 @@ import {
 import { CATALOG_PLANNING_SYMBOL_IDS } from "@workstream/domain";
 import type { CatalogPlacement, CatalogSymbol } from "../lib/api";
 import {
-  parseMapboxStaticAerial,
   placementIndicativeMetres,
+  resolveStaticMapView,
   type StaticMapView,
 } from "../lib/mapView";
 import { saveDesignCanvasAction } from "../app/actions";
@@ -60,13 +60,11 @@ type DragState =
     };
 
 const TPZ_SYMBOL_ID = "tree-root-protection";
+/** Survey markup ink — stored in payload; rendered via `.markupStroke`. */
+const STROKE_INK_COLOR = "#ff2ef6";
 
 function newId(): string {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return crypto.randomUUID();
 }
 
 function clientPct(
@@ -106,13 +104,14 @@ function pointerDist(
 
 /** Legacy pink strokes render as survey ink (visual only; payload unchanged). */
 function markupStrokeClass(color: string): string | undefined {
-  if (color === "#ff2ef6") return s.markupStroke;
+  if (color === STROKE_INK_COLOR) return s.markupStroke;
   return undefined;
 }
 
 type Props = {
   projectId: string;
   aerialUri: string;
+  lotRing?: [number, number][];
   symbols: CatalogSymbol[];
   initialPlacements: CatalogPlacement[];
   initialStrokes: CanvasStrokeClient[];
@@ -121,6 +120,7 @@ type Props = {
 export function DesignStudio({
   projectId,
   aerialUri,
+  lotRing = [],
   symbols,
   initialPlacements,
   initialStrokes,
@@ -131,6 +131,7 @@ export function DesignStudio({
   const dragRef = useRef<DragState | null>(null);
   const pendingPlaceRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const drawingRef = useRef(false);
+  const savingRef = useRef(false);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
   const [placements, setPlacements] =
@@ -154,11 +155,10 @@ export function DesignStudio({
     text: string;
   } | null>(null);
 
-  const mapView: StaticMapView = useMemo(() => {
-    const parsed = parseMapboxStaticAerial(aerialUri);
-    if (parsed) return parsed;
-    return { lng: -37.8136, lat: 144.9631, zoom: 19, width: 800, height: 480 };
-  }, [aerialUri]);
+  const mapView: StaticMapView = useMemo(
+    () => resolveStaticMapView(aerialUri, lotRing),
+    [aerialUri, lotRing],
+  );
 
   const symbolById = useMemo(
     () => new Map(symbols.map((sym) => [sym.id, sym])),
@@ -170,6 +170,7 @@ export function DesignStudio({
   );
 
   const isDrawMode = toolOverride === "draw";
+  const canUndoStroke = draftPoints.length > 0 || strokes.length > 0;
 
   useEffect(() => {
     const el = canvasRef.current;
@@ -242,7 +243,7 @@ export function DesignStudio({
       {
         id: newId(),
         points: draftPoints,
-        color: "#ff2ef6",
+        color: STROKE_INK_COLOR,
         width_px: 2,
       },
     ]);
@@ -259,16 +260,25 @@ export function DesignStudio({
 
   const clearStrokes = useCallback(() => {
     if (strokes.length === 0) return;
-    if (!confirm(`Clear ${strokes.length} markup stroke(s)?`)) return;
+    const snapshot = [...strokes];
     setStrokes([]);
-  }, [strokes.length]);
+    toast.show(`Cleared ${snapshot.length} markup stroke(s).`, "info", 6000, {
+      action: { label: "Undo", onClick: () => setStrokes(snapshot) },
+    });
+  }, [strokes, toast]);
 
   const clearPlacements = useCallback(() => {
     if (placements.length === 0) return;
-    if (!confirm(`Clear ${placements.length} symbol(s)?`)) return;
+    const snapshot = [...placements];
     setPlacements([]);
     setSelectedPlacementId(null);
-  }, [placements.length]);
+    toast.show(`Cleared ${snapshot.length} symbol(s).`, "info", 6000, {
+      action: {
+        label: "Undo",
+        onClick: () => setPlacements(snapshot),
+      },
+    });
+  }, [placements, toast]);
 
   const handlePaletteSelect = useCallback(
     (id: string) => {
@@ -282,6 +292,7 @@ export function DesignStudio({
 
   const updateCursorHint = useCallback(
     (clientX: number, clientY: number) => {
+      if (dragRef.current) return;
       const el = canvasRef.current;
       if (!el || isDrawMode) {
         setCursorHint(null);
@@ -425,22 +436,39 @@ export function DesignStudio({
     updateCursorHint(e.clientX, e.clientY);
   }
 
+  function releaseCanvasCapture(e: React.PointerEvent<HTMLDivElement>) {
+    const el = canvasRef.current;
+    if (el?.hasPointerCapture(e.pointerId)) {
+      el.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  function handleCanvasPointerCancel(e: React.PointerEvent<HTMLDivElement>) {
+    if (drawingRef.current) {
+      drawingRef.current = false;
+      setDraftPoints([]);
+      releaseCanvasCapture(e);
+      return;
+    }
+    dragRef.current = null;
+    pendingPlaceRef.current = null;
+    releaseCanvasCapture(e);
+  }
+
   function handleCanvasPointerUp(e: React.PointerEvent<HTMLDivElement>) {
     if (drawingRef.current) {
       drawingRef.current = false;
-      const el = canvasRef.current;
-      if (el?.hasPointerCapture(e.pointerId)) {
-        el.releasePointerCapture(e.pointerId);
-      }
+      releaseCanvasCapture(e);
       commitDraftStroke();
       return;
     }
 
+    const hadDrag = dragRef.current !== null;
     dragRef.current = null;
 
     const pending = pendingPlaceRef.current;
     pendingPlaceRef.current = null;
-    if (pending) {
+    if (pending && !hadDrag) {
       const moved = Math.hypot(
         e.clientX - pending.clientX,
         e.clientY - pending.clientY,
@@ -450,10 +478,12 @@ export function DesignStudio({
       }
     }
 
-    const el = canvasRef.current;
-    if (el?.hasPointerCapture(e.pointerId)) {
-      el.releasePointerCapture(e.pointerId);
-    }
+    releaseCanvasCapture(e);
+  }
+
+  function beginPlacementDrag(id: string, e: React.PointerEvent) {
+    pendingPlaceRef.current = null;
+    startMoveDrag(id, e);
   }
 
   function startMoveDrag(id: string, e: React.PointerEvent) {
@@ -472,6 +502,7 @@ export function DesignStudio({
   }
 
   function startRotateDrag(id: string, e: React.PointerEvent) {
+    pendingPlaceRef.current = null;
     const el = canvasRef.current;
     const placement = placements.find((p) => p.id === id);
     if (!el || !placement) return;
@@ -494,6 +525,7 @@ export function DesignStudio({
   }
 
   function startScaleDrag(id: string, e: React.PointerEvent) {
+    pendingPlaceRef.current = null;
     const el = canvasRef.current;
     const placement = placements.find((p) => p.id === id);
     if (!el || !placement) return;
@@ -516,6 +548,8 @@ export function DesignStudio({
   }
 
   async function handleSave() {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       await saveDesignCanvasAction(projectId, placements, strokes);
@@ -533,6 +567,7 @@ export function DesignStudio({
     } catch (err) {
       toast.show(err instanceof Error ? err.message : "Save failed", "error");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -597,8 +632,14 @@ export function DesignStudio({
         </div>
         <KeyboardLegend />
         <div className={s.toolbarDestructive}>
-          <button type="button" className={s.toolBtn} onClick={undo}>
-            Undo
+          <button
+            type="button"
+            className={s.toolBtn}
+            onClick={undo}
+            disabled={!canUndoStroke}
+            aria-disabled={!canUndoStroke}
+          >
+            Undo stroke
           </button>
           <button type="button" className={s.toolBtn} onClick={clearStrokes}>
             Clear markup
@@ -664,10 +705,14 @@ export function DesignStudio({
             onPointerMove={handleCanvasPointerMove}
             onPointerUp={handleCanvasPointerUp}
             onPointerLeave={(e) => {
-              handleCanvasPointerUp(e);
+              if (drawingRef.current || dragRef.current) {
+                handleCanvasPointerCancel(e);
+              } else {
+                handleCanvasPointerUp(e);
+              }
               setCursorHint(null);
             }}
-            onPointerCancel={handleCanvasPointerUp}
+            onPointerCancel={handleCanvasPointerCancel}
             onContextMenu={(e) => isDrawMode && e.preventDefault()}
             role="application"
             aria-label="Site plan canvas"
@@ -688,6 +733,7 @@ export function DesignStudio({
                 </button>
               </div>
             ) : (
+              /* Mapbox static satellite URL from survey — not user-uploaded input. */
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 key={aerialKey}
@@ -736,7 +782,7 @@ export function DesignStudio({
                       : null
                   }
                   onSelect={() => setSelectedPlacementId(p.id)}
-                  onMoveStart={(e) => startMoveDrag(p.id, e)}
+                  onMovePointerDown={(e) => beginPlacementDrag(p.id, e)}
                   onRotateStart={(e) => startRotateDrag(p.id, e)}
                   onScaleStart={(e) => startScaleDrag(p.id, e)}
                   onDelete={() => deletePlacement(p.id)}

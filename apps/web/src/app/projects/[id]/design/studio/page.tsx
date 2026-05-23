@@ -55,6 +55,7 @@ export default async function DesignStudioPage({
       <DesignStudio
         projectId={id}
         aerialUri={survey.aerial_uri}
+        lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
         symbols={symbols}
         initialPlacements={canvas?.placements ?? []}
         initialStrokes={

@@ -114,7 +114,12 @@
   cursor: pointer;
 }
 
-.toolBtn:hover {
+.toolBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toolBtn:hover:not(:disabled) {
   color: var(--ink-primary);
   border-color: var(--line-strong);
   background: var(--surface-base);
@@ -231,9 +236,11 @@
   }
 }
 
-.selectionRing {
+.selectionRingDecor {
   position: absolute;
   inset: -14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-sm);
   pointer-events: none;
 }
 

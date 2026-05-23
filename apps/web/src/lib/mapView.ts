@@ -1,5 +1,8 @@
 /** Mapbox Static Images — geographic bounds for overlay alignment. */
 
+/** Mapbox Static Images API uses 256 px tiles (not 512). */
+export const MAPBOX_TILE_PX = 256;
+
 export type StaticMapView = {
   lng: number;
   lat: number;
@@ -20,7 +23,7 @@ export function lngLatToWorldPx(
   lat: number,
   zoom: number,
 ): [number, number] {
-  const scale = 512 * 2 ** zoom;
+  const scale = MAPBOX_TILE_PX * 2 ** zoom;
   const x = ((lng + 180) / 360) * scale;
   const latRad = (lat * Math.PI) / 180;
   const y =
@@ -60,6 +63,11 @@ export function parseMapboxStaticAerial(uri: string): StaticMapView | null {
   };
 }
 
+/**
+ * Arithmetic mean of ring vertices — adequate for small lot fallback views,
+ * not a true polygon centroid (can sit outside non-convex rings).
+ * Assumes spec-compliant GeoJSON (closed ring uses identical first/last coords).
+ */
 export function ringCentroid(ring: [number, number][]): {
   lng: number;
   lat: number;
@@ -83,8 +91,8 @@ export function projectLngLatToPercent(
 ): [number, number] {
   const [wx, wy] = lngLatToWorldPx(lng, lat, view.zoom);
   const b = staticImageMercatorBounds(view);
-  const spanX = Math.max(b.maxX - b.minX, 1e-9);
-  const spanY = Math.max(b.maxY - b.minY, 1e-9);
+  const spanX = Math.max(b.maxX - b.minX, 1);
+  const spanY = Math.max(b.maxY - b.minY, 1);
   const xPct = ((wx - b.minX) / spanX) * 100;
   const yPct = ((wy - b.minY) / spanY) * 100;
   return [xPct, yPct];
@@ -107,11 +115,20 @@ export function groundSpanMetres(view: StaticMapView): {
 } {
   const latRad = (view.lat * Math.PI) / 180;
   const metresPerWorldPx =
-    (40_075_016.686 * Math.cos(latRad)) / (512 * 2 ** view.zoom);
+    (40_075_016.686 * Math.cos(latRad)) / (MAPBOX_TILE_PX * 2 ** view.zoom);
   return {
     widthM: view.width * metresPerWorldPx,
     heightM: view.height * metresPerWorldPx,
   };
+}
+
+/** Horizontal metres per canvas pixel (scale bar / indicative readouts). */
+export function metresPerCanvasPixelX(
+  view: StaticMapView,
+  canvasWidthPx: number,
+): number {
+  const ground = groundSpanMetres(view);
+  return ground.widthM / Math.max(canvasWidthPx, 1);
 }
 
 export function metresPerCanvasPixel(
@@ -126,7 +143,7 @@ export function metresPerCanvasPixel(
   };
 }
 
-const SCALE_BAR_NICE = [1, 2, 5, 10, 20, 50, 100] as const;
+const SCALE_BAR_NICE = [1, 2, 5, 10, 20, 50, 100, 200, 500] as const;
 
 /** Indicative scale bar for overlay (not survey-grade). */
 export function indicativeScaleBar(
@@ -134,7 +151,7 @@ export function indicativeScaleBar(
   canvasWidthPx: number,
   targetBarPx = 120,
 ): { metres: number; barPx: number } {
-  const mpp = metresPerCanvasPixel(view, canvasWidthPx, 1).x;
+  const mpp = metresPerCanvasPixelX(view, canvasWidthPx);
   let best: number = SCALE_BAR_NICE[0];
   for (const m of SCALE_BAR_NICE) {
     const px = m / mpp;
