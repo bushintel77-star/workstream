@@ -54,7 +54,7 @@ export function ToastHost({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ show }}>
       {children}
       <div
-        aria-live="polite"
+        aria-live={toasts.some((t) => t.kind === "error") ? "assertive" : "polite"}
         aria-atomic="true"
         style={{
           position: "fixed",

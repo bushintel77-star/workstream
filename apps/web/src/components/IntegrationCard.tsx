@@ -80,15 +80,19 @@ export function IntegrationCard({ integration: i }: { integration: Integration }
 
       <form action={run(setIntegrationAction, `${i.label} saved`)} className={styles.form}>
         <input type="hidden" name="key" value={i.key} />
-        <input
-          className={styles.input}
-          name="value"
-          type="password"
-          placeholder={i.placeholder}
-          autoComplete="off"
-          spellCheck={false}
-          disabled={pending}
-        />
+        <label className={styles.label} htmlFor={`integration-${i.key}`}>
+          {i.label} token
+          <input
+            id={`integration-${i.key}`}
+            className={styles.input}
+            name="value"
+            type="password"
+            placeholder={i.placeholder}
+            autoComplete="off"
+            spellCheck={false}
+            disabled={pending}
+          />
+        </label>
         <SubmitButton className={s.btn} pendingLabel="Saving…" disabled={pending}>
           {i.source === "store" ? "Replace" : "Save"}
         </SubmitButton>

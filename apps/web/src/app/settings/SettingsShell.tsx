@@ -44,9 +44,10 @@ export function SettingsMasthead({
           const isActive = active === slug;
           return (
             <Link
-              key={t.slug}
+              key={t.slug || "integrations"}
               href={href}
               className={`${p.subnavItem} ${isActive ? p.subnavItemActive : ""}`}
+              aria-current={isActive ? "page" : undefined}
             >
               {t.label}
             </Link>

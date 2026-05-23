@@ -6,7 +6,7 @@ import {
 } from "../lib/api";
 import s from "../styles/app.module.css";
 import d from "./dashboard.module.css";
-import { deleteProjectAction } from "./actions";
+import { DeleteProjectButton } from "../components/DeleteProjectButton";
 import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
 import { SubmitButton } from "../components/SubmitButton";
 import { requireSignedIn } from "../lib/auth";
@@ -105,17 +105,7 @@ export default async function DashboardPage() {
                   <span>{fmtDate(p.created_at)}</span>
                 </span>
               </Link>
-              <form action={deleteProjectAction}>
-                <input type="hidden" name="id" value={p.id} />
-                <button
-                  type="submit"
-                  className={`${s.btnDanger} ${d.rowDelete}`}
-                  aria-label={`Delete ${p.address}`}
-                  title="Delete"
-                >
-                  Delete
-                </button>
-              </form>
+              <DeleteProjectButton projectId={p.id} address={p.address} />
             </li>
           ))}
         </ul>
