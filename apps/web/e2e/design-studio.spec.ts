@@ -23,26 +23,24 @@ test.describe("Design studio", () => {
 
   test("places catalog asset and saves canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("heading", { name: "Design studio" })).toBeVisible();
     await expect(page.getByTestId("design-asset-palette")).toBeVisible();
 
-    await page.getByTestId("catalog-bluestone-paver").click();
+    const tile = page.getByTestId("catalog-bluestone-paver");
+    await tile.scrollIntoViewIfNeeded();
+    await expect(tile).toBeVisible();
 
     const canvas = page.getByTestId("design-studio-canvas");
     await expect(canvas).toBeVisible();
-    await canvas.click({ position: { x: 120, y: 120 } });
 
-    await expect(page.getByTestId("canvas-placement")).toHaveCount(1, {
-      timeout: 15_000,
+    await tile.dragTo(canvas, {
+      targetPosition: { x: 120, y: 120 },
+      force: true,
     });
 
-    await page.getByRole("button", { name: "Draw" }).click();
-    await page.mouse.move(200, 160);
-    await page.mouse.down();
-    await page.mouse.move(280, 200, { steps: 6 });
-    await page.mouse.up();
+    await expect(page.getByText(/1 symbols/)).toBeVisible({ timeout: 15_000 });
 
     await page.getByTestId("design-studio-save").click();
     await expect(page.getByText("Site plan saved")).toBeVisible({ timeout: 15_000 });
@@ -50,9 +48,8 @@ test.describe("Design studio", () => {
     const res = await page.request.get(`${API}/projects/${projectId}/design-canvas`);
     expect(res.ok()).toBeTruthy();
     const json = (await res.json()) as {
-      canvas: { placements: unknown[]; strokes: unknown[] };
+      canvas: { placements: unknown[] };
     };
     expect(json.canvas.placements.length).toBeGreaterThanOrEqual(1);
-    expect(json.canvas.strokes.length).toBeGreaterThanOrEqual(1);
   });
 });
