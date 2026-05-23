@@ -215,6 +215,50 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return p?.owner_id ?? null;
     },
 
+    async resolveAssetOwner(kind, assetId) {
+      const ownerForProject = (projectId: string) => {
+        const project = _projects.find((p) => p.id === projectId);
+        return project ? { ownerId: project.owner_id, projectId } : null;
+      };
+
+      switch (kind) {
+        case "uploads": {
+          const rec = _recordings.find((r) => r.id === assetId);
+          return rec ? ownerForProject(rec.project_id) : null;
+        }
+        case "outputs": {
+          const out = _outputs.find((o) => o.id === assetId);
+          return out ? ownerForProject(out.project_id) : null;
+        }
+        case "photos": {
+          const row = _photoMeasurements.find((m) =>
+            m.image_uri.includes(assetId),
+          );
+          return row ? ownerForProject(row.project_id) : null;
+        }
+        case "aerial": {
+          const survey = _surveys.find((s) =>
+            s.aerial_uri?.includes(assetId),
+          );
+          return survey ? ownerForProject(survey.project_id) : null;
+        }
+        case "filings": {
+          const file =
+            _projectFiles.find((f) => f.id === assetId) ??
+            _projectFiles.find((f) => f.uri.includes(assetId));
+          return file
+            ? { ownerId: file.owner_id, projectId: file.project_id }
+            : null;
+        }
+        default:
+          return null;
+      }
+    },
+
+    reloadSnapshot() {
+      loadSnapshot();
+    },
+
     async deleteProject(ownerId, id) {
       const idx = _projects.findIndex(
         (x) => x.id === id && x.owner_id === ownerId,
