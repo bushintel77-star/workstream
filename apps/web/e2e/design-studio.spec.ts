@@ -50,14 +50,38 @@ test.describe("Design studio", () => {
       timeout: 15_000,
     });
 
-    await page.getByTestId("design-studio-save").click();
-    await expect(page.getByText("Site plan saved")).toBeVisible({ timeout: 15_000 });
+    const beforeRes = await page.request.get(
+      `${API}/projects/${projectId}/design-canvas`,
+    );
+    expect(beforeRes.ok()).toBeTruthy();
+    const before = (await beforeRes.json()) as {
+      canvas: { updated_at: string | null };
+    };
 
-    const res = await page.request.get(`${API}/projects/${projectId}/design-canvas`);
-    expect(res.ok()).toBeTruthy();
-    const json = (await res.json()) as {
+    const save = page.getByTestId("design-studio-save");
+    await save.click();
+    await expect(save).toHaveText("Save plan", { timeout: 30_000 });
+
+    await expect
+      .poll(async () => {
+        const res = await page.request.get(
+          `${API}/projects/${projectId}/design-canvas`,
+        );
+        if (!res.ok()) return null;
+        const json = (await res.json()) as {
+          canvas: { updated_at: string | null; placements: unknown[] };
+        };
+        return json.canvas.updated_at;
+      })
+      .not.toBe(before.canvas.updated_at);
+
+    const afterRes = await page.request.get(
+      `${API}/projects/${projectId}/design-canvas`,
+    );
+    expect(afterRes.ok()).toBeTruthy();
+    const after = (await afterRes.json()) as {
       canvas: { placements: unknown[] };
     };
-    expect(json.canvas.placements.length).toBeGreaterThanOrEqual(1);
+    expect(after.canvas.placements.length).toBeGreaterThanOrEqual(1);
   });
 });
