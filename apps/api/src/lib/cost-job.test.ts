@@ -56,4 +56,21 @@ describe("runCosting", () => {
       expect(Math.abs(c.total - (c.subtotal + c.gst))).toBeLessThan(2);
     }
   });
+
+  it("aligns tier-1 standard scenario to proposal workbook total", async () => {
+    const project = await store.createProject(owner, {
+      address: "36 Wrights Terrace, Prahran VIC 3181",
+      lat: -37.85,
+      lng: 145.0,
+    });
+    await runSurvey(store, owner, project.id);
+    await runDesign(store, owner, project.id);
+    const costings = await runCosting(store, owner, project.id);
+
+    const standard = costings.find((c) => c.scenario === "standard")!;
+    expect(standard.total).toBe(58410.35);
+    expect(
+      standard.line_items.some((l) => l.sku === "ALW-TIER1-ALIGN"),
+    ).toBe(true);
+  });
 });

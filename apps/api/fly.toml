@@ -56,6 +56,12 @@ kill_timeout = "5s"
   size = "shared-cpu-1x"
   memory = "512mb"
 
+# Optional async pipeline worker — enable after REDIS_URL is set.
+# fly scale count worker=1 -a construct-api
+[processes]
+  app = "node dist/server.js"
+  worker = "node dist/worker.js"
+
 # Persistence: the JSON-snapshot store at packages/db/src/persist.ts writes to
 # /repo/apps/api/data/store.json on every mutation. Single-machine pattern —
 # scale to >1 only after migrating to managed Postgres (or Litestream → R2).

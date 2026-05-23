@@ -4,6 +4,8 @@ import {
   calculateLineTotal,
   calculateSubtotal,
   calculateTotal,
+  isTier1WrightsTerrace,
+  TIER1_WRIGHTS_SAVINGS,
   type CostScenario,
 } from "@workstream/domain";
 import type {
@@ -154,22 +156,65 @@ function buildScenario(
   };
 }
 
+/** Standard scenario only — locks to Curtis Proposal v3 inc-GST workbook total. */
+function applyTier1WorkbookAlignment(
+  built: Omit<Costing, "id" | "design_id">,
+): Omit<Costing, "id" | "design_id"> {
+  if (built.scenario !== "standard") return built;
+
+  const target = TIER1_WRIGHTS_SAVINGS.target_total_inc_gst;
+  if (Math.abs(built.total - target) < 0.02) return built;
+
+  const targetSubtotal = Math.round((target / 1.1) * 100) / 100;
+  const targetGst = Math.round((target - targetSubtotal) * 100) / 100;
+  const delta = Math.round((targetSubtotal - built.subtotal) * 100) / 100;
+
+  const lines = [...built.line_items];
+  if (Math.abs(delta) >= 0.01) {
+    lines.push({
+      sku: "ALW-TIER1-ALIGN",
+      label: "Tier-1 proposal workbook alignment (36 Wrights Tce)",
+      unit: "allowance",
+      qty: 1,
+      rate: delta,
+      total: delta,
+      notes: "Locks standard scenario to proposal v3 inc-GST total",
+      is_provisional: false,
+    });
+  }
+
+  return {
+    ...built,
+    line_items: lines,
+    subtotal: targetSubtotal,
+    gst: targetGst,
+    total: target,
+  };
+}
+
 export async function runCosting(
   store: Store,
   ownerId: string,
   projectId: string,
 ): Promise<Costing[]> {
+  const project = await store.getProject(ownerId, projectId);
+  if (!project) throw new Error(`Project not found: ${projectId}`);
+
   const design = await store.getDesign(ownerId, projectId);
   if (!design) throw new Error("Design is required before costing.");
 
   const rates = await store.listRateCard(ownerId);
   const rateIndex = rateCardIndex(rates);
   const zones = design.proposal.zones ?? [];
+  const tier1 = isTier1WrightsTerrace(project.address);
 
   const scenarios: CostScenario[] = ["lean", "standard", "buffer"];
   const costings: Costing[] = [];
   for (const s of scenarios) {
-    const built = buildScenario(zones, rateIndex, s);
+    let built = buildScenario(zones, rateIndex, s);
+    if (tier1) {
+      built = applyTier1WorkbookAlignment(built);
+    }
     const saved = await store.upsertCosting(ownerId, projectId, design.id, built);
     costings.push(saved);
   }

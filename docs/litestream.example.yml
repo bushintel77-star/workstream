@@ -1,0 +1,15 @@
+# Litestream example — replicate JSON snapshot to object storage (DR).
+# Not active until you provision R2/B2 credentials and mount this on Fly.
+#
+#   fly secrets set LITESTREAM_ACCESS_KEY_ID=… LITESTREAM_SECRET_ACCESS_KEY=…
+#   fly deploy -a construct-api
+
+dbs:
+  - path: /repo/apps/api/data/store.json
+    replicas:
+      - type: s3
+        bucket: workstream-dr
+        path: construct-api/store.json
+        endpoint: ${LITESTREAM_S3_ENDPOINT}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "eslint apps/api/src packages/domain/src packages/contracts/src --max-warnings 50",
     "typecheck": "turbo typecheck",
     "test": "vitest run",
     "test:e2e": "pnpm --filter @workstream/web test:e2e",
@@ -19,11 +19,14 @@
     "prepare": "husky || true"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^9.39.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",
+    "typescript-eslint": "^8.46.4",
     "vitest": "^2.1.9"
   }
 }

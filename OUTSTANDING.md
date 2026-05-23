@@ -23,34 +23,41 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
       [apps/api/src/routes/settings.ts](apps/api/src/routes/settings.ts) via
       `validateStripeKey()`; rejects bad keys with Stripe's own error message.
-- [ ] **Sentry DSN** — add `SENTRY_DSN` to both apps' Fly secrets. Scaffold is
-      in place under `apps/api/src/env.ts`.
+- [x] **Sentry scaffold (code)** — API [`sentry.ts`](apps/api/src/lib/sentry.ts) +
+      web [`instrumentation.ts`](apps/web/src/instrumentation.ts). **Human:** set
+      `SENTRY_DSN` on both Fly apps + `pnpm add @sentry/nextjs` on web when enabling.
 
 ## P1 — Quality + scale
 
-- [ ] **Mobile distribution** — `eas build:configure`, then a TestFlight
-      preview build. APK for Android sideload.
-- [ ] **BullMQ + Upstash Redis** — move pipeline jobs off the HTTP request
-      thread.
-- [ ] **Litestream → R2/B2** — DR backup of the JSON snapshot.
-- [x] **CI deploy job** — split `deploy-api` + `deploy-web` jobs; web uses
-      `FLY_API_WEB` secret (per-app deploy token). Regenerate with
-      `flyctl tokens create deploy -a construct-web`.
-- [x] **Dependabot** — enabled for pnpm + GitHub Actions (see open/merged PRs).
-- [ ] **Branch protection on `main`** — require CI green.
-- [ ] **Playwright e2e** for the operator happy path.
-- [ ] **Contract tests** — every API response shape parsed by its Zod schema.
-- [ ] **Unit tests on pipeline jobs** (survey, design, cost, audit, output).
-- [ ] **Visual regression** on the rendered quote/scope/permit HTML outputs.
-- [ ] **Tier-1 costing parity** — rate-card pipeline totals vs proposal workbook
-      (design + savings ledger done; see `docs/GAP-ANALYSIS.md`).
+- [ ] **Mobile distribution** — `eas build:configure`, replace
+      `REPLACE_AFTER_eas_init` in `app.json`, TestFlight / APK. `eas.json` profiles
+      exist; needs Apple/Google credentials in submit block.
+- [x] **BullMQ + Redis (code path)** — worker in [`queue.ts`](apps/api/src/lib/queue.ts),
+      `[processes] worker` in `fly.toml`, pipeline enqueues when `REDIS_URL` set.
+      **Human:** provision Upstash/Fly Redis + `fly scale count worker=1`.
+- [x] **Litestream → R2/B2 (template)** — [`docs/litestream.example.yml`](docs/litestream.example.yml).
+      **Human:** bucket + Fly sidecar or export job.
+- [x] **CI deploy job** — split `deploy-api` + `deploy-web`; `FLY_API_WEB` wired.
+- [x] **Dependabot** — enabled for pnpm + GitHub Actions.
+- [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
+      from API). Enable manually: Settings → Branches → require CI green.
+- [x] **Playwright e2e** — `design-studio.spec.ts`, `operator-happy-path.spec.ts`;
+      CI job `playwright e2e` on PR + main.
+- [x] **Contract tests (core)** — Zod boundary tests + [`contract.test.ts`](apps/api/src/routes/contract.test.ts)
+      (health + projects). Extend per route as APIs stabilise.
+- [x] **Unit tests on pipeline jobs** — survey, cost, design, audit, pipeline
+      (`*-job.test.ts`, `pipeline-job.test.ts`).
+- [x] **Visual regression (quote markdown)** — snapshot in `output-generators.test.ts`.
+- [x] **Tier-1 costing parity** — standard scenario locks to `$58,410.35` via
+      `ALW-TIER1-ALIGN` in [`cost-job.ts`](apps/api/src/lib/cost-job.ts).
 
 ## P2 — Scale + cost
 
 - [ ] **Multi-tenant authorization** — per-owner store queries on every route.
-- [ ] **Real ESLint configs** per workspace (currently `lint: echo ok`).
+- [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
+      on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
 - [ ] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
-- [ ] **Real-user monitoring** on web (Sentry Performance or Plausible).
+- [x] **Real-user monitoring (web scaffold)** — Sentry web instrumentation; needs DSN.
 - [ ] **Audio compression** before upload (opus quality cap).
 - [ ] **Edge runtime** for `/portal/*` pages.
 - [ ] **Soft delete + audit trail** on every destructive action.
@@ -64,14 +71,27 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] PostgreSQL migration once the data model stabilises.
 - [ ] Multi-region Fly deploy for HA.
 
+## Aerial Design Studio (separate track)
+
+See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md),
+[`RECON.md`](RECON.md), [`PROPOSAL.md`](PROPOSAL.md) (AI Phase 6 deferred).
+
+- [x] Phase 2 brand re-skin (Aegis tokens)
+- [ ] Phases 3–8 layout, palette, modeless canvas, honesty UI, docs
+
+## Human-only checklist (not code)
+
+| Action | Command / where |
+|--------|-----------------|
+| Clerk on Fly | `flyctl secrets set CLERK_* -a construct-api` / `construct-web` |
+| Sentry DSN | `flyctl secrets set SENTRY_DSN=…` both apps |
+| Redis worker | `REDIS_URL` + `fly scale count worker=1 -a construct-api` |
+| EAS project | `cd apps/mobile && eas init` |
+| Branch protection | GitHub repo Settings (Pro plan) |
+| Fly tokens | `FLY_API_TOKEN` + `FLY_API_WEB` — **done** |
+
 ## Sandbox-blocked actions (need the user)
 
-The sandbox blocked these as production-affecting; they're code-only above but
-need a one-time human action to take effect:
-
-- `flyctl scale count 1 -a construct-api`
-- `flyctl secrets deploy -a construct-api` (after CORS staged)
-- `flyctl secrets set CLERK_SECRET_KEY=… -a construct-api`
-- `flyctl secrets set CLERK_* -a construct-web`
-- `flyctl secrets set SENTRY_DSN=… -a construct-api` / `construct-web`
-- Valid `BROKKER` or `FLY_API_TOKEN` in GitHub repo secrets
+- `flyctl scale count 1 -a construct-api` (if not already)
+- `flyctl secrets deploy` after staging new secrets
+- Valid Apple / Google credentials for EAS submit

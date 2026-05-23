@@ -107,4 +107,12 @@ describe("buildQuote", () => {
     expect(md).toContain("Bluestone paver");
     expect(md).toContain("PAV-BLUE");
   });
+
+  it("matches quote markdown snapshot for stable sections", () => {
+    const md = buildQuote(baseArgs());
+    const normalised = md
+      .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z/g, "TIMESTAMP")
+      .replace(/Project [a-f0-9-]+/gi, "Project ID");
+    expect(normalised).toMatchSnapshot();
+  });
 });

@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runFullPipeline } from "../lib/pipeline-job";
 import { runDevelopFromSketchPipeline } from "../lib/develop-pipeline";
+import { enqueuePipelineJob } from "../lib/queue";
 
 export default async function pipelineRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -39,6 +40,15 @@ export default async function pipelineRoutes(fastify: FastifyInstance) {
       // Kick off the pipeline in the background; the client observes progress
       // by polling the project's status + child resources. Errors are logged
       // but don't propagate to the HTTP response.
+      const queued = await enqueuePipelineJob({
+        kind: "pipeline",
+        ownerId,
+        projectId,
+      });
+      if (queued.enqueued) {
+        return reply.code(202).send({ accepted: true, queued: true, jobId: queued.jobId });
+      }
+
       void runFullPipeline(fastify.store, ownerId, projectId).catch((err) => {
         request.log.error(err, "background pipeline failed");
       });

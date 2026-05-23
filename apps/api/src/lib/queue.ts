@@ -1,24 +1,21 @@
 /**
- * Pipeline-job queue scaffold. Activates only if REDIS_URL is set; otherwise
- * the existing inline execution path is used (the API does the work in the
- * request handler).
- *
- * To enable async pipeline execution:
- *
- *   1. Provision Redis (Upstash, Redis Cloud, Fly Redis — any).
- *   2. `pnpm --filter @workstream/api add bullmq ioredis`
- *   3. `flyctl secrets set REDIS_URL=rediss://… -a construct-api`
- *   4. Start a worker process on a separate Fly machine via
- *      `[processes]` in fly.toml — e.g. `worker = "node dist/worker.js"`.
- *      A worker.js wrapper that calls `startWorker()` from this file is
- *      the next thing to write.
- *
- * Until then this file is a no-op safety net.
+ * BullMQ pipeline queue. Inline execution when REDIS_URL is unset.
  */
 
 import type { Store } from "@workstream/db";
+import { runFullPipeline } from "./pipeline-job";
+import { runSurvey } from "./survey-job";
+import { runDesign } from "./design-job";
+import { runCosting } from "./cost-job";
+import { runProjectAudit } from "./audit-job";
 
-type JobKind = "survey" | "design" | "costing" | "audit" | "output";
+type JobKind =
+  | "survey"
+  | "design"
+  | "costing"
+  | "audit"
+  | "output"
+  | "pipeline";
 
 export type PipelineJobPayload = {
   kind: JobKind;
@@ -61,14 +58,49 @@ export async function enqueuePipelineJob(
   }
 }
 
-/**
- * Worker entrypoint — wire this into `worker.js` once bullmq is installed
- * and a Fly worker process is configured.
- */
-export async function startWorker(_store: Store): Promise<void> {
+async function runJob(store: Store, payload: PipelineJobPayload): Promise<void> {
+  const { kind, ownerId, projectId } = payload;
+  switch (kind) {
+    case "pipeline":
+      await runFullPipeline(store, ownerId, projectId);
+      break;
+    case "survey":
+      await runSurvey(store, ownerId, projectId);
+      break;
+    case "design":
+      await runDesign(store, ownerId, projectId);
+      break;
+    case "costing":
+      await runCosting(store, ownerId, projectId);
+      break;
+    case "audit":
+      await runProjectAudit(store, ownerId, projectId);
+      break;
+    case "output":
+      throw new Error("output jobs are enqueued via output routes");
+    default:
+      throw new Error(`Unknown job kind: ${kind satisfies never}`);
+  }
+}
+
+export async function startWorker(store: Store): Promise<void> {
   if (!isQueueEnabled()) {
     console.log("[queue] REDIS_URL not set; not starting worker");
     return;
   }
-  console.log("[queue] worker scaffold present — install bullmq to enable");
+
+  const { Worker } = await import("bullmq");
+  const worker = new Worker(
+    "workstream-pipeline",
+    async (job) => {
+      await runJob(store, job.data as PipelineJobPayload);
+    },
+    { connection: { url: process.env.REDIS_URL } },
+  );
+
+  worker.on("failed", (job, err) => {
+    console.error("[queue] job failed", job?.id, err);
+  });
+
+  console.log("[queue] BullMQ worker listening on workstream-pipeline");
 }

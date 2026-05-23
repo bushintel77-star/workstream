@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildQuote > matches quote markdown snapshot for stable sections 1`] = `
+"# Quote — 12 Test St, Melbourne VIC
+
+Curtis & Co — Boutique Landscape Design, Melbourne.
+
+**Project total (Standard scenario, incl. GST): $5,280**
+
+Subtotal $4,800.00  ·  GST $480.00
+
+## Scope
+
+### Rear garden
+Formal planting
+
+## Site plan (design studio)
+
+Assets placed on the aerial site plan. Quantities are plan counts — confirm against design zones before issue.
+
+| Asset | Qty on plan | SKU | Rate card |
+| --- | ---: | --- | --- |
+| Bluestone paver | 1 | PAV-BLUE | Bluestone paving (m² @ 120) |
+
+## Planning & permits (from envelope sketch)
+
+- Confirm council — **Review**: Municipality not inferred from address — confirm via Vicmap / planning certificate before lodgement.
+
+## Inclusions (Standard)
+
+- Bluestone paving — 40 m² @ $120.00 → $4,800.00
+
+## Scenarios
+
+- STANDARD — $5,280 incl. GST
+
+## Embodied carbon (estimate)
+
+- Net: 0 kg CO₂e
+- Coefficients pending for: PAV-BLUE
+
+Estimates use the EPiC database (epicdatabase.com.au) for AU construction materials and ICE v3 where local data is missing. Plant biogenic uptake is a lifecycle stub — replace with EPDs when supplier data is available.
+
+Quote valid 30 days. Pricing reflects rate card effective on Project IDreation."
+`;
