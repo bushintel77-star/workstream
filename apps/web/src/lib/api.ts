@@ -1,9 +1,9 @@
-import { clerkEnabled } from "./auth";
+import "server-only";
 
-const API_URL =
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:3001";
+import { clerkEnabled } from "./auth";
+import { operatorApiUrl } from "./public-env";
+
+const API_URL = operatorApiUrl();
 
 async function apiHeaders(json = false): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};

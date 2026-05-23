@@ -1,9 +1,15 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
+import { clerkEnabled } from "../../../lib/auth";
 import s from "../../../styles/app.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default function SignUpPage() {
+  if (!clerkEnabled) {
+    redirect("/");
+  }
   return (
     <main className={s.pageNarrow}>
       <header className={s.masthead}>
@@ -13,6 +19,9 @@ export default function SignUpPage() {
         </div>
       </header>
       <SignUp />
+      <p className={s.meta}>
+        <Link href="/">← Back to projects</Link>
+      </p>
     </main>
   );
 }
