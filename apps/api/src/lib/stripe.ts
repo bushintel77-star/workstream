@@ -8,11 +8,12 @@
 
 import { createHmac, timingSafeEqual } from "crypto";
 import type { Costing, Project } from "@workstream/contracts";
+import { getOwnerEnv } from "./owner-secrets";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
 export function isStripeLive(): boolean {
-  return !!process.env.STRIPE_SECRET_KEY;
+  return !!getOwnerEnv("STRIPE_SECRET_KEY");
 }
 
 export type StripeKeyCheck =
@@ -111,6 +112,7 @@ export type StripeEvent = {
 export type DepositArgs = {
   project: Project;
   costing: Costing;
+  owner_id?: string;
   deposit_pct?: number; // default 20%
   success_url: string;
   cancel_url: string;
@@ -154,12 +156,20 @@ export async function createDepositSession(
   );
   form.set("payment_method_types[0]", "card");
   form.set("metadata[project_id]", args.project.id);
+  if (args.owner_id) {
+    form.set("metadata[owner_id]", args.owner_id);
+  }
   form.set("metadata[deposit_pct]", String(pct));
+
+  const secretKey = getOwnerEnv("STRIPE_SECRET_KEY");
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY not configured for this workspace");
+  }
 
   const res = await fetch(`${STRIPE_API}/checkout/sessions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+      Authorization: `Bearer ${secretKey}`,
       "content-type": "application/x-www-form-urlencoded",
     },
     body: form,

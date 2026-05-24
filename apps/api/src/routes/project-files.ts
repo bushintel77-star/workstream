@@ -12,6 +12,7 @@ import {
   viewableGalleryItems,
 } from "../lib/project-gallery";
 import { publicBaseUrl } from "../lib/public-url";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 const FILINGS_DIR = path.join(process.cwd(), "data", "filings");
 
@@ -42,8 +43,8 @@ export default async function projectFileRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
-      const project = await fastify.store.getProject(ownerId, projectId);
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       const items = await buildProjectGallery(fastify.store, ownerId, projectId);
       return reply.send({
         items,
@@ -57,10 +58,12 @@ export default async function projectFileRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const files = await fastify.store.listProjectFiles(
-        request.userId!,
-        projectId,
-      );
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const files = await fastify.store.listProjectFiles(ownerId, projectId);
       return reply.send({ files });
     },
   );
@@ -71,8 +74,8 @@ export default async function projectFileRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
-      const project = await fastify.store.getProject(ownerId, projectId);
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
 
       const file = await request.file();
       if (!file) return reply.code(400).send({ error: "No file uploaded" });
@@ -131,8 +134,8 @@ export default async function projectFileRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
-      const project = await fastify.store.getProject(ownerId, projectId);
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
 
       const file = await request.file();
       if (!file) return reply.code(400).send({ error: "No image uploaded" });

@@ -55,8 +55,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 - [x] **Per-request owner secrets** — `owner-secrets.ts` AsyncLocalStorage; no
       `process.env` mutation in auth path.
-- [ ] **Multi-tenant authorization** — per-owner store queries on every route (pattern
-      in place; audit remaining handlers).
+- [ ] **Multi-tenant authorization** — route-level `getOwnedProject` gates (most GET routes done).
 - [x] **Protected file delivery** — auth or portal token on `/uploads`, `/outputs`,
       `/photos`, `/aerial`, `/filings` ([protected-files.ts](apps/api/src/routes/protected-files.ts)).
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
@@ -71,7 +70,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] **Soft delete + audit trail** on every destructive action.
 - [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
 - [x] **Dashboard delete undo** — toast restores via restore endpoint.
-- [ ] **Idempotency keys** on pipeline POSTs.
+- [x] **Pipeline idempotency (in-memory)** — `Idempotency-Key` on full pipeline POST.
 
 ## P3 — Nice to have
 

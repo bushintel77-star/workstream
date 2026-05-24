@@ -3,6 +3,7 @@ import { requireAuth } from "../plugins/auth";
 import { audioPublicUrl, saveAudio } from "../lib/storage";
 import { publicBaseUrl } from "../lib/public-url";
 import { runCapturePipeline } from "../lib/capture-pipeline";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function recordingRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -12,9 +13,9 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
 
-      const project = await fastify.store.getProject(ownerId, projectId);
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
       if (!project) {
-        return reply.code(404).send({ error: "Project not found" });
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       }
 
       const file = await request.file();
@@ -75,10 +76,12 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const recordings = await fastify.store.listRecordings(
-        request.userId!,
-        projectId
-      );
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const recordings = await fastify.store.listRecordings(ownerId, projectId);
       return reply.send({ recordings });
     }
   );

@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runCosting } from "../lib/cost-job";
 import { runSketchCosting } from "../lib/sketch-cost-job";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function costingRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -61,10 +62,12 @@ export default async function costingRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const costings = await fastify.store.listCostings(
-        request.userId!,
-        projectId,
-      );
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const costings = await fastify.store.listCostings(ownerId, projectId);
       return reply.send({ costings });
     },
   );

@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runProjectAudit } from "../lib/audit-job";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function auditRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -34,7 +35,12 @@ export default async function auditRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const audit = await fastify.store.getAudit(request.userId!, projectId);
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const audit = await fastify.store.getAudit(ownerId, projectId);
       if (!audit) return reply.code(404).send({ error: "Audit not found" });
       return reply.send({ audit });
     },

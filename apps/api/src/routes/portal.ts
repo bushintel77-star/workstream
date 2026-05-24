@@ -10,6 +10,7 @@ import {
   verifyPortalToken,
 } from "../lib/magic-link";
 import { createDepositSession } from "../lib/stripe";
+import { bindOwnerSecrets } from "../lib/owner-secrets";
 
 export default async function portalRoutes(fastify: FastifyInstance) {
   // --- Authed: studio side ---
@@ -120,9 +121,11 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
     ).replace(/\/$/, "");
     try {
+      await bindOwnerSecrets(fastify.store, ownerId);
       const session = await createDepositSession({
         project,
         costing: standard,
+        owner_id: ownerId,
         deposit_pct: Number(process.env.DEPOSIT_PCT ?? 20),
         success_url: `${portalBase}/portal/deposit-success`,
         cancel_url: `${portalBase}/portal/deposit-cancel`,

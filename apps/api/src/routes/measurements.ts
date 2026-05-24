@@ -4,6 +4,7 @@ import path from "path";
 import { requireAuth } from "../plugins/auth";
 import { measurePhoto } from "../lib/claude";
 import { publicBaseUrl } from "../lib/public-url";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 const PHOTOS_DIR = path.join(process.cwd(), "data", "photos");
 
@@ -28,8 +29,13 @@ export default async function measurementRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const measurements = await fastify.store.listPhotoMeasurements(
-        request.userId!,
+        ownerId,
         projectId,
       );
       return reply.send({ measurements });
@@ -43,8 +49,8 @@ export default async function measurementRoutes(fastify: FastifyInstance) {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
 
-      const project = await fastify.store.getProject(ownerId, projectId);
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
 
       const file = await request.file();
       if (!file) {

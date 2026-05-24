@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runDesign } from "../lib/design-job";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function designRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -31,10 +32,12 @@ export default async function designRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const design = await fastify.store.getDesign(
-        request.userId!,
-        projectId,
-      );
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const design = await fastify.store.getDesign(ownerId, projectId);
       if (!design) {
         return reply.code(404).send({ error: "Design not found" });
       }

@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runSurvey } from "../lib/survey-job";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function surveyRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -28,7 +29,12 @@ export default async function surveyRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const survey = await fastify.store.getSurvey(request.userId!, projectId);
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const survey = await fastify.store.getSurvey(ownerId, projectId);
       if (!survey) {
         return reply.code(404).send({ error: "Survey not found" });
       }

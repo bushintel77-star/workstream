@@ -75,6 +75,16 @@ export async function applyStudioFromCheckoutSession(
   if (session.metadata?.purpose !== "studio_upgrade") return false;
   const ownerId = session.metadata?.owner_id;
   if (!ownerId) return false;
+  const billing = await store.getWorkspaceBilling(ownerId);
+  const customer =
+    typeof session.customer === "string" ? session.customer : null;
+  if (
+    billing.stripe_customer_id &&
+    customer &&
+    billing.stripe_customer_id !== customer
+  ) {
+    return false;
+  }
   await store.patchWorkspaceBilling(ownerId, {
     plan: "studio",
     seat_limit: 1,

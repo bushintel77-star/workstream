@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { totalEmbodiedCarbon } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function carbonRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -9,6 +10,10 @@ export default async function carbonRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
 
       const costings = await fastify.store.listCostings(ownerId, projectId);
       const standard =
