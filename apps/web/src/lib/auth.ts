@@ -14,6 +14,10 @@ function authRequired(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
+export function isDevAuthMode(): boolean {
+  return !authRequired() && !clerkEnabled;
+}
+
 export function isClerkRequired(): boolean {
   return authRequired() && !clerkEnabled;
 }
