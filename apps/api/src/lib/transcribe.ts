@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
 import { getOwnerEnv } from "./owner-secrets";
+import { fetchWithRetry } from "./http";
 
 const DEV_TRANSCRIPT =
   "Pleached hornbeam screen along the west boundary at about two point four metres. " +
@@ -24,11 +25,24 @@ export async function transcribeAudio(
   form.append("model", "whisper-1");
   form.append("language", "en");
 
-  const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
-  });
+  const res = await fetchWithRetry(
+    "https://api.openai.com/v1/audio/transcriptions",
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    },
+    {
+      telemetry: {
+        spanName: "openai.audio_transcription",
+        provider: "openai",
+        attributes: {
+          "pipeline.stage": "transcribe",
+          "model.name": "whisper-1",
+        },
+      },
+    },
+  );
 
   if (!res.ok) {
     const err = await res.text();

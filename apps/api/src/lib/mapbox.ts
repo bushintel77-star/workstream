@@ -1,4 +1,5 @@
 import { getOwnerEnv } from "./owner-secrets";
+import { fetchWithRetry } from "./http";
 
 const MAPBOX_GEOCODE_URL =
   "https://api.mapbox.com/geocoding/v5/mapbox.places";
@@ -32,7 +33,15 @@ export async function geocodeSearch(
     `&country=AU&autocomplete=true&types=address` +
     `&limit=${Math.min(Math.max(limit, 1), 10)}`;
 
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url, {}, {
+    telemetry: {
+      spanName: "mapbox.geocode_search",
+      provider: "mapbox",
+      attributes: {
+        "pipeline.stage": "survey",
+      },
+    },
+  });
   if (!res.ok) {
     throw new Error(`Mapbox autocomplete failed: ${res.status} ${await res.text()}`);
   }
@@ -63,7 +72,15 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
     `${MAPBOX_GEOCODE_URL}/${encodeURIComponent(address)}.json` +
     `?access_token=${token}&country=AU&limit=1`;
 
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url, {}, {
+    telemetry: {
+      spanName: "mapbox.geocode_address",
+      provider: "mapbox",
+      attributes: {
+        "pipeline.stage": "survey",
+      },
+    },
+  });
   if (!res.ok) {
     throw new Error(`Mapbox geocode failed: ${res.status} ${await res.text()}`);
   }
