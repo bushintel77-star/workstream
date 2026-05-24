@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
-import { createDepositCheckout } from "../../../../lib/api";
+import { createDepositCheckout } from "../../../../lib/portal-api";
 import styles from "./deposit.module.css";
+
+export const runtime = "edge";
 
 export default async function DepositPage({
   params,
