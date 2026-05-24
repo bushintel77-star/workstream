@@ -33,9 +33,13 @@ import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from "../routes/integration-hub";
 
-/** Minimal Fastify app for route-level contract tests (dev auth). */
-export async function buildTestApp() {
-  process.env.AUTH_REQUIRED = "false";
+type BuildTestAppOptions = {
+  authRequired?: boolean;
+};
+
+/** Minimal Fastify app for route-level contract tests. */
+export async function buildTestApp(options: BuildTestAppOptions = {}) {
+  process.env.AUTH_REQUIRED = options.authRequired ? "true" : "false";
   delete process.env.CLERK_SECRET_KEY;
 
   const store = createMemoryStore();

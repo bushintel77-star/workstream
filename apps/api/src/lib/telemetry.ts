@@ -194,3 +194,8 @@ export function registerRouteTelemetry(fastify: FastifyInstance): void {
   });
 }
 
+export function annotateActiveSpan(
+  attributes: Record<string, SpanAttributeValue | null | undefined>,
+): void {
+  setActiveTelemetryAttributes(attributes);
+}

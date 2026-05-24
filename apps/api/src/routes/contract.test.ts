@@ -41,6 +41,26 @@ describe("API contract — projects", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("POST /projects rejects invalid input", async () => {
+    ({ app } = await buildTestApp());
+    const res = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "x" },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: "Validation failed" });
+  });
+
+  it("auth guard blocks protected routes when auth is required but Clerk is missing", async () => {
+    ({ app } = await buildTestApp({ authRequired: true }));
+    const res = await app.inject({ method: "GET", url: "/projects/" });
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toMatchObject({
+      error: "Authentication is not configured",
+    });
+  });
+
   it("GET /projects lists Project[]", async () => {
     ({ app } = await buildTestApp());
     await app.inject({
@@ -63,6 +83,13 @@ describe("API contract — projects", () => {
     });
     expect(res.statusCode).toBe(404);
     expect(res.json()).toEqual({ error: "Project not found" });
+  });
+
+  it("GET /readyz returns dependency readiness", async () => {
+    ({ app } = await buildTestApp());
+    const res = await app.inject({ method: "GET", url: "/readyz" });
+    expect([200, 503]).toContain(res.statusCode);
+    expect(res.json()).toHaveProperty("checks");
   });
 
   it("POST /projects/:id/pipeline honors Idempotency-Key", async () => {
@@ -479,11 +506,41 @@ describe("API contract — projects", () => {
     });
     expect(supplier.statusCode).toBe(200);
 
+    const suppliers = await app.inject({
+      method: "GET",
+      url: "/suppliers/",
+    });
+    expect(suppliers.statusCode).toBe(200);
+    expect(Array.isArray(suppliers.json().suppliers)).toBe(true);
+
+    const search = await app.inject({
+      method: "GET",
+      url: "/geocode/search?q=Wrights%20Terrace",
+    });
+    expect(search.statusCode).toBe(200);
+    expect(Array.isArray(search.json().suggestions)).toBe(true);
+
     const siteContext = await app.inject({
       method: "GET",
       url: `/projects/${projectId}/site-context`,
     });
     expect(siteContext.statusCode).toBe(200);
     expect(siteContext.json()).toHaveProperty("context");
+
+    const weather = await app.inject({
+      method: "GET",
+      url: `/projects/${projectId}/weather`,
+    });
+    expect(weather.statusCode).toBe(200);
+    expect(weather.json()).toHaveProperty("forecast");
+
+    const carbon = await app.inject({
+      method: "GET",
+      url: `/projects/${projectId}/carbon`,
+    });
+    expect(carbon.statusCode).toBe(404);
+    expect(carbon.json()).toEqual({
+      error: "Costing required before carbon estimate.",
+    });
   });
 });

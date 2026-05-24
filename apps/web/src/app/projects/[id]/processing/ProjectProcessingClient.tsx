@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { pollProjectProgressAction } from "../../../actions";
+import {
+  pollProjectProgressAction,
+  restartPipelineAction,
+} from "../../../actions";
 import {
   ProjectPipelineProgress,
   buildPipelineStages,
@@ -29,6 +32,17 @@ export function ProjectProcessingClient({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const slowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const clearTimers = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    if (slowRef.current) {
+      clearTimeout(slowRef.current);
+      slowRef.current = null;
+    }
+  }, []);
+
   const tick = useCallback(async () => {
     try {
       const data = await pollProjectProgressAction(projectId);
@@ -41,25 +55,35 @@ export function ProjectProcessingClient({
       setError(null);
 
       if (data.ready) {
-        if (pollRef.current) clearInterval(pollRef.current);
-        if (slowRef.current) clearTimeout(slowRef.current);
+        clearTimers();
         router.replace(`/projects/${projectId}`);
         router.refresh();
+        return;
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Processing failed");
-    }
-  }, [projectId, router]);
 
-  useEffect(() => {
+      if (data.status !== "processing") {
+        clearTimers();
+        setError(
+          "Processing stopped before every stage completed. Retry to restart the pipeline.",
+        );
+      }
+    } catch {
+      clearTimers();
+      setError("Could not refresh processing status. Retry to check again.");
+    }
+  }, [clearTimers, projectId, router]);
+
+  const startPolling = useCallback(() => {
+    clearTimers();
     void tick();
     slowRef.current = setTimeout(() => setSlow(true), 90_000);
     pollRef.current = setInterval(() => void tick(), 1500);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-      if (slowRef.current) clearTimeout(slowRef.current);
-    };
-  }, [tick]);
+  }, [clearTimers, tick]);
+
+  useEffect(() => {
+    startPolling();
+    return clearTimers;
+  }, [clearTimers, startPolling]);
 
   const stages = buildPipelineStages({
     hasTranscript,
@@ -82,9 +106,17 @@ export function ProjectProcessingClient({
         stages={stages}
         slow={slow}
         error={error}
-        onRetry={() => {
+        onRetry={async () => {
+          clearTimers();
           setError(null);
-          void tick();
+          setSlow(false);
+          setStatus("processing");
+          try {
+            await restartPipelineAction(projectId);
+            startPolling();
+          } catch {
+            setError("Could not restart processing. Try again in a moment.");
+          }
         }}
       />
 

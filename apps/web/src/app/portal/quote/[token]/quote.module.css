@@ -121,6 +121,25 @@
 }
 
 .section { margin-bottom: var(--s-7); }
+.quoteWatermark {
+  position: relative;
+  overflow: hidden;
+}
+.quoteWatermark::before {
+  content: attr(data-watermark);
+  position: absolute;
+  inset: 18% auto auto -8%;
+  transform: rotate(-22deg);
+  font-family: var(--font-mono);
+  font-size: clamp(24px, 6vw, 48px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-primary);
+  opacity: 0.06;
+  pointer-events: none;
+  white-space: nowrap;
+}
 .sectionHeading {
   font-family: var(--font-display);
   font-size: 20px;

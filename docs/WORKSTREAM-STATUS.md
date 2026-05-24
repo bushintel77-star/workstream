@@ -17,6 +17,12 @@ Generated 2026-05-24 for the gold-standard automation audit.
 - Web shell typography moved to IBM Plex tokens and dev auth mode now displays a
   persistent warning banner.
 - Human ops runbook created at `docs/HUMAN-OPS-RUNBOOK.md`.
+- Strict ready-for-review follow-up (`4461b28`): route telemetry now annotates
+  current non-`/v1` API routes, dictation Anthropic calls emit spans, protected
+  file portal scopes are tightened, tombstoned project assets are blocked,
+  brochure output is no longer exposed as a dead action, portal quotes show the
+  confidential watermark and gate deposits until costing exists, and processing
+  retry calls the real pipeline restart endpoint.
 
 ## Still human-owned
 
@@ -51,4 +57,4 @@ pnpm mobile:check-placeholders
 pnpm web:check-portal-edge
 ```
 
-Result: 31 Vitest files, 128 tests passing.
+Result: 31 Vitest files, 131 tests passing.

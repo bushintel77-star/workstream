@@ -421,6 +421,16 @@ export async function runDevelopFromSketchPipeline(
   );
 }
 
+export async function runFullPipeline(projectId: string): Promise<{
+  accepted: boolean;
+  queued?: boolean;
+  jobId?: string;
+}> {
+  return apiPost<{ accepted: boolean; queued?: boolean; jobId?: string }>(
+    `/projects/${projectId}/pipeline`,
+  );
+}
+
 export async function runCosting(projectId: string): Promise<Costing[]> {
   const body = await apiPost<{ costings: Costing[] }>(
     `/projects/${projectId}/costing`,

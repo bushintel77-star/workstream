@@ -73,8 +73,10 @@ const aud2 = (n: number) =>
 
 export function QuotePortal({
   data,
+  token,
 }: {
   data: PortalQuoteData;
+  token: string;
 }) {
   const { project, survey, design, tier1 } = data;
   const allCostings = data.costings?.length
@@ -185,7 +187,11 @@ export function QuotePortal({
       )}
 
       {allCostings.length > 0 && (
-        <section className={styles.section}>
+        <section
+          className={`${styles.section} ${styles.quoteWatermark}`}
+          data-watermark={`CONFIDENTIAL · ${project.id}`}
+          aria-label={`Confidential quote for project ${project.id}`}
+        >
           <h2 className={styles.sectionHeading}>Investment</h2>
 
           <div
@@ -261,20 +267,27 @@ export function QuotePortal({
       )}
 
       <section className={styles.acceptSection}>
-        {active && data.deposit_url ? (
-          <Link href={data.deposit_url} className={styles.acceptButton}>
-            Accept &amp; pay {aud2(active.total * 0.2)} deposit
-          </Link>
+        {active ? (
+          <>
+            <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
+              Accept &amp; pay {aud2(active.total * 0.2)} deposit
+            </Link>
+            <p className={styles.acceptNote}>
+              A 20% deposit secures your project on the Standard scenario. Balance
+              billed in stages as works progress.
+            </p>
+          </>
         ) : (
-          <span className={styles.acceptButtonDisabled}>
-            Deposit checkout pending
-          </span>
+          <>
+            <span className={styles.acceptButtonDisabled}>
+              Deposit unavailable
+            </span>
+            <p className={styles.acceptNote}>
+              Curtis &amp; Co will issue the deposit link once the quote total is
+              confirmed.
+            </p>
+          </>
         )}
-        <p className={styles.acceptNote}>
-          {active
-            ? "A 20% deposit secures your project on the Standard scenario. Balance billed in stages as works progress."
-            : "Deposit checkout unlocks once Curtis & Co issues the costed quote."}
-        </p>
       </section>
 
       <footer className={styles.colophon}>

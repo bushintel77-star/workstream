@@ -27,6 +27,7 @@ import {
   runAudit,
   runCosting,
   runDesign,
+  runFullPipeline,
   runSketchCosting,
   runDevelopFromSketchPipeline,
   runOutput,
@@ -211,6 +212,17 @@ export async function runDevelopFromSketchAction(formData: FormData) {
     await runDevelopFromSketchPipeline(projectId);
   } catch (err) {
     throw wrapApiError(err, "Develop pipeline failed");
+  }
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/processing`);
+}
+
+export async function restartPipelineAction(projectId: string) {
+  if (!projectId) throw new Error("Missing project");
+  try {
+    await runFullPipeline(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not restart processing");
   }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/processing`);
