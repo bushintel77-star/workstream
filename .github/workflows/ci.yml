@@ -39,6 +39,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm mobile:check-placeholders
+
+      - name: Check portal edge imports
+        run: test -z "$(grep -r \"import.*'fs'\" apps/web/src/app/portal/ || true)"
+
       - run: pnpm typecheck
 
       - run: pnpm lint
