@@ -42,15 +42,15 @@ test.describe("Design studio", () => {
 
   test("loads studio with catalog and seeded canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design`);
-    await expect(page.getByRole("heading", { name: "Design" })).toBeVisible({
+    await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByTestId("design-asset-palette")).toBeVisible();
-    await expect(page.getByTestId("catalog-bluestone-paver")).toBeVisible();
-    await expect(page.getByTestId("design-studio-canvas")).toBeVisible();
     await expect(page.getByTestId("design-studio-counts")).toHaveText(/1 symbols/, {
       timeout: 15_000,
     });
+    await page.getByRole("button", { name: "Place", exact: true }).click();
+    await expect(page.getByTestId("design-asset-palette")).toBeVisible();
+    await expect(page.getByTestId("catalog-bluestone-paver")).toBeVisible();
     await expect(page.getByTestId("design-studio-save")).toBeVisible();
   });
 
@@ -67,6 +67,7 @@ test.describe("Design studio", () => {
     await expect(page.getByTestId("design-studio-counts")).toHaveText(/1 symbols/, {
       timeout: 30_000,
     });
+    await page.getByRole("button", { name: "Place", exact: true }).click();
     await page.getByTestId("catalog-lomandra-mass").click();
     const canvas = page.getByTestId("design-studio-canvas");
     const box = await canvas.boundingBox();

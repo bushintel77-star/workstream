@@ -46,7 +46,7 @@ type ToolOverride =
   | "irrigation"
   | null;
 
-type RailTab = "assets" | "massplant" | "irrigation" | "schedule";
+type RailTab = "massplant" | "irrigation" | "schedule";
 
 type DragState =
   | {
@@ -153,7 +153,7 @@ export function DesignStudio({
   const savingRef = useRef(false);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
-  const [railTab, setRailTab] = useState<RailTab>("assets");
+  const [railTab, setRailTab] = useState<RailTab>("schedule");
   const studio = useStudioHistory({
     placements: initialPlacements,
     strokes: initialStrokes,
@@ -276,14 +276,11 @@ export function DesignStudio({
       else if (tab === "schedule") {
         /* keep current canvas tool */
       }
-      else if (tab === "assets") {
-        if (toolOverride === "massplant" || toolOverride === "irrigation" || toolOverride === "measure") {
-          setStudioTool("place");
-        }
-      }
     },
-    [setStudioTool, toolOverride],
+    [setStudioTool],
   );
+
+  const showAssetLibrary = toolOverride === "place";
 
   const updatePlacement = useCallback(
     (id: string, patch: Partial<CatalogPlacement>) => {
@@ -467,7 +464,6 @@ export function DesignStudio({
       }
       if (e.key.toLowerCase() === "m") {
         setStudioTool("measure");
-        setRailTab("assets");
         return;
       }
       if (e.key.toLowerCase() === "p") {
@@ -837,7 +833,6 @@ export function DesignStudio({
       : null;
 
   const railTabs = [
-    ["assets", "Assets", null],
     ["massplant", "Mass plant", null],
     ["irrigation", "Irrigation", irrigationZones.length || null],
     ["schedule", "Schedule", scheduleBadge],
@@ -904,7 +899,6 @@ export function DesignStudio({
               title="Measure (M)"
               onClick={() => {
                 setStudioTool("measure");
-                setRailTab("assets");
               }}
             >
               Measure
@@ -1167,6 +1161,23 @@ export function DesignStudio({
         </div>
 
         <aside className={s.sideRail}>
+          {showAssetLibrary ? (
+            <div className={s.railLibrary} aria-label="Asset library">
+              <p className={s.railLibraryHint}>Place mode — pick a symbol, then tap the aerial.</p>
+              <DesignAssetPalette
+                symbols={symbols}
+                selectedId={paletteSelectedId}
+                disabled={isDrawMode}
+                embedded
+                onSelect={handlePaletteSelect}
+                onDragStart={(id) => {
+                  setDragSymbolId(id);
+                  setArmedSymbolId(id);
+                }}
+                onDragEnd={() => setDragSymbolId(null)}
+              />
+            </div>
+          ) : null}
           <div className={s.railTabs} role="tablist" aria-label="Studio panels">
             {railTabs.map(([id, label, badge]) => (
               <button
@@ -1183,20 +1194,6 @@ export function DesignStudio({
             ))}
           </div>
           <div className={s.railPanel} role="tabpanel">
-            {railTab === "assets" ? (
-              <DesignAssetPalette
-                symbols={symbols}
-                selectedId={paletteSelectedId}
-                disabled={isDrawMode}
-                embedded
-                onSelect={handlePaletteSelect}
-                onDragStart={(id) => {
-                  setDragSymbolId(id);
-                  setArmedSymbolId(id);
-                }}
-                onDragEnd={() => setDragSymbolId(null)}
-              />
-            ) : null}
             {railTab === "massplant" ? (
               <StudioMassPlantPanel
                 symbols={symbols}

@@ -24,7 +24,7 @@ test.describe("Operator happy path", () => {
     expect(pipeline.ok()).toBeTruthy();
 
     await page.goto(`/projects/${projectId}`);
-    await expect(page.getByRole("heading", { name: "Design" })).toBeVisible({
+    await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,
     });
 
