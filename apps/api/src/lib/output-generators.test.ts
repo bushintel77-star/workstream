@@ -60,6 +60,7 @@ const baseArgs = (): GeneratorArgs => ({
       },
     ],
     strokes: [],
+    irrigation_zones: [],
     updated_at: new Date().toISOString(),
   },
   catalogSymbols: [],

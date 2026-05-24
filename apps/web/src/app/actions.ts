@@ -177,9 +177,10 @@ export async function saveDesignCanvasAction(
   projectId: string,
   placements: CatalogPlacement[],
   strokes: import("../lib/api").DesignCanvas["strokes"] = [],
+  irrigationZones: import("../lib/api").DesignCanvas["irrigation_zones"] = [],
 ) {
   try {
-    await saveDesignCanvasApi(projectId, placements, strokes);
+    await saveDesignCanvasApi(projectId, placements, strokes, irrigationZones);
   } catch (err) {
     throw wrapApiError(err, "Failed to save site plan");
   }

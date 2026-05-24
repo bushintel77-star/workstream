@@ -81,11 +81,29 @@ export const CanvasStrokeSchema = z.object({
 });
 export type CanvasStroke = z.infer<typeof CanvasStrokeSchema>;
 
+/** Percent point on the design studio aerial canvas. */
+export const CanvasPointPctSchema = z.object({
+  x_pct: z.number(),
+  y_pct: z.number(),
+});
+export type CanvasPointPct = z.infer<typeof CanvasPointPctSchema>;
+
+/** Drip-line irrigation zone sketched on the studio canvas. */
+export const IrrigationZoneSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  points: z.array(CanvasPointPctSchema).min(2),
+  emitter_spacing_cm: z.number().positive().default(30),
+  emitter_flow_lph: z.number().positive().default(2),
+});
+export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
+
 export const DesignCanvasSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema),
+  irrigation_zones: z.array(IrrigationZoneSchema).default([]),
   updated_at: z.string().datetime(),
 });
 export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
@@ -93,5 +111,6 @@ export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
 export const UpsertDesignCanvasSchema = z.object({
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema).optional(),
+  irrigation_zones: z.array(IrrigationZoneSchema).optional(),
 });
 export type UpsertDesignCanvasInput = z.infer<typeof UpsertDesignCanvasSchema>;

@@ -17,13 +17,19 @@ export function KeyboardLegend() {
           <kbd>V</kbd> Select
         </li>
         <li>
+          <kbd>M</kbd> Measure
+        </li>
+        <li>
           <kbd>Esc</kbd> Cancel / deselect
         </li>
         <li>
           <kbd>Delete</kbd> Remove selected symbol
         </li>
         <li>
-          <kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo stroke
+          <kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo
+        </li>
+        <li>
+          <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> Redo
         </li>
       </ul>
     </details>

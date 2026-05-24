@@ -18,6 +18,30 @@
   pointer-events: none;
 }
 
+.paletteEmbedded {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.paletteEmbedded .header {
+  display: none;
+}
+
+.paletteEmbedded .grid {
+  max-height: none;
+  flex: 1;
+  min-height: 12rem;
+}
+
 .header {
   display: flex;
   flex-direction: column;
@@ -254,4 +278,29 @@
   .card {
     transition: none;
   }
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.filterChip {
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-hairline);
+  background: var(--surface-sunken);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.filterChipActive {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-elevated));
+  color: var(--ink-primary);
 }
