@@ -72,6 +72,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Audio compression** — mobile walkthrough uses `LOW_QUALITY` recording preset.
 - [x] **Edge runtime** for `/portal/*` pages.
 - [x] **Portal hero image** — `hero_url` from survey aerial on quote portal payload.
+- [x] **Portal checkout production URLs** — `PORTAL_BASE_URL` is set in
+      [`apps/api/fly.toml`](apps/api/fly.toml), production defaults to
+      `construct-web`, and quote/deposit amounts render with cents.
 - [x] **Activity audit trail** — `GET /projects/:id/activity` and `GET /settings/activity`;
       logs project delete/restore, filing delete, crew, catalog, integration, SKU link.
 - [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.

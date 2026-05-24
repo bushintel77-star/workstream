@@ -16,6 +16,8 @@ Generated 2026-05-24. Product: Workstream. Studio brand: Curtis & Co.
   states are branded (`9de3ed7`, `443761d`).
 - Contract tests now cover carbon smoke and quote-to-deposit portal token flow
   (`677b543`, `0af85c0`).
+- Portal checkout URLs now default to the production web app instead of
+  localhost, and portal cost figures render with cents (`fd23e08`).
 
 ## Human-owned before first paying customer
 
@@ -30,7 +32,7 @@ Generated 2026-05-24. Product: Workstream. Studio brand: Curtis & Co.
 ## Current verification baseline
 
 - Literal `pnpm ci` is not implemented by pnpm 9 in this environment.
-- `pnpm run ci` passed after implementation with 126 tests.
+- `pnpm run ci` passed after implementation with 128 tests.
 - `pnpm lint`, `pnpm mobile:check-placeholders`, and the portal edge import
   guard passed.
 - `pnpm test:e2e` passed after installing Playwright Chromium in the runner.
