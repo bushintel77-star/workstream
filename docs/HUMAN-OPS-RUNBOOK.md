@@ -191,6 +191,8 @@ eas submit --platform android
 ## External API Keys
 
 Needed for full live pipeline; dev fallbacks work without them.
+`PORTAL_BASE_URL=https://construct-web.fly.dev` is already set in
+`apps/api/fly.toml`; only override it after a custom portal domain is live.
 
 ```bash
 flyctl secrets set \

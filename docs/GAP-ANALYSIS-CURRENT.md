@@ -1,4 +1,4 @@
-## Workstream Gap Matrix — generated 2026-05-24T03:39:45Z
+## Workstream Gap Matrix — generated 2026-05-24T05:24:32Z
 
 | # | Task | Source | Status | Gap Type | Owner | Priority |
 |---|------|--------|--------|----------|-------|----------|
@@ -17,21 +17,22 @@
 | 13 | Portal loading, error boundaries, and signed deposit checkout flow for client-facing quote/deposit routes | User prompt, web audit | CLOSED `46161c4`, `9de3ed7`, `443761d` | UX | Agent | P2 |
 | 14 | Settings loading boundary and token-only legacy CSS cleanup | User prompt, web audit | CLOSED `4465787`, `9de3ed7` | UX | Agent | P2 |
 | 15 | Project tab loading skeleton consistency | User prompt, web audit | CLOSED `4465787` | UX | Agent | P2 |
-| 16 | Design studio Phase 6 AI assist | AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md, OUTSTANDING.md | DEFERRED | UX | Human | P3 |
-| 17 | Brochure output | AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md, OUTSTANDING.md | DEFERRED | UX | Human | P3 |
-| 18 | Storybook for web primitives | OUTSTANDING.md | NOT STARTED | UX | Agent | P3 |
-| 19 | Bundle-size budget in CI | OUTSTANDING.md | NOT STARTED | Test | Agent | P3 |
-| 20 | PostgreSQL migration | OUTSTANDING.md | DEFERRED | Code | Human | P3 |
-| 21 | Multi-region Fly deploy for HA | OUTSTANDING.md | DEFERRED | HumanOps | Human | P3 |
+| 16 | Portal checkout URLs must not default to localhost in production; client-facing cost figures include cents | PR audit, Design System Law | CLOSED `fd23e08` | Code | Agent | P1 |
+| 17 | Design studio Phase 6 AI assist | AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md, OUTSTANDING.md | DEFERRED | UX | Human | P3 |
+| 18 | Brochure output | AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md, OUTSTANDING.md | DEFERRED | UX | Human | P3 |
+| 19 | Storybook for web primitives | OUTSTANDING.md | NOT STARTED | UX | Agent | P3 |
+| 20 | Bundle-size budget in CI | OUTSTANDING.md | NOT STARTED | Test | Agent | P3 |
+| 21 | PostgreSQL migration | OUTSTANDING.md | DEFERRED | Code | Human | P3 |
+| 22 | Multi-region Fly deploy for HA | OUTSTANDING.md | DEFERRED | HumanOps | Human | P3 |
 
 Gap types: Code | HumanOps | UX | Asset | Test | Doc
 Owner: Agent (can implement now) | Human (requires credentials/platform access)
 
 ## Baseline verification
 
-- `git log --oneline -50` read at 2026-05-24T03:39:45Z.
+- `git log --oneline -50` read at 2026-05-24T05:20Z.
 - `pnpm ci` was attempted as requested and failed because pnpm reports `ERR_PNPM_CI_NOT_IMPLEMENTED`.
-- `pnpm run ci` passed after final implementation with 126 tests.
+- `pnpm run ci` passed after final implementation with 128 tests.
 - `pnpm lint`, `pnpm mobile:check-placeholders`, portal import guard, and
   `pnpm test:e2e` passed after installing Playwright Chromium locally.
 - Production smoke checks returned `ok` for `/healthz` and `/readyz`; the

@@ -13,6 +13,10 @@ Live stack (May 2026). Product: **Workstream**. Studio on artefacts: **Curtis & 
 
 Fly app names remain `construct-api` / `construct-web` until cutover to `workstream-*` (see [CONSOLIDATION.md](CONSOLIDATION.md)).
 
+`apps/api/fly.toml` sets `PORTAL_BASE_URL=https://construct-web.fly.dev` so
+magic links and deposit checkout callbacks resolve to the live client portal.
+Override it only when a custom portal domain is live.
+
 ## Current auth mode
 
 `AUTH_REQUIRED=false` on both Fly apps — open operator loop with shared `dev-user` until Clerk keys are provisioned.
@@ -51,6 +55,7 @@ Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time for m
 | `MAPBOX_TOKEN` | construct-api | Mock survey imagery |
 | `CLERK_*` | both | Dev-user mode (current) |
 | `WORKSTREAM_PORTAL_SECRET` | construct-api | Rotate from legacy `CONSTRUCT_PORTAL_SECRET` |
+| `PORTAL_BASE_URL` | construct-api | Set in `apps/api/fly.toml`; override only for a custom portal domain |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | construct-api | OpenTelemetry spans stay local/no-op |
 | `REDIS_URL` | construct-api | Pipeline runs inline instead of worker queue |
 | `SENTRY_DSN` | both | Errors are logged but not reported to Sentry |
