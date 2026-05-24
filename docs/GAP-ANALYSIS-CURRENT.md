@@ -13,8 +13,8 @@
 | 9 | Route contract smoke coverage extended beyond core health/projects routes | OUTSTANDING.md | CLOSED in 86db313 | Test | Agent | P1 |
 | 10 | Litestream backup configuration promoted from template to operator setup docs | OUTSTANDING.md | CLOSED in 86db313 | Doc | Agent | P2 |
 | 11 | Mobile `REPLACE_AFTER_eas_init` placeholder extracted to EAS notes and CI linted | OUTSTANDING.md | CLOSED in 86db313 | Test | Agent | P1 |
-| 12 | `docs/WORKSTREAM-STATUS.md` authoritative status document restored or recreated | User prompt | CLOSED in docs commit | Doc | Agent | P2 |
-| 13 | Human ops runbook with copy-paste steps for Clerk, Redis, Sentry, Fly scale, EAS, external keys, branch protection, and OpenTelemetry endpoint | User prompt | CLOSED in docs commit | Doc | Agent | P0 |
+| 12 | `docs/WORKSTREAM-STATUS.md` authoritative status document restored or recreated | User prompt | CLOSED in 4e8bfcf | Doc | Agent | P2 |
+| 13 | Human ops runbook with copy-paste steps for Clerk, Redis, Sentry, Fly scale, EAS, external keys, branch protection, and OpenTelemetry endpoint | User prompt | CLOSED in 4e8bfcf | Doc | Agent | P0 |
 | 14 | Dashboard empty/loading/error/filter/delete-undo polish verified against Aegis UX standard | User prompt | PARTIAL | UX | Agent | P2 |
 | 15 | Project hub tab locked states, empty states, form validation, destructive confirms, and output actions verified | User prompt | PARTIAL | UX | Agent | P2 |
 | 16 | Client portal edge-safe, responsive, graceful expired-link, quote watermark, and Stripe-disabled states verified | User prompt | PARTIAL | UX | Agent | P2 |
