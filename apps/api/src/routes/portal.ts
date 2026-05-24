@@ -68,6 +68,15 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     const costings = await fastify.store.listCostings(ownerId, projectId);
     const standard =
       costings.find((c) => c.scenario === "standard") ?? costings[0];
+    const depositUrl = standard
+      ? buildPortalUrl(
+          "deposit_checkout",
+          signPortalToken({
+            project_id: projectId,
+            scope: "deposit_checkout",
+          }),
+        )
+      : null;
     const tier1 = isTier1WrightsTerrace(project?.address ?? "")
       ? TIER1_WRIGHTS_SAVINGS
       : null;
@@ -84,6 +93,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       design,
       costing: standard,
       costings,
+      deposit_url: depositUrl,
       tier1,
       hero_url: heroUrl,
     });

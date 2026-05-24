@@ -15,7 +15,7 @@ Copy-paste guide for taking Workstream from the current code-complete state to a
 ```bash
 flyctl secrets set \
   CLERK_SECRET_KEY="sk_live_PASTE_HERE" \
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_PASTE_HERE" \
+  CLERK_PUBLISHABLE_KEY="pk_live_PASTE_HERE" \
   AUTH_REQUIRED=true \
   -a construct-api
 
@@ -155,6 +155,9 @@ npx eas-cli init
 ```
 
 This writes the real EAS project ID into `app.json`.
+
+Do not run a production mobile build with `EXPO_PUBLIC_AUTH_REQUIRED=true`
+until the Clerk publishable key is also set in the EAS production environment.
 
 ### Step 2: Apple credentials
 

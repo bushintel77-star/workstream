@@ -2,7 +2,7 @@
 
 | # | Task | Source | Status | Gap Type | Owner | Priority |
 |---|------|--------|--------|----------|-------|----------|
-| 1 | Clerk CLERK_SECRET_KEY and NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY set on construct-api + construct-web | OUTSTANDING.md, PRODUCTION.md | NOT DONE | HumanOps | Human | P0 |
+| 1 | Clerk CLERK_SECRET_KEY + CLERK_PUBLISHABLE_KEY on construct-api; CLERK_SECRET_KEY + NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY on construct-web | OUTSTANDING.md, PRODUCTION.md | NOT DONE | HumanOps | Human | P0 |
 | 2 | REDIS_URL provisioned and fly scale count worker=1 on construct-api | OUTSTANDING.md, GAP-ANALYSIS.md | NOT DONE | HumanOps | Human | P0 |
 | 3 | SENTRY_DSN set on both apps and @sentry/nextjs installed on web when enabling Sentry | OUTSTANDING.md, GAP-ANALYSIS.md | NOT DONE | HumanOps | Human | P0 |
 | 4 | fly scale count 1 -a construct-api for JSON snapshot consistency | OUTSTANDING.md, PRODUCTION.md | NOT DONE | HumanOps | Human | P0 |

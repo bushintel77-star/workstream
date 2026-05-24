@@ -9,7 +9,7 @@ import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
 import { assertAuthConfigured } from './lib/auth-config';
 import { captureError, initSentry } from './lib/sentry';
-import { initTelemetry, registerRouteTelemetry } from './lib/telemetry';
+import { initTelemetry, registerRouteTelemetry, shutdownTelemetry } from './lib/telemetry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
 import storePlugin from './plugins/store';
@@ -175,6 +175,7 @@ start().catch((err) => {
 
 const shutdown = async () => {
   await server.close();
+  await shutdownTelemetry();
   process.exit(0);
 };
 
