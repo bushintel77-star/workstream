@@ -34,6 +34,7 @@ test.describe("Design studio", () => {
           },
         ],
         strokes: [],
+        irrigation_zones: [],
       },
     });
     expect(seed.ok()).toBeTruthy();
@@ -79,13 +80,25 @@ test.describe("Design studio", () => {
     await expect(page.getByTestId("canvas-placement")).toHaveCount(2);
   });
 
+  test("opens schedule and irrigation panels", async ({ page }) => {
+    await page.goto(`/projects/${projectId}/design/studio`);
+    await page.getByRole("tab", { name: "Schedule" }).click();
+    await expect(page.getByTestId("studio-schedule-panel")).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByRole("tab", { name: "Irrigation" }).click();
+    await expect(page.getByTestId("studio-irrigation-panel")).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test("save plan from toolbar", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
     await expect(page.getByTestId("design-studio-save")).toBeVisible({
       timeout: 30_000,
     });
     await page.getByTestId("design-studio-save").click();
-    await expect(page.getByText(/All changes saved/i)).toBeVisible({
+    await expect(page.getByTestId("design-studio-save-status")).toHaveText(/Saved/, {
       timeout: 15_000,
     });
   });

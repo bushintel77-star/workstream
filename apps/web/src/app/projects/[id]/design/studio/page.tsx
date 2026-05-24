@@ -4,6 +4,7 @@ import {
   getDesignCanvas,
   getSurvey,
   listCatalogSymbols,
+  listRateCard,
 } from "../../../../../lib/api";
 import s from "../../../../../styles/app.module.css";
 import { NotFoundPage, ProjectMasthead } from "../../ProjectShell";
@@ -34,9 +35,10 @@ export default async function DesignStudioPage({
     );
   }
 
-  const [symbols, canvas] = await Promise.all([
+  const [symbols, canvas, rateCard] = await Promise.all([
     listCatalogSymbols(),
     getDesignCanvas(id),
+    listRateCard(),
   ]);
 
   return (
@@ -47,10 +49,8 @@ export default async function DesignStudioPage({
       </p>
       <h1 className={s.headline}>Design studio</h1>
       <p className={s.lede}>
-        Back-of-envelope sketch: trees, lawn, paving, plus{" "}
-        <strong>Tree protection zone</strong> and{" "}
-        <strong>Existing tree (retain)</strong> when TRP or council planning
-        applies. Save, then envelope estimate on the Design page.
+        Concept sketch on the survey aerial — place Curtis assets, mass planting,
+        irrigation, and live schedule. Save before opening outputs.
       </p>
       <DesignStudio
         projectId={id}
@@ -66,6 +66,8 @@ export default async function DesignStudioPage({
             width_px: st.width_px,
           })) ?? []
         }
+        initialIrrigationZones={canvas?.irrigation_zones ?? []}
+        rateCard={rateCard}
       />
     </main>
   );

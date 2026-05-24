@@ -3,7 +3,8 @@
 Living doc of work between today's state and gold-standard
 end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
-**Gap analysis (detailed):** [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md)
+- [WORKSTREAM-STATUS.md](docs/WORKSTREAM-STATUS.md) — consolidated done + roadmap
+- [GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md) — detailed audit
 
 ## P0 — Blocks first paying customer
 
@@ -104,6 +105,8 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 - [x] Phase 5 modeless canvas (select/move/rotate/scale, scale bar, context label)
 - [x] Phase 7 honesty UI (caption, save hand-off, clear confirms, keyboard legend)
 - [x] Phase 8 docs + E2E (`CHANGES.md`, extended Playwright)
+- [x] Gold upgrade — measure, mass plant, irrigation zones, live schedule, undo/redo, toolbar UX (`857b7af`)
+- [x] Designer handover pack — [`docs/DESIGNER-HANDOVER.md`](docs/DESIGNER-HANDOVER.md)
 - [ ] Phases 6 AI assist (deferred)
 - [ ] Brochure output (deferred in spec)
 

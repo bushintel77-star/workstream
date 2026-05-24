@@ -338,6 +338,13 @@ export type DesignCanvas = {
     color: string;
     width_px: number;
   }>;
+  irrigation_zones: Array<{
+    id: string;
+    name: string;
+    points: Array<{ x_pct: number; y_pct: number }>;
+    emitter_spacing_cm: number;
+    emitter_flow_lph: number;
+  }>;
   updated_at: string;
 };
 
@@ -384,10 +391,11 @@ export async function saveDesignCanvasApi(
   projectId: string,
   placements: CatalogPlacement[],
   strokes: DesignCanvas["strokes"] = [],
+  irrigationZones: DesignCanvas["irrigation_zones"] = [],
 ): Promise<DesignCanvas> {
   const body = await apiPut<{ canvas: DesignCanvas }>(
     `/projects/${projectId}/design-canvas`,
-    { placements, strokes },
+    { placements, strokes, irrigation_zones: irrigationZones },
   );
   return body.canvas;
 }

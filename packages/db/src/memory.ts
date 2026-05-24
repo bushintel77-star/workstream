@@ -1005,7 +1005,12 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         (p) => p.id === projectId && p.owner_id === ownerId,
       );
       if (!project) return null;
-      return _designCanvases.find((c) => c.project_id === projectId) ?? null;
+      const canvas = _designCanvases.find((c) => c.project_id === projectId);
+      if (!canvas) return null;
+      return {
+        ...canvas,
+        irrigation_zones: canvas.irrigation_zones ?? [],
+      };
     },
 
     async listCatalogSymbols(ownerId) {
@@ -1053,7 +1058,10 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       const existing = _designCanvases.find((c) => c.project_id === projectId);
       if (existing) {
         existing.placements = input.placements;
-        if (input.strokes) existing.strokes = input.strokes;
+        if (input.strokes !== undefined) existing.strokes = input.strokes;
+        if (input.irrigation_zones !== undefined) {
+          existing.irrigation_zones = input.irrigation_zones;
+        }
         existing.updated_at = now;
         flush();
         return { ...existing };
@@ -1063,6 +1071,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         project_id: projectId,
         placements: input.placements,
         strokes: input.strokes ?? [],
+        irrigation_zones: input.irrigation_zones ?? [],
         updated_at: now,
       };
       _designCanvases.push(canvas);

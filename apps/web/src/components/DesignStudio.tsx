@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   canvasStrokeToPathD,
   strokePointsToPathD,
   type StrokePointPct,
 } from "@workstream/domain";
 import { CATALOG_PLANNING_SYMBOL_IDS } from "@workstream/domain";
-import type { CatalogPlacement, CatalogSymbol } from "../lib/api";
+import type { CatalogPlacement, CatalogSymbol, IrrigationZone } from "@workstream/contracts";
 import {
+  metresPerCanvasPixel,
   placementIndicativeMetres,
   resolveStaticMapView,
   type StaticMapView,
@@ -18,9 +20,18 @@ import { useToast } from "./ToastHost";
 import {
   DesignAssetPalette,
   DesignCanvasPlacement,
+  IrrigationOverlay,
   KeyboardLegend,
+  MassPlantOverlay,
+  MeasureOverlay,
   ScaleBar,
+  StudioIrrigationPanel,
+  StudioMassPlantPanel,
+  StudioSchedulePanel,
+  useStudioHistory,
+  useStudioPolylineDraw,
 } from "./studio";
+import type { RateCardItem } from "../lib/api";
 import s from "./designStudio.module.css";
 
 export type CanvasStrokeClient = {
@@ -30,7 +41,16 @@ export type CanvasStrokeClient = {
   width_px: number;
 };
 
-type ToolOverride = "place" | "draw" | "select" | null;
+type ToolOverride =
+  | "place"
+  | "draw"
+  | "select"
+  | "measure"
+  | "massplant"
+  | "irrigation"
+  | null;
+
+type RailTab = "assets" | "massplant" | "irrigation" | "schedule";
 
 type DragState =
   | {
@@ -114,6 +134,8 @@ type Props = {
   symbols: CatalogSymbol[];
   initialPlacements: CatalogPlacement[];
   initialStrokes: CanvasStrokeClient[];
+  initialIrrigationZones?: IrrigationZone[];
+  rateCard?: RateCardItem[];
 };
 
 export function DesignStudio({
@@ -123,7 +145,10 @@ export function DesignStudio({
   symbols,
   initialPlacements,
   initialStrokes,
+  initialIrrigationZones = [],
+  rateCard = [],
 }: Props) {
+  const router = useRouter();
   const toast = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -133,9 +158,14 @@ export function DesignStudio({
   const armedSymbolRef = useRef<string | null>(null);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
-  const [placements, setPlacements] =
-    useState<CatalogPlacement[]>(initialPlacements);
-  const [strokes, setStrokes] = useState<CanvasStrokeClient[]>(initialStrokes);
+  const [railTab, setRailTab] = useState<RailTab>("assets");
+  const studio = useStudioHistory({
+    placements: initialPlacements,
+    strokes: initialStrokes,
+    irrigationZones: initialIrrigationZones,
+  });
+  const { placements, strokes, irrigationZones, setPlacements, setStrokes, setIrrigationZones } =
+    studio;
   const [draftPoints, setDraftPoints] = useState<StrokePointPct[]>([]);
   const [armedSymbolId, setArmedSymbolId] = useState<string | null>(null);
   const [paletteSelectedId, setPaletteSelectedId] = useState<string | null>(null);
@@ -145,6 +175,8 @@ export function DesignStudio({
   );
   const [saving, setSaving] = useState(false);
   const [lastSavedLabel, setLastSavedLabel] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const skipDirtyRef = useRef(true);
   const [canvasSize, setCanvasSize] = useState({ width: 400, height: 280 });
   const [aerialError, setAerialError] = useState(false);
   const [aerialKey, setAerialKey] = useState(0);
@@ -153,6 +185,15 @@ export function DesignStudio({
     y: number;
     text: string;
   } | null>(null);
+  const [measurePoints, setMeasurePoints] = useState<StrokePointPct[]>([]);
+  const [massSpacingCm, setMassSpacingCm] = useState(45);
+  const [massPolygonPoints, setMassPolygonPoints] = useState<StrokePointPct[]>([]);
+  const [massPolygonClosed, setMassPolygonClosed] = useState(false);
+  const [selectedIrrigationZoneId, setSelectedIrrigationZoneId] = useState<string | null>(
+    null,
+  );
+  const massPlantDraw = useStudioPolylineDraw("closed");
+  const irrigationDraw = useStudioPolylineDraw("open");
 
   const setArmedSymbol = useCallback((id: string | null) => {
     armedSymbolRef.current = id;
@@ -162,6 +203,23 @@ export function DesignStudio({
   const mapView: StaticMapView = useMemo(
     () => resolveStaticMapView(aerialUri, lotRing),
     [aerialUri, lotRing],
+  );
+
+  const groundScale = useMemo(
+    () => {
+      const mpp = metresPerCanvasPixel(
+        mapView,
+        canvasSize.width,
+        canvasSize.height,
+      );
+      return {
+        metresPerXPx: mpp.x,
+        metresPerYPx: mpp.y,
+        canvasWidthPx: canvasSize.width,
+        canvasHeightPx: canvasSize.height,
+      };
+    },
+    [mapView, canvasSize.width, canvasSize.height],
   );
 
   const symbolById = useMemo(
@@ -174,7 +232,19 @@ export function DesignStudio({
   );
 
   const isDrawMode = toolOverride === "draw";
-  const canUndoStroke = draftPoints.length > 0 || strokes.length > 0;
+  const isMeasureMode = toolOverride === "measure";
+  const isMassPlantMode = toolOverride === "massplant";
+  const isIrrigationMode = toolOverride === "irrigation";
+  const canUndo = studio.canUndo || draftPoints.length > 0;
+  void studio.historyTick;
+
+  useEffect(() => {
+    if (skipDirtyRef.current) {
+      skipDirtyRef.current = false;
+      return;
+    }
+    setIsDirty(true);
+  }, [placements, strokes, irrigationZones]);
 
   useEffect(() => {
     const el = canvasRef.current;
@@ -191,19 +261,56 @@ export function DesignStudio({
     return () => ro.disconnect();
   }, []);
 
+  const setStudioTool = useCallback(
+    (tool: ToolOverride) => {
+      if (tool !== "irrigation" && irrigationDraw.isDrawing) {
+        irrigationDraw.cancel();
+      }
+      if (tool !== "massplant" && massPlantDraw.isDrawing) {
+        massPlantDraw.cancel();
+        setMassPolygonClosed(false);
+      }
+      if (tool !== "measure") {
+        setMeasurePoints([]);
+      }
+      setToolOverride(tool);
+    },
+    [irrigationDraw, massPlantDraw],
+  );
+
+  const handleRailTab = useCallback(
+    (tab: RailTab) => {
+      setRailTab(tab);
+      if (tab === "massplant") setStudioTool("massplant");
+      else if (tab === "irrigation") setStudioTool("irrigation");
+      else if (tab === "schedule") {
+        /* keep current canvas tool */
+      }
+      else if (tab === "assets") {
+        if (toolOverride === "massplant" || toolOverride === "irrigation" || toolOverride === "measure") {
+          setStudioTool("place");
+        }
+      }
+    },
+    [setStudioTool, toolOverride],
+  );
+
   const updatePlacement = useCallback(
     (id: string, patch: Partial<CatalogPlacement>) => {
       setPlacements((prev) =>
         prev.map((p) => (p.id === id ? { ...p, ...patch } : p)),
       );
     },
-    [],
+    [setPlacements],
   );
 
-  const deletePlacement = useCallback((id: string) => {
-    setPlacements((prev) => prev.filter((p) => p.id !== id));
-    setSelectedPlacementId((cur) => (cur === id ? null : cur));
-  }, []);
+  const deletePlacement = useCallback(
+    (id: string) => {
+      setPlacements((prev) => prev.filter((p) => p.id !== id));
+      setSelectedPlacementId((cur) => (cur === id ? null : cur));
+    },
+    [setPlacements],
+  );
 
   const addPlacement = useCallback(
     (symbolId: string, xPct: number, yPct: number) => {
@@ -219,7 +326,7 @@ export function DesignStudio({
         },
       ]);
     },
-    [],
+    [setPlacements],
   );
 
   const placeOnCanvas = useCallback(
@@ -229,12 +336,13 @@ export function DesignStudio({
       const symbolId = dragSymbolId ?? armedSymbolRef.current;
       if (!symbolId) return;
       if (toolOverride === "select") return;
+      if (isMeasureMode || isMassPlantMode || isIrrigationMode) return;
       const rect = el.getBoundingClientRect();
       const pt = clientPct(clientX, clientY, rect);
       addPlacement(symbolId, pt.x_pct, pt.y_pct);
       setDragSymbolId(null);
     },
-    [addPlacement, dragSymbolId, toolOverride],
+    [addPlacement, dragSymbolId, isIrrigationMode, isMassPlantMode, isMeasureMode, toolOverride],
   );
 
   const commitDraftStroke = useCallback(() => {
@@ -252,37 +360,42 @@ export function DesignStudio({
       },
     ]);
     setDraftPoints([]);
-  }, [draftPoints]);
+  }, [draftPoints, setStrokes]);
 
   const undo = useCallback(() => {
     if (draftPoints.length > 0) {
       setDraftPoints([]);
       return;
     }
-    setStrokes((prev) => prev.slice(0, -1));
-  }, [draftPoints.length]);
+    studio.undo();
+  }, [draftPoints.length, studio]);
+
+  const redo = useCallback(() => {
+    studio.redo();
+  }, [studio]);
 
   const clearStrokes = useCallback(() => {
     if (strokes.length === 0) return;
     const snapshot = [...strokes];
-    setStrokes([]);
+    setStrokes([], true);
     toast.show(`Cleared ${snapshot.length} markup stroke(s).`, "info", 6000, {
-      action: { label: "Undo", onClick: () => setStrokes(snapshot) },
+      action: { label: "Undo", onClick: () => setStrokes(snapshot, false) },
     });
-  }, [strokes, toast]);
+  }, [strokes, setStrokes, toast]);
 
   const clearPlacements = useCallback(() => {
     if (placements.length === 0) return;
+    if (!window.confirm("Clear all symbols from the plan?")) return;
     const snapshot = [...placements];
-    setPlacements([]);
+    setPlacements([], true);
     setSelectedPlacementId(null);
     toast.show(`Cleared ${snapshot.length} symbol(s).`, "info", 6000, {
       action: {
         label: "Undo",
-        onClick: () => setPlacements(snapshot),
+        onClick: () => setPlacements(snapshot, false),
       },
     });
-  }, [placements, toast]);
+  }, [placements, setPlacements, toast]);
 
   const handlePaletteSelect = useCallback(
     (id: string) => {
@@ -298,7 +411,7 @@ export function DesignStudio({
     (clientX: number, clientY: number) => {
       if (dragRef.current) return;
       const el = canvasRef.current;
-      if (!el || isDrawMode) {
+      if (!el || isDrawMode || isMeasureMode || isMassPlantMode || isIrrigationMode) {
         setCursorHint(null);
         return;
       }
@@ -319,7 +432,7 @@ export function DesignStudio({
       else if (selectedSym) text = `Move ${selectedSym.label}`;
       setCursorHint({ x, y, text });
     },
-    [armedSymbolId, isDrawMode, placements, selectedPlacementId, symbolById],
+    [armedSymbolId, isDrawMode, isIrrigationMode, isMassPlantMode, isMeasureMode, placements, selectedPlacementId, symbolById],
   );
 
   useEffect(() => {
@@ -328,6 +441,21 @@ export function DesignStudio({
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
       if (e.key === "Escape") {
+        if (irrigationDraw.isDrawing) {
+          irrigationDraw.cancel();
+          return;
+        }
+        if (massPlantDraw.isDrawing) {
+          massPlantDraw.cancel();
+          setMassPolygonClosed(false);
+          setMassPolygonPoints([]);
+          return;
+        }
+        if (isMeasureMode) {
+          setMeasurePoints([]);
+          setStudioTool(null);
+          return;
+        }
         setSelectedPlacementId(null);
         setArmedSymbol(null);
         setDragSymbolId(null);
@@ -343,29 +471,69 @@ export function DesignStudio({
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
-        undo();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (e.key.toLowerCase() === "m") {
+        setStudioTool("measure");
+        setRailTab("assets");
         return;
       }
       if (e.key.toLowerCase() === "p") {
-        setToolOverride("place");
+        setStudioTool("place");
         return;
       }
       if (e.key.toLowerCase() === "d") {
-        setToolOverride("draw");
+        setStudioTool("draw");
         setSelectedPlacementId(null);
         return;
       }
       if (e.key.toLowerCase() === "v") {
-        setToolOverride("select");
+        setStudioTool("select");
         setArmedSymbol(null);
         return;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [deletePlacement, selectedPlacementId, setArmedSymbol, undo]);
+  }, [
+    deletePlacement,
+    irrigationDraw,
+    isMeasureMode,
+    massPlantDraw,
+    redo,
+    selectedPlacementId,
+    setArmedSymbol,
+    setStudioTool,
+    undo,
+  ]);
+
+  function handlePolylineTap(clientX: number, clientY: number) {
+    const el = canvasRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const pt = clientPct(clientX, clientY, rect);
+
+    if (isMeasureMode) {
+      setMeasurePoints((prev) => (prev.length >= 2 ? [pt] : [...prev, pt]));
+      return;
+    }
+    if (isMassPlantMode && massPlantDraw.isDrawing) {
+      massPlantDraw.addPoint(pt);
+      return;
+    }
+    if (isIrrigationMode && irrigationDraw.isDrawing) {
+      irrigationDraw.addPoint(pt);
+    }
+  }
 
   function handleCanvasPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (isMeasureMode || (isMassPlantMode && massPlantDraw.isDrawing) || (isIrrigationMode && irrigationDraw.isDrawing)) {
+      handlePolylineTap(e.clientX, e.clientY);
+      return;
+    }
+
     if (isDrawMode) {
       const el = canvasRef.current;
       if (!el) return;
@@ -552,28 +720,54 @@ export function DesignStudio({
   }
 
   async function handleSave() {
-    if (savingRef.current) return;
+    if (savingRef.current) return false;
     savingRef.current = true;
     setSaving(true);
     try {
-      await saveDesignCanvasAction(projectId, placements, strokes);
+      await saveDesignCanvasAction(projectId, placements, strokes, irrigationZones);
       setLastSavedLabel(
         new Date().toLocaleTimeString("en-AU", {
           hour: "numeric",
           minute: "2-digit",
         }),
       );
+      setIsDirty(false);
       toast.show(
         "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
         "success",
       );
+      router.refresh();
+      return true;
     } catch (err) {
       toast.show(err instanceof Error ? err.message : "Save failed", "error");
+      return false;
     } finally {
       savingRef.current = false;
       setSaving(false);
     }
   }
+
+  async function handleSaveAndOpenOutputs() {
+    const ok = await handleSave();
+    if (ok) router.push(`/projects/${projectId}/outputs`);
+  }
+
+  const toolHint = (() => {
+    if (isMeasureMode) {
+      return measurePoints.length < 2
+        ? "Tap two points on the aerial to measure (indicative)."
+        : "Tap again to start a new measurement.";
+    }
+    if (isMassPlantMode && massPlantDraw.isDrawing) {
+      return `Placing bed points (${massPlantDraw.points.length}). Tap Finish bed when done.`;
+    }
+    if (isIrrigationMode && irrigationDraw.isDrawing) {
+      return `Tracing drip line (${irrigationDraw.points.length} points). Tap Finish line when done.`;
+    }
+    if (isDrawMode) return null;
+    if (toolOverride === "select") return null;
+    return null;
+  })();
 
   const draftPath =
     draftPoints.length >= 2
@@ -585,19 +779,93 @@ export function DesignStudio({
         )
       : "";
 
-  const canvasEmpty = placements.length === 0 && strokes.length === 0;
+  const canvasEmpty =
+    placements.length === 0 &&
+    strokes.length === 0 &&
+    irrigationZones.length === 0;
+
+  const isPlotMode = isMeasureMode || isMassPlantMode || isIrrigationMode;
+  const canvasClass = isDrawMode
+    ? s.canvasDraw
+    : isPlotMode
+      ? s.canvasPlot
+      : s.canvasPlace;
+
+  const activeToolLabel = (() => {
+    if (toolOverride === "draw") return "Draw";
+    if (toolOverride === "select") return "Select";
+    if (toolOverride === "measure") return "Measure";
+    if (toolOverride === "massplant") return "Mass plant";
+    if (toolOverride === "irrigation") return "Irrigation";
+    if (toolOverride === "place") return "Place";
+    return "Auto";
+  })();
+
+  const armedSymbolLabel = armedSymbolId
+    ? (symbolById.get(armedSymbolId)?.label ?? null)
+    : null;
+
+  const statusMessage = (() => {
+    if (toolHint) return toolHint;
+    if (isDrawMode) {
+      return "Markup with mouse, trackpad, or stylus — survey ink (concept sketch only).";
+    }
+    if (isMeasureMode) {
+      return "Tap two points on the aerial for an indicative distance.";
+    }
+    if (isMassPlantMode) {
+      return "Outline a planting bed, set spacing, then fill with a staggered grid.";
+    }
+    if (isIrrigationMode) {
+      return "Trace drip lines by zone — spacing and flow update the schedule live.";
+    }
+    if (toolOverride === "select") {
+      return "Select symbols to move, rotate, or scale. Delete removes the selection.";
+    }
+    return "Pick an asset, then click the aerial to place — or drag from the library.";
+  })();
+
+  const saveStatusDotClass = saving
+    ? s.saveStatusDotSaving
+    : isDirty
+      ? s.saveStatusDotDirty
+      : lastSavedLabel
+        ? s.saveStatusDotSaved
+        : s.saveStatusDotReady;
+
+  const saveStatusText = saving
+    ? "Saving…"
+    : isDirty
+      ? "Unsaved changes"
+      : lastSavedLabel
+        ? `Saved ${lastSavedLabel}`
+        : "Ready to save";
+
+  const scheduleBadge =
+    placements.length + irrigationZones.length > 0
+      ? placements.length + irrigationZones.length
+      : null;
+
+  const railTabs = [
+    ["assets", "Assets", null],
+    ["massplant", "Mass plant", null],
+    ["irrigation", "Irrigation", irrigationZones.length || null],
+    ["schedule", "Schedule", scheduleBadge],
+  ] as const;
 
   return (
     <div className={s.root}>
       <div className={s.toolbar} role="toolbar" aria-label="Design tools">
-        <div className={s.modeFallback}>
-          <span className={s.modeFallbackLabel}>Fallback modes</span>
-          <div className={s.modeGroup}>
+        <div className={s.toolbarPrimary}>
+          <div className={s.toolCluster}>
+            <span className={s.toolClusterLabel}>Canvas</span>
+            <div className={s.modeGroup}>
             <button
               type="button"
               className={`${s.modeBtn} ${toolOverride === null ? s.modeBtnAutoActive : ""}`}
               aria-pressed={toolOverride === null}
-              onClick={() => setToolOverride(null)}
+              title="Auto mode"
+              onClick={() => setStudioTool(null)}
             >
               Auto
             </button>
@@ -605,7 +873,8 @@ export function DesignStudio({
               type="button"
               className={`${s.modeBtn} ${toolOverride === "place" ? s.modeBtnActive : ""}`}
               aria-pressed={toolOverride === "place"}
-              onClick={() => setToolOverride("place")}
+              title="Place (P)"
+              onClick={() => setStudioTool("place")}
             >
               Place
             </button>
@@ -613,8 +882,9 @@ export function DesignStudio({
               type="button"
               className={`${s.modeBtn} ${toolOverride === "draw" ? s.modeBtnActive : ""}`}
               aria-pressed={toolOverride === "draw"}
+              title="Draw markup (D)"
               onClick={() => {
-                setToolOverride("draw");
+                setStudioTool("draw");
                 setSelectedPlacementId(null);
               }}
             >
@@ -622,27 +892,81 @@ export function DesignStudio({
             </button>
             <button
               type="button"
-              className={`${s.modeBtn} ${toolOverride === "select" ? s.modeBtnAutoActive : ""}`}
+              className={`${s.modeBtn} ${toolOverride === "select" ? s.modeBtnActive : ""}`}
               aria-pressed={toolOverride === "select"}
+              title="Select (V)"
               onClick={() => {
-                setToolOverride("select");
+                setStudioTool("select");
                 setArmedSymbol(null);
               }}
             >
               Select
             </button>
+            </div>
           </div>
+          <div className={s.toolCluster}>
+            <span className={s.toolClusterLabel}>Site</span>
+            <div className={s.modeGroup}>
+            <button
+              type="button"
+              className={`${s.modeBtn} ${toolOverride === "measure" ? s.modeBtnActive : ""}`}
+              aria-pressed={toolOverride === "measure"}
+              title="Measure (M)"
+              onClick={() => {
+                setStudioTool("measure");
+                setRailTab("assets");
+              }}
+            >
+              Measure
+            </button>
+            <button
+              type="button"
+              className={`${s.modeBtn} ${toolOverride === "massplant" ? s.modeBtnActive : ""}`}
+              aria-pressed={toolOverride === "massplant"}
+              onClick={() => {
+                setStudioTool("massplant");
+                setRailTab("massplant");
+              }}
+              title="Mass plant bed"
+            >
+              Mass plant
+            </button>
+            <button
+              type="button"
+              className={`${s.modeBtn} ${toolOverride === "irrigation" ? s.modeBtnActive : ""}`}
+              aria-pressed={toolOverride === "irrigation"}
+              title="Irrigation zones"
+              onClick={() => {
+                setStudioTool("irrigation");
+                setRailTab("irrigation");
+              }}
+            >
+              Irrigation
+            </button>
+            </div>
+          </div>
+          <KeyboardLegend />
         </div>
-        <KeyboardLegend />
-        <div className={s.toolbarDestructive}>
+        <div className={s.toolbarSecondary}>
           <button
             type="button"
             className={s.toolBtn}
             onClick={undo}
-            disabled={!canUndoStroke}
-            aria-disabled={!canUndoStroke}
+            disabled={!canUndo}
+            aria-disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
           >
-            Undo stroke
+            Undo
+          </button>
+          <button
+            type="button"
+            className={s.toolBtn}
+            onClick={redo}
+            disabled={!studio.canRedo}
+            aria-disabled={!studio.canRedo}
+            title="Redo (Ctrl+Shift+Z)"
+          >
+            Redo
           </button>
           <button type="button" className={s.toolBtn} onClick={clearStrokes}>
             Clear markup
@@ -650,17 +974,22 @@ export function DesignStudio({
           <button type="button" className={s.toolBtn} onClick={clearPlacements}>
             Clear symbols
           </button>
+          <span className={s.counts} data-testid="design-studio-counts">
+            {placements.length} symbols · {strokes.length} strokes · {irrigationZones.length}{" "}
+            zones
+          </span>
         </div>
-        <span className={s.counts} data-testid="design-studio-counts">
-          {placements.length} symbols · {strokes.length} strokes
-        </span>
         <div className={s.toolbarActions}>
-          <span className={s.saveStatus} aria-live="polite">
-            {saving
-              ? "Saving…"
-              : lastSavedLabel
-                ? `All changes saved ${lastSavedLabel}`
-                : "Unsaved changes"}
+          <span
+            className={`${s.saveStatus} ${s.saveStatusRow}`}
+            aria-live="polite"
+            data-testid="design-studio-save-status"
+          >
+            <span
+              className={`${s.saveStatusDot} ${saveStatusDotClass}`}
+              aria-hidden
+            />
+            {saveStatusText}
           </span>
           <button
             type="button"
@@ -681,19 +1010,20 @@ export function DesignStudio({
         </p>
       ) : null}
 
+      <div
+        className={`${s.statusBar} ${toolHint ? s.statusBarActive : ""}`}
+        role="status"
+        aria-live="polite"
+      >
+        <span className={s.statusBarLabel}>{activeToolLabel}</span>
+        <p className={s.statusBarText}>{statusMessage}</p>
+      </div>
+
       <div className={s.workspace}>
         <div className={s.canvasCol}>
-          <p className={s.helper}>
-            {isDrawMode
-              ? "Markup with mouse, trackpad, or stylus — survey ink (concept sketch only)."
-              : toolOverride === "select"
-                ? "Select symbols to move, rotate, or scale. Delete removes the selection."
-                : "Pick an asset, then click the aerial to place — or drag from the library."}
-          </p>
-
           <div
             ref={canvasRef}
-            className={`${s.canvas} ${isDrawMode ? s.canvasDraw : s.canvasPlace}`}
+            className={`${s.canvas} ${canvasClass}`}
             onDragOver={(e) => {
               if (isDrawMode || toolOverride === "select") return;
               e.preventDefault();
@@ -721,6 +1051,12 @@ export function DesignStudio({
             aria-label="Site plan canvas"
             data-testid="design-studio-canvas"
           >
+            <div className={s.canvasHud} aria-hidden>
+              <span className={s.canvasHudPill}>{activeToolLabel}</span>
+              {armedSymbolLabel ? (
+                <span className={s.canvasHudArmed}>{armedSymbolLabel}</span>
+              ) : null}
+            </div>
             {aerialError ? (
               <div className={s.aerialError}>
                 <p>Aerial image failed to load.</p>
@@ -767,6 +1103,25 @@ export function DesignStudio({
               ))}
               {draftPath ? <path d={draftPath} className={s.markupStroke} /> : null}
             </svg>
+            <IrrigationOverlay
+              zones={irrigationZones}
+              draftPoints={irrigationDraw.points}
+              canvasWidthPx={canvasSize.width}
+              canvasHeightPx={canvasSize.height}
+            />
+            <MassPlantOverlay
+              points={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
+              closed={massPolygonClosed && !massPlantDraw.isDrawing}
+              draft={massPlantDraw.isDrawing}
+              canvasWidthPx={canvasSize.width}
+              canvasHeightPx={canvasSize.height}
+            />
+            <MeasureOverlay
+              points={measurePoints}
+              canvasWidthPx={canvasSize.width}
+              canvasHeightPx={canvasSize.height}
+              scale={groundScale}
+            />
             {placements.map((p) => {
               const sym = symbolById.get(p.symbol_id);
               if (!sym) return null;
@@ -792,12 +1147,20 @@ export function DesignStudio({
                 />
               );
             })}
-            {canvasEmpty && !isDrawMode ? (
+            {canvasEmpty && !isDrawMode && !isPlotMode ? (
               <div className={s.emptyPrompt}>
-                <p>Select an asset and click the aerial to begin your concept sketch.</p>
+                <div className={s.emptyPromptCard}>
+                  <p className={s.emptyPromptTitle}>Start your concept sketch</p>
+                  <ol className={s.emptyPromptSteps}>
+                    <li>Choose an asset from the library</li>
+                    <li>Click the aerial to place symbols</li>
+                    <li>Draw beds, irrigation, or markup as needed</li>
+                    <li>Open Schedule for a live estimate</li>
+                  </ol>
+                </div>
               </div>
             ) : null}
-            {cursorHint && !isDrawMode ? (
+            {cursorHint && !isDrawMode && !isPlotMode ? (
               <div
                 className={s.contextLabel}
                 style={{ left: cursorHint.x, top: cursorHint.y }}
@@ -813,17 +1176,131 @@ export function DesignStudio({
           </p>
         </div>
 
-        <DesignAssetPalette
-          symbols={symbols}
-          selectedId={paletteSelectedId}
-          disabled={isDrawMode}
-          onSelect={handlePaletteSelect}
-          onDragStart={(id) => {
-            setDragSymbolId(id);
-            setArmedSymbol(id);
-          }}
-          onDragEnd={() => setDragSymbolId(null)}
-        />
+        <aside className={s.sideRail}>
+          <div className={s.railTabs} role="tablist" aria-label="Studio panels">
+            {railTabs.map(([id, label, badge]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={railTab === id}
+                className={`${s.railTab} ${railTab === id ? s.railTabActive : ""}`}
+                onClick={() => handleRailTab(id)}
+              >
+                {label}
+                {badge ? <span className={s.railTabBadge}>{badge}</span> : null}
+              </button>
+            ))}
+          </div>
+          <div className={s.railPanel} role="tabpanel">
+            {railTab === "assets" ? (
+              <DesignAssetPalette
+                symbols={symbols}
+                selectedId={paletteSelectedId}
+                disabled={isDrawMode}
+                embedded
+                onSelect={handlePaletteSelect}
+                onDragStart={(id) => {
+                  setDragSymbolId(id);
+                  setArmedSymbol(id);
+                }}
+                onDragEnd={() => setDragSymbolId(null)}
+              />
+            ) : null}
+            {railTab === "massplant" ? (
+              <StudioMassPlantPanel
+                symbols={symbols}
+                polygonPoints={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
+                polygonClosed={massPolygonClosed}
+                isDrawing={massPlantDraw.isDrawing}
+                spacingCm={massSpacingCm}
+                scale={groundScale}
+                onSpacingChange={setMassSpacingCm}
+                onStartDraw={() => {
+                  setStudioTool("massplant");
+                  setMassPolygonClosed(false);
+                  setMassPolygonPoints([]);
+                  massPlantDraw.start();
+                }}
+                onFinishPolygon={() => {
+                  const pts = massPlantDraw.finish();
+                  if (pts) {
+                    setMassPolygonPoints(pts);
+                    setMassPolygonClosed(true);
+                  } else toast.show("Need at least 3 points for a bed.", "error");
+                }}
+                onClear={() => {
+                  massPlantDraw.cancel();
+                  setMassPolygonClosed(false);
+                  setMassPolygonPoints([]);
+                }}
+                onFill={(newPlacements) => {
+                  setPlacements((prev) => [...prev, ...newPlacements]);
+                  setRailTab("schedule");
+                  toast.show(`Placed ${newPlacements.length} plants.`, "success");
+                }}
+              />
+            ) : null}
+            {railTab === "irrigation" ? (
+              <StudioIrrigationPanel
+                zones={irrigationZones}
+                selectedZoneId={selectedIrrigationZoneId}
+                isDrawing={irrigationDraw.isDrawing}
+                scale={groundScale}
+                onSelectZone={setSelectedIrrigationZoneId}
+                onUpdateZone={(id, patch) => {
+                  setIrrigationZones(
+                    (prev) => prev.map((z) => (z.id === id ? { ...z, ...patch } : z)),
+                    false,
+                  );
+                }}
+                onDeleteZone={(id) => {
+                  if (!window.confirm("Delete this irrigation zone?")) return;
+                  setIrrigationZones((prev) => prev.filter((z) => z.id !== id));
+                  setSelectedIrrigationZoneId((cur) => (cur === id ? null : cur));
+                }}
+                onStartNewZone={() => {
+                  setStudioTool("irrigation");
+                  setSelectedIrrigationZoneId(null);
+                  irrigationDraw.start();
+                }}
+                onFinishLine={() => {
+                  const pts = irrigationDraw.finish();
+                  if (!pts) {
+                    toast.show("Need at least 2 points for a line.", "error");
+                    return;
+                  }
+                  const zone = {
+                    id: newId(),
+                    name: `Zone ${irrigationZones.length + 1}`,
+                    points: pts,
+                    emitter_spacing_cm: 30,
+                    emitter_flow_lph: 2,
+                  };
+                  setIrrigationZones((prev) => [...prev, zone]);
+                  setSelectedIrrigationZoneId(zone.id);
+                  setRailTab("schedule");
+                  toast.show(`Zone "${zone.name}" created.`, "success");
+                }}
+              />
+            ) : null}
+            {railTab === "schedule" ? (
+              <StudioSchedulePanel
+                placements={placements}
+                irrigationZones={irrigationZones}
+                symbols={symbols}
+                rateCard={rateCard}
+                scale={groundScale}
+                onCopySchedule={(md) => {
+                  void navigator.clipboard.writeText(md);
+                  toast.show("Schedule copied to clipboard.", "success");
+                }}
+                onOpenOutputs={() => void handleSaveAndOpenOutputs()}
+                saving={saving}
+              />
+            ) : null}
+          </div>
+        </aside>
       </div>
     </div>
   );

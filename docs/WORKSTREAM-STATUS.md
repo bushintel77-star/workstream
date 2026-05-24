@@ -4,6 +4,7 @@ Generated 2026-05-24. Product: Workstream. Studio brand: Curtis & Co.
 
 ## Shipped in this session
 
+- **Design studio gold upgrade** — measure, mass plant beds, irrigation zones, live schedule panel, undo/redo, toolbar UX (`857b7af` / PR #21).
 - Current gap matrix: `docs/GAP-ANALYSIS-CURRENT.md` (`33fdfea`).
 - API OpenTelemetry scaffold and provider spans for Anthropic, OpenAI, and Mapbox (`ce198e0`).
 - Portal route fetches moved out of the `server-only` operator API module; quote/deposit portal routes now declare edge runtime and branded loading states (`46161c4`).
@@ -44,5 +45,6 @@ Generated 2026-05-24. Product: Workstream. Studio brand: Curtis & Co.
 - Finish human ops checklist in `docs/HUMAN-OPS-RUNBOOK.md`.
 - Enable Litestream sidecar after R2 or B2 credentials exist.
 - Keep Design Studio Phase 6 AI assist deferred until proposal, model cost, and review gates are approved.
+- Design studio operator docs: [`docs/DESIGNER-HANDOVER.md`](DESIGNER-HANDOVER.md).
 - Keep PostgreSQL migration out of scope until the JSON snapshot path is replaced intentionally.
 
