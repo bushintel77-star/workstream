@@ -10,12 +10,12 @@
 | 6 | Branch protection on main | OUTSTANDING.md, GAP-ANALYSIS.md | BLOCKED | HumanOps | Human | P1 |
 | 7 | OpenTelemetry tracing for Anthropic, OpenAI, Mapbox, and route spans | OUTSTANDING.md, GAP-ANALYSIS.md | CLOSED `ce198e0` | Code | Agent | P2 |
 | 8 | Edge runtime for /portal/* pages | OUTSTANDING.md, GAP-ANALYSIS.md | CLOSED `46161c4` | Code | Agent | P2 |
-| 9 | Contract smoke coverage for remaining API routes beyond core routes | OUTSTANDING.md, apps/api/src/routes/contract.test.ts | CLOSED `0c78e17` | Test | Agent | P1 |
+| 9 | Contract smoke coverage for remaining API routes beyond core routes | OUTSTANDING.md, apps/api/src/routes/contract.test.ts | CLOSED `0c78e17`, `677b543`, `0af85c0` | Test | Agent | P1 |
 | 10 | Litestream backup setup promoted from template to operator-ready documentation | OUTSTANDING.md, docs/litestream.example.yml | CLOSED | Doc | Agent | P2 |
 | 11 | Mobile app.json EAS placeholder detection and CI guard | apps/mobile/app.json, apps/mobile/eas.json | CLOSED `97df9a4` | Test | Agent | P1 |
 | 12 | docs/WORKSTREAM-STATUS.md authoritative status document | User prompt, repository audit | CLOSED | Doc | Agent | P2 |
-| 13 | Portal loading and error boundaries for client-facing quote/deposit routes | User prompt, web audit | CLOSED `46161c4` | UX | Agent | P2 |
-| 14 | Settings loading boundary and token-only legacy CSS cleanup | User prompt, web audit | PARTIAL `4465787` | UX | Agent | P2 |
+| 13 | Portal loading, error boundaries, and signed deposit checkout flow for client-facing quote/deposit routes | User prompt, web audit | CLOSED `46161c4`, `9de3ed7`, `443761d` | UX | Agent | P2 |
+| 14 | Settings loading boundary and token-only legacy CSS cleanup | User prompt, web audit | CLOSED `4465787`, `9de3ed7` | UX | Agent | P2 |
 | 15 | Project tab loading skeleton consistency | User prompt, web audit | CLOSED `4465787` | UX | Agent | P2 |
 | 16 | Design studio Phase 6 AI assist | AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md, OUTSTANDING.md | DEFERRED | UX | Human | P3 |
 | 17 | Brochure output | AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md, OUTSTANDING.md | DEFERRED | UX | Human | P3 |
@@ -31,5 +31,10 @@ Owner: Agent (can implement now) | Human (requires credentials/platform access)
 
 - `git log --oneline -50` read at 2026-05-24T03:39:45Z.
 - `pnpm ci` was attempted as requested and failed because pnpm reports `ERR_PNPM_CI_NOT_IMPLEMENTED`.
-- `pnpm run ci` passed with 118 tests.
+- `pnpm run ci` passed after final implementation with 126 tests.
+- `pnpm lint`, `pnpm mobile:check-placeholders`, portal import guard, and
+  `pnpm test:e2e` passed after installing Playwright Chromium locally.
+- Production smoke checks returned `ok` for `/healthz` and `/readyz`; the
+  requested `/uploads/test.mp3` probe returned `404` because the test object is
+  absent on production.
 

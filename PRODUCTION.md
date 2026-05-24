@@ -94,6 +94,9 @@ Bundle ID: `com.curtisandco.workstream`
 curl -s https://construct-api.fly.dev/healthz
 curl -s https://construct-api.fly.dev/readyz
 curl -s -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/
+curl -s -o /dev/null -w "%{http_code}\n" https://construct-api.fly.dev/uploads/test.mp3
 ```
 
-Expect `ok` / `200`.
+Expect API health/ready `ok`, web `200`/redirect, and protected uploads to
+return `401` for existing unauthenticated objects or `404` when the requested
+object is absent.
