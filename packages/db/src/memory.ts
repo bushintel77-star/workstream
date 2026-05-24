@@ -240,7 +240,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
 
     async resolveAssetOwner(kind, assetId) {
       const ownerForProject = (projectId: string) => {
-        const project = _projects.find((p) => p.id === projectId);
+        const project = _projects.find((p) => p.id === projectId && !p.deleted_at);
         return project ? { ownerId: project.owner_id, projectId } : null;
       };
 
@@ -269,9 +269,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           const file =
             _projectFiles.find((f) => f.id === assetId) ??
             _projectFiles.find((f) => f.uri.includes(assetId));
-          return file
-            ? { ownerId: file.owner_id, projectId: file.project_id }
-            : null;
+          return file ? ownerForProject(file.project_id) : null;
         }
         default:
           return null;

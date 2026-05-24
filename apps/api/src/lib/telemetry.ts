@@ -92,19 +92,21 @@ export function annotateActiveSpan(
 }
 
 export function annotateRouteSpan(request: FastifyRequest): void {
-  if (!request.url.startsWith("/v1/")) return;
-
-  const projectId =
+  const params =
     typeof request.params === "object" &&
-    request.params != null &&
-    "projectId" in request.params &&
-    typeof request.params.projectId === "string"
-      ? request.params.projectId
-      : undefined;
+    request.params != null
+      ? (request.params as Record<string, unknown>)
+      : {};
+  const projectId =
+    typeof params.projectId === "string"
+      ? params.projectId
+      : typeof params.id === "string" && request.url.startsWith("/projects/")
+        ? params.id
+        : undefined;
 
   annotateActiveSpan({
     "operator.id": request.userId,
     "project.id": projectId,
-    "http.route.scope": "v1",
+    "http.route.scope": request.url.startsWith("/v1/") ? "v1" : "default",
   });
 }

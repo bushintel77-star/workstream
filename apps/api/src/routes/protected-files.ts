@@ -68,7 +68,7 @@ async function authorizeAsset(
       reply.code(403).send({ error: "Token does not match this asset" });
       return null;
     }
-    if (kind === "outputs" && verify.payload.scope !== "quote_view") {
+    if (verify.payload.scope !== "quote_view") {
       reply.code(403).send({ error: "Token scope does not allow file access" });
       return null;
     }

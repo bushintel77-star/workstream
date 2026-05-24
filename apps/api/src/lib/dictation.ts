@@ -5,6 +5,7 @@ import type {
 } from "@workstream/contracts";
 import { notifyTaskAssignment } from "./task-notify";
 import { getOwnerEnv } from "./owner-secrets";
+import { withTelemetrySpan } from "./telemetry";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -361,15 +362,26 @@ export async function runDictation(
       ],
     };
 
-    const res = await fetch(MESSAGES_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
+    const res = await withTelemetrySpan(
+      "anthropic.dictation",
+      {
+        "project.id": projectId,
+        "operator.id": ownerId,
+        "pipeline.stage": "dictation",
+        "model.name": DICTATION_MODEL,
+        "tokens.input": trimmed.length,
       },
-      body: JSON.stringify(body),
-    });
+      () =>
+        fetch(MESSAGES_URL, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": ANTHROPIC_VERSION,
+          },
+          body: JSON.stringify(body),
+        }),
+    );
     if (!res.ok) {
       throw new Error(
         `Anthropic dictation failed: ${res.status} ${await res.text()}`,

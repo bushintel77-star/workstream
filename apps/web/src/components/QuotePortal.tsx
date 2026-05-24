@@ -193,7 +193,11 @@ export function QuotePortal({
       )}
 
       {allCostings.length > 0 && (
-        <section className={styles.section}>
+        <section
+          className={`${styles.section} ${styles.quoteWatermark}`}
+          data-watermark={`CONFIDENTIAL · ${project.id}`}
+          aria-label={`Confidential quote for project ${project.id}`}
+        >
           <h2 className={styles.sectionHeading}>Investment</h2>
 
           <div
@@ -269,13 +273,27 @@ export function QuotePortal({
       )}
 
       <section className={styles.acceptSection}>
-        <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
-          Accept &amp; pay deposit
-        </Link>
-        <p className={styles.acceptNote}>
-          A 20% deposit secures your project on the Standard scenario. Balance
-          billed in stages as works progress.
-        </p>
+        {active ? (
+          <>
+            <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
+              Accept &amp; pay deposit
+            </Link>
+            <p className={styles.acceptNote}>
+              A 20% deposit secures your project on the Standard scenario. Balance
+              billed in stages as works progress.
+            </p>
+          </>
+        ) : (
+          <>
+            <span className={styles.acceptButtonDisabled}>
+              Deposit unavailable
+            </span>
+            <p className={styles.acceptNote}>
+              Curtis &amp; Co will issue the deposit link once the quote total is
+              confirmed.
+            </p>
+          </>
+        )}
       </section>
 
       <footer className={styles.colophon}>

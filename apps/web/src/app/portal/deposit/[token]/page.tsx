@@ -28,7 +28,10 @@ export default async function DepositPage({
       {result.error && (
         <section className={styles.errorBlock}>
           <h1 className={styles.heading}>Couldn't open checkout</h1>
-          <p className={styles.body}>{result.error}</p>
+          <p className={styles.body}>
+            This deposit link is not available right now. Contact your
+            landscaper and they will issue a fresh checkout link.
+          </p>
         </section>
       )}
 
