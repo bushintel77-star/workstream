@@ -68,11 +68,11 @@ export default async function DesignPage({
         />
       )}
 
-      <div className={s.actionBar}>
+      <div id="envelope-estimate" className={s.actionBar}>
         {!survey ? (
-          <button type="button" className={s.btn} disabled>
-            Run survey first
-          </button>
+          <Link href={`/projects/${id}/survey`} className={s.btn}>
+            Complete survey first
+          </Link>
         ) : (
           <>
             <Link href={`/projects/${id}/design/studio`} className={s.btn}>

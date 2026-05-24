@@ -29,6 +29,7 @@ export type PortalQuote = {
       is_provisional: boolean;
     }>;
   } | null;
+  deposit_url: string | null;
 };
 
 export type DepositCheckout = {

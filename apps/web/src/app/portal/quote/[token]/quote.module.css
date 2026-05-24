@@ -234,6 +234,16 @@
   opacity: 1 !important;
   transform: translateY(-1px);
 }
+.acceptButtonDisabled {
+  display: inline-block;
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
+  padding: var(--s-3) var(--s-5);
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-md);
+  font-size: 16px;
+  font-weight: 600;
+}
 .acceptNote {
   margin: var(--s-3) 0 0;
   font-size: 13px;

@@ -224,6 +224,7 @@ describe("API contract — projects", () => {
       `/projects/${projectId}/files`,
       `/projects/${projectId}/weather`,
       `/projects/${projectId}/site-context`,
+      `/projects/${projectId}/carbon`,
     ];
 
     for (const url of checks) {
@@ -299,6 +300,67 @@ describe("API contract — projects", () => {
       expect(res.statusCode).toBe(200);
       expect(res.json()).toBeTypeOf("object");
     }
+  });
+
+  it("mints separate portal quote and deposit tokens for client checkout", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Portal Deposit St, Armadale VIC 3143" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const survey = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/survey`,
+    });
+    expect(survey.statusCode).toBe(201);
+
+    const design = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/design`,
+    });
+    expect(design.statusCode).toBe(201);
+
+    const costing = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/costing`,
+    });
+    expect(costing.statusCode).toBe(201);
+
+    const link = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/magic-link`,
+      payload: { scope: "quote_view" },
+    });
+    expect(link.statusCode).toBe(200);
+    const { token } = link.json() as { token: string };
+
+    const quote = await app.inject({
+      method: "GET",
+      url: `/portal/quote/${token}`,
+    });
+    expect(quote.statusCode).toBe(200);
+    const quoteBody = quote.json() as { deposit_url: string | null };
+    expect(quoteBody.deposit_url).toMatch(/\/portal\/deposit\//);
+    expect(quoteBody.deposit_url).not.toContain(token);
+
+    const depositToken = new URL(quoteBody.deposit_url ?? "").pathname
+      .split("/")
+      .pop();
+    expect(depositToken).toBeTruthy();
+
+    const deposit = await app.inject({
+      method: "POST",
+      url: `/portal/deposit/${depositToken}`,
+    });
+    expect(deposit.statusCode).toBe(200);
+    const depositBody = deposit.json() as {
+      session: { mode: string; deposit_amount_aud: number };
+    };
+    expect(depositBody.session.mode).toBe("dev_fallback");
+    expect(depositBody.session.deposit_amount_aud).toBeGreaterThan(0);
   });
 
   it("records project delete and restore in activity log", async () => {

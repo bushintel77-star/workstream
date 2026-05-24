@@ -11,6 +11,11 @@ Generated 2026-05-24. Product: Workstream. Studio brand: Curtis & Co.
 - API contract test harness now registers the broader route surface and adds smoke coverage for geocode, ops tabs, integrations, accounting, catalog, suppliers, and validation paths (`0c78e17`).
 - Web loading states improved for settings plus design/costing project tabs (`4465787`).
 - Litestream setup and human operations runbook added.
+- Client portal deposit links now use separate checkout-scoped tokens, signed
+  token routes accept HMAC tokens with dots, and portal success/cancel/error
+  states are branded (`9de3ed7`, `443761d`).
+- Contract tests now cover carbon smoke and quote-to-deposit portal token flow
+  (`677b543`, `0af85c0`).
 
 ## Human-owned before first paying customer
 
@@ -25,8 +30,12 @@ Generated 2026-05-24. Product: Workstream. Studio brand: Curtis & Co.
 ## Current verification baseline
 
 - Literal `pnpm ci` is not implemented by pnpm 9 in this environment.
-- `pnpm run ci` passed before implementation with 118 tests.
-- Final verification is tracked in the automation run summary after all changes.
+- `pnpm run ci` passed after implementation with 126 tests.
+- `pnpm lint`, `pnpm mobile:check-placeholders`, and the portal edge import
+  guard passed.
+- `pnpm test:e2e` passed after installing Playwright Chromium in the runner.
+- Production smoke: `/healthz` and `/readyz` returned `ok`; the requested
+  `/uploads/test.mp3` probe returned `404` because that object does not exist.
 
 ## Roadmap
 

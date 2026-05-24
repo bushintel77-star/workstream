@@ -24,5 +24,5 @@ export default async function QuotePage({
     );
   }
 
-  return <QuotePortal data={data} token={token} />;
+  return <QuotePortal data={data} />;
 }

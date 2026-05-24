@@ -35,6 +35,7 @@ export type PortalQuoteData = {
   } | null;
   costing: PortalCosting | null;
   costings?: PortalCosting[];
+  deposit_url?: string | null;
   tier1?: {
     removed_ex: number;
     deployed_ex: number;
@@ -79,10 +80,8 @@ const aud2 = (n: number) =>
 
 export function QuotePortal({
   data,
-  token,
 }: {
   data: PortalQuoteData;
-  token: string;
 }) {
   const { project, survey, design, tier1 } = data;
   const allCostings = data.costings?.length
@@ -269,12 +268,19 @@ export function QuotePortal({
       )}
 
       <section className={styles.acceptSection}>
-        <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
-          Accept &amp; pay deposit
-        </Link>
+        {active && data.deposit_url ? (
+          <Link href={data.deposit_url} className={styles.acceptButton}>
+            Accept &amp; pay {aud2(active.total * 0.2)} deposit
+          </Link>
+        ) : (
+          <span className={styles.acceptButtonDisabled}>
+            Deposit checkout pending
+          </span>
+        )}
         <p className={styles.acceptNote}>
-          A 20% deposit secures your project on the Standard scenario. Balance
-          billed in stages as works progress.
+          {active
+            ? "A 20% deposit secures your project on the Standard scenario. Balance billed in stages as works progress."
+            : "Deposit checkout unlocks once Curtis & Co issues the costed quote."}
         </p>
       </section>
 
