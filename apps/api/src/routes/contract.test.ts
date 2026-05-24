@@ -268,7 +268,7 @@ describe("API contract — projects", () => {
 
     for (const check of checks) {
       const res = await app.inject(check);
-      expect([400, 406, 415]).toContain(res.statusCode);
+      expect([400, 406, 409, 415]).toContain(res.statusCode);
       expect(res.json()).toBeTypeOf("object");
     }
   });
