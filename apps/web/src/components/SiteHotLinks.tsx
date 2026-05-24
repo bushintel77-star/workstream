@@ -68,7 +68,7 @@ function nextHref(projectId: string, next: SiteNextAction): string {
     case "share":
       return `/projects/${projectId}/outputs`;
     default:
-      return `/projects/${projectId}`;
+      return `/projects/${projectId}/overview`;
   }
 }
 

@@ -24,9 +24,14 @@ test.describe("Operator happy path", () => {
     expect(pipeline.ok()).toBeTruthy();
 
     await page.goto(`/projects/${projectId}`);
-    await expect(
-      page.getByRole("heading", { name: /E2E Operator Path, 88 Test Grove/i }),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Design" })).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await page.goto(`/projects/${projectId}/overview`);
+    await expect(page.getByRole("heading", { name: "Pipeline" })).toBeVisible({
+      timeout: 30_000,
+    });
 
     await page.goto(`/projects/${projectId}/design`);
     await expect(page.getByRole("heading", { name: /design/i })).toBeVisible({

@@ -5,9 +5,9 @@ import type { Project } from "../../../lib/api";
 import { NotFoundView } from "../../../components/NotFoundView";
 
 const BASE_TABS: Array<{ slug: string; label: string }> = [
-  { slug: "", label: "Overview" },
+  { slug: "design", label: "Studio" },
+  { slug: "overview", label: "Pipeline" },
   { slug: "survey", label: "Survey" },
-  { slug: "design", label: "Design" },
   { slug: "costing", label: "Costing" },
   { slug: "audit", label: "Audit" },
   { slug: "outputs", label: "Outputs" },
@@ -35,7 +35,7 @@ export type ProjectTab =
 function projectTabs(project: Project) {
   if (project.status !== "processing") return BASE_TABS;
   const tabs = [...BASE_TABS];
-  tabs.splice(1, 0, { slug: "processing", label: "Processing" });
+  tabs.splice(2, 0, { slug: "processing", label: "Processing" });
   return tabs;
 }
 
@@ -68,14 +68,11 @@ export function ProjectMasthead({
       </header>
       <nav className={p.subnav} aria-label="Project sections">
         {tabs.map((t) => {
-          const slug = t.slug || "overview";
-          const href = t.slug
-            ? `/projects/${project.id}/${t.slug}`
-            : `/projects/${project.id}`;
-          const isActive = active === slug;
+          const href = `/projects/${project.id}/${t.slug}`;
+          const isActive = active === t.slug;
           return (
             <Link
-              key={t.slug || "overview"}
+              key={t.slug}
               href={href}
               className={`${p.subnavItem} ${isActive ? p.subnavItemActive : ""}`}
               aria-current={isActive ? "page" : undefined}
