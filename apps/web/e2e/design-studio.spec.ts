@@ -41,8 +41,8 @@ test.describe("Design studio", () => {
   });
 
   test("loads studio with catalog and seeded canvas", async ({ page }) => {
-    await page.goto(`/projects/${projectId}/design/studio`);
-    await expect(page.getByRole("heading", { name: "Design studio" })).toBeVisible({
+    await page.goto(`/projects/${projectId}/design`);
+    await expect(page.getByRole("heading", { name: "Design" })).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByTestId("design-asset-palette")).toBeVisible();
@@ -55,7 +55,7 @@ test.describe("Design studio", () => {
   });
 
   test("shows indicative scale bar on canvas", async ({ page }) => {
-    await page.goto(`/projects/${projectId}/design/studio`);
+    await page.goto(`/projects/${projectId}/design`);
     await expect(page.getByTestId("design-studio-scale-bar")).toBeVisible({
       timeout: 30_000,
     });
@@ -63,7 +63,7 @@ test.describe("Design studio", () => {
   });
 
   test("places symbol from catalog click", async ({ page }) => {
-    await page.goto(`/projects/${projectId}/design/studio`);
+    await page.goto(`/projects/${projectId}/design`);
     await expect(page.getByTestId("design-studio-counts")).toHaveText(/1 symbols/, {
       timeout: 30_000,
     });
@@ -81,7 +81,7 @@ test.describe("Design studio", () => {
   });
 
   test("opens schedule and irrigation panels", async ({ page }) => {
-    await page.goto(`/projects/${projectId}/design/studio`);
+    await page.goto(`/projects/${projectId}/design`);
     await page.getByRole("tab", { name: "Schedule" }).click();
     await expect(page.getByTestId("studio-schedule-panel")).toBeVisible({
       timeout: 15_000,
@@ -92,8 +92,16 @@ test.describe("Design studio", () => {
     });
   });
 
-  test("save plan from toolbar", async ({ page }) => {
+  test("legacy studio URL redirects to design", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
+    await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/design$`));
+    await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
+      timeout: 30_000,
+    });
+  });
+
+  test("save plan from toolbar", async ({ page }) => {
+    await page.goto(`/projects/${projectId}/design`);
     await expect(page.getByTestId("design-studio-save")).toBeVisible({
       timeout: 30_000,
     });

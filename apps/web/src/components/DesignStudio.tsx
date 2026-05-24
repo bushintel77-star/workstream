@@ -31,15 +31,11 @@ import {
   useStudioHistory,
   useStudioPolylineDraw,
 } from "./studio";
+import type { CanvasStrokeClient } from "./studio/types";
 import type { RateCardItem } from "../lib/api";
 import s from "./designStudio.module.css";
 
-export type CanvasStrokeClient = {
-  id: string;
-  points: StrokePointPct[];
-  color: string;
-  width_px: number;
-};
+export type { CanvasStrokeClient } from "./studio/types";
 
 type ToolOverride =
   | "place"
@@ -155,7 +151,6 @@ export function DesignStudio({
   const pendingPlaceRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const drawingRef = useRef(false);
   const savingRef = useRef(false);
-  const armedSymbolRef = useRef<string | null>(null);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
   const [railTab, setRailTab] = useState<RailTab>("assets");
@@ -194,11 +189,6 @@ export function DesignStudio({
   );
   const massPlantDraw = useStudioPolylineDraw("closed");
   const irrigationDraw = useStudioPolylineDraw("open");
-
-  const setArmedSymbol = useCallback((id: string | null) => {
-    armedSymbolRef.current = id;
-    setArmedSymbolId(id);
-  }, []);
 
   const mapView: StaticMapView = useMemo(
     () => resolveStaticMapView(aerialUri, lotRing),
@@ -333,7 +323,7 @@ export function DesignStudio({
     (clientX: number, clientY: number) => {
       const el = canvasRef.current;
       if (!el) return;
-      const symbolId = dragSymbolId ?? armedSymbolRef.current;
+      const symbolId = dragSymbolId ?? armedSymbolId;
       if (!symbolId) return;
       if (toolOverride === "select") return;
       if (isMeasureMode || isMassPlantMode || isIrrigationMode) return;
@@ -342,7 +332,7 @@ export function DesignStudio({
       addPlacement(symbolId, pt.x_pct, pt.y_pct);
       setDragSymbolId(null);
     },
-    [addPlacement, dragSymbolId, isIrrigationMode, isMassPlantMode, isMeasureMode, toolOverride],
+    [addPlacement, armedSymbolId, dragSymbolId, isIrrigationMode, isMassPlantMode, isMeasureMode, toolOverride],
   );
 
   const commitDraftStroke = useCallback(() => {
@@ -401,10 +391,10 @@ export function DesignStudio({
     (id: string) => {
       setPaletteSelectedId(id);
       if (toolOverride !== "select") {
-        setArmedSymbol(id);
+        setArmedSymbolId(id);
       }
     },
-    [setArmedSymbol, toolOverride],
+    [setArmedSymbolId, toolOverride],
   );
 
   const updateCursorHint = useCallback(
@@ -457,7 +447,7 @@ export function DesignStudio({
           return;
         }
         setSelectedPlacementId(null);
-        setArmedSymbol(null);
+        setArmedSymbolId(null);
         setDragSymbolId(null);
         setDraftPoints([]);
         return;
@@ -491,7 +481,7 @@ export function DesignStudio({
       }
       if (e.key.toLowerCase() === "v") {
         setStudioTool("select");
-        setArmedSymbol(null);
+        setArmedSymbolId(null);
         return;
       }
     };
@@ -504,7 +494,7 @@ export function DesignStudio({
     massPlantDraw,
     redo,
     selectedPlacementId,
-    setArmedSymbol,
+    setArmedSymbolId,
     setStudioTool,
     undo,
   ]);
@@ -897,7 +887,7 @@ export function DesignStudio({
               title="Select (V)"
               onClick={() => {
                 setStudioTool("select");
-                setArmedSymbol(null);
+                setArmedSymbolId(null);
               }}
             >
               Select
@@ -1202,7 +1192,7 @@ export function DesignStudio({
                 onSelect={handlePaletteSelect}
                 onDragStart={(id) => {
                   setDragSymbolId(id);
-                  setArmedSymbol(id);
+                  setArmedSymbolId(id);
                 }}
                 onDragEnd={() => setDragSymbolId(null)}
               />

@@ -1,5 +1,11 @@
 import "server-only";
 
+import type {
+  CatalogPlacement,
+  CatalogSymbol,
+  CreateCatalogSymbolInput,
+  DesignCanvas,
+} from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
 import { operatorApiUrl } from "./public-env";
 
@@ -283,85 +289,20 @@ export async function runDesign(projectId: string): Promise<Design> {
 
 /* -- Design studio (catalog + canvas) ---------------------------------- */
 
-export type CatalogGlyphLayer = {
-  d: string;
-  fill?: string;
-  stroke?: string;
-  stroke_width?: number;
-  opacity?: number;
-};
-
-export type CatalogAsset = {
-  view_box: string;
-  layers: CatalogGlyphLayer[];
-  preview_bg?: string;
-  accent?: string;
-};
-
-export type CatalogCategory =
-  | "planting"
-  | "paving"
-  | "structure"
-  | "water"
-  | "annotation"
-  | "furniture";
-
-export type CatalogSymbol = {
-  id: string;
-  label: string;
-  category: CatalogCategory;
-  path_d: string;
-  asset?: CatalogAsset;
-  description?: string;
-  keywords?: string[];
-  default_width_m?: number;
-  rate_card_sku?: string;
-};
-
-export type CatalogPlacement = {
-  id: string;
-  symbol_id: string;
-  x_pct: number;
-  y_pct: number;
-  rotation_deg: number;
-  scale: number;
-  label?: string;
-};
-
-export type DesignCanvas = {
-  id: string;
-  project_id: string;
-  placements: CatalogPlacement[];
-  strokes: Array<{
-    id: string;
-    points: Array<{ x_pct: number; y_pct: number }>;
-    color: string;
-    width_px: number;
-  }>;
-  irrigation_zones: Array<{
-    id: string;
-    name: string;
-    points: Array<{ x_pct: number; y_pct: number }>;
-    emitter_spacing_cm: number;
-    emitter_flow_lph: number;
-  }>;
-  updated_at: string;
-};
+export type {
+  CatalogAsset,
+  CatalogCategory,
+  CatalogGlyphLayer,
+  CatalogPlacement,
+  CatalogSymbol,
+  CreateCatalogSymbolInput,
+  DesignCanvas,
+} from "@workstream/contracts";
 
 export async function listCatalogSymbols(): Promise<CatalogSymbol[]> {
   const body = await apiGet<{ symbols: CatalogSymbol[] }>("/catalog/symbols");
   return body.symbols;
 }
-
-export type CreateCatalogSymbolInput = {
-  label: string;
-  category: CatalogCategory;
-  path_d: string;
-  description?: string;
-  rate_card_sku?: string;
-  preview_bg?: string;
-  accent?: string;
-};
 
 export async function createCatalogSymbolApi(
   input: CreateCatalogSymbolInput,

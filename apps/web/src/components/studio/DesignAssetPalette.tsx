@@ -11,7 +11,7 @@ import {
   catalogAssetCode,
   filterCatalogSymbols,
 } from "@workstream/domain";
-import type { CatalogSymbol } from "../../lib/api";
+import type { CatalogSymbol } from "@workstream/contracts";
 import { DesignAssetGlyph } from "./DesignAssetGlyph";
 import s from "./designAssetPalette.module.css";
 
