@@ -300,7 +300,7 @@ export async function updateTaskStatusAction(formData: FormData) {
   const taskId = String(formData.get("taskId") ?? "");
   const status = String(formData.get("status") ?? "") as TaskStatus;
   if (!projectId || !taskId || !status) return;
-  await updateTaskStatusApi(taskId, status);
+  await updateTaskStatusApi(projectId, taskId, status);
   revalidatePath(`/projects/${projectId}/tasks`);
 }
 

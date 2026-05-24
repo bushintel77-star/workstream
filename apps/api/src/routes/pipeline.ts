@@ -53,7 +53,7 @@ export default async function pipelineRoutes(fastify: FastifyInstance) {
           projectId,
           idempotencyKey,
         );
-        const cached = getIdempotentPipelineResponse(cacheKey);
+        const cached = await getIdempotentPipelineResponse(cacheKey);
         if (cached) {
           return reply.code(202).send(cached);
         }
@@ -74,7 +74,7 @@ export default async function pipelineRoutes(fastify: FastifyInstance) {
           jobId: queued.jobId,
         };
         if (idempotencyKey) {
-          setIdempotentPipelineResponse(
+          await setIdempotentPipelineResponse(
             pipelineIdempotencyKey(ownerId, projectId, idempotencyKey),
             body,
           );
@@ -88,7 +88,7 @@ export default async function pipelineRoutes(fastify: FastifyInstance) {
 
       const body = { accepted: true };
       if (idempotencyKey) {
-        setIdempotentPipelineResponse(
+        await setIdempotentPipelineResponse(
           pipelineIdempotencyKey(ownerId, projectId, idempotencyKey),
           body,
         );

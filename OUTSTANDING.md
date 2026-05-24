@@ -70,7 +70,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] **Soft delete + audit trail** on every destructive action.
 - [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
 - [x] **Dashboard delete undo** — toast restores via restore endpoint.
-- [x] **Pipeline idempotency (in-memory)** — `Idempotency-Key` on full pipeline POST.
+- [x] **Pipeline idempotency** — `Idempotency-Key` on full pipeline POST; Redis when
+      `REDIS_URL` set, in-memory fallback.
+- [x] **Task route hardening** — `PATCH /projects/:projectId/tasks/:taskId/status`
+      with owned-project + task-in-project checks.
 
 ## P3 — Nice to have
 

@@ -93,4 +93,46 @@ describe("API contract — projects", () => {
     expect(res.statusCode).toBe(404);
     expect(res.json()).toEqual({ error: "Project not found" });
   });
+
+  it("PATCH task status requires owned project and matching task", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Task Contract St, Carlton VIC 3053" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+    const taskRes = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/tasks`,
+      payload: { title: "Set out bed" },
+    });
+    const taskId = (taskRes.json() as { task: { id: string } }).task.id;
+
+    const ok = await app.inject({
+      method: "PATCH",
+      url: `/projects/${projectId}/tasks/${taskId}/status`,
+      payload: { status: "in_progress" },
+    });
+    expect(ok.statusCode).toBe(200);
+    expect((ok.json() as { task: { status: string } }).task.status).toBe(
+      "in_progress",
+    );
+
+    const wrongProject = await app.inject({
+      method: "PATCH",
+      url: `/projects/${randomUUID()}/tasks/${taskId}/status`,
+      payload: { status: "done" },
+    });
+    expect(wrongProject.statusCode).toBe(404);
+    expect(wrongProject.json()).toEqual({ error: "Project not found" });
+
+    const wrongTask = await app.inject({
+      method: "PATCH",
+      url: `/projects/${projectId}/tasks/${randomUUID()}/status`,
+      payload: { status: "done" },
+    });
+    expect(wrongTask.statusCode).toBe(404);
+    expect(wrongTask.json()).toEqual({ error: "Task not found" });
+  });
 });

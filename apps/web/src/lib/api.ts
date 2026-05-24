@@ -622,12 +622,14 @@ export async function createTaskApi(
 }
 
 export async function updateTaskStatusApi(
+  projectId: string,
   taskId: string,
   status: TaskStatus,
 ): Promise<Task> {
-  const body = await apiPatch<{ task: Task }>(`/projects/tasks/${taskId}/status`, {
-    status,
-  });
+  const body = await apiPatch<{ task: Task }>(
+    `/projects/${projectId}/tasks/${taskId}/status`,
+    { status },
+  );
   return body.task;
 }
 

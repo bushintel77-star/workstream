@@ -28,6 +28,11 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = CreateTaskInputSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
@@ -54,18 +59,30 @@ export default async function taskRoutes(fastify: FastifyInstance) {
   );
 
   fastify.patch(
-    "/tasks/:taskId/status",
+    "/:projectId/tasks/:taskId/status",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { taskId } = request.params as { taskId: string };
+      const { projectId, taskId } = request.params as {
+        projectId: string;
+        taskId: string;
+      };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = UpdateTaskStatusInputSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
           .code(400)
           .send({ error: "Validation failed", issues: parsed.error.issues });
       }
+      const tasks = await fastify.store.listTasks(ownerId, projectId);
+      if (!tasks.some((t) => t.id === taskId)) {
+        return reply.code(404).send({ error: "Task not found" });
+      }
       const task = await fastify.store.updateTaskStatus(
-        request.userId!,
+        ownerId,
         taskId,
         parsed.data.status,
       );

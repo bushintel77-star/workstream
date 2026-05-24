@@ -4,6 +4,7 @@ import healthRoutes from "../routes/health";
 import projectRoutes from "../routes/projects";
 import pipelineRoutes from "../routes/pipeline";
 import surveyRoutes from "../routes/surveys";
+import taskRoutes from "../routes/tasks";
 
 /** Minimal Fastify app for route-level contract tests (dev auth). */
 export async function buildTestApp() {
@@ -19,6 +20,7 @@ export async function buildTestApp() {
   await app.register(projectRoutes, { prefix: "/projects" });
   await app.register(pipelineRoutes, { prefix: "/projects" });
   await app.register(surveyRoutes, { prefix: "/projects" });
+  await app.register(taskRoutes, { prefix: "/projects" });
   await app.ready();
   return { app, store };
 }

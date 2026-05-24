@@ -445,10 +445,14 @@ export class WorkstreamClient {
     return res.task;
   }
 
-  async updateTaskStatus(taskId: string, status: TaskStatus): Promise<Task> {
+  async updateTaskStatus(
+    projectId: string,
+    taskId: string,
+    status: TaskStatus,
+  ): Promise<Task> {
     const res = await this.request<{ task: Task }>(
       "PATCH",
-      `/projects/tasks/${taskId}/status`,
+      `/projects/${projectId}/tasks/${taskId}/status`,
       { status },
     );
     return res.task;
