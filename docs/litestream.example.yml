@@ -1,5 +1,9 @@
-# Litestream config — replicate the Workstream JSON snapshot to S3-compatible
-# object storage for disaster recovery.
+# Litestream configuration — replicate the Workstream JSON snapshot to object
+# storage for disaster recovery.
+#
+# This file is documentation-ready but not active until a human provisions R2
+# or B2 credentials, mounts it in the API image/sidecar, and sets the Fly
+# secrets listed in docs/LITESTREAM-SETUP.md.
 #
 # This file is documentation-first until the operator provisions Cloudflare R2
 # or Backblaze B2 credentials and adds the Fly sidecar shown in
@@ -12,6 +16,6 @@ dbs:
         bucket: ${LITESTREAM_BUCKET}
         path: construct-api/store.json
         endpoint: ${LITESTREAM_S3_ENDPOINT}
-        region: ${LITESTREAM_REGION}
+        region: ${LITESTREAM_S3_REGION}
         access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
         secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}

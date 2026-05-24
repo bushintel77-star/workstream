@@ -46,13 +46,18 @@ async function authorizeAsset(
   kind: AssetKind,
   assetId: string,
 ): Promise<{ ownerId: string } | null> {
+  const tokenRaw = (request.query as { token?: string }).token;
+  if (!tokenRaw && !request.userId) {
+    await requireAuth(request, reply);
+    if (reply.sent) return null;
+  }
+
   const resolved = await request.server.store.resolveAssetOwner(kind, assetId);
   if (!resolved) {
     reply.code(404).send({ error: "File not found" });
     return null;
   }
 
-  const tokenRaw = (request.query as { token?: string }).token;
   if (tokenRaw) {
     const verify = verifyPortalToken(tokenRaw);
     if (!verify.ok) {
@@ -68,11 +73,6 @@ async function authorizeAsset(
       return null;
     }
     return { ownerId: resolved.ownerId };
-  }
-
-  if (!request.userId) {
-    await requireAuth(request, reply);
-    if (reply.sent) return null;
   }
 
   if (request.userId !== resolved.ownerId) {

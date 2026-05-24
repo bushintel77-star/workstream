@@ -1,63 +1,84 @@
 # Litestream backup setup
 
-Workstream still stores production state in `/repo/apps/api/data/store.json` on the Fly volume. Use Litestream only as a disaster-recovery replica until the SQLite/Postgres migration lands.
+Workstream still persists to `/repo/apps/api/data/store.json` on the single API
+machine. Litestream is a disaster-recovery layer only until the SQLite/Postgres
+migration lands.
 
 ## Cloudflare R2
 
-1. Create a bucket named `workstream-dr` in Cloudflare R2.
-2. Go to R2 → Manage R2 API tokens → Create API token.
-3. Grant Object Read & Write for the `workstream-dr` bucket.
-4. Copy the Access Key ID, Secret Access Key, and S3 endpoint.
+1. Open Cloudflare Dashboard → R2 → Create bucket.
+2. Bucket name: `workstream-dr`.
+3. Create an R2 API token with object read/write access to that bucket.
+4. Copy:
+   - Account ID
+   - Access key ID
+   - Secret access key
+   - S3 endpoint: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+
+Set Fly secrets:
 
 ```bash
 flyctl secrets set \
   LITESTREAM_BUCKET="workstream-dr" \
-  LITESTREAM_REGION="auto" \
-  LITESTREAM_S3_ENDPOINT="https://ACCOUNT_ID.r2.cloudflarestorage.com" \
-  LITESTREAM_ACCESS_KEY_ID="PASTE_HERE" \
-  LITESTREAM_SECRET_ACCESS_KEY="PASTE_HERE" \
+  LITESTREAM_S3_ENDPOINT="https://PASTE_ACCOUNT_ID.r2.cloudflarestorage.com" \
+  LITESTREAM_S3_REGION="auto" \
+  LITESTREAM_ACCESS_KEY_ID="PASTE_R2_ACCESS_KEY_ID" \
+  LITESTREAM_SECRET_ACCESS_KEY="PASTE_R2_SECRET_ACCESS_KEY" \
   -a construct-api
 ```
 
 ## Backblaze B2
 
-1. Create a private bucket named `workstream-dr`.
-2. Create an application key with read/write access to that bucket.
-3. Use the S3-compatible endpoint for the bucket region.
+1. Open Backblaze → B2 Cloud Storage → Create bucket.
+2. Bucket name: `workstream-dr`.
+3. Create an application key scoped to the bucket with read/write access.
+4. Copy:
+   - Key ID
+   - Application key
+   - S3 endpoint for the bucket region, for example `https://s3.us-west-004.backblazeb2.com`
+   - Region, for example `us-west-004`
+
+Set Fly secrets:
 
 ```bash
 flyctl secrets set \
   LITESTREAM_BUCKET="workstream-dr" \
-  LITESTREAM_REGION="us-west-004" \
-  LITESTREAM_S3_ENDPOINT="https://s3.us-west-004.backblazeb2.com" \
-  LITESTREAM_ACCESS_KEY_ID="PASTE_HERE" \
-  LITESTREAM_SECRET_ACCESS_KEY="PASTE_HERE" \
+  LITESTREAM_S3_ENDPOINT="https://s3.PASTE_REGION.backblazeb2.com" \
+  LITESTREAM_S3_REGION="PASTE_REGION" \
+  LITESTREAM_ACCESS_KEY_ID="PASTE_B2_KEY_ID" \
+  LITESTREAM_SECRET_ACCESS_KEY="PASTE_B2_APPLICATION_KEY" \
   -a construct-api
 ```
 
-## Fly sidecar config
+## Fly sidecar wiring
 
-Add this process to `apps/api/fly.toml` only after the secrets above exist:
+Copy `docs/litestream.example.yml` into the API image as
+`/etc/litestream.yml`, install the Litestream binary in `apps/api/Dockerfile`,
+then add a worker process that runs beside the API app:
 
 ```toml
 [processes]
   app = "node dist/server.js"
   worker = "node dist/worker.js"
-  litestream = "litestream replicate -config /repo/docs/litestream.example.yml"
+  backup = "litestream replicate -config /etc/litestream.yml"
 ```
 
-Then scale one sidecar beside the single API machine:
+Scale the sidecar after secrets are set:
 
 ```bash
-flyctl scale count app=1 worker=1 litestream=1 -a construct-api
+flyctl scale count backup=1 -a construct-api
 ```
 
-## Verify restore metadata
+Verify replication:
 
 ```bash
-flyctl ssh console -a construct-api -C \
-  "litestream replicas -config /repo/docs/litestream.example.yml"
+flyctl logs -a construct-api | grep litestream
+litestream restore -config docs/litestream.example.yml -if-replica-exists /tmp/workstream-store.json
 ```
 
-Expect one replica for `/repo/apps/api/data/store.json`. If it is empty, check the bucket credentials and Fly logs before relying on the backup.
+Do not scale the API app above one machine while JSON snapshot persistence is
+active. The current consistency command remains:
 
+```bash
+flyctl scale count 1 -a construct-api
+```

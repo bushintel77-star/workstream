@@ -41,8 +41,7 @@ jobs:
 
       - run: pnpm mobile:check-placeholders
 
-      - name: Check portal edge imports
-        run: test -z "$(grep -r \"import.*'fs'\" apps/web/src/app/portal/ || true)"
+      - run: pnpm web:check-portal-edge
 
       - run: pnpm typecheck
 
