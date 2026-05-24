@@ -78,6 +78,8 @@ export default async function measurementRoutes(fastify: FastifyInstance) {
           image_base64: base64,
           mime_type: mime,
           user_hint: hint,
+          project_id: projectId,
+          operator_id: ownerId,
         });
       } catch (err) {
         request.log.error(err, "vision measurement failed");

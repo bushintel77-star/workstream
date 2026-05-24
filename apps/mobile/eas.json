@@ -1,4 +1,9 @@
 {
+  "_workstreamEasInitNotes": {
+    "appJsonPath": "expo.extra.eas.projectId",
+    "currentSentinel": "00000000-0000-0000-0000-000000000000",
+    "setAfterEasInit": "Replace with the real Expo EAS project ID printed by `npx eas-cli init`."
+  },
   "cli": {
     "version": ">= 14.0.0",
     "appVersionSource": "remote"

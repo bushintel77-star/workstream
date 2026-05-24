@@ -9,6 +9,11 @@ import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
 import { assertAuthConfigured } from './lib/auth-config';
 import { captureError, initSentry } from './lib/sentry';
+import {
+  annotateRouteSpan,
+  initTelemetry,
+  shutdownTelemetry,
+} from './lib/telemetry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
 import storePlugin from './plugins/store';
@@ -53,6 +58,7 @@ loadEnv({
   error: (m) => server.log.error(m),
 });
 assertAuthConfigured();
+void initTelemetry();
 
 function resolveCorsOrigin(): boolean | string | string[] {
   const raw = process.env.CORS_ORIGIN;
@@ -104,6 +110,9 @@ async function start() {
 
   await server.register(websocket);
   await server.register(requestIdPlugin);
+  server.addHook("preHandler", async (request) => {
+    annotateRouteSpan(request);
+  });
   await server.register(authPlugin);
   await server.register(storePlugin);
   await server.register(protectedFileRoutes);
@@ -172,6 +181,7 @@ start().catch((err) => {
 
 const shutdown = async () => {
   await server.close();
+  await shutdownTelemetry();
   process.exit(0);
 };
 

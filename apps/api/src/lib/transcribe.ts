@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
 import { getOwnerEnv } from "./owner-secrets";
+import { withTelemetrySpan } from "./telemetry";
 
 const DEV_TRANSCRIPT =
   "Pleached hornbeam screen along the west boundary at about two point four metres. " +
@@ -7,7 +8,8 @@ const DEV_TRANSCRIPT =
   "Client wants low maintenance, no irrigation to the front.";
 
 export async function transcribeAudio(
-  filePath: string
+  filePath: string,
+  telemetry?: { project_id?: string; operator_id?: string },
 ): Promise<{ transcript: string; confidence: number }> {
   const apiKey = getOwnerEnv("OPENAI_API_KEY");
   if (!apiKey) {
@@ -24,19 +26,30 @@ export async function transcribeAudio(
   form.append("model", "whisper-1");
   form.append("language", "en");
 
-  const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
-  });
+  return withTelemetrySpan(
+    "external.openai.transcription",
+    {
+      "project.id": telemetry?.project_id,
+      "operator.id": telemetry?.operator_id,
+      "pipeline.stage": "transcribe",
+      "model.name": "whisper-1",
+    },
+    async () => {
+      const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: form,
+      });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Whisper failed: ${res.status} ${err}`);
-  }
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Whisper failed: ${res.status} ${err}`);
+      }
 
-  const json = (await res.json()) as { text: string };
-  return { transcript: json.text.trim(), confidence: 0.9 };
+      const json = (await res.json()) as { text: string };
+      return { transcript: json.text.trim(), confidence: 0.9 };
+    },
+  );
 }
 
 function pathBasename(p: string): string {

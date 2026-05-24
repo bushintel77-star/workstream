@@ -167,7 +167,10 @@ export async function runSurvey(
   const center =
     project.lat != null && project.lng != null
       ? { lat: project.lat, lng: project.lng }
-      : await geocodeAddress(project.address);
+      : await geocodeAddress(project.address, {
+          project_id: projectId,
+          operator_id: ownerId,
+        });
 
   let geometry: SurveyGeometry | null = null;
   if (isVicmapEnabled()) {

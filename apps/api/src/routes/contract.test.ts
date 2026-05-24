@@ -229,4 +229,66 @@ describe("API contract — projects", () => {
     const events = (activity.json() as { events: { action: string }[] }).events;
     expect(events.some((e) => e.action === "crew_member.deleted")).toBe(true);
   });
+
+  it("smoke-covers geocode preview, catalog, suppliers, and project context routes", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: {
+        address: "36 Wrights Terrace, Prahran VIC 3181",
+        lat: -37.8497,
+        lng: 145.0189,
+      },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const preview = await app.inject({
+      method: "GET",
+      url: "/geocode/preview?lat=-37.8497&lng=145.0189",
+    });
+    expect(preview.statusCode).toBe(200);
+    expect(preview.json()).toMatchObject({ lat: -37.8497, lng: 145.0189 });
+
+    const invalidPreview = await app.inject({
+      method: "GET",
+      url: "/geocode/preview?lat=bad&lng=145.0189",
+    });
+    expect(invalidPreview.statusCode).toBe(400);
+
+    const symbols = await app.inject({ method: "GET", url: "/catalog/symbols" });
+    expect(symbols.statusCode).toBe(200);
+    expect(Array.isArray(symbols.json().symbols)).toBe(true);
+
+    const createdSymbol = await app.inject({
+      method: "POST",
+      url: "/catalog/symbols",
+      payload: {
+        label: "Contract olive",
+        category: "planting",
+        path_d: "M 0 0 L 10 0 L 10 10 Z",
+      },
+    });
+    expect(createdSymbol.statusCode).toBe(201);
+
+    const invalidSymbol = await app.inject({
+      method: "POST",
+      url: "/catalog/symbols",
+      payload: { label: "", category: "planting", path_d: "x" },
+    });
+    expect(invalidSymbol.statusCode).toBe(400);
+
+    const supplier = await app.inject({
+      method: "GET",
+      url: "/suppliers/speciality_trees",
+    });
+    expect(supplier.statusCode).toBe(200);
+
+    const siteContext = await app.inject({
+      method: "GET",
+      url: `/projects/${projectId}/site-context`,
+    });
+    expect(siteContext.statusCode).toBe(200);
+    expect(siteContext.json()).toHaveProperty("context");
+  });
 });

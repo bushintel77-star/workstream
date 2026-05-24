@@ -16,7 +16,13 @@ export async function runProjectAudit(
   const recordings = await store.listRecordings(ownerId, projectId);
   const transcript = recordings.find((r) => r.transcript)?.transcript ?? null;
 
-  const { findings } = await runAudit({ transcript, design, costings });
+  const { findings } = await runAudit({
+    transcript,
+    design,
+    costings,
+    project_id: projectId,
+    operator_id: ownerId,
+  });
 
   const blocking_count = findings.filter((f) => f.severity === "blocking").length;
   const advisory_count = findings.filter((f) => f.severity === "advisory").length;

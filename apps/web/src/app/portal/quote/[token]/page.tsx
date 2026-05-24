@@ -2,6 +2,8 @@ import { fetchPortalQuote } from "../../../../lib/api";
 import { QuotePortal } from "../../../../components/QuotePortal";
 import styles from "./quote.module.css";
 
+export const runtime = "edge";
+
 export default async function QuotePage({
   params,
 }: {

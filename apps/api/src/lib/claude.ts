@@ -14,6 +14,7 @@ import {
   tier1WrightsTerraceDesign,
 } from "@workstream/domain";
 import { getOwnerEnv } from "./owner-secrets";
+import { annotateActiveSpan, withTelemetrySpan } from "./telemetry";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -36,6 +37,8 @@ export type DesignContext = {
   mode: DesignMode;
   plant_palette: PlantPalette[];
   rate_card: RateCard[];
+  project_id?: string;
+  operator_id?: string;
   /** Operator layout from design studio — AI should expand, not ignore. */
   sketch_brief?: string | null;
 };
@@ -235,41 +238,58 @@ export async function generateDesign(
     ],
   };
 
-  const res = await fetch(MESSAGES_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
+  return withTelemetrySpan(
+    "external.anthropic.design",
+    {
+      "project.id": ctx.project_id,
+      "operator.id": ctx.operator_id,
+      "pipeline.stage": "design",
+      "model.name": DESIGN_MODEL,
     },
-    body: JSON.stringify(body),
-  });
+    async () => {
+      const res = await fetch(MESSAGES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      });
 
-  if (!res.ok) {
-    throw new Error(`Anthropic /messages failed: ${res.status} ${await res.text()}`);
-  }
+      if (!res.ok) {
+        throw new Error(`Anthropic /messages failed: ${res.status} ${await res.text()}`);
+      }
 
-  const json = (await res.json()) as {
-    content: Array<{ type: string; text: string }>;
-  };
-  const textBlock = json.content.find((c) => c.type === "text");
-  if (!textBlock) throw new Error("Anthropic response had no text block");
+      const json = (await res.json()) as {
+        content: Array<{ type: string; text: string }>;
+        usage?: { input_tokens?: number; output_tokens?: number };
+      };
+      annotateActiveSpan({
+        "tokens.input": json.usage?.input_tokens,
+        "tokens.output": json.usage?.output_tokens,
+      });
 
-  const cleaned = textBlock.text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "");
+      const textBlock = json.content.find((c) => c.type === "text");
+      if (!textBlock) throw new Error("Anthropic response had no text block");
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch (err) {
-    throw new Error(
-      `Failed to parse design JSON: ${err instanceof Error ? err.message : err}`,
-    );
-  }
+      const cleaned = textBlock.text
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "");
 
-  return parsed as DesignGeneration;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch (err) {
+        throw new Error(
+          `Failed to parse design JSON: ${err instanceof Error ? err.message : err}`,
+        );
+      }
+
+      return parsed as DesignGeneration;
+    },
+  );
 }
 
 const AUDIT_SYSTEM_PROMPT = `You are the self-audit pass for Curtis & Co's landscape design tool. A separate model has just produced a design and costing from a walkthrough transcript and a survey. Your job is to interrogate that output and surface anything that's wrong, missing, or risky — like a senior project lead reviewing the brief before it goes to the client.
@@ -388,6 +408,8 @@ export async function runAudit(args: {
   transcript: string | null;
   design: Design;
   costings: Costing[];
+  project_id?: string;
+  operator_id?: string;
 }): Promise<{ findings: AuditFinding[] }> {
   const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
   if (!apiKey) {
@@ -409,33 +431,49 @@ export async function runAudit(args: {
     ],
   };
 
-  const res = await fetch(MESSAGES_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
+  return withTelemetrySpan(
+    "external.anthropic.audit",
+    {
+      "project.id": args.project_id,
+      "operator.id": args.operator_id,
+      "pipeline.stage": "audit",
+      "model.name": AUDIT_MODEL,
     },
-    body: JSON.stringify(body),
-  });
+    async () => {
+      const res = await fetch(MESSAGES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      });
 
-  if (!res.ok) {
-    throw new Error(`Anthropic /messages failed: ${res.status} ${await res.text()}`);
-  }
+      if (!res.ok) {
+        throw new Error(`Anthropic /messages failed: ${res.status} ${await res.text()}`);
+      }
 
-  const json = (await res.json()) as {
-    content: Array<{ type: string; text: string }>;
-  };
-  const textBlock = json.content.find((c) => c.type === "text");
-  if (!textBlock) throw new Error("Anthropic audit response had no text block");
+      const json = (await res.json()) as {
+        content: Array<{ type: string; text: string }>;
+        usage?: { input_tokens?: number; output_tokens?: number };
+      };
+      annotateActiveSpan({
+        "tokens.input": json.usage?.input_tokens,
+        "tokens.output": json.usage?.output_tokens,
+      });
 
-  const cleaned = textBlock.text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "");
+      const textBlock = json.content.find((c) => c.type === "text");
+      if (!textBlock) throw new Error("Anthropic audit response had no text block");
 
-  const parsed = JSON.parse(cleaned) as { findings: AuditFinding[] };
-  return parsed;
+      const cleaned = textBlock.text
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "");
+
+      return JSON.parse(cleaned) as { findings: AuditFinding[] };
+    },
+  );
 }
 
 // ---------- Vision: photo → measurement -----------------------------------
@@ -466,6 +504,8 @@ export type PhotoMeasurementCallArgs = {
   image_base64: string;
   mime_type: "image/jpeg" | "image/png" | "image/webp";
   user_hint?: string;
+  project_id?: string;
+  operator_id?: string;
 };
 
 export type PhotoMeasurementCallResult = {
@@ -558,30 +598,47 @@ export async function measurePhoto(
     messages: [{ role: "user", content: userContent }],
   };
 
-  const res = await fetch(MESSAGES_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
+  return withTelemetrySpan(
+    "external.anthropic.photo_measurement",
+    {
+      "project.id": args.project_id,
+      "operator.id": args.operator_id,
+      "pipeline.stage": "measurement",
+      "model.name": VISION_MODEL,
     },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw new Error(
-      `Anthropic vision failed: ${res.status} ${await res.text()}`,
-    );
-  }
-  const json = (await res.json()) as {
-    content: Array<{ type: string; text: string }>;
-  };
-  const textBlock = json.content.find((c) => c.type === "text");
-  if (!textBlock) throw new Error("Anthropic vision response had no text block");
-  const cleaned = textBlock.text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "");
-  return JSON.parse(cleaned) as PhotoMeasurementCallResult;
+    async () => {
+      const res = await fetch(MESSAGES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        throw new Error(
+          `Anthropic vision failed: ${res.status} ${await res.text()}`,
+        );
+      }
+      const json = (await res.json()) as {
+        content: Array<{ type: string; text: string }>;
+        usage?: { input_tokens?: number; output_tokens?: number };
+      };
+      annotateActiveSpan({
+        "tokens.input": json.usage?.input_tokens,
+        "tokens.output": json.usage?.output_tokens,
+      });
+
+      const textBlock = json.content.find((c) => c.type === "text");
+      if (!textBlock) throw new Error("Anthropic vision response had no text block");
+      const cleaned = textBlock.text
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "");
+      return JSON.parse(cleaned) as PhotoMeasurementCallResult;
+    },
+  );
 }
 
 // ---------- Vision: photo → client email/name (not for email attachment) ----
@@ -603,6 +660,8 @@ Rules:
 export async function scanImageContact(args: {
   image_base64: string;
   mime_type: "image/jpeg" | "image/png" | "image/webp";
+  project_id?: string;
+  operator_id?: string;
 }): Promise<{
   client_name: string | null;
   client_email: string | null;
@@ -642,35 +701,52 @@ export async function scanImageContact(args: {
     ],
   };
 
-  const res = await fetch(MESSAGES_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
+  return withTelemetrySpan(
+    "external.anthropic.contact_scan",
+    {
+      "project.id": args.project_id,
+      "operator.id": args.operator_id,
+      "pipeline.stage": "contact_scan",
+      "model.name": VISION_MODEL,
     },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw new Error(`Anthropic contact scan failed: ${res.status}`);
-  }
-  const json = (await res.json()) as {
-    content: Array<{ type: string; text: string }>;
-  };
-  const textBlock = json.content.find((c) => c.type === "text");
-  if (!textBlock) throw new Error("No text in contact scan response");
-  const cleaned = textBlock.text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "");
-  const parsed = JSON.parse(cleaned) as {
-    client_name?: string | null;
-    client_email?: string | null;
-    notes?: string | null;
-  };
-  return {
-    client_name: parsed.client_name ?? null,
-    client_email: parsed.client_email ?? null,
-    notes: parsed.notes ?? null,
-  };
+    async () => {
+      const res = await fetch(MESSAGES_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        throw new Error(`Anthropic contact scan failed: ${res.status}`);
+      }
+      const json = (await res.json()) as {
+        content: Array<{ type: string; text: string }>;
+        usage?: { input_tokens?: number; output_tokens?: number };
+      };
+      annotateActiveSpan({
+        "tokens.input": json.usage?.input_tokens,
+        "tokens.output": json.usage?.output_tokens,
+      });
+
+      const textBlock = json.content.find((c) => c.type === "text");
+      if (!textBlock) throw new Error("No text in contact scan response");
+      const cleaned = textBlock.text
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "");
+      const parsed = JSON.parse(cleaned) as {
+        client_name?: string | null;
+        client_email?: string | null;
+        notes?: string | null;
+      };
+      return {
+        client_name: parsed.client_name ?? null,
+        client_email: parsed.client_email ?? null,
+        notes: parsed.notes ?? null,
+      };
+    },
+  );
 }

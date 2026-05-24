@@ -152,6 +152,8 @@ export default async function projectFileRoutes(fastify: FastifyInstance) {
         const scan = await scanImageContact({
           image_base64: base64,
           mime_type: mime as "image/jpeg" | "image/png" | "image/webp",
+          project_id: projectId,
+          operator_id: ownerId,
         });
 
         const patch: {

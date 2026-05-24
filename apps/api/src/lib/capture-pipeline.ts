@@ -17,7 +17,10 @@ export async function runCapturePipeline(
   await store.updateProjectStatus(ownerId, projectId, "processing");
 
   try {
-    await runTranscription(store, recordingId, audioPath);
+    await runTranscription(store, recordingId, audioPath, {
+      project_id: projectId,
+      operator_id: ownerId,
+    });
     await runSurvey(store, ownerId, projectId);
     await store.updateProjectStatus(ownerId, projectId, "survey_review");
   } catch (err) {

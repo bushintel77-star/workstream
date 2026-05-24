@@ -40,6 +40,8 @@ export async function runDesign(
     plant_palette: palette,
     rate_card: rates,
     sketch_brief,
+    project_id: projectId,
+    operator_id: ownerId,
   });
 
   const design = await store.upsertDesign(ownerId, projectId, {
