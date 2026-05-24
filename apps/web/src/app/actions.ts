@@ -186,6 +186,7 @@ export async function saveDesignCanvasAction(
     throw wrapApiError(err, "Failed to save site plan");
   }
   revalidatePath(`/projects/${projectId}/design`);
+  revalidatePath(`/projects/${projectId}/design/develop`);
   revalidatePath(`/projects/${projectId}/design/studio`);
 }
 
@@ -200,6 +201,7 @@ export async function runSketchCostingAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/costing`);
   revalidatePath(`/projects/${projectId}/design`);
+  revalidatePath(`/projects/${projectId}/design/develop`);
 }
 
 export async function runDevelopFromSketchAction(formData: FormData) {
@@ -224,6 +226,7 @@ export async function runDesignAction(formData: FormData) {
   }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/design`);
+  revalidatePath(`/projects/${projectId}/design/develop`);
 }
 
 export async function runCostingAction(formData: FormData) {

@@ -34,7 +34,7 @@ export function QuoteWorkflowSteps({
       label: "Envelope estimate",
       done: hasCosting && !hasDesign,
       href: hasCanvas
-        ? `/projects/${projectId}/design#envelope-estimate`
+        ? `/projects/${projectId}/design/develop#envelope-estimate`
         : `/projects/${projectId}/design#design-studio`,
       hint: "Budget + planning",
     },
@@ -42,7 +42,7 @@ export function QuoteWorkflowSteps({
       n: 4,
       label: "AI design from sketch",
       done: hasDesign,
-      href: `/projects/${projectId}/design#develop`,
+      href: `/projects/${projectId}/design/develop`,
     },
     {
       n: 5,
