@@ -48,7 +48,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       CI job `playwright e2e` on PR + main.
 - [x] **Contract tests (extended smoke)** — Zod boundary tests +
       [`contract.test.ts`](apps/api/src/routes/contract.test.ts) covers core
-      project flows plus geocode, catalog, suppliers, and site context.
+      project flows plus geocode, catalog, suppliers, site context, weather,
+      carbon preconditions, readiness, validation, and auth-configuration guard.
 - [x] **Unit tests on pipeline jobs** — survey, cost, design, audit, pipeline
       (`*-job.test.ts`, `pipeline-job.test.ts`).
 - [x] **Visual regression (quote markdown)** — snapshot in `output-generators.test.ts`.
@@ -62,7 +63,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Multi-tenant authorization** — route-level `getOwnedProject` gates on all
       project-scoped GET/POST/PATCH/DELETE handlers.
 - [x] **Protected file delivery** — auth or portal token on `/uploads`, `/outputs`,
-      `/photos`, `/aerial`, `/filings` ([protected-files.ts](apps/api/src/routes/protected-files.ts)).
+      `/photos`, `/aerial`, `/filings` ([protected-files.ts](apps/api/src/routes/protected-files.ts));
+      portal file access is quote-view scoped and tombstoned projects are blocked.
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
