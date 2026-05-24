@@ -226,7 +226,7 @@ export function DesignStudio({
     (clientX: number, clientY: number) => {
       const el = canvasRef.current;
       if (!el) return;
-      const symbolId = dragSymbolId ?? armedSymbolRef.current ?? armedSymbolId;
+      const symbolId = dragSymbolId ?? armedSymbolRef.current;
       if (!symbolId) return;
       if (toolOverride === "select") return;
       const rect = el.getBoundingClientRect();
@@ -234,7 +234,7 @@ export function DesignStudio({
       addPlacement(symbolId, pt.x_pct, pt.y_pct);
       setDragSymbolId(null);
     },
-    [addPlacement, armedSymbolId, dragSymbolId, toolOverride],
+    [addPlacement, dragSymbolId, toolOverride],
   );
 
   const commitDraftStroke = useCallback(() => {
