@@ -13,7 +13,6 @@
     "mobile:check-placeholders": "grep -r 'REPLACE_AFTER_eas_init' apps/mobile/app.json && exit 1 || exit 0",
     "web:check-portal-edge": "! grep -r \"import.*'fs'\" apps/web/src/app/portal/",
     "ci": "pnpm install --frozen-lockfile && pnpm typecheck && pnpm test",
-    "mobile:check-placeholders": "grep -r 'REPLACE_AFTER_eas_init' apps/mobile/app.json && exit 1 || exit 0",
     "build:docker:api": "docker build -f apps/api/Dockerfile -t construct-api:local .",
     "build:docker:web": "docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev -t construct-web:local .",
     "build:docker": "pnpm build:docker:api && pnpm build:docker:web",

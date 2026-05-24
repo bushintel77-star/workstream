@@ -20,8 +20,6 @@ export async function runProjectAudit(
     transcript,
     design,
     costings,
-    project_id: projectId,
-    operator_id: ownerId,
   });
 
   const blocking_count = findings.filter((f) => f.severity === "blocking").length;
