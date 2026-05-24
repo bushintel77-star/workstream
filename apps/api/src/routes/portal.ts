@@ -44,7 +44,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
   // --- Public: client side (token-gated, NO requireAuth) ---
   // Stricter rate-limit here — these are the only endpoints reachable
   // without auth and would otherwise be the primary brute-force target.
-  fastify.get("/portal/quote/:token", {
+  fastify.get("/portal/quote/*", {
     config: {
       rateLimit: {
         max: 30,
@@ -52,7 +52,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const { token } = request.params as { token: string };
+    const { "*": token } = request.params as { "*": string };
     const verify = verifyPortalToken(token);
     if (!verify.ok) return reply.code(401).send({ error: verify.reason });
     if (verify.payload.scope !== "quote_view") {
@@ -99,7 +99,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     });
   });
 
-  fastify.post("/portal/deposit/:token", {
+  fastify.post("/portal/deposit/*", {
     config: {
       rateLimit: {
         max: 10,
@@ -107,7 +107,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const { token } = request.params as { token: string };
+    const { "*": token } = request.params as { "*": string };
     const verify = verifyPortalToken(token);
     if (!verify.ok) return reply.code(401).send({ error: verify.reason });
     if (verify.payload.scope !== "deposit_checkout") {
