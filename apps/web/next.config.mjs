@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   transpilePackages: ["@workstream/contracts", "@workstream/domain"],
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001",
