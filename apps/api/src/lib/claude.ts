@@ -14,6 +14,8 @@ import {
   tier1WrightsTerraceDesign,
 } from "@workstream/domain";
 import { getOwnerEnv } from "./owner-secrets";
+import { fetchWithRetry } from "./http";
+import { setActiveTelemetryAttributes } from "./telemetry";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -235,7 +237,7 @@ export async function generateDesign(
     ],
   };
 
-  const res = await fetch(MESSAGES_URL, {
+  const res = await fetchWithRetry(MESSAGES_URL, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -243,6 +245,15 @@ export async function generateDesign(
       "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify(body),
+  }, {
+    telemetry: {
+      spanName: "anthropic.generate_design",
+      provider: "anthropic",
+      attributes: {
+        "pipeline.stage": "design",
+        "model.name": DESIGN_MODEL,
+      },
+    },
   });
 
   if (!res.ok) {
@@ -251,7 +262,12 @@ export async function generateDesign(
 
   const json = (await res.json()) as {
     content: Array<{ type: string; text: string }>;
+    usage?: { input_tokens?: number; output_tokens?: number };
   };
+  setActiveTelemetryAttributes({
+    "tokens.input": json.usage?.input_tokens,
+    "tokens.output": json.usage?.output_tokens,
+  });
   const textBlock = json.content.find((c) => c.type === "text");
   if (!textBlock) throw new Error("Anthropic response had no text block");
 
@@ -409,7 +425,7 @@ export async function runAudit(args: {
     ],
   };
 
-  const res = await fetch(MESSAGES_URL, {
+  const res = await fetchWithRetry(MESSAGES_URL, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -417,6 +433,15 @@ export async function runAudit(args: {
       "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify(body),
+  }, {
+    telemetry: {
+      spanName: "anthropic.run_audit",
+      provider: "anthropic",
+      attributes: {
+        "pipeline.stage": "audit",
+        "model.name": AUDIT_MODEL,
+      },
+    },
   });
 
   if (!res.ok) {
@@ -425,7 +450,12 @@ export async function runAudit(args: {
 
   const json = (await res.json()) as {
     content: Array<{ type: string; text: string }>;
+    usage?: { input_tokens?: number; output_tokens?: number };
   };
+  setActiveTelemetryAttributes({
+    "tokens.input": json.usage?.input_tokens,
+    "tokens.output": json.usage?.output_tokens,
+  });
   const textBlock = json.content.find((c) => c.type === "text");
   if (!textBlock) throw new Error("Anthropic audit response had no text block");
 
@@ -558,7 +588,7 @@ export async function measurePhoto(
     messages: [{ role: "user", content: userContent }],
   };
 
-  const res = await fetch(MESSAGES_URL, {
+  const res = await fetchWithRetry(MESSAGES_URL, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -566,6 +596,15 @@ export async function measurePhoto(
       "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify(body),
+  }, {
+    telemetry: {
+      spanName: "anthropic.measure_photo",
+      provider: "anthropic",
+      attributes: {
+        "pipeline.stage": "measurements",
+        "model.name": VISION_MODEL,
+      },
+    },
   });
   if (!res.ok) {
     throw new Error(
@@ -574,7 +613,12 @@ export async function measurePhoto(
   }
   const json = (await res.json()) as {
     content: Array<{ type: string; text: string }>;
+    usage?: { input_tokens?: number; output_tokens?: number };
   };
+  setActiveTelemetryAttributes({
+    "tokens.input": json.usage?.input_tokens,
+    "tokens.output": json.usage?.output_tokens,
+  });
   const textBlock = json.content.find((c) => c.type === "text");
   if (!textBlock) throw new Error("Anthropic vision response had no text block");
   const cleaned = textBlock.text
@@ -642,7 +686,7 @@ export async function scanImageContact(args: {
     ],
   };
 
-  const res = await fetch(MESSAGES_URL, {
+  const res = await fetchWithRetry(MESSAGES_URL, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -650,13 +694,27 @@ export async function scanImageContact(args: {
       "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify(body),
+  }, {
+    telemetry: {
+      spanName: "anthropic.scan_image_contact",
+      provider: "anthropic",
+      attributes: {
+        "pipeline.stage": "filing",
+        "model.name": VISION_MODEL,
+      },
+    },
   });
   if (!res.ok) {
     throw new Error(`Anthropic contact scan failed: ${res.status}`);
   }
   const json = (await res.json()) as {
     content: Array<{ type: string; text: string }>;
+    usage?: { input_tokens?: number; output_tokens?: number };
   };
+  setActiveTelemetryAttributes({
+    "tokens.input": json.usage?.input_tokens,
+    "tokens.output": json.usage?.output_tokens,
+  });
   const textBlock = json.content.find((c) => c.type === "text");
   if (!textBlock) throw new Error("No text in contact scan response");
   const cleaned = textBlock.text

@@ -1,4 +1,7 @@
 {
+  "_workstream": {
+    "easInitRequired": "Run npx eas-cli init in apps/mobile before production distribution. That command writes expo.extra.eas.projectId into app.json for the real EAS project."
+  },
   "cli": {
     "version": ">= 14.0.0",
     "appVersionSource": "remote"

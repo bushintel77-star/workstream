@@ -9,6 +9,7 @@ import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
 import { assertAuthConfigured } from './lib/auth-config';
 import { captureError, initSentry } from './lib/sentry';
+import { initTelemetry, registerRouteTelemetry } from './lib/telemetry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
 import storePlugin from './plugins/store';
@@ -106,6 +107,7 @@ async function start() {
   await server.register(requestIdPlugin);
   await server.register(authPlugin);
   await server.register(storePlugin);
+  registerRouteTelemetry(server);
   await server.register(protectedFileRoutes);
   await server.register(healthRoutes);
   await server.register(projectRoutes, { prefix: '/projects' });
@@ -149,6 +151,7 @@ async function start() {
   server.log.info(`API listening on http://0.0.0.0:${port}`);
 }
 
+initTelemetry();
 void initSentry();
 
 server.setErrorHandler((err: Error & { statusCode?: number }, request, reply) => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   canvasStrokeToPathD,
   strokePointsToPathD,
@@ -125,13 +124,13 @@ export function DesignStudio({
   initialPlacements,
   initialStrokes,
 }: Props) {
-  const router = useRouter();
   const toast = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const pendingPlaceRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const drawingRef = useRef(false);
   const savingRef = useRef(false);
+  const armedSymbolRef = useRef<string | null>(null);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
   const [placements, setPlacements] =
@@ -154,6 +153,11 @@ export function DesignStudio({
     y: number;
     text: string;
   } | null>(null);
+
+  const setArmedSymbol = useCallback((id: string | null) => {
+    armedSymbolRef.current = id;
+    setArmedSymbolId(id);
+  }, []);
 
   const mapView: StaticMapView = useMemo(
     () => resolveStaticMapView(aerialUri, lotRing),
@@ -222,7 +226,7 @@ export function DesignStudio({
     (clientX: number, clientY: number) => {
       const el = canvasRef.current;
       if (!el) return;
-      const symbolId = dragSymbolId ?? armedSymbolId;
+      const symbolId = dragSymbolId ?? armedSymbolRef.current;
       if (!symbolId) return;
       if (toolOverride === "select") return;
       const rect = el.getBoundingClientRect();
@@ -230,7 +234,7 @@ export function DesignStudio({
       addPlacement(symbolId, pt.x_pct, pt.y_pct);
       setDragSymbolId(null);
     },
-    [addPlacement, armedSymbolId, dragSymbolId, toolOverride],
+    [addPlacement, dragSymbolId, toolOverride],
   );
 
   const commitDraftStroke = useCallback(() => {
@@ -284,10 +288,10 @@ export function DesignStudio({
     (id: string) => {
       setPaletteSelectedId(id);
       if (toolOverride !== "select") {
-        setArmedSymbolId(id);
+        setArmedSymbol(id);
       }
     },
-    [toolOverride],
+    [setArmedSymbol, toolOverride],
   );
 
   const updateCursorHint = useCallback(
@@ -325,7 +329,7 @@ export function DesignStudio({
 
       if (e.key === "Escape") {
         setSelectedPlacementId(null);
-        setArmedSymbolId(null);
+        setArmedSymbol(null);
         setDragSymbolId(null);
         setDraftPoints([]);
         return;
@@ -353,13 +357,13 @@ export function DesignStudio({
       }
       if (e.key.toLowerCase() === "v") {
         setToolOverride("select");
-        setArmedSymbolId(null);
+        setArmedSymbol(null);
         return;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [deletePlacement, selectedPlacementId, undo]);
+  }, [deletePlacement, selectedPlacementId, setArmedSymbol, undo]);
 
   function handleCanvasPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (isDrawMode) {
@@ -563,7 +567,6 @@ export function DesignStudio({
         "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
         "success",
       );
-      router.refresh();
     } catch (err) {
       toast.show(err instanceof Error ? err.message : "Save failed", "error");
     } finally {
@@ -623,7 +626,7 @@ export function DesignStudio({
               aria-pressed={toolOverride === "select"}
               onClick={() => {
                 setToolOverride("select");
-                setArmedSymbolId(null);
+                setArmedSymbol(null);
               }}
             >
               Select
@@ -817,7 +820,7 @@ export function DesignStudio({
           onSelect={handlePaletteSelect}
           onDragStart={(id) => {
             setDragSymbolId(id);
-            setArmedSymbolId(id);
+            setArmedSymbol(id);
           }}
           onDragEnd={() => setDragSymbolId(null)}
         />

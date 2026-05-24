@@ -51,6 +51,13 @@ Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time for m
 | `MAPBOX_TOKEN` | construct-api | Mock survey imagery |
 | `CLERK_*` | both | Dev-user mode (current) |
 | `WORKSTREAM_PORTAL_SECRET` | construct-api | Rotate from legacy `CONSTRUCT_PORTAL_SECRET` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | construct-api | OpenTelemetry spans stay local/no-op |
+| `REDIS_URL` | construct-api | Pipeline runs inline instead of worker queue |
+| `SENTRY_DSN` | both | Errors are logged but not reported to Sentry |
+
+## Human ops runbook
+
+Use [docs/HUMAN-OPS-RUNBOOK.md](docs/HUMAN-OPS-RUNBOOK.md) for copy-paste steps covering Clerk, Redis, Sentry, OpenTelemetry, EAS, Litestream, and branch protection.
 
 ## Deploy (one command)
 
