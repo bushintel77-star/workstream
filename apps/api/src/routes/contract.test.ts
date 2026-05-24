@@ -321,13 +321,13 @@ describe("API contract — projects", () => {
       method: "POST",
       url: `/projects/${projectId}/design`,
     });
-    expect(design.statusCode).toBe(200);
+    expect(design.statusCode).toBe(201);
 
     const costing = await app.inject({
       method: "POST",
       url: `/projects/${projectId}/costing`,
     });
-    expect(costing.statusCode).toBe(200);
+    expect(costing.statusCode).toBe(201);
 
     const link = await app.inject({
       method: "POST",
