@@ -326,28 +326,6 @@
   cursor: pointer;
 }
 
-.filterRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.filterChip {
-  min-height: 32px;
-  padding: 0 8px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line-hairline);
-  background: var(--surface-sunken);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.filterChipActive {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, var(--surface-elevated));
-}
-
 .detailStrip {
   margin: 0;
   padding: var(--s-2);

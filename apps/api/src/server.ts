@@ -9,11 +9,7 @@ import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
 import { assertAuthConfigured } from './lib/auth-config';
 import { captureError, initSentry } from './lib/sentry';
-import {
-  annotateRouteSpan,
-  initTelemetry,
-  shutdownTelemetry,
-} from './lib/telemetry';
+import { initTelemetry, registerRouteTelemetry, shutdownTelemetry } from './lib/telemetry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
 import storePlugin from './plugins/store';
@@ -58,7 +54,6 @@ loadEnv({
   error: (m) => server.log.error(m),
 });
 assertAuthConfigured();
-void initTelemetry();
 
 function resolveCorsOrigin(): boolean | string | string[] {
   const raw = process.env.CORS_ORIGIN;
@@ -110,11 +105,9 @@ async function start() {
 
   await server.register(websocket);
   await server.register(requestIdPlugin);
-  server.addHook("preHandler", async (request) => {
-    annotateRouteSpan(request);
-  });
   await server.register(authPlugin);
   await server.register(storePlugin);
+  registerRouteTelemetry(server);
   await server.register(protectedFileRoutes);
   await server.register(healthRoutes);
   await server.register(projectRoutes, { prefix: '/projects' });
@@ -158,6 +151,7 @@ async function start() {
   server.log.info(`API listening on http://0.0.0.0:${port}`);
 }
 
+initTelemetry();
 void initSentry();
 
 server.setErrorHandler((err: Error & { statusCode?: number }, request, reply) => {

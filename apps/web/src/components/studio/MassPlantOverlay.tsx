@@ -1,5 +1,6 @@
 "use client";
 
+import { polylineToSvgPoints } from "@workstream/domain";
 import type { CanvasPointPct } from "@workstream/contracts";
 import s from "../designStudio.module.css";
 
@@ -20,12 +21,11 @@ export function MassPlantOverlay({
 }: Props) {
   if (points.length === 0) return null;
 
-  const toPx = (p: CanvasPointPct) =>
-    `${(p.x_pct / 100) * canvasWidthPx},${(p.y_pct / 100) * canvasHeightPx}`;
-
-  const polyline = points.map(toPx).join(" ");
+  const polyline = polylineToSvgPoints(points, canvasWidthPx, canvasHeightPx);
   const polygon =
-    closed && points.length >= 3 ? `${polyline} ${toPx(points[0]!)}` : polyline;
+    closed && points.length >= 3
+      ? `${polyline} ${polylineToSvgPoints([points[0]!], canvasWidthPx, canvasHeightPx)}`
+      : polyline;
 
   return (
     <svg

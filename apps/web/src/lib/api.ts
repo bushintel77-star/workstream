@@ -1,5 +1,11 @@
 import "server-only";
 
+import type {
+  CatalogPlacement,
+  CatalogSymbol,
+  CreateCatalogSymbolInput,
+  DesignCanvas,
+} from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
 import { operatorApiUrl } from "./public-env";
 
@@ -283,85 +289,20 @@ export async function runDesign(projectId: string): Promise<Design> {
 
 /* -- Design studio (catalog + canvas) ---------------------------------- */
 
-export type CatalogGlyphLayer = {
-  d: string;
-  fill?: string;
-  stroke?: string;
-  stroke_width?: number;
-  opacity?: number;
-};
-
-export type CatalogAsset = {
-  view_box: string;
-  layers: CatalogGlyphLayer[];
-  preview_bg?: string;
-  accent?: string;
-};
-
-export type CatalogCategory =
-  | "planting"
-  | "paving"
-  | "structure"
-  | "water"
-  | "annotation"
-  | "furniture";
-
-export type CatalogSymbol = {
-  id: string;
-  label: string;
-  category: CatalogCategory;
-  path_d: string;
-  asset?: CatalogAsset;
-  description?: string;
-  keywords?: string[];
-  default_width_m?: number;
-  rate_card_sku?: string;
-};
-
-export type CatalogPlacement = {
-  id: string;
-  symbol_id: string;
-  x_pct: number;
-  y_pct: number;
-  rotation_deg: number;
-  scale: number;
-  label?: string;
-};
-
-export type DesignCanvas = {
-  id: string;
-  project_id: string;
-  placements: CatalogPlacement[];
-  strokes: Array<{
-    id: string;
-    points: Array<{ x_pct: number; y_pct: number }>;
-    color: string;
-    width_px: number;
-  }>;
-  irrigation_zones: Array<{
-    id: string;
-    name: string;
-    points: Array<{ x_pct: number; y_pct: number }>;
-    emitter_spacing_cm: number;
-    emitter_flow_lph: number;
-  }>;
-  updated_at: string;
-};
+export type {
+  CatalogAsset,
+  CatalogCategory,
+  CatalogGlyphLayer,
+  CatalogPlacement,
+  CatalogSymbol,
+  CreateCatalogSymbolInput,
+  DesignCanvas,
+} from "@workstream/contracts";
 
 export async function listCatalogSymbols(): Promise<CatalogSymbol[]> {
   const body = await apiGet<{ symbols: CatalogSymbol[] }>("/catalog/symbols");
   return body.symbols;
 }
-
-export type CreateCatalogSymbolInput = {
-  label: string;
-  category: CatalogCategory;
-  path_d: string;
-  description?: string;
-  rate_card_sku?: string;
-  preview_bg?: string;
-  accent?: string;
-};
 
 export async function createCatalogSymbolApi(
   input: CreateCatalogSymbolInput,
@@ -1200,56 +1141,3 @@ export async function listWorkspaceActivity(): Promise<ActivityEvent[]> {
   return body.events;
 }
 
-/* -- Portal (kept from previous build) -------------------------------- */
-
-export async function fetchPortalQuote(token: string): Promise<{
-  project: { id: string; address: string; created_at: string };
-  survey: {
-    lot_area_m2: number;
-    house_area_m2: number;
-    garden_area_m2: number;
-  } | null;
-  design: {
-    rationale: string;
-    proposal: {
-      zones: Array<{ id: string; name: string; treatment: string }>;
-    };
-  } | null;
-  costing: {
-    scenario: string;
-    subtotal: number;
-    gst: number;
-    total: number;
-    line_items: Array<{
-      label: string;
-      qty: number;
-      unit: string;
-      rate: number;
-      total: number;
-      is_provisional: boolean;
-    }>;
-  } | null;
-} | { error: string }> {
-  const res = await fetch(`${API_URL}/portal/quote/${token}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return { error: `Portal returned ${res.status}` };
-  return res.json();
-}
-
-export async function createDepositCheckout(token: string): Promise<{
-  session?: {
-    session_id: string;
-    checkout_url: string;
-    deposit_amount_aud: number;
-    mode: "live" | "dev_fallback";
-  };
-  error?: string;
-}> {
-  const res = await fetch(`${API_URL}/portal/deposit/${token}`, {
-    method: "POST",
-    cache: "no-store",
-  });
-  if (!res.ok) return { error: `Portal returned ${res.status}` };
-  return res.json();
-}

@@ -5,8 +5,7 @@ export async function runTranscription(
   store: Store,
   recordingId: string,
   filePath: string,
-  telemetry?: { project_id?: string; operator_id?: string },
 ): Promise<void> {
-  const { transcript, confidence } = await transcribeAudio(filePath, telemetry);
+  const { transcript, confidence } = await transcribeAudio(filePath);
   await store.updateRecordingTranscript(recordingId, transcript, confidence);
 }

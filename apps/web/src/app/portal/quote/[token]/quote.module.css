@@ -255,9 +255,10 @@
 }
 .acceptButtonDisabled {
   display: inline-block;
-  background: var(--surface-muted);
-  color: var(--ink-tertiary);
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
   padding: var(--s-3) var(--s-5);
+  border: 1px solid var(--line-hairline);
   border-radius: var(--r-md);
   font-size: 16px;
   font-weight: 600;
@@ -297,6 +298,70 @@
   color: var(--ink-secondary);
   font-size: 15px;
   line-height: 1.55;
+}
+
+.skeletonHero,
+.skeletonLineWide,
+.skeletonLine,
+.skeletonLineShort,
+.skeletonLineTiny,
+.skeletonCard {
+  display: block;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      90deg,
+      var(--surface-sunken) 0%,
+      var(--line-subtle) 45%,
+      var(--surface-sunken) 100%
+    );
+  background-size: 200% 100%;
+  border-radius: var(--r-md);
+  animation: portalShimmer 1.4s var(--ease) infinite;
+}
+
+.skeletonHero {
+  aspect-ratio: 16 / 9;
+  margin-bottom: var(--s-4);
+  border: 1px solid var(--line-hairline);
+}
+
+.skeletonLineWide {
+  width: min(460px, 90%);
+  height: 32px;
+  margin-bottom: var(--s-3);
+}
+
+.skeletonLine {
+  width: min(360px, 72%);
+  height: 16px;
+}
+
+.skeletonLineShort {
+  width: 92px;
+  height: 12px;
+  margin-left: auto;
+  margin-bottom: var(--s-2);
+}
+
+.skeletonLineTiny {
+  width: 64px;
+  height: 12px;
+  margin-left: auto;
+}
+
+.skeletonCard {
+  min-height: 76px;
+}
+
+@keyframes portalShimmer {
+  from {
+    background-position: 120% 0;
+  }
+
+  to {
+    background-position: -120% 0;
+  }
 }
 
 .heroLede {

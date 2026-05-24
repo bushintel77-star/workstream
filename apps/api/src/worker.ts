@@ -10,12 +10,14 @@ import { loadEnv } from "./env";
 import { assertAuthConfigured } from "./lib/auth-config";
 import { initStore } from "@workstream/db";
 import { startWorker } from "./lib/queue";
+import { initTelemetry } from "./lib/telemetry";
 
 async function main(): Promise<void> {
   loadEnv({
     warn: (m) => console.warn(m),
     error: (m) => console.error(m),
   });
+  initTelemetry();
   assertAuthConfigured();
 
   const store = await initStore();

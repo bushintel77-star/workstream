@@ -1,28 +1,44 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { initTelemetry, resetTelemetryForTests } from "./telemetry";
+import {
+  initTelemetry,
+  resetTelemetryForTest,
+  shutdownTelemetry,
+} from "./telemetry";
 
 describe("telemetry", () => {
   afterEach(async () => {
-    delete process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
-    await resetTelemetryForTests();
+    await shutdownTelemetry();
+    resetTelemetryForTest();
+    vi.restoreAllMocks();
   });
 
   it("is a no-op when OTEL_EXPORTER_OTLP_ENDPOINT is absent", () => {
-    const createSdk = vi.fn();
+    const sdkFactory = vi.fn();
+    const result = initTelemetry({ env: {}, sdkFactory });
 
-    expect(initTelemetry({ createSdk })).toBe(false);
-    expect(createSdk).not.toHaveBeenCalled();
+    expect(result).toEqual({ enabled: false, started: false });
+    expect(sdkFactory).not.toHaveBeenCalled();
   });
 
-  it("starts the SDK when OTEL_EXPORTER_OTLP_ENDPOINT is configured", () => {
-    process.env.OTEL_EXPORTER_OTLP_ENDPOINT =
-      "https://otel.example.test/v1/traces";
-    const shutdown = vi.fn(async () => undefined);
+  it("initialises the SDK when OTEL_EXPORTER_OTLP_ENDPOINT is set", () => {
     const start = vi.fn();
-    const createSdk = vi.fn(() => ({ start, shutdown }));
+    const shutdown = vi.fn();
+    const sdkFactory = vi.fn(() => ({ start, shutdown }));
 
-    expect(initTelemetry({ createSdk })).toBe(true);
-    expect(createSdk).toHaveBeenCalledWith("https://otel.example.test/v1/traces");
+    const result = initTelemetry({
+      env: { OTEL_EXPORTER_OTLP_ENDPOINT: "https://otel.example.com" },
+      sdkFactory,
+    });
+
+    expect(result).toEqual({
+      enabled: true,
+      started: true,
+      traceUrl: "https://otel.example.com/v1/traces",
+    });
+    expect(sdkFactory).toHaveBeenCalledWith({
+      traceUrl: "https://otel.example.com/v1/traces",
+    });
     expect(start).toHaveBeenCalledOnce();
   });
 });
+

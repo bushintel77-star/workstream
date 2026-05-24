@@ -3,13 +3,16 @@
 Living doc of work between today's state and gold-standard
 end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
-**Gap analysis (detailed):** [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md)
+- [WORKSTREAM-STATUS.md](docs/WORKSTREAM-STATUS.md) — consolidated done + roadmap
+- [GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md) — detailed audit
 
 ## P0 — Blocks first paying customer
 
 - [x] **Persistence on Fly** — `[mounts]` block live in
       [apps/api/fly.toml](apps/api/fly.toml) against `construct_data_v2`.
-      Run `flyctl scale count 1 -a construct-api` after deploy.
+- [ ] **Single API machine** — human must run
+      `flyctl scale count 1 -a construct-api` after deploy to keep the
+      JSON snapshot store single-writer.
 - [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
       `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
       dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`
@@ -30,16 +33,14 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 ## P1 — Quality + scale
 
 - [ ] **Mobile distribution** — `eas build:configure`, TestFlight / APK.
-      `eas.json` profiles exist; needs Apple/Google credentials in submit block.
-      Code-side placeholder lint is shipped; human must replace the neutral EAS
-      project ID sentinel after `npx eas-cli init`.
+      `app.json` no longer contains the EAS init placeholder and CI guards against
+      reintroducing it. **Human:** run EAS init and provide Apple/Google credentials.
 - [x] **BullMQ + Redis (code path)** — worker in [`queue.ts`](apps/api/src/lib/queue.ts),
       `[processes] worker` in `fly.toml`, pipeline enqueues when `REDIS_URL` set.
       **Human:** provision Upstash/Fly Redis + `fly scale count worker=1`.
-- [x] **Litestream → R2/B2 (documented config)** —
-      [`docs/litestream.example.yml`](docs/litestream.example.yml) +
-      [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
-      **Human:** bucket + Fly sidecar or export job.
+- [x] **Litestream → R2/B2 (documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
+      + [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
+      **Human:** bucket credentials + Fly sidecar.
 - [x] **CI deploy job** — split `deploy-api` + `deploy-web`; `FLY_API_WEB` wired.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions.
 - [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
@@ -69,12 +70,14 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
 - [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
-      **Human:** set `OTEL_EXPORTER_OTLP_ENDPOINT` on `construct-api`.
 - [x] **Real-user monitoring (web scaffold)** — [`instrumentation.ts`](apps/web/src/instrumentation.ts);
       needs DSN + `@sentry/nextjs` package.
 - [x] **Audio compression** — mobile walkthrough uses `LOW_QUALITY` recording preset.
 - [x] **Edge runtime** for `/portal/*` pages.
 - [x] **Portal hero image** — `hero_url` from survey aerial on quote portal payload.
+- [x] **Portal checkout production URLs** — `PORTAL_BASE_URL` is set in
+      [`apps/api/fly.toml`](apps/api/fly.toml), production defaults to
+      `construct-web`, and quote/deposit amounts render with cents.
 - [x] **Activity audit trail** — `GET /projects/:id/activity` and `GET /settings/activity`;
       logs project delete/restore, filing delete, crew, catalog, integration, SKU link.
 - [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.
@@ -104,6 +107,8 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 - [x] Phase 5 modeless canvas (select/move/rotate/scale, scale bar, context label)
 - [x] Phase 7 honesty UI (caption, save hand-off, clear confirms, keyboard legend)
 - [x] Phase 8 docs + E2E (`CHANGES.md`, extended Playwright)
+- [x] Gold upgrade — measure, mass plant, irrigation zones, live schedule, undo/redo, toolbar UX (`857b7af`)
+- [x] Designer handover pack — [`docs/DESIGNER-HANDOVER.md`](docs/DESIGNER-HANDOVER.md)
 - [ ] Phases 6 AI assist (deferred)
 - [ ] Brochure output (deferred in spec)
 
@@ -115,7 +120,6 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 | Sentry DSN | `flyctl secrets set SENTRY_DSN=…` both apps |
 | Redis worker | `REDIS_URL` + `fly scale count worker=1 -a construct-api` |
 | EAS project | `cd apps/mobile && eas init` |
-| OpenTelemetry | `flyctl secrets set OTEL_EXPORTER_OTLP_ENDPOINT=… -a construct-api` |
 | Branch protection | GitHub repo Settings (Pro plan) |
 | Fly tokens | `FLY_API_TOKEN` + `FLY_API_WEB` — **done** |
 

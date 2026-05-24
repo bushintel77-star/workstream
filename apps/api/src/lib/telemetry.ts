@@ -1,112 +1,201 @@
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
+  SpanKind,
   SpanStatusCode,
   trace,
-  type AttributeValue,
   type Span,
+  type SpanAttributes,
+  type SpanAttributeValue,
 } from "@opentelemetry/api";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import type { FastifyRequest } from "fastify";
 
-type TelemetrySdk = Pick<NodeSDK, "start" | "shutdown">;
-
-type InitTelemetryOptions = {
-  endpoint?: string;
-  createSdk?: (endpoint: string) => TelemetrySdk;
-  force?: boolean;
+type TelemetryEnv = {
+  OTEL_EXPORTER_OTLP_ENDPOINT?: string;
 };
 
-let activeSdk: TelemetrySdk | null = null;
+type TelemetrySdk = {
+  start(): void | Promise<void>;
+  shutdown(): void | Promise<void>;
+};
 
-function createSdk(endpoint: string): TelemetrySdk {
+type TelemetryFactoryArgs = {
+  traceUrl: string;
+};
+
+type TelemetryFactory = (args: TelemetryFactoryArgs) => TelemetrySdk;
+
+type InitTelemetryOptions = {
+  env?: TelemetryEnv;
+  sdkFactory?: TelemetryFactory;
+};
+
+declare module "fastify" {
+  interface FastifyRequest {
+    telemetrySpan?: Span;
+  }
+}
+
+let telemetrySdk: TelemetrySdk | null = null;
+let telemetryStarted = false;
+
+function normaliseTraceUrl(endpoint: string): string {
+  const trimmed = endpoint.trim().replace(/\/+$/, "");
+  return trimmed.endsWith("/v1/traces") ? trimmed : `${trimmed}/v1/traces`;
+}
+
+function createSdk({ traceUrl }: TelemetryFactoryArgs): TelemetrySdk {
   return new NodeSDK({
-    serviceName: "workstream-api",
-    traceExporter: new OTLPTraceExporter({ url: endpoint }),
+    traceExporter: new OTLPTraceExporter({ url: traceUrl }),
     instrumentations: [getNodeAutoInstrumentations()],
   });
 }
 
-export function initTelemetry(options: InitTelemetryOptions = {}): boolean {
-  const endpoint = options.endpoint ?? process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
-  if (!endpoint) return false;
-  if (activeSdk && !options.force) return true;
+export function initTelemetry(options: InitTelemetryOptions = {}): {
+  enabled: boolean;
+  started: boolean;
+  traceUrl?: string;
+} {
+  const endpoint = options.env?.OTEL_EXPORTER_OTLP_ENDPOINT ?? process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
+  if (!endpoint?.trim()) {
+    return { enabled: false, started: false };
+  }
 
-  activeSdk = (options.createSdk ?? createSdk)(endpoint);
-  activeSdk.start();
-  return true;
+  const traceUrl = normaliseTraceUrl(endpoint);
+  if (telemetryStarted) {
+    return { enabled: true, started: false, traceUrl };
+  }
+
+  const factory = options.sdkFactory ?? createSdk;
+  telemetrySdk = factory({ traceUrl });
+  void telemetrySdk.start();
+  telemetryStarted = true;
+
+  return { enabled: true, started: true, traceUrl };
 }
 
 export async function shutdownTelemetry(): Promise<void> {
-  if (!activeSdk) return;
-  const sdk = activeSdk;
-  activeSdk = null;
-  await sdk.shutdown();
+  if (!telemetrySdk) return;
+  await telemetrySdk.shutdown();
+  telemetrySdk = null;
+  telemetryStarted = false;
 }
 
-export async function resetTelemetryForTests(): Promise<void> {
-  await shutdownTelemetry();
+export function resetTelemetryForTest(): void {
+  telemetrySdk = null;
+  telemetryStarted = false;
 }
 
-export function setSpanAttributes(
-  span: Span | undefined,
-  attributes: Record<string, AttributeValue | null | undefined>,
+function cleanAttributes(
+  attributes: Record<string, SpanAttributeValue | null | undefined>,
+): SpanAttributes {
+  return Object.fromEntries(
+    Object.entries(attributes).filter(
+      (entry): entry is [string, SpanAttributeValue] => entry[1] != null,
+    ),
+  );
+}
+
+export function setTelemetryAttributes(
+  span: Span,
+  attributes: Record<string, SpanAttributeValue | null | undefined>,
 ): void {
-  if (!span) return;
+  span.setAttributes(cleanAttributes(attributes));
+}
 
-  for (const [key, value] of Object.entries(attributes)) {
-    if (value != null) span.setAttribute(key, value);
-  }
+export function setActiveTelemetryAttributes(
+  attributes: Record<string, SpanAttributeValue | null | undefined>,
+): void {
+  const span = trace.getActiveSpan();
+  if (span) setTelemetryAttributes(span, attributes);
 }
 
 export async function withTelemetrySpan<T>(
   name: string,
-  attributes: Record<string, AttributeValue | null | undefined>,
-  operation: () => Promise<T>,
+  attributes: Record<string, SpanAttributeValue | null | undefined>,
+  fn: (span: Span) => Promise<T>,
 ): Promise<T> {
   const tracer = trace.getTracer("workstream-api");
-  return tracer.startActiveSpan(name, async (span) => {
-    setSpanAttributes(span, attributes);
-    try {
-      const result = await operation();
-      span.setStatus({ code: SpanStatusCode.OK });
-      return result;
-    } catch (err) {
-      if (err instanceof Error) {
-        span.recordException(err);
-        span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
-      } else {
-        span.setStatus({ code: SpanStatusCode.ERROR });
+  return await tracer.startActiveSpan(
+    name,
+    { kind: SpanKind.CLIENT, attributes: cleanAttributes(attributes) },
+    async (span) => {
+      try {
+        const result = await fn(span);
+        span.setStatus({ code: SpanStatusCode.OK });
+        return result;
+      } catch (err) {
+        if (err instanceof Error) {
+          span.recordException(err);
+          span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+        } else {
+          span.setStatus({ code: SpanStatusCode.ERROR });
+        }
+        throw err;
+      } finally {
+        span.end();
       }
-      throw err;
-    } finally {
+    },
+  );
+}
+
+function projectIdFromRequest(request: FastifyRequest): string | undefined {
+  const params = request.params;
+  if (params && typeof params === "object") {
+    const record = params as Record<string, unknown>;
+    const candidate = record.projectId ?? record.id;
+    return typeof candidate === "string" ? candidate : undefined;
+  }
+  return undefined;
+}
+
+export function registerRouteTelemetry(fastify: FastifyInstance): void {
+  fastify.addHook("onRequest", (request, _reply, done) => {
+    const span = trace.getTracer("workstream-api").startSpan(
+      `api ${request.method} ${request.url}`,
+      {
+        kind: SpanKind.SERVER,
+        attributes: {
+          "http.request.method": request.method,
+          "url.path": request.url,
+        },
+      },
+    );
+    request.telemetrySpan = span;
+    done();
+  });
+
+  fastify.addHook("onResponse", (request, reply, done) => {
+    const span = request.telemetrySpan;
+    if (span) {
+      setTelemetryAttributes(span, {
+        "http.response.status_code": reply.statusCode,
+        "operator.id": request.userId,
+        "project.id": projectIdFromRequest(request),
+      });
+      if (reply.statusCode >= 500) {
+        span.setStatus({ code: SpanStatusCode.ERROR });
+      } else {
+        span.setStatus({ code: SpanStatusCode.OK });
+      }
       span.end();
     }
+    done();
+  });
+
+  fastify.addHook("onError", (request, _reply, error, done) => {
+    const span = request.telemetrySpan;
+    if (span) {
+      span.recordException(error);
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+    }
+    done();
   });
 }
 
 export function annotateActiveSpan(
-  attributes: Record<string, AttributeValue | null | undefined>,
+  attributes: Record<string, SpanAttributeValue | null | undefined>,
 ): void {
-  setSpanAttributes(trace.getActiveSpan(), attributes);
-}
-
-export function annotateRouteSpan(request: FastifyRequest): void {
-  const params =
-    typeof request.params === "object" &&
-    request.params != null
-      ? (request.params as Record<string, unknown>)
-      : {};
-  const projectId =
-    typeof params.projectId === "string"
-      ? params.projectId
-      : typeof params.id === "string" && request.url.startsWith("/projects/")
-        ? params.id
-        : undefined;
-
-  annotateActiveSpan({
-    "operator.id": request.userId,
-    "project.id": projectId,
-    "http.route.scope": request.url.startsWith("/v1/") ? "v1" : "default",
-  });
+  setActiveTelemetryAttributes(attributes);
 }
