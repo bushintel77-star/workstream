@@ -1,9 +1,21 @@
-import { beforeAll, describe, expect, it } from "vitest";
-import { signPortalToken, verifyPortalToken } from "./magic-link";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { buildPortalUrl, portalBaseUrl, signPortalToken, verifyPortalToken } from "./magic-link";
 
 beforeAll(() => {
   process.env.WORKSTREAM_PORTAL_SECRET =
     "test-secret-key-with-sufficient-entropy-1234";
+});
+
+const originalNodeEnv = process.env.NODE_ENV;
+const originalPortalBaseUrl = process.env.PORTAL_BASE_URL;
+
+afterEach(() => {
+  process.env.NODE_ENV = originalNodeEnv;
+  if (originalPortalBaseUrl == null) {
+    delete process.env.PORTAL_BASE_URL;
+  } else {
+    process.env.PORTAL_BASE_URL = originalPortalBaseUrl;
+  }
 });
 
 describe("portal tokens", () => {
@@ -60,5 +72,20 @@ describe("portal tokens", () => {
     const a = signPortalToken({ project_id: "p", scope: "quote_view" });
     const b = signPortalToken({ project_id: "p", scope: "quote_view" });
     expect(a).not.toBe(b);
+  });
+
+  it("uses the configured portal base URL when building links", () => {
+    process.env.PORTAL_BASE_URL = "https://quotes.example.com/";
+
+    expect(buildPortalUrl("deposit_checkout", "token.parts")).toBe(
+      "https://quotes.example.com/portal/deposit/token.parts",
+    );
+  });
+
+  it("defaults portal links to the production web app in production", () => {
+    delete process.env.PORTAL_BASE_URL;
+    process.env.NODE_ENV = "production";
+
+    expect(portalBaseUrl()).toBe("https://construct-web.fly.dev");
   });
 });

@@ -6,6 +6,7 @@ import {
 import { requireAuth } from "../plugins/auth";
 import {
   buildPortalUrl,
+  portalBaseUrl,
   signPortalToken,
   verifyPortalToken,
 } from "../lib/magic-link";
@@ -128,9 +129,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         .send({ error: "Costing required before deposit." });
     }
 
-    const portalBase = (
-      process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
-    ).replace(/\/$/, "");
+    const portalBase = portalBaseUrl();
     try {
       await bindOwnerSecrets(fastify.store, ownerId);
       const session = await createDepositSession({
