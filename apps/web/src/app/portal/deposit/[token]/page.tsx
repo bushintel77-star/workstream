@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
-import { createDepositCheckout } from "../../../../lib/api";
+import { createDepositCheckout } from "../../../../lib/portal-api";
 import styles from "./deposit.module.css";
+
+export const runtime = "edge";
 
 export default async function DepositPage({
   params,
@@ -37,7 +39,8 @@ export default async function DepositPage({
             {new Intl.NumberFormat("en-AU", {
               style: "currency",
               currency: "AUD",
-              maximumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             }).format(result.session.deposit_amount_aud)}{" "}
             deposit ready
           </h1>

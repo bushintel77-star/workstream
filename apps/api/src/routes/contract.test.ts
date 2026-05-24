@@ -18,6 +18,13 @@ describe("API contract — projects", () => {
     expect(body.status).toBe("ok");
   });
 
+  it("GET /readyz returns ok", async () => {
+    ({ app } = await buildTestApp());
+    const res = await app.inject({ method: "GET", url: "/readyz" });
+    expect([200, 503]).toContain(res.statusCode);
+    expect((res.json() as { status: string }).status).toMatch(/ok|degraded/);
+  });
+
   it("POST /projects returns a Project-shaped body", async () => {
     ({ app } = await buildTestApp());
     const res = await app.inject({
@@ -94,6 +101,32 @@ describe("API contract — projects", () => {
     expect(res.json()).toEqual({ error: "Project not found" });
   });
 
+  it("covers geocode preview, search, and validation contracts", async () => {
+    ({ app } = await buildTestApp());
+
+    const preview = await app.inject({
+      method: "GET",
+      url: "/geocode/preview?lat=-37.84&lng=145.01",
+    });
+    expect(preview.statusCode).toBe(200);
+    expect(preview.json()).toMatchObject({ lat: -37.84, lng: 145.01 });
+
+    const search = await app.inject({
+      method: "GET",
+      url: "/geocode/search?q=Armadale",
+    });
+    expect(search.statusCode).toBe(200);
+    expect(Array.isArray((search.json() as { suggestions: unknown[] }).suggestions)).toBe(
+      true,
+    );
+
+    const invalid = await app.inject({
+      method: "GET",
+      url: "/geocode/preview?lat=999&lng=145",
+    });
+    expect(invalid.statusCode).toBe(400);
+  });
+
   it("POST /projects/:id/survey returns 404 for unknown project", async () => {
     ({ app } = await buildTestApp());
     const res = await app.inject({
@@ -166,6 +199,168 @@ describe("API contract — projects", () => {
     });
     expect(wrongTask.statusCode).toBe(404);
     expect(wrongTask.json()).toEqual({ error: "Task not found" });
+  });
+
+  it("smoke-tests project-scoped read routes across survey outputs and ops tabs", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Route Smoke St, Armadale VIC 3143" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const checks = [
+      `/projects/${projectId}/design`,
+      `/projects/${projectId}/costing`,
+      `/projects/${projectId}/audit`,
+      `/projects/${projectId}/overrides`,
+      `/projects/${projectId}/outputs`,
+      `/projects/${projectId}/tasks`,
+      `/projects/${projectId}/recordings`,
+      `/projects/${projectId}/measurements`,
+      `/projects/${projectId}/design-canvas`,
+      `/projects/${projectId}/gallery`,
+      `/projects/${projectId}/files`,
+      `/projects/${projectId}/weather`,
+      `/projects/${projectId}/site-context`,
+      `/projects/${projectId}/carbon`,
+    ];
+
+    for (const url of checks) {
+      const res = await app.inject({ method: "GET", url });
+      expect([200, 404]).toContain(res.statusCode);
+      expect(res.json()).toBeTypeOf("object");
+    }
+  });
+
+  it("validates write contracts for design canvas, catalog, dictation, and uploads", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Validation Smoke St, Malvern VIC 3144" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const checks = [
+      {
+        method: "PUT" as const,
+        url: `/projects/${projectId}/design-canvas`,
+        payload: { placements: "bad" },
+      },
+      { method: "POST" as const, url: "/catalog/symbols", payload: { label: "" } },
+      {
+        method: "POST" as const,
+        url: `/projects/${projectId}/dictation`,
+        payload: { transcript: "" },
+      },
+      {
+        method: "POST" as const,
+        url: `/projects/${projectId}/measurements/photo`,
+        payload: { image_base64: "" },
+      },
+      {
+        method: "POST" as const,
+        url: `/projects/${projectId}/aerial/upload`,
+        payload: { not: "multipart" },
+      },
+    ] as const;
+
+    for (const check of checks) {
+      const res = await app.inject(check);
+      expect([400, 406, 409, 415]).toContain(res.statusCode);
+      expect(res.json()).toBeTypeOf("object");
+    }
+  });
+
+  it("smoke-tests workspace integration, supplier, accounting, and catalog routes", async () => {
+    ({ app } = await buildTestApp());
+
+    const checks = [
+      "/catalog/symbols",
+      "/suppliers/",
+      "/suppliers/bunnings",
+      "/myob/status",
+      "/myob/customers",
+      "/myob/items",
+      "/myob/sku-links",
+      "/xero/status",
+      "/xero/contacts",
+      "/xero/items",
+      "/integrations/summary",
+      "/integrations/hub",
+      "/settings/integrations",
+      "/settings/rate-card",
+      "/settings/plant-palette",
+    ];
+
+    for (const url of checks) {
+      const res = await app.inject({ method: "GET", url });
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toBeTypeOf("object");
+    }
+  });
+
+  it("mints separate portal quote and deposit tokens for client checkout", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Portal Deposit St, Armadale VIC 3143" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const survey = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/survey`,
+    });
+    expect(survey.statusCode).toBe(201);
+
+    const design = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/design`,
+    });
+    expect(design.statusCode).toBe(201);
+
+    const costing = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/costing`,
+    });
+    expect(costing.statusCode).toBe(201);
+
+    const link = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/magic-link`,
+      payload: { scope: "quote_view" },
+    });
+    expect(link.statusCode).toBe(200);
+    const { token } = link.json() as { token: string };
+
+    const quote = await app.inject({
+      method: "GET",
+      url: `/portal/quote/${token}`,
+    });
+    expect(quote.statusCode).toBe(200);
+    const quoteBody = quote.json() as { deposit_url: string | null };
+    expect(quoteBody.deposit_url).toMatch(/\/portal\/deposit\//);
+    expect(quoteBody.deposit_url).not.toContain(token);
+
+    const depositToken = new URL(quoteBody.deposit_url ?? "").pathname
+      .split("/")
+      .pop();
+    expect(depositToken).toBeTruthy();
+
+    const deposit = await app.inject({
+      method: "POST",
+      url: `/portal/deposit/${depositToken}`,
+    });
+    expect(deposit.statusCode).toBe(200);
+    const depositBody = deposit.json() as {
+      session: { mode: string; deposit_amount_aud: number };
+    };
+    expect(depositBody.session.mode).toBe("dev_fallback");
+    expect(depositBody.session.deposit_amount_aud).toBeGreaterThan(0);
   });
 
   it("records project delete and restore in activity log", async () => {

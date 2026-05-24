@@ -155,6 +155,7 @@ export function DesignStudio({
   const pendingPlaceRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const drawingRef = useRef(false);
   const savingRef = useRef(false);
+  const armedSymbolRef = useRef<string | null>(null);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
   const [railTab, setRailTab] = useState<RailTab>("assets");
@@ -193,6 +194,11 @@ export function DesignStudio({
   );
   const massPlantDraw = useStudioPolylineDraw("closed");
   const irrigationDraw = useStudioPolylineDraw("open");
+
+  const setArmedSymbol = useCallback((id: string | null) => {
+    armedSymbolRef.current = id;
+    setArmedSymbolId(id);
+  }, []);
 
   const mapView: StaticMapView = useMemo(
     () => resolveStaticMapView(aerialUri, lotRing),
@@ -327,7 +333,7 @@ export function DesignStudio({
     (clientX: number, clientY: number) => {
       const el = canvasRef.current;
       if (!el) return;
-      const symbolId = dragSymbolId ?? armedSymbolId;
+      const symbolId = dragSymbolId ?? armedSymbolRef.current;
       if (!symbolId) return;
       if (toolOverride === "select") return;
       if (isMeasureMode || isMassPlantMode || isIrrigationMode) return;
@@ -336,7 +342,7 @@ export function DesignStudio({
       addPlacement(symbolId, pt.x_pct, pt.y_pct);
       setDragSymbolId(null);
     },
-    [addPlacement, armedSymbolId, dragSymbolId, isIrrigationMode, isMassPlantMode, isMeasureMode, toolOverride],
+    [addPlacement, dragSymbolId, isIrrigationMode, isMassPlantMode, isMeasureMode, toolOverride],
   );
 
   const commitDraftStroke = useCallback(() => {
@@ -395,10 +401,10 @@ export function DesignStudio({
     (id: string) => {
       setPaletteSelectedId(id);
       if (toolOverride !== "select") {
-        setArmedSymbolId(id);
+        setArmedSymbol(id);
       }
     },
-    [toolOverride],
+    [setArmedSymbol, toolOverride],
   );
 
   const updateCursorHint = useCallback(
@@ -451,7 +457,7 @@ export function DesignStudio({
           return;
         }
         setSelectedPlacementId(null);
-        setArmedSymbolId(null);
+        setArmedSymbol(null);
         setDragSymbolId(null);
         setDraftPoints([]);
         return;
@@ -485,7 +491,7 @@ export function DesignStudio({
       }
       if (e.key.toLowerCase() === "v") {
         setStudioTool("select");
-        setArmedSymbolId(null);
+        setArmedSymbol(null);
         return;
       }
     };
@@ -498,6 +504,7 @@ export function DesignStudio({
     massPlantDraw,
     redo,
     selectedPlacementId,
+    setArmedSymbol,
     setStudioTool,
     undo,
   ]);
@@ -890,7 +897,7 @@ export function DesignStudio({
               title="Select (V)"
               onClick={() => {
                 setStudioTool("select");
-                setArmedSymbolId(null);
+                setArmedSymbol(null);
               }}
             >
               Select
@@ -1191,7 +1198,7 @@ export function DesignStudio({
                 onSelect={handlePaletteSelect}
                 onDragStart={(id) => {
                   setDragSymbolId(id);
-                  setArmedSymbolId(id);
+                  setArmedSymbol(id);
                 }}
                 onDragEnd={() => setDragSymbolId(null)}
               />

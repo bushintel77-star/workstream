@@ -35,6 +35,7 @@ export type PortalQuoteData = {
   } | null;
   costing: PortalCosting | null;
   costings?: PortalCosting[];
+  deposit_url?: string | null;
   tier1?: {
     removed_ex: number;
     deployed_ex: number;
@@ -63,13 +64,6 @@ const SCENARIOS = [
   },
 ] as const;
 
-const aud0 = (n: number) =>
-  new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-    maximumFractionDigits: 0,
-  }).format(n);
-
 const aud2 = (n: number) =>
   new Intl.NumberFormat("en-AU", {
     style: "currency",
@@ -79,10 +73,8 @@ const aud2 = (n: number) =>
 
 export function QuotePortal({
   data,
-  token,
 }: {
   data: PortalQuoteData;
-  token: string;
 }) {
   const { project, survey, design, tier1 } = data;
   const allCostings = data.costings?.length
@@ -137,7 +129,7 @@ export function QuotePortal({
         {tier1 && (
           <p className={styles.heroLede}>
             Architecture locked. Singular-species blocks, bluestone ground plane,
-            concealed deck lighting. Saving {aud0(Math.abs(tier1.net_inc_gst))}{" "}
+            concealed deck lighting. Saving {aud2(Math.abs(tier1.net_inc_gst))}{" "}
             vs cottage scatter scope.
           </p>
         )}
@@ -171,7 +163,7 @@ export function QuotePortal({
             <div className={styles.ledgerCol}>
               <span className={styles.ledgerKicker}>Removed</span>
               <span className={styles.ledgerAmount}>
-                {aud0(tier1.removed_ex)}
+                {aud2(tier1.removed_ex)}
               </span>
               <p className={styles.ledgerNote}>
                 Cottage perennials, ferns, organic mulch, redundant irrigation
@@ -181,7 +173,7 @@ export function QuotePortal({
             <div className={styles.ledgerCol}>
               <span className={styles.ledgerKicker}>Deployed</span>
               <span className={styles.ledgerAmount}>
-                {aud0(tier1.deployed_ex)}
+                {aud2(tier1.deployed_ex)}
               </span>
               <p className={styles.ledgerNote}>
                 Cycas anchors, Buxus structure, Mondo grid, bluestone screenings,
@@ -215,7 +207,7 @@ export function QuotePortal({
                   onClick={() => setScenario(s.id)}
                 >
                   <span className={styles.scenarioLabel}>{s.label}</span>
-                  <span className={styles.scenarioTotal}>{aud0(c.total)}</span>
+                  <span className={styles.scenarioTotal}>{aud2(c.total)}</span>
                   <span className={styles.scenarioNote}>{s.note}</span>
                 </button>
               );
@@ -228,7 +220,7 @@ export function QuotePortal({
                 <span className={styles.totalKicker}>
                   {active.scenario.toUpperCase()} - TOTAL INCL. GST
                 </span>
-                <span className={styles.totalAmount}>{aud0(active.total)}</span>
+                <span className={styles.totalAmount}>{aud2(active.total)}</span>
                 <span className={styles.totalSub}>
                   Subtotal {aud2(active.subtotal)} - GST {aud2(active.gst)}
                 </span>
@@ -253,7 +245,7 @@ export function QuotePortal({
                           {li.qty} {li.unit}
                         </td>
                         <td className={styles.alignRight}>{aud2(li.rate)}</td>
-                        <td className={styles.alignRight}>{aud0(li.total)}</td>
+                        <td className={styles.alignRight}>{aud2(li.total)}</td>
                       </tr>
                     ))}
                 </tbody>
@@ -269,12 +261,19 @@ export function QuotePortal({
       )}
 
       <section className={styles.acceptSection}>
-        <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
-          Accept &amp; pay deposit
-        </Link>
+        {active && data.deposit_url ? (
+          <Link href={data.deposit_url} className={styles.acceptButton}>
+            Accept &amp; pay {aud2(active.total * 0.2)} deposit
+          </Link>
+        ) : (
+          <span className={styles.acceptButtonDisabled}>
+            Deposit checkout pending
+          </span>
+        )}
         <p className={styles.acceptNote}>
-          A 20% deposit secures your project on the Standard scenario. Balance
-          billed in stages as works progress.
+          {active
+            ? "A 20% deposit secures your project on the Standard scenario. Balance billed in stages as works progress."
+            : "Deposit checkout unlocks once Curtis & Co issues the costed quote."}
         </p>
       </section>
 

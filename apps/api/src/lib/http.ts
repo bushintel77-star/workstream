@@ -22,6 +22,12 @@ export type FetchRetryOptions = {
   retryOn?: (status: number) => boolean;
   /** AbortSignal to chain into the per-attempt signal. */
   signal?: AbortSignal;
+  /** Optional OpenTelemetry span metadata for an external provider call. */
+  telemetry?: {
+    spanName: string;
+    provider: "anthropic" | "openai" | "mapbox" | "external";
+    attributes?: Record<string, string | number | boolean | null | undefined>;
+  };
 };
 
 const DEFAULT_USER_AGENT = "Workstream/1.0 (+https://construct-api.fly.dev)";
@@ -35,7 +41,7 @@ function jitteredDelay(baseMs: number, attempt: number): number {
   return Math.min(exp + jitter, 15_000);
 }
 
-export async function fetchWithRetry(
+async function fetchWithRetryAttempt(
   input: string | URL,
   init: RequestInit = {},
   opts: FetchRetryOptions = {},
@@ -97,4 +103,40 @@ export async function fetchWithRetry(
   throw lastErr instanceof Error
     ? lastErr
     : new Error(`fetch failed after ${retries} attempts`);
+}
+
+function methodFromInit(init: RequestInit): string {
+  return init.method?.toUpperCase() ?? "GET";
+}
+
+function hrefFromInput(input: string | URL): string {
+  return typeof input === "string" ? input : input.href;
+}
+
+export async function fetchWithRetry(
+  input: string | URL,
+  init: RequestInit = {},
+  opts: FetchRetryOptions = {},
+): Promise<Response> {
+  if (!opts.telemetry) {
+    return await fetchWithRetryAttempt(input, init, opts);
+  }
+
+  const { withTelemetrySpan, setTelemetryAttributes } = await import("./telemetry");
+  return await withTelemetrySpan(
+    opts.telemetry.spanName,
+    {
+      "peer.service": opts.telemetry.provider,
+      "http.request.method": methodFromInit(init),
+      "url.full": hrefFromInput(input),
+      ...opts.telemetry.attributes,
+    },
+    async (span) => {
+      const res = await fetchWithRetryAttempt(input, init, opts);
+      setTelemetryAttributes(span, {
+        "http.response.status_code": res.status,
+      });
+      return res;
+    },
+  );
 }

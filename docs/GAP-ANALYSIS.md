@@ -3,7 +3,7 @@
 Living audit: **current state ? gold-standard production**, with owner and
 automation status. Update when PRs land. Companion: `OUTSTANDING.md` (punch list).
 
-Last reviewed: 2026-05-21.
+Last reviewed: 2026-05-24. Current matrix: `docs/GAP-ANALYSIS-CURRENT.md`.
 
 ## Summary
 
@@ -64,7 +64,7 @@ See `OUTSTANDING.md`. Highest leverage next:
 2. Mobile TestFlight (`eas init`).
 3. Design studio Phase 6 AI assist (proposal only).
 4. Brochure output (product spec TBD).
-5. OpenTelemetry tracing for external API calls.
+5. Bundle-size budget in CI.
 
 ## 6. Human-only checklist
 
