@@ -192,6 +192,7 @@ export default async function ProjectHubPage({
         address={project.address}
         siteContext={siteContext}
         kicker="Landscape project"
+        designHref={survey ? `/projects/${id}/design` : undefined}
       />
 
       <SiteProjectWidgets
@@ -224,15 +225,17 @@ export default async function ProjectHubPage({
         />
         <Stage
           n={2}
-          label="Design"
+          label={hasCanvas || design ? "Design" : "Sketch"}
           status={design ? "done" : survey ? "todo" : "locked"}
           href={`/projects/${id}/design`}
           meta={
             design
               ? `${design.proposal.zones.length} zones · v${design.version}`
-              : survey
-                ? "Ready"
-                : "Needs survey"
+              : hasCanvas
+                ? "Layout on aerial"
+                : survey
+                  ? "Open studio"
+                  : "Needs survey"
           }
         />
         <Stage

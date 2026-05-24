@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { SiteContext, Survey } from "../lib/api";
 import { ProjectTitleCover } from "./ProjectTitleCover";
 import { SiteContextRibbon } from "./SiteContextRibbon";
@@ -9,11 +10,13 @@ export function ProjectTitleSiteMap({
   address,
   siteContext,
   kicker = "Landscape project",
+  designHref,
 }: {
   survey: Survey;
   address: string;
   siteContext?: SiteContext | null;
   kicker?: string;
+  designHref?: string;
 }) {
   const sunMarker = siteContext
     ? {
@@ -40,6 +43,12 @@ export function ProjectTitleSiteMap({
         />
       </div>
       <span className={t.badge}>Backyard mapped</span>
+      {designHref ? (
+        <Link href={designHref} className={t.studioCta}>
+          Sketch on aerial
+          <span className={t.studioCtaSub}>Opens design studio</span>
+        </Link>
+      ) : null}
       <div className={t.titleBand}>
         <p className={t.kicker}>{kicker}</p>
         <p className={t.brand}>Curtis &amp; Co</p>
@@ -60,11 +69,13 @@ export function ProjectTitleHero({
   address,
   siteContext,
   kicker = "Landscape project",
+  designHref,
 }: {
   survey: Survey | null;
   address: string;
   siteContext?: SiteContext | null;
   kicker?: string;
+  designHref?: string;
 }) {
   if (!survey) {
     return (
@@ -81,6 +92,7 @@ export function ProjectTitleHero({
       address={address}
       siteContext={siteContext}
       kicker={kicker}
+      designHref={designHref}
     />
   );
 }
