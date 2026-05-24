@@ -13,18 +13,27 @@ import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 export type PortalScope = "quote_view" | "deposit_checkout" | "change_request";
 
+const LOCAL_PORTAL_BASE_URL = "http://localhost:3002";
+const PRODUCTION_PORTAL_BASE_URL = "https://construct-web.fly.dev";
+
+export function portalBaseUrl(): string {
+  return (
+    process.env.PORTAL_BASE_URL ??
+    (process.env.NODE_ENV === "production"
+      ? PRODUCTION_PORTAL_BASE_URL
+      : LOCAL_PORTAL_BASE_URL)
+  ).replace(/\/$/, "");
+}
+
 /** Public portal URL for a signed token (matches Next `/portal/{scope}/[token]` routes). */
 export function buildPortalUrl(scope: PortalScope, token: string): string {
-  const portalBase = (
-    process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
-  ).replace(/\/$/, "");
   const scopePath =
     scope === "quote_view"
       ? "quote"
       : scope === "deposit_checkout"
         ? "deposit"
         : "change_request";
-  return `${portalBase}/portal/${scopePath}/${token}`;
+  return `${portalBaseUrl()}/portal/${scopePath}/${token}`;
 }
 
 export type PortalTokenPayload = {

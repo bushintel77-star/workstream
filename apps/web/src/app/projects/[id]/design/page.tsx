@@ -6,7 +6,9 @@ import {
   getDesignCanvas,
   getEnvelopeBrief,
   getSurvey,
+  listCatalogSymbols,
   listCostings,
+  listRateCard,
 } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import {
@@ -19,6 +21,7 @@ import { PipelineActionForm } from "../../../../components/PipelineActionForm";
 import { QuoteWorkflowSteps } from "../../../../components/QuoteWorkflowSteps";
 import { EnvelopeBriefPanel } from "../../../../components/EnvelopeBriefPanel";
 import { DesignProposalView } from "../../../../components/DesignProposalView";
+import { DesignStudioSection } from "./DesignStudioSection";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +34,13 @@ export default async function DesignPage({
   const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const [survey, design, canvas, costings] = await Promise.all([
-    getSurvey(id),
+  const survey = await getSurvey(id);
+  const [design, canvas, costings, symbols, rateCard] = await Promise.all([
     getDesign(id),
     getDesignCanvas(id),
     listCostings(id).catch(() => []),
+    survey ? listCatalogSymbols() : Promise.resolve([]),
+    survey ? listRateCard() : Promise.resolve([]),
   ]);
   const hasCanvas = (canvas?.placements?.length ?? 0) > 0;
   const envelope =
@@ -49,79 +54,99 @@ export default async function DesignPage({
 
       <h1 className={s.headline}>Design</h1>
       <p className={s.lede}>
-        Back-of-envelope flow: rough sketch on the aerial, ballpark budget and
-        planning flags (tree root protection, council stormwater, heritage), then
-        AI develops the design from your layout.
+        Concept sketch on the survey aerial — place Curtis assets, mass planting,
+        irrigation, and live schedule. Save before opening outputs.
       </p>
 
-      {envelope && hasCanvas && (
-        <EnvelopeBriefPanel projectId={id} envelope={envelope} />
-      )}
-
-      {survey && (
-        <QuoteWorkflowSteps
-          projectId={id}
-          hasSurvey={!!survey}
-          hasCanvas={hasCanvas}
-          hasDesign={!!design}
-          hasCosting={costings.length > 0}
-        />
-      )}
-
-      <div className={s.actionBar}>
-        {!survey ? (
-          <button type="button" className={s.btn} disabled>
-            Run survey first
-          </button>
-        ) : (
-          <>
-            <Link href={`/projects/${id}/design/studio`} className={s.btn}>
-              Open design studio
-            </Link>
-            <PipelineActionForm
-              projectId={id}
-              action={runSketchCostingAction}
-              label="Envelope estimate"
-              pendingLabel="Estimating…"
-              successMessage="Sketch estimate ready"
-              disabled={!hasCanvas}
-            />
-            <PipelineActionForm
-              projectId={id}
-              action={runDevelopFromSketchAction}
-              label={design ? "Re-develop from sketch" : "Develop from sketch"}
-              pendingLabel="Developing…"
-              successMessage="Pipeline started"
-              disabled={!hasCanvas}
-              redirectToProcessing
-            />
-            <PipelineActionForm
-              projectId={id}
-              action={runDesignAction}
-              label="Design only (no pipeline)"
-              pendingLabel="Designing…"
-              successMessage="Design complete"
-            />
-          </>
-        )}
-        {design && (
-          <span className={`${s.pill} ${s.pillInfo}`}>
-            Version {design.version} · {design.mode}
-          </span>
-        )}
-        {design && (
-          <span className={`${s.pill} ${s.pillAccent}`}>
-            {design.proposal.estimated_complexity}
-          </span>
-        )}
-      </div>
-
-      {!design ? (
-        <div className={s.empty}>
-          No design yet. Run the survey first, then generate a design.
+      {!survey ? (
+        <div className={s.actionBar}>
+          <Link href={`/projects/${id}/survey`} className={s.btn}>
+            Complete survey first
+          </Link>
         </div>
       ) : (
-        <DesignProposalView design={design} aerialUri={aerialUri} tier1={tier1} />
+        <>
+          <QuoteWorkflowSteps
+            projectId={id}
+            hasSurvey={!!survey}
+            hasCanvas={hasCanvas}
+            hasDesign={!!design}
+            hasCosting={costings.length > 0}
+          />
+
+          <DesignStudioSection
+            projectId={id}
+            aerialUri={survey.aerial_uri}
+            lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
+            symbols={symbols}
+            rateCard={rateCard}
+            canvas={canvas}
+          />
+
+          <section id="develop" aria-labelledby="develop-heading">
+            <h2 id="develop-heading" className={s.sectionHeading}>
+              Develop & estimate
+            </h2>
+            <p className={s.meta}>
+              Back-of-envelope budget and planning flags, then AI develops the
+              design from your sketch.
+            </p>
+
+            {envelope && hasCanvas && (
+              <EnvelopeBriefPanel projectId={id} envelope={envelope} />
+            )}
+
+            <div id="envelope-estimate" className={s.actionBar}>
+              <PipelineActionForm
+                projectId={id}
+                action={runSketchCostingAction}
+                label="Envelope estimate"
+                pendingLabel="Estimating…"
+                successMessage="Sketch estimate ready"
+                disabled={!hasCanvas}
+              />
+              <PipelineActionForm
+                projectId={id}
+                action={runDevelopFromSketchAction}
+                label={design ? "Re-develop from sketch" : "Develop from sketch"}
+                pendingLabel="Developing…"
+                successMessage="Pipeline started"
+                disabled={!hasCanvas}
+                redirectToProcessing
+              />
+              <PipelineActionForm
+                projectId={id}
+                action={runDesignAction}
+                label="Design only (no pipeline)"
+                pendingLabel="Designing…"
+                successMessage="Design complete"
+              />
+              {design && (
+                <span className={`${s.pill} ${s.pillInfo}`}>
+                  Version {design.version} · {design.mode}
+                </span>
+              )}
+              {design && (
+                <span className={`${s.pill} ${s.pillAccent}`}>
+                  {design.proposal.estimated_complexity}
+                </span>
+              )}
+            </div>
+
+            {!design ? (
+              <div className={s.empty}>
+                No AI design yet. Sketch on the aerial, then run develop from
+                sketch.
+              </div>
+            ) : (
+              <DesignProposalView
+                design={design}
+                aerialUri={aerialUri}
+                tier1={tier1}
+              />
+            )}
+          </section>
+        </>
       )}
     </main>
   );

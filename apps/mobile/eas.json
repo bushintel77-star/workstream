@@ -1,8 +1,6 @@
 {
-  "_workstreamEasInitNotes": {
-    "appJsonPath": "expo.extra.eas.projectId",
-    "currentSentinel": "00000000-0000-0000-0000-000000000000",
-    "setAfterEasInit": "Replace with the real Expo EAS project ID printed by `npx eas-cli init`."
+  "_workstream": {
+    "easInitRequired": "Run npx eas-cli init in apps/mobile before production distribution. That command writes expo.extra.eas.projectId into app.json for the real EAS project."
   },
   "cli": {
     "version": ">= 14.0.0",

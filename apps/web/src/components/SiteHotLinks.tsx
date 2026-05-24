@@ -56,7 +56,7 @@ function nextHref(projectId: string, next: SiteNextAction): string {
     case "record":
       return `/projects/${projectId}/recordings`;
     case "sketch":
-      return `/projects/${projectId}/design/studio`;
+      return `/projects/${projectId}/design`;
     case "survey_ok":
     case "develop":
       return `/projects/${projectId}/design`;
@@ -160,7 +160,7 @@ export function SiteHotLinks({
           </span>
         </Link>
         <Link
-          href={`/projects/${project.id}/design/studio`}
+          href={`/projects/${project.id}/design`}
           className={s.widget}
         >
           <span className={s.widgetLabel}>{GARDEN_COPY.widgets.sketch}</span>

@@ -5,8 +5,9 @@
 # or B2 credentials, mounts it in the API image/sidecar, and sets the Fly
 # secrets listed in docs/LITESTREAM-SETUP.md.
 #
-#   fly secrets set LITESTREAM_ACCESS_KEY_ID=… LITESTREAM_SECRET_ACCESS_KEY=…
-#   fly deploy -a construct-api
+# This file is documentation-first until the operator provisions Cloudflare R2
+# or Backblaze B2 credentials and adds the Fly sidecar shown in
+# docs/LITESTREAM-SETUP.md. Do not hardcode credentials here.
 
 dbs:
   - path: /repo/apps/api/data/store.json

@@ -55,19 +55,19 @@
 .banner {
   padding: 12px 16px;
   border-radius: 8px;
-  background: #fff7ed;
-  color: #7c2d12;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
   font-size: 12px;
   line-height: 1.5;
   margin-bottom: var(--s-5);
-  border: 1px solid #fed7aa;
+  border: 1px solid var(--accent-soft);
 }
 
 .error {
   padding: 12px 16px;
   border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
+  background: color-mix(in srgb, var(--block) 10%, var(--surface-elevated));
+  color: var(--block);
   font-size: 13px;
   margin-bottom: var(--s-4);
 }
@@ -94,7 +94,7 @@
   padding: 16px 18px;
   border: 1px solid color-mix(in srgb, var(--ink-tertiary) 30%, transparent);
   border-radius: 10px;
-  background: var(--surface-elevated, #fff);
+  background: var(--surface-elevated);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -131,18 +131,18 @@
 }
 
 .pillOk {
-  background: #dcfce7;
-  color: #15803d;
+  background: color-mix(in srgb, var(--ok) 14%, var(--surface-elevated));
+  color: var(--ok);
 }
 
 .pillEnv {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--info) 14%, var(--surface-elevated));
+  color: var(--info);
 }
 
 .pillNone {
-  background: #f4f4f5;
-  color: #71717a;
+  background: var(--surface-sunken);
+  color: var(--ink-tertiary);
 }
 
 .description {
@@ -174,21 +174,21 @@
   font: inherit;
   font-family: var(--font-mono);
   font-size: 13px;
-  background: var(--surface-base, #fff);
+  background: var(--surface-base);
   color: var(--ink-primary);
 }
 
 .input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .save {
   padding: 10px 16px;
   border: none;
   background: var(--ink-primary);
-  color: var(--surface-elevated, #fff);
+  color: var(--surface-elevated);
   border-radius: 8px;
   font: inherit;
   font-size: 13px;

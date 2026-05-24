@@ -6,6 +6,7 @@ import {
 import { requireAuth } from "../plugins/auth";
 import {
   buildPortalUrl,
+  portalBaseUrl,
   signPortalToken,
   verifyPortalToken,
 } from "../lib/magic-link";
@@ -44,7 +45,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
   // --- Public: client side (token-gated, NO requireAuth) ---
   // Stricter rate-limit here — these are the only endpoints reachable
   // without auth and would otherwise be the primary brute-force target.
-  fastify.get("/portal/quote/:token", {
+  fastify.get("/portal/quote/*", {
     config: {
       rateLimit: {
         max: 30,
@@ -52,7 +53,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const { token } = request.params as { token: string };
+    const { "*": token } = request.params as { "*": string };
     const verify = verifyPortalToken(token);
     if (!verify.ok) return reply.code(401).send({ error: verify.reason });
     if (verify.payload.scope !== "quote_view") {
@@ -68,6 +69,15 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     const costings = await fastify.store.listCostings(ownerId, projectId);
     const standard =
       costings.find((c) => c.scenario === "standard") ?? costings[0];
+    const depositUrl = standard
+      ? buildPortalUrl(
+          "deposit_checkout",
+          signPortalToken({
+            project_id: projectId,
+            scope: "deposit_checkout",
+          }),
+        )
+      : null;
     const tier1 = isTier1WrightsTerrace(project?.address ?? "")
       ? TIER1_WRIGHTS_SAVINGS
       : null;
@@ -84,12 +94,13 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       design,
       costing: standard,
       costings,
+      deposit_url: depositUrl,
       tier1,
       hero_url: heroUrl,
     });
   });
 
-  fastify.post("/portal/deposit/:token", {
+  fastify.post("/portal/deposit/*", {
     config: {
       rateLimit: {
         max: 10,
@@ -97,7 +108,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const { token } = request.params as { token: string };
+    const { "*": token } = request.params as { "*": string };
     const verify = verifyPortalToken(token);
     if (!verify.ok) return reply.code(401).send({ error: verify.reason });
     if (verify.payload.scope !== "deposit_checkout") {
@@ -118,9 +129,7 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         .send({ error: "Costing required before deposit." });
     }
 
-    const portalBase = (
-      process.env.PORTAL_BASE_URL ?? "http://localhost:3002"
-    ).replace(/\/$/, "");
+    const portalBase = portalBaseUrl();
     try {
       await bindOwnerSecrets(fastify.store, ownerId);
       const session = await createDepositSession({

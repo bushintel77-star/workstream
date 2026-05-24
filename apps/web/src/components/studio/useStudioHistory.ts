@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
-import type { CatalogPlacement, IrrigationZone } from "@workstream/contracts";
-import type { CanvasStrokeClient } from "../DesignStudio";
+import type { CatalogPlacement, CatalogSymbol, IrrigationZone } from "@workstream/contracts";
+import type { CanvasStrokeClient } from "./types";
 
 export type StudioSnapshot = {
   placements: CatalogPlacement[];

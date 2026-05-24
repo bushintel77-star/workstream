@@ -21,6 +21,7 @@ import {
   deleteCatalogSymbolApi,
   type CatalogPlacement,
   type CreateCatalogSymbolInput,
+  type DesignCanvas,
   listCostings,
   listRecordings,
   runAudit,
@@ -176,8 +177,8 @@ export async function runSurveyAction(formData: FormData) {
 export async function saveDesignCanvasAction(
   projectId: string,
   placements: CatalogPlacement[],
-  strokes: import("../lib/api").DesignCanvas["strokes"] = [],
-  irrigationZones: import("../lib/api").DesignCanvas["irrigation_zones"] = [],
+  strokes: DesignCanvas["strokes"] = [],
+  irrigationZones: DesignCanvas["irrigation_zones"] = [],
 ) {
   try {
     await saveDesignCanvasApi(projectId, placements, strokes, irrigationZones);

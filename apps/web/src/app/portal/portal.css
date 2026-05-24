@@ -2,9 +2,9 @@
   min-height: 100dvh;
   background: linear-gradient(
     165deg,
-    #fafaf7 0%,
-    #f4f0eb 45%,
-    #fafaf7 100%
+    var(--surface-base) 0%,
+    var(--surface-sunken) 45%,
+    var(--surface-base) 100%
   );
 }
 
@@ -12,9 +12,9 @@
   .portal-root {
     background: linear-gradient(
       165deg,
-      #0b0b0e 0%,
-      #141210 45%,
-      #0b0b0e 100%
+      var(--surface-base) 0%,
+      var(--surface-elevated) 45%,
+      var(--surface-base) 100%
     );
   }
 }

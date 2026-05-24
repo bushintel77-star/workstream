@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { createMemoryStore } from "@workstream/db";
+import multipart from "@fastify/multipart";
 import healthRoutes from "../routes/health";
 import projectRoutes from "../routes/projects";
 import pipelineRoutes from "../routes/pipeline";
@@ -8,15 +9,29 @@ import taskRoutes from "../routes/tasks";
 import designRoutes from "../routes/designs";
 import costingRoutes from "../routes/costings";
 import outputRoutes from "../routes/outputs";
+import auditRoutes from "../routes/audits";
+import overrideRoutes from "../routes/overrides";
 import activityRoutes from "../routes/activity";
 import crewRoutes from "../routes/crew";
 import settingsRoutes from "../routes/settings";
-import catalogRoutes from "../routes/catalog";
-import carbonRoutes from "../routes/carbon";
+import recordingRoutes from "../routes/recordings";
 import geocodeRoutes from "../routes/geocode";
-import siteContextRoutes from "../routes/site-context";
-import supplierRoutes from "../routes/suppliers";
+import dictationRoutes from "../routes/dictation";
+import myobRoutes from "../routes/myob";
 import weatherRoutes from "../routes/weather";
+import siteContextRoutes from "../routes/site-context";
+import measurementRoutes from "../routes/measurements";
+import supplierRoutes from "../routes/suppliers";
+import aerialRoutes from "../routes/aerial";
+import xeroRoutes from "../routes/xero";
+import carbonRoutes from "../routes/carbon";
+import catalogRoutes from "../routes/catalog";
+import designCanvasRoutes from "../routes/design-canvas";
+import projectFileRoutes from "../routes/project-files";
+import portalRoutes from "../routes/portal";
+import integrationHubRoutes, {
+  registerProjectIntegrationRoutes,
+} from "../routes/integration-hub";
 
 /** Minimal Fastify app for route-level contract tests (dev auth). */
 export async function buildTestApp() {
@@ -28,6 +43,7 @@ export async function buildTestApp() {
 
   const app = Fastify({ logger: false });
   app.decorate("store", store);
+  await app.register(multipart);
   await app.register(healthRoutes);
   await app.register(projectRoutes, { prefix: "/projects" });
   await app.register(pipelineRoutes, { prefix: "/projects" });
@@ -36,15 +52,33 @@ export async function buildTestApp() {
   await app.register(designRoutes, { prefix: "/projects" });
   await app.register(costingRoutes, { prefix: "/projects" });
   await app.register(outputRoutes, { prefix: "/projects" });
+  await app.register(auditRoutes, { prefix: "/projects" });
+  await app.register(overrideRoutes, { prefix: "/projects" });
   await app.register(activityRoutes, { prefix: "/projects" });
-  await app.register(crewRoutes, { prefix: "/crew" });
-  await app.register(settingsRoutes, { prefix: "/settings" });
-  await app.register(catalogRoutes, { prefix: "/catalog" });
-  await app.register(carbonRoutes, { prefix: "/projects" });
-  await app.register(geocodeRoutes, { prefix: "/geocode" });
-  await app.register(siteContextRoutes, { prefix: "/projects" });
-  await app.register(supplierRoutes, { prefix: "/suppliers" });
+  await app.register(recordingRoutes, { prefix: "/projects" });
+  await app.register(dictationRoutes, { prefix: "/projects" });
   await app.register(weatherRoutes, { prefix: "/projects" });
+  await app.register(siteContextRoutes, { prefix: "/projects" });
+  await app.register(measurementRoutes, { prefix: "/projects" });
+  await app.register(aerialRoutes, { prefix: "/projects" });
+  await app.register(carbonRoutes, { prefix: "/projects" });
+  await app.register(designCanvasRoutes, { prefix: "/projects" });
+  await app.register(projectFileRoutes, { prefix: "/projects" });
+  await app.register(geocodeRoutes, { prefix: "/geocode" });
+  await app.register(crewRoutes, { prefix: "/crew" });
+  await app.register(myobRoutes, { prefix: "/myob" });
+  await app.register(xeroRoutes, { prefix: "/xero" });
+  await app.register(supplierRoutes, { prefix: "/suppliers" });
+  await app.register(catalogRoutes, { prefix: "/catalog" });
+  await app.register(portalRoutes);
+  await app.register(settingsRoutes, { prefix: "/settings" });
+  await app.register(integrationHubRoutes, { prefix: "/integrations" });
+  await app.register(
+    async (scope) => {
+      await registerProjectIntegrationRoutes(scope);
+    },
+    { prefix: "/projects" },
+  );
   await app.ready();
   return { app, store };
 }

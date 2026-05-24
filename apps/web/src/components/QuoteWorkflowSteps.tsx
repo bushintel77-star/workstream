@@ -27,19 +27,22 @@ export function QuoteWorkflowSteps({
       n: 2,
       label: "Sketch on aerial",
       done: hasCanvas,
-      href: `/projects/${projectId}/design/studio`,
+      href: `/projects/${projectId}/design#design-studio`,
     },
     {
       n: 3,
       label: "Envelope estimate",
       done: hasCosting && !hasDesign,
+      href: hasCanvas
+        ? `/projects/${projectId}/design#envelope-estimate`
+        : `/projects/${projectId}/design#design-studio`,
       hint: "Budget + planning",
     },
     {
       n: 4,
       label: "AI design from sketch",
       done: hasDesign,
-      href: `/projects/${projectId}/design`,
+      href: `/projects/${projectId}/design#develop`,
     },
     {
       n: 5,

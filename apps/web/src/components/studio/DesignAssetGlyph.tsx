@@ -1,4 +1,4 @@
-import type { CatalogSymbol } from "../../lib/api";
+import type { CatalogSymbol } from "@workstream/contracts";
 import s from "./designAssetGlyph.module.css";
 
 type Props = {

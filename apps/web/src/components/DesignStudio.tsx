@@ -31,15 +31,11 @@ import {
   useStudioHistory,
   useStudioPolylineDraw,
 } from "./studio";
+import type { CanvasStrokeClient } from "./studio/types";
 import type { RateCardItem } from "../lib/api";
 import s from "./designStudio.module.css";
 
-export type CanvasStrokeClient = {
-  id: string;
-  points: StrokePointPct[];
-  color: string;
-  width_px: number;
-};
+export type { CanvasStrokeClient } from "./studio/types";
 
 type ToolOverride =
   | "place"
@@ -398,7 +394,7 @@ export function DesignStudio({
         setArmedSymbolId(id);
       }
     },
-    [toolOverride],
+    [setArmedSymbolId, toolOverride],
   );
 
   const updateCursorHint = useCallback(
@@ -498,6 +494,7 @@ export function DesignStudio({
     massPlantDraw,
     redo,
     selectedPlacementId,
+    setArmedSymbolId,
     setStudioTool,
     undo,
   ]);
@@ -973,7 +970,11 @@ export function DesignStudio({
           </span>
         </div>
         <div className={s.toolbarActions}>
-          <span className={`${s.saveStatus} ${s.saveStatusRow}`} aria-live="polite">
+          <span
+            className={`${s.saveStatus} ${s.saveStatusRow}`}
+            aria-live="polite"
+            data-testid="design-studio-save-status"
+          >
             <span
               className={`${s.saveStatusDot} ${saveStatusDotClass}`}
               aria-hidden

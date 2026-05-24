@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { CatalogPlacement, CatalogSymbol } from "../../lib/api";
+import type { CatalogPlacement, CatalogSymbol } from "@workstream/contracts";
 import { DesignAssetGlyph } from "./DesignAssetGlyph";
 import s from "../designStudio.module.css";
 
