@@ -185,6 +185,10 @@ export default async function projectFileRoutes(fastify: FastifyInstance) {
         fileId: string;
       };
       const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const files = await fastify.store.listProjectFiles(ownerId, projectId);
       const row = files.find((f) => f.id === fileId);
       if (!row) return reply.code(404).send({ error: "File not found" });

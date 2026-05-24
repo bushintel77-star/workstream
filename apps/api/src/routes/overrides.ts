@@ -9,6 +9,11 @@ export default async function overrideRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = CreateOverrideInputSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
@@ -18,7 +23,7 @@ export default async function overrideRoutes(fastify: FastifyInstance) {
 
       try {
         const result = await fastify.store.createOverride(
-          request.userId!,
+          ownerId,
           projectId,
           parsed.data,
         );

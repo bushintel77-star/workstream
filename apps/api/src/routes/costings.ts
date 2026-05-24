@@ -11,6 +11,10 @@ export default async function costingRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       try {
         const costings = await runCosting(fastify.store, ownerId, projectId);
         return reply.code(201).send({ costings });
@@ -34,6 +38,10 @@ export default async function costingRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       try {
         const result = await runSketchCosting(
           fastify.store,

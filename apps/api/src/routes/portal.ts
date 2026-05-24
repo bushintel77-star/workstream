@@ -11,6 +11,7 @@ import {
 } from "../lib/magic-link";
 import { createDepositSession } from "../lib/stripe";
 import { bindOwnerSecrets } from "../lib/owner-secrets";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function portalRoutes(fastify: FastifyInstance) {
   // --- Authed: studio side ---
@@ -19,12 +20,12 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
       const { scope } = (request.body ?? {}) as { scope?: string };
-      const project = await fastify.store.getProject(
-        request.userId!,
-        projectId,
-      );
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const validScope =
         scope === "quote_view" ||
         scope === "deposit_checkout" ||

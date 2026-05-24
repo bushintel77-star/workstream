@@ -10,6 +10,10 @@ export default async function surveyRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       try {
         const survey = await runSurvey(fastify.store, ownerId, projectId);
         return reply.code(201).send({ survey });

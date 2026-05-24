@@ -17,6 +17,10 @@ export default async function outputRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = RunBodySchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.code(400).send({ error: "Invalid body", issues: parsed.error.issues });

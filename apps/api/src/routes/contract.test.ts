@@ -94,6 +94,16 @@ describe("API contract — projects", () => {
     expect(res.json()).toEqual({ error: "Project not found" });
   });
 
+  it("POST /projects/:id/survey returns 404 for unknown project", async () => {
+    ({ app } = await buildTestApp());
+    const res = await app.inject({
+      method: "POST",
+      url: `/projects/${randomUUID()}/survey`,
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: "Project not found" });
+  });
+
   it("PATCH task status requires owned project and matching task", async () => {
     ({ app } = await buildTestApp());
     const create = await app.inject({
