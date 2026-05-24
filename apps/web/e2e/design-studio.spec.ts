@@ -98,7 +98,7 @@ test.describe("Design studio", () => {
       timeout: 30_000,
     });
     await page.getByTestId("design-studio-save").click();
-    await expect(page.getByText(/Saved/i)).toBeVisible({
+    await expect(page.getByTestId("design-studio-save-status")).toHaveText(/Saved/, {
       timeout: 15_000,
     });
   });

@@ -980,7 +980,11 @@ export function DesignStudio({
           </span>
         </div>
         <div className={s.toolbarActions}>
-          <span className={`${s.saveStatus} ${s.saveStatusRow}`} aria-live="polite">
+          <span
+            className={`${s.saveStatus} ${s.saveStatusRow}`}
+            aria-live="polite"
+            data-testid="design-studio-save-status"
+          >
             <span
               className={`${s.saveStatusDot} ${saveStatusDotClass}`}
               aria-hidden
