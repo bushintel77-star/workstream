@@ -315,7 +315,7 @@ describe("API contract — projects", () => {
       method: "POST",
       url: `/projects/${projectId}/survey`,
     });
-    expect(survey.statusCode).toBe(200);
+    expect(survey.statusCode).toBe(201);
 
     const design = await app.inject({
       method: "POST",
