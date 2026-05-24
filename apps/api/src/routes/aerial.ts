@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { requireAuth } from "../plugins/auth";
 import { publicBaseUrl } from "../lib/public-url";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 const AERIAL_DIR = path.join(process.cwd(), "data", "aerial");
 
@@ -14,8 +15,10 @@ export default async function aerialRoutes(fastify: FastifyInstance) {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
 
-      const project = await fastify.store.getProject(ownerId, projectId);
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
 
       const survey = await fastify.store.getSurvey(ownerId, projectId);
       if (!survey) {

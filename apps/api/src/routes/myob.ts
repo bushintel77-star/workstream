@@ -10,6 +10,7 @@ import {
   listCustomers,
   listItems,
 } from "../lib/myob";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function myobRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -122,6 +123,11 @@ export default async function myobRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = LinkCustomerInputSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
@@ -130,7 +136,7 @@ export default async function myobRoutes(fastify: FastifyInstance) {
       }
       try {
         const link = await fastify.store.upsertProjectMyobLink(
-          request.userId!,
+          ownerId,
           projectId,
           { myob_customer_uid: parsed.data.myob_customer_uid },
         );
@@ -153,8 +159,10 @@ export default async function myobRoutes(fastify: FastifyInstance) {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
 
-      const project = await fastify.store.getProject(ownerId, projectId);
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
 
       const link = await fastify.store.getProjectMyobLink(ownerId, projectId);
       if (!link) {

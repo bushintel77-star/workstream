@@ -7,6 +7,7 @@ import {
 import { requireAuth } from "../plugins/auth";
 import { getEnvelopeBrief } from "../lib/envelope-job";
 import { dispatchProjectCreated } from "../lib/integration-dispatch";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function projectRoutes(fastify: FastifyInstance) {
   fastify.get("/", { preHandler: requireAuth }, async (request, reply) => {
@@ -35,9 +36,9 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
   fastify.get("/:id", { preHandler: requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const project = await fastify.store.getProject(request.userId!, id);
+    const project = await getOwnedProject(fastify.store, request.userId!, id);
     if (!project) {
-      return reply.code(404).send({ error: "Project not found" });
+      return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
     }
     return reply.send({ project });
   });
@@ -47,9 +48,14 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { id } = request.params as { id: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, id);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const envelope = await getEnvelopeBrief(
         fastify.store,
-        request.userId!,
+        ownerId,
         id,
       );
       if (!envelope) {
@@ -66,6 +72,11 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { id } = request.params as { id: string };
+      const ownerId = request.userId!;
+      const existing = await getOwnedProject(fastify.store, ownerId, id);
+      if (!existing) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = UpdateProjectClientInputSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
@@ -73,7 +84,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
           .send({ error: "Validation failed", issues: parsed.error.issues });
       }
       const project = await fastify.store.updateProjectClient(
-        request.userId!,
+        ownerId,
         id,
         parsed.data,
       );
@@ -89,6 +100,11 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { id } = request.params as { id: string };
+      const ownerId = request.userId!;
+      const existing = await getOwnedProject(fastify.store, ownerId, id);
+      if (!existing) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = UpdateProjectStatusInputSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
@@ -96,7 +112,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
           .send({ error: "Validation failed", issues: parsed.error.issues });
       }
       const project = await fastify.store.updateProjectStatus(
-        request.userId!,
+        ownerId,
         id,
         parsed.data.status,
       );
@@ -112,7 +128,12 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const ok = await fastify.store.deleteProject(request.userId!, id);
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, id);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const ok = await fastify.store.deleteProject(ownerId, id);
       if (!ok) {
         return reply.code(404).send({ error: "Project not found" });
       }
@@ -125,7 +146,8 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const project = await fastify.store.restoreProject(request.userId!, id);
+      const ownerId = request.userId!;
+      const project = await fastify.store.restoreProject(ownerId, id);
       if (!project) {
         return reply.code(404).send({ error: "Project not found or not deleted" });
       }

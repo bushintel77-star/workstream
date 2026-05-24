@@ -20,6 +20,7 @@ import { sendQuotePackEmail } from "../lib/email-resend";
 import { hydrateEnvForOwner, resolveSecret } from "../lib/integration-secrets";
 import { validateStripeKey } from "../lib/stripe";
 import { signPortalToken, buildPortalUrl } from "../lib/magic-link";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 const TestBodySchema = z.object({
   channel: IntegrationChannelSchema,
@@ -215,8 +216,10 @@ export async function registerProjectIntegrationRoutes(
           .send({ error: "Invalid body", issues: parsed.error.issues });
       }
 
-      const project = await fastify.store.getProject(ownerId, projectId);
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
 
       const outputs = await fastify.store.listOutputs(ownerId, projectId);
       const quote = outputs.find((o) => o.kind === "quote");

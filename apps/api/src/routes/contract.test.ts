@@ -104,6 +104,28 @@ describe("API contract — projects", () => {
     expect(res.json()).toEqual({ error: "Project not found" });
   });
 
+  it.each([
+    { label: "design", path: "design" },
+    { label: "costing", path: "costing" },
+    {
+      label: "outputs",
+      path: "outputs",
+      payload: { kind: "quote" },
+    },
+  ])(
+    "POST /projects/:id/$label returns 404 for unknown project",
+    async ({ path, payload }) => {
+      ({ app } = await buildTestApp());
+      const res = await app.inject({
+        method: "POST",
+        url: `/projects/${randomUUID()}/${path}`,
+        payload,
+      });
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toEqual({ error: "Project not found" });
+    },
+  );
+
   it("PATCH task status requires owned project and matching task", async () => {
     ({ app } = await buildTestApp());
     const create = await app.inject({

@@ -17,7 +17,7 @@ Last reviewed: 2026-05-21.
 | File delivery | **Auth-gated routes** | Portal token on quote HTML; operator Bearer |
 | Tier-1 Wrights Terrace | **Product-complete** | ? |
 | Design studio (web) | **Phases 2?5, 7 shipped** | AI assist + brochure deferred |
-| Multi-tenant API | **Hardening in progress** | Remaining GET route gates |
+| Multi-tenant API | **Shipped** | Integration routes aligned to `getOwnedProject` |
 | Mobile / queue | Worker reload shipped | Redis + EAS = human |
 
 ## 1. Build & release automation
@@ -62,9 +62,9 @@ See `OUTSTANDING.md`. Highest leverage next:
 
 1. Clerk + Redis + Sentry Fly secrets (human).
 2. Mobile TestFlight (`eas init`).
-3. Remaining route-level `getOwnedProject` gates (audits, costings, overrides, etc.).
+3. Full soft-delete audit trail (beyond tombstone + undo toast).
 4. Design studio Phase 6 AI assist (proposal only).
-5. Full soft-delete audit trail (beyond tombstone + undo toast).
+5. Brochure output (product spec TBD).
 
 ## 6. Human-only checklist
 

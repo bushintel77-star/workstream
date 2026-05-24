@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
 import { runDictation } from "../lib/dictation";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 const DictationBodySchema = z.object({
   transcript: z.string().min(1).max(10_000),
@@ -13,6 +14,11 @@ export default async function dictationRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = DictationBodySchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
@@ -22,7 +28,7 @@ export default async function dictationRoutes(fastify: FastifyInstance) {
       try {
         const result = await runDictation(
           fastify.store,
-          request.userId!,
+          ownerId,
           projectId,
           parsed.data.transcript,
         );

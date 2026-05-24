@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { fetchForecast } from "../lib/weather";
 import { geocodeAddress } from "../lib/mapbox";
+import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function weatherRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -9,11 +10,11 @@ export default async function weatherRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const project = await fastify.store.getProject(
-        request.userId!,
-        projectId,
-      );
-      if (!project) return reply.code(404).send({ error: "Project not found" });
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
 
       const center =
         project.lat != null && project.lng != null
