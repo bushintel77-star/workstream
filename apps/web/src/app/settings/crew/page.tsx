@@ -1,9 +1,10 @@
 import { listCrew } from "../../../lib/api";
 import s from "../../../styles/app.module.css";
-import { createCrewAction, deleteCrewAction } from "../../actions";
+import { createCrewAction } from "../../actions";
 import { SettingsMasthead } from "../SettingsShell";
 import c from "./crew.module.css";
 import { SubmitButton } from "../../../components/SubmitButton";
+import { CrewRemoveButton } from "../../../components/CrewRemoveButton";
 
 export const dynamic = "force-dynamic";
 
@@ -94,16 +95,7 @@ export default async function CrewPage() {
                   )}
                 </span>
               </div>
-              <form action={deleteCrewAction}>
-                <input type="hidden" name="id" value={m.id} />
-                <button
-                  type="submit"
-                  className={s.btnDanger}
-                  aria-label={`Remove ${m.name}`}
-                >
-                  Remove
-                </button>
-              </form>
+              <CrewRemoveButton id={m.id} name={m.name} />
             </li>
           ))}
         </ul>

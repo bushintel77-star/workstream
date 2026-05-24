@@ -9,6 +9,7 @@ import s from "../../../../styles/app.module.css";
 import { FilingUploadForm } from "../../../../components/FilingUploadForm";
 import { SwipeGallery } from "../../../../components/SwipeGallery";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { loadOptional } from "../../../../lib/load-optional";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +22,20 @@ export default async function FilingPage({
   const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const [gallery, files, survey, siteContext] = await Promise.all([
-    getProjectGallery(id).catch(() => ({ items: [], viewable: [] })),
-    listProjectFiles(id).catch(() => []),
-    getSurvey(id).catch(() => null),
-    getSiteContext(id).catch(() => null),
-  ]);
+  const [galleryResult, filesResult, surveyResult, siteResult] =
+    await Promise.all([
+      loadOptional("Gallery", () => getProjectGallery(id)),
+      loadOptional("Files", () => listProjectFiles(id)),
+      loadOptional("Survey", () => getSurvey(id)),
+      loadOptional("Site context", () => getSiteContext(id)),
+    ]);
+
+  const gallery = galleryResult.data ?? { items: [], viewable: [] };
+  const files = filesResult.data ?? [];
+  const survey = surveyResult.data;
+  const siteContext = siteResult.data;
+  const filingLoadFailed =
+    galleryResult.failed || filesResult.failed;
 
   return (
     <main className={s.page}>
@@ -37,6 +46,13 @@ export default async function FilingPage({
         Title slide shows the backyard already mapped from survey. Swipe for your
         uploaded plans and photos.
       </p>
+
+      {filingLoadFailed && (
+        <div className={s.error} role="status">
+          Could not load all filing data. Try refreshing — uploads may still
+          work.
+        </div>
+      )}
 
       <SwipeGallery
         items={gallery.viewable}

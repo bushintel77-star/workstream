@@ -46,6 +46,7 @@
   overflow: hidden;
   border: 1px solid var(--line-hairline);
   background: var(--surface-sunken);
+  box-shadow: var(--elev-1), var(--elev-inset);
 }
 
 .aerial {

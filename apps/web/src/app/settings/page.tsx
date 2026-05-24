@@ -1,6 +1,7 @@
 import {
   getIntegrationHub,
   listIntegrations,
+  listWorkspaceActivity,
   type Integration,
   type IntegrationCategory,
 } from "../../lib/api";
@@ -11,6 +12,7 @@ import { IntegrationCard } from "../../components/IntegrationCard";
 import { IntegrationHubPanel } from "../../components/IntegrationHubPanel";
 import { IntegrationEventsList } from "../../components/IntegrationEventsList";
 import { SettingsUpgradeToast } from "../../components/SettingsUpgradeToast";
+import { ActivityTimeline } from "../../components/ActivityTimeline";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +45,14 @@ export default async function SettingsPage({
   let integrations: Integration[] = [];
   let billing = null as Awaited<ReturnType<typeof listIntegrations>>["billing"] | null;
   let hub: Awaited<ReturnType<typeof getIntegrationHub>> | null = null;
+  let workspaceActivity: Awaited<ReturnType<typeof listWorkspaceActivity>> = [];
   let loadError: string | null = null;
   try {
     const listed = await listIntegrations();
     integrations = listed.items;
     billing = listed.billing;
     hub = await getIntegrationHub();
+    workspaceActivity = await listWorkspaceActivity();
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Could not reach the API.";
   }
@@ -95,10 +99,24 @@ export default async function SettingsPage({
 
       {hub && hub.events.length > 0 && (
         <section className={s.card}>
-          <h2 className={s.sectionHeading}>Recent activity</h2>
+          <h2 className={s.sectionHeading}>Integration events</h2>
+          <p className={s.brandSub}>
+            CRM, email, and channel sync — not the full workspace audit log.
+          </p>
           <IntegrationEventsList events={hub.events} />
         </section>
       )}
+
+      <section className={s.card}>
+        <h2 className={s.sectionHeading}>Workspace audit log</h2>
+        <p className={s.brandSub}>
+          Crew, catalog, integration, and other workspace-level changes.
+        </p>
+        <ActivityTimeline
+          events={workspaceActivity}
+          emptyMessage="No workspace changes recorded yet."
+        />
+      </section>
 
       {CATEGORY_ORDER.map((cat) => {
         const items = grouped.get(cat);

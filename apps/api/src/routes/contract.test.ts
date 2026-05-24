@@ -167,4 +167,66 @@ describe("API contract — projects", () => {
     expect(wrongTask.statusCode).toBe(404);
     expect(wrongTask.json()).toEqual({ error: "Task not found" });
   });
+
+  it("records project delete and restore in activity log", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Activity Audit St, Carlton VIC 3053" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const deleted = await app.inject({
+      method: "DELETE",
+      url: `/projects/${projectId}`,
+    });
+    expect(deleted.statusCode).toBe(204);
+
+    const restored = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/restore`,
+    });
+    expect(restored.statusCode).toBe(200);
+
+    const activity = await app.inject({
+      method: "GET",
+      url: `/projects/${projectId}/activity`,
+    });
+    expect(activity.statusCode).toBe(200);
+    const events = (activity.json() as { events: { action: string }[] }).events;
+    expect(events.map((e) => e.action).sort()).toEqual([
+      "project.deleted",
+      "project.restored",
+    ]);
+  });
+
+  it("records crew member delete in workspace activity log", async () => {
+    ({ app } = await buildTestApp());
+    const created = await app.inject({
+      method: "POST",
+      url: "/crew/",
+      payload: {
+        name: "Alex Site",
+        role: "tradesperson",
+        hourly_rate: 85,
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    const memberId = (created.json() as { member: { id: string } }).member.id;
+
+    const deleted = await app.inject({
+      method: "DELETE",
+      url: `/crew/${memberId}`,
+    });
+    expect(deleted.statusCode).toBe(204);
+
+    const activity = await app.inject({
+      method: "GET",
+      url: "/settings/activity",
+    });
+    expect(activity.statusCode).toBe(200);
+    const events = (activity.json() as { events: { action: string }[] }).events;
+    expect(events.some((e) => e.action === "crew_member.deleted")).toBe(true);
+  });
 });

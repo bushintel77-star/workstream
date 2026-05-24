@@ -3,11 +3,11 @@
 import { useActionState } from "react";
 import {
   createCatalogSymbolAction,
-  deleteCatalogSymbolAction,
 } from "../app/actions";
 import type { CatalogSymbol } from "../lib/api";
 import { SubmitButton } from "./SubmitButton";
 import { DesignAssetGlyph } from "./studio";
+import { CatalogSymbolRemoveButton } from "./CatalogSymbolRemoveButton";
 import s from "./designAssetUpload.module.css";
 
 const CATEGORIES = [
@@ -130,12 +130,7 @@ export function DesignAssetUploadForm({ customSymbols }: Props) {
                     <span className={s.uploadSku}>{sym.rate_card_sku}</span>
                   )}
                 </div>
-                <form action={deleteCatalogSymbolAction}>
-                  <input type="hidden" name="id" value={sym.id} />
-                  <button type="submit" className={s.deleteBtn}>
-                    Remove
-                  </button>
-                </form>
+                <CatalogSymbolRemoveButton id={sym.id} label={sym.label} />
               </li>
             ))}
           </ul>

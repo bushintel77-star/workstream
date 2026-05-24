@@ -8,12 +8,14 @@
   background: linear-gradient(
     90deg,
     var(--surface-sunken) 0%,
-    color-mix(in srgb, var(--surface-sunken) 50%, var(--surface-elevated)) 50%,
+    color-mix(in srgb, var(--surface-elevated) 65%, var(--surface-sunken)) 50%,
     var(--surface-sunken) 100%
   );
   background-size: 200px 100%;
   background-repeat: no-repeat;
   border-radius: 6px;
+  border: 1px solid var(--line-subtle);
+  box-shadow: var(--elev-inset);
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
@@ -35,7 +37,18 @@
 .card {
   height: 80px;
   margin-bottom: 12px;
-  border-radius: 12px;
+  border-radius: var(--r-lg);
+}
+
+.gap {
+  height: 24px;
+}
+
+.tab {
+  width: 72px;
+  min-height: 44px;
+  border-radius: var(--r-md);
+  flex-shrink: 0;
 }
 
 .stage {

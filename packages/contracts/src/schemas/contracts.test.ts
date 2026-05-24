@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  ActivityEventSchema,
   AuditSchema,
   CostingSchema,
   CreateOverrideInputSchema,
@@ -283,6 +284,36 @@ describe("RateCardSchema + PlantPaletteSchema + RecordingSchema + PhotoMeasureme
           },
         ],
         notes: null,
+        created_at: ISO,
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe("ActivityEventSchema", () => {
+  it("accepts a project delete event", () => {
+    expect(
+      ActivityEventSchema.safeParse({
+        id: UUID,
+        owner_id: "dev-user",
+        project_id: UUID,
+        action: "project.deleted",
+        subject_id: UUID,
+        detail: 'Project "22 Smith St" moved to trash',
+        created_at: ISO,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts a workspace crew delete event", () => {
+    expect(
+      ActivityEventSchema.safeParse({
+        id: UUID,
+        owner_id: "dev-user",
+        project_id: null,
+        action: "crew_member.deleted",
+        subject_id: UUID,
+        detail: 'Crew member "Alex Site" removed',
         created_at: ISO,
       }).success,
     ).toBe(true);

@@ -1,4 +1,8 @@
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
+import {
+  Audio,
+  InterruptionModeAndroid,
+  InterruptionModeIOS,
+} from "expo-av";
 import * as Haptics from "expo-haptics";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -31,6 +35,12 @@ const CLIP_THRESHOLD = 0.92;
 const CLIP_DECAY_MS = 600;
 
 type VadState = "silent" | "voice" | "ambient";
+
+/** Voice walkthrough — LOW_QUALITY preset keeps uploads lean (mono AAC). */
+const WALKTHROUGH_RECORDING_OPTIONS: Audio.RecordingOptions = {
+  ...Audio.RecordingOptionsPresets.LOW_QUALITY,
+  isMeteringEnabled: true,
+};
 
 function formatElapsed(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -231,10 +241,8 @@ export default function RecordingScreen() {
     }).start();
 
     try {
-      const recordingOptions: Audio.RecordingOptions = {
-        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        isMeteringEnabled: true,
-      };
+      const recordingOptions: Audio.RecordingOptions =
+        WALKTHROUGH_RECORDING_OPTIONS;
       levelsRef.current = new Array(METERING_WINDOW).fill(0);
       vadSamplesRef.current = [];
       ambientSamplesRef.current = [];

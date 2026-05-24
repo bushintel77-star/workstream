@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { geocodeSearchAction } from "../app/actions";
 import s from "../styles/app.module.css";
 import d from "../app/dashboard.module.css";
+import { Spinner } from "./Spinner";
 
 type Suggestion = {
   id: string;
@@ -91,7 +92,8 @@ export function NewProjectAddressForm() {
         />
         {pendingSearch && (
           <span className={d.addressSpinner} aria-live="polite">
-            Searching…
+            <Spinner size="sm" label="Searching addresses" />
+            Searching
           </span>
         )}
 

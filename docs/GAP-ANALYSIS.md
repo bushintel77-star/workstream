@@ -62,9 +62,9 @@ See `OUTSTANDING.md`. Highest leverage next:
 
 1. Clerk + Redis + Sentry Fly secrets (human).
 2. Mobile TestFlight (`eas init`).
-3. Full soft-delete audit trail (beyond tombstone + undo toast).
-4. Design studio Phase 6 AI assist (proposal only).
-5. Brochure output (product spec TBD).
+3. Design studio Phase 6 AI assist (proposal only).
+4. Brochure output (product spec TBD).
+5. OpenTelemetry tracing for external API calls.
 
 ## 6. Human-only checklist
 

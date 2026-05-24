@@ -90,6 +90,8 @@ export default function ProcessingScreen() {
         router.replace(`/(app)/project/${id}`);
       }
     } catch (e) {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (slowRef.current) clearTimeout(slowRef.current);
       setError(e instanceof Error ? e.message : "Processing failed");
     }
   }, [api, id, router]);
@@ -148,11 +150,13 @@ export default function ProcessingScreen() {
           ))}
         </View>
 
-        <ActivityIndicator
-          size="large"
-          color={tokens.color.accent.default}
-          style={styles.spinner}
-        />
+        {error ? null : (
+          <ActivityIndicator
+            size="large"
+            color={tokens.color.accent.default}
+            style={styles.spinner}
+          />
+        )}
 
         {slow && (
           <Text style={styles.slow}>
@@ -167,6 +171,7 @@ export default function ProcessingScreen() {
             <Pressable
               onPress={() => {
                 setError(null);
+                pollRef.current = setInterval(() => void tick(), 1500);
                 void tick();
               }}
               accessibilityRole="button"

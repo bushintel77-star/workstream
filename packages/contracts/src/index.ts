@@ -16,6 +16,7 @@ export * from "./schemas/photo-measurement";
 export * from "./schemas/xero";
 export * from "./schemas/workspace";
 export * from "./schemas/integration-event";
+export * from "./schemas/activity-event";
 export * from "./schemas/project-file";
 export * from "./schemas/image-contact";
 export * from "./schemas/site-context";

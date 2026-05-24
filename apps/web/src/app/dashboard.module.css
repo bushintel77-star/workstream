@@ -34,7 +34,12 @@
   right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--ink-tertiary);
 }
 
@@ -45,10 +50,10 @@
   right: 0;
   top: calc(100% + 4px);
   margin: 0;
-  padding: 4px 0;
+  padding: 4px;
   list-style: none;
-  background: var(--surface-raised);
-  border: 1px solid var(--border-default);
+  background: var(--surface-overlay);
+  border: 1px solid var(--line-hairline);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   max-height: 240px;
@@ -75,6 +80,7 @@
 .suggestionBtn:focus-visible {
   background: var(--surface-sunken);
   outline: none;
+  box-shadow: var(--elev-inset);
 }
 
 .suggestionPrimary {
@@ -130,6 +136,12 @@
 
 .rowLink:active {
   background: var(--surface-sunken);
+}
+
+@media (hover: hover) {
+  .rowLink:hover {
+    background: color-mix(in srgb, var(--surface-sunken) 65%, transparent);
+  }
 }
 
 .rowAddress {

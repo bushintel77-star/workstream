@@ -68,7 +68,26 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
   > = [];
+  const _activityEvents: import("./types").ActivityEvent[] = [];
   let seeded = false;
+
+  function logActivity(
+    ownerId: string,
+    projectId: string | null,
+    action: import("./types").ActivityAction,
+    detail: string,
+    subjectId: string | null = null,
+  ): void {
+    _activityEvents.push({
+      id: crypto.randomUUID(),
+      owner_id: ownerId,
+      project_id: projectId,
+      action,
+      subject_id: subjectId,
+      detail,
+      created_at: new Date().toISOString(),
+    });
+  }
 
   const arrays = {
     _projects,
@@ -92,6 +111,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _projectFiles,
     _designCanvases,
     _catalogCustom,
+    _activityEvents,
   };
 
   const flush = opts.persistPath
@@ -268,6 +288,13 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       );
       if (!p) return false;
       p.deleted_at = new Date().toISOString();
+      logActivity(
+        ownerId,
+        id,
+        "project.deleted",
+        `Project "${p.address}" moved to trash`,
+        id,
+      );
       flush();
       return true;
     },
@@ -278,6 +305,13 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       );
       if (!p) return null;
       p.deleted_at = null;
+      logActivity(
+        ownerId,
+        id,
+        "project.restored",
+        `Project "${p.address}" restored`,
+        id,
+      );
       flush();
       return p;
     },
@@ -687,6 +721,13 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         (l) => l.owner_id === ownerId && l.rate_card_sku === rate_card_sku,
       );
       if (idx < 0) return false;
+      logActivity(
+        ownerId,
+        null,
+        "sku_link.deleted",
+        `MYOB SKU link "${rate_card_sku}" removed`,
+        rate_card_sku,
+      );
       _skuLinks.splice(idx, 1);
       flush();
       return true;
@@ -811,6 +852,14 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         (i) => i.owner_id === ownerId && i.key === key,
       );
       if (idx < 0) return false;
+      const row = _integrations[idx]!;
+      logActivity(
+        ownerId,
+        null,
+        "integration.deleted",
+        `Integration "${row.key}" removed`,
+        row.key,
+      );
       _integrations.splice(idx, 1);
       flush();
       return true;
@@ -916,9 +965,39 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           f.owner_id === ownerId,
       );
       if (idx < 0) return false;
+      const row = _projectFiles[idx]!;
+      logActivity(
+        ownerId,
+        projectId,
+        "project_file.deleted",
+        `File "${row.title}" (${row.kind}) removed`,
+        fileId,
+      );
       _projectFiles.splice(idx, 1);
       flush();
       return true;
+    },
+
+    async listActivityEvents(ownerId, projectId) {
+      return _activityEvents
+        .filter(
+          (e) =>
+            e.owner_id === ownerId &&
+            e.project_id === projectId,
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+    },
+
+    async listWorkspaceActivityEvents(ownerId) {
+      return _activityEvents
+        .filter((e) => e.owner_id === ownerId && e.project_id === null)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
     },
 
     async getDesignCanvas(ownerId, projectId) {
@@ -952,6 +1031,14 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         (s) => s.owner_id === ownerId && s.id === id,
       );
       if (idx < 0) return false;
+      const sym = _catalogCustom[idx]!;
+      logActivity(
+        ownerId,
+        null,
+        "catalog_symbol.deleted",
+        `Catalog symbol "${sym.label}" removed`,
+        id,
+      );
       _catalogCustom.splice(idx, 1);
       flush();
       return true;
@@ -988,6 +1075,14 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         (c) => c.id === id && c.owner_id === ownerId,
       );
       if (idx < 0) return false;
+      const member = _crew[idx]!;
+      logActivity(
+        ownerId,
+        null,
+        "crew_member.deleted",
+        `Crew member "${member.name}" removed`,
+        id,
+      );
       _crew.splice(idx, 1);
       flush();
       return true;

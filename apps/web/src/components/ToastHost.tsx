@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import styles from "./toast-host.module.css";
 
 type ToastKind = "info" | "success" | "error";
 
@@ -79,19 +80,7 @@ export function ToastHost({ children }: { children: React.ReactNode }) {
       <div
         aria-live={toasts.some((t) => t.kind === "error") ? "assertive" : "polite"}
         aria-atomic="true"
-        style={{
-          position: "fixed",
-          bottom: "calc(16px + env(safe-area-inset-bottom))",
-          left: 0,
-          right: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 8,
-          pointerEvents: "none",
-          zIndex: 1000,
-          padding: "0 16px",
-        }}
+        className={styles.host}
       >
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
@@ -108,64 +97,18 @@ function ToastItem({
   toast: Toast;
   onDismiss: () => void;
 }) {
-  const palette = {
-    info: { bg: "#18181B", fg: "#FAFAF7" },
-    success: { bg: "#15803D", fg: "#FFFFFF" },
-    error: { bg: "#B91C1C", fg: "#FFFFFF" },
-  }[toast.kind];
-
   return (
-    <div
-      style={{
-        pointerEvents: "auto",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        background: palette.bg,
-        color: palette.fg,
-        border: "none",
-        borderRadius: 10,
-        padding: "12px 18px",
-        fontSize: 14,
-        fontWeight: 500,
-        boxShadow: "0 8px 24px rgba(24,24,27,0.15)",
-        maxWidth: 480,
-        fontFamily: "inherit",
-        animation: "toastIn 200ms ease-out",
-      }}
-    >
-      <button
-        type="button"
-        onClick={onDismiss}
-        style={{
-          background: "transparent",
-          border: "none",
-          color: "inherit",
-          cursor: "pointer",
-          padding: 0,
-          font: "inherit",
-          textAlign: "left",
-        }}
-      >
+    <div className={`${styles.toast} ${styles[toast.kind]}`}>
+      <button type="button" className={styles.messageBtn} onClick={onDismiss}>
         {toast.message}
       </button>
       {toast.action ? (
         <button
           type="button"
+          className={styles.actionBtn}
           onClick={() => {
             toast.action?.onClick();
             onDismiss();
-          }}
-          style={{
-            background: "rgba(255,255,255,0.14)",
-            border: "none",
-            borderRadius: 6,
-            color: "inherit",
-            cursor: "pointer",
-            font: "inherit",
-            fontWeight: 600,
-            padding: "6px 10px",
-            whiteSpace: "nowrap",
           }}
         >
           {toast.action.label}

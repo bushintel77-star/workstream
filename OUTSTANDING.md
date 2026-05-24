@@ -65,10 +65,12 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
 - [x] **Real-user monitoring (web scaffold)** — [`instrumentation.ts`](apps/web/src/instrumentation.ts);
       needs DSN + `@sentry/nextjs` package.
-- [ ] **Audio compression** before upload (opus quality cap).
+- [x] **Audio compression** — mobile walkthrough uses `LOW_QUALITY` recording preset.
 - [ ] **Edge runtime** for `/portal/*` pages.
 - [x] **Portal hero image** — `hero_url` from survey aerial on quote portal payload.
-- [ ] **Soft delete + audit trail** on every destructive action.
+- [x] **Activity audit trail** — `GET /projects/:id/activity` and `GET /settings/activity`;
+      logs project delete/restore, filing delete, crew, catalog, integration, SKU link.
+- [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.
 - [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
 - [x] **Dashboard delete undo** — toast restores via restore endpoint.
 - [x] **Pipeline idempotency** — `Idempotency-Key` on full pipeline POST; Redis when

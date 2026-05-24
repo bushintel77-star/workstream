@@ -10,9 +10,11 @@ import {
   getWeather,
   listCostings,
   listOutputs,
+  listProjectActivity,
   listRecordings,
   listTasks,
 } from "../../../lib/api";
+import { loadOptional } from "../../../lib/load-optional";
 import s from "../../../styles/app.module.css";
 import p from "./project.module.css";
 import {
@@ -28,6 +30,7 @@ import { ProjectTitleHero } from "../../../components/ProjectTitleSiteMap";
 import { SiteProjectWidgets } from "../../../components/SiteProjectWidgets";
 import { ProjectClientHandoff } from "../../../components/ProjectClientHandoff";
 import { getIntegrationHub } from "../../../lib/api";
+import { ActivityTimeline } from "../../../components/ActivityTimeline";
 
 export const dynamic = "force-dynamic";
 
@@ -44,29 +47,46 @@ export default async function ProjectHubPage({
     );
   }
 
-  const [
-    survey,
-    design,
-    costings,
-    audit,
-    outputs,
-    weather,
-    siteContext,
-    tasks,
-    recordings,
-    canvas,
-  ] = await Promise.all([
-    getSurvey(id),
-    getDesign(id),
-    listCostings(id),
-    getAudit(id),
-    listOutputs(id),
-    getWeather(id),
-    getSiteContext(id),
-    listTasks(id),
-    listRecordings(id),
-    getDesignCanvas(id).catch(() => null),
+  const loaded = await Promise.all([
+    loadOptional("Survey", () => getSurvey(id)),
+    loadOptional("Design", () => getDesign(id)),
+    loadOptional("Costing", () => listCostings(id)),
+    loadOptional("Audit", () => getAudit(id)),
+    loadOptional("Outputs", () => listOutputs(id)),
+    loadOptional("Weather", () => getWeather(id)),
+    loadOptional("Site context", () => getSiteContext(id)),
+    loadOptional("Tasks", () => listTasks(id)),
+    loadOptional("Recordings", () => listRecordings(id)),
+    loadOptional("Design canvas", () => getDesignCanvas(id)),
+    loadOptional("Activity", () => listProjectActivity(id)),
   ]);
+
+  const pick = <T,>(label: string) =>
+    loaded.find((r) => r.label === label)! as {
+      label: string;
+      data: T | null;
+      failed: boolean;
+    };
+
+  const survey = pick<Awaited<ReturnType<typeof getSurvey>>>("Survey").data;
+  const design = pick<Awaited<ReturnType<typeof getDesign>>>("Design").data;
+  const costings =
+    pick<Awaited<ReturnType<typeof listCostings>>>("Costing").data ?? [];
+  const audit = pick<Awaited<ReturnType<typeof getAudit>>>("Audit").data;
+  const outputs =
+    pick<Awaited<ReturnType<typeof listOutputs>>>("Outputs").data ?? [];
+  const weather = pick<Awaited<ReturnType<typeof getWeather>>>("Weather").data;
+  const siteContext =
+    pick<Awaited<ReturnType<typeof getSiteContext>>>("Site context").data;
+  const tasks = pick<Awaited<ReturnType<typeof listTasks>>>("Tasks").data ?? [];
+  const recordings =
+    pick<Awaited<ReturnType<typeof listRecordings>>>("Recordings").data ?? [];
+  const canvas =
+    pick<Awaited<ReturnType<typeof getDesignCanvas>>>("Design canvas").data;
+  const activity =
+    pick<Awaited<ReturnType<typeof listProjectActivity>>>("Activity").data ??
+    [];
+  const loadFailures = loaded.filter((r) => r.failed).map((r) => r.label);
 
   const envelope =
     survey != null
@@ -159,6 +179,13 @@ export default async function ProjectHubPage({
         zones, costing prices it three ways, audit checks the work, outputs
         produce the artefacts.
       </p>
+
+      {loadFailures.length > 0 && (
+        <div className={s.banner} role="status">
+          Some sections could not load ({loadFailures.join(", ")}). Refresh the
+          page or open the tab directly — other data below is still available.
+        </div>
+      )}
 
       <ProjectTitleHero
         survey={survey}
@@ -319,6 +346,14 @@ export default async function ProjectHubPage({
           <span className={s.metricValue}>{outputs.length}</span>
         </div>
       </div>
+
+      <section className={s.card}>
+        <h2 className={s.sectionHeading}>Recent activity</h2>
+        <p className={s.brandSub}>
+          Deletes, restores, and filing changes on this project.
+        </p>
+        <ActivityTimeline events={activity} />
+      </section>
 
       {weather && weather.days.length > 0 && (
         <>

@@ -3,13 +3,15 @@
   gap: 4px;
   padding: 4px;
   background: var(--surface-sunken);
-  border-radius: 12px;
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-lg);
   margin-bottom: var(--s-4);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   position: sticky;
   top: 56px;
   z-index: 9;
+  box-shadow: var(--elev-inset);
 }
 
 @media (min-width: 720px) {
@@ -42,7 +44,8 @@
 .subnavItemActive {
   background: var(--surface-elevated);
   color: var(--ink-primary);
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08);
+  border: 1px solid var(--line-hairline);
+  box-shadow: var(--elev-1), var(--elev-inset);
 }
 
 .processingHint {
@@ -74,19 +77,26 @@
   gap: 6px;
   text-decoration: none;
   color: inherit;
-  transition: border-color var(--dur-fast) var(--ease);
+  box-shadow: var(--elev-1), var(--elev-inset);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
 }
 
 .stage:hover {
-  border-color: var(--ink-primary);
+  border-color: color-mix(in srgb, var(--ink-primary) 25%, var(--line-hairline));
+  box-shadow: var(--elev-2), var(--elev-inset);
 }
 
 .stageDone {
-  background: color-mix(in srgb, #dcfce7 30%, var(--surface-elevated));
+  background: color-mix(in srgb, #dcfce7 22%, var(--surface-elevated));
+  border-color: color-mix(in srgb, var(--ok) 20%, var(--line-hairline));
 }
 
 .stageBlocked {
-  background: color-mix(in srgb, #fee2e2 30%, var(--surface-elevated));
+  background: color-mix(in srgb, #fee2e2 22%, var(--surface-elevated));
+  border-color: color-mix(in srgb, var(--block) 18%, var(--line-hairline));
 }
 
 .stageLocked {
@@ -118,9 +128,10 @@
 .zone {
   padding: 18px 20px;
   border: 1px solid var(--line-hairline);
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   background: var(--surface-elevated);
   margin-bottom: var(--s-3);
+  box-shadow: var(--elev-1), var(--elev-inset);
 }
 
 .zoneName {

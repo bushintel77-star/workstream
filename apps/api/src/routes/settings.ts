@@ -170,4 +170,15 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
       return reply.code(204).send();
     },
   );
+
+  fastify.get(
+    "/activity",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const events = await fastify.store.listWorkspaceActivityEvents(
+        request.userId!,
+      );
+      return reply.send({ events });
+    },
+  );
 }

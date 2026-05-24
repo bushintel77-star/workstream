@@ -13,7 +13,7 @@ export default function DashboardLoading() {
       <div className={`${sk.skel} ${sk.lineLg} ${sk.w40}`} />
       <div className={`${sk.skel} ${sk.line} ${sk.w80}`} />
       <div className={`${sk.skel} ${sk.line} ${sk.w60}`} />
-      <div style={{ height: 24 }} />
+      <div className={sk.gap} />
       <div className={`${sk.skel} ${sk.card}`} />
       <div className={`${sk.skel} ${sk.card}`} />
       <div className={`${sk.skel} ${sk.card}`} />

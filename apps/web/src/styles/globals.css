@@ -17,8 +17,13 @@
 
   /* lines */
   --line-hairline: #E4E4E7;
+  --line-subtle: #EEEEF0;
   --line-strong: #D4D4D8;
   --line-ink: #18181B;
+
+  /* layered surfaces */
+  --surface-overlay: #FFFFFF;
+  --surface-inset: #F0F0ED;
 
   /* accent */
   --accent: #C2410C;
@@ -42,10 +47,26 @@
 
   /* radii */
   --r-sm: 4px; --r-md: 8px; --r-lg: 12px; --r-pill: 999px;
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
 
-  /* shadows */
-  --elev-1: 0 1px 2px rgba(24,24,27,0.06);
-  --elev-2: 0 8px 24px rgba(24,24,27,0.08);
+  /* shadows & depth — tonal stacks, hairline rims, inset highlights */
+  --elev-0: none;
+  --elev-1: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 3px rgba(24, 24, 27, 0.06);
+  --elev-2: 0 4px 14px rgba(24, 24, 27, 0.06), 0 16px 40px rgba(24, 24, 27, 0.08);
+  --elev-inset: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --elev-rim: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  --shadow-sm: var(--elev-1);
+  --shadow-md: var(--elev-2);
+
+  /* semantic aliases (feature modules) */
+  --border-default: var(--line-hairline);
+  --surface-raised: var(--surface-elevated);
+  --semantic-ok: var(--ok);
+  --semantic-warn: var(--warn);
+  --semantic-block: var(--block);
+  --semantic-info: var(--info);
 
   /* motion */
   --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -68,8 +89,12 @@
     --ink-inverted: #18181B;
 
     --line-hairline: #27272A;
+    --line-subtle: #1F1F23;
     --line-strong: #3F3F46;
     --line-ink: #FAFAF7;
+
+    --surface-overlay: #222228;
+    --surface-inset: #0E0E12;
 
     --accent: #FB923C;
     --accent-soft: #431407;
@@ -80,8 +105,10 @@
     --block: #F87171;
     --info: #60A5FA;
 
-    --elev-1: 0 1px 2px rgba(0,0,0,0.5);
-    --elev-2: 0 8px 24px rgba(0,0,0,0.5);
+    --elev-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+    --elev-2: 0 4px 16px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.45);
+    --elev-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --elev-rim: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   }
 }
 
@@ -90,7 +117,13 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--surface-base);
+  background-color: var(--surface-base);
+  background-image:
+    radial-gradient(
+      ellipse 120% 70% at 50% -18%,
+      color-mix(in srgb, var(--surface-sunken) 55%, transparent),
+      transparent 58%
+    );
   color: var(--ink-primary);
   font-family: var(--font-body);
   font-size: 15px;
@@ -164,4 +197,8 @@ button:focus-visible {
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

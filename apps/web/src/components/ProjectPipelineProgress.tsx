@@ -2,6 +2,7 @@
 
 import s from "../styles/app.module.css";
 import pp from "./pipelineProgress.module.css";
+import { Spinner } from "./Spinner";
 
 export type PipelineStage = {
   key: string;
@@ -72,7 +73,10 @@ export function ProjectPipelineProgress({
       </ul>
 
       {stages.some((s) => s.active) && (
-        <p className={pp.working}>Working — stay on this screen.</p>
+        <p className={pp.working}>
+          <Spinner size="sm" label="Processing" />
+          Working — stay on this screen.
+        </p>
       )}
 
       {slow && (

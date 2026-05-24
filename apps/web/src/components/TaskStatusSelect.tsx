@@ -40,6 +40,15 @@ export function TaskStatusSelect({
       onChange={(e) => {
         const next = e.target.value as TaskStatus;
         if (next === status) return;
+        if (
+          next === "cancelled" &&
+          !window.confirm(
+            "Cancel this task? It will leave the board but stay in the audit log.",
+          )
+        ) {
+          e.target.value = status;
+          return;
+        }
         const fd = new FormData();
         fd.set("projectId", projectId);
         fd.set("taskId", taskId);

@@ -55,7 +55,13 @@ export default async function OutputsPage({
   const project = await requireProject(id);
   if (!project) return <NotFoundPage message="Project not found." />;
 
-  const outputs = await listOutputs(id);
+  let outputs: Awaited<ReturnType<typeof listOutputs>> = [];
+  let loadError: string | null = null;
+  try {
+    outputs = await listOutputs(id);
+  } catch (err) {
+    loadError = err instanceof Error ? err.message : "Could not load outputs.";
+  }
   const byKind = new Map(outputs.map((o) => [o.kind, o]));
   const quoteOutput = outputs.find((o) => o.kind === "quote");
 
@@ -95,6 +101,12 @@ export default async function OutputsPage({
         kind regenerates on demand — the latest version overwrites the
         previous.
       </p>
+
+      {loadError && (
+        <div className={s.banner} role="alert">
+          {loadError}
+        </div>
+      )}
 
       <h2 className={s.sectionHeading}>Available outputs</h2>
       <ul className={s.list}>

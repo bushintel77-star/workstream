@@ -36,6 +36,8 @@ import type {
   IntegrationChannel,
   ProjectFile,
   ProjectFileKind,
+  ActivityEvent,
+  ActivityAction,
 } from "@workstream/contracts";
 
 export type {
@@ -76,6 +78,8 @@ export type {
   IntegrationChannel,
   ProjectFile,
   ProjectFileKind,
+  ActivityEvent,
+  ActivityAction,
 };
 
 export type PhotoMeasurementInput = Omit<
@@ -273,6 +277,11 @@ export interface Store {
     projectId: string,
     fileId: string,
   ): Promise<boolean>;
+  listActivityEvents(
+    ownerId: string,
+    projectId: string,
+  ): Promise<ActivityEvent[]>;
+  listWorkspaceActivityEvents(ownerId: string): Promise<ActivityEvent[]>;
   seedDefaults(): Promise<void>;
 }
 

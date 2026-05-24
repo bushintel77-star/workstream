@@ -22,10 +22,10 @@ const COLUMNS: Array<{ status: TaskStatus; label: string }> = [
 ];
 
 const PRIORITY_PILL: Record<string, string> = {
-  low: "",
-  medium: "",
-  high: "",
-  critical: "",
+  low: s.pillMuted,
+  medium: s.pillInfo,
+  high: s.pillWarn,
+  critical: s.pillBlock,
 };
 
 export default async function TasksPage({
@@ -130,7 +130,12 @@ export default async function TasksPage({
                     <span className={p.taskTitle}>{t.title}</span>
                     <div className={p.taskMeta}>
                       <span className={p.taskAssignee}>
-                        {t.assignee_name ?? "Unassigned"} · {t.priority}
+                        {t.assignee_name ?? "Unassigned"}
+                      </span>
+                      <span
+                        className={`${s.pill} ${PRIORITY_PILL[t.priority] ?? s.pillMuted}`}
+                      >
+                        {t.priority}
                       </span>
                     </div>
                     <TaskStatusSelect

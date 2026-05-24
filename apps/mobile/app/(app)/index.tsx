@@ -80,7 +80,7 @@ export default function HomeScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       Alert.alert(
         "Delete project?",
-        `${project.address}\n\nAll recordings, survey, design, costing, audit and outputs for this project will be removed. Cannot be undone.`,
+        `${project.address}\n\nThe project moves to trash and can be restored from the web dashboard.`,
         [
           { text: "Cancel", style: "cancel" },
           {

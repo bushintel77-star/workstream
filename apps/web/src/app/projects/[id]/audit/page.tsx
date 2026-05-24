@@ -2,10 +2,10 @@ import { requireProject } from "../../../../lib/project-guard";
 import { getAudit, listOverrides } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
-import { createOverrideAction, runAuditAction } from "../../../actions";
+import { runAuditAction } from "../../../actions";
 import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
 import { PipelineActionForm } from "../../../../components/PipelineActionForm";
-import { SubmitButton } from "../../../../components/SubmitButton";
+import { AuditOverrideForm } from "../../../../components/AuditOverrideForm";
 
 export const dynamic = "force-dynamic";
 
@@ -124,31 +124,10 @@ export default async function AuditPage({
                           <summary className={p.overrideSummary}>
                             Override this finding
                           </summary>
-                          <form action={createOverrideAction}>
-                            <input type="hidden" name="projectId" value={id} />
-                            <input
-                              type="hidden"
-                              name="finding_index"
-                              value={i}
-                            />
-                            <textarea
-                              name="reason"
-                              className={s.textarea}
-                              placeholder="Why is this finding acceptable? Minimum 8 characters. This is recorded forever in the project ledger."
-                              minLength={8}
-                              required
-                              rows={3}
-                              aria-label={`Override reason for finding ${i + 1}`}
-                            />
-                            <div className={p.overrideActions}>
-                              <SubmitButton
-                                className={s.btnDanger}
-                                pendingLabel="Recording…"
-                              >
-                                Record override
-                              </SubmitButton>
-                            </div>
-                          </form>
+                          <AuditOverrideForm
+                            projectId={id}
+                            findingIndex={i}
+                          />
                         </details>
                       )
                     )}

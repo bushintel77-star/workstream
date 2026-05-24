@@ -38,6 +38,7 @@ import carbonRoutes from './routes/carbon';
 import catalogRoutes from './routes/catalog';
 import designCanvasRoutes from './routes/design-canvas';
 import projectFileRoutes from './routes/project-files';
+import activityRoutes from './routes/activity';
 import portalRoutes from './routes/portal';
 import stripeWebhookRoutes from './routes/stripe-webhook';
 import integrationHubRoutes, {
@@ -131,6 +132,7 @@ async function start() {
   await server.register(catalogRoutes, { prefix: '/catalog' });
   await server.register(designCanvasRoutes, { prefix: '/projects' });
   await server.register(projectFileRoutes, { prefix: '/projects' });
+  await server.register(activityRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);
   await server.register(stripeWebhookRoutes);
   await server.register(settingsRoutes, { prefix: '/settings' });

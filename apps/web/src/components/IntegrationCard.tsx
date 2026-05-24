@@ -101,7 +101,16 @@ export function IntegrationCard({ integration: i }: { integration: Integration }
             className={s.btnDanger}
             pendingLabel="Clearing…"
             disabled={pending}
-            formAction={run(clearIntegrationAction, `${i.label} cleared`)}
+            formAction={async (fd) => {
+              if (
+                !window.confirm(
+                  `Clear saved ${i.label} token? You can re-enter it later.`,
+                )
+              ) {
+                return;
+              }
+              await run(clearIntegrationAction, `${i.label} cleared`)(fd);
+            }}
           >
             Clear
           </SubmitButton>

@@ -1149,6 +1149,39 @@ export async function listProjectFiles(
   return body.files;
 }
 
+/* -- Activity audit trail ---------------------------------------------- */
+
+export type ActivityEvent = {
+  id: string;
+  owner_id: string;
+  project_id: string | null;
+  action:
+    | "project.deleted"
+    | "project.restored"
+    | "project_file.deleted"
+    | "crew_member.deleted"
+    | "catalog_symbol.deleted"
+    | "integration.deleted"
+    | "sku_link.deleted";
+  subject_id: string | null;
+  detail: string;
+  created_at: string;
+};
+
+export async function listProjectActivity(
+  projectId: string,
+): Promise<ActivityEvent[]> {
+  const body = await apiGet<{ events: ActivityEvent[] }>(
+    `/projects/${projectId}/activity`,
+  );
+  return body.events;
+}
+
+export async function listWorkspaceActivity(): Promise<ActivityEvent[]> {
+  const body = await apiGet<{ events: ActivityEvent[] }>("/settings/activity");
+  return body.events;
+}
+
 /* -- Portal (kept from previous build) -------------------------------- */
 
 export async function fetchPortalQuote(token: string): Promise<{
