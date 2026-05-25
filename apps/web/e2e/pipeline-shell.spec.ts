@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { pipelineShell } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -24,7 +25,7 @@ test.describe("Pipeline shell", () => {
   test("project root redirects to studio with immersive shell", async ({ page }) => {
     await page.goto(`/projects/${projectId}`);
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/design$`));
-    const shell = page.getByTestId("project-pipeline-shell");
+    const shell = pipelineShell(page);
     await expect(shell).toBeVisible({ timeout: 30_000 });
     await expect(shell).toHaveAttribute("data-shell-variant", "immersive");
     await expect(page.getByTestId("pipeline-tab-design")).toHaveAttribute(
@@ -35,7 +36,7 @@ test.describe("Pipeline shell", () => {
 
   test("overview uses immersive shell with aerial and pipeline rail", async ({ page }) => {
     await page.goto(`/projects/${projectId}/overview`);
-    const shell = page.getByTestId("project-pipeline-shell");
+    const shell = pipelineShell(page);
     await expect(shell).toBeVisible({ timeout: 30_000 });
     await expect(shell).toHaveAttribute("data-shell-variant", "immersive");
     await expect(page.getByTestId("pipeline-tab-overview")).toHaveAttribute(
@@ -46,12 +47,12 @@ test.describe("Pipeline shell", () => {
       timeout: 15_000,
     });
     await expect(page.getByTestId("pipeline-aerial-canvas")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Open studio" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open studio" }).first()).toBeVisible();
   });
 
   test("survey tab uses content shell", async ({ page }) => {
     await page.goto(`/projects/${projectId}/survey`);
-    const shell = page.getByTestId("project-pipeline-shell");
+    const shell = pipelineShell(page);
     await expect(shell).toBeVisible({ timeout: 30_000 });
     await expect(shell).toHaveAttribute("data-shell-variant", "content");
     await expect(page.getByTestId("pipeline-tab-survey")).toHaveAttribute(
@@ -65,14 +66,14 @@ test.describe("Pipeline shell", () => {
 
   test("shell quick links navigate between studio and pipeline", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design`);
-    await page.getByRole("link", { name: "Pipeline" }).click();
+    await page.getByRole("link", { name: "Pipeline" }).first().click();
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/overview$`));
     await expect(page.getByTestId("pipeline-tab-overview")).toHaveAttribute(
       "aria-current",
       "page",
     );
 
-    await page.getByRole("link", { name: "Studio" }).click();
+    await page.getByRole("link", { name: "Studio" }).first().click();
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/design$`));
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,

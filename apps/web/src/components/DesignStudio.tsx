@@ -1038,6 +1038,12 @@ export function DesignStudio({
     </span>
   );
 
+  const countsNode = (
+    <span data-testid="design-studio-counts" className={s.canvasHudPill}>
+      {placements.length} symbols · {irrigationZones.length} zones
+    </span>
+  );
+
   const saveButtonNode = (
     <button
       type="button"
@@ -1250,6 +1256,7 @@ export function DesignStudio({
         ) : null}
         <div className={s.canvasHud} aria-hidden>
           <span className={s.canvasHudPill}>{activeToolLabel}</span>
+          {shellLayout === "legacy" ? countsNode : null}
           {armedSymbolLabel ? (
             <span className={s.canvasHudArmed}>{armedSymbolLabel}</span>
           ) : null}
@@ -1567,6 +1574,7 @@ export function DesignStudio({
       saveStatusDotClass,
       selectionCount: selectedPlacementId ? 1 : 0,
       symbolCount: placements.length,
+      zoneCount: irrigationZones.length,
       cursorPct,
       setCursorPct,
       zoomPercent: viewport.zoomPercent,
@@ -1590,6 +1598,7 @@ export function DesignStudio({
       saveStatusDotClass,
       selectedPlacementId,
       placements.length,
+      irrigationZones.length,
       cursorPct,
       viewport.zoomPercent,
       saving,

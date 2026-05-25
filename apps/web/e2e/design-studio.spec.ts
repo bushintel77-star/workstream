@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -40,9 +41,13 @@ test.describe("Design studio", () => {
     expect(seed.ok()).toBeTruthy();
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(LEGACY_STUDIO_VIEWPORT);
+  });
+
   test("loads immersive pipeline shell and aerial canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design`);
-    const shell = page.getByTestId("project-pipeline-shell");
+    const shell = pipelineShell(page);
     await expect(shell).toBeVisible({ timeout: 30_000 });
     await expect(shell).toHaveAttribute("data-shell-variant", "immersive");
     await expect(page.getByTestId("pipeline-tab-design")).toHaveAttribute(
@@ -103,15 +108,12 @@ test.describe("Design studio", () => {
     });
   });
 
-  test("legacy studio URL redirects to design", async ({ page }) => {
+  test("legacy studio URL loads desktop-capable studio page", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
-    await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/design$`));
-    await expect(page.getByTestId("project-pipeline-shell")).toBeVisible({
-      timeout: 30_000,
-    });
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(page.getByTestId("project-pipeline-shell").first()).toBeVisible();
   });
 
   test("save plan from toolbar", async ({ page }) => {
