@@ -22,6 +22,7 @@ import {
 import { PipelineActionForm } from "../../../../../components/PipelineActionForm";
 import { EnvelopeBriefPanel } from "../../../../../components/EnvelopeBriefPanel";
 import { DesignProposalView } from "../../../../../components/DesignProposalView";
+import { Tier1DevelopHero, Tier1SavingsLedger } from "../../../../../components/tier1";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,9 @@ export default async function DesignDevelopPage({
         Back-of-envelope budget and planning flags, then AI develops the design
         from your sketch.
       </p>
+
+      {tier1 ? <Tier1DevelopHero address={project.address} /> : null}
+      {tier1 ? <Tier1SavingsLedger /> : null}
 
       {!survey ? (
         <div className={s.actionBar}>

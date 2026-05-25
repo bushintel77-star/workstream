@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { useStudioChromeOptional } from "./StudioChromeContext";
 import tb from "./studioTopbar.module.css";
 
@@ -13,6 +14,7 @@ type Props = {
 
 export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
   const chrome = useStudioChromeOptional();
+  const { canInstall, promptInstall } = usePWAInstall();
   return (
     <header className={tb.topbar} data-testid="studio-topbar">
       <div className={tb.left}>
@@ -42,6 +44,16 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
         >
           ⌘
         </button>
+        {canInstall ? (
+          <button
+            type="button"
+            className={tb.installBtn}
+            data-testid="studio-pwa-install"
+            onClick={() => void promptInstall()}
+          >
+            Install app
+          </button>
+        ) : null}
         <button type="button" className={tb.iconBtn} title="Share (coming soon)">
           ↗
         </button>

@@ -5,20 +5,18 @@
   gap: var(--s-3);
   padding: var(--s-3) var(--s-4);
   margin: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line-hairline));
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--accent-soft) 65%, var(--surface-elevated)),
-    var(--surface-elevated)
-  );
+  border-bottom: var(--line-hairline);
+  border-left: 3px solid var(--warn);
+  background: var(--surface-elevated);
 }
 
 .kicker {
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-ink);
+  color: var(--warn);
 }
 
 .title {
@@ -42,13 +40,14 @@
   border-radius: var(--r-sm);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--accent-ink);
+  color: var(--ink-primary);
   text-decoration: none;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border: var(--line-hairline);
   display: inline-flex;
   align-items: center;
+  background: var(--surface-sunken);
 }
 
 .link:hover {
-  background: var(--accent-soft);
+  background: var(--surface-elevated);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CatalogSymbol } from "@workstream/contracts";
+import { isTier1WrightsTerrace } from "@workstream/domain";
 import { useSearchParams } from "next/navigation";
 import { DesignStudio } from "../../../../components/DesignStudio";
 import type { DesignCanvas, RateCardItem } from "../../../../lib/api";
@@ -33,9 +34,10 @@ export function DesignStudioClient({
   symbols,
   rateCard,
   canvas,
-  tier1 = false,
+  tier1: tier1Override,
   surveyMetrics,
 }: Props) {
+  const tier1 = tier1Override ?? isTier1WrightsTerrace(projectAddress);
   const wide = useMediaQuery("(min-width: 960px)");
   const params = useSearchParams();
   const shellLayout = wide || params.get("studio") === "desktop" ? "desktop" : "legacy";

@@ -15,7 +15,7 @@ Last reviewed: 2026-05-24. Current matrix: `docs/GAP-ANALYSIS-CURRENT.md`.
 | API persistence | **Configured** | Volume mount; single machine recommended |
 | Auth (Clerk) | Code ready | Fly secrets on api + web |
 | File delivery | **Auth-gated routes** | Portal token on quote HTML; operator Bearer |
-| Tier-1 Wrights Terrace | **Product-complete** | ? |
+| Tier-1 Wrights Terrace | **Product-complete** | Studio + develop + portal ledger wired |
 | Design studio (web) | **Phases 2?5, 7 shipped** | AI assist + brochure deferred |
 | Multi-tenant API | **Shipped** | Integration routes aligned to `getOwnedProject` |
 | Mobile / queue | Worker reload shipped | Redis + EAS = human |
@@ -44,6 +44,9 @@ See `.github/workflows/ci.yml`, `pnpm ci`, `docker-compose.yml`.
 | Domain math + savings | Shipped + tested |
 | Costing parity `$58,410.35` | Shipped (`ALW-TIER1-ALIGN`) |
 | Operator design page Tier-1 styling | Shipped (`DesignProposalView`) |
+| Studio Tier-1 detection + banner | Shipped (`tier1Active`, `StudioTier1Banner`) |
+| Develop hero + savings ledger | Shipped (`Tier1DevelopHero`, `Tier1SavingsLedger`) |
+| Portal savings ledger | Shipped (shared component) |
 | Portal hero image | Shipped (`hero_url` from survey aerial) |
 
 ## 4. Operator UX

@@ -198,6 +198,29 @@ test.describe("Design studio", () => {
     await expect(counts).toHaveText(/1 symbols/, { timeout: 15_000 });
   });
 
+  test("shows Tier-1 banner for Wrights Terrace address", async ({ request, page }) => {
+    const create = await request.post(`${API}/projects/`, {
+      data: {
+        address: "36 Wrights Terrace, Prahran VIC 3181",
+        lat: -37.8512,
+        lng: 145.001,
+      },
+    });
+    expect(create.ok()).toBeTruthy();
+    const { project } = (await create.json()) as { project: { id: string } };
+    const survey = await request.post(`${API}/projects/${project.id}/survey`);
+    expect(survey.ok()).toBeTruthy();
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/projects/${project.id}/design?studio=desktop`);
+    await expect(page.getByTestId("studio-tier1-banner")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByTestId("studio-tier1-banner")).toContainText(
+      /Architectural massing studio/i,
+    );
+  });
+
   test("save persists irrigation zones on reload", async ({ request, page }) => {
     await page.goto(`/projects/${projectId}/design`);
     await page.getByRole("tab", { name: "Irrigation" }).click();
