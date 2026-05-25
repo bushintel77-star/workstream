@@ -27,6 +27,12 @@ import { tokens } from "@workstream/ui";
 import { useWorkstreamApi } from "../../../src/lib/api";
 import { DesignAssetGlyph } from "../../../src/components/studio/DesignAssetGlyph";
 import { DesignAssetPalette } from "../../../src/components/studio/DesignAssetPalette";
+import { MobileSketchTopbar } from "../../../src/components/sketch/MobileSketchTopbar";
+import {
+  MobileToolStrip,
+  type MobileTool,
+} from "../../../src/components/sketch/MobileToolStrip";
+import { useOfflineQueue } from "../../../src/hooks/useOfflineQueue";
 
 type StudioMode = "place" | "draw";
 
@@ -54,6 +60,9 @@ export default function DesignStudioScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 320, height: 240 });
+  const [presentation, setPresentation] = useState(false);
+  const [syncLabel, setSyncLabel] = useState<string | undefined>();
+  const offline = useOfflineQueue(id ?? "");
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -79,6 +88,28 @@ export default function DesignStudioScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!id || loading) return;
+    const timer = setTimeout(() => {
+      void api
+        .saveDesignCanvas(id, { placements, strokes })
+        .then(async () => {
+          await offline.saveCache({ placements, strokes });
+          setSyncLabel("synced");
+          setTimeout(() => setSyncLabel(undefined), 2000);
+        })
+        .catch(async () => {
+          await offline.enqueue({
+            timestamp: Date.now(),
+            operation: "modify",
+            element: { placements, strokes },
+          });
+          setSyncLabel("offline");
+        });
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [api, id, loading, placements, strokes, offline]);
 
   const symbolById = new Map(symbols.map((s) => [s.id, s]));
 
@@ -178,122 +209,103 @@ export default function DesignStudioScreen() {
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.kicker}>DESIGN STUDIO</Text>
-        <Text style={styles.heading}>Plan on aerial</Text>
+  const mobileTool: MobileTool = mode === "draw" ? "draw" : "place";
 
-        <View style={styles.toolbar}>
-          <Pressable
-            style={[styles.modeBtn, mode === "place" && styles.modeBtnActive]}
-            onPress={() => setMode("place")}
+  return (
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      {!presentation ? (
+        <MobileSketchTopbar
+          projectId={id ?? ""}
+          title="Site sketch"
+          onBack={() => router.back()}
+          syncLabel={syncLabel ?? (offline.offline ? "offline" : undefined)}
+          presentationMode={presentation}
+          onTogglePresentation={() => setPresentation((p) => !p)}
+        />
+      ) : null}
+      <Text style={styles.honesty}>concept sketch — indicative</Text>
+      <GestureDetector gesture={drawGesture}>
+        <Pressable
+          style={styles.canvasFlex}
+          onLayout={(e) => {
+            const { width, height } = e.nativeEvent.layout;
+            if (width > 0 && height > 0) setCanvasSize({ width, height });
+          }}
+          onPress={(e) => {
+            if (mode !== "place") return;
+            placeAt(
+              (e.nativeEvent.locationX / canvasSize.width) * 100,
+              (e.nativeEvent.locationY / canvasSize.height) * 100,
+            );
+          }}
+          accessibilityLabel="Site plan canvas"
+        >
+          <Image
+            source={{ uri: survey.aerial_uri }}
+            style={styles.aerial}
+            resizeMode="cover"
+          />
+          <Svg
+            style={StyleSheet.absoluteFill}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
+            pointerEvents="none"
           >
-            <Text
-              style={[
-                styles.modeBtnText,
-                mode === "place" && styles.modeBtnTextActive,
-              ]}
-            >
-              Place
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.modeBtn, mode === "draw" && styles.modeBtnActive]}
-            onPress={() => {
-              setMode("draw");
-              setSelectedId(null);
+            {strokes.map((stroke) => (
+              <Path
+                key={stroke.id}
+                d={canvasStrokeToPathD(stroke, canvasSize.width, canvasSize.height)}
+                fill={stroke.color}
+              />
+            ))}
+            {draftPath ? <Path d={draftPath} fill="#ff2ef6" opacity={0.85} /> : null}
+          </Svg>
+          {placements.map((p) => {
+            const sym = symbolById.get(p.symbol_id);
+            if (!sym) return null;
+            return (
+              <View
+                key={p.id}
+                style={[styles.placed, { left: `${p.x_pct}%`, top: `${p.y_pct}%` }]}
+                pointerEvents="none"
+              >
+                <DesignAssetGlyph symbol={sym} size="pin" />
+              </View>
+            );
+          })}
+        </Pressable>
+      </GestureDetector>
+
+      {!presentation ? (
+        <>
+          <MobileToolStrip
+            active={mobileTool}
+            onTool={(t) => {
+              if (t === "draw") {
+                setMode("draw");
+                setSelectedId(null);
+              } else {
+                setMode("place");
+              }
             }}
-          >
-            <Text
-              style={[
-                styles.modeBtnText,
-                mode === "draw" && styles.modeBtnTextActive,
-              ]}
-            >
-              Draw
-            </Text>
-          </Pressable>
-          <Pressable
-            style={styles.toolBtn}
-            onPress={() =>
+            onUndo={() =>
               draftPoints.length ? setDraftPoints([]) : setStrokes((s) => s.slice(0, -1))
             }
-          >
-            <Text style={styles.toolBtnText}>Undo</Text>
-          </Pressable>
-        </View>
+            onRedo={() => {}}
+          />
+          <DesignAssetPalette
+            symbols={symbols}
+            selectedId={selectedId}
+            disabled={mode === "draw"}
+            onSelect={setSelectedId}
+          />
+        </>
+      ) : null}
 
-        <GestureDetector gesture={drawGesture}>
-          <Pressable
-            style={styles.canvas}
-            onLayout={(e) => {
-              const { width, height } = e.nativeEvent.layout;
-              if (width > 0 && height > 0) setCanvasSize({ width, height });
-            }}
-            onPress={(e) => {
-              if (mode !== "place") return;
-              placeAt(
-                (e.nativeEvent.locationX / canvasSize.width) * 100,
-                (e.nativeEvent.locationY / canvasSize.height) * 100,
-              );
-            }}
-            accessibilityLabel="Site plan canvas"
-          >
-            <Image
-              source={{ uri: survey.aerial_uri }}
-              style={styles.aerial}
-              resizeMode="cover"
-            />
-            <Svg
-              style={StyleSheet.absoluteFill}
-              width={canvasSize.width}
-              height={canvasSize.height}
-              viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
-              pointerEvents="none"
-            >
-              {strokes.map((stroke) => (
-                <Path
-                  key={stroke.id}
-                  d={canvasStrokeToPathD(
-                    stroke,
-                    canvasSize.width,
-                    canvasSize.height,
-                  )}
-                  fill={stroke.color}
-                />
-              ))}
-              {draftPath ? <Path d={draftPath} fill="#ff2ef6" opacity={0.85} /> : null}
-            </Svg>
-            {placements.map((p) => {
-              const sym = symbolById.get(p.symbol_id);
-              if (!sym) return null;
-              return (
-                <View
-                  key={p.id}
-                  style={[
-                    styles.placed,
-                    { left: `${p.x_pct}%`, top: `${p.y_pct}%` },
-                  ]}
-                  pointerEvents="none"
-                >
-                  <DesignAssetGlyph symbol={sym} size="pin" />
-                </View>
-              );
-            })}
-          </Pressable>
-        </GestureDetector>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <DesignAssetPalette
-          symbols={symbols}
-          selectedId={selectedId}
-          disabled={mode === "draw"}
-          onSelect={setSelectedId}
-        />
-
-        {error && <Text style={styles.error}>{error}</Text>}
-      </ScrollView>
-
+      {!presentation ? (
       <View style={styles.footer}>
         <Pressable
           style={[styles.button, styles.ghost]}
@@ -316,6 +328,7 @@ export default function DesignStudioScreen() {
           </Text>
         </Pressable>
       </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -368,6 +381,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   toolBtnText: { fontWeight: "600", color: tokens.color.ink.primary },
+  honesty: {
+    fontFamily: "monospace",
+    fontSize: 8,
+    color: tokens.color.ink.tertiary,
+    opacity: 0.5,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  canvasFlex: {
+    flex: 1,
+    overflow: "hidden",
+    backgroundColor: tokens.color.surface.sunken,
+  },
   canvas: {
     minHeight: 240,
     borderRadius: 12,

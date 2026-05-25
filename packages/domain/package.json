@@ -7,13 +7,18 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "echo ok"
+    "lint": "echo ok",
+    "import:open-crop": "node scripts/generate-open-crop-catalog.mjs",
+    "import:osmic-landscape": "node scripts/generate-osmic-landscape-catalog.mjs",
+    "import:wikimedia-trees": "node scripts/download-wikimedia-trees.mjs && node scripts/generate-wikimedia-trees-catalog.mjs"
   },
   "dependencies": {
     "@workstream/contracts": "workspace:*",
     "perfect-freehand": "^1.2.2"
   },
   "devDependencies": {
+    "open-crop-icons": "github:openfarmcc/open-crop-icons",
+    "osmic-source": "github:gmgeo/osmic",
     "typescript": "^5.7.0"
   }
 }

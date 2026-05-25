@@ -82,12 +82,7 @@ export default function AppLayout() {
       />
       <Stack.Screen
         name="design-studio/[id]"
-        options={{
-          headerShown: true,
-          title: "Design studio",
-          headerStyle: { backgroundColor: tokens.color.surface.base },
-          headerTintColor: tokens.color.ink.primary,
-        }}
+        options={{ headerShown: false, title: "Design studio" }}
       />
     </Stack>
   );

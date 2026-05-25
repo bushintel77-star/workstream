@@ -27,9 +27,11 @@ This handover focuses on **operator web**, especially **layout** and **design st
 
 ## 2. Design principles (locked)
 
+**Product phases:** [STUDIO-PRODUCT-PHASES.md](./STUDIO-PRODUCT-PHASES.md) — **Workflow 1** (professional sketch, CAD UX, indicative geometry) ships now; **Stage 2** (true CAD: survey coordinates, layer export, dim styles) is a separate scope and data model.
+
 These are product decisions, not suggestions:
 
-1. **Concept sketch, not CAD** — The design studio is a back-of-envelope tool. It must never read as construction-grade or survey-accurate. Copy and visual treatment must reinforce “estimate / concept only”.
+1. **Workflow 1 — concept sketch, not true CAD** — The design studio is a back-of-envelope tool with CAD-*inspired* chrome (ribbon, pan/zoom, layers). It must never read as construction-grade or survey-accurate. Copy and visual treatment must reinforce “estimate / concept only”. Stage 2 may add survey geometry later without rewriting this principle for Workflow 1.
 2. **2D top-down only** — Aerial + symbols on a flat plan. No 3D, isometric, photoreal, or tilt.
 3. **Single accent colour** — `--accent` (`#C2410C` light / `#FB923C` dark) on **≤3% of surface**: Save CTA + armed Place/Draw mode only. Everything else is achromatic ink + surfaces.
 4. **CSS variables only** — No hex literals in component CSS. Tokens live in `apps/web/src/styles/globals.css`; shared primitives in `app.module.css`.

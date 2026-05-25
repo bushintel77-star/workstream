@@ -123,6 +123,9 @@ importers:
       '@clerk/clerk-expo':
         specifier: ^2.9.0
         version: 2.19.31(jr452tpqsxibekoyww7cd4fuj4)
+      '@react-native-async-storage/async-storage':
+        specifier: 2.1.2
+        version: 2.1.2(react-native@0.76.9(@babel/core@7.29.0)(@babel/preset-env@7.29.5(@babel/core@7.29.0))(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6))
       '@workstream/client':
         specifier: workspace:*
         version: link:../../packages/client
@@ -282,6 +285,12 @@ importers:
         specifier: ^1.2.2
         version: 1.2.3
     devDependencies:
+      open-crop-icons:
+        specifier: github:openfarmcc/open-crop-icons
+        version: https://codeload.github.com/openfarmcc/open-crop-icons/tar.gz/d41f1197a14bb82f12037dc47585152ae1e3074f
+      osmic-source:
+        specifier: github:gmgeo/osmic
+        version: osmic@https://codeload.github.com/gmgeo/osmic/tar.gz/94b418619c72fd2caa0edfa08c7a959ac3f48b2a
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -2763,6 +2772,11 @@ packages:
     resolution: {integrity: sha512-W4/vbwUOYOjco0x3toB8QCr7EjIP6nE9G7o8PMguvvjYT5Awg09lyV4enACRx4s++PPulBiBSjL0KTFx2u0Z/g==}
     peerDependencies:
       react-native: ^0.0.0-0 || >=0.60 <1.0
+
+  '@react-native-async-storage/async-storage@2.1.2':
+    resolution: {integrity: sha512-dvlNq4AlGWC+ehtH12p65+17V0Dx7IecOWl6WanF2ja38O1Dcjjvn7jVzkUHJ5oWkQBlyASurTPlTHgKXyYiow==}
+    peerDependencies:
+      react-native: ^0.0.0-0 || >=0.65 <1.0
 
   '@react-native/assets-registry@0.76.9':
     resolution: {integrity: sha512-pN0Ws5xsjWOZ8P37efh0jqHHQmq+oNGKT4AyAoKRpxBDDDmlAmpaYjer9Qz7PpDKF+IUyRjF/+rBsM50a8JcUg==}
@@ -5831,6 +5845,10 @@ packages:
     resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
     engines: {node: '>=18'}
 
+  open-crop-icons@https://codeload.github.com/openfarmcc/open-crop-icons/tar.gz/d41f1197a14bb82f12037dc47585152ae1e3074f:
+    resolution: {tarball: https://codeload.github.com/openfarmcc/open-crop-icons/tar.gz/d41f1197a14bb82f12037dc47585152ae1e3074f}
+    version: 1.0.0
+
   open@7.4.2:
     resolution: {integrity: sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==}
     engines: {node: '>=8'}
@@ -5846,6 +5864,10 @@ packages:
   ora@3.4.0:
     resolution: {integrity: sha512-eNwHudNbO1folBP3JsZ19v9azXWtQZjICdr3Q0TDPIaeBQ3mXLrh54wM+er0+hSp+dWKf+Z8KM58CYzEyIYxYg==}
     engines: {node: '>=6'}
+
+  osmic@https://codeload.github.com/gmgeo/osmic/tar.gz/94b418619c72fd2caa0edfa08c7a959ac3f48b2a:
+    resolution: {tarball: https://codeload.github.com/gmgeo/osmic/tar.gz/94b418619c72fd2caa0edfa08c7a959ac3f48b2a}
+    version: 0.0.0
 
   ox@0.14.20:
     resolution: {integrity: sha512-rby38C3nDn8eQkf29Zgw4hkCZJ64Qqi0zRPWL8ENUQ7JVuoITqrVtwWQgM/He19SCMUEc7hS/Sjw0jIOSLJhOw==}
@@ -10372,6 +10394,11 @@ snapshots:
       react-native: 0.76.9(@babel/core@7.29.0)(@babel/preset-env@7.29.5(@babel/core@7.29.0))(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6)
     optional: true
 
+  '@react-native-async-storage/async-storage@2.1.2(react-native@0.76.9(@babel/core@7.29.0)(@babel/preset-env@7.29.5(@babel/core@7.29.0))(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6))':
+    dependencies:
+      merge-options: 3.0.4
+      react-native: 0.76.9(@babel/core@7.29.0)(@babel/preset-env@7.29.5(@babel/core@7.29.0))(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6)
+
   '@react-native/assets-registry@0.76.9': {}
 
   '@react-native/babel-plugin-codegen@0.76.9(@babel/preset-env@7.29.5(@babel/core@7.29.0))':
@@ -10454,7 +10481,7 @@ snapshots:
       execa: 5.1.1
       invariant: 2.2.4
       metro: 0.81.5(bufferutil@4.1.0)
-      metro-config: 0.81.5(bufferutil@4.1.0)
+      metro-config: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.5
       node-fetch: 2.7.0
       readline: 1.3.0
@@ -13074,8 +13101,7 @@ snapshots:
 
   is-path-inside@3.0.3: {}
 
-  is-plain-obj@2.1.0:
-    optional: true
+  is-plain-obj@2.1.0: {}
 
   is-plain-object@2.0.4:
     dependencies:
@@ -13517,7 +13543,6 @@ snapshots:
   merge-options@3.0.4:
     dependencies:
       is-plain-obj: 2.1.0
-    optional: true
 
   merge-stream@2.0.0: {}
 
@@ -13541,21 +13566,6 @@ snapshots:
       exponential-backoff: 3.1.3
       flow-enums-runtime: 0.0.6
       metro-core: 0.81.5
-
-  metro-config@0.81.5(bufferutil@4.1.0):
-    dependencies:
-      connect: 3.7.0
-      cosmiconfig: 5.2.1
-      flow-enums-runtime: 0.0.6
-      jest-validate: 29.7.0
-      metro: 0.81.5(bufferutil@4.1.0)
-      metro-cache: 0.81.5
-      metro-core: 0.81.5
-      metro-runtime: 0.81.5
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
 
   metro-config@0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
@@ -13709,7 +13719,7 @@ snapshots:
       metro-babel-transformer: 0.81.5
       metro-cache: 0.81.5
       metro-cache-key: 0.81.5
-      metro-config: 0.81.5(bufferutil@4.1.0)
+      metro-config: 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.81.5
       metro-file-map: 0.81.5
       metro-resolver: 0.81.5
@@ -14007,6 +14017,8 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
+  open-crop-icons@https://codeload.github.com/openfarmcc/open-crop-icons/tar.gz/d41f1197a14bb82f12037dc47585152ae1e3074f: {}
+
   open@7.4.2:
     dependencies:
       is-docker: 2.2.1
@@ -14035,6 +14047,8 @@ snapshots:
       log-symbols: 2.2.0
       strip-ansi: 5.2.0
       wcwidth: 1.0.1
+
+  osmic@https://codeload.github.com/gmgeo/osmic/tar.gz/94b418619c72fd2caa0edfa08c7a959ac3f48b2a: {}
 
   ox@0.14.20(typescript@5.9.3)(zod@3.25.76):
     dependencies:

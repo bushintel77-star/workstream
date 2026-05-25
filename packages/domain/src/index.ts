@@ -16,6 +16,19 @@ export {
   catalogAssetCode,
   filterCatalogSymbols,
 } from './catalog-assets';
+export { OPEN_CROP_SYMBOLS } from './open-crop-symbols';
+export { OSMIC_LANDSCAPE_SYMBOLS } from './osmic-landscape-symbols';
+export {
+  WIKIMEDIA_TREE_SYMBOLS,
+  WIKIMEDIA_TREE_ATTRIBUTION,
+} from './wikimedia-tree-symbols';
+export {
+  buildGhostPlacementSuggestions,
+  buildStudioAiSuggestions,
+  withDirtySaveSuggestion,
+  type GhostPlacementSuggestion,
+  type StudioAiSuggestion,
+} from './studio-ai-assist';
 export * from './catalog-glyph';
 export * from './catalog-quote';
 export * from './sketch-brief';
@@ -29,6 +42,12 @@ export * from './irrigation';
 export * from './plan';
 export * from './site-plan-projection';
 export * from './site-environment';
+export { buildStudioSystemPrompt } from './studio-ai-prompt';
+export {
+  buildIndicativeShadeGrid,
+  SHADE_GRID_SIZE,
+  type ShadeGridCell,
+} from './shade-grid';
 export * from './title-planning-badges';
 export * from './site-garden-copy';
 export * from './weather-condition';
