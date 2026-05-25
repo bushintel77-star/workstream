@@ -62,7 +62,7 @@ import {
   useStudioViewport,
 } from "./studio";
 import type { RibbonTab } from "./studio/StudioRibbon";
-import type { SiteLayerState } from "./studio/SiteLayersPanel";
+import type { SiteLayerId, SiteLayerState } from "./studio/SiteLayersPanel";
 import { useStudioKeyboard } from "../hooks/useStudioKeyboard";
 import type { CanvasStrokeClient } from "./studio/types";
 import type { RateCardItem } from "../lib/api";
@@ -317,8 +317,13 @@ export function DesignStudio({
         setMeasurePoints([]);
       }
       setToolOverride(tool);
+      if (shellLayout === "desktop") {
+        setRightRailOpen(true);
+        if (tool === "place") setRightRailTab("library");
+        if (tool === "select") setRightRailTab("inspector");
+      }
     },
-    [irrigationDraw, massPlantDraw],
+    [irrigationDraw, massPlantDraw, shellLayout],
   );
 
   const handleRailTab = useCallback(
@@ -1432,6 +1437,85 @@ export function DesignStudio({
 
   const desktopRightRail = (
     <>
+      {toolOverride === "massplant" ? (
+        <StudioMassPlantPanel
+          symbols={symbols}
+          polygonPoints={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
+          polygonClosed={massPolygonClosed}
+          isDrawing={massPlantDraw.isDrawing}
+          spacingCm={massSpacingCm}
+          scale={groundScale}
+          onSpacingChange={setMassSpacingCm}
+          onStartDraw={() => {
+            setStudioTool("massplant");
+            setMassPolygonClosed(false);
+            setMassPolygonPoints([]);
+            massPlantDraw.start();
+          }}
+          onFinishPolygon={() => {
+            const pts = massPlantDraw.finish();
+            if (pts) {
+              setMassPolygonPoints(pts);
+              setMassPolygonClosed(true);
+            } else toast.show("Need at least 3 points for a bed.", "error");
+          }}
+          onClear={() => {
+            massPlantDraw.cancel();
+            setMassPolygonClosed(false);
+            setMassPolygonPoints([]);
+          }}
+          onFill={(newPlacements) => {
+            setPlacements((prev) => [...prev, ...newPlacements]);
+            setRightRailTab("schedule");
+            toast.show(`Placed ${newPlacements.length} plants.`, "success");
+          }}
+        />
+      ) : null}
+      {toolOverride === "irrigation" ? (
+        <StudioIrrigationPanel
+          zones={irrigationZones}
+          selectedZoneId={selectedIrrigationZoneId}
+          isDrawing={irrigationDraw.isDrawing}
+          scale={groundScale}
+          onSelectZone={setSelectedIrrigationZoneId}
+          onUpdateZone={(id, patch) => {
+            setIrrigationZones(
+              (prev) => prev.map((z) => (z.id === id ? { ...z, ...patch } : z)),
+              false,
+            );
+          }}
+          onDeleteZone={(id) => {
+            if (!window.confirm("Delete this irrigation zone?")) return;
+            setIrrigationZones((prev) => prev.filter((z) => z.id !== id));
+            setSelectedIrrigationZoneId((cur) => (cur === id ? null : cur));
+          }}
+          onStartNewZone={() => {
+            setStudioTool("irrigation");
+            setSelectedIrrigationZoneId(null);
+            irrigationDraw.start();
+          }}
+          onFinishLine={() => {
+            const pts = irrigationDraw.finish();
+            if (!pts) {
+              toast.show("Need at least 2 points for a line.", "error");
+              return;
+            }
+            const zone = {
+              id: newId(),
+              name: `Zone ${irrigationZones.length + 1}`,
+              points: pts,
+              emitter_spacing_cm: 30,
+              emitter_flow_lph: 2,
+            };
+            setIrrigationZones((prev) => [...prev, zone]);
+            setSelectedIrrigationZoneId(zone.id);
+            setRightRailTab("schedule");
+            toast.show(`Zone "${zone.name}" created.`, "success");
+          }}
+        />
+      ) : null}
+      {toolOverride !== "massplant" && toolOverride !== "irrigation" ? (
+        <>
       {rightRailTab === "inspector" ? (
         <StudioInspector
           projectId={projectId}
@@ -1540,6 +1624,8 @@ export function DesignStudio({
           symbolLabel={(id) => symbolById.get(id)?.label ?? id}
         />
       ) : null}
+        </>
+      ) : null}
     </>
   );
 
@@ -1588,6 +1674,29 @@ export function DesignStudio({
       canRedo: studio.canRedo,
       onRedo: redo,
       onOpenCommandPalette: () => setCommandOpen(true),
+      onOpenLayers: () => {
+        setRightRailTab("layers");
+        setRightRailOpen(true);
+      },
+      onOpenSitePanel: () => {
+        setRibbonTab("site");
+      },
+      onOpenLibrary: () => {
+        setRightRailTab("library");
+        setRightRailOpen(true);
+        setStudioTool("place");
+      },
+      onRibbonTab: setRibbonTab,
+      onRightRailTab: (tab: RightRailTab) => {
+        setRightRailTab(tab);
+        setRightRailOpen(true);
+      },
+      siteLayers,
+      onToggleSiteLayer: (id: SiteLayerId) =>
+        setSiteLayers((prev) => ({
+          ...prev,
+          [id]: { ...prev[id], on: !prev[id].on },
+        })),
     }),
     [
       toolOverride,
@@ -1606,6 +1715,7 @@ export function DesignStudio({
       undo,
       studio.canRedo,
       redo,
+      siteLayers,
     ],
   );
 
@@ -1683,6 +1793,13 @@ export function DesignStudio({
               onOpenDevelop={() => router.push(`/projects/${projectId}/design/develop`)}
               libraryFilter={libraryFilter}
               onLibraryFilter={setLibraryFilter}
+              siteLayers={siteLayers}
+              onToggleSiteLayer={(id) =>
+                setSiteLayers((prev) => ({
+                  ...prev,
+                  [id]: { ...prev[id], on: !prev[id].on },
+                }))
+              }
             />
           }
           sitePanel={

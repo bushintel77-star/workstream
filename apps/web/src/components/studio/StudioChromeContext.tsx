@@ -8,6 +8,9 @@ import {
   type ReactNode,
 } from "react";
 import type { ToolOverride } from "./studioTypes";
+import type { RibbonTab } from "./StudioRibbon";
+import type { RightRailTab } from "./studioTypes";
+import type { SiteLayerId, SiteLayerState } from "./SiteLayersPanel";
 
 export type StudioChromeState = {
   toolOverride: ToolOverride;
@@ -34,6 +37,13 @@ export type StudioChromeState = {
   canRedo: boolean;
   onRedo: () => void;
   onOpenCommandPalette?: () => void;
+  onOpenLayers?: () => void;
+  onOpenSitePanel?: () => void;
+  onOpenLibrary?: () => void;
+  onRibbonTab?: (tab: RibbonTab) => void;
+  onRightRailTab?: (tab: RightRailTab) => void;
+  siteLayers?: SiteLayerState;
+  onToggleSiteLayer?: (id: SiteLayerId) => void;
 };
 
 const StudioChromeContext = createContext<StudioChromeState | null>(null);

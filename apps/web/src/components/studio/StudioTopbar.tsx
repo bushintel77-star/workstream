@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
+import { useToast } from "../ToastHost";
 import { useStudioChromeOptional } from "./StudioChromeContext";
 import tb from "./studioTopbar.module.css";
 
@@ -14,7 +15,14 @@ type Props = {
 
 export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
   const chrome = useStudioChromeOptional();
+  const toast = useToast();
   const { canInstall, promptInstall } = usePWAInstall();
+
+  async function copyStudioLink() {
+    const url = `${window.location.origin}/projects/${projectId}/design?studio=desktop`;
+    await navigator.clipboard.writeText(url);
+    toast.show("Studio link copied.", "success");
+  }
   return (
     <header className={tb.topbar} data-testid="studio-topbar">
       <div className={tb.left}>
@@ -54,7 +62,13 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
             Install app
           </button>
         ) : null}
-        <button type="button" className={tb.iconBtn} title="Share (coming soon)">
+        <button
+          type="button"
+          className={tb.iconBtn}
+          title="Copy studio link"
+          aria-label="Copy studio link"
+          onClick={() => void copyStudioLink()}
+        >
           ↗
         </button>
       </div>

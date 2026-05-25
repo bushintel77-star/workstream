@@ -38,7 +38,7 @@
   margin: 0;
   padding: 4px 14px;
   border-radius: 12px;
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   background: var(--surface-elevated);
   font-family: "JetBrains Mono", monospace;
   font-size: 10px;

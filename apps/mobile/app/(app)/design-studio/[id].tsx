@@ -32,6 +32,8 @@ import {
   MobileToolStrip,
   type MobileTool,
 } from "../../../src/components/sketch/MobileToolStrip";
+import { isTier1WrightsTerrace } from "@workstream/domain";
+import { MobileSketchStatusBar } from "../../../src/components/sketch/MobileSketchStatusBar";
 import { useOfflineQueue } from "../../../src/hooks/useOfflineQueue";
 
 type StudioMode = "place" | "draw";
@@ -61,6 +63,8 @@ export default function DesignStudioScreen() {
   const [error, setError] = useState<string | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 320, height: 240 });
   const [presentation, setPresentation] = useState(false);
+  const [projectAddress, setProjectAddress] = useState("");
+  const [redoStrokes, setRedoStrokes] = useState<CanvasStroke[]>([]);
   const [syncLabel, setSyncLabel] = useState<string | undefined>();
   const offline = useOfflineQueue(id ?? "");
 
@@ -68,15 +72,18 @@ export default function DesignStudioScreen() {
     if (!id) return;
     setLoading(true);
     try {
-      const [s, catalog, canvas] = await Promise.all([
+      const [s, catalog, canvas, project] = await Promise.all([
         api.getSurvey(id),
         api.listCatalogSymbols(),
         api.getDesignCanvas(id),
+        api.getProject(id),
       ]);
       setSurvey(s);
       setSymbols(catalog);
       setPlacements(canvas?.placements ?? []);
       setStrokes(canvas?.strokes ?? []);
+      setProjectAddress(project.address);
+      setRedoStrokes([]);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load studio");
@@ -126,6 +133,7 @@ export default function DesignStudioScreen() {
         scale: 1,
       },
     ]);
+    setRedoStrokes([]);
   }
 
   function commitDraft() {
@@ -142,6 +150,7 @@ export default function DesignStudioScreen() {
         width_px: 2,
       },
     ]);
+    setRedoStrokes([]);
     setDraftPoints([]);
   }
 
@@ -209,6 +218,7 @@ export default function DesignStudioScreen() {
     );
   }
 
+  const tier1 = isTier1WrightsTerrace(projectAddress);
   const mobileTool: MobileTool = mode === "draw" ? "draw" : "place";
 
   return (
@@ -216,14 +226,21 @@ export default function DesignStudioScreen() {
       {!presentation ? (
         <MobileSketchTopbar
           projectId={id ?? ""}
-          title="Site sketch"
+          title={projectAddress || "Site sketch"}
           onBack={() => router.back()}
-          syncLabel={syncLabel ?? (offline.offline ? "offline" : undefined)}
           presentationMode={presentation}
           onTogglePresentation={() => setPresentation((p) => !p)}
         />
       ) : null}
-      <Text style={styles.honesty}>concept sketch — indicative</Text>
+      {!presentation ? (
+        <MobileSketchStatusBar
+          symbolCount={placements.length}
+          strokeCount={strokes.length}
+          syncLabel={syncLabel ?? (offline.offline ? "offline" : undefined)}
+          tier1={tier1}
+        />
+      ) : null}
+      <Text style={styles.honesty}>Concept sketch — indicative geometry, not survey CAD</Text>
       <GestureDetector gesture={drawGesture}>
         <Pressable
           style={styles.canvasFlex}
@@ -289,10 +306,28 @@ export default function DesignStudioScreen() {
                 setMode("place");
               }
             }}
-            onUndo={() =>
-              draftPoints.length ? setDraftPoints([]) : setStrokes((s) => s.slice(0, -1))
-            }
-            onRedo={() => {}}
+            onUndo={() => {
+              if (draftPoints.length) {
+                setDraftPoints([]);
+                return;
+              }
+              setStrokes((s) => {
+                if (s.length === 0) return s;
+                const next = s.slice(0, -1);
+                setRedoStrokes((r) => [...r, s[s.length - 1]!]);
+                return next;
+              });
+            }}
+            onRedo={() => {
+              setRedoStrokes((r) => {
+                if (r.length === 0) return r;
+                const stroke = r[r.length - 1]!;
+                setStrokes((s) => [...s, stroke]);
+                return r.slice(0, -1);
+              });
+            }}
+            canUndo={draftPoints.length > 0 || strokes.length > 0}
+            canRedo={redoStrokes.length > 0}
           />
           <DesignAssetPalette
             symbols={symbols}
@@ -312,6 +347,8 @@ export default function DesignStudioScreen() {
           onPress={() => {
             setPlacements([]);
             setStrokes([]);
+            setRedoStrokes([]);
+            setDraftPoints([]);
           }}
           accessibilityRole="button"
         >

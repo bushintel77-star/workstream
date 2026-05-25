@@ -15,7 +15,7 @@
   align-items: center;
   gap: var(--s-1);
   background: var(--surface-elevated);
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   border-radius: var(--r-sm);
   padding: var(--s-1);
 }
@@ -46,7 +46,7 @@
 }
 
 .fit {
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   border-radius: var(--r-sm);
   background: var(--surface-elevated);
   color: var(--ink-tertiary);

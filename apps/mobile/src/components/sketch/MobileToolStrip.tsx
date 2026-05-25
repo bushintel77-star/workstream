@@ -8,34 +8,65 @@ type Props = {
   onTool: (t: MobileTool) => void;
   onUndo: () => void;
   onRedo: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 };
 
-const TOOLS: { id: MobileTool; label: string }[] = [
-  { id: "select", label: "Select" },
-  { id: "draw", label: "Draw" },
-  { id: "place", label: "Place" },
-  { id: "measure", label: "Measure" },
+const TOOLS: { id: MobileTool; label: string; enabled: boolean }[] = [
+  { id: "select", label: "Select", enabled: false },
+  { id: "draw", label: "Draw", enabled: true },
+  { id: "place", label: "Place", enabled: true },
+  { id: "measure", label: "Measure", enabled: false },
 ];
 
-export function MobileToolStrip({ active, onTool, onUndo, onRedo }: Props) {
+export function MobileToolStrip({
+  active,
+  onTool,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+}: Props) {
   return (
     <View style={styles.wrap}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {TOOLS.map((t) => (
           <Pressable
             key={t.id}
-            style={[styles.pill, active === t.id && styles.pillActive]}
-            onPress={() => onTool(t.id)}
+            style={[
+              styles.pill,
+              active === t.id && styles.pillActive,
+              !t.enabled && styles.pillDisabled,
+            ]}
+            disabled={!t.enabled}
+            onPress={() => t.enabled && onTool(t.id)}
+            accessibilityState={{ disabled: !t.enabled }}
           >
-            <Text style={[styles.label, active === t.id && styles.labelActive]}>{t.label}</Text>
+            <Text
+              style={[
+                styles.label,
+                active === t.id && styles.labelActive,
+                !t.enabled && styles.labelDisabled,
+              ]}
+            >
+              {t.label}
+            </Text>
           </Pressable>
         ))}
         <View style={styles.divider} />
-        <Pressable style={styles.pill} onPress={onUndo}>
-          <Text style={styles.label}>Undo</Text>
+        <Pressable
+          style={[styles.pill, !canUndo && styles.pillDisabled]}
+          onPress={onUndo}
+          disabled={!canUndo}
+        >
+          <Text style={[styles.label, !canUndo && styles.labelDisabled]}>Undo</Text>
         </Pressable>
-        <Pressable style={styles.pill} onPress={onRedo}>
-          <Text style={styles.label}>Redo</Text>
+        <Pressable
+          style={[styles.pill, !canRedo && styles.pillDisabled]}
+          onPress={onRedo}
+          disabled={!canRedo}
+        >
+          <Text style={[styles.label, !canRedo && styles.labelDisabled]}>Redo</Text>
         </Pressable>
       </ScrollView>
     </View>
@@ -68,12 +99,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: tokens.color.accent.default,
   },
+  pillDisabled: { opacity: 0.4 },
   label: {
     fontSize: 9,
     fontFamily: "monospace",
     color: tokens.color.ink.tertiary,
   },
   labelActive: { color: tokens.color.accent.default },
+  labelDisabled: { color: tokens.color.ink.tertiary },
   divider: {
     width: 1,
     height: 28,

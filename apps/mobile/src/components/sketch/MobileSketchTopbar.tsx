@@ -10,7 +10,7 @@ type Props = {
   onTogglePresentation: () => void;
 };
 
-const WEB_BASE = process.env.EXPO_PUBLIC_WEB_URL ?? "https://workstream-web.fly.dev";
+const WEB_BASE = process.env.EXPO_PUBLIC_WEB_URL ?? "https://construct-web.fly.dev";
 
 export function MobileSketchTopbar({
   projectId,
@@ -20,7 +20,7 @@ export function MobileSketchTopbar({
   presentationMode,
   onTogglePresentation,
 }: Props) {
-  const studioUrl = `${WEB_BASE}/projects/${projectId}/design/studio?studio=desktop`;
+  const studioUrl = `${WEB_BASE}/projects/${projectId}/design?studio=desktop`;
 
   return (
     <View style={styles.wrap}>

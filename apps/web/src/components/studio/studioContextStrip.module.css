@@ -6,7 +6,7 @@
   min-height: var(--studio-context-strip-h);
   padding: 0 var(--s-3);
   background: var(--surface-sunken);
-  border-bottom: var(--line-hairline);
+  border-bottom: 1px solid var(--line-hairline);
   flex-shrink: 0;
 }
 
@@ -16,7 +16,7 @@
   letter-spacing: 0.04em;
   padding: 3px 10px;
   border-radius: 10px;
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   background: transparent;
   color: var(--ink-secondary);
   cursor: pointer;
@@ -31,6 +31,24 @@
   background: var(--surface-elevated);
   color: var(--ink-primary);
   border-color: var(--line-strong);
+}
+
+.chipDisabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chipDisabled:hover {
+  color: var(--ink-secondary);
+  border-color: var(--line-hairline);
+}
+
+.hint {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  padding-left: var(--s-1);
 }
 
 .tier1Chip {

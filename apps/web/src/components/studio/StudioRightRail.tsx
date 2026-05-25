@@ -52,7 +52,7 @@ export function StudioRightRail({ children, activeTab, onTab }: Props) {
       </div>
       <div className={rr.body} role="tabpanel">
         {children ?? (
-          <p className={rr.placeholder}>Library + inspector — Stage 6</p>
+          <p className={rr.placeholder}>Select a symbol on canvas to inspect, or open Library.</p>
         )}
       </div>
     </aside>

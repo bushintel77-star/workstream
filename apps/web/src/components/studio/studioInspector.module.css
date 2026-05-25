@@ -68,7 +68,7 @@
   width: 96px;
   text-align: right;
   padding: 3px 8px;
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   border-radius: var(--r-sm);
   background: var(--surface-elevated);
 }
@@ -91,7 +91,7 @@
   font-family: "JetBrains Mono", monospace;
   font-size: 11px;
   padding: 6px 8px;
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   border-radius: var(--r-sm);
   background: var(--surface-elevated);
   color: var(--ink-primary);

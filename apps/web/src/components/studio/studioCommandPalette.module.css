@@ -16,7 +16,7 @@
   display: flex;
   flex-direction: column;
   background: var(--surface-elevated);
-  border: var(--line-subtle);
+  border: 1px solid var(--line-subtle);
   border-radius: var(--r-md);
 }
 
@@ -25,7 +25,7 @@
   align-items: center;
   gap: var(--s-2);
   padding: var(--s-3);
-  border-bottom: var(--line-hairline);
+  border-bottom: 1px solid var(--line-hairline);
 }
 
 .searchIcon {

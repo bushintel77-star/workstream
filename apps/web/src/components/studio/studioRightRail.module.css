@@ -36,7 +36,7 @@
   justify-content: space-between;
   height: 36px;
   padding: 0 var(--s-3);
-  border-bottom: var(--line-hairline);
+  border-bottom: 1px solid var(--line-hairline);
   flex-shrink: 0;
 }
 
@@ -61,7 +61,7 @@
   display: flex;
   gap: 2px;
   padding: var(--s-2);
-  border-bottom: var(--line-hairline);
+  border-bottom: 1px solid var(--line-hairline);
   flex-shrink: 0;
 }
 
@@ -70,7 +70,7 @@
   font-family: "JetBrains Mono", monospace;
   font-size: 9px;
   padding: 4px 6px;
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   border-radius: var(--r-sm);
   background: transparent;
   color: var(--ink-secondary);

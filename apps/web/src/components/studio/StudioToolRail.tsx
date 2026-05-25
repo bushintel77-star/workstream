@@ -53,19 +53,37 @@ export function StudioToolRail() {
           </button>
         ))}
         <div className={tr.divider} role="separator" />
-        <button type="button" className={tr.toolItem} title="Layers (Stage 4)">
+        <button
+          type="button"
+          className={tr.toolItem}
+          title="Layer list"
+          aria-label="Layers"
+          onClick={() => chrome?.onOpenLayers?.()}
+        >
           <span className={tr.icon} aria-hidden>
             ◫
           </span>
           <span className={tr.label}>Layers</span>
         </button>
-        <button type="button" className={tr.toolItem} title="Site layers (Stage 7)">
+        <button
+          type="button"
+          className={tr.toolItem}
+          title="Site intelligence"
+          aria-label="Site layers"
+          onClick={() => chrome?.onOpenSitePanel?.()}
+        >
           <span className={tr.icon} aria-hidden>
             ☀
           </span>
           <span className={tr.label}>Site</span>
         </button>
-        <button type="button" className={tr.toolItem} title="Command palette (Stage 3)">
+        <button
+          type="button"
+          className={tr.toolItem}
+          title="Command palette (Ctrl+K)"
+          aria-label="Command palette"
+          onClick={() => chrome?.onOpenCommandPalette?.()}
+        >
           <span className={tr.icon} aria-hidden>
             ⌘
           </span>

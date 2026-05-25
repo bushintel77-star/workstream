@@ -5,7 +5,7 @@
   gap: var(--s-3);
   padding: var(--s-3) var(--s-4);
   margin: 0;
-  border-bottom: var(--line-hairline);
+  border-bottom: 1px solid var(--line-hairline);
   border-left: 3px solid var(--warn);
   background: var(--surface-elevated);
 }
@@ -42,7 +42,7 @@
   font-weight: 600;
   color: var(--ink-primary);
   text-decoration: none;
-  border: var(--line-hairline);
+  border: 1px solid var(--line-hairline);
   display: inline-flex;
   align-items: center;
   background: var(--surface-sunken);
