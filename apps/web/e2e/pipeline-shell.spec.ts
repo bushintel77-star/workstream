@@ -54,7 +54,7 @@ test.describe("Pipeline shell", () => {
     await page.goto(`/projects/${projectId}/survey`);
     const shell = pipelineShell(page);
     await expect(shell).toBeVisible({ timeout: 30_000 });
-    await expect(shell).toHaveAttribute("data-shell-variant", "content");
+    await expect(shell).toHaveAttribute("data-shell-variant", "immersive");
     await expect(page.getByTestId("pipeline-tab-survey")).toHaveAttribute(
       "aria-current",
       "page",
@@ -66,8 +66,12 @@ test.describe("Pipeline shell", () => {
 
   test("shell quick links navigate between studio and pipeline", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design`);
+    await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
+      timeout: 30_000,
+    });
     await page.getByRole("link", { name: "Pipeline" }).first().click();
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/overview$`));
+    await expect(pipelineShell(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("pipeline-tab-overview")).toHaveAttribute(
       "aria-current",
       "page",

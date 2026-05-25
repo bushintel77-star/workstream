@@ -131,7 +131,7 @@ test.describe("Design studio", () => {
     await page.goto(`/projects/${projectId}/design`);
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({ timeout: 30_000 });
 
-    await page.getByRole("button", { name: "Mass plant", exact: true }).click();
+    await page.getByRole("tab", { name: "Mass plant" }).click();
     await page.getByRole("button", { name: "Draw bed", exact: true }).click();
 
     const canvas = page.getByTestId("design-studio-canvas");
@@ -181,7 +181,7 @@ test.describe("Design studio", () => {
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({ timeout: 30_000 });
 
     const counts = page.getByTestId("design-studio-counts");
-    await page.getByRole("button", { name: "Mass plant", exact: true }).click();
+    await page.getByRole("tab", { name: "Mass plant" }).click();
     await page.getByRole("button", { name: "Draw bed", exact: true }).click();
 
     const canvas = page.getByTestId("design-studio-canvas");
@@ -196,7 +196,7 @@ test.describe("Design studio", () => {
     await page.getByRole("button", { name: "Fill area", exact: true }).click();
     await expect(counts).toHaveText(/[3-9]\d* symbols/, { timeout: 15_000 });
 
-    await page.getByTestId("design-studio-undo").click();
+    await page.getByRole("button", { name: "Undo", exact: true }).click();
     await expect(counts).toHaveText(/1 symbols/, { timeout: 15_000 });
   });
 
