@@ -7,13 +7,22 @@ import { StudioToolRail } from "./StudioToolRail";
 import { StudioCanvas } from "./StudioCanvas";
 import { StudioRightRail } from "./StudioRightRail";
 import { StudioStatusBar } from "./StudioStatusBar";
+import type { RightRailTab } from "./studioTypes";
 
 type Props = {
   projectId: string;
   projectAddress: string;
   canvas: ReactNode;
   rightRail?: ReactNode;
+  rightRailTab: RightRailTab;
+  onRightRailTab: (tab: RightRailTab) => void;
   topbarExtras?: ReactNode;
+  ribbon?: ReactNode;
+  contextStrip?: ReactNode;
+  sitePanel?: ReactNode;
+  commandPalette?: ReactNode;
+  focusMode?: boolean;
+  ghostBar?: ReactNode;
 };
 
 /** Full-viewport CAD shell — Workflow 1 desktop layout. */
@@ -22,21 +31,50 @@ export function StudioDesktopShell({
   projectAddress,
   canvas,
   rightRail,
+  rightRailTab,
+  onRightRailTab,
   topbarExtras,
+  ribbon,
+  contextStrip,
+  sitePanel,
+  commandPalette,
+  focusMode = false,
+  ghostBar,
 }: Props) {
   return (
-    <div className={shell.shell} data-testid="studio-desktop-shell">
-      <StudioTopbar
-        projectId={projectId}
-        projectAddress={projectAddress}
-        extras={topbarExtras}
-      />
+    <div
+      className={`${shell.shell} ${focusMode ? shell.shellFocus : ""}`}
+      data-testid="studio-desktop-shell"
+    >
+      {commandPalette}
+      {!focusMode ? (
+        <StudioTopbar
+          projectId={projectId}
+          projectAddress={projectAddress}
+          extras={topbarExtras}
+        />
+      ) : null}
+      {!focusMode && ribbon ? <div className={shell.ribbonSlot}>{ribbon}</div> : null}
+      {!focusMode && contextStrip ? (
+        <div className={shell.contextSlot}>{contextStrip}</div>
+      ) : null}
+      {!focusMode && sitePanel ? <div className={shell.siteSlot}>{sitePanel}</div> : null}
       <div className={shell.workspace}>
-        <StudioToolRail />
-        <StudioCanvas>{canvas}</StudioCanvas>
-        <StudioRightRail>{rightRail}</StudioRightRail>
+        {!focusMode ? <StudioToolRail /> : null}
+        <div className={shell.canvasWrap}>
+          {ghostBar}
+          <StudioCanvas>{canvas}</StudioCanvas>
+        </div>
+        {!focusMode ? (
+          <StudioRightRail activeTab={rightRailTab} onTab={onRightRailTab}>
+            {rightRail}
+          </StudioRightRail>
+        ) : null}
       </div>
       <StudioStatusBar />
+      {focusMode ? (
+        <p className={shell.focusPill}>focus mode · press F to exit</p>
+      ) : null}
     </div>
   );
 }

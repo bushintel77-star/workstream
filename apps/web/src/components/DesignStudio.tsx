@@ -49,14 +49,28 @@ import {
   StudioWorkflowBadge,
   StudioMinimap,
   StudioZoomHUD,
+  StudioCommandPalette,
+  StudioContextStrip,
+  StudioInspector,
+  StudioLayersPanel,
+  SiteLayersPanel,
+  SiteOverlayLayer,
+  SunShadeControls,
   useStudioHistory,
   useStudioPolylineDraw,
   useStudioViewport,
 } from "./studio";
 import type { RibbonTab } from "./studio/StudioRibbon";
+import type { SiteLayerState } from "./studio/SiteLayersPanel";
+import { useStudioKeyboard } from "../hooks/useStudioKeyboard";
 import type { CanvasStrokeClient } from "./studio/types";
 import type { RateCardItem } from "../lib/api";
-import type { RailTab, StudioShellLayout, ToolOverride } from "./studio/studioTypes";
+import type {
+  RailTab,
+  RightRailTab,
+  StudioShellLayout,
+  ToolOverride,
+} from "./studio/studioTypes";
 import s from "./designStudio.module.css";
 
 export type { CanvasStrokeClient } from "./studio/types";
@@ -130,6 +144,13 @@ type Props = {
   hasDesign?: boolean;
   projectAddress?: string;
   shellLayout?: StudioShellLayout;
+  surveyMetrics?: {
+    garden_area_m2: number;
+    lot_area_m2: number;
+    house_area_m2: number;
+    lat?: number | null;
+    lng?: number | null;
+  };
 };
 
 export function DesignStudio({
@@ -145,6 +166,7 @@ export function DesignStudio({
   hasDesign = false,
   projectAddress = "Project",
   shellLayout = "legacy",
+  surveyMetrics,
 }: Props) {
   const router = useRouter();
   const toast = useToast();
@@ -163,6 +185,27 @@ export function DesignStudio({
   const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(null);
   const [railExpanded, setRailExpanded] = useState(false);
   const [rightRailOpen, setRightRailOpen] = useState(true);
+  const [rightRailTab, setRightRailTab] = useState<RightRailTab>("library");
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [libraryFilter, setLibraryFilter] = useState<string | null>(null);
+  const [hiddenPlacementIds, setHiddenPlacementIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [lockedPlacementIds, setLockedPlacementIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [siteLayers, setSiteLayers] = useState<SiteLayerState>({
+    trp: { on: true, opacity: 38 },
+    "sun-shade": { on: false, opacity: 38 },
+    easements: { on: false, opacity: 38 },
+    utilities: { on: false, opacity: 38 },
+    permits: { on: true, opacity: 100 },
+  });
+  const [sunTimeHour, setSunTimeHour] = useState(14);
+  const [solstice, setSolstice] = useState<"summer" | "equinox" | "winter">(
+    "equinox",
+  );
   const studio = useStudioHistory({
     placements: initialPlacements,
     strokes: initialStrokes,
@@ -1271,7 +1314,22 @@ export function DesignStudio({
           scale={groundScale}
         />
         <GhostPlacementOverlay ghosts={ghosts} symbolById={symbolById} />
+        {surveyMetrics && shellLayout === "desktop" ? (
+          <SiteOverlayLayer
+            canvasWidth={canvasSize.width}
+            canvasHeight={canvasSize.height}
+            placements={placements}
+            symbols={symbols}
+            layers={siteLayers}
+            lat={surveyMetrics.lat ?? -37.81}
+            lng={surveyMetrics.lng ?? 144.96}
+            shadeWhen={new Date()}
+            siteWidthM={Math.sqrt(surveyMetrics.garden_area_m2) || 20}
+            hiddenIds={hiddenPlacementIds}
+          />
+        ) : null}
         {placements.map((p) => {
+          if (hiddenPlacementIds.has(p.id)) return null;
           const sym = symbolById.get(p.symbol_id);
           if (!sym) return null;
           const isTpz = p.symbol_id === TPZ_SYMBOL_ID;
@@ -1325,6 +1383,176 @@ export function DesignStudio({
     </>
   );
 
+  const selectedPlacement =
+    placements.find((p) => p.id === selectedPlacementId) ?? null;
+  const selectedSymbol = selectedPlacement
+    ? symbolById.get(selectedPlacement.symbol_id) ?? null
+    : null;
+
+  useEffect(() => {
+    if (selectedPlacementId && shellLayout === "desktop") {
+      setRightRailTab("inspector");
+      setRightRailOpen(true);
+    }
+  }, [selectedPlacementId, shellLayout]);
+
+  useStudioKeyboard(
+    {
+      setTool: setStudioTool,
+      onUndo: undo,
+      onRedo: redo,
+      canUndo,
+      canRedo: studio.canRedo,
+      onDelete: () => {
+        if (selectedPlacementId) deletePlacement(selectedPlacementId);
+      },
+      onZoomIn: viewport.zoomIn,
+      onZoomOut: viewport.zoomOut,
+      onResetView: viewport.resetView,
+      onToggleRightRail: () => setRightRailOpen((o) => !o),
+      onOpenCommandPalette: () => setCommandOpen(true),
+      onToggleFocusMode: () => setFocusMode((f) => !f),
+      onSelectAll: () => {
+        if (placements.length > 0) {
+          setSelectedPlacementId(placements[0].id);
+        }
+      },
+    },
+    shellLayout === "desktop",
+  );
+
+  const desktopRightRail = (
+    <>
+      {rightRailTab === "inspector" ? (
+        <StudioInspector
+          projectId={projectId}
+          projectAddress={projectAddress}
+          placement={selectedPlacement}
+          symbol={selectedSymbol}
+          gardenAreaM2={surveyMetrics?.garden_area_m2}
+          onLabelChange={(label) => {
+            if (!selectedPlacementId) return;
+            updatePlacement(selectedPlacementId, { label });
+          }}
+          onRotationChange={(deg) => {
+            if (!selectedPlacementId) return;
+            updatePlacement(selectedPlacementId, {
+              rotation_deg: Math.min(360, Math.max(0, deg)),
+            });
+          }}
+        />
+      ) : null}
+      {rightRailTab === "layers" ? (
+        <StudioLayersPanel
+          rows={placements
+            .map((p) => {
+              const sym = symbolById.get(p.symbol_id);
+              if (!sym) return null;
+              return {
+                placement: p,
+                symbol: sym,
+                hidden: hiddenPlacementIds.has(p.id),
+                locked: lockedPlacementIds.has(p.id),
+              };
+            })
+            .filter(Boolean) as {
+            placement: CatalogPlacement;
+            symbol: CatalogSymbol;
+            hidden: boolean;
+            locked: boolean;
+          }[]}
+          selectedId={selectedPlacementId}
+          onSelect={(id) => setSelectedPlacementId(id)}
+          onToggleHidden={(id) => {
+            setHiddenPlacementIds((prev) => {
+              const next = new Set(prev);
+              if (next.has(id)) next.delete(id);
+              else next.add(id);
+              return next;
+            });
+          }}
+          onToggleLocked={(id) => {
+            setLockedPlacementIds((prev) => {
+              const next = new Set(prev);
+              if (next.has(id)) next.delete(id);
+              else next.add(id);
+              return next;
+            });
+          }}
+          onShowAll={() => setHiddenPlacementIds(new Set())}
+          onHideAll={() =>
+            setHiddenPlacementIds(new Set(placements.map((p) => p.id)))
+          }
+        />
+      ) : null}
+      {rightRailTab === "library" ? (
+        <DesignAssetPalette
+          symbols={symbols}
+          selectedId={paletteSelectedId}
+          disabled={isDrawMode}
+          embedded
+          onSelect={(id) => {
+            handlePaletteSelect(id);
+            setStudioTool("place");
+          }}
+          onDragStart={(id) => {
+            setDragSymbolId(id);
+            setArmedSymbolId(id);
+          }}
+          onDragEnd={() => setDragSymbolId(null)}
+        />
+      ) : null}
+      {rightRailTab === "schedule" ? (
+        <StudioSchedulePanel
+          placements={placements}
+          irrigationZones={irrigationZones}
+          symbols={symbols}
+          rateCard={rateCard}
+          scale={groundScale}
+          onCopySchedule={(md) => {
+            void navigator.clipboard.writeText(md);
+            toast.show("Schedule copied to clipboard.", "success");
+          }}
+          onOpenOutputs={() => void handleSaveAndOpenOutputs()}
+          saving={saving}
+        />
+      ) : null}
+      {rightRailTab === "ai" ? (
+        <StudioAiPanel
+          projectId={projectId}
+          tier1={tier1}
+          suggestions={aiSuggestions}
+          ghosts={ghosts}
+          scanning={aiScanning}
+          onScanSite={handleAiScan}
+          onApplyAllGhosts={applyAllGhosts}
+          onClearGhosts={() => setGhosts([])}
+          onSuggestionAction={handleAiSuggestion}
+          symbolLabel={(id) => symbolById.get(id)?.label ?? id}
+        />
+      ) : null}
+    </>
+  );
+
+  const ghostAcceptBar =
+    ghosts.length > 0 ? (
+      <div className={s.ghostAcceptBar} role="status">
+        <span>
+          {ghosts.length} suggested change{ghosts.length === 1 ? "" : "s"} — indicative
+        </span>
+        <button type="button" className={s.btnPrimary} onClick={applyAllGhosts}>
+          Apply
+        </button>
+        <button
+          type="button"
+          className={s.toolBtn}
+          onClick={() => setGhosts([])}
+        >
+          Discard
+        </button>
+      </div>
+    ) : null;
+
   const chromeValue = useMemo(
     () => ({
       toolOverride,
@@ -1349,6 +1577,7 @@ export function DesignStudio({
       onUndo: undo,
       canRedo: studio.canRedo,
       onRedo: redo,
+      onOpenCommandPalette: () => setCommandOpen(true),
     }),
     [
       toolOverride,
@@ -1370,19 +1599,127 @@ export function DesignStudio({
   );
 
   if (shellLayout === "desktop") {
+    const surveyPick = surveyMetrics ?? {
+      garden_area_m2: 400,
+      lot_area_m2: 600,
+      house_area_m2: 200,
+      lat: -37.81,
+      lng: 144.96,
+    };
+
     return (
       <StudioChromeProvider value={chromeValue}>
+        <StudioCommandPalette
+          open={commandOpen}
+          onClose={() => setCommandOpen(false)}
+          symbols={symbols}
+          onTool={setStudioTool}
+          onResetView={viewport.resetView}
+          onZoomIn={viewport.zoomIn}
+          onZoomOut={viewport.zoomOut}
+          onToggleRightRail={() => setRightRailOpen((o) => !o)}
+          onToggleFocusMode={() => setFocusMode((f) => !f)}
+          onPlaceSymbol={(id) => {
+            setArmedSymbolId(id);
+            setPaletteSelectedId(id);
+            setStudioTool("place");
+          }}
+          projectId={projectId}
+        />
         <StudioDesktopShell
           projectId={projectId}
           projectAddress={projectAddress}
           topbarExtras={saveStatusText}
+          rightRailTab={rightRailTab}
+          onRightRailTab={(tab) => {
+            setRightRailTab(tab);
+            setRightRailOpen(true);
+          }}
+          focusMode={focusMode}
+          ghostBar={ghostAcceptBar}
+          ribbon={
+            <StudioRibbon
+              ribbonTab={ribbonTab}
+              onRibbonTab={setRibbonTab}
+              toolOverride={toolOverride}
+              onTool={setStudioTool}
+              zoomPercent={viewport.zoomPercent}
+              onZoomIn={viewport.zoomIn}
+              onZoomOut={viewport.zoomOut}
+              onResetView={viewport.resetView}
+              onOpenAiRail={() => {
+                setRightRailTab("ai");
+                setRightRailOpen(true);
+              }}
+              canUndo={canUndo}
+              onUndo={undo}
+              onRedo={redo}
+              canRedo={studio.canRedo}
+              tier1={tier1}
+              saveStatus={saveStatusNode}
+              saveButton={saveButtonNode}
+            />
+          }
+          contextStrip={
+            <StudioContextStrip
+              ribbonTab={ribbonTab}
+              projectAddress={projectAddress}
+              onUndo={undo}
+              onRedo={redo}
+              canUndo={canUndo}
+              canRedo={studio.canRedo}
+              onScan={handleAiScan}
+              onOpenDevelop={() => router.push(`/projects/${projectId}/design/develop`)}
+              libraryFilter={libraryFilter}
+              onLibraryFilter={setLibraryFilter}
+            />
+          }
+          sitePanel={
+            ribbonTab === "site" ? (
+              <>
+                <SiteLayersPanel
+                  projectId={projectId}
+                  projectAddress={projectAddress}
+                  survey={surveyPick}
+                  placements={placements}
+                  symbols={symbols}
+                  layers={siteLayers}
+                  onToggle={(id) =>
+                    setSiteLayers((prev) => ({
+                      ...prev,
+                      [id]: { ...prev[id], on: !prev[id].on },
+                    }))
+                  }
+                  onOpacity={(id, opacity) =>
+                    setSiteLayers((prev) => ({
+                      ...prev,
+                      [id]: { ...prev[id], opacity },
+                    }))
+                  }
+                  conflictCount={0}
+                />
+                {siteLayers["sun-shade"].on ? (
+                  <SunShadeControls
+                    lat={surveyPick.lat ?? -37.81}
+                    lng={surveyPick.lng ?? 144.96}
+                    timeHour={sunTimeHour}
+                    solstice={solstice}
+                    onTimeHour={setSunTimeHour}
+                    onSolstice={setSolstice}
+                    zoomPercent={viewport.zoomPercent}
+                    cursorPct={cursorPct}
+                  />
+                ) : null}
+              </>
+            ) : null
+          }
           canvas={
             <div className={sh.rootFill}>
               {tier1 ? <StudioTier1Banner projectId={projectId} /> : null}
               {canvasWorkspace}
             </div>
           }
-          rightRail={railPanels}
+          rightRail={desktopRightRail}
         />
       </StudioChromeProvider>
     );

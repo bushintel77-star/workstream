@@ -3,7 +3,7 @@
 import type { ToolOverride } from "./studioTypes";
 import rb from "./studioRibbon.module.css";
 
-export type RibbonTab = "home" | "plant" | "annotate" | "ai";
+export type RibbonTab = "ai" | "home" | "plant" | "annotate" | "site";
 
 type Props = {
   ribbonTab: RibbonTab;
@@ -63,6 +63,7 @@ export function StudioRibbon({
             ["home", "Home", false],
             ["plant", "Plant", false],
             ["annotate", "Annotate", false],
+            ["site", "Site", false],
           ] as const
         ).map(([id, label, ai]) => (
           <button

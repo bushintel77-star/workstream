@@ -6,9 +6,43 @@
   background: var(--surface-base);
 }
 
+.ribbonSlot,
+.contextSlot,
+.siteSlot {
+  flex-shrink: 0;
+}
+
 .workspace {
   display: flex;
   flex: 1;
   overflow: hidden;
   min-height: 0;
+}
+
+.canvasWrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shellFocus .workspace {
+  flex: 1;
+}
+
+.focusPill {
+  position: absolute;
+  bottom: calc(var(--studio-statusbar-h) + var(--s-2));
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 14px;
+  border-radius: 12px;
+  border: var(--line-hairline);
+  background: var(--surface-elevated);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-tertiary);
+  z-index: 20;
+  pointer-events: none;
 }

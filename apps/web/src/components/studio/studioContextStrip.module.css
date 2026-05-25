@@ -1,0 +1,44 @@
+.strip {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  min-height: var(--studio-context-strip-h);
+  padding: 0 var(--s-3);
+  background: var(--surface-sunken);
+  border-bottom: var(--line-hairline);
+  flex-shrink: 0;
+}
+
+.chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: 10px;
+  border: var(--line-hairline);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--ink-primary);
+  border-color: var(--line-subtle);
+}
+
+.chipActive {
+  background: var(--surface-elevated);
+  color: var(--ink-primary);
+  border-color: var(--line-strong);
+}
+
+.tier1Chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  border-left: 2px solid var(--warn);
+  color: var(--ink-primary);
+  background: var(--surface-elevated);
+}

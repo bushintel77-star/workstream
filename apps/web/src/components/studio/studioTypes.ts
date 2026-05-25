@@ -10,4 +10,13 @@ export type ToolOverride =
 
 export type StudioShellLayout = "legacy" | "desktop";
 
-export type RailTab = "ai" | "massplant" | "irrigation" | "schedule";
+export type RailTab =
+  | "ai"
+  | "inspector"
+  | "layers"
+  | "library"
+  | "massplant"
+  | "irrigation"
+  | "schedule";
+
+export type RightRailTab = "inspector" | "layers" | "library" | "schedule" | "ai";

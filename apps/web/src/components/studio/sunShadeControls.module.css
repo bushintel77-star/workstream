@@ -1,0 +1,51 @@
+.panel {
+  padding: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  border-bottom: var(--line-hairline);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--ink-secondary);
+}
+
+.value {
+  font-size: 11px;
+  color: var(--ink-primary);
+}
+
+.chips {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  border: var(--line-hairline);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.chipActive {
+  background: var(--surface-elevated);
+  color: var(--ink-primary);
+  border-color: var(--line-strong);
+}
+
+.hud,
+.footer {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  color: var(--ink-tertiary);
+  margin: 0;
+}

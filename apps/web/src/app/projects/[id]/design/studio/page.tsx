@@ -45,6 +45,13 @@ export default async function DesignStudioPage({
             symbols={symbols}
             rateCard={rateCard}
             canvas={canvas}
+            surveyMetrics={{
+              garden_area_m2: survey.garden_area_m2,
+              lot_area_m2: survey.lot_area_m2,
+              house_area_m2: survey.house_area_m2,
+              lat: project.lat,
+              lng: project.lng,
+            }}
           />
         </Suspense>
       )}

@@ -15,6 +15,13 @@ type Props = {
   rateCard: RateCardItem[];
   canvas: DesignCanvas | null;
   tier1?: boolean;
+  surveyMetrics?: {
+    garden_area_m2: number;
+    lot_area_m2: number;
+    house_area_m2: number;
+    lat?: number | null;
+    lng?: number | null;
+  };
 };
 
 /** Picks desktop CAD shell at ≥960px or ?studio=desktop. */
@@ -27,6 +34,7 @@ export function DesignStudioClient({
   rateCard,
   canvas,
   tier1 = false,
+  surveyMetrics,
 }: Props) {
   const wide = useMediaQuery("(min-width: 960px)");
   const params = useSearchParams();
@@ -52,6 +60,7 @@ export function DesignStudioClient({
       }
       initialIrrigationZones={canvas?.irrigation_zones ?? []}
       shellLayout={shellLayout}
+      surveyMetrics={surveyMetrics}
     />
   );
 }

@@ -32,6 +32,7 @@ export type StudioChromeState = {
   onUndo: () => void;
   canRedo: boolean;
   onRedo: () => void;
+  onOpenCommandPalette?: () => void;
 };
 
 const StudioChromeContext = createContext<StudioChromeState | null>(null);
@@ -92,6 +93,7 @@ export function useStudioChromeStub(): StudioChromeState {
       onUndo: () => {},
       canRedo: false,
       onRedo: () => {},
+      onOpenCommandPalette: () => {},
     }),
     [toolOverride, railExpanded, rightRailOpen, cursorPct],
   );

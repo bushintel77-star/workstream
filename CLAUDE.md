@@ -63,8 +63,14 @@ co-pilot for Curtis & Co (Melbourne).
   punch list to add an undo toast).
 - Don't add backwards-compatibility shims for removed code. Delete it.
 
+## Design studio phases
+
+- **Workflow 1 (now):** Professional sketch — CAD-inspired UX, `%` canvas coords, indicative scale/overlays. See `docs/STUDIO-PRODUCT-PHASES.md`.
+- **Stage 2 (later):** True CAD — survey coordinates, named layer export, dim styles; requires new contracts schema. Do not implement Stage 2 fields on `DesignCanvas` without a schema brief.
+
 ## Out-of-scope today
 
 - Real-time multi-user sync. The store is single-tenant.
 - Postgres. Stay on the JSON snapshot path until SQLite migration lands.
 - Native ESLint plugin churn — see `OUTSTANDING.md`.
+- Stage 2 CAD export / survey-grade studio (Workflow 1 only until product opens Stage 2).

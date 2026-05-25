@@ -11,6 +11,13 @@ type Props = {
   symbols: CatalogSymbol[];
   rateCard: RateCardItem[];
   canvas: DesignCanvas | null;
+  surveyMetrics?: {
+    garden_area_m2: number;
+    lot_area_m2: number;
+    house_area_m2: number;
+    lat?: number | null;
+    lng?: number | null;
+  };
 };
 
 export function DesignStudioSection({
@@ -21,6 +28,7 @@ export function DesignStudioSection({
   symbols,
   rateCard,
   canvas,
+  surveyMetrics,
 }: Props) {
   return (
     <section id="design-studio" className={section.wrap} aria-label="Design studio">
@@ -32,6 +40,7 @@ export function DesignStudioSection({
         symbols={symbols}
         rateCard={rateCard}
         canvas={canvas}
+        surveyMetrics={surveyMetrics}
       />
     </section>
   );

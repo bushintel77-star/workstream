@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useStudioChromeOptional } from "./StudioChromeContext";
 import tb from "./studioTopbar.module.css";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
+  const chrome = useStudioChromeOptional();
   return (
     <header className={tb.topbar} data-testid="studio-topbar">
       <div className={tb.left}>
@@ -32,7 +34,12 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
         </p>
       </div>
       <div className={tb.right}>
-        <button type="button" className={tb.iconBtn} title="Command palette (Stage 3)">
+        <button
+          type="button"
+          className={tb.iconBtn}
+          title="Command palette (Ctrl+K)"
+          onClick={() => chrome?.onOpenCommandPalette?.()}
+        >
           ⌘
         </button>
         <button type="button" className={tb.iconBtn} title="Share (coming soon)">

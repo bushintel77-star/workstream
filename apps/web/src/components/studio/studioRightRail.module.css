@@ -30,6 +30,59 @@
   line-height: 1.5;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 var(--s-3);
+  border-bottom: var(--line-hairline);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: capitalize;
+  color: var(--ink-secondary);
+}
+
+.close {
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: var(--s-2);
+  border-bottom: var(--line-hairline);
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  padding: 4px 6px;
+  border: var(--line-hairline);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.tabActive {
+  background: var(--surface-sunken);
+  color: var(--ink-primary);
+  border-color: var(--line-strong);
+}
+
 .body {
   flex: 1;
   min-height: 0;
