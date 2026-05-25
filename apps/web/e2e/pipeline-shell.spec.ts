@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pipelineShell } from "./helpers";
+import { LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -79,6 +79,7 @@ test.describe("Pipeline shell", () => {
 
     await page.getByRole("link", { name: "Studio" }).first().click();
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/design$`));
+    await page.setViewportSize(LEGACY_STUDIO_VIEWPORT);
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,
     });
