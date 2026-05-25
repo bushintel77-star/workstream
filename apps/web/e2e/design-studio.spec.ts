@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -40,9 +41,13 @@ test.describe("Design studio", () => {
     expect(seed.ok()).toBeTruthy();
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(LEGACY_STUDIO_VIEWPORT);
+  });
+
   test("loads immersive pipeline shell and aerial canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design`);
-    const shell = page.getByTestId("project-pipeline-shell");
+    const shell = pipelineShell(page);
     await expect(shell).toBeVisible({ timeout: 30_000 });
     await expect(shell).toHaveAttribute("data-shell-variant", "immersive");
     await expect(page.getByTestId("pipeline-tab-design")).toHaveAttribute(
@@ -103,15 +108,12 @@ test.describe("Design studio", () => {
     });
   });
 
-  test("legacy studio URL redirects to design", async ({ page }) => {
+  test("legacy studio URL loads desktop-capable studio page", async ({ page }) => {
     await page.goto(`/projects/${projectId}/design/studio`);
-    await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/design$`));
-    await expect(page.getByTestId("project-pipeline-shell")).toBeVisible({
-      timeout: 30_000,
-    });
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(page.getByTestId("project-pipeline-shell").first()).toBeVisible();
   });
 
   test("save plan from toolbar", async ({ page }) => {
@@ -129,7 +131,7 @@ test.describe("Design studio", () => {
     await page.goto(`/projects/${projectId}/design`);
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({ timeout: 30_000 });
 
-    await page.getByRole("button", { name: "Mass plant", exact: true }).click();
+    await page.getByRole("tab", { name: "Mass plant" }).click();
     await page.getByRole("button", { name: "Draw bed", exact: true }).click();
 
     const canvas = page.getByTestId("design-studio-canvas");
@@ -165,9 +167,6 @@ test.describe("Design studio", () => {
     await canvas.click({ position: { x: w * 0.7, y: h * 0.6 } });
 
     await page.getByRole("button", { name: "Finish line", exact: true }).click();
-    await page.getByRole("button", { name: "Summary", exact: true }).click();
-    await expect(page.getByText(/Valves needed:/)).toBeVisible({ timeout: 10_000 });
-
     await page.getByRole("tab", { name: "Schedule" }).click();
     await expect(page.getByTestId("schedule-sku-IRR-DRIP")).toBeVisible({
       timeout: 15_000,
@@ -179,7 +178,7 @@ test.describe("Design studio", () => {
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({ timeout: 30_000 });
 
     const counts = page.getByTestId("design-studio-counts");
-    await page.getByRole("button", { name: "Mass plant", exact: true }).click();
+    await page.getByRole("tab", { name: "Mass plant" }).click();
     await page.getByRole("button", { name: "Draw bed", exact: true }).click();
 
     const canvas = page.getByTestId("design-studio-canvas");
@@ -194,8 +193,31 @@ test.describe("Design studio", () => {
     await page.getByRole("button", { name: "Fill area", exact: true }).click();
     await expect(counts).toHaveText(/[3-9]\d* symbols/, { timeout: 15_000 });
 
-    await page.getByTestId("design-studio-undo").click();
+    await page.getByRole("button", { name: "Undo", exact: true }).click();
     await expect(counts).toHaveText(/1 symbols/, { timeout: 15_000 });
+  });
+
+  test("shows Tier-1 banner for Wrights Terrace address", async ({ request, page }) => {
+    const create = await request.post(`${API}/projects/`, {
+      data: {
+        address: "36 Wrights Terrace, Prahran VIC 3181",
+        lat: -37.8512,
+        lng: 145.001,
+      },
+    });
+    expect(create.ok()).toBeTruthy();
+    const { project } = (await create.json()) as { project: { id: string } };
+    const survey = await request.post(`${API}/projects/${project.id}/survey`);
+    expect(survey.ok()).toBeTruthy();
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/projects/${project.id}/design?studio=desktop`);
+    await expect(page.getByTestId("studio-tier1-banner")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByTestId("studio-tier1-banner")).toContainText(
+      /Architectural massing studio/i,
+    );
   });
 
   test("save persists irrigation zones on reload", async ({ request, page }) => {

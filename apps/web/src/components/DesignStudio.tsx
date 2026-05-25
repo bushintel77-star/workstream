@@ -11,6 +11,7 @@ import {
   buildGhostPlacementSuggestions,
   buildStudioAiSuggestions,
   CATALOG_PLANNING_SYMBOL_IDS,
+  isTier1WrightsTerrace,
   withDirtySaveSuggestion,
 } from "@workstream/domain";
 import type {
@@ -168,6 +169,7 @@ export function DesignStudio({
   shellLayout = "legacy",
   surveyMetrics,
 }: Props) {
+  const tier1Active = tier1 || isTier1WrightsTerrace(projectAddress);
   const router = useRouter();
   const toast = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -341,7 +343,7 @@ export function DesignStudio({
           strokeCount: strokes.length,
           zoneCount: irrigationZones.length,
           hasPlanningSymbol,
-          tier1,
+          tier1: tier1Active,
           hasDesign,
         }),
         isDirty,
@@ -351,7 +353,7 @@ export function DesignStudio({
       strokes.length,
       irrigationZones.length,
       hasPlanningSymbol,
-      tier1,
+      tier1Active,
       hasDesign,
       isDirty,
     ],
@@ -361,7 +363,7 @@ export function DesignStudio({
     setAiScanning(true);
     window.setTimeout(() => {
       const next = buildGhostPlacementSuggestions({
-        tier1,
+        tier1: tier1Active,
         symbolIds: symbols.map((sym) => sym.id),
       });
       setGhosts(next);
@@ -374,7 +376,7 @@ export function DesignStudio({
         next.length > 0 ? "success" : "info",
       );
     }, 480);
-  }, [symbols, tier1, toast]);
+  }, [symbols, tier1Active, toast]);
 
   const applyAllGhosts = useCallback(() => {
     if (ghosts.length === 0) return;
@@ -1019,7 +1021,7 @@ export function DesignStudio({
       : null;
 
   const railTabs = [
-    ["ai", "AI assist", ghosts.length || (tier1 ? "T1" : null)],
+    ["ai", "AI assist", ghosts.length || (tier1Active ? "T1" : null)],
     ["massplant", "Mass plant", null],
     ["irrigation", "Irrigation", irrigationZones.length || null],
     ["schedule", "Schedule", scheduleBadge],
@@ -1033,6 +1035,12 @@ export function DesignStudio({
     >
       <span className={`${s.saveStatusDot} ${saveStatusDotClass}`} aria-hidden />
       {saveStatusText}
+    </span>
+  );
+
+  const countsNode = (
+    <span data-testid="design-studio-counts" className={s.canvasHudPill}>
+      {placements.length} symbols · {irrigationZones.length} zones
     </span>
   );
 
@@ -1086,7 +1094,7 @@ export function DesignStudio({
         {railTab === "ai" ? (
           <StudioAiPanel
             projectId={projectId}
-            tier1={tier1}
+            tier1={tier1Active}
             suggestions={aiSuggestions}
             ghosts={ghosts}
             scanning={aiScanning}
@@ -1248,6 +1256,7 @@ export function DesignStudio({
         ) : null}
         <div className={s.canvasHud} aria-hidden>
           <span className={s.canvasHudPill}>{activeToolLabel}</span>
+          {shellLayout === "legacy" ? countsNode : null}
           {armedSymbolLabel ? (
             <span className={s.canvasHudArmed}>{armedSymbolLabel}</span>
           ) : null}
@@ -1520,7 +1529,7 @@ export function DesignStudio({
       {rightRailTab === "ai" ? (
         <StudioAiPanel
           projectId={projectId}
-          tier1={tier1}
+          tier1={tier1Active}
           suggestions={aiSuggestions}
           ghosts={ghosts}
           scanning={aiScanning}
@@ -1565,6 +1574,7 @@ export function DesignStudio({
       saveStatusDotClass,
       selectionCount: selectedPlacementId ? 1 : 0,
       symbolCount: placements.length,
+      zoneCount: irrigationZones.length,
       cursorPct,
       setCursorPct,
       zoomPercent: viewport.zoomPercent,
@@ -1588,6 +1598,7 @@ export function DesignStudio({
       saveStatusDotClass,
       selectedPlacementId,
       placements.length,
+      irrigationZones.length,
       cursorPct,
       viewport.zoomPercent,
       saving,
@@ -1655,7 +1666,7 @@ export function DesignStudio({
               onUndo={undo}
               onRedo={redo}
               canRedo={studio.canRedo}
-              tier1={tier1}
+              tier1={tier1Active}
               saveStatus={saveStatusNode}
               saveButton={saveButtonNode}
             />
@@ -1715,7 +1726,7 @@ export function DesignStudio({
           }
           canvas={
             <div className={sh.rootFill}>
-              {tier1 ? <StudioTier1Banner projectId={projectId} /> : null}
+              {tier1Active ? <StudioTier1Banner projectId={projectId} /> : null}
               {canvasWorkspace}
             </div>
           }
@@ -1728,7 +1739,7 @@ export function DesignStudio({
   return (
     <div className={sh.rootFill}>
       <StudioWorkflowBadge />
-      {tier1 ? <StudioTier1Banner projectId={projectId} /> : null}
+      {tier1Active ? <StudioTier1Banner projectId={projectId} /> : null}
       <StudioRibbon
         ribbonTab={ribbonTab}
         onRibbonTab={setRibbonTab}
@@ -1743,7 +1754,7 @@ export function DesignStudio({
         onUndo={undo}
         onRedo={redo}
         canRedo={studio.canRedo}
-        tier1={tier1}
+        tier1={tier1Active}
         saveStatus={saveStatusNode}
         saveButton={saveButtonNode}
       />

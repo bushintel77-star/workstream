@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Tier1SavingsLedger } from "./tier1";
 import styles from "../app/portal/quote/[token]/quote.module.css";
 
 export type PortalCosting = {
@@ -158,33 +159,11 @@ export function QuotePortal({
         </section>
       )}
 
-      {tier1 && (
+      {tier1 ? (
         <section className={styles.section}>
-          <h2 className={styles.sectionHeading}>Value reallocation</h2>
-          <div className={styles.ledger}>
-            <div className={styles.ledgerCol}>
-              <span className={styles.ledgerKicker}>Removed</span>
-              <span className={styles.ledgerAmount}>
-                {aud2(tier1.removed_ex)}
-              </span>
-              <p className={styles.ledgerNote}>
-                Cottage perennials, ferns, organic mulch, redundant irrigation
-                zone.
-              </p>
-            </div>
-            <div className={styles.ledgerCol}>
-              <span className={styles.ledgerKicker}>Deployed</span>
-              <span className={styles.ledgerAmount}>
-                {aud2(tier1.deployed_ex)}
-              </span>
-              <p className={styles.ledgerNote}>
-                Cycas anchors, Buxus structure, Mondo grid, bluestone screenings,
-                deck strip lighting.
-              </p>
-            </div>
-          </div>
+          <Tier1SavingsLedger savings={tier1} showTarget={false} />
         </section>
-      )}
+      ) : null}
 
       {allCostings.length > 0 && (
         <section

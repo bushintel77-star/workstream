@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { pipelineShell } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -24,7 +25,7 @@ test.describe("Operator happy path", () => {
     expect(pipeline.ok()).toBeTruthy();
 
     await page.goto(`/projects/${projectId}`);
-    await expect(page.getByTestId("project-pipeline-shell")).toBeVisible({
+    await expect(pipelineShell(page)).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
@@ -32,7 +33,7 @@ test.describe("Operator happy path", () => {
     });
 
     await page.goto(`/projects/${projectId}/overview`);
-    await expect(page.getByTestId("project-pipeline-shell")).toHaveAttribute(
+    await expect(pipelineShell(page)).toHaveAttribute(
       "data-shell-variant",
       "immersive",
     );
@@ -41,7 +42,7 @@ test.describe("Operator happy path", () => {
     });
 
     await page.goto(`/projects/${projectId}/design`);
-    await expect(page.getByTestId("project-pipeline-shell")).toHaveAttribute(
+    await expect(pipelineShell(page)).toHaveAttribute(
       "data-shell-variant",
       "immersive",
     );

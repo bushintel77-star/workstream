@@ -40,6 +40,7 @@ export function StudioToolRail() {
             data-mode={t.mode ?? t.id}
             data-active={t.mode !== undefined && toolOverride === t.mode ? "true" : "false"}
             title={t.label}
+            aria-label={t.label}
             disabled={!setTool && t.mode !== undefined}
             onClick={() => {
               if (t.mode !== undefined && setTool) setTool(t.mode);

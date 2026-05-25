@@ -16,6 +16,7 @@ export function StudioStatusBar() {
     sel === 0 ? "no selection" : `selection: ${sel} symbol${sel === 1 ? "" : "s"}`;
   const zoom = chrome?.zoomPercent ?? 100;
   const symbols = chrome?.symbolCount ?? 0;
+  const zones = chrome?.zoneCount ?? 0;
 
   return (
     <footer className={sb.statusBar} role="status" aria-live="polite" data-testid="studio-status-bar">
@@ -23,9 +24,10 @@ export function StudioStatusBar() {
       <span>{selectionLabel}</span>
       <span className={sb.right}>
         <span>zoom: {zoom}%</span>
-        <span>
-          {symbols} symbols · <span className={sb.indicative}>indicative scale</span>
+        <span data-testid="design-studio-counts">
+          {symbols} symbols · {zones} zones
         </span>
+        <span className={sb.indicative}>indicative scale</span>
       </span>
     </footer>
   );

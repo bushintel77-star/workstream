@@ -20,6 +20,7 @@ export type StudioChromeState = {
   saveStatusDotClass: string;
   selectionCount: number;
   symbolCount: number;
+  zoneCount: number;
   cursorPct: { x: number; y: number } | null;
   setCursorPct: (pct: { x: number; y: number } | null) => void;
   zoomPercent: number;
@@ -81,6 +82,7 @@ export function useStudioChromeStub(): StudioChromeState {
       saveStatusDotClass: "",
       selectionCount: 0,
       symbolCount: 0,
+      zoneCount: 0,
       cursorPct,
       setCursorPct,
       zoomPercent: 100,

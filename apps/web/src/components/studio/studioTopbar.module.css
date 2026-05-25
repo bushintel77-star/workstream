@@ -97,3 +97,20 @@
   color: var(--ink-primary);
   background: var(--surface-sunken);
 }
+
+.installBtn {
+  min-height: 36px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-hairline);
+  background: var(--surface-sunken);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.installBtn:hover {
+  background: var(--surface-elevated);
+}

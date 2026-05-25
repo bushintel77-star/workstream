@@ -5,9 +5,9 @@ import { useMemo } from "react";
 import {
   assessPlanningFromSketch,
   isTier1WrightsTerrace,
-  TIER1_WRIGHTS_SAVINGS,
   WIKIMEDIA_TREE_ATTRIBUTION,
 } from "@workstream/domain";
+import { Tier1SavingsLedger, Tier1ZoneCards } from "../tier1";
 import type { PlanningFlag } from "@workstream/domain";
 import type { CatalogPlacement, CatalogSymbol, DesignCanvas } from "@workstream/contracts";
 import type { Survey } from "@workstream/contracts";
@@ -131,11 +131,19 @@ export function SiteLayersPanel({
       )}
 
       {tier1 ? (
-        <div className={sl.tier1}>
-          <p>
-            Tier-1 savings net {TIER1_WRIGHTS_SAVINGS.net_inc_gst.toFixed(0)} inc GST
-          </p>
-          <Link href={`/projects/${projectId}/design/develop`}>→ Full develop analysis</Link>
+        <div className={sl.tier1} data-testid="site-tier1-block">
+          <p className={sl.section}>Tier-1 zone massing</p>
+          <Tier1ZoneCards />
+          <Tier1SavingsLedger
+            variant="compact"
+            heading="Savings ledger"
+            showTarget={false}
+            footer={
+              <Link href={`/projects/${projectId}/design/develop`}>
+                Full develop analysis
+              </Link>
+            }
+          />
         </div>
       ) : null}
 
