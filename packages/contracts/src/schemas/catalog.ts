@@ -31,6 +31,12 @@ export const CatalogAssetSchema = z.object({
 });
 export type CatalogAsset = z.infer<typeof CatalogAssetSchema>;
 
+export const PlantSunSchema = z.enum(["full", "partial", "shade"]);
+export type PlantSun = z.infer<typeof PlantSunSchema>;
+
+export const PlantWaterSchema = z.enum(["low", "moderate", "high"]);
+export type PlantWater = z.infer<typeof PlantWaterSchema>;
+
 /** CAD-style symbol from the Curtis library. */
 export const CatalogSymbolSchema = z.object({
   id: z.string(),
@@ -42,6 +48,11 @@ export const CatalogSymbolSchema = z.object({
   asset: CatalogAssetSchema.optional(),
   description: z.string().optional(),
   keywords: z.array(z.string()).optional(),
+  botanical_name: z.string().optional(),
+  sun: PlantSunSchema.optional(),
+  water: PlantWaterSchema.optional(),
+  soil: z.string().optional(),
+  mature_height_m: z.number().positive().optional(),
   default_width_m: z.number().positive().optional(),
   rate_card_sku: z.string().optional(),
 });

@@ -1,7 +1,11 @@
 import { requireProject } from "../../../../lib/project-guard";
 import { getCarbon } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +30,8 @@ export default async function CarbonPage({
     : [];
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="carbon" />
+    <ProjectPipelineShell project={project} active="carbon">
+      <PipelineContent>
 
       <h1 className={s.headline}>Embodied carbon</h1>
       <p className={s.lede}>
@@ -101,6 +105,7 @@ export default async function CarbonPage({
           </table>
         </>
       )}
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

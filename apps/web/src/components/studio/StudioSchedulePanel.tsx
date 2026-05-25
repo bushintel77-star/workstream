@@ -152,7 +152,7 @@ export function StudioSchedulePanel({
                 <td>
                   {row.qty} {row.unit}
                 </td>
-                <td>
+                <td data-testid={row.sku ? `schedule-sku-${row.sku}` : undefined}>
                   {row.sku}
                   {row.missing ? <span className={s.missingPill}> Missing rate</span> : null}
                 </td>

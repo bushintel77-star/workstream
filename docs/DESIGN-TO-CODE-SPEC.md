@@ -21,9 +21,10 @@ apps/web/src/
 │   └── projects/[id]/
 │       ├── page.tsx         ← project hub
 │       ├── project.module.css
-│       └── design/studio/page.tsx
+│       └── design/page.tsx  ← immersive studio (survey required)
 └── components/              ← reusable UI (+ matching *.module.css)
-    ├── AppNav.tsx + app-nav.module.css
+    ├── ProjectPipelineShell.tsx + projectPipelineShell.module.css
+    ├── PipelineImageShell.tsx + pipelineImageShell.module.css
     ├── DesignStudio.tsx + designStudio.module.css
     └── studio/              ← design studio sub-components
 ```
@@ -46,7 +47,7 @@ For every screen you change, fill one row:
 
 | Figma page / frame | Route | Page file | CSS module | Client components to restyle |
 | --- | --- | --- | --- | --- |
-| 04 — Design studio / Desktop | `/projects/:id/design/studio` | `app/projects/[id]/design/studio/page.tsx` | `components/designStudio.module.css` | `DesignStudio.tsx`, `studio/DesignAssetPalette.tsx`, `studio/designAssetPalette.module.css` |
+| 04 — Design studio / Desktop | `/projects/:id/design` | `app/projects/[id]/design/page.tsx` | `components/designStudio.module.css`, `pipelineImageShell.module.css` | `DesignStudio.tsx`, `studio/DesignAssetPalette.tsx`, `studio/StudioSchedulePanel.tsx`, `studio/StudioMassPlantPanel.tsx`, `studio/StudioIrrigationPanel.tsx`, `studio/useStudioHistory.ts` |
 | 03 — Dashboard | `/` | `app/page.tsx` | `app/dashboard.module.css` | `NewProjectAddressForm.tsx`, `DashboardProjectRow.tsx` |
 | Project hub | `/projects/:id` | `app/projects/[id]/page.tsx` | `app/projects/[id]/project.module.css` | `ProjectShell.tsx` (masthead + subnav) |
 

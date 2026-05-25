@@ -2,7 +2,11 @@ import { requireProject } from "../../../../lib/project-guard";
 import { listRecordings } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 import { RecordingCapture } from "../../../../components/RecordingCapture";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +29,8 @@ export default async function RecordingsPage({
   const recordings = await listRecordings(id);
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="recordings" />
+    <ProjectPipelineShell project={project} active="recordings">
+      <PipelineContent>
 
       <h1 className={s.headline}>Recordings</h1>
       <p className={s.lede}>
@@ -71,6 +75,7 @@ export default async function RecordingsPage({
           ))}
         </ul>
       )}
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

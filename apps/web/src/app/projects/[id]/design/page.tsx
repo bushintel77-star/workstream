@@ -1,15 +1,15 @@
-import Link from "next/link";
 import { requireProject } from "../../../../lib/project-guard";
 import {
-  getDesign,
   getDesignCanvas,
   getSurvey,
   listCatalogSymbols,
-  listCostings,
   listRateCard,
 } from "../../../../lib/api";
-import s from "../../../../styles/app.module.css";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  ProjectPipelineShell,
+  StudioSurveyRequired,
+} from "../../../../components/ProjectPipelineShell";
 import { DesignStudioSection } from "./DesignStudioSection";
 
 export const dynamic = "force-dynamic";
@@ -31,38 +31,19 @@ export default async function DesignPage({
   ]);
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="design" />
-
+    <ProjectPipelineShell project={project} active="design" variant="immersive">
       {!survey ? (
-        <>
-          <h1 className={s.headline}>Studio</h1>
-          <p className={s.lede}>Run the survey first — the aerial site plan is required.</p>
-          <div className={s.actionBar}>
-            <Link href={`/projects/${id}/survey`} className={s.btn}>
-              Complete survey first
-            </Link>
-          </div>
-        </>
+        <StudioSurveyRequired projectId={id} />
       ) : (
-        <>
-          <DesignStudioSection
-            projectId={id}
-            aerialUri={survey.aerial_uri}
-            lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
-            symbols={symbols}
-            rateCard={rateCard}
-            canvas={canvas}
-          />
-          <p className={s.meta}>
-            <Link href={`/projects/${id}/design/develop`}>
-              Develop & estimate from sketch →
-            </Link>
-            {" · "}
-            <Link href={`/projects/${id}/overview`}>Pipeline overview →</Link>
-          </p>
-        </>
+        <DesignStudioSection
+          projectId={id}
+          aerialUri={survey.aerial_uri}
+          lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
+          symbols={symbols}
+          rateCard={rateCard}
+          canvas={canvas}
+        />
       )}
-    </main>
+    </ProjectPipelineShell>
   );
 }

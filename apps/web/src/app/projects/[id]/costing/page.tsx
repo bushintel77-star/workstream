@@ -7,7 +7,11 @@ import {
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { runCostingAction } from "../../../actions";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 import { PipelineActionForm } from "../../../../components/PipelineActionForm";
 
 export const dynamic = "force-dynamic";
@@ -54,8 +58,8 @@ export default async function CostingPage({
     }).format(n);
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="costing" />
+    <ProjectPipelineShell project={project} active="costing">
+      <PipelineContent>
 
       <h1 className={s.headline}>Costing</h1>
       <p className={s.lede}>
@@ -156,6 +160,7 @@ export default async function CostingPage({
           )}
         </>
       )}
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

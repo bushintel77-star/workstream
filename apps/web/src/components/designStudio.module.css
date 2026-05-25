@@ -1,37 +1,12 @@
-/* Design studio — @workstream/ui / globals.css tokens only.
- * Signal accent (--accent): Save + armed Place/Draw mode only (≤3% surface). */
+/* Design studio — studio-specific chrome; layout shell in pipelineImageShell.module.css. */
 
-.root {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-  min-height: min(72vh, 820px);
-}
-
-.workspace {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  flex: 1;
-  min-height: 0;
-}
-
-.canvasCol {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
+.canvasColAdvisory .statusBar {
+  top: calc(var(--s-3) + 4.25rem);
 }
 
 @media (min-width: 960px) {
-  .workspace {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    align-items: stretch;
-    gap: 1.5rem;
-    min-height: min(68vh, 760px);
+  .canvasColAdvisory .statusBar {
+    top: calc(var(--s-4) + 4.25rem);
   }
 }
 
@@ -39,13 +14,18 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
-  padding: var(--s-3);
-  border-radius: var(--r-md);
-  border: 1px solid var(--line-hairline);
-  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  flex-shrink: 0;
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--line-hairline) 55%, var(--surface-inverted));
+  border-radius: 0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
   -webkit-backdrop-filter: saturate(140%) blur(12px);
   backdrop-filter: saturate(140%) blur(12px);
-  box-shadow: var(--elev-1);
+  box-shadow: none;
+  z-index: 6;
 }
 
 .toolbarPrimary {
@@ -231,17 +211,36 @@
 }
 
 .statusBar {
+  position: absolute;
+  left: var(--s-3);
+  right: var(--s-3);
+  top: var(--s-3);
+  bottom: auto;
+  z-index: 5;
   display: flex;
   align-items: flex-start;
   gap: var(--s-3);
   margin: 0;
-  padding: var(--s-3) var(--s-4);
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--r-md);
-  border: 1px solid var(--line-hairline);
-  background: var(--surface-sunken);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  border: 1px solid color-mix(in srgb, var(--line-hairline) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(12px);
+  box-shadow: var(--elev-2);
+  font-size: 0.8125rem;
+  line-height: 1.45;
   color: var(--ink-secondary);
+  pointer-events: none;
+  max-width: min(36rem, calc(100% - var(--s-6)));
+}
+
+@media (min-width: 960px) {
+  .statusBar {
+    left: var(--s-4);
+    top: var(--s-4);
+    max-width: min(42rem, calc(100% - var(--s-8)));
+  }
 }
 
 .statusBarActive {
@@ -266,33 +265,21 @@
   min-width: 0;
 }
 
-.honestyCaption {
-  margin: var(--s-2) 0 0;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--ink-tertiary);
-  text-align: center;
-}
-
-.canvas {
-  position: relative;
-  flex: 1;
-  min-height: 320px;
-  border-radius: var(--r-md);
-  overflow: hidden;
-  border: 1px solid var(--line-strong);
-  background: var(--surface-inverted);
-  touch-action: none;
-  box-shadow: var(--elev-2);
-}
-
-.canvas::after {
-  content: "";
+.aerialError {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-inverted) 12%, transparent);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  color: var(--ink-inverted);
+  background: var(--surface-inverted);
+}
+
+.aerialError p {
+  margin: 0;
+  font-weight: 600;
 }
 
 .canvasPlace {
@@ -303,19 +290,13 @@
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='4' fill='%2318181B'/%3E%3C/svg%3E") 12 12, crosshair;
 }
 
+.canvasPlot {
+  cursor: crosshair;
+}
+
 .markupStroke {
   fill: var(--ink-primary);
   opacity: 0.82;
-}
-
-.aerial {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 320px;
-  object-fit: cover;
-  pointer-events: none;
-  user-select: none;
 }
 
 .strokeLayer {
@@ -549,29 +530,22 @@
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.aerialError {
-  display: grid;
-  place-items: center;
-  gap: var(--s-3);
-  min-height: 320px;
-  padding: var(--s-5);
-  color: var(--ink-inverted);
-  background: var(--surface-inverted);
-}
-
-.aerialError p {
-  margin: 0;
-  font-weight: 600;
-}
-
 .tpzAdvisory {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  right: var(--s-3);
+  z-index: 6;
   margin: 0;
-  padding: var(--s-3) var(--s-4);
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line-strong);
-  background: var(--surface-sunken);
-  font-size: 0.875rem;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line-hairline));
+  background: color-mix(in srgb, var(--surface-elevated) 90%, transparent);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(12px);
+  font-size: 0.8125rem;
   color: var(--ink-secondary);
+  box-shadow: var(--elev-2);
 }
 
 .keyboardLegend {
@@ -794,36 +768,6 @@
   background: var(--surface-elevated);
   color: var(--ink-primary);
   box-shadow: inset 0 0 0 1px var(--line-strong);
-}
-
-.sideRail {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  min-height: 0;
-  padding: var(--s-3);
-  border-radius: var(--r-md);
-  border: 1px solid var(--line-hairline);
-  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
-  -webkit-backdrop-filter: saturate(140%) blur(12px);
-  backdrop-filter: saturate(140%) blur(12px);
-  box-shadow: var(--elev-2);
-}
-
-@media (max-width: 959px) {
-  .workspace {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .sideRail {
-    order: 2;
-    max-height: min(42vh, 420px);
-  }
-
-  .canvasCol {
-    order: 1;
-  }
 }
 
 .railPanel {

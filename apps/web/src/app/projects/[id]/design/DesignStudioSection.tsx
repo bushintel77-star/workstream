@@ -1,6 +1,7 @@
 import type { CatalogSymbol } from "@workstream/contracts";
 import { DesignStudio } from "../../../../components/DesignStudio";
 import type { DesignCanvas, RateCardItem } from "../../../../lib/api";
+import section from "./designStudioSection.module.css";
 
 type Props = {
   projectId: string;
@@ -20,7 +21,7 @@ export function DesignStudioSection({
   canvas,
 }: Props) {
   return (
-    <section id="design-studio" aria-label="Design studio">
+    <section id="design-studio" className={section.wrap} aria-label="Design studio">
       <DesignStudio
         projectId={projectId}
         aerialUri={aerialUri}

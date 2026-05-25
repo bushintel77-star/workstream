@@ -14,7 +14,11 @@ import {
   runDevelopFromSketchAction,
   runSketchCostingAction,
 } from "../../../../actions";
-import { NotFoundPage, ProjectMasthead } from "../../ProjectShell";
+import { NotFoundPage } from "../../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../../components/ProjectPipelineShell";
 import { PipelineActionForm } from "../../../../../components/PipelineActionForm";
 import { EnvelopeBriefPanel } from "../../../../../components/EnvelopeBriefPanel";
 import { DesignProposalView } from "../../../../../components/DesignProposalView";
@@ -43,8 +47,12 @@ export default async function DesignDevelopPage({
   const aerialUri = survey?.aerial_uri ?? null;
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="design" />
+    <ProjectPipelineShell
+      project={project}
+      active="design"
+      sectionLabel="Develop & estimate"
+    >
+      <PipelineContent>
 
       <p className={s.meta}>
         <Link href={`/projects/${id}/design`}>← Back to sketch</Link>
@@ -124,6 +132,7 @@ export default async function DesignDevelopPage({
           )}
         </section>
       )}
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

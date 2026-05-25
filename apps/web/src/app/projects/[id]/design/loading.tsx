@@ -1,5 +1,5 @@
-import { ProjectRouteLoading } from "../../../../components/ProjectRouteLoading";
+import { PipelineShellLoading } from "../../../../components/PipelineShellLoading";
 
 export default function DesignLoading() {
-  return <ProjectRouteLoading />;
+  return <PipelineShellLoading variant="immersive" label="Loading studio" />;
 }

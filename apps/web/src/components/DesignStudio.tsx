@@ -17,6 +17,8 @@ import {
 } from "../lib/mapView";
 import { saveDesignCanvasAction } from "../app/actions";
 import { useToast } from "./ToastHost";
+import { PipelineImageShell } from "./PipelineImageShell";
+import sh from "./pipelineImageShell.module.css";
 import {
   DesignAssetPalette,
   DesignCanvasPlacement,
@@ -226,7 +228,6 @@ export function DesignStudio({
   const isMassPlantMode = toolOverride === "massplant";
   const isIrrigationMode = toolOverride === "irrigation";
   const canUndo = studio.canUndo || draftPoints.length > 0;
-  void studio.historyTick;
 
   useEffect(() => {
     if (skipDirtyRef.current) {
@@ -839,7 +840,7 @@ export function DesignStudio({
   ] as const;
 
   return (
-    <div className={s.root}>
+    <div className={sh.rootFill}>
       <div className={s.toolbar} role="toolbar" aria-label="Design tools">
         <div className={s.toolbarPrimary}>
           <div className={s.toolCluster}>
@@ -939,6 +940,7 @@ export function DesignStudio({
             disabled={!canUndo}
             aria-disabled={!canUndo}
             title="Undo (Ctrl+Z)"
+            data-testid="design-studio-undo"
           >
             Undo
           </button>
@@ -987,27 +989,30 @@ export function DesignStudio({
         </div>
       </div>
 
-      {hasPlanningSymbol ? (
-        <p className={s.tpzAdvisory} role="status">
-          Tree protection symbols present — confirm against arborist report and council
-          requirements before build.
-        </p>
-      ) : null}
+      <PipelineImageShell
+        testId="design-studio-image-shell"
+        canvasColClassName={hasPlanningSymbol ? s.canvasColAdvisory : undefined}
+        canvasCol={
+          <>
+            {hasPlanningSymbol ? (
+              <p className={s.tpzAdvisory} role="status">
+                Tree protection symbols present — confirm against arborist report and council
+                requirements before build.
+              </p>
+            ) : null}
 
-      <div
-        className={`${s.statusBar} ${toolHint ? s.statusBarActive : ""}`}
-        role="status"
-        aria-live="polite"
-      >
-        <span className={s.statusBarLabel}>{activeToolLabel}</span>
-        <p className={s.statusBarText}>{statusMessage}</p>
-      </div>
+            <div
+              className={`${s.statusBar} ${toolHint ? s.statusBarActive : ""}`}
+              role="status"
+              aria-live="polite"
+            >
+              <span className={s.statusBarLabel}>{activeToolLabel}</span>
+              <p className={s.statusBarText}>{statusMessage}</p>
+            </div>
 
-      <div className={s.workspace}>
-        <div className={s.canvasCol}>
-          <div
-            ref={canvasRef}
-            className={`${s.canvas} ${canvasClass}`}
+            <div
+              ref={canvasRef}
+              className={`${sh.canvas} ${canvasClass}`}
             onDragOver={(e) => {
               if (isDrawMode || toolOverride === "select") return;
               e.preventDefault();
@@ -1062,7 +1067,7 @@ export function DesignStudio({
                 key={aerialKey}
                 src={aerialUri}
                 alt=""
-                className={s.aerial}
+                className={sh.aerial}
                 draggable={false}
                 onError={() => setAerialError(true)}
               />
@@ -1154,13 +1159,14 @@ export function DesignStudio({
               </div>
             ) : null}
             <ScaleBar mapView={mapView} canvasWidthPx={canvasSize.width} />
+            <p className={sh.honestyCaption}>
+              Concept sketch for estimating — not a construction drawing.
+            </p>
           </div>
-          <p className={s.honestyCaption}>
-            Concept sketch for estimating — not a construction drawing.
-          </p>
-        </div>
-
-        <aside className={s.sideRail}>
+          </>
+        }
+        rail={
+          <>
           {showAssetLibrary ? (
             <div className={s.railLibrary} aria-label="Asset library">
               <p className={s.railLibraryHint}>Place mode — pick a symbol, then tap the aerial.</p>
@@ -1287,8 +1293,9 @@ export function DesignStudio({
               />
             ) : null}
           </div>
-        </aside>
-      </div>
+          </>
+        }
+      />
     </div>
   );
 }

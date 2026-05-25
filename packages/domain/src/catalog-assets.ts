@@ -15,6 +15,11 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Pleached hornbeam",
     category: "planting",
     description: "Formal pleached screen — Curtis house style",
+    botanical_name: "Carpinus betulus",
+    sun: "full",
+    water: "moderate",
+    soil: "Well-drained loam",
+    mature_height_m: 3.5,
     keywords: ["screen", "hedge", "deciduous"],
     path_d: "M4 20V8l4-4 4 4v12M12 20V4l4 4 4-4v16",
     asset: G(
@@ -34,6 +39,11 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Lomandra mass",
     category: "planting",
     description: "Mass-planted strappy understorey",
+    botanical_name: "Lomandra longifolia 'Tanika'",
+    sun: "full",
+    water: "low",
+    soil: "Free-draining; tolerates clay",
+    mature_height_m: 0.6,
     keywords: ["grass", "native", "understorey"],
     path_d: "M6 18c0-4 2-8 6-8s6 4 6 8",
     asset: G(
@@ -47,6 +57,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#6b8f5e",
     ),
     default_width_m: 2,
+    rate_card_sku: "PLT-LOM-140",
   },
   {
     id: "agapanthus-drift",
@@ -105,6 +116,10 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Liriope edge",
     category: "planting",
     description: "Strappy border edging",
+    botanical_name: "Liriope muscari",
+    sun: "partial",
+    water: "moderate",
+    mature_height_m: 0.35,
     keywords: ["edge", "shade"],
     path_d: "M4 20h16M6 16v8M10 14v10M14 16v8",
     asset: G(

@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import {
   CATALOG_CATEGORY_LABELS,
   type CatalogCategory,
+  type PlantSun,
+  type PlantWater,
 } from "@workstream/contracts";
 import {
   CATALOG_CATEGORY_ORDER,
@@ -82,6 +84,13 @@ export function DesignAssetPalette({
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [query, setQuery] = useState("");
   const [plantKeyword, setPlantKeyword] = useState<string | null>(null);
+  const [plantSun, setPlantSun] = useState<PlantSun | null>(null);
+  const [plantWater, setPlantWater] = useState<PlantWater | null>(null);
+
+  const selectedSymbol = useMemo(
+    () => symbols.find((sym) => sym.id === selectedId) ?? null,
+    [symbols, selectedId],
+  );
 
   const planningSymbols = useMemo(
     () => symbols.filter((sym) => CATALOG_PLANNING_SYMBOL_IDS.has(sym.id)),
@@ -95,8 +104,14 @@ export function DesignAssetPalette({
         (sym.keywords ?? []).some((k) => k.toLowerCase().includes(plantKeyword)),
       );
     }
+    if (category === "planting" && plantSun) {
+      list = list.filter((sym) => sym.sun === plantSun);
+    }
+    if (category === "planting" && plantWater) {
+      list = list.filter((sym) => sym.water === plantWater);
+    }
     return list;
-  }, [symbols, category, query, plantKeyword]);
+  }, [symbols, category, query, plantKeyword, plantSun, plantWater]);
 
   const gridSymbols = useMemo(() => {
     if (category !== "all" || query.trim()) return filtered;
@@ -168,18 +183,87 @@ export function DesignAssetPalette({
       </div>
 
       {category === "planting" ? (
-        <div className={s.filterRow}>
-          {["native", "shade", "grass", "hedge"].map((kw) => (
-            <button
-              key={kw}
-              type="button"
-              className={`${s.filterChip} ${plantKeyword === kw ? s.filterChipActive : ""}`}
-              onClick={() => setPlantKeyword((cur) => (cur === kw ? null : kw))}
-              disabled={disabled}
-            >
-              {kw}
-            </button>
-          ))}
+        <>
+          <div className={s.filterRow}>
+            {(
+              [
+                ["full", "Full sun"],
+                ["partial", "Partial"],
+                ["shade", "Shade"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`${s.filterChip} ${plantSun === value ? s.filterChipActive : ""}`}
+                onClick={() =>
+                  setPlantSun((cur: PlantSun | null) => (cur === value ? null : value))
+                }
+                disabled={disabled}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className={s.filterRow}>
+            {(
+              [
+                ["low", "Low water"],
+                ["moderate", "Moderate"],
+                ["high", "High"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`${s.filterChip} ${plantWater === value ? s.filterChipActive : ""}`}
+                onClick={() =>
+                  setPlantWater((cur: PlantWater | null) => (cur === value ? null : value))
+                }
+                disabled={disabled}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className={s.filterRow}>
+            {["native", "grass", "hedge"].map((kw) => (
+              <button
+                key={kw}
+                type="button"
+                className={`${s.filterChip} ${plantKeyword === kw ? s.filterChipActive : ""}`}
+                onClick={() => setPlantKeyword((cur) => (cur === kw ? null : kw))}
+                disabled={disabled}
+              >
+                {kw}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {category === "planting" && selectedSymbol ? (
+        <div className={s.plantDetail} data-testid="planting-detail-strip">
+          <p className={s.plantDetailTitle}>{selectedSymbol.label}</p>
+          {selectedSymbol.botanical_name ? (
+            <p className={s.plantDetailMeta}>{selectedSymbol.botanical_name}</p>
+          ) : null}
+          <p className={s.plantDetailMeta}>
+            {[
+              selectedSymbol.sun ? `Sun: ${selectedSymbol.sun}` : null,
+              selectedSymbol.water ? `Water: ${selectedSymbol.water}` : null,
+              selectedSymbol.mature_height_m
+                ? `Mature ~${selectedSymbol.mature_height_m} m`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {selectedSymbol.rate_card_sku ? (
+            <p className={s.plantDetailSku}>SKU {selectedSymbol.rate_card_sku}</p>
+          ) : (
+            <p className={s.plantDetailHint}>Curtis-approved palette — confirm size on site</p>
+          )}
         </div>
       ) : null}
 

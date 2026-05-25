@@ -3,7 +3,11 @@ import { getAudit, listOverrides } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { runAuditAction } from "../../../actions";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 import { PipelineActionForm } from "../../../../components/PipelineActionForm";
 import { AuditOverrideForm } from "../../../../components/AuditOverrideForm";
 
@@ -33,8 +37,8 @@ export default async function AuditPage({
     });
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="audit" />
+    <ProjectPipelineShell project={project} active="audit">
+      <PipelineContent>
 
       <h1 className={s.headline}>Audit</h1>
       <p className={s.lede}>
@@ -138,6 +142,7 @@ export default async function AuditPage({
           )}
         </>
       )}
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

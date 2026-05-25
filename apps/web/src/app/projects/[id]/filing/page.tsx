@@ -8,7 +8,11 @@ import {
 import s from "../../../../styles/app.module.css";
 import { FilingUploadForm } from "../../../../components/FilingUploadForm";
 import { SwipeGallery } from "../../../../components/SwipeGallery";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 import { loadOptional } from "../../../../lib/load-optional";
 
 export const dynamic = "force-dynamic";
@@ -38,8 +42,8 @@ export default async function FilingPage({
     galleryResult.failed || filesResult.failed;
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="filing" />
+    <ProjectPipelineShell project={project} active="filing">
+      <PipelineContent>
 
       <h1 className={s.headline}>Filing</h1>
       <p className={s.brandSub}>
@@ -85,6 +89,7 @@ export default async function FilingPage({
           </p>
         </section>
       </div>
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

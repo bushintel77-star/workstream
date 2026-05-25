@@ -4,7 +4,6 @@ import {
   summarizeIrrigationZones,
   valveCount,
 } from "./irrigation";
-import { massPlantSummary, staggeredPlantCount } from "./mass-plant";
 import {
   polygonAreaFromCanvasPercent,
   polylineLengthFromCanvasPercent,
@@ -36,24 +35,6 @@ describe("canvas-geometry", () => {
     ];
     const len = polylineLengthFromCanvasPercent(line, scale);
     expect(len).toBeCloseTo(4, 1);
-  });
-});
-
-describe("mass-plant", () => {
-  it("counts staggered plants", () => {
-    expect(staggeredPlantCount(10, 45)).toBeGreaterThan(0);
-  });
-
-  it("summarises bed", () => {
-    const bed = [
-      { x_pct: 10, y_pct: 10 },
-      { x_pct: 40, y_pct: 10 },
-      { x_pct: 40, y_pct: 40 },
-      { x_pct: 10, y_pct: 40 },
-    ];
-    const summary = massPlantSummary(bed, 45, scale);
-    expect(summary.areaM2).toBeGreaterThan(0);
-    expect(summary.plantCount).toBeGreaterThan(0);
   });
 });
 

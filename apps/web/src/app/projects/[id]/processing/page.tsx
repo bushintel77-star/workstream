@@ -1,7 +1,10 @@
 import { requireProject } from "../../../../lib/project-guard";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 import { ProjectProcessingClient } from "./ProjectProcessingClient";
-import s from "../../../../styles/app.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +20,10 @@ export default async function ProjectProcessingPage({
   }
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="processing" />
-      <ProjectProcessingClient projectId={id} address={project.address} />
-    </main>
+    <ProjectPipelineShell project={project} active="processing">
+      <PipelineContent>
+        <ProjectProcessingClient projectId={id} address={project.address} />
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

@@ -304,3 +304,38 @@
   background: color-mix(in srgb, var(--accent) 14%, var(--surface-elevated));
   color: var(--ink-primary);
 }
+
+.plantDetail {
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-hairline);
+  background: var(--surface-sunken);
+}
+
+.plantDetailTitle {
+  margin: 0 0 var(--s-1);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.plantDetailMeta {
+  margin: 0 0 var(--s-1);
+  font-size: 0.75rem;
+  color: var(--ink-secondary);
+  line-height: 1.4;
+}
+
+.plantDetailSku {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.plantDetailHint {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--ink-tertiary);
+}

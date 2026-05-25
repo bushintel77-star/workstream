@@ -24,17 +24,28 @@ test.describe("Operator happy path", () => {
     expect(pipeline.ok()).toBeTruthy();
 
     await page.goto(`/projects/${projectId}`);
+    await expect(page.getByTestId("project-pipeline-shell")).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,
     });
 
     await page.goto(`/projects/${projectId}/overview`);
-    await expect(page.getByRole("heading", { name: "Pipeline" })).toBeVisible({
+    await expect(page.getByTestId("project-pipeline-shell")).toHaveAttribute(
+      "data-shell-variant",
+      "immersive",
+    );
+    await expect(page.getByTestId("pipeline-hub-image-shell")).toBeVisible({
       timeout: 30_000,
     });
 
     await page.goto(`/projects/${projectId}/design`);
-    await expect(page.getByRole("heading", { name: /design/i })).toBeVisible({
+    await expect(page.getByTestId("project-pipeline-shell")).toHaveAttribute(
+      "data-shell-variant",
+      "immersive",
+    );
+    await expect(page.getByTestId("design-studio-image-shell")).toBeVisible({
       timeout: 30_000,
     });
   });

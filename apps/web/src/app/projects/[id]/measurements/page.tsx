@@ -2,7 +2,11 @@ import { requireProject } from "../../../../lib/project-guard";
 import { listPhotoMeasurements } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +39,8 @@ export default async function MeasurementsPage({
     });
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="measurements" />
+    <ProjectPipelineShell project={project} active="measurements">
+      <PipelineContent>
 
       <h1 className={s.headline}>Photo measurements</h1>
       <p className={s.lede}>
@@ -97,6 +101,7 @@ export default async function MeasurementsPage({
           ))}
         </ul>
       )}
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

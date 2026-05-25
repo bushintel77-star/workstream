@@ -6,7 +6,11 @@ import {
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { runOutputAction } from "../../../actions";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 import { PipelineActionForm } from "../../../../components/PipelineActionForm";
 import { ProjectClientHandoff } from "../../../../components/ProjectClientHandoff";
 import { getIntegrationHub } from "../../../../lib/api";
@@ -84,8 +88,8 @@ export default async function OutputsPage({
     });
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="outputs" />
+    <ProjectPipelineShell project={project} active="outputs">
+      <PipelineContent>
 
       <ProjectClientHandoff
         project={project}
@@ -146,6 +150,7 @@ export default async function OutputsPage({
         })}
       </ul>
 
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

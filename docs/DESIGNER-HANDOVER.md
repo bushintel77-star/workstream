@@ -260,7 +260,48 @@ Every tile shows: **glyph preview**, **asset code** (mono), **label**, optional 
 
 Do not hide these in settings or first-run only — they are permanent affordances.
 
-### 6.9 Save & downstream data
+### 6.9 Mass planting (bed calculator)
+
+**Rail tab:** Mass plant (mobile bottom rail).
+
+**Flow:** Draw bed → tap aerial (≥3 points) → **Finish bed** → set spacing (cm) → **Fill area**.
+
+- Area (m²) and plant count are **indicative** — confirm on site before order.
+- Fill pushes `CatalogPlacement[]` in one undo step (staggered grid via `@workstream/domain` `mass-plant.ts`).
+- Planting symbols only in the dropdown (Curtis catalog).
+
+### 6.10 Irrigation wizard
+
+**Rail tab:** Irrigation.
+
+**Flow:** **New zone** → tap aerial to trace drip line → **Finish line** → per-zone spacing/flow → **Summary** for valve count.
+
+- Pipe length, emitters, and flow are indicative — hydraulic sign-off by irrigation contractor.
+- Schedule adds `IRR-DRIP` (lm) and `IRR-VALVE` (ea) from rate card when zones exist.
+- `irrigation_zones[]` persisted on save (`DesignCanvas`).
+
+### 6.11 Plant schedule & export
+
+**Rail tab:** Schedule — live AUD preview (ex-GST, GST, total inc-GST).
+
+- Rows from `summarizePlacementsForQuote` + `irrigationLineItems`; amber pill when SKU missing from rate card.
+- **Copy schedule** — markdown table to clipboard.
+- **Save & open outputs** — saves canvas then navigates to `/projects/:id/outputs`.
+
+### 6.12 Undo / redo / measure
+
+- **Undo / redo** — placements, strokes, and irrigation zones (cap 50); `Ctrl+Z` / `Ctrl+Shift+Z`.
+- **Measure** — two taps on aerial; distance from scale bar math; labelled indicative only.
+
+### 6.13 Planting catalog depth
+
+When **Planting** category is active in the asset rail:
+
+- Sun and water filter chips (from symbol metadata).
+- Detail strip: botanical name, mature height, SKU when selected.
+- Curtis-approved palette only — blocklisted species cannot be added via studio.
+
+### 6.14 Save & downstream data
 
 **Save** → `PUT /projects/:id/design-canvas` via server action `saveDesignCanvasAction`.
 
@@ -268,6 +309,7 @@ Payload (`DesignCanvas`):
 
 - `placements[]` — symbol_id, x/y %, rotation, scale  
 - `strokes[]` — freehand points, colour, width  
+- `irrigation_zones[]` — drip-line polylines, emitter spacing/flow per zone  
 - `updated_at`
 
 Downstream consumers (do not break field names):
@@ -295,7 +337,7 @@ Shared primitives: `apps/web/src/styles/app.module.css`
 | `.bottomBar` | Mobile sticky CTA (hidden ≥720px) |
 | `.empty` / `.error` / `.banner` | Feedback blocks |
 
-**Loading:** Route-level skeletons (`ProjectRouteLoading`, dashboard `loading.tsx`) mirror real layout — subnav pills, pipeline row, metric cards.
+**Loading:** Route-level skeletons (`PipelineShellLoading`, dashboard `loading.tsx`) mirror real layout — subnav pills, pipeline row, metric cards.
 
 **Toasts:** Bottom-centre, glass + semantic tint (`toast-host.module.css`).
 
@@ -319,7 +361,7 @@ Shared primitives: `apps/web/src/styles/app.module.css`
 
 | Asset | Location |
 | --- | --- |
-| Live reference | https://construct-web.fly.dev/projects/{id}/design/studio |
+| Live reference | https://construct-web.fly.dev/projects/{id}/design |
 | Design tokens | `apps/web/src/styles/globals.css` |
 | Studio layout CSS | `apps/web/src/components/designStudio.module.css` |
 | Asset rail CSS | `apps/web/src/components/studio/designAssetPalette.module.css` |

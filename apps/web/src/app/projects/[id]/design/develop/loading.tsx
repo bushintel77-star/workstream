@@ -1,5 +1,5 @@
-import { ProjectRouteLoading } from "../../../../../components/ProjectRouteLoading";
+import { PipelineShellLoading } from "../../../../../components/PipelineShellLoading";
 
-export default function DesignDevelopLoading() {
-  return <ProjectRouteLoading />;
+export default function Loading() {
+  return <PipelineShellLoading label="Loading project" />;
 }

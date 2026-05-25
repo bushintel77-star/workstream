@@ -8,7 +8,11 @@ import {
 import s from "../../../../styles/app.module.css";
 import p from "../project.module.css";
 import { createTaskAction } from "../../../actions";
-import { NotFoundPage, ProjectMasthead } from "../ProjectShell";
+import { NotFoundPage } from "../ProjectShell";
+import {
+  PipelineContent,
+  ProjectPipelineShell,
+} from "../../../../components/ProjectPipelineShell";
 import { SubmitButton } from "../../../../components/SubmitButton";
 import { TaskStatusSelect } from "../../../../components/TaskStatusSelect";
 
@@ -51,8 +55,8 @@ export default async function TasksPage({
   }
 
   return (
-    <main className={s.page}>
-      <ProjectMasthead project={project} active="tasks" />
+    <ProjectPipelineShell project={project} active="tasks">
+      <PipelineContent>
 
       <h1 className={s.headline}>Tasks</h1>
       <p className={s.lede}>
@@ -151,6 +155,7 @@ export default async function TasksPage({
           );
         })}
       </div>
-    </main>
+      </PipelineContent>
+    </ProjectPipelineShell>
   );
 }

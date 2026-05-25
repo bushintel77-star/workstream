@@ -28,19 +28,21 @@ export function useStudioHistory(initial: StudioSnapshot) {
   const [state, setState] = useState(initial);
   const pastRef = useRef<StudioSnapshot[]>([]);
   const futureRef = useRef<StudioSnapshot[]>([]);
-  const [historyTick, setHistoryTick] = useState(0);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
-  const bumpHistory = useCallback(() => {
-    setHistoryTick((t) => t + 1);
+  const syncHistoryFlags = useCallback(() => {
+    setCanUndo(pastRef.current.length > 0);
+    setCanRedo(futureRef.current.length > 0);
   }, []);
 
   const pushPast = useCallback(
     (prev: StudioSnapshot) => {
       pastRef.current = [...pastRef.current.slice(-(HISTORY_CAP - 1)), cloneSnapshot(prev)];
       futureRef.current = [];
-      bumpHistory();
+      syncHistoryFlags();
     },
-    [bumpHistory],
+    [syncHistoryFlags],
   );
 
   const undo = useCallback(() => {
@@ -51,9 +53,9 @@ export function useStudioHistory(initial: StudioSnapshot) {
     const prev = past[past.length - 1]!;
     pastRef.current = past.slice(0, -1);
     setState(cloneSnapshot(prev));
-    bumpHistory();
+    syncHistoryFlags();
     return true;
-  }, [state, bumpHistory]);
+  }, [state, syncHistoryFlags]);
 
   const redo = useCallback(() => {
     const future = futureRef.current;
@@ -62,9 +64,9 @@ export function useStudioHistory(initial: StudioSnapshot) {
     const next = future[0]!;
     futureRef.current = future.slice(1);
     setState(cloneSnapshot(next));
-    bumpHistory();
+    syncHistoryFlags();
     return true;
-  }, [state, bumpHistory]);
+  }, [state, syncHistoryFlags]);
 
   const setPlacements = useCallback(
     (
@@ -115,11 +117,10 @@ export function useStudioHistory(initial: StudioSnapshot) {
     (next: StudioSnapshot, recordHistory = true) => {
       if (recordHistory) pushPast(state);
       setState(cloneSnapshot(next));
+      syncHistoryFlags();
     },
-    [pushPast, state],
+    [pushPast, state, syncHistoryFlags],
   );
-
-  void historyTick;
 
   return {
     placements: state.placements,
@@ -131,8 +132,7 @@ export function useStudioHistory(initial: StudioSnapshot) {
     replaceAll,
     undo,
     redo,
-    canUndo: pastRef.current.length > 0,
-    canRedo: futureRef.current.length > 0,
-    historyTick,
+    canUndo,
+    canRedo,
   };
 }
