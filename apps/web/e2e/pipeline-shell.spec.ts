@@ -50,7 +50,7 @@ test.describe("Pipeline shell", () => {
     await expect(page.getByRole("link", { name: "Open studio" }).first()).toBeVisible();
   });
 
-  test("survey tab uses content shell", async ({ page }) => {
+  test("survey tab uses immersive shell with lot metrics", async ({ page }) => {
     await page.goto(`/projects/${projectId}/survey`);
     const shell = pipelineShell(page);
     await expect(shell).toBeVisible({ timeout: 30_000 });
@@ -59,7 +59,7 @@ test.describe("Pipeline shell", () => {
       "aria-current",
       "page",
     );
-    await expect(page.getByRole("heading", { name: "Survey" })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Re-run survey" })).toBeVisible({
       timeout: 15_000,
     });
   });

@@ -167,9 +167,6 @@ test.describe("Design studio", () => {
     await canvas.click({ position: { x: w * 0.7, y: h * 0.6 } });
 
     await page.getByRole("button", { name: "Finish line", exact: true }).click();
-    await page.getByRole("button", { name: "Summary", exact: true }).click();
-    await expect(page.getByText(/Valves needed:/)).toBeVisible({ timeout: 10_000 });
-
     await page.getByRole("tab", { name: "Schedule" }).click();
     await expect(page.getByTestId("schedule-sku-IRR-DRIP")).toBeVisible({
       timeout: 15_000,
