@@ -7,7 +7,16 @@ import {
   strokePointsToPathD,
   type StrokePointPct,
 } from "@workstream/domain";
-import { CATALOG_PLANNING_SYMBOL_IDS } from "@workstream/domain";
+import {
+  buildGhostPlacementSuggestions,
+  buildStudioAiSuggestions,
+  CATALOG_PLANNING_SYMBOL_IDS,
+  withDirtySaveSuggestion,
+} from "@workstream/domain";
+import type {
+  GhostPlacementSuggestion,
+  StudioAiSuggestion,
+} from "@workstream/domain";
 import type { CatalogPlacement, CatalogSymbol, IrrigationZone } from "@workstream/contracts";
 import {
   metresPerCanvasPixel,
@@ -30,25 +39,27 @@ import {
   StudioIrrigationPanel,
   StudioMassPlantPanel,
   StudioSchedulePanel,
+  GhostPlacementOverlay,
+  StudioAiPanel,
+  StudioRibbon,
+  StudioTier1Banner,
+  StudioViewportHud,
+  StudioChromeProvider,
+  StudioDesktopShell,
+  StudioWorkflowBadge,
+  StudioMinimap,
+  StudioZoomHUD,
   useStudioHistory,
   useStudioPolylineDraw,
+  useStudioViewport,
 } from "./studio";
+import type { RibbonTab } from "./studio/StudioRibbon";
 import type { CanvasStrokeClient } from "./studio/types";
 import type { RateCardItem } from "../lib/api";
+import type { RailTab, StudioShellLayout, ToolOverride } from "./studio/studioTypes";
 import s from "./designStudio.module.css";
 
 export type { CanvasStrokeClient } from "./studio/types";
-
-type ToolOverride =
-  | "place"
-  | "draw"
-  | "select"
-  | "measure"
-  | "massplant"
-  | "irrigation"
-  | null;
-
-type RailTab = "massplant" | "irrigation" | "schedule";
 
 type DragState =
   | {
@@ -84,39 +95,20 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
-function clientPct(
-  clientX: number,
-  clientY: number,
-  rect: DOMRect,
-): StrokePointPct {
-  return {
-    x_pct: Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)),
-    y_pct: Math.min(100, Math.max(0, ((clientY - rect.top) / rect.height) * 100)),
-  };
-}
-
 function pointerAngleDeg(
-  rect: DOMRect,
+  center: { cx: number; cy: number },
   clientX: number,
   clientY: number,
-  xPct: number,
-  yPct: number,
 ): number {
-  const cx = rect.left + (xPct / 100) * rect.width;
-  const cy = rect.top + (yPct / 100) * rect.height;
-  return (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
+  return (Math.atan2(clientY - center.cy, clientX - center.cx) * 180) / Math.PI;
 }
 
 function pointerDist(
-  rect: DOMRect,
+  center: { cx: number; cy: number },
   clientX: number,
   clientY: number,
-  xPct: number,
-  yPct: number,
 ): number {
-  const cx = rect.left + (xPct / 100) * rect.width;
-  const cy = rect.top + (yPct / 100) * rect.height;
-  return Math.hypot(clientX - cx, clientY - cy);
+  return Math.hypot(clientX - center.cx, clientY - center.cy);
 }
 
 /** Legacy pink strokes render as survey ink (visual only; payload unchanged). */
@@ -134,6 +126,10 @@ type Props = {
   initialStrokes: CanvasStrokeClient[];
   initialIrrigationZones?: IrrigationZone[];
   rateCard?: RateCardItem[];
+  tier1?: boolean;
+  hasDesign?: boolean;
+  projectAddress?: string;
+  shellLayout?: StudioShellLayout;
 };
 
 export function DesignStudio({
@@ -145,17 +141,28 @@ export function DesignStudio({
   initialStrokes,
   initialIrrigationZones = [],
   rateCard = [],
+  tier1 = false,
+  hasDesign = false,
+  projectAddress = "Project",
+  shellLayout = "legacy",
 }: Props) {
   const router = useRouter();
   const toast = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const viewport = useStudioViewport(canvasRef);
   const dragRef = useRef<DragState | null>(null);
   const pendingPlaceRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const drawingRef = useRef(false);
   const savingRef = useRef(false);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
-  const [railTab, setRailTab] = useState<RailTab>("schedule");
+  const [ribbonTab, setRibbonTab] = useState<RibbonTab>("ai");
+  const [railTab, setRailTab] = useState<RailTab>("ai");
+  const [ghosts, setGhosts] = useState<GhostPlacementSuggestion[]>([]);
+  const [aiScanning, setAiScanning] = useState(false);
+  const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(null);
+  const [railExpanded, setRailExpanded] = useState(false);
+  const [rightRailOpen, setRightRailOpen] = useState(true);
   const studio = useStudioHistory({
     placements: initialPlacements,
     strokes: initialStrokes,
@@ -283,6 +290,66 @@ export function DesignStudio({
 
   const showAssetLibrary = toolOverride === "place";
 
+  const aiSuggestions = useMemo(
+    () =>
+      withDirtySaveSuggestion(
+        buildStudioAiSuggestions({
+          placementCount: placements.length,
+          strokeCount: strokes.length,
+          zoneCount: irrigationZones.length,
+          hasPlanningSymbol,
+          tier1,
+          hasDesign,
+        }),
+        isDirty,
+      ),
+    [
+      placements.length,
+      strokes.length,
+      irrigationZones.length,
+      hasPlanningSymbol,
+      tier1,
+      hasDesign,
+      isDirty,
+    ],
+  );
+
+  const handleAiScan = useCallback(() => {
+    setAiScanning(true);
+    window.setTimeout(() => {
+      const next = buildGhostPlacementSuggestions({
+        tier1,
+        symbolIds: symbols.map((sym) => sym.id),
+      });
+      setGhosts(next);
+      setAiScanning(false);
+      setRailTab("ai");
+      toast.show(
+        next.length > 0
+          ? `${next.length} AI ghost hint(s) on canvas — apply or clear.`
+          : "No ghosts suggested for this library.",
+        next.length > 0 ? "success" : "info",
+      );
+    }, 480);
+  }, [symbols, tier1, toast]);
+
+  const applyAllGhosts = useCallback(() => {
+    if (ghosts.length === 0) return;
+    setPlacements((prev) => [
+      ...prev,
+      ...ghosts.map((g) => ({
+        id: newId(),
+        symbol_id: g.symbol_id,
+        x_pct: g.x_pct,
+        y_pct: g.y_pct,
+        rotation_deg: 0,
+        scale: 1,
+      })),
+    ]);
+    setGhosts([]);
+    toast.show("Applied AI ghosts to plan.", "success");
+  }, [ghosts, setPlacements, toast]);
+
   const updatePlacement = useCallback(
     (id: string, patch: Partial<CatalogPlacement>) => {
       setPlacements((prev) =>
@@ -325,12 +392,20 @@ export function DesignStudio({
       if (!symbolId) return;
       if (toolOverride === "select") return;
       if (isMeasureMode || isMassPlantMode || isIrrigationMode) return;
-      const rect = el.getBoundingClientRect();
-      const pt = clientPct(clientX, clientY, rect);
+      const pt = viewport.clientToPct(clientX, clientY);
       addPlacement(symbolId, pt.x_pct, pt.y_pct);
       setDragSymbolId(null);
     },
-    [addPlacement, armedSymbolId, dragSymbolId, isIrrigationMode, isMassPlantMode, isMeasureMode, toolOverride],
+    [
+      addPlacement,
+      armedSymbolId,
+      dragSymbolId,
+      isIrrigationMode,
+      isMassPlantMode,
+      isMeasureMode,
+      toolOverride,
+      viewport,
+    ],
   );
 
   const commitDraftStroke = useCallback(() => {
@@ -403,6 +478,8 @@ export function DesignStudio({
         setCursorHint(null);
         return;
       }
+      const pt = viewport.clientToPct(clientX, clientY);
+      setCursorPct({ x: pt.x_pct, y: pt.y_pct });
       const rect = el.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
@@ -420,7 +497,17 @@ export function DesignStudio({
       else if (selectedSym) text = `Move ${selectedSym.label}`;
       setCursorHint({ x, y, text });
     },
-    [armedSymbolId, isDrawMode, isIrrigationMode, isMassPlantMode, isMeasureMode, placements, selectedPlacementId, symbolById],
+    [
+      armedSymbolId,
+      isDrawMode,
+      isIrrigationMode,
+      isMassPlantMode,
+      isMeasureMode,
+      placements,
+      selectedPlacementId,
+      symbolById,
+      viewport,
+    ],
   );
 
   useEffect(() => {
@@ -481,6 +568,10 @@ export function DesignStudio({
         setArmedSymbolId(null);
         return;
       }
+      if (e.key.toLowerCase() === "h") {
+        setStudioTool("pan");
+        return;
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -497,10 +588,7 @@ export function DesignStudio({
   ]);
 
   function handlePolylineTap(clientX: number, clientY: number) {
-    const el = canvasRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const pt = clientPct(clientX, clientY, rect);
+    const pt = viewport.clientToPct(clientX, clientY);
 
     if (isMeasureMode) {
       setMeasurePoints((prev) => (prev.length >= 2 ? [pt] : [...prev, pt]));
@@ -516,6 +604,21 @@ export function DesignStudio({
   }
 
   function handleCanvasPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (toolOverride === "pan" || viewport.spacePan) {
+      viewport.beginPan(e.clientX, e.clientY);
+      e.currentTarget.setPointerCapture(e.pointerId);
+      return;
+    }
+
+    if (toolOverride === "select") {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-placement-id]")) {
+        viewport.beginPan(e.clientX, e.clientY);
+        e.currentTarget.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
+
     if (isMeasureMode || (isMassPlantMode && massPlantDraw.isDrawing) || (isIrrigationMode && irrigationDraw.isDrawing)) {
       handlePolylineTap(e.clientX, e.clientY);
       return;
@@ -526,8 +629,7 @@ export function DesignStudio({
       if (!el) return;
       drawingRef.current = true;
       el.setPointerCapture(e.pointerId);
-      const rect = el.getBoundingClientRect();
-      setDraftPoints([clientPct(e.clientX, e.clientY, rect)]);
+      setDraftPoints([viewport.clientToPct(e.clientX, e.clientY)]);
       setSelectedPlacementId(null);
       return;
     }
@@ -541,11 +643,16 @@ export function DesignStudio({
   }
 
   function handleCanvasPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const pct = viewport.clientToPct(e.clientX, e.clientY);
+    setCursorPct({ x: pct.x_pct, y: pct.y_pct });
+
+    if (viewport.isPanning) {
+      viewport.movePan(e.clientX, e.clientY);
+      return;
+    }
+
     if (drawingRef.current && isDrawMode) {
-      const el = canvasRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const pt = clientPct(e.clientX, e.clientY, rect);
+      const pt = viewport.clientToPct(e.clientX, e.clientY);
       setDraftPoints((prev) => {
         const last = prev[prev.length - 1];
         if (last && Math.hypot(last.x_pct - pt.x_pct, last.y_pct - pt.y_pct) < 0.4) {
@@ -557,37 +664,40 @@ export function DesignStudio({
     }
 
     const drag = dragRef.current;
-    const el = canvasRef.current;
-    if (drag && el) {
-      const rect = el.getBoundingClientRect();
+    if (drag) {
       if (drag.kind === "move") {
-        const dx = ((e.clientX - drag.startClientX) / rect.width) * 100;
-        const dy = ((e.clientY - drag.startClientY) / rect.height) * 100;
+        const { dx, dy } = viewport.pctDeltaFromScreen(
+          e.clientX - drag.startClientX,
+          e.clientY - drag.startClientY,
+        );
         updatePlacement(drag.id, {
           x_pct: Math.min(100, Math.max(0, drag.startXpct + dx)),
           y_pct: Math.min(100, Math.max(0, drag.startYpct + dy)),
         });
       } else if (drag.kind === "rotate") {
-        const angle = pointerAngleDeg(
-          rect,
-          e.clientX,
-          e.clientY,
+        const center = viewport.placementCenterClient(
           drag.centerXpct,
           drag.centerYpct,
         );
-        updatePlacement(drag.id, {
-          rotation_deg: (drag.startRot + angle - drag.startAngle + 360) % 360,
-        });
+        if (center) {
+          const angle = pointerAngleDeg(center, e.clientX, e.clientY);
+          updatePlacement(drag.id, {
+            rotation_deg: (drag.startRot + angle - drag.startAngle + 360) % 360,
+          });
+        }
       } else if (drag.kind === "scale") {
-        const dist = pointerDist(
-          rect,
-          e.clientX,
-          e.clientY,
+        const center = viewport.placementCenterClient(
           drag.centerXpct,
           drag.centerYpct,
         );
-        const next = Math.min(4, Math.max(0.35, drag.startScale * (dist / drag.startDist)));
-        updatePlacement(drag.id, { scale: next });
+        if (center) {
+          const dist = pointerDist(center, e.clientX, e.clientY);
+          const next = Math.min(
+            4,
+            Math.max(0.35, drag.startScale * (dist / drag.startDist)),
+          );
+          updatePlacement(drag.id, { scale: next });
+        }
       }
       return;
     }
@@ -603,6 +713,11 @@ export function DesignStudio({
   }
 
   function handleCanvasPointerCancel(e: React.PointerEvent<HTMLDivElement>) {
+    if (viewport.isPanning) {
+      viewport.endPan();
+      releaseCanvasCapture(e);
+      return;
+    }
     if (drawingRef.current) {
       drawingRef.current = false;
       setDraftPoints([]);
@@ -615,6 +730,11 @@ export function DesignStudio({
   }
 
   function handleCanvasPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (viewport.isPanning) {
+      viewport.endPan();
+      releaseCanvasCapture(e);
+      return;
+    }
     if (drawingRef.current) {
       drawingRef.current = false;
       releaseCanvasCapture(e);
@@ -665,19 +785,15 @@ export function DesignStudio({
     const el = canvasRef.current;
     const placement = placements.find((p) => p.id === id);
     if (!el || !placement) return;
-    const rect = el.getBoundingClientRect();
+    const center = viewport.placementCenterClient(placement.x_pct, placement.y_pct);
     dragRef.current = {
       kind: "rotate",
       id,
       centerXpct: placement.x_pct,
       centerYpct: placement.y_pct,
-      startAngle: pointerAngleDeg(
-        rect,
-        e.clientX,
-        e.clientY,
-        placement.x_pct,
-        placement.y_pct,
-      ),
+      startAngle: center
+        ? pointerAngleDeg(center, e.clientX, e.clientY)
+        : 0,
       startRot: placement.rotation_deg,
     };
     el.setPointerCapture(e.pointerId);
@@ -688,19 +804,13 @@ export function DesignStudio({
     const el = canvasRef.current;
     const placement = placements.find((p) => p.id === id);
     if (!el || !placement) return;
-    const rect = el.getBoundingClientRect();
+    const center = viewport.placementCenterClient(placement.x_pct, placement.y_pct);
     dragRef.current = {
       kind: "scale",
       id,
       centerXpct: placement.x_pct,
       centerYpct: placement.y_pct,
-      startDist: pointerDist(
-        rect,
-        e.clientX,
-        e.clientY,
-        placement.x_pct,
-        placement.y_pct,
-      ),
+      startDist: center ? pointerDist(center, e.clientX, e.clientY) : 1,
       startScale: placement.scale,
     };
     el.setPointerCapture(e.pointerId);
@@ -739,6 +849,34 @@ export function DesignStudio({
     if (ok) router.push(`/projects/${projectId}/outputs`);
   }
 
+  function handleAiSuggestion(suggestion: StudioAiSuggestion) {
+    switch (suggestion.action) {
+      case "save":
+        void handleSave();
+        break;
+      case "develop":
+        void (async () => {
+          const ok = await handleSave();
+          if (ok) router.push(`/projects/${projectId}/design/develop`);
+        })();
+        break;
+      case "schedule":
+        setRailTab("schedule");
+        break;
+      case "trp":
+      case "place":
+        if (suggestion.symbol_id) {
+          setArmedSymbolId(suggestion.symbol_id);
+          setStudioTool("place");
+        } else {
+          setStudioTool("place");
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   const toolHint = (() => {
     if (isMeasureMode) {
       return measurePoints.length < 2
@@ -772,13 +910,17 @@ export function DesignStudio({
     irrigationZones.length === 0;
 
   const isPlotMode = isMeasureMode || isMassPlantMode || isIrrigationMode;
-  const canvasClass = isDrawMode
-    ? s.canvasDraw
-    : isPlotMode
-      ? s.canvasPlot
-      : s.canvasPlace;
+  const isPanActive = toolOverride === "pan" || viewport.spacePan;
+  const canvasClass = isPanActive
+    ? s.canvasPan
+    : isDrawMode
+      ? s.canvasDraw
+      : isPlotMode
+        ? s.canvasPlot
+        : s.canvasPlace;
 
   const activeToolLabel = (() => {
+    if (toolOverride === "pan" || viewport.spacePan) return "Pan";
     if (toolOverride === "draw") return "Draw";
     if (toolOverride === "select") return "Select";
     if (toolOverride === "measure") return "Measure";
@@ -834,467 +976,446 @@ export function DesignStudio({
       : null;
 
   const railTabs = [
+    ["ai", "AI assist", ghosts.length || (tier1 ? "T1" : null)],
     ["massplant", "Mass plant", null],
     ["irrigation", "Irrigation", irrigationZones.length || null],
     ["schedule", "Schedule", scheduleBadge],
   ] as const;
 
-  return (
-    <div className={sh.rootFill}>
-      <div className={s.toolbar} role="toolbar" aria-label="Design tools">
-        <div className={s.toolbarPrimary}>
-          <div className={s.toolCluster}>
-            <span className={s.toolClusterLabel}>Canvas</span>
-            <div className={s.modeGroup}>
-            <button
-              type="button"
-              className={`${s.modeBtn} ${toolOverride === null ? s.modeBtnAutoActive : ""}`}
-              aria-pressed={toolOverride === null}
-              title="Auto mode"
-              onClick={() => setStudioTool(null)}
-            >
-              Auto
-            </button>
-            <button
-              type="button"
-              className={`${s.modeBtn} ${toolOverride === "place" ? s.modeBtnActive : ""}`}
-              aria-pressed={toolOverride === "place"}
-              title="Place (P)"
-              onClick={() => setStudioTool("place")}
-            >
-              Place
-            </button>
-            <button
-              type="button"
-              className={`${s.modeBtn} ${toolOverride === "draw" ? s.modeBtnActive : ""}`}
-              aria-pressed={toolOverride === "draw"}
-              title="Draw markup (D)"
-              onClick={() => {
-                setStudioTool("draw");
-                setSelectedPlacementId(null);
-              }}
-            >
-              Draw
-            </button>
-            <button
-              type="button"
-              className={`${s.modeBtn} ${toolOverride === "select" ? s.modeBtnActive : ""}`}
-              aria-pressed={toolOverride === "select"}
-              title="Select (V)"
-              onClick={() => {
-                setStudioTool("select");
-                setArmedSymbolId(null);
-              }}
-            >
-              Select
-            </button>
-            </div>
-          </div>
-          <div className={s.toolCluster}>
-            <span className={s.toolClusterLabel}>Site</span>
-            <div className={s.modeGroup}>
-            <button
-              type="button"
-              className={`${s.modeBtn} ${toolOverride === "measure" ? s.modeBtnActive : ""}`}
-              aria-pressed={toolOverride === "measure"}
-              title="Measure (M)"
-              onClick={() => {
-                setStudioTool("measure");
-              }}
-            >
-              Measure
-            </button>
-            <button
-              type="button"
-              className={`${s.modeBtn} ${toolOverride === "massplant" ? s.modeBtnActive : ""}`}
-              aria-pressed={toolOverride === "massplant"}
-              onClick={() => {
-                setStudioTool("massplant");
-                setRailTab("massplant");
-              }}
-              title="Mass plant bed"
-            >
-              Mass plant
-            </button>
-            <button
-              type="button"
-              className={`${s.modeBtn} ${toolOverride === "irrigation" ? s.modeBtnActive : ""}`}
-              aria-pressed={toolOverride === "irrigation"}
-              title="Irrigation zones"
-              onClick={() => {
-                setStudioTool("irrigation");
-                setRailTab("irrigation");
-              }}
-            >
-              Irrigation
-            </button>
-            </div>
-          </div>
-          <KeyboardLegend />
+  const saveStatusNode = (
+    <span
+      className={`${s.saveStatus} ${s.saveStatusRow}`}
+      aria-live="polite"
+      data-testid="design-studio-save-status"
+    >
+      <span className={`${s.saveStatusDot} ${saveStatusDotClass}`} aria-hidden />
+      {saveStatusText}
+    </span>
+  );
+
+  const saveButtonNode = (
+    <button
+      type="button"
+      className={s.btnPrimary}
+      disabled={saving}
+      onClick={() => void handleSave()}
+      data-testid="design-studio-save"
+    >
+      {saving ? "Saving…" : "Save plan"}
+    </button>
+  );
+
+  const railPanels = (
+    <>
+      {showAssetLibrary ? (
+        <div className={s.railLibrary} aria-label="Asset library">
+          <p className={s.railLibraryHint}>Place mode — pick a symbol, then tap the aerial.</p>
+          <DesignAssetPalette
+            symbols={symbols}
+            selectedId={paletteSelectedId}
+            disabled={isDrawMode}
+            embedded
+            onSelect={handlePaletteSelect}
+            onDragStart={(id) => {
+              setDragSymbolId(id);
+              setArmedSymbolId(id);
+            }}
+            onDragEnd={() => setDragSymbolId(null)}
+          />
         </div>
-        <div className={s.toolbarSecondary}>
+      ) : null}
+      <div className={s.railTabs} role="tablist" aria-label="Studio panels">
+        {railTabs.map(([id, label, badge]) => (
           <button
+            key={id}
             type="button"
-            className={s.toolBtn}
-            onClick={undo}
-            disabled={!canUndo}
-            aria-disabled={!canUndo}
-            title="Undo (Ctrl+Z)"
-            data-testid="design-studio-undo"
+            role="tab"
+            aria-selected={railTab === id}
+            className={`${s.railTab} ${railTab === id ? s.railTabActive : ""}`}
+            onClick={() => handleRailTab(id)}
           >
-            Undo
+            {label}
+            {badge ? <span className={s.railTabBadge}>{badge}</span> : null}
           </button>
-          <button
-            type="button"
-            className={s.toolBtn}
-            onClick={redo}
-            disabled={!studio.canRedo}
-            aria-disabled={!studio.canRedo}
-            title="Redo (Ctrl+Shift+Z)"
-          >
-            Redo
-          </button>
-          <button type="button" className={s.toolBtn} onClick={clearStrokes}>
-            Clear markup
-          </button>
-          <button type="button" className={s.toolBtn} onClick={clearPlacements}>
-            Clear symbols
-          </button>
-          <span className={s.counts} data-testid="design-studio-counts">
-            {placements.length} symbols · {strokes.length} strokes · {irrigationZones.length}{" "}
-            zones
-          </span>
+        ))}
+      </div>
+      <div className={s.railPanel} role="tabpanel">
+        {railTab === "ai" ? (
+          <StudioAiPanel
+            projectId={projectId}
+            tier1={tier1}
+            suggestions={aiSuggestions}
+            ghosts={ghosts}
+            scanning={aiScanning}
+            onScanSite={handleAiScan}
+            onApplyAllGhosts={applyAllGhosts}
+            onClearGhosts={() => setGhosts([])}
+            onSuggestionAction={handleAiSuggestion}
+            symbolLabel={(id) => symbolById.get(id)?.label ?? id}
+          />
+        ) : null}
+        {railTab === "massplant" ? (
+          <StudioMassPlantPanel
+            symbols={symbols}
+            polygonPoints={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
+            polygonClosed={massPolygonClosed}
+            isDrawing={massPlantDraw.isDrawing}
+            spacingCm={massSpacingCm}
+            scale={groundScale}
+            onSpacingChange={setMassSpacingCm}
+            onStartDraw={() => {
+              setStudioTool("massplant");
+              setMassPolygonClosed(false);
+              setMassPolygonPoints([]);
+              massPlantDraw.start();
+            }}
+            onFinishPolygon={() => {
+              const pts = massPlantDraw.finish();
+              if (pts) {
+                setMassPolygonPoints(pts);
+                setMassPolygonClosed(true);
+              } else toast.show("Need at least 3 points for a bed.", "error");
+            }}
+            onClear={() => {
+              massPlantDraw.cancel();
+              setMassPolygonClosed(false);
+              setMassPolygonPoints([]);
+            }}
+            onFill={(newPlacements) => {
+              setPlacements((prev) => [...prev, ...newPlacements]);
+              setRailTab("schedule");
+              toast.show(`Placed ${newPlacements.length} plants.`, "success");
+            }}
+          />
+        ) : null}
+        {railTab === "irrigation" ? (
+          <StudioIrrigationPanel
+            zones={irrigationZones}
+            selectedZoneId={selectedIrrigationZoneId}
+            isDrawing={irrigationDraw.isDrawing}
+            scale={groundScale}
+            onSelectZone={setSelectedIrrigationZoneId}
+            onUpdateZone={(id, patch) => {
+              setIrrigationZones(
+                (prev) => prev.map((z) => (z.id === id ? { ...z, ...patch } : z)),
+                false,
+              );
+            }}
+            onDeleteZone={(id) => {
+              if (!window.confirm("Delete this irrigation zone?")) return;
+              setIrrigationZones((prev) => prev.filter((z) => z.id !== id));
+              setSelectedIrrigationZoneId((cur) => (cur === id ? null : cur));
+            }}
+            onStartNewZone={() => {
+              setStudioTool("irrigation");
+              setSelectedIrrigationZoneId(null);
+              irrigationDraw.start();
+            }}
+            onFinishLine={() => {
+              const pts = irrigationDraw.finish();
+              if (!pts) {
+                toast.show("Need at least 2 points for a line.", "error");
+                return;
+              }
+              const zone = {
+                id: newId(),
+                name: `Zone ${irrigationZones.length + 1}`,
+                points: pts,
+                emitter_spacing_cm: 30,
+                emitter_flow_lph: 2,
+              };
+              setIrrigationZones((prev) => [...prev, zone]);
+              setSelectedIrrigationZoneId(zone.id);
+              setRailTab("schedule");
+              toast.show(`Zone "${zone.name}" created.`, "success");
+            }}
+          />
+        ) : null}
+        {railTab === "schedule" ? (
+          <StudioSchedulePanel
+            placements={placements}
+            irrigationZones={irrigationZones}
+            symbols={symbols}
+            rateCard={rateCard}
+            scale={groundScale}
+            onCopySchedule={(md) => {
+              void navigator.clipboard.writeText(md);
+              toast.show("Schedule copied to clipboard.", "success");
+            }}
+            onOpenOutputs={() => void handleSaveAndOpenOutputs()}
+            saving={saving}
+          />
+        ) : null}
+      </div>
+    </>
+  );
+
+  const canvasWorkspace = (
+    <>
+      {hasPlanningSymbol ? (
+        <p className={s.tpzAdvisory} role="status">
+          Tree protection symbols present — confirm against arborist report and council
+          requirements before build.
+        </p>
+      ) : null}
+      <div
+        className={`${s.statusBar} ${toolHint ? s.statusBarActive : ""}`}
+        role="status"
+        aria-live="polite"
+      >
+        <span className={s.statusBarLabel}>{activeToolLabel}</span>
+        <p className={s.statusBarText}>{statusMessage}</p>
+      </div>
+      <div
+        ref={canvasRef}
+        className={`${sh.canvas} ${canvasClass}`}
+        onWheel={viewport.onWheel}
+        onDragOver={(e) => {
+          if (isDrawMode || toolOverride === "select") return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(e) => {
+          if (isDrawMode || toolOverride === "select") return;
+          e.preventDefault();
+          placeOnCanvas(e.clientX, e.clientY);
+        }}
+        onPointerDown={handleCanvasPointerDown}
+        onPointerMove={handleCanvasPointerMove}
+        onPointerUp={handleCanvasPointerUp}
+        onPointerLeave={(e) => {
+          if (drawingRef.current || dragRef.current) {
+            handleCanvasPointerCancel(e);
+          } else {
+            handleCanvasPointerUp(e);
+          }
+          setCursorHint(null);
+        }}
+        onPointerCancel={handleCanvasPointerCancel}
+        onContextMenu={(e) => isDrawMode && e.preventDefault()}
+        role="application"
+        aria-label="Site plan canvas"
+        data-testid="design-studio-canvas"
+      >
+        {shellLayout === "desktop" ? (
+          <>
+            <StudioMinimap aerialSrc={aerialUri} />
+            <StudioZoomHUD />
+          </>
+        ) : null}
+        <div className={s.canvasHud} aria-hidden>
+          <span className={s.canvasHudPill}>{activeToolLabel}</span>
+          {armedSymbolLabel ? (
+            <span className={s.canvasHudArmed}>{armedSymbolLabel}</span>
+          ) : null}
         </div>
-        <div className={s.toolbarActions}>
-          <span
-            className={`${s.saveStatus} ${s.saveStatusRow}`}
-            aria-live="polite"
-            data-testid="design-studio-save-status"
-          >
-            <span
-              className={`${s.saveStatusDot} ${saveStatusDotClass}`}
-              aria-hidden
+        <div className={sh.stage} style={viewport.stageStyle}>
+        {aerialError ? (
+          <div className={s.aerialError}>
+            <p>Aerial image failed to load.</p>
+            <button
+              type="button"
+              className={s.toolBtn}
+              onClick={() => {
+                setAerialError(false);
+                setAerialKey((k) => k + 1);
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            key={aerialKey}
+            src={aerialUri}
+            alt=""
+            className={sh.aerial}
+            draggable={false}
+            onError={() => setAerialError(true)}
+          />
+        )}
+        <svg
+          className={s.strokeLayer}
+          viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          {strokes.map((stroke) => (
+            <path
+              key={stroke.id}
+              className={markupStrokeClass(stroke.color)}
+              d={canvasStrokeToPathD(stroke, canvasSize.width, canvasSize.height)}
+              fill={markupStrokeClass(stroke.color) ? undefined : stroke.color}
             />
-            {saveStatusText}
-          </span>
-          <button
-            type="button"
-            className={s.btnPrimary}
-            disabled={saving}
-            onClick={() => void handleSave()}
-            data-testid="design-studio-save"
+          ))}
+          {draftPath ? <path d={draftPath} className={s.markupStroke} /> : null}
+        </svg>
+        <IrrigationOverlay
+          zones={irrigationZones}
+          draftPoints={irrigationDraw.points}
+          canvasWidthPx={canvasSize.width}
+          canvasHeightPx={canvasSize.height}
+        />
+        <MassPlantOverlay
+          points={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
+          closed={massPolygonClosed && !massPlantDraw.isDrawing}
+          draft={massPlantDraw.isDrawing}
+          canvasWidthPx={canvasSize.width}
+          canvasHeightPx={canvasSize.height}
+        />
+        <MeasureOverlay
+          points={measurePoints}
+          canvasWidthPx={canvasSize.width}
+          canvasHeightPx={canvasSize.height}
+          scale={groundScale}
+        />
+        <GhostPlacementOverlay ghosts={ghosts} symbolById={symbolById} />
+        {placements.map((p) => {
+          const sym = symbolById.get(p.symbol_id);
+          if (!sym) return null;
+          const isTpz = p.symbol_id === TPZ_SYMBOL_ID;
+          const baseM = sym.default_width_m ?? 8;
+          return (
+            <DesignCanvasPlacement
+              key={p.id}
+              placement={p}
+              symbol={sym}
+              selected={selectedPlacementId === p.id}
+              isTpz={isTpz}
+              indicativeMetres={
+                isTpz ? placementIndicativeMetres(baseM, p.scale) : null
+              }
+              onSelect={() => setSelectedPlacementId(p.id)}
+              onMovePointerDown={(e) => beginPlacementDrag(p.id, e)}
+              onRotateStart={(e) => startRotateDrag(p.id, e)}
+              onScaleStart={(e) => startScaleDrag(p.id, e)}
+              onDelete={() => deletePlacement(p.id)}
+            />
+          );
+        })}
+        {canvasEmpty && !isDrawMode && !isPlotMode ? (
+          <div className={s.emptyPrompt}>
+            <div className={s.emptyPromptCard}>
+              <p className={s.emptyPromptTitle}>Start your concept sketch</p>
+              <ol className={s.emptyPromptSteps}>
+                <li>Choose an asset from the library</li>
+                <li>Click the aerial to place symbols</li>
+                <li>Draw beds, irrigation, or markup as needed</li>
+                <li>Open Schedule for a live estimate</li>
+              </ol>
+            </div>
+          </div>
+        ) : null}
+        {cursorHint && !isDrawMode && !isPlotMode ? (
+          <div
+            className={s.contextLabel}
+            style={{ left: cursorHint.x, top: cursorHint.y }}
+            aria-hidden
           >
-            {saving ? "Saving…" : "Save plan"}
-          </button>
+            {cursorHint.text}
+          </div>
+        ) : null}
+        <ScaleBar mapView={mapView} canvasWidthPx={canvasSize.width} />
+        <p className={sh.honestyCaption}>
+          Concept sketch for estimating — not a construction drawing.
+        </p>
         </div>
       </div>
+    </>
+  );
+
+  const chromeValue = useMemo(
+    () => ({
+      toolOverride,
+      setToolOverride: setStudioTool,
+      railExpanded,
+      setRailExpanded,
+      rightRailOpen,
+      setRightRailOpen,
+      saveStatusText,
+      saveStatusDotClass,
+      selectionCount: selectedPlacementId ? 1 : 0,
+      symbolCount: placements.length,
+      cursorPct,
+      setCursorPct,
+      zoomPercent: viewport.zoomPercent,
+      onZoomIn: viewport.zoomIn,
+      onZoomOut: viewport.zoomOut,
+      onResetView: viewport.resetView,
+      onSave: () => void handleSave(),
+      saving,
+      canUndo,
+      onUndo: undo,
+      canRedo: studio.canRedo,
+      onRedo: redo,
+    }),
+    [
+      toolOverride,
+      setStudioTool,
+      railExpanded,
+      rightRailOpen,
+      saveStatusText,
+      saveStatusDotClass,
+      selectedPlacementId,
+      placements.length,
+      cursorPct,
+      viewport.zoomPercent,
+      saving,
+      canUndo,
+      undo,
+      studio.canRedo,
+      redo,
+    ],
+  );
+
+  if (shellLayout === "desktop") {
+    return (
+      <StudioChromeProvider value={chromeValue}>
+        <StudioDesktopShell
+          projectId={projectId}
+          projectAddress={projectAddress}
+          topbarExtras={saveStatusText}
+          canvas={
+            <div className={sh.rootFill}>
+              {tier1 ? <StudioTier1Banner projectId={projectId} /> : null}
+              {canvasWorkspace}
+            </div>
+          }
+          rightRail={railPanels}
+        />
+      </StudioChromeProvider>
+    );
+  }
+
+  return (
+    <div className={sh.rootFill}>
+      <StudioWorkflowBadge />
+      {tier1 ? <StudioTier1Banner projectId={projectId} /> : null}
+      <StudioRibbon
+        ribbonTab={ribbonTab}
+        onRibbonTab={setRibbonTab}
+        toolOverride={toolOverride}
+        onTool={setStudioTool}
+        zoomPercent={viewport.zoomPercent}
+        onZoomIn={viewport.zoomIn}
+        onZoomOut={viewport.zoomOut}
+        onResetView={viewport.resetView}
+        onOpenAiRail={() => setRailTab("ai")}
+        canUndo={canUndo}
+        onUndo={undo}
+        onRedo={redo}
+        canRedo={studio.canRedo}
+        tier1={tier1}
+        saveStatus={saveStatusNode}
+        saveButton={saveButtonNode}
+      />
 
       <PipelineImageShell
         testId="design-studio-image-shell"
         canvasColClassName={hasPlanningSymbol ? s.canvasColAdvisory : undefined}
-        canvasCol={
-          <>
-            {hasPlanningSymbol ? (
-              <p className={s.tpzAdvisory} role="status">
-                Tree protection symbols present — confirm against arborist report and council
-                requirements before build.
-              </p>
-            ) : null}
-
-            <div
-              className={`${s.statusBar} ${toolHint ? s.statusBarActive : ""}`}
-              role="status"
-              aria-live="polite"
-            >
-              <span className={s.statusBarLabel}>{activeToolLabel}</span>
-              <p className={s.statusBarText}>{statusMessage}</p>
-            </div>
-
-            <div
-              ref={canvasRef}
-              className={`${sh.canvas} ${canvasClass}`}
-            onDragOver={(e) => {
-              if (isDrawMode || toolOverride === "select") return;
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "copy";
-            }}
-            onDrop={(e) => {
-              if (isDrawMode || toolOverride === "select") return;
-              e.preventDefault();
-              placeOnCanvas(e.clientX, e.clientY);
-            }}
-            onPointerDown={handleCanvasPointerDown}
-            onPointerMove={handleCanvasPointerMove}
-            onPointerUp={handleCanvasPointerUp}
-            onPointerLeave={(e) => {
-              if (drawingRef.current || dragRef.current) {
-                handleCanvasPointerCancel(e);
-              } else {
-                handleCanvasPointerUp(e);
-              }
-              setCursorHint(null);
-            }}
-            onPointerCancel={handleCanvasPointerCancel}
-            onContextMenu={(e) => isDrawMode && e.preventDefault()}
-            role="application"
-            aria-label="Site plan canvas"
-            data-testid="design-studio-canvas"
-          >
-            <div className={s.canvasHud} aria-hidden>
-              <span className={s.canvasHudPill}>{activeToolLabel}</span>
-              {armedSymbolLabel ? (
-                <span className={s.canvasHudArmed}>{armedSymbolLabel}</span>
-              ) : null}
-            </div>
-            {aerialError ? (
-              <div className={s.aerialError}>
-                <p>Aerial image failed to load.</p>
-                <button
-                  type="button"
-                  className={s.toolBtn}
-                  onClick={() => {
-                    setAerialError(false);
-                    setAerialKey((k) => k + 1);
-                  }}
-                >
-                  Retry
-                </button>
-              </div>
-            ) : (
-              /* Mapbox static satellite URL from survey — not user-uploaded input. */
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                key={aerialKey}
-                src={aerialUri}
-                alt=""
-                className={sh.aerial}
-                draggable={false}
-                onError={() => setAerialError(true)}
-              />
-            )}
-            <svg
-              className={s.strokeLayer}
-              viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              {strokes.map((stroke) => (
-                <path
-                  key={stroke.id}
-                  className={markupStrokeClass(stroke.color)}
-                  d={canvasStrokeToPathD(
-                    stroke,
-                    canvasSize.width,
-                    canvasSize.height,
-                  )}
-                  fill={markupStrokeClass(stroke.color) ? undefined : stroke.color}
-                />
-              ))}
-              {draftPath ? <path d={draftPath} className={s.markupStroke} /> : null}
-            </svg>
-            <IrrigationOverlay
-              zones={irrigationZones}
-              draftPoints={irrigationDraw.points}
-              canvasWidthPx={canvasSize.width}
-              canvasHeightPx={canvasSize.height}
-            />
-            <MassPlantOverlay
-              points={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
-              closed={massPolygonClosed && !massPlantDraw.isDrawing}
-              draft={massPlantDraw.isDrawing}
-              canvasWidthPx={canvasSize.width}
-              canvasHeightPx={canvasSize.height}
-            />
-            <MeasureOverlay
-              points={measurePoints}
-              canvasWidthPx={canvasSize.width}
-              canvasHeightPx={canvasSize.height}
-              scale={groundScale}
-            />
-            {placements.map((p) => {
-              const sym = symbolById.get(p.symbol_id);
-              if (!sym) return null;
-              const isTpz = p.symbol_id === TPZ_SYMBOL_ID;
-              const baseM = sym.default_width_m ?? 8;
-              return (
-                <DesignCanvasPlacement
-                  key={p.id}
-                  placement={p}
-                  symbol={sym}
-                  selected={selectedPlacementId === p.id}
-                  isTpz={isTpz}
-                  indicativeMetres={
-                    isTpz
-                      ? placementIndicativeMetres(baseM, p.scale)
-                      : null
-                  }
-                  onSelect={() => setSelectedPlacementId(p.id)}
-                  onMovePointerDown={(e) => beginPlacementDrag(p.id, e)}
-                  onRotateStart={(e) => startRotateDrag(p.id, e)}
-                  onScaleStart={(e) => startScaleDrag(p.id, e)}
-                  onDelete={() => deletePlacement(p.id)}
-                />
-              );
-            })}
-            {canvasEmpty && !isDrawMode && !isPlotMode ? (
-              <div className={s.emptyPrompt}>
-                <div className={s.emptyPromptCard}>
-                  <p className={s.emptyPromptTitle}>Start your concept sketch</p>
-                  <ol className={s.emptyPromptSteps}>
-                    <li>Choose an asset from the library</li>
-                    <li>Click the aerial to place symbols</li>
-                    <li>Draw beds, irrigation, or markup as needed</li>
-                    <li>Open Schedule for a live estimate</li>
-                  </ol>
-                </div>
-              </div>
-            ) : null}
-            {cursorHint && !isDrawMode && !isPlotMode ? (
-              <div
-                className={s.contextLabel}
-                style={{ left: cursorHint.x, top: cursorHint.y }}
-                aria-hidden
-              >
-                {cursorHint.text}
-              </div>
-            ) : null}
-            <ScaleBar mapView={mapView} canvasWidthPx={canvasSize.width} />
-            <p className={sh.honestyCaption}>
-              Concept sketch for estimating — not a construction drawing.
-            </p>
-          </div>
-          </>
-        }
-        rail={
-          <>
-          {showAssetLibrary ? (
-            <div className={s.railLibrary} aria-label="Asset library">
-              <p className={s.railLibraryHint}>Place mode — pick a symbol, then tap the aerial.</p>
-              <DesignAssetPalette
-                symbols={symbols}
-                selectedId={paletteSelectedId}
-                disabled={isDrawMode}
-                embedded
-                onSelect={handlePaletteSelect}
-                onDragStart={(id) => {
-                  setDragSymbolId(id);
-                  setArmedSymbolId(id);
-                }}
-                onDragEnd={() => setDragSymbolId(null)}
-              />
-            </div>
-          ) : null}
-          <div className={s.railTabs} role="tablist" aria-label="Studio panels">
-            {railTabs.map(([id, label, badge]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={railTab === id}
-                className={`${s.railTab} ${railTab === id ? s.railTabActive : ""}`}
-                onClick={() => handleRailTab(id)}
-              >
-                {label}
-                {badge ? <span className={s.railTabBadge}>{badge}</span> : null}
-              </button>
-            ))}
-          </div>
-          <div className={s.railPanel} role="tabpanel">
-            {railTab === "massplant" ? (
-              <StudioMassPlantPanel
-                symbols={symbols}
-                polygonPoints={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
-                polygonClosed={massPolygonClosed}
-                isDrawing={massPlantDraw.isDrawing}
-                spacingCm={massSpacingCm}
-                scale={groundScale}
-                onSpacingChange={setMassSpacingCm}
-                onStartDraw={() => {
-                  setStudioTool("massplant");
-                  setMassPolygonClosed(false);
-                  setMassPolygonPoints([]);
-                  massPlantDraw.start();
-                }}
-                onFinishPolygon={() => {
-                  const pts = massPlantDraw.finish();
-                  if (pts) {
-                    setMassPolygonPoints(pts);
-                    setMassPolygonClosed(true);
-                  } else toast.show("Need at least 3 points for a bed.", "error");
-                }}
-                onClear={() => {
-                  massPlantDraw.cancel();
-                  setMassPolygonClosed(false);
-                  setMassPolygonPoints([]);
-                }}
-                onFill={(newPlacements) => {
-                  setPlacements((prev) => [...prev, ...newPlacements]);
-                  setRailTab("schedule");
-                  toast.show(`Placed ${newPlacements.length} plants.`, "success");
-                }}
-              />
-            ) : null}
-            {railTab === "irrigation" ? (
-              <StudioIrrigationPanel
-                zones={irrigationZones}
-                selectedZoneId={selectedIrrigationZoneId}
-                isDrawing={irrigationDraw.isDrawing}
-                scale={groundScale}
-                onSelectZone={setSelectedIrrigationZoneId}
-                onUpdateZone={(id, patch) => {
-                  setIrrigationZones(
-                    (prev) => prev.map((z) => (z.id === id ? { ...z, ...patch } : z)),
-                    false,
-                  );
-                }}
-                onDeleteZone={(id) => {
-                  if (!window.confirm("Delete this irrigation zone?")) return;
-                  setIrrigationZones((prev) => prev.filter((z) => z.id !== id));
-                  setSelectedIrrigationZoneId((cur) => (cur === id ? null : cur));
-                }}
-                onStartNewZone={() => {
-                  setStudioTool("irrigation");
-                  setSelectedIrrigationZoneId(null);
-                  irrigationDraw.start();
-                }}
-                onFinishLine={() => {
-                  const pts = irrigationDraw.finish();
-                  if (!pts) {
-                    toast.show("Need at least 2 points for a line.", "error");
-                    return;
-                  }
-                  const zone = {
-                    id: newId(),
-                    name: `Zone ${irrigationZones.length + 1}`,
-                    points: pts,
-                    emitter_spacing_cm: 30,
-                    emitter_flow_lph: 2,
-                  };
-                  setIrrigationZones((prev) => [...prev, zone]);
-                  setSelectedIrrigationZoneId(zone.id);
-                  setRailTab("schedule");
-                  toast.show(`Zone "${zone.name}" created.`, "success");
-                }}
-              />
-            ) : null}
-            {railTab === "schedule" ? (
-              <StudioSchedulePanel
-                placements={placements}
-                irrigationZones={irrigationZones}
-                symbols={symbols}
-                rateCard={rateCard}
-                scale={groundScale}
-                onCopySchedule={(md) => {
-                  void navigator.clipboard.writeText(md);
-                  toast.show("Schedule copied to clipboard.", "success");
-                }}
-                onOpenOutputs={() => void handleSaveAndOpenOutputs()}
-                saving={saving}
-              />
-            ) : null}
-          </div>
-          </>
-        }
+        canvasCol={canvasWorkspace}
+        rail={railPanels}
       />
     </div>
   );

@@ -1,0 +1,139 @@
+.ribbon {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line-hairline);
+  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  -webkit-backdrop-filter: saturate(150%) blur(14px);
+  backdrop-filter: saturate(150%) blur(14px);
+  z-index: 8;
+}
+
+.tabRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0 var(--s-2);
+  border-bottom: 1px solid var(--line-hairline);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabRow::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--ink-primary);
+  background: var(--surface-sunken);
+}
+
+.tabActive {
+  color: var(--ink-primary);
+  border-bottom-color: var(--accent);
+}
+
+.tabAi {
+  color: var(--accent-ink);
+}
+
+.tabAi.tabActive {
+  background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+}
+
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+}
+
+.cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clusterLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+
+.btnGroup {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line-hairline);
+}
+
+.btn {
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 var(--s-3);
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--ink-primary);
+  background: var(--surface-elevated);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnActive {
+  background: var(--accent);
+  color: var(--ink-inverted);
+}
+
+.btnAccent {
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface-elevated));
+  color: var(--accent-ink);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.zoomReadout {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-tertiary);
+  min-width: 3.5rem;
+  text-align: right;
+}

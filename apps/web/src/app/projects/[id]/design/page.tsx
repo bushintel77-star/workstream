@@ -10,6 +10,7 @@ import {
   ProjectPipelineShell,
   StudioSurveyRequired,
 } from "../../../../components/ProjectPipelineShell";
+import { Suspense } from "react";
 import { DesignStudioSection } from "./DesignStudioSection";
 
 export const dynamic = "force-dynamic";
@@ -35,14 +36,17 @@ export default async function DesignPage({
       {!survey ? (
         <StudioSurveyRequired projectId={id} />
       ) : (
-        <DesignStudioSection
-          projectId={id}
-          aerialUri={survey.aerial_uri}
-          lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
-          symbols={symbols}
-          rateCard={rateCard}
-          canvas={canvas}
-        />
+        <Suspense fallback={null}>
+          <DesignStudioSection
+            projectId={id}
+            projectAddress={project.address}
+            aerialUri={survey.aerial_uri}
+            lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
+            symbols={symbols}
+            rateCard={rateCard}
+            canvas={canvas}
+          />
+        </Suspense>
       )}
     </ProjectPipelineShell>
   );

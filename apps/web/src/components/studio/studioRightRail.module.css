@@ -1,0 +1,37 @@
+.rail {
+  flex-shrink: 0;
+  background: var(--surface-elevated);
+  border-left: 1px solid var(--line-hairline);
+  overflow: hidden;
+  transition: width var(--studio-transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.railClosed {
+  width: 0;
+  border-left: none;
+}
+
+.railOpen {
+  width: var(--studio-rightrail-open-w);
+}
+
+.placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--ink-tertiary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

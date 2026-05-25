@@ -94,6 +94,23 @@
   --dur-fast: 120ms;
   --dur-base: 200ms;
   --dur-slow: 320ms;
+
+  /* Studio layout sizing */
+  --studio-topbar-h: 40px;
+  --studio-toolrail-w: 48px;
+  --studio-toolrail-expanded-w: 180px;
+  --studio-rightrail-open-w: 280px;
+  --studio-statusbar-h: 22px;
+  --studio-transition: 220ms ease;
+  --studio-ribbon-h: 36px;
+  --studio-context-strip-h: 32px;
+
+  /* Site intelligence overlay fills */
+  --overlay-shade: color-mix(in srgb, var(--warn) 38%, transparent);
+  --overlay-trp: color-mix(in srgb, var(--ok) 38%, transparent);
+  --overlay-utility: color-mix(in srgb, var(--info) 38%, transparent);
+  --overlay-easement: color-mix(in srgb, var(--block) 38%, transparent);
+  --overlay-ghost: color-mix(in srgb, var(--ink-primary) 12%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {

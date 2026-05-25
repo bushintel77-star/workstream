@@ -98,6 +98,20 @@ export function DesignAssetPalette({
   );
 
   const filtered = useMemo(() => {
+    if (
+      plantKeyword === "landscape" ||
+      plantKeyword === "open crop" ||
+      plantKeyword === "wikimedia"
+    ) {
+      let list = symbols.filter((sym) =>
+        (sym.keywords ?? []).some((k) => k.toLowerCase().includes(plantKeyword)),
+      );
+      if (query.trim()) {
+        list = filterCatalogSymbols(list, { query });
+      }
+      return list;
+    }
+
     let list = filterCatalogSymbols(symbols, { category, query });
     if (category === "planting" && plantKeyword) {
       list = list.filter((sym) =>
@@ -181,6 +195,52 @@ export function DesignAssetPalette({
           </button>
         ))}
       </div>
+
+      {category === "planting" || category === "all" ? (
+        <>
+          <div className={s.filterRow}>
+            <button
+              type="button"
+              className={`${s.filterChip} ${plantKeyword === "landscape" ? s.filterChipActive : ""}`}
+              onClick={() => {
+                setPlantKeyword((cur) => (cur === "landscape" ? null : "landscape"));
+                setCategory("all");
+                setPlantSun(null);
+                setPlantWater(null);
+              }}
+              disabled={disabled}
+            >
+              Landscape library
+            </button>
+            <button
+              type="button"
+              className={`${s.filterChip} ${plantKeyword === "wikimedia" ? s.filterChipActive : ""}`}
+              onClick={() => {
+                setPlantKeyword((cur) => (cur === "wikimedia" ? null : "wikimedia"));
+                setCategory("all");
+                setPlantSun(null);
+                setPlantWater(null);
+              }}
+              disabled={disabled}
+            >
+              Tree pack
+            </button>
+            <button
+              type="button"
+              className={`${s.filterChip} ${plantKeyword === "open crop" ? s.filterChipActive : ""}`}
+              onClick={() => {
+                setPlantKeyword((cur) => (cur === "open crop" ? null : "open crop"));
+                setCategory("all");
+                setPlantSun(null);
+                setPlantWater(null);
+              }}
+              disabled={disabled}
+            >
+              Crop library
+            </button>
+          </div>
+        </>
+      ) : null}
 
       {category === "planting" ? (
         <>

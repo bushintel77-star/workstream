@@ -1,10 +1,11 @@
 import type { CatalogSymbol } from "@workstream/contracts";
-import { DesignStudio } from "../../../../components/DesignStudio";
 import type { DesignCanvas, RateCardItem } from "../../../../lib/api";
+import { DesignStudioClient } from "./DesignStudioClient";
 import section from "./designStudioSection.module.css";
 
 type Props = {
   projectId: string;
+  projectAddress: string;
   aerialUri: string;
   lotRing: [number, number][];
   symbols: CatalogSymbol[];
@@ -14,6 +15,7 @@ type Props = {
 
 export function DesignStudioSection({
   projectId,
+  projectAddress,
   aerialUri,
   lotRing,
   symbols,
@@ -22,22 +24,14 @@ export function DesignStudioSection({
 }: Props) {
   return (
     <section id="design-studio" className={section.wrap} aria-label="Design studio">
-      <DesignStudio
+      <DesignStudioClient
         projectId={projectId}
+        projectAddress={projectAddress}
         aerialUri={aerialUri}
         lotRing={lotRing}
         symbols={symbols}
-        initialPlacements={canvas?.placements ?? []}
-        initialStrokes={
-          canvas?.strokes?.map((st) => ({
-            id: st.id,
-            points: st.points,
-            color: st.color,
-            width_px: st.width_px,
-          })) ?? []
-        }
-        initialIrrigationZones={canvas?.irrigation_zones ?? []}
         rateCard={rateCard}
+        canvas={canvas}
       />
     </section>
   );
