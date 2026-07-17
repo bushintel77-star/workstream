@@ -54,6 +54,13 @@
   pointer-events: none;
 }
 
+.boundaryHost {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-sheet);
+  overflow: hidden;
+}
+
 .cadLayer :global(svg) {
   width: 100%;
   height: 100%;

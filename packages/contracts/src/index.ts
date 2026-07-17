@@ -4,6 +4,7 @@ export * from "./schemas/survey";
 export * from "./schemas/design";
 export * from "./schemas/catalog";
 export * from "./schemas/cad";
+export * from "./schemas/site-boundary";
 export * from "./schemas/catalog-admin";
 export * from "./schemas/costing";
 export * from "./schemas/audit";

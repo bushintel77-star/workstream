@@ -58,3 +58,35 @@ export type CadBuildApi = {
   gst: number;
   total: number;
 };
+
+export type BoundaryVertexLite = {
+  vertex_id: string;
+  sequence_index: number;
+  source: "AI_GENERATED" | "HUMAN_EDITED" | "HUMAN_ADDED" | "GIS_PARCEL";
+  is_locked: boolean;
+  canvas_coords: { x: number; y: number };
+  geo_coords: { lng: number; lat: number };
+  is_master_reference?: boolean;
+};
+
+export type SiteBoundaryLite = {
+  id: string;
+  project_id: string;
+  layer_id: string;
+  status: "UNVERIFIED" | "VERIFIED";
+  source_kind: "vicmap" | "geojson_ingest" | "ai_trace" | "manual";
+  width_m: number;
+  height_m: number;
+  geo_reference: {
+    crs: "EPSG:4326";
+    canvas_origin_geo: { lng: number; lat: number };
+    metres_per_canvas_unit: 1;
+  };
+  calculated_metrics: {
+    total_area_m2: number;
+    perimeter_m: number;
+    ai_confidence: number | null;
+  };
+  vertices: BoundaryVertexLite[];
+  updated_at: string;
+};

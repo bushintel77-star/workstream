@@ -66,6 +66,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _projectFiles: import("./types").ProjectFile[] = [];
   const _designCanvases: import("@workstream/contracts").DesignCanvas[] = [];
   const _cadDocuments: import("@workstream/contracts").CadDocument[] = [];
+  const _siteBoundaries: import("@workstream/contracts").SiteBoundary[] = [];
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
   > = [];
@@ -112,6 +113,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _projectFiles,
     _designCanvases,
     _cadDocuments,
+    _siteBoundaries,
     _catalogCustom,
     _activityEvents,
   };
@@ -1133,6 +1135,70 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _cadDocuments.push(doc);
       flush();
       return doc;
+    },
+
+    async getSiteBoundary(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const doc = _siteBoundaries.find((b) => b.project_id === projectId);
+      return doc ? structuredClone(doc) : null;
+    },
+
+    async upsertSiteBoundary(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const now = new Date().toISOString();
+      const existing = _siteBoundaries.find((b) => b.project_id === projectId);
+      if (existing) {
+        existing.layer_id = input.layer_id ?? existing.layer_id;
+        existing.status = input.status;
+        existing.last_modified_by =
+          input.last_modified_by !== undefined
+            ? input.last_modified_by
+            : existing.last_modified_by;
+        existing.source_kind = input.source_kind ?? existing.source_kind;
+        existing.geo_reference = input.geo_reference;
+        existing.width_m = input.width_m;
+        existing.height_m = input.height_m;
+        existing.calculated_metrics = input.calculated_metrics;
+        existing.vertices = input.vertices;
+        existing.updated_at = now;
+        flush();
+        return structuredClone(existing);
+      }
+      const doc: import("@workstream/contracts").SiteBoundary = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        layer_id: input.layer_id ?? "layer_baseline_boundary",
+        status: input.status,
+        last_modified_by: input.last_modified_by ?? null,
+        source_kind: input.source_kind ?? "manual",
+        geo_reference: input.geo_reference,
+        width_m: input.width_m,
+        height_m: input.height_m,
+        calculated_metrics: input.calculated_metrics,
+        vertices: input.vertices,
+        updated_at: now,
+      };
+      _siteBoundaries.push(doc);
+      flush();
+      return structuredClone(doc);
+    },
+
+    async deleteSiteBoundary(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return false;
+      const idx = _siteBoundaries.findIndex((b) => b.project_id === projectId);
+      if (idx < 0) return false;
+      _siteBoundaries.splice(idx, 1);
+      flush();
+      return true;
     },
 
     async deleteCrewMember(ownerId, id) {

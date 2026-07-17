@@ -29,6 +29,8 @@ import type {
   UpsertDesignCanvasInput,
   CadDocument,
   UpsertCadDocumentInput,
+  SiteBoundary,
+  UpsertSiteBoundaryInput,
   CatalogSymbol,
   CreateCatalogSymbolInput,
   WorkspaceBilling,
@@ -73,6 +75,8 @@ export type {
   UpsertDesignCanvasInput,
   CadDocument,
   UpsertCadDocumentInput,
+  SiteBoundary,
+  UpsertSiteBoundaryInput,
   CatalogSymbol,
   CreateCatalogSymbolInput,
   WorkspaceBilling,
@@ -273,6 +277,16 @@ export interface Store {
     projectId: string,
     input: UpsertCadDocumentInput,
   ): Promise<CadDocument>;
+  getSiteBoundary(
+    ownerId: string,
+    projectId: string,
+  ): Promise<SiteBoundary | null>;
+  upsertSiteBoundary(
+    ownerId: string,
+    projectId: string,
+    input: UpsertSiteBoundaryInput,
+  ): Promise<SiteBoundary>;
+  deleteSiteBoundary(ownerId: string, projectId: string): Promise<boolean>;
   listCatalogSymbols(ownerId: string): Promise<CatalogSymbol[]>;
   createCustomCatalogSymbol(
     ownerId: string,

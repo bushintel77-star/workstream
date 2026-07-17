@@ -82,7 +82,7 @@ async function apiPut<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function apiDelete(path: string): Promise<void> {
+async function apiDelete<T = void>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "DELETE",
     cache: "no-store",
@@ -91,6 +91,10 @@ async function apiDelete(path: string): Promise<void> {
   if (!res.ok && res.status !== 404) {
     throw new Error(`API ${res.status} on DELETE ${path}`);
   }
+  if (res.status === 204 || res.status === 404) return undefined as T;
+  const text = await res.text().catch(() => "");
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 /* -- Projects ---------------------------------------------------------- */
@@ -473,6 +477,63 @@ export async function cadQuoteApi(
   html: string;
 }> {
   return apiPost(`/projects/${projectId}/cad/quote`, { scenario });
+}
+
+/* -- HITL site boundary ------------------------------------------------ */
+
+export type { SiteBoundaryLite } from "./canvas-types";
+import type { SiteBoundaryLite } from "./canvas-types";
+
+export async function getSiteBoundaryApi(
+  projectId: string,
+): Promise<{ boundary: SiteBoundaryLite | null }> {
+  return apiGet<{ boundary: SiteBoundaryLite | null }>(
+    `/projects/${projectId}/boundary`,
+  );
+}
+
+export async function putSiteBoundaryApi(
+  projectId: string,
+  boundary: SiteBoundaryLite,
+): Promise<{ boundary: SiteBoundaryLite }> {
+  return apiPut<{ boundary: SiteBoundaryLite }>(
+    `/projects/${projectId}/boundary`,
+    boundary,
+  );
+}
+
+export async function autoTraceBoundaryApi(
+  projectId: string,
+  preferGis = true,
+): Promise<{ boundary: SiteBoundaryLite }> {
+  return apiPost<{ boundary: SiteBoundaryLite }>(
+    `/projects/${projectId}/boundary/auto-trace`,
+    { prefer_gis: preferGis },
+  );
+}
+
+export async function lockBoundaryApi(
+  projectId: string,
+): Promise<{ boundary: SiteBoundaryLite }> {
+  return apiPost<{ boundary: SiteBoundaryLite }>(
+    `/projects/${projectId}/boundary/lock`,
+    {},
+  );
+}
+
+export async function unlockBoundaryApi(
+  projectId: string,
+): Promise<{ boundary: SiteBoundaryLite }> {
+  return apiPost<{ boundary: SiteBoundaryLite }>(
+    `/projects/${projectId}/boundary/unlock`,
+    {},
+  );
+}
+
+export async function resetBoundaryApi(
+  projectId: string,
+): Promise<{ deleted: boolean }> {
+  return apiDelete<{ deleted: boolean }>(`/projects/${projectId}/boundary`);
 }
 
 /* -- Costing ----------------------------------------------------------- */

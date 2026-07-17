@@ -4,6 +4,7 @@ import {
   getCadDocumentApi,
   getDesignCanvas,
   getProject,
+  getSiteBoundaryApi,
   getSurvey,
 } from "../../../lib/api";
 import { requireSignedIn } from "../../../lib/auth";
@@ -17,7 +18,7 @@ export default async function ProjectCanvasPage({
 }) {
   await requireSignedIn();
   const { id } = await params;
-  const [project, survey, cad, canvas] = await Promise.all([
+  const [project, survey, cad, canvas, boundaryRes] = await Promise.all([
     getProject(id),
     getSurvey(id).catch(() => null),
     getCadDocumentApi(id).catch(() => ({
@@ -26,6 +27,7 @@ export default async function ProjectCanvasPage({
       ghost_count: 0,
     })),
     getDesignCanvas(id).catch(() => null),
+    getSiteBoundaryApi(id).catch(() => ({ boundary: null })),
   ]);
 
   if (!project) notFound();
@@ -38,6 +40,7 @@ export default async function ProjectCanvasPage({
       initialDocument={cad.document}
       initialSvg={cad.svg}
       initialGhostCount={cad.ghost_count}
+      initialBoundary={boundaryRes.boundary}
       key={canvas?.updated_at ?? id}
     />
   );

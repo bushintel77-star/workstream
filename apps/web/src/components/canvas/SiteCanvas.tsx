@@ -10,18 +10,29 @@ import {
 } from "react";
 import {
   acceptCadAction,
+  autoTraceBoundaryAction,
   cadBuildAction,
   cadQuantitySurveyAction,
   cadQuoteAction,
   downloadCadDxfAction,
   editCadAction,
   generateCadAction,
+  lockBoundaryAction,
+  resetBoundaryAction,
+  saveBoundaryAction,
+  unlockBoundaryAction,
 } from "../../app/actions";
 import type {
   CadBuildApi,
   CadDocumentLite,
   CadQuantitySurveyApi,
+  SiteBoundaryLite,
 } from "../../lib/canvas-types";
+import {
+  BoundaryChrome,
+  BoundaryOverlay,
+  type BoundaryTool,
+} from "./BoundaryLockSnap";
 import css from "./siteCanvas.module.css";
 
 type Props = {
@@ -31,6 +42,7 @@ type Props = {
   initialDocument: CadDocumentLite | null;
   initialSvg: string | null;
   initialGhostCount: number;
+  initialBoundary: SiteBoundaryLite | null;
 };
 
 type Sheet = "none" | "qs" | "build";
@@ -42,10 +54,15 @@ export function SiteCanvas({
   initialDocument,
   initialSvg,
   initialGhostCount,
+  initialBoundary,
 }: Props) {
   const [cadDoc, setCadDoc] = useState<CadDocumentLite | null>(initialDocument);
   const [svg, setSvg] = useState(initialSvg);
   const [ghostCount, setGhostCount] = useState(initialGhostCount);
+  const [boundary, setBoundary] = useState<SiteBoundaryLite | null>(
+    initialBoundary,
+  );
+  const [boundaryTool, setBoundaryTool] = useState<BoundaryTool>("pan");
   const [instruction, setInstruction] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +71,7 @@ export function SiteCanvas({
   const [quoteHtml, setQuoteHtml] = useState<string | null>(null);
   const [sheet, setSheet] = useState<Sheet>("none");
   const [pending, startTransition] = useTransition();
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(40);
@@ -89,7 +107,26 @@ export function SiteCanvas({
     return () => window.removeEventListener("wheel", onWheel);
   }, []);
 
+  const persistBoundary = useCallback(
+    (next: SiteBoundaryLite) => {
+      setBoundary(next);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        startTransition(async () => {
+          try {
+            const res = await saveBoundaryAction(projectId, next);
+            setBoundary(res.boundary);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Boundary save failed");
+          }
+        });
+      }, 400);
+    },
+    [projectId],
+  );
+
   const onPointerDown = (e: React.PointerEvent) => {
+    if (boundaryTool !== "pan") return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { x: e.clientX, y: e.clientY, tx, ty };
   };
@@ -169,6 +206,13 @@ export function SiteCanvas({
               dangerouslySetInnerHTML={{ __html: svg }}
             />
           ) : null}
+          <div className={css.boundaryHost}>
+            <BoundaryOverlay
+              boundary={boundary}
+              tool={boundaryTool}
+              onChange={persistBoundary}
+            />
+          </div>
           {survey?.rows.slice(0, 24).map((row) => (
             <span
               key={row.id}
@@ -203,6 +247,41 @@ export function SiteCanvas({
           </Link>
         </div>
       </div>
+
+      <BoundaryChrome
+        boundary={boundary}
+        tool={boundaryTool}
+        pending={pending}
+        onToolChange={setBoundaryTool}
+        onAutoTrace={() =>
+          run("Tracing parcel…", async () => {
+            const res = await autoTraceBoundaryAction(projectId);
+            setBoundary(res.boundary);
+            setBoundaryTool("edit");
+          })
+        }
+        onLock={() =>
+          run("Locking boundary…", async () => {
+            const res = await lockBoundaryAction(projectId);
+            setBoundary(res.boundary);
+            setBoundaryTool("pan");
+          })
+        }
+        onUnlock={() =>
+          run("Unlocking boundary…", async () => {
+            const res = await unlockBoundaryAction(projectId);
+            setBoundary(res.boundary);
+            setBoundaryTool("edit");
+          })
+        }
+        onReset={() =>
+          run("Resetting boundary…", async () => {
+            await resetBoundaryAction(projectId);
+            setBoundary(null);
+            setBoundaryTool("pan");
+          })
+        }
+      />
 
       {sheet !== "none" && (survey || build) ? (
         <aside className={css.sheet} aria-label="Schedule sheet">

@@ -301,6 +301,64 @@ export async function cadQuoteAction(
   }
 }
 
+export async function autoTraceBoundaryAction(projectId: string) {
+  const { autoTraceBoundaryApi } = await import("../lib/api");
+  try {
+    const result = await autoTraceBoundaryApi(projectId, true);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Boundary auto-trace failed");
+  }
+}
+
+export async function saveBoundaryAction(
+  projectId: string,
+  boundary: import("../lib/canvas-types").SiteBoundaryLite,
+) {
+  const { putSiteBoundaryApi } = await import("../lib/api");
+  try {
+    const result = await putSiteBoundaryApi(projectId, boundary);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Boundary save failed");
+  }
+}
+
+export async function lockBoundaryAction(projectId: string) {
+  const { lockBoundaryApi } = await import("../lib/api");
+  try {
+    const result = await lockBoundaryApi(projectId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Boundary lock failed");
+  }
+}
+
+export async function unlockBoundaryAction(projectId: string) {
+  const { unlockBoundaryApi } = await import("../lib/api");
+  try {
+    const result = await unlockBoundaryApi(projectId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Boundary unlock failed");
+  }
+}
+
+export async function resetBoundaryAction(projectId: string) {
+  const { resetBoundaryApi } = await import("../lib/api");
+  try {
+    const result = await resetBoundaryApi(projectId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Boundary reset failed");
+  }
+}
+
 export async function runSketchCostingAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   if (!projectId) throw new Error("Missing project");

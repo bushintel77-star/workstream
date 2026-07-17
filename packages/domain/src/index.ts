@@ -35,6 +35,7 @@ export * from './sketch-brief';
 export * from './sketch-costing';
 export * from './cad-quantities';
 export * from './cad-build';
+export * from './site-boundary';
 export * from './planning-context';
 export * from './envelope-brief';
 export * from './studio-strokes';
