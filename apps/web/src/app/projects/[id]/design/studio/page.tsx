@@ -1,60 +1,11 @@
-import { Suspense } from "react";
-import { requireProject } from "../../../../../lib/project-guard";
-import {
-  getDesignCanvas,
-  getSurvey,
-  listCatalogSymbols,
-  listRateCard,
-} from "../../../../../lib/api";
-import { NotFoundPage } from "../../ProjectShell";
-import {
-  ProjectPipelineShell,
-  StudioSurveyRequired,
-} from "../../../../../components/ProjectPipelineShell";
-import { DesignStudioSection } from "../DesignStudioSection";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
+/** Alias — sketch lives at /design, canvas-first. */
 export default async function DesignStudioPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await requireProject(id);
-  if (!project) return <NotFoundPage message="Project not found." />;
-
-  const survey = await getSurvey(id);
-  const [canvas, symbols, rateCard] = await Promise.all([
-    getDesignCanvas(id),
-    survey ? listCatalogSymbols() : Promise.resolve([]),
-    survey ? listRateCard() : Promise.resolve([]),
-  ]);
-
-  return (
-    <ProjectPipelineShell project={project} active="design" variant="immersive">
-      {!survey ? (
-        <StudioSurveyRequired projectId={id} />
-      ) : (
-        <Suspense fallback={null}>
-          <DesignStudioSection
-            projectId={id}
-            projectAddress={project.address}
-            aerialUri={survey.aerial_uri}
-            lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
-            symbols={symbols}
-            rateCard={rateCard}
-            canvas={canvas}
-            surveyMetrics={{
-              garden_area_m2: survey.garden_area_m2,
-              lot_area_m2: survey.lot_area_m2,
-              house_area_m2: survey.house_area_m2,
-              lat: project.lat,
-              lng: project.lng,
-            }}
-          />
-        </Suspense>
-      )}
-    </ProjectPipelineShell>
-  );
+  redirect(`/projects/${id}/design`);
 }

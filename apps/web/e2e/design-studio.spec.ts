@@ -45,15 +45,11 @@ test.describe("Design studio", () => {
     await page.setViewportSize(LEGACY_STUDIO_VIEWPORT);
   });
 
-  test("loads immersive pipeline shell and aerial canvas", async ({ page }) => {
+  test("loads canvas-first aerial studio without pipeline chrome", async ({
+    page,
+  }) => {
     await page.goto(`/projects/${projectId}/design`);
-    const shell = pipelineShell(page);
-    await expect(shell).toBeVisible({ timeout: 30_000 });
-    await expect(shell).toHaveAttribute("data-shell-variant", "immersive");
-    await expect(page.getByTestId("pipeline-tab-design")).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    await expect(pipelineShell(page)).toHaveCount(0);
     await expect(page.getByTestId("design-studio-image-shell")).toBeVisible({
       timeout: 15_000,
     });

@@ -18,11 +18,13 @@ type Props = {
   children: ReactNode;
 };
 
-/** Canvas routes: no AppNav / share FAB ? studio/site canvas is the only chrome. */
+/** Site canvas + sketch + AI CAD: no AppNav. Develop/hub keep light nav. */
 function isCanvasFirstRoute(pathname: string): boolean {
   return (
     /\/projects\/[^/]+\/?$/.test(pathname) ||
-    /\/projects\/[^/]+\/design(\/|$)/.test(pathname)
+    /\/projects\/[^/]+\/design\/?$/.test(pathname) ||
+    /\/projects\/[^/]+\/design\/studio\/?$/.test(pathname) ||
+    /\/projects\/[^/]+\/design\/cad\/?$/.test(pathname)
   );
 }
 

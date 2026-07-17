@@ -4,7 +4,7 @@ import { LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
 const API = process.env.API_URL ?? "http://localhost:3001";
 
 test.describe("Operator happy path", () => {
-  test("project hub and design page after API create + pipeline", async ({
+  test("site canvas and design studio after API create + pipeline", async ({
     page,
     request,
   }) => {
@@ -30,27 +30,16 @@ test.describe("Operator happy path", () => {
     await expect(page.getByTestId("site-canvas")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(pipelineShell(page)).toHaveCount(0);
 
     await page.goto(`/projects/${projectId}/overview`);
-    await expect(pipelineShell(page)).toHaveAttribute(
-      "data-shell-variant",
-      "immersive",
-    );
-    await expect(page.getByTestId("pipeline-hub-image-shell")).toBeVisible({
-      timeout: 30_000,
-    });
+    await expect(pipelineShell(page)).toBeVisible({ timeout: 30_000 });
 
     await page.setViewportSize(LEGACY_STUDIO_VIEWPORT);
     await page.goto(`/projects/${projectId}/design`);
-    await expect(pipelineShell(page)).toHaveAttribute(
-      "data-shell-variant",
-      "immersive",
-    );
-    await expect(page.getByTestId("design-studio-image-shell")).toBeVisible({
-      timeout: 30_000,
-    });
     await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(pipelineShell(page)).toHaveCount(0);
   });
 });

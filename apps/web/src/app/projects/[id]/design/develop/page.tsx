@@ -6,7 +6,6 @@ import {
   getDesignCanvas,
   getEnvelopeBrief,
   getSurvey,
-  listCostings,
 } from "../../../../../lib/api";
 import s from "../../../../../styles/app.module.css";
 import {
@@ -15,17 +14,17 @@ import {
   runSketchCostingAction,
 } from "../../../../actions";
 import { NotFoundPage } from "../../ProjectShell";
-import {
-  PipelineContent,
-  ProjectPipelineShell,
-} from "../../../../../components/ProjectPipelineShell";
 import { PipelineActionForm } from "../../../../../components/PipelineActionForm";
 import { EnvelopeBriefPanel } from "../../../../../components/EnvelopeBriefPanel";
 import { DesignProposalView } from "../../../../../components/DesignProposalView";
-import { Tier1DevelopHero, Tier1SavingsLedger } from "../../../../../components/tier1";
+import {
+  Tier1DevelopHero,
+  Tier1SavingsLedger,
+} from "../../../../../components/tier1";
 
 export const dynamic = "force-dynamic";
 
+/** Develop & estimate — editorial page, no pipeline masthead. */
 export default async function DesignDevelopPage({
   params,
 }: {
@@ -36,35 +35,27 @@ export default async function DesignDevelopPage({
   if (!project) return <NotFoundPage message="Project not found." />;
 
   const survey = await getSurvey(id);
-  const [design, canvas, costings] = await Promise.all([
+  const [design, canvas] = await Promise.all([
     getDesign(id),
     getDesignCanvas(id),
-    listCostings(id).catch(() => []),
   ]);
   const hasCanvas = (canvas?.placements?.length ?? 0) > 0;
-  const envelope =
-    survey && hasCanvas ? await getEnvelopeBrief(id) : null;
+  const envelope = survey && hasCanvas ? await getEnvelopeBrief(id) : null;
   const tier1 = isTier1WrightsTerrace(project.address);
   const aerialUri = survey?.aerial_uri ?? null;
 
   return (
-    <ProjectPipelineShell
-      project={project}
-      active="design"
-      sectionLabel="Develop & estimate"
-    >
-      <PipelineContent>
-
+    <main className={s.pageNarrow}>
       <p className={s.meta}>
-        <Link href={`/projects/${id}/design`}>← Back to sketch</Link>
+        <Link href={`/projects/${id}/design`}>← Sketch</Link>
         {" · "}
         <Link href={`/projects/${id}/design/cad`}>AI CAD</Link>
       </p>
 
       <h1 className={s.headline}>Develop & estimate</h1>
       <p className={s.lede}>
-        Back-of-envelope budget and planning flags, then AI develops the design
-        from your sketch.
+        Envelope budget and planning flags, then develop the design from your
+        sketch.
       </p>
 
       {tier1 ? <Tier1DevelopHero address={project.address} /> : null}
@@ -78,9 +69,9 @@ export default async function DesignDevelopPage({
         </div>
       ) : (
         <section id="develop" aria-labelledby="develop-heading">
-          {envelope && hasCanvas && (
+          {envelope && hasCanvas ? (
             <EnvelopeBriefPanel projectId={id} envelope={envelope} />
-          )}
+          ) : null}
 
           <div id="envelope-estimate" className={s.actionBar}>
             <PipelineActionForm
@@ -91,11 +82,11 @@ export default async function DesignDevelopPage({
               successMessage="Sketch estimate ready"
               disabled={!hasCanvas}
             />
-            {!hasCanvas && (
+            {!hasCanvas ? (
               <Link href={`/projects/${id}/design`} className={s.btn}>
                 Sketch on aerial first
               </Link>
-            )}
+            ) : null}
             <PipelineActionForm
               projectId={id}
               action={runDevelopFromSketchAction}
@@ -112,22 +103,21 @@ export default async function DesignDevelopPage({
               pendingLabel="Designing…"
               successMessage="Design complete"
             />
-            {design && (
+            {design ? (
               <span className={`${s.pill} ${s.pillInfo}`}>
                 Version {design.version} · {design.mode}
               </span>
-            )}
-            {design && (
+            ) : null}
+            {design ? (
               <span className={`${s.pill} ${s.pillAccent}`}>
                 {design.proposal.estimated_complexity}
               </span>
-            )}
+            ) : null}
           </div>
 
           {!design ? (
             <div className={s.empty}>
-              No AI design yet. Sketch on the aerial, then run develop from
-              sketch.
+              No AI design yet. Sketch on the aerial, then develop from sketch.
             </div>
           ) : (
             <DesignProposalView
@@ -138,7 +128,6 @@ export default async function DesignDevelopPage({
           )}
         </section>
       )}
-      </PipelineContent>
-    </ProjectPipelineShell>
+    </main>
   );
 }

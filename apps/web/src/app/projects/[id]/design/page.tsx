@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Suspense } from "react";
 import { requireProject } from "../../../../lib/project-guard";
 import {
   getDesignCanvas,
@@ -6,15 +8,12 @@ import {
   listRateCard,
 } from "../../../../lib/api";
 import { NotFoundPage } from "../ProjectShell";
-import {
-  ProjectPipelineShell,
-  StudioSurveyRequired,
-} from "../../../../components/ProjectPipelineShell";
-import { Suspense } from "react";
 import { DesignStudioSection } from "./DesignStudioSection";
+import s from "../../../../styles/app.module.css";
 
 export const dynamic = "force-dynamic";
 
+/** Canvas-first sketch studio — no pipeline chrome. */
 export default async function DesignPage({
   params,
 }: {
@@ -25,36 +24,44 @@ export default async function DesignPage({
   if (!project) return <NotFoundPage message="Project not found." />;
 
   const survey = await getSurvey(id);
+  if (!survey) {
+    return (
+      <div className={s.empty} style={{ padding: "var(--s-6)" }}>
+        <h1 className={s.headline}>Design</h1>
+        <p className={s.lede}>
+          Run survey first — the aerial is required before you can sketch.
+        </p>
+        <Link href={`/projects/${id}/survey`} className={s.btn}>
+          Complete survey
+        </Link>
+      </div>
+    );
+  }
+
   const [canvas, symbols, rateCard] = await Promise.all([
     getDesignCanvas(id),
-    survey ? listCatalogSymbols() : Promise.resolve([]),
-    survey ? listRateCard() : Promise.resolve([]),
+    listCatalogSymbols(),
+    listRateCard(),
   ]);
 
   return (
-    <ProjectPipelineShell project={project} active="design" variant="immersive">
-      {!survey ? (
-        <StudioSurveyRequired projectId={id} />
-      ) : (
-        <Suspense fallback={null}>
-          <DesignStudioSection
-            projectId={id}
-            projectAddress={project.address}
-            aerialUri={survey.aerial_uri}
-            lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
-            symbols={symbols}
-            rateCard={rateCard}
-            canvas={canvas}
-            surveyMetrics={{
-              garden_area_m2: survey.garden_area_m2,
-              lot_area_m2: survey.lot_area_m2,
-              house_area_m2: survey.house_area_m2,
-              lat: project.lat,
-              lng: project.lng,
-            }}
-          />
-        </Suspense>
-      )}
-    </ProjectPipelineShell>
+    <Suspense fallback={null}>
+      <DesignStudioSection
+        projectId={id}
+        projectAddress={project.address}
+        aerialUri={survey.aerial_uri}
+        lotRing={survey.title_polygon.coordinates[0] as [number, number][]}
+        symbols={symbols}
+        rateCard={rateCard}
+        canvas={canvas}
+        surveyMetrics={{
+          garden_area_m2: survey.garden_area_m2,
+          lot_area_m2: survey.lot_area_m2,
+          house_area_m2: survey.house_area_m2,
+          lat: project.lat,
+          lng: project.lng,
+        }}
+      />
+    </Suspense>
   );
 }
