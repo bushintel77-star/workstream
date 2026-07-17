@@ -125,11 +125,11 @@ export function NewProjectAddressForm() {
 
       <button
         type="button"
-        className={s.btn}
+        className={s.btnAccent}
         disabled={!selected}
         onClick={goConfirm}
       >
-        Confirm on aerial →
+        Pin garden on aerial →
       </button>
     </div>
   );

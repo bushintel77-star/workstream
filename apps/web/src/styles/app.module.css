@@ -230,7 +230,11 @@
 .pillWarn { background: color-mix(in srgb, #fef3c7 75%, var(--surface-elevated)); color: #b45309; border-color: color-mix(in srgb, #b45309 18%, var(--line-hairline)); }
 .pillBlock { background: color-mix(in srgb, #fee2e2 75%, var(--surface-elevated)); color: #b91c1c; border-color: color-mix(in srgb, #b91c1c 18%, var(--line-hairline)); }
 .pillInfo { background: color-mix(in srgb, #dbeafe 75%, var(--surface-elevated)); color: #1d4ed8; border-color: color-mix(in srgb, #1d4ed8 18%, var(--line-hairline)); }
-.pillAccent { background: color-mix(in srgb, #ffedd5 75%, var(--surface-elevated)); color: #c2410c; border-color: color-mix(in srgb, #c2410c 18%, var(--line-hairline)); }
+.pillAccent {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--line-hairline));
+}
 .pillMuted { background: var(--surface-sunken); color: var(--ink-tertiary); border-color: var(--line-hairline); }
 
 .btn {

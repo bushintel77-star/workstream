@@ -1,59 +1,75 @@
 .page {
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: var(--s-7) var(--s-5) var(--s-8);
-  background: var(--surface-elevated);
-  min-height: 100vh;
-  border-left: 1px solid var(--line-hairline);
-  border-right: 1px solid var(--line-hairline);
+  padding: var(--s-6) var(--s-4) var(--s-8);
+  min-height: 100dvh;
+  animation: riseIn var(--dur-slow) var(--ease) both;
+  background: transparent;
+  border: none;
 }
 
 .masthead {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
   padding-bottom: var(--s-4);
-  border-bottom: 2px solid var(--ink-primary);
-  margin-bottom: var(--s-7);
-  gap: var(--s-5);
+  border-bottom: 1px solid rgba(242, 247, 244, 0.16);
+  margin-bottom: var(--s-5);
+  gap: var(--s-4);
 }
 
 .brand {
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: clamp(28px, 6vw, 42px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: #f2f7f4;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .brandSub {
+  font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-tertiary);
+  color: rgba(242, 247, 244, 0.55);
 }
 
 .docMeta {
   text-align: right;
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-tertiary);
-  line-height: 1.4;
+  color: rgba(242, 247, 244, 0.5);
+  line-height: 1.45;
 }
 
-.docMeta strong { display: block; color: var(--accent); }
+.docMeta strong {
+  display: block;
+  color: #c8f07a;
+  margin-bottom: 4px;
+}
+
+.sheet {
+  background: #f8fbf9;
+  color: #0c1a14;
+  border-radius: var(--r-xl);
+  padding: var(--s-5);
+  border: 1px solid rgba(242, 247, 244, 0.08);
+  animation: growIn var(--dur-slow) var(--ease) both;
+}
 
 .kicker {
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: #1f8a5a;
 }
 
 .eyebrow {
@@ -87,11 +103,12 @@
 
 .address {
   font-family: var(--font-display);
-  font-size: clamp(28px, 5vw, 40px);
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  margin: 0;
-  color: var(--accent-ink);
+  font-size: clamp(26px, 5vw, 38px);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  margin: 8px 0 0;
+  color: #0c1a14;
+  max-width: 18ch;
 }
 
 .summary {
@@ -229,29 +246,28 @@
 .alignRight { text-align: right; }
 
 .acceptSection {
-  margin: var(--s-7) 0 var(--s-5);
+  margin: var(--s-6) 0 0;
   padding: var(--s-5);
-  background: var(--surface-inverted);
+  background: #0c1a14;
   border-radius: var(--r-lg);
   text-align: center;
-  color: var(--ink-inverted);
+  color: #f2f7f4;
 }
 .acceptButton {
   display: inline-block;
-  background: var(--accent);
-  color: var(--ink-inverted) !important;
-  padding: var(--s-3) var(--s-5);
+  background: #c8f07a;
+  color: #0c1a14 !important;
+  padding: 14px 22px;
   border-radius: var(--r-md);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   text-decoration: none;
-  transition:
-    transform var(--dur-fast) var(--ease),
-    opacity var(--dur-fast) var(--ease);
+  transition: transform var(--dur-fast) var(--ease);
 }
 .acceptButton:hover {
   opacity: 1 !important;
   transform: translateY(-1px);
+  color: #0c1a14 !important;
 }
 .acceptButtonDisabled {
   display: inline-block;
@@ -272,13 +288,15 @@
 .colophon {
   display: flex;
   justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
   padding-top: var(--s-4);
-  border-top: 1px solid var(--line-hairline);
+  border-top: 1px solid rgba(242, 247, 244, 0.14);
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-tertiary);
+  color: rgba(242, 247, 244, 0.45);
 }
 
 .errorPage {

@@ -109,169 +109,176 @@ export function QuotePortal({
         <div className={styles.brand}>
           Curtis &amp; Co
           <span className={styles.brandSub}>
-            Boutique Landscape Design - Melbourne
+            Landscape design · Melbourne
           </span>
         </div>
         <div className={styles.docMeta}>
-          <strong>QUOTE</strong>
+          <strong>Garden quote</strong>
           {generated}
         </div>
       </header>
 
-      <section className={styles.hero}>
-        {data.hero_url ? (
-          <div className={styles.heroVisual}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={data.hero_url} alt="Site aerial" />
-          </div>
-        ) : null}
-        <span className={styles.kicker}>
-          {tier1 ? "TIER-1 ARCHITECTURAL MASSING" : "PREPARED FOR YOU"}
-        </span>
-        <h1 className={styles.address}>{project.address}</h1>
-        {tier1 && (
-          <p className={styles.heroLede}>
-            Architecture locked. Singular-species blocks, bluestone ground plane,
-            concealed deck lighting. Saving {aud2(Math.abs(tier1.net_inc_gst))}{" "}
-            vs cottage scatter scope.
-          </p>
-        )}
-      </section>
-
-      {survey && (
-        <section className={styles.summary}>
-          <Metric label="Lot" value={`${survey.lot_area_m2} m2`} />
-          <Metric label="House" value={`${survey.house_area_m2} m2`} />
-          <Metric label="Garden" value={`${survey.garden_area_m2} m2`} />
-        </section>
-      )}
-
-      {design && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionHeading}>The design</h2>
-          <p className={styles.rationale}>{design.rationale}</p>
-          {design.proposal.zones.map((z) => (
-            <div key={z.id} className={styles.zone}>
-              <h3 className={styles.zoneName}>{z.name}</h3>
-              <p className={styles.zoneTreatment}>{z.treatment}</p>
+      <div className={styles.sheet}>
+        <section className={styles.hero}>
+          {data.hero_url ? (
+            <div className={styles.heroVisual}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={data.hero_url} alt="Site aerial" />
             </div>
-          ))}
+          ) : null}
+          <span className={styles.kicker}>
+            {tier1 ? "Tier-1 architectural massing" : "Prepared for your garden"}
+          </span>
+          <h1 className={styles.address}>{project.address}</h1>
+          {tier1 && (
+            <p className={styles.heroLede}>
+              Architecture locked. Singular-species blocks, bluestone ground
+              plane, concealed deck lighting. Saving{" "}
+              {aud2(Math.abs(tier1.net_inc_gst))} vs cottage scatter scope.
+            </p>
+          )}
         </section>
-      )}
 
-      {tier1 ? (
-        <section className={styles.section}>
-          <Tier1SavingsLedger savings={tier1} showTarget={false} />
-        </section>
-      ) : null}
+        {survey && (
+          <section className={styles.summary}>
+            <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
+            <Metric label="House" value={`${survey.house_area_m2} m²`} />
+            <Metric label="Garden" value={`${survey.garden_area_m2} m²`} />
+          </section>
+        )}
 
-      {allCostings.length > 0 && (
-        <section
-          className={`${styles.section} ${styles.quoteWatermark}`}
-          data-watermark={`CONFIDENTIAL · ${project.id}`}
-          aria-label={`Confidential quote for project ${project.id}`}
-        >
-          <h2 className={styles.sectionHeading}>Investment</h2>
-
-          <div
-            className={styles.scenarioRow}
-            role="tablist"
-            aria-label="Price scenarios"
-          >
-            {SCENARIOS.map((s) => {
-              const c = allCostings.find((x) => x.scenario === s.id);
-              if (!c) return null;
-              const selected = scenario === s.id;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  className={`${styles.scenarioCard} ${selected ? styles.scenarioCardActive : ""}`}
-                  onClick={() => setScenario(s.id)}
-                >
-                  <span className={styles.scenarioLabel}>{s.label}</span>
-                  <span className={styles.scenarioTotal}>{aud2(c.total)}</span>
-                  <span className={styles.scenarioNote}>{s.note}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {active && (
-            <>
-              <div className={styles.total}>
-                <span className={styles.totalKicker}>
-                  {active.scenario.toUpperCase()} - TOTAL INCL. GST
-                </span>
-                <span className={styles.totalAmount}>{aud2(active.total)}</span>
-                <span className={styles.totalSub}>
-                  Subtotal {aud2(active.subtotal)} - GST {aud2(active.gst)}
-                </span>
+        {design && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionHeading}>The planting story</h2>
+            <p className={styles.rationale}>{design.rationale}</p>
+            {design.proposal.zones.map((z) => (
+              <div key={z.id} className={styles.zone}>
+                <h3 className={styles.zoneName}>{z.name}</h3>
+                <p className={styles.zoneTreatment}>{z.treatment}</p>
               </div>
+            ))}
+          </section>
+        )}
 
-              <table className={styles.lineItems}>
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th className={styles.alignRight}>Qty</th>
-                    <th className={styles.alignRight}>Rate</th>
-                    <th className={styles.alignRight}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {active.line_items
-                    .filter((li) => !li.is_provisional)
-                    .map((li, i) => (
-                      <tr key={`${li.label}-${i}`}>
-                        <td>{li.label}</td>
-                        <td className={styles.alignRight}>
-                          {li.qty} {li.unit}
-                        </td>
-                        <td className={styles.alignRight}>{aud2(li.rate)}</td>
-                        <td className={styles.alignRight}>{aud2(li.total)}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+        {tier1 ? (
+          <section className={styles.section}>
+            <Tier1SavingsLedger savings={tier1} showTarget={false} />
+          </section>
+        ) : null}
+
+        {allCostings.length > 0 && (
+          <section
+            className={`${styles.section} ${styles.quoteWatermark}`}
+            data-watermark={`CONFIDENTIAL · ${project.id}`}
+            aria-label={`Confidential quote for project ${project.id}`}
+          >
+            <h2 className={styles.sectionHeading}>Investment</h2>
+
+            <div
+              className={styles.scenarioRow}
+              role="tablist"
+              aria-label="Price scenarios"
+            >
+              {SCENARIOS.map((s) => {
+                const c = allCostings.find((x) => x.scenario === s.id);
+                if (!c) return null;
+                const selected = scenario === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    className={`${styles.scenarioCard} ${selected ? styles.scenarioCardActive : ""}`}
+                    onClick={() => setScenario(s.id)}
+                  >
+                    <span className={styles.scenarioLabel}>{s.label}</span>
+                    <span className={styles.scenarioTotal}>{aud2(c.total)}</span>
+                    <span className={styles.scenarioNote}>{s.note}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {active && (
+              <>
+                <div className={styles.total}>
+                  <span className={styles.totalKicker}>
+                    {active.scenario} · total incl. GST
+                  </span>
+                  <span className={styles.totalAmount}>
+                    {aud2(active.total)}
+                  </span>
+                  <span className={styles.totalSub}>
+                    Subtotal {aud2(active.subtotal)} · GST {aud2(active.gst)}
+                  </span>
+                </div>
+
+                <table className={styles.lineItems}>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th className={styles.alignRight}>Qty</th>
+                      <th className={styles.alignRight}>Rate</th>
+                      <th className={styles.alignRight}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {active.line_items
+                      .filter((li) => !li.is_provisional)
+                      .map((li, i) => (
+                        <tr key={`${li.label}-${i}`}>
+                          <td>{li.label}</td>
+                          <td className={styles.alignRight}>
+                            {li.qty} {li.unit}
+                          </td>
+                          <td className={styles.alignRight}>{aud2(li.rate)}</td>
+                          <td className={styles.alignRight}>{aud2(li.total)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+
+            <p className={styles.transparency}>
+              Every line links to the live rate card. Substitution levers are
+              disclosed — nothing silent.
+            </p>
+          </section>
+        )}
+
+        <section className={styles.acceptSection}>
+          {active ? (
+            <>
+              <Link
+                href={`/portal/deposit/${token}`}
+                className={styles.acceptButton}
+              >
+                Accept &amp; pay {aud2(active.total * 0.2)} deposit
+              </Link>
+              <p className={styles.acceptNote}>
+                A 20% deposit secures your garden on the Standard scenario.
+                Balance billed in stages as works progress.
+              </p>
+            </>
+          ) : (
+            <>
+              <span className={styles.acceptButtonDisabled}>
+                Deposit unavailable
+              </span>
+              <p className={styles.acceptNote}>
+                Curtis &amp; Co will issue the deposit link once the quote total
+                is confirmed.
+              </p>
             </>
           )}
-
-          <p className={styles.transparency}>
-            Every line links to the live rate card. Substitution levers are
-            disclosed - nothing silent.
-          </p>
         </section>
-      )}
-
-      <section className={styles.acceptSection}>
-        {active ? (
-          <>
-            <Link href={`/portal/deposit/${token}`} className={styles.acceptButton}>
-              Accept &amp; pay {aud2(active.total * 0.2)} deposit
-            </Link>
-            <p className={styles.acceptNote}>
-              A 20% deposit secures your project on the Standard scenario. Balance
-              billed in stages as works progress.
-            </p>
-          </>
-        ) : (
-          <>
-            <span className={styles.acceptButtonDisabled}>
-              Deposit unavailable
-            </span>
-            <p className={styles.acceptNote}>
-              Curtis &amp; Co will issue the deposit link once the quote total is
-              confirmed.
-            </p>
-          </>
-        )}
-      </section>
+      </div>
 
       <footer className={styles.colophon}>
-        <span>Curtis &amp; Co - {project.address}</span>
-        <span>Quote valid 30 days</span>
+        <span>Curtis &amp; Co · {project.address}</span>
+        <span>Valid 30 days</span>
       </footer>
     </main>
   );

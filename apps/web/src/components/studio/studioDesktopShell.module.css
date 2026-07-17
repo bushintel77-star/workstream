@@ -3,7 +3,13 @@
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  background: var(--surface-base);
+  background:
+    radial-gradient(
+      ellipse 70% 40% at 100% 0%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 50%
+    ),
+    var(--surface-base);
 }
 
 .ribbonSlot,

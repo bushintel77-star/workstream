@@ -8,7 +8,6 @@ import s from "../styles/app.module.css";
 import d from "./dashboard.module.css";
 import { DashboardProjectRow } from "../components/DashboardProjectRow";
 import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
-import { SubmitButton } from "../components/SubmitButton";
 import { requireSignedIn } from "../lib/auth";
 import { AppNav } from "../components/AppNav";
 import { IntegrationSetupChecklist } from "../components/IntegrationSetupChecklist";
@@ -64,33 +63,43 @@ export default async function DashboardPage() {
     <main className={s.pageNarrow}>
       <AppNav summary={summary} />
       {summary && <IntegrationSetupChecklist summary={summary} />}
-      <header className={s.masthead}>
-        <div className={s.brand}>
-          Curtis &amp; Co
-          <span className={s.brandSub}>Workstream · Projects</span>
+
+      <section className={d.gardenHero} aria-labelledby="sites-heading">
+        <div className={d.metaRow}>
+          <p className={d.kicker}>Curtis &amp; Co · landscape studio</p>
+          <span className={d.count}>
+            {projects.length} {projects.length === 1 ? "garden" : "gardens"}
+          </span>
         </div>
-        <span className={s.crumb}>
-          {projects.length} {projects.length === 1 ? "project" : "projects"}
-        </span>
-      </header>
-
-      <h1 className={s.headline}>Projects</h1>
-      <p className={s.lede}>
-        Every site Tim walks. Add a new address to start a project — survey,
-        design, costing, audit and outputs flow from there.
-      </p>
-
-      <NewProjectAddressForm />
+        <h1 id="sites-heading" className={d.headline}>
+          Sites in growth
+        </h1>
+        <p className={d.lede}>
+          Walk the lot, lock the massing, price the plantings — then send a
+          quote that feels like the finished garden.
+        </p>
+        <div className={d.composerWrap}>
+          <NewProjectAddressForm />
+        </div>
+      </section>
 
       {loadError && (
-        <div className={s.error}>Couldn&apos;t load projects: {loadError}</div>
+        <div className={s.error} role="alert">
+          Couldn&apos;t load projects: {loadError}
+        </div>
       )}
 
-      <h2 className={s.sectionHeading}>Active</h2>
+      <div className={d.sectionHead}>
+        <h2>Active gardens</h2>
+      </div>
 
       {projects.length === 0 && !loadError ? (
-        <div className={s.empty}>
-          No projects yet. Add a site address above to start one.
+        <div className={d.emptyGarden}>
+          <h3 className={d.emptyTitle}>Ground not broken yet</h3>
+          <p className={d.emptyBody}>
+            Start with a Melbourne address above. Aerial, survey, design and
+            quote grow from that first pin.
+          </p>
         </div>
       ) : (
         <ul className={s.list}>
@@ -112,7 +121,7 @@ export default async function DashboardPage() {
         <span className={d.footerLinks}>
           <Link href="/legal/privacy">Privacy</Link>
           <Link href="/legal/terms">Terms</Link>
-          <Link href="/settings">Settings →</Link>
+          <Link href="/settings">Settings</Link>
         </span>
       </footer>
     </main>

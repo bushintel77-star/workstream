@@ -15,34 +15,39 @@ export function AppNav({ summary, brandSub = false }: Props) {
 
   return (
     <nav className={nav.bar} aria-label="Workstream">
-      <Link href="/" className={nav.brand}>
-        Workstream
-        {brandSub ? (
-          <span className={nav.brandSub}>Curtis &amp; Co</span>
-        ) : null}
-      </Link>
-      <div className={nav.links}>
-        <Link href="/" className={nav.link}>
-          Projects
+      <div className={nav.inner}>
+        <Link href="/" className={nav.brand}>
+          <span className={nav.brandMark} aria-hidden />
+          <span className={nav.brandText}>
+            Workstream
+            {brandSub ? (
+              <span className={nav.brandSub}>Curtis &amp; Co</span>
+            ) : null}
+          </span>
         </Link>
-        <Link href="/settings" className={nav.link}>
-          Integrations
-          {attention ? (
-            <>
-              <span className={nav.dot} aria-hidden />
-              <span className={nav.srOnly}>Setup incomplete</span>
-            </>
-          ) : null}
-        </Link>
-        <Link href="/settings/accounting" className={nav.link}>
-          Accounting
-        </Link>
+        <div className={nav.links}>
+          <Link href="/" className={nav.link}>
+            Projects
+          </Link>
+          <Link href="/settings" className={nav.link}>
+            Integrations
+            {attention ? (
+              <>
+                <span className={nav.dot} aria-hidden />
+                <span className={nav.srOnly}>Setup incomplete</span>
+              </>
+            ) : null}
+          </Link>
+          <Link href="/settings/accounting" className={nav.link}>
+            Accounting
+          </Link>
+        </div>
+        <span
+          className={`${s.pill} ${plan === "studio" ? s.pillOk : s.pillInfo} ${nav.plan}`}
+        >
+          {plan === "studio" ? "Studio" : "Lite"}
+        </span>
       </div>
-      <span
-        className={`${s.pill} ${plan === "studio" ? s.pillOk : s.pillInfo} ${nav.plan}`}
-      >
-        {plan === "studio" ? "Studio" : "Lite"}
-      </span>
     </nav>
   );
 }
