@@ -38,50 +38,53 @@ export function ProjectPipelineShell({
       data-testid="project-pipeline-shell"
       data-shell-variant={variant}
     >
-      <header className={shell.chrome}>
-        <div className={shell.chromeRow}>
-          <Link href="/" className={shell.crumb}>
-            ← Projects
-          </Link>
-          <div className={shell.site}>
-            <span className={shell.address}>{project.address}</span>
-            <span className={shell.meta}>{label}</span>
+      {/* Immersive = canvas-first: no pipeline masthead — studio/CAD owns chrome. */}
+      {!immersive ? (
+        <header className={shell.chrome}>
+          <div className={shell.chromeRow}>
+            <Link href="/" className={shell.crumb}>
+              ← Projects
+            </Link>
+            <div className={shell.site}>
+              <span className={shell.address}>{project.address}</span>
+              <span className={shell.meta}>{label}</span>
+            </div>
+            <nav className={shell.quickLinks} aria-label="Quick links">
+              {active !== "design" ? (
+                <Link href={`/projects/${project.id}/design`} className={shell.link}>
+                  Studio
+                </Link>
+              ) : (
+                <Link href={`/projects/${project.id}/design/develop`} className={shell.link}>
+                  Develop
+                </Link>
+              )}
+              {active !== "overview" ? (
+                <Link href={`/projects/${project.id}/overview`} className={shell.link}>
+                  Pipeline
+                </Link>
+              ) : null}
+            </nav>
           </div>
-          <nav className={shell.quickLinks} aria-label="Quick links">
-            {active !== "design" ? (
-              <Link href={`/projects/${project.id}/design`} className={shell.link}>
-                Studio
-              </Link>
-            ) : (
-              <Link href={`/projects/${project.id}/design/develop`} className={shell.link}>
-                Develop
-              </Link>
-            )}
-            {active !== "overview" ? (
-              <Link href={`/projects/${project.id}/overview`} className={shell.link}>
-                Pipeline
-              </Link>
-            ) : null}
+          <nav className={`${p.subnav} ${shell.subnav}`} aria-label="Project sections">
+            {tabs.map((t) => {
+              const href = `/projects/${project.id}/${t.slug}`;
+              const isActive = active === t.slug;
+              return (
+                <Link
+                  key={t.slug}
+                  href={href}
+                  className={`${p.subnavItem} ${isActive ? p.subnavItemActive : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                  data-testid={`pipeline-tab-${t.slug}`}
+                >
+                  {t.label}
+                </Link>
+              );
+            })}
           </nav>
-        </div>
-        <nav className={`${p.subnav} ${shell.subnav}`} aria-label="Project sections">
-          {tabs.map((t) => {
-            const href = `/projects/${project.id}/${t.slug}`;
-            const isActive = active === t.slug;
-            return (
-              <Link
-                key={t.slug}
-                href={href}
-                className={`${p.subnavItem} ${isActive ? p.subnavItemActive : ""}`}
-                aria-current={isActive ? "page" : undefined}
-                data-testid={`pipeline-tab-${t.slug}`}
-              >
-                {t.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </header>
+        </header>
+      ) : null}
       <main
         className={`${shell.stage} ${immersive ? shell.stageImmersive : shell.stageContent}`}
       >

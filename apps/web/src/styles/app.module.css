@@ -125,14 +125,14 @@
 }
 
 .card {
-  padding: 18px 20px;
-  border: 1px solid var(--line-hairline);
-  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-md);
   background: var(--surface-elevated);
-  box-shadow: var(--elev-1), var(--elev-inset);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .cardHead {

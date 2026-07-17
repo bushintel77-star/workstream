@@ -77,7 +77,7 @@ export function useStudioChromeOptional(): StudioChromeState | null {
 export function useStudioChromeStub(): StudioChromeState {
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
   const [railExpanded, setRailExpanded] = useState(false);
-  const [rightRailOpen, setRightRailOpen] = useState(true);
+  const [rightRailOpen, setRightRailOpen] = useState(false);
   const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(null);
 
   return useMemo(

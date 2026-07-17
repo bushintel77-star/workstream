@@ -115,17 +115,11 @@ export function AiCadStudio({
   return (
     <div className={css.root} data-testid="ai-cad-studio">
       <header className={css.header}>
-        <div>
-          <p className={s.meta}>
-            <Link href={`/projects/${projectId}/design`}>? Sketch studio</Link>
-            {" · "}
-            <Link href={`/projects/${projectId}/design/develop`}>Develop</Link>
-          </p>
+        <div className={css.titleRow}>
+          <Link href={`/projects/${projectId}/design`} className={css.back}>
+            Sketch
+          </Link>
           <h1 className={css.title}>AI CAD</h1>
-          <p className={css.lede}>
-            Metre-space CAD from your sketch — ghosts until you accept. Export
-            DXF for LibreCAD. Indicative only — not a construction drawing.
-          </p>
           <p className={css.address}>{projectAddress}</p>
         </div>
         <div className={css.actions}>
@@ -135,7 +129,7 @@ export function AiCadStudio({
             disabled={pending || !hasSketch}
             onClick={onGenerate}
           >
-            {document ? "Regenerate AI CAD" : "Generate AI CAD"}
+            {document ? "Regenerate" : "Generate"}
           </button>
           <button
             type="button"
@@ -143,7 +137,7 @@ export function AiCadStudio({
             disabled={pending || ghostCount === 0}
             onClick={onAccept}
           >
-            Accept ghosts ({ghostCount})
+            Accept ({ghostCount})
           </button>
           <button
             type="button"
@@ -151,15 +145,15 @@ export function AiCadStudio({
             disabled={pending || !document}
             onClick={onDownloadDxf}
           >
-            Download DXF
+            DXF
           </button>
         </div>
       </header>
 
       {!hasSketch ? (
         <div className={s.banner}>
-          Save placements in the sketch studio before upgrading to AI CAD.{" "}
-          <Link href={`/projects/${projectId}/design`}>Open sketch</Link>
+          Save a sketch first.{" "}
+          <Link href={`/projects/${projectId}/design`}>Open studio</Link>
         </div>
       ) : null}
 
@@ -169,11 +163,7 @@ export function AiCadStudio({
       <div className={css.layout}>
         <div className={css.canvasWrap}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={aerialUri}
-            alt="Site aerial"
-            className={css.aerial}
-          />
+          <img src={aerialUri} alt="Site aerial" className={css.aerial} />
           {svg ? (
             <div
               className={css.svgOverlay}
@@ -181,29 +171,26 @@ export function AiCadStudio({
             />
           ) : (
             <div className={css.emptyOverlay}>
-              {hasSketch
-                ? "Generate AI CAD to overlay metre-space geometry."
-                : "Sketch required."}
+              {hasSketch ? "Generate to overlay geometry." : "Sketch required."}
             </div>
           )}
           <p className={css.honesty}>
-            Concept / working-planning CAD — confirm on site · title · locate.
-            LibreCAD DXF for draftsperson handoff.
+            Indicative CAD — not construction. Confirm on site.
           </p>
         </div>
 
         <aside className={css.rail}>
-          <h2 className={css.railTitle}>AI rail</h2>
+          <h2 className={css.railTitle}>Edit</h2>
           <label className={css.label} htmlFor="cad-instruction">
-            Edit with natural language
+            Instruction
           </label>
           <textarea
             id="cad-instruction"
             className={css.textarea}
-            rows={4}
+            rows={3}
             value={instruction}
             onChange={(e) => setInstruction(e.target.value)}
-            placeholder='e.g. "Add 3 m TRP on the NW tree" or "Offset paving 0.5 m"'
+            placeholder='e.g. "Add 3 m TRP on the NW tree"'
             disabled={pending}
           />
           <button
@@ -212,7 +199,7 @@ export function AiCadStudio({
             disabled={pending || !instruction.trim()}
             onClick={onEdit}
           >
-            Apply edit
+            Apply
           </button>
 
           <h3 className={css.railSub}>Document</h3>
@@ -227,8 +214,8 @@ export function AiCadStudio({
               Size{" "}
               <strong>
                 {document
-                  ? `${document.width_m.toFixed(1)} × ${document.height_m.toFixed(1)} m`
-                  : "—"}
+                  ? `${document.width_m.toFixed(1)} x ${document.height_m.toFixed(1)} m`
+                  : "-"}
               </strong>
             </li>
           </ul>
@@ -241,7 +228,7 @@ export function AiCadStudio({
             {layers.length === 0 ? <li className={css.muted}>None yet</li> : null}
           </ul>
 
-          {pending ? <p className={css.muted}>Working…</p> : null}
+          {pending ? <p className={css.muted}>Working...</p> : null}
         </aside>
       </div>
     </div>

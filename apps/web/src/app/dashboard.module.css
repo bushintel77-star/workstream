@@ -1,65 +1,46 @@
 .gardenHero {
   position: relative;
-  overflow: hidden;
   margin: 0 0 var(--s-6);
-  padding: var(--s-6) var(--s-5);
-  border-radius: var(--r-xl);
-  border: 1px solid var(--line-hairline);
-  background:
-    radial-gradient(
-      ellipse 80% 70% at 100% 0%,
-      color-mix(in srgb, var(--accent-bright) 40%, transparent),
-      transparent 55%
-    ),
-    linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--accent) 12%, var(--surface-elevated)) 0%,
-      var(--surface-elevated) 55%,
-      color-mix(in srgb, var(--accent-water) 8%, var(--surface-elevated)) 100%
-    );
-  animation: riseIn var(--dur-slow) var(--ease) both;
+  padding: 0 0 var(--s-5);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  animation: riseIn var(--dur-base) var(--ease) both;
 }
 
 .gardenHero::before {
-  content: "";
-  position: absolute;
-  inset: auto -10% -40% auto;
-  width: 220px;
-  height: 220px;
-  border-radius: 45% 55% 60% 40%;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  pointer-events: none;
+  display: none;
 }
 
 .kicker {
   position: relative;
   margin: 0 0 var(--s-2);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent-ink);
+  color: var(--ink-tertiary);
 }
 
 .headline {
   position: relative;
   font-family: var(--font-display);
-  font-size: clamp(32px, 6vw, 46px);
+  font-size: clamp(28px, 5vw, 40px);
   line-height: 1.05;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.03em;
   margin: 0 0 var(--s-3);
   color: var(--ink-primary);
-  max-width: 12ch;
+  max-width: 14ch;
 }
 
 .lede {
   position: relative;
   margin: 0 0 var(--s-5);
-  font-size: 15.5px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.45;
   color: var(--ink-secondary);
-  max-width: 46ch;
+  max-width: 40ch;
 }
 
 .metaRow {
@@ -69,18 +50,17 @@
   justify-content: space-between;
   gap: var(--s-3);
   flex-wrap: wrap;
-  margin-bottom: var(--s-4);
+  margin-bottom: var(--s-2);
 }
 
 .count {
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-secondary);
-  padding: 6px 10px;
-  border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--ink-primary) 5%, transparent);
-  border: 1px solid var(--line-hairline);
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .composerWrap {
@@ -99,89 +79,6 @@
   margin: 0;
 }
 
-.form {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 0;
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-
-.formInput {
-  flex: 1 1 240px;
-  min-width: 0;
-}
-
-.addressField {
-  position: relative;
-  flex: 1 1 100%;
-  min-width: 0;
-}
-
-.addressSpinner {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--ink-tertiary);
-}
-
-.suggestions {
-  position: absolute;
-  z-index: 20;
-  left: 0;
-  right: 0;
-  top: calc(100% + 4px);
-  margin: 0;
-  padding: 4px;
-  list-style: none;
-  background: var(--surface-overlay);
-  border: 1px solid var(--line-hairline);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.suggestionBtn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  border-radius: var(--r-sm);
-}
-
-.suggestionBtn:hover,
-.suggestionBtn:focus-visible {
-  background: var(--accent-soft);
-  outline: none;
-}
-
-.suggestionPrimary {
-  font-weight: 600;
-  color: var(--ink-primary);
-}
-
-.suggestionSecondary {
-  font-size: 12px;
-  color: var(--ink-tertiary);
-}
-
 .sectionHead {
   display: flex;
   align-items: baseline;
@@ -191,98 +88,57 @@
 
 .sectionHead h2 {
   margin: 0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-tertiary);
 }
 
 .emptyGarden {
-  padding: var(--s-6);
-  border-radius: var(--r-xl);
-  border: 1px dashed var(--line-strong);
-  background: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
-  animation: growIn var(--dur-slow) var(--ease) both;
+  padding: var(--s-6) 0;
+  text-align: left;
 }
 
 .emptyTitle {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
   margin: 0 0 var(--s-2);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink-primary);
 }
 
 .emptyBody {
   margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
   color: var(--ink-secondary);
-  max-width: 40ch;
-  line-height: 1.55;
-}
-
-.addressPinned {
-  margin: 0;
-  width: 100%;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  border-radius: var(--r-sm);
-  padding: 8px 12px;
-}
-
-.addressHint {
-  margin: 0;
-  width: 100%;
-  font-size: 13px;
-  color: var(--ink-tertiary);
+  max-width: 36ch;
 }
 
 .footerLinks {
   display: flex;
-  gap: 14px;
+  gap: var(--s-3);
 }
 
-.row {
-  flex-direction: row !important;
-  align-items: center !important;
-  padding: 0 !important;
-  overflow: hidden;
-}
-
-.rowLink {
-  flex: 1;
-  min-width: 0;
+.footerLinks a {
+  color: var(--ink-tertiary);
   text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px 18px;
-  min-height: 64px;
-  justify-content: center;
+  font-size: 0.8125rem;
 }
 
-.rowAddress {
-  font-weight: 600;
-  font-size: 15px;
+.footerLinks a:hover {
   color: var(--ink-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.rowMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.rowDelete {
-  padding: 10px 14px !important;
-  font-size: 12px !important;
-  min-height: 44px !important;
-  margin-right: 12px;
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

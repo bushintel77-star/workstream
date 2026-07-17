@@ -334,18 +334,32 @@ export async function getDesignCanvas(
   return body.canvas as DesignCanvas;
 }
 
+export type SketchQuoteSummary = {
+  total: number;
+  budget_low: number;
+  budget_mid: number;
+  budget_high: number;
+  garden_area_m2: number;
+  line_count: number;
+};
+
 export async function saveDesignCanvasApi(
   projectId: string,
   placements: CatalogPlacement[],
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations: DesignCanvas["annotations"] = [],
-): Promise<DesignCanvas> {
-  const body = await apiPut<{ canvas: DesignCanvas }>(
-    `/projects/${projectId}/design-canvas`,
-    { placements, strokes, irrigation_zones: irrigationZones, annotations },
-  );
-  return body.canvas;
+): Promise<{ canvas: DesignCanvas; quote: SketchQuoteSummary | null }> {
+  const body = await apiPut<{
+    canvas: DesignCanvas;
+    quote: SketchQuoteSummary | null;
+  }>(`/projects/${projectId}/design-canvas`, {
+    placements,
+    strokes,
+    irrigation_zones: irrigationZones,
+    annotations,
+  });
+  return { canvas: body.canvas, quote: body.quote ?? null };
 }
 
 export async function scanDesignGhostsApi(

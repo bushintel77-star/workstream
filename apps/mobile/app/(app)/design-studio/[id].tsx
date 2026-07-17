@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import Svg, { Path } from "react-native-svg";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Svg, { Line, Path } from "react-native-svg";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type {
@@ -18,25 +18,28 @@ import type {
   CatalogSymbol,
   Survey,
 } from "@workstream/contracts";
+import type { GhostPlacementSuggestion } from "@workstream/domain";
 import {
+  buildGhostPlacementSuggestions,
   canvasStrokeToPathD,
+  isTier1WrightsTerrace,
+  polylineLengthFromCanvasPercent,
   strokePointsToPathD,
   type StrokePointPct,
 } from "@workstream/domain";
 import { tokens } from "@workstream/ui";
 import { useWorkstreamApi } from "../../../src/lib/api";
 import { DesignAssetGlyph } from "../../../src/components/studio/DesignAssetGlyph";
-import { DesignAssetPalette } from "../../../src/components/studio/DesignAssetPalette";
 import { MobileSketchTopbar } from "../../../src/components/sketch/MobileSketchTopbar";
 import {
   MobileToolStrip,
   type MobileTool,
 } from "../../../src/components/sketch/MobileToolStrip";
-import { isTier1WrightsTerrace } from "@workstream/domain";
 import { MobileSketchStatusBar } from "../../../src/components/sketch/MobileSketchStatusBar";
+import { MobileSketchBottomSheet } from "../../../src/components/sketch/MobileSketchBottomSheet";
 import { useOfflineQueue } from "../../../src/hooks/useOfflineQueue";
 
-type StudioMode = "place" | "draw";
+type StudioMode = "place" | "draw" | "select" | "measure";
 
 function newId(): string {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -50,6 +53,7 @@ export default function DesignStudioScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const api = useWorkstreamApi();
+  const sheetRef = useRef<BottomSheet>(null);
 
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [symbols, setSymbols] = useState<CatalogSymbol[]>([]);
@@ -58,6 +62,7 @@ export default function DesignStudioScreen() {
   const [draftPoints, setDraftPoints] = useState<StrokePointPct[]>([]);
   const [mode, setMode] = useState<StudioMode>("place");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +71,21 @@ export default function DesignStudioScreen() {
   const [projectAddress, setProjectAddress] = useState("");
   const [redoStrokes, setRedoStrokes] = useState<CanvasStroke[]>([]);
   const [syncLabel, setSyncLabel] = useState<string | undefined>();
+  const [ghosts, setGhosts] = useState<GhostPlacementSuggestion[]>([]);
+  const [aiScanning, setAiScanning] = useState(false);
+  const [measureDraft, setMeasureDraft] = useState<StrokePointPct | null>(null);
+  const [measureLabel, setMeasureLabel] = useState<string | null>(null);
   const offline = useOfflineQueue(id ?? "");
+
+  const groundScale = useMemo(
+    () => ({
+      metresPerXPx: 0.05,
+      metresPerYPx: 0.05,
+      canvasWidthPx: canvasSize.width,
+      canvasHeightPx: canvasSize.height,
+    }),
+    [canvasSize.height, canvasSize.width],
+  );
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -119,6 +138,15 @@ export default function DesignStudioScreen() {
   }, [api, id, loading, placements, strokes, offline]);
 
   const symbolById = new Map(symbols.map((s) => [s.id, s]));
+  const tier1 = isTier1WrightsTerrace(projectAddress);
+  const mobileTool: MobileTool = mode;
+
+  function canvasPoint(e: { locationX: number; locationY: number }): StrokePointPct {
+    return {
+      x_pct: (e.locationX / canvasSize.width) * 100,
+      y_pct: (e.locationY / canvasSize.height) * 100,
+    };
+  }
 
   function placeAt(xPct: number, yPct: number) {
     if (!selectedId || mode !== "place") return;
@@ -152,6 +180,40 @@ export default function DesignStudioScreen() {
     ]);
     setRedoStrokes([]);
     setDraftPoints([]);
+  }
+
+  async function handleAiScan() {
+    if (!id) return;
+    setAiScanning(true);
+    try {
+      const res = await api.scanDesignGhosts(id);
+      setGhosts(res.suggestions);
+    } catch {
+      setGhosts(
+        buildGhostPlacementSuggestions({
+          tier1,
+          symbolIds: symbols.map((s) => s.id),
+        }),
+      );
+    } finally {
+      setAiScanning(false);
+    }
+  }
+
+  function applyGhosts() {
+    if (ghosts.length === 0) return;
+    setPlacements((prev) => [
+      ...prev,
+      ...ghosts.map((g) => ({
+        id: newId(),
+        symbol_id: g.symbol_id,
+        x_pct: g.x_pct,
+        y_pct: g.y_pct,
+        rotation_deg: 0,
+        scale: 1,
+      })),
+    ]);
+    setGhosts([]);
   }
 
   const drawGesture = Gesture.Pan()
@@ -218,206 +280,232 @@ export default function DesignStudioScreen() {
     );
   }
 
-  const tier1 = isTier1WrightsTerrace(projectAddress);
-  const mobileTool: MobileTool = mode === "draw" ? "draw" : "place";
-
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {!presentation ? (
-        <MobileSketchTopbar
-          projectId={id ?? ""}
-          title={projectAddress || "Site sketch"}
-          onBack={() => router.back()}
-          presentationMode={presentation}
-          onTogglePresentation={() => setPresentation((p) => !p)}
-        />
-      ) : null}
-      {!presentation ? (
-        <MobileSketchStatusBar
-          symbolCount={placements.length}
-          strokeCount={strokes.length}
-          syncLabel={syncLabel ?? (offline.offline ? "offline" : undefined)}
-          tier1={tier1}
-        />
-      ) : null}
-      <Text style={styles.honesty}>Concept sketch — indicative geometry, not survey CAD</Text>
-      <GestureDetector gesture={drawGesture}>
-        <Pressable
-          style={styles.canvasFlex}
-          onLayout={(e) => {
-            const { width, height } = e.nativeEvent.layout;
-            if (width > 0 && height > 0) setCanvasSize({ width, height });
-          }}
-          onPress={(e) => {
-            if (mode !== "place") return;
-            placeAt(
-              (e.nativeEvent.locationX / canvasSize.width) * 100,
-              (e.nativeEvent.locationY / canvasSize.height) * 100,
-            );
-          }}
-          accessibilityLabel="Site plan canvas"
-        >
-          <Image
-            source={{ uri: survey.aerial_uri }}
-            style={styles.aerial}
-            resizeMode="cover"
+    <GestureHandlerRootView style={styles.flex}>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        {!presentation ? (
+          <MobileSketchTopbar
+            projectId={id ?? ""}
+            title={projectAddress || "Site sketch"}
+            onBack={() => router.back()}
+            presentationMode={presentation}
+            onTogglePresentation={() => setPresentation((p) => !p)}
           />
-          <Svg
-            style={StyleSheet.absoluteFill}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
-            pointerEvents="none"
+        ) : (
+          <Pressable
+            style={styles.presentationExit}
+            onPress={() => setPresentation(false)}
+            accessibilityRole="button"
           >
-            {strokes.map((stroke) => (
-              <Path
-                key={stroke.id}
-                d={canvasStrokeToPathD(stroke, canvasSize.width, canvasSize.height)}
-                fill={stroke.color}
-              />
-            ))}
-            {draftPath ? <Path d={draftPath} fill="#ff2ef6" opacity={0.85} /> : null}
-          </Svg>
-          {placements.map((p) => {
-            const sym = symbolById.get(p.symbol_id);
-            if (!sym) return null;
-            return (
-              <View
-                key={p.id}
-                style={[styles.placed, { left: `${p.x_pct}%`, top: `${p.y_pct}%` }]}
-                pointerEvents="none"
-              >
-                <DesignAssetGlyph symbol={sym} size="pin" />
-              </View>
-            );
-          })}
-        </Pressable>
-      </GestureDetector>
-
-      {!presentation ? (
-        <>
-          <MobileToolStrip
-            active={mobileTool}
-            onTool={(t) => {
-              if (t === "draw") {
-                setMode("draw");
-                setSelectedId(null);
-              } else {
-                setMode("place");
-              }
+            <Text style={styles.presentationExitText}>Exit presentation</Text>
+          </Pressable>
+        )}
+        {!presentation ? (
+          <MobileSketchStatusBar
+            symbolCount={placements.length}
+            strokeCount={strokes.length}
+            syncLabel={syncLabel ?? (offline.offline ? "offline" : undefined)}
+            tier1={tier1}
+          />
+        ) : (
+          <View style={styles.presentationHud}>
+            <Text style={styles.presentationHudText}>
+              {placements.length} symbols · {strokes.length} strokes
+            </Text>
+          </View>
+        )}
+        {!presentation ? (
+          <Text style={styles.honesty}>Concept sketch — indicative geometry, not survey CAD</Text>
+        ) : null}
+        {measureLabel ? (
+          <Text style={styles.measureLabel}>{measureLabel}</Text>
+        ) : null}
+        <GestureDetector gesture={drawGesture}>
+          <Pressable
+            style={styles.canvasFlex}
+            onLayout={(e) => {
+              const { width, height } = e.nativeEvent.layout;
+              if (width > 0 && height > 0) setCanvasSize({ width, height });
             }}
-            onUndo={() => {
-              if (draftPoints.length) {
-                setDraftPoints([]);
+            onPress={(e) => {
+              const pt = canvasPoint(e.nativeEvent);
+              if (mode === "place") {
+                placeAt(pt.x_pct, pt.y_pct);
                 return;
               }
-              setStrokes((s) => {
-                if (s.length === 0) return s;
-                const next = s.slice(0, -1);
-                setRedoStrokes((r) => [...r, s[s.length - 1]!]);
-                return next;
-              });
+              if (mode === "select") {
+                setSelectedPlacementId(null);
+                return;
+              }
+              if (mode === "measure") {
+                if (!measureDraft) {
+                  setMeasureDraft(pt);
+                  setMeasureLabel("Tap end point");
+                  return;
+                }
+                const metres = polylineLengthFromCanvasPercent([measureDraft, pt], groundScale);
+                setMeasureLabel(`${metres.toFixed(1)} m indicative`);
+                setMeasureDraft(null);
+              }
             }}
-            onRedo={() => {
-              setRedoStrokes((r) => {
-                if (r.length === 0) return r;
-                const stroke = r[r.length - 1]!;
-                setStrokes((s) => [...s, stroke]);
-                return r.slice(0, -1);
-              });
-            }}
-            canUndo={draftPoints.length > 0 || strokes.length > 0}
-            canRedo={redoStrokes.length > 0}
-          />
-          <DesignAssetPalette
-            symbols={symbols}
-            selectedId={selectedId}
-            disabled={mode === "draw"}
-            onSelect={setSelectedId}
-          />
-        </>
-      ) : null}
+            accessibilityLabel="Site plan canvas"
+          >
+            <Image
+              source={{ uri: survey.aerial_uri }}
+              style={styles.aerial}
+              resizeMode="cover"
+            />
+            <Svg
+              style={StyleSheet.absoluteFill}
+              width={canvasSize.width}
+              height={canvasSize.height}
+              viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
+              pointerEvents="none"
+            >
+              {strokes.map((stroke) => (
+                <Path
+                  key={stroke.id}
+                  d={canvasStrokeToPathD(stroke, canvasSize.width, canvasSize.height)}
+                  fill={stroke.color}
+                />
+              ))}
+              {draftPath ? <Path d={draftPath} fill="#ff2ef6" opacity={0.85} /> : null}
+              {measureDraft ? (
+                <Line
+                  x1={(measureDraft.x_pct / 100) * canvasSize.width}
+                  y1={(measureDraft.y_pct / 100) * canvasSize.height}
+                  x2={(measureDraft.x_pct / 100) * canvasSize.width}
+                  y2={(measureDraft.y_pct / 100) * canvasSize.height}
+                  stroke={tokens.color.accent.default}
+                  strokeWidth={2}
+                  strokeDasharray="4 3"
+                />
+              ) : null}
+            </Svg>
+            {placements.map((p) => {
+              const sym = symbolById.get(p.symbol_id);
+              if (!sym) return null;
+              const selected = selectedPlacementId === p.id;
+              return (
+                <Pressable
+                  key={p.id}
+                  style={[
+                    styles.placed,
+                    { left: `${p.x_pct}%`, top: `${p.y_pct}%` },
+                    selected && styles.placedSelected,
+                  ]}
+                  onPress={() => {
+                    if (mode === "select") setSelectedPlacementId(p.id);
+                  }}
+                  disabled={mode !== "select"}
+                >
+                  <DesignAssetGlyph symbol={sym} size="pin" />
+                </Pressable>
+              );
+            })}
+          </Pressable>
+        </GestureDetector>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+        {!presentation ? (
+          <>
+            <MobileToolStrip
+              active={mobileTool}
+              onTool={(t) => {
+                if (t === "draw") {
+                  setMode("draw");
+                  setSelectedId(null);
+                  setMeasureDraft(null);
+                } else if (t === "select") {
+                  setMode("select");
+                } else if (t === "measure") {
+                  setMode("measure");
+                  setMeasureDraft(null);
+                  setMeasureLabel(null);
+                } else {
+                  setMode("place");
+                }
+              }}
+              onUndo={() => {
+                if (draftPoints.length) {
+                  setDraftPoints([]);
+                  return;
+                }
+                setStrokes((s) => {
+                  if (s.length === 0) return s;
+                  const next = s.slice(0, -1);
+                  setRedoStrokes((r) => [...r, s[s.length - 1]!]);
+                  return next;
+                });
+              }}
+              onRedo={() => {
+                setRedoStrokes((r) => {
+                  if (r.length === 0) return r;
+                  const stroke = r[r.length - 1]!;
+                  setStrokes((s) => [...s, stroke]);
+                  return r.slice(0, -1);
+                });
+              }}
+              canUndo={draftPoints.length > 0 || strokes.length > 0}
+              canRedo={redoStrokes.length > 0}
+            />
+            <MobileSketchBottomSheet
+              ref={sheetRef}
+              symbols={symbols}
+              selectedId={selectedId}
+              onSelectSymbol={setSelectedId}
+              paletteDisabled={mode === "draw"}
+              ghosts={ghosts}
+              scanning={aiScanning}
+              onScan={() => void handleAiScan()}
+              onApplyGhosts={applyGhosts}
+              onClearGhosts={() => setGhosts([])}
+            />
+          </>
+        ) : null}
 
-      {!presentation ? (
-      <View style={styles.footer}>
-        <Pressable
-          style={[styles.button, styles.ghost]}
-          onPress={() => {
-            setPlacements([]);
-            setStrokes([]);
-            setRedoStrokes([]);
-            setDraftPoints([]);
-          }}
-          accessibilityRole="button"
-        >
-          <Text style={styles.ghostText}>Clear all</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.button, saving && styles.buttonDisabled]}
-          onPress={() => void save()}
-          disabled={saving}
-          accessibilityRole="button"
-        >
-          <Text style={styles.buttonText}>
-            {saving ? "Saving…" : "Save plan"}
-          </Text>
-        </Pressable>
-      </View>
-      ) : null}
-    </SafeAreaView>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        {!presentation ? (
+          <View style={styles.footer}>
+            <Pressable
+              style={[styles.button, styles.ghost]}
+              onPress={() => {
+                setPlacements([]);
+                setStrokes([]);
+                setRedoStrokes([]);
+                setDraftPoints([]);
+                setGhosts([]);
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={styles.ghostText}>Clear all</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, saving && styles.buttonDisabled]}
+              onPress={() => void save()}
+              disabled={saving}
+              accessibilityRole="button"
+            >
+              <Text style={styles.buttonText}>{saving ? "Saving…" : "Save plan"}</Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
 const PIN = 18;
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { flex: 1, backgroundColor: tokens.color.surface.base },
-  scroll: { padding: 20, paddingBottom: 100 },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
   },
-  kicker: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.2,
-    color: tokens.color.ink.tertiary,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: tokens.color.ink.primary,
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  toolbar: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  modeBtn: {
-    minHeight: 44,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: tokens.color.line.hairline,
-    justifyContent: "center",
-  },
-  modeBtnActive: {
-    backgroundColor: tokens.color.accent.default,
-    borderColor: tokens.color.accent.default,
-  },
-  modeBtnText: { fontWeight: "600", color: tokens.color.ink.primary },
-  modeBtnTextActive: { color: tokens.color.ink.inverted },
-  toolBtn: {
-    minHeight: 44,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: tokens.color.line.hairline,
-    justifyContent: "center",
-  },
-  toolBtnText: { fontWeight: "600", color: tokens.color.ink.primary },
   honesty: {
     fontFamily: "monospace",
     fontSize: 8,
@@ -426,17 +514,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
+  measureLabel: {
+    fontFamily: "monospace",
+    fontSize: 10,
+    color: tokens.color.accent.default,
+    paddingHorizontal: 12,
+  },
   canvasFlex: {
     flex: 1,
     overflow: "hidden",
-    backgroundColor: tokens.color.surface.sunken,
-  },
-  canvas: {
-    minHeight: 240,
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: tokens.color.line.hairline,
     backgroundColor: tokens.color.surface.sunken,
   },
   aerial: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
@@ -444,6 +530,45 @@ const styles = StyleSheet.create({
     position: "absolute",
     marginLeft: -PIN,
     marginTop: -PIN,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placedSelected: {
+    borderWidth: 2,
+    borderColor: tokens.color.accent.default,
+    borderRadius: 22,
+  },
+  presentationExit: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: tokens.color.surface.elevated,
+  },
+  presentationExitText: {
+    fontSize: 11,
+    fontFamily: "monospace",
+    color: tokens.color.ink.primary,
+  },
+  presentationHud: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    zIndex: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  presentationHudText: {
+    fontSize: 10,
+    fontFamily: "monospace",
+    color: tokens.color.ink.inverted,
   },
   footer: {
     flexDirection: "row",
@@ -474,6 +599,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   ghostText: { color: tokens.color.ink.primary, fontWeight: "600" },
-  error: { color: tokens.color.semantic.block, marginTop: 12 },
+  error: { color: tokens.color.semantic.block, marginTop: 12, paddingHorizontal: 16 },
   link: { color: tokens.color.accent.default, marginTop: 12 },
 });

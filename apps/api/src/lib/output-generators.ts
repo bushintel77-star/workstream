@@ -265,6 +265,71 @@ export function buildQuote(args: Args): string {
   return lines.join("\n");
 }
 
+export function buildBrochure(args: Args): string {
+  const standard =
+    args.costings.find((c) => c.scenario === "standard") ?? args.costings[0];
+  const design = requireDesign(args, "brochure");
+  const survey = requireSurvey(args, "brochure");
+  const lines: string[] = [];
+  lines.push(`# Concept brochure — ${args.project.address}`);
+  lines.push("");
+  lines.push("Curtis & Co — Boutique landscape design, Melbourne.");
+  lines.push("");
+  lines.push(
+    "_Concept sketch for client conversation — indicative geometry, not construction CAD. Working drawings by draftsperson._",
+  );
+  lines.push("");
+  if (args.survey?.aerial_uri?.startsWith("http")) {
+    lines.push(`![Site aerial](${args.survey.aerial_uri})`);
+    lines.push("");
+  }
+  lines.push("## Design vision");
+  lines.push("");
+  lines.push(design.rationale);
+  lines.push("");
+  lines.push("## Zones");
+  lines.push("");
+  for (const z of zones(design)) {
+    lines.push(`### ${z.name}`);
+    lines.push(z.treatment);
+    if (z.plantings.length > 0) {
+      lines.push("");
+      lines.push(
+        z.plantings
+          .map((p) => `- ${p.common_name} (${p.species}) × ${p.count}`)
+          .join("\n"),
+      );
+    }
+    lines.push("");
+  }
+  const sitePlan = formatSitePlanQuoteSection(
+    args.designCanvas,
+    args.catalogSymbols,
+    rateCardLookup(args.rateCard),
+  );
+  if (sitePlan.length > 0) {
+    lines.push(...sitePlan);
+  }
+  if (isTier1WrightsTerrace(args.project.address)) {
+    lines.push("## Tier-1 architectural massing");
+    lines.push("");
+    lines.push(
+      `Value reallocation saves **${aud0(Math.abs(TIER1_WRIGHTS_SAVINGS.net_inc_gst))} incl. GST** vs cottage-scatter scope.`,
+    );
+    lines.push("");
+  }
+  lines.push("## Investment guide");
+  lines.push("");
+  lines.push(`**From ${aud0(standard.total)} incl. GST** (Standard scenario)`);
+  lines.push("");
+  lines.push("Lean and Buffer scenarios available on formal quote.");
+  lines.push("");
+  lines.push(`Lot ${survey.lot_area_m2} m² · Garden ${survey.garden_area_m2} m²`);
+  lines.push("");
+  lines.push("Prepared by Curtis & Co. Valid 30 days.");
+  return lines.join("\n");
+}
+
 export function buildScope(args: Args): string {
   const survey = requireSurvey(args, "scope");
   const design = requireDesign(args, "scope");
@@ -452,6 +517,6 @@ export function generateForKind(kind: OutputKind, args: Args): string {
     case "permit_yarra_heritage":
       return buildYarraHeritagePermit(args);
     case "brochure":
-      throw new Error("Brochure output is deferred (Phase 8 in spec).");
+      return buildBrochure(args);
   }
 }

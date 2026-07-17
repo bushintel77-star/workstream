@@ -86,19 +86,19 @@
 
 .honestyCaption {
   position: absolute;
-  left: 50%;
+  left: var(--s-2);
   bottom: var(--s-2);
-  transform: translateX(-50%);
   z-index: 4;
   margin: 0;
-  padding: var(--s-1) var(--s-3);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--ink-inverted) 78%, transparent);
-  text-align: center;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--surface-inverted) 55%, transparent);
+  padding: 2px 6px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--ink-inverted) 85%, transparent);
+  text-align: left;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--surface-inverted) 50%, transparent);
   pointer-events: none;
   white-space: nowrap;
 }
@@ -106,16 +106,14 @@
 .sideRail {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-2);
   min-height: 0;
   height: 100%;
-  padding: var(--s-3);
+  padding: var(--s-2);
   border-radius: 0;
   border: none;
-  border-left: 1px solid color-mix(in srgb, var(--line-hairline) 55%, var(--surface-inverted));
-  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
-  -webkit-backdrop-filter: saturate(140%) blur(14px);
-  backdrop-filter: saturate(140%) blur(14px);
+  border-left: 1px solid var(--line-subtle);
+  background: var(--surface-elevated);
   box-shadow: none;
   overflow: hidden;
 }

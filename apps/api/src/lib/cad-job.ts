@@ -108,6 +108,7 @@ export async function generateCadDocument(
   const span = groundSpanFromSurvey(survey);
   const width_m = opts?.width_m ?? span.width_m;
   const height_m = opts?.height_m ?? span.height_m;
+  const outdoor_area_m2 = span.outdoor_area_m2;
 
   let doc = await store.getCadDocument(ownerId, projectId);
   if (!doc) {
@@ -117,6 +118,32 @@ export async function generateCadDocument(
       width_m,
       height_m,
     });
+    // Stamp outdoor workspace from aerial/title survey onto the CAD template.
+    const margin = Math.min(width_m, height_m) * 0.04;
+    const stamped = applyCadOps(doc, [
+      {
+        op: "add_polyline",
+        layer: "SKETCH-REF",
+        closed: true,
+        ghost: false,
+        points: [
+          { x: margin, y: margin },
+          { x: width_m - margin, y: margin },
+          { x: width_m - margin, y: height_m - margin },
+          { x: margin, y: height_m - margin },
+        ],
+      },
+      {
+        op: "add_text",
+        layer: "ANNOTATION",
+        ghost: false,
+        position: { x: margin, y: height_m - margin * 1.5 },
+        height: 0.45,
+        value: `Outdoor workspace ${outdoor_area_m2} m² · ${width_m.toFixed(1)}×${height_m.toFixed(1)} m`,
+        rotation_deg: 0,
+      },
+    ]);
+    doc = stamped.document;
   }
 
   const symbols = await store.listCatalogSymbols(ownerId);
@@ -131,7 +158,12 @@ export async function generateCadDocument(
     address: project.address,
     width_m: doc.width_m,
     height_m: doc.height_m,
-    sketch_summary: sketchSummary(canvas),
+    sketch_summary: [
+      sketchSummary(canvas),
+      `Outdoor area (aerial/title): ${outdoor_area_m2} m²`,
+      `CAD template: ${width_m.toFixed(1)} m × ${height_m.toFixed(1)} m`,
+      `Garden ${survey.garden_area_m2} m² · lot ${survey.lot_area_m2} m² · house ${survey.house_area_m2} m²`,
+    ].join("\n"),
     planning_notes: formatPlanningFlagsForAi(planning),
     existing_entity_brief: entityBrief(doc),
     catalog_symbol_ids: symbols.map((s) => s.id),
@@ -147,7 +179,7 @@ export async function generateCadDocument(
     document: saved,
     svg: cadDocumentToSvg(saved),
     ghost_count: countGhosts(saved),
-    rationale,
+    rationale: `${rationale} Outdoor template ${outdoor_area_m2} m².`,
     applied,
   };
 }

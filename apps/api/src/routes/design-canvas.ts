@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { UpsertDesignCanvasSchema } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
+import { runSketchCosting } from "../lib/sketch-cost-job";
 
 export default async function designCanvasRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -25,9 +26,10 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
             annotations: [],
             updated_at: null,
           },
+          quote: null,
         });
       }
-      return reply.send({ canvas });
+      return reply.send({ canvas, quote: null });
     },
   );
 
@@ -48,11 +50,46 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
           .send({ error: "Validation failed", issues: parsed.error.issues });
       }
       const canvas = await fastify.store.upsertDesignCanvas(
-        request.userId!,
+        ownerId,
         projectId,
         parsed.data,
       );
-      return reply.send({ canvas });
+
+      // Auto quotation from sketch pins + outdoor (garden) area on survey.
+      let quote: {
+        total: number;
+        budget_low: number;
+        budget_mid: number;
+        budget_high: number;
+        garden_area_m2: number;
+        line_count: number;
+      } | null = null;
+
+      if (canvas.placements.length > 0) {
+        try {
+          const { costing, envelope } = await runSketchCosting(
+            fastify.store,
+            ownerId,
+            projectId,
+          );
+          const survey = await fastify.store.getSurvey(ownerId, projectId);
+          quote = {
+            total: costing.total,
+            budget_low: envelope.budget_low,
+            budget_mid: envelope.budget_mid,
+            budget_high: envelope.budget_high,
+            garden_area_m2: survey?.garden_area_m2 ?? 0,
+            line_count: costing.line_items.length,
+          };
+        } catch (err) {
+          request.log.warn(
+            { err, projectId },
+            "auto sketch quotation skipped",
+          );
+        }
+      }
+
+      return reply.send({ canvas, quote });
     },
   );
 }

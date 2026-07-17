@@ -1319,6 +1319,7 @@ const OUTPUT_ORDER: OutputKind[] = [
   "task_list",
   "schedule",
   "quote",
+  "brochure",
   "scope",
   "daily_site_report",
   "permit_stonnington_stormwater",
@@ -1341,7 +1342,7 @@ const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
     title: "Yarra heritage application",
     sub: "Pre-filled draft application",
   },
-  brochure: { title: "Brochure", sub: "Deferred to Phase 8" },
+  brochure: { title: "Brochure", sub: "Client concept brochure with aerial hero" },
 };
 
 function OutputsSection({

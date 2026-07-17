@@ -197,7 +197,7 @@ export function DesignStudio({
   const [aiScanning, setAiScanning] = useState(false);
   const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(null);
   const [railExpanded, setRailExpanded] = useState(false);
-  const [rightRailOpen, setRightRailOpen] = useState(true);
+  const [rightRailOpen, setRightRailOpen] = useState(false);
   const [rightRailTab, setRightRailTab] = useState<RightRailTab>("library");
   const [commandOpen, setCommandOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
@@ -953,7 +953,7 @@ export function DesignStudio({
     savingRef.current = true;
     setSaving(true);
     try {
-      await saveDesignCanvasAction(
+      const result = await saveDesignCanvasAction(
         projectId,
         placements,
         strokes,
@@ -967,10 +967,24 @@ export function DesignStudio({
         }),
       );
       setIsDirty(false);
-      toast.show(
-        "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
-        "success",
-      );
+      const quote = result?.quote;
+      if (quote && quote.budget_mid > 0) {
+        const aud = (n: number) =>
+          new Intl.NumberFormat("en-AU", {
+            style: "currency",
+            currency: "AUD",
+            maximumFractionDigits: 0,
+          }).format(n);
+        toast.show(
+          `Quote updated · ${aud(quote.budget_low)}–${aud(quote.budget_high)} · outdoor ${quote.garden_area_m2} m²`,
+          "success",
+        );
+      } else {
+        toast.show(
+          "Saved — place priced assets (lawn, paving, trees) to auto-quote from outdoor area.",
+          "success",
+        );
+      }
       router.refresh();
       return true;
     } catch (err) {

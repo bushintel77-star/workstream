@@ -1,4 +1,4 @@
-/* Project pipeline shell — shared chrome for studio + workflow tabs. */
+/* Project pipeline shell — content tabs keep chrome; immersive is chrome-free. */
 
 .frame {
   display: flex;
@@ -11,7 +11,8 @@
 }
 
 .frameImmersive {
-  background: var(--surface-inverted);
+  min-height: 100dvh;
+  background: var(--surface-base);
 }
 
 .frameContent {
@@ -20,10 +21,8 @@
 
 .chrome {
   flex-shrink: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--line-hairline) 55%, var(--surface-inverted));
-  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
-  -webkit-backdrop-filter: saturate(140%) blur(12px);
-  backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--surface-elevated);
   z-index: 12;
 }
 
@@ -31,16 +30,16 @@
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  padding: var(--s-2) var(--s-4);
+  padding: 6px var(--s-4);
   flex-wrap: wrap;
 }
 
 .crumb {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-secondary);
   text-decoration: none;
-  min-height: 44px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
 }
@@ -52,15 +51,15 @@
 .site {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }
 
 .address {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--ink-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -69,8 +68,8 @@
 
 .meta {
   font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-tertiary);
 }
@@ -85,10 +84,10 @@
 
 .link {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-secondary);
   text-decoration: none;
-  min-height: 44px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
 }
@@ -113,6 +112,7 @@
 
 .stageImmersive {
   overflow: hidden;
+  min-height: 100dvh;
 }
 
 .stageContent {
@@ -148,7 +148,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink-primary);
 }
 
@@ -156,17 +156,21 @@
   margin: 0;
   max-width: 28rem;
   font-size: 0.9375rem;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--ink-secondary);
 }
 
 @media (min-width: 960px) {
   .frame {
-    min-height: calc(100dvh - 56px);
+    min-height: calc(100dvh - 48px);
+  }
+
+  .frameImmersive {
+    min-height: 100dvh;
   }
 
   .chromeRow {
-    padding: var(--s-2) var(--s-5);
+    padding: 6px var(--s-5);
   }
 
   .subnav {

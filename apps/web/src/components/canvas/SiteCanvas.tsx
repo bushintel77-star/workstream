@@ -170,7 +170,7 @@ export function SiteCanvas({
   };
 
   return (
-    <div className={css.root}>
+    <div className={css.root} data-testid="site-canvas">
       <div
         className={css.stage}
         onPointerDown={onPointerDown}

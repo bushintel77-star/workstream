@@ -9,16 +9,21 @@
 
 **Construct** and **Walkthrough** are retired product codenames. Do not use them in new UI, env vars, or Fly app names.
 
-## Canonical folder
+**Aegis** is a separate product (commodities deal workspace). Do not merge it into this repo.
+
+## Canonical folder (single checkout)
 
 ```
 C:\Users\Tim\Downloads\CURTIS-CO\
-  README.md
-  workstream\          ← monorepo (this codebase)
-  clients\             ← per-job files (e.g. wrights-terrace)
+  README.md              ← Curtis & Co workspace home
+  workstream\            ← this monorepo (open in Cursor)
+  clients\               ← per-job files (e.g. wrights-terrace)
 ```
 
-`KellyBet-Fresh\WorkSteam` was a duplicate checkout. **Open `CURTIS-CO\workstream` in Cursor** (or sync changes there) and delete the KellyBet copy when no editor has it open.
+| Path | Status |
+|------|--------|
+| `Downloads\CURTIS-CO\workstream` | **Canonical** — edit here |
+| `Downloads\KellyBet-Fresh\WorkSteam` | **Retired duplicate** — do not develop here |
 
 GitHub: https://github.com/Boringuy7799/workstream (repo `construct` redirects here).
 

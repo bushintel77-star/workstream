@@ -183,19 +183,22 @@ export async function saveDesignCanvasAction(
   annotations: DesignCanvas["annotations"] = [],
 ) {
   try {
-    await saveDesignCanvasApi(
+    const result = await saveDesignCanvasApi(
       projectId,
       placements,
       strokes,
       irrigationZones,
       annotations,
     );
+    revalidatePath(`/projects/${projectId}/design`);
+    revalidatePath(`/projects/${projectId}/design/develop`);
+    revalidatePath(`/projects/${projectId}/design/studio`);
+    revalidatePath(`/projects/${projectId}/costing`);
+    revalidatePath(`/projects/${projectId}/overview`);
+    return result;
   } catch (err) {
     throw wrapApiError(err, "Failed to save site plan");
   }
-  revalidatePath(`/projects/${projectId}/design`);
-  revalidatePath(`/projects/${projectId}/design/develop`);
-  revalidatePath(`/projects/${projectId}/design/studio`);
 }
 
 export async function scanDesignGhostsAction(projectId: string) {

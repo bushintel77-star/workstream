@@ -13,10 +13,10 @@ type Props = {
 };
 
 const TOOLS: { id: MobileTool; label: string; enabled: boolean }[] = [
-  { id: "select", label: "Select", enabled: false },
+  { id: "select", label: "Select", enabled: true },
   { id: "draw", label: "Draw", enabled: true },
   { id: "place", label: "Place", enabled: true },
-  { id: "measure", label: "Measure", enabled: false },
+  { id: "measure", label: "Measure", enabled: true },
 ];
 
 export function MobileToolStrip({

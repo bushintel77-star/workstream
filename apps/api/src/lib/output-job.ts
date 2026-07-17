@@ -22,6 +22,7 @@ const NEEDS_DESIGN: OutputKind[] = [
   "task_list",
   "schedule",
   "quote",
+  "brochure",
   "scope",
   "permit_stonnington_stormwater",
   "permit_yarra_heritage",
@@ -35,10 +36,6 @@ export async function runOutput(
   kind: OutputKind,
   baseUrl: string,
 ): Promise<Output> {
-  if (kind === "brochure") {
-    throw new Error("Brochure output is deferred (Phase 8 in spec).");
-  }
-
   const project = await store.getProject(ownerId, projectId);
   if (!project) throw new Error(`Project not found: ${projectId}`);
 

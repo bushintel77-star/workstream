@@ -112,6 +112,47 @@ export function bbox(coords: LngLat[]): [number, number, number, number] {
 }
 
 /**
+ * Outdoor workspace span from title/lot ring (metres).
+ * Prefer this over full aerial tile when sizing CAD templates.
+ */
+export function outdoorWorkspaceSpan(args: {
+  titleRing?: LngLat[] | null;
+  garden_area_m2: number;
+  lot_area_m2?: number;
+}): { width_m: number; height_m: number; outdoor_area_m2: number } {
+  const outdoor_area_m2 = Math.max(
+    0,
+    args.garden_area_m2 || args.lot_area_m2 || 0,
+  );
+
+  const ring = args.titleRing;
+  if (ring && ring.length >= 3) {
+    const [minLng, minLat, maxLng, maxLat] = bbox(ring);
+    const midLat = (minLat + maxLat) / 2;
+    const width_m = Math.abs(maxLng - minLng) * metersPerDegLng(midLat);
+    const height_m = Math.abs(maxLat - minLat) * METERS_PER_DEG_LAT;
+    if (width_m >= 2 && height_m >= 2) {
+      return {
+        width_m: Math.round(width_m * 10) / 10,
+        height_m: Math.round(height_m * 10) / 10,
+        outdoor_area_m2:
+          outdoor_area_m2 > 0
+            ? Math.round(outdoor_area_m2)
+            : Math.round(width_m * height_m),
+      };
+    }
+  }
+
+  const area = Math.max(outdoor_area_m2, 80);
+  const side = Math.sqrt(area);
+  return {
+    width_m: Math.round(side * 1.25 * 10) / 10,
+    height_m: Math.round(side * 0.8 * 10) / 10,
+    outdoor_area_m2: Math.round(area),
+  };
+}
+
+/**
  * Polygon difference stub. Garden = title minus house. Implementing a
  * full polygon-clipping (Vatti, Greiner-Hormann) is meaningful work; the
  * survey-job currently uses the title polygon with house-as-inner-ring

@@ -15,9 +15,11 @@ Workflow 1 sketch studio stays the default. AI CAD is an upgrade path.
 
 ## Operator flow
 
-1. Save sketch placements in Design studio.
+1. Save sketch placements in Design studio — **auto-quotes** from pins + outdoor
+   (`garden_area_m2` from aerial/title survey).
 2. **Upgrade to AI CAD** (AI ribbon chip or `/projects/:id/design/cad`).
-3. **Generate AI CAD** — imports sketch as committed geometry, adds AI **ghosts**.
+3. **Generate AI CAD** — CAD template sized from **outdoor lot footprint**
+   (title bbox / garden area), imports sketch, stamps outdoor m², adds AI **ghosts**.
 4. Review ghosts on aerial + SVG overlay; NL **Apply edit** for more ghosts.
 5. **Accept ghosts** — promote to committed entities.
 6. **Download DXF** — open in LibreCAD for draftsperson handoff.
