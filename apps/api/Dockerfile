@@ -2,7 +2,7 @@
 #
 # Multi-stage build for the @workstream/api Fastify service.
 # Built from the monorepo root so workspace deps (@workstream/contracts,
-# /db, /domain) can be hoisted via pnpm. Resulting image runs the prebuilt
+# /db, /domain, /cad) can be hoisted via pnpm. Resulting image runs the prebuilt
 # JS on Node 22 with only production deps installed.
 
 ARG NODE_VERSION=22.11.0
@@ -22,6 +22,7 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc tsconfig.base.json t
 # Manifests for every workspace the api depends on (transitively).
 COPY apps/api/package.json ./apps/api/
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/cad/package.json ./packages/cad/
 COPY packages/db/package.json ./packages/db/
 COPY packages/domain/package.json ./packages/domain/
 
@@ -30,6 +31,7 @@ RUN pnpm install --frozen-lockfile --filter=@workstream/api...
 # Copy sources after install so dep churn doesn't bust the install layer
 COPY apps/api ./apps/api
 COPY packages/contracts ./packages/contracts
+COPY packages/cad ./packages/cad
 COPY packages/db ./packages/db
 COPY packages/domain ./packages/domain
 
@@ -53,6 +55,8 @@ COPY --from=builder /repo/apps/api/package.json ./apps/api/
 COPY --from=builder /repo/apps/api/dist ./apps/api/dist
 COPY --from=builder /repo/packages/contracts/package.json ./packages/contracts/
 COPY --from=builder /repo/packages/contracts/dist ./packages/contracts/dist
+COPY --from=builder /repo/packages/cad/package.json ./packages/cad/
+COPY --from=builder /repo/packages/cad/dist ./packages/cad/dist
 COPY --from=builder /repo/packages/db/package.json ./packages/db/
 COPY --from=builder /repo/packages/db/dist ./packages/db/dist
 COPY --from=builder /repo/packages/domain/package.json ./packages/domain/

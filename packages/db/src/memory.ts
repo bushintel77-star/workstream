@@ -65,6 +65,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _integrationEvents: import("./types").IntegrationEvent[] = [];
   const _projectFiles: import("./types").ProjectFile[] = [];
   const _designCanvases: import("@workstream/contracts").DesignCanvas[] = [];
+  const _cadDocuments: import("@workstream/contracts").CadDocument[] = [];
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
   > = [];
@@ -110,6 +111,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _integrationEvents,
     _projectFiles,
     _designCanvases,
+    _cadDocuments,
     _catalogCustom,
     _activityEvents,
   };
@@ -1008,6 +1010,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return {
         ...canvas,
         irrigation_zones: canvas.irrigation_zones ?? [],
+        annotations: canvas.annotations ?? [],
       };
     },
 
@@ -1060,6 +1063,9 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         if (input.irrigation_zones !== undefined) {
           existing.irrigation_zones = input.irrigation_zones;
         }
+        if (input.annotations !== undefined) {
+          existing.annotations = input.annotations;
+        }
         existing.updated_at = now;
         flush();
         return { ...existing };
@@ -1070,11 +1076,63 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         placements: input.placements,
         strokes: input.strokes ?? [],
         irrigation_zones: input.irrigation_zones ?? [],
+        annotations: input.annotations ?? [],
         updated_at: now,
       };
       _designCanvases.push(canvas);
       flush();
       return canvas;
+    },
+
+    async getCadDocument(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const doc = _cadDocuments.find((c) => c.project_id === projectId);
+      return doc ? { ...doc, blocks: doc.blocks ?? [] } : null;
+    },
+
+    async upsertCadDocument(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const now = new Date().toISOString();
+      const existing = _cadDocuments.find((c) => c.project_id === projectId);
+      if (existing) {
+        existing.origin = input.origin ?? existing.origin;
+        existing.width_m = input.width_m;
+        existing.height_m = input.height_m;
+        existing.layers = input.layers;
+        existing.entities = input.entities;
+        if (input.blocks !== undefined) existing.blocks = input.blocks;
+        if (input.ai_run_id !== undefined) existing.ai_run_id = input.ai_run_id;
+        if (input.source_sketch_id !== undefined) {
+          existing.source_sketch_id = input.source_sketch_id;
+        }
+        existing.updated_at = now;
+        flush();
+        return { ...existing };
+      }
+      const doc: import("@workstream/contracts").CadDocument = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        version: 1,
+        units: "m",
+        origin: input.origin ?? { x: 0, y: 0 },
+        width_m: input.width_m,
+        height_m: input.height_m,
+        layers: input.layers,
+        entities: input.entities,
+        blocks: input.blocks ?? [],
+        ai_run_id: input.ai_run_id ?? null,
+        source_sketch_id: input.source_sketch_id ?? null,
+        updated_at: now,
+      };
+      _cadDocuments.push(doc);
+      flush();
+      return doc;
     },
 
     async deleteCrewMember(ownerId, id) {

@@ -26,6 +26,7 @@ No cream/terracotta Inter look.
 | P1 | Site walk checklist on project hub | Shipped |
 | P1 | Outputs card grid + client handoff | Shipped — `outputs/page.tsx` + `ProjectClientHandoff` |
 | P2 | Design page zone cards + Tier-1 styling | Shipped — `DesignProposalView` |
+| P1 | AI CAD Stage 2 (LibreCAD DXF + ghosts) | Shipped — `/design/cad` + `@workstream/cad` |
 
 ## Portal — status
 

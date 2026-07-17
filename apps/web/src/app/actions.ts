@@ -180,15 +180,86 @@ export async function saveDesignCanvasAction(
   placements: CatalogPlacement[],
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
+  annotations: DesignCanvas["annotations"] = [],
 ) {
   try {
-    await saveDesignCanvasApi(projectId, placements, strokes, irrigationZones);
+    await saveDesignCanvasApi(
+      projectId,
+      placements,
+      strokes,
+      irrigationZones,
+      annotations,
+    );
   } catch (err) {
     throw wrapApiError(err, "Failed to save site plan");
   }
   revalidatePath(`/projects/${projectId}/design`);
   revalidatePath(`/projects/${projectId}/design/develop`);
   revalidatePath(`/projects/${projectId}/design/studio`);
+}
+
+export async function scanDesignGhostsAction(projectId: string) {
+  const { scanDesignGhostsApi } = await import("../lib/api");
+  try {
+    return await scanDesignGhostsApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "AI site scan failed");
+  }
+}
+
+export async function getCadDocumentAction(projectId: string) {
+  const { getCadDocumentApi } = await import("../lib/api");
+  try {
+    return await getCadDocumentApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Failed to load AI CAD");
+  }
+}
+
+export async function generateCadAction(projectId: string) {
+  const { generateCadApi } = await import("../lib/api");
+  try {
+    const result = await generateCadApi(projectId);
+    revalidatePath(`/projects/${projectId}/design/cad`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "AI CAD generate failed");
+  }
+}
+
+export async function editCadAction(projectId: string, instruction: string) {
+  const { editCadApi } = await import("../lib/api");
+  try {
+    const result = await editCadApi(projectId, instruction);
+    revalidatePath(`/projects/${projectId}/design/cad`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "AI CAD edit failed");
+  }
+}
+
+export async function acceptCadAction(
+  projectId: string,
+  entityIds?: string[],
+) {
+  const { acceptCadApi } = await import("../lib/api");
+  try {
+    const result = await acceptCadApi(projectId, entityIds);
+    revalidatePath(`/projects/${projectId}/design/cad`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "AI CAD accept failed");
+  }
+}
+
+export async function downloadCadDxfAction(projectId: string): Promise<string> {
+  const { downloadCadDxfApi } = await import("../lib/api");
+  try {
+    const blob = await downloadCadDxfApi(projectId);
+    return await blob.text();
+  } catch (err) {
+    throw wrapApiError(err, "DXF download failed");
+  }
 }
 
 export async function runSketchCostingAction(formData: FormData) {

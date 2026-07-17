@@ -27,6 +27,8 @@ import type {
   PhotoMeasurement,
   DesignCanvas,
   UpsertDesignCanvasInput,
+  CadDocument,
+  UpsertCadDocumentInput,
   CatalogSymbol,
   CreateCatalogSymbolInput,
   WorkspaceBilling,
@@ -69,6 +71,8 @@ export type {
   PhotoMeasurement,
   DesignCanvas,
   UpsertDesignCanvasInput,
+  CadDocument,
+  UpsertCadDocumentInput,
   CatalogSymbol,
   CreateCatalogSymbolInput,
   WorkspaceBilling,
@@ -260,6 +264,15 @@ export interface Store {
     projectId: string,
     input: UpsertDesignCanvasInput,
   ): Promise<DesignCanvas>;
+  getCadDocument(
+    ownerId: string,
+    projectId: string,
+  ): Promise<CadDocument | null>;
+  upsertCadDocument(
+    ownerId: string,
+    projectId: string,
+    input: UpsertCadDocumentInput,
+  ): Promise<CadDocument>;
   listCatalogSymbols(ownerId: string): Promise<CatalogSymbol[]>;
   createCustomCatalogSymbol(
     ownerId: string,

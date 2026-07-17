@@ -9,8 +9,10 @@ import type {
   CreateTaskInput,
   CrewMember,
   Design,
+  CadDocument,
   DesignCanvas,
   UpsertDesignCanvasInput,
+  DesignGhostsResponse,
   CreateCatalogSymbolInput,
   MyobCustomer,
   MyobItem,
@@ -596,6 +598,56 @@ export class WorkstreamClient {
       input,
     );
     return res.canvas;
+  }
+
+  async scanDesignGhosts(projectId: string): Promise<DesignGhostsResponse> {
+    return this.request("POST", `/projects/${projectId}/design/ghosts`);
+  }
+
+  async getCadDocument(projectId: string): Promise<{
+    document: CadDocument | null;
+    svg: string | null;
+    ghost_count: number;
+  }> {
+    return this.request("GET", `/projects/${projectId}/cad`);
+  }
+
+  async generateCad(projectId: string): Promise<{
+    document: CadDocument;
+    svg: string;
+    ghost_count: number;
+    rationale: string;
+    applied: number;
+  }> {
+    return this.request("POST", `/projects/${projectId}/cad/generate`, {});
+  }
+
+  async editCad(
+    projectId: string,
+    instruction: string,
+  ): Promise<{
+    document: CadDocument;
+    svg: string;
+    ghost_count: number;
+    rationale: string;
+    applied: number;
+  }> {
+    return this.request("POST", `/projects/${projectId}/cad/edit`, {
+      instruction,
+    });
+  }
+
+  async acceptCad(
+    projectId: string,
+    entityIds?: string[],
+  ): Promise<{
+    document: CadDocument;
+    svg: string;
+    ghost_count: number;
+  }> {
+    return this.request("POST", `/projects/${projectId}/cad/accept`, {
+      entity_ids: entityIds,
+    });
   }
 
   async runSurvey(projectId: string): Promise<Survey> {

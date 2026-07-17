@@ -1,4 +1,4 @@
-# Workstream ó External Designer Project Brief
+# Workstream ù External Designer Project Brief
 
 **Version:** 2026-07-17  
 **Prepared for:** External website / app designer  
@@ -12,7 +12,7 @@ This brief is self-contained. Use it as the kickoff pack for visual / UX redesig
 
 ## 1. One-line pitch
 
-Tim walks a Melbourne site and talks. Workstream turns that into survey ? concept sketch ? estimate ? AI design ? costing ? audit ? client quote ó so by the time heís at the car, the job is moving.
+Tim walks a Melbourne site and talks. Workstream turns that into survey ? concept sketch ? estimate ? AI design ? costing ? audit ? client quote ù so by the time heùs at the car, the job is moving.
 
 ---
 
@@ -30,7 +30,7 @@ Tim walks a Melbourne site and talks. Workstream turns that into survey ? concep
 
 ## 3. Business context
 
-- **Industry:** Residential / boutique landscape design & build (Melbourne inner suburbs ó Stonnington, Yarra, etc.).
+- **Industry:** Residential / boutique landscape design & build (Melbourne inner suburbs ù Stonnington, Yarra, etc.).
 - **Users:** Small crew; not enterprise SaaS buyers. Operators are outdoors, muddy, in a hurry.
 - **Money path:** Concept plan ? three cost scenarios (Lean / Standard / Buffer) ? client picks ? deposit via Stripe portal.
 - **Honesty is a product feature:** Plans are **concept for estimating**, never construction drawings. Design must never look like CAD sign-off.
@@ -39,17 +39,17 @@ Tim walks a Melbourne site and talks. Workstream turns that into survey ? concep
 
 ## 4. Personas
 
-### Tim ó Lead / on-site operator
+### Tim ù Lead / on-site operator
 - Walks sites, dictates scope, places trees/lawn/paving on aerial.
 - Needs one obvious next step; hates hunting for buttons.
 - Uses phone on site, laptop back at the studio.
 
-### Morgan ó Studio / ops
+### Morgan ù Studio / ops
 - Reviews costing, audit, outputs, client handoff.
 - Needs clarity over decoration; pipeline status at a glance.
 
-### Homeowner ó Portal only
-- Opens a magic link. Sees Curtis & Co, not ìWorkstreamî.
+### Homeowner ù Portal only
+- Opens a magic link. Sees Curtis & Co, not ùWorkstreamù.
 - Needs confidence: what am I buying, why three prices, how do I pay a deposit.
 - Zero training; calm, premium, garden-aware.
 
@@ -62,7 +62,7 @@ New project (address)
   ? Pin site on aerial
   ? Record / upload walkthrough (voice)
   ? Auto pipeline processing
-  ? Survey review (aerial + lot + m≤)
+  ? Survey review (aerial + lot + mù)
   ? Design studio: sketch on aerial (envelope)
   ? Envelope estimate + planning flags (TRP, stormwater, heritage)
   ? AI design from sketch
@@ -79,38 +79,39 @@ New project (address)
 ## 6. Information architecture (operator web)
 
 ### Global
-- Sticky **AppNav:** Workstream wordmark ∑ Projects ∑ Settings (and related ops links)
-- **Project shell:** address masthead ∑ horizontal stage subnav ∑ content ∑ mobile sticky CTA
+- Sticky **AppNav:** Workstream wordmark ù Projects ù Settings (and related ops links)
+- **Project shell:** address masthead ù horizontal stage subnav ù content ù mobile sticky CTA
 
 ### Key screens to design
 
 | Screen | Route pattern | Designer focus |
 | --- | --- | --- |
-| Projects dashboard | `/` | Site list + ìnew projectî; calm empty state |
+| Projects dashboard | `/` | Site list + ùnew projectù; calm empty state |
 | Project hub | `/projects/:id` | Pipeline stages + single next action |
 | Survey | `/projects/:id/survey` | Aerial + lot context |
 | Design | `/projects/:id/design` | Workflow steps into studio / AI |
 | **Design studio** | `/projects/:id/design/studio` | Full-screen aerial sketch tool (hero surface) |
+| **AI CAD (Stage 2)** | `/projects/:id/design/cad` | Metre-space CAD + AI ghosts + LibreCAD DXF |
 | Costing | `/projects/:id/costing` | Three scenario cards |
 | Audit | `/projects/:id/audit` | Checklist / confidence |
 | Outputs | `/projects/:id/outputs` | Quote + packs + send to client |
-| Portal quote | `/portal/quote/[token]` | Curtis brand ∑ scenarios ∑ deposit |
+| Portal quote | `/portal/quote/[token]` | Curtis brand ù scenarios ù deposit |
 
 ---
 
-## 7. Design studio ó brief within the brief
+## 7. Design studio ù brief within the brief
 
 ### Purpose
 Back-of-envelope concept on a **static Mapbox aerial**: drop landscape symbols, freehand ink, indicative scale. Feeds estimate, planning flags, AI develop, and quote quantities.
 
 ### Hard product rules
-1. **Concept sketch, not CAD** ó CAD-*inspired* chrome is OK; construction-grade accuracy is not.
-2. **2D top-down only** ó no 3D, isometric, photoreal, or tilt.
+1. **Concept sketch, not CAD** ù CAD-*inspired* chrome is OK; construction-grade accuracy is not.
+2. **2D top-down only** ù no 3D, isometric, photoreal, or tilt.
 3. **Permanent honesty copy** (non-dismissible), including:  
-   *ìConcept sketch for estimating ó not a construction drawing.î*
-4. **Aerial is the hero** ó asset rail ~320px desktop; canvas dominates.
-5. **Accent sparingly** ó signal CTAs and armed tools, not whole chrome.
-6. **Indicative metres** ó scale bar / TPZ readouts always labelled indicative.
+   *ùConcept sketch for estimating ù not a construction drawing.ù*
+4. **Aerial is the hero** ù asset rail ~320px desktop; canvas dominates.
+5. **Accent sparingly** ù signal CTAs and armed tools, not whole chrome.
+6. **Indicative metres** ù scale bar / TPZ readouts always labelled indicative.
 
 ### Core interactions
 - Place / move / rotate / scale catalog symbols (percent coordinates on aerial)
@@ -121,7 +122,17 @@ Back-of-envelope concept on a **static Mapbox aerial**: drop landscape symbols, 
 - Save plan ? downstream envelope / AI / quote
 
 ### States that must be designed
-Empty canvas ∑ armed symbol ∑ selected symbol ∑ saving / saved ∑ aerial load fail ∑ no survey gate
+Empty canvas ù armed symbol ù selected symbol ù saving / saved ù aerial load fail ù no survey gate
+
+---
+
+## 7b. AI CAD (Stage 2)
+
+- Separate from concept sketch: **Upgrade to AI CAD** after a saved sketch.
+- Aerial underlay + SVG vector overlay; AI rail (generate / NL edit / accept ghosts).
+- DXF download for **LibreCAD** ù keep Workstream chrome; do not fake AutoCAD.
+- Ghosts are low-opacity until Accept. Honesty copy remains permanent.
+- See `docs/AI-CAD.md`.
 
 ---
 
@@ -130,14 +141,14 @@ Empty canvas ∑ armed symbol ∑ selected symbol ∑ saving / saved ∑ aerial load fai
 - **No operator chrome** (no Workstream nav).
 - **Curtis & Co** brand first; premium garden confidence.
 - Homeowner understands the design, compares **Lean / Standard / Buffer**, pays deposit.
-- Current visual direction: dark ìnight canopyî shell + light quote sheet (Garden Atelier).
+- Current visual direction: dark ùnight canopyù shell + light quote sheet (Garden Atelier).
 - Avoid SaaS dashboard patterns, stats strips, or studio tooling.
 
 ---
 
-## 9. Visual system ó Garden Atelier 2026 (current shipped)
+## 9. Visual system ù Garden Atelier 2026 (current shipped)
 
-**Direction:** Cool moss / stone field, living canopy green, chartreuse bloom accent. Biophilic, editorial, Melbourne garden ó **not** cream+terracotta Inter, **not** purple SaaS, **not** neon cyber.
+**Direction:** Cool moss / stone field, living canopy green, chartreuse bloom accent. Biophilic, editorial, Melbourne garden ù **not** cream+terracotta Inter, **not** purple SaaS, **not** neon cyber.
 
 ### Typography
 | Role | Family |
@@ -165,7 +176,7 @@ Source of truth in code: `apps/web/src/styles/globals.css` and `packages/ui/src/
 
 ### Layout & craft rules
 - Prefer tonal depth + hairlines over heavy cards and multi-layer shadows.
-- Soft organic radii (`8 / 12 / 18`) ó avoid candy pill clusters.
+- Soft organic radii (`8 / 12 / 18`) ù avoid candy pill clusters.
 - Accent as signal, not wallpaper.
 - Mobile-first: **44px** min tap targets; sticky bottom primary CTA on phones.
 - Breakpoints to design: **375 / 720 / 960+**.
@@ -173,7 +184,7 @@ Source of truth in code: `apps/web/src/styles/globals.css` and `packages/ui/src/
 - Accessibility: **WCAG AA** contrast on labels and rail text.
 
 ### Motion
-Intentional, calm presence (page/panel transitions already tokenised). Prefer 2ñ3 meaningful motions per surface ó not decorative noise.
+Intentional, calm presence (page/panel transitions already tokenised). Prefer 2ù3 meaningful motions per surface ù not decorative noise.
 
 ---
 
@@ -181,8 +192,8 @@ Intentional, calm presence (page/panel transitions already tokenised). Prefer 2ñ
 
 | Surface | Tone |
 | --- | --- |
-| Operator | Clear, terse, operational ó ìnext stepî language |
-| Portal | Warm, confident, garden-literate Curtis & Co ó never engineering jargon |
+| Operator | Clear, terse, operational ù ùnext stepù language |
+| Portal | Warm, confident, garden-literate Curtis & Co ù never engineering jargon |
 
 Always reinforce: concept / estimate / indicative. Never imply council approval or construction readiness from the sketch alone.
 
@@ -198,7 +209,7 @@ Always reinforce: concept / estimate / indicative. Never imply council approval 
 
 ---
 
-## 12. Out of scope (do not propose as ìshippedî)
+## 12. Out of scope (do not propose as ùshippedù)
 
 - True survey CAD / coordinate export / working drawings (separate future phase)
 - 3D / photoreal / isometric
@@ -215,12 +226,12 @@ Always reinforce: concept / estimate / indicative. Never imply council approval 
    - Components (nav, subnav, buttons, pills, inputs, toasts)
    - Templates (dashboard, project hub, design, costing, outputs)
    - Design studio (375 / 720 / 960+)
-   - Portal ó **separate file or page set**, Curtis brand
+   - Portal ù **separate file or page set**, Curtis brand
    - States (empty, loading, error, honesty copy visible)
 2. **Filled return doc** from `docs/templates/DESIGN-RETURN-TEMPLATE.md`
 3. **Token delta table** vs `apps/web/src/styles/globals.css`
-4. **Copy deck** ó all en-AU strings for designed screens
-5. **Component map** ó Figma component ? suggested React / CSS module path  
+4. **Copy deck** ù all en-AU strings for designed screens
+5. **Component map** ù Figma component ? suggested React / CSS module path  
 6. Optional: ?5 min Loom for studio interactions
 
 Engineering will not start until return markdown + Figma match.
@@ -255,4 +266,4 @@ Engineering will not start until return markdown + Figma match.
 
 ---
 
-*This brief supersedes older token notes that referenced Inter + terracotta accent. Current shipped system is Garden Atelier 2026 as described in ß9.*
+*This brief supersedes older token notes that referenced Inter + terracotta accent. Current shipped system is Garden Atelier 2026 as described in ù9.*

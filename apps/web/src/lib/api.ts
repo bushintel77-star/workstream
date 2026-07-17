@@ -1,10 +1,12 @@
 import "server-only";
 
 import type {
+  CadDocument,
   CatalogPlacement,
   CatalogSymbol,
   CreateCatalogSymbolInput,
   DesignCanvas,
+  DesignGhostsResponse,
 } from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
 import { operatorApiUrl } from "./public-env";
@@ -333,12 +335,69 @@ export async function saveDesignCanvasApi(
   placements: CatalogPlacement[],
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
+  annotations: DesignCanvas["annotations"] = [],
 ): Promise<DesignCanvas> {
   const body = await apiPut<{ canvas: DesignCanvas }>(
     `/projects/${projectId}/design-canvas`,
-    { placements, strokes, irrigation_zones: irrigationZones },
+    { placements, strokes, irrigation_zones: irrigationZones, annotations },
   );
   return body.canvas;
+}
+
+export async function scanDesignGhostsApi(
+  projectId: string,
+): Promise<DesignGhostsResponse> {
+  return apiPost<DesignGhostsResponse>(`/projects/${projectId}/design/ghosts`, {});
+}
+
+export type CadApiResult = {
+  document: CadDocument | null;
+  svg: string | null;
+  ghost_count: number;
+  rationale?: string;
+  applied?: number;
+};
+
+export async function getCadDocumentApi(
+  projectId: string,
+): Promise<CadApiResult> {
+  return apiGet<CadApiResult>(`/projects/${projectId}/cad`);
+}
+
+export async function generateCadApi(
+  projectId: string,
+): Promise<CadApiResult> {
+  return apiPost<CadApiResult>(`/projects/${projectId}/cad/generate`, {});
+}
+
+export async function editCadApi(
+  projectId: string,
+  instruction: string,
+): Promise<CadApiResult> {
+  return apiPost<CadApiResult>(`/projects/${projectId}/cad/edit`, {
+    instruction,
+  });
+}
+
+export async function acceptCadApi(
+  projectId: string,
+  entityIds?: string[],
+): Promise<CadApiResult> {
+  return apiPost<CadApiResult>(`/projects/${projectId}/cad/accept`, {
+    entity_ids: entityIds,
+  });
+}
+
+export async function downloadCadDxfApi(projectId: string): Promise<Blob> {
+  const res = await fetch(`${API_URL}/projects/${projectId}/cad.dxf`, {
+    cache: "no-store",
+    headers: await apiHeaders(),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API ${res.status} on GET cad.dxf: ${text}`);
+  }
+  return res.blob();
 }
 
 /* -- Costing ----------------------------------------------------------- */

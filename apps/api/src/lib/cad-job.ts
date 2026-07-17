@@ -1,0 +1,233 @@
+import type { Store } from "@workstream/db";
+import type { CadDocument } from "@workstream/contracts";
+import {
+  acceptCadGhosts,
+  applyCadOps,
+  cadDocumentToDxf,
+  cadDocumentToSvg,
+  countGhosts,
+  importSketchToCad,
+} from "@workstream/cad";
+import { formatPlanningFlagsForAi, assessPlanningFromSketch } from "@workstream/domain";
+import { generateCadOps } from "./claude";
+import { groundSpanFromSurvey } from "./cad-ground";
+
+function entityBrief(doc: CadDocument): string {
+  return doc.entities
+    .slice(0, 40)
+    .map((e) => {
+      if (e.kind === "polyline") {
+        return `${e.id} polyline layer=${e.layer} ghost=${e.ghost} pts=${e.points.length}`;
+      }
+      if (e.kind === "circle") {
+        return `${e.id} circle layer=${e.layer} ghost=${e.ghost} r=${e.radius.toFixed(2)}`;
+      }
+      if (e.kind === "insert") {
+        return `${e.id} insert ${e.block_name} ghost=${e.ghost}`;
+      }
+      return `${e.id} ${e.kind} layer=${e.layer} ghost=${e.ghost}`;
+    })
+    .join("\n");
+}
+
+function sketchSummary(canvas: {
+  placements: { symbol_id: string }[];
+  strokes: unknown[];
+  irrigation_zones: unknown[];
+}): string {
+  const counts = new Map<string, number>();
+  for (const p of canvas.placements) {
+    counts.set(p.symbol_id, (counts.get(p.symbol_id) ?? 0) + 1);
+  }
+  const lines = [...counts.entries()].map(([id, n]) => `${id} ù ${n}`);
+  return [
+    `placements: ${canvas.placements.length}`,
+    `strokes: ${canvas.strokes?.length ?? 0}`,
+    `irrigation_zones: ${canvas.irrigation_zones?.length ?? 0}`,
+    ...lines.slice(0, 30),
+  ].join("\n");
+}
+
+async function persist(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+  doc: CadDocument,
+): Promise<CadDocument> {
+  return store.upsertCadDocument(ownerId, projectId, {
+    version: 1,
+    units: "m",
+    origin: doc.origin,
+    width_m: doc.width_m,
+    height_m: doc.height_m,
+    layers: doc.layers,
+    entities: doc.entities,
+    blocks: doc.blocks,
+    ai_run_id: doc.ai_run_id,
+    source_sketch_id: doc.source_sketch_id,
+  });
+}
+
+export async function getCadWithSvg(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+): Promise<{ document: CadDocument | null; svg: string | null; ghost_count: number }> {
+  const document = await store.getCadDocument(ownerId, projectId);
+  if (!document) {
+    return { document: null, svg: null, ghost_count: 0 };
+  }
+  return {
+    document,
+    svg: cadDocumentToSvg(document),
+    ghost_count: countGhosts(document),
+  };
+}
+
+export async function generateCadDocument(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+  opts?: { width_m?: number; height_m?: number },
+): Promise<{
+  document: CadDocument;
+  svg: string;
+  ghost_count: number;
+  rationale: string;
+  applied: number;
+}> {
+  const project = await store.getProject(ownerId, projectId);
+  if (!project) throw new Error("Project not found");
+  const survey = await store.getSurvey(ownerId, projectId);
+  if (!survey) throw new Error("Survey required before AI CAD");
+  const canvas = await store.getDesignCanvas(ownerId, projectId);
+  if (!canvas?.placements?.length) {
+    throw new Error("Save a site sketch before generating AI CAD");
+  }
+
+  const span = groundSpanFromSurvey(survey);
+  const width_m = opts?.width_m ?? span.width_m;
+  const height_m = opts?.height_m ?? span.height_m;
+
+  let doc = await store.getCadDocument(ownerId, projectId);
+  if (!doc) {
+    doc = importSketchToCad({
+      projectId,
+      canvas,
+      width_m,
+      height_m,
+    });
+  }
+
+  const symbols = await store.listCatalogSymbols(ownerId);
+  const planning = assessPlanningFromSketch(
+    project.address,
+    survey,
+    canvas,
+    symbols,
+  );
+
+  const { ops, rationale } = await generateCadOps({
+    address: project.address,
+    width_m: doc.width_m,
+    height_m: doc.height_m,
+    sketch_summary: sketchSummary(canvas),
+    planning_notes: formatPlanningFlagsForAi(planning),
+    existing_entity_brief: entityBrief(doc),
+    catalog_symbol_ids: symbols.map((s) => s.id),
+  });
+
+  const runId = crypto.randomUUID();
+  const { document: next, applied } = applyCadOps(doc, ops);
+  next.ai_run_id = runId;
+  next.source_sketch_id = canvas.id;
+  const saved = await persist(store, ownerId, projectId, next);
+
+  return {
+    document: saved,
+    svg: cadDocumentToSvg(saved),
+    ghost_count: countGhosts(saved),
+    rationale,
+    applied,
+  };
+}
+
+export async function editCadDocument(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+  instruction: string,
+): Promise<{
+  document: CadDocument;
+  svg: string;
+  ghost_count: number;
+  rationale: string;
+  applied: number;
+}> {
+  const project = await store.getProject(ownerId, projectId);
+  if (!project) throw new Error("Project not found");
+  let doc = await store.getCadDocument(ownerId, projectId);
+  if (!doc) {
+    // Bootstrap via generate path
+    const gen = await generateCadDocument(store, ownerId, projectId);
+    doc = gen.document;
+  }
+
+  const canvas = await store.getDesignCanvas(ownerId, projectId);
+  const survey = await store.getSurvey(ownerId, projectId);
+  const symbols = await store.listCatalogSymbols(ownerId);
+  const planning =
+    canvas && survey
+      ? assessPlanningFromSketch(project.address, survey, canvas, symbols)
+      : [];
+
+  const { ops, rationale } = await generateCadOps({
+    address: project.address,
+    width_m: doc.width_m,
+    height_m: doc.height_m,
+    sketch_summary: canvas ? sketchSummary(canvas) : "(no sketch)",
+    planning_notes: formatPlanningFlagsForAi(planning),
+    instruction,
+    existing_entity_brief: entityBrief(doc),
+    catalog_symbol_ids: symbols.map((s) => s.id),
+  });
+
+  const { document: next, applied } = applyCadOps(doc, ops);
+  next.ai_run_id = crypto.randomUUID();
+  const saved = await persist(store, ownerId, projectId, next);
+
+  return {
+    document: saved,
+    svg: cadDocumentToSvg(saved),
+    ghost_count: countGhosts(saved),
+    rationale,
+    applied,
+  };
+}
+
+export async function acceptCadDocument(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+  entityIds?: string[],
+): Promise<{ document: CadDocument; svg: string; ghost_count: number }> {
+  const doc = await store.getCadDocument(ownerId, projectId);
+  if (!doc) throw new Error("No CAD document ù generate first");
+  const next = acceptCadGhosts(doc, entityIds);
+  const saved = await persist(store, ownerId, projectId, next);
+  return {
+    document: saved,
+    svg: cadDocumentToSvg(saved),
+    ghost_count: countGhosts(saved),
+  };
+}
+
+export async function exportCadDxf(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+): Promise<string> {
+  const doc = await store.getCadDocument(ownerId, projectId);
+  if (!doc) throw new Error("No CAD document ù generate first");
+  return cadDocumentToDxf(doc);
+}

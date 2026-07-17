@@ -25,6 +25,7 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
     "@opentelemetry/sdk-node": "^0.218.0",
     "@sentry/node": "^10.53.1",
+    "@workstream/cad": "workspace:*",
     "@workstream/contracts": "workspace:*",
     "@workstream/db": "workspace:*",
     "@workstream/domain": "workspace:*",

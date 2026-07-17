@@ -57,6 +57,8 @@ export default async function DesignDevelopPage({
 
       <p className={s.meta}>
         <Link href={`/projects/${id}/design`}>← Back to sketch</Link>
+        {" · "}
+        <Link href={`/projects/${id}/design/cad`}>AI CAD</Link>
       </p>
 
       <h1 className={s.headline}>Develop & estimate</h1>

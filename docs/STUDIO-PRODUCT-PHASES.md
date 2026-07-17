@@ -29,26 +29,19 @@
 
 ---
 
-## Stage 2 — True CAD (future product)
+## Stage 2 — AI CAD (shipping)
 
-**Positioning:** Working-planning surface for draftsperson handoff — same Workstream account and project, **new data model and studio mode**.
+**Positioning:** Working-planning surface for draftsperson handoff — same Workstream account and project, **new data model and studio mode**. See [AI-CAD.md](./AI-CAD.md).
 
 | Dimension | Stage 2 rule |
 | --- | --- |
-| **Geometry** | Survey / title-derived coordinate system (e.g. MGA2020 metres from lot origin, or georeferenced canvas). |
-| **Accuracy** | Stated precision, snap to grid, orthogonal, optional stationing. |
-| **Layers** | Named layers (plants, hardscape, irrigation, annotations, services, easements) with export. |
-| **Dims** | Dim styles (mm, chainage optional), associative to geometry where supported. |
-| **Export** | Structured SVG/DXF/PDF sheet with layer table; optional sync to external CAD. |
-| **Workflow 1 link** | Import sketch canvas as reference layer; promote symbols to CAD entities on upgrade. |
+| **Geometry** | Metres from aerial-frame origin (`CadDocument`); Y-up. |
+| **AI** | Claude emits `CadOp[]`; `@workstream/cad` applies ops. All AI geometry is **ghost** until Accept. |
+| **Layers** | SKETCH-REF, PLANTING, HARDSCAPE, STRUCTURES, WATER, IRRIGATION, TRP, ANNOTATION, DIMENSIONS, PERMITS. |
+| **Export** | SVG preview in-app; **DXF for LibreCAD**. |
+| **Workflow 1 link** | Import sketch → inserts + stroke polylines; upgrade via `/design/cad`. |
 
-**Stage 2 prerequisites (product, not code yet):**
-
-1. Title/survey origin + Vicmap lock confirmed per project.
-2. Product sign-off on export formats and liability copy.
-3. Schema version (`DesignCanvasV2` or `CadDocument`) in `packages/contracts` before API/clients.
-
-**Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to CAD document* — one-way promote with reference snapshot, no silent coercion.
+**Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 
 ---
 
@@ -67,13 +60,13 @@ Portal concept plan      ────────▶  Optional CAD PDF sheet pac
 Same **Clerk account**, same **project id**, same **pipeline tabs**. Studio route may branch:
 
 - `/projects/:id/design` — Workflow 1 (default).
-- `/projects/:id/design/cad` — Stage 2 when shipped.
+- `/projects/:id/design/cad` — Stage 2 AI CAD.
 
 ---
 
 ## Design DNA (both phases)
 
-Shared tokens (`globals.css`), Inter + JetBrains Mono, Curtis palette, AU locale, `SiteContextRibbon` chip language. Stage 2 adds denser chrome (layer manager, dim toolbar) but **same accent discipline** (≤3% accent surface).
+Shared tokens (`globals.css`), Garden Atelier type (Fraunces + Sora), AU locale. Stage 2 AI CAD uses the same DNA with an AI rail + aerial/SVG overlay.
 
 ---
 

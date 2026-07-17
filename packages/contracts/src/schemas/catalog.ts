@@ -109,12 +109,44 @@ export const IrrigationZoneSchema = z.object({
 });
 export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
 
+/** Sketch annotation — Stage 2-lite markup on Workflow 1 canvas (% geometry). */
+export const CanvasAnnotationKindSchema = z.enum(["text", "dimension", "arrow"]);
+export type CanvasAnnotationKind = z.infer<typeof CanvasAnnotationKindSchema>;
+
+export const CanvasAnnotationSchema = z.object({
+  id: z.string().uuid(),
+  kind: CanvasAnnotationKindSchema,
+  x_pct: z.number().min(0).max(100),
+  y_pct: z.number().min(0).max(100),
+  x2_pct: z.number().min(0).max(100).optional(),
+  y2_pct: z.number().min(0).max(100).optional(),
+  text: z.string().max(240).optional(),
+});
+export type CanvasAnnotation = z.infer<typeof CanvasAnnotationSchema>;
+
+/** Ephemeral AI ghost — never persisted until operator confirms. */
+export const GhostPlacementSuggestionSchema = z.object({
+  id: z.string(),
+  symbol_id: z.string(),
+  x_pct: z.number().min(0).max(100),
+  y_pct: z.number().min(0).max(100),
+  confidence: z.number().min(0).max(1),
+  reason: z.string(),
+});
+export type GhostPlacementSuggestion = z.infer<typeof GhostPlacementSuggestionSchema>;
+
+export const DesignGhostsResponseSchema = z.object({
+  suggestions: z.array(GhostPlacementSuggestionSchema),
+});
+export type DesignGhostsResponse = z.infer<typeof DesignGhostsResponseSchema>;
+
 export const DesignCanvasSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema),
   irrigation_zones: z.array(IrrigationZoneSchema).default([]),
+  annotations: z.array(CanvasAnnotationSchema).default([]),
   updated_at: z.string().datetime(),
 });
 export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
@@ -123,5 +155,6 @@ export const UpsertDesignCanvasSchema = z.object({
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema).optional(),
   irrigation_zones: z.array(IrrigationZoneSchema).optional(),
+  annotations: z.array(CanvasAnnotationSchema).optional(),
 });
 export type UpsertDesignCanvasInput = z.infer<typeof UpsertDesignCanvasSchema>;

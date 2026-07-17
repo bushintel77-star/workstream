@@ -38,6 +38,8 @@ import xeroRoutes from './routes/xero';
 import carbonRoutes from './routes/carbon';
 import catalogRoutes from './routes/catalog';
 import designCanvasRoutes from './routes/design-canvas';
+import designGhostsRoutes from './routes/design-ghosts';
+import cadRoutes from './routes/cad';
 import projectFileRoutes from './routes/project-files';
 import activityRoutes from './routes/activity';
 import portalRoutes from './routes/portal';
@@ -133,6 +135,8 @@ async function start() {
   await server.register(carbonRoutes, { prefix: '/projects' });
   await server.register(catalogRoutes, { prefix: '/catalog' });
   await server.register(designCanvasRoutes, { prefix: '/projects' });
+  await server.register(designGhostsRoutes, { prefix: '/projects' });
+  await server.register(cadRoutes, { prefix: '/projects' });
   await server.register(projectFileRoutes, { prefix: '/projects' });
   await server.register(activityRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);

@@ -1,5 +1,6 @@
 import type {
   AuditFinding,
+  CadOp,
   Costing,
   Design,
   DesignMode,
@@ -9,10 +10,13 @@ import type {
   RateCard,
   Survey,
 } from "@workstream/contracts";
+import { CadOpsBatchSchema } from "@workstream/contracts";
 import {
+  buildGhostPlacementSuggestions,
   isTier1WrightsTerrace,
   tier1WrightsTerraceDesign,
 } from "@workstream/domain";
+import type { GhostPlacementSuggestion } from "@workstream/contracts";
 import { getOwnerEnv } from "./owner-secrets";
 import { fetchWithRetry } from "./http";
 import { setActiveTelemetryAttributes } from "./telemetry";
@@ -731,4 +735,331 @@ export async function scanImageContact(args: {
     client_email: parsed.client_email ?? null,
     notes: parsed.notes ?? null,
   };
+}
+
+const AERIAL_GHOST_PROMPT = `You analyse a top-down aerial site plan image for a Melbourne landscape concept sketch.
+
+Return strict JSON only:
+{
+  "suggestions": [
+    {
+      "symbol_id": "catalog-id-from-allowed-list",
+      "x_pct": 0-100,
+      "y_pct": 0-100,
+      "confidence": 0-1,
+      "reason": "short plain-English hint"
+    }
+  ]
+}
+
+Rules:
+- Use ONLY symbol_id values from the allowed list provided.
+- x_pct / y_pct are percent from top-left of the image (0–100).
+- Suggest trees, lawn, paving, structures where visually plausible — max 8 suggestions.
+- These are indicative AI hints, not survey CAD. Never claim precision.
+- If uncertain, return an empty suggestions array.`;
+
+async function fetchAerialBase64(
+  aerialUri: string,
+): Promise<{ base64: string; mime_type: "image/jpeg" | "image/png" | "image/webp" }> {
+  const res = await fetchWithRetry(aerialUri, { method: "GET" });
+  if (!res.ok) throw new Error(`Aerial fetch failed: ${res.status}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  const ct = res.headers.get("content-type") ?? "image/jpeg";
+  const mime_type = ct.includes("png")
+    ? "image/png"
+    : ct.includes("webp")
+      ? "image/webp"
+      : "image/jpeg";
+  return { base64: buf.toString("base64"), mime_type };
+}
+
+export async function scanAerialGhosts(args: {
+  aerial_uri: string;
+  symbol_ids: string[];
+  tier1: boolean;
+}): Promise<GhostPlacementSuggestion[]> {
+  const fallback = () =>
+    buildGhostPlacementSuggestions({
+      tier1: args.tier1,
+      symbolIds: args.symbol_ids,
+    });
+
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
+  if (!apiKey || !args.aerial_uri.startsWith("http")) {
+    return fallback();
+  }
+
+  try {
+    const { base64, mime_type } = await fetchAerialBase64(args.aerial_uri);
+    const allowed = args.symbol_ids.slice(0, 80).join(", ");
+    const body = {
+      model: VISION_MODEL,
+      max_tokens: 2048,
+      system: [{ type: "text", text: AERIAL_GHOST_PROMPT }],
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mime_type,
+                data: base64,
+              },
+            },
+            {
+              type: "text",
+              text: `Allowed symbol_id values: ${allowed}\nTier-1 Wrights Terrace: ${args.tier1 ? "yes" : "no"}`,
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = await fetchWithRetry(MESSAGES_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": ANTHROPIC_VERSION,
+      },
+      body: JSON.stringify(body),
+    }, {
+      telemetry: {
+        spanName: "anthropic.scan_aerial_ghosts",
+        provider: "anthropic",
+        attributes: {
+          "pipeline.stage": "design",
+          "model.name": VISION_MODEL,
+        },
+      },
+    });
+    if (!res.ok) return fallback();
+
+    const json = (await res.json()) as {
+      content: Array<{ type: string; text: string }>;
+    };
+    const textBlock = json.content.find((c) => c.type === "text");
+    if (!textBlock) return fallback();
+
+    const cleaned = textBlock.text
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "");
+    const parsed = JSON.parse(cleaned) as {
+      suggestions?: Array<{
+        symbol_id?: string;
+        x_pct?: number;
+        y_pct?: number;
+        confidence?: number;
+        reason?: string;
+      }>;
+    };
+
+    const allowedSet = new Set(args.symbol_ids);
+    const out: GhostPlacementSuggestion[] = [];
+    for (const s of parsed.suggestions ?? []) {
+      if (!s.symbol_id || !allowedSet.has(s.symbol_id)) continue;
+      const x = Number(s.x_pct);
+      const y = Number(s.y_pct);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      out.push({
+        id: crypto.randomUUID(),
+        symbol_id: s.symbol_id,
+        x_pct: Math.min(100, Math.max(0, x)),
+        y_pct: Math.min(100, Math.max(0, y)),
+        confidence: Math.min(1, Math.max(0, Number(s.confidence) || 0.5)),
+        reason: s.reason?.trim() || "AI aerial hint",
+      });
+    }
+    return out.length > 0 ? out : fallback();
+  } catch {
+    return fallback();
+  }
+}
+
+const CAD_OPS_SYSTEM = `You are the AI CAD engine for Workstream (Curtis & Co, Melbourne landscape).
+Emit deterministic CAD operations in metre space (origin SW of aerial frame, Y-up).
+Return strict JSON only — no markdown.
+
+Schema:
+{
+  "ops": [ CadOp, ... ],
+  "rationale": "short string"
+}
+
+Allowed CadOp.op values:
+- add_layer { name, color? }
+- add_line { layer, start:{x,y}, end:{x,y}, ghost }
+- add_polyline { layer, points:[{x,y}], closed, ghost }
+- add_circle { layer, center:{x,y}, radius, ghost }
+- add_arc { layer, center, radius, start_angle_deg, end_angle_deg, ghost }
+- add_text { layer, position, height, value, rotation_deg?, ghost }
+- add_insert { layer, block_name, position, scale?, rotation_deg?, ghost }
+- add_dim { layer, p1, p2, offset?, ghost }
+- offset_polyline { entity_id, distance, ghost }
+- delete_entity { entity_id }
+
+Layers: SKETCH-REF, PLANTING, HARDSCAPE, STRUCTURES, WATER, IRRIGATION, TRP, ANNOTATION, DIMENSIONS, PERMITS.
+
+Rules:
+- All new AI geometry MUST set ghost: true.
+- Stay inside width_m × height_m.
+- TRP circles are indicative (AS 4970) — never claim survey accuracy.
+- Prefer closed polylines for lawn/paving envelopes; inserts for plant symbols (block_name = catalog symbol_id).
+- Do not invent lodgement-ready dimensions.
+- Max 80 ops.`;
+
+export type CadOpsContext = {
+  address: string;
+  width_m: number;
+  height_m: number;
+  sketch_summary: string;
+  planning_notes: string;
+  instruction?: string | null;
+  existing_entity_brief?: string | null;
+  catalog_symbol_ids?: string[];
+};
+
+function devFallbackCadOps(ctx: CadOpsContext): { ops: CadOp[]; rationale: string } {
+  const w = ctx.width_m;
+  const h = ctx.height_m;
+  const margin = Math.min(w, h) * 0.12;
+  const ops: CadOp[] = [
+    {
+      op: "add_polyline",
+      layer: "HARDSCAPE",
+      closed: true,
+      ghost: true,
+      points: [
+        { x: margin, y: margin },
+        { x: w - margin, y: margin },
+        { x: w - margin, y: h * 0.45 },
+        { x: margin, y: h * 0.45 },
+      ],
+    },
+    {
+      op: "add_circle",
+      layer: "TRP",
+      ghost: true,
+      center: { x: w * 0.72, y: h * 0.68 },
+      radius: Math.min(w, h) * 0.08,
+    },
+    {
+      op: "add_text",
+      layer: "ANNOTATION",
+      ghost: true,
+      position: { x: margin, y: h - margin },
+      height: 0.4,
+      value: "AI CAD proposal — accept to commit",
+      rotation_deg: 0,
+    },
+  ];
+  if (ctx.catalog_symbol_ids?.length) {
+    ops.push({
+      op: "add_insert",
+      layer: "PLANTING",
+      ghost: true,
+      block_name: ctx.catalog_symbol_ids[0]!,
+      position: { x: w * 0.35, y: h * 0.62 },
+      scale: 1,
+      rotation_deg: 0,
+    });
+  }
+  return {
+    ops,
+    rationale:
+      "Dev fallback AI CAD envelope + indicative TRP — ANTHROPIC_API_KEY not configured or model parse failed.",
+  };
+}
+
+export async function generateCadOps(
+  ctx: CadOpsContext,
+): Promise<{ ops: CadOp[]; rationale: string }> {
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
+  if (!apiKey) {
+    return devFallbackCadOps(ctx);
+  }
+
+  const symbols = (ctx.catalog_symbol_ids ?? []).slice(0, 40).join(", ");
+  const user = [
+    `Address: ${ctx.address}`,
+    `Canvas: ${ctx.width_m.toFixed(2)} m × ${ctx.height_m.toFixed(2)} m (origin SW, Y-up)`,
+    ctx.instruction
+      ? `Edit instruction: ${ctx.instruction}`
+      : "Generate an initial AI CAD proposal from the sketch.",
+    "",
+    "Sketch summary:",
+    ctx.sketch_summary || "(empty)",
+    "",
+    "Planning notes:",
+    ctx.planning_notes || "(none)",
+    "",
+    "Existing entities (for edit/offset — use entity_id when needed):",
+    ctx.existing_entity_brief || "(none)",
+    "",
+    `Catalog block_name values (prefer these for add_insert): ${symbols || "(none)"}`,
+  ].join("\n");
+
+  const body = {
+    model: DESIGN_MODEL,
+    max_tokens: 4096,
+    system: [{ type: "text", text: CAD_OPS_SYSTEM }],
+    messages: [{ role: "user", content: user }],
+  };
+
+  try {
+    const res = await fetchWithRetry(
+      MESSAGES_URL,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      },
+      {
+        telemetry: {
+          spanName: "anthropic.generate_cad_ops",
+          provider: "anthropic",
+          attributes: {
+            "pipeline.stage": "cad",
+            "model.name": DESIGN_MODEL,
+          },
+        },
+      },
+    );
+    if (!res.ok) return devFallbackCadOps(ctx);
+
+    const json = (await res.json()) as {
+      content: Array<{ type: string; text: string }>;
+    };
+    const textBlock = json.content.find((c) => c.type === "text");
+    if (!textBlock) return devFallbackCadOps(ctx);
+
+    const cleaned = textBlock.text
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "");
+    const parsed = JSON.parse(cleaned) as unknown;
+    const batch = CadOpsBatchSchema.safeParse(parsed);
+    if (!batch.success || batch.data.ops.length === 0) {
+      return devFallbackCadOps(ctx);
+    }
+    // Force ghost on generative ops
+    const ops = batch.data.ops.map((op) => {
+      if ("ghost" in op) return { ...op, ghost: true };
+      return op;
+    }) as CadOp[];
+    return {
+      ops,
+      rationale: batch.data.rationale ?? "AI CAD ops",
+    };
+  } catch {
+    return devFallbackCadOps(ctx);
+  }
 }
