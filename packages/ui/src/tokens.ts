@@ -1,32 +1,34 @@
+/** Workstream Design System 3.0 — soft-pink editorial, canvas-first. */
 export const tokens = {
   color: {
     surface: {
-      base: "#E5ECE7",
-      elevated: "#F8FBF9",
-      sunken: "#D4DDD7",
-      inverted: "#0C1A14",
+      base: "#F3ECEF",
+      elevated: "#FFF9FB",
+      sunken: "#E8DFE4",
+      inverted: "#1A1218",
     },
     ink: {
-      primary: "#0C1A14",
-      secondary: "#3A4D42",
-      tertiary: "#6B7D72",
-      inverted: "#F2F7F4",
+      primary: "#1A1218",
+      secondary: "#5C4A52",
+      tertiary: "#8A7580",
+      inverted: "#FAF4F6",
     },
     line: {
-      hairline: "#C2CDC6",
-      strong: "#9AABA0",
-      ink: "#0C1A14",
+      hairline: "#E0D4DA",
+      strong: "#C9B6BF",
+      ink: "#1A1218",
     },
     accent: {
-      default: "#1F8A5A",
-      soft: "#D0EDDD",
-      ink: "#0E3F28",
+      default: "#D4849A",
+      soft: "#F7DCE4",
+      ink: "#7A3348",
+      bright: "#F0B4C4",
     },
     semantic: {
-      ok: "#178A4A",
-      warn: "#9A7218",
+      ok: "#3D8B6E",
+      warn: "#B8893A",
       block: "#B42318",
-      info: "#2F7D8C",
+      info: "#8B6B7A",
     },
   },
 
@@ -93,9 +95,10 @@ export const tokens = {
   },
 
   radius: {
-    sm: 8,
-    md: 12,
-    lg: 18,
+    sm: 10,
+    md: 14,
+    lg: 20,
+    canvas: 16,
     pill: 999,
   },
 
@@ -104,14 +107,14 @@ export const tokens = {
       shadowOffset: { width: 0, height: 1 },
       shadowRadius: 0,
       shadowOpacity: 0.05,
-      shadowColor: "#0C1A14",
+      shadowColor: "#1A1218",
       elevation: 1,
     },
     2: {
       shadowOffset: { width: 0, height: 18 },
       shadowRadius: 48,
       shadowOpacity: 0.09,
-      shadowColor: "#0C1A14",
+      shadowColor: "#1A1218",
       elevation: 4,
     },
   },

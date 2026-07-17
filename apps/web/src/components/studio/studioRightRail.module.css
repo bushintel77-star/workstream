@@ -1,7 +1,8 @@
 .rail {
   flex-shrink: 0;
   background: var(--surface-elevated);
-  border-left: 1px solid var(--line-hairline);
+  border: none;
+  border-radius: var(--r-canvas);
   overflow: hidden;
   transition: width var(--studio-transition);
   display: flex;

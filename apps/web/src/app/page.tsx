@@ -66,17 +66,16 @@ export default async function DashboardPage() {
 
       <section className={d.gardenHero} aria-labelledby="sites-heading">
         <div className={d.metaRow}>
-          <p className={d.kicker}>Curtis &amp; Co · landscape studio</p>
+          <p className={d.kicker}>Workstream</p>
           <span className={d.count}>
-            {projects.length} {projects.length === 1 ? "garden" : "gardens"}
+            {projects.length} {projects.length === 1 ? "site" : "sites"}
           </span>
         </div>
         <h1 id="sites-heading" className={d.headline}>
-          Sites in growth
+          Curtis &amp; Co
         </h1>
         <p className={d.lede}>
-          Walk the lot, lock the massing, price the plantings — then send a
-          quote that feels like the finished garden.
+          Design first — sketch, quote, and share in one click.
         </p>
         <div className={d.composerWrap}>
           <NewProjectAddressForm />
@@ -90,15 +89,14 @@ export default async function DashboardPage() {
       )}
 
       <div className={d.sectionHead}>
-        <h2>Active gardens</h2>
+        <h2>Sites</h2>
       </div>
 
       {projects.length === 0 && !loadError ? (
         <div className={d.emptyGarden}>
-          <h3 className={d.emptyTitle}>Ground not broken yet</h3>
+          <h3 className={d.emptyTitle}>No sites yet</h3>
           <p className={d.emptyBody}>
-            Start with a Melbourne address above. Aerial, survey, design and
-            quote grow from that first pin.
+            Start with a Melbourne address. Survey and studio open from there.
           </p>
         </div>
       ) : (

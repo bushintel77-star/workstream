@@ -2,8 +2,9 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--surface-sunken);
-  border-right: 1px solid var(--line-hairline);
+  background: var(--surface-elevated);
+  border: none;
+  border-radius: var(--r-canvas);
   overflow: hidden;
   transition: width var(--studio-transition);
 }
@@ -53,9 +54,9 @@
 }
 
 .toolItem[data-active="true"] {
-  background: var(--surface-elevated);
-  color: var(--ink-primary);
-  border-left-color: var(--line-strong);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-left-color: var(--accent);
 }
 
 .toolItem[data-mode="place"][data-active="true"],

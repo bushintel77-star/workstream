@@ -1,20 +1,20 @@
 import type { CadDocument, CadEntity } from "@workstream/contracts";
 
 const LAYER_STROKE: Record<string, string> = {
-  "SKETCH-REF": "#6b7d72",
-  PLANTING: "#1f8a5a",
-  HARDSCAPE: "#3a4d42",
-  STRUCTURES: "#0c1a14",
-  WATER: "#2f7d8c",
-  IRRIGATION: "#2f7d8c",
+  "SKETCH-REF": "#8a7580",
+  PLANTING: "#d4849a",
+  HARDSCAPE: "#5c4a52",
+  STRUCTURES: "#1a1218",
+  WATER: "#9b7b8f",
+  IRRIGATION: "#9b7b8f",
   TRP: "#b42318",
-  ANNOTATION: "#3a4d42",
-  DIMENSIONS: "#9a7218",
-  PERMITS: "#9a7218",
+  ANNOTATION: "#5c4a52",
+  DIMENSIONS: "#b8893a",
+  PERMITS: "#b8893a",
 };
 
 function strokeFor(layer: string, ghost: boolean): string {
-  const base = LAYER_STROKE[layer] ?? "#0c1a14";
+  const base = LAYER_STROKE[layer] ?? "#1a1218";
   return ghost ? base : base;
 }
 

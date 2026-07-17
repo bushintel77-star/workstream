@@ -79,11 +79,13 @@ export function StudioContextStrip({
     <div className={cs.strip} data-testid="studio-context-strip">
       {ribbonTab === "ai" ? (
         <>
-          {chip("Scan design", false, onScan)}
-          {chip("Develop from sketch", false, onOpenDevelop)}
-          {chip("Upgrade to AI CAD", false, () => onOpenCad?.(), {
+          {chip("Scan", false, onScan, { title: "AI scan of the current sketch" })}
+          {chip("Develop", false, onOpenDevelop, {
+            title: "Develop planting from sketch",
+          })}
+          {chip("AI CAD", false, () => onOpenCad?.(), {
             disabled: !onOpenCad,
-            title: "Stage 2 metre-space CAD with LibreCAD DXF export",
+            title: "One click to metre-space CAD + DXF",
           })}
           {tier1 ? (
             <span className={cs.tier1Chip}>36 Wrights Terrace · Tier-1 design</span>

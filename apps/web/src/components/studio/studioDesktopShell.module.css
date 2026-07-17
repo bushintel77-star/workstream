@@ -3,13 +3,7 @@
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  background:
-    radial-gradient(
-      ellipse 70% 40% at 100% 0%,
-      color-mix(in srgb, var(--accent) 10%, transparent),
-      transparent 50%
-    ),
-    var(--surface-base);
+  background: var(--surface-base);
 }
 
 .ribbonSlot,
@@ -23,6 +17,9 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  gap: var(--studio-canvas-inset);
+  padding: var(--studio-canvas-inset);
+  background: var(--surface-base);
 }
 
 .canvasWrap {
@@ -30,10 +27,20 @@
   position: relative;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
+  border: none;
+  border-radius: var(--r-canvas);
+  background: var(--surface-sunken);
 }
 
 .shellFocus .workspace {
   flex: 1;
+  padding: 0;
+  gap: 0;
+}
+
+.shellFocus .canvasWrap {
+  border-radius: 0;
 }
 
 .focusPill {
@@ -42,11 +49,11 @@
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
-  padding: 4px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--line-hairline);
-  background: var(--surface-elevated);
-  font-family: "JetBrains Mono", monospace;
+  padding: 6px 14px;
+  border-radius: var(--r-md);
+  border: none;
+  background: color-mix(in srgb, var(--surface-elevated) 92%, var(--accent-soft));
+  font-family: var(--font-mono);
   font-size: 10px;
   color: var(--ink-tertiary);
   z-index: 20;

@@ -1,12 +1,13 @@
 .topbar {
   height: var(--studio-topbar-h);
-  background: var(--surface-elevated);
-  border-bottom: 1px solid var(--line-hairline);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  border-bottom: 1px solid var(--line-subtle);
   display: flex;
   align-items: center;
   gap: var(--s-3);
   padding: 0 var(--s-3);
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
 }
 
 .left {
@@ -21,15 +22,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 32px;
+  min-height: 32px;
   color: var(--ink-secondary);
   text-decoration: none;
-  font-size: 1.125rem;
+  font-size: 1rem;
+  border-radius: var(--r-sm);
 }
 
 .back:hover {
   color: var(--ink-primary);
+  background: var(--accent-soft);
 }
 
 .title {
@@ -37,8 +40,9 @@
   font-family: var(--font-display);
   font-size: 0.9375rem;
   font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--ink-primary);
-  max-width: 200px;
+  max-width: 240px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -51,30 +55,51 @@
   white-space: nowrap;
 }
 
-.centre {
+.jumps {
   display: none;
-  flex: 1;
-  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-md);
+  background: var(--surface-inset);
 }
 
 @media (min-width: 720px) {
-  .centre {
+  .jumps {
     display: flex;
   }
 }
 
-.workflow {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-tertiary);
+.jump {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.jump:hover {
+  color: var(--ink-primary);
+  background: var(--surface-elevated);
+}
+
+.jumpActive {
+  background: var(--surface-elevated);
+  color: var(--accent-ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .right {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: 2px;
   margin-left: auto;
 }
 
@@ -82,8 +107,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 32px;
+  min-height: 32px;
   border: none;
   border-radius: var(--r-sm);
   background: transparent;
@@ -95,22 +120,22 @@
 
 .iconBtn:hover {
   color: var(--ink-primary);
-  background: var(--surface-sunken);
+  background: var(--accent-soft);
 }
 
 .installBtn {
-  min-height: 36px;
-  padding: 0 var(--s-3);
+  min-height: 28px;
+  padding: 0 var(--s-2);
   border-radius: var(--r-sm);
-  border: 1px solid var(--line-hairline);
-  background: var(--surface-sunken);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ink-primary);
+  border: none;
+  background: var(--accent-soft);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--accent-ink);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .installBtn:hover {
-  background: var(--surface-elevated);
+  background: color-mix(in srgb, var(--accent) 22%, var(--accent-soft));
 }

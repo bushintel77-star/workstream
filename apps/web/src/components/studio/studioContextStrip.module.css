@@ -1,22 +1,23 @@
 .strip {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: 4px;
   flex-wrap: wrap;
-  min-height: var(--studio-context-strip-h);
-  padding: 0 var(--s-3);
-  background: var(--surface-sunken);
-  border-bottom: 1px solid var(--line-hairline);
+  min-height: 28px;
+  padding: 4px var(--s-3);
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  border-bottom: 1px solid var(--line-subtle);
   flex-shrink: 0;
 }
 
 .chip {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  padding: 3px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--line-hairline);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  border: none;
   background: transparent;
   color: var(--ink-secondary);
   cursor: pointer;
@@ -24,39 +25,32 @@
 
 .chip:hover {
   color: var(--ink-primary);
-  border-color: var(--line-subtle);
+  background: var(--surface-sunken);
 }
 
 .chipActive {
-  background: var(--surface-elevated);
-  color: var(--ink-primary);
-  border-color: var(--line-strong);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 .chipDisabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .chipDisabled:hover {
   color: var(--ink-secondary);
-  border-color: var(--line-hairline);
+  background: transparent;
 }
 
 .hint {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 9px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--ink-tertiary);
   padding-left: var(--s-1);
 }
 
 .tier1Chip {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  padding: 3px 10px;
-  border-radius: 10px;
-  border-left: 2px solid var(--warn);
-  color: var(--ink-primary);
-  background: var(--surface-elevated);
+  display: none;
 }

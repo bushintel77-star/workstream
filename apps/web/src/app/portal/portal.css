@@ -1,17 +1,17 @@
 .portal-root {
   min-height: 100dvh;
-  background-color: #0c1a14;
+  background-color: #1a1218;
   background-image:
     radial-gradient(
       ellipse 80% 50% at 85% -5%,
-      rgba(31, 138, 90, 0.5),
+      rgba(212, 132, 154, 0.42),
       transparent 55%
     ),
     radial-gradient(
       ellipse 55% 40% at 5% 95%,
-      rgba(200, 240, 122, 0.14),
+      rgba(240, 180, 196, 0.12),
       transparent 50%
     ),
-    linear-gradient(180deg, #12261c 0%, #0c1a14 42%, #091410 100%);
-  color: #f2f7f4;
+    linear-gradient(180deg, #261820 0%, #1a1218 42%, #140e12 100%);
+  color: #faf4f6;
 }

@@ -11,10 +11,14 @@ Single track: **operator clarity** + **client confidence**. Everything else wait
 
 Brand: **Curtis & Co** on portal — **Workstream** in studio chrome.
 
-**Garden Atelier 2026** visual system: cool moss/stone field, canopy green
-`#1F8A5A`, chartreuse bloom `#C8F07A`, type **Fraunces** + **Sora**. Portal =
-dark garden night + light quote sheet. Studio inherits biophilic tokens.
-No cream/terracotta Inter look.
+**Design System 3.0** — soft-pink editorial field `#D4849A`, cool blush
+surfaces, type **Fraunces** + **Sora**. Subtle radii (`--r-canvas` 16px);
+no hard square framing around the canvas. Portal = rosewood night + blush
+quote sheet. One-click jumps: Design · Quote · CAD · Share.
+
+**Canvas-first chrome:** design / studio / CAD routes hide AppNav + pipeline
+masthead. Soft-inset canvas plane; library rail closed by default; ergonomic
+topbar jumps keep collaboration one click away.
 
 ## Studio — status
 

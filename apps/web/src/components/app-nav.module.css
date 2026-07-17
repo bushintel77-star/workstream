@@ -4,7 +4,7 @@
   gap: var(--s-3);
   max-width: var(--shell-max, 1080px);
   margin: 0 auto var(--s-4);
-  padding: 10px 12px;
+  padding: 8px 4px;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -14,27 +14,24 @@
 .inner {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2);
   width: 100%;
   flex-wrap: wrap;
-  padding: 10px 14px;
-  border-radius: var(--r-lg);
-  border: 1px solid color-mix(in srgb, var(--line-hairline) 85%, transparent);
-  background: color-mix(in srgb, var(--surface-elevated) 86%, transparent);
-  -webkit-backdrop-filter: saturate(160%) blur(16px);
-  backdrop-filter: saturate(160%) blur(16px);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line-subtle);
+  background: transparent;
 }
 
 .brand {
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--ink-primary);
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   line-height: 1.1;
   margin-right: auto;
 }
@@ -45,25 +42,25 @@
 }
 
 .brandMark {
-  width: 11px;
-  height: 11px;
-  border-radius: 3px 8px 3px 8px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-bright) 55%, transparent);
   flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .brandText {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
 }
 
 .brandSub {
   font-family: var(--font-body);
   font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-tertiary);
 }
@@ -71,30 +68,28 @@
 .links {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   flex-wrap: wrap;
 }
 
 .link {
   position: relative;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-secondary);
   text-decoration: none;
-  min-height: 40px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0 12px;
+  padding: 0 10px;
   border-radius: var(--r-sm);
-  transition:
-    color var(--dur-fast) var(--ease),
-    background var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease);
 }
 
 .link:hover {
   color: var(--ink-primary);
-  background: var(--surface-panel);
+  background: transparent;
   opacity: 1;
 }
 
@@ -104,11 +99,10 @@
 }
 
 .dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--accent-bright);
-  box-shadow: 0 0 0 2px var(--accent);
+  background: var(--accent);
   flex-shrink: 0;
 }
 

@@ -1,43 +1,43 @@
-/* Workstream — Garden Atelier 2026
- * Biophilic landscape UX: cool moss/stone field, living canopy accent,
- * botanical atmosphere. Not cream/terracotta, not purple SaaS. */
+/* Workstream — Design System 3.0
+ * Soft-pink editorial field, canvas-first, subtle radii.
+ * Design does the heavy lifting; chrome stays quiet. */
 
 :root {
-  /* surfaces — mist garden, cool stone */
-  --surface-base: #e5ece7;
-  --surface-elevated: #f8fbf9;
-  --surface-sunken: #d4ddd7;
-  --surface-inverted: #0c1a14;
-  --surface-overlay: #f8fbf9;
-  --surface-inset: #eef4f0;
-  --surface-panel: #eef3f0;
+  /* surfaces — cool blush mist (not cream/terracotta) */
+  --surface-base: #f3ecef;
+  --surface-elevated: #fff9fb;
+  --surface-sunken: #e8dfe4;
+  --surface-inverted: #1a1218;
+  --surface-overlay: #fff9fb;
+  --surface-inset: #f7f0f3;
+  --surface-panel: #f7f0f3;
 
-  /* ink — deep canopy */
-  --ink-primary: #0c1a14;
-  --ink-secondary: #3a4d42;
-  --ink-tertiary: #6b7d72;
-  --ink-inverted: #f2f7f4;
+  /* ink — rosewood charcoal */
+  --ink-primary: #1a1218;
+  --ink-secondary: #5c4a52;
+  --ink-tertiary: #8a7580;
+  --ink-inverted: #faf4f6;
 
-  /* lines — weathered stone */
-  --line-hairline: #c2cdc6;
-  --line-subtle: #d8e0db;
-  --line-strong: #9aaba0;
-  --line-ink: #0c1a14;
+  /* lines — soft petal stone */
+  --line-hairline: #e0d4da;
+  --line-subtle: #ede4e9;
+  --line-strong: #c9b6bf;
+  --line-ink: #1a1218;
 
-  /* accent — living canopy + chartreuse bloom */
-  --accent: #1f8a5a;
-  --accent-soft: #d0eddd;
-  --accent-ink: #0e3f28;
-  --accent-bright: #c8f07a;
-  --accent-water: #2f7d8c;
+  /* accent — soft rose */
+  --accent: #d4849a;
+  --accent-soft: #f7dce4;
+  --accent-ink: #7a3348;
+  --accent-bright: #f0b4c4;
+  --accent-water: #9b7b8f;
 
   /* semantic */
-  --ok: #178a4a;
-  --warn: #9a7218;
+  --ok: #3d8b6e;
+  --warn: #b8893a;
   --block: #b42318;
-  --info: #2f7d8c;
+  --info: #8b6b7a;
 
-  /* type — garden editorial + modern ops */
+  /* type — editorial display + calm ops body */
   --font-display: "Fraunces", "Georgia", serif;
   --font-body: "Sora", "Segoe UI", sans-serif;
   --font-serif: "Fraunces", "Georgia", serif;
@@ -72,24 +72,25 @@
   --s-7: 48px;
   --s-8: 64px;
 
-  /* radii — soft organic, not candy pills */
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 18px;
+  /* radii — subtle soft edges, never hard square frames */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
   --r-xl: 28px;
+  --r-canvas: 16px;
   --r-pill: 999px;
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
 
-  /* depth — soft leaf-cast, not heavy chrome */
+  /* depth — hairline first; almost no shadow */
   --elev-0: none;
-  --elev-1: 0 1px 0 rgba(12, 26, 20, 0.05);
-  --elev-2: 0 18px 48px rgba(12, 26, 20, 0.09);
-  --elev-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65);
-  --elev-rim: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
-  --shadow-sm: var(--elev-1);
-  --shadow-md: var(--elev-2);
+  --elev-1: none;
+  --elev-2: none;
+  --elev-inset: none;
+  --elev-rim: none;
+  --shadow-sm: none;
+  --shadow-md: none;
 
   --border-default: var(--line-hairline);
   --surface-raised: var(--surface-elevated);
@@ -105,13 +106,14 @@
   --dur-slow: 480ms;
 
   --studio-topbar-h: 40px;
-  --studio-toolrail-w: 48px;
-  --studio-toolrail-expanded-w: 180px;
-  --studio-rightrail-open-w: 280px;
-  --studio-statusbar-h: 22px;
-  --studio-transition: 220ms var(--ease);
-  --studio-ribbon-h: 36px;
-  --studio-context-strip-h: 32px;
+  --studio-toolrail-w: 40px;
+  --studio-toolrail-expanded-w: 160px;
+  --studio-rightrail-open-w: 260px;
+  --studio-statusbar-h: 20px;
+  --studio-transition: 180ms var(--ease);
+  --studio-ribbon-h: 28px;
+  --studio-context-strip-h: 28px;
+  --studio-canvas-inset: 8px;
 
   --overlay-shade: color-mix(in srgb, var(--warn) 38%, transparent);
   --overlay-trp: color-mix(in srgb, var(--ok) 38%, transparent);
@@ -128,20 +130,21 @@
 }
 
 html {
-  background: var(--surface-base);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
-  color: var(--ink-primary);
   font-family: var(--font-body);
-  font-size: 15.5px;
+  font-size: 15px;
   line-height: 1.5;
+  color: var(--ink-primary);
+  background: var(--surface-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
@@ -153,24 +156,17 @@ body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   background-color: var(--surface-base);
-  /* Botanical atmosphere: canopy wash + soft bloom + faint leaf lattice */
   background-image:
     radial-gradient(
-      ellipse 90% 55% at 100% -5%,
-      color-mix(in srgb, var(--accent) 16%, transparent),
+      ellipse 70% 45% at 100% 0%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
       transparent 58%
     ),
     radial-gradient(
-      ellipse 70% 45% at -5% 40%,
-      color-mix(in srgb, var(--accent-bright) 22%, transparent),
-      transparent 52%
-    ),
-    radial-gradient(
-      ellipse 50% 30% at 70% 100%,
-      color-mix(in srgb, var(--accent-water) 10%, transparent),
+      ellipse 50% 40% at 0% 100%,
+      color-mix(in srgb, var(--accent-bright) 10%, transparent),
       transparent 55%
-    ),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath d='M60 8c8 18 8 36 0 54-8-18-8-36 0-54zm0 54c18 8 36 8 54 0-18-8-36-8-54 0zm0 0c-8 18-8 36 0 54 8-18 8-36 0-54zm0 0c-18-8-36-8-54 0 18 8 36 8 54 0z' fill='%231f8a5a' fill-opacity='0.035'/%3E%3C/svg%3E");
+    );
   background-attachment: fixed;
 }
 
@@ -213,17 +209,17 @@ select {
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-ink);
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease);
 }
 a:hover {
-  color: var(--accent-ink);
+  color: var(--accent);
 }
 a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: 2px;
+  border-radius: var(--r-sm);
 }
 
 button {
@@ -234,6 +230,7 @@ button {
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+  border-radius: var(--r-sm);
 }
 
 ::selection {

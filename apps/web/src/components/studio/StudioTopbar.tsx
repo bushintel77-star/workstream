@@ -17,17 +17,19 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
   const chrome = useStudioChromeOptional();
   const toast = useToast();
   const { canInstall, promptInstall } = usePWAInstall();
+  const base = `/projects/${projectId}`;
 
   async function copyStudioLink() {
-    const url = `${window.location.origin}/projects/${projectId}/design?studio=desktop`;
+    const url = `${window.location.origin}${base}/design?studio=desktop`;
     await navigator.clipboard.writeText(url);
-    toast.show("Studio link copied.", "success");
+    toast.show("Studio link copied — share with the team.", "success");
   }
+
   return (
     <header className={tb.topbar} data-testid="studio-topbar">
       <div className={tb.left}>
         <Link
-          href={`/projects/${projectId}/overview`}
+          href={`${base}/overview`}
           className={tb.back}
           aria-label="Back to project"
         >
@@ -38,11 +40,22 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
         </p>
         {extras ? <span className={tb.saveHint}>{extras}</span> : null}
       </div>
-      <div className={tb.centre}>
-        <p className={tb.workflow} data-testid="studio-workflow-badge">
-          Professional sketch · Indicative geometry — not survey CAD
-        </p>
-      </div>
+
+      <nav className={tb.jumps} aria-label="One-click studio jumps">
+        <Link href={`${base}/design`} className={`${tb.jump} ${tb.jumpActive}`}>
+          Design
+        </Link>
+        <Link href={`${base}/costing`} className={tb.jump}>
+          Quote
+        </Link>
+        <Link href={`${base}/design/cad`} className={tb.jump}>
+          CAD
+        </Link>
+        <Link href={`${base}/outputs`} className={tb.jump}>
+          Share
+        </Link>
+      </nav>
+
       <div className={tb.right}>
         <button
           type="button"
@@ -59,7 +72,7 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
             data-testid="studio-pwa-install"
             onClick={() => void promptInstall()}
           >
-            Install app
+            Install
           </button>
         ) : null}
         <button
