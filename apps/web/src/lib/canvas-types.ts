@@ -1,0 +1,60 @@
+/** Client-safe types for the canvas-first UI (no server-only imports). */
+
+export type CadDocumentLite = {
+  id: string;
+  project_id: string;
+  width_m: number;
+  height_m: number;
+  entities: Array<{ id: string; ghost: boolean }>;
+};
+
+export type CadApiResultLite = {
+  document: CadDocumentLite | null;
+  svg: string | null;
+  ghost_count: number;
+  rationale?: string;
+};
+
+export type CadQuantitySurveyApi = {
+  project_id: string;
+  committed_only: boolean;
+  rows: Array<{
+    id: string;
+    entity_id: string;
+    layer: string;
+    kind: string;
+    label: string;
+    qty: number;
+    unit: "m2" | "lm" | "ea";
+    anchor: { x: number; y: number };
+    ghost: boolean;
+  }>;
+  totals: {
+    hardscape_m2: number;
+    planting_ea: number;
+    irrigation_lm: number;
+    structure_m2: number;
+    other_m2: number;
+    other_lm: number;
+    other_ea: number;
+  };
+};
+
+export type CadBuildApi = {
+  survey: CadQuantitySurveyApi;
+  line_items: Array<{
+    sku: string;
+    label: string;
+    unit: string;
+    qty: number;
+    rate: number;
+    total: number;
+    notes?: string;
+    is_provisional?: boolean;
+  }>;
+  scenario: "lean" | "standard" | "buffer";
+  subtotal: number;
+  contingency: number;
+  gst: number;
+  total: number;
+};

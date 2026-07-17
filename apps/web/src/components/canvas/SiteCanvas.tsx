@@ -8,7 +8,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import type { CadDocument } from "@workstream/contracts";
 import {
   acceptCadAction,
   cadBuildAction,
@@ -18,14 +17,18 @@ import {
   editCadAction,
   generateCadAction,
 } from "../../app/actions";
-import type { CadBuildApi, CadQuantitySurveyApi } from "../../lib/api";
+import type {
+  CadBuildApi,
+  CadDocumentLite,
+  CadQuantitySurveyApi,
+} from "../../lib/canvas-types";
 import css from "./siteCanvas.module.css";
 
 type Props = {
   projectId: string;
   projectAddress: string;
   aerialUri: string | null;
-  initialDocument: CadDocument | null;
+  initialDocument: CadDocumentLite | null;
   initialSvg: string | null;
   initialGhostCount: number;
 };
@@ -40,7 +43,7 @@ export function SiteCanvas({
   initialSvg,
   initialGhostCount,
 }: Props) {
-  const [cadDoc, setCadDoc] = useState(initialDocument);
+  const [cadDoc, setCadDoc] = useState<CadDocumentLite | null>(initialDocument);
   const [svg, setSvg] = useState(initialSvg);
   const [ghostCount, setGhostCount] = useState(initialGhostCount);
   const [instruction, setInstruction] = useState("");
@@ -64,7 +67,7 @@ export function SiteCanvas({
 
   const applyCad = useCallback(
     (result: {
-      document: CadDocument | null;
+      document: CadDocumentLite | null;
       svg: string | null;
       ghost_count: number;
     }) => {

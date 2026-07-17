@@ -96,7 +96,7 @@ export const CadBlockSchema = z.object({
 });
 export type CadBlock = z.infer<typeof CadBlockSchema>;
 
-/** Stage 2 AI CAD document — metre space, DXF-exportable. */
+/** Stage 2 AI CAD document - metre space, DXF-exportable. */
 export const CadDocumentSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
