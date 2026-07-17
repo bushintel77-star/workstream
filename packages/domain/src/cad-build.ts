@@ -149,7 +149,7 @@ export function buildFromCad(
   const billable = line_items
     .filter((l) => !l.is_provisional)
     .map((l) => l.total);
-  let subtotal = calculateSubtotal(
+  const subtotal = calculateSubtotal(
     billable.length > 0 ? billable : line_items.map((l) => l.total),
   );
   const contingency = applyContingency(subtotal, scenario);
