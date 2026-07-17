@@ -1,0 +1,109 @@
+.page {
+  min-height: 100dvh;
+  background:
+    radial-gradient(120% 80% at 10% -10%, #ffe8f0 0%, transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, #f7e8ee 0%, transparent 50%),
+    #f7e8ee;
+  color: #1a1218;
+  font-family: "Sora", "Segoe UI", sans-serif;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.hero {
+  max-width: 40rem;
+  margin-bottom: 2.5rem;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a7580;
+}
+
+.brand {
+  margin: 0.4rem 0 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.lede {
+  margin: 0.85rem 0 0;
+  font-size: 1.05rem;
+  color: #5c4a52;
+  max-width: 32rem;
+  line-height: 1.45;
+}
+
+.composer {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(255, 249, 251, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.list {
+  max-width: 40rem;
+}
+
+.listTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a7580;
+}
+
+.ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 1rem 1.15rem;
+  border-radius: 18px;
+  background: rgba(255, 249, 251, 0.9);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.row:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.addr {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.meta {
+  font-size: 0.75rem;
+  color: #8a7580;
+  white-space: nowrap;
+}
+
+.empty {
+  color: #5c4a52;
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #b42318;
+  margin-bottom: 1rem;
+}

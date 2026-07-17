@@ -400,6 +400,81 @@ export async function downloadCadDxfApi(projectId: string): Promise<Blob> {
   return res.blob();
 }
 
+export type CadQuantitySurveyApi = {
+  project_id: string;
+  committed_only: boolean;
+  rows: Array<{
+    id: string;
+    entity_id: string;
+    layer: string;
+    kind: string;
+    label: string;
+    qty: number;
+    unit: "m2" | "lm" | "ea";
+    anchor: { x: number; y: number };
+    ghost: boolean;
+  }>;
+  totals: {
+    hardscape_m2: number;
+    planting_ea: number;
+    irrigation_lm: number;
+    structure_m2: number;
+    other_m2: number;
+    other_lm: number;
+    other_ea: number;
+  };
+};
+
+export type CadBuildApi = {
+  survey: CadQuantitySurveyApi;
+  line_items: Array<{
+    sku: string;
+    label: string;
+    unit: string;
+    qty: number;
+    rate: number;
+    total: number;
+    notes?: string;
+    is_provisional?: boolean;
+  }>;
+  scenario: "lean" | "standard" | "buffer";
+  subtotal: number;
+  contingency: number;
+  gst: number;
+  total: number;
+};
+
+export async function cadQuantitySurveyApi(
+  projectId: string,
+): Promise<{ survey: CadQuantitySurveyApi }> {
+  return apiPost<{ survey: CadQuantitySurveyApi }>(
+    `/projects/${projectId}/cad/quantity-survey`,
+    {},
+  );
+}
+
+export async function cadBuildApi(
+  projectId: string,
+  scenario: "lean" | "standard" | "buffer" = "standard",
+): Promise<{ build: CadBuildApi }> {
+  return apiPost<{ build: CadBuildApi }>(
+    `/projects/${projectId}/cad/build`,
+    { scenario },
+  );
+}
+
+export async function cadQuoteApi(
+  projectId: string,
+  scenario: "lean" | "standard" | "buffer" = "standard",
+): Promise<{
+  build: CadBuildApi;
+  survey: CadQuantitySurveyApi;
+  markdown: string;
+  html: string;
+}> {
+  return apiPost(`/projects/${projectId}/cad/quote`, { scenario });
+}
+
 /* -- Costing ----------------------------------------------------------- */
 
 export type CostScenario = "lean" | "standard" | "buffer";

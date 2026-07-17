@@ -33,6 +33,8 @@ export * from './catalog-glyph';
 export * from './catalog-quote';
 export * from './sketch-brief';
 export * from './sketch-costing';
+export * from './cad-quantities';
+export * from './cad-build';
 export * from './planning-context';
 export * from './envelope-brief';
 export * from './studio-strokes';

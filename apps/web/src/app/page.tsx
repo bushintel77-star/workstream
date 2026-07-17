@@ -1,16 +1,8 @@
 import Link from "next/link";
-import {
-  getIntegrationSummary,
-  listProjects,
-  type ProjectStatus,
-} from "../lib/api";
-import s from "../styles/app.module.css";
-import d from "./dashboard.module.css";
-import { DashboardProjectRow } from "../components/DashboardProjectRow";
-import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
+import { listProjects, type ProjectStatus } from "../lib/api";
 import { requireSignedIn } from "../lib/auth";
-import { AppNav } from "../components/AppNav";
-import { IntegrationSetupChecklist } from "../components/IntegrationSetupChecklist";
+import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
+import home from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -26,102 +18,56 @@ const STATUS_LABEL: Record<ProjectStatus, string> = {
   complete: "Complete",
 };
 
-const STATUS_PILL: Record<ProjectStatus, string> = {
-  draft: s.pillMuted,
-  recording: s.pillInfo,
-  processing: s.pillInfo,
-  survey_review: s.pillInfo,
-  design_review: s.pillAccent,
-  cost_review: s.pillAccent,
-  audit: s.pillWarn,
-  outputs: s.pillOk,
-  complete: s.pillOk,
-};
-
-export default async function DashboardPage() {
+export default async function HomePage() {
   await requireSignedIn();
   let projects: Awaited<ReturnType<typeof listProjects>> = [];
-  let summary: Awaited<ReturnType<typeof getIntegrationSummary>> | null = null;
   let loadError: string | null = null;
   try {
-    [projects, summary] = await Promise.all([
-      listProjects(),
-      getIntegrationSummary(),
-    ]);
+    projects = await listProjects();
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Could not reach the API.";
   }
 
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-AU", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-
   return (
-    <main className={s.pageNarrow}>
-      <AppNav summary={summary} />
-      {summary && <IntegrationSetupChecklist summary={summary} />}
-
-      <section className={d.gardenHero} aria-labelledby="sites-heading">
-        <div className={d.metaRow}>
-          <p className={d.kicker}>Workstream</p>
-          <span className={d.count}>
-            {projects.length} {projects.length === 1 ? "site" : "sites"}
-          </span>
-        </div>
-        <h1 id="sites-heading" className={d.headline}>
-          Curtis &amp; Co
-        </h1>
-        <p className={d.lede}>
-          Design first — sketch, quote, and share in one click.
+    <main className={home.page}>
+      <header className={home.hero}>
+        <p className={home.kicker}>Workstream</p>
+        <h1 className={home.brand}>Curtis &amp; Co</h1>
+        <p className={home.lede}>
+          Canvas-first AI CAD → quantity survey → itemised build → polished quote.
         </p>
-        <div className={d.composerWrap}>
+        <div className={home.composer}>
           <NewProjectAddressForm />
         </div>
+      </header>
+
+      {loadError ? (
+        <p className={home.error} role="alert">
+          {loadError}
+        </p>
+      ) : null}
+
+      <section className={home.list} aria-labelledby="sites-heading">
+        <h2 id="sites-heading" className={home.listTitle}>
+          Sites
+        </h2>
+        {projects.length === 0 ? (
+          <p className={home.empty}>Add an address to open the design canvas.</p>
+        ) : (
+          <ul className={home.ul}>
+            {projects.map((p) => (
+              <li key={p.id}>
+                <Link className={home.row} href={`/projects/${p.id}`}>
+                  <span className={home.addr}>{p.address}</span>
+                  <span className={home.meta}>
+                    {STATUS_LABEL[p.status] ?? p.status}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
-
-      {loadError && (
-        <div className={s.error} role="alert">
-          Couldn&apos;t load projects: {loadError}
-        </div>
-      )}
-
-      <div className={d.sectionHead}>
-        <h2>Sites</h2>
-      </div>
-
-      {projects.length === 0 && !loadError ? (
-        <div className={d.emptyGarden}>
-          <h3 className={d.emptyTitle}>No sites yet</h3>
-          <p className={d.emptyBody}>
-            Start with a Melbourne address. Survey and studio open from there.
-          </p>
-        </div>
-      ) : (
-        <ul className={s.list}>
-          {projects.map((p) => (
-            <DashboardProjectRow
-              key={p.id}
-              projectId={p.id}
-              address={p.address}
-              statusPill={STATUS_PILL[p.status]}
-              statusLabel={STATUS_LABEL[p.status]}
-              createdLabel={fmtDate(p.created_at)}
-            />
-          ))}
-        </ul>
-      )}
-
-      <footer className={s.colophon}>
-        <span>Curtis &amp; Co · Melbourne</span>
-        <span className={d.footerLinks}>
-          <Link href="/legal/privacy">Privacy</Link>
-          <Link href="/legal/terms">Terms</Link>
-          <Link href="/settings">Settings</Link>
-        </span>
-      </footer>
     </main>
   );
 }

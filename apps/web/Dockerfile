@@ -6,7 +6,7 @@
 
 ARG NODE_VERSION=22.11.0
 ARG PNPM_VERSION=9.15.4
-ARG NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+ARG NEXT_PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
 
 # ---- builder ---------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS builder

@@ -220,7 +220,7 @@ export async function generateCadAction(projectId: string) {
   const { generateCadApi } = await import("../lib/api");
   try {
     const result = await generateCadApi(projectId);
-    revalidatePath(`/projects/${projectId}/design/cad`);
+    revalidatePath(`/projects/${projectId}`);
     return result;
   } catch (err) {
     throw wrapApiError(err, "AI CAD generate failed");
@@ -231,7 +231,7 @@ export async function editCadAction(projectId: string, instruction: string) {
   const { editCadApi } = await import("../lib/api");
   try {
     const result = await editCadApi(projectId, instruction);
-    revalidatePath(`/projects/${projectId}/design/cad`);
+    revalidatePath(`/projects/${projectId}`);
     return result;
   } catch (err) {
     throw wrapApiError(err, "AI CAD edit failed");
@@ -245,7 +245,7 @@ export async function acceptCadAction(
   const { acceptCadApi } = await import("../lib/api");
   try {
     const result = await acceptCadApi(projectId, entityIds);
-    revalidatePath(`/projects/${projectId}/design/cad`);
+    revalidatePath(`/projects/${projectId}`);
     return result;
   } catch (err) {
     throw wrapApiError(err, "AI CAD accept failed");
@@ -259,6 +259,45 @@ export async function downloadCadDxfAction(projectId: string): Promise<string> {
     return await blob.text();
   } catch (err) {
     throw wrapApiError(err, "DXF download failed");
+  }
+}
+
+export async function cadQuantitySurveyAction(projectId: string) {
+  const { cadQuantitySurveyApi } = await import("../lib/api");
+  try {
+    const result = await cadQuantitySurveyApi(projectId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Quantity survey failed");
+  }
+}
+
+export async function cadBuildAction(
+  projectId: string,
+  scenario: "lean" | "standard" | "buffer" = "standard",
+) {
+  const { cadBuildApi } = await import("../lib/api");
+  try {
+    const result = await cadBuildApi(projectId, scenario);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Itemised build failed");
+  }
+}
+
+export async function cadQuoteAction(
+  projectId: string,
+  scenario: "lean" | "standard" | "buffer" = "standard",
+) {
+  const { cadQuoteApi } = await import("../lib/api");
+  try {
+    const result = await cadQuoteApi(projectId, scenario);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Quote generation failed");
   }
 }
 

@@ -16,6 +16,9 @@ kill_timeout = "5s"
   NODE_ENV = "production"
   # Until Clerk keys are on Fly, run open with dev-user (see DEPLOY.md).
   AUTH_REQUIRED = "false"
+  # Canvas-first reboot — API on Railway
+  API_URL = "https://api-production-a8ff1.up.railway.app"
+  NEXT_PUBLIC_API_URL = "https://api-production-a8ff1.up.railway.app"
 
 [http_service]
   internal_port = 3002
