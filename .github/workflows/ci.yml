@@ -17,7 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NEXT_PUBLIC_API_URL: https://construct-api.fly.dev
+  # Canvas-first reboot: public API on Railway (Fly serves web only).
+  NEXT_PUBLIC_API_URL: https://api-production-a8ff1.up.railway.app
 
 jobs:
   typecheck:
