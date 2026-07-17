@@ -37,6 +37,7 @@ export * from './planning-context';
 export * from './envelope-brief';
 export * from './studio-strokes';
 export * from './canvas-geometry';
+export * from './canvas-snap';
 export * from './mass-plant';
 export * from './irrigation';
 export * from './plan';

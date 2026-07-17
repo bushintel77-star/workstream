@@ -22,6 +22,7 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
             project_id: projectId,
             placements: [],
             strokes: [],
+            annotations: [],
             updated_at: null,
           },
         });

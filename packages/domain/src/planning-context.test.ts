@@ -31,6 +31,7 @@ describe("assessPlanningFromSketch", () => {
         ],
         strokes: [],
         irrigation_zones: [],
+        annotations: [],
         updated_at: new Date().toISOString(),
       },
     );
@@ -56,6 +57,7 @@ describe("assessPlanningFromSketch", () => {
         ],
         strokes: [],
         irrigation_zones: [],
+        annotations: [],
         updated_at: new Date().toISOString(),
       },
     );

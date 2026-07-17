@@ -61,6 +61,7 @@ export function DesignStudioClient({
         })) ?? []
       }
       initialIrrigationZones={canvas?.irrigation_zones ?? []}
+      initialAnnotations={canvas?.annotations ?? []}
       shellLayout={shellLayout}
       surveyMetrics={surveyMetrics}
     />

@@ -1,6 +1,7 @@
 "use client";
 
 import { isTier1WrightsTerrace } from "@workstream/domain";
+import type { CanvasAnnotationKind } from "@workstream/contracts";
 import type { RibbonTab } from "./StudioRibbon";
 import type { SiteLayerId, SiteLayerState } from "./SiteLayersPanel";
 import cs from "./studioContextStrip.module.css";
@@ -14,10 +15,16 @@ type Props = {
   canRedo: boolean;
   onScan: () => void;
   onOpenDevelop: () => void;
+  onOpenCad?: () => void;
   libraryFilter: string | null;
   onLibraryFilter: (f: string | null) => void;
   siteLayers?: SiteLayerState;
   onToggleSiteLayer?: (id: SiteLayerId) => void;
+  snapEnabled?: boolean;
+  onToggleSnap?: () => void;
+  onSelectAll?: () => void;
+  annotateTool?: CanvasAnnotationKind | null;
+  onAnnotateTool?: (kind: CanvasAnnotationKind | null) => void;
 };
 
 export function StudioContextStrip({
@@ -29,10 +36,16 @@ export function StudioContextStrip({
   canRedo,
   onScan,
   onOpenDevelop,
+  onOpenCad,
   libraryFilter,
   onLibraryFilter,
   siteLayers,
   onToggleSiteLayer,
+  snapEnabled = false,
+  onToggleSnap,
+  onSelectAll,
+  annotateTool = null,
+  onAnnotateTool,
 }: Props) {
   const tier1 = isTier1WrightsTerrace(projectAddress);
 
@@ -68,6 +81,10 @@ export function StudioContextStrip({
         <>
           {chip("Scan design", false, onScan)}
           {chip("Develop from sketch", false, onOpenDevelop)}
+          {chip("Upgrade to AI CAD", false, () => onOpenCad?.(), {
+            disabled: !onOpenCad,
+            title: "Stage 2 metre-space CAD with LibreCAD DXF export",
+          })}
           {tier1 ? (
             <span className={cs.tier1Chip}>36 Wrights Terrace · Tier-1 design</span>
           ) : null}
@@ -77,8 +94,16 @@ export function StudioContextStrip({
         <>
           {chip("Undo", false, onUndo, { disabled: !canUndo, title: "Undo last change" })}
           {chip("Redo", false, onRedo, { disabled: !canRedo, title: "Redo" })}
-          {chip("Select all", false, () => {}, { disabled: true, title: "Stage 2 CAD" })}
-          {chip("Snap off", false, () => {}, { disabled: true, title: "Stage 2 CAD" })}
+          {chip("Select all", false, () => onSelectAll?.(), {
+            disabled: !onSelectAll,
+            title: "Select all symbols",
+          })}
+          {chip(
+            snapEnabled ? "Snap on" : "Snap off",
+            snapEnabled,
+            () => onToggleSnap?.(),
+            { disabled: !onToggleSnap, title: "Snap to indicative grid" },
+          )}
         </>
       ) : null}
       {ribbonTab === "plant" ? (
@@ -100,10 +125,26 @@ export function StudioContextStrip({
       ) : null}
       {ribbonTab === "annotate" ? (
         <>
-          {chip("Text label", false, () => {}, { disabled: true, title: "Stage 2 CAD" })}
-          {chip("Dimension", false, () => {}, { disabled: true, title: "Stage 2 CAD" })}
-          {chip("Arrow", false, () => {}, { disabled: true, title: "Stage 2 CAD" })}
-          <span className={cs.hint}>Annotations ship with Stage 2 CAD</span>
+          {chip(
+            "Text label",
+            annotateTool === "text",
+            () => onAnnotateTool?.(annotateTool === "text" ? null : "text"),
+            { title: "Place text label on canvas" },
+          )}
+          {chip(
+            "Dimension",
+            annotateTool === "dimension",
+            () =>
+              onAnnotateTool?.(annotateTool === "dimension" ? null : "dimension"),
+            { title: "Two-click indicative dimension" },
+          )}
+          {chip(
+            "Arrow",
+            annotateTool === "arrow",
+            () => onAnnotateTool?.(annotateTool === "arrow" ? null : "arrow"),
+            { title: "Two-click arrow" },
+          )}
+          <span className={cs.hint}>Indicative markup — not survey CAD</span>
         </>
       ) : null}
       {ribbonTab === "site" ? (

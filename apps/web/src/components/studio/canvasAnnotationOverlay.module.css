@@ -1,0 +1,32 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.text {
+  fill: var(--ink-primary);
+  font-family: "JetBrains Mono", monospace;
+  paint-order: stroke;
+  stroke: var(--surface-elevated);
+  stroke-width: 3px;
+}
+
+.dimLine {
+  stroke: var(--ink-primary);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.dimLabel {
+  fill: var(--ink-secondary);
+  font-family: "JetBrains Mono", monospace;
+  text-anchor: middle;
+}
+
+.arrow {
+  stroke: var(--accent);
+  stroke-width: 2;
+  marker-end: url(#studio-arrowhead);
+}

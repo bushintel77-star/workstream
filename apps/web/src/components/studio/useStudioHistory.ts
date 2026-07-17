@@ -1,11 +1,12 @@
 import { useCallback, useRef, useState } from "react";
-import type { CatalogPlacement, CatalogSymbol, IrrigationZone } from "@workstream/contracts";
+import type { CatalogPlacement, CatalogSymbol, CanvasAnnotation, IrrigationZone } from "@workstream/contracts";
 import type { CanvasStrokeClient } from "./types";
 
 export type StudioSnapshot = {
   placements: CatalogPlacement[];
   strokes: CanvasStrokeClient[];
   irrigationZones: IrrigationZone[];
+  annotations: CanvasAnnotation[];
 };
 
 const HISTORY_CAP = 50;
@@ -21,6 +22,7 @@ function cloneSnapshot(s: StudioSnapshot): StudioSnapshot {
       ...z,
       points: z.points.map((pt) => ({ ...pt })),
     })),
+    annotations: s.annotations.map((a) => ({ ...a })),
   };
 }
 
@@ -113,6 +115,21 @@ export function useStudioHistory(initial: StudioSnapshot) {
     [pushPast],
   );
 
+  const setAnnotations = useCallback(
+    (
+      updater: CanvasAnnotation[] | ((prev: CanvasAnnotation[]) => CanvasAnnotation[]),
+      recordHistory = true,
+    ) => {
+      setState((prev) => {
+        const nextAnnotations =
+          typeof updater === "function" ? updater(prev.annotations) : updater;
+        if (recordHistory) pushPast(prev);
+        return { ...prev, annotations: nextAnnotations };
+      });
+    },
+    [pushPast],
+  );
+
   const replaceAll = useCallback(
     (next: StudioSnapshot, recordHistory = true) => {
       if (recordHistory) pushPast(state);
@@ -126,9 +143,11 @@ export function useStudioHistory(initial: StudioSnapshot) {
     placements: state.placements,
     strokes: state.strokes,
     irrigationZones: state.irrigationZones,
+    annotations: state.annotations,
     setPlacements,
     setStrokes,
     setIrrigationZones,
+    setAnnotations,
     replaceAll,
     undo,
     redo,

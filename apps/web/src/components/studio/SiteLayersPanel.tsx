@@ -69,6 +69,7 @@ export function SiteLayersPanel({
           placements,
           strokes: [],
           irrigation_zones: [],
+          annotations: [],
           updated_at: new Date().toISOString(),
         } satisfies DesignCanvas,
         symbols,

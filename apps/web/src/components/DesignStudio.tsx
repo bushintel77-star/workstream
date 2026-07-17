@@ -12,20 +12,28 @@ import {
   buildStudioAiSuggestions,
   CATALOG_PLANNING_SYMBOL_IDS,
   isTier1WrightsTerrace,
+  polylineLengthFromCanvasPercent,
+  snapPointPctToGrid,
   withDirtySaveSuggestion,
 } from "@workstream/domain";
 import type {
   GhostPlacementSuggestion,
   StudioAiSuggestion,
 } from "@workstream/domain";
-import type { CatalogPlacement, CatalogSymbol, IrrigationZone } from "@workstream/contracts";
+import type {
+  CanvasAnnotation,
+  CanvasAnnotationKind,
+  CatalogPlacement,
+  CatalogSymbol,
+  IrrigationZone,
+} from "@workstream/contracts";
 import {
   metresPerCanvasPixel,
   placementIndicativeMetres,
   resolveStaticMapView,
   type StaticMapView,
 } from "../lib/mapView";
-import { saveDesignCanvasAction } from "../app/actions";
+import { saveDesignCanvasAction, scanDesignGhostsAction } from "../app/actions";
 import { useToast } from "./ToastHost";
 import { PipelineImageShell } from "./PipelineImageShell";
 import sh from "./pipelineImageShell.module.css";
@@ -41,6 +49,7 @@ import {
   StudioMassPlantPanel,
   StudioSchedulePanel,
   GhostPlacementOverlay,
+  CanvasAnnotationOverlay,
   StudioAiPanel,
   StudioRibbon,
   StudioTier1Banner,
@@ -140,6 +149,7 @@ type Props = {
   initialPlacements: CatalogPlacement[];
   initialStrokes: CanvasStrokeClient[];
   initialIrrigationZones?: IrrigationZone[];
+  initialAnnotations?: CanvasAnnotation[];
   rateCard?: RateCardItem[];
   tier1?: boolean;
   hasDesign?: boolean;
@@ -162,6 +172,7 @@ export function DesignStudio({
   initialPlacements,
   initialStrokes,
   initialIrrigationZones = [],
+  initialAnnotations = [],
   rateCard = [],
   tier1 = false,
   hasDesign = false,
@@ -208,13 +219,26 @@ export function DesignStudio({
   const [solstice, setSolstice] = useState<"summer" | "equinox" | "winter">(
     "equinox",
   );
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(() => new Set());
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [annotateTool, setAnnotateTool] = useState<CanvasAnnotationKind | null>(null);
+  const [annotateDraft, setAnnotateDraft] = useState<StrokePointPct | null>(null);
   const studio = useStudioHistory({
     placements: initialPlacements,
     strokes: initialStrokes,
     irrigationZones: initialIrrigationZones,
+    annotations: initialAnnotations,
   });
-  const { placements, strokes, irrigationZones, setPlacements, setStrokes, setIrrigationZones } =
-    studio;
+  const {
+    placements,
+    strokes,
+    irrigationZones,
+    annotations,
+    setPlacements,
+    setStrokes,
+    setIrrigationZones,
+    setAnnotations,
+  } = studio;
   const [draftPoints, setDraftPoints] = useState<StrokePointPct[]>([]);
   const [armedSymbolId, setArmedSymbolId] = useState<string | null>(null);
   const [paletteSelectedId, setPaletteSelectedId] = useState<string | null>(null);
@@ -364,15 +388,12 @@ export function DesignStudio({
     ],
   );
 
-  const handleAiScan = useCallback(() => {
+  const handleAiScan = useCallback(async () => {
     setAiScanning(true);
-    window.setTimeout(() => {
-      const next = buildGhostPlacementSuggestions({
-        tier1: tier1Active,
-        symbolIds: symbols.map((sym) => sym.id),
-      });
+    try {
+      const res = await scanDesignGhostsAction(projectId);
+      const next = res.suggestions;
       setGhosts(next);
-      setAiScanning(false);
       setRailTab("ai");
       toast.show(
         next.length > 0
@@ -380,8 +401,23 @@ export function DesignStudio({
           : "No ghosts suggested for this library.",
         next.length > 0 ? "success" : "info",
       );
-    }, 480);
-  }, [symbols, tier1Active, toast]);
+    } catch {
+      const next = buildGhostPlacementSuggestions({
+        tier1: tier1Active,
+        symbolIds: symbols.map((sym) => sym.id),
+      });
+      setGhosts(next);
+      setRailTab("ai");
+      toast.show(
+        next.length > 0
+          ? `${next.length} heuristic hint(s) — vision scan unavailable.`
+          : "No ghosts suggested.",
+        next.length > 0 ? "info" : "info",
+      );
+    } finally {
+      setAiScanning(false);
+    }
+  }, [projectId, symbols, tier1Active, toast]);
 
   const applyAllGhosts = useCallback(() => {
     if (ghosts.length === 0) return;
@@ -419,19 +455,21 @@ export function DesignStudio({
 
   const addPlacement = useCallback(
     (symbolId: string, xPct: number, yPct: number) => {
+      const pt = snapPointPctToGrid(xPct, yPct, 2.5, snapEnabled);
       setPlacements((prev) => [
         ...prev,
         {
           id: newId(),
           symbol_id: symbolId,
-          x_pct: xPct,
-          y_pct: yPct,
+          x_pct: pt.x_pct,
+          y_pct: pt.y_pct,
           rotation_deg: 0,
           scale: 1,
         },
       ]);
+      setBulkSelectedIds(new Set());
     },
-    [setPlacements],
+    [setPlacements, snapEnabled],
   );
 
   const placeOnCanvas = useCallback(
@@ -660,6 +698,50 @@ export function DesignStudio({
       return;
     }
 
+    if (annotateTool) {
+      const raw = viewport.clientToPct(e.clientX, e.clientY);
+      const pt = snapPointPctToGrid(raw.x_pct, raw.y_pct, 2.5, snapEnabled);
+      if (annotateTool === "text") {
+        const text = window.prompt("Label text", "Note")?.trim();
+        if (text) {
+          setAnnotations((prev) => [
+            ...prev,
+            {
+              id: newId(),
+              kind: "text",
+              x_pct: pt.x_pct,
+              y_pct: pt.y_pct,
+              text,
+            },
+          ]);
+        }
+        return;
+      }
+      if (!annotateDraft) {
+        setAnnotateDraft(pt);
+        toast.show("Click the end point.", "info");
+        return;
+      }
+      const metres = polylineLengthFromCanvasPercent([annotateDraft, pt], groundScale);
+      setAnnotations((prev) => [
+        ...prev,
+        {
+          id: newId(),
+          kind: annotateTool,
+          x_pct: annotateDraft.x_pct,
+          y_pct: annotateDraft.y_pct,
+          x2_pct: pt.x_pct,
+          y2_pct: pt.y_pct,
+          text:
+            annotateTool === "dimension"
+              ? `${metres.toFixed(1)} m indicative`
+              : undefined,
+        },
+      ]);
+      setAnnotateDraft(null);
+      return;
+    }
+
     if (toolOverride === "select") {
       const target = e.target as HTMLElement;
       if (!target.closest("[data-placement-id]")) {
@@ -871,7 +953,13 @@ export function DesignStudio({
     savingRef.current = true;
     setSaving(true);
     try {
-      await saveDesignCanvasAction(projectId, placements, strokes, irrigationZones);
+      await saveDesignCanvasAction(
+        projectId,
+        placements,
+        strokes,
+        irrigationZones,
+        annotations,
+      );
       setLastSavedLabel(
         new Date().toLocaleTimeString("en-AU", {
           hour: "numeric",
@@ -1328,6 +1416,11 @@ export function DesignStudio({
           scale={groundScale}
         />
         <GhostPlacementOverlay ghosts={ghosts} symbolById={symbolById} />
+        <CanvasAnnotationOverlay
+          annotations={annotations}
+          width={canvasSize.width}
+          height={canvasSize.height}
+        />
         {surveyMetrics && shellLayout === "desktop" ? (
           <SiteOverlayLayer
             canvasWidth={canvasSize.width}
@@ -1353,12 +1446,15 @@ export function DesignStudio({
               key={p.id}
               placement={p}
               symbol={sym}
-              selected={selectedPlacementId === p.id}
+              selected={bulkSelectedIds.has(p.id) || selectedPlacementId === p.id}
               isTpz={isTpz}
               indicativeMetres={
                 isTpz ? placementIndicativeMetres(baseM, p.scale) : null
               }
-              onSelect={() => setSelectedPlacementId(p.id)}
+              onSelect={() => {
+                setSelectedPlacementId(p.id);
+                setBulkSelectedIds(new Set());
+              }}
               onMovePointerDown={(e) => beginPlacementDrag(p.id, e)}
               onRotateStart={(e) => startRotateDrag(p.id, e)}
               onScaleStart={(e) => startScaleDrag(p.id, e)}
@@ -1791,6 +1887,7 @@ export function DesignStudio({
               canRedo={studio.canRedo}
               onScan={handleAiScan}
               onOpenDevelop={() => router.push(`/projects/${projectId}/design/develop`)}
+              onOpenCad={() => router.push(`/projects/${projectId}/design/cad`)}
               libraryFilter={libraryFilter}
               onLibraryFilter={setLibraryFilter}
               siteLayers={siteLayers}
@@ -1800,6 +1897,17 @@ export function DesignStudio({
                   [id]: { ...prev[id], on: !prev[id].on },
                 }))
               }
+              snapEnabled={snapEnabled}
+              onToggleSnap={() => setSnapEnabled((v) => !v)}
+              onSelectAll={() => {
+                setBulkSelectedIds(new Set(placements.map((p) => p.id)));
+                toast.show(`Selected ${placements.length} symbol(s).`, "info");
+              }}
+              annotateTool={annotateTool}
+              onAnnotateTool={(kind) => {
+                setAnnotateTool(kind);
+                setAnnotateDraft(null);
+              }}
             />
           }
           sitePanel={
