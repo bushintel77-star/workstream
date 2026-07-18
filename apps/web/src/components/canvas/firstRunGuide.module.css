@@ -1,0 +1,89 @@
+.panel {
+  position: absolute;
+  left: 50%;
+  bottom: 5.75rem;
+  transform: translateX(-50%);
+  z-index: 45;
+  width: min(26rem, calc(100vw - 1.5rem));
+  padding: 1rem 1.1rem 1.05rem;
+  border-radius: 20px;
+  background: rgba(255, 249, 251, 0.94);
+  backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in srgb, var(--blush, #e8a4b8) 50%, transparent);
+  box-shadow: 0 14px 36px rgba(26, 18, 24, 0.1);
+  font-family: var(--font, "Sora", sans-serif);
+  color: var(--ink, #1a1218);
+  animation: rise 320ms ease;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft, #5c4a52);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--display, "Fraunces", Georgia, serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.body {
+  margin: 0.4rem 0 0.85rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--ink-soft, #5c4a52);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.primary {
+  border: none;
+  border-radius: 12px;
+  padding: 0.55rem 0.95rem;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+  background: var(--ink, #1a1218);
+  color: #fff;
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.ghost {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft, #5c4a52);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0.35rem 0.4rem;
+}

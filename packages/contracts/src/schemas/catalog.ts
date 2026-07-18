@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LandscapeFeatureSchema } from "./landscape-feature";
 
 export const CatalogCategorySchema = z.enum([
   "planting",
@@ -147,6 +148,8 @@ export const DesignCanvasSchema = z.object({
   strokes: z.array(CanvasStrokeSchema),
   irrigation_zones: z.array(IrrigationZoneSchema).default([]),
   annotations: z.array(CanvasAnnotationSchema).default([]),
+  /** Lean landscape features (beds/paths) - optional until bed paint ships. */
+  features: z.array(LandscapeFeatureSchema).optional().default([]),
   updated_at: z.string().datetime(),
 });
 export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
@@ -156,5 +159,6 @@ export const UpsertDesignCanvasSchema = z.object({
   strokes: z.array(CanvasStrokeSchema).optional(),
   irrigation_zones: z.array(IrrigationZoneSchema).optional(),
   annotations: z.array(CanvasAnnotationSchema).optional(),
+  features: z.array(LandscapeFeatureSchema).optional(),
 });
 export type UpsertDesignCanvasInput = z.infer<typeof UpsertDesignCanvasSchema>;

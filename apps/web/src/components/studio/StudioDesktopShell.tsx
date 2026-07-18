@@ -23,6 +23,8 @@ type Props = {
   commandPalette?: ReactNode;
   focusMode?: boolean;
   ghostBar?: ReactNode;
+  /** Soften chrome when an instrumental brush is armed. */
+  instrumentArmed?: boolean;
 };
 
 /** Full-viewport CAD shell — Workflow 1 desktop layout. */
@@ -40,11 +42,13 @@ export function StudioDesktopShell({
   commandPalette,
   focusMode = false,
   ghostBar,
+  instrumentArmed = false,
 }: Props) {
   return (
     <div
-      className={`${shell.shell} ${focusMode ? shell.shellFocus : ""}`}
+      className={`${shell.shell} ${focusMode ? shell.shellFocus : ""} ${instrumentArmed ? shell.shellArmed : ""}`}
       data-testid="studio-desktop-shell"
+      data-instrument-armed={instrumentArmed ? "true" : undefined}
     >
       {commandPalette}
       {!focusMode ? (

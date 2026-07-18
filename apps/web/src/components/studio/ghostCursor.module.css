@@ -1,0 +1,22 @@
+.ghost {
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--accent, #c45c7a) 70%, transparent);
+  background: color-mix(in srgb, var(--accent, #c45c7a) 8%, transparent);
+  opacity: 0.85;
+}
+
+.glyph {
+  position: relative;
+  opacity: 0.72;
+  filter: saturate(0.9);
+}

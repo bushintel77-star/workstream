@@ -39,7 +39,7 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
     });
   }, [lat, lng]);
 
-  function submit(next: "recordings" | "hub") {
+  function submit() {
     startSubmit(async () => {
       try {
         const fd = new FormData();
@@ -47,12 +47,8 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
         fd.set("lat", String(lat));
         fd.set("lng", String(lng));
         const { projectId } = await createProjectWithSurveyAction(fd);
-        toast.show("Site plan ready", "success", 3000);
-        if (next === "recordings") {
-          router.push(`/projects/${projectId}/recordings`);
-        } else {
-          router.push(`/projects/${projectId}`);
-        }
+        toast.show("Site ready — prepare the concept next", "success", 3000);
+        router.push(`/projects/${projectId}?guide=1`);
         router.refresh();
       } catch (e) {
         toast.show(
@@ -69,17 +65,17 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
       <header className={s.masthead}>
         <div className={s.brand}>
           Curtis &amp; Co
-          <span className={s.brandSub}>Confirm site on aerial</span>
+          <span className={s.brandSub}>Confirm the site</span>
         </div>
         <Link href="/" className={s.crumb}>
           ← Projects
         </Link>
       </header>
 
-      <h1 className={s.headline}>Pin the lot</h1>
+      <h1 className={s.headline}>Is this the right lot?</h1>
       <p className={s.lede}>
-        Check the satellite view matches the property. We run the survey as soon
-        as you confirm so the site plan is ready before you record.
+        Confirm the aerial. We load the site plan instantly — then one tap
+        prepares concept, drawing, and estimate.
       </p>
 
       <p className={cp.address}>{address}</p>
@@ -108,17 +104,10 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
           type="button"
           className={s.btn}
           disabled={submitting}
-          onClick={() => submit("recordings")}
+          data-testid="confirm-open-site"
+          onClick={() => submit()}
         >
-          {submitting ? "Creating site plan…" : "Looks right → Record"}
-        </button>
-        <button
-          type="button"
-          className={s.btnGhost}
-          disabled={submitting}
-          onClick={() => submit("hub")}
-        >
-          Create without recording
+          {submitting ? "Opening site…" : "Looks right → Open site"}
         </button>
         <Link href="/" className={cp.adjust}>
           Adjust address

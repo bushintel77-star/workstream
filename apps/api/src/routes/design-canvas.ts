@@ -3,6 +3,7 @@ import { UpsertDesignCanvasSchema } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 import { runSketchCosting } from "../lib/sketch-cost-job";
+import { refreshOrchestration } from "../lib/material-orchestrator";
 
 export default async function designCanvasRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -24,6 +25,7 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
             placements: [],
             strokes: [],
             annotations: [],
+            features: [],
             updated_at: null,
           },
           quote: null,
@@ -89,7 +91,18 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
         }
       }
 
-      return reply.send({ canvas, quote });
+      let orchestration = null;
+      try {
+        orchestration = await refreshOrchestration(
+          fastify.store,
+          ownerId,
+          projectId,
+        );
+      } catch (err) {
+        request.log.warn({ err, projectId }, "orchestration refresh skipped");
+      }
+
+      return reply.send({ canvas, quote, orchestration });
     },
   );
 }

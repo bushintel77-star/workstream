@@ -31,20 +31,26 @@ test.describe("One canvas modes", () => {
     await expect(pipelineShell(page)).toHaveCount(0);
   });
 
-  test("mode strip switches without leaving project URL", async ({ page }) => {
-    await page.goto(`/projects/${projectId}?mode=cad`);
-    await expect(page.getByTestId("canvas-mode-cad")).toHaveAttribute(
-      "aria-pressed",
+  test("mode strip progressive disclosure unlocks after survey", async ({
+    page,
+  }) => {
+    await page.goto(`/projects/${projectId}`);
+    await expect(page.getByTestId("canvas-mode-strip")).toBeVisible({
+      timeout: 30_000,
+    });
+    // Aerial from beforeAll → Sketch + CAD unlocked; Quote/Share stay gated.
+    await expect(page.getByTestId("canvas-mode-sketch")).toBeVisible();
+    await expect(page.getByTestId("canvas-mode-cad")).toBeVisible();
+    await expect(page.getByTestId("canvas-mode-quote")).toHaveAttribute(
+      "aria-disabled",
       "true",
     );
-    await page.getByTestId("canvas-mode-survey").click();
-    await expect(page).toHaveURL(/mode=survey/);
+    await page.getByTestId("canvas-mode-cad").click();
+    await expect(page).toHaveURL(/mode=cad/);
     await expect(page.getByTestId("site-canvas")).toHaveAttribute(
       "data-canvas-mode",
-      "survey",
+      "cad",
     );
-    await page.getByTestId("canvas-mode-share").click();
-    await expect(page.getByTestId("canvas-share-sheet")).toBeVisible();
   });
 
   test("legacy design route redirects into sketch mode", async ({ page }) => {

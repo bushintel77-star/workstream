@@ -62,6 +62,7 @@ const baseArgs = (): GeneratorArgs => ({
     strokes: [],
     irrigation_zones: [],
     annotations: [],
+    features: [],
     updated_at: new Date().toISOString(),
   },
   catalogSymbols: [],

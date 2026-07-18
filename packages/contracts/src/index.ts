@@ -22,3 +22,5 @@ export * from "./schemas/activity-event";
 export * from "./schemas/project-file";
 export * from "./schemas/image-contact";
 export * from "./schemas/site-context";
+export * from "./schemas/orchestration";
+export * from "./schemas/landscape-feature";

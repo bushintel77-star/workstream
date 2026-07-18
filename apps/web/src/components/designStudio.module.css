@@ -294,6 +294,29 @@
   cursor: crosshair;
 }
 
+.canvasArmed {
+  cursor: none;
+}
+
+.chromeSoft {
+  opacity: 0.42;
+  transition: opacity 160ms ease;
+}
+
+.canvasHudCost {
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--r-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-inverted);
+  background: color-mix(in srgb, #1a1218 72%, transparent);
+}
+
+.canvasHudCostPending {
+  color: #1a1218;
+  background: color-mix(in srgb, #d4a017 82%, #fff);
+}
+
 .canvasDraw {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='4' fill='%2318181B'/%3E%3C/svg%3E") 12 12, crosshair;
 }

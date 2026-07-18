@@ -20,6 +20,7 @@ import {
   runCadQuantitySurvey,
   runCadQuote,
 } from "../lib/cad-qs-job";
+import { refreshOrchestration } from "../lib/material-orchestrator";
 
 export default async function cadRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -86,6 +87,7 @@ export default async function cadRoutes(fastify: FastifyInstance) {
           projectId,
           parsed.data,
         );
+        void refreshOrchestration(fastify.store, ownerId, projectId);
         return reply.send(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD generate failed";
@@ -117,6 +119,7 @@ export default async function cadRoutes(fastify: FastifyInstance) {
           projectId,
           parsed.data.instruction,
         );
+        void refreshOrchestration(fastify.store, ownerId, projectId);
         return reply.send(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD edit failed";
@@ -148,6 +151,7 @@ export default async function cadRoutes(fastify: FastifyInstance) {
           projectId,
           parsed.data.entity_ids,
         );
+        void refreshOrchestration(fastify.store, ownerId, projectId);
         return reply.send(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD accept failed";

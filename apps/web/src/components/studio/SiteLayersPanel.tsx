@@ -70,6 +70,7 @@ export function SiteLayersPanel({
           strokes: [],
           irrigation_zones: [],
           annotations: [],
+          features: [],
           updated_at: new Date().toISOString(),
         } satisfies DesignCanvas,
         symbols,
