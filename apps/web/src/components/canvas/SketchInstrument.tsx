@@ -59,7 +59,7 @@ type PaintSession = {
   unitCost: number;
 };
 
-/** Instrumental paint layer on the shared SiteCanvas world ù no studio shell. */
+/** Instrumental paint layer on the shared SiteCanvas world - no studio shell. */
 export function SketchInstrument({
   projectId,
   symbols,
@@ -469,9 +469,9 @@ export function SketchInstrument({
         />
         <p className={css.hint}>
           {armedRecipe
-            ? "Stamp or drag to paint ù Alt+click samples ù Esc clears brush"
-            : "Pick a material, then paint the site ù Alt+click any pin to sample"}
-          {saving ? " ù Savingù" : ""}
+            ? "Stamp or drag to paint - Alt+click samples - Esc clears brush"
+            : "Pick a material, then paint the site - Alt+click any pin to sample"}
+          {saving ? " - Saving-" : ""}
         </p>
       </div>
     </>
