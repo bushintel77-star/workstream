@@ -65,7 +65,7 @@ export function designableCanvas(
     return [openRing(outer as LngLatRing)];
   }
 
-  // MultiPolygon ù return each outer ring
+  // MultiPolygon - return each outer ring
   const rings: LngLatRing[] = [];
   for (const poly of geom.coordinates) {
     const outer = poly[0];
