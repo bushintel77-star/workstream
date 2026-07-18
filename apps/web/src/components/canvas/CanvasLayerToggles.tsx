@@ -17,6 +17,8 @@ const ITEMS: Array<{
   { key: "draftGrid", label: "Draft grid", hint: "Layout dots" },
   { key: "orchestrationChips", label: "Risk chips", hint: "TRP / drainage overlays" },
   { key: "ghostSuggestions", label: "AI ghosts", hint: "Unaccepted suggestions" },
+  { key: "shade", label: "Sun/shade", hint: "Predicted solar grid" },
+  { key: "easements", label: "Easements", hint: "Indicative corridors" },
 ];
 
 /** Site intelligence layer toggles — canvas chrome, not a separate page. */

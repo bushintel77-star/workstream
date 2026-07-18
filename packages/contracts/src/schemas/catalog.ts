@@ -141,6 +141,18 @@ export const DesignGhostsResponseSchema = z.object({
 });
 export type DesignGhostsResponse = z.infer<typeof DesignGhostsResponseSchema>;
 
+/** Natural-language sketch assist — operator message in, prose + ephemeral ghosts out. */
+export const DesignAssistRequestSchema = z.object({
+  message: z.string().min(1).max(4000),
+});
+export type DesignAssistRequest = z.infer<typeof DesignAssistRequestSchema>;
+
+export const DesignAssistResponseSchema = z.object({
+  reply: z.string(),
+  suggestions: z.array(GhostPlacementSuggestionSchema),
+});
+export type DesignAssistResponse = z.infer<typeof DesignAssistResponseSchema>;
+
 export const DesignCanvasSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),

@@ -55,6 +55,7 @@ export function SketchGhostLayer({
                 <button
                   type="button"
                   className={css.accept}
+                  data-testid="sketch-ghost-accept"
                   onClick={() => onAccept(ghost)}
                 >
                   Accept
@@ -62,6 +63,7 @@ export function SketchGhostLayer({
                 <button
                   type="button"
                   className={css.dismiss}
+                  data-testid="sketch-ghost-dismiss"
                   onClick={() => onDismiss(ghost.id)}
                 >
                   Dismiss

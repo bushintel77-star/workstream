@@ -22,6 +22,11 @@ type Props = {
   onGoToQuote: () => void;
   onToggleMeasure: () => void;
   measureActive: boolean;
+  onFocusAssist?: () => void;
+  onToggleShade?: () => void;
+  onToggleEasements?: () => void;
+  shadeActive?: boolean;
+  easementsActive?: boolean;
 };
 
 function buildCommands(
@@ -34,9 +39,21 @@ function buildCommands(
     | "onGoToQuote"
     | "onToggleMeasure"
     | "measureActive"
+    | "onFocusAssist"
+    | "onToggleShade"
+    | "onToggleEasements"
+    | "shadeActive"
+    | "easementsActive"
   >,
 ): CanvasCommand[] {
   const base: CanvasCommand[] = [
+    {
+      id: "ask-assist",
+      label: "Ask AI sketch assistant",
+      detail: "Natural language layout — ghosts stay ephemeral until accept",
+      keywords: "ai assist nl natural language chat ask sketch",
+      run: () => handlers.onFocusAssist?.(),
+    },
     {
       id: "scan-ghosts",
       label: "Scan aerial for AI suggestions",
@@ -67,6 +84,28 @@ function buildCommands(
     },
   ];
 
+  if (handlers.onToggleShade) {
+    base.push({
+      id: "toggle-shade",
+      label: handlers.shadeActive ? "Hide sun/shade overlay" : "Show sun/shade overlay",
+      detail: "Indicative solar grid on the aerial",
+      keywords: "shade sun solar overlay site intelligence",
+      run: handlers.onToggleShade,
+    });
+  }
+
+  if (handlers.onToggleEasements) {
+    base.push({
+      id: "toggle-easements",
+      label: handlers.easementsActive
+        ? "Hide easement overlay"
+        : "Show easement overlay",
+      detail: "Indicative drainage corridor — confirm on title",
+      keywords: "easement drainage overlay site intelligence",
+      run: handlers.onToggleEasements,
+    });
+  }
+
   const symbolCommands = symbols.slice(0, 80).map((sym) => ({
     id: `arm-${sym.id}`,
     label: `Arm ${sym.label}`,
@@ -91,6 +130,11 @@ export function CanvasCommandPalette({
   onGoToQuote,
   onToggleMeasure,
   measureActive,
+  onFocusAssist,
+  onToggleShade,
+  onToggleEasements,
+  shadeActive = false,
+  easementsActive = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -105,14 +149,24 @@ export function CanvasCommandPalette({
         onGoToQuote,
         onToggleMeasure,
         measureActive,
+        onFocusAssist,
+        onToggleShade,
+        onToggleEasements,
+        shadeActive,
+        easementsActive,
       }),
     [
+      easementsActive,
       measureActive,
       onArmSymbol,
       onDraftCad,
+      onFocusAssist,
       onGoToQuote,
       onScanGhosts,
+      onToggleEasements,
       onToggleMeasure,
+      onToggleShade,
+      shadeActive,
       symbols,
     ],
   );
@@ -217,6 +271,7 @@ export function CanvasCommandPalette({
                   role="option"
                   aria-selected={i === activeIdx}
                   className={`${css.row} ${i === activeIdx ? css.rowActive : ""}`}
+                  data-testid={`canvas-command-${cmd.id}`}
                   onMouseEnter={() => setActiveIdx(i)}
                   onClick={() => {
                     cmd.run();

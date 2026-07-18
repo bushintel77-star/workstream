@@ -3,6 +3,8 @@ export type CanvasViewLayers = {
   draftGrid: boolean;
   orchestrationChips: boolean;
   ghostSuggestions: boolean;
+  shade: boolean;
+  easements: boolean;
 };
 
 export const DEFAULT_CANVAS_VIEW_LAYERS: CanvasViewLayers = {
@@ -10,4 +12,6 @@ export const DEFAULT_CANVAS_VIEW_LAYERS: CanvasViewLayers = {
   draftGrid: true,
   orchestrationChips: true,
   ghostSuggestions: true,
+  shade: false,
+  easements: false,
 };

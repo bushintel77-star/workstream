@@ -1,4 +1,7 @@
-import type { Page } from "@playwright/test";
+import type { APIRequestContext, Page } from "@playwright/test";
+import { expect } from "@playwright/test";
+
+const API = process.env.API_URL ?? "http://localhost:3001";
 
 /** Legacy pipeline chrome — must stay absent on canvas-first routes. */
 export function pipelineShell(page: Page) {
@@ -7,3 +10,22 @@ export function pipelineShell(page: Page) {
 
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */
 export const LEGACY_STUDIO_VIEWPORT = { width: 800, height: 900 };
+
+/** Fresh project with survey only — empty sketch for ghost bootstrap. */
+export async function createSurveyProject(request: APIRequestContext) {
+  const create = await request.post(`${API}/projects/`, {
+    data: {
+      address: "E2E Canvas AI, 42 Test Grove, Melbourne VIC 3000",
+      lat: -37.8136,
+      lng: 144.9631,
+    },
+  });
+  expect(create.ok()).toBeTruthy();
+  const body = (await create.json()) as { project: { id: string } };
+  const projectId = body.project.id;
+
+  const survey = await request.post(`${API}/projects/${projectId}/survey`);
+  expect(survey.ok()).toBeTruthy();
+
+  return { projectId };
+}

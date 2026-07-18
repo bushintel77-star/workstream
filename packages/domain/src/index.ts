@@ -58,12 +58,19 @@ export * from './irrigation';
 export * from './plan';
 export * from './site-plan-projection';
 export * from './site-environment';
-export { buildStudioSystemPrompt } from './studio-ai-prompt';
+export { buildStudioSystemPrompt, type StudioPromptSite, type StudioPromptProject } from './studio-ai-prompt';
 export {
   buildIndicativeShadeGrid,
   SHADE_GRID_SIZE,
   type ShadeGridCell,
 } from './shade-grid';
+export {
+  buildIndicativeEasements,
+  pointInEasement,
+  pointInRing,
+  type EasementCorridor,
+} from './site-overlays';
+export { parseStudioAssistResponse } from './studio-assist-parse';
 export * from './title-planning-badges';
 export * from './site-garden-copy';
 export * from './weather-condition';

@@ -39,6 +39,7 @@ import carbonRoutes from './routes/carbon';
 import catalogRoutes from './routes/catalog';
 import designCanvasRoutes from './routes/design-canvas';
 import designGhostsRoutes from './routes/design-ghosts';
+import designAssistRoutes from './routes/design-assist';
 import cadRoutes from './routes/cad';
 import boundaryRoutes from './routes/boundary';
 import orchestrationRoutes from './routes/orchestration';
@@ -138,6 +139,7 @@ async function start() {
   await server.register(catalogRoutes, { prefix: '/catalog' });
   await server.register(designCanvasRoutes, { prefix: '/projects' });
   await server.register(designGhostsRoutes, { prefix: '/projects' });
+  await server.register(designAssistRoutes, { prefix: '/projects' });
   await server.register(cadRoutes, { prefix: '/projects' });
   await server.register(boundaryRoutes, { prefix: '/projects' });
   await server.register(orchestrationRoutes, { prefix: '/projects' });

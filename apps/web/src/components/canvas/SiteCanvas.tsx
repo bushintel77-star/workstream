@@ -65,6 +65,8 @@ import {
   type MeasurePt,
 } from "./DraftingAssist";
 import { TitleParcelOverlay } from "./TitleParcelOverlay";
+import { SiteIntelligenceOverlay } from "./SiteIntelligenceOverlay";
+import { SunShadeControls } from "./SunShadeControls";
 import { Tier1SavingsLedger, Tier1ZoneCards } from "../tier1";
 import { CanvasLayerToggles } from "./CanvasLayerToggles";
 import css from "./siteCanvas.module.css";
@@ -146,6 +148,10 @@ function SiteCanvasInner({
   const [viewLayers, setViewLayers] = useState<CanvasViewLayers>(
     DEFAULT_CANVAS_VIEW_LAYERS,
   );
+  const [sunWhen, setSunWhen] = useState(() => new Date());
+  const toggleViewLayer = useCallback((key: keyof CanvasViewLayers) => {
+    setViewLayers((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
   const [sketchCount, setSketchCount] = useState(
     () => sketch?.canvas?.placements?.length ?? 0,
   );
@@ -490,6 +496,19 @@ function SiteCanvasInner({
                   }}
                 />
               )}
+              {mapView &&
+              sketch?.surveyMetrics?.lat != null &&
+              sketch.surveyMetrics.lng != null ? (
+                <SiteIntelligenceOverlay
+                  mapView={mapView}
+                  lotRing={lotRing}
+                  lat={sketch.surveyMetrics.lat}
+                  lng={sketch.surveyMetrics.lng}
+                  when={sunWhen}
+                  showShade={viewLayers.shade}
+                  showEasements={viewLayers.easements}
+                />
+              ) : null}
               {mapView && lotRing.length >= 3 && viewLayers.titleParcel ? (
                 <TitleParcelOverlay lotRing={lotRing} mapView={mapView} />
               ) : null}
@@ -519,6 +538,8 @@ function SiteCanvasInner({
                       setMode("cad");
                     })
                   }
+                  onToggleViewLayer={toggleViewLayer}
+                  viewLayers={viewLayers}
                 />
               ) : null}
               <MeasureOverlay
@@ -657,6 +678,17 @@ function SiteCanvasInner({
             ) : null}
 
             <CanvasLayerToggles layers={viewLayers} onChange={setViewLayers} />
+
+            {viewLayers.shade &&
+            sketch?.surveyMetrics?.lat != null &&
+            sketch.surveyMetrics.lng != null ? (
+              <SunShadeControls
+                lat={sketch.surveyMetrics.lat}
+                lng={sketch.surveyMetrics.lng}
+                when={sunWhen}
+                onWhenChange={setSunWhen}
+              />
+            ) : null}
 
             {(mode === "quote" || mode === "cad") &&
             sheet !== "none" &&

@@ -9,6 +9,11 @@
   pointer-events: none;
 }
 
+.layerGhosts {
+  z-index: 16;
+  pointer-events: auto;
+}
+
 .layerArmed {
   pointer-events: auto;
   cursor: none;

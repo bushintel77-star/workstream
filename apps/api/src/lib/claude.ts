@@ -13,8 +13,12 @@ import type {
 import { CadOpsBatchSchema } from "@workstream/contracts";
 import {
   buildGhostPlacementSuggestions,
+  buildStudioSystemPrompt,
+  formatSketchBriefForAi,
   isTier1WrightsTerrace,
+  parseStudioAssistResponse,
   tier1WrightsTerraceDesign,
+  type StudioPromptSite,
 } from "@workstream/domain";
 import type { GhostPlacementSuggestion } from "@workstream/contracts";
 import { getOwnerEnv } from "./owner-secrets";
@@ -1061,5 +1065,105 @@ export async function generateCadOps(
     };
   } catch {
     return devFallbackCadOps(ctx);
+  }
+}
+
+export async function runStudioAssist(args: {
+  project: { name: string; address: string };
+  site: StudioPromptSite;
+  canvasElementCount: number;
+  message: string;
+  sketch_brief?: string | null;
+  symbol_ids: string[];
+  tier1: boolean;
+}): Promise<{ reply: string; suggestions: GhostPlacementSuggestion[] }> {
+  const fallback = () => {
+    const suggestions = buildGhostPlacementSuggestions({
+      tier1: args.tier1,
+      symbolIds: args.symbol_ids,
+    });
+    return {
+      reply: args.tier1
+        ? "Indicative Wrights Terrace massing — accept ghosts to commit placements."
+        : "Indicative Curtis-style placements — accept ghosts to commit.",
+      suggestions,
+    };
+  };
+
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
+  if (!apiKey) return fallback();
+
+  const system = buildStudioSystemPrompt(
+    { name: args.project.name, address: args.project.address },
+    args.canvasElementCount,
+    args.site,
+  );
+
+  const userText = [
+    args.sketch_brief ? `Current sketch:\n${args.sketch_brief}\n` : "",
+    `Operator request:\n${args.message}`,
+    "",
+    `Allowed symbol_id values: ${args.symbol_ids.slice(0, 80).join(", ")}`,
+    "",
+    "Respond with 2–3 sentences of practical advice, then a <canvas_suggestions> JSON array:",
+    '[{"symbol_id":"...","x_pct":0-100,"y_pct":0-100,"reason":"...","confidence":0.0-1.0}]',
+    "All coordinates are percentage of the aerial (0–100). Suggestions stay indicative.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const body = {
+      model: VISION_MODEL,
+      max_tokens: 2048,
+      system: [{ type: "text", text: system }],
+      messages: [{ role: "user", content: userText }],
+    };
+
+    const res = await fetchWithRetry(
+      MESSAGES_URL,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      },
+      {
+        telemetry: {
+          spanName: "anthropic.studio_assist",
+          provider: "anthropic",
+          attributes: {
+            "pipeline.stage": "design",
+            "model.name": VISION_MODEL,
+          },
+        },
+      },
+    );
+    if (!res.ok) return fallback();
+
+    const json = (await res.json()) as {
+      content: Array<{ type: string; text: string }>;
+    };
+    const textBlock = json.content.find((c) => c.type === "text");
+    if (!textBlock) return fallback();
+
+    const allowed = new Set(args.symbol_ids);
+    const parsed = parseStudioAssistResponse(textBlock.text, allowed);
+    if (parsed.suggestions.length === 0) {
+      const heuristic = buildGhostPlacementSuggestions({
+        tier1: args.tier1,
+        symbolIds: args.symbol_ids,
+      });
+      return {
+        reply: parsed.reply,
+        suggestions: heuristic,
+      };
+    }
+    return parsed;
+  } catch {
+    return fallback();
   }
 }

@@ -25,9 +25,10 @@ import {
   withDirtySaveSuggestion,
   type StudioAiSuggestion,
 } from "@workstream/domain";
-import { saveDesignCanvasAction, scanDesignGhostsAction } from "../../app/actions";
+import { saveDesignCanvasAction, scanDesignGhostsAction, designAssistAction } from "../../app/actions";
 import type { RateCardItem } from "../../lib/api";
 import type { StaticMapView } from "../../lib/mapView";
+import type { CanvasViewLayers } from "../../lib/canvas-view-layers";
 import { ghostSizeFromMetres } from "./DraftingAssist";
 import { SketchGhostLayer } from "./SketchGhostLayer";
 import { CanvasCommandPalette } from "./CanvasCommandPalette";
@@ -69,6 +70,8 @@ type Props = {
   onRegisterCommands?: (api: { scanGhosts: () => void }) => void;
   measureActive?: boolean;
   onToggleMeasure?: () => void;
+  viewLayers?: CanvasViewLayers;
+  onToggleViewLayer?: (key: keyof CanvasViewLayers) => void;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -138,8 +141,11 @@ export function SketchInstrument({
   onRegisterCommands,
   measureActive = false,
   onToggleMeasure,
+  viewLayers,
+  onToggleViewLayer,
 }: Props) {
   const toast = useToast();
+  const assistInputRef = useRef<HTMLTextAreaElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const placementsRef = useRef<CatalogPlacement[]>(initialPlacements);
   const mutationFsmRef = useRef(createMutationFsm());
@@ -159,6 +165,8 @@ export function SketchInstrument({
     GhostPlacementSuggestion[]
   >([]);
   const [ghostScanning, setGhostScanning] = useState(false);
+  const [assistPending, setAssistPending] = useState(false);
+  const [assistReply, setAssistReply] = useState<string | null>(null);
   const [commandOpen, setCommandOpen] = useState(false);
   const [armedRecipe, setArmedRecipe] = useState<BrushRecipe | null>(null);
   const [swatchHistory, setSwatchHistory] = useState<BrushRecipe[]>([]);
@@ -494,6 +502,41 @@ export function SketchInstrument({
     }
   }, [projectId, symbols, tier1, toast]);
 
+  const runAssist = useCallback(
+    async (message: string) => {
+      const trimmed = message.trim();
+      if (!trimmed) return;
+      setAssistPending(true);
+      try {
+        const res = await designAssistAction(projectId, trimmed);
+        setAssistReply(res.reply);
+        if (res.suggestions.length > 0) {
+          setEphemeralGhosts(res.suggestions);
+          toast.show(
+            `${res.suggestions.length} AI suggestion${res.suggestions.length === 1 ? "" : "s"} — accept to commit`,
+            "info",
+            5000,
+          );
+        } else {
+          toast.show(res.reply.slice(0, 120), "info", 5000);
+        }
+      } catch {
+        const symbolIds = symbols.map((s) => s.id);
+        const fallback = buildGhostPlacementSuggestions({ tier1, symbolIds });
+        setEphemeralGhosts(fallback);
+        setAssistReply("Using heuristic placements — accept ghosts to commit.");
+        toast.show("Assist unavailable — heuristic ghosts placed", "info");
+      } finally {
+        setAssistPending(false);
+      }
+    },
+    [projectId, symbols, tier1, toast],
+  );
+
+  const focusAssist = useCallback(() => {
+    assistInputRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     onRegisterCommands?.({ scanGhosts: () => void scanGhosts() });
   }, [onRegisterCommands, scanGhosts]);
@@ -506,8 +549,8 @@ export function SketchInstrument({
 
   const acceptGhost = useCallback(
     (ghost: GhostPlacementSuggestion) => {
-      setPlacements((prev) => [
-        ...prev,
+      const next: CatalogPlacement[] = [
+        ...placementsRef.current,
         {
           id: crypto.randomUUID(),
           symbol_id: ghost.symbol_id,
@@ -516,7 +559,9 @@ export function SketchInstrument({
           rotation_deg: 0,
           scale: 1,
         },
-      ]);
+      ];
+      placementsRef.current = next;
+      setPlacements(next);
       setEphemeralGhosts((g) => g.filter((x) => x.id !== ghost.id));
       setDirty(true);
       void persist();
@@ -720,7 +765,7 @@ export function SketchInstrument({
     <>
       <div
         ref={layerRef}
-        className={`${css.layer} ${armedRecipe ? css.layerArmed : ""}`}
+        className={`${css.layer} ${armedRecipe ? css.layerArmed : ""} ${showGhostSuggestions && (ephemeralGhosts.length > 0 || ghostScanning) ? css.layerGhosts : ""}`}
         data-testid="sketch-instrument"
         data-armed={armedRecipe ? "1" : undefined}
         onPointerDown={onPointerDown}
@@ -815,6 +860,14 @@ export function SketchInstrument({
         onDraftCad={() => onDraftCad?.()}
         onScanGhosts={() => void scanGhosts()}
         onOpenCommands={() => setCommandOpen(true)}
+        onSubmitAssist={(msg) => void runAssist(msg)}
+        assistReply={assistReply}
+        assistPending={assistPending}
+        assistInputRef={assistInputRef}
+        ghostsActive={
+          showGhostSuggestions &&
+          (ephemeralGhosts.length > 0 || ghostScanning)
+        }
       />
 
       <CanvasCommandPalette
@@ -827,6 +880,18 @@ export function SketchInstrument({
         onGoToQuote={() => onGoToQuote?.()}
         onToggleMeasure={() => onToggleMeasure?.()}
         measureActive={measureActive}
+        onFocusAssist={() => {
+          setCommandOpen(false);
+          focusAssist();
+        }}
+        onToggleShade={
+          onToggleViewLayer ? () => onToggleViewLayer("shade") : undefined
+        }
+        onToggleEasements={
+          onToggleViewLayer ? () => onToggleViewLayer("easements") : undefined
+        }
+        shadeActive={viewLayers?.shade ?? false}
+        easementsActive={viewLayers?.easements ?? false}
       />
     </>
   );

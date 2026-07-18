@@ -211,6 +211,15 @@ export async function scanDesignGhostsAction(projectId: string) {
   }
 }
 
+export async function designAssistAction(projectId: string, message: string) {
+  const { designAssistApi } = await import("../lib/api");
+  try {
+    return await designAssistApi(projectId, message.trim());
+  } catch (err) {
+    throw wrapApiError(err, "AI sketch assist failed");
+  }
+}
+
 /** First-run: seed starter massing, try AI CAD, land operator on the drawing. */
 export async function prepareSiteFirstRunAction(projectId: string) {
   if (!projectId) throw new Error("Missing project");

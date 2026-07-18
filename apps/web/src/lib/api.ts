@@ -6,6 +6,7 @@ import type {
   CatalogSymbol,
   CreateCatalogSymbolInput,
   DesignCanvas,
+  DesignAssistResponse,
   DesignGhostsResponse,
   ProjectOrchestrationWorld,
 } from "@workstream/contracts";
@@ -367,6 +368,15 @@ export async function scanDesignGhostsApi(
   projectId: string,
 ): Promise<DesignGhostsResponse> {
   return apiPost<DesignGhostsResponse>(`/projects/${projectId}/design/ghosts`, {});
+}
+
+export async function designAssistApi(
+  projectId: string,
+  message: string,
+): Promise<DesignAssistResponse> {
+  return apiPost<DesignAssistResponse>(`/projects/${projectId}/design/assist`, {
+    message,
+  });
 }
 
 export async function getOrchestrationApi(

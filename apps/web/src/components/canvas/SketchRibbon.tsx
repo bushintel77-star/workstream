@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type RefObject } from "react";
 import type { BrushRecipe, CatalogSymbol } from "@workstream/contracts";
 import type { StudioAiSuggestion } from "@workstream/domain";
 import {
@@ -30,6 +30,11 @@ type Props = {
   onDraftCad: () => void;
   onScanGhosts: () => void;
   onOpenCommands: () => void;
+  onSubmitAssist: (message: string) => void;
+  assistReply: string | null;
+  assistPending: boolean;
+  assistInputRef?: RefObject<HTMLTextAreaElement | null>;
+  ghostsActive?: boolean;
 };
 
 const TABS: Array<{ id: SketchRibbonTab; label: string }> = [
@@ -61,7 +66,7 @@ function skuLabel(sym: CatalogSymbol): string {
   return sym.id.slice(0, 10).toUpperCase();
 }
 
-/** Floating sketch ribbon — gold assets, AI coaching, search. */
+/** Floating sketch ribbon - gold assets, AI coaching, search. */
 export function SketchRibbon({
   symbols,
   armedRecipe,
@@ -77,9 +82,15 @@ export function SketchRibbon({
   onDraftCad,
   onScanGhosts,
   onOpenCommands,
+  onSubmitAssist,
+  assistReply,
+  assistPending,
+  assistInputRef,
+  ghostsActive = false,
 }: Props) {
   const [tab, setTab] = useState<SketchRibbonTab>("essentials");
   const [query, setQuery] = useState("");
+  const [assistDraft, setAssistDraft] = useState("");
   const [collapsed, setCollapsed] = useState(false);
 
   const trayBase = selectSketchRibbonSymbols(symbols, tab, 24);
@@ -100,7 +111,7 @@ export function SketchRibbon({
 
   return (
     <div
-      className={`${css.ribbon} ${collapsed ? css.ribbonCollapsed : ""}`}
+      className={`${css.ribbon} ${collapsed ? css.ribbonCollapsed : ""} ${ghostsActive ? css.ribbonGhostActive : ""}`}
       data-testid="sketch-ribbon"
       role="region"
       aria-label="Sketch ribbon"
@@ -122,6 +133,7 @@ export function SketchRibbon({
           className={css.cmdBtn}
           onClick={onOpenCommands}
           title="Command palette (Ctrl+K)"
+          data-testid="sketch-ribbon-cmd"
         >
           Cmd
         </button>
@@ -158,12 +170,51 @@ export function SketchRibbon({
             </div>
           ) : null}
 
+          <div className={css.assistBar} data-testid="sketch-assist-bar">
+            <textarea
+              ref={assistInputRef}
+              className={css.assistInput}
+              value={assistDraft}
+              onChange={(e) => setAssistDraft(e.target.value)}
+              placeholder="Ask AI: mass Lomandra along the north boundary..."
+              aria-label="AI sketch assist"
+              rows={2}
+              disabled={assistPending}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (assistDraft.trim()) {
+                    onSubmitAssist(assistDraft);
+                    setAssistDraft("");
+                  }
+                }
+              }}
+            />
+            <button
+              type="button"
+              className={css.assistSubmit}
+              disabled={assistPending || !assistDraft.trim()}
+              data-testid="sketch-assist-submit"
+              onClick={() => {
+                onSubmitAssist(assistDraft);
+                setAssistDraft("");
+              }}
+            >
+              {assistPending ? "Thinking..." : "Ask AI"}
+            </button>
+            {assistReply ? (
+              <p className={css.assistReply} data-testid="sketch-assist-reply">
+                {assistReply}
+              </p>
+            ) : null}
+          </div>
+
           <input
             className={css.search}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name or SKU…"
+            placeholder="Search name or SKU..."
             aria-label="Search materials"
           />
 
@@ -192,7 +243,7 @@ export function SketchRibbon({
                   key={sym.id}
                   type="button"
                   className={`${css.trayBtn} ${active ? css.trayBtnOn : ""} ${planning ? css.trayBtnPlanning : ""}`}
-                  title={`${sym.label} · ${skuLabel(sym)} · ${w.toFixed(1)} m`}
+                  title={`${sym.label} | ${skuLabel(sym)} | ${w.toFixed(1)} m`}
                   data-testid={`sketch-ribbon-${sym.id}`}
                   onClick={() => onArm(sym)}
                 >
@@ -214,8 +265,8 @@ export function SketchRibbon({
 
           <p className={css.status}>
             {armedRecipe
-              ? `Snap · ${brushWidthM.toFixed(1)} m brush · stamp or drag · Esc clears`
-              : "Gold library · sized to aerial · Alt+click samples · Ctrl+K commands"}
+              ? `Snap | ${brushWidthM.toFixed(1)} m brush | stamp or drag | Esc clears`
+              : "Gold library | sized to aerial | Alt+click samples | Ctrl+K commands"}
           </p>
         </>
       ) : null}

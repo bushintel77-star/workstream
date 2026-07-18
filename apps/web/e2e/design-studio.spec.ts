@@ -1,6 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
+
+async function openCommandPalette(page: Page) {
+  await page.getByTestId("sketch-ribbon-cmd").evaluate((el) => {
+    (el as HTMLButtonElement).click();
+  });
+  await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
+    timeout: 15_000,
+  });
+}
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -57,16 +66,12 @@ test.describe("Design studio (sketch mode)", () => {
       timeout: 30_000,
     });
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible();
-    await expect(page.getByTestId("canvas-sketch-host")).toBeVisible({
+    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
+    await expect(page.getByTestId("canvas-placement")).toHaveCount(1, {
       timeout: 15_000,
     });
-    await expect(page.getByTestId("design-studio-counts")).toHaveText(
-      /1 symbols/,
-      { timeout: 15_000 },
-    );
   });
 
   test("legacy /design redirects into sketch mode", async ({ page }) => {
@@ -74,27 +79,30 @@ test.describe("Design studio (sketch mode)", () => {
     await expect(page).toHaveURL(
       new RegExp(`/projects/${projectId}\\?mode=sketch`),
     );
-    await expect(page.getByTestId("design-studio-canvas")).toBeVisible({
+    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
       timeout: 30_000,
     });
   });
 
   test("shows indicative scale bar on canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("design-studio-scale-bar")).toBeVisible({
+    await expect(page.getByTestId("canvas-scale-bar")).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByTestId("design-studio-scale-bar")).toContainText(/m/);
+    await expect(page.getByTestId("canvas-scale-bar")).toContainText(/m/);
   });
 
-  test("places symbol from catalog click", async ({ page }) => {
+  test("arms symbol from ribbon catalog", async ({ page }) => {
     await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("design-studio-counts")).toHaveText(
-      /1 symbols/,
-      { timeout: 30_000 },
+    await expect(page.getByTestId("canvas-placement")).toHaveCount(1, {
+      timeout: 30_000,
+    });
+    await openCommandPalette(page);
+    await page.getByLabel("Search commands and materials").fill("bluestone");
+    await page.getByRole("option", { name: /Arm.*[Bb]luestone/i }).click();
+    await expect(page.getByTestId("sketch-instrument")).toHaveAttribute(
+      "data-armed",
+      "1",
     );
-    await page.getByRole("button", { name: "Place", exact: true }).click();
-    await expect(page.getByTestId("design-asset-palette")).toBeVisible();
-    await expect(page.getByTestId("catalog-bluestone-paver")).toBeVisible();
   });
 });
