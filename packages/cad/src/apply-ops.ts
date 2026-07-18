@@ -3,6 +3,7 @@ import type {
   CadEntity,
   CadOp,
   CadPoint2d,
+  VerificationState,
 } from "@workstream/contracts";
 
 function newId(): string {
@@ -12,6 +13,25 @@ function newId(): string {
 function ensureLayer(doc: CadDocument, name: string, color?: number): void {
   if (doc.layers.some((l) => l.name === name)) return;
   doc.layers.push({ name, color: color ?? 7 });
+}
+
+/** True when entity is still an AI suggestion (legacy ghost or UNVERIFIED). */
+export function isUnverified(e: {
+  ghost?: boolean;
+  verification_state?: VerificationState;
+}): boolean {
+  return e.ghost === true || e.verification_state === "UNVERIFIED";
+}
+
+function verificationFromGhost(ghost: boolean | undefined): {
+  ghost: boolean;
+  verification_state: VerificationState;
+} {
+  const unverified = ghost !== false;
+  return {
+    ghost: unverified,
+    verification_state: unverified ? "UNVERIFIED" : "VERIFIED",
+  };
 }
 
 /** Offset a closed/open polyline roughly along average edge normals (indicative). */
@@ -70,7 +90,7 @@ export function applyCadOps(
             id: newId(),
             kind: "line",
             layer: op.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             start: op.start,
             end: op.end,
           });
@@ -83,7 +103,7 @@ export function applyCadOps(
             id: newId(),
             kind: "polyline",
             layer: op.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             points: op.points,
             closed: op.closed ?? false,
           });
@@ -96,7 +116,7 @@ export function applyCadOps(
             id: newId(),
             kind: "circle",
             layer: op.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             center: op.center,
             radius: op.radius,
           });
@@ -109,7 +129,7 @@ export function applyCadOps(
             id: newId(),
             kind: "arc",
             layer: op.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             center: op.center,
             radius: op.radius,
             start_angle_deg: op.start_angle_deg,
@@ -124,7 +144,7 @@ export function applyCadOps(
             id: newId(),
             kind: "text",
             layer: op.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             position: op.position,
             height: op.height ?? 0.35,
             value: op.value,
@@ -146,7 +166,7 @@ export function applyCadOps(
             id: newId(),
             kind: "insert",
             layer: op.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             block_name: op.block_name,
             position: op.position,
             scale: op.scale ?? 1,
@@ -161,7 +181,7 @@ export function applyCadOps(
             id: newId(),
             kind: "dimension",
             layer: op.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             p1: op.p1,
             p2: op.p2,
             offset: op.offset ?? 0.5,
@@ -181,7 +201,7 @@ export function applyCadOps(
             id: newId(),
             kind: "polyline",
             layer: src.layer,
-            ghost: op.ghost ?? true,
+            ...verificationFromGhost(op.ghost),
             points: pts,
             closed: src.closed,
           });
@@ -206,20 +226,23 @@ export function applyCadOps(
   return { document: doc, applied, skipped };
 }
 
-/** Promote ghost entities to committed (optionally filtered by id). */
-export function acceptCadGhosts(
+/** Promote unverified / ghost entities to committed (optionally filtered by id). */
+export function acceptUnverified(
   input: CadDocument,
   entityIds?: string[],
 ): CadDocument {
   const allow = entityIds ? new Set(entityIds) : null;
   const entities: CadEntity[] = input.entities.map((e) => {
-    if (!e.ghost) return e;
+    if (!isUnverified(e)) return e;
     if (allow && !allow.has(e.id)) return e;
-    return { ...e, ghost: false };
+    return { ...e, ghost: false, verification_state: "VERIFIED" as const };
   });
   return { ...input, entities };
 }
 
+/** @deprecated Prefer acceptUnverified */
+export const acceptCadGhosts = acceptUnverified;
+
 export function countGhosts(doc: CadDocument): number {
-  return doc.entities.filter((e) => e.ghost).length;
+  return doc.entities.filter((e) => isUnverified(e)).length;
 }

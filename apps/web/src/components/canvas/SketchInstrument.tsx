@@ -6,7 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import type {
   BrushRecipe,
   CatalogPlacement,
@@ -72,6 +74,10 @@ type Props = {
   onToggleMeasure?: () => void;
   viewLayers?: CanvasViewLayers;
   onToggleViewLayer?: (key: keyof CanvasViewLayers) => void;
+  /** Portal sketch ribbon into the geo canvas dock. */
+  chromeHost?: HTMLElement | null;
+  onArmedChange?: (armed: boolean) => void;
+  showRibbon?: boolean;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -143,6 +149,9 @@ export function SketchInstrument({
   onToggleMeasure,
   viewLayers,
   onToggleViewLayer,
+  chromeHost = null,
+  onArmedChange,
+  showRibbon = true,
 }: Props) {
   const toast = useToast();
   const assistInputRef = useRef<HTMLTextAreaElement>(null);
@@ -199,6 +208,10 @@ export function SketchInstrument({
     placementsRef.current = placements;
     onPlacementCount?.(placements.length);
   }, [placements, onPlacementCount]);
+
+  useEffect(() => {
+    onArmedChange?.(armedRecipe != null);
+  }, [armedRecipe, onArmedChange]);
 
   const clientToPct = useCallback((clientX: number, clientY: number) => {
     const el = layerRef.current;
@@ -838,37 +851,45 @@ export function SketchInstrument({
         ) : null}
       </div>
 
-      <SketchRibbon
-        symbols={symbols}
-        armedRecipe={armedRecipe}
-        brushWidthM={brushWidthM}
-        saveStatusLabel={saveStatusLabel}
-        swatchHistory={swatchHistory}
-        symbolById={symbolById}
-        aiSuggestions={aiSuggestions}
-        onArm={armSymbol}
-        onSelectSwatch={(r) => setArmedRecipe(r)}
-        onToggleCopy={(id, key) => {
-          setSwatchHistory((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, [key]: !r[key] } : r)),
-          );
-          setArmedRecipe((cur) =>
-            cur && cur.id === id ? { ...cur, [key]: !cur[key] } : cur,
-          );
-        }}
-        onAiAction={handleAiAction}
-        onDraftCad={() => onDraftCad?.()}
-        onScanGhosts={() => void scanGhosts()}
-        onOpenCommands={() => setCommandOpen(true)}
-        onSubmitAssist={(msg) => void runAssist(msg)}
-        assistReply={assistReply}
-        assistPending={assistPending}
-        assistInputRef={assistInputRef}
-        ghostsActive={
-          showGhostSuggestions &&
-          (ephemeralGhosts.length > 0 || ghostScanning)
-        }
-      />
+      {showRibbon
+        ? (() => {
+            const ribbon: ReactNode = (
+              <SketchRibbon
+                symbols={symbols}
+                armedRecipe={armedRecipe}
+                brushWidthM={brushWidthM}
+                saveStatusLabel={saveStatusLabel}
+                swatchHistory={swatchHistory}
+                symbolById={symbolById}
+                aiSuggestions={aiSuggestions}
+                onArm={armSymbol}
+                onSelectSwatch={(r) => setArmedRecipe(r)}
+                onToggleCopy={(id, key) => {
+                  setSwatchHistory((prev) =>
+                    prev.map((r) => (r.id === id ? { ...r, [key]: !r[key] } : r)),
+                  );
+                  setArmedRecipe((cur) =>
+                    cur && cur.id === id ? { ...cur, [key]: !cur[key] } : cur,
+                  );
+                }}
+                onAiAction={handleAiAction}
+                onDraftCad={() => onDraftCad?.()}
+                onScanGhosts={() => void scanGhosts()}
+                onOpenCommands={() => setCommandOpen(true)}
+                onSubmitAssist={(msg) => void runAssist(msg)}
+                assistReply={assistReply}
+                assistPending={assistPending}
+                assistInputRef={assistInputRef}
+                ghostsActive={
+                  showGhostSuggestions &&
+                  (ephemeralGhosts.length > 0 || ghostScanning)
+                }
+              />
+            );
+            if (chromeHost) return createPortal(ribbon, chromeHost);
+            return ribbon;
+          })()
+        : null}
 
       <CanvasCommandPalette
         open={commandOpen}

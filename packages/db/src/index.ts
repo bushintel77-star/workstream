@@ -40,6 +40,7 @@ export type {
   UpdateCrewMemberInput,
   PhotoMeasurement,
   PhotoMeasurementInput,
+  OrchestrationOverlayState,
 } from "./types";
 export { SYSTEM_OWNER, createMemoryStore } from "./memory";
 

@@ -1,11 +1,28 @@
 /** Client-safe types for the canvas-first UI (no server-only imports). */
 
+/** Subset of CadEntity fields needed for clay walk + dock counts. */
+export type CadEntityLite = {
+  id: string;
+  ghost: boolean;
+  /** Prefer over ghost when present (UNVERIFIED = AI suggestion). */
+  verification_state?: "UNVERIFIED" | "VERIFIED";
+  kind?: string;
+  layer?: string;
+  points?: Array<{ x: number; y: number }>;
+  closed?: boolean;
+  start?: { x: number; y: number };
+  end?: { x: number; y: number };
+  position?: { x: number; y: number };
+  center?: { x: number; y: number };
+  block_name?: string;
+};
+
 export type CadDocumentLite = {
   id: string;
   project_id: string;
   width_m: number;
   height_m: number;
-  entities: Array<{ id: string; ghost: boolean }>;
+  entities: CadEntityLite[];
 };
 
 export type CadApiResultLite = {

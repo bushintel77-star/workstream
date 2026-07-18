@@ -11,18 +11,23 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.0.0",
+    "@types/three": "^0.185.1",
+    "@workstream/contracts": "workspace:*",
+    "@workstream/domain": "workspace:*",
+    "maplibre-gl": "^5.24.0",
     "next": "^16.2.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "@clerk/nextjs": "^6.0.0",
-    "@workstream/contracts": "workspace:*",
-    "@workstream/domain": "workspace:*"
+    "suncalc": "^2.0.1",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
-    "typescript": "^5.7.0",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "@types/suncalc": "^1.9.2",
+    "typescript": "^5.7.0"
   }
 }

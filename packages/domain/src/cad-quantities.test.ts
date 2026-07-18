@@ -3,7 +3,22 @@ import type { CadDocument } from "@workstream/contracts";
 import { cadQuantitySurvey } from "./cad-quantities";
 import { buildFromCad } from "./cad-build";
 
-function doc(entities: CadDocument["entities"]): CadDocument {
+function withVerification(
+  entity: CadDocument["entities"][number],
+): CadDocument["entities"][number] {
+  const unverified = entity.ghost === true;
+  return {
+    ...entity,
+    ghost: unverified,
+    verification_state: unverified ? "UNVERIFIED" : "VERIFIED",
+  };
+}
+
+function doc(
+  entities: Array<Omit<CadDocument["entities"][number], "verification_state"> & {
+    verification_state?: "UNVERIFIED" | "VERIFIED";
+  }>,
+): CadDocument {
   return {
     id: "11111111-1111-1111-1111-111111111111",
     project_id: "22222222-2222-2222-2222-222222222222",
@@ -13,7 +28,9 @@ function doc(entities: CadDocument["entities"]): CadDocument {
     width_m: 20,
     height_m: 15,
     layers: [{ name: "HARDSCAPE" }, { name: "PLANTING" }],
-    entities,
+    entities: entities.map((e) =>
+      withVerification(e as CadDocument["entities"][number]),
+    ),
     blocks: [],
     ai_run_id: null,
     source_sketch_id: null,
@@ -30,6 +47,7 @@ describe("cadQuantitySurvey", () => {
           kind: "polyline",
           layer: "HARDSCAPE",
           ghost: false,
+          verification_state: "VERIFIED",
           closed: true,
           points: [
             { x: 0, y: 0 },
@@ -43,6 +61,7 @@ describe("cadQuantitySurvey", () => {
           kind: "circle",
           layer: "HARDSCAPE",
           ghost: true,
+          verification_state: "UNVERIFIED",
           center: { x: 1, y: 1 },
           radius: 1,
         },
@@ -63,6 +82,7 @@ describe("cadQuantitySurvey", () => {
           kind: "insert",
           layer: "PLANTING",
           ghost: false,
+          verification_state: "VERIFIED",
           block_name: "olive-tree",
           position: { x: 3, y: 3 },
           scale: 1,
@@ -83,6 +103,7 @@ describe("buildFromCad", () => {
           kind: "polyline",
           layer: "HARDSCAPE",
           ghost: false,
+          verification_state: "VERIFIED",
           closed: true,
           points: [
             { x: 0, y: 0 },

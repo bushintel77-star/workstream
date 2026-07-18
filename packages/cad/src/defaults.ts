@@ -1,6 +1,7 @@
 import type { CadDocument, CadLayer } from "@workstream/contracts";
 
 export const DEFAULT_CAD_LAYERS: CadLayer[] = [
+  { name: "SHEET", color: 9 },
   { name: "SKETCH-REF", color: 8 },
   { name: "PLANTING", color: 3 },
   { name: "HARDSCAPE", color: 7 },

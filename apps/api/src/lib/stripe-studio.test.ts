@@ -39,4 +39,28 @@ describe("applyStudioFromCheckoutSession", () => {
     expect(billing.plan).toBe("studio");
     expect(billing.stripe_subscription_id).toBe("sub_2");
   });
+
+  it("adds seats on seat_add checkout", async () => {
+    const store = createMemoryStore();
+    const ownerId = "user_c";
+    await store.patchWorkspaceBilling(ownerId, {
+      plan: "studio",
+      seat_limit: 1,
+      stripe_customer_id: "cus_c",
+    });
+
+    const ok = await applyStudioFromCheckoutSession(store, {
+      metadata: {
+        owner_id: ownerId,
+        purpose: "seat_add",
+        extra_seats: "2",
+      },
+      customer: "cus_c",
+      subscription: "sub_seats",
+    });
+
+    expect(ok).toBe(true);
+    const billing = await store.getWorkspaceBilling(ownerId);
+    expect(billing.seat_limit).toBe(3);
+  });
 });

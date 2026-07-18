@@ -27,6 +27,8 @@ type MeasureProps = Shared & {
   active: boolean;
   points: MeasurePt[];
   onPointsChange: (pts: MeasurePt[]) => void;
+  /** Cream Fit sheet - ink measure, not gold glass. */
+  paper?: boolean;
 };
 
 export type MeasurePt = { xPct: number; yPct: number };
@@ -114,6 +116,7 @@ export function MeasureOverlay({
   active,
   points,
   onPointsChange,
+  paper = false,
 }: MeasureProps) {
   const onWorldClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -148,8 +151,9 @@ export function MeasureOverlay({
 
   return (
     <div
-      className={css.measureLayer}
+      className={`${css.measureLayer}${paper ? ` ${css.measureLayerPaper}` : ""}`}
       data-testid="canvas-measure-layer"
+      data-paper={paper ? "1" : undefined}
       onClick={onWorldClick}
       onPointerDown={(e) => e.stopPropagation()}
     >

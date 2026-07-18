@@ -1,20 +1,23 @@
 import type { CadDocument, CadEntity } from "@workstream/contracts";
 
+/** Ink on cream Fit sheet - darker weights, planting as soft wash. */
 const LAYER_STROKE: Record<string, string> = {
-  "SKETCH-REF": "#8a7580",
-  PLANTING: "#d4849a",
-  HARDSCAPE: "#5c4a52",
+  SHEET: "#b8a8a0",
+  "SKETCH-REF": "#7a6a62",
+  PLANTING: "#3d6b4f",
+  HARDSCAPE: "#241318",
   STRUCTURES: "#1a1218",
-  WATER: "#9b7b8f",
-  IRRIGATION: "#9b7b8f",
+  WATER: "#3a5f7a",
+  IRRIGATION: "#3a5f7a",
   TRP: "#b42318",
-  ANNOTATION: "#5c4a52",
-  DIMENSIONS: "#b8893a",
-  PERMITS: "#b8893a",
+  ANNOTATION: "#241318",
+  DIMENSIONS: "#6b5660",
+  PERMITS: "#8a6a2a",
 };
 
 function strokeFor(layer: string, ghost: boolean): string {
   const base = LAYER_STROKE[layer] ?? "#1a1218";
+  // Ghosts: same hue; dash + opacity mark them as suggestions.
   return ghost ? base : base;
 }
 
@@ -39,9 +42,7 @@ export function cadDocumentToSvg(
   parts.push(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">`,
   );
-  parts.push(
-    `<g transform="translate(0 ${h}) scale(1 -1)">`,
-  );
+  parts.push(`<g transform="translate(0 ${h}) scale(1 -1)">`);
 
   for (const e of doc.entities) {
     if (e.ghost && !showGhosts) continue;
@@ -51,17 +52,18 @@ export function cadDocumentToSvg(
 
   parts.push("</g>");
   parts.push(
-    `<text x="0.4" y="${h - 0.4}" font-size="0.35" fill="#6b7d72" font-family="system-ui,sans-serif">AI CAD · metres · indicative — not a construction drawing</text>`,
+    `<text x="0.4" y="${h - 0.4}" font-size="0.35" fill="#6b7d72" font-family="IBM Plex Mono,system-ui,sans-serif">AI CAD \u00b7 metres \u00b7 indicative \u00b7 not a construction drawing</text>`,
   );
   parts.push("</svg>");
   return parts.join("\n");
 }
 
 function entitySvg(e: CadEntity): string {
-  const opacity = e.ghost ? 0.45 : 0.95;
+  const opacity = e.ghost ? 0.55 : 0.95;
   const stroke = strokeFor(e.layer, e.ghost);
-  const dash = e.ghost ? ' stroke-dasharray="0.25 0.15"' : "";
-  const common = `stroke="${stroke}" fill="none" stroke-width="0.08" opacity="${opacity}"${dash} data-id="${e.id}" data-layer="${escapeXml(e.layer)}"`;
+  const dash = e.ghost ? ' stroke-dasharray="0.28 0.18"' : "";
+  const width = e.ghost ? "0.07" : "0.08";
+  const common = `stroke="${stroke}" fill="none" stroke-width="${width}" opacity="${opacity}"${dash} data-id="${e.id}" data-layer="${escapeXml(e.layer)}" data-ghost="${e.ghost ? "1" : "0"}"`;
 
   switch (e.kind) {
     case "line":
@@ -86,7 +88,7 @@ function entitySvg(e: CadEntity): string {
       return `<path d="M ${x0} ${y0} A ${e.radius} ${e.radius} 0 ${large} 1 ${x1} ${y1}" ${common} />`;
     }
     case "text":
-      // Text unflipped inside nested inverse group would be mirrored — draw as point + label in outer? Keep simple circle marker.
+      // Keep a simple marker; nested inverse transform would mirror labels.
       return `<g ${common}><circle cx="${e.position.x}" cy="${e.position.y}" r="0.12" fill="${stroke}" stroke="none" opacity="${opacity}" /><!-- ${escapeXml(e.value)} --></g>`;
     case "insert":
       return `<g ${common}><circle cx="${e.position.x}" cy="${e.position.y}" r="${0.2 * e.scale}" fill="${stroke}" fill-opacity="0.35" stroke="${stroke}" stroke-width="0.06"${dash} /><title>${escapeXml(e.block_name)}</title></g>`;

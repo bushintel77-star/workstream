@@ -25,7 +25,7 @@ describe("canvas progressive disclosure", () => {
     ).toBe("survey");
   });
 
-  it("unlocks sketch after aerial, not CAD", () => {
+  it("unlocks sketch and CAD after aerial", () => {
     const open = unlockedModes({
       hasAerial: true,
       hasSketch: false,
@@ -33,7 +33,7 @@ describe("canvas progressive disclosure", () => {
       hasQuote: false,
     });
     expect(open.has("sketch")).toBe(true);
-    expect(open.has("cad")).toBe(false);
+    expect(open.has("cad")).toBe(true);
     expect(open.has("quote")).toBe(false);
     expect(
       suggestedMode({
@@ -42,10 +42,10 @@ describe("canvas progressive disclosure", () => {
         hasCad: false,
         hasQuote: false,
       }),
-    ).toBe("sketch");
+    ).toBe("cad");
   });
 
-  it("unlocks CAD only after aerial + sketch", () => {
+  it("keeps CAD unlocked with or without sketch placements", () => {
     const open = unlockedModes({
       hasAerial: true,
       hasSketch: true,
@@ -75,7 +75,7 @@ describe("canvas progressive disclosure", () => {
     expect(withQuote.has("share")).toBe(true);
   });
 
-  it("clamps locked mode requests to the suggested next step", () => {
+  it("honours CAD from title click without sketch", () => {
     expect(
       resolveCanvasMode("cad", {
         hasAerial: true,
@@ -83,20 +83,12 @@ describe("canvas progressive disclosure", () => {
         hasCad: false,
         hasQuote: false,
       }),
-    ).toBe("sketch");
-    expect(
-      resolveCanvasMode("quote", {
-        hasAerial: true,
-        hasSketch: true,
-        hasCad: false,
-        hasQuote: false,
-      }),
     ).toBe("cad");
   });
 
-  it("honours unlocked mode from URL", () => {
+  it("clamps Quote until accepted CAD exists", () => {
     expect(
-      resolveCanvasMode("cad", {
+      resolveCanvasMode("quote", {
         hasAerial: true,
         hasSketch: true,
         hasCad: false,

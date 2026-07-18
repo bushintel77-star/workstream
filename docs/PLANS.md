@@ -1,8 +1,9 @@
 # Plans — Lite (free) vs paid integrations
 
 Product policy for **Workstream** when offered as a commercial service (beyond
-Curtis & Co internal use). **Not enforced in code yet** — documents intent for
-pricing, marketing, and future Stripe seat gating.
+Curtis & Co internal use). Commercial surface name: **Design & Build License**
+(`WorkspacePlan` lite | studio). **Enforced in code** for live integration
+hydration, Studio checkout, seat limits, and workspace membership.
 
 ## Lite (free) — first user
 
@@ -85,18 +86,18 @@ stage — not required for v1.
 
 ## Implementation punch list (commercial)
 
-When productising:
+1. ~~`WorkspacePlan`: `lite` | `studio` on `owner_id`~~
+2. ~~Gate live keys only if `studio`~~ (`canUseLiveIntegration` + owner secrets)
+3. Stripe Subscription: **integrations pack** (`STRIPE_STUDIO_PRICE_ID`) + **seat** (`STRIPE_SEAT_PRICE_ID`) — live when set; else dev unlock
+4. ~~Seat membership + block when `seats_used >= seat_limit`~~ (`ensureWorkspaceMember`)
+5. ~~Settings UI: `/settings/license` Design & Build License + hub badge~~
 
-1. `WorkspacePlan`: `lite` | `studio` on `owner_id`
-2. Gate `hydrateEnvFromStore` / integration save: live keys only if `studio`
-3. Stripe Subscription: **integrations pack** + **seat** price IDs
-4. Clerk: org or allowlist; block 2nd member if `seats_used >= seat_limit`
-5. Settings UI: plan badge, upgrade CTA, which integrations are live vs fallback
-
-Until then, Curtis & Co runs with Fly secrets = effective Studio tier.
+Curtis & Co Fly secrets still act as effective Studio when keys are on the machine;
+workspace plan must be `studio` for per-owner stored live keys to hydrate.
 
 ## Related docs
 
+- [CANVAS-FIRST-UX.md](CANVAS-FIRST-UX.md) — **binding** operator canvas UI mandate (progressive disclosure, paper/clay, optimistic + skeletal Live BOM)
 - [INTEGRATIONS.md](INTEGRATIONS.md) — hub API, CRM webhook, Resend, connector keys
 - [QUOTE_WORKFLOW.md](QUOTE_WORKFLOW.md) — operator sequence
 - [../OUTSTANDING.md](../OUTSTANDING.md) — engineering punch list

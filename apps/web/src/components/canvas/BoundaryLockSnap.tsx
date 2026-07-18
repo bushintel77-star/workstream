@@ -29,7 +29,10 @@ type SharedProps = {
   onUnlock: () => void;
   onReset: () => void;
   onToolChange: (tool: BoundaryTool) => void;
+  /** Hide inline HUD when parent renders BoundaryStatusHud in the right rail. */
   embeddedHud?: boolean;
+  /** When title is locked - open cream Fit sheet + CAD. */
+  onOpenFitSheet?: () => void;
 };
 
 function toDomain(b: SiteBoundaryLite): DomainBoundary {
@@ -96,77 +99,142 @@ export function BoundaryChrome({
   onReset,
   onToolChange,
   embeddedHud = false,
+  onOpenFitSheet,
 }: Omit<SharedProps, "onChange">) {
   const locked = boundary?.status === "VERIFIED";
+  const editing = tool === "edit" || tool === "add";
   return (
     <>
       <div className={css.toolbar} role="toolbar" aria-label="Boundary tools">
-        <button
-          type="button"
-          className={`${css.tool} ${tool === "auto" ? css.toolActive : ""}`}
-          title="AI Auto-Trace (A) — Vicmap parcel when available"
-          disabled={pending}
-          onClick={() => {
-            onToolChange("auto");
-            onAutoTrace();
-          }}
-        >
-          ✦
-          <span>Trace</span>
-        </button>
-        <button
-          type="button"
-          className={`${css.tool} ${tool === "edit" ? css.toolActive : ""}`}
-          title="Edit Nodes (V)"
-          disabled={pending || !boundary}
-          onClick={() => onToolChange("edit")}
-        >
-          ✎
-          <span>Edit</span>
-        </button>
-        <button
-          type="button"
-          className={`${css.tool} ${tool === "add" ? css.toolActive : ""}`}
-          title="Add Node (P)"
-          disabled={pending || !boundary || locked}
-          onClick={() => onToolChange("add")}
-        >
-          +
-          <span>Add</span>
-        </button>
-        <button
-          type="button"
-          className={`${css.tool} ${locked ? css.toolLocked : ""}`}
-          title={locked ? "Unlock boundary" : "Lock Boundary (L)"}
-          disabled={pending || !boundary}
-          onClick={() => (locked ? onUnlock() : onLock())}
-        >
-          {locked ? "🔒" : "🔓"}
-          <span>{locked ? "Locked" : "Lock"}</span>
-        </button>
-        <button
-          type="button"
-          className={css.tool}
-          title="Reset vector (Esc)"
-          disabled={pending || !boundary}
-          onClick={onReset}
-        >
-          ⌫
-          <span>Reset</span>
-        </button>
-        <button
-          type="button"
-          className={`${css.tool} ${tool === "pan" ? css.toolActive : ""}`}
-          title="Pan canvas"
-          onClick={() => onToolChange("pan")}
-        >
-          ✥
-          <span>Pan</span>
-        </button>
+        {locked ? (
+          <>
+            {onOpenFitSheet ? (
+              <button
+                type="button"
+                className={`${css.tool} ${css.toolPrimary}`}
+                title="Open cream Fit sheet + line CAD"
+                data-testid="boundary-open-fit-sheet"
+                onClick={onOpenFitSheet}
+              >
+                <span>Open Fit sheet</span>
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={`${css.tool} ${css.toolLocked}`}
+              title="Unlock title to edit vertices"
+              disabled={pending || !boundary}
+              onClick={onUnlock}
+            >
+              <span>Unlock</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={`${css.tool} ${tool === "auto" ? css.toolActive : ""}`}
+              title="AI Auto-Trace — Vicmap parcel when available"
+              disabled={pending}
+              onClick={() => {
+                onToolChange("auto");
+                onAutoTrace();
+              }}
+            >
+              <span>Trace</span>
+            </button>
+            <button
+              type="button"
+              className={`${css.tool} ${tool === "edit" ? css.toolActive : ""}`}
+              title="Edit nodes"
+              disabled={pending || !boundary}
+              onClick={() => onToolChange(editing ? "pan" : "edit")}
+            >
+              <span>{editing ? "Done" : "Edit boundary"}</span>
+            </button>
+            {editing ? (
+              <>
+                <button
+                  type="button"
+                  className={`${css.tool} ${tool === "add" ? css.toolActive : ""}`}
+                  title="Add node"
+                  disabled={pending || !boundary}
+                  onClick={() => onToolChange("add")}
+                >
+                  <span>Add</span>
+                </button>
+                <button
+                  type="button"
+                  className={css.tool}
+                  title="Reset vector"
+                  disabled={pending || !boundary}
+                  onClick={onReset}
+                >
+                  <span>Reset</span>
+                </button>
+              </>
+            ) : null}
+            <button
+              type="button"
+              className={css.tool}
+              title="Lock Boundary (L)"
+              disabled={pending || !boundary}
+              onClick={onLock}
+            >
+              <span>Lock title</span>
+            </button>
+            <button
+              type="button"
+              className={`${css.tool} ${tool === "pan" ? css.toolActive : ""}`}
+              title="Pan canvas"
+              onClick={() => onToolChange("pan")}
+            >
+              <span>Pan</span>
+            </button>
+          </>
+        )}
       </div>
 
       {boundary && !embeddedHud ? (
-        <BoundaryStatusHud boundary={boundary} />
+        <div className={css.hud}>
+          <span
+            className={`${css.pill} ${locked ? css.pillVerified : css.pillDraft}`}
+          >
+            {locked
+              ? "TITLE LOCKED · FIT SHEET READY"
+              : "TITLE UNVERIFIED · TRACE OR EDIT"}
+          </span>
+          <div className={css.telemetry}>
+            <div>
+              <em>Outdoor area</em>
+              <strong>
+                {boundary.calculated_metrics.total_area_m2.toLocaleString()} m²
+              </strong>
+            </div>
+            <div>
+              <em>Perimeter</em>
+              <strong>
+                {boundary.calculated_metrics.perimeter_m.toLocaleString()} lm
+              </strong>
+            </div>
+            {!locked &&
+            boundary.calculated_metrics.ai_confidence != null ? (
+              <div>
+                <em>AI confidence</em>
+                <strong>
+                  {Math.round(
+                    boundary.calculated_metrics.ai_confidence * 100,
+                  )}
+                  %
+                </strong>
+              </div>
+            ) : null}
+            <div>
+              <em>Source</em>
+              <strong>{boundary.source_kind}</strong>
+            </div>
+          </div>
+        </div>
       ) : null}
     </>
   );

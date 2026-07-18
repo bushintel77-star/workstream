@@ -44,14 +44,14 @@ export async function getOrchestrationWorld(
   ownerId: string,
   projectId: string,
 ): Promise<ProjectOrchestrationWorld> {
-  const [canvas, cad, survey, symbols, rates] = await Promise.all([
+  const [canvas, cad, survey, symbols, rates, st] = await Promise.all([
     store.getDesignCanvas(ownerId, projectId),
     store.getCadDocument(ownerId, projectId),
     store.getSurvey(ownerId, projectId),
     store.listCatalogSymbols(ownerId),
     store.listRateCard(ownerId),
+    loadOverlayState(store, ownerId, projectId),
   ]);
-  const st = await loadOverlayState(store, ownerId, projectId);
   const world = buildOrchestrationWorld({
     projectId,
     canvas,

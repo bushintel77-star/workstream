@@ -241,16 +241,24 @@ export async function prepareSiteFirstRunAction(projectId: string) {
     }
 
     let mode: "cad" | "sketch" = "sketch";
+    let ghostCount = 0;
+    let cadResult: Awaited<ReturnType<typeof generateCadApi>> | null = null;
     try {
-      await generateCadApi(projectId);
+      cadResult = await generateCadApi(projectId);
       mode = "cad";
+      ghostCount = cadResult.ghost_count ?? 0;
     } catch {
       /* CAD may fail without model keys — sketch + live BOM still useful */
       mode = "sketch";
     }
 
     revalidatePath(`/projects/${projectId}`);
-    return { mode, placementCount: canvas.placements.length };
+    return {
+      mode,
+      placementCount: canvas.placements.length,
+      ghostCount,
+      cad: cadResult,
+    };
   } catch (err) {
     throw wrapApiError(err, "Could not prepare site");
   }
@@ -299,6 +307,31 @@ export async function getCadDocumentAction(projectId: string) {
     return await getCadDocumentApi(projectId);
   } catch (err) {
     throw wrapApiError(err, "Failed to load AI CAD");
+  }
+}
+
+export async function ensureCadAction(projectId: string) {
+  const { ensureCadApi } = await import("../lib/api");
+  try {
+    const result = await ensureCadApi(projectId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Could not open CAD sheet");
+  }
+}
+
+export async function applyCadOpsAction(
+  projectId: string,
+  ops: import("@workstream/contracts").CadOp[],
+) {
+  const { applyCadOpsApi } = await import("../lib/api");
+  try {
+    const result = await applyCadOpsApi(projectId, ops);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Could not save CAD line");
   }
 }
 
@@ -687,6 +720,7 @@ export async function upgradePlanAction(plan: "lite" | "studio"): Promise<void> 
   const { upgradeWorkspacePlanApi } = await import("../lib/api");
   await upgradeWorkspacePlanApi(plan);
   revalidatePath("/settings");
+  revalidatePath("/settings/license");
 }
 
 export async function startStudioCheckoutAction(): Promise<{
@@ -694,7 +728,32 @@ export async function startStudioCheckoutAction(): Promise<{
   mode: "live" | "dev_fallback";
 }> {
   const { startStudioCheckoutApi } = await import("../lib/api");
-  return startStudioCheckoutApi();
+  const result = await startStudioCheckoutApi();
+  revalidatePath("/settings/license");
+  return result;
+}
+
+export async function startSeatCheckoutAction(extraSeats = 1): Promise<{
+  checkout_url: string;
+  mode: "live" | "dev_fallback";
+  seat_limit: number;
+}> {
+  const { startSeatCheckoutApi } = await import("../lib/api");
+  const result = await startSeatCheckoutApi(extraSeats);
+  revalidatePath("/settings/license");
+  return result;
+}
+
+export async function inviteWorkspaceMemberAction(userId: string): Promise<void> {
+  const { inviteWorkspaceMemberApi } = await import("../lib/api");
+  await inviteWorkspaceMemberApi(userId);
+  revalidatePath("/settings/license");
+}
+
+export async function removeWorkspaceMemberAction(userId: string): Promise<void> {
+  const { removeWorkspaceMemberApi } = await import("../lib/api");
+  await removeWorkspaceMemberApi(userId);
+  revalidatePath("/settings/license");
 }
 
 export type PortalLinkState = {

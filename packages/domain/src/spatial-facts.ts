@@ -7,7 +7,10 @@ import type {
   SpatialObject,
   Survey,
 } from "@workstream/contracts";
+import { DEFAULT_PAVING_ASSEMBLY, totalDepthM } from "./assembly-recipe";
 import { getCatalogSymbol } from "./catalog";
+
+const DEFAULT_PAVING_DEPTH_M = totalDepthM(DEFAULT_PAVING_ASSEMBLY);
 
 function layerForCategory(
   category: CatalogSymbol["category"] | undefined,
@@ -103,11 +106,11 @@ export function spatialFactsFromCanvas(
         layer === "hardscape" && area > 0
           ? Math.round(Math.sqrt(area) * 4 * 100) / 100
           : 0,
-      depth_m: layer === "hardscape" ? 0.25 : undefined,
+      depth_m: layer === "hardscape" ? DEFAULT_PAVING_DEPTH_M : undefined,
       height_m: height,
       volume_m3:
         layer === "hardscape" && area > 0
-          ? Math.round(area * 0.25 * 100) / 100
+          ? Math.round(area * DEFAULT_PAVING_DEPTH_M * 100) / 100
           : undefined,
       count: 1,
       x_pct: p.x_pct,
@@ -228,10 +231,10 @@ export function spatialFactsFromCad(
       source: "cad",
       area_m2: Math.round(area * 100) / 100,
       length_m: Math.round(length * 100) / 100,
-      depth_m: layer === "hardscape" ? 0.25 : undefined,
+      depth_m: layer === "hardscape" ? DEFAULT_PAVING_DEPTH_M : undefined,
       volume_m3:
         layer === "hardscape" && area > 0
-          ? Math.round(area * 0.25 * 100) / 100
+          ? Math.round(area * DEFAULT_PAVING_DEPTH_M * 100) / 100
           : undefined,
       count: 1,
       x_pct,

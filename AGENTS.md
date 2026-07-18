@@ -22,10 +22,15 @@ Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json
 
 - Home: `/` — address composer + sites list
 - Operator canvas: `/projects/[id]?mode=survey|sketch|cad|quote|share`
+- **Fit sheet** (cream paper working drawing): `ArchitecturalSheet` + `FitSheetLayer` + MapLibre `GeoSiteMap` on the Vicmap title frame. Survey → lock title → **Open Fit sheet** (or auto on CAD/Quote/Share). Toggle with **F** / `data-testid="fit-sheet-top"`. Session prefs: `ws-fit-sheet:{projectId}`, `ws-fit-dims:{projectId}`.
 
-Sketch mode (`SketchInstrument`) owns: paint/save, AI ghost scan (`scanDesignGhostsAction`), NL assist (`designAssistAction` + ribbon Ask AI), Cmd+K command palette, rotate/scale handles, ribbon search, site-intelligence overlays (sun/shade + easements toggles on right rail).
+Sketch mode (`SketchInstrument`) owns: paint/save, AI ghost scan (`scanDesignGhostsAction`), NL assist (`designAssistAction` + ribbon Ask AI), Cmd+K command palette, rotate/scale handles, ribbon search, site-intelligence overlays (sun/shade + easements toggles on right rail when on static-aerial fallback).
+
+MapLibre stage needs map style routes (`/api/map-config`, `/api/map-style/satellite`) — works without keys via bundled fallbacks where configured.
 
 AI pipeline: heuristic coaching (`buildSketchCanvasAiSuggestions`) + optional vision ghosts API + NL sketch assist (`POST /projects/:id/design/assist` via `buildStudioSystemPrompt`) + CAD ghosts on generate (`generateCadAction`). Ghosts are ephemeral until accept.
+
+**Single branch:** Fit sheet geo canvas and sketch-assist polish both live on `main` — do not reintroduce parallel feature branches for canvas chrome.
 
 ### UTF-8 / Turbopack
 

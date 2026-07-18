@@ -49,6 +49,10 @@ export default async function ProjectCanvasPage({
     sketch = {
       aerialUri: survey.aerial_uri,
       lotRing: survey.title_polygon.coordinates[0] as [number, number][],
+      houseRing: (survey.house_polygon?.coordinates?.[0] ?? []) as [
+        number,
+        number,
+      ][],
       symbols,
       rateCard,
       canvas,

@@ -73,12 +73,15 @@ export function IntegrationHubPanel({
       <div className={s.cardHead}>
         <h2 className={s.cardTitle}>Integration hub</h2>
         <span className={`${s.pill} ${planPill}`}>
-          {billing.plan === "studio" ? "Studio" : "Lite · 1 user free"}
+          {billing.plan === "studio"
+            ? "Design & Build · Studio"
+            : "Design & Build · Lite"}
         </span>
       </div>
       <p className={s.lede}>
-        {liveCount} of {channels.length} channels live. Zoho CRM Free (solo) via n8n
-        webhook; Resend for email; MYOB/Xero/Stripe when on Studio.
+        {liveCount} of {channels.length} channels live. Manage the{" "}
+        <a href="/settings/license">Design &amp; Build License</a> for seats and
+        Studio unlock. Zoho CRM Free via n8n; Resend; MYOB/Xero/Stripe on Studio.
       </p>
 
       <div className={styles.hubActions}>

@@ -230,6 +230,8 @@ export async function getIntegrationSummary(
   ownerId: string,
 ): Promise<IntegrationSummary> {
   const billing = await store.getWorkspaceBilling(ownerId);
+  await store.ensureWorkspaceMember(ownerId, ownerId, "owner");
+  const seats_used = await store.countWorkspaceSeats(ownerId);
   const channels = await channelStatuses(store, ownerId);
   const live_channels = channels.filter((c) => c.live).length;
   const next_steps = buildIntegrationSetupSteps(billing.plan, channels);
@@ -237,6 +239,7 @@ export async function getIntegrationSummary(
   return {
     plan: billing.plan,
     seat_limit: billing.seat_limit,
+    seats_used,
     live_channels,
     total_channels: channels.length,
     needs_attention,

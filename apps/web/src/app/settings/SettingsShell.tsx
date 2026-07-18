@@ -3,6 +3,7 @@ import s from "../../styles/app.module.css";
 import p from "../projects/[id]/project.module.css";
 
 const TABS: Array<{ slug: string; label: string }> = [
+  { slug: "license", label: "License" },
   { slug: "", label: "Integrations" },
   { slug: "rate-card", label: "Rate card" },
   { slug: "plant-palette", label: "Plant palette" },
@@ -17,6 +18,7 @@ export function SettingsMasthead({
   subtitle,
 }: {
   active:
+    | "license"
     | "integrations"
     | "rate-card"
     | "plant-palette"
