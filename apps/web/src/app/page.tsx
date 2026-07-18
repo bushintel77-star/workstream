@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listProjects, type ProjectStatus } from "../lib/api";
 import { requireSignedIn } from "../lib/auth";
 import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
+import { WorkflowPreviewStrip } from "../components/WorkflowPreviewStrip";
 import home from "./home.module.css";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export default async function HomePage() {
 
   return (
     <main className={home.page}>
+      <WorkflowPreviewStrip />
       <header className={home.hero}>
         <p className={home.kicker}>Workstream</p>
         <h1 className={home.brand}>Curtis &amp; Co</h1>

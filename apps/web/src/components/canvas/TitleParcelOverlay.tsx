@@ -8,14 +8,14 @@ import {
 import css from "./titleParcelOverlay.module.css";
 
 type Props = {
-  /** GeoJSON ring [lng, lat][] — title / Vicmap parcel. */
+  /** GeoJSON ring [lng, lat][] - title / Vicmap parcel. */
   lotRing: [number, number][];
   mapView: StaticMapView;
 };
 
 /**
  * Land-title ring projected into the Mapbox aerial frame (relative %).
- * Read-only — BoundaryOverlay is the editable HITL layer.
+ * Read-only - BoundaryOverlay is the editable HITL layer.
  */
 export function TitleParcelOverlay({ lotRing, mapView }: Props) {
   const points = useMemo(() => {

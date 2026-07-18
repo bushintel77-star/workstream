@@ -29,6 +29,7 @@ type SharedProps = {
   onUnlock: () => void;
   onReset: () => void;
   onToolChange: (tool: BoundaryTool) => void;
+  embeddedHud?: boolean;
 };
 
 function toDomain(b: SiteBoundaryLite): DomainBoundary {
@@ -40,6 +41,51 @@ function fromDomain(b: DomainBoundary): SiteBoundaryLite {
 }
 
 /** Fixed chrome — toolbar + status pill + telemetry (outside pan/zoom world). */
+export function BoundaryStatusHud({
+  boundary,
+  embedded = false,
+}: {
+  boundary: SiteBoundaryLite;
+  embedded?: boolean;
+}) {
+  const locked = boundary.status === "VERIFIED";
+  return (
+    <div className={`${css.hud} ${embedded ? css.hudEmbedded : ""}`}>
+      <span
+        className={`${css.pill} ${locked ? css.pillVerified : css.pillDraft}`}
+      >
+        {locked ? "BOUNDARY LOCKED: VERIFIED" : "AI DRAFT: UNVERIFIED"}
+      </span>
+      <div className={css.telemetry}>
+        <div>
+          <em>Outdoor area</em>
+          <strong>
+            {boundary.calculated_metrics.total_area_m2.toLocaleString()} m²
+          </strong>
+        </div>
+        <div>
+          <em>Perimeter</em>
+          <strong>
+            {boundary.calculated_metrics.perimeter_m.toLocaleString()} lm
+          </strong>
+        </div>
+        {!locked && boundary.calculated_metrics.ai_confidence != null ? (
+          <div>
+            <em>AI confidence</em>
+            <strong>
+              {Math.round(boundary.calculated_metrics.ai_confidence * 100)}%
+            </strong>
+          </div>
+        ) : null}
+        <div>
+          <em>Source</em>
+          <strong>{boundary.source_kind}</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function BoundaryChrome({
   boundary,
   tool,
@@ -49,6 +95,7 @@ export function BoundaryChrome({
   onUnlock,
   onReset,
   onToolChange,
+  embeddedHud = false,
 }: Omit<SharedProps, "onChange">) {
   const locked = boundary?.status === "VERIFIED";
   return (
@@ -118,46 +165,8 @@ export function BoundaryChrome({
         </button>
       </div>
 
-      {boundary ? (
-        <div className={css.hud}>
-          <span
-            className={`${css.pill} ${locked ? css.pillVerified : css.pillDraft}`}
-          >
-            {locked
-              ? "BOUNDARY LOCKED: VERIFIED"
-              : "AI DRAFT: UNVERIFIED"}
-          </span>
-          <div className={css.telemetry}>
-            <div>
-              <em>Outdoor area</em>
-              <strong>
-                {boundary.calculated_metrics.total_area_m2.toLocaleString()} m²
-              </strong>
-            </div>
-            <div>
-              <em>Perimeter</em>
-              <strong>
-                {boundary.calculated_metrics.perimeter_m.toLocaleString()} lm
-              </strong>
-            </div>
-            {!locked &&
-            boundary.calculated_metrics.ai_confidence != null ? (
-              <div>
-                <em>AI confidence</em>
-                <strong>
-                  {Math.round(
-                    boundary.calculated_metrics.ai_confidence * 100,
-                  )}
-                  %
-                </strong>
-              </div>
-            ) : null}
-            <div>
-              <em>Source</em>
-              <strong>{boundary.source_kind}</strong>
-            </div>
-          </div>
-        </div>
+      {boundary && !embeddedHud ? (
+        <BoundaryStatusHud boundary={boundary} />
       ) : null}
     </>
   );

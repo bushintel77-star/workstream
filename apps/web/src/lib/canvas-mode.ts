@@ -16,7 +16,7 @@ export type CanvasProgress = {
 };
 
 /**
- * Progressive unlock ù matches API prerequisites:
+ * Progressive unlock - matches API prerequisites:
  * CAD needs aerial + sketch; Quote needs accepted CAD; Share needs persisted quote.
  */
 export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {

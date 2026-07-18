@@ -20,6 +20,7 @@ type HudProps = Shared & {
   onMeasureActiveChange: (on: boolean) => void;
   measureDistanceM: number | null;
   measureHint: string | null;
+  embedded?: boolean;
 };
 
 type MeasureProps = Shared & {
@@ -30,7 +31,7 @@ type MeasureProps = Shared & {
 
 export type MeasurePt = { xPct: number; yPct: number };
 
-/** Fixed HUD — scale bar + measure toggle (stage chrome). */
+/** Fixed HUD - scale bar + measure toggle (stage chrome). */
 export function DraftingHud({
   mapView,
   worldWidthPx,
@@ -40,6 +41,7 @@ export function DraftingHud({
   onMeasureActiveChange,
   measureDistanceM,
   measureHint,
+  embedded = false,
 }: HudProps) {
   const mpp = useMemo(() => {
     if (!mapView) return null;
@@ -71,7 +73,11 @@ export function DraftingHud({
         </div>
       ) : null}
 
-      <div className={css.toolRow} role="toolbar" aria-label="Drafting assists">
+      <div
+        className={`${css.toolRow} ${embedded ? css.toolRowEmbedded : ""}`}
+        role="toolbar"
+        aria-label="Drafting assists"
+      >
         <button
           type="button"
           className={`${css.toolBtn} ${measureActive ? css.toolBtnOn : ""}`}
@@ -83,7 +89,7 @@ export function DraftingHud({
         </button>
         {mpp ? (
           <span className={css.meta} data-testid="canvas-mpp">
-            grid snap · {(mpp.x * 2.5).toFixed(2)} m
+            grid snap Â· {(mpp.x * 2.5).toFixed(2)} m
           </span>
         ) : (
           <span className={css.meta}>grid snap on</span>
@@ -100,7 +106,7 @@ export function DraftingHud({
   );
 }
 
-/** Measure tape overlay — lives inside the pan/zoom world. */
+/** Measure tape overlay - lives inside the pan/zoom world. */
 export function MeasureOverlay({
   mapView,
   worldWidthPx,

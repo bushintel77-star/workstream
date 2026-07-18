@@ -75,6 +75,14 @@
   pointer-events: none;
 }
 
+.hudEmbedded {
+  position: static;
+  z-index: auto;
+  width: 100%;
+  align-items: stretch;
+  pointer-events: auto;
+}
+
 .pill {
   padding: 0.48rem 0.95rem;
   border-radius: 999px;

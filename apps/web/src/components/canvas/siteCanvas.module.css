@@ -288,13 +288,61 @@
   position: absolute;
   top: 3.6rem;
   left: 1rem;
-  right: 1rem;
   z-index: 5;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 1rem;
   pointer-events: none;
+  max-width: min(420px, calc(100vw - 11rem));
+}
+
+.rightRail {
+  position: absolute;
+  top: 3.6rem;
+  right: 1rem;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: calc(100vh - 5rem);
+  overflow: auto;
+  pointer-events: none;
+  scrollbar-width: thin;
+}
+
+.rightRail > * {
+  pointer-events: auto;
+}
+
+.railActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.honestyCaption {
+  position: absolute;
+  left: 50%;
+  bottom: 0.65rem;
+  transform: translateX(-50%);
+  z-index: 4;
+  margin: 0;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--frost);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blush) 18%, transparent);
 }
 
 .brandBlock {
@@ -522,12 +570,10 @@
 }
 
 .sheet {
-  position: absolute;
-  z-index: 7;
-  top: 5.5rem;
-  right: 1rem;
-  width: min(360px, calc(100vw - 2rem));
-  max-height: calc(100vh - 10rem);
+  position: static;
+  z-index: auto;
+  width: 100%;
+  max-height: min(42vh, 420px);
   overflow: auto;
   padding: 1.2rem 1.25rem;
   border-radius: var(--radius-sheet);
@@ -674,13 +720,20 @@
 }
 
 @media (max-width: 640px) {
-  .sheet {
-    left: 1rem;
-    right: 1rem;
-    width: auto;
-    top: auto;
-    bottom: 8.5rem;
-    max-height: 38vh;
+  .topBar {
+    left: 0.65rem;
+    max-width: calc(100vw - 8.5rem);
+  }
+
+  .rightRail {
+    top: 3.25rem;
+    right: 0.65rem;
+    width: min(320px, calc(100vw - 1.3rem));
+    max-height: calc(100vh - 4.5rem);
+  }
+
+  .brandBlock {
+    padding: 0.75rem 0.95rem;
   }
 
   .brand {
@@ -691,5 +744,12 @@
     top: 0.65rem;
     max-width: calc(100vw - 1rem);
     overflow-x: auto;
+  }
+
+  .honestyCaption {
+    white-space: normal;
+    text-align: center;
+    max-width: calc(100vw - 2rem);
+    bottom: 0.5rem;
   }
 }

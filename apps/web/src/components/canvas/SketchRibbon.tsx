@@ -51,7 +51,7 @@ function actionLabel(s: StudioAiSuggestion): string {
   }
 }
 
-/** 2026 floating sketch ribbon — gold assets, tabs, AI coaching. */
+/** 2026 floating sketch ribbon - gold assets, tabs, AI coaching. */
 export function SketchRibbon({
   symbols,
   armedRecipe,
@@ -123,7 +123,7 @@ export function SketchRibbon({
               key={sym.id}
               type="button"
               className={`${css.trayBtn} ${active ? css.trayBtnOn : ""}`}
-              title={`${sym.label} · ${w.toFixed(1)} m`}
+              title={`${sym.label} Â· ${w.toFixed(1)} m`}
               data-testid={`sketch-ribbon-${sym.id}`}
               onClick={() => onArm(sym)}
             >
@@ -144,9 +144,9 @@ export function SketchRibbon({
 
       <p className={css.status}>
         {armedRecipe
-          ? `Snap · ${brushWidthM.toFixed(1)} m brush · stamp or drag · Esc clears`
-          : "Gold library · sized to aerial · Alt+click samples"}
-        {saving ? " · Saving…" : ""}
+          ? `Snap Â· ${brushWidthM.toFixed(1)} m brush Â· stamp or drag Â· Esc clears`
+          : "Gold library Â· sized to aerial Â· Alt+click samples"}
+        {saving ? " Â· Saving?" : ""}
       </p>
     </div>
   );

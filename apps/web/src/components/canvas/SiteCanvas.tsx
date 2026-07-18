@@ -53,6 +53,7 @@ import {
 import {
   BoundaryChrome,
   BoundaryOverlay,
+  BoundaryStatusHud,
   type BoundaryTool,
 } from "./BoundaryLockSnap";
 import { CanvasModeStrip } from "./CanvasModeStrip";
@@ -589,7 +590,10 @@ function SiteCanvasInner({
                         : "Working planning · indicative"}
               </span>
             </div>
-            <div className={css.topActions}>
+          </div>
+
+          <div className={css.rightRail} data-testid="canvas-right-rail">
+            <div className={css.railActions}>
               <button type="button" className={css.iconBtn} onClick={fitSite}>
                 Fit
               </button>
@@ -597,36 +601,123 @@ function SiteCanvasInner({
                 Sites
               </Link>
             </div>
+
+            {mapView && mode !== "share" ? (
+              <DraftingHud
+                mapView={mapView}
+                worldWidthPx={worldSize.width}
+                worldHeightPx={worldSize.height}
+                viewScale={scale}
+                measureActive={measureActive}
+                onMeasureActiveChange={(on) => {
+                  setMeasureActive(on);
+                  if (!on) setMeasurePts([]);
+                }}
+                measureDistanceM={measureDistanceMetres(
+                  measurePts,
+                  mapView,
+                  worldSize.width,
+                  worldSize.height,
+                )}
+                measureHint={
+                  measureActive
+                    ? measurePts.length === 0
+                      ? "Tap start point"
+                      : measurePts.length === 1
+                        ? "Tap end point"
+                        : null
+                    : null
+                }
+                embedded
+              />
+            ) : null}
+
+            {showBoundary && boundary ? (
+              <BoundaryStatusHud boundary={boundary} embedded />
+            ) : null}
+
+            {(mode === "quote" || mode === "cad") &&
+            sheet !== "none" &&
+            (survey || build) ? (
+              <aside className={css.sheet} aria-label="Schedule sheet">
+                <button
+                  type="button"
+                  className={css.sheetClose}
+                  onClick={() => setSheet("none")}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+                <h2 className={css.sheetTitle}>
+                  {sheet === "qs" ? "Quantity survey" : "Itemised build"}
+                </h2>
+                {sheet === "qs" && survey ? (
+                  <>
+                    <table className={css.table}>
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Qty</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {survey.rows.map((r) => (
+                          <tr key={r.id}>
+                            <td>{r.label}</td>
+                            <td>
+                              {r.qty} {r.unit}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className={css.totals}>
+                      Hardscape {survey.totals.hardscape_m2} m² · Planting{" "}
+                      {survey.totals.planting_ea} ea · Irrigation{" "}
+                      {survey.totals.irrigation_lm} lm
+                    </div>
+                  </>
+                ) : null}
+                {sheet === "build" && build ? (
+                  <>
+                    <table className={css.table}>
+                      <thead>
+                        <tr>
+                          <th>SKU</th>
+                          <th>Qty</th>
+                          <th>$</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {build.line_items.map((l) => (
+                          <tr key={`${l.sku}-${l.label}`}>
+                            <td>{l.label}</td>
+                            <td>
+                              {l.qty} {l.unit}
+                            </td>
+                            <td>{l.total.toFixed(0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className={css.totals}>
+                      Subtotal ${build.subtotal.toFixed(0)}
+                      <br />
+                      Contingency ${build.contingency.toFixed(0)}
+                      <br />
+                      GST ${build.gst.toFixed(0)}
+                      <br />
+                      <strong>Total ${build.total.toFixed(0)}</strong>
+                    </div>
+                  </>
+                ) : null}
+              </aside>
+            ) : null}
           </div>
 
-          {mapView && mode !== "share" ? (
-            <DraftingHud
-              mapView={mapView}
-              worldWidthPx={worldSize.width}
-              worldHeightPx={worldSize.height}
-              viewScale={scale}
-              measureActive={measureActive}
-              onMeasureActiveChange={(on) => {
-                setMeasureActive(on);
-                if (!on) setMeasurePts([]);
-              }}
-              measureDistanceM={measureDistanceMetres(
-                measurePts,
-                mapView,
-                worldSize.width,
-                worldSize.height,
-              )}
-              measureHint={
-                measureActive
-                  ? measurePts.length === 0
-                    ? "Tap start point"
-                    : measurePts.length === 1
-                      ? "Tap end point"
-                      : null
-                  : null
-              }
-            />
-          ) : null}
+          <p className={css.honestyCaption} data-testid="canvas-honesty-caption">
+            Concept sketch on aerial - indicative scale, not a construction drawing
+          </p>
 
           {showBoundary ? (
             <BoundaryChrome
@@ -634,6 +725,7 @@ function SiteCanvasInner({
               tool={boundaryTool}
               pending={pending}
               onToolChange={setBoundaryTool}
+              embeddedHud
               onAutoTrace={() =>
                 run("Tracing parcel…", async () => {
                   const res = await autoTraceBoundaryAction(projectId);
@@ -663,84 +755,6 @@ function SiteCanvasInner({
                 })
               }
             />
-          ) : null}
-
-          {(mode === "quote" || mode === "cad") &&
-          sheet !== "none" &&
-          (survey || build) ? (
-            <aside className={css.sheet} aria-label="Schedule sheet">
-              <button
-                type="button"
-                className={css.sheetClose}
-                onClick={() => setSheet("none")}
-                aria-label="Close"
-              >
-                ×
-              </button>
-              <h2 className={css.sheetTitle}>
-                {sheet === "qs" ? "Quantity survey" : "Itemised build"}
-              </h2>
-              {sheet === "qs" && survey ? (
-                <>
-                  <table className={css.table}>
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {survey.rows.map((r) => (
-                        <tr key={r.id}>
-                          <td>{r.label}</td>
-                          <td>
-                            {r.qty} {r.unit}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className={css.totals}>
-                    Hardscape {survey.totals.hardscape_m2} m² · Planting{" "}
-                    {survey.totals.planting_ea} ea · Irrigation{" "}
-                    {survey.totals.irrigation_lm} lm
-                  </div>
-                </>
-              ) : null}
-              {sheet === "build" && build ? (
-                <>
-                  <table className={css.table}>
-                    <thead>
-                      <tr>
-                        <th>SKU</th>
-                        <th>Qty</th>
-                        <th>$</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {build.line_items.map((l) => (
-                        <tr key={`${l.sku}-${l.label}`}>
-                          <td>{l.label}</td>
-                          <td>
-                            {l.qty} {l.unit}
-                          </td>
-                          <td>{l.total.toFixed(0)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className={css.totals}>
-                    Subtotal ${build.subtotal.toFixed(0)}
-                    <br />
-                    Contingency ${build.contingency.toFixed(0)}
-                    <br />
-                    GST ${build.gst.toFixed(0)}
-                    <br />
-                    <strong>Total ${build.total.toFixed(0)}</strong>
-                  </div>
-                </>
-              ) : null}
-            </aside>
           ) : null}
 
           {showSurveyDock ? (
