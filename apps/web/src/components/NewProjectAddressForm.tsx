@@ -177,7 +177,7 @@ export function NewProjectAddressForm() {
         disabled={!canContinue}
         onClick={goConfirm}
       >
-        {selected ? "Pin garden on aerial →" : "Continue with this address →"}
+        {selected ? "Open site →" : "Continue with this address →"}
       </button>
     </div>
   );

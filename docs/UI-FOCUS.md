@@ -16,10 +16,13 @@ surfaces, type **Fraunces** + **Sora**.
 
 **One canvas:** `/projects/:id` is the only operator surface. Modes via
 `?mode=` are **lenses** (Survey · Sketch · CAD · Quote · Share) into one world —
-not a estimation pipeline. **Material Orchestrator** keeps a live preemptive BOM
+not an estimation pipeline. **Material Orchestrator** keeps a live preemptive BOM
 and risk overlays on Sketch/CAD/Quote. Progressive disclosure: only the current
-lens + next unlock show. Legacy routes redirect into the canvas. Client portal +
-Settings stay separate.
+lens + next unlock show.
+
+**2-minute first run:** address → confirm aerial → `?guide=1` → one tap
+**Prepare this site** (starter massing + AI CAD when available) → nudge → share.
+Legacy routes redirect into the canvas. Client portal + Settings stay separate.
 
 ## Studio — status
 

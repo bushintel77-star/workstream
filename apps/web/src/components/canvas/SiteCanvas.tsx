@@ -28,6 +28,7 @@ import {
   saveBoundaryAction,
   unlockBoundaryAction,
 } from "../../app/actions";
+import { FirstRunGuide } from "./FirstRunGuide";
 import { LiveBomHud } from "./LiveBomHud";
 import type {
   CadBuildApi,
@@ -40,6 +41,7 @@ import {
   resolveCanvasMode,
   type CanvasMode,
 } from "../../lib/canvas-mode";
+import { onOrchestrationRefreshRequest } from "../../lib/canvas-mutation-bus";
 import { DesignStudioClient } from "../../app/projects/[id]/design/DesignStudioClient";
 import {
   BoundaryChrome,
@@ -113,6 +115,9 @@ function SiteCanvasInner({
   const [orchRefresh, setOrchRefresh] = useState(0);
   const [orchWorld, setOrchWorld] = useState<ProjectOrchestrationWorld | null>(
     null,
+  );
+  const [showGuide, setShowGuide] = useState(
+    () => searchParams.get("guide") === "1",
   );
   const [pending, startTransition] = useTransition();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -265,6 +270,22 @@ function SiteCanvasInner({
 
   const bumpOrchestration = () => setOrchRefresh((n) => n + 1);
 
+  useEffect(() => onOrchestrationRefreshRequest(bumpOrchestration), []);
+
+  const clearGuideParam = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("guide");
+    const q = params.toString();
+    router.replace(
+      q ? `/projects/${projectId}?${q}` : `/projects/${projectId}`,
+      { scroll: false },
+    );
+  }, [projectId, router, searchParams]);
+
+  useEffect(() => {
+    if (committedCount > 0) setShowGuide(false);
+  }, [committedCount]);
+
   return (
     <div className={css.root} data-testid="site-canvas" data-canvas-mode={mode}>
       <CanvasModeStrip mode={mode} progress={progress} onMode={setMode} />
@@ -284,6 +305,23 @@ function SiteCanvasInner({
             />
           </Suspense>
         </div>
+      ) : null}
+
+      {showGuide && aerialUri && committedCount === 0 ? (
+        <FirstRunGuide
+          projectId={projectId}
+          onDismiss={() => {
+            setShowGuide(false);
+            clearGuideParam();
+          }}
+          onDone={(nextMode) => {
+            setShowGuide(false);
+            clearGuideParam();
+            setMode(nextMode);
+            bumpOrchestration();
+            router.refresh();
+          }}
+        />
       ) : null}
 
       {showLiveBom ? (
@@ -547,8 +585,8 @@ function SiteCanvasInner({
             <div className={css.dock}>
               <p className={css.dockPrimaryHint}>
                 {aerialUri
-                  ? "Next — sketch massing or jump to CAD"
-                  : "Step 1 — load the aerial"}
+                  ? "Site loaded — prepare the concept next"
+                  : "Load the aerial for this address"}
               </p>
               <div className={css.btnRow}>
                 {!aerialUri ? (
@@ -565,48 +603,27 @@ function SiteCanvasInner({
                       })
                     }
                   >
-                    Run survey
+                    Load site
                   </button>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      className={`${css.btn} ${css.btnPrimary}`}
-                      onClick={() => setMode("sketch")}
-                    >
-                      Sketch on aerial →
-                    </button>
-                    <button
-                      type="button"
-                      className={css.btn}
-                      onClick={() => setMode("cad")}
-                    >
-                      CAD →
-                    </button>
-                    <button
-                      type="button"
-                      className={css.btn}
-                      disabled={pending}
-                      onClick={() =>
-                        run("Running survey…", async () => {
-                          const fd = new FormData();
-                          fd.set("projectId", projectId);
-                          await runSurveyAction(fd);
-                          router.refresh();
-                        })
-                      }
-                    >
-                      Re-run survey
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    className={`${css.btn} ${css.btnPrimary}`}
+                    onClick={() => {
+                      setShowGuide(true);
+                      setMode("sketch");
+                    }}
+                  >
+                    Prepare this site →
+                  </button>
                 )}
               </div>
               <div className={`${css.status} ${error ? css.error : ""}`}>
                 {error ??
                   status ??
                   (aerialUri
-                    ? "Aerial ready — lock the boundary if you need it"
-                    : "Survey unlocks Sketch and CAD")}
+                    ? "One tap drafts concept, drawing, and live estimate"
+                    : "We need the aerial before anything else")}
               </div>
             </div>
           ) : null}
@@ -615,10 +632,10 @@ function SiteCanvasInner({
             <div className={css.dock}>
               <p className={css.dockPrimaryHint}>
                 {committedCount === 0
-                  ? "Step — generate CAD on this site"
+                  ? "AI can draft the working drawing on this aerial"
                   : ghostCount > 0
-                    ? "Accept AI ghosts, then quote"
-                    : "CAD ready — continue to quote"}
+                    ? "Review AI suggestions — accept when they look right"
+                    : "Drawing ready — live estimate is already updating"}
               </p>
               {showCadAdvanced ? (
                 <div className={css.promptRow}>
@@ -653,7 +670,7 @@ function SiteCanvasInner({
                       })
                     }
                   >
-                    Generate CAD
+                    Draft drawing
                   </button>
                 ) : ghostCount > 0 ? (
                   <button
@@ -666,7 +683,7 @@ function SiteCanvasInner({
                       })
                     }
                   >
-                    Accept ghosts ({ghostCount})
+                    Accept suggestions ({ghostCount})
                   </button>
                 ) : (
                   <button
@@ -674,7 +691,7 @@ function SiteCanvasInner({
                     className={`${css.btn} ${css.btnPrimary}`}
                     onClick={() => setMode("quote")}
                   >
-                    Quote →
+                    Review price →
                   </button>
                 )}
                 <button

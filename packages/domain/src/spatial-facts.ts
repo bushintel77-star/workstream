@@ -225,7 +225,7 @@ export function spatialFactsFromCad(
     out.push({
       id: `cad:${e.id}`,
       layer,
-      label: `${e.kind} · ${e.layer}`,
+      label: `${e.kind} / ${e.layer}`,
       source: "cad",
       area_m2: Math.round(area * 100) / 100,
       length_m: Math.round(length * 100) / 100,

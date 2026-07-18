@@ -211,6 +211,42 @@ export async function scanDesignGhostsAction(projectId: string) {
   }
 }
 
+/** First-run: seed starter massing, try AI CAD, land operator on the drawing. */
+export async function prepareSiteFirstRunAction(projectId: string) {
+  if (!projectId) throw new Error("Missing project");
+  const { buildFirstRunSeedPlacements } = await import("@workstream/domain");
+  const { getDesignCanvas, saveDesignCanvasApi, generateCadApi } =
+    await import("../lib/api");
+  try {
+    let canvas = await getDesignCanvas(projectId);
+    if (!canvas?.placements?.length) {
+      const seeded = buildFirstRunSeedPlacements();
+      const saved = await saveDesignCanvasApi(
+        projectId,
+        seeded,
+        [],
+        [],
+        [],
+      );
+      canvas = saved.canvas;
+    }
+
+    let mode: "cad" | "sketch" = "sketch";
+    try {
+      await generateCadApi(projectId);
+      mode = "cad";
+    } catch {
+      /* CAD may fail without model keys — sketch + live BOM still useful */
+      mode = "sketch";
+    }
+
+    revalidatePath(`/projects/${projectId}`);
+    return { mode, placementCount: canvas.placements.length };
+  } catch (err) {
+    throw wrapApiError(err, "Could not prepare site");
+  }
+}
+
 export async function getOrchestrationAction(projectId: string) {
   const { getOrchestrationApi } = await import("../lib/api");
   try {

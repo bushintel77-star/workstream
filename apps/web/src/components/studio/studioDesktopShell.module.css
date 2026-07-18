@@ -59,3 +59,16 @@
   z-index: 20;
   pointer-events: none;
 }
+
+/* Instrumental brush armed — rails recede so canvas stays primary. */
+.shellArmed .ribbonSlot,
+.shellArmed .contextSlot,
+.shellArmed .siteSlot {
+  opacity: 0.42;
+  transition: opacity 160ms ease;
+}
+
+.shellArmed .workspace > :not(.canvasWrap) {
+  opacity: 0.38;
+  transition: opacity 160ms ease;
+}

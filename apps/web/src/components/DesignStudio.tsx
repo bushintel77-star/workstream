@@ -12,7 +12,10 @@ import {
   buildStudioAiSuggestions,
   CATALOG_PLANNING_SYMBOL_IDS,
   isTier1WrightsTerrace,
+  jitterPlacement,
   polylineLengthFromCanvasPercent,
+  pushSwatchHistory,
+  recipeFromPlacement,
   snapPointPctToGrid,
   withDirtySaveSuggestion,
 } from "@workstream/domain";
@@ -21,6 +24,7 @@ import type {
   StudioAiSuggestion,
 } from "@workstream/domain";
 import type {
+  BrushRecipe,
   CanvasAnnotation,
   CanvasAnnotationKind,
   CatalogPlacement,
@@ -33,6 +37,18 @@ import {
   resolveStaticMapView,
   type StaticMapView,
 } from "../lib/mapView";
+import {
+  beginMutation,
+  commitPrecise,
+  createMutationFsm,
+  mutateHeuristic,
+  resolveMutation,
+  type MutationFsmState,
+} from "../lib/canvas-mutation-fsm";
+import {
+  publishMutationHud,
+  requestOrchestrationRefresh,
+} from "../lib/canvas-mutation-bus";
 import { saveDesignCanvasAction, scanDesignGhostsAction } from "../app/actions";
 import { useToast } from "./ToastHost";
 import { PipelineImageShell } from "./PipelineImageShell";
@@ -49,6 +65,8 @@ import {
   StudioMassPlantPanel,
   StudioSchedulePanel,
   GhostPlacementOverlay,
+  GhostCursor,
+  SwatchPad,
   CanvasAnnotationOverlay,
   StudioAiPanel,
   StudioRibbon,
@@ -241,6 +259,24 @@ export function DesignStudio({
   } = studio;
   const [draftPoints, setDraftPoints] = useState<StrokePointPct[]>([]);
   const [armedSymbolId, setArmedSymbolId] = useState<string | null>(null);
+  const [armedRecipe, setArmedRecipe] = useState<BrushRecipe | null>(null);
+  const [swatchHistory, setSwatchHistory] = useState<BrushRecipe[]>([]);
+  const [mutationFsm, setMutationFsm] = useState<MutationFsmState>(() =>
+    createMutationFsm(),
+  );
+  const paintRef = useRef<{
+    active: boolean;
+    lastX: number;
+    lastY: number;
+    stamped: number;
+    baselineCount: number;
+    unitCost: number;
+  } | null>(null);
+  const heuristicAtRef = useRef(0);
+  const mutationFsmRef = useRef(mutationFsm);
+  mutationFsmRef.current = mutationFsm;
+  const placementsRef = useRef(placements);
+  placementsRef.current = placements;
   const [paletteSelectedId, setPaletteSelectedId] = useState<string | null>(null);
   const [dragSymbolId, setDragSymbolId] = useState<string | null>(null);
   const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(
@@ -453,8 +489,90 @@ export function DesignStudio({
     [setPlacements],
   );
 
+  const syncMutationHud = useCallback((next: MutationFsmState) => {
+    mutationFsmRef.current = next;
+    setMutationFsm(next);
+    publishMutationHud({
+      phase: next.phase,
+      optimisticCost: next.optimisticCost,
+      pendingPrecise: next.pendingPrecise,
+    });
+  }, []);
+
+  const unitCostForSymbol = useCallback(
+    (symbolId: string) => {
+      const sym = symbolById.get(symbolId);
+      if (!sym?.rate_card_sku) return 40;
+      const rate = rateCard.find((r) => r.sku === sym.rate_card_sku);
+      return rate?.rate ?? 40;
+    },
+    [rateCard, symbolById],
+  );
+
+  const armBrush = useCallback(
+    (recipe: BrushRecipe) => {
+      setArmedRecipe(recipe);
+      setArmedSymbolId(recipe.symbol_id);
+      setPaletteSelectedId(recipe.symbol_id);
+      setSwatchHistory((h) => pushSwatchHistory(h, recipe));
+      if (toolOverride === "select" || toolOverride == null) {
+        setStudioTool("place");
+      }
+    },
+    [setStudioTool, toolOverride],
+  );
+
+  const samplePlacement = useCallback(
+    (placement: CatalogPlacement) => {
+      const recipe = recipeFromPlacement(
+        placement,
+        symbolById.get(placement.symbol_id),
+      );
+      armBrush(recipe);
+      toast.show(
+        `Sampled ${recipe.label ?? "symbol"} — click or drag to paint.`,
+        "info",
+      );
+    },
+    [armBrush, symbolById, toast],
+  );
+
+  const stampFromRecipe = useCallback(
+    (xPct: number, yPct: number, withJitter: boolean, recipe?: BrushRecipe | null) => {
+      const brush = recipe ?? armedRecipe;
+      if (!brush) return;
+      const pt = snapPointPctToGrid(xPct, yPct, 2.5, snapEnabled);
+      const jittered = withJitter
+        ? jitterPlacement({
+            scale: brush.scale,
+            rotation_deg: brush.rotation_deg,
+          })
+        : {
+            scale: brush.scale,
+            rotation_deg: brush.rotation_deg,
+          };
+      setPlacements((prev) => [
+        ...prev,
+        {
+          id: newId(),
+          symbol_id: brush.symbol_id,
+          x_pct: pt.x_pct,
+          y_pct: pt.y_pct,
+          rotation_deg: brush.copy_geometry ? jittered.rotation_deg : 0,
+          scale: brush.copy_geometry ? jittered.scale : 1,
+        },
+      ]);
+      setBulkSelectedIds(new Set());
+    },
+    [armedRecipe, setPlacements, snapEnabled],
+  );
+
   const addPlacement = useCallback(
     (symbolId: string, xPct: number, yPct: number) => {
+      if (armedRecipe && armedRecipe.symbol_id === symbolId) {
+        stampFromRecipe(xPct, yPct, true);
+        return;
+      }
       const pt = snapPointPctToGrid(xPct, yPct, 2.5, snapEnabled);
       setPlacements((prev) => [
         ...prev,
@@ -469,14 +587,14 @@ export function DesignStudio({
       ]);
       setBulkSelectedIds(new Set());
     },
-    [setPlacements, snapEnabled],
+    [armedRecipe, setPlacements, snapEnabled, stampFromRecipe],
   );
 
   const placeOnCanvas = useCallback(
     (clientX: number, clientY: number) => {
       const el = canvasRef.current;
       if (!el) return;
-      const symbolId = dragSymbolId ?? armedSymbolId;
+      const symbolId = dragSymbolId ?? armedRecipe?.symbol_id ?? armedSymbolId;
       if (!symbolId) return;
       if (toolOverride === "select") return;
       if (isMeasureMode || isMassPlantMode || isIrrigationMode) return;
@@ -486,6 +604,7 @@ export function DesignStudio({
     },
     [
       addPlacement,
+      armedRecipe?.symbol_id,
       armedSymbolId,
       dragSymbolId,
       isIrrigationMode,
@@ -495,6 +614,99 @@ export function DesignStudio({
       viewport,
     ],
   );
+
+  const beginPaintSession = useCallback(
+    (clientX: number, clientY: number) => {
+      const symbolId = armedRecipe?.symbol_id ?? armedSymbolId;
+      if (!symbolId) return;
+      const brush =
+        armedRecipe ??
+        ({
+          id: newId(),
+          symbol_id: symbolId,
+          scale: 1,
+          rotation_deg: 0,
+          label: symbolById.get(symbolId)?.label,
+          copy_geometry: true,
+          copy_material: true,
+          copy_pricing: true,
+        } satisfies BrushRecipe);
+      if (!armedRecipe) {
+        setArmedRecipe(brush);
+        setSwatchHistory((h) => pushSwatchHistory(h, brush));
+      }
+      const unit = unitCostForSymbol(symbolId);
+      const baselineCount = Math.max(placements.length, 1);
+      const baselineCost = baselineCount * unit;
+      syncMutationHud(beginMutation(mutationFsmRef.current, baselineCost, baselineCount));
+      const pt = viewport.clientToPct(clientX, clientY);
+      paintRef.current = {
+        active: true,
+        lastX: pt.x_pct,
+        lastY: pt.y_pct,
+        stamped: 0,
+        baselineCount,
+        unitCost: unit,
+      };
+      stampFromRecipe(pt.x_pct, pt.y_pct, true, brush);
+      paintRef.current.stamped = 1;
+      heuristicAtRef.current = performance.now();
+    },
+    [
+      armedRecipe,
+      armedSymbolId,
+      placements.length,
+      stampFromRecipe,
+      symbolById,
+      syncMutationHud,
+      unitCostForSymbol,
+      viewport,
+    ],
+  );
+
+  const continuePaintSession = useCallback(
+    (clientX: number, clientY: number) => {
+      const paint = paintRef.current;
+      if (!paint?.active) return;
+      const pt = viewport.clientToPct(clientX, clientY);
+      const dist = Math.hypot(pt.x_pct - paint.lastX, pt.y_pct - paint.lastY);
+      if (dist < 2.2) return;
+      paint.lastX = pt.x_pct;
+      paint.lastY = pt.y_pct;
+      stampFromRecipe(pt.x_pct, pt.y_pct, true);
+      paint.stamped += 1;
+      const now = performance.now();
+      if (now - heuristicAtRef.current >= 100) {
+        heuristicAtRef.current = now;
+        const area = paint.baselineCount + paint.stamped;
+        syncMutationHud(mutateHeuristic(mutationFsmRef.current, area));
+      }
+    },
+    [stampFromRecipe, syncMutationHud, viewport],
+  );
+
+  const endPaintSession = useCallback(() => {
+    const paint = paintRef.current;
+    if (!paint?.active) return;
+    paintRef.current = null;
+    syncMutationHud(resolveMutation(mutationFsmRef.current));
+    const unitCost = paint.unitCost;
+    const runPrecise = () => {
+      void handleSave().then((ok) => {
+        const precise =
+          Math.round(placementsRef.current.length * unitCost * 100) / 100;
+        syncMutationHud(commitPrecise(mutationFsmRef.current, precise));
+        if (ok) requestOrchestrationRefresh();
+      });
+    };
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      window.requestIdleCallback(() => runPrecise());
+    } else {
+      setTimeout(runPrecise, 0);
+    }
+    // handleSave is a function declaration in this component (hoisted).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncMutationHud]);
 
   const commitDraftStroke = useCallback(() => {
     if (draftPoints.length < 2) {
@@ -552,10 +764,20 @@ export function DesignStudio({
     (id: string) => {
       setPaletteSelectedId(id);
       if (toolOverride !== "select") {
-        setArmedSymbolId(id);
+        const sym = symbolById.get(id);
+        armBrush({
+          id: newId(),
+          symbol_id: id,
+          scale: 1,
+          rotation_deg: 0,
+          label: sym?.label,
+          copy_geometry: true,
+          copy_material: true,
+          copy_pricing: true,
+        });
       }
     },
-    [setArmedSymbolId, toolOverride],
+    [armBrush, symbolById, toolOverride],
   );
 
   const updateCursorHint = useCallback(
@@ -621,8 +843,17 @@ export function DesignStudio({
         }
         setSelectedPlacementId(null);
         setArmedSymbolId(null);
+        setArmedRecipe(null);
         setDragSymbolId(null);
         setDraftPoints([]);
+        return;
+      }
+      if (e.key >= "1" && e.key <= "5") {
+        const slot = swatchHistory[Number(e.key) - 1];
+        if (slot) {
+          e.preventDefault();
+          armBrush(slot);
+        }
         return;
       }
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -664,6 +895,7 @@ export function DesignStudio({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [
+    armBrush,
     deletePlacement,
     irrigationDraw,
     isMeasureMode,
@@ -672,6 +904,7 @@ export function DesignStudio({
     selectedPlacementId,
     setArmedSymbolId,
     setStudioTool,
+    swatchHistory,
     undo,
   ]);
 
@@ -770,6 +1003,21 @@ export function DesignStudio({
     if (target.closest("[data-placement-id]")) return;
 
     setSelectedPlacementId(null);
+
+    const canPaint =
+      Boolean(armedRecipe || armedSymbolId || dragSymbolId) &&
+      toolOverride !== "select" &&
+      !isMeasureMode &&
+      !isMassPlantMode &&
+      !isIrrigationMode &&
+      !isDrawMode;
+
+    if (canPaint && (armedRecipe || armedSymbolId) && !dragSymbolId) {
+      beginPaintSession(e.clientX, e.clientY);
+      e.currentTarget.setPointerCapture(e.pointerId);
+      return;
+    }
+
     pendingPlaceRef.current = { clientX: e.clientX, clientY: e.clientY };
     e.currentTarget.setPointerCapture(e.pointerId);
   }
@@ -780,6 +1028,11 @@ export function DesignStudio({
 
     if (viewport.isPanning) {
       viewport.movePan(e.clientX, e.clientY);
+      return;
+    }
+
+    if (paintRef.current?.active) {
+      continuePaintSession(e.clientX, e.clientY);
       return;
     }
 
@@ -850,6 +1103,11 @@ export function DesignStudio({
       releaseCanvasCapture(e);
       return;
     }
+    if (paintRef.current?.active) {
+      endPaintSession();
+      releaseCanvasCapture(e);
+      return;
+    }
     if (drawingRef.current) {
       drawingRef.current = false;
       setDraftPoints([]);
@@ -864,6 +1122,11 @@ export function DesignStudio({
   function handleCanvasPointerUp(e: React.PointerEvent<HTMLDivElement>) {
     if (viewport.isPanning) {
       viewport.endPan();
+      releaseCanvasCapture(e);
+      return;
+    }
+    if (paintRef.current?.active) {
+      endPaintSession();
       releaseCanvasCapture(e);
       return;
     }
@@ -1063,13 +1326,19 @@ export function DesignStudio({
 
   const isPlotMode = isMeasureMode || isMassPlantMode || isIrrigationMode;
   const isPanActive = toolOverride === "pan" || viewport.spacePan;
-  const canvasClass = isPanActive
-    ? s.canvasPan
-    : isDrawMode
-      ? s.canvasDraw
-      : isPlotMode
-        ? s.canvasPlot
-        : s.canvasPlace;
+  const instrumentArmed = Boolean(armedRecipe);
+  const canvasClass = [
+    isPanActive
+      ? s.canvasPan
+      : isDrawMode
+        ? s.canvasDraw
+        : isPlotMode
+          ? s.canvasPlot
+          : s.canvasPlace,
+    instrumentArmed ? s.canvasArmed : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const activeToolLabel = (() => {
     if (toolOverride === "pan" || viewport.spacePan) return "Pan";
@@ -1082,9 +1351,37 @@ export function DesignStudio({
     return "Auto";
   })();
 
-  const armedSymbolLabel = armedSymbolId
-    ? (symbolById.get(armedSymbolId)?.label ?? null)
-    : null;
+  const armedSymbolLabel = armedRecipe?.label
+    ?? (armedSymbolId ? (symbolById.get(armedSymbolId)?.label ?? null) : null);
+
+  const ghostSizePx = useMemo(() => {
+    if (!armedRecipe) return 36;
+    const sym = symbolById.get(armedRecipe.symbol_id);
+    const widthM = sym?.default_width_m ?? 1;
+    const mpp =
+      (groundScale.metresPerXPx + groundScale.metresPerYPx) / 2 || 0.05;
+    return Math.max(20, Math.min(140, widthM / mpp));
+  }, [armedRecipe, groundScale.metresPerXPx, groundScale.metresPerYPx, symbolById]);
+
+  const swatchPadNode =
+    swatchHistory.length > 0 ? (
+      <SwatchPad
+        slots={swatchHistory}
+        activeId={armedRecipe?.id ?? null}
+        symbolById={symbolById}
+        onSelect={(recipe) => armBrush(recipe)}
+        onToggleCopy={(recipeId, key) => {
+          setSwatchHistory((prev) =>
+            prev.map((r) =>
+              r.id === recipeId ? { ...r, [key]: !r[key] } : r,
+            ),
+          );
+          setArmedRecipe((cur) =>
+            cur && cur.id === recipeId ? { ...cur, [key]: !cur[key] } : cur,
+          );
+        }}
+      />
+    ) : null;
 
   const statusMessage = (() => {
     if (toolHint) return toolHint;
@@ -1103,7 +1400,10 @@ export function DesignStudio({
     if (toolOverride === "select") {
       return "Select symbols to move, rotate, or scale. Delete removes the selection.";
     }
-    return "Pick an asset, then click the aerial to place — or drag from the library.";
+    if (instrumentArmed) {
+      return "Brush armed — click to stamp, drag to paint. Alt+click a placement to sample. Keys 1–5 switch swatches.";
+    }
+    return "Pick an asset, then click the aerial to place — or drag from the library. Alt+click samples.";
   })();
 
   const saveStatusDotClass = saving
@@ -1176,13 +1476,17 @@ export function DesignStudio({
             onSelect={handlePaletteSelect}
             onDragStart={(id) => {
               setDragSymbolId(id);
-              setArmedSymbolId(id);
+              handlePaletteSelect(id);
             }}
             onDragEnd={() => setDragSymbolId(null)}
           />
         </div>
       ) : null}
-      <div className={s.railTabs} role="tablist" aria-label="Studio panels">
+      <div
+        className={`${s.railTabs} ${instrumentArmed ? s.chromeSoft : ""}`}
+        role="tablist"
+        aria-label="Studio panels"
+      >
         {railTabs.map(([id, label, badge]) => (
           <button
             key={id}
@@ -1367,6 +1671,19 @@ export function DesignStudio({
           {armedSymbolLabel ? (
             <span className={s.canvasHudArmed}>{armedSymbolLabel}</span>
           ) : null}
+          {mutationFsm.phase !== "IDLE" && mutationFsm.optimisticCost != null ? (
+            <span
+              className={`${s.canvasHudCost} ${mutationFsm.phase === "MUTATING" ? s.canvasHudCostPending : ""}`}
+              data-testid="canvas-optimistic-cost"
+            >
+              ~
+              {new Intl.NumberFormat("en-AU", {
+                style: "currency",
+                currency: "AUD",
+                maximumFractionDigits: 0,
+              }).format(mutationFsm.optimisticCost)}
+            </span>
+          ) : null}
         </div>
         <div className={sh.stage} style={viewport.stageStyle}>
         {aerialError ? (
@@ -1430,6 +1747,20 @@ export function DesignStudio({
           scale={groundScale}
         />
         <GhostPlacementOverlay ghosts={ghosts} symbolById={symbolById} />
+        {armedRecipe && cursorPct && !isDrawMode && !isPlotMode
+          ? (() => {
+              const sym = symbolById.get(armedRecipe.symbol_id);
+              if (!sym) return null;
+              return (
+                <GhostCursor
+                  recipe={armedRecipe}
+                  symbol={sym}
+                  cursorPct={cursorPct}
+                  sizePx={ghostSizePx}
+                />
+              );
+            })()
+          : null}
         <CanvasAnnotationOverlay
           annotations={annotations}
           width={canvasSize.width}
@@ -1469,6 +1800,7 @@ export function DesignStudio({
                 setSelectedPlacementId(p.id);
                 setBulkSelectedIds(new Set());
               }}
+              onAltSample={() => samplePlacement(p)}
               onMovePointerDown={(e) => beginPlacementDrag(p.id, e)}
               onRotateStart={(e) => startRotateDrag(p.id, e)}
               onScaleStart={(e) => startScaleDrag(p.id, e)}
@@ -1476,6 +1808,7 @@ export function DesignStudio({
             />
           );
         })}
+        {swatchPadNode}
         {canvasEmpty && !isDrawMode && !isPlotMode ? (
           <div className={s.emptyPrompt}>
             <div className={s.emptyPromptCard}>
@@ -1489,7 +1822,7 @@ export function DesignStudio({
             </div>
           </div>
         ) : null}
-        {cursorHint && !isDrawMode && !isPlotMode ? (
+        {cursorHint && !isDrawMode && !isPlotMode && !instrumentArmed ? (
           <div
             className={s.contextLabel}
             style={{ left: cursorHint.x, top: cursorHint.y }}
@@ -1700,7 +2033,7 @@ export function DesignStudio({
           }}
           onDragStart={(id) => {
             setDragSymbolId(id);
-            setArmedSymbolId(id);
+            handlePaletteSelect(id);
           }}
           onDragEnd={() => setDragSymbolId(null)}
         />
@@ -1851,8 +2184,7 @@ export function DesignStudio({
           onToggleRightRail={() => setRightRailOpen((o) => !o)}
           onToggleFocusMode={() => setFocusMode((f) => !f)}
           onPlaceSymbol={(id) => {
-            setArmedSymbolId(id);
-            setPaletteSelectedId(id);
+            handlePaletteSelect(id);
             setStudioTool("place");
           }}
           projectId={projectId}
@@ -1867,6 +2199,7 @@ export function DesignStudio({
             setRightRailOpen(true);
           }}
           focusMode={focusMode}
+          instrumentArmed={instrumentArmed}
           ghostBar={ghostAcceptBar}
           ribbon={
             <StudioRibbon

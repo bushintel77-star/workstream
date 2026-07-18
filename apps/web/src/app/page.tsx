@@ -34,7 +34,8 @@ export default async function HomePage() {
         <p className={home.kicker}>Workstream</p>
         <h1 className={home.brand}>Curtis &amp; Co</h1>
         <p className={home.lede}>
-          Canvas-first AI CAD → quantity survey → itemised build → polished quote.
+          Type an address. Get a concept, working drawing, and live estimate —
+          then share the quote.
         </p>
         <div className={home.composer}>
           <NewProjectAddressForm />
@@ -52,7 +53,9 @@ export default async function HomePage() {
           Sites
         </h2>
         {projects.length === 0 ? (
-          <p className={home.empty}>Add an address to open the design canvas.</p>
+          <p className={home.empty}>
+            Start with an address — about two minutes to a shareable quote.
+          </p>
         ) : (
           <ul className={home.ul}>
             {projects.map((p) => (

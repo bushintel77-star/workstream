@@ -16,6 +16,8 @@ export { StudioRibbon } from "./StudioRibbon";
 export { StudioAiPanel } from "./StudioAiPanel";
 export { StudioTier1Banner } from "./StudioTier1Banner";
 export { GhostPlacementOverlay } from "./GhostPlacementOverlay";
+export { GhostCursor } from "./GhostCursor";
+export { SwatchPad } from "./SwatchPad";
 export { CanvasAnnotationOverlay } from "./CanvasAnnotationOverlay";
 export { StudioViewportHud } from "./StudioViewportHud";
 export { StudioWorkflowBadge } from "./StudioWorkflowBadge";

@@ -31,7 +31,6 @@ function findRate(rates: RateIndex, ...candidates: string[]): RateCard | null {
     const hit = rates.get(sku);
     if (hit) return hit;
   }
-  // fuzzy label match
   for (const [, row] of rates) {
     const label = row.label.toLowerCase();
     if (candidates.some((c) => label.includes(c.toLowerCase()))) return row;
@@ -93,7 +92,7 @@ export function expandPreemptiveBom(
           line(
             `prim-${obj.id}`,
             "primary",
-            pav?.label ?? `${obj.label} — surface`,
+            pav?.label ?? `${obj.label} - surface`,
             pav?.unit ?? "m2",
             area,
             applyMult(pav?.rate ?? 95, multipliers),
@@ -109,7 +108,7 @@ export function expandPreemptiveBom(
           line(
             `sec-exc-${obj.id}`,
             "secondary",
-            excav?.label ?? "Excavation — subgrade",
+            excav?.label ?? "Excavation - subgrade",
             excav?.unit ?? "m3",
             excavateM3,
             applyMult(excav?.rate ?? 85, multipliers),
@@ -120,7 +119,7 @@ export function expandPreemptiveBom(
         );
 
         const baseM3 = area * 0.15;
-        const baseT = baseM3 * 1.8; // ~CR crushed rock t/m3
+        const baseT = baseM3 * 1.8;
         const base = findRate(rateIndex, "CR6", "crushed", "base");
         lines.push(
           line(
@@ -205,13 +204,13 @@ export function expandPreemptiveBom(
           line(
             `fee-eng-${obj.id}`,
             "fee",
-            eng?.label ?? "Structural engineer — retaining >1.2 m",
+            eng?.label ?? "Structural engineer - retaining >1.2 m",
             eng?.unit ?? "ea",
             1,
             eng?.rate ?? 1800,
             eng?.sku ?? null,
             [obj.id],
-            "AU threshold ~1.2 m — engineer + permit likely",
+            "AU threshold ~1.2 m - engineer + permit likely",
           ),
         );
         const permit = findRate(rateIndex, "PERMIT", "council");
@@ -225,7 +224,7 @@ export function expandPreemptiveBom(
             permit?.rate ?? 650,
             permit?.sku ?? null,
             [obj.id],
-            "Preemptive fee — confirm with council",
+            "Preemptive fee - confirm with council",
           ),
         );
       }
@@ -283,7 +282,7 @@ export function expandPreemptiveBom(
       line(
         "sec-drain-global",
         "secondary",
-        drain?.label ?? "Drainage — ag line / pit allowance",
+        drain?.label ?? "Drainage - ag line / pit allowance",
         drain?.unit ?? "lm",
         Math.max(6, Math.round(Math.sqrt(hardscapeM2) * 2)),
         applyMult(drain?.rate ?? 55, multipliers),
@@ -306,7 +305,7 @@ export function expandPreemptiveBom(
         applyMult(bobcat?.rate ?? 450, multipliers),
         bobcat?.sku ?? null,
         [],
-        "Preemptive equipment — access / volume",
+        "Preemptive equipment - access / volume",
       ),
     );
   }

@@ -14,6 +14,8 @@ type Props = {
   isTpz: boolean;
   indicativeMetres: number | null;
   onSelect: () => void;
+  /** Alt+click eyedropper — sample into brush recipe without selecting. */
+  onAltSample?: () => void;
   onMovePointerDown: (e: React.PointerEvent) => void;
   onRotateStart: (e: React.PointerEvent) => void;
   onScaleStart: (e: React.PointerEvent) => void;
@@ -27,6 +29,7 @@ export function DesignCanvasPlacement({
   isTpz,
   indicativeMetres,
   onSelect,
+  onAltSample,
   onMovePointerDown,
   onRotateStart,
   onScaleStart,
@@ -50,6 +53,11 @@ export function DesignCanvasPlacement({
       aria-selected={selected}
       onPointerDown={(e) => {
         e.stopPropagation();
+        if (e.altKey && onAltSample) {
+          e.preventDefault();
+          onAltSample();
+          return;
+        }
         onSelect();
         downRef.current = { x: e.clientX, y: e.clientY };
       }}

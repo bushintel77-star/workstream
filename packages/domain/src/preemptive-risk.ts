@@ -33,7 +33,7 @@ export type PreemptiveRiskResult = {
   overlays: OverlayProposal[];
 };
 
-/** Predictive structural & ecological risks + mitigation overlay proposals. */
+/** Predictive structural and ecological risks + mitigation overlay proposals. */
 export function assessPreemptiveRisks(
   facts: SpatialObject[],
   dismissedIds: Set<string> = new Set(),
@@ -63,7 +63,7 @@ export function assessPreemptiveRisks(
       kind: "retaining_height",
       severity: "critical",
       title: "Retaining wall exceeds 1.2 m",
-      detail: `${wall.label} at ~${wall.height_m.toFixed(1)} m ù structural engineer and permit fees preempted in live BOM.`,
+      detail: `${wall.label} at ~${wall.height_m.toFixed(1)} m - structural engineer and permit fees preempted in live BOM.`,
       source_object_ids: [wall.id],
       overlay_id: overlayId,
     });
@@ -71,7 +71,7 @@ export function assessPreemptiveRisks(
       id: overlayId,
       kind: "engineer_hold",
       status: "ready",
-      title: "Engineer hold ù retaining >1.2 m",
+      title: "Engineer hold - retaining >1.2 m",
       detail:
         "Accept to keep fee lines; mitigation is documentation, not geometry.",
       source_object_ids: [wall.id],
@@ -123,7 +123,7 @@ export function assessPreemptiveRisks(
         kind: "drainage",
         severity: hardscapeM2 >= 60 ? "critical" : "watch",
         title: "Stormwater from hardscape",
-        detail: `${hardscapeM2.toFixed(0)} mù hardscape ù preempt French drain / pit allowance and overlay.`,
+        detail: `${hardscapeM2.toFixed(0)} m2 hardscape - preempt French drain / pit allowance and overlay.`,
         source_object_ids: hardscape.map((h) => h.id),
         overlay_id: overlayId,
       });
@@ -142,6 +142,6 @@ export function assessPreemptiveRisks(
     }
   }
 
-  // Utility stub ù reserved when survey utilities land.
+  // Utility stub - reserved when survey utilities land.
   return { risks, overlays };
 }

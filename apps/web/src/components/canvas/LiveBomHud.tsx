@@ -12,6 +12,10 @@ import {
   dismissOrchestrationOverlayAction,
   getOrchestrationAction,
 } from "../../app/actions";
+import {
+  subscribeMutationHud,
+  type MutationHudSnapshot,
+} from "../../lib/canvas-mutation-bus";
 import css from "./liveBomHud.module.css";
 
 const TIER_ORDER: BomTier[] = [
@@ -63,6 +67,11 @@ export function LiveBomHud({ projectId, refreshKey = 0, onWorld }: Props) {
   const [activeOverlay, setActiveOverlay] = useState<OverlayProposal | null>(
     null,
   );
+  const [mutationHud, setMutationHud] = useState<MutationHudSnapshot>({
+    phase: "IDLE",
+    optimisticCost: null,
+    pendingPrecise: false,
+  });
   const [pending, startTransition] = useTransition();
 
   const load = useCallback(() => {
@@ -86,13 +95,33 @@ export function LiveBomHud({ projectId, refreshKey = 0, onWorld }: Props) {
     load();
   }, [load, refreshKey]);
 
+  useEffect(() => subscribeMutationHud(setMutationHud), []);
+
+  const mutating =
+    mutationHud.phase === "MUTATING" || mutationHud.phase === "RESOLVED";
+  const displayTotal =
+    mutating && mutationHud.optimisticCost != null
+      ? mutationHud.optimisticCost
+      : (world?.bom_total ?? mutationHud.optimisticCost);
+
   if (!world || world.spatial_facts.length === 0) {
     return (
-      <aside className={css.hud} data-testid="live-bom-hud">
+      <aside
+        className={`${css.hud} ${mutating ? css.hudMutating : ""}`}
+        data-testid="live-bom-hud"
+        data-mutation-phase={mutationHud.phase}
+      >
         <p className={css.kicker}>Live BOM</p>
-        <p className={css.empty}>
-          Place hardscape or planting — preemptive materials appear here.
-        </p>
+        {mutating && displayTotal != null ? (
+          <p className={`${css.total} ${css.totalPending}`}>
+            {aud(displayTotal)}
+            <span className={css.pendingHint}> estimating</span>
+          </p>
+        ) : (
+          <p className={css.empty}>
+            Place hardscape or planting - preemptive materials appear here.
+          </p>
+        )}
       </aside>
     );
   }
@@ -101,11 +130,22 @@ export function LiveBomHud({ projectId, refreshKey = 0, onWorld }: Props) {
   const byTier = groupByTier(world.live_bom);
 
   return (
-    <aside className={css.hud} data-testid="live-bom-hud">
+    <aside
+      className={`${css.hud} ${mutating ? css.hudMutating : ""}`}
+      data-testid="live-bom-hud"
+      data-mutation-phase={mutationHud.phase}
+    >
       <div className={css.summary}>
         <div>
-          <p className={css.kicker}>Live BOM · preemptive</p>
-          <p className={css.total}>{aud(world.bom_total)} incl. GST</p>
+          <p className={css.kicker}>Live BOM / preemptive</p>
+          <p
+            className={`${css.total} ${mutating ? css.totalPending : ""} ${mutationHud.phase === "IDLE" && mutationHud.optimisticCost != null ? css.totalSettle : ""}`}
+          >
+            {aud(displayTotal ?? world.bom_total)} incl. GST
+            {mutating ? (
+              <span className={css.pendingHint}> live</span>
+            ) : null}
+          </p>
         </div>
         <button
           type="button"
@@ -200,7 +240,7 @@ export function LiveBomHud({ projectId, refreshKey = 0, onWorld }: Props) {
                 {rows.map((row) => (
                   <div key={row.id} className={css.line}>
                     <span>
-                      {row.label} · {row.qty} {row.unit}
+                      {row.label} / {row.qty} {row.unit}
                     </span>
                     <span>{aud(row.total)}</span>
                     {row.notes ? (

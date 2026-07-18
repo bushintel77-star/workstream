@@ -32,6 +32,7 @@ describe("formatSitePlanQuoteSection", () => {
       strokes: [],
       irrigation_zones: [],
       annotations: [],
+      features: [],
       updated_at: new Date().toISOString(),
     };
     const lines = formatSitePlanQuoteSection(canvas);
