@@ -190,6 +190,7 @@ export async function saveDesignCanvasAction(
       irrigationZones,
       annotations,
     );
+    revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);
     revalidatePath(`/projects/${projectId}/design/develop`);
     revalidatePath(`/projects/${projectId}/design/studio`);
@@ -207,6 +208,43 @@ export async function scanDesignGhostsAction(projectId: string) {
     return await scanDesignGhostsApi(projectId);
   } catch (err) {
     throw wrapApiError(err, "AI site scan failed");
+  }
+}
+
+export async function getOrchestrationAction(projectId: string) {
+  const { getOrchestrationApi } = await import("../lib/api");
+  try {
+    return await getOrchestrationApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Orchestration world failed");
+  }
+}
+
+export async function acceptOrchestrationOverlayAction(
+  projectId: string,
+  proposalId: string,
+) {
+  const { acceptOrchestrationOverlayApi } = await import("../lib/api");
+  try {
+    const result = await acceptOrchestrationOverlayApi(projectId, proposalId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Accept overlay failed");
+  }
+}
+
+export async function dismissOrchestrationOverlayAction(
+  projectId: string,
+  proposalId: string,
+) {
+  const { dismissOrchestrationOverlayApi } = await import("../lib/api");
+  try {
+    const world = await dismissOrchestrationOverlayApi(projectId, proposalId);
+    revalidatePath(`/projects/${projectId}`);
+    return world;
+  } catch (err) {
+    throw wrapApiError(err, "Dismiss overlay failed");
   }
 }
 

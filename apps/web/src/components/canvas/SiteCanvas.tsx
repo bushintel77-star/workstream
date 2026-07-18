@@ -11,6 +11,7 @@ import {
   Suspense,
 } from "react";
 import type { CatalogSymbol } from "@workstream/contracts";
+import type { ProjectOrchestrationWorld } from "@workstream/contracts";
 import {
   acceptCadAction,
   autoTraceBoundaryAction,
@@ -27,6 +28,7 @@ import {
   saveBoundaryAction,
   unlockBoundaryAction,
 } from "../../app/actions";
+import { LiveBomHud } from "./LiveBomHud";
 import type {
   CadBuildApi,
   CadDocumentLite,
@@ -34,7 +36,10 @@ import type {
   SiteBoundaryLite,
 } from "../../lib/canvas-types";
 import type { DesignCanvas, RateCardItem } from "../../lib/api";
-import { parseCanvasMode, type CanvasMode } from "../../lib/canvas-mode";
+import {
+  resolveCanvasMode,
+  type CanvasMode,
+} from "../../lib/canvas-mode";
 import { DesignStudioClient } from "../../app/projects/[id]/design/DesignStudioClient";
 import {
   BoundaryChrome,
@@ -88,18 +93,6 @@ function SiteCanvasInner({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const mode = parseCanvasMode(searchParams.get("mode"));
-
-  const setMode = useCallback(
-    (next: CanvasMode) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("mode", next);
-      router.replace(`/projects/${projectId}?${params.toString()}`, {
-        scroll: false,
-      });
-    },
-    [projectId, router, searchParams],
-  );
 
   const [cadDoc, setCadDoc] = useState<CadDocumentLite | null>(initialDocument);
   const [svg, setSvg] = useState(initialSvg);
@@ -116,8 +109,50 @@ function SiteCanvasInner({
   const [quoteHtml, setQuoteHtml] = useState<string | null>(null);
   const [sheet, setSheet] = useState<Sheet>("none");
   const [portalLink, setPortalLink] = useState<string | null>(quoteUrl);
+  const [showCadAdvanced, setShowCadAdvanced] = useState(false);
+  const [orchRefresh, setOrchRefresh] = useState(0);
+  const [orchWorld, setOrchWorld] = useState<ProjectOrchestrationWorld | null>(
+    null,
+  );
   const [pending, startTransition] = useTransition();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const committedCount =
+    cadDoc?.entities.filter((e) => !e.ghost).length ?? 0;
+  const progress = {
+    hasAerial: Boolean(aerialUri),
+    hasSketch: (sketch?.canvas?.placements?.length ?? 0) > 0,
+    hasCad: committedCount > 0,
+    hasQuote: hasQuote || Boolean(quoteHtml),
+  };
+  const mode = resolveCanvasMode(searchParams.get("mode"), progress);
+
+  const setMode = useCallback(
+    (next: CanvasMode) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("mode", next);
+      router.replace(`/projects/${projectId}?${params.toString()}`, {
+        scroll: false,
+      });
+    },
+    [projectId, router, searchParams],
+  );
+
+  // Keep URL honest when progressive unlock clamps the mode.
+  useEffect(() => {
+    const raw = searchParams.get("mode");
+    if (raw !== mode) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("mode", mode);
+      router.replace(`/projects/${projectId}?${params.toString()}`, {
+        scroll: false,
+      });
+    }
+  }, [mode, projectId, router, searchParams]);
+
+  useEffect(() => {
+    if (mode !== "cad") setShowCadAdvanced(false);
+  }, [mode]);
 
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(40);
@@ -139,6 +174,7 @@ function SiteCanvasInner({
       setSvg(result.svg);
       setGhostCount(result.ghost_count);
       setError(null);
+      setOrchRefresh((n) => n + 1);
     },
     [],
   );
@@ -213,9 +249,6 @@ function SiteCanvasInner({
     });
   };
 
-  const committedCount =
-    cadDoc?.entities.filter((e) => !e.ghost).length ?? 0;
-
   const chipStyle = (anchor: { x: number; y: number }) => {
     if (!cadDoc) return { left: "50%", top: "50%" };
     const left = `${(anchor.x / cadDoc.width_m) * 100}%`;
@@ -227,10 +260,14 @@ function SiteCanvasInner({
   const showCadDock = mode === "cad";
   const showQuoteDock = mode === "quote";
   const showSurveyDock = mode === "survey";
+  const showLiveBom =
+    mode === "sketch" || mode === "cad" || mode === "quote";
+
+  const bumpOrchestration = () => setOrchRefresh((n) => n + 1);
 
   return (
     <div className={css.root} data-testid="site-canvas" data-canvas-mode={mode}>
-      <CanvasModeStrip mode={mode} onMode={setMode} />
+      <CanvasModeStrip mode={mode} progress={progress} onMode={setMode} />
 
       {mode === "sketch" && sketch ? (
         <div className={css.sketchHost} data-testid="canvas-sketch-host">
@@ -247,6 +284,14 @@ function SiteCanvasInner({
             />
           </Suspense>
         </div>
+      ) : null}
+
+      {showLiveBom ? (
+        <LiveBomHud
+          projectId={projectId}
+          refreshKey={orchRefresh}
+          onWorld={setOrchWorld}
+        />
       ) : null}
 
       {mode === "sketch" && !sketch ? (
@@ -330,12 +375,31 @@ function SiteCanvasInner({
                     {row.qty} {row.unit}
                   </span>
                 ))}
+              {(mode === "cad" || mode === "quote") &&
+                orchWorld?.overlays
+                  .filter((o) => o.status === "ready")
+                  .map((o) =>
+                    o.x_pct != null && o.y_pct != null ? (
+                      <span
+                        key={o.id}
+                        className={`${css.chip} ${css.overlayGhost}`}
+                        style={{ left: `${o.x_pct}%`, top: `${o.y_pct}%` }}
+                        title={o.detail}
+                      >
+                        {o.kind === "trp_ring"
+                          ? "TRP"
+                          : o.kind === "drainage"
+                            ? "Drain"
+                            : "Hold"}
+                      </span>
+                    ) : null,
+                  )}
             </div>
 
             {!cadDoc && !pending && mode === "cad" ? (
               <div className={css.emptyHint}>
                 <strong>Design by CAD</strong>
-                <p>Generate AI CAD on this site — then one-click QS, build, quote.</p>
+                <p>Generate AI CAD on this site — live BOM updates as geometry lands.</p>
               </div>
             ) : null}
           </div>
@@ -481,139 +545,200 @@ function SiteCanvasInner({
 
           {showSurveyDock ? (
             <div className={css.dock}>
+              <p className={css.dockPrimaryHint}>
+                {aerialUri
+                  ? "Next — sketch massing or jump to CAD"
+                  : "Step 1 — load the aerial"}
+              </p>
               <div className={css.btnRow}>
-                <button
-                  type="button"
-                  className={`${css.btn} ${css.btnPrimary}`}
-                  disabled={pending}
-                  onClick={() =>
-                    run("Running survey…", async () => {
-                      const fd = new FormData();
-                      fd.set("projectId", projectId);
-                      await runSurveyAction(fd);
-                      router.refresh();
-                    })
-                  }
-                >
-                  {aerialUri ? "Re-run survey" : "Run survey"}
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  disabled={!aerialUri}
-                  onClick={() => setMode("sketch")}
-                >
-                  Sketch on aerial
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  onClick={() => setMode("cad")}
-                >
-                  Continue to CAD
-                </button>
+                {!aerialUri ? (
+                  <button
+                    type="button"
+                    className={`${css.btn} ${css.btnPrimary}`}
+                    disabled={pending}
+                    onClick={() =>
+                      run("Running survey…", async () => {
+                        const fd = new FormData();
+                        fd.set("projectId", projectId);
+                        await runSurveyAction(fd);
+                        router.refresh();
+                      })
+                    }
+                  >
+                    Run survey
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={`${css.btn} ${css.btnPrimary}`}
+                      onClick={() => setMode("sketch")}
+                    >
+                      Sketch on aerial →
+                    </button>
+                    <button
+                      type="button"
+                      className={css.btn}
+                      onClick={() => setMode("cad")}
+                    >
+                      CAD →
+                    </button>
+                    <button
+                      type="button"
+                      className={css.btn}
+                      disabled={pending}
+                      onClick={() =>
+                        run("Running survey…", async () => {
+                          const fd = new FormData();
+                          fd.set("projectId", projectId);
+                          await runSurveyAction(fd);
+                          router.refresh();
+                        })
+                      }
+                    >
+                      Re-run survey
+                    </button>
+                  </>
+                )}
               </div>
               <div className={`${css.status} ${error ? css.error : ""}`}>
                 {error ??
                   status ??
                   (aerialUri
-                    ? "Aerial ready — lock boundary, then sketch or CAD"
-                    : "Run survey to load the aerial")}
+                    ? "Aerial ready — lock the boundary if you need it"
+                    : "Survey unlocks Sketch and CAD")}
               </div>
             </div>
           ) : null}
 
           {showCadDock ? (
             <div className={css.dock}>
-              <div className={css.promptRow}>
-                <input
-                  className={css.prompt}
-                  value={instruction}
-                  onChange={(e) => setInstruction(e.target.value)}
-                  placeholder="Ask CAD… e.g. add paving path along the fence"
-                  disabled={pending}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && instruction.trim()) {
+              <p className={css.dockPrimaryHint}>
+                {committedCount === 0
+                  ? "Step — generate CAD on this site"
+                  : ghostCount > 0
+                    ? "Accept AI ghosts, then quote"
+                    : "CAD ready — continue to quote"}
+              </p>
+              {showCadAdvanced ? (
+                <div className={css.promptRow}>
+                  <input
+                    className={css.prompt}
+                    value={instruction}
+                    onChange={(e) => setInstruction(e.target.value)}
+                    placeholder="Ask CAD… e.g. add paving path along the fence"
+                    disabled={pending}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && instruction.trim()) {
+                        run("Editing CAD…", async () => {
+                          applyCad(
+                            await editCadAction(projectId, instruction.trim()),
+                          );
+                          setInstruction("");
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              ) : null}
+              <div className={css.btnRow}>
+                {committedCount === 0 ? (
+                  <button
+                    type="button"
+                    className={`${css.btn} ${css.btnPrimary}`}
+                    disabled={pending}
+                    onClick={() =>
+                      run("Generating CAD…", async () => {
+                        applyCad(await generateCadAction(projectId));
+                      })
+                    }
+                  >
+                    Generate CAD
+                  </button>
+                ) : ghostCount > 0 ? (
+                  <button
+                    type="button"
+                    className={`${css.btn} ${css.btnPrimary}`}
+                    disabled={pending}
+                    onClick={() =>
+                      run("Accepting ghosts…", async () => {
+                        applyCad(await acceptCadAction(projectId));
+                      })
+                    }
+                  >
+                    Accept ghosts ({ghostCount})
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={`${css.btn} ${css.btnPrimary}`}
+                    onClick={() => setMode("quote")}
+                  >
+                    Quote →
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={css.dockToggle}
+                  onClick={() => setShowCadAdvanced((v) => !v)}
+                >
+                  {showCadAdvanced ? "Fewer tools" : "More tools"}
+                </button>
+              </div>
+              {showCadAdvanced ? (
+                <div className={`${css.btnRow} ${css.dockMore}`}>
+                  {committedCount > 0 ? (
+                    <button
+                      type="button"
+                      className={css.btn}
+                      disabled={pending}
+                      onClick={() =>
+                        run("Generating CAD…", async () => {
+                          applyCad(await generateCadAction(projectId));
+                        })
+                      }
+                    >
+                      Regenerate
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={css.btn}
+                    disabled={pending || !instruction.trim()}
+                    onClick={() =>
                       run("Editing CAD…", async () => {
                         applyCad(
                           await editCadAction(projectId, instruction.trim()),
                         );
                         setInstruction("");
-                      });
+                      })
                     }
-                  }}
-                />
-              </div>
-              <div className={css.btnRow}>
-                <button
-                  type="button"
-                  className={`${css.btn} ${css.btnPrimary}`}
-                  disabled={pending}
-                  onClick={() =>
-                    run("Generating CAD…", async () => {
-                      applyCad(await generateCadAction(projectId));
-                    })
-                  }
-                >
-                  Generate CAD
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  disabled={pending || !instruction.trim()}
-                  onClick={() =>
-                    run("Editing CAD…", async () => {
-                      applyCad(
-                        await editCadAction(projectId, instruction.trim()),
-                      );
-                      setInstruction("");
-                    })
-                  }
-                >
-                  Apply edit
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  disabled={pending || ghostCount === 0}
-                  onClick={() =>
-                    run("Accepting ghosts…", async () => {
-                      applyCad(await acceptCadAction(projectId));
-                    })
-                  }
-                >
-                  Accept ({ghostCount})
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  disabled={pending || !cadDoc}
-                  onClick={() =>
-                    run("Exporting DXF…", async () => {
-                      const text = await downloadCadDxfAction(projectId);
-                      const blob = new Blob([text], {
-                        type: "application/dxf",
-                      });
-                      const url = URL.createObjectURL(blob);
-                      const a = window.document.createElement("a");
-                      a.href = url;
-                      a.download = `workstream-${projectId.slice(0, 8)}.dxf`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    })
-                  }
-                >
-                  DXF
-                </button>
-                <button
-                  type="button"
-                  className={`${css.btn} ${css.btnAccent}`}
-                  disabled={pending || committedCount === 0}
-                  onClick={() => setMode("quote")}
-                >
-                  Quote →
-                </button>
-              </div>
+                  >
+                    Apply edit
+                  </button>
+                  <button
+                    type="button"
+                    className={css.btn}
+                    disabled={pending || !cadDoc}
+                    onClick={() =>
+                      run("Exporting DXF…", async () => {
+                        const text = await downloadCadDxfAction(projectId);
+                        const blob = new Blob([text], {
+                          type: "application/dxf",
+                        });
+                        const url = URL.createObjectURL(blob);
+                        const a = window.document.createElement("a");
+                        a.href = url;
+                        a.download = `workstream-${projectId.slice(0, 8)}.dxf`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      })
+                    }
+                  >
+                    DXF
+                  </button>
+                </div>
+              ) : null}
               <div className={`${css.status} ${error ? css.error : ""}`}>
                 {error ??
                   status ??
@@ -621,17 +746,52 @@ function SiteCanvasInner({
                     ? `${ghostCount} AI ghosts pending accept`
                     : committedCount > 0
                       ? `${committedCount} committed entities`
-                      : "Ready")}
+                      : "Generate unlocks Quote")}
               </div>
             </div>
           ) : null}
 
           {showQuoteDock ? (
             <div className={css.dock}>
+              <p className={css.dockPrimaryHint}>
+                {quoteHtml || hasQuote
+                  ? "Client quote ready — share from this canvas"
+                  : orchWorld && orchWorld.live_bom.length > 0
+                    ? "Live BOM is already running — promote to client quote"
+                    : "Generate client quote from CAD (live BOM stays on canvas)"}
+              </p>
               <div className={css.btnRow}>
+                {quoteHtml || hasQuote ? (
+                  <button
+                    type="button"
+                    className={`${css.btn} ${css.btnPrimary}`}
+                    onClick={() => setMode("share")}
+                  >
+                    Share →
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={`${css.btn} ${css.btnPrimary}`}
+                    disabled={pending || committedCount === 0}
+                    onClick={() =>
+                      run("Generating client quote…", async () => {
+                        const res = await cadQuoteAction(projectId, "standard");
+                        setBuild(res.build);
+                        setSurvey(res.survey);
+                        setQuoteHtml(res.html);
+                        bumpOrchestration();
+                      })
+                    }
+                  >
+                    Promote live BOM → quote
+                  </button>
+                )}
+              </div>
+              <div className={`${css.btnRow} ${css.dockMore}`}>
                 <button
                   type="button"
-                  className={`${css.btn} ${css.btnAccent}`}
+                  className={css.btn}
                   disabled={pending || committedCount === 0}
                   onClick={() =>
                     run("Surveying…", async () => {
@@ -641,7 +801,7 @@ function SiteCanvasInner({
                     })
                   }
                 >
-                  Quantity survey
+                  View QS
                 </button>
                 <button
                   type="button"
@@ -656,37 +816,15 @@ function SiteCanvasInner({
                     })
                   }
                 >
-                  Itemised build
-                </button>
-                <button
-                  type="button"
-                  className={`${css.btn} ${css.btnPrimary}`}
-                  disabled={pending || committedCount === 0}
-                  onClick={() =>
-                    run("Polishing quote…", async () => {
-                      const res = await cadQuoteAction(projectId, "standard");
-                      setBuild(res.build);
-                      setSurvey(res.survey);
-                      setQuoteHtml(res.html);
-                    })
-                  }
-                >
-                  Quote
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  onClick={() => setMode("share")}
-                >
-                  Share →
+                  View build
                 </button>
               </div>
               <div className={`${css.status} ${error ? css.error : ""}`}>
                 {error ??
                   status ??
-                  (committedCount === 0
-                    ? "Generate CAD first, then QS → build → quote"
-                    : "One-click schedule and client quote")}
+                  (orchWorld
+                    ? `Live BOM ${orchWorld.live_bom.length} lines · ${orchWorld.risks.length} risks`
+                    : "Financials update as you draw — no separate quote mode")}
               </div>
             </div>
           ) : null}

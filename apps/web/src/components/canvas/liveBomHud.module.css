@@ -1,0 +1,176 @@
+.hud {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 5.5rem;
+  z-index: 40;
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-height: min(48vh, 28rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 18px;
+  background: var(--frost, rgba(255, 249, 251, 0.92));
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--blush, #e8a4b8) 45%, transparent);
+  box-shadow: 0 10px 28px rgba(26, 18, 24, 0.08);
+  font-family: var(--font, "Sora", sans-serif);
+  color: var(--ink, #1a1218);
+}
+
+.summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft, #5c4a52);
+}
+
+.total {
+  margin: 0;
+  font-family: var(--display, "Fraunces", Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.toggle {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft, #5c4a52);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+  align-self: flex-start;
+}
+
+.tiers {
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tierBlock {
+  margin: 0;
+}
+
+.tierLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft, #5c4a52);
+  margin: 0 0 0.15rem;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.72rem;
+  padding: 0.15rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--blush, #e8a4b8) 25%, transparent);
+}
+
+.lineMeta {
+  grid-column: 1 / -1;
+  color: var(--ink-soft, #5c4a52);
+  font-size: 0.62rem;
+}
+
+.risks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.chip {
+  border: none;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--blush, #e8a4b8) 28%, #fff);
+  color: var(--ink, #1a1218);
+}
+
+.chipCritical {
+  background: color-mix(in srgb, #c45c5c 35%, #fff);
+}
+
+.overlayPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.overlayTitle {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.overlayDetail {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--ink-soft, #5c4a52);
+}
+
+.overlayActions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.3rem 0.55rem;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  color: var(--ink, #1a1218);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blush, #e8a4b8) 50%, transparent);
+}
+
+.btnPrimary {
+  background: var(--ink, #1a1218);
+  color: #fff;
+  box-shadow: none;
+}
+
+.empty {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--ink-soft, #5c4a52);
+}
+
+@media (max-width: 720px) {
+  .hud {
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    bottom: 6.5rem;
+  }
+}

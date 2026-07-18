@@ -7,6 +7,7 @@ import type {
   CreateCatalogSymbolInput,
   DesignCanvas,
   DesignGhostsResponse,
+  ProjectOrchestrationWorld,
 } from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
 import { operatorApiUrl } from "./public-env";
@@ -366,6 +367,35 @@ export async function scanDesignGhostsApi(
   projectId: string,
 ): Promise<DesignGhostsResponse> {
   return apiPost<DesignGhostsResponse>(`/projects/${projectId}/design/ghosts`, {});
+}
+
+export async function getOrchestrationApi(
+  projectId: string,
+): Promise<ProjectOrchestrationWorld> {
+  return apiGet<ProjectOrchestrationWorld>(
+    `/projects/${projectId}/orchestration`,
+  );
+}
+
+export async function acceptOrchestrationOverlayApi(
+  projectId: string,
+  proposalId: string,
+): Promise<{
+  world: ProjectOrchestrationWorld;
+  placed: CatalogPlacement | null;
+}> {
+  return apiPost(`/projects/${projectId}/orchestration/accept-overlay`, {
+    proposal_id: proposalId,
+  });
+}
+
+export async function dismissOrchestrationOverlayApi(
+  projectId: string,
+  proposalId: string,
+): Promise<ProjectOrchestrationWorld> {
+  return apiPost(`/projects/${projectId}/orchestration/dismiss-overlay`, {
+    proposal_id: proposalId,
+  });
 }
 
 export type CadApiResult = {
