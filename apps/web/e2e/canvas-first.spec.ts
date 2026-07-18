@@ -67,6 +67,9 @@ test.describe("Canvas-first mode chrome", () => {
     await page.getByTestId("cad-walk").click();
     await expect(page.getByTestId("clay-exit-walk")).toBeVisible();
     await page.getByTestId("clay-exit-walk").click();
-    await expect(page.getByTestId("clay-exit-walk")).toHaveCount(0);
+    // Exit chip stays through the Walk cross-fade (~560ms), then unmounts.
+    await expect(page.getByTestId("clay-exit-walk")).toHaveCount(0, {
+      timeout: 2500,
+    });
   });
 });

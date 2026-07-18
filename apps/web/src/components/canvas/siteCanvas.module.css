@@ -64,6 +64,40 @@
   pointer-events: none;
 }
 
+/** Fit sheet → Walk: keep paper wash, quieter aerial ink. */
+.stageWalkPaper > :not([data-testid="clay-walkthrough"]) {
+  opacity: 0.1;
+  filter: saturate(0.5) brightness(1.03);
+}
+
+/** Walk immersion: fade operator chrome; Exit chip stays on the clay overlay. */
+.root [data-testid="canvas-mode-strip"],
+.root [data-testid="live-bom-hud"],
+.root [data-testid="geo-sheet-hud"],
+.root [data-testid="cad-dock"],
+.root [data-testid="survey-dock"],
+.root [data-testid="canvas-quote-dock"],
+.root [data-testid="canvas-share-sheet"],
+.root [data-testid="sketch-chrome-host"],
+.root .topActions,
+.root .emptyHint {
+  transition: opacity 560ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.rootWalk [data-testid="canvas-mode-strip"],
+.rootWalk [data-testid="live-bom-hud"],
+.rootWalk [data-testid="geo-sheet-hud"],
+.rootWalk [data-testid="cad-dock"],
+.rootWalk [data-testid="survey-dock"],
+.rootWalk [data-testid="canvas-quote-dock"],
+.rootWalk [data-testid="canvas-share-sheet"],
+.rootWalk [data-testid="sketch-chrome-host"],
+.rootWalk .topActions,
+.rootWalk .emptyHint {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .stage > :not([data-testid="clay-walkthrough"]) {
   transition: opacity 520ms cubic-bezier(0.33, 1, 0.68, 1);
 }

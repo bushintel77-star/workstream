@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
@@ -8,6 +8,8 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { SSAOPass } from "three/examples/jsm/postprocessing/SSAOPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import css from "./clayWalkthrough.module.css";
+
+const FADE_MS = 560;
 
 /** Closed ring in lot metres (SW origin, plan Y-up). */
 export type ClayRing = {
@@ -133,10 +135,35 @@ export function ClayWalkthrough({
 }: ClayWalkthroughProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const hintRef = useRef<HTMLParagraphElement | null>(null);
+  const controlsRef = useRef<PointerLockControls | null>(null);
   const exitRef = useRef(onRequestExit);
   exitRef.current = onRequestExit;
   const activeRef = useRef(active);
   activeRef.current = active;
+  const [chromeVisible, setChromeVisible] = useState(active);
+  const [mountFlash, setMountFlash] = useState(false);
+
+  // Keep exit/hint through the CSS cross-fade so Walk doesn't pop chrome off.
+  useEffect(() => {
+    if (active) {
+      setChromeVisible(true);
+      setMountFlash(true);
+      const flash = window.setTimeout(() => setMountFlash(false), 420);
+      return () => window.clearTimeout(flash);
+    }
+    const hide = window.setTimeout(() => setChromeVisible(false), FADE_MS);
+    return () => window.clearTimeout(hide);
+  }, [active]);
+
+  // Scene mounts while inactive (warm); re-seed hint when chrome appears.
+  useEffect(() => {
+    if (!chromeVisible || !hintRef.current) return;
+    const locked = controlsRef.current?.isLocked ?? false;
+    hintRef.current.classList.remove(css.hintSettled);
+    hintRef.current.innerHTML = locked
+      ? "<kbd>WASD</kbd> move ∑ <kbd>Esc</kbd> release ∑ twice to exit"
+      : "Click to look ∑ <kbd>WASD</kbd> ∑ <kbd>Esc</kbd> exit walk";
+  }, [chromeVisible]);
 
   // Stable scene fingerprint - avoid remounting Three on parent re-renders
   const sceneKey = JSON.stringify({ rings, polylines, plants });
@@ -163,6 +190,7 @@ export function ClayWalkthrough({
 
     const camera = new THREE.PerspectiveCamera(70, 1, 0.08, 200);
     const controls = new PointerLockControls(camera, renderer.domElement);
+    controlsRef.current = controls;
 
     const matcap = makeMatcapTexture();
     const clayMat = new THREE.MeshMatcapMaterial({
@@ -331,11 +359,22 @@ export function ClayWalkthrough({
     };
     renderer.domElement.addEventListener("click", onClick);
 
+    let hintSettleTimer = 0;
     const updateHint = () => {
-      if (!hintRef.current) return;
-      hintRef.current.innerHTML = controls.isLocked
-        ? "<kbd>WASD</kbd> move - <kbd>Esc</kbd> release look"
-        : "Click to look - <kbd>WASD</kbd> - <kbd>Esc</kbd> exit walk";
+      const el = hintRef.current;
+      if (!el) return;
+      window.clearTimeout(hintSettleTimer);
+      el.classList.remove(css.hintSettled);
+      if (controls.isLocked) {
+        el.innerHTML =
+          "<kbd>WASD</kbd> move ù <kbd>Esc</kbd> release ù twice to exit";
+        hintSettleTimer = window.setTimeout(() => {
+          el.classList.add(css.hintSettled);
+        }, 2200);
+      } else {
+        el.innerHTML =
+          "Click to look ù <kbd>WASD</kbd> ù <kbd>Esc</kbd> exit walk";
+      }
     };
     controls.addEventListener("lock", updateHint);
     controls.addEventListener("unlock", updateHint);
@@ -418,10 +457,12 @@ export function ClayWalkthrough({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       renderer.domElement.removeEventListener("click", onClick);
+      window.clearTimeout(hintSettleTimer);
       controls.removeEventListener("lock", updateHint);
       controls.removeEventListener("unlock", updateHint);
       if (controls.isLocked) controls.unlock();
       controls.dispose();
+      if (controlsRef.current === controls) controlsRef.current = null;
       composer.dispose();
       matcap.dispose();
       clayMat.dispose();
@@ -447,16 +488,24 @@ export function ClayWalkthrough({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneKey]);
 
+  const requestExit = () => {
+    const c = controlsRef.current;
+    if (c?.isLocked) c.unlock();
+    onRequestExit?.();
+  };
+
   return (
     <div
       ref={hostRef}
       className={`${css.overlay}${active ? ` ${css.overlayActive}` : ""}${
         paper ? ` ${css.overlayPaper}` : ""
-      }${className ? ` ${className}` : ""}`}
+      }${mountFlash ? ` ${css.overlayMounting}` : ""}${
+        className ? ` ${className}` : ""
+      }`}
       aria-hidden={!active}
       data-testid="clay-walkthrough"
     >
-      {active ? (
+      {chromeVisible ? (
         <>
           <p
             ref={hintRef}
@@ -466,7 +515,7 @@ export function ClayWalkthrough({
             type="button"
             className={`${css.exit}${paper ? ` ${css.exitPaper}` : ""}`}
             data-testid="clay-exit-walk"
-            onClick={() => onRequestExit?.()}
+            onClick={requestExit}
           >
             Exit walk
           </button>

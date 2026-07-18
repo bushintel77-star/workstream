@@ -905,10 +905,11 @@ function SiteCanvasInner({
 
   return (
     <div
-      className={css.root}
+      className={`${css.root}${walkMode && canWalk ? ` ${css.rootWalk}` : ""}`}
       data-testid="site-canvas"
       data-canvas-mode={mode}
       data-title-reveal={titleRevealActive ? "1" : undefined}
+      data-walk={walkMode && canWalk ? "1" : undefined}
     >
       {!titleRevealActive ? (
         <CanvasModeStrip
@@ -1054,7 +1055,9 @@ function SiteCanvasInner({
           <div
             ref={stageRef}
             className={`${css.stage}${useGeoStage ? ` ${css.stageGeo}` : ""}${
-              walkMode && canWalk ? ` ${css.stageWalk}` : ""
+              walkMode && canWalk
+                ? ` ${css.stageWalk}${showFitSheet ? ` ${css.stageWalkPaper}` : ""}`
+                : ""
             }`}
             onPointerDown={useGeoStage ? undefined : onPointerDown}
             onPointerMove={useGeoStage ? undefined : onPointerMove}
@@ -1215,6 +1218,7 @@ function SiteCanvasInner({
                           : mode === "quote" || mode === "share"
                             ? "Rev A · quoted"
                             : "Rev A · concept",
+                      jobRef: projectId.slice(0, 8).toUpperCase(),
                     }}
                     cadSvg={
                       svg &&
@@ -1589,9 +1593,15 @@ function SiteCanvasInner({
                 )}
               </span>
               <span className={css.sheetHudMeta}>
-                {showFitSheet ? "Fit sheet · north up" : "Aerial · title frame"}
+                {walkMode
+                  ? "Clay walk"
+                  : showFitSheet
+                    ? "Fit sheet · north up"
+                    : "Aerial · title frame"}
               </span>
-              {measureActive ? (
+              {walkMode ? (
+                <span className={css.sheetHudHint}>Esc · Exit walk</span>
+              ) : measureActive ? (
                 <span className={css.sheetHudHint}>
                   Measure · tap two points
                 </span>

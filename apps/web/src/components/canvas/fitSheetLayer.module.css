@@ -46,6 +46,11 @@
   vector-effect: non-scaling-stroke;
 }
 
+.gridMajor {
+  stroke: rgba(36, 19, 24, 0.16);
+  stroke-width: 0.042;
+}
+
 .ticks path {
   fill: none;
   stroke: rgba(36, 19, 24, 0.75);
@@ -77,8 +82,14 @@
 }
 
 .dim line {
-  stroke: rgba(36, 19, 24, 0.35);
-  stroke-width: 0.04;
+  stroke: rgba(36, 19, 24, 0.4);
+  stroke-width: 0.045;
+  vector-effect: non-scaling-stroke;
+}
+
+.dimTick {
+  stroke: rgba(36, 19, 24, 0.72);
+  stroke-width: 0.055;
   vector-effect: non-scaling-stroke;
 }
 
@@ -88,7 +99,7 @@
   font-weight: 600;
   paint-order: stroke;
   stroke: #faf6f2;
-  stroke-width: 0.18;
+  stroke-width: 0.2;
 }
 
 .titleBlockFrame {
@@ -104,6 +115,11 @@
   vector-effect: non-scaling-stroke;
 }
 
+.titleRule {
+  stroke: rgba(36, 19, 24, 0.55);
+  stroke-width: 0.05;
+}
+
 .titleBlock text {
   fill: #241318;
   font-family: "IBM Plex Mono", "Sora", monospace;
@@ -113,6 +129,19 @@
 
 .brand {
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mute {
+  fill: #6b5660;
+  font-weight: 500;
+}
+
+.nfc {
+  fill: rgba(36, 19, 24, 0.45);
+  font-family: "IBM Plex Mono", "Sora", monospace;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
