@@ -22,8 +22,9 @@
 
 .hudPaper {
   border-radius: 8px;
-  background: rgba(250, 246, 242, 0.96);
-  border: 1px solid rgba(36, 19, 24, 0.18);
+  background: color-mix(in srgb, var(--paper, #faf6f2) 96%, transparent);
+  border: 1px solid var(--paper-rule, rgba(36, 19, 24, 0.18));
+  color: var(--paper-ink, #241318);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: 0 10px 28px rgba(36, 24, 30, 0.1);

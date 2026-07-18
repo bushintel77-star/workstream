@@ -18,6 +18,11 @@
   --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
   --font: "Sora", "Segoe UI", sans-serif;
   --display: "Fraunces", Georgia, serif;
+  /* Fit sheet working-drawing paper */
+  --paper: #faf6f2;
+  --paper-ink: #241318;
+  --paper-rule: rgba(36, 19, 24, 0.18);
+  --paper-mute: rgba(36, 19, 24, 0.55);
 
   position: fixed;
   inset: 0;
@@ -337,16 +342,16 @@
 }
 
 .modeStripPaper {
-  background: rgba(250, 246, 242, 0.94);
-  border: 1px solid rgba(36, 19, 24, 0.14);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--paper-rule);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: 0 8px 22px rgba(36, 24, 30, 0.08);
 }
 
 .modeStripPaper .modeBtnActive {
-  background: #241318;
-  color: #faf6f2;
+  background: var(--paper-ink);
+  color: var(--paper);
   box-shadow: none;
 }
 
@@ -622,8 +627,9 @@
 
 /** Fit sheet on - dock reads as paper chrome, not glass. */
 .dockPaper {
-  background: rgba(250, 246, 242, 0.96);
-  border: 1px solid rgba(36, 19, 24, 0.16);
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  border: 1px solid var(--paper-rule);
+  color: var(--paper-ink);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: 0 14px 36px rgba(36, 24, 30, 0.1);

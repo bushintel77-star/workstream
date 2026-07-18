@@ -383,7 +383,7 @@ export function GeoSiteMap({
 
       // Fit sheet: solid cream over aerial inside the lot + ink outline.
       const fillColor = paperMode
-        ? "#FAF6F2"
+        ? "#faf6f2"
         : titleOnly
           ? "#f3c49a"
           : isLocked
