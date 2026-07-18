@@ -11,8 +11,10 @@ import type {
   BrushRecipe,
   CatalogPlacement,
   CatalogSymbol,
+  GhostPlacementSuggestion,
 } from "@workstream/contracts";
 import {
+  buildGhostPlacementSuggestions,
   buildSketchCanvasAiSuggestions,
   CATALOG_PLANNING_SYMBOL_IDS,
   jitterPlacement,
@@ -20,12 +22,16 @@ import {
   recipeFromPlacement,
   SKETCH_RIBBON_STARTERS,
   snapPointPctToGrid,
+  withDirtySaveSuggestion,
   type StudioAiSuggestion,
 } from "@workstream/domain";
-import { saveDesignCanvasAction } from "../../app/actions";
+import { saveDesignCanvasAction, scanDesignGhostsAction } from "../../app/actions";
 import type { RateCardItem } from "../../lib/api";
 import type { StaticMapView } from "../../lib/mapView";
 import { ghostSizeFromMetres } from "./DraftingAssist";
+import { SketchGhostLayer } from "./SketchGhostLayer";
+import { CanvasCommandPalette } from "./CanvasCommandPalette";
+import { useToast } from "../ToastHost";
 import {
   beginMutation,
   commitPrecise,
@@ -57,7 +63,32 @@ type Props = {
   tier1?: boolean;
   /** Promote sketch → working drawing on the same canvas. */
   onDraftCad?: () => void;
+  /** Jump to quote lens (AI coaching "quote" action). */
+  onGoToQuote?: () => void;
+  onRegisterCommands?: (api: { scanGhosts: () => void }) => void;
+  measureActive?: boolean;
+  onToggleMeasure?: () => void;
 };
+
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+type TransformSession =
+  | {
+      kind: "rotate";
+      id: string;
+      startAngleRad: number;
+      startRotation: number;
+      cx: number;
+      cy: number;
+    }
+  | {
+      kind: "scale";
+      id: string;
+      startDist: number;
+      startScale: number;
+      cx: number;
+      cy: number;
+    };
 
 const STRUCTURE_PLANT_RE =
   /pleached|olive|tree|canopy|hornbeam|existing-tree|nature-tree|wikimedia-tree/i;
@@ -101,7 +132,12 @@ export function SketchInstrument({
   worldHeightPx = 640,
   tier1 = false,
   onDraftCad,
+  onGoToQuote,
+  onRegisterCommands,
+  measureActive = false,
+  onToggleMeasure,
 }: Props) {
+  const toast = useToast();
   const layerRef = useRef<HTMLDivElement>(null);
   const placementsRef = useRef<CatalogPlacement[]>(initialPlacements);
   const mutationFsmRef = useRef(createMutationFsm());
@@ -114,16 +150,25 @@ export function SketchInstrument({
     startClientX: number;
     startClientY: number;
   } | null>(null);
+  const transformRef = useRef<TransformSession | null>(null);
 
   const [placements, setPlacements] = useState(initialPlacements);
+  const [ephemeralGhosts, setEphemeralGhosts] = useState<
+    GhostPlacementSuggestion[]
+  >([]);
+  const [ghostScanning, setGhostScanning] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const [armedRecipe, setArmedRecipe] = useState<BrushRecipe | null>(null);
   const [swatchHistory, setSwatchHistory] = useState<BrushRecipe[]>([]);
   const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(
     null,
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [dirty, setDirty] = useState(false);
   const startersReady = useRef(false);
+  const ghostsBootstrapped = useRef(false);
 
   const symbolById = useMemo(
     () => new Map(symbols.map((s) => [s.id, s])),
@@ -175,7 +220,7 @@ export function SketchInstrument({
   );
 
   const persist = useCallback(async () => {
-    setSaving(true);
+    setSaveStatus("saving");
     try {
       await saveDesignCanvasAction(
         projectId,
@@ -185,13 +230,28 @@ export function SketchInstrument({
         [],
       );
       requestOrchestrationRefresh();
+      setSaveStatus("saved");
+      setLastSavedAt(new Date());
+      setDirty(false);
       return true;
-    } catch {
+    } catch (err) {
+      setSaveStatus("error");
+      toast.show(
+        err instanceof Error ? err.message : "Could not save sketch",
+        "error",
+        6000,
+        {
+          action: {
+            label: "Retry",
+            onClick: () => {
+              void persist();
+            },
+          },
+        },
+      );
       return false;
-    } finally {
-      setSaving(false);
     }
-  }, [projectId]);
+  }, [projectId, toast]);
 
   const armBrush = useCallback((recipe: BrushRecipe) => {
     setArmedRecipe(recipe);
@@ -225,6 +285,7 @@ export function SketchInstrument({
           scale: brush.copy_geometry ? jittered.scale : 1,
         },
       ]);
+      setDirty(true);
     },
     [armedRecipe],
   );
@@ -327,6 +388,7 @@ export function SketchInstrument({
         e.preventDefault();
         setPlacements((prev) => prev.filter((p) => p.id !== selectedId));
         setSelectedId(null);
+        setDirty(true);
         void persist();
       }
       if (e.key === "Escape") {
@@ -359,15 +421,18 @@ export function SketchInstrument({
         hasStructurePlanting = true;
       }
     }
-    return buildSketchCanvasAiSuggestions({
-      placementCount: placements.length,
-      hasPlanningSymbol,
-      hasHardscape,
-      hasStructurePlanting,
-      tier1,
-      sketchReadyForCad: placements.length >= 3,
-    });
-  }, [placements, symbolById, tier1]);
+    return withDirtySaveSuggestion(
+      buildSketchCanvasAiSuggestions({
+        placementCount: placements.length,
+        hasPlanningSymbol,
+        hasHardscape,
+        hasStructurePlanting,
+        tier1,
+        sketchReadyForCad: placements.length >= 3,
+      }),
+      dirty,
+    );
+  }, [dirty, placements, symbolById, tier1]);
 
   const armSymbol = useCallback(
     (sym: CatalogSymbol) => {
@@ -378,8 +443,16 @@ export function SketchInstrument({
 
   const handleAiAction = useCallback(
     (suggestion: StudioAiSuggestion) => {
-      if (suggestion.action === "cad" || suggestion.action === "quote") {
+      if (suggestion.action === "cad") {
         onDraftCad?.();
+        return;
+      }
+      if (suggestion.action === "quote") {
+        onGoToQuote?.();
+        return;
+      }
+      if (suggestion.action === "save") {
+        void persist();
         return;
       }
       const id = suggestion.symbol_id;
@@ -387,7 +460,120 @@ export function SketchInstrument({
       const sym = symbolById.get(id);
       if (sym) armSymbol(sym);
     },
-    [armSymbol, onDraftCad, symbolById],
+    [armSymbol, onDraftCad, onGoToQuote, persist, symbolById],
+  );
+
+  const scanGhosts = useCallback(async () => {
+    setGhostScanning(true);
+    try {
+      const symbolIds = symbols.map((s) => s.id);
+      let suggestions: GhostPlacementSuggestion[] = [];
+      try {
+        const res = await scanDesignGhostsAction(projectId);
+        suggestions = res.suggestions ?? [];
+      } catch {
+        suggestions = buildGhostPlacementSuggestions({ tier1, symbolIds });
+      }
+      if (suggestions.length === 0) {
+        suggestions = buildGhostPlacementSuggestions({ tier1, symbolIds });
+      }
+      setEphemeralGhosts(suggestions);
+      if (suggestions.length > 0) {
+        toast.show(
+          `${suggestions.length} AI suggestion${suggestions.length === 1 ? "" : "s"} on canvas — accept to commit`,
+          "info",
+          5000,
+        );
+      } else {
+        toast.show("No layout suggestions for this aerial yet", "info");
+      }
+    } finally {
+      setGhostScanning(false);
+    }
+  }, [projectId, symbols, tier1, toast]);
+
+  useEffect(() => {
+    onRegisterCommands?.({ scanGhosts: () => void scanGhosts() });
+  }, [onRegisterCommands, scanGhosts]);
+
+  useEffect(() => {
+    if (ghostsBootstrapped.current || placements.length > 0) return;
+    ghostsBootstrapped.current = true;
+    void scanGhosts();
+  }, [placements.length, scanGhosts]);
+
+  const acceptGhost = useCallback(
+    (ghost: GhostPlacementSuggestion) => {
+      setPlacements((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          symbol_id: ghost.symbol_id,
+          x_pct: ghost.x_pct,
+          y_pct: ghost.y_pct,
+          rotation_deg: 0,
+          scale: 1,
+        },
+      ]);
+      setEphemeralGhosts((g) => g.filter((x) => x.id !== ghost.id));
+      setDirty(true);
+      void persist();
+      toast.show("Suggestion accepted onto plan", "success");
+    },
+    [persist, toast],
+  );
+
+  const dismissGhost = useCallback((ghostId: string) => {
+    setEphemeralGhosts((g) => g.filter((x) => x.id !== ghostId));
+  }, []);
+
+  const beginRotate = useCallback(
+    (placementId: string, e: React.PointerEvent) => {
+      const el = layerRef.current;
+      const placement = placementsRef.current.find((p) => p.id === placementId);
+      if (!el || !placement) return;
+      e.stopPropagation();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      const r = el.getBoundingClientRect();
+      const cx = r.left + (placement.x_pct / 100) * r.width;
+      const cy = r.top + (placement.y_pct / 100) * r.height;
+      const startAngleRad = Math.atan2(e.clientY - cy, e.clientX - cx);
+      transformRef.current = {
+        kind: "rotate",
+        id: placementId,
+        startAngleRad,
+        startRotation: placement.rotation_deg,
+        cx,
+        cy,
+      };
+    },
+    [],
+  );
+
+  const beginScale = useCallback(
+    (placementId: string, e: React.PointerEvent) => {
+      const el = layerRef.current;
+      const placement = placementsRef.current.find((p) => p.id === placementId);
+      if (!el || !placement) return;
+      e.stopPropagation();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      const r = el.getBoundingClientRect();
+      const cx = r.left + (placement.x_pct / 100) * r.width;
+      const cy = r.top + (placement.y_pct / 100) * r.height;
+      const startDist = Math.max(
+        24,
+        Math.hypot(e.clientX - cx, e.clientY - cy),
+      );
+      transformRef.current = {
+        kind: "scale",
+        id: placementId,
+        startDist,
+        startScale: placement.scale || 1,
+        cx,
+        cy,
+      };
+    },
+    [],
   );
 
   const armedSym = armedRecipe
@@ -426,6 +612,51 @@ export function SketchInstrument({
     }
 
     const drag = dragRef.current;
+    const transform = transformRef.current;
+    if (transform) {
+      e.stopPropagation();
+      if (transform.kind === "rotate") {
+        const angle = Math.atan2(
+          e.clientY - transform.cy,
+          e.clientX - transform.cx,
+        );
+        const deltaDeg =
+          ((angle - transform.startAngleRad) * 180) / Math.PI;
+        setPlacements((prev) =>
+          prev.map((p) =>
+            p.id === transform.id
+              ? {
+                  ...p,
+                  rotation_deg:
+                    Math.round((transform.startRotation + deltaDeg) * 10) /
+                    10,
+                }
+              : p,
+          ),
+        );
+        setDirty(true);
+        return;
+      }
+      if (transform.kind === "scale") {
+        const dist = Math.max(
+          24,
+          Math.hypot(e.clientX - transform.cx, e.clientY - transform.cy),
+        );
+        const nextScale = Math.min(
+          3,
+          Math.max(0.25, transform.startScale * (dist / transform.startDist)),
+        );
+        setPlacements((prev) =>
+          prev.map((p) =>
+            p.id === transform.id
+              ? { ...p, scale: Math.round(nextScale * 100) / 100 }
+              : p,
+          ),
+        );
+        setDirty(true);
+        return;
+      }
+    }
     if (drag) {
       e.stopPropagation();
       const el = layerRef.current;
@@ -448,6 +679,14 @@ export function SketchInstrument({
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
+    if (transformRef.current) {
+      transformRef.current = null;
+      void persist();
+      if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+      return;
+    }
     if (paintRef.current?.active) {
       endPaint();
       if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
@@ -457,9 +696,23 @@ export function SketchInstrument({
     }
     if (dragRef.current) {
       dragRef.current = null;
+      setDirty(true);
       void persist();
     }
   };
+
+  const saveStatusLabel = useMemo(() => {
+    if (saveStatus === "saving") return "Saving…";
+    if (saveStatus === "error") return "Save failed";
+    if (dirty) return "Unsaved changes";
+    if (lastSavedAt) {
+      return `Saved ${lastSavedAt.toLocaleTimeString("en-AU", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    }
+    return "Autosave on";
+  }, [dirty, lastSavedAt, saveStatus]);
 
   return (
     <>
@@ -473,6 +726,13 @@ export function SketchInstrument({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        <SketchGhostLayer
+          ghosts={ephemeralGhosts}
+          symbolById={symbolById}
+          onAccept={acceptGhost}
+          onDismiss={dismissGhost}
+          scanning={ghostScanning}
+        />
         {placements.map((p) => {
           const sym = symbolById.get(p.symbol_id);
           if (!sym) return null;
@@ -499,11 +759,12 @@ export function SketchInstrument({
                   startClientY: ev.clientY,
                 };
               }}
-              onRotateStart={() => {}}
-              onScaleStart={() => {}}
+              onRotateStart={(ev) => beginRotate(p.id, ev)}
+              onScaleStart={(ev) => beginScale(p.id, ev)}
               onDelete={() => {
                 setPlacements((prev) => prev.filter((x) => x.id !== p.id));
                 setSelectedId(null);
+                setDirty(true);
                 void persist();
               }}
             />
@@ -534,7 +795,7 @@ export function SketchInstrument({
         symbols={symbols}
         armedRecipe={armedRecipe}
         brushWidthM={brushWidthM}
-        saving={saving}
+        saveStatusLabel={saveStatusLabel}
         swatchHistory={swatchHistory}
         symbolById={symbolById}
         aiSuggestions={aiSuggestions}
@@ -550,6 +811,20 @@ export function SketchInstrument({
         }}
         onAiAction={handleAiAction}
         onDraftCad={() => onDraftCad?.()}
+        onScanGhosts={() => void scanGhosts()}
+        onOpenCommands={() => setCommandOpen(true)}
+      />
+
+      <CanvasCommandPalette
+        open={commandOpen}
+        onOpenChange={setCommandOpen}
+        symbols={symbols}
+        onArmSymbol={armSymbol}
+        onScanGhosts={() => void scanGhosts()}
+        onDraftCad={() => onDraftCad?.()}
+        onGoToQuote={() => onGoToQuote?.()}
+        onToggleMeasure={() => onToggleMeasure?.()}
+        measureActive={measureActive}
       />
     </>
   );

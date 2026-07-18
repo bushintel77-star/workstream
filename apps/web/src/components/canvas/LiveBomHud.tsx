@@ -13,6 +13,7 @@ import {
   getOrchestrationAction,
 } from "../../app/actions";
 import {
+  requestOrchestrationRefresh,
   subscribeMutationHud,
   type MutationHudSnapshot,
 } from "../../lib/canvas-mutation-bus";
@@ -193,6 +194,9 @@ export function LiveBomHud({ projectId, refreshKey = 0, onWorld }: Props) {
                   setWorld(res.world);
                   onWorld?.(res.world);
                   setActiveOverlay(null);
+                  if (res.placed) {
+                    requestOrchestrationRefresh();
+                  }
                 })
               }
             >

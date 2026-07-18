@@ -494,6 +494,14 @@ function SiteCanvasInner({
                   worldWidthPx={worldSize.width}
                   worldHeightPx={worldSize.height}
                   tier1={tier1}
+                  measureActive={measureActive}
+                  onToggleMeasure={() => {
+                    setMeasureActive((on) => {
+                      if (on) setMeasurePts([]);
+                      return !on;
+                    });
+                  }}
+                  onGoToQuote={() => setMode("quote")}
                   onDraftCad={() =>
                     run("Generating CAD…", async () => {
                       applyCad(await generateCadAction(projectId));
@@ -816,30 +824,15 @@ function SiteCanvasInner({
             <div className={css.dock}>
               <p className={css.dockPrimaryHint}>
                 {sketchCount === 0
-                  ? "Paint materials on the aerial — live BOM tracks every stamp"
-                  : "Concept on the site — draft the working drawing next"}
+                  ? "Accept AI suggestions or paint materials — live BOM tracks every stamp"
+                  : "Concept on site — use ribbon or Ctrl+K for CAD and quote"}
               </p>
-              <div className={css.btnRow}>
-                <button
-                  type="button"
-                  className={`${css.btn} ${css.btnPrimary}`}
-                  disabled={pending || sketchCount === 0}
-                  onClick={() =>
-                    run("Generating CAD…", async () => {
-                      applyCad(await generateCadAction(projectId));
-                      setMode("cad");
-                    })
-                  }
-                >
-                  Draft drawing →
-                </button>
-              </div>
               <div className={`${css.status} ${error ? css.error : ""}`}>
                 {error ??
                   status ??
                   (sketchCount > 0
                     ? `${sketchCount} placements · Alt+click to sample a brush`
-                    : "Same world as Survey and CAD — not a separate studio")}
+                    : "Same world as Survey and CAD — Cmd+K for commands")}
               </div>
             </div>
           ) : null}

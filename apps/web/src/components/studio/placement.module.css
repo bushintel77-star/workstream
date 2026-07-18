@@ -35,9 +35,11 @@
 
 .selectionHandle {
   position: absolute;
-  width: 14px;
-  height: 14px;
-  margin: -7px;
+  width: 16px;
+  height: 16px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -22px;
   border-radius: 50%;
   border: 2px solid var(--ink-inverted);
   background: var(--ink-primary);

@@ -10,42 +10,23 @@ Guidance for cloud agents working in the Workstream monorepo.
 |---------|---------|-----|
 | API | `pnpm --filter @workstream/api dev` | http://localhost:3001 |
 | Web | `pnpm --filter @workstream/web dev` | http://localhost:3002 |
-| Both | `pnpm dev` (Turbo; builds workspace packages first) | |
+| Both | `pnpm dev` | |
 
-Copy env templates before first run: `apps/api/.env.example` → `.env`, `apps/web/.env.example` → `.env`. Without Clerk keys the stack runs as `dev-user`.
+Copy `apps/api/.env.example` and `apps/web/.env.example` to `.env` before first run. Without Clerk keys the stack uses `dev-user`.
 
-### First-time build
+After `pnpm install`, run `pnpm --filter '@workstream/*' build` once (Turbo `dev` also builds deps).
 
-After `pnpm install`, build workspace packages once:
+Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json`.
 
-```bash
-pnpm --filter '@workstream/*' build
-```
+### Canvas product surface
 
-Turbo `dev` also triggers dependency builds, but a manual build avoids cold-start surprises.
+- Home: `/` — address composer + sites list
+- Operator canvas: `/projects/[id]?mode=survey|sketch|cad|quote|share`
 
-### Lint / test
+Sketch mode (`SketchInstrument`) owns: paint/save, AI ghost scan (`scanDesignGhostsAction`), Cmd+K command palette, rotate/scale handles, ribbon search.
 
-See root `package.json`: `pnpm typecheck`, `pnpm test`, `pnpm lint`. Pre-commit runs `lint-staged` → workspace `typecheck` on staged TS.
+AI pipeline: heuristic coaching (`buildSketchCanvasAiSuggestions`) + optional vision ghosts API + CAD ghosts on generate (`generateCadAction`). Ghosts are ephemeral until accept.
 
-### Canvas app entry points
+### UTF-8 / Turbopack
 
-- Home (address composer): `/`
-- Single canvas surface: `/projects/[id]?mode=survey|sketch|cad|quote|share`
-
-Legacy `/design/studio` routes redirect into canvas modes.
-
-### Dev-server encoding gotcha
-
-Some source files historically contained Windows-1252 punctuation (em dash `0x97`, middle dot `0xb7`, etc.). **Next.js Turbopack requires valid UTF-8** and will 500 on import if a file has lone high bytes. If the web dev server fails with `invalid utf-8 sequence`, scan the reported file and replace non-UTF-8 punctuation with ASCII or proper UTF-8 characters. Do **not** bulk-replace across the whole repo with sed — fix only the files Turbopack names.
-
-### Demo project (empty store)
-
-```bash
-curl -s -X POST http://localhost:3001/projects \
-  -H 'Content-Type: application/json' \
-  -d '{"address":"12 Wrights Terrace, South Yarra VIC 3141","lat":-37.838,"lng":144.992}'
-# then POST /projects/:id/survey with {}
-```
-
-Open `/projects/:id?mode=survey` to exercise the aerial canvas and right-rail chrome.
+Next.js dev requires valid UTF-8 in imported TS files. Lone Windows-1252 bytes (e.g. `0x97` em dash) cause 500s. Fix only files Turbopack names — do not bulk sed the repo.
