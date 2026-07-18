@@ -21,6 +21,7 @@ import {
   runCadQuote,
 } from "../lib/cad-qs-job";
 import { refreshOrchestration } from "../lib/material-orchestrator";
+import { publicBaseUrl } from "../lib/public-url";
 
 export default async function cadRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -238,11 +239,18 @@ export default async function cadRoutes(fastify: FastifyInstance) {
           .send({ error: "Validation failed", issues: body.error.issues });
       }
       try {
+        let baseUrl: string | undefined;
+        try {
+          baseUrl = publicBaseUrl(request);
+        } catch {
+          baseUrl = undefined;
+        }
         const quote = await runCadQuote(
           fastify.store,
           ownerId,
           projectId,
           body.data.scenario ?? "standard",
+          baseUrl,
         );
         return reply.send(quote);
       } catch (err) {

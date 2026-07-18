@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -12,6 +13,7 @@ import {
 } from "react";
 import type { CatalogSymbol } from "@workstream/contracts";
 import type { ProjectOrchestrationWorld } from "@workstream/contracts";
+import { isTier1WrightsTerrace } from "@workstream/domain";
 import {
   acceptCadAction,
   autoTraceBoundaryAction,
@@ -43,12 +45,26 @@ import {
 } from "../../lib/canvas-mode";
 import { onOrchestrationRefreshRequest } from "../../lib/canvas-mutation-bus";
 import {
+  displaySizeForAerial,
+  fitWorldToStage,
+  groundSpanMetres,
+  resolveStaticMapView,
+} from "../../lib/mapView";
+import {
   BoundaryChrome,
   BoundaryOverlay,
   type BoundaryTool,
 } from "./BoundaryLockSnap";
 import { CanvasModeStrip } from "./CanvasModeStrip";
 import { SketchInstrument } from "./SketchInstrument";
+import {
+  DraftingHud,
+  MeasureOverlay,
+  measureDistanceMetres,
+  type MeasurePt,
+} from "./DraftingAssist";
+import { TitleParcelOverlay } from "./TitleParcelOverlay";
+import { Tier1SavingsLedger, Tier1ZoneCards } from "../tier1";
 import css from "./siteCanvas.module.css";
 
 export type SketchBundle = {
@@ -109,8 +125,10 @@ function SiteCanvasInner({
   const [survey, setSurvey] = useState<CadQuantitySurveyApi | null>(null);
   const [build, setBuild] = useState<CadBuildApi | null>(null);
   const [quoteHtml, setQuoteHtml] = useState<string | null>(null);
+  const [showQuoteOverlay, setShowQuoteOverlay] = useState(false);
   const [sheet, setSheet] = useState<Sheet>("none");
   const [portalLink, setPortalLink] = useState<string | null>(quoteUrl);
+  const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [showCadAdvanced, setShowCadAdvanced] = useState(false);
   const [orchRefresh, setOrchRefresh] = useState(0);
   const [orchWorld, setOrchWorld] = useState<ProjectOrchestrationWorld | null>(
@@ -124,6 +142,7 @@ function SiteCanvasInner({
   );
   const [pending, startTransition] = useTransition();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tier1 = isTier1WrightsTerrace(projectAddress);
 
   const committedCount =
     cadDoc?.entities.filter((e) => !e.ghost).length ?? 0;
@@ -131,10 +150,20 @@ function SiteCanvasInner({
     hasAerial: Boolean(aerialUri),
     hasSketch:
       sketchCount > 0 || (sketch?.canvas?.placements?.length ?? 0) > 0,
-    hasCad: committedCount > 0,
-    hasQuote: hasQuote || Boolean(quoteHtml),
+    /** Accepted CAD only — ghosts must be cleared (matches API quote gate). */
+    hasCad: committedCount > 0 && ghostCount === 0,
+    /** Persisted output only — local HTML preview does not unlock Share. */
+    hasQuote: quotePersisted,
   };
   const mode = resolveCanvasMode(searchParams.get("mode"), progress);
+
+  useEffect(() => {
+    setQuotePersisted(hasQuote);
+  }, [hasQuote]);
+
+  useEffect(() => {
+    setPortalLink(quoteUrl);
+  }, [quoteUrl]);
 
   const setMode = useCallback(
     (next: CanvasMode) => {
@@ -166,12 +195,70 @@ function SiteCanvasInner({
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(40);
   const [ty, setTy] = useState(80);
+  const [worldSize, setWorldSize] = useState({ width: 800, height: 480 });
+  const [measureActive, setMeasureActive] = useState(false);
+  const [measurePts, setMeasurePts] = useState<MeasurePt[]>([]);
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const drag = useRef<{
     x: number;
     y: number;
     tx: number;
     ty: number;
   } | null>(null);
+
+  const activeAerial = aerialUri ?? sketch?.aerialUri ?? null;
+  const lotRing = sketch?.lotRing ?? [];
+  const mapView = useMemo(() => {
+    if (!activeAerial && lotRing.length < 3) return null;
+    return resolveStaticMapView(activeAerial ?? "", lotRing);
+  }, [activeAerial, lotRing]);
+  const groundSpan = mapView ? groundSpanMetres(mapView) : null;
+
+  const applyFit = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    const next = fitWorldToStage(
+      rect.width,
+      rect.height,
+      worldSize.width,
+      worldSize.height,
+    );
+    setScale(next.scale);
+    setTx(next.tx);
+    setTy(next.ty);
+  }, [worldSize.height, worldSize.width]);
+
+  const onAerialLoad = useCallback(
+    (img: HTMLImageElement) => {
+      const naturalW = img.naturalWidth || mapView?.width || 800;
+      const naturalH = img.naturalHeight || mapView?.height || 480;
+      const size = displaySizeForAerial(naturalW, naturalH);
+      setWorldSize(size);
+      requestAnimationFrame(() => {
+        const stage = stageRef.current;
+        if (!stage) return;
+        const rect = stage.getBoundingClientRect();
+        const next = fitWorldToStage(
+          rect.width,
+          rect.height,
+          size.width,
+          size.height,
+        );
+        setScale(next.scale);
+        setTx(next.tx);
+        setTy(next.ty);
+      });
+    },
+    [mapView?.height, mapView?.width],
+  );
+
+  useEffect(() => {
+    if (!activeAerial && mapView) {
+      const size = displaySizeForAerial(mapView.width, mapView.height);
+      setWorldSize(size);
+    }
+  }, [activeAerial, mapView]);
 
   const applyCad = useCallback(
     (result: {
@@ -243,9 +330,7 @@ function SiteCanvasInner({
   };
 
   const fitSite = () => {
-    setScale(1);
-    setTx(40);
-    setTy(80);
+    applyFit();
   };
 
   const run = (label: string, fn: () => Promise<void>) => {
@@ -351,36 +436,52 @@ function SiteCanvasInner({
       {showStage ? (
         <>
           <div
+            ref={stageRef}
             className={css.stage}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
             <div
+              className={css.draftGrid}
+              aria-hidden
+              data-testid="canvas-draft-grid"
+            />
+            <div
               className={css.world}
               style={{
+                width: worldSize.width,
+                height: worldSize.height,
                 transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
               }}
+              data-ground-w={
+                groundSpan ? groundSpan.widthM.toFixed(1) : undefined
+              }
+              data-ground-h={
+                groundSpan ? groundSpan.heightM.toFixed(1) : undefined
+              }
             >
-              {(aerialUri || sketch?.aerialUri) ? (
+              {activeAerial ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   className={css.aerial}
-                  src={aerialUri ?? sketch!.aerialUri}
+                  src={activeAerial}
                   alt={`Aerial — ${projectAddress}`}
                   draggable={false}
+                  onLoad={(e) => onAerialLoad(e.currentTarget)}
                 />
               ) : (
                 <div
                   className={css.aerial}
                   style={{
-                    width: 900,
-                    height: 640,
                     background:
                       "linear-gradient(145deg, #fceef4 0%, #e8dfe4 100%)",
                   }}
                 />
               )}
+              {mapView && lotRing.length >= 3 ? (
+                <TitleParcelOverlay lotRing={lotRing} mapView={mapView} />
+              ) : null}
               {mode === "sketch" && sketch ? (
                 <SketchInstrument
                   projectId={projectId}
@@ -388,8 +489,26 @@ function SiteCanvasInner({
                   rateCard={sketch.rateCard}
                   initialPlacements={sketch.canvas?.placements ?? []}
                   onPlacementCount={setSketchCount}
+                  mapView={mapView}
+                  worldWidthPx={worldSize.width}
+                  worldHeightPx={worldSize.height}
+                  tier1={tier1}
+                  onDraftCad={() =>
+                    run("Generating CAD…", async () => {
+                      applyCad(await generateCadAction(projectId));
+                      setMode("cad");
+                    })
+                  }
                 />
               ) : null}
+              <MeasureOverlay
+                mapView={mapView}
+                worldWidthPx={worldSize.width}
+                worldHeightPx={worldSize.height}
+                active={measureActive}
+                points={measurePts}
+                onPointsChange={setMeasurePts}
+              />
               {svg && (mode === "cad" || mode === "quote") ? (
                 <div
                   className={`${css.cadLayer} ${ghostCount > 0 ? css.cadLayerGhost : ""}`}
@@ -402,6 +521,7 @@ function SiteCanvasInner({
                     boundary={boundary}
                     tool={boundaryTool}
                     onChange={persistBoundary}
+                    mapView={mapView}
                   />
                 </div>
               ) : null}
@@ -478,6 +598,35 @@ function SiteCanvasInner({
               </Link>
             </div>
           </div>
+
+          {mapView && mode !== "share" ? (
+            <DraftingHud
+              mapView={mapView}
+              worldWidthPx={worldSize.width}
+              worldHeightPx={worldSize.height}
+              viewScale={scale}
+              measureActive={measureActive}
+              onMeasureActiveChange={(on) => {
+                setMeasureActive(on);
+                if (!on) setMeasurePts([]);
+              }}
+              measureDistanceM={measureDistanceMetres(
+                measurePts,
+                mapView,
+                worldSize.width,
+                worldSize.height,
+              )}
+              measureHint={
+                measureActive
+                  ? measurePts.length === 0
+                    ? "Tap start point"
+                    : measurePts.length === 1
+                      ? "Tap end point"
+                      : null
+                  : null
+              }
+            />
+          ) : null}
 
           {showBoundary ? (
             <BoundaryChrome
@@ -608,10 +757,16 @@ function SiteCanvasInner({
                     className={`${css.btn} ${css.btnPrimary}`}
                     disabled={pending}
                     onClick={() =>
-                      run("Running survey…", async () => {
+                      run("Loading aerial & title…", async () => {
                         const fd = new FormData();
                         fd.set("projectId", projectId);
                         await runSurveyAction(fd);
+                        try {
+                          const res = await autoTraceBoundaryAction(projectId);
+                          setBoundary(res.boundary);
+                        } catch {
+                          /* title overlay still renders from lotRing */
+                        }
                         router.refresh();
                       })
                     }
@@ -635,8 +790,10 @@ function SiteCanvasInner({
                 {error ??
                   status ??
                   (aerialUri
-                    ? "One tap drafts concept, drawing, and live estimate"
-                    : "We need the aerial before anything else")}
+                    ? groundSpan
+                      ? `Aerial fitted · frame ${groundSpan.widthM.toFixed(0)}×${groundSpan.heightM.toFixed(0)} m · title projected`
+                      : "Aerial on canvas — title overlays when survey has a parcel"
+                    : "Load aerial + land title onto the canvas")}
               </div>
             </div>
           ) : null}
@@ -816,14 +973,20 @@ function SiteCanvasInner({
           {showQuoteDock ? (
             <div className={css.dock}>
               <p className={css.dockPrimaryHint}>
-                {quoteHtml || hasQuote
-                  ? "Client quote ready — share from this canvas"
+                {quotePersisted
+                  ? "Client quote saved — share from this canvas"
                   : orchWorld && orchWorld.live_bom.length > 0
                     ? "Live BOM is already running — promote to client quote"
                     : "Generate client quote from CAD (live BOM stays on canvas)"}
               </p>
+              {tier1 ? (
+                <div className={css.tier1Dock} data-testid="canvas-tier1-quote">
+                  <Tier1SavingsLedger variant="compact" />
+                  <Tier1ZoneCards />
+                </div>
+              ) : null}
               <div className={css.btnRow}>
-                {quoteHtml || hasQuote ? (
+                {quotePersisted ? (
                   <button
                     type="button"
                     className={`${css.btn} ${css.btnPrimary}`}
@@ -835,26 +998,41 @@ function SiteCanvasInner({
                   <button
                     type="button"
                     className={`${css.btn} ${css.btnPrimary}`}
-                    disabled={pending || committedCount === 0}
+                    disabled={pending || !progress.hasCad}
                     onClick={() =>
                       run("Generating client quote…", async () => {
                         const res = await cadQuoteAction(projectId, "standard");
                         setBuild(res.build);
                         setSurvey(res.survey);
                         setQuoteHtml(res.html);
+                        setShowQuoteOverlay(true);
+                        if (res.output?.uri) {
+                          setQuotePersisted(true);
+                          setPortalLink(res.output.uri);
+                        }
                         bumpOrchestration();
+                        router.refresh();
                       })
                     }
                   >
                     Promote live BOM → quote
                   </button>
                 )}
+                {quoteHtml ? (
+                  <button
+                    type="button"
+                    className={css.btn}
+                    onClick={() => setShowQuoteOverlay(true)}
+                  >
+                    Preview quote
+                  </button>
+                ) : null}
               </div>
               <div className={`${css.btnRow} ${css.dockMore}`}>
                 <button
                   type="button"
                   className={css.btn}
-                  disabled={pending || committedCount === 0}
+                  disabled={pending || !progress.hasCad}
                   onClick={() =>
                     run("Surveying…", async () => {
                       const res = await cadQuantitySurveyAction(projectId);
@@ -868,7 +1046,7 @@ function SiteCanvasInner({
                 <button
                   type="button"
                   className={css.btn}
-                  disabled={pending || committedCount === 0}
+                  disabled={pending || !progress.hasCad}
                   onClick={() =>
                     run("Building schedule…", async () => {
                       const res = await cadBuildAction(projectId, "standard");
@@ -884,9 +1062,11 @@ function SiteCanvasInner({
               <div className={`${css.status} ${error ? css.error : ""}`}>
                 {error ??
                   status ??
-                  (orchWorld
-                    ? `Live BOM ${orchWorld.live_bom.length} lines · ${orchWorld.risks.length} risks`
-                    : "Financials update as you draw — no separate quote mode")}
+                  (tier1
+                    ? "Tier-1 workbook total is the quote truth on this site"
+                    : orchWorld
+                      ? `Live BOM ${orchWorld.live_bom.length} lines · ${orchWorld.risks.length} risks`
+                      : "Financials update as you draw — no separate quote mode")}
               </div>
             </div>
           ) : null}
@@ -898,11 +1078,16 @@ function SiteCanvasInner({
                 Copy the portal link or open the polished quote. Everything else
                 stays on this canvas.
               </p>
+              {tier1 ? (
+                <div className={css.tier1Dock} data-testid="canvas-tier1-share">
+                  <Tier1SavingsLedger variant="compact" showTarget />
+                </div>
+              ) : null}
               <div className={css.btnRow}>
                 <button
                   type="button"
                   className={`${css.btn} ${css.btnPrimary}`}
-                  disabled={pending}
+                  disabled={pending || !quotePersisted}
                   onClick={() =>
                     run("Copying portal link…", async () => {
                       const url = await copyPortalLinkAction(projectId);
@@ -913,7 +1098,7 @@ function SiteCanvasInner({
                 >
                   Copy portal link
                 </button>
-                {portalLink || hasQuote ? (
+                {portalLink || quotePersisted ? (
                   <a
                     className={css.btn}
                     href={portalLink ?? quoteUrl ?? "#"}
@@ -923,17 +1108,23 @@ function SiteCanvasInner({
                     Open portal
                   </a>
                 ) : null}
-                <button
-                  type="button"
-                  className={css.btn}
-                  disabled={!quoteHtml && committedCount === 0}
-                  onClick={() => {
-                    if (quoteHtml) return;
-                    setMode("quote");
-                  }}
-                >
-                  {quoteHtml ? "Quote ready" : "Make quote first"}
-                </button>
+                {quoteHtml ? (
+                  <button
+                    type="button"
+                    className={css.btn}
+                    onClick={() => setShowQuoteOverlay(true)}
+                  >
+                    View quote
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={css.btn}
+                    onClick={() => setMode("quote")}
+                  >
+                    Make quote first
+                  </button>
+                )}
               </div>
               {portalLink ? (
                 <p style={{ wordBreak: "break-all", fontSize: "0.75rem" }}>
@@ -948,7 +1139,7 @@ function SiteCanvasInner({
         </>
       ) : null}
 
-      {quoteHtml ? (
+      {showQuoteOverlay && quoteHtml ? (
         <div className={css.quoteOverlay}>
           <div className={css.quoteBar}>
             <strong className={css.brand} style={{ fontSize: "1.25rem" }}>
@@ -965,7 +1156,7 @@ function SiteCanvasInner({
               <button
                 type="button"
                 className={`${css.btn} ${css.btnPrimary}`}
-                onClick={() => setQuoteHtml(null)}
+                onClick={() => setShowQuoteOverlay(false)}
               >
                 Back to canvas
               </button>

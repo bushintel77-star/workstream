@@ -12,21 +12,37 @@ const repoRoot = path.resolve(domainRoot, "../..");
 
 const INCLUDE = [
   /^nature\//,
-  /^outdoor\/(bench|table|fountain|drinking-water|shelter|guidepost|camping)-/,
-  /^amenity\/playground-/,
+  /^outdoor\/(bench|table|fountain|drinking-water|shelter|guidepost|camping|waste-basket|water-tower|wilderness-hut|basic-hut|alpine-hut)-/,
+  /^amenity\/(playground|cemetery|toilets|recycling)-/,
   /^sports\/swimming-/,
   /^barrier\/(gate|steps|bollard|lift-gate|cattle-grid)-/,
   /^shop\/(garden-centre|florist)-/,
-  /^tourism\/viewpoint-/,
+  /^tourism\/(viewpoint|windmill|memorial|monument|castle-manor)-/,
 ];
 
 const CATEGORY_RULES = [
-  [/tree|florist|garden-centre/, "planting"],
-  [/fountain|waterfall|spring|swimming|drinking-water/, "water"],
-  [/bench|table|playground|camping/, "furniture"],
-  [/gate|bollard|lift-gate|cattle-grid|shelter|viewpoint/, "structure"],
+  [/tree|florist|garden-centre|cemetery/, "planting"],
+  [/fountain|waterfall|spring|swimming|drinking-water|water-tower/, "water"],
+  [/bench|table|playground|camping|waste-basket|toilets/, "furniture"],
+  [/gate|bollard|lift-gate|cattle-grid|shelter|viewpoint|windmill|memorial|monument|castle|hut|recycling/, "structure"],
   [/steps/, "paving"],
   [/peak|saddle/, "annotation"],
+];
+
+/** Indicative canopy / footprint for drafting size assist (metres). */
+const WIDTH_RULES = [
+  [/tree-deciduous|tree-unspecified/, 6],
+  [/tree-coniferous/, 5],
+  [/playground/, 8],
+  [/fountain/, 2.5],
+  [/bench|table/, 1.8],
+  [/gate|bollard|steps/, 1.2],
+  [/shelter|hut/, 4],
+  [/water-tower/, 3],
+  [/windmill/, 5],
+  [/garden-centre|florist/, 3],
+  [/cemetery/, 4],
+  [/camping/, 3],
 ];
 
 function findOsmicRoot() {
@@ -59,7 +75,9 @@ function parseLayers(svg, fills) {
     if (!dM) continue;
     const classM = attrs.match(/\bclass="([^"]+)"/i);
     const styleM = attrs.match(/\bstyle="([^"]+)"/i);
-    const inlineFillM = attrs.match(/\bfill:\s*([^;"]+)/i) ?? styleM?.[1]?.match(/fill:\s*([^;"]+)/i);
+    const inlineFillM =
+      attrs.match(/\bfill:\s*([^;"]+)/i) ??
+      styleM?.[1]?.match(/fill:\s*([^;"]+)/i);
     const cls = classM?.[1]?.trim().split(/\s+/)[0];
     let fill = inlineFillM?.[1] ?? (cls ? fills.get(cls) : undefined);
     if (fill === "#000000" || fill === "#000") fill = "#4a6741";
@@ -82,13 +100,22 @@ function categoryFor(relPath) {
   return "planting";
 }
 
+function widthFor(relPath) {
+  const key = relPath.replace(/-\d+\.svg$/, "");
+  for (const [re, w] of WIDTH_RULES) {
+    if (re.test(key)) return w;
+  }
+  return 2.5;
+}
+
 const iconsRoot = findOsmicRoot();
 const all = [];
 function walk(dir) {
   for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
     const fp = path.join(dir, f.name);
     if (f.isDirectory()) walk(fp);
-    else if (f.name.endsWith(".svg")) all.push(path.relative(iconsRoot, fp).split(path.sep).join("/"));
+    else if (f.name.endsWith(".svg"))
+      all.push(path.relative(iconsRoot, fp).split(path.sep).join("/"));
   }
 }
 walk(iconsRoot);
@@ -108,13 +135,23 @@ for (const [base, { rel }] of [...byBase.entries()].sort()) {
   const layers = parseLayers(svg, parseStyleFills(svg));
   if (layers.length === 0) continue;
   const slug = base.replace(/\//g, "-");
+  const category = categoryFor(rel);
   symbols.push({
     id: `osmic-${slug}`,
     label: titleFromFile(path.basename(rel)),
-    category: categoryFor(rel),
-    description: "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
-    keywords: [slug, "landscape", "osmic", "cc0", categoryFor(rel)],
+    category,
+    description: "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    keywords: [
+      slug,
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      category,
+    ],
     path_d: layers[0].d,
+    default_width_m: widthFor(rel),
     asset: {
       view_box: parseViewBox(svg),
       layers,

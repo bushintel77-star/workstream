@@ -519,6 +519,13 @@ export async function cadQuoteApi(
   survey: CadQuantitySurveyApi;
   markdown: string;
   html: string;
+  output: {
+    id: string;
+    project_id: string;
+    kind: string;
+    uri: string;
+    generated_at: string;
+  } | null;
 }> {
   return apiPost(`/projects/${projectId}/cad/quote`, { scenario });
 }

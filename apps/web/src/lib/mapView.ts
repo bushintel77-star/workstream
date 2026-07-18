@@ -34,6 +34,19 @@ export function lngLatToWorldPx(
   return [x, y];
 }
 
+/** Inverse of lngLatToWorldPx (Web Mercator, Mapbox 256 px tiles). */
+export function worldPxToLngLat(
+  x: number,
+  y: number,
+  zoom: number,
+): [number, number] {
+  const scale = MAPBOX_TILE_PX * 2 ** zoom;
+  const lng = (x / scale) * 360 - 180;
+  const n = Math.PI - (2 * Math.PI * y) / scale;
+  const lat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+  return [lng, lat];
+}
+
 export function staticImageMercatorBounds(
   view: StaticMapView,
 ): MercatorBounds {
@@ -96,6 +109,63 @@ export function projectLngLatToPercent(
   const xPct = ((wx - b.minX) / spanX) * 100;
   const yPct = ((wy - b.minY) / spanY) * 100;
   return [xPct, yPct];
+}
+
+/** Inverse of projectLngLatToPercent — percent in the static frame → WGS84. */
+export function percentToLngLat(
+  xPct: number,
+  yPct: number,
+  view: StaticMapView,
+): [number, number] {
+  const b = staticImageMercatorBounds(view);
+  const wx = b.minX + (xPct / 100) * (b.maxX - b.minX);
+  const wy = b.minY + (yPct / 100) * (b.maxY - b.minY);
+  return worldPxToLngLat(wx, wy, view.zoom);
+}
+
+/**
+ * Fit a world (aerial) rectangle into the stage with padding.
+ * Returns pan/zoom for `transform: translate(tx,ty) scale(s)`.
+ */
+export function fitWorldToStage(
+  stageW: number,
+  stageH: number,
+  worldW: number,
+  worldH: number,
+  pad = 48,
+): { scale: number; tx: number; ty: number } {
+  if (worldW <= 0 || worldH <= 0 || stageW <= 0 || stageH <= 0) {
+    return { scale: 1, tx: pad, ty: pad };
+  }
+  const scale = Math.min(
+    (stageW - pad * 2) / worldW,
+    (stageH - pad * 2) / worldH,
+    3,
+  );
+  const clamped = Math.max(0.2, scale);
+  return {
+    scale: clamped,
+    tx: (stageW - worldW * clamped) / 2,
+    ty: (stageH - worldH * clamped) / 2,
+  };
+}
+
+/**
+ * Display pixel size for the aerial world — preserves Mapbox / natural aspect,
+ * capped so Fit has a stable base before stage scaling.
+ */
+export function displaySizeForAerial(
+  naturalW: number,
+  naturalH: number,
+  maxEdge = 960,
+): { width: number; height: number } {
+  const w = Math.max(1, naturalW);
+  const h = Math.max(1, naturalH);
+  const aspect = w / h;
+  if (aspect >= 1) {
+    return { width: maxEdge, height: Math.round(maxEdge / aspect) };
+  }
+  return { width: Math.round(maxEdge * aspect), height: maxEdge };
 }
 
 export function resolveStaticMapView(

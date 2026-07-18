@@ -1,21 +1,52 @@
 /** AUTO-GENERATED — Osmic CC0 landscaping icons. Regenerate: node packages/domain/scripts/generate-osmic-landscape-catalog.mjs */
 import type { CatalogSymbol } from "@workstream/contracts";
 
-/** 24 landscaping glyphs from https://github.com/gmgeo/osmic */
+/** 36 landscaping glyphs from https://github.com/gmgeo/osmic */
 export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
+  {
+    "id": "osmic-amenity-cemetery",
+    "label": "Cemetery",
+    "category": "planting",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "amenity-cemetery",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "planting"
+    ],
+    "path_d": "M 5,1 C 4,1 3,2 3,3 l 0,8 8,0 0,-8 C 11,2 10,1 9,1 z M 6,3 8,3 8,4 6,4 z M 4,5 10,5 10,6 4,6 z M 5,7 9,7 9,8 5,8 z m -3,5 -1,1 0,1 12,0 0,-1 -1,-1 z",
+    "default_width_m": 4,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 5,1 C 4,1 3,2 3,3 l 0,8 8,0 0,-8 C 11,2 10,1 9,1 z M 6,3 8,3 8,4 6,4 z M 4,5 10,5 10,6 4,6 z M 5,7 9,7 9,8 5,8 z m -3,5 -1,1 0,1 12,0 0,-1 -1,-1 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
   {
     "id": "osmic-amenity-playground",
     "label": "Playground",
     "category": "furniture",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "amenity-playground",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "furniture"
     ],
     "path_d": "M 3.40625,1 C 2.65262,1.047193 1.998524,1.7448953 2,2.5 2.000287,3.2852156 2.714784,3.9994517 3.5,3.9994517 4.285216,3.9994517 4.999713,3.2852156 5,2.5 5.0016,1.6823545 4.222298,0.9488955 3.40625,1 z m 8,3 C 10.65262,4.0471927 9.998524,4.7448953 10,5.5 c 2.87e-4,0.7852156 0.714784,1.4994517 1.5,1.4994517 0.785216,0 1.499713,-0.7142361 1.5,-1.4994517 C 13.001599,4.6823545 12.222298,3.9488956 11.40625,4 z M 3,4.5 C 1.52901,4.5 1.134165,6.3734067 1.03125,7.375 L 0,7 0,8 5.96875,10.125 5,14 9,14 8.0625,10.875 14,13 14,12 13.0625,11.65625 C 13.226562,10.794922 13.75,7.5 12,7.5 c -1.638462,0 -1.915209,2.244501 -1.96875,3.09375 l -5.9375,-2.125 C 4.285012,7.337531 4.614,4.5 3,4.5 z",
+    "default_width_m": 8,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -29,18 +60,77 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     }
   },
   {
+    "id": "osmic-amenity-recycling",
+    "label": "Recycling",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "amenity-recycling",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 5.111113,8.690628 3.513352,5.804047 0.3,5.804047 1.60621,6.5880837 0.798678,8.031102 c -0.06887,0.130859 -0.103304,0.267511 -0.103301,0.409961 -3e-6,0.142456 0.03443,0.27911 0.103301,0.40996 l 1.271077,2.298282 c 0.05733,-0.166376 0.11466,-0.309011 0.171995,-0.427902 L 3.82273,7.906591 5.111113,8.690628 z m -2.38799,2.316224 c -0.09194,0.154416 -0.137914,0.320611 -0.13791,0.498585 -4e-6,0.273307 0.09456,0.504931 0.283685,0.694868 0.189119,0.189939 0.415298,0.284906 0.678537,0.284906 l 3.161963,0 0,-2.654413 -3.333432,0 C 3.352886,9.878288 3.266892,10.0327 3.117975,10.294041 l -0.394852,0.712811 z m 4.278351,-6.5745954 3.196047,0 L 11.812587,1.54622 10.506901,2.3302555 9.698844,0.8866933 C 9.549912,0.6137609 9.320934,0.4772893 9.011916,0.4772767 l -2.543205,0 c 0.10312,0.1185426 0.189116,0.2372528 0.257992,0.3561331 L 8.289856,3.6482199 8.032389,3.8086154 7.001474,4.4322566 z M 5.437797,0.6197306 C 5.07108,0.6197421 4.796134,0.7859374 4.61296,1.1183163 L 3.015198,3.9690109 C 3.622066,4.3372941 4.360906,4.7767964 5.231719,5.2875185 5.746994,4.372999 6.302478,3.3752843 6.898173,2.2943703 L 6.262635,1.1183163 C 6.079446,0.7859374 5.804501,0.6197421 5.437797,0.6197306 l 0,0 z m 4.106882,9.1751824 0,-0.320793 0,-1.228795 L 7.946393,11.131363 9.544679,14 l 0,-1.55013 1.597761,0 c 0.309366,0 0.54411,-0.136653 0.704231,-0.409962 l 1.271602,-2.298279 c -0.171656,0.04749 -0.314811,0.07123 -0.42946,0.07123 L 9.544679,9.794909 z m 2.37121,-4.88147 c -0.05735,0.035533 -0.79636,0.4750321 -2.217045,1.3185066 0.710337,1.2708484 1.271764,2.2745434 1.684282,3.0110934 l 1.288383,0 c 0.378233,2e-6 0.658946,-0.166373 0.842142,-0.499132 0.171629,-0.320788 0.165862,-0.647379 -0.01731,-0.979774 l -1.58045,-2.850694 z",
+    "default_width_m": 2.5,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 5.111113,8.690628 3.513352,5.804047 0.3,5.804047 1.60621,6.5880837 0.798678,8.031102 c -0.06887,0.130859 -0.103304,0.267511 -0.103301,0.409961 -3e-6,0.142456 0.03443,0.27911 0.103301,0.40996 l 1.271077,2.298282 c 0.05733,-0.166376 0.11466,-0.309011 0.171995,-0.427902 L 3.82273,7.906591 5.111113,8.690628 z m -2.38799,2.316224 c -0.09194,0.154416 -0.137914,0.320611 -0.13791,0.498585 -4e-6,0.273307 0.09456,0.504931 0.283685,0.694868 0.189119,0.189939 0.415298,0.284906 0.678537,0.284906 l 3.161963,0 0,-2.654413 -3.333432,0 C 3.352886,9.878288 3.266892,10.0327 3.117975,10.294041 l -0.394852,0.712811 z m 4.278351,-6.5745954 3.196047,0 L 11.812587,1.54622 10.506901,2.3302555 9.698844,0.8866933 C 9.549912,0.6137609 9.320934,0.4772893 9.011916,0.4772767 l -2.543205,0 c 0.10312,0.1185426 0.189116,0.2372528 0.257992,0.3561331 L 8.289856,3.6482199 8.032389,3.8086154 7.001474,4.4322566 z M 5.437797,0.6197306 C 5.07108,0.6197421 4.796134,0.7859374 4.61296,1.1183163 L 3.015198,3.9690109 C 3.622066,4.3372941 4.360906,4.7767964 5.231719,5.2875185 5.746994,4.372999 6.302478,3.3752843 6.898173,2.2943703 L 6.262635,1.1183163 C 6.079446,0.7859374 5.804501,0.6197421 5.437797,0.6197306 l 0,0 z m 4.106882,9.1751824 0,-0.320793 0,-1.228795 L 7.946393,11.131363 9.544679,14 l 0,-1.55013 1.597761,0 c 0.309366,0 0.54411,-0.136653 0.704231,-0.409962 l 1.271602,-2.298279 c -0.171656,0.04749 -0.314811,0.07123 -0.42946,0.07123 L 9.544679,9.794909 z m 2.37121,-4.88147 c -0.05735,0.035533 -0.79636,0.4750321 -2.217045,1.3185066 0.710337,1.2708484 1.271764,2.2745434 1.684282,3.0110934 l 1.288383,0 c 0.378233,2e-6 0.658946,-0.166373 0.842142,-0.499132 0.171629,-0.320788 0.165862,-0.647379 -0.01731,-0.979774 l -1.58045,-2.850694 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
+    "id": "osmic-amenity-toilets",
+    "label": "Toilets",
+    "category": "furniture",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "amenity-toilets",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "furniture"
+    ],
+    "path_d": "m 6.25,0 0,14 1.5,0 0,-14 -1.5,0 z M 2.5,1 C 1.671573,1 1,1.6715729 1,2.5 1,3.3284271 1.671573,4 2.5,4 3.328427,4 4,3.3284271 4,2.5 4,1.6715729 3.328427,1 2.5,1 z m 9,0 C 10.671573,1 10,1.6715729 10,2.5 10,3.3284271 10.671573,4 11.5,4 12.328427,4 13,3.3284271 13,2.5 13,1.6715729 12.328427,1 11.5,1 z m -10,4 c -0.599722,0 -1,0.568545 -1,1 0,0.5273339 1.25,1.496636 1.25,2 C 1.75,8.555974 0,9 0,11 l 1.75,0 0,3 1.5,0 0,-3 L 5,11 C 5,9 3.25,8.529509 3.25,8 3.25,7.470492 4.5,6.5513036 4.5,6 4.5,5.5925147 4.075273,5 3.5,5 l -2,0 z M 10,5 C 9.472666,5 9,5.4804699 9,6 c 0,1 1.75,4.016073 1.75,5 l 0,3 1.5,0 0,-3 C 12.25,10.035543 14,7 14,6 14,5.446616 13.551304,5 13,5 l -3,0 z",
+    "default_width_m": 2.5,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "m 6.25,0 0,14 1.5,0 0,-14 -1.5,0 z M 2.5,1 C 1.671573,1 1,1.6715729 1,2.5 1,3.3284271 1.671573,4 2.5,4 3.328427,4 4,3.3284271 4,2.5 4,1.6715729 3.328427,1 2.5,1 z m 9,0 C 10.671573,1 10,1.6715729 10,2.5 10,3.3284271 10.671573,4 11.5,4 12.328427,4 13,3.3284271 13,2.5 13,1.6715729 12.328427,1 11.5,1 z m -10,4 c -0.599722,0 -1,0.568545 -1,1 0,0.5273339 1.25,1.496636 1.25,2 C 1.75,8.555974 0,9 0,11 l 1.75,0 0,3 1.5,0 0,-3 L 5,11 C 5,9 3.25,8.529509 3.25,8 3.25,7.470492 4.5,6.5513036 4.5,6 4.5,5.5925147 4.075273,5 3.5,5 l -2,0 z M 10,5 C 9.472666,5 9,5.4804699 9,6 c 0,1 1.75,4.016073 1.75,5 l 0,3 1.5,0 0,-3 C 12.25,10.035543 14,7 14,6 14,5.446616 13.551304,5 13,5 l -3,0 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
     "id": "osmic-barrier-bollard",
     "label": "Bollard",
     "category": "structure",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "barrier-bollard",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "structure"
     ],
     "path_d": "M 7,2 C 7,2 5,2 5,4 l 0,7 4,0 0,-7 C 9,2 7,2 7,2 z m -4,10 0,1 8,0 0,-1 z",
+    "default_width_m": 1.2,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -57,15 +147,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-barrier-cattle-grid",
     "label": "Cattle Grid",
     "category": "structure",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "barrier-cattle-grid",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "structure"
     ],
     "path_d": "M 0.84375,3 C 0.5625,3.046875 -1.071429e-8,3.25 0,4 l 0,7 2,0 0,-7 C 2,3 1,3 1,3 1,3 0.9375,2.984375 0.84375,3 z M 2,11 12,11 11.5,10 2.5,10 2,11 z m 10,0 2,0 0,-7 C 14,3 13,3 13,3 13,3 12.9375,2.984375 12.84375,3 12.5625,3.046875 12,3.25 12,4 l 0,7 z M 4.5,6 4,7 10,7 9.5,6 4.5,6 z M 3.5,8 3,9 11,9 10.5,8 3.5,8 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -82,15 +175,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-barrier-gate",
     "label": "Gate",
     "category": "structure",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "barrier-gate",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "structure"
     ],
     "path_d": "M 0.84375,2 C 0.5625,2.046875 0,2.25 0,3 l 0,9 2,0 0,-9 C 2,2 1,2 1,2 1,2 0.9375,1.984375 0.84375,2 z m 12,0 C 12.5625,2.046875 12,2.25 12,3 l 0,9 2,0 0,-9 C 14,2 13,2 13,2 13,2 12.9375,1.984375 12.84375,2 z M 3,4 l 0,7 8,0 0,-7 -8,0 z m 1.75,1 4.5,0 C 9.25,5 10,5 10,5.5 10,6 9.25,6 9.25,6 L 4.75,6 C 4.75,6 4,6 4,5.5 4,5 4.75,5 4.75,5 z m 0,2 4.5,0 C 9.25,7 10,7 10,7.5 10,8 9.25,8 9.25,8 L 4.75,8 C 4.75,8 4,8 4,7.5 4,7 4.75,7 4.75,7 z m 0,2 4.5,0 C 9.25,9 10,9 10,9.5 10,10 9.25,10 9.25,10 l -4.5,0 C 4.75,10 4,10 4,9.5 4,9 4.75,9 4.75,9 z",
+    "default_width_m": 1.2,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -107,15 +203,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-barrier-lift-gate",
     "label": "Lift Gate",
     "category": "structure",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "barrier-lift-gate",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "structure"
     ],
     "path_d": "M 0.84375,2 C 0.5625,2.046875 0,2.25 0,3 l 0,9 2,0 0,-3.3125 C 1.6300346,8.4774734 1.3229566,8.1746775 1.15625,7.78125 0.78008275,6.8934953 1.1828719,5.7751702 2,5.28125 L 2,3 C 2,2 1,2 1,2 1,2 0.9375,1.984375 0.84375,2 z m 12,0 C 12.5625,2.046875 12,2.25 12,3 l 0,9 2,0 0,-9 C 14,2 13,2 13,2 13,2 12.9375,1.984375 12.84375,2 z M 9.875,3 C 9.777294,3.017072 9.6821585,3.048784 9.59375,3.09375 l -7,3 C 2.0564586,6.2619445 1.7697007,6.9550053 2,7.46875 2.2302993,7.9824946 2.9232021,8.195449 3.40625,7.90625 l 7,-3 C 10.840329,4.7135022 11.096254,4.1762637 10.96875,3.71875 10.841246,3.2612362 10.346201,2.9404567 9.875,3 z",
+    "default_width_m": 1.2,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -132,15 +231,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-barrier-steps",
     "label": "Steps",
     "category": "paving",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "barrier-steps",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "paving"
     ],
     "path_d": "M 5,5 5,3 0,3 0,6 2,6 10,12 14,12 14,9 11,9 11,7 8,7 8,5 z",
+    "default_width_m": 1.2,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -157,15 +259,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-nature-peak",
     "label": "Peak",
     "category": "annotation",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "nature-peak",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "annotation"
     ],
     "path_d": "M 2,11 12,11 10,5 7,7 4,3 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -182,15 +287,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-nature-saddle",
     "label": "Saddle",
     "category": "annotation",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "nature-saddle",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "annotation"
     ],
     "path_d": "m 2,10 0,-6 5,3 5,-3 0,6 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -207,15 +315,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-nature-spring",
     "label": "Spring",
     "category": "water",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "nature-spring",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "water"
     ],
     "path_d": "m 8.0003502,0 c -1.53125,0 -3,0.9998209 -3,2.5 0,1.5001791 1,2.03125 2,5.5 1,-3.4375 3.3749998,-4 3.4999998,-5.5 C 10.62535,1 9.5316002,0 8.0003502,0 z m -5.5,6.5 c -2.01830003,0 -2.41683403,2.697459 -1,4 1.416834,1.302541 2.887622,1.099599 4.5,3.5 0.400102,-2 0.282636,-3 0,-4 -0.282636,-1 -1.4817,-3.5 -3.5,-3.5 z M 11.50035,7 c -2.0182998,0 -3.2173638,2 -3.4999998,3 -0.282636,1 -0.400102,2 0,4 1.612378,-2.400401 3.5831658,-1.697459 4.9999998,-3 1.416834,-1.302541 0.5183,-4 -1.5,-4 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -232,15 +343,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-nature-tree-coniferous",
     "label": "Tree Coniferous",
     "category": "planting",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "nature-tree-coniferous",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "planting"
     ],
     "path_d": "m 7.75,14 0,-3 3.75,0 -3,-3.25 3,0 -3.1822034,-3 L 11,4.75 7,1 3,4.75 l 3,0 -3.5,3 3,0 -3,3.25 3.75,0 0,3 z",
+    "default_width_m": 5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -257,15 +371,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-nature-tree-deciduous",
     "label": "Tree Deciduous",
     "category": "planting",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "nature-tree-deciduous",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "planting"
     ],
     "path_d": "m 7.75,14 0,-3 L 9,11 C 11.524338,11 12.545311,7.5 10,6.5 11.496636,5.5 11,3 9,2.75 9,2.75 9,1 7,1 5,1 5,2.75 5,2.75 3,3 2.4614171,5.5 4,6.5 1.4966359,7.5 2.4966359,11 5,11 l 1.25,0 0,3 z",
+    "default_width_m": 6,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -282,15 +399,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-nature-tree-unspecified",
     "label": "Tree Unspecified",
     "category": "planting",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "nature-tree-unspecified",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "planting"
     ],
     "path_d": "M 3.375,2 0.4375,5 2.53125,5 0,7.5 2.125,7.5 0,10 l 2.75,0 0,2 1.28125,0 0,-2 2.75,0 -2.125,-2.5 2.125,0 L 4.5,5 6.34375,5 3.375,2 z m 7,0 C 9.2328442,2 9.09375,3 9.09375,3 7.4014424,3.2115384 6.9481223,5.1538462 8.25,6 6.1317693,6.8461537 6.9755191,10 9.09375,10 l 0.625,0 0,2 1.28125,0 0,-2 0.625,0 c 2.135977,0 2.997474,-3.1538463 0.84375,-4 1.266384,-0.8461538 0.848557,-2.7884616 -0.84375,-3 0,0 -0.07235,-1 -1.25,-1 z",
+    "default_width_m": 6,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -307,15 +427,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-nature-waterfall",
     "label": "Waterfall",
     "category": "water",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "nature-waterfall",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "water"
     ],
     "path_d": "m 0,1 0,1.25 c 1.9973598,0 2.9578431,0.3559307 3,2 L 3,6.5 c 0,2 1.5,3 2.5,3 0,0 -1,-1 -1,-3 l 0,-2.25 C 4.5,3.3890411 4.1949144,2.7403338 3.71875,2.25 4.9723257,2.25 5.9613912,2.7730892 6,4.25 L 6,6.5 c 0,2 1.5,3 2.5,3 0,0 -1,-1 -1,-3 l 0,-2.25 C 7.5,3.3355769 7.2575127,2.6919337 6.90625,2.25 8,2.25 9,2.8004763 9,4.25 L 9,6.5 c 0,2 1.5,3 2.5,3 0,0 -1,-1 -1,-3 l 0,-2.25 C 10.5,1.25 8,1 7,1 z m 3,9.5 c -0.5338983,0 -1.4922852,1 -2,1 L 1,13 c 0.5371839,0 1.5254237,-1 2,-1 0.5042373,0 1.4661017,1 2,1 0.4755023,0 1.4922852,-1 2,-1 0.5042373,0 1.5217305,1 2,1 0.5042373,0 1.525424,-1 2,-1 0.474576,0 1.495763,1 2,1 l 0,-1.5 c -0.415254,0 -1.466102,-1.029661 -2,-1 -0.47827,0 -1.4652784,1 -2,1 -0.4449153,0 -1.4957627,-1 -2,-1 -0.5042373,0 -1.5540971,1 -2,1 -0.4755023,0 -1.4661017,-1 -2,-1 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -329,18 +452,77 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     }
   },
   {
+    "id": "osmic-outdoor-alpine-hut",
+    "label": "Alpine Hut",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "outdoor-alpine-hut",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 7 1 L 0 5 L 0 7 L 1.5 6.3496094 L 1.5 14 L 3 14 L 3 5.6992188 L 7 4 L 11 5.6992188 L 11 14 L 12.5 14 L 12.5 6.3496094 L 14 7 L 14 5 L 7 1 z M 5.5 6 C 4.9285714 6 4 7.2857142 4 9 C 4 10.714286 5 11 5 11 L 5 14 L 6 14 L 6 11 C 6 11 7 10.714286 7 9 C 7 7.2857142 6.0714286 6 5.5 6 z M 8 6 L 8 14 L 9 14 L 9 11 L 10 11 L 10 10 C 10 8 9 6 8 6 z ",
+    "default_width_m": 4,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 7 1 L 0 5 L 0 7 L 1.5 6.3496094 L 1.5 14 L 3 14 L 3 5.6992188 L 7 4 L 11 5.6992188 L 11 14 L 12.5 14 L 12.5 6.3496094 L 14 7 L 14 5 L 7 1 z M 5.5 6 C 4.9285714 6 4 7.2857142 4 9 C 4 10.714286 5 11 5 11 L 5 14 L 6 14 L 6 11 C 6 11 7 10.714286 7 9 C 7 7.2857142 6.0714286 6 5.5 6 z M 8 6 L 8 14 L 9 14 L 9 11 L 10 11 L 10 10 C 10 8 9 6 8 6 z ",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
+    "id": "osmic-outdoor-basic-hut",
+    "label": "Basic Hut",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "outdoor-basic-hut",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 14,5 6.9999999,0.99999997 0,5 0,7.0000002 1.5,6.35 l 1e-7,7.65 1.4999998,0 0,-8.2999998 L 6.9999999,4 11,5.7000002 11,14 l 1.5,0 0,-7.65 1.5,0.6500002 z",
+    "default_width_m": 4,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 14,5 6.9999999,0.99999997 0,5 0,7.0000002 1.5,6.35 l 1e-7,7.65 1.4999998,0 0,-8.2999998 L 6.9999999,4 11,5.7000002 11,14 l 1.5,0 0,-7.65 1.5,0.6500002 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
     "id": "osmic-outdoor-bench",
     "label": "Bench",
     "category": "furniture",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "outdoor-bench",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "furniture"
     ],
     "path_d": "M 1,5 C 0,5 0,6.5 1,6.5 l 12,0 C 14,6.5 14,5 13,5 L 1,5 z m 1,2 0,3 1.5,0 0,-3 L 2,7 z m 8.5,0 0,3 1.5,0 0,-3 -1.5,0 z",
+    "default_width_m": 1.8,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -357,15 +539,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-outdoor-camping",
     "label": "Camping",
     "category": "furniture",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "outdoor-camping",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "furniture"
     ],
     "path_d": "M 14,14 8.000001,2.9999992 9.000001,0 l -1,0 -1,1.9999995 L 6,0 5,0 6,2.9999992 0,14 z m -6.999999,-7.0000008 3,6.0000018 -6.000001,0 z",
+    "default_width_m": 3,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -382,15 +567,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-outdoor-drinking-water",
     "label": "Drinking Water",
     "category": "water",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "outdoor-drinking-water",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "water"
     ],
     "path_d": "m 1,6 1.5,8 5,0 L 9,6 z M 2.18,7 7.81,7 7.44,9 2.55,9 M 4,5 C 4,3 5,2 7,2 L 8,2 8,1 7,1 C 6,1 6,0 7,0 l 3,0 c 1,0 1,1 0,1 l -1,0 0,1 4,0 0,1.5 -6,0 C 5.91526,3.49111 5.5,3.9824765 5.5,5 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -407,15 +595,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-outdoor-fountain",
     "label": "Fountain",
     "category": "water",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "outdoor-fountain",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "water"
     ],
     "path_d": "M 9,1 C 7.466325,1 6.25,2.0324775 6.25,4 l 0,0.3125 C 5.865049,4.1210714 5.433094,4 5,4 3.532943,4 2.25,5.0324775 2.25,7 l 0,1 c 0,1 1.5,1 1.5,0 l 0,-1 C 3.75,6.0340405 4.433016,5.5 5,5.5 5.566984,5.5 6.25,6.0673495 6.25,7 l 0,2.5 c 0.3708888,-0.3708888 1.1494693,-0.3505307 1.5,0 l 0,-2.5 0,-3 C 7.75,3.0340405 8.466325,2.5 9,2.5 c 0.600293,0 1.25,0.5673495 1.25,1.5 l 0,2 c 0,1 1.5,1 1.5,0 l 0,-2 C 11.75,2.1013899 10.500366,1 9,1 z m -6,9.5 c -0.533898,0 -1.492285,1 -2,1 L 1,13 c 0.537184,0 1.525424,-1 2,-1 0.504237,0 1.466102,1 2,1 0.475502,0 1.492285,-1 2,-1 0.504237,0 1.521731,1 2,1 0.504237,0 1.525424,-1 2,-1 0.474576,0 1.495763,1 2,1 l 0,-1.5 c -0.415254,0 -1.466102,-1.029661 -2,-1 -0.47827,0 -1.465278,1 -2,1 -0.444915,0 -1.495763,-1 -2,-1 -0.504237,0 -1.554097,1 -2,1 -0.475502,0 -1.466102,-1 -2,-1 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -432,15 +623,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-outdoor-guidepost",
     "label": "Guidepost",
     "category": "planting",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "outdoor-guidepost",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "planting"
     ],
     "path_d": "M 7,0.25 C 6.625,0.25 6.25,0.5 6.25,1 l 0,13 1.5,0 0,-13 C 7.75,0.5 7.375,0.25 7,0.25 z M 2,1 0,2.5 2,4 6,4 6,1 2,1 z M 8,4 8,7 12,7 14,5.5 12,4 8,4 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -457,15 +651,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-outdoor-shelter",
     "label": "Shelter",
     "category": "structure",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "outdoor-shelter",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "structure"
     ],
     "path_d": "M 3.53125 0 L 2.53125 2 L 3 2 L 4.046875 0 L 3.53125 0 z M 7.53125 0 L 6.53125 2 L 7 2 L 8.046875 0 L 7.53125 0 z M 11.53125 0 L 10.53125 2 L 11 2 L 12.046875 0 L 11.53125 0 z M 1.0234375 1 L 0.0234375 3 L 0.4921875 3 L 1.5410156 1 L 1.0234375 1 z M 5.03125 1 L 4.03125 3 L 4.5 3 L 5.546875 1 L 5.03125 1 z M 9.03125 1 L 8.03125 3 L 8.5 3 L 9.546875 1 L 9.03125 1 z M 13.03125 1 L 12.03125 3 L 12.5 3 L 13.546875 1 L 13.03125 1 z M 3 4 L 0 7 L 1.5 7 L 1.5 14 L 3 14 L 3 7 L 11 7 L 11 14 L 12.5 14 L 12.5 7 L 14 7 L 11 4 L 3 4 z ",
+    "default_width_m": 4,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -482,15 +679,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-outdoor-table",
     "label": "Table",
     "category": "furniture",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "outdoor-table",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "furniture"
     ],
     "path_d": "m 2.9995255,2 c -1.322034,0 -1.322034,1.5 0,1.5 l 8.0000005,0 c 1.33909,0 1.338983,-1.5 0,-1.5 L 2.9995255,2 z m 1,2 -0.75,3 -2.25,0 c -1.322034,0 -1.322034,1.5 0,1.5 l 1.875,0 -0.875,3.5 1.5,0 0.875,-3.5 5.25,0 0.8750005,3.5 1.5,0 -0.875,-3.5 1.875,0 c 1.33909,0 1.338983,-1.5 0,-1.5 l -2.25,0 -0.7500005,-3 -1.5,0 0.75,3 -4.5,0 0.75,-3 -1.5,0 z",
+    "default_width_m": 1.8,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -504,18 +704,105 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     }
   },
   {
+    "id": "osmic-outdoor-waste-basket",
+    "label": "Waste Basket",
+    "category": "furniture",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "outdoor-waste-basket",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "furniture"
+    ],
+    "path_d": "M 6,1 C 5,1 5,2 5,2 L 4,2 C 2,2 2,3 2,3 L 12,3 C 12,3 12,2 10,2 L 9,2 C 9,2 9,1 8,1 z m -4,3 2,9 6,0 2,-9 z",
+    "default_width_m": 2.5,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 6,1 C 5,1 5,2 5,2 L 4,2 C 2,2 2,3 2,3 L 12,3 C 12,3 12,2 10,2 L 9,2 C 9,2 9,1 8,1 z m -4,3 2,9 6,0 2,-9 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
+    "id": "osmic-outdoor-water-tower",
+    "label": "Water Tower",
+    "category": "water",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "outdoor-water-tower",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "water"
+    ],
+    "path_d": "M 2,0 2,3.5 C 2,4.9469172 2.7905512,5.9802716 3.90625,6.625 L 3,14 4.5,14 4.6875,12.53125 7,11 9.3125,12.5625 9.5,14 11,14 10.09375,6.65625 C 11.21821,6.0132746 12,4.9628112 12,3.5 l 0,-3.5 -1.5,0 0,1.5 -0.5,0 C 8.8728814,2 8,2 7,1.5 6,1 5.0381356,1 4,1.5 l -0.5,0 0,-1.5 z m 3.34375,7.1875 c 1.069224,0.2671613 2.2426846,0.2935662 3.3125,0.03125 L 8.84375,8.78125 7,10 5.15625,8.78125 z m -0.3125,2.5 L 6.25,10.5 4.8125,11.46875 z m 3.9375,0 L 9.1875,11.46875 7.75,10.5 z",
+    "default_width_m": 3,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 2,0 2,3.5 C 2,4.9469172 2.7905512,5.9802716 3.90625,6.625 L 3,14 4.5,14 4.6875,12.53125 7,11 9.3125,12.5625 9.5,14 11,14 10.09375,6.65625 C 11.21821,6.0132746 12,4.9628112 12,3.5 l 0,-3.5 -1.5,0 0,1.5 -0.5,0 C 8.8728814,2 8,2 7,1.5 6,1 5.0381356,1 4,1.5 l -0.5,0 0,-1.5 z m 3.34375,7.1875 c 1.069224,0.2671613 2.2426846,0.2935662 3.3125,0.03125 L 8.84375,8.78125 7,10 5.15625,8.78125 z m -0.3125,2.5 L 6.25,10.5 4.8125,11.46875 z m 3.9375,0 L 9.1875,11.46875 7.75,10.5 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
+    "id": "osmic-outdoor-wilderness-hut",
+    "label": "Wilderness Hut",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "outdoor-wilderness-hut",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 8,0 8,2 7,1.5 0,5 0,7 1.5,6.3496094 1.5,14 3,14 3,5.6992188 7,4 8,4.4257812 8,9 4.5,9 c 0.025314,1.65157 -0.034277,3.38952 0,5 l 5,0 C 9.518206,11.046736 9.50603,8.0503867 9.5,5.0625 L 11,5.6992188 11,14 12.5,14 12.5,6.3496094 14,7 14,5 9.5,2.75 C 9.4984477,1.8314022 9.5,0.9158261 9.5,0 L 8,0 Z M 7,11 c 0,0 1,0 1,1 l 0,1 -2,0 0,-1 c 0,-1 1,-1 1,-1 z",
+    "default_width_m": 4,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 8,0 8,2 7,1.5 0,5 0,7 1.5,6.3496094 1.5,14 3,14 3,5.6992188 7,4 8,4.4257812 8,9 4.5,9 c 0.025314,1.65157 -0.034277,3.38952 0,5 l 5,0 C 9.518206,11.046736 9.50603,8.0503867 9.5,5.0625 L 11,5.6992188 11,14 12.5,14 12.5,6.3496094 14,7 14,5 9.5,2.75 C 9.4984477,1.8314022 9.5,0.9158261 9.5,0 L 8,0 Z M 7,11 c 0,0 1,0 1,1 l 0,1 -2,0 0,-1 c 0,-1 1,-1 1,-1 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
     "id": "osmic-shop-florist",
     "label": "Florist",
     "category": "planting",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "shop-florist",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "planting"
     ],
     "path_d": "M 3,0 C 3.944406,2.8332196 2.233819,6.4334035 6.25,6.938 l 0,5.562 C 6.25,11.033993 3.997226,8 1,8 c 3,2 1,6 5,6 2,0 0,0 2,0 4,0 2,-4 5,-6 -2.997226,0 -5.25,2.944994 -5.25,4.5 l 0,-5.562 C 11.753428,6.4504075 10.055593,2.8332196 11,0 10,0 8.75,3 8.75,3 8.75,3 8,1 7,0 6,1 5.25,3 5.25,3 5.25,3 4,0 3,0 z",
+    "default_width_m": 3,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -532,15 +819,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-shop-garden-centre",
     "label": "Garden Centre",
     "category": "planting",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "shop-garden-centre",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "planting"
     ],
     "path_d": "M 9,1.75 C 6.7923729,1.75 5,2 5,5 l 0,2 6,0 0,-0.75 C 11,5.5233051 10.476695,5 9.75,5 L 6.25,5 C 6.25,3 7.5163633,3 9,3 c 1.881356,0 3,0.6667341 3,2.5 0,0.8474576 0.02209,1.9761331 -1,2.25 l -6,0 0,2.125 C 4.4809323,9.875 4.125,9.6292372 4.125,9 l 0,-2 C 4.125,5.6144068 3.4131355,4.875 2.25,4.875 L 1,4 1,7 2.25,6.125 c 0.3771186,0 0.625,0.3468002 0.625,0.875 l 0,2 c 0,1.57839 0.7542373,2.125 2.125,2.125 L 5,11.5 C 5,12.567797 5.4915255,13 6.5,13 l 3,0 C 10.478814,13 11,12.612288 11,11.5 L 11,9.25 C 13.055843,8.6991385 13.25,7 13.25,5.5 13.25,2.806969 11.627097,1.75 9,1.75 z M 0.03125,4 0,7 0.5,7 0.53125,4 z",
+    "default_width_m": 3,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -557,15 +847,18 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     "id": "osmic-sports-swimming",
     "label": "Swimming",
     "category": "water",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "sports-swimming",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "water"
     ],
     "path_d": "M 8.28125,1.90625 C 8.1873095,1.9137211 8.0966058,1.9442246 8,2 L 4.96875,3.625 C 4.58422,3.807 4.4339,4.37715 4.6875,4.71875 L 5.25,5.75 2,7.75 2,8.5 C 2,8.5 2.4991574,8 3,8 3.4737861,8 4.4232286,9 5,9 5.5033641,9 6.4961991,8 7,8 7.5243377,8 8.4756623,9 9,9 L 9.34375,9 6.5,4.5 8.59375,3.40625 C 9.041742,3.1476017 9.186529,2.6980781 9,2.375 8.8279386,2.0769809 8.5630716,1.8838367 8.28125,1.90625 z M 10,4.5 C 9.17157,4.5 8.5,5.1716 8.5,6 8.5,6.8284 9.17157,7.5 10,7.5 10.82843,7.5 11.5,6.8284 11.5,6 11.5,5.1716 10.82843,4.5 10,4.5 z m -7,5 c -0.533898,0 -1.492285,1 -2,1 L 1,12 c 0.537184,0 1.525424,-1 2,-1 0.504237,0 1.466102,1 2,1 0.475502,0 1.492285,-1 2,-1 0.504237,0 1.52173,1 2,1 0.504237,0 1.525424,-1 2,-1 0.474576,0 1.495763,1 2,1 l 0,-1.5 c -0.415254,0 -1.466102,-1.0296611 -2,-1 -0.47827,0 -1.465278,1 -2,1 -0.444915,0 -1.495763,-1 -2,-1 -0.504237,0 -1.554097,1 -2,1 -0.475502,0 -1.466102,-1 -2,-1 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
@@ -579,23 +872,138 @@ export const OSMIC_LANDSCAPE_SYMBOLS: CatalogSymbol[] = [
     }
   },
   {
+    "id": "osmic-tourism-castle-manor",
+    "label": "Castle Manor",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "tourism-castle-manor",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 2,2 0,4.5 0,5 14,5 14,4.5 12,2 z m -2,4 0,6 5,0 c 0,-1 0,-3 2,-3 2,0 2,2 2,3 l 5,0 0,-6 z M 2.5,8 C 3,8 3.017512,8.67576 3,9 L 3,10 2,10 2,9 C 2,8.675287 2,8 2.5,8 z m 9,0 C 12,8 12.017511,8.67576 12,9 l 0,1 -1,0 0,-1 c 0,-0.324713 0,-1 0.5,-1 z",
+    "default_width_m": 2.5,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 2,2 0,4.5 0,5 14,5 14,4.5 12,2 z m -2,4 0,6 5,0 c 0,-1 0,-3 2,-3 2,0 2,2 2,3 l 5,0 0,-6 z M 2.5,8 C 3,8 3.017512,8.67576 3,9 L 3,10 2,10 2,9 C 2,8.675287 2,8 2.5,8 z m 9,0 C 12,8 12.017511,8.67576 12,9 l 0,1 -1,0 0,-1 c 0,-0.324713 0,-1 0.5,-1 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
+    "id": "osmic-tourism-memorial",
+    "label": "Memorial",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "tourism-memorial",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 2.5,2 C 1.6887616,2 1,2.6887616 1,3.5 l 0,7 C 1,11.269291 1.667788,12 2.5,12 l 9,0 c 0.748318,0 1.5,-0.709735 1.5,-1.5 l 0,-7 C 13,2.7307086 12.269291,2 11.5,2 z m 0,1 C 2.7761424,3 3,3.2238576 3,3.5 3,3.7761424 2.7761424,4 2.5,4 2.2238576,4 2,3.7761424 2,3.5 2,3.2238576 2.2238576,3 2.5,3 z m 9,0 C 11.776142,3 12,3.2238576 12,3.5 12,3.7761424 11.776142,4 11.5,4 11.223858,4 11,3.7761424 11,3.5 11,3.2238576 11.223858,3 11.5,3 z M 5,4 6,4 6,5 5,5 z M 7,4 9,4 9,5 7,5 z M 3,6 11,6 11,7 3,7 z M 5,8 9,8 9,9 5,9 z M 2.5,10 C 2.7761424,10 3,10.223858 3,10.5 3,10.776142 2.7761424,11 2.5,11 2.2238576,11 2,10.776142 2,10.5 2,10.223858 2.2238576,10 2.5,10 z m 9,0 C 11.776142,10 12,10.223858 12,10.5 12,10.776142 11.776142,11 11.5,11 11.223858,11 11,10.776142 11,10.5 11,10.223858 11.223858,10 11.5,10 z",
+    "default_width_m": 2.5,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 2.5,2 C 1.6887616,2 1,2.6887616 1,3.5 l 0,7 C 1,11.269291 1.667788,12 2.5,12 l 9,0 c 0.748318,0 1.5,-0.709735 1.5,-1.5 l 0,-7 C 13,2.7307086 12.269291,2 11.5,2 z m 0,1 C 2.7761424,3 3,3.2238576 3,3.5 3,3.7761424 2.7761424,4 2.5,4 2.2238576,4 2,3.7761424 2,3.5 2,3.2238576 2.2238576,3 2.5,3 z m 9,0 C 11.776142,3 12,3.2238576 12,3.5 12,3.7761424 11.776142,4 11.5,4 11.223858,4 11,3.7761424 11,3.5 11,3.2238576 11.223858,3 11.5,3 z M 5,4 6,4 6,5 5,5 z M 7,4 9,4 9,5 7,5 z M 3,6 11,6 11,7 3,7 z M 5,8 9,8 9,9 5,9 z M 2.5,10 C 2.7761424,10 3,10.223858 3,10.5 3,10.776142 2.7761424,11 2.5,11 2.2238576,11 2,10.776142 2,10.5 2,10.223858 2.2238576,10 2.5,10 z m 9,0 C 11.776142,10 12,10.223858 12,10.5 12,10.776142 11.776142,11 11.5,11 11.223858,11 11,10.776142 11,10.5 11,10.223858 11.223858,10 11.5,10 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
+    "id": "osmic-tourism-monument",
+    "label": "Monument",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "tourism-monument",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 7,0 C 7,0 5,1.4966359 5,2 l 0,8 4,0 0,-8 C 9,1.5206056 7,0 7,0 z M 4,11 c -1,0 -1,1 -1,2 l -1,0 -1,1 12,0 -1,-1 -1,0 c 0,-1 0,-2 -1,-2 z",
+    "default_width_m": 2.5,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 7,0 C 7,0 5,1.4966359 5,2 l 0,8 4,0 0,-8 C 9,1.5206056 7,0 7,0 z M 4,11 c -1,0 -1,1 -1,2 l -1,0 -1,1 12,0 -1,-1 -1,0 c 0,-1 0,-2 -1,-2 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
     "id": "osmic-tourism-viewpoint",
     "label": "Viewpoint",
     "category": "structure",
-    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
     "keywords": [
       "tourism-viewpoint",
       "landscape",
       "osmic",
       "cc0",
+      "ai cad",
+      "design library",
       "structure"
     ],
     "path_d": "m 9.65625,0.59375 c -0.3024732,0.0462641 -0.5739493,0.24857188 -0.75,0.5 C 8.4915325,1.6542533 8.3846231,2.3479287 8.1875,3 7.9662603,3.8420605 7.7522058,4.7006473 7.625,5.5625 7.6044,5.8106582 7.7926492,5.8644805 8.03125,5.625 8.8564261,4.8565483 9.6689927,4.0447405 10.46875,3.25 10.66307,3.0435127 10.857947,2.8397801 11,2.59375 c 0.22114,-0.3696454 0.325018,-0.8581921 0.09375,-1.25 -0.238762,-0.3960416 -0.675926,-0.6652283 -1.125,-0.75 -0.1037376,-0.0197567 -0.2116756,-0.0154214 -0.3125,0 z m -5.4375,0.0625 C 3.756376,0.664435 3.298377,0.9038402 3,1.25 2.7236959,1.5695061 2.7337489,2.0351336 2.90625,2.40625 3.1835185,3.0459969 3.721958,3.5026801 4.1875,4 4.8053738,4.6133884 5.4428785,5.2080755 6.125,5.75 6.3294366,5.8921706 6.4627003,5.7639689 6.375,5.4375 6.1234386,4.3383434 5.8495515,3.246582 5.5625,2.15625 5.4811703,1.8846207 5.3917386,1.5899614 5.25,1.34375 5.0409086,0.9671579 4.6737053,0.6524279 4.21875,0.65625 z M 1,5.65625 C 0.6728589,5.7133884 0.35581084,5.8906685 0.1875,6.1875 -0.03684961,6.5918816 -0.05657638,7.0996758 0.09375,7.53125 0.23204898,7.9303783 0.65487609,8.1823302 1.0625,8.21875 1.7551236,8.2989321 2.398939,8.029096 3.0625,7.875 3.9027885,7.6471232 4.7519195,7.4130156 5.5625,7.09375 5.787908,6.9879268 5.7327889,6.7749958 5.40625,6.6875 4.3287785,6.3551066 3.2438454,6.0472518 2.15625,5.75 1.8803888,5.6844434 1.596594,5.6567822 1.3125,5.65625 1.2048302,5.6543848 1.109047,5.6372039 1,5.65625 z m 11.6875,0 C 12.403405,5.6567822 12.119611,5.684443 11.84375,5.75 10.756155,6.0472518 9.6712203,6.3551066 8.59375,6.6875 8.2672114,6.7749958 8.21209,6.9879301 8.4375,7.09375 c 0.8105812,0.3192656 1.659711,0.5533732 2.5,0.78125 0.663559,0.154096 1.307371,0.4239353 2,0.34375 0.407624,-0.03642 0.830451,-0.2883717 0.96875,-0.6875 C 14.056568,7.0996758 14.036852,6.5918816 13.8125,6.1875 13.588087,5.7917247 13.118179,5.64879 12.6875,5.65625 z M 6.28125,8.0625 C 6.24107,8.0647215 6.1761092,8.0894573 6.125,8.125 5.4428785,8.6669264 4.8053738,9.2928641 4.1875,9.90625 3.721958,10.403571 3.1835185,10.829001 2.90625,11.46875 2.7337489,11.839865 2.7236959,12.305494 3,12.625 3.298377,12.97116 3.756376,13.241771 4.21875,13.25 4.6737053,13.253823 5.0409086,12.90784 5.25,12.53125 5.3917386,12.285037 5.48117,12.02163 5.5625,11.75 5.8495515,10.659668 6.1234386,9.5366567 6.375,8.4375 6.4407752,8.1926478 6.4017899,8.0558356 6.28125,8.0625 z M 7.75,8.125 C 7.676409,8.138699 7.6147,8.21967 7.625,8.34375 c 0.1272058,0.8618534 0.3412603,1.689188 0.5625,2.53125 0.1971231,0.652072 0.3040361,1.376995 0.71875,1.9375 0.2347344,0.335235 0.6475495,0.54778 1.0625,0.46875 0.449074,-0.08477 0.886238,-0.353959 1.125,-0.75 C 11.325022,12.139441 11.22114,11.650893 11,11.28125 10.857947,11.035219 10.66307,10.831485 10.46875,10.625 9.6689927,9.8302564 8.8564261,9.0496977 8.03125,8.28125 7.9119496,8.1615102 7.8235913,8.1113005 7.75,8.125 z",
+    "default_width_m": 2.5,
     "asset": {
       "view_box": "0 0 14 14",
       "layers": [
         {
           "d": "m 9.65625,0.59375 c -0.3024732,0.0462641 -0.5739493,0.24857188 -0.75,0.5 C 8.4915325,1.6542533 8.3846231,2.3479287 8.1875,3 7.9662603,3.8420605 7.7522058,4.7006473 7.625,5.5625 7.6044,5.8106582 7.7926492,5.8644805 8.03125,5.625 8.8564261,4.8565483 9.6689927,4.0447405 10.46875,3.25 10.66307,3.0435127 10.857947,2.8397801 11,2.59375 c 0.22114,-0.3696454 0.325018,-0.8581921 0.09375,-1.25 -0.238762,-0.3960416 -0.675926,-0.6652283 -1.125,-0.75 -0.1037376,-0.0197567 -0.2116756,-0.0154214 -0.3125,0 z m -5.4375,0.0625 C 3.756376,0.664435 3.298377,0.9038402 3,1.25 2.7236959,1.5695061 2.7337489,2.0351336 2.90625,2.40625 3.1835185,3.0459969 3.721958,3.5026801 4.1875,4 4.8053738,4.6133884 5.4428785,5.2080755 6.125,5.75 6.3294366,5.8921706 6.4627003,5.7639689 6.375,5.4375 6.1234386,4.3383434 5.8495515,3.246582 5.5625,2.15625 5.4811703,1.8846207 5.3917386,1.5899614 5.25,1.34375 5.0409086,0.9671579 4.6737053,0.6524279 4.21875,0.65625 z M 1,5.65625 C 0.6728589,5.7133884 0.35581084,5.8906685 0.1875,6.1875 -0.03684961,6.5918816 -0.05657638,7.0996758 0.09375,7.53125 0.23204898,7.9303783 0.65487609,8.1823302 1.0625,8.21875 1.7551236,8.2989321 2.398939,8.029096 3.0625,7.875 3.9027885,7.6471232 4.7519195,7.4130156 5.5625,7.09375 5.787908,6.9879268 5.7327889,6.7749958 5.40625,6.6875 4.3287785,6.3551066 3.2438454,6.0472518 2.15625,5.75 1.8803888,5.6844434 1.596594,5.6567822 1.3125,5.65625 1.2048302,5.6543848 1.109047,5.6372039 1,5.65625 z m 11.6875,0 C 12.403405,5.6567822 12.119611,5.684443 11.84375,5.75 10.756155,6.0472518 9.6712203,6.3551066 8.59375,6.6875 8.2672114,6.7749958 8.21209,6.9879301 8.4375,7.09375 c 0.8105812,0.3192656 1.659711,0.5533732 2.5,0.78125 0.663559,0.154096 1.307371,0.4239353 2,0.34375 0.407624,-0.03642 0.830451,-0.2883717 0.96875,-0.6875 C 14.056568,7.0996758 14.036852,6.5918816 13.8125,6.1875 13.588087,5.7917247 13.118179,5.64879 12.6875,5.65625 z M 6.28125,8.0625 C 6.24107,8.0647215 6.1761092,8.0894573 6.125,8.125 5.4428785,8.6669264 4.8053738,9.2928641 4.1875,9.90625 3.721958,10.403571 3.1835185,10.829001 2.90625,11.46875 2.7337489,11.839865 2.7236959,12.305494 3,12.625 3.298377,12.97116 3.756376,13.241771 4.21875,13.25 4.6737053,13.253823 5.0409086,12.90784 5.25,12.53125 5.3917386,12.285037 5.48117,12.02163 5.5625,11.75 5.8495515,10.659668 6.1234386,9.5366567 6.375,8.4375 6.4407752,8.1926478 6.4017899,8.0558356 6.28125,8.0625 z M 7.75,8.125 C 7.676409,8.138699 7.6147,8.21967 7.625,8.34375 c 0.1272058,0.8618534 0.3412603,1.689188 0.5625,2.53125 0.1971231,0.652072 0.3040361,1.376995 0.71875,1.9375 0.2347344,0.335235 0.6475495,0.54778 1.0625,0.46875 0.449074,-0.08477 0.886238,-0.353959 1.125,-0.75 C 11.325022,12.139441 11.22114,11.650893 11,11.28125 10.857947,11.035219 10.66307,10.831485 10.46875,10.625 9.6689927,9.8302564 8.8564261,9.0496977 8.03125,8.28125 7.9119496,8.1615102 7.8235913,8.1113005 7.75,8.125 z",
+          "fill": "#4a6741"
+        }
+      ],
+      "preview_bg": "#edf5ea",
+      "accent": "#5a7a48"
+    }
+  },
+  {
+    "id": "osmic-tourism-windmill",
+    "label": "Windmill",
+    "category": "structure",
+    "description": "Osmic map icons (CC0) — gmgeo/osmic, landscaping / AI CAD",
+    "keywords": [
+      "tourism-windmill",
+      "landscape",
+      "osmic",
+      "cc0",
+      "ai cad",
+      "design library",
+      "structure"
+    ],
+    "path_d": "M 2.71875,0 1,1.71875 5.96875,6 1,10.28125 2.71875,12 7,7.03125 11.28125,12 13,10.28125 8.03125,6 13,1.71875 11.28125,0 7,4.96875 2.71875,0 z M 7,2 C 6.5846058,2 6.2371923,2.0902004 5.9375,2.21875 L 7,3.4375 8.0625,2.21875 C 7.7644902,2.0832701 7.4104059,2 7,2 z M 7,5.5 C 7.2761424,5.5 7.5,5.7238576 7.5,6 7.5,6.2761424 7.2761424,6.5 7,6.5 6.7238576,6.5 6.5,6.2761424 6.5,6 6.5,5.7238576 6.7238576,5.5 7,5.5 z M 4.1875,5.78125 4.15625,6.25 4.4375,6 4.1875,5.78125 z m 5.625,0 L 9.5625,6 9.84375,6.25 9.8125,5.78125 z M 7,8.5625 3.625,12.46875 3.5,14 10.5,14 10.375,12.46875 7,8.5625 z",
+    "default_width_m": 5,
+    "asset": {
+      "view_box": "0 0 14 14",
+      "layers": [
+        {
+          "d": "M 2.71875,0 1,1.71875 5.96875,6 1,10.28125 2.71875,12 7,7.03125 11.28125,12 13,10.28125 8.03125,6 13,1.71875 11.28125,0 7,4.96875 2.71875,0 z M 7,2 C 6.5846058,2 6.2371923,2.0902004 5.9375,2.21875 L 7,3.4375 8.0625,2.21875 C 7.7644902,2.0832701 7.4104059,2 7,2 z M 7,5.5 C 7.2761424,5.5 7.5,5.7238576 7.5,6 7.5,6.2761424 7.2761424,6.5 7,6.5 6.7238576,6.5 6.5,6.2761424 6.5,6 6.5,5.7238576 6.7238576,5.5 7,5.5 z M 4.1875,5.78125 4.15625,6.25 4.4375,6 4.1875,5.78125 z m 5.625,0 L 9.5625,6 9.84375,6.25 9.8125,5.78125 z M 7,8.5625 3.625,12.46875 3.5,14 10.5,14 10.375,12.46875 7,8.5625 z",
           "fill": "#4a6741"
         }
       ],

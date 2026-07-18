@@ -17,9 +17,9 @@ type Props = {
 const LOCK_HINT: Record<CanvasMode, string> = {
   survey: "Start here",
   sketch: "Needs aerial from survey",
-  cad: "Needs aerial from survey",
-  quote: "Needs committed CAD",
-  share: "Needs a quote first",
+  cad: "Needs sketch placements on the aerial",
+  quote: "Needs accepted CAD (no pending ghosts)",
+  share: "Needs a persisted client quote",
 };
 
 export function CanvasModeStrip({ mode, progress, onMode }: Props) {

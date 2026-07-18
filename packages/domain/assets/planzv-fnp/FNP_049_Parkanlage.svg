@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2017 -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="77mm" height="52mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 7700 5200"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str0 {stroke:black;stroke-width:200;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+    .fil1 {fill:black}
+   ]]>
+  </style>
+ </defs>
+ <g id="Ebene_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <rect class="fil0 str0" x="100" y="100" width="7500" height="5000"/>
+ </g>
+ <g id="Ebene_x0020_1_0">
+  <metadata id="CorelCorpID_1Corel-Layer"/>
+  <g id="_1736626422896">
+   <g>
+    <g>
+     <circle class="fil1" cx="1189.17" cy="1874.79" r="265.98"/>
+     <circle class="fil1" cx="1793.86" cy="1122.57" r="265.98"/>
+     <circle class="fil1" cx="2398.54" cy="1874.79" r="265.98"/>
+    </g>
+    <g>
+     <circle class="fil1" cx="5301.46" cy="1874.79" r="265.98"/>
+     <circle class="fil1" cx="5906.14" cy="1122.57" r="265.98"/>
+     <circle class="fil1" cx="6512.91" cy="1874.79" r="265.98"/>
+    </g>
+   </g>
+   <g>
+    <circle class="fil1" cx="3244.27" cy="4079.51" r="265.98"/>
+    <circle class="fil1" cx="3851.04" cy="3325.21" r="265.98"/>
+    <circle class="fil1" cx="4455.73" cy="4079.51" r="265.98"/>
+   </g>
+  </g>
+ </g>
+</svg>

@@ -10,7 +10,9 @@
     "lint": "echo ok",
     "import:open-crop": "node scripts/generate-open-crop-catalog.mjs",
     "import:osmic-landscape": "node scripts/generate-osmic-landscape-catalog.mjs",
-    "import:wikimedia-trees": "node scripts/download-wikimedia-trees.mjs && node scripts/generate-wikimedia-trees-catalog.mjs"
+    "import:wikimedia-trees": "node scripts/download-wikimedia-trees.mjs && node scripts/generate-wikimedia-trees-catalog.mjs",
+    "import:planzv": "node scripts/download-planzv-fnp.mjs && node scripts/generate-planzv-catalog.mjs",
+    "import:ai-cad-design": "node scripts/generate-osmic-landscape-catalog.mjs && node scripts/download-planzv-fnp.mjs && node scripts/generate-planzv-catalog.mjs"
   },
   "dependencies": {
     "@workstream/contracts": "workspace:*",

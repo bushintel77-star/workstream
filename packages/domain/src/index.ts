@@ -19,16 +19,28 @@ export {
 export { OPEN_CROP_SYMBOLS } from './open-crop-symbols';
 export { OSMIC_LANDSCAPE_SYMBOLS } from './osmic-landscape-symbols';
 export {
+  PLANZV_DESIGN_SYMBOLS,
+  PLANZV_ATTRIBUTION,
+} from './planzv-design-symbols';
+export {
   WIKIMEDIA_TREE_SYMBOLS,
   WIKIMEDIA_TREE_ATTRIBUTION,
 } from './wikimedia-tree-symbols';
 export {
   buildGhostPlacementSuggestions,
+  buildSketchCanvasAiSuggestions,
   buildStudioAiSuggestions,
   withDirtySaveSuggestion,
   type GhostPlacementSuggestion,
+  type SketchCanvasAiInput,
   type StudioAiSuggestion,
 } from './studio-ai-assist';
+export {
+  isSketchGoldStandard,
+  selectSketchRibbonSymbols,
+  SKETCH_RIBBON_STARTERS,
+  type SketchRibbonTab,
+} from './sketch-gold-library';
 export * from './catalog-glyph';
 export * from './catalog-quote';
 export * from './sketch-brief';

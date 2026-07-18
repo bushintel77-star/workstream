@@ -592,16 +592,14 @@ export default function ProjectDetailScreen() {
         void handleAdvanceStatus("design_review");
         break;
       case "develop":
-        void handleRunDesign();
+      case "quote":
+        void handleRunOutput("quote");
         break;
       case "cost":
         void handleRunCosting();
         break;
       case "audit":
         void handleRunAudit();
-        break;
-      case "quote":
-        void handleRunOutput("quote");
         break;
       case "share":
         void (async () => {

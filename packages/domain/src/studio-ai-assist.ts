@@ -8,8 +8,17 @@ export type StudioAiSuggestion = {
   priority: "high" | "medium" | "low";
   title: string;
   detail: string;
-  action: "develop" | "save" | "trp" | "schedule" | "place";
+  action: "quote" | "save" | "trp" | "schedule" | "place" | "cad";
   symbol_id?: string;
+};
+
+export type SketchCanvasAiInput = {
+  placementCount: number;
+  hasPlanningSymbol: boolean;
+  hasHardscape: boolean;
+  hasStructurePlanting: boolean;
+  tier1: boolean;
+  sketchReadyForCad: boolean;
 };
 
 export type GhostPlacementSuggestion = {
@@ -30,6 +39,93 @@ export type StudioAiAssistInput = {
   hasDesign: boolean;
 };
 
+/**
+ * 2026 one-canvas sketch ribbon AI — progressive, action-first coaching.
+ * Prefer structure → massing → TRP → CAD over generic tips.
+ */
+export function buildSketchCanvasAiSuggestions(
+  input: SketchCanvasAiInput,
+): StudioAiSuggestion[] {
+  const out: StudioAiSuggestion[] = [];
+
+  if (input.tier1) {
+    out.push({
+      id: "tier1-ribbon",
+      priority: "high",
+      title: "Tier-1 massing",
+      detail: "Lock front entry + rear courtyard, then promote quote.",
+      action: "place",
+      symbol_id: "hornbeam-pleached",
+    });
+  }
+
+  if (input.placementCount === 0) {
+    out.push({
+      id: "structure-first",
+      priority: "high",
+      title: "Structure first",
+      detail: "Place canopy or pleached screen — then mass planting.",
+      action: "place",
+      symbol_id: "hornbeam-pleached",
+    });
+    return out;
+  }
+
+  if (!input.hasStructurePlanting) {
+    out.push({
+      id: "add-canopy",
+      priority: "high",
+      title: "Add canopy anchors",
+      detail: "Trees or screens give the plan scale before hardscape densifies.",
+      action: "place",
+      symbol_id: "olive-standard",
+    });
+  }
+
+  if (!input.hasHardscape && input.placementCount >= 2) {
+    out.push({
+      id: "add-hardscape",
+      priority: "medium",
+      title: "Lay a path language",
+      detail: "Bluestone or steppers tie massing to circulation.",
+      action: "place",
+      symbol_id: "bluestone-paver",
+    });
+  }
+
+  if (!input.hasPlanningSymbol && input.placementCount >= 1) {
+    out.push({
+      id: "trp-ribbon",
+      priority: "medium",
+      title: "Protect retained trees",
+      detail: "Drop a TRP ring where canopy protection applies.",
+      action: "trp",
+      symbol_id: "tree-root-protection",
+    });
+  }
+
+  if (input.sketchReadyForCad) {
+    out.push({
+      id: "draft-cad",
+      priority: "high",
+      title: "Draft working drawing",
+      detail: "Sketch is dense enough — generate AI CAD on this aerial.",
+      action: "cad",
+    });
+  } else if (input.placementCount >= 3) {
+    out.push({
+      id: "mass-fill",
+      priority: "low",
+      title: "Mass the ground plane",
+      detail: "Paint Lomandra or turf between structure — live BOM tracks it.",
+      action: "place",
+      symbol_id: "lomandra-mass",
+    });
+  }
+
+  return out.slice(0, 3);
+}
+
 /** Ordered coaching cards for the AI rail (AI-first workflow). */
 export function buildStudioAiSuggestions(
   input: StudioAiAssistInput,
@@ -42,8 +138,8 @@ export function buildStudioAiSuggestions(
       priority: "high",
       title: "Tier-1 architectural massing",
       detail:
-        "36 Wrights Terrace: front entry bluestone + specimen anchors, rear courtyard discipline. Save the sketch, then open Quote to lock zones and costing parity.",
-      action: "develop",
+        "36 Wrights Terrace: front entry bluestone + specimen anchors, rear courtyard discipline. Save the sketch, then open Quote for zones and workbook savings.",
+      action: "quote",
     });
   }
 
@@ -53,7 +149,7 @@ export function buildStudioAiSuggestions(
       priority: "high",
       title: "Start with structure on the aerial",
       detail:
-        "Place pleached hornbeam or site trees first, then mass planting and hardscape. AI develop reads this layout.",
+        "Place pleached hornbeam or site trees first, then mass planting and hardscape. This layout feeds the working drawing and live BOM.",
       action: "place",
       symbol_id: "hornbeam-pleached",
     });
@@ -71,12 +167,12 @@ export function buildStudioAiSuggestions(
 
   if (input.placementCount > 0 && !input.hasDesign) {
     out.push({
-      id: "develop",
+      id: "promote-quote",
       priority: "high",
       title: "Promote sketch to quote",
       detail:
-        "Save the plan, then open Quote to promote the live BOM and quote-ready rationale.",
-      action: "develop",
+        "Save the plan, draft CAD, accept suggestions, then open Quote to promote the live BOM.",
+      action: "quote",
     });
   }
 
@@ -119,7 +215,7 @@ export function withDirtySaveSuggestion(
       id: "save",
       priority: "high",
       title: "Save before leaving studio",
-      detail: "Unsaved sketch changes will not feed envelope or AI develop.",
+      detail: "Unsaved sketch changes will not feed CAD or quote.",
       action: "save",
     },
     ...suggestions,

@@ -1,12 +1,25 @@
+import { mkdir, rename, writeFile } from "fs/promises";
+import path from "path";
 import type { Store } from "@workstream/db";
-import type { CostScenario, Project } from "@workstream/contracts";
+import type { CostScenario, Output, Project } from "@workstream/contracts";
 import {
+  alignCadBuildToTier1Workbook,
   buildFromCad,
   cadQuantitySurvey,
   type CadBuildSchedule,
   type CadQuantitySurvey,
 } from "@workstream/domain";
 import { renderHtml } from "./html-render";
+import { outputPublicUrl } from "./output-job";
+import { dispatchQuoteGenerated } from "./integration-dispatch";
+
+const OUTPUT_DIR = path.join(process.cwd(), "data", "outputs");
+
+async function atomicWrite(filePath: string, body: string): Promise<void> {
+  const tmp = `${filePath}.tmp`;
+  await writeFile(tmp, body, "utf8");
+  await rename(tmp, filePath);
+}
 
 function cadQuoteMarkdown(
   project: Project,
@@ -56,6 +69,10 @@ async function requireCadDoc(store: Store, ownerId: string, projectId: string) {
   if (committed.length === 0) {
     throw new Error("Accept CAD ghosts before running quantity survey.");
   }
+  const ghosts = document.entities.filter((e) => e.ghost);
+  if (ghosts.length > 0) {
+    throw new Error("Accept CAD suggestions before quoting.");
+  }
   return document;
 }
 
@@ -74,12 +91,16 @@ export async function runCadBuild(
   projectId: string,
   scenario: CostScenario = "standard",
 ): Promise<CadBuildSchedule> {
+  const project = await store.getProject(ownerId, projectId);
+  if (!project) throw new Error(`Project not found: ${projectId}`);
+
   const document = await requireCadDoc(store, ownerId, projectId);
   const rates = await store.listRateCard(ownerId);
-  const build = buildFromCad(document, rates, {
+  let build = buildFromCad(document, rates, {
     committedOnly: true,
     scenario,
   });
+  build = alignCadBuildToTier1Workbook(build, project.address);
 
   const design = await store.getDesign(ownerId, projectId);
   if (design) {
@@ -101,16 +122,45 @@ export async function runCadQuote(
   ownerId: string,
   projectId: string,
   scenario: CostScenario = "standard",
+  baseUrl?: string,
 ): Promise<{
   build: CadBuildSchedule;
   survey: CadQuantitySurvey;
   markdown: string;
   html: string;
+  output: Output | null;
 }> {
   const project = await store.getProject(ownerId, projectId);
   if (!project) throw new Error(`Project not found: ${projectId}`);
   const build = await runCadBuild(store, ownerId, projectId, scenario);
   const markdown = cadQuoteMarkdown(project, build);
   const html = renderHtml({ kind: "quote", project, markdown });
-  return { build, survey: build.survey, markdown, html };
+
+  let output: Output | null = null;
+  if (baseUrl) {
+    await mkdir(OUTPUT_DIR, { recursive: true });
+    const stub = await store.upsertOutput(ownerId, projectId, "quote", {
+      uri: "",
+      generated_at: new Date().toISOString(),
+    });
+    const mdPath = path.join(OUTPUT_DIR, `${stub.id}.md`);
+    const htmlPath = path.join(OUTPUT_DIR, `${stub.id}.html`);
+    await Promise.all([
+      atomicWrite(mdPath, markdown),
+      atomicWrite(htmlPath, html),
+    ]);
+    const uri = outputPublicUrl(baseUrl, stub.id);
+    output = await store.upsertOutput(ownerId, projectId, "quote", {
+      uri,
+      generated_at: stub.generated_at,
+    });
+    await store.updateProjectStatus(ownerId, projectId, "outputs");
+    void dispatchQuoteGenerated(store, ownerId, project, {
+      quote_url: uri,
+    }).catch(() => {
+      /* logged per-channel */
+    });
+  }
+
+  return { build, survey: build.survey, markdown, html, output };
 }

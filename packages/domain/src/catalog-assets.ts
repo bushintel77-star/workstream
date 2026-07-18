@@ -76,6 +76,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#e8f4fc",
       "#7eb8e8",
     ),
+    default_width_m: 1.2,
   },
   {
     id: "box-ball",
@@ -93,6 +94,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#e6efe5",
       "#3d6b3a",
     ),
+    default_width_m: 0.8,
   },
   {
     id: "olive-standard",
@@ -110,6 +112,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#f4f2e8",
       "#7a8f5c",
     ),
+    default_width_m: 2.5,
   },
   {
     id: "liriope-edge",
@@ -131,6 +134,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#eef4ea",
       "#5a7a48",
     ),
+    default_width_m: 0.4,
   },
   {
     id: "lawn-turf",
@@ -147,6 +151,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#e5f5df",
       "#7cb86a",
     ),
+    default_width_m: 3,
   },
 
   /* —— Hardscape / paving —— */
@@ -204,6 +209,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#faf4e8",
       "#c4a574",
     ),
+    default_width_m: 0.8,
   },
   {
     id: "basalt-grid",
@@ -220,6 +226,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#e8e8ea",
       "#3a3d42",
     ),
+    default_width_m: 0.6,
   },
   {
     id: "gravel-mulch",
@@ -236,6 +243,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#f2ebe4",
       "#a89888",
     ),
+    default_width_m: 1.5,
   },
   {
     id: "timber-deck",
@@ -252,6 +260,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#f5ead8",
       "#8b6914",
     ),
+    default_width_m: 2.4,
   },
 
   /* —— Structures —— */
@@ -289,6 +298,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#ececef",
       "#7a7a82",
     ),
+    default_width_m: 0.4,
   },
   {
     id: "pool",
@@ -323,6 +333,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#dceef8",
       "#3a8aaa",
     ),
+    default_width_m: 2.2,
   },
   {
     id: "seat-wall",
@@ -358,6 +369,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#f5f0ec",
       "#e87840",
     ),
+    default_width_m: 1.4,
   },
   {
     id: "dim-line",
@@ -391,6 +403,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
       "#e8f5e8",
       "#3d6b3a",
     ),
+    default_width_m: 8,
   },
   {
     id: "tree-root-protection",

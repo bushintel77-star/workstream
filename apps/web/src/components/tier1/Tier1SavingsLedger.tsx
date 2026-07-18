@@ -26,7 +26,7 @@ type Props = {
   footer?: ReactNode;
 };
 
-/** Shared Proposal v3 savings ledger — portal, develop, studio. */
+/** Shared Proposal v3 savings ledger — portal, quote/share docks, studio. */
 export function Tier1SavingsLedger({
   savings = TIER1_WRIGHTS_SAVINGS,
   variant = "full",

@@ -1,10 +1,8 @@
 import type { Page } from "@playwright/test";
 
-/** Real pipeline shell — excludes Next.js loading skeleton (`aria-busy`). */
+/** Legacy pipeline chrome — must stay absent on canvas-first routes. */
 export function pipelineShell(page: Page) {
-  return page.locator(
-    '[data-testid="project-pipeline-shell"]:not([aria-busy="true"])',
-  );
+  return page.locator('[data-testid="project-pipeline-shell"]');
 }
 
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */

@@ -6,16 +6,17 @@ import home from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
+/** Canvas-stage labels — not the old pipeline hub names. */
 const STATUS_LABEL: Record<ProjectStatus, string> = {
-  draft: "Draft",
-  recording: "Recording",
-  processing: "Processing",
-  survey_review: "Survey",
-  design_review: "Design",
-  cost_review: "Costing",
-  audit: "Audit",
-  outputs: "Outputs",
-  complete: "Complete",
+  draft: "Survey",
+  recording: "Survey",
+  processing: "Survey",
+  survey_review: "Sketch",
+  design_review: "CAD",
+  cost_review: "Quote",
+  audit: "Quote",
+  outputs: "Share",
+  complete: "Share",
 };
 
 export default async function HomePage() {

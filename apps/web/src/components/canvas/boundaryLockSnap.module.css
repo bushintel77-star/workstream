@@ -138,9 +138,10 @@
 .polyDraft,
 .polyLocked {
   fill: rgba(212, 148, 88, 0.1);
-  stroke-width: 0.22;
+  stroke-width: 0.45;
   stroke-linejoin: round;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
   transition: fill 280ms ease, stroke 280ms ease, opacity 280ms ease;
 }
 

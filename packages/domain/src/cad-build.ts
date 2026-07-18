@@ -1,4 +1,4 @@
-import type { LineItem, RateCard } from "@workstream/contracts";
+import type { CadDocument, LineItem, RateCard } from "@workstream/contracts";
 import {
   applyContingency,
   calculateGST,
@@ -12,7 +12,10 @@ import {
   type CadQuantityRow,
   type CadQuantitySurvey,
 } from "./cad-quantities";
-import type { CadDocument } from "@workstream/contracts";
+import {
+  isTier1WrightsTerrace,
+  TIER1_WRIGHTS_SAVINGS,
+} from "./tier1-wrights-terrace";
 
 /** Map CAD layer (+ unit) to a preferred rate-card SKU pattern. */
 const LAYER_SKU_HINTS: Array<{
@@ -165,5 +168,48 @@ export function buildFromCad(
     contingency: Math.round(contingency * 100) / 100,
     gst: Math.round(gst * 100) / 100,
     total: Math.round(total * 100) / 100,
+  };
+}
+
+/**
+ * One costing truth for Wrights Tier-1: lock standard CAD build to proposal
+ * workbook total (same ALW-TIER1-ALIGN gate as zone costing).
+ */
+export function alignCadBuildToTier1Workbook(
+  build: CadBuildSchedule,
+  address: string,
+): CadBuildSchedule {
+  if (!isTier1WrightsTerrace(address)) return build;
+  if (build.scenario !== "standard") return build;
+
+  const target = TIER1_WRIGHTS_SAVINGS.target_total_inc_gst;
+  if (Math.abs(build.total - target) < 0.02) return build;
+
+  const targetSubtotal = Math.round((target / 1.1) * 100) / 100;
+  const targetGst = Math.round((target - targetSubtotal) * 100) / 100;
+  const priced = build.subtotal + build.contingency;
+  const delta = Math.round((targetSubtotal - priced) * 100) / 100;
+
+  const line_items = [...build.line_items];
+  if (Math.abs(delta) >= 0.01) {
+    line_items.push({
+      sku: "ALW-TIER1-ALIGN",
+      label: "Tier-1 proposal workbook alignment (36 Wrights Tce)",
+      unit: "allowance",
+      qty: 1,
+      rate: delta,
+      total: delta,
+      notes: "Locks standard CAD quote to proposal v3 inc-GST total",
+      is_provisional: false,
+    });
+  }
+
+  return {
+    ...build,
+    line_items,
+    subtotal: targetSubtotal,
+    contingency: 0,
+    gst: targetGst,
+    total: target,
   };
 }

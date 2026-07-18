@@ -38,18 +38,17 @@ test.describe("One canvas modes", () => {
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible({
       timeout: 30_000,
     });
-    // Aerial from beforeAll → Sketch + CAD unlocked; Quote/Share stay gated.
+    // Aerial from beforeAll → Sketch unlocked; CAD stays gated until sketch.
     await expect(page.getByTestId("canvas-mode-sketch")).toBeVisible();
-    await expect(page.getByTestId("canvas-mode-cad")).toBeVisible();
-    await expect(page.getByTestId("canvas-mode-quote")).toHaveAttribute(
+    await expect(page.getByTestId("canvas-mode-cad")).toHaveAttribute(
       "aria-disabled",
       "true",
     );
-    await page.getByTestId("canvas-mode-cad").click();
-    await expect(page).toHaveURL(/mode=cad/);
+    await page.getByTestId("canvas-mode-sketch").click();
+    await expect(page).toHaveURL(/mode=sketch/);
     await expect(page.getByTestId("site-canvas")).toHaveAttribute(
       "data-canvas-mode",
-      "cad",
+      "sketch",
     );
   });
 
@@ -66,7 +65,7 @@ test.describe("One canvas modes", () => {
   test("legacy overview redirects into canvas", async ({ page }) => {
     await page.goto(`/projects/${projectId}/overview`);
     await expect(page).toHaveURL(
-      new RegExp(`/projects/${projectId}\\?mode=cad`),
+      new RegExp(`/projects/${projectId}\\?mode=sketch`),
     );
     await expect(pipelineShell(page)).toHaveCount(0);
   });

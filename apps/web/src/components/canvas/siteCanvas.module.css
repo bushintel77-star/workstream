@@ -43,16 +43,37 @@
   cursor: grabbing;
 }
 
+/** Uniform drafting-board dots behind the site sheet. */
+.draftGrid {
+  --grid-dot: rgba(36, 24, 30, 0.16);
+  --grid-step: 24px;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: transparent;
+  background-image: radial-gradient(
+    circle at center,
+    var(--grid-dot) 1px,
+    transparent 1.15px
+  );
+  background-size: var(--grid-step) var(--grid-step);
+  background-position: 0 0;
+}
+
 .world {
   position: absolute;
+  z-index: 1;
   transform-origin: 0 0;
   will-change: transform;
+  /* width/height set inline from aerial aspect */
 }
 
 .aerial {
   display: block;
-  width: min(92vw, 1100px);
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
   border-radius: var(--radius-sheet);
   box-shadow:
     var(--shadow-lift),
@@ -377,6 +398,18 @@
   display: grid;
   gap: 0.7rem;
   animation: dockIn 400ms var(--ease-out);
+  max-height: min(70vh, 560px);
+  overflow: auto;
+}
+
+.tier1Dock {
+  display: grid;
+  gap: 0.55rem;
+  max-height: 220px;
+  overflow: auto;
+  padding: 0.35rem 0;
+  border-top: 1px solid rgba(36, 24, 30, 0.08);
+  border-bottom: 1px solid rgba(36, 24, 30, 0.08);
 }
 
 @keyframes dockIn {

@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import type { CatalogPlacement, CatalogSymbol } from "@workstream/contracts";
 import { DesignAssetGlyph } from "./DesignAssetGlyph";
-import s from "../designStudio.module.css";
+import s from "./placement.module.css";
 
 const DRAG_THRESHOLD_PX = 4;
 

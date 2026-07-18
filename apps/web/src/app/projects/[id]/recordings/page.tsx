@@ -6,5 +6,5 @@ export default async function RecordingsRedirect({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  redirectToCanvas(id, "cad");
+  redirectToCanvas(id, "sketch");
 }

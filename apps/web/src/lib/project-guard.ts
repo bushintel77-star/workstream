@@ -4,11 +4,11 @@ import { redirect } from "next/navigation";
 import { getProject, type Project } from "./api";
 
 type LoadProjectOptions = {
-  /** Allow viewing while pipeline status is `processing` (that route only). */
+  /** Allow viewing while pipeline status is `processing`. */
   allowProcessing?: boolean;
 };
 
-/** Load a project or return null. Redirects to the processing screen when active. */
+/** Load a project or return null. Processing projects stay on the canvas. */
 export async function requireProject(
   id: string,
   opts: LoadProjectOptions = {},
@@ -16,7 +16,7 @@ export async function requireProject(
   const project = await getProject(id);
   if (!project) return null;
   if (project.status === "processing" && !opts.allowProcessing) {
-    redirect(`/projects/${id}/processing`);
+    redirect(`/projects/${id}?mode=survey`);
   }
   return project;
 }
