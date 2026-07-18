@@ -42,13 +42,13 @@ import {
   type CanvasMode,
 } from "../../lib/canvas-mode";
 import { onOrchestrationRefreshRequest } from "../../lib/canvas-mutation-bus";
-import { DesignStudioClient } from "../../app/projects/[id]/design/DesignStudioClient";
 import {
   BoundaryChrome,
   BoundaryOverlay,
   type BoundaryTool,
 } from "./BoundaryLockSnap";
 import { CanvasModeStrip } from "./CanvasModeStrip";
+import { SketchInstrument } from "./SketchInstrument";
 import css from "./siteCanvas.module.css";
 
 export type SketchBundle = {
@@ -119,6 +119,9 @@ function SiteCanvasInner({
   const [showGuide, setShowGuide] = useState(
     () => searchParams.get("guide") === "1",
   );
+  const [sketchCount, setSketchCount] = useState(
+    () => sketch?.canvas?.placements?.length ?? 0,
+  );
   const [pending, startTransition] = useTransition();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -126,7 +129,8 @@ function SiteCanvasInner({
     cadDoc?.entities.filter((e) => !e.ghost).length ?? 0;
   const progress = {
     hasAerial: Boolean(aerialUri),
-    hasSketch: (sketch?.canvas?.placements?.length ?? 0) > 0,
+    hasSketch:
+      sketchCount > 0 || (sketch?.canvas?.placements?.length ?? 0) > 0,
     hasCad: committedCount > 0,
     hasQuote: hasQuote || Boolean(quoteHtml),
   };
@@ -221,7 +225,11 @@ function SiteCanvasInner({
   );
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (boundaryTool !== "pan" || mode === "sketch") return;
+    if (boundaryTool !== "pan") return;
+    const sketchLayer = (e.target as HTMLElement)?.closest?.(
+      "[data-testid='sketch-instrument']",
+    );
+    if (sketchLayer?.getAttribute("data-armed") === "1") return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { x: e.clientX, y: e.clientY, tx, ty };
   };
@@ -265,8 +273,10 @@ function SiteCanvasInner({
   const showCadDock = mode === "cad";
   const showQuoteDock = mode === "quote";
   const showSurveyDock = mode === "survey";
+  const showSketchDock = mode === "sketch" && Boolean(sketch);
   const showLiveBom =
     mode === "sketch" || mode === "cad" || mode === "quote";
+  const showStage = mode !== "sketch" || Boolean(sketch);
 
   const bumpOrchestration = () => setOrchRefresh((n) => n + 1);
 
@@ -289,23 +299,6 @@ function SiteCanvasInner({
   return (
     <div className={css.root} data-testid="site-canvas" data-canvas-mode={mode}>
       <CanvasModeStrip mode={mode} progress={progress} onMode={setMode} />
-
-      {mode === "sketch" && sketch ? (
-        <div className={css.sketchHost} data-testid="canvas-sketch-host">
-          <Suspense fallback={null}>
-            <DesignStudioClient
-              projectId={projectId}
-              projectAddress={projectAddress}
-              aerialUri={sketch.aerialUri}
-              lotRing={sketch.lotRing}
-              symbols={sketch.symbols}
-              rateCard={sketch.rateCard}
-              canvas={sketch.canvas}
-              surveyMetrics={sketch.surveyMetrics}
-            />
-          </Suspense>
-        </div>
-      ) : null}
 
       {showGuide && aerialUri && committedCount === 0 ? (
         <FirstRunGuide
@@ -355,7 +348,7 @@ function SiteCanvasInner({
         </div>
       ) : null}
 
-      {mode !== "sketch" ? (
+      {showStage ? (
         <>
           <div
             className={css.stage}
@@ -369,11 +362,11 @@ function SiteCanvasInner({
                 transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
               }}
             >
-              {aerialUri ? (
+              {(aerialUri || sketch?.aerialUri) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   className={css.aerial}
-                  src={aerialUri}
+                  src={aerialUri ?? sketch!.aerialUri}
                   alt={`Aerial — ${projectAddress}`}
                   draggable={false}
                 />
@@ -388,6 +381,15 @@ function SiteCanvasInner({
                   }}
                 />
               )}
+              {mode === "sketch" && sketch ? (
+                <SketchInstrument
+                  projectId={projectId}
+                  symbols={sketch.symbols}
+                  rateCard={sketch.rateCard}
+                  initialPlacements={sketch.canvas?.placements ?? []}
+                  onPlacementCount={setSketchCount}
+                />
+              ) : null}
               {svg && (mode === "cad" || mode === "quote") ? (
                 <div
                   className={`${css.cadLayer} ${ghostCount > 0 ? css.cadLayerGhost : ""}`}
@@ -440,6 +442,15 @@ function SiteCanvasInner({
                 <p>Generate AI CAD on this site — live BOM updates as geometry lands.</p>
               </div>
             ) : null}
+            {mode === "sketch" && sketchCount === 0 && !pending ? (
+              <div className={css.emptyHint}>
+                <strong>Paint the concept</strong>
+                <p>
+                  Pick a material below — stamp or drag to paint. Live BOM
+                  updates as you go.
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <div className={css.topBar}>
@@ -449,11 +460,13 @@ function SiteCanvasInner({
               <span className={css.badge}>
                 {mode === "survey"
                   ? "Survey · boundary"
-                  : mode === "quote"
-                    ? "Quote · QS → build"
-                    : mode === "share"
-                      ? "Share · client link"
-                      : "Working planning · indicative"}
+                  : mode === "sketch"
+                    ? "Sketch · paint concept"
+                    : mode === "quote"
+                      ? "Quote · QS → build"
+                      : mode === "share"
+                        ? "Share · client link"
+                        : "Working planning · indicative"}
               </span>
             </div>
             <div className={css.topActions}>
@@ -624,6 +637,38 @@ function SiteCanvasInner({
                   (aerialUri
                     ? "One tap drafts concept, drawing, and live estimate"
                     : "We need the aerial before anything else")}
+              </div>
+            </div>
+          ) : null}
+
+          {showSketchDock ? (
+            <div className={css.dock}>
+              <p className={css.dockPrimaryHint}>
+                {sketchCount === 0
+                  ? "Paint materials on the aerial — live BOM tracks every stamp"
+                  : "Concept on the site — draft the working drawing next"}
+              </p>
+              <div className={css.btnRow}>
+                <button
+                  type="button"
+                  className={`${css.btn} ${css.btnPrimary}`}
+                  disabled={pending || sketchCount === 0}
+                  onClick={() =>
+                    run("Generating CAD…", async () => {
+                      applyCad(await generateCadAction(projectId));
+                      setMode("cad");
+                    })
+                  }
+                >
+                  Draft drawing →
+                </button>
+              </div>
+              <div className={`${css.status} ${error ? css.error : ""}`}>
+                {error ??
+                  status ??
+                  (sketchCount > 0
+                    ? `${sketchCount} placements · Alt+click to sample a brush`
+                    : "Same world as Survey and CAD — not a separate studio")}
               </div>
             </div>
           ) : null}

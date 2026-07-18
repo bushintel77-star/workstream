@@ -1,0 +1,88 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-sheet, 22px);
+  overflow: hidden;
+  z-index: 3;
+  touch-action: none;
+  /* Let pan through when no brush armed ù placements still receive events */
+  pointer-events: none;
+}
+
+.layerArmed {
+  pointer-events: auto;
+  cursor: none;
+}
+
+.layer :global([data-placement-id]) {
+  pointer-events: auto;
+}
+
+.chrome {
+  /* Fixed so tray stays on the SiteCanvas shell, not inside the pan/zoom world */
+  position: fixed;
+  left: 50%;
+  bottom: 7.25rem;
+  transform: translateX(-50%);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  width: min(520px, calc(100vw - 1.5rem));
+  pointer-events: none;
+}
+
+.chrome > * {
+  pointer-events: auto;
+}
+
+.tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 14px;
+  background: var(--frost, rgba(255, 249, 251, 0.88));
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(26, 18, 24, 0.1);
+}
+
+.trayBtn {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, #fff 55%, transparent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+}
+
+.trayBtnActive {
+  border-color: var(--blush, #e8a4b8);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--blush, #e8a4b8) 45%, transparent);
+}
+
+.hint {
+  margin: 0;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--frost, rgba(255, 249, 251, 0.88));
+  backdrop-filter: blur(10px);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ink-soft, #5c4a52);
+  text-align: center;
+}
+
+/* SwatchPad is position:absolute ù host it relative to chrome */
+.chrome :global([data-testid="swatch-pad"]) {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+}

@@ -824,3 +824,132 @@
   min-height: 0;
   overflow-y: auto;
 }
+
+/* Embedded sketch chrome — lives under SiteCanvas mode strip only */
+.embeddedRoot {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface-canvas, var(--pink-mist, #f7f0f3));
+}
+
+.embeddedArmed {
+  outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: -1px;
+}
+
+.embeddedFocus .embeddedRail {
+  display: none;
+}
+
+.embeddedToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  flex-shrink: 0;
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid var(--line-hairline);
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+}
+
+.embeddedTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.embeddedToolbarEnd {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.embeddedTool {
+  min-height: 36px;
+  padding: 0 0.65rem;
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.embeddedTool:hover {
+  color: var(--ink-primary);
+  border-color: var(--line-strong);
+}
+
+.embeddedToolActive {
+  background: var(--surface-elevated);
+  color: var(--ink-primary);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.embeddedBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.embeddedCanvas {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.embeddedRail {
+  width: min(300px, 42vw);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--line-hairline);
+  background: var(--surface-elevated);
+}
+
+.embeddedRailTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 0.35rem;
+  border-bottom: 1px solid var(--line-hairline);
+  background: var(--surface-sunken);
+}
+
+.embeddedRailTab {
+  flex: 1;
+  min-width: 3.5rem;
+  min-height: 32px;
+  padding: 0 0.4rem;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.embeddedRailTabActive {
+  background: var(--surface-elevated);
+  color: var(--ink-primary);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.embeddedRailBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.5rem;
+}

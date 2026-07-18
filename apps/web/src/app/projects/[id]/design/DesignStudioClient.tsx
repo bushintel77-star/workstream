@@ -2,10 +2,8 @@
 
 import type { CatalogSymbol } from "@workstream/contracts";
 import { isTier1WrightsTerrace } from "@workstream/domain";
-import { useSearchParams } from "next/navigation";
 import { DesignStudio } from "../../../../components/DesignStudio";
 import type { DesignCanvas, RateCardItem } from "../../../../lib/api";
-import { useMediaQuery } from "../../../../hooks/useMediaQuery";
 
 type Props = {
   projectId: string;
@@ -25,7 +23,7 @@ type Props = {
   };
 };
 
-/** Picks desktop CAD shell at ≥960px or ?studio=desktop. */
+/** Single sketch surface for SiteCanvas — no nested desktop shell. */
 export function DesignStudioClient({
   projectId,
   projectAddress,
@@ -38,9 +36,6 @@ export function DesignStudioClient({
   surveyMetrics,
 }: Props) {
   const tier1 = tier1Override ?? isTier1WrightsTerrace(projectAddress);
-  const wide = useMediaQuery("(min-width: 960px)");
-  const params = useSearchParams();
-  const shellLayout = wide || params.get("studio") === "desktop" ? "desktop" : "legacy";
 
   return (
     <DesignStudio
@@ -62,7 +57,6 @@ export function DesignStudioClient({
       }
       initialIrrigationZones={canvas?.irrigation_zones ?? []}
       initialAnnotations={canvas?.annotations ?? []}
-      shellLayout={shellLayout}
       surveyMetrics={surveyMetrics}
     />
   );

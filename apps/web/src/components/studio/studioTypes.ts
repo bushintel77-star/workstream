@@ -8,8 +8,6 @@ export type ToolOverride =
   | "pan"
   | null;
 
-export type StudioShellLayout = "legacy" | "desktop";
-
 export type RailTab =
   | "ai"
   | "inspector"

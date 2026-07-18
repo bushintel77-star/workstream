@@ -51,7 +51,6 @@ import {
 } from "../lib/canvas-mutation-bus";
 import { saveDesignCanvasAction, scanDesignGhostsAction } from "../app/actions";
 import { useToast } from "./ToastHost";
-import { PipelineImageShell } from "./PipelineImageShell";
 import sh from "./pipelineImageShell.module.css";
 import {
   DesignAssetPalette,
@@ -69,34 +68,25 @@ import {
   SwatchPad,
   CanvasAnnotationOverlay,
   StudioAiPanel,
-  StudioRibbon,
   StudioTier1Banner,
   StudioViewportHud,
   StudioChromeProvider,
-  StudioDesktopShell,
-  StudioWorkflowBadge,
   StudioMinimap,
   StudioZoomHUD,
   StudioCommandPalette,
-  StudioContextStrip,
   StudioInspector,
   StudioLayersPanel,
-  SiteLayersPanel,
   SiteOverlayLayer,
-  SunShadeControls,
   useStudioHistory,
   useStudioPolylineDraw,
   useStudioViewport,
 } from "./studio";
-import type { RibbonTab } from "./studio/StudioRibbon";
 import type { SiteLayerId, SiteLayerState } from "./studio/SiteLayersPanel";
 import { useStudioKeyboard } from "../hooks/useStudioKeyboard";
 import type { CanvasStrokeClient } from "./studio/types";
 import type { RateCardItem } from "../lib/api";
 import type {
-  RailTab,
   RightRailTab,
-  StudioShellLayout,
   ToolOverride,
 } from "./studio/studioTypes";
 import s from "./designStudio.module.css";
@@ -172,7 +162,6 @@ type Props = {
   tier1?: boolean;
   hasDesign?: boolean;
   projectAddress?: string;
-  shellLayout?: StudioShellLayout;
   surveyMetrics?: {
     garden_area_m2: number;
     lot_area_m2: number;
@@ -195,7 +184,6 @@ export function DesignStudio({
   tier1 = false,
   hasDesign = false,
   projectAddress = "Project",
-  shellLayout = "legacy",
   surveyMetrics,
 }: Props) {
   const tier1Active = tier1 || isTier1WrightsTerrace(projectAddress);
@@ -209,17 +197,14 @@ export function DesignStudio({
   const savingRef = useRef(false);
 
   const [toolOverride, setToolOverride] = useState<ToolOverride>(null);
-  const [ribbonTab, setRibbonTab] = useState<RibbonTab>("ai");
-  const [railTab, setRailTab] = useState<RailTab>("ai");
   const [ghosts, setGhosts] = useState<GhostPlacementSuggestion[]>([]);
   const [aiScanning, setAiScanning] = useState(false);
   const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(null);
   const [railExpanded, setRailExpanded] = useState(false);
-  const [rightRailOpen, setRightRailOpen] = useState(false);
+  const [rightRailOpen, setRightRailOpen] = useState(true);
   const [rightRailTab, setRightRailTab] = useState<RightRailTab>("library");
   const [commandOpen, setCommandOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  const [libraryFilter, setLibraryFilter] = useState<string | null>(null);
   const [hiddenPlacementIds, setHiddenPlacementIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -377,28 +362,13 @@ export function DesignStudio({
         setMeasurePoints([]);
       }
       setToolOverride(tool);
-      if (shellLayout === "desktop") {
-        setRightRailOpen(true);
-        if (tool === "place") setRightRailTab("library");
-        if (tool === "select") setRightRailTab("inspector");
-      }
+      setRightRailOpen(true);
+      if (tool === "place") setRightRailTab("library");
+      if (tool === "select") setRightRailTab("inspector");
     },
-    [irrigationDraw, massPlantDraw, shellLayout],
+    [irrigationDraw, massPlantDraw],
   );
 
-  const handleRailTab = useCallback(
-    (tab: RailTab) => {
-      setRailTab(tab);
-      if (tab === "massplant") setStudioTool("massplant");
-      else if (tab === "irrigation") setStudioTool("irrigation");
-      else if (tab === "schedule") {
-        /* keep current canvas tool */
-      }
-    },
-    [setStudioTool],
-  );
-
-  const showAssetLibrary = toolOverride === "place";
 
   const aiSuggestions = useMemo(
     () =>
@@ -430,7 +400,8 @@ export function DesignStudio({
       const res = await scanDesignGhostsAction(projectId);
       const next = res.suggestions;
       setGhosts(next);
-      setRailTab("ai");
+      setRightRailTab("ai");
+      setRightRailOpen(true);
       toast.show(
         next.length > 0
           ? `${next.length} AI ghost hint(s) on canvas — apply or clear.`
@@ -443,7 +414,8 @@ export function DesignStudio({
         symbolIds: symbols.map((sym) => sym.id),
       });
       setGhosts(next);
-      setRailTab("ai");
+      setRightRailTab("ai");
+      setRightRailOpen(true);
       toast.show(
         next.length > 0
           ? `${next.length} heuristic hint(s) — vision scan unavailable.`
@@ -1276,7 +1248,8 @@ export function DesignStudio({
         })();
         break;
       case "schedule":
-        setRailTab("schedule");
+        setRightRailTab("schedule");
+        setRightRailOpen(true);
         break;
       case "trp":
       case "place":
@@ -1422,18 +1395,6 @@ export function DesignStudio({
         ? `Saved ${lastSavedLabel}`
         : "Ready to save";
 
-  const scheduleBadge =
-    placements.length + irrigationZones.length > 0
-      ? placements.length + irrigationZones.length
-      : null;
-
-  const railTabs = [
-    ["ai", "AI assist", ghosts.length || (tier1Active ? "T1" : null)],
-    ["massplant", "Mass plant", null],
-    ["irrigation", "Irrigation", irrigationZones.length || null],
-    ["schedule", "Schedule", scheduleBadge],
-  ] as const;
-
   const saveStatusNode = (
     <span
       className={`${s.saveStatus} ${s.saveStatusRow}`}
@@ -1461,155 +1422,6 @@ export function DesignStudio({
     >
       {saving ? "Saving…" : "Save plan"}
     </button>
-  );
-
-  const railPanels = (
-    <>
-      {showAssetLibrary ? (
-        <div className={s.railLibrary} aria-label="Asset library">
-          <p className={s.railLibraryHint}>Place mode — pick a symbol, then tap the aerial.</p>
-          <DesignAssetPalette
-            symbols={symbols}
-            selectedId={paletteSelectedId}
-            disabled={isDrawMode}
-            embedded
-            onSelect={handlePaletteSelect}
-            onDragStart={(id) => {
-              setDragSymbolId(id);
-              handlePaletteSelect(id);
-            }}
-            onDragEnd={() => setDragSymbolId(null)}
-          />
-        </div>
-      ) : null}
-      <div
-        className={`${s.railTabs} ${instrumentArmed ? s.chromeSoft : ""}`}
-        role="tablist"
-        aria-label="Studio panels"
-      >
-        {railTabs.map(([id, label, badge]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={railTab === id}
-            className={`${s.railTab} ${railTab === id ? s.railTabActive : ""}`}
-            onClick={() => handleRailTab(id)}
-          >
-            {label}
-            {badge ? <span className={s.railTabBadge}>{badge}</span> : null}
-          </button>
-        ))}
-      </div>
-      <div className={s.railPanel} role="tabpanel">
-        {railTab === "ai" ? (
-          <StudioAiPanel
-            projectId={projectId}
-            tier1={tier1Active}
-            suggestions={aiSuggestions}
-            ghosts={ghosts}
-            scanning={aiScanning}
-            onScanSite={handleAiScan}
-            onApplyAllGhosts={applyAllGhosts}
-            onClearGhosts={() => setGhosts([])}
-            onSuggestionAction={handleAiSuggestion}
-            symbolLabel={(id) => symbolById.get(id)?.label ?? id}
-          />
-        ) : null}
-        {railTab === "massplant" ? (
-          <StudioMassPlantPanel
-            symbols={symbols}
-            polygonPoints={massPlantDraw.isDrawing ? massPlantDraw.points : massPolygonPoints}
-            polygonClosed={massPolygonClosed}
-            isDrawing={massPlantDraw.isDrawing}
-            spacingCm={massSpacingCm}
-            scale={groundScale}
-            onSpacingChange={setMassSpacingCm}
-            onStartDraw={() => {
-              setStudioTool("massplant");
-              setMassPolygonClosed(false);
-              setMassPolygonPoints([]);
-              massPlantDraw.start();
-            }}
-            onFinishPolygon={() => {
-              const pts = massPlantDraw.finish();
-              if (pts) {
-                setMassPolygonPoints(pts);
-                setMassPolygonClosed(true);
-              } else toast.show("Need at least 3 points for a bed.", "error");
-            }}
-            onClear={() => {
-              massPlantDraw.cancel();
-              setMassPolygonClosed(false);
-              setMassPolygonPoints([]);
-            }}
-            onFill={(newPlacements) => {
-              setPlacements((prev) => [...prev, ...newPlacements]);
-              setRailTab("schedule");
-              toast.show(`Placed ${newPlacements.length} plants.`, "success");
-            }}
-          />
-        ) : null}
-        {railTab === "irrigation" ? (
-          <StudioIrrigationPanel
-            zones={irrigationZones}
-            selectedZoneId={selectedIrrigationZoneId}
-            isDrawing={irrigationDraw.isDrawing}
-            scale={groundScale}
-            onSelectZone={setSelectedIrrigationZoneId}
-            onUpdateZone={(id, patch) => {
-              setIrrigationZones(
-                (prev) => prev.map((z) => (z.id === id ? { ...z, ...patch } : z)),
-                false,
-              );
-            }}
-            onDeleteZone={(id) => {
-              if (!window.confirm("Delete this irrigation zone?")) return;
-              setIrrigationZones((prev) => prev.filter((z) => z.id !== id));
-              setSelectedIrrigationZoneId((cur) => (cur === id ? null : cur));
-            }}
-            onStartNewZone={() => {
-              setStudioTool("irrigation");
-              setSelectedIrrigationZoneId(null);
-              irrigationDraw.start();
-            }}
-            onFinishLine={() => {
-              const pts = irrigationDraw.finish();
-              if (!pts) {
-                toast.show("Need at least 2 points for a line.", "error");
-                return;
-              }
-              const zone = {
-                id: newId(),
-                name: `Zone ${irrigationZones.length + 1}`,
-                points: pts,
-                emitter_spacing_cm: 30,
-                emitter_flow_lph: 2,
-              };
-              setIrrigationZones((prev) => [...prev, zone]);
-              setSelectedIrrigationZoneId(zone.id);
-              setRailTab("schedule");
-              toast.show(`Zone "${zone.name}" created.`, "success");
-            }}
-          />
-        ) : null}
-        {railTab === "schedule" ? (
-          <StudioSchedulePanel
-            placements={placements}
-            irrigationZones={irrigationZones}
-            symbols={symbols}
-            rateCard={rateCard}
-            scale={groundScale}
-            onCopySchedule={(md) => {
-              void navigator.clipboard.writeText(md);
-              toast.show("Schedule copied to clipboard.", "success");
-            }}
-            onOpenOutputs={() => void handleSaveAndOpenOutputs()}
-            saving={saving}
-          />
-        ) : null}
-      </div>
-    </>
   );
 
   const canvasWorkspace = (
@@ -1659,15 +1471,11 @@ export function DesignStudio({
         aria-label="Site plan canvas"
         data-testid="design-studio-canvas"
       >
-        {shellLayout === "desktop" ? (
-          <>
-            <StudioMinimap aerialSrc={aerialUri} />
-            <StudioZoomHUD />
-          </>
-        ) : null}
+        <StudioMinimap aerialSrc={aerialUri} />
+        <StudioZoomHUD />
         <div className={s.canvasHud} aria-hidden>
           <span className={s.canvasHudPill}>{activeToolLabel}</span>
-          {shellLayout === "legacy" ? countsNode : null}
+          {countsNode}
           {armedSymbolLabel ? (
             <span className={s.canvasHudArmed}>{armedSymbolLabel}</span>
           ) : null}
@@ -1766,7 +1574,7 @@ export function DesignStudio({
           width={canvasSize.width}
           height={canvasSize.height}
         />
-        {surveyMetrics && shellLayout === "desktop" ? (
+        {surveyMetrics ? (
           <SiteOverlayLayer
             canvasWidth={canvasSize.width}
             canvasHeight={canvasSize.height}
@@ -1847,11 +1655,11 @@ export function DesignStudio({
     : null;
 
   useEffect(() => {
-    if (selectedPlacementId && shellLayout === "desktop") {
+    if (selectedPlacementId) {
       setRightRailTab("inspector");
       setRightRailOpen(true);
     }
-  }, [selectedPlacementId, shellLayout]);
+  }, [selectedPlacementId]);
 
   useStudioKeyboard(
     {
@@ -1875,7 +1683,7 @@ export function DesignStudio({
         }
       },
     },
-    shellLayout === "desktop",
+    true,
   );
 
   const desktopRightRail = (
@@ -2122,14 +1930,14 @@ export function DesignStudio({
         setRightRailOpen(true);
       },
       onOpenSitePanel: () => {
-        setRibbonTab("site");
+        setRightRailTab("layers");
+        setRightRailOpen(true);
       },
       onOpenLibrary: () => {
         setRightRailTab("library");
         setRightRailOpen(true);
         setStudioTool("place");
       },
-      onRibbonTab: setRibbonTab,
       onRightRailTab: (tab: RightRailTab) => {
         setRightRailTab(tab);
         setRightRailOpen(true);
@@ -2162,181 +1970,103 @@ export function DesignStudio({
     ],
   );
 
-  if (shellLayout === "desktop") {
-    const surveyPick = surveyMetrics ?? {
-      garden_area_m2: 400,
-      lot_area_m2: 600,
-      house_area_m2: 200,
-      lat: -37.81,
-      lng: 144.96,
-    };
-
-    return (
-      <StudioChromeProvider value={chromeValue}>
-        <StudioCommandPalette
-          open={commandOpen}
-          onClose={() => setCommandOpen(false)}
-          symbols={symbols}
-          onTool={setStudioTool}
-          onResetView={viewport.resetView}
-          onZoomIn={viewport.zoomIn}
-          onZoomOut={viewport.zoomOut}
-          onToggleRightRail={() => setRightRailOpen((o) => !o)}
-          onToggleFocusMode={() => setFocusMode((f) => !f)}
-          onPlaceSymbol={(id) => {
-            handlePaletteSelect(id);
-            setStudioTool("place");
-          }}
-          projectId={projectId}
-        />
-        <StudioDesktopShell
-          projectId={projectId}
-          projectAddress={projectAddress}
-          topbarExtras={saveStatusText}
-          rightRailTab={rightRailTab}
-          onRightRailTab={(tab) => {
-            setRightRailTab(tab);
-            setRightRailOpen(true);
-          }}
-          focusMode={focusMode}
-          instrumentArmed={instrumentArmed}
-          ghostBar={ghostAcceptBar}
-          ribbon={
-            <StudioRibbon
-              ribbonTab={ribbonTab}
-              onRibbonTab={setRibbonTab}
-              toolOverride={toolOverride}
-              onTool={setStudioTool}
-              zoomPercent={viewport.zoomPercent}
-              onZoomIn={viewport.zoomIn}
-              onZoomOut={viewport.zoomOut}
-              onResetView={viewport.resetView}
-              onOpenAiRail={() => {
-                setRightRailTab("ai");
-                setRightRailOpen(true);
-              }}
-              canUndo={canUndo}
-              onUndo={undo}
-              onRedo={redo}
-              canRedo={studio.canRedo}
-              tier1={tier1Active}
-              saveStatus={saveStatusNode}
-              saveButton={saveButtonNode}
-            />
-          }
-          contextStrip={
-            <StudioContextStrip
-              ribbonTab={ribbonTab}
-              projectAddress={projectAddress}
-              onUndo={undo}
-              onRedo={redo}
-              canUndo={canUndo}
-              canRedo={studio.canRedo}
-              onScan={handleAiScan}
-              onOpenDevelop={() => router.push(`/projects/${projectId}?mode=quote`)}
-              onOpenCad={() => router.push(`/projects/${projectId}/design/cad`)}
-              libraryFilter={libraryFilter}
-              onLibraryFilter={setLibraryFilter}
-              siteLayers={siteLayers}
-              onToggleSiteLayer={(id) =>
-                setSiteLayers((prev) => ({
-                  ...prev,
-                  [id]: { ...prev[id], on: !prev[id].on },
-                }))
-              }
-              snapEnabled={snapEnabled}
-              onToggleSnap={() => setSnapEnabled((v) => !v)}
-              onSelectAll={() => {
-                setBulkSelectedIds(new Set(placements.map((p) => p.id)));
-                toast.show(`Selected ${placements.length} symbol(s).`, "info");
-              }}
-              annotateTool={annotateTool}
-              onAnnotateTool={(kind) => {
-                setAnnotateTool(kind);
-                setAnnotateDraft(null);
-              }}
-            />
-          }
-          sitePanel={
-            ribbonTab === "site" ? (
-              <>
-                <SiteLayersPanel
-                  projectId={projectId}
-                  projectAddress={projectAddress}
-                  survey={surveyPick}
-                  placements={placements}
-                  symbols={symbols}
-                  layers={siteLayers}
-                  onToggle={(id) =>
-                    setSiteLayers((prev) => ({
-                      ...prev,
-                      [id]: { ...prev[id], on: !prev[id].on },
-                    }))
-                  }
-                  onOpacity={(id, opacity) =>
-                    setSiteLayers((prev) => ({
-                      ...prev,
-                      [id]: { ...prev[id], opacity },
-                    }))
-                  }
-                  conflictCount={0}
-                />
-                {siteLayers["sun-shade"].on ? (
-                  <SunShadeControls
-                    lat={surveyPick.lat ?? -37.81}
-                    lng={surveyPick.lng ?? 144.96}
-                    timeHour={sunTimeHour}
-                    solstice={solstice}
-                    onTimeHour={setSunTimeHour}
-                    onSolstice={setSolstice}
-                    zoomPercent={viewport.zoomPercent}
-                    cursorPct={cursorPct}
-                  />
-                ) : null}
-              </>
-            ) : null
-          }
-          canvas={
-            <div className={sh.rootFill}>
-              {tier1Active ? <StudioTier1Banner projectId={projectId} /> : null}
-              {canvasWorkspace}
-            </div>
-          }
-          rightRail={desktopRightRail}
-        />
-      </StudioChromeProvider>
-    );
-  }
+  const tools: { id: ToolOverride; label: string }[] = [
+    { id: "place", label: "Place" },
+    { id: "select", label: "Select" },
+    { id: "draw", label: "Draw" },
+    { id: "measure", label: "Measure" },
+    { id: "massplant", label: "Mass" },
+    { id: "irrigation", label: "Drip" },
+    { id: "pan", label: "Pan" },
+  ];
 
   return (
-    <div className={sh.rootFill}>
-      <StudioWorkflowBadge />
-      {tier1Active ? <StudioTier1Banner projectId={projectId} /> : null}
-      <StudioRibbon
-        ribbonTab={ribbonTab}
-        onRibbonTab={setRibbonTab}
-        toolOverride={toolOverride}
+    <StudioChromeProvider value={chromeValue}>
+      <StudioCommandPalette
+        open={commandOpen}
+        onClose={() => setCommandOpen(false)}
+        symbols={symbols}
         onTool={setStudioTool}
-        zoomPercent={viewport.zoomPercent}
+        onResetView={viewport.resetView}
         onZoomIn={viewport.zoomIn}
         onZoomOut={viewport.zoomOut}
-        onResetView={viewport.resetView}
-        onOpenAiRail={() => setRailTab("ai")}
-        canUndo={canUndo}
-        onUndo={undo}
-        onRedo={redo}
-        canRedo={studio.canRedo}
-        tier1={tier1Active}
-        saveStatus={saveStatusNode}
-        saveButton={saveButtonNode}
+        onToggleRightRail={() => setRightRailOpen((o) => !o)}
+        onToggleFocusMode={() => setFocusMode((f) => !f)}
+        onPlaceSymbol={(id) => {
+          handlePaletteSelect(id);
+          setStudioTool("place");
+        }}
+        projectId={projectId}
       />
-
-      <PipelineImageShell
-        testId="design-studio-image-shell"
-        canvasColClassName={hasPlanningSymbol ? s.canvasColAdvisory : undefined}
-        canvasCol={canvasWorkspace}
-        rail={railPanels}
-      />
-    </div>
+      <div
+        className={`${s.embeddedRoot} ${instrumentArmed ? s.embeddedArmed : ""} ${focusMode ? s.embeddedFocus : ""}`}
+        data-testid="design-studio-embedded"
+      >
+        {tier1Active ? <StudioTier1Banner projectId={projectId} /> : null}
+        <div className={s.embeddedToolbar} role="toolbar" aria-label="Sketch tools">
+          <div className={s.embeddedTools}>
+            {tools.map((t) => (
+              <button
+                key={t.id ?? "auto"}
+                type="button"
+                className={`${s.embeddedTool} ${toolOverride === t.id ? s.embeddedToolActive : ""}`}
+                onClick={() => setStudioTool(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className={s.embeddedToolbarEnd}>
+            {saveStatusNode}
+            <button
+              type="button"
+              className={s.embeddedTool}
+              onClick={() => setRightRailOpen((o) => !o)}
+            >
+              {rightRailOpen ? "Hide panel" : "Panel"}
+            </button>
+            {saveButtonNode}
+          </div>
+        </div>
+        {ghostAcceptBar}
+        <div className={s.embeddedBody}>
+          <div
+            className={`${s.embeddedCanvas} ${hasPlanningSymbol ? s.canvasColAdvisory : ""}`}
+          >
+            {canvasWorkspace}
+          </div>
+          {rightRailOpen && !focusMode ? (
+            <aside className={s.embeddedRail} aria-label="Sketch panel">
+              <div className={s.embeddedRailTabs} role="tablist">
+                {(
+                  [
+                    ["library", "Library"],
+                    ["ai", "AI"],
+                    ["layers", "Layers"],
+                    ["schedule", "Schedule"],
+                    ["inspector", "Inspect"],
+                  ] as const
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={rightRailTab === id}
+                    className={`${s.embeddedRailTab} ${rightRailTab === id ? s.embeddedRailTabActive : ""}`}
+                    onClick={() => {
+                      setRightRailTab(id);
+                      if (id === "library") setStudioTool("place");
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className={s.embeddedRailBody}>{desktopRightRail}</div>
+            </aside>
+          ) : null}
+        </div>
+      </div>
+    </StudioChromeProvider>
   );
 }
