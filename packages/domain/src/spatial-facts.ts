@@ -1,7 +1,6 @@
 import type {
   CadDocument,
   CadEntity,
-  CatalogPlacement,
   CatalogSymbol,
   DesignCanvas,
   SpatialLayer,

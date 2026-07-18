@@ -12,7 +12,7 @@ type Props = {
   sizePx: number;
 };
 
-/** Contextual ghost at cursor — real-ish scale from catalog metrics. */
+/** Contextual ghost at cursor - real-ish scale from catalog metrics. */
 export function GhostCursor({ recipe, symbol, cursorPct, sizePx }: Props) {
   const size = Math.max(18, Math.min(120, sizePx * recipe.scale));
   return (
