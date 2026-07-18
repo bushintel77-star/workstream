@@ -2245,7 +2245,7 @@ function SiteCanvasInner({
                       ? "Quote on Fit sheet — promote when the BOM reads true"
                       : "Vicmap lot is the sheet — Fit sheet for paper presentation"
                     : orchWorld
-                      ? `Live BOM ${orchWorld.live_bom.length} lines`
+                      ? "Live estimate on the sheet — promote when it reads true"
                       : "Promote when the canvas reads true")}
               </div>
             </div>
