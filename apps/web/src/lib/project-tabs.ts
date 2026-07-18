@@ -1,5 +1,9 @@
 import type { Project } from "./api";
 
+/**
+ * Legacy tab IA — retired. Operator work is one canvas with ?mode=.
+ * Kept as empty helper so old imports compile; do not render these as nav.
+ */
 export type ProjectTab =
   | "overview"
   | "processing"
@@ -14,38 +18,26 @@ export type ProjectTab =
   | "measurements"
   | "carbon";
 
-const BASE_TABS: Array<{ slug: ProjectTab; label: string }> = [
-  { slug: "design", label: "Studio" },
-  { slug: "overview", label: "Pipeline" },
-  { slug: "survey", label: "Survey" },
-  { slug: "costing", label: "Costing" },
-  { slug: "audit", label: "Audit" },
-  { slug: "outputs", label: "Outputs" },
-  { slug: "filing", label: "Filing" },
-  { slug: "tasks", label: "Tasks" },
-  { slug: "recordings", label: "Recordings" },
-  { slug: "measurements", label: "Measurements" },
-  { slug: "carbon", label: "Carbon" },
-];
-
-export function getProjectTabs(project: Project) {
-  if (project.status !== "processing") return BASE_TABS;
-  const tabs = [...BASE_TABS];
-  tabs.splice(2, 0, { slug: "processing", label: "Processing" });
-  return tabs;
+/** @deprecated One-canvas modes replace pipeline tabs. */
+export function getProjectTabs(_project: Project): Array<{
+  slug: ProjectTab;
+  label: string;
+}> {
+  return [];
 }
 
+/** @deprecated */
 export const PROJECT_SECTION_LABELS: Record<ProjectTab, string> = {
-  overview: "Pipeline",
-  design: "Design studio",
-  processing: "Processing",
+  overview: "Canvas",
+  design: "Sketch",
+  processing: "Canvas",
   survey: "Survey",
-  costing: "Costing",
-  audit: "Audit",
-  outputs: "Outputs",
-  filing: "Filing",
-  tasks: "Tasks",
-  recordings: "Recordings",
-  measurements: "Measurements",
-  carbon: "Carbon",
+  costing: "Quote",
+  audit: "Share",
+  outputs: "Share",
+  filing: "Share",
+  tasks: "Canvas",
+  recordings: "Canvas",
+  measurements: "Canvas",
+  carbon: "Canvas",
 };
