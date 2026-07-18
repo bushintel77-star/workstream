@@ -29,6 +29,8 @@ type SharedProps = {
   onUnlock: () => void;
   onReset: () => void;
   onToolChange: (tool: BoundaryTool) => void;
+  /** When title is locked - open cream Fit sheet + CAD. */
+  onOpenFitSheet?: () => void;
 };
 
 function toDomain(b: SiteBoundaryLite): DomainBoundary {
@@ -49,6 +51,7 @@ export function BoundaryChrome({
   onUnlock,
   onReset,
   onToolChange,
+  onOpenFitSheet,
 }: Omit<SharedProps, "onChange">) {
   const locked = boundary?.status === "VERIFIED";
   return (
@@ -97,10 +100,21 @@ export function BoundaryChrome({
           {locked ? "🔒" : "🔓"}
           <span>{locked ? "Locked" : "Lock"}</span>
         </button>
+        {locked && onOpenFitSheet ? (
+          <button
+            type="button"
+            className={`${css.tool} ${css.toolPrimary}`}
+            title="Open cream Fit sheet + line CAD"
+            data-testid="boundary-open-fit-sheet"
+            onClick={onOpenFitSheet}
+          >
+            <span>Fit sheet</span>
+          </button>
+        ) : null}
         <button
           type="button"
           className={css.tool}
-          title="Reset vector (Esc)"
+          title="Reset vector"
           disabled={pending || !boundary}
           onClick={onReset}
         >
@@ -124,8 +138,8 @@ export function BoundaryChrome({
             className={`${css.pill} ${locked ? css.pillVerified : css.pillDraft}`}
           >
             {locked
-              ? "BOUNDARY LOCKED: VERIFIED"
-              : "AI DRAFT: UNVERIFIED"}
+              ? "TITLE LOCKED - FIT SHEET READY"
+              : "AI DRAFT - UNVERIFIED"}
           </span>
           <div className={css.telemetry}>
             <div>

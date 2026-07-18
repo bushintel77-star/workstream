@@ -1,5 +1,5 @@
 /**
- * Runtime public config for Fly (secrets injected at container start).
+ * Runtime public config (secrets injected at container start on Railway).
  * NEXT_PUBLIC_* is optional when CLERK_PUBLISHABLE_KEY / API_URL are set.
  */
 export function clerkPublishableKey(): string {

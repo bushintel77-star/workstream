@@ -16,20 +16,41 @@ type OverlayState = {
   lastFingerprint?: string;
 };
 
+/** Process-local cache; durable source of truth is the store snapshot. */
 const overlayState = new Map<ProjectKey, OverlayState>();
 
 function key(ownerId: string, projectId: string): ProjectKey {
   return `${ownerId}:${projectId}`;
 }
 
-function stateFor(ownerId: string, projectId: string): OverlayState {
+async function loadState(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+): Promise<OverlayState> {
   const k = key(ownerId, projectId);
-  let s = overlayState.get(k);
-  if (!s) {
-    s = { dismissed: new Set(), accepted: new Set() };
-    overlayState.set(k, s);
-  }
+  const cached = overlayState.get(k);
+  if (cached) return cached;
+
+  const persisted = await store.getOrchestrationOverlayState(ownerId, projectId);
+  const s: OverlayState = {
+    dismissed: new Set(persisted.dismissed),
+    accepted: new Set(persisted.accepted),
+  };
+  overlayState.set(k, s);
   return s;
+}
+
+async function saveState(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+  st: OverlayState,
+): Promise<void> {
+  await store.setOrchestrationOverlayState(ownerId, projectId, {
+    accepted: [...st.accepted],
+    dismissed: [...st.dismissed],
+  });
 }
 
 /** Build live orchestration world from store (deterministic + preemptive). */
@@ -38,14 +59,14 @@ export async function getOrchestrationWorld(
   ownerId: string,
   projectId: string,
 ): Promise<ProjectOrchestrationWorld> {
-  const [canvas, cad, survey, symbols, rates] = await Promise.all([
+  const [canvas, cad, survey, symbols, rates, st] = await Promise.all([
     store.getDesignCanvas(ownerId, projectId),
     store.getCadDocument(ownerId, projectId),
     store.getSurvey(ownerId, projectId),
     store.listCatalogSymbols(ownerId),
     store.listRateCard(ownerId),
+    loadState(store, ownerId, projectId),
   ]);
-  const st = stateFor(ownerId, projectId);
   const world = buildOrchestrationWorld({
     projectId,
     canvas,
@@ -78,9 +99,10 @@ export async function dismissOverlay(
   projectId: string,
   proposalId: string,
 ): Promise<ProjectOrchestrationWorld> {
-  const st = stateFor(ownerId, projectId);
+  const st = await loadState(store, ownerId, projectId);
   st.dismissed.add(proposalId);
   st.accepted.delete(proposalId);
+  await saveState(store, ownerId, projectId, st);
   return getOrchestrationWorld(store, ownerId, projectId);
 }
 
@@ -101,9 +123,10 @@ export async function acceptOverlay(
     return { world: worldBefore, overlay: null, placed: null };
   }
 
-  const st = stateFor(ownerId, projectId);
+  const st = await loadState(store, ownerId, projectId);
   st.accepted.add(proposalId);
   st.dismissed.delete(proposalId);
+  await saveState(store, ownerId, projectId, st);
 
   let placed: CatalogPlacement | null = null;
   const symbolId = overlay.suggest_symbol_id;

@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  VerificationStateSchema,
+  type VerificationState,
+} from "./verification";
 
 /** Lifecycle of a boundary vertex for HITL audit. */
 export const BoundaryVertexSourceSchema = z.enum([
@@ -9,8 +13,9 @@ export const BoundaryVertexSourceSchema = z.enum([
 ]);
 export type BoundaryVertexSource = z.infer<typeof BoundaryVertexSourceSchema>;
 
-export const BoundaryStatusSchema = z.enum(["UNVERIFIED", "VERIFIED"]);
-export type BoundaryStatus = z.infer<typeof BoundaryStatusSchema>;
+/** Alias of VerificationState — boundary HITL status. */
+export const BoundaryStatusSchema = VerificationStateSchema;
+export type BoundaryStatus = VerificationState;
 
 export const GeoCoordsSchema = z.object({
   lng: z.number(),

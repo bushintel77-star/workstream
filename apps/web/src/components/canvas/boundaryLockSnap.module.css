@@ -63,6 +63,21 @@
   color: #2f6b52;
 }
 
+.toolPrimary {
+  background: #241318;
+  color: #faf6f2;
+}
+
+.toolPrimary span {
+  opacity: 1;
+}
+
+.toolPrimary:hover:not(:disabled) {
+  background: #3a1f28;
+  color: #faf6f2;
+  transform: scale(1.03);
+}
+
 .hud {
   position: absolute;
   top: 5.5rem;

@@ -16,13 +16,16 @@ export type CanvasProgress = {
 };
 
 /**
- * Progressive unlock ù matches API prerequisites:
- * CAD needs aerial + sketch; Quote needs accepted CAD; Share needs persisted quote.
+ * Progressive unlock:
+ * Sketch + CAD both open after aerial/title (CAD is the line-draw sheet).
+ * Quote needs accepted CAD; Share needs persisted quote.
  */
 export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
   const open = new Set<CanvasMode>(["survey"]);
-  if (progress.hasAerial) open.add("sketch");
-  if (progress.hasAerial && progress.hasSketch) open.add("cad");
+  if (progress.hasAerial) {
+    open.add("sketch");
+    open.add("cad");
+  }
   if (progress.hasCad) open.add("quote");
   if (progress.hasQuote) open.add("share");
   return open;
@@ -31,7 +34,6 @@ export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
 /** Suggested next mode for empty `?mode=` or after completing a step. */
 export function suggestedMode(progress: CanvasProgress): CanvasMode {
   if (!progress.hasAerial) return "survey";
-  if (!progress.hasSketch) return "sketch";
   if (!progress.hasCad) return "cad";
   if (!progress.hasQuote) return "quote";
   return "share";

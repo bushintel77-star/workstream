@@ -214,6 +214,40 @@
   border-color: var(--block);
 }
 
+.licenseStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.licenseStats dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint, #9a8590);
+}
+
+.licenseStats dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--ink, #241318);
+}
+
+.licenseMembersTitle {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.memberId {
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
 .hubActions {
   display: flex;
   gap: var(--s-3);

@@ -50,6 +50,7 @@ import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from './routes/integration-hub';
 import protectedFileRoutes from './routes/protected-files';
+import configRoutes from './routes/config';
 
 const server = Fastify({ logger: true });
 
@@ -114,6 +115,7 @@ async function start() {
   registerRouteTelemetry(server);
   await server.register(protectedFileRoutes);
   await server.register(healthRoutes);
+  await server.register(configRoutes, { prefix: '/config' });
   await server.register(projectRoutes, { prefix: '/projects' });
   await server.register(recordingRoutes, { prefix: '/projects' });
   await server.register(surveyRoutes, { prefix: '/projects' });

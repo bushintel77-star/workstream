@@ -3,7 +3,7 @@ import { outdoorWorkspaceSpan } from "./geometry";
 
 describe("outdoorWorkspaceSpan", () => {
   it("sizes CAD template from title ring metres", () => {
-    // ~20 m E–W × ~15 m N–S near Melbourne
+    // ~20 m Eâ€“W   ~15 m Nâ€“S near Melbourne
     const ring: [number, number][] = [
       [145.0, -37.85],
       [145.00022, -37.85],

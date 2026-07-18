@@ -1,7 +1,7 @@
 import type { CatalogCategory, CatalogSymbol } from "@workstream/contracts";
 
 /**
- * Gold-standard sketching library — only symbols fit for 2026 one-canvas design.
+ * Gold-standard sketching library â€“ only symbols fit for 2026 one-canvas design.
  * Criteria: design-grade glyph, default_width_m, landscape-relevant,
  * no edible-crop noise, no hollow planning frames.
  */

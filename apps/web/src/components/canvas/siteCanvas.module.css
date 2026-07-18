@@ -43,6 +43,33 @@
   cursor: grabbing;
 }
 
+/** Live MapLibre geo canvas — pan/zoom owned by the map, not CSS transforms. */
+.stageGeo {
+  cursor: default;
+  touch-action: manipulation;
+}
+
+/** Soft cross-fade: dim the 2D sheet while clay Walk is active. */
+.stageWalk > :not([data-testid="clay-walkthrough"]) {
+  opacity: 0.08;
+  transition: opacity 520ms cubic-bezier(0.33, 1, 0.68, 1);
+  pointer-events: none;
+}
+
+.stage > :not([data-testid="clay-walkthrough"]) {
+  transition: opacity 520ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.stageGeo:active {
+  cursor: default;
+}
+
+/** Host for SketchRibbon when paint layer is geoprojected onto the parcel. */
+.sketchChromeHost {
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
 /** Uniform drafting-board dots behind the site sheet. */
 .draftGrid {
   --grid-dot: rgba(36, 24, 30, 0.16);
@@ -107,15 +134,75 @@
   animation: ghostIn 480ms var(--ease-out);
 }
 
+.cadLayerGhost :global(svg) {
+  opacity: 0.68;
+}
+
 @keyframes ghostIn {
   from {
     opacity: 0;
     filter: blur(3px);
   }
   to {
-    opacity: 0.9;
+    opacity: 0.68;
     filter: none;
   }
+}
+
+.sheetAnchors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.sheetHud {
+  position: absolute;
+  top: 3.7rem;
+  left: 1rem;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 251, 252, 0.9);
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  box-shadow: 0 8px 22px rgba(36, 24, 30, 0.1);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  pointer-events: none;
+}
+
+.sheetHudScale {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--ink, #241318);
+}
+
+.sheetHudMeta {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--ink-soft, #6b5660);
+  letter-spacing: 0.02em;
+}
+
+.sheetHudHint {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #c2455f;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sheetHudPaper {
+  background: rgba(250, 246, 242, 0.94);
+  border-color: rgba(36, 19, 24, 0.18);
+  box-shadow: 0 6px 18px rgba(36, 24, 30, 0.08);
+}
+
+.sheetHudPaper .sheetHudHint {
+  color: #241318;
 }
 
 .chip {
@@ -135,11 +222,31 @@
   animation: chipIn 320ms var(--ease-out);
 }
 
+/* Fit sheet paper — ink chips, not glass pills */
+.chipOnSheet {
+  border-radius: 2px;
+  background: rgba(250, 246, 242, 0.96);
+  border: 1px solid rgba(36, 19, 24, 0.35);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #241318;
+  box-shadow: none;
+}
+
 .overlayGhost {
   background: color-mix(in srgb, var(--blush) 40%, #fff);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--blush) 55%, transparent);
   pointer-events: auto;
   cursor: default;
+}
+
+.chipOnSheet.overlayGhost {
+  background: #faf6f2;
+  border-style: dashed;
+  box-shadow: none;
 }
 
 @keyframes chipIn {
@@ -205,24 +312,60 @@
 }
 
 .modeBtnLocked {
-  opacity: 0.4;
-  cursor: default;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.modeBtnLocked:hover {
+  color: var(--ink-faint);
+  background: transparent;
+}
+
+.modeStripPaper {
+  background: rgba(250, 246, 242, 0.94);
+  border: 1px solid rgba(36, 19, 24, 0.14);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 8px 22px rgba(36, 24, 30, 0.08);
+}
+
+.modeStripPaper .modeBtnActive {
+  background: #241318;
+  color: #faf6f2;
+  box-shadow: none;
 }
 
 .modeLock {
-  margin-left: 0.25rem;
+  margin-left: 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.dockIntro {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.dockKicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--ink-faint);
 }
 
 .dockPrimaryHint {
   margin: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 500;
   color: var(--ink-soft);
   letter-spacing: 0.01em;
+  line-height: 1.4;
 }
 
 .dockMore {
@@ -269,6 +412,20 @@
   animation: sheetIn 340ms var(--ease-out);
 }
 
+/* Share keeps Fit sheet visible - dock floats over the drawing */
+.shareSheetDock {
+  max-height: min(52vh, 28rem);
+  overflow: auto;
+}
+
+.shareSheetPaper {
+  background: rgba(250, 246, 242, 0.96);
+  border: 1px solid rgba(36, 19, 24, 0.16);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 14px 36px rgba(36, 24, 30, 0.1);
+}
+
 .shareSheet h2 {
   margin: 0;
   font-family: var(--display);
@@ -282,6 +439,19 @@
   font-size: 0.85rem;
   color: var(--ink-soft);
   line-height: 1.45;
+}
+
+.shareLink {
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(36, 24, 30, 0.05);
+  border: 1px solid rgba(36, 24, 30, 0.08);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  word-break: break-all;
 }
 
 .topBar {
@@ -380,6 +550,31 @@
   transform: translateY(0);
 }
 
+.iconBtnActive {
+  background: #241318;
+  color: #ffd3de;
+  box-shadow: 0 8px 22px rgba(36, 24, 30, 0.18);
+}
+
+.iconBtnActive:hover {
+  background: #3a1f28;
+  color: #ffd3de;
+}
+
+.topActionsPaper .iconBtn {
+  background: rgba(250, 246, 242, 0.94);
+  border: 1px solid rgba(36, 19, 24, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.topActionsPaper .iconBtnActive {
+  background: #241318;
+  color: #faf6f2;
+  border-color: #241318;
+}
+
 .dock {
   position: absolute;
   z-index: 6;
@@ -400,6 +595,31 @@
   animation: dockIn 400ms var(--ease-out);
   max-height: min(70vh, 560px);
   overflow: auto;
+}
+
+/** Quote mode - keep the title canvas visible; ledger on demand. */
+.dockSlim {
+  width: min(520px, calc(100vw - 1.5rem));
+  max-height: none;
+  padding: 0.75rem 0.9rem;
+  gap: 0.5rem;
+}
+
+/** Fit sheet on - dock reads as paper chrome, not glass. */
+.dockPaper {
+  background: rgba(250, 246, 242, 0.96);
+  border: 1px solid rgba(36, 19, 24, 0.16);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 14px 36px rgba(36, 24, 30, 0.1);
+}
+
+/** Brand lives on the architectural sheet — top bar is actions only. */
+.topBarSheet {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  backdrop-filter: none;
 }
 
 .tier1Dock {
@@ -484,10 +704,67 @@
   box-shadow: 0 6px 16px rgba(36, 24, 30, 0.07);
 }
 
+.btnGhost {
+  border: none;
+  border-radius: var(--radius-ctrl);
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink-soft);
+}
+
+.btnGhost:hover {
+  color: var(--ink);
+  background: rgba(36, 24, 30, 0.05);
+}
+
 .btnPrimary {
   background: var(--ink);
   color: #faf4f6;
   box-shadow: 0 4px 14px rgba(36, 24, 30, 0.16);
+}
+
+.keysHelp {
+  position: absolute;
+  top: 4.2rem;
+  right: 1rem;
+  z-index: 12;
+  width: min(240px, calc(100vw - 2rem));
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  background: rgba(250, 246, 242, 0.98);
+  border: 1px solid rgba(36, 19, 24, 0.2);
+  box-shadow: 0 16px 40px rgba(36, 24, 30, 0.14);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.keysHelp ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.keysHelp li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--ink);
+}
+
+.keysHelp kbd {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(36, 19, 24, 0.06);
+  color: var(--ink-soft);
 }
 
 .btnPrimary:hover:not(:disabled) {
@@ -538,6 +815,20 @@
     var(--shadow-lift),
     inset 0 1px 0 var(--glass-edge);
   animation: sheetIn 340ms var(--ease-out);
+}
+
+.scheduleSheetPaper {
+  border-radius: 8px;
+  background: rgba(250, 246, 242, 0.97);
+  border: 1px solid rgba(36, 19, 24, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 14px 36px rgba(36, 24, 30, 0.1);
+}
+
+.scheduleSheetPaper .sheetClose {
+  border-radius: 4px;
+  background: rgba(36, 19, 24, 0.06);
 }
 
 @keyframes sheetIn {
@@ -664,6 +955,48 @@
     var(--shadow-soft),
     inset 0 1px 0 var(--glass-edge);
   animation: chipIn 400ms var(--ease-out);
+}
+
+.emptyHintAction {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 320px;
+  z-index: 6;
+  background: var(--frost-strong);
+}
+
+.emptyHintAction .btnRow,
+.emptyHintActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.emptyHintAction p {
+  margin: 0;
+}
+
+.ghostReview {
+  border: 1px solid rgba(212, 137, 158, 0.35);
+  box-shadow:
+    var(--shadow-lift),
+    inset 0 1px 0 var(--glass-edge);
+}
+
+.emptyHintPaper {
+  background: rgba(250, 246, 242, 0.96);
+  border: 1px solid rgba(36, 19, 24, 0.22);
+  box-shadow: 0 12px 32px rgba(36, 24, 30, 0.1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.emptyHintPaper.ghostReview {
+  border-color: rgba(36, 19, 24, 0.35);
 }
 
 .emptyHint p {

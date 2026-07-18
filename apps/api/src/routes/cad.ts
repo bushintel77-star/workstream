@@ -4,13 +4,16 @@ import {
   CadAcceptRequestSchema,
   CadEditRequestSchema,
   CadGenerateRequestSchema,
+  CadOpsBatchSchema,
   CostScenarioSchema,
 } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 import {
   acceptCadDocument,
+  applyCadOpsBatch,
   editCadDocument,
+  ensureCadDocument,
   exportCadDxf,
   generateCadDocument,
   getCadWithSvg,
@@ -61,6 +64,63 @@ export default async function cadRoutes(fastify: FastifyInstance) {
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD export failed";
         return reply.code(404).send({ error: message });
+      }
+    },
+  );
+
+  fastify.post(
+    "/:projectId/cad/ensure",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      try {
+        const result = await ensureCadDocument(
+          fastify.store,
+          ownerId,
+          projectId,
+        );
+        return reply.send(result);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "CAD ensure failed";
+        return reply.code(400).send({ error: message });
+      }
+    },
+  );
+
+  fastify.post(
+    "/:projectId/cad/ops",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      const parsed = CadOpsBatchSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply
+          .code(400)
+          .send({ error: "Validation failed", issues: parsed.error.issues });
+      }
+      try {
+        const result = await applyCadOpsBatch(
+          fastify.store,
+          ownerId,
+          projectId,
+          parsed.data.ops,
+        );
+        void refreshOrchestration(fastify.store, ownerId, projectId);
+        return reply.send(result);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "CAD ops failed";
+        return reply.code(400).send({ error: message });
       }
     },
   );

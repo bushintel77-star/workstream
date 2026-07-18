@@ -140,3 +140,21 @@
   pointer-events: none;
   white-space: nowrap;
 }
+
+.measureLayerPaper .measureLine {
+  stroke: #241318;
+  stroke-dasharray: 1.4 0.7;
+}
+
+.measureLayerPaper .measureDot {
+  background: #241318;
+  box-shadow: 0 0 0 2px #faf6f2;
+}
+
+.measureLayerPaper .measureTag {
+  border-radius: 2px;
+  background: #faf6f2;
+  color: #241318;
+  border: 1px solid rgba(36, 19, 24, 0.35);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}

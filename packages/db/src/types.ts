@@ -35,6 +35,8 @@ import type {
   CreateCatalogSymbolInput,
   WorkspaceBilling,
   WorkspacePlan,
+  WorkspaceMember,
+  WorkspaceMemberRole,
   IntegrationEvent,
   IntegrationEventType,
   IntegrationChannel,
@@ -81,6 +83,8 @@ export type {
   CreateCatalogSymbolInput,
   WorkspaceBilling,
   WorkspacePlan,
+  WorkspaceMember,
+  WorkspaceMemberRole,
   IntegrationEvent,
   IntegrationEventType,
   IntegrationChannel,
@@ -94,6 +98,14 @@ export type PhotoMeasurementInput = Omit<
   PhotoMeasurement,
   "id" | "created_at"
 >;
+
+/** Persisted accept/dismiss decisions for material orchestration overlays. */
+export type OrchestrationOverlayState = {
+  owner_id: string;
+  project_id: string;
+  accepted: string[];
+  dismissed: string[];
+};
 
 export type SurveyInput = Omit<Survey, "id" | "project_id">;
 export type DesignInput = Omit<Design, "id" | "project_id" | "version">;
@@ -251,6 +263,21 @@ export interface Store {
       >
     >,
   ): Promise<WorkspaceBilling>;
+  listWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]>;
+  /**
+   * Ensure user is a member. Throws / returns null path via error object
+   * when seat_limit would be exceeded for a new user.
+   */
+  ensureWorkspaceMember(
+    workspaceId: string,
+    userId: string,
+    role: WorkspaceMemberRole,
+  ): Promise<{ member: WorkspaceMember; created: boolean }>;
+  removeWorkspaceMember(
+    workspaceId: string,
+    userId: string,
+  ): Promise<boolean>;
+  countWorkspaceSeats(workspaceId: string): Promise<number>;
   appendIntegrationEvent(
     ownerId: string,
     input: Omit<IntegrationEvent, "id" | "owner_id" | "created_at">,
@@ -277,6 +304,15 @@ export interface Store {
     projectId: string,
     input: UpsertCadDocumentInput,
   ): Promise<CadDocument>;
+  getOrchestrationOverlayState(
+    ownerId: string,
+    projectId: string,
+  ): Promise<{ accepted: string[]; dismissed: string[] }>;
+  setOrchestrationOverlayState(
+    ownerId: string,
+    projectId: string,
+    state: { accepted: string[]; dismissed: string[] },
+  ): Promise<{ accepted: string[]; dismissed: string[] }>;
   getSiteBoundary(
     ownerId: string,
     projectId: string,

@@ -12,9 +12,12 @@ import {
   getIntegrationSummary,
 } from "../lib/integration-dispatch";
 import {
+  createSeatCheckout,
   createStudioCheckout,
+  seatPriceConfigured,
   studioPriceConfigured,
 } from "../lib/stripe-studio";
+import { getWorkspaceLicense } from "../lib/workspace-license";
 import { crmPayloadFromProject, postCrmWebhook } from "../lib/crm-webhook";
 import { sendQuotePackEmail } from "../lib/email-resend";
 import { hydrateEnvForOwner, resolveSecret } from "../lib/integration-secrets";
@@ -32,12 +35,30 @@ const CheckoutBodySchema = z.object({
   cancel_url: z.string().url().optional(),
 });
 
+const SeatCheckoutBodySchema = CheckoutBodySchema.extend({
+  extra_seats: z.number().int().min(1).max(20).optional(),
+});
+
+const InviteMemberBodySchema = z.object({
+  user_id: z.string().min(3),
+});
+
 export default async function integrationHubRoutes(fastify: FastifyInstance) {
   fastify.get("/summary", { preHandler: requireAuth }, async (request, reply) => {
     const ownerId = request.userId!;
     await hydrateEnvForOwner(fastify.store, ownerId);
     const summary = await getIntegrationSummary(fastify.store, ownerId);
     return reply.send({ summary });
+  });
+
+  fastify.get("/license", { preHandler: requireAuth }, async (request, reply) => {
+    const ownerId = request.userId!;
+    const license = await getWorkspaceLicense(fastify.store, ownerId);
+    return reply.send({
+      license,
+      studio_price_configured: studioPriceConfigured(),
+      seat_price_configured: seatPriceConfigured(),
+    });
   });
 
   fastify.get("/hub", { preHandler: requireAuth }, async (request, reply) => {
@@ -47,7 +68,8 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
     const channels = await channelStatuses(fastify.store, ownerId);
     const events = await fastify.store.listIntegrationEvents(ownerId, 30);
     const summary = await getIntegrationSummary(fastify.store, ownerId);
-    return reply.send({ billing, channels, events, summary });
+    const license = await getWorkspaceLicense(fastify.store, ownerId);
+    return reply.send({ billing, channels, events, summary, license });
   });
 
   fastify.post(
@@ -162,6 +184,91 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
       plan: billing.plan,
     });
   });
+
+  fastify.post(
+    "/plan/seats/checkout",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const ownerId = request.userId!;
+      const parsed = SeatCheckoutBodySchema.safeParse(request.body ?? {});
+      const webBase = process.env.WEB_BASE_URL ?? "http://localhost:3002";
+      const successUrl =
+        parsed.success && parsed.data.success_url
+          ? parsed.data.success_url
+          : `${webBase}/settings/license?seats=success`;
+      const cancelUrl =
+        parsed.success && parsed.data.cancel_url
+          ? parsed.data.cancel_url
+          : `${webBase}/settings/license?seats=cancel`;
+      try {
+        const checkout = await createSeatCheckout(
+          fastify.store,
+          ownerId,
+          successUrl,
+          cancelUrl,
+          parsed.success ? parsed.data.extra_seats : 1,
+        );
+        return reply.send({
+          ...checkout,
+          seat_price_configured: seatPriceConfigured(),
+        });
+      } catch (e) {
+        return reply.code(400).send({
+          error: e instanceof Error ? e.message : "Seat checkout failed",
+        });
+      }
+    },
+  );
+
+  fastify.post(
+    "/license/members",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const ownerId = request.userId!;
+      const parsed = InviteMemberBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "user_id required" });
+      }
+      if (parsed.data.user_id === ownerId) {
+        return reply.code(400).send({ error: "Owner is already a member" });
+      }
+      try {
+        const result = await fastify.store.ensureWorkspaceMember(
+          ownerId,
+          parsed.data.user_id,
+          "operator",
+        );
+        const license = await getWorkspaceLicense(fastify.store, ownerId);
+        return reply.send({ member: result.member, created: result.created, license });
+      } catch (e) {
+        const code = (e as Error & { code?: string }).code;
+        if (code === "SEAT_LIMIT") {
+          return reply.code(403).send({
+            error: "Seat limit reached",
+            hint: "POST /integrations/plan/seats/checkout to add seats",
+          });
+        }
+        throw e;
+      }
+    },
+  );
+
+  fastify.delete(
+    "/license/members/:userId",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const ownerId = request.userId!;
+      const { userId } = request.params as { userId: string };
+      const ok = await fastify.store.removeWorkspaceMember(ownerId, userId);
+      if (!ok) {
+        return reply.code(400).send({
+          error: "Cannot remove member (missing or is owner)",
+        });
+      }
+      const license = await getWorkspaceLicense(fastify.store, ownerId);
+      return reply.send({ ok: true, license });
+    },
+  );
 
   fastify.post(
     "/plan/upgrade",

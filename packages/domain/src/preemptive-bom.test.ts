@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RateCard, SpatialObject } from "@workstream/contracts";
+import { DEFAULT_PAVING_ASSEMBLY, totalDepthM } from "./assembly-recipe";
 import {
   bomTotals,
   expandPreemptiveBom,
@@ -9,6 +10,7 @@ import { assessPreemptiveRisks, RETAINING_ENGINEER_HEIGHT_M } from "./preemptive
 import { spatialFingerprint } from "./spatial-facts";
 
 const rates: RateCard[] = [];
+const pavingDepthM = totalDepthM(DEFAULT_PAVING_ASSEMBLY);
 
 function patio(area: number): SpatialObject {
   return {
@@ -19,8 +21,8 @@ function patio(area: number): SpatialObject {
     source: "placement",
     area_m2: area,
     length_m: Math.sqrt(area) * 4,
-    depth_m: 0.25,
-    volume_m3: area * 0.25,
+    depth_m: pavingDepthM,
+    volume_m3: area * pavingDepthM,
     count: 1,
     x_pct: 40,
     y_pct: 50,

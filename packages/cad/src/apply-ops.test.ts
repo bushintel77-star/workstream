@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CadDocument } from "@workstream/contracts";
-import { applyCadOps, acceptCadGhosts, countGhosts } from "./apply-ops";
+import {
+  applyCadOps,
+  acceptCadGhosts,
+  acceptUnverified,
+  countGhosts,
+} from "./apply-ops";
 import { cadDocumentToDxf } from "./export-dxf";
 import { emptyCadDocument } from "./defaults";
 
@@ -42,8 +47,20 @@ describe("@workstream/cad", () => {
     ]);
     expect(applied).toBe(2);
     expect(countGhosts(document)).toBe(2);
-    const accepted = acceptCadGhosts(document);
+    expect(
+      document.entities.every((e) => e.verification_state === "UNVERIFIED"),
+    ).toBe(true);
+    const accepted = acceptUnverified(document);
     expect(countGhosts(accepted)).toBe(0);
+    expect(
+      accepted.entities.every(
+        (e) => e.verification_state === "VERIFIED" && e.ghost === false,
+      ),
+    ).toBe(true);
+    // Legacy alias
+    expect(acceptCadGhosts(document).entities.every((e) => !e.ghost)).toBe(
+      true,
+    );
   });
 
   it("exports DXF with LAYER and ENTITIES", () => {

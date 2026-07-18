@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VerificationStateSchema } from "./verification";
 
 /** Metres from document origin (lot SW / canvas origin). */
 export const CadPoint2dSchema = z.object({
@@ -17,7 +18,15 @@ export type CadLayer = z.infer<typeof CadLayerSchema>;
 const CadEntityBase = {
   id: z.string().uuid(),
   layer: z.string().min(1),
-  /** AI-proposed until operator accepts. */
+  /**
+   * Operator verification. Default VERIFIED for hand-drawn / imported geometry.
+   * AI ops set UNVERIFIED until accept.
+   */
+  verification_state: VerificationStateSchema.default("VERIFIED"),
+  /**
+   * @deprecated Prefer `verification_state`. Kept for wire compat —
+   * true when verification_state === "UNVERIFIED".
+   */
   ghost: z.boolean().default(false),
 };
 

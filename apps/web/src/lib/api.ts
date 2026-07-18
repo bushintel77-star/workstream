@@ -412,6 +412,19 @@ export async function getCadDocumentApi(
   return apiGet<CadApiResult>(`/projects/${projectId}/cad`);
 }
 
+export async function ensureCadApi(
+  projectId: string,
+): Promise<CadApiResult> {
+  return apiPost<CadApiResult>(`/projects/${projectId}/cad/ensure`, {});
+}
+
+export async function applyCadOpsApi(
+  projectId: string,
+  ops: import("@workstream/contracts").CadOp[],
+): Promise<CadApiResult> {
+  return apiPost<CadApiResult>(`/projects/${projectId}/cad/ops`, { ops });
+}
+
 export async function generateCadApi(
   projectId: string,
 ): Promise<CadApiResult> {
@@ -1162,6 +1175,7 @@ export type WorkspaceBilling = {
 export type IntegrationSummary = {
   plan: "lite" | "studio";
   seat_limit: number;
+  seats_used?: number;
   live_channels: number;
   total_channels: number;
   needs_attention: boolean;
@@ -1171,6 +1185,25 @@ export type IntegrationSummary = {
     href: string;
     done: boolean;
   }>;
+};
+
+export type WorkspaceMember = {
+  workspace_id: string;
+  user_id: string;
+  role: "owner" | "operator";
+  joined_at: string;
+};
+
+export type WorkspaceLicense = {
+  product_name: "Design & Build License";
+  plan: "lite" | "studio";
+  seat_limit: number;
+  seats_used: number;
+  seats_available: number;
+  live_integrations: boolean;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  members: WorkspaceMember[];
 };
 
 export type Integration = {
@@ -1228,8 +1261,17 @@ export async function getIntegrationHub(): Promise<{
   channels: IntegrationChannelStatus[];
   events: IntegrationEvent[];
   summary: IntegrationSummary;
+  license?: WorkspaceLicense;
 }> {
   return apiGet("/integrations/hub");
+}
+
+export async function getWorkspaceLicenseApi(): Promise<{
+  license: WorkspaceLicense;
+  studio_price_configured: boolean;
+  seat_price_configured: boolean;
+}> {
+  return apiGet("/integrations/license");
 }
 
 export async function startStudioCheckoutApi(): Promise<{
@@ -1241,9 +1283,39 @@ export async function startStudioCheckoutApi(): Promise<{
     process.env.PORTAL_BASE_URL ??
     "http://localhost:3002";
   return apiPost("/integrations/plan/checkout", {
-    success_url: `${webBase}/settings?studio=success`,
-    cancel_url: `${webBase}/settings?studio=cancel`,
+    success_url: `${webBase}/settings/license?studio=success`,
+    cancel_url: `${webBase}/settings/license?studio=cancel`,
   });
+}
+
+export async function startSeatCheckoutApi(
+  extraSeats = 1,
+): Promise<{
+  checkout_url: string;
+  mode: "live" | "dev_fallback";
+  seat_limit: number;
+}> {
+  const webBase =
+    process.env.NEXT_PUBLIC_WEB_URL ??
+    process.env.PORTAL_BASE_URL ??
+    "http://localhost:3002";
+  return apiPost("/integrations/plan/seats/checkout", {
+    extra_seats: extraSeats,
+    success_url: `${webBase}/settings/license?seats=success`,
+    cancel_url: `${webBase}/settings/license?seats=cancel`,
+  });
+}
+
+export async function inviteWorkspaceMemberApi(
+  userId: string,
+): Promise<{ license: WorkspaceLicense }> {
+  return apiPost("/integrations/license/members", { user_id: userId });
+}
+
+export async function removeWorkspaceMemberApi(
+  userId: string,
+): Promise<{ license: WorkspaceLicense }> {
+  return apiDelete(`/integrations/license/members/${encodeURIComponent(userId)}`);
 }
 
 export async function createPortalLinkApi(

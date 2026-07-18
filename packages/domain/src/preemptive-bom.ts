@@ -4,7 +4,16 @@ import type {
   SiteMultipliers,
   SpatialObject,
 } from "@workstream/contracts";
+import {
+  DEFAULT_PAVING_ASSEMBLY,
+  layerDepthM,
+  totalDepthM,
+} from "./assembly-recipe";
 import { calculateGST, calculateLineTotal, calculateTotal } from "./costing";
+
+const DEFAULT_PAVING_DEPTH_M = totalDepthM(DEFAULT_PAVING_ASSEMBLY);
+const DEFAULT_BASE_DEPTH_M = layerDepthM(DEFAULT_PAVING_ASSEMBLY, "base");
+const DEFAULT_BEDDING_DEPTH_M = layerDepthM(DEFAULT_PAVING_ASSEMBLY, "bedding");
 
 export const DEFAULT_SITE_MULTIPLIERS: SiteMultipliers = {
   soil: "standard",
@@ -102,7 +111,7 @@ export function expandPreemptiveBom(
           ),
         );
 
-        const excavateM3 = obj.volume_m3 ?? area * 0.25;
+        const excavateM3 = obj.volume_m3 ?? area * DEFAULT_PAVING_DEPTH_M;
         const excav = findRate(rateIndex, "EXC", "excavat");
         lines.push(
           line(
@@ -114,11 +123,11 @@ export function expandPreemptiveBom(
             applyMult(excav?.rate ?? 85, multipliers),
             excav?.sku ?? null,
             [obj.id],
-            "Preemptive: remove for base + bedding",
+            "Preemptive: remove for assembly depth",
           ),
         );
 
-        const baseM3 = area * 0.15;
+        const baseM3 = area * DEFAULT_BASE_DEPTH_M;
         const baseT = baseM3 * 1.8;
         const base = findRate(rateIndex, "CR6", "crushed", "base");
         lines.push(
@@ -131,11 +140,11 @@ export function expandPreemptiveBom(
             applyMult(base?.rate ?? 65, multipliers),
             base?.sku ?? null,
             [obj.id],
-            "Preemptive: ~150 mm compacted base",
+            `Preemptive: ~${Math.round(DEFAULT_BASE_DEPTH_M * 1000)} mm compacted base`,
           ),
         );
 
-        const sandM3 = area * 0.03;
+        const sandM3 = area * DEFAULT_BEDDING_DEPTH_M;
         const sand = findRate(rateIndex, "SAND", "bedding");
         lines.push(
           line(
@@ -147,7 +156,7 @@ export function expandPreemptiveBom(
             applyMult(sand?.rate ?? 90, multipliers),
             sand?.sku ?? null,
             [obj.id],
-            "Preemptive: ~30 mm setting bed",
+            `Preemptive: ~${Math.round(DEFAULT_BEDDING_DEPTH_M * 1000)} mm setting bed`,
           ),
         );
 

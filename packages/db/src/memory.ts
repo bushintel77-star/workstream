@@ -62,10 +62,13 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _photoMeasurements: PhotoMeasurement[] = [];
   const _integrations: IntegrationSecret[] = [];
   const _workspaceBilling: import("./types").WorkspaceBilling[] = [];
+  const _workspaceMembers: import("./types").WorkspaceMember[] = [];
   const _integrationEvents: import("./types").IntegrationEvent[] = [];
   const _projectFiles: import("./types").ProjectFile[] = [];
   const _designCanvases: import("@workstream/contracts").DesignCanvas[] = [];
   const _cadDocuments: import("@workstream/contracts").CadDocument[] = [];
+  const _orchestrationOverlays: import("./types").OrchestrationOverlayState[] =
+    [];
   const _siteBoundaries: import("@workstream/contracts").SiteBoundary[] = [];
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
@@ -109,10 +112,12 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _photoMeasurements,
     _integrations,
     _workspaceBilling,
+    _workspaceMembers,
     _integrationEvents,
     _projectFiles,
     _designCanvases,
     _cadDocuments,
+    _orchestrationOverlays,
     _siteBoundaries,
     _catalogCustom,
     _activityEvents,
@@ -907,6 +912,56 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return { ...row };
     },
 
+    async listWorkspaceMembers(workspaceId) {
+      return _workspaceMembers
+        .filter((m) => m.workspace_id === workspaceId)
+        .map((m) => ({ ...m }));
+    },
+
+    async countWorkspaceSeats(workspaceId) {
+      return _workspaceMembers.filter((m) => m.workspace_id === workspaceId)
+        .length;
+    },
+
+    async ensureWorkspaceMember(workspaceId, userId, role) {
+      const existing = _workspaceMembers.find(
+        (m) => m.workspace_id === workspaceId && m.user_id === userId,
+      );
+      if (existing) return { member: { ...existing }, created: false };
+
+      const billing = await this.getWorkspaceBilling(workspaceId);
+      const used = await this.countWorkspaceSeats(workspaceId);
+      if (used >= billing.seat_limit) {
+        const err = new Error(
+          `Seat limit reached (${billing.seat_limit}). Upgrade seats on the Design & Build License.`,
+        );
+        (err as Error & { code?: string }).code = "SEAT_LIMIT";
+        throw err;
+      }
+
+      const member: import("./types").WorkspaceMember = {
+        workspace_id: workspaceId,
+        user_id: userId,
+        role,
+        joined_at: new Date().toISOString(),
+      };
+      _workspaceMembers.push(member);
+      flush();
+      return { member: { ...member }, created: true };
+    },
+
+    async removeWorkspaceMember(workspaceId, userId) {
+      const idx = _workspaceMembers.findIndex(
+        (m) => m.workspace_id === workspaceId && m.user_id === userId,
+      );
+      if (idx < 0) return false;
+      const row = _workspaceMembers[idx]!;
+      if (row.role === "owner") return false;
+      _workspaceMembers.splice(idx, 1);
+      flush();
+      return true;
+    },
+
     async appendIntegrationEvent(ownerId, input) {
       const row: import("./types").IntegrationEvent = {
         id: crypto.randomUUID(),
@@ -1140,6 +1195,38 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _cadDocuments.push(doc);
       flush();
       return doc;
+    },
+
+    async getOrchestrationOverlayState(ownerId, projectId) {
+      const row = _orchestrationOverlays.find(
+        (r) => r.owner_id === ownerId && r.project_id === projectId,
+      );
+      if (!row) return { accepted: [], dismissed: [] };
+      return {
+        accepted: [...row.accepted],
+        dismissed: [...row.dismissed],
+      };
+    },
+
+    async setOrchestrationOverlayState(ownerId, projectId, state) {
+      const accepted = [...new Set(state.accepted)];
+      const dismissed = [...new Set(state.dismissed)];
+      const existing = _orchestrationOverlays.find(
+        (r) => r.owner_id === ownerId && r.project_id === projectId,
+      );
+      if (existing) {
+        existing.accepted = accepted;
+        existing.dismissed = dismissed;
+      } else {
+        _orchestrationOverlays.push({
+          owner_id: ownerId,
+          project_id: projectId,
+          accepted,
+          dismissed,
+        });
+      }
+      flush();
+      return { accepted: [...accepted], dismissed: [...dismissed] };
     },
 
     async getSiteBoundary(ownerId, projectId) {

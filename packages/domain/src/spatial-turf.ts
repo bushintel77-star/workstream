@@ -1,0 +1,98 @@
+import {
+  difference,
+  featureCollection,
+  mask,
+  polygon,
+} from "@turf/turf";
+import type { Feature, MultiPolygon, Polygon } from "geojson";
+
+/** WGS84 ring: [lng, lat][], open or closed. */
+export type LngLatRing = [number, number][];
+
+function openRing(ring: LngLatRing): LngLatRing {
+  if (ring.length < 2) return ring;
+  const a = ring[0]!;
+  const b = ring[ring.length - 1]!;
+  if (a[0] === b[0] && a[1] === b[1]) return ring.slice(0, -1);
+  return ring;
+}
+
+function closeRing(ring: LngLatRing): LngLatRing {
+  const open = openRing(ring);
+  if (open.length < 3) return open;
+  const first = open[0]!;
+  return [...open, first];
+}
+
+function ringToPolygon(ring: LngLatRing): Feature<Polygon> | null {
+  const closed = closeRing(ring);
+  if (closed.length < 4) return null;
+  return polygon([closed]);
+}
+
+/**
+ * Designable "Canvas Canvas": title parcel minus building footprints.
+ * Returns outer ring(s) of the difference polygon, or the parcel if no buildings.
+ */
+export function designableCanvas(
+  parcelRing: LngLatRing,
+  buildingRings: LngLatRing[] = [],
+): LngLatRing[] {
+  const parcel = ringToPolygon(parcelRing);
+  if (!parcel) return [];
+
+  const buildings = buildingRings
+    .map(ringToPolygon)
+    .filter((f): f is Feature<Polygon> => f != null);
+
+  if (buildings.length === 0) {
+    return [openRing(parcelRing)];
+  }
+
+  let result: Feature<Polygon | MultiPolygon> | null = parcel;
+  for (const b of buildings) {
+    if (!result) break;
+    const next = difference(featureCollection([result, b]));
+    result = next;
+  }
+
+  if (!result) return [openRing(parcelRing)];
+
+  const geom = result.geometry;
+  if (geom.type === "Polygon") {
+    const outer = geom.coordinates[0];
+    if (!outer || outer.length < 3) return [openRing(parcelRing)];
+    return [openRing(outer as LngLatRing)];
+  }
+
+  // MultiPolygon  return each outer ring
+  const rings: LngLatRing[] = [];
+  for (const poly of geom.coordinates) {
+    const outer = poly[0];
+    if (outer && outer.length >= 3) rings.push(openRing(outer as LngLatRing));
+  }
+  return rings.length ? rings : [openRing(parcelRing)];
+}
+
+/**
+ * Outside-dim mask: world covering polygon with a hole at the title parcel.
+ * Drop-in for GeoSiteMap mask GeoJSON Feature.
+ */
+export function outsideMask(
+  parcelRing: LngLatRing,
+): Feature<Polygon | MultiPolygon> | null {
+  const parcel = ringToPolygon(parcelRing);
+  if (!parcel) return null;
+  return mask(parcel);
+}
+
+/** Primary designable focus ring (largest outer ring from designableCanvas). */
+export function designableFocusRing(
+  parcelRing: LngLatRing,
+  buildingRings: LngLatRing[] = [],
+): LngLatRing {
+  const rings = designableCanvas(parcelRing, buildingRings);
+  if (!rings.length) return openRing(parcelRing);
+  // Prefer ring with most vertices (usually the main garden remnant)
+  return rings.reduce((best, r) => (r.length > best.length ? r : best), rings[0]!);
+}

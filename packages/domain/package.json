@@ -15,10 +15,12 @@
     "import:ai-cad-design": "node scripts/generate-osmic-landscape-catalog.mjs && node scripts/download-planzv-fnp.mjs && node scripts/generate-planzv-catalog.mjs"
   },
   "dependencies": {
+    "@turf/turf": "^7.3.5",
     "@workstream/contracts": "workspace:*",
     "perfect-freehand": "^1.2.2"
   },
   "devDependencies": {
+    "@types/geojson": "^7946.0.16",
     "open-crop-icons": "github:openfarmcc/open-crop-icons",
     "osmic-source": "github:gmgeo/osmic",
     "typescript": "^5.7.0"

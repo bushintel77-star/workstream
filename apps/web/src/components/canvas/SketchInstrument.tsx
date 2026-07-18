@@ -6,7 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import type {
   BrushRecipe,
   CatalogPlacement,
@@ -57,6 +59,13 @@ type Props = {
   tier1?: boolean;
   /** Promote sketch → working drawing on the same canvas. */
   onDraftCad?: () => void;
+  /**
+   * When set, the material ribbon portals here (geo design frame stays
+   * parcel-sized; chrome stays in the soft pink dock).
+   */
+  chromeHost?: HTMLElement | null;
+  /** Fired when brush arming changes — geo map can disable pan. */
+  onArmedChange?: (armed: boolean) => void;
 };
 
 const STRUCTURE_PLANT_RE =
@@ -101,6 +110,8 @@ export function SketchInstrument({
   worldHeightPx = 640,
   tier1 = false,
   onDraftCad,
+  chromeHost = null,
+  onArmedChange,
 }: Props) {
   const layerRef = useRef<HTMLDivElement>(null);
   const placementsRef = useRef<CatalogPlacement[]>(initialPlacements);
@@ -144,6 +155,10 @@ export function SketchInstrument({
     placementsRef.current = placements;
     onPlacementCount?.(placements.length);
   }, [placements, onPlacementCount]);
+
+  useEffect(() => {
+    onArmedChange?.(Boolean(armedRecipe));
+  }, [armedRecipe, onArmedChange]);
 
   const clientToPct = useCallback((clientX: number, clientY: number) => {
     const el = layerRef.current;
@@ -530,27 +545,35 @@ export function SketchInstrument({
         ) : null}
       </div>
 
-      <SketchRibbon
-        symbols={symbols}
-        armedRecipe={armedRecipe}
-        brushWidthM={brushWidthM}
-        saving={saving}
-        swatchHistory={swatchHistory}
-        symbolById={symbolById}
-        aiSuggestions={aiSuggestions}
-        onArm={armSymbol}
-        onSelectSwatch={(r) => setArmedRecipe(r)}
-        onToggleCopy={(id, key) => {
-          setSwatchHistory((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, [key]: !r[key] } : r)),
-          );
-          setArmedRecipe((cur) =>
-            cur && cur.id === id ? { ...cur, [key]: !cur[key] } : cur,
-          );
-        }}
-        onAiAction={handleAiAction}
-        onDraftCad={() => onDraftCad?.()}
-      />
+      {(() => {
+        const ribbon: ReactNode = (
+          <SketchRibbon
+            symbols={symbols}
+            armedRecipe={armedRecipe}
+            brushWidthM={brushWidthM}
+            saving={saving}
+            swatchHistory={swatchHistory}
+            symbolById={symbolById}
+            aiSuggestions={aiSuggestions}
+            onArm={armSymbol}
+            onSelectSwatch={(r) => setArmedRecipe(r)}
+            onToggleCopy={(id, key) => {
+              setSwatchHistory((prev) =>
+                prev.map((r) =>
+                  r.id === id ? { ...r, [key]: !r[key] } : r,
+                ),
+              );
+              setArmedRecipe((cur) =>
+                cur && cur.id === id ? { ...cur, [key]: !cur[key] } : cur,
+              );
+            }}
+            onAiAction={handleAiAction}
+            onDraftCad={() => onDraftCad?.()}
+          />
+        );
+        if (chromeHost) return createPortal(ribbon, chromeHost);
+        return ribbon;
+      })()}
     </>
   );
 }
