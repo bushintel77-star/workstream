@@ -63,5 +63,10 @@ test.describe("Canvas-first mode chrome", () => {
     await expect(page.getByTestId("cad-walk")).toBeVisible();
     // Warm-mounted clay host (inactive until Walk toggled)
     await expect(page.getByTestId("clay-walkthrough")).toBeAttached();
+
+    await page.getByTestId("cad-walk").click();
+    await expect(page.getByTestId("clay-exit-walk")).toBeVisible();
+    await page.getByTestId("clay-exit-walk").click();
+    await expect(page.getByTestId("clay-exit-walk")).toHaveCount(0);
   });
 });

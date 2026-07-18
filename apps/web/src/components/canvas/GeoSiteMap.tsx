@@ -397,7 +397,7 @@ export function GeoSiteMap({
           : isLocked
             ? "#5ea884"
             : "#c9955a";
-      const lineW = paperMode ? 2.5 : titleOnly ? 4.5 : 3;
+      const lineW = paperMode ? 1.75 : titleOnly ? 4.5 : 3;
 
       if (map.getLayer(LY_FILL)) {
         map.setPaintProperty(LY_FILL, "fill-color", fillColor);
@@ -620,8 +620,8 @@ export function GeoSiteMap({
 
   const syncHouseShadow = useCallback(
     (map: maplibregl.Map) => {
-      // Title reveal: only the cadastral outline — no house/shadow clutter.
-      if (titleOnly) {
+      // Title reveal / Fit sheet: cadastral ink only — no house/shadow clutter.
+      if (titleOnly || paperMode) {
         const empty: FeatureCollection = {
           type: "FeatureCollection",
           features: [],

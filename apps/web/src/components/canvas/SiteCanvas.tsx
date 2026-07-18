@@ -1393,6 +1393,7 @@ function SiteCanvasInner({
                 rings={clayScene.rings}
                 polylines={clayScene.polylines}
                 plants={clayScene.plants}
+                paper={showFitSheet}
                 onRequestExit={() => setWalkMode(false)}
               />
             ) : null}

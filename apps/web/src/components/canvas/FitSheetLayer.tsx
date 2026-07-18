@@ -226,9 +226,10 @@ export function FitSheetLayer({
             y2={blockY + font * 1.35}
           />
           <text
+            className={css.brand}
             x={blockX + font * 0.35}
             y={blockY + font * 0.95}
-            fontSize={font * 0.72}
+            fontSize={font * 0.68}
           >
             {(meta.brand ?? "Curtis & Co").slice(0, 28)}
           </text>

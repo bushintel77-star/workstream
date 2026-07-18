@@ -34,6 +34,8 @@ export type ClayWalkthroughProps = {
   polylines?: ClayPolyline[];
   plants?: ClayPlant[];
   className?: string;
+  /** Fit sheet paper chrome for exit chip / hint. */
+  paper?: boolean;
   /** Esc when look is unlocked (or second Esc) leaves Walk mode. */
   onRequestExit?: () => void;
 };
@@ -126,6 +128,7 @@ export function ClayWalkthrough({
   polylines = [],
   plants = [],
   className,
+  paper = false,
   onRequestExit,
 }: ClayWalkthroughProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -448,12 +451,27 @@ export function ClayWalkthrough({
     <div
       ref={hostRef}
       className={`${css.overlay}${active ? ` ${css.overlayActive}` : ""}${
-        className ? ` ${className}` : ""
-      }`}
+        paper ? ` ${css.overlayPaper}` : ""
+      }${className ? ` ${className}` : ""}`}
       aria-hidden={!active}
       data-testid="clay-walkthrough"
     >
-      {active ? <p ref={hintRef} className={css.hint} /> : null}
+      {active ? (
+        <>
+          <p
+            ref={hintRef}
+            className={`${css.hint}${paper ? ` ${css.hintPaper}` : ""}`}
+          />
+          <button
+            type="button"
+            className={`${css.exit}${paper ? ` ${css.exitPaper}` : ""}`}
+            data-testid="clay-exit-walk"
+            onClick={() => onRequestExit?.()}
+          >
+            Exit walk
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
