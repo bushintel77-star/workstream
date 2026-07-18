@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { redirectToCanvas } from "../../../../lib/redirect-to-canvas";
 
 export default async function CostingRedirect({
   params,
@@ -6,5 +6,5 @@ export default async function CostingRedirect({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  redirect(`/projects/${id}`);
+  redirectToCanvas(id, "quote");
 }

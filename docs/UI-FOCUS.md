@@ -6,19 +6,18 @@ Single track: **operator clarity** + **client confidence**. Everything else wait
 
 | Surface | User | Job |
 |---------|------|-----|
-| **Studio** (operator web) | Tim / Morgan | Walk site → pipeline → send quote |
+| **Studio** (operator web) | Tim / Morgan | One site canvas → quote → share |
 | **Portal** (token links) | Homeowner | Understand design, compare price, pay deposit |
 
-Brand: **Curtis & Co** on portal — **Workstream** in studio chrome.
+Brand: **Curtis & Co** on portal — **Workstream** on the operator home shell.
 
 **Design System 3.0** — soft-pink editorial field `#D4849A`, cool blush
-surfaces, type **Fraunces** + **Sora**. Subtle radii (`--r-canvas` 16px);
-no hard square framing around the canvas. Portal = rosewood night + blush
-quote sheet. One-click jumps: Design · Quote · CAD · Share.
+surfaces, type **Fraunces** + **Sora**.
 
-**Canvas-first chrome:** design / studio / CAD routes hide AppNav + pipeline
-masthead. Soft-inset canvas plane; library rail closed by default; ergonomic
-topbar jumps keep collaboration one click away.
+**One canvas:** `/projects/:id` is the only operator surface. Modes via
+`?mode=` — Survey · Sketch · CAD · Quote · Share. Legacy pipeline routes
+redirect into the canvas. No pipeline tab masthead. Client portal + Settings
+stay separate.
 
 ## Studio — status
 

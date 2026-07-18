@@ -1,15 +1,11 @@
 import { notFound } from "next/navigation";
 import { requireSignedIn } from "../../../lib/auth";
-import {
-  getIntegrationSummary,
-  getProject,
-  listOutputs,
-} from "../../../lib/api";
+import { getProject } from "../../../lib/api";
 import { ProjectChrome } from "../../../components/ProjectChrome";
 
 export const dynamic = "force-dynamic";
 
-/** Project shell: AppNav on hub routes; canvas-first design/CAD hides chrome. */
+/** Project routes are canvas-first — no pipeline masthead. */
 export default async function ProjectLayout({
   children,
   params,
@@ -19,27 +15,16 @@ export default async function ProjectLayout({
 }) {
   await requireSignedIn();
   const { id } = await params;
-  const [project, outputs, summary] = await Promise.all([
-    getProject(id),
-    listOutputs(id).catch(() => []),
-    getIntegrationSummary().catch(() => null),
-  ]);
-
-  if (!project) {
-    notFound();
-  }
-
-  const quoteOutput = outputs.find((o) => o.kind === "quote");
+  const project = await getProject(id);
+  if (!project) notFound();
 
   return (
     <ProjectChrome
       projectId={id}
       address={project.address}
-      quoteUrl={quoteOutput?.uri ?? null}
-      hasQuote={Boolean(quoteOutput)}
-      clientName={project.client_name}
-      clientEmail={project.client_email}
-      summary={summary}
+      quoteUrl={null}
+      hasQuote={false}
+      summary={null}
     >
       {children}
     </ProjectChrome>

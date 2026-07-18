@@ -20,18 +20,18 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
   const base = `/projects/${projectId}`;
 
   async function copyStudioLink() {
-    const url = `${window.location.origin}${base}/design?studio=desktop`;
+    const url = `${window.location.origin}${base}?mode=sketch`;
     await navigator.clipboard.writeText(url);
-    toast.show("Studio link copied — share with the team.", "success");
+    toast.show("Canvas link copied — share with the team.", "success");
   }
 
   return (
     <header className={tb.topbar} data-testid="studio-topbar">
       <div className={tb.left}>
         <Link
-          href={`${base}/overview`}
+          href={`${base}?mode=cad`}
           className={tb.back}
-          aria-label="Back to project"
+          aria-label="Back to canvas"
         >
           ←
         </Link>
@@ -41,17 +41,20 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
         {extras ? <span className={tb.saveHint}>{extras}</span> : null}
       </div>
 
-      <nav className={tb.jumps} aria-label="One-click studio jumps">
-        <Link href={`${base}/design`} className={`${tb.jump} ${tb.jumpActive}`}>
-          Design
+      <nav className={tb.jumps} aria-label="Canvas mode jumps">
+        <Link
+          href={`${base}?mode=sketch`}
+          className={`${tb.jump} ${tb.jumpActive}`}
+        >
+          Sketch
         </Link>
-        <Link href={`${base}/costing`} className={tb.jump}>
+        <Link href={`${base}?mode=quote`} className={tb.jump}>
           Quote
         </Link>
-        <Link href={`${base}/design/cad`} className={tb.jump}>
+        <Link href={`${base}?mode=cad`} className={tb.jump}>
           CAD
         </Link>
-        <Link href={`${base}/outputs`} className={tb.jump}>
+        <Link href={`${base}?mode=share`} className={tb.jump}>
           Share
         </Link>
       </nav>
@@ -78,8 +81,8 @@ export function StudioTopbar({ projectId, projectAddress, extras }: Props) {
         <button
           type="button"
           className={tb.iconBtn}
-          title="Copy studio link"
-          aria-label="Copy studio link"
+          title="Copy canvas link"
+          aria-label="Copy canvas link"
           onClick={() => void copyStudioLink()}
         >
           ↗

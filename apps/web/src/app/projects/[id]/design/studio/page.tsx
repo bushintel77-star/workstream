@@ -1,11 +1,10 @@
-import { redirect } from "next/navigation";
+import { redirectToCanvas } from "../../../../../lib/redirect-to-canvas";
 
-/** Alias — sketch lives at /design, canvas-first. */
-export default async function DesignStudioPage({
+export default async function DesignStudioRedirect({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  redirect(`/projects/${id}/design`);
+  redirectToCanvas(id, "sketch");
 }
