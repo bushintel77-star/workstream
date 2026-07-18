@@ -15,6 +15,9 @@ type Suggestion = {
   lng: number;
 };
 
+/** Melbourne CBD — only used if geocode returns nothing for a freeform address. */
+const MELBOURNE_FALLBACK = { lat: -37.8136, lng: 144.9631 };
+
 export function NewProjectAddressForm() {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -43,7 +46,7 @@ export function NewProjectAddressForm() {
         setSuggestions(results);
         if (results.length === 0) {
           setHint(
-            "No matches — check Mapbox in Settings, or type the full street address.",
+            "No list matches — you can still continue with this address and pin on the aerial.",
           );
         } else {
           setHint("Pick an address from the list.");
@@ -63,14 +66,30 @@ export function NewProjectAddressForm() {
   }
 
   function goConfirm() {
-    if (!selected) return;
+    const trimmed = query.trim();
+    if (trimmed.length < 5) return;
+
+    if (selected) {
+      const params = new URLSearchParams({
+        address: selected.place_name,
+        lat: String(selected.lat),
+        lng: String(selected.lng),
+      });
+      router.push(`/confirm-pin?${params.toString()}`);
+      return;
+    }
+
+    // Freeform: use first suggestion match if any, else Melbourne pin for adjust.
+    const fallback = suggestions[0];
     const params = new URLSearchParams({
-      address: selected.place_name,
-      lat: String(selected.lat),
-      lng: String(selected.lng),
+      address: trimmed,
+      lat: String(fallback?.lat ?? MELBOURNE_FALLBACK.lat),
+      lng: String(fallback?.lng ?? MELBOURNE_FALLBACK.lng),
     });
     router.push(`/confirm-pin?${params.toString()}`);
   }
+
+  const canContinue = query.trim().length >= 5;
 
   return (
     <div className={d.form}>
@@ -83,6 +102,12 @@ export function NewProjectAddressForm() {
           role="combobox"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && canContinue) {
+              e.preventDefault();
+              goConfirm();
+            }
+          }}
           placeholder="Start typing — e.g. 36 Wrights Terrace, Prahran"
           autoComplete="off"
           spellCheck={false}
@@ -100,14 +125,20 @@ export function NewProjectAddressForm() {
         {suggestions.length > 0 && (
           <ul id={listId} className={d.suggestions} role="listbox">
             {suggestions.map((item) => (
-              <li key={item.id} role="option" aria-selected={selected?.id === item.id}>
+              <li
+                key={item.id}
+                role="option"
+                aria-selected={selected?.id === item.id}
+              >
                 <button
                   type="button"
                   className={d.suggestionBtn}
                   onClick={() => pickSuggestion(item)}
                 >
                   <span className={d.suggestionPrimary}>{item.text}</span>
-                  <span className={d.suggestionSecondary}>{item.place_name}</span>
+                  <span className={d.suggestionSecondary}>
+                    {item.place_name}
+                  </span>
                 </button>
               </li>
             ))}
@@ -126,10 +157,10 @@ export function NewProjectAddressForm() {
       <button
         type="button"
         className={s.btnAccent}
-        disabled={!selected}
+        disabled={!canContinue}
         onClick={goConfirm}
       >
-        Pin garden on aerial →
+        {selected ? "Pin garden on aerial →" : "Continue with this address →"}
       </button>
     </div>
   );
