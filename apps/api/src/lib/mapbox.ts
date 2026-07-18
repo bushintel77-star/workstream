@@ -59,14 +59,31 @@ async function nominatimSearch(
     name?: string;
     lat: string;
     lon: string;
+    address?: {
+      house_number?: string;
+      road?: string;
+      suburb?: string;
+      city?: string;
+      town?: string;
+      state?: string;
+    };
   }>;
-  return json.map((f) => ({
-    id: `nominatim:${f.place_id}`,
-    place_name: f.display_name,
-    text: f.name?.trim() || f.display_name.split(",")[0] || f.display_name,
-    lat: Number(f.lat),
-    lng: Number(f.lon),
-  }));
+  return json.map((f) => {
+    const a = f.address;
+    const street = [a?.house_number, a?.road].filter(Boolean).join(" ").trim();
+    const locality = a?.suburb || a?.town || a?.city || "";
+    const label =
+      street && locality
+        ? `${street}, ${locality}`
+        : street || f.name?.trim() || f.display_name.split(",")[0] || f.display_name;
+    return {
+      id: `nominatim:${f.place_id}`,
+      place_name: f.display_name,
+      text: label,
+      lat: Number(f.lat),
+      lng: Number(f.lon),
+    };
+  });
 }
 
 export async function geocodeSearch(

@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { geocodeSearchAction } from "../app/actions";
-import s from "../styles/app.module.css";
-import d from "../app/dashboard.module.css";
-import { Spinner } from "./Spinner";
+import css from "./newProjectAddressForm.module.css";
 
 type Suggestion = {
   id: string;
@@ -15,8 +13,17 @@ type Suggestion = {
   lng: number;
 };
 
-/** Melbourne CBD — only used if geocode returns nothing for a freeform address. */
 const MELBOURNE_FALLBACK = { lat: -37.8136, lng: 144.9631 };
+
+function labelFor(item: Suggestion): string {
+  // Nominatim often sets text to house number only — prefer a readable street line.
+  const first = item.place_name.split(",").slice(0, 3).join(",").trim();
+  if (!item.text || /^\d+$/.test(item.text.trim())) return first || item.place_name;
+  if (item.place_name.toLowerCase().startsWith(item.text.toLowerCase())) {
+    return first || item.place_name;
+  }
+  return `${item.text} — ${first}`;
+}
 
 export function NewProjectAddressForm() {
   const router = useRouter();
@@ -24,8 +31,9 @@ export function NewProjectAddressForm() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selected, setSelected] = useState<Suggestion | null>(null);
   const [hint, setHint] = useState<string | null>(null);
-  const [pendingSearch, startSearch] = useTransition();
+  const [searching, setSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
   const listId = "address-suggestions";
 
   useEffect(() => {
@@ -34,25 +42,38 @@ export function NewProjectAddressForm() {
       setSelected(null);
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
+
     const trimmed = query.trim();
     if (trimmed.length < 3) {
       setSuggestions([]);
       setHint(null);
+      setSearching(false);
       return;
     }
+
+    const requestId = ++requestIdRef.current;
     debounceRef.current = setTimeout(() => {
-      startSearch(async () => {
-        const results = await geocodeSearchAction(trimmed);
-        setSuggestions(results);
-        if (results.length === 0) {
+      setSearching(true);
+      void (async () => {
+        try {
+          const results = await geocodeSearchAction(trimmed);
+          if (requestId !== requestIdRef.current) return;
+          setSuggestions(results);
           setHint(
-            "No list matches — you can still continue with this address and pin on the aerial.",
+            results.length === 0
+              ? "No matches in the list — you can still continue and pin on the aerial."
+              : "Tap a match below.",
           );
-        } else {
-          setHint("Pick an address from the list.");
+        } catch {
+          if (requestId !== requestIdRef.current) return;
+          setSuggestions([]);
+          setHint("Search failed — continue with the typed address.");
+        } finally {
+          if (requestId === requestIdRef.current) setSearching(false);
         }
-      });
-    }, 250);
+      })();
+    }, 280);
+
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
@@ -79,7 +100,6 @@ export function NewProjectAddressForm() {
       return;
     }
 
-    // Freeform: use first suggestion match if any, else Melbourne pin for adjust.
     const fallback = suggestions[0];
     const params = new URLSearchParams({
       address: trimmed,
@@ -92,10 +112,10 @@ export function NewProjectAddressForm() {
   const canContinue = query.trim().length >= 5;
 
   return (
-    <div className={d.form}>
-      <div className={d.addressField}>
+    <div className={css.form}>
+      <div className={css.field}>
         <input
-          className={`${s.input} ${d.formInput}`}
+          className={css.input}
           type="text"
           id="project-address"
           aria-label="Project address"
@@ -105,58 +125,55 @@ export function NewProjectAddressForm() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && canContinue) {
               e.preventDefault();
+              if (suggestions[0] && !selected) {
+                pickSuggestion(suggestions[0]);
+                return;
+              }
               goConfirm();
             }
           }}
-          placeholder="Start typing — e.g. 36 Wrights Terrace, Prahran"
+          placeholder="Start typing — e.g. 6 Beatty Ave, Armadale"
           autoComplete="off"
           spellCheck={false}
           aria-autocomplete="list"
           aria-controls={suggestions.length > 0 ? listId : undefined}
           aria-expanded={suggestions.length > 0}
         />
-        {pendingSearch && (
-          <span className={d.addressSpinner} aria-live="polite">
-            <Spinner size="sm" label="Searching addresses" />
-            Searching
+        {searching ? (
+          <span className={css.spinner} aria-live="polite">
+            Searching…
           </span>
-        )}
+        ) : null}
 
-        {suggestions.length > 0 && (
-          <ul id={listId} className={d.suggestions} role="listbox">
+        {suggestions.length > 0 ? (
+          <ul id={listId} className={css.list} role="listbox">
             {suggestions.map((item) => (
-              <li
-                key={item.id}
-                role="option"
-                aria-selected={selected?.id === item.id}
-              >
+              <li key={item.id} role="option" aria-selected={selected?.id === item.id}>
                 <button
                   type="button"
-                  className={d.suggestionBtn}
+                  className={css.option}
                   onClick={() => pickSuggestion(item)}
                 >
-                  <span className={d.suggestionPrimary}>{item.text}</span>
-                  <span className={d.suggestionSecondary}>
-                    {item.place_name}
-                  </span>
+                  <span className={css.primary}>{labelFor(item)}</span>
+                  <span className={css.secondary}>{item.place_name}</span>
                 </button>
               </li>
             ))}
           </ul>
-        )}
+        ) : null}
       </div>
 
-      {selected && (
-        <p className={d.addressPinned}>
+      {selected ? (
+        <p className={css.pinned}>
           {selected.lat.toFixed(5)}, {selected.lng.toFixed(5)}
         </p>
-      )}
+      ) : null}
 
-      {hint && !selected && <p className={d.addressHint}>{hint}</p>}
+      {hint && !selected ? <p className={css.hint}>{hint}</p> : null}
 
       <button
         type="button"
-        className={s.btnAccent}
+        className={css.submit}
         disabled={!canContinue}
         onClick={goConfirm}
       >

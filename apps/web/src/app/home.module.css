@@ -41,11 +41,14 @@
 }
 
 .composer {
+  position: relative;
+  z-index: 4;
   margin-top: 1.5rem;
   padding: 1rem;
   border-radius: 22px;
   background: rgba(255, 249, 251, 0.85);
   backdrop-filter: blur(12px);
+  overflow: visible;
 }
 
 .list {
