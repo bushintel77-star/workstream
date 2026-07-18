@@ -28,8 +28,8 @@ export function FirstRunGuide({ projectId, onDone, onDismiss }: Props) {
       <p className={css.kicker}>Two minutes</p>
       <h2 className={css.title}>Open your Fit sheet</h2>
       <p className={css.body}>
-        One tap prepares a starter concept on the cream working drawing with a
-        live estimate. Nudge anything after — nothing is locked in.
+        One tap drafts a starter concept on the cream Fit sheet. Accept what
+        looks right, reject the rest — the live estimate updates as you go.
       </p>
       <div className={css.actions}>
         <button
