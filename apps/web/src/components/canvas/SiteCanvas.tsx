@@ -42,6 +42,7 @@ import type {
   SiteBoundaryLite,
 } from "../../lib/canvas-types";
 import type { DesignCanvas, RateCardItem } from "../../lib/api";
+import { resolveCanvasChrome } from "../../lib/canvas-chrome";
 import {
   resolveCanvasMode,
   type CanvasMode,
@@ -412,9 +413,13 @@ function SiteCanvasInner({
     Boolean(mapConfig) && (hasParcelGeo || Boolean(fallbackCenter));
   /** World blacked out — only the Vicmap title outline until opened. */
   const titleRevealActive = useGeoStage && hasParcelGeo && !titleOpened;
-  const canWalk =
-    !titleRevealActive &&
-    (mode === "cad" || mode === "quote" || mode === "share");
+  const chrome = resolveCanvasChrome({
+    mode,
+    titleRevealActive,
+    hasSketchBundle: Boolean(sketch),
+    cadDrawArmed,
+  });
+  const canWalk = chrome.walk;
   const clayScene = useMemo(
     () => buildClayScene(boundary, cadDoc),
     [boundary, cadDoc],
@@ -871,17 +876,12 @@ function SiteCanvasInner({
     return { left, top };
   };
 
-  const showBoundary =
-    !titleRevealActive &&
-    (mode === "survey" || (mode === "cad" && !cadDrawArmed));
-  const showCadDock = !titleRevealActive && mode === "cad";
-  const showQuoteDock = !titleRevealActive && mode === "quote";
-  const showSurveyDock = !titleRevealActive && mode === "survey";
-  const showSketchDock =
-    !titleRevealActive && mode === "sketch" && Boolean(sketch);
-  /** Canvas-first: costing HUD from CAD/Quote only — never Survey/Sketch/Share. */
-  const showLiveBom =
-    !titleRevealActive && (mode === "cad" || mode === "quote");
+  const showBoundary = chrome.boundary;
+  const showCadDock = chrome.cadDock;
+  const showQuoteDock = chrome.quoteDock;
+  const showSurveyDock = chrome.surveyDock;
+  const showSketchDock = chrome.sketchDock;
+  const showLiveBom = chrome.liveBom;
   const showStage =
     titleRevealActive || mode !== "sketch" || Boolean(sketch);
 
@@ -2251,7 +2251,7 @@ function SiteCanvasInner({
             </div>
           ) : null}
 
-          {mode === "share" ? (
+          {chrome.shareDock ? (
             <div
               className={`${css.shareSheet} ${css.shareSheetDock}${showFitSheet ? ` ${css.shareSheetPaper}` : ""}`}
               data-testid="canvas-share-sheet"

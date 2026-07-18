@@ -61,4 +61,5 @@ Do not show empty skeleton placeholders instead of a number when an optimistic e
 | Share | Copy/Open portal + Walk; Fit sheet under More | Live BOM, Tier-1 ledger, edit ribbons |
 
 **CSS tokens:** `--paper`, `--paper-ink`, `--paper-rule` on SiteCanvas root.  
-**Code anchors:** `showLiveBom`, `showCadAdvanced`, `quoteToolsOpen`, `sketchPaintOpen`, `ClayWalkthrough` cross-fade.
+**Code anchors:** `resolveCanvasChrome` (`apps/web/src/lib/canvas-chrome.ts`), `showCadAdvanced`, `quoteToolsOpen`, `sketchPaintOpen`, `ClayWalkthrough` cross-fade.  
+**Tests:** `canvas-chrome.test.ts` · e2e `e2e/canvas-first.spec.ts`.
