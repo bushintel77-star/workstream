@@ -4,28 +4,28 @@
 
 :root {
   /* surfaces — cool blush mist (not cream/terracotta) */
-  --surface-base: #f7e8ee;
-  --surface-elevated: #fff9fb;
-  --surface-sunken: #e8dfe4;
-  --surface-inverted: #1a1218;
-  --surface-overlay: #fff9fb;
-  --surface-inset: #f7f0f3;
-  --surface-panel: #f7f0f3;
+  --surface-base: #f6e6ed;
+  --surface-elevated: #fffafc;
+  --surface-sunken: #eadfe5;
+  --surface-inverted: #24181e;
+  --surface-overlay: #fffafc;
+  --surface-inset: #f8f0f4;
+  --surface-panel: #f8f0f4;
 
   /* ink — rosewood charcoal */
-  --ink-primary: #1a1218;
-  --ink-secondary: #5c4a52;
-  --ink-tertiary: #8a7580;
+  --ink-primary: #24181e;
+  --ink-secondary: #6b5660;
+  --ink-tertiary: #9a8590;
   --ink-inverted: #faf4f6;
 
-  /* lines — soft petal stone */
-  --line-hairline: #e0d4da;
-  --line-subtle: #ede4e9;
-  --line-strong: #c9b6bf;
-  --line-ink: #1a1218;
+  /* lines — soft petal stone (prefer shadow/inset over hard rules) */
+  --line-hairline: #e8dde3;
+  --line-subtle: #f0e7ec;
+  --line-strong: #d2c2cb;
+  --line-ink: #24181e;
 
   /* accent — soft rose */
-  --accent: #d4849a;
+  --accent: #e9a8ba;
   --accent-soft: #f7dce4;
   --accent-ink: #7a3348;
   --accent-bright: #f0b4c4;

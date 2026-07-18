@@ -185,7 +185,7 @@ export function BoundaryOverlay({
     .join(" ");
 
   const locked = boundary.status === "VERIFIED";
-  const stroke = locked ? "#10b981" : "#d97706";
+  const stroke = locked ? "#5ea884" : "#c9955a";
 
   const onNodePointerDown = (
     e: React.PointerEvent,
