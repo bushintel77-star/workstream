@@ -54,14 +54,15 @@ export function FitSheetLayer({
 }: Props) {
   if (!visible || widthM <= 0 || heightM <= 0) return null;
 
-  const margin = Math.min(widthM, heightM) * 0.035;
+  const margin = Math.min(widthM, heightM) * 0.04;
   const grid = niceGridStep(Math.max(widthM, heightM));
-  const font = Math.max(0.28, Math.min(widthM, heightM) * 0.028);
-  const barLen = Math.min(grid * 2, (widthM - margin * 2) * 0.22);
+  // Floor high enough that title / dims stay legible on phone zoom.
+  const font = Math.max(0.45, Math.min(widthM, heightM) * 0.034);
+  const barLen = Math.min(grid * 2, (widthM - margin * 2) * 0.24);
   const drawW = widthM - margin * 2;
   const drawH = heightM - margin * 2;
-  const blockW = Math.min(drawW * 0.42, widthM * 0.38);
-  const blockH = font * 4.2;
+  const blockW = Math.min(drawW * 0.48, widthM * 0.44);
+  const blockH = font * 4.6;
   const blockX = widthM - margin - blockW;
   const blockY = heightM - margin - blockH;
 

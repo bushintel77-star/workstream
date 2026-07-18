@@ -76,16 +76,16 @@
 .dim text {
   fill: #241318;
   font-family: "IBM Plex Mono", "Sora", monospace;
-  font-weight: 500;
+  font-weight: 600;
   paint-order: stroke;
   stroke: #faf6f2;
-  stroke-width: 0.12;
+  stroke-width: 0.18;
 }
 
 .titleBlockFrame {
-  fill: rgba(250, 246, 242, 0.92);
-  stroke: rgba(36, 19, 24, 0.55);
-  stroke-width: 0.06;
+  fill: rgba(250, 246, 242, 0.96);
+  stroke: rgba(36, 19, 24, 0.7);
+  stroke-width: 0.07;
   vector-effect: non-scaling-stroke;
 }
 
@@ -98,5 +98,5 @@
 .titleBlock text {
   fill: #241318;
   font-family: "IBM Plex Mono", "Sora", monospace;
-  font-weight: 500;
+  font-weight: 600;
 }

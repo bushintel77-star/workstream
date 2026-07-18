@@ -326,6 +326,8 @@ function SiteCanvasInner({
   const [walkMode, setWalkMode] = useState(false);
   const [fitNonce, setFitNonce] = useState(0);
   const [sketchArmed, setSketchArmed] = useState(false);
+  /** Progressive disclosure — material ribbon after Paint. */
+  const [sketchPaintOpen, setSketchPaintOpen] = useState(false);
   const [cadDrawArmed, setCadDrawArmed] = useState(() => {
     const committed =
       initialDocument?.entities.filter(
@@ -874,9 +876,9 @@ function SiteCanvasInner({
   const showSurveyDock = !titleRevealActive && mode === "survey";
   const showSketchDock =
     !titleRevealActive && mode === "sketch" && Boolean(sketch);
+  /** Canvas-first: Sketch stays paint-only — BOM/QS appear from CAD onward. */
   const showLiveBom =
-    !titleRevealActive &&
-    (mode === "sketch" || mode === "cad" || mode === "quote");
+    !titleRevealActive && (mode === "cad" || mode === "quote");
   const showStage =
     titleRevealActive || mode !== "sketch" || Boolean(sketch);
 
@@ -999,7 +1001,7 @@ function SiteCanvasInner({
           projectId={projectId}
           refreshKey={orchRefresh}
           paper={showFitSheet}
-          compact={mode === "cad" || mode === "sketch"}
+          compact={mode === "cad"}
           onWorld={setOrchWorld}
         />
       ) : null}
@@ -1221,6 +1223,7 @@ function SiteCanvasInner({
                           chromeHost={sketchChromeHost}
                           onArmedChange={setSketchArmed}
                           onDraftCad={draftFitSheet}
+                          showRibbon={sketchPaintOpen}
                         />
                       ) : mode === "quote" ||
                         mode === "cad" ||
@@ -1298,6 +1301,7 @@ function SiteCanvasInner({
                       worldHeightPx={worldSize.height}
                       tier1={tier1}
                       onDraftCad={draftFitSheet}
+                      showRibbon={sketchPaintOpen}
                     />
                   ) : null}
                   <MeasureOverlay
@@ -1789,14 +1793,25 @@ function SiteCanvasInner({
                 data-testid="sketch-chrome-host"
               />
               <p className={css.dockPrimaryHint}>
-                {sketchCount === 0
-                  ? "Paint the garden — house is excluded; zoom is locked to the yard"
-                  : "Garden concept on the sheet — draft the working drawing next"}
+                {!sketchPaintOpen
+                  ? "Garden only — open Paint when you are ready to place materials"
+                  : sketchCount === 0
+                    ? "Pick a brush, then paint the yard"
+                    : "Garden concept on the sheet — draft the working drawing next"}
               </p>
               <div className={css.btnRow}>
                 <button
                   type="button"
-                  className={`${css.btn} ${css.btnPrimary}`}
+                  className={`${css.btn} ${sketchPaintOpen ? "" : css.btnPrimary}`}
+                  aria-pressed={sketchPaintOpen}
+                  data-testid="sketch-paint-open"
+                  onClick={() => setSketchPaintOpen((v) => !v)}
+                >
+                  {sketchPaintOpen ? "Hide brushes" : "Paint"}
+                </button>
+                <button
+                  type="button"
+                  className={`${css.btn} ${sketchCount > 0 ? css.btnPrimary : ""}`}
                   disabled={pending || sketchCount === 0}
                   onClick={() =>
                     run("Drafting Fit sheet…", async () => {
@@ -1807,7 +1822,7 @@ function SiteCanvasInner({
                       setMode("cad");
                       setFitNonce((n) => n + 1);
                       return result.ghost_count > 0
-                        ? `${result.ghost_count} AI suggestions — Accept (A) to commit`
+                        ? `${result.ghost_count} to verify — Accept (A)`
                         : "Fit sheet drafted from sketch";
                     })
                   }

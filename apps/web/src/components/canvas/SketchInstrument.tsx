@@ -66,6 +66,8 @@ type Props = {
   chromeHost?: HTMLElement | null;
   /** Fired when brush arming changes — geo map can disable pan. */
   onArmedChange?: (armed: boolean) => void;
+  /** Progressive disclosure — hide material ribbon until operator opens paint. */
+  showRibbon?: boolean;
 };
 
 const STRUCTURE_PLANT_RE =
@@ -112,6 +114,7 @@ export function SketchInstrument({
   onDraftCad,
   chromeHost = null,
   onArmedChange,
+  showRibbon = true,
 }: Props) {
   const layerRef = useRef<HTMLDivElement>(null);
   const placementsRef = useRef<CatalogPlacement[]>(initialPlacements);
@@ -545,35 +548,37 @@ export function SketchInstrument({
         ) : null}
       </div>
 
-      {(() => {
-        const ribbon: ReactNode = (
-          <SketchRibbon
-            symbols={symbols}
-            armedRecipe={armedRecipe}
-            brushWidthM={brushWidthM}
-            saving={saving}
-            swatchHistory={swatchHistory}
-            symbolById={symbolById}
-            aiSuggestions={aiSuggestions}
-            onArm={armSymbol}
-            onSelectSwatch={(r) => setArmedRecipe(r)}
-            onToggleCopy={(id, key) => {
-              setSwatchHistory((prev) =>
-                prev.map((r) =>
-                  r.id === id ? { ...r, [key]: !r[key] } : r,
-                ),
-              );
-              setArmedRecipe((cur) =>
-                cur && cur.id === id ? { ...cur, [key]: !cur[key] } : cur,
-              );
-            }}
-            onAiAction={handleAiAction}
-            onDraftCad={() => onDraftCad?.()}
-          />
-        );
-        if (chromeHost) return createPortal(ribbon, chromeHost);
-        return ribbon;
-      })()}
+      {showRibbon
+        ? (() => {
+            const ribbon: ReactNode = (
+              <SketchRibbon
+                symbols={symbols}
+                armedRecipe={armedRecipe}
+                brushWidthM={brushWidthM}
+                saving={saving}
+                swatchHistory={swatchHistory}
+                symbolById={symbolById}
+                aiSuggestions={aiSuggestions}
+                onArm={armSymbol}
+                onSelectSwatch={(r) => setArmedRecipe(r)}
+                onToggleCopy={(id, key) => {
+                  setSwatchHistory((prev) =>
+                    prev.map((r) =>
+                      r.id === id ? { ...r, [key]: !r[key] } : r,
+                    ),
+                  );
+                  setArmedRecipe((cur) =>
+                    cur && cur.id === id ? { ...cur, [key]: !cur[key] } : cur,
+                  );
+                }}
+                onAiAction={handleAiAction}
+                onDraftCad={() => onDraftCad?.()}
+              />
+            );
+            if (chromeHost) return createPortal(ribbon, chromeHost);
+            return ribbon;
+          })()
+        : null}
     </>
   );
 }

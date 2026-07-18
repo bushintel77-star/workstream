@@ -97,6 +97,7 @@ workspace plan must be `studio` for per-owner stored live keys to hydrate.
 
 ## Related docs
 
+- [CANVAS-FIRST-UX.md](CANVAS-FIRST-UX.md) — **binding** operator canvas UI mandate (progressive disclosure, paper/clay, optimistic + skeletal Live BOM)
 - [INTEGRATIONS.md](INTEGRATIONS.md) — hub API, CRM webhook, Resend, connector keys
 - [QUOTE_WORKFLOW.md](QUOTE_WORKFLOW.md) — operator sequence
 - [../OUTSTANDING.md](../OUTSTANDING.md) — engineering punch list

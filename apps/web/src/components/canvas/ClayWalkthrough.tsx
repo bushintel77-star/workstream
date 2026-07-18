@@ -132,12 +132,14 @@ export function ClayWalkthrough({
   const hintRef = useRef<HTMLParagraphElement | null>(null);
   const exitRef = useRef(onRequestExit);
   exitRef.current = onRequestExit;
+  const activeRef = useRef(active);
+  activeRef.current = active;
 
   // Stable scene fingerprint - avoid remounting Three on parent re-renders
   const sceneKey = JSON.stringify({ rings, polylines, plants });
 
   useEffect(() => {
-    if (!active || !hostRef.current) return;
+    if (!hostRef.current) return;
     const host = hostRef.current;
 
     const renderer = new THREE.WebGLRenderer({
@@ -257,7 +259,7 @@ export function ClayWalkthrough({
       root.add(fence);
     }
 
-    // Vegetation: icosahedron crowns + thin plane leaf sprites (no glTF)
+    // Vegetation: icosahedron crowns + thin plane ?leaf? sprites (no glTF)
     const plantMat = new THREE.MeshMatcapMaterial({
       matcap,
       color: 0xb9b0a6,
@@ -296,6 +298,7 @@ export function ClayWalkthrough({
       right: false,
     };
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!activeRef.current) return;
       if (e.code === "Escape") {
         e.preventDefault();
         if (controls.isLocked) {
@@ -320,6 +323,7 @@ export function ClayWalkthrough({
     window.addEventListener("keyup", onKeyUp);
 
     const onClick = () => {
+      if (!activeRef.current) return;
       if (!controls.isLocked) controls.lock();
     };
     renderer.domElement.addEventListener("click", onClick);
@@ -378,6 +382,10 @@ export function ClayWalkthrough({
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
+      if (!activeRef.current) {
+        if (controls.isLocked) controls.unlock();
+        return;
+      }
       const dt = Math.min(clock.getDelta(), 0.05);
       if (controls.isLocked) {
         const dir = new THREE.Vector3();
@@ -432,9 +440,9 @@ export function ClayWalkthrough({
         host.removeChild(renderer.domElement);
       }
     };
-    // sceneKey captures rings / polylines / plants
+    // Mount once per scene; `active` only fades via CSS + activeRef.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, sceneKey]);
+  }, [sceneKey]);
 
   return (
     <div
