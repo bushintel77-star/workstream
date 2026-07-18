@@ -92,14 +92,17 @@ test.describe("Design studio (sketch mode)", () => {
     await expect(page.getByTestId("canvas-scale-bar")).toContainText(/m/);
   });
 
-  test("arms symbol from ribbon catalog", async ({ page }) => {
+  test("arms symbol from command palette search", async ({ page }) => {
     await page.goto(`/projects/${projectId}?mode=sketch`);
     await expect(page.getByTestId("canvas-placement")).toHaveCount(1, {
       timeout: 30_000,
     });
     await openCommandPalette(page);
-    await page.getByLabel("Search commands and materials").fill("bluestone");
-    await page.getByRole("option", { name: /Arm.*[Bb]luestone/i }).click();
+    await page.getByLabel("Search commands and materials").fill("arm bluestone");
+    await expect(
+      page.getByRole("option", { name: /Arm Bluestone paver/i }),
+    ).toBeVisible();
+    await page.keyboard.press("Enter");
     await expect(page.getByTestId("sketch-instrument")).toHaveAttribute(
       "data-armed",
       "1",
