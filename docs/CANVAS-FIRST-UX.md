@@ -58,7 +58,7 @@ Do not show empty skeleton placeholders instead of a number when an optimistic e
 | Sketch | Paint disclosure → brushes; Draft Fit sheet | Live BOM, QS schedule, CAD line dock |
 | CAD | Accept / Line / Walk; compact Live BOM | Full QS sheet auto-open; recipe depth editors |
 | Quote | Promote; Ledger disclosure for QS/Build | Always-on schedule overlay |
-| Share | Fit sheet + Walk; client link | Operator edit ribbons |
+| Share | Copy/Open portal + Walk; Fit sheet under More | Live BOM, Tier-1 ledger, edit ribbons |
 
 **CSS tokens:** `--paper`, `--paper-ink`, `--paper-rule` on SiteCanvas root.  
 **Code anchors:** `showLiveBom`, `showCadAdvanced`, `quoteToolsOpen`, `sketchPaintOpen`, `ClayWalkthrough` cross-fade.

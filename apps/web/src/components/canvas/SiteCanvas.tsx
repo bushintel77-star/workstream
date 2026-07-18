@@ -589,8 +589,11 @@ function SiteCanvasInner({
   const prevModeRef = useRef(mode);
   useEffect(() => {
     if (mode !== "cad") setShowCadAdvanced(false);
-    if (mode !== "sketch") setSketchArmed(false);
-    if (mode !== "quote") setQuoteToolsOpen(false);
+    if (mode !== "sketch") {
+      setSketchArmed(false);
+      setSketchPaintOpen(false);
+    }
+    if (mode !== "quote" && mode !== "share") setQuoteToolsOpen(false);
     if (mode !== "cad" && mode !== "quote" && mode !== "share") {
       setWalkMode(false);
     }
@@ -723,7 +726,7 @@ function SiteCanvasInner({
       setMode("cad");
       setFitNonce((n) => n + 1);
       return result.ghost_count > 0
-        ? `${result.ghost_count} AI suggestions — Accept (A) to commit`
+        ? `${result.ghost_count} to verify — Accept (A)`
         : "Draft landed — review geometry on Fit sheet";
     });
   }, [applyCad, projectId, setMode]);
@@ -876,7 +879,7 @@ function SiteCanvasInner({
   const showSurveyDock = !titleRevealActive && mode === "survey";
   const showSketchDock =
     !titleRevealActive && mode === "sketch" && Boolean(sketch);
-  /** Canvas-first: Sketch stays paint-only — BOM/QS appear from CAD onward. */
+  /** Canvas-first: costing HUD from CAD/Quote only — never Survey/Sketch/Share. */
   const showLiveBom =
     !titleRevealActive && (mode === "cad" || mode === "quote");
   const showStage =
@@ -945,7 +948,7 @@ function SiteCanvasInner({
             setStatus(
               nextMode === "cad"
                 ? ghosts > 0
-                  ? `${ghosts} AI suggestions — Accept (A) to commit`
+                  ? `${ghosts} to verify — Accept (A)`
                   : "Fit sheet ready — Draft with AI or draw"
                 : "Sketch ready on the lot",
             );
@@ -956,35 +959,52 @@ function SiteCanvasInner({
 
       {keysHelpOn ? (
         <div className={css.keysHelp} data-testid="canvas-keys-help">
-          <p className={css.dockKicker}>Shortcuts</p>
+          <p className={css.dockKicker}>Shortcuts · {mode}</p>
           <ul>
-            <li>
-              <kbd>F</kbd> Fit sheet
-            </li>
-            <li>
-              <kbd>Space</kbd> Line / pan
-            </li>
-            <li>
-              <kbd>L</kbd> Lock title
-            </li>
-            <li>
-              <kbd>⌘Z</kbd> Undo line
-            </li>
-            <li>
-              <kbd>G</kbd> Draft with AI
-            </li>
-            <li>
-              <kbd>D</kbd> Edge dims
-            </li>
-            <li>
-              <kbd>A</kbd> / <kbd>Enter</kbd> Accept AI suggestions
-            </li>
-            <li>
-              <kbd>Enter</kbd> Finish line
-            </li>
-            <li>
-              <kbd>Esc</kbd> Clear / close
-            </li>
+            {(mode === "cad" || mode === "quote" || mode === "sketch") && (
+              <li>
+                <kbd>F</kbd> Fit sheet
+              </li>
+            )}
+            {mode === "cad" && (
+              <>
+                <li>
+                  <kbd>Space</kbd> Line draw
+                </li>
+                <li>
+                  <kbd>G</kbd> Draft with AI
+                </li>
+                <li>
+                  <kbd>A</kbd> / <kbd>Enter</kbd> Verify AI geometry
+                </li>
+                <li>
+                  <kbd>⌘Z</kbd> Undo line
+                </li>
+                <li>
+                  <kbd>Enter</kbd> Finish line
+                </li>
+              </>
+            )}
+            {(mode === "cad" || mode === "quote") && (
+              <li>
+                <kbd>D</kbd> Edge dims
+              </li>
+            )}
+            {mode === "survey" && (
+              <li>
+                <kbd>L</kbd> Lock / unlock title
+              </li>
+            )}
+            {(mode === "cad" || mode === "quote" || mode === "share") && (
+              <li>
+                <kbd>Esc</kbd> Exit Walk / clear
+              </li>
+            )}
+            {mode === "sketch" && (
+              <li>
+                <kbd>Esc</kbd> Disarm brush
+              </li>
+            )}
           </ul>
           <button
             type="button"
@@ -1576,7 +1596,7 @@ function SiteCanvasInner({
                 </span>
               ) : mode === "cad" && ghostCount > 0 && !cadDrawArmed ? (
                 <span className={css.sheetHudHint}>
-                  {ghostCount} AI suggestions · A Accept
+                  {ghostCount} to verify · A Accept
                 </span>
               ) : mode === "cad" &&
                 committedCount === 0 &&
@@ -1584,6 +1604,8 @@ function SiteCanvasInner({
                 <span className={css.sheetHudHint}>Draft with AI or Line</span>
               ) : mode === "cad" && cadDrawArmed ? (
                 <span className={css.sheetHudHint}>Line · Enter finish</span>
+              ) : mode === "share" ? (
+                <span className={css.sheetHudHint}>Client preview</span>
               ) : null}
             </div>
           ) : null}
@@ -1853,7 +1875,7 @@ function SiteCanvasInner({
                       ? "Fit sheet — click vertices, Enter / double-click finish, Esc clear"
                       : "Line draw — click points, Enter / double-click finish"
                     : ghostCount > 0
-                      ? `${ghostCount} AI suggestions — Accept (A) commits them to the sheet`
+                      ? `${ghostCount} to verify — Accept (A) before Quote`
                       : committedCount === 0
                         ? "Blank sheet — Draft with AI, or Line to draw by hand"
                         : "Working drawing — live estimate updates as geometry lands"}
@@ -2072,7 +2094,7 @@ function SiteCanvasInner({
                 <p className={css.dockPrimaryHint}>
                   {!progress.hasCad
                     ? ghostCount > 0
-                      ? "Accept AI suggestions on Fit sheet before promote"
+                      ? "Verify AI geometry on Fit sheet before promote"
                       : "No committed drawing yet - draft on Fit sheet first"
                     : survey
                       ? `${survey.rows.length} QS lines on Fit sheet - promote when the BOM reads true`
@@ -2235,19 +2257,13 @@ function SiteCanvasInner({
               data-testid="canvas-share-sheet"
             >
               <p className={css.dockKicker}>Share</p>
-              <h2>Client portal</h2>
-              <p>
+              <p className={css.dockPrimaryHint}>
                 {quotePersisted
-                  ? "Fit sheet stays on the lot behind the portal — copy the link when you’re ready."
+                  ? "Copy the portal link — Fit sheet stays on the lot behind you."
                   : !progress.hasCad
-                    ? "Draft and accept CAD on Fit sheet, then promote a quote before sharing."
-                    : "Promote the live BOM to a client quote, then copy the portal link."}
+                    ? "Verify CAD on Fit sheet, then promote a quote."
+                    : "Promote quote on the Quote step, then come back to share."}
               </p>
-              {tier1 ? (
-                <div className={css.tier1Dock} data-testid="canvas-tier1-share">
-                  <Tier1SavingsLedger variant="compact" showTarget />
-                </div>
-              ) : null}
               <div className={css.btnRow}>
                 {!quotePersisted ? (
                   <button
@@ -2261,8 +2277,8 @@ function SiteCanvasInner({
                     }}
                   >
                     {!progress.hasCad
-                      ? "Draft Fit sheet →"
-                      : "Promote quote first →"}
+                      ? "Open Fit sheet →"
+                      : "Promote quote →"}
                   </button>
                 ) : (
                   <button
@@ -2290,38 +2306,56 @@ function SiteCanvasInner({
                     Open portal
                   </a>
                 ) : null}
-                {quoteHtml ? (
-                  <button
-                    type="button"
-                    className={css.btn}
-                    onClick={() => setShowQuoteOverlay(true)}
-                  >
-                    View quote
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  className={css.btn}
-                  aria-pressed={showFitSheet}
-                  title="Paper working drawing under the share dock (F)"
-                  onClick={() => {
-                    setShowFitSheet((v) => !v);
-                    setFitNonce((n) => n + 1);
-                  }}
-                >
-                  {showFitSheet ? "Fit sheet on" : "Fit sheet"}
-                </button>
                 <button
                   type="button"
                   className={`${css.btn}${walkMode ? ` ${css.btnPrimary}` : ""}`}
                   data-testid="share-walk"
                   aria-pressed={walkMode}
-                  title="Clay walkthrough overlay"
+                  title="Clay walkthrough · Esc exit"
                   onClick={() => setWalkMode((v) => !v)}
                 >
                   {walkMode ? "Exit walk" : "Walk"}
                 </button>
+                <button
+                  type="button"
+                  className={css.dockToggle}
+                  onClick={() => setQuoteToolsOpen((v) => !v)}
+                >
+                  {quoteToolsOpen ? "Fewer" : "More"}
+                </button>
               </div>
+              {quoteToolsOpen ? (
+                <div className={`${css.btnRow} ${css.dockMore}`}>
+                  {quoteHtml ? (
+                    <button
+                      type="button"
+                      className={css.btn}
+                      onClick={() => setShowQuoteOverlay(true)}
+                    >
+                      View quote
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={css.btn}
+                    aria-pressed={showFitSheet}
+                    onClick={() => {
+                      setShowFitSheet((v) => !v);
+                      setFitNonce((n) => n + 1);
+                    }}
+                  >
+                    Fit sheet
+                  </button>
+                  {tier1 ? (
+                    <div
+                      className={css.tier1Dock}
+                      data-testid="canvas-tier1-share"
+                    >
+                      <Tier1SavingsLedger variant="compact" showTarget />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               {portalLink ? (
                 <p className={css.shareLink} title={portalLink}>
                   {portalLink}
@@ -2331,7 +2365,7 @@ function SiteCanvasInner({
                 {error ??
                   status ??
                   (quotePersisted
-                    ? "Portal ready — Fit sheet remains the site drawing"
+                    ? "Portal ready"
                     : "Quote unlocks the portal link")}
               </div>
             </div>
