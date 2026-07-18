@@ -625,11 +625,7 @@ function SiteCanvasInner({
     });
   }, [mode, titleRevealActive, cadDoc, projectId, applyCad]);
 
-  useEffect(() => {
-    if (mode === "quote" && sheet === "none" && survey) setSheet("qs");
-  }, [mode, sheet, survey]);
-
-  // Auto QS when Quote opens so geo Fit sheet gets quantity anchors.
+  // Auto QS when Quote opens (anchors on Fit sheet) — keep schedule sheet closed.
   useEffect(() => {
     if (mode !== "quote" || titleRevealActive || survey || !progress.hasCad)
       return;
@@ -637,7 +633,6 @@ function SiteCanvasInner({
       try {
         const res = await cadQuantitySurveyAction(projectId);
         setSurvey(res.survey);
-        setSheet("qs");
       } catch {
         /* operator can retry from dock */
       }
@@ -732,11 +727,11 @@ function SiteCanvasInner({
   }, [applyCad, projectId, setMode]);
 
   const acceptAllGhosts = useCallback(() => {
-    run("Accepting AI suggestions…", async () => {
+    run("Verifying AI geometry…", async () => {
       applyCad(await acceptCadAction(projectId));
       setShowFitSheet(true);
       setCadDrawArmed(true);
-      return "AI suggestions accepted — Quote unlocked";
+      return "Geometry verified — Quote unlocked";
     });
   }, [applyCad, projectId]);
 
@@ -753,6 +748,11 @@ function SiteCanvasInner({
         return;
       }
       if (e.key === "Escape") {
+        if (walkMode) {
+          setWalkMode(false);
+          e.preventDefault();
+          return;
+        }
         if (keysHelpOn) {
           setKeysHelpOn(false);
           return;
@@ -834,7 +834,7 @@ function SiteCanvasInner({
         }
         return;
       }
-      if (e.key === " " && mode === "cad") {
+      if (e.key === " " && mode === "cad" && ghostCount === 0) {
         e.preventDefault();
         setCadDrawArmed((v) => !v);
       }
@@ -856,6 +856,7 @@ function SiteCanvasInner({
     showFitSheet,
     titleRevealActive,
     undoLastCad,
+    walkMode,
   ]);
 
   const chipStyle = (anchor: { x: number; y: number }) => {
@@ -998,6 +999,7 @@ function SiteCanvasInner({
           projectId={projectId}
           refreshKey={orchRefresh}
           paper={showFitSheet}
+          compact={mode === "cad" || mode === "sketch"}
           onWorld={setOrchWorld}
         />
       ) : null}
@@ -1367,6 +1369,7 @@ function SiteCanvasInner({
                 rings={clayScene.rings}
                 polylines={clayScene.polylines}
                 plants={clayScene.plants}
+                onRequestExit={() => setWalkMode(false)}
               />
             ) : null}
 
@@ -1412,11 +1415,11 @@ function SiteCanvasInner({
                 className={`${css.emptyHint} ${css.emptyHintAction} ${css.ghostReview}${showFitSheet ? ` ${css.emptyHintPaper}` : ""}`}
                 data-testid="cad-ghost-review"
               >
-                <strong>AI suggestions</strong>
+                <strong>Verify AI geometry</strong>
                 <p>
-                  {ghostCount} AI suggestion
-                  {ghostCount === 1 ? "" : "s"} on the Fit sheet — Accept to
-                  commit and unlock Quote.
+                  {ghostCount} suggestion
+                  {ghostCount === 1 ? "" : "s"} on the Fit sheet — Accept (A)
+                  to verify and unlock Quote.
                 </p>
                 <div className={css.emptyHintActions}>
                   <button
@@ -1863,83 +1866,13 @@ function SiteCanvasInner({
                 </div>
               ) : null}
               <div className={css.btnRow}>
-                <button
-                  type="button"
-                  className={`${css.btn} ${cadDrawArmed ? css.btnPrimary : ""}`}
-                  data-testid="cad-line-draw"
-                  aria-pressed={cadDrawArmed}
-                  onClick={() => setCadDrawArmed((v) => !v)}
-                >
-                  {cadDrawArmed ? "Drawing line…" : "Line"}
-                </button>
-                <button
-                  type="button"
-                  className={`${css.btn} ${showFitSheet ? css.btnPrimary : ""}`}
-                  data-testid="fit-sheet-toggle"
-                  aria-pressed={showFitSheet}
-                  title="Paper working drawing - cream sheet, ink, title block (F)"
-                  onClick={() => {
-                    setShowFitSheet((v) => !v);
-                    setFitNonce((n) => n + 1);
-                  }}
-                >
-                  Fit sheet
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  aria-pressed={showFitDims}
-                  disabled={!showFitSheet}
-                  title="Parcel edge dimensions on Fit sheet (D)"
-                  onClick={() => setShowFitDims((v) => !v)}
-                >
-                  {showFitDims ? "Dims on" : "Dims"}
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  data-testid="fit-sheet"
-                  title="Fit camera to title parcel"
-                  onClick={() => setFitNonce((n) => n + 1)}
-                >
-                  Fit view
-                </button>
-                <button
-                  type="button"
-                  className={`${css.btn}${walkMode ? ` ${css.btnPrimary}` : ""}`}
-                  data-testid="cad-walk"
-                  aria-pressed={walkMode}
-                  title="Clay walkthrough overlay (WASD · Esc unlock)"
-                  onClick={() => setWalkMode((v) => !v)}
-                >
-                  {walkMode ? "Exit walk" : "Walk"}
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  data-testid="cad-undo"
-                  disabled={pending || cadUndoIds.length === 0}
-                  title="Undo last line (⌘/Ctrl+Z)"
-                  onClick={() => undoLastCad()}
-                >
-                  Undo
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  title="Keyboard shortcuts"
-                  aria-pressed={keysHelpOn}
-                  onClick={() => setKeysHelpOn((v) => !v)}
-                >
-                  ?
-                </button>
                 {ghostCount > 0 ? (
                   <button
                     type="button"
                     className={`${css.btn} ${css.btnPrimary}`}
                     disabled={pending}
                     data-testid="cad-accept-ghosts-dock"
-                    title="Accept all AI suggestions (A)"
+                    title="Verify and accept AI geometry (A)"
                     onClick={acceptAllGhosts}
                   >
                     Accept ({ghostCount})
@@ -1963,9 +1896,34 @@ function SiteCanvasInner({
                     data-testid="cad-generate"
                     onClick={draftFitSheet}
                   >
-                    Draft with AI →
+                    Draft with AI
                   </button>
                 )}
+                <button
+                  type="button"
+                  className={`${css.btn} ${cadDrawArmed ? css.btnPrimary : ""}`}
+                  data-testid="cad-line-draw"
+                  aria-pressed={cadDrawArmed}
+                  disabled={ghostCount > 0}
+                  title={
+                    ghostCount > 0
+                      ? "Accept AI geometry before drawing"
+                      : "Line draw (Space)"
+                  }
+                  onClick={() => setCadDrawArmed((v) => !v)}
+                >
+                  {cadDrawArmed ? "Drawing…" : "Line"}
+                </button>
+                <button
+                  type="button"
+                  className={`${css.btn}${walkMode ? ` ${css.btnPrimary}` : ""}`}
+                  data-testid="cad-walk"
+                  aria-pressed={walkMode}
+                  title="Clay walkthrough (WASD · Esc exit)"
+                  onClick={() => setWalkMode((v) => !v)}
+                >
+                  {walkMode ? "Exit walk" : "Walk"}
+                </button>
                 <button
                   type="button"
                   className={css.dockToggle}
@@ -1976,6 +1934,48 @@ function SiteCanvasInner({
               </div>
               {showCadAdvanced ? (
                 <div className={`${css.btnRow} ${css.dockMore}`}>
+                  <button
+                    type="button"
+                    className={`${css.btn} ${showFitSheet ? css.btnPrimary : ""}`}
+                    data-testid="fit-sheet-toggle"
+                    aria-pressed={showFitSheet}
+                    title="Paper working drawing (F)"
+                    onClick={() => {
+                      setShowFitSheet((v) => !v);
+                      setFitNonce((n) => n + 1);
+                    }}
+                  >
+                    Fit sheet
+                  </button>
+                  <button
+                    type="button"
+                    className={css.btn}
+                    aria-pressed={showFitDims}
+                    disabled={!showFitSheet}
+                    title="Parcel edge dimensions (D)"
+                    onClick={() => setShowFitDims((v) => !v)}
+                  >
+                    {showFitDims ? "Dims on" : "Dims"}
+                  </button>
+                  <button
+                    type="button"
+                    className={css.btn}
+                    data-testid="fit-sheet"
+                    title="Fit camera to title parcel"
+                    onClick={() => setFitNonce((n) => n + 1)}
+                  >
+                    Fit view
+                  </button>
+                  <button
+                    type="button"
+                    className={css.btn}
+                    data-testid="cad-undo"
+                    disabled={pending || cadUndoIds.length === 0}
+                    title="Undo last line (⌘/Ctrl+Z)"
+                    onClick={() => undoLastCad()}
+                  >
+                    Undo
+                  </button>
                   {committedCount > 0 || ghostCount > 0 ? (
                     <button
                       type="button"
@@ -1988,7 +1988,7 @@ function SiteCanvasInner({
                           setShowFitSheet(true);
                           setCadDrawArmed(false);
                           return result.ghost_count > 0
-                            ? `${result.ghost_count} AI suggestions — Accept (A) to commit`
+                            ? `${result.ghost_count} to verify — Accept (A)`
                             : "Fit sheet regenerated";
                         })
                       }
@@ -2039,9 +2039,9 @@ function SiteCanvasInner({
                 {error ??
                   status ??
                   (ghostCount > 0
-                    ? `${ghostCount} AI suggestions · A Accept · then Quote unlocks`
+                    ? `${ghostCount} to verify · A Accept · then Quote`
                     : committedCount > 0
-                      ? `${committedCount} committed · Fit sheet ready for Quote`
+                      ? `${committedCount} verified · ready for Quote`
                       : "Draft or draw — Quote unlocks after accept")}
               </div>
             </div>
@@ -2128,22 +2128,10 @@ function SiteCanvasInner({
                 )}
                 <button
                   type="button"
-                  className={`${css.btn} ${showFitSheet ? css.btnPrimary : ""}`}
-                  aria-pressed={showFitSheet}
-                  title="Paper working drawing (F)"
-                  onClick={() => {
-                    setShowFitSheet((v) => !v);
-                    setFitNonce((n) => n + 1);
-                  }}
-                >
-                  Fit sheet
-                </button>
-                <button
-                  type="button"
                   className={`${css.btn}${walkMode ? ` ${css.btnPrimary}` : ""}`}
                   data-testid="quote-walk"
                   aria-pressed={walkMode}
-                  title="Clay walkthrough overlay"
+                  title="Clay walkthrough · Esc exit"
                   onClick={() => setWalkMode((v) => !v)}
                 >
                   {walkMode ? "Exit walk" : "Walk"}
@@ -2154,43 +2142,62 @@ function SiteCanvasInner({
                   aria-expanded={quoteToolsOpen}
                   onClick={() => setQuoteToolsOpen((v) => !v)}
                 >
-                  {quoteToolsOpen ? "Hide ledger" : "Value ledger"}
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  disabled={pending || !progress.hasCad}
-                  onClick={() =>
-                    run("Surveying…", async () => {
-                      const res = await cadQuantitySurveyAction(projectId);
-                      setSurvey(res.survey);
-                      setSheet("qs");
-                      return `${res.survey.rows.length} QS lines on Fit sheet`;
-                    })
-                  }
-                >
-                  QS
-                </button>
-                <button
-                  type="button"
-                  className={css.btn}
-                  disabled={pending || !progress.hasCad}
-                  onClick={() =>
-                    run("Building schedule…", async () => {
-                      const res = await cadBuildAction(projectId, "standard");
-                      setBuild(res.build);
-                      setSurvey(res.build.survey);
-                      setSheet("build");
-                      return `Build total $${res.build.total.toFixed(0)}`;
-                    })
-                  }
-                >
-                  Build
+                  {quoteToolsOpen ? "Hide ledger" : "Ledger"}
                 </button>
               </div>
-              {quoteToolsOpen && tier1 ? (
-                <div className={css.tier1Dock} data-testid="canvas-tier1-quote">
-                  <Tier1SavingsLedger variant="compact" />
+              {quoteToolsOpen ? (
+                <div className={`${css.btnRow} ${css.dockMore}`}>
+                  <button
+                    type="button"
+                    className={`${css.btn} ${showFitSheet ? css.btnPrimary : ""}`}
+                    aria-pressed={showFitSheet}
+                    title="Paper working drawing (F)"
+                    onClick={() => {
+                      setShowFitSheet((v) => !v);
+                      setFitNonce((n) => n + 1);
+                    }}
+                  >
+                    Fit sheet
+                  </button>
+                  <button
+                    type="button"
+                    className={css.btn}
+                    disabled={pending || !progress.hasCad}
+                    onClick={() =>
+                      run("Surveying…", async () => {
+                        const res = await cadQuantitySurveyAction(projectId);
+                        setSurvey(res.survey);
+                        setSheet("qs");
+                        return `${res.survey.rows.length} QS lines on Fit sheet`;
+                      })
+                    }
+                  >
+                    QS schedule
+                  </button>
+                  <button
+                    type="button"
+                    className={css.btn}
+                    disabled={pending || !progress.hasCad}
+                    onClick={() =>
+                      run("Building schedule…", async () => {
+                        const res = await cadBuildAction(projectId, "standard");
+                        setBuild(res.build);
+                        setSurvey(res.build.survey);
+                        setSheet("build");
+                        return `Build total $${res.build.total.toFixed(0)}`;
+                      })
+                    }
+                  >
+                    Build schedule
+                  </button>
+                  {tier1 ? (
+                    <div
+                      className={css.tier1Dock}
+                      data-testid="canvas-tier1-quote"
+                    >
+                      <Tier1SavingsLedger variant="compact" />
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               <div className={`${css.status} ${error ? css.error : ""}`}>

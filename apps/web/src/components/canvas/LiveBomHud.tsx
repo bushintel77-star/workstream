@@ -50,6 +50,8 @@ type Props = {
   refreshKey?: number;
   /** Cream Fit sheet - ink panel instead of glass. */
   paper?: boolean;
+  /** Slim CAD strip: total only until expanded. */
+  compact?: boolean;
   onWorld?: (world: ProjectOrchestrationWorld | null) => void;
 };
 
@@ -68,10 +70,11 @@ export function LiveBomHud({
   projectId,
   refreshKey = 0,
   paper = false,
+  compact = false,
   onWorld,
 }: Props) {
   const [world, setWorld] = useState<ProjectOrchestrationWorld | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(!compact);
   const [activeOverlay, setActiveOverlay] = useState<OverlayProposal | null>(
     null,
   );
@@ -123,7 +126,7 @@ export function LiveBomHud({
 
   const hudClass = `${css.hud}${mutating ? ` ${css.hudMutating}` : ""}${
     skeletal ? ` ${css.hudSkeletal}` : ""
-  }${paper ? ` ${css.hudPaper}` : ""}`;
+  }${paper ? ` ${css.hudPaper}` : ""}${compact ? ` ${css.hudCompact}` : ""}`;
 
   if (!world || world.spatial_facts.length === 0) {
     return (
@@ -187,7 +190,7 @@ export function LiveBomHud({
         </button>
       </div>
 
-      {world.risks.length > 0 ? (
+      {expanded && world.risks.length > 0 ? (
         <div className={css.risks}>
           {world.risks.map((r) => (
             <button
@@ -206,7 +209,7 @@ export function LiveBomHud({
         </div>
       ) : null}
 
-      {activeOverlay && activeOverlay.status === "ready" ? (
+      {expanded && activeOverlay && activeOverlay.status === "ready" ? (
         <div className={css.overlayPanel} data-testid="live-bom-overlay">
           <p className={css.overlayTitle}>{activeOverlay.title}</p>
           <p className={css.overlayDetail}>{activeOverlay.detail}</p>
@@ -249,7 +252,7 @@ export function LiveBomHud({
             </button>
           </div>
         </div>
-      ) : readyOverlays.length > 0 ? (
+      ) : expanded && readyOverlays.length > 0 ? (
         <button
           type="button"
           className={css.toggle}

@@ -29,6 +29,13 @@
   box-shadow: 0 10px 28px rgba(36, 24, 30, 0.1);
 }
 
+.hudCompact {
+  width: min(16rem, calc(100vw - 1.5rem));
+  max-height: none;
+  bottom: 6.25rem;
+  padding: 0.55rem 0.75rem;
+}
+
 .summary {
   display: flex;
   align-items: baseline;

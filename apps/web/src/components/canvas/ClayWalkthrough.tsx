@@ -34,6 +34,8 @@ export type ClayWalkthroughProps = {
   polylines?: ClayPolyline[];
   plants?: ClayPlant[];
   className?: string;
+  /** Esc when look is unlocked (or second Esc) leaves Walk mode. */
+  onRequestExit?: () => void;
 };
 
 const EYE_H = 1.6;
@@ -76,7 +78,7 @@ function openRing(pts: Array<[number, number]>): Array<[number, number]> {
   return pts;
 }
 
-/** Plan (x,y) ? Three (x, yUp, z) with Z = ?planY so +Y plan faces camera ùnorthù. */
+/** Plan (x,y) ? Three (x, yUp, z) with Z = ?planY so +Y plan faces camera "north". */
 function toWorld(x: number, y: number, yUp = 0): THREE.Vector3 {
   return new THREE.Vector3(x, yUp, -y);
 }
@@ -124,11 +126,14 @@ export function ClayWalkthrough({
   polylines = [],
   plants = [],
   className,
+  onRequestExit,
 }: ClayWalkthroughProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const hintRef = useRef<HTMLParagraphElement | null>(null);
+  const exitRef = useRef(onRequestExit);
+  exitRef.current = onRequestExit;
 
-  // Stable scene fingerprint ù avoid remounting Three on parent re-renders
+  // Stable scene fingerprint - avoid remounting Three on parent re-renders
   const sceneKey = JSON.stringify({ rings, polylines, plants });
 
   useEffect(() => {
@@ -252,7 +257,7 @@ export function ClayWalkthrough({
       root.add(fence);
     }
 
-    // Vegetation: icosahedron crowns + thin plane ùleafù sprites (no glTF)
+    // Vegetation: icosahedron crowns + thin plane ¬ùleaf¬ù sprites (no glTF)
     const plantMat = new THREE.MeshMatcapMaterial({
       matcap,
       color: 0xb9b0a6,
@@ -292,9 +297,11 @@ export function ClayWalkthrough({
     };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Escape") {
+        e.preventDefault();
         if (controls.isLocked) {
           controls.unlock();
-          e.preventDefault();
+        } else {
+          exitRef.current?.();
         }
         return;
       }
@@ -320,8 +327,8 @@ export function ClayWalkthrough({
     const updateHint = () => {
       if (!hintRef.current) return;
       hintRef.current.innerHTML = controls.isLocked
-        ? `<kbd>WASD</kbd> move ù <kbd>Esc</kbd> release look`
-        : `Click to look around ù <kbd>WASD</kbd> ù <kbd>Esc</kbd> unlock`;
+        ? "<kbd>WASD</kbd> move - <kbd>Esc</kbd> release look"
+        : "Click to look - <kbd>WASD</kbd> - <kbd>Esc</kbd> exit walk";
     };
     controls.addEventListener("lock", updateHint);
     controls.addEventListener("unlock", updateHint);

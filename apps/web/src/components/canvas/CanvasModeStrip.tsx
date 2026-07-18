@@ -17,11 +17,18 @@ type Props = {
 };
 
 const LOCK_HINT: Record<CanvasMode, string> = {
-  survey: "Start here - load Vicmap title",
-  sketch: "Needs aerial from survey",
-  cad: "Needs title opened - Fit sheet + line draw",
-  quote: "Needs accepted CAD (no pending AI suggestions)",
-  share: "Needs a persisted client quote",
+  survey: "Start here — load Vicmap title",
+  sketch: "Run Survey for aerial, then paint the garden",
+  cad: "Open the title Fit sheet to draft lines",
+  quote: "Accept CAD on the Fit sheet to unlock Quote",
+  share: "Promote a client quote to unlock Share",
+};
+
+const LOCK_LABEL: Partial<Record<CanvasMode, string>> = {
+  sketch: "Survey first",
+  cad: "Open title",
+  quote: "Accept CAD",
+  share: "Save quote",
 };
 
 export function CanvasModeStrip({
@@ -50,7 +57,14 @@ export function CanvasModeStrip({
           <button
             key={m.id}
             type="button"
-            className={`${css.modeBtn} ${mode === m.id ? css.modeBtnActive : ""} ${!open ? css.modeBtnLocked : ""}`}
+            className={`${css.modeBtn} ${mode === m.id ? css.modeBtnActive : ""} ${!open ? css.modeBtnLocked : ""} ${
+              open &&
+              m.id === "quote" &&
+              progress.hasCad &&
+              mode === "cad"
+                ? css.modeBtnReady
+                : ""
+            }`}
             aria-pressed={mode === m.id}
             aria-disabled={!open}
             disabled={!open}
@@ -61,7 +75,11 @@ export function CanvasModeStrip({
             }}
           >
             {m.label}
-            {!open ? <span className={css.modeLock}>Locked</span> : null}
+            {!open ? (
+              <span className={css.modeLock}>
+                {LOCK_LABEL[m.id] ?? "Locked"}
+              </span>
+            ) : null}
           </button>
         );
       })}
