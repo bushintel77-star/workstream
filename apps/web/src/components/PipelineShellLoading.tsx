@@ -10,7 +10,7 @@ type Props = {
   label?: string;
 };
 
-/** Loading skeleton matching ProjectPipelineShell chrome + image grid. */
+/** Loading skeleton for project routes (legacy pipeline chrome retired). */
 export function PipelineShellLoading({
   variant = "content",
   label = "Loading project",

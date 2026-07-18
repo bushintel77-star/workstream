@@ -42,7 +42,7 @@ export function buildStudioAiSuggestions(
       priority: "high",
       title: "Tier-1 architectural massing",
       detail:
-        "36 Wrights Terrace: front entry bluestone + specimen anchors, rear courtyard discipline. Run develop from sketch to lock zones and costing parity.",
+        "36 Wrights Terrace: front entry bluestone + specimen anchors, rear courtyard discipline. Save the sketch, then open Quote to lock zones and costing parity.",
       action: "develop",
     });
   }
@@ -73,9 +73,9 @@ export function buildStudioAiSuggestions(
     out.push({
       id: "develop",
       priority: "high",
-      title: "Develop design from sketch",
+      title: "Promote sketch to quote",
       detail:
-        "Save the plan, then run AI develop to generate zones, species blocks, and quote-ready rationale.",
+        "Save the plan, then open Quote to promote the live BOM and quote-ready rationale.",
       action: "develop",
     });
   }

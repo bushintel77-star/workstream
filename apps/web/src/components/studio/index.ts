@@ -24,7 +24,6 @@ export { StudioWorkflowBadge } from "./StudioWorkflowBadge";
 export { StudioMinimap } from "./StudioMinimap";
 export { StudioZoomHUD } from "./StudioZoomHUD";
 export { StudioDesktopShell } from "./StudioDesktopShell";
-export { StudioDesktopGate } from "./StudioDesktopGate";
 export { StudioChromeProvider } from "./StudioChromeContext";
 export type { StudioShellLayout } from "./studioTypes";
 export { StudioCommandPalette } from "./StudioCommandPalette";

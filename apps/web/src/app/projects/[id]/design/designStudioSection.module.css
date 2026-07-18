@@ -1,9 +1,0 @@
-.wrap {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 100dvh;
-  height: 100dvh;
-  overflow: hidden;
-  background: var(--surface-base);
-}

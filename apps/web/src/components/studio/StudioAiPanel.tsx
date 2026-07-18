@@ -32,7 +32,7 @@ export function StudioAiPanel({
   onSuggestionAction,
   symbolLabel,
 }: Props) {
-  const developHref = `/projects/${projectId}/design/develop`;
+  const quoteHref = `/projects/${projectId}?mode=quote`;
 
   return (
     <div className={ai.panel} data-testid="studio-ai-panel">
@@ -42,7 +42,7 @@ export function StudioAiPanel({
         </h3>
         <p className={ai.heroLead}>
           Scan the aerial for suggested symbol ghosts (confirm before save). Save
-          the sketch, then develop zones and costing from the same account.
+          the sketch, then open Quote to promote the live BOM.
         </p>
       </div>
 
@@ -66,8 +66,8 @@ export function StudioAiPanel({
             </button>
           </>
         ) : null}
-        <Link href={developHref} className={ai.btnSecondary}>
-          Develop from sketch
+        <Link href={quoteHref} className={ai.btnSecondary}>
+          Open quote
         </Link>
       </div>
 
@@ -118,7 +118,7 @@ export function StudioAiPanel({
 function actionLabel(s: StudioAiSuggestion): string {
   switch (s.action) {
     case "develop":
-      return "Open develop";
+      return "Open quote";
     case "save":
       return "Save plan";
     case "trp":

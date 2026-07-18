@@ -25,8 +25,8 @@ export function StudioTier1Banner({ projectId }: Props) {
           net saving {aud(Math.abs(TIER1_WRIGHTS_SAVINGS.net_inc_gst))}
         </p>
       </div>
-      <Link href={`/projects/${projectId}/design/develop`} className={t1.link}>
-        Develop & zones
+      <Link href={`/projects/${projectId}?mode=quote`} className={t1.link}>
+        Quote & zones
       </Link>
     </div>
   );

@@ -1272,7 +1272,7 @@ export function DesignStudio({
       case "develop":
         void (async () => {
           const ok = await handleSave();
-          if (ok) router.push(`/projects/${projectId}/design/develop`);
+          if (ok) router.push(`/projects/${projectId}?mode=quote`);
         })();
         break;
       case "schedule":
@@ -2233,7 +2233,7 @@ export function DesignStudio({
               canUndo={canUndo}
               canRedo={studio.canRedo}
               onScan={handleAiScan}
-              onOpenDevelop={() => router.push(`/projects/${projectId}/design/develop`)}
+              onOpenDevelop={() => router.push(`/projects/${projectId}?mode=quote`)}
               onOpenCad={() => router.push(`/projects/${projectId}/design/cad`)}
               libraryFilter={libraryFilter}
               onLibraryFilter={setLibraryFilter}

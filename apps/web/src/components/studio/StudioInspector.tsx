@@ -102,10 +102,10 @@ export function StudioInspector({
 
       {tier1 ? (
         <Link
-          href={`/projects/${projectId}/design/develop`}
+          href={`/projects/${projectId}?mode=quote`}
           className={ins.tier1Link}
         >
-          Tier-1 zone → View develop
+          Tier-1 zone - Open quote
         </Link>
       ) : null}
 

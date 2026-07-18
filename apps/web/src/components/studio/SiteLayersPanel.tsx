@@ -141,8 +141,8 @@ export function SiteLayersPanel({
             heading="Savings ledger"
             showTarget={false}
             footer={
-              <Link href={`/projects/${projectId}/design/develop`}>
-                Full develop analysis
+              <Link href={`/projects/${projectId}?mode=quote`}>
+                Open quote lens
               </Link>
             }
           />

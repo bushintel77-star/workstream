@@ -97,8 +97,8 @@ export function deriveSiteNextAction(input: {
   if (!input.hasDesign) {
     return {
       kind: "develop",
-      label: "Develop from sketch",
-      sub: "AI honours your layout",
+      label: "Open quote from sketch",
+      sub: "Promote live BOM on the canvas",
     };
   }
   if (!input.hasCosting) {
