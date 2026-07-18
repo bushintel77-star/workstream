@@ -71,6 +71,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
   > = [];
   const _activityEvents: import("./types").ActivityEvent[] = [];
+  const _orchestrationOverlays: import("@workstream/contracts").OrchestrationOverlayRecord[] =
+    [];
   let seeded = false;
 
   function logActivity(
@@ -116,6 +118,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _siteBoundaries,
     _catalogCustom,
     _activityEvents,
+    _orchestrationOverlays,
   };
 
   const flush = opts.persistPath
@@ -1000,6 +1003,41 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
+    },
+
+    async getOrchestrationOverlayRecord(ownerId, projectId) {
+      const row = _orchestrationOverlays.find(
+        (r) => r.owner_id === ownerId && r.project_id === projectId,
+      );
+      return row ? structuredClone(row) : null;
+    },
+
+    async upsertOrchestrationOverlayRecord(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const now = new Date().toISOString();
+      const existing = _orchestrationOverlays.find(
+        (r) => r.owner_id === ownerId && r.project_id === projectId,
+      );
+      if (existing) {
+        existing.dismissed_ids = [...input.dismissed_ids];
+        existing.accepted_ids = [...input.accepted_ids];
+        existing.updated_at = now;
+        flush();
+        return structuredClone(existing);
+      }
+      const row: import("@workstream/contracts").OrchestrationOverlayRecord = {
+        owner_id: ownerId,
+        project_id: projectId,
+        dismissed_ids: [...input.dismissed_ids],
+        accepted_ids: [...input.accepted_ids],
+        updated_at: now,
+      };
+      _orchestrationOverlays.push(row);
+      flush();
+      return structuredClone(row);
     },
 
     async getDesignCanvas(ownerId, projectId) {

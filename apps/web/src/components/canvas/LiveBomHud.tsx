@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type {
   BomLine,
   BomTier,
@@ -63,6 +64,7 @@ function groupByTier(lines: BomLine[]): Map<BomTier, BomLine[]> {
 }
 
 export function LiveBomHud({ projectId, refreshKey = 0, onWorld }: Props) {
+  const router = useRouter();
   const [world, setWorld] = useState<ProjectOrchestrationWorld | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [activeOverlay, setActiveOverlay] = useState<OverlayProposal | null>(
@@ -196,6 +198,7 @@ export function LiveBomHud({ projectId, refreshKey = 0, onWorld }: Props) {
                   setActiveOverlay(null);
                   if (res.placed) {
                     requestOrchestrationRefresh();
+                    router.refresh();
                   }
                 })
               }

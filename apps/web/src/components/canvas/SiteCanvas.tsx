@@ -66,7 +66,12 @@ import {
 } from "./DraftingAssist";
 import { TitleParcelOverlay } from "./TitleParcelOverlay";
 import { Tier1SavingsLedger, Tier1ZoneCards } from "../tier1";
+import { CanvasLayerToggles } from "./CanvasLayerToggles";
 import css from "./siteCanvas.module.css";
+import {
+  DEFAULT_CANVAS_VIEW_LAYERS,
+  type CanvasViewLayers,
+} from "../../lib/canvas-view-layers";
 
 export type SketchBundle = {
   aerialUri: string;
@@ -137,6 +142,9 @@ function SiteCanvasInner({
   );
   const [showGuide, setShowGuide] = useState(
     () => searchParams.get("guide") === "1",
+  );
+  const [viewLayers, setViewLayers] = useState<CanvasViewLayers>(
+    DEFAULT_CANVAS_VIEW_LAYERS,
   );
   const [sketchCount, setSketchCount] = useState(
     () => sketch?.canvas?.placements?.length ?? 0,
@@ -443,11 +451,13 @@ function SiteCanvasInner({
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
-            <div
-              className={css.draftGrid}
-              aria-hidden
-              data-testid="canvas-draft-grid"
-            />
+            {viewLayers.draftGrid ? (
+              <div
+                className={css.draftGrid}
+                aria-hidden
+                data-testid="canvas-draft-grid"
+              />
+            ) : null}
             <div
               className={css.world}
               style={{
@@ -480,7 +490,7 @@ function SiteCanvasInner({
                   }}
                 />
               )}
-              {mapView && lotRing.length >= 3 ? (
+              {mapView && lotRing.length >= 3 && viewLayers.titleParcel ? (
                 <TitleParcelOverlay lotRing={lotRing} mapView={mapView} />
               ) : null}
               {mode === "sketch" && sketch ? (
@@ -494,6 +504,7 @@ function SiteCanvasInner({
                   worldWidthPx={worldSize.width}
                   worldHeightPx={worldSize.height}
                   tier1={tier1}
+                  showGhostSuggestions={viewLayers.ghostSuggestions}
                   measureActive={measureActive}
                   onToggleMeasure={() => {
                     setMeasureActive((on) => {
@@ -545,6 +556,7 @@ function SiteCanvasInner({
                   </span>
                 ))}
               {(mode === "cad" || mode === "quote") &&
+                viewLayers.orchestrationChips &&
                 orchWorld?.overlays
                   .filter((o) => o.status === "ready")
                   .map((o) =>
@@ -643,6 +655,8 @@ function SiteCanvasInner({
             {showBoundary && boundary ? (
               <BoundaryStatusHud boundary={boundary} embedded />
             ) : null}
+
+            <CanvasLayerToggles layers={viewLayers} onChange={setViewLayers} />
 
             {(mode === "quote" || mode === "cad") &&
             sheet !== "none" &&

@@ -7,29 +7,35 @@ import type {
 import { buildOrchestrationWorld } from "@workstream/domain";
 import type { Store } from "@workstream/db";
 
-type ProjectKey = string;
-
 type OverlayState = {
   dismissed: Set<string>;
   accepted: Set<string>;
-  /** Last computed fingerprint — for stale detection. */
   lastFingerprint?: string;
 };
 
-const overlayState = new Map<ProjectKey, OverlayState>();
-
-function key(ownerId: string, projectId: string): ProjectKey {
-  return `${ownerId}:${projectId}`;
+async function loadOverlayState(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+): Promise<OverlayState> {
+  const record = await store.getOrchestrationOverlayRecord(ownerId, projectId);
+  return {
+    dismissed: new Set(record?.dismissed_ids ?? []),
+    accepted: new Set(record?.accepted_ids ?? []),
+    lastFingerprint: undefined,
+  };
 }
 
-function stateFor(ownerId: string, projectId: string): OverlayState {
-  const k = key(ownerId, projectId);
-  let s = overlayState.get(k);
-  if (!s) {
-    s = { dismissed: new Set(), accepted: new Set() };
-    overlayState.set(k, s);
-  }
-  return s;
+async function saveOverlayState(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+  st: OverlayState,
+): Promise<void> {
+  await store.upsertOrchestrationOverlayRecord(ownerId, projectId, {
+    dismissed_ids: [...st.dismissed],
+    accepted_ids: [...st.accepted],
+  });
 }
 
 /** Build live orchestration world from store (deterministic + preemptive). */
@@ -45,7 +51,7 @@ export async function getOrchestrationWorld(
     store.listCatalogSymbols(ownerId),
     store.listRateCard(ownerId),
   ]);
-  const st = stateFor(ownerId, projectId);
+  const st = await loadOverlayState(store, ownerId, projectId);
   const world = buildOrchestrationWorld({
     projectId,
     canvas,
@@ -57,9 +63,8 @@ export async function getOrchestrationWorld(
     acceptedOverlayIds: st.accepted,
   });
   if (st.lastFingerprint && st.lastFingerprint !== world.fingerprint) {
-    world.stale = false; // recomputed fresh
+    world.stale = false;
   }
-  st.lastFingerprint = world.fingerprint;
   return world;
 }
 
@@ -78,9 +83,10 @@ export async function dismissOverlay(
   projectId: string,
   proposalId: string,
 ): Promise<ProjectOrchestrationWorld> {
-  const st = stateFor(ownerId, projectId);
+  const st = await loadOverlayState(store, ownerId, projectId);
   st.dismissed.add(proposalId);
   st.accepted.delete(proposalId);
+  await saveOverlayState(store, ownerId, projectId, st);
   return getOrchestrationWorld(store, ownerId, projectId);
 }
 
@@ -101,9 +107,10 @@ export async function acceptOverlay(
     return { world: worldBefore, overlay: null, placed: null };
   }
 
-  const st = stateFor(ownerId, projectId);
+  const st = await loadOverlayState(store, ownerId, projectId);
   st.accepted.add(proposalId);
   st.dismissed.delete(proposalId);
+  await saveOverlayState(store, ownerId, projectId, st);
 
   let placed: CatalogPlacement | null = null;
   const symbolId = overlay.suggest_symbol_id;
@@ -148,7 +155,7 @@ export async function acceptOverlay(
   return { world, overlay, placed };
 }
 
-/** Test helper — clear in-memory overlay decisions. */
+/** Test helper — no-op; overlay state lives in store now. */
 export function resetOrchestrationStateForTests(): void {
-  overlayState.clear();
+  /* persisted in store between calls in same store instance */
 }

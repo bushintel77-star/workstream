@@ -61,6 +61,7 @@ type Props = {
   worldHeightPx?: number;
   /** Tier-1 Wrights Terrace coaching path. */
   tier1?: boolean;
+  showGhostSuggestions?: boolean;
   /** Promote sketch → working drawing on the same canvas. */
   onDraftCad?: () => void;
   /** Jump to quote lens (AI coaching "quote" action). */
@@ -131,6 +132,7 @@ export function SketchInstrument({
   worldWidthPx = 900,
   worldHeightPx = 640,
   tier1 = false,
+  showGhostSuggestions = true,
   onDraftCad,
   onGoToQuote,
   onRegisterCommands,
@@ -727,11 +729,11 @@ export function SketchInstrument({
         onPointerCancel={onPointerUp}
       >
         <SketchGhostLayer
-          ghosts={ephemeralGhosts}
+          ghosts={showGhostSuggestions ? ephemeralGhosts : []}
           symbolById={symbolById}
           onAccept={acceptGhost}
           onDismiss={dismissGhost}
-          scanning={ghostScanning}
+          scanning={showGhostSuggestions && ghostScanning}
         />
         {placements.map((p) => {
           const sym = symbolById.get(p.symbol_id);

@@ -139,3 +139,15 @@ export const DismissOverlayInputSchema = z.object({
   proposal_id: z.string().min(1),
 });
 export type DismissOverlayInput = z.infer<typeof DismissOverlayInputSchema>;
+
+/** Persisted accept/dismiss decisions for preemptive overlay proposals. */
+export const OrchestrationOverlayRecordSchema = z.object({
+  owner_id: z.string(),
+  project_id: z.string().uuid(),
+  dismissed_ids: z.array(z.string()).default([]),
+  accepted_ids: z.array(z.string()).default([]),
+  updated_at: z.string().datetime(),
+});
+export type OrchestrationOverlayRecord = z.infer<
+  typeof OrchestrationOverlayRecordSchema
+>;

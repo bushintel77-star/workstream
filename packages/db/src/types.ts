@@ -42,6 +42,7 @@ import type {
   ProjectFileKind,
   ActivityEvent,
   ActivityAction,
+  OrchestrationOverlayRecord,
 } from "@workstream/contracts";
 
 export type {
@@ -88,6 +89,7 @@ export type {
   ProjectFileKind,
   ActivityEvent,
   ActivityAction,
+  OrchestrationOverlayRecord,
 };
 
 export type PhotoMeasurementInput = Omit<
@@ -309,6 +311,15 @@ export interface Store {
     projectId: string,
   ): Promise<ActivityEvent[]>;
   listWorkspaceActivityEvents(ownerId: string): Promise<ActivityEvent[]>;
+  getOrchestrationOverlayRecord(
+    ownerId: string,
+    projectId: string,
+  ): Promise<OrchestrationOverlayRecord | null>;
+  upsertOrchestrationOverlayRecord(
+    ownerId: string,
+    projectId: string,
+    input: Pick<OrchestrationOverlayRecord, "dismissed_ids" | "accepted_ids">,
+  ): Promise<OrchestrationOverlayRecord>;
   seedDefaults(): Promise<void>;
 }
 
