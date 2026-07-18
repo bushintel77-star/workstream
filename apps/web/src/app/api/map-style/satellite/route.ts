@@ -1,6 +1,6 @@
 /**
  * Free MapLibre-compatible satellite raster style (Esri World Imagery).
- * Streets use demotiles / OpenFreeMap from /api/map-config — no token required.
+ * Streets use demotiles / OpenFreeMap from /api/map-config â€” no token required.
  * Swap tiles here if Esri ToS or rate limits become an issue (e.g. USGS NAIP).
  */
 const SATELLITE_STYLE = {
@@ -14,7 +14,7 @@ const SATELLITE_STYLE = {
       ],
       tileSize: 256,
       attribution:
-        "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+        "Tiles Â© Esri â€” Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
       maxzoom: 19,
     },
   },

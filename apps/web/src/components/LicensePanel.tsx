@@ -80,7 +80,7 @@ export function LicensePanel({
       <div className={s.cardHead}>
         <h2 className={s.cardTitle}>{license.product_name}</h2>
         <span className={`${s.pill} ${isStudio ? s.pillOk : s.pillInfo}`}>
-          {isStudio ? "Studio · live integrations" : "Lite · 1 operator"}
+          {isStudio ? "Studio Â· live integrations" : "Lite Â· 1 operator"}
         </span>
       </div>
 
@@ -117,7 +117,7 @@ export function LicensePanel({
               onClick={runStudioCheckout}
             >
               {pending
-                ? "Starting…"
+                ? "StartingÂ…"
                 : studioPriceConfigured
                   ? "Upgrade to Studio"
                   : "Unlock Studio (dev)"}
@@ -146,7 +146,7 @@ export function LicensePanel({
               onClick={runSeatCheckout}
             >
               {pending
-                ? "Starting…"
+                ? "StartingÂ…"
                 : seatPriceConfigured
                   ? "Add seat"
                   : "Add seat (dev)"}

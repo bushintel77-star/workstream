@@ -161,8 +161,8 @@ export function ClayWalkthrough({
     const locked = controlsRef.current?.isLocked ?? false;
     hintRef.current.classList.remove(css.hintSettled);
     hintRef.current.innerHTML = locked
-      ? "<kbd>WASD</kbd> move ∑ <kbd>Esc</kbd> release ∑ twice to exit"
-      : "Click to look ∑ <kbd>WASD</kbd> ∑ <kbd>Esc</kbd> exit walk";
+      ? "<kbd>WASD</kbd> move ¬∑ <kbd>Esc</kbd> release ¬∑ twice to exit"
+      : "Click to look ¬∑ <kbd>WASD</kbd> ¬∑ <kbd>Esc</kbd> exit walk";
   }, [chromeVisible]);
 
   // Stable scene fingerprint - avoid remounting Three on parent re-renders
@@ -367,13 +367,13 @@ export function ClayWalkthrough({
       el.classList.remove(css.hintSettled);
       if (controls.isLocked) {
         el.innerHTML =
-          "<kbd>WASD</kbd> move ù <kbd>Esc</kbd> release ù twice to exit";
+          "<kbd>WASD</kbd> move ¬ù <kbd>Esc</kbd> release ¬ù twice to exit";
         hintSettleTimer = window.setTimeout(() => {
           el.classList.add(css.hintSettled);
         }, 2200);
       } else {
         el.innerHTML =
-          "Click to look ù <kbd>WASD</kbd> ù <kbd>Esc</kbd> exit walk";
+          "Click to look ¬ù <kbd>WASD</kbd> ¬ù <kbd>Esc</kbd> exit walk";
       }
     };
     controls.addEventListener("lock", updateHint);
