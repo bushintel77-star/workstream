@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { PctPoint } from "../../geometry";
+import { TactileGround } from "../ground/TactileGround";
 import css from "./aerialSlot.module.css";
 
 export type CanopyImagePayload = {
@@ -14,21 +16,35 @@ type Props = {
   dimmed: boolean;
   frameOn: boolean;
   scanning: boolean;
+  zoom?: number;
+  scaleM?: number;
+  darkOn?: boolean;
+  boundary?: PctPoint[];
+  building?: PctPoint[];
+  siteLabel?: string | null;
+  /** Keep parchment as soft underlay when aerial is present (default true). */
+  parchmentUnderlay?: boolean;
   onUri: (uri: string | null) => void;
   onScanning: (v: boolean) => void;
-  /** Preferred path — AI engine runs canopy clustering. */
   onCanopyImage: (image: CanopyImagePayload) => void;
 };
 
 /**
- * Aerial drag-and-drop slot. On fill, samples pixels and hands them to the
- * studio AI engine for canopy proposals (not a local bolt-on mapper).
+ * Site plane: tactile parchment ground always present; aerial cross-fades above
+ * as a soft underlay stack — never a sterile void / checkerboard.
  */
 export function AerialSlot({
   uri,
   dimmed,
   frameOn,
   scanning,
+  zoom = 1,
+  scaleM = 110,
+  darkOn = false,
+  boundary = [],
+  building = [],
+  siteLabel = null,
+  parchmentUnderlay = true,
   onUri,
   onScanning,
   onCanopyImage,
@@ -36,7 +52,12 @@ export function AerialSlot({
   const inputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [aerialReady, setAerialReady] = useState(false);
   const scannedFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    setAerialReady(false);
+  }, [uri]);
 
   const runCanopyScan = useCallback(
     async (src: string) => {
@@ -91,11 +112,21 @@ export function AerialSlot({
     reader.readAsDataURL(file);
   };
 
+  const showAerial = Boolean(uri) && !frameOn;
+  const parchmentStrength = parchmentUnderlay
+    ? showAerial && aerialReady
+      ? 0.42
+      : 1
+    : showAerial && aerialReady
+      ? 0
+      : 1;
+
   return (
     <div
       className={css.slot}
       data-testid="aerial-image-slot"
       data-filled={uri ? "true" : "false"}
+      data-ground="tactile-parchment"
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);
@@ -117,23 +148,59 @@ export function AerialSlot({
         className={css.file}
         onChange={(e) => acceptFile(e.target.files?.[0] ?? null)}
       />
+
+      <TactileGround
+        zoom={zoom}
+        scaleM={scaleM}
+        parchmentStrength={parchmentStrength}
+        hasAerial={showAerial && aerialReady}
+        darkOn={darkOn}
+        boundary={boundary}
+        building={building}
+        siteLabel={
+          siteLabel
+            ? `${siteLabel} · ghost cadastral`
+            : uri
+              ? null
+              : "Drop aerial or sketch on parchment"
+        }
+      />
+
       {uri ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           ref={imgRef}
           src={uri}
           alt=""
-          className={css.img}
-          style={{ opacity: frameOn ? 0 : dimmed ? 0.78 : 1 }}
+          className={`${css.img}${aerialReady ? ` ${css.imgReady}` : ""}`}
+          style={{
+            opacity: frameOn
+              ? 0
+              : dimmed
+                ? aerialReady
+                  ? 0.72
+                  : 0
+                : aerialReady
+                  ? parchmentUnderlay
+                    ? 0.88
+                    : 1
+                  : 0,
+          }}
           draggable={false}
+          onLoad={() => setAerialReady(true)}
         />
-      ) : (
-        <div className={`${css.empty}${dragOver ? ` ${css.emptyHot}` : ""}`}>
-          Drop Mapbox aerial screenshot here (2D top-down)
-          <br />
-          or browse files
+      ) : null}
+
+      {!uri ? (
+        <div
+          className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
+          data-testid="aerial-drop-cue"
+        >
+          Drop a top-down aerial to ground this site
+          <span>Parchment stays as a soft underlay</span>
         </div>
-      )}
+      ) : null}
+
       {scanning ? (
         <div className={css.scanPill} data-testid="canopy-scanning">
           <span className={css.scanDot} />

@@ -3,8 +3,12 @@
 Each capability is a self-contained feature module under `features/`.
 The shell (`HandoffDesignStudio`) only composes chrome + mounts features.
 
-**Canvas-first (Workflow 1):** `%` board space is the drawing plane. Invisible UI
-(ambient ribbon, selection rings, calm compliance) keeps cognition on geometry.
+**Canvas-first (Workflow 1):** `%` board space is the drawing plane. The default
+plane is **tactile parchment ground** (adaptive metric mesh + true-north rose +
+ghost cadastral) — never a sterile void. Aerial/survey cross-fades above with
+parchment kept as a soft underlay. Invisible UI (ambient ribbon, selection rings,
+calm compliance) keeps cognition on geometry.
+
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
 studio surface here until that schema brief lands.
@@ -19,6 +23,7 @@ studio surface here until that schema brief lands.
 | `features/cadPlan/` | Aerial, SVG polys, symbol placements, corner/mid handles, dim labels, edit banner |
 | `features/aiGhosts/` | Coach dock (primary), ghost review, confidence factors, accept/reject/cycle, Ask AI |
 | `features/utilityDrawer/` | Right-hand Compliance + Live BOM hub — indicator tabs, sheet overlay while drawing |
+| `features/ground/` | Tactile parchment earth, adaptive metric grid, compass, ghost cadastral |
 | `features/ambient/` | Proximity left ribbon — dormant blur strip, layer chips with counts |
 | `features/selectionRing/` | Contextual radial UI on selected asset (material / peel / lock / delete) |
 | `features/layers/` | Four opacity sliders + setback toggle |

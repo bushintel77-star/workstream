@@ -513,6 +513,13 @@ export function HandoffDesignStudio({
               dimmed={ui.darkOn}
               frameOn={ui.frameOn}
               scanning={ui.canopyScanning || ai.busy === "scanning"}
+              zoom={ui.zoom}
+              scaleM={110}
+              darkOn={ui.darkOn}
+              boundary={studio.boundary}
+              building={studio.building}
+              siteLabel={displayAddress}
+              parchmentUnderlay
               onUri={(uri) => studio.setUi({ aerialUri: uri })}
               onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
               onCanopyImage={ai.ingestCanopyImage}
