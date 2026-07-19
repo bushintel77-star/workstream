@@ -15,6 +15,7 @@ import {
   getAudit,
   getDesign,
   getProject,
+  listProjects,
   getSurvey,
   saveDesignCanvasApi,
   createCatalogSymbolApi,
@@ -46,6 +47,14 @@ function wrapApiError(err: unknown, fallback: string): Error {
 }
 
 /* -- Projects --------------------------------------------------------- */
+
+export async function listProjectsAction() {
+  try {
+    return await listProjects();
+  } catch (err) {
+    throw wrapApiError(err, "Could not load sites");
+  }
+}
 
 export async function geocodeSearchAction(query: string) {
   try {

@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { listProjects, type Project } from "../../lib/api";
+import { listProjectsAction } from "../../app/actions";
 import css from "./siteSwitcherPopover.module.css";
+
+type SiteRow = {
+  id: string;
+  address: string;
+};
 
 type Props = {
   currentProjectId: string;
@@ -15,13 +20,15 @@ export function SiteSwitcherPopover({
   buttonClassName,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [sites, setSites] = useState<Project[]>([]);
+  const [sites, setSites] = useState<SiteRow[]>([]);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    void listProjects()
-      .then(setSites)
+    void listProjectsAction()
+      .then((rows) =>
+        setSites(rows.map((p) => ({ id: p.id, address: p.address }))),
+      )
       .catch(() => setSites([]));
   }, [open]);
 
