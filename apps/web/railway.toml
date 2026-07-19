@@ -23,3 +23,5 @@ startCommand = "node apps/web/server.js"
 # deploy bump 2026-07-19 14:48 — CAD/survey/sketch prototype fix
 
 # deploy bump 2026-07-19 14:53 — single-owner plane
+
+# deploy bump 2026-07-19 14:58 — sheet spacing / chrome hierarchy
