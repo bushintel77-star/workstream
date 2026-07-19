@@ -1,0 +1,213 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BY_TYPE, type StudioItemType } from "../../studioCatalog";
+import css from "./commandPalette.module.css";
+
+export type StudioCommand = {
+  id: string;
+  label: string;
+  detail: string;
+  keywords: string;
+  run: () => void;
+};
+
+type Props = {
+  open: boolean;
+  query: string;
+  onQuery: (q: string) => void;
+  onClose: () => void;
+  onAskAi: (query: string) => void;
+  onArm: (t: StudioItemType) => void;
+  onScanGhosts: () => void;
+  onToggleFitSheet: () => void;
+  onGoQuote: () => void;
+  onToggleFocus: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+};
+
+function matches(cmd: StudioCommand, q: string) {
+  if (!q.trim()) return true;
+  const hay = `${cmd.label} ${cmd.detail} ${cmd.keywords}`.toLowerCase();
+  return q
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((tok) => hay.includes(tok));
+}
+
+export function StudioCommandPalette({
+  open,
+  query,
+  onQuery,
+  onClose,
+  onAskAi,
+  onArm,
+  onScanGhosts,
+  onToggleFitSheet,
+  onGoQuote,
+  onToggleFocus,
+  onUndo,
+  onRedo,
+}: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [active, setActive] = useState(0);
+
+  const commands = useMemo<StudioCommand[]>(() => {
+    const base: StudioCommand[] = [
+      {
+        id: "ask-ai",
+        label: query.trim() ? `Ask AI: ${query.trim()}` : "Ask AI sketch assistant",
+        detail: "Propose canopy ghosts from natural language — accept to commit",
+        keywords: "ai assist ask natural language",
+        run: () => onAskAi(query.trim() || "shade the west glazing"),
+      },
+      {
+        id: "scan-ghosts",
+        label: "Scan for AI ghosts",
+        detail: "Seed layout suggestions on this working drawing",
+        keywords: "scan ghost ai suggest",
+        run: onScanGhosts,
+      },
+      {
+        id: "fit-sheet",
+        label: "Toggle Fit sheet",
+        detail: "A3/A4 cream paper working drawing with schedule",
+        keywords: "fit sheet a3 a4 paper frame",
+        run: onToggleFitSheet,
+      },
+      {
+        id: "quote",
+        label: "Open quote",
+        detail: "Live BOM and Tier-1 value ledger",
+        keywords: "quote bom price tier1",
+        run: onGoQuote,
+      },
+      {
+        id: "focus",
+        label: "Toggle focus mode",
+        detail: "Hide docks for clean drafting",
+        keywords: "focus chrome hide",
+        run: onToggleFocus,
+      },
+      {
+        id: "undo",
+        label: "Undo",
+        detail: "Revert last mutate",
+        keywords: "undo history",
+        run: onUndo,
+      },
+      {
+        id: "redo",
+        label: "Redo",
+        detail: "Restore undone mutate",
+        keywords: "redo history",
+        run: onRedo,
+      },
+    ];
+
+    const arm: StudioCommand[] = (
+      Object.keys(BY_TYPE) as StudioItemType[]
+    )
+      .filter((t) => !BY_TYPE[t].existing)
+      .map((t) => ({
+        id: `arm-${t}`,
+        label: `Place ${BY_TYPE[t].name}`,
+        detail: "Arm Add tool — click plan to place",
+        keywords: `${BY_TYPE[t].name} ${BY_TYPE[t].tag} add place`,
+        run: () => onArm(t),
+      }));
+
+    return [...base, ...arm];
+  }, [
+    onArm,
+    onAskAi,
+    onGoQuote,
+    onRedo,
+    onScanGhosts,
+    onToggleFitSheet,
+    onToggleFocus,
+    onUndo,
+    query,
+  ]);
+
+  const filtered = useMemo(
+    () => commands.filter((c) => matches(c, query)),
+    [commands, query],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    setActive(0);
+    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  useEffect(() => {
+    setActive(0);
+  }, [query]);
+
+  if (!open) return null;
+
+  const runAt = (idx: number) => {
+    const cmd = filtered[idx];
+    if (!cmd) return;
+    cmd.run();
+    onClose();
+  };
+
+  return (
+    <div className={css.backdrop} data-testid="canvas-command-palette" onClick={onClose}>
+      <div
+        className={css.panel}
+        role="dialog"
+        aria-label="Command palette"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            onClose();
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActive((i) => Math.min(filtered.length - 1, i + 1));
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActive((i) => Math.max(0, i - 1));
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            runAt(active);
+          }
+        }}
+      >
+        <input
+          ref={inputRef}
+          className={css.input}
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+          placeholder="Ask AI or run a command…"
+          aria-label="Command search"
+        />
+        <ul className={css.list}>
+          {filtered.map((cmd, i) => (
+            <li key={cmd.id}>
+              <button
+                type="button"
+                className={css.row}
+                data-active={i === active ? "true" : "false"}
+                onMouseEnter={() => setActive(i)}
+                onClick={() => runAt(i)}
+              >
+                <span className={css.label}>{cmd.label}</span>
+                <span className={css.detail}>{cmd.detail}</span>
+              </button>
+            </li>
+          ))}
+          {filtered.length === 0 ? (
+            <li className={css.empty}>No matching commands</li>
+          ) : null}
+        </ul>
+      </div>
+    </div>
+  );
+}

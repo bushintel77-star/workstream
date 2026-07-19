@@ -1,0 +1,90 @@
+.dock {
+  position: absolute;
+  left: 72px;
+  bottom: 14px;
+  z-index: 12;
+  width: min(220px, calc(100vw - 100px));
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 246, 248, 0.9);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(36, 19, 24, 0.08);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  color: #241318;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b08a95;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.passPill {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "IBM Plex Mono", monospace;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(47, 143, 91, 0.14);
+  color: #2f8f5b;
+}
+
+.metricKey {
+  margin: 0;
+  font-size: 10px;
+  color: #7a5560;
+}
+
+.metricVal {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.ok {
+  color: #2f8f5b;
+}
+
+.bad {
+  color: #c2455f;
+}
+
+.bar {
+  position: relative;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 99px;
+  background: rgba(36, 19, 24, 0.08);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 99px;
+  background: #2f8f5b;
+}
+
+.barTick {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 10px;
+  background: #241318;
+  opacity: 0.45;
+}

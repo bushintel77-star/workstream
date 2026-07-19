@@ -709,6 +709,37 @@
   font-weight: 500;
 }
 
+.ghostPanel {
+  position: absolute;
+  left: 50%;
+  top: 60px;
+  transform: translateX(-50%);
+  z-index: 22;
+}
+
+.addStrip {
+  position: absolute;
+  left: 72px;
+  top: 14px;
+  z-index: 14;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: min(420px, calc(100% - 300px));
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 246, 248, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.addStrip .chip {
+  flex: none;
+  padding: 0 10px;
+  min-height: 28px;
+  height: auto;
+}
+
 .elev {
   position: absolute;
   inset: 0;
