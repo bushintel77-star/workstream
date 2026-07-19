@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
-import { isTier1WrightsTerrace } from "@workstream/domain";
+import {
+  isTier1WrightsTerrace,
+  type StudioEstimateReport,
+} from "@workstream/domain";
 import { Tier1SavingsLedger } from "../../../../tier1";
-import { bomLines, type StudioItem } from "../../studioCatalog";
 import css from "./quote.module.css";
 
 type Props = {
   address: string;
-  items: StudioItem[];
+  estimate: StudioEstimateReport;
   draftUnverified?: boolean;
   pendingGhosts?: number;
   onReviewGhosts?: () => void;
@@ -23,20 +24,18 @@ const aud = (n: number) =>
   }).format(n);
 
 /**
- * Quote lens — live BOM total + Wrights Terrace Tier-1 value ledger when address matches.
+ * Quote lens — same continuous preemptive estimate as Live BOM (no mode math split).
  */
 export function QuoteSurface({
   address,
-  items,
+  estimate,
   draftUnverified = false,
   pendingGhosts = 0,
   onReviewGhosts,
   onBack,
 }: Props) {
-  const lines = useMemo(() => bomLines(items), [items]);
-  const materials = lines.reduce((a, r) => a + r.amt, 0);
-  const total = Math.round((materials + 4378) * 0.92);
   const tier1 = isTier1WrightsTerrace(address);
+  const lines = estimate.lines.filter((l) => l.total > 0).slice(0, 18);
 
   return (
     <div className={css.root} data-testid="quote-surface">
@@ -57,16 +56,24 @@ export function QuoteSurface({
           </div>
         ) : null}
         <p className={css.kicker}>Indicative quote</p>
-        <h2 className={css.total}>{aud(total)}</h2>
+        <h2 className={css.total}>{aud(estimate.totalInclGst)}</h2>
         <p className={css.lead}>
-          Incl. GST from the live BOM on this working drawing. Not a formal tender —
-          promote from Share when the client is ready.
+          Incl. GST from the live preemptive BOM on this working drawing. Not a
+          formal tender — promote from Share when the client is ready.
         </p>
         <ul className={css.lines}>
           {lines.map((row) => (
-            <li key={row.name}>
-              <span>{row.name}</span>
-              <span>{aud(row.amt)}</span>
+            <li key={row.id}>
+              <span>
+                {row.label}
+                {row.qty > 0 ? (
+                  <small>
+                    {" "}
+                    · {row.qty} {row.unit}
+                  </small>
+                ) : null}
+              </span>
+              <span>{aud(row.total)}</span>
             </li>
           ))}
         </ul>

@@ -30,6 +30,8 @@ import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { StudioCoachMarks } from "./features/coach/StudioCoachMarks";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
+import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
+import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ITEM_LAYER } from "./state/studioTypes";
 import type { StudioAiSuggestion } from "@workstream/domain";
 import css from "./handoffStudio.module.css";
@@ -63,7 +65,7 @@ export function HandoffDesignStudio({
       ? initialMode
       : "cad",
   });
-  const { ui, ai, compliance } = studio;
+  const { ui, ai, compliance, estimate, acceptHorizonCard } = studio;
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
 
@@ -216,6 +218,11 @@ export function HandoffDesignStudio({
   const liveAerial = ui.aerialUri ?? aerialUri;
   const flaggedIds = new Set<string>(
     compliance.alerts.flatMap((a: { sourceIds: string[] }) => a.sourceIds),
+  );
+
+  const openHorizon = estimate.horizon.filter((h) => !ui.mitigated[h.id]);
+  const actionHorizon = openHorizon.filter(
+    (h) => h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer",
   );
 
   const tpzReadouts = compliance.alerts
@@ -492,7 +499,7 @@ export function HandoffDesignStudio({
         {ui.mode === "quote" ? (
           <QuoteSurface
             address={displayAddress}
-            items={studio.items}
+            estimate={estimate}
             draftUnverified={ai.status === "unverified"}
             pendingGhosts={ai.pendingCount}
             onReviewGhosts={() => {
@@ -586,6 +593,21 @@ export function HandoffDesignStudio({
               onMoveGroup={studio.moveGroup}
               onTransformItem={studio.transformItem}
             />
+            {chromeLive && !drawingHot ? (
+              <HorizonMarkers
+                cards={actionHorizon}
+                onFocus={(card) => {
+                  if (card.suggestType) {
+                    acceptHorizonCard(card);
+                    return;
+                  }
+                  studio.setUi({
+                    utilityPanel: "bom",
+                    coachOpen: true,
+                  });
+                }}
+              />
+            ) : null}
             {ui.mode === "sketch" ? (
               <SketchBoard
                 strokes={studio.strokes}
@@ -710,6 +732,7 @@ export function HandoffDesignStudio({
               outdoorM2={outdoor}
               boundary={studio.boundary}
               items={studio.items}
+              estimate={estimate}
               mitigated={ui.mitigated}
               complianceSignal={compliance.canvasSignal}
               compliancePass={
@@ -739,6 +762,17 @@ export function HandoffDesignStudio({
                 studio.setUi({ utilityPanel: "compliance", setbackOn: true })
               }
             />
+            {!drawingHot ? (
+              <PreemptiveHorizon
+                cards={actionHorizon}
+                onAccept={acceptHorizonCard}
+                onDismiss={(id) =>
+                  studio.setUi({
+                    mitigated: { ...ui.mitigated, [id]: true },
+                  })
+                }
+              />
+            ) : null}
           </>
         ) : null}
 

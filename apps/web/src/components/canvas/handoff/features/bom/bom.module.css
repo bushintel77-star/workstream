@@ -27,6 +27,28 @@
   box-shadow: none;
 }
 
+.meta {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: #7a5560;
+  line-height: 1.35;
+}
+
+.shadowHead {
+  margin-top: 4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b08a95;
+}
+
+.shadowLine span:first-child {
+  color: #7a5560;
+  font-size: 10.5px;
+}
+
 .head {
   display: flex;
   align-items: center;

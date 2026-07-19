@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { bomLines, type StudioItem } from "../../studioCatalog";
+import type { StudioEstimateReport } from "@workstream/domain";
+import type { StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import { ComplianceDock } from "../compliance/ComplianceDock";
 import { LiveBomDock } from "../bom/LiveBomDock";
@@ -16,6 +17,7 @@ type Props = {
   outdoorM2: number;
   boundary: PctPoint[];
   items: StudioItem[];
+  estimate: StudioEstimateReport;
   mitigated: Record<string, boolean>;
   complianceSignal?: "ok" | "watch" | "critical";
   compliancePass?: number;
@@ -34,6 +36,7 @@ export function UtilityDrawer({
   outdoorM2,
   boundary,
   items,
+  estimate,
   mitigated,
   complianceSignal = "ok",
   compliancePass: passCount = 3,
@@ -41,12 +44,6 @@ export function UtilityDrawer({
   onMitigate,
   onOpenQuote,
 }: Props) {
-  const bomTotal = useMemo(() => {
-    const lines = bomLines(items);
-    const materials = lines.reduce((a, r) => a + r.amt, 0);
-    return Math.round(materials + 4378);
-  }, [items]);
-
   const compliancePass = {
     pass: passCount,
     total: 3,
@@ -57,7 +54,7 @@ export function UtilityDrawer({
     style: "currency",
     currency: "AUD",
     maximumFractionDigits: 0,
-  }).format(bomTotal);
+  }).format(estimate.totalInclGst);
 
   return (
     <div
@@ -128,7 +125,7 @@ export function UtilityDrawer({
               />
             ) : (
               <LiveBomDock
-                items={items}
+                estimate={estimate}
                 mitigated={mitigated}
                 onMitigate={onMitigate}
                 onOpenQuote={onOpenQuote}

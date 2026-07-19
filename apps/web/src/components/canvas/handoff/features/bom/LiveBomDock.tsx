@@ -1,28 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
-import { bomLines, type StudioItem } from "../../studioCatalog";
+import type { StudioEstimateReport } from "@workstream/domain";
 import css from "./bom.module.css";
 
-const MITIGATIONS = [
-  {
-    id: "tpz",
-    label: "TPZ encroachment",
-    detail: "Shift deck 0.4 m clear of existing canopy TPZ",
-  },
-  {
-    id: "fall",
-    label: "Fall grade",
-    detail: "Hold paving fall under 1:100 toward French drain",
-  },
-] as const;
-
 type Props = {
-  items: StudioItem[];
+  estimate: StudioEstimateReport;
   mitigated: Record<string, boolean>;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
-  /** Render without absolute dock chrome (utility drawer sheet). */
   embedded?: boolean;
 };
 
@@ -33,17 +18,22 @@ const aud = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
+/**
+ * Live preemptive BOM — secondary/tertiary materials, labour, tippers, GST.
+ * Updates with every geometry commit; no Design↔Quote mode switch.
+ */
 export function LiveBomDock({
-  items,
+  estimate,
   mitigated,
   onMitigate,
   onOpenQuote,
   embedded = false,
 }: Props) {
-  const lines = useMemo(() => bomLines(items), [items]);
-  const materials = lines.reduce((a, r) => a + r.amt, 0);
-  const total = Math.round(materials + 4378); // labour/fees bridge to ~28.5k demo
-  const pending = MITIGATIONS.filter((m) => !mitigated[m.id]).length;
+  const primary = estimate.lines.filter((l) => l.tier === "primary");
+  const shadowed = estimate.lines.filter((l) => l.tier !== "primary");
+  const horizonChips = estimate.horizon.filter(
+    (h) => h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer",
+  );
 
   return (
     <aside
@@ -53,41 +43,57 @@ export function LiveBomDock({
       {!embedded ? (
         <div className={css.head}>
           <p className={css.kicker}>Live BOM / preemptive</p>
-          <span className={css.kicker}>{lines.length} lines</span>
+          <span className={css.kicker}>{estimate.lines.length} lines</span>
         </div>
       ) : (
-        <p className={css.kicker}>{lines.length} lines</p>
+        <p className={css.kicker}>{estimate.lines.length} lines</p>
       )}
       <button type="button" className={css.total} onClick={onOpenQuote}>
-        {aud(total)} <span className={css.gst}>incl. GST</span>
+        {aud(estimate.totalInclGst)} <span className={css.gst}>incl. GST</span>
       </button>
+      <p className={css.meta}>
+        {estimate.hardscapeM2 > 0
+          ? `${estimate.hardscapeM2.toFixed(1)} m² hard · ${estimate.excavateM3.toFixed(1)} m³ dig · ${estimate.tipperLoads} tipper`
+          : "Place hardscape to shadow assembly costs"}
+      </p>
       <div className={css.lines}>
-        {lines.map((row) => (
-          <div key={row.name} className={css.line}>
-            <span>{row.name}</span>
-            <span className={css.amt}>{aud(row.amt)}</span>
+        {primary.slice(0, 6).map((row) => (
+          <div key={row.id} className={css.line}>
+            <span>{row.label}</span>
+            <span className={css.amt}>{aud(row.total)}</span>
+          </div>
+        ))}
+        {shadowed.length > 0 ? (
+          <div className={css.shadowHead}>
+            Shadowed assembly · labour · logistics
+          </div>
+        ) : null}
+        {shadowed.slice(0, 8).map((row) => (
+          <div key={row.id} className={`${css.line} ${css.shadowLine}`}>
+            <span title={row.notes}>{row.label}</span>
+            <span className={css.amt}>{aud(row.total)}</span>
           </div>
         ))}
       </div>
-      <div className={css.chips}>
-        {MITIGATIONS.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            className={css.chip}
-            data-on={mitigated[m.id] ? "true" : "false"}
-            title={m.detail}
-            onClick={() => onMitigate(m.id)}
-          >
-            {mitigated[m.id] ? "Applied · " : ""}
-            {m.label}
-          </button>
-        ))}
-      </div>
+      {horizonChips.length > 0 ? (
+        <div className={css.chips}>
+          {horizonChips.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className={css.chip}
+              data-on={mitigated[m.id] ? "true" : "false"}
+              title={m.detail}
+              onClick={() => onMitigate(m.id)}
+            >
+              {mitigated[m.id] ? "Noted · " : ""}
+              {m.title.length > 28 ? `${m.title.slice(0, 26)}…` : m.title}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <p className={css.foot}>
-        {pending
-          ? `${pending} mitigation overlay${pending === 1 ? "" : "s"} ready — click a chip to apply`
-          : "All mitigation overlays applied on this drawing"}
+        Preemptive estimate — GST {aud(estimate.gst)} · not a formal tender
       </p>
     </aside>
   );

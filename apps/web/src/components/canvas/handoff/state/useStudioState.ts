@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   buildableEnvelopeFromBoundary,
+  estimateStudioDrawing,
   evaluateStudioCompliance,
   shouldEnforceSetback,
   snapPointToBuildableEnvelope,
   type StudioComplianceItem,
+  type StudioHorizonCard,
 } from "@workstream/domain";
 import {
   BY_TYPE,
@@ -980,6 +982,74 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [state.doc.boundary, state.doc.items],
   );
 
+  /** Continuous material orchestrator — primary + shadowed assembly + logistics. */
+  const estimate = useMemo(
+    () =>
+      estimateStudioDrawing({
+        outdoorM2: outdoorRef.current,
+        boundary: state.doc.boundary,
+        items: toComplianceItems(state.doc.items),
+        accessConstrained: outdoorRef.current > 400,
+        metaByType: Object.fromEntries(
+          (Object.keys(BY_TYPE) as StudioItemType[]).map((t) => {
+            const d = BY_TYPE[t];
+            return [
+              t,
+              {
+                rate: d.rate,
+                wPx: d.w,
+                hPx: d.h,
+                areaKind: d.area ?? "none",
+                heightM: d.heightM,
+                lin: d.lin,
+                existing: d.existing,
+                dbhM: d.dbhM,
+                canopyM: d.canopyM,
+              },
+            ];
+          }),
+        ),
+      }),
+    [state.doc.boundary, state.doc.items],
+  );
+
+  const acceptHorizonCard = useCallback(
+    (card: StudioHorizonCard) => {
+      if (!card.suggestType || card.x == null || card.y == null) {
+        setUi({ mitigated: { ...state.ui.mitigated, [card.id]: true } });
+        return;
+      }
+      mutate((snap, idn) => {
+        const id = `ai-horizon-${idn + 1}`;
+        const item: StudioItem = {
+          id,
+          t: card.suggestType!,
+          x: card.x!,
+          y: card.y!,
+          rot: 0,
+          scale: 0.75,
+          ghost: true,
+          why: card.detail,
+          conf: 0.88,
+        };
+        return {
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, [item], ["layout"]),
+          },
+          idn: idn + 1,
+        };
+      });
+      setUi({
+        mitigated: { ...state.ui.mitigated, [card.id]: true },
+        ghostReviewOpen: true,
+        coachOpen: true,
+        utilityPanel: "bom",
+      });
+    },
+    [mutate, setUi, state.ui.mitigated],
+  );
+
   useEffect(() => {
     if (!state.ui.councilTip) return;
     const t = window.setTimeout(
@@ -1044,6 +1114,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     ghostCount,
     curGhost,
     compliance,
+    estimate,
+    acceptHorizonCard,
     ai,
     mutate,
     setUi,
