@@ -22,6 +22,7 @@ type Props = {
   locked: boolean;
   onMaterial: (t: StudioItemType) => void;
   onOpacityPeel: () => void;
+  onParchmentPeel?: () => void;
   onToggleLock: () => void;
   onDelete: () => void;
   onClose: () => void;
@@ -37,6 +38,7 @@ export function SelectionRing({
   locked,
   onMaterial,
   onOpacityPeel,
+  onParchmentPeel,
   onToggleLock,
   onDelete,
   onClose,
@@ -68,8 +70,8 @@ export function SelectionRing({
       <button
         type="button"
         className={`${css.node} ${css.east}`}
-        title="Opacity peel"
-        onClick={onOpacityPeel}
+        title={onParchmentPeel ? "Parchment peel" : "Layer opacity peel"}
+        onClick={onParchmentPeel ?? onOpacityPeel}
       >
         Peel
       </button>

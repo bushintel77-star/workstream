@@ -2,32 +2,26 @@
 
 import { useMemo } from "react";
 import { ptsAttr, type PctPoint } from "../../geometry";
+import {
+  boardScaleM,
+  pickMetricStepM,
+  resolveGroundPhase,
+  type SheetScaleDenom,
+} from "./groundMetrics";
 import css from "./tactileGround.module.css";
 
 type Props = {
-  /** Board zoom — drives adaptive metric subdivision. */
   zoom?: number;
-  /** Metres across the board width (indicative). */
-  scaleM?: number;
-  /** Soft parchment underlay opacity when aerial is present (0–1). */
-  parchmentStrength?: number;
-  /** True when satellite/aerial is showing above. */
+  sheetScaleDenom?: SheetScaleDenom;
+  /** 0–1 peel when aerial present; higher = more parchment tooth. */
+  parchmentPeel?: number;
   hasAerial?: boolean;
   darkOn?: boolean;
-  /** Ghost cadastral infill once a site/address is known. */
   boundary?: PctPoint[];
   building?: PctPoint[];
   siteLabel?: string | null;
+  address?: string | null;
 };
-
-function pickStepM(visibleM: number): number {
-  if (visibleM < 35) return 1;
-  if (visibleM < 70) return 5;
-  if (visibleM < 160) return 10;
-  if (visibleM < 320) return 25;
-  if (visibleM < 700) return 50;
-  return 100;
-}
 
 /**
  * Living tactile ground — parchment earth + adaptive metric mesh + true-north rose.
@@ -35,17 +29,24 @@ function pickStepM(visibleM: number): number {
  */
 export function TactileGround({
   zoom = 1,
-  scaleM = 110,
-  parchmentStrength = 1,
+  sheetScaleDenom = 100,
+  parchmentPeel = 0.42,
   hasAerial = false,
   darkOn = false,
   boundary = [],
   building = [],
   siteLabel = null,
+  address = null,
 }: Props) {
+  const scaleM = boardScaleM(sheetScaleDenom);
   const visibleM = scaleM / Math.max(0.4, zoom);
-  const stepM = pickStepM(visibleM);
+  const stepM = pickMetricStepM(visibleM);
   const stepPct = (stepM / scaleM) * 100;
+  const phase = resolveGroundPhase({
+    hasAerial,
+    hasBoundary: boundary.length >= 3,
+    address: address ?? siteLabel,
+  });
 
   const lines = useMemo(() => {
     const major: number[] = [];
@@ -75,14 +76,32 @@ export function TactileGround({
     return out;
   }, [lines.major, stepM]);
 
-  const parchmentOp = hasAerial
-    ? Math.max(0.12, Math.min(0.45, parchmentStrength * 0.38))
-    : Math.max(0.85, parchmentStrength);
+  // Soft topo-ish contours — generative context, not survey contours.
+  const topo = useMemo(() => {
+    if (phase === "parchment") return [] as number[];
+    const rings = [18, 32, 48, 64, 78];
+    return rings;
+  }, [phase]);
+
+  const parchmentOp =
+    phase === "aerial"
+      ? Math.max(0.1, Math.min(0.55, parchmentPeel))
+      : phase === "cadastral"
+        ? 0.92
+        : 1;
+
+  const cue =
+    phase === "aerial"
+      ? null
+      : phase === "cadastral"
+        ? `${siteLabel ?? address ?? "Site"} · ghost cadastral`
+        : "Parchment ground · indicative metres";
 
   return (
     <div
-      className={`${css.ground}${darkOn ? ` ${css.groundDark}` : ""}${hasAerial ? ` ${css.withAerial}` : ""}`}
+      className={`${css.ground}${darkOn ? ` ${css.groundDark}` : ""}${phase === "aerial" ? ` ${css.phase_aerial}` : ""}${phase === "cadastral" ? ` ${css.phase_cadastral}` : ""}${phase === "parchment" ? ` ${css.phase_parchment}` : ""}`}
       data-testid="tactile-ground"
+      data-phase={phase}
       data-step-m={stepM}
       style={{ ["--parchment-op" as string]: String(parchmentOp) }}
       aria-hidden
@@ -91,6 +110,18 @@ export function TactileGround({
       <div className={css.tooth} />
 
       <svg className={css.mesh} viewBox="0 0 100 100" preserveAspectRatio="none">
+        {topo.map((r) => (
+          <ellipse
+            key={`topo${r}`}
+            cx={50}
+            cy={52}
+            rx={r * 0.55}
+            ry={r * 0.42}
+            className={css.topo}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+
         {lines.minor.map((p) => (
           <g key={`mi${p}`}>
             <line
@@ -168,11 +199,11 @@ export function TactileGround({
         <span className={css.compassRose} />
       </div>
 
-      {siteLabel ? (
-        <p className={css.siteCue}>{siteLabel}</p>
-      ) : (
-        <p className={css.siteCue}>Parchment ground · indicative metres</p>
-      )}
+      {cue ? <p className={css.siteCue}>{cue}</p> : null}
+
+      <p className={css.scaleChip} data-testid="ground-metric-step">
+        {stepM} m · 1:{sheetScaleDenom}
+      </p>
     </div>
   );
 }

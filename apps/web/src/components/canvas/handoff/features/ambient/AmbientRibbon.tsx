@@ -18,6 +18,8 @@ type Props = {
   canRedo: boolean;
   layerChips: LayerChip[];
   layerOpacity: LayerOpacity;
+  parchmentPeel: number;
+  hasAerial: boolean;
   onTool: (t: StudioTool) => void;
   onMeasure: () => void;
   onUndo: () => void;
@@ -25,6 +27,7 @@ type Props = {
   onZoom: (delta: number) => void;
   onFit: () => void;
   onOpacity: (key: LayerKey, value: number) => void;
+  onParchmentPeel: (v: number) => void;
 };
 
 const EDGE_PX = 52;
@@ -40,6 +43,8 @@ export function AmbientRibbon({
   canRedo,
   layerChips,
   layerOpacity,
+  parchmentPeel,
+  hasAerial,
   onTool,
   onMeasure,
   onUndo,
@@ -47,6 +52,7 @@ export function AmbientRibbon({
   onZoom,
   onFit,
   onOpacity,
+  onParchmentPeel,
 }: Props) {
   const [hot, setHot] = useState(false);
 
@@ -117,6 +123,25 @@ export function AmbientRibbon({
       </div>
 
       <div className={css.layers} data-testid="ambient-layer-chips">
+        {hasAerial ? (
+          <button
+            type="button"
+            className={css.chip}
+            data-testid="parchment-peel"
+            title="Peel parchment underlay"
+            onClick={() => {
+              const steps = [0.12, 0.28, 0.42, 0.62, 0.85];
+              const idx = steps.findIndex((s) => Math.abs(s - parchmentPeel) < 0.05);
+              const next = steps[(idx + 1) % steps.length]!;
+              onParchmentPeel(next);
+            }}
+          >
+            <span className={css.chipName}>Peel</span>
+            <span className={css.chipCount}>
+              {Math.round(parchmentPeel * 100)}
+            </span>
+          </button>
+        ) : null}
         {layerChips.map((chip) => (
           <button
             key={chip.key}

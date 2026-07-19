@@ -514,12 +514,13 @@ export function HandoffDesignStudio({
               frameOn={ui.frameOn}
               scanning={ui.canopyScanning || ai.busy === "scanning"}
               zoom={ui.zoom}
-              scaleM={110}
+              sheetScaleDenom={ui.sheetScaleDenom}
               darkOn={ui.darkOn}
               boundary={studio.boundary}
               building={studio.building}
               siteLabel={displayAddress}
-              parchmentUnderlay
+              address={displayAddress}
+              parchmentPeel={ui.parchmentPeel}
               onUri={(uri) => studio.setUi({ aerialUri: uri })}
               onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
               onCanopyImage={ai.ingestCanopyImage}
@@ -618,6 +619,18 @@ export function HandoffDesignStudio({
                   const cur = ui.layerOpacity[bucket];
                   studio.setLayerOpacity(bucket, cur < 0.4 ? 1 : 0.25);
                 }}
+                onParchmentPeel={
+                  liveAerial
+                    ? () => {
+                        const steps = [0.12, 0.28, 0.42, 0.62, 0.85];
+                        const idx = steps.findIndex(
+                          (s) => Math.abs(s - ui.parchmentPeel) < 0.05,
+                        );
+                        const next = steps[(idx + 1) % steps.length]!;
+                        studio.setUi({ parchmentPeel: next });
+                      }
+                    : undefined
+                }
                 onToggleLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
                 onDelete={studio.deleteSelected}
                 onClose={() => studio.setSelection(null, [])}
@@ -649,6 +662,8 @@ export function HandoffDesignStudio({
             canRedo={studio.canRedo}
             layerChips={layerChips}
             layerOpacity={ui.layerOpacity}
+            parchmentPeel={ui.parchmentPeel}
+            hasAerial={Boolean(liveAerial)}
             onTool={studio.setTool}
             onMeasure={() =>
               studio.setTool(ui.tool === "measure" ? "pan" : "measure")
@@ -665,6 +680,7 @@ export function HandoffDesignStudio({
             }
             onFit={() => studio.setUi({ zoom: 1 })}
             onOpacity={studio.setLayerOpacity}
+            onParchmentPeel={(parchmentPeel) => studio.setUi({ parchmentPeel })}
           />
         ) : null}
 

@@ -123,6 +123,11 @@ type Ui = {
    * Snaps to [50, 100, 200, 250, 500] — canvas is the print sheet.
    */
   sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
+  /**
+   * Parchment underlay strength when aerial is present (0 = survey-sharp,
+   * 1 = soft drafting table). Canvas-first: peel, don't void.
+   */
+  parchmentPeel: number;
 };
 
 type State = {
@@ -221,6 +226,7 @@ function initialState(mode: StudioMode): State {
       utilityPanel: null,
       councilTip: null,
       sheetScaleDenom: 100,
+      parchmentPeel: 0.42,
     },
   };
 }

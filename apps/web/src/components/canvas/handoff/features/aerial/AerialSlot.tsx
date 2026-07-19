@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PctPoint } from "../../geometry";
 import { TactileGround } from "../ground/TactileGround";
+import type { SheetScaleDenom } from "../ground/groundMetrics";
 import css from "./aerialSlot.module.css";
 
 export type CanopyImagePayload = {
@@ -17,13 +18,14 @@ type Props = {
   frameOn: boolean;
   scanning: boolean;
   zoom?: number;
-  scaleM?: number;
+  sheetScaleDenom?: SheetScaleDenom;
   darkOn?: boolean;
   boundary?: PctPoint[];
   building?: PctPoint[];
   siteLabel?: string | null;
-  /** Keep parchment as soft underlay when aerial is present (default true). */
-  parchmentUnderlay?: boolean;
+  address?: string | null;
+  /** 0–1 parchment tooth when aerial is stacked (soft underlay). */
+  parchmentPeel?: number;
   onUri: (uri: string | null) => void;
   onScanning: (v: boolean) => void;
   onCanopyImage: (image: CanopyImagePayload) => void;
@@ -39,12 +41,13 @@ export function AerialSlot({
   frameOn,
   scanning,
   zoom = 1,
-  scaleM = 110,
+  sheetScaleDenom = 100,
   darkOn = false,
   boundary = [],
   building = [],
   siteLabel = null,
-  parchmentUnderlay = true,
+  address = null,
+  parchmentPeel = 0.42,
   onUri,
   onScanning,
   onCanopyImage,
@@ -113,13 +116,6 @@ export function AerialSlot({
   };
 
   const showAerial = Boolean(uri) && !frameOn;
-  const parchmentStrength = parchmentUnderlay
-    ? showAerial && aerialReady
-      ? 0.42
-      : 1
-    : showAerial && aerialReady
-      ? 0
-      : 1;
 
   return (
     <div
@@ -151,19 +147,14 @@ export function AerialSlot({
 
       <TactileGround
         zoom={zoom}
-        scaleM={scaleM}
-        parchmentStrength={parchmentStrength}
+        sheetScaleDenom={sheetScaleDenom}
+        parchmentPeel={parchmentPeel}
         hasAerial={showAerial && aerialReady}
         darkOn={darkOn}
         boundary={boundary}
         building={building}
-        siteLabel={
-          siteLabel
-            ? `${siteLabel} · ghost cadastral`
-            : uri
-              ? null
-              : "Drop aerial or sketch on parchment"
-        }
+        siteLabel={siteLabel}
+        address={address ?? siteLabel}
       />
 
       {uri ? (
@@ -176,15 +167,11 @@ export function AerialSlot({
           style={{
             opacity: frameOn
               ? 0
-              : dimmed
-                ? aerialReady
-                  ? 0.72
-                  : 0
-                : aerialReady
-                  ? parchmentUnderlay
-                    ? 0.88
-                    : 1
-                  : 0,
+              : !aerialReady
+                ? 0
+                : dimmed
+                  ? 0.7
+                  : Math.max(0.55, 1 - parchmentPeel * 0.35),
           }}
           draggable={false}
           onLoad={() => setAerialReady(true)}
