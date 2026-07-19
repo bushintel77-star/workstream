@@ -678,6 +678,8 @@ export function HandoffDesignStudio({
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}
               titleLocked={titleLocked}
+              lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
+              siteLabel={displayAddress}
               boundary={studio.boundary}
               building={studio.building}
               items={studio.items}
@@ -759,7 +761,7 @@ export function HandoffDesignStudio({
                 data-testid="foundation-cleanse-banner"
               >
                 <span>
-                  Stage 1 · Vicmap title locked · 1:{ui.sheetScaleDenom}
+                  Stage 1 CAD · title boundary · 1:{ui.sheetScaleDenom}
                 </span>
                 <button
                   type="button"

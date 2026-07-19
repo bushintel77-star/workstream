@@ -5,11 +5,18 @@ import {
   deleteVertex,
   edgeSegments,
   insertVertexAfter,
+  polygonAreaM2,
   ptsAttr,
   snapVertexDrag,
   tpzRadiusPct,
   type PctPoint,
 } from "../../geometry";
+import {
+  formatCadAreaM2,
+  formatCadMetres,
+  neighbourLotContext,
+  polygonCentroid,
+} from "../../geometry/foundationCadContext";
 import {
   BY_TYPE,
   type StudioItem,
@@ -37,6 +44,10 @@ type Props = {
   foundationCleanse?: boolean;
   /** Vicmap-sourced title — solid charcoal stroke (not dashed ghost). */
   titleLocked?: boolean;
+  /** Optional cadastral lot area (Vicmap) for centre CAD label. */
+  lotAreaM2?: number | null;
+  /** Street / site label for CAD annotation (not REA map chrome). */
+  siteLabel?: string | null;
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
@@ -94,6 +105,8 @@ export function CadPlanBoard({
   darkOn,
   foundationCleanse = false,
   titleLocked = false,
+  lotAreaM2 = null,
+  siteLabel = null,
   boundary,
   building,
   items,
@@ -166,6 +179,12 @@ export function CadPlanBoard({
         edgeSegments(building, "F", scaleM),
       );
   const showDims = editing || frameOn || foundationCleanse || titleLocked;
+  const cadTitleMode = foundationCleanse || titleLocked;
+  const contextLots = cadTitleMode ? neighbourLotContext(boundary) : [];
+  const titleCentroid = polygonCentroid(boundary);
+  const drawnLotM2 = polygonAreaM2(boundary, scaleM);
+  const areaLabelM2 =
+    lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
 
   const exist = foundationCleanse
     ? undefined
@@ -406,9 +425,19 @@ export function CadPlanBoard({
             />
           </pattern>
         </defs>
+        {cadTitleMode
+          ? contextLots.map((ring, i) => (
+              <polygon
+                key={`ctx${i}`}
+                points={ptsAttr(ring)}
+                className={css.cadContextLot}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))
+          : null}
         <polygon
           points={ptsAttr(boundary)}
-          fill="transparent"
+          fill={cadTitleMode ? "rgba(28, 25, 23, 0.045)" : "transparent"}
           stroke={bStroke}
           strokeWidth={1.5}
           strokeDasharray={titleSolid ? undefined : "4 4"}
@@ -428,6 +457,28 @@ export function CadPlanBoard({
             opacity={layerOpacity.boundary}
           />
         ) : null}
+        {cadTitleMode
+          ? dimSegs.map((d) => {
+              // Short CAD extension ticks inward from edge midpoints
+              const nx = -(d.b.y - d.a.y);
+              const ny = d.b.x - d.a.x;
+              const len = Math.hypot(nx, ny) || 1;
+              const ox = (nx / len) * 1.1;
+              const oy = (ny / len) * 1.1;
+              return (
+                <line
+                  key={`dext${d.key}`}
+                  x1={d.mid.x - ox}
+                  y1={d.mid.y - oy}
+                  x2={d.mid.x + ox}
+                  y2={d.mid.y + oy}
+                  stroke="#1C1917"
+                  strokeWidth={0.9}
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            })
+          : null}
         {setbackOn && !foundationCleanse ? (
           <polygon
             points={ptsAttr(
@@ -543,7 +594,7 @@ export function CadPlanBoard({
         dimSegs.map((d) => (
           <div
             key={d.key}
-            className={css.dimMark}
+            className={`${css.dimMark}${cadTitleMode ? ` ${css.cadDimMark}` : ""}`}
             style={{
               left: `${d.mid.x}%`,
               top: `${d.mid.y}%`,
@@ -551,14 +602,33 @@ export function CadPlanBoard({
             }}
           >
             <span className={css.obliqueTick} aria-hidden />
-            <span className={css.dimLabel}>
-              {d.key} ·{" "}
-              {titleSolid
-                ? `${d.lengthM.toFixed(3)} m`
-                : `${d.lengthM.toFixed(2)} m`}
+            <span
+              className={cadTitleMode ? css.cadDimLabel : css.dimLabel}
+              data-testid={cadTitleMode ? "cad-edge-dim" : undefined}
+            >
+              {cadTitleMode
+                ? formatCadMetres(d.lengthM)
+                : `${d.key} · ${d.lengthM.toFixed(2)} m`}
             </span>
           </div>
         ))}
+
+      {cadTitleMode && boundary.length >= 3 ? (
+        <div
+          className={css.cadAreaLabel}
+          style={{ left: `${titleCentroid.x}%`, top: `${titleCentroid.y}%` }}
+          data-testid="cad-title-area"
+        >
+          <span className={css.cadAreaValue}>{formatCadAreaM2(areaLabelM2)}</span>
+          <span className={css.cadAreaMeta}>title area</span>
+        </div>
+      ) : null}
+
+      {cadTitleMode && siteLabel ? (
+        <p className={css.cadStreetCue} data-testid="cad-street-cue">
+          {siteLabel}
+        </p>
+      ) : null}
 
       {exist && tpz ? (
         <div

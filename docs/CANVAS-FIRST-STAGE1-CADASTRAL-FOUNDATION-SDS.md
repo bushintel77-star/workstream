@@ -43,13 +43,17 @@ Bypass probabilistic AI design generation, purge visual noise from the active ca
 
 ### 2.4 Stage 1 visual layout
 
+**Concept reference:** realestate.com.au “Property boundary” (street map + title outline + edge dims + area) — **not** a clone. No purple pills, no Google chrome, no satellite.
+
 | Layer | Spec |
 |-------|------|
-| Base | Flat low-contrast parchment (no satellite) |
-| Title CAD overlay | Deep charcoal `#1C1917`, **1.5px** stroke (`COLOR_VECTOR_PRIMARY`) |
-| Vertices | 45° architectural oblique ticks (2–3 mm visual) |
-| Dimensions | Always on; labels show metres to **3 dp** (millimetre truth) |
-| Scale | Fit sheet / board locked toward 1:100 or 1:200 (A3 frame); zoom not free-interpolated while cleanse active |
+| Base | Cool monochrome CAD plate (silver-grey vector street fabric) — no satellite |
+| Context | Light charcoal neighbour lot lines (indicative fabric, not Vicmap neighbours) |
+| Title CAD overlay | Deep charcoal `#1C1917`, **1.5px** stroke + light fill (`COLOR_VECTOR_PRIMARY`) |
+| Vertices | 45° architectural oblique ticks (not REA purple circles) |
+| Dimensions | Inline CAD labels `0.000 m` (mono, square frame) — millimetre truth |
+| Area | Centre title-area callout `NNN m²` |
+| Scale | Locked toward 1:100 or 1:200; zoom not free while cleanse active |
 | Content purge | Hide vegetation + loose items on plan while foundation cleanse is on |
 
 ---

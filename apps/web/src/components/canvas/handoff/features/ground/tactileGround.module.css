@@ -18,6 +18,40 @@
   transition: opacity 420ms ease;
 }
 
+/**
+ * Stage 1 CAD plate — cool monochrome vector street-map feel
+ * (REA property-boundary *concept*, charcoal drafting — not Google purple).
+ */
+.phase_foundation .parchment {
+  background:
+    linear-gradient(180deg, #ececea 0%, #e4e2de 48%, #ddd9d2 100%);
+}
+
+.phase_foundation .minor {
+  stroke: rgba(28, 25, 23, 0.06);
+  stroke-width: 0.5;
+}
+
+.phase_foundation .major {
+  stroke: rgba(28, 25, 23, 0.12);
+  stroke-width: 0.75;
+}
+
+.phase_foundation .edgeScale {
+  color: rgba(28, 25, 23, 0.4);
+}
+
+.phase_foundation .compass {
+  opacity: 0.7;
+}
+
+.phase_foundation .scaleChip {
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.28);
+  background: #f2f0eb;
+  color: #1c1917;
+}
+
 .groundDark .parchment {
   background:
     radial-gradient(120% 90% at 18% 12%, rgba(90, 70, 52, 0.45), transparent 55%),

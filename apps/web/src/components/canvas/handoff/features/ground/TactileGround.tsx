@@ -105,8 +105,9 @@ export function TactileGround({
     titleLocked ||
     foundationCleanse ||
     boundarySource === "vicmap";
+  // CadPlan renders the street cue in Stage 1 CAD mode — avoid double copy.
   const cue = foundationCleanse
-    ? `${siteLabel ?? address ?? "Site"} · Vicmap title · Stage 1`
+    ? null
     : phase === "aerial"
       ? null
       : vicmapCue
@@ -117,15 +118,15 @@ export function TactileGround({
 
   return (
     <div
-      className={`${css.ground}${darkOn ? ` ${css.groundDark}` : ""}${phase === "aerial" ? ` ${css.phase_aerial}` : ""}${phase === "cadastral" ? ` ${css.phase_cadastral}` : ""}${phase === "parchment" ? ` ${css.phase_parchment}` : ""}`}
+      className={`${css.ground}${darkOn ? ` ${css.groundDark}` : ""}${foundationCleanse ? ` ${css.phase_foundation}` : ""}${!foundationCleanse && phase === "aerial" ? ` ${css.phase_aerial}` : ""}${!foundationCleanse && phase === "cadastral" ? ` ${css.phase_cadastral}` : ""}${!foundationCleanse && phase === "parchment" ? ` ${css.phase_parchment}` : ""}`}
       data-testid="tactile-ground"
-      data-phase={phase}
+      data-phase={foundationCleanse ? "foundation-cad" : phase}
       data-step-m={stepM}
       style={{ ["--parchment-op" as string]: String(parchmentOp) }}
       aria-hidden
     >
       <div className={css.parchment} />
-      <div className={css.tooth} />
+      {!foundationCleanse ? <div className={css.tooth} /> : null}
 
       <svg className={css.mesh} viewBox="0 0 100 100" preserveAspectRatio="none">
         {topo.map((r) => (
