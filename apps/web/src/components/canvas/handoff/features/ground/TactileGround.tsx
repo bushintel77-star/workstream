@@ -19,6 +19,9 @@ type Props = {
   darkOn?: boolean;
   /** Stage 1 — Vicmap title board; no ghost cue / soft cadastral underlay. */
   foundationCleanse?: boolean;
+  /** Authoritative Vicmap / locked title — never say "ghost cadastral". */
+  titleLocked?: boolean;
+  boundarySource?: "vicmap" | "manual" | "seed";
   boundary?: PctPoint[];
   building?: PctPoint[];
   siteLabel?: string | null;
@@ -36,6 +39,8 @@ export function TactileGround({
   hasAerial = false,
   darkOn = false,
   foundationCleanse = false,
+  titleLocked = false,
+  boundarySource = "seed",
   boundary = [],
   building = [],
   siteLabel = null,
@@ -96,13 +101,19 @@ export function TactileGround({
         ? 0.92
         : 1;
 
+  const vicmapCue =
+    titleLocked ||
+    foundationCleanse ||
+    boundarySource === "vicmap";
   const cue = foundationCleanse
     ? `${siteLabel ?? address ?? "Site"} · Vicmap title · Stage 1`
     : phase === "aerial"
       ? null
-      : phase === "cadastral"
-        ? `${siteLabel ?? address ?? "Site"} · ghost cadastral`
-        : "Parchment ground · indicative metres";
+      : vicmapCue
+        ? `${siteLabel ?? address ?? "Site"} · Vicmap title`
+        : phase === "cadastral"
+          ? `${siteLabel ?? address ?? "Site"} · indicative boundary`
+          : "Parchment ground · indicative metres";
 
   return (
     <div
@@ -170,15 +181,15 @@ export function TactileGround({
           </g>
         ))}
 
-        {/* Stage 1 CadPlan owns the crisp charcoal title — skip soft ghost underlay. */}
-        {!foundationCleanse && boundary.length >= 3 ? (
+        {/* CadPlan owns the crisp title stroke when Vicmap/Stage 1 locked. */}
+        {!foundationCleanse && !vicmapCue && boundary.length >= 3 ? (
           <polygon
             points={ptsAttr(boundary)}
             className={css.cadastral}
             vectorEffect="non-scaling-stroke"
           />
         ) : null}
-        {!foundationCleanse && building.length >= 3 ? (
+        {!foundationCleanse && !vicmapCue && building.length >= 3 ? (
           <polygon
             points={ptsAttr(building)}
             className={css.footprint}

@@ -171,6 +171,13 @@ type Ui = {
    * aerial + AI vegetation purged, charcoal CAD overlay.
    */
   foundationCleanse: boolean;
+  /** Provenance of the active title polygon. */
+  boundarySource: "vicmap" | "manual" | "seed";
+  /**
+   * After Stage 1 / aerial purge — block re-injection of project aerial
+   * until the operator explicitly drops imagery again.
+   */
+  aerialSuppressed: boolean;
 };
 
 /** Prahran / Stonnington demo centroid for indicative shade grid. */
@@ -302,6 +309,8 @@ function initialState(opts: {
       saveStatus: hasCanvas ? "saved" : "idle",
       floraSession: null,
       foundationCleanse: false,
+      boundarySource: "seed",
+      aerialSuppressed: false,
     },
   };
 }
@@ -367,11 +376,17 @@ function reducer(state: State, action: Action): State {
     case "setUi":
       return { ...state, ui: { ...state.ui, ...action.patch } };
     case "setMode": {
+      // Stage 1 locks cadastral survey — ignore Cad/Sketch/etc. until Exit.
+      if (state.ui.foundationCleanse && action.mode !== "survey") {
+        return state;
+      }
       const enteringSurvey = action.mode === "survey";
       const leavingSurvey = state.ui.mode === "survey" && action.mode !== "survey";
       let layerOpacity = state.ui.layerOpacity;
       if (enteringSurvey) layerOpacity = { ...SURVEY_LAYER_PRESET };
-      if (leavingSurvey) layerOpacity = { ...DESIGN_LAYER_PRESET };
+      if (leavingSurvey && !state.ui.foundationCleanse) {
+        layerOpacity = { ...DESIGN_LAYER_PRESET };
+      }
       return {
         ...state,
         ui: {
@@ -382,7 +397,9 @@ function reducer(state: State, action: Action): State {
           drawCursor: null,
           tool:
             action.mode === "survey"
-              ? "edit"
+              ? state.ui.foundationCleanse
+                ? "lock"
+                : "edit"
               : action.mode === "sketch"
                 ? "sketch"
                 : "pan",
@@ -491,11 +508,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
   projectIdRef.current = projectId;
 
   useEffect(() => {
-    if (state.ui.foundationCleanse) return;
+    if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
     if (aerialProp && !state.ui.aerialUri) {
       dispatch({ type: "setUi", patch: { aerialUri: aerialProp } });
     }
-  }, [aerialProp, state.ui.aerialUri, state.ui.foundationCleanse]);
+  }, [
+    aerialProp,
+    state.ui.aerialUri,
+    state.ui.aerialSuppressed,
+    state.ui.foundationCleanse,
+  ]);
 
   const mutate = useCallback(
     (fn: (snap: StudioSnapshot, idn: number) => { snap: StudioSnapshot; idn?: number }) => {
@@ -772,6 +794,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
         if (pct.length >= 3) {
           mutate((snap) => ({ snap: { ...snap, boundary: pct } }));
           boundarySnapped = true;
+          setUi({
+            boundarySource:
+              res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+            aerialSuppressed: true,
+          });
           notes.push(
             `Boundary snapped to ${res.boundary.source_kind === "vicmap" ? "Vicmap parcel" : "title polygon"}`,
           );
@@ -786,6 +813,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({
       aiBusy: "idle",
       locked: false,
+      aerialUri: null,
+      aerialSuppressed: true,
       assistReply: `Spatial correction complete. ${notes.join(" · ")}${
         boundarySnapped ? "" : ""
       }`,
@@ -802,6 +831,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       aerialUri: null,
       parchmentPeel: 1,
       foundationCleanse: true,
+      aerialSuppressed: true,
       floraSession: null,
       aiBusy: "assisting",
       cmdOpen: false,
@@ -860,10 +890,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
             snap: {
               ...snap,
               boundary: pct,
-              // Title is absolute — drop approximate building until resurvey
             },
           }));
           boundaryLocked = true;
+          setUi({
+            boundarySource:
+              res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+          });
           notes.push(
             res.boundary.source_kind === "vicmap"
               ? "Vicmap parcel locked as absolute title"
@@ -884,6 +917,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       locked: true,
       tool: "lock",
       foundationCleanse: true,
+      aerialSuppressed: true,
+      aerialUri: null,
       assistReply: `Stage 1 cadastral foundation locked. ${notes.join(" · ")}`,
     });
     void boundaryLocked;
@@ -901,8 +936,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
       foundationCleanse: false,
       locked: false,
       tool: "pan",
+      // Keep aerial off until operator drops imagery (no silent re-scan)
+      aerialSuppressed: true,
+      aerialUri: null,
       layerOpacity: { ...DESIGN_LAYER_PRESET },
-      assistReply: "Foundation cleanse exited — design layers restored.",
+      assistReply:
+        "Foundation exited — design layers restored. Aerial stays off until you drop imagery.",
     });
   }, [setUi]);
 
@@ -1059,15 +1098,40 @@ export function useStudioState(opts: UseStudioStateOpts) {
     });
   }, [mutate, projectId, setUi, state.ui.foundationCleanse]);
 
-  /** Bootstrap AI propose once when the studio mounts empty of proposals. */
+  /**
+   * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
+   * Does not purge vegetation (that's Stage 1).
+   */
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
-    const pending = state.doc.items.filter((i) => i.ghost).length;
-    if (pending === 0) {
-      void scanGhosts();
-    }
-    // intentionally once on mount
+    if (!projectId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { autoTraceBoundaryAction } = await import(
+          "../../../../app/actions"
+        );
+        const res = await autoTraceBoundaryAction(projectId);
+        if (cancelled) return;
+        const verts = [...res.boundary.vertices]
+          .sort((a, b) => a.sequence_index - b.sequence_index)
+          .map((v) => v.canvas_coords);
+        const pct = canvasMetresRingToPct(verts);
+        if (pct.length < 3) return;
+        mutate((snap) => ({ snap: { ...snap, boundary: pct } }));
+        setUi({
+          boundarySource:
+            res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+        });
+      } catch {
+        /* keep seed boundary */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1075,8 +1139,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (boundary: PctPoint[]) => {
       if (state.ui.locked) return;
       mutate((snap) => ({ snap: { ...snap, boundary } }));
+      setUi({ boundarySource: "manual" });
     },
-    [mutate, state.ui.locked],
+    [mutate, setUi, state.ui.locked],
   );
 
   const updateBuilding = useCallback(
@@ -1290,6 +1355,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       height: number;
       data: ArrayLike<number>;
     }) => {
+      if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
       setUi({ canopyScanning: true, aiBusy: "scanning" });
       mutate((snap, idn) => {
         const proposed = proposeFromCanopyImage(image, idn);
@@ -1301,15 +1367,19 @@ export function useStudioState(opts: UseStudioStateOpts) {
           idn: proposed.idn,
         };
       });
+      // Quiet merge — do not force Coach + Review open (screenshot chrome collision)
       setUi({
         canopyScanning: false,
         aiBusy: "idle",
-        ghostReviewOpen: true,
-        coachOpen: true,
         ghostIdx: 0,
       });
     },
-    [mutate, setUi],
+    [
+      mutate,
+      setUi,
+      state.ui.aerialSuppressed,
+      state.ui.foundationCleanse,
+    ],
   );
 
   const setStrokes = useCallback(
@@ -1399,17 +1469,19 @@ export function useStudioState(opts: UseStudioStateOpts) {
           [target]: pts.map((p) => ({ ...p })),
         };
         let nextIdn = idn;
-        const follow = maybeAutoProposeAfterCommit(
-          next,
-          addressRef.current,
-          nextIdn,
-        );
-        if (follow) {
-          next = {
-            ...next,
-            items: mergeAiProposals(next, follow.items, ["layout"]),
-          };
-          nextIdn = follow.idn;
+        if (!state.ui.foundationCleanse) {
+          const follow = maybeAutoProposeAfterCommit(
+            next,
+            addressRef.current,
+            nextIdn,
+          );
+          if (follow) {
+            next = {
+              ...next,
+              items: mergeAiProposals(next, follow.items, ["layout"]),
+            };
+            nextIdn = follow.idn;
+          }
         }
         return { snap: next, idn: nextIdn };
       });
@@ -1417,11 +1489,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
         drawPoly: null,
         drawCursor: null,
         tool: "edit",
-        coachOpen: true,
-        ghostReviewOpen: true,
+        ...(target === "boundary" ? { boundarySource: "manual" as const } : {}),
       });
     },
-    [mutate, setUi, state.ui.locked, state.ui.traceTarget],
+    [
+      mutate,
+      setUi,
+      state.ui.foundationCleanse,
+      state.ui.locked,
+      state.ui.traceTarget,
+    ],
   );
 
   const cancelTrace = useCallback(() => {

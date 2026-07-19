@@ -22,6 +22,14 @@ type Props = {
   darkOn?: boolean;
   /** Stage 1 — no aerial drop, canopy scan, or soft underlay imagery. */
   foundationCleanse?: boolean;
+  /**
+   * Opt-in aerial colour canopy clustering. Default off — silent auto-scan
+   * was flooding Cad with AI proposals on every aerial load.
+   */
+  autoCanopyScan?: boolean;
+  /** Vicmap / Stage 1 title cue (not "ghost cadastral"). */
+  titleLocked?: boolean;
+  boundarySource?: "vicmap" | "manual" | "seed";
   boundary?: PctPoint[];
   building?: PctPoint[];
   siteLabel?: string | null;
@@ -46,6 +54,9 @@ export function AerialSlot({
   sheetScaleDenom = 100,
   darkOn = false,
   foundationCleanse = false,
+  autoCanopyScan = false,
+  titleLocked = false,
+  boundarySource = "seed",
   boundary = [],
   building = [],
   siteLabel = null,
@@ -101,9 +112,9 @@ export function AerialSlot({
   );
 
   useEffect(() => {
-    if (foundationCleanse || !uri || frameOn) return;
+    if (foundationCleanse || !autoCanopyScan || !uri || frameOn) return;
     void runCanopyScan(uri);
-  }, [uri, frameOn, foundationCleanse, runCanopyScan]);
+  }, [uri, frameOn, foundationCleanse, autoCanopyScan, runCanopyScan]);
 
   const acceptFile = (file: File | null) => {
     if (foundationCleanse) return;
@@ -161,6 +172,8 @@ export function AerialSlot({
         hasAerial={showAerial && aerialReady}
         darkOn={darkOn}
         foundationCleanse={foundationCleanse}
+        titleLocked={titleLocked}
+        boundarySource={boundarySource}
         boundary={boundary}
         building={building}
         siteLabel={siteLabel}

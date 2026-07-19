@@ -38,6 +38,7 @@ Isolith vector drafting in the Isolith SDS §5.
 **Spatial correction NLP:** [`docs/CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md`](../../../../../../docs/CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md)
 — `runSpatialCorrection` / Ask AI: Vicmap boundary snap, vegetation sieve, elev clamp, parchment-only.
 — `runStage1FoundationCleanse` / ⌘K “Stage 1 foundation cleanse”: purge aerial + AI veg, lock Vicmap title, charcoal CAD overlay + mm dims (`foundationCleanse` chrome).
+— Quiet Vicmap hydrate on mount (`boundarySource`); no silent `scanGhosts` / canopy scan. Cad chrome diets while AI ghosts pending. See `docs/CANVAS-FIRST-SCREENSHOT-ISSUES.md`.
 
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default

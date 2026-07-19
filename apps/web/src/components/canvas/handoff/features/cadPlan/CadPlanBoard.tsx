@@ -35,6 +35,8 @@ type Props = {
   darkOn: boolean;
   /** Stage 1 — charcoal title overlay, mm dims, hide veg/items. */
   foundationCleanse?: boolean;
+  /** Vicmap-sourced title — solid charcoal stroke (not dashed ghost). */
+  titleLocked?: boolean;
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
@@ -91,6 +93,7 @@ export function CadPlanBoard({
   frameOn,
   darkOn,
   foundationCleanse = false,
+  titleLocked = false,
   boundary,
   building,
   items,
@@ -146,8 +149,9 @@ export function CadPlanBoard({
   );
 
   const editing = tool === "edit" && !locked && !frameOn && !foundationCleanse;
-  /** SDS Stage 1 — COLOR_VECTOR_PRIMARY charcoal; amber only for dark presentation. */
-  const bStroke = foundationCleanse
+  const titleSolid = foundationCleanse || titleLocked;
+  /** SDS — COLOR_VECTOR_PRIMARY charcoal when Vicmap/Stage 1; amber for dark. */
+  const bStroke = titleSolid
     ? "#1C1917"
     : darkOn && !frameOn
       ? "#C99757"
@@ -161,7 +165,7 @@ export function CadPlanBoard({
     : edgeSegments(boundary, "B", scaleM).concat(
         edgeSegments(building, "F", scaleM),
       );
-  const showDims = editing || frameOn || foundationCleanse;
+  const showDims = editing || frameOn || foundationCleanse || titleLocked;
 
   const exist = foundationCleanse
     ? undefined
@@ -407,10 +411,12 @@ export function CadPlanBoard({
           fill="transparent"
           stroke={bStroke}
           strokeWidth={1.5}
-          strokeDasharray={foundationCleanse ? undefined : "4 4"}
+          strokeDasharray={titleSolid ? undefined : "4 4"}
           vectorEffect="non-scaling-stroke"
           opacity={layerOpacity.boundary}
-          data-testid={foundationCleanse ? "foundation-title-boundary" : undefined}
+          data-testid={
+            titleSolid ? "foundation-title-boundary" : undefined
+          }
         />
         {!foundationCleanse ? (
           <polygon
@@ -521,7 +527,7 @@ export function CadPlanBoard({
           ))
         : null}
 
-      {foundationCleanse
+      {titleSolid
         ? boundary.map((p, i) => (
             <span
               key={`ftick${i}`}
@@ -547,7 +553,7 @@ export function CadPlanBoard({
             <span className={css.obliqueTick} aria-hidden />
             <span className={css.dimLabel}>
               {d.key} ·{" "}
-              {foundationCleanse
+              {titleSolid
                 ? `${d.lengthM.toFixed(3)} m`
                 : `${d.lengthM.toFixed(2)} m`}
             </span>
@@ -771,7 +777,8 @@ export function CadPlanBoard({
         </div>
       ) : null}
 
-      <div className={css.north}>N↑</div>
+      {/* Ground compass is the single north rose when title is locked. */}
+      {!titleSolid ? <div className={css.north}>N↑</div> : null}
     </div>
   );
 }

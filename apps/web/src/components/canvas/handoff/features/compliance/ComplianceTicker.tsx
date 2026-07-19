@@ -10,6 +10,7 @@ type Props = {
 
 /**
  * Live regulatory ticker — updates on every geometry commit, no Calculate.
+ * Setback metre is the council *rule*, not a measured clearance (unless alert).
  */
 export function ComplianceTicker({ report, onOpenCompliance }: Props) {
   const top = report.alerts[0] ?? null;
@@ -28,7 +29,7 @@ export function ComplianceTicker({ report, onOpenCompliance }: Props) {
         <span className={css.dot}>·</span>
         {Math.round(report.canopyPct)}% canopy
         <span className={css.dot}>·</span>
-        {report.setbackM.toFixed(1)} m setback
+        {report.setbackM.toFixed(1)} m rule
       </span>
       {top ? (
         <span className={css.alert}>{top.title}</span>

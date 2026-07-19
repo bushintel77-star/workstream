@@ -33,6 +33,19 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(true);
   });
 
+  it("diets Cad chrome while AI ghosts are pending", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      pendingGhosts: 11,
+    });
+    expect(c.sunGrowth).toBe(false);
+    expect(c.horizon).toBe(false);
+    expect(c.volumeIsolith).toBe(false);
+    expect(c.tradeMargin).toBe(false);
+    expect(c.floraRing).toBe(false);
+  });
+
   it("collapses utility while Trace is armed", () => {
     const c = resolveHandoffChrome({
       ...base,

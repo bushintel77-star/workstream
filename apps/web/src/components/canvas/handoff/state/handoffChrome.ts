@@ -39,6 +39,8 @@ type Input = {
   clientView: boolean;
   /** Stage 1 cadastral foundation — suppress AI/trade/veg chrome */
   foundationCleanse?: boolean;
+  /** Quiet Cad when unverified AI ghosts are pending */
+  pendingGhosts?: number;
 };
 
 const DRAWING_TOOLS: StudioTool[] = ["trace", "edit", "add", "measure"];
@@ -55,8 +57,10 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     frameOn,
     clientView,
     foundationCleanse = false,
+    pendingGhosts = 0,
   } = input;
   const drawingHot = DRAWING_TOOLS.includes(tool);
+  const draftCrowded = pendingGhosts > 0;
 
   if (foundationCleanse) {
     return {
@@ -103,18 +107,20 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const cadLike = mode === "cad" || mode === "elevation";
 
   return {
-    utilityDrawer: cadLike,
+    utilityDrawer: cadLike && !draftCrowded,
     liveBom: cadLike || mode === "quote",
-    horizon: mode === "cad" && !drawingHot,
+    horizon: mode === "cad" && !drawingHot && !draftCrowded,
     // Isolith + trade margin stay live while Add/Edit (unlike conversational horizon)
-    volumeIsolith: mode === "cad",
-    tradeMargin: mode === "cad",
-    sunGrowth: plan && mode !== "survey" && mode !== "sketch",
+    volumeIsolith: mode === "cad" && !draftCrowded,
+    tradeMargin: mode === "cad" && !draftCrowded,
+    // Sun/growth is a design tool — hide while AI draft review is the job
+    sunGrowth:
+      plan && mode !== "survey" && mode !== "sketch" && !draftCrowded,
     aiCoach: plan && mode !== "survey",
     ambientRibbon: plan,
-    selectionRing: mode === "cad" && !drawingHot,
+    selectionRing: mode === "cad" && !drawingHot && !draftCrowded,
     drawTools: plan,
-    collapseUtility: drawingHot,
-    floraRing: plan && mode !== "survey",
+    collapseUtility: drawingHot || draftCrowded,
+    floraRing: plan && mode !== "survey" && !draftCrowded,
   };
 }

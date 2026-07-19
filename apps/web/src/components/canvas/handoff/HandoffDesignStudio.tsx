@@ -251,7 +251,10 @@ export function HandoffDesignStudio({
     frameOn: ui.frameOn,
     clientView: ui.clientView,
     foundationCleanse: ui.foundationCleanse,
+    pendingGhosts: ai.pendingCount,
   });
+  const titleLocked =
+    ui.foundationCleanse || ui.boundarySource === "vicmap";
   const drawingHot = chrome.collapseUtility;
   const showDocks = chrome.utilityDrawer;
   /** Fit sheet / focus freezes floating chrome — parchment plane stays first. */
@@ -339,13 +342,6 @@ export function HandoffDesignStudio({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawingHot]);
 
-  useEffect(() => {
-    if (compliance.alerts.some((a) => a.code === "setback" || a.code === "tpz")) {
-      if (!ui.setbackOn) studio.setUi({ setbackOn: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [compliance.alerts]);
-
   const armType = (t: StudioItemType) => {
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
   };
@@ -356,9 +352,11 @@ export function HandoffDesignStudio({
       ? "AI DRAFT: SCANNING"
       : ai.status === "assisting"
         ? "AI DRAFT: ASSISTING"
-        : ai.status === "unverified"
-          ? "AI DRAFT: UNVERIFIED"
-          : "AI DRAFT: VERIFIED";
+        : titleLocked && ai.status === "unverified"
+          ? "VICMAP TITLE · DESIGN DRAFT"
+          : ai.status === "unverified"
+            ? "AI DRAFT: UNVERIFIED"
+            : "AI DRAFT: VERIFIED";
 
   const onCoachTip = (tip: StudioAiSuggestion) => {
     if (tip.id === "review-ghosts" || tip.id === "scan-site") {
@@ -400,17 +398,26 @@ export function HandoffDesignStudio({
         </div>
         <div className={css.spacer} />
         <nav className={css.modes} aria-label="Design workflow" data-testid="canvas-mode-strip">
-          {MODE_TABS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}`}
-              data-testid={`canvas-mode-${m}`}
-              onClick={() => studio.setMode(m)}
-            >
-              {m[0]!.toUpperCase() + m.slice(1)}
-            </button>
-          ))}
+          {MODE_TABS.map((m) => {
+            const lockedOut = ui.foundationCleanse && m !== "survey";
+            return (
+              <button
+                key={m}
+                type="button"
+                className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}`}
+                data-testid={`canvas-mode-${m}`}
+                disabled={lockedOut}
+                title={
+                  lockedOut
+                    ? "Exit Stage 1 foundation to leave Survey"
+                    : undefined
+                }
+                onClick={() => studio.setMode(m)}
+              >
+                {m[0]!.toUpperCase() + m.slice(1)}
+              </button>
+            );
+          })}
         </nav>
         <div className={css.spacer} />
         <div className={css.meta}>
@@ -646,6 +653,9 @@ export function HandoffDesignStudio({
               sheetScaleDenom={ui.sheetScaleDenom}
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}
+              autoCanopyScan={false}
+              titleLocked={titleLocked}
+              boundarySource={ui.boundarySource}
               boundary={studio.boundary}
               building={ui.foundationCleanse ? [] : studio.building}
               siteLabel={displayAddress}
@@ -653,7 +663,10 @@ export function HandoffDesignStudio({
               parchmentPeel={ui.foundationCleanse ? 1 : ui.parchmentPeel}
               onUri={(uri) => {
                 if (ui.foundationCleanse) return;
-                studio.setUi({ aerialUri: uri });
+                studio.setUi({
+                  aerialUri: uri,
+                  aerialSuppressed: uri == null,
+                });
               }}
               onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
               onCanopyImage={ai.ingestCanopyImage}
@@ -664,6 +677,7 @@ export function HandoffDesignStudio({
               frameOn={ui.frameOn}
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}
+              titleLocked={titleLocked}
               boundary={studio.boundary}
               building={studio.building}
               items={studio.items}
@@ -880,15 +894,22 @@ export function HandoffDesignStudio({
             }
             onUndo={studio.undo}
             onRedo={studio.redo}
-            onZoom={(delta) =>
+            onZoom={(delta) => {
+              if (ui.foundationCleanse) return;
               studio.setUi({
                 zoom: Math.max(
                   0.6,
                   Math.min(2.2, Number((ui.zoom + delta).toFixed(2))),
                 ),
-              })
-            }
-            onFit={() => studio.setUi({ zoom: 1 })}
+              });
+            }}
+            onFit={() => {
+              if (ui.foundationCleanse) {
+                studio.setUi({ zoom: 1, sheetScaleDenom: 100 });
+                return;
+              }
+              studio.setUi({ zoom: 1 });
+            }}
             onOpacity={studio.setLayerOpacity}
             onParchmentPeel={(parchmentPeel) => studio.setUi({ parchmentPeel })}
           />
