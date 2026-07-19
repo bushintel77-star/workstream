@@ -1,0 +1,61 @@
+.mark {
+  position: absolute;
+  z-index: 15;
+  max-width: min(16rem, 80vw);
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
+  background: #241318;
+  color: #fff6f8;
+  box-shadow: 0 14px 44px rgba(42, 23, 29, 0.4);
+  pointer-events: auto;
+}
+
+.markBottomLeft {
+  left: 1rem;
+  bottom: 6rem;
+}
+
+.markTopRight {
+  right: 1rem;
+  top: 5rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.body {
+  margin: 0.35rem 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  opacity: 0.92;
+}
+
+.actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnPrimary {
+  background: #ffd3de;
+  color: #241318;
+}
+
+.btnGhost {
+  background: transparent;
+  color: #fff6f8;
+  opacity: 0.85;
+}

@@ -309,13 +309,53 @@
 }
 
 .rootFocus [data-testid="live-bom-hud"],
+.rootFocus [data-testid="compliance-dock"],
 .rootFocus [data-testid="cad-dock"],
 .rootFocus [data-testid="survey-dock"],
 .rootFocus [data-testid="canvas-quote-dock"],
 .rootFocus [data-testid="geo-sheet-hud"],
+.rootFocus [data-testid="canvas-tool-rail"],
+.rootFocus [data-testid="sun-shade-controls"],
+.rootFocus .sunDock,
 .rootFocus .dock {
   opacity: 0;
   pointer-events: none;
+}
+
+.rootDark {
+  --pink-mist: #1a1216;
+  background: #1a1216;
+  color: #fff6f8;
+}
+
+.rootDark .stage {
+  filter: brightness(0.92) contrast(1.05);
+}
+
+.rootClient [data-testid="live-bom-hud"],
+.rootClient [data-testid="compliance-dock"],
+.rootClient [data-testid="canvas-tool-rail"],
+.rootClient [data-testid="ai-draft-badge"],
+.rootClient [data-testid="cad-ghost-review"],
+.rootClient .dock {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sunDock {
+  position: absolute;
+  right: 0.75rem;
+  top: 13.5rem;
+  z-index: 38;
+  max-width: min(16rem, calc(100vw - 1.5rem));
+}
+
+.sheetPaper[data-paper-size="A4"] {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
 }
 
 .modeStrip {

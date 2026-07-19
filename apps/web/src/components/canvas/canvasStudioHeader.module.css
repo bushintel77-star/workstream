@@ -170,6 +170,60 @@
   background: color-mix(in srgb, var(--paper, #faf6f2) 94%, transparent);
 }
 
+.headerClient {
+  justify-content: space-between;
+}
+
+.aiBadge {
+  display: inline-flex;
+  margin-top: 4px;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9e3049;
+  background: color-mix(in srgb, #ffd3de 55%, #fff);
+  border: 1px solid color-mix(in srgb, #c2455f 35%, transparent);
+}
+
+.saveTick {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 9px;
+  color: #1f8a5a;
+}
+
+.segment {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(36, 19, 24, 0.05);
+  border: 1px solid rgba(36, 19, 24, 0.08);
+}
+
+.segmentBtn {
+  border: none;
+  border-radius: 999px;
+  min-height: 28px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: #7a5560;
+}
+
+.segmentBtnActive {
+  background: #241318;
+  color: #fff6f8;
+}
+
 @media (max-width: 900px) {
   .meta {
     display: none;

@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CanvasViewLayers } from "../../lib/canvas-view-layers";
 import type { CanvasLayerOpacity } from "../../lib/canvas-layer-opacity";
 import type { CanvasMode, CanvasProgress } from "../../lib/canvas-mode";
 import { CanvasLayerOpacityPanel } from "./CanvasLayerOpacityPanel";
 import { CanvasModeStrip } from "./CanvasModeStrip";
+import { SiteSwitcherPopover } from "./SiteSwitcherPopover";
 import hdr from "./canvasStudioHeader.module.css";
 
 type WorkingMeta = {
@@ -14,7 +14,10 @@ type WorkingMeta = {
   detail: string;
 };
 
+export type PaperSize = "A3" | "A4";
+
 type Props = {
+  projectId: string;
   projectAddress: string;
   mode: CanvasMode;
   progress: CanvasProgress;
@@ -22,6 +25,14 @@ type Props = {
   paper?: boolean;
   showFitSheet: boolean;
   onToggleFitSheet: () => void;
+  paperSize?: PaperSize;
+  onPaperSize?: (size: PaperSize) => void;
+  sheetElevations?: boolean;
+  onToggleSheetElevations?: () => void;
+  darkCanvas?: boolean;
+  onToggleDarkCanvas?: () => void;
+  clientView?: boolean;
+  onToggleClientView?: () => void;
   showCadLine?: boolean;
   cadDrawArmed?: boolean;
   onToggleCadDraw?: () => void;
@@ -36,12 +47,16 @@ type Props = {
   onLayerOpacityChange?: (next: CanvasLayerOpacity) => void;
   layerCounts?: Partial<Record<keyof CanvasLayerOpacity, number>>;
   onOpenCommands?: () => void;
+  onShare?: () => void;
   focusChrome?: boolean;
   onToggleFocusChrome?: () => void;
   hideBrand?: boolean;
+  clientViewActive?: boolean;
+  autosaveLabel?: string | null;
 };
 
 export function CanvasStudioHeader({
+  projectId,
   projectAddress,
   mode,
   progress,
@@ -49,6 +64,14 @@ export function CanvasStudioHeader({
   paper = false,
   showFitSheet,
   onToggleFitSheet,
+  paperSize = "A3",
+  onPaperSize,
+  sheetElevations = false,
+  onToggleSheetElevations,
+  darkCanvas = false,
+  onToggleDarkCanvas,
+  clientView = false,
+  onToggleClientView,
   showCadLine = false,
   cadDrawArmed = false,
   onToggleCadDraw,
@@ -63,9 +86,12 @@ export function CanvasStudioHeader({
   onLayerOpacityChange,
   layerCounts,
   onOpenCommands,
+  onShare,
   focusChrome = false,
   onToggleFocusChrome,
   hideBrand = false,
+  clientViewActive = false,
+  autosaveLabel = null,
 }: Props) {
   const [layersOpen, setLayersOpen] = useState(false);
   const layersRef = useRef<HTMLDivElement>(null);
@@ -81,6 +107,29 @@ export function CanvasStudioHeader({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [layersOpen]);
 
+  if (clientViewActive) {
+    return (
+      <header
+        className={`${hdr.header} ${hdr.headerClient}`}
+        data-testid="canvas-studio-header"
+      >
+        <div className={hdr.brand}>
+          <p className={hdr.brandName}>Curtis &amp; Co</p>
+          <p className={hdr.address}>{projectAddress}</p>
+        </div>
+        {onToggleClientView ? (
+          <button
+            type="button"
+            className={hdr.toolBtn}
+            onClick={onToggleClientView}
+          >
+            Exit client view
+          </button>
+        ) : null}
+      </header>
+    );
+  }
+
   return (
     <header
       className={`${hdr.header}${paper ? ` ${hdr.headerPaper}` : ""}`}
@@ -92,6 +141,14 @@ export function CanvasStudioHeader({
           <p className={hdr.address} title={projectAddress}>
             {projectAddress}
           </p>
+          {ghostCount > 0 ? (
+            <span className={hdr.aiBadge} data-testid="ai-draft-badge">
+              AI draft: unverified
+            </span>
+          ) : null}
+          {autosaveLabel ? (
+            <span className={hdr.saveTick}>{autosaveLabel}</span>
+          ) : null}
         </div>
       ) : null}
 
@@ -114,6 +171,34 @@ export function CanvasStudioHeader({
       <div
         className={`${hdr.toolbar}${workingMeta ? ` ${hdr.toolbarWithMeta}` : ""}`}
       >
+        {showFitSheet && onPaperSize ? (
+          <div className={hdr.segment} data-testid="paper-size-control">
+            {(["A3", "A4"] as PaperSize[]).map((size) => (
+              <button
+                key={size}
+                type="button"
+                className={`${hdr.segmentBtn}${paperSize === size ? ` ${hdr.segmentBtnActive}` : ""}`}
+                aria-pressed={paperSize === size}
+                onClick={() => onPaperSize(size)}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {showFitSheet && onToggleSheetElevations ? (
+          <button
+            type="button"
+            className={`${hdr.toolBtn}${sheetElevations ? ` ${hdr.toolBtnActive}` : ""}`}
+            aria-pressed={sheetElevations}
+            data-testid="sheet-elevations-top"
+            onClick={onToggleSheetElevations}
+          >
+            {sheetElevations ? "Elevations ✓" : "+ Elevations"}
+          </button>
+        ) : null}
+
         <button
           type="button"
           className={`${hdr.toolBtn}${showFitSheet ? ` ${hdr.toolBtnActive}` : ""}`}
@@ -124,6 +209,18 @@ export function CanvasStudioHeader({
         >
           Fit sheet
         </button>
+
+        {onToggleDarkCanvas ? (
+          <button
+            type="button"
+            className={`${hdr.toolBtn}${darkCanvas ? ` ${hdr.toolBtnActive}` : ""}`}
+            aria-pressed={darkCanvas}
+            data-testid="dark-canvas-top"
+            onClick={onToggleDarkCanvas}
+          >
+            {darkCanvas ? "Light" : "Dark"}
+          </button>
+        ) : null}
 
         {showCadLine ? (
           <button
@@ -144,11 +241,10 @@ export function CanvasStudioHeader({
               type="button"
               className={`${hdr.toolBtn}${layersOpen ? ` ${hdr.toolBtnActive}` : ""}`}
               aria-expanded={layersOpen}
-              aria-haspopup="dialog"
               data-testid="canvas-layers-top"
               onClick={() => setLayersOpen((v) => !v)}
             >
-              Layers
+              ⧉ Layers
             </button>
             {layersOpen ? (
               <div className={hdr.popover} role="dialog" aria-label="Canvas layers">
@@ -164,12 +260,16 @@ export function CanvasStudioHeader({
           </div>
         ) : null}
 
+        <SiteSwitcherPopover
+          currentProjectId={projectId}
+          buttonClassName={hdr.toolBtn}
+        />
+
         {onToggleFocusChrome ? (
           <button
             type="button"
             className={`${hdr.toolBtn}${focusChrome ? ` ${hdr.toolBtnActive}` : ""}`}
             aria-pressed={focusChrome}
-            title="Focus — hide side panels"
             data-testid="canvas-focus-top"
             onClick={onToggleFocusChrome}
           >
@@ -177,15 +277,28 @@ export function CanvasStudioHeader({
           </button>
         ) : null}
 
-        <Link href="/" className={hdr.toolBtn}>
-          Sites
-        </Link>
+        {onToggleClientView ? (
+          <button
+            type="button"
+            className={`${hdr.toolBtn}${clientView ? ` ${hdr.toolBtnActive}` : ""}`}
+            aria-pressed={clientView}
+            data-testid="client-view-top"
+            onClick={onToggleClientView}
+          >
+            Client view
+          </button>
+        ) : null}
+
+        {onShare ? (
+          <button type="button" className={hdr.toolBtn} data-testid="share-top" onClick={onShare}>
+            Share
+          </button>
+        ) : null}
 
         {onToggleKeysHelp ? (
           <button
             type="button"
             className={`${hdr.toolBtn}${keysHelpOn ? ` ${hdr.toolBtnActive}` : ""}`}
-            title="Keyboard shortcuts (?)"
             aria-pressed={keysHelpOn}
             onClick={onToggleKeysHelp}
           >

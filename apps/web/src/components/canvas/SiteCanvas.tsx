@@ -33,8 +33,18 @@ import {
   saveBoundaryAction,
   unlockBoundaryAction,
 } from "../../app/actions";
+import { computeSiteCompliance } from "@workstream/domain";
 import { FirstRunGuide } from "./FirstRunGuide";
 import { LiveBomHud } from "./LiveBomHud";
+import { ComplianceDock } from "./ComplianceDock";
+import { CanvasToolRail, type CanvasTool } from "./CanvasToolRail";
+import { ElevationProfile } from "./ElevationProfile";
+import { GhostReviewCard } from "./GhostReviewCard";
+import { CanvasCoachMarks } from "./CanvasCoachMarks";
+import { CanvasStudioCommandPalette } from "./CanvasStudioCommandPalette";
+import { SheetElevationPanel } from "./SheetElevationPanel";
+import { SunShadeControls } from "./SunShadeControls";
+import { SiteIntelligenceOverlay } from "./SiteIntelligenceOverlay";
 import type {
   CadBuildApi,
   CadDocumentLite,
@@ -60,7 +70,7 @@ import {
   BoundaryOverlay,
   type BoundaryTool,
 } from "./BoundaryLockSnap";
-import { CanvasStudioHeader } from "./CanvasStudioHeader";
+import { CanvasStudioHeader, type PaperSize } from "./CanvasStudioHeader";
 import { SketchInstrument } from "./SketchInstrument";
 import {
   DraftingHud,
@@ -84,6 +94,7 @@ import {
   type CanvasViewLayers,
 } from "../../lib/canvas-view-layers";
 import {
+  applyBucketOpacity,
   DEFAULT_LAYER_OPACITY,
   SURVEY_LAYER_PRESET,
   type CanvasLayerOpacity,
@@ -382,6 +393,19 @@ function SiteCanvasInner({
     useState<CanvasLayerOpacity>(DEFAULT_LAYER_OPACITY);
   const layerOpacityRestore = useRef<CanvasLayerOpacity>(DEFAULT_LAYER_OPACITY);
   const [focusChrome, setFocusChrome] = useState(false);
+  const [darkCanvas, setDarkCanvas] = useState(false);
+  const [clientView, setClientView] = useState(false);
+  const [paperSize, setPaperSize] = useState<PaperSize>("A3");
+  const [sheetElevations, setSheetElevations] = useState(false);
+  const [complianceCollapsed, setComplianceCollapsed] = useState(false);
+  const [canvasTool, setCanvasTool] = useState<CanvasTool>("pan");
+  const [globalCommandOpen, setGlobalCommandOpen] = useState(false);
+  const [selectedElevationId, setSelectedElevationId] = useState<string | null>(
+    null,
+  );
+  const [ghostReviewIndex, setGhostReviewIndex] = useState(0);
+  const [autosaveLabel, setAutosaveLabel] = useState<string | null>(null);
+  const [sunWhen, setSunWhen] = useState(() => new Date());
   const sketchCommandsRef = useRef<SketchCommandsApi | null>(null);
   const cadDocRef = useRef(cadDoc);
   cadDocRef.current = cadDoc;
@@ -912,9 +936,49 @@ function SiteCanvasInner({
   const showQuoteDock = chrome.quoteDock;
   const showSurveyDock = chrome.surveyDock;
   const showSketchDock = chrome.sketchDock;
-  const showLiveBom = chrome.liveBom;
+  const showLiveBom = chrome.liveBom && !focusChrome && !clientView;
+  const showComplianceDock =
+    chrome.complianceDock && !focusChrome && !clientView;
+  const showSunDock = chrome.sunGrowthDock && !focusChrome && !clientView;
+  const showToolRail = chrome.toolRail && !clientView && !titleRevealActive;
+  const showElevationStage = mode === "elevation" && !titleRevealActive;
   const showStage =
-    titleRevealActive || mode !== "sketch" || Boolean(sketch);
+    titleRevealActive ||
+    mode === "elevation" ||
+    mode !== "sketch" ||
+    Boolean(sketch);
+
+  const complianceStats = useMemo(
+    () =>
+      computeSiteCompliance({
+        outdoorAreaM2:
+          sketch?.surveyMetrics?.garden_area_m2 ??
+          boundary?.calculated_metrics.total_area_m2 ??
+          sketch?.surveyMetrics?.lot_area_m2 ??
+          200,
+        spatialFacts: orchWorld?.spatial_facts ?? [],
+        risks: orchWorld?.risks ?? [],
+      }),
+    [boundary, orchWorld, sketch?.surveyMetrics],
+  );
+
+  const elevationItems = useMemo(() => {
+    const facts = orchWorld?.spatial_facts ?? [];
+    return facts
+      .filter((f) => f.x_pct != null && f.y_pct != null)
+      .map((f) => ({
+        id: f.id,
+        label: f.label,
+        x_pct: f.x_pct ?? 50,
+        y_pct: f.y_pct ?? 50,
+        height_m: f.height_m,
+        ghost: false,
+      }));
+  }, [orchWorld?.spatial_facts]);
+
+  const councilOpacity = applyBucketOpacity("council", 1, layerOpacity);
+  const vegetationOpacity = applyBucketOpacity("vegetation", 1, layerOpacity);
+  const boundaryOpacity = applyBucketOpacity("boundary", 1, layerOpacity);
 
   const layerCounts = useMemo(
     () => ({
@@ -937,7 +1001,7 @@ function SiteCanvasInner({
       sketchCommandsRef.current.openCommands();
       return;
     }
-    setKeysHelpOn(true);
+    setGlobalCommandOpen(true);
   }, [mode]);
 
   const workingMeta = useMemo(() => {
@@ -983,16 +1047,37 @@ function SiteCanvasInner({
     if (committedCount > 0) setShowGuide(false);
   }, [committedCount]);
 
+  useEffect(() => {
+    if (canvasTool === "measure") setMeasureActive(true);
+    else setMeasureActive(false);
+  }, [canvasTool]);
+
+  useEffect(() => {
+    if (canvasTool === "edit" || canvasTool === "trace") setBoundaryTool("edit");
+    if (canvasTool === "pan") setBoundaryTool("pan");
+  }, [canvasTool]);
+
+  useEffect(() => {
+    if (!pending) {
+      setAutosaveLabel("Saved");
+      const t = setTimeout(() => setAutosaveLabel(null), 2200);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [pending, cadDoc, sketchCount, ghostCount]);
+
   return (
     <div
-      className={`${css.root}${walkMode && canWalk ? ` ${css.rootWalk}` : ""}${focusChrome ? ` ${css.rootFocus}` : ""}`}
+      className={`${css.root}${walkMode && canWalk ? ` ${css.rootWalk}` : ""}${focusChrome ? ` ${css.rootFocus}` : ""}${darkCanvas ? ` ${css.rootDark}` : ""}${clientView ? ` ${css.rootClient}` : ""}`}
       data-testid="site-canvas"
       data-canvas-mode={mode}
       data-title-reveal={titleRevealActive ? "1" : undefined}
       data-walk={walkMode && canWalk ? "1" : undefined}
+      data-paper-size={showFitSheet ? paperSize : undefined}
     >
       {!titleRevealActive ? (
         <CanvasStudioHeader
+          projectId={projectId}
           projectAddress={projectAddress}
           mode={mode}
           progress={progress}
@@ -1003,6 +1088,16 @@ function SiteCanvasInner({
             setShowFitSheet((v) => !v);
             setFitNonce((n) => n + 1);
           }}
+          paperSize={paperSize}
+          onPaperSize={setPaperSize}
+          sheetElevations={sheetElevations}
+          onToggleSheetElevations={() => setSheetElevations((v) => !v)}
+          darkCanvas={darkCanvas}
+          onToggleDarkCanvas={() => setDarkCanvas((v) => !v)}
+          clientView={clientView}
+          onToggleClientView={() => setClientView((v) => !v)}
+          clientViewActive={clientView}
+          autosaveLabel={autosaveLabel}
           showCadLine={mode === "cad"}
           cadDrawArmed={cadDrawArmed}
           onToggleCadDraw={() => setCadDrawArmed((v) => !v)}
@@ -1017,6 +1112,7 @@ function SiteCanvasInner({
           onLayerOpacityChange={setLayerOpacity}
           layerCounts={layerCounts}
           onOpenCommands={openCommandPalette}
+          onShare={() => setMode("share")}
           focusChrome={focusChrome}
           onToggleFocusChrome={() => setFocusChrome((v) => !v)}
           hideBrand={useGeoStage}
@@ -1120,6 +1216,15 @@ function SiteCanvasInner({
         </div>
       ) : null}
 
+      {showComplianceDock ? (
+        <ComplianceDock
+          stats={complianceStats}
+          paper={showFitSheet}
+          collapsed={complianceCollapsed}
+          onToggleCollapsed={() => setComplianceCollapsed((v) => !v)}
+        />
+      ) : null}
+
       {showLiveBom ? (
         <LiveBomHud
           projectId={projectId}
@@ -1153,7 +1258,39 @@ function SiteCanvasInner({
         </div>
       ) : null}
 
-      {showStage ? (
+      {showToolRail ? (
+        <CanvasToolRail
+          tool={canvasTool}
+          onTool={setCanvasTool}
+          onZoomIn={() => setFitNonce((n) => n + 1)}
+          onZoomOut={() => setFitNonce((n) => n + 1)}
+          onZoomFit={() => setFitNonce((n) => n + 1)}
+        />
+      ) : null}
+
+      {showSunDock && mapView && fallbackCenter ? (
+        <div className={css.sunDock}>
+          <SunShadeControls
+            lat={fallbackCenter.lat}
+            lng={fallbackCenter.lng}
+            when={sunWhen}
+            onWhenChange={setSunWhen}
+          />
+        </div>
+      ) : null}
+
+      {!titleRevealActive && !clientView ? <CanvasCoachMarks /> : null}
+
+      {showElevationStage ? (
+        <ElevationProfile
+          items={elevationItems}
+          selectedId={selectedElevationId}
+          onSelect={setSelectedElevationId}
+          onTraceInPlan={() => setMode("cad")}
+        />
+      ) : null}
+
+      {showStage && !showElevationStage ? (
         <>
           <div
             ref={stageRef}
@@ -1221,6 +1358,7 @@ function SiteCanvasInner({
                       mode === "quote" ||
                       mode === "share")
                   }
+                  paperSize={paperSize}
                 >
                   <GeoSiteMap
                     phase="design"
@@ -1471,6 +1609,7 @@ function SiteCanvasInner({
                   {svg && (mode === "cad" || mode === "quote") ? (
                     <div
                       className={`${css.cadLayer} ${ghostCount > 0 ? css.cadLayerGhost : ""}`}
+                      style={{ opacity: boundaryOpacity }}
                       dangerouslySetInnerHTML={{ __html: svg }}
                     />
                   ) : null}
@@ -1575,29 +1714,14 @@ function SiteCanvasInner({
                 className={`${css.emptyHint} ${css.emptyHintAction} ${css.ghostReview}${showFitSheet ? ` ${css.emptyHintPaper}` : ""}`}
                 data-testid="cad-ghost-review"
               >
-                <strong>Verify AI geometry</strong>
-                <p>
-                  {ghostCount} suggestion
-                  {ghostCount === 1 ? "" : "s"} on the Fit sheet — Accept (A)
-                  to verify and unlock Quote.
-                </p>
-                <div className={css.emptyHintActions}>
-                  <button
-                    type="button"
-                    className={`${css.btn} ${css.btnPrimary}`}
-                    data-testid="cad-accept-ghosts"
-                    onClick={acceptAllGhosts}
-                  >
-                    Accept ({ghostCount})
-                  </button>
-                  <button
-                    type="button"
-                    className={css.btn}
-                    onClick={() => setCadDrawArmed(true)}
-                  >
-                    Reject / keep drawing
-                  </button>
-                </div>
+                <GhostReviewCard
+                  title="AI CAD geometry"
+                  why="Generated metre geometry on the Fit sheet — verify before quote."
+                  confidence={0.78}
+                  suggestionId={`cad-ghost-${ghostCount}`}
+                  onAccept={acceptAllGhosts}
+                  onReject={() => setCadDrawArmed(true)}
+                />
               </div>
             ) : null}
             {!titleRevealActive &&
@@ -2445,6 +2569,15 @@ function SiteCanvasInner({
               </div>
             </div>
           ) : null}
+
+          {showFitSheet && sheetElevations && useGeoStage ? (
+            <SheetElevationPanel
+              items={elevationItems}
+              widthM={
+                cadDoc?.width_m ?? boundary?.width_m ?? groundSpan?.widthM ?? 400
+              }
+            />
+          ) : null}
         </>
       ) : null}
 
@@ -2477,6 +2610,39 @@ function SiteCanvasInner({
             srcDoc={quoteHtml}
           />
         </div>
+      ) : null}
+
+      {sketch?.symbols ? (
+        <CanvasStudioCommandPalette
+          open={globalCommandOpen}
+          onOpenChange={setGlobalCommandOpen}
+          mode={mode}
+          symbols={sketch.symbols}
+          onMode={setMode}
+          onToggleFitSheet={() => {
+            setShowFitSheet((v) => !v);
+            setFitNonce((n) => n + 1);
+          }}
+          fitSheetOn={showFitSheet}
+          onToggleDarkCanvas={() => setDarkCanvas((v) => !v)}
+          darkCanvas={darkCanvas}
+          onToggleClientView={() => setClientView((v) => !v)}
+          clientView={clientView}
+          onScanGhosts={() => sketchCommandsRef.current?.scanGhosts()}
+          onDraftCad={draftFitSheet}
+          onGoToQuote={() => setMode("quote")}
+          onToggleMeasure={() => setMeasureActive((v) => !v)}
+          measureActive={measureActive}
+          onToggleShade={() =>
+            setViewLayers((prev) => ({ ...prev, shade: !prev.shade }))
+          }
+          onToggleEasements={() =>
+            setViewLayers((prev) => ({ ...prev, easements: !prev.easements }))
+          }
+          shadeActive={viewLayers.shade}
+          easementsActive={viewLayers.easements}
+          projectId={projectId}
+        />
       ) : null}
     </div>
   );

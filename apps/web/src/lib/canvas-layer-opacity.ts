@@ -21,6 +21,15 @@ export const SURVEY_LAYER_PRESET: CanvasLayerOpacity = {
 
 export type CanvasLayerBucket = keyof CanvasLayerOpacity;
 
+/** Multiply base opacity by bucket slider (0–1). */
+export function applyBucketOpacity(
+  bucket: CanvasLayerBucket,
+  baseOpacity: number,
+  layers: CanvasLayerOpacity,
+): number {
+  return baseOpacity * Math.max(0, Math.min(1, layers[bucket]));
+}
+
 export const LAYER_BUCKET_LABELS: Record<
   CanvasLayerBucket,
   { label: string; hint: string }

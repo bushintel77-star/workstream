@@ -25,7 +25,7 @@ describe("canvas progressive disclosure", () => {
     ).toBe("survey");
   });
 
-  it("unlocks sketch and CAD after aerial", () => {
+  it("unlocks sketch, CAD, and elevation after aerial", () => {
     const open = unlockedModes({
       hasAerial: true,
       hasSketch: false,
@@ -34,6 +34,7 @@ describe("canvas progressive disclosure", () => {
     });
     expect(open.has("sketch")).toBe(true);
     expect(open.has("cad")).toBe(true);
+    expect(open.has("elevation")).toBe(true);
     expect(open.has("quote")).toBe(false);
     expect(
       suggestedMode({

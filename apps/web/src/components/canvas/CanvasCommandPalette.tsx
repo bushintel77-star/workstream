@@ -27,6 +27,7 @@ type Props = {
   onToggleEasements?: () => void;
   shadeActive?: boolean;
   easementsActive?: boolean;
+  extraCommands?: CanvasCommand[];
 };
 
 function buildCommands(
@@ -135,54 +136,74 @@ export function CanvasCommandPalette({
   onToggleEasements,
   shadeActive = false,
   easementsActive = false,
+  extraCommands = [],
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
 
-  const commands = useMemo(
-    () =>
-      buildCommands(symbols, {
-        onArmSymbol,
-        onScanGhosts,
-        onDraftCad,
-        onGoToQuote,
-        onToggleMeasure,
-        measureActive,
-        onFocusAssist,
-        onToggleShade,
-        onToggleEasements,
-        shadeActive,
-        easementsActive,
-      }),
-    [
-      easementsActive,
-      measureActive,
+  const commands = useMemo(() => {
+    const built = buildCommands(symbols, {
       onArmSymbol,
-      onDraftCad,
-      onFocusAssist,
-      onGoToQuote,
       onScanGhosts,
-      onToggleEasements,
+      onDraftCad,
+      onGoToQuote,
       onToggleMeasure,
+      measureActive,
+      onFocusAssist,
       onToggleShade,
+      onToggleEasements,
       shadeActive,
-      symbols,
-    ],
-  );
+      easementsActive,
+    });
+    const seen = new Set<string>();
+    return [...extraCommands, ...built].filter((c) => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
+  }, [
+    easementsActive,
+    extraCommands,
+    measureActive,
+    onArmSymbol,
+    onDraftCad,
+    onFocusAssist,
+    onGoToQuote,
+    onScanGhosts,
+    onToggleEasements,
+    onToggleMeasure,
+    onToggleShade,
+    shadeActive,
+    symbols,
+  ]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return commands.slice(0, 12);
-    return commands
-      .filter(
-        (c) =>
-          c.label.toLowerCase().includes(q) ||
-          c.detail.toLowerCase().includes(q) ||
-          c.keywords.toLowerCase().includes(q),
-      )
-      .slice(0, 12);
-  }, [commands, query]);
+    let list = !q
+      ? commands.slice(0, 14)
+      : commands
+          .filter(
+            (c) =>
+              c.label.toLowerCase().includes(q) ||
+              c.detail.toLowerCase().includes(q) ||
+              c.keywords.toLowerCase().includes(q),
+          )
+          .slice(0, 14);
+    if (q && list.length < 3 && onFocusAssist) {
+      list = [
+        ...list,
+        {
+          id: "ask-ai-query",
+          label: `Ask AI: “${query.trim()}”`,
+          detail: "Draft ghost suggestions from your query",
+          keywords: query,
+          run: () => onFocusAssist(),
+        },
+      ];
+    }
+    return list;
+  }, [commands, onFocusAssist, query]);
 
   useEffect(() => {
     if (open) {

@@ -22,6 +22,7 @@ type Props = {
    * Fit sheet off = slim aperture over aerial.
    */
   fitSheet?: boolean;
+  paperSize?: "A3" | "A4";
 };
 
 function formatScale(groundWidthM: number | null | undefined): string {
@@ -49,6 +50,7 @@ export function ArchitecturalSheet({
   children,
   tools = null,
   fitSheet = false,
+  paperSize = "A3",
 }: Props) {
   const today = new Date().toLocaleDateString("en-AU", {
     day: "numeric",
@@ -78,6 +80,7 @@ export function ArchitecturalSheet({
       className={`${css.sheet} ${css.sheetPaper}`}
       data-testid="architectural-sheet"
       data-fit-sheet="1"
+      data-paper-size={paperSize}
     >
       <header className={css.header}>
         <div className={css.brandBlock}>

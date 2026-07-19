@@ -1,9 +1,16 @@
-export type CanvasMode = "survey" | "sketch" | "cad" | "quote" | "share";
+export type CanvasMode =
+  | "survey"
+  | "sketch"
+  | "cad"
+  | "elevation"
+  | "quote"
+  | "share";
 
 export const CANVAS_MODES: Array<{ id: CanvasMode; label: string }> = [
   { id: "survey", label: "Survey" },
   { id: "sketch", label: "Sketch" },
   { id: "cad", label: "CAD" },
+  { id: "elevation", label: "Elevation" },
   { id: "quote", label: "Quote" },
   { id: "share", label: "Share" },
 ];
@@ -25,6 +32,7 @@ export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
   if (progress.hasAerial) {
     open.add("sketch");
     open.add("cad");
+    open.add("elevation");
   }
   if (progress.hasCad) open.add("quote");
   if (progress.hasQuote) open.add("share");
@@ -41,7 +49,7 @@ export function suggestedMode(progress: CanvasProgress): CanvasMode {
 
 export function parseCanvasMode(raw: string | null | undefined): CanvasMode | null {
   const v = (raw ?? "").toLowerCase();
-  if (v === "survey" || v === "sketch" || v === "cad" || v === "quote" || v === "share") {
+  if (v === "survey" || v === "sketch" || v === "cad" || v === "elevation" || v === "quote" || v === "share") {
     return v;
   }
   return null;

@@ -20,6 +20,7 @@ const LOCK_HINT: Record<CanvasMode, string> = {
   survey: "Start here — load Vicmap title",
   sketch: "Run Survey for aerial, then paint the garden",
   cad: "Open the title Fit sheet to draft lines",
+  elevation: "Load aerial to view side profile",
   quote: "Accept CAD on the Fit sheet to unlock Quote",
   share: "Promote a client quote to unlock Share",
 };
@@ -27,6 +28,7 @@ const LOCK_HINT: Record<CanvasMode, string> = {
 const LOCK_LABEL: Partial<Record<CanvasMode, string>> = {
   sketch: "Survey first",
   cad: "Open title",
+  elevation: "Survey first",
   quote: "Accept CAD",
   share: "Save quote",
 };
