@@ -2,11 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  buildIndicativeShadeGrid,
   buildableEnvelopeFromBoundary,
+  countNearbyCanopy,
   estimateStudioDrawing,
   evaluateStudioCompliance,
+  FLORA_HEIGHT_BY_FORM,
+  isFloraStudioForm,
+  rankCurtisFloraCandidates,
   shouldEnforceSetback,
   snapPointToBuildableEnvelope,
+  sunHoursAtPct,
+  type FloraCandidate,
   type StudioComplianceItem,
   type StudioHorizonCard,
 } from "@workstream/domain";
@@ -141,7 +148,25 @@ type Ui = {
   parchmentPeel: number;
   /** Durable DesignCanvas autosave status. */
   saveStatus: "idle" | "saving" | "saved" | "error";
+  /** Inline Flora Ring session (planting Add click). */
+  floraSession: {
+    x: number;
+    y: number;
+    candidates: FloraCandidate[];
+    activeIdx: number;
+    maxHeightM: number;
+  } | null;
 };
+
+/** Prahran / Stonnington demo centroid for indicative shade grid. */
+const FLORA_SHADE_LAT = -37.849;
+const FLORA_SHADE_LNG = 144.993;
+
+function dateFromSunMin(sunMin: number): Date {
+  const d = new Date();
+  d.setHours(Math.floor(sunMin / 60), sunMin % 60, 0, 0);
+  return d;
+}
 
 type State = {
   doc: Doc;
@@ -260,6 +285,7 @@ function initialState(opts: {
       sheetScaleDenom: 100,
       parchmentPeel: 0.42,
       saveStatus: hasCanvas ? "saved" : "idle",
+      floraSession: null,
     },
   };
 }
@@ -503,10 +529,127 @@ export function useStudioState(opts: UseStudioStateOpts) {
     mutate((snap) => ({ snap: acceptAllProposals(snap) }));
   }, [mutate]);
 
+  const dismissFlora = useCallback(() => {
+    setUi({ floraSession: null });
+  }, [setUi]);
+
+  const setFloraActiveIdx = useCallback(
+    (activeIdx: number) => {
+      const session = state.ui.floraSession;
+      if (!session) return;
+      setUi({
+        floraSession: {
+          ...session,
+          activeIdx: Math.max(
+            0,
+            Math.min(session.candidates.length - 1, activeIdx),
+          ),
+        },
+      });
+    },
+    [setUi, state.ui.floraSession],
+  );
+
+  const acceptFlora = useCallback(
+    (candidate: FloraCandidate) => {
+      const session = state.ui.floraSession;
+      if (!session) return;
+      const form = candidate.studioForm;
+      let tip: string | null = null;
+      let px = session.x;
+      let py = session.y;
+      mutate((snap, idn) => {
+        if (shouldEnforceSetback(form)) {
+          const env = buildableEnvelopeFromBoundary(snap.boundary);
+          const snapped = snapPointToBuildableEnvelope(px, py, env);
+          px = snapped.x;
+          py = snapped.y;
+          if (snapped.snapped) tip = snapped.codeHint;
+        }
+        const scale = Math.max(
+          0.45,
+          Math.min(1.25, candidate.canopySpreadM / 5),
+        );
+        const id = crypto.randomUUID();
+        const item: StudioItem = {
+          id,
+          t: form,
+          x: px,
+          y: py,
+          rot: 0,
+          scale,
+          ghost: false,
+          why: candidate.why,
+          conf: candidate.score,
+        };
+        let next: StudioSnapshot = {
+          ...snap,
+          items: [...snap.items, item],
+        };
+        let nextIdn = idn + 1;
+        const follow = maybeAutoProposeAfterCommit(
+          next,
+          addressRef.current,
+          nextIdn,
+        );
+        if (follow) {
+          next = {
+            ...next,
+            items: mergeAiProposals(next, follow.items, ["layout"]),
+          };
+          nextIdn = follow.idn;
+        }
+        return { snap: next, idn: nextIdn };
+      });
+      setUi({
+        floraSession: null,
+        armed: null,
+        addOpen: false,
+        tool: "pan",
+        ghostReviewOpen: true,
+        coachOpen: true,
+        setbackOn: tip ? true : state.ui.setbackOn,
+        councilTip: tip,
+      });
+    },
+    [mutate, setUi, state.ui.floraSession, state.ui.setbackOn],
+  );
+
   const placeArmed = useCallback(
     (x: number, y: number) => {
       const armed = state.ui.armed;
       if (!armed) return;
+
+      // Planting Add → Flora Ring (spatial sample + deterministic solver)
+      if (isFloraStudioForm(armed)) {
+        const cells = buildIndicativeShadeGrid(
+          FLORA_SHADE_LAT,
+          FLORA_SHADE_LNG,
+          dateFromSunMin(state.ui.sunMin),
+        );
+        const sunHours = sunHoursAtPct(x, y, cells);
+        const nearby = countNearbyCanopy(x, y, state.doc.items);
+        const maxHeightM = FLORA_HEIGHT_BY_FORM[armed];
+        const candidates = rankCurtisFloraCandidates({
+          address: addressRef.current,
+          sunHours,
+          nearbyCanopyCount: nearby,
+          maxHeightM,
+          preferredForm: armed,
+        });
+        setUi({
+          floraSession: {
+            x,
+            y,
+            candidates,
+            activeIdx: 0,
+            maxHeightM,
+          },
+          addOpen: false,
+        });
+        return;
+      }
+
       let tip: string | null = null;
       mutate((snap, idn) => {
         let px = x;
@@ -557,7 +700,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
         councilTip: tip,
       });
     },
-    [mutate, setUi, state.ui.armed, state.ui.setbackOn],
+    [
+      mutate,
+      setUi,
+      state.doc.items,
+      state.ui.armed,
+      state.ui.setbackOn,
+      state.ui.sunMin,
+    ],
   );
 
   const askAi = useCallback(
@@ -1224,6 +1374,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     rejectGhost,
     acceptAllGhosts,
     placeArmed,
+    acceptFlora,
+    dismissFlora,
+    setFloraActiveIdx,
     askAi,
     scanGhosts,
     cycleGhost,

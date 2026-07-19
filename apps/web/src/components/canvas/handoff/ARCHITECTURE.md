@@ -19,6 +19,10 @@ Live cost **Advanced**.
 snap, oblique dim ticks, TPZ / permeability colours, scale ladder. MapLibre +
 PostGIS remain Stage 2.
 
+**Flora / micro-climate SDS:** [`docs/CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md`](../../../../../../docs/CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md)
+— planting Add opens inline Flora Ring; shade-grid + Curtis deterministic solver;
+holographic mature canopy preview; Accept places stock. PostGIS registry is Stage 2.
+
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
 studio surface here until that schema brief lands.
@@ -36,6 +40,7 @@ studio surface here until that schema brief lands.
 | `features/ground/` | Tactile parchment earth, adaptive metric grid, compass, ghost cadastral |
 | `features/ambient/` | Proximity left ribbon — dormant blur strip, layer chips with counts |
 | `features/selectionRing/` | Contextual radial UI on selected asset (material / peel / lock / delete) |
+| `features/flora/` | Inline Flora Ring — micro-climate sample + top-3 Curtis plant suggestions |
 | `features/layers/` | Four opacity sliders + setback toggle |
 | `features/commandPalette/` | ⌘K actions + Ask AI row + arm symbols |
 | `features/sunGrowth/` | Arc scrubber, growth chips, shadow length readout |

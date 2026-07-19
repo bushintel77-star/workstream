@@ -83,6 +83,10 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Buxus sphere",
     category: "planting",
     description: "Formal clipped sphere",
+    botanical_name: "Buxus sempervirens",
+    sun: "partial",
+    water: "moderate",
+    mature_height_m: 0.8,
     keywords: ["topiary", "evergreen"],
     path_d: "M12 12a8 8 0 1016 0 8 8 0 00-16 0",
     asset: G(
@@ -101,6 +105,10 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Olive standard",
     category: "planting",
     description: "Single-trunk olive lollipop",
+    botanical_name: "Olea europaea",
+    sun: "full",
+    water: "low",
+    mature_height_m: 5,
     keywords: ["mediterranean", "tree"],
     path_d: "M12 20V8M12 8a6 6 0 1012 0",
     asset: G(

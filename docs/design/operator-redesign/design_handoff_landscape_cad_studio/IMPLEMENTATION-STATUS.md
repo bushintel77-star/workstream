@@ -140,6 +140,7 @@ See [README.md § UX/UI execution mandate](./README.md) and
 | Conversational AI / horizon binary actions | **Done** | Coach Accept/Reject; horizon Yes / Not now |
 | Fit sheet freezes floating cost chrome | **Done** | `frameOn` → chrome off |
 | Optimistic + skeletal Live BOM pulse | **Partial** | Continuous estimate; worker skeletal pulse TBD |
+| Flora Ring plant suggestion (micro-climate) | **Done** | `features/flora` + `rankCurtisFloraCandidates`; SDS [`CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md`](../../../CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md) |
 
 ---
 

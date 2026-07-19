@@ -34,6 +34,7 @@ import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
+import { FloraRing } from "./features/flora/FloraRing";
 import { ITEM_LAYER } from "./state/studioTypes";
 import type {
   ArchitecturalTitleBlock,
@@ -153,6 +154,10 @@ export function HandoffDesignStudio({
       }
 
       if (e.key === "Escape") {
+        if (ui.floraSession) {
+          studio.dismissFlora();
+          return;
+        }
         if (ui.drawPoly) {
           studio.cancelTrace();
           return;
@@ -658,6 +663,25 @@ export function HandoffDesignStudio({
               onMoveGroup={studio.moveGroup}
               onTransformItem={studio.transformItem}
             />
+            {ui.floraSession ? (
+              <FloraRing
+                xPct={ui.floraSession.x}
+                yPct={ui.floraSession.y}
+                candidates={ui.floraSession.candidates}
+                activeIdx={ui.floraSession.activeIdx}
+                previewSpreadPct={Math.min(
+                  28,
+                  Math.max(
+                    6,
+                    (ui.floraSession.candidates[ui.floraSession.activeIdx]
+                      ?.canopySpreadM ?? 2) * 2.4,
+                  ),
+                )}
+                onActiveIdx={studio.setFloraActiveIdx}
+                onAccept={studio.acceptFlora}
+                onDismiss={studio.dismissFlora}
+              />
+            ) : null}
             {chrome.horizon ? (
               <HorizonMarkers
                 cards={actionHorizon}

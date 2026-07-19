@@ -89,6 +89,7 @@ export * from './site-compliance';
 export * from './studio-preemptive-compliance';
 export * from './studio-preemptive-estimate';
 export * from './architectural-title-block';
+export * from './flora-suggestion';
 export * from './ghost-confidence';
 export * from './elevation-projection';
 export * from './first-run-seed';
