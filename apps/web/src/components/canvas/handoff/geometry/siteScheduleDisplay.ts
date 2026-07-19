@@ -1,0 +1,41 @@
+import type { SiteSchedule } from "./types";
+
+export type FitSheetAreaDisplay = {
+  lotAreaM2: number;
+  buildingAreaM2: number;
+  outdoorAreaM2: number;
+  siteCoveragePct: number;
+  /** Lot may come from Vicmap; footprint always from the drawn building. */
+  lotSource: "cadastral" | "drawing";
+};
+
+/**
+ * Site schedule numbers for the Fit sheet panel.
+ * Building footprint + outdoor always track the drawn polygons — never
+ * an unverified survey/template house_area (root of the "1 m²" bug).
+ * Lot area may prefer a positive cadastral Vicmap figure when present.
+ */
+export function resolveFitSheetAreas(args: {
+  schedule: SiteSchedule;
+  cadastralLotM2?: number | null;
+}): FitSheetAreaDisplay {
+  const buildingAreaM2 = args.schedule.buildingAreaM2;
+  const cadastral =
+    args.cadastralLotM2 != null &&
+    args.cadastralLotM2 > 5 &&
+    // Ignore Vicmap lot when it conflicts with drawn scale (building would exceed lot)
+    args.cadastralLotM2 + 0.5 >= buildingAreaM2
+      ? args.cadastralLotM2
+      : null;
+  const lotAreaM2 = cadastral ?? args.schedule.lotAreaM2;
+  const outdoorAreaM2 = Math.max(0, lotAreaM2 - buildingAreaM2);
+  const siteCoveragePct =
+    lotAreaM2 > 0 ? Math.round((buildingAreaM2 / lotAreaM2) * 100) : 0;
+  return {
+    lotAreaM2,
+    buildingAreaM2,
+    outdoorAreaM2,
+    siteCoveragePct,
+    lotSource: cadastral != null ? "cadastral" : "drawing",
+  };
+}

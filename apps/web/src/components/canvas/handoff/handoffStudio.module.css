@@ -262,6 +262,11 @@
   transform-origin: center center;
 }
 
+/** Fit sheet — clip plan vectors to the printable A3/A4 frame (no bleed). */
+.zoomWorldClipped {
+  overflow: hidden;
+}
+
 .rootClient .aiPill,
 .rootClient .ghostToast,
 .rootClient .ghostPanel,

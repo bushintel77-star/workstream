@@ -1125,19 +1125,26 @@ export function useStudioState(opts: UseStudioStateOpts) {
       const placements = itemsToPlacements(fixed.items);
       const canvasStrokes = strokesToCanvas(fixed.strokes);
       setUi({ saveStatus: "saving" });
-      void saveDesignCanvasAction(
-        projectIdRef.current,
-        placements,
-        canvasStrokes,
-        [],
-        [],
-      )
-        .then(() => {
+      const persist = async (attempt: number): Promise<void> => {
+        try {
+          await saveDesignCanvasAction(
+            projectIdRef.current,
+            placements,
+            canvasStrokes,
+            [],
+            [],
+          );
           setUi({ saveStatus: "saved", savedTick: Date.now() });
-        })
-        .catch(() => {
+        } catch {
+          if (attempt < 3) {
+            setUi({ saveStatus: "error" });
+            await new Promise((r) => window.setTimeout(r, 700 * attempt));
+            return persist(attempt + 1);
+          }
           setUi({ saveStatus: "error" });
-        });
+        }
+      };
+      void persist(1);
     }, 1100);
     return () => window.clearTimeout(handle);
     // Persist accepted geometry only — ghosts change should not rewrite canvas.

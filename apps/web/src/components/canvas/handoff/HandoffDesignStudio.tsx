@@ -54,6 +54,7 @@ import {
   tradeTagForItem,
 } from "@workstream/domain";
 import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
+import { sheetBoxFor } from "./geometry";
 import { lookupCadastralTitleAction } from "../../../app/actions";
 import css from "./handoffStudio.module.css";
 
@@ -538,7 +539,7 @@ export function HandoffDesignStudio({
           {ui.saveStatus === "saving"
             ? "Saving…"
             : ui.saveStatus === "error"
-              ? "Save failed"
+              ? "Save paused — retrying"
               : ui.saveStatus === "saved"
                 ? "Saved"
                 : "—"}
@@ -604,8 +605,18 @@ export function HandoffDesignStudio({
 
         {planOn ? (
           <div
-            className={css.zoomWorld}
-            style={{ transform: `scale(${ui.zoom})` }}
+            className={`${css.zoomWorld}${ui.frameOn ? ` ${css.zoomWorldClipped}` : ""}`}
+            style={{
+              transform: `scale(${ui.zoom})`,
+              ...(ui.frameOn
+                ? (() => {
+                    const box = sheetBoxFor(boardSize.w, boardSize.h, ui.paper);
+                    return {
+                      clipPath: `inset(${box.boxTop}px ${Math.max(0, boardSize.w - box.boxLeft - box.boxW)}px ${Math.max(0, boardSize.h - box.boxTop - box.boxH)}px ${box.boxLeft}px)`,
+                    };
+                  })()
+                : null),
+            }}
           >
             <AerialSlot
               uri={liveAerial}

@@ -5,6 +5,7 @@ import type { ArchitecturalTitleBlock } from "@workstream/domain";
 import {
   buildSiteSchedule,
   edgeSegments,
+  resolveFitSheetAreas,
   sheetBoxFor,
   type PaperSize,
   type PctPoint,
@@ -176,6 +177,16 @@ export function FitSheetOverlay({
     [boundary, building, scaleM],
   );
 
+  /** Drawn footprint wins — never template/survey house_area (1 m² bug). */
+  const areas = useMemo(
+    () =>
+      resolveFitSheetAreas({
+        schedule,
+        cadastralLotM2: titleBlock?.lotAreaM2,
+      }),
+    [schedule, titleBlock?.lotAreaM2],
+  );
+
   const segs = useMemo(() => {
     const b = edgeSegments(boundary, "B", scaleM);
     const f = edgeSegments(building, "F", scaleM);
@@ -300,23 +311,19 @@ export function FitSheetOverlay({
               [
                 [
                   "Lot area",
-                  titleBlock?.lotAreaM2 != null
-                    ? `${titleBlock.lotAreaM2.toLocaleString("en-AU")} m²`
-                    : `${schedule.lotAreaM2.toFixed(2)} m²`,
+                  `${areas.lotAreaM2.toLocaleString("en-AU", {
+                    maximumFractionDigits: 2,
+                  })} m²`,
                 ],
                 [
                   "Building footprint",
-                  titleBlock?.houseAreaM2 != null
-                    ? `${titleBlock.houseAreaM2.toLocaleString("en-AU")} m²`
-                    : `${schedule.buildingAreaM2.toFixed(2)} m²`,
+                  `${areas.buildingAreaM2.toFixed(2)} m²`,
                 ],
                 [
                   "Outdoor area",
-                  titleBlock?.gardenAreaM2 != null
-                    ? `${titleBlock.gardenAreaM2.toLocaleString("en-AU")} m²`
-                    : `${schedule.outdoorAreaM2.toFixed(2)} m²`,
+                  `${areas.outdoorAreaM2.toFixed(2)} m²`,
                 ],
-                ["Site coverage", `${schedule.siteCoveragePct}%`],
+                ["Site coverage", `${areas.siteCoveragePct}%`],
                 [
                   "Boundary perimeter",
                   `${schedule.boundaryPerimeterM.toFixed(2)} lm`,
