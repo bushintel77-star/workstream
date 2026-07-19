@@ -52,10 +52,12 @@ import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
 import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
 import { boardScaleM } from "./features/ground/groundMetrics";
-import type { ArchitecturalTitleBlock } from "@workstream/domain";
 import {
+  buildIndicativeShadeGrid,
+  sunHoursAtPct,
   solveLiveTradeEstimate,
   tradeTagForItem,
+  type ArchitecturalTitleBlock,
 } from "@workstream/domain";
 import type {
   CatalogPlacement,
@@ -1131,6 +1133,15 @@ export function HandoffDesignStudio({
                   ? Boolean(BY_TYPE[t].existing)
                   : !BY_TYPE[t].existing,
               )
+              .filter((t) => {
+                // When sun mesh is on, hide full-sun canopy/feature in deep shade
+                if (!ui.shadeOn) return true;
+                if (t !== "canopy" && t !== "feature") return true;
+                const d = new Date();
+                d.setHours(Math.floor(ui.sunMin / 60), ui.sunMin % 60, 0, 0);
+                const cells = buildIndicativeShadeGrid(-37.849, 144.993, d);
+                return sunHoursAtPct(50, 50, cells) >= 3.5;
+              })
               .map((t) => (
                 <button
                   key={t}
