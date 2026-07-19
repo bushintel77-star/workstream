@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   BY_TYPE,
   MODE_TABS,
-  TOOLS,
   type StudioItemType,
   type StudioMode,
 } from "./studioCatalog";
@@ -29,6 +28,9 @@ import { AerialSlot } from "./features/aerial/AerialSlot";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { StudioCoachMarks } from "./features/coach/StudioCoachMarks";
+import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
+import { SelectionRing } from "./features/selectionRing/SelectionRing";
+import { ITEM_LAYER } from "./state/studioTypes";
 import type { StudioAiSuggestion } from "@workstream/domain";
 import css from "./handoffStudio.module.css";
 
@@ -215,6 +217,44 @@ export function HandoffDesignStudio({
   const flaggedIds = new Set<string>(
     compliance.alerts.flatMap((a: { sourceIds: string[] }) => a.sourceIds),
   );
+
+  const tpzReadouts = compliance.alerts
+    .filter((a) => a.code === "tpz")
+    .map((a) => {
+      const hardId = a.sourceIds.find((id) => {
+        const it = studio.items.find((x) => x.id === id);
+        return it && (it.t === "paving" || it.t === "deck");
+      });
+      const item = studio.items.find((x) => x.id === hardId);
+      const pctMatch = a.title.match(/(\d+)%/);
+      return {
+        id: a.id,
+        x: item?.x ?? 50,
+        y: item?.y ?? 50,
+        pct: pctMatch ? Number(pctMatch[1]) : 0,
+        active: ui.hoverId === hardId || ui.selectedId === hardId,
+      };
+    });
+
+  const layerChips = (
+    [
+      ["survey", "Survey"],
+      ["boundary", "Boundary"],
+      ["council", "Council"],
+      ["vegetation", "Veg"],
+    ] as const
+  ).map(([key, label]) => ({
+    key,
+    label,
+    count:
+      key === "boundary"
+        ? 2
+        : studio.items.filter((i) => !i.ghost && ITEM_LAYER[i.t] === key)
+            .length,
+  }));
+
+  const selectedLive =
+    studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
 
   useEffect(() => {
     if (!drawingHot) return;
@@ -495,6 +535,7 @@ export function HandoffDesignStudio({
               hoverId={ui.hoverId}
               curGhostId={ai.current?.id ?? null}
               flaggedIds={flaggedIds}
+              tpzReadouts={tpzReadouts}
               onSelect={(id, opts) => {
                 if (!id) {
                   studio.setSelection(null, []);
@@ -558,6 +599,23 @@ export function HandoffDesignStudio({
               onPop={studio.popTracePoint}
             />
             <MeasureOverlay active={ui.tool === "measure" && !ui.frameOn} />
+            {chromeLive && selectedLive && !drawingHot ? (
+              <SelectionRing
+                item={selectedLive}
+                xPct={selectedLive.x}
+                yPct={selectedLive.y}
+                locked={ui.locked}
+                onMaterial={studio.changeSelectedType}
+                onOpacityPeel={() => {
+                  const bucket = ITEM_LAYER[selectedLive.t];
+                  const cur = ui.layerOpacity[bucket];
+                  studio.setLayerOpacity(bucket, cur < 0.4 ? 1 : 0.25);
+                }}
+                onToggleLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
+                onDelete={studio.deleteSelected}
+                onClose={() => studio.setSelection(null, [])}
+              />
+            ) : null}
           </div>
         ) : null}
 
@@ -571,88 +629,38 @@ export function HandoffDesignStudio({
             building={studio.building}
             items={studio.items}
             showElevations={ui.sheetElevOn}
+            scaleDenom={ui.sheetScaleDenom}
+            onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
           />
         ) : null}
 
-        {!ui.focusOn && planOn && !ui.clientView ? (
-          <nav className={css.rail} data-testid="canvas-tool-rail" aria-label="Drawing tools">
-            {TOOLS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={`${css.railBtn}${ui.tool === t.id || (t.id === "lock" && ui.locked) ? ` ${css.railBtnActive}` : ""}`}
-                data-testid={`canvas-tool-${t.id}`}
-                title={t.label}
-                onClick={() => studio.setTool(t.id)}
-              >
-                <span className={css.railIcon}>{t.icon}</span>
-                <span className={css.railLabel}>{t.label}</span>
-              </button>
-            ))}
-            <div className={css.railDiv} />
-            <button
-              type="button"
-              className={`${css.railBtn}${ui.tool === "measure" ? ` ${css.railBtnActive}` : ""}`}
-              data-testid="canvas-tool-measure"
-              title="Measure"
-              onClick={() =>
-                studio.setTool(ui.tool === "measure" ? "pan" : "measure")
-              }
-            >
-              <span className={css.railIcon}>⟋</span>
-              <span className={css.railLabel}>Measure</span>
-            </button>
-            <div className={css.railDiv} />
-            <button
-              type="button"
-              className={css.railBtn}
-              title="Zoom out"
-              onClick={() =>
-                studio.setUi({ zoom: Math.max(0.6, Number((ui.zoom - 0.1).toFixed(2))) })
-              }
-            >
-              <span className={css.railIcon}>−</span>
-            </button>
-            <button
-              type="button"
-              className={css.railBtn}
-              title="Fit"
-              onClick={() => studio.setUi({ zoom: 1 })}
-            >
-              <span className={css.railIcon}>⛶</span>
-              <span className={css.railLabel}>Fit</span>
-            </button>
-            <button
-              type="button"
-              className={css.railBtn}
-              title="Zoom in"
-              onClick={() =>
-                studio.setUi({ zoom: Math.min(2.2, Number((ui.zoom + 0.1).toFixed(2))) })
-              }
-            >
-              <span className={css.railIcon}>+</span>
-            </button>
-            <div className={css.railDiv} />
-            <button
-              type="button"
-              className={css.railBtn}
-              title="Undo"
-              disabled={!studio.canUndo}
-              onClick={studio.undo}
-            >
-              <span className={css.railIcon}>↩</span>
-            </button>
-            <button
-              type="button"
-              className={css.railBtn}
-              title="Redo"
-              disabled={!studio.canRedo}
-              onClick={studio.redo}
-            >
-              <span className={css.railIcon}>↪</span>
-            </button>
-          </nav>
+        {planOn && !ui.clientView && !ui.frameOn ? (
+          <AmbientRibbon
+            tool={ui.tool}
+            locked={ui.locked}
+            canUndo={studio.canUndo}
+            canRedo={studio.canRedo}
+            layerChips={layerChips}
+            layerOpacity={ui.layerOpacity}
+            onTool={studio.setTool}
+            onMeasure={() =>
+              studio.setTool(ui.tool === "measure" ? "pan" : "measure")
+            }
+            onUndo={studio.undo}
+            onRedo={studio.redo}
+            onZoom={(delta) =>
+              studio.setUi({
+                zoom: Math.max(
+                  0.6,
+                  Math.min(2.2, Number((ui.zoom + delta).toFixed(2))),
+                ),
+              })
+            }
+            onFit={() => studio.setUi({ zoom: 1 })}
+            onOpacity={studio.setLayerOpacity}
+          />
         ) : null}
+
 
         {ui.addOpen && planOn && !ui.focusOn ? (
           <div className={css.addStrip} data-testid="add-symbol-strip">

@@ -71,6 +71,7 @@ export type StudioUiState = {
   assistReply: string | null;
   utilityPanel: "compliance" | "bom" | null;
   councilTip: string | null;
+  sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

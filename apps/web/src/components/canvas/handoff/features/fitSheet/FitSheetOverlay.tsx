@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   buildSiteSchedule,
   edgeSegments,
@@ -10,6 +10,9 @@ import {
 } from "../../geometry";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import css from "./fitSheet.module.css";
+
+export const SHEET_SCALE_STEPS = [50, 100, 200, 250, 500] as const;
+export type SheetScaleDenom = (typeof SHEET_SCALE_STEPS)[number];
 
 type Props = {
   boardW: number;
@@ -22,6 +25,9 @@ type Props = {
   scaleM?: number;
   showElevations?: boolean;
   issuedLabel?: string;
+  /** Architectural print scale 1:N — discrete snap ladder. */
+  scaleDenom?: SheetScaleDenom;
+  onScaleDenom?: (n: SheetScaleDenom) => void;
 };
 
 type ElevProfile = {
@@ -127,7 +133,35 @@ export function FitSheetOverlay({
   scaleM = 110,
   showElevations = false,
   issuedLabel,
+  scaleDenom = 100,
+  onScaleDenom,
 }: Props) {
+  const [pulse, setPulse] = useState(false);
+
+  useEffect(() => {
+    setPulse(true);
+    const t = window.setTimeout(() => setPulse(false), 280);
+    return () => window.clearTimeout(t);
+  }, [scaleDenom]);
+
+  useEffect(() => {
+    if (!onScaleDenom) return;
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest?.("[data-testid='studio-board']")) return;
+      e.preventDefault();
+      const idx = SHEET_SCALE_STEPS.indexOf(scaleDenom);
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const next =
+        SHEET_SCALE_STEPS[
+          Math.max(0, Math.min(SHEET_SCALE_STEPS.length - 1, idx + dir))
+        ]!;
+      if (next !== scaleDenom) onScaleDenom(next);
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [onScaleDenom, scaleDenom]);
+
   const box = useMemo(
     () => sheetBoxFor(boardW, boardH, paper),
     [boardW, boardH, paper],
@@ -172,7 +206,7 @@ export function FitSheetOverlay({
       year: "numeric",
     });
 
-  const scaleTxt = paper === "a4" ? "1:200" : "1:100";
+  const scaleTxt = `1:${scaleDenom}`;
 
   return (
     <>
@@ -211,9 +245,10 @@ export function FitSheetOverlay({
       </div>
 
       <div
-        className={css.frame}
+        className={`${css.frame}${pulse ? ` ${css.framePulse}` : ""}`}
         data-testid="fit-sheet-frame"
         data-paper={paper}
+        data-scale={scaleTxt}
         style={{
           left: box.boxLeft,
           top: box.boxTop,
@@ -222,6 +257,10 @@ export function FitSheetOverlay({
         }}
       >
         <div className={css.frameInner} />
+        <div className={css.scaleHud} data-testid="fit-sheet-scale">
+          {scaleTxt}
+          <span className={css.scaleHint}>scroll to snap</span>
+        </div>
       </div>
 
       {showPanel ? (

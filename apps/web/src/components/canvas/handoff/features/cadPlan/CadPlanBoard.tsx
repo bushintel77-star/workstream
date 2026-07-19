@@ -46,6 +46,14 @@ type Props = {
   curGhostId: string | null;
   /** Item ids currently failing preemptive council checks. */
   flaggedIds?: Set<string>;
+  /** Live TPZ encroachment labels (calm compliance — inline, not modal). */
+  tpzReadouts?: Array<{
+    id: string;
+    x: number;
+    y: number;
+    pct: number;
+    active: boolean;
+  }>;
   scaleM?: number;
   onSelect: (id: string | null, opts?: { additive?: boolean }) => void;
   onMarqueeSelect: (ids: string[]) => void;
@@ -92,6 +100,7 @@ export function CadPlanBoard({
   hoverId,
   curGhostId,
   flaggedIds,
+  tpzReadouts,
   scaleM = 110,
   onSelect,
   onMarqueeSelect,
@@ -348,6 +357,24 @@ export function CadPlanBoard({
       ) : null}
 
       <svg className={css.planSvg} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <pattern
+            id="ws-hardscape-hatch"
+            width="4"
+            height="4"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(35)"
+          >
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="4"
+              stroke="rgba(194,69,95,0.55)"
+              strokeWidth="1.2"
+            />
+          </pattern>
+        </defs>
         <polygon
           points={ptsAttr(boundary)}
           fill="transparent"
@@ -601,6 +628,9 @@ export function CadPlanBoard({
             <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
               <StudioGlyph type={it.t} ink={!darkOn || frameOn} />
             </div>
+            {flagged && (it.t === "paving" || it.t === "deck") ? (
+              <div className={css.hatchOverlay} aria-hidden />
+            ) : null}
             {it.ghost ? <span className={css.aiChip}>AI</span> : null}
             {isCur && !frameOn ? (
               <div
@@ -665,6 +695,19 @@ export function CadPlanBoard({
           onTransform={onTransformItem}
         />
       ) : null}
+
+      {tpzReadouts?.map((r) =>
+        r.active ? (
+          <div
+            key={r.id}
+            className={css.tpzReadout}
+            data-testid="tpz-encroach-readout"
+            style={{ left: `${r.x}%`, top: `${r.y}%` }}
+          >
+            TPZ {Math.round(r.pct)}%
+          </div>
+        ) : null,
+      )}
 
       {editing ? (
         <div className={css.editBanner} data-testid="edit-vector-banner">

@@ -64,6 +64,7 @@ function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
 }
 
 const MAX_HIST = 40;
+const SHEET_SCALES = [50, 100, 200, 250, 500] as const;
 
 type Doc = StudioSnapshot & {
   idn: number;
@@ -117,6 +118,11 @@ type Ui = {
   utilityPanel: "compliance" | "bom" | null;
   /** Brief setback / TPZ tip after a preemptive snap. */
   councilTip: string | null;
+  /**
+   * Fit-sheet architectural scale denominator (1:N).
+   * Snaps to [50, 100, 200, 250, 500] — canvas is the print sheet.
+   */
+  sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
 };
 
 type State = {
@@ -214,6 +220,7 @@ function initialState(mode: StudioMode): State {
       assistReply: null,
       utilityPanel: null,
       councilTip: null,
+      sheetScaleDenom: 100,
     },
   };
 }
@@ -764,6 +771,42 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({ selectedId: null });
   }, [mutate, setUi, state.doc.items, state.ui.locked, state.ui.selectedId]);
 
+  const changeSelectedType = useCallback(
+    (t: StudioItemType) => {
+      const id = state.ui.selectedId;
+      if (!id || state.ui.locked) return;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost ? { ...i, t } : i,
+          ),
+        },
+      }));
+    },
+    [mutate, state.ui.locked, state.ui.selectedId],
+  );
+
+  const snapSheetScale = useCallback(
+    (dir: 1 | -1) => {
+      const cur = state.ui.sheetScaleDenom;
+      const idx = SHEET_SCALES.indexOf(cur);
+      const next =
+        SHEET_SCALES[
+          Math.max(0, Math.min(SHEET_SCALES.length - 1, idx + dir))
+        ]!;
+      setUi({ sheetScaleDenom: next });
+    },
+    [setUi, state.ui.sheetScaleDenom],
+  );
+
+  const setSheetScale = useCallback(
+    (sheetScaleDenom: 50 | 100 | 200 | 250 | 500) => {
+      setUi({ sheetScaleDenom });
+    },
+    [setUi],
+  );
+
   const cycleGhost = useCallback(
     (dir: 1 | -1 = 1) => {
       if (ghostCount === 0) return;
@@ -1021,6 +1064,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     moveGroup,
     setSelection,
     deleteSelected,
+    changeSelectedType,
+    snapSheetScale,
+    setSheetScale,
     updateBoundary,
     updateBuilding,
     finishTrace,

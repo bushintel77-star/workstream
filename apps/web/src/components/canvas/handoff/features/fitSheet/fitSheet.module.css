@@ -16,6 +16,23 @@
   box-sizing: border-box;
   pointer-events: none;
   z-index: 4;
+  transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.framePulse {
+  animation: sheetElastic 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes sheetElastic {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.012);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .frameInner {
@@ -23,6 +40,31 @@
   inset: 8px;
   border: 1px dashed rgba(36, 19, 24, 0.2);
   box-sizing: border-box;
+}
+
+.scaleHud {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #241318;
+  background: rgba(250, 246, 242, 0.92);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(36, 19, 24, 0.15);
+}
+
+.scaleHint {
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a5560;
 }
 
 .panel {

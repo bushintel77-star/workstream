@@ -2,7 +2,12 @@
 
 Each capability is a self-contained feature module under `features/`.
 The shell (`HandoffDesignStudio`) only composes chrome + mounts features.
-No MapLibre on this surface — `%` board space is the drawing plane.
+
+**Canvas-first (Workflow 1):** `%` board space is the drawing plane. Invisible UI
+(ambient ribbon, selection rings, calm compliance) keeps cognition on geometry.
+**Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
+phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
+studio surface here until that schema brief lands.
 
 ## Modules
 
@@ -14,6 +19,8 @@ No MapLibre on this surface — `%` board space is the drawing plane.
 | `features/cadPlan/` | Aerial, SVG polys, symbol placements, corner/mid handles, dim labels, edit banner |
 | `features/aiGhosts/` | Coach dock (primary), ghost review, confidence factors, accept/reject/cycle, Ask AI |
 | `features/utilityDrawer/` | Right-hand Compliance + Live BOM hub — indicator tabs, sheet overlay while drawing |
+| `features/ambient/` | Proximity left ribbon — dormant blur strip, layer chips with counts |
+| `features/selectionRing/` | Contextual radial UI on selected asset (material / peel / lock / delete) |
 | `features/layers/` | Four opacity sliders + setback toggle |
 | `features/commandPalette/` | ⌘K actions + Ask AI row + arm symbols |
 | `features/sunGrowth/` | Arc scrubber, growth chips, shadow length readout |
