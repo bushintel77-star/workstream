@@ -793,10 +793,10 @@
 
 .ghostPanel {
   position: absolute;
-  left: 50%;
-  top: 60px;
-  transform: translateX(-50%);
+  left: 72px;
+  top: 52px;
   z-index: 22;
+  max-width: min(360px, calc(100% - 180px));
 }
 
 .addStrip {

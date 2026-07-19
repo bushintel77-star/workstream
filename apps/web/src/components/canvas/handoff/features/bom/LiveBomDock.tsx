@@ -22,6 +22,8 @@ type Props = {
   mitigated: Record<string, boolean>;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
+  /** Render without absolute dock chrome (utility drawer sheet). */
+  embedded?: boolean;
 };
 
 const aud = (n: number) =>
@@ -31,18 +33,31 @@ const aud = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-export function LiveBomDock({ items, mitigated, onMitigate, onOpenQuote }: Props) {
+export function LiveBomDock({
+  items,
+  mitigated,
+  onMitigate,
+  onOpenQuote,
+  embedded = false,
+}: Props) {
   const lines = useMemo(() => bomLines(items), [items]);
   const materials = lines.reduce((a, r) => a + r.amt, 0);
   const total = Math.round(materials + 4378); // labour/fees bridge to ~28.5k demo
   const pending = MITIGATIONS.filter((m) => !mitigated[m.id]).length;
 
   return (
-    <aside className={css.dock} data-testid="live-bom-hud">
-      <div className={css.head}>
-        <p className={css.kicker}>Live BOM / preemptive</p>
-        <span className={css.kicker}>{lines.length} lines</span>
-      </div>
+    <aside
+      className={`${css.dock}${embedded ? ` ${css.embedded}` : ""}`}
+      data-testid="live-bom-hud"
+    >
+      {!embedded ? (
+        <div className={css.head}>
+          <p className={css.kicker}>Live BOM / preemptive</p>
+          <span className={css.kicker}>{lines.length} lines</span>
+        </div>
+      ) : (
+        <p className={css.kicker}>{lines.length} lines</p>
+      )}
       <button type="button" className={css.total} onClick={onOpenQuote}>
         {aud(total)} <span className={css.gst}>incl. GST</span>
       </button>

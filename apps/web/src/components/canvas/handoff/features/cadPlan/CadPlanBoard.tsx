@@ -2,7 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import {
+  deleteVertex,
   edgeSegments,
+  insertVertexAfter,
   ptsAttr,
   tpzRadiusPct,
   type PctPoint,
@@ -16,6 +18,13 @@ import { StudioGlyph } from "../../StudioGlyph";
 import { ITEM_LAYER, type LayerOpacity } from "../../state/studioTypes";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
+
+type NodeMenu = {
+  kind: "boundary" | "building";
+  index: number;
+  x: number;
+  y: number;
+};
 
 type Props = {
   aerialUri: string | null;
@@ -115,6 +124,10 @@ export function CadPlanBoard({
     x2: number;
     y2: number;
   } | null>(null);
+  const [nodeMenu, setNodeMenu] = useState<NodeMenu | null>(null);
+  const [cursorMode, setCursorMode] = useState<"default" | "move" | "add">(
+    "default",
+  );
 
   const editing = tool === "edit" && !locked && !frameOn;
   const bStroke = darkOn && !frameOn ? "#E8B84B" : "#241318";
@@ -168,8 +181,31 @@ export function CadPlanBoard({
   ) => {
     e.stopPropagation();
     e.preventDefault();
+    setNodeMenu(null);
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragRef.current = { kind, index, ox: 0, oy: 0 };
+  };
+
+  const openNodeMenu = (
+    kind: "boundary" | "building",
+    index: number,
+    e: React.MouseEvent,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const pts = kind === "boundary" ? boundary : building;
+    const p = pts[index];
+    if (!p) return;
+    setNodeMenu({ kind, index, x: p.x, y: p.y });
+  };
+
+  const removeNode = (kind: "boundary" | "building", index: number) => {
+    const pts = kind === "boundary" ? boundary : building;
+    const next = deleteVertex(pts, index);
+    if (!next) return;
+    if (kind === "boundary") onBoundaryChange(next);
+    else onBuildingChange(next);
+    setNodeMenu(null);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -252,12 +288,10 @@ export function CadPlanBoard({
 
   const insertMid = (kind: "boundary" | "building", after: number) => {
     const pts = kind === "boundary" ? boundary : building;
-    const a = pts[after]!;
-    const b = pts[(after + 1) % pts.length]!;
-    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    const next = [...pts.slice(0, after + 1), mid, ...pts.slice(after + 1)];
+    const next = insertVertexAfter(pts, after);
     if (kind === "boundary") onBoundaryChange(next);
     else onBuildingChange(next);
+    setNodeMenu(null);
   };
 
   const selected = items.find((i) => i.id === selectedId && !i.ghost) ?? null;
@@ -265,10 +299,14 @@ export function CadPlanBoard({
   return (
     <div
       ref={rootRef}
-      className={css.world}
+      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}`}
       data-testid="cad-plan-board"
       data-cad-plan
-      onPointerDown={onPointerDownBoard}
+      data-cursor={editing ? cursorMode : "default"}
+      onPointerDown={(e) => {
+        if (nodeMenu) setNodeMenu(null);
+        onPointerDownBoard(e);
+      }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
@@ -368,7 +406,10 @@ export function CadPlanBoard({
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
                   className={css.handleHit}
+                  onPointerEnter={() => setCursorMode("move")}
+                  onPointerLeave={() => setCursorMode("default")}
                   onPointerDown={(e) => startCornerDrag("boundary", i, e)}
+                  onContextMenu={(e) => openNodeMenu("boundary", i, e)}
                 />
                 <line
                   x1={p.x}
@@ -396,7 +437,10 @@ export function CadPlanBoard({
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
                   className={css.handleHit}
+                  onPointerEnter={() => setCursorMode("move")}
+                  onPointerLeave={() => setCursorMode("default")}
                   onPointerDown={(e) => startCornerDrag("building", i, e)}
+                  onContextMenu={(e) => openNodeMenu("building", i, e)}
                 />
                 <line
                   x1={p.x}
@@ -419,10 +463,28 @@ export function CadPlanBoard({
               key={`mb${m.after}`}
               className={css.midHandle}
               style={{ left: `${m.x}%`, top: `${m.y}%` }}
-              title="Drag to add a corner"
+              title="Add vertex"
+              onPointerEnter={() => setCursorMode("add")}
+              onPointerLeave={() => setCursorMode("default")}
               onPointerDown={(e) => {
                 e.stopPropagation();
                 insertMid("boundary", m.after);
+              }}
+            />
+          ))
+        : null}
+      {editing
+        ? midHandles(building, "building").map((m) => (
+            <div
+              key={`mf${m.after}`}
+              className={`${css.midHandle} ${css.midHandleBuilding}`}
+              style={{ left: `${m.x}%`, top: `${m.y}%` }}
+              title="Add vertex"
+              onPointerEnter={() => setCursorMode("add")}
+              onPointerLeave={() => setCursorMode("default")}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                insertMid("building", m.after);
               }}
             />
           ))
@@ -597,8 +659,45 @@ export function CadPlanBoard({
       ) : null}
 
       {editing ? (
-        <div className={css.editBanner}>
-          Edit corners — drag to move · diamond adds a vertex
+        <div className={css.editBanner} data-testid="edit-vector-banner">
+          Hover node to move · hover edge diamond to add · right-click node to
+          delete
+        </div>
+      ) : null}
+
+      {nodeMenu ? (
+        <div
+          className={css.nodeMenu}
+          data-testid="vector-node-menu"
+          style={{ left: `${nodeMenu.x}%`, top: `${nodeMenu.y}%` }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className={css.nodeMenuBtn}
+            disabled={
+              (nodeMenu.kind === "boundary"
+                ? boundary.length
+                : building.length) <= 3
+            }
+            onClick={() => removeNode(nodeMenu.kind, nodeMenu.index)}
+          >
+            Delete node
+          </button>
+          <button
+            type="button"
+            className={css.nodeMenuBtn}
+            onClick={() => insertMid(nodeMenu.kind, nodeMenu.index)}
+          >
+            Add node after
+          </button>
+          <button
+            type="button"
+            className={css.nodeMenuBtn}
+            onClick={() => setNodeMenu(null)}
+          >
+            Cancel
+          </button>
         </div>
       ) : null}
 

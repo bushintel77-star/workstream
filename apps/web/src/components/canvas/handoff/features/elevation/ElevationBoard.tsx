@@ -2,6 +2,7 @@
 
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
+import { PlanThumbnail } from "./PlanThumbnail";
 import css from "./elevation.module.css";
 
 type Props = {
@@ -60,6 +61,12 @@ export function ElevationBoard({
         ) : null}
       </div>
       <div className={css.north}>N↑</div>
+      <PlanThumbnail
+        boundary={boundary}
+        building={building}
+        items={items}
+        selectedId={selectedId}
+      />
       <svg className={css.svg} viewBox="0 0 100 40" preserveAspectRatio="none">
         {[0, 3, 6, 9].map((m) => {
           const y = 36 - (m / 9) * 30;

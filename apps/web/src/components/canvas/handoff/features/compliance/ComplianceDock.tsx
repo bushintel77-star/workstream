@@ -10,6 +10,8 @@ type Props = {
   boundary: PctPoint[];
   items: StudioItem[];
   scaleM?: number;
+  /** Render without absolute dock chrome (utility drawer sheet). */
+  embedded?: boolean;
 };
 
 function clampPct(n: number) {
@@ -21,6 +23,7 @@ export function ComplianceDock({
   boundary,
   items,
   scaleM = 110,
+  embedded = false,
 }: Props) {
   const stats = useMemo(() => {
     const live = items.filter((i) => !i.ghost);
@@ -76,13 +79,18 @@ export function ComplianceDock({
   }, [boundary, items, outdoorM2, scaleM]);
 
   return (
-    <aside className={css.dock} data-testid="compliance-dock">
-      <div className={css.head}>
-        <p className={css.kicker}>Compliance</p>
-        <span className={css.passPill}>
-          {stats.pass}/{stats.total}
-        </span>
-      </div>
+    <aside
+      className={`${css.dock}${embedded ? ` ${css.embedded}` : ""}`}
+      data-testid="compliance-dock"
+    >
+      {!embedded ? (
+        <div className={css.head}>
+          <p className={css.kicker}>Compliance</p>
+          <span className={css.passPill}>
+            {stats.pass}/{stats.total}
+          </span>
+        </div>
+      ) : null}
       <div>
         <p className={css.metricKey}>Outdoor area</p>
         <p className={`${css.metricVal}${stats.outdoorOk ? ` ${css.ok}` : ""}`}>

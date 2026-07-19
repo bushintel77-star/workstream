@@ -1,10 +1,11 @@
 .dock {
   position: absolute;
   left: 72px;
-  top: 56px;
+  bottom: 14px;
+  top: auto;
   z-index: 16;
   width: min(280px, calc(100vw - 100px));
-  max-height: calc(100% - 80px);
+  max-height: min(280px, calc(100% - 120px));
   overflow: auto;
   padding: 12px 14px 14px;
   border-radius: 14px;

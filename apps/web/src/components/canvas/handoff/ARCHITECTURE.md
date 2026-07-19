@@ -13,6 +13,7 @@ No MapLibre on this surface — `%` board space is the drawing plane.
 | `features/fitSheet/` | Paper frame, site schedule, boundary/footprint dim table, stacked elevations |
 | `features/cadPlan/` | Aerial, SVG polys, symbol placements, corner/mid handles, dim labels, edit banner |
 | `features/aiGhosts/` | Coach dock (primary), ghost review, confidence factors, accept/reject/cycle, Ask AI |
+| `features/utilityDrawer/` | Right-hand Compliance + Live BOM hub — indicator tabs, sheet overlay while drawing |
 | `features/layers/` | Four opacity sliders + setback toggle |
 | `features/commandPalette/` | ⌘K actions + Ask AI row + arm symbols |
 | `features/sunGrowth/` | Arc scrubber, growth chips, shadow length readout |

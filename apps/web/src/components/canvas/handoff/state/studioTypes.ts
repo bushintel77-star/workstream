@@ -69,6 +69,7 @@ export type StudioUiState = {
   aiBusy: "idle" | "scanning" | "assisting";
   coachOpen: boolean;
   assistReply: string | null;
+  utilityPanel: "compliance" | "bom" | null;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

@@ -86,6 +86,8 @@ type Ui = {
   coachOpen: boolean;
   /** Last natural-language assist reply shown in the coach rail. */
   assistReply: string | null;
+  /** Right-hand utility drawer sheet: compliance | bom | closed. */
+  utilityPanel: "compliance" | "bom" | null;
 };
 
 type State = {
@@ -181,6 +183,7 @@ function initialState(mode: StudioMode): State {
       aiBusy: "idle",
       coachOpen: true,
       assistReply: null,
+      utilityPanel: null,
     },
   };
 }

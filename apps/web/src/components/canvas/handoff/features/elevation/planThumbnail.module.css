@@ -1,0 +1,48 @@
+.card {
+  position: absolute;
+  right: 20px;
+  top: 56px;
+  z-index: 6;
+  width: min(180px, 28vw);
+  padding: 10px 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 246, 248, 0.94);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(36, 19, 24, 0.08);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  color: #241318;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b08a95;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.title {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1px solid rgba(36, 19, 24, 0.08);
+  background: #faf6f2;
+}
+
+.meta {
+  margin: 8px 0 0;
+  font-size: 10px;
+  color: #7a5560;
+  font-family: "IBM Plex Mono", monospace;
+  line-height: 1.35;
+}

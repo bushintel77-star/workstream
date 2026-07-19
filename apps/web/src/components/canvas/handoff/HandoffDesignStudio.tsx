@@ -16,8 +16,7 @@ import { AiCoachDock } from "./features/aiGhosts/AiCoachDock";
 import { LayersPanel } from "./features/layers/LayersPanel";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
-import { ComplianceDock } from "./features/compliance/ComplianceDock";
-import { LiveBomDock } from "./features/bom/LiveBomDock";
+import { UtilityDrawer } from "./features/utilityDrawer/UtilityDrawer";
 import { QuoteSurface } from "./features/tier1/QuoteSurface";
 import { ElevationBoard } from "./features/elevation/ElevationBoard";
 import {
@@ -194,6 +193,11 @@ export function HandoffDesignStudio({
   }, [studio]);
 
   const planOn = ui.mode !== "elevation" && ui.mode !== "quote";
+  const drawingHot =
+    ui.tool === "trace" ||
+    ui.tool === "edit" ||
+    ui.tool === "add" ||
+    ui.tool === "measure";
   const showDocks =
     !ui.focusOn &&
     planOn &&
@@ -201,9 +205,19 @@ export function HandoffDesignStudio({
     ui.mode !== "survey" &&
     ui.mode !== "sketch" &&
     !ui.clientView;
+  /** Fit sheet freezes dynamic floating chrome to match paper constraints. */
+  const chromeLive = planOn && !ui.frameOn && !ui.focusOn && !ui.clientView;
   const outdoor = areaM2 ?? 230.82;
   const displayAddress = studio.siteAddress || projectAddress;
   const liveAerial = ui.aerialUri ?? aerialUri;
+
+  useEffect(() => {
+    if (!drawingHot) return;
+    if (ui.utilityPanel != null || ui.coachOpen) {
+      studio.setUi({ utilityPanel: null, coachOpen: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawingHot]);
 
   const armType = (t: StudioItemType) => {
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
@@ -641,10 +655,20 @@ export function HandoffDesignStudio({
 
         {showDocks ? (
           <>
-            <ComplianceDock
+            <UtilityDrawer
+              openPanel={ui.utilityPanel}
+              collapsed={drawingHot}
               outdoorM2={outdoor}
               boundary={studio.boundary}
               items={studio.items}
+              mitigated={ui.mitigated}
+              onOpenPanel={(utilityPanel) => studio.setUi({ utilityPanel })}
+              onMitigate={(id) =>
+                studio.setUi({
+                  mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
+                })
+              }
+              onOpenQuote={() => studio.setMode("quote")}
             />
             <SunGrowthDock
               sunMin={ui.sunMin}
@@ -654,22 +678,12 @@ export function HandoffDesignStudio({
               onGrowth={(growth) => studio.setUi({ growth })}
               onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
             />
-            <LiveBomDock
-              items={studio.items}
-              mitigated={ui.mitigated}
-              onMitigate={(id) =>
-                studio.setUi({
-                  mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
-                })
-              }
-              onOpenQuote={() => studio.setMode("quote")}
-            />
           </>
         ) : null}
 
-        {planOn && !ui.focusOn && !ui.clientView ? (
+        {chromeLive ? (
           <AiCoachDock
-            open={ui.coachOpen}
+            open={ui.coachOpen && !drawingHot}
             status={ai.status}
             coaching={ai.coaching}
             pendingCount={ai.pendingCount}
@@ -686,23 +700,24 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {!ui.coachOpen &&
-        ai.pendingCount > 0 &&
-        planOn &&
-        !ui.focusOn &&
-        !ui.clientView ? (
+        {chromeLive &&
+        !ui.coachOpen &&
+        !ui.ghostReviewOpen &&
+        ai.pendingCount > 0 ? (
           <button
             type="button"
             className={css.ghostToast}
-            onClick={() => studio.setUi({ coachOpen: true, ghostReviewOpen: true })}
+            onClick={() =>
+              studio.setUi({ coachOpen: true, ghostReviewOpen: true })
+            }
           >
             <span className={css.ghostDot} />
             {ai.pendingCount} AI proposals pending{" "}
-            <span className={css.ghostReview}>Open coach</span>
+            <span className={css.ghostReview}>Review</span>
           </button>
         ) : null}
 
-        {ui.ghostReviewOpen && planOn && !ui.focusOn && !ui.clientView ? (
+        {chromeLive && ui.ghostReviewOpen ? (
           <div className={css.ghostPanel}>
             <AiGhostReview
               ghosts={ai.pending}
@@ -724,7 +739,7 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {planOn && !ui.clientView ? (
+        {chromeLive ? (
           <div className={css.aiStatusBar} data-testid="ai-draft-status-bar">
             <span
               className={`${css.aiStatusChip}${ai.status === "verified" ? ` ${css.aiStatusOk}` : ""}`}
@@ -743,6 +758,18 @@ export function HandoffDesignStudio({
                 onClick={() => studio.setUi({ coachOpen: true })}
               >
                 Coach
+              </button>
+            ) : null}
+            {ai.pendingCount > 0 ? (
+              <button
+                type="button"
+                className={css.aiStatusOpen}
+                data-testid="ai-status-review"
+                onClick={() =>
+                  studio.setUi({ ghostReviewOpen: !ui.ghostReviewOpen })
+                }
+              >
+                {ui.ghostReviewOpen ? "Hide" : "Review"}
               </button>
             ) : null}
           </div>

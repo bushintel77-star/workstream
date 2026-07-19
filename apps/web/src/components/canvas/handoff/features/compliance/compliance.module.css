@@ -17,6 +17,16 @@
   gap: 10px;
 }
 
+.embedded {
+  position: static;
+  width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
 .head {
   display: flex;
   align-items: center;
