@@ -6,7 +6,7 @@
   flex-direction: column;
   background:
     linear-gradient(180deg, #faf6f2 0%, #f0e8e2 100%);
-  padding: 48px 40px 32px;
+  padding: 40px 28px 20px;
 }
 
 .topRow {
@@ -14,14 +14,15 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  padding-right: min(180px, 28vw);
 }
 
 .toggle,
 .tracePlan {
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 8px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 7px;
   border: 1px solid rgba(36, 19, 24, 0.14);
   background: rgba(255, 246, 248, 0.9);
   color: #241318;
@@ -37,21 +38,33 @@
   color: #fff6f8;
 }
 
+.widthChip {
+  margin-left: auto;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: #8c8a85;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
 .north {
   position: absolute;
-  top: 16px;
-  right: 20px;
+  top: 14px;
+  right: 18px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: 10px;
   color: #7a5560;
+  z-index: 9;
 }
 
 .stage {
+  position: relative;
   flex: 1;
-  min-height: 280px;
+  min-height: 240px;
   width: 100%;
-  /* Soft band so stacked callouts never kiss the plan-link card */
-  padding: 8px 12px 4px 0;
+  /* Leave a slim lane for the plan-link card */
+  padding: 4px min(176px, 27vw) 8px 4px;
   overflow: hidden;
 }
 
@@ -59,6 +72,60 @@
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 260px;
-  overflow: visible;
+  min-height: 220px;
+}
+
+/* Fixed-px annotation layer — never scaled with the stretch SVG */
+.hud {
+  position: absolute;
+  inset: 4px min(176px, 27vw) 8px 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tick {
+  position: absolute;
+  transform: translate(-100%, -50%);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(92, 90, 85, 0.75);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -4px;
+  max-width: 140px;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  border-radius: 999px;
+  background: rgba(250, 246, 242, 0.96);
+  color: #5c5a55;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 3px rgba(36, 19, 24, 0.06);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.label:hover,
+.labelActive {
+  color: #241318;
+  border-color: rgba(194, 69, 95, 0.4);
+  background: #fffbfc;
+}
+
+.labelActive {
+  font-weight: 650;
 }

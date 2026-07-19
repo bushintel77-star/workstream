@@ -1,13 +1,13 @@
 import type { PaperSize, SheetBox } from "./types";
 
-/** Outer board → paper padding (24 px each side). */
-export const SHEET_OUTER_PAD = 48;
+/** Outer board → paper padding (tighter — less dead margin around the sheet). */
+export const SHEET_OUTER_PAD = 20;
 /** Inner printable margin inside the paper frame. */
-export const SHEET_INNER_MARGIN = 12;
+export const SHEET_INNER_MARGIN = 8;
 /** Gap between plot and title/elevation panels. */
-export const SHEET_PANEL_GAP = 16;
+export const SHEET_PANEL_GAP = 12;
 /** Max schedule column width on wide A3 sheets. */
-export const TITLE_PANEL_MAX = 262;
+export const TITLE_PANEL_MAX = 240;
 
 /**
  * Fit a landscape A3 (420×297) or portrait A4 (210×297) sheet into the board,

@@ -10,6 +10,13 @@ import {
 import { PlanThumbnail } from "./PlanThumbnail";
 import css from "./elevation.module.css";
 
+/** ViewBox height — geometry only; labels are HTML so they never stretch. */
+const VB_H = 40;
+const GROUND_Y = 36;
+const PLOT_H = 30;
+const PLOT_X0 = 10;
+const PLOT_W = 78;
+
 type Props = {
   axis: "x" | "y";
   boundary: PctPoint[];
@@ -21,9 +28,16 @@ type Props = {
   onTraceInPlan: (id: string) => void;
 };
 
+function vbToPct(x: number, y: number) {
+  return {
+    left: `${x}%`,
+    top: `${(y / VB_H) * 100}%`,
+  };
+}
+
 /**
- * Full-mode elevation profile — front/side cut through the working drawing.
- * Stack: datum → building → vegetation → labels (bbox layout + parchment mask).
+ * Front/side elevation — geometry in a stretch SVG; ticks + callouts as
+ * fixed-px HTML so labels stay reading-size on wide boards.
  */
 export function ElevationBoard({
   axis,
@@ -43,18 +57,19 @@ export function ElevationBoard({
 
   const bCoords = building.map((p) => (axis === "x" ? p.x : p.y));
   const b0 = bCoords.length
-    ? ((Math.min(...bCoords) - minC) / span) * 70 + 12
-    : 28;
+    ? PLOT_X0 + ((Math.min(...bCoords) - minC) / span) * PLOT_W
+    : PLOT_X0 + PLOT_W * 0.22;
   const b1 = bCoords.length
-    ? ((Math.max(...bCoords) - minC) / span) * 70 + 12
-    : 50;
+    ? PLOT_X0 + ((Math.max(...bCoords) - minC) / span) * PLOT_W
+    : PLOT_X0 + PLOT_W * 0.55;
 
-  /** True vertical scale — datum fits tallest asset (not a fixed 9 m clip). */
+  /** Vertical scale hugs the tallest asset — avoid empty 6–9 m air. */
   const maxHM = useMemo(() => {
     const tallest = items
       .filter((i) => BY_TYPE[i.t].heightM)
       .reduce((m, it) => Math.max(m, (BY_TYPE[it.t].heightM ?? 1) * it.scale), 0);
-    return Math.max(9, tallest + 0.5);
+    if (tallest <= 0) return 6;
+    return Math.min(12, Math.max(tallest + 0.75, tallest * 1.2));
   }, [items]);
 
   const elevItems = useMemo(() => {
@@ -64,10 +79,11 @@ export function ElevationBoard({
         const d = BY_TYPE[it.t];
         const hm = (d.heightM ?? 1) * it.scale;
         const c = axis === "x" ? it.x : it.y;
-        const x = 12 + ((c - minC) / span) * 70;
-        const h = (hm / maxHM) * 30;
-        const y = 36 - h;
-        const w = it.ghost ? 4 : 5;
+        const x = PLOT_X0 + ((c - minC) / span) * PLOT_W;
+        const h = (hm / maxHM) * PLOT_H;
+        const y = GROUND_Y - h;
+        /** Narrow bars — readable as stems, not fat cards. */
+        const w = it.ghost ? 1.6 : d.elevShape === "hedge" || d.elevShape === "deck" ? 3.2 : 2.2;
         return {
           it,
           d,
@@ -90,14 +106,20 @@ export function ElevationBoard({
           barTopY: e.y,
           text: elevationLabelText(e.d.tag, e.hm),
         })),
+        { viewW: 100, viewH: VB_H, pad: 1 },
       ),
     [elevItems],
   );
 
-  const labelById = useMemo(() => {
-    const m = new Map(labelPlacements.map((p) => [p.id, p]));
-    return m;
-  }, [labelPlacements]);
+  const ticks = useMemo(() => {
+    const steps = 4;
+    return Array.from({ length: steps + 1 }, (_, i) => {
+      const t = i / steps;
+      const m = maxHM * t;
+      const y = GROUND_Y - t * PLOT_H;
+      return { m, y, t };
+    });
+  }, [maxHM]);
 
   return (
     <div className={css.root} data-testid="elevation-profile">
@@ -115,8 +137,13 @@ export function ElevationBoard({
             Trace in plan
           </button>
         ) : null}
+        <span className={css.widthChip}>
+          Site width ≈ {widthM.toFixed(1)} m
+        </span>
       </div>
-      <div className={css.north}>N↑</div>
+      <div className={css.north} aria-hidden>
+        N↑
+      </div>
       <PlanThumbnail
         boundary={boundary}
         building={building}
@@ -126,65 +153,47 @@ export function ElevationBoard({
       <div className={css.stage}>
         <svg
           className={css.svg}
-          viewBox="0 0 100 40"
+          viewBox={`0 0 100 ${VB_H}`}
           preserveAspectRatio="none"
-          overflow="visible"
+          aria-hidden
         >
-          {/* Z10 — datum guidelines + margin ticks */}
           <g data-layer="datum">
-            {[0, 0.33, 0.66, 1].map((t) => {
-              const m = Math.round(maxHM * t);
-              const y = 36 - t * 30;
-              return (
-                <g key={`${m}-${t}`}>
-                  <line
-                    x1={8}
-                    y1={y}
-                    x2={96}
-                    y2={y}
-                    stroke="rgba(140,138,133,0.35)"
-                    strokeWidth={0.35}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                  <text
-                    x={6.5}
-                    y={y + 0.8}
-                    textAnchor="end"
-                    fill="rgba(140,138,133,0.85)"
-                    fontSize={2.2}
-                    fontFamily="IBM Plex Mono, monospace"
-                  >
-                    {m}m
-                  </text>
-                </g>
-              );
-            })}
+            {ticks.map(({ y, t }) => (
+              <line
+                key={`g-${t}`}
+                x1={PLOT_X0 - 2}
+                y1={y}
+                x2={PLOT_X0 + PLOT_W + 4}
+                y2={y}
+                stroke="rgba(140,138,133,0.28)"
+                strokeWidth={0.3}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
             <line
-              x1={8}
-              y1={36}
-              x2={96}
-              y2={36}
-              stroke="rgba(26,26,26,0.4)"
-              strokeWidth={0.8}
-              vectorEffect="non-scaling-stroke"
-            />
-          </g>
-
-          {/* Z20 — building profile (below vegetation so bars are not sheared) */}
-          <g data-layer="building">
-            <rect
-              x={b0}
-              y={18}
-              width={Math.max(4, b1 - b0)}
-              height={18}
-              fill="rgba(36,19,24,0.06)"
-              stroke="#241318"
+              x1={PLOT_X0 - 2}
+              y1={GROUND_Y}
+              x2={PLOT_X0 + PLOT_W + 4}
+              y2={GROUND_Y}
+              stroke="rgba(26,26,26,0.45)"
               strokeWidth={0.7}
               vectorEffect="non-scaling-stroke"
             />
           </g>
 
-          {/* Z30 — vegetation / height bars */}
+          <g data-layer="building">
+            <rect
+              x={b0}
+              y={GROUND_Y - PLOT_H * 0.55}
+              width={Math.max(3, b1 - b0)}
+              height={PLOT_H * 0.55}
+              fill="rgba(36,19,24,0.05)"
+              stroke="#241318"
+              strokeWidth={0.6}
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+
           <g data-layer="vegetation">
             {elevItems.map(({ it, x, y, w, h, selected }) => (
               <g
@@ -200,78 +209,74 @@ export function ElevationBoard({
                   width={w}
                   height={h}
                   fill={
-                    it.ghost ? "rgba(232,184,75,0.2)" : "rgba(194,69,95,0.22)"
+                    it.ghost ? "rgba(232,184,75,0.22)" : "rgba(194,69,95,0.28)"
                   }
                   stroke={
                     selected ? "#C2455F" : it.ghost ? "#E8B84B" : "#C2455F"
                   }
-                  strokeWidth={selected ? 1.1 : 0.6}
-                  strokeDasharray={it.ghost ? "2 2" : undefined}
+                  strokeWidth={selected ? 1 : 0.55}
+                  strokeDasharray={it.ghost ? "1.5 1.2" : undefined}
                   vectorEffect="non-scaling-stroke"
-                  opacity={it.ghost ? 0.55 : selected ? 1 : 0.92}
+                  opacity={it.ghost ? 0.5 : 1}
                 />
               </g>
             ))}
           </g>
 
-          {/* Z40 — bbox-laid labels with parchment clearance + leaders */}
-          <g data-layer="labels">
-            {elevItems.map(({ it }) => {
-              const p = labelById.get(it.id);
-              if (!p) return null;
-              const active = it.id === selectedId && !it.ghost;
-              return (
-                <g key={`lbl-${it.id}`} data-testid="elevation-label">
-                  {p.leader ? (
-                    <line
-                      x1={p.leader.x1}
-                      y1={p.leader.y1}
-                      x2={p.leader.x2}
-                      y2={p.leader.y2}
-                      stroke="rgba(92,90,85,0.45)"
-                      strokeWidth={0.25}
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  ) : null}
-                  <rect
-                    x={p.x - p.maskW / 2}
-                    y={p.y - 2.15}
-                    width={p.maskW}
-                    height={p.maskH}
-                    rx={0.35}
-                    fill="#faf6f2"
-                    stroke={
-                      active ? "rgba(194,69,95,0.45)" : "rgba(36,19,24,0.08)"
-                    }
-                    strokeWidth={0.2}
-                    opacity={0.96}
-                  />
-                  <text
-                    x={p.x}
-                    y={p.y}
-                    textAnchor="middle"
-                    fill={active ? "#241318" : "#5c5a55"}
-                    fontSize={1.75}
-                    fontWeight={active ? 600 : 500}
-                    fontFamily="IBM Plex Mono, monospace"
-                  >
-                    {p.text}
-                  </text>
-                </g>
-              );
-            })}
-            <text
-              x={96}
-              y={39}
-              textAnchor="end"
-              fill="#8c8a85"
-              fontSize={2.2}
-              fontFamily="IBM Plex Mono, monospace"
-            >
-              Site width ≈ {widthM.toFixed(1)} m
-            </text>
+          {/* Leaders only — text is HTML */}
+          <g data-layer="leaders">
+            {labelPlacements.map((p) =>
+              p.leader ? (
+                <line
+                  key={`ld-${p.id}`}
+                  x1={p.leader.x1}
+                  y1={p.leader.y1}
+                  x2={p.leader.x2}
+                  y2={p.leader.y2}
+                  stroke="rgba(92,90,85,0.4)"
+                  strokeWidth={0.2}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ) : null,
+            )}
           </g>
         </svg>
+
+        <div className={css.hud} data-testid="elevation-hud">
+          {ticks.map(({ m, y }) => {
+            const pos = vbToPct(PLOT_X0 - 3.5, y);
+            return (
+              <span
+                key={`tick-${m}`}
+                className={css.tick}
+                style={{ left: pos.left, top: pos.top }}
+              >
+                {m < 10 ? m.toFixed(1).replace(/\.0$/, "") : Math.round(m)}m
+              </span>
+            );
+          })}
+
+          {labelPlacements.map((p) => {
+            const active =
+              elevItems.find((e) => e.it.id === p.id)?.selected ?? false;
+            const pos = vbToPct(p.x, p.y);
+            return (
+              <button
+                key={`lbl-${p.id}`}
+                type="button"
+                className={`${css.label}${active ? ` ${css.labelActive}` : ""}`}
+                data-testid="elevation-label"
+                style={{ left: pos.left, top: pos.top }}
+                onClick={() => {
+                  const item = elevItems.find((e) => e.it.id === p.id)?.it;
+                  if (item && !item.ghost) onSelect(item.id);
+                }}
+              >
+                {p.text}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

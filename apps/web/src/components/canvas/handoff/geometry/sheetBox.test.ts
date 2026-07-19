@@ -33,13 +33,13 @@ describe("sheetBoxFor", () => {
 describe("titlePanelWidth", () => {
   it("keeps a schedule column on typical A4 sheet widths", () => {
     const a4 = sheetBoxFor(960, 640, "a4");
-    expect(a4.boxW).toBeLessThan(420);
+    expect(a4.boxW / a4.boxH).toBeCloseTo(210 / 297, 3);
     expect(titlePanelWidth(a4.boxW)).toBeGreaterThanOrEqual(148);
   });
 
   it("uses full width schedule on wide A3", () => {
     const a3 = sheetBoxFor(1200, 800, "a3");
-    expect(titlePanelWidth(a3.boxW)).toBe(262);
+    expect(titlePanelWidth(a3.boxW)).toBe(240);
   });
 });
 
