@@ -83,6 +83,11 @@ import {
   DEFAULT_CANVAS_VIEW_LAYERS,
   type CanvasViewLayers,
 } from "../../lib/canvas-view-layers";
+import {
+  DEFAULT_LAYER_OPACITY,
+  SURVEY_LAYER_PRESET,
+  type CanvasLayerOpacity,
+} from "../../lib/canvas-layer-opacity";
 import css from "./siteCanvas.module.css";
 
 type SketchCommandsApi = {
@@ -373,6 +378,9 @@ function SiteCanvasInner({
   const [viewLayers, setViewLayers] = useState<CanvasViewLayers>(
     DEFAULT_CANVAS_VIEW_LAYERS,
   );
+  const [layerOpacity, setLayerOpacity] =
+    useState<CanvasLayerOpacity>(DEFAULT_LAYER_OPACITY);
+  const layerOpacityRestore = useRef<CanvasLayerOpacity>(DEFAULT_LAYER_OPACITY);
   const [focusChrome, setFocusChrome] = useState(false);
   const sketchCommandsRef = useRef<SketchCommandsApi | null>(null);
   const cadDocRef = useRef(cadDoc);
@@ -607,6 +615,15 @@ function SiteCanvasInner({
 
   const prevModeRef = useRef(mode);
   useEffect(() => {
+    const prev = prevModeRef.current;
+    if (mode === "survey" && prev !== "survey") {
+      setLayerOpacity((cur) => {
+        layerOpacityRestore.current = cur;
+        return SURVEY_LAYER_PRESET;
+      });
+    } else if (prev === "survey" && mode !== "survey") {
+      setLayerOpacity(layerOpacityRestore.current);
+    }
     if (mode !== "cad") setShowCadAdvanced(false);
     if (mode !== "sketch") {
       setSketchArmed(false);
@@ -899,6 +916,22 @@ function SiteCanvasInner({
   const showStage =
     titleRevealActive || mode !== "sketch" || Boolean(sketch);
 
+  const layerCounts = useMemo(
+    () => ({
+      survey: sketchCount,
+      boundary: committedCount + (boundary?.vertices.length ? 1 : 0),
+      council: orchWorld?.overlays.length ?? 0,
+      vegetation: sketchCount + ghostCount,
+    }),
+    [
+      boundary?.vertices.length,
+      committedCount,
+      ghostCount,
+      orchWorld?.overlays.length,
+      sketchCount,
+    ],
+  );
+
   const openCommandPalette = useCallback(() => {
     if (mode === "sketch" && sketchCommandsRef.current) {
       sketchCommandsRef.current.openCommands();
@@ -980,6 +1013,9 @@ function SiteCanvasInner({
           workingMeta={workingMeta}
           viewLayers={viewLayers}
           onViewLayersChange={setViewLayers}
+          layerOpacity={layerOpacity}
+          onLayerOpacityChange={setLayerOpacity}
+          layerCounts={layerCounts}
           onOpenCommands={openCommandPalette}
           focusChrome={focusChrome}
           onToggleFocusChrome={() => setFocusChrome((v) => !v)}

@@ -26,7 +26,7 @@ Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json
 
 Sketch mode (`SketchInstrument`) owns: paint/save, AI ghost scan (`scanDesignGhostsAction`), NL assist (`designAssistAction` + ribbon Ask AI), Cmd+K command palette, rotate/scale handles, ribbon search, site-intelligence overlays (sun/shade + easements toggles on right rail when on static-aerial fallback).
 
-**Design Studio v4 handoff** (reference only — not production code): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. Operator chrome is implemented in `CanvasStudioHeader` + v4 tokens in `apps/web/src/styles/globals.css`. Prototype `.dc.html` is pixel spec; do not port verbatim.
+**Design Studio v4/v5 handoff** (reference only): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README contains the **complete feature checklist**; track build progress in `IMPLEMENTATION-STATUS.md`. Operator chrome: `CanvasStudioHeader` + v4 tokens in `globals.css`.
 
 MapLibre stage needs map style routes (`/api/map-config`, `/api/map-style/satellite`) — works without keys via bundled fallbacks where configured.
 

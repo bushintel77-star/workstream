@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CanvasViewLayers } from "../../lib/canvas-view-layers";
+import type { CanvasLayerOpacity } from "../../lib/canvas-layer-opacity";
 import type { CanvasMode, CanvasProgress } from "../../lib/canvas-mode";
-import { CanvasLayerToggles } from "./CanvasLayerToggles";
+import { CanvasLayerOpacityPanel } from "./CanvasLayerOpacityPanel";
 import { CanvasModeStrip } from "./CanvasModeStrip";
 import hdr from "./canvasStudioHeader.module.css";
 
@@ -31,6 +32,9 @@ type Props = {
   workingMeta?: WorkingMeta | null;
   viewLayers?: CanvasViewLayers;
   onViewLayersChange?: (next: CanvasViewLayers) => void;
+  layerOpacity?: CanvasLayerOpacity;
+  onLayerOpacityChange?: (next: CanvasLayerOpacity) => void;
+  layerCounts?: Partial<Record<keyof CanvasLayerOpacity, number>>;
   onOpenCommands?: () => void;
   focusChrome?: boolean;
   onToggleFocusChrome?: () => void;
@@ -55,6 +59,9 @@ export function CanvasStudioHeader({
   workingMeta = null,
   viewLayers,
   onViewLayersChange,
+  layerOpacity,
+  onLayerOpacityChange,
+  layerCounts,
   onOpenCommands,
   focusChrome = false,
   onToggleFocusChrome,
@@ -131,7 +138,7 @@ export function CanvasStudioHeader({
           </button>
         ) : null}
 
-        {viewLayers && onViewLayersChange ? (
+        {layerOpacity && onLayerOpacityChange ? (
           <div className={hdr.popoverWrap} ref={layersRef}>
             <button
               type="button"
@@ -145,11 +152,12 @@ export function CanvasStudioHeader({
             </button>
             {layersOpen ? (
               <div className={hdr.popover} role="dialog" aria-label="Canvas layers">
-                <CanvasLayerToggles
-                  layers={viewLayers}
-                  onChange={(next) => {
-                    onViewLayersChange(next);
-                  }}
+                <CanvasLayerOpacityPanel
+                  opacity={layerOpacity}
+                  onOpacityChange={onLayerOpacityChange}
+                  counts={layerCounts}
+                  viewLayers={viewLayers}
+                  onViewLayersChange={onViewLayersChange}
                 />
               </div>
             ) : null}

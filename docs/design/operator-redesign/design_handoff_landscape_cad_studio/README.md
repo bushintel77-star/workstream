@@ -142,6 +142,84 @@ Full-bleed, edge-to-edge captures of every mode/state, verified clean (no unreso
 
 Use these as the pixel-accuracy reference alongside the live HTML (which remains the source of truth for exact spacing/behavior — screenshots can compress or anti-alias subtle values).
 
+## Complete Feature Checklist (build every item — nothing here is optional/decorative)
+
+### Modes & navigation
+- Mode switcher (pill tabs): Survey, Sketch, CAD, Elevation, Quote — instant client-side switch, no page nav.
+- Site switcher ("Sites ▾" popover): multiple saved sites, each with its own boundary/building/items/history, switching snapshots and restores full state per site.
+- Focus mode: hides side docks/panels for a larger drawing area.
+- Client view: a presentation-safe view (hides editing chrome/AI-draft labeling for client-facing screen share).
+- Command palette (⌘K / Ctrl+K): fuzzy-filterable list of ALL app actions (mode switches, "Fit sheet", "Dark canvas", "Close layers", site switches, "Place <symbol>" for every item type), keyboard nav (↑↓, Enter to run, Esc to close), plus a free-text "Ask AI" row that drafts new ghost suggestions from the typed query when fewer than 3 matches are found.
+
+### Canvas / CAD drawing tools
+- Tool switcher (left rail): Trace, Edit, Add, Lock, Reset, Pan — plus zoom controls (+/−/Fit) and pan-position dots/arrows.
+- **Trace tool**: click-to-place polygon tracing for Boundary and Building Footprint (`traceTarget` toggle) directly over the aerial photo. Ortho/angle-snap guide (hold Shift). Undo last point (Backspace), close polygon (Enter or click first point). Live point count + computed area readout while tracing.
+- **Ghost-geometry rectangle autocomplete** (added this session): live dashed-gold rectangle preview computed from the in-progress trace; accept via Tab or the "⇥ Autocomplete rectangle" badge.
+- **Edit tool**: drag boundary/building corner handles to reshape; drag mid-segment to insert a new point; right-click a corner to delete it.
+- **Add tool**: arm a symbol type (from the palette) and click the canvas to place it; placed items are draggable, rotatable, and resizable (scale).
+- Multi-select: marquee-drag select (dashed selection box), shift/cmd-click to add to selection (`groupIds`), group drag-move.
+- Keyboard nudge: arrow keys move selection by 0.2%, Shift+arrow by 1%.
+- Delete: Delete/Backspace removes selection (or in-progress trace point).
+- **Lock tool**: locks boundary/building geometry from further edits.
+- Undo/redo: full history stack (⌘Z / ⌘⇧Z or ⌘Y), 40 steps.
+- Measure tool: click-drag to get a live distance readout between two points.
+- Snap guides: vertical/horizontal alignment guide lines while dragging items.
+- Symbol palette ("+ Add" panel): every plantable/hardscape type (canopy tree, feature tree, hedge, planting bed, lawn, paving, deck, French drain, existing tree) as hand-built inline-SVG glyphs, each with name/rate/dimensions.
+
+### AI ghost-suggestion system
+- Ghost items render dashed-gold, at 50% opacity, distinct from accepted (solid, full-opacity) items.
+- Ghost review card: shows current suggestion's name, rationale ("why"), cost/schedule impact, and confidence score.
+- **Confidence-factor breakdown** (added this session): click the confidence bar to expand 3 category-specific contributing factors (sun exposure, root clearance, cost efficiency, drainage intercept, etc. depending on item type), each its own mini progress bar.
+- Accept / Reject per-suggestion (✓/✕ buttons, also keyboard `A`/`R` shortcuts), cycle through multiple ghosts (prev/next), "Accept all" bulk action.
+- Arrow-key cycling between ghost suggestions when none selected.
+- **Stale-ghost detection** (added this session): moving/resizing/deleting an accepted item flags nearby pending ghosts `stale` — amber pulse border + "recheck this" tooltip note, computed automatically inside the central `mutate()` diff.
+- **Aerial canopy auto-detection** (added this session): on aerial image load, offscreen-canvas pixel/color-cluster analysis proposes up to 6 canopy-tree ghosts directly from the photo, with a transient "Scanning aerial for canopy…" status pill.
+- **Command-palette "Ask AI"**: typing a free-text query in ⌘K and running it drafts new ghost suggestions tagged with that query as their rationale.
+- "AI DRAFT: UNVERIFIED" persistent badge in the header while any ghost suggestions are pending review.
+
+### Bi-directional CAD↔Elevation linking (added this session)
+- Hover/select an accepted item with a defined height in CAD → floating "⇄ Trace in elevation" pill jumps to Elevation mode with the same selection preserved.
+- Hover/select an elevation silhouette → matching "⇄ Trace in plan" pill jumps back to CAD, same selection state.
+- Elevation silhouettes are now independently hoverable/selectable/clickable (previously static).
+
+### Elevation mode
+- Front/Side elevation axis toggle (top-right pill).
+- Ground line, building eave-height box, item silhouettes with height labels, existing-tree marker with DBH.
+- North indicator.
+
+### Compliance & analysis
+- **Compliance dock** (glass panel, top-right, collapsible to a tab): pass/fail pill, outdoor area, permeable-surface % vs minimum, canopy-at-maturity % — each its own stat row, capped height with internal scroll so it never overlaps other docks.
+- 1.5 m setback overlay (dashed boundary offset), toggle in Layers popover.
+- Tree Protection Zone (TPZ) / root-zone circles around existing trees, auto-computed from DBH.
+- Conflict detection & mitigation chips: TPZ encroachment, easement conflicts, stormwater/impervious-surface threshold (>30% triggers a French-drain-allowance chip) — each clickable to toggle a "mitigated" state that updates the schedule/quote.
+- Sun & Growth panel: time-of-day slider/scrubber (9am–5pm+ range) with an animated play button showing real-time shadow-casting from buildings/trees; growth-stage toggle (Plant / +5yr / Mature) scales canopy sizes and shadow length accordingly.
+
+### Layer system (added/rebuilt this session)
+- Single "⧉ Layers" popover with 4 continuous opacity sliders (0–100%, not on/off): Survey (existing), Boundary & hardscape, Council & compliance, Vegetation (proposed) — each showing a live item count.
+- Compliance pass/fail and conflict counts in the stats dock are intentionally independent of this opacity (never silenced by peeling a layer back).
+- Survey-mode auto-preset dims Council/Vegetation and brings Survey/Boundary forward; leaving Survey restores prior levels.
+
+### Sheet / print / export mode
+- "Fit sheet" toggle: composes the CAD drawing onto a formal working-drawing sheet layout.
+- A3/A4 paper-size segmented control.
+- Site title block (brand, address), site schedule (lot area, building footprint, outdoor area, site coverage, boundary perimeter), full boundary & footprint dimension table (B1–B4, F1–F4 style labeled segments), notes block, scale + issue-date readout.
+- Item schedule/legend with quantities per symbol type.
+- **Multi-profile elevation stacking** (added this session): "+ Elevations" toggle inserts a bottom panel with independently-computed Front + Side elevation mini-profiles (own ground line, building box, item silhouettes, width readout) alongside the plan — not a duplicate of the live single-axis Elevation view.
+- North indicator on the sheet.
+- Dimension lines auto-generated along boundary/building edges when in sheet mode (or edit tool unlocked).
+
+### Quote / BOM mode
+- Live BOM (bill of materials) dock: running total (incl. GST), itemized schedule lines with quantities and cost, "+N more lines" expansion.
+- Cost delta indicator when AI suggestions would add cost.
+- Schedule entries auto-add for accepted mitigations (e.g. French drain allowance line).
+
+### Other chrome / utilities
+- Dark canvas toggle (full alternate dark palette for eye strain / presentation).
+- Share button (presumed link/export share action — verify intended behavior with stakeholders, name suggests external sharing not yet fully specified in this prototype).
+- Onboarding coach marks: 3-step first-run tour (Trace → Add → Fit sheet), dismissible, "skip" always available, only shows once (persisted via `localStorage cc_coach_done`).
+- Autosave indicator (periodic "saved" tick, no explicit save button — changes persist continuously).
+- Aerial base image: drag-and-drop `<image-slot>` placeholder for the top-down site photo (Mapbox/Google-style aerial), which all tracing and the canopy-detection feature key off of.
+
 ## Files
 - `Design Studio v4.dc.html` — the full interactive prototype source (all screens/modes/features described above; complete, unabridged code).
 - `image-slot.js` — internal reference for the aerial drag-and-drop image placeholder's fill-state attribute (`data-filled`) and shadow-DOM `img` element, which the canopy-detection feature depends on.
