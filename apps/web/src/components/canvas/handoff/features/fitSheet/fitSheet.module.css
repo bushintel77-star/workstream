@@ -130,6 +130,13 @@
   flex: none;
 }
 
+.northRose {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  line-height: 0;
+}
+
 .section {
   padding: 10px 15px 11px;
   border-bottom: 1px solid rgba(36, 19, 24, 0.25);

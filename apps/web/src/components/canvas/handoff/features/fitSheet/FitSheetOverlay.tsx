@@ -110,16 +110,39 @@ function buildElevProfile(
   };
 }
 
-function legendLines(items: StudioItem[]): { name: string; v: string }[] {
+/** Indicative m² from catalog px footprint × scale at board metres. */
+function itemAreaM2(it: StudioItem, scaleM: number): number {
+  const d = BY_TYPE[it.t];
+  const wm = ((d.w * it.scale) / 960) * scaleM;
+  const hm = ((d.h * it.scale) / 640) * scaleM;
+  if (d.area === "ellipse") return (Math.PI / 4) * wm * hm;
+  if (d.area === "rect") return wm * hm;
+  if (d.canopyM) {
+    const r = (d.canopyM * it.scale) / 2;
+    return Math.PI * r * r;
+  }
+  return 0;
+}
+
+function legendLines(
+  items: StudioItem[],
+  scaleM: number,
+): { name: string; v: string }[] {
   const real = items.filter((i) => !i.ghost);
+  const areas = new Map<string, number>();
   const counts = new Map<string, number>();
   for (const i of real) {
     counts.set(i.t, (counts.get(i.t) ?? 0) + 1);
+    areas.set(i.t, (areas.get(i.t) ?? 0) + itemAreaM2(i, scaleM));
   }
-  return [...counts.entries()].map(([t, n]) => ({
-    name: BY_TYPE[t as keyof typeof BY_TYPE].name,
-    v: `${n} no.`,
-  }));
+  return [...counts.entries()].map(([t, n]) => {
+    const m2 = areas.get(t) ?? 0;
+    const name = BY_TYPE[t as keyof typeof BY_TYPE].name;
+    if (m2 > 0.05) {
+      return { name, v: `${m2.toFixed(1)} m²` };
+    }
+    return { name, v: `${n} no.` };
+  });
 }
 
 /**
@@ -187,13 +210,16 @@ export function FitSheetOverlay({
     [schedule, titleBlock?.lotAreaM2],
   );
 
-  const segs = useMemo(() => {
-    const b = edgeSegments(boundary, "B", scaleM);
-    const f = edgeSegments(building, "F", scaleM);
-    return [...b, ...f];
-  }, [boundary, building, scaleM]);
+  const boundarySegs = useMemo(
+    () => edgeSegments(boundary, "B", scaleM),
+    [boundary, scaleM],
+  );
+  const footprintSegs = useMemo(
+    () => edgeSegments(building, "F", scaleM),
+    [building, scaleM],
+  );
 
-  const legend = useMemo(() => legendLines(items), [items]);
+  const legend = useMemo(() => legendLines(items, scaleM), [items, scaleM]);
   const showPanel = box.boxW >= 420;
   const scrimBot = Math.max(0, boardH - box.boxTop - box.boxH);
 
@@ -302,7 +328,29 @@ export function FitSheetOverlay({
                 <p className={css.titleCouncil}>{titleBlock.councilLabel}</p>
               ) : null}
             </div>
-            <span className={css.north}>N↑</span>
+            <span className={css.northRose} title="True north" aria-hidden>
+              <svg viewBox="0 0 24 28" width="22" height="26">
+                <polygon points="12,2 15,14 12,12 9,14" fill="#1a1a1a" />
+                <line
+                  x1="12"
+                  y1="12"
+                  x2="12"
+                  y2="26"
+                  stroke="#1a1a1a"
+                  strokeWidth="1.2"
+                />
+                <text
+                  x="12"
+                  y="11"
+                  textAnchor="middle"
+                  fontSize="6"
+                  fontFamily="IBM Plex Mono, monospace"
+                  fill="#1a1a1a"
+                >
+                  N
+                </text>
+              </svg>
+            </span>
           </div>
 
           <div className={css.section}>
@@ -338,9 +386,9 @@ export function FitSheetOverlay({
           </div>
 
           <div className={css.section}>
-            <p className={css.kicker}>Boundary &amp; footprint dims</p>
+            <p className={css.kicker}>Boundary dims</p>
             <div className={css.dimGrid}>
-              {segs.map((s) => (
+              {boundarySegs.map((s) => (
                 <div key={s.key} className={css.dimRow}>
                   <span className={css.dimKey}>{s.key}</span>
                   <span>{s.lengthM.toFixed(2)} m</span>
@@ -348,6 +396,20 @@ export function FitSheetOverlay({
               ))}
             </div>
           </div>
+
+          {footprintSegs.length > 0 ? (
+            <div className={css.section}>
+              <p className={css.kicker}>Footprint dims</p>
+              <div className={css.dimGrid}>
+                {footprintSegs.map((s) => (
+                  <div key={s.key} className={css.dimRow}>
+                    <span className={css.dimKey}>{s.key}</span>
+                    <span>{s.lengthM.toFixed(2)} m</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {legend.length > 0 ? (
             <div className={css.sectionGrow}>
@@ -367,8 +429,8 @@ export function FitSheetOverlay({
             <p className={css.kicker}>Notes</p>
             <p className={css.notesBody} data-testid="fit-sheet-notes">
               {titleBlock?.notesLine ??
-                "Indicative parcel · confirm Vicmap / title. Dimensions in metres — working drawing, not for construction."}{" "}
-              B# boundary · F# footprint.
+                "Vicmap cadastral base · confirm title. Dimensions in metres — working drawing, indicative only."}{" "}
+              B# = boundary · F# = footprint. Not for construction.
             </p>
             <div className={css.notesMeta}>
               <span data-testid="fit-sheet-scale-stamp">

@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import {
+  buildOutsideDims,
   deleteVertex,
   edgeSegments,
   insertVertexAfter,
@@ -190,18 +191,35 @@ export function CadPlanBoard({
   const bldFill =
     darkOn && !frameOn ? "rgba(247,244,239,0.35)" : "rgba(26,26,26,0.06)";
 
-  const dimSegs = foundationCleanse
-    ? edgeSegments(boundary, "B", scaleM)
-    : edgeSegments(boundary, "B", scaleM).concat(
-        edgeSegments(building, "F", scaleM),
-      );
+  /** Fit sheet working drawing: B + F. Stage 1 plate alone: B only. */
+  const boundarySegs = edgeSegments(boundary, "B", scaleM);
+  const buildingSegs = edgeSegments(building, "F", scaleM);
+  const dimSegs = frameOn
+    ? boundarySegs.concat(buildingSegs)
+    : foundationCleanse
+      ? boundarySegs
+      : boundarySegs.concat(buildingSegs);
   const showDims = editing || frameOn || foundationCleanse || titleLocked;
   const cadTitleMode = foundationCleanse || titleLocked;
-  const contextLots = cadTitleMode ? neighbourLotContext(boundary) : [];
+  /** Fit sheet: classic dashed boundary + solid footprint (screenshot language). */
+  const fitSheetStroke = frameOn;
+  const contextLots =
+    cadTitleMode && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
   const drawnLotM2 = polygonAreaM2(boundary, scaleM);
   const areaLabelM2 =
     lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
+  const outsideDims = frameOn
+    ? [
+        ...buildOutsideDims(boundarySegs, boundary),
+        ...(building.length >= 3
+          ? buildOutsideDims(buildingSegs, building, {
+              offsetPct: 1.8,
+              labelExtraPct: 1.2,
+            })
+          : []),
+      ]
+    : [];
 
   const exist = items.find((i) => i.t === "exist" && !i.ghost);
   /** AI / design intelligence underlay — dimmed under CAD title in Stage 1. */
@@ -454,14 +472,22 @@ export function CadPlanBoard({
           : null}
         <polygon
           points={ptsAttr(boundary)}
-          fill={cadTitleMode ? "rgba(28, 25, 23, 0.045)" : "transparent"}
-          stroke={bStroke}
+          fill={
+            cadTitleMode && !fitSheetStroke
+              ? "rgba(28, 25, 23, 0.045)"
+              : "transparent"
+          }
+          stroke={fitSheetStroke ? "#1A1A1A" : bStroke}
           strokeWidth={1.5}
-          strokeDasharray={titleSolid ? undefined : "4 4"}
+          strokeDasharray={
+            fitSheetStroke || !titleSolid ? "4 4" : undefined
+          }
           vectorEffect="non-scaling-stroke"
           opacity={layerOpacity.boundary}
           data-testid={
-            titleSolid ? "foundation-title-boundary" : undefined
+            titleSolid || fitSheetStroke
+              ? "foundation-title-boundary"
+              : undefined
           }
         />
         {building.length >= 3 ? (
@@ -476,9 +502,39 @@ export function CadPlanBoard({
             }
           />
         ) : null}
-        {cadTitleMode
+        {outsideDims.map((d) => (
+          <g key={`odim${d.key}`} data-testid="outside-dim">
+            <line
+              x1={d.x1}
+              y1={d.y1}
+              x2={d.x2}
+              y2={d.y2}
+              stroke="#1A1A1A"
+              strokeWidth={0.85}
+              vectorEffect="non-scaling-stroke"
+            />
+            <line
+              x1={d.tickA.x1}
+              y1={d.tickA.y1}
+              x2={d.tickA.x2}
+              y2={d.tickA.y2}
+              stroke="#1A1A1A"
+              strokeWidth={0.85}
+              vectorEffect="non-scaling-stroke"
+            />
+            <line
+              x1={d.tickB.x1}
+              y1={d.tickB.y1}
+              x2={d.tickB.x2}
+              y2={d.tickB.y2}
+              stroke="#1A1A1A"
+              strokeWidth={0.85}
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        ))}
+        {cadTitleMode && !frameOn
           ? dimSegs.map((d) => {
-              // Short CAD extension ticks inward from edge midpoints
               const nx = -(d.b.y - d.a.y);
               const ny = d.b.x - d.a.x;
               const len = Math.hypot(nx, ny) || 1;
@@ -624,6 +680,7 @@ export function CadPlanBoard({
         : null}
 
       {showDims &&
+        !frameOn &&
         dimSegs.map((d) => (
           <div
             key={d.key}
@@ -661,7 +718,26 @@ export function CadPlanBoard({
           </div>
         ))}
 
-      {cadTitleMode && boundary.length >= 3 ? (
+      {frameOn &&
+        outsideDims.map((d) => (
+          <div
+            key={`olab${d.key}`}
+            className={`${css.dimMark} ${css.fitOutsideDim}`}
+            style={{
+              left: `${d.labelX}%`,
+              top: `${d.labelY}%`,
+              transform: `translate(-50%, -50%) rotate(${d.rotDeg}deg)`,
+            }}
+            data-testid="fit-outside-dim-label"
+          >
+            <span className={css.obliqueTick} aria-hidden />
+            <span className={css.fitDimLabel}>
+              {d.key} · {d.lengthM.toFixed(2)} m
+            </span>
+          </div>
+        ))}
+
+      {cadTitleMode && !frameOn && boundary.length >= 3 ? (
         <div
           className={css.cadAreaLabel}
           style={{ left: `${titleCentroid.x}%`, top: `${titleCentroid.y}%` }}
@@ -682,7 +758,7 @@ export function CadPlanBoard({
         </div>
       ) : null}
 
-      {cadTitleMode && siteLabel ? (
+      {cadTitleMode && !frameOn && siteLabel ? (
         <p className={css.cadStreetCue} data-testid="cad-street-cue">
           {siteLabel}
         </p>

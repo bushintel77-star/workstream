@@ -84,9 +84,13 @@ When `true`:
 5. boundaryLocked = false briefly → Vicmap resolve → ring → boundary
 6. boundaryLocked = true
 7. clear sketches that are near-duplicate of title ring (optional loose match)
-8. mode = survey; fitSheet = false (title stage before Fit sheet)
-9. toast: Stage 1 cadastral foundation locked
+8. mode = survey; Fit sheet opens (`frameOn`) for working-drawing detail
+9. Title Lock/Unlock for snap/drag; AI underlay retained
+10. toast: Stage 1 CAD + Fit sheet ready
 ```
+
+**Detail target:** Fit sheet schedule + outside B#/F# CAD dims (see screenshot working drawing) — Stage 1 lands there with AI intelligence kept under the title layer.
+
 
 Idempotent when already cleansed + locked to same Vicmap ring.
 

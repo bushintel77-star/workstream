@@ -913,9 +913,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
       tool: "edit",
       foundationCleanse: true,
       titleBoundaryLocked: snapped,
+      // Open Fit sheet working drawing — schedule + outside CAD dims
+      frameOn: true,
       aerialSuppressed: true,
       aerialUri: null,
-      assistReply: `Stage 1 CAD ready. ${notes.join(" · ")}`,
+      assistReply: `Stage 1 CAD + Fit sheet. ${notes.join(" · ")}`,
     });
   }, [mutate, projectId, setUi, state.doc.boundary, state.doc.strokes]);
 

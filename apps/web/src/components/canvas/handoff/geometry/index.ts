@@ -7,3 +7,4 @@ export * from "./siteScheduleDisplay";
 export * from "./elevationLabels";
 export * from "./geoToPct";
 export * from "./foundationCadContext";
+export * from "./outsideDims";

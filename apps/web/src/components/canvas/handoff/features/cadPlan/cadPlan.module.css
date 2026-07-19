@@ -302,6 +302,23 @@
   white-space: nowrap;
 }
 
+.fitOutsideDim {
+  z-index: 8;
+}
+
+.fitDimLabel {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  color: #1a1a1a;
+  background: color-mix(in srgb, #faf6f2 92%, transparent);
+  border: none;
+  border-radius: 0;
+  padding: 1px 4px;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
 .tpzTag {
   position: absolute;
   transform: translate(-50%, -50%);
