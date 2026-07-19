@@ -16,7 +16,11 @@ import {
   type StudioComplianceItem,
   type StudioHorizonCard,
 } from "@workstream/domain";
-import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
+import type {
+  CatalogPlacement,
+  CanvasStroke,
+  DesignSiteFrame,
+} from "@workstream/contracts";
 import { saveDesignCanvasAction } from "../../../../app/actions";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
 import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
@@ -37,6 +41,8 @@ import {
   canvasToStrokes,
   itemsToPlacements,
   placementsToItems,
+  siteFrameToSnapshot,
+  snapshotToSiteFrame,
   strokesToCanvas,
   withContractIds,
 } from "./canvasBridge";
@@ -257,17 +263,25 @@ function initialState(opts: {
   mode: StudioMode;
   placements?: CatalogPlacement[];
   strokes?: CanvasStroke[];
+  siteFrame?: DesignSiteFrame | null;
 }): State {
   const seed = WRIGHTS_SEED;
   const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
   const base = seedToSnap(seed);
+  const frameOverlay = siteFrameToSnapshot(opts.siteFrame);
   const hasCanvas =
-    (opts.placements?.length ?? 0) > 0 || (opts.strokes?.length ?? 0) > 0;
+    (opts.placements?.length ?? 0) > 0 ||
+    (opts.strokes?.length ?? 0) > 0 ||
+    Boolean(frameOverlay.boundary);
   const snap: StudioSnapshot = hasCanvas
     ? {
         ...base,
+        ...frameOverlay,
         items: placementsToItems(opts.placements ?? []),
         strokes: canvasToStrokes(opts.strokes ?? []),
+        easements: frameOverlay.easements ?? base.easements,
+        services: frameOverlay.services ?? base.services,
+        levels: frameOverlay.levels ?? base.levels,
       }
     : base;
   return {
@@ -344,6 +358,8 @@ export type UseStudioStateOpts = {
   outdoorM2?: number;
   initialPlacements?: CatalogPlacement[];
   initialStrokes?: CanvasStroke[];
+  /** Durable title/survey frame from DesignCanvas.site_frame. */
+  initialSiteFrame?: DesignSiteFrame | null;
 };
 
 function reducer(state: State, action: Action): State {
@@ -520,12 +536,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
     outdoorM2 = 230.82,
     initialPlacements = [],
     initialStrokes = [],
+    initialSiteFrame = null,
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
       mode: initialMode,
       placements: initialPlacements,
       strokes: initialStrokes,
+      siteFrame: initialSiteFrame,
     }),
   );
   const bootstrapped = useRef(false);
@@ -789,6 +807,17 @@ export function useStudioState(opts: UseStudioStateOpts) {
           py = snapped.y;
           if (snapped.snapped) tip = snapped.codeHint;
         }
+        let dbhM: number | undefined;
+        if (armed === "exist") {
+          const raw = window.prompt(
+            "Existing tree DBH (m) — drives AS 4970 TPZ",
+            String(BY_TYPE.exist.dbhM ?? 0.45),
+          );
+          if (raw != null) {
+            const n = Number.parseFloat(raw);
+            if (Number.isFinite(n) && n > 0) dbhM = n;
+          }
+        }
         const id = crypto.randomUUID();
         const item: StudioItem = {
           id,
@@ -798,6 +827,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           rot: 0,
           scale: 0.7,
           ghost: false,
+          ...(dbhM != null ? { dbhM } : {}),
         };
         let next: StudioSnapshot = {
           ...snap,
@@ -1536,6 +1566,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
       }
       const placements = itemsToPlacements(fixed.items);
       const canvasStrokes = strokesToCanvas(fixed.strokes);
+      const siteFrame = snapshotToSiteFrame({
+        boundary: state.doc.boundary,
+        building: state.doc.building,
+        easements: state.doc.easements ?? [],
+        services: state.doc.services ?? [],
+        levels: state.doc.levels ?? [],
+      });
       setUi({ saveStatus: "saving" });
       const persist = async (attempt: number): Promise<void> => {
         try {
@@ -1545,6 +1582,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
             canvasStrokes,
             [],
             [],
+            siteFrame,
           );
           setUi({ saveStatus: "saved", savedTick: Date.now() });
         } catch {
@@ -1559,7 +1597,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       void persist(1);
     }, 1100);
     return () => window.clearTimeout(handle);
-    // Persist accepted geometry only — ghosts change should not rewrite canvas.
+    // Persist accepted geometry + site frame — ghosts must not rewrite canvas.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     state.doc.items.filter((i) => !i.ghost).length,
@@ -1569,6 +1607,17 @@ export function useStudioState(opts: UseStudioStateOpts) {
       .join("|"),
     state.doc.strokes.map((s) => s.id).join("|"),
     state.doc.strokes.length,
+    state.doc.boundary.map((p) => `${p.x},${p.y}`).join("|"),
+    state.doc.building.map((p) => `${p.x},${p.y}`).join("|"),
+    (state.doc.easements ?? [])
+      .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
+      .join("/"),
+    (state.doc.services ?? [])
+      .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
+      .join("/"),
+    (state.doc.levels ?? [])
+      .map((lv) => `${lv.x},${lv.y},${lv.z}`)
+      .join("|"),
   ]);
 
   const finishTrace = useCallback(

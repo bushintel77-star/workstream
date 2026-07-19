@@ -233,6 +233,8 @@ export function StudioCommandPalette({
               <button
                 type="button"
                 className={css.row}
+                role="option"
+                data-testid={`canvas-command-${cmd.id}`}
                 data-active={i === active ? "true" : "false"}
                 onMouseEnter={() => setActive(i)}
                 onClick={() => runAt(i)}

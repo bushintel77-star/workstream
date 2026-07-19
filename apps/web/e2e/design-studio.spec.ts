@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
-import { LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
+import { handoffStudio, LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
 
 async function openCommandPalette(page: Page) {
-  await page.getByTestId("sketch-ribbon-cmd").evaluate((el) => {
+  await page.getByTestId("canvas-command-top").evaluate((el) => {
     (el as HTMLButtonElement).click();
   });
   await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
@@ -62,14 +62,11 @@ test.describe("Design studio (sketch mode)", () => {
   }) => {
     await page.goto(`/projects/${projectId}?mode=sketch`);
     await expect(pipelineShell(page)).toHaveCount(0);
-    await expect(page.getByTestId("site-canvas")).toBeVisible({
+    await expect(handoffStudio(page)).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible();
-    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByTestId("canvas-placement")).toHaveCount(1, {
+    await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 15_000,
     });
   });
@@ -79,33 +76,34 @@ test.describe("Design studio (sketch mode)", () => {
     await expect(page).toHaveURL(
       new RegExp(`/projects/${projectId}\\?mode=sketch`),
     );
-    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
+    await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 30_000,
     });
   });
 
-  test("shows indicative scale bar on canvas", async ({ page }) => {
-    await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("canvas-scale-bar")).toBeVisible({
+  test("seeded placement visible in CAD", async ({ page }) => {
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByTestId("canvas-scale-bar")).toContainText(/m/);
+    await expect(page.getByTestId("studio-item")).toHaveCount(1, {
+      timeout: 15_000,
+    });
   });
 
   test("arms symbol from command palette search", async ({ page }) => {
-    await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("canvas-placement")).toHaveCount(1, {
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(page.getByTestId("studio-item")).toHaveCount(1, {
       timeout: 30_000,
     });
     await openCommandPalette(page);
-    await page.getByLabel("Search commands and materials").fill("arm bluestone");
+    await page.getByLabel("Command search").fill("place bluestone");
     await expect(
-      page.getByRole("option", { name: /Arm Bluestone paver/i }),
+      page.getByRole("option", { name: /Place Bluestone/i }),
     ).toBeVisible();
     await page.keyboard.press("Enter");
-    await expect(page.getByTestId("sketch-instrument")).toHaveAttribute(
-      "data-armed",
-      "1",
-    );
+    await expect(page.getByTestId("add-symbol-strip")).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

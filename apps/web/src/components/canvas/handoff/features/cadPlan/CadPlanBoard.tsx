@@ -60,6 +60,8 @@ type Props = {
   } | null;
   boundary: PctPoint[];
   building: PctPoint[];
+  /** Closed easement rings — hatched on plan (honesty layer). */
+  easements?: PctPoint[][];
   items: StudioItem[];
   tool: StudioTool;
   /** Studio mode — survey shows edge dims; sketch disables pointer capture. */
@@ -124,6 +126,7 @@ export function CadPlanBoard({
   titleMeta = null,
   boundary,
   building,
+  easements = [],
   items,
   tool,
   mode = "cad",
@@ -246,9 +249,9 @@ export function CadPlanBoard({
   /** AI / design intelligence underlay — dimmed under CAD title in Stage 1. */
   const planItems = items;
   const underlayOp = foundationCleanse ? 0.38 : 1;
-  const tpz = exist
-    ? tpzRadiusPct(BY_TYPE.exist.dbhM ?? 0.45, scaleM)
-    : null;
+  const existDbhM =
+    exist?.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
+  const tpz = exist ? tpzRadiusPct(existDbhM, scaleM) : null;
 
   const toPct = useCallback((clientX: number, clientY: number) => {
     const el = rootRef.current;
@@ -445,7 +448,37 @@ export function CadPlanBoard({
               strokeWidth="1.2"
             />
           </pattern>
+          <pattern
+            id="ws-easement-hatch"
+            width="3"
+            height="3"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(-45)"
+          >
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="3"
+              stroke="rgba(87,83,78,0.55)"
+              strokeWidth="0.9"
+            />
+          </pattern>
         </defs>
+        {easements
+          .filter((r) => r.length >= 3)
+          .map((ring, i) => (
+            <g key={`ease${i}`} opacity={layerOpacity.council} data-testid="easement-hatch">
+              <polygon
+                points={ptsAttr(ring)}
+                fill="url(#ws-easement-hatch)"
+                stroke="#57534E"
+                strokeWidth={0.35}
+                strokeDasharray="1.2 0.8"
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
+          ))}
         {cadTitleMode
           ? contextLots.map((ring, i) => (
               <polygon
@@ -788,6 +821,8 @@ export function CadPlanBoard({
           <div
             key={it.id}
             className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}`}
+            data-testid={it.ghost ? "studio-ghost" : "studio-item"}
+            data-item-type={it.t}
             style={{
               left: `${it.x}%`,
               top: `${it.y}%`,
@@ -983,6 +1018,12 @@ export function CadPlanBoard({
         </div>
       ) : null}
 
+      {easements.some((r) => r.length >= 3) ? (
+        <p className={css.honestyFooter} data-testid="easement-honesty-footer">
+          Easement hatch · indicative only — confirm with title / council before
+          excavation
+        </p>
+      ) : null}
     </div>
   );
 }

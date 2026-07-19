@@ -74,7 +74,7 @@ function peerRatesFor(typeId: StudioItem["t"]): number[] {
 function toTree(it: StudioItem, scaleM: number): LiveGhostTree | null {
   const d = BY_TYPE[it.t];
   if (!d.canopyM && !d.existing) return null;
-  const dbhM = d.dbhM ?? 0.45;
+  const dbhM = it.dbhM ?? d.dbhM ?? 0.45;
   const { rxPct } = d.existing
     ? tpzRadiusPct(dbhM, scaleM)
     : {

@@ -559,3 +559,20 @@
   border-radius: 4px;
   cursor: nwse-resize;
 }
+
+.honestyFooter {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 8;
+  margin: 0;
+  max-width: min(340px, calc(100% - 24px));
+  padding: 4px 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.92);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: #57534e;
+  pointer-events: none;
+}

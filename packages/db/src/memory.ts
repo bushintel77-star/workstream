@@ -1162,9 +1162,16 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         if (input.features !== undefined) {
           existing.features = input.features;
         }
+        if (input.site_frame !== undefined) {
+          existing.site_frame = input.site_frame;
+        }
         existing.updated_at = now;
         flush();
-        return { ...existing, features: existing.features ?? [] };
+        return {
+          ...existing,
+          features: existing.features ?? [],
+          site_frame: existing.site_frame,
+        };
       }
       const canvas: import("@workstream/contracts").DesignCanvas = {
         id: crypto.randomUUID(),
@@ -1174,6 +1181,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         irrigation_zones: input.irrigation_zones ?? [],
         annotations: input.annotations ?? [],
         features: input.features ?? [],
+        site_frame: input.site_frame,
         updated_at: now,
       };
       _designCanvases.push(canvas);

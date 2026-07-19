@@ -56,7 +56,11 @@ import {
   solveLiveTradeEstimate,
   tradeTagForItem,
 } from "@workstream/domain";
-import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
+import type {
+  CatalogPlacement,
+  CanvasStroke,
+  DesignSiteFrame,
+} from "@workstream/contracts";
 import {
   plotBoxFor,
   sheetBoxFor,
@@ -73,6 +77,7 @@ type Props = {
   initialMode?: StudioMode;
   initialPlacements?: CatalogPlacement[];
   initialStrokes?: CanvasStroke[];
+  initialSiteFrame?: DesignSiteFrame | null;
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -90,6 +95,7 @@ export function HandoffDesignStudio({
   initialMode = "cad",
   initialPlacements = [],
   initialStrokes = [],
+  initialSiteFrame = null,
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -105,6 +111,7 @@ export function HandoffDesignStudio({
       : "cad",
     initialPlacements,
     initialStrokes,
+    initialSiteFrame,
   });
   const {
     ui,
@@ -396,6 +403,7 @@ export function HandoffDesignStudio({
     <div
       className={`${css.root}${ui.darkOn ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}`}
       data-testid="handoff-design-studio"
+      data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
       data-compliance={compliance.canvasSignal}
       style={
@@ -835,6 +843,7 @@ export function HandoffDesignStudio({
               }
               boundary={studio.boundary}
               building={studio.building}
+              easements={studio.easements}
               items={studio.items}
               mode={ui.mode}
               tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}

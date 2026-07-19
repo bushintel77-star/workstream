@@ -22,6 +22,8 @@ export type StudioItem = {
   why?: string;
   conf?: number;
   stale?: boolean;
+  /** Authored DBH (m) for existing trees — drives AS 4970 TPZ when set. */
+  dbhM?: number;
 };
 
 export type Pt = { x: number; y: number };

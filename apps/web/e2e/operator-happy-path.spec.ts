@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pipelineShell } from "./helpers";
+import { handoffStudio, pipelineShell } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -24,7 +24,7 @@ test.describe("Operator happy path", () => {
     expect(pipeline.ok()).toBeTruthy();
 
     await page.goto(`/projects/${projectId}`);
-    await expect(page.getByTestId("site-canvas")).toBeVisible({
+    await expect(handoffStudio(page)).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible();
@@ -32,5 +32,9 @@ test.describe("Operator happy path", () => {
 
     await page.getByTestId("canvas-mode-sketch").click();
     await expect(page).toHaveURL(/mode=sketch/);
+    await expect(handoffStudio(page)).toHaveAttribute(
+      "data-canvas-mode",
+      "sketch",
+    );
   });
 });

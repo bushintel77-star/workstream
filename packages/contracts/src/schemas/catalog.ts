@@ -155,6 +155,33 @@ export const DesignAssistResponseSchema = z.object({
 });
 export type DesignAssistResponse = z.infer<typeof DesignAssistResponseSchema>;
 
+/**
+ * Workflow 1 % site geometry for HandoffDesignStudio.
+ * Distinct from HITL SiteBoundary (geo/metres Vicmap lock).
+ */
+export const DesignSiteFramePointSchema = z.object({
+  x_pct: z.number().min(0).max(100),
+  y_pct: z.number().min(0).max(100),
+});
+export type DesignSiteFramePoint = z.infer<typeof DesignSiteFramePointSchema>;
+
+export const DesignSiteFrameLevelSchema = z.object({
+  x_pct: z.number().min(0).max(100),
+  y_pct: z.number().min(0).max(100),
+  /** Reduced level (m AHD / local RL). */
+  z_m: z.number(),
+});
+export type DesignSiteFrameLevel = z.infer<typeof DesignSiteFrameLevelSchema>;
+
+export const DesignSiteFrameSchema = z.object({
+  boundary: z.array(DesignSiteFramePointSchema).default([]),
+  building: z.array(DesignSiteFramePointSchema).default([]),
+  easements: z.array(z.array(DesignSiteFramePointSchema)).default([]),
+  services: z.array(z.array(DesignSiteFramePointSchema)).default([]),
+  levels: z.array(DesignSiteFrameLevelSchema).default([]),
+});
+export type DesignSiteFrame = z.infer<typeof DesignSiteFrameSchema>;
+
 export const DesignCanvasSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
@@ -164,6 +191,8 @@ export const DesignCanvasSchema = z.object({
   annotations: z.array(CanvasAnnotationSchema).default([]),
   /** Lean landscape features (beds/paths) - optional until bed paint ships. */
   features: z.array(LandscapeFeatureSchema).optional().default([]),
+  /** Durable title / survey frame — boundary, building, easements, levels. */
+  site_frame: DesignSiteFrameSchema.optional(),
   updated_at: z.string().datetime(),
 });
 export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
@@ -174,5 +203,6 @@ export const UpsertDesignCanvasSchema = z.object({
   irrigation_zones: z.array(IrrigationZoneSchema).optional(),
   annotations: z.array(CanvasAnnotationSchema).optional(),
   features: z.array(LandscapeFeatureSchema).optional(),
+  site_frame: DesignSiteFrameSchema.optional(),
 });
 export type UpsertDesignCanvasInput = z.infer<typeof UpsertDesignCanvasSchema>;

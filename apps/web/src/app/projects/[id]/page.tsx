@@ -65,6 +65,7 @@ export default async function ProjectCanvasPage({
         initialMode={parseMode(sp.mode)}
         initialPlacements={canvas?.placements ?? []}
         initialStrokes={canvas?.strokes ?? []}
+        initialSiteFrame={canvas?.site_frame ?? null}
         hasQuote={Boolean(quoteOut)}
         quotePortalUri={quoteOut?.uri ?? null}
         initialTitleBlock={titleBlock}

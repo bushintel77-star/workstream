@@ -8,6 +8,11 @@ export function pipelineShell(page: Page) {
   return page.locator('[data-testid="project-pipeline-shell"]');
 }
 
+/** Live HandoffDesignStudio root (replaces retired site-canvas). */
+export function handoffStudio(page: Page) {
+  return page.getByTestId("handoff-design-studio");
+}
+
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */
 export const LEGACY_STUDIO_VIEWPORT = { width: 800, height: 900 };
 

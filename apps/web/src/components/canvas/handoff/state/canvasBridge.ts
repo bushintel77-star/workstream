@@ -3,8 +3,18 @@
  * Ghosts never persist. Non-UUID demo ids are remapped for the contracts schema.
  */
 
-import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
-import type { SketchStroke, StudioItem, StudioItemType } from "../studioCatalog";
+import type {
+  CatalogPlacement,
+  CanvasStroke,
+  DesignSiteFrame,
+} from "@workstream/contracts";
+import type {
+  SketchStroke,
+  SpotLevel,
+  StudioItem,
+  StudioItemType,
+} from "../studioCatalog";
+import type { PctPoint } from "../geometry";
 import { mapSymbolToStudioType } from "./studioAiEngine";
 
 const UUID_RE =
@@ -50,6 +60,22 @@ export function withContractIds(args: {
   return { items, strokes, remapped };
 }
 
+/** Pack optional authored DBH into placement label for durable round-trip. */
+function placementLabel(i: StudioItem): string {
+  if (i.t === "exist" && i.dbhM != null && Number.isFinite(i.dbhM)) {
+    return `exist:dbh=${i.dbhM}`;
+  }
+  return i.t;
+}
+
+function dbhFromLabel(label: string | undefined): number | undefined {
+  if (!label) return undefined;
+  const m = /^exist:dbh=([\d.]+)$/.exec(label);
+  if (!m) return undefined;
+  const n = Number.parseFloat(m[1]!);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
 /** Accepted (non-ghost) items → catalog placements. */
 export function itemsToPlacements(items: StudioItem[]): CatalogPlacement[] {
   return items
@@ -61,22 +87,27 @@ export function itemsToPlacements(items: StudioItem[]): CatalogPlacement[] {
       y_pct: clampPct(i.y),
       rotation_deg: ((i.rot % 360) + 360) % 360,
       scale: Math.max(0.05, i.scale),
-      label: i.t,
+      label: placementLabel(i),
     }));
 }
 
 export function placementsToItems(
   placements: CatalogPlacement[],
 ): StudioItem[] {
-  return placements.map((p) => ({
-    id: p.id,
-    t: mapSymbolToStudioType(p.symbol_id),
-    x: p.x_pct,
-    y: p.y_pct,
-    rot: p.rotation_deg ?? 0,
-    scale: p.scale ?? 1,
-    ghost: false,
-  }));
+  return placements.map((p) => {
+    const t = mapSymbolToStudioType(p.symbol_id);
+    const dbhM = t === "exist" ? dbhFromLabel(p.label) : undefined;
+    return {
+      id: p.id,
+      t,
+      x: p.x_pct,
+      y: p.y_pct,
+      rot: p.rotation_deg ?? 0,
+      scale: p.scale ?? 1,
+      ghost: false,
+      ...(dbhM != null ? { dbhM } : {}),
+    };
+  });
 }
 
 export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
@@ -101,4 +132,72 @@ export function canvasToStrokes(strokes: CanvasStroke[]): SketchStroke[] {
 function clampPct(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, n));
+}
+
+function ringToFrame(pts: PctPoint[]) {
+  return pts.map((p) => ({
+    x_pct: clampPct(p.x),
+    y_pct: clampPct(p.y),
+  }));
+}
+
+function frameToRing(
+  pts: Array<{ x_pct: number; y_pct: number }>,
+): PctPoint[] {
+  return pts.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+}
+
+/** Studio site geometry → durable DesignCanvas.site_frame. */
+export function snapshotToSiteFrame(args: {
+  boundary: PctPoint[];
+  building: PctPoint[];
+  easements: PctPoint[][];
+  services: PctPoint[][];
+  levels: SpotLevel[];
+}): DesignSiteFrame {
+  return {
+    boundary: ringToFrame(args.boundary),
+    building: ringToFrame(args.building),
+    easements: args.easements.map(ringToFrame),
+    services: args.services.map(ringToFrame),
+    levels: args.levels.map((lv) => ({
+      x_pct: clampPct(lv.x),
+      y_pct: clampPct(lv.y),
+      z_m: lv.z,
+    })),
+  };
+}
+
+/** Hydrate site_frame onto seed rings when present and non-empty. */
+export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): {
+  boundary?: PctPoint[];
+  building?: PctPoint[];
+  easements?: PctPoint[][];
+  services?: PctPoint[][];
+  levels?: SpotLevel[];
+} {
+  if (!frame) return {};
+  const out: {
+    boundary?: PctPoint[];
+    building?: PctPoint[];
+    easements?: PctPoint[][];
+    services?: PctPoint[][];
+    levels?: SpotLevel[];
+  } = {};
+  if (frame.boundary.length >= 3) out.boundary = frameToRing(frame.boundary);
+  if (frame.building.length >= 3) out.building = frameToRing(frame.building);
+  if (frame.easements.length > 0) {
+    out.easements = frame.easements.map(frameToRing);
+  }
+  if (frame.services.length > 0) {
+    out.services = frame.services.map(frameToRing);
+  }
+  if (frame.levels.length > 0) {
+    out.levels = frame.levels.map((lv) => ({
+      x: lv.x_pct,
+      y: lv.y_pct,
+      z: lv.z_m,
+    }));
+  }
+  return out;
 }

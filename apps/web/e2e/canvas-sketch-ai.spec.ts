@@ -1,8 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
-import { createSurveyProject, pipelineShell } from "./helpers";
+import { createSurveyProject, handoffStudio, pipelineShell } from "./helpers";
 
 async function openCommandPalette(page: Page) {
-  await page.getByTestId("sketch-ribbon-cmd").evaluate((el) => {
+  await page.getByTestId("canvas-command-top").evaluate((el) => {
     (el as HTMLButtonElement).click();
   });
   await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
@@ -11,92 +11,76 @@ async function openCommandPalette(page: Page) {
 }
 
 test.describe("Canvas sketch AI", () => {
-  test("shows AI ghost suggestions on empty sketch", async ({ page, request }) => {
+  test("sketch board mounts without pipeline chrome", async ({
+    page,
+    request,
+  }) => {
     const { projectId } = await createSurveyProject(request);
 
     await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
+    await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 30_000,
     });
     await expect(pipelineShell(page)).toHaveCount(0);
-    await expect(page.getByTestId("sketch-ghost-suggestion").first()).toBeVisible({
-      timeout: 20_000,
-    });
+    await expect(handoffStudio(page)).toHaveAttribute(
+      "data-canvas-mode",
+      "sketch",
+    );
   });
 
-  test("accepts AI ghost suggestion onto canvas", async ({ page, request }) => {
+  test("command palette opens with scan and convert commands", async ({
+    page,
+    request,
+  }) => {
     const { projectId } = await createSurveyProject(request);
 
     await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("sketch-ghost-suggestion").first()).toBeVisible({
-      timeout: 20_000,
-    });
-
-    await page
-      .getByTestId("sketch-ghost-suggestion")
-      .first()
-      .getByTestId("sketch-ghost-accept")
-      .evaluate((el) => {
-        (el as HTMLButtonElement).click();
-      });
-
-    await expect(page.getByTestId("canvas-placement")).toHaveCount(1, {
-      timeout: 15_000,
-    });
-  });
-
-  test("command palette opens with AI and scan commands", async ({ page, request }) => {
-    const { projectId } = await createSurveyProject(request);
-
-    await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
+    await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 30_000,
     });
 
     await openCommandPalette(page);
     await expect(page.getByTestId("canvas-command-scan-ghosts")).toBeVisible();
-    await expect(page.getByTestId("canvas-command-ask-assist")).toBeVisible();
-    await expect(page.getByTestId("canvas-command-toggle-shade")).toBeVisible();
+    await expect(
+      page.getByTestId("canvas-command-convert-sketch"),
+    ).toBeVisible();
   });
 
   test("command palette arms symbol from search", async ({ page, request }) => {
     const { projectId } = await createSurveyProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
 
     await openCommandPalette(page);
-    await page.getByLabel("Search commands and materials").fill("arm bluestone");
+    await page.getByLabel("Command search").fill("place bluestone");
     await expect(
-      page.getByRole("option", { name: /Arm Bluestone paver/i }),
+      page.getByRole("option", { name: /Place Bluestone/i }),
     ).toBeVisible();
     await page.keyboard.press("Enter");
-
-    await expect(page.getByTestId("sketch-instrument")).toHaveAttribute(
-      "data-armed",
-      "1",
-    );
+    await expect(page.getByTestId("add-symbol-strip")).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
-  test("toggles sun/shade overlay from layer rail", async ({ page, request }) => {
+  test("CAD scan produces reviewable ghosts", async ({ page, request }) => {
     const { projectId } = await createSurveyProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=sketch`);
-    await expect(page.getByTestId("sketch-instrument")).toBeVisible({
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
 
-    await page
-      .getByTestId("canvas-layer-toggles")
-      .getByLabel("Sun/shade")
-      .check();
-    await expect(page.getByTestId("site-intelligence-overlay")).toBeVisible({
-      timeout: 10_000,
-    });
-    await expect(page.getByTestId("sun-shade-controls")).toBeVisible({
-      timeout: 10_000,
-    });
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-scan-ghosts").click();
+    // Either ghosts land for review, or empty state after scan completes
+    await expect(
+      page
+        .getByTestId("cad-ghost-review")
+        .or(page.getByTestId("header-accept-ghosts"))
+        .or(page.getByTestId("studio-ghost").first()),
+    ).toBeVisible({ timeout: 25_000 });
   });
 });

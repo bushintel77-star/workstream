@@ -190,6 +190,7 @@ export async function saveDesignCanvasAction(
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations: DesignCanvas["annotations"] = [],
+  siteFrame?: DesignCanvas["site_frame"],
 ) {
   try {
     const result = await saveDesignCanvasApi(
@@ -198,6 +199,7 @@ export async function saveDesignCanvasAction(
       strokes,
       irrigationZones,
       annotations,
+      siteFrame,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);
