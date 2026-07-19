@@ -16,6 +16,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.horizon).toBe(false);
     expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
+    expect(c.draftSurface).toBe(false);
   });
 
   it("hides Live BOM in Survey", () => {
@@ -23,6 +24,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.liveBom).toBe(false);
     expect(c.utilityDrawer).toBe(false);
     expect(c.sunGrowth).toBe(false);
+    expect(c.draftSurface).toBe(false);
   });
 
   it("keeps utility hub in CAD without floating coach/sun/trade", () => {
@@ -34,20 +36,20 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(false);
     expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
+    expect(c.selectionRing).toBe(false);
+    expect(c.draftSurface).toBe(false);
   });
 
-  it("diets Cad chrome while AI ghosts are pending", () => {
+  it("opens draft surface only while ghosts are pending", () => {
     const c = resolveHandoffChrome({
       ...base,
       mode: "cad",
-      pendingGhosts: 11,
+      pendingGhosts: 3,
     });
-    expect(c.sunGrowth).toBe(false);
-    expect(c.horizon).toBe(false);
-    expect(c.volumeIsolith).toBe(false);
-    expect(c.tradeMargin).toBe(false);
-    expect(c.floraRing).toBe(false);
+    expect(c.draftSurface).toBe(true);
     expect(c.utilityDrawer).toBe(false);
+    expect(c.sunGrowth).toBe(false);
+    expect(c.floraRing).toBe(false);
   });
 
   it("collapses utility while Trace is armed", () => {
@@ -90,6 +92,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.volumeIsolith).toBe(false);
     expect(c.tradeMargin).toBe(false);
     expect(c.ambientRibbon).toBe(false);
+    expect(c.draftSurface).toBe(false);
   });
 
   it("Focus mode clears ambient chrome for a single composition", () => {
@@ -101,6 +104,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.ambientRibbon).toBe(false);
     expect(c.volumeIsolith).toBe(false);
     expect(c.floraRing).toBe(false);
+    expect(c.draftSurface).toBe(false);
   });
 
   it("Stage 1 title overlay stays monograph — no floating coach", () => {
@@ -113,5 +117,6 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(false);
     expect(c.aiCoach).toBe(false);
     expect(c.floraRing).toBe(false);
+    expect(c.draftSurface).toBe(false);
   });
 });

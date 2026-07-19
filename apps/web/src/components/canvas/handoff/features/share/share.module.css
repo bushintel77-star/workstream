@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in srgb, #f6eaed 88%, transparent);
+  background: color-mix(in srgb, #f2f0eb 88%, transparent);
   backdrop-filter: blur(8px);
 }
 
@@ -70,9 +70,9 @@
 }
 
 .primary {
-  border: 1px solid #241318;
-  background: #241318;
-  color: #ffd3de;
+  border: 1px solid #1c1917;
+  background: #1c1917;
+  color: #f2f0eb;
 }
 
 .primary:disabled {
@@ -97,5 +97,5 @@
 .error {
   margin: 0;
   font-size: 12px;
-  color: #c2455f;
+  color: #1c1917;
 }

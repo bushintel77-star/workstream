@@ -23,7 +23,6 @@ import {
 import { CadPlanBoard } from "./features/cadPlan/CadPlanBoard";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
-import { AiCoachDock } from "./features/aiGhosts/AiCoachDock";
 import { LayersPanel } from "./features/layers/LayersPanel";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
@@ -41,7 +40,6 @@ import { SketchBoard } from "./features/sketch/SketchBoard";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
-import { StudioCoachMarks } from "./features/coach/StudioCoachMarks";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
@@ -53,10 +51,7 @@ import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
 import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
 import { boardScaleM } from "./features/ground/groundMetrics";
-import type {
-  ArchitecturalTitleBlock,
-  StudioAiSuggestion,
-} from "@workstream/domain";
+import type { ArchitecturalTitleBlock } from "@workstream/domain";
 import {
   solveLiveTradeEstimate,
   tradeTagForItem,
@@ -99,19 +94,29 @@ export function HandoffDesignStudio({
   quotePortalUri = null,
   initialTitleBlock = null,
 }: Props) {
-  const outdoor = areaM2 ?? 230.82;
+  const fallbackOutdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
     projectId,
     address: projectAddress,
     aerialUri,
-    outdoorM2: outdoor,
+    outdoorM2: fallbackOutdoor,
     initialMode: MODE_TABS.includes(initialMode as StudioMode)
       ? initialMode
       : "cad",
     initialPlacements,
     initialStrokes,
   });
-  const { ui, ai, compliance, estimate, acceptHorizonCard } = studio;
+  const {
+    ui,
+    ai,
+    compliance,
+    estimate,
+    estimateSettling,
+    workableOutdoorM2,
+    acceptHorizonCard,
+  } = studio;
+  /** Prefer Turf workable outdoor; fall back to project / seed area. */
+  const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
@@ -204,7 +209,15 @@ export function HandoffDesignStudio({
         studio.setUi({ frameOn: !ui.frameOn });
         return;
       }
-      if (e.key.toLowerCase() === "a" && ai.current && !ui.drawPoly) {
+      if (
+        (e.key.toLowerCase() === "a" || e.key === "Enter") &&
+        ai.current &&
+        !ui.drawPoly &&
+        ui.tool !== "service" &&
+        ui.tool !== "calib" &&
+        ui.tool !== "level" &&
+        ui.tool !== "trace"
+      ) {
         e.preventDefault();
         ai.accept(ai.current.id);
         return;
@@ -269,8 +282,8 @@ export function HandoffDesignStudio({
     ui.foundationCleanse || ui.boundarySource === "vicmap";
   const drawingHot = chrome.collapseUtility;
   const showDocks = chrome.utilityDrawer;
-  /** Fit sheet / focus freezes floating chrome — parchment plane stays first. */
-  const chromeLive = planOn && !ui.frameOn && !ui.focusOn && !ui.clientView;
+  /** Draft AI surface only when chrome matrix allows (never Stage 1 / Fit). */
+  const draftSurface = chrome.draftSurface;
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
   const scaleM = ui.boardWidthM ?? boardScaleM(ui.sheetScaleDenom);
@@ -378,27 +391,6 @@ export function HandoffDesignStudio({
         : ai.pendingCount > 0
           ? `Review ${ai.pendingCount}`
           : "Ask AI";
-
-  const onCoachTip = (tip: StudioAiSuggestion) => {
-    if (tip.id === "review-ghosts" || tip.id === "scan-site") {
-      if (tip.id === "scan-site") void ai.scan();
-      else ai.openReview();
-      return;
-    }
-    if (tip.action === "quote") {
-      studio.setMode("quote");
-      return;
-    }
-    if (tip.action === "place" || tip.action === "cad") {
-      studio.setUi({ addOpen: true, tool: "add", coachOpen: true });
-      return;
-    }
-    if (tip.action === "trp") {
-      armType("exist");
-      return;
-    }
-    ai.openReview();
-  };
 
   return (
     <div
@@ -675,21 +667,21 @@ export function HandoffDesignStudio({
           >
             ⌘K
           </button>
-          {!ui.clientView ? (
+          {!ui.clientView && !ui.foundationCleanse && !ui.frameOn ? (
             <button
               type="button"
               className={`${css.aiPill}${ai.pendingCount > 0 ? ` ${css.aiPillHot}` : ""}${ai.status === "verified" && ai.pendingCount === 0 ? ` ${css.aiPillOk}` : ""}`}
               data-testid="header-accept-ghosts"
               onClick={() => {
                 if (ai.status === "scanning" || ai.status === "assisting") {
-                  studio.setUi({ coachOpen: true });
+                  studio.setUi({ cmdOpen: true, cmdQuery: "" });
                   return;
                 }
                 if (ai.pendingCount === 0) {
                   void ai.scan();
                   return;
                 }
-                ai.acceptAll();
+                studio.setUi({ ghostReviewOpen: true });
               }}
             >
               {draftLabel}
@@ -869,7 +861,6 @@ export function HandoffDesignStudio({
                     groupIds: [],
                     ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
                     ghostReviewOpen: true,
-                    coachOpen: true,
                   });
                   return;
                 }
@@ -928,7 +919,6 @@ export function HandoffDesignStudio({
                   }
                   studio.setUi({
                     utilityPanel: "bom",
-                    coachOpen: true,
                   });
                 }}
               />
@@ -1068,6 +1058,8 @@ export function HandoffDesignStudio({
             boundary={studio.boundary}
             building={studio.building}
             items={studio.items}
+            easements={studio.easements}
+            services={studio.services}
             showElevations={ui.sheetElevOn}
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
@@ -1158,7 +1150,7 @@ export function HandoffDesignStudio({
                 })
               }
               onOpenQuote={() => studio.setMode("quote")}
-              settling={ui.saveStatus === "saving"}
+              settling={estimateSettling || ui.saveStatus === "saving"}
             />
             {chrome.sunGrowth ? (
               <SunGrowthDock
@@ -1190,49 +1182,13 @@ export function HandoffDesignStudio({
           </>
         ) : null}
 
-        {chromeLive && ui.councilTip ? (
+        {draftSurface && ui.councilTip ? (
           <div className={css.councilTip} data-testid="council-setback-tip">
             {ui.councilTip}
           </div>
         ) : null}
 
-        {chrome.aiCoach ? (
-          <AiCoachDock
-            open={ui.coachOpen && !chrome.collapseUtility}
-            status={ai.status}
-            coaching={ai.coaching}
-            pendingCount={ai.pendingCount}
-            busy={ai.busy}
-            assistReply={ui.assistReply}
-            onClose={() => studio.setUi({ coachOpen: false })}
-            onScan={() => void ai.scan()}
-            onAsk={() =>
-              studio.setUi({ cmdOpen: true, cmdQuery: "", coachOpen: true })
-            }
-            onReview={() => ai.openReview()}
-            onAcceptAll={() => ai.acceptAll()}
-            onTipAction={onCoachTip}
-          />
-        ) : null}
-
-        {chromeLive &&
-        !ui.coachOpen &&
-        !ui.ghostReviewOpen &&
-        ai.pendingCount > 0 ? (
-          <button
-            type="button"
-            className={css.ghostToast}
-            onClick={() =>
-              studio.setUi({ coachOpen: true, ghostReviewOpen: true })
-            }
-          >
-            <span className={css.ghostDot} />
-            {ai.pendingCount} AI proposals pending{" "}
-            <span className={css.ghostReview}>Review</span>
-          </button>
-        ) : null}
-
-        {chromeLive && ui.ghostReviewOpen ? (
+        {draftSurface && ui.ghostReviewOpen ? (
           <div className={css.ghostPanel}>
             <AiGhostReview
               ghosts={ai.pending}
@@ -1257,46 +1213,6 @@ export function HandoffDesignStudio({
                 void ai.assist(g?.why ?? "refine this suggestion");
               }}
             />
-          </div>
-        ) : null}
-
-        {chromeLive ? (
-          <div className={css.aiStatusBar} data-testid="ai-draft-status-bar">
-            <span
-              className={`${css.aiStatusChip}${
-                ui.foundationCleanse || ai.status === "verified"
-                  ? ` ${css.aiStatusOk}`
-                  : ""
-              }`}
-            >
-              {draftLabel}
-            </span>
-            <span className={css.aiStatusMeta}>
-              {ai.pendingCount
-                ? `${ai.pendingCount} proposal${ai.pendingCount === 1 ? "" : "s"} · A accept · R reject`
-                : "Scan or Ask AI to propose layout moves"}
-            </span>
-            {!ui.coachOpen ? (
-              <button
-                type="button"
-                className={css.aiStatusOpen}
-                onClick={() => studio.setUi({ coachOpen: true })}
-              >
-                Coach
-              </button>
-            ) : null}
-            {ai.pendingCount > 0 ? (
-              <button
-                type="button"
-                className={css.aiStatusOpen}
-                data-testid="ai-status-review"
-                onClick={() =>
-                  studio.setUi({ ghostReviewOpen: !ui.ghostReviewOpen })
-                }
-              >
-                {ui.ghostReviewOpen ? "Hide" : "Review"}
-              </button>
-            ) : null}
           </div>
         ) : null}
 
@@ -1333,7 +1249,6 @@ export function HandoffDesignStudio({
           onRedo={studio.redo}
         />
 
-        {!ui.clientView ? <StudioCoachMarks /> : null}
       </div>
     </div>
   );

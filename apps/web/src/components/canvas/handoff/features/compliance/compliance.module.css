@@ -48,9 +48,9 @@
   font-weight: 700;
   font-family: "IBM Plex Mono", monospace;
   padding: 2px 8px;
-  border-radius: 99px;
-  background: rgba(47, 143, 91, 0.14);
-  color: #2f8f5b;
+  border-radius: 0;
+  background: rgba(28, 25, 23, 0.1);
+  color: #1c1917;
 }
 
 .metricKey {
@@ -68,26 +68,26 @@
 }
 
 .ok {
-  color: #2f8f5b;
+  color: #1c1917;
 }
 
 .bad {
-  color: #c2455f;
+  color: #57534e;
 }
 
 .bar {
   position: relative;
   height: 6px;
   margin-top: 6px;
-  border-radius: 99px;
-  background: rgba(36, 19, 24, 0.08);
+  border-radius: 0;
+  background: rgba(28, 25, 23, 0.08);
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
-  border-radius: 99px;
-  background: #2f8f5b;
+  border-radius: 0;
+  background: #1c1917;
 }
 
 .barTick {

@@ -75,8 +75,8 @@
 }
 
 .dropCueHot {
-  border-color: #c2455f;
-  background: rgba(255, 211, 222, 0.45);
+  border-color: #1c1917;
+  background: rgba(28, 25, 23, 0.08);
 }
 
 .scanPill {
@@ -90,13 +90,14 @@
   gap: 8px;
   height: 34px;
   padding: 0 14px 0 10px;
-  border-radius: 99px;
-  background: rgba(36, 19, 24, 0.92);
-  color: #fff6f8;
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.35);
+  background: rgba(242, 240, 235, 0.94);
+  color: #1c1917;
   font-size: 11px;
   font-weight: 600;
-  font-family: Sora, ui-sans-serif, sans-serif;
-  box-shadow: 0 6px 24px rgba(42, 23, 29, 0.4);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  box-shadow: none;
   white-space: nowrap;
 }
 

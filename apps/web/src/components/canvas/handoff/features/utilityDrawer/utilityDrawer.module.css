@@ -27,14 +27,13 @@
   gap: 8px;
   min-height: 36px;
   padding: 0 12px 0 8px;
-  border-radius: 11px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 246, 248, 0.94);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 6px 20px rgba(36, 19, 24, 0.08);
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.94);
+  box-shadow: none;
   font: inherit;
   cursor: pointer;
-  color: #241318;
+  color: #1c1917;
 }
 
 .tab:hover {
@@ -42,13 +41,13 @@
 }
 
 .tabActive {
-  border-color: #241318;
-  background: #241318;
-  color: #ffd3de;
+  border-color: #1c1917;
+  background: #1c1917;
+  color: #f2f0eb;
 }
 
 .tabActive .tabLabel {
-  color: #ffd3de;
+  color: #f2f0eb;
 }
 
 .shield,
@@ -65,30 +64,30 @@
 }
 
 .shieldOk {
-  background: rgba(31, 138, 90, 0.16);
-  color: #1f8a5a;
+  background: rgba(28, 25, 23, 0.1);
+  color: #1c1917;
 }
 
 .shieldWarn {
-  background: rgba(194, 69, 95, 0.14);
-  color: #9e3049;
+  background: rgba(28, 25, 23, 0.12);
+  color: #1c1917;
   animation: utilPulse 1.8s ease-in-out infinite;
 }
 
 .tabActive .shieldOk,
 .tabActive .shieldWarn {
-  background: rgba(255, 211, 222, 0.18);
-  color: #ffd3de;
+  background: rgba(242, 240, 235, 0.18);
+  color: #f2f0eb;
 }
 
 .dollar {
-  background: rgba(232, 184, 75, 0.18);
-  color: #8a6a1f;
+  background: rgba(28, 25, 23, 0.1);
+  color: #1c1917;
 }
 
 .tabActive .dollar {
-  background: rgba(255, 211, 222, 0.18);
-  color: #ffd3de;
+  background: rgba(242, 240, 235, 0.18);
+  color: #f2f0eb;
 }
 
 .tabLabel {
@@ -102,11 +101,10 @@
   width: min(260px, calc(100vw - 40px));
   max-height: min(420px, calc(100vh - 160px));
   overflow: auto;
-  border-radius: 14px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.96);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 14px 40px rgba(36, 19, 24, 0.12);
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.96);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
 }

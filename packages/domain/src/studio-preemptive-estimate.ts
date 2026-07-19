@@ -11,6 +11,7 @@ import {
   totalDepthM,
 } from "./assembly-recipe";
 import { calculateGST } from "./costing";
+import { itemFootprintMetres } from "./hybrid-plane";
 import {
   evaluateStudioCompliance,
   type StudioComplianceItem,
@@ -88,20 +89,29 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
-function itemAreaM2(
-  it: StudioComplianceItem,
-  meta: ItemMeta,
-): number {
+function itemMetrics(it: StudioComplianceItem, meta: ItemMeta) {
   const wPx = it.wPx ?? meta.wPx;
   const hPx = it.hPx ?? meta.hPx;
   const areaKind = it.areaKind ?? meta.areaKind;
-  const wm = (wPx * it.scale) / 40;
-  const hm = (hPx * it.scale) / 40;
-  if (areaKind === "ellipse") return (Math.PI / 4) * wm * hm;
-  if (areaKind === "rect") return wm * hm;
-  if (meta.lin) return Math.max(wm, hm) * 0.35;
-  if (it.t === "lawn" || it.t === "bed") return wm * hm * 0.85;
-  return 0;
+  const foot = itemFootprintMetres({
+    wPx,
+    hPx,
+    scale: it.scale,
+    areaKind,
+    linear: meta.lin,
+  });
+  // Softscape fills use a packing factor (mass planting / turf coverage).
+  if ((it.t === "lawn" || it.t === "bed") && !meta.lin && areaKind !== "none") {
+    return {
+      area_m2: foot.area_m2 * 0.85,
+      perimeter_m: foot.perimeter_m,
+    };
+  }
+  return { area_m2: foot.area_m2, perimeter_m: foot.perimeter_m };
+}
+
+function itemAreaM2(it: StudioComplianceItem, meta: ItemMeta): number {
+  return itemMetrics(it, meta).area_m2;
 }
 
 function line(
@@ -262,7 +272,8 @@ export function estimateStudioDrawing(args: {
             [it.id],
           ),
         );
-        const edgeLm = Math.sqrt(area) * 4;
+        // True polygon perimeter (rect/ellipse), not √area × 4 approximation.
+        const edgeLm = itemMetrics(it, meta).perimeter_m;
         lines.push(
           line(
             `ter-edge-${it.id}`,
@@ -272,6 +283,7 @@ export function estimateStudioDrawing(args: {
             edgeLm,
             28 * access,
             [it.id],
+            "Polygon perimeter × edge restraint",
           ),
         );
       } else {

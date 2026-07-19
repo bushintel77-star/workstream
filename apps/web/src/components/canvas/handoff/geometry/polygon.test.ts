@@ -49,6 +49,30 @@ describe("polygon metrics", () => {
     expect(s.outdoorAreaM2).toBeGreaterThan(s.outdoorNaiveM2);
   });
 
+  it("subtracts exclude rings from workable outdoor", () => {
+    const lot = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+      { x: 0, y: 100 },
+    ];
+    const house = [
+      { x: 40, y: 40 },
+      { x: 70, y: 40 },
+      { x: 70, y: 70 },
+      { x: 40, y: 70 },
+    ];
+    const easement = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 100 },
+      { x: 0, y: 100 },
+    ];
+    const without = buildSiteSchedule(lot, house, SCALE);
+    const withExclude = buildSiteSchedule(lot, house, SCALE, 1, [easement]);
+    expect(withExclude.outdoorAreaM2).toBeLessThan(without.outdoorAreaM2);
+  });
+
   it("labels boundary edges B1…Bn", () => {
     const segs = edgeSegments(WRIGHTS_SEED.boundary, "B", SCALE);
     expect(segs).toHaveLength(4);

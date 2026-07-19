@@ -164,8 +164,8 @@ export function AiGhostReview({
       <div className={styles.empty} data-testid="ai-ghost-empty">
         <p className={styles.emptyTitle}>No pending ghosts</p>
         <p className={styles.emptyBody}>
-          Use the AI coach to Scan or Ask — proposals land here as ghosts until
-          you accept them onto the working drawing.
+          Use Ask AI or Cmd+K to Scan — proposals land here as ghosts until you
+          accept them (A / Enter) onto the working drawing.
         </p>
       </div>
     );
@@ -257,7 +257,7 @@ export function AiGhostReview({
               className={styles.confFill}
               style={{
                 width: `${pct}%`,
-                background: pct >= 85 ? "#1F8A5A" : pct >= 70 ? "#E8B84B" : "#C2455F",
+                background: "#1C1917",
               }}
             />
           </span>
@@ -267,7 +267,7 @@ export function AiGhostReview({
 
         <div className={styles.actions}>
           <button type="button" className={styles.accept} onClick={() => onAccept(selected.id)}>
-            Accept (A)
+            Accept (A / Enter)
           </button>
           <button type="button" className={styles.reject} onClick={() => onReject(selected.id)}>
             Reject (R)

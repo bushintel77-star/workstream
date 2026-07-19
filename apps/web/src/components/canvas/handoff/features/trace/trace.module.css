@@ -16,24 +16,24 @@
 }
 
 .ghostRect {
-  fill: rgba(232, 184, 75, 0.12);
-  stroke: #e8b84b;
-  stroke-width: 1.5;
-  stroke-dasharray: 5 4;
+  fill: rgba(28, 25, 23, 0.04);
+  stroke: #1c1917;
+  stroke-width: 1.1;
+  stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
 }
 
 .drawLine {
   fill: none;
-  stroke: #c2455f;
-  stroke-width: 2;
+  stroke: #1c1917;
+  stroke-width: 1.4;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
 }
 
 .dot {
-  fill: #c2455f;
-  stroke: #fff6f8;
+  fill: #1c1917;
+  stroke: #f2f0eb;
   stroke-width: 0.25;
   vector-effect: non-scaling-stroke;
 }
@@ -42,21 +42,21 @@
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 17;
-  height: 26px;
-  padding: 0 12px;
-  border-radius: 99px;
-  border: 1.5px dashed #e8b84b;
-  background: rgba(232, 184, 75, 0.2);
-  color: #8a6a1f;
-  font-size: 10.5px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 0;
+  border: 1px dashed #1c1917;
+  background: rgba(242, 240, 235, 0.94);
+  color: #1c1917;
+  font-size: 10px;
   font-weight: 600;
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .autoBadge:hover {
-  background: rgba(232, 184, 75, 0.32);
+  background: #f2f0eb;
 }
 
 .bar {
@@ -71,31 +71,30 @@
   flex-wrap: wrap;
   justify-content: center;
   max-width: min(720px, calc(100% - 28px));
-  padding: 8px 12px;
-  border-radius: 99px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 246, 248, 0.94);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 28px rgba(36, 19, 24, 0.12);
+  padding: 6px 10px;
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.22);
+  background: rgba(242, 240, 235, 0.96);
+  box-shadow: none;
   font-family: Sora, ui-sans-serif, sans-serif;
-  color: #241318;
+  color: #1c1917;
 }
 
 .targets {
   display: flex;
   gap: 4px;
   padding: 2px;
-  border-radius: 99px;
-  background: rgba(36, 19, 24, 0.05);
+  border-radius: 0;
+  background: rgba(28, 25, 23, 0.05);
 }
 
 .targetBtn {
   min-height: 26px;
   padding: 0 10px;
   border: none;
-  border-radius: 99px;
+  border-radius: 0;
   background: transparent;
-  color: #7a5560;
+  color: #6b6560;
   font: inherit;
   font-size: 10px;
   font-weight: 650;
@@ -103,8 +102,8 @@
 }
 
 .targetBtn[data-active="true"] {
-  background: #241318;
-  color: #fff6f8;
+  background: #1c1917;
+  color: #f2f0eb;
 }
 
 .status {
@@ -117,7 +116,7 @@
 .tabHint {
   font-size: 10px;
   font-weight: 650;
-  color: #b78a2e;
+  color: #6b6560;
   font-family: "IBM Plex Mono", monospace;
   white-space: nowrap;
 }
@@ -126,7 +125,7 @@
 .cancel {
   min-height: 24px;
   padding: 0 12px;
-  border-radius: 99px;
+  border-radius: 0;
   border: none;
   font: inherit;
   font-size: 10px;
@@ -135,8 +134,8 @@
 }
 
 .finish {
-  background: #ffd3de;
-  color: #241318;
+  background: #1c1917;
+  color: #f2f0eb;
 }
 
 .finish:disabled {
@@ -146,6 +145,6 @@
 
 .cancel {
   background: transparent;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  color: #7a5560;
+  border: 1px solid rgba(28, 25, 23, 0.22);
+  color: #6b6560;
 }

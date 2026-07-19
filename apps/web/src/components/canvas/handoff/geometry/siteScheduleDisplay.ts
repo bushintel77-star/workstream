@@ -14,7 +14,9 @@ export type FitSheetAreaDisplay = {
 /**
  * Site schedule numbers for the Fit sheet panel.
  * Building footprint always tracks the drawn polygon.
- * Outdoor is deterministic: lot − building footprint.
+ * Outdoor prefers Turf boolean difference (schedule.outdoorAreaM2).
+ * When a cadastral lot overrides the drawn lot, outdoor = cadastral − building
+ * (naive) unless the schedule already subtracted extras at drawing scale.
  */
 export function resolveFitSheetAreas(args: {
   schedule: SiteSchedule;
@@ -28,17 +30,30 @@ export function resolveFitSheetAreas(args: {
     args.cadastralLotM2 + 0.5 >= buildingAreaM2
       ? args.cadastralLotM2
       : null;
-  const lotAreaM2 = cadastral ?? args.schedule.lotAreaM2;
-  const outdoorAreaM2 = Math.max(0, lotAreaM2 - buildingAreaM2);
-  const siteCoveragePct =
-    lotAreaM2 > 0 ? Math.round((buildingAreaM2 / lotAreaM2) * 100) : 0;
+
+  if (cadastral != null) {
+    const outdoorAreaM2 = Math.max(0, cadastral - buildingAreaM2);
+    const siteCoveragePct =
+      cadastral > 0 ? Math.round((buildingAreaM2 / cadastral) * 100) : 0;
+    return {
+      lotAreaM2: cadastral,
+      buildingAreaM2,
+      outdoorAreaM2,
+      outdoorNaiveM2: outdoorAreaM2,
+      outdoorDiffersFromNaive: false,
+      siteCoveragePct,
+      lotSource: "cadastral",
+    };
+  }
+
+  // Drawing-scale schedule — keep boolean outdoor (lot − building − excludes).
   return {
-    lotAreaM2,
+    lotAreaM2: args.schedule.lotAreaM2,
     buildingAreaM2,
-    outdoorAreaM2,
-    outdoorNaiveM2: outdoorAreaM2,
-    outdoorDiffersFromNaive: false,
-    siteCoveragePct,
-    lotSource: cadastral != null ? "cadastral" : "drawing",
+    outdoorAreaM2: args.schedule.outdoorAreaM2,
+    outdoorNaiveM2: args.schedule.outdoorNaiveM2,
+    outdoorDiffersFromNaive: args.schedule.outdoorDiffersFromNaive,
+    siteCoveragePct: args.schedule.siteCoveragePct,
+    lotSource: "drawing",
   };
 }

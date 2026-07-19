@@ -441,7 +441,7 @@ export function CadPlanBoard({
               y1="0"
               x2="0"
               y2="4"
-              stroke="rgba(194,69,95,0.55)"
+              stroke="rgba(28,25,23,0.45)"
               strokeWidth="1.2"
             />
           </pattern>

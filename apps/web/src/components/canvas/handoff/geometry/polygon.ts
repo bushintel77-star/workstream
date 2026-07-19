@@ -1,4 +1,4 @@
-import { outdoorDifferenceM2 } from "@workstream/domain";
+import { workableCanvasM2 } from "@workstream/domain";
 import type { EdgeSegment, PctPoint, SiteSchedule } from "./types";
 
 /** Shoelace area in percent-space squared (not metres). */
@@ -84,11 +84,17 @@ export function pctRingToPlanarM(
   ]);
 }
 
+/**
+ * Site schedule via Turf boolean difference in local metres.
+ * Outdoor / workable = lot − building − optional exclude rings
+ * (easements, closed service corridors, accepted hardscape footprints).
+ */
 export function buildSiteSchedule(
   boundary: PctPoint[],
   building: PctPoint[],
   scaleM: number,
   boardAspect = 1,
+  excludeRings: PctPoint[][] = [],
 ): SiteSchedule {
   const lotAreaM2 = polygonAreaM2(boundary, scaleM, boardAspect);
   const buildingAreaM2 = polygonAreaM2(building, scaleM, boardAspect);
@@ -98,9 +104,12 @@ export function buildSiteSchedule(
     building.length >= 3
       ? [pctRingToPlanarM(building, scaleM, boardAspect)]
       : [];
-  const diff = outdoorDifferenceM2(
+  const exclude = excludeRings
+    .filter((r) => r.length >= 3)
+    .map((r) => pctRingToPlanarM(r, scaleM, boardAspect));
+  const diff = workableCanvasM2(
     pctRingToPlanarM(boundary, scaleM, boardAspect),
-    buildings,
+    { buildings, exclude },
   );
   const outdoorAreaM2 =
     boundary.length >= 3 ? Math.max(0, diff.areaM2) : outdoorNaiveM2;
@@ -116,6 +125,11 @@ export function buildSiteSchedule(
     siteCoveragePct,
     boundaryPerimeterM: polygonPerimeterM(boundary, scaleM, boardAspect),
   };
+}
+
+/** Closed rings only — open service polylines are ignored for boolean subtract. */
+export function closedExcludeRings(rings: PctPoint[][]): PctPoint[][] {
+  return rings.filter((r) => r.length >= 3);
 }
 
 /** Labelled edge table B1… / F1… for the Fit sheet dim panel. */

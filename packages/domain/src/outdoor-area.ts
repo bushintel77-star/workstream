@@ -74,27 +74,30 @@ export type OutdoorDifferenceResult = {
 const DEFAULT_DIFF_THRESHOLD_M2 = 0.5;
 
 /**
- * True outdoor area = boundary MINUS every building footprint via Turf
+ * True outdoor / workable area = boundary MINUS every subtractor ring via Turf
  * polygon boolean difference (handles overhang, partial overlap, L-shapes).
  * Port of the prototype's outdoorDifferenceM2 behaviour — uses turf.difference,
  * not polygon-clipping.
  *
- * Contained buildings become holes in the result Polygon; area accounts for
- * those holes (outer − Σ holes). Overhanging buildings only subtract the
+ * Contained subtractors become holes in the result Polygon; area accounts for
+ * those holes (outer − Σ holes). Overhanging polygons only subtract the
  * intersecting portion — which is where boolean ≠ naive.
+ *
+ * `subtractPolysM` is typically buildings, plus optional easements / existing
+ * hardscapes for the Phase-1 "Canvas Canvas" workable remnant.
  */
 export function outdoorDifferenceM2(
   boundaryM: PlanarRing,
-  buildingPolysM: PlanarRing[],
+  subtractPolysM: PlanarRing[],
   opts?: { differThresholdM2?: number },
 ): OutdoorDifferenceResult {
   const threshold = opts?.differThresholdM2 ?? DEFAULT_DIFF_THRESHOLD_M2;
   const lotArea = planarPolyArea(boundaryM);
-  const buildingArea = buildingPolysM.reduce(
+  const subtractArea = subtractPolysM.reduce(
     (s, r) => s + planarPolyArea(r),
     0,
   );
-  const naiveAreaM2 = Math.max(0, lotArea - buildingArea);
+  const naiveAreaM2 = Math.max(0, lotArea - subtractArea);
 
   const parcel = ringToPolygon(boundaryM);
   if (!parcel) {
@@ -106,11 +109,11 @@ export function outdoorDifferenceM2(
     };
   }
 
-  const buildings = buildingPolysM
+  const subtractors = subtractPolysM
     .map(ringToPolygon)
     .filter((f): f is Feature<Polygon> => f != null);
 
-  if (buildings.length === 0) {
+  if (subtractors.length === 0) {
     return {
       areaM2: lotArea,
       naiveAreaM2: lotArea,
@@ -120,7 +123,7 @@ export function outdoorDifferenceM2(
   }
 
   let result: Feature<Polygon | MultiPolygon> | null = parcel;
-  for (const b of buildings) {
+  for (const b of subtractors) {
     if (!result) break;
     result = difference(featureCollection([result, b]));
   }
@@ -151,4 +154,23 @@ export function outdoorDifferenceM2(
     differsFromNaive: Math.abs(areaM2 - naiveAreaM2) > threshold,
     polygons,
   };
+}
+
+/**
+ * Workable "Canvas Canvas" in local metres (origin = site corner / board 0,0).
+ * Lot − buildings − easements / existing hardscapes / other exclude rings.
+ */
+export function workableCanvasM2(
+  boundaryM: PlanarRing,
+  args: {
+    buildings?: PlanarRing[];
+    exclude?: PlanarRing[];
+    differThresholdM2?: number;
+  } = {},
+): OutdoorDifferenceResult {
+  return outdoorDifferenceM2(
+    boundaryM,
+    [...(args.buildings ?? []), ...(args.exclude ?? [])],
+    { differThresholdM2: args.differThresholdM2 },
+  );
 }

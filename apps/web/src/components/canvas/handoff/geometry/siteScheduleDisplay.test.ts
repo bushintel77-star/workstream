@@ -41,7 +41,7 @@ describe("resolveFitSheetAreas", () => {
     );
   });
 
-  it("falls back to drawn lot when cadastral missing", () => {
+  it("falls back to drawn lot when cadastral missing — keeps boolean outdoor", () => {
     const schedule = buildSiteSchedule(
       WRIGHTS_SEED.boundary,
       WRIGHTS_SEED.building,
@@ -50,9 +50,9 @@ describe("resolveFitSheetAreas", () => {
     const display = resolveFitSheetAreas({ schedule, cadastralLotM2: null });
     expect(display.lotSource).toBe("drawing");
     expect(display.lotAreaM2).toBe(schedule.lotAreaM2);
-    expect(display.outdoorAreaM2).toBeCloseTo(
-      schedule.lotAreaM2 - schedule.buildingAreaM2,
-      5,
+    expect(display.outdoorAreaM2).toBeCloseTo(schedule.outdoorAreaM2, 5);
+    expect(display.outdoorDiffersFromNaive).toBe(
+      schedule.outdoorDiffersFromNaive,
     );
   });
 });

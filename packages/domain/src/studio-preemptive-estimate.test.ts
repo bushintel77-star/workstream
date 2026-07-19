@@ -33,6 +33,9 @@ describe("estimateStudioDrawing", () => {
     expect(labels.some((l) => /bedding/i.test(l))).toBe(true);
     expect(labels.some((l) => /joint/i.test(l))).toBe(true);
     expect(labels.some((l) => /edge/i.test(l))).toBe(true);
+    // Edge restraint = rect perimeter: 2 × ((110×1.2)/40 + (80×1.2)/40)
+    const edge = report.lines.find((l) => /edge restraint/i.test(l.label));
+    expect(edge?.qty).toBeCloseTo(2 * (3.3 + 2.4), 5);
     expect(report.totalInclGst).toBeGreaterThan(report.materialsExGst);
     expect(report.tipperLoads).toBeGreaterThanOrEqual(1);
   });

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ArchitecturalTitleBlock } from "@workstream/domain";
 import {
-  buildSiteSchedule,
+  buildWorkableSiteSchedule,
   resolveFitSheetAreas,
   SHEET_INNER_MARGIN,
   SHEET_PANEL_GAP,
@@ -26,6 +26,8 @@ type Props = {
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
+  easements?: PctPoint[][];
+  services?: PctPoint[][];
   scaleM?: number;
   showElevations?: boolean;
   issuedLabel?: string;
@@ -96,8 +98,8 @@ function buildElevProfile(
         x,
         wPx: it.ghost ? 4 : 5,
         hPx: (hm / maxHM) * usable,
-        fill: it.ghost ? "rgba(232,184,75,0.15)" : "rgba(194,69,95,0.18)",
-        stroke: it.ghost ? "#E8B84B" : "#C2455F",
+        fill: it.ghost ? "rgba(28,25,23,0.05)" : "rgba(28,25,23,0.1)",
+        stroke: it.ghost ? "#6B6560" : "#1C1917",
         dash: it.ghost ? "dashed" : "solid",
       };
     });
@@ -159,6 +161,8 @@ export function FitSheetOverlay({
   boundary,
   building,
   items,
+  easements = [],
+  services = [],
   scaleM = 110,
   showElevations = false,
   issuedLabel,
@@ -198,8 +202,16 @@ export function FitSheetOverlay({
   );
 
   const schedule = useMemo(
-    () => buildSiteSchedule(boundary, building, scaleM),
-    [boundary, building, scaleM],
+    () =>
+      buildWorkableSiteSchedule({
+        boundary,
+        building,
+        easements,
+        services,
+        items,
+        scaleM,
+      }),
+    [boundary, building, easements, services, items, scaleM],
   );
 
   /** Drawn footprint wins — never template/survey house_area (1 m² bug). */

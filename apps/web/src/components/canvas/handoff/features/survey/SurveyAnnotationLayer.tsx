@@ -22,7 +22,8 @@ type Props = {
 
 /**
  * Survey CAD annotations — spot levels, service/easement traces, two-point
- * scale calibration. Ported from curtis-co prototype PlanCanvas behaviour.
+ * scale calibration. Geometry stays in a stretch SVG; labels are fixed-px
+ * HTML overlays so they never stretch with the board aspect ratio.
  */
 export function SurveyAnnotationLayer({
   active,
@@ -81,9 +82,10 @@ export function SurveyAnnotationLayer({
   const capturing =
     active && (tool === "level" || tool === "service" || tool === "calib");
 
-  const ink = darkOn ? "#E6E9EA" : "#241318";
+  const ink = darkOn ? "#E6E9EA" : "#1C1917";
   const surveyOp = layerOpacity.survey;
   const councilOp = layerOpacity.council;
+  const serviceRings = [...services, drawService].filter(Boolean) as PctPoint[][];
 
   return (
     <div
@@ -134,30 +136,19 @@ export function SurveyAnnotationLayer({
         preserveAspectRatio="none"
         aria-hidden
       >
-        {[...services, drawService].filter(Boolean).map((s, si) => (
+        {serviceRings.map((s, si) => (
           <g key={`svc${si}`} opacity={councilOp} style={{ pointerEvents: "none" }}>
             <polyline
-              points={s!.map((p) => `${p.x},${p.y}`).join(" ")}
+              points={s.map((p) => `${p.x},${p.y}`).join(" ")}
               fill="none"
-              stroke="#2F7D8C"
+              stroke="#57534E"
               strokeWidth={0.28}
               strokeDasharray="1.6 1"
               vectorEffect="non-scaling-stroke"
             />
-            {s!.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r={0.4} fill="#2F7D8C" />
+            {s.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={0.4} fill="#57534E" />
             ))}
-            {s!.length > 1 ? (
-              <text
-                x={s![0]!.x + 1}
-                y={s![0]!.y - 1}
-                fontSize={1.5}
-                fill="#2F7D8C"
-                fontFamily="IBM Plex Mono, ui-monospace, monospace"
-              >
-                SERVICE / EASEMENT
-              </text>
-            ) : null}
           </g>
         ))}
 
@@ -169,7 +160,7 @@ export function SurveyAnnotationLayer({
                 y1={calibPts[0]!.y}
                 x2={calibPts[1]!.x}
                 y2={calibPts[1]!.y}
-                stroke="#C2455F"
+                stroke="#1C1917"
                 strokeWidth={0.25}
                 vectorEffect="non-scaling-stroke"
               />
@@ -181,7 +172,7 @@ export function SurveyAnnotationLayer({
                 cy={p.y}
                 r={0.7}
                 fill="none"
-                stroke="#C2455F"
+                stroke="#1C1917"
                 strokeWidth={0.25}
                 vectorEffect="non-scaling-stroke"
               />
@@ -203,15 +194,6 @@ export function SurveyAnnotationLayer({
               strokeWidth={0.2}
               vectorEffect="non-scaling-stroke"
             />
-            <text
-              x={lv.x + 1.3}
-              y={lv.y + 0.4}
-              fontSize={1.6}
-              fill={ink}
-              fontFamily="IBM Plex Mono, ui-monospace, monospace"
-            >
-              {lv.z.toFixed(2)}
-            </text>
           </g>
         ))}
 
@@ -220,8 +202,6 @@ export function SurveyAnnotationLayer({
           const b = lv;
           const distM = (Math.hypot(b.x - a.x, b.y - a.y) / 100) * scaleM;
           if (distM < 0.2) return null;
-          const dz = b.z - a.z;
-          const fall = Math.abs((dz / distM) * 100).toFixed(1);
           return (
             <g
               key={`fall${i}`}
@@ -234,25 +214,69 @@ export function SurveyAnnotationLayer({
                 y1={a.y}
                 x2={b.x}
                 y2={b.y}
-                stroke={darkOn ? "rgba(230,233,234,0.5)" : "rgba(36,19,24,0.4)"}
+                stroke={darkOn ? "rgba(230,233,234,0.5)" : "rgba(28,25,23,0.4)"}
                 strokeWidth={0.14}
                 strokeDasharray="0.5 0.7"
                 vectorEffect="non-scaling-stroke"
               />
-              <text
-                x={(a.x + b.x) / 2}
-                y={(a.y + b.y) / 2 - 0.8}
-                fontSize={1.5}
-                textAnchor="middle"
-                fill={darkOn ? "#E8B84B" : "#8A6A1F"}
-                fontFamily="IBM Plex Mono, ui-monospace, monospace"
-              >
-                {fall}% · {Math.round(Math.abs(dz) * 1000)} mm
-              </text>
             </g>
           );
         })}
       </svg>
+
+      {/* Fixed-px labels — never stretch with preserveAspectRatio="none" */}
+      {serviceRings.map((s, si) =>
+        s.length > 1 ? (
+          <span
+            key={`svclab${si}`}
+            className={css.serviceLabel}
+            style={{
+              left: `${s[0]!.x}%`,
+              top: `${s[0]!.y}%`,
+              opacity: councilOp,
+            }}
+          >
+            Service / easement
+          </span>
+        ) : null,
+      )}
+
+      {levels.map((lv, i) => (
+        <span
+          key={`lvlab${i}`}
+          className={css.levelLabel}
+          style={{
+            left: `${lv.x}%`,
+            top: `${lv.y}%`,
+            opacity: surveyOp,
+            color: ink,
+          }}
+        >
+          {lv.z.toFixed(2)}
+        </span>
+      ))}
+
+      {levels.slice(1).map((lv, i) => {
+        const a = levels[i]!;
+        const b = lv;
+        const distM = (Math.hypot(b.x - a.x, b.y - a.y) / 100) * scaleM;
+        if (distM < 0.2) return null;
+        const dz = b.z - a.z;
+        const fall = Math.abs((dz / distM) * 100).toFixed(1);
+        return (
+          <span
+            key={`falllab${i}`}
+            className={css.fallLabel}
+            style={{
+              left: `${(a.x + b.x) / 2}%`,
+              top: `${(a.y + b.y) / 2}%`,
+              opacity: surveyOp,
+            }}
+          >
+            {fall}% · {Math.round(Math.abs(dz) * 1000)} mm
+          </span>
+        );
+      })}
 
       {tool === "service" && drawService ? (
         <p className={css.hint}>

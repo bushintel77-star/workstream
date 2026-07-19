@@ -5,7 +5,6 @@ import {
   buildIndicativeShadeGrid,
   buildableEnvelopeFromBoundary,
   countNearbyCanopy,
-  estimateStudioDrawing,
   evaluateStudioCompliance,
   FLORA_HEIGHT_BY_FORM,
   isFloraStudioForm,
@@ -19,6 +18,9 @@ import {
 } from "@workstream/domain";
 import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
 import { saveDesignCanvasAction } from "../../../../app/actions";
+import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
+import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
+import { buildWorkableSiteSchedule } from "../geometry/workableCanvas";
 import {
   BY_TYPE,
   STUDIO_SITES,
@@ -315,7 +317,7 @@ function initialState(opts: {
       savedTick: 0,
       aerialUri: null,
       aiBusy: "idle",
-      coachOpen: true,
+      coachOpen: false,
       assistReply: null,
       utilityPanel: null,
       councilTip: null,
@@ -563,7 +565,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     if (strokeCount === 0) {
       setUi({
         assistReply: "Sketch on the plan first — then convert to CAD assets.",
-        coachOpen: true,
+        coachOpen: false,
       });
       return 0;
     }
@@ -587,7 +589,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       tool: "pan",
       ghostIdx: 0,
       ghostReviewOpen: count > 0,
-      coachOpen: true,
+      coachOpen: false,
       assistReply:
         count > 0
           ? `Converted ${count} sketch${count === 1 ? "" : "es"} into CAD assets — review sun, setback, and envelope, then accept.`
@@ -733,7 +735,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         addOpen: false,
         tool: "pan",
         ghostReviewOpen: true,
-        coachOpen: true,
+        coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
         councilTip: tip,
       });
@@ -823,7 +825,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         addOpen: false,
         tool: "pan",
         ghostReviewOpen: !state.ui.foundationCleanse,
-        coachOpen: true,
+        coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
         councilTip: tip,
       });
@@ -850,7 +852,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       parchmentPeel: 1,
       aiBusy: "assisting",
       cmdOpen: false,
-      coachOpen: true,
+      coachOpen: false,
       assistReply: "Running spatial correction…",
     });
     notes.push("Aerial off · parchment #F7F4EF");
@@ -928,7 +930,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       titleBoundaryLocked: false,
       aiBusy: "assisting",
       cmdOpen: false,
-      coachOpen: true,
+      coachOpen: false,
       frameOn: false,
       locked: false,
       sheetScaleDenom: 100,
@@ -1051,7 +1053,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         aiBusy: "assisting",
         cmdOpen: false,
         cmdQuery: "",
-        coachOpen: true,
+        coachOpen: false,
         assistReply: null,
       });
       try {
@@ -1115,7 +1117,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const scanGhosts = useCallback(async () => {
-    setUi({ aiBusy: "scanning", canopyScanning: true, coachOpen: true });
+    setUi({ aiBusy: "scanning", canopyScanning: true, coachOpen: false });
     try {
       if (projectId) {
         const { scanDesignGhostsAction } = await import(
@@ -1404,7 +1406,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         ghostIdx: state.ui.ghostIdx + dir,
         ghostReviewOpen: true,
-        coachOpen: true,
+        coachOpen: false,
       });
     },
     [ghostCount, setUi, state.ui.ghostIdx],
@@ -1430,7 +1432,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         ghostIdx: 0,
         ghostReviewOpen: true,
-        coachOpen: true,
+        coachOpen: false,
         canopyScanning: false,
       });
     },
@@ -1642,47 +1644,81 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [ghostCount, siteAddress, state.doc],
   );
 
+  /**
+   * Phase 1 workable canvas — Turf boolean lot − building − easements /
+   * closed services / existing hardscape, in local metres (origin 0,0).
+   */
+  const siteSchedule = useMemo(() => {
+    const scaleM = state.ui.boardWidthM ?? 110;
+    if (state.doc.boundary.length < 3) {
+      return null;
+    }
+    return buildWorkableSiteSchedule({
+      boundary: state.doc.boundary,
+      building: state.doc.building,
+      easements: state.doc.easements ?? [],
+      services: state.doc.services ?? [],
+      items: state.doc.items,
+      scaleM,
+    });
+  }, [
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.easements,
+    state.doc.services,
+    state.doc.items,
+    state.ui.boardWidthM,
+  ]);
+
+  const workableOutdoorM2 =
+    siteSchedule != null && siteSchedule.outdoorAreaM2 > 0
+      ? siteSchedule.outdoorAreaM2
+      : outdoorRef.current;
+
   /** Continuous council inspector — recomputes on every geometry commit. */
   const compliance = useMemo(
     () =>
       evaluateStudioCompliance({
-        outdoorM2: outdoorRef.current,
+        outdoorM2: workableOutdoorM2,
         boundary: state.doc.boundary,
         items: toComplianceItems(state.doc.items),
       }),
-    [state.doc.boundary, state.doc.items],
+    [state.doc.boundary, state.doc.items, workableOutdoorM2],
   );
 
-  /** Continuous material orchestrator — primary + shadowed assembly + logistics. */
-  const estimate = useMemo(
-    () =>
-      estimateStudioDrawing({
-        outdoorM2: outdoorRef.current,
-        boundary: state.doc.boundary,
-        items: toComplianceItems(state.doc.items),
-        accessConstrained: outdoorRef.current > 400,
-        metaByType: Object.fromEntries(
-          (Object.keys(BY_TYPE) as StudioItemType[]).map((t) => {
-            const d = BY_TYPE[t];
-            return [
-              t,
-              {
-                rate: d.rate,
-                wPx: d.w,
-                hPx: d.h,
-                areaKind: d.area ?? "none",
-                heightM: d.heightM,
-                lin: d.lin,
-                existing: d.existing,
-                dbhM: d.dbhM,
-                canopyM: d.canopyM,
-              },
-            ];
-          }),
-        ),
-      }),
-    [state.doc.boundary, state.doc.items],
-  );
+  const estimateArgs = useMemo((): StudioEstimateArgs => {
+    return {
+      outdoorM2: workableOutdoorM2,
+      boundary: state.doc.boundary,
+      items: toComplianceItems(state.doc.items),
+      accessConstrained: workableOutdoorM2 > 400,
+      metaByType: Object.fromEntries(
+        (Object.keys(BY_TYPE) as StudioItemType[]).map((t) => {
+          const d = BY_TYPE[t];
+          return [
+            t,
+            {
+              rate: d.rate,
+              wPx: d.w,
+              hPx: d.h,
+              areaKind: d.area ?? "none",
+              heightM: d.heightM,
+              lin: d.lin,
+              existing: d.existing,
+              dbhM: d.dbhM,
+              canopyM: d.canopyM,
+            },
+          ];
+        }),
+      ),
+    };
+  }, [state.doc.boundary, state.doc.items, workableOutdoorM2]);
+
+  /**
+   * Phase 3 parametric BOM — sync seed + Web Worker settle so drag stays fluid.
+   */
+  const { estimate, settling: estimateSettling } =
+    useStudioEstimate(estimateArgs);
 
   const acceptHorizonCard = useCallback(
     (card: StudioHorizonCard) => {
@@ -1714,7 +1750,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         mitigated: { ...state.ui.mitigated, [card.id]: true },
         ghostReviewOpen: true,
-        coachOpen: true,
+        coachOpen: false,
         utilityPanel: "bom",
       });
     },
@@ -1749,8 +1785,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ingestCanopy: ingestCanopyGhosts,
       ingestCanopyImage,
       interpretSketches,
-      openReview: () => setUi({ ghostReviewOpen: true, coachOpen: true }),
-      openCoach: () => setUi({ coachOpen: true }),
+      openReview: () => setUi({ ghostReviewOpen: true }),
+      openCoach: () => setUi({ ghostReviewOpen: true }),
     }),
     [
       acceptAllGhosts,
@@ -1790,6 +1826,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     curGhost,
     compliance,
     estimate,
+    estimateSettling,
+    workableOutdoorM2,
+    siteSchedule,
     acceptHorizonCard,
     ai,
     mutate,

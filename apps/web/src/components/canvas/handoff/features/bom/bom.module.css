@@ -128,10 +128,10 @@
 .chip {
   min-height: 28px;
   padding: 0 10px;
-  border-radius: 99px;
-  border: 1px solid rgba(194, 69, 95, 0.35);
-  background: rgba(194, 69, 95, 0.08);
-  color: #c2455f;
+  border-radius: 0;
+  border: 1px dashed rgba(28, 25, 23, 0.4);
+  background: rgba(28, 25, 23, 0.04);
+  color: #1c1917;
   font: inherit;
   font-size: 10px;
   font-weight: 650;
@@ -139,9 +139,10 @@
 }
 
 .chip[data-on="true"] {
-  border-color: rgba(47, 143, 91, 0.4);
-  background: rgba(47, 143, 91, 0.12);
-  color: #2f8f5b;
+  border-style: solid;
+  border-color: #1c1917;
+  background: #1c1917;
+  color: #f2f0eb;
 }
 
 .foot {

@@ -184,12 +184,12 @@
   height: 22px;
   background: linear-gradient(
     180deg,
-    rgba(194, 69, 95, 0.7) 0%,
-    rgba(194, 69, 95, 0.7) 48%,
-    rgba(90, 62, 42, 0.25) 52%,
-    rgba(90, 62, 42, 0.25) 100%
+    #1c1917 0%,
+    #1c1917 48%,
+    rgba(28, 25, 23, 0.25) 52%,
+    rgba(28, 25, 23, 0.25) 100%
   );
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .siteCue {

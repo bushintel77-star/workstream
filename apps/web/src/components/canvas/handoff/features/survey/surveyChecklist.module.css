@@ -6,10 +6,10 @@
   z-index: 12;
   width: 188px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 251, 252, 0.92);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 6px 20px rgba(42, 23, 29, 0.14);
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.94);
+  box-shadow: none;
   pointer-events: none;
 }
 
@@ -26,7 +26,7 @@
   font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #8a7a82;
+  color: #6b6560;
 }
 
 .count {
@@ -34,14 +34,14 @@
   font-size: 9px;
   font-weight: 600;
   padding: 2px 7px;
-  border-radius: 99px;
-  background: rgba(232, 184, 75, 0.25);
-  color: #8a6a1f;
+  border-radius: 0;
+  background: rgba(28, 25, 23, 0.08);
+  color: #1c1917;
 }
 
 .countDone {
-  background: rgba(31, 138, 90, 0.14);
-  color: #1f8a5a;
+  background: rgba(28, 25, 23, 0.14);
+  color: #1c1917;
 }
 
 .list {
@@ -60,35 +60,37 @@
 .mark {
   width: 13px;
   height: 13px;
-  border-radius: 50%;
+  border-radius: 0;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 8px;
-  background: rgba(36, 19, 24, 0.06);
-  color: #8a7a82;
+  border: 1px solid rgba(28, 25, 23, 0.22);
+  background: transparent;
+  color: #6b6560;
 }
 
 .markOk {
-  background: rgba(31, 138, 90, 0.14);
-  color: #1f8a5a;
+  background: #1c1917;
+  border-color: #1c1917;
+  color: #f2f0eb;
 }
 
 .label {
   font-size: 11px;
-  color: #7a5560;
+  color: #6b6560;
 }
 
 .labelOk {
   font-size: 11px;
-  color: #241318;
+  color: #1c1917;
 }
 
 .foot {
   margin: 6px 0 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 8px;
-  color: #8a7a82;
+  color: #6b6560;
   line-height: 1.45;
 }

@@ -32,26 +32,28 @@ function ringToPolygon(ring: LngLatRing): Feature<Polygon> | null {
 }
 
 /**
- * Designable "Canvas Canvas": title parcel minus building footprints.
- * Returns outer ring(s) of the difference polygon, or the parcel if no buildings.
+ * Designable "Canvas Canvas": title parcel minus building footprints and
+ * optional exclude rings (easements / existing hardscapes).
+ * Returns outer ring(s) of the difference polygon, or the parcel if empty.
  */
 export function designableCanvas(
   parcelRing: LngLatRing,
   buildingRings: LngLatRing[] = [],
+  excludeRings: LngLatRing[] = [],
 ): LngLatRing[] {
   const parcel = ringToPolygon(parcelRing);
   if (!parcel) return [];
 
-  const buildings = buildingRings
+  const subtractors = [...buildingRings, ...excludeRings]
     .map(ringToPolygon)
     .filter((f): f is Feature<Polygon> => f != null);
 
-  if (buildings.length === 0) {
+  if (subtractors.length === 0) {
     return [openRing(parcelRing)];
   }
 
   let result: Feature<Polygon | MultiPolygon> | null = parcel;
-  for (const b of buildings) {
+  for (const b of subtractors) {
     if (!result) break;
     const next = difference(featureCollection([result, b]));
     result = next;

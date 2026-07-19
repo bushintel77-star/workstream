@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { outdoorDifferenceM2, planarPolyArea } from "./outdoor-area";
+import {
+  outdoorDifferenceM2,
+  planarPolyArea,
+  workableCanvasM2,
+} from "./outdoor-area";
 
 /** 20×20 m square lot. */
 const LOT: [number, number][] = [
@@ -56,5 +60,29 @@ describe("planarPolyArea", () => {
         [0, 1],
       ]),
     ).toBeCloseTo(1, 8);
+  });
+});
+
+describe("workableCanvasM2", () => {
+  it("subtracts buildings and exclude rings from the lot", () => {
+    const house: [number, number][] = [
+      [5, 5],
+      [15, 5],
+      [15, 12],
+      [5, 12],
+    ];
+    const easement: [number, number][] = [
+      [0, 0],
+      [2, 0],
+      [2, 20],
+      [0, 20],
+    ];
+    const r = workableCanvasM2(LOT, {
+      buildings: [house],
+      exclude: [easement],
+    });
+    // 400 − 70 house − 40 easement = 290
+    expect(r.areaM2).toBeCloseTo(290, 0);
+    expect(r.polygons.length).toBeGreaterThanOrEqual(1);
   });
 });

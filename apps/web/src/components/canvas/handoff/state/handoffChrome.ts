@@ -32,6 +32,11 @@ export type HandoffChrome = {
   collapseUtility: boolean;
   /** Flora Ring / botanical suggestion HUD */
   floraRing: boolean;
+  /**
+   * Draft AI surface on the board (status bar, ghost toast, review panel).
+   * Off during Stage 1 / Fit sheet / focus — use header Ask AI + Cmd+K only.
+   */
+  draftSurface: boolean;
 };
 
 type Input = {
@@ -79,6 +84,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       drawTools: !frameOn && !clientView && !focusOn && mode !== "quote" && mode !== "share",
       collapseUtility: true,
       floraRing: false,
+      draftSurface: false,
     };
   }
 
@@ -97,6 +103,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       drawTools: false,
       collapseUtility: true,
       floraRing: false,
+      draftSurface: false,
     };
   }
 
@@ -114,9 +121,11 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     sunGrowth: false,
     aiCoach: false,
     ambientRibbon: plan,
-    selectionRing: mode === "cad" && !drawingHot && !draftCrowded,
+    selectionRing: false,
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: false,
+    // Ghost review only when user opens it — no ambient toast/status bar
+    draftSurface: plan && mode !== "survey" && draftCrowded,
   };
 }

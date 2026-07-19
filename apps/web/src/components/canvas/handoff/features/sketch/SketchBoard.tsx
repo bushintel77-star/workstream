@@ -72,7 +72,7 @@ export function SketchBoard({
             key={s.id}
             points={s.points.map((p) => `${p.x},${p.y}`).join(" ")}
             fill="none"
-            stroke={darkOn ? "#FFD3DE" : "#C2455F"}
+            stroke={darkOn ? "#C9C2BA" : "#1C1917"}
             strokeWidth={s.id === "__live" ? 0.45 : 0.55}
             strokeLinecap="round"
             strokeLinejoin="round"

@@ -66,10 +66,10 @@ export function PlanThumbnail({
                   rx={r * (d.w / 40)}
                   ry={r * (d.h / 40)}
                   fill={
-                    active ? "rgba(194,69,95,0.35)" : "rgba(36,19,24,0.18)"
+                    active ? "rgba(28,25,23,0.28)" : "rgba(28,25,23,0.14)"
                   }
-                  stroke={active ? "#C2455F" : "transparent"}
-                  strokeWidth={active ? 1.4 : 0}
+                  stroke={active ? "#1C1917" : "transparent"}
+                  strokeWidth={active ? 1.2 : 0}
                   vectorEffect="non-scaling-stroke"
                 />
                 {active ? (
@@ -78,7 +78,7 @@ export function PlanThumbnail({
                     cy={it.y}
                     r={5.5}
                     fill="none"
-                    stroke="#C2455F"
+                    stroke="#1C1917"
                     strokeWidth={1}
                     strokeDasharray="2 1.5"
                     vectorEffect="non-scaling-stroke"
