@@ -27,3 +27,5 @@ startCommand = "node apps/web/server.js"
 # deploy bump 2026-07-19 14:58 — sheet spacing / chrome hierarchy
 
 # deploy bump 2026-07-19 15:06 — drop Stage labels
+
+# deploy bump 2026-07-19 15:10 — gold-standard polish
