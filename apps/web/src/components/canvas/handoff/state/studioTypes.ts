@@ -1,5 +1,6 @@
 import type {
   SketchStroke,
+  SpotLevel,
   StudioItem,
   StudioItemType,
   StudioMode,
@@ -21,6 +22,10 @@ export type StudioSnapshot = {
   items: StudioItem[];
   easements: PctPoint[][];
   strokes: SketchStroke[];
+  /** Survey spot levels (RL m) — prototype Level tool. */
+  levels: SpotLevel[];
+  /** Survey service / easement polylines — prototype Servc tool. */
+  services: PctPoint[][];
 };
 
 export type StudioUiState = {

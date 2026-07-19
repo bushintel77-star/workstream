@@ -150,6 +150,11 @@ type Ui = {
    */
   sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
   /**
+   * Optional board-width metres from survey Calib (two known points).
+   * When set, overrides sheetScaleDenom-derived scale for dims / fall %.
+   */
+  boardWidthM: number | null;
+  /**
    * Parchment underlay strength when aerial is present (0 = survey-sharp,
    * 1 = soft drafting table). Canvas-first: peel, don't void.
    */
@@ -226,6 +231,8 @@ function snapOf(doc: Doc): StudioSnapshot {
     items: doc.items,
     easements: doc.easements,
     strokes: doc.strokes,
+    levels: doc.levels,
+    services: doc.services,
   };
 }
 
@@ -236,6 +243,8 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
     items: seed.items.map((i) => ({ ...i })),
     easements: [],
     strokes: [],
+    levels: [],
+    services: [],
   };
 }
 
@@ -308,13 +317,16 @@ function initialState(opts: {
       utilityPanel: null,
       councilTip: null,
       sheetScaleDenom: 100,
+      boardWidthM: null,
       parchmentPeel: 0.42,
       saveStatus: hasCanvas ? "saved" : "idle",
       floraSession: null,
       foundationCleanse: false,
       titleBoundaryLocked: false,
       boundarySource: "seed",
-      aerialSuppressed: false,
+      // Never auto-inject Mapbox/survey static aerial — optional upload only
+      // (matches curtis-co prototype: parchment drafting plate by default).
+      aerialSuppressed: true,
     },
   };
 }
@@ -390,6 +402,10 @@ function reducer(state: State, action: Action): State {
       if (leavingSurvey && !state.ui.foundationCleanse) {
         layerOpacity = { ...DESIGN_LAYER_PRESET };
       }
+      // CAD / sketch are parchment drafting plates — no auto aerial map.
+      // Survey may keep an optional user-uploaded screenshot only.
+      const draftingPlate =
+        action.mode === "cad" || action.mode === "sketch";
       return {
         ...state,
         ui: {
@@ -398,6 +414,11 @@ function reducer(state: State, action: Action): State {
           layerOpacity,
           drawPoly: null,
           drawCursor: null,
+          ...(draftingPlate
+            ? { aerialUri: null, aerialSuppressed: true }
+            : action.mode === "survey"
+              ? { aerialSuppressed: true }
+              : {}),
           tool:
             action.mode === "survey"
               ? state.ui.foundationCleanse
@@ -1386,6 +1407,31 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate],
   );
 
+  const addSpotLevel = useCallback(
+    (x: number, y: number, z: number) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          levels: [...(snap.levels ?? []), { x, y, z }],
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const commitService = useCallback(
+    (ring: PctPoint[]) => {
+      if (ring.length < 2) return;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          services: [...(snap.services ?? []), ring],
+        },
+      }));
+    },
+    [mutate],
+  );
+
   const switchSite = useCallback((idx: number) => {
     dispatch({ type: "switchSite", idx });
   }, []);
@@ -1660,6 +1706,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     items: state.doc.items,
     easements: state.doc.easements,
     strokes: state.doc.strokes,
+    levels: state.doc.levels ?? [],
+    services: state.doc.services ?? [],
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     ui: state.ui,
@@ -1695,6 +1743,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     ingestCanopyGhosts,
     ingestCanopyImage,
     setStrokes,
+    addSpotLevel,
+    commitService,
     switchSite,
     resetSite,
     bumpSaved,

@@ -21,6 +21,8 @@ function snapFromSeed(): StudioSnapshot {
       .map((i) => ({ ...i })),
     easements: [],
     strokes: [],
+    levels: [],
+    services: [],
   };
 }
 

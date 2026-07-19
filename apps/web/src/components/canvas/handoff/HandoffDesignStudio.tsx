@@ -33,6 +33,8 @@ import {
 import { MeasureOverlay } from "./features/measure/MeasureOverlay";
 import { AerialSlot } from "./features/aerial/AerialSlot";
 import { SketchBoard } from "./features/sketch/SketchBoard";
+import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
+import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { StudioCoachMarks } from "./features/coach/StudioCoachMarks";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
@@ -262,7 +264,7 @@ export function HandoffDesignStudio({
   const chromeLive = planOn && !ui.frameOn && !ui.focusOn && !ui.clientView;
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
-  const scaleM = boardScaleM(ui.sheetScaleDenom);
+  const scaleM = ui.boardWidthM ?? boardScaleM(ui.sheetScaleDenom);
 
   useEffect(() => {
     let cancelled = false;
@@ -277,9 +279,18 @@ export function HandoffDesignStudio({
       cancelled = true;
     };
   }, [projectId, displayAddress]);
-  const liveAerial = ui.foundationCleanse
-    ? null
-    : (ui.aerialUri ?? aerialUri);
+  /**
+   * Aerial is optional upload only (prototype behaviour) — never auto-inject
+   * Mapbox/survey static tiles into CAD or sketch. Survey may show a
+   * user-uploaded screenshot from ui.aerialUri only.
+   */
+  const liveAerial =
+    ui.foundationCleanse ||
+    ui.mode === "cad" ||
+    ui.mode === "sketch" ||
+    ui.aerialSuppressed
+      ? null
+      : ui.aerialUri;
   const flaggedIds = new Set<string>(
     compliance.alerts.flatMap((a: { sourceIds: string[] }) => a.sourceIds),
   );
@@ -656,13 +667,18 @@ export function HandoffDesignStudio({
               dimmed={ui.darkOn}
               frameOn={ui.frameOn}
               scanning={
+                ui.mode === "survey" &&
                 !ui.foundationCleanse &&
                 (ui.canopyScanning || ai.busy === "scanning")
               }
               zoom={ui.zoom}
               sheetScaleDenom={ui.sheetScaleDenom}
               darkOn={ui.darkOn}
-              foundationCleanse={ui.foundationCleanse}
+              foundationCleanse={
+                ui.foundationCleanse ||
+                ui.mode === "cad" ||
+                ui.mode === "sketch"
+              }
               autoCanopyScan={false}
               titleLocked={titleLocked}
               boundarySource={ui.boundarySource}
@@ -670,9 +686,19 @@ export function HandoffDesignStudio({
               building={studio.building}
               siteLabel={displayAddress}
               address={displayAddress}
-              parchmentPeel={ui.foundationCleanse ? 1 : ui.parchmentPeel}
+              parchmentPeel={
+                ui.foundationCleanse || ui.mode === "cad" || ui.mode === "sketch"
+                  ? 1
+                  : ui.parchmentPeel
+              }
               onUri={(uri) => {
-                if (ui.foundationCleanse) return;
+                if (
+                  ui.foundationCleanse ||
+                  ui.mode === "cad" ||
+                  ui.mode === "sketch"
+                ) {
+                  return;
+                }
                 studio.setUi({
                   aerialUri: uri,
                   aerialSuppressed: uri == null,
@@ -682,7 +708,7 @@ export function HandoffDesignStudio({
               onCanopyImage={ai.ingestCanopyImage}
             />
             <CadPlanBoard
-              aerialUri={liveAerial}
+              aerialUri={null}
               externalAerial
               frameOn={ui.frameOn}
               darkOn={ui.darkOn}
@@ -705,6 +731,7 @@ export function HandoffDesignStudio({
               boundary={studio.boundary}
               building={studio.building}
               items={studio.items}
+              mode={ui.mode}
               tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}
               locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
@@ -835,8 +862,54 @@ export function HandoffDesignStudio({
               <SketchBoard
                 strokes={studio.strokes}
                 darkOn={ui.darkOn}
-                onChange={studio.setStrokes}
+                onCommit={(stroke) => {
+                  studio.setStrokes([...studio.strokes, stroke]);
+                }}
               />
+            ) : null}
+            {ui.mode === "survey" && !ui.frameOn ? (
+              <>
+                <SurveyAnnotationLayer
+                  active
+                  tool={ui.tool}
+                  levels={studio.levels}
+                  services={studio.services}
+                  scaleM={scaleM}
+                  darkOn={ui.darkOn}
+                  layerOpacity={ui.layerOpacity}
+                  onAddLevel={studio.addSpotLevel}
+                  onCommitService={studio.commitService}
+                  onCalibrate={(nextScaleM) => {
+                    // Prototype: board width metres from two known points.
+                    // Also snap sheet denom so the ground mesh stays coherent.
+                    const denoms = [50, 100, 200, 250, 500] as const;
+                    const target = (nextScaleM / 110) * 100;
+                    let best: (typeof denoms)[number] = 100;
+                    let bestD = Infinity;
+                    for (const d of denoms) {
+                      const err = Math.abs(d - target);
+                      if (err < bestD) {
+                        bestD = err;
+                        best = d;
+                      }
+                    }
+                    studio.setUi({
+                      boardWidthM: nextScaleM,
+                      sheetScaleDenom: best,
+                      tool: "pan",
+                    });
+                  }}
+                />
+                {!ui.focusOn && !ui.clientView ? (
+                  <SurveyChecklist
+                    boundary={studio.boundary}
+                    building={studio.building}
+                    items={studio.items}
+                    levels={studio.levels}
+                    services={studio.services}
+                  />
+                ) : null}
+              </>
             ) : null}
             <TraceOverlay
               active={ui.tool === "trace" && !ui.frameOn && ui.mode !== "sketch"}
@@ -916,6 +989,7 @@ export function HandoffDesignStudio({
         {chrome.ambientRibbon ? (
           <AmbientRibbon
             tool={ui.tool}
+            mode={ui.mode}
             locked={ui.locked}
             canUndo={studio.canUndo}
             canRedo={studio.canRedo}
@@ -951,10 +1025,14 @@ export function HandoffDesignStudio({
         ) : null}
 
 
-        {ui.addOpen && planOn && !ui.focusOn ? (
+        {ui.addOpen && planOn && !ui.focusOn && ui.mode !== "sketch" ? (
           <div className={css.addStrip} data-testid="add-symbol-strip">
             {(Object.keys(BY_TYPE) as StudioItemType[])
-              .filter((t) => !BY_TYPE[t].existing)
+              .filter((t) =>
+                ui.mode === "survey"
+                  ? Boolean(BY_TYPE[t].existing)
+                  : !BY_TYPE[t].existing,
+              )
               .map((t) => (
                 <button
                   key={t}

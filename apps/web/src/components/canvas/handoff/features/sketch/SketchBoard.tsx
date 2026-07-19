@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { SketchStroke } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import css from "./sketch.module.css";
@@ -8,15 +8,18 @@ import css from "./sketch.module.css";
 type Props = {
   strokes: SketchStroke[];
   darkOn: boolean;
-  onChange: (strokes: SketchStroke[]) => void;
+  /** Commit a finished stroke (once per pointer-up — not per move). */
+  onCommit: (stroke: SketchStroke) => void;
 };
 
 /**
- * Freehand sketch mode — ink strokes in % board space over the aerial.
+ * Freehand sketch — ink over parchment. CadPlanBoard is pointer-events:none
+ * while this mounts so symbols don't steal the stroke.
  */
-export function SketchBoard({ strokes, darkOn, onChange }: Props) {
+export function SketchBoard({ strokes, darkOn, onCommit }: Props) {
   const drawing = useRef<PctPoint[] | null>(null);
-  const idn = useRef(strokes.length + 1);
+  const idn = useRef(0);
+  const [live, setLive] = useState<PctPoint[] | null>(null);
 
   const toPct = (el: HTMLElement, clientX: number, clientY: number): PctPoint => {
     const r = el.getBoundingClientRect();
@@ -26,43 +29,37 @@ export function SketchBoard({ strokes, darkOn, onChange }: Props) {
     };
   };
 
+  const all = live
+    ? [...strokes, { id: "__live", points: live }]
+    : strokes;
+
   return (
     <div
       className={css.root}
       data-testid="sketch-board"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
-        drawing.current = [toPct(e.currentTarget, e.clientX, e.clientY)];
+        const p = toPct(e.currentTarget, e.clientX, e.clientY);
+        drawing.current = [p];
+        setLive([p]);
       }}
       onPointerMove={(e) => {
         if (!drawing.current) return;
-        drawing.current = [
-          ...drawing.current,
-          toPct(e.currentTarget, e.clientX, e.clientY),
-        ];
-        // Live preview via forcing re-render through temporary stroke
-        const live = drawing.current;
-        onChange([
-          ...strokes.filter((s) => s.id !== "__live"),
-          { id: "__live", points: live },
-        ]);
+        const p = toPct(e.currentTarget, e.clientX, e.clientY);
+        drawing.current = [...drawing.current, p];
+        setLive(drawing.current);
       }}
       onPointerUp={() => {
         const pts = drawing.current;
         drawing.current = null;
-        if (!pts || pts.length < 2) {
-          onChange(strokes.filter((s) => s.id !== "__live"));
-          return;
-        }
+        setLive(null);
+        if (!pts || pts.length < 2) return;
         idn.current += 1;
-        onChange([
-          ...strokes.filter((s) => s.id !== "__live"),
-          { id: `sk${idn.current}`, points: pts },
-        ]);
+        onCommit({ id: `sk${Date.now()}_${idn.current}`, points: pts });
       }}
     >
       <svg className={css.svg} viewBox="0 0 100 100" preserveAspectRatio="none">
-        {strokes.map((s) => (
+        {all.map((s) => (
           <polyline
             key={s.id}
             points={s.points.map((p) => `${p.x},${p.y}`).join(" ")}
@@ -73,6 +70,7 @@ export function SketchBoard({ strokes, darkOn, onChange }: Props) {
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
             opacity={s.id === "__live" ? 0.7 : 0.9}
+            style={{ pointerEvents: "none" }}
           />
         ))}
       </svg>

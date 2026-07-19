@@ -23,6 +23,7 @@ import {
 import {
   BY_TYPE,
   type StudioItem,
+  type StudioMode,
   type StudioTool,
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
@@ -64,6 +65,8 @@ type Props = {
   building: PctPoint[];
   items: StudioItem[];
   tool: StudioTool;
+  /** Studio mode — survey shows edge dims; sketch disables pointer capture. */
+  mode?: StudioMode;
   locked: boolean;
   layerOpacity: LayerOpacity;
   setbackOn: boolean;
@@ -108,7 +111,8 @@ function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
 }
 
 /**
- * Plan drawing board — aerial, polys, symbols, edit handles, dims, TPZ.
+ * Plan drawing board — polys, symbols, edit handles, dims, TPZ.
+ * Aerial is optional and owned by AerialSlot (never a live map in CAD).
  */
 export function CadPlanBoard({
   aerialUri,
@@ -125,6 +129,7 @@ export function CadPlanBoard({
   building,
   items,
   tool,
+  mode = "cad",
   locked,
   layerOpacity,
   setbackOn,
@@ -200,7 +205,18 @@ export function CadPlanBoard({
     : foundationCleanse
       ? boundarySegs
       : boundarySegs.concat(buildingSegs);
-  const showDims = editing || frameOn || foundationCleanse || titleLocked;
+  const showDims =
+    editing ||
+    frameOn ||
+    foundationCleanse ||
+    titleLocked ||
+    mode === "survey";
+  const sketchPassthrough = mode === "sketch";
+  /** Survey annotation tools own the pointer (prototype Level / Servc / Calib). */
+  const surveyAnnotatePassthrough =
+    mode === "survey" &&
+    (tool === "calib" || tool === "level" || tool === "service");
+  const boardPassthrough = sketchPassthrough || surveyAnnotatePassthrough;
   const cadTitleMode = foundationCleanse || titleLocked;
   /** Fit sheet: classic dashed boundary + solid footprint (screenshot language). */
   const fitSheetStroke = frameOn;
@@ -396,13 +412,16 @@ export function CadPlanBoard({
       className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}`}
       data-testid="cad-plan-board"
       data-cad-plan
+      data-mode={mode}
       data-cursor={editing ? cursorMode : "default"}
+      style={boardPassthrough ? { pointerEvents: "none" } : undefined}
       onPointerDown={(e) => {
+        if (boardPassthrough) return;
         if (nodeMenu) setNodeMenu(null);
         onPointerDownBoard(e);
       }}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
+      onPointerMove={boardPassthrough ? undefined : onPointerMove}
+      onPointerUp={boardPassthrough ? undefined : onPointerUp}
     >
       {externalAerial ? (
         <div

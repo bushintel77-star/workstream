@@ -1,0 +1,93 @@
+.root {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 28;
+  width: 196px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.22);
+  pointer-events: none;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.title {
+  flex: 1;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a7a82;
+}
+
+.count {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(232, 184, 75, 0.25);
+  color: #8a6a1f;
+}
+
+.countDone {
+  background: rgba(31, 138, 90, 0.14);
+  color: #1f8a5a;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3.5px 0;
+}
+
+.mark {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  background: rgba(36, 19, 24, 0.06);
+  color: #8a7a82;
+}
+
+.markOk {
+  background: rgba(31, 138, 90, 0.14);
+  color: #1f8a5a;
+}
+
+.label {
+  font-size: 11.5px;
+  color: #7a5560;
+}
+
+.labelOk {
+  font-size: 11.5px;
+  color: #241318;
+}
+
+.foot {
+  margin: 7px 0 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8.5px;
+  color: #8a7a82;
+  line-height: 1.5;
+}

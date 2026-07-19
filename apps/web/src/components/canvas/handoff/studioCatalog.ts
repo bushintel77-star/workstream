@@ -323,11 +323,20 @@ export const TOOLS = [
   { id: "pan", label: "Pan", icon: "✥" },
 ] as const;
 
+/** Survey-mode annotation tools (ported from curtis-co prototype). */
+export const SURVEY_TOOLS = [
+  { id: "calib", label: "Calib", icon: "⌖", title: "Calibrate scale — two points with a known distance" },
+  { id: "level", label: "Level", icon: "△", title: "Spot level — click a point, enter RL" },
+  { id: "service", label: "Servc", icon: "〜", title: "Trace a service / easement — Enter to finish" },
+] as const;
+
 export type StudioTool =
   | (typeof TOOLS)[number]["id"]
+  | (typeof SURVEY_TOOLS)[number]["id"]
   | "measure"
   | "sketch";
 
+export type SpotLevel = { x: number; y: number; z: number };
 export function ptsStr(pts: Pt[]) {
   return pts.map((p) => `${p.x},${p.y}`).join(" ");
 }

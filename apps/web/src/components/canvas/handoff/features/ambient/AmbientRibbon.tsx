@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TOOLS, type StudioTool } from "../../studioCatalog";
+import { SURVEY_TOOLS, TOOLS, type StudioMode, type StudioTool } from "../../studioCatalog";
 import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
 import css from "./ambientRibbon.module.css";
 
@@ -13,6 +13,7 @@ type LayerChip = {
 
 type Props = {
   tool: StudioTool;
+  mode?: StudioMode;
   locked: boolean;
   canUndo: boolean;
   canRedo: boolean;
@@ -38,6 +39,7 @@ const EDGE_PX = 52;
  */
 export function AmbientRibbon({
   tool,
+  mode = "cad",
   locked,
   canUndo,
   canRedo,
@@ -54,6 +56,7 @@ export function AmbientRibbon({
   onOpacity,
   onParchmentPeel,
 }: Props) {
+  const surveyMode = mode === "survey";
   const [hot, setHot] = useState(false);
 
   useEffect(() => {
@@ -93,6 +96,21 @@ export function AmbientRibbon({
           </button>
         ))}
         <div className={css.div} />
+        {surveyMode
+          ? SURVEY_TOOLS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`${css.btn}${tool === t.id ? ` ${css.active}` : ""}`}
+                data-testid={`canvas-tool-${t.id}`}
+                title={t.title}
+                onClick={() => onTool(t.id)}
+              >
+                <span className={css.glyph}>{t.icon}</span>
+                <span className={css.label}>{t.label}</span>
+              </button>
+            ))
+          : null}
         <button
           type="button"
           className={`${css.btn}${tool === "measure" ? ` ${css.active}` : ""}`}
