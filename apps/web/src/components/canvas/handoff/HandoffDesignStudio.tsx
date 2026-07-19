@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   BY_TYPE,
   MODE_TABS,
@@ -36,10 +42,16 @@ import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
 import { FloraRing } from "./features/flora/FloraRing";
 import { VolumetricIsolith } from "./features/isolith/VolumetricIsolith";
+import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
+import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
 import type {
   ArchitecturalTitleBlock,
   StudioAiSuggestion,
+} from "@workstream/domain";
+import {
+  solveLiveTradeEstimate,
+  tradeTagForItem,
 } from "@workstream/domain";
 import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
 import { lookupCadastralTitleAction } from "../../../app/actions";
@@ -268,6 +280,11 @@ export function HandoffDesignStudio({
     (h) => h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer",
   );
 
+  const trade = useMemo(
+    () => solveLiveTradeEstimate({ report: estimate }),
+    [estimate],
+  );
+
   const tpzReadouts = compliance.alerts
     .filter((a) => a.code === "tpz")
     .map((a) => {
@@ -305,6 +322,10 @@ export function HandoffDesignStudio({
 
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
+  const selectedTradeTag =
+    selectedLive && chrome.tradeMargin
+      ? tradeTagForItem(trade, selectedLive.id)
+      : null;
 
   useEffect(() => {
     if (!drawingHot) return;
@@ -757,6 +778,19 @@ export function HandoffDesignStudio({
                 onToggleLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
                 onDelete={studio.deleteSelected}
                 onClose={() => studio.setSelection(null, [])}
+              />
+            ) : null}
+            {chrome.tradeMargin && selectedTradeTag && selectedLive ? (
+              <TradeSkuTag
+                match={selectedTradeTag}
+                xPct={selectedLive.x}
+                yPct={selectedLive.y}
+              />
+            ) : null}
+            {chrome.tradeMargin ? (
+              <AmbientBudgetMargin
+                trade={trade}
+                displayTotalInclGst={estimate.totalInclGst}
               />
             ) : null}
           </div>

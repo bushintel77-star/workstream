@@ -142,6 +142,7 @@ See [README.md § UX/UI execution mandate](./README.md) and
 | Optimistic + skeletal Live BOM pulse | **Partial** | Continuous estimate; worker skeletal pulse TBD |
 | Flora Ring plant suggestion (micro-climate) | **Done** | `features/flora` + `rankCurtisFloraCandidates`; SDS [`CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md`](../../../CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md) |
 | Dynamic Volumetric Isolith (stockpile) | **Done** | `features/isolith` + `buildIsolithSurvey`; SDS [`CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md`](../../../CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md) |
+| Live trade sourcing HUD | **Done** | `features/trade` + `solveLiveTradeEstimate`; SDS [`CANVAS-FIRST-LIVE-TRADE-SDS.md`](../../../CANVAS-FIRST-LIVE-TRADE-SDS.md) |
 
 ---
 

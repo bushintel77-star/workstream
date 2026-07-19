@@ -27,6 +27,10 @@ holographic mature canopy preview; Accept places stock. PostGIS registry is Stag
 — micro-topographic stockpile contours from live estimate (topsoil / CR6 / clay);
 bank×bulkage → loose m³; compact tag expands to micro-HUD. PostGIS volumes Stage 2.
 
+**Live Trade SDS:** [`docs/CANVAS-FIRST-LIVE-TRADE-SDS.md`](../../../../../../docs/CANVAS-FIRST-LIVE-TRADE-SDS.md)
+— ambient budget margin + selection SKU tags from cached Melbourne trade hubs;
+amber “Wholesale Unverified” fallback. Live Plantmark/Dinsan APIs are Stage 2.
+
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
 studio surface here until that schema brief lands.
@@ -46,6 +50,7 @@ studio surface here until that schema brief lands.
 | `features/selectionRing/` | Contextual radial UI on selected asset (material / peel / lock / delete) |
 | `features/flora/` | Inline Flora Ring — micro-climate sample + top-3 Curtis plant suggestions |
 | `features/isolith/` | Dynamic Volumetric Isolith — SVG stockpile contours + bulkage ledger |
+| `features/trade/` | Ambient budget margin + contextual SKU trade tags / alternatives |
 | `features/layers/` | Four opacity sliders + setback toggle |
 | `features/commandPalette/` | ⌘K actions + Ask AI row + arm symbols |
 | `features/sunGrowth/` | Arc scrubber, growth chips, shadow length readout |

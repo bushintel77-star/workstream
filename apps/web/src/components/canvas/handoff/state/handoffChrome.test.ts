@@ -30,6 +30,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.utilityDrawer).toBe(true);
     expect(c.horizon).toBe(true);
     expect(c.volumeIsolith).toBe(true);
+    expect(c.tradeMargin).toBe(true);
   });
 
   it("collapses utility while Trace is armed", () => {
@@ -42,11 +43,13 @@ describe("resolveHandoffChrome", () => {
     expect(c.horizon).toBe(false);
     expect(c.selectionRing).toBe(false);
     expect(c.volumeIsolith).toBe(true);
+    expect(c.tradeMargin).toBe(true);
   });
 
-  it("hides Isolith in Sketch", () => {
+  it("hides Isolith and trade margin in Sketch", () => {
     const c = resolveHandoffChrome({ ...base, mode: "sketch" });
     expect(c.volumeIsolith).toBe(false);
+    expect(c.tradeMargin).toBe(false);
   });
 
   it("Quote keeps estimate path without draw chrome", () => {
@@ -76,5 +79,6 @@ describe("resolveHandoffChrome", () => {
     expect(c.horizon).toBe(false);
     expect(c.aiCoach).toBe(false);
     expect(c.volumeIsolith).toBe(true);
+    expect(c.tradeMargin).toBe(true);
   });
 });

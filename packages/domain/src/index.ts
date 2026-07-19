@@ -91,6 +91,7 @@ export * from './studio-preemptive-estimate';
 export * from './architectural-title-block';
 export * from './flora-suggestion';
 export * from './volumetric-isolith';
+export * from './live-trade-sourcing';
 export * from './ghost-confidence';
 export * from './elevation-projection';
 export * from './first-run-seed';

@@ -79,7 +79,7 @@ export function LiveBomDock({
       </button>
       <p className={css.meta}>
         {estimate.hardscapeM2 > 0
-          ? `About ${estimate.hardscapeM2.toFixed(0)} m² hardscape on this drawing`
+          ? `About ${estimate.hardscapeM2.toFixed(0)} m² hardscape · trade hubs cached`
           : "Tag materials on the plan — cost updates as you draw"}
       </p>
       <div className={css.lines}>
