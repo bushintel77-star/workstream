@@ -2,7 +2,7 @@
 
 Tracks the **Complete Feature Checklist** in [README.md](./README.md).
 
-**Visual fidelity note (2026-07-19):** Earlier checklist rows were marked Done for *behaviour wiring* while the operator shell still diverged from the handoff screenshots (full-bleed map, missing brand, wrong dock corners, text tool rail). A shell pass is in progress against `screenshots/01-frame.png` + `Design Studio v4.dc.html` — inset 18px board, centered mode pills, glass docks at TR/BL/BR, icon tool rail.
+**Visual fidelity note (2026-07-19):** Production previously served MapLibre/`SiteCanvas` (Vicmap title → geo Fit sheet) — a different product surface than the handoff. `/projects/[id]` now mounts `HandoffDesignStudio` — the v4 `%`-coord aerial board from `Design Studio v4.dc.html` / `screenshots/01-frame.png` (inset paper board, SVG symbols, glass docks, AI draft toast). Geo `SiteCanvas` remains in the repo for later survey ingest, not as the default studio.
 
 Legend: **Done** · **Partial** · **Not started**
 
