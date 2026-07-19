@@ -145,6 +145,10 @@ See [README.md § UX/UI execution mandate](./README.md) and
 
 ## Remaining (lower priority)
 
+See prioritized matrix in [TIER1-AI-CANVAS-GAP-AUDIT.md](./TIER1-AI-CANVAS-GAP-AUDIT.md):
+
+- **P0:** Durable persist · Share/portal unlock · AI draft gate on Share
+- **P1:** Worker skeletal Live cost · shade grid · easements · authored DBH
 - Optimistic Live BOM skeletal pulse when estimate moves to a Web Worker
 - DBH-authored TPZ survey fields / Stage 2 schema briefs
 

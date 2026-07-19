@@ -228,6 +228,12 @@ Use these as the pixel-accuracy reference alongside the live HTML (which remains
 
 ---
 
+## Gap audit (2026)
+
+**Binding audit:** [TIER1-AI-CANVAS-GAP-AUDIT.md](./TIER1-AI-CANVAS-GAP-AUDIT.md) — tier-1 · AI-first · canvas-first CAD landscape scorecard, gold-standard logic, and P0–P3 gaps vs the live `HandoffDesignStudio` mount.
+
+---
+
 ## UX/UI execution mandate — Canvas-First (binding)
 
 Treat cognitive load and visual aesthetic as **strict technical requirements**,

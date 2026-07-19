@@ -98,6 +98,7 @@ workspace plan must be `studio` for per-owner stored live keys to hydrate.
 ## Related docs
 
 - [CANVAS-FIRST-UX.md](CANVAS-FIRST-UX.md) — **binding** operator canvas UI mandate (progressive disclosure, paper/clay, optimistic + skeletal Live BOM)
+- [design/operator-redesign/design_handoff_landscape_cad_studio/TIER1-AI-CANVAS-GAP-AUDIT.md](design/operator-redesign/design_handoff_landscape_cad_studio/TIER1-AI-CANVAS-GAP-AUDIT.md) — 2026 tier-1 AI-first canvas-first gap audit + gold-standard logic
 - [INTEGRATIONS.md](INTEGRATIONS.md) — hub API, CRM webhook, Resend, connector keys
 - [QUOTE_WORKFLOW.md](QUOTE_WORKFLOW.md) — operator sequence
 - [../OUTSTANDING.md](../OUTSTANDING.md) — engineering punch list
