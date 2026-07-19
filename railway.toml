@@ -17,3 +17,5 @@ healthcheckPath = "/healthz"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
+
+# deploy bump 2026-07-19 06:26 — studio visual fidelity (flora/isolith/trade)
