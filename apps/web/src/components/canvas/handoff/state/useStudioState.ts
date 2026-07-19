@@ -1023,7 +1023,6 @@ export function useStudioState(opts: UseStudioStateOpts) {
       runSpatialCorrection,
       runStage1FoundationCleanse,
       setUi,
-      state.ui.foundationCleanse,
     ],
   );
 
