@@ -99,3 +99,4 @@ export * from './brush-recipe';
 export * from './assembly-recipe';
 export * from './spatial-turf';
 export * from './outdoor-area';
+export * from './sketch-to-cad';

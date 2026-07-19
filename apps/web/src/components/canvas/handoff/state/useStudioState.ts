@@ -47,6 +47,7 @@ import {
   mergeAiProposals,
   proposeFromAssistQuery,
   proposeFromCanopyImage,
+  proposeFromStrokes,
   proposeLayoutFromSnapshot,
   proposalsFromApiSuggestions,
   rejectProposal,
@@ -556,9 +557,68 @@ export function useStudioState(opts: UseStudioStateOpts) {
     dispatch({ type: "setUi", patch });
   }, []);
 
-  const setMode = useCallback((mode: StudioMode) => {
-    dispatch({ type: "setMode", mode });
-  }, []);
+  const interpretSketches = useCallback(() => {
+    const strokeCount = state.doc.strokes.length;
+    if (strokeCount === 0) {
+      setUi({
+        assistReply: "Sketch on the plan first — then convert to CAD assets.",
+        coachOpen: true,
+      });
+      return 0;
+    }
+    let count = 0;
+    mutate((snap, idn) => {
+      const proposed = proposeFromStrokes(snap, idn);
+      count = proposed.count;
+      if (proposed.count === 0) {
+        return { snap, idn };
+      }
+      return {
+        snap: {
+          ...snap,
+          items: mergeAiProposals(snap, proposed.items, ["sketch"]),
+        },
+        idn: proposed.idn,
+      };
+    });
+    setUi({
+      mode: "cad",
+      tool: "pan",
+      ghostIdx: 0,
+      ghostReviewOpen: count > 0,
+      coachOpen: true,
+      assistReply:
+        count > 0
+          ? `Converted ${count} sketch${count === 1 ? "" : "es"} into CAD assets — review sun, setback, and envelope, then accept.`
+          : "No convertible strokes — draw a path, bed, or canopy mark first.",
+    });
+    return count;
+  }, [mutate, setUi, state.doc.strokes.length]);
+
+  const setMode = useCallback(
+    (mode: StudioMode) => {
+      const leavingSketch =
+        state.ui.mode === "sketch" && mode === "cad";
+      const hadStrokes = state.doc.strokes.length > 0;
+      const alreadyHasSketchGhosts = state.doc.items.some(
+        (i) => i.ghost && i.id.startsWith("ai-sketch-"),
+      );
+      dispatch({ type: "setMode", mode });
+      // Progressive: leaving Sketch for CAD auto-interprets ink → ghosts
+      // (skip if Convert already produced pending sketch ghosts)
+      if (leavingSketch && hadStrokes && !alreadyHasSketchGhosts) {
+        queueMicrotask(() => {
+          interpretSketches();
+        });
+      }
+    },
+    [
+      interpretSketches,
+      state.doc.items,
+      state.doc.strokes.length,
+      state.ui.mode,
+    ],
+  );
 
   const setLayerOpacity = useCallback((key: LayerKey, value: number) => {
     dispatch({ type: "setLayerOpacity", key, value });
@@ -1677,6 +1737,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       cycle: cycleGhost,
       ingestCanopy: ingestCanopyGhosts,
       ingestCanopyImage,
+      interpretSketches,
       openReview: () => setUi({ ghostReviewOpen: true, coachOpen: true }),
       openCoach: () => setUi({ coachOpen: true }),
     }),
@@ -1691,6 +1752,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ghosts,
       ingestCanopyGhosts,
       ingestCanopyImage,
+      interpretSketches,
       rejectGhost,
       scanGhosts,
       setUi,
@@ -1722,6 +1784,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     mutate,
     setUi,
     setMode,
+    interpretSketches,
     setLayerOpacity,
     undo,
     redo,

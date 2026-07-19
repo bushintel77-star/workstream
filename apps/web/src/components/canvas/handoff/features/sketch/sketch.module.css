@@ -15,11 +15,20 @@
   overflow: visible;
 }
 
-.hint {
+.bar {
   position: absolute;
   left: 50%;
   bottom: 16px;
   transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(92%, 420px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hint {
   margin: 0;
   font-size: 11px;
   font-weight: 600;
@@ -30,4 +39,32 @@
   padding: 6px 12px;
   pointer-events: none;
   font-family: Sora, ui-sans-serif, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.convert {
+  pointer-events: auto;
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 99px;
+  background: #241318;
+  color: #fffbfc;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: Sora, ui-sans-serif, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(36, 19, 24, 0.22);
+}
+
+.convert:hover {
+  background: #3a2229;
+}
+
+.convert:focus-visible {
+  outline: 2px solid #c2455f;
+  outline-offset: 2px;
 }

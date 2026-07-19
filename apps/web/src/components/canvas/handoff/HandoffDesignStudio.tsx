@@ -950,6 +950,9 @@ export function HandoffDesignStudio({
                 onCommit={(stroke) => {
                   studio.setStrokes([...studio.strokes, stroke]);
                 }}
+                onConvertToCad={() => {
+                  studio.interpretSketches();
+                }}
               />
             ) : null}
             {ui.mode === "survey" && !ui.frameOn ? (
@@ -1321,6 +1324,7 @@ export function HandoffDesignStudio({
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
+          onConvertSketch={() => studio.interpretSketches()}
           onToggleFitSheet={() => studio.setUi({ frameOn: !ui.frameOn })}
           onGoQuote={() => studio.setMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}

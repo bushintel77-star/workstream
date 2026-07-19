@@ -9,8 +9,12 @@
 import {
   buildGhostPlacementSuggestions,
   buildStudioAiSuggestions,
+  buildableEnvelopeFromBoundary,
   detectCanopyClustersFromImageData,
+  interpretSketchStrokesToCad,
   isTier1WrightsTerrace,
+  shouldEnforceSetback,
+  snapPointToBuildableEnvelope,
   type GhostPlacementSuggestion,
   type RgbaImageData,
   type StudioAiSuggestion,
@@ -25,7 +29,8 @@ export type AiProposalSource =
   | "assist"
   | "canopy"
   | "layout"
-  | "coach";
+  | "coach"
+  | "sketch";
 
 export type AiDraftStatus = "unverified" | "verified" | "scanning" | "assisting";
 
@@ -364,6 +369,81 @@ export function proposeFromAssistQuery(
     );
   });
   return { items, idn: nextIdn };
+}
+
+/**
+ * Freehand sketch strokes → CAD ghost assets, snapped clear of setback and
+ * house envelope. Accept commits them onto the site plan.
+ */
+export function proposeFromStrokes(
+  snap: StudioSnapshot,
+  idn: number,
+  opts?: { scaleM?: number },
+): { items: StudioItem[]; idn: number; count: number } {
+  const suggestions = interpretSketchStrokesToCad(snap.strokes, {
+    boundary: snap.boundary,
+    building: snap.building,
+    scaleM: opts?.scaleM,
+  });
+  if (suggestions.length === 0) {
+    return { items: [], idn, count: 0 };
+  }
+
+  const envelope = buildableEnvelopeFromBoundary(
+    snap.boundary,
+    undefined,
+    opts?.scaleM ?? 110,
+  );
+  const house = snap.building.length >= 3 ? snap.building : null;
+  const hMinX = house ? Math.min(...house.map((p) => p.x)) : 0;
+  const hMaxX = house ? Math.max(...house.map((p) => p.x)) : 0;
+  const hMinY = house ? Math.min(...house.map((p) => p.y)) : 0;
+  const hMaxY = house ? Math.max(...house.map((p) => p.y)) : 0;
+
+  let nextIdn = idn;
+  const items = suggestions.map((g) => {
+    nextIdn += 1;
+    const t = mapSymbolToStudioType(g.symbol_id);
+    let x = g.x_pct;
+    let y = g.y_pct;
+    let reason = g.reason;
+
+    if (house) {
+      const inHouse =
+        x >= hMinX && x <= hMaxX && y >= hMinY && y <= hMaxY;
+      if (inHouse) {
+        y = Math.min(96, hMaxY + 5);
+        reason = `${reason} · cleared of house envelope`;
+      }
+    }
+
+    if (shouldEnforceSetback(t)) {
+      const snapped = snapPointToBuildableEnvelope(x, y, envelope);
+      x = snapped.x;
+      y = snapped.y;
+      if (snapped.codeHint) {
+        reason = `${reason} · ${snapped.codeHint}`;
+      }
+    }
+
+    const item = proposalToStudioItem(
+      {
+        id: g.id,
+        symbol_id: g.symbol_id,
+        x_pct: x,
+        y_pct: y,
+        confidence: g.confidence,
+        reason,
+      },
+      `${aiItemPrefix("sketch")}${nextIdn}`,
+      "sketch",
+    );
+    if (g.scaleHint != null) item.scale = g.scaleHint;
+    if (g.rotDeg != null) item.rot = g.rotDeg;
+    return item;
+  });
+
+  return { items, idn: nextIdn, count: items.length };
 }
 
 export function proposeFromCanopyImage(

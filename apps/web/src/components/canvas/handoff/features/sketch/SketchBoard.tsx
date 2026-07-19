@@ -10,13 +10,20 @@ type Props = {
   darkOn: boolean;
   /** Commit a finished stroke (once per pointer-up — not per move). */
   onCommit: (stroke: SketchStroke) => void;
+  /** Convert freehand ink → site-anchored CAD ghosts. */
+  onConvertToCad?: () => void;
 };
 
 /**
  * Freehand sketch — ink over parchment. CadPlanBoard is pointer-events:none
  * while this mounts so symbols don't steal the stroke.
  */
-export function SketchBoard({ strokes, darkOn, onCommit }: Props) {
+export function SketchBoard({
+  strokes,
+  darkOn,
+  onCommit,
+  onConvertToCad,
+}: Props) {
   const drawing = useRef<PctPoint[] | null>(null);
   const idn = useRef(0);
   const [live, setLive] = useState<PctPoint[] | null>(null);
@@ -32,6 +39,7 @@ export function SketchBoard({ strokes, darkOn, onCommit }: Props) {
   const all = live
     ? [...strokes, { id: "__live", points: live }]
     : strokes;
+  const canConvert = strokes.length > 0 && Boolean(onConvertToCad);
 
   return (
     <div
@@ -74,7 +82,27 @@ export function SketchBoard({ strokes, darkOn, onCommit }: Props) {
           />
         ))}
       </svg>
-      <p className={css.hint}>Sketch freehand · ink stays on this site</p>
+      <div className={css.bar} data-testid="sketch-convert-bar">
+        <p className={css.hint}>
+          {canConvert
+            ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · convert to CAD on the site plan`
+            : "Sketch freehand · decks, hedges, canopies, beds"}
+        </p>
+        {canConvert ? (
+          <button
+            type="button"
+            className={css.convert}
+            data-testid="sketch-convert-cad"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onConvertToCad?.();
+            }}
+          >
+            Convert to CAD
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

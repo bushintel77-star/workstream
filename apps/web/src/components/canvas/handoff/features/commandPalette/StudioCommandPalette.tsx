@@ -20,6 +20,7 @@ type Props = {
   onAskAi: (query: string) => void;
   onArm: (t: StudioItemType) => void;
   onScanGhosts: () => void;
+  onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
   onToggleFocus: () => void;
@@ -45,6 +46,7 @@ export function StudioCommandPalette({
   onAskAi,
   onArm,
   onScanGhosts,
+  onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
   onToggleFocus,
@@ -93,6 +95,19 @@ export function StudioCommandPalette({
         keywords: "scan ghost ai suggest propose layout",
         run: onScanGhosts,
       },
+      ...(onConvertSketch
+        ? [
+            {
+              id: "convert-sketch",
+              label: "Convert sketch to CAD",
+              detail:
+                "Turn freehand strokes into site-anchored assets — clear of setback and house envelope",
+              keywords:
+                "convert sketch cad stroke ink deck hedge canopy paving bed lawn drain auto",
+              run: onConvertSketch,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "fit-sheet",
         label: "Toggle Fit sheet",
@@ -146,6 +161,7 @@ export function StudioCommandPalette({
   }, [
     onArm,
     onAskAi,
+    onConvertSketch,
     onGoQuote,
     onRedo,
     onScanGhosts,

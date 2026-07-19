@@ -7,6 +7,7 @@ import {
   mapSymbolToStudioType,
   mergeAiProposals,
   proposeFromAssistQuery,
+  proposeFromStrokes,
   proposeLayoutFromSnapshot,
   rejectProposal,
 } from "./studioAiEngine";
@@ -53,6 +54,45 @@ describe("studioAiEngine", () => {
     );
     expect(items.some((i) => i.t === "canopy")).toBe(true);
     expect(items[0]?.why).toMatch(/shade/i);
+  });
+
+  it("sketch strokes become site-anchored CAD ghosts", () => {
+    const base = snapFromSeed();
+    const withInk: StudioSnapshot = {
+      ...base,
+      strokes: [
+        {
+          id: "sk-deck",
+          points: [
+            { x: 40, y: 58 },
+            { x: 58, y: 58 },
+            { x: 58, y: 74 },
+            { x: 40, y: 74 },
+            { x: 41, y: 59 },
+          ],
+        },
+        {
+          id: "sk-canopy",
+          points: [
+            { x: 28, y: 62 },
+            { x: 30, y: 63 },
+            { x: 29, y: 65 },
+          ],
+        },
+      ],
+    };
+    const { items, count } = proposeFromStrokes(withInk, 50);
+    expect(count).toBe(2);
+    expect(items.every((i) => i.ghost && i.id.startsWith("ai-sketch-"))).toBe(
+      true,
+    );
+    expect(items.some((i) => i.t === "deck" || i.t === "bed" || i.t === "lawn")).toBe(
+      true,
+    );
+    expect(items.some((i) => i.t === "canopy" || i.t === "feature")).toBe(true);
+    expect(items.every((i) => i.x >= 0 && i.x <= 100 && i.y >= 0 && i.y <= 100)).toBe(
+      true,
+    );
   });
 
   it("coaching prioritises pending review when ghosts exist", () => {
