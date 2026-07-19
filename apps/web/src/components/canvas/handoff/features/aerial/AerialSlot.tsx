@@ -27,6 +27,11 @@ type Props = {
    */
   allowAerial?: boolean;
   /**
+   * Allow SVG/PNG survey-plan underlay on drafting plates (no satellite required).
+   * Distinct from allowAerial — plan underlay keeps parchment dominant.
+   */
+  allowPlanUnderlay?: boolean;
+  /**
    * Opt-in aerial colour canopy clustering. Default off — silent auto-scan
    * was flooding Cad with AI proposals on every aerial load.
    */
@@ -59,6 +64,7 @@ export function AerialSlot({
   darkOn = false,
   foundationCleanse = false,
   allowAerial = true,
+  allowPlanUnderlay = false,
   autoCanopyScan = false,
   titleLocked = false,
   boundarySource = "seed",
@@ -116,6 +122,8 @@ export function AerialSlot({
   );
 
   const aerialEnabled = allowAerial && !foundationCleanse;
+  const underlayEnabled =
+    !foundationCleanse && (aerialEnabled || allowPlanUnderlay);
 
   useEffect(() => {
     if (!aerialEnabled || !autoCanopyScan || !uri || frameOn) return;
@@ -123,8 +131,13 @@ export function AerialSlot({
   }, [uri, frameOn, aerialEnabled, autoCanopyScan, runCanopyScan]);
 
   const acceptFile = (file: File | null) => {
-    if (!aerialEnabled) return;
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!underlayEnabled) return;
+    if (!file) return;
+    const okType =
+      file.type.startsWith("image/") ||
+      file.type === "image/svg+xml" ||
+      /\.svg$/i.test(file.name);
+    if (!okType) return;
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : null;
@@ -136,7 +149,8 @@ export function AerialSlot({
     reader.readAsDataURL(file);
   };
 
-  const showAerial = Boolean(uri) && !frameOn && aerialEnabled;
+  const showAerial = Boolean(uri) && !frameOn && underlayEnabled;
+  const planOnly = allowPlanUnderlay && !aerialEnabled;
 
   return (
     <div
@@ -146,8 +160,9 @@ export function AerialSlot({
       data-ground="tactile-parchment"
       data-foundation={foundationCleanse ? "true" : "false"}
       data-allow-aerial={aerialEnabled ? "true" : "false"}
+      data-allow-plan={allowPlanUnderlay ? "true" : "false"}
       onDragOver={(e) => {
-        if (!aerialEnabled) return;
+        if (!underlayEnabled) return;
         e.preventDefault();
         setDragOver(true);
       }}
@@ -155,27 +170,33 @@ export function AerialSlot({
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);
-        if (!aerialEnabled) return;
+        if (!underlayEnabled) return;
         acceptFile(e.dataTransfer.files?.[0] ?? null);
       }}
       onClick={() => {
-        if (!aerialEnabled || uri) return;
+        if (!underlayEnabled || uri) return;
         inputRef.current?.click();
       }}
     >
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.svg,image/svg+xml"
         className={css.file}
-        disabled={!aerialEnabled}
+        disabled={!underlayEnabled}
         onChange={(e) => acceptFile(e.target.files?.[0] ?? null)}
       />
 
       <TactileGround
         zoom={zoom}
         sheetScaleDenom={sheetScaleDenom}
-        parchmentPeel={foundationCleanse || !aerialEnabled ? 1 : parchmentPeel}
+        parchmentPeel={
+          foundationCleanse || !underlayEnabled
+            ? 1
+            : planOnly
+              ? Math.max(parchmentPeel, 0.72)
+              : parchmentPeel
+        }
         hasAerial={showAerial && aerialReady}
         darkOn={darkOn}
         foundationCleanse={foundationCleanse}
@@ -200,21 +221,25 @@ export function AerialSlot({
               : !aerialReady
                 ? 0
                 : dimmed
-                  ? 0.7
-                  : Math.max(0.55, 1 - parchmentPeel * 0.35),
+                  ? 0.55
+                  : planOnly
+                    ? Math.max(0.35, 0.65 - parchmentPeel * 0.2)
+                    : Math.max(0.55, 1 - parchmentPeel * 0.35),
           }}
           draggable={false}
           onLoad={() => setAerialReady(true)}
         />
       ) : null}
 
-      {!uri && aerialEnabled ? (
+      {!uri && underlayEnabled ? (
         <div
           className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
           data-testid="aerial-drop-cue"
         >
-          Drop a top-down aerial to ground this site
-          <span>Parchment stays as a soft underlay</span>
+          {planOnly
+            ? "Drop a survey plan (SVG/PNG) — no aerial required"
+            : "Drop a top-down aerial or survey plan"}
+          <span>Parchment stays as the drafting ground</span>
         </div>
       ) : null}
 

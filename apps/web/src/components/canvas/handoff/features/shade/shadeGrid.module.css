@@ -1,0 +1,27 @@
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.cell {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid rgba(28, 25, 23, 0.04);
+}
+
+.legend {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  margin: 0;
+  padding: 3px 7px;
+  border: 1px solid rgba(28, 25, 23, 0.16);
+  background: rgba(242, 240, 235, 0.9);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #57534e;
+}

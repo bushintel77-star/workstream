@@ -3,9 +3,9 @@
  *   • canvas % (x/y) for 60 FPS viewport rendering / zoom
  *   • physical metres from local origin (0,0) = board / site corner
  *
- * Workflow 1 keeps StudioItem as the runtime shape; these pure helpers
- * derive the physical metrics the BOM / compliance engines need without
- * forcing a Stage-2 LandscapeFeature migration.
+ * Workflow 1 status (locked): StudioItem + these helpers ARE the dual-plane
+ * model. DesignCanvas.features / LandscapeFeature remain optional Stage-2
+ * persistence — do not migrate the live handoff path without a schema brief.
  */
 
 export type CanvasPctPoint = { x_pct: number; y_pct: number };

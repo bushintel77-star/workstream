@@ -122,6 +122,8 @@ type Ui = {
   layersOpen: boolean;
   layerOpacity: LayerOpacity;
   setbackOn: boolean;
+  /** Indicative sun-hours mesh on the % board. */
+  shadeOn: boolean;
   growth: GrowthStage;
   sunMin: number;
   elevAxis: "x" | "y";
@@ -305,6 +307,7 @@ function initialState(opts: {
       layersOpen: false,
       layerOpacity: { ...DEFAULT_LAYER_OPACITY },
       setbackOn: false,
+      shadeOn: false,
       growth: "mature",
       sunMin: 12 * 60 + 26,
       elevAxis: "x",

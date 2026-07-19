@@ -36,6 +36,7 @@ import {
 } from "./features/trace/TraceOverlay";
 import { MeasureOverlay } from "./features/measure/MeasureOverlay";
 import { AerialSlot } from "./features/aerial/AerialSlot";
+import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
@@ -319,6 +320,7 @@ export function HandoffDesignStudio({
     foundationCleanse: ui.foundationCleanse,
     aerialSuppressed: ui.aerialSuppressed,
     aerialUri: ui.aerialUri,
+    allowPlanUnderlay: draftingPlate && !ui.foundationCleanse,
   });
   const titleCueOnCad =
     (ui.foundationCleanse || titleLocked) && !ui.frameOn;
@@ -803,6 +805,7 @@ export function HandoffDesignStudio({
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}
               allowAerial={aerialOk}
+              allowPlanUnderlay={draftingPlate && !ui.foundationCleanse}
               autoCanopyScan={false}
               titleLocked={titleLocked}
               boundarySource={ui.boundarySource}
@@ -813,7 +816,8 @@ export function HandoffDesignStudio({
                 draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
               }
               onUri={(uri) => {
-                if (!aerialOk) return;
+                // Survey aerial OR CAD/Sketch plan underlay (SVG/PNG)
+                if (!aerialOk && !draftingPlate) return;
                 studio.setUi({
                   aerialUri: uri,
                   aerialSuppressed: uri == null,
@@ -821,6 +825,10 @@ export function HandoffDesignStudio({
               }}
               onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
               onCanopyImage={ai.ingestCanopyImage}
+            />
+            <ShadeGridOverlay
+              active={ui.shadeOn && !ui.frameOn && !ui.focusOn}
+              sunMin={ui.sunMin}
             />
             <CadPlanBoard
               frameOn={ui.frameOn}
@@ -1229,10 +1237,12 @@ export function HandoffDesignStudio({
           open={ui.layersOpen}
           opacity={ui.layerOpacity}
           setbackOn={ui.setbackOn}
+          shadeOn={ui.shadeOn}
           items={studio.items}
           onClose={() => studio.setUi({ layersOpen: false })}
           onOpacity={studio.setLayerOpacity}
           onSetback={(setbackOn) => studio.setUi({ setbackOn })}
+          onShade={(shadeOn) => studio.setUi({ shadeOn })}
         />
 
         <SiteSwitcher

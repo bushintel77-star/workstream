@@ -15,10 +15,12 @@ type Props = {
   open: boolean;
   opacity: LayerOpacity;
   setbackOn: boolean;
+  shadeOn: boolean;
   items: StudioItem[];
   onClose: () => void;
   onOpacity: (key: LayerKey, value: number) => void;
   onSetback: (on: boolean) => void;
+  onShade: (on: boolean) => void;
 };
 
 function countFor(key: LayerKey, items: StudioItem[]) {
@@ -34,10 +36,12 @@ export function LayersPanel({
   open,
   opacity,
   setbackOn,
+  shadeOn,
   items,
   onClose,
   onOpacity,
   onSetback,
+  onShade,
 }: Props) {
   if (!open) return null;
 
@@ -85,9 +89,18 @@ export function LayersPanel({
         />
         <span>Show setback overlays</span>
       </label>
+      <label className={css.toggle} data-testid="layers-shade-toggle">
+        <input
+          type="checkbox"
+          checked={shadeOn}
+          onChange={(e) => onShade(e.target.checked)}
+          aria-label="Sun/shade"
+        />
+        <span>Show sun/shade mesh</span>
+      </label>
       <p className={css.foot}>
         Compliance pass/fail stays visible regardless of Council opacity. Survey mode
-        auto-dims proposed layers.
+        auto-dims proposed layers. Sun mesh is indicative — not EnergyPlus.
       </p>
     </div>
   );

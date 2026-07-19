@@ -1,31 +1,33 @@
 import type { StudioMode } from "../studioCatalog";
 
-/** CAD + Sketch are parchment drafting plates — never aerial maps. */
+/** CAD + Sketch are parchment drafting plates — never satellite aerial by default. */
 export function isDraftingPlate(mode: StudioMode): boolean {
   return mode === "cad" || mode === "sketch";
 }
 
 /**
- * Resolve the single aerial URI that AerialSlot may paint.
- * Survey may show an optional user upload; CAD/Sketch/Stage 1 never do.
+ * Resolve the underlay URI AerialSlot may paint.
+ * Survey: optional aerial. CAD/Sketch: optional user-dropped survey plan
+ * (SVG/PNG) when allowPlanUnderlay — still parchment-first, no map required.
  */
 export function resolveLiveAerial(opts: {
   mode: StudioMode;
   foundationCleanse: boolean;
   aerialSuppressed: boolean;
   aerialUri: string | null;
+  /** When true, CAD/Sketch may show a user-dropped plan underlay. */
+  allowPlanUnderlay?: boolean;
 }): string | null {
-  if (
-    opts.foundationCleanse ||
-    isDraftingPlate(opts.mode) ||
-    opts.aerialSuppressed
-  ) {
+  if (opts.foundationCleanse || opts.aerialSuppressed) {
     return null;
+  }
+  if (isDraftingPlate(opts.mode)) {
+    return opts.allowPlanUnderlay ? opts.aerialUri : null;
   }
   return opts.aerialUri;
 }
 
-/** Aerial drop / underlay allowed only on Survey (and never Stage 1). */
+/** Satellite aerial drop allowed only on Survey (and never Stage 1). */
 export function allowAerialUnderlay(opts: {
   mode: StudioMode;
   foundationCleanse: boolean;

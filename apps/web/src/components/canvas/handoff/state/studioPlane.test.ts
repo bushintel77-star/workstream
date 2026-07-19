@@ -12,7 +12,7 @@ describe("studioPlane", () => {
     expect(isDraftingPlate("survey")).toBe(false);
   });
 
-  it("never resolves aerial on CAD / sketch / Stage 1 / suppressed", () => {
+  it("never resolves satellite aerial on CAD / sketch unless plan underlay", () => {
     const uri = "data:image/png;base64,xx";
     expect(
       resolveLiveAerial({
@@ -24,12 +24,13 @@ describe("studioPlane", () => {
     ).toBeNull();
     expect(
       resolveLiveAerial({
-        mode: "sketch",
+        mode: "cad",
         foundationCleanse: false,
         aerialSuppressed: false,
         aerialUri: uri,
+        allowPlanUnderlay: true,
       }),
-    ).toBeNull();
+    ).toBe(uri);
     expect(
       resolveLiveAerial({
         mode: "survey",
@@ -60,7 +61,7 @@ describe("studioPlane", () => {
     ).toBe(uri);
   });
 
-  it("gates underlay to survey only", () => {
+  it("gates satellite aerial underlay to survey only", () => {
     expect(
       allowAerialUnderlay({ mode: "survey", foundationCleanse: false }),
     ).toBe(true);
