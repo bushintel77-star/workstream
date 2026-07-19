@@ -15,7 +15,6 @@
     "@types/three": "^0.185.1",
     "@workstream/contracts": "workspace:*",
     "@workstream/domain": "workspace:*",
-    "maplibre-gl": "^5.24.0",
     "next": "^16.2.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

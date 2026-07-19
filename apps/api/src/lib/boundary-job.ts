@@ -9,10 +9,7 @@ import {
   lockBoundary,
   unlockBoundary,
 } from "@workstream/domain";
-import {
-  fetchTitlePolygon,
-  isVicmapEnabled,
-} from "./vicmap";
+import { fetchTitlePolygon } from "./vicmap";
 
 function toUpsert(
   draft: Omit<SiteBoundary, "id" | "updated_at">,
@@ -51,7 +48,7 @@ export async function saveSiteBoundaryDoc(
   });
 }
 
-/** Auto-trace: Vicmap parcel when enabled, else survey title_polygon. */
+/** Auto-trace: keyless Vicmap WFS parcel, else survey title_polygon. */
 export async function autoTraceSiteBoundary(
   store: Store,
   ownerId: string,
@@ -66,7 +63,7 @@ export async function autoTraceSiteBoundary(
   let source: "GIS_PARCEL" | "AI_GENERATED" = "AI_GENERATED";
   let confidence: number | null = 0.84;
 
-  if (preferGis && isVicmapEnabled() && project.lat != null && project.lng != null) {
+  if (preferGis && project.lat != null && project.lng != null) {
     try {
       polygon = await fetchTitlePolygon(project.lat, project.lng);
       if (polygon) {
@@ -83,16 +80,10 @@ export async function autoTraceSiteBoundary(
     const survey = await store.getSurvey(ownerId, projectId);
     if (survey?.title_polygon) {
       polygon = survey.title_polygon;
-      // Survey rings from Vicmap survey job are municipal; mock rings are AI-ish.
-      if (isVicmapEnabled()) {
-        sourceKind = "vicmap";
-        source = "GIS_PARCEL";
-        confidence = 0.94;
-      } else {
-        sourceKind = "ai_trace";
-        source = "AI_GENERATED";
-        confidence = 0.72;
-      }
+      // Survey job prefers Vicmap WFS; mock rectangle is the offline fallback.
+      sourceKind = "vicmap";
+      source = "GIS_PARCEL";
+      confidence = 0.94;
     }
   }
 

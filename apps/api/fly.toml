@@ -14,10 +14,10 @@
 #   flyctl secrets set CORS_ORIGIN="https://workstream-web.fly.dev"
 #   flyctl secrets set CLERK_SECRET_KEY="…"          # optional; dev fallback present
 #   flyctl secrets set CLERK_PUBLISHABLE_KEY="…"     # optional
-#   flyctl secrets set MAPBOX_TOKEN="…"              # optional; mock survey if absent
+#   flyctl secrets set MAPBOX_TOKEN="…"              # optional; mock geocode/aerial if absent
 #   flyctl secrets set ANTHROPIC_API_KEY="…"         # optional; mock design/audit if absent
 #   flyctl secrets set OPENAI_API_KEY="…"            # optional; canned transcript if absent
-#   flyctl secrets set VICMAP_ENABLED="true"         # optional; toggles real cadastral polygons
+#   Vicmap cadastral: keyless DELWP GeoServer WFS (no secret)
 
 app = "construct-api"
 primary_region = "syd"

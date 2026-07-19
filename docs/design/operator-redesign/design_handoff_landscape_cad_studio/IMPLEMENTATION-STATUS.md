@@ -2,7 +2,7 @@
 
 Tracks the **Complete Feature Checklist** in [README.md](./README.md).
 
-**Visual fidelity note (2026-07-19):** Production previously served MapLibre/`SiteCanvas` (Vicmap title → geo Fit sheet) — a different product surface than the handoff. `/projects/[id]` now mounts `HandoffDesignStudio` — the v4 `%`-coord aerial board from `Design Studio v4.dc.html` / `screenshots/01-frame.png` (inset paper board, SVG symbols, glass docks, AI draft toast). Geo `SiteCanvas` remains in the repo for later survey ingest, not as the default studio.
+**Visual fidelity note (2026-07-19):** `/projects/[id]` mounts `HandoffDesignStudio` — the v4 `%`-coord aerial board from `Design Studio v4.dc.html` / `screenshots/01-frame.png`. MapLibre `GeoSiteMap` / `SiteCanvas` removed. Vicmap cadastral is keyless DELWP GeoServer WFS (`apps/api/src/lib/vicmap.ts`, GetCapabilities self-discovery).
 
 Legend: **Done** · **Partial** · **Not started**
 
@@ -25,8 +25,8 @@ Legend: **Done** · **Partial** · **Not started**
 | Item | Status | Notes |
 |------|--------|-------|
 | Left tool rail | **Done** | `CanvasToolRail` — Trace/Edit/Add/Lock/Reset/Pan/Measure + zoom. |
-| Trace polygon | **Done** | GeoSiteMap click-trace over aerial; Vicmap auto-trace retained. |
-| Ghost-geometry rectangle autocomplete | **Done** | `inferRectangleCompletion()` + Tab / gold preview in GeoSiteMap. |
+| Trace polygon | **Done** | Handoff `TraceOverlay` click-trace; Vicmap WFS auto-trace retained. |
+| Ghost-geometry rectangle autocomplete | **Done** | `inferRectangleCompletion()` + Tab / gold preview in TraceOverlay. |
 | Edit handles | **Done** | BoundaryOverlay + `CadEntityHandles` (`replace_entity` vertex drag). |
 | Add / place symbols | **Done** | SketchInstrument + catalog. |
 | Multi-select marquee | **Done** | Marquee in SketchInstrument when Edit tool + sketch select mode. |
@@ -88,7 +88,7 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | 4 opacity sliders | **Done** | `CanvasLayerOpacityPanel` + survey preset on mode switch. |
 | Compliance stats independent of opacity | **Done** | Compliance dock always visible when mode allows. |
-| Survey-mode auto-preset | **Done** | `SURVEY_LAYER_PRESET` in SiteCanvas. |
+| Survey-mode auto-preset | **Done** | Handoff survey mode + Vicmap WFS title hydrate. |
 | Opacity on render | **Done** | MapLibre paint + design overlay vegetation bucket. |
 
 ---

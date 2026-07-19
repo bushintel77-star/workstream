@@ -15,7 +15,7 @@ hydration, Studio checkout, seat limits, and workspace membership.
 |------------|--------|
 | Core pipeline | Voice → survey → design studio → costing → audit → outputs |
 | Design studio | Catalog, sketch, envelope estimate, develop-from-sketch |
-| Dev fallbacks | Missing API keys use canned AI/transcripts/maps so the app is usable zero-keys |
+| Dev fallbacks | Missing API keys use canned AI/transcripts; Vicmap cadastral is keyless WFS; mock lot if WFS misses |
 | Client portal | Magic links (operator sends URL manually) |
 | Settings | Rate card, plant palette, crew, design assets |
 

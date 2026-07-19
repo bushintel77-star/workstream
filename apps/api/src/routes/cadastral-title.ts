@@ -2,11 +2,11 @@ import { FastifyInstance } from "fastify";
 import { buildArchitecturalTitleBlock } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
 import { geocodeAddress } from "../lib/mapbox";
-import { fetchTitleParcel, isVicmapEnabled } from "../lib/vicmap";
+import { fetchTitleParcel } from "../lib/vicmap";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 /**
- * Architectural title block · Vicmap cadastral for the selected address.
+ * Architectural title block · Vicmap cadastral (keyless DELWP GeoServer WFS).
  * Query `address` overrides the project address (demo site switcher).
  */
 export default async function cadastralTitleRoutes(fastify: FastifyInstance) {
@@ -28,22 +28,20 @@ export default async function cadastralTitleRoutes(fastify: FastifyInstance) {
       let parcel = null;
       let vicmapHit = false;
 
-      if (isVicmapEnabled()) {
-        try {
-          const sameAsProject =
-            address.toLowerCase() === project.address.toLowerCase();
-          const center =
-            sameAsProject && project.lat != null && project.lng != null
-              ? { lat: project.lat, lng: project.lng }
-              : await geocodeAddress(address);
-          const hit = await fetchTitleParcel(center.lat, center.lng);
-          if (hit) {
-            parcel = hit.attrs;
-            vicmapHit = true;
-          }
-        } catch (err) {
-          request.log.warn({ err }, "Vicmap cadastral-title lookup failed");
+      try {
+        const sameAsProject =
+          address.toLowerCase() === project.address.toLowerCase();
+        const center =
+          sameAsProject && project.lat != null && project.lng != null
+            ? { lat: project.lat, lng: project.lng }
+            : await geocodeAddress(address);
+        const hit = await fetchTitleParcel(center.lat, center.lng);
+        if (hit) {
+          parcel = hit.attrs;
+          vicmapHit = true;
         }
+      } catch (err) {
+        request.log.warn({ err }, "Vicmap cadastral-title lookup failed");
       }
 
       const titleBlock = buildArchitecturalTitleBlock({
