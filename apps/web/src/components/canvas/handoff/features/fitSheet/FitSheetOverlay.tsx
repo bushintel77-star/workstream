@@ -374,7 +374,7 @@ export function FitSheetOverlay({
                 ["Site coverage", `${areas.siteCoveragePct}%`],
                 [
                   "Boundary perimeter",
-                  `${schedule.boundaryPerimeterM.toFixed(2)} lm`,
+                  `${schedule.boundaryPerimeterM.toFixed(2)}\u00A0lm`,
                 ],
               ] as const
             ).map(([k, v]) => (
@@ -383,16 +383,6 @@ export function FitSheetOverlay({
                 <span className={css.mono}>{v}</span>
               </div>
             ))}
-            {areas.outdoorDiffersFromNaive ? (
-              <p
-                className={css.notesBody}
-                data-testid="outdoor-boolean-note"
-                title="Boolean difference (lot − footprint intersection) differs from naive area subtraction — typical with overhang or non-simple containment"
-              >
-                Outdoor uses polygon difference · naive lot − building would be{" "}
-                {areas.outdoorNaiveM2.toFixed(2)} m²
-              </p>
-            ) : null}
           </div>
 
           {/* On-canvas outside dims own B#/F# callouts — schedule keeps areas + legend. */}

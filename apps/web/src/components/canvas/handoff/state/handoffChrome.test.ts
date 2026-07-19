@@ -9,12 +9,13 @@ const base = {
 };
 
 describe("resolveHandoffChrome", () => {
-  it("hides Live BOM and utility in Sketch", () => {
+  it("hides Live BOM and floating consumer docks in Sketch", () => {
     const c = resolveHandoffChrome({ ...base, mode: "sketch" });
     expect(c.liveBom).toBe(false);
     expect(c.utilityDrawer).toBe(false);
     expect(c.horizon).toBe(false);
-    expect(c.aiCoach).toBe(true);
+    expect(c.aiCoach).toBe(false);
+    expect(c.sunGrowth).toBe(false);
   });
 
   it("hides Live BOM in Survey", () => {
@@ -24,13 +25,15 @@ describe("resolveHandoffChrome", () => {
     expect(c.sunGrowth).toBe(false);
   });
 
-  it("allows floating Live BOM and horizon in CAD", () => {
+  it("keeps utility hub in CAD without floating coach/sun/trade", () => {
     const c = resolveHandoffChrome({ ...base, mode: "cad" });
     expect(c.liveBom).toBe(true);
     expect(c.utilityDrawer).toBe(true);
-    expect(c.horizon).toBe(true);
-    expect(c.volumeIsolith).toBe(true);
-    expect(c.tradeMargin).toBe(true);
+    expect(c.horizon).toBe(false);
+    expect(c.volumeIsolith).toBe(false);
+    expect(c.tradeMargin).toBe(false);
+    expect(c.aiCoach).toBe(false);
+    expect(c.sunGrowth).toBe(false);
   });
 
   it("diets Cad chrome while AI ghosts are pending", () => {
@@ -44,6 +47,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.volumeIsolith).toBe(false);
     expect(c.tradeMargin).toBe(false);
     expect(c.floraRing).toBe(false);
+    expect(c.utilityDrawer).toBe(false);
   });
 
   it("collapses utility while Trace is armed", () => {
@@ -55,14 +59,6 @@ describe("resolveHandoffChrome", () => {
     expect(c.collapseUtility).toBe(true);
     expect(c.horizon).toBe(false);
     expect(c.selectionRing).toBe(false);
-    expect(c.volumeIsolith).toBe(true);
-    expect(c.tradeMargin).toBe(true);
-  });
-
-  it("hides Isolith and trade margin in Sketch", () => {
-    const c = resolveHandoffChrome({ ...base, mode: "sketch" });
-    expect(c.volumeIsolith).toBe(false);
-    expect(c.tradeMargin).toBe(false);
   });
 
   it("Quote keeps estimate path without draw chrome", () => {
@@ -107,19 +103,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.floraRing).toBe(false);
   });
 
-  it("Stage 1 keeps AI coach / flora under CAD title overlay", () => {
-    const c = resolveHandoffChrome({
-      ...base,
-      mode: "survey",
-      foundationCleanse: true,
-    });
-    expect(c.floraRing).toBe(true);
-    expect(c.aiCoach).toBe(true);
-    expect(c.sunGrowth).toBe(false);
-    expect(c.utilityDrawer).toBe(false);
-  });
-
-  it("Stage 1 CAD hides Isolith / trade margin to clear the title plate", () => {
+  it("Stage 1 title overlay stays monograph — no floating coach", () => {
     const c = resolveHandoffChrome({
       ...base,
       mode: "cad",
@@ -127,6 +111,7 @@ describe("resolveHandoffChrome", () => {
     });
     expect(c.volumeIsolith).toBe(false);
     expect(c.tradeMargin).toBe(false);
-    expect(c.aiCoach).toBe(true);
+    expect(c.aiCoach).toBe(false);
+    expect(c.floraRing).toBe(false);
   });
 });

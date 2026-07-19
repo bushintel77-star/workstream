@@ -3,6 +3,9 @@ import type { StudioMode, StudioTool } from "../studioCatalog";
 /**
  * Canvas-first progressive disclosure for HandoffDesignStudio.
  * Binding: docs/CANVAS-FIRST-UX.md + handoff README mandate.
+ *
+ * Monograph rule: floating consumer docks (AI coach, sun scrubber, trade
+ * pills) stay off the vector plane — telemetry lives in the right utility hub.
  */
 export type HandoffChrome = {
   /** Compliance + Live BOM utility hub */
@@ -15,9 +18,9 @@ export type HandoffChrome = {
   volumeIsolith: boolean;
   /** Ambient budget margin + selection SKU trade tags */
   tradeMargin: boolean;
-  /** Sun / growth scrubber */
+  /** Sun / growth scrubber (canvas float — prefer utility hub) */
   sunGrowth: boolean;
-  /** AI coach dock */
+  /** AI coach dock (canvas float — prefer Ask AI / utility) */
   aiCoach: boolean;
   /** Ambient left ribbon (layers / peel) */
   ambientRibbon: boolean;
@@ -63,7 +66,6 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const draftCrowded = pendingGhosts > 0;
 
   if (foundationCleanse) {
-    // CAD title overlay — keep coach; hide trade chrome that crowds the plate
     return {
       utilityDrawer: false,
       liveBom: false,
@@ -71,16 +73,16 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       volumeIsolith: false,
       tradeMargin: false,
       sunGrowth: false,
-      aiCoach: !frameOn && !focusOn && !clientView,
+      aiCoach: false,
       ambientRibbon: !frameOn && !clientView && !focusOn,
       selectionRing: false,
       drawTools: !frameOn && !clientView && !focusOn && mode !== "quote" && mode !== "share",
       collapseUtility: true,
-      floraRing: !frameOn && !focusOn && !clientView,
+      floraRing: false,
     };
   }
 
-  // Fit sheet / focus / client — paper-first composition, no floating cost HUDs
+  // Fit sheet / focus / client — paper-first composition, no floating HUDs
   if (focusOn || clientView || frameOn) {
     return {
       utilityDrawer: false,
@@ -105,18 +107,16 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   return {
     utilityDrawer: cadLike && !draftCrowded,
     liveBom: cadLike || mode === "quote",
-    horizon: mode === "cad" && !drawingHot && !draftCrowded,
-    // Isolith + trade margin stay live while Add/Edit (unlike conversational horizon)
-    volumeIsolith: mode === "cad" && !draftCrowded,
-    tradeMargin: mode === "cad" && !draftCrowded,
-    // Sun/growth is a design tool — hide while AI draft review is the job
-    sunGrowth:
-      plan && mode !== "survey" && mode !== "sketch" && !draftCrowded,
-    aiCoach: plan && mode !== "survey",
+    // Monograph canvas — no floating consumer widgets on the drawing plane
+    horizon: false,
+    volumeIsolith: false,
+    tradeMargin: false,
+    sunGrowth: false,
+    aiCoach: false,
     ambientRibbon: plan,
     selectionRing: mode === "cad" && !drawingHot && !draftCrowded,
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
-    floraRing: plan && mode !== "survey" && !draftCrowded,
+    floraRing: false,
   };
 }

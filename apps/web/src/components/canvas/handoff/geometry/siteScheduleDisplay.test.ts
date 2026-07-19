@@ -4,7 +4,7 @@ import { buildSiteSchedule } from "./polygon";
 import { resolveFitSheetAreas } from "./siteScheduleDisplay";
 
 describe("resolveFitSheetAreas", () => {
-  it("never uses a bogus cadastral house area — footprint from drawing", () => {
+  it("outdoor is lot minus building when cadastral lot applies", () => {
     const schedule = buildSiteSchedule(
       WRIGHTS_SEED.boundary,
       WRIGHTS_SEED.building,
@@ -18,8 +18,8 @@ describe("resolveFitSheetAreas", () => {
     });
     expect(display.lotAreaM2).toBe(lot);
     expect(display.buildingAreaM2).toBe(schedule.buildingAreaM2);
-    // Outdoor stays boolean-from-drawing (not cadastral − building).
-    expect(display.outdoorAreaM2).toBe(schedule.outdoorAreaM2);
+    expect(display.outdoorAreaM2).toBeCloseTo(lot - schedule.buildingAreaM2, 5);
+    expect(display.outdoorDiffersFromNaive).toBe(false);
     expect(display.lotSource).toBe("cadastral");
   });
 
@@ -35,7 +35,10 @@ describe("resolveFitSheetAreas", () => {
     });
     expect(display.buildingAreaM2).toBe(schedule.buildingAreaM2);
     expect(display.lotSource).toBe("drawing");
-    expect(display.outdoorAreaM2).toBe(schedule.outdoorAreaM2);
+    expect(display.outdoorAreaM2).toBeCloseTo(
+      schedule.lotAreaM2 - schedule.buildingAreaM2,
+      5,
+    );
   });
 
   it("falls back to drawn lot when cadastral missing", () => {
@@ -47,24 +50,9 @@ describe("resolveFitSheetAreas", () => {
     const display = resolveFitSheetAreas({ schedule, cadastralLotM2: null });
     expect(display.lotSource).toBe("drawing");
     expect(display.lotAreaM2).toBe(schedule.lotAreaM2);
-  });
-
-  it("surfaces outdoorDiffersFromNaive from the schedule", () => {
-    const lot = [
-      { x: 20, y: 20 },
-      { x: 80, y: 20 },
-      { x: 80, y: 80 },
-      { x: 20, y: 80 },
-    ];
-    const overhang = [
-      { x: 65, y: 40 },
-      { x: 95, y: 40 },
-      { x: 95, y: 60 },
-      { x: 65, y: 60 },
-    ];
-    const schedule = buildSiteSchedule(lot, overhang, 110);
-    const display = resolveFitSheetAreas({ schedule });
-    expect(display.outdoorDiffersFromNaive).toBe(true);
-    expect(display.outdoorNaiveM2).toBe(schedule.outdoorNaiveM2);
+    expect(display.outdoorAreaM2).toBeCloseTo(
+      schedule.lotAreaM2 - schedule.buildingAreaM2,
+      5,
+    );
   });
 });

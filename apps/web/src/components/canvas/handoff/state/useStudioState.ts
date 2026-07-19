@@ -63,6 +63,7 @@ import {
   type TraceTarget,
 } from "./studioTypes";
 import { canvasMetresRingToPct } from "../geometry/geoToPct";
+import { reprojectDocToBoundary } from "../geometry/reprojectToBoundary";
 import {
   clampVegetationElevationScale,
   clearBoundaryLikeSketches,
@@ -878,7 +879,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
           .map((v) => v.canvas_coords);
         const pct = canvasMetresRingToPct(verts);
         if (pct.length >= 3) {
-          mutate((snap) => ({ snap: { ...snap, boundary: pct } }));
+          mutate((snap) => ({
+            snap: {
+              ...snap,
+              ...reprojectDocToBoundary(snap, pct),
+            },
+          }));
           boundarySnapped = true;
           setUi({
             boundarySource:
@@ -967,7 +973,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           mutate((snap) => ({
             snap: {
               ...snap,
-              boundary: pct,
+              ...reprojectDocToBoundary(snap, pct),
             },
           }));
           snapped = true;
@@ -1185,7 +1191,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
           .map((v) => v.canvas_coords);
         const pct = canvasMetresRingToPct(verts);
         if (pct.length < 3) return;
-        mutate((snap) => ({ snap: { ...snap, boundary: pct } }));
+        mutate((snap) => ({
+          snap: {
+            ...snap,
+            ...reprojectDocToBoundary(snap, pct),
+          },
+        }));
         setUi({
           boundarySource:
             res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
@@ -1197,8 +1208,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     return () => {
       cancelled = true;
     };
-    // once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateBoundary = useCallback(

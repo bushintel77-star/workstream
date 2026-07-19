@@ -22,20 +22,20 @@
 .tracePlan {
   min-height: 28px;
   padding: 0 10px;
-  border-radius: 7px;
-  border: 1px solid rgba(36, 19, 24, 0.14);
-  background: rgba(255, 246, 248, 0.9);
-  color: #241318;
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.2);
+  background: transparent;
+  color: #1c1917;
   font: inherit;
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 550;
   cursor: pointer;
 }
 
 .tracePlan {
-  border-color: #c2455f;
-  background: #c2455f;
-  color: #fff6f8;
+  border-color: #1c1917;
+  background: #1c1917;
+  color: #faf6f2;
 }
 
 .widthChip {
@@ -43,7 +43,7 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
-  color: #8c8a85;
+  color: #6b6560;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
@@ -54,7 +54,7 @@
   right: 18px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
-  color: #7a5560;
+  color: #6b6560;
   z-index: 9;
 }
 
@@ -63,7 +63,6 @@
   flex: 1;
   min-height: 240px;
   width: 100%;
-  /* Leave a slim lane for the plan-link card */
   padding: 4px min(176px, 27vw) 8px 4px;
   overflow: hidden;
 }
@@ -75,7 +74,6 @@
   min-height: 220px;
 }
 
-/* Fixed-px annotation layer — never scaled with the stretch SVG */
 .hud {
   position: absolute;
   inset: 4px min(176px, 27vw) 8px 4px;
@@ -87,45 +85,45 @@
   position: absolute;
   transform: translate(-100%, -50%);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
-  color: rgba(92, 90, 85, 0.75);
+  color: rgba(28, 25, 23, 0.55);
   letter-spacing: 0.02em;
   white-space: nowrap;
   pointer-events: none;
 }
 
+/* Architectural callout — ink string, no pill / shadow */
 .label {
   position: absolute;
   transform: translate(-50%, -100%);
-  margin-top: -4px;
-  max-width: 140px;
-  height: 20px;
-  padding: 0 7px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  border-radius: 999px;
-  background: rgba(250, 246, 242, 0.96);
-  color: #5c5a55;
+  margin-top: -2px;
+  max-width: 160px;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #1c1917;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  line-height: 18px;
+  line-height: 1.2;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: 0 1px 3px rgba(36, 19, 24, 0.06);
+  overflow: visible;
+  text-overflow: clip;
+  box-shadow: none;
   pointer-events: auto;
   cursor: pointer;
 }
 
 .label:hover,
 .labelActive {
-  color: #241318;
-  border-color: rgba(194, 69, 95, 0.4);
-  background: #fffbfc;
-}
-
-.labelActive {
+  color: #1c1917;
   font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: transparent;
+  border: none;
 }

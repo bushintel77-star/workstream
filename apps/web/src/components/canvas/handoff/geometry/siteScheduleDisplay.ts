@@ -14,10 +14,7 @@ export type FitSheetAreaDisplay = {
 /**
  * Site schedule numbers for the Fit sheet panel.
  * Building footprint always tracks the drawn polygon.
- * Outdoor uses Turf boolean difference from {@link SiteSchedule} (not
- * naive lot − building). When a cadastral lot overrides the drawn lot
- * area, outdoor stays the boolean garden from the drawing — cadastral
- * is only applied to the lot figure / coverage denominator.
+ * Outdoor is deterministic: lot − building footprint.
  */
 export function resolveFitSheetAreas(args: {
   schedule: SiteSchedule;
@@ -32,17 +29,15 @@ export function resolveFitSheetAreas(args: {
       ? args.cadastralLotM2
       : null;
   const lotAreaM2 = cadastral ?? args.schedule.lotAreaM2;
-  const outdoorAreaM2 = args.schedule.outdoorAreaM2;
-  const outdoorNaiveM2 = args.schedule.outdoorNaiveM2;
-  const outdoorDiffersFromNaive = args.schedule.outdoorDiffersFromNaive;
+  const outdoorAreaM2 = Math.max(0, lotAreaM2 - buildingAreaM2);
   const siteCoveragePct =
     lotAreaM2 > 0 ? Math.round((buildingAreaM2 / lotAreaM2) * 100) : 0;
   return {
     lotAreaM2,
     buildingAreaM2,
     outdoorAreaM2,
-    outdoorNaiveM2,
-    outdoorDiffersFromNaive,
+    outdoorNaiveM2: outdoorAreaM2,
+    outdoorDiffersFromNaive: false,
     siteCoveragePct,
     lotSource: cadastral != null ? "cadastral" : "drawing",
   };

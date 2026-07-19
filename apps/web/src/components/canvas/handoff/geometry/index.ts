@@ -6,5 +6,6 @@ export * from "./drafting";
 export * from "./siteScheduleDisplay";
 export * from "./elevationLabels";
 export * from "./geoToPct";
+export * from "./reprojectToBoundary";
 export * from "./foundationCadContext";
 export * from "./outsideDims";

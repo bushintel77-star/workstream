@@ -209,15 +209,13 @@ export function ElevationBoard({
                   width={w}
                   height={h}
                   fill={
-                    it.ghost ? "rgba(232,184,75,0.22)" : "rgba(194,69,95,0.28)"
+                    it.ghost ? "rgba(28,25,23,0.06)" : "rgba(28,25,23,0.1)"
                   }
-                  stroke={
-                    selected ? "#C2455F" : it.ghost ? "#E8B84B" : "#C2455F"
-                  }
-                  strokeWidth={selected ? 1 : 0.55}
+                  stroke={selected ? "#1C1917" : it.ghost ? "#6B6560" : "#1C1917"}
+                  strokeWidth={selected ? 0.9 : 0.55}
                   strokeDasharray={it.ghost ? "1.5 1.2" : undefined}
                   vectorEffect="non-scaling-stroke"
-                  opacity={it.ghost ? 0.5 : 1}
+                  opacity={it.ghost ? 0.55 : 1}
                 />
               </g>
             ))}
@@ -233,9 +231,10 @@ export function ElevationBoard({
                   y1={p.leader.y1}
                   x2={p.leader.x2}
                   y2={p.leader.y2}
-                  stroke="rgba(92,90,85,0.4)"
-                  strokeWidth={0.2}
+                  stroke="#1C1917"
+                  strokeWidth={0.35}
                   vectorEffect="non-scaling-stroke"
+                  opacity={0.55}
                 />
               ) : null,
             )}

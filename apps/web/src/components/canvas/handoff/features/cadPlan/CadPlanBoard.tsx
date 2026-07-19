@@ -569,11 +569,11 @@ export function CadPlanBoard({
               })),
             )}
             fill="none"
-            stroke="#C99757"
-            strokeWidth={1}
-            strokeDasharray="4 4"
+            stroke="#1A1A1A"
+            strokeWidth={0.8}
+            strokeDasharray="3 3"
             vectorEffect="non-scaling-stroke"
-            opacity={0.9 * layerOpacity.council}
+            opacity={0.75 * layerOpacity.council}
           />
         ) : null}
         {exist && tpz ? (
@@ -738,19 +738,16 @@ export function CadPlanBoard({
           className={css.cadAreaLabel}
           style={{ left: `${titleCentroid.x}%`, top: `${titleCentroid.y}%` }}
           data-testid="cad-title-area"
+          title={
+            titleBoundaryLocked
+              ? "Title locked"
+              : "Title unlocked — drag corner nodes to refine"
+          }
         >
           <span className={css.cadAreaValue}>{formatCadAreaM2(areaLabelM2)}</span>
-          <span className={css.cadAreaMeta}>
-            {titleMeta?.parcelRef
-              ? titleMeta.parcelRef
-              : titleMeta?.sourceLabel ?? "title area"}
-          </span>
-          {titleMeta?.councilLabel ? (
-            <span className={css.cadAreaMeta}>{titleMeta.councilLabel}</span>
+          {titleMeta?.parcelRef ? (
+            <span className={css.cadAreaMeta}>{titleMeta.parcelRef}</span>
           ) : null}
-          <span className={css.cadLockState}>
-            {titleBoundaryLocked ? "LOCKED" : "UNLOCKED · drag nodes"}
-          </span>
         </div>
       ) : null}
 
@@ -802,23 +799,18 @@ export function CadPlanBoard({
               transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
               border: it.ghost
                 ? isCur
-                  ? "2px solid #C2455F"
+                  ? "1.5px solid #1c1917"
                   : it.stale
-                    ? "1.5px dashed #B78A2E"
-                    : "1.5px dashed rgba(232,184,75,0.9)"
+                    ? "1px dashed #8a6a1f"
+                    : "1px dashed rgba(28,25,23,0.55)"
                 : flagged
-                  ? "2px solid #C2455F"
-                  : "none",
-              boxShadow:
-                selected || groupIds.includes(it.id)
-                  ? "0 0 0 2px rgba(255,246,248,0.95), 0 0 0 4px #C2455F"
-                  : isCur
-                    ? "0 0 0 3px rgba(194,69,95,0.3)"
-                    : flagged
-                      ? "0 0 0 3px rgba(194,69,95,0.35)"
-                      : hovered && !it.ghost
-                        ? "0 0 0 2px rgba(255,246,248,0.85), 0 0 0 3.5px rgba(194,69,95,0.4)"
-                        : "none",
+                  ? "1.5px solid #1c1917"
+                  : selected || groupIds.includes(it.id)
+                    ? "1.5px solid #1c1917"
+                    : hovered && !it.ghost
+                      ? "1px solid rgba(28,25,23,0.45)"
+                      : "none",
+              boxShadow: "none",
               zIndex: isCur
                 ? 50
                 : selected || groupIds.includes(it.id)
