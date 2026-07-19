@@ -598,9 +598,7 @@ export function CadPlanBoard({
               className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
               title={
-                foundationCleanse
-                  ? "Drag title node (vertex / ortho snap)"
-                  : "Corner vertex"
+                foundationCleanse ? "Drag boundary node" : "Corner vertex"
               }
               aria-label={`Boundary corner ${i + 1}`}
               data-testid="cad-title-node"

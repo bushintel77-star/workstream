@@ -370,17 +370,14 @@ export function HandoffDesignStudio({
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
   };
 
-  const draftLabel = ui.foundationCleanse
-    ? "STAGE 1 · TITLE LOCKED"
-    : ai.status === "scanning"
-      ? "AI DRAFT: SCANNING"
+  const draftLabel =
+    ai.status === "scanning"
+      ? "Scanning"
       : ai.status === "assisting"
-        ? "AI DRAFT: ASSISTING"
-        : titleLocked && ai.status === "unverified"
-          ? "VICMAP TITLE · DESIGN DRAFT"
-          : ai.status === "unverified"
-            ? "AI DRAFT: UNVERIFIED"
-            : "AI DRAFT: VERIFIED";
+        ? "Assisting"
+        : ai.status === "unverified"
+          ? "Draft"
+          : "Ready";
 
   const onCoachTip = (tip: StudioAiSuggestion) => {
     if (tip.id === "review-ghosts" || tip.id === "scan-site") {
@@ -469,31 +466,90 @@ export function HandoffDesignStudio({
 
         <button
           type="button"
-          className={`${css.toolBtn}${ui.foundationCleanse ? ` ${css.toolBtnActive}` : ""}`}
-          data-testid="stage1-foundation-top"
-          title="Stage 1 CAD title — Vicmap snap, drag/lock boundary, AI layer under"
+          className={`${css.iconBtn}${ui.foundationCleanse ? ` ${css.iconBtnActive}` : ""}`}
+          data-testid="title-boundary-top"
+          aria-label={
+            ui.foundationCleanse ? "Close title boundary" : "Title boundary"
+          }
+          title={
+            ui.foundationCleanse ? "Close title boundary" : "Title boundary"
+          }
           onClick={() => {
             if (ui.foundationCleanse) studio.exitStage1Foundation();
             else void studio.runStage1FoundationCleanse();
           }}
         >
-          {ui.foundationCleanse ? "Exit Stage 1" : "Stage 1"}
+          <svg
+            className={css.iconBtnSvg}
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden
+          >
+            <path
+              d="M2.5 3.5h11v9H2.5zM5 3.5v9M11 3.5v9M2.5 8h11"
+              stroke="currentColor"
+              strokeWidth="1.25"
+            />
+          </svg>
         </button>
-        {ui.foundationCleanse ? (
+        {ui.foundationCleanse || titleLocked ? (
           <button
             type="button"
-            className={`${css.toolBtn}${ui.titleBoundaryLocked ? ` ${css.toolBtnActive}` : ""}`}
+            className={`${css.iconBtn}${ui.titleBoundaryLocked ? ` ${css.iconBtnActive}` : ""}`}
             data-testid="title-boundary-lock-top"
-            title={
-              ui.titleBoundaryLocked
-                ? "Unlock title CAD nodes to snap/drag"
-                : "Lock title CAD — freeze edge metadata"
-            }
+            aria-label={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
+            title={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
             onClick={() =>
               studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked)
             }
           >
-            {ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
+            {ui.titleBoundaryLocked ? (
+              <svg
+                className={css.iconBtnSvg}
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden
+              >
+                <rect
+                  x="3.5"
+                  y="7"
+                  width="9"
+                  height="6.5"
+                  rx="1.2"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                />
+                <path
+                  d="M5.5 7V5.2a2.5 2.5 0 0 1 5 0V7"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ) : (
+              <svg
+                className={css.iconBtnSvg}
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden
+              >
+                <rect
+                  x="3.5"
+                  y="7"
+                  width="9"
+                  height="6.5"
+                  rx="1.2"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                />
+                <path
+                  d="M5.5 7V5.2a2.5 2.5 0 0 1 4.8-.8"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
           </button>
         ) : null}
         <button
@@ -806,16 +862,6 @@ export function HandoffDesignStudio({
                 onAccept={studio.acceptFlora}
                 onDismiss={studio.dismissFlora}
               />
-            ) : null}
-            {ui.foundationCleanse && !ui.frameOn ? (
-              <div
-                className={css.foundationBanner}
-                data-testid="foundation-cleanse-banner"
-              >
-                Stage 1 ·{" "}
-                {ui.titleBoundaryLocked ? "title locked" : "drag + snap"} · 1:
-                {ui.sheetScaleDenom}
-              </div>
             ) : null}
             {chrome.horizon ? (
               <HorizonMarkers
@@ -1168,13 +1214,9 @@ export function HandoffDesignStudio({
               {draftLabel}
             </span>
             <span className={css.aiStatusMeta}>
-              {ui.foundationCleanse
-                ? ui.titleBoundaryLocked
-                  ? "Title CAD locked · AI intelligence underlay · Unlock title to drag nodes"
-                  : "Title CAD unlocked · drag/snap nodes · Lock title when true · AI underlay live"
-                : ai.pendingCount
-                  ? `${ai.pendingCount} proposal${ai.pendingCount === 1 ? "" : "s"} · A accept · R reject`
-                  : "Scan or Ask AI to propose layout moves"}
+              {ai.pendingCount
+                ? `${ai.pendingCount} proposal${ai.pendingCount === 1 ? "" : "s"} · A accept · R reject`
+                : "Scan or Ask AI to propose layout moves"}
             </span>
             {!ui.coachOpen ? (
               <button

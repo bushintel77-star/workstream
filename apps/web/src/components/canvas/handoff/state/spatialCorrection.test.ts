@@ -50,8 +50,11 @@ describe("isSpatialCorrectionQuery", () => {
 });
 
 describe("isStage1FoundationQuery", () => {
-  it("matches foundation cleanse / Vicmap title phrases", () => {
+  it("matches title-boundary / Vicmap phrases", () => {
     expect(isStage1FoundationQuery("Stage 1 cadastral foundation cleanse")).toBe(
+      true,
+    );
+    expect(isStage1FoundationQuery("title boundary — Vicmap parcel")).toBe(
       true,
     );
     expect(isStage1FoundationQuery("purge aerial and vegetation")).toBe(true);

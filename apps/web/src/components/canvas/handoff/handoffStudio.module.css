@@ -167,6 +167,49 @@
   color: #e6e9ea;
 }
 
+/** Quiet icon controls — progressive disclosure, no stage labels. */
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: transparent;
+  color: #241318;
+  cursor: pointer;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconBtn:hover {
+  border-color: #c2455f;
+}
+
+.iconBtnActive {
+  background: #241318;
+  color: #fff6f8;
+  border-color: #241318;
+}
+
+.rootDark .iconBtn {
+  border-color: rgba(230, 233, 234, 0.22);
+  color: #e6e9ea;
+}
+
+.rootDark .iconBtnActive {
+  background: #e6e9ea;
+  color: #1a1216;
+  border-color: #e6e9ea;
+}
+
+.iconBtnSvg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .cmdBtn {
   height: 34px;
   padding: 0 12px;
@@ -268,25 +311,6 @@
   text-align: center;
   pointer-events: none;
   box-shadow: 0 10px 28px rgba(42, 23, 29, 0.28);
-}
-
-.foundationBanner {
-  position: absolute;
-  left: 50%;
-  top: 10px;
-  transform: translateX(-50%);
-  z-index: 20;
-  max-width: min(360px, calc(100% - 48px));
-  padding: 6px 12px;
-  border: 1px solid rgba(28, 25, 23, 0.14);
-  background: color-mix(in srgb, var(--sds-canvas-bg, #f7f4ef) 94%, #1c1917);
-  color: #1c1917;
-  font-size: var(--ws-type-hud, 11px);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-align: center;
-  pointer-events: none;
-  white-space: nowrap;
 }
 
 .zoomWorld {

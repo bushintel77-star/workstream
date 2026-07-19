@@ -172,10 +172,10 @@ export function clearBoundaryLikeSketches(
   return { strokes: kept, cleared: strokes.length - kept.length };
 }
 
-/** NLP intent — Stage 1 Cadastral Alignment & Foundation Cleanse. */
+/** NLP intent — title-boundary / cadastral foundation (progressive, unlabeled). */
 export function isStage1FoundationQuery(query: string): boolean {
   const q = query.toLowerCase();
-  return /stage\s*1|cadastral\s+foundation|foundation\s+cleanse|purge\s+(aerial|vegetation|ai)|vicmap\s+title\s+boundary|authoritative\s+(title|cadastral)|legal\s+land\s+records|to[- ]scale\s+2d\s+cad\s+title|vector\s+alignment|layer\s+purge/.test(
+  return /stage\s*1|title\s+boundary|cadastral\s+foundation|foundation\s+cleanse|purge\s+(aerial|vegetation|ai)|vicmap\s+(title|parcel)|authoritative\s+(title|cadastral)|legal\s+land\s+records|to[- ]scale\s+2d\s+cad\s+title|vector\s+alignment|layer\s+purge/.test(
     q,
   );
 }

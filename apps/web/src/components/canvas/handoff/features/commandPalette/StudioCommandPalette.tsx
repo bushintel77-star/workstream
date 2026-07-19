@@ -64,15 +64,14 @@ export function StudioCommandPalette({
         run: () => onAskAi(query.trim() || "shade the west glazing"),
       },
       {
-        id: "stage1-foundation",
-        label: "Stage 1 foundation cleanse",
-        detail:
-          "Purge aerial + AI vegetation, lock Vicmap title boundary, charcoal CAD overlay with mm dims",
+        id: "title-boundary",
+        label: "Title boundary",
+        detail: "Snap Vicmap title, clear aerial noise, charcoal boundary with dims",
         keywords:
-          "stage 1 cadastral foundation cleanse vicmap title boundary aerial purge vegetation authoritative legal land records",
+          "title boundary cadastral foundation vicmap aerial purge vegetation land records stage",
         run: () =>
           onAskAi(
-            "Stage 1 cadastral foundation cleanse — Vicmap title boundary, purge aerial",
+            "title boundary — Vicmap parcel, clear aerial",
           ),
       },
       {

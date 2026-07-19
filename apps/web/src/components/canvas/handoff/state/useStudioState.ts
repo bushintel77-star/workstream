@@ -875,9 +875,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
         council: 0.25,
         vegetation: 0.4,
       },
-      assistReply: "Stage 1 CAD — snapping Vicmap title (AI layer kept under)…",
+      assistReply: "Snapping Vicmap title…",
     });
-    notes.push("CAD title plate · AI intelligence underlay retained");
+    notes.push("Title boundary live");
 
     // Clear only title-trace sketches — keep design strokes / AI items
     const sketches = clearBoundaryLikeSketches(
@@ -917,15 +917,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
           });
           notes.push(
             res.boundary.source_kind === "vicmap"
-              ? "Vicmap parcel snapped — drag nodes or Lock title"
-              : "Title polygon snapped — drag nodes or Lock title",
+              ? "Vicmap parcel snapped"
+              : "Title polygon snapped",
           );
         }
       } catch {
-        notes.push("Vicmap unavailable — drag seed title nodes, then Lock");
+        notes.push("Vicmap unavailable — drag title nodes");
       }
     } else {
-      notes.push("No project id — drag title nodes, then Lock");
+      notes.push("Drag title nodes to refine");
     }
 
     setUi({
@@ -938,7 +938,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       frameOn: true,
       aerialSuppressed: true,
       aerialUri: null,
-      assistReply: `Stage 1 CAD + Fit sheet. ${notes.join(" · ")}`,
+      assistReply: notes.join(" · "),
     });
   }, [mutate, projectId, setUi, state.doc.boundary, state.doc.strokes]);
 
@@ -949,8 +949,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         tool: titleBoundaryLocked ? "pan" : "edit",
         locked: false,
         assistReply: titleBoundaryLocked
-          ? "Title CAD locked — edge metadata frozen. Unlock to snap/drag nodes."
-          : "Title CAD unlocked — drag vertices (ortho/vertex snap). Lock when true.",
+          ? "Title locked"
+          : "Title unlocked — drag nodes to refine",
       });
     },
     [setUi],
@@ -965,8 +965,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       aerialSuppressed: true,
       aerialUri: null,
       layerOpacity: { ...DESIGN_LAYER_PRESET },
-      assistReply:
-        "Stage 1 exited — design chrome restored. Aerial stays off until you drop imagery.",
+      assistReply: null,
     });
   }, [setUi]);
 

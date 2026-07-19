@@ -22,11 +22,11 @@ Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json
 
 - Home: `/` — address composer + sites list
 - Operator canvas: `/projects/[id]?mode=survey|sketch|cad|quote|share` — mounts `HandoffDesignStudio` (`%-coord` parchment board)
-- **Fit sheet** (cream paper working drawing): handoff `FitSheetOverlay` + Stage 1 Vicmap title. Survey → Stage 1 / lock title → Fit sheet (or auto on CAD/Quote/Share). Toggle with **F** / `data-testid="fit-sheet-top"`. Session prefs: `ws-fit-sheet:{projectId}`, `ws-fit-dims:{projectId}`.
+- **Fit sheet** (cream paper working drawing): handoff `FitSheetOverlay` + Vicmap title boundary. Survey → title boundary / lock icon → Fit sheet (or auto on CAD/Quote/Share). Toggle with **F** / `data-testid="fit-sheet-top"`. Session prefs: `ws-fit-sheet:{projectId}`, `ws-fit-dims:{projectId}`. No “Stage 1” labels in the UI — progressive disclosure via icon controls.
 
 **Vicmap cadastral** (API): keyless DELWP GeoServer WFS at `opendata.maps.vic.gov.au` — `apps/api/src/lib/vicmap.ts` self-discovers property/building layers via GetCapabilities (no `VICMAP_ENABLED` / developer.vic.gov.au API key). MapLibre `GeoSiteMap` / `SiteCanvas` removed; Trace + Calibrate on the handoff board remains the offline fallback.
 
-Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, Stage 1 foundation cleanse, Fit sheet dims.
+Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, title-boundary snap, Fit sheet dims.
 
 **Design Studio v4/v5 handoff** (reference): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README checklist; progress in `IMPLEMENTATION-STATUS.md`.
 
