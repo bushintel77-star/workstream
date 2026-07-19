@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&amp;family=Sora:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F6EAED;color:#241318;font-family:Sora,ui-sans-serif,sans-serif}
+a{color:#C2455F;text-decoration:none} a:hover{color:#9E3049}
+::selection{background:#FFD3DE}
+input[type=range]{accent-color:#C2455F}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(36,19,24,0.15);border-radius:4px}
+@keyframes ccIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes ccFade{from{opacity:0}to{opacity:1}}
+@keyframes ccPulse{0%,100%{opacity:1}50%{opacity:0.3}}
+button{transition:background 0.16s,border-color 0.16s,color 0.16s,opacity 0.16s}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+<div style="height:100vh;min-height:620px;display:flex;flex-direction:column;background:#F6EAED" data-screen-label="Design studio v4 — Curtis &amp; Co CAD">
+  <div style="flex:none;display:flex;align-items:center;gap:12px;padding:10px 18px 8px;flex-wrap:wrap;row-gap:8px">
+    <div style="flex:none">
+      <div style="font-family:Fraunces,serif;font-size:21px;font-weight:600;letter-spacing:-0.01em;line-height:1.1;white-space:nowrap">Curtis &amp; Co</div>
+      <div style="font-size:11px;color:#7A5560;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{siteAddr}}</div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:3px;background:rgba(36,19,24,0.05);border-radius:99px;padding:4px">
+      <sc-for list="{{modes}}" as="m" hint-placeholder-count="4">
+        <button onClick="{{m.pick}}" style="height:30px;padding:0 15px;border-radius:99px;border:none;cursor:pointer;background:{{m.bg}};color:{{m.fg}};font-size:12px;font-weight:600;font-family:Sora,sans-serif;box-shadow:{{m.sh}}">{{m.label}}</button>
+      </sc-for>
+    </div>
+    <div style="flex:1"></div>
+    <div style="text-align:right;font-family:'IBM Plex Mono',monospace;line-height:1.5;flex:none">
+      <div style="font-size:8.5px;letter-spacing:0.14em;color:#B08A95">WORKING DRAWING</div>
+      <div style="font-size:10px;color:#7A5560">Vicmap · Land Vic · {{areaTxt}}</div>
+    </div>
+    <sc-if value="{{frameOn}}" hint-placeholder-val="{{false}}">
+      <div style="display:flex;border:1px solid rgba(36,19,24,0.12);border-radius:10px;overflow:hidden;flex:none">
+        <button onClick="{{setPaperA3}}" style="height:34px;padding:0 10px;border:none;background:{{paperA3Bg}};color:{{paperA3Fg}};font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">A3</button>
+        <button onClick="{{setPaperA4}}" style="height:34px;padding:0 10px;border:none;background:{{paperA4Bg}};color:{{paperA4Fg}};font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;border-left:1px solid rgba(36,19,24,0.12)">A4</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{frameOn}}" hint-placeholder-val="{{false}}">
+      <button onClick="{{toggleSheetElev}}" title="Stack front + side elevation profiles on this sheet" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:{{sheetElevBg}};color:{{sheetElevFg}};font-size:11.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;flex:none" style-hover="border:1px solid #C2455F">{{sheetElevLabel}}</button>
+    </sc-if>
+    <button onClick="{{toggleFrame}}" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:{{frameBg}};color:{{frameFg}};font-size:11.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;flex:none" style-hover="border:1px solid #C2455F">Fit sheet</button>
+    <button onClick="{{toggleDark}}" title="Dark canvas (eye strain)" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:{{darkBg}};color:{{darkFg}};font-size:11.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;flex:none" style-hover="border:1px solid #C2455F">{{darkLabel}}</button>
+<sc-if value="{{layersBtnOn}}" hint-placeholder-val="{{true}}">
+    <div style="position:relative;flex:none">
+      <button onClick="{{toggleLayers}}" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:{{layersBg}};color:{{layersFg}};font-size:11.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif" style-hover="border:1px solid #C2455F">⧉ Layers</button>
+      <sc-if value="{{layersOn}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;right:0;top:40px;width:210px;background:#FFFBFC;border:1px solid rgba(36,19,24,0.1);border-radius:14px;box-shadow:0 14px 44px rgba(42,23,29,0.25);padding:8px;z-index:40;display:flex;flex-direction:column;gap:2px;animation:ccIn 0.2s cubic-bezier(0.2,0.7,0.2,1) both">
+          <sc-for list="{{layerList}}" as="l" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:3px;padding:7px 9px">
+              <div style="display:flex;align-items:baseline;gap:6px">
+                <span style="flex:1;font-size:11.5px;font-weight:500;color:#241318">{{l.name}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95;flex:none">{{l.count}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7A5560;flex:none;width:28px;text-align:right">{{l.val}}%</span>
+              </div>
+              <input type="range" min="0" max="100" value="{{l.val}}" onChange="{{l.set}}" style="width:100%;margin:0"></input>
+            </div>
+          </sc-for>
+          <div style="height:1px;background:rgba(36,19,24,0.07);margin:3px 0"></div>
+          <button onClick="{{toggleSetback}}" style="display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:9px;border:none;background:transparent;cursor:pointer;text-align:left;font-family:Sora,sans-serif" style-hover="background:rgba(194,69,95,0.06)">
+            <span style="width:14px;height:14px;border-radius:4px;border:1.5px solid #C2455F;background:{{setbackDot}};flex:none"></span>
+            <span style="flex:1;font-size:11.5px;font-weight:500;color:#241318">1.5 m setback</span>
+          </button>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+    <div style="position:relative;flex:none">
+      <button onClick="{{toggleSites}}" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:{{sitesBg}};color:{{sitesFg}};font-size:11.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif" style-hover="border:1px solid #C2455F">Sites ▾</button>
+      <sc-if value="{{sitesOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;right:0;top:40px;width:250px;background:#FFFBFC;border:1px solid rgba(36,19,24,0.1);border-radius:14px;box-shadow:0 14px 44px rgba(42,23,29,0.25);padding:6px;z-index:40;display:flex;flex-direction:column;gap:2px;animation:ccIn 0.2s cubic-bezier(0.2,0.7,0.2,1) both">
+          <sc-for list="{{sites}}" as="st" hint-placeholder-count="2">
+            <button onClick="{{st.pick}}" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;border:none;background:{{st.bg}};cursor:pointer;text-align:left;font-family:Sora,sans-serif" style-hover="background:rgba(194,69,95,0.07)">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{st.dot}};flex:none"></span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font-size:11.5px;font-weight:600;color:#241318">{{st.addr}}</span>
+                <span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95;margin-top:1px">{{st.meta}}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <button onClick="{{toggleFocus}}" title="Hide side panels for a larger drawing area" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:{{focusBg}};color:{{focusFg}};font-size:11.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;flex:none" style-hover="border:1px solid #C2455F">{{focusLabel}}</button>
+    <button onClick="{{toggleShare}}" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:transparent;color:#241318;font-size:11.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;flex:none" style-hover="border:1px solid #C2455F">Client view</button>
+    <button onClick="{{openCmd}}" title="Command palette" style="height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(36,19,24,0.12);background:transparent;color:#7A5560;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;flex:none" style-hover="border:1px solid #C2455F">⌘K</button>
+    <button onClick="{{acceptAll}}" style="height:34px;padding:0 13px;border-radius:10px;border:1px solid {{aiBd}};background:{{aiBg}};color:{{aiFg}};font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:0.08em;cursor:pointer;flex:none">{{aiPill}}</button>
+  </div>
+  <div ref="{{hudRef}}" onWheel="{{hudWheel}}" style="flex:1;position:relative;margin:{{hudMargin}};border-radius:18px;overflow:hidden;background:{{paperBg}};min-height:0">
+    <sc-if value="{{coach0On}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:78px;top:6px;width:220px;background:#241318;color:#FFF6F8;border-radius:14px;padding:14px 16px;box-shadow:0 14px 44px rgba(42,23,29,0.4);z-index:80">
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:5px">1. Trace</div>
+        <div style="font-size:11px;color:#D3B3BC;line-height:1.5;margin-bottom:10px">Start by tracing your boundary and building footprint over the aerial.</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <button onClick="{{dismissCoach}}" style="border:none;background:transparent;color:#B08A95;font-size:10.5px;cursor:pointer;font-family:Sora,sans-serif">Skip</button>
+          <button onClick="{{coachNext}}" style="height:28px;padding:0 12px;border-radius:99px;border:none;background:#FFD3DE;color:#241318;font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">Next</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{coach1On}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:78px;top:126px;width:220px;background:#241318;color:#FFF6F8;border-radius:14px;padding:14px 16px;box-shadow:0 14px 44px rgba(42,23,29,0.4);z-index:80">
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:5px">2. Add</div>
+        <div style="font-size:11px;color:#D3B3BC;line-height:1.5;margin-bottom:10px">Place planting, paving, decks and other elements from the symbol library.</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <button onClick="{{dismissCoach}}" style="border:none;background:transparent;color:#B08A95;font-size:10.5px;cursor:pointer;font-family:Sora,sans-serif">Skip</button>
+          <button onClick="{{coachNext}}" style="height:28px;padding:0 12px;border-radius:99px;border:none;background:#FFD3DE;color:#241318;font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">Next</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{coach2On}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;right:14px;top:6px;width:220px;background:#241318;color:#FFF6F8;border-radius:14px;padding:14px 16px;box-shadow:0 14px 44px rgba(42,23,29,0.4);z-index:80">
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:5px">3. Fit sheet</div>
+        <div style="font-size:11px;color:#D3B3BC;line-height:1.5;margin-bottom:10px">Use the Fit sheet control in the top bar to arrange everything onto a clean, dimensioned drawing sheet.</div>
+        <div style="display:flex;justify-content:flex-end">
+          <button onClick="{{dismissCoach}}" style="height:28px;padding:0 12px;border-radius:99px;border:none;background:#FFD3DE;color:#241318;font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">Got it</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{planOn}}" hint-placeholder-val="{{true}}">
+    <div style="position:absolute;inset:0;transform:translate({{panX}}px,{{panY}}px) scale({{zoom}}) rotate({{sheetRotDeg}}deg)">
+    <sc-if value="{{aerialOn}}" hint-placeholder-val="{{true}}">
+      <div style="position:absolute;inset:0"><image-slot id="aerial2" shape="rect" placeholder="Drop Mapbox aerial screenshot here (2D top-down)"></image-slot></div>
+      <div style="position:absolute;inset:0;pointer-events:none;background:{{aerialScrim}}"></div>
+    </sc-if>
+    <sc-if value="{{gridOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;inset:0;pointer-events:none;opacity:0.45;background-image:repeating-linear-gradient(to right,{{gridColMaj}} 0 1px,transparent 1px 13.158%),repeating-linear-gradient(to bottom,{{gridColMaj}} 0 1px,transparent 1px 22.5%),repeating-linear-gradient(to right,{{gridCol}} 0 1px,transparent 1px 2.6316%),repeating-linear-gradient(to bottom,{{gridCol}} 0 1px,transparent 1px 4.5%)"></div>
+    </sc-if>
+    <div ref="{{canvasRef}}" onPointerDown="{{cvDown}}" onPointerMove="{{cvMove}}" onPointerUp="{{cvUp}}" onDoubleClick="{{cvDbl}}" style="position:absolute;inset:0;cursor:{{canvasCursor}};touch-action:none">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible">
+        <path d="{{shadowD}}" style="fill:{{shadowFill}};opacity:{{shadowOp}}"></path>
+        <sc-for list="{{treeShadows}}" as="ts" hint-placeholder-count="0">
+          <ellipse cx="{{ts.cx}}" cy="{{ts.cy}}" rx="{{ts.rx}}" ry="{{ts.ry}}" style="fill:{{shadowFill}};opacity:{{ts.op}}"></ellipse>
+        </sc-for>
+        <sc-for list="{{rootRings}}" as="rr" hint-placeholder-count="0">
+          <ellipse cx="{{rr.cx}}" cy="{{rr.cy}}" rx="{{rr.rx}}" ry="{{rr.ry}}" style="fill:{{rr.fill}};stroke:{{rr.col}};stroke-width:1.2px;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;opacity:{{rr.op}}"></ellipse>
+        </sc-for>
+        <polygon points="{{boundaryPts}}" style="fill:{{bFill}};stroke:{{bStroke}};stroke-width:2px;stroke-dasharray:6 3;vector-effect:non-scaling-stroke;opacity:{{boundaryOp}}"></polygon>
+        <polygon points="{{buildingPts}}" style="fill:{{bldFill}};stroke:{{bldStroke}};stroke-width:1.6px;vector-effect:non-scaling-stroke;opacity:{{buildingOp}}"></polygon>
+        <polygon points="{{setbackPts}}" style="fill:none;stroke:#C2455F;stroke-width:1.2px;stroke-dasharray:3 3;vector-effect:non-scaling-stroke;opacity:{{setbackOp}}"></polygon>
+        <sc-for list="{{easementPolys}}" as="ez" hint-placeholder-count="0">
+          <polygon points="{{ez.pts}}" onClick="{{ez.del}}" title="Traced easement — click to remove while Editing" style="fill:rgba(183,138,46,0.1);stroke:#B78A2E;stroke-width:1.4px;stroke-dasharray:2 5;vector-effect:non-scaling-stroke;opacity:{{ez.op}};pointer-events:auto;cursor:pointer"></polygon>
+        </sc-for>
+        <sc-if value="{{extLinesOn}}" hint-placeholder-val="{{false}}">
+          <sc-for list="{{extLines}}" as="ex" hint-placeholder-count="0">
+            <line x1="{{ex.a.x}}" y1="{{ex.a.y}}" x2="{{ex.b.x}}" y2="{{ex.b.y}}" style="stroke:#241318;stroke-width:0.6px;vector-effect:non-scaling-stroke;opacity:0.55"></line>
+            <line x1="{{ex.c.x}}" y1="{{ex.c.y}}" x2="{{ex.d.x}}" y2="{{ex.d.y}}" style="stroke:#241318;stroke-width:0.6px;vector-effect:non-scaling-stroke;opacity:0.55"></line>
+            <line x1="{{ex.b.x}}" y1="{{ex.b.y}}" x2="{{ex.d.x}}" y2="{{ex.d.y}}" style="stroke:#241318;stroke-width:0.9px;vector-effect:non-scaling-stroke;opacity:0.75"></line>
+            <line x1="{{ex.t1a.x}}" y1="{{ex.t1a.y}}" x2="{{ex.t1b.x}}" y2="{{ex.t1b.y}}" style="stroke:#241318;stroke-width:1.2px;vector-effect:non-scaling-stroke"></line>
+            <line x1="{{ex.t2a.x}}" y1="{{ex.t2a.y}}" x2="{{ex.t2b.x}}" y2="{{ex.t2b.y}}" style="stroke:#241318;stroke-width:1.2px;vector-effect:non-scaling-stroke"></line>
+          </sc-for>
+        </sc-if>
+        <sc-for list="{{strokes}}" as="s" hint-placeholder-count="0">
+          <polyline points="{{s.pts}}" style="fill:none;stroke:{{skStroke}};stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:{{strokesOp}}"></polyline>
+        </sc-for>
+        <polygon points="{{ghostCompletionPts}}" style="fill:rgba(232,184,75,0.12);stroke:#E8B84B;stroke-width:1.5px;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;opacity:{{ghostCompletionOn}}"></polygon>
+        <polyline points="{{drawPolyPts}}" style="fill:none;stroke:#C2455F;stroke-width:2px;stroke-dasharray:4 3;vector-effect:non-scaling-stroke;opacity:{{drawPolyOn}}"></polyline>
+        <sc-for list="{{drawPolyDots}}" as="v" hint-placeholder-count="0">
+          <line x1="{{v.x}}" y1="{{v.y}}" x2="{{v.x}}" y2="{{v.y}}" style="stroke:#C2455F;stroke-width:9px;vector-effect:non-scaling-stroke;stroke-linecap:round"></line>
+        </sc-for>
+        <line x1="{{gx1}}" y1="{{gy1}}" x2="{{gx2}}" y2="{{gy2}}" style="stroke:#E8B84B;stroke-width:1.2px;stroke-dasharray:2 4;vector-effect:non-scaling-stroke;opacity:{{guideOp}}"></line>
+        <line x1="{{mx1}}" y1="{{my1}}" x2="{{mx2}}" y2="{{my2}}" style="stroke:{{mStroke}};stroke-width:1.5px;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;opacity:{{mOpacity}}"></line>
+        <sc-for list="{{boundaryHandles}}" as="v" hint-placeholder-count="0">
+          <line x1="{{v.x}}" y1="{{v.y}}" x2="{{v.x}}" y2="{{v.y}}" onPointerDown="{{v.down}}" onContextMenu="{{v.ctx}}" style="stroke:#E8B84B;stroke-width:15px;vector-effect:non-scaling-stroke;stroke-linecap:round;pointer-events:auto;cursor:grab"></line>
+          <line x1="{{v.x}}" y1="{{v.y}}" x2="{{v.x}}" y2="{{v.y}}" style="stroke:#FFF6F8;stroke-width:6px;vector-effect:non-scaling-stroke;stroke-linecap:round;pointer-events:none"></line>
+        </sc-for>
+        <sc-for list="{{buildingHandles}}" as="v" hint-placeholder-count="0">
+          <line x1="{{v.x}}" y1="{{v.y}}" x2="{{v.x}}" y2="{{v.y}}" onPointerDown="{{v.down}}" onContextMenu="{{v.ctx}}" style="stroke:#B08A95;stroke-width:13px;vector-effect:non-scaling-stroke;stroke-linecap:round;pointer-events:auto;cursor:grab"></line>
+          <line x1="{{v.x}}" y1="{{v.y}}" x2="{{v.x}}" y2="{{v.y}}" style="stroke:#FFF6F8;stroke-width:5px;vector-effect:non-scaling-stroke;stroke-linecap:round;pointer-events:none"></line>
+        </sc-for>
+        <sc-if value="{{guideXOn}}" hint-placeholder-val="{{false}}">
+          <line x1="{{guideXPct}}" y1="0" x2="{{guideXPct}}" y2="100" style="stroke:#C2455F;stroke-width:1px;stroke-dasharray:3 3;vector-effect:non-scaling-stroke;opacity:0.85"></line>
+        </sc-if>
+        <sc-if value="{{guideYOn}}" hint-placeholder-val="{{false}}">
+          <line x1="0" y1="{{guideYPct}}" x2="100" y2="{{guideYPct}}" style="stroke:#C2455F;stroke-width:1px;stroke-dasharray:3 3;vector-effect:non-scaling-stroke;opacity:0.85"></line>
+        </sc-if>
+      </svg>
+      <sc-if value="{{ghostCompletionBadgeOn}}" hint-placeholder-val="{{false}}">
+        <button onClick="{{acceptGhostCompletion}}" style="position:absolute;left:{{ghostCompletionCx}}%;top:{{ghostCompletionCy}}%;transform:translate(-50%,-50%);height:26px;padding:0 12px;border-radius:99px;border:1.5px dashed #E8B84B;background:rgba(232,184,75,0.2);color:#8A6A1F;font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;white-space:nowrap;z-index:9" style-hover="background:rgba(232,184,75,0.32)">⇥ Autocomplete rectangle</button>
+      </sc-if>
+      <sc-if value="{{marqueeOn}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;left:{{marqueeLeft}}%;top:{{marqueeTop}}%;width:{{marqueeW}}%;height:{{marqueeH}}%;border:1.5px dashed #C2455F;background:rgba(194,69,95,0.08);pointer-events:none"></div>
+      </sc-if>
+      <sc-for list="{{placed}}" as="it" hint-placeholder-count="0">
+        <div onPointerDown="{{it.down}}" onPointerEnter="{{it.over}}" onPointerLeave="{{it.out}}" onContextMenu="{{it.onCtx}}" title="{{it.tip}}" style="position:absolute;left:{{it.x}}%;top:{{it.y}}%;width:{{it.w}}px;height:{{it.h}}px;transform:translate(-50%,-50%) rotate({{it.rot}}deg);opacity:{{it.op}};cursor:{{it.cursor}};display:flex;align-items:center;justify-content:center;box-shadow:{{it.ring}};border-radius:{{it.br}};box-sizing:border-box;border:{{it.ghostBd}};animation:{{it.stalePulse}};z-index:{{it.zIndex}}">
+          <div style="position:absolute;inset:0;pointer-events:none">{{it.glyph}}</div>
+          <sc-if value="{{it.ghost}}" hint-placeholder-val="{{false}}">
+            <div style="position:absolute;top:-8px;right:-8px;height:16px;padding:0 6px;border-radius:99px;background:#E8B84B;color:#241318;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;display:flex;align-items:center;pointer-events:none">AI</div>
+          </sc-if>
+          <sc-if value="{{it.curOn}}" hint-placeholder-val="{{false}}">
+            <div onPointerDown="{{stopEvt}}" style="position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:rgba(255,251,252,0.97);border:1px solid rgba(36,19,24,0.1);border-radius:99px;padding:3px 4px;box-shadow:0 6px 20px rgba(42,23,29,0.32);white-space:nowrap;z-index:7">
+              <button onClick="{{it.acceptG}}" style="height:22px;padding:0 10px;border-radius:99px;border:none;background:rgba(31,138,90,0.14);color:#1F8A5A;font-size:10px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif" style-hover="background:rgba(31,138,90,0.24)">✓ Accept</button>
+              <button onClick="{{it.rejectG}}" title="Reject suggestion" style="height:22px;width:22px;border-radius:99px;border:none;background:rgba(194,69,95,0.1);color:#C2455F;font-size:10px;font-weight:600;cursor:pointer" style-hover="background:rgba(194,69,95,0.2)">✕</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{it.traceOn}}" hint-placeholder-val="{{false}}">
+            <button onPointerDown="{{stopEvt}}" onClick="{{it.traceToElev}}" title="Jump to Elevation mode with this element highlighted" style="position:absolute;top:-9px;left:50%;transform:translate(-50%,-100%);height:22px;padding:0 10px;border-radius:99px;border:none;background:#C2455F;color:#FFF6F8;font-size:10px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;white-space:nowrap;box-shadow:0 4px 14px rgba(42,23,29,0.3);z-index:8" style-hover="background:#9E3049">⇄ Trace in elevation</button>
+          </sc-if>
+          <sc-if value="{{it.labelOn}}" hint-placeholder-val="{{false}}">
+            <div style="position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#FFF6F8;background:rgba(42,23,29,0.78);padding:2px 8px;border-radius:6px;pointer-events:none;backdrop-filter:blur(6px)">{{it.tag}}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+      <sc-if value="{{selHOn}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;left:{{selHX}}%;top:{{selHY}}%;width:0;height:0;transform:rotate({{selHRot}}deg);z-index:6">
+          <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%) translateY(-{{selHUp}}px);width:1.5px;height:15px;background:rgba(194,69,95,0.55);pointer-events:none"></div>
+          <button onPointerDown="{{rotHandleDown}}" title="Drag to rotate · snaps to 5° · hold Shift for free angle" style="position:absolute;left:0;top:0;transform:translate(-50%,-50%) translateY(-{{selHRotY}}px);width:20px;height:20px;border-radius:50%;background:#FFFBFC;border:1.5px solid #C2455F;color:#C2455F;font-size:10px;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(42,23,29,0.3);padding:0">⟳</button>
+          <button onPointerDown="{{resHandleDown}}" title="Drag to resize" style="position:absolute;left:0;top:0;transform:translate(-50%,-50%) translate({{selHRx}}px,{{selHRy}}px);width:13px;height:13px;border-radius:4px;background:#FFFBFC;border:1.5px solid #C2455F;cursor:nwse-resize;box-shadow:0 2px 8px rgba(42,23,29,0.3);padding:0"></button>
+        </div>
+      </sc-if>
+      <sc-if value="{{measureLabelOn}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;left:{{mLabX}}%;top:{{mLabY}}%;transform:translate(-50%,-140%);font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#241318;background:rgba(255,246,248,0.95);padding:4px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;box-shadow:0 2px 10px rgba(42,23,29,0.35)">≈ {{mLen}} m · indicative</div>
+      </sc-if>
+      <sc-for list="{{dims}}" as="d2" hint-placeholder-count="0">
+        <div style="position:absolute;left:{{d2.x}}%;top:{{d2.y}}%;transform:translate(-50%,-50%) rotate({{d2.rot}}deg);font-family:'IBM Plex Mono',monospace;font-size:9px;color:{{dimFg}};background:{{dimBg}};padding:1px 6px;border-radius:5px;pointer-events:none;white-space:nowrap">{{d2.txt}}</div>
+      </sc-for>
+      <sc-for list="{{traceDims}}" as="td" hint-placeholder-count="0">
+        <div style="position:absolute;left:{{td.x}}%;top:{{td.y}}%;transform:translate(-50%,-50%) rotate({{td.rot}}deg);font-family:'IBM Plex Mono',monospace;font-size:9px;color:#FFF6F8;background:rgba(194,69,95,0.92);padding:1px 6px;border-radius:5px;pointer-events:none;white-space:nowrap">{{td.txt}}</div>
+      </sc-for>
+      <sc-for list="{{rootTags}}" as="rt" hint-placeholder-count="0">
+        <div style="position:absolute;left:{{rt.x}}%;top:{{rt.y}}%;transform:translate(-50%,-50%);font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:{{rt.fg}};background:{{rt.bg}};padding:1px 6px;border-radius:5px;pointer-events:none;white-space:nowrap;box-shadow:0 1px 6px rgba(42,23,29,0.18)">{{rt.txt}}</div>
+      </sc-for>
+      <sc-if value="{{closeOn}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;left:{{closeX}}%;top:{{closeY}}%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;border:2px solid #C8F07A;box-shadow:0 0 0 3px rgba(200,240,122,0.25);pointer-events:none;box-sizing:border-box"></div>
+      </sc-if>
+      <sc-if value="{{traceTipOn}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;left:{{traceTipX}}%;top:{{traceTipY}}%;transform:translate(14px,14px);font-family:'IBM Plex Mono',monospace;font-size:10px;color:#241318;background:rgba(255,246,248,0.95);padding:3px 8px;border-radius:7px;pointer-events:none;white-space:nowrap;box-shadow:0 2px 10px rgba(42,23,29,0.35)">{{traceTipTxt}}</div>
+      </sc-if>
+      <sc-for list="{{midHandles}}" as="mh" hint-placeholder-count="0">
+        <div onPointerDown="{{mh.down}}" title="Drag to add a corner" style="position:absolute;left:{{mh.x}}%;top:{{mh.y}}%;width:11px;height:11px;transform:translate(-50%,-50%) rotate(45deg);background:#FFF6F8;border:1.5px solid {{mh.bd}};border-radius:2px;cursor:copy;box-shadow:0 1px 6px rgba(42,23,29,0.4)"></div>
+      </sc-for>
+    </div>
+    </div>
+    </sc-if>
+    <sc-if value="{{elevOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;inset:0">
+        <button onClick="{{toggleElevAxis}}" style="position:absolute;right:14px;top:14px;height:30px;padding:0 13px;border-radius:9px;border:1px solid {{elevBtnBd}};background:{{elevBtnBg}};color:{{elevFg}};font-size:11px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;z-index:2" style-hover="border:1px solid #C2455F">{{elevLabel}} elevation ⇄</button>
+        <sc-for list="{{rulerLines}}" as="rl" hint-placeholder-count="0">
+          <div style="position:absolute;left:2%;right:2%;bottom:{{rl.bottomPx}}px;height:1px;background:{{elevRuleCol}};pointer-events:none"></div>
+          <div style="position:absolute;left:2%;bottom:calc({{rl.bottomPx}}px + 2px);font-family:'IBM Plex Mono',monospace;font-size:8px;color:{{elevRuleTxt}};pointer-events:none">{{rl.label}}</div>
+        </sc-for>
+        <div style="position:absolute;left:2%;right:2%;bottom:{{groundBottomPx}}px;height:1px;background:{{elevFg}};opacity:0.5"></div>
+        <div style="position:absolute;left:2%;bottom:calc({{groundBottomPx}}px - 16px);font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:{{elevFg}};opacity:0.7">Ground line</div>
+        <div style="position:absolute;right:2%;bottom:calc({{groundBottomPx}}px - 16px);font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:{{elevFg}};opacity:0.7">Site width ≈ {{widthM}} m</div>
+        <div style="position:absolute;left:{{bldLeftPct}}%;width:{{bldWidthPct}}%;bottom:{{groundBottomPx}}px;height:{{buildingHPx}}px;background:{{elevBldFill}};border:1.5px solid {{elevFg}};box-sizing:border-box"></div>
+        <div style="position:absolute;left:{{bldLeftPct}}%;bottom:calc({{groundBottomPx}}px + {{buildingHPx}}px + 6px);width:1px;height:46px;background:{{elevFg}};opacity:0.4"></div>
+        <div style="position:absolute;left:{{bldLeftPct}}%;bottom:calc({{groundBottomPx}}px + {{buildingHPx}}px + 52px);font-family:'IBM Plex Mono',monospace;font-size:10px;color:#241318;background:rgba(255,246,248,0.9);padding:1px 6px;border-radius:5px;white-space:nowrap;z-index:1">Eave {{eaveTxt}}</div>
+        <sc-for list="{{elevItems}}" as="ei" hint-placeholder-count="0">
+          <div onPointerEnter="{{ei.over}}" onPointerLeave="{{ei.out}}" onClick="{{ei.pick}}" style="position:absolute;left:{{ei.x}}%;bottom:{{groundBottomPx}}px;width:{{ei.wPx}}px;height:{{ei.hPx}}px;transform:translateX(-50%);background:{{ei.fill}};border:1.5px {{ei.borderStyle}} {{ei.stroke}};border-radius:3px 3px 0 0;box-sizing:border-box;box-shadow:{{ei.ring}};cursor:pointer"></div>
+          <div style="position:absolute;left:{{ei.x}}%;bottom:{{ei.labelBottomPx}}px;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:9px;color:{{elevFg}};white-space:nowrap">{{ei.name}} · {{ei.label}}</div>
+          <sc-if value="{{ei.traceOn}}" hint-placeholder-val="{{false}}">
+            <button onClick="{{ei.traceToPlan}}" title="Jump to CAD plan with this element highlighted" style="position:absolute;left:{{ei.x}}%;bottom:calc({{groundBottomPx}}px + {{ei.hPx}}px + 20px);transform:translateX(-50%);height:22px;padding:0 10px;border-radius:99px;border:none;background:#C2455F;color:#FFF6F8;font-size:10px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;white-space:nowrap;box-shadow:0 4px 14px rgba(42,23,29,0.3);z-index:3" style-hover="background:#9E3049">⇄ Trace in plan</button>
+          </sc-if>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{frameOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:0;right:0;top:0;height:{{scrimTopH}}px;background:rgba(36,19,24,0.28);pointer-events:none"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:{{scrimBotH}}px;background:rgba(36,19,24,0.28);pointer-events:none"></div>
+      <div style="position:absolute;left:{{sheetBoxLeft}}px;width:{{sheetBoxW}}px;top:0;height:{{scrimTopH}}px;background:rgba(36,19,24,0.28);pointer-events:none"></div>
+      <div style="position:absolute;left:{{sheetBoxLeft}}px;width:{{sheetBoxW}}px;bottom:0;height:{{scrimBotH}}px;background:rgba(36,19,24,0.28);pointer-events:none"></div>
+      <div style="position:absolute;left:{{sheetBoxLeft}}px;top:{{sheetBoxTop}}px;width:{{sheetBoxW}}px;height:{{sheetBoxH}}px;border:1.5px solid {{frameCol}};pointer-events:none;box-sizing:border-box"></div>
+      <div style="position:absolute;left:calc({{sheetBoxLeft}}px + 8px);top:calc({{sheetBoxTop}}px + 8px);width:calc({{sheetBoxW}}px - 16px);height:calc({{sheetBoxH}}px - 16px);border:1px dashed {{frameCol2}};pointer-events:none;box-sizing:border-box"></div>
+    </sc-if>
+    <sc-if value="{{sheetPanelOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:calc({{sheetBoxLeft}}px + {{sheetBoxW}}px - 262px - 16px);top:calc({{sheetBoxTop}}px + 16px);bottom:calc({{scrimBotH}}px + 16px);width:262px;display:flex;flex-direction:column;background:#FAF6F2;border:1px solid rgba(36,19,24,0.6);box-sizing:border-box;z-index:5">
+        <div style="padding:13px 15px 11px;border-bottom:1px solid rgba(36,19,24,0.6);display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <div style="min-width:0">
+            <div style="font-family:Fraunces,serif;font-size:16px;font-weight:600;letter-spacing:-0.01em">Curtis &amp; Co</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#7A5560;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{siteAddr}}</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#241318;flex:none">N↑</div>
+        </div>
+        <div style="padding:10px 15px 11px;border-bottom:1px solid rgba(36,19,24,0.25)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.14em;color:#B08A95;margin-bottom:5px">SITE SCHEDULE</div>
+          <sc-for list="{{sheetSched}}" as="r" hint-placeholder-count="5">
+            <div style="display:flex;justify-content:space-between;gap:8px;padding:2.5px 0;font-size:10px;color:#241318"><span>{{r.k}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px">{{r.v}}</span></div>
+          </sc-for>
+        </div>
+        <div style="padding:10px 15px 11px;border-bottom:1px solid rgba(36,19,24,0.25)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.14em;color:#B08A95;margin-bottom:5px">BOUNDARY &amp; FOOTPRINT DIMS</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:16px">
+            <sc-for list="{{sheetSegs}}" as="r" hint-placeholder-count="8">
+              <div style="display:flex;justify-content:space-between;padding:2px 0;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#241318"><span style="color:#B08A95">{{r.k}}</span><span>{{r.v}}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{legendOn}}" hint-placeholder-val="{{false}}">
+          <div style="padding:10px 15px 11px;border-bottom:1px solid rgba(36,19,24,0.25);flex:1;min-height:0;overflow-y:auto">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.14em;color:#B08A95;margin-bottom:5px">LANDSCAPE LEGEND</div>
+            <sc-for list="{{sheetLegend}}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;gap:8px;padding:2.5px 0;font-size:10px;color:#241318"><span>{{r.name}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7A5560">{{r.v}}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="padding:10px 15px 12px;margin-top:auto">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.14em;color:#B08A95;margin-bottom:5px">NOTES</div>
+          <div style="font-size:9px;color:#7A5560;line-height:1.55;text-wrap:pretty">Vicmap cadastral base · dimensions in metres. B# boundary segment · F# building footprint. Working drawing — indicative only, not for construction.</div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#241318"><span style="color:{{scaleCol}}">{{scaleTxt}}</span><span>{{issuedTxt}}</span></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{sheetElevPanelOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:calc({{sheetBoxLeft}}px + 16px);bottom:calc({{scrimBotH}}px + 16px);width:{{sheetElevPanelW}}px;height:{{sheetElevPanelH}}px;display:flex;flex-direction:column;gap:10px;background:#FAF6F2;border:1px solid rgba(36,19,24,0.55);box-sizing:border-box;padding:10px 14px;z-index:5">
+        <sc-for list="{{sheetElevProfiles}}" as="pf" hint-placeholder-count="2">
+          <div style="flex:1;min-width:0;position:relative;border-bottom:{{pf.divider}}">
+            <div style="position:absolute;left:0;top:0;font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:0.12em;color:#B08A95">{{pf.label}}</div>
+            <div style="position:absolute;left:2%;right:36px;bottom:{{pf.groundB}}px;height:1px;background:#241318;opacity:0.5"></div>
+            <div style="position:absolute;left:{{pf.bld0}}%;width:{{pf.bldW}}%;bottom:{{pf.groundB}}px;height:{{pf.bH}}px;background:rgba(36,19,24,0.06);border:1.2px solid #241318;box-sizing:border-box"></div>
+            <sc-for list="{{pf.items}}" as="pi" hint-placeholder-count="0">
+              <div style="position:absolute;left:{{pi.x}}%;bottom:{{pf.groundB}}px;width:{{pi.wPx}}px;height:{{pi.hPx}}px;transform:translateX(-50%);background:{{pi.fill}};border:1px {{pi.dash}} {{pi.stroke}};border-radius:2px 2px 0 0;box-sizing:border-box"></div>
+            </sc-for>
+            <div style="position:absolute;right:0;bottom:calc({{pf.groundB}}px - 11px);font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:#7A5560">{{pf.widthM}} m</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <div style="position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,251,252,0.9);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(42,23,29,0.3);transform:rotate({{sheetRotDeg}}deg)">N↑</div>
+    <sc-if value="{{ucsOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:20px;bottom:20px;width:58px;height:58px;pointer-events:none;z-index:3">
+        <div style="position:absolute;left:0;bottom:0;width:1.5px;height:50px;background:#AFB9BE"></div>
+        <div style="position:absolute;left:0;bottom:0;width:50px;height:1.5px;background:#AFB9BE"></div>
+        <div style="position:absolute;left:-2px;bottom:50px;width:5.5px;height:5.5px;background:#AFB9BE"></div>
+        <div style="position:absolute;left:50px;bottom:-2px;width:5.5px;height:5.5px;background:#AFB9BE"></div>
+        <div style="position:absolute;left:6px;top:-4px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#AFB9BE">Y</div>
+        <div style="position:absolute;right:-4px;bottom:6px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#AFB9BE">X</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{planOn}}" hint-placeholder-val="{{true}}">
+    <div style="position:absolute;left:14px;top:64px;bottom:{{railBottom}}px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;background:rgba(255,251,252,0.9);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.65);border-radius:16px;padding:6px;box-shadow:0 8px 28px rgba(42,23,29,0.3)">
+      <sc-for list="{{rail}}" as="t" hint-placeholder-count="6">
+        <button onClick="{{t.pick}}" title="{{t.label}}" style="width:48px;height:46px;border-radius:12px;border:none;cursor:pointer;background:{{t.bg}};color:{{t.fg}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-family:Sora,sans-serif" style-hover="background:#F1D7DD">
+          <span style="font-size:14px;line-height:1">{{t.icon}}</span>
+          <span style="font-size:8px;letter-spacing:0.03em;font-weight:600">{{t.label}}</span>
+        </button>
+      </sc-for>
+      <div style="width:100%;height:1px;background:rgba(36,19,24,0.1);margin:2px 0"></div>
+      <button onClick="{{zoomIn}}" title="Zoom in" style="width:48px;height:28px;border-radius:10px;border:none;background:transparent;color:#241318;font-size:13px;cursor:pointer" style-hover="background:#F1D7DD">＋</button>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:#7A5560;text-align:center">{{zoomTxt}}</div>
+      <button onClick="{{zoomOut}}" title="Zoom out" style="width:48px;height:28px;border-radius:10px;border:none;background:transparent;color:#241318;font-size:13px;cursor:pointer" style-hover="background:#F1D7DD">−</button>
+      <button onClick="{{fitView}}" title="Reset view to 100%" style="width:48px;height:22px;border-radius:8px;border:none;background:transparent;color:#7A5560;font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:0.08em;cursor:pointer" style-hover="background:#F1D7DD">FIT</button>
+      <div style="width:100%;height:1px;background:rgba(36,19,24,0.1);margin:2px 0"></div>
+      <button onClick="{{undoNow}}" title="Undo (Cmd/Ctrl+Z)" style="width:48px;height:32px;border-radius:10px;border:none;background:transparent;color:#241318;font-size:15px;cursor:pointer;opacity:{{undoOp}}" style-hover="background:#F1D7DD">↩</button>
+      <button onClick="{{redoNow}}" title="Redo (Cmd/Ctrl+Shift+Z)" style="width:48px;height:32px;border-radius:10px;border:none;background:transparent;color:#241318;font-size:15px;cursor:pointer;opacity:{{redoOp}}" style-hover="background:#F1D7DD">↪</button>
+    </div>
+    </sc-if>
+    <sc-if value="{{traceToggleOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:76px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;background:rgba(42,23,29,0.88);border-radius:12px;padding:5px;box-shadow:0 6px 24px rgba(42,23,29,0.4)">
+        <sc-for list="{{traceTargets}}" as="tt" hint-placeholder-count="2">
+          <button onClick="{{tt.pick}}" style="height:28px;padding:0 12px;border-radius:8px;border:none;cursor:pointer;background:{{tt.bg}};color:{{tt.fg}};font-size:10.5px;font-weight:600;font-family:Sora,sans-serif">{{tt.label}}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{addOpen}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:76px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;background:rgba(255,251,252,0.96);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.7);border-radius:14px;padding:6px;box-shadow:0 10px 36px rgba(42,23,29,0.35);width:172px;animation:ccFade 0.2s both">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:#B08A95;padding:4px 6px 5px">Place symbol</div>
+        <sc-for list="{{assets}}" as="a" hint-placeholder-count="4">
+          <button onClick="{{a.arm}}" style="display:flex;align-items:center;gap:9px;padding:6px 7px;border-radius:10px;border:none;background:{{a.bg}};cursor:pointer;text-align:left;font-family:Sora,sans-serif;box-shadow:{{a.ring}}" style-hover="background:rgba(194,69,95,0.07)">
+            <span style="width:26px;height:26px;flex:none;background:#2E1B21;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:3px;box-sizing:border-box"><span style="width:20px;height:20px;display:block">{{a.glyph}}</span></span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:11px;font-weight:600;color:#241318;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{a.name}}</span>
+              <span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#B08A95">{{a.rateTxt}}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{selName}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:5px;background:rgba(42,23,29,0.9);backdrop-filter:blur(12px);color:#FFF6F8;border-radius:14px;padding:5px 6px 5px 13px;box-shadow:0 6px 24px rgba(42,23,29,0.4);animation:ccFade 0.25s both">
+        <div style="font-size:11.5px;font-weight:600;white-space:nowrap">{{selName}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#D3B3BC;white-space:nowrap">{{selDimsTxt}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#E8B84B;white-space:nowrap">{{selCostTxt}}</div>
+        <div style="width:1px;height:16px;background:rgba(255,246,248,0.2);margin:0 3px"></div>
+        <button onClick="{{dupSel}}" title="Duplicate" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#FFF6F8;cursor:pointer;font-size:12px" style-hover="background:rgba(255,211,222,0.15)">⧉</button>
+        <button onClick="{{rotL}}" title="Rotate left 15°" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#FFF6F8;cursor:pointer;font-size:13px" style-hover="background:rgba(255,211,222,0.15)">⟲</button>
+        <button onClick="{{rotR}}" title="Rotate right 15°" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#FFF6F8;cursor:pointer;font-size:13px" style-hover="background:rgba(255,211,222,0.15)">⟳</button>
+        <button onClick="{{scaleDn}}" title="Smaller" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#FFF6F8;cursor:pointer;font-size:13px" style-hover="background:rgba(255,211,222,0.15)">−</button>
+        <button onClick="{{scaleUp}}" title="Larger" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#FFF6F8;cursor:pointer;font-size:13px" style-hover="background:rgba(255,211,222,0.15)">＋</button>
+        <button onClick="{{del}}" style="height:30px;padding:0 10px;border-radius:8px;border:none;background:rgba(255,120,120,0.16);color:#FFB9B0;cursor:pointer;font-size:10.5px;font-weight:500" style-hover="background:rgba(255,120,120,0.26)">Delete</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{drawingPoly}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:50%;top:60px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:#241318;color:#FFD3DE;font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:8px 10px 8px 16px;border-radius:12px;box-shadow:0 6px 24px rgba(42,23,29,0.4);white-space:nowrap;max-width:94%;z-index:20">
+        <span>Tracing {{polyLabel}} · {{polyN}} pts {{traceAreaTxt}}</span>
+        <span style="opacity:0.6">⌫ undo · ⇧ ortho · Enter close</span>
+        <sc-if value="{{ghostCompletionOn}}" hint-placeholder-val="{{false}}">
+          <span style="color:#E8B84B">⇥ Tab autocompletes rectangle</span>
+        </sc-if>
+        <button onClick="{{cancelPoly}}" style="height:24px;padding:0 12px;border-radius:99px;border:1px solid rgba(255,211,222,0.3);background:transparent;color:#FFD3DE;font-size:10px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;flex:none">Cancel</button>
+        <sc-if value="{{canFinishPoly}}" hint-placeholder-val="{{false}}">
+          <button onClick="{{finishPolyBtn}}" style="height:24px;padding:0 12px;border-radius:99px;border:none;background:#FFD3DE;color:#241318;font-size:10px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;flex:none">Finish</button>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{editBannerOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:50%;top:60px;transform:translateX(-50%);background:rgba(42,23,29,0.88);color:#FFD3DE;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px 14px;border-radius:12px;white-space:nowrap;box-shadow:0 6px 24px rgba(42,23,29,0.4)">Edit corners — drag ● move · drag ◆ add · right-click ● delete</div>
+    </sc-if>
+    <sc-if value="{{armedName}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:50%;top:60px;transform:translateX(-50%);background:#241318;color:#FFD3DE;font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:8px 16px;border-radius:12px;box-shadow:0 6px 24px rgba(42,23,29,0.4);white-space:nowrap">Placing · {{armedName}} — tap the aerial. Esc to cancel.</div>
+    </sc-if>
+    <sc-if value="{{canopyScanOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:50%;top:60px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:#241318;color:#FFD3DE;font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:8px 16px;border-radius:12px;box-shadow:0 6px 24px rgba(42,23,29,0.4);white-space:nowrap">
+        <span style="width:7px;height:7px;border-radius:50%;background:#E8B84B;animation:ccPulse 1s ease-in-out infinite"></span>
+        Scanning aerial for canopy…
+      </div>
+    </sc-if>
+    <sc-if value="{{statsOn}}" hint-placeholder-val="{{true}}">
+    <div style="position:absolute;right:14px;top:14px;width:200px;max-height:44%;overflow-y:auto;background:rgba(255,251,252,0.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.65);border-radius:16px;box-shadow:0 8px 28px rgba(42,23,29,0.28);padding:12px 15px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;animation:ccIn 0.3s cubic-bezier(0.2,0.7,0.2,1) both">
+      <div style="position:sticky;top:-1px;background:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:7px;border-bottom:1px solid rgba(36,19,24,0.07)">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;color:#B08A95">COMPLIANCE</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div title="{{passTip}}" style="height:17px;padding:0 7px;border-radius:99px;background:{{passBg}};color:{{passFg}};font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;display:flex;align-items:center">{{passTxt}}</div>
+          <button onClick="{{toggleStatsDock}}" title="Collapse to tab" style="width:18px;height:18px;border-radius:6px;border:none;background:transparent;color:#B08A95;font-size:12px;cursor:pointer;padding:0;line-height:1" style-hover="background:rgba(36,19,24,0.06)">–</button>
+        </div>
+      </div>
+      <sc-for list="{{aiStats}}" as="r" hint-placeholder-count="4">
+        <div onClick="{{r.act}}" title="{{r.tip}}" style="cursor:{{r.cur}};border-radius:9px;margin:0 -7px;padding:3px 7px" style-hover="background:{{r.hoverBg}}">
+          <div style="display:flex;align-items:center;gap:5px">
+            <sc-if value="{{r.dotOn}}" hint-placeholder-val="{{false}}"><span style="width:7px;height:7px;border-radius:50%;background:{{r.dotCol}};flex:none"></span></sc-if>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:#B08A95">{{r.k}}</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;color:{{r.col}};margin-top:1px;font-variant-numeric:tabular-nums">{{r.v}}</div>
+          <sc-if value="{{r.barOn}}" hint-placeholder-val="{{false}}">
+            <div style="position:relative;height:4px;border-radius:99px;background:rgba(36,19,24,0.08);margin-top:5px">
+              <div style="height:100%;width:{{r.barW}}%;border-radius:99px;background:{{r.barCol}};transition:width 0.5s cubic-bezier(0.2,0.7,0.2,1)"></div>
+              <sc-if value="{{r.tickOn}}" hint-placeholder-val="{{false}}"><div style="position:absolute;left:{{r.tick}}%;top:-2.5px;width:1.5px;height:9px;background:rgba(36,19,24,0.4);border-radius:1px"></div></sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+    <sc-if value="{{statsTabOn}}" hint-placeholder-val="{{false}}">
+      <button onClick="{{toggleStatsDock}}" title="{{passTip}} — click to expand" style="position:absolute;right:14px;top:14px;height:32px;padding:0 12px;border-radius:99px;border:1px solid rgba(255,255,255,0.65);background:rgba(255,251,252,0.92);backdrop-filter:blur(14px);box-shadow:0 6px 20px rgba(42,23,29,0.24);display:flex;align-items:center;gap:7px;cursor:pointer;animation:ccFade 0.25s both">
+        <span style="width:8px;height:8px;border-radius:50%;background:{{passFg}};flex:none"></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:{{passFg}};letter-spacing:0.06em">{{passTxt}}</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{bomTabOn}}" hint-placeholder-val="{{false}}">
+      <button onClick="{{toggleBomDock}}" title="Live BOM — click to expand" style="position:absolute;right:14px;bottom:14px;height:32px;padding:0 12px;border-radius:99px;border:1px solid rgba(255,255,255,0.65);background:rgba(255,251,252,0.92);backdrop-filter:blur(14px);box-shadow:0 6px 20px rgba(42,23,29,0.24);display:flex;align-items:center;gap:7px;cursor:pointer;animation:ccFade 0.25s both">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.1em;color:#B08A95">BOM</span>
+        <span style="font-family:Fraunces,serif;font-size:13px;font-weight:600;color:#241318">{{totalIncTxt}}</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{sunOn}}" hint-placeholder-val="{{true}}">
+      <div style="position:absolute;left:14px;bottom:14px;width:268px;background:rgba(255,251,252,0.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.65);border-radius:16px;box-shadow:0 8px 28px rgba(42,23,29,0.28);padding:12px 14px 11px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;animation:ccIn 0.3s cubic-bezier(0.2,0.7,0.2,1) both">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.14em;color:#B08A95">SUN &amp; GROWTH</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <button onClick="{{toggleSunPlay}}" title="{{sunPlayTip}}" style="width:22px;height:22px;border-radius:7px;border:1px solid {{sunPlayBd}};background:{{sunPlayBg}};color:{{sunPlayFg}};font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0" style-hover="border-color:#C2455F">{{sunPlayIcon}}</button>
+            <div style="font-family:Fraunces,serif;font-size:19px;font-weight:600;letter-spacing:-0.01em;min-width:76px;text-align:right;font-variant-numeric:tabular-nums">{{sunTimeTxt}}</div>
+            <button onClick="{{toggleSunBody}}" title="Collapse / expand sun panel" style="width:22px;height:22px;border-radius:7px;border:1px solid rgba(36,19,24,0.12);background:transparent;color:#7A5560;font-size:10px;cursor:pointer" style-hover="border:1px solid #C2455F">{{sunChevron}}</button>
+          </div>
+        </div>
+        <sc-if value="{{sunBodyOn}}" hint-placeholder-val="{{true}}">
+        <div onPointerDown="{{sunDown}}" onPointerMove="{{sunMove}}" onPointerUp="{{sunUp}}" title="Drag to set time of day" style="position:relative;height:56px;cursor:ew-resize;touch-action:none">
+          <svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+            <path d="M2,38 Q50,-14 98,38" style="fill:none;stroke:rgba(194,69,95,0.3);stroke-width:1.5px;stroke-dasharray:3 3;vector-effect:non-scaling-stroke"></path>
+            <line x1="0" y1="38" x2="100" y2="38" style="stroke:rgba(36,19,24,0.22);stroke-width:1px;vector-effect:non-scaling-stroke"></line>
+            <line x1="{{sunX}}" y1="{{sunY}}" x2="{{sunX}}" y2="38" style="stroke:rgba(232,184,75,0.6);stroke-width:1px;vector-effect:non-scaling-stroke"></line>
+          </svg>
+          <div style="position:absolute;left:{{sunPX}}%;top:{{sunPY}}%;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;background:#E8B84B;box-shadow:0 0 0 4px rgba(232,184,75,0.25), 0 2px 8px rgba(42,23,29,0.3);pointer-events:none"></div>
+          <div style="position:absolute;left:0;bottom:-3px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:#B08A95;pointer-events:none">6:20 AM</div>
+          <div style="position:absolute;right:0;bottom:-3px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:#B08A95;pointer-events:none">7:40 PM</div>
+        </div>
+        <div style="display:flex;gap:5px">
+          <sc-for list="{{sunChips}}" as="sc" hint-placeholder-count="4">
+            <button onClick="{{sc.pick}}" style="flex:1;height:24px;border-radius:8px;border:1px solid {{sc.bd}};background:{{sc.bg}};color:{{sc.fg}};font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;cursor:pointer" style-hover="border:1px solid #C2455F">{{sc.label}}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.1em;color:#B08A95;flex:none">GROWTH</div>
+          <sc-for list="{{growthChips}}" as="gc" hint-placeholder-count="3">
+            <button onClick="{{gc.pick}}" style="flex:1;height:24px;border-radius:8px;border:1px solid {{gc.bd}};background:{{gc.bg}};color:{{gc.fg}};font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;cursor:pointer" style-hover="border:1px solid #C2455F">{{gc.label}}</button>
+          </sc-for>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7A5560">Shadow ≈ {{shadowLenTxt}} · eaves {{eaveTxt}} · canopies cast</div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{bomOn}}" hint-placeholder-val="{{true}}">
+      <div style="position:absolute;right:14px;bottom:14px;width:300px;max-height:52%;display:flex;flex-direction:column;background:rgba(255,251,252,0.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.65);border-radius:16px;box-shadow:0 8px 28px rgba(42,23,29,0.28);padding:13px 15px;gap:9px;box-sizing:border-box;animation:ccIn 0.3s cubic-bezier(0.2,0.7,0.2,1) both">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#B08A95">LIVE BOM / PREEMPTIVE</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95">{{lineCount}} lines</div>
+            <button onClick="{{toggleBomDock}}" title="Collapse to tab" style="width:18px;height:18px;border-radius:6px;border:none;background:transparent;color:#B08A95;font-size:12px;cursor:pointer;padding:0;line-height:1" style-hover="background:rgba(36,19,24,0.06)">–</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+          <div onClick="{{openQuote}}" title="Open quote" style="font-family:Fraunces,serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;cursor:pointer" style-hover="color:#C2455F">{{totalIncTxt}} <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:400;color:#7A5560">incl. GST</span></div>
+          <sc-if value="{{totDeltaOn}}" hint-placeholder-val="{{false}}">
+            <span style="height:18px;padding:0 7px;border-radius:99px;background:{{totDeltaBg}};color:{{totDeltaFg}};font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;display:inline-flex;align-items:center;animation:ccFade 0.25s both">{{totDeltaTxt}}</span>
+          </sc-if>
+        </div>
+        <sc-if value="{{bomTopOn}}" hint-placeholder-val="{{true}}">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <sc-for list="{{bomTop}}" as="bl" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:#241318;align-items:baseline"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{bl.name}}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7A5560;flex:none">{{bl.amt}}</div></div>
+            </sc-for>
+            <sc-if value="{{bomMoreOn}}" hint-placeholder-val="{{false}}">
+              <button onClick="{{openQuote}}" style="align-self:flex-start;height:20px;padding:0;border:none;background:transparent;color:#C2455F;font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer" style-hover="color:#9E3049">+ {{bomMoreN}} more lines →</button>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{hasChips}}" hint-placeholder-val="{{true}}">
+          <div style="display:flex;flex-wrap:wrap;gap:5px;overflow-y:auto;min-height:0">
+            <sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
+              <button onClick="{{c.act}}" title="{{c.tip}}" style="height:24px;padding:0 10px;border-radius:7px;border:1px solid {{c.bd}};background:{{c.bg}};color:{{c.fg}};font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;white-space:nowrap" style-hover="border:1px solid #C2455F">{{c.label}}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7A5560">{{mitTxt}}</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{toastPillOn}}" hint-placeholder-val="{{true}}">
+      <button onClick="{{toastToggle}}" style="position:absolute;left:{{toastLeft}};right:{{toastRight}};top:{{toastTop}}px;transform:{{toastTransform}};display:flex;align-items:center;gap:9px;height:38px;padding:0 16px 0 8px;border-radius:99px;border:1px solid rgba(255,255,255,0.7);background:rgba(36,19,24,0.94);backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(42,23,29,0.32);cursor:pointer;animation:ccFade 0.3s both" style-hover="background:#3A2530">
+        <span style="width:8px;height:8px;border-radius:50%;background:#E8B84B;flex:none"></span>
+        <span style="font-size:12px;font-weight:600;color:#FFF6F8;white-space:nowrap">{{pillLabel}}</span>
+        <span style="font-size:11px;color:#D3B3BC;white-space:nowrap">Review →</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{toastCardOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:{{toastLeft}};right:{{toastRight}};top:{{toastTop}}px;transform:{{toastTransform}};display:flex;flex-direction:column;gap:{{toastGap}}px;background:rgba(255,251,252,0.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.7);border-radius:18px;padding:{{toastPad}};box-shadow:0 10px 36px rgba(42,23,29,0.32);align-items:flex-start;max-width:{{toastMaxW}};animation:ccFade 0.3s both">
+        <div style="display:flex;align-items:center;gap:8px;width:100%">
+          <div style="font-size:12px;font-weight:600;flex:1">Review AI suggestions</div>
+          <div style="display:flex;align-items:center;gap:2px">
+            <sc-for list="{{ghostDots}}" as="gd" hint-placeholder-count="0">
+              <button onClick="{{gd.pick}}" title="{{gd.tip}}" style="width:14px;height:14px;border:none;background:transparent;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center"><span style="width:{{gd.sz}}px;height:{{gd.sz}}px;border-radius:50%;background:{{gd.col}};display:block;transition:all 0.18s"></span></button>
+            </sc-for>
+          </div>
+          <button onClick="{{collapseToast}}" title="Minimize" style="width:22px;height:22px;border-radius:7px;border:none;background:transparent;color:#B08A95;font-size:13px;cursor:pointer;flex:none" style-hover="background:rgba(36,19,24,0.06)">–</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onClick="{{ghostPrev}}" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(36,19,24,0.14);background:transparent;color:#241318;font-size:12px;cursor:pointer" style-hover="border:1px solid #C2455F">‹</button>
+          <div style="white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis"><span style="font-size:11.5px;font-weight:600;color:#241318">{{curGhostName}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95"> · {{ghostStepTxt}}</span></div>
+          <button onClick="{{ghostNext}}" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(36,19,24,0.14);background:transparent;color:#241318;font-size:12px;cursor:pointer" style-hover="border:1px solid #C2455F">›</button>
+          <button onClick="{{ghostRejectOne}}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid rgba(194,69,95,0.3);background:rgba(194,69,95,0.06);color:#C2455F;font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">Reject</button>
+          <button onClick="{{ghostAcceptOne}}" style="height:26px;padding:0 10px;border-radius:8px;border:none;background:rgba(31,138,90,0.12);color:#1F8A5A;font-size:10.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">Accept this</button>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7A5560;line-height:1.5">{{curGhostWhy}}</div>
+        <div onClick="{{toggleFactors}}" title="Click to see what makes up this score" style="display:flex;align-items:center;gap:7px;width:100%;box-sizing:border-box;cursor:pointer">
+          <div style="flex:1;height:3px;border-radius:99px;background:rgba(36,19,24,0.08);overflow:hidden"><div style="height:100%;width:{{curGhostConf}}%;background:{{curGhostConfCol}};border-radius:99px;transition:width 0.3s"></div></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#7A5560;flex:none">conf {{curGhostConf}}% {{factorsChevron}}</div>
+        </div>
+        <sc-if value="{{factorsOpen}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;flex-direction:column;gap:4px;width:100%;padding:2px 0 0">
+            <sc-for list="{{curGhostFactors}}" as="f" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:7px;width:100%;box-sizing:border-box">
+                <div style="width:92px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:8px;color:#B08A95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{f.label}}</div>
+                <div style="flex:1;height:2.5px;border-radius:99px;background:rgba(36,19,24,0.07);overflow:hidden"><div style="height:100%;width:{{f.pct}}%;background:rgba(194,69,95,0.55);border-radius:99px"></div></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#7A5560;flex:none">{{f.pct}}%</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B78A2E">{{curGhostImpact}}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onClick="{{acceptAll}}" style="height:34px;padding:0 15px;border-radius:99px;border:none;background:#241318;color:#FFF6F8;font-size:12px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif" style-hover="background:#3A2530">Accept suggestions ({{ghostCount}})</button>
+          <div style="position:relative">
+            <button onClick="{{toggleMore}}" style="height:34px;padding:0 12px;border-radius:99px;border:1px solid rgba(36,19,24,0.12);background:{{moreBg}};color:#241318;font-size:11.5px;font-weight:500;cursor:pointer;font-family:Sora,sans-serif" style-hover="border:1px solid #C2455F">More tools</button>
+            <sc-if value="{{moreOpen}}" hint-placeholder-val="{{false}}">
+              <div style="position:absolute;left:0;top:42px;width:160px;background:#FFFBFC;border:1px solid rgba(36,19,24,0.1);border-radius:13px;box-shadow:0 14px 44px rgba(42,23,29,0.25);padding:5px;display:flex;flex-direction:column;gap:1px;z-index:30">
+                <sc-for list="{{moreTools}}" as="mt" hint-placeholder-count="3">
+                  <button onClick="{{mt.pick}}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;border:none;background:{{mt.bg}};cursor:pointer;font-size:11.5px;font-weight:500;color:#241318;font-family:Sora,sans-serif;text-align:left" style-hover="background:rgba(194,69,95,0.07)"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B08A95">{{mt.k}}</span>{{mt.label}}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+        <sc-if value="{{toastHintOn}}" hint-placeholder-val="{{true}}">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95">←→ cycle · A accept · R reject · or click a ghost on the plan</div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{moreToastOn}}" hint-placeholder-val="{{false}}">
+      <div style="position:absolute;left:{{toastLeft}};right:{{toastRight}};bottom:{{toastBottom}}px;transform:{{toastTransform}}">
+        <div style="position:relative">
+          <button onClick="{{toggleMore}}" style="height:36px;padding:0 15px;border-radius:99px;border:1px solid rgba(255,255,255,0.6);background:rgba(255,251,252,0.92);backdrop-filter:blur(14px);color:#241318;font-size:12px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif;box-shadow:0 8px 28px rgba(42,23,29,0.28)">More tools</button>
+          <sc-if value="{{moreOpen}}" hint-placeholder-val="{{false}}">
+            <div style="position:absolute;left:0;bottom:44px;width:160px;background:#FFFBFC;border:1px solid rgba(36,19,24,0.1);border-radius:13px;box-shadow:0 14px 44px rgba(42,23,29,0.25);padding:5px;display:flex;flex-direction:column;gap:1px;z-index:30">
+              <sc-for list="{{moreTools}}" as="mt" hint-placeholder-count="3">
+                <button onClick="{{mt.pick}}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;border:none;background:{{mt.bg}};cursor:pointer;font-size:11.5px;font-weight:500;color:#241318;font-family:Sora,sans-serif;text-align:left" style-hover="background:rgba(194,69,95,0.07)"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B08A95">{{mt.k}}</span>{{mt.label}}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  <div style="flex:none;display:flex;align-items:center;gap:16px;padding:9px 20px 11px">
+    <div style="flex:1;display:flex;align-items:center;gap:10px">
+      <div style="display:flex;gap:0">
+        <div style="width:9px;height:5px;background:#241318"></div><div style="width:9px;height:5px;background:transparent;border:1px solid #241318;box-sizing:border-box"></div><div style="width:9px;height:5px;background:#241318"></div><div style="width:9px;height:5px;background:transparent;border:1px solid #241318;box-sizing:border-box"></div><div style="width:9px;height:5px;background:#241318"></div>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;color:{{scaleCol}}">{{scaleTxt}}</div>
+        <div style="font-size:9.5px;color:#7A5560">North up · metres on sheet</div>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#B08A95">SHEET</div>
+      <div style="font-size:11px;font-weight:600">Architectural title block · Vicmap cadastral</div>
+      <div style="font-size:9.5px;color:#7A5560">Working · Indicative</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:16px">
+      <div style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95"><span style="width:6px;height:6px;border-radius:50%;background:#1F8A5A;animation:ccPulse 2.4s ease-in-out infinite"></span>{{savedAgoTxt}}</div>
+      <div style="text-align:right">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#B08A95">ISSUED</div>
+        <div style="font-size:11px;font-weight:600">{{issuedTxt}}</div>
+        <div style="font-size:9.5px;color:#7A5560">Not for construction</div>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{quoteOpen}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closeQuote}}" style="position:fixed;inset:0;z-index:50;background:rgba(24,11,15,0.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+      <div onClick="{{stopEvt}}" style="width:100%;max-width:460px;max-height:100%;display:flex;flex-direction:column;background:#FFFBFC;border-radius:20px;box-shadow:0 24px 80px rgba(24,11,15,0.5);overflow:hidden;animation:ccIn 0.25s cubic-bezier(0.2,0.7,0.2,1) both">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px 14px;background:#241318;color:#FFF6F8">
+          <div>
+            <div style="font-family:Fraunces,serif;font-size:20px;font-weight:600">Curtis &amp; Co</div>
+            <div style="font-size:11px;color:#FFD3DE;margin-top:3px">Concept estimate · indicative</div>
+          </div>
+          <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#D3B3BC;line-height:1.6"><div>{{quoteRef}}</div><div>{{issuedTxt}}</div></div>
+        </div>
+        <div style="padding:14px 22px 4px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#B08A95">Site</div>
+          <div style="font-size:13px;font-weight:600;margin-top:2px">{{siteAddr}}</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px 22px 4px;display:flex;flex-direction:column;gap:8px;min-height:0">
+          <sc-for list="{{sched}}" as="ln" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(36,19,24,0.06)">
+              <div style="min-width:0">
+                <div style="font-size:12px;color:#241318">{{ln.name}}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7A5560;margin-top:1px">{{ln.qtyTxt}}</div>
+              </div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;flex:none">{{ln.amt}}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:10px 22px 4px;display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#7A5560"><div>Subtotal</div><div style="font-family:'IBM Plex Mono',monospace">{{subTxt}}</div></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#7A5560"><div>GST 10%</div><div style="font-family:'IBM Plex Mono',monospace">{{gstTxt}}</div></div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;margin-top:2px"><div>Total inc GST</div><div style="font-family:'IBM Plex Mono',monospace">{{totalIncTxt}}</div></div>
+        </div>
+        <div style="margin:12px 22px 0;padding:10px 14px;background:rgba(232,184,75,0.12);border:1px solid rgba(232,184,75,0.35);border-radius:12px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;line-height:1.6;color:#7A5560">Concept sketch for estimating — not a construction drawing. Indicative allowances, not a fixed quote.</div>
+        <div style="display:flex;gap:8px;padding:16px 22px 20px">
+          <button onClick="{{copyQuote}}" style="flex:1;height:44px;border-radius:13px;border:none;background:#C2455F;color:#FFF6F8;font-size:13px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif" style-hover="background:#A93750">{{copyLabel}}</button>
+          <button onClick="{{closeQuote}}" style="height:44px;padding:0 18px;border-radius:13px;border:1px solid rgba(36,19,24,0.12);background:transparent;color:#7A5560;font-size:13px;cursor:pointer;font-family:Sora,sans-serif" style-hover="background:rgba(36,19,24,0.05)">Close</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{shareOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;inset:0;z-index:60;background:#FAF6F2;display:flex;flex-direction:column;overflow:auto">
+      <div style="flex:none;display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid rgba(36,19,24,0.08)">
+        <div>
+          <div style="font-family:Fraunces,serif;font-size:22px;font-weight:600;color:#241318">Curtis &amp; Co</div>
+          <div style="font-size:11.5px;color:#7A5560;margin-top:2px">{{siteAddr}} · Concept plan for client review</div>
+        </div>
+        <div style="flex:1"></div>
+        <button onClick="{{toggleShare}}" style="height:36px;padding:0 16px;border-radius:10px;border:1px solid rgba(36,19,24,0.14);background:transparent;color:#241318;font-size:12px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif" style-hover="border:1px solid #C2455F">← Back to studio</button>
+      </div>
+      <div style="flex:1;display:flex;gap:20px;padding:20px 24px;min-height:0;flex-wrap:wrap">
+        <div style="flex:none;height:100%;aspect-ratio:{{shareRatio}};position:relative;border-radius:16px;overflow:hidden;background:#FAF6F2;border:1px solid rgba(36,19,24,0.1);box-sizing:border-box">
+          <div style="position:absolute;inset:0"><image-slot id="aerialShare" shape="rect" placeholder="Drop Mapbox aerial screenshot here"></image-slot></div>
+          <div style="position:absolute;inset:0;pointer-events:none;background:rgba(250,246,242,0.55)"></div>
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible">
+            <polygon points="{{shareBoundaryPts}}" style="fill:rgba(36,19,24,0.03);stroke:#241318;stroke-width:2px;stroke-dasharray:6 3;vector-effect:non-scaling-stroke"></polygon>
+            <polygon points="{{shareBuildingPts}}" style="fill:rgba(36,19,24,0.08);stroke:#241318;stroke-width:1.6px;vector-effect:non-scaling-stroke"></polygon>
+            <sc-for list="{{shareStrokes}}" as="s2" hint-placeholder-count="0">
+              <polyline points="{{s2.pts}}" style="fill:none;stroke:#C2455F;stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:0.9"></polyline>
+            </sc-for>
+          </svg>
+          <sc-for list="{{shareItems}}" as="it2" hint-placeholder-count="0">
+            <div style="position:absolute;left:{{it2.x}}%;top:{{it2.y}}%;width:{{it2.wPct}}%;height:{{it2.hPct}}%;transform:translate(-50%,-50%) rotate({{it2.rot}}deg)">{{it2.glyph}}</div>
+          </sc-for>
+          <div style="position:absolute;top:12px;left:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,251,252,0.9);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;box-shadow:0 4px 14px rgba(42,23,29,0.2);color:#241318">N↑</div>
+        </div>
+        <div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:10px">
+            <div style="flex:1;background:#FFFBFC;border:1px solid rgba(36,19,24,0.08);border-radius:14px;padding:12px 14px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#B08A95">OUTDOOR AREA</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:500;margin-top:2px;color:#241318">{{areaTxt}}</div>
+            </div>
+            <div style="flex:1;background:#FFFBFC;border:1px solid rgba(36,19,24,0.08);border-radius:14px;padding:12px 14px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#B08A95">ISSUED</div>
+              <div style="font-size:13px;font-weight:600;margin-top:2px;color:#241318">{{issuedTxt}}</div>
+            </div>
+          </div>
+          <div style="flex:1;background:#FFFBFC;border:1px solid rgba(36,19,24,0.08);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-height:0">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#B08A95">CONCEPT ESTIMATE</div>
+            <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{sched}}" as="ln2" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(36,19,24,0.06)">
+                  <div><div style="font-size:12px;color:#241318">{{ln2.name}}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7A5560;margin-top:1px">{{ln2.qtyTxt}}</div></div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;flex:none;color:#241318">{{ln2.amt}}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;padding-top:6px;border-top:1px solid rgba(36,19,24,0.1);color:#241318"><div>Total inc GST</div><div style="font-family:'IBM Plex Mono',monospace">{{totalIncTxt}}</div></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95">Concept sketch for estimating — not a construction drawing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{cmdOpen}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closeCmd}}" style="position:fixed;inset:0;z-index:70;background:rgba(24,11,15,0.5);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;box-sizing:border-box">
+      <div onClick="{{stopEvt}}" style="width:100%;max-width:440px;background:#FFFBFC;border-radius:16px;box-shadow:0 24px 80px rgba(24,11,15,0.5);overflow:hidden;animation:ccIn 0.2s cubic-bezier(0.2,0.7,0.2,1) both">
+        <input autoFocus="{{true}}" value="{{cmdQuery}}" onChange="{{cmdInput}}" onKeyDown="{{cmdKey}}" placeholder="Type a command…" style="width:100%;box-sizing:border-box;height:52px;padding:0 18px;border:none;border-bottom:1px solid rgba(36,19,24,0.08);font-size:14px;font-family:Sora,sans-serif;outline:none;background:transparent;color:#241318"></input>
+        <div style="display:flex;flex-direction:column;padding:6px;max-height:340px;overflow-y:auto">
+          <sc-for list="{{cmdFiltered}}" as="cm" hint-placeholder-count="5">
+            <button onClick="{{cm.run}}" onPointerEnter="{{cm.hover}}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;border:none;background:{{cm.bg}};cursor:pointer;text-align:left;font-family:Sora,sans-serif" style-hover="background:rgba(194,69,95,0.07)">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#B08A95;width:40px;flex:none">{{cm.k}}</span>
+              <span style="font-size:12.5px;color:#241318">{{cm.label}}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{cmdAskOn}}" hint-placeholder-val="{{false}}">
+            <button onClick="{{cmdAsk}}" onPointerEnter="{{cmdAskHover}}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;border:none;background:{{cmdAskBg}};cursor:pointer;text-align:left;font-family:Sora,sans-serif" style-hover="background:rgba(232,184,75,0.2)">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#8A6A1F;width:40px;flex:none">AI</span>
+              <span style="font-size:12.5px;color:#241318">Ask AI — “{{cmdQuery}}” → draft ghost suggestions</span>
+            </button>
+          </sc-if>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;border-top:1px solid rgba(36,19,24,0.07);font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B08A95">
+          <span>↑↓ navigate</span><span>↵ run</span><span>esc close</span>
+          <span style="margin-left:auto">{{cmdCountTxt}}</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:900},&quot;aerialDim&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.22,&quot;min&quot;:0,&quot;max&quot;:0.5,&quot;step&quot;:0.02,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Canvas&quot;},&quot;eaveHeightM&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:5,&quot;min&quot;:3,&quot;max&quot;:9,&quot;step&quot;:0.5,&quot;unit&quot;:&quot;m&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Sun cast&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.byType = {
+      canopy:{name:'Canopy tree', tag:'Canopy tree', rate:650, w:72,h:72,br:'50%', canopyM:6, heightM:6, elevShape:'tree'},
+      feature:{name:'Feature tree', tag:'Feature tree', rate:1200, w:54,h:54,br:'50%', canopyM:4, heightM:4, elevShape:'tree'},
+      paving:{name:'Bluestone paving', tag:'Bluestone', rate:320, w:110,h:80,br:'4px', area:'rect'},
+      deck:{name:'Timber deck', tag:'Deck', rate:480, w:120,h:86,br:'4px', area:'rect', heightM:0.4, elevShape:'deck'},
+      lawn:{name:'Instant turf', tag:'Turf', rate:45, w:130,h:95,br:'12px', area:'rect'},
+      hedge:{name:'Clipped hedge', tag:'Hedge', rate:260, w:120,h:34,br:'8px', lin:true, heightM:1.2, elevShape:'hedge'},
+      bed:{name:'Mass plant bed', tag:'Plant bed', rate:180, w:100,h:74,br:'55% 45% 60% 40%', area:'ellipse'},
+      frenchdrain:{name:'French drain', tag:'French drain', rate:220, w:110,h:14,br:'8px', lin:true},
+      exist:{name:'Existing tree', tag:'Existing tree · DBH 450', rate:0, w:64,h:64,br:'50%', canopyM:7, heightM:8, elevShape:'tree', existing:true, dbhM:0.45},
+    };
+    this.blocks = this.buildBlocks();
+    this.blocksInk = this.buildBlocks('#5A4650');
+    this.SITES = [
+      {addr:'12 Wrights Terrace, Prahran VIC 3181', meta:'Vicmap · CT 8842/117'},
+      {addr:'14 Airlie Ave, Armadale VIC 3143', meta:'Vicmap · CT 9107/042'},
+    ];
+    this.SEEDS = [
+      {
+        boundary:[{x:36,y:10},{x:42.5,y:10.6},{x:40.6,y:90},{x:34,y:89.2}],
+        building:[{x:36.6,y:22},{x:41.9,y:22.4},{x:41.1,y:52},{x:35.8,y:51.6}],
+        items:[
+          {id:'e1', t:'exist', x:35.6, y:69.5, rot:0, scale:1, ghost:false},
+          {id:'r1', t:'lawn', x:38.2, y:73, rot:2, scale:0.85, ghost:false},
+          {id:'r2', t:'paving', x:38.6, y:58, rot:3, scale:0.62, ghost:false},
+          {id:'g1', t:'deck', x:38.4, y:64.5, rot:3, scale:0.55, ghost:true, why:'Links rear door to lawn · fall < 1:100', conf:0.93},
+          {id:'g2', t:'canopy', x:36.4, y:82, rot:0, scale:0.9, ghost:true, why:'Shades west glazing at 3 PM in Jan', conf:0.91},
+          {id:'g3', t:'canopy', x:40.4, y:86, rot:0, scale:0.7, ghost:true, why:'Lifts canopy cover toward 15% target', conf:0.88},
+          {id:'g4', t:'hedge', x:37.4, y:16.5, rot:1, scale:0.75, ghost:true, why:'Screens front boundary · 1.2 m clipped', conf:0.86},
+        ],
+        strokes:[],
+      },
+      {
+        boundary:[{x:32,y:14},{x:47,y:14.8},{x:46,y:86},{x:33,y:85.2}],
+        building:[{x:34,y:20},{x:45,y:20.6},{x:44.4,y:44},{x:34.6,y:43.5}],
+        items:[
+          {id:'r1', t:'paving', x:39.3, y:56, rot:0, scale:0.9, ghost:false},
+          {id:'r2', t:'hedge', x:33.6, y:60, rot:1, scale:0.7, ghost:false},
+          {id:'r3', t:'bed', x:41.8, y:74, rot:0, scale:0.8, ghost:false},
+          {id:'g1', t:'lawn', x:39.3, y:70, rot:0, scale:0.75, ghost:true, why:'Permeable core · lifts site permeability', conf:0.92},
+          {id:'g2', t:'canopy', x:35, y:80, rot:0, scale:0.65, ghost:true, why:'Canopy target · clear of sewer easement', conf:0.87},
+          {id:'g3', t:'frenchdrain', x:39.3, y:50, rot:0, scale:1, ghost:true, why:'Intercepts runoff at paving low point', conf:0.9},
+        ],
+        strokes:[],
+      },
+    ];
+    const cp = o => JSON.parse(JSON.stringify(o));
+    this.siteSnaps = this.SEEDS.map(sd => ({
+      boundary:cp(sd.boundary), building:cp(sd.building), items:cp(sd.items), strokes:cp(sd.strokes), easements:cp(sd.easements||[]),
+      hist:[], redo:[], selectedId:null,
+    }));
+    this.state = {
+      vw: typeof window !== 'undefined' ? window.innerWidth : 1280,
+      cw:1280, ch:640, scaleM:110,
+      mode:'cad', tool:'pan', locked:false, armed:null, addOpen:false, focusOn:false, elevAxis:'x',
+      traceTarget:'boundary', drawPoly:null, drawCursor:null,
+      boundary:cp(this.SEEDS[0].boundary), building:cp(this.SEEDS[0].building), items:cp(this.SEEDS[0].items), strokes:[], easements:cp(this.SEEDS[0].easements||[]),
+      selectedId:null, drag:null, vDrag:null, cur:null,
+      sunMin:746, growth:'mature', sunBodyOn:true, gridOn:false, frameOn:false, sheetRot:0, paper:'a3', zoom:1, panX:0, panY:0, dimsOn:true, sheetElevOn:false,
+      darkOn:(()=>{ try { return localStorage.getItem('cc_dark')==='1'; } catch(e) { return false; } })(),
+      layerOpacity:{survey:1, boundary:1, council:1, vegetation:1}, layersOn:false, setbackOn:false,
+      sitesOpen:false, siteIdx:0, moreOpen:false, quoteOpen:false, shareOpen:false, copied:false,
+      measure:{on:false,x1:0,y1:0,x2:0,y2:0,len:'0.0'}, _measuring:false,
+      mitigated:{}, hist:[], redo:[], idn:10,
+      groupIds:[], marquee:null, guideX:null, guideY:null,
+      cmdOpen:false, cmdQuery:'', cmdSel:0, hoverId:null, sunPlay:false,
+      coachStep: (typeof localStorage!=='undefined' && localStorage.getItem('cc_coach_done')) ? -1 : 0,
+      savedTick:0, ghostIdx:0, toastPin:false, dockStats:null, dockBom:null, factorsOpen:false, canopyScanning:false,
+    };
+    this.canvasRef = React.createRef();
+    this.hudRef = React.createRef();
+    this.lastSaved = Date.now();
+  }
+  buildBlocks(Wc) {
+    const E = React.createElement; let k = 0;
+    const L=(x1,y1,x2,y2,s,w,d)=>E('line',{key:'k'+(k++),x1,y1,x2,y2,stroke:s,strokeWidth:w||1.5,strokeDasharray:d,strokeLinecap:'round',vectorEffect:'non-scaling-stroke'});
+    const C=(cx,cy,r,s,w,f,d)=>E('circle',{key:'k'+(k++),cx,cy,r,stroke:s,strokeWidth:w||1.5,fill:f||'none',strokeDasharray:d,vectorEffect:'non-scaling-stroke'});
+    const EL=(cx,cy,rx,ry,s,w,f)=>E('ellipse',{key:'k'+(k++),cx,cy,rx,ry,stroke:s,strokeWidth:w||1.5,fill:f||'none',vectorEffect:'non-scaling-stroke'});
+    const R=(x,y,w2,h2,rx,s,w,f,d)=>E('rect',{key:'k'+(k++),x,y,width:w2,height:h2,rx,stroke:s,strokeWidth:w||1.5,fill:f||'none',strokeDasharray:d,vectorEffect:'non-scaling-stroke'});
+    const SVG=(ch,stretch)=>E('svg',{key:'k'+(k++),viewBox:'0 0 100 100',preserveAspectRatio:stretch?'none':'xMidYMid meet',style:{width:'100%',height:'100%',display:'block',overflow:'visible'}},ch);
+    const spokes=(n,r1,r2,s,w,off)=>Array.from({length:n},(_,i)=>{const a=(i*360/n+(off||0))*Math.PI/180;return L(50+r1*Math.cos(a),50+r1*Math.sin(a),50+r2*Math.cos(a),50+r2*Math.sin(a),s,w);});
+    const G='#C8F07A', DG='#1F8A5A', W=Wc||'#FFF6F8', B='#2F7D8C', MV='#B08A95';
+    return {
+      canopy: SVG([C(50,50,46,G,2,'rgba(31,138,90,0.42)'),...spokes(12,10,43,'rgba(200,240,122,0.75)',1.2,8),C(50,50,3.5,G,1,G)]),
+      feature: SVG([C(50,50,46,W,2,'rgba(20,96,62,0.55)'),...spokes(8,12,32,'rgba(255,246,248,0.7)',1.2,22),L(44,50,56,50,W,1.6),L(50,44,50,56,W,1.6)]),
+      paving: SVG([R(6,8,88,84,2,W,1.6,'rgba(150,162,156,0.42)'),L(6,36,94,36,'rgba(255,246,248,0.75)',1),L(6,64,94,64,'rgba(255,246,248,0.75)',1),L(35,8,35,36,'rgba(255,246,248,0.75)',1),L(65,8,65,36,'rgba(255,246,248,0.75)',1),L(20,36,20,64,'rgba(255,246,248,0.75)',1),L(50,36,50,64,'rgba(255,246,248,0.75)',1),L(80,36,80,64,'rgba(255,246,248,0.75)',1),L(35,64,35,92,'rgba(255,246,248,0.75)',1),L(65,64,65,92,'rgba(255,246,248,0.75)',1)],true),
+      deck: SVG([R(5,8,90,84,2,MV,1.4,'rgba(176,138,149,0.2)'),...Array.from({length:8},(_,i)=>L(5,17+i*9.5,95,17+i*9.5,'rgba(226,214,218,0.75)',1))],true),
+      lawn: SVG([R(5,8,90,84,12,G,1.4,'rgba(200,240,122,0.25)','5 4'),...[28,53,78].flatMap((y,r)=>[20,35,50,65,80].map(x=>L(x+(r%2?6:0),y,x+(r%2?10:4),y-9,'rgba(200,240,122,0.9)',1.2)))],true),
+      hedge: SVG([R(4,26,92,48,10,DG,1.8,'rgba(31,138,90,0.42)'),...Array.from({length:11},(_,i)=>C(9+i*8.2,26,5,'rgba(200,240,122,0.7)',1.2)),...Array.from({length:11},(_,i)=>C(9+i*8.2,74,5,'rgba(200,240,122,0.7)',1.2))],true),
+      bed: SVG([EL(50,50,46,34,G,1.6,'rgba(31,138,90,0.3)'),...[-0.6,-0.3,0,0.3,0.6].map(t=>{const cx=50+t*40,my=30*Math.sqrt(1-t*t);return L(cx-9,50+my*0.75,cx+9,50-my*0.75,'rgba(200,240,122,0.8)',1.2);})],true),
+      frenchdrain: SVG([L(6,50,94,50,B,1.8,'2 5'),...Array.from({length:9},(_,i)=>C(10+i*10,50,1.6,'none',0,B))],true),
+      exist: SVG([C(50,50,44,W,1.6,'none','5 5'),C(50,50,30,'rgba(232,184,75,0.9)',1.2,'none','3 4'),L(36,50,64,50,W,1.4),L(50,36,50,64,W,1.4),C(50,50,3,W,1,W)]),
+    };
+  }
+  componentDidMount() {
+    this._measure = () => { const c = this.canvasRef.current; if (c) { const r = c.getBoundingClientRect(); this.setState({cw:r.width, ch:r.height}); } };
+    this._onResize = () => { this.setState({vw:window.innerWidth}); this._measure(); };
+    window.addEventListener('resize', this._onResize);
+    this._onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState(st => ({cmdOpen:!st.cmdOpen, cmdQuery:''})); return; }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) this.redoAct(); else this.undo(); }
+      else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); this.redoAct(); }
+      else if (e.key === 'Escape') this.setState({armed:null, selectedId:null, groupIds:[], drawPoly:null, addOpen:false, moreOpen:false, sitesOpen:false, quoteOpen:false, layersOn:false, cmdOpen:false});
+      else if (e.key === 'Enter' && this.state.drawPoly && this.state.drawPoly.length >= 3) this.finishPoly();
+      else if (e.key === 'Tab' && this.state.drawPoly && this.state.tool === 'trace' && !this.state.locked && this._ghostCompletionPts) { e.preventDefault(); this.finishPolyWith(this._ghostCompletionPts); }
+      else if ((e.key === 'Delete' || e.key === 'Backspace') && this.state.drawPoly && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); this.setState(s => ({drawPoly: s.drawPoly.length > 1 ? s.drawPoly.slice(0,-1) : null, drawCursor: s.drawPoly.length > 1 ? s.drawCursor : null})); }
+      else if ((e.key === 'Delete' || e.key === 'Backspace') && (this.state.selectedId || this.state.groupIds.length) && document.activeElement.tagName !== 'INPUT') this.delSel();
+      else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !this.state.selectedId && !this.state.groupIds.length && !this.state.cmdOpen && this.state.items.some(i=>i.ghost) && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); const d = e.key === 'ArrowRight' ? 1 : -1; this.setState(st => ({ghostIdx: st.ghostIdx + d})); }
+      else if ((e.key === 'a' || e.key === 'A') && !e.metaKey && !e.ctrlKey && !this.state.cmdOpen && this.state.items.some(i=>i.ghost) && document.activeElement.tagName !== 'INPUT') this.acceptCurGhost();
+      else if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey && !this.state.cmdOpen && this.state.items.some(i=>i.ghost) && document.activeElement.tagName !== 'INPUT') this.rejectCurGhost();
+    else if ((this.state.selectedId || this.state.groupIds.length) && document.activeElement.tagName !== 'INPUT' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      const step = e.shiftKey ? 1 : 0.2;
+      const dx = e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0, dy = e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0;
+      const ids = this.state.groupIds.length ? this.state.groupIds : [this.state.selectedId];
+      this.mutate(st => ({items:st.items.map(i => ids.includes(i.id) ? {...i, x:Math.min(100,Math.max(0,i.x+dx)), y:Math.min(100,Math.max(0,i.y+dy))} : i)}));
+    }
+    };
+    window.addEventListener('keydown', this._onKey);
+    this._saveTick = setInterval(() => this.setState(st => ({savedTick: st.savedTick+1})), 10000);
+    setTimeout(this._measure, 0);
+    const aerialEl = document.getElementById('aerial2');
+    if (aerialEl) {
+      this._aerialObs = new MutationObserver(() => {
+        if (aerialEl.hasAttribute('data-filled') && !this._canopyScanned) { this._canopyScanned = true; this.scanAerialForCanopy(aerialEl); }
+      });
+      this._aerialObs.observe(aerialEl, {attributes:true, attributeFilter:['data-filled']});
+      if (aerialEl.hasAttribute('data-filled')) { this._canopyScanned = true; this.scanAerialForCanopy(aerialEl); }
+    }
+  }
+  scanAerialForCanopy(el) {
+    const img = el.shadowRoot && el.shadowRoot.querySelector('.frame img');
+    if (!img) return;
+    const run = () => {
+      try {
+        const cw = 96, grid = 24, cell = cw/grid;
+        const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = cw;
+        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, cw, cw);
+        const data = ctx.getImageData(0, 0, cw, cw).data;
+        const green = new Array(grid*grid).fill(false);
+        for (let gy=0; gy<grid; gy++) for (let gx=0; gx<grid; gx++) {
+          let hits=0, tot=0;
+          for (let py=0; py<cell; py++) for (let px=0; px<cell; px++) {
+            const x = Math.floor(gx*cell+px), y = Math.floor(gy*cell+py), idx = (y*cw+x)*4;
+            const r=data[idx], g=data[idx+1], b=data[idx+2]; tot++;
+            if (g > r*1.12 && g > b*1.05 && g > 40 && g < 235) hits++;
+          }
+          green[gy*grid+gx] = tot ? (hits/tot) > 0.42 : false;
+        }
+        const seen = new Array(grid*grid).fill(false), clusters = [];
+        for (let i=0;i<grid*grid;i++) {
+          if (!green[i] || seen[i]) continue;
+          const stack=[i]; seen[i]=true; const cells=[];
+          while (stack.length) {
+            const c = stack.pop(); cells.push(c);
+            const cx=c%grid, cy=(c-cx)/grid;
+            [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => {
+              const nx=cx+dx, ny=cy+dy; if (nx<0||ny<0||nx>=grid||ny>=grid) return;
+              const ni=ny*grid+nx; if (green[ni] && !seen[ni]) { seen[ni]=true; stack.push(ni); }
+            });
+          }
+          if (cells.length >= 3) clusters.push(cells);
+        }
+        clusters.sort((a,b) => b.length-a.length);
+        const top = clusters.slice(0,6);
+        this.setState({canopyScanning:false});
+        if (!top.length) return;
+        const idn0 = this.state.idn;
+        const add = top.map((cells,i) => {
+          const cx = cells.reduce((a,c)=>a+(c%grid),0)/cells.length, cy = cells.reduce((a,c)=>a+Math.floor(c/grid),0)/cells.length;
+          const sizeFrac = cells.length/(grid*grid);
+          return {id:'aic'+(idn0+i+1), t:'canopy', x:+((cx+0.5)/grid*100).toFixed(1), y:+((cy+0.5)/grid*100).toFixed(1), rot:0,
+            scale:+Math.max(0.5, Math.min(1.3, 0.6+sizeFrac*14)).toFixed(2), ghost:true,
+            why:'Detected canopy from aerial imagery (colour analysis)', conf:+Math.max(0.55, Math.min(0.93, 0.5+cells.length*0.03)).toFixed(2)};
+        });
+        this.mutate(s => ({items:[...s.items, ...add], idn: idn0+add.length, ghostIdx:0}));
+      } catch (e) { this.setState({canopyScanning:false}); }
+    };
+    this.setState({canopyScanning:true});
+    if (img.complete && img.naturalWidth) setTimeout(run, 650);
+    else img.addEventListener('load', () => setTimeout(run, 650), {once:true});
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._onResize); window.removeEventListener('keydown', this._onKey); clearInterval(this._saveTick); clearInterval(this._sunTick); clearTimeout(this._dtT); clearTimeout(this._cp); if (this._aerialObs) this._aerialObs.disconnect(); }
+  snap() { return JSON.parse(JSON.stringify({items:this.state.items, boundary:this.state.boundary, building:this.state.building, strokes:this.state.strokes, easements:this.state.easements})); }
+  pip(pt, poly) {
+    let inside = false;
+    for (let i=0, j=poly.length-1; i<poly.length; j=i++) {
+      const xi=poly[i].x, yi=poly[i].y, xj=poly[j].x, yj=poly[j].y;
+      if (((yi>pt.y)!==(yj>pt.y)) && (pt.x < (xj-xi)*(pt.y-yi)/(yj-yi)+xi)) inside = !inside;
+    }
+    return inside;
+  }
+  mutate(fn) {
+    this.lastSaved = Date.now();
+    this.setState(s => {
+      const before = s.items, next = fn(s);
+      if (next && next.items) {
+        const moved = [], gone = [];
+        before.forEach(b => { if (b.ghost) return; const a = next.items.find(x=>x.id===b.id); if (!a) gone.push(b); else if (a.x!==b.x || a.y!==b.y || a.scale!==b.scale) moved.push(b); });
+        if (moved.length || gone.length) {
+          next.items = next.items.map(it => {
+            if (!it.ghost || it.stale) return it;
+            const near = [...moved, ...gone].some(a => Math.hypot(a.x-it.x, a.y-it.y) < 6);
+            return near ? {...it, stale:true} : it;
+          });
+        }
+      }
+      return {hist:[...s.hist, this.snap()].slice(-40), redo:[], ...next};
+    });
+  }
+  toggleFactors() { this.setState(st => ({factorsOpen:!st.factorsOpen})); }
+  ghostFactors(g) {
+    if (!g) return [];
+    const defs = {canopy:['Sun exposure','Canopy target','Root clearance'], feature:['Sun exposure','Canopy target','Root clearance'],
+      hedge:['Screening coverage','Root clearance','Cost efficiency'], deck:['Access & fall','Permeability impact','Cost efficiency'],
+      paving:['Access & fall','Permeability impact','Cost efficiency'], lawn:['Permeability impact','Sun exposure','Cost efficiency'],
+      bed:['Sun exposure','Canopy target','Cost efficiency'], frenchdrain:['Drainage intercept','Permeability impact','Cost efficiency'],
+      exist:['Sun exposure','Root clearance','Canopy target']}[g.t] || ['Site fit','Cost efficiency','Pattern match'];
+    const conf = Math.round((g.conf||0.9)*100);
+    let h = 0; for (const c of g.id) h = (h*31 + c.charCodeAt(0)) >>> 0;
+    return defs.map((label,i) => ({label, pct: Math.max(42, Math.min(99, conf + (((h >>> (i*6)) % 21) - 10)))}));
+  }
+  dismissCoach() { try { localStorage.setItem('cc_coach_done','1'); } catch(e) {} this.setState({coachStep:-1}); }
+  curGhost2() { const gs = this.state.items.filter(i => i.ghost); if (!gs.length) return null; const gi = ((this.state.ghostIdx % gs.length) + gs.length) % gs.length; return gs[gi]; }
+  acceptCurGhost() { const g = this.curGhost2(); if (g) this.mutate(st => ({items:st.items.map(i => i.id===g.id ? {...i, ghost:false} : i), ghostIdx:0})); }
+  rejectCurGhost() { const g = this.curGhost2(); if (g) this.mutate(st => ({items:st.items.filter(i => i.id!==g.id), ghostIdx:0})); }
+  toggleSunPlay() {
+    if (this.state.sunPlay) { clearInterval(this._sunTick); this.setState({sunPlay:false}); return; }
+    this._sunTick = setInterval(() => this.setState(st => ({sunMin: st.sunMin >= 1180 ? 380 : st.sunMin + 5})), 50);
+    this.setState({sunPlay:true});
+  }
+  sheetBoxFor(cw, ch, paper) {
+    const aspect = paper === 'a4' ? 210/297 : 420/297;
+    const availW = Math.max(80, cw-48), availH = Math.max(80, ch-48);
+    let boxW, boxH;
+    if (availW/availH > aspect) { boxH = availH; boxW = boxH*aspect; } else { boxW = availW; boxH = boxW/aspect; }
+    return {boxW, boxH, boxLeft:(cw-boxW)/2, boxTop:(ch-boxH)/2};
+  }
+  computeSheetFit(st, paper) {
+    const el = this.hudRef.current, W = el ? el.clientWidth : 1280, H = el ? el.clientHeight : 640;
+    const xs = st.boundary.map(p=>p.x), ys = st.boundary.map(p=>p.y);
+    if (!xs.length) return {sheetRot:0, zoom:1, panX:0, panY:0};
+    const box = this.sheetBoxFor(W, H, paper);
+    const panelW = box.boxW >= 420 ? 262 : 0;
+    const x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
+    const bw=Math.max(1,x1-x0)/100*W, bh=Math.max(1,y1-y0)/100*H;
+    const dx0 = box.boxLeft + 30, dx1 = box.boxLeft + box.boxW - panelW - 30;
+    const availW2 = dx1-dx0, availH2 = box.boxH - 70;
+    const zNormal = Math.min(availW2/bw, availH2/bh);
+    const zRot = Math.min(availW2/bh, availH2/bw);
+    const rotate = zRot > zNormal*1.05;
+    let z = Math.min(5, Math.max(1, rotate ? zRot : zNormal));
+    const stdScales = [50,75,100,150,200,250,300,400,500,750,1000];
+    const rawDen = st.scaleM*3779.5/(W*z);
+    const snapDen = stdScales.find(d => d >= rawDen - 0.5) || Math.ceil(rawDen/250)*250;
+    z = st.scaleM*3779.5/(W*snapDen);
+    const cx0 = (x0+x1)/2, cy0 = (y0+y1)/2;
+    const rad = rotate ? Math.PI/2 : 0;
+    const lx = (cx0-50)/100*W, ly = (cy0-50)/100*H;
+    const rx = lx*Math.cos(rad) - ly*Math.sin(rad), ry = lx*Math.sin(rad) + ly*Math.cos(rad);
+    const targetCx = (dx0+dx1)/2, targetCy = box.boxTop + box.boxH/2;
+    return {sheetRot: rotate?90:0, zoom:z, panX: targetCx - W/2 - rx*z, panY: targetCy - H/2 - ry*z};
+  }
+  toggleSheet() {
+    this.setState(st => {
+      if (st.frameOn) { const pv = st._pv || {zoom:1,panX:0,panY:0}; return {frameOn:false, zoom:pv.zoom, panX:pv.panX, panY:pv.panY, sheetRot:0}; }
+      const fit = this.computeSheetFit(st, st.paper);
+      return {frameOn:true, _pv:{zoom:st.zoom,panX:st.panX,panY:st.panY}, ...fit};
+    });
+  }
+  setPaper(p) {
+    this.setState(st => st.frameOn ? {paper:p, ...this.computeSheetFit(st, p)} : {paper:p});
+  }
+  undo() { this.setState(s => { if (!s.hist.length) return null; const prev = s.hist[s.hist.length-1]; return {hist:s.hist.slice(0,-1), redo:[...s.redo, this.snap()].slice(-40), ...prev, selectedId:null, groupIds:[]}; }); }
+  redoAct() { this.setState(s => { if (!s.redo.length) return null; const next = s.redo[s.redo.length-1]; return {redo:s.redo.slice(0,-1), hist:[...s.hist, this.snap()].slice(-40), ...next, selectedId:null, groupIds:[]}; }); }
+  delSel() { const ids = this.state.groupIds.length ? this.state.groupIds : [this.state.selectedId]; this.mutate(s => ({items:s.items.filter(i=>!ids.includes(i.id)), selectedId:null, groupIds:[]})); }
+  switchSite(i) {
+    const cp = o => JSON.parse(JSON.stringify(o));
+    this.setState(s => {
+      this.siteSnaps[s.siteIdx] = {boundary:cp(s.boundary), building:cp(s.building), items:cp(s.items), strokes:cp(s.strokes), easements:cp(s.easements), hist:cp(s.hist), redo:cp(s.redo), selectedId:s.selectedId};
+      const snap = this.siteSnaps[i];
+      return {siteIdx:i, sitesOpen:false, boundary:cp(snap.boundary), building:cp(snap.building), items:cp(snap.items), strokes:cp(snap.strokes), easements:cp(snap.easements||[]), hist:cp(snap.hist), redo:cp(snap.redo), selectedId:snap.selectedId, drag:null, armed:null, drawPoly:null};
+    });
+  }
+  finishPoly() { this.finishPolyWith(this.state.drawPoly); }
+  finishPolyWith(pts) {
+    if (!pts || pts.length < 3) { this.setState({drawPoly:null}); return; }
+    const which = this.state.traceTarget;
+    if (which === 'easement') { this.mutate(s => ({easements:[...s.easements, pts], drawPoly:null, drawCursor:null, tool:'edit'})); return; }
+    this.mutate(s => ({[which]:pts, drawPoly:null, drawCursor:null, tool:'edit'}));
+  }
+  setSunFromEvt(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    const f = Math.min(1, Math.max(0, (e.clientX - r.left)/r.width));
+    this.setState({sunMin: Math.round(380 + f*800)});
+  }
+  pct(e) {
+    const r = this.canvasRef.current.getBoundingClientRect();
+    return {x:Math.min(100,Math.max(0,(e.clientX-r.left)/r.width*100)), y:Math.min(100,Math.max(0,(e.clientY-r.top)/r.height*100)), r};
+  }
+  traceSnap(p, shift) {
+    const s = this.state, cw = s.cw || 1280, ch = s.ch || 640;
+    const dp = s.drawPoly || [];
+    if (dp.length >= 3) { const f = dp[0]; if (Math.hypot((p.x-f.x)/100*cw, (p.y-f.y)/100*ch) < 14) return {x:f.x, y:f.y, kind:'close'}; }
+    let best = null, bd = 10;
+    s.boundary.concat(s.building).forEach(v => { const d = Math.hypot((p.x-v.x)/100*cw, (p.y-v.y)/100*ch); if (d < bd) { bd = d; best = v; } });
+    if (best) return {x:best.x, y:best.y, kind:'vertex'};
+    if (dp.length) {
+      const lp = dp[dp.length-1];
+      const dx = (p.x-lp.x)/100*cw, dy = (p.y-lp.y)/100*ch, len = Math.hypot(dx,dy);
+      if (len > 2) {
+        const a = Math.atan2(dy,dx);
+        const stepA = shift ? Math.PI/2 : Math.PI/4;
+        const sa = Math.round(a/stepA)*stepA;
+        if (shift || Math.abs(a-sa) < 0.09) {
+          const nx = lp.x + len*Math.cos(sa)/cw*100, ny = lp.y + len*Math.sin(sa)/ch*100;
+          return {x:Math.min(100,Math.max(0,nx)), y:Math.min(100,Math.max(0,ny)), kind:'angle', fx:lp.x, fy:lp.y};
+        }
+      }
+    }
+    return {x:p.x, y:p.y, kind:null};
+  }
+  hull(pts) {
+    const P = pts.slice().sort((a,b)=>a.x-b.x||a.y-b.y);
+    const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
+    const lo=[],up=[];
+    for (const p of P) { while (lo.length>=2 && cross(lo[lo.length-2],lo[lo.length-1],p)<=0) lo.pop(); lo.push(p); }
+    for (const p of P.slice().reverse()) { while (up.length>=2 && cross(up[up.length-2],up[up.length-1],p)<=0) up.pop(); up.push(p); }
+    return lo.slice(0,-1).concat(up.slice(0,-1));
+  }
+  renderVals() {
+    const s = this.state, P = this.props || {};
+    const eaveH = P.eaveHeightM ?? 5;
+    const GK = {plant:0.5, five:0.75, mature:1}; const gk = GK[s.growth] || 1;
+    const grow = t => { const d0 = this.byType[t]; return (d0 && d0.canopyM && !d0.existing) ? gk : 1; };
+    const fmt = v => '$' + Math.round(v).toLocaleString('en-AU');
+    const cw = s.cw || 1280, ch = s.ch || 640, ratio = ch/cw;
+    const toMx = p => p/100*s.scaleM, toMy = p => p/100*ratio*s.scaleM;
+    const pxToM = px => px/cw*s.scaleM;
+    const shoelace = pts => { if (!pts || pts.length<3) return 0; let a=0; for (let i=0;i<pts.length;i++){const p=pts[i],q=pts[(i+1)%pts.length];a+=toMx(p.x)*toMy(q.y)-toMx(q.x)*toMy(p.y);} return Math.abs(a)/2; };
+    const perim = pts => { if (!pts || pts.length<3) return 0; let L=0; for (let i=0;i<pts.length;i++){const p=pts[i],q=pts[(i+1)%pts.length];L+=Math.hypot(toMx(q.x)-toMx(p.x),toMy(q.y)-toMy(p.y));} return L; };
+    const lotArea = shoelace(s.boundary), buildArea = shoelace(s.building);
+    const outdoor = Math.max(0, lotArea - buildArea);
+    const areaTxt = outdoor.toFixed(2)+' m²';
+    const sheet = s.frameOn;
+    const dark = s.darkOn && !sheet;
+    const sheetBox = this.sheetBoxFor(cw, ch, s.paper);
+    const dims = [];
+    const extLines = [];
+    if (s.dimsOn) {
+      const addDims = (pts, pre) => {
+        if (!pts || pts.length<3) return;
+        const offPx = pre==='B' ? 26 : 16;
+        let C = null;
+        if (sheet) { let cx=0,cy=0; pts.forEach(p=>{cx+=p.x;cy+=p.y;}); C = {x:cx/pts.length, y:cy/pts.length}; }
+        for (let i=0;i<pts.length;i++) {
+          const p=pts[i], q=pts[(i+1)%pts.length];
+          const dxp=(q.x-p.x)/100*cw, dyp=(q.y-p.y)/100*ch;
+          const Lm=Math.hypot(toMx(q.x)-toMx(p.x), toMy(q.y)-toMy(p.y));
+          if (Lm < 1) continue;
+          let rot=Math.atan2(dyp,dxp)*180/Math.PI; if (rot>90) rot-=180; if (rot<-90) rot+=180;
+          let mx=(p.x+q.x)/2, my=(p.y+q.y)/2;
+          if (sheet) {
+            const ppx={x:p.x/100*cw,y:p.y/100*ch}, qpx={x:q.x/100*cw,y:q.y/100*ch};
+            const len=Math.hypot(dxp,dyp)||1, ux=dxp/len, uy=dyp/len;
+            let nx=-uy, ny=ux;
+            const Cpx={x:C.x/100*cw,y:C.y/100*ch};
+            const midx=(ppx.x+qpx.x)/2, midy=(ppx.y+qpx.y)/2;
+            if ((midx+nx*10-Cpx.x)*nx+(midy+ny*10-Cpx.y)*ny < 0) { nx=-nx; ny=-ny; }
+            const e1={x:ppx.x+nx*offPx,y:ppx.y+ny*offPx}, e2={x:qpx.x+nx*offPx,y:qpx.y+ny*offPx};
+            mx=(e1.x+e2.x)/2/cw*100; my=(e1.y+e2.y)/2/ch*100;
+            const P2=v=>({x:v.x/cw*100, y:v.y/ch*100});
+            extLines.push({
+              a:P2(ppx), b:P2(e1), c:P2(qpx), d:P2(e2),
+              t1a:P2({x:e1.x-ux*5-nx*5,y:e1.y-uy*5-ny*5}), t1b:P2({x:e1.x+ux*5+nx*5,y:e1.y+uy*5+ny*5}),
+              t2a:P2({x:e2.x-ux*5-nx*5,y:e2.y-uy*5-ny*5}), t2b:P2({x:e2.x+ux*5+nx*5,y:e2.y+uy*5+ny*5}),
+            });
+          }
+          dims.push({x:mx, y:my, rot:Math.round(rot), txt:(pre?pre+(i+1)+' · ':'')+Lm.toFixed(2)+' m'});
+        }
+      };
+      addDims(s.boundary, sheet ? 'B' : null);
+      if (sheet || (s.tool === 'edit' && !s.locked)) addDims(s.building, sheet ? 'F' : null);
+    }
+    // sun shadow
+    const tH = s.sunMin/60, frac = Math.min(1, Math.max(0, (tH-6.3)/13.4));
+    const alt = Math.max(0.06, Math.sin(Math.PI*frac)*(72*Math.PI/180));
+    let dirX = Math.cos(Math.PI*(1-frac)), dirY = 0.55 + 0.25*Math.sin(Math.PI*frac);
+    const dl = Math.hypot(dirX,dirY); dirX/=dl; dirY/=dl;
+    const shLen = Math.min(28, eaveH/Math.tan(alt));
+    const offX = shLen*dirX/s.scaleM*100, offY = shLen*dirY/(s.scaleM*ratio)*100;
+    let shadowD = '', shadowOp = 0;
+    if (s.building.length >= 3 && s.mode !== 'survey') {
+      const all = s.building.concat(s.building.map(p=>({x:p.x+offX, y:p.y+offY})));
+      const h = this.hull(all);
+      shadowD = 'M' + h.map(p=>p.x.toFixed(2)+','+p.y.toFixed(2)).join('L') + 'Z';
+      shadowOp = 0.9 - 0.5*Math.abs(frac-0.5)*2*0; shadowOp = 0.85;
+    }
+    const hh = Math.floor(tH), mm = Math.round(s.sunMin%60);
+    const ampm = hh >= 12 ? 'pm' : 'am';
+    const sunTimeTxt = ((hh+11)%12+1) + ':' + String(mm).padStart(2,'0') + ' ' + ampm;
+    // BOM from accepted items
+    const real = s.items.filter(i => !i.ghost);
+    const treeShadows = [];
+    if (s.mode !== 'survey') s.items.forEach(i => {
+      const d = this.byType[i.t]; if (!d || !d.canopyM) return;
+      const g2 = d.existing ? 1 : gk;
+      const hM = d.heightM*(i.scale||1)*g2;
+      const sL = Math.min(22, hM/Math.tan(alt));
+      const rM = d.canopyM*(i.scale||1)*g2/2;
+      treeShadows.push({cx:(i.x + sL*dirX/s.scaleM*100).toFixed(2), cy:(i.y + sL*dirY/(s.scaleM*ratio)*100).toFixed(2), rx:(rM/s.scaleM*100).toFixed(2), ry:(rM/(s.scaleM*ratio)*100).toFixed(2), op: i.ghost ? 0.35 : 0.8});
+    });
+    const sched = [];
+    const areaAcc = {}, perimAcc = {}, linAcc = {}, cntAcc = {};
+    real.forEach(i => {
+      const d = this.byType[i.t]; if (!d) return;
+      const wm = pxToM(d.w*i.scale), hm = pxToM(d.h*i.scale);
+      if (d.area) { areaAcc[i.t] = (areaAcc[i.t]||0) + (d.area==='rect' ? wm*hm : Math.PI/4*wm*hm); perimAcc[i.t] = (perimAcc[i.t]||0) + 2*(wm+hm); }
+      else if (d.lin) linAcc[i.t] = (linAcc[i.t]||0) + Math.max(wm,hm);
+      else if (!d.existing) cntAcc[i.t] = (cntAcc[i.t]||0) + 1;
+    });
+    const fm2 = v => v.toFixed(1)+' m²', fmL = v => v.toFixed(1)+' m';
+    Object.keys(areaAcc).forEach(t => { const d=this.byType[t]; sched.push({name:d.name, qtyTxt:fm2(areaAcc[t])+' × '+fmt(d.rate)+'/m²', amt:fmt(d.rate*areaAcc[t]), _v:d.rate*areaAcc[t]}); });
+    Object.keys(linAcc).forEach(t => { const d=this.byType[t]; sched.push({name:d.name, qtyTxt:fmL(linAcc[t])+' × '+fmt(d.rate)+'/m', amt:fmt(d.rate*linAcc[t]), _v:d.rate*linAcc[t]}); });
+    Object.keys(cntAcc).forEach(t => { const d=this.byType[t]; sched.push({name:d.name+' — supply & plant', qtyTxt:cntAcc[t]+' × '+fmt(d.rate), amt:fmt(d.rate*cntAcc[t]), _v:d.rate*cntAcc[t]}); });
+    ['paving'].forEach(t => {
+      const a = areaAcc[t]; if (!a) return; const d = this.byType[t];
+      const ex = a*0.15, exAmt = ex*180; sched.push({name:'↳ Excavation & spoil ('+d.name+')', qtyTxt:ex.toFixed(1)+' m³ × $180/m³', amt:fmt(exAmt), _v:exAmt});
+      const bt = a*0.1*2.2, btAmt = bt*95; sched.push({name:'↳ Compacted road base ('+d.name+')', qtyTxt:bt.toFixed(1)+' t × $95/t', amt:fmt(btAmt), _v:btAmt});
+      const sd = a*0.03, sdAmt = sd*110; sched.push({name:'↳ Sand setting bed', qtyTxt:sd.toFixed(1)+' m³ × $110/m³', amt:fmt(sdAmt), _v:sdAmt});
+      if (perimAcc[t]) { const eAmt = perimAcc[t]*18; sched.push({name:'↳ Edge restraint', qtyTxt:perimAcc[t].toFixed(1)+' m × $18/m', amt:fmt(eAmt), _v:eAmt}); }
+    });
+    if (areaAcc.deck) { const f = Math.ceil(areaAcc.deck/1.5), fA = f*180; sched.push({name:'↳ Concrete pier footings (deck)', qtyTxt:f+' × $180', amt:fmt(fA), _v:fA}); }
+    // conflicts: tree root zones vs hardscape
+    const distPtRect = (px,py,rx,ry,hw,hh2) => { const dx=Math.max(Math.abs(px-rx)-hw,0), dy=Math.max(Math.abs(py-ry)-hh2,0); return Math.hypot(dx,dy); };
+    const hard = real.filter(i => (i.t==='paving'||i.t==='deck')).map(i => { const d=this.byType[i.t]; return {name:d.name, x:toMx(i.x), y:toMy(i.y), hw:pxToM(d.w*i.scale)/2, hh:pxToM(d.h*i.scale)/2}; });
+    if (s.building.length >= 3) {
+      const bx = s.building.map(p=>toMx(p.x)), by = s.building.map(p=>toMy(p.y));
+      hard.push({name:'building slab', x:(Math.min(...bx)+Math.max(...bx))/2, y:(Math.min(...by)+Math.max(...by))/2, hw:(Math.max(...bx)-Math.min(...bx))/2, hh:(Math.max(...by)-Math.min(...by))/2});
+    }
+    const conflicts = [];
+    real.forEach(i => {
+      const d = this.byType[i.t]; if (!d || !d.canopyM) return;
+      const rootR = d.existing ? Math.min(15, 12*(d.dbhM||0.4)) : d.canopyM*(i.scale||1)*gk/2*1.5, tx = toMx(i.x), ty = toMy(i.y);
+      hard.forEach(h => { const dist = distPtRect(tx,ty,h.x,h.y,h.hw,h.hh); if (dist < rootR) conflicts.push({key:i.id+'/'+h.name, kind: d.existing ? 'tpz' : 'root', tip: d.existing ? 'TPZ (AS 4970) encroached '+(rootR-dist).toFixed(1)+' m by the '+h.name.toLowerCase()+' — arborist report likely. Click to allow root-sensitive construction.' : d.name+' root zone reaches '+(rootR-dist).toFixed(1)+' m into the '+h.name.toLowerCase()+'. Click to add a root barrier.'}); });
+    });
+    s.easements.forEach((poly, ei) => {
+      if (s.building.length >= 3) {
+        const bcx = s.building.reduce((a,p)=>a+p.x,0)/s.building.length, bcy = s.building.reduce((a,p)=>a+p.y,0)/s.building.length;
+        if (this.pip({x:bcx,y:bcy}, poly)) conflicts.push({key:'ez'+ei+'/building', kind:'easement', tip:'Building footprint sits within a traced easement — confirm service authority consent before construction.'});
+      }
+      real.filter(i => this.byType[i.t] && (this.byType[i.t].area || this.byType[i.t].lin)).forEach(i => {
+        if (this.pip({x:i.x,y:i.y}, poly)) conflicts.push({key:'ez'+ei+'/'+i.id, kind:'easement', tip:this.byType[i.t].name+' sits within a traced easement — relocate or confirm no build-over is required.'});
+      });
+    });
+    const impervious = (areaAcc.paving||0)+(areaAcc.deck||0);
+    const chips = conflicts.map(c => {
+      const done = !!s.mitigated[c.key];
+      return {label: done ? (c.kind==='tpz' ? '✓ Root-sensitive build' : c.kind==='easement' ? '✓ Easement noted' : '✓ Root barrier added') : (c.kind==='tpz' ? 'TPZ encroachment' : c.kind==='easement' ? 'Easement encroachment' : 'Root / structure conflict'), tip:c.tip,
+        bg: done ? 'rgba(31,138,90,0.1)' : 'rgba(194,69,95,0.08)', bd: done ? 'rgba(31,138,90,0.4)' : 'rgba(194,69,95,0.3)', fg: done ? '#1F8A5A' : '#C2455F',
+        act: () => this.setState(st => ({mitigated:{...st.mitigated, [c.key]:!st.mitigated[c.key]}}))};
+    });
+    if (impervious > 30) {
+      const done = !!s.mitigated.storm;
+      chips.push({label: done ? '✓ French drain allowed' : 'Stormwater from hardscape', tip:'New hardscape adds '+fm2(impervious)+' impervious. Click to allow a French drain.',
+        bg: done ? 'rgba(31,138,90,0.1)' : 'rgba(232,184,75,0.14)', bd: done ? 'rgba(31,138,90,0.4)' : 'rgba(232,184,75,0.5)', fg: done ? '#1F8A5A' : '#8A6A1F',
+        act: () => this.setState(st => ({mitigated:{...st.mitigated, storm:!st.mitigated.storm}}))});
+    }
+    Object.keys(s.mitigated).forEach(k => { if (!s.mitigated[k]) return; if (k === 'storm') sched.push({name:'↳ French drain — stormwater mitigation', qtyTxt:'allowance', amt:fmt(1200), _v:1200}); else sched.push({name:'↳ Root barrier — '+ (this.byType[(s.items.find(i=>i.id===k.split('/')[0])||{}).t]||{name:'tree'}).name, qtyTxt:'allowance', amt:fmt(850), _v:850}); });
+    const sub = sched.reduce((a,l)=>a+l._v,0), gst = sub*0.1;
+    const totalNow = Math.round(sub+gst);
+    if (this._lastTotal === undefined) this._lastTotal = totalNow;
+    if (totalNow !== this._lastTotal) {
+      this._totDelta = totalNow - this._lastTotal; this._totDeltaT = Date.now(); this._lastTotal = totalNow;
+      clearTimeout(this._dtT); this._dtT = setTimeout(() => this.forceUpdate(), 3800);
+    }
+    const totDeltaOn = !!this._totDelta && (Date.now() - (this._totDeltaT||0) < 3500);
+    const ghosts = s.items.filter(i => i.ghost);
+    const site = this.SITES[s.siteIdx];
+    // placed items render list
+    const LAYER = {canopy:'vegetation',feature:'vegetation',hedge:'vegetation',bed:'vegetation',lawn:'vegetation',exist:'survey',paving:'boundary',deck:'boundary',frenchdrain:'boundary'};
+    const placed = s.items.map(it => {
+      const d = this.byType[it.t], seld = it.id === s.selectedId, inGroup = s.groupIds.includes(it.id);
+      const isCurGhost = it.ghost && ghosts.length>0 && ghosts[((s.ghostIdx%ghosts.length)+ghosts.length)%ghosts.length].id === it.id;
+      const bucketOp = s.layerOpacity[LAYER[it.t]] ?? 1;
+      return {...it, tag:d.tag, w:Math.round(d.w*it.scale*grow(it.t)), h:Math.round(d.h*it.scale*grow(it.t)), br:d.br,
+        glyph:(s.darkOn && !s.frameOn ? this.blocks : this.blocksInk)[it.t], op: (it.ghost ? 0.5 : 1) * bucketOp,
+        curOn: isCurGhost && !s.drag && !s.vDrag && !s.marquee && !sheet,
+        zIndex: (isCurGhost && !s.drag && !s.vDrag && !s.marquee && !sheet) ? 50 : (seld || inGroup) ? 20 : (s.hoverId===it.id) ? 10 : 1,
+        acceptG: () => this.acceptCurGhost(), rejectG: () => this.rejectCurGhost(),
+        ghostBd: it.ghost ? (isCurGhost ? '2px solid #C2455F' : it.stale ? '1.5px dashed #B78A2E' : '1.5px dashed rgba(232,184,75,0.9)') : 'none',
+        stalePulse: it.ghost && it.stale ? 'ccPulse 1.8s ease-in-out infinite' : 'none',
+        ring: seld ? '0 0 0 2px rgba(255,246,248,0.95), 0 0 0 4px #C2455F' : inGroup ? '0 0 0 2px rgba(255,246,248,0.95), 0 0 0 4px #E8B84B' : isCurGhost ? '0 0 0 3px rgba(194,69,95,0.3)' : (s.hoverId===it.id && !it.ghost) ? '0 0 0 2px rgba(255,246,248,0.85), 0 0 0 3.5px rgba(194,69,95,0.4)' : 'none',
+        labelOn: seld || (!!s.hoverId && s.hoverId===it.id && !it.ghost && !s.drag && !s.vDrag && !s.marquee),
+        traceOn: (seld || s.hoverId===it.id) && !it.ghost && !!d.heightM && !sheet,
+        traceToElev: () => this.setState({mode:'elevation', tool:'pan'}),
+        tip: it.ghost ? 'AI suggestion — click to accept · '+(it.why||'')+(it.stale ? ' · nearby edit — recheck this' : '') : d.tag+' — drag to move · right-click to delete',
+        over: () => { if (!this.state.drag && !this.state.vDrag && !this.state.marquee) this.setState({hoverId:it.id}); },
+        out: () => { if (this.state.hoverId===it.id) this.setState({hoverId:null}); },
+        cursor: it.ghost ? 'pointer' : 'grab',
+        down: (e) => {
+          e.stopPropagation();
+          if (it.ghost) { this.mutate(st => ({items:st.items.map(x => x.id===it.id ? {...x, ghost:false} : x)})); return; }
+          if (this.state.tool !== 'pan' || this.state.armed) return;
+          const p = this.pct(e);
+          if (inGroup && s.groupIds.length > 1) {
+            const anchors = {}; s.items.forEach(x => { if (s.groupIds.includes(x.id)) anchors[x.id] = {x:x.x, y:x.y}; });
+            this.setState(st => ({hist:[...st.hist, this.snap()].slice(-40), redo:[], drag:{group:true, ids:s.groupIds, anchors, startX:p.x, startY:p.y}}));
+            return;
+          }
+          this.setState(st => ({hist:[...st.hist, this.snap()].slice(-40), redo:[], selectedId:it.id, groupIds:[], drag:{id:it.id, dx:p.x-it.x, dy:p.y-it.y}}));
+        },
+        onCtx: (e) => { e.preventDefault(); e.stopPropagation(); this.mutate(st => ({items:st.items.filter(x=>x.id!==it.id), selectedId:null, groupIds:st.groupIds.filter(g=>g!==it.id)})); }};
+    });
+    // client-view fit-to-content mapping
+    const sbAll = s.boundary.concat(s.building);
+    let sMinX = Math.min(...sbAll.map(p=>p.x)), sMaxX = Math.max(...sbAll.map(p=>p.x));
+    let sMinY = Math.min(...sbAll.map(p=>p.y)), sMaxY = Math.max(...sbAll.map(p=>p.y));
+    real.forEach(it => { const d = this.byType[it.t]; if (!d) return; const wp = d.w*it.scale/cw*50, hp = d.h*it.scale/ch*50;
+      sMinX = Math.min(sMinX, it.x-wp); sMaxX = Math.max(sMaxX, it.x+wp); sMinY = Math.min(sMinY, it.y-hp); sMaxY = Math.max(sMaxY, it.y+hp); });
+    sMinX -= 2.5/s.scaleM*100; sMaxX += 2.5/s.scaleM*100;
+    sMinY -= 2.5/(s.scaleM*ratio)*100; sMaxY += 2.5/(s.scaleM*ratio)*100;
+    const sBW = Math.max(1e-6, sMaxX-sMinX), sBH = Math.max(1e-6, sMaxY-sMinY);
+    const contentWm = sBW/100*s.scaleM, contentHm = sBH/100*ratio*s.scaleM;
+    const shareC = contentWm/Math.max(1e-6, contentHm);
+    const shareR = Math.min(1.25, Math.max(0.45, shareC));
+    const spanX = shareC <= shareR ? shareC/shareR*100 : 100;
+    const spanY = shareC <= shareR ? 100 : shareR/shareC*100;
+    const shOffX = (100-spanX)/2, shOffY = (100-spanY)/2;
+    const rX = x => shOffX + (x-sMinX)/sBW*spanX, rY = y => shOffY + (y-sMinY)/sBH*spanY;
+    const rPts = pts => pts.map(p => rX(p.x).toFixed(2)+','+rY(p.y).toFixed(2)).join(' ');
+    const rStroke = str => str.split(' ').map(pr => { const c = pr.split(','); return rX(+c[0]).toFixed(1)+','+rY(+c[1]).toFixed(1); }).join(' ');
+    const dpp = s.drawPoly, dcur = s.drawCursor;
+    const traceDims = [];
+    if (dpp) {
+      const segs = dcur && dcur.kind !== 'close' ? [...dpp, dcur] : dpp.slice();
+      for (let i=0;i<segs.length-1;i++) {
+        const a = segs[i], b = segs[i+1];
+        const dxp = (b.x-a.x)/100*cw, dyp = (b.y-a.y)/100*ch;
+        if (Math.hypot(dxp,dyp) < 26) continue;
+        let rot = Math.atan2(dyp,dxp)*180/Math.PI; if (rot>90) rot-=180; if (rot<-90) rot+=180;
+        traceDims.push({x:(a.x+b.x)/2, y:(a.y+b.y)/2, rot:Math.round(rot), txt:Math.hypot(toMx(b.x)-toMx(a.x), toMy(b.y)-toMy(a.y)).toFixed(2)+' m'});
+      }
+    }
+    const closeOn = !!(dpp && dcur && dcur.kind === 'close');
+    const traceTipOn = !!(dpp && dpp.length && dcur && dcur.kind !== 'close');
+    let traceTipTxt = '';
+    if (traceTipOn) {
+      const lp = dpp[dpp.length-1];
+      const Lm = Math.hypot(toMx(dcur.x)-toMx(lp.x), toMy(dcur.y)-toMy(lp.y));
+      const ang = Math.round(((Math.atan2((dcur.y-lp.y)/100*ch, (dcur.x-lp.x)/100*cw)*180/Math.PI)+360)%360);
+      traceTipTxt = Lm.toFixed(2)+' m · '+ang+'°'+(dcur.kind==='vertex' ? ' · snap' : dcur.kind==='angle' ? ' · ortho' : '');
+    }
+    const guideOn = !!(dpp && dcur && dcur.kind === 'angle');
+    const traceArea = dpp && dpp.length >= 3 ? shoelace(dcur && dcur.kind !== 'close' ? [...dpp, dcur] : dpp) : 0;
+    // ghost-geometry autocomplete: infer a likely rectangle closure from the segments drawn so far
+    let ghostCompletionPts = null;
+    if (dpp && s.tool === 'trace' && !s.locked) {
+      if (dpp.length === 2 && dcur && dcur.kind !== 'close') {
+        const p0 = dpp[0], p1 = dpp[1];
+        const p0px = {x:p0.x/100*cw, y:p0.y/100*ch}, p1px = {x:p1.x/100*cw, y:p1.y/100*ch};
+        const vx = p1px.x-p0px.x, vy = p1px.y-p0px.y, vlen = Math.hypot(vx,vy) || 1;
+        const ux = vx/vlen, uy = vy/vlen, nx = -uy, ny = ux;
+        const curpx = {x:dcur.x/100*cw, y:dcur.y/100*ch};
+        const w = (curpx.x-p1px.x)*nx + (curpx.y-p1px.y)*ny;
+        if (Math.abs(w) > 8) {
+          const p2px = {x:p1px.x+nx*w, y:p1px.y+ny*w}, p3px = {x:p0px.x+nx*w, y:p0px.y+ny*w};
+          ghostCompletionPts = [p0, p1, {x:p2px.x/cw*100, y:p2px.y/ch*100}, {x:p3px.x/cw*100, y:p3px.y/ch*100}];
+        }
+      } else if (dpp.length === 3) {
+        const p0 = dpp[0], p1 = dpp[1], p2 = dpp[2];
+        const p3 = {x:p0.x+(p2.x-p1.x), y:p0.y+(p2.y-p1.y)};
+        ghostCompletionPts = [p0, p1, p2, p3];
+      }
+    }
+    this._ghostCompletionPts = ghostCompletionPts;
+    const ghostCompletionOn = !!ghostCompletionPts;
+    const ghostCompletionCx = ghostCompletionOn ? ghostCompletionPts.reduce((a,p)=>a+p.x,0)/ghostCompletionPts.length : 0;
+    const ghostCompletionCy = ghostCompletionOn ? ghostCompletionPts.reduce((a,p)=>a+p.y,0)/ghostCompletionPts.length : 0;
+    const setbackM = 1.5;
+    const setbackPts = (() => {
+      if (!s.setbackOn || s.boundary.length < 3 || !(s.layerOpacity.council > 0.02)) return '';
+      const cx = s.boundary.reduce((a,p)=>a+p.x,0)/s.boundary.length, cy = s.boundary.reduce((a,p)=>a+p.y,0)/s.boundary.length;
+      return s.boundary.map(p => { const dx=p.x-cx, dy=p.y-cy, l=Math.hypot(dx,dy)||1; const inPct = setbackM/s.scaleM*100; return {x:p.x-dx/l*inPct, y:p.y-dy/l*inPct}; }).map(p=>p.x+','+p.y).join(' ');
+    })();
+    const permeable = lotArea ? Math.max(0, (outdoor - impervious)/lotArea*100) : 0;
+    const matureCanopyA = real.reduce((a,i)=>{const d=this.byType[i.t]; if(!d||!d.canopyM) return a; const r=d.canopyM*(i.scale||1)/2; return a+Math.PI*r*r;},0);
+    const canopyPct = lotArea ? Math.min(100, matureCanopyA/lotArea*100) : 0;
+    const distSeg=(px,py,ax,ay,bx2,by2)=>{const dx=bx2-ax,dy=by2-ay,L2=dx*dx+dy*dy||1;let t=((px-ax)*dx+(py-ay)*dy)/L2;t=Math.max(0,Math.min(1,t));return Math.hypot(px-(ax+dx*t),py-(ay+dy*t));};
+    let breaches = 0;
+    real.forEach(i=>{const d=this.byType[i.t]; if(!d||d.existing||i.t==='lawn') return; let md=1e9; for(let j=0;j<s.boundary.length;j++){const a=s.boundary[j],b=s.boundary[(j+1)%s.boundary.length]; md=Math.min(md, distSeg(toMx(i.x),toMy(i.y),toMx(a.x),toMy(a.y),toMx(b.x),toMy(b.y)));} if(md<setbackM) breaches++;});
+    const compPass = (permeable>=20?1:0)+(canopyPct>=15?1:0)+(breaches===0?1:0);
+    const rootRings = [], rootTags = [];
+    real.forEach(i => {
+      const d = this.byType[i.t]; if (!d || !d.canopyM) return;
+      const isSel = i.id === s.selectedId;
+      if (d.existing) {
+        const tpz = Math.min(15, 12*(d.dbhM||0.4));
+        rootRings.push({cx:i.x, cy:i.y, rx:tpz/s.scaleM*100, ry:tpz/(s.scaleM*ratio)*100, col:'#B78A2E', fill:'rgba(232,184,75,0.05)', op: (isSel ? 0.95 : 0.5) * s.layerOpacity.council});
+        if (isSel || s.tool==='edit') rootTags.push({x:i.x, y:i.y - tpz/(s.scaleM*ratio)*100 - 2, txt:'TPZ Ø'+(tpz*2).toFixed(1)+' m · AS 4970', fg:'#8A6A1F', bg:'rgba(255,246,248,0.92)'});
+      } else if (isSel) {
+        const rr = d.canopyM*(i.scale||1)*gk/2*1.5;
+        rootRings.push({cx:i.x, cy:i.y, rx:rr/s.scaleM*100, ry:rr/(s.scaleM*ratio)*100, col:'#C2455F', fill:'none', op:0.8*s.layerOpacity.council});
+        rootTags.push({x:i.x, y:i.y - rr/(s.scaleM*ratio)*100 - 2, txt:'Root zone Ø'+(rr*2).toFixed(1)+' m', fg:'#C2455F', bg:'rgba(255,246,248,0.92)'});
+      }
+    });
+    const sel = s.items.find(i => i.id === s.selectedId && !i.ghost);
+    const groupCount = s.groupIds.length;
+    const selD = sel ? this.byType[sel.t] : null;
+    const selW = selD ? selD.w*sel.scale*grow(sel.t) : 0, selH2 = selD ? selD.h*sel.scale*grow(sel.t) : 0;
+    const railDefs = [
+      {id:'trace', icon:'⌖', label:'Trace'}, {id:'edit', icon:'✎', label:'Edit'}, {id:'add', icon:'＋', label:'Add'},
+      {id:'lock', icon: s.locked ? '⊘' : '○', label:'Lock'}, {id:'reset', icon:'↺', label:'Reset'}, {id:'pan', icon:'✥', label:'Pan'},
+    ];
+    const rail = railDefs.map(t => {
+      const active = (t.id === s.tool) || (t.id==='lock' && s.locked) || (t.id==='add' && s.addOpen);
+      return {...t, bg: active ? '#241318' : 'transparent', fg: active ? '#FFD3DE' : '#7A5560',
+        pick: () => {
+          if (t.id === 'lock') { this.setState(st => ({locked:!st.locked, tool: st.locked ? st.tool : 'pan', drawPoly:null})); return; }
+          if (t.id === 'reset') {
+            if (!window.confirm('Reset this site to its original layout? This clears all placed items and edits.')) return;
+            const cp = o => JSON.parse(JSON.stringify(o)); const sd = this.SEEDS[this.state.siteIdx]; this.mutate(() => ({boundary:cp(sd.boundary), building:cp(sd.building), items:cp(sd.items), strokes:[], easements:cp(sd.easements||[]), mitigated:{}, selectedId:null, drawPoly:null, armed:null})); return;
+          }
+          if (t.id === 'add') { this.setState(st => ({addOpen:!st.addOpen, tool:'pan', drawPoly:null})); return; }
+          if ((t.id === 'trace' || t.id === 'edit') && this.state.locked) return;
+          this.setState({tool:t.id, addOpen:false, armed:null, drawPoly:null, selectedId: t.id==='pan' ? s.selectedId : null});
+        }};
+    });
+    const editing = s.tool === 'edit' && !s.locked;
+    const mkHandle = (which,p,i) => ({x:p.x, y:p.y,
+      ctx:(e)=>{ e.preventDefault(); e.stopPropagation(); if (this.state[which].length > 3) this.mutate(st => ({[which]:st[which].filter((_,j)=>j!==i)})); },
+      down:(e)=>{e.stopPropagation();
+      if (e.altKey) { if (this.state[which].length > 3) this.mutate(st => ({[which]:st[which].filter((_,j)=>j!==i)})); return; }
+      this.setState(st => ({hist:[...st.hist, this.snap()].slice(-40), redo:[], vDrag:{which, idx:i}}));}});
+    const mkMids = (which,bd) => s[which].map((p,i) => { const q = s[which][(i+1)%s[which].length];
+      return {x:(p.x+q.x)/2, y:(p.y+q.y)/2, bd, down:(e)=>{e.stopPropagation();
+        const np = {x:(p.x+q.x)/2, y:(p.y+q.y)/2};
+        this.setState(st => { const arr = st[which].slice(); arr.splice(i+1,0,np); return {hist:[...st.hist, this.snap()].slice(-40), redo:[], [which]:arr, vDrag:{which, idx:i+1}}; });
+      }};
+    });
+    const modes = [{id:'survey',label:'Survey'},{id:'sketch',label:'Sketch'},{id:'cad',label:'CAD'},{id:'elevation',label:'Elevation'},{id:'quote',label:'Quote'}].map(m => ({...m,
+      bg: s.mode===m.id ? '#FFFBFC' : 'transparent', fg: s.mode===m.id ? '#241318' : '#7A5560',
+      sh: s.mode===m.id ? '0 2px 8px rgba(42,23,29,0.15)' : 'none',
+      pick: () => this.setState(st => {
+        const wasSurvey = st.mode === 'survey', toSurvey = m.id === 'survey';
+        const next = {mode:m.id, quoteOpen:m.id==='quote', tool: m.id==='sketch' ? 'sketch' : m.id==='survey' ? 'edit' : 'pan', addOpen:false, drawPoly:null, armed:null};
+        if (toSurvey && !wasSurvey) next.layerOpacity = {survey:1, boundary:1, council:0.15, vegetation:0.15};
+        else if (wasSurvey && !toSurvey) next.layerOpacity = {survey:0.2, boundary:1, council:1, vegetation:1};
+        return next;
+      }),
+    }));
+    const elevOn = s.mode === 'elevation';
+    const planOn = !elevOn;
+    const isSurvey = s.mode === 'survey';
+    const sheetPanelOnCalc = sheet && planOn && sheetBox.boxW >= 420;
+    const elevItemsPre = s.items.filter(it => this.byType[it.t] && this.byType[it.t].heightM);
+    const maxHM = Math.max(eaveH, ...elevItemsPre.map(it => this.byType[it.t].heightM*(it.scale||1)), 1) + 1;
+    const groundBottomPx = Math.max(44, Math.round((s.ch||640)*0.30));
+    const pxPerM = Math.max(10, Math.min(26, ((s.ch||640) - groundBottomPx - 70) / maxHM));
+    const eAx = s.elevAxis === 'y' ? 'y' : 'x';
+    const bxsE = s.building.map(p=>p[eAx]); const bldx0raw = s.building.length ? Math.min(...bxsE) : 44, bldx1raw = s.building.length ? Math.max(...bxsE) : 56;
+    const allXs = s.boundary.map(p=>p[eAx]).concat(bxsE).concat(s.items.map(it=>it[eAx]));
+    const spanMin = Math.min(...allXs), spanMax = Math.max(...allXs);
+    const spanW = Math.max(1, spanMax-spanMin);
+    const mapX = v => 8 + (v-spanMin)/spanW*84;
+    const bldx0 = mapX(bldx0raw), bldx1 = mapX(bldx1raw);
+    const buildingHPx = Math.round(eaveH*pxPerM);
+    const elevItemsRaw = elevItemsPre
+      .slice().sort((a,b)=>a[eAx]-b[eAx]);
+    const elevItems = elevItemsRaw.map((it,i) => {
+      const d = this.byType[it.t]; const hm = d.heightM * (it.scale||1) * (d.existing ? 1 : gk);
+      const hPx = Math.round(hm*pxPerM);
+      const isTree = d.elevShape === 'tree', isDeck = d.elevShape === 'deck';
+      const canopyD = isTree ? Math.max(20, Math.round((d.w/1.7)*(it.scale||1))) : 0;
+      const trunkH = isTree ? Math.round(hPx*0.32) : 0;
+      const eSel = it.id === s.selectedId, eHov = s.hoverId === it.id;
+      return { x: mapX(it[eAx]), wPx: Math.max(10, Math.round((d.w/2.4)*(it.scale||1))), hPx, labelBottomPx: groundBottomPx+hPx+4+(i%3)*16, name: d.tag, label: hm.toFixed(1)+' m', ghost: it.ghost,
+        fill: it.ghost ? (dark ? 'rgba(232,184,75,0.16)' : 'rgba(183,138,46,0.14)') : (dark ? 'rgba(255,211,222,0.22)' : 'rgba(194,69,95,0.1)'), stroke: it.ghost ? (dark ? '#E8B84B' : '#B78A2E') : (dark ? '#FFD3DE' : '#C2455F'), borderStyle: it.ghost ? 'dashed' : 'solid',
+        isTree, isDeck, isHedge: d.elevShape === 'hedge', canopyD, trunkH,
+        ring: eSel ? '0 0 0 2px rgba(255,246,248,0.95), 0 0 0 4px #C2455F' : eHov ? '0 0 0 2px rgba(255,246,248,0.85), 0 0 0 3.5px rgba(194,69,95,0.4)' : 'none',
+        traceOn: (eSel || eHov) && !it.ghost && !sheet,
+        over: () => this.setState({hoverId: it.id}),
+        out: () => this.setState(st2 => st2.hoverId===it.id ? {hoverId:null} : null),
+        pick: () => this.setState({selectedId: it.id}),
+        traceToPlan: () => this.setState({mode:'cad', tool:'pan'}),
+        deckHatch: dark ? 'repeating-linear-gradient(115deg, rgba(255,211,222,0.28) 0 2px, transparent 2px 7px)' : 'repeating-linear-gradient(115deg, rgba(36,19,24,0.18) 0 2px, transparent 2px 7px)' };
+    });
+    const rulerLines = []; for (let m=1; m<=Math.ceil(maxHM); m++) { rulerLines.push({ bottomPx: groundBottomPx+m*pxPerM, label: m+' m' }); }
+    const widthM = ((spanMax-spanMin)/100*s.scaleM).toFixed(1);
+    const moreTools = [
+      {k:'M', label: s.tool==='measure' ? 'Measure ✓' : 'Measure', pick:()=>this.setState(st=>({tool: st.tool==='measure'?'pan':'measure', moreOpen:false, addOpen:false, armed:null}))},
+      {k:'#', label: s.gridOn ? 'Grid ✓' : 'Grid', pick:()=>this.setState(st=>({gridOn:!st.gridOn, moreOpen:false}))},
+      {k:'⇤', label: s.dimsOn ? 'Dims ✓' : 'Dims', pick:()=>this.setState(st=>({dimsOn:!st.dimsOn, moreOpen:false}))},
+      {k:'↩', label:'Undo', pick:()=>{ this.undo(); this.setState({moreOpen:false}); }},
+      {k:'↪', label:'Redo', pick:()=>{ this.redoAct(); this.setState({moreOpen:false}); }},
+    ].map(mt => ({...mt, bg:'transparent'}));
+    const assets = Object.keys(this.byType).filter(t => !isSurvey || this.byType[t].existing).map(t => { const d = this.byType[t]; return {
+      name:d.name, glyph:this.blocks[t], rateTxt: d.existing ? 'survey · TPZ auto' : d.area ? fmt(d.rate)+'/m²' : d.lin ? fmt(d.rate)+'/m' : fmt(d.rate)+' ea',
+      bg: s.armed===t ? 'rgba(194,69,95,0.1)' : 'transparent', ring: s.armed===t ? 'inset 0 0 0 1.5px #C2455F' : 'none',
+      arm: () => this.setState(st => ({armed: st.armed===t ? null : t, tool:'pan', selectedId:null})),
+    };});
+    const armDef = s.armed ? this.byType[s.armed] : null;
+    const ghostCount = ghosts.length;
+    const toastExpanded = !!s.toastPin;
+    const gIdx = ghostCount ? ((s.ghostIdx % ghostCount) + ghostCount) % ghostCount : 0;
+    const curGhost = ghostCount ? ghosts[gIdx] : null;
+    const conf = ghostCount ? Math.round((ghosts.reduce((a,g)=>a+(g.conf||0.9),0)/ghostCount)*100) : 100;
+    const ghostImpact = (g) => {
+      if (!g) return '';
+      const d = this.byType[g.t]; if (!d) return '';
+      const wm = pxToM(d.w*g.scale), hm2 = pxToM(d.h*g.scale);
+      const cost = d.area ? d.rate*(d.area==='rect'?wm*hm2:Math.PI/4*wm*hm2) : d.lin ? d.rate*Math.max(wm,hm2) : d.rate;
+      let dp = '';
+      if (g.t==='paving'||g.t==='deck') dp = ' · permeable −'+(lotArea?(wm*hm2/lotArea*100).toFixed(1):'0')+'%';
+      else if (d.canopyM) dp = ' · canopy +'+(lotArea?(Math.PI*Math.pow(d.canopyM*g.scale/2,2)/lotArea*100).toFixed(1):'0')+'%';
+      return 'If accepted: +'+fmt(cost)+dp;
+    };
+    const cover = lotArea ? Math.round(buildArea/lotArea*100) : 0;
+    const sheetSched = [
+      {k:'Lot area', v:lotArea.toFixed(2)+' m²'},
+      {k:'Building footprint', v:buildArea.toFixed(2)+' m²'},
+      {k:'Outdoor area', v:outdoor.toFixed(2)+' m²'},
+      {k:'Site coverage', v:cover+'%'},
+      {k:'Boundary perimeter', v:perim(s.boundary).toFixed(2)+' lm'},
+    ];
+    const sheetSegs = [], sheetLegend = [];
+    if (sheet) {
+      s.boundary.forEach((p,i)=>{ const q=s.boundary[(i+1)%s.boundary.length]; const Lm=Math.hypot(toMx(q.x)-toMx(p.x),toMy(q.y)-toMy(p.y)); sheetSegs.push({k:'B'+(i+1), v:Lm.toFixed(2)+' m'}); });
+      s.building.forEach((p,i)=>{ const q=s.building[(i+1)%s.building.length]; const Lm=Math.hypot(toMx(q.x)-toMx(p.x),toMy(q.y)-toMy(p.y)); sheetSegs.push({k:'F'+(i+1), v:Lm.toFixed(2)+' m'}); });
+      Object.keys(areaAcc).forEach(t=>sheetLegend.push({name:this.byType[t].name, v:fm2(areaAcc[t])}));
+      Object.keys(linAcc).forEach(t=>sheetLegend.push({name:this.byType[t].name, v:fmL(linAcc[t])}));
+      Object.keys(cntAcc).forEach(t=>sheetLegend.push({name:this.byType[t].name, v:cntAcc[t]+' no.'}));
+    }
+    // multi-profile stacking: front + side elevation, computed independently of the live Elevation view's axis
+    const buildElevProfile = (axis, rowH) => {
+      const groundB = Math.max(12, Math.round(rowH*0.3));
+      const bxs2 = s.building.map(p=>p[axis]);
+      const bld0raw = s.building.length ? Math.min(...bxs2) : 44, bld1raw = s.building.length ? Math.max(...bxs2) : 56;
+      const allXs2 = s.boundary.map(p=>p[axis]).concat(bxs2).concat(elevItemsPre.map(it=>it[axis]));
+      const spanMin2 = allXs2.length ? Math.min(...allXs2) : 0, spanMax2 = allXs2.length ? Math.max(...allXs2) : 100;
+      const spanW2 = Math.max(1, spanMax2-spanMin2);
+      const mapX2 = v => 8 + (v-spanMin2)/spanW2*84;
+      const maxHM2 = Math.max(eaveH, ...elevItemsPre.map(it=>this.byType[it.t].heightM*(it.scale||1)), 1)+1;
+      const pxPerM2 = Math.max(4, Math.min(16, (rowH-groundB-12)/maxHM2));
+      const bH = Math.round(eaveH*pxPerM2);
+      const items2 = elevItemsPre.slice().sort((a,b)=>a[axis]-b[axis]).map(it => {
+        const d2 = this.byType[it.t]; const hm2 = d2.heightM*(it.scale||1)*(d2.existing?1:gk);
+        return {x:mapX2(it[axis]), wPx:Math.max(5, Math.round((d2.w/3.2)*(it.scale||1))), hPx:Math.round(hm2*pxPerM2),
+          fill: it.ghost ? 'rgba(183,138,46,0.14)' : 'rgba(194,69,95,0.1)', stroke: it.ghost ? '#B78A2E' : '#C2455F', dash: it.ghost ? 'dashed' : 'solid'};
+      });
+      return {groundB, bH, bld0:mapX2(bld0raw), bldW:Math.max(2, mapX2(bld1raw)-mapX2(bld0raw)), items:items2, widthM:((spanMax2-spanMin2)/100*s.scaleM).toFixed(1)};
+    };
+    const sheetElevRowH = 58;
+    const sheetElevProfiles = (sheet && planOn && s.sheetElevOn) ? [
+      {label:'FRONT ELEVATION', divider:'1px solid rgba(36,19,24,0.15)', ...buildElevProfile('x', sheetElevRowH)},
+      {label:'SIDE ELEVATION', divider:'none', ...buildElevProfile('y', sheetElevRowH)},
+    ] : [];
+    const sheetElevPanelOn = sheetElevProfiles.length > 0 && sheetBox.boxW >= 380;
+    const sheetElevPanelW = Math.max(160, sheetBox.boxW - 32 - (sheetPanelOnCalc ? 262+16 : 0));
+    const sheetElevPanelH = sheetElevRowH*2 + 34;
+    const cmdList = [
+      ...modes.map(m => ({label:'Mode: '+m.label, k:'MODE', act:m.pick})),
+      {label: sheet ? 'Exit fit sheet' : 'Fit sheet', k:'SHEET', act:()=>this.toggleSheet()},
+      {label: s.darkOn ? 'Light canvas' : 'Dark canvas', k:'VIEW', act:()=>this.setState(st=>{ const v=!st.darkOn; try { localStorage.setItem('cc_dark', v?'1':'0'); } catch(e) {} return {darkOn:v}; })},
+      {label: s.layersOn ? 'Close layers' : 'Open layers', k:'VIEW', act:()=>this.setState(st=>({layersOn:!st.layersOn}))},
+      {label: s.gridOn ? 'Hide grid' : 'Show grid', k:'VIEW', act:()=>this.setState(st=>({gridOn:!st.gridOn}))},
+      {label: s.dimsOn ? 'Hide dimensions' : 'Show dimensions', k:'VIEW', act:()=>this.setState(st=>({dimsOn:!st.dimsOn}))},
+      {label: s.focusOn ? 'Exit focus' : 'Focus mode', k:'VIEW', act:()=>this.setState(st=>({focusOn:!st.focusOn}))},
+      {label:'Open client view', k:'SHARE', act:()=>this.setState(st=>({shareOpen:true}))},
+      {label:'Open quote', k:'QUOTE', act:()=>this.setState({quoteOpen:true})},
+      {label:'Undo', k:'↩', act:()=>this.undo()}, {label:'Redo', k:'↪', act:()=>this.redoAct()},
+      ...this.SITES.map((st2,i) => ({label:'Site: '+st2.addr, k:'SITE', act:()=>this.switchSite(i)})),
+      ...Object.keys(this.byType).map(t => ({label:'Place '+this.byType[t].name, k:'ADD', act:()=>this.setState({armed:t, tool:'pan', addOpen:false})})),
+    ].map(c => ({...c, run:()=>{ c.act(); this.setState({cmdOpen:false, cmdQuery:''}); }}));
+    const q = s.cmdQuery.toLowerCase();
+    const cmdBase = (q ? cmdList.filter(c => c.label.toLowerCase().includes(q)) : cmdList).slice(0,8);
+    const cmdAskOn = !!q && cmdBase.length < 3;
+    const cmdRows = cmdBase.length + (cmdAskOn ? 1 : 0);
+    const cmdSel = cmdRows ? Math.min(s.cmdSel, cmdRows-1) : 0;
+    const cmdFiltered = cmdBase.map((c,i) => ({...c, bg: i===cmdSel ? 'rgba(194,69,95,0.08)' : 'transparent', hover: () => { if (this.state.cmdSel!==i) this.setState({cmdSel:i}); }}));
+    const runAsk = () => {
+      const q2 = s.cmdQuery;
+      this.mutate(st => {
+        const ys = st.boundary.map(p=>p.y), xs2 = st.boundary.map(p=>p.x);
+        const y0 = Math.max(...ys)-8, x0 = (Math.min(...xs2)+Math.max(...xs2))/2;
+        let idn = st.idn; const add = [];
+        [[x0-2,y0],[x0+2.5,y0-3]].forEach(pt => { idn++; add.push({id:'p'+idn, t:'canopy', x:pt[0], y:pt[1], rot:0, scale:0.75, ghost:true, why:'You asked: “'+q2+'”', conf:0.84}); });
+        return {items:[...st.items, ...add], idn, cmdOpen:false, cmdQuery:'', ghostIdx:0};
+      });
+    };
+    const drawingBusy = !!s.drawPoly || !!s.armed || s.tool==='trace' || s.tool==='sketch' || s.tool==='measure';
+    const statsAvail = !s.focusOn && !elevOn && !sheet && !isSurvey;
+    const statsExpanded = s.dockStats!=null ? s.dockStats : !drawingBusy;
+    const bomAvail = (s.mode === 'cad' || s.mode === 'quote') && !s.focusOn && !sheet;
+    const bomExpanded = s.dockBom!=null ? s.dockBom : !drawingBusy;
+    return {
+      siteAddr: site.addr,
+      areaTxt, modes,
+      elevOn, planOn, hudMargin: s.focusOn ? '0 4px' : '0 14px',
+      focusOn: s.focusOn, toggleFocus: () => this.setState(st=>({focusOn:!st.focusOn})),
+      focusBg: s.focusOn ? '#241318' : 'transparent', focusFg: s.focusOn ? '#FFF6F8' : '#241318',
+      focusLabel: s.focusOn ? 'Exit focus' : 'Focus',
+      elevItems, buildingHPx, groundBottomPx, widthM, rulerLines,
+      elevFg: dark ? '#D9DCDD' : '#241318', elevBtnBg: dark ? '#2A323B' : '#FFFBFC', elevBtnBd: dark ? 'rgba(230,233,234,0.22)' : 'rgba(36,19,24,0.15)',
+      elevRuleCol: dark ? 'rgba(230,233,234,0.14)' : 'rgba(36,19,24,0.12)', elevRuleTxt: dark ? 'rgba(230,233,234,0.55)' : 'rgba(36,19,24,0.5)', elevBldFill: dark ? 'rgba(230,233,234,0.07)' : 'rgba(36,19,24,0.06)',
+      elevAxis: eAx, elevLabel: eAx==='x' ? 'Front' : 'Side',
+      toggleElevAxis: () => this.setState(st => ({elevAxis: st.elevAxis==='y' ? 'x' : 'y'})),
+      bldLeftPct: bldx0, bldWidthPct: Math.max(2, bldx1-bldx0),
+      aerialDim: P.aerialDim ?? 0.22,
+      frameOn: s.frameOn, toggleFrame: () => this.toggleSheet(),
+      sheetRotDeg: sheet ? s.sheetRot : 0,
+      sheetPanelOn: sheetPanelOnCalc, sheetSched, sheetSegs, sheetLegend, legendOn: sheetLegend.length > 0,
+      sheetElevPanelOn, sheetElevPanelW, sheetElevPanelH, sheetElevProfiles,
+      sheetElevOn: s.sheetElevOn, toggleSheetElev: () => this.setState(st=>({sheetElevOn:!st.sheetElevOn})),
+      sheetElevBg: s.sheetElevOn ? '#241318' : 'transparent', sheetElevFg: s.sheetElevOn ? '#FFD3DE' : '#241318',
+      sheetElevLabel: s.sheetElevOn ? 'Elevations ✓' : '+ Elevations',
+      ghostCompletionOn: ghostCompletionOn ? 1 : 0, ghostCompletionBadgeOn: ghostCompletionOn,
+      ghostCompletionPts: ghostCompletionOn ? ghostCompletionPts.map(p=>p.x+','+p.y).join(' ') : '',
+      ghostCompletionCx, ghostCompletionCy,
+      acceptGhostCompletion: () => { if (this._ghostCompletionPts) this.finishPolyWith(this._ghostCompletionPts); },
+      paper: s.paper, setPaperA3: () => this.setPaper('a3'), setPaperA4: () => this.setPaper('a4'),
+      paperA3Bg: s.paper==='a3' ? '#241318' : 'transparent', paperA3Fg: s.paper==='a3' ? '#FFD3DE' : '#241318',
+      paperA4Bg: s.paper==='a4' ? '#241318' : 'transparent', paperA4Fg: s.paper==='a4' ? '#FFD3DE' : '#241318',
+      sheetBoxLeft: sheetBox.boxLeft, sheetBoxTop: sheetBox.boxTop, sheetBoxW: sheetBox.boxW, sheetBoxH: sheetBox.boxH,
+      scrimTopH: sheetBox.boxTop, scrimBotH: Math.max(0, ch-sheetBox.boxTop-sheetBox.boxH),
+      layersOn: s.layersOn, toggleLayers: () => this.setState(st=>({layersOn:!st.layersOn, sitesOpen:false, moreOpen:false})),
+      layersBg: s.layersOn ? '#241318' : 'transparent', layersFg: s.layersOn ? '#FFD3DE' : '#241318', layersBtnOn: true,
+      layerList: [
+        {key:'survey', name:'Survey (existing)'},
+        {key:'boundary', name:'Boundary & hardscape'},
+        {key:'council', name:'Council & compliance'},
+        {key:'vegetation', name:'Vegetation (proposed)'},
+      ].map(l => ({...l,
+        val: Math.round((s.layerOpacity[l.key] ?? 1)*100),
+        count: l.key==='council' ? (breaches + conflicts.length) : s.items.filter(i => !i.ghost && LAYER[i.t] === l.key).length,
+        set: (e) => { const v = Math.max(0, Math.min(100, +e.target.value))/100; this.setState(st => ({layerOpacity:{...st.layerOpacity, [l.key]:v}})); }})),
+      toggleSetback: () => this.setState(st => ({setbackOn:!st.setbackOn})),
+      setbackDot: s.setbackOn ? '#C2455F' : 'transparent',
+      setbackPts, setbackOp: s.setbackOn ? 0.9 * (s.layerOpacity.council ?? 1) : 0,
+      easementPolys: s.easements.map((poly,ei) => ({
+        pts: poly.map(p=>p.x+','+p.y).join(' '),
+        op: 0.85 * (s.layerOpacity.council ?? 1),
+        del: (e) => { e.stopPropagation(); if (this.state.tool==='edit' && !this.state.locked) this.mutate(st => ({easements:st.easements.filter((_,j)=>j!==ei)})); },
+      })),
+      aerialOn: !sheet,
+      toggleDark: () => this.setState(st => { const v = !st.darkOn; try { localStorage.setItem('cc_dark', v?'1':'0'); } catch(e) {} return {darkOn:v}; }),
+      darkBg: dark ? '#212830' : 'transparent', darkFg: dark ? '#E6E9EA' : '#241318', darkLabel: dark ? 'Dark ✓' : 'Dark',
+      paperBg: dark ? '#212830' : '#FAF6F2',
+      gridCol: dark ? 'rgba(173,183,188,0.09)' : 'rgba(36,19,24,0.16)',
+      gridColMaj: dark ? 'rgba(173,183,188,0.22)' : 'rgba(36,19,24,0.28)',
+      ucsOn: dark,
+      aerialScrim: dark ? 'rgba(33,40,48,'+(P.aerialDim ?? 0.22)+')' : 'rgba(250,246,242,'+(P.aerialDim ?? 0.22)+')',
+      bStroke: dark ? '#E8B84B' : '#241318', bFill: dark ? 'rgba(232,184,75,0.06)' : 'transparent',
+      bldStroke: dark ? '#F6EAED' : '#241318', bldFill: dark ? 'rgba(246,234,237,0.4)' : 'rgba(36,19,24,0.07)',
+      shadowFill: dark ? 'rgba(16,8,11,0.38)' : 'rgba(36,19,24,0.09)',
+      skStroke: dark ? '#FFD3DE' : '#C2455F', mStroke: dark ? '#FFF6F8' : '#241318',
+      frameCol: 'rgba(36,19,24,0.55)', frameCol2: 'rgba(36,19,24,0.2)',
+      dims, dimFg: '#241318', dimBg: dark ? 'rgba(255,246,248,0.9)' : 'rgba(250,246,242,0.92)',
+      extLinesOn: sheet, extLines,
+      marqueeOn: !!s.marquee,
+      marqueeLeft: s.marquee ? Math.min(s.marquee.x1,s.marquee.x2) : 0, marqueeTop: s.marquee ? Math.min(s.marquee.y1,s.marquee.y2) : 0,
+      marqueeW: s.marquee ? Math.abs(s.marquee.x2-s.marquee.x1) : 0, marqueeH: s.marquee ? Math.abs(s.marquee.y2-s.marquee.y1) : 0,
+      guideXOn: s.guideX != null, guideYOn: s.guideY != null, guideXPct: s.guideX || 0, guideYPct: s.guideY || 0,
+      cmdOpen: s.cmdOpen, cmdQuery: s.cmdQuery, cmdFiltered,
+      cmdAskOn,
+      cmdAsk: runAsk,
+      cmdAskBg: cmdAskOn && cmdSel === cmdRows-1 ? 'rgba(232,184,75,0.28)' : 'rgba(232,184,75,0.12)',
+      cmdAskHover: () => this.setState({cmdSel: cmdRows-1}),
+      cmdCountTxt: cmdRows + (cmdRows===1 ? ' command' : ' commands'),
+      cmdKey: (e) => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({cmdSel: Math.min(cmdRows-1, cmdSel+1)}); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState({cmdSel: Math.max(0, cmdSel-1)}); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (cmdAskOn && cmdSel === cmdRows-1) runAsk(); else if (cmdFiltered[cmdSel]) cmdFiltered[cmdSel].run(); }
+      },
+      closeCmd: () => this.setState({cmdOpen:false}),
+      cmdInput: (e) => this.setState({cmdQuery:e.target.value, cmdSel:0}),
+      openCmd: () => this.setState({cmdOpen:true, cmdQuery:'', cmdSel:0}),
+      canopyScanOn: s.canopyScanning,
+      coach0On: s.coachStep===0 && planOn, coach1On: s.coachStep===1 && planOn, coach2On: s.coachStep===2 && planOn,
+      dismissCoach: () => this.dismissCoach(),
+      coachNext: () => this.setState(st => ({coachStep: st.coachStep+1})),
+      savedAgoTxt: (() => { const secs = Math.max(0, Math.round((Date.now()-this.lastSaved)/1000)); if (secs<5) return 'Saved just now'; if (secs<60) return 'Saved '+secs+'s ago'; const mins=Math.round(secs/60); return 'Saved '+mins+'m ago'; })(),
+      zoom: s.zoom, panX: s.panX, panY: s.panY, zoomTxt: Math.round(s.zoom*100)+'%',
+      zoomIn: () => this.setState(st => ({zoom: Math.min(5, st.zoom*1.25)})),
+      fitView: () => this.setState({zoom:1, panX:0, panY:0}),
+      zoomOut: () => this.setState(st => { const z = Math.max(1, st.zoom/1.25); return z <= 1.001 ? {zoom:1, panX:0, panY:0} : {zoom:z}; }),
+      hudWheel: (e) => {
+        const dz = e.deltaY < 0 ? 1.12 : 1/1.12;
+        const rect = this.hudRef.current ? this.hudRef.current.getBoundingClientRect() : null;
+        this.setState(st => {
+          const z = Math.min(5, Math.max(1, st.zoom*dz));
+          if (z <= 1.001) return {zoom:1, panX:0, panY:0};
+          if (!rect) return {zoom:z};
+          const cx = e.clientX - rect.left - rect.width/2, cy = e.clientY - rect.top - rect.height/2;
+          const k = z/st.zoom;
+          return {zoom:z, panX: cx-(cx-st.panX)*k, panY: cy-(cy-st.panY)*k};
+        });
+      },
+      frameBg: s.frameOn ? '#241318' : 'transparent', frameFg: s.frameOn ? '#FFD3DE' : '#241318',
+      sitesOpen: s.sitesOpen, toggleSites: () => this.setState(st=>({sitesOpen:!st.sitesOpen, moreOpen:false})),
+      sitesBg: s.sitesOpen ? '#241318' : 'transparent', sitesFg: s.sitesOpen ? '#FFD3DE' : '#241318',
+      sites: this.SITES.map((st2,i) => ({...st2, dot: i===s.siteIdx ? '#1F8A5A' : 'rgba(36,19,24,0.15)', bg: i===s.siteIdx ? 'rgba(31,138,90,0.06)' : 'transparent', pick: () => i===s.siteIdx ? this.setState({sitesOpen:false}) : this.switchSite(i)})),
+      aiPill: ghostCount ? 'AI DRAFT: UNVERIFIED' : 'AI DRAFT: VERIFIED ✓',
+      aiBg: ghostCount ? 'rgba(232,184,75,0.14)' : 'rgba(31,138,90,0.1)',
+      aiBd: ghostCount ? 'rgba(232,184,75,0.35)' : 'rgba(31,138,90,0.4)',
+      aiFg: ghostCount ? '#8A6A1F' : '#1F8A5A',
+      acceptAll: () => this.mutate(st => ({items:st.items.map(i => ({...i, ghost:false}))})),
+      gridOn: s.gridOn,
+      canvasRef: this.canvasRef, hudRef: this.hudRef,
+      canvasCursor: s.armed ? 'copy' : (s.tool==='trace'||s.tool==='sketch'||s.tool==='measure') ? 'crosshair' : (dark ? 'crosshair' : 'default'),
+      shadowD, shadowOp,
+      boundaryPts: s.boundary.map(p=>p.x+','+p.y).join(' '),
+      buildingPts: s.building.map(p=>p.x+','+p.y).join(' '),
+      boundaryOp: s.layerOpacity.boundary, buildingOp: s.layerOpacity.boundary,
+      strokes: s.cur ? [...s.strokes, s.cur] : s.strokes,
+      strokesOp: 0.9 * (s.layerOpacity.survey ?? 1),
+      drawPolyOn: s.drawPoly ? 1 : 0,
+      drawPolyPts: s.drawPoly ? s.drawPoly.map(p=>p.x+','+p.y).join(' ') + (s.drawCursor ? ' '+s.drawCursor.x+','+s.drawCursor.y : '') : '',
+      drawPolyDots: s.drawPoly || [],
+      drawingPoly: !!s.drawPoly,
+      polyLabel: s.traceTarget === 'building' ? 'footprint' : 'boundary',
+      polyN: s.drawPoly ? s.drawPoly.length : 0,
+      canFinishPoly: !!(s.drawPoly && s.drawPoly.length >= 3),
+      finishPolyBtn: () => this.finishPoly(),
+      cancelPoly: () => this.setState({drawPoly:null, drawCursor:null}),
+      cvDbl: () => { if (this.state.drawPoly && this.state.drawPoly.length >= 3) this.finishPoly(); },
+      traceDims,
+      closeOn, closeX: dpp && dpp.length ? dpp[0].x : 0, closeY: dpp && dpp.length ? dpp[0].y : 0,
+      traceTipOn, traceTipX: dcur ? dcur.x : 0, traceTipY: dcur ? dcur.y : 0, traceTipTxt,
+      guideOp: guideOn ? 0.9 : 0,
+      gx1: guideOn ? dcur.fx : 0, gy1: guideOn ? dcur.fy : 0,
+      gx2: guideOn ? dcur.fx + (dcur.x-dcur.fx)*1.6 : 0, gy2: guideOn ? dcur.fy + (dcur.y-dcur.fy)*1.6 : 0,
+      traceAreaTxt: traceArea ? '· ≈ '+traceArea.toFixed(1)+' m²' : '',
+      midHandles: editing ? [...mkMids('boundary','#E8B84B'), ...mkMids('building','#B08A95')] : [],
+      editBannerOn: editing && planOn && !s.drawPoly,
+      boundaryHandles: editing ? s.boundary.map((p,i)=>mkHandle('boundary',p,i)) : [],
+      buildingHandles: editing ? s.building.map((p,i)=>mkHandle('building',p,i)) : [],
+      placed,
+      mx1:s.measure.x1, my1:s.measure.y1, mx2:s.measure.x2, my2:s.measure.y2,
+      mOpacity: s.measure.on ? 1 : 0, measureLabelOn: s.measure.on,
+      mLabX:(s.measure.x1+s.measure.x2)/2, mLabY:(s.measure.y1+s.measure.y2)/2, mLen:s.measure.len,
+      rail,
+      traceToggleOn: s.tool === 'trace' && !s.locked,
+      traceTargets: [{id:'boundary',label:'Boundary'},{id:'building',label:'Building'},{id:'easement',label:'Easement'}].map(tt => ({...tt,
+        bg: s.traceTarget===tt.id ? '#FFD3DE' : 'transparent', fg: s.traceTarget===tt.id ? '#241318' : '#FFD3DE',
+        pick: () => this.setState({traceTarget:tt.id, drawPoly:null})})),
+      addOpen: s.addOpen, assets,
+      armedName: armDef ? armDef.name : false,
+      selName: groupCount > 1 ? (groupCount+' selected') : sel ? this.byType[sel.t].name : false,
+      rotL: () => this.mutate(st => ({items:st.items.map(i => (groupCount>1 ? st.groupIds.includes(i.id) : i.id===st.selectedId) ? {...i, rot:i.rot-15} : i)})),
+      rotR: () => this.mutate(st => ({items:st.items.map(i => (groupCount>1 ? st.groupIds.includes(i.id) : i.id===st.selectedId) ? {...i, rot:i.rot+15} : i)})),
+      scaleUp: () => this.mutate(st => ({items:st.items.map(i => (groupCount>1 ? st.groupIds.includes(i.id) : i.id===st.selectedId) ? {...i, scale:Math.min(2.5,i.scale*1.15)} : i)})),
+      scaleDn: () => this.mutate(st => ({items:st.items.map(i => (groupCount>1 ? st.groupIds.includes(i.id) : i.id===st.selectedId) ? {...i, scale:Math.max(0.35,i.scale/1.15)} : i)})),
+      del: () => this.delSel(),
+      selDimsTxt: groupCount > 1 ? '' : sel ? (() => { const d = this.byType[sel.t]; return pxToM(d.w*sel.scale).toFixed(1)+' × '+pxToM(d.h*sel.scale).toFixed(1)+' m'; })() : '',
+      selCostTxt: groupCount > 1 ? '' : sel ? (() => { const d = this.byType[sel.t]; if (d.existing) return 'existing · $0'; const wm = pxToM(d.w*sel.scale), hm3 = pxToM(d.h*sel.scale); const c = d.area ? d.rate*(d.area==='rect' ? wm*hm3 : Math.PI/4*wm*hm3) : d.lin ? d.rate*Math.max(wm,hm3) : d.rate; return '≈ '+fmt(c); })() : '',
+      selHOn: !!sel && s.tool === 'pan' && !s.drawPoly && planOn && !s.frameOn,
+      selHX: sel ? sel.x : 0, selHY: sel ? sel.y : 0, selHRot: sel ? sel.rot : 0,
+      selHUp: Math.round(selH2/2), selHRotY: Math.round(selH2/2)+25, selHRx: Math.round(selW/2)+9, selHRy: Math.round(selH2/2)+9,
+      rotHandleDown: (e) => { e.stopPropagation(); if (!sel) return; this.setState(st => ({hist:[...st.hist, this.snap()].slice(-40), redo:[], drag:{rotate:sel.id, cx:sel.x, cy:sel.y}})); },
+      resHandleDown: (e) => { e.stopPropagation(); if (!sel) return; const p = this.pct(e); const dist0 = Math.hypot((p.x-sel.x)/100*cw, (p.y-sel.y)/100*ch); this.setState(st => ({hist:[...st.hist, this.snap()].slice(-40), redo:[], drag:{resize:sel.id, cx:sel.x, cy:sel.y, dist0:Math.max(6,dist0), scale0:sel.scale}})); },
+      dupSel: () => this.mutate(st => {
+        if (st.groupIds.length > 1) {
+          let idn = st.idn, ids = [];
+          const items = st.items.slice();
+          st.groupIds.forEach(gid => { const it = items.find(i=>i.id===gid); if (!it) return; idn++; const id='p'+idn; items.push({...it, id, x:Math.min(98,it.x+2), y:Math.min(98,it.y+2)}); ids.push(id); });
+          return {items, groupIds:ids, selectedId:null, idn};
+        }
+        const it = st.items.find(i => i.id === st.selectedId); if (!it) return {}; const id = 'p'+(st.idn+1); return {items:[...st.items, {...it, id, x:Math.min(98, it.x+2), y:Math.min(98, it.y+2)}], selectedId:id, idn:st.idn+1};
+      }),
+      passTxt: compPass===3 ? '3/3 PASS' : compPass+'/3',
+      passBg: compPass===3 ? 'rgba(31,138,90,0.12)' : breaches ? 'rgba(194,69,95,0.1)' : 'rgba(232,184,75,0.16)',
+      passFg: compPass===3 ? '#1F8A5A' : breaches ? '#C2455F' : '#8A6A1F',
+      passTip: 'Permeability · canopy at maturity · boundary setback',
+      aiStats: [
+        {k:'Outdoor area', v:areaTxt, col:'#241318', barOn:false, barW:0, dotOn:false, dotCol:'', tickOn:false, tick:0, barCol:'#C2455F', cur:'default', hoverBg:'transparent', tip:'', act:null},
+        {k:'Permeable · min 20%', v:permeable.toFixed(0)+'%', col: permeable>=20 ? '#1F8A5A' : '#C2455F', barOn:true, barW:Math.min(100,permeable), barCol: permeable>=20 ? '#1F8A5A' : '#C2455F', tickOn:true, tick:20, dotOn:true, dotCol: permeable>=20 ? '#1F8A5A' : '#C2455F', cur:'help', hoverBg:'transparent', tip:'Unsealed share of the lot — lawn, beds, open soil. Council minimum 20%. Tick marks the target.', act:null},
+        {k:'Canopy @ maturity · 15%', v:canopyPct.toFixed(0)+'%', col: canopyPct>=15 ? '#1F8A5A' : '#B78A2E', barOn:true, barW:Math.min(100,canopyPct), barCol: canopyPct>=15 ? '#1F8A5A' : '#E8B84B', tickOn:true, tick:15, dotOn:true, dotCol: canopyPct>=15 ? '#1F8A5A' : '#E8B84B', cur:'pointer', hoverBg:'rgba(194,69,95,0.05)', tip:'Click to preview canopies at maturity on the plan', act:()=>this.setState({growth:'mature'})},
+        {k:'Setback 1.5 m', v: breaches ? breaches+' breach'+(breaches>1?'es':'') : 'clear', col: breaches ? '#C2455F' : '#1F8A5A', barOn:false, barW:0, barCol:'#C2455F', tickOn:false, tick:0, dotOn:true, dotCol: breaches ? '#C2455F' : '#1F8A5A', cur:'pointer', hoverBg:'rgba(194,69,95,0.05)', tip:'Click to toggle the 1.5 m setback overlay', act:()=>this.setState(st=>({setbackOn:!st.setbackOn}))},
+        {k:'AI confidence', v:conf+'%', col: conf===100 ? '#1F8A5A' : '#241318', barOn:false, barW:0, dotOn:false, dotCol:'', tickOn:false, tick:0, barCol:'#C2455F', cur:'default', hoverBg:'transparent', tip:'', act:null},
+        {k:'Source', v: ghostCount ? 'vicmap' : 'vicmap · verified', col:'#241318', barOn:false, barW:0, dotOn:false, dotCol:'', tickOn:false, tick:0, barCol:'#C2455F', cur:'default', hoverBg:'transparent', tip:'', act:null},
+      ],
+      sunOn: planOn && !sheet && !isSurvey,
+      sunBodyOn: s.sunBodyOn && !s.focusOn,
+      toggleSunBody: () => this.setState(st => ({sunBodyOn:!st.sunBodyOn})),
+      sunChevron: (s.sunBodyOn && !s.focusOn) ? '▾' : '▴',
+      treeShadows, rootRings, rootTags,
+      growthChips: [{id:'plant',label:'PLANT'},{id:'five',label:'+5 YR'},{id:'mature',label:'MATURE'}].map(g => ({...g,
+        bg: s.growth===g.id ? '#FFD3DE' : 'transparent', bd: s.growth===g.id ? '#FFD3DE' : 'rgba(36,19,24,0.12)', fg: s.growth===g.id ? '#241318' : '#7A5560',
+        pick: () => this.setState({growth:g.id})})),
+      sunTimeTxt, eaveTxt: eaveH + ' m',
+      sunX: (1-frac)*(1-frac)*2 + 2*(1-frac)*frac*50 + frac*frac*98,
+      sunY: (1-frac)*(1-frac)*38 + 2*(1-frac)*frac*(-14) + frac*frac*38,
+      sunPX: (1-frac)*(1-frac)*2 + 2*(1-frac)*frac*50 + frac*frac*98,
+      sunPY: ((1-frac)*(1-frac)*38 + 2*(1-frac)*frac*(-14) + frac*frac*38)/40*100,
+      toggleSunPlay: () => this.toggleSunPlay(),
+      sunPlayIcon: s.sunPlay ? '❚❚' : '▶',
+      sunPlayTip: s.sunPlay ? 'Pause sun sweep' : 'Play the sun across the day',
+      sunPlayBg: s.sunPlay ? '#241318' : 'transparent',
+      sunPlayFg: s.sunPlay ? '#FFD3DE' : '#7A5560',
+      sunPlayBd: s.sunPlay ? '#241318' : 'rgba(36,19,24,0.12)',
+      sunDown: (e) => { if (this.state.sunPlay) this.toggleSunPlay(); e.currentTarget.setPointerCapture(e.pointerId); this._sunDrag = true; this.setSunFromEvt(e); },
+      sunMove: (e) => { if (this._sunDrag) this.setSunFromEvt(e); },
+      sunUp: () => { this._sunDrag = false; },
+      sunChips: [{label:'9 AM',m:540},{label:'NOON',m:720},{label:'3 PM',m:900},{label:'5 PM',m:1020}].map(c => {
+        const on = Math.abs(s.sunMin - c.m) < 15;
+        return {...c, bg: on ? '#FFD3DE' : 'transparent', bd: on ? '#FFD3DE' : 'rgba(36,19,24,0.12)', fg: on ? '#241318' : '#7A5560',
+          pick: () => { if (this.state.sunPlay) this.toggleSunPlay(); this.setState({sunMin: c.m}); }};
+      }),
+      shadowLenTxt: shLen.toFixed(1) + ' m',
+      bomOn: bomAvail && bomExpanded,
+      bomTabOn: bomAvail && !bomExpanded,
+      toggleBomDock: () => this.setState({dockBom: !bomExpanded}),
+      statsOn: statsAvail && statsExpanded,
+      statsTabOn: statsAvail && !statsExpanded,
+      toggleStatsDock: () => this.setState({dockStats: !statsExpanded}),
+      lineCount: sched.length,
+      bomTopOn: sched.length > 0, bomTop: sched.slice(0,3).map(l => ({name:l.name, amt:l.amt})),
+      bomMoreOn: sched.length > 3, bomMoreN: sched.length - 3,
+      totalIncTxt: fmt(sub+gst), subTxt: fmt(sub), gstTxt: fmt(gst),
+      totDeltaOn,
+      totDeltaTxt: (this._totDelta||0) > 0 ? '+'+fmt(this._totDelta) : '−'+fmt(Math.abs(this._totDelta||0)),
+      totDeltaBg: (this._totDelta||0) > 0 ? 'rgba(232,184,75,0.16)' : 'rgba(31,138,90,0.12)',
+      totDeltaFg: (this._totDelta||0) > 0 ? '#8A6A1F' : '#1F8A5A',
+      hasChips: chips.length > 0, chips,
+      mitTxt: chips.length + ' mitigation overlay' + (chips.length===1?'':'s') + ' ready · click a chip to apply',
+      ghostToastOn: ghostCount > 0 && !elevOn && !s.focusOn && !isSurvey, ghostCount, toastExpanded,
+      ghostStepTxt: ghostCount ? (gIdx+1)+' of '+ghostCount : '',
+      curGhostName: curGhost ? this.byType[curGhost.t].name : '',
+      curGhostWhy: curGhost ? (curGhost.why || 'Pattern fit from similar lots') : '',
+      curGhostImpact: ghostImpact(curGhost),
+      curGhostConf: curGhost ? Math.round((curGhost.conf||0.9)*100) : 0,
+      curGhostConfCol: curGhost ? ((curGhost.conf||0.9) >= 0.9 ? '#1F8A5A' : '#E8B84B') : '#1F8A5A',
+      factorsOpen: s.factorsOpen, toggleFactors: () => this.toggleFactors(),
+      factorsChevron: s.factorsOpen ? '▴' : '▾',
+      curGhostFactors: s.factorsOpen ? this.ghostFactors(curGhost) : [],
+      ghostDots: ghosts.map((g,i) => ({sz: i===gIdx ? 8 : 6, col: i===gIdx ? '#C2455F' : 'rgba(36,19,24,0.18)', tip: this.byType[g.t].name, pick: () => this.setState({ghostIdx:i})})),
+      ghostPrev: () => this.setState(st => ({ghostIdx: gIdx-1})),
+      ghostNext: () => this.setState(st => ({ghostIdx: gIdx+1})),
+      ghostAcceptOne: () => this.acceptCurGhost(),
+      ghostRejectOne: () => this.rejectCurGhost(),
+      toastLeft: '50%', toastRight: 'auto', toastTransform: 'translateX(-50%)', toastBottom: 14, toastTop: 14,
+      toastMaxW: 'min(420px,90%)',
+      toastPillOn: (ghostCount > 0 && !elevOn && !s.focusOn && !sheet && !isSurvey) && !toastExpanded, toastCardOn: (ghostCount > 0 && !elevOn && !s.focusOn && !sheet && !isSurvey) && toastExpanded,
+      toastToggle: () => this.setState(st => ({toastPin: !st.toastPin})),
+      collapseToast: () => this.setState({toastPin:false}),
+      pillLabel: ghostCount + ' AI suggestion' + (ghostCount===1?'':'s') + ' ready',
+      toastCompact: ch < 620,
+      toastHintOn: ch >= 620,
+      toastGap: ch < 620 ? 4 : 7,
+      toastPad: ch < 620 ? '8px 12px' : '12px 16px',
+      railBottom: (planOn && !sheet) ? ((s.sunBodyOn && !s.focusOn) ? 236 : 96) : 64,
+      moreToastOn: ghostCount === 0,
+      undoNow: () => this.undo(), redoNow: () => this.redoAct(),
+      undoOp: s.hist.length ? 1 : 0.32, redoOp: s.redo.length ? 1 : 0.32,
+      moreOpen: s.moreOpen, toggleMore: () => this.setState(st=>({moreOpen:!st.moreOpen, sitesOpen:false})),
+      moreBg: s.moreOpen ? 'rgba(194,69,95,0.08)' : 'transparent',
+      moreTools,
+      scaleTxt: (() => {
+        const den = s.scaleM*3779.5/(cw*(s.zoom||1));
+        const std = [50,75,100,150,200,250,300,400,500,750,1000].find(d => Math.abs(d-den)/d < 0.02);
+        if (!sheet) return '1:' + (Math.round(den/25)*25 || 100) + (s.zoom > 1 ? ' · zoom ' + Math.round(s.zoom*100) + '%' : '');
+        return std ? '1:'+std : '1:'+Math.round(den)+' (not to scale)';
+      })(),
+      scaleCol: (() => {
+        if (!sheet) return 'inherit';
+        const den = s.scaleM*3779.5/(cw*(s.zoom||1));
+        return [50,75,100,150,200,250,300,400,500,750,1000].some(d => Math.abs(d-den)/d < 0.02) ? 'inherit' : '#B78A2E';
+      })(),
+      issuedTxt: new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'}),
+      shareOpen: s.shareOpen,
+      toggleShare: () => this.setState(st => ({shareOpen:!st.shareOpen, sitesOpen:false, layersOn:false, moreOpen:false})),
+      shareRatio: shareR.toFixed(3),
+      shareBoundaryPts: rPts(s.boundary), shareBuildingPts: rPts(s.building),
+      shareStrokes: s.strokes.map(k => ({pts: rStroke(k.pts)})),
+      shareItems: real.map(it => { const d = this.byType[it.t]; return {id:it.id, rot:it.rot, x:rX(it.x), y:rY(it.y), wPct: pxToM(d.w*it.scale)/contentWm*spanX, hPct: pxToM(d.h*it.scale)/contentHm*spanY, glyph:this.blocksInk[it.t]}; }),
+      quoteOpen: s.quoteOpen,
+      openQuote: () => this.setState({quoteOpen:true}),
+      closeQuote: () => this.setState(st => ({quoteOpen:false, mode: st.mode==='quote' ? 'cad' : st.mode})),
+      stopEvt: (e) => e.stopPropagation(),
+      quoteRef: 'CC-26-' + String(real.length).padStart(3,'0'),
+      sched,
+      copyLabel: s.copied ? 'Copied ✓' : 'Copy summary',
+      copyQuote: () => {
+        const lines = ['Curtis & Co — Concept estimate', site.addr, ''].concat(sched.map(l=>l.name+' — '+l.qtyTxt+' — '+l.amt)).concat(['','Subtotal '+fmt(sub),'GST 10% '+fmt(gst),'Total inc GST '+fmt(sub+gst),'','Indicative allowances, not a fixed quote.']);
+        try { navigator.clipboard.writeText(lines.join('\n')); } catch(e) {}
+        this.setState({copied:true}); clearTimeout(this._cp); this._cp = setTimeout(()=>this.setState({copied:false}), 1600);
+      },
+      cvDown: (e) => {
+        const p = this.pct(e);
+        if (s.armed) {
+          const id = 'p' + (s.idn+1);
+          this.mutate(st => ({items:[...st.items, {id, t:st.armed, x:p.x, y:p.y, rot:0, scale:0.7, ghost:false}], selectedId:id, idn:st.idn+1, armed:null, addOpen:false}));
+        } else if (s.tool === 'trace' && !s.locked) {
+          const sp = this.traceSnap(p, e.shiftKey);
+          if (sp.kind === 'close') { this.finishPoly(); return; }
+          this.setState(st => ({drawPoly: st.drawPoly ? [...st.drawPoly, {x:sp.x, y:sp.y}] : [{x:sp.x, y:sp.y}], drawCursor:null}));
+        } else if (s.tool === 'sketch') {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          this.setState({cur:{pts:p.x.toFixed(1)+','+p.y.toFixed(1)}, selectedId:null});
+        } else if (s.tool === 'measure') {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          this.setState({measure:{on:true,x1:p.x,y1:p.y,x2:p.x,y2:p.y,len:'0.0'}, _measuring:true, selectedId:null});
+        } else {
+          if (s.tool === 'pan' && s.zoom <= 1.001 && !s.armed) {
+            this.setState({selectedId:null, groupIds:[], sitesOpen:false, moreOpen:false, marquee:{x1:p.x,y1:p.y,x2:p.x,y2:p.y}});
+            e.currentTarget.setPointerCapture(e.pointerId);
+            return;
+          }
+          this.setState({selectedId:null, groupIds:[], sitesOpen:false, moreOpen:false});
+          if (s.tool === 'pan' && s.zoom > 1) { e.currentTarget.setPointerCapture(e.pointerId); this._viewDrag = {cx:e.clientX, cy:e.clientY, px:s.panX, py:s.panY}; }
+        }
+      },
+      cvMove: (e) => {
+        const st = this.state;
+        if (this._viewDrag) { const vd = this._viewDrag; this.setState({panX:vd.px+(e.clientX-vd.cx), panY:vd.py+(e.clientY-vd.cy)}); return; }
+        if (st.marquee) {
+          const p = this.pct(e);
+          this.setState(s2 => ({marquee:{...s2.marquee, x2:p.x, y2:p.y}}));
+        } else if (st.vDrag) {
+          const p = this.pct(e); const vd = st.vDrag; const shift = e.shiftKey;
+          this.setState(s2 => {
+            const arr = s2[vd.which].slice(); let nx = p.x, ny = p.y;
+            if (!shift && arr.length > 1) {
+              const n = arr.length, cw2 = s2.cw||1280, ch2 = s2.ch||640;
+              [arr[(vd.idx+n-1)%n], arr[(vd.idx+1)%n]].forEach(q => { if (Math.abs(nx-q.x)/100*cw2 < 7) nx = q.x; if (Math.abs(ny-q.y)/100*ch2 < 7) ny = q.y; });
+            }
+            arr[vd.idx] = {x:nx, y:ny}; return {[vd.which]:arr};
+          });
+        } else if (st.drag && st.drag.resize) {
+          const p = this.pct(e); const d3 = st.drag;
+          const dist = Math.hypot((p.x-d3.cx)/100*(st.cw||1280), (p.y-d3.cy)/100*(st.ch||640));
+          const ns = Math.min(2.5, Math.max(0.35, d3.scale0 * dist / d3.dist0));
+          this.setState(s2 => ({items:s2.items.map(i => i.id===d3.resize ? {...i, scale:ns} : i)}));
+        } else if (st.drag && st.drag.rotate) {
+          const p = this.pct(e); const d3 = st.drag;
+          let ang = Math.atan2((p.y-d3.cy)/100*(st.ch||640), (p.x-d3.cx)/100*(st.cw||1280))*180/Math.PI + 90;
+          if (!e.shiftKey) ang = Math.round(ang/5)*5;
+          this.setState(s2 => ({items:s2.items.map(i => i.id===d3.rotate ? {...i, rot:ang} : i)}));
+        } else if (st.drag && st.drag.group) {
+          const p = this.pct(e); const dg = st.drag;
+          const ddx0 = p.x - dg.startX, ddy0 = p.y - dg.startY;
+          const others = st.items.filter(i => !dg.ids.includes(i.id));
+          const thresh = 1.3; let gx = null, gy = null;
+          const firstId = dg.ids[0], anchor = dg.anchors[firstId];
+          const targetX = anchor.x + ddx0, targetY = anchor.y + ddy0;
+          others.forEach(o => { if (gx===null && Math.abs(o.x-targetX)<thresh) gx=o.x; if (gy===null && Math.abs(o.y-targetY)<thresh) gy=o.y; });
+          const ddx = gx!==null ? ddx0+(gx-targetX) : ddx0, ddy = gy!==null ? ddy0+(gy-targetY) : ddy0;
+          this.setState(s2 => ({guideX:gx, guideY:gy, items:s2.items.map(i => dg.ids.includes(i.id) ? {...i, x:Math.min(100,Math.max(0,dg.anchors[i.id].x+ddx)), y:Math.min(100,Math.max(0,dg.anchors[i.id].y+ddy))} : i)}));
+        } else if (st.drag) {
+          const p = this.pct(e);
+          const tx = p.x-st.drag.dx, ty = p.y-st.drag.dy;
+          const thresh = 1.3; let gx = null, gy = null;
+          st.items.forEach(o => { if (o.id===st.drag.id) return; if (gx===null && Math.abs(o.x-tx)<thresh) gx=o.x; if (gy===null && Math.abs(o.y-ty)<thresh) gy=o.y; });
+          const nx2 = gx!==null ? gx : tx, ny2 = gy!==null ? gy : ty;
+          this.setState(s2 => ({guideX:gx, guideY:gy, items:s2.items.map(i => i.id===s2.drag.id ? {...i, x:nx2, y:ny2} : i)}));
+        } else if (st.cur) {
+          const p = this.pct(e);
+          this.setState(s2 => ({cur:{pts:s2.cur.pts+' '+p.x.toFixed(1)+','+p.y.toFixed(1)}}));
+        } else if (st._measuring) {
+          const p = this.pct(e);
+          const dm = Math.hypot(toMx(p.x)-toMx(st.measure.x1), toMy(p.y)-toMy(st.measure.y1));
+          this.setState(s2 => ({measure:{...s2.measure, x2:p.x, y2:p.y, len:dm.toFixed(1)}}));
+        } else if (st.drawPoly) {
+          const p = this.pct(e);
+          this.setState({drawCursor: this.traceSnap(p, e.shiftKey)});
+        }
+      },
+      cvUp: () => {
+        this._viewDrag = null;
+        if (this.state.marquee) {
+          const m = this.state.marquee;
+          const x0=Math.min(m.x1,m.x2), x1=Math.max(m.x1,m.x2), y0=Math.min(m.y1,m.y2), y1=Math.max(m.y1,m.y2);
+          const ids = this.state.items.filter(i => !i.ghost && i.x>=x0 && i.x<=x1 && i.y>=y0 && i.y<=y1).map(i=>i.id);
+          this.setState({marquee:null, groupIds: ids.length>1 ? ids : [], selectedId: ids.length===1 ? ids[0] : null});
+        }
+        if (this.state.cur) this.mutate(s2 => ({strokes:[...s2.strokes, s2.cur], cur:null}));
+        if (this.state._measuring) this.setState({_measuring:false});
+        if (this.state.drag) this.setState({drag:null, guideX:null, guideY:null});
+        if (this.state.vDrag) this.setState({vDrag:null});
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

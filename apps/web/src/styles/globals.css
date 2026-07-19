@@ -1,39 +1,38 @@
-/* Workstream — Design System 3.0
- * Soft-pink editorial field, canvas-first, subtle radii.
- * Design does the heavy lifting; chrome stays quiet. */
+/* Workstream — Design Studio v4
+ * Curtis & Co operator chrome — blush field, brand red accent. */
 
 :root {
-  /* surfaces — cool blush mist (not cream/terracotta) */
-  --surface-base: #f6e6ed;
-  --surface-elevated: #fffafc;
+  /* surfaces */
+  --surface-base: #f6eaed;
+  --surface-elevated: #fffbfb;
   --surface-sunken: #eadfe5;
-  --surface-inverted: #24181e;
-  --surface-overlay: #fffafc;
-  --surface-inset: #f8f0f4;
-  --surface-panel: #f8f0f4;
+  --surface-inverted: #241318;
+  --surface-overlay: #fffbfb;
+  --surface-inset: #fff6f8;
+  --surface-panel: #fffbfb;
 
-  /* ink — rosewood charcoal */
-  --ink-primary: #24181e;
-  --ink-secondary: #6b5660;
-  --ink-tertiary: #9a8590;
-  --ink-inverted: #faf4f6;
+  /* ink */
+  --ink-primary: #241318;
+  --ink-secondary: #7a5560;
+  --ink-tertiary: #b08a95;
+  --ink-inverted: #fff6f8;
 
-  /* lines — soft petal stone (prefer shadow/inset over hard rules) */
-  --line-hairline: #e8dde3;
-  --line-subtle: #f0e7ec;
-  --line-strong: #d2c2cb;
-  --line-ink: #24181e;
+  /* lines */
+  --line-hairline: rgba(36, 19, 24, 0.12);
+  --line-subtle: rgba(36, 19, 24, 0.07);
+  --line-strong: rgba(36, 19, 24, 0.18);
+  --line-ink: #241318;
 
-  /* accent — soft rose */
-  --accent: #e9a8ba;
-  --accent-soft: #f7dce4;
-  --accent-ink: #7a3348;
-  --accent-bright: #f0b4c4;
+  /* accent — brand red */
+  --accent: #c2455f;
+  --accent-soft: #ffd3de;
+  --accent-ink: #9e3049;
+  --accent-bright: #c2455f;
   --accent-water: #9b7b8f;
 
   /* semantic */
-  --ok: #3d8b6e;
-  --warn: #b8893a;
+  --ok: #1f8a5a;
+  --warn: #e8b84b;
   --block: #b42318;
   --info: #8b6b7a;
 
@@ -234,7 +233,7 @@ button:focus-visible {
 }
 
 ::selection {
-  background: var(--accent-bright);
+  background: var(--accent-soft);
   color: var(--ink-primary);
 }
 

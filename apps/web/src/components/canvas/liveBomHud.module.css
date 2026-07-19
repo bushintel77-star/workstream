@@ -1,23 +1,22 @@
 .hud {
   position: absolute;
   right: 0.75rem;
-  bottom: 5.5rem;
+  top: 4.5rem;
   z-index: 40;
-  width: min(22rem, calc(100vw - 1.5rem));
+  width: min(16rem, calc(100vw - 1.5rem));
   max-height: min(48vh, 28rem);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.8rem 0.9rem;
-  border-radius: 24px;
-  background: var(--frost, rgba(255, 248, 251, 0.72));
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow:
-    0 4px 24px rgba(36, 24, 30, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  padding: 0.75rem 0.85rem;
+  border-radius: 16px;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
   font-family: var(--font, "Sora", sans-serif);
-  color: var(--ink, #24181e);
+  color: var(--ink, #241318);
 }
 
 .hudPaper {
@@ -31,9 +30,9 @@
 }
 
 .hudCompact {
-  width: min(16rem, calc(100vw - 1.5rem));
+  width: min(14rem, calc(100vw - 1.5rem));
   max-height: none;
-  bottom: 6.25rem;
+  top: 4.5rem;
   padding: 0.55rem 0.75rem;
 }
 
@@ -46,11 +45,12 @@
 
 .kicker {
   margin: 0;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-faint, #9a8590);
+  color: #b08a95;
 }
 
 .total {

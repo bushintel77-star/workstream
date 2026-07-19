@@ -1,19 +1,19 @@
 .root {
-  /* Soft 2026 studio tokens — pale blush, liquid glass, no hard chrome */
-  --pink-mist: #f6e6ed;
-  --pink-soft: #fdf0f5;
-  --blush: #e9a8ba;
-  --blush-deep: #d4899e;
-  --ink: #24181e;
-  --ink-soft: #6b5660;
-  --ink-faint: #9a8590;
-  --frost: rgba(255, 248, 251, 0.72);
-  --frost-strong: rgba(255, 250, 252, 0.88);
+  /* Design Studio v4 — Curtis & Co operator tokens */
+  --pink-mist: #f6eaed;
+  --pink-soft: #fff6f8;
+  --blush: #c2455f;
+  --blush-deep: #9e3049;
+  --ink: #241318;
+  --ink-soft: #7a5560;
+  --ink-faint: #b08a95;
+  --frost: rgba(255, 251, 252, 0.92);
+  --frost-strong: rgba(255, 251, 252, 0.96);
   --glass-edge: rgba(255, 255, 255, 0.55);
-  --shadow-soft: 0 4px 24px rgba(36, 24, 30, 0.06);
-  --shadow-lift: 0 18px 48px rgba(36, 24, 30, 0.1);
-  --radius-ctrl: 16px;
-  --radius-sheet: 26px;
+  --shadow-soft: 0 8px 28px rgba(42, 23, 29, 0.12);
+  --shadow-lift: 0 14px 44px rgba(42, 23, 29, 0.22);
+  --radius-ctrl: 10px;
+  --radius-sheet: 18px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
   --font: "Sora", "Segoe UI", sans-serif;
@@ -26,11 +26,7 @@
 
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(90% 70% at 8% -8%, #ffe4ef 0%, transparent 52%),
-    radial-gradient(70% 55% at 96% 4%, #f3dde8 0%, transparent 48%),
-    radial-gradient(50% 40% at 50% 100%, #f8eef3 0%, transparent 55%),
-    var(--pink-mist);
+  background: var(--pink-mist);
   color: var(--ink);
   font-family: var(--font);
   overflow: hidden;
@@ -71,6 +67,7 @@
 }
 
 /** Walk immersion: fade operator chrome; Exit chip stays on the clay overlay. */
+.root [data-testid="canvas-studio-header"],
 .root [data-testid="canvas-mode-strip"],
 .root [data-testid="live-bom-hud"],
 .root [data-testid="geo-sheet-hud"],
@@ -84,6 +81,7 @@
   transition: opacity 560ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
+.rootWalk [data-testid="canvas-studio-header"],
 .rootWalk [data-testid="canvas-mode-strip"],
 .rootWalk [data-testid="live-bom-hud"],
 .rootWalk [data-testid="geo-sheet-hud"],
@@ -310,6 +308,16 @@
   }
 }
 
+.rootFocus [data-testid="live-bom-hud"],
+.rootFocus [data-testid="cad-dock"],
+.rootFocus [data-testid="survey-dock"],
+.rootFocus [data-testid="canvas-quote-dock"],
+.rootFocus [data-testid="geo-sheet-hud"],
+.rootFocus .dock {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .modeStrip {
   position: absolute;
   top: 1rem;
@@ -320,45 +328,44 @@
   gap: 3px;
   padding: 4px;
   border-radius: 999px;
-  background: var(--frost);
-  backdrop-filter: blur(20px) saturate(1.25);
-  -webkit-backdrop-filter: blur(20px) saturate(1.25);
-  box-shadow:
-    var(--shadow-soft),
-    inset 0 1px 0 var(--glass-edge);
+  background: rgba(36, 19, 24, 0.05);
   pointer-events: auto;
+}
+
+/** Inline in v4 studio header — not floating center. */
+:global([data-testid="canvas-studio-header"]) .modeStrip {
+  position: static;
+  top: auto;
+  left: auto;
+  transform: none;
+  z-index: auto;
 }
 
 .modeBtn {
   border: none;
   border-radius: 999px;
-  min-height: 36px;
-  padding: 0 16px;
+  min-height: 30px;
+  padding: 0 15px;
   background: transparent;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition:
-    background 220ms var(--ease-soft),
-    color 220ms var(--ease-soft),
-    box-shadow 220ms var(--ease-soft),
-    transform 220ms var(--ease-soft);
+    background 0.16s ease,
+    color 0.16s ease;
 }
 
 .modeBtn:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.45);
 }
 
 .modeBtnActive {
-  background: #fff;
-  color: var(--ink);
-  box-shadow:
-    0 2px 10px rgba(36, 24, 30, 0.06),
-    inset 0 0 0 1px color-mix(in srgb, var(--blush) 40%, transparent);
+  background: var(--ink);
+  color: #fff6f8;
+  box-shadow: none;
 }
 
 .modeBtnLocked {

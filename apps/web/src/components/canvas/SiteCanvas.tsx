@@ -60,7 +60,7 @@ import {
   BoundaryOverlay,
   type BoundaryTool,
 } from "./BoundaryLockSnap";
-import { CanvasModeStrip } from "./CanvasModeStrip";
+import { CanvasStudioHeader } from "./CanvasStudioHeader";
 import { SketchInstrument } from "./SketchInstrument";
 import {
   DraftingHud,
@@ -79,7 +79,16 @@ import type {
 } from "./ClayWalkthrough";
 import { SheetAnchorsOverlay } from "./SheetAnchorsOverlay";
 import { Tier1SavingsLedger } from "../tier1";
+import {
+  DEFAULT_CANVAS_VIEW_LAYERS,
+  type CanvasViewLayers,
+} from "../../lib/canvas-view-layers";
 import css from "./siteCanvas.module.css";
+
+type SketchCommandsApi = {
+  scanGhosts: () => void;
+  openCommands: () => void;
+};
 
 const GeoSiteMap = dynamic(
   () => import("./GeoSiteMap").then((m) => m.GeoSiteMap),
@@ -361,6 +370,11 @@ function SiteCanvasInner({
   /** Stack of entity ids for Cmd/Ctrl+Z undo of drawn lines. */
   const [cadUndoIds, setCadUndoIds] = useState<string[]>([]);
   const [keysHelpOn, setKeysHelpOn] = useState(false);
+  const [viewLayers, setViewLayers] = useState<CanvasViewLayers>(
+    DEFAULT_CANVAS_VIEW_LAYERS,
+  );
+  const [focusChrome, setFocusChrome] = useState(false);
+  const sketchCommandsRef = useRef<SketchCommandsApi | null>(null);
   const cadDocRef = useRef(cadDoc);
   cadDocRef.current = cadDoc;
   const [sketchChromeHost, setSketchChromeHost] =
@@ -885,6 +899,39 @@ function SiteCanvasInner({
   const showStage =
     titleRevealActive || mode !== "sketch" || Boolean(sketch);
 
+  const openCommandPalette = useCallback(() => {
+    if (mode === "sketch" && sketchCommandsRef.current) {
+      sketchCommandsRef.current.openCommands();
+      return;
+    }
+    setKeysHelpOn(true);
+  }, [mode]);
+
+  const workingMeta = useMemo(() => {
+    if (!showFitSheet && mode !== "cad" && mode !== "quote") return null;
+    const scale = fitSheetScaleLabel(
+      cadDoc?.width_m ?? boundary?.width_m ?? groundSpan?.widthM ?? null,
+    );
+    const source =
+      boundary?.source_kind === "vicmap" || lotRing.length >= 3
+        ? "Vicmap Property · Land Vic"
+        : (boundary?.source_kind ?? "Title");
+    const area =
+      sketch?.surveyMetrics?.garden_area_m2 ??
+      boundary?.calculated_metrics.total_area_m2 ??
+      sketch?.surveyMetrics?.lot_area_m2;
+    const detail = area != null ? `${scale} · ${Math.round(area)} m²` : scale;
+    return { eyebrow: "Working drawing", detail: `${source} · ${detail}` };
+  }, [
+    boundary,
+    cadDoc?.width_m,
+    groundSpan?.widthM,
+    lotRing.length,
+    mode,
+    showFitSheet,
+    sketch?.surveyMetrics,
+  ]);
+
   const bumpOrchestration = () => setOrchRefresh((n) => n + 1);
 
   useEffect(() => onOrchestrationRefreshRequest(bumpOrchestration), []);
@@ -905,18 +952,38 @@ function SiteCanvasInner({
 
   return (
     <div
-      className={`${css.root}${walkMode && canWalk ? ` ${css.rootWalk}` : ""}`}
+      className={`${css.root}${walkMode && canWalk ? ` ${css.rootWalk}` : ""}${focusChrome ? ` ${css.rootFocus}` : ""}`}
       data-testid="site-canvas"
       data-canvas-mode={mode}
       data-title-reveal={titleRevealActive ? "1" : undefined}
       data-walk={walkMode && canWalk ? "1" : undefined}
     >
       {!titleRevealActive ? (
-        <CanvasModeStrip
+        <CanvasStudioHeader
+          projectAddress={projectAddress}
           mode={mode}
           progress={progress}
           onMode={setMode}
           paper={showFitSheet}
+          showFitSheet={showFitSheet}
+          onToggleFitSheet={() => {
+            setShowFitSheet((v) => !v);
+            setFitNonce((n) => n + 1);
+          }}
+          showCadLine={mode === "cad"}
+          cadDrawArmed={cadDrawArmed}
+          onToggleCadDraw={() => setCadDrawArmed((v) => !v)}
+          ghostCount={ghostCount}
+          onAcceptGhosts={ghostCount > 0 ? acceptAllGhosts : undefined}
+          keysHelpOn={keysHelpOn}
+          onToggleKeysHelp={() => setKeysHelpOn((v) => !v)}
+          workingMeta={workingMeta}
+          viewLayers={viewLayers}
+          onViewLayersChange={setViewLayers}
+          onOpenCommands={openCommandPalette}
+          focusChrome={focusChrome}
+          onToggleFocusChrome={() => setFocusChrome((v) => !v)}
+          hideBrand={useGeoStage}
         />
       ) : null}
 
@@ -1248,6 +1315,20 @@ function SiteCanvasInner({
                           onArmedChange={setSketchArmed}
                           onDraftCad={draftFitSheet}
                           showRibbon={sketchPaintOpen}
+                          viewLayers={viewLayers}
+                          onToggleViewLayer={(key) =>
+                            setViewLayers((prev) => ({
+                              ...prev,
+                              [key]: !prev[key],
+                            }))
+                          }
+                          onRegisterCommands={(api) => {
+                            sketchCommandsRef.current = api;
+                          }}
+                          measureActive={measureActive}
+                          onToggleMeasure={() => setMeasureActive((v) => !v)}
+                          onGoToQuote={() => setMode("quote")}
+                          showGhostSuggestions={viewLayers.ghostSuggestions}
                         />
                       ) : mode === "quote" ||
                         mode === "cad" ||
@@ -1326,6 +1407,20 @@ function SiteCanvasInner({
                       tier1={tier1}
                       onDraftCad={draftFitSheet}
                       showRibbon={sketchPaintOpen}
+                      viewLayers={viewLayers}
+                      onToggleViewLayer={(key) =>
+                        setViewLayers((prev) => ({
+                          ...prev,
+                          [key]: !prev[key],
+                        }))
+                      }
+                      onRegisterCommands={(api) => {
+                        sketchCommandsRef.current = api;
+                      }}
+                      measureActive={measureActive}
+                      onToggleMeasure={() => setMeasureActive((v) => !v)}
+                      onGoToQuote={() => setMode("quote")}
+                      showGhostSuggestions={viewLayers.ghostSuggestions}
                     />
                   ) : null}
                   <MeasureOverlay
@@ -1482,73 +1577,6 @@ function SiteCanvasInner({
               </div>
             ) : null}
           </div>
-
-          {!titleRevealActive ? (
-          <div
-            className={`${css.topBar}${useGeoStage ? ` ${css.topBarSheet}` : ""}`}
-          >
-            {!useGeoStage ? (
-              <div className={css.brandBlock}>
-                <p className={css.brand}>Curtis &amp; Co</p>
-                <p className={css.address}>{projectAddress}</p>
-                <span className={css.badge}>
-                  {mode === "survey"
-                    ? "Survey · boundary"
-                    : mode === "sketch"
-                      ? "Sketch · paint concept"
-                      : mode === "quote"
-                        ? "Quote · QS → build"
-                        : mode === "share"
-                          ? "Share · client link"
-                          : "Working planning · indicative"}
-                </span>
-              </div>
-            ) : (
-              <div className={css.brandBlock} aria-hidden />
-            )}
-            <div
-              className={`${css.topActions}${showFitSheet ? ` ${css.topActionsPaper}` : ""}`}
-            >
-              <button
-                type="button"
-                className={`${css.iconBtn}${showFitSheet ? ` ${css.iconBtnActive}` : ""}`}
-                onClick={() => {
-                  setShowFitSheet((v) => !v);
-                  setFitNonce((n) => n + 1);
-                }}
-                title="Fit sheet - paper working drawing (F)"
-                aria-pressed={showFitSheet}
-                data-testid="fit-sheet-top"
-              >
-                Fit sheet
-              </button>
-              {mode === "cad" ? (
-                <button
-                  type="button"
-                  className={`${css.iconBtn}${cadDrawArmed ? ` ${css.iconBtnActive}` : ""}`}
-                  title="Line draw (Space)"
-                  aria-pressed={cadDrawArmed}
-                  data-testid="cad-line-top"
-                  onClick={() => setCadDrawArmed((v) => !v)}
-                >
-                  {cadDrawArmed ? "Line on" : "Line"}
-                </button>
-              ) : null}
-              <button
-                type="button"
-                className={`${css.iconBtn}${keysHelpOn ? ` ${css.iconBtnActive}` : ""}`}
-                title="Keyboard shortcuts (?)"
-                aria-pressed={keysHelpOn}
-                onClick={() => setKeysHelpOn((v) => !v)}
-              >
-                ?
-              </button>
-              <Link href="/" className={css.iconBtn}>
-                Sites
-              </Link>
-            </div>
-          </div>
-          ) : null}
 
           {!titleRevealActive && mapView && mode !== "share" && !useGeoStage ? (
             <DraftingHud

@@ -69,7 +69,7 @@ type Props = {
   onDraftCad?: () => void;
   /** Jump to quote lens (AI coaching "quote" action). */
   onGoToQuote?: () => void;
-  onRegisterCommands?: (api: { scanGhosts: () => void }) => void;
+  onRegisterCommands?: (api: { scanGhosts: () => void; openCommands: () => void }) => void;
   measureActive?: boolean;
   onToggleMeasure?: () => void;
   viewLayers?: CanvasViewLayers;
@@ -551,7 +551,10 @@ export function SketchInstrument({
   }, []);
 
   useEffect(() => {
-    onRegisterCommands?.({ scanGhosts: () => void scanGhosts() });
+    onRegisterCommands?.({
+      scanGhosts: () => void scanGhosts(),
+      openCommands: () => setCommandOpen(true),
+    });
   }, [onRegisterCommands, scanGhosts]);
 
   useEffect(() => {
