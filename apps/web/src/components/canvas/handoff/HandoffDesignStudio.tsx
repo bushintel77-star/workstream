@@ -19,6 +19,10 @@ import { ComplianceDock } from "./features/compliance/ComplianceDock";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
 import { QuoteSurface } from "./features/tier1/QuoteSurface";
 import { ElevationBoard } from "./features/elevation/ElevationBoard";
+import {
+  TraceOverlay,
+  currentTraceCompletion,
+} from "./features/trace/TraceOverlay";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -79,7 +83,37 @@ export function HandoffDesignStudio({
         return;
       }
       if (typing || ui.cmdOpen) return;
+
+      if (ui.tool === "trace" && ui.drawPoly) {
+        if (e.key === "Tab") {
+          const done = currentTraceCompletion(
+            ui.drawPoly,
+            ui.drawCursor,
+            ui.locked,
+          );
+          if (done) {
+            e.preventDefault();
+            studio.finishTrace(done);
+            return;
+          }
+        }
+        if (e.key === "Enter" && ui.drawPoly.length >= 3) {
+          e.preventDefault();
+          studio.finishTrace(ui.drawPoly);
+          return;
+        }
+        if (e.key === "Backspace" || e.key === "Delete") {
+          e.preventDefault();
+          studio.popTracePoint();
+          return;
+        }
+      }
+
       if (e.key === "Escape") {
+        if (ui.drawPoly) {
+          studio.cancelTrace();
+          return;
+        }
         studio.setUi({
           factorsOpen: false,
           layersOpen: false,
@@ -94,12 +128,12 @@ export function HandoffDesignStudio({
         studio.setUi({ frameOn: !ui.frameOn });
         return;
       }
-      if (e.key.toLowerCase() === "a" && studio.curGhost) {
+      if (e.key.toLowerCase() === "a" && studio.curGhost && !ui.drawPoly) {
         e.preventDefault();
         studio.acceptGhost(studio.curGhost.id);
         return;
       }
-      if (e.key.toLowerCase() === "r" && studio.curGhost) {
+      if (e.key.toLowerCase() === "r" && studio.curGhost && !ui.drawPoly) {
         e.preventDefault();
         studio.rejectGhost(studio.curGhost.id);
         return;
@@ -107,7 +141,7 @@ export function HandoffDesignStudio({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [studio, ui.cmdOpen, ui.frameOn]);
+  }, [studio, ui]);
 
   const planOn = ui.mode !== "elevation" && ui.mode !== "quote";
   const showDocks =
@@ -255,9 +289,15 @@ export function HandoffDesignStudio({
             boundary={studio.boundary}
             building={studio.building}
             items={studio.items}
+            selectedId={ui.selectedId}
+            onSelect={(id) => studio.setUi({ selectedId: id })}
             onToggleAxis={() =>
               studio.setUi({ elevAxis: ui.elevAxis === "x" ? "y" : "x" })
             }
+            onTraceInPlan={(id) => {
+              studio.setUi({ selectedId: id });
+              studio.setMode("cad");
+            }}
           />
         ) : null}
 
@@ -270,44 +310,59 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn ? (
-          <CadPlanBoard
-            aerialUri={aerialUri}
-            frameOn={ui.frameOn}
-            darkOn={ui.darkOn}
-            boundary={studio.boundary}
-            building={studio.building}
-            items={studio.items}
-            tool={ui.tool}
-            locked={ui.locked}
-            layerOpacity={ui.layerOpacity}
-            setbackOn={ui.setbackOn}
-            growth={ui.growth}
-            selectedId={ui.selectedId}
-            hoverId={ui.hoverId}
-            curGhostId={studio.curGhost?.id ?? null}
-            onSelect={(id) => {
-              studio.setUi({ selectedId: id });
-              if (id && studio.ghosts.some((g) => g.id === id)) {
-                const idx = studio.ghosts.findIndex((g) => g.id === id);
-                studio.setUi({
-                  selectedId: id,
-                  ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
-                  factorsOpen: true,
-                });
-              }
-            }}
-            onHover={(id) => studio.setUi({ hoverId: id })}
-            onAcceptGhost={studio.acceptGhost}
-            onRejectGhost={studio.rejectGhost}
-            onTraceInElevation={(id) => {
-              studio.setUi({ selectedId: id });
-              studio.setMode("elevation");
-            }}
-            onBoundaryChange={studio.updateBoundary}
-            onBuildingChange={studio.updateBuilding}
-            onPlace={studio.placeArmed}
-            onMoveItem={studio.moveItem}
-          />
+          <>
+            <CadPlanBoard
+              aerialUri={aerialUri}
+              frameOn={ui.frameOn}
+              darkOn={ui.darkOn}
+              boundary={studio.boundary}
+              building={studio.building}
+              items={studio.items}
+              tool={ui.tool}
+              locked={ui.locked}
+              layerOpacity={ui.layerOpacity}
+              setbackOn={ui.setbackOn}
+              growth={ui.growth}
+              selectedId={ui.selectedId}
+              hoverId={ui.hoverId}
+              curGhostId={studio.curGhost?.id ?? null}
+              onSelect={(id) => {
+                studio.setUi({ selectedId: id });
+                if (id && studio.ghosts.some((g) => g.id === id)) {
+                  const idx = studio.ghosts.findIndex((g) => g.id === id);
+                  studio.setUi({
+                    selectedId: id,
+                    ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
+                    factorsOpen: true,
+                  });
+                }
+              }}
+              onHover={(id) => studio.setUi({ hoverId: id })}
+              onAcceptGhost={studio.acceptGhost}
+              onRejectGhost={studio.rejectGhost}
+              onTraceInElevation={(id) => {
+                studio.setUi({ selectedId: id });
+                studio.setMode("elevation");
+              }}
+              onBoundaryChange={studio.updateBoundary}
+              onBuildingChange={studio.updateBuilding}
+              onPlace={studio.placeArmed}
+              onMoveItem={studio.moveItem}
+            />
+            <TraceOverlay
+              active={ui.tool === "trace" && !ui.frameOn}
+              locked={ui.locked}
+              target={ui.traceTarget}
+              drawPoly={ui.drawPoly}
+              drawCursor={ui.drawCursor}
+              onTarget={studio.setTraceTarget}
+              onCursor={(drawCursor) => studio.setUi({ drawCursor })}
+              onPush={studio.pushTracePoint}
+              onFinish={studio.finishTrace}
+              onCancel={studio.cancelTrace}
+              onPop={studio.popTracePoint}
+            />
+          </>
         ) : null}
 
         {ui.frameOn && planOn ? (

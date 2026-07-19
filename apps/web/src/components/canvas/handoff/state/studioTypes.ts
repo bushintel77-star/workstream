@@ -7,6 +7,8 @@ export type LayerOpacity = Record<LayerKey, number>;
 
 export type GrowthStage = "plant" | "5yr" | "mature";
 
+export type TraceTarget = "boundary" | "building";
+
 export type StudioSnapshot = {
   boundary: PctPoint[];
   building: PctPoint[];
@@ -42,6 +44,10 @@ export type StudioUiState = {
   armed: StudioItemType | null;
   mitigated: Record<string, boolean>;
   coachStep: number;
+  /** In-progress polygon while tool === 'trace' */
+  drawPoly: PctPoint[] | null;
+  drawCursor: PctPoint | null;
+  traceTarget: TraceTarget;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

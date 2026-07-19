@@ -9,7 +9,10 @@ type Props = {
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
   onToggleAxis: () => void;
+  onTraceInPlan: (id: string) => void;
 };
 
 /**
@@ -20,7 +23,10 @@ export function ElevationBoard({
   boundary,
   building,
   items,
+  selectedId,
+  onSelect,
   onToggleAxis,
+  onTraceInPlan,
 }: Props) {
   const coords = boundary.map((p) => (axis === "x" ? p.x : p.y));
   const minC = Math.min(...coords);
@@ -38,9 +44,21 @@ export function ElevationBoard({
 
   return (
     <div className={css.root} data-testid="elevation-profile">
-      <button type="button" className={css.toggle} onClick={onToggleAxis}>
-        {axis === "x" ? "Front elevation" : "Side elevation"}
-      </button>
+      <div className={css.topRow}>
+        <button type="button" className={css.toggle} onClick={onToggleAxis}>
+          {axis === "x" ? "Front elevation" : "Side elevation"}
+        </button>
+        {selectedId && items.some((i) => i.id === selectedId && !i.ghost) ? (
+          <button
+            type="button"
+            className={css.tracePlan}
+            data-testid="trace-in-plan"
+            onClick={() => onTraceInPlan(selectedId)}
+          >
+            Trace in plan
+          </button>
+        ) : null}
+      </div>
       <div className={css.north}>N↑</div>
       <svg className={css.svg} viewBox="0 0 100 40" preserveAspectRatio="none">
         {[0, 3, 6, 9].map((m) => {
@@ -98,8 +116,15 @@ export function ElevationBoard({
             const h = (hm / 9) * 30;
             const y = 36 - h;
             const w = it.ghost ? 4 : 5;
+            const selected = it.id === selectedId && !it.ghost;
             return (
-              <g key={it.id}>
+              <g
+                key={it.id}
+                style={{ cursor: it.ghost ? "default" : "pointer" }}
+                onClick={() => {
+                  if (!it.ghost) onSelect(it.id);
+                }}
+              >
                 <rect
                   x={x}
                   y={y}
@@ -108,8 +133,8 @@ export function ElevationBoard({
                   fill={
                     it.ghost ? "rgba(232,184,75,0.15)" : "rgba(194,69,95,0.18)"
                   }
-                  stroke={it.ghost ? "#E8B84B" : "#C2455F"}
-                  strokeWidth={0.6}
+                  stroke={selected ? "#C2455F" : it.ghost ? "#E8B84B" : "#C2455F"}
+                  strokeWidth={selected ? 1.1 : 0.6}
                   strokeDasharray={it.ghost ? "2 2" : undefined}
                   vectorEffect="non-scaling-stroke"
                 />

@@ -18,6 +18,7 @@ import {
   type LayerKey,
   type LayerOpacity,
   type StudioSnapshot,
+  type TraceTarget,
 } from "./studioTypes";
 
 const MAX_HIST = 40;
@@ -55,6 +56,9 @@ type Ui = {
   armed: StudioItemType | null;
   mitigated: Record<string, boolean>;
   coachStep: number;
+  drawPoly: PctPoint[] | null;
+  drawCursor: PctPoint | null;
+  traceTarget: TraceTarget;
 };
 
 type State = { doc: Doc; ui: Ui };
@@ -119,6 +123,9 @@ function initialState(mode: StudioMode): State {
       armed: null,
       mitigated: {},
       coachStep: -1,
+      drawPoly: null,
+      drawCursor: null,
+      traceTarget: "boundary",
     },
   };
 }
@@ -181,7 +188,14 @@ function reducer(state: State, action: Action): State {
       if (leavingSurvey) layerOpacity = { ...DESIGN_LAYER_PRESET };
       return {
         ...state,
-        ui: { ...state.ui, mode: action.mode, layerOpacity },
+        ui: {
+          ...state.ui,
+          mode: action.mode,
+          layerOpacity,
+          drawPoly: null,
+          drawCursor: null,
+          tool: action.mode === "survey" ? "edit" : "pan",
+        },
       };
     }
     case "setLayerOpacity":
@@ -386,6 +400,44 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     setUi({ ghostIdx: state.ui.ghostIdx + 1, factorsOpen: true });
   }, [ghostCount, setUi, state.ui.ghostIdx]);
 
+  const finishTrace = useCallback(
+    (pts: PctPoint[]) => {
+      if (pts.length < 3 || state.ui.locked) {
+        setUi({ drawPoly: null, drawCursor: null });
+        return;
+      }
+      const target = state.ui.traceTarget;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          [target]: pts.map((p) => ({ ...p })),
+        },
+      }));
+      setUi({ drawPoly: null, drawCursor: null, tool: "edit" });
+    },
+    [mutate, setUi, state.ui.locked, state.ui.traceTarget],
+  );
+
+  const cancelTrace = useCallback(() => {
+    setUi({ drawPoly: null, drawCursor: null });
+  }, [setUi]);
+
+  const pushTracePoint = useCallback(
+    (p: PctPoint) => {
+      if (state.ui.locked) return;
+      const cur = state.ui.drawPoly ?? [];
+      setUi({ drawPoly: [...cur, p], drawCursor: null });
+    },
+    [setUi, state.ui.drawPoly, state.ui.locked],
+  );
+
+  const popTracePoint = useCallback(() => {
+    const cur = state.ui.drawPoly;
+    if (!cur) return;
+    if (cur.length <= 1) setUi({ drawPoly: null, drawCursor: null });
+    else setUi({ drawPoly: cur.slice(0, -1) });
+  }, [setUi, state.ui.drawPoly]);
+
   return {
     boundary: state.doc.boundary,
     building: state.doc.building,
@@ -413,6 +465,12 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     moveItem,
     updateBoundary,
     updateBuilding,
+    finishTrace,
+    cancelTrace,
+    pushTracePoint,
+    popTracePoint,
+    setTraceTarget: (traceTarget: TraceTarget) =>
+      setUi({ traceTarget, drawPoly: null, drawCursor: null }),
     setTool: (tool: StudioTool) => {
       if (tool === "lock") {
         const nextLocked = !state.ui.locked;
@@ -420,6 +478,8 @@ export function useStudioState(initialMode: StudioMode = "cad") {
           tool: nextLocked ? "lock" : "pan",
           locked: nextLocked,
           addOpen: false,
+          drawPoly: null,
+          drawCursor: null,
         });
         return;
       }
@@ -428,6 +488,8 @@ export function useStudioState(initialMode: StudioMode = "cad") {
         locked: false,
         addOpen: tool === "add",
         armed: tool === "add" ? state.ui.armed : null,
+        drawPoly: tool === "trace" ? state.ui.drawPoly : null,
+        drawCursor: tool === "trace" ? state.ui.drawCursor : null,
       });
     },
     setPaper: (paper: PaperSize) => setUi({ paper }),

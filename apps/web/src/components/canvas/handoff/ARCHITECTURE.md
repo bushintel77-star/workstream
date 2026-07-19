@@ -20,6 +20,7 @@ No MapLibre on this surface — `%` board space is the drawing plane.
 | `features/bom/` | Live BOM + mitigation chips |
 | `features/tier1/` | Quote surface + Wrights Terrace value ledger |
 | `features/elevation/` | Full-mode front/side elevation profile |
+| `features/trace/` | Click-trace boundary/building + Tab rectangle autocomplete |
 
 ## Visual source of truth
 

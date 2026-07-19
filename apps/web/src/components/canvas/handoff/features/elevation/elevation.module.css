@@ -9,8 +9,16 @@
   padding: 48px 40px 32px;
 }
 
-.toggle {
-  align-self: flex-start;
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.toggle,
+.tracePlan {
   min-height: 32px;
   padding: 0 12px;
   border-radius: 8px;
@@ -21,7 +29,12 @@
   font-size: 11px;
   font-weight: 650;
   cursor: pointer;
-  margin-bottom: 12px;
+}
+
+.tracePlan {
+  border-color: #c2455f;
+  background: #c2455f;
+  color: #fff6f8;
 }
 
 .north {
