@@ -413,30 +413,48 @@ export function HandoffDesignStudio({
               setbackOn={ui.setbackOn}
               growth={ui.growth}
               selectedId={ui.selectedId}
+              groupIds={ui.groupIds}
               hoverId={ui.hoverId}
               curGhostId={studio.curGhost?.id ?? null}
-              onSelect={(id) => {
-                studio.setUi({ selectedId: id });
-                if (id && studio.ghosts.some((g) => g.id === id)) {
+              onSelect={(id, opts) => {
+                if (!id) {
+                  studio.setSelection(null, []);
+                  return;
+                }
+                if (studio.ghosts.some((g) => g.id === id)) {
                   const idx = studio.ghosts.findIndex((g) => g.id === id);
                   studio.setUi({
                     selectedId: id,
+                    groupIds: [],
                     ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
                     ghostReviewOpen: true,
                   });
+                  return;
                 }
+                if (opts?.additive) {
+                  const next = ui.groupIds.includes(id)
+                    ? ui.groupIds.filter((g) => g !== id)
+                    : [...ui.groupIds, id];
+                  studio.setSelection(id, next.length ? next : [id]);
+                  return;
+                }
+                studio.setSelection(id, [id]);
+              }}
+              onMarqueeSelect={(ids) => {
+                studio.setSelection(ids[0] ?? null, ids);
               }}
               onHover={(id) => studio.setUi({ hoverId: id })}
               onAcceptGhost={studio.acceptGhost}
               onRejectGhost={studio.rejectGhost}
               onTraceInElevation={(id) => {
-                studio.setUi({ selectedId: id });
+                studio.setSelection(id, [id]);
                 studio.setMode("elevation");
               }}
               onBoundaryChange={studio.updateBoundary}
               onBuildingChange={studio.updateBuilding}
               onPlace={studio.placeArmed}
               onMoveItem={studio.moveItem}
+              onMoveGroup={studio.moveGroup}
               onTransformItem={studio.transformItem}
             />
             {ui.mode === "sketch" ? (

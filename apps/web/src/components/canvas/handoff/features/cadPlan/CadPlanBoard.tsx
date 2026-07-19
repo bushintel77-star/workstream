@@ -32,10 +32,12 @@ type Props = {
   setbackOn: boolean;
   growth: "plant" | "5yr" | "mature";
   selectedId: string | null;
+  groupIds: string[];
   hoverId: string | null;
   curGhostId: string | null;
   scaleM?: number;
-  onSelect: (id: string | null) => void;
+  onSelect: (id: string | null, opts?: { additive?: boolean }) => void;
+  onMarqueeSelect: (ids: string[]) => void;
   onHover: (id: string | null) => void;
   onAcceptGhost: (id: string) => void;
   onRejectGhost: (id: string) => void;
@@ -44,6 +46,7 @@ type Props = {
   onBuildingChange: (pts: PctPoint[]) => void;
   onPlace: (x: number, y: number) => void;
   onMoveItem: (id: string, x: number, y: number) => void;
+  onMoveGroup: (ids: string[], dx: number, dy: number) => void;
   onTransformItem: (
     id: string,
     patch: Partial<Pick<StudioItem, "rot" | "scale">>,
@@ -74,10 +77,12 @@ export function CadPlanBoard({
   setbackOn,
   growth,
   selectedId,
+  groupIds,
   hoverId,
   curGhostId,
   scaleM = 110,
   onSelect,
+  onMarqueeSelect,
   onHover,
   onAcceptGhost,
   onRejectGhost,
@@ -86,20 +91,30 @@ export function CadPlanBoard({
   onBuildingChange,
   onPlace,
   onMoveItem,
+  onMoveGroup,
   onTransformItem,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
-    kind: "item" | "boundary" | "building";
+    kind: "item" | "boundary" | "building" | "marquee" | "group";
     id?: string;
     index?: number;
-    ox: number;
-    oy: number;
+    ox?: number;
+    oy?: number;
+    ids?: string[];
+    startX?: number;
+    startY?: number;
   } | null>(null);
   const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({
     x: null,
     y: null,
   });
+  const [marquee, setMarquee] = useState<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  } | null>(null);
 
   const editing = tool === "edit" && !locked && !frameOn;
   const bStroke = darkOn && !frameOn ? "#E8B84B" : "#241318";
@@ -130,6 +145,19 @@ export function CadPlanBoard({
     if (tool === "add") {
       const p = toPct(e.clientX, e.clientY);
       onPlace(p.x, p.y);
+      return;
+    }
+    if (tool === "edit" || tool === "pan") {
+      const p = toPct(e.clientX, e.clientY);
+      dragRef.current = {
+        kind: "marquee",
+        startX: p.x,
+        startY: p.y,
+        ox: p.x,
+        oy: p.y,
+      };
+      setMarquee({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
     }
   };
 
@@ -148,6 +176,17 @@ export function CadPlanBoard({
     const d = dragRef.current;
     if (!d) return;
     const p = toPct(e.clientX, e.clientY);
+    if (d.kind === "marquee" && d.startX != null && d.startY != null) {
+      setMarquee({ x1: d.startX, y1: d.startY, x2: p.x, y2: p.y });
+      return;
+    }
+    if (d.kind === "group" && d.ids && d.startX != null && d.startY != null) {
+      const dx = p.x - d.startX;
+      const dy = p.y - d.startY;
+      dragRef.current = { ...d, startX: p.x, startY: p.y };
+      onMoveGroup(d.ids, dx, dy);
+      return;
+    }
     if (d.kind === "item" && d.id) {
       const thresh = 1.3;
       let gx: number | null = null;
@@ -172,7 +211,31 @@ export function CadPlanBoard({
   };
 
   const onPointerUp = () => {
+    const d = dragRef.current;
+    if (d?.kind === "marquee" && marquee) {
+      const minX = Math.min(marquee.x1, marquee.x2);
+      const maxX = Math.max(marquee.x1, marquee.x2);
+      const minY = Math.min(marquee.y1, marquee.y2);
+      const maxY = Math.max(marquee.y1, marquee.y2);
+      const area = (maxX - minX) * (maxY - minY);
+      if (area > 1.5) {
+        const hit = items
+          .filter(
+            (i) =>
+              !i.ghost &&
+              i.x >= minX &&
+              i.x <= maxX &&
+              i.y >= minY &&
+              i.y <= maxY,
+          )
+          .map((i) => i.id);
+        onMarqueeSelect(hit);
+      } else {
+        onSelect(null);
+      }
+    }
     dragRef.current = null;
+    setMarquee(null);
     setGuides({ x: null, y: null });
   };
 
@@ -418,14 +481,21 @@ export function CadPlanBoard({
                     ? "1.5px dashed #B78A2E"
                     : "1.5px dashed rgba(232,184,75,0.9)"
                 : "none",
-              boxShadow: selected
-                ? "0 0 0 2px rgba(255,246,248,0.95), 0 0 0 4px #C2455F"
-                : isCur
-                  ? "0 0 0 3px rgba(194,69,95,0.3)"
-                  : hovered && !it.ghost
-                    ? "0 0 0 2px rgba(255,246,248,0.85), 0 0 0 3.5px rgba(194,69,95,0.4)"
-                    : "none",
-              zIndex: isCur ? 50 : selected ? 20 : hovered ? 10 : 2,
+              boxShadow:
+                selected || groupIds.includes(it.id)
+                  ? "0 0 0 2px rgba(255,246,248,0.95), 0 0 0 4px #C2455F"
+                  : isCur
+                    ? "0 0 0 3px rgba(194,69,95,0.3)"
+                    : hovered && !it.ghost
+                      ? "0 0 0 2px rgba(255,246,248,0.85), 0 0 0 3.5px rgba(194,69,95,0.4)"
+                      : "none",
+              zIndex: isCur
+                ? 50
+                : selected || groupIds.includes(it.id)
+                  ? 20
+                  : hovered
+                    ? 10
+                    : 2,
             }}
             title={
               it.stale
@@ -436,9 +506,24 @@ export function CadPlanBoard({
             onPointerLeave={() => onHover(null)}
             onPointerDown={(e) => {
               e.stopPropagation();
-              onSelect(it.id);
+              const additive = e.shiftKey || e.metaKey;
+              onSelect(it.id, { additive });
               if (!it.ghost && tool !== "lock") {
-                dragRef.current = { kind: "item", id: it.id, ox: 0, oy: 0 };
+                const ids =
+                  groupIds.includes(it.id) && groupIds.length > 1
+                    ? groupIds
+                    : [it.id];
+                if (ids.length > 1) {
+                  const p = toPct(e.clientX, e.clientY);
+                  dragRef.current = {
+                    kind: "group",
+                    ids,
+                    startX: p.x,
+                    startY: p.y,
+                  };
+                } else {
+                  dragRef.current = { kind: "item", id: it.id, ox: 0, oy: 0 };
+                }
                 (e.target as Element).setPointerCapture?.(e.pointerId);
               }
             }}
@@ -482,6 +567,18 @@ export function CadPlanBoard({
           </div>
         );
       })}
+
+      {marquee ? (
+        <div
+          className={css.marquee}
+          style={{
+            left: `${Math.min(marquee.x1, marquee.x2)}%`,
+            top: `${Math.min(marquee.y1, marquee.y2)}%`,
+            width: `${Math.abs(marquee.x2 - marquee.x1)}%`,
+            height: `${Math.abs(marquee.y2 - marquee.y1)}%`,
+          }}
+        />
+      ) : null}
 
       {guides.x != null ? (
         <div className={css.guideV} style={{ left: `${guides.x}%` }} />

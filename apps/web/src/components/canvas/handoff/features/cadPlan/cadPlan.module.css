@@ -234,6 +234,14 @@
   animation: ccPulse 1.8s ease-in-out infinite;
 }
 
+.marquee {
+  position: absolute;
+  z-index: 14;
+  border: 1.5px dashed #c2455f;
+  background: rgba(194, 69, 95, 0.08);
+  pointer-events: none;
+}
+
 .guideV,
 .guideH {
   position: absolute;

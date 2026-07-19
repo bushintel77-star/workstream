@@ -48,6 +48,7 @@ type Ui = {
   sunMin: number;
   elevAxis: "x" | "y";
   selectedId: string | null;
+  groupIds: string[];
   hoverId: string | null;
   ghostIdx: number;
   factorsOpen: boolean;
@@ -139,6 +140,7 @@ function initialState(mode: StudioMode): State {
       sunMin: 12 * 60 + 26,
       elevAxis: "x",
       selectedId: null,
+      groupIds: [],
       hoverId: null,
       ghostIdx: 0,
       factorsOpen: false,
@@ -489,13 +491,19 @@ export function useStudioState(initialMode: StudioMode = "cad") {
 
   const nudgeSelected = useCallback(
     (dx: number, dy: number) => {
-      const id = state.ui.selectedId;
-      if (!id || state.ui.locked) return;
+      const ids =
+        state.ui.groupIds.length > 0
+          ? state.ui.groupIds
+          : state.ui.selectedId
+            ? [state.ui.selectedId]
+            : [];
+      if (ids.length === 0 || state.ui.locked) return;
+      const set = new Set(ids);
       mutate((snap) => ({
         snap: {
           ...snap,
           items: snap.items.map((i) =>
-            i.id === id && !i.ghost
+            set.has(i.id) && !i.ghost
               ? {
                   ...i,
                   x: Math.max(0, Math.min(100, i.x + dx)),
@@ -506,7 +514,36 @@ export function useStudioState(initialMode: StudioMode = "cad") {
         },
       }));
     },
-    [mutate, state.ui.locked, state.ui.selectedId],
+    [mutate, state.ui.groupIds, state.ui.locked, state.ui.selectedId],
+  );
+
+  const moveGroup = useCallback(
+    (ids: string[], dx: number, dy: number) => {
+      if (state.ui.locked || ids.length === 0) return;
+      const set = new Set(ids);
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            set.has(i.id) && !i.ghost
+              ? {
+                  ...i,
+                  x: Math.max(0, Math.min(100, i.x + dx)),
+                  y: Math.max(0, Math.min(100, i.y + dy)),
+                }
+              : i,
+          ),
+        },
+      }));
+    },
+    [mutate, state.ui.locked],
+  );
+
+  const setSelection = useCallback(
+    (selectedId: string | null, groupIds: string[] = []) => {
+      setUi({ selectedId, groupIds });
+    },
+    [setUi],
   );
 
   const deleteSelected = useCallback(() => {
@@ -665,6 +702,8 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     moveItem,
     transformItem,
     nudgeSelected,
+    moveGroup,
+    setSelection,
     deleteSelected,
     updateBoundary,
     updateBuilding,

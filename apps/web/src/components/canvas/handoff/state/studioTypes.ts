@@ -41,6 +41,7 @@ export type StudioUiState = {
   sunMin: number;
   elevAxis: "x" | "y";
   selectedId: string | null;
+  groupIds: string[];
   hoverId: string | null;
   ghostIdx: number;
   /** Expand confidence-factor breakdown inside the ghost review card. */
