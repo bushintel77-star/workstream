@@ -169,23 +169,6 @@ body {
   background-attachment: fixed;
 }
 
-.dev-mode-banner {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  padding: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--color-border-strong);
-  background: color-mix(in srgb, var(--color-warning) 18%, var(--surface-elevated));
-  color: var(--color-text-primary);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 button,
 [role="button"],
 a {
