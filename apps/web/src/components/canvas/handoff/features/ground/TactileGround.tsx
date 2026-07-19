@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { ptsAttr, type PctPoint } from "../../geometry";
 import {
   boardScaleM,
   pickMetricStepM,
@@ -17,20 +16,21 @@ type Props = {
   parchmentPeel?: number;
   hasAerial?: boolean;
   darkOn?: boolean;
-  /** Stage 1 — Vicmap title board; no ghost cue / soft cadastral underlay. */
+  /** Stage 1 — Vicmap title board phase. */
   foundationCleanse?: boolean;
   /** Authoritative Vicmap / locked title — never say "ghost cadastral". */
   titleLocked?: boolean;
   boundarySource?: "vicmap" | "manual" | "seed";
-  boundary?: PctPoint[];
-  building?: PctPoint[];
   siteLabel?: string | null;
   address?: string | null;
+  /** CadPlan owns the street cue in title mode. */
+  suppressSiteCue?: boolean;
 };
 
 /**
  * Living tactile ground — parchment earth + adaptive metric mesh + true-north rose.
- * Aerial/survey cross-fades above; parchment remains a soft underlay (never a void).
+ * CadPlanBoard owns boundary/building vectors; this layer never paints them.
+ * Aerial imagery (when allowed) stacks above via AerialSlot.
  */
 export function TactileGround({
   zoom = 1,
@@ -41,10 +41,9 @@ export function TactileGround({
   foundationCleanse = false,
   titleLocked = false,
   boundarySource = "seed",
-  boundary = [],
-  building = [],
   siteLabel = null,
   address = null,
+  suppressSiteCue = false,
 }: Props) {
   const scaleM = boardScaleM(sheetScaleDenom);
   const visibleM = scaleM / Math.max(0.4, zoom);
@@ -54,7 +53,7 @@ export function TactileGround({
     ? "cadastral"
     : resolveGroundPhase({
         hasAerial,
-        hasBoundary: boundary.length >= 3,
+        hasBoundary: false,
         address: address ?? siteLabel,
       });
 
@@ -89,8 +88,7 @@ export function TactileGround({
   // Soft topo-ish contours — generative context, not survey contours.
   const topo = useMemo(() => {
     if (foundationCleanse || phase === "parchment") return [] as number[];
-    const rings = [18, 32, 48, 64, 78];
-    return rings;
+    return [18, 32, 48, 64, 78];
   }, [foundationCleanse, phase]);
 
   const parchmentOp = foundationCleanse
@@ -102,18 +100,16 @@ export function TactileGround({
         : 1;
 
   const vicmapCue =
-    titleLocked ||
-    foundationCleanse ||
-    boundarySource === "vicmap";
-  // CadPlan renders the street cue in Stage 1 CAD mode — avoid double copy.
-  const cue = foundationCleanse
-    ? null
-    : phase === "aerial"
+    titleLocked || foundationCleanse || boundarySource === "vicmap";
+
+  // CadPlan owns street cue in title mode; ground cue only for plain parchment.
+  const cue =
+    suppressSiteCue || foundationCleanse || phase === "aerial"
       ? null
       : vicmapCue
-        ? `${siteLabel ?? address ?? "Site"} · Vicmap title`
+        ? null
         : phase === "cadastral"
-          ? `${siteLabel ?? address ?? "Site"} · indicative boundary`
+          ? `${siteLabel ?? address ?? "Site"} · indicative metres`
           : "Parchment ground · indicative metres";
 
   return (
@@ -181,22 +177,6 @@ export function TactileGround({
             />
           </g>
         ))}
-
-        {/* CadPlan owns the crisp title stroke when Vicmap/Stage 1 locked. */}
-        {!foundationCleanse && !vicmapCue && boundary.length >= 3 ? (
-          <polygon
-            points={ptsAttr(boundary)}
-            className={css.cadastral}
-            vectorEffect="non-scaling-stroke"
-          />
-        ) : null}
-        {!foundationCleanse && !vicmapCue && building.length >= 3 ? (
-          <polygon
-            points={ptsAttr(building)}
-            className={css.footprint}
-            vectorEffect="non-scaling-stroke"
-          />
-        ) : null}
       </svg>
 
       <div className={css.edgeScale} data-edge="left">

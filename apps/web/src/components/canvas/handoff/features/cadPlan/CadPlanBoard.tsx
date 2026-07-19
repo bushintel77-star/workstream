@@ -39,9 +39,6 @@ type NodeMenu = {
 };
 
 type Props = {
-  aerialUri: string | null;
-  /** When true, aerial is rendered by AerialSlot outside this board. */
-  externalAerial?: boolean;
   frameOn: boolean;
   darkOn: boolean;
   /** Stage 1 — charcoal title overlay + AI underlay. */
@@ -112,11 +109,9 @@ function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
 
 /**
  * Plan drawing board — polys, symbols, edit handles, dims, TPZ.
- * Aerial is optional and owned by AerialSlot (never a live map in CAD).
+ * Ground/aerial owned by AerialSlot + TactileGround (no plate/scrim here).
  */
 export function CadPlanBoard({
-  aerialUri,
-  externalAerial = false,
   frameOn,
   darkOn,
   foundationCleanse = false,
@@ -423,40 +418,6 @@ export function CadPlanBoard({
       onPointerMove={boardPassthrough ? undefined : onPointerMove}
       onPointerUp={boardPassthrough ? undefined : onPointerUp}
     >
-      {externalAerial ? (
-        <div
-          className={css.aerial}
-          style={
-            frameOn
-              ? { background: "#faf6f2" }
-              : { background: "transparent", backgroundImage: "none" }
-          }
-          aria-hidden
-        />
-      ) : (
-        <div
-          className={css.aerial}
-          style={
-            aerialUri && !frameOn
-              ? { backgroundImage: `url(${aerialUri})` }
-              : frameOn
-                ? { background: "#faf6f2" }
-                : undefined
-          }
-        >
-          {!aerialUri && !frameOn && !foundationCleanse ? (
-            <div className={css.aerialEmpty}>
-              Drop Mapbox aerial screenshot here (2D top-down)
-              <br />
-              or browse files
-            </div>
-          ) : null}
-        </div>
-      )}
-      {!frameOn ? (
-        <div className={`${css.scrim}${darkOn ? ` ${css.scrimDark}` : ""}`} />
-      ) : null}
-
       <svg className={css.planSvg} viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <pattern
@@ -623,29 +584,23 @@ export function CadPlanBoard({
         ) : null}
       </svg>
 
-      {editing || (foundationCleanse && titleBoundaryLocked)
+      {editing
         ? boundary.map((p, i) => (
             <button
               key={`bh${i}`}
               type="button"
-              className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}${titleBoundaryLocked && foundationCleanse ? ` ${css.cadCornerLocked}` : ""}`}
+              className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
               title={
                 foundationCleanse
-                  ? titleBoundaryLocked
-                    ? "Title node locked — Unlock title to drag"
-                    : "Drag title node (vertex / ortho snap)"
+                  ? "Drag title node (vertex / ortho snap)"
                   : "Corner vertex"
               }
               aria-label={`Boundary corner ${i + 1}`}
               data-testid="cad-title-node"
-              disabled={foundationCleanse && titleBoundaryLocked}
               onPointerEnter={() => setCursorMode("move")}
               onPointerLeave={() => setCursorMode("default")}
-              onPointerDown={(e) => {
-                if (foundationCleanse && titleBoundaryLocked) return;
-                startCornerDrag("boundary", i, e);
-              }}
+              onPointerDown={(e) => startCornerDrag("boundary", i, e)}
               onContextMenu={(e) => {
                 if (foundationCleanse) return;
                 openNodeMenu("boundary", i, e);
@@ -703,7 +658,8 @@ export function CadPlanBoard({
           ))
         : null}
 
-      {titleSolid
+      {/* Ticks only when locked (nodes are the edit affordance — never both). */}
+      {titleSolid && !editing
         ? boundary.map((p, i) => (
             <span
               key={`ftick${i}`}
@@ -1018,8 +974,6 @@ export function CadPlanBoard({
         </div>
       ) : null}
 
-      {/* Ground compass is the single north rose when title is locked. */}
-      {!titleSolid ? <div className={css.north}>N↑</div> : null}
     </div>
   );
 }

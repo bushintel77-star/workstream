@@ -15,6 +15,11 @@ import {
 } from "./studioCatalog";
 import { useStudioState } from "./state/useStudioState";
 import { resolveHandoffChrome } from "./state/handoffChrome";
+import {
+  allowAerialUnderlay,
+  isDraftingPlate,
+  resolveLiveAerial,
+} from "./state/studioPlane";
 import { CadPlanBoard } from "./features/cadPlan/CadPlanBoard";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
@@ -279,18 +284,20 @@ export function HandoffDesignStudio({
       cancelled = true;
     };
   }, [projectId, displayAddress]);
-  /**
-   * Aerial is optional upload only (prototype behaviour) — never auto-inject
-   * Mapbox/survey static tiles into CAD or sketch. Survey may show a
-   * user-uploaded screenshot from ui.aerialUri only.
-   */
-  const liveAerial =
-    ui.foundationCleanse ||
-    ui.mode === "cad" ||
-    ui.mode === "sketch" ||
-    ui.aerialSuppressed
-      ? null
-      : ui.aerialUri;
+  const draftingPlate = isDraftingPlate(ui.mode);
+  const aerialOk = allowAerialUnderlay({
+    mode: ui.mode,
+    foundationCleanse: ui.foundationCleanse,
+  });
+  /** Single aerial paint path — Survey upload only; never CAD/Sketch/Stage 1. */
+  const liveAerial = resolveLiveAerial({
+    mode: ui.mode,
+    foundationCleanse: ui.foundationCleanse,
+    aerialSuppressed: ui.aerialSuppressed,
+    aerialUri: ui.aerialUri,
+  });
+  const titleCueOnCad =
+    (ui.foundationCleanse || titleLocked) && !ui.frameOn;
   const flaggedIds = new Set<string>(
     compliance.alerts.flatMap((a: { sourceIds: string[] }) => a.sourceIds),
   );
@@ -667,38 +674,25 @@ export function HandoffDesignStudio({
               dimmed={ui.darkOn}
               frameOn={ui.frameOn}
               scanning={
-                ui.mode === "survey" &&
-                !ui.foundationCleanse &&
+                aerialOk &&
                 (ui.canopyScanning || ai.busy === "scanning")
               }
               zoom={ui.zoom}
               sheetScaleDenom={ui.sheetScaleDenom}
               darkOn={ui.darkOn}
-              foundationCleanse={
-                ui.foundationCleanse ||
-                ui.mode === "cad" ||
-                ui.mode === "sketch"
-              }
+              foundationCleanse={ui.foundationCleanse}
+              allowAerial={aerialOk}
               autoCanopyScan={false}
               titleLocked={titleLocked}
               boundarySource={ui.boundarySource}
-              boundary={studio.boundary}
-              building={studio.building}
               siteLabel={displayAddress}
               address={displayAddress}
+              suppressSiteCue={titleCueOnCad}
               parchmentPeel={
-                ui.foundationCleanse || ui.mode === "cad" || ui.mode === "sketch"
-                  ? 1
-                  : ui.parchmentPeel
+                draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
               }
               onUri={(uri) => {
-                if (
-                  ui.foundationCleanse ||
-                  ui.mode === "cad" ||
-                  ui.mode === "sketch"
-                ) {
-                  return;
-                }
+                if (!aerialOk) return;
                 studio.setUi({
                   aerialUri: uri,
                   aerialSuppressed: uri == null,
@@ -708,8 +702,6 @@ export function HandoffDesignStudio({
               onCanopyImage={ai.ingestCanopyImage}
             />
             <CadPlanBoard
-              aerialUri={null}
-              externalAerial
               frameOn={ui.frameOn}
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}

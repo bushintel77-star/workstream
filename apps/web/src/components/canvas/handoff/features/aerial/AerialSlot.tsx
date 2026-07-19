@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PctPoint } from "../../geometry";
 import { TactileGround } from "../ground/TactileGround";
 import type { SheetScaleDenom } from "../ground/groundMetrics";
 import css from "./aerialSlot.module.css";
@@ -20,8 +19,13 @@ type Props = {
   zoom?: number;
   sheetScaleDenom?: SheetScaleDenom;
   darkOn?: boolean;
-  /** Stage 1 — no aerial drop, canopy scan, or soft underlay imagery. */
+  /** Stage 1 — Vicmap title ground phase (not a stand-in for CAD/Sketch). */
   foundationCleanse?: boolean;
+  /**
+   * When false, AerialSlot never paints imagery or the drop cue.
+   * CAD/Sketch drafting plates pass false; Survey may pass true.
+   */
+  allowAerial?: boolean;
   /**
    * Opt-in aerial colour canopy clustering. Default off — silent auto-scan
    * was flooding Cad with AI proposals on every aerial load.
@@ -30,10 +34,10 @@ type Props = {
   /** Vicmap / Stage 1 title cue (not "ghost cadastral"). */
   titleLocked?: boolean;
   boundarySource?: "vicmap" | "manual" | "seed";
-  boundary?: PctPoint[];
-  building?: PctPoint[];
   siteLabel?: string | null;
   address?: string | null;
+  /** CadPlan owns street cue in title mode — suppress ground duplicate. */
+  suppressSiteCue?: boolean;
   /** 0–1 parchment tooth when aerial is stacked (soft underlay). */
   parchmentPeel?: number;
   onUri: (uri: string | null) => void;
@@ -54,13 +58,13 @@ export function AerialSlot({
   sheetScaleDenom = 100,
   darkOn = false,
   foundationCleanse = false,
+  allowAerial = true,
   autoCanopyScan = false,
   titleLocked = false,
   boundarySource = "seed",
-  boundary = [],
-  building = [],
   siteLabel = null,
   address = null,
+  suppressSiteCue = false,
   parchmentPeel = 0.42,
   onUri,
   onScanning,
@@ -111,13 +115,15 @@ export function AerialSlot({
     [onCanopyImage, onScanning],
   );
 
+  const aerialEnabled = allowAerial && !foundationCleanse;
+
   useEffect(() => {
-    if (foundationCleanse || !autoCanopyScan || !uri || frameOn) return;
+    if (!aerialEnabled || !autoCanopyScan || !uri || frameOn) return;
     void runCanopyScan(uri);
-  }, [uri, frameOn, foundationCleanse, autoCanopyScan, runCanopyScan]);
+  }, [uri, frameOn, aerialEnabled, autoCanopyScan, runCanopyScan]);
 
   const acceptFile = (file: File | null) => {
-    if (foundationCleanse) return;
+    if (!aerialEnabled) return;
     if (!file || !file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = () => {
@@ -130,7 +136,7 @@ export function AerialSlot({
     reader.readAsDataURL(file);
   };
 
-  const showAerial = Boolean(uri) && !frameOn && !foundationCleanse;
+  const showAerial = Boolean(uri) && !frameOn && aerialEnabled;
 
   return (
     <div
@@ -139,8 +145,9 @@ export function AerialSlot({
       data-filled={showAerial ? "true" : "false"}
       data-ground="tactile-parchment"
       data-foundation={foundationCleanse ? "true" : "false"}
+      data-allow-aerial={aerialEnabled ? "true" : "false"}
       onDragOver={(e) => {
-        if (foundationCleanse) return;
+        if (!aerialEnabled) return;
         e.preventDefault();
         setDragOver(true);
       }}
@@ -148,11 +155,11 @@ export function AerialSlot({
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);
-        if (foundationCleanse) return;
+        if (!aerialEnabled) return;
         acceptFile(e.dataTransfer.files?.[0] ?? null);
       }}
       onClick={() => {
-        if (foundationCleanse || uri) return;
+        if (!aerialEnabled || uri) return;
         inputRef.current?.click();
       }}
     >
@@ -161,23 +168,22 @@ export function AerialSlot({
         type="file"
         accept="image/*"
         className={css.file}
-        disabled={foundationCleanse}
+        disabled={!aerialEnabled}
         onChange={(e) => acceptFile(e.target.files?.[0] ?? null)}
       />
 
       <TactileGround
         zoom={zoom}
         sheetScaleDenom={sheetScaleDenom}
-        parchmentPeel={foundationCleanse ? 1 : parchmentPeel}
+        parchmentPeel={foundationCleanse || !aerialEnabled ? 1 : parchmentPeel}
         hasAerial={showAerial && aerialReady}
         darkOn={darkOn}
         foundationCleanse={foundationCleanse}
         titleLocked={titleLocked}
         boundarySource={boundarySource}
-        boundary={boundary}
-        building={building}
         siteLabel={siteLabel}
         address={address ?? siteLabel}
+        suppressSiteCue={suppressSiteCue}
       />
 
       {showAerial && uri ? (
@@ -201,7 +207,7 @@ export function AerialSlot({
         />
       ) : null}
 
-      {!uri && !foundationCleanse ? (
+      {!uri && aerialEnabled ? (
         <div
           className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
           data-testid="aerial-drop-cue"
@@ -211,7 +217,7 @@ export function AerialSlot({
         </div>
       ) : null}
 
-      {scanning && !foundationCleanse ? (
+      {scanning && aerialEnabled ? (
         <div className={css.scanPill} data-testid="canopy-scanning">
           <span className={css.scanDot} />
           AI scanning aerial for canopy…

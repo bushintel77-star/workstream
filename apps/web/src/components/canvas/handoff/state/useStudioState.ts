@@ -69,6 +69,7 @@ import {
   isStage1FoundationQuery,
   sieveVegetationItems,
 } from "./spatialCorrection";
+import { isDraftingPlate } from "./studioPlane";
 
 function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
   return items.map((i) => {
@@ -402,10 +403,9 @@ function reducer(state: State, action: Action): State {
       if (leavingSurvey && !state.ui.foundationCleanse) {
         layerOpacity = { ...DESIGN_LAYER_PRESET };
       }
-      // CAD / sketch are parchment drafting plates — no auto aerial map.
+      // CAD / sketch are parchment drafting plates — no aerial underlay.
       // Survey may keep an optional user-uploaded screenshot only.
-      const draftingPlate =
-        action.mode === "cad" || action.mode === "sketch";
+      const drafting = isDraftingPlate(action.mode);
       return {
         ...state,
         ui: {
@@ -414,7 +414,7 @@ function reducer(state: State, action: Action): State {
           layerOpacity,
           drawPoly: null,
           drawCursor: null,
-          ...(draftingPlate
+          ...(drafting
             ? { aerialUri: null, aerialSuppressed: true }
             : action.mode === "survey"
               ? { aerialSuppressed: true }
