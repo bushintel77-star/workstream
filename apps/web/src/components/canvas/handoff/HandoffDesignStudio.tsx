@@ -55,6 +55,7 @@ import { ITEM_LAYER } from "./state/studioTypes";
 import { boardScaleM } from "./features/ground/groundMetrics";
 import {
   buildIndicativeShadeGrid,
+  meanSunHours,
   sunHoursAtPct,
   solveLiveTradeEstimate,
   tradeTagForItem,
@@ -139,6 +140,11 @@ export function HandoffDesignStudio({
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
     initialTitleBlock,
   );
+  /** Probe point for shade → Add strip filter (follows pointer while Add open). */
+  const [addProbePct, setAddProbePct] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -744,6 +750,17 @@ export function HandoffDesignStudio({
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}`}
         data-testid="studio-board"
         ref={boardRef}
+        onPointerMove={(e) => {
+          if (!ui.addOpen || !ui.shadeOn) return;
+          const el = boardRef.current;
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          if (r.width < 1 || r.height < 1) return;
+          setAddProbePct({
+            x: Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)),
+            y: Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100)),
+          });
+        }}
       >
         {ui.mode === "elevation" ? (
           <ElevationBoard
@@ -1174,7 +1191,10 @@ export function HandoffDesignStudio({
                   projectLng ?? 144.993,
                   d,
                 );
-                return sunHoursAtPct(50, 50, cells) >= 3.5;
+                const hours = addProbePct
+                  ? sunHoursAtPct(addProbePct.x, addProbePct.y, cells)
+                  : meanSunHours(cells);
+                return hours >= 3.5;
               })
               .map((t) => (
                 <button
@@ -1186,6 +1206,15 @@ export function HandoffDesignStudio({
                   {BY_TYPE[t].tag}
                 </button>
               ))}
+            {ui.shadeOn ? (
+              <span className={css.sunProbeHint} data-testid="add-sun-probe-hint">
+                Sun filter ·{" "}
+                {addProbePct
+                  ? "at pointer"
+                  : "lot average"}{" "}
+                · move to probe
+              </span>
+            ) : null}
             {ui.armed === "exist" ? (
               <label className={css.dbhField} data-testid="exist-dbh-field">
                 <span>DBH m</span>

@@ -212,13 +212,13 @@ Priorities are **product impact × Canvas-First / AI-first fit**. Stage 2 items 
 | P2.1 | Vision canopy quality | Better ghosts, less noise | Swap heuristic when vision API returns clusters | **Partial** — colour-cluster heuristic |
 | P2.2 | Assist grounded in compliance + shade | Conversational AI that knows the site | Inject compliance + shade summary into `buildStudioSystemPrompt` | **Done** — `buildAssistSiteIntel` → design-assist |
 | P2.3 | Irrigation / lighting secondary BOM | Material orchestrator completeness | Tag zones → tertiary lines under Advanced | **Partial** — auto secondary BOM; no authored zones |
-| P2.4 | Planting palette sun filter | Shade → species suitability | Filter Add strip by `sunMin` / growth | **Partial** — Add strip filter when shade mesh on |
+| P2.4 | Planting palette sun filter | Shade → species suitability | Filter Add strip by `sunMin` / growth | **Done** — pointer probe / lot-mean when shade mesh on |
 
 ### P3 — Immersive / nice-to-have
 
 | ID | Gap | Suggested move |
 |----|-----|----------------|
-| P3.1 | Clay Walk on handoff | Port cross-fade or mark “Coming on geo survey” |
+| P3.1 | Clay Walk on handoff | Port cross-fade or mark “Coming on geo survey” — **deferral copy** on Share (`share-walk-defer`) |
 | P3.2 | AI moodboard / visualizer | Optional; keep off primary CAD loop |
 | P3.3 | Multi-council compliance profiles | Parameterize beyond Stonnington constants |
 
@@ -248,13 +248,13 @@ Use these as PR review gates for any studio change:
 
 ## 6. Recommended next slice (smallest high-leverage)
 
-P0–P1 closed on the live handoff mount (2026-07-19). Remaining Workflow 1 leverage:
+P0–P1 and P2.2/P2.4 closed on the live handoff mount (2026-07-19). Remaining Workflow 1 leverage:
 
-1. **P2.4** — Point-local sun filter on Add strip (not board-centre sample).  
-2. **P2.3** — Authored irrigation/lighting zones → Advanced BOM (not auto-only).  
-3. **P2.1** — Vision canopy clusters when API returns them (keep heuristic fallback).  
+1. **P2.3** — Authored irrigation/lighting zones → Advanced BOM (not auto-only).  
+2. **P2.1** — Vision canopy clusters when API returns them (keep heuristic fallback).  
+3. **P3.3** — Multi-council compliance profiles beyond Stonnington constants.  
 
-Defer Clay Walk (P3.1) and AI visualizer (P3.2) until the CAD material loop is solid.
+Clay Walk (P3.1) deferred with Share honesty copy; AI visualizer (P3.2) stays optional.
 
 ---
 

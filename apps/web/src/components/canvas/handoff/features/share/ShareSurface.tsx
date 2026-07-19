@@ -141,6 +141,11 @@ export function ShareSurface({
         <button type="button" className={css.ghost} onClick={onBack}>
           Back to CAD
         </button>
+
+        <p className={css.defer} data-testid="share-walk-defer">
+          Digital Clay Walk — coming on geo survey; this share stays a 2D portal
+          link for Workflow 1.
+        </p>
       </div>
     </div>
   );

@@ -1013,6 +1013,15 @@
   height: auto;
 }
 
+.sunProbeHint {
+  flex: 1 1 100%;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  color: #78716c;
+  letter-spacing: 0.02em;
+}
+
 .dbhField {
   display: inline-flex;
   align-items: center;

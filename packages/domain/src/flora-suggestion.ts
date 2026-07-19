@@ -249,6 +249,14 @@ export function sunHoursAtPct(
   return cell?.sunHours ?? 6;
 }
 
+/** Lot-mean sun hours when no probe point is available. */
+export function meanSunHours(
+  cells: Array<{ sunHours: number }>,
+): number {
+  if (cells.length === 0) return 6;
+  return cells.reduce((s, c) => s + c.sunHours, 0) / cells.length;
+}
+
 export function countNearbyCanopy(
   xPct: number,
   yPct: number,

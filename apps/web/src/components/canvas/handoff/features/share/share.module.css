@@ -99,3 +99,11 @@
   font-size: 12px;
   color: #1c1917;
 }
+
+.defer {
+  margin: 4px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  line-height: 1.35;
+  color: #b08a95;
+}
