@@ -87,13 +87,62 @@ Honesty: “Indicative bank→loose — confirm soil profile on site”
 
 ---
 
+## 5. Vector drafting specifications (Isolith overlay)
+
+Binding graphic rules for the micro-topographic stockpile — publication-grade, not decorative.
+
+### 5.1 Contour generation loop
+
+```text
+looseM3 → intensity ∈ [0,1]  (√(loose)/8, capped)
+        → ringCount = 2 + round(intensity × 5)   // 2…7 rings
+        → radii outer→inner with eased spacing
+        → footprint px = 52 + intensity × 58
+```
+
+- Ring stroke: **0.5px** (`vectorEffect: non-scaling-stroke` where SVG allows)
+- Ring colour: material token at 55% opacity; core ellipse 1px solid at 85%
+- Inner core marks structural height — tightens as intensity rises
+- Grain fill: SVG `<pattern>` only (stipple / hatch / wave) — **no WebGL** in Workflow 1
+
+### 5.2 Depth sort on the sheet (relative to plan chrome)
+
+| Isolith sub-layer | Role | Local z |
+|-------------------|------|---------|
+| Grain ellipse | Micro-texture under contours | 1 |
+| Contour rings | Topographic density | 2 |
+| Core ellipse | Height cue | 3 |
+| Material label + m³ tag | Typographic HUD | 4 |
+| Expanded ledger | Click-reveal bank / bulkage / trucks | 5 |
+
+Isolith chrome sits above CadPlan vectors (`z-index: 14`) but below Flora Ring / selection (`16–17`).
+
+### 5.3 Motion
+
+- Footprint / ring count: CSS spring `cubic-bezier(0.22, 1.2, 0.36, 1)` ≈ stiffness 120 / damping 14 feel
+- Proximity mode (Add paving/deck or Edit): shift toward board centre — cursor-proximate Stage 2
+- Ledger: 180ms fade/slide; collapse on pointer leave
+
+### 5.4 Sheet + Fit sheet
+
+- Default anchor: **right margin** (legend band)
+- Fit sheet (`frameOn`): Isolith remains in margin; plan vectors stay clip-masked to A3/A4
+- Never a sidebar spreadsheet — compact pile + tag only until click
+
+### 5.5 Honesty
+
+Always: “Indicative bank→loose — confirm soil profile on site”
+
+---
+
 ## Implementation status
 
 | Item | Status |
 |------|--------|
 | SDS documented | **Done** |
-| `buildIsolithSurvey` domain helper | **Done** (this pass) |
-| Isolith SVG + micro-HUD on handoff | **Done** (this pass) |
+| `buildIsolithSurvey` domain helper | **Done** |
+| Isolith SVG + micro-HUD on handoff | **Done** |
 | Live spring from estimate mutations | **Done** (CSS) |
+| Vector drafting tokens (0.5px rings, grain, z) | **Done** (this pass) |
 | Cursor-proximate dig float | Stage 2 |
 | WebGL grain / PostGIS volumes | Stage 2 |

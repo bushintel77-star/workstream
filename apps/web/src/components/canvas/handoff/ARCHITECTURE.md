@@ -31,6 +31,10 @@ bank×bulkage → loose m³; compact tag expands to micro-HUD. PostGIS volumes S
 — ambient budget margin + selection SKU tags from cached Melbourne trade hubs;
 amber “Wholesale Unverified” fallback. Live Plantmark/Dinsan APIs are Stage 2.
 
+**Patch verification:** [`docs/CANVAS-FIRST-PATCH-VERIFICATION.md`](../../../../../../docs/CANVAS-FIRST-PATCH-VERIFICATION.md)
+— drawn geometry overrides Vicmap placeholders; elevation label stack; Fit sheet clip;
+Isolith vector drafting in the Isolith SDS §5.
+
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
 studio surface here until that schema brief lands.

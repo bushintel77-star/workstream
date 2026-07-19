@@ -30,7 +30,8 @@
   padding: 8px 10px 10px;
   border: 1px solid rgba(26, 26, 26, 0.1);
   border-radius: 14px;
-  background: rgba(247, 244, 239, 0.9);
+  /* COLOR_CANVAS_BG parchment #F7F4EF */
+  background: rgba(247, 244, 239, 0.94);
   backdrop-filter: blur(16px);
   box-shadow: 0 10px 28px rgba(26, 26, 26, 0.08);
   cursor: pointer;
@@ -65,7 +66,8 @@
 
 .ring {
   stroke: currentColor;
-  stroke-width: 0.55;
+  /* SDS: 0.5px drafting contour */
+  stroke-width: 0.5;
   opacity: 0.55;
 }
 

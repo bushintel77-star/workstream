@@ -122,37 +122,47 @@ export function VolumetricIsolith({ estimate, proximity }: Props) {
           height={footprint * 0.72}
           viewBox="0 0 100 72"
           aria-hidden
+          data-intensity={active.intensity.toFixed(2)}
         >
           <defs>
             <GrainPattern id={patternId} grain={active.grain} />
           </defs>
-          <ellipse
-            cx="50"
-            cy="40"
-            rx={48 * (0.72 + active.intensity * 0.22)}
-            ry={28 * (0.72 + active.intensity * 0.22)}
-            fill={`url(#${patternId})`}
-            opacity={0.22 + active.intensity * 0.18}
-          />
-          {rings.map((r, i) => (
+          {/* Drafting stack: grain → contours → core (SDS §5.2) */}
+          <g data-isolith-layer="grain">
             <ellipse
-              key={`${r}-${i}`}
-              className={css.ring}
               cx="50"
               cy="40"
-              rx={48 * r}
-              ry={28 * r}
-              fill="none"
+              rx={48 * (0.72 + active.intensity * 0.22)}
+              ry={28 * (0.72 + active.intensity * 0.22)}
+              fill={`url(#${patternId})`}
+              opacity={0.22 + active.intensity * 0.18}
             />
-          ))}
-          <ellipse
-            className={css.core}
-            cx="50"
-            cy="40"
-            rx={10 + active.intensity * 8}
-            ry={6 + active.intensity * 5}
-            fill="none"
-          />
+          </g>
+          <g data-isolith-layer="contours">
+            {rings.map((r, i) => (
+              <ellipse
+                key={`${r}-${i}`}
+                className={css.ring}
+                cx="50"
+                cy="40"
+                rx={48 * r}
+                ry={28 * r}
+                fill="none"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          </g>
+          <g data-isolith-layer="core">
+            <ellipse
+              className={css.core}
+              cx="50"
+              cy="40"
+              rx={10 + active.intensity * 8}
+              ry={6 + active.intensity * 5}
+              fill="none"
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
         </svg>
         <span className={css.tag} data-testid="isolith-volume-tag">
           {active.looseM3.toFixed(2)} m³
