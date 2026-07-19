@@ -106,7 +106,7 @@ export function LiveBomDock({
               <p className={css.shadowHead}>
                 Assembly · labour · logistics (engine)
               </p>
-              {shadowed.slice(0, 10).map((row) => (
+              {shadowed.slice(0, 16).map((row) => (
                 <div key={row.id} className={`${css.line} ${css.shadowLine}`}>
                   <span title={row.notes}>{row.label}</span>
                   <span className={css.amt}>{aud(row.total)}</span>

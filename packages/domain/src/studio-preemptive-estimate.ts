@@ -318,14 +318,31 @@ export function estimateStudioDrawing(args: {
         ),
       );
 
+      // Path / deck lighting — secondary under Advanced
+      const lightCount = Math.max(2, Math.ceil(area / 8));
+      lines.push(
+        line(
+          `sec-light-${it.id}`,
+          "secondary",
+          it.t === "paving"
+            ? "Path lighting — spike / bollard"
+            : "Deck-reveal strip lighting",
+          "ea",
+          lightCount,
+          (it.t === "paving" ? 85 : 120) * access,
+          [it.id],
+          "Preemptive lighting allowance (~1 per 8 m²)",
+        ),
+      );
+
       horizon.push({
         id: `hz-assy-${it.id}`,
         kind: "assembly",
         title: it.t === "paving" ? "Paving assembly shadowed" : "Deck assembly shadowed",
         detail:
           it.t === "paving"
-            ? "Excavation, CR6 base, bedding, joint sand, and edge restraint are live in the BOM."
-            : "Framing and labour are live; check fall < 1:100 to lawn.",
+            ? "Excavation, CR6 base, bedding, joint sand, edge restraint, and path lighting are live in the BOM."
+            : "Framing, labour, and deck-reveal lighting are live; check fall < 1:100 to lawn.",
         severity: "info",
         sourceIds: [it.id],
         x: it.x,
@@ -372,6 +389,84 @@ export function estimateStudioDrawing(args: {
             unit === "ea" ? 1 : qty * 0.15,
             unit === "ea" ? 45 : 75,
             [it.id],
+          ),
+        );
+      }
+
+      // Irrigation / lighting secondaries (Advanced)
+      if (it.t === "lawn" || it.t === "bed") {
+        const dripLm = Math.max(2, Math.sqrt(area) * 2.5);
+        lines.push(
+          line(
+            `sec-irrig-${it.id}`,
+            "secondary",
+            "Drip irrigation — lateral",
+            "lm",
+            dripLm,
+            14 * access,
+            [it.id],
+            "Preemptive drip grid (~2.5 × √area)",
+          ),
+        );
+        lines.push(
+          line(
+            `ter-emit-${it.id}`,
+            "tertiary",
+            "Drip emitters",
+            "ea",
+            Math.ceil(dripLm / 0.3),
+            1.85,
+            [it.id],
+            "300 mm spacing",
+          ),
+        );
+      } else if (it.t === "hedge") {
+        lines.push(
+          line(
+            `sec-irrig-${it.id}`,
+            "secondary",
+            "Drip irrigation — hedge run",
+            "lm",
+            qty,
+            14 * access,
+            [it.id],
+          ),
+        );
+      } else if (it.t === "canopy" || it.t === "feature") {
+        lines.push(
+          line(
+            `sec-light-${it.id}`,
+            "secondary",
+            "Specimen uplight",
+            "ea",
+            1,
+            180 * access,
+            [it.id],
+            "Preemptive LED uplight + stake",
+          ),
+        );
+      } else if (it.t === "frenchdrain") {
+        lines.push(
+          line(
+            `sec-pipe-${it.id}`,
+            "secondary",
+            "Perforated ag-pipe 100 mm",
+            "lm",
+            qty,
+            18 * access,
+            [it.id],
+          ),
+        );
+        lines.push(
+          line(
+            `ter-gravel-${it.id}`,
+            "tertiary",
+            "Drainage gravel 20 mm",
+            "m³",
+            qty * 0.12,
+            95 * access,
+            [it.id],
+            "~120 mm trench depth × width",
           ),
         );
       }

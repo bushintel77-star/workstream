@@ -33,11 +33,34 @@ describe("estimateStudioDrawing", () => {
     expect(labels.some((l) => /bedding/i.test(l))).toBe(true);
     expect(labels.some((l) => /joint/i.test(l))).toBe(true);
     expect(labels.some((l) => /edge/i.test(l))).toBe(true);
+    expect(labels.some((l) => /lighting/i.test(l))).toBe(true);
     // Edge restraint = rect perimeter: 2 × ((110×1.2)/40 + (80×1.2)/40)
     const edge = report.lines.find((l) => /edge restraint/i.test(l.label));
     expect(edge?.qty).toBeCloseTo(2 * (3.3 + 2.4), 5);
     expect(report.totalInclGst).toBeGreaterThan(report.materialsExGst);
     expect(report.tipperLoads).toBeGreaterThanOrEqual(1);
+  });
+
+  it("expands lawn into drip irrigation secondaries", () => {
+    const report = estimateStudioDrawing({
+      outdoorM2: 230,
+      boundary,
+      items: [
+        {
+          id: "lawn1",
+          t: "lawn",
+          x: 50,
+          y: 60,
+          scale: 1.5,
+          areaKind: "rect",
+          wPx: 130,
+          hPx: 95,
+        },
+      ],
+    });
+    const labels = report.lines.map((l) => l.label);
+    expect(labels.some((l) => /drip irrigation/i.test(l))).toBe(true);
+    expect(labels.some((l) => /emitters/i.test(l))).toBe(true);
   });
 
   it("foreshadows drainage when hardscape exceeds threshold without drain", () => {
