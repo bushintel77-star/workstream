@@ -15,11 +15,18 @@ import {
   deleteBoundaryVertex,
   designableFocusRing,
   geoToCanvasMetres,
+  inferRectangleCompletion,
   insertBoundaryVertex,
+  inwardSetbackRing,
   moveBoundaryVertex,
   outsideMask,
 } from "@workstream/domain";
 import type { SiteBoundaryLite } from "../../lib/canvas-types";
+import {
+  applyBucketOpacity,
+  DEFAULT_LAYER_OPACITY,
+  type CanvasLayerOpacity,
+} from "../../lib/canvas-layer-opacity";
 import {
   castBuildingShadow,
   dateAtMinutes,
@@ -128,6 +135,14 @@ export type GeoSiteMapProps = {
   /** Click-to-draw CAD polylines in lot-metre space (origin SW, Y-up). */
   lineDrawActive?: boolean;
   onLineCommit?: (points: { x: number; y: number }[]) => void;
+  /** Click-to-trace boundary polygon over aerial (survey / CAD). */
+  traceActive?: boolean;
+  onTraceCommit?: (ring: [number, number][]) => void;
+  onTraceHint?: (hint: string | null) => void;
+  /** Layer opacity buckets — drives MapLibre paint + overlays. */
+  layerOpacity?: CanvasLayerOpacity;
+  /** Show 1.5 m inward setback ring (council bucket). */
+  showSetback?: boolean;
   /**
    * Fit sheet = paper working-drawing mode (Design Studio v3):
    * cream sheet, ink geometry, aerial hidden. Not a glass overlay.
@@ -142,6 +157,11 @@ export type GeoSiteMapProps = {
 const SRC_DRAW = "ws-cad-draw";
 const LY_DRAW_LINE = "ws-cad-draw-line";
 const LY_DRAW_PTS = "ws-cad-draw-pts";
+const SRC_SETBACK = "ws-setback";
+const LY_SETBACK = "ws-setback-line";
+const SRC_TRACE_GHOST = "ws-trace-ghost";
+const LY_TRACE_GHOST_LINE = "ws-trace-ghost-line";
+const LY_TRACE_GHOST_FILL = "ws-trace-ghost-fill";
 
 const SRC_PARCEL = "ws-parcel";
 const SRC_MASK = "ws-parcel-mask";
@@ -179,6 +199,11 @@ export function GeoSiteMap({
   onTitleOpen,
   lineDrawActive = false,
   onLineCommit,
+  traceActive = false,
+  onTraceCommit,
+  onTraceHint,
+  layerOpacity = DEFAULT_LAYER_OPACITY,
+  showSetback = true,
   paperMode = false,
   fitSheetMeta = null,
   fitSheetShowDims = true,
@@ -189,6 +214,11 @@ export function GeoSiteMap({
   onTitleOpenRef.current = onTitleOpen;
   const onLineCommitRef = useRef(onLineCommit);
   onLineCommitRef.current = onLineCommit;
+  const onTraceCommitRef = useRef(onTraceCommit);
+  onTraceCommitRef.current = onTraceCommit;
+  const onTraceHintRef = useRef(onTraceHint);
+  onTraceHintRef.current = onTraceHint;
+  const ghostCompletionRef = useRef<[number, number][] | null>(null);
   const [draftPts, setDraftPts] = useState<[number, number][]>([]);
   const draftPtsRef = useRef(draftPts);
   draftPtsRef.current = draftPts;
@@ -248,6 +278,11 @@ export function GeoSiteMap({
 
   const siteLat = center.lat;
   const siteLng = center.lng;
+
+  const boundaryOp = applyBucketOpacity("boundary", 1, layerOpacity);
+  const surveyOp = applyBucketOpacity("survey", 1, layerOpacity);
+  const councilOp = applyBucketOpacity("council", 1, layerOpacity);
+  const vegetationOp = applyBucketOpacity("vegetation", 1, layerOpacity);
 
   const dayBounds = useMemo(
     () => sunDayBounds(sunDay, siteLat, siteLng),
@@ -389,7 +424,8 @@ export function GeoSiteMap({
           : isLocked
             ? "#5ea884"
             : "#c9955a";
-      const fillOp = paperMode ? 1 : titleOnly ? 0.28 : isLocked ? 0.1 : 0.12;
+      const fillOp =
+        (paperMode ? 1 : titleOnly ? 0.28 : isLocked ? 0.1 : 0.12) * boundaryOp;
       const lineColor = paperMode
         ? "#241318"
         : titleOnly
@@ -406,6 +442,7 @@ export function GeoSiteMap({
       if (map.getLayer(LY_LINE)) {
         map.setPaintProperty(LY_LINE, "line-color", lineColor);
         map.setPaintProperty(LY_LINE, "line-width", lineW);
+        map.setPaintProperty(LY_LINE, "line-opacity", boundaryOp);
       }
 
       const maskSrc = map.getSource(SRC_MASK) as
@@ -429,10 +466,10 @@ export function GeoSiteMap({
       }
       if (map.getLayer(LY_MASK)) {
         map.setPaintProperty(LY_MASK, "fill-color", paperMode ? "#FAF6F2" : "#120c10");
-        map.setPaintProperty(LY_MASK, "fill-opacity", paperMode ? 1 : dim);
+        map.setPaintProperty(LY_MASK, "fill-opacity", paperMode ? 1 : dim * surveyOp);
       }
     },
-    [basemap, paperMode, titleOnly],
+    [basemap, boundaryOp, paperMode, surveyOp, titleOnly],
   );
 
   const clearMarkers = useCallback(() => {
@@ -726,7 +763,7 @@ export function GeoSiteMap({
         map.setPaintProperty(
           LY_SHADOW,
           "fill-opacity",
-          paperMode ? 0.08 : sunEnabled ? 0.38 : 0,
+          (paperMode ? 0.08 : sunEnabled ? 0.38 : 0) * surveyOp,
         );
       }
       if (map.getLayer(LY_HOUSE_FILL)) {
@@ -738,7 +775,7 @@ export function GeoSiteMap({
         map.setPaintProperty(
           LY_HOUSE_FILL,
           "fill-opacity",
-          paperMode ? 0.08 : 0.72,
+          (paperMode ? 0.08 : 0.72) * surveyOp,
         );
       }
       if (map.getLayer(LY_HOUSE_LINE)) {
@@ -752,9 +789,100 @@ export function GeoSiteMap({
           "line-width",
           paperMode ? 1.6 : 1.25,
         );
+        map.setPaintProperty(LY_HOUSE_LINE, "line-opacity", 0.9 * surveyOp);
       }
     },
-    [houseRing, paperMode, shadowRing, sunEnabled, titleOnly],
+    [houseRing, paperMode, shadowRing, sunEnabled, surveyOp, titleOnly],
+  );
+
+  const syncSetback = useCallback(
+    (map: maplibregl.Map) => {
+      const frame = (() => {
+        const open = openRing(parcelRing);
+        if (open.length < 3) return null;
+        let minLng = Infinity;
+        let minLat = Infinity;
+        let maxLng = -Infinity;
+        let maxLat = -Infinity;
+        for (const [lng, lat] of open) {
+          minLng = Math.min(minLng, lng);
+          minLat = Math.min(minLat, lat);
+          maxLng = Math.max(maxLng, lng);
+          maxLat = Math.max(maxLat, lat);
+        }
+        const pad = 2;
+        const mPerLng = 110_540 * Math.cos((minLat * Math.PI) / 180);
+        return {
+          origin: {
+            lng: minLng - pad / mPerLng,
+            lat: minLat - pad / 110_540,
+          },
+          widthM: Math.max(1, (maxLng - minLng) * mPerLng) + pad * 2,
+          heightM: Math.max(1, (maxLat - minLat) * 110_540) + pad * 2,
+        };
+      })();
+
+      const ringSource =
+        boundary && boundary.vertices.length >= 3
+          ? boundary.vertices
+              .slice()
+              .sort((a, b) => a.sequence_index - b.sequence_index)
+              .map((v) => geoToCanvasMetres(v.geo_coords, boundary.geo_reference.canvas_origin_geo))
+          : frame && parcelRing.length >= 3
+            ? openRing(parcelRing).map(([lng, lat]) =>
+                geoToCanvasMetres({ lng, lat }, frame.origin),
+              )
+            : [];
+
+      const setbackCanvas =
+        showSetback && councilOp > 0.02 && ringSource.length >= 3
+          ? inwardSetbackRing(ringSource)
+          : [];
+
+      const setbackClosed =
+        setbackCanvas.length >= 3
+          ? closeRing(
+              setbackCanvas.map((p) => {
+                const geo = canvasMetresToGeo(p, boundary?.geo_reference.canvas_origin_geo ?? frame!.origin);
+                return [geo.lng, geo.lat] as [number, number];
+              }),
+            )
+          : null;
+
+      const fc: FeatureCollection = {
+        type: "FeatureCollection",
+        features: setbackClosed
+          ? [
+              {
+                type: "Feature",
+                properties: {},
+                geometry: { type: "Polygon", coordinates: [setbackClosed] },
+              },
+            ]
+          : [],
+      };
+
+      const src = map.getSource(SRC_SETBACK) as maplibregl.GeoJSONSource | undefined;
+      if (src) src.setData(fc);
+      else if (setbackClosed) {
+        map.addSource(SRC_SETBACK, { type: "geojson", data: fc });
+        map.addLayer({
+          id: LY_SETBACK,
+          type: "line",
+          source: SRC_SETBACK,
+          paint: {
+            "line-color": "#C2455F",
+            "line-width": 1.5,
+            "line-dasharray": [3, 3],
+            "line-opacity": 0.9 * councilOp,
+          },
+        });
+      }
+      if (map.getLayer(LY_SETBACK)) {
+        map.setPaintProperty(LY_SETBACK, "line-opacity", showSetback ? 0.9 * councilOp : 0);
+      }
+    },
+    [boundary, councilOp, parcelRing, showSetback],
   );
 
   // Sync parcel geojson when boundary / lot ring / lock changes
@@ -764,10 +892,11 @@ export function GeoSiteMap({
     const apply = () => {
       syncLayers(map, parcelRing, locked);
       syncHouseShadow(map);
+      syncSetback(map);
     };
     if (map.isStyleLoaded()) apply();
     else map.once("style.load", apply);
-  }, [parcelRing, locked, mapReady, syncLayers, syncHouseShadow]);
+  }, [parcelRing, locked, mapReady, syncLayers, syncHouseShadow, syncSetback]);
 
   // Sun scrubber updates shadow without full parcel rebuild
   useEffect(() => {
@@ -1032,6 +1161,252 @@ export function GeoSiteMap({
     };
   }, [lineDrawActive, mapReady, paperMode, sheetFrame, titleOnly]);
 
+  // Boundary trace — click vertices over aerial; Tab rectangle autocomplete
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    const paintTraceGhost = (ring: [number, number][] | null) => {
+      const src = map.getSource(SRC_TRACE_GHOST) as maplibregl.GeoJSONSource | undefined;
+      if (!ring || ring.length < 3) {
+        if (src) src.setData({ type: "FeatureCollection", features: [] });
+        return;
+      }
+      const closed = closeRing(ring);
+      const fc = {
+        type: "FeatureCollection" as const,
+        features: [
+          {
+            type: "Feature" as const,
+            properties: {},
+            geometry: { type: "Polygon" as const, coordinates: [closed] },
+          },
+        ],
+      };
+      if (src) src.setData(fc);
+      else {
+        map.addSource(SRC_TRACE_GHOST, { type: "geojson", data: fc });
+        map.addLayer({
+          id: LY_TRACE_GHOST_FILL,
+          type: "fill",
+          source: SRC_TRACE_GHOST,
+          paint: {
+            "fill-color": "#E8B84B",
+            "fill-opacity": 0.08,
+          },
+        });
+        map.addLayer({
+          id: LY_TRACE_GHOST_LINE,
+          type: "line",
+          source: SRC_TRACE_GHOST,
+          paint: {
+            "line-color": "#E8B84B",
+            "line-width": 2,
+            "line-dasharray": [4, 3],
+            "line-opacity": 0.95,
+          },
+        });
+      }
+    };
+
+    const paintDraft = (pts: [number, number][], hover?: [number, number] | null) => {
+      if (!map.getSource(SRC_DRAW)) {
+        map.addSource(SRC_DRAW, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+      }
+      if (!map.getLayer(LY_DRAW_LINE)) {
+        map.addLayer({
+          id: LY_DRAW_LINE,
+          type: "line",
+          source: SRC_DRAW,
+          filter: ["==", ["geometry-type"], "LineString"],
+          paint: {
+            "line-color": "#f4e8ee",
+            "line-width": 2.5,
+            "line-opacity": 0.95,
+          },
+        });
+      }
+      if (!map.getLayer(LY_DRAW_PTS)) {
+        map.addLayer({
+          id: LY_DRAW_PTS,
+          type: "circle",
+          source: SRC_DRAW,
+          filter: ["==", ["geometry-type"], "Point"],
+          paint: {
+            "circle-radius": 4.5,
+            "circle-color": "#fffafc",
+            "circle-stroke-width": 1.5,
+            "circle-stroke-color": "#24181e",
+          },
+        });
+      }
+      const src = map.getSource(SRC_DRAW) as maplibregl.GeoJSONSource;
+      const features: Array<{
+        type: "Feature";
+        properties: Record<string, unknown>;
+        geometry:
+          | { type: "Point"; coordinates: [number, number] }
+          | { type: "LineString"; coordinates: [number, number][] };
+      }> = pts.map((c) => ({
+        type: "Feature",
+        properties: {},
+        geometry: { type: "Point", coordinates: c },
+      }));
+      const line = hover && pts.length >= 1 ? [...pts, hover] : pts;
+      if (line.length >= 2) {
+        features.push({
+          type: "Feature",
+          properties: {},
+          geometry: { type: "LineString", coordinates: line },
+        });
+      }
+      src.setData({ type: "FeatureCollection", features });
+
+      const frame = sheetFrame();
+      ghostCompletionRef.current = null;
+      if (frame && pts.length >= 2 && hover) {
+        const draftM = pts.map(([lng, lat]) =>
+          geoToCanvasMetres({ lng, lat }, frame.origin),
+        );
+        const hoverM = geoToCanvasMetres(
+          { lng: hover[0], lat: hover[1] },
+          frame.origin,
+        );
+        const completion = inferRectangleCompletion(draftM, hoverM, 0.35);
+        if (completion) {
+          const geoRing = completion.map((p) => {
+            const g = canvasMetresToGeo(p, frame.origin);
+            return [g.lng, g.lat] as [number, number];
+          });
+          ghostCompletionRef.current = geoRing;
+          paintTraceGhost(geoRing);
+          onTraceHintRef.current?.("Tab autocompletes rectangle");
+          return;
+        }
+      }
+      if (pts.length === 3) {
+        const frame3 = sheetFrame();
+        if (frame3) {
+          const draftM = pts.map(([lng, lat]) =>
+            geoToCanvasMetres({ lng, lat }, frame3.origin),
+          );
+          const completion = inferRectangleCompletion(draftM, null);
+          if (completion) {
+            const geoRing = completion.map((p) => {
+              const g = canvasMetresToGeo(p, frame3.origin);
+              return [g.lng, g.lat] as [number, number];
+            });
+            ghostCompletionRef.current = geoRing;
+            paintTraceGhost(geoRing);
+            onTraceHintRef.current?.("Tab autocompletes rectangle");
+            return;
+          }
+        }
+      }
+      paintTraceGhost(null);
+      onTraceHintRef.current?.(
+        pts.length >= 1 ? `${pts.length} pts · Enter close · Esc cancel` : null,
+      );
+    };
+
+    if (!traceActive || titleOnly || locked) {
+      setDraftPts([]);
+      ghostCompletionRef.current = null;
+      paintTraceGhost(null);
+      onTraceHintRef.current?.(null);
+      if (map.getSource(SRC_DRAW)) {
+        (map.getSource(SRC_DRAW) as maplibregl.GeoJSONSource).setData({
+          type: "FeatureCollection",
+          features: [],
+        });
+      }
+      map.getCanvas().style.cursor = "";
+      return;
+    }
+
+    paintDraft(draftPtsRef.current, null);
+    map.getCanvas().style.cursor = "crosshair";
+
+    let cursor: [number, number] | null = null;
+
+    const finish = (pts: [number, number][]) => {
+      if (pts.length < 3) return;
+      onTraceCommitRef.current?.(openRing(pts));
+      setDraftPts([]);
+      cursor = null;
+      ghostCompletionRef.current = null;
+      paintTraceGhost(null);
+      paintDraft([]);
+      onTraceHintRef.current?.(null);
+    };
+
+    const onClick = (e: maplibregl.MapMouseEvent) => {
+      const next: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+      const pts = draftPtsRef.current;
+      if (pts.length >= 3) {
+        const first = pts[0]!;
+        const distDeg = Math.hypot(next[0] - first[0], next[1] - first[1]);
+        if (distDeg < 0.000015) {
+          finish(pts);
+          return;
+        }
+      }
+      setDraftPts((prev) => {
+        const merged = [...prev, next];
+        paintDraft(merged, cursor);
+        return merged;
+      });
+    };
+
+    const onMove = (e: maplibregl.MapMouseEvent) => {
+      cursor = [e.lngLat.lng, e.lngLat.lat];
+      paintDraft(draftPtsRef.current, cursor);
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Tab" && ghostCompletionRef.current) {
+        e.preventDefault();
+        finish(ghostCompletionRef.current);
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        finish(draftPtsRef.current);
+      } else if (e.key === "Escape") {
+        setDraftPts([]);
+        cursor = null;
+        ghostCompletionRef.current = null;
+        paintTraceGhost(null);
+        paintDraft([]);
+        onTraceHintRef.current?.(null);
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        setDraftPts((prev) => {
+          const next = prev.slice(0, -1);
+          paintDraft(next, cursor);
+          return next;
+        });
+      }
+    };
+
+    map.on("click", onClick);
+    map.on("mousemove", onMove);
+    window.addEventListener("keydown", onKey);
+    map.doubleClickZoom.disable();
+
+    return () => {
+      map.off("click", onClick);
+      map.off("mousemove", onMove);
+      window.removeEventListener("keydown", onKey);
+      map.doubleClickZoom.enable();
+      map.getCanvas().style.cursor = "";
+      onTraceHintRef.current?.(null);
+    };
+  }, [locked, mapReady, sheetFrame, titleOnly, traceActive]);
+
   /**
    * Title design sheet: lot-metre frame (SW origin, Y-up) projected onto the map,
    * clipped to the Vicmap ring so sketch/CAD live on the title — not a second box.
@@ -1265,7 +1640,7 @@ export function GeoSiteMap({
       <div
         ref={designRef}
         className={`${css.designFrame}${paperMode ? ` ${css.designFramePaper}` : ""}`}
-        style={{ display: "none" }}
+        style={{ display: "none", opacity: vegetationOp }}
         data-testid="geo-design-frame"
       >
         {designOverlay}

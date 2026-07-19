@@ -5,6 +5,8 @@ export type CanvasViewLayers = {
   ghostSuggestions: boolean;
   shade: boolean;
   easements: boolean;
+  /** 1.5 m council setback ring (council layer bucket). */
+  setback: boolean;
 };
 
 export const DEFAULT_CANVAS_VIEW_LAYERS: CanvasViewLayers = {
@@ -14,4 +16,5 @@ export const DEFAULT_CANVAS_VIEW_LAYERS: CanvasViewLayers = {
   ghostSuggestions: true,
   shade: false,
   easements: false,
+  setback: true,
 };

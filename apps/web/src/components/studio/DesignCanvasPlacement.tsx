@@ -13,7 +13,7 @@ type Props = {
   selected: boolean;
   isTpz: boolean;
   indicativeMetres: number | null;
-  onSelect: () => void;
+  onSelect: (e?: React.MouseEvent) => void;
   /** Alt+click eyedropper — sample into brush recipe without selecting. */
   onAltSample?: () => void;
   onMovePointerDown: (e: React.PointerEvent) => void;
@@ -58,7 +58,7 @@ export function DesignCanvasPlacement({
           onAltSample();
           return;
         }
-        onSelect();
+        onSelect(e);
         downRef.current = { x: e.clientX, y: e.clientY };
       }}
       onPointerMove={(e) => {
@@ -82,7 +82,7 @@ export function DesignCanvasPlacement({
         // Delete/Backspace handled by parent canvas keydown listener.
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onSelect();
+          onSelect(undefined);
         }
       }}
     >

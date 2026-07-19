@@ -25,6 +25,13 @@ import {
   SKETCH_RIBBON_STARTERS,
   snapPointPctToGrid,
   withDirtySaveSuggestion,
+  emptyHistoryStacks,
+  pushHistorySnapshot,
+  undoHistory,
+  redoHistory,
+  diffMovedPlacements,
+  diffRemovedPlacements,
+  markStaleGhostsNearEdit,
   type StudioAiSuggestion,
 } from "@workstream/domain";
 import { saveDesignCanvasAction, scanDesignGhostsAction, designAssistAction } from "../../app/actions";
@@ -69,7 +76,12 @@ type Props = {
   onDraftCad?: () => void;
   /** Jump to quote lens (AI coaching "quote" action). */
   onGoToQuote?: () => void;
-  onRegisterCommands?: (api: { scanGhosts: () => void; openCommands: () => void }) => void;
+  onRegisterCommands?: (api: {
+    scanGhosts: () => void;
+    openCommands: () => void;
+    undo: () => void;
+    redo: () => void;
+  }) => void;
   measureActive?: boolean;
   onToggleMeasure?: () => void;
   viewLayers?: CanvasViewLayers;
@@ -78,6 +90,8 @@ type Props = {
   chromeHost?: HTMLElement | null;
   onArmedChange?: (armed: boolean) => void;
   showRibbon?: boolean;
+  /** Edit/select mode — marquee + multi-select when brush not armed. */
+  selectMode?: boolean;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -121,6 +135,46 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
+function snapDragPct(
+  xPct: number,
+  yPct: number,
+  others: CatalogPlacement[],
+  excludeIds: Set<string>,
+): { x_pct: number; y_pct: number; guideX?: number; guideY?: number } {
+  const anchors = [25, 50, 75];
+  let x = xPct;
+  let y = yPct;
+  let guideX: number | undefined;
+  let guideY: number | undefined;
+  const threshold = 1.25;
+  for (const a of anchors) {
+    if (Math.abs(xPct - a) < threshold) {
+      x = a;
+      guideX = a;
+      break;
+    }
+  }
+  for (const a of anchors) {
+    if (Math.abs(yPct - a) < threshold) {
+      y = a;
+      guideY = a;
+      break;
+    }
+  }
+  for (const p of others) {
+    if (excludeIds.has(p.id)) continue;
+    if (guideX == null && Math.abs(xPct - p.x_pct) < threshold) {
+      x = p.x_pct;
+      guideX = p.x_pct;
+    }
+    if (guideY == null && Math.abs(yPct - p.y_pct) < threshold) {
+      y = p.y_pct;
+      guideY = p.y_pct;
+    }
+  }
+  return { x_pct: x, y_pct: y, guideX, guideY };
+}
+
 type PaintSession = {
   active: boolean;
   lastX: number;
@@ -152,6 +206,7 @@ export function SketchInstrument({
   chromeHost = null,
   onArmedChange,
   showRibbon = true,
+  selectMode = false,
 }: Props) {
   const toast = useToast();
   const assistInputRef = useRef<HTMLTextAreaElement>(null);
@@ -161,17 +216,25 @@ export function SketchInstrument({
   const paintRef = useRef<PaintSession | null>(null);
   const heuristicAtRef = useRef(0);
   const dragRef = useRef<{
-    id: string;
+    ids: string[];
     startXpct: number;
     startYpct: number;
     startClientX: number;
     startClientY: number;
+    origins: Map<string, { x_pct: number; y_pct: number }>;
   } | null>(null);
   const transformRef = useRef<TransformSession | null>(null);
+  const historyRef = useRef(emptyHistoryStacks<CatalogPlacement[]>());
+  const marqueeRef = useRef<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  } | null>(null);
 
   const [placements, setPlacements] = useState(initialPlacements);
   const [ephemeralGhosts, setEphemeralGhosts] = useState<
-    GhostPlacementSuggestion[]
+    Array<GhostPlacementSuggestion & { stale?: boolean }>
   >([]);
   const [ghostScanning, setGhostScanning] = useState(false);
   const [assistPending, setAssistPending] = useState(false);
@@ -183,6 +246,17 @@ export function SketchInstrument({
     null,
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [marquee, setMarquee] = useState<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  } | null>(null);
+  const [alignGuides, setAlignGuides] = useState<{
+    x?: number;
+    y?: number;
+  } | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -275,6 +349,65 @@ export function SketchInstrument({
       return false;
     }
   }, [projectId, toast]);
+
+  const pushPlacementHistory = useCallback(() => {
+    historyRef.current = pushHistorySnapshot(
+      historyRef.current,
+      structuredClone(placementsRef.current),
+    );
+  }, []);
+
+  const applyPlacements = useCallback(
+    (
+      updater: (prev: CatalogPlacement[]) => CatalogPlacement[],
+      opts?: { recordHistory?: boolean; staleFrom?: CatalogPlacement[] },
+    ) => {
+      const before = opts?.staleFrom ?? placementsRef.current;
+      setPlacements((prev) => {
+        const next = updater(prev);
+        placementsRef.current = next;
+        const removed = diffRemovedPlacements(before, next);
+        const moved = diffMovedPlacements(before, next);
+        if (removed.length || moved.length) {
+          setEphemeralGhosts((ghosts) =>
+            markStaleGhostsNearEdit(ghosts, [...removed, ...moved]),
+          );
+        }
+        return next;
+      });
+      setDirty(true);
+      if (opts?.recordHistory !== false) pushPlacementHistory();
+    },
+    [pushPlacementHistory],
+  );
+
+  const undoPlacements = useCallback(() => {
+    const { stacks, state } = undoHistory(
+      historyRef.current,
+      placementsRef.current,
+    );
+    if (!state) return false;
+    historyRef.current = stacks;
+    placementsRef.current = state;
+    setPlacements(state);
+    setDirty(true);
+    void persist();
+    return true;
+  }, [persist]);
+
+  const redoPlacements = useCallback(() => {
+    const { stacks, state } = redoHistory(
+      historyRef.current,
+      placementsRef.current,
+    );
+    if (!state) return false;
+    historyRef.current = stacks;
+    placementsRef.current = state;
+    setPlacements(state);
+    setDirty(true);
+    void persist();
+    return true;
+  }, [persist]);
 
   const armBrush = useCallback((recipe: BrushRecipe) => {
     setArmedRecipe(recipe);
@@ -407,21 +540,75 @@ export function SketchInstrument({
           setArmedRecipe(recipe);
         }
       }
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
-        setPlacements((prev) => prev.filter((p) => p.id !== selectedId));
+        if (e.shiftKey) redoPlacements();
+        else undoPlacements();
+        return;
+      }
+      const activeIds =
+        selectedIds.length > 0
+          ? selectedIds
+          : selectedId
+            ? [selectedId]
+            : [];
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        activeIds.length > 0
+      ) {
+        e.preventDefault();
+        applyPlacements(
+          (prev) => prev.filter((p) => !activeIds.includes(p.id)),
+          { staleFrom: placementsRef.current },
+        );
         setSelectedId(null);
-        setDirty(true);
+        setSelectedIds([]);
+        void persist();
+      }
+      if (
+        activeIds.length > 0 &&
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 2.5 : 0.5;
+        const dx =
+          e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+        const dy =
+          e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+        applyPlacements(
+          (prev) =>
+            prev.map((p) =>
+              activeIds.includes(p.id)
+                ? {
+                    ...p,
+                    x_pct: Math.min(100, Math.max(0, p.x_pct + dx)),
+                    y_pct: Math.min(100, Math.max(0, p.y_pct + dy)),
+                  }
+                : p,
+            ),
+          { staleFrom: placementsRef.current },
+        );
         void persist();
       }
       if (e.key === "Escape") {
         setArmedRecipe(null);
         setSelectedId(null);
+        setSelectedIds([]);
+        setMarquee(null);
+        marqueeRef.current = null;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [persist, selectedId, swatchHistory]);
+  }, [
+    applyPlacements,
+    persist,
+    redoPlacements,
+    selectedId,
+    selectedIds,
+    swatchHistory,
+    undoPlacements,
+  ]);
 
   const aiSuggestions = useMemo(() => {
     let hasPlanningSymbol = false;
@@ -554,8 +741,14 @@ export function SketchInstrument({
     onRegisterCommands?.({
       scanGhosts: () => void scanGhosts(),
       openCommands: () => setCommandOpen(true),
+      undo: () => {
+        undoPlacements();
+      },
+      redo: () => {
+        redoPlacements();
+      },
     });
-  }, [onRegisterCommands, scanGhosts]);
+  }, [onRegisterCommands, redoPlacements, scanGhosts, undoPlacements]);
 
   useEffect(() => {
     if (ghostsBootstrapped.current || placements.length > 0) return;
@@ -661,7 +854,24 @@ export function SketchInstrument({
       beginPaint(e.clientX, e.clientY);
       return;
     }
+
+    if (selectMode) {
+      e.stopPropagation();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      const pt = clientToPct(e.clientX, e.clientY);
+      marqueeRef.current = {
+        x1: pt.x_pct,
+        y1: pt.y_pct,
+        x2: pt.x_pct,
+        y2: pt.y_pct,
+      };
+      setMarquee(marqueeRef.current);
+      setSelectedId(null);
+      setSelectedIds([]);
+      return;
+    }
     setSelectedId(null);
+    setSelectedIds([]);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -727,17 +937,41 @@ export function SketchInstrument({
       const r = el.getBoundingClientRect();
       const dx = ((e.clientX - drag.startClientX) / r.width) * 100;
       const dy = ((e.clientY - drag.startClientY) / r.height) * 100;
-      setPlacements((prev) =>
-        prev.map((p) =>
-          p.id === drag.id
-            ? {
-                ...p,
-                x_pct: Math.min(100, Math.max(0, drag.startXpct + dx)),
-                y_pct: Math.min(100, Math.max(0, drag.startYpct + dy)),
-              }
-            : p,
-        ),
+      const exclude = new Set(drag.ids);
+      applyPlacements(
+        (prev) =>
+          prev.map((p) => {
+            if (!drag.ids.includes(p.id)) return p;
+            const origin = drag.origins.get(p.id)!;
+            const rawX = Math.min(100, Math.max(0, origin.x_pct + dx));
+            const rawY = Math.min(100, Math.max(0, origin.y_pct + dy));
+            const snapped = snapDragPct(rawX, rawY, prev, exclude);
+            if (drag.ids[0] === p.id) {
+              setAlignGuides({
+                x: snapped.guideX,
+                y: snapped.guideY,
+              });
+            }
+            return {
+              ...p,
+              x_pct: snapped.x_pct,
+              y_pct: snapped.y_pct,
+            };
+          }),
+        { recordHistory: false, staleFrom: placementsRef.current },
       );
+    }
+
+    if (marqueeRef.current) {
+      e.stopPropagation();
+      const pt = clientToPct(e.clientX, e.clientY);
+      const next = {
+        ...marqueeRef.current,
+        x2: pt.x_pct,
+        y2: pt.y_pct,
+      };
+      marqueeRef.current = next;
+      setMarquee(next);
     }
   };
 
@@ -758,9 +992,36 @@ export function SketchInstrument({
       return;
     }
     if (dragRef.current) {
+      pushPlacementHistory();
       dragRef.current = null;
+      setAlignGuides(null);
       setDirty(true);
       void persist();
+    }
+    if (marqueeRef.current) {
+      const m = marqueeRef.current;
+      marqueeRef.current = null;
+      setMarquee(null);
+      const left = Math.min(m.x1, m.x2);
+      const right = Math.max(m.x1, m.x2);
+      const top = Math.min(m.y1, m.y2);
+      const bottom = Math.max(m.y1, m.y2);
+      if (Math.abs(right - left) > 1.5 && Math.abs(bottom - top) > 1.5) {
+        const ids = placementsRef.current
+          .filter(
+            (p) =>
+              p.x_pct >= left &&
+              p.x_pct <= right &&
+              p.y_pct >= top &&
+              p.y_pct <= bottom,
+          )
+          .map((p) => p.id);
+        setSelectedIds(ids);
+        setSelectedId(ids.length === 1 ? ids[0]! : null);
+      }
+      if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      }
     }
   };
 
@@ -781,7 +1042,7 @@ export function SketchInstrument({
     <>
       <div
         ref={layerRef}
-        className={`${css.layer} ${armedRecipe ? css.layerArmed : ""} ${showGhostSuggestions && (ephemeralGhosts.length > 0 || ghostScanning) ? css.layerGhosts : ""}`}
+        className={`${css.layer} ${armedRecipe ? css.layerArmed : ""} ${selectMode && !armedRecipe ? css.layerSelect : ""} ${showGhostSuggestions && (ephemeralGhosts.length > 0 || ghostScanning) ? css.layerGhosts : ""}`}
         data-testid="sketch-instrument"
         data-armed={armedRecipe ? "1" : undefined}
         onPointerDown={onPointerDown}
@@ -789,6 +1050,32 @@ export function SketchInstrument({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        {alignGuides?.x != null ? (
+          <div
+            className={css.alignGuideV}
+            style={{ left: `${alignGuides.x}%` }}
+            aria-hidden
+          />
+        ) : null}
+        {alignGuides?.y != null ? (
+          <div
+            className={css.alignGuideH}
+            style={{ top: `${alignGuides.y}%` }}
+            aria-hidden
+          />
+        ) : null}
+        {marquee ? (
+          <div
+            className={css.marquee}
+            style={{
+              left: `${Math.min(marquee.x1, marquee.x2)}%`,
+              top: `${Math.min(marquee.y1, marquee.y2)}%`,
+              width: `${Math.abs(marquee.x2 - marquee.x1)}%`,
+              height: `${Math.abs(marquee.y2 - marquee.y1)}%`,
+            }}
+            aria-hidden
+          />
+        ) : null}
         <SketchGhostLayer
           ghosts={showGhostSuggestions ? ephemeralGhosts : []}
           symbolById={symbolById}
@@ -806,28 +1093,54 @@ export function SketchInstrument({
               key={p.id}
               placement={p}
               symbol={sym}
-              selected={selectedId === p.id}
+              selected={selectedId === p.id || selectedIds.includes(p.id)}
               isTpz={isTpz}
               indicativeMetres={
                 isTpz && mapView ? Math.round(widthM * 10) / 10 : null
               }
-              onSelect={() => setSelectedId(p.id)}
+              onSelect={(ev) => {
+                if (ev?.shiftKey) {
+                  setSelectedIds((prev) =>
+                    prev.includes(p.id)
+                      ? prev.filter((id) => id !== p.id)
+                      : [...prev, p.id],
+                  );
+                  setSelectedId(p.id);
+                  return;
+                }
+                setSelectedIds([p.id]);
+                setSelectedId(p.id);
+              }}
               onAltSample={() => samplePlacement(p)}
               onMovePointerDown={(ev) => {
+                pushPlacementHistory();
+                const group =
+                  selectedIds.includes(p.id) && selectedIds.length > 1
+                    ? selectedIds
+                    : [p.id];
+                const origins = new Map(
+                  placementsRef.current
+                    .filter((x) => group.includes(x.id))
+                    .map((x) => [x.id, { x_pct: x.x_pct, y_pct: x.y_pct }]),
+                );
                 dragRef.current = {
-                  id: p.id,
+                  ids: group,
                   startXpct: p.x_pct,
                   startYpct: p.y_pct,
                   startClientX: ev.clientX,
                   startClientY: ev.clientY,
+                  origins,
                 };
               }}
               onRotateStart={(ev) => beginRotate(p.id, ev)}
               onScaleStart={(ev) => beginScale(p.id, ev)}
               onDelete={() => {
-                setPlacements((prev) => prev.filter((x) => x.id !== p.id));
+                applyPlacements(
+                  (prev) => prev.filter((x) => x.id !== p.id),
+                  { staleFrom: placementsRef.current },
+                );
                 setSelectedId(null);
-                setDirty(true);
+                setSelectedIds((ids) => ids.filter((id) => id !== p.id));
                 void persist();
               }}
             />

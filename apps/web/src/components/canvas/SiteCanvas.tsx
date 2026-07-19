@@ -14,7 +14,15 @@ import {
 } from "react";
 import type { CatalogSymbol } from "@workstream/contracts";
 import type { ProjectOrchestrationWorld } from "@workstream/contracts";
-import { isTier1WrightsTerrace } from "@workstream/domain";
+import {
+  isTier1WrightsTerrace,
+  buildBoundaryFromGeoRing,
+  computeSiteCompliance,
+  emptyHistoryStacks,
+  pushHistorySnapshot,
+  redoHistory,
+  undoHistory,
+} from "@workstream/domain";
 import {
   acceptCadAction,
   applyCadOpsAction,
@@ -33,7 +41,6 @@ import {
   saveBoundaryAction,
   unlockBoundaryAction,
 } from "../../app/actions";
-import { computeSiteCompliance } from "@workstream/domain";
 import { FirstRunGuide } from "./FirstRunGuide";
 import { LiveBomHud } from "./LiveBomHud";
 import { ComplianceDock } from "./ComplianceDock";
@@ -104,6 +111,8 @@ import css from "./siteCanvas.module.css";
 type SketchCommandsApi = {
   scanGhosts: () => void;
   openCommands: () => void;
+  undo: () => void;
+  redo: () => void;
 };
 
 const GeoSiteMap = dynamic(
@@ -404,6 +413,7 @@ function SiteCanvasInner({
     null,
   );
   const [ghostReviewIndex, setGhostReviewIndex] = useState(0);
+  const [traceHint, setTraceHint] = useState<string | null>(null);
   const [autosaveLabel, setAutosaveLabel] = useState<string | null>(null);
   const [sunWhen, setSunWhen] = useState(() => new Date());
   const sketchCommandsRef = useRef<SketchCommandsApi | null>(null);
@@ -413,6 +423,9 @@ function SiteCanvasInner({
     useState<HTMLDivElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const autoTraceOnce = useRef(false);
+  const boundaryHistoryRef = useRef(
+    emptyHistoryStacks<SiteBoundaryLite | null>(),
+  );
   const drag = useRef<{
     x: number;
     y: number;
@@ -718,7 +731,13 @@ function SiteCanvasInner({
   }, [useGeoStage]);
 
   const persistBoundary = useCallback(
-    (next: SiteBoundaryLite) => {
+    (next: SiteBoundaryLite, opts?: { skipHistory?: boolean }) => {
+      if (!opts?.skipHistory) {
+        boundaryHistoryRef.current = pushHistorySnapshot(
+          boundaryHistoryRef.current,
+          boundary,
+        );
+      }
       setBoundary(next);
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -734,8 +753,30 @@ function SiteCanvasInner({
         });
       }, 400);
     },
-    [projectId],
+    [boundary, projectId],
   );
+
+  const undoBoundary = useCallback(() => {
+    const { stacks, state } = undoHistory(
+      boundaryHistoryRef.current,
+      boundary,
+    );
+    if (!state) return false;
+    boundaryHistoryRef.current = stacks;
+    persistBoundary(state, { skipHistory: true });
+    return true;
+  }, [boundary, persistBoundary]);
+
+  const redoBoundary = useCallback(() => {
+    const { stacks, state } = redoHistory(
+      boundaryHistoryRef.current,
+      boundary,
+    );
+    if (!state) return false;
+    boundaryHistoryRef.current = stacks;
+    persistBoundary(state, { skipHistory: true });
+    return true;
+  }, [boundary, persistBoundary]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (boundaryTool !== "pan") return;
@@ -828,9 +869,18 @@ function SiteCanvasInner({
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
-        if (mode === "cad" && cadUndoIds.length) {
-          e.preventDefault();
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (mode === "sketch") sketchCommandsRef.current?.redo();
+          else if (mode === "cad" && cadUndoIds.length) {
+            /* CAD redo not wired — boundary/sketch only */
+          } else redoBoundary();
+        } else if (mode === "sketch") {
+          sketchCommandsRef.current?.undo();
+        } else if (mode === "cad" && cadUndoIds.length) {
           undoLastCad();
+        } else {
+          undoBoundary();
         }
         return;
       }
@@ -1053,7 +1103,8 @@ function SiteCanvasInner({
   }, [canvasTool]);
 
   useEffect(() => {
-    if (canvasTool === "edit" || canvasTool === "trace") setBoundaryTool("edit");
+    if (canvasTool === "edit" || canvasTool === "add") setBoundaryTool("edit");
+    if (canvasTool === "trace") setBoundaryTool("pan");
     if (canvasTool === "pan") setBoundaryTool("pan");
   }, [canvasTool]);
 
@@ -1268,6 +1319,12 @@ function SiteCanvasInner({
         />
       ) : null}
 
+      {traceHint ? (
+        <p className={css.traceHint} data-testid="trace-hint">
+          {traceHint}
+        </p>
+      ) : null}
+
       {showSunDock && mapView && fallbackCenter ? (
         <div className={css.sunDock}>
           <SunShadeControls
@@ -1384,12 +1441,45 @@ function SiteCanvasInner({
                     tool={
                       mode === "share"
                         ? "pan"
+                        : canvasTool === "trace"
+                          ? "pan"
                         : mode === "sketch" || (mode === "cad" && cadDrawArmed)
                           ? "pan"
                           : boundaryTool
                     }
                     onBoundaryChange={persistBoundary}
                     fitNonce={fitNonce}
+                    layerOpacity={layerOpacity}
+                    showSetback={viewLayers.setback}
+                    traceActive={
+                      canvasTool === "trace" &&
+                      boundary?.status !== "VERIFIED" &&
+                      (mode === "survey" || mode === "cad")
+                    }
+                    onTraceHint={setTraceHint}
+                    onTraceCommit={(ring) => {
+                      try {
+                        const draft = buildBoundaryFromGeoRing({
+                          projectId,
+                          ring,
+                          source: "HUMAN_EDITED",
+                          sourceKind: "manual",
+                        });
+                        persistBoundary({
+                          id: boundary?.id ?? crypto.randomUUID(),
+                          updated_at: new Date().toISOString(),
+                          ...draft,
+                        });
+                        setTraceHint(null);
+                        setFitNonce((n) => n + 1);
+                      } catch (err) {
+                        setError(
+                          err instanceof Error
+                            ? err.message
+                            : "Trace commit failed",
+                        );
+                      }
+                    }}
                     allowMapPan={
                       mode === "share"
                         ? true
@@ -1503,6 +1593,9 @@ function SiteCanvasInner({
                           onToggleMeasure={() => setMeasureActive((v) => !v)}
                           onGoToQuote={() => setMode("quote")}
                           showGhostSuggestions={viewLayers.ghostSuggestions}
+                          selectMode={
+                            canvasTool === "edit" && !sketchArmed
+                          }
                         />
                       ) : mode === "quote" ||
                         mode === "cad" ||
@@ -1595,6 +1688,7 @@ function SiteCanvasInner({
                       onToggleMeasure={() => setMeasureActive((v) => !v)}
                       onGoToQuote={() => setMode("quote")}
                       showGhostSuggestions={viewLayers.ghostSuggestions}
+                      selectMode={canvasTool === "edit" && !sketchArmed}
                     />
                   ) : null}
                   <MeasureOverlay

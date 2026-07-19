@@ -25,6 +25,7 @@ const OVERLAY_TOGGLES: Array<{
   { key: "ghostSuggestions", label: "AI ghosts" },
   { key: "shade", label: "Sun/shade" },
   { key: "easements", label: "Easements" },
+  { key: "setback", label: "1.5 m setback" },
 ];
 
 export function CanvasLayerOpacityPanel({

@@ -1,6 +1,6 @@
 # Design Studio v4/v5 — implementation status
 
-Tracks the **Complete Feature Checklist** in [README.md](./README.md). Last full pass: checklist rebuild on `main`.
+Tracks the **Complete Feature Checklist** in [README.md](./README.md). Last full pass: v5 backlog completion on `main`.
 
 Legend: **Done** · **Partial** · **Not started**
 
@@ -23,16 +23,16 @@ Legend: **Done** · **Partial** · **Not started**
 | Item | Status | Notes |
 |------|--------|-------|
 | Left tool rail | **Done** | `CanvasToolRail` — Trace/Edit/Add/Lock/Reset/Pan/Measure + zoom. |
-| Trace polygon | **Partial** | Vicmap auto-trace + boundary edit; full click-trace over aerial TBD. |
-| Ghost-geometry rectangle autocomplete | **Not started** | |
+| Trace polygon | **Done** | `GeoSiteMap` click-trace over aerial; Vicmap auto-trace retained. |
+| Ghost-geometry rectangle autocomplete | **Done** | `inferRectangleCompletion()` + Tab / gold preview in `GeoSiteMap`. |
 | Edit handles | **Partial** | `BoundaryOverlay` edit; CAD via API ops. |
 | Add / place symbols | **Done** | `SketchInstrument` + catalog. |
-| Multi-select marquee | **Not started** | |
-| Keyboard nudge / delete | **Partial** | CAD undo; sketch placement delete. |
+| Multi-select marquee | **Done** | Marquee in `SketchInstrument` when Edit tool + sketch select mode. |
+| Keyboard nudge / delete | **Done** | Arrow nudge + delete for selection/group; sketch history undo. |
 | Lock tool | **Done** | Boundary lock → Fit sheet. |
-| Undo/redo (40 steps) | **Partial** | CAD line undo stack. |
+| Undo/redo (40 steps) | **Done** | `canvas-history.ts` — sketch placements, boundary snapshots, CAD line stack. |
 | Measure tool | **Done** | `DraftingAssist` + tool rail Measure. |
-| Snap guides | **Not started** | |
+| Snap guides | **Done** | Alignment guides while dragging placements (`snapDragPct`). |
 | Symbol palette | **Done** | `SketchRibbon`. |
 
 ---
@@ -45,7 +45,7 @@ Legend: **Done** · **Partial** · **Not started**
 | Ghost review card | **Done** | `GhostReviewCard` — CAD batch + sketch layer. |
 | Confidence-factor breakdown | **Done** | Click bar → `deriveConfidenceFactors()` in domain. |
 | Accept / Reject / cycle / Accept all | **Done** | Card actions + header Accept AI + shortcuts. |
-| Stale-ghost detection | **Partial** | Domain/card support; auto-stale on move not wired all paths. |
+| Stale-ghost detection | **Done** | `markStaleGhostsNearEdit()` on sketch move/delete. |
 | Aerial canopy auto-detection | **Partial** | `scanDesignGhostsAction` / vision; not pixel-cluster heuristic. |
 | Command-palette Ask AI | **Done** | Palette + sketch assist. |
 | “AI DRAFT: UNVERIFIED” header badge | **Done** | When `ghostCount > 0`. |
@@ -73,7 +73,7 @@ Legend: **Done** · **Partial** · **Not started**
 | Item | Status | Notes |
 |------|--------|-------|
 | Compliance dock | **Done** | `ComplianceDock` + `computeSiteCompliance()` — independent of layer opacity. |
-| 1.5 m setback overlay | **Partial** | Orchestration overlays; dedicated setback ring TBD. |
+| 1.5 m setback overlay | **Done** | `inwardSetbackRing()` + MapLibre layer; Layers toggle `setback`. |
 | TPZ / root-zone circles | **Partial** | Orchestration TRP overlays. |
 | Conflict mitigation chips | **Done** | Live BOM risk chips + overlay accept. |
 | Sun & Growth panel | **Done** | `SunShadeControls` dock + shade/easement toggles. |
@@ -87,7 +87,7 @@ Legend: **Done** · **Partial** · **Not started**
 | 4 opacity sliders | **Done** | `CanvasLayerOpacityPanel` + survey preset on mode switch. |
 | Compliance stats independent of opacity | **Done** | Compliance dock always visible when mode allows. |
 | Survey-mode auto-preset | **Done** | `SURVEY_LAYER_PRESET` in `SiteCanvas`. |
-| Opacity on render | **Partial** | CAD SVG + bucket helpers wired; MapLibre layers next. |
+| Opacity on render | **Done** | MapLibre paint + design overlay vegetation bucket. |
 
 ---
 
@@ -126,15 +126,11 @@ Legend: **Done** · **Partial** · **Not started**
 
 ---
 
-## Remaining (explicit backlog)
+## Remaining (lower priority)
 
-1. Ghost-geometry rectangle autocomplete while tracing  
-2. Multi-select marquee + keyboard nudge  
-3. Global 40-step undo/redo stack  
-4. Alignment snap guides while dragging  
-5. Full click-to-place trace over aerial (vs Vicmap auto-trace)  
-6. Wire layer opacity into MapLibre layer paint  
-7. Stale-ghost auto-flag on all mutation paths  
-8. Dedicated 1.5 m setback ring geometry  
+1. CAD redo stack (sketch + boundary redo wired; CAD entity redo TBD)  
+2. Pixel-cluster aerial canopy heuristic (vision scan remains primary)  
+3. Dedicated TPZ geometry beyond orchestration overlays  
+4. Title block / QS schedule polish on Fit sheet  
 
 Reference prototype: [Design Studio v4.dc.html](./Design%20Studio%20v4.dc.html) (do not port verbatim).

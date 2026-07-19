@@ -19,6 +19,39 @@
   cursor: none;
 }
 
+.layerSelect {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.marquee {
+  position: absolute;
+  border: 1.5px dashed #c2455f;
+  background: rgba(194, 69, 95, 0.08);
+  pointer-events: none;
+  z-index: 12;
+}
+
+.alignGuideV,
+.alignGuideH {
+  position: absolute;
+  pointer-events: none;
+  z-index: 6;
+  background: rgba(201, 149, 90, 0.55);
+}
+
+.alignGuideV {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.alignGuideH {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
 .snapGuides {
   position: absolute;
   z-index: 7;
