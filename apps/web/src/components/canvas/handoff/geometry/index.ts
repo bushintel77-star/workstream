@@ -5,6 +5,7 @@ export * from "./snap";
 export * from "./drafting";
 export * from "./siteScheduleDisplay";
 export * from "./workableCanvas";
+export * from "./surveyCorridor";
 export * from "./elevationLabels";
 export * from "./geoToPct";
 export * from "./reprojectToBoundary";

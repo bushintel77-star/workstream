@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { SpotLevel } from "../../studioCatalog";
 import type { LayerOpacity } from "../../state/studioTypes";
 import type { PctPoint } from "../../geometry";
+import { nearSurveyRingStart } from "../../geometry/surveyCorridor";
 import type { StudioTool } from "../../studioCatalog";
 import css from "./surveyAnnotations.module.css";
 
@@ -12,6 +13,7 @@ type Props = {
   tool: StudioTool;
   levels: SpotLevel[];
   services: PctPoint[][];
+  easements?: PctPoint[][];
   scaleM: number;
   darkOn: boolean;
   layerOpacity: LayerOpacity;
@@ -24,12 +26,16 @@ type Props = {
  * Survey CAD annotations — spot levels, service/easement traces, two-point
  * scale calibration. Geometry stays in a stretch SVG; labels are fixed-px
  * HTML overlays so they never stretch with the board aspect ratio.
+ *
+ * Servc tool honesty: 2 pts → service corridor; ≥3 pts (Enter or click
+ * near start) → easement hatch ring persisted on site_frame.
  */
 export function SurveyAnnotationLayer({
   active,
   tool,
   levels,
   services,
+  easements = [],
   scaleM,
   darkOn,
   layerOpacity,
@@ -107,6 +113,15 @@ export function SurveyAnnotationLayer({
           return;
         }
         if (tool === "service") {
+          if (
+            drawService &&
+            drawService.length >= 2 &&
+            nearSurveyRingStart(drawService, p)
+          ) {
+            onCommitService(drawService);
+            setDrawService(null);
+            return;
+          }
           setDrawService((prev) => (prev ? [...prev, p] : [p]));
           return;
         }
@@ -151,6 +166,26 @@ export function SurveyAnnotationLayer({
             ))}
           </g>
         ))}
+
+        {easements
+          .filter((r) => r.length >= 3)
+          .map((ring, i) => (
+            <g
+              key={`ease${i}`}
+              opacity={councilOp}
+              style={{ pointerEvents: "none" }}
+              data-testid="survey-easement-ring"
+            >
+              <polygon
+                points={ring.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                stroke="#57534E"
+                strokeWidth={0.3}
+                strokeDasharray="1.2 0.8"
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
+          ))}
 
         {calibPts.length > 0 ? (
           <g style={{ pointerEvents: "none" }}>
@@ -236,7 +271,23 @@ export function SurveyAnnotationLayer({
               opacity: councilOp,
             }}
           >
-            Service / easement
+            {s.length >= 3 ? "Easement" : "Service"}
+          </span>
+        ) : null,
+      )}
+
+      {easements.map((ring, i) =>
+        ring.length >= 3 ? (
+          <span
+            key={`easelab${i}`}
+            className={css.serviceLabel}
+            style={{
+              left: `${ring[0]!.x}%`,
+              top: `${ring[0]!.y}%`,
+              opacity: councilOp,
+            }}
+          >
+            Easement
           </span>
         ) : null,
       )}
@@ -279,8 +330,10 @@ export function SurveyAnnotationLayer({
       })}
 
       {tool === "service" && drawService ? (
-        <p className={css.hint}>
-          Service trace · {drawService.length} pts · Enter to finish · Esc cancel
+        <p className={css.hint} data-testid="survey-service-hint">
+          {drawService.length >= 3
+            ? `Easement hatch · ${drawService.length} pts · Enter or click start to finish · Esc cancel`
+            : `Service / easement · ${drawService.length} pts · 2 pts = service · ≥3 = easement · Enter finish`}
         </p>
       ) : null}
       {tool === "level" ? (

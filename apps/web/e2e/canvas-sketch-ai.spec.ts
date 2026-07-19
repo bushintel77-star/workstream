@@ -83,4 +83,34 @@ test.describe("Canvas sketch AI", () => {
         .or(page.getByTestId("studio-ghost").first()),
     ).toBeVisible({ timeout: 25_000 });
   });
+
+  test("A / Enter accepts a pending ghost onto the board", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createSurveyProject(request);
+
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(page.getByTestId("cad-plan-board")).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-scan-ghosts").click();
+    await expect(
+      page
+        .getByTestId("cad-ghost-review")
+        .or(page.getByTestId("studio-ghost").first()),
+    ).toBeVisible({ timeout: 25_000 });
+
+    const before = await page.getByTestId("studio-ghost").count();
+    if (before === 0) {
+      test.skip();
+      return;
+    }
+    await page.keyboard.press("a");
+    await expect
+      .poll(async () => page.getByTestId("studio-ghost").count())
+      .toBeLessThan(before);
+  });
 });

@@ -10,17 +10,29 @@ type Props = {
   onPick: (idx: number) => void;
 };
 
+/**
+ * Demo lot presets for the handoff board — not the live project list.
+ * Switching resets geometry to a canned seed (Wrights / etc.).
+ */
 export function SiteSwitcher({ open, siteIdx, onClose, onPick }: Props) {
   if (!open) return null;
 
   return (
-    <div className={css.panel} data-testid="sites-popover" role="dialog" aria-label="Sites">
+    <div
+      className={css.panel}
+      data-testid="sites-popover"
+      role="dialog"
+      aria-label="Demo lot presets"
+    >
       <div className={css.head}>
-        <p className={css.kicker}>Sites</p>
+        <p className={css.kicker}>Demo lots</p>
         <button type="button" className={css.close} onClick={onClose}>
           Close
         </button>
       </div>
+      <p className={css.note}>
+        Preset survey seeds for drafting demos — not your project list.
+      </p>
       <ul className={css.list}>
         {STUDIO_SITES.map((site, i) => (
           <li key={site.addr}>

@@ -49,6 +49,8 @@ type Input = {
   foundationCleanse?: boolean;
   /** Quiet Cad when unverified AI ghosts are pending */
   pendingGhosts?: number;
+  /** Operator opted into sun/shade mesh — surface the time scrubber. */
+  shadeOn?: boolean;
 };
 
 const DRAWING_TOOLS: StudioTool[] = ["trace", "edit", "add", "measure"];
@@ -66,6 +68,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     clientView,
     foundationCleanse = false,
     pendingGhosts = 0,
+    shadeOn = false,
   } = input;
   const drawingHot = DRAWING_TOOLS.includes(tool);
   const draftCrowded = pendingGhosts > 0;
@@ -110,6 +113,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const plan =
     mode !== "elevation" && mode !== "quote" && mode !== "share";
   const cadLike = mode === "cad" || mode === "elevation";
+  /** Sun scrubber only when shade mesh is on — otherwise stays off the plane. */
+  const sunScrubber = shadeOn && plan && !draftCrowded;
 
   return {
     utilityDrawer: cadLike && !draftCrowded,
@@ -118,7 +123,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     horizon: false,
     volumeIsolith: false,
     tradeMargin: false,
-    sunGrowth: false,
+    sunGrowth: sunScrubber,
     aiCoach: false,
     ambientRibbon: plan,
     selectionRing: false,

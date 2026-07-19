@@ -36,6 +36,8 @@ import {
   type StudioTool,
 } from "../studioCatalog";
 import type { PaperSize, PctPoint } from "../geometry";
+import { classifySurveyCorridor } from "../geometry/surveyCorridor";
+import { pointInPolygon } from "../geometry/polygon";
 import { markStaleGhostsNearEdit } from "./staleGhosts";
 import {
   canvasToStrokes,
@@ -155,8 +157,10 @@ type Ui = {
   assistReply: string | null;
   /** Right-hand utility drawer sheet: compliance | bom | closed. */
   utilityPanel: "compliance" | "bom" | null;
-  /** Brief setback / TPZ tip after a preemptive snap. */
+  /** Brief setback / TPZ / easement tip after a preemptive snap. */
   councilTip: string | null;
+  /** Authored DBH (m) for next existing-tree placement — drives AS 4970 TPZ. */
+  existDbhM: number;
   /**
    * Fit-sheet architectural scale denominator (1:N).
    * Snaps to [50, 100, 200, 250, 500] — canvas is the print sheet.
@@ -338,6 +342,7 @@ function initialState(opts: {
       assistReply: null,
       utilityPanel: null,
       councilTip: null,
+      existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       sheetScaleDenom: 100,
       boardWidthM: null,
       parchmentPeel: 0.42,
@@ -715,6 +720,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
           py = snapped.y;
           if (snapped.snapped) tip = snapped.codeHint;
         }
+        const inEasement = (snap.easements ?? []).some(
+          (ring) => ring.length >= 3 && pointInPolygon({ x: px, y: py }, ring),
+        );
+        if (inEasement) {
+          tip =
+            "Inside easement hatch — confirm title / council before excavation";
+        }
         const scale = Math.max(
           0.45,
           Math.min(1.25, candidate.canopySpreadM / 5),
@@ -810,16 +822,17 @@ export function useStudioState(opts: UseStudioStateOpts) {
           py = snapped.y;
           if (snapped.snapped) tip = snapped.codeHint;
         }
+        const inEasement = (snap.easements ?? []).some(
+          (ring) => ring.length >= 3 && pointInPolygon({ x: px, y: py }, ring),
+        );
+        if (inEasement) {
+          tip =
+            "Inside easement hatch — confirm title / council before excavation";
+        }
         let dbhM: number | undefined;
         if (armed === "exist") {
-          const raw = window.prompt(
-            "Existing tree DBH (m) — drives AS 4970 TPZ",
-            String(BY_TYPE.exist.dbhM ?? 0.45),
-          );
-          if (raw != null) {
-            const n = Number.parseFloat(raw);
-            if (Number.isFinite(n) && n > 0) dbhM = n;
-          }
+          const n = state.ui.existDbhM;
+          if (Number.isFinite(n) && n > 0) dbhM = n;
         }
         const id = crypto.randomUUID();
         const item: StudioItem = {
@@ -868,6 +881,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi,
       state.doc.items,
       state.ui.armed,
+      state.ui.existDbhM,
       state.ui.foundationCleanse,
       state.ui.setbackOn,
       state.ui.sunMin,
@@ -1526,13 +1540,24 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const commitService = useCallback(
     (ring: PctPoint[]) => {
-      if (ring.length < 2) return;
-      mutate((snap) => ({
-        snap: {
-          ...snap,
-          services: [...(snap.services ?? []), ring],
-        },
-      }));
+      const classified = classifySurveyCorridor(ring);
+      if (!classified) return;
+      mutate((snap) => {
+        if (classified.kind === "easement") {
+          return {
+            snap: {
+              ...snap,
+              easements: [...(snap.easements ?? []), classified.ring],
+            },
+          };
+        }
+        return {
+          snap: {
+            ...snap,
+            services: [...(snap.services ?? []), classified.ring],
+          },
+        };
+      });
     },
     [mutate],
   );

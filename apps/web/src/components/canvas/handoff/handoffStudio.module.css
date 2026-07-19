@@ -1013,6 +1013,34 @@
   height: auto;
 }
 
+.dbhField {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(255, 255, 255, 0.55);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: #44403c;
+}
+
+.dbhField input {
+  width: 3.4rem;
+  height: 24px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  color: #1c1917;
+  text-align: right;
+}
+
+.dbhField input:focus {
+  outline: none;
+}
+
 .elev {
   position: absolute;
   inset: 0;
@@ -1100,5 +1128,19 @@
   .sun,
   .bom {
     width: min(268px, calc(100% - 28px));
+  }
+}
+
+/** Fit sheet print — hide chrome; keep the working drawing plane. */
+@media print {
+  .root {
+    position: static;
+    background: #fff !important;
+  }
+
+  .header,
+  .councilTip,
+  .addStrip {
+    display: none !important;
   }
 }

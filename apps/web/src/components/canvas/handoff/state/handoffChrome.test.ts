@@ -40,6 +40,22 @@ describe("resolveHandoffChrome", () => {
     expect(c.draftSurface).toBe(false);
   });
 
+  it("surfaces sun scrubber when shade mesh is on", () => {
+    const c = resolveHandoffChrome({ ...base, mode: "cad", shadeOn: true });
+    expect(c.sunGrowth).toBe(true);
+    expect(c.aiCoach).toBe(false);
+  });
+
+  it("keeps sun scrubber off Fit sheet even with shade mesh", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      shadeOn: true,
+      frameOn: true,
+    });
+    expect(c.sunGrowth).toBe(false);
+  });
+
   it("opens draft surface only while ghosts are pending", () => {
     const c = resolveHandoffChrome({
       ...base,

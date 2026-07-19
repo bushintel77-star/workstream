@@ -41,6 +41,10 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
         survey ?? undefined,
         project.address,
       );
+      const frame = canvas?.site_frame;
+      const easementCount =
+        frame?.easements?.filter((r) => r.length >= 3).length ?? 0;
+      const serviceCount = frame?.services?.length ?? 0;
 
       const result = await runStudioAssist({
         project: { name: project.address, address: project.address },
@@ -49,6 +53,9 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
           height_m: span?.height_m,
           lat: project.lat ?? undefined,
           lng: project.lng ?? undefined,
+          easement_count: easementCount,
+          service_count: serviceCount,
+          scale_m: span?.width_m,
         },
         canvasElementCount: canvas?.placements.length ?? 0,
         message: parsedBody.data.message,

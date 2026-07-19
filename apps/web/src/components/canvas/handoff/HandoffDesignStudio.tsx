@@ -287,6 +287,7 @@ export function HandoffDesignStudio({
     clientView: ui.clientView,
     foundationCleanse: ui.foundationCleanse,
     pendingGhosts: ai.pendingCount,
+    shadeOn: ui.shadeOn,
   });
   const titleLocked =
     ui.foundationCleanse || ui.boundarySource === "vicmap";
@@ -551,6 +552,25 @@ export function HandoffDesignStudio({
               <path d="M9.5 2.5v11" stroke="currentColor" strokeWidth="1.25" />
             </svg>
           </button>
+          {ui.frameOn ? (
+            <button
+              type="button"
+              className={css.iconBtn}
+              data-testid="fit-sheet-print"
+              aria-label="Print fit sheet"
+              title="Print fit sheet"
+              onClick={() => window.print()}
+            >
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path
+                  d="M4 6V3.5h8V6M4 11.5h8V14H4v-2.5ZM3.5 6H12.5a1 1 0 0 1 1 1v3.5H2.5V7a1 1 0 0 1 1-1Z"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          ) : null}
           {!ui.focusOn && !ui.clientView ? (
             <>
               <button
@@ -972,6 +992,7 @@ export function HandoffDesignStudio({
                   tool={ui.tool}
                   levels={studio.levels}
                   services={studio.services}
+                  easements={studio.easements}
                   scaleM={scaleM}
                   darkOn={ui.darkOn}
                   layerOpacity={ui.layerOpacity}
@@ -1005,6 +1026,7 @@ export function HandoffDesignStudio({
                     items={studio.items}
                     levels={studio.levels}
                     services={studio.services}
+                    easements={studio.easements}
                   />
                 ) : null}
               </>
@@ -1152,6 +1174,25 @@ export function HandoffDesignStudio({
                   {BY_TYPE[t].tag}
                 </button>
               ))}
+            {ui.armed === "exist" ? (
+              <label className={css.dbhField} data-testid="exist-dbh-field">
+                <span>DBH m</span>
+                <input
+                  type="number"
+                  min={0.05}
+                  max={2}
+                  step={0.01}
+                  inputMode="decimal"
+                  value={ui.existDbhM}
+                  aria-label="Existing tree DBH in metres"
+                  onChange={(e) => {
+                    const n = Number.parseFloat(e.target.value);
+                    if (!Number.isFinite(n) || n <= 0) return;
+                    studio.setUi({ existDbhM: Math.min(2, Math.max(0.05, n)) });
+                  }}
+                />
+              </label>
+            ) : null}
           </div>
         ) : null}
 
@@ -1210,7 +1251,7 @@ export function HandoffDesignStudio({
           </>
         ) : null}
 
-        {draftSurface && ui.councilTip ? (
+        {!ui.focusOn && !ui.clientView && !ui.frameOn && ui.councilTip ? (
           <div className={css.councilTip} data-testid="council-setback-tip">
             {ui.councilTip}
           </div>

@@ -329,7 +329,13 @@ export const TOOLS = [
 export const SURVEY_TOOLS = [
   { id: "calib", label: "Calib", icon: "⌖", title: "Calibrate scale — two points with a known distance" },
   { id: "level", label: "Level", icon: "△", title: "Spot level — click a point, enter RL" },
-  { id: "service", label: "Servc", icon: "〜", title: "Trace a service / easement — Enter to finish" },
+  {
+    id: "service",
+    label: "Servc",
+    icon: "〜",
+    title:
+      "Trace a service line (2 pts) or easement hatch (≥3 pts + Enter) — Esc cancel",
+  },
 ] as const;
 
 export type StudioTool =

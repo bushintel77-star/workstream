@@ -49,11 +49,24 @@ export function LiveBomDock({
   const [advanced, setAdvanced] = useState(false);
   const primary = estimate.lines.filter((l) => l.tier === "primary");
   const shadowed = estimate.lines.filter((l) => l.tier !== "primary");
-  const horizonChips = estimate.horizon.filter(
-    (h) =>
-      !mitigated[h.id] &&
-      (h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer"),
-  );
+  const horizonChips = estimate.horizon.filter((h) => !mitigated[h.id]);
+
+  const horizonLabel = (kind: (typeof horizonChips)[number]["kind"]) => {
+    switch (kind) {
+      case "drainage":
+        return "Drainage tip";
+      case "tpz":
+        return "Tree protection";
+      case "engineer":
+        return "Engineer check";
+      case "spoil":
+        return "Spoil / tipper";
+      case "assembly":
+        return "Assembly note";
+      default:
+        return "Horizon tip";
+    }
+  };
 
   return (
     <aside
@@ -124,21 +137,19 @@ export function LiveBomDock({
         </div>
       ) : null}
       {horizonChips.length > 0 ? (
-        <div className={css.chips}>
+        <div className={css.chips} data-testid="live-bom-horizon">
+          <p className={css.shadowHead}>Preemptive horizon</p>
           {horizonChips.map((m) => (
             <button
               key={m.id}
               type="button"
               className={css.chip}
               data-on="false"
+              data-testid={`live-bom-horizon-${m.kind}`}
               title={m.detail}
               onClick={() => onMitigate(m.id)}
             >
-              {m.kind === "drainage"
-                ? "Drainage tip"
-                : m.kind === "tpz"
-                  ? "Tree protection"
-                  : "Engineer check"}
+              {horizonLabel(m.kind)}
             </button>
           ))}
         </div>
