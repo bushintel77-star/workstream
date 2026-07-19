@@ -63,42 +63,38 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const draftCrowded = pendingGhosts > 0;
 
   if (foundationCleanse) {
-    // CAD title overlay on top — AI intelligence chrome stays available under
+    // CAD title overlay — keep coach; hide trade chrome that crowds the plate
     return {
       utilityDrawer: false,
       liveBom: false,
-      horizon: mode === "cad" && !drawingHot,
-      volumeIsolith: mode === "cad",
-      tradeMargin: mode === "cad",
+      horizon: false,
+      volumeIsolith: false,
+      tradeMargin: false,
       sunGrowth: false,
-      aiCoach: true,
-      ambientRibbon: !frameOn && !clientView,
+      aiCoach: !frameOn && !focusOn && !clientView,
+      ambientRibbon: !frameOn && !clientView && !focusOn,
       selectionRing: false,
-      drawTools: !frameOn && !clientView && mode !== "quote" && mode !== "share",
-      collapseUtility: drawingHot,
-      floraRing: true,
+      drawTools: !frameOn && !clientView && !focusOn && mode !== "quote" && mode !== "share",
+      collapseUtility: true,
+      floraRing: !frameOn && !focusOn && !clientView,
     };
   }
 
+  // Fit sheet / focus / client — paper-first composition, no floating cost HUDs
   if (focusOn || clientView || frameOn) {
     return {
       utilityDrawer: false,
       liveBom: false,
       horizon: false,
-      // Fit sheet keeps Isolith / trade margin; cost dock stays frozen
-      volumeIsolith: mode === "cad" && frameOn && !clientView && !focusOn,
-      tradeMargin: mode === "cad" && frameOn && !clientView && !focusOn,
+      volumeIsolith: false,
+      tradeMargin: false,
       sunGrowth: false,
       aiCoach: false,
-      ambientRibbon: !frameOn && !clientView,
+      ambientRibbon: false,
       selectionRing: false,
-      drawTools:
-        !frameOn &&
-        !clientView &&
-        mode !== "quote" &&
-        mode !== "share",
+      drawTools: false,
       collapseUtility: true,
-      floraRing: !frameOn && !clientView && !focusOn,
+      floraRing: false,
     };
   }
 

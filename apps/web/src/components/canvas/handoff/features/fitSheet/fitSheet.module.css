@@ -37,39 +37,32 @@
 
 .frameInner {
   position: absolute;
-  inset: 8px;
+  inset: var(--ws-sheet-margin, 12px);
   border: 1px dashed rgba(36, 19, 24, 0.2);
   box-sizing: border-box;
+  pointer-events: none;
 }
 
 .scaleHud {
   position: absolute;
-  left: 12px;
-  bottom: 10px;
+  left: var(--ws-sheet-margin, 12px);
+  bottom: var(--ws-sheet-margin, 12px);
   display: flex;
   align-items: baseline;
   gap: 8px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
+  font-size: var(--ws-type-hud, 11px);
   font-weight: 700;
   color: #241318;
-  background: rgba(250, 246, 242, 0.92);
+  background: rgba(250, 246, 242, 0.94);
   padding: 4px 10px;
   border-radius: 8px;
   border: 1px solid rgba(36, 19, 24, 0.15);
-}
-
-.scaleHint {
-  font-size: 8.5px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #7a5560;
+  z-index: 1;
 }
 
 .panel {
   position: absolute;
-  width: 262px;
   display: flex;
   flex-direction: column;
   background: #faf6f2;

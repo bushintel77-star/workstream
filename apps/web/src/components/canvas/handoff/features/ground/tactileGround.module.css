@@ -120,9 +120,9 @@
 }
 
 .edgeScale[data-edge="left"] {
-  left: 6px;
-  top: 0;
-  bottom: 0;
+  left: var(--ws-safe-left, 64px);
+  top: var(--ws-safe-top, 48px);
+  bottom: var(--ws-safe-bottom, 48px);
   width: 36px;
 }
 
@@ -134,9 +134,9 @@
 }
 
 .edgeScale[data-edge="bottom"] {
-  left: 0;
-  right: 0;
-  bottom: 6px;
+  left: var(--ws-safe-left, 64px);
+  right: var(--ws-safe-right, 16px);
+  bottom: var(--ws-safe-bottom, 48px);
   height: 16px;
 }
 
@@ -147,20 +147,22 @@
   white-space: nowrap;
 }
 
+/* Corner safe slot — never centre of the lot (CadPlan owns geometry). */
 .compass {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 54px;
-  height: 54px;
-  margin: -27px 0 0 -27px;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  top: calc(var(--ws-safe-top, 48px) + 4px);
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid rgba(90, 62, 42, 0.18);
-  background: rgba(255, 246, 238, 0.22);
+  background: rgba(255, 246, 238, 0.55);
   display: grid;
   place-items: center;
-  opacity: calc(0.25 + var(--parchment-op) * 0.35);
+  opacity: calc(0.35 + var(--parchment-op) * 0.3);
   transition: opacity 420ms ease;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .phase_aerial .compass {
@@ -192,21 +194,21 @@
 
 .siteCue {
   position: absolute;
-  left: 50%;
-  bottom: 28px;
-  transform: translateX(-50%);
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 48px) + 28px);
   margin: 0;
   padding: 4px 10px;
   border-radius: 8px;
   background: rgba(255, 246, 238, 0.55);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(74, 48, 40, 0.5);
   white-space: nowrap;
   opacity: calc(var(--parchment-op) * 0.9);
   transition: opacity 420ms ease;
+  pointer-events: none;
 }
 
 .phase_aerial .siteCue {
@@ -230,17 +232,18 @@
 
 .scaleChip {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
+  right: var(--ws-safe-right, 16px);
+  bottom: var(--ws-safe-bottom, 48px);
   margin: 0;
   padding: 3px 8px;
   border-radius: 7px;
   background: rgba(255, 246, 238, 0.55);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--ws-type-kicker, 8px);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: rgba(74, 48, 40, 0.5);
+  pointer-events: none;
   opacity: calc(0.4 + var(--parchment-op) * 0.5);
 }
 

@@ -221,13 +221,19 @@ export function CadPlanBoard({
   const drawnLotM2 = polygonAreaM2(boundary, scaleM);
   const areaLabelM2 =
     lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
+  /** Compact offsets so Fit-sheet dims clear the title band / plot inset. */
   const outsideDims = frameOn
     ? [
-        ...buildOutsideDims(boundarySegs, boundary),
+        ...buildOutsideDims(boundarySegs, boundary, {
+          offsetPct: 1.6,
+          labelExtraPct: 1.0,
+          tickPct: 0.9,
+        }),
         ...(building.length >= 3
           ? buildOutsideDims(buildingSegs, building, {
-              offsetPct: 1.8,
-              labelExtraPct: 1.2,
+              offsetPct: 1.2,
+              labelExtraPct: 0.85,
+              tickPct: 0.8,
             })
           : []),
       ]

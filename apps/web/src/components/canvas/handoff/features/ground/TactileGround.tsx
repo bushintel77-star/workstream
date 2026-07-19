@@ -25,6 +25,11 @@ type Props = {
   address?: string | null;
   /** CadPlan owns the street cue in title mode. */
   suppressSiteCue?: boolean;
+  /**
+   * Fit sheet / quiet plate — hide compass, scale chip, and edge ticks
+   * (Fit overlay owns N + scale).
+   */
+  quietChrome?: boolean;
 };
 
 /**
@@ -44,6 +49,7 @@ export function TactileGround({
   siteLabel = null,
   address = null,
   suppressSiteCue = false,
+  quietChrome = false,
 }: Props) {
   const scaleM = boardScaleM(sheetScaleDenom);
   const visibleM = scaleM / Math.max(0.4, zoom);
@@ -179,31 +185,32 @@ export function TactileGround({
         ))}
       </svg>
 
-      <div className={css.edgeScale} data-edge="left">
-        {edgeLabels.map((l) => (
-          <span key={`L${l.pct}`} style={{ top: `${l.pct}%` }}>
-            {l.label}
-          </span>
-        ))}
-      </div>
-      <div className={css.edgeScale} data-edge="bottom">
-        {edgeLabels.map((l) => (
-          <span key={`B${l.pct}`} style={{ left: `${l.pct}%` }}>
-            {l.label}
-          </span>
-        ))}
-      </div>
-
-      <div className={css.compass} title="True north">
-        <span className={css.compassN}>N</span>
-        <span className={css.compassRose} />
-      </div>
-
-      {cue ? <p className={css.siteCue}>{cue}</p> : null}
-
-      <p className={css.scaleChip} data-testid="ground-metric-step">
-        {stepM} m · 1:{sheetScaleDenom}
-      </p>
+      {!quietChrome ? (
+        <>
+          <div className={css.edgeScale} data-edge="left">
+            {edgeLabels.map((l) => (
+              <span key={`L${l.pct}`} style={{ top: `${l.pct}%` }}>
+                {l.label}
+              </span>
+            ))}
+          </div>
+          <div className={css.edgeScale} data-edge="bottom">
+            {edgeLabels.map((l) => (
+              <span key={`B${l.pct}`} style={{ left: `${l.pct}%` }}>
+                {l.label}
+              </span>
+            ))}
+          </div>
+          <div className={css.compass} title="True north">
+            <span className={css.compassN}>N</span>
+            <span className={css.compassRose} />
+          </div>
+          {cue ? <p className={css.siteCue}>{cue}</p> : null}
+          <p className={css.scaleChip} data-testid="ground-metric-step">
+            {stepM} m · 1:{sheetScaleDenom}
+          </p>
+        </>
+      ) : null}
     </div>
   );
 }

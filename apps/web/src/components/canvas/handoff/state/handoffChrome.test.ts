@@ -82,7 +82,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.aiCoach).toBe(false);
   });
 
-  it("Fit sheet freezes floating cost chrome but keeps Isolith", () => {
+  it("Fit sheet is paper-only — no Isolith, trade, or ribbon", () => {
     const c = resolveHandoffChrome({
       ...base,
       mode: "cad",
@@ -91,8 +91,20 @@ describe("resolveHandoffChrome", () => {
     expect(c.utilityDrawer).toBe(false);
     expect(c.horizon).toBe(false);
     expect(c.aiCoach).toBe(false);
-    expect(c.volumeIsolith).toBe(true);
-    expect(c.tradeMargin).toBe(true);
+    expect(c.volumeIsolith).toBe(false);
+    expect(c.tradeMargin).toBe(false);
+    expect(c.ambientRibbon).toBe(false);
+  });
+
+  it("Focus mode clears ambient chrome for a single composition", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      focusOn: true,
+    });
+    expect(c.ambientRibbon).toBe(false);
+    expect(c.volumeIsolith).toBe(false);
+    expect(c.floraRing).toBe(false);
   });
 
   it("Stage 1 keeps AI coach / flora under CAD title overlay", () => {
@@ -107,14 +119,14 @@ describe("resolveHandoffChrome", () => {
     expect(c.utilityDrawer).toBe(false);
   });
 
-  it("Stage 1 CAD keeps Isolith / trade margin", () => {
+  it("Stage 1 CAD hides Isolith / trade margin to clear the title plate", () => {
     const c = resolveHandoffChrome({
       ...base,
       mode: "cad",
       foundationCleanse: true,
     });
-    expect(c.volumeIsolith).toBe(true);
-    expect(c.tradeMargin).toBe(true);
+    expect(c.volumeIsolith).toBe(false);
+    expect(c.tradeMargin).toBe(false);
     expect(c.aiCoach).toBe(true);
   });
 });

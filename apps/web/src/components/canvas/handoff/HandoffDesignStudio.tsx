@@ -62,7 +62,11 @@ import {
   tradeTagForItem,
 } from "@workstream/domain";
 import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
-import { sheetBoxFor } from "./geometry";
+import {
+  plotBoxFor,
+  sheetBoxFor,
+  titlePanelWidth,
+} from "./geometry";
 import { lookupCadastralTitleAction } from "../../../app/actions";
 import css from "./handoffStudio.module.css";
 
@@ -661,9 +665,16 @@ export function HandoffDesignStudio({
               transform: `scale(${ui.zoom})`,
               ...(ui.frameOn
                 ? (() => {
-                    const box = sheetBoxFor(boardSize.w, boardSize.h, ui.paper);
+                    const sheet = sheetBoxFor(
+                      boardSize.w,
+                      boardSize.h,
+                      ui.paper,
+                    );
+                    const titleW = titlePanelWidth(sheet.boxW);
+                    const elevH = ui.sheetElevOn ? 56 * 2 + 34 : 0;
+                    const plot = plotBoxFor(sheet, { titleW, elevH });
                     return {
-                      clipPath: `inset(${box.boxTop}px ${Math.max(0, boardSize.w - box.boxLeft - box.boxW)}px ${Math.max(0, boardSize.h - box.boxTop - box.boxH)}px ${box.boxLeft}px)`,
+                      clipPath: `inset(${plot.boxTop}px ${Math.max(0, boardSize.w - plot.boxLeft - plot.boxW)}px ${Math.max(0, boardSize.h - plot.boxTop - plot.boxH)}px ${plot.boxLeft}px)`,
                     };
                   })()
                 : null),
@@ -796,32 +807,14 @@ export function HandoffDesignStudio({
                 onDismiss={studio.dismissFlora}
               />
             ) : null}
-            {ui.foundationCleanse ? (
+            {ui.foundationCleanse && !ui.frameOn ? (
               <div
                 className={css.foundationBanner}
                 data-testid="foundation-cleanse-banner"
               >
-                <span>
-                  Stage 1 CAD ·{" "}
-                  {ui.titleBoundaryLocked ? "title locked" : "drag + snap"} · AI
-                  under · 1:{ui.sheetScaleDenom}
-                </span>
-                <button
-                  type="button"
-                  className={css.foundationExit}
-                  onClick={() =>
-                    studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked)
-                  }
-                >
-                  {ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
-                </button>
-                <button
-                  type="button"
-                  className={css.foundationExit}
-                  onClick={() => studio.exitStage1Foundation()}
-                >
-                  Exit Stage 1
-                </button>
+                Stage 1 ·{" "}
+                {ui.titleBoundaryLocked ? "title locked" : "drag + snap"} · 1:
+                {ui.sheetScaleDenom}
               </div>
             ) : null}
             {chrome.horizon ? (

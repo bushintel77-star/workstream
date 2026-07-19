@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { ArchitecturalTitleBlock } from "@workstream/domain";
 import {
   buildSiteSchedule,
-  edgeSegments,
   resolveFitSheetAreas,
+  SHEET_INNER_MARGIN,
+  SHEET_PANEL_GAP,
   sheetBoxFor,
+  titlePanelWidth,
   type PaperSize,
   type PctPoint,
 } from "../../geometry";
@@ -210,18 +212,11 @@ export function FitSheetOverlay({
     [schedule, titleBlock?.lotAreaM2],
   );
 
-  const boundarySegs = useMemo(
-    () => edgeSegments(boundary, "B", scaleM),
-    [boundary, scaleM],
-  );
-  const footprintSegs = useMemo(
-    () => edgeSegments(building, "F", scaleM),
-    [building, scaleM],
-  );
-
   const legend = useMemo(() => legendLines(items, scaleM), [items, scaleM]);
-  const showPanel = box.boxW >= 420;
+  const panelW = titlePanelWidth(box.boxW);
+  const showPanel = panelW > 0;
   const scrimBot = Math.max(0, boardH - box.boxTop - box.boxH);
+  const inset = SHEET_INNER_MARGIN;
 
   const elevProfiles = useMemo(() => {
     if (!showElevations) return [];
@@ -232,10 +227,12 @@ export function FitSheetOverlay({
     ];
   }, [showElevations, boundary, building, items, scaleM]);
 
-  const elevPanelOn = elevProfiles.length > 0 && box.boxW >= 380;
+  const elevPanelOn = elevProfiles.length > 0 && box.boxW >= 280;
   const elevPanelW = Math.max(
-    160,
-    box.boxW - 32 - (showPanel ? 262 + 16 : 0),
+    140,
+    box.boxW -
+      inset * 2 -
+      (showPanel ? panelW + SHEET_PANEL_GAP : 0),
   );
   const elevPanelH = 56 * 2 + 34;
 
@@ -297,10 +294,12 @@ export function FitSheetOverlay({
           height: box.boxH,
         }}
       >
-        <div className={css.frameInner} />
+        <div
+          className={css.frameInner}
+          style={{ inset: inset }}
+        />
         <div className={css.scaleHud} data-testid="fit-sheet-scale">
           {scaleTxt}
-          <span className={css.scaleHint}>scroll to snap</span>
         </div>
       </div>
 
@@ -309,9 +308,10 @@ export function FitSheetOverlay({
           className={css.panel}
           data-testid="fit-sheet-schedule"
           style={{
-            left: box.boxLeft + box.boxW - 262 - 16,
-            top: box.boxTop + 16,
-            bottom: scrimBot + 16,
+            width: panelW,
+            left: box.boxLeft + box.boxW - panelW - inset,
+            top: box.boxTop + inset,
+            bottom: scrimBot + inset,
           }}
         >
           <div className={css.panelHead} data-testid="fit-sheet-title-block">
@@ -395,32 +395,7 @@ export function FitSheetOverlay({
             ) : null}
           </div>
 
-          <div className={css.section}>
-            <p className={css.kicker}>Boundary dims</p>
-            <div className={css.dimGrid}>
-              {boundarySegs.map((s) => (
-                <div key={s.key} className={css.dimRow}>
-                  <span className={css.dimKey}>{s.key}</span>
-                  <span>{s.lengthM.toFixed(2)} m</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {footprintSegs.length > 0 ? (
-            <div className={css.section}>
-              <p className={css.kicker}>Footprint dims</p>
-              <div className={css.dimGrid}>
-                {footprintSegs.map((s) => (
-                  <div key={s.key} className={css.dimRow}>
-                    <span className={css.dimKey}>{s.key}</span>
-                    <span>{s.lengthM.toFixed(2)} m</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
+          {/* On-canvas outside dims own B#/F# callouts — schedule keeps areas + legend. */}
           {legend.length > 0 ? (
             <div className={css.sectionGrow}>
               <p className={css.kicker}>Landscape legend</p>
@@ -459,8 +434,8 @@ export function FitSheetOverlay({
           className={css.elevStack}
           data-testid="fit-sheet-elevations"
           style={{
-            left: box.boxLeft + 16,
-            bottom: scrimBot + 16,
+            left: box.boxLeft + inset,
+            bottom: scrimBot + inset,
             width: elevPanelW,
             height: elevPanelH,
           }}

@@ -13,6 +13,20 @@
   --sds-node-mid: 6px;
   --sds-label-offset: 8px;
 
+  /* Sheet + chrome safe insets — keep CAD clear of HUDs */
+  --ws-sheet-pad: 24px;
+  --ws-sheet-margin: 12px;
+  --ws-title-w: 262px;
+  --ws-title-gap: 16px;
+  --ws-safe-left: 64px;
+  --ws-safe-top: 48px;
+  --ws-safe-right: 16px;
+  --ws-safe-bottom: 48px;
+  --ws-type-kicker: 8px;
+  --ws-type-dim: 9.5px;
+  --ws-type-hud: 11px;
+  --ws-type-title: 16px;
+
   position: fixed;
   inset: 0;
   display: flex;
@@ -259,38 +273,20 @@
 .foundationBanner {
   position: absolute;
   left: 50%;
-  top: 12px;
+  top: 10px;
   transform: translateX(-50%);
-  z-index: 26;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: min(520px, calc(100% - 32px));
-  padding: 8px 10px 8px 14px;
-  border: 1px solid rgba(28, 25, 23, 0.18);
+  z-index: 20;
+  max-width: min(360px, calc(100% - 48px));
+  padding: 6px 12px;
+  border: 1px solid rgba(28, 25, 23, 0.14);
   background: color-mix(in srgb, var(--sds-canvas-bg, #f7f4ef) 94%, #1c1917);
   color: #1c1917;
-  font-size: 12px;
+  font-size: var(--ws-type-hud, 11px);
   font-weight: 600;
   letter-spacing: 0.01em;
-  pointer-events: auto;
-}
-
-.foundationExit {
-  flex: none;
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid rgba(28, 25, 23, 0.28);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.foundationExit:hover {
-  background: rgba(28, 25, 23, 0.06);
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .zoomWorld {
@@ -313,14 +309,14 @@
 
 .aiStatusBar {
   position: absolute;
-  left: 72px;
-  top: 14px;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  top: 10px;
   z-index: 13;
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 34px;
-  max-width: min(440px, calc(100% - 320px));
+  min-height: 32px;
+  max-width: min(360px, calc(100% - 340px));
   padding: 0 12px;
   border-radius: 10px;
   border: 1px solid rgba(36, 19, 24, 0.1);
@@ -893,25 +889,28 @@
 
 .ghostPanel {
   position: absolute;
-  left: 72px;
-  top: 52px;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  top: calc(var(--ws-safe-top, 48px) + 4px);
   z-index: 22;
-  max-width: min(360px, calc(100% - 180px));
+  max-width: min(320px, calc(100% - 200px));
 }
 
+/* Bottom-centre strip — clears aiStatusBar / checklist top band. */
 .addStrip {
   position: absolute;
-  left: 72px;
-  top: 14px;
+  left: 50%;
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  transform: translateX(-50%);
   z-index: 14;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
-  max-width: min(420px, calc(100% - 300px));
-  padding: 8px;
+  max-width: min(520px, calc(100% - 160px));
+  padding: 8px 10px;
   border-radius: 12px;
   border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.92);
+  background: rgba(255, 246, 248, 0.94);
   backdrop-filter: blur(10px);
 }
 

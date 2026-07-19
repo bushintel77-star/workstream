@@ -1,8 +1,8 @@
 .root {
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 10px;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  right: var(--ws-safe-right, 16px);
+  bottom: 8px;
   z-index: 15;
   pointer-events: none;
   display: flex;
