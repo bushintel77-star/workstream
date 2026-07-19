@@ -13,6 +13,7 @@ type Props = {
   draftUnverified?: boolean;
   pendingGhosts?: number;
   onReviewGhosts?: () => void;
+  onShare?: () => void;
   onBack: () => void;
 };
 
@@ -32,6 +33,7 @@ export function QuoteSurface({
   draftUnverified = false,
   pendingGhosts = 0,
   onReviewGhosts,
+  onShare,
   onBack,
 }: Props) {
   const tier1 = isTier1WrightsTerrace(address);
@@ -81,6 +83,16 @@ export function QuoteSurface({
           <div className={css.ledger} data-testid="tier1-quote-ledger">
             <Tier1SavingsLedger variant="compact" showTarget />
           </div>
+        ) : null}
+        {!draftUnverified && onShare ? (
+          <button
+            type="button"
+            className={css.back}
+            data-testid="quote-go-share"
+            onClick={onShare}
+          >
+            Share with client →
+          </button>
         ) : null}
         <button type="button" className={css.back} onClick={onBack}>
           Back to CAD

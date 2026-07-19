@@ -324,6 +324,21 @@
   flex: none;
 }
 
+.savedTickPulse {
+  color: #7a5560;
+  animation: savePulse 1.2s ease-in-out infinite;
+}
+
+@keyframes savePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .rootFocus .board {
   margin: 0 4px 4px;
 }

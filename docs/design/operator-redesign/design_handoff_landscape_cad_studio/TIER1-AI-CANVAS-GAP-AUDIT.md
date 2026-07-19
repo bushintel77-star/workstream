@@ -190,11 +190,11 @@ Priorities are **product impact × Canvas-First / AI-first fit**. Stage 2 items 
 
 ### P0 — Close the live-mount honesty loop
 
-| ID | Gap | Why gold | Suggested move |
-|----|-----|----------|----------------|
-| P0.1 | Durable handoff → `DesignCanvas` / API persist | Tier-1 jobs cannot live in session memory | Wire mutate path → existing design save actions |
-| P0.2 | Share / portal unlock parity with SiteCanvas | Client confidence = product | Port quote-persisted unlock + honesty watermark |
-| P0.3 | AI draft gate on Share | Unverified ghosts must not look client-ready | Same gate as `QuoteSurface` |
+| ID | Gap | Why gold | Suggested move | Status |
+|----|-----|----------|----------------|--------|
+| P0.1 | Durable handoff → `DesignCanvas` / API persist | Tier-1 jobs cannot live in session memory | Wire mutate path → existing design save actions | **Done** — `canvasBridge` + debounced `saveDesignCanvasAction` |
+| P0.2 | Share / portal unlock parity with SiteCanvas | Client confidence = product | Port quote-persisted unlock + honesty watermark | **Done** — `ShareSurface` + `cadQuoteAction` / `copyPortalLinkAction` |
+| P0.3 | AI draft gate on Share | Unverified ghosts must not look client-ready | Same gate as `QuoteSurface` | **Done** — `share-ai-draft-gate` |
 
 ### P1 — Invisible engine polish
 

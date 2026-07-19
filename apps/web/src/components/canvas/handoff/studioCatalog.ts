@@ -309,6 +309,7 @@ export const MODE_TABS = [
   "cad",
   "elevation",
   "quote",
+  "share",
 ] as const;
 
 export type StudioMode = (typeof MODE_TABS)[number];

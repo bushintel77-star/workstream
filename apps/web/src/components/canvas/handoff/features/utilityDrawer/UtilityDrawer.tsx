@@ -23,6 +23,7 @@ type Props = {
   onOpenPanel: (panel: UtilityPanel) => void;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
+  settling?: boolean;
 };
 
 /**
@@ -42,6 +43,7 @@ export function UtilityDrawer({
   onOpenPanel,
   onMitigate,
   onOpenQuote,
+  settling = false,
 }: Props) {
   const compliancePass = {
     pass: passCount,
@@ -128,6 +130,7 @@ export function UtilityDrawer({
                 mitigated={mitigated}
                 onMitigate={onMitigate}
                 onOpenQuote={onOpenQuote}
+                settling={settling}
                 embedded
               />
             )}

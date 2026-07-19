@@ -50,6 +50,15 @@ describe("resolveHandoffChrome", () => {
     expect(c.horizon).toBe(false);
   });
 
+  it("Share hides Live BOM and draw tools", () => {
+    const c = resolveHandoffChrome({ ...base, mode: "share" });
+    expect(c.liveBom).toBe(false);
+    expect(c.utilityDrawer).toBe(false);
+    expect(c.drawTools).toBe(false);
+    expect(c.horizon).toBe(false);
+    expect(c.aiCoach).toBe(false);
+  });
+
   it("Fit sheet freezes floating cost chrome", () => {
     const c = resolveHandoffChrome({
       ...base,

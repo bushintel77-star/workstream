@@ -1,7 +1,12 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
-import { getProject, getSurvey } from "../../../lib/api";
+import {
+  getDesignCanvas,
+  getProject,
+  getSurvey,
+  listOutputs,
+} from "../../../lib/api";
 import { requireSignedIn } from "../../../lib/auth";
 import type { StudioMode } from "../../../components/canvas/handoff/studioCatalog";
 
@@ -14,7 +19,8 @@ function parseMode(raw: string | string[] | undefined): StudioMode {
     v === "sketch" ||
     v === "cad" ||
     v === "elevation" ||
-    v === "quote"
+    v === "quote" ||
+    v === "share"
   ) {
     return v;
   }
@@ -31,12 +37,16 @@ export default async function ProjectCanvasPage({
   await requireSignedIn();
   const { id } = await params;
   const sp = await searchParams;
-  const [project, survey] = await Promise.all([
+  const [project, survey, canvas, outputs] = await Promise.all([
     getProject(id),
     getSurvey(id).catch(() => null),
+    getDesignCanvas(id).catch(() => null),
+    listOutputs(id).catch(() => []),
   ]);
 
   if (!project) notFound();
+
+  const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
 
   return (
     <Suspense fallback={null}>
@@ -48,6 +58,10 @@ export default async function ProjectCanvasPage({
           survey?.garden_area_m2 ?? survey?.lot_area_m2 ?? 230.82
         }
         initialMode={parseMode(sp.mode)}
+        initialPlacements={canvas?.placements ?? []}
+        initialStrokes={canvas?.strokes ?? []}
+        hasQuote={Boolean(quoteOut)}
+        quotePortalUri={quoteOut?.uri ?? null}
       />
     </Suspense>
   );

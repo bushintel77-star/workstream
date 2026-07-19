@@ -10,6 +10,8 @@ import {
   type StudioComplianceItem,
   type StudioHorizonCard,
 } from "@workstream/domain";
+import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
+import { saveDesignCanvasAction } from "../../../../app/actions";
 import {
   BY_TYPE,
   STUDIO_SITES,
@@ -22,6 +24,13 @@ import {
 } from "../studioCatalog";
 import type { PaperSize, PctPoint } from "../geometry";
 import { markStaleGhostsNearEdit } from "./staleGhosts";
+import {
+  canvasToStrokes,
+  itemsToPlacements,
+  placementsToItems,
+  strokesToCanvas,
+  withContractIds,
+} from "./canvasBridge";
 import {
   acceptAllProposals,
   acceptProposal,
@@ -130,6 +139,8 @@ type Ui = {
    * 1 = soft drafting table). Canvas-first: peel, don't void.
    */
   parchmentPeel: number;
+  /** Durable DesignCanvas autosave status. */
+  saveStatus: "idle" | "saving" | "saved" | "error";
 };
 
 type State = {
@@ -147,7 +158,12 @@ type Action =
   | { type: "setMode"; mode: StudioMode }
   | { type: "setLayerOpacity"; key: LayerKey; value: number }
   | { type: "switchSite"; idx: number }
-  | { type: "resetSite" };
+  | { type: "resetSite" }
+  | {
+      type: "silentIds";
+      items: StudioItem[];
+      strokes: SketchStroke[];
+    };
 
 function cloneSnap(s: StudioSnapshot): StudioSnapshot {
   return JSON.parse(JSON.stringify(s)) as StudioSnapshot;
@@ -173,19 +189,33 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
   };
 }
 
-function initialState(mode: StudioMode): State {
+function initialState(opts: {
+  mode: StudioMode;
+  placements?: CatalogPlacement[];
+  strokes?: CanvasStroke[];
+}): State {
   const seed = WRIGHTS_SEED;
   const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
+  const base = seedToSnap(seed);
+  const hasCanvas =
+    (opts.placements?.length ?? 0) > 0 || (opts.strokes?.length ?? 0) > 0;
+  const snap: StudioSnapshot = hasCanvas
+    ? {
+        ...base,
+        items: placementsToItems(opts.placements ?? []),
+        strokes: canvasToStrokes(opts.strokes ?? []),
+      }
+    : base;
   return {
     doc: {
-      ...seedToSnap(seed),
+      ...snap,
       idn: 20,
       hist: [],
       redo: [],
     },
     siteSnaps,
     ui: {
-      mode,
+      mode: opts.mode,
       tool: "pan",
       locked: false,
       frameOn: false,
@@ -229,6 +259,7 @@ function initialState(mode: StudioMode): State {
       councilTip: null,
       sheetScaleDenom: 100,
       parchmentPeel: 0.42,
+      saveStatus: hasCanvas ? "saved" : "idle",
     },
   };
 }
@@ -239,6 +270,8 @@ export type UseStudioStateOpts = {
   address: string;
   aerialUri?: string | null;
   outdoorM2?: number;
+  initialPlacements?: CatalogPlacement[];
+  initialStrokes?: CanvasStroke[];
 };
 
 function reducer(state: State, action: Action): State {
@@ -375,6 +408,15 @@ function reducer(state: State, action: Action): State {
         },
       };
     }
+    case "silentIds":
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          items: action.items,
+          strokes: action.strokes,
+        },
+      };
     default:
       return state;
   }
@@ -387,13 +429,24 @@ export function useStudioState(opts: UseStudioStateOpts) {
     address,
     aerialUri: aerialProp = null,
     outdoorM2 = 230.82,
+    initialPlacements = [],
+    initialStrokes = [],
   } = opts;
-  const [state, dispatch] = useReducer(reducer, initialMode, initialState);
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    initialState({
+      mode: initialMode,
+      placements: initialPlacements,
+      strokes: initialStrokes,
+    }),
+  );
   const bootstrapped = useRef(false);
+  const skipPersist = useRef(true);
   const addressRef = useRef(address);
   addressRef.current = address;
   const outdoorRef = useRef(outdoorM2);
   outdoorRef.current = outdoorM2;
+  const projectIdRef = useRef(projectId);
+  projectIdRef.current = projectId;
 
   useEffect(() => {
     if (aerialProp && !state.ui.aerialUri) {
@@ -465,7 +518,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           py = snapped.y;
           if (snapped.snapped) tip = snapped.codeHint;
         }
-        const id = `p${idn + 1}`;
+        const id = crypto.randomUUID();
         const item: StudioItem = {
           id,
           t: armed,
@@ -831,21 +884,17 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (ghosts: StudioItem[]) => {
       // Prefer raw image path via engine; this accepts pre-mapped items from AerialSlot.
       mutate((snap, idn) => {
-        let nextIdn = idn;
-        const add = ghosts.map((g) => {
-          nextIdn += 1;
-          return {
-            ...g,
-            id: `ai-canopy-${nextIdn}`,
-            ghost: true,
-          };
-        });
+        const add = ghosts.map((g) => ({
+          ...g,
+          id: crypto.randomUUID(),
+          ghost: true as const,
+        }));
         return {
           snap: {
             ...snap,
             items: mergeAiProposals(snap, add, ["canopy"]),
           },
-          idn: nextIdn,
+          idn: idn + add.length,
         };
       });
       setUi({
@@ -902,8 +951,56 @@ export function useStudioState(opts: UseStudioStateOpts) {
   }, []);
 
   const bumpSaved = useCallback(() => {
-    setUi({ savedTick: Date.now() });
+    setUi({ savedTick: Date.now(), saveStatus: "saved" });
   }, [setUi]);
+
+  /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
+  useEffect(() => {
+    if (skipPersist.current) {
+      skipPersist.current = false;
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      const fixed = withContractIds({
+        items: state.doc.items,
+        strokes: state.doc.strokes,
+      });
+      if (fixed.remapped) {
+        dispatch({
+          type: "silentIds",
+          items: fixed.items,
+          strokes: fixed.strokes,
+        });
+      }
+      const placements = itemsToPlacements(fixed.items);
+      const canvasStrokes = strokesToCanvas(fixed.strokes);
+      setUi({ saveStatus: "saving" });
+      void saveDesignCanvasAction(
+        projectIdRef.current,
+        placements,
+        canvasStrokes,
+        [],
+        [],
+      )
+        .then(() => {
+          setUi({ saveStatus: "saved", savedTick: Date.now() });
+        })
+        .catch(() => {
+          setUi({ saveStatus: "error" });
+        });
+    }, 1100);
+    return () => window.clearTimeout(handle);
+    // Persist accepted geometry only — ghosts change should not rewrite canvas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    state.doc.items.filter((i) => !i.ghost).length,
+    state.doc.items
+      .filter((i) => !i.ghost)
+      .map((i) => `${i.id}:${i.x}:${i.y}:${i.scale}:${i.rot}:${i.t}`)
+      .join("|"),
+    state.doc.strokes.map((s) => s.id).join("|"),
+    state.doc.strokes.length,
+  ]);
 
   const finishTrace = useCallback(
     (pts: PctPoint[]) => {
@@ -1020,7 +1117,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         return;
       }
       mutate((snap, idn) => {
-        const id = `ai-horizon-${idn + 1}`;
+        const id = crypto.randomUUID();
         const item: StudioItem = {
           id,
           t: card.suggestType!,

@@ -73,6 +73,7 @@ export type StudioUiState = {
   councilTip: string | null;
   sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
   parchmentPeel: number;
+  saveStatus: "idle" | "saving" | "saved" | "error";
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

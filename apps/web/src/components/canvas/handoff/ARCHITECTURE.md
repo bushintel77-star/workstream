@@ -37,7 +37,9 @@ studio surface here until that schema brief lands.
 | `features/compliance/` | Pass/fail dock independent of layer opacity |
 | `features/bom/` | Live preemptive BOM (primary + shadowed assembly / labour / logistics) |
 | `features/horizon/` | Preemptive horizon cards + canvas pins; Accept sketches mitigation ghosts |
+| `features/share/` | Share lens — AI draft gate, promote quote, portal copy/open |
 | `features/tier1/` | Quote surface (same estimate report) + Wrights Terrace value ledger |
+| `state/canvasBridge.ts` | StudioItem ↔ DesignCanvas placements; durable autosave payload |
 | `features/elevation/` | Full-mode front/side elevation profile |
 | `features/trace/` | Click-trace boundary/building + Tab rectangle autocomplete |
 | `features/measure/` | Indicative two-point measure tape |

@@ -52,12 +52,17 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       aiCoach: false,
       ambientRibbon: !frameOn && !clientView,
       selectionRing: false,
-      drawTools: !frameOn && !clientView && mode !== "quote",
+      drawTools:
+        !frameOn &&
+        !clientView &&
+        mode !== "quote" &&
+        mode !== "share",
       collapseUtility: true,
     };
   }
 
-  const plan = mode !== "elevation" && mode !== "quote";
+  const plan =
+    mode !== "elevation" && mode !== "quote" && mode !== "share";
   const cadLike = mode === "cad" || mode === "elevation";
 
   return {

@@ -33,8 +33,10 @@ import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
+import { ShareSurface } from "./features/share/ShareSurface";
 import { ITEM_LAYER } from "./state/studioTypes";
 import type { StudioAiSuggestion } from "@workstream/domain";
+import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -43,6 +45,10 @@ type Props = {
   aerialUri?: string | null;
   areaM2?: number | null;
   initialMode?: StudioMode;
+  initialPlacements?: CatalogPlacement[];
+  initialStrokes?: CanvasStroke[];
+  hasQuote?: boolean;
+  quotePortalUri?: string | null;
 };
 
 /**
@@ -55,6 +61,10 @@ export function HandoffDesignStudio({
   aerialUri = null,
   areaM2 = 230.82,
   initialMode = "cad",
+  initialPlacements = [],
+  initialStrokes = [],
+  hasQuote = false,
+  quotePortalUri = null,
 }: Props) {
   const outdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
@@ -65,10 +75,14 @@ export function HandoffDesignStudio({
     initialMode: MODE_TABS.includes(initialMode as StudioMode)
       ? initialMode
       : "cad",
+    initialPlacements,
+    initialStrokes,
   });
   const { ui, ai, compliance, estimate, acceptHorizonCard } = studio;
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
+  const [quotePersisted, setQuotePersisted] = useState(hasQuote);
+  const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -196,11 +210,12 @@ export function HandoffDesignStudio({
   }, [studio, ui]);
 
   useEffect(() => {
-    const id = window.setInterval(() => studio.bumpSaved(), 12000);
-    return () => window.clearInterval(id);
-  }, [studio]);
+    setQuotePersisted(hasQuote);
+    setPortalUri(quotePortalUri);
+  }, [hasQuote, quotePortalUri]);
 
-  const planOn = ui.mode !== "elevation" && ui.mode !== "quote";
+  const planOn =
+    ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
   const chrome = resolveHandoffChrome({
     mode: ui.mode,
     tool: ui.tool,
@@ -429,12 +444,9 @@ export function HandoffDesignStudio({
         </button>
         <button
           type="button"
-          className={css.toolBtn}
+          className={`${css.toolBtn}${ui.mode === "share" ? ` ${css.toolBtnActive}` : ""}`}
           data-testid="share-top"
-          onClick={() => {
-            const url = typeof window !== "undefined" ? window.location.href : "";
-            void navigator.clipboard?.writeText(url);
-          }}
+          onClick={() => studio.setMode("share")}
         >
           Share
         </button>
@@ -466,8 +478,18 @@ export function HandoffDesignStudio({
             {draftLabel}
           </button>
         ) : null}
-        <span className={css.savedTick} data-testid="autosave-tick">
-          Saved
+        <span
+          className={`${css.savedTick}${ui.saveStatus === "saving" ? ` ${css.savedTickPulse}` : ""}`}
+          data-testid="autosave-tick"
+          data-status={ui.saveStatus}
+        >
+          {ui.saveStatus === "saving"
+            ? "Saving…"
+            : ui.saveStatus === "error"
+              ? "Save failed"
+              : ui.saveStatus === "saved"
+                ? "Saved"
+                : "—"}
         </span>
       </header>
 
@@ -500,6 +522,26 @@ export function HandoffDesignStudio({
             estimate={estimate}
             draftUnverified={ai.status === "unverified"}
             pendingGhosts={ai.pendingCount}
+            onReviewGhosts={() => {
+              studio.setMode("cad");
+              ai.openReview();
+            }}
+            onShare={() => studio.setMode("share")}
+            onBack={() => studio.setMode("cad")}
+          />
+        ) : null}
+
+        {ui.mode === "share" ? (
+          <ShareSurface
+            projectId={projectId}
+            draftUnverified={ai.status === "unverified"}
+            pendingGhosts={ai.pendingCount}
+            quotePersisted={quotePersisted}
+            portalUri={portalUri}
+            onQuotePersisted={(uri) => {
+              setQuotePersisted(true);
+              setPortalUri(uri);
+            }}
             onReviewGhosts={() => {
               studio.setMode("cad");
               ai.openReview();
@@ -745,6 +787,7 @@ export function HandoffDesignStudio({
                 })
               }
               onOpenQuote={() => studio.setMode("quote")}
+              settling={ui.saveStatus === "saving"}
             />
             {chrome.sunGrowth ? (
               <SunGrowthDock

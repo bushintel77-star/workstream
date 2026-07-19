@@ -10,6 +10,8 @@ type Props = {
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
   embedded?: boolean;
+  /** Soft skeletal pulse while estimate / save settles (Canvas-First). */
+  settling?: boolean;
 };
 
 const aud = (n: number) =>
@@ -42,6 +44,7 @@ export function LiveBomDock({
   onMitigate,
   onOpenQuote,
   embedded = false,
+  settling = false,
 }: Props) {
   const [advanced, setAdvanced] = useState(false);
   const primary = estimate.lines.filter((l) => l.tier === "primary");
@@ -66,9 +69,10 @@ export function LiveBomDock({
       )}
       <button
         type="button"
-        className={css.total}
+        className={`${css.total}${settling ? ` ${css.totalPulse}` : ""}`}
         onClick={onOpenQuote}
         data-testid="live-bom-total"
+        data-settling={settling ? "true" : "false"}
       >
         {aud(estimate.totalInclGst)}{" "}
         <span className={css.gst}>incl. GST</span>
