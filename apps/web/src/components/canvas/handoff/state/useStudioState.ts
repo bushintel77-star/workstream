@@ -61,6 +61,12 @@ import {
   type StudioSnapshot,
   type TraceTarget,
 } from "./studioTypes";
+import { canvasMetresRingToPct } from "../geometry/geoToPct";
+import {
+  clampVegetationElevationScale,
+  isSpatialCorrectionQuery,
+  sieveVegetationItems,
+} from "./spatialCorrection";
 
 function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
   return items.map((i) => {
@@ -710,10 +716,76 @@ export function useStudioState(opts: UseStudioStateOpts) {
     ],
   );
 
+  /**
+   * Four-tier Spatial Correction NLP pipeline:
+   * aerial suppress → vegetation sieve → elev scale clamp → Vicmap boundary snap.
+   */
+  const runSpatialCorrection = useCallback(async () => {
+    const notes: string[] = [];
+    setUi({
+      aerialUri: null,
+      parchmentPeel: 1,
+      aiBusy: "assisting",
+      cmdOpen: false,
+      coachOpen: true,
+      assistReply: "Running spatial correction…",
+    });
+    notes.push("Aerial off · parchment #F7F4EF");
+
+    const sieved = sieveVegetationItems(state.doc.items);
+    const clamped = clampVegetationElevationScale(sieved.items);
+    if (sieved.removed > 0) {
+      notes.push(`Sieved ${sieved.removed} overlapping vegetation`);
+    }
+    if (clamped.clamped > 0) {
+      notes.push(`Clamped ${clamped.clamped} oversized elevation scales`);
+    }
+    mutate((snap) => ({
+      snap: { ...snap, items: clamped.items },
+    }));
+
+    let boundarySnapped = false;
+    if (projectId) {
+      try {
+        const { autoTraceBoundaryAction } = await import(
+          "../../../../app/actions"
+        );
+        const res = await autoTraceBoundaryAction(projectId);
+        const verts = [...res.boundary.vertices]
+          .sort((a, b) => a.sequence_index - b.sequence_index)
+          .map((v) => v.canvas_coords);
+        const pct = canvasMetresRingToPct(verts);
+        if (pct.length >= 3) {
+          mutate((snap) => ({ snap: { ...snap, boundary: pct } }));
+          boundarySnapped = true;
+          notes.push(
+            `Boundary snapped to ${res.boundary.source_kind === "vicmap" ? "Vicmap parcel" : "title polygon"}`,
+          );
+        }
+      } catch {
+        notes.push("Vicmap parcel unavailable — kept drawn boundary");
+      }
+    } else {
+      notes.push("No project id — cadastral snap skipped");
+    }
+
+    setUi({
+      aiBusy: "idle",
+      locked: false,
+      assistReply: `Spatial correction complete. ${notes.join(" · ")}${
+        boundarySnapped ? "" : ""
+      }`,
+    });
+  }, [mutate, projectId, setUi, state.doc.items]);
+
   const askAi = useCallback(
     async (query: string) => {
       const q = query.trim();
       if (!q) return;
+      if (isSpatialCorrectionQuery(q)) {
+        await runSpatialCorrection();
+        return;
+      }
       setUi({
         aiBusy: "assisting",
         cmdOpen: false,
@@ -772,7 +844,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         assistReply: `Local assist for “${q}” — accept ghosts to commit.`,
       });
     },
-    [mutate, projectId, setUi],
+    [mutate, projectId, runSpatialCorrection, setUi],
   );
 
   const scanGhosts = useCallback(async () => {
@@ -1385,6 +1457,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     dismissFlora,
     setFloraActiveIdx,
     askAi,
+    runSpatialCorrection,
     scanGhosts,
     cycleGhost,
     ingestCanopyGhosts,

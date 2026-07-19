@@ -64,6 +64,18 @@ export function StudioCommandPalette({
         run: () => onAskAi(query.trim() || "shade the west glazing"),
       },
       {
+        id: "spatial-correction",
+        label: "Spatial correction (cadastral + sieve)",
+        detail:
+          "Snap Vicmap title boundary, sieve overlapping trees, clamp elevation, drop aerial to parchment",
+        keywords:
+          "spatial correction cadastral vicmap snap title sieve vegetation aerial parchment elevation",
+        run: () =>
+          onAskAi(
+            "spatial correction — snap to Vicmap title, sieve vegetation, drop aerial",
+          ),
+      },
+      {
         id: "scan-ghosts",
         label: "Scan site (AI propose)",
         detail: "Run the studio AI engine over lot geometry and aerial cues",

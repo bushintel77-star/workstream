@@ -35,6 +35,9 @@ amber “Wholesale Unverified” fallback. Live Plantmark/Dinsan APIs are Stage 
 — drawn geometry overrides Vicmap placeholders; elevation label stack; Fit sheet clip;
 Isolith vector drafting in the Isolith SDS §5.
 
+**Spatial correction NLP:** [`docs/CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md`](../../../../../../docs/CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md)
+— `runSpatialCorrection` / Ask AI: Vicmap boundary snap, vegetation sieve, elev clamp, parchment-only.
+
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
 studio surface here until that schema brief lands.

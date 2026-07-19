@@ -145,6 +145,7 @@ See [README.md § UX/UI execution mandate](./README.md) and
 | Live trade sourcing HUD | **Done** | `features/trade` + `solveLiveTradeEstimate`; SDS [`CANVAS-FIRST-LIVE-TRADE-SDS.md`](../../../CANVAS-FIRST-LIVE-TRADE-SDS.md) |
 | Core canvas collision patch | **Done** | `resolveFitSheetAreas` + elev label stack + sheet clip; [`CANVAS-FIRST-PATCH-VERIFICATION.md`](../../../CANVAS-FIRST-PATCH-VERIFICATION.md) |
 | Isolith vector drafting tokens | **Done** | 0.5px contours, grain/core layers; Isolith SDS §5 |
+| Spatial correction NLP pipeline | **Done** | `runSpatialCorrection` + sieve/elev/aerial; SDS [`CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md`](../../../CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md) |
 
 ---
 

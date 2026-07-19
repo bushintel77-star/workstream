@@ -49,6 +49,14 @@ export function ElevationBoard({
     ? ((Math.max(...bCoords) - minC) / span) * 70 + 12
     : 50;
 
+  /** True vertical scale — datum fits tallest asset (not a fixed 9 m clip). */
+  const maxHM = useMemo(() => {
+    const tallest = items
+      .filter((i) => BY_TYPE[i.t].heightM)
+      .reduce((m, it) => Math.max(m, (BY_TYPE[it.t].heightM ?? 1) * it.scale), 0);
+    return Math.max(9, tallest + 0.5);
+  }, [items]);
+
   const elevItems = useMemo(() => {
     return items
       .filter((i) => BY_TYPE[i.t].heightM)
@@ -57,7 +65,7 @@ export function ElevationBoard({
         const hm = (d.heightM ?? 1) * it.scale;
         const c = axis === "x" ? it.x : it.y;
         const x = 12 + ((c - minC) / span) * 70;
-        const h = (hm / 9) * 30;
+        const h = (hm / maxHM) * 30;
         const y = 36 - h;
         const w = it.ghost ? 4 : 5;
         return {
@@ -71,7 +79,7 @@ export function ElevationBoard({
           selected: it.id === selectedId && !it.ghost,
         };
       });
-  }, [items, axis, minC, span, selectedId]);
+  }, [items, axis, minC, span, selectedId, maxHM]);
 
   const labelStacks = useMemo(
     () =>
@@ -109,10 +117,11 @@ export function ElevationBoard({
       <svg className={css.svg} viewBox="0 0 100 40" preserveAspectRatio="none">
         {/* Z10 — datum guidelines + margin ticks */}
         <g data-layer="datum">
-          {[0, 3, 6, 9].map((m) => {
-            const y = 36 - (m / 9) * 30;
+          {[0, 0.33, 0.66, 1].map((t) => {
+            const m = Math.round(maxHM * t);
+            const y = 36 - t * 30;
             return (
-              <g key={m}>
+              <g key={`${m}-${t}`}>
                 <line
                   x1={8}
                   y1={y}
