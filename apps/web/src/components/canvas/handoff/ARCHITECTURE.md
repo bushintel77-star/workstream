@@ -14,6 +14,11 @@ calm compliance) keeps cognition on geometry.
 `state/handoffChrome.ts` (`resolveHandoffChrome`). Nested BOM stays under
 Live cost **Advanced**.
 
+**Spatial engine SDS:** [`docs/CANVAS-FIRST-SPATIAL-ENGINE-SDS.md`](../../../../../../docs/CANVAS-FIRST-SPATIAL-ENGINE-SDS.md)
+— parchment tokens, 1.5px vectors, 8px corner / diamond mid nodes, 12px cadastral
+snap, oblique dim ticks, TPZ / permeability colours, scale ladder. MapLibre +
+PostGIS remain Stage 2.
+
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
 studio surface here until that schema brief lands.

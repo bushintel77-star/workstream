@@ -364,7 +364,11 @@ export function FitSheetOverlay({
               B# boundary · F# footprint.
             </p>
             <div className={css.notesMeta}>
-              <span>{scaleTxt}</span>
+              <span data-testid="fit-sheet-scale-stamp">
+                {SHEET_SCALE_STEPS.includes(scaleDenom)
+                  ? scaleTxt
+                  : `${scaleTxt} (Not to scale) — Working drawing indicative only`}
+              </span>
               <span>{issued}</span>
             </div>
           </div>

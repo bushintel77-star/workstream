@@ -1,10 +1,24 @@
 .root {
+  /* SDS — Canvas-First Spatial Engine drafting tokens (Workflow 1 board) */
+  --sds-canvas-bg: #f7f4ef;
+  --sds-vector-primary: #1a1a1a;
+  --sds-vector-muted: #8c8a85;
+  --sds-compliance-amber: #c99757;
+  --sds-compliance-red: #d66b6b;
+  --sds-stroke-primary: 1.5;
+  --sds-stroke-secondary: 1;
+  --sds-dash: 4 4;
+  --sds-tick-len: 6px;
+  --sds-node-corner: 8px;
+  --sds-node-mid: 6px;
+  --sds-label-offset: 8px;
+
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: #f6eaed;
-  color: #241318;
+  background: var(--sds-canvas-bg);
+  color: var(--sds-vector-primary);
   font-family: Sora, ui-sans-serif, sans-serif;
   overflow: hidden;
   min-height: 620px;

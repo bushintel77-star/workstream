@@ -77,4 +77,4 @@ When reviewing a PR, ask:
 - [ ] Does this stay in **percent + indicative** geometry? → Workflow 1 OK.
 - [ ] Does it require **metre grid origin or DXF layers**? → Stage 2 only; do not bolt onto `DesignCanvas` without schema brief.
 
-See also: [DESIGNER-HANDOVER.md](./DESIGNER-HANDOVER.md) §2, [STUDIO-SITE-INTELLIGENCE.md](./STUDIO-SITE-INTELLIGENCE.md), `PROPOSAL.md` (AI ghosts).
+See also: [DESIGNER-HANDOVER.md](./DESIGNER-HANDOVER.md) §2, [STUDIO-SITE-INTELLIGENCE.md](./STUDIO-SITE-INTELLIGENCE.md), `PROPOSAL.md` (AI ghosts), [CANVAS-FIRST-SPATIAL-ENGINE-SDS.md](./CANVAS-FIRST-SPATIAL-ENGINE-SDS.md).

@@ -6,6 +6,7 @@ import {
   edgeSegments,
   insertVertexAfter,
   ptsAttr,
+  snapVertexDrag,
   tpzRadiusPct,
   type PctPoint,
 } from "../../geometry";
@@ -142,10 +143,11 @@ export function CadPlanBoard({
   );
 
   const editing = tool === "edit" && !locked && !frameOn;
-  const bStroke = darkOn && !frameOn ? "#E8B84B" : "#241318";
-  const bldStroke = darkOn && !frameOn ? "#F6EAED" : "#241318";
+  /** SDS §2 — charcoal primary; amber only for dark presentation canvas. */
+  const bStroke = darkOn && !frameOn ? "#C99757" : "#1A1A1A";
+  const bldStroke = darkOn && !frameOn ? "#F7F4EF" : "#1A1A1A";
   const bldFill =
-    darkOn && !frameOn ? "rgba(246,234,237,0.4)" : "rgba(36,19,24,0.07)";
+    darkOn && !frameOn ? "rgba(247,244,239,0.35)" : "rgba(26,26,26,0.06)";
 
   const dimSegs = edgeSegments(boundary, "B", scaleM).concat(
     edgeSegments(building, "F", scaleM),
@@ -248,13 +250,25 @@ export function CadPlanBoard({
       onMoveItem(d.id, gx ?? p.x, gy ?? p.y);
       return;
     }
-    if (d.kind === "boundary" && d.index != null) {
-      const next = boundary.map((pt, i) => (i === d.index ? p : pt));
-      onBoundaryChange(next);
-    }
-    if (d.kind === "building" && d.index != null) {
-      const next = building.map((pt, i) => (i === d.index ? p : pt));
-      onBuildingChange(next);
+    if (
+      (d.kind === "boundary" || d.kind === "building") &&
+      d.index != null
+    ) {
+      const pts = d.kind === "boundary" ? boundary : building;
+      const exclude = pts[d.index];
+      const rect = rootRef.current?.getBoundingClientRect();
+      const snapped = snapVertexDrag(p, [...boundary, ...building], {
+        boardW: rect?.width ?? 960,
+        boardH: rect?.height ?? 640,
+        exclude,
+        vertexPx: 12,
+        shift: e.shiftKey,
+      });
+      const next = pts.map((pt, i) =>
+        i === d.index ? { x: snapped.x, y: snapped.y } : pt,
+      );
+      if (d.kind === "boundary") onBoundaryChange(next);
+      else onBuildingChange(next);
     }
   };
 
@@ -379,8 +393,8 @@ export function CadPlanBoard({
           points={ptsAttr(boundary)}
           fill="transparent"
           stroke={bStroke}
-          strokeWidth={2}
-          strokeDasharray="6 3"
+          strokeWidth={1.5}
+          strokeDasharray="4 4"
           vectorEffect="non-scaling-stroke"
           opacity={layerOpacity.boundary}
         />
@@ -388,7 +402,7 @@ export function CadPlanBoard({
           points={ptsAttr(building)}
           fill={bldFill}
           stroke={bldStroke}
-          strokeWidth={1.6}
+          strokeWidth={1.5}
           vectorEffect="non-scaling-stroke"
           opacity={layerOpacity.boundary}
         />
@@ -401,9 +415,9 @@ export function CadPlanBoard({
               })),
             )}
             fill="none"
-            stroke="#C2455F"
-            strokeWidth={1.2}
-            strokeDasharray="3 3"
+            stroke="#C99757"
+            strokeWidth={1}
+            strokeDasharray="4 4"
             vectorEffect="non-scaling-stroke"
             opacity={0.9 * layerOpacity.council}
           />
@@ -414,78 +428,49 @@ export function CadPlanBoard({
             cy={exist.y}
             rx={tpz.rxPct}
             ry={tpz.rxPct * 0.75}
-            fill="rgba(232,184,75,0.08)"
-            stroke="#B78A2E"
-            strokeWidth={1.2}
+            fill="rgba(201,151,87,0.06)"
+            stroke="#8C8A85"
+            strokeWidth={1}
             strokeDasharray="4 4"
             vectorEffect="non-scaling-stroke"
             opacity={layerOpacity.council}
+            data-tpz-state="normal"
           />
         ) : null}
-
-        {editing
-          ? boundary.map((p, i) => (
-              <g key={`bh${i}`}>
-                <line
-                  x1={p.x}
-                  y1={p.y}
-                  x2={p.x}
-                  y2={p.y}
-                  stroke="#E8B84B"
-                  strokeWidth={15}
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                  className={css.handleHit}
-                  onPointerEnter={() => setCursorMode("move")}
-                  onPointerLeave={() => setCursorMode("default")}
-                  onPointerDown={(e) => startCornerDrag("boundary", i, e)}
-                  onContextMenu={(e) => openNodeMenu("boundary", i, e)}
-                />
-                <line
-                  x1={p.x}
-                  y1={p.y}
-                  x2={p.x}
-                  y2={p.y}
-                  stroke="#FFF6F8"
-                  strokeWidth={6}
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-              </g>
-            ))
-          : null}
-        {editing
-          ? building.map((p, i) => (
-              <g key={`fh${i}`}>
-                <line
-                  x1={p.x}
-                  y1={p.y}
-                  x2={p.x}
-                  y2={p.y}
-                  stroke="#B08A95"
-                  strokeWidth={13}
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                  className={css.handleHit}
-                  onPointerEnter={() => setCursorMode("move")}
-                  onPointerLeave={() => setCursorMode("default")}
-                  onPointerDown={(e) => startCornerDrag("building", i, e)}
-                  onContextMenu={(e) => openNodeMenu("building", i, e)}
-                />
-                <line
-                  x1={p.x}
-                  y1={p.y}
-                  x2={p.x}
-                  y2={p.y}
-                  stroke="#FFF6F8"
-                  strokeWidth={5}
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-              </g>
-            ))
-          : null}
       </svg>
+
+      {editing
+        ? boundary.map((p, i) => (
+            <button
+              key={`bh${i}`}
+              type="button"
+              className={css.cornerNode}
+              style={{ left: `${p.x}%`, top: `${p.y}%` }}
+              title="Corner vertex"
+              aria-label={`Boundary corner ${i + 1}`}
+              onPointerEnter={() => setCursorMode("move")}
+              onPointerLeave={() => setCursorMode("default")}
+              onPointerDown={(e) => startCornerDrag("boundary", i, e)}
+              onContextMenu={(e) => openNodeMenu("boundary", i, e)}
+            />
+          ))
+        : null}
+      {editing
+        ? building.map((p, i) => (
+            <button
+              key={`fh${i}`}
+              type="button"
+              className={`${css.cornerNode} ${css.cornerNodeBuilding}`}
+              style={{ left: `${p.x}%`, top: `${p.y}%` }}
+              title="Corner vertex"
+              aria-label={`Footprint corner ${i + 1}`}
+              onPointerEnter={() => setCursorMode("move")}
+              onPointerLeave={() => setCursorMode("default")}
+              onPointerDown={(e) => startCornerDrag("building", i, e)}
+              onContextMenu={(e) => openNodeMenu("building", i, e)}
+            />
+          ))
+        : null}
 
       {editing
         ? midHandles(boundary, "boundary").map((m) => (
@@ -493,7 +478,7 @@ export function CadPlanBoard({
               key={`mb${m.after}`}
               className={css.midHandle}
               style={{ left: `${m.x}%`, top: `${m.y}%` }}
-              title="Add vertex"
+              title="Split segment"
               onPointerEnter={() => setCursorMode("add")}
               onPointerLeave={() => setCursorMode("default")}
               onPointerDown={(e) => {
@@ -509,7 +494,7 @@ export function CadPlanBoard({
               key={`mf${m.after}`}
               className={`${css.midHandle} ${css.midHandleBuilding}`}
               style={{ left: `${m.x}%`, top: `${m.y}%` }}
-              title="Add vertex"
+              title="Split segment"
               onPointerEnter={() => setCursorMode("add")}
               onPointerLeave={() => setCursorMode("default")}
               onPointerDown={(e) => {
@@ -524,14 +509,17 @@ export function CadPlanBoard({
         dimSegs.map((d) => (
           <div
             key={d.key}
-            className={css.dimLabel}
+            className={css.dimMark}
             style={{
               left: `${d.mid.x}%`,
               top: `${d.mid.y}%`,
               transform: `translate(-50%, -50%) rotate(${d.rotDeg}deg)`,
             }}
           >
-            {d.lengthM.toFixed(1)} m
+            <span className={css.obliqueTick} aria-hidden />
+            <span className={css.dimLabel}>
+              {d.key} · {d.lengthM.toFixed(2)} m
+            </span>
           </div>
         ))}
 

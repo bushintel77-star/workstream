@@ -14,7 +14,7 @@ export type SnapOptions = {
   boardH: number;
   /** Closing ring radius in CSS px (handoff ≈ 14). */
   closePx?: number;
-  /** Vertex snap radius in CSS px (handoff ≈ 10). */
+  /** Vertex / cadastral snap radius in CSS px (SDS §3 = 12). */
   vertexPx?: number;
   /** Soft angle snap tolerance in radians when Shift is not held. */
   softAngleRad?: number;
@@ -51,7 +51,7 @@ export function snapTracePointer(
   const boardW = Math.max(1, opts.boardW);
   const boardH = Math.max(1, opts.boardH);
   const closePx = opts.closePx ?? 14;
-  const vertexPx = opts.vertexPx ?? 10;
+  const vertexPx = opts.vertexPx ?? 12;
   const soft = opts.softAngleRad ?? 0.09;
   const shift = Boolean(opts.shift);
 
@@ -118,7 +118,7 @@ export function snapVertexDrag(
 ): SnapResult {
   const boardW = Math.max(1, opts.boardW);
   const boardH = Math.max(1, opts.boardH);
-  const vertexPx = opts.vertexPx ?? 10;
+  const vertexPx = opts.vertexPx ?? 12;
   const axisPx = opts.axisPx ?? 7;
   let x = raw.x;
   let y = raw.y;

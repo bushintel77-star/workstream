@@ -62,22 +62,42 @@
   cursor: copy;
 }
 
+/* SDS §3 — corner solid 8px · mid hollow diamond 6px */
+.cornerNode {
+  position: absolute;
+  width: var(--sds-node-corner, 8px);
+  height: var(--sds-node-corner, 8px);
+  margin: 0;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: none;
+  background: var(--sds-vector-primary, #1a1a1a);
+  cursor: grab;
+  z-index: 7;
+  pointer-events: auto;
+  box-shadow: 0 0 0 2px rgba(247, 244, 239, 0.9);
+}
+
+.cornerNodeBuilding {
+  background: var(--sds-vector-muted, #8c8a85);
+}
+
 .midHandle {
   position: absolute;
-  width: 11px;
-  height: 11px;
+  width: var(--sds-node-mid, 6px);
+  height: var(--sds-node-mid, 6px);
   transform: translate(-50%, -50%) rotate(45deg);
-  background: #fff6f8;
-  border: 1.5px solid #e8b84b;
-  border-radius: 2px;
+  background: transparent;
+  border: 1.5px solid var(--sds-vector-muted, #8c8a85);
+  border-radius: 1px;
   cursor: copy;
-  box-shadow: 0 1px 6px rgba(42, 23, 29, 0.4);
   z-index: 6;
   pointer-events: auto;
 }
 
 .midHandleBuilding {
-  border-color: #b08a95;
+  border-color: var(--sds-vector-muted, #8c8a85);
 }
 
 .nodeMenu {
@@ -118,18 +138,33 @@
   cursor: not-allowed;
 }
 
-.dimLabel {
+.dimMark {
   position: absolute;
-  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.obliqueTick {
+  width: var(--sds-tick-len, 6px);
+  height: 1.5px;
+  background: var(--sds-vector-primary, #1a1a1a);
+  transform: rotate(45deg);
+  flex: none;
+}
+
+.dimLabel {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #241318;
-  background: rgba(250, 246, 242, 0.92);
+  color: var(--sds-vector-primary, #1a1a1a);
+  background: color-mix(in srgb, var(--sds-canvas-bg, #f7f4ef) 92%, transparent);
   padding: 1px 6px;
-  border-radius: 5px;
-  pointer-events: none;
+  border-radius: 4px;
   white-space: nowrap;
-  z-index: 5;
+  margin-top: var(--sds-label-offset, 8px);
 }
 
 .tpzTag {

@@ -58,6 +58,18 @@ describe("snapVertexDrag", () => {
     expect(r.x).toBe(30);
     expect(r.kind).toBe("ortho");
   });
+
+  it("cadastral-snaps within 12px SDS vertex radius", () => {
+    // 0.1% of 1000px board ≈ 1px — well inside 12px
+    const r = snapVertexDrag(
+      { x: 50.1, y: 50.05 },
+      [{ x: 50, y: 50 }],
+      { ...board, exclude: { x: 10, y: 10 } },
+    );
+    expect(r.kind).toBe("vertex");
+    expect(r.x).toBe(50);
+    expect(r.y).toBe(50);
+  });
 });
 
 describe("snapAlignment", () => {
