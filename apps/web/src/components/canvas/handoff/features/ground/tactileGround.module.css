@@ -228,23 +228,6 @@
   opacity: 0;
 }
 
-.phase_cadastral .cadastral {
-  animation: cadastralIn 520ms ease both;
-}
-
-.phase_aerial .cadastral {
-  opacity: 0.55;
-}
-
-@keyframes cadastralIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 .scaleChip {
   position: absolute;
   right: 10px;
