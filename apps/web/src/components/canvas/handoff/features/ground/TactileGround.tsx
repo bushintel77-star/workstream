@@ -17,6 +17,8 @@ type Props = {
   parchmentPeel?: number;
   hasAerial?: boolean;
   darkOn?: boolean;
+  /** Stage 1 — Vicmap title board; no ghost cue / soft cadastral underlay. */
+  foundationCleanse?: boolean;
   boundary?: PctPoint[];
   building?: PctPoint[];
   siteLabel?: string | null;
@@ -33,6 +35,7 @@ export function TactileGround({
   parchmentPeel = 0.42,
   hasAerial = false,
   darkOn = false,
+  foundationCleanse = false,
   boundary = [],
   building = [],
   siteLabel = null,
@@ -42,11 +45,13 @@ export function TactileGround({
   const visibleM = scaleM / Math.max(0.4, zoom);
   const stepM = pickMetricStepM(visibleM);
   const stepPct = (stepM / scaleM) * 100;
-  const phase = resolveGroundPhase({
-    hasAerial,
-    hasBoundary: boundary.length >= 3,
-    address: address ?? siteLabel,
-  });
+  const phase = foundationCleanse
+    ? "cadastral"
+    : resolveGroundPhase({
+        hasAerial,
+        hasBoundary: boundary.length >= 3,
+        address: address ?? siteLabel,
+      });
 
   const lines = useMemo(() => {
     const major: number[] = [];
@@ -78,20 +83,22 @@ export function TactileGround({
 
   // Soft topo-ish contours — generative context, not survey contours.
   const topo = useMemo(() => {
-    if (phase === "parchment") return [] as number[];
+    if (foundationCleanse || phase === "parchment") return [] as number[];
     const rings = [18, 32, 48, 64, 78];
     return rings;
-  }, [phase]);
+  }, [foundationCleanse, phase]);
 
-  const parchmentOp =
-    phase === "aerial"
+  const parchmentOp = foundationCleanse
+    ? 1
+    : phase === "aerial"
       ? Math.max(0.1, Math.min(0.55, parchmentPeel))
       : phase === "cadastral"
         ? 0.92
         : 1;
 
-  const cue =
-    phase === "aerial"
+  const cue = foundationCleanse
+    ? `${siteLabel ?? address ?? "Site"} · Vicmap title · Stage 1`
+    : phase === "aerial"
       ? null
       : phase === "cadastral"
         ? `${siteLabel ?? address ?? "Site"} · ghost cadastral`
@@ -163,14 +170,15 @@ export function TactileGround({
           </g>
         ))}
 
-        {boundary.length >= 3 ? (
+        {/* Stage 1 CadPlan owns the crisp charcoal title — skip soft ghost underlay. */}
+        {!foundationCleanse && boundary.length >= 3 ? (
           <polygon
             points={ptsAttr(boundary)}
             className={css.cadastral}
             vectorEffect="non-scaling-stroke"
           />
         ) : null}
-        {building.length >= 3 ? (
+        {!foundationCleanse && building.length >= 3 ? (
           <polygon
             points={ptsAttr(building)}
             className={css.footprint}

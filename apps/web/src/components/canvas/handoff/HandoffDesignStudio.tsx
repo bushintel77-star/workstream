@@ -350,8 +350,9 @@ export function HandoffDesignStudio({
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
   };
 
-  const draftLabel =
-    ai.status === "scanning"
+  const draftLabel = ui.foundationCleanse
+    ? "STAGE 1 · TITLE LOCKED"
+    : ai.status === "scanning"
       ? "AI DRAFT: SCANNING"
       : ai.status === "assisting"
         ? "AI DRAFT: ASSISTING"
@@ -444,6 +445,18 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
+        <button
+          type="button"
+          className={`${css.toolBtn}${ui.foundationCleanse ? ` ${css.toolBtnActive}` : ""}`}
+          data-testid="stage1-foundation-top"
+          title="Stage 1 cadastral foundation — Vicmap title, purge aerial and AI vegetation"
+          onClick={() => {
+            if (ui.foundationCleanse) studio.exitStage1Foundation();
+            else void studio.runStage1FoundationCleanse();
+          }}
+        >
+          {ui.foundationCleanse ? "Exit Stage 1" : "Stage 1"}
+        </button>
         <button
           type="button"
           className={`${css.toolBtn}${ui.frameOn ? ` ${css.toolBtnActive}` : ""}`}
@@ -625,16 +638,23 @@ export function HandoffDesignStudio({
               uri={liveAerial}
               dimmed={ui.darkOn}
               frameOn={ui.frameOn}
-              scanning={ui.canopyScanning || ai.busy === "scanning"}
+              scanning={
+                !ui.foundationCleanse &&
+                (ui.canopyScanning || ai.busy === "scanning")
+              }
               zoom={ui.zoom}
               sheetScaleDenom={ui.sheetScaleDenom}
               darkOn={ui.darkOn}
+              foundationCleanse={ui.foundationCleanse}
               boundary={studio.boundary}
-              building={studio.building}
+              building={ui.foundationCleanse ? [] : studio.building}
               siteLabel={displayAddress}
               address={displayAddress}
-              parchmentPeel={ui.parchmentPeel}
-              onUri={(uri) => studio.setUi({ aerialUri: uri })}
+              parchmentPeel={ui.foundationCleanse ? 1 : ui.parchmentPeel}
+              onUri={(uri) => {
+                if (ui.foundationCleanse) return;
+                studio.setUi({ aerialUri: uri });
+              }}
               onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
               onCanopyImage={ai.ingestCanopyImage}
             />
@@ -927,12 +947,14 @@ export function HandoffDesignStudio({
                 onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
               />
             ) : null}
-            <ComplianceTicker
-              report={compliance}
-              onOpenCompliance={() =>
-                studio.setUi({ utilityPanel: "compliance", setbackOn: true })
-              }
-            />
+            {!ui.foundationCleanse ? (
+              <ComplianceTicker
+                report={compliance}
+                onOpenCompliance={() =>
+                  studio.setUi({ utilityPanel: "compliance", setbackOn: true })
+                }
+              />
+            ) : null}
             {chrome.horizon ? (
               <PreemptiveHorizon
                 cards={actionHorizon}
@@ -953,7 +975,7 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {chrome.aiCoach ? (
+        {chrome.aiCoach && !ui.foundationCleanse ? (
           <AiCoachDock
             open={ui.coachOpen && !chrome.collapseUtility}
             status={ai.status}
@@ -973,6 +995,7 @@ export function HandoffDesignStudio({
         ) : null}
 
         {chromeLive &&
+        !ui.foundationCleanse &&
         !ui.coachOpen &&
         !ui.ghostReviewOpen &&
         ai.pendingCount > 0 ? (
@@ -989,7 +1012,7 @@ export function HandoffDesignStudio({
           </button>
         ) : null}
 
-        {chromeLive && ui.ghostReviewOpen ? (
+        {chromeLive && ui.ghostReviewOpen && !ui.foundationCleanse ? (
           <div className={css.ghostPanel}>
             <AiGhostReview
               ghosts={ai.pending}
@@ -1014,16 +1037,22 @@ export function HandoffDesignStudio({
         {chromeLive ? (
           <div className={css.aiStatusBar} data-testid="ai-draft-status-bar">
             <span
-              className={`${css.aiStatusChip}${ai.status === "verified" ? ` ${css.aiStatusOk}` : ""}`}
+              className={`${css.aiStatusChip}${
+                ui.foundationCleanse || ai.status === "verified"
+                  ? ` ${css.aiStatusOk}`
+                  : ""
+              }`}
             >
               {draftLabel}
             </span>
             <span className={css.aiStatusMeta}>
-              {ai.pendingCount
-                ? `${ai.pendingCount} proposal${ai.pendingCount === 1 ? "" : "s"} · A accept · R reject`
-                : "Scan or Ask AI to propose layout moves"}
+              {ui.foundationCleanse
+                ? "Vicmap title locked · aerial and AI vegetation purged · Exit Stage 1 to design"
+                : ai.pendingCount
+                  ? `${ai.pendingCount} proposal${ai.pendingCount === 1 ? "" : "s"} · A accept · R reject`
+                  : "Scan or Ask AI to propose layout moves"}
             </span>
-            {!ui.coachOpen ? (
+            {!ui.foundationCleanse && !ui.coachOpen ? (
               <button
                 type="button"
                 className={css.aiStatusOpen}
@@ -1032,7 +1061,7 @@ export function HandoffDesignStudio({
                 Coach
               </button>
             ) : null}
-            {ai.pendingCount > 0 ? (
+            {!ui.foundationCleanse && ai.pendingCount > 0 ? (
               <button
                 type="button"
                 className={css.aiStatusOpen}

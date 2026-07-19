@@ -66,7 +66,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       volumeIsolith: false,
       tradeMargin: false,
       sunGrowth: false,
-      aiCoach: true,
+      // Coach dock off — Stage 1 status lives in the draft chip / banner
+      aiCoach: false,
       ambientRibbon: !frameOn && !clientView,
       selectionRing: false,
       drawTools: !frameOn && !clientView && mode !== "quote" && mode !== "share",

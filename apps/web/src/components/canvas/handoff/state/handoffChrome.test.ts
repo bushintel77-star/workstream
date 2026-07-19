@@ -93,6 +93,6 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(false);
     expect(c.horizon).toBe(false);
     expect(c.sunGrowth).toBe(false);
-    expect(c.aiCoach).toBe(true);
+    expect(c.aiCoach).toBe(false);
   });
 });

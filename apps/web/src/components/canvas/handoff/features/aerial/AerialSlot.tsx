@@ -20,6 +20,8 @@ type Props = {
   zoom?: number;
   sheetScaleDenom?: SheetScaleDenom;
   darkOn?: boolean;
+  /** Stage 1 — no aerial drop, canopy scan, or soft underlay imagery. */
+  foundationCleanse?: boolean;
   boundary?: PctPoint[];
   building?: PctPoint[];
   siteLabel?: string | null;
@@ -43,6 +45,7 @@ export function AerialSlot({
   zoom = 1,
   sheetScaleDenom = 100,
   darkOn = false,
+  foundationCleanse = false,
   boundary = [],
   building = [],
   siteLabel = null,
@@ -98,11 +101,12 @@ export function AerialSlot({
   );
 
   useEffect(() => {
-    if (!uri || frameOn) return;
+    if (foundationCleanse || !uri || frameOn) return;
     void runCanopyScan(uri);
-  }, [uri, frameOn, runCanopyScan]);
+  }, [uri, frameOn, foundationCleanse, runCanopyScan]);
 
   const acceptFile = (file: File | null) => {
+    if (foundationCleanse) return;
     if (!file || !file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = () => {
@@ -115,15 +119,17 @@ export function AerialSlot({
     reader.readAsDataURL(file);
   };
 
-  const showAerial = Boolean(uri) && !frameOn;
+  const showAerial = Boolean(uri) && !frameOn && !foundationCleanse;
 
   return (
     <div
       className={css.slot}
       data-testid="aerial-image-slot"
-      data-filled={uri ? "true" : "false"}
+      data-filled={showAerial ? "true" : "false"}
       data-ground="tactile-parchment"
+      data-foundation={foundationCleanse ? "true" : "false"}
       onDragOver={(e) => {
+        if (foundationCleanse) return;
         e.preventDefault();
         setDragOver(true);
       }}
@@ -131,10 +137,12 @@ export function AerialSlot({
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);
+        if (foundationCleanse) return;
         acceptFile(e.dataTransfer.files?.[0] ?? null);
       }}
       onClick={() => {
-        if (!uri) inputRef.current?.click();
+        if (foundationCleanse || uri) return;
+        inputRef.current?.click();
       }}
     >
       <input
@@ -142,22 +150,24 @@ export function AerialSlot({
         type="file"
         accept="image/*"
         className={css.file}
+        disabled={foundationCleanse}
         onChange={(e) => acceptFile(e.target.files?.[0] ?? null)}
       />
 
       <TactileGround
         zoom={zoom}
         sheetScaleDenom={sheetScaleDenom}
-        parchmentPeel={parchmentPeel}
+        parchmentPeel={foundationCleanse ? 1 : parchmentPeel}
         hasAerial={showAerial && aerialReady}
         darkOn={darkOn}
+        foundationCleanse={foundationCleanse}
         boundary={boundary}
         building={building}
         siteLabel={siteLabel}
         address={address ?? siteLabel}
       />
 
-      {uri ? (
+      {showAerial && uri ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           ref={imgRef}
@@ -178,7 +188,7 @@ export function AerialSlot({
         />
       ) : null}
 
-      {!uri ? (
+      {!uri && !foundationCleanse ? (
         <div
           className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
           data-testid="aerial-drop-cue"
@@ -188,7 +198,7 @@ export function AerialSlot({
         </div>
       ) : null}
 
-      {scanning ? (
+      {scanning && !foundationCleanse ? (
         <div className={css.scanPill} data-testid="canopy-scanning">
           <span className={css.scanDot} />
           AI scanning aerial for canopy…
