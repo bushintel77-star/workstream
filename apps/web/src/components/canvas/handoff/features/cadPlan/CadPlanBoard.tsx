@@ -44,6 +44,8 @@ type Props = {
   groupIds: string[];
   hoverId: string | null;
   curGhostId: string | null;
+  /** Item ids currently failing preemptive council checks. */
+  flaggedIds?: Set<string>;
   scaleM?: number;
   onSelect: (id: string | null, opts?: { additive?: boolean }) => void;
   onMarqueeSelect: (ids: string[]) => void;
@@ -89,6 +91,7 @@ export function CadPlanBoard({
   groupIds,
   hoverId,
   curGhostId,
+  flaggedIds,
   scaleM = 110,
   onSelect,
   onMarqueeSelect,
@@ -524,10 +527,11 @@ export function CadPlanBoard({
         const isCur = it.id === curGhostId;
         const selected = it.id === selectedId;
         const hovered = it.id === hoverId;
+        const flagged = flaggedIds?.has(it.id) && !it.ghost;
         return (
           <div
             key={it.id}
-            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}`}
+            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}`}
             style={{
               left: `${it.x}%`,
               top: `${it.y}%`,
@@ -542,15 +546,19 @@ export function CadPlanBoard({
                   : it.stale
                     ? "1.5px dashed #B78A2E"
                     : "1.5px dashed rgba(232,184,75,0.9)"
-                : "none",
+                : flagged
+                  ? "2px solid #C2455F"
+                  : "none",
               boxShadow:
                 selected || groupIds.includes(it.id)
                   ? "0 0 0 2px rgba(255,246,248,0.95), 0 0 0 4px #C2455F"
                   : isCur
                     ? "0 0 0 3px rgba(194,69,95,0.3)"
-                    : hovered && !it.ghost
-                      ? "0 0 0 2px rgba(255,246,248,0.85), 0 0 0 3.5px rgba(194,69,95,0.4)"
-                      : "none",
+                    : flagged
+                      ? "0 0 0 3px rgba(194,69,95,0.35)"
+                      : hovered && !it.ghost
+                        ? "0 0 0 2px rgba(255,246,248,0.85), 0 0 0 3.5px rgba(194,69,95,0.4)"
+                        : "none",
               zIndex: isCur
                 ? 50
                 : selected || groupIds.includes(it.id)

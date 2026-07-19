@@ -70,6 +70,7 @@ export type StudioUiState = {
   coachOpen: boolean;
   assistReply: string | null;
   utilityPanel: "compliance" | "bom" | null;
+  councilTip: string | null;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

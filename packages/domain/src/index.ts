@@ -86,6 +86,7 @@ export * from './preemptive-bom';
 export * from './preemptive-risk';
 export * from './orchestration-world';
 export * from './site-compliance';
+export * from './studio-preemptive-compliance';
 export * from './ghost-confidence';
 export * from './elevation-projection';
 export * from './first-run-seed';

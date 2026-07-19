@@ -211,6 +211,35 @@
   overflow: hidden;
   background: #faf6f2;
   min-height: 0;
+  box-shadow: inset 0 0 0 1px rgba(36, 19, 24, 0.06);
+  transition: box-shadow 180ms ease;
+}
+
+.boardWatch {
+  box-shadow: inset 0 0 0 2px rgba(232, 184, 75, 0.65);
+}
+
+.boardCritical {
+  box-shadow: inset 0 0 0 3px rgba(194, 69, 95, 0.75);
+}
+
+.councilTip {
+  position: absolute;
+  left: 50%;
+  top: 56px;
+  transform: translateX(-50%);
+  z-index: 24;
+  max-width: min(420px, calc(100% - 48px));
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 184, 75, 0.45);
+  background: rgba(42, 23, 29, 0.92);
+  color: #ffd3de;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 10px 28px rgba(42, 23, 29, 0.28);
 }
 
 .zoomWorld {

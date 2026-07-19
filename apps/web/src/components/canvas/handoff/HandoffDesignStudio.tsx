@@ -17,6 +17,7 @@ import { LayersPanel } from "./features/layers/LayersPanel";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
 import { UtilityDrawer } from "./features/utilityDrawer/UtilityDrawer";
+import { ComplianceTicker } from "./features/compliance/ComplianceTicker";
 import { QuoteSurface } from "./features/tier1/QuoteSurface";
 import { ElevationBoard } from "./features/elevation/ElevationBoard";
 import {
@@ -50,15 +51,17 @@ export function HandoffDesignStudio({
   areaM2 = 230.82,
   initialMode = "cad",
 }: Props) {
+  const outdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
     projectId,
     address: projectAddress,
     aerialUri,
+    outdoorM2: outdoor,
     initialMode: MODE_TABS.includes(initialMode as StudioMode)
       ? initialMode
       : "cad",
   });
-  const { ui, ai } = studio;
+  const { ui, ai, compliance } = studio;
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
 
@@ -207,9 +210,11 @@ export function HandoffDesignStudio({
     !ui.clientView;
   /** Fit sheet freezes dynamic floating chrome to match paper constraints. */
   const chromeLive = planOn && !ui.frameOn && !ui.focusOn && !ui.clientView;
-  const outdoor = areaM2 ?? 230.82;
   const displayAddress = studio.siteAddress || projectAddress;
   const liveAerial = ui.aerialUri ?? aerialUri;
+  const flaggedIds = new Set<string>(
+    compliance.alerts.flatMap((a: { sourceIds: string[] }) => a.sourceIds),
+  );
 
   useEffect(() => {
     if (!drawingHot) return;
@@ -218,6 +223,13 @@ export function HandoffDesignStudio({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawingHot]);
+
+  useEffect(() => {
+    if (compliance.alerts.some((a) => a.code === "setback" || a.code === "tpz")) {
+      if (!ui.setbackOn) studio.setUi({ setbackOn: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compliance.alerts]);
 
   const armType = (t: StudioItemType) => {
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
@@ -258,6 +270,7 @@ export function HandoffDesignStudio({
       className={`${css.root}${ui.darkOn ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}`}
       data-testid="handoff-design-studio"
       data-studio-surface="handoff-v4"
+      data-compliance={compliance.canvasSignal}
       style={
         {
           ["--studio-zoom" as string]: String(ui.zoom),
@@ -413,7 +426,11 @@ export function HandoffDesignStudio({
         </span>
       </header>
 
-      <div className={css.board} data-testid="studio-board" ref={boardRef}>
+      <div
+        className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}`}
+        data-testid="studio-board"
+        ref={boardRef}
+      >
         {ui.mode === "elevation" ? (
           <ElevationBoard
             axis={ui.elevAxis}
@@ -477,6 +494,7 @@ export function HandoffDesignStudio({
               groupIds={ui.groupIds}
               hoverId={ui.hoverId}
               curGhostId={ai.current?.id ?? null}
+              flaggedIds={flaggedIds}
               onSelect={(id, opts) => {
                 if (!id) {
                   studio.setSelection(null, []);
@@ -662,6 +680,12 @@ export function HandoffDesignStudio({
               boundary={studio.boundary}
               items={studio.items}
               mitigated={ui.mitigated}
+              complianceSignal={compliance.canvasSignal}
+              compliancePass={
+                [compliance.outdoorOk, compliance.permeableOk, compliance.canopyOk].filter(
+                  Boolean,
+                ).length
+              }
               onOpenPanel={(utilityPanel) => studio.setUi({ utilityPanel })}
               onMitigate={(id) =>
                 studio.setUi({
@@ -678,7 +702,19 @@ export function HandoffDesignStudio({
               onGrowth={(growth) => studio.setUi({ growth })}
               onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
             />
+            <ComplianceTicker
+              report={compliance}
+              onOpenCompliance={() =>
+                studio.setUi({ utilityPanel: "compliance", setbackOn: true })
+              }
+            />
           </>
+        ) : null}
+
+        {chromeLive && ui.councilTip ? (
+          <div className={css.councilTip} data-testid="council-setback-tip">
+            {ui.councilTip}
+          </div>
         ) : null}
 
         {chromeLive ? (

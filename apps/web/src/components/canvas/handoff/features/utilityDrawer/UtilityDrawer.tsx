@@ -17,6 +17,8 @@ type Props = {
   boundary: PctPoint[];
   items: StudioItem[];
   mitigated: Record<string, boolean>;
+  complianceSignal?: "ok" | "watch" | "critical";
+  compliancePass?: number;
   onOpenPanel: (panel: UtilityPanel) => void;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
@@ -33,6 +35,8 @@ export function UtilityDrawer({
   boundary,
   items,
   mitigated,
+  complianceSignal = "ok",
+  compliancePass: passCount = 3,
   onOpenPanel,
   onMitigate,
   onOpenQuote,
@@ -43,17 +47,11 @@ export function UtilityDrawer({
     return Math.round(materials + 4378);
   }, [items]);
 
-  const compliancePass = useMemo(() => {
-    const live = items.filter((i) => !i.ghost);
-    const canopy = live.some((i) => i.t === "canopy" || i.t === "exist");
-    const permeable = live.some((i) => i.t === "lawn" || i.t === "bed");
-    const hard = live.some((i) => i.t === "paving" || i.t === "deck");
-    // Lightweight badge signal — full math stays in ComplianceDock.
-    let pass = 1; // outdoor area assumed for seeded sites
-    if (permeable || !hard) pass += 1;
-    if (canopy) pass += 1;
-    return { pass, total: 3, ok: pass === 3 };
-  }, [items]);
+  const compliancePass = {
+    pass: passCount,
+    total: 3,
+    ok: complianceSignal === "ok",
+  };
 
   const aud = new Intl.NumberFormat("en-AU", {
     style: "currency",

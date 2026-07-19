@@ -9,7 +9,7 @@ No MapLibre on this surface — `%` board space is the drawing plane.
 | Module | Owns |
 |--------|------|
 | `geometry/` | Pure maths: sheet box A3/A4, polygon area/perimeter, edge dims, TPZ radius in % space |
-| `state/` | `useStudioState` + **`studioAiEngine`** — single mutate path; AI propose/scan/assist/canopy/coaching/stale is the design loop, not a side panel |
+| `state/` | `useStudioState` + **`studioAiEngine`** + continuous **`evaluateStudioCompliance`** (Stonnington permeability, setback snap, AS 4970 TPZ) — no Calculate button |
 | `features/fitSheet/` | Paper frame, site schedule, boundary/footprint dim table, stacked elevations |
 | `features/cadPlan/` | Aerial, SVG polys, symbol placements, corner/mid handles, dim labels, edit banner |
 | `features/aiGhosts/` | Coach dock (primary), ghost review, confidence factors, accept/reject/cycle, Ask AI |

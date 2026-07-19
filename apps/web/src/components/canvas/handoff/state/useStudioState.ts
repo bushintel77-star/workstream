@@ -2,6 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  buildableEnvelopeFromBoundary,
+  evaluateStudioCompliance,
+  shouldEnforceSetback,
+  snapPointToBuildableEnvelope,
+  type StudioComplianceItem,
+} from "@workstream/domain";
+import {
+  BY_TYPE,
   STUDIO_SITES,
   WRIGHTS_SEED,
   type SketchStroke,
@@ -35,6 +43,25 @@ import {
   type StudioSnapshot,
   type TraceTarget,
 } from "./studioTypes";
+
+function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
+  return items.map((i) => {
+    const d = BY_TYPE[i.t];
+    return {
+      id: i.id,
+      t: i.t,
+      x: i.x,
+      y: i.y,
+      scale: i.scale,
+      ghost: i.ghost,
+      dbhM: d.dbhM,
+      canopyM: d.canopyM,
+      wPx: d.w,
+      hPx: d.h,
+      areaKind: d.area ?? "none",
+    };
+  });
+}
 
 const MAX_HIST = 40;
 
@@ -88,6 +115,8 @@ type Ui = {
   assistReply: string | null;
   /** Right-hand utility drawer sheet: compliance | bom | closed. */
   utilityPanel: "compliance" | "bom" | null;
+  /** Brief setback / TPZ tip after a preemptive snap. */
+  councilTip: string | null;
 };
 
 type State = {
@@ -184,6 +213,7 @@ function initialState(mode: StudioMode): State {
       coachOpen: true,
       assistReply: null,
       utilityPanel: null,
+      councilTip: null,
     },
   };
 }
@@ -193,6 +223,7 @@ export type UseStudioStateOpts = {
   projectId: string;
   address: string;
   aerialUri?: string | null;
+  outdoorM2?: number;
 };
 
 function reducer(state: State, action: Action): State {
@@ -340,11 +371,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
     projectId,
     address,
     aerialUri: aerialProp = null,
+    outdoorM2 = 230.82,
   } = opts;
   const [state, dispatch] = useReducer(reducer, initialMode, initialState);
   const bootstrapped = useRef(false);
   const addressRef = useRef(address);
   addressRef.current = address;
+  const outdoorRef = useRef(outdoorM2);
+  outdoorRef.current = outdoorM2;
 
   useEffect(() => {
     if (aerialProp && !state.ui.aerialUri) {
@@ -405,13 +439,23 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (x: number, y: number) => {
       const armed = state.ui.armed;
       if (!armed) return;
+      let tip: string | null = null;
       mutate((snap, idn) => {
+        let px = x;
+        let py = y;
+        if (shouldEnforceSetback(armed)) {
+          const env = buildableEnvelopeFromBoundary(snap.boundary);
+          const snapped = snapPointToBuildableEnvelope(px, py, env);
+          px = snapped.x;
+          py = snapped.y;
+          if (snapped.snapped) tip = snapped.codeHint;
+        }
         const id = `p${idn + 1}`;
         const item: StudioItem = {
           id,
           t: armed,
-          x,
-          y,
+          x: px,
+          y: py,
           rot: 0,
           scale: 0.7,
           ghost: false,
@@ -441,9 +485,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
         tool: "pan",
         ghostReviewOpen: true,
         coachOpen: true,
+        setbackOn: tip ? true : state.ui.setbackOn,
+        councilTip: tip,
       });
     },
-    [mutate, setUi, state.ui.armed],
+    [mutate, setUi, state.ui.armed, state.ui.setbackOn],
   );
 
   const askAi = useCallback(
@@ -599,16 +645,30 @@ export function useStudioState(opts: UseStudioStateOpts) {
   const moveItem = useCallback(
     (id: string, x: number, y: number) => {
       if (state.ui.locked) return;
-      mutate((snap) => ({
-        snap: {
-          ...snap,
-          items: snap.items.map((i) =>
-            i.id === id && !i.ghost ? { ...i, x, y } : i,
-          ),
-        },
-      }));
+      let tip: string | null = null;
+      mutate((snap) => {
+        const target = snap.items.find((i) => i.id === id);
+        let px = x;
+        let py = y;
+        if (target && !target.ghost && shouldEnforceSetback(target.t)) {
+          const env = buildableEnvelopeFromBoundary(snap.boundary);
+          const snapped = snapPointToBuildableEnvelope(px, py, env);
+          px = snapped.x;
+          py = snapped.y;
+          if (snapped.snapped) tip = snapped.codeHint;
+        }
+        return {
+          snap: {
+            ...snap,
+            items: snap.items.map((i) =>
+              i.id === id && !i.ghost ? { ...i, x: px, y: py } : i,
+            ),
+          },
+        };
+      });
+      if (tip) setUi({ councilTip: tip, setbackOn: true });
     },
-    [mutate, state.ui.locked],
+    [mutate, setUi, state.ui.locked],
   );
 
   const transformItem = useCallback(
@@ -860,6 +920,26 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [ghostCount, siteAddress, state.doc],
   );
 
+  /** Continuous council inspector — recomputes on every geometry commit. */
+  const compliance = useMemo(
+    () =>
+      evaluateStudioCompliance({
+        outdoorM2: outdoorRef.current,
+        boundary: state.doc.boundary,
+        items: toComplianceItems(state.doc.items),
+      }),
+    [state.doc.boundary, state.doc.items],
+  );
+
+  useEffect(() => {
+    if (!state.ui.councilTip) return;
+    const t = window.setTimeout(
+      () => setUi({ councilTip: null }),
+      4200,
+    );
+    return () => window.clearTimeout(t);
+  }, [setUi, state.ui.councilTip]);
+
   const status = draftStatus(ghostCount, state.ui.aiBusy);
 
   const ai = useMemo(
@@ -914,6 +994,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     ghosts,
     ghostCount,
     curGhost,
+    compliance,
     ai,
     mutate,
     setUi,
