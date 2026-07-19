@@ -19,6 +19,7 @@ import {
   buildGhostPlacementSuggestions,
   buildSketchCanvasAiSuggestions,
   CATALOG_PLANNING_SYMBOL_IDS,
+  detectCanopyClustersFromImageData,
   jitterPlacement,
   markStaleGhostsNearEdit,
   pushSwatchHistory,
@@ -92,6 +93,8 @@ type Props = {
   selectMode?: boolean;
   /** Vegetation bucket opacity (0–1). */
   vegetationOpacity?: number;
+  /** Same-origin aerial URL for pixel-cluster canopy heuristic. */
+  aerialUrl?: string | null;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -168,6 +171,7 @@ export function SketchInstrument({
   showRibbon = true,
   selectMode = false,
   vegetationOpacity = 1,
+  aerialUrl = null,
 }: Props) {
   const toast = useToast();
   const assistInputRef = useRef<HTMLTextAreaElement>(null);
@@ -607,6 +611,36 @@ export function SketchInstrument({
     [armSymbol, onDraftCad, onGoToQuote, persist, symbolById],
   );
 
+  const scanCanopyClusters = useCallback(async (): Promise<
+    GhostPlacementSuggestion[]
+  > => {
+    if (!aerialUrl || typeof document === "undefined") return [];
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("aerial load failed"));
+        img.src = aerialUrl;
+      });
+      const size = 96;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return [];
+      ctx.drawImage(img, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size);
+      return detectCanopyClustersFromImageData({
+        width: data.width,
+        height: data.height,
+        data: data.data,
+      });
+    } catch {
+      return [];
+    }
+  }, [aerialUrl]);
+
   const scanGhosts = useCallback(async () => {
     setGhostScanning(true);
     try {
@@ -617,6 +651,16 @@ export function SketchInstrument({
         suggestions = res.suggestions ?? [];
       } catch {
         suggestions = buildGhostPlacementSuggestions({ tier1, symbolIds });
+      }
+      const canopy = await scanCanopyClusters();
+      if (canopy.length) {
+        const seen = new Set(suggestions.map((s) => `${s.x_pct}|${s.y_pct}`));
+        for (const c of canopy) {
+          const key = `${Math.round(c.x_pct)}|${Math.round(c.y_pct)}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          suggestions.push(c);
+        }
       }
       if (suggestions.length === 0) {
         suggestions = buildGhostPlacementSuggestions({ tier1, symbolIds });
@@ -634,7 +678,24 @@ export function SketchInstrument({
     } finally {
       setGhostScanning(false);
     }
-  }, [projectId, symbols, tier1, toast]);
+  }, [projectId, scanCanopyClusters, symbols, tier1, toast]);
+
+  const ghostCostHint = useCallback(
+    (ghost: GhostPlacementSuggestion): string | null => {
+      const sym = symbolById.get(ghost.symbol_id);
+      if (!sym?.rate_card_sku) return null;
+      const rate =
+        rateCard.find((r) => r.sku === sym.rate_card_sku)?.rate ?? null;
+      if (rate == null) return null;
+      const qty =
+        sym.category === "paving" || sym.category === "structure"
+          ? Math.max(0.5, (sym.default_width_m ?? 1) ** 2)
+          : 1;
+      const add = Math.round(qty * rate);
+      return `Adds ~$${add.toLocaleString("en-AU")} (ex GST)`;
+    },
+    [rateCard, symbolById],
+  );
 
   const runAssist = useCallback(
     async (message: string) => {
@@ -687,6 +748,11 @@ export function SketchInstrument({
   const acceptGhost = useCallback(
     (ghost: GhostPlacementSuggestion) => {
       recordHistory();
+      const unit = unitCostForSymbol(ghost.symbol_id);
+      const baseline = placementsRef.current.length * unit;
+      syncMutationHud(
+        beginMutation(mutationFsmRef.current, baseline, placementsRef.current.length),
+      );
       const next: CatalogPlacement[] = [
         ...placementsRef.current,
         {
@@ -702,10 +768,28 @@ export function SketchInstrument({
       setPlacements(next);
       setEphemeralGhosts((g) => g.filter((x) => x.id !== ghost.id));
       setDirty(true);
-      void persist();
-      toast.show("Suggestion accepted onto plan", "success");
+      syncMutationHud(
+        mutateHeuristic(mutationFsmRef.current, next.length),
+      );
+      void persist().then((ok) => {
+        const precise = Math.round(next.length * unit * 100) / 100;
+        syncMutationHud(commitPrecise(mutationFsmRef.current, precise));
+        if (ok) requestOrchestrationRefresh();
+      });
+      const hint = ghostCostHint(ghost);
+      toast.show(
+        hint ? `Suggestion accepted — ${hint}` : "Suggestion accepted onto plan",
+        "success",
+      );
     },
-    [persist, recordHistory, toast],
+    [
+      ghostCostHint,
+      persist,
+      recordHistory,
+      syncMutationHud,
+      toast,
+      unitCostForSymbol,
+    ],
   );
 
   const dismissGhost = useCallback((ghostId: string) => {
@@ -1001,6 +1085,7 @@ export function SketchInstrument({
           onAccept={acceptGhost}
           onDismiss={dismissGhost}
           scanning={showGhostSuggestions && ghostScanning}
+          costHintFor={ghostCostHint}
         />
         {placements.map((p) => {
           const sym = symbolById.get(p.symbol_id);

@@ -25,12 +25,12 @@ Legend: **Done** · **Partial** · **Not started**
 | Left tool rail | **Done** | `CanvasToolRail` — Trace/Edit/Add/Lock/Reset/Pan/Measure + zoom. |
 | Trace polygon | **Done** | GeoSiteMap click-trace over aerial; Vicmap auto-trace retained. |
 | Ghost-geometry rectangle autocomplete | **Done** | `inferRectangleCompletion()` + Tab / gold preview in GeoSiteMap. |
-| Edit handles | **Partial** | BoundaryOverlay edit; CAD via API ops. |
+| Edit handles | **Done** | BoundaryOverlay + `CadEntityHandles` (`replace_entity` vertex drag). |
 | Add / place symbols | **Done** | SketchInstrument + catalog. |
 | Multi-select marquee | **Done** | Marquee in SketchInstrument when Edit tool + sketch select mode. |
 | Keyboard nudge / delete | **Done** | Arrow nudge + delete for selection/group; sketch history undo. |
 | Lock tool | **Done** | Boundary lock → Fit sheet. |
-| Undo/redo (40 steps) | **Done** | `canvas-history.ts` — sketch placements, boundary snapshots, CAD line stack. |
+| Undo/redo (40 steps) | **Done** | `canvas-history.ts` + CAD `replace_entity` redo stack. |
 | Measure tool | **Done** | `DraftingAssist` + tool rail Measure. |
 | Snap guides | **Done** | Alignment guides while dragging placements (`snapDragPct`). |
 | Symbol palette | **Done** | `SketchRibbon`. |
@@ -46,7 +46,7 @@ Legend: **Done** · **Partial** · **Not started**
 | Confidence-factor breakdown | **Done** | Click bar → `deriveConfidenceFactors()` in domain. |
 | Accept / Reject / cycle / Accept all | **Done** | Card actions + header Accept AI + shortcuts. |
 | Stale-ghost detection | **Done** | `markStaleGhostsNearEdit()` on sketch move/delete. |
-| Aerial canopy auto-detection | **Partial** | `scanDesignGhostsAction` / vision; not pixel-cluster heuristic. |
+| Aerial canopy auto-detection | **Done** | Vision scan + `detectCanopyClustersFromImageData()` pixel heuristic. |
 | Command-palette Ask AI | **Done** | Palette + sketch assist. |
 | “AI DRAFT: UNVERIFIED” header badge | **Done** | When `ghostCount > 0`. |
 
@@ -74,7 +74,7 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | Compliance dock | **Done** | `ComplianceDock` + `computeSiteCompliance()` — independent of layer opacity. |
 | 1.5 m setback overlay | **Done** | `inwardSetbackRing()` + MapLibre layer; Layers toggle setback. |
-| TPZ / root-zone circles | **Partial** | Orchestration TRP overlays. |
+| TPZ / root-zone circles | **Done** | MapLibre + sheet SVG rings from overlay `radius_m` / AS 4970 helper. |
 | Conflict mitigation chips | **Done** | Live BOM risk chips + overlay accept. |
 | Sun & Growth panel | **Done** | `SunShadeControls` dock + shade/easement toggles. |
 
@@ -97,10 +97,10 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | Fit sheet toggle | **Done** | Header + **F** shortcut. |
 | A3 / A4 paper size | **Done** | Header segmented control → `ArchitecturalSheet` `data-paper-size`. |
-| Title block, schedule, dimensions | **Partial** | `ArchitecturalSheet` + `FitSheetLayer` + quote QS. |
+| Title block, schedule, dimensions | **Done** | `ArchitecturalSheet` + `FitSheetLayer` + `FitSheetSchedulePanel`. |
 | Multi-profile elevation stacking | **Done** | `SheetElevationPanel` + **+ Elevations** toggle. |
 | North indicator | **Done** | Architectural sheet + elevation profile. |
-| Auto edge dimensions | **Partial** | Fit dims toggle. |
+| Auto edge dimensions | **Done** | `buildFitSheetEdges()` — labelled B/F edges, Fit dims toggle. |
 
 ---
 
@@ -109,8 +109,8 @@ Legend: **Done** · **Partial** · **Not started**
 | Item | Status | Notes |
 |------|--------|-------|
 | Live BOM dock | **Done** | `LiveBomHud`. |
-| Cost delta for AI | **Partial** | Optimistic mutation HUD. |
-| Mitigation schedule lines | **Partial** | Overlay accept → orchestration. |
+| Cost delta for AI | **Done** | Ghost cost hints + mutation HUD on accept. |
+| Mitigation schedule lines | **Done** | `buildAcceptedMitigationLines()` into orchestration live BOM. |
 
 ---
 
@@ -128,9 +128,6 @@ Legend: **Done** · **Partial** · **Not started**
 
 ## Remaining (lower priority)
 
-1. CAD redo stack (sketch + boundary redo wired; CAD entity redo TBD)
-2. Pixel-cluster aerial canopy heuristic (vision scan remains primary)
-3. Dedicated TPZ geometry beyond orchestration overlays
-4. Title block / QS schedule polish on Fit sheet
+None — checklist complete for Workflow 1. Further polish (DBH-authored TPZ survey fields, CAD ghost-inclusive formal QS) can land with Stage 2 schema briefs.
 
 Reference prototype: [Design Studio v4.dc.html](./Design%20Studio%20v4.dc.html) (do not port verbatim).

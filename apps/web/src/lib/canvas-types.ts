@@ -14,6 +14,7 @@ export type CadEntityLite = {
   end?: { x: number; y: number };
   position?: { x: number; y: number };
   center?: { x: number; y: number };
+  radius?: number;
   block_name?: string;
 };
 

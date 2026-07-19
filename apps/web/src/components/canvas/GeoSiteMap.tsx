@@ -11,7 +11,9 @@ import {
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
+  buildFitSheetEdges,
   canvasMetresToGeo,
+  circleRingLngLat,
   deleteBoundaryVertex,
   designableFocusRing,
   geoToCanvasMetres,
@@ -147,8 +149,19 @@ export type GeoSiteMapProps = {
   councilOpacity?: number;
   /** Show 1.5 m inward setback ring. */
   showSetback?: boolean;
+  /** TPZ / root-zone circles (percent anchors + radius_m). */
+  tpzAnchors?: Array<{
+    id: string;
+    x_pct: number;
+    y_pct: number;
+    radius_m: number;
+  }>;
   className?: string;
 };
+
+const SRC_TPZ = "ws-tpz";
+const LY_TPZ = "ws-tpz-line";
+const LY_TPZ_FILL = "ws-tpz-fill";
 
 const SRC_DRAW = "ws-cad-draw";
 const LY_DRAW_LINE = "ws-cad-draw-line";
@@ -205,6 +218,7 @@ export function GeoSiteMap({
   boundaryOpacity = 1,
   councilOpacity = 1,
   showSetback = true,
+  tpzAnchors = [],
   className,
 }: GeoSiteMapProps) {
   const titleOnly = phase === "title";
@@ -511,8 +525,102 @@ export function GeoSiteMap({
             : 0,
         );
       }
+
+      const frame = (() => {
+        const b = boundaryRef.current;
+        if (b?.geo_reference.canvas_origin_geo && b.width_m > 0 && b.height_m > 0) {
+          return {
+            origin: b.geo_reference.canvas_origin_geo,
+            widthM: b.width_m,
+            heightM: b.height_m,
+          };
+        }
+        if (open.length < 3) return null;
+        let minLng = Infinity;
+        let minLat = Infinity;
+        let maxLng = -Infinity;
+        let maxLat = -Infinity;
+        for (const [lng, lat] of open) {
+          minLng = Math.min(minLng, lng);
+          minLat = Math.min(minLat, lat);
+          maxLng = Math.max(maxLng, lng);
+          maxLat = Math.max(maxLat, lat);
+        }
+        const mPerLng = 110_540 * Math.cos((minLat * Math.PI) / 180);
+        return {
+          origin: { lng: minLng, lat: minLat },
+          widthM: Math.max(1, (maxLng - minLng) * mPerLng),
+          heightM: Math.max(1, (maxLat - minLat) * 110_540),
+        };
+      })();
+
+      const tpzFeatures: PolygonFeature[] = [];
+      if (frame && tpzAnchors.length) {
+        for (const a of tpzAnchors) {
+          if (a.radius_m <= 0) continue;
+          const x = (a.x_pct / 100) * frame.widthM;
+          const y = (1 - a.y_pct / 100) * frame.heightM;
+          const center = canvasMetresToGeo({ x, y }, frame.origin);
+          const ring = circleRingLngLat(center, a.radius_m, 28);
+          if (ring.length < 3) continue;
+          tpzFeatures.push({
+            type: "Feature",
+            properties: { id: a.id },
+            geometry: {
+              type: "Polygon",
+              coordinates: [closeRing(ring)],
+            },
+          });
+        }
+      }
+      const tpzFc: FeatureCollection = {
+        type: "FeatureCollection",
+        features: tpzFeatures,
+      };
+      const tpzSrc = map.getSource(SRC_TPZ) as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      if (tpzSrc) tpzSrc.setData(tpzFc);
+      else {
+        map.addSource(SRC_TPZ, { type: "geojson", data: tpzFc });
+        map.addLayer({
+          id: LY_TPZ_FILL,
+          type: "fill",
+          source: SRC_TPZ,
+          paint: {
+            "fill-color": "#C2455F",
+            "fill-opacity": 0.08,
+          },
+        });
+        map.addLayer({
+          id: LY_TPZ,
+          type: "line",
+          source: SRC_TPZ,
+          paint: {
+            "line-color": "#C2455F",
+            "line-width": 1.5,
+            "line-dasharray": [2, 2],
+            "line-opacity": 0.9,
+          },
+        });
+      }
+      const councilOp = Math.max(0, Math.min(1, councilOpacity));
+      if (map.getLayer(LY_TPZ_FILL)) {
+        map.setPaintProperty(LY_TPZ_FILL, "fill-opacity", 0.08 * councilOp);
+      }
+      if (map.getLayer(LY_TPZ)) {
+        map.setPaintProperty(LY_TPZ, "line-opacity", 0.9 * councilOp);
+      }
     },
-    [basemap, boundaryOpacity, councilOpacity, paperMode, showSetback, titleOnly],
+    [
+      basemap,
+      boundaryOpacity,
+      councilOpacity,
+      paperMode,
+      showSetback,
+      titleOnly,
+      tpzAnchors,
+    ],
   );
 
   const clearMarkers = useCallback(() => {
@@ -1508,25 +1616,32 @@ export function GeoSiteMap({
     const frame = sheetFrame();
     const open = openRing(parcelRing);
     if (!frame || open.length < 3) return [];
-    const pts = open.map(([lng, lat]) =>
+    const boundaryPts = open.map(([lng, lat]) =>
       geoToCanvasMetres({ lng, lat }, frame.origin),
     );
-    const edges: FitSheetEdge[] = [];
-    for (let i = 0; i < pts.length; i++) {
-      const a = pts[i]!;
-      const b = pts[(i + 1) % pts.length]!;
-      const len = Math.hypot(b.x - a.x, b.y - a.y);
-      if (len < 0.8) continue;
-      edges.push({
-        x1: a.x,
-        y1: frame.heightM - a.y,
-        x2: b.x,
-        y2: frame.heightM - b.y,
-        label: `${len.toFixed(len >= 10 ? 1 : 2)} m`,
-      });
-    }
-    return edges.slice(0, 12);
-  }, [parcelRing, sheetFrame]);
+    const houseOpen = openRing(houseRing);
+    const footprintPts =
+      houseOpen.length >= 3
+        ? houseOpen.map(([lng, lat]) =>
+            geoToCanvasMetres({ lng, lat }, frame.origin),
+          )
+        : [];
+    return buildFitSheetEdges(
+      [
+        { id: "boundary", kind: "boundary", points: boundaryPts },
+        ...(footprintPts.length
+          ? [{ id: "house", kind: "footprint" as const, points: footprintPts }]
+          : []),
+      ],
+      frame.heightM,
+    ).map((e) => ({
+      x1: e.x1,
+      y1: e.y1,
+      x2: e.x2,
+      y2: e.y2,
+      label: e.label,
+    }));
+  }, [houseRing, parcelRing, sheetFrame]);
 
   const sourceLabel = boundary
     ? boundary.source_kind === "vicmap"

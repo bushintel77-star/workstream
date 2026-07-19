@@ -19,6 +19,7 @@ import {
   computeSiteCompliance,
   isTier1WrightsTerrace,
 } from "@workstream/domain";
+import { replaceOpFromLite } from "../../lib/cad-entity-restore";
 import {
   acceptCadAction,
   applyCadOpsAction,
@@ -58,9 +59,12 @@ import { SiteIntelligenceOverlay } from "./SiteIntelligenceOverlay";
 import type {
   CadBuildApi,
   CadDocumentLite,
+  CadEntityLite,
   CadQuantitySurveyApi,
   SiteBoundaryLite,
 } from "../../lib/canvas-types";
+import { CadEntityHandles } from "./CadEntityHandles";
+import { FitSheetSchedulePanel } from "./FitSheetSchedulePanel";
 import type { DesignCanvas, RateCardItem } from "../../lib/api";
 import { resolveCanvasChrome } from "../../lib/canvas-chrome";
 import {
@@ -395,6 +399,8 @@ function SiteCanvasInner({
   });
   /** Stack of entity ids for Cmd/Ctrl+Z undo of drawn lines. */
   const [cadUndoIds, setCadUndoIds] = useState<string[]>([]);
+  /** Entities removed by undo — Cmd/Ctrl+Shift+Z / Y restores via replace_entity. */
+  const [cadRedoEntities, setCadRedoEntities] = useState<CadEntityLite[]>([]);
   const boundaryHistoryRef = useRef<CanvasHistory<SiteBoundaryLite | null>>(
     createCanvasHistory(),
   );
@@ -619,6 +625,7 @@ function SiteCanvasInner({
           .filter((id) => !prev.has(id)) ?? [];
       if (added.length) {
         setCadUndoIds((stack) => [...stack, ...added].slice(-40));
+        setCadRedoEntities([]);
       }
       setCadDoc(result.document);
       setSvg(result.svg);
@@ -632,6 +639,7 @@ function SiteCanvasInner({
   const undoLastCad = useCallback(() => {
     const id = cadUndoIds[cadUndoIds.length - 1];
     if (!id) return;
+    const entity = cadDocRef.current?.entities.find((e) => e.id === id) ?? null;
     setStatus("Undoing…");
     setError(null);
     startTransition(async () => {
@@ -642,6 +650,9 @@ function SiteCanvasInner({
           ]),
         );
         setCadUndoIds((stack) => stack.slice(0, -1));
+        if (entity) {
+          setCadRedoEntities((stack) => [...stack, entity].slice(-40));
+        }
         setStatus("Line removed");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Undo failed");
@@ -649,6 +660,29 @@ function SiteCanvasInner({
       }
     });
   }, [applyCad, cadUndoIds, projectId]);
+
+  const redoLastCad = useCallback(() => {
+    const entity = cadRedoEntities[cadRedoEntities.length - 1];
+    if (!entity) return;
+    const op = replaceOpFromLite(entity);
+    if (!op) {
+      setError("Cannot redo this entity type");
+      return;
+    }
+    setStatus("Redoing…");
+    setError(null);
+    startTransition(async () => {
+      try {
+        applyCad(await applyCadOpsAction(projectId, [op]));
+        setCadRedoEntities((stack) => stack.slice(0, -1));
+        setCadUndoIds((stack) => [...stack, entity.id].slice(-40));
+        setStatus("Line restored");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Redo failed");
+        setStatus(null);
+      }
+    });
+  }, [applyCad, cadRedoEntities, projectId]);
 
   const prevModeRef = useRef(mode);
   useEffect(() => {
@@ -703,10 +737,14 @@ function SiteCanvasInner({
     });
   }, [mode, titleRevealActive, cadDoc, projectId, applyCad]);
 
-  // Auto QS when Quote opens (anchors on Fit sheet) — keep schedule sheet closed.
+  // Auto QS when Quote opens or Fit sheet shows with CAD — schedule panel needs rows.
   useEffect(() => {
-    if (mode !== "quote" || titleRevealActive || survey || !progress.hasCad)
-      return;
+    const wantQs =
+      (mode === "quote" || (showFitSheet && (mode === "cad" || mode === "share"))) &&
+      !titleRevealActive &&
+      !survey &&
+      progress.hasCad;
+    if (!wantQs) return;
     startTransition(async () => {
       try {
         const res = await cadQuantitySurveyAction(projectId);
@@ -715,7 +753,7 @@ function SiteCanvasInner({
         /* operator can retry from dock */
       }
     });
-  }, [mode, titleRevealActive, survey, progress.hasCad, projectId]);
+  }, [mode, titleRevealActive, survey, progress.hasCad, projectId, showFitSheet]);
 
   useEffect(() => {
     if (useGeoStage) return;
@@ -926,7 +964,10 @@ function SiteCanvasInner({
         (e.key.toLowerCase() === "y" ||
           (e.key.toLowerCase() === "z" && e.shiftKey))
       ) {
-        if (boundaryHistoryRef.current.redoStack.length) {
+        if (mode === "cad" && cadRedoEntities.length) {
+          e.preventDefault();
+          redoLastCad();
+        } else if (boundaryHistoryRef.current.redoStack.length) {
           e.preventDefault();
           redoBoundary();
         }
@@ -1008,6 +1049,7 @@ function SiteCanvasInner({
     acceptAllGhosts,
     boundary,
     cadDrawArmed,
+    cadRedoEntities.length,
     cadUndoIds.length,
     committedCount,
     draftFitSheet,
@@ -1017,6 +1059,7 @@ function SiteCanvasInner({
     pending,
     projectId,
     redoBoundary,
+    redoLastCad,
     showFitSheet,
     titleRevealActive,
     undoBoundary,
@@ -1542,6 +1585,20 @@ function SiteCanvasInner({
                     boundaryOpacity={boundaryOpacity}
                     councilOpacity={councilOpacity}
                     showSetback={viewLayers.setback}
+                    tpzAnchors={(orchWorld?.overlays ?? [])
+                      .filter(
+                        (o) =>
+                          o.kind === "trp_ring" &&
+                          o.x_pct != null &&
+                          o.y_pct != null &&
+                          (o.radius_m ?? 0) > 0,
+                      )
+                      .map((o) => ({
+                        id: o.id,
+                        x_pct: o.x_pct!,
+                        y_pct: o.y_pct!,
+                        radius_m: o.radius_m!,
+                      }))}
                     fitSheetShowDims={showFitDims}
                     onLineCommit={(points) => {
                       if (points.length < 2) return;
@@ -1647,24 +1704,67 @@ function SiteCanvasInner({
                           showGhostSuggestions={viewLayers.ghostSuggestions}
                           selectMode={canvasTool === "edit"}
                           vegetationOpacity={vegetationOpacity}
+                          aerialUrl={activeAerial}
                         />
                       ) : mode === "quote" ||
                         mode === "cad" ||
                         mode === "share" ? (
-                        <SheetAnchorsOverlay
-                          widthM={
-                            cadDoc?.width_m ?? boundary?.width_m ?? 1
-                          }
-                          heightM={
-                            cadDoc?.height_m ?? boundary?.height_m ?? 1
-                          }
-                          qsRows={
-                            mode === "quote" || mode === "share"
-                              ? survey?.rows
-                              : null
-                          }
-                          overlays={orchWorld?.overlays ?? null}
-                        />
+                        <>
+                          <SheetAnchorsOverlay
+                            widthM={
+                              cadDoc?.width_m ?? boundary?.width_m ?? 1
+                            }
+                            heightM={
+                              cadDoc?.height_m ?? boundary?.height_m ?? 1
+                            }
+                            qsRows={
+                              mode === "quote" || mode === "share"
+                                ? survey?.rows
+                                : null
+                            }
+                            overlays={orchWorld?.overlays ?? null}
+                            councilOpacity={councilOpacity}
+                          />
+                          {mode === "cad" ? (
+                            <CadEntityHandles
+                              entities={cadDoc?.entities ?? []}
+                              widthM={
+                                cadDoc?.width_m ?? boundary?.width_m ?? 1
+                              }
+                              heightM={
+                                cadDoc?.height_m ?? boundary?.height_m ?? 1
+                              }
+                              editActive={canvasTool === "edit"}
+                              onCommit={(ops) => {
+                                run("Updating CAD…", async () => {
+                                  applyCad(
+                                    await applyCadOpsAction(projectId, ops),
+                                  );
+                                  return "Vertex updated";
+                                });
+                              }}
+                            />
+                          ) : null}
+                          {showFitSheet &&
+                          (mode === "quote" || mode === "cad") ? (
+                            <FitSheetSchedulePanel
+                              areaM2={
+                                sketch?.surveyMetrics?.garden_area_m2 ??
+                                boundary?.calculated_metrics.total_area_m2 ??
+                                null
+                              }
+                              totals={survey?.totals ?? null}
+                              rows={(survey?.rows ?? [])
+                                .slice(0, 8)
+                                .map((r) => ({
+                                  id: r.id,
+                                  label: r.label,
+                                  qty: r.qty,
+                                  unit: r.unit,
+                                }))}
+                            />
+                          ) : null}
+                        </>
                       ) : null
                     }
                   />
@@ -1741,6 +1841,7 @@ function SiteCanvasInner({
                       showGhostSuggestions={viewLayers.ghostSuggestions}
                       selectMode={canvasTool === "edit"}
                       vegetationOpacity={vegetationOpacity}
+                      aerialUrl={activeAerial}
                     />
                   ) : null}
                   <MeasureOverlay
@@ -1865,6 +1966,11 @@ function SiteCanvasInner({
                   why="Generated metre geometry on the Fit sheet — verify before quote."
                   confidence={0.78}
                   suggestionId={`cad-ghost-${ghostCount}`}
+                  costHint={
+                    ghostCount > 0
+                      ? `~${ghostCount} unverified entit${ghostCount === 1 ? "y" : "ies"} pending — accept before QS`
+                      : null
+                  }
                   onAccept={acceptAllGhosts}
                   onReject={() => setCadDrawArmed(true)}
                 />
@@ -2357,6 +2463,16 @@ function SiteCanvasInner({
                     onClick={() => undoLastCad()}
                   >
                     Undo
+                  </button>
+                  <button
+                    type="button"
+                    className={css.btn}
+                    data-testid="cad-redo"
+                    disabled={pending || cadRedoEntities.length === 0}
+                    title="Redo last line (⌘/Ctrl+⇧Z)"
+                    onClick={() => redoLastCad()}
+                  >
+                    Redo
                   </button>
                   {committedCount > 0 || ghostCount > 0 ? (
                     <button

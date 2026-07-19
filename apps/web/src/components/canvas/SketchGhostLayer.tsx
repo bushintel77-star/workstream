@@ -10,6 +10,7 @@ type Props = {
   onAccept: (ghost: GhostPlacementSuggestion) => void;
   onDismiss: (ghostId: string) => void;
   scanning: boolean;
+  costHintFor?: (ghost: GhostPlacementSuggestion) => string | null;
 };
 
 /** Ephemeral AI placement ghosts — never persisted until accepted. */
@@ -19,6 +20,7 @@ export function SketchGhostLayer({
   onAccept,
   onDismiss,
   scanning,
+  costHintFor,
 }: Props) {
   if (scanning) {
     return (
@@ -35,6 +37,7 @@ export function SketchGhostLayer({
       {ghosts.map((ghost) => {
         const sym = symbolById.get(ghost.symbol_id);
         if (!sym) return null;
+        const costHint = costHintFor?.(ghost) ?? null;
         return (
           <div
             key={ghost.id}
@@ -55,6 +58,14 @@ export function SketchGhostLayer({
               <p className={css.ghostMeta}>
                 AI {Math.round(ghost.confidence * 100)}% · indicative only
               </p>
+              {costHint ? (
+                <p className={css.ghostMeta} data-testid="ghost-cost-hint">
+                  {costHint}
+                </p>
+              ) : null}
+              {ghost.stale ? (
+                <p className={css.ghostMeta}>Nearby edit — recheck</p>
+              ) : null}
               <div className={css.ghostActions}>
                 <button
                   type="button"
