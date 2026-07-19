@@ -31,12 +31,37 @@
   font-family: "IBM Plex Mono", monospace;
 }
 
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .time {
   margin: 0;
   font-size: 12px;
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
   font-variant-numeric: tabular-nums;
+}
+
+.play {
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: transparent;
+  color: #7a5560;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.play[data-active="true"] {
+  background: #241318;
+  color: #fff6f8;
+  border-color: #241318;
 }
 
 .arc {

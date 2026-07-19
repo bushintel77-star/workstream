@@ -1,0 +1,95 @@
+.panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 26;
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: #fffbfc;
+  box-shadow: 0 14px 44px rgba(42, 23, 29, 0.25);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  color: #241318;
+  animation: ccIn 0.2s ease-out;
+}
+
+@keyframes ccIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b08a95;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.close {
+  border: none;
+  background: transparent;
+  color: #7a5560;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 28px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row[data-active="true"],
+.row:hover {
+  background: rgba(194, 69, 95, 0.08);
+  border-color: rgba(36, 19, 24, 0.08);
+}
+
+.addr {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.meta {
+  font-size: 10px;
+  color: #7a5560;
+  font-family: "IBM Plex Mono", monospace;
+}

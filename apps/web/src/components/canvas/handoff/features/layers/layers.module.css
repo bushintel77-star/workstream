@@ -65,8 +65,18 @@
 }
 
 .label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   font-size: 12px;
   font-weight: 650;
+}
+
+.count {
+  font-size: 10px;
+  font-weight: 500;
+  font-family: "IBM Plex Mono", monospace;
+  color: #b08a95;
 }
 
 .hint {

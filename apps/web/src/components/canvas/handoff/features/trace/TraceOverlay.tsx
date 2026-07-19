@@ -84,13 +84,31 @@ export function TraceOverlay({
       onPointerDown={(e) => {
         if (locked) return;
         e.stopPropagation();
-        const p = toPct(e.currentTarget, e.clientX, e.clientY);
+        let p = toPct(e.currentTarget, e.clientX, e.clientY);
         if (poly.length >= 3) {
           const first = poly[0]!;
           const d = Math.hypot(p.x - first.x, p.y - first.y);
           if (d < 2.2) {
             onFinish(poly);
             return;
+          }
+        }
+        // Ortho / angle snap — Shift = 90°, else soft 45° snap
+        if (poly.length > 0) {
+          const lp = poly[poly.length - 1]!;
+          const dx = p.x - lp.x;
+          const dy = p.y - lp.y;
+          const len = Math.hypot(dx, dy);
+          if (len > 0.4) {
+            const a = Math.atan2(dy, dx);
+            const step = e.shiftKey ? Math.PI / 2 : Math.PI / 4;
+            const sa = Math.round(a / step) * step;
+            if (e.shiftKey || Math.abs(a - sa) < 0.12) {
+              p = {
+                x: Math.max(0, Math.min(100, lp.x + len * Math.cos(sa))),
+                y: Math.max(0, Math.min(100, lp.y + len * Math.sin(sa))),
+              };
+            }
           }
         }
         onPush(p);

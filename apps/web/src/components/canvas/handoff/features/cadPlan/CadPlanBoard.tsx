@@ -19,6 +19,8 @@ import css from "./cadPlan.module.css";
 
 type Props = {
   aerialUri: string | null;
+  /** When true, aerial is rendered by AerialSlot outside this board. */
+  externalAerial?: boolean;
   frameOn: boolean;
   darkOn: boolean;
   boundary: PctPoint[];
@@ -60,6 +62,7 @@ function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
  */
 export function CadPlanBoard({
   aerialUri,
+  externalAerial = false,
   frameOn,
   darkOn,
   boundary,
@@ -206,24 +209,36 @@ export function CadPlanBoard({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <div
-        className={css.aerial}
-        style={
-          aerialUri && !frameOn
-            ? { backgroundImage: `url(${aerialUri})` }
-            : frameOn
+      {externalAerial ? (
+        <div
+          className={css.aerial}
+          style={
+            frameOn
               ? { background: "#faf6f2" }
-              : undefined
-        }
-      >
-        {!aerialUri && !frameOn ? (
-          <div className={css.aerialEmpty}>
-            Drop Mapbox aerial screenshot here (2D top-down)
-            <br />
-            or browse files
-          </div>
-        ) : null}
-      </div>
+              : { background: "transparent", backgroundImage: "none" }
+          }
+          aria-hidden
+        />
+      ) : (
+        <div
+          className={css.aerial}
+          style={
+            aerialUri && !frameOn
+              ? { backgroundImage: `url(${aerialUri})` }
+              : frameOn
+                ? { background: "#faf6f2" }
+                : undefined
+          }
+        >
+          {!aerialUri && !frameOn ? (
+            <div className={css.aerialEmpty}>
+              Drop Mapbox aerial screenshot here (2D top-down)
+              <br />
+              or browse files
+            </div>
+          ) : null}
+        </div>
+      )}
       {!frameOn ? (
         <div className={`${css.scrim}${darkOn ? ` ${css.scrimDark}` : ""}`} />
       ) : null}

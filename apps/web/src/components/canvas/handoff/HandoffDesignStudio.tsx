@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   BY_TYPE,
   MODE_TABS,
@@ -24,6 +24,10 @@ import {
   currentTraceCompletion,
 } from "./features/trace/TraceOverlay";
 import { MeasureOverlay } from "./features/measure/MeasureOverlay";
+import { AerialSlot } from "./features/aerial/AerialSlot";
+import { SketchBoard } from "./features/sketch/SketchBoard";
+import { SiteSwitcher } from "./features/sites/SiteSwitcher";
+import { StudioCoachMarks } from "./features/coach/StudioCoachMarks";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -117,6 +121,7 @@ export function HandoffDesignStudio({
         }
         studio.setUi({
           factorsOpen: false,
+          ghostReviewOpen: false,
           layersOpen: false,
           cmdOpen: false,
           addOpen: false,
@@ -140,12 +145,22 @@ export function HandoffDesignStudio({
         return;
       }
       if (
+        !ui.selectedId &&
+        !ui.drawPoly &&
+        studio.ghostCount > 0 &&
+        (e.key === "ArrowLeft" || e.key === "ArrowRight")
+      ) {
+        e.preventDefault();
+        studio.cycleGhost(e.key === "ArrowRight" ? 1 : -1);
+        return;
+      }
+      if (
         ui.selectedId &&
         !ui.drawPoly &&
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
       ) {
         e.preventDefault();
-        const step = e.shiftKey ? 1 : 0.35;
+        const step = e.shiftKey ? 1 : 0.2;
         const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
         const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
         studio.nudgeSelected(dx, dy);
@@ -164,10 +179,22 @@ export function HandoffDesignStudio({
     return () => window.removeEventListener("keydown", onKey);
   }, [studio, ui]);
 
+  useEffect(() => {
+    const id = window.setInterval(() => studio.bumpSaved(), 12000);
+    return () => window.clearInterval(id);
+  }, [studio]);
+
   const planOn = ui.mode !== "elevation" && ui.mode !== "quote";
   const showDocks =
-    !ui.focusOn && planOn && !ui.frameOn && ui.mode !== "survey" && !ui.clientView;
+    !ui.focusOn &&
+    planOn &&
+    !ui.frameOn &&
+    ui.mode !== "survey" &&
+    ui.mode !== "sketch" &&
+    !ui.clientView;
   const outdoor = areaM2 ?? 230.82;
+  const displayAddress = studio.siteAddress || projectAddress;
+  const liveAerial = ui.aerialUri ?? aerialUri;
 
   const armType = (t: StudioItemType) => {
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
@@ -175,14 +202,19 @@ export function HandoffDesignStudio({
 
   return (
     <div
-      className={`${css.root}${ui.darkOn ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}`}
+      className={`${css.root}${ui.darkOn ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}`}
       data-testid="handoff-design-studio"
       data-studio-surface="handoff-v4"
+      style={
+        {
+          ["--studio-zoom" as string]: String(ui.zoom),
+        } as CSSProperties
+      }
     >
       <header className={css.header} data-testid="canvas-studio-header">
         <div>
           <p className={css.brandName}>Curtis &amp; Co</p>
-          <p className={css.address}>{projectAddress}</p>
+          <p className={css.address}>{displayAddress}</p>
         </div>
         <div className={css.spacer} />
         <nav className={css.modes} aria-label="Design workflow" data-testid="canvas-mode-strip">
@@ -202,7 +234,7 @@ export function HandoffDesignStudio({
         <div className={css.meta}>
           <div className={css.metaEyebrow}>Working drawing</div>
           <div className={css.metaDetail}>
-            Vicmap · Land Vic · {Number(outdoor).toFixed(2)} m²
+            {studio.siteMeta} · {Number(outdoor).toFixed(2)} m²
           </div>
         </div>
 
@@ -221,10 +253,11 @@ export function HandoffDesignStudio({
             <button
               type="button"
               className={`${css.segmentBtn}${ui.sheetElevOn ? ` ${css.segmentBtnActive}` : ""}`}
+              data-testid="sheet-elevations-toggle"
               onClick={() => studio.setUi({ sheetElevOn: !ui.sheetElevOn })}
               title="Stacked elevations on Fit sheet"
             >
-              Elev
+              {ui.sheetElevOn ? "Elevations ✓" : "+ Elevations"}
             </button>
           </div>
         ) : null}
@@ -273,9 +306,26 @@ export function HandoffDesignStudio({
           type="button"
           className={`${css.toolBtn}${ui.clientView ? ` ${css.toolBtnActive}` : ""}`}
           data-testid="client-view-top"
-          onClick={() => studio.setUi({ clientView: !ui.clientView, focusOn: true })}
+          onClick={() =>
+            studio.setUi({
+              clientView: !ui.clientView,
+              focusOn: !ui.clientView,
+              ghostReviewOpen: false,
+            })
+          }
         >
           Client view
+        </button>
+        <button
+          type="button"
+          className={css.toolBtn}
+          data-testid="share-top"
+          onClick={() => {
+            const url = typeof window !== "undefined" ? window.location.href : "";
+            void navigator.clipboard?.writeText(url);
+          }}
+        >
+          Share
         </button>
         <button
           type="button"
@@ -285,22 +335,27 @@ export function HandoffDesignStudio({
         >
           ⌘K
         </button>
-        <button
-          type="button"
-          className={`${css.aiPill}${studio.ghostCount === 0 ? ` ${css.aiPillOk}` : ""}`}
-          data-testid="header-accept-ghosts"
-          onClick={() => {
-            if (studio.ghostCount === 0) {
-              studio.scanGhosts();
-              return;
-            }
-            studio.acceptAllGhosts();
-          }}
-        >
-          {studio.ghostCount
-            ? `AI draft · ${studio.ghostCount} pending`
-            : "AI draft · verified"}
-        </button>
+        {!ui.clientView ? (
+          <button
+            type="button"
+            className={`${css.aiPill}${studio.ghostCount === 0 ? ` ${css.aiPillOk}` : ""}`}
+            data-testid="header-accept-ghosts"
+            onClick={() => {
+              if (studio.ghostCount === 0) {
+                studio.scanGhosts();
+                return;
+              }
+              studio.acceptAllGhosts();
+            }}
+          >
+            {studio.ghostCount
+              ? "AI DRAFT: UNVERIFIED"
+              : "AI DRAFT: VERIFIED"}
+          </button>
+        ) : null}
+        <span className={css.savedTick} data-testid="autosave-tick">
+          Saved
+        </span>
       </header>
 
       <div className={css.board} data-testid="studio-board" ref={boardRef}>
@@ -324,16 +379,29 @@ export function HandoffDesignStudio({
 
         {ui.mode === "quote" ? (
           <QuoteSurface
-            address={projectAddress}
+            address={displayAddress}
             items={studio.items}
             onBack={() => studio.setMode("cad")}
           />
         ) : null}
 
         {planOn ? (
-          <>
+          <div
+            className={css.zoomWorld}
+            style={{ transform: `scale(${ui.zoom})` }}
+          >
+            <AerialSlot
+              uri={liveAerial}
+              dimmed={ui.darkOn}
+              frameOn={ui.frameOn}
+              scanning={ui.canopyScanning}
+              onUri={(uri) => studio.setUi({ aerialUri: uri })}
+              onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
+              onCanopyGhosts={studio.ingestCanopyGhosts}
+            />
             <CadPlanBoard
-              aerialUri={aerialUri}
+              aerialUri={liveAerial}
+              externalAerial
               frameOn={ui.frameOn}
               darkOn={ui.darkOn}
               boundary={studio.boundary}
@@ -354,7 +422,7 @@ export function HandoffDesignStudio({
                   studio.setUi({
                     selectedId: id,
                     ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
-                    factorsOpen: true,
+                    ghostReviewOpen: true,
                   });
                 }
               }}
@@ -371,8 +439,15 @@ export function HandoffDesignStudio({
               onMoveItem={studio.moveItem}
               onTransformItem={studio.transformItem}
             />
+            {ui.mode === "sketch" ? (
+              <SketchBoard
+                strokes={studio.strokes}
+                darkOn={ui.darkOn}
+                onChange={studio.setStrokes}
+              />
+            ) : null}
             <TraceOverlay
-              active={ui.tool === "trace" && !ui.frameOn}
+              active={ui.tool === "trace" && !ui.frameOn && ui.mode !== "sketch"}
               locked={ui.locked}
               target={ui.traceTarget}
               drawPoly={ui.drawPoly}
@@ -384,10 +459,8 @@ export function HandoffDesignStudio({
               onCancel={studio.cancelTrace}
               onPop={studio.popTracePoint}
             />
-            <MeasureOverlay
-              active={ui.tool === "measure" && !ui.frameOn}
-            />
-          </>
+            <MeasureOverlay active={ui.tool === "measure" && !ui.frameOn} />
+          </div>
         ) : null}
 
         {ui.frameOn && planOn ? (
@@ -395,7 +468,7 @@ export function HandoffDesignStudio({
             boardW={boardSize.w}
             boardH={boardSize.h}
             paper={ui.paper}
-            address={projectAddress}
+            address={displayAddress}
             boundary={studio.boundary}
             building={studio.building}
             items={studio.items}
@@ -403,7 +476,7 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {!ui.focusOn && planOn && ui.mode !== "survey" ? (
+        {!ui.focusOn && planOn && !ui.clientView ? (
           <nav className={css.rail} data-testid="canvas-tool-rail" aria-label="Drawing tools">
             {TOOLS.map((t) => (
               <button
@@ -430,6 +503,36 @@ export function HandoffDesignStudio({
             >
               <span className={css.railIcon}>⟋</span>
               <span className={css.railLabel}>Measure</span>
+            </button>
+            <div className={css.railDiv} />
+            <button
+              type="button"
+              className={css.railBtn}
+              title="Zoom out"
+              onClick={() =>
+                studio.setUi({ zoom: Math.max(0.6, Number((ui.zoom - 0.1).toFixed(2))) })
+              }
+            >
+              <span className={css.railIcon}>−</span>
+            </button>
+            <button
+              type="button"
+              className={css.railBtn}
+              title="Fit"
+              onClick={() => studio.setUi({ zoom: 1 })}
+            >
+              <span className={css.railIcon}>⛶</span>
+              <span className={css.railLabel}>Fit</span>
+            </button>
+            <button
+              type="button"
+              className={css.railBtn}
+              title="Zoom in"
+              onClick={() =>
+                studio.setUi({ zoom: Math.min(2.2, Number((ui.zoom + 0.1).toFixed(2))) })
+              }
+            >
+              <span className={css.railIcon}>+</span>
             </button>
             <div className={css.railDiv} />
             <button
@@ -480,8 +583,10 @@ export function HandoffDesignStudio({
             <SunGrowthDock
               sunMin={ui.sunMin}
               growth={ui.growth}
+              playing={ui.sunPlay}
               onSunMin={(sunMin) => studio.setUi({ sunMin })}
               onGrowth={(growth) => studio.setUi({ growth })}
+              onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
             />
             <LiveBomDock
               items={studio.items}
@@ -496,11 +601,13 @@ export function HandoffDesignStudio({
           </>
         ) : null}
 
-        {studio.ghostCount > 0 && planOn && !ui.focusOn ? (
+        {studio.ghostCount > 0 && planOn && !ui.focusOn && !ui.clientView ? (
           <button
             type="button"
             className={css.ghostToast}
-            onClick={() => studio.setUi({ factorsOpen: !ui.factorsOpen })}
+            onClick={() =>
+              studio.setUi({ ghostReviewOpen: !ui.ghostReviewOpen })
+            }
           >
             <span className={css.ghostDot} />
             {studio.ghostCount} AI suggestions ready{" "}
@@ -508,11 +615,13 @@ export function HandoffDesignStudio({
           </button>
         ) : null}
 
-        {ui.factorsOpen && planOn && !ui.focusOn ? (
+        {ui.ghostReviewOpen && planOn && !ui.focusOn && !ui.clientView ? (
           <div className={css.ghostPanel}>
             <AiGhostReview
               ghosts={studio.ghosts}
               selectedId={studio.curGhost?.id ?? null}
+              factorsOpen={ui.factorsOpen}
+              onFactorsOpen={(factorsOpen) => studio.setUi({ factorsOpen })}
               onSelect={(id) => {
                 const idx = studio.ghosts.findIndex((g) => g.id === id);
                 studio.setUi({ ghostIdx: idx >= 0 ? idx : ui.ghostIdx });
@@ -532,9 +641,17 @@ export function HandoffDesignStudio({
           open={ui.layersOpen}
           opacity={ui.layerOpacity}
           setbackOn={ui.setbackOn}
+          items={studio.items}
           onClose={() => studio.setUi({ layersOpen: false })}
           onOpacity={studio.setLayerOpacity}
           onSetback={(setbackOn) => studio.setUi({ setbackOn })}
+        />
+
+        <SiteSwitcher
+          open={ui.sitesOpen}
+          siteIdx={ui.siteIdx}
+          onClose={() => studio.setUi({ sitesOpen: false })}
+          onPick={studio.switchSite}
         />
 
         <StudioCommandPalette
@@ -551,6 +668,8 @@ export function HandoffDesignStudio({
           onUndo={studio.undo}
           onRedo={studio.redo}
         />
+
+        {!ui.clientView ? <StudioCoachMarks /> : null}
       </div>
     </div>
   );

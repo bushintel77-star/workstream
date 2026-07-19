@@ -1,4 +1,10 @@
-import type { StudioItem, StudioItemType, StudioMode, StudioTool } from "../studioCatalog";
+import type {
+  SketchStroke,
+  StudioItem,
+  StudioItemType,
+  StudioMode,
+  StudioTool,
+} from "../studioCatalog";
 import type { PaperSize, PctPoint } from "../geometry";
 
 export type LayerKey = "survey" | "boundary" | "council" | "vegetation";
@@ -14,6 +20,7 @@ export type StudioSnapshot = {
   building: PctPoint[];
   items: StudioItem[];
   easements: PctPoint[][];
+  strokes: SketchStroke[];
 };
 
 export type StudioUiState = {
@@ -36,7 +43,10 @@ export type StudioUiState = {
   selectedId: string | null;
   hoverId: string | null;
   ghostIdx: number;
+  /** Expand confidence-factor breakdown inside the ghost review card. */
   factorsOpen: boolean;
+  /** Show the ghost review card itself. */
+  ghostReviewOpen: boolean;
   cmdOpen: boolean;
   cmdQuery: string;
   sitesOpen: boolean;
@@ -48,6 +58,12 @@ export type StudioUiState = {
   drawPoly: PctPoint[] | null;
   drawCursor: PctPoint | null;
   traceTarget: TraceTarget;
+  siteIdx: number;
+  canopyScanning: boolean;
+  sunPlay: boolean;
+  zoom: number;
+  savedTick: number;
+  aerialUri: string | null;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

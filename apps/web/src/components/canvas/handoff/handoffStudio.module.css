@@ -213,6 +213,27 @@
   min-height: 0;
 }
 
+.zoomWorld {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+}
+
+.rootClient .aiPill,
+.rootClient .ghostToast,
+.rootClient .ghostPanel {
+  display: none;
+}
+
+.savedTick {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b08a95;
+  flex: none;
+}
+
 .rootFocus .board {
   margin: 0 4px 4px;
 }

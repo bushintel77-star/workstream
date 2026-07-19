@@ -1,28 +1,40 @@
 "use client";
 
-import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
+import { ITEM_LAYER, type LayerKey, type LayerOpacity } from "../../state/studioTypes";
+import type { StudioItem } from "../../studioCatalog";
 import css from "./layers.module.css";
 
 const LAYERS: Array<{ key: LayerKey; label: string; hint: string }> = [
-  { key: "survey", label: "Survey & existing", hint: "Title, existing trees, as-built" },
-  { key: "boundary", label: "Boundary & hardscape", hint: "Title bounds, paving, deck" },
-  { key: "council", label: "Council & setbacks", hint: "Overlays, easements, setback lines" },
-  { key: "vegetation", label: "Vegetation", hint: "Canopy, hedge, beds, lawn" },
+  { key: "survey", label: "Survey (existing)", hint: "Existing trees, as-built sketches" },
+  { key: "boundary", label: "Boundary & hardscape", hint: "Bounds, paving, deck, drainage" },
+  { key: "council", label: "Council & compliance", hint: "Setbacks, TPZ, easements" },
+  { key: "vegetation", label: "Vegetation (proposed)", hint: "Canopy, hedge, beds, lawn" },
 ];
 
 type Props = {
   open: boolean;
   opacity: LayerOpacity;
   setbackOn: boolean;
+  items: StudioItem[];
   onClose: () => void;
   onOpacity: (key: LayerKey, value: number) => void;
   onSetback: (on: boolean) => void;
 };
 
+function countFor(key: LayerKey, items: StudioItem[]) {
+  if (key === "council") return setbackCountLabel();
+  return items.filter((i) => ITEM_LAYER[i.t] === key).length;
+}
+
+function setbackCountLabel() {
+  return 2; // setback ring + TPZ — geometric overlays
+}
+
 export function LayersPanel({
   open,
   opacity,
   setbackOn,
+  items,
   onClose,
   onOpacity,
   onSetback,
@@ -38,26 +50,32 @@ export function LayersPanel({
         </button>
       </div>
       <ul className={css.list}>
-        {LAYERS.map((layer) => (
-          <li key={layer.key} className={css.row}>
-            <div className={css.rowText}>
-              <span className={css.label}>{layer.label}</span>
-              <span className={css.hint}>{layer.hint}</span>
-            </div>
-            <label className={css.sliderLabel}>
-              <span className={css.pct}>{Math.round(opacity[layer.key] * 100)}%</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={5}
-                value={Math.round(opacity[layer.key] * 100)}
-                onChange={(e) => onOpacity(layer.key, Number(e.target.value) / 100)}
-                aria-label={`${layer.label} opacity`}
-              />
-            </label>
-          </li>
-        ))}
+        {LAYERS.map((layer) => {
+          const count = countFor(layer.key, items);
+          return (
+            <li key={layer.key} className={css.row}>
+              <div className={css.rowText}>
+                <span className={css.label}>
+                  {layer.label}
+                  <span className={css.count}>{count}</span>
+                </span>
+                <span className={css.hint}>{layer.hint}</span>
+              </div>
+              <label className={css.sliderLabel}>
+                <span className={css.pct}>{Math.round(opacity[layer.key] * 100)}%</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={Math.round(opacity[layer.key] * 100)}
+                  onChange={(e) => onOpacity(layer.key, Number(e.target.value) / 100)}
+                  aria-label={`${layer.label} opacity`}
+                />
+              </label>
+            </li>
+          );
+        })}
       </ul>
       <label className={css.toggle}>
         <input
@@ -68,7 +86,8 @@ export function LayersPanel({
         <span>Show setback overlays</span>
       </label>
       <p className={css.foot}>
-        Survey mode dims design layers; leaving survey restores the design preset.
+        Compliance pass/fail stays visible regardless of Council opacity. Survey mode
+        auto-dims proposed layers.
       </p>
     </div>
   );

@@ -1,0 +1,75 @@
+.mark {
+  position: absolute;
+  z-index: 30;
+  width: min(280px, calc(100vw - 40px));
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #241318;
+  color: #fff6f8;
+  box-shadow: 0 14px 44px rgba(42, 23, 29, 0.4);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  animation: ccIn 0.22s ease-out;
+}
+
+@keyframes ccIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bottomLeft {
+  left: 72px;
+  bottom: 18px;
+}
+
+.topRight {
+  right: 18px;
+  top: 18px;
+}
+
+.title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.body {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 246, 248, 0.82);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.primary,
+.ghost {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.primary {
+  background: #ffd3de;
+  color: #241318;
+}
+
+.ghost {
+  background: transparent;
+  color: rgba(255, 246, 248, 0.75);
+  border: 1px solid rgba(255, 246, 248, 0.22);
+}

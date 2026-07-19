@@ -1,13 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
 import type { GrowthStage } from "../../state/studioTypes";
 import css from "./sunGrowth.module.css";
 
 type Props = {
   sunMin: number;
   growth: GrowthStage;
+  playing: boolean;
   onSunMin: (min: number) => void;
   onGrowth: (g: GrowthStage) => void;
+  onPlaying: (v: boolean) => void;
 };
 
 const DAY_START = 6 * 60 + 20; // ~6:20
@@ -29,13 +32,30 @@ function shadowLengthM(sunMin: number, growth: GrowthStage) {
   return Math.max(1.1, Math.min(3.6, (2.8 / elev) * 0.55 * canopy));
 }
 
-export function SunGrowthDock({ sunMin, growth, onSunMin, onGrowth }: Props) {
+export function SunGrowthDock({
+  sunMin,
+  growth,
+  playing,
+  onSunMin,
+  onGrowth,
+  onPlaying,
+}: Props) {
   const t = Math.max(0, Math.min(1, (sunMin - DAY_START) / (DAY_END - DAY_START)));
   const sunX = 2 + t * 96;
   const sunY = 38 - Math.sin(t * Math.PI) * 40;
   const sunPX = sunX;
   const sunPY = (sunY / 40) * 100;
   const shadow = shadowLengthM(sunMin, growth);
+
+  useEffect(() => {
+    if (!playing) return;
+    const id = window.setInterval(() => {
+      const next = sunMin + 4;
+      if (next >= DAY_END) onSunMin(DAY_START);
+      else onSunMin(next);
+    }, 80);
+    return () => window.clearInterval(id);
+  }, [playing, sunMin, onSunMin]);
 
   const setFromClientX = (el: HTMLElement, clientX: number) => {
     const r = el.getBoundingClientRect();
@@ -47,7 +67,18 @@ export function SunGrowthDock({ sunMin, growth, onSunMin, onGrowth }: Props) {
     <aside className={css.dock} data-testid="sun-shade-controls">
       <div className={css.head}>
         <p className={css.kicker}>Sun &amp; growth</p>
-        <p className={css.time}>{formatSun(sunMin)}</p>
+        <div className={css.timeRow}>
+          <p className={css.time}>{formatSun(sunMin)}</p>
+          <button
+            type="button"
+            className={css.play}
+            data-active={playing ? "true" : "false"}
+            aria-label={playing ? "Pause sun" : "Play sun"}
+            onClick={() => onPlaying(!playing)}
+          >
+            {playing ? "Pause" : "Play"}
+          </button>
+        </div>
       </div>
       <div
         className={css.arc}

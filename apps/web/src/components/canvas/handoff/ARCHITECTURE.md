@@ -22,6 +22,10 @@ No MapLibre on this surface — `%` board space is the drawing plane.
 | `features/elevation/` | Full-mode front/side elevation profile |
 | `features/trace/` | Click-trace boundary/building + Tab rectangle autocomplete |
 | `features/measure/` | Indicative two-point measure tape |
+| `features/aerial/` | Drag-drop aerial slot + canopy colour-cluster scan |
+| `features/sketch/` | Freehand ink strokes in sketch mode |
+| `features/sites/` | Multi-site switcher with per-site snapshots |
+| `features/coach/` | 3-step onboarding (`cc_coach_done`) |
 
 ## Visual source of truth
 

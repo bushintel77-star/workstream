@@ -1,0 +1,44 @@
+"use client";
+
+import { STUDIO_SITES } from "../../studioCatalog";
+import css from "./sites.module.css";
+
+type Props = {
+  open: boolean;
+  siteIdx: number;
+  onClose: () => void;
+  onPick: (idx: number) => void;
+};
+
+export function SiteSwitcher({ open, siteIdx, onClose, onPick }: Props) {
+  if (!open) return null;
+
+  return (
+    <div className={css.panel} data-testid="sites-popover" role="dialog" aria-label="Sites">
+      <div className={css.head}>
+        <p className={css.kicker}>Sites</p>
+        <button type="button" className={css.close} onClick={onClose}>
+          Close
+        </button>
+      </div>
+      <ul className={css.list}>
+        {STUDIO_SITES.map((site, i) => (
+          <li key={site.addr}>
+            <button
+              type="button"
+              className={css.row}
+              data-active={i === siteIdx ? "true" : "false"}
+              onClick={() => {
+                onPick(i);
+                onClose();
+              }}
+            >
+              <span className={css.addr}>{site.addr}</span>
+              <span className={css.meta}>{site.meta}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

@@ -225,6 +225,84 @@ export const WRIGHTS_SEED = {
   ] as StudioItem[],
 };
 
+/** 14 Airlie Ave — handoff seed 1 */
+export const ARMADALE_SEED = {
+  boundary: [
+    { x: 32, y: 14 },
+    { x: 47, y: 14.8 },
+    { x: 46, y: 86 },
+    { x: 33, y: 85.2 },
+  ] as Pt[],
+  building: [
+    { x: 34, y: 20 },
+    { x: 45, y: 20.6 },
+    { x: 44.4, y: 44 },
+    { x: 34.6, y: 43.5 },
+  ] as Pt[],
+  items: [
+    { id: "r1", t: "paving" as const, x: 39.3, y: 56, rot: 0, scale: 0.9, ghost: false },
+    { id: "r2", t: "hedge" as const, x: 33.6, y: 60, rot: 1, scale: 0.7, ghost: false },
+    { id: "r3", t: "bed" as const, x: 41.8, y: 74, rot: 0, scale: 0.8, ghost: false },
+    {
+      id: "g1",
+      t: "lawn" as const,
+      x: 39.3,
+      y: 70,
+      rot: 0,
+      scale: 0.75,
+      ghost: true,
+      why: "Permeable core · lifts site permeability",
+      conf: 0.92,
+    },
+    {
+      id: "g2",
+      t: "canopy" as const,
+      x: 35,
+      y: 80,
+      rot: 0,
+      scale: 0.65,
+      ghost: true,
+      why: "Canopy target · clear of sewer easement",
+      conf: 0.87,
+    },
+    {
+      id: "g3",
+      t: "frenchdrain" as const,
+      x: 39.3,
+      y: 50,
+      rot: 0,
+      scale: 1,
+      ghost: true,
+      why: "Intercepts runoff at paving low point",
+      conf: 0.9,
+    },
+  ] as StudioItem[],
+};
+
+export type StudioSiteDef = {
+  addr: string;
+  meta: string;
+  seed: typeof WRIGHTS_SEED;
+};
+
+export const STUDIO_SITES: StudioSiteDef[] = [
+  {
+    addr: "12 Wrights Terrace, Prahran VIC 3181",
+    meta: "Vicmap · CT 8842/117",
+    seed: WRIGHTS_SEED,
+  },
+  {
+    addr: "14 Airlie Ave, Armadale VIC 3143",
+    meta: "Vicmap · CT 9107/042",
+    seed: ARMADALE_SEED,
+  },
+];
+
+export type SketchStroke = {
+  id: string;
+  points: Pt[];
+};
+
 export const MODE_TABS = [
   "survey",
   "sketch",
@@ -240,9 +318,14 @@ export const TOOLS = [
   { id: "edit", label: "Edit", icon: "◇" },
   { id: "add", label: "Add", icon: "+" },
   { id: "lock", label: "Lock", icon: "⬡" },
+  { id: "reset", label: "Reset", icon: "↺" },
+  { id: "pan", label: "Pan", icon: "✥" },
 ] as const;
 
-export type StudioTool = (typeof TOOLS)[number]["id"] | "pan" | "measure";
+export type StudioTool =
+  | (typeof TOOLS)[number]["id"]
+  | "measure"
+  | "sketch";
 
 export function ptsStr(pts: Pt[]) {
   return pts.map((p) => `${p.x},${p.y}`).join(" ");

@@ -2,7 +2,9 @@
 
 import { useCallback, useReducer } from "react";
 import {
+  STUDIO_SITES,
   WRIGHTS_SEED,
+  type SketchStroke,
   type StudioItem,
   type StudioItemType,
   type StudioMode,
@@ -49,6 +51,7 @@ type Ui = {
   hoverId: string | null;
   ghostIdx: number;
   factorsOpen: boolean;
+  ghostReviewOpen: boolean;
   cmdOpen: boolean;
   cmdQuery: string;
   sitesOpen: boolean;
@@ -59,9 +62,20 @@ type Ui = {
   drawPoly: PctPoint[] | null;
   drawCursor: PctPoint | null;
   traceTarget: TraceTarget;
+  siteIdx: number;
+  canopyScanning: boolean;
+  sunPlay: boolean;
+  zoom: number;
+  savedTick: number;
+  aerialUri: string | null;
 };
 
-type State = { doc: Doc; ui: Ui };
+type State = {
+  doc: Doc;
+  ui: Ui;
+  /** Per-site snapshots so switching restores full drawing state. */
+  siteSnaps: StudioSnapshot[];
+};
 
 type Action =
   | { type: "mutate"; fn: (snap: StudioSnapshot, idn: number) => { snap: StudioSnapshot; idn?: number } }
@@ -69,7 +83,9 @@ type Action =
   | { type: "redo" }
   | { type: "setUi"; patch: Partial<Ui> }
   | { type: "setMode"; mode: StudioMode }
-  | { type: "setLayerOpacity"; key: LayerKey; value: number };
+  | { type: "setLayerOpacity"; key: LayerKey; value: number }
+  | { type: "switchSite"; idx: number }
+  | { type: "resetSite" };
 
 function cloneSnap(s: StudioSnapshot): StudioSnapshot {
   return JSON.parse(JSON.stringify(s)) as StudioSnapshot;
@@ -81,21 +97,31 @@ function snapOf(doc: Doc): StudioSnapshot {
     building: doc.building,
     items: doc.items,
     easements: doc.easements,
+    strokes: doc.strokes,
+  };
+}
+
+function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot {
+  return {
+    boundary: seed.boundary.map((p) => ({ ...p })),
+    building: seed.building.map((p) => ({ ...p })),
+    items: seed.items.map((i) => ({ ...i })),
+    easements: [],
+    strokes: [],
   };
 }
 
 function initialState(mode: StudioMode): State {
   const seed = WRIGHTS_SEED;
+  const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
   return {
     doc: {
-      boundary: seed.boundary.map((p) => ({ ...p })),
-      building: seed.building.map((p) => ({ ...p })),
-      items: seed.items.map((i) => ({ ...i })),
-      easements: [],
+      ...seedToSnap(seed),
       idn: 20,
       hist: [],
       redo: [],
     },
+    siteSnaps,
     ui: {
       mode,
       tool: "pan",
@@ -116,6 +142,7 @@ function initialState(mode: StudioMode): State {
       hoverId: null,
       ghostIdx: 0,
       factorsOpen: false,
+      ghostReviewOpen: false,
       cmdOpen: false,
       cmdQuery: "",
       sitesOpen: false,
@@ -126,6 +153,12 @@ function initialState(mode: StudioMode): State {
       drawPoly: null,
       drawCursor: null,
       traceTarget: "boundary",
+      siteIdx: 0,
+      canopyScanning: false,
+      sunPlay: false,
+      zoom: 1,
+      savedTick: 0,
+      aerialUri: null,
     },
   };
 }
@@ -194,7 +227,12 @@ function reducer(state: State, action: Action): State {
           layerOpacity,
           drawPoly: null,
           drawCursor: null,
-          tool: action.mode === "survey" ? "edit" : "pan",
+          tool:
+            action.mode === "survey"
+              ? "edit"
+              : action.mode === "sketch"
+                ? "sketch"
+                : "pan",
         },
       };
     }
@@ -209,6 +247,56 @@ function reducer(state: State, action: Action): State {
           },
         },
       };
+    case "switchSite": {
+      const idx = action.idx;
+      if (idx < 0 || idx >= state.siteSnaps.length || idx === state.ui.siteIdx) {
+        return { ...state, ui: { ...state.ui, sitesOpen: false } };
+      }
+      const siteSnaps = [...state.siteSnaps];
+      siteSnaps[state.ui.siteIdx] = cloneSnap(snapOf(state.doc));
+      const next = cloneSnap(siteSnaps[idx]!);
+      return {
+        ...state,
+        siteSnaps,
+        doc: {
+          ...next,
+          idn: state.doc.idn,
+          hist: [],
+          redo: [],
+        },
+        ui: {
+          ...state.ui,
+          siteIdx: idx,
+          sitesOpen: false,
+          selectedId: null,
+          drawPoly: null,
+          drawCursor: null,
+          ghostIdx: 0,
+        },
+      };
+    }
+    case "resetSite": {
+      const seed = STUDIO_SITES[state.ui.siteIdx]?.seed ?? WRIGHTS_SEED;
+      const next = seedToSnap(seed);
+      const before = snapOf(state.doc);
+      return {
+        ...state,
+        doc: {
+          ...next,
+          idn: state.doc.idn,
+          hist: [...state.doc.hist, before].slice(-MAX_HIST),
+          redo: [],
+        },
+        ui: {
+          ...state.ui,
+          selectedId: null,
+          drawPoly: null,
+          drawCursor: null,
+          mitigated: {},
+          ghostIdx: 0,
+        },
+      };
+    }
     default:
       return state;
   }
@@ -450,13 +538,59 @@ export function useStudioState(initialMode: StudioMode = "cad") {
         idn: nextIdn,
       };
     });
-    setUi({ factorsOpen: true, ghostIdx: 0 });
+    setUi({ ghostReviewOpen: true, ghostIdx: 0 });
   }, [mutate, setUi]);
 
-  const cycleGhost = useCallback(() => {
-    if (ghostCount === 0) return;
-    setUi({ ghostIdx: state.ui.ghostIdx + 1, factorsOpen: true });
-  }, [ghostCount, setUi, state.ui.ghostIdx]);
+  const cycleGhost = useCallback(
+    (dir: 1 | -1 = 1) => {
+      if (ghostCount === 0) return;
+      setUi({
+        ghostIdx: state.ui.ghostIdx + dir,
+        ghostReviewOpen: true,
+      });
+    },
+    [ghostCount, setUi, state.ui.ghostIdx],
+  );
+
+  const ingestCanopyGhosts = useCallback(
+    (ghosts: StudioItem[]) => {
+      mutate((snap, idn) => {
+        const withoutAerial = snap.items.filter(
+          (i) => !i.id.startsWith("canopy-aerial-"),
+        );
+        let nextIdn = idn;
+        const add = ghosts.map((g) => {
+          nextIdn += 1;
+          return { ...g, id: `canopy-aerial-${nextIdn}` };
+        });
+        return {
+          snap: { ...snap, items: [...withoutAerial, ...add] },
+          idn: nextIdn,
+        };
+      });
+      setUi({ ghostIdx: 0, ghostReviewOpen: true });
+    },
+    [mutate, setUi],
+  );
+
+  const setStrokes = useCallback(
+    (strokes: SketchStroke[]) => {
+      mutate((snap) => ({ snap: { ...snap, strokes } }));
+    },
+    [mutate],
+  );
+
+  const switchSite = useCallback((idx: number) => {
+    dispatch({ type: "switchSite", idx });
+  }, []);
+
+  const resetSite = useCallback(() => {
+    dispatch({ type: "resetSite" });
+  }, []);
+
+  const bumpSaved = useCallback(() => {
+    setUi({ savedTick: Date.now() });
+  }, [setUi]);
 
   const finishTrace = useCallback(
     (pts: PctPoint[]) => {
@@ -501,9 +635,12 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     building: state.doc.building,
     items: state.doc.items,
     easements: state.doc.easements,
+    strokes: state.doc.strokes,
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     ui: state.ui,
+    siteAddress: STUDIO_SITES[state.ui.siteIdx]?.addr ?? STUDIO_SITES[0]!.addr,
+    siteMeta: STUDIO_SITES[state.ui.siteIdx]?.meta ?? STUDIO_SITES[0]!.meta,
     ghosts,
     ghostCount,
     curGhost,
@@ -520,6 +657,11 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     askAi,
     scanGhosts,
     cycleGhost,
+    ingestCanopyGhosts,
+    setStrokes,
+    switchSite,
+    resetSite,
+    bumpSaved,
     moveItem,
     transformItem,
     nudgeSelected,
@@ -533,6 +675,11 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     setTraceTarget: (traceTarget: TraceTarget) =>
       setUi({ traceTarget, drawPoly: null, drawCursor: null }),
     setTool: (tool: StudioTool) => {
+      if (tool === "reset") {
+        resetSite();
+        setUi({ tool: "pan", addOpen: false, drawPoly: null, drawCursor: null });
+        return;
+      }
       if (tool === "lock") {
         const nextLocked = !state.ui.locked;
         setUi({
