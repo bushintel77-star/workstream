@@ -20,11 +20,11 @@ type Props = {
 };
 
 const STATUS_LABEL: Record<AiDraftStatus, string> = {
-  unverified: "Unverified draft",
-  verified: "Verified draft",
-  scanning: "Scanning site…",
-  assisting: "Assist running…",
-};
+  unverified: "Still a draft — review suggestions when ready",
+  verified: "Looking good — suggestions cleared",
+  scanning: "Looking at the site…",
+  assisting: "Thinking with you…",
+}
 
 /**
  * Primary AI coach rail — live coaching from the drawing, not a toast bolt-on.

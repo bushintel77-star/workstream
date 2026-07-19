@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { StudioEstimateReport } from "@workstream/domain";
 import css from "./bom.module.css";
 
@@ -18,9 +19,22 @@ const aud = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
+function friendlyPrimary(label: string): string {
+  return label
+    .replace(/\s+[—-]\s+surface$/i, "")
+    .replace(/^Bluestone paving$/i, "Bluestone")
+    .replace(/^Timber deck$/i, "Deck")
+    .replace(/^Instant turf$/i, "Turf")
+    .replace(/^Mass plant bed$/i, "Planting")
+    .replace(/^Clipped hedge$/i, "Hedge")
+    .replace(/^Canopy tree$/i, "Canopy")
+    .replace(/^Feature tree$/i, "Feature")
+    .replace(/^French drain$/i, "Drain");
+}
+
 /**
- * Live preemptive BOM — secondary/tertiary materials, labour, tippers, GST.
- * Updates with every geometry commit; no Design↔Quote mode switch.
+ * Floating Live BOM HUD — total + material tags only.
+ * Nested assembly / labour / tippers stay under Advanced (Canvas-First).
  */
 export function LiveBomDock({
   estimate,
@@ -29,10 +43,13 @@ export function LiveBomDock({
   onOpenQuote,
   embedded = false,
 }: Props) {
+  const [advanced, setAdvanced] = useState(false);
   const primary = estimate.lines.filter((l) => l.tier === "primary");
   const shadowed = estimate.lines.filter((l) => l.tier !== "primary");
   const horizonChips = estimate.horizon.filter(
-    (h) => h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer",
+    (h) =>
+      !mitigated[h.id] &&
+      (h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer"),
   );
 
   return (
@@ -42,39 +59,66 @@ export function LiveBomDock({
     >
       {!embedded ? (
         <div className={css.head}>
-          <p className={css.kicker}>Live BOM / preemptive</p>
-          <span className={css.kicker}>{estimate.lines.length} lines</span>
+          <p className={css.kicker}>Live cost</p>
         </div>
       ) : (
-        <p className={css.kicker}>{estimate.lines.length} lines</p>
+        <p className={css.kicker}>Live cost</p>
       )}
-      <button type="button" className={css.total} onClick={onOpenQuote}>
-        {aud(estimate.totalInclGst)} <span className={css.gst}>incl. GST</span>
+      <button
+        type="button"
+        className={css.total}
+        onClick={onOpenQuote}
+        data-testid="live-bom-total"
+      >
+        {aud(estimate.totalInclGst)}{" "}
+        <span className={css.gst}>incl. GST</span>
       </button>
       <p className={css.meta}>
         {estimate.hardscapeM2 > 0
-          ? `${estimate.hardscapeM2.toFixed(1)} m² hard · ${estimate.excavateM3.toFixed(1)} m³ dig · ${estimate.tipperLoads} tipper`
-          : "Place hardscape to shadow assembly costs"}
+          ? `About ${estimate.hardscapeM2.toFixed(0)} m² hardscape on this drawing`
+          : "Tag materials on the plan — cost updates as you draw"}
       </p>
       <div className={css.lines}>
-        {primary.slice(0, 6).map((row) => (
+        {primary.slice(0, 5).map((row) => (
           <div key={row.id} className={css.line}>
-            <span>{row.label}</span>
-            <span className={css.amt}>{aud(row.total)}</span>
-          </div>
-        ))}
-        {shadowed.length > 0 ? (
-          <div className={css.shadowHead}>
-            Shadowed assembly · labour · logistics
-          </div>
-        ) : null}
-        {shadowed.slice(0, 8).map((row) => (
-          <div key={row.id} className={`${css.line} ${css.shadowLine}`}>
-            <span title={row.notes}>{row.label}</span>
+            <span>{friendlyPrimary(row.label)}</span>
             <span className={css.amt}>{aud(row.total)}</span>
           </div>
         ))}
       </div>
+      {shadowed.length > 0 ? (
+        <div className={css.advanced}>
+          <button
+            type="button"
+            className={css.advancedToggle}
+            data-testid="live-bom-advanced"
+            aria-expanded={advanced}
+            onClick={() => setAdvanced((v) => !v)}
+          >
+            {advanced ? "Hide assembly detail" : "Advanced"}
+          </button>
+          {advanced ? (
+            <div className={css.advancedBody} data-testid="live-bom-advanced-body">
+              <p className={css.shadowHead}>
+                Assembly · labour · logistics (engine)
+              </p>
+              {shadowed.slice(0, 10).map((row) => (
+                <div key={row.id} className={`${css.line} ${css.shadowLine}`}>
+                  <span title={row.notes}>{row.label}</span>
+                  <span className={css.amt}>{aud(row.total)}</span>
+                </div>
+              ))}
+              {estimate.tipperLoads > 0 ? (
+                <p className={css.meta}>
+                  {estimate.excavateM3.toFixed(1)} m³ dig · {estimate.tipperLoads}{" "}
+                  tipper load
+                  {estimate.tipperLoads === 1 ? "" : "s"}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {horizonChips.length > 0 ? (
         <div className={css.chips}>
           {horizonChips.map((m) => (
@@ -82,19 +126,20 @@ export function LiveBomDock({
               key={m.id}
               type="button"
               className={css.chip}
-              data-on={mitigated[m.id] ? "true" : "false"}
+              data-on="false"
               title={m.detail}
               onClick={() => onMitigate(m.id)}
             >
-              {mitigated[m.id] ? "Noted · " : ""}
-              {m.title.length > 28 ? `${m.title.slice(0, 26)}…` : m.title}
+              {m.kind === "drainage"
+                ? "Drainage tip"
+                : m.kind === "tpz"
+                  ? "Tree protection"
+                  : "Engineer check"}
             </button>
           ))}
         </div>
       ) : null}
-      <p className={css.foot}>
-        Preemptive estimate — GST {aud(estimate.gst)} · not a formal tender
-      </p>
+      <p className={css.foot}>Indicative — not a formal tender</p>
     </aside>
   );
 }

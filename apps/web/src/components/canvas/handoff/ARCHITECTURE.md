@@ -9,6 +9,11 @@ ghost cadastral) — never a sterile void. Aerial/survey cross-fades above with
 parchment kept as a soft underlay. Invisible UI (ambient ribbon, selection rings,
 calm compliance) keeps cognition on geometry.
 
+**Binding UX mandate:** [`docs/CANVAS-FIRST-UX.md`](../../../../../../docs/CANVAS-FIRST-UX.md)
++ handoff README § *UX/UI execution mandate*. Chrome matrix:
+`state/handoffChrome.ts` (`resolveHandoffChrome`). Nested BOM stays under
+Live cost **Advanced**.
+
 **Stage 2** (MapLibre + PostGIS / EPSG:7855 / FLOAT8) is a separate product
 phase — see `docs/STUDIO-PRODUCT-PHASES.md`. Do not make MapLibre the default
 studio surface here until that schema brief lands.

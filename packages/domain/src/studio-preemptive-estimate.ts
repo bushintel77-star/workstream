@@ -392,9 +392,9 @@ export function estimateStudioDrawing(args: {
       horizon.push({
         id: `hz-eng-${it.id}`,
         kind: "engineer",
-        title: "Engineer hold — height >1.2 m",
+        title: "This height usually needs an engineer",
         detail:
-          "Structural engineer and permit fees preempted in the live BOM.",
+          "Over about 1.2 m we have already reserved engineer and permit fees in the live cost.",
         severity: "critical",
         sourceIds: [it.id],
         x: it.x,
@@ -433,8 +433,8 @@ export function estimateStudioDrawing(args: {
     horizon.push({
       id: "hz-drain",
       kind: "drainage",
-      title: "Stormwater intervention foreshadowed",
-      detail: `${round2(hardscapeM2)} m² hardscape — preempt French drain / pit near low point.`,
+      title: "This hardscape may need a drain nearby",
+      detail: `About ${round2(hardscapeM2)} m² of paving — a French drain near the low point usually keeps lawns dry.`,
       severity: hardscapeM2 >= 60 ? "critical" : "watch",
       suggestType: "frenchdrain",
       x: anchor ? anchor.x : 50,

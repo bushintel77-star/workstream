@@ -9,23 +9,30 @@ type Props = {
   onDismiss: (id: string) => void;
 };
 
+const KIND_LABEL: Record<StudioHorizonCard["kind"], string> = {
+  drainage: "A thought on drainage",
+  tpz: "Tree protection",
+  engineer: "Before you go further",
+  spoil: "Site access",
+  assembly: "Under the surface",
+};
+
 /**
- * Preemptive horizon — foreshadowed logistics / drainage / TPZ cards near focus.
- * Accept sketches the mitigation onto the drawing; no Design↔Quote toggle.
+ * Conversational foresight cards — Accept / Dismiss only (Canvas-First HITL).
  */
 export function PreemptiveHorizon({ cards, onAccept, onDismiss }: Props) {
   if (cards.length === 0) return null;
 
   return (
     <div className={css.stack} data-testid="preemptive-horizon">
-      {cards.slice(0, 3).map((card) => (
+      {cards.slice(0, 2).map((card) => (
         <article
           key={card.id}
           className={`${css.card} ${css[card.severity]}`}
           data-kind={card.kind}
         >
-          <p className={css.kicker}>{card.kind}</p>
-          <p className={css.title}>{card.title}</p>
+          <p className={css.kicker}>{KIND_LABEL[card.kind]}</p>
+          <p className={css.title}>{card.title.replace(/foreshadowed/gi, "").trim()}</p>
           <p className={css.detail}>{card.detail}</p>
           <div className={css.actions}>
             {card.suggestType ? (
@@ -34,7 +41,7 @@ export function PreemptiveHorizon({ cards, onAccept, onDismiss }: Props) {
                 className={css.accept}
                 onClick={() => onAccept(card)}
               >
-                Sketch mitigation
+                Yes, add it
               </button>
             ) : null}
             <button
@@ -42,7 +49,7 @@ export function PreemptiveHorizon({ cards, onAccept, onDismiss }: Props) {
               className={css.dismiss}
               onClick={() => onDismiss(card.id)}
             >
-              Dismiss
+              Not now
             </button>
           </div>
         </article>

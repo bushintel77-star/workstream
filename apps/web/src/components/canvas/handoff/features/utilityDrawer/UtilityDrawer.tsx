@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import type { StudioEstimateReport } from "@workstream/domain";
 import type { StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
@@ -90,7 +89,7 @@ export function UtilityDrawer({
           aria-selected={openPanel === "bom"}
           className={`${css.tab}${openPanel === "bom" ? ` ${css.tabActive}` : ""}`}
           data-testid="utility-tab-bom"
-          title="Live BOM"
+          title="Live cost"
           onClick={() => onOpenPanel(openPanel === "bom" ? null : "bom")}
         >
           <span className={css.dollar} aria-hidden>
@@ -104,7 +103,7 @@ export function UtilityDrawer({
         <div className={css.sheet} data-testid={`utility-sheet-${openPanel}`}>
           <div className={css.sheetHead}>
             <p className={css.sheetTitle}>
-              {openPanel === "compliance" ? "Compliance" : "Live BOM"}
+              {openPanel === "compliance" ? "Compliance" : "Live cost"}
             </p>
             <button
               type="button"

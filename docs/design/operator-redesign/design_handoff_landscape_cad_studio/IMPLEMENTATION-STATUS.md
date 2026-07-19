@@ -128,8 +128,24 @@ Legend: **Done** · **Partial** · **Not started**
 
 ---
 
+## Canvas-First UX mandate (binding)
+
+See [README.md § UX/UI execution mandate](./README.md) and
+[`docs/CANVAS-FIRST-UX.md`](../../../CANVAS-FIRST-UX.md).
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Mode state-machine chrome (`resolveHandoffChrome`) | **Done** | Sketch/Survey hide Live BOM; CAD floating HUDs |
+| Live cost primary = total + tags; Advanced for assembly | **Done** | `LiveBomDock` disclosure |
+| Conversational AI / horizon binary actions | **Done** | Coach Accept/Reject; horizon Yes / Not now |
+| Fit sheet freezes floating cost chrome | **Done** | `frameOn` → chrome off |
+| Optimistic + skeletal Live BOM pulse | **Partial** | Continuous estimate; worker skeletal pulse TBD |
+
+---
+
 ## Remaining (lower priority)
 
-None — checklist complete for Workflow 1. Further polish (DBH-authored TPZ survey fields, CAD ghost-inclusive formal QS) can land with Stage 2 schema briefs.
+- Optimistic Live BOM skeletal pulse when estimate moves to a Web Worker
+- DBH-authored TPZ survey fields / Stage 2 schema briefs
 
 Reference prototype: [Design Studio v4.dc.html](./Design%20Studio%20v4.dc.html) (do not port verbatim).

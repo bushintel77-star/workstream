@@ -8,6 +8,7 @@ import {
   type StudioMode,
 } from "./studioCatalog";
 import { useStudioState } from "./state/useStudioState";
+import { resolveHandoffChrome } from "./state/handoffChrome";
 import { CadPlanBoard } from "./features/cadPlan/CadPlanBoard";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
@@ -200,19 +201,16 @@ export function HandoffDesignStudio({
   }, [studio]);
 
   const planOn = ui.mode !== "elevation" && ui.mode !== "quote";
-  const drawingHot =
-    ui.tool === "trace" ||
-    ui.tool === "edit" ||
-    ui.tool === "add" ||
-    ui.tool === "measure";
-  const showDocks =
-    !ui.focusOn &&
-    planOn &&
-    !ui.frameOn &&
-    ui.mode !== "survey" &&
-    ui.mode !== "sketch" &&
-    !ui.clientView;
-  /** Fit sheet freezes dynamic floating chrome to match paper constraints. */
+  const chrome = resolveHandoffChrome({
+    mode: ui.mode,
+    tool: ui.tool,
+    focusOn: ui.focusOn,
+    frameOn: ui.frameOn,
+    clientView: ui.clientView,
+  });
+  const drawingHot = chrome.collapseUtility;
+  const showDocks = chrome.utilityDrawer;
+  /** Fit sheet / focus freezes floating chrome — parchment plane stays first. */
   const chromeLive = planOn && !ui.frameOn && !ui.focusOn && !ui.clientView;
   const displayAddress = studio.siteAddress || projectAddress;
   const liveAerial = ui.aerialUri ?? aerialUri;
@@ -593,7 +591,7 @@ export function HandoffDesignStudio({
               onMoveGroup={studio.moveGroup}
               onTransformItem={studio.transformItem}
             />
-            {chromeLive && !drawingHot ? (
+            {chrome.horizon ? (
               <HorizonMarkers
                 cards={actionHorizon}
                 onFocus={(card) => {
@@ -629,7 +627,7 @@ export function HandoffDesignStudio({
               onPop={studio.popTracePoint}
             />
             <MeasureOverlay active={ui.tool === "measure" && !ui.frameOn} />
-            {chromeLive && selectedLive && !drawingHot ? (
+            {chrome.selectionRing && selectedLive ? (
               <SelectionRing
                 item={selectedLive}
                 xPct={selectedLive.x}
@@ -676,7 +674,7 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {planOn && !ui.clientView && !ui.frameOn ? (
+        {chrome.ambientRibbon ? (
           <AmbientRibbon
             tool={ui.tool}
             locked={ui.locked}
@@ -748,21 +746,23 @@ export function HandoffDesignStudio({
               }
               onOpenQuote={() => studio.setMode("quote")}
             />
-            <SunGrowthDock
-              sunMin={ui.sunMin}
-              growth={ui.growth}
-              playing={ui.sunPlay}
-              onSunMin={(sunMin) => studio.setUi({ sunMin })}
-              onGrowth={(growth) => studio.setUi({ growth })}
-              onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
-            />
+            {chrome.sunGrowth ? (
+              <SunGrowthDock
+                sunMin={ui.sunMin}
+                growth={ui.growth}
+                playing={ui.sunPlay}
+                onSunMin={(sunMin) => studio.setUi({ sunMin })}
+                onGrowth={(growth) => studio.setUi({ growth })}
+                onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
+              />
+            ) : null}
             <ComplianceTicker
               report={compliance}
               onOpenCompliance={() =>
                 studio.setUi({ utilityPanel: "compliance", setbackOn: true })
               }
             />
-            {!drawingHot ? (
+            {chrome.horizon ? (
               <PreemptiveHorizon
                 cards={actionHorizon}
                 onAccept={acceptHorizonCard}
@@ -782,9 +782,9 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {chromeLive ? (
+        {chrome.aiCoach ? (
           <AiCoachDock
-            open={ui.coachOpen && !drawingHot}
+            open={ui.coachOpen && !chrome.collapseUtility}
             status={ai.status}
             coaching={ai.coaching}
             pendingCount={ai.pendingCount}
