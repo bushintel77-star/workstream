@@ -11,6 +11,8 @@ export type HandoffChrome = {
   liveBom: boolean;
   /** Preemptive horizon cards + canvas pins */
   horizon: boolean;
+  /** Dynamic volumetric Isolith (stockpile contours on sheet margin) */
+  volumeIsolith: boolean;
   /** Sun / growth scrubber */
   sunGrowth: boolean;
   /** AI coach dock */
@@ -48,6 +50,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       utilityDrawer: false,
       liveBom: false,
       horizon: false,
+      // Fit sheet keeps Isolith on the margin; cost dock stays frozen
+      volumeIsolith: mode === "cad" && frameOn && !clientView && !focusOn,
       sunGrowth: false,
       aiCoach: false,
       ambientRibbon: !frameOn && !clientView,
@@ -69,6 +73,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     utilityDrawer: cadLike,
     liveBom: cadLike || mode === "quote",
     horizon: mode === "cad" && !drawingHot,
+    // Isolith stays live while Add/Edit (unlike conversational horizon)
+    volumeIsolith: mode === "cad",
     sunGrowth: plan && mode !== "survey" && mode !== "sketch",
     aiCoach: plan && mode !== "survey",
     ambientRibbon: plan,

@@ -141,6 +141,7 @@ See [README.md § UX/UI execution mandate](./README.md) and
 | Fit sheet freezes floating cost chrome | **Done** | `frameOn` → chrome off |
 | Optimistic + skeletal Live BOM pulse | **Partial** | Continuous estimate; worker skeletal pulse TBD |
 | Flora Ring plant suggestion (micro-climate) | **Done** | `features/flora` + `rankCurtisFloraCandidates`; SDS [`CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md`](../../../CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md) |
+| Dynamic Volumetric Isolith (stockpile) | **Done** | `features/isolith` + `buildIsolithSurvey`; SDS [`CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md`](../../../CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md) |
 
 ---
 

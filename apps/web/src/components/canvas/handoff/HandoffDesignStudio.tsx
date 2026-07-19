@@ -35,6 +35,7 @@ import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
 import { FloraRing } from "./features/flora/FloraRing";
+import { VolumetricIsolith } from "./features/isolith/VolumetricIsolith";
 import { ITEM_LAYER } from "./state/studioTypes";
 import type {
   ArchitecturalTitleBlock,
@@ -695,6 +696,17 @@ export function HandoffDesignStudio({
                     coachOpen: true,
                   });
                 }}
+              />
+            ) : null}
+            {chrome.volumeIsolith ? (
+              <VolumetricIsolith
+                estimate={estimate}
+                proximity={
+                  drawingHot &&
+                  (ui.armed === "paving" ||
+                    ui.armed === "deck" ||
+                    ui.tool === "edit")
+                }
               />
             ) : null}
             {ui.mode === "sketch" ? (

@@ -29,6 +29,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.liveBom).toBe(true);
     expect(c.utilityDrawer).toBe(true);
     expect(c.horizon).toBe(true);
+    expect(c.volumeIsolith).toBe(true);
   });
 
   it("collapses utility while Trace is armed", () => {
@@ -40,6 +41,12 @@ describe("resolveHandoffChrome", () => {
     expect(c.collapseUtility).toBe(true);
     expect(c.horizon).toBe(false);
     expect(c.selectionRing).toBe(false);
+    expect(c.volumeIsolith).toBe(true);
+  });
+
+  it("hides Isolith in Sketch", () => {
+    const c = resolveHandoffChrome({ ...base, mode: "sketch" });
+    expect(c.volumeIsolith).toBe(false);
   });
 
   it("Quote keeps estimate path without draw chrome", () => {
@@ -59,7 +66,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.aiCoach).toBe(false);
   });
 
-  it("Fit sheet freezes floating cost chrome", () => {
+  it("Fit sheet freezes floating cost chrome but keeps Isolith", () => {
     const c = resolveHandoffChrome({
       ...base,
       mode: "cad",
@@ -68,5 +75,6 @@ describe("resolveHandoffChrome", () => {
     expect(c.utilityDrawer).toBe(false);
     expect(c.horizon).toBe(false);
     expect(c.aiCoach).toBe(false);
+    expect(c.volumeIsolith).toBe(true);
   });
 });
