@@ -154,7 +154,8 @@ See [README.md § UX/UI execution mandate](./README.md) and
 See prioritized matrix in [TIER1-AI-CANVAS-GAP-AUDIT.md](./TIER1-AI-CANVAS-GAP-AUDIT.md):
 
 - **P0:** Durable persist · Share/portal unlock · AI draft gate — **Done** (`canvasBridge`, `ShareSurface`)
-- **P1:** Worker skeletal Live cost · shade grid · easements · authored DBH
+- **P1:** Worker skeletal Live cost · shade grid · easements/utilities · authored DBH — **Done** on handoff
+- **P2.2:** Assist grounded on compliance + shade — **Done** (`buildAssistSiteIntel`)
 - Live cost soft pulse while saving — **Partial** (save-status pulse; full worker settle TBD)
 - DBH-authored TPZ survey fields / Stage 2 schema briefs
 

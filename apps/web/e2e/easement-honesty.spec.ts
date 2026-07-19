@@ -55,7 +55,13 @@ test.describe("Easement honesty loop", () => {
               { x_pct: 30, y_pct: 45 },
             ],
             easements: [EASEMENT_RING],
-            services: [],
+            services: [
+              [
+                { x_pct: 20, y_pct: 70 },
+                { x_pct: 55, y_pct: 72 },
+                { x_pct: 80, y_pct: 68 },
+              ],
+            ],
             levels: [],
           },
         },
@@ -72,12 +78,15 @@ test.describe("Easement honesty loop", () => {
       timeout: 15_000,
     });
     await expect(page.getByTestId("easement-honesty-footer")).toBeVisible();
+    await expect(page.getByTestId("utility-service-trace").first()).toBeVisible();
+    await expect(page.getByTestId("utility-honesty-footer")).toBeVisible();
 
     await page.reload();
     await expect(page.getByTestId("easement-hatch").first()).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.getByTestId("easement-honesty-footer")).toBeVisible();
+    await expect(page.getByTestId("utility-honesty-footer")).toBeVisible();
   });
 
   test("survey Servc ≥3 pts commits easement hatch on CAD", async ({

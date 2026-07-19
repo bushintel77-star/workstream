@@ -43,6 +43,7 @@ import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
+import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
@@ -75,6 +76,8 @@ import css from "./handoffStudio.module.css";
 type Props = {
   projectId: string;
   projectAddress: string;
+  projectLat?: number | null;
+  projectLng?: number | null;
   aerialUri?: string | null;
   areaM2?: number | null;
   initialMode?: StudioMode;
@@ -93,6 +96,8 @@ type Props = {
 export function HandoffDesignStudio({
   projectId,
   projectAddress,
+  projectLat = null,
+  projectLng = null,
   aerialUri = null,
   areaM2 = 230.82,
   initialMode = "cad",
@@ -851,6 +856,8 @@ export function HandoffDesignStudio({
             <ShadeGridOverlay
               active={ui.shadeOn && !ui.frameOn && !ui.focusOn}
               sunMin={ui.sunMin}
+              lat={projectLat ?? undefined}
+              lng={projectLng ?? undefined}
             />
             <CadPlanBoard
               frameOn={ui.frameOn}
@@ -874,6 +881,7 @@ export function HandoffDesignStudio({
               boundary={studio.boundary}
               building={studio.building}
               easements={studio.easements}
+              services={studio.services}
               items={studio.items}
               mode={ui.mode}
               tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}
@@ -1161,7 +1169,11 @@ export function HandoffDesignStudio({
                 if (t !== "canopy" && t !== "feature") return true;
                 const d = new Date();
                 d.setHours(Math.floor(ui.sunMin / 60), ui.sunMin % 60, 0, 0);
-                const cells = buildIndicativeShadeGrid(-37.849, 144.993, d);
+                const cells = buildIndicativeShadeGrid(
+                  projectLat ?? -37.849,
+                  projectLng ?? 144.993,
+                  d,
+                );
                 return sunHoursAtPct(50, 50, cells) >= 3.5;
               })
               .map((t) => (
@@ -1194,6 +1206,19 @@ export function HandoffDesignStudio({
               </label>
             ) : null}
           </div>
+        ) : null}
+
+        {!ui.addOpen &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        planOn &&
+        selectedLive?.t === "exist" ? (
+          <ExistTreeInspector
+            dbhM={selectedLive.dbhM ?? ui.existDbhM}
+            locked={ui.locked}
+            onDbhM={studio.patchSelectedDbh}
+          />
         ) : null}
 
         {showDocks ? (

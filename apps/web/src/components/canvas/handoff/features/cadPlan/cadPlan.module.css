@@ -560,13 +560,20 @@
   cursor: nwse-resize;
 }
 
-.honestyFooter {
+.honestyStack {
   position: absolute;
   left: 10px;
   bottom: 8px;
   z-index: 8;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   max-width: min(340px, calc(100% - 24px));
+  pointer-events: none;
+}
+
+.honestyFooter {
+  margin: 0;
   padding: 4px 8px;
   border: 1px solid rgba(28, 25, 23, 0.18);
   background: rgba(242, 240, 235, 0.92);
@@ -574,5 +581,4 @@
   font-size: 8.5px;
   letter-spacing: 0.02em;
   color: #57534e;
-  pointer-events: none;
 }

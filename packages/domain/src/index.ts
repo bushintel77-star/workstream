@@ -64,7 +64,13 @@ export * from './irrigation';
 export * from './plan';
 export * from './site-plan-projection';
 export * from './site-environment';
-export { buildStudioSystemPrompt, type StudioPromptSite, type StudioPromptProject } from './studio-ai-prompt';
+export {
+  buildStudioSystemPrompt,
+  buildAssistSiteIntel,
+  coarseSymbolToComplianceType,
+  type StudioPromptSite,
+  type StudioPromptProject,
+} from './studio-ai-prompt';
 export {
   buildIndicativeShadeGrid,
   SHADE_GRID_SIZE,

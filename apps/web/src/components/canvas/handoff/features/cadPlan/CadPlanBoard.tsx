@@ -62,6 +62,8 @@ type Props = {
   building: PctPoint[];
   /** Closed easement rings — hatched on plan (honesty layer). */
   easements?: PctPoint[][];
+  /** Open service / utility corridors — dashed locate layer. */
+  services?: PctPoint[][];
   items: StudioItem[];
   tool: StudioTool;
   /** Studio mode — survey shows edge dims; sketch disables pointer capture. */
@@ -127,6 +129,7 @@ export function CadPlanBoard({
   boundary,
   building,
   easements = [],
+  services = [],
   items,
   tool,
   mode = "cad",
@@ -245,13 +248,14 @@ export function CadPlanBoard({
       ]
     : [];
 
-  const exist = items.find((i) => i.t === "exist" && !i.ghost);
+  const existTrees = items.filter((i) => i.t === "exist" && !i.ghost);
   /** AI / design intelligence underlay — dimmed under CAD title in Stage 1. */
   const planItems = items;
   const underlayOp = foundationCleanse ? 0.38 : 1;
-  const existDbhM =
-    exist?.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
-  const tpz = exist ? tpzRadiusPct(existDbhM, scaleM) : null;
+  const existTpz = existTrees.map((it) => {
+    const dbhM = it.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
+    return { it, dbhM, tpz: tpzRadiusPct(dbhM, scaleM) };
+  });
 
   const toPct = useCallback((clientX: number, clientY: number) => {
     const el = rootRef.current;
@@ -479,6 +483,24 @@ export function CadPlanBoard({
               />
             </g>
           ))}
+        {services
+          .filter((r) => r.length >= 2)
+          .map((ring, i) => (
+            <g
+              key={`svc${i}`}
+              opacity={layerOpacity.council}
+              data-testid="utility-service-trace"
+            >
+              <polyline
+                points={ptsAttr(ring)}
+                fill="none"
+                stroke="#57534E"
+                strokeWidth={0.32}
+                strokeDasharray="1.8 1.1"
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
+          ))}
         {cadTitleMode
           ? contextLots.map((ring, i) => (
               <polygon
@@ -609,10 +631,11 @@ export function CadPlanBoard({
             opacity={0.75 * layerOpacity.council}
           />
         ) : null}
-        {exist && tpz ? (
+        {existTpz.map(({ it, tpz }) => (
           <ellipse
-            cx={exist.x}
-            cy={exist.y}
+            key={`tpz-${it.id}`}
+            cx={it.x}
+            cy={it.y}
             rx={tpz.rxPct}
             ry={tpz.rxPct * 0.75}
             fill="rgba(201,151,87,0.06)"
@@ -622,8 +645,9 @@ export function CadPlanBoard({
             vectorEffect="non-scaling-stroke"
             opacity={layerOpacity.council * underlayOp}
             data-tpz-state="normal"
+            data-testid="exist-tpz-ring"
           />
-        ) : null}
+        ))}
       </svg>
 
       {editing
@@ -790,21 +814,25 @@ export function CadPlanBoard({
         </p>
       ) : null}
 
-      {exist &&
-      tpz &&
-      !foundationCleanse &&
-      (selectedId === exist.id || hoverId === exist.id) ? (
-        <div
-          className={css.tpzTag}
-          style={{
-            left: `${Math.min(96, exist.x + tpz.rxPct * 0.72)}%`,
-            top: `${Math.max(4, exist.y - tpz.rxPct * 0.35)}%`,
-          }}
-          title="Tree protection zone · AS 4970"
-        >
-          TPZ Ø{tpz.radiusM.toFixed(1)} m
-        </div>
-      ) : null}
+      {!foundationCleanse
+        ? existTpz
+            .filter(
+              ({ it }) => it.id === selectedId || it.id === hoverId,
+            )
+            .map(({ it, tpz }) => (
+              <div
+                key={`tpztag-${it.id}`}
+                className={css.tpzTag}
+                style={{
+                  left: `${Math.min(96, it.x + tpz.rxPct * 0.72)}%`,
+                  top: `${Math.max(4, it.y - tpz.rxPct * 0.35)}%`,
+                }}
+                title="Tree protection zone · AS 4970"
+              >
+                TPZ Ø{tpz.radiusM.toFixed(1)} m
+              </div>
+            ))
+        : null}
 
       {planItems.map((it) => {
         const d = BY_TYPE[it.t];
@@ -1018,11 +1046,21 @@ export function CadPlanBoard({
         </div>
       ) : null}
 
-      {easements.some((r) => r.length >= 3) ? (
-        <p className={css.honestyFooter} data-testid="easement-honesty-footer">
-          Easement hatch · indicative only — confirm with title / council before
-          excavation
-        </p>
+      {easements.some((r) => r.length >= 3) ||
+      services.some((r) => r.length >= 2) ? (
+        <div className={css.honestyStack}>
+          {easements.some((r) => r.length >= 3) ? (
+            <p className={css.honestyFooter} data-testid="easement-honesty-footer">
+              Easement hatch · indicative only — confirm with title / council before
+              excavation
+            </p>
+          ) : null}
+          {services.some((r) => r.length >= 2) ? (
+            <p className={css.honestyFooter} data-testid="utility-honesty-footer">
+              Utility traces · indicative — confirm locate / DBYD before dig
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

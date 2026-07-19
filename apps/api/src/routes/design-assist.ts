@@ -3,7 +3,11 @@ import {
   DesignAssistRequestSchema,
   DesignAssistResponseSchema,
 } from "@workstream/contracts";
-import { formatSketchBriefForAi, isTier1WrightsTerrace } from "@workstream/domain";
+import {
+  buildAssistSiteIntel,
+  formatSketchBriefForAi,
+  isTier1WrightsTerrace,
+} from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
 import { groundSpanFromSurvey } from "../lib/cad-ground";
 import { runStudioAssist } from "../lib/claude";
@@ -45,6 +49,18 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
       const easementCount =
         frame?.easements?.filter((r) => r.length >= 3).length ?? 0;
       const serviceCount = frame?.services?.length ?? 0;
+      const outdoorM2 =
+        survey?.garden_area_m2 ??
+        survey?.lot_area_m2 ??
+        (span ? span.width_m * span.height_m * 0.55 : 180);
+      const intel = buildAssistSiteIntel({
+        outdoorM2,
+        placements: canvas?.placements ?? [],
+        boundary: frame?.boundary,
+        lat: project.lat ?? undefined,
+        lng: project.lng ?? undefined,
+        scaleM: span?.width_m,
+      });
 
       const result = await runStudioAssist({
         project: { name: project.address, address: project.address },
@@ -56,6 +72,9 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
           easement_count: easementCount,
           service_count: serviceCount,
           scale_m: span?.width_m,
+          sun_hours: intel.sun_hours,
+          compliance_summary: intel.compliance_summary,
+          shade_summary: intel.shade_summary,
         },
         canvasElementCount: canvas?.placements.length ?? 0,
         message: parsedBody.data.message,

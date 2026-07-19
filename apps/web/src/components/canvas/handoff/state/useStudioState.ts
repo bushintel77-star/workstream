@@ -93,7 +93,7 @@ function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
       y: i.y,
       scale: i.scale,
       ghost: i.ghost,
-      dbhM: d.dbhM,
+      dbhM: i.dbhM ?? d.dbhM,
       canopyM: d.canopyM,
       wPx: d.w,
       hPx: d.h,
@@ -1427,6 +1427,27 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate, state.ui.locked, state.ui.selectedId],
   );
 
+  const patchSelectedDbh = useCallback(
+    (dbhM: number) => {
+      const id = state.ui.selectedId;
+      if (!id || state.ui.locked) return;
+      if (!Number.isFinite(dbhM) || dbhM <= 0) return;
+      const next = Math.min(2, Math.max(0.05, dbhM));
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost && i.t === "exist"
+              ? { ...i, dbhM: next }
+              : i,
+          ),
+        },
+      }));
+      setUi({ existDbhM: next });
+    },
+    [mutate, setUi, state.ui.locked, state.ui.selectedId],
+  );
+
   const snapSheetScale = useCallback(
     (dir: 1 | -1) => {
       const cur = state.ui.sheetScaleDenom;
@@ -1631,7 +1652,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.items.filter((i) => !i.ghost).length,
     state.doc.items
       .filter((i) => !i.ghost)
-      .map((i) => `${i.id}:${i.x}:${i.y}:${i.scale}:${i.rot}:${i.t}`)
+      .map(
+        (i) =>
+          `${i.id}:${i.x}:${i.y}:${i.scale}:${i.rot}:${i.t}:${i.dbhM ?? ""}`,
+      )
       .join("|"),
     state.doc.strokes.map((s) => s.id).join("|"),
     state.doc.strokes.length,
@@ -1944,6 +1968,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setSelection,
     deleteSelected,
     changeSelectedType,
+    patchSelectedDbh,
     snapSheetScale,
     setSheetScale,
     updateBoundary,

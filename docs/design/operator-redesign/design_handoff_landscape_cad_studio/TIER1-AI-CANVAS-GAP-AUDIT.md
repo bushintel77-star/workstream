@@ -198,21 +198,21 @@ Priorities are **product impact × Canvas-First / AI-first fit**. Stage 2 items 
 
 ### P1 — Invisible engine polish
 
-| ID | Gap | Why gold | Suggested move |
-|----|-----|----------|----------------|
-| P1.1 | Worker + skeletal Live cost pulse | Canvas-First live-cost rule | Reuse `bom.worker.ts` settle UX on handoff total |
-| P1.2 | Shade grid on `%` aerial | 2026 site-intel baseline | Port `shade-grid` → `CadPlanBoard` / ground stack |
-| P1.3 | Easement hatch + honesty footer | Title reality check | Render `easements` + “confirm title” |
-| P1.4 | Authored DBH for TPZ | AS 4970 credibility | Selection ring → Advanced DBH field |
+| ID | Gap | Why gold | Suggested move | Status |
+|----|-----|----------|----------------|--------|
+| P1.1 | Worker + skeletal Live cost pulse | Canvas-First live-cost rule | Reuse `bom.worker.ts` settle UX on handoff total | **Done** — `useStudioEstimate` + `LiveBomDock` settle pulse |
+| P1.2 | Shade grid on `%` aerial | 2026 site-intel baseline | Port `shade-grid` → `CadPlanBoard` / ground stack | **Done** — `ShadeGridOverlay` + project lat/lng |
+| P1.3 | Easement hatch + honesty footer | Title reality check | Render `easements` + “confirm title” | **Done** — hatch + Servc→easements + utility traces/DBYD footer |
+| P1.4 | Authored DBH for TPZ | AS 4970 credibility | Selection ring → Advanced DBH field | **Done** — place-time field + `ExistTreeInspector` + persist `dbhM` |
 
 ### P2 — AI depth without chrome fog
 
-| ID | Gap | Why gold | Suggested move |
-|----|-----|----------|----------------|
-| P2.1 | Vision canopy quality | Better ghosts, less noise | Swap heuristic when vision API returns clusters |
-| P2.2 | Assist grounded in compliance + shade | Conversational AI that knows the site | Inject compliance + shade summary into `buildStudioSystemPrompt` |
-| P2.3 | Irrigation / lighting secondary BOM | Material orchestrator completeness | Tag zones → tertiary lines under Advanced |
-| P2.4 | Planting palette sun filter | Shade → species suitability | Filter Add strip by `sunMin` / growth |
+| ID | Gap | Why gold | Suggested move | Status |
+|----|-----|----------|----------------|--------|
+| P2.1 | Vision canopy quality | Better ghosts, less noise | Swap heuristic when vision API returns clusters | **Partial** — colour-cluster heuristic |
+| P2.2 | Assist grounded in compliance + shade | Conversational AI that knows the site | Inject compliance + shade summary into `buildStudioSystemPrompt` | **Done** — `buildAssistSiteIntel` → design-assist |
+| P2.3 | Irrigation / lighting secondary BOM | Material orchestrator completeness | Tag zones → tertiary lines under Advanced | **Partial** — auto secondary BOM; no authored zones |
+| P2.4 | Planting palette sun filter | Shade → species suitability | Filter Add strip by `sunMin` / growth | **Partial** — Add strip filter when shade mesh on |
 
 ### P3 — Immersive / nice-to-have
 
@@ -248,11 +248,13 @@ Use these as PR review gates for any studio change:
 
 ## 6. Recommended next slice (smallest high-leverage)
 
-1. **P0.1–P0.3** — Persist + Share gate (closes tier-1 business loop).  
-2. **P1.1** — Worker skeletal pulse on Live cost (Canvas-First mandate).  
-3. **P1.2–P1.3** — Shade + easement overlays (site intelligence without ribbon fog).  
+P0–P1 closed on the live handoff mount (2026-07-19). Remaining Workflow 1 leverage:
 
-Defer Clay Walk and AI visualizer until the honesty loop is solid.
+1. **P2.4** — Point-local sun filter on Add strip (not board-centre sample).  
+2. **P2.3** — Authored irrigation/lighting zones → Advanced BOM (not auto-only).  
+3. **P2.1** — Vision canopy clusters when API returns them (keep heuristic fallback).  
+
+Defer Clay Walk (P3.1) and AI visualizer (P3.2) until the CAD material loop is solid.
 
 ---
 

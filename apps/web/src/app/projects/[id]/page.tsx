@@ -55,6 +55,8 @@ export default async function ProjectCanvasPage({
       <HandoffDesignStudio
         projectId={id}
         projectAddress={project.address}
+        projectLat={project.lat ?? null}
+        projectLng={project.lng ?? null}
         aerialUri={survey?.aerial_uri ?? null}
         areaM2={
           titleBlock?.lotAreaM2 ??
