@@ -375,9 +375,9 @@ export function HandoffDesignStudio({
       ? "Scanning"
       : ai.status === "assisting"
         ? "Assisting"
-        : ai.status === "unverified"
-          ? "Draft"
-          : "Ready";
+        : ai.pendingCount > 0
+          ? `Review ${ai.pendingCount}`
+          : "Ask AI";
 
   const onCoachTip = (tip: StudioAiSuggestion) => {
     if (tip.id === "review-ghosts" || tip.id === "scan-site") {
@@ -413,12 +413,16 @@ export function HandoffDesignStudio({
       }
     >
       <header className={css.header} data-testid="canvas-studio-header">
-        <div>
+        <div className={css.brandBlock}>
           <p className={css.brandName}>Curtis &amp; Co</p>
           <p className={css.address}>{displayAddress}</p>
         </div>
-        <div className={css.spacer} />
-        <nav className={css.modes} aria-label="Design workflow" data-testid="canvas-mode-strip">
+
+        <nav
+          className={css.modes}
+          aria-label="Design workflow"
+          data-testid="canvas-mode-strip"
+        >
           {MODE_TABS.map((m) => (
             <button
               key={m}
@@ -431,16 +435,17 @@ export function HandoffDesignStudio({
             </button>
           ))}
         </nav>
+
         <div className={css.spacer} />
-        <div className={css.meta}>
-          <div className={css.metaEyebrow}>Working drawing</div>
-          <div className={css.metaDetail} data-testid="header-cadastral-meta">
+
+        {!ui.focusOn && !ui.clientView ? (
+          <div className={css.meta} data-testid="header-cadastral-meta">
             {titleBlock?.metaLine ??
               `${studio.siteMeta} · ${Number(outdoor).toFixed(0)} m²`}
           </div>
-        </div>
+        ) : null}
 
-        {ui.frameOn ? (
+        {ui.frameOn && !ui.clientView ? (
           <div className={css.segment} data-testid="paper-size-control">
             {(["a3", "a4"] as const).map((p) => (
               <button
@@ -457,204 +462,253 @@ export function HandoffDesignStudio({
               className={`${css.segmentBtn}${ui.sheetElevOn ? ` ${css.segmentBtnActive}` : ""}`}
               data-testid="sheet-elevations-toggle"
               onClick={() => studio.setUi({ sheetElevOn: !ui.sheetElevOn })}
-              title="Stacked elevations on Fit sheet"
+              title="Elevations"
+              aria-label="Elevations"
             >
-              {ui.sheetElevOn ? "Elevations ✓" : "+ Elevations"}
+              Elev
             </button>
           </div>
         ) : null}
 
-        <button
-          type="button"
-          className={`${css.iconBtn}${ui.foundationCleanse ? ` ${css.iconBtnActive}` : ""}`}
-          data-testid="title-boundary-top"
-          aria-label={
-            ui.foundationCleanse ? "Close title boundary" : "Title boundary"
-          }
-          title={
-            ui.foundationCleanse ? "Close title boundary" : "Title boundary"
-          }
-          onClick={() => {
-            if (ui.foundationCleanse) studio.exitStage1Foundation();
-            else void studio.runStage1FoundationCleanse();
-          }}
-        >
-          <svg
-            className={css.iconBtnSvg}
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden
-          >
-            <path
-              d="M2.5 3.5h11v9H2.5zM5 3.5v9M11 3.5v9M2.5 8h11"
-              stroke="currentColor"
-              strokeWidth="1.25"
-            />
-          </svg>
-        </button>
-        {ui.foundationCleanse || titleLocked ? (
+        <div className={css.headerTools} role="toolbar" aria-label="Canvas tools">
           <button
             type="button"
-            className={`${css.iconBtn}${ui.titleBoundaryLocked ? ` ${css.iconBtnActive}` : ""}`}
-            data-testid="title-boundary-lock-top"
-            aria-label={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
-            title={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
-            onClick={() =>
-              studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked)
+            className={`${css.iconBtn}${ui.foundationCleanse ? ` ${css.iconBtnActive}` : ""}`}
+            data-testid="title-boundary-top"
+            aria-label={
+              ui.foundationCleanse ? "Close title boundary" : "Title boundary"
             }
-          >
-            {ui.titleBoundaryLocked ? (
-              <svg
-                className={css.iconBtnSvg}
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden
-              >
-                <rect
-                  x="3.5"
-                  y="7"
-                  width="9"
-                  height="6.5"
-                  rx="1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                />
-                <path
-                  d="M5.5 7V5.2a2.5 2.5 0 0 1 5 0V7"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : (
-              <svg
-                className={css.iconBtnSvg}
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden
-              >
-                <rect
-                  x="3.5"
-                  y="7"
-                  width="9"
-                  height="6.5"
-                  rx="1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                />
-                <path
-                  d="M5.5 7V5.2a2.5 2.5 0 0 1 4.8-.8"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className={`${css.toolBtn}${ui.frameOn ? ` ${css.toolBtnActive}` : ""}`}
-          data-testid="fit-sheet-top"
-          onClick={() => studio.setUi({ frameOn: !ui.frameOn })}
-        >
-          Fit sheet
-        </button>
-        <button
-          type="button"
-          className={`${css.toolBtn}${ui.darkOn ? ` ${css.toolBtnActive}` : ""}`}
-          data-testid="dark-canvas-top"
-          onClick={() => studio.setUi({ darkOn: !ui.darkOn })}
-        >
-          {ui.darkOn ? "Dark on" : "Dark"}
-        </button>
-        <button
-          type="button"
-          className={`${css.toolBtn}${ui.layersOpen ? ` ${css.toolBtnActive}` : ""}`}
-          data-testid="canvas-layers-top"
-          onClick={() => studio.setUi({ layersOpen: !ui.layersOpen })}
-        >
-          Layers
-        </button>
-        <button
-          type="button"
-          className={css.toolBtn}
-          data-testid="canvas-sites-top"
-          onClick={() => studio.setUi({ sitesOpen: !ui.sitesOpen })}
-        >
-          Sites
-        </button>
-        <button
-          type="button"
-          className={`${css.toolBtn}${ui.focusOn ? ` ${css.toolBtnActive}` : ""}`}
-          data-testid="canvas-focus-top"
-          onClick={() => studio.setUi({ focusOn: !ui.focusOn })}
-        >
-          {ui.focusOn ? "Exit focus" : "Focus"}
-        </button>
-        <button
-          type="button"
-          className={`${css.toolBtn}${ui.clientView ? ` ${css.toolBtnActive}` : ""}`}
-          data-testid="client-view-top"
-          onClick={() =>
-            studio.setUi({
-              clientView: !ui.clientView,
-              focusOn: !ui.clientView,
-              ghostReviewOpen: false,
-            })
-          }
-        >
-          Client view
-        </button>
-        <button
-          type="button"
-          className={`${css.toolBtn}${ui.mode === "share" ? ` ${css.toolBtnActive}` : ""}`}
-          data-testid="share-top"
-          onClick={() => studio.setMode("share")}
-        >
-          Share
-        </button>
-        <button
-          type="button"
-          className={css.cmdBtn}
-          data-testid="canvas-command-top"
-          onClick={() => studio.setUi({ cmdOpen: true })}
-        >
-          ⌘K
-        </button>
-        {!ui.clientView ? (
-          <button
-            type="button"
-            className={`${css.aiPill}${ai.status === "verified" ? ` ${css.aiPillOk}` : ""}`}
-            data-testid="header-accept-ghosts"
+            title="Title boundary"
             onClick={() => {
-              if (ai.status === "scanning" || ai.status === "assisting") {
-                studio.setUi({ coachOpen: true });
-                return;
-              }
-              if (ai.pendingCount === 0) {
-                void ai.scan();
-                return;
-              }
-              ai.acceptAll();
+              if (ui.foundationCleanse) studio.exitStage1Foundation();
+              else void studio.runStage1FoundationCleanse();
             }}
           >
-            {draftLabel}
+            <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path
+                d="M2.5 3.5h11v9H2.5zM5 3.5v9M11 3.5v9M2.5 8h11"
+                stroke="currentColor"
+                strokeWidth="1.25"
+              />
+            </svg>
           </button>
-        ) : null}
-        <span
-          className={`${css.savedTick}${ui.saveStatus === "saving" ? ` ${css.savedTickPulse}` : ""}`}
-          data-testid="autosave-tick"
-          data-status={ui.saveStatus}
-        >
-          {ui.saveStatus === "saving"
-            ? "Saving…"
-            : ui.saveStatus === "error"
-              ? "Save paused — retrying"
-              : ui.saveStatus === "saved"
-                ? "Saved"
-                : "—"}
-        </span>
+          {ui.foundationCleanse || titleLocked ? (
+            <button
+              type="button"
+              className={`${css.iconBtn}${ui.titleBoundaryLocked ? ` ${css.iconBtnActive}` : ""}`}
+              data-testid="title-boundary-lock-top"
+              aria-label={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
+              title={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
+              onClick={() =>
+                studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked)
+              }
+            >
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <rect
+                  x="3.5"
+                  y="7"
+                  width="9"
+                  height="6.5"
+                  rx="1.2"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                />
+                <path
+                  d={
+                    ui.titleBoundaryLocked
+                      ? "M5.5 7V5.2a2.5 2.5 0 0 1 5 0V7"
+                      : "M5.5 7V5.2a2.5 2.5 0 0 1 4.8-.8"
+                  }
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={`${css.iconBtn}${ui.frameOn ? ` ${css.iconBtnActive}` : ""}`}
+            data-testid="fit-sheet-top"
+            aria-label="Fit sheet"
+            title="Fit sheet"
+            onClick={() => studio.setUi({ frameOn: !ui.frameOn })}
+          >
+            <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+              <rect
+                x="3"
+                y="2.5"
+                width="10"
+                height="11"
+                rx="1"
+                stroke="currentColor"
+                strokeWidth="1.25"
+              />
+              <path d="M9.5 2.5v11" stroke="currentColor" strokeWidth="1.25" />
+            </svg>
+          </button>
+          {!ui.focusOn && !ui.clientView ? (
+            <>
+              <button
+                type="button"
+                className={`${css.iconBtn}${ui.darkOn ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="dark-canvas-top"
+                aria-label="Dark canvas"
+                title="Dark canvas"
+                onClick={() => studio.setUi({ darkOn: !ui.darkOn })}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M9.2 2.4A5.5 5.5 0 1 0 13.6 10 4.2 4.2 0 0 1 9.2 2.4z"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`${css.iconBtn}${ui.layersOpen ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="canvas-layers-top"
+                aria-label="Layers"
+                title="Layers"
+                onClick={() => studio.setUi({ layersOpen: !ui.layersOpen })}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M2.5 5.2 8 2.8l5.5 2.4L8 7.6 2.5 5.2zm0 3.2L8 11l5.5-2.6M2.5 11.6 8 14.2l5.5-2.6"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={css.iconBtn}
+                data-testid="canvas-sites-top"
+                aria-label="Sites"
+                title="Sites"
+                onClick={() => studio.setUi({ sitesOpen: !ui.sitesOpen })}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M8 13.5s4-3.4 4-6.2A4 4 0 1 0 4 7.3C4 10.1 8 13.5 8 13.5z"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                  />
+                  <circle cx="8" cy="7.2" r="1.3" stroke="currentColor" strokeWidth="1.2" />
+                </svg>
+              </button>
+            </>
+          ) : null}
+          <button
+            type="button"
+            className={`${css.iconBtn}${ui.focusOn ? ` ${css.iconBtnActive}` : ""}`}
+            data-testid="canvas-focus-top"
+            aria-label={ui.focusOn ? "Exit focus" : "Focus"}
+            title={ui.focusOn ? "Exit focus" : "Focus"}
+            onClick={() => studio.setUi({ focusOn: !ui.focusOn })}
+          >
+            <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+              <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.25" />
+              <path
+                d="M8 2.5v2M8 11.5v2M2.5 8h2M11.5 8h2"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+          {!ui.focusOn ? (
+            <button
+              type="button"
+              className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
+              data-testid="client-view-top"
+              aria-label="Client view"
+              title="Client view"
+              onClick={() =>
+                studio.setUi({
+                  clientView: !ui.clientView,
+                  focusOn: !ui.clientView,
+                  ghostReviewOpen: false,
+                })
+              }
+            >
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path
+                  d="M2.5 8s2.2-3.5 5.5-3.5S13.5 8 13.5 8s-2.2 3.5-5.5 3.5S2.5 8 2.5 8z"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                />
+                <circle cx="8" cy="8" r="1.4" stroke="currentColor" strokeWidth="1.2" />
+              </svg>
+            </button>
+          ) : null}
+          {!ui.focusOn && !ui.clientView ? (
+            <button
+              type="button"
+              className={`${css.iconBtn}${ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}
+              data-testid="share-top"
+              aria-label="Share"
+              title="Share"
+              onClick={() => studio.setMode("share")}
+            >
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <circle cx="12" cy="4" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                <circle cx="4" cy="8" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                <circle cx="12" cy="12" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                <path
+                  d="M5.4 7.3 10.5 4.8M5.4 8.7l5.1 2.5"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+              </svg>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={css.cmdBtn}
+            data-testid="canvas-command-top"
+            onClick={() => studio.setUi({ cmdOpen: true })}
+            title="Command palette"
+          >
+            ⌘K
+          </button>
+          {!ui.clientView ? (
+            <button
+              type="button"
+              className={`${css.aiPill}${ai.pendingCount > 0 ? ` ${css.aiPillHot}` : ""}${ai.status === "verified" && ai.pendingCount === 0 ? ` ${css.aiPillOk}` : ""}`}
+              data-testid="header-accept-ghosts"
+              onClick={() => {
+                if (ai.status === "scanning" || ai.status === "assisting") {
+                  studio.setUi({ coachOpen: true });
+                  return;
+                }
+                if (ai.pendingCount === 0) {
+                  void ai.scan();
+                  return;
+                }
+                ai.acceptAll();
+              }}
+            >
+              {draftLabel}
+            </button>
+          ) : null}
+          <span
+            className={`${css.savedTick}${ui.saveStatus === "saving" ? ` ${css.savedTickPulse}` : ""}`}
+            data-testid="autosave-tick"
+            data-status={ui.saveStatus}
+          >
+            {ui.saveStatus === "saving"
+              ? "Saving"
+              : ui.saveStatus === "error"
+                ? "Retry"
+                : ui.saveStatus === "saved"
+                  ? "Saved"
+                  : ""}
+          </span>
+        </div>
       </header>
 
       <div

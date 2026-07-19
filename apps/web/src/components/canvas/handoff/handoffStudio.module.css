@@ -1,6 +1,6 @@
 .root {
   /* SDS — Canvas-First Spatial Engine drafting tokens (Workflow 1 board) */
-  --sds-canvas-bg: #f7f4ef;
+  --sds-canvas-bg: #f3efe8;
   --sds-vector-primary: #1c1917;
   --sds-vector-muted: #8c8a85;
   --sds-compliance-amber: #c99757;
@@ -12,6 +12,9 @@
   --sds-node-corner: 8px;
   --sds-node-mid: 6px;
   --sds-label-offset: 8px;
+  --ws-glass: rgba(255, 251, 252, 0.72);
+  --ws-glass-border: rgba(36, 19, 24, 0.08);
+  --ws-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Sheet + chrome safe insets — keep CAD clear of HUDs */
   --ws-sheet-pad: 24px;
@@ -19,9 +22,9 @@
   --ws-title-w: 262px;
   --ws-title-gap: 16px;
   --ws-safe-left: 64px;
-  --ws-safe-top: 48px;
+  --ws-safe-top: 44px;
   --ws-safe-right: 16px;
-  --ws-safe-bottom: 48px;
+  --ws-safe-bottom: 44px;
   --ws-type-kicker: 8px;
   --ws-type-dim: 9.5px;
   --ws-type-hud: 11px;
@@ -31,7 +34,10 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: var(--sds-canvas-bg);
+  background:
+    radial-gradient(120% 80% at 8% 0%, rgba(232, 213, 188, 0.55), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.28), transparent 50%),
+    var(--sds-canvas-bg);
   color: var(--sds-vector-primary);
   font-family: Sora, ui-sans-serif, sans-serif;
   overflow: hidden;
@@ -39,7 +45,9 @@
 }
 
 .rootDark {
-  background: #1a1216;
+  background:
+    radial-gradient(100% 70% at 10% 0%, rgba(90, 50, 60, 0.35), transparent 50%),
+    #161116;
   color: #fff6f8;
 }
 
@@ -47,30 +55,39 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 18px 8px;
-  flex-wrap: wrap;
-  row-gap: 8px;
+  gap: 10px;
+  padding: 8px 12px 8px 16px;
+  flex-wrap: nowrap;
+  min-height: 56px;
+  z-index: 30;
+  background: color-mix(in srgb, var(--sds-canvas-bg) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  border-bottom: 1px solid var(--ws-glass-border);
+}
+
+.brandBlock {
+  flex: none;
+  min-width: 0;
 }
 
 .brandName {
   margin: 0;
   font-family: Fraunces, Georgia, serif;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   line-height: 1.1;
   white-space: nowrap;
 }
 
 .address {
-  margin: 1px 0 0;
-  font-size: 11px;
+  margin: 2px 0 0;
+  font-size: 10.5px;
   color: #7a5560;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: min(280px, 42vw);
+  max-width: min(240px, 28vw);
 }
 
 .rootDark .address {
@@ -84,10 +101,11 @@
 
 .modes {
   display: flex;
-  gap: 3px;
+  gap: 2px;
   background: rgba(36, 19, 24, 0.05);
-  border-radius: 99px;
-  padding: 4px;
+  border-radius: 999px;
+  padding: 3px;
+  flex: none;
 }
 
 .rootDark .modes {
@@ -95,22 +113,30 @@
 }
 
 .modeBtn {
-  height: 30px;
-  padding: 0 15px;
-  border-radius: 99px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
   border: none;
   cursor: pointer;
   background: transparent;
   color: #7a5560;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   font-family: inherit;
+  transition:
+    background 160ms var(--ws-ease),
+    color 160ms var(--ws-ease),
+    transform 160ms var(--ws-ease);
+}
+
+.modeBtn:hover {
+  color: #241318;
 }
 
 .modeBtnActive {
   background: #241318;
   color: #fff6f8;
-  box-shadow: 0 2px 8px rgba(42, 23, 29, 0.2);
+  box-shadow: 0 2px 10px rgba(42, 23, 29, 0.18);
 }
 
 .rootDark .modeBtnActive {
@@ -119,22 +145,23 @@
 }
 
 .meta {
-  text-align: right;
-  font-family: "IBM Plex Mono", monospace;
-  line-height: 1.5;
   flex: none;
+  max-width: min(220px, 22vw);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: #8a7a82;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
 }
 
-.metaEyebrow {
-  font-size: 8.5px;
-  letter-spacing: 0.14em;
-  color: #b08a95;
-  text-transform: uppercase;
-}
-
-.metaDetail {
-  font-size: 10px;
-  color: #7a5560;
+.headerTools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
 }
 
 .toolBtn {
@@ -167,24 +194,34 @@
   color: #e6e9ea;
 }
 
-/** Quiet icon controls — progressive disclosure, no stage labels. */
+/** Quiet icon controls — progressive disclosure. */
 .iconBtn {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
+  border-radius: 9px;
+  border: 1px solid transparent;
   background: transparent;
-  color: #241318;
+  color: #5a4650;
   cursor: pointer;
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition:
+    background 140ms var(--ws-ease),
+    color 140ms var(--ws-ease),
+    border-color 140ms var(--ws-ease),
+    transform 140ms var(--ws-ease);
 }
 
 .iconBtn:hover {
-  border-color: #c2455f;
+  background: rgba(36, 19, 24, 0.06);
+  color: #241318;
+}
+
+.iconBtn:active {
+  transform: scale(0.96);
 }
 
 .iconBtnActive {
@@ -194,27 +231,31 @@
 }
 
 .rootDark .iconBtn {
-  border-color: rgba(230, 233, 234, 0.22);
-  color: #e6e9ea;
+  color: #d3b3bc;
+}
+
+.rootDark .iconBtn:hover {
+  background: rgba(255, 246, 248, 0.08);
+  color: #fff6f8;
 }
 
 .rootDark .iconBtnActive {
-  background: #e6e9ea;
+  background: #fff6f8;
   color: #1a1216;
-  border-color: #e6e9ea;
+  border-color: #fff6f8;
 }
 
 .iconBtnSvg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   display: block;
 }
 
 .cmdBtn {
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid var(--ws-glass-border);
   background: transparent;
   color: #7a5560;
   font-family: "IBM Plex Mono", monospace;
@@ -222,44 +263,66 @@
   font-weight: 500;
   cursor: pointer;
   flex: none;
+  transition: border-color 140ms var(--ws-ease), color 140ms var(--ws-ease);
+}
+
+.cmdBtn:hover {
+  border-color: rgba(36, 19, 24, 0.22);
+  color: #241318;
 }
 
 .aiPill {
-  height: 34px;
-  padding: 0 13px;
-  border-radius: 10px;
-  border: 1px solid rgba(232, 184, 75, 0.35);
-  background: rgba(232, 184, 75, 0.14);
-  color: #8a6a1f;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 9.5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 251, 252, 0.85);
+  color: #241318;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   cursor: pointer;
   flex: none;
+  transition:
+    background 160ms var(--ws-ease),
+    border-color 160ms var(--ws-ease),
+    color 160ms var(--ws-ease),
+    box-shadow 160ms var(--ws-ease);
+}
+
+.aiPill:hover {
+  border-color: rgba(36, 19, 24, 0.2);
+  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.08);
+}
+
+.aiPillHot {
+  border-color: rgba(194, 69, 95, 0.35);
+  background: rgba(194, 69, 95, 0.1);
+  color: #8a3048;
 }
 
 .aiPillOk {
-  border-color: rgba(31, 138, 90, 0.4);
+  border-color: rgba(31, 138, 90, 0.35);
   background: rgba(31, 138, 90, 0.1);
   color: #1f8a5a;
 }
 
 .segment {
   display: flex;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  border-radius: 10px;
+  border: 1px solid var(--ws-glass-border);
+  border-radius: 9px;
   overflow: hidden;
   flex: none;
+  background: rgba(255, 251, 252, 0.45);
 }
 
 .segmentBtn {
-  height: 34px;
-  padding: 0 10px;
+  height: 32px;
+  padding: 0 9px;
   border: none;
   background: transparent;
-  color: #241318;
-  font-size: 10.5px;
+  color: #5a4650;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -277,21 +340,41 @@
 .board {
   flex: 1;
   position: relative;
-  margin: 0 14px 14px;
-  border-radius: 18px;
+  margin: 0 8px 8px;
+  border-radius: 16px;
   overflow: hidden;
   background: #e8d5bc;
   min-height: 0;
-  box-shadow: inset 0 0 0 1px rgba(90, 62, 42, 0.12);
-  transition: box-shadow 180ms ease;
+  box-shadow:
+    inset 0 0 0 1px rgba(90, 62, 42, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.35),
+    0 18px 40px rgba(42, 23, 29, 0.08);
+  transition:
+    box-shadow 220ms var(--ws-ease),
+    margin 220ms var(--ws-ease),
+    border-radius 220ms var(--ws-ease);
+}
+
+.board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  border-radius: inherit;
+  box-shadow: inset 0 0 80px rgba(42, 23, 29, 0.04);
 }
 
 .boardWatch {
-  box-shadow: inset 0 0 0 2px rgba(232, 184, 75, 0.65);
+  box-shadow:
+    inset 0 0 0 2px rgba(232, 184, 75, 0.55),
+    0 18px 40px rgba(42, 23, 29, 0.08);
 }
 
 .boardCritical {
-  box-shadow: inset 0 0 0 3px rgba(194, 69, 95, 0.75);
+  box-shadow:
+    inset 0 0 0 2px rgba(194, 69, 95, 0.65),
+    0 18px 40px rgba(42, 23, 29, 0.1);
 }
 
 .councilTip {
@@ -338,23 +421,24 @@
   z-index: 13;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 32px;
-  max-width: min(360px, calc(100% - 340px));
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.92);
-  backdrop-filter: blur(10px);
+  gap: 8px;
+  min-height: 34px;
+  max-width: min(340px, calc(100% - 340px));
+  padding: 0 8px 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--ws-glass-border);
+  background: var(--ws-glass);
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 8px 24px rgba(42, 23, 29, 0.08);
   pointer-events: auto;
+  animation: chromeIn 220ms var(--ws-ease) both;
 }
 
 .aiStatusChip {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: #8a6a1f;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: #5a4650;
   flex: none;
 }
 
@@ -376,14 +460,30 @@
   flex: none;
   min-height: 26px;
   padding: 0 10px;
-  border-radius: 7px;
-  border: 1px solid rgba(36, 19, 24, 0.14);
-  background: transparent;
+  border-radius: 8px;
+  border: none;
+  background: rgba(36, 19, 24, 0.06);
   color: #241318;
   font: inherit;
   font-size: 10.5px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 140ms var(--ws-ease);
+}
+
+.aiStatusOpen:hover {
+  background: rgba(36, 19, 24, 0.1);
+}
+
+@keyframes chromeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .rootFocus .aiStatusBar {
@@ -394,10 +494,11 @@
 .savedTick {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: #b08a95;
   flex: none;
+  min-width: 2.5em;
+  text-align: right;
 }
 
 .savedTickPulse {
@@ -415,8 +516,15 @@
   }
 }
 
+.rootFocus .header {
+  background: transparent;
+  border-bottom-color: transparent;
+  backdrop-filter: none;
+}
+
 .rootFocus .board {
-  margin: 0 4px 4px;
+  margin: 0;
+  border-radius: 0;
 }
 
 .rootDark .board {
@@ -932,10 +1040,12 @@
   gap: 6px;
   max-width: min(520px, calc(100% - 160px));
   padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.94);
-  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  border: 1px solid rgba(36, 19, 24, 0.08);
+  background: rgba(255, 251, 252, 0.88);
+  backdrop-filter: blur(18px) saturate(1.1);
+  box-shadow: 0 10px 28px rgba(42, 23, 29, 0.1);
+  animation: chromeIn 200ms var(--ws-ease) both;
 }
 
 .addStrip .chip {

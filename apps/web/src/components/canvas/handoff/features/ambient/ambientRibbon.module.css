@@ -1,27 +1,28 @@
 .ribbon {
   position: absolute;
   left: 0;
-  top: 48px;
-  bottom: 48px;
+  top: 40px;
+  bottom: 40px;
   z-index: 18;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
-  width: 54px;
-  padding: 8px 6px 8px 8px;
-  border-radius: 0 16px 16px 0;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  width: 48px;
+  padding: 10px 5px 10px 6px;
+  border-radius: 0 14px 14px 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-left: none;
-  background: rgba(255, 251, 252, 0.22);
-  backdrop-filter: blur(24px);
-  opacity: 0.28;
-  transform: translateX(-6px);
+  background: rgba(255, 251, 252, 0.16);
+  backdrop-filter: blur(20px) saturate(1.1);
+  opacity: 0.22;
+  transform: translateX(-8px);
   transition:
-    opacity 180ms ease,
-    transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
     background 180ms ease,
-    width 200ms ease;
+    width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms ease;
   pointer-events: auto;
 }
 
@@ -29,22 +30,22 @@
 .hot {
   opacity: 1;
   transform: translateX(0);
-  width: 58px;
-  background: rgba(255, 251, 252, 0.88);
-  box-shadow: 0 10px 32px rgba(42, 23, 29, 0.16);
+  width: 56px;
+  background: rgba(255, 251, 252, 0.9);
+  box-shadow: 0 12px 36px rgba(42, 23, 29, 0.14);
 }
 
 .tools {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .btn {
-  width: 44px;
-  min-height: 40px;
+  width: 42px;
+  min-height: 38px;
   border: none;
-  border-radius: 11px;
+  border-radius: 10px;
   background: transparent;
   color: #7a5560;
   cursor: pointer;
@@ -55,11 +56,19 @@
   gap: 1px;
   font: inherit;
   padding: 4px 0;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
 }
 
 .btn:hover {
-  background: rgba(241, 215, 221, 0.85);
+  background: rgba(36, 19, 24, 0.06);
   color: #241318;
+}
+
+.btn:active {
+  transform: scale(0.96);
 }
 
 .btn:disabled {
@@ -73,12 +82,12 @@
 }
 
 .glyph {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
 }
 
 .label {
-  font-size: 7.5px;
+  font-size: 7px;
   font-weight: 650;
   letter-spacing: 0.02em;
   opacity: 0;
@@ -97,8 +106,8 @@
 
 .div {
   height: 1px;
-  margin: 3px 6px;
-  background: rgba(36, 19, 24, 0.1);
+  margin: 4px 8px;
+  background: rgba(36, 19, 24, 0.08);
 }
 
 .layers {
@@ -121,18 +130,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 4px;
-  min-height: 28px;
+  min-height: 26px;
   padding: 0 6px;
   border-radius: 8px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.75);
+  border: 1px solid rgba(36, 19, 24, 0.08);
+  background: rgba(255, 246, 248, 0.7);
   cursor: pointer;
   font: inherit;
   color: #241318;
 }
 
 .chipName {
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
