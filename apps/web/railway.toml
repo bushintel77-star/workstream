@@ -19,3 +19,5 @@ restartPolicyMaxRetries = 5
 startCommand = "node apps/web/server.js"
 
 # deploy bump 2026-07-19 06:26 — studio visual fidelity (flora/isolith/trade)
+
+# deploy bump 2026-07-19 14:48 — CAD/survey/sketch prototype fix
