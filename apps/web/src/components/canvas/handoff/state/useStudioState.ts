@@ -20,6 +20,8 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
+  IrrigationZone,
+  IrrigationZoneKind,
 } from "@workstream/contracts";
 import { saveDesignCanvasAction } from "../../../../app/actions";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
@@ -82,6 +84,7 @@ import {
   sieveVegetationItems,
 } from "./spatialCorrection";
 import { isDraftingPlate } from "./studioPlane";
+import { boardScaleM } from "../features/ground/groundMetrics";
 
 function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
   return items.map((i) => {
@@ -145,6 +148,7 @@ type Ui = {
   drawPoly: PctPoint[] | null;
   drawCursor: PctPoint | null;
   traceTarget: TraceTarget;
+  zoneKind: IrrigationZoneKind;
   siteIdx: number;
   canopyScanning: boolean;
   sunPlay: boolean;
@@ -250,6 +254,7 @@ function snapOf(doc: Doc): StudioSnapshot {
     strokes: doc.strokes,
     levels: doc.levels,
     services: doc.services,
+    irrigationZones: doc.irrigationZones ?? [],
   };
 }
 
@@ -262,6 +267,7 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
     strokes: [],
     levels: [],
     services: [],
+    irrigationZones: [],
   };
 }
 
@@ -270,6 +276,7 @@ function initialState(opts: {
   placements?: CatalogPlacement[];
   strokes?: CanvasStroke[];
   siteFrame?: DesignSiteFrame | null;
+  irrigationZones?: IrrigationZone[];
 }): State {
   const seed = WRIGHTS_SEED;
   const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
@@ -278,6 +285,7 @@ function initialState(opts: {
   const hasCanvas =
     (opts.placements?.length ?? 0) > 0 ||
     (opts.strokes?.length ?? 0) > 0 ||
+    (opts.irrigationZones?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
   const snap: StudioSnapshot = hasCanvas
     ? {
@@ -288,6 +296,7 @@ function initialState(opts: {
         easements: frameOverlay.easements ?? base.easements,
         services: frameOverlay.services ?? base.services,
         levels: frameOverlay.levels ?? base.levels,
+        irrigationZones: opts.irrigationZones ?? [],
       }
     : base;
   return {
@@ -331,6 +340,7 @@ function initialState(opts: {
       drawPoly: null,
       drawCursor: null,
       traceTarget: "boundary",
+      zoneKind: "drip",
       siteIdx: 0,
       canopyScanning: false,
       sunPlay: false,
@@ -368,6 +378,8 @@ export type UseStudioStateOpts = {
   initialStrokes?: CanvasStroke[];
   /** Durable title/survey frame from DesignCanvas.site_frame. */
   initialSiteFrame?: DesignSiteFrame | null;
+  /** Authored drip / lighting zones from DesignCanvas.irrigation_zones. */
+  initialIrrigationZones?: IrrigationZone[];
 };
 
 function reducer(state: State, action: Action): State {
@@ -545,6 +557,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialPlacements = [],
     initialStrokes = [],
     initialSiteFrame = null,
+    initialIrrigationZones = [],
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
@@ -552,6 +565,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       placements: initialPlacements,
       strokes: initialStrokes,
       siteFrame: initialSiteFrame,
+      irrigationZones: initialIrrigationZones,
     }),
   );
   const bootstrapped = useRef(false);
@@ -1583,6 +1597,30 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate],
   );
 
+  const commitZone = useCallback(
+    (points: PctPoint[], kind: IrrigationZoneKind) => {
+      if (points.length < 2) return;
+      const n = (state.doc.irrigationZones ?? []).length + 1;
+      const zone: IrrigationZone = {
+        id: crypto.randomUUID(),
+        name: kind === "lighting" ? `Light ${n}` : `Zone ${n}`,
+        kind,
+        points: points.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+        emitter_spacing_cm: 30,
+        emitter_flow_lph: 2,
+        ...(kind === "lighting" ? { fixture_spacing_m: 2.5 } : {}),
+      };
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          irrigationZones: [...(snap.irrigationZones ?? []), zone],
+        },
+      }));
+      setUi({ tool: "pan" });
+    },
+    [mutate, setUi, state.doc.irrigationZones],
+  );
+
   const switchSite = useCallback((idx: number) => {
     dispatch({ type: "switchSite", idx });
   }, []);
@@ -1629,7 +1667,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
             projectIdRef.current,
             placements,
             canvasStrokes,
-            [],
+            state.doc.irrigationZones ?? [],
             [],
             siteFrame,
           );
@@ -1670,6 +1708,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (state.doc.levels ?? [])
       .map((lv) => `${lv.x},${lv.y},${lv.z}`)
       .join("|"),
+    (state.doc.irrigationZones ?? [])
+      .map(
+        (z) =>
+          `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+      )
+      .join("/"),
   ]);
 
   const finishTrace = useCallback(
@@ -1788,11 +1832,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const estimateArgs = useMemo((): StudioEstimateArgs => {
+    const scaleM =
+      state.ui.boardWidthM ?? boardScaleM(state.ui.sheetScaleDenom);
     return {
       outdoorM2: workableOutdoorM2,
       boundary: state.doc.boundary,
       items: toComplianceItems(state.doc.items),
       accessConstrained: workableOutdoorM2 > 400,
+      scaleM,
+      irrigationZones: state.doc.irrigationZones ?? [],
       metaByType: Object.fromEntries(
         (Object.keys(BY_TYPE) as StudioItemType[]).map((t) => {
           const d = BY_TYPE[t];
@@ -1813,7 +1861,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
         }),
       ),
     };
-  }, [state.doc.boundary, state.doc.items, workableOutdoorM2]);
+  }, [
+    state.doc.boundary,
+    state.doc.items,
+    state.doc.irrigationZones,
+    state.ui.boardWidthM,
+    state.ui.sheetScaleDenom,
+    workableOutdoorM2,
+  ]);
 
   /**
    * Phase 3 parametric BOM — sync seed + Web Worker settle so drag stays fluid.
@@ -1917,6 +1972,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     strokes: state.doc.strokes,
     levels: state.doc.levels ?? [],
     services: state.doc.services ?? [],
+    irrigationZones: state.doc.irrigationZones ?? [],
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     ui: state.ui,
@@ -1958,6 +2014,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setStrokes,
     addSpotLevel,
     commitService,
+    commitZone,
     switchSite,
     resetSite,
     bumpSaved,

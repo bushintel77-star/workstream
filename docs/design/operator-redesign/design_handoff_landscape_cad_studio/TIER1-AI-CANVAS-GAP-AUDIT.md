@@ -211,7 +211,7 @@ Priorities are **product impact × Canvas-First / AI-first fit**. Stage 2 items 
 |----|-----|----------|----------------|--------|
 | P2.1 | Vision canopy quality | Better ghosts, less noise | Swap heuristic when vision API returns clusters | **Partial** — colour-cluster heuristic |
 | P2.2 | Assist grounded in compliance + shade | Conversational AI that knows the site | Inject compliance + shade summary into `buildStudioSystemPrompt` | **Done** — `buildAssistSiteIntel` → design-assist |
-| P2.3 | Irrigation / lighting secondary BOM | Material orchestrator completeness | Tag zones → tertiary lines under Advanced | **Partial** — auto secondary BOM; no authored zones |
+| P2.3 | Irrigation / lighting secondary BOM | Material orchestrator completeness | Tag zones → tertiary lines under Advanced | **Done** — Zone tool → `irrigation_zones` → Advanced BOM (authored supersedes auto) |
 | P2.4 | Planting palette sun filter | Shade → species suitability | Filter Add strip by `sunMin` / growth | **Done** — pointer probe / lot-mean when shade mesh on |
 
 ### P3 — Immersive / nice-to-have
@@ -248,13 +248,13 @@ Use these as PR review gates for any studio change:
 
 ## 6. Recommended next slice (smallest high-leverage)
 
-P0–P1 and P2.2/P2.4 closed on the live handoff mount (2026-07-19). Remaining Workflow 1 leverage:
+P0–P1 and P2.2–P2.4 closed on the live handoff mount (2026-07-19). Remaining Workflow 1 leverage:
 
-1. **P2.3** — Authored irrigation/lighting zones → Advanced BOM (not auto-only).  
-2. **P2.1** — Vision canopy clusters when API returns them (keep heuristic fallback).  
-3. **P3.3** — Multi-council compliance profiles beyond Stonnington constants.  
+1. **P2.1** — Vision canopy clusters when API returns them (keep heuristic fallback).  
+2. **P3.3** — Multi-council compliance profiles beyond Stonnington constants.  
+3. **P3.2** — Optional AI moodboard / visualizer (keep off primary CAD loop).  
 
-Clay Walk (P3.1) deferred with Share honesty copy; AI visualizer (P3.2) stays optional.
+Clay Walk (P3.1) deferred with Share honesty copy.
 
 ---
 

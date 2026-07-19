@@ -1,3 +1,4 @@
+import type { IrrigationZone, IrrigationZoneKind } from "@workstream/contracts";
 import type {
   SketchStroke,
   SpotLevel,
@@ -26,6 +27,8 @@ export type StudioSnapshot = {
   levels: SpotLevel[];
   /** Survey service / easement polylines — prototype Servc tool. */
   services: PctPoint[][];
+  /** Authored drip / lighting paths — DesignCanvas.irrigation_zones. */
+  irrigationZones: IrrigationZone[];
 };
 
 export type StudioUiState = {
@@ -64,6 +67,8 @@ export type StudioUiState = {
   drawPoly: PctPoint[] | null;
   drawCursor: PctPoint | null;
   traceTarget: TraceTarget;
+  /** Zone tool kind — drip irrigation or lighting run. */
+  zoneKind: IrrigationZoneKind;
   siteIdx: number;
   canopyScanning: boolean;
   sunPlay: boolean;

@@ -220,7 +220,10 @@ export function CadPlanBoard({
   const surveyAnnotatePassthrough =
     mode === "survey" &&
     (tool === "calib" || tool === "level" || tool === "service");
-  const boardPassthrough = sketchPassthrough || surveyAnnotatePassthrough;
+  /** Zone tool owns the pointer for authored drip / lighting paths. */
+  const zonePassthrough = tool === "zone";
+  const boardPassthrough =
+    sketchPassthrough || surveyAnnotatePassthrough || zonePassthrough;
   const cadTitleMode = foundationCleanse || titleLocked;
   /** Fit sheet: classic dashed boundary + solid footprint (screenshot language). */
   const fitSheetStroke = frameOn;

@@ -23,6 +23,16 @@ export type StudioEstimateArgs = {
     }
   >;
   accessConstrained?: boolean;
+  scaleM?: number;
+  irrigationZones?: Array<{
+    id: string;
+    name: string;
+    kind?: "drip" | "lighting";
+    points: Array<{ x_pct: number; y_pct: number }>;
+    emitter_spacing_cm?: number;
+    emitter_flow_lph?: number;
+    fixture_spacing_m?: number;
+  }>;
 };
 
 export type StudioEstimateWorkerRequest = {

@@ -100,13 +100,20 @@ export const CanvasPointPctSchema = z.object({
 });
 export type CanvasPointPct = z.infer<typeof CanvasPointPctSchema>;
 
-/** Drip-line irrigation zone sketched on the studio canvas. */
+/** Authored irrig / lighting path on the studio canvas (% geometry). */
+export const IrrigationZoneKindSchema = z.enum(["drip", "lighting"]);
+export type IrrigationZoneKind = z.infer<typeof IrrigationZoneKindSchema>;
+
 export const IrrigationZoneSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
+  /** drip = irrigation laterals; lighting = fixture run along path. */
+  kind: IrrigationZoneKindSchema.default("drip"),
   points: z.array(CanvasPointPctSchema).min(2),
   emitter_spacing_cm: z.number().positive().default(30),
   emitter_flow_lph: z.number().positive().default(2),
+  /** Lighting only — fixture spacing along path (m). */
+  fixture_spacing_m: z.number().positive().default(2.5).optional(),
 });
 export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
 

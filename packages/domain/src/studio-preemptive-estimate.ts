@@ -17,6 +17,35 @@ import {
   type StudioComplianceItem,
   type StudioComplianceReport,
 } from "./studio-preemptive-compliance";
+import { emitterCountForLine } from "./irrigation";
+
+/** Minimal authored zone payload (matches contracts IrrigationZone). */
+export type StudioAuthoredZone = {
+  id: string;
+  name: string;
+  kind?: "drip" | "lighting";
+  points: Array<{ x_pct: number; y_pct: number }>;
+  emitter_spacing_cm?: number;
+  emitter_flow_lph?: number;
+  fixture_spacing_m?: number;
+};
+
+/** Polyline length in metres — board width = scaleM across 100%. */
+export function authoredZoneLengthM(
+  points: Array<{ x_pct: number; y_pct: number }>,
+  scaleM: number,
+): number {
+  if (points.length < 2 || scaleM <= 0) return 0;
+  let sum = 0;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]!;
+    const b = points[i]!;
+    const dx = ((b.x_pct - a.x_pct) / 100) * scaleM;
+    const dy = ((b.y_pct - a.y_pct) / 100) * scaleM;
+    sum += Math.hypot(dx, dy);
+  }
+  return sum;
+}
 
 const PAVING_DEPTH_M = totalDepthM(DEFAULT_PAVING_ASSEMBLY);
 const BASE_DEPTH_M = layerDepthM(DEFAULT_PAVING_ASSEMBLY, "base");
@@ -180,6 +209,13 @@ export function estimateStudioDrawing(args: {
   metaByType?: Partial<Record<string, ItemMeta>>;
   /** Constrained access bumps labour / tipper count. */
   accessConstrained?: boolean;
+  /**
+   * Authored irrig / lighting paths on DesignCanvas.
+   * When present, they supersede auto softscape drip / hardscape lighting.
+   */
+  irrigationZones?: StudioAuthoredZone[];
+  /** Board width metres (100% span) — for zone polyline lengths. */
+  scaleM?: number;
 }): StudioEstimateReport {
   const metaMap = { ...DEFAULT_META, ...args.metaByType };
   const access = args.accessConstrained ? 1.15 : 1;
@@ -189,6 +225,12 @@ export function estimateStudioDrawing(args: {
   let hardscapeM2 = 0;
   let excavateM3 = 0;
   let spoilTonnes = 0;
+  const scaleM = args.scaleM ?? 110;
+  const zones = args.irrigationZones ?? [];
+  const dripZones = zones.filter((z) => (z.kind ?? "drip") === "drip");
+  const lightZones = zones.filter((z) => z.kind === "lighting");
+  const useAuthoredIrrig = dripZones.length > 0;
+  const useAuthoredLight = lightZones.length > 0;
 
   for (const it of live) {
     const meta = metaMap[it.t] ?? {
@@ -318,22 +360,24 @@ export function estimateStudioDrawing(args: {
         ),
       );
 
-      // Path / deck lighting — secondary under Advanced
-      const lightCount = Math.max(2, Math.ceil(area / 8));
-      lines.push(
-        line(
-          `sec-light-${it.id}`,
-          "secondary",
-          it.t === "paving"
-            ? "Path lighting — spike / bollard"
-            : "Deck-reveal strip lighting",
-          "ea",
-          lightCount,
-          (it.t === "paving" ? 85 : 120) * access,
-          [it.id],
-          "Preemptive lighting allowance (~1 per 8 m²)",
-        ),
-      );
+      // Path / deck lighting — secondary under Advanced (skipped when authored)
+      if (!useAuthoredLight) {
+        const lightCount = Math.max(2, Math.ceil(area / 8));
+        lines.push(
+          line(
+            `sec-light-${it.id}`,
+            "secondary",
+            it.t === "paving"
+              ? "Path lighting — spike / bollard"
+              : "Deck-reveal strip lighting",
+            "ea",
+            lightCount,
+            (it.t === "paving" ? 85 : 120) * access,
+            [it.id],
+            "Preemptive lighting allowance (~1 per 8 m²)",
+          ),
+        );
+      }
 
       horizon.push({
         id: `hz-assy-${it.id}`,
@@ -341,8 +385,12 @@ export function estimateStudioDrawing(args: {
         title: it.t === "paving" ? "Paving assembly shadowed" : "Deck assembly shadowed",
         detail:
           it.t === "paving"
-            ? "Excavation, CR6 base, bedding, joint sand, edge restraint, and path lighting are live in the BOM."
-            : "Framing, labour, and deck-reveal lighting are live; check fall < 1:100 to lawn.",
+            ? useAuthoredLight
+              ? "Excavation, CR6 base, bedding, joint sand, and edge restraint are live; lighting from authored zones."
+              : "Excavation, CR6 base, bedding, joint sand, edge restraint, and path lighting are live in the BOM."
+            : useAuthoredLight
+              ? "Framing and labour are live; lighting from authored zones."
+              : "Framing, labour, and deck-reveal lighting are live; check fall < 1:100 to lawn.",
         severity: "info",
         sourceIds: [it.id],
         x: it.x,
@@ -393,8 +441,8 @@ export function estimateStudioDrawing(args: {
         );
       }
 
-      // Irrigation / lighting secondaries (Advanced)
-      if (it.t === "lawn" || it.t === "bed") {
+      // Irrigation / lighting secondaries (Advanced) — skipped when authored zones exist
+      if (!useAuthoredIrrig && (it.t === "lawn" || it.t === "bed")) {
         const dripLm = Math.max(2, Math.sqrt(area) * 2.5);
         lines.push(
           line(
@@ -420,7 +468,7 @@ export function estimateStudioDrawing(args: {
             "300 mm spacing",
           ),
         );
-      } else if (it.t === "hedge") {
+      } else if (!useAuthoredIrrig && it.t === "hedge") {
         lines.push(
           line(
             `sec-irrig-${it.id}`,
@@ -432,7 +480,7 @@ export function estimateStudioDrawing(args: {
             [it.id],
           ),
         );
-      } else if (it.t === "canopy" || it.t === "feature") {
+      } else if (!useAuthoredLight && (it.t === "canopy" || it.t === "feature")) {
         lines.push(
           line(
             `sec-light-${it.id}`,
@@ -508,6 +556,72 @@ export function estimateStudioDrawing(args: {
         y: it.y,
       });
     }
+  }
+
+  // Authored irrig / lighting zones → Advanced BOM (supersede auto allowances)
+  for (const z of dripZones) {
+    const lm = authoredZoneLengthM(z.points, scaleM);
+    if (lm < 0.5) continue;
+    const spacingCm = z.emitter_spacing_cm ?? 30;
+    const emitters = emitterCountForLine(lm, spacingCm);
+    lines.push(
+      line(
+        `sec-zone-irrig-${z.id}`,
+        "secondary",
+        z.name?.trim() ? `Drip — ${z.name}` : "Drip irrigation — authored zone",
+        "lm",
+        lm,
+        14 * access,
+        [z.id],
+        "Authored irrigation zone on plan",
+      ),
+    );
+    if (emitters > 0) {
+      lines.push(
+        line(
+          `ter-zone-emit-${z.id}`,
+          "tertiary",
+          "Drip emitters",
+          "ea",
+          emitters,
+          1.85,
+          [z.id],
+          `${spacingCm} cm spacing`,
+        ),
+      );
+    }
+  }
+  if (dripZones.length > 0) {
+    lines.push(
+      line(
+        "lab-zone-irrig",
+        "labour",
+        "Irrigation zone install",
+        "zone",
+        dripZones.length,
+        180 * access,
+        dripZones.map((z) => z.id),
+        "Authored drip zones",
+      ),
+    );
+  }
+  for (const z of lightZones) {
+    const lm = authoredZoneLengthM(z.points, scaleM);
+    if (lm < 0.5) continue;
+    const spacing = z.fixture_spacing_m ?? 2.5;
+    const fixtures = Math.max(1, Math.ceil(lm / spacing));
+    lines.push(
+      line(
+        `sec-zone-light-${z.id}`,
+        "secondary",
+        z.name?.trim() ? `Lighting — ${z.name}` : "Path lighting — authored run",
+        "ea",
+        fixtures,
+        95 * access,
+        [z.id],
+        `Authored lighting · ~${spacing} m spacing`,
+      ),
+    );
   }
 
   if (spoilTonnes > 0) {

@@ -109,4 +109,82 @@ describe("estimateStudioDrawing", () => {
     });
     expect(report.horizon.some((h) => h.kind === "drainage")).toBe(false);
   });
+
+  it("authored drip zones supersede auto lawn irrigation in Advanced BOM", () => {
+    const zoneId = "11111111-1111-4111-8111-111111111111";
+    const report = estimateStudioDrawing({
+      outdoorM2: 230,
+      boundary,
+      scaleM: 100,
+      irrigationZones: [
+        {
+          id: zoneId,
+          name: "Rear lawn",
+          kind: "drip",
+          points: [
+            { x_pct: 20, y_pct: 60 },
+            { x_pct: 70, y_pct: 60 },
+          ],
+          emitter_spacing_cm: 30,
+        },
+      ],
+      items: [
+        {
+          id: "lawn1",
+          t: "lawn",
+          x: 50,
+          y: 60,
+          scale: 1.5,
+          areaKind: "rect",
+          wPx: 130,
+          hPx: 95,
+        },
+      ],
+    });
+    const labels = report.lines.map((l) => l.label);
+    expect(labels.some((l) => /Drip — Rear lawn/i.test(l))).toBe(true);
+    expect(labels.some((l) => /Irrigation zone install/i.test(l))).toBe(true);
+    expect(labels.some((l) => /Preemptive drip/i.test(l))).toBe(false);
+    expect(
+      report.lines.some(
+        (l) => l.id === `sec-irrig-lawn1` || /~2\.5/.test(l.notes ?? ""),
+      ),
+    ).toBe(false);
+  });
+
+  it("authored lighting zones supersede auto path lighting", () => {
+    const zoneId = "22222222-2222-4222-8222-222222222222";
+    const report = estimateStudioDrawing({
+      outdoorM2: 230,
+      boundary,
+      scaleM: 100,
+      irrigationZones: [
+        {
+          id: zoneId,
+          name: "Entry path",
+          kind: "lighting",
+          points: [
+            { x_pct: 30, y_pct: 40 },
+            { x_pct: 30, y_pct: 80 },
+          ],
+          fixture_spacing_m: 2.5,
+        },
+      ],
+      items: [
+        {
+          id: "p1",
+          t: "paving",
+          x: 40,
+          y: 50,
+          scale: 1.2,
+          areaKind: "rect",
+          wPx: 110,
+          hPx: 80,
+        },
+      ],
+    });
+    const labels = report.lines.map((l) => l.label);
+    expect(labels.some((l) => /Lighting — Entry path/i.test(l))).toBe(true);
+    expect(labels.some((l) => /Path lighting — spike/i.test(l))).toBe(false);
+  });
 });

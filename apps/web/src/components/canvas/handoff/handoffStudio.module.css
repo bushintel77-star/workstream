@@ -1022,6 +1022,19 @@
   letter-spacing: 0.02em;
 }
 
+.zoneKindBar {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--ws-safe-top, 40px) + 8px);
+  transform: translateX(-50%);
+  z-index: 14;
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.94);
+}
+
 .dbhField {
   display: inline-flex;
   align-items: center;

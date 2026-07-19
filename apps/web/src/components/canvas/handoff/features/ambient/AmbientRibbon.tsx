@@ -88,7 +88,7 @@ export function AmbientRibbon({
             type="button"
             className={`${css.btn}${tool === t.id || (t.id === "lock" && locked) ? ` ${css.active}` : ""}`}
             data-testid={`canvas-tool-${t.id}`}
-            title={t.label}
+            title={"title" in t && t.title ? t.title : t.label}
             onClick={() => onTool(t.id)}
           >
             <span className={css.glyph}>{t.icon}</span>

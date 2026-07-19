@@ -44,6 +44,7 @@ import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
+import { ZoneOverlay } from "./features/zones/ZoneOverlay";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
@@ -65,6 +66,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
+  IrrigationZone,
 } from "@workstream/contracts";
 import {
   plotBoxFor,
@@ -85,6 +87,7 @@ type Props = {
   initialPlacements?: CatalogPlacement[];
   initialStrokes?: CanvasStroke[];
   initialSiteFrame?: DesignSiteFrame | null;
+  initialIrrigationZones?: IrrigationZone[];
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -105,6 +108,7 @@ export function HandoffDesignStudio({
   initialPlacements = [],
   initialStrokes = [],
   initialSiteFrame = null,
+  initialIrrigationZones = [],
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -121,6 +125,7 @@ export function HandoffDesignStudio({
     initialPlacements,
     initialStrokes,
     initialSiteFrame,
+    initialIrrigationZones,
   });
   const {
     ui,
@@ -237,7 +242,8 @@ export function HandoffDesignStudio({
         ui.tool !== "service" &&
         ui.tool !== "calib" &&
         ui.tool !== "level" &&
-        ui.tool !== "trace"
+        ui.tool !== "trace" &&
+        ui.tool !== "zone"
       ) {
         e.preventDefault();
         ai.accept(ai.current.id);
@@ -1070,6 +1076,34 @@ export function HandoffDesignStudio({
               onPop={studio.popTracePoint}
             />
             <MeasureOverlay active={ui.tool === "measure" && !ui.frameOn} />
+            {(ui.mode === "cad" || ui.mode === "sketch") && !ui.frameOn ? (
+              <ZoneOverlay
+                active={ui.tool === "zone"}
+                kind={ui.zoneKind}
+                zones={studio.irrigationZones}
+                onCommit={studio.commitZone}
+              />
+            ) : null}
+            {ui.tool === "zone" && !ui.focusOn && !ui.clientView ? (
+              <div className={css.zoneKindBar} data-testid="zone-kind-bar">
+                <button
+                  type="button"
+                  className={`${css.chip}${ui.zoneKind === "drip" ? ` ${css.chipActive}` : ""}`}
+                  data-testid="zone-kind-drip"
+                  onClick={() => studio.setUi({ zoneKind: "drip" })}
+                >
+                  Drip
+                </button>
+                <button
+                  type="button"
+                  className={`${css.chip}${ui.zoneKind === "lighting" ? ` ${css.chipActive}` : ""}`}
+                  data-testid="zone-kind-lighting"
+                  onClick={() => studio.setUi({ zoneKind: "lighting" })}
+                >
+                  Lighting
+                </button>
+              </div>
+            ) : null}
             {chrome.selectionRing && selectedLive ? (
               <SelectionRing
                 item={selectedLive}

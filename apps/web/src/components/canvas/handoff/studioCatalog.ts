@@ -320,6 +320,12 @@ export const TOOLS = [
   { id: "trace", label: "Trace", icon: "✎" },
   { id: "edit", label: "Edit", icon: "◇" },
   { id: "add", label: "Add", icon: "+" },
+  {
+    id: "zone",
+    label: "Zone",
+    icon: "〰",
+    title: "Author drip or lighting path — Enter to finish (Advanced BOM)",
+  },
   { id: "lock", label: "Lock", icon: "⬡" },
   { id: "reset", label: "Reset", icon: "↺" },
   { id: "pan", label: "Pan", icon: "✥" },

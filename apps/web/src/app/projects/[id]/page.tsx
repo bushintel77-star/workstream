@@ -68,6 +68,7 @@ export default async function ProjectCanvasPage({
         initialPlacements={canvas?.placements ?? []}
         initialStrokes={canvas?.strokes ?? []}
         initialSiteFrame={canvas?.site_frame ?? null}
+        initialIrrigationZones={canvas?.irrigation_zones ?? []}
         hasQuote={Boolean(quoteOut)}
         quotePortalUri={quoteOut?.uri ?? null}
         initialTitleBlock={titleBlock}

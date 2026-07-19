@@ -53,7 +53,13 @@ type Input = {
   shadeOn?: boolean;
 };
 
-const DRAWING_TOOLS: StudioTool[] = ["trace", "edit", "add", "measure"];
+const DRAWING_TOOLS: StudioTool[] = [
+  "trace",
+  "edit",
+  "add",
+  "zone",
+  "measure",
+];
 
 /**
  * Pure chrome matrix — Survey → Sketch → CAD → Elevation → Quote.
