@@ -1,17 +1,19 @@
 .card {
   position: absolute;
-  right: 20px;
-  top: 56px;
-  z-index: 6;
-  width: min(180px, 28vw);
+  right: 16px;
+  top: 52px;
+  z-index: 8;
+  width: min(168px, 26vw);
   padding: 10px 12px 12px;
   border-radius: 12px;
   border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.94);
+  background: rgba(255, 246, 248, 0.96);
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 24px rgba(36, 19, 24, 0.08);
   font-family: Sora, ui-sans-serif, sans-serif;
   color: #241318;
+  /* Keep clear of the elevation plot label band */
+  pointer-events: auto;
 }
 
 .kicker {

@@ -46,8 +46,19 @@
   color: #7a5560;
 }
 
-.svg {
+.stage {
   flex: 1;
-  width: 100%;
   min-height: 280px;
+  width: 100%;
+  /* Soft band so stacked callouts never kiss the plan-link card */
+  padding: 8px 12px 4px 0;
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  overflow: visible;
 }

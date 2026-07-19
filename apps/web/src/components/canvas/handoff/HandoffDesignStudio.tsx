@@ -854,6 +854,7 @@ export function HandoffDesignStudio({
               groupIds={ui.groupIds}
               hoverId={ui.hoverId}
               curGhostId={ai.current?.id ?? null}
+              reviewOpen={ui.ghostReviewOpen}
               flaggedIds={flaggedIds}
               tpzReadouts={tpzReadouts}
               onSelect={(id, opts) => {

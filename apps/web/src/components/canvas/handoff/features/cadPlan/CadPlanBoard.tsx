@@ -72,6 +72,8 @@ type Props = {
   groupIds: string[];
   hoverId: string | null;
   curGhostId: string | null;
+  /** When the review dock is open, suppress on-canvas Accept chrome. */
+  reviewOpen?: boolean;
   /** Item ids currently failing preemptive council checks. */
   flaggedIds?: Set<string>;
   /** Live TPZ encroachment labels (calm compliance — inline, not modal). */
@@ -133,6 +135,7 @@ export function CadPlanBoard({
   groupIds,
   hoverId,
   curGhostId,
+  reviewOpen = false,
   flaggedIds,
   tpzReadouts,
   scaleM = 110,
@@ -703,9 +706,6 @@ export function CadPlanBoard({
                 <>
                   <span className={css.cadDimKey}>{d.key}</span>
                   <span>{formatCadMetres(d.lengthM)}</span>
-                  <span className={css.cadDimBearing}>
-                    {formatCadBearing(d.rotDeg)}
-                  </span>
                 </>
               ) : (
                 `${d.key} · ${d.lengthM.toFixed(2)} m`
@@ -760,12 +760,19 @@ export function CadPlanBoard({
         </p>
       ) : null}
 
-      {exist && tpz && !foundationCleanse ? (
+      {exist &&
+      tpz &&
+      !foundationCleanse &&
+      (selectedId === exist.id || hoverId === exist.id) ? (
         <div
           className={css.tpzTag}
-          style={{ left: `${exist.x + tpz.rxPct * 0.55}%`, top: `${exist.y}%` }}
+          style={{
+            left: `${Math.min(96, exist.x + tpz.rxPct * 0.72)}%`,
+            top: `${Math.max(4, exist.y - tpz.rxPct * 0.35)}%`,
+          }}
+          title="Tree protection zone · AS 4970"
         >
-          TPZ Ø{tpz.radiusM.toFixed(1)} m — AS 4970
+          TPZ Ø{tpz.radiusM.toFixed(1)} m
         </div>
       ) : null}
 
@@ -857,8 +864,14 @@ export function CadPlanBoard({
             {flagged && (it.t === "paving" || it.t === "deck") ? (
               <div className={css.hatchOverlay} aria-hidden />
             ) : null}
-            {it.ghost ? <span className={css.aiChip}>AI</span> : null}
-            {isCur && !frameOn ? (
+            {it.ghost && (isCur || hovered) ? (
+              <span
+                className={`${css.aiChip}${isCur ? ` ${css.aiChipHot}` : ""}`}
+              >
+                AI
+              </span>
+            ) : null}
+            {isCur && !frameOn && !reviewOpen ? (
               <div
                 className={css.ghostActions}
                 onPointerDown={(e) => e.stopPropagation()}
@@ -868,7 +881,7 @@ export function CadPlanBoard({
                   className={css.acceptBtn}
                   onClick={() => onAcceptGhost(it.id)}
                 >
-                  ✓ Accept
+                  Accept
                 </button>
                 <button
                   type="button"
