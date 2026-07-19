@@ -45,7 +45,7 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | Dashed-gold ghost rendering | **Done** | CAD SVG + sketch ghosts + gold styling. |
 | Ghost review card | **Done** | `GhostReviewCard` — CAD batch + sketch layer. |
-| Confidence-factor breakdown | **Done** | Click bar → `deriveConfidenceFactors()` in domain. |
+| Confidence-factor breakdown | **Done** | Live factors via `computeLiveConfidenceFactors()` (sun / TPZ / cost; drainage neutral until services). |
 | Accept / Reject / cycle / Accept all | **Done** | Card actions + header Accept AI + shortcuts. |
 | Stale-ghost detection | **Done** | `markStaleGhostsNearEdit()` on sketch move/delete. |
 | Aerial canopy auto-detection | **Done** | Vision scan + `detectCanopyClustersFromImageData()` pixel heuristic. |

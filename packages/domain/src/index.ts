@@ -98,3 +98,4 @@ export * from './first-run-seed';
 export * from './brush-recipe';
 export * from './assembly-recipe';
 export * from './spatial-turf';
+export * from './outdoor-area';

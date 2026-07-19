@@ -383,6 +383,16 @@ export function FitSheetOverlay({
                 <span className={css.mono}>{v}</span>
               </div>
             ))}
+            {areas.outdoorDiffersFromNaive ? (
+              <p
+                className={css.notesBody}
+                data-testid="outdoor-boolean-note"
+                title="Boolean difference (lot − footprint intersection) differs from naive area subtraction — typical with overhang or non-simple containment"
+              >
+                Outdoor uses polygon difference · naive lot − building would be{" "}
+                {areas.outdoorNaiveM2.toFixed(2)} m²
+              </p>
+            ) : null}
           </div>
 
           <div className={css.section}>

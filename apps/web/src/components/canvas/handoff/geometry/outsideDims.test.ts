@@ -24,4 +24,24 @@ describe("buildOutsideDims", () => {
       expect(dimDist).toBeGreaterThan(edgeDist);
     }
   });
+
+  it("includes witness extension segments past the dim string", () => {
+    const segs = edgeSegments(lot, "B", 110);
+    const dims = buildOutsideDims(segs, lot, {
+      offsetPct: 2.4,
+      gapPct: 0.35,
+      overshootPct: 0.5,
+    });
+    for (const d of dims) {
+      expect(d.extA).toBeDefined();
+      expect(d.extB).toBeDefined();
+      // Extension end should sit outside the dim string (further from centroid).
+      const c = { x: 47.5, y: 50 };
+      const dimMid = { x: (d.x1 + d.x2) / 2, y: (d.y1 + d.y2) / 2 };
+      const extEnd = { x: d.extA.x2, y: d.extA.y2 };
+      const dimDist = (dimMid.x - c.x) ** 2 + (dimMid.y - c.y) ** 2;
+      const extDist = (extEnd.x - c.x) ** 2 + (extEnd.y - c.y) ** 2;
+      expect(extDist).toBeGreaterThan(dimDist);
+    }
+  });
 });

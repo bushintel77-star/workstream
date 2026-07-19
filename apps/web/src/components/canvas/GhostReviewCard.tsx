@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import {
-  deriveConfidenceFactors,
-  ghostCategoryFromSymbol,
+  computeLiveConfidenceFactors,
+  emptyLiveGhostScene,
   type ConfidenceFactor,
+  type LiveGhostSubject,
 } from "@workstream/domain";
 import css from "./ghostReviewCard.module.css";
 
@@ -40,13 +41,20 @@ export function GhostReviewCard({
   onNext,
 }: Props) {
   const [factorsOpen, setFactorsOpen] = useState(false);
-  const pct = Math.round(confidence * 100);
-  const category = ghostCategoryFromSymbol(symbolId, title);
-  const factors: ConfidenceFactor[] = deriveConfidenceFactors(
-    suggestionId,
-    confidence,
-    category,
-  );
+  const subject: LiveGhostSubject = {
+    typeId: symbolId || "generic",
+    x: 50,
+    y: 50,
+    rate: 200,
+    peerRates: [45, 200, 480],
+    seedConf: confidence,
+    isHedge: /hedge/i.test(`${symbolId} ${title}`),
+    isFrenchDrain: /drain/i.test(`${symbolId} ${title}`),
+  };
+  void suggestionId;
+  const live = computeLiveConfidenceFactors(subject, emptyLiveGhostScene());
+  const pct = Math.round(live.overall * 100);
+  const factors: ConfidenceFactor[] = live.factors;
 
   return (
     <div

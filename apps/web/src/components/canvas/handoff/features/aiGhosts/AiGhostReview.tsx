@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  deriveConfidenceFactors,
-  ghostCategoryFromSymbol,
+  computeLiveConfidenceFactors,
+  growthFactorFromStage,
+  sunShadowVector,
   type ConfidenceFactor,
+  type LiveGhostScene,
+  type LiveGhostSubject,
+  type LiveGhostTree,
 } from "@workstream/domain";
 import { BY_TYPE, itemCost, type StudioItem } from "../../studioCatalog";
+import { tpzRadiusPct, type PctPoint } from "../../geometry";
 import styles from "./aiGhosts.module.css";
 
 type Props = {
   ghosts: StudioItem[];
+  /** Accepted + ghost items for TPZ / shade context. */
+  items: StudioItem[];
+  boundary: PctPoint[];
+  building: PctPoint[];
+  scaleM: number;
+  sunMin: number;
+  growth: "plant" | "5yr" | "mature";
   selectedId: string | null;
   factorsOpen: boolean;
   onFactorsOpen: (open: boolean) => void;
@@ -46,11 +58,68 @@ function Factors({ factors }: { factors: ConfidenceFactor[] }) {
   );
 }
 
+function peerRatesFor(typeId: StudioItem["t"]): number[] {
+  const def = BY_TYPE[typeId];
+  return Object.values(BY_TYPE)
+    .filter(
+      (o) =>
+        !o.existing &&
+        !!o.area === !!def.area &&
+        !!o.lin === !!def.lin,
+    )
+    .map((o) => o.rate)
+    .filter((r) => r > 0);
+}
+
+function toTree(it: StudioItem, scaleM: number): LiveGhostTree | null {
+  const d = BY_TYPE[it.t];
+  if (!d.canopyM && !d.existing) return null;
+  const dbhM = d.dbhM ?? 0.45;
+  const { rxPct } = d.existing
+    ? tpzRadiusPct(dbhM, scaleM)
+    : {
+        rxPct: ((Math.max(2, 12 * dbhM) * (it.scale || 1)) / scaleM) * 100,
+      };
+  return {
+    x: it.x,
+    y: it.y,
+    tpzRadiusPct: rxPct,
+    canopyM: d.canopyM ?? 4,
+    heightM: d.heightM ?? 4,
+    scale: it.scale || 1,
+    existing: Boolean(d.existing),
+  };
+}
+
+function buildSubject(g: StudioItem): LiveGhostSubject {
+  const d = BY_TYPE[g.t];
+  return {
+    typeId: g.t,
+    x: g.x,
+    y: g.y,
+    scale: g.scale,
+    rate: d.rate,
+    canopyM: d.canopyM,
+    heightM: d.heightM,
+    peerRates: peerRatesFor(g.t),
+    isHedge: g.t === "hedge",
+    isFrenchDrain: g.t === "frenchdrain",
+    seedConf: g.conf,
+  };
+}
+
 /**
- * AI ghost review — confidence bar expands in-place to factor breakdown.
+ * AI ghost review — confidence bar expands to live factor breakdown
+ * (sun / TPZ / cost; drainage neutral until services exist).
  */
 export function AiGhostReview({
   ghosts,
+  items,
+  boundary,
+  building,
+  scaleM,
+  sunMin,
+  growth,
   selectedId,
   factorsOpen,
   onFactorsOpen,
@@ -61,6 +130,34 @@ export function AiGhostReview({
   onAskAi,
 }: Props) {
   const [localOpen, setLocalOpen] = useState(factorsOpen);
+
+  const scene: LiveGhostScene = useMemo(() => {
+    const trees: LiveGhostTree[] = [];
+    const shadeCasters: LiveGhostTree[] = [];
+    for (const it of items) {
+      if (it.ghost) continue;
+      const tr = toTree(it, scaleM);
+      if (!tr) continue;
+      if (tr.existing) trees.push(tr);
+      else if (BY_TYPE[it.t].canopyM) shadeCasters.push(tr);
+    }
+    const cx =
+      building.length >= 3
+        ? building.reduce((s, p) => s + p.x, 0) / building.length
+        : 50;
+    const cy =
+      building.length >= 3
+        ? building.reduce((s, p) => s + p.y, 0) / building.length
+        : 50;
+    return {
+      trees,
+      shadeCasters,
+      buildingCentroid: { x: cx, y: cy },
+      scaleM,
+      shadow: sunShadowVector(sunMin),
+      growthFactor: growthFactorFromStage(growth),
+    };
+  }, [items, building, scaleM, sunMin, growth]);
 
   if (ghosts.length === 0) {
     return (
@@ -76,10 +173,11 @@ export function AiGhostReview({
 
   const selected = ghosts.find((g) => g.id === selectedId) ?? ghosts[0]!;
   const def = BY_TYPE[selected.t];
-  const category = ghostCategoryFromSymbol(selected.t, def.name);
-  const confidence = selected.conf ?? 0.8;
-  const pct = Math.round(confidence * 100);
-  const factors = deriveConfidenceFactors(selected.id, confidence, category);
+  const live = computeLiveConfidenceFactors(buildSubject(selected), scene, {
+    boundary,
+  });
+  const pct = Math.round(live.overall * 100);
+  const factors = live.factors;
   const isStale = Boolean(selected.stale);
   const expanded = localOpen;
   const cost = itemCost({ ...selected, ghost: false });
@@ -96,6 +194,9 @@ export function AiGhostReview({
         {ghosts.map((g) => {
           const d = BY_TYPE[g.t];
           const stale = Boolean(g.stale);
+          const rowLive = computeLiveConfidenceFactors(buildSubject(g), scene, {
+            boundary,
+          });
           return (
             <button
               key={g.id}
@@ -107,7 +208,7 @@ export function AiGhostReview({
             >
               <span className={styles.rowTitle}>{d.name}</span>
               <span className={styles.rowMeta}>
-                {Math.round((g.conf ?? 0.8) * 100)}%
+                {Math.round(rowLive.overall * 100)}%
                 {stale ? " · stale" : ""}
               </span>
             </button>
@@ -125,6 +226,11 @@ export function AiGhostReview({
           ) : null}
         </div>
         <p className={styles.reason}>{selected.why ?? "AI layout proposal"}</p>
+        {live.notes.length > 0 ? (
+          <p className={styles.impact} data-testid="ghost-live-notes">
+            {live.notes.join(" · ")}
+          </p>
+        ) : null}
         {cost > 0 ? (
           <p className={styles.impact}>If accepted: +{aud(cost)}</p>
         ) : null}
@@ -137,7 +243,14 @@ export function AiGhostReview({
           data-testid="ghost-confidence-toggle"
         >
           <span className={styles.confLabel}>
-            Confidence {pct}% <span aria-hidden>{expanded ? "▴" : "▾"}</span>
+            Confidence {pct}%
+            {live.liveDrift ? (
+              <span data-testid="ghost-live-drift" title="Live score drifted from seed">
+                {" "}
+                · live
+              </span>
+            ) : null}{" "}
+            <span aria-hidden>{expanded ? "▴" : "▾"}</span>
           </span>
           <span className={styles.confTrack}>
             <span

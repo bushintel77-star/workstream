@@ -1,3 +1,4 @@
+import { outdoorDifferenceM2 } from "@workstream/domain";
 import type { EdgeSegment, PctPoint, SiteSchedule } from "./types";
 
 /** Shoelace area in percent-space squared (not metres). */
@@ -71,6 +72,18 @@ export function polygonPerimeterM(
   return sum;
 }
 
+/** Map board-% vertices into planar metres for Turf boolean ops. */
+export function pctRingToPlanarM(
+  pts: PctPoint[],
+  scaleM: number,
+  boardAspect = 1,
+): [number, number][] {
+  return pts.map((p) => [
+    (p.x / 100) * scaleM,
+    (p.y / 100) * (scaleM / boardAspect),
+  ]);
+}
+
 export function buildSiteSchedule(
   boundary: PctPoint[],
   building: PctPoint[],
@@ -79,13 +92,27 @@ export function buildSiteSchedule(
 ): SiteSchedule {
   const lotAreaM2 = polygonAreaM2(boundary, scaleM, boardAspect);
   const buildingAreaM2 = polygonAreaM2(building, scaleM, boardAspect);
-  const outdoorAreaM2 = Math.max(0, lotAreaM2 - buildingAreaM2);
+  const outdoorNaiveM2 = Math.max(0, lotAreaM2 - buildingAreaM2);
+
+  const buildings =
+    building.length >= 3
+      ? [pctRingToPlanarM(building, scaleM, boardAspect)]
+      : [];
+  const diff = outdoorDifferenceM2(
+    pctRingToPlanarM(boundary, scaleM, boardAspect),
+    buildings,
+  );
+  const outdoorAreaM2 =
+    boundary.length >= 3 ? Math.max(0, diff.areaM2) : outdoorNaiveM2;
+
   const siteCoveragePct =
     lotAreaM2 > 0 ? Math.round((buildingAreaM2 / lotAreaM2) * 100) : 0;
   return {
     lotAreaM2,
     buildingAreaM2,
     outdoorAreaM2,
+    outdoorNaiveM2,
+    outdoorDiffersFromNaive: diff.differsFromNaive,
     siteCoveragePct,
     boundaryPerimeterM: polygonPerimeterM(boundary, scaleM, boardAspect),
   };

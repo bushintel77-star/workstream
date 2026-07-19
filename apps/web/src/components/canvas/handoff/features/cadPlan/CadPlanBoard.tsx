@@ -8,6 +8,7 @@ import {
   insertVertexAfter,
   polygonAreaM2,
   ptsAttr,
+  snapAlignment,
   snapVertexDrag,
   tpzRadiusPct,
   type PctPoint,
@@ -309,16 +310,12 @@ export function CadPlanBoard({
       return;
     }
     if (d.kind === "item" && d.id) {
-      const thresh = 1.3;
-      let gx: number | null = null;
-      let gy: number | null = null;
-      for (const o of items) {
-        if (o.id === d.id) continue;
-        if (gx == null && Math.abs(o.x - p.x) < thresh) gx = o.x;
-        if (gy == null && Math.abs(o.y - p.y) < thresh) gy = o.y;
-      }
-      setGuides({ x: gx, y: gy });
-      onMoveItem(d.id, gx ?? p.x, gy ?? p.y);
+      const others = items
+        .filter((o) => o.id !== d.id)
+        .map((o) => ({ x: o.x, y: o.y }));
+      const snapped = snapAlignment(p, others);
+      setGuides({ x: snapped.guideX, y: snapped.guideY });
+      onMoveItem(d.id, snapped.point.x, snapped.point.y);
       return;
     }
     if (
@@ -504,6 +501,26 @@ export function CadPlanBoard({
         ) : null}
         {outsideDims.map((d) => (
           <g key={`odim${d.key}`} data-testid="outside-dim">
+            <line
+              x1={d.extA.x1}
+              y1={d.extA.y1}
+              x2={d.extA.x2}
+              y2={d.extA.y2}
+              stroke="#1A1A1A"
+              strokeWidth={0.55}
+              vectorEffect="non-scaling-stroke"
+              data-testid="outside-dim-ext"
+            />
+            <line
+              x1={d.extB.x1}
+              y1={d.extB.y1}
+              x2={d.extB.x2}
+              y2={d.extB.y2}
+              stroke="#1A1A1A"
+              strokeWidth={0.55}
+              vectorEffect="non-scaling-stroke"
+              data-testid="outside-dim-ext"
+            />
             <line
               x1={d.x1}
               y1={d.y1}

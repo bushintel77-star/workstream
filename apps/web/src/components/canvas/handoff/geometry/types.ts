@@ -23,7 +23,12 @@ export type EdgeSegment = {
 export type SiteSchedule = {
   lotAreaM2: number;
   buildingAreaM2: number;
+  /** Outdoor area via Turf boolean difference (boundary − building). */
   outdoorAreaM2: number;
+  /** Naive lot − building — for comparison when geometry overhangs / L-shapes. */
+  outdoorNaiveM2: number;
+  /** True when boolean outdoor differs meaningfully from naive subtraction. */
+  outdoorDiffersFromNaive: boolean;
   siteCoveragePct: number;
   boundaryPerimeterM: number;
 };

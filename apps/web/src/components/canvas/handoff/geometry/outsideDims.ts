@@ -1,6 +1,13 @@
 import type { EdgeSegment, PctPoint } from "./types";
 import { polygonCentroid } from "./foundationCadContext";
 
+export type DimSegment = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
 export type OutsideDim = {
   key: string;
   lengthM: number;
@@ -14,23 +21,39 @@ export type OutsideDim = {
   labelY: number;
   rotDeg: number;
   /** Perpendicular end ticks (45° CAD style via short crossbars). */
-  tickA: { x1: number; y1: number; x2: number; y2: number };
-  tickB: { x1: number; y1: number; x2: number; y2: number };
+  tickA: DimSegment;
+  tickB: DimSegment;
+  /**
+   * Witness / extension lines from the polygon vertex out past the
+   * dimension string (with a small overshoot).
+   */
+  extA: DimSegment;
+  extB: DimSegment;
 };
 
 /**
- * CAD outside-plot dimensions — extension string + end ticks + label
- * placed away from the polygon centroid (Fit sheet working drawing).
+ * CAD outside-plot dimensions — witness/extension lines, offset dimension
+ * string, end ticks, and label placed away from the polygon centroid.
  */
 export function buildOutsideDims(
   segs: EdgeSegment[],
   polygon: PctPoint[],
-  opts?: { offsetPct?: number; tickPct?: number; labelExtraPct?: number },
+  opts?: {
+    offsetPct?: number;
+    tickPct?: number;
+    labelExtraPct?: number;
+    /** Gap from vertex before the extension line starts. */
+    gapPct?: number;
+    /** How far past the dim string the extension continues. */
+    overshootPct?: number;
+  },
 ): OutsideDim[] {
   if (segs.length === 0 || polygon.length < 3) return [];
   const offset = opts?.offsetPct ?? 2.4;
   const tick = opts?.tickPct ?? 1.15;
   const labelExtra = opts?.labelExtraPct ?? 1.5;
+  const gap = opts?.gapPct ?? 0.35;
+  const overshoot = opts?.overshootPct ?? 0.5;
   const c = polygonCentroid(polygon);
 
   return segs.map((s) => {
@@ -85,6 +108,18 @@ export function buildOutsideDims(
         y1: y2 - ty,
         x2: x2 + tx,
         y2: y2 + ty,
+      },
+      extA: {
+        x1: s.a.x + nx * gap,
+        y1: s.a.y + ny * gap,
+        x2: s.a.x + nx * (offset + overshoot),
+        y2: s.a.y + ny * (offset + overshoot),
+      },
+      extB: {
+        x1: s.b.x + nx * gap,
+        y1: s.b.y + ny * gap,
+        x2: s.b.x + nx * (offset + overshoot),
+        y2: s.b.y + ny * (offset + overshoot),
       },
     };
   });

@@ -17,16 +17,36 @@ describe("polygon metrics", () => {
     expect(area).toBeLessThan(800);
   });
 
-  it("builds a site schedule with outdoor = lot − building", () => {
+  it("builds a site schedule with boolean outdoor close to naive when contained", () => {
     const s = buildSiteSchedule(
       WRIGHTS_SEED.boundary,
       WRIGHTS_SEED.building,
       SCALE,
     );
-    expect(s.outdoorAreaM2).toBeCloseTo(s.lotAreaM2 - s.buildingAreaM2, 5);
+    expect(s.outdoorAreaM2).toBeCloseTo(s.outdoorNaiveM2, 0);
+    expect(s.outdoorDiffersFromNaive).toBe(false);
     expect(s.siteCoveragePct).toBeGreaterThan(0);
     expect(s.siteCoveragePct).toBeLessThan(100);
     expect(s.boundaryPerimeterM).toBeGreaterThan(20);
+  });
+
+  it("flags outdoor when a building overhangs the lot", () => {
+    const lot = [
+      { x: 20, y: 20 },
+      { x: 80, y: 20 },
+      { x: 80, y: 80 },
+      { x: 20, y: 80 },
+    ];
+    // Building straddles the east edge (half outside).
+    const overhang = [
+      { x: 65, y: 40 },
+      { x: 95, y: 40 },
+      { x: 95, y: 60 },
+      { x: 65, y: 60 },
+    ];
+    const s = buildSiteSchedule(lot, overhang, SCALE);
+    expect(s.outdoorDiffersFromNaive).toBe(true);
+    expect(s.outdoorAreaM2).toBeGreaterThan(s.outdoorNaiveM2);
   });
 
   it("labels boundary edges B1…Bn", () => {

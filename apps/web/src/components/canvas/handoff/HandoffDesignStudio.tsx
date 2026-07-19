@@ -45,6 +45,7 @@ import { VolumetricIsolith } from "./features/isolith/VolumetricIsolith";
 import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
 import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
+import { boardScaleM } from "./features/ground/groundMetrics";
 import type {
   ArchitecturalTitleBlock,
   StudioAiSuggestion,
@@ -261,6 +262,7 @@ export function HandoffDesignStudio({
   const chromeLive = planOn && !ui.frameOn && !ui.focusOn && !ui.clientView;
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
+  const scaleM = boardScaleM(ui.sheetScaleDenom);
 
   useEffect(() => {
     let cancelled = false;
@@ -687,6 +689,7 @@ export function HandoffDesignStudio({
               foundationCleanse={ui.foundationCleanse}
               titleLocked={titleLocked}
               titleBoundaryLocked={ui.titleBoundaryLocked}
+              scaleM={scaleM}
               lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
               siteLabel={displayAddress}
               titleMeta={
@@ -1066,6 +1069,12 @@ export function HandoffDesignStudio({
           <div className={css.ghostPanel}>
             <AiGhostReview
               ghosts={ai.pending}
+              items={studio.items}
+              boundary={studio.boundary}
+              building={studio.building}
+              scaleM={scaleM}
+              sunMin={ui.sunMin}
+              growth={ui.growth}
               selectedId={ai.current?.id ?? null}
               factorsOpen={ui.factorsOpen}
               onFactorsOpen={(factorsOpen) => studio.setUi({ factorsOpen })}
