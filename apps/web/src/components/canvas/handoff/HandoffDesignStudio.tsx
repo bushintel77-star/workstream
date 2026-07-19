@@ -250,6 +250,7 @@ export function HandoffDesignStudio({
     focusOn: ui.focusOn,
     frameOn: ui.frameOn,
     clientView: ui.clientView,
+    foundationCleanse: ui.foundationCleanse,
   });
   const drawingHot = chrome.collapseUtility;
   const showDocks = chrome.utilityDrawer;
@@ -271,7 +272,9 @@ export function HandoffDesignStudio({
       cancelled = true;
     };
   }, [projectId, displayAddress]);
-  const liveAerial = ui.aerialUri ?? aerialUri;
+  const liveAerial = ui.foundationCleanse
+    ? null
+    : (ui.aerialUri ?? aerialUri);
   const flaggedIds = new Set<string>(
     compliance.alerts.flatMap((a: { sourceIds: string[] }) => a.sourceIds),
   );
@@ -640,6 +643,7 @@ export function HandoffDesignStudio({
               externalAerial
               frameOn={ui.frameOn}
               darkOn={ui.darkOn}
+              foundationCleanse={ui.foundationCleanse}
               boundary={studio.boundary}
               building={studio.building}
               items={studio.items}
@@ -696,7 +700,7 @@ export function HandoffDesignStudio({
               onMoveGroup={studio.moveGroup}
               onTransformItem={studio.transformItem}
             />
-            {ui.floraSession ? (
+            {chrome.floraRing && ui.floraSession ? (
               <FloraRing
                 xPct={ui.floraSession.x}
                 yPct={ui.floraSession.y}
@@ -714,6 +718,23 @@ export function HandoffDesignStudio({
                 onAccept={studio.acceptFlora}
                 onDismiss={studio.dismissFlora}
               />
+            ) : null}
+            {ui.foundationCleanse ? (
+              <div
+                className={css.foundationBanner}
+                data-testid="foundation-cleanse-banner"
+              >
+                <span>
+                  Stage 1 · Vicmap title locked · 1:{ui.sheetScaleDenom}
+                </span>
+                <button
+                  type="button"
+                  className={css.foundationExit}
+                  onClick={() => studio.exitStage1Foundation()}
+                >
+                  Exit foundation
+                </button>
+              </div>
             ) : null}
             {chrome.horizon ? (
               <HorizonMarkers

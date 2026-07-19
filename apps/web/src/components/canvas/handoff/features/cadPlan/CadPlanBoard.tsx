@@ -33,6 +33,8 @@ type Props = {
   externalAerial?: boolean;
   frameOn: boolean;
   darkOn: boolean;
+  /** Stage 1 — charcoal title overlay, mm dims, hide veg/items. */
+  foundationCleanse?: boolean;
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
@@ -88,6 +90,7 @@ export function CadPlanBoard({
   externalAerial = false,
   frameOn,
   darkOn,
+  foundationCleanse = false,
   boundary,
   building,
   items,
@@ -142,18 +145,28 @@ export function CadPlanBoard({
     "default",
   );
 
-  const editing = tool === "edit" && !locked && !frameOn;
-  /** SDS §2 — charcoal primary; amber only for dark presentation canvas. */
-  const bStroke = darkOn && !frameOn ? "#C99757" : "#1A1A1A";
+  const editing = tool === "edit" && !locked && !frameOn && !foundationCleanse;
+  /** SDS Stage 1 — COLOR_VECTOR_PRIMARY charcoal; amber only for dark presentation. */
+  const bStroke = foundationCleanse
+    ? "#1C1917"
+    : darkOn && !frameOn
+      ? "#C99757"
+      : "#1A1A1A";
   const bldStroke = darkOn && !frameOn ? "#F7F4EF" : "#1A1A1A";
   const bldFill =
     darkOn && !frameOn ? "rgba(247,244,239,0.35)" : "rgba(26,26,26,0.06)";
 
-  const dimSegs = edgeSegments(boundary, "B", scaleM).concat(
-    edgeSegments(building, "F", scaleM),
-  );
+  const dimSegs = foundationCleanse
+    ? edgeSegments(boundary, "B", scaleM)
+    : edgeSegments(boundary, "B", scaleM).concat(
+        edgeSegments(building, "F", scaleM),
+      );
+  const showDims = editing || frameOn || foundationCleanse;
 
-  const exist = items.find((i) => i.t === "exist" && !i.ghost);
+  const exist = foundationCleanse
+    ? undefined
+    : items.find((i) => i.t === "exist" && !i.ghost);
+  const planItems = foundationCleanse ? [] : items;
   const tpz = exist
     ? tpzRadiusPct(BY_TYPE.exist.dbhM ?? 0.45, scaleM)
     : null;
@@ -357,7 +370,7 @@ export function CadPlanBoard({
                 : undefined
           }
         >
-          {!aerialUri && !frameOn ? (
+          {!aerialUri && !frameOn && !foundationCleanse ? (
             <div className={css.aerialEmpty}>
               Drop Mapbox aerial screenshot here (2D top-down)
               <br />
@@ -394,19 +407,22 @@ export function CadPlanBoard({
           fill="transparent"
           stroke={bStroke}
           strokeWidth={1.5}
-          strokeDasharray="4 4"
+          strokeDasharray={foundationCleanse ? undefined : "4 4"}
           vectorEffect="non-scaling-stroke"
           opacity={layerOpacity.boundary}
+          data-testid={foundationCleanse ? "foundation-title-boundary" : undefined}
         />
-        <polygon
-          points={ptsAttr(building)}
-          fill={bldFill}
-          stroke={bldStroke}
-          strokeWidth={1.5}
-          vectorEffect="non-scaling-stroke"
-          opacity={layerOpacity.boundary}
-        />
-        {setbackOn ? (
+        {!foundationCleanse ? (
+          <polygon
+            points={ptsAttr(building)}
+            fill={bldFill}
+            stroke={bldStroke}
+            strokeWidth={1.5}
+            vectorEffect="non-scaling-stroke"
+            opacity={layerOpacity.boundary}
+          />
+        ) : null}
+        {setbackOn && !foundationCleanse ? (
           <polygon
             points={ptsAttr(
               boundary.map((p) => ({
@@ -505,7 +521,19 @@ export function CadPlanBoard({
           ))
         : null}
 
-      {(editing || frameOn) &&
+      {foundationCleanse
+        ? boundary.map((p, i) => (
+            <span
+              key={`ftick${i}`}
+              className={css.foundationVertexTick}
+              style={{ left: `${p.x}%`, top: `${p.y}%` }}
+              aria-hidden
+              data-testid="foundation-vertex-tick"
+            />
+          ))
+        : null}
+
+      {showDims &&
         dimSegs.map((d) => (
           <div
             key={d.key}
@@ -518,7 +546,10 @@ export function CadPlanBoard({
           >
             <span className={css.obliqueTick} aria-hidden />
             <span className={css.dimLabel}>
-              {d.key} · {d.lengthM.toFixed(2)} m
+              {d.key} ·{" "}
+              {foundationCleanse
+                ? `${d.lengthM.toFixed(3)} m`
+                : `${d.lengthM.toFixed(2)} m`}
             </span>
           </div>
         ))}
@@ -532,7 +563,7 @@ export function CadPlanBoard({
         </div>
       ) : null}
 
-      {items.map((it) => {
+      {planItems.map((it) => {
         const d = BY_TYPE[it.t];
         const gk = growthFactor(growth, !!d.existing);
         const w = Math.round(d.w * it.scale * gk);

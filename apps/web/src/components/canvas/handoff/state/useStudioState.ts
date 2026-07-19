@@ -64,7 +64,11 @@ import {
 import { canvasMetresRingToPct } from "../geometry/geoToPct";
 import {
   clampVegetationElevationScale,
+  clearBoundaryLikeSketches,
   isSpatialCorrectionQuery,
+  isStage1FoundationQuery,
+  purgeGhostItems,
+  purgeVegetationItems,
   sieveVegetationItems,
 } from "./spatialCorrection";
 
@@ -162,6 +166,11 @@ type Ui = {
     activeIdx: number;
     maxHeightM: number;
   } | null;
+  /**
+   * Stage 1 Cadastral Foundation Cleanse — Vicmap title locked,
+   * aerial + AI vegetation purged, charcoal CAD overlay.
+   */
+  foundationCleanse: boolean;
 };
 
 /** Prahran / Stonnington demo centroid for indicative shade grid. */
@@ -292,6 +301,7 @@ function initialState(opts: {
       parchmentPeel: 0.42,
       saveStatus: hasCanvas ? "saved" : "idle",
       floraSession: null,
+      foundationCleanse: false,
     },
   };
 }
@@ -481,10 +491,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
   projectIdRef.current = projectId;
 
   useEffect(() => {
+    if (state.ui.foundationCleanse) return;
     if (aerialProp && !state.ui.aerialUri) {
       dispatch({ type: "setUi", patch: { aerialUri: aerialProp } });
     }
-  }, [aerialProp, state.ui.aerialUri]);
+  }, [aerialProp, state.ui.aerialUri, state.ui.foundationCleanse]);
 
   const mutate = useCallback(
     (fn: (snap: StudioSnapshot, idn: number) => { snap: StudioSnapshot; idn?: number }) => {
@@ -626,8 +637,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       const armed = state.ui.armed;
       if (!armed) return;
 
-      // Planting Add → Flora Ring (spatial sample + deterministic solver)
-      if (isFloraStudioForm(armed)) {
+      // Planting Add → Flora Ring (disabled during Stage 1 foundation cleanse)
+      if (isFloraStudioForm(armed) && !state.ui.foundationCleanse) {
         const cells = buildIndicativeShadeGrid(
           FLORA_SHADE_LAT,
           FLORA_SHADE_LNG,
@@ -682,17 +693,19 @@ export function useStudioState(opts: UseStudioStateOpts) {
           items: [...snap.items, item],
         };
         let nextIdn = idn + 1;
-        const follow = maybeAutoProposeAfterCommit(
-          next,
-          addressRef.current,
-          nextIdn,
-        );
-        if (follow) {
-          next = {
-            ...next,
-            items: mergeAiProposals(next, follow.items, ["layout"]),
-          };
-          nextIdn = follow.idn;
+        if (!state.ui.foundationCleanse) {
+          const follow = maybeAutoProposeAfterCommit(
+            next,
+            addressRef.current,
+            nextIdn,
+          );
+          if (follow) {
+            next = {
+              ...next,
+              items: mergeAiProposals(next, follow.items, ["layout"]),
+            };
+            nextIdn = follow.idn;
+          }
         }
         return { snap: next, idn: nextIdn };
       });
@@ -700,7 +713,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         armed: null,
         addOpen: false,
         tool: "pan",
-        ghostReviewOpen: true,
+        ghostReviewOpen: !state.ui.foundationCleanse,
         coachOpen: true,
         setbackOn: tip ? true : state.ui.setbackOn,
         councilTip: tip,
@@ -711,6 +724,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi,
       state.doc.items,
       state.ui.armed,
+      state.ui.foundationCleanse,
       state.ui.setbackOn,
       state.ui.sunMin,
     ],
@@ -778,12 +792,137 @@ export function useStudioState(opts: UseStudioStateOpts) {
     });
   }, [mutate, projectId, setUi, state.doc.items]);
 
+  /**
+   * Stage 1 Cadastral Alignment & Foundation Cleanse:
+   * AI veg off → aerial purge → Vicmap absolute title → lock → survey CAD overlay.
+   */
+  const runStage1FoundationCleanse = useCallback(async () => {
+    const notes: string[] = [];
+    setUi({
+      aerialUri: null,
+      parchmentPeel: 1,
+      foundationCleanse: true,
+      floraSession: null,
+      aiBusy: "assisting",
+      cmdOpen: false,
+      coachOpen: true,
+      ghostReviewOpen: false,
+      frameOn: false,
+      locked: false,
+      sheetScaleDenom: 100,
+      zoom: 1,
+      mode: "survey",
+      layerOpacity: { ...SURVEY_LAYER_PRESET, vegetation: 0 },
+      assistReply: "Stage 1 foundation cleanse — locking Vicmap title…",
+    });
+    notes.push("Aerial purged · parchment vector plane");
+    notes.push("Flora Ring / AI botanical HUD off");
+
+    const ghosts = purgeGhostItems(state.doc.items);
+    const purged = purgeVegetationItems(ghosts.items);
+    const sketches = clearBoundaryLikeSketches(
+      state.doc.strokes,
+      state.doc.boundary,
+      { clearAll: true },
+    );
+    if (purged.removed > 0) {
+      notes.push(`Purged ${purged.removed} vegetation / softscape`);
+    }
+    if (ghosts.removed > 0) {
+      notes.push(`Cleared ${ghosts.removed} AI ghosts`);
+    }
+    if (sketches.cleared > 0) {
+      notes.push(`Cleared ${sketches.cleared} sketch traces`);
+    }
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        items: purged.items,
+        strokes: sketches.strokes,
+      },
+    }));
+
+    let boundaryLocked = false;
+    if (projectId) {
+      try {
+        const { autoTraceBoundaryAction } = await import(
+          "../../../../app/actions"
+        );
+        const res = await autoTraceBoundaryAction(projectId);
+        const verts = [...res.boundary.vertices]
+          .sort((a, b) => a.sequence_index - b.sequence_index)
+          .map((v) => v.canvas_coords);
+        const pct = canvasMetresRingToPct(verts);
+        if (pct.length >= 3) {
+          mutate((snap) => ({
+            snap: {
+              ...snap,
+              boundary: pct,
+              // Title is absolute — drop approximate building until resurvey
+            },
+          }));
+          boundaryLocked = true;
+          notes.push(
+            res.boundary.source_kind === "vicmap"
+              ? "Vicmap parcel locked as absolute title"
+              : "Title polygon locked",
+          );
+        }
+      } catch {
+        notes.push("Vicmap unavailable — locked drawn boundary nodes");
+        boundaryLocked = true;
+      }
+    } else {
+      notes.push("No project id — locked drawn boundary");
+      boundaryLocked = true;
+    }
+
+    setUi({
+      aiBusy: "idle",
+      locked: true,
+      tool: "lock",
+      foundationCleanse: true,
+      assistReply: `Stage 1 cadastral foundation locked. ${notes.join(" · ")}`,
+    });
+    void boundaryLocked;
+  }, [
+    mutate,
+    projectId,
+    setUi,
+    state.doc.boundary,
+    state.doc.items,
+    state.doc.strokes,
+  ]);
+
+  const exitStage1Foundation = useCallback(() => {
+    setUi({
+      foundationCleanse: false,
+      locked: false,
+      tool: "pan",
+      layerOpacity: { ...DESIGN_LAYER_PRESET },
+      assistReply: "Foundation cleanse exited — design layers restored.",
+    });
+  }, [setUi]);
+
   const askAi = useCallback(
     async (query: string) => {
       const q = query.trim();
       if (!q) return;
+      if (isStage1FoundationQuery(q)) {
+        await runStage1FoundationCleanse();
+        return;
+      }
       if (isSpatialCorrectionQuery(q)) {
         await runSpatialCorrection();
+        return;
+      }
+      if (state.ui.foundationCleanse) {
+        setUi({
+          cmdOpen: false,
+          coachOpen: true,
+          assistReply:
+            "Stage 1 foundation active — generative assist paused. Exit foundation to resume design AI.",
+        });
         return;
       }
       setUi({
@@ -844,10 +983,24 @@ export function useStudioState(opts: UseStudioStateOpts) {
         assistReply: `Local assist for “${q}” — accept ghosts to commit.`,
       });
     },
-    [mutate, projectId, runSpatialCorrection, setUi],
+    [
+      mutate,
+      projectId,
+      runSpatialCorrection,
+      runStage1FoundationCleanse,
+      setUi,
+      state.ui.foundationCleanse,
+    ],
   );
 
   const scanGhosts = useCallback(async () => {
+    if (state.ui.foundationCleanse) {
+      setUi({
+        assistReply:
+          "Stage 1 foundation active — AI vegetation scan disabled. Exit foundation to resume.",
+      });
+      return;
+    }
     setUi({ aiBusy: "scanning", canopyScanning: true, coachOpen: true });
     try {
       if (projectId) {
@@ -902,7 +1055,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ghostIdx: 0,
       ghostReviewOpen: true,
     });
-  }, [mutate, projectId, setUi]);
+  }, [mutate, projectId, setUi, state.ui.foundationCleanse]);
 
   /** Bootstrap AI propose once when the studio mounts empty of proposals. */
   useEffect(() => {
@@ -1458,6 +1611,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setFloraActiveIdx,
     askAi,
     runSpatialCorrection,
+    runStage1FoundationCleanse,
+    exitStage1Foundation,
     scanGhosts,
     cycleGhost,
     ingestCanopyGhosts,

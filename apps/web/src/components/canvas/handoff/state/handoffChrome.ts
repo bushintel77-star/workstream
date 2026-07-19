@@ -27,6 +27,8 @@ export type HandoffChrome = {
   drawTools: boolean;
   /** Collapse open utility sheets while Trace/Edit/Add/Measure */
   collapseUtility: boolean;
+  /** Flora Ring / botanical suggestion HUD */
+  floraRing: boolean;
 };
 
 type Input = {
@@ -35,6 +37,8 @@ type Input = {
   focusOn: boolean;
   frameOn: boolean;
   clientView: boolean;
+  /** Stage 1 cadastral foundation — suppress AI/trade/veg chrome */
+  foundationCleanse?: boolean;
 };
 
 const DRAWING_TOOLS: StudioTool[] = ["trace", "edit", "add", "measure"];
@@ -44,8 +48,32 @@ const DRAWING_TOOLS: StudioTool[] = ["trace", "edit", "add", "measure"];
  * Sketch never surfaces Quantity Survey / Live BOM.
  */
 export function resolveHandoffChrome(input: Input): HandoffChrome {
-  const { mode, tool, focusOn, frameOn, clientView } = input;
+  const {
+    mode,
+    tool,
+    focusOn,
+    frameOn,
+    clientView,
+    foundationCleanse = false,
+  } = input;
   const drawingHot = DRAWING_TOOLS.includes(tool);
+
+  if (foundationCleanse) {
+    return {
+      utilityDrawer: false,
+      liveBom: false,
+      horizon: false,
+      volumeIsolith: false,
+      tradeMargin: false,
+      sunGrowth: false,
+      aiCoach: true,
+      ambientRibbon: !frameOn && !clientView,
+      selectionRing: false,
+      drawTools: !frameOn && !clientView && mode !== "quote" && mode !== "share",
+      collapseUtility: true,
+      floraRing: false,
+    };
+  }
 
   if (focusOn || clientView || frameOn) {
     return {
@@ -65,6 +93,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
         mode !== "quote" &&
         mode !== "share",
       collapseUtility: true,
+      floraRing: !frameOn && !clientView && !focusOn,
     };
   }
 
@@ -85,5 +114,6 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     selectionRing: mode === "cad" && !drawingHot,
     drawTools: plan,
     collapseUtility: drawingHot,
+    floraRing: plan && mode !== "survey",
   };
 }

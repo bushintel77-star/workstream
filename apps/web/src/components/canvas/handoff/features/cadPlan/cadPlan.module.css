@@ -156,6 +156,19 @@
   flex: none;
 }
 
+/** Stage 1 — 45° architectural oblique tick at each legal parcel vertex. */
+.foundationVertexTick {
+  position: absolute;
+  width: 8px;
+  height: 1.5px;
+  margin-left: -4px;
+  margin-top: -0.75px;
+  background: #1c1917;
+  transform: rotate(45deg);
+  pointer-events: none;
+  z-index: 6;
+}
+
 .dimLabel {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;

@@ -1,19 +1,47 @@
 /**
- * Spatial Correction pipeline — Workflow 1 deterministic geometry ops
- * driven by the NLP Spatial Reasoner (no PostGIS).
+ * Spatial Correction + Stage 1 Cadastral Foundation Cleanse —
+ * Workflow 1 deterministic geometry ops (no PostGIS).
  */
 
-import { BY_TYPE, type StudioItem, type StudioItemType } from "../studioCatalog";
+import {
+  BY_TYPE,
+  type SketchStroke,
+  type StudioItem,
+  type StudioItemType,
+} from "../studioCatalog";
+import type { PctPoint } from "../geometry";
 
 const SCALE_M = 110;
 
 const VEG: StudioItemType[] = ["exist", "canopy", "feature"];
+
+/** All botanical / softscape types purged in Stage 1 foundation cleanse. */
+const FOUNDATION_VEG_PURGE: StudioItemType[] = [
+  "exist",
+  "canopy",
+  "feature",
+  "hedge",
+  "bed",
+  "lawn",
+];
+
+/** Vicmap title CAD overlay — deep charcoal primary vector. */
+export const COLOR_VECTOR_PRIMARY = "#1C1917";
+export const FOUNDATION_BOUNDARY_STROKE_PX = 1.5;
 
 export type SpatialCorrectionReport = {
   aerialSuppressed: boolean;
   boundarySnapped: boolean;
   vegetationRemoved: number;
   scalesClamped: number;
+  notes: string[];
+};
+
+export type Stage1FoundationReport = {
+  aerialPurged: boolean;
+  vegetationPurged: number;
+  sketchesCleared: number;
+  boundaryLocked: boolean;
   notes: string[];
 };
 
@@ -86,8 +114,75 @@ export function clampVegetationElevationScale(items: StudioItem[]): {
   return { items: next, clamped };
 }
 
+/**
+ * Stage 1 — strip all vegetation / softscape (manual place remains available).
+ * Stronger than sieveVegetationItems (overlap-only).
+ */
+export function purgeVegetationItems(items: StudioItem[]): {
+  items: StudioItem[];
+  removed: number;
+} {
+  const next = items.filter((i) => !FOUNDATION_VEG_PURGE.includes(i.t));
+  return { items: next, removed: items.length - next.length };
+}
+
+/** Drop AI ghosts so Stage 1 has no generative residue. */
+export function purgeGhostItems(items: StudioItem[]): {
+  items: StudioItem[];
+  removed: number;
+} {
+  const next = items.filter((i) => !i.ghost);
+  return { items: next, removed: items.length - next.length };
+}
+
+/**
+ * Clear freehand strokes that approximate a closed lot outline
+ * (or clear all strokes when foundation cleanse wants a blank vector plane).
+ */
+export function clearBoundaryLikeSketches(
+  strokes: SketchStroke[],
+  boundary: PctPoint[],
+  opts?: { clearAll?: boolean },
+): { strokes: SketchStroke[]; cleared: number } {
+  if (opts?.clearAll || boundary.length < 3) {
+    return { strokes: [], cleared: strokes.length };
+  }
+  const kept = strokes.filter((s) => {
+    if (s.points.length < 4) return true;
+    // Heuristic: stroke whose bbox is within ~12% of the title bbox → title trace
+    const sx = s.points.map((p) => p.x);
+    const sy = s.points.map((p) => p.y);
+    const bx = boundary.map((p) => p.x);
+    const by = boundary.map((p) => p.y);
+    const sMinX = Math.min(...sx);
+    const sMaxX = Math.max(...sx);
+    const sMinY = Math.min(...sy);
+    const sMaxY = Math.max(...sy);
+    const bMinX = Math.min(...bx);
+    const bMaxX = Math.max(...bx);
+    const bMinY = Math.min(...by);
+    const bMaxY = Math.max(...by);
+    const near =
+      Math.abs(sMinX - bMinX) < 12 &&
+      Math.abs(sMaxX - bMaxX) < 12 &&
+      Math.abs(sMinY - bMinY) < 12 &&
+      Math.abs(sMaxY - bMaxY) < 12;
+    return !near;
+  });
+  return { strokes: kept, cleared: strokes.length - kept.length };
+}
+
+/** NLP intent — Stage 1 Cadastral Alignment & Foundation Cleanse. */
+export function isStage1FoundationQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  return /stage\s*1|cadastral\s+foundation|foundation\s+cleanse|purge\s+(aerial|vegetation|ai)|vicmap\s+title\s+boundary|authoritative\s+(title|cadastral)|legal\s+land\s+records|to[- ]scale\s+2d\s+cad\s+title|vector\s+alignment|layer\s+purge/.test(
+    q,
+  );
+}
+
 /** NLP intent detector for the four-tier spatial correction pipeline. */
 export function isSpatialCorrectionQuery(query: string): boolean {
+  if (isStage1FoundationQuery(query)) return false;
   const q = query.toLowerCase();
   return /spatial\s*correct|cadastral|snap\s*to\s*title|vicmap|land\s*vic|clean\s*(the\s*)?(canvas|site|vegetation|trees)|sieve\s*(trees|veg)|drop\s*aerial|suppress\s*aerial|parchment\s*only|verify\s*elevation|oversized|title\s*boundary|parcel\s*snap/.test(
     q,
