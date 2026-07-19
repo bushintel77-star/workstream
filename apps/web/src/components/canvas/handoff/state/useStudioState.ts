@@ -374,6 +374,64 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     [mutate, state.ui.locked],
   );
 
+  const transformItem = useCallback(
+    (id: string, patch: Partial<Pick<StudioItem, "rot" | "scale" | "x" | "y">>) => {
+      if (state.ui.locked) return;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) => {
+            if (i.id !== id || i.ghost) return i;
+            const next = { ...i, ...patch };
+            if (next.scale != null) {
+              next.scale = Math.max(0.35, Math.min(2.5, next.scale));
+            }
+            if (next.rot != null) {
+              let r = next.rot % 360;
+              if (r < 0) r += 360;
+              next.rot = r;
+            }
+            return next;
+          }),
+        },
+      }));
+    },
+    [mutate, state.ui.locked],
+  );
+
+  const nudgeSelected = useCallback(
+    (dx: number, dy: number) => {
+      const id = state.ui.selectedId;
+      if (!id || state.ui.locked) return;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost
+              ? {
+                  ...i,
+                  x: Math.max(0, Math.min(100, i.x + dx)),
+                  y: Math.max(0, Math.min(100, i.y + dy)),
+                }
+              : i,
+          ),
+        },
+      }));
+    },
+    [mutate, state.ui.locked, state.ui.selectedId],
+  );
+
+  const deleteSelected = useCallback(() => {
+    const id = state.ui.selectedId;
+    if (!id || state.ui.locked) return;
+    const target = state.doc.items.find((i) => i.id === id);
+    if (!target || target.ghost) return;
+    mutate((snap) => ({
+      snap: { ...snap, items: snap.items.filter((i) => i.id !== id) },
+    }));
+    setUi({ selectedId: null });
+  }, [mutate, setUi, state.doc.items, state.ui.locked, state.ui.selectedId]);
+
   /** Re-seed pending AI ghosts from the Wrights handoff catalog when empty. */
   const scanGhosts = useCallback(() => {
     mutate((snap, idn) => {
@@ -463,6 +521,9 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     scanGhosts,
     cycleGhost,
     moveItem,
+    transformItem,
+    nudgeSelected,
+    deleteSelected,
     updateBoundary,
     updateBuilding,
     finishTrace,

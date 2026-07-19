@@ -21,6 +21,7 @@ No MapLibre on this surface — `%` board space is the drawing plane.
 | `features/tier1/` | Quote surface + Wrights Terrace value ledger |
 | `features/elevation/` | Full-mode front/side elevation profile |
 | `features/trace/` | Click-trace boundary/building + Tab rectangle autocomplete |
+| `features/measure/` | Indicative two-point measure tape |
 
 ## Visual source of truth
 

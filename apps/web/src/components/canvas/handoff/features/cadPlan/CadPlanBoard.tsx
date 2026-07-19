@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   edgeSegments,
   ptsAttr,
@@ -14,6 +14,7 @@ import {
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
 import { ITEM_LAYER, type LayerOpacity } from "../../state/studioTypes";
+import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
 
 type Props = {
@@ -41,6 +42,10 @@ type Props = {
   onBuildingChange: (pts: PctPoint[]) => void;
   onPlace: (x: number, y: number) => void;
   onMoveItem: (id: string, x: number, y: number) => void;
+  onTransformItem: (
+    id: string,
+    patch: Partial<Pick<StudioItem, "rot" | "scale">>,
+  ) => void;
 };
 
 function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
@@ -78,6 +83,7 @@ export function CadPlanBoard({
   onBuildingChange,
   onPlace,
   onMoveItem,
+  onTransformItem,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -87,6 +93,10 @@ export function CadPlanBoard({
     ox: number;
     oy: number;
   } | null>(null);
+  const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({
+    x: null,
+    y: null,
+  });
 
   const editing = tool === "edit" && !locked && !frameOn;
   const bStroke = darkOn && !frameOn ? "#E8B84B" : "#241318";
@@ -136,7 +146,16 @@ export function CadPlanBoard({
     if (!d) return;
     const p = toPct(e.clientX, e.clientY);
     if (d.kind === "item" && d.id) {
-      onMoveItem(d.id, p.x, p.y);
+      const thresh = 1.3;
+      let gx: number | null = null;
+      let gy: number | null = null;
+      for (const o of items) {
+        if (o.id === d.id) continue;
+        if (gx == null && Math.abs(o.x - p.x) < thresh) gx = o.x;
+        if (gy == null && Math.abs(o.y - p.y) < thresh) gy = o.y;
+      }
+      setGuides({ x: gx, y: gy });
+      onMoveItem(d.id, gx ?? p.x, gy ?? p.y);
       return;
     }
     if (d.kind === "boundary" && d.index != null) {
@@ -151,6 +170,7 @@ export function CadPlanBoard({
 
   const onPointerUp = () => {
     dragRef.current = null;
+    setGuides({ x: null, y: null });
   };
 
   const midHandles = (pts: PctPoint[], kind: "boundary" | "building") =>
@@ -174,11 +194,14 @@ export function CadPlanBoard({
     else onBuildingChange(next);
   };
 
+  const selected = items.find((i) => i.id === selectedId && !i.ghost) ?? null;
+
   return (
     <div
       ref={rootRef}
       className={css.world}
       data-testid="cad-plan-board"
+      data-cad-plan
       onPointerDown={onPointerDownBoard}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -445,9 +468,25 @@ export function CadPlanBoard({
         );
       })}
 
+      {guides.x != null ? (
+        <div className={css.guideV} style={{ left: `${guides.x}%` }} />
+      ) : null}
+      {guides.y != null ? (
+        <div className={css.guideH} style={{ top: `${guides.y}%` }} />
+      ) : null}
+
+      {selected && !frameOn && tool !== "lock" ? (
+        <SelectionHandles
+          item={selected}
+          boardW={rootRef.current?.clientWidth ?? 960}
+          boardH={rootRef.current?.clientHeight ?? 640}
+          onTransform={onTransformItem}
+        />
+      ) : null}
+
       {editing ? (
         <div className={css.editBanner}>
-          Edit corners — drag ● move · drag ◆ add · right-click ● delete
+          Edit corners — drag to move · diamond adds a vertex
         </div>
       ) : null}
 

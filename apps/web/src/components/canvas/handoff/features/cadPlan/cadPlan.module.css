@@ -233,3 +233,74 @@
 .stalePulse {
   animation: ccPulse 1.8s ease-in-out infinite;
 }
+
+.guideV,
+.guideH {
+  position: absolute;
+  pointer-events: none;
+  z-index: 15;
+  background: rgba(194, 69, 95, 0.55);
+}
+
+.guideV {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.guideH {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.selHandles {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 18;
+  pointer-events: none;
+}
+
+.selStem {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.5px;
+  height: 15px;
+  background: rgba(194, 69, 95, 0.55);
+  pointer-events: none;
+}
+
+.rotHandle,
+.resHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  border: 1.5px solid #c2455f;
+  background: #fffbfc;
+  color: #c2455f;
+  box-shadow: 0 2px 8px rgba(42, 23, 29, 0.3);
+  padding: 0;
+}
+
+.rotHandle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resHandle {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  cursor: nwse-resize;
+}

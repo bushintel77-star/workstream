@@ -23,6 +23,7 @@ import {
   TraceOverlay,
   currentTraceCompletion,
 } from "./features/trace/TraceOverlay";
+import { MeasureOverlay } from "./features/measure/MeasureOverlay";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -137,6 +138,26 @@ export function HandoffDesignStudio({
         e.preventDefault();
         studio.rejectGhost(studio.curGhost.id);
         return;
+      }
+      if (
+        ui.selectedId &&
+        !ui.drawPoly &&
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 1 : 0.35;
+        const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+        const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+        studio.nudgeSelected(dx, dy);
+        return;
+      }
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        ui.selectedId &&
+        !ui.drawPoly
+      ) {
+        e.preventDefault();
+        studio.deleteSelected();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -348,6 +369,7 @@ export function HandoffDesignStudio({
               onBuildingChange={studio.updateBuilding}
               onPlace={studio.placeArmed}
               onMoveItem={studio.moveItem}
+              onTransformItem={studio.transformItem}
             />
             <TraceOverlay
               active={ui.tool === "trace" && !ui.frameOn}
@@ -361,6 +383,9 @@ export function HandoffDesignStudio({
               onFinish={studio.finishTrace}
               onCancel={studio.cancelTrace}
               onPop={studio.popTracePoint}
+            />
+            <MeasureOverlay
+              active={ui.tool === "measure" && !ui.frameOn}
             />
           </>
         ) : null}
@@ -393,6 +418,19 @@ export function HandoffDesignStudio({
                 <span className={css.railLabel}>{t.label}</span>
               </button>
             ))}
+            <div className={css.railDiv} />
+            <button
+              type="button"
+              className={`${css.railBtn}${ui.tool === "measure" ? ` ${css.railBtnActive}` : ""}`}
+              data-testid="canvas-tool-measure"
+              title="Measure"
+              onClick={() =>
+                studio.setTool(ui.tool === "measure" ? "pan" : "measure")
+              }
+            >
+              <span className={css.railIcon}>⟋</span>
+              <span className={css.railLabel}>Measure</span>
+            </button>
             <div className={css.railDiv} />
             <button
               type="button"
