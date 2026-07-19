@@ -229,6 +229,19 @@ export async function designAssistAction(projectId: string, message: string) {
   }
 }
 
+/** Architectural title block · Vicmap cadastral for the selected address. */
+export async function lookupCadastralTitleAction(
+  projectId: string,
+  address?: string,
+) {
+  const { getCadastralTitle } = await import("../lib/api");
+  try {
+    return await getCadastralTitle(projectId, address);
+  } catch (err) {
+    throw wrapApiError(err, "Cadastral title lookup failed");
+  }
+}
+
 /** First-run: seed starter massing, try AI CAD, land operator on the drawing. */
 export async function prepareSiteFirstRunAction(projectId: string) {
   if (!projectId) throw new Error("Missing project");

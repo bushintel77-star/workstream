@@ -1,5 +1,5 @@
 import type { GeoJsonPolygon } from "@workstream/contracts";
-import { polygonArea } from "@workstream/domain";
+import { polygonArea, type VicmapParcelAttrs } from "@workstream/domain";
 
 const WFS_BASE = "https://opendata.maps.vic.gov.au/geoserver/wfs";
 
@@ -28,6 +28,11 @@ type RawFeature = {
 type FeatureCollection = {
   type: "FeatureCollection";
   features: RawFeature[];
+};
+
+export type VicmapTitleParcel = {
+  polygon: GeoJsonPolygon;
+  attrs: VicmapParcelAttrs;
 };
 
 export function isVicmapEnabled(): boolean {
@@ -73,16 +78,63 @@ function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
   return { type: "Polygon", coordinates: [ring] };
 }
 
-/** Fetch the property polygon enclosing a lat/lng. Returns null on miss. */
-export async function fetchTitlePolygon(
+function propStr(
+  props: Record<string, unknown> | undefined,
+  ...keys: string[]
+): string | null {
+  if (!props) return null;
+  const lower = new Map(
+    Object.entries(props).map(([k, v]) => [k.toLowerCase(), v]),
+  );
+  for (const key of keys) {
+    const v = lower.get(key.toLowerCase());
+    if (v == null) continue;
+    const s = String(v).trim();
+    if (s && s !== "null" && s !== "undefined") return s;
+  }
+  return null;
+}
+
+/** Extract cadastral labels from Vicmap property_view attributes. */
+export function extractVicmapParcelAttrs(
+  props: Record<string, unknown> | undefined,
+  lotAreaM2: number,
+): VicmapParcelAttrs {
+  return {
+    pfi: propStr(props, "PROP_PFI", "PROPV_PFI", "prop_pfi", "propv_pfi", "PFI"),
+    propNum: propStr(
+      props,
+      "PROP_PROPNUM",
+      "PROPNUM",
+      "prop_propnum",
+      "propnum",
+    ),
+    spi: propStr(props, "SPI", "PARCEL_SPI", "spi", "parcel_spi"),
+    lgaCode: propStr(
+      props,
+      "PROP_LGA_CODE",
+      "LGA_CODE",
+      "prop_lga_code",
+      "lga_code",
+    ),
+    lotAreaM2: lotAreaM2 > 0 ? lotAreaM2 : null,
+  };
+}
+
+/**
+ * Fetch the property polygon + cadastral attributes enclosing a lat/lng.
+ * Returns null on miss.
+ */
+export async function fetchTitleParcel(
   lat: number,
   lng: number,
-): Promise<GeoJsonPolygon | null> {
+): Promise<VicmapTitleParcel | null> {
   const cql = `INTERSECTS(geom, SRID=4326;POINT(${lng} ${lat}))`;
   const url = buildUrl("open-data-platform:property_view", cql);
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 
+  let best: RawFeature | null = null;
   let bestRing: Ring | null = null;
   let bestArea = 0;
   for (const f of fc.features) {
@@ -90,11 +142,27 @@ export async function fetchTitlePolygon(
     if (!ring) continue;
     const area = polygonArea(ring as Coord[]);
     if (area > bestArea) {
+      best = f;
       bestRing = ring;
       bestArea = area;
     }
   }
-  return bestRing ? toGeoJsonPolygon(bestRing) : null;
+  if (!best || !bestRing) return null;
+
+  const lotAreaM2 = Math.round(bestArea);
+  return {
+    polygon: toGeoJsonPolygon(bestRing),
+    attrs: extractVicmapParcelAttrs(best.properties, lotAreaM2),
+  };
+}
+
+/** Fetch the property polygon enclosing a lat/lng. Returns null on miss. */
+export async function fetchTitlePolygon(
+  lat: number,
+  lng: number,
+): Promise<GeoJsonPolygon | null> {
+  const parcel = await fetchTitleParcel(lat, lng);
+  return parcel?.polygon ?? null;
 }
 
 /** Fetch the building footprint(s) intersecting a property polygon. Returns the

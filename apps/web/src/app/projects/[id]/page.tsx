@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
 import {
+  getCadastralTitle,
   getDesignCanvas,
   getProject,
   getSurvey,
@@ -37,11 +38,12 @@ export default async function ProjectCanvasPage({
   await requireSignedIn();
   const { id } = await params;
   const sp = await searchParams;
-  const [project, survey, canvas, outputs] = await Promise.all([
+  const [project, survey, canvas, outputs, titleBlock] = await Promise.all([
     getProject(id),
     getSurvey(id).catch(() => null),
     getDesignCanvas(id).catch(() => null),
     listOutputs(id).catch(() => []),
+    getCadastralTitle(id).catch(() => null),
   ]);
 
   if (!project) notFound();
@@ -55,13 +57,17 @@ export default async function ProjectCanvasPage({
         projectAddress={project.address}
         aerialUri={survey?.aerial_uri ?? null}
         areaM2={
-          survey?.garden_area_m2 ?? survey?.lot_area_m2 ?? 230.82
+          titleBlock?.lotAreaM2 ??
+          survey?.garden_area_m2 ??
+          survey?.lot_area_m2 ??
+          230.82
         }
         initialMode={parseMode(sp.mode)}
         initialPlacements={canvas?.placements ?? []}
         initialStrokes={canvas?.strokes ?? []}
         hasQuote={Boolean(quoteOut)}
         quotePortalUri={quoteOut?.uri ?? null}
+        initialTitleBlock={titleBlock}
       />
     </Suspense>
   );

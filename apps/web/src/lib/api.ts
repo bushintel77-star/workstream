@@ -1015,6 +1015,27 @@ export async function getSiteContext(
   }
 }
 
+/** Architectural title block · Vicmap cadastral for selected address. */
+export type { ArchitecturalTitleBlock as CadastralTitleBlock } from "@workstream/domain";
+
+export async function getCadastralTitle(
+  projectId: string,
+  address?: string,
+): Promise<import("@workstream/domain").ArchitecturalTitleBlock | null> {
+  try {
+    const q =
+      address && address.trim()
+        ? `?address=${encodeURIComponent(address.trim())}`
+        : "";
+    const body = await apiGet<{
+      titleBlock: import("@workstream/domain").ArchitecturalTitleBlock;
+    }>(`/projects/${projectId}/cadastral-title${q}`);
+    return body.titleBlock;
+  } catch {
+    return null;
+  }
+}
+
 /* -- Weather ----------------------------------------------------------- */
 
 export type WeatherDay = {

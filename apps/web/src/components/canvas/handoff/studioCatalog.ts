@@ -288,12 +288,12 @@ export type StudioSiteDef = {
 export const STUDIO_SITES: StudioSiteDef[] = [
   {
     addr: "12 Wrights Terrace, Prahran VIC 3181",
-    meta: "Vicmap · CT 8842/117",
+    meta: "Vicmap · Stonnington",
     seed: WRIGHTS_SEED,
   },
   {
     addr: "14 Airlie Ave, Armadale VIC 3143",
-    meta: "Vicmap · CT 9107/042",
+    meta: "Vicmap · Stonnington",
     seed: ARMADALE_SEED,
   },
 ];

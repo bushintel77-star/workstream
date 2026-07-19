@@ -99,7 +99,7 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | Fit sheet toggle | **Done** | Header + **F** shortcut. |
 | A3 / A4 paper size | **Done** | Header segmented control → `ArchitecturalSheet` `data-paper-size`. |
-| Title block, schedule, dimensions | **Done** | `ArchitecturalSheet` + `FitSheetLayer` + `FitSheetSchedulePanel`. |
+| Title block, schedule, dimensions | **Done** | Handoff Fit sheet pulls Vicmap cadastral for selected address (`GET …/cadastral-title` + `buildArchitecturalTitleBlock`). |
 | Multi-profile elevation stacking | **Done** | `SheetElevationPanel` + **+ Elevations** toggle. |
 | North indicator | **Done** | Architectural sheet + elevation profile. |
 | Auto edge dimensions | **Done** | `buildFitSheetEdges()` — labelled B/F edges, Fit dims toggle. |

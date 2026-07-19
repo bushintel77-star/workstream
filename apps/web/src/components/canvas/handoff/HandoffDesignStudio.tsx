@@ -35,8 +35,12 @@ import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
 import { ITEM_LAYER } from "./state/studioTypes";
-import type { StudioAiSuggestion } from "@workstream/domain";
+import type {
+  ArchitecturalTitleBlock,
+  StudioAiSuggestion,
+} from "@workstream/domain";
 import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
+import { lookupCadastralTitleAction } from "../../../app/actions";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -49,6 +53,7 @@ type Props = {
   initialStrokes?: CanvasStroke[];
   hasQuote?: boolean;
   quotePortalUri?: string | null;
+  initialTitleBlock?: ArchitecturalTitleBlock | null;
 };
 
 /**
@@ -65,6 +70,7 @@ export function HandoffDesignStudio({
   initialStrokes = [],
   hasQuote = false,
   quotePortalUri = null,
+  initialTitleBlock = null,
 }: Props) {
   const outdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
@@ -83,6 +89,9 @@ export function HandoffDesignStudio({
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
+  const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
+    initialTitleBlock,
+  );
 
   useEffect(() => {
     const el = boardRef.current;
@@ -227,7 +236,22 @@ export function HandoffDesignStudio({
   const showDocks = chrome.utilityDrawer;
   /** Fit sheet / focus freezes floating chrome — parchment plane stays first. */
   const chromeLive = planOn && !ui.frameOn && !ui.focusOn && !ui.clientView;
+  /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
+
+  useEffect(() => {
+    let cancelled = false;
+    void lookupCadastralTitleAction(projectId, displayAddress)
+      .then((block) => {
+        if (!cancelled && block) setTitleBlock(block);
+      })
+      .catch(() => {
+        /* keep last good title block */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, displayAddress]);
   const liveAerial = ui.aerialUri ?? aerialUri;
   const flaggedIds = new Set<string>(
     compliance.alerts.flatMap((a: { sourceIds: string[] }) => a.sourceIds),
@@ -359,8 +383,9 @@ export function HandoffDesignStudio({
         <div className={css.spacer} />
         <div className={css.meta}>
           <div className={css.metaEyebrow}>Working drawing</div>
-          <div className={css.metaDetail}>
-            {studio.siteMeta} · {Number(outdoor).toFixed(2)} m²
+          <div className={css.metaDetail} data-testid="header-cadastral-meta">
+            {titleBlock?.metaLine ??
+              `${studio.siteMeta} · ${Number(outdoor).toFixed(0)} m²`}
           </div>
         </div>
 
@@ -713,6 +738,7 @@ export function HandoffDesignStudio({
             showElevations={ui.sheetElevOn}
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
+            titleBlock={titleBlock}
           />
         ) : null}
 

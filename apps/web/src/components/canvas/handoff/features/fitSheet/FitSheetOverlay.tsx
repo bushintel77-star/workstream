@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ArchitecturalTitleBlock } from "@workstream/domain";
 import {
   buildSiteSchedule,
   edgeSegments,
@@ -28,6 +29,8 @@ type Props = {
   /** Architectural print scale 1:N — discrete snap ladder. */
   scaleDenom?: SheetScaleDenom;
   onScaleDenom?: (n: SheetScaleDenom) => void;
+  /** Live Vicmap cadastral title block for the selected address. */
+  titleBlock?: ArchitecturalTitleBlock | null;
 };
 
 type ElevProfile = {
@@ -135,6 +138,7 @@ export function FitSheetOverlay({
   issuedLabel,
   scaleDenom = 100,
   onScaleDenom,
+  titleBlock = null,
 }: Props) {
   const [pulse, setPulse] = useState(false);
 
@@ -273,10 +277,19 @@ export function FitSheetOverlay({
             bottom: scrimBot + 16,
           }}
         >
-          <div className={css.panelHead}>
+          <div className={css.panelHead} data-testid="fit-sheet-title-block">
             <div style={{ minWidth: 0 }}>
               <p className={css.brand}>Curtis &amp; Co</p>
-              <p className={css.addr}>{address}</p>
+              <p className={css.addr}>{titleBlock?.address ?? address}</p>
+              <p className={css.titleSource} data-testid="fit-sheet-cadastral">
+                {titleBlock?.sourceLabel ?? "Indicative parcel"}
+                {titleBlock?.parcelRef
+                  ? ` · ${titleBlock.parcelRef.includes("\\") || titleBlock.parcelRef.includes("/") ? "SPI" : "PFI"} ${titleBlock.parcelRef}`
+                  : null}
+              </p>
+              {titleBlock?.councilLabel ? (
+                <p className={css.titleCouncil}>{titleBlock.councilLabel}</p>
+              ) : null}
             </div>
             <span className={css.north}>N↑</span>
           </div>
@@ -285,9 +298,24 @@ export function FitSheetOverlay({
             <p className={css.kicker}>Site schedule</p>
             {(
               [
-                ["Lot area", `${schedule.lotAreaM2.toFixed(2)} m²`],
-                ["Building footprint", `${schedule.buildingAreaM2.toFixed(2)} m²`],
-                ["Outdoor area", `${schedule.outdoorAreaM2.toFixed(2)} m²`],
+                [
+                  "Lot area",
+                  titleBlock?.lotAreaM2 != null
+                    ? `${titleBlock.lotAreaM2.toLocaleString("en-AU")} m²`
+                    : `${schedule.lotAreaM2.toFixed(2)} m²`,
+                ],
+                [
+                  "Building footprint",
+                  titleBlock?.houseAreaM2 != null
+                    ? `${titleBlock.houseAreaM2.toLocaleString("en-AU")} m²`
+                    : `${schedule.buildingAreaM2.toFixed(2)} m²`,
+                ],
+                [
+                  "Outdoor area",
+                  titleBlock?.gardenAreaM2 != null
+                    ? `${titleBlock.gardenAreaM2.toLocaleString("en-AU")} m²`
+                    : `${schedule.outdoorAreaM2.toFixed(2)} m²`,
+                ],
                 ["Site coverage", `${schedule.siteCoveragePct}%`],
                 [
                   "Boundary perimeter",
@@ -330,10 +358,10 @@ export function FitSheetOverlay({
 
           <div className={css.notes}>
             <p className={css.kicker}>Notes</p>
-            <p className={css.notesBody}>
-              Vicmap cadastral base · dimensions in metres. B# boundary segment ·
-              F# building footprint. Working drawing — indicative only, not for
-              construction.
+            <p className={css.notesBody} data-testid="fit-sheet-notes">
+              {titleBlock?.notesLine ??
+                "Indicative parcel · confirm Vicmap / title. Dimensions in metres — working drawing, not for construction."}{" "}
+              B# boundary · F# footprint.
             </p>
             <div className={css.notesMeta}>
               <span>{scaleTxt}</span>

@@ -4,7 +4,7 @@ import { edgeLengths, polygonArea } from "@workstream/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
 import {
   fetchBuildingPolygon,
-  fetchTitlePolygon,
+  fetchTitleParcel,
   isVicmapEnabled,
 } from "./vicmap";
 
@@ -106,7 +106,8 @@ async function buildVicmapGeometry(center: {
   lat: number;
   lng: number;
 }): Promise<SurveyGeometry | null> {
-  const titlePoly = await fetchTitlePolygon(center.lat, center.lng);
+  const titleParcel = await fetchTitleParcel(center.lat, center.lng);
+  const titlePoly = titleParcel?.polygon ?? null;
   if (!titlePoly) return null;
 
   const titleRing = titlePoly.coordinates[0];
