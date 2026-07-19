@@ -53,6 +53,8 @@ export * from './envelope-brief';
 export * from './studio-strokes';
 export * from './canvas-geometry';
 export * from './canvas-snap';
+export * from './rectangle-completion';
+export * from './stale-ghosts';
 export * from './mass-plant';
 export * from './irrigation';
 export * from './plan';

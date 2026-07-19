@@ -14,7 +14,11 @@ import {
 } from "react";
 import type { CatalogSymbol } from "@workstream/contracts";
 import type { ProjectOrchestrationWorld } from "@workstream/contracts";
-import { isTier1WrightsTerrace } from "@workstream/domain";
+import {
+  buildBoundaryFromGeoRing,
+  computeSiteCompliance,
+  isTier1WrightsTerrace,
+} from "@workstream/domain";
 import {
   acceptCadAction,
   applyCadOpsAction,
@@ -33,7 +37,13 @@ import {
   saveBoundaryAction,
   unlockBoundaryAction,
 } from "../../app/actions";
-import { computeSiteCompliance } from "@workstream/domain";
+import {
+  createCanvasHistory,
+  pushHistory,
+  redoHistory,
+  undoHistory,
+  type CanvasHistory,
+} from "../../lib/canvas-history";
 import { FirstRunGuide } from "./FirstRunGuide";
 import { LiveBomHud } from "./LiveBomHud";
 import { ComplianceDock } from "./ComplianceDock";
@@ -385,6 +395,9 @@ function SiteCanvasInner({
   });
   /** Stack of entity ids for Cmd/Ctrl+Z undo of drawn lines. */
   const [cadUndoIds, setCadUndoIds] = useState<string[]>([]);
+  const boundaryHistoryRef = useRef<CanvasHistory<SiteBoundaryLite | null>>(
+    createCanvasHistory(),
+  );
   const [keysHelpOn, setKeysHelpOn] = useState(false);
   const [viewLayers, setViewLayers] = useState<CanvasViewLayers>(
     DEFAULT_CANVAS_VIEW_LAYERS,
@@ -717,8 +730,17 @@ function SiteCanvasInner({
     return () => window.removeEventListener("wheel", onWheel);
   }, [useGeoStage]);
 
+  const boundaryRef = useRef(boundary);
+  boundaryRef.current = boundary;
+
   const persistBoundary = useCallback(
-    (next: SiteBoundaryLite) => {
+    (next: SiteBoundaryLite, opts?: { recordHistory?: boolean }) => {
+      if (opts?.recordHistory !== false) {
+        boundaryHistoryRef.current = pushHistory(
+          boundaryHistoryRef.current,
+          boundaryRef.current,
+        );
+      }
       setBoundary(next);
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -735,6 +757,68 @@ function SiteCanvasInner({
       }, 400);
     },
     [projectId],
+  );
+
+  const undoBoundary = useCallback(() => {
+    const result = undoHistory(boundaryHistoryRef.current, boundaryRef.current);
+    if (!result) return;
+    boundaryHistoryRef.current = result.history;
+    const snap = result.snapshot;
+    if (snap) persistBoundary(snap, { recordHistory: false });
+    else setBoundary(null);
+  }, [persistBoundary]);
+
+  const redoBoundary = useCallback(() => {
+    const result = redoHistory(boundaryHistoryRef.current, boundaryRef.current);
+    if (!result?.snapshot) return;
+    boundaryHistoryRef.current = result.history;
+    persistBoundary(result.snapshot, { recordHistory: false });
+  }, [persistBoundary]);
+
+  const commitPolygonTrace = useCallback(
+    (ring: [number, number][]) => {
+      if (ring.length < 3) return;
+      try {
+        const built = buildBoundaryFromGeoRing({
+          projectId,
+          ring,
+          source: "HUMAN_ADDED",
+          sourceKind: "manual",
+          status: "UNVERIFIED",
+        });
+        const next: SiteBoundaryLite = {
+          id: boundary?.id ?? crypto.randomUUID(),
+          project_id: built.project_id,
+          layer_id: built.layer_id,
+          status: built.status,
+          source_kind: built.source_kind,
+          width_m: built.width_m,
+          height_m: built.height_m,
+          geo_reference: {
+            crs: "EPSG:4326",
+            canvas_origin_geo: built.geo_reference.canvas_origin_geo,
+            metres_per_canvas_unit: 1,
+          },
+          calculated_metrics: built.calculated_metrics,
+          vertices: built.vertices.map((v) => ({
+            vertex_id: v.vertex_id,
+            sequence_index: v.sequence_index,
+            source: v.source,
+            is_locked: v.is_locked,
+            canvas_coords: v.canvas_coords,
+            geo_coords: v.geo_coords,
+          })),
+          updated_at: new Date().toISOString(),
+        };
+        persistBoundary(next);
+        setCanvasTool("edit");
+        setBoundaryTool("edit");
+        setStatus("Boundary traced — edit handles or lock title");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Trace failed");
+      }
+    },
+    [boundary?.id, persistBoundary, projectId],
   );
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -827,10 +911,24 @@ function SiteCanvasInner({
         }
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
         if (mode === "cad" && cadUndoIds.length) {
           e.preventDefault();
           undoLastCad();
+        } else if (boundaryHistoryRef.current.undoStack.length) {
+          e.preventDefault();
+          undoBoundary();
+        }
+        return;
+      }
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        (e.key.toLowerCase() === "y" ||
+          (e.key.toLowerCase() === "z" && e.shiftKey))
+      ) {
+        if (boundaryHistoryRef.current.redoStack.length) {
+          e.preventDefault();
+          redoBoundary();
         }
         return;
       }
@@ -918,8 +1016,10 @@ function SiteCanvasInner({
     mode,
     pending,
     projectId,
+    redoBoundary,
     showFitSheet,
     titleRevealActive,
+    undoBoundary,
     undoLastCad,
     walkMode,
   ]);
@@ -1053,9 +1153,42 @@ function SiteCanvasInner({
   }, [canvasTool]);
 
   useEffect(() => {
-    if (canvasTool === "edit" || canvasTool === "trace") setBoundaryTool("edit");
-    if (canvasTool === "pan") setBoundaryTool("pan");
+    if (canvasTool === "edit") setBoundaryTool("edit");
+    else if (
+      canvasTool === "trace" ||
+      canvasTool === "pan" ||
+      canvasTool === "measure" ||
+      canvasTool === "add"
+    ) {
+      setBoundaryTool("pan");
+    }
+    if (canvasTool === "add") {
+      setMode("sketch");
+      setSketchPaintOpen(true);
+    }
   }, [canvasTool]);
+
+  useEffect(() => {
+    if (canvasTool !== "lock" && canvasTool !== "reset") return;
+    const tool = canvasTool;
+    setCanvasTool("pan");
+    if (tool === "lock") {
+      if (!boundaryRef.current || boundaryRef.current.status === "VERIFIED") {
+        return;
+      }
+      run("Locking boundary…", async () => {
+        const res = await lockBoundaryAction(projectId);
+        setBoundary(res.boundary);
+        setBoundaryTool("pan");
+        setShowFitSheet(true);
+      });
+      return;
+    }
+    run("Resetting boundary…", async () => {
+      await resetBoundaryAction(projectId);
+      setBoundary(null);
+    });
+  }, [canvasTool, projectId]);
 
   useEffect(() => {
     if (!pending) {
@@ -1400,6 +1533,15 @@ function SiteCanvasInner({
                             : true
                     }
                     lineDrawActive={mode === "cad" && cadDrawArmed}
+                    polygonTraceActive={
+                      canvasTool === "trace" &&
+                      mode !== "share" &&
+                      boundary?.status !== "VERIFIED"
+                    }
+                    onPolygonTraceCommit={commitPolygonTrace}
+                    boundaryOpacity={boundaryOpacity}
+                    councilOpacity={councilOpacity}
+                    showSetback={viewLayers.setback}
                     fitSheetShowDims={showFitDims}
                     onLineCommit={(points) => {
                       if (points.length < 2) return;
@@ -1503,6 +1645,8 @@ function SiteCanvasInner({
                           onToggleMeasure={() => setMeasureActive((v) => !v)}
                           onGoToQuote={() => setMode("quote")}
                           showGhostSuggestions={viewLayers.ghostSuggestions}
+                          selectMode={canvasTool === "edit"}
+                          vegetationOpacity={vegetationOpacity}
                         />
                       ) : mode === "quote" ||
                         mode === "cad" ||
@@ -1595,6 +1739,8 @@ function SiteCanvasInner({
                       onToggleMeasure={() => setMeasureActive((v) => !v)}
                       onGoToQuote={() => setMode("quote")}
                       showGhostSuggestions={viewLayers.ghostSuggestions}
+                      selectMode={canvasTool === "edit"}
+                      vegetationOpacity={vegetationOpacity}
                     />
                   ) : null}
                   <MeasureOverlay

@@ -38,9 +38,13 @@ export function SketchGhostLayer({
         return (
           <div
             key={ghost.id}
-            className={css.ghost}
+            className={`${css.ghost}${ghost.stale ? ` ${css.ghostStale}` : ""}`}
             style={{ left: `${ghost.x_pct}%`, top: `${ghost.y_pct}%` }}
             data-testid="sketch-ghost-suggestion"
+            data-stale={ghost.stale ? "1" : undefined}
+            title={
+              ghost.stale ? "Nearby edit — recheck this suggestion" : undefined
+            }
           >
             <div className={css.ghostGlyph}>
               <DesignAssetGlyph symbol={sym} size="sm" />

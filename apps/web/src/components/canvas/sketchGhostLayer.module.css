@@ -10,6 +10,23 @@
   animation: ghostPulse 2.4s ease-in-out infinite;
 }
 
+.ghostStale .ghostGlyph {
+  box-shadow:
+    0 0 0 2px dashed #b78a2e,
+    0 8px 24px rgba(36, 24, 30, 0.12);
+  animation: stalePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes stalePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .ghostGlyph {
   width: 2.75rem;
   height: 2.75rem;

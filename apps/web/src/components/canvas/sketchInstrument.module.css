@@ -19,6 +19,41 @@
   cursor: none;
 }
 
+.layerSelect {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.marquee {
+  position: absolute;
+  z-index: 8;
+  border: 1.5px dashed rgba(194, 69, 95, 0.85);
+  background: rgba(194, 69, 95, 0.08);
+  pointer-events: none;
+}
+
+.alignGuideX,
+.alignGuideY {
+  position: absolute;
+  z-index: 7;
+  pointer-events: none;
+  background: rgba(232, 184, 75, 0.75);
+}
+
+.alignGuideX {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.alignGuideY {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
 .snapGuides {
   position: absolute;
   z-index: 7;

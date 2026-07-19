@@ -23,6 +23,7 @@ const OVERLAY_TOGGLES: Array<{
   { key: "titleParcel", label: "Title parcel" },
   { key: "draftGrid", label: "Draft grid" },
   { key: "ghostSuggestions", label: "AI ghosts" },
+  { key: "setback", label: "1.5 m setback" },
   { key: "shade", label: "Sun/shade" },
   { key: "easements", label: "Easements" },
 ];

@@ -20,17 +20,27 @@ import {
   buildSketchCanvasAiSuggestions,
   CATALOG_PLANNING_SYMBOL_IDS,
   jitterPlacement,
+  markStaleGhostsNearEdit,
   pushSwatchHistory,
   recipeFromPlacement,
   SKETCH_RIBBON_STARTERS,
+  snapDragPct,
   snapPointPctToGrid,
   withDirtySaveSuggestion,
+  type SnapGuide,
   type StudioAiSuggestion,
 } from "@workstream/domain";
 import { saveDesignCanvasAction, scanDesignGhostsAction, designAssistAction } from "../../app/actions";
 import type { RateCardItem } from "../../lib/api";
 import type { StaticMapView } from "../../lib/mapView";
 import type { CanvasViewLayers } from "../../lib/canvas-view-layers";
+import {
+  createCanvasHistory,
+  pushHistory,
+  redoHistory,
+  undoHistory,
+  type CanvasHistory,
+} from "../../lib/canvas-history";
 import { ghostSizeFromMetres } from "./DraftingAssist";
 import { SketchGhostLayer } from "./SketchGhostLayer";
 import { CanvasCommandPalette } from "./CanvasCommandPalette";
@@ -78,6 +88,10 @@ type Props = {
   chromeHost?: HTMLElement | null;
   onArmedChange?: (armed: boolean) => void;
   showRibbon?: boolean;
+  /** Edit tool — enable marquee multi-select. */
+  selectMode?: boolean;
+  /** Vegetation bucket opacity (0–1). */
+  vegetationOpacity?: number;
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -152,6 +166,8 @@ export function SketchInstrument({
   chromeHost = null,
   onArmedChange,
   showRibbon = true,
+  selectMode = false,
+  vegetationOpacity = 1,
 }: Props) {
   const toast = useToast();
   const assistInputRef = useRef<HTMLTextAreaElement>(null);
@@ -160,14 +176,22 @@ export function SketchInstrument({
   const mutationFsmRef = useRef(createMutationFsm());
   const paintRef = useRef<PaintSession | null>(null);
   const heuristicAtRef = useRef(0);
+  const historyRef = useRef<CanvasHistory<CatalogPlacement[]>>(
+    createCanvasHistory(),
+  );
   const dragRef = useRef<{
-    id: string;
-    startXpct: number;
-    startYpct: number;
+    ids: string[];
+    origins: Array<{ id: string; x_pct: number; y_pct: number }>;
     startClientX: number;
     startClientY: number;
   } | null>(null);
   const transformRef = useRef<TransformSession | null>(null);
+  const marqueeRef = useRef<{
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  } | null>(null);
 
   const [placements, setPlacements] = useState(initialPlacements);
   const [ephemeralGhosts, setEphemeralGhosts] = useState<
@@ -182,12 +206,31 @@ export function SketchInstrument({
   const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(
     null,
   );
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [marqueeBox, setMarqueeBox] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [alignGuides, setAlignGuides] = useState<SnapGuide[]>([]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [dirty, setDirty] = useState(false);
   const startersReady = useRef(false);
   const ghostsBootstrapped = useRef(false);
+
+  const recordHistory = useCallback(() => {
+    historyRef.current = pushHistory(
+      historyRef.current,
+      placementsRef.current.map((p) => ({ ...p })),
+    );
+  }, []);
+
+  const flagStaleNear = useCallback((points: Array<{ x_pct: number; y_pct: number }>) => {
+    if (points.length === 0) return;
+    setEphemeralGhosts((g) => markStaleGhostsNearEdit(g, points));
+  }, []);
 
   const symbolById = useMemo(
     () => new Map(symbols.map((s) => [s.id, s])),
@@ -316,6 +359,7 @@ export function SketchInstrument({
   const beginPaint = useCallback(
     (clientX: number, clientY: number) => {
       if (!armedRecipe) return;
+      recordHistory();
       const unit = unitCostForSymbol(armedRecipe.symbol_id);
       const baselineCount = Math.max(placementsRef.current.length, 1);
       syncMutationHud(
@@ -334,7 +378,14 @@ export function SketchInstrument({
       paintRef.current.stamped = 1;
       heuristicAtRef.current = performance.now();
     },
-    [armedRecipe, clientToPct, stampFromRecipe, syncMutationHud, unitCostForSymbol],
+    [
+      armedRecipe,
+      clientToPct,
+      recordHistory,
+      stampFromRecipe,
+      syncMutationHud,
+      unitCostForSymbol,
+    ],
   );
 
   const continuePaint = useCallback(
@@ -407,21 +458,91 @@ export function SketchInstrument({
           setArmedRecipe(recipe);
         }
       }
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        const result = undoHistory(historyRef.current, placementsRef.current);
+        if (!result) return;
         e.preventDefault();
-        setPlacements((prev) => prev.filter((p) => p.id !== selectedId));
-        setSelectedId(null);
+        historyRef.current = result.history;
+        placementsRef.current = result.snapshot;
+        setPlacements(result.snapshot);
+        setDirty(true);
+        void persist();
+        return;
+      }
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        (e.key.toLowerCase() === "y" ||
+          (e.key.toLowerCase() === "z" && e.shiftKey))
+      ) {
+        const result = redoHistory(historyRef.current, placementsRef.current);
+        if (!result) return;
+        e.preventDefault();
+        historyRef.current = result.history;
+        placementsRef.current = result.snapshot;
+        setPlacements(result.snapshot);
+        setDirty(true);
+        void persist();
+        return;
+      }
+      if (
+        (e.key === "ArrowUp" ||
+          e.key === "ArrowDown" ||
+          e.key === "ArrowLeft" ||
+          e.key === "ArrowRight") &&
+        selectedIds.length > 0
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 1 : 0.2;
+        const dx =
+          e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+        const dy =
+          e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+        recordHistory();
+        const ids = new Set(selectedIds);
+        const editPts: Array<{ x_pct: number; y_pct: number }> = [];
+        setPlacements((prev) =>
+          prev.map((p) => {
+            if (!ids.has(p.id)) return p;
+            const next = {
+              ...p,
+              x_pct: Math.min(100, Math.max(0, p.x_pct + dx)),
+              y_pct: Math.min(100, Math.max(0, p.y_pct + dy)),
+            };
+            editPts.push({ x_pct: next.x_pct, y_pct: next.y_pct });
+            return next;
+          }),
+        );
+        flagStaleNear(editPts);
+        setDirty(true);
+        void persist();
+        return;
+      }
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selectedIds.length > 0
+      ) {
+        e.preventDefault();
+        const ids = new Set(selectedIds);
+        const removed = placementsRef.current.filter((p) => ids.has(p.id));
+        recordHistory();
+        setPlacements((prev) => prev.filter((p) => !ids.has(p.id)));
+        setSelectedIds([]);
+        flagStaleNear(
+          removed.map((p) => ({ x_pct: p.x_pct, y_pct: p.y_pct })),
+        );
         setDirty(true);
         void persist();
       }
       if (e.key === "Escape") {
         setArmedRecipe(null);
-        setSelectedId(null);
+        setSelectedIds([]);
+        setMarqueeBox(null);
+        marqueeRef.current = null;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [persist, selectedId, swatchHistory]);
+  }, [flagStaleNear, persist, recordHistory, selectedIds, swatchHistory]);
 
   const aiSuggestions = useMemo(() => {
     let hasPlanningSymbol = false;
@@ -565,6 +686,7 @@ export function SketchInstrument({
 
   const acceptGhost = useCallback(
     (ghost: GhostPlacementSuggestion) => {
+      recordHistory();
       const next: CatalogPlacement[] = [
         ...placementsRef.current,
         {
@@ -583,7 +705,7 @@ export function SketchInstrument({
       void persist();
       toast.show("Suggestion accepted onto plan", "success");
     },
-    [persist, toast],
+    [persist, recordHistory, toast],
   );
 
   const dismissGhost = useCallback((ghostId: string) => {
@@ -661,7 +783,28 @@ export function SketchInstrument({
       beginPaint(e.clientX, e.clientY);
       return;
     }
-    setSelectedId(null);
+
+    if (selectMode) {
+      e.stopPropagation();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      const pt = clientToPct(e.clientX, e.clientY);
+      marqueeRef.current = {
+        x0: pt.x_pct,
+        y0: pt.y_pct,
+        x1: pt.x_pct,
+        y1: pt.y_pct,
+      };
+      setMarqueeBox({
+        left: pt.x_pct,
+        top: pt.y_pct,
+        width: 0,
+        height: 0,
+      });
+      if (!e.shiftKey && !e.metaKey && !e.ctrlKey) setSelectedIds([]);
+      return;
+    }
+
+    setSelectedIds([]);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -671,6 +814,19 @@ export function SketchInstrument({
     if (paintRef.current?.active) {
       e.stopPropagation();
       continuePaint(e.clientX, e.clientY);
+      return;
+    }
+
+    const marquee = marqueeRef.current;
+    if (marquee) {
+      e.stopPropagation();
+      marquee.x1 = pt.x_pct;
+      marquee.y1 = pt.y_pct;
+      const left = Math.min(marquee.x0, marquee.x1);
+      const top = Math.min(marquee.y0, marquee.y1);
+      const width = Math.abs(marquee.x1 - marquee.x0);
+      const height = Math.abs(marquee.y1 - marquee.y0);
+      setMarqueeBox({ left, top, width, height });
       return;
     }
 
@@ -727,23 +883,39 @@ export function SketchInstrument({
       const r = el.getBoundingClientRect();
       const dx = ((e.clientX - drag.startClientX) / r.width) * 100;
       const dy = ((e.clientY - drag.startClientY) / r.height) * 100;
+      const primary = drag.origins[0]!;
+      const others = placementsRef.current
+        .filter((p) => !drag.ids.includes(p.id))
+        .map((p) => ({ id: p.id, x_pct: p.x_pct, y_pct: p.y_pct }));
+      const snapped = snapDragPct(
+        primary.x_pct + dx,
+        primary.y_pct + dy,
+        others,
+      );
+      const snapDx = snapped.x_pct - primary.x_pct;
+      const snapDy = snapped.y_pct - primary.y_pct;
+      setAlignGuides(snapped.guides);
+      const byId = new Map(drag.origins.map((o) => [o.id, o]));
       setPlacements((prev) =>
-        prev.map((p) =>
-          p.id === drag.id
-            ? {
-                ...p,
-                x_pct: Math.min(100, Math.max(0, drag.startXpct + dx)),
-                y_pct: Math.min(100, Math.max(0, drag.startYpct + dy)),
-              }
-            : p,
-        ),
+        prev.map((p) => {
+          const origin = byId.get(p.id);
+          if (!origin) return p;
+          return {
+            ...p,
+            x_pct: Math.min(100, Math.max(0, origin.x_pct + snapDx)),
+            y_pct: Math.min(100, Math.max(0, origin.y_pct + snapDy)),
+          };
+        }),
       );
     }
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
     if (transformRef.current) {
+      const t = transformRef.current;
       transformRef.current = null;
+      const p = placementsRef.current.find((x) => x.id === t.id);
+      if (p) flagStaleNear([{ x_pct: p.x_pct, y_pct: p.y_pct }]);
       void persist();
       if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -757,8 +929,40 @@ export function SketchInstrument({
       }
       return;
     }
+    if (marqueeRef.current) {
+      const m = marqueeRef.current;
+      marqueeRef.current = null;
+      setMarqueeBox(null);
+      const left = Math.min(m.x0, m.x1);
+      const right = Math.max(m.x0, m.x1);
+      const top = Math.min(m.y0, m.y1);
+      const bottom = Math.max(m.y0, m.y1);
+      const hit = placementsRef.current
+        .filter(
+          (p) =>
+            p.x_pct >= left &&
+            p.x_pct <= right &&
+            p.y_pct >= top &&
+            p.y_pct <= bottom,
+        )
+        .map((p) => p.id);
+      setSelectedIds((prev) => {
+        if (e.shiftKey || e.metaKey || e.ctrlKey) {
+          return Array.from(new Set([...prev, ...hit]));
+        }
+        return hit;
+      });
+      if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+      return;
+    }
     if (dragRef.current) {
+      const drag = dragRef.current;
       dragRef.current = null;
+      setAlignGuides([]);
+      const moved = placementsRef.current.filter((p) => drag.ids.includes(p.id));
+      flagStaleNear(moved.map((p) => ({ x_pct: p.x_pct, y_pct: p.y_pct })));
       setDirty(true);
       void persist();
     }
@@ -781,9 +985,11 @@ export function SketchInstrument({
     <>
       <div
         ref={layerRef}
-        className={`${css.layer} ${armedRecipe ? css.layerArmed : ""} ${showGhostSuggestions && (ephemeralGhosts.length > 0 || ghostScanning) ? css.layerGhosts : ""}`}
+        className={`${css.layer} ${armedRecipe ? css.layerArmed : ""} ${selectMode ? css.layerSelect : ""} ${showGhostSuggestions && (ephemeralGhosts.length > 0 || ghostScanning) ? css.layerGhosts : ""}`}
         data-testid="sketch-instrument"
         data-armed={armedRecipe ? "1" : undefined}
+        data-select-mode={selectMode ? "1" : undefined}
+        style={{ opacity: Math.max(0, Math.min(1, vegetationOpacity)) }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -801,38 +1007,89 @@ export function SketchInstrument({
           if (!sym) return null;
           const isTpz = p.symbol_id === "tree-root-protection";
           const widthM = (sym.default_width_m ?? 1.2) * (p.scale || 1);
+          const selected = selectedIds.includes(p.id);
           return (
             <DesignCanvasPlacement
               key={p.id}
               placement={p}
               symbol={sym}
-              selected={selectedId === p.id}
+              selected={selected}
               isTpz={isTpz}
               indicativeMetres={
                 isTpz && mapView ? Math.round(widthM * 10) / 10 : null
               }
-              onSelect={() => setSelectedId(p.id)}
+              onSelect={() =>
+                setSelectedIds((prev) =>
+                  prev.includes(p.id) ? prev : [p.id],
+                )
+              }
               onAltSample={() => samplePlacement(p)}
               onMovePointerDown={(ev) => {
+                recordHistory();
+                const group =
+                  selectedIds.includes(p.id) && selectedIds.length > 1
+                    ? selectedIds
+                    : [p.id];
+                setSelectedIds(group);
                 dragRef.current = {
-                  id: p.id,
-                  startXpct: p.x_pct,
-                  startYpct: p.y_pct,
+                  ids: group,
+                  origins: placementsRef.current
+                    .filter((x) => group.includes(x.id))
+                    .map((x) => ({
+                      id: x.id,
+                      x_pct: x.x_pct,
+                      y_pct: x.y_pct,
+                    })),
                   startClientX: ev.clientX,
                   startClientY: ev.clientY,
                 };
               }}
-              onRotateStart={(ev) => beginRotate(p.id, ev)}
-              onScaleStart={(ev) => beginScale(p.id, ev)}
+              onRotateStart={(ev) => {
+                recordHistory();
+                beginRotate(p.id, ev);
+              }}
+              onScaleStart={(ev) => {
+                recordHistory();
+                beginScale(p.id, ev);
+              }}
               onDelete={() => {
+                recordHistory();
                 setPlacements((prev) => prev.filter((x) => x.id !== p.id));
-                setSelectedId(null);
+                setSelectedIds((ids) => ids.filter((id) => id !== p.id));
+                flagStaleNear([{ x_pct: p.x_pct, y_pct: p.y_pct }]);
                 setDirty(true);
                 void persist();
               }}
             />
           );
         })}
+        {alignGuides.map((g) => (
+          <div
+            key={`${g.axis}-${g.sourceId}-${g.pct}`}
+            className={
+              g.axis === "x" ? css.alignGuideX : css.alignGuideY
+            }
+            style={
+              g.axis === "x"
+                ? { left: `${g.pct}%` }
+                : { top: `${g.pct}%` }
+            }
+            aria-hidden
+          />
+        ))}
+        {marqueeBox ? (
+          <div
+            className={css.marquee}
+            data-testid="sketch-marquee"
+            style={{
+              left: `${marqueeBox.left}%`,
+              top: `${marqueeBox.top}%`,
+              width: `${marqueeBox.width}%`,
+              height: `${marqueeBox.height}%`,
+            }}
+            aria-hidden
+          />
+        ) : null}
         {armedRecipe && armedSym && cursorPct ? (
           <>
             <div

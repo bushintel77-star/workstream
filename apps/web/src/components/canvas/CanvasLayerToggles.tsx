@@ -17,6 +17,7 @@ const ITEMS: Array<{
   { key: "draftGrid", label: "Draft grid", hint: "Layout dots" },
   { key: "orchestrationChips", label: "Risk chips", hint: "TRP / drainage overlays" },
   { key: "ghostSuggestions", label: "AI ghosts", hint: "Unaccepted suggestions" },
+  { key: "setback", label: "1.5 m setback", hint: "Council setback ring" },
   { key: "shade", label: "Sun/shade", hint: "Predicted solar grid" },
   { key: "easements", label: "Easements", hint: "Indicative corridors" },
 ];

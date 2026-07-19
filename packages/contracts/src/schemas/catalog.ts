@@ -133,6 +133,8 @@ export const GhostPlacementSuggestionSchema = z.object({
   y_pct: z.number().min(0).max(100),
   confidence: z.number().min(0).max(1),
   reason: z.string(),
+  /** Nearby accepted edit may have invalidated the suggestion rationale. */
+  stale: z.boolean().optional(),
 });
 export type GhostPlacementSuggestion = z.infer<typeof GhostPlacementSuggestionSchema>;
 
