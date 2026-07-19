@@ -12,6 +12,7 @@ import { useStudioState } from "./state/useStudioState";
 import { CadPlanBoard } from "./features/cadPlan/CadPlanBoard";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
+import { AiCoachDock } from "./features/aiGhosts/AiCoachDock";
 import { LayersPanel } from "./features/layers/LayersPanel";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
@@ -28,6 +29,7 @@ import { AerialSlot } from "./features/aerial/AerialSlot";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { StudioCoachMarks } from "./features/coach/StudioCoachMarks";
+import type { StudioAiSuggestion } from "@workstream/domain";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -43,15 +45,21 @@ type Props = {
  * %‑coord aerial drafting board (not MapLibre / Vicmap title chrome).
  */
 export function HandoffDesignStudio({
+  projectId,
   projectAddress,
   aerialUri = null,
   areaM2 = 230.82,
   initialMode = "cad",
 }: Props) {
-  const studio = useStudioState(
-    MODE_TABS.includes(initialMode as StudioMode) ? initialMode : "cad",
-  );
-  const { ui } = studio;
+  const studio = useStudioState({
+    projectId,
+    address: projectAddress,
+    aerialUri,
+    initialMode: MODE_TABS.includes(initialMode as StudioMode)
+      ? initialMode
+      : "cad",
+  });
+  const { ui, ai } = studio;
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
 
@@ -126,6 +134,7 @@ export function HandoffDesignStudio({
           cmdOpen: false,
           addOpen: false,
           sitesOpen: false,
+          coachOpen: false,
         });
         return;
       }
@@ -134,24 +143,24 @@ export function HandoffDesignStudio({
         studio.setUi({ frameOn: !ui.frameOn });
         return;
       }
-      if (e.key.toLowerCase() === "a" && studio.curGhost && !ui.drawPoly) {
+      if (e.key.toLowerCase() === "a" && ai.current && !ui.drawPoly) {
         e.preventDefault();
-        studio.acceptGhost(studio.curGhost.id);
+        ai.accept(ai.current.id);
         return;
       }
-      if (e.key.toLowerCase() === "r" && studio.curGhost && !ui.drawPoly) {
+      if (e.key.toLowerCase() === "r" && ai.current && !ui.drawPoly) {
         e.preventDefault();
-        studio.rejectGhost(studio.curGhost.id);
+        ai.reject(ai.current.id);
         return;
       }
       if (
         !ui.selectedId &&
         !ui.drawPoly &&
-        studio.ghostCount > 0 &&
+        ai.pendingCount > 0 &&
         (e.key === "ArrowLeft" || e.key === "ArrowRight")
       ) {
         e.preventDefault();
-        studio.cycleGhost(e.key === "ArrowRight" ? 1 : -1);
+        ai.cycle(e.key === "ArrowRight" ? 1 : -1);
         return;
       }
       if (
@@ -198,6 +207,36 @@ export function HandoffDesignStudio({
 
   const armType = (t: StudioItemType) => {
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
+  };
+
+  const draftLabel =
+    ai.status === "scanning"
+      ? "AI DRAFT: SCANNING"
+      : ai.status === "assisting"
+        ? "AI DRAFT: ASSISTING"
+        : ai.status === "unverified"
+          ? "AI DRAFT: UNVERIFIED"
+          : "AI DRAFT: VERIFIED";
+
+  const onCoachTip = (tip: StudioAiSuggestion) => {
+    if (tip.id === "review-ghosts" || tip.id === "scan-site") {
+      if (tip.id === "scan-site") void ai.scan();
+      else ai.openReview();
+      return;
+    }
+    if (tip.action === "quote") {
+      studio.setMode("quote");
+      return;
+    }
+    if (tip.action === "place" || tip.action === "cad") {
+      studio.setUi({ addOpen: true, tool: "add", coachOpen: true });
+      return;
+    }
+    if (tip.action === "trp") {
+      armType("exist");
+      return;
+    }
+    ai.openReview();
   };
 
   return (
@@ -338,19 +377,21 @@ export function HandoffDesignStudio({
         {!ui.clientView ? (
           <button
             type="button"
-            className={`${css.aiPill}${studio.ghostCount === 0 ? ` ${css.aiPillOk}` : ""}`}
+            className={`${css.aiPill}${ai.status === "verified" ? ` ${css.aiPillOk}` : ""}`}
             data-testid="header-accept-ghosts"
             onClick={() => {
-              if (studio.ghostCount === 0) {
-                studio.scanGhosts();
+              if (ai.status === "scanning" || ai.status === "assisting") {
+                studio.setUi({ coachOpen: true });
                 return;
               }
-              studio.acceptAllGhosts();
+              if (ai.pendingCount === 0) {
+                void ai.scan();
+                return;
+              }
+              ai.acceptAll();
             }}
           >
-            {studio.ghostCount
-              ? "AI DRAFT: UNVERIFIED"
-              : "AI DRAFT: VERIFIED"}
+            {draftLabel}
           </button>
         ) : null}
         <span className={css.savedTick} data-testid="autosave-tick">
@@ -381,6 +422,12 @@ export function HandoffDesignStudio({
           <QuoteSurface
             address={displayAddress}
             items={studio.items}
+            draftUnverified={ai.status === "unverified"}
+            pendingGhosts={ai.pendingCount}
+            onReviewGhosts={() => {
+              studio.setMode("cad");
+              ai.openReview();
+            }}
             onBack={() => studio.setMode("cad")}
           />
         ) : null}
@@ -394,10 +441,10 @@ export function HandoffDesignStudio({
               uri={liveAerial}
               dimmed={ui.darkOn}
               frameOn={ui.frameOn}
-              scanning={ui.canopyScanning}
+              scanning={ui.canopyScanning || ai.busy === "scanning"}
               onUri={(uri) => studio.setUi({ aerialUri: uri })}
               onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
-              onCanopyGhosts={studio.ingestCanopyGhosts}
+              onCanopyImage={ai.ingestCanopyImage}
             />
             <CadPlanBoard
               aerialUri={liveAerial}
@@ -415,19 +462,20 @@ export function HandoffDesignStudio({
               selectedId={ui.selectedId}
               groupIds={ui.groupIds}
               hoverId={ui.hoverId}
-              curGhostId={studio.curGhost?.id ?? null}
+              curGhostId={ai.current?.id ?? null}
               onSelect={(id, opts) => {
                 if (!id) {
                   studio.setSelection(null, []);
                   return;
                 }
-                if (studio.ghosts.some((g) => g.id === id)) {
-                  const idx = studio.ghosts.findIndex((g) => g.id === id);
+                if (ai.pending.some((g) => g.id === id)) {
+                  const idx = ai.pending.findIndex((g) => g.id === id);
                   studio.setUi({
                     selectedId: id,
                     groupIds: [],
                     ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
                     ghostReviewOpen: true,
+                    coachOpen: true,
                   });
                   return;
                 }
@@ -444,8 +492,8 @@ export function HandoffDesignStudio({
                 studio.setSelection(ids[0] ?? null, ids);
               }}
               onHover={(id) => studio.setUi({ hoverId: id })}
-              onAcceptGhost={studio.acceptGhost}
-              onRejectGhost={studio.rejectGhost}
+              onAcceptGhost={ai.accept}
+              onRejectGhost={ai.reject}
               onTraceInElevation={(id) => {
                 studio.setSelection(id, [id]);
                 studio.setMode("elevation");
@@ -619,39 +667,84 @@ export function HandoffDesignStudio({
           </>
         ) : null}
 
-        {studio.ghostCount > 0 && planOn && !ui.focusOn && !ui.clientView ? (
+        {planOn && !ui.focusOn && !ui.clientView ? (
+          <AiCoachDock
+            open={ui.coachOpen}
+            status={ai.status}
+            coaching={ai.coaching}
+            pendingCount={ai.pendingCount}
+            busy={ai.busy}
+            assistReply={ui.assistReply}
+            onClose={() => studio.setUi({ coachOpen: false })}
+            onScan={() => void ai.scan()}
+            onAsk={() =>
+              studio.setUi({ cmdOpen: true, cmdQuery: "", coachOpen: true })
+            }
+            onReview={() => ai.openReview()}
+            onAcceptAll={() => ai.acceptAll()}
+            onTipAction={onCoachTip}
+          />
+        ) : null}
+
+        {!ui.coachOpen &&
+        ai.pendingCount > 0 &&
+        planOn &&
+        !ui.focusOn &&
+        !ui.clientView ? (
           <button
             type="button"
             className={css.ghostToast}
-            onClick={() =>
-              studio.setUi({ ghostReviewOpen: !ui.ghostReviewOpen })
-            }
+            onClick={() => studio.setUi({ coachOpen: true, ghostReviewOpen: true })}
           >
             <span className={css.ghostDot} />
-            {studio.ghostCount} AI suggestions ready{" "}
-            <span className={css.ghostReview}>Review</span>
+            {ai.pendingCount} AI proposals pending{" "}
+            <span className={css.ghostReview}>Open coach</span>
           </button>
         ) : null}
 
         {ui.ghostReviewOpen && planOn && !ui.focusOn && !ui.clientView ? (
           <div className={css.ghostPanel}>
             <AiGhostReview
-              ghosts={studio.ghosts}
-              selectedId={studio.curGhost?.id ?? null}
+              ghosts={ai.pending}
+              selectedId={ai.current?.id ?? null}
               factorsOpen={ui.factorsOpen}
               onFactorsOpen={(factorsOpen) => studio.setUi({ factorsOpen })}
               onSelect={(id) => {
-                const idx = studio.ghosts.findIndex((g) => g.id === id);
+                const idx = ai.pending.findIndex((g) => g.id === id);
                 studio.setUi({ ghostIdx: idx >= 0 ? idx : ui.ghostIdx });
               }}
-              onAccept={studio.acceptGhost}
-              onReject={studio.rejectGhost}
-              onCycle={studio.cycleGhost}
+              onAccept={ai.accept}
+              onReject={ai.reject}
+              onCycle={ai.cycle}
               onAskAi={(id) => {
-                const g = studio.ghosts.find((x) => x.id === id);
-                studio.askAi(g?.why ?? "refine this suggestion");
+                const g = ai.pending.find((x) => x.id === id);
+                void ai.assist(g?.why ?? "refine this suggestion");
               }}
             />
+          </div>
+        ) : null}
+
+        {planOn && !ui.clientView ? (
+          <div className={css.aiStatusBar} data-testid="ai-draft-status-bar">
+            <span
+              className={`${css.aiStatusChip}${ai.status === "verified" ? ` ${css.aiStatusOk}` : ""}`}
+            >
+              {draftLabel}
+            </span>
+            <span className={css.aiStatusMeta}>
+              {ai.pendingCount
+                ? `${ai.pendingCount} proposal${ai.pendingCount === 1 ? "" : "s"} · A accept · R reject`
+                : "Scan or Ask AI to propose layout moves"}
+            </span>
+            {!ui.coachOpen ? (
+              <button
+                type="button"
+                className={css.aiStatusOpen}
+                onClick={() => studio.setUi({ coachOpen: true })}
+              >
+                Coach
+              </button>
+            ) : null}
           </div>
         ) : null}
 
@@ -677,9 +770,9 @@ export function HandoffDesignStudio({
           query={ui.cmdQuery}
           onQuery={(cmdQuery) => studio.setUi({ cmdQuery })}
           onClose={() => studio.setUi({ cmdOpen: false, cmdQuery: "" })}
-          onAskAi={studio.askAi}
+          onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
-          onScanGhosts={studio.scanGhosts}
+          onScanGhosts={() => void ai.scan()}
           onToggleFitSheet={() => studio.setUi({ frameOn: !ui.frameOn })}
           onGoQuote={() => studio.setMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}

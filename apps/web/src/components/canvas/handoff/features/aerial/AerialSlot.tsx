@@ -1,9 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { detectCanopyClustersFromImageData } from "@workstream/domain";
-import type { StudioItem } from "../../studioCatalog";
 import css from "./aerialSlot.module.css";
+
+export type CanopyImagePayload = {
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
+};
 
 type Props = {
   uri: string | null;
@@ -12,12 +16,13 @@ type Props = {
   scanning: boolean;
   onUri: (uri: string | null) => void;
   onScanning: (v: boolean) => void;
-  onCanopyGhosts: (ghosts: StudioItem[]) => void;
+  /** Preferred path — AI engine runs canopy clustering. */
+  onCanopyImage: (image: CanopyImagePayload) => void;
 };
 
 /**
- * Aerial drag-and-drop slot. On fill, runs heuristic canopy colour clustering
- * (96×96 sample → 24×24 grid) and emits canopy ghosts into studio state.
+ * Aerial drag-and-drop slot. On fill, samples pixels and hands them to the
+ * studio AI engine for canopy proposals (not a local bolt-on mapper).
  */
 export function AerialSlot({
   uri,
@@ -26,7 +31,7 @@ export function AerialSlot({
   scanning,
   onUri,
   onScanning,
-  onCanopyGhosts,
+  onCanopyImage,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -54,29 +59,18 @@ export function AerialSlot({
         if (!ctx) return;
         ctx.drawImage(img, 0, 0, size, size);
         const data = ctx.getImageData(0, 0, size, size);
-        const clusters = detectCanopyClustersFromImageData(
-          { width: size, height: size, data: data.data },
-          { gridSize: 24, maxClusters: 6, symbolId: "canopy" },
-        );
-        const ghosts: StudioItem[] = clusters.map((c, i) => ({
-          id: `canopy-aerial-${i + 1}`,
-          t: "canopy" as const,
-          x: c.x_pct,
-          y: c.y_pct,
-          rot: 0,
-          scale: Math.max(0.5, Math.min(1.3, 0.5 + c.confidence * 0.9)),
-          ghost: true,
-          why: c.reason,
-          conf: c.confidence,
-        }));
-        if (ghosts.length) onCanopyGhosts(ghosts);
+        onCanopyImage({
+          width: size,
+          height: size,
+          data: data.data,
+        });
       } catch {
         /* heuristic best-effort */
       } finally {
         onScanning(false);
       }
     },
-    [onCanopyGhosts, onScanning],
+    [onCanopyImage, onScanning],
   );
 
   useEffect(() => {
@@ -143,7 +137,7 @@ export function AerialSlot({
       {scanning ? (
         <div className={css.scanPill} data-testid="canopy-scanning">
           <span className={css.scanDot} />
-          Scanning aerial for canopy…
+          AI scanning aerial for canopy…
         </div>
       ) : null}
     </div>

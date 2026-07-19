@@ -9,6 +9,9 @@ import css from "./quote.module.css";
 type Props = {
   address: string;
   items: StudioItem[];
+  draftUnverified?: boolean;
+  pendingGhosts?: number;
+  onReviewGhosts?: () => void;
   onBack: () => void;
 };
 
@@ -22,7 +25,14 @@ const aud = (n: number) =>
 /**
  * Quote lens — live BOM total + Wrights Terrace Tier-1 value ledger when address matches.
  */
-export function QuoteSurface({ address, items, onBack }: Props) {
+export function QuoteSurface({
+  address,
+  items,
+  draftUnverified = false,
+  pendingGhosts = 0,
+  onReviewGhosts,
+  onBack,
+}: Props) {
   const lines = useMemo(() => bomLines(items), [items]);
   const materials = lines.reduce((a, r) => a + r.amt, 0);
   const total = Math.round((materials + 4378) * 0.92);
@@ -31,6 +41,21 @@ export function QuoteSurface({ address, items, onBack }: Props) {
   return (
     <div className={css.root} data-testid="quote-surface">
       <div className={css.card}>
+        {draftUnverified ? (
+          <div className={css.draftGate} data-testid="quote-ai-draft-gate">
+            <p className={css.draftGateTitle}>AI draft unverified</p>
+            <p className={css.draftGateBody}>
+              {pendingGhosts} pending proposal
+              {pendingGhosts === 1 ? "" : "s"} still sit on the drawing. Accept or
+              reject them before treating this quote as client-ready.
+            </p>
+            {onReviewGhosts ? (
+              <button type="button" className={css.draftGateBtn} onClick={onReviewGhosts}>
+                Review AI proposals
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         <p className={css.kicker}>Indicative quote</p>
         <h2 className={css.total}>{aud(total)}</h2>
         <p className={css.lead}>

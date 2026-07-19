@@ -65,6 +65,10 @@ export type StudioUiState = {
   zoom: number;
   savedTick: number;
   aerialUri: string | null;
+  /** AI engine busy flag — drives draft badge + coach dock. */
+  aiBusy: "idle" | "scanning" | "assisting";
+  coachOpen: boolean;
+  assistReply: string | null;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

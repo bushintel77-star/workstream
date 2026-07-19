@@ -9,10 +9,10 @@ No MapLibre on this surface — `%` board space is the drawing plane.
 | Module | Owns |
 |--------|------|
 | `geometry/` | Pure maths: sheet box A3/A4, polygon area/perimeter, edge dims, TPZ radius in % space |
-| `state/` | `useStudioState` — single mutate path, undo/redo, layer opacity, ghosts |
+| `state/` | `useStudioState` + **`studioAiEngine`** — single mutate path; AI propose/scan/assist/canopy/coaching/stale is the design loop, not a side panel |
 | `features/fitSheet/` | Paper frame, site schedule, boundary/footprint dim table, stacked elevations |
 | `features/cadPlan/` | Aerial, SVG polys, symbol placements, corner/mid handles, dim labels, edit banner |
-| `features/aiGhosts/` | Review card, confidence factors, accept/reject/cycle, Ask AI |
+| `features/aiGhosts/` | Coach dock (primary), ghost review, confidence factors, accept/reject/cycle, Ask AI |
 | `features/layers/` | Four opacity sliders + setback toggle |
 | `features/commandPalette/` | ⌘K actions + Ask AI row + arm symbols |
 | `features/sunGrowth/` | Arc scrubber, growth chips, shadow length readout |

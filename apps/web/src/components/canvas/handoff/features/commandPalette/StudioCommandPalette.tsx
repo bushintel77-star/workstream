@@ -58,16 +58,16 @@ export function StudioCommandPalette({
     const base: StudioCommand[] = [
       {
         id: "ask-ai",
-        label: query.trim() ? `Ask AI: ${query.trim()}` : "Ask AI sketch assistant",
-        detail: "Propose canopy ghosts from natural language — accept to commit",
-        keywords: "ai assist ask natural language",
+        label: query.trim() ? `Ask AI: ${query.trim()}` : "Ask AI (design loop)",
+        detail: "Central assist — geometry-aware proposals merge into the draft until you accept",
+        keywords: "ai assist ask natural language coach",
         run: () => onAskAi(query.trim() || "shade the west glazing"),
       },
       {
         id: "scan-ghosts",
-        label: "Scan for AI ghosts",
-        detail: "Seed layout suggestions on this working drawing",
-        keywords: "scan ghost ai suggest",
+        label: "Scan site (AI propose)",
+        detail: "Run the studio AI engine over lot geometry and aerial cues",
+        keywords: "scan ghost ai suggest propose layout",
         run: onScanGhosts,
       },
       {

@@ -22,6 +22,42 @@
   color: #241318;
 }
 
+.draftGate {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(232, 184, 75, 0.45);
+  background: rgba(232, 184, 75, 0.12);
+}
+
+.draftGateTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: #8a6a1f;
+}
+
+.draftGateBody {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #5a4030;
+}
+
+.draftGateBtn {
+  margin-top: 10px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid #241318;
+  background: #241318;
+  color: #ffd3de;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .kicker {
   margin: 0;
   font-size: 9px;

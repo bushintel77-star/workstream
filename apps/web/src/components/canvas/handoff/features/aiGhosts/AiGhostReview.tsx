@@ -67,8 +67,8 @@ export function AiGhostReview({
       <div className={styles.empty} data-testid="ai-ghost-empty">
         <p className={styles.emptyTitle}>No pending ghosts</p>
         <p className={styles.emptyBody}>
-          Drop an aerial to scan for canopy, or Ask AI from the command palette.
-          Accepted ghosts become live drawing objects.
+          Use the AI coach to Scan or Ask — proposals land here as ghosts until
+          you accept them onto the working drawing.
         </p>
       </div>
     );

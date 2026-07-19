@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   STUDIO_SITES,
   WRIGHTS_SEED,
@@ -12,6 +12,19 @@ import {
 } from "../studioCatalog";
 import type { PaperSize, PctPoint } from "../geometry";
 import { markStaleGhostsNearEdit } from "./staleGhosts";
+import {
+  acceptAllProposals,
+  acceptProposal,
+  buildHandoffCoaching,
+  draftStatus,
+  maybeAutoProposeAfterCommit,
+  mergeAiProposals,
+  proposeFromAssistQuery,
+  proposeFromCanopyImage,
+  proposeLayoutFromSnapshot,
+  proposalsFromApiSuggestions,
+  rejectProposal,
+} from "./studioAiEngine";
 import {
   DEFAULT_LAYER_OPACITY,
   DESIGN_LAYER_PRESET,
@@ -69,6 +82,10 @@ type Ui = {
   zoom: number;
   savedTick: number;
   aerialUri: string | null;
+  aiBusy: "idle" | "scanning" | "assisting";
+  coachOpen: boolean;
+  /** Last natural-language assist reply shown in the coach rail. */
+  assistReply: string | null;
 };
 
 type State = {
@@ -161,9 +178,19 @@ function initialState(mode: StudioMode): State {
       zoom: 1,
       savedTick: 0,
       aerialUri: null,
+      aiBusy: "idle",
+      coachOpen: true,
+      assistReply: null,
     },
   };
 }
+
+export type UseStudioStateOpts = {
+  initialMode?: StudioMode;
+  projectId: string;
+  address: string;
+  aerialUri?: string | null;
+};
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -304,8 +331,23 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function useStudioState(initialMode: StudioMode = "cad") {
+export function useStudioState(opts: UseStudioStateOpts) {
+  const {
+    initialMode = "cad",
+    projectId,
+    address,
+    aerialUri: aerialProp = null,
+  } = opts;
   const [state, dispatch] = useReducer(reducer, initialMode, initialState);
+  const bootstrapped = useRef(false);
+  const addressRef = useRef(address);
+  addressRef.current = address;
+
+  useEffect(() => {
+    if (aerialProp && !state.ui.aerialUri) {
+      dispatch({ type: "setUi", patch: { aerialUri: aerialProp } });
+    }
+  }, [aerialProp, state.ui.aerialUri]);
 
   const mutate = useCallback(
     (fn: (snap: StudioSnapshot, idn: number) => { snap: StudioSnapshot; idn?: number }) => {
@@ -340,36 +382,20 @@ export function useStudioState(initialMode: StudioMode = "cad") {
 
   const acceptGhost = useCallback(
     (id: string) => {
-      mutate((snap) => ({
-        snap: {
-          ...snap,
-          items: snap.items.map((i) =>
-            i.id === id ? { ...i, ghost: false, stale: false } : i,
-          ),
-        },
-      }));
+      mutate((snap) => ({ snap: acceptProposal(snap, id) }));
     },
     [mutate],
   );
 
   const rejectGhost = useCallback(
     (id: string) => {
-      mutate((snap) => ({
-        snap: { ...snap, items: snap.items.filter((i) => i.id !== id) },
-      }));
+      mutate((snap) => ({ snap: rejectProposal(snap, id) }));
     },
     [mutate],
   );
 
   const acceptAllGhosts = useCallback(() => {
-    mutate((snap) => ({
-      snap: {
-        ...snap,
-        items: snap.items.map((i) =>
-          i.ghost ? { ...i, ghost: false, stale: false } : i,
-        ),
-      },
-    }));
+    mutate((snap) => ({ snap: acceptAllProposals(snap) }));
   }, [mutate]);
 
   const placeArmed = useCallback(
@@ -387,51 +413,169 @@ export function useStudioState(initialMode: StudioMode = "cad") {
           scale: 0.7,
           ghost: false,
         };
-        return {
-          snap: { ...snap, items: [...snap.items, item] },
-          idn: idn + 1,
+        let next: StudioSnapshot = {
+          ...snap,
+          items: [...snap.items, item],
         };
+        let nextIdn = idn + 1;
+        const follow = maybeAutoProposeAfterCommit(
+          next,
+          addressRef.current,
+          nextIdn,
+        );
+        if (follow) {
+          next = {
+            ...next,
+            items: mergeAiProposals(next, follow.items, ["layout"]),
+          };
+          nextIdn = follow.idn;
+        }
+        return { snap: next, idn: nextIdn };
       });
-      setUi({ armed: null, addOpen: false, tool: "pan" });
+      setUi({
+        armed: null,
+        addOpen: false,
+        tool: "pan",
+        ghostReviewOpen: true,
+        coachOpen: true,
+      });
     },
     [mutate, setUi, state.ui.armed],
   );
 
   const askAi = useCallback(
-    (query: string) => {
-      mutate((snap, idn) => {
-        const ys = snap.boundary.map((p) => p.y);
-        const xs = snap.boundary.map((p) => p.x);
-        const y0 = Math.max(...ys) - 8;
-        const x0 = (Math.min(...xs) + Math.max(...xs)) / 2;
-        let nextIdn = idn;
-        const add: StudioItem[] = [];
-        for (const [dx, dy] of [
-          [-2, 0],
-          [2.5, -3],
-        ] as const) {
-          nextIdn += 1;
-          add.push({
-            id: `p${nextIdn}`,
-            t: "canopy",
-            x: x0 + dx,
-            y: y0 + dy,
-            rot: 0,
-            scale: 0.75,
-            ghost: true,
-            why: `You asked: “${query}”`,
-            conf: 0.84,
-          });
+    async (query: string) => {
+      const q = query.trim();
+      if (!q) return;
+      setUi({
+        aiBusy: "assisting",
+        cmdOpen: false,
+        cmdQuery: "",
+        coachOpen: true,
+        assistReply: null,
+      });
+      try {
+        if (projectId) {
+          const { designAssistAction } = await import("../../../../app/actions");
+          const res = await designAssistAction(projectId, q);
+          if (res?.suggestions?.length) {
+            mutate((snap, idn) => {
+              const mapped = proposalsFromApiSuggestions(
+                res.suggestions,
+                idn,
+                "assist",
+              );
+              return {
+                snap: {
+                  ...snap,
+                  items: mergeAiProposals(snap, mapped.items, ["assist"]),
+                },
+                idn: mapped.idn,
+              };
+            });
+            setUi({
+              aiBusy: "idle",
+              ghostIdx: 0,
+              ghostReviewOpen: true,
+              assistReply: res.reply?.trim() || null,
+            });
+            return;
+          }
+          if (res?.reply?.trim()) {
+            setUi({ assistReply: res.reply.trim() });
+          }
         }
+      } catch {
+        /* fall through to geometry assist */
+      }
+      mutate((snap, idn) => {
+        const local = proposeFromAssistQuery(snap, q, idn);
         return {
-          snap: { ...snap, items: [...snap.items, ...add] },
-          idn: nextIdn,
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, local.items, ["assist"]),
+          },
+          idn: local.idn,
         };
       });
-      setUi({ cmdOpen: false, cmdQuery: "", ghostIdx: 0 });
+      setUi({
+        aiBusy: "idle",
+        ghostIdx: 0,
+        ghostReviewOpen: true,
+        assistReply: `Local assist for “${q}” — accept ghosts to commit.`,
+      });
     },
-    [mutate, setUi],
+    [mutate, projectId, setUi],
   );
+
+  const scanGhosts = useCallback(async () => {
+    setUi({ aiBusy: "scanning", canopyScanning: true, coachOpen: true });
+    try {
+      if (projectId) {
+        const { scanDesignGhostsAction } = await import(
+          "../../../../app/actions"
+        );
+        const res = await scanDesignGhostsAction(projectId);
+        if (res?.suggestions?.length) {
+          mutate((snap, idn) => {
+            const mapped = proposalsFromApiSuggestions(
+              res.suggestions,
+              idn,
+              "scan",
+            );
+            const layout = proposeLayoutFromSnapshot(
+              snap,
+              addressRef.current,
+              mapped.idn,
+            );
+            const merged = mergeAiProposals(
+              snap,
+              [...mapped.items, ...layout.items],
+              ["scan", "layout"],
+            );
+            return { snap: { ...snap, items: merged }, idn: layout.idn };
+          });
+          setUi({
+            aiBusy: "idle",
+            canopyScanning: false,
+            ghostIdx: 0,
+            ghostReviewOpen: true,
+          });
+          return;
+        }
+      }
+    } catch {
+      /* layout fallback */
+    }
+    mutate((snap, idn) => {
+      const layout = proposeLayoutFromSnapshot(snap, addressRef.current, idn);
+      return {
+        snap: {
+          ...snap,
+          items: mergeAiProposals(snap, layout.items, ["layout", "scan"]),
+        },
+        idn: layout.idn,
+      };
+    });
+    setUi({
+      aiBusy: "idle",
+      canopyScanning: false,
+      ghostIdx: 0,
+      ghostReviewOpen: true,
+    });
+  }, [mutate, projectId, setUi]);
+
+  /** Bootstrap AI propose once when the studio mounts empty of proposals. */
+  useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
+    const pending = state.doc.items.filter((i) => i.ghost).length;
+    if (pending === 0) {
+      void scanGhosts();
+    }
+    // intentionally once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateBoundary = useCallback(
     (boundary: PctPoint[]) => {
@@ -557,33 +701,13 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     setUi({ selectedId: null });
   }, [mutate, setUi, state.doc.items, state.ui.locked, state.ui.selectedId]);
 
-  /** Re-seed pending AI ghosts from the Wrights handoff catalog when empty. */
-  const scanGhosts = useCallback(() => {
-    mutate((snap, idn) => {
-      const pending = snap.items.filter((i) => i.ghost);
-      if (pending.length > 0) {
-        return { snap };
-      }
-      const seeds = WRIGHTS_SEED.items.filter((i) => i.ghost);
-      let nextIdn = idn;
-      const add: StudioItem[] = seeds.map((s) => {
-        nextIdn += 1;
-        return { ...s, id: `p${nextIdn}`, stale: false };
-      });
-      return {
-        snap: { ...snap, items: [...snap.items, ...add] },
-        idn: nextIdn,
-      };
-    });
-    setUi({ ghostReviewOpen: true, ghostIdx: 0 });
-  }, [mutate, setUi]);
-
   const cycleGhost = useCallback(
     (dir: 1 | -1 = 1) => {
       if (ghostCount === 0) return;
       setUi({
         ghostIdx: state.ui.ghostIdx + dir,
         ghostReviewOpen: true,
+        coachOpen: true,
       });
     },
     [ghostCount, setUi, state.ui.ghostIdx],
@@ -591,21 +715,59 @@ export function useStudioState(initialMode: StudioMode = "cad") {
 
   const ingestCanopyGhosts = useCallback(
     (ghosts: StudioItem[]) => {
+      // Prefer raw image path via engine; this accepts pre-mapped items from AerialSlot.
       mutate((snap, idn) => {
-        const withoutAerial = snap.items.filter(
-          (i) => !i.id.startsWith("canopy-aerial-"),
-        );
         let nextIdn = idn;
         const add = ghosts.map((g) => {
           nextIdn += 1;
-          return { ...g, id: `canopy-aerial-${nextIdn}` };
+          return {
+            ...g,
+            id: `ai-canopy-${nextIdn}`,
+            ghost: true,
+          };
         });
         return {
-          snap: { ...snap, items: [...withoutAerial, ...add] },
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, add, ["canopy"]),
+          },
           idn: nextIdn,
         };
       });
-      setUi({ ghostIdx: 0, ghostReviewOpen: true });
+      setUi({
+        ghostIdx: 0,
+        ghostReviewOpen: true,
+        coachOpen: true,
+        canopyScanning: false,
+      });
+    },
+    [mutate, setUi],
+  );
+
+  const ingestCanopyImage = useCallback(
+    (image: {
+      width: number;
+      height: number;
+      data: ArrayLike<number>;
+    }) => {
+      setUi({ canopyScanning: true, aiBusy: "scanning" });
+      mutate((snap, idn) => {
+        const proposed = proposeFromCanopyImage(image, idn);
+        return {
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, proposed.items, ["canopy"]),
+          },
+          idn: proposed.idn,
+        };
+      });
+      setUi({
+        canopyScanning: false,
+        aiBusy: "idle",
+        ghostReviewOpen: true,
+        coachOpen: true,
+        ghostIdx: 0,
+      });
     },
     [mutate, setUi],
   );
@@ -636,13 +798,33 @@ export function useStudioState(initialMode: StudioMode = "cad") {
         return;
       }
       const target = state.ui.traceTarget;
-      mutate((snap) => ({
-        snap: {
+      mutate((snap, idn) => {
+        let next: StudioSnapshot = {
           ...snap,
           [target]: pts.map((p) => ({ ...p })),
-        },
-      }));
-      setUi({ drawPoly: null, drawCursor: null, tool: "edit" });
+        };
+        let nextIdn = idn;
+        const follow = maybeAutoProposeAfterCommit(
+          next,
+          addressRef.current,
+          nextIdn,
+        );
+        if (follow) {
+          next = {
+            ...next,
+            items: mergeAiProposals(next, follow.items, ["layout"]),
+          };
+          nextIdn = follow.idn;
+        }
+        return { snap: next, idn: nextIdn };
+      });
+      setUi({
+        drawPoly: null,
+        drawCursor: null,
+        tool: "edit",
+        coachOpen: true,
+        ghostReviewOpen: true,
+      });
     },
     [mutate, setUi, state.ui.locked, state.ui.traceTarget],
   );
@@ -667,6 +849,54 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     else setUi({ drawPoly: cur.slice(0, -1) });
   }, [setUi, state.ui.drawPoly]);
 
+  const siteAddress =
+    STUDIO_SITES[state.ui.siteIdx]?.addr ?? (address || STUDIO_SITES[0]!.addr);
+
+  const coaching = useMemo(
+    () => buildHandoffCoaching(snapOf(state.doc), siteAddress, ghostCount),
+    [ghostCount, siteAddress, state.doc],
+  );
+
+  const status = draftStatus(ghostCount, state.ui.aiBusy);
+
+  const ai = useMemo(
+    () => ({
+      status,
+      coaching,
+      pending: ghosts,
+      pendingCount: ghostCount,
+      current: curGhost,
+      busy: state.ui.aiBusy,
+      scan: scanGhosts,
+      assist: askAi,
+      accept: acceptGhost,
+      reject: rejectGhost,
+      acceptAll: acceptAllGhosts,
+      cycle: cycleGhost,
+      ingestCanopy: ingestCanopyGhosts,
+      ingestCanopyImage,
+      openReview: () => setUi({ ghostReviewOpen: true, coachOpen: true }),
+      openCoach: () => setUi({ coachOpen: true }),
+    }),
+    [
+      acceptAllGhosts,
+      acceptGhost,
+      askAi,
+      coaching,
+      curGhost,
+      cycleGhost,
+      ghostCount,
+      ghosts,
+      ingestCanopyGhosts,
+      ingestCanopyImage,
+      rejectGhost,
+      scanGhosts,
+      setUi,
+      state.ui.aiBusy,
+      status,
+    ],
+  );
+
   return {
     boundary: state.doc.boundary,
     building: state.doc.building,
@@ -676,11 +906,12 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     ui: state.ui,
-    siteAddress: STUDIO_SITES[state.ui.siteIdx]?.addr ?? STUDIO_SITES[0]!.addr,
+    siteAddress,
     siteMeta: STUDIO_SITES[state.ui.siteIdx]?.meta ?? STUDIO_SITES[0]!.meta,
     ghosts,
     ghostCount,
     curGhost,
+    ai,
     mutate,
     setUi,
     setMode,
@@ -695,6 +926,7 @@ export function useStudioState(initialMode: StudioMode = "cad") {
     scanGhosts,
     cycleGhost,
     ingestCanopyGhosts,
+    ingestCanopyImage,
     setStrokes,
     switchSite,
     resetSite,
