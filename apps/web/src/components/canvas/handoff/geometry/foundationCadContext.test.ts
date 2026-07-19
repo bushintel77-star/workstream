@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCadAreaM2,
+  formatCadBearing,
   formatCadMetres,
   neighbourLotContext,
   polygonCentroid,
@@ -32,5 +33,10 @@ describe("CAD formatters", () => {
   it("prints millimetre metres and area", () => {
     expect(formatCadMetres(5.12)).toBe("5.120 m");
     expect(formatCadAreaM2(186.2)).toBe("186 m²");
+  });
+
+  it("formats indicative bearings", () => {
+    expect(formatCadBearing(0).length).toBeGreaterThan(0);
+    expect(formatCadBearing(90).length).toBeGreaterThan(0);
   });
 });

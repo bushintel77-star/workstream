@@ -87,3 +87,21 @@ export function formatCadAreaM2(m2: number): string {
   if (m2 >= 100) return `${m2.toFixed(0)} m²`;
   return `${m2.toFixed(1)} m²`;
 }
+
+/**
+ * Board bearing from edge (y-down canvas). Returns quadrant string e.g. N12°E.
+ * Indicative Workflow 1 — not survey grid bearing.
+ */
+export function formatCadBearing(rotDeg: number): string {
+  // rotDeg is atan2(dy, dx) with y-down; convert to compass-ish from +x east
+  let deg = ((90 - rotDeg) % 360 + 360) % 360;
+  const card = ["N", "E", "S", "W"] as const;
+  const sector = Math.floor(((deg + 45) % 360) / 90);
+  const primary = card[sector]!;
+  const next = card[(sector + 1) % 4]!;
+  const within = ((deg + 45) % 90) - 45;
+  if (Math.abs(within) < 2) return primary;
+  const abs = Math.abs(Math.round(within));
+  if (within >= 0) return `${primary}${abs}°${next}`;
+  return `${next}${abs}°${primary}`;
+}

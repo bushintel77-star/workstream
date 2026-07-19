@@ -13,6 +13,7 @@ import {
 } from "../../geometry";
 import {
   formatCadAreaM2,
+  formatCadBearing,
   formatCadMetres,
   neighbourLotContext,
   polygonCentroid,
@@ -40,14 +41,23 @@ type Props = {
   externalAerial?: boolean;
   frameOn: boolean;
   darkOn: boolean;
-  /** Stage 1 — charcoal title overlay, mm dims, hide veg/items. */
+  /** Stage 1 — charcoal title overlay + AI underlay. */
   foundationCleanse?: boolean;
   /** Vicmap-sourced title — solid charcoal stroke (not dashed ghost). */
   titleLocked?: boolean;
+  /** Title CAD nodes locked (no drag). */
+  titleBoundaryLocked?: boolean;
   /** Optional cadastral lot area (Vicmap) for centre CAD label. */
   lotAreaM2?: number | null;
   /** Street / site label for CAD annotation (not REA map chrome). */
   siteLabel?: string | null;
+  /** Vicmap / title metadata for CAD edge callouts. */
+  titleMeta?: {
+    parcelRef?: string | null;
+    sourceLabel?: string | null;
+    councilLabel?: string | null;
+    sourceKind?: string | null;
+  } | null;
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
@@ -105,8 +115,10 @@ export function CadPlanBoard({
   darkOn,
   foundationCleanse = false,
   titleLocked = false,
+  titleBoundaryLocked = false,
   lotAreaM2 = null,
   siteLabel = null,
+  titleMeta = null,
   boundary,
   building,
   items,
@@ -161,7 +173,12 @@ export function CadPlanBoard({
     "default",
   );
 
-  const editing = tool === "edit" && !locked && !frameOn && !foundationCleanse;
+  /** Title CAD drag when Stage 1 unlocked — snap via snapVertexDrag. */
+  const titleEditing =
+    foundationCleanse && !titleBoundaryLocked && !frameOn;
+  const editing =
+    (tool === "edit" && !locked && !frameOn && !foundationCleanse) ||
+    (titleEditing && tool === "edit");
   const titleSolid = foundationCleanse || titleLocked;
   /** SDS — COLOR_VECTOR_PRIMARY charcoal when Vicmap/Stage 1; amber for dark. */
   const bStroke = titleSolid
@@ -186,10 +203,10 @@ export function CadPlanBoard({
   const areaLabelM2 =
     lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
 
-  const exist = foundationCleanse
-    ? undefined
-    : items.find((i) => i.t === "exist" && !i.ghost);
-  const planItems = foundationCleanse ? [] : items;
+  const exist = items.find((i) => i.t === "exist" && !i.ghost);
+  /** AI / design intelligence underlay — dimmed under CAD title in Stage 1. */
+  const planItems = items;
+  const underlayOp = foundationCleanse ? 0.38 : 1;
   const tpz = exist
     ? tpzRadiusPct(BY_TYPE.exist.dbhM ?? 0.45, scaleM)
     : null;
@@ -447,14 +464,16 @@ export function CadPlanBoard({
             titleSolid ? "foundation-title-boundary" : undefined
           }
         />
-        {!foundationCleanse ? (
+        {building.length >= 3 ? (
           <polygon
             points={ptsAttr(building)}
             fill={bldFill}
             stroke={bldStroke}
-            strokeWidth={1.5}
+            strokeWidth={foundationCleanse ? 1 : 1.5}
             vectorEffect="non-scaling-stroke"
-            opacity={layerOpacity.boundary}
+            opacity={
+              layerOpacity.boundary * (foundationCleanse ? underlayOp : 1)
+            }
           />
         ) : null}
         {cadTitleMode
@@ -506,29 +525,43 @@ export function CadPlanBoard({
             strokeWidth={1}
             strokeDasharray="4 4"
             vectorEffect="non-scaling-stroke"
-            opacity={layerOpacity.council}
+            opacity={layerOpacity.council * underlayOp}
             data-tpz-state="normal"
           />
         ) : null}
       </svg>
 
-      {editing
+      {editing || (foundationCleanse && titleBoundaryLocked)
         ? boundary.map((p, i) => (
             <button
               key={`bh${i}`}
               type="button"
-              className={css.cornerNode}
+              className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}${titleBoundaryLocked && foundationCleanse ? ` ${css.cadCornerLocked}` : ""}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
-              title="Corner vertex"
+              title={
+                foundationCleanse
+                  ? titleBoundaryLocked
+                    ? "Title node locked — Unlock title to drag"
+                    : "Drag title node (vertex / ortho snap)"
+                  : "Corner vertex"
+              }
               aria-label={`Boundary corner ${i + 1}`}
+              data-testid="cad-title-node"
+              disabled={foundationCleanse && titleBoundaryLocked}
               onPointerEnter={() => setCursorMode("move")}
               onPointerLeave={() => setCursorMode("default")}
-              onPointerDown={(e) => startCornerDrag("boundary", i, e)}
-              onContextMenu={(e) => openNodeMenu("boundary", i, e)}
+              onPointerDown={(e) => {
+                if (foundationCleanse && titleBoundaryLocked) return;
+                startCornerDrag("boundary", i, e);
+              }}
+              onContextMenu={(e) => {
+                if (foundationCleanse) return;
+                openNodeMenu("boundary", i, e);
+              }}
             />
           ))
         : null}
-      {editing
+      {editing && !foundationCleanse
         ? building.map((p, i) => (
             <button
               key={`fh${i}`}
@@ -545,7 +578,7 @@ export function CadPlanBoard({
           ))
         : null}
 
-      {editing
+      {editing && !foundationCleanse
         ? midHandles(boundary, "boundary").map((m) => (
             <div
               key={`mb${m.after}`}
@@ -561,7 +594,7 @@ export function CadPlanBoard({
             />
           ))
         : null}
-      {editing
+      {editing && !foundationCleanse
         ? midHandles(building, "building").map((m) => (
             <div
               key={`mf${m.after}`}
@@ -605,10 +638,25 @@ export function CadPlanBoard({
             <span
               className={cadTitleMode ? css.cadDimLabel : css.dimLabel}
               data-testid={cadTitleMode ? "cad-edge-dim" : undefined}
+              title={
+                cadTitleMode
+                  ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${
+                      titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
+                    }`
+                  : undefined
+              }
             >
-              {cadTitleMode
-                ? formatCadMetres(d.lengthM)
-                : `${d.key} · ${d.lengthM.toFixed(2)} m`}
+              {cadTitleMode ? (
+                <>
+                  <span className={css.cadDimKey}>{d.key}</span>
+                  <span>{formatCadMetres(d.lengthM)}</span>
+                  <span className={css.cadDimBearing}>
+                    {formatCadBearing(d.rotDeg)}
+                  </span>
+                </>
+              ) : (
+                `${d.key} · ${d.lengthM.toFixed(2)} m`
+              )}
             </span>
           </div>
         ))}
@@ -620,7 +668,17 @@ export function CadPlanBoard({
           data-testid="cad-title-area"
         >
           <span className={css.cadAreaValue}>{formatCadAreaM2(areaLabelM2)}</span>
-          <span className={css.cadAreaMeta}>title area</span>
+          <span className={css.cadAreaMeta}>
+            {titleMeta?.parcelRef
+              ? titleMeta.parcelRef
+              : titleMeta?.sourceLabel ?? "title area"}
+          </span>
+          {titleMeta?.councilLabel ? (
+            <span className={css.cadAreaMeta}>{titleMeta.councilLabel}</span>
+          ) : null}
+          <span className={css.cadLockState}>
+            {titleBoundaryLocked ? "LOCKED" : "UNLOCKED · drag nodes"}
+          </span>
         </div>
       ) : null}
 
@@ -630,7 +688,7 @@ export function CadPlanBoard({
         </p>
       ) : null}
 
-      {exist && tpz ? (
+      {exist && tpz && !foundationCleanse ? (
         <div
           className={css.tpzTag}
           style={{ left: `${exist.x + tpz.rxPct * 0.55}%`, top: `${exist.y}%` }}
@@ -653,14 +711,15 @@ export function CadPlanBoard({
         return (
           <div
             key={it.id}
-            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}`}
+            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}`}
             style={{
               left: `${it.x}%`,
               top: `${it.y}%`,
               width: w,
               height: h,
               borderRadius: d.br,
-              opacity: (it.ghost ? 0.5 : 1) * bucketOp,
+              opacity: (it.ghost ? 0.45 : 1) * bucketOp * underlayOp,
+              pointerEvents: foundationCleanse ? "none" : undefined,
               transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
               border: it.ghost
                 ? isCur

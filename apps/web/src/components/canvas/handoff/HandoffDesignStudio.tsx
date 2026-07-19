@@ -398,26 +398,17 @@ export function HandoffDesignStudio({
         </div>
         <div className={css.spacer} />
         <nav className={css.modes} aria-label="Design workflow" data-testid="canvas-mode-strip">
-          {MODE_TABS.map((m) => {
-            const lockedOut = ui.foundationCleanse && m !== "survey";
-            return (
-              <button
-                key={m}
-                type="button"
-                className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}`}
-                data-testid={`canvas-mode-${m}`}
-                disabled={lockedOut}
-                title={
-                  lockedOut
-                    ? "Exit Stage 1 foundation to leave Survey"
-                    : undefined
-                }
-                onClick={() => studio.setMode(m)}
-              >
-                {m[0]!.toUpperCase() + m.slice(1)}
-              </button>
-            );
-          })}
+          {MODE_TABS.map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}`}
+              data-testid={`canvas-mode-${m}`}
+              onClick={() => studio.setMode(m)}
+            >
+              {m[0]!.toUpperCase() + m.slice(1)}
+            </button>
+          ))}
         </nav>
         <div className={css.spacer} />
         <div className={css.meta}>
@@ -456,7 +447,7 @@ export function HandoffDesignStudio({
           type="button"
           className={`${css.toolBtn}${ui.foundationCleanse ? ` ${css.toolBtnActive}` : ""}`}
           data-testid="stage1-foundation-top"
-          title="Stage 1 cadastral foundation — Vicmap title, purge aerial and AI vegetation"
+          title="Stage 1 CAD title — Vicmap snap, drag/lock boundary, AI layer under"
           onClick={() => {
             if (ui.foundationCleanse) studio.exitStage1Foundation();
             else void studio.runStage1FoundationCleanse();
@@ -464,6 +455,23 @@ export function HandoffDesignStudio({
         >
           {ui.foundationCleanse ? "Exit Stage 1" : "Stage 1"}
         </button>
+        {ui.foundationCleanse ? (
+          <button
+            type="button"
+            className={`${css.toolBtn}${ui.titleBoundaryLocked ? ` ${css.toolBtnActive}` : ""}`}
+            data-testid="title-boundary-lock-top"
+            title={
+              ui.titleBoundaryLocked
+                ? "Unlock title CAD nodes to snap/drag"
+                : "Lock title CAD — freeze edge metadata"
+            }
+            onClick={() =>
+              studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked)
+            }
+          >
+            {ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
+          </button>
+        ) : null}
         <button
           type="button"
           className={`${css.toolBtn}${ui.frameOn ? ` ${css.toolBtnActive}` : ""}`}
@@ -657,7 +665,7 @@ export function HandoffDesignStudio({
               titleLocked={titleLocked}
               boundarySource={ui.boundarySource}
               boundary={studio.boundary}
-              building={ui.foundationCleanse ? [] : studio.building}
+              building={studio.building}
               siteLabel={displayAddress}
               address={displayAddress}
               parchmentPeel={ui.foundationCleanse ? 1 : ui.parchmentPeel}
@@ -678,13 +686,24 @@ export function HandoffDesignStudio({
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}
               titleLocked={titleLocked}
+              titleBoundaryLocked={ui.titleBoundaryLocked}
               lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
               siteLabel={displayAddress}
+              titleMeta={
+                titleBlock
+                  ? {
+                      parcelRef: titleBlock.parcelRef,
+                      sourceLabel: titleBlock.sourceLabel,
+                      councilLabel: titleBlock.councilLabel,
+                      sourceKind: titleBlock.sourceKind,
+                    }
+                  : null
+              }
               boundary={studio.boundary}
               building={studio.building}
               items={studio.items}
-              tool={ui.tool}
-              locked={ui.locked}
+              tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}
+              locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
               setbackOn={ui.setbackOn}
               growth={ui.growth}
@@ -761,14 +780,25 @@ export function HandoffDesignStudio({
                 data-testid="foundation-cleanse-banner"
               >
                 <span>
-                  Stage 1 CAD · title boundary · 1:{ui.sheetScaleDenom}
+                  Stage 1 CAD ·{" "}
+                  {ui.titleBoundaryLocked ? "title locked" : "drag + snap"} · AI
+                  under · 1:{ui.sheetScaleDenom}
                 </span>
+                <button
+                  type="button"
+                  className={css.foundationExit}
+                  onClick={() =>
+                    studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked)
+                  }
+                >
+                  {ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
+                </button>
                 <button
                   type="button"
                   className={css.foundationExit}
                   onClick={() => studio.exitStage1Foundation()}
                 >
-                  Exit foundation
+                  Exit Stage 1
                 </button>
               </div>
             ) : null}
@@ -970,14 +1000,12 @@ export function HandoffDesignStudio({
                 onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
               />
             ) : null}
-            {!ui.foundationCleanse ? (
-              <ComplianceTicker
-                report={compliance}
-                onOpenCompliance={() =>
-                  studio.setUi({ utilityPanel: "compliance", setbackOn: true })
-                }
-              />
-            ) : null}
+            <ComplianceTicker
+              report={compliance}
+              onOpenCompliance={() =>
+                studio.setUi({ utilityPanel: "compliance", setbackOn: true })
+              }
+            />
             {chrome.horizon ? (
               <PreemptiveHorizon
                 cards={actionHorizon}
@@ -998,7 +1026,7 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {chrome.aiCoach && !ui.foundationCleanse ? (
+        {chrome.aiCoach ? (
           <AiCoachDock
             open={ui.coachOpen && !chrome.collapseUtility}
             status={ai.status}
@@ -1018,7 +1046,6 @@ export function HandoffDesignStudio({
         ) : null}
 
         {chromeLive &&
-        !ui.foundationCleanse &&
         !ui.coachOpen &&
         !ui.ghostReviewOpen &&
         ai.pendingCount > 0 ? (
@@ -1035,7 +1062,7 @@ export function HandoffDesignStudio({
           </button>
         ) : null}
 
-        {chromeLive && ui.ghostReviewOpen && !ui.foundationCleanse ? (
+        {chromeLive && ui.ghostReviewOpen ? (
           <div className={css.ghostPanel}>
             <AiGhostReview
               ghosts={ai.pending}
@@ -1070,12 +1097,14 @@ export function HandoffDesignStudio({
             </span>
             <span className={css.aiStatusMeta}>
               {ui.foundationCleanse
-                ? "Vicmap title locked · aerial and AI vegetation purged · Exit Stage 1 to design"
+                ? ui.titleBoundaryLocked
+                  ? "Title CAD locked · AI intelligence underlay · Unlock title to drag nodes"
+                  : "Title CAD unlocked · drag/snap nodes · Lock title when true · AI underlay live"
                 : ai.pendingCount
                   ? `${ai.pendingCount} proposal${ai.pendingCount === 1 ? "" : "s"} · A accept · R reject`
                   : "Scan or Ask AI to propose layout moves"}
             </span>
-            {!ui.foundationCleanse && !ui.coachOpen ? (
+            {!ui.coachOpen ? (
               <button
                 type="button"
                 className={css.aiStatusOpen}
@@ -1084,7 +1113,7 @@ export function HandoffDesignStudio({
                 Coach
               </button>
             ) : null}
-            {!ui.foundationCleanse && ai.pendingCount > 0 ? (
+            {ai.pendingCount > 0 ? (
               <button
                 type="button"
                 className={css.aiStatusOpen}

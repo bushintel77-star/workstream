@@ -16,14 +16,14 @@ Bypass probabilistic AI design generation, purge visual noise from the active ca
 
 ## 2. Systemic overrides
 
-### 2.1 Global AI vegetation & automation shutdown
+### 2.1 AI intelligence layer (retained under CAD)
 
-| Off | Behaviour |
-|-----|-----------|
-| Flora Ring | `flora` → `idle`; no Place from ring |
-| Botanical HUD / proximity infill | No auto canopy, plant symbols, or beds |
-| Ghost plant suggestions | Cleared |
-| Placement | Manual vector only — planting tools remain for hand placement |
+| Layer | Behaviour |
+|-------|-----------|
+| Flora Ring / coach / ghosts | **Kept** as underlay — dimmed under title CAD |
+| Isolith / trade (Cad) | Available while Stage 1 is on |
+| Auto aerial canopy flood | Still suppressed (opt-in Scan only) |
+| Placement | Manual + Flora still work; title nodes are the primary CAD job |
 
 ### 2.2 Aerial imagery base layer purge
 

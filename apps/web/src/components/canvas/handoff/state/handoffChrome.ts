@@ -63,20 +63,20 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const draftCrowded = pendingGhosts > 0;
 
   if (foundationCleanse) {
+    // CAD title overlay on top — AI intelligence chrome stays available under
     return {
       utilityDrawer: false,
       liveBom: false,
-      horizon: false,
-      volumeIsolith: false,
-      tradeMargin: false,
+      horizon: mode === "cad" && !drawingHot,
+      volumeIsolith: mode === "cad",
+      tradeMargin: mode === "cad",
       sunGrowth: false,
-      // Coach dock off — Stage 1 status lives in the draft chip / banner
-      aiCoach: false,
+      aiCoach: true,
       ambientRibbon: !frameOn && !clientView,
       selectionRing: false,
       drawTools: !frameOn && !clientView && mode !== "quote" && mode !== "share",
-      collapseUtility: true,
-      floraRing: false,
+      collapseUtility: drawingHot,
+      floraRing: true,
     };
   }
 

@@ -67,8 +67,6 @@ import {
   clearBoundaryLikeSketches,
   isSpatialCorrectionQuery,
   isStage1FoundationQuery,
-  purgeGhostItems,
-  purgeVegetationItems,
   sieveVegetationItems,
 } from "./spatialCorrection";
 
@@ -167,10 +165,15 @@ type Ui = {
     maxHeightM: number;
   } | null;
   /**
-   * Stage 1 Cadastral Foundation Cleanse — Vicmap title locked,
-   * aerial + AI vegetation purged, charcoal CAD overlay.
+   * Stage 1 CAD title overlay — Vicmap snap + charcoal boundary.
+   * AI intelligence layer stays underneath (not purged).
    */
   foundationCleanse: boolean;
+  /**
+   * Title CAD nodes locked (no drag). Unlock to snap/drag vertices;
+   * Lock commits Vicmap/manual geometry with edge metadata.
+   */
+  titleBoundaryLocked: boolean;
   /** Provenance of the active title polygon. */
   boundarySource: "vicmap" | "manual" | "seed";
   /**
@@ -309,6 +312,7 @@ function initialState(opts: {
       saveStatus: hasCanvas ? "saved" : "idle",
       floraSession: null,
       foundationCleanse: false,
+      titleBoundaryLocked: false,
       boundarySource: "seed",
       aerialSuppressed: false,
     },
@@ -376,14 +380,13 @@ function reducer(state: State, action: Action): State {
     case "setUi":
       return { ...state, ui: { ...state.ui, ...action.patch } };
     case "setMode": {
-      // Stage 1 locks cadastral survey — ignore Cad/Sketch/etc. until Exit.
-      if (state.ui.foundationCleanse && action.mode !== "survey") {
-        return state;
-      }
+      // Stage 1 keeps CAD title overlay across tabs — AI layer stays available.
       const enteringSurvey = action.mode === "survey";
       const leavingSurvey = state.ui.mode === "survey" && action.mode !== "survey";
       let layerOpacity = state.ui.layerOpacity;
-      if (enteringSurvey) layerOpacity = { ...SURVEY_LAYER_PRESET };
+      if (enteringSurvey && !state.ui.foundationCleanse) {
+        layerOpacity = { ...SURVEY_LAYER_PRESET };
+      }
       if (leavingSurvey && !state.ui.foundationCleanse) {
         layerOpacity = { ...DESIGN_LAYER_PRESET };
       }
@@ -398,7 +401,9 @@ function reducer(state: State, action: Action): State {
           tool:
             action.mode === "survey"
               ? state.ui.foundationCleanse
-                ? "lock"
+                ? state.ui.titleBoundaryLocked
+                  ? "pan"
+                  : "edit"
                 : "edit"
               : action.mode === "sketch"
                 ? "sketch"
@@ -659,8 +664,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       const armed = state.ui.armed;
       if (!armed) return;
 
-      // Planting Add → Flora Ring (disabled during Stage 1 foundation cleanse)
-      if (isFloraStudioForm(armed) && !state.ui.foundationCleanse) {
+      // Planting Add → Flora Ring (AI intelligence layer — available in Stage 1)
+      if (isFloraStudioForm(armed)) {
         const cells = buildIndicativeShadeGrid(
           FLORA_SHADE_LAT,
           FLORA_SHADE_LNG,
@@ -822,8 +827,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
   }, [mutate, projectId, setUi, state.doc.items]);
 
   /**
-   * Stage 1 Cadastral Alignment & Foundation Cleanse:
-   * AI veg off → aerial purge → Vicmap absolute title → lock → survey CAD overlay.
+   * Stage 1 CAD title overlay:
+   * Vicmap snap → charcoal CAD boundary with snap/drag/lock + edge metadata.
+   * AI intelligence layer is preserved underneath (ghosts, flora, coach).
    */
   const runStage1FoundationCleanse = useCallback(async () => {
     const notes: string[] = [];
@@ -832,49 +838,40 @@ export function useStudioState(opts: UseStudioStateOpts) {
       parchmentPeel: 1,
       foundationCleanse: true,
       aerialSuppressed: true,
-      floraSession: null,
+      titleBoundaryLocked: false,
       aiBusy: "assisting",
       cmdOpen: false,
-      coachOpen: false,
-      ghostReviewOpen: false,
-      canopyScanning: false,
+      coachOpen: true,
       frameOn: false,
       locked: false,
       sheetScaleDenom: 100,
       zoom: 1,
       mode: "survey",
-      setbackOn: false,
-      layerOpacity: { ...SURVEY_LAYER_PRESET, vegetation: 0 },
-      assistReply: "Stage 1 foundation cleanse — locking Vicmap title…",
+      tool: "edit",
+      layerOpacity: {
+        survey: 0.35,
+        boundary: 1,
+        council: 0.25,
+        vegetation: 0.4,
+      },
+      assistReply: "Stage 1 CAD — snapping Vicmap title (AI layer kept under)…",
     });
-    notes.push("Aerial purged · parchment vector plane");
-    notes.push("Flora Ring / AI botanical HUD off");
+    notes.push("CAD title plate · AI intelligence underlay retained");
 
-    const ghosts = purgeGhostItems(state.doc.items);
-    const purged = purgeVegetationItems(ghosts.items);
+    // Clear only title-trace sketches — keep design strokes / AI items
     const sketches = clearBoundaryLikeSketches(
       state.doc.strokes,
       state.doc.boundary,
-      { clearAll: true },
+      { clearAll: false },
     );
-    if (purged.removed > 0) {
-      notes.push(`Purged ${purged.removed} vegetation / softscape`);
-    }
-    if (ghosts.removed > 0) {
-      notes.push(`Cleared ${ghosts.removed} AI ghosts`);
-    }
     if (sketches.cleared > 0) {
-      notes.push(`Cleared ${sketches.cleared} sketch traces`);
+      notes.push(`Cleared ${sketches.cleared} title-trace sketches`);
+      mutate((snap) => ({
+        snap: { ...snap, strokes: sketches.strokes },
+      }));
     }
-    mutate((snap) => ({
-      snap: {
-        ...snap,
-        items: purged.items,
-        strokes: sketches.strokes,
-      },
-    }));
 
-    let boundaryLocked = false;
+    let snapped = false;
     if (projectId) {
       try {
         const { autoTraceBoundaryAction } = await import(
@@ -892,56 +889,61 @@ export function useStudioState(opts: UseStudioStateOpts) {
               boundary: pct,
             },
           }));
-          boundaryLocked = true;
+          snapped = true;
           setUi({
             boundarySource:
               res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
           });
           notes.push(
             res.boundary.source_kind === "vicmap"
-              ? "Vicmap parcel locked as absolute title"
-              : "Title polygon locked",
+              ? "Vicmap parcel snapped — drag nodes or Lock title"
+              : "Title polygon snapped — drag nodes or Lock title",
           );
         }
       } catch {
-        notes.push("Vicmap unavailable — locked drawn boundary nodes");
-        boundaryLocked = true;
+        notes.push("Vicmap unavailable — drag seed title nodes, then Lock");
       }
     } else {
-      notes.push("No project id — locked drawn boundary");
-      boundaryLocked = true;
+      notes.push("No project id — drag title nodes, then Lock");
     }
 
     setUi({
       aiBusy: "idle",
-      locked: true,
-      tool: "lock",
+      locked: false,
+      tool: "edit",
       foundationCleanse: true,
+      titleBoundaryLocked: snapped,
       aerialSuppressed: true,
       aerialUri: null,
-      assistReply: `Stage 1 cadastral foundation locked. ${notes.join(" · ")}`,
+      assistReply: `Stage 1 CAD ready. ${notes.join(" · ")}`,
     });
-    void boundaryLocked;
-  }, [
-    mutate,
-    projectId,
-    setUi,
-    state.doc.boundary,
-    state.doc.items,
-    state.doc.strokes,
-  ]);
+  }, [mutate, projectId, setUi, state.doc.boundary, state.doc.strokes]);
+
+  const setTitleBoundaryLocked = useCallback(
+    (titleBoundaryLocked: boolean) => {
+      setUi({
+        titleBoundaryLocked,
+        tool: titleBoundaryLocked ? "pan" : "edit",
+        locked: false,
+        assistReply: titleBoundaryLocked
+          ? "Title CAD locked — edge metadata frozen. Unlock to snap/drag nodes."
+          : "Title CAD unlocked — drag vertices (ortho/vertex snap). Lock when true.",
+      });
+    },
+    [setUi],
+  );
 
   const exitStage1Foundation = useCallback(() => {
     setUi({
       foundationCleanse: false,
+      titleBoundaryLocked: false,
       locked: false,
       tool: "pan",
-      // Keep aerial off until operator drops imagery (no silent re-scan)
       aerialSuppressed: true,
       aerialUri: null,
       layerOpacity: { ...DESIGN_LAYER_PRESET },
       assistReply:
-        "Foundation exited — design layers restored. Aerial stays off until you drop imagery.",
+        "Stage 1 exited — design chrome restored. Aerial stays off until you drop imagery.",
     });
   }, [setUi]);
 
@@ -955,15 +957,6 @@ export function useStudioState(opts: UseStudioStateOpts) {
       }
       if (isSpatialCorrectionQuery(q)) {
         await runSpatialCorrection();
-        return;
-      }
-      if (state.ui.foundationCleanse) {
-        setUi({
-          cmdOpen: false,
-          coachOpen: true,
-          assistReply:
-            "Stage 1 foundation active — generative assist paused. Exit foundation to resume design AI.",
-        });
         return;
       }
       setUi({
@@ -1035,13 +1028,6 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const scanGhosts = useCallback(async () => {
-    if (state.ui.foundationCleanse) {
-      setUi({
-        assistReply:
-          "Stage 1 foundation active — AI vegetation scan disabled. Exit foundation to resume.",
-      });
-      return;
-    }
     setUi({ aiBusy: "scanning", canopyScanning: true, coachOpen: true });
     try {
       if (projectId) {
@@ -1096,11 +1082,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ghostIdx: 0,
       ghostReviewOpen: true,
     });
-  }, [mutate, projectId, setUi, state.ui.foundationCleanse]);
+  }, [mutate, projectId, setUi]);
 
   /**
    * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
-   * Does not purge vegetation (that's Stage 1).
    */
   useEffect(() => {
     if (bootstrapped.current) return;
@@ -1137,11 +1122,22 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const updateBoundary = useCallback(
     (boundary: PctPoint[]) => {
-      if (state.ui.locked) return;
+      // Stage 1: title nodes editable when unlocked; ignore global lock.
+      if (state.ui.foundationCleanse) {
+        if (state.ui.titleBoundaryLocked) return;
+      } else if (state.ui.locked) {
+        return;
+      }
       mutate((snap) => ({ snap: { ...snap, boundary } }));
       setUi({ boundarySource: "manual" });
     },
-    [mutate, setUi, state.ui.locked],
+    [
+      mutate,
+      setUi,
+      state.ui.foundationCleanse,
+      state.ui.locked,
+      state.ui.titleBoundaryLocked,
+    ],
   );
 
   const updateBuilding = useCallback(
@@ -1692,6 +1688,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     runSpatialCorrection,
     runStage1FoundationCleanse,
     exitStage1Foundation,
+    setTitleBoundaryLocked,
     scanGhosts,
     cycleGhost,
     ingestCanopyGhosts,

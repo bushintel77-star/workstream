@@ -95,17 +95,26 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(true);
   });
 
-  it("Stage 1 foundation cleanse suppresses AI and trade chrome", () => {
+  it("Stage 1 keeps AI coach / flora under CAD title overlay", () => {
     const c = resolveHandoffChrome({
       ...base,
       mode: "survey",
       foundationCleanse: true,
     });
-    expect(c.floraRing).toBe(false);
-    expect(c.volumeIsolith).toBe(false);
-    expect(c.tradeMargin).toBe(false);
-    expect(c.horizon).toBe(false);
+    expect(c.floraRing).toBe(true);
+    expect(c.aiCoach).toBe(true);
     expect(c.sunGrowth).toBe(false);
-    expect(c.aiCoach).toBe(false);
+    expect(c.utilityDrawer).toBe(false);
+  });
+
+  it("Stage 1 CAD keeps Isolith / trade margin", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      foundationCleanse: true,
+    });
+    expect(c.volumeIsolith).toBe(true);
+    expect(c.tradeMargin).toBe(true);
+    expect(c.aiCoach).toBe(true);
   });
 });
