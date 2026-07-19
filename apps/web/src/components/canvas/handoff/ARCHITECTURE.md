@@ -30,8 +30,9 @@ studio surface here until that schema brief lands.
 | `features/commandPalette/` | ⌘K actions + Ask AI row + arm symbols |
 | `features/sunGrowth/` | Arc scrubber, growth chips, shadow length readout |
 | `features/compliance/` | Pass/fail dock independent of layer opacity |
-| `features/bom/` | Live BOM + mitigation chips |
-| `features/tier1/` | Quote surface + Wrights Terrace value ledger |
+| `features/bom/` | Live preemptive BOM (primary + shadowed assembly / labour / logistics) |
+| `features/horizon/` | Preemptive horizon cards + canvas pins; Accept sketches mitigation ghosts |
+| `features/tier1/` | Quote surface (same estimate report) + Wrights Terrace value ledger |
 | `features/elevation/` | Full-mode front/side elevation profile |
 | `features/trace/` | Click-trace boundary/building + Tab rectangle autocomplete |
 | `features/measure/` | Indicative two-point measure tape |
