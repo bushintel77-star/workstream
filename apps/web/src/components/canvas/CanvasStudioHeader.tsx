@@ -50,7 +50,6 @@ type Props = {
   onShare?: () => void;
   focusChrome?: boolean;
   onToggleFocusChrome?: () => void;
-  hideBrand?: boolean;
   clientViewActive?: boolean;
   autosaveLabel?: string | null;
 };
@@ -89,7 +88,6 @@ export function CanvasStudioHeader({
   onShare,
   focusChrome = false,
   onToggleFocusChrome,
-  hideBrand = false,
   clientViewActive = false,
   autosaveLabel = null,
 }: Props) {
@@ -130,27 +128,27 @@ export function CanvasStudioHeader({
     );
   }
 
+  const meta = workingMeta ?? {
+    eyebrow: "Working drawing",
+    detail: projectAddress,
+  };
+
   return (
     <header
       className={`${hdr.header}${paper ? ` ${hdr.headerPaper}` : ""}`}
       data-testid="canvas-studio-header"
     >
-      {!hideBrand ? (
-        <div className={hdr.brand}>
-          <p className={hdr.brandName}>Curtis &amp; Co</p>
-          <p className={hdr.address} title={projectAddress}>
-            {projectAddress}
-          </p>
-          {ghostCount > 0 ? (
-            <span className={hdr.aiBadge} data-testid="ai-draft-badge">
-              AI draft: unverified
-            </span>
-          ) : null}
-          {autosaveLabel ? (
-            <span className={hdr.saveTick}>{autosaveLabel}</span>
-          ) : null}
-        </div>
-      ) : null}
+      <div className={hdr.brand}>
+        <p className={hdr.brandName}>Curtis &amp; Co</p>
+        <p className={hdr.address} title={projectAddress}>
+          {projectAddress}
+        </p>
+        {autosaveLabel ? (
+          <span className={hdr.saveTick}>{autosaveLabel}</span>
+        ) : null}
+      </div>
+
+      <div className={hdr.spacer} aria-hidden />
 
       <div className={hdr.modeHost}>
         <CanvasModeStrip
@@ -161,16 +159,14 @@ export function CanvasStudioHeader({
         />
       </div>
 
-      {workingMeta ? (
-        <div className={hdr.meta}>
-          <span className={hdr.metaEyebrow}>{workingMeta.eyebrow}</span>
-          <span className={hdr.metaDetail}>{workingMeta.detail}</span>
-        </div>
-      ) : null}
+      <div className={hdr.spacer} aria-hidden />
 
-      <div
-        className={`${hdr.toolbar}${workingMeta ? ` ${hdr.toolbarWithMeta}` : ""}`}
-      >
+      <div className={hdr.meta}>
+        <span className={hdr.metaEyebrow}>{meta.eyebrow}</span>
+        <span className={hdr.metaDetail}>{meta.detail}</span>
+      </div>
+
+      <div className={hdr.toolbar}>
         {showFitSheet && onPaperSize ? (
           <div className={hdr.segment} data-testid="paper-size-control">
             {(["A3", "A4"] as PaperSize[]).map((size) => (
@@ -318,16 +314,21 @@ export function CanvasStudioHeader({
           </button>
         ) : null}
 
-        {ghostCount > 0 && onAcceptGhosts ? (
-          <button
-            type="button"
-            className={`${hdr.toolBtn} ${hdr.toolBtnAccent}`}
-            data-testid="header-accept-ghosts"
-            onClick={onAcceptGhosts}
-          >
-            Accept AI ({ghostCount})
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className={`${hdr.aiPill}${ghostCount === 0 ? ` ${hdr.aiPillVerified}` : ""}`}
+          data-testid="header-accept-ghosts"
+          data-ai-draft={ghostCount > 0 ? "unverified" : "verified"}
+          disabled={ghostCount > 0 && !onAcceptGhosts}
+          onClick={ghostCount > 0 ? onAcceptGhosts : undefined}
+          title={
+            ghostCount > 0
+              ? `Accept all ${ghostCount} AI suggestions`
+              : "AI draft verified"
+          }
+        >
+          {ghostCount > 0 ? "AI DRAFT: UNVERIFIED" : "AI DRAFT: VERIFIED ✓"}
+        </button>
       </div>
     </header>
   );

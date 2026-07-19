@@ -16,6 +16,9 @@ type Props = {
   paper?: boolean;
 };
 
+/** Handoff mode pills — Share stays a header action, not a mode tab. */
+const MODE_TABS = CANVAS_MODES.filter((m) => m.id !== "share");
+
 const LOCK_HINT: Record<CanvasMode, string> = {
   survey: "Start here — load Vicmap title",
   sketch: "Run Survey for aerial, then paint the garden",
@@ -25,14 +28,6 @@ const LOCK_HINT: Record<CanvasMode, string> = {
   share: "Promote a client quote to unlock Share",
 };
 
-const LOCK_LABEL: Partial<Record<CanvasMode, string>> = {
-  sketch: "Survey first",
-  cad: "Open title",
-  elevation: "Survey first",
-  quote: "Accept CAD",
-  share: "Save quote",
-};
-
 export function CanvasModeStrip({
   mode,
   progress,
@@ -40,6 +35,7 @@ export function CanvasModeStrip({
   paper = false,
 }: Props) {
   const unlocked = unlockedModes(progress);
+  const activeMode = mode === "share" ? "quote" : mode;
 
   return (
     <nav
@@ -48,26 +44,15 @@ export function CanvasModeStrip({
       data-testid="canvas-mode-strip"
       data-paper={paper ? "1" : undefined}
     >
-      {CANVAS_MODES.map((m) => {
+      {MODE_TABS.map((m) => {
         const open = unlocked.has(m.id);
-        const nextLocked = CANVAS_MODES.find((x) => !unlocked.has(x.id));
-        const show =
-          open || (nextLocked != null && nextLocked.id === m.id);
-        if (!show) return null;
 
         return (
           <button
             key={m.id}
             type="button"
-            className={`${css.modeBtn} ${mode === m.id ? css.modeBtnActive : ""} ${!open ? css.modeBtnLocked : ""} ${
-              open &&
-              m.id === "quote" &&
-              progress.hasCad &&
-              mode === "cad"
-                ? css.modeBtnReady
-                : ""
-            }`}
-            aria-pressed={mode === m.id}
+            className={`${css.modeBtn} ${activeMode === m.id ? css.modeBtnActive : ""} ${!open ? css.modeBtnLocked : ""}`}
+            aria-pressed={activeMode === m.id}
             aria-disabled={!open}
             disabled={!open}
             title={open ? m.label : LOCK_HINT[m.id]}
@@ -77,11 +62,6 @@ export function CanvasModeStrip({
             }}
           >
             {m.label}
-            {!open ? (
-              <span className={css.modeLock}>
-                {LOCK_LABEL[m.id] ?? "Locked"}
-              </span>
-            ) : null}
           </button>
         );
       })}

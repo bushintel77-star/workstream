@@ -1148,20 +1148,22 @@ function SiteCanvasInner({
   }, [mode]);
 
   const workingMeta = useMemo(() => {
-    if (!showFitSheet && mode !== "cad" && mode !== "quote") return null;
     const scale = fitSheetScaleLabel(
       cadDoc?.width_m ?? boundary?.width_m ?? groundSpan?.widthM ?? null,
     );
     const source =
       boundary?.source_kind === "vicmap" || lotRing.length >= 3
-        ? "Vicmap Property · Land Vic"
+        ? "Vicmap · Land Vic"
         : (boundary?.source_kind ?? "Title");
     const area =
       sketch?.surveyMetrics?.garden_area_m2 ??
       boundary?.calculated_metrics.total_area_m2 ??
       sketch?.surveyMetrics?.lot_area_m2;
-    const detail = area != null ? `${scale} · ${Math.round(area)} m²` : scale;
-    return { eyebrow: "Working drawing", detail: `${source} · ${detail}` };
+    const detail =
+      area != null
+        ? `${source} · ${Number(area).toFixed(2)} m²`
+        : `${source} · ${scale}`;
+    return { eyebrow: "Working drawing", detail };
   }, [
     boundary,
     cadDoc?.width_m,
@@ -1291,7 +1293,6 @@ function SiteCanvasInner({
           onShare={() => setMode("share")}
           focusChrome={focusChrome}
           onToggleFocusChrome={() => setFocusChrome((v) => !v)}
-          hideBrand={useGeoStage}
         />
       ) : null}
 
@@ -1392,6 +1393,7 @@ function SiteCanvasInner({
         </div>
       ) : null}
 
+      <div className={css.board} data-testid="studio-board">
       {showComplianceDock ? (
         <ComplianceDock
           stats={complianceStats}
@@ -1406,7 +1408,7 @@ function SiteCanvasInner({
           projectId={projectId}
           refreshKey={orchRefresh}
           paper={showFitSheet}
-          compact={mode === "cad"}
+          compact={false}
           onWorld={setOrchWorld}
         />
       ) : null}
@@ -2842,6 +2844,7 @@ function SiteCanvasInner({
           ) : null}
         </>
       ) : null}
+      </div>
 
       {showQuoteOverlay && quoteHtml ? (
         <div className={css.quoteOverlay}>

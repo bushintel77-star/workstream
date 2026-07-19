@@ -17,16 +17,19 @@ type Props = {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onZoomFit?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  zoomLabel?: string;
 };
 
-const TOOLS: Array<{ id: CanvasTool; label: string }> = [
-  { id: "trace", label: "Trace" },
-  { id: "edit", label: "Edit" },
-  { id: "add", label: "Add" },
-  { id: "lock", label: "Lock" },
-  { id: "reset", label: "Reset" },
-  { id: "pan", label: "Pan" },
-  { id: "measure", label: "Measure" },
+const TOOLS: Array<{ id: CanvasTool; label: string; icon: string }> = [
+  { id: "trace", label: "Trace", icon: "✎" },
+  { id: "edit", label: "Edit", icon: "◇" },
+  { id: "add", label: "Add", icon: "+" },
+  { id: "lock", label: "Lock", icon: "⬡" },
+  { id: "reset", label: "Reset", icon: "↺" },
+  { id: "pan", label: "Pan", icon: "✥" },
+  { id: "measure", label: "Measure", icon: "⟷" },
 ];
 
 export function CanvasToolRail({
@@ -35,6 +38,9 @@ export function CanvasToolRail({
   onZoomIn,
   onZoomOut,
   onZoomFit,
+  onUndo,
+  onRedo,
+  zoomLabel = "100%",
 }: Props) {
   return (
     <nav className={css.rail} aria-label="Drawing tools" data-testid="canvas-tool-rail">
@@ -48,21 +54,42 @@ export function CanvasToolRail({
           title={t.label}
           onClick={() => onTool(t.id)}
         >
-          {t.label}
+          <span className={css.icon} aria-hidden>
+            {t.icon}
+          </span>
+          <span className={css.label}>{t.label}</span>
         </button>
       ))}
       <div className={css.divider} />
-      <div className={css.zoomRow}>
-        <button type="button" className={css.btn} title="Zoom in" onClick={onZoomIn}>
-          +
-        </button>
-        <button type="button" className={css.btn} title="Zoom out" onClick={onZoomOut}>
-          −
-        </button>
-        <button type="button" className={css.btn} title="Fit view" onClick={onZoomFit}>
-          Fit
-        </button>
-      </div>
+      <button type="button" className={css.zoomBtn} title="Zoom in" onClick={onZoomIn}>
+        ＋
+      </button>
+      <div className={css.zoomTxt}>{zoomLabel}</div>
+      <button type="button" className={css.zoomBtn} title="Zoom out" onClick={onZoomOut}>
+        −
+      </button>
+      <button type="button" className={css.fitBtn} title="Fit view" onClick={onZoomFit}>
+        FIT
+      </button>
+      <div className={css.divider} />
+      <button
+        type="button"
+        className={css.histBtn}
+        title="Undo"
+        onClick={onUndo}
+        disabled={!onUndo}
+      >
+        ↩
+      </button>
+      <button
+        type="button"
+        className={css.histBtn}
+        title="Redo"
+        onClick={onRedo}
+        disabled={!onRedo}
+      >
+        ↪
+      </button>
     </nav>
   );
 }

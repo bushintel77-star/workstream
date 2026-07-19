@@ -24,20 +24,20 @@
   color: var(--sheet-ink);
 }
 
-/* Aerial mode — aperture only */
+/* Aerial mode — fill the studio board (handoff inset board owns the radius). */
 .sheetSlim {
   grid-template-rows: 1fr;
-  inset: 0.55rem 0.55rem 5.5rem;
+  inset: 0;
   background: transparent;
   border: none;
   box-shadow: none;
-  border-radius: 14px;
+  border-radius: 0;
 }
 
 .sheetSlim .drawing {
   margin: 0;
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 /* Fit sheet ON — cream paper working drawing */

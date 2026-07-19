@@ -1,34 +1,80 @@
 .hud {
   position: absolute;
-  right: 0.75rem;
-  top: 7.5rem;
+  right: 14px;
+  top: 14px;
   z-index: 40;
-  width: min(15rem, calc(100vw - 1.5rem));
-  max-height: min(40vh, 20rem);
+  width: 200px;
+  max-height: 44%;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  padding: 0.75rem 0.85rem;
+  gap: 8px;
+  padding: 12px 15px;
   border-radius: 16px;
   background: rgba(255, 251, 252, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(36, 19, 24, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
   font-family: "Sora", sans-serif;
   color: #241318;
   overflow: auto;
-}
-
-.hudCollapsed {
-  width: auto;
-  max-height: none;
-  padding: 0.45rem 0.65rem;
+  box-sizing: border-box;
+  animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .hudPaper {
   background: color-mix(in srgb, #faf6f2 96%, transparent);
   backdrop-filter: none;
+}
+
+.tab {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 40;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 20px rgba(42, 23, 29, 0.24);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.dotPass {
+  background: #1f8a5a;
+}
+
+.dotFail {
+  background: #c2455f;
+}
+
+.tabPass,
+.tabFail {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.tabPass {
+  color: #1f8a5a;
+}
+
+.tabFail {
+  color: #9e3049;
 }
 
 .kicker {
@@ -42,21 +88,33 @@
 }
 
 .headerRow {
+  position: sticky;
+  top: -1px;
+  background: inherit;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(36, 19, 24, 0.07);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .pill {
+  height: 17px;
+  padding: 0 7px;
+  border-radius: 99px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
   border: none;
-  border-radius: 999px;
-  padding: 0.2rem 0.55rem;
-  font: inherit;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .pillPass {
@@ -69,32 +127,93 @@
   color: #9e3049;
 }
 
-.toggle {
+.collapse {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
   border: none;
   background: transparent;
-  font: inherit;
-  font-size: 10px;
-  font-weight: 600;
-  color: #7a5560;
+  color: #b08a95;
+  font-size: 12px;
   cursor: pointer;
   padding: 0;
+  line-height: 1;
 }
 
-.row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.15rem 0.5rem;
-  font-size: 11px;
+.collapse:hover {
+  background: rgba(36, 19, 24, 0.06);
 }
 
-.rowLabel {
-  color: #7a5560;
+.metric {
+  margin: 0 -7px;
+  padding: 3px 7px;
+  border-radius: 9px;
 }
 
-.rowValue {
+.metricKey {
+  margin: 0;
   font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b08a95;
+}
+
+.metricVal {
+  margin: 1px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 15px;
   font-weight: 500;
   color: #241318;
+  font-variant-numeric: tabular-nums;
+}
+
+.ok {
+  color: #1f8a5a;
+}
+
+.warn {
+  color: #b78a2e;
+}
+
+.bad {
+  color: #9e3049;
+}
+
+.barTrack {
+  position: relative;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(36, 19, 24, 0.08);
+  margin-top: 5px;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.barOk {
+  background: #1f8a5a;
+}
+
+.barWarn {
+  background: #e8b84b;
+}
+
+.barBad {
+  background: #c2455f;
+}
+
+.barTick {
+  position: absolute;
+  top: -2.5px;
+  width: 1.5px;
+  height: 9px;
+  background: rgba(36, 19, 24, 0.4);
+  border-radius: 1px;
+  transform: translateX(-50%);
 }
 
 .verdict {
@@ -104,8 +223,19 @@
   line-height: 1.35;
 }
 
+@keyframes ccIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 720px) {
   .hud {
-    top: 6.5rem;
+    width: min(200px, calc(100vw - 2rem));
   }
 }

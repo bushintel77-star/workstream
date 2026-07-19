@@ -140,7 +140,7 @@ export function LiveBomHud({
         data-skeletal={skeletal ? "1" : undefined}
         data-paper={paper ? "1" : undefined}
       >
-        <p className={css.kicker}>Live BOM</p>
+        <p className={css.kicker}>Live BOM / preemptive</p>
         {(mutating || skeletal) && displayTotal != null ? (
           <p
             className={`${css.total} ${css.totalPending}${skeletal ? ` ${css.skeletalPulse}` : ""}`}

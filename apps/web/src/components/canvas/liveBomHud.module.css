@@ -1,39 +1,42 @@
 .hud {
   position: absolute;
-  right: 0.75rem;
-  top: 4.5rem;
+  right: 14px;
+  bottom: 14px;
+  top: auto;
   z-index: 40;
-  width: min(16rem, calc(100vw - 1.5rem));
-  max-height: min(48vh, 28rem);
+  width: 300px;
+  max-width: calc(100% - 28px);
+  max-height: 52%;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 0.85rem;
+  gap: 9px;
+  padding: 13px 15px;
   border-radius: 16px;
   background: rgba(255, 251, 252, 0.92);
   backdrop-filter: blur(16px) saturate(1.15);
   -webkit-backdrop-filter: blur(16px) saturate(1.15);
-  border: 1px solid rgba(36, 19, 24, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
   font-family: var(--font, "Sora", sans-serif);
   color: var(--ink, #241318);
+  box-sizing: border-box;
+  animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .hudPaper {
-  border-radius: 8px;
   background: color-mix(in srgb, var(--paper, #faf6f2) 96%, transparent);
   border: 1px solid var(--paper-rule, rgba(36, 19, 24, 0.18));
   color: var(--paper-ink, #241318);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: 0 10px 28px rgba(36, 24, 30, 0.1);
 }
 
 .hudCompact {
-  width: min(14rem, calc(100vw - 1.5rem));
+  width: 300px;
   max-height: none;
-  top: 4.5rem;
-  padding: 0.55rem 0.75rem;
+  top: auto;
+  bottom: 14px;
+  padding: 13px 15px;
 }
 
 .summary {
@@ -56,9 +59,9 @@
 .total {
   margin: 0;
   font-family: var(--display, "Fraunces", Georgia, serif);
-  font-size: 1.2rem;
+  font-size: 22px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .hudMutating {
@@ -257,11 +260,22 @@
   color: var(--ink-soft, #6b5660);
 }
 
+@keyframes ccIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 720px) {
   .hud {
-    right: 0.5rem;
-    left: 0.5rem;
-    width: auto;
-    bottom: 6.5rem;
+    right: 14px;
+    left: auto;
+    width: min(300px, calc(100% - 28px));
+    bottom: 14px;
   }
 }

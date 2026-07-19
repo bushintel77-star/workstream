@@ -76,20 +76,20 @@
   --r-md: 14px;
   --r-lg: 20px;
   --r-xl: 28px;
-  --r-canvas: 16px;
+  --r-canvas: 18px;
   --r-pill: 999px;
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
 
-  /* depth — hairline first; almost no shadow */
+  /* depth — Design Studio glass lift (handoff) */
   --elev-0: none;
-  --elev-1: none;
-  --elev-2: none;
+  --elev-1: 0 8px 28px rgba(42, 23, 29, 0.18);
+  --elev-2: 0 14px 44px rgba(42, 23, 29, 0.25);
   --elev-inset: none;
   --elev-rim: none;
-  --shadow-sm: none;
-  --shadow-md: none;
+  --shadow-sm: 0 4px 14px rgba(42, 23, 29, 0.2);
+  --shadow-md: 0 8px 28px rgba(42, 23, 29, 0.28);
 
   --border-default: var(--line-hairline);
   --surface-raised: var(--surface-elevated);
@@ -112,7 +112,7 @@
   --studio-transition: 180ms var(--ease);
   --studio-ribbon-h: 28px;
   --studio-context-strip-h: 28px;
-  --studio-canvas-inset: 8px;
+  --studio-canvas-inset: 14px;
 
   --overlay-shade: color-mix(in srgb, var(--warn) 38%, transparent);
   --overlay-trp: color-mix(in srgb, var(--ok) 38%, transparent);

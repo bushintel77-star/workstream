@@ -53,15 +53,22 @@ export function SunShadeControls({ lat, lng, when, onWhenChange }: Props) {
   const hour = parseHour(when);
   const year = when.getFullYear();
 
+  const hh = Math.floor(hour);
+  const mm = Math.round((hour % 1) * 60);
+  const ampm = hh >= 12 ? "pm" : "am";
+  const h12 = ((hh + 11) % 12) + 1;
+  const timeTxt = `${h12}:${String(mm).padStart(2, "0")} ${ampm}`;
+
   return (
     <div className={css.root} data-testid="sun-shade-controls">
-      <p className={css.hud}>
-        {season.label} · {String(Math.floor(hour)).padStart(2, "0")}:
-        {String(Math.round((hour % 1) * 60)).padStart(2, "0")} · Alt{" "}
-        {sun.altitude_deg}° · {sun.azimuth_label}
-      </p>
+      <div className={css.titleRow}>
+        <p className={css.hud}>Sun &amp; growth</p>
+        <p className={css.time}>{timeTxt}</p>
+      </div>
       <label className={css.sliderRow}>
-        <span className={css.sliderLabel}>Time</span>
+        <span className={css.sliderLabel}>
+          {season.label} · Alt {sun.altitude_deg}° · {sun.azimuth_label}
+        </span>
         <input
           type="range"
           min={6}

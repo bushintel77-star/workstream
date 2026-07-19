@@ -1,6 +1,8 @@
 # Design Studio v4/v5 — implementation status
 
-Tracks the **Complete Feature Checklist** in [README.md](./README.md). Last full pass: v5 backlog completion on `main`.
+Tracks the **Complete Feature Checklist** in [README.md](./README.md).
+
+**Visual fidelity note (2026-07-19):** Earlier checklist rows were marked Done for *behaviour wiring* while the operator shell still diverged from the handoff screenshots (full-bleed map, missing brand, wrong dock corners, text tool rail). A shell pass is in progress against `screenshots/01-frame.png` + `Design Studio v4.dc.html` — inset 18px board, centered mode pills, glass docks at TR/BL/BR, icon tool rail.
 
 Legend: **Done** · **Partial** · **Not started**
 

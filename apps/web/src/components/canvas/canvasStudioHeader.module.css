@@ -1,20 +1,20 @@
 .header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 9;
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+  row-gap: 8px;
   padding: 10px 18px 8px;
   pointer-events: none;
+  background: #f6eaed;
 }
 
 .brand {
   pointer-events: auto;
-  flex: 0 1 auto;
+  flex: none;
   min-width: 0;
 }
 
@@ -24,12 +24,13 @@
   font-size: 21px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.15;
+  line-height: 1.1;
   color: var(--ink-primary, #241318);
+  white-space: nowrap;
 }
 
 .address {
-  margin: 2px 0 0;
+  margin: 1px 0 0;
   font-size: 11px;
   line-height: 1.35;
   color: var(--ink-secondary, #7a5560);
@@ -39,16 +40,23 @@
   max-width: min(280px, 42vw);
 }
 
+.spacer {
+  flex: 1 1 12px;
+  min-width: 8px;
+  pointer-events: none;
+}
+
 .modeHost {
   pointer-events: auto;
-  flex: 0 1 auto;
+  flex: none;
 }
 
 .meta {
   pointer-events: none;
-  margin-left: auto;
+  flex: none;
   text-align: right;
   font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  line-height: 1.5;
 }
 
 .metaEyebrow {
@@ -62,7 +70,6 @@
 
 .metaDetail {
   display: block;
-  margin-top: 2px;
   font-size: 10px;
   color: var(--ink-secondary, #7a5560);
 }
@@ -72,24 +79,20 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
   gap: 6px;
-  margin-left: auto;
-}
-
-.toolbarWithMeta {
-  margin-left: 0;
+  flex: none;
 }
 
 .toolBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 34px;
   min-height: 34px;
   padding: 0 13px;
   border-radius: 10px;
   border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 251, 252, 0.72);
+  background: transparent;
   color: var(--ink-primary, #241318);
   font: inherit;
   font-size: 11.5px;
@@ -105,8 +108,7 @@
 }
 
 .toolBtn:hover {
-  background: #fffbfb;
-  border-color: rgba(36, 19, 24, 0.18);
+  border-color: #c2455f;
 }
 
 .toolBtnActive {
@@ -117,24 +119,54 @@
 
 .toolBtnActive:hover {
   background: #3a1f28;
+  border-color: #3a1f28;
   color: #fff6f8;
 }
 
 .toolBtnAccent {
-  border-color: color-mix(in srgb, var(--accent, #c2455f) 55%, transparent);
-  color: var(--accent-ink, #9e3049);
+  border-color: rgba(194, 69, 95, 0.45);
+  color: #9e3049;
 }
 
 .toolBtnAccent:hover {
-  background: color-mix(in srgb, var(--accent-soft, #ffd3de) 40%, #fff);
+  border-color: #c2455f;
+  background: rgba(255, 211, 222, 0.35);
 }
 
 .toolBtnIcon {
   min-width: 34px;
-  padding: 0 10px;
+  padding: 0 12px;
   font-family: var(--font-mono, "IBM Plex Mono", monospace);
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 500;
   letter-spacing: 0.02em;
+  color: #7a5560;
+}
+
+.aiPill {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 184, 75, 0.55);
+  background: rgba(232, 184, 75, 0.18);
+  color: #8a6a1f;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.aiPill:hover {
+  border-color: #b78a2e;
+  background: rgba(232, 184, 75, 0.28);
+}
+
+.aiPillVerified {
+  border-color: rgba(31, 138, 90, 0.4);
+  background: rgba(31, 138, 90, 0.12);
+  color: #1f8a5a;
 }
 
 .popoverWrap {
@@ -149,7 +181,7 @@
   min-width: 220px;
   padding: 8px;
   border-radius: 14px;
-  background: var(--surface-panel, #fffbfb);
+  background: #fffbfc;
   border: 1px solid rgba(36, 19, 24, 0.1);
   box-shadow: 0 14px 44px rgba(42, 23, 29, 0.25);
   animation: ccIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -167,26 +199,11 @@
 }
 
 .headerPaper .toolBtn {
-  background: color-mix(in srgb, var(--paper, #faf6f2) 94%, transparent);
+  background: transparent;
 }
 
 .headerClient {
   justify-content: space-between;
-}
-
-.aiBadge {
-  display: inline-flex;
-  margin-top: 4px;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
-  font-family: var(--font-mono, "IBM Plex Mono", monospace);
-  font-size: 8.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9e3049;
-  background: color-mix(in srgb, #ffd3de 55%, #fff);
-  border: 1px solid color-mix(in srgb, #c2455f 35%, transparent);
 }
 
 .saveTick {
@@ -199,24 +216,27 @@
 
 .segment {
   display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: rgba(36, 19, 24, 0.05);
-  border: 1px solid rgba(36, 19, 24, 0.08);
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+  flex: none;
 }
 
 .segmentBtn {
-  border: none;
-  border-radius: 999px;
-  min-height: 28px;
+  height: 34px;
   padding: 0 10px;
+  border: none;
+  border-radius: 0;
   font: inherit;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
   cursor: pointer;
   background: transparent;
   color: #7a5560;
+}
+
+.segmentBtn + .segmentBtn {
+  border-left: 1px solid rgba(36, 19, 24, 0.12);
 }
 
 .segmentBtnActive {
@@ -225,8 +245,12 @@
 }
 
 @media (max-width: 900px) {
-  .meta {
+  .spacer {
     display: none;
+  }
+
+  .meta {
+    margin-left: auto;
   }
 
   .address {
@@ -242,5 +266,9 @@
 
   .brandName {
     font-size: 18px;
+  }
+
+  .meta {
+    display: none;
   }
 }
