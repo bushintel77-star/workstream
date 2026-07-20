@@ -51,6 +51,7 @@ import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
+import { DesignKitInventory } from "./features/kitInventory/DesignKitInventory";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
@@ -335,6 +336,37 @@ export function HandoffDesignStudio({
         e.preventDefault();
         studio.deleteSelected();
       }
+
+      /* Inventory quick-equip — Digit1–9, game hotbar logic. */
+      if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const idx = Number(e.key) - 1;
+        if (ui.addOpen && ui.mode !== "sketch") {
+          const t = (
+            Object.keys(BY_TYPE) as StudioItemType[]
+          ).filter((type) =>
+            ui.mode === "survey"
+              ? Boolean(BY_TYPE[type].existing)
+              : !BY_TYPE[type].existing,
+          )[idx];
+          if (t) {
+            e.preventDefault();
+            studio.setUi({
+              armed: t,
+              tool: "add",
+              addOpen: true,
+              cmdOpen: false,
+            });
+            return;
+          }
+        }
+        if (ui.tool === "paint" && !ui.frameOn) {
+          const sw = PAINT_SWATCHES[idx];
+          if (sw) {
+            e.preventDefault();
+            studio.setUi({ paintSwatch: sw.t, tool: "paint" });
+          }
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -472,6 +504,43 @@ export function HandoffDesignStudio({
   const armType = (t: StudioItemType) => {
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
   };
+
+  /** Inventory slot order for Add kit + 1–9 quick-equip. */
+  const addKitTypes = useMemo(() => {
+    return (Object.keys(BY_TYPE) as StudioItemType[])
+      .filter((t) =>
+        ui.mode === "survey"
+          ? Boolean(BY_TYPE[t].existing)
+          : !BY_TYPE[t].existing,
+      )
+      .filter((t) => {
+        if (!ui.shadeOn) return true;
+        if (t !== "canopy" && t !== "feature") return true;
+        const d = new Date();
+        d.setHours(Math.floor(ui.sunMin / 60), ui.sunMin % 60, 0, 0);
+        const cells = buildIndicativeShadeGrid(
+          projectLat ?? -37.849,
+          projectLng ?? 144.993,
+          d,
+        );
+        const hours = addProbePct
+          ? sunHoursAtPct(addProbePct.x, addProbePct.y, cells)
+          : meanSunHours(cells);
+        return hours >= 3.5;
+      });
+  }, [
+    addProbePct,
+    projectLat,
+    projectLng,
+    ui.mode,
+    ui.shadeOn,
+    ui.sunMin,
+  ]);
+
+  const paintKitTypes = useMemo(
+    () => PAINT_SWATCHES.map((s) => s.t),
+    [],
+  );
 
   const draftLabel =
     ai.status === "scanning"
@@ -1140,53 +1209,49 @@ export function HandoffDesignStudio({
                   top: `${Math.max(10, Math.min(40, instrumentAnchor.y - 12))}%`,
                 }}
               >
+                <span className={css.zoneKitLabel}>Zone loadout</span>
                 <button
                   type="button"
-                  className={`${css.chip}${ui.zoneKind === "drip" ? ` ${css.chipActive}` : ""}`}
+                  className={`${css.zoneSlot}${ui.zoneKind === "drip" ? ` ${css.zoneSlotOn}` : ""}`}
                   data-testid="zone-kind-drip"
+                  title="Drip irrigation path"
                   onClick={() => studio.setUi({ zoneKind: "drip" })}
                 >
-                  Drip
+                  <span className={css.zoneSlotGlyph} aria-hidden>
+                    〰
+                  </span>
+                  <span>Drip</span>
                 </button>
                 <button
                   type="button"
-                  className={`${css.chip}${ui.zoneKind === "lighting" ? ` ${css.chipActive}` : ""}`}
+                  className={`${css.zoneSlot}${ui.zoneKind === "lighting" ? ` ${css.zoneSlotOn}` : ""}`}
                   data-testid="zone-kind-lighting"
+                  title="Lighting path"
                   onClick={() => studio.setUi({ zoneKind: "lighting" })}
                 >
-                  Lighting
+                  <span className={css.zoneSlotGlyph} aria-hidden>
+                    ✦
+                  </span>
+                  <span>Lighting</span>
                 </button>
               </div>
             ) : null}
             {ui.tool === "paint" && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
-              <div
-                className={css.paintSwatchBar}
-                data-testid="paint-swatch-bar"
+              <DesignKitInventory
+                variant="paint"
+                placement="anchor"
+                testId="paint-swatch-bar"
+                slotTestIdPrefix="paint-swatch-"
+                types={paintKitTypes}
+                equipped={ui.paintSwatch}
+                onEquip={(t) =>
+                  studio.setUi({ paintSwatch: t, tool: "paint" })
+                }
                 style={{
                   left: `${Math.max(18, Math.min(82, instrumentAnchor.x))}%`,
-                  top: `${Math.max(10, Math.min(42, instrumentAnchor.y - 14))}%`,
+                  top: `${Math.max(14, Math.min(48, instrumentAnchor.y - 10))}%`,
                 }}
-              >
-                {PAINT_SWATCHES.map((s) => (
-                  <button
-                    key={s.t}
-                    type="button"
-                    className={`${css.chip}${ui.paintSwatch === s.t ? ` ${css.chipActive}` : ""}`}
-                    data-testid={`paint-swatch-${s.t}`}
-                    title={`Fill ${s.label}`}
-                    onClick={() =>
-                      studio.setUi({ paintSwatch: s.t, tool: "paint" })
-                    }
-                  >
-                    <span
-                      className={css.swatchDot}
-                      data-swatch={s.t}
-                      aria-hidden
-                    />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+              />
             ) : null}
             {(ui.tool === "edit" ||
               ui.tool === "paint" ||
@@ -1326,68 +1391,43 @@ export function HandoffDesignStudio({
 
 
         {ui.addOpen && planOn && !ui.focusOn && ui.mode !== "sketch" ? (
-          <div className={css.addStrip} data-testid="add-symbol-strip">
-            {(Object.keys(BY_TYPE) as StudioItemType[])
-              .filter((t) =>
-                ui.mode === "survey"
-                  ? Boolean(BY_TYPE[t].existing)
-                  : !BY_TYPE[t].existing,
-              )
-              .filter((t) => {
-                // When sun mesh is on, hide full-sun canopy/feature in deep shade
-                if (!ui.shadeOn) return true;
-                if (t !== "canopy" && t !== "feature") return true;
-                const d = new Date();
-                d.setHours(Math.floor(ui.sunMin / 60), ui.sunMin % 60, 0, 0);
-                const cells = buildIndicativeShadeGrid(
-                  projectLat ?? -37.849,
-                  projectLng ?? 144.993,
-                  d,
-                );
-                const hours = addProbePct
-                  ? sunHoursAtPct(addProbePct.x, addProbePct.y, cells)
-                  : meanSunHours(cells);
-                return hours >= 3.5;
-              })
-              .map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className={`${css.chip}${ui.armed === t ? ` ${css.chipActive}` : ""}`}
-                  onClick={() => armType(t)}
-                >
-                  {BY_TYPE[t].tag}
-                </button>
-              ))}
-            {ui.shadeOn ? (
-              <span className={css.sunProbeHint} data-testid="add-sun-probe-hint">
-                Sun filter ·{" "}
-                {addProbePct
-                  ? "at pointer"
-                  : "lot average"}{" "}
-                · move to probe
-              </span>
-            ) : null}
-            {ui.armed === "exist" ? (
-              <label className={css.dbhField} data-testid="exist-dbh-field">
-                <span>DBH m</span>
-                <input
-                  type="number"
-                  min={0.05}
-                  max={2}
-                  step={0.01}
-                  inputMode="decimal"
-                  value={ui.existDbhM}
-                  aria-label="Existing tree DBH in metres"
-                  onChange={(e) => {
-                    const n = Number.parseFloat(e.target.value);
-                    if (!Number.isFinite(n) || n <= 0) return;
-                    studio.setUi({ existDbhM: Math.min(2, Math.max(0.05, n)) });
-                  }}
-                />
-              </label>
-            ) : null}
-          </div>
+          <DesignKitInventory
+            variant="add"
+            placement="dock"
+            testId="add-symbol-strip"
+            slotTestIdPrefix="add-symbol-"
+            types={addKitTypes}
+            equipped={ui.armed}
+            onEquip={armType}
+            sunHint={
+              ui.shadeOn
+                ? `Sun filter · ${addProbePct ? "at pointer" : "lot average"} · move to probe`
+                : null
+            }
+            footer={
+              ui.armed === "exist" ? (
+                <label className={css.dbhField} data-testid="exist-dbh-field">
+                  <span>DBH m</span>
+                  <input
+                    type="number"
+                    min={0.05}
+                    max={2}
+                    step={0.01}
+                    inputMode="decimal"
+                    value={ui.existDbhM}
+                    aria-label="Existing tree DBH in metres"
+                    onChange={(e) => {
+                      const n = Number.parseFloat(e.target.value);
+                      if (!Number.isFinite(n) || n <= 0) return;
+                      studio.setUi({
+                        existDbhM: Math.min(2, Math.max(0.05, n)),
+                      });
+                    }}
+                  />
+                </label>
+              ) : null
+            }
+          />
         ) : null}
 
         {!ui.addOpen &&

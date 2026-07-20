@@ -350,6 +350,46 @@ export const PAINT_SWATCHES: Array<{
   { t: "hedge", label: "Hedge", wash: "rgba(52, 92, 48, 0.55)" },
 ];
 
+/**
+ * Game-inventory bags — filter the design kit like WoW/Diablo tab bags,
+ * not a Windows toolbar of text chips.
+ */
+export type KitBagId = "soft" | "hard" | "trees" | "water" | "all";
+
+export const KIT_BAGS: ReadonlyArray<{
+  id: KitBagId;
+  label: string;
+  types: readonly StudioItemType[];
+}> = [
+  {
+    id: "soft",
+    label: "Softscape",
+    types: ["lawn", "bed", "hedge"],
+  },
+  {
+    id: "hard",
+    label: "Hardscape",
+    types: ["paving", "deck"],
+  },
+  {
+    id: "trees",
+    label: "Trees",
+    types: ["canopy", "feature", "exist"],
+  },
+  {
+    id: "water",
+    label: "Water",
+    types: ["frenchdrain"],
+  },
+];
+
+export function kitBagFor(type: StudioItemType): KitBagId {
+  for (const bag of KIT_BAGS) {
+    if (bag.types.includes(type)) return bag.id;
+  }
+  return "all";
+}
+
 /** Survey-mode annotation tools (ported from curtis-co prototype). */
 export const SURVEY_TOOLS = [
   { id: "calib", label: "Calib", icon: "⌖", title: "Calibrate scale — two points with a known distance" },

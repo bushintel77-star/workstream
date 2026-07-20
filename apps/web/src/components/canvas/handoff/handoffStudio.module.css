@@ -1066,16 +1066,17 @@
   position: absolute;
   z-index: 21;
   display: flex;
+  align-items: center;
   gap: 6px;
-  padding: 5px 7px;
+  padding: 6px 8px;
   border-radius: 12px;
   border: 1px solid rgba(232, 240, 248, 0.22);
-  background: rgba(26, 36, 48, 0.72);
+  background: rgba(26, 36, 48, 0.82);
   backdrop-filter: blur(14px);
   box-shadow: 0 6px 18px rgba(26, 36, 48, 0.28);
   color: #e8f0f8;
   transform: translate(-50%, -50%);
-  opacity: 0.82;
+  opacity: 0.9;
   transition: opacity 220ms var(--ws-ease);
   animation: chromeIn 200ms var(--ws-ease) both;
 }
@@ -1083,6 +1084,51 @@
 .zoneKindBar:hover,
 .zoneKindBar:focus-within {
   opacity: 1;
+}
+
+.zoneKitLabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 240, 248, 0.55);
+  margin-right: 2px;
+}
+
+.zoneSlot {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 52px;
+  min-height: 44px;
+  padding: 4px 2px;
+  border-radius: 8px;
+  border: 1px solid rgba(232, 240, 248, 0.22);
+  background: rgba(12, 16, 22, 0.45);
+  color: rgba(232, 240, 248, 0.85);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.zoneSlot:hover {
+  border-color: rgba(232, 240, 248, 0.45);
+}
+
+.zoneSlotOn {
+  border-color: rgba(232, 240, 248, 0.85);
+  background: rgba(232, 240, 248, 0.14);
+  color: #e8f0f8;
+  box-shadow: 0 0 0 1px rgba(232, 240, 248, 0.3);
+}
+
+.zoneSlotGlyph {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.9;
 }
 
 /* Paint swatches — dark slate glass over blush canvas, anchored to work. */
@@ -1183,11 +1229,12 @@
   gap: 6px;
   min-height: 28px;
   padding: 0 8px;
-  border: 1px solid rgba(28, 25, 23, 0.18);
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(232, 240, 248, 0.28);
+  border-radius: 8px;
+  background: rgba(12, 16, 22, 0.4);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #44403c;
+  color: #e8f0f8;
 }
 
 .dbhField input {
@@ -1197,7 +1244,7 @@
   background: transparent;
   font: inherit;
   font-size: 11px;
-  color: #1c1917;
+  color: #e8f0f8;
   text-align: right;
 }
 
