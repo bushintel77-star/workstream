@@ -56,9 +56,10 @@
   inset: 0;
   display: flex;
   flex-direction: column;
+  /* Original handoff blush field — not stained parchment */
   background:
-    radial-gradient(120% 80% at 8% 0%, rgba(232, 213, 188, 0.55), transparent 55%),
-    radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.28), transparent 50%),
+    radial-gradient(120% 80% at 8% 0%, rgba(255, 211, 222, 0.35), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.32), transparent 50%),
     var(--sds-canvas-bg);
   color: var(--hc-ink);
   font-family: Sora, ui-sans-serif, sans-serif;
@@ -363,13 +364,14 @@
   flex: 1;
   position: relative;
   margin: 0 8px 8px;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  background: #e8d5bc;
+  /* Original Fit sheet / handoff paper — #faf6f2, not sepia plate */
+  background: #faf6f2;
   min-height: 0;
   box-shadow:
-    inset 0 0 0 1px rgba(90, 62, 42, 0.1),
-    0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 0 0 1px rgba(36, 19, 24, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.45),
     0 18px 40px rgba(42, 23, 29, 0.08);
   transition:
     box-shadow 220ms var(--ws-ease),
@@ -384,7 +386,7 @@
   pointer-events: none;
   z-index: 50;
   border-radius: inherit;
-  box-shadow: inset 0 0 80px rgba(42, 23, 29, 0.04);
+  box-shadow: inset 0 0 80px rgba(36, 19, 24, 0.03);
 }
 
 .boardWatch {
@@ -1106,10 +1108,10 @@
   width: 52px;
   min-height: 44px;
   padding: 4px 2px;
-  border-radius: 8px;
-  border: 1px solid rgba(232, 240, 248, 0.22);
-  background: rgba(12, 16, 22, 0.45);
-  color: rgba(232, 240, 248, 0.85);
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: rgba(255, 251, 252, 0.92);
+  color: #7a5560;
   font: inherit;
   font-size: 9px;
   font-weight: 650;
@@ -1117,14 +1119,15 @@
 }
 
 .zoneSlot:hover {
-  border-color: rgba(232, 240, 248, 0.45);
+  border-color: rgba(194, 69, 95, 0.35);
+  background: #fff6f8;
 }
 
 .zoneSlotOn {
-  border-color: rgba(232, 240, 248, 0.85);
-  background: rgba(232, 240, 248, 0.14);
-  color: #e8f0f8;
-  box-shadow: 0 0 0 1px rgba(232, 240, 248, 0.3);
+  border-color: #241318;
+  background: #241318;
+  color: #fff6f8;
+  box-shadow: none;
 }
 
 .zoneSlotGlyph {

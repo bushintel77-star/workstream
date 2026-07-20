@@ -166,9 +166,14 @@ export function PermitTodosPanel({
 
   if (drafts.length === 0 && openDesignTasks.length === 0) return null;
 
+  // TRP / tree-root advice is carried by the green TPZ zone on the plan — no card.
+  const showAmbientCard =
+    ambientAdvice &&
+    !/tree root|tpz|protection/i.test(ambientAdvice.title ?? "");
+
   return (
     <div className={css.root} data-testid="permit-todos">
-      {ambientAdvice ? (
+      {showAmbientCard && ambientAdvice ? (
         <aside
           className={css.ambient}
           data-testid="permit-prompt"

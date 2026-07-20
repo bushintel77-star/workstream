@@ -1,18 +1,16 @@
 /*
- * Near-object 180° material fan — contextual CAD marking menu.
- * Local to the selection; generous atelier fade in / out.
+ * Material fan — original blush frost marking menu.
  */
 
 .root {
-  --ink: #e8f0f8;
-  --ink-soft: rgba(232, 240, 248, 0.78);
-  --glass: rgba(26, 36, 48, 0.84);
-  --glass-border: rgba(232, 240, 248, 0.24);
+  --ink: #241318;
+  --ink-soft: #7a5560;
+  --glass: rgba(255, 251, 252, 0.92);
+  --glass-border: rgba(36, 19, 24, 0.12);
   --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
   --enter-ms: 480ms;
   --exit-ms: 1200ms;
-  /* Fitts / marking-menu radius — see features/reach/fittsProximity.ts */
   --arc-radius: 64px;
 
   position: absolute;
@@ -21,7 +19,6 @@
   height: 0;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  /* Stay present while selection/zone mode is live */
   opacity: 0.82;
   transition: opacity var(--exit-ms) var(--ease-exit);
 }
@@ -57,7 +54,7 @@
   border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: var(--glass);
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
   color: var(--ink-soft);
   cursor: pointer;
   display: flex;
@@ -66,7 +63,7 @@
   justify-content: center;
   gap: 1px;
   font: inherit;
-  box-shadow: 0 4px 14px rgba(26, 36, 48, 0.24);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
   opacity: 0.55;
   transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.55))
     rotate(calc(-1 * var(--arc, 0deg))) scale(0.92);
@@ -106,14 +103,15 @@
 }
 
 .slot:hover {
-  background: rgba(38, 52, 68, 0.92);
+  background: #fff6f8;
   color: var(--ink);
+  border-color: rgba(194, 69, 95, 0.28);
 }
 
 .slotOn {
-  background: rgba(232, 240, 248, 0.94);
-  color: #1a2430;
-  border-color: rgba(232, 240, 248, 0.55);
+  background: #241318;
+  color: #fff6f8;
+  border-color: #241318;
 }
 
 .root[data-phase="open"] .slotOn,

@@ -11,10 +11,11 @@
   position: absolute;
   inset: 0;
   opacity: var(--parchment-op);
+  /* Warm Architectural Parchment #F7F4EF + blush mist — original handoff DNA */
   background:
-    radial-gradient(120% 90% at 18% 12%, rgba(255, 236, 214, 0.55), transparent 55%),
-    radial-gradient(90% 80% at 82% 78%, rgba(214, 186, 158, 0.35), transparent 50%),
-    linear-gradient(155deg, #f3e6d4 0%, #e8d5bc 42%, #dfc7a8 100%);
+    radial-gradient(120% 90% at 18% 12%, rgba(255, 211, 222, 0.28), transparent 55%),
+    radial-gradient(90% 80% at 82% 78%, rgba(246, 234, 237, 0.45), transparent 50%),
+    linear-gradient(155deg, #faf6f2 0%, #f7f4ef 48%, #f0ebe4 100%);
   transition: opacity 420ms ease;
 }
 

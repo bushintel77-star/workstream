@@ -323,6 +323,58 @@
   opacity: 0.22;
 }
 
+/* Soft protection wash — success green #1F8A5A from handoff palette */
+.tpzZone {
+  fill: rgba(31, 138, 90, 0.16);
+  stroke: rgba(31, 138, 90, 0.48);
+  stroke-width: 1.15;
+  stroke-dasharray: 5 3.5;
+  pointer-events: painted;
+  transition: fill 200ms ease, stroke 200ms ease;
+}
+
+.tpzZone:hover {
+  fill: rgba(31, 138, 90, 0.28);
+  stroke: rgba(31, 138, 90, 0.72);
+}
+
+.tpzHit {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: help;
+  z-index: 11;
+  pointer-events: auto;
+}
+
+.tpzHit:hover + .tpzPop,
+.tpzHit:focus-visible + .tpzPop {
+  opacity: 1;
+}
+
+.tpzPop {
+  position: absolute;
+  z-index: 16;
+  transform: translate(-50%, calc(-100% - 8px));
+  padding: 5px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(31, 138, 90, 0.28);
+  background: rgba(255, 251, 252, 0.96);
+  color: #241318;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  transition: opacity 180ms ease;
+}
+
 .tpzTag {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -330,14 +382,14 @@
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #6b5420;
-  background: rgba(250, 246, 242, 0.96);
-  border: 1px solid rgba(138, 106, 31, 0.28);
+  color: #1f8a5a;
+  background: rgba(255, 251, 252, 0.96);
+  border: 1px solid rgba(31, 138, 90, 0.28);
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: 6px;
   pointer-events: none;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(42, 23, 29, 0.12);
+  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.1);
   z-index: 12;
 }
 

@@ -680,23 +680,32 @@ export function CadPlanBoard({
             opacity={0.75 * layerOpacity.council}
           />
         ) : null}
-        {existTpz.map(({ it, tpz }) => (
-          <ellipse
-            key={`tpz-${it.id}`}
-            cx={it.x}
-            cy={it.y}
-            rx={tpz.rxPct}
-            ry={tpz.rxPct * 0.75}
-            fill="rgba(201,151,87,0.06)"
-            stroke="#8C8A85"
-            strokeWidth={1}
-            strokeDasharray="4 4"
-            vectorEffect="non-scaling-stroke"
-            opacity={layerOpacity.council * underlayOp}
-            data-tpz-state="normal"
-            data-testid="exist-tpz-ring"
-          />
-        ))}
+        {existTpz.map(({ it, tpz }) => {
+          const dbh = it.dbhM ?? 0.45;
+          const tpzM = Math.max(2, 12 * dbh);
+          return (
+            <g
+              key={`tpz-${it.id}`}
+              opacity={layerOpacity.council * underlayOp}
+              data-testid="exist-tpz-ring"
+              data-tpz-state="zone"
+            >
+              {/* Tree protection as a readable council zone — not a text card */}
+              <ellipse
+                cx={it.x}
+                cy={it.y}
+                rx={tpz.rxPct}
+                ry={tpz.rxPct * 0.78}
+                className={css.tpzZone}
+                vectorEffect="non-scaling-stroke"
+              >
+                <title>
+                  {`Tree protection zone · AS 4970 · TPZ ≈ ${tpzM.toFixed(1)} m (12 × DBH)`}
+                </title>
+              </ellipse>
+            </g>
+          );
+        })}
       </svg>
 
       {editing
@@ -857,23 +866,45 @@ export function CadPlanBoard({
       ) : null}
 
       {!foundationCleanse
-        ? existTpz
-            .filter(
-              ({ it }) => it.id === selectedId || it.id === hoverId,
-            )
-            .map(({ it, tpz }) => (
-              <div
-                key={`tpztag-${it.id}`}
-                className={css.tpzTag}
-                style={{
-                  left: `${Math.min(96, it.x + tpz.rxPct * 0.72)}%`,
-                  top: `${Math.max(4, it.y - tpz.rxPct * 0.35)}%`,
-                }}
-                title="Tree protection zone · AS 4970"
-              >
-                TPZ Ø{tpz.radiusM.toFixed(1)} m
+        ? existTpz.map(({ it, tpz }) => {
+            const showTag = it.id === selectedId || it.id === hoverId;
+            const size = Math.max(28, tpz.rxPct * 2.2);
+            return (
+              <div key={`tpzui-${it.id}`}>
+                <button
+                  type="button"
+                  className={css.tpzHit}
+                  data-testid="exist-tpz-hit"
+                  aria-label={`Tree protection zone ≈ ${tpz.radiusM.toFixed(1)} metres`}
+                  style={{
+                    left: `${it.x}%`,
+                    top: `${it.y}%`,
+                    width: `${size}%`,
+                    height: `${size * 0.78}%`,
+                  }}
+                  onPointerEnter={() => onHover(it.id)}
+                  onPointerLeave={() => onHover(null)}
+                />
+                <div
+                  className={css.tpzPop}
+                  style={{ left: `${it.x}%`, top: `${Math.max(6, it.y - tpz.rxPct * 0.5)}%` }}
+                >
+                  Tree protection · AS 4970 · ≈ {tpz.radiusM.toFixed(1)} m
+                </div>
+                {showTag ? (
+                  <div
+                    className={css.tpzTag}
+                    style={{
+                      left: `${Math.min(96, it.x + tpz.rxPct * 0.72)}%`,
+                      top: `${Math.max(4, it.y - tpz.rxPct * 0.35)}%`,
+                    }}
+                  >
+                    TPZ Ø{tpz.radiusM.toFixed(1)} m
+                  </div>
+                ) : null}
               </div>
-            ))
+            );
+          })
         : null}
 
       {planItems.map((it) => {

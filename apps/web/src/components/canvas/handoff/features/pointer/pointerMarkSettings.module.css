@@ -1,11 +1,11 @@
 /*
- * Pointer mark settings — calm sheet, generous fades.
+ * Pointer settings — original blush frost panel.
  */
 
 .panel {
-  --ink: #e8f0f8;
-  --ink-soft: rgba(232, 240, 248, 0.72);
-  --glass: rgba(26, 36, 48, 0.9);
+  --ink: #241318;
+  --ink-soft: #7a5560;
+  --glass: rgba(255, 251, 252, 0.96);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: absolute;
@@ -15,10 +15,10 @@
   width: min(220px, 42vw);
   padding: 12px 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(232, 240, 248, 0.2);
+  border: 1px solid rgba(36, 19, 24, 0.1);
   background: var(--glass);
-  backdrop-filter: blur(18px) saturate(1.05);
-  box-shadow: 0 12px 32px rgba(26, 36, 48, 0.32);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 14px 44px rgba(42, 23, 29, 0.22);
   color: var(--ink);
   animation: panelIn 480ms var(--ease) both;
 }
@@ -48,7 +48,7 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: #b08a95;
 }
 
 .close {
@@ -60,12 +60,12 @@
   font-weight: 650;
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 .close:hover {
-  color: var(--ink);
-  background: rgba(232, 240, 248, 0.08);
+  color: #c2455f;
+  background: #fff6f8;
 }
 
 .title {
@@ -96,8 +96,8 @@
   min-height: 56px;
   padding: 6px 4px;
   border-radius: 10px;
-  border: 1px solid rgba(232, 240, 248, 0.18);
-  background: rgba(12, 16, 22, 0.4);
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: #fff6f8;
   color: var(--ink-soft);
   font: inherit;
   cursor: pointer;
@@ -110,15 +110,15 @@
 
 .mark:hover {
   color: var(--ink);
-  background: rgba(38, 52, 68, 0.85);
-  border-color: rgba(232, 240, 248, 0.35);
+  background: #ffd3de;
+  border-color: rgba(194, 69, 95, 0.28);
   transform: translateY(-1px);
 }
 
 .markOn {
-  color: #1a2430;
-  background: rgba(232, 240, 248, 0.92);
-  border-color: rgba(232, 240, 248, 0.92);
+  color: #fff6f8;
+  background: #241318;
+  border-color: #241318;
 }
 
 .glyph {

@@ -1,11 +1,11 @@
-/* Micro grid studio — dark slate glass on blush canvas (readable + translucent). */
+/* Micro grid studio — original blush frost */
 
 .root {
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
-  --ink: #e8f0f8;
-  --ink-soft: rgba(232, 240, 248, 0.78);
-  --glass: rgba(26, 36, 48, 0.72);
-  --glass-border: rgba(232, 240, 248, 0.22);
+  --ink: #241318;
+  --ink-soft: #7a5560;
+  --glass: rgba(255, 251, 252, 0.92);
+  --glass-border: rgba(36, 19, 24, 0.12);
   position: absolute;
   z-index: 20;
   display: flex;
@@ -15,8 +15,8 @@
   border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: var(--glass);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 6px 18px rgba(26, 36, 48, 0.28);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
   opacity: 0.72;
   transform: translate(-50%, -50%);
   transition:
@@ -27,7 +27,7 @@
 
 .root[data-awake="true"] {
   opacity: 1;
-  background: rgba(26, 36, 48, 0.86);
+  background: rgba(255, 251, 252, 0.96);
 }
 
 .face {
@@ -45,7 +45,7 @@
 }
 
 .face:hover {
-  background: rgba(232, 240, 248, 0.1);
+  background: #fff6f8;
 }
 
 .glyph {
@@ -82,13 +82,13 @@
   padding: 0;
   border-radius: 5px;
   border: 1px solid var(--glass-border);
-  background: var(--ink, rgba(232, 240, 248, 0.35));
+  background: var(--ink, rgba(36, 19, 24, 0.2));
   cursor: pointer;
   flex: none;
 }
 
 .ink:hover {
-  outline: 1px solid rgba(232, 240, 248, 0.45);
+  outline: 1px solid rgba(194, 69, 95, 0.45);
   outline-offset: 1px;
 }
 
@@ -111,13 +111,13 @@
 
 .grain:hover,
 .snap:hover {
-  background: rgba(232, 240, 248, 0.1);
+  background: #fff6f8;
   color: var(--ink);
 }
 
 .snapOn {
-  color: var(--ink);
-  background: rgba(232, 240, 248, 0.14);
+  color: #c2455f;
+  background: #ffd3de;
 }
 
 @media (prefers-reduced-motion: reduce) {

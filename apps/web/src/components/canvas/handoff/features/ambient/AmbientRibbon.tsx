@@ -16,7 +16,6 @@ import {
 } from "../../studioCatalog";
 import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
 import { ATELIER_LINGER_MS } from "../kitInventory/atelierPresence";
-import { LOCAL_ARC_SPAN_DEG, LOCAL_ACTION_PX } from "../reach/fittsProximity";
 import { playInstrumentTick } from "./instrumentTick";
 import css from "./ambientRibbon.module.css";
 
@@ -32,20 +31,13 @@ type Props = {
   locked: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  /** Kept for API compat — layer inventory is the Layers panel, not this dock. */
   layerChips: LayerChip[];
   layerOpacity: LayerOpacity;
   parchmentPeel: number;
   hasAerial: boolean;
-  /**
-   * Sticky board-% home — pinned on empty canvas margin clicks.
-   * Does not follow selection (selection uses the niche carousel).
-   */
   anchorXPct: number;
   anchorYPct: number;
-  /**
-   * Explicit summon from empty margin click (off the lot drawing).
-   * Selecting geometry / items must not set this.
-   */
   summoned: boolean;
   onDismissSummon?: () => void;
   onTool: (t: StudioTool) => void;
@@ -68,9 +60,11 @@ type Instrument = {
   kind: "draft" | "view" | "history";
 };
 
+const SLOT_PX = 40;
+
 /**
- * Drawing instruments — summon from empty canvas margin, or the hub.
- * Selecting CAD lines / symbols does not open this toolbar (Figma-style).
+ * Drawing instruments — clean vertical draft stack + east utilities.
+ * Layer chips live in the Layers panel (structure rail), not piled here.
  */
 export function AmbientRibbon({
   tool,
@@ -78,8 +72,6 @@ export function AmbientRibbon({
   locked,
   canUndo,
   canRedo,
-  layerChips,
-  layerOpacity,
   parchmentPeel,
   hasAerial,
   anchorXPct,
@@ -92,7 +84,6 @@ export function AmbientRibbon({
   onRedo,
   onZoom,
   onFit,
-  onOpacity,
   onParchmentPeel,
 }: Props) {
   const surveyMode = mode === "survey";
@@ -123,7 +114,6 @@ export function AmbientRibbon({
     setLingering(true);
   }, [clearFade]);
 
-  // Fresh margin summon → open and hold, then settle.
   useEffect(() => {
     if (!summoned) return;
     stayEngaged();
@@ -191,7 +181,6 @@ export function AmbientRibbon({
       else if (id === "undo") onUndo();
       else if (id === "redo") onRedo();
       else if (id === tool) {
-        // Click active draft tool again → return to pan (same as Esc).
         onTool("pan");
       } else onTool(id as StudioTool);
     },
@@ -213,18 +202,6 @@ export function AmbientRibbon({
     [activeDraftIdx, draftInstruments, onMeasure, onTool, stayEngaged],
   );
 
-  const arcAngles = useMemo(() => {
-    const n = draftInstruments.length;
-    if (n <= 1) return [0];
-    const span = LOCAL_ARC_SPAN_DEG;
-    const start = -span / 2;
-    return draftInstruments.map((_, i) => {
-      const base = start + (span * i) / (n - 1);
-      const activeAngle = start + (span * activeDraftIdx) / (n - 1);
-      return base - activeAngle;
-    });
-  }, [activeDraftIdx, draftInstruments]);
-
   const ax = Math.max(10, Math.min(90, anchorXPct));
   const ay = Math.max(12, Math.min(88, anchorYPct));
 
@@ -237,13 +214,7 @@ export function AmbientRibbon({
       data-expanded={open ? "true" : "false"}
       data-summoned={summoned ? "true" : "false"}
       aria-label="Drawing instruments"
-      style={
-        {
-          left: `${ax}%`,
-          top: `${ay}%`,
-          ["--arc-radius" as string]: `${LOCAL_ACTION_PX}px`,
-        } as CSSProperties
-      }
+      style={{ left: `${ax}%`, top: `${ay}%` } as CSSProperties}
       onMouseEnter={() => {
         stayEngaged();
         setHovered(true);
@@ -278,7 +249,8 @@ export function AmbientRibbon({
         {draftInstruments.map((t, i) => {
           const active =
             tool === t.id || (t.id === "lock" && locked && tool === "lock");
-          const angle = arcAngles[i] ?? 0;
+          /* Closest tool nearest the hub (Fitts). */
+          const stackPx = (draftInstruments.length - i) * SLOT_PX;
           return (
             <button
               key={t.id}
@@ -293,8 +265,7 @@ export function AmbientRibbon({
               title={t.title ?? t.label}
               style={
                 {
-                  ["--arc" as string]: `${angle}deg`,
-                  ["--stack" as string]: `${(draftInstruments.length - 1 - i) * 38}px`,
+                  ["--stack" as string]: `${stackPx}px`,
                 } as CSSProperties
               }
               onClick={() => runInstrument(t.id)}
@@ -327,13 +298,13 @@ export function AmbientRibbon({
         })}
       </div>
 
-      <div className={css.layers} data-testid="ambient-layer-chips">
-        {hasAerial ? (
+      {hasAerial ? (
+        <div className={css.peel}>
           <button
             type="button"
             className={css.chip}
             data-testid="parchment-peel"
-            title="Peel parchment underlay"
+            title="Peel underlay"
             onClick={() => {
               const steps = [0.12, 0.28, 0.42, 0.62, 0.85];
               const idx = steps.findIndex(
@@ -350,26 +321,8 @@ export function AmbientRibbon({
               {Math.round(parchmentPeel * 100)}
             </span>
           </button>
-        ) : null}
-        {layerChips.map((chip) => (
-          <button
-            key={chip.key}
-            type="button"
-            className={css.chip}
-            title={`${chip.label} · ${Math.round(layerOpacity[chip.key] * 100)}%`}
-            onClick={() => {
-              const cur = layerOpacity[chip.key];
-              const next = cur < 0.35 ? 1 : cur < 0.7 ? 0.3 : 0.55;
-              playInstrumentTick("step");
-              onOpacity(chip.key, next);
-              stayEngaged();
-            }}
-          >
-            <span className={css.chipName}>{chip.label}</span>
-            <span className={css.chipCount}>{chip.count}</span>
-          </button>
-        ))}
-      </div>
+        </div>
+      ) : null}
     </nav>
   );
 }

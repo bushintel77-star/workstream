@@ -1,4 +1,4 @@
-/* Local to selection — Gestalt proximity + Fitts short travel */
+/* Local to selection — original blush frost */
 
 .root {
   position: absolute;
@@ -9,11 +9,14 @@
   align-items: center;
   gap: 8px 12px;
   max-width: min(280px, 46vw);
-  padding: 6px 10px;
-  border: 1px solid rgba(28, 25, 23, 0.18);
-  background: rgba(242, 240, 235, 0.94);
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 251, 252, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
   font-family: Sora, ui-sans-serif, sans-serif;
-  color: #1c1917;
+  color: #241318;
   pointer-events: auto;
 }
 
@@ -23,7 +26,7 @@
   font-size: 8.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #78716c;
+  color: #b08a95;
 }
 
 .field {
@@ -32,23 +35,25 @@
   gap: 6px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #44403c;
+  color: #7a5560;
 }
 
 .field input {
   width: 3.6rem;
   height: 28px;
-  border: 1px solid rgba(28, 25, 23, 0.18);
-  background: #fff;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  border-radius: 10px;
+  background: #fffbfc;
   font: inherit;
   font-size: 11px;
-  color: #1c1917;
+  color: #241318;
   text-align: right;
   padding: 0 6px;
 }
 
 .field input:focus {
-  outline: 1px solid rgba(28, 25, 23, 0.35);
+  outline: 2px solid #c2455f;
+  outline-offset: 1px;
 }
 
 .field input:disabled {
@@ -60,5 +65,5 @@
   flex: 1 1 100%;
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #78716c;
+  color: #7a5560;
 }

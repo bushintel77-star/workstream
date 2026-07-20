@@ -1,19 +1,17 @@
 /*
- * Live measures — right gutter telemetry, off the drawing.
- * Numbers flash softly when geometry changes (alive plan, not static sheet).
+ * Live measures — original blush glass dock (AI sidecar lane).
  */
 
 .rail {
-  --ink: #e8f0f8;
-  --ink-soft: rgba(232, 240, 248, 0.7);
-  --glass: rgba(26, 36, 48, 0.78);
-  --glass-border: rgba(232, 240, 248, 0.2);
+  --ink: #241318;
+  --ink-soft: #7a5560;
+  --glass: rgba(255, 251, 252, 0.92);
+  --glass-border: rgba(36, 19, 24, 0.12);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: absolute;
   z-index: 15;
   right: calc(var(--ws-safe-right, 12px) + 4px);
-  /* AI sidecar lane — mid-right, clears utility hub */
   top: 50%;
   transform: translateY(-42%);
   width: min(168px, 28vw);
@@ -22,11 +20,11 @@
   flex-direction: column;
   gap: 6px;
   padding: 8px 9px 9px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--glass-border);
   background: var(--glass);
-  backdrop-filter: blur(16px) saturate(1.05);
-  box-shadow: 0 8px 24px rgba(26, 36, 48, 0.28);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
   color: var(--ink);
   pointer-events: auto;
   overflow: hidden;
@@ -36,7 +34,7 @@
 
 .rail:hover,
 .rail[data-expanded="true"] {
-  opacity: 0.96;
+  opacity: 0.98;
 }
 
 .railCollapsed {
@@ -68,7 +66,7 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: #b08a95;
 }
 
 .summary {
@@ -114,7 +112,7 @@
   font-size: 8.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(232, 240, 248, 0.45);
+  color: #b08a95;
 }
 
 .list {
@@ -131,69 +129,32 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  min-height: 22px;
-  padding: 2px 4px;
-  border-radius: 6px;
-  transition:
-    background 280ms var(--ease),
-    color 280ms var(--ease);
+  min-height: 20px;
+  padding: 2px 0;
+  border-radius: 4px;
 }
 
-.row:hover {
-  background: rgba(232, 240, 248, 0.06);
+.flash {
+  background: rgba(255, 211, 222, 0.55);
 }
 
 .label {
-  font-size: 11px;
-  font-weight: 550;
+  font-size: 10px;
+  font-weight: 600;
   color: var(--ink-soft);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .value {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
-  flex: none;
-  letter-spacing: 0.01em;
-}
-
-.flash {
-  background: rgba(232, 240, 248, 0.12);
-}
-
-.flash .value {
-  color: #fff8e8;
-}
-
-.group[data-group="selection"] .row {
-  background: rgba(232, 240, 248, 0.08);
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .row {
-    transition: none;
-  }
-}
-
-@media (max-width: 720px) {
   .rail {
-    width: min(140px, 34vw);
-    max-height: 42vh;
-    top: auto;
-    bottom: calc(var(--ws-safe-bottom, 36px) + 8px);
-  }
-
-  .label {
-    font-size: 10px;
-  }
-
-  .value {
-    font-size: 11px;
+    transition: none;
   }
 }
