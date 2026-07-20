@@ -6,18 +6,13 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      deploy:
-        description: Deploy to Fly after CI (main only)
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  # Canvas-first reboot: public API on Railway (Fly serves web only).
+  # Canvas-first reboot: public API on Railway.
   NEXT_PUBLIC_API_URL: https://api-production-a8ff1.up.railway.app
 
 jobs:
@@ -117,82 +112,3 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy-api:
-    name: deploy construct-api
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [typecheck, build-api]
-    if: >
-      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy == true)
-    concurrency:
-      group: fly-deploy-api
-      cancel-in-progress: false
-    env:
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN || secrets.BROKKER }}
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install flyctl
-        run: |
-          curl -fsSL https://fly.io/install.sh | sh
-          echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
-      - name: Verify Fly token (API)
-        run: flyctl apps list | grep -F construct-api
-      - name: Deploy API
-        run: |
-          for i in 1 2 3 4 5; do
-            flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile \
-              -a construct-api --remote-only && exit 0
-            echo "fly deploy api attempt $i failed; retry in 30s..."
-            sleep 30
-          done
-          exit 1
-      - name: Smoke test API
-        run: |
-          for i in 1 2 3 4 5; do
-            curl -sfS https://construct-api.fly.dev/healthz && exit 0
-            sleep 10
-          done
-          exit 1
-
-  deploy-web:
-    name: deploy construct-web
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [typecheck, build-web]
-    if: >
-      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy == true)
-    concurrency:
-      group: fly-deploy-web
-      cancel-in-progress: false
-    env:
-      # Per-app deploy token — was stored as FLY_API_WEB but never wired in CI.
-      FLY_API_TOKEN: ${{ secrets.FLY_API_WEB || secrets.FLY_API_TOKEN || secrets.BROKKER }}
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install flyctl
-        run: |
-          curl -fsSL https://fly.io/install.sh | sh
-          echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
-      - name: Verify Fly token (web)
-        run: flyctl apps list | grep -F construct-web
-      - name: Deploy Web
-        run: |
-          for i in 1 2 3 4 5; do
-            flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
-              -a construct-web --remote-only \
-              --build-arg NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }} && exit 0
-            echo "fly deploy web attempt $i failed; retry in 30s..."
-            sleep 30
-          done
-          exit 1
-      - name: Smoke test Web
-        run: |
-          for i in 1 2 3 4 5; do
-            code=$(curl -sS -o /dev/null -w "%{http_code}" https://construct-web.fly.dev/)
-            if [ "$code" = "200" ] || [ "$code" = "307" ] || [ "$code" = "308" ]; then exit 0; fi
-            sleep 10
-          done
-          exit 1
