@@ -45,6 +45,12 @@ type Props = {
   suppressSiteCue?: boolean;
   /** 0–1 parchment tooth when aerial is stacked (soft underlay). */
   parchmentPeel?: number;
+  /**
+   * Drawing-plane law: unmount onboarding drop cue when any vectors / assets
+   * exist or a drafting tool is armed — never collide with live CAD text.
+   */
+  hasGeometry?: boolean;
+  canvasEngaged?: boolean;
   onUri: (uri: string | null) => void;
   onScanning: (v: boolean) => void;
   onCanopyImage: (image: CanopyImagePayload) => void;
@@ -72,6 +78,8 @@ export function AerialSlot({
   address = null,
   suppressSiteCue = false,
   parchmentPeel = 0.42,
+  hasGeometry = false,
+  canvasEngaged = false,
   onUri,
   onScanning,
   onCanopyImage,
@@ -151,6 +159,9 @@ export function AerialSlot({
 
   const showAerial = Boolean(uri) && !frameOn && underlayEnabled;
   const planOnly = allowPlanUnderlay && !aerialEnabled;
+  /** Barren lot only — geometry or an armed tool nukes the DOM node. */
+  const showDropCue =
+    !uri && underlayEnabled && !hasGeometry && !canvasEngaged;
 
   return (
     <div
@@ -231,15 +242,18 @@ export function AerialSlot({
         />
       ) : null}
 
-      {!uri && underlayEnabled ? (
+      {showDropCue ? (
         <div
           className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
           data-testid="aerial-drop-cue"
+          aria-hidden
         >
-          {planOnly
-            ? "Drop a survey plan (SVG/PNG) — no aerial required"
-            : "Drop a top-down aerial or survey plan"}
-          <span>Parchment stays as the drafting ground</span>
+          <p className={css.primaryText}>
+            {planOnly
+              ? "Drop a survey plan (SVG/PNG) — no aerial required"
+              : "Drop a top-down aerial or survey plan"}
+          </p>
+          <p className={css.metaText}>Stays as the drafting background</p>
         </div>
       ) : null}
 

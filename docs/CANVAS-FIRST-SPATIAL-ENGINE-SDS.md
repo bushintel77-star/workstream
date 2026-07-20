@@ -134,7 +134,7 @@ Workflow 1: setback envelope snap + mid insert + corner drag already on `%` boar
 
 `Permeable / Outdoor ≥ 20%` (Stonnington-style). Below threshold → offending hardscape stroke `COLOR_COMPLIANCE_RED` + schedule warning.
 
-**Anchors:** `studio-preemptive-compliance`, CadPlanBoard TPZ / hatch, ComplianceTicker.
+**Anchors:** `studio-preemptive-compliance`, CadPlanBoard TPZ / hatch / setback path label, UtilityDrawer compliance sidecar.
 
 ---
 

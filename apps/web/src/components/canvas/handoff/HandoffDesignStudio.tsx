@@ -35,7 +35,6 @@ import { LayersPanel } from "./features/layers/LayersPanel";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
 import { UtilityDrawer } from "./features/utilityDrawer/UtilityDrawer";
-import { ComplianceTicker } from "./features/compliance/ComplianceTicker";
 import { PermitTodosPanel } from "./features/permitTodos/PermitTodosPanel";
 import { QuoteSurface } from "./features/tier1/QuoteSurface";
 import { ElevationBoard } from "./features/elevation/ElevationBoard";
@@ -581,6 +580,21 @@ export function HandoffDesignStudio({
 
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
+  /** Any vectors / underlay / assets — kills barren-lot onboarding cue. */
+  const hasGeometry =
+    studio.items.some((i) => !i.ghost) ||
+    studio.boundary.length >= 3 ||
+    studio.building.length >= 3 ||
+    Boolean(liveAerial) ||
+    studio.easements.length > 0 ||
+    studio.services.length > 0;
+  /** Tool armed or drawing in progress — not survey/cad idle. */
+  const canvasEngaged =
+    ui.tool !== "pan" ||
+    Boolean(ui.drawPoly && ui.drawPoly.length > 0) ||
+    Boolean(ui.selectedId) ||
+    ui.addOpen ||
+    ui.locked;
   /**
    * Instrument + inventory home — margin pin only (never lot core).
    */
@@ -1073,6 +1087,8 @@ export function HandoffDesignStudio({
               parchmentPeel={
                 draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
               }
+              hasGeometry={hasGeometry}
+              canvasEngaged={canvasEngaged}
               onUri={(uri) => {
                 // Survey aerial OR CAD/Sketch plan underlay (SVG/PNG)
                 if (!aerialOk && !draftingPlate) return;
@@ -1119,6 +1135,7 @@ export function HandoffDesignStudio({
               locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
               setbackOn={ui.setbackOn}
+              councilSetbackM={compliance.setbackM}
               growth={ui.growth}
               selectedId={ui.selectedId}
               groupIds={ui.groupIds}
@@ -1374,6 +1391,7 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
+            {/* Orbit sprouts with selection wash — Delete / Lock / Ask AI clear of glyph */}
             {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
               <SelectionRing
                 item={selectedLive}
@@ -1585,7 +1603,17 @@ export function HandoffDesignStudio({
                   Boolean,
                 ).length
               }
-              onOpenPanel={(utilityPanel) => studio.setUi({ utilityPanel })}
+              councilSummary={{
+                permeablePct: compliance.permeablePct,
+                canopyPct: compliance.canopyPct,
+                setbackM: compliance.setbackM,
+              }}
+              onOpenPanel={(utilityPanel) =>
+                studio.setUi({
+                  utilityPanel,
+                  ...(utilityPanel === "compliance" ? { setbackOn: true } : {}),
+                })
+              }
               onMitigate={(id) =>
                 studio.setUi({
                   mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
@@ -1604,12 +1632,7 @@ export function HandoffDesignStudio({
                 onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
               />
             ) : null}
-            <ComplianceTicker
-              report={compliance}
-              onOpenCompliance={() =>
-                studio.setUi({ utilityPanel: "compliance", setbackOn: true })
-              }
-            />
+            {/* Council metrics live in utility compliance sidecar — not a corner card */}
             <PermitTodosPanel
               projectId={projectId}
               address={projectAddress}

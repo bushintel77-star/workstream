@@ -82,6 +82,8 @@ type Props = {
   locked: boolean;
   layerOpacity: LayerOpacity;
   setbackOn: boolean;
+  /** Indicative council setback rule (m) — muted on-plan path label, not a card. */
+  councilSetbackM?: number | null;
   growth: "plant" | "5yr" | "mature";
   selectedId: string | null;
   groupIds: string[];
@@ -168,6 +170,7 @@ export function CadPlanBoard({
   locked,
   layerOpacity,
   setbackOn,
+  councilSetbackM = null,
   growth,
   selectedId,
   groupIds,
@@ -699,7 +702,14 @@ export function CadPlanBoard({
             strokeDasharray={lines.setback.dash}
             vectorEffect="non-scaling-stroke"
             opacity={0.75 * layerOpacity.council}
-          />
+            data-testid="council-setback-zone"
+          >
+            <title>
+              {councilSetbackM != null && councilSetbackM > 0
+                ? `Council setback rule · ${councilSetbackM.toFixed(1)} m (indicative)`
+                : "Council setback zone (indicative)"}
+            </title>
+          </polygon>
         ) : null}
         {existTpz.map(({ it, tpz }) => {
           const dbh = it.dbhM ?? 0.45;
@@ -886,6 +896,25 @@ export function CadPlanBoard({
         </p>
       ) : null}
 
+      {setbackOn &&
+      !foundationCleanse &&
+      !sketchPassthrough &&
+      !frameOn &&
+      boundary.length >= 3 &&
+      councilSetbackM != null &&
+      councilSetbackM > 0 ? (
+        <p
+          className={css.councilPathLabel}
+          data-testid="council-setback-path-label"
+          style={{
+            left: `${50 + (titleCentroid.x - 50) * 0.92}%`,
+            top: `${Math.max(8, 50 + (Math.min(...boundary.map((p) => p.y)) - 50) * 0.92 - 1.2)}%`,
+          }}
+        >
+          {councilSetbackM.toFixed(1)} m setback rule
+        </p>
+      ) : null}
+
       {!foundationCleanse
         ? existTpz.map(({ it, tpz }) => {
             const showTag = it.id === selectedId || it.id === hoverId;
@@ -968,7 +997,10 @@ export function CadPlanBoard({
                     : hovered && !it.ghost
                       ? "1px solid rgba(28,25,23,0.45)"
                       : "none",
-              boxShadow: "none",
+              boxShadow:
+                selected || groupIds.includes(it.id)
+                  ? undefined
+                  : "none",
               zIndex: isCur
                 ? 50
                 : selected || groupIds.includes(it.id)

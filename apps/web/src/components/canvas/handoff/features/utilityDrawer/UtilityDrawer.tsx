@@ -20,6 +20,12 @@ type Props = {
   mitigated: Record<string, boolean>;
   complianceSignal?: "ok" | "watch" | "critical";
   compliancePass?: number;
+  /** Council read for sidecar — replaces the old bottom-left ticker card. */
+  councilSummary?: {
+    permeablePct: number;
+    canopyPct: number;
+    setbackM: number;
+  } | null;
   onOpenPanel: (panel: UtilityPanel) => void;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
@@ -40,6 +46,7 @@ export function UtilityDrawer({
   mitigated,
   complianceSignal = "ok",
   compliancePass: passCount = 3,
+  councilSummary = null,
   onOpenPanel,
   onMitigate,
   onOpenQuote,
@@ -57,6 +64,10 @@ export function UtilityDrawer({
     maximumFractionDigits: 0,
   }).format(estimate.totalInclGst);
 
+  const councilTip = councilSummary
+    ? `${Math.round(councilSummary.permeablePct)}% perm · ${Math.round(councilSummary.canopyPct)}% canopy · ${councilSummary.setbackM.toFixed(1)} m rule`
+    : "Compliance";
+
   return (
     <div
       className={css.hub}
@@ -70,7 +81,7 @@ export function UtilityDrawer({
           aria-selected={openPanel === "compliance"}
           className={`${css.tab}${openPanel === "compliance" ? ` ${css.tabActive}` : ""}`}
           data-testid="utility-tab-compliance"
-          title="Compliance"
+          title={councilTip}
           onClick={() =>
             onOpenPanel(openPanel === "compliance" ? null : "compliance")
           }
@@ -118,12 +129,22 @@ export function UtilityDrawer({
           </div>
           <div className={css.sheetBody}>
             {openPanel === "compliance" ? (
-              <ComplianceDock
-                outdoorM2={outdoorM2}
-                boundary={boundary}
-                items={items}
-                embedded
-              />
+              <>
+                {councilSummary ? (
+                  <p
+                    className={css.councilSidecar}
+                    data-testid="council-sidecar-metrics"
+                  >
+                    {councilTip}
+                  </p>
+                ) : null}
+                <ComplianceDock
+                  outdoorM2={outdoorM2}
+                  boundary={boundary}
+                  items={items}
+                  embedded
+                />
+              </>
             ) : (
               <LiveBomDock
                 estimate={estimate}

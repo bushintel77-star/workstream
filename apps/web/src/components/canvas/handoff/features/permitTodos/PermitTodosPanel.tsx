@@ -4,9 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   assessPlanningFromStudio,
   diffDesignTodos,
-  parseDesignTodoTrigger,
   planningToDesignTodos,
-  promptableDesignTodos,
   type DesignTodoDraft,
 } from "@workstream/domain";
 import type { StudioComplianceReport } from "@workstream/domain";
@@ -89,26 +87,6 @@ export function PermitTodosPanel({
     [tasks],
   );
 
-  const ambientAdvice = useMemo(() => {
-    const hot = promptableDesignTodos(drafts);
-    const openTriggers = new Set(
-      openDesignTasks
-        .map((t) => parseDesignTodoTrigger(t.technical_specifications))
-        .filter(Boolean),
-    );
-    return (
-      hot.find((d) => !openTriggers.has(d.trigger_id)) ??
-      hot[0] ??
-      (openDesignTasks[0]
-        ? {
-            title: openDesignTasks[0].title,
-            technical_specifications:
-              openDesignTasks[0].technical_specifications,
-          }
-        : null)
-    );
-  }, [drafts, openDesignTasks]);
-
   useEffect(() => {
     let cancelled = false;
     void listProjectTasksAction(projectId).then((list) => {
@@ -166,32 +144,9 @@ export function PermitTodosPanel({
 
   if (drafts.length === 0 && openDesignTasks.length === 0) return null;
 
-  // TRP / tree-root advice is carried by the green TPZ zone on the plan — no card.
-  const showAmbientCard =
-    ambientAdvice &&
-    !/tree root|tpz|protection/i.test(ambientAdvice.title ?? "");
-
+  // Council / TPZ meaning is on-plan (zone + hover), never a corner card.
   return (
     <div className={css.root} data-testid="permit-todos">
-      {showAmbientCard && ambientAdvice ? (
-        <aside
-          className={css.ambient}
-          data-testid="permit-prompt"
-          aria-label="Council advice"
-        >
-          <p className={css.ambientKicker}>Council</p>
-          <p className={css.ambientTitle}>{ambientAdvice.title}</p>
-          <p className={css.ambientDetail}>
-            {"technical_specifications" in ambientAdvice
-              ? detailFromSpec(
-                  ambientAdvice.technical_specifications ?? null,
-                ) ||
-                "Likely needs a permit or specialist check — listed in design to-dos."
-              : "Likely needs a permit or specialist check — listed in design to-dos."}
-          </p>
-        </aside>
-      ) : null}
-
       <section
         className={css.panel}
         data-testid="permit-todo-list"

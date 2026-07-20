@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import css from "./selectionRing.module.css";
 
@@ -32,13 +33,22 @@ export function SelectionRing({
   onAskAi,
 }: Props) {
   const def = BY_TYPE[item.t];
+  const half = Math.max(def.w, def.h) * (item.scale || 1) * 0.5;
+  /** Clear the glyph footprint — never intersect the selection centre. */
+  const orbitPx = Math.max(76, Math.round(half + 40));
 
   return (
     <div
       className={css.ring}
       data-testid="selection-ring"
       data-locked={locked ? "true" : "false"}
-      style={{ left: `${xPct}%`, top: `${yPct}%` }}
+      style={
+        {
+          left: `${xPct}%`,
+          top: `${yPct}%`,
+          "--orbit": `${orbitPx}px`,
+        } as CSSProperties
+      }
     >
       <button
         type="button"
