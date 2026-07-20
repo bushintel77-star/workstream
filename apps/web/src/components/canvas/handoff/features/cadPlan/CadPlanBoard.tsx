@@ -299,13 +299,15 @@ export function CadPlanBoard({
   /** Fit sheet working drawing: B + F. Stage 1 plate alone: B only. */
   const boundarySegs = edgeSegments(boundary, "B", scaleM);
   const buildingSegs = edgeSegments(building, "F", scaleM);
+  /*
+   * Progressive disclosure: the full dimension ring is a working-drawing detail,
+   * not idle chrome. Show it while editing, in the Fit sheet, in Stage 1 title
+   * mode, or in Survey — but let idle CAD (even a Vicmap-locked title) stay a
+   * calm drawing. Dims return in <=1 interaction (arm Edit / open Fit sheet).
+   */
   const showDims =
     !sketchPassthrough &&
-    (editing ||
-      frameOn ||
-      foundationCleanse ||
-      titleLocked ||
-      mode === "survey");
+    (editing || frameOn || foundationCleanse || mode === "survey");
   const contextLots =
     cadTitleMode && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);

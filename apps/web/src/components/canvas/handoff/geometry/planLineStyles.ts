@@ -27,9 +27,10 @@ export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
     dash: "5 3.5",
   },
   building: {
-    stroke: "#8B3A2F",
-    strokeWidth: 2.15,
-    fill: "rgba(139, 58, 47, 0.1)",
+    /* Soft blush-umber footprint — distinct from charcoal boundary, never alarm red. */
+    stroke: "#7A5560",
+    strokeWidth: 1.5,
+    fill: "rgba(122, 85, 96, 0.06)",
   },
   easement: {
     stroke: "#B45309",
@@ -105,7 +106,7 @@ export function planLinesFor(opts: {
       },
       building: {
         ...base.building,
-        strokeWidth: opts.fitSheet ? 1.65 : 2,
+        strokeWidth: opts.fitSheet ? 1.5 : 1.6,
       },
     };
   }
