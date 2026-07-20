@@ -133,7 +133,9 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     sunGrowth: sunScrubber,
     aiCoach: false,
     ambientRibbon: plan,
-    selectionRing: false,
+    /** Near-object niche carousel + compact selection hub */
+    selectionRing:
+      mode === "cad" || mode === "sketch" || mode === "survey",
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: false,

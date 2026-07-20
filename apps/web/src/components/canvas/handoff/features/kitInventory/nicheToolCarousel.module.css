@@ -1,0 +1,162 @@
+/*
+ * Near-object 180° niche carousel.
+ * Atelier motion: ~280ms enter, ~3s linger, ~700ms settle.
+ */
+
+.root {
+  --ink: #e8f0f8;
+  --ink-soft: rgba(232, 240, 248, 0.78);
+  --glass: rgba(26, 36, 48, 0.84);
+  --glass-border: rgba(232, 240, 248, 0.24);
+  --ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
+  --enter-ms: 280ms;
+  --exit-ms: 700ms;
+  --arc-radius: 48px;
+
+  position: absolute;
+  z-index: 28;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0.48;
+  transition: opacity var(--exit-ms) var(--ease-exit);
+}
+
+.root[data-phase="linger"] {
+  opacity: 0.88;
+  transition: opacity var(--exit-ms) var(--ease-exit);
+}
+
+.root[data-phase="open"] {
+  opacity: 1;
+  transition: opacity var(--enter-ms) var(--ease-enter);
+}
+
+.well {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+.slot {
+  pointer-events: auto;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40px;
+  min-height: 36px;
+  margin: -18px 0 0 -20px;
+  padding: 3px 0;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font: inherit;
+  box-shadow: 0 4px 14px rgba(26, 36, 48, 0.24);
+  opacity: 0.55;
+  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.55))
+    rotate(calc(-1 * var(--arc, 0deg))) scale(0.92);
+  pointer-events: none;
+  transition:
+    opacity var(--exit-ms) var(--ease-exit),
+    transform var(--exit-ms) var(--ease-exit),
+    background 200ms ease,
+    color 200ms ease;
+}
+
+.root[data-phase="open"] .slot,
+.root[data-phase="linger"] .slot {
+  opacity: 1;
+  pointer-events: auto;
+  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -1))
+    rotate(calc(-1 * var(--arc, 0deg)));
+}
+
+.root[data-phase="open"] .slot {
+  transition:
+    opacity var(--enter-ms) var(--ease-enter),
+    transform var(--enter-ms) var(--ease-enter),
+    background 200ms ease,
+    color 200ms ease;
+}
+
+.root[data-phase="rest"] .slot {
+  opacity: 0.4;
+  pointer-events: auto;
+  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.7))
+    rotate(calc(-1 * var(--arc, 0deg))) scale(0.94);
+}
+
+.root[data-phase="linger"] .slot:not(.slotOn) {
+  opacity: 0.78;
+}
+
+.slot:hover {
+  background: rgba(38, 52, 68, 0.92);
+  color: var(--ink);
+}
+
+.slotOn {
+  background: rgba(232, 240, 248, 0.94);
+  color: #1a2430;
+  border-color: rgba(232, 240, 248, 0.55);
+}
+
+.root[data-phase="open"] .slotOn,
+.root[data-phase="linger"] .slotOn {
+  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -1.12))
+    rotate(calc(-1 * var(--arc, 0deg))) scale(1.05);
+  opacity: 1;
+}
+
+.glyph {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.label {
+  font-size: 7px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  max-width: 36px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  max-height: 0;
+  transition:
+    opacity var(--exit-ms) var(--ease-exit),
+    max-height var(--exit-ms) var(--ease-exit);
+}
+
+.root[data-phase="open"] .label,
+.root[data-phase="linger"] .label {
+  opacity: 1;
+  max-height: 12px;
+}
+
+.root[data-phase="open"] .label {
+  transition:
+    opacity var(--enter-ms) var(--ease-enter),
+    max-height var(--enter-ms) var(--ease-enter);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .slot,
+  .label {
+    transition: none;
+  }
+}

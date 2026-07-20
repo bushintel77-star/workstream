@@ -140,7 +140,11 @@ export const BY_TYPE: Record<StudioItemType, TypeDef> = {
   },
 };
 
-/** 12 Wrights Terrace — handoff seed 0 */
+/**
+ * 12 Wrights Terrace — handoff demo seed (not live Vicmap hardscape).
+ * Real items: existing tree + proposed lawn + proposed bluestone paving.
+ * There is no “existing bluestone” type — only `exist` (tree) is survey-existing.
+ */
 export const WRIGHTS_SEED = {
   boundary: [
     { x: 36, y: 10 },
@@ -227,7 +231,10 @@ export const WRIGHTS_SEED = {
   ] as StudioItem[],
 };
 
-/** 14 Airlie Ave — handoff seed 1 */
+/**
+ * 14 Airlie Ave — handoff demo seed (not live Vicmap hardscape).
+ * Real items: proposed bluestone paving + hedge + mass plant bed.
+ */
 export const ARMADALE_SEED = {
   boundary: [
     { x: 32, y: 14 },

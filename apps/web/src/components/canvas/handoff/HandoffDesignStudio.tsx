@@ -52,6 +52,15 @@ import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { DesignKitInventory } from "./features/kitInventory/DesignKitInventory";
+import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
+import {
+  nicheActiveIdForItem,
+  nicheToolsForItem,
+  nicheToolsForZone,
+  zoneNicheActiveId,
+  type NicheTool,
+} from "./features/kitInventory/nicheTools";
+import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
@@ -148,6 +157,7 @@ export function HandoffDesignStudio({
     estimate,
     estimateSettling,
     workableOutdoorM2,
+    siteSchedule,
     acceptHorizonCard,
   } = studio;
   /** Prefer Turf workable outdoor; fall back to project / seed area. */
@@ -1223,7 +1233,10 @@ export function HandoffDesignStudio({
               onCancel={studio.cancelTrace}
               onPop={studio.popTracePoint}
             />
-            <MeasureOverlay active={ui.tool === "measure" && !ui.frameOn} />
+            <MeasureOverlay
+              active={ui.tool === "measure" && !ui.frameOn}
+              scaleM={scaleM}
+            />
             {(ui.mode === "cad" || ui.mode === "sketch") && !ui.frameOn ? (
               <ZoneOverlay
                 active={ui.tool === "zone"}
@@ -1233,52 +1246,20 @@ export function HandoffDesignStudio({
               />
             ) : null}
             {ui.tool === "zone" && !ui.focusOn && !ui.clientView ? (
-              <div
-                className={css.zoneKindBar}
-                data-testid="zone-kind-bar"
-                style={{
-                  left: `${Math.max(18, Math.min(82, instrumentAnchor.x))}%`,
-                  top: `${Math.max(10, Math.min(40, instrumentAnchor.y - 12))}%`,
+              <NicheToolCarousel
+                testId="zone-kind-bar"
+                label="Zone loadout"
+                xPct={Math.max(18, Math.min(82, instrumentAnchor.x))}
+                yPct={Math.max(14, Math.min(70, instrumentAnchor.y - 8))}
+                tools={nicheToolsForZone()}
+                activeId={zoneNicheActiveId(ui.zoneKind)}
+                onSelect={(tool: NicheTool) => {
+                  if (tool.id === "zone-drip") {
+                    studio.setUi({ zoneKind: "drip" });
+                  } else if (tool.id === "zone-lighting") {
+                    studio.setUi({ zoneKind: "lighting" });
+                  }
                 }}
-              >
-                <span className={css.zoneKitLabel}>Zone loadout</span>
-                <button
-                  type="button"
-                  className={`${css.zoneSlot}${ui.zoneKind === "drip" ? ` ${css.zoneSlotOn}` : ""}`}
-                  data-testid="zone-kind-drip"
-                  title="Drip irrigation path"
-                  onClick={() => studio.setUi({ zoneKind: "drip" })}
-                >
-                  <span className={css.zoneSlotGlyph} aria-hidden>
-                    〰
-                  </span>
-                  <span>Drip</span>
-                </button>
-                <button
-                  type="button"
-                  className={`${css.zoneSlot}${ui.zoneKind === "lighting" ? ` ${css.zoneSlotOn}` : ""}`}
-                  data-testid="zone-kind-lighting"
-                  title="Lighting path"
-                  onClick={() => studio.setUi({ zoneKind: "lighting" })}
-                >
-                  <span className={css.zoneSlotGlyph} aria-hidden>
-                    ✦
-                  </span>
-                  <span>Lighting</span>
-                </button>
-              </div>
-            ) : null}
-            {ui.tool === "paint" && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
-              <DesignKitInventory
-                variant="paint"
-                placement="dock"
-                testId="paint-swatch-bar"
-                slotTestIdPrefix="paint-swatch-"
-                types={paintKitTypes}
-                equipped={ui.paintSwatch}
-                onEquip={(t) =>
-                  studio.setUi({ paintSwatch: t, tool: "paint" })
-                }
               />
             ) : null}
             {(ui.tool === "edit" ||
@@ -1315,34 +1296,49 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {chrome.selectionRing && selectedLive ? (
-              <SelectionRing
-                item={selectedLive}
-                xPct={selectedLive.x}
-                yPct={selectedLive.y}
-                locked={ui.locked}
-                onMaterial={studio.changeSelectedType}
-                onOpacityPeel={() => {
-                  const bucket = ITEM_LAYER[selectedLive.t];
-                  const cur = ui.layerOpacity[bucket];
-                  studio.setLayerOpacity(bucket, cur < 0.4 ? 1 : 0.25);
-                }}
-                onParchmentPeel={
-                  liveAerial
-                    ? () => {
+            {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
+              <>
+                <NicheToolCarousel
+                  xPct={selectedLive.x}
+                  yPct={Math.max(10, selectedLive.y - 6)}
+                  tools={nicheToolsForItem(selectedLive, {
+                    locked: ui.locked,
+                  })}
+                  activeId={nicheActiveIdForItem(selectedLive)}
+                  onSelect={(tool: NicheTool) => {
+                    if (tool.kind === "material" && tool.material) {
+                      studio.changeSelectedType(tool.material);
+                      return;
+                    }
+                    if (tool.id === "lock") {
+                      studio.setTool(ui.locked ? "pan" : "lock");
+                      return;
+                    }
+                    if (tool.id === "peel") {
+                      if (liveAerial) {
                         const steps = [0.12, 0.28, 0.42, 0.62, 0.85];
                         const idx = steps.findIndex(
                           (s) => Math.abs(s - ui.parchmentPeel) < 0.05,
                         );
                         const next = steps[(idx + 1) % steps.length]!;
                         studio.setUi({ parchmentPeel: next });
+                        return;
                       }
-                    : undefined
-                }
-                onToggleLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
-                onDelete={studio.deleteSelected}
-                onClose={() => studio.setSelection(null, [])}
-              />
+                      const bucket = ITEM_LAYER[selectedLive.t];
+                      const cur = ui.layerOpacity[bucket];
+                      studio.setLayerOpacity(bucket, cur < 0.4 ? 1 : 0.25);
+                    }
+                  }}
+                />
+                <SelectionRing
+                  item={selectedLive}
+                  xPct={selectedLive.x}
+                  yPct={selectedLive.y}
+                  locked={ui.locked}
+                  onDelete={studio.deleteSelected}
+                  onClose={() => studio.setSelection(null, [])}
+                />
+              </>
             ) : null}
             {chrome.tradeMargin && selectedTradeTag && selectedLive ? (
               <TradeSkuTag
@@ -1418,10 +1414,26 @@ export function HandoffDesignStudio({
         ) : null}
 
 
+        {ui.tool === "paint" &&
+        planOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn ? (
+          <DesignKitInventory
+            variant="paint"
+            testId="paint-swatch-bar"
+            slotTestIdPrefix="paint-swatch-"
+            types={paintKitTypes}
+            equipped={ui.paintSwatch}
+            onEquip={(t) =>
+              studio.setUi({ paintSwatch: t, tool: "paint" })
+            }
+          />
+        ) : null}
+
         {ui.addOpen && planOn && !ui.focusOn && ui.mode !== "sketch" ? (
           <DesignKitInventory
             variant="add"
-            placement="dock"
             testId="add-symbol-strip"
             slotTestIdPrefix="add-symbol-"
             types={addKitTypes}
@@ -1468,6 +1480,21 @@ export function HandoffDesignStudio({
             dbhM={selectedLive.dbhM ?? ui.existDbhM}
             locked={ui.locked}
             onDbhM={studio.patchSelectedDbh}
+          />
+        ) : null}
+
+        {planOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        !ui.foundationCleanse ? (
+          <LiveMeasuresRail
+            boundary={studio.boundary}
+            building={studio.building}
+            items={studio.items}
+            scaleM={scaleM}
+            schedule={siteSchedule}
+            selected={selectedLive}
           />
         ) : null}
 

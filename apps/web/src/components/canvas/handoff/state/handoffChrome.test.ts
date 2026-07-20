@@ -36,7 +36,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(false);
     expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
-    expect(c.selectionRing).toBe(false);
+    expect(c.selectionRing).toBe(true);
     expect(c.draftSurface).toBe(false);
   });
 
@@ -76,7 +76,7 @@ describe("resolveHandoffChrome", () => {
     });
     expect(c.collapseUtility).toBe(true);
     expect(c.horizon).toBe(false);
-    expect(c.selectionRing).toBe(false);
+    expect(c.selectionRing).toBe(true);
   });
 
   it("Quote keeps estimate path without draw chrome", () => {

@@ -1,18 +1,7 @@
 "use client";
 
-import { BY_TYPE, type StudioItem, type StudioItemType } from "../../studioCatalog";
+import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import css from "./selectionRing.module.css";
-
-const MATERIALS: StudioItemType[] = [
-  "paving",
-  "deck",
-  "lawn",
-  "bed",
-  "hedge",
-  "canopy",
-  "feature",
-  "frenchdrain",
-];
 
 type Props = {
   item: StudioItem;
@@ -20,26 +9,19 @@ type Props = {
   xPct: number;
   yPct: number;
   locked: boolean;
-  onMaterial: (t: StudioItemType) => void;
-  onOpacityPeel: () => void;
-  onParchmentPeel?: () => void;
-  onToggleLock: () => void;
   onDelete: () => void;
   onClose: () => void;
 };
 
 /**
- * Contextual canvas ring — radial micro-UI under the selection, zero sidebar.
+ * Compact selection hub — delete / deselect.
+ * Material + peel + lock live on the near-object niche carousel.
  */
 export function SelectionRing({
   item,
   xPct,
   yPct,
   locked,
-  onMaterial,
-  onOpacityPeel,
-  onParchmentPeel,
-  onToggleLock,
   onDelete,
   onClose,
 }: Props) {
@@ -49,33 +31,10 @@ export function SelectionRing({
     <div
       className={css.ring}
       data-testid="selection-ring"
+      data-locked={locked ? "true" : "false"}
       style={{ left: `${xPct}%`, top: `${yPct}%` }}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
-        className={`${css.node} ${css.north}`}
-        title="Material"
-        aria-label="Change material"
-        onClick={() => {
-          const idx = MATERIALS.indexOf(item.t);
-          const next = MATERIALS[(idx + 1) % MATERIALS.length]!;
-          onMaterial(next);
-        }}
-      >
-        <span className={css.nodeKicker}>Material</span>
-        <span className={css.nodeVal}>{def.tag}</span>
-      </button>
-
-      <button
-        type="button"
-        className={`${css.node} ${css.east}`}
-        title={onParchmentPeel ? "Parchment peel" : "Layer opacity peel"}
-        onClick={onParchmentPeel ?? onOpacityPeel}
-      >
-        Peel
-      </button>
-
       <button
         type="button"
         className={`${css.node} ${css.west}`}
@@ -83,15 +42,6 @@ export function SelectionRing({
         onClick={onDelete}
       >
         Delete
-      </button>
-
-      <button
-        type="button"
-        className={`${css.node} ${css.south}`}
-        title="Constraint lock"
-        onClick={onToggleLock}
-      >
-        {locked ? "Unlock" : "Lock"}
       </button>
 
       <button

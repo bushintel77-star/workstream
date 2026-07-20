@@ -1,0 +1,160 @@
+/*
+ * Live measures — right gutter telemetry, off the drawing.
+ * Numbers flash softly when geometry changes (alive plan, not static sheet).
+ */
+
+.rail {
+  --ink: #e8f0f8;
+  --ink-soft: rgba(232, 240, 248, 0.7);
+  --glass: rgba(26, 36, 48, 0.78);
+  --glass-border: rgba(232, 240, 248, 0.2);
+  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+
+  position: absolute;
+  z-index: 15;
+  right: calc(var(--ws-safe-right, 12px) + 4px);
+  /* Mid-right — clears the utility hub up top */
+  top: 50%;
+  transform: translateY(-42%);
+  width: min(168px, 28vw);
+  max-height: min(52vh, 480px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 9px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(16px) saturate(1.05);
+  box-shadow: 0 8px 24px rgba(26, 36, 48, 0.28);
+  color: var(--ink);
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.srLive {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  min-height: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.groupTitle {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 240, 248, 0.45);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 22px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition:
+    background 280ms var(--ease),
+    color 280ms var(--ease);
+}
+
+.row:hover {
+  background: rgba(232, 240, 248, 0.06);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 550;
+  color: var(--ink-soft);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  flex: none;
+  letter-spacing: 0.01em;
+}
+
+.flash {
+  background: rgba(232, 240, 248, 0.12);
+}
+
+.flash .value {
+  color: #fff8e8;
+}
+
+.group[data-group="selection"] .row {
+  background: rgba(232, 240, 248, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .rail {
+    width: min(140px, 34vw);
+    max-height: 42vh;
+    top: auto;
+    bottom: calc(var(--ws-safe-bottom, 36px) + 8px);
+  }
+
+  .label {
+    font-size: 10px;
+  }
+
+  .value {
+    font-size: 11px;
+  }
+}

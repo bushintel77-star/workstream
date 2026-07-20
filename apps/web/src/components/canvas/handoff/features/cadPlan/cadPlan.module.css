@@ -139,13 +139,14 @@
   z-index: 6;
 }
 
-/* Discreet off-drawing dims — ink only, no chip on the line. */
+/* Off-drawing dims — readable floor for live plan work (not print-only 8px). */
 .dimLabel {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8.5px;
-  font-weight: 500;
+  font-size: var(--ws-type-dim, 11px);
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: rgba(28, 25, 23, 0.72);
+  color: rgba(28, 25, 23, 0.88);
   background: transparent;
   border: none;
   border-radius: 0;
@@ -154,8 +155,8 @@
   margin-top: 0;
   box-shadow: none;
   text-shadow:
-    0 0 3px rgba(242, 240, 235, 0.95),
-    0 0 6px rgba(242, 240, 235, 0.7);
+    0 0 4px rgba(242, 240, 235, 0.98),
+    0 0 8px rgba(242, 240, 235, 0.85);
 }
 
 /* CAD property-boundary language (REA concept, not REA chrome). */
@@ -175,10 +176,11 @@
   align-items: baseline;
   gap: 5px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8.5px;
-  font-weight: 500;
+  font-size: var(--ws-type-dim, 11px);
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: rgba(28, 25, 23, 0.78);
+  color: rgba(28, 25, 23, 0.9);
   background: transparent;
   border: none;
   border-radius: 0;
@@ -187,20 +189,20 @@
   margin-top: 0;
   box-shadow: none;
   text-shadow:
-    0 0 3px rgba(242, 240, 235, 0.95),
-    0 0 6px rgba(242, 240, 235, 0.7);
+    0 0 4px rgba(242, 240, 235, 0.98),
+    0 0 8px rgba(242, 240, 235, 0.85);
 }
 
 .cadDimKey {
-  font-size: 7.5px;
+  font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6b6560;
+  color: #5b6b7a;
 }
 
 .cadDimBearing {
-  font-size: 7.5px;
-  color: #6b6560;
+  font-size: 9px;
+  color: #5b6b7a;
 }
 
 .cadCorner {
@@ -241,23 +243,24 @@
 
 .cadAreaValue {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 500;
-  color: rgba(28, 25, 23, 0.78);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(28, 25, 23, 0.9);
   background: transparent;
   padding: 0;
   line-height: 1.1;
   text-shadow:
-    0 0 3px rgba(242, 240, 235, 0.95),
-    0 0 6px rgba(242, 240, 235, 0.7);
+    0 0 4px rgba(242, 240, 235, 0.98),
+    0 0 8px rgba(242, 240, 235, 0.85);
 }
 
 .cadAreaMeta {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 7.5px;
+  font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b6560;
+  color: #5b6b7a;
   background: transparent;
   padding: 0;
   text-shadow: 0 0 3px rgba(242, 240, 235, 0.9);

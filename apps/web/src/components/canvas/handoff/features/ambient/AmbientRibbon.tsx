@@ -15,6 +15,7 @@ import {
   type StudioTool,
 } from "../../studioCatalog";
 import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
+import { ATELIER_LINGER_MS } from "../kitInventory/atelierPresence";
 import { playInstrumentTick } from "./instrumentTick";
 import css from "./ambientRibbon.module.css";
 
@@ -62,7 +63,6 @@ const DRAFTING: ReadonlySet<string> = new Set([
 ]);
 
 const PROX_PCT = 14;
-const FADE_MS = 900;
 
 type Phase = "shadow" | "awake" | "carousel" | "armed";
 
@@ -129,7 +129,7 @@ export function AmbientRibbon({
     fadeTimer.current = setTimeout(() => {
       setLingering(false);
       fadeTimer.current = null;
-    }, FADE_MS);
+    }, ATELIER_LINGER_MS);
   }, [clearFade]);
 
   useEffect(() => {

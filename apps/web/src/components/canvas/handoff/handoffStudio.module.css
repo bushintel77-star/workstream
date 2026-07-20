@@ -41,12 +41,14 @@
   --ws-sheet-margin: 8px;
   --ws-title-w: 240px;
   --ws-title-gap: 12px;
-  --ws-safe-left: 56px;
+  /* Left gutter holds the kit carousel — keep drawing clear of it */
+  --ws-safe-left: 72px;
   --ws-safe-top: 40px;
   --ws-safe-right: 12px;
   --ws-safe-bottom: 36px;
   --ws-type-kicker: 8px;
-  --ws-type-dim: 9px;
+  /* Live plan dims — readable on screen; print can go smaller later */
+  --ws-type-dim: 11px;
   --ws-type-hud: 11px;
   --ws-type-title: 15px;
 

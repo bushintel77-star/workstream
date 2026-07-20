@@ -1,47 +1,56 @@
 /*
- * Design kit — game inventory logic (slots, bags, equipped), not Office chips.
- * Cool slate glass so it reads on blush parchment.
+ * Main design kit — vertical stack, left gutter.
+ * Atelier motion: ~280ms enter, ~3s linger hold, ~700ms settle to rest.
  */
 
 .root {
   --ink: #e8f0f8;
   --ink-soft: rgba(232, 240, 248, 0.72);
-  --glass: rgba(26, 36, 48, 0.82);
+  --glass: rgba(26, 36, 48, 0.84);
   --glass-border: rgba(232, 240, 248, 0.22);
   --slot: 44px;
-  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  --ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
+  --enter-ms: 280ms;
+  --exit-ms: 700ms;
+
+  position: absolute;
   z-index: 16;
+  left: calc(var(--ws-safe-left, 72px) - 56px);
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: min(320px, calc(100% - 48px));
-  padding: 8px 9px 9px;
-  border-radius: 12px;
+  width: 56px;
+  padding: 8px 6px;
+  border-radius: 14px;
   border: 1px solid var(--glass-border);
   background: var(--glass);
   backdrop-filter: blur(16px) saturate(1.05);
-  box-shadow: 0 10px 28px rgba(26, 36, 48, 0.32);
+  box-shadow: 0 10px 28px rgba(26, 36, 48, 0.3);
   color: var(--ink);
-  animation: kitIn 200ms var(--ease) both;
+  pointer-events: auto;
+  opacity: 0.48;
+  transition:
+    opacity var(--exit-ms) var(--ease-exit),
+    width var(--exit-ms) var(--ease-exit);
 }
 
-.docked {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
-  transform: translateX(-50%);
+.root[data-phase="linger"] {
+  opacity: 0.88;
+  width: 56px;
+  transition:
+    opacity var(--exit-ms) var(--ease-exit),
+    width var(--exit-ms) var(--ease-exit);
 }
 
-.anchored {
-  position: absolute;
-  transform: translate(-50%, -50%);
-}
-
-.head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+.root[data-phase="open"] {
+  opacity: 1;
+  width: min(168px, calc(100vw - 24px));
+  transition:
+    opacity var(--enter-ms) var(--ease-enter),
+    width var(--enter-ms) var(--ease-enter);
 }
 
 .kicker {
@@ -51,79 +60,89 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-soft);
-}
-
-.equippedLabel {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 650;
-  color: var(--ink);
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  overflow: hidden;
+  opacity: 0;
+  max-height: 0;
+  transition:
+    opacity var(--exit-ms) var(--ease-exit),
+    max-height var(--exit-ms) var(--ease-exit);
 }
 
-.equippedRow {
+.root[data-phase="open"] .kicker {
+  opacity: 1;
+  max-height: 14px;
+  transition:
+    opacity var(--enter-ms) var(--ease-enter),
+    max-height var(--enter-ms) var(--ease-enter);
+}
+
+.equipped {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 6px;
-  border-radius: 10px;
-  background: rgba(232, 240, 248, 0.06);
-  border: 1px solid rgba(232, 240, 248, 0.12);
+  gap: 6px;
+  min-height: var(--slot);
 }
 
 .equippedSlot {
   width: var(--slot);
   height: var(--slot);
-  border-radius: 8px;
-  border: 1.5px solid rgba(232, 240, 248, 0.55);
+  border-radius: 10px;
+  border: 1.5px solid rgba(232, 240, 248, 0.5);
   background: rgba(232, 240, 248, 0.08);
   display: grid;
   place-items: center;
   flex: none;
-  box-shadow: inset 0 0 0 1px rgba(26, 36, 48, 0.35);
 }
 
 .equippedMeta {
   min-width: 0;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 1px;
 }
 
+.root[data-phase="open"] .equippedMeta {
+  display: flex;
+}
+
 .equippedName {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 650;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .equippedHint {
   margin: 0;
-  font-size: 9.5px;
+  font-size: 9px;
   color: var(--ink-soft);
   line-height: 1.3;
 }
 
 .bags {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 3px;
 }
 
+.root[data-phase="open"] .bags {
+  display: flex;
+}
+
 .bag {
-  min-height: 26px;
-  padding: 0 8px;
-  border-radius: 7px;
+  min-height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 650;
-  letter-spacing: 0.02em;
   cursor: pointer;
 }
 
@@ -135,38 +154,49 @@
 .bagOn {
   color: #1a2430;
   background: rgba(232, 240, 248, 0.92);
-  border-color: rgba(232, 240, 248, 0.92);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(5, var(--slot));
-  gap: 5px;
-  justify-content: start;
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
 
 .slot {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   width: var(--slot);
-  height: var(--slot);
+  min-height: var(--slot);
   padding: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid rgba(232, 240, 248, 0.2);
   background: rgba(12, 16, 22, 0.45);
   cursor: pointer;
-  display: grid;
-  place-items: center;
   color: var(--ink);
   transition:
-    border-color 140ms ease,
-    background 140ms ease,
-    transform 140ms var(--ease);
+    border-color 200ms ease,
+    background 200ms ease,
+    width var(--exit-ms) var(--ease-exit);
+}
+
+.root[data-phase="open"] .slot {
+  width: 100%;
+  padding: 0 8px 0 0;
+  transition:
+    border-color 200ms ease,
+    background 200ms ease,
+    width var(--enter-ms) var(--ease-enter);
 }
 
 .slot:hover {
   border-color: rgba(232, 240, 248, 0.45);
   background: rgba(38, 52, 68, 0.75);
-  transform: translateY(-1px);
 }
 
 .slot:focus-visible {
@@ -178,15 +208,37 @@
   border-color: rgba(232, 240, 248, 0.85);
   background: rgba(232, 240, 248, 0.14);
   box-shadow:
-    0 0 0 1px rgba(232, 240, 248, 0.35),
-    inset 0 0 0 1px rgba(232, 240, 248, 0.2);
+    0 0 0 1px rgba(232, 240, 248, 0.3),
+    inset 0 0 0 1px rgba(232, 240, 248, 0.15);
 }
 
 .glyph {
   width: 28px;
   height: 28px;
+  margin: 0 auto;
+  flex: none;
   pointer-events: none;
+  display: grid;
+  place-items: center;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
+.root[data-phase="open"] .glyph {
+  margin: 0 0 0 8px;
+}
+
+.slotLabel {
+  display: none;
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.root[data-phase="open"] .slotLabel {
+  display: block;
 }
 
 .hotkey {
@@ -196,15 +248,39 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 8px;
   font-weight: 700;
-  color: rgba(232, 240, 248, 0.55);
+  color: rgba(232, 240, 248, 0.5);
   line-height: 1;
   pointer-events: none;
 }
 
 .inspect {
+  min-height: 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0;
+  border-top: 1px solid transparent;
+  transition:
+    opacity var(--exit-ms) var(--ease-exit),
+    max-height var(--exit-ms) var(--ease-exit),
+    padding var(--exit-ms) var(--ease-exit);
+}
+
+/* Keep inspect readable through linger; collapse only at rest */
+.root[data-phase="open"] .inspect,
+.root[data-phase="linger"] .inspect {
   min-height: 28px;
+  max-height: 56px;
+  opacity: 1;
   padding: 4px 2px 0;
-  border-top: 1px solid rgba(232, 240, 248, 0.1);
+  border-top-color: rgba(232, 240, 248, 0.1);
+}
+
+.root[data-phase="open"] .inspect {
+  transition:
+    opacity var(--enter-ms) var(--ease-enter),
+    max-height var(--enter-ms) var(--ease-enter),
+    padding var(--enter-ms) var(--ease-enter);
 }
 
 .inspectName {
@@ -222,64 +298,40 @@
 }
 
 .footer {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.root[data-phase="open"] .footer {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
 }
 
 .hint {
   margin: 0;
-  flex: 1 1 100%;
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
   color: rgba(232, 240, 248, 0.55);
   letter-spacing: 0.02em;
-}
-
-@keyframes kitIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 6px));
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
-.docked {
-  animation-name: kitInDock;
-}
-
-@keyframes kitInDock {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 8px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+  line-height: 1.35;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .root {
-    animation: none;
-  }
-
-  .slot {
+  .root,
+  .slot,
+  .kicker,
+  .inspect {
     transition: none;
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 720px) {
   .root {
+    left: 6px;
     --slot: 40px;
-    width: min(280px, calc(100% - 32px));
   }
 
-  .grid {
-    grid-template-columns: repeat(4, var(--slot));
+  .root[data-phase="open"] {
+    width: min(148px, calc(100vw - 16px));
   }
 }
