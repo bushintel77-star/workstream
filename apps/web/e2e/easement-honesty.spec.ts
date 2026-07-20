@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { handoffStudio, LEGACY_STUDIO_VIEWPORT } from "./helpers";
+import {
+  handoffStudio,
+  LEGACY_STUDIO_VIEWPORT,
+  summonCanvasInstruments,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -113,8 +117,10 @@ test.describe("Easement honesty loop", () => {
       timeout: 15_000,
     });
 
+    await summonCanvasInstruments(page);
     await page.getByTestId("canvas-tool-service").click();
     const layer = page.getByTestId("survey-annotation-layer");
+    await expect(layer).toHaveAttribute("data-capturing", "true");
     const box = await layer.boundingBox();
     expect(box).toBeTruthy();
     if (!box) return;
@@ -126,14 +132,19 @@ test.describe("Easement honesty loop", () => {
       );
     };
 
-    await clickPct(72, 14);
-    await clickPct(88, 14);
-    await clickPct(88, 32);
-    await clickPct(72, 32);
+    await clickPct(40, 40);
+    await clickPct(60, 40);
+    await clickPct(60, 60);
+    await clickPct(40, 60);
+    await expect(page.getByTestId("survey-service-hint")).toContainText("4 pts");
     await page.keyboard.press("Enter");
+    await expect(page.getByTestId("survey-service-hint")).toHaveCount(0);
 
-    // Autosave debounce (1100ms) + network — wait for durable site_frame
-    await page.waitForTimeout(2500);
+    await expect(page.getByTestId("autosave-tick")).toHaveAttribute(
+      "data-status",
+      "saved",
+      { timeout: 15_000 },
+    );
 
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({

@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BY_TYPE,
   MODE_TABS,
@@ -102,6 +103,7 @@ import {
   zoomFromWheel,
 } from "./geometry/canvasZoom";
 import { lookupCadastralTitleAction } from "../../../app/actions";
+import { useToast } from "../../ToastHost";
 import { suggestedMode, unlockedModes } from "../../../lib/canvas-mode";
 import css from "./handoffStudio.module.css";
 
@@ -142,6 +144,8 @@ export function HandoffDesignStudio({
   quotePortalUri = null,
   initialTitleBlock = null,
 }: Props) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const fallbackOutdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
     projectId,
@@ -156,6 +160,7 @@ export function HandoffDesignStudio({
     initialSiteFrame,
     initialIrrigationZones,
   });
+  const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
     useState<GridFormation | null>(null);
   const [gridPreviewInk, setGridPreviewInk] = useState<GridInk | null>(null);
@@ -173,6 +178,7 @@ export function HandoffDesignStudio({
   /** Prefer Turf workable outdoor; fall back to project / seed area. */
   const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
+  const lastSaveToast = useRef(0);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
@@ -218,6 +224,17 @@ export function HandoffDesignStudio({
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
   }, []);
+
+  useEffect(() => {
+    if (ui.saveStatus !== "saved" || ui.savedTick === 0) return;
+    if (lastSaveToast.current === ui.savedTick) return;
+    lastSaveToast.current = ui.savedTick;
+    toast.show(
+      "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
+      "success",
+      5000,
+    );
+  }, [toast, ui.saveStatus, ui.savedTick]);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -679,6 +696,17 @@ export function HandoffDesignStudio({
     if (mode === "share") return "Generate a quote before sharing.";
     return "Complete the previous stage first.";
   };
+
+  const setCanvasMode = (mode: StudioMode) => {
+    studio.setMode(mode);
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("mode", mode);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${pathname}?${next.toString()}`,
+    );
+  };
   /**
    * Instrument + inventory home — margin pin only (never lot core).
    */
@@ -773,7 +801,7 @@ export function HandoffDesignStudio({
                 aria-disabled={locked}
                 title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
                 onClick={() => {
-                  if (!locked) studio.setMode(m);
+                  if (!locked) setCanvasMode(m);
                 }}
               >
                 {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
@@ -1070,10 +1098,13 @@ export function HandoffDesignStudio({
               className={`${css.savedTick} ${css.savedTickButton}`}
               data-testid="autosave-tick"
               data-status={ui.saveStatus}
-              onClick={studio.retrySave}
-              title="Retry save"
+              onClick={() => {
+                void studio.saveNow().catch(() => {
+                  toast.show("Canvas save failed. Try again before leaving.", "error");
+                });
+              }}
             >
-              Retry
+              Retry save
             </button>
           ) : (
             <span
@@ -1096,6 +1127,9 @@ export function HandoffDesignStudio({
         data-testid="studio-board"
         ref={boardRef}
       >
+        <div className={css.honestyCaption}>
+          Concept sketch for estimating — not a construction drawing.
+        </div>
         {ui.mode === "elevation" ? (
           <ElevationBoard
             axis={ui.elevAxis}

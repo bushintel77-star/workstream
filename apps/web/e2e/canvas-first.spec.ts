@@ -8,7 +8,7 @@ const API = process.env.API_URL ?? "http://localhost:3001";
  * CAD exposes utility Live cost; Share hides floating cost chrome.
  */
 test.describe("Canvas-first mode chrome", () => {
-  test("Sketch hides Live BOM; CAD shows utility cost hub", async ({
+  test("Sketch and idle CAD hide cost chrome; Share stays locked before quote", async ({
     page,
     request,
   }) => {
@@ -57,8 +57,8 @@ test.describe("Canvas-first mode chrome", () => {
       });
     }
 
-    await page.getByTestId("canvas-mode-share").click();
-    await expect(page).toHaveURL(/mode=share/);
+    // Progressive disclosure: Share is unavailable until a quote is persisted.
+    await expect(page.getByTestId("canvas-mode-share")).toBeDisabled();
     await expect(page.getByTestId("live-bom-hud")).toHaveCount(0);
   });
 });

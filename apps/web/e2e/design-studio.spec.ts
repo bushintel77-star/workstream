@@ -1,15 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
-import { handoffStudio, LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
-
-async function openCommandPalette(page: Page) {
-  await page.getByTestId("canvas-command-top").evaluate((el) => {
-    (el as HTMLButtonElement).click();
-  });
-  await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
-    timeout: 15_000,
-  });
-}
+import { expect, test } from "@playwright/test";
+import {
+  handoffStudio,
+  LEGACY_STUDIO_VIEWPORT,
+  openCommandPalette,
+  pipelineShell,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -98,11 +94,10 @@ test.describe("Design studio (sketch mode)", () => {
     });
     await openCommandPalette(page);
     await page.getByLabel("Command search").fill("place bluestone");
-    await expect(
-      page.getByRole("option", { name: /Place Bluestone/i }),
-    ).toBeVisible();
-    await page.keyboard.press("Enter");
-    await expect(page.getByTestId("add-symbol-strip")).toBeVisible({
+    const armPaving = page.getByTestId("canvas-command-arm-paving");
+    await expect(armPaving).toBeVisible();
+    await armPaving.click();
+    await expect(page.getByTestId("kit-asset-dock")).toBeVisible({
       timeout: 10_000,
     });
   });

@@ -1,5 +1,5 @@
 import { PipelineShellLoading } from "../../../../components/PipelineShellLoading";
 
 export default function ProcessingLoading() {
-  return <PipelineShellLoading label="Loading processing" />;
+  return <PipelineShellLoading label="Loading pipeline stages" />;
 }

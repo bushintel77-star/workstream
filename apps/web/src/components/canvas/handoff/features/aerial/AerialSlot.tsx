@@ -88,10 +88,14 @@ export function AerialSlot({
   const imgRef = useRef<HTMLImageElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [aerialReady, setAerialReady] = useState(false);
+  const [aerialError, setAerialError] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
   const scannedFor = useRef<string | null>(null);
 
   useEffect(() => {
     setAerialReady(false);
+    setAerialError(false);
+    setRetryNonce(0);
   }, [uri]);
 
   const runCanopyScan = useCallback(
@@ -232,6 +236,7 @@ export function AerialSlot({
       {showAerial && uri ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          key={retryNonce}
           ref={imgRef}
           src={uri}
           alt=""
@@ -248,8 +253,33 @@ export function AerialSlot({
                     : Math.max(0.55, 1 - parchmentPeel * 0.35),
           }}
           draggable={false}
-          onLoad={() => setAerialReady(true)}
+          onLoad={() => {
+            setAerialError(false);
+            setAerialReady(true);
+          }}
+          onError={() => {
+            setAerialReady(false);
+            setAerialError(true);
+          }}
         />
+      ) : null}
+
+      {showAerial && aerialError ? (
+        <div className={css.errorPanel} role="alert">
+          <p className={css.primaryText}>Aerial image failed to load</p>
+          <p className={css.metaText}>Check the source or retry the survey underlay</p>
+          <button
+            type="button"
+            className={css.retryButton}
+            onClick={(event) => {
+              event.stopPropagation();
+              setAerialError(false);
+              setRetryNonce((value) => value + 1);
+            }}
+          >
+            Retry image
+          </button>
+        </div>
       ) : null}
 
       {showDropCue ? (
