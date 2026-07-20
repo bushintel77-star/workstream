@@ -20,6 +20,13 @@ import {
   ATELIER_LINGER_MS,
   type AtelierPhase,
 } from "./atelierPresence";
+import {
+  KIT_HUB_ICONS,
+  kitHubIconById,
+  loadKitHubIconId,
+  saveKitHubIconId,
+  type KitHubIconId,
+} from "./kitHubIcons";
 import css from "./designKitInventory.module.css";
 
 type Props = {
@@ -37,7 +44,8 @@ type Props = {
 
 /**
  * Main design kit — vertical stack in the left gutter (off the drawing).
- * Atelier presence: ease in, hold after leave, slowly settle to rest.
+ * Hub mark is personalisable (garden tools). Hover skims; click keeps.
+ * Stays present while the mode is armed — atelier timing, not combat fade.
  */
 export function DesignKitInventory({
   variant,
@@ -53,8 +61,17 @@ export function DesignKitInventory({
   const [hover, setHover] = useState(false);
   const [lingering, setLingering] = useState(true);
   const [inspectHover, setInspectHover] = useState<StudioItemType | null>(null);
+  const [hubIconId, setHubIconId] = useState<KitHubIconId>("spade");
+  const [hubPickerOpen, setHubPickerOpen] = useState(false);
+  const [hubSkimId, setHubSkimId] = useState<KitHubIconId | null>(null);
   const lingerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoverRef = useRef(false);
+
+  useEffect(() => {
+    setHubIconId(loadKitHubIconId());
+  }, []);
+
+  const hubIcon = kitHubIconById(hubSkimId ?? hubIconId);
 
   const bags = useMemo(() => {
     return [
@@ -90,7 +107,7 @@ export function DesignKitInventory({
     }
   }, []);
 
-  /** After disengage — hold readable, then settle to rest (no snap). */
+  /** Compact after hold — never hide while mounted. */
   const beginLinger = useCallback(() => {
     clearLinger();
     setLingering(true);
@@ -105,7 +122,6 @@ export function DesignKitInventory({
     setLingering(true);
   }, [clearLinger]);
 
-  // Mode / equip change: wake to linger (not a combat snap), then hold.
   useEffect(() => {
     if (hoverRef.current) {
       stayEngaged();
@@ -120,6 +136,15 @@ export function DesignKitInventory({
     : lingering
       ? "linger"
       : "rest";
+
+  const keepHubIcon = (id: KitHubIconId) => {
+    setHubIconId(id);
+    setHubSkimId(null);
+    saveKitHubIconId(id);
+    setHubPickerOpen(false);
+    playInstrumentTick("arm");
+    stayEngaged();
+  };
 
   const cycle = useCallback(
     (dir: 1 | -1) => {
@@ -153,6 +178,8 @@ export function DesignKitInventory({
         hoverRef.current = false;
         setHover(false);
         setInspectHover(null);
+        setHubPickerOpen(false);
+        setHubSkimId(null);
         beginLinger();
       }}
       onWheel={(e) => {
@@ -165,23 +192,83 @@ export function DesignKitInventory({
         {variant === "paint" ? "Paint loadout" : "Design kit"}
       </p>
 
-      <div className={css.equipped} data-testid={`${testId}-equipped`}>
-        <div className={css.equippedSlot} aria-hidden>
-          {equippedType ? (
-            <span className={css.glyph}>
-              <StudioGlyph type={equippedType} ink />
-            </span>
-          ) : null}
-        </div>
-        <div className={css.equippedMeta}>
-          <p className={css.equippedName}>
-            {equippedType ? BY_TYPE[equippedType].tag : "Select"}
-          </p>
-          <p className={css.equippedHint}>
-            {variant === "paint" ? "Click shape to fill" : "Click lot to place"}
-          </p>
+      <div className={css.hubRow}>
+        <button
+          type="button"
+          className={css.hub}
+          data-testid={`${testId}-hub`}
+          title={`${hubIcon.label} · hover to change`}
+          aria-label={`Kit mark · ${hubIcon.label}. Hover to skim garden tools, click to keep`}
+          aria-expanded={hubPickerOpen}
+          onMouseEnter={() => setHubPickerOpen(true)}
+          onFocus={() => setHubPickerOpen(true)}
+          onClick={() => {
+            setHubPickerOpen((o) => !o);
+            playInstrumentTick("step");
+          }}
+        >
+          <span className={css.hubGlyph} aria-hidden>
+            {hubIcon.glyph}
+          </span>
+        </button>
+
+        <div className={css.equipped} data-testid={`${testId}-equipped`}>
+          <div className={css.equippedSlot} aria-hidden>
+            {equippedType ? (
+              <span className={css.glyph}>
+                <StudioGlyph type={equippedType} ink />
+              </span>
+            ) : (
+              <span className={css.equippedEmpty}>◇</span>
+            )}
+          </div>
+          <div className={css.equippedMeta}>
+            <p className={css.equippedName}>
+              {equippedType ? BY_TYPE[equippedType].tag : "Select"}
+            </p>
+            <p className={css.equippedHint}>
+              {variant === "paint"
+                ? "Hover to skim · click to keep"
+                : "Hover to skim · click to keep"}
+            </p>
+          </div>
         </div>
       </div>
+
+      {hubPickerOpen ? (
+        <div
+          className={css.hubPicker}
+          data-testid={`${testId}-hub-picker`}
+          role="listbox"
+          aria-label="Kit mark"
+        >
+          {KIT_HUB_ICONS.map((icon) => {
+            const on = icon.id === hubIconId;
+            const skim = icon.id === hubSkimId;
+            return (
+              <button
+                key={icon.id}
+                type="button"
+                role="option"
+                aria-selected={on}
+                className={`${css.hubOption}${on ? ` ${css.hubOptionOn}` : ""}${skim ? ` ${css.hubOptionSkim}` : ""}`}
+                data-testid={`kit-hub-icon-${icon.id}`}
+                title={`${icon.label}${on ? " · kept" : " · click to keep"}`}
+                onMouseEnter={() => setHubSkimId(icon.id)}
+                onMouseLeave={() => setHubSkimId(null)}
+                onFocus={() => setHubSkimId(icon.id)}
+                onBlur={() => setHubSkimId(null)}
+                onClick={() => keepHubIcon(icon.id)}
+              >
+                <span className={css.hubOptionGlyph} aria-hidden>
+                  {icon.glyph}
+                </span>
+                <span className={css.hubOptionLabel}>{icon.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {bags.length > 2 ? (
         <div className={css.bags} role="tablist" aria-label="Kit bags">
@@ -209,6 +296,7 @@ export function DesignKitInventory({
       <div className={css.stack} role="listbox" aria-label="Kit slots">
         {visible.map((t, i) => {
           const on = equippedType === t;
+          const skim = inspectHover === t && !on;
           const hotkey = i < 9 ? String(i + 1) : null;
           return (
             <button
@@ -216,9 +304,9 @@ export function DesignKitInventory({
               type="button"
               role="option"
               aria-selected={on}
-              className={`${css.slot}${on ? ` ${css.slotOn}` : ""}`}
+              className={`${css.slot}${on ? ` ${css.slotOn}` : ""}${skim ? ` ${css.slotSkim}` : ""}`}
               data-testid={`${slotTestIdPrefix}${t}`}
-              title={`${BY_TYPE[t].name}${hotkey ? ` · ${hotkey}` : ""}`}
+              title={`${BY_TYPE[t].name}${hotkey ? ` · ${hotkey}` : ""} · hover to skim, click to keep`}
               onMouseEnter={() => setInspectHover(t)}
               onMouseLeave={() => setInspectHover(null)}
               onFocus={() => setInspectHover(t)}
@@ -248,10 +336,13 @@ export function DesignKitInventory({
               {inspectDef.existing
                 ? "Survey mark · set DBH when placing"
                 : `Proposed · from $${inspectDef.rate}`}
+              {inspectHover && equippedType && inspectHover !== equippedType
+                ? " · click to keep"
+                : ""}
             </p>
           </>
         ) : (
-          <p className={css.inspectDetail}>Scroll · keys 1–9</p>
+          <p className={css.inspectDetail}>Hover to skim · click to keep</p>
         )}
       </div>
 

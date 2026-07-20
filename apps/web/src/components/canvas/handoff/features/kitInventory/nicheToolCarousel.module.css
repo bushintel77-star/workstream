@@ -20,12 +20,13 @@
   height: 0;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  opacity: 0.48;
+  /* Stay present while selection/zone mode is live */
+  opacity: 0.82;
   transition: opacity var(--exit-ms) var(--ease-exit);
 }
 
 .root[data-phase="linger"] {
-  opacity: 0.88;
+  opacity: 0.94;
   transition: opacity var(--exit-ms) var(--ease-exit);
 }
 
@@ -48,9 +49,9 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 40px;
-  min-height: 36px;
-  margin: -18px 0 0 -20px;
+  width: 48px;
+  min-height: 44px;
+  margin: -22px 0 0 -24px;
   padding: 3px 0;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
@@ -93,10 +94,10 @@
 }
 
 .root[data-phase="rest"] .slot {
-  opacity: 0.4;
+  opacity: 0.85;
   pointer-events: auto;
-  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.7))
-    rotate(calc(-1 * var(--arc, 0deg))) scale(0.94);
+  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.85))
+    rotate(calc(-1 * var(--arc, 0deg)));
 }
 
 .root[data-phase="linger"] .slot:not(.slotOn) {

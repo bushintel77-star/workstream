@@ -41,8 +41,8 @@
   --ws-sheet-margin: 8px;
   --ws-title-w: 240px;
   --ws-title-gap: 12px;
-  /* Left gutter holds the kit carousel — keep drawing clear of it */
-  --ws-safe-left: 72px;
+  /* Left gutter holds the kit stack — keep drawing clear of larger slots */
+  --ws-safe-left: 80px;
   --ws-safe-top: 40px;
   --ws-safe-right: 12px;
   --ws-safe-bottom: 36px;
