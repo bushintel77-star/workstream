@@ -50,6 +50,13 @@ type NodeMenu = {
   y: number;
 };
 
+type ItemMenu = {
+  id: string;
+  t: StudioItemType;
+  x: number;
+  y: number;
+};
+
 type Props = {
   frameOn: boolean;
   darkOn: boolean;
@@ -127,9 +134,13 @@ type Props = {
   onPaintItem?: (id: string) => void;
   /** Item id that just received a Paint apply — settle-flash confirmation. */
   paintFlashId?: string | null;
+  /** Swatch/stamp currently hovered in the persistent tray — preview before commit. */
+  previewSwatch?: StudioItemType | null;
   /** Eyedropper armed — clicking an element loads its style into the swatch. */
   eyedropArmed?: boolean;
   onEyedrop?: (t: StudioItemType) => void;
+  /** World zoom — drives high-zoom coordinate pill / precision disclosure. */
+  zoom?: number;
   /**
    * Empty-board click (not an item / CAD handle).
    * `insideLot` — true on the property drawing; false on the canvas margin.
@@ -204,8 +215,10 @@ export function CadPlanBoard({
   gridInk = "charcoal",
   onPaintItem,
   paintFlashId = null,
+  previewSwatch = null,
   eyedropArmed = false,
   onEyedrop,
+  zoom = 1,
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
@@ -236,6 +249,8 @@ export function CadPlanBoard({
     y: number;
   } | null>(null);
   const [nodeMenu, setNodeMenu] = useState<NodeMenu | null>(null);
+  const [itemMenu, setItemMenu] = useState<ItemMenu | null>(null);
+  const [cursorPct, setCursorPct] = useState<PctPoint | null>(null);
   const [cursorMode, setCursorMode] = useState<"default" | "move" | "add">(
     "default",
   );
@@ -367,6 +382,22 @@ export function CadPlanBoard({
     }
   };
 
+  const toolLabel =
+    eyedropArmed
+      ? "Pick"
+      : tool === "paint"
+        ? "Fill"
+        : tool === "add"
+          ? "Place"
+          : tool === "measure"
+            ? "Measure"
+            : tool === "edit"
+              ? "Edit"
+              : tool === "pan"
+                ? "Pan"
+                : tool;
+  const showCoordinatePill = zoom >= 2.2 && cursorPct != null && !frameOn;
+
   const startCornerDrag = (
     kind: "boundary" | "building",
     index: number,
@@ -403,6 +434,7 @@ export function CadPlanBoard({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    setCursorPct(toPct(e.clientX, e.clientY));
     const d = dragRef.current;
     if (!d) return;
     const p = toPct(e.clientX, e.clientY);
@@ -529,10 +561,12 @@ export function CadPlanBoard({
       onPointerDown={(e) => {
         if (boardPassthrough) return;
         if (nodeMenu) setNodeMenu(null);
+        if (itemMenu) setItemMenu(null);
         onPointerDownBoard(e);
       }}
       onPointerMove={boardPassthrough ? undefined : onPointerMove}
       onPointerUp={boardPassthrough ? undefined : onPointerUp}
+      onPointerLeave={() => setCursorPct(null)}
     >
       <svg className={css.planSvg} viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
@@ -977,6 +1011,10 @@ export function CadPlanBoard({
         const selected = it.id === selectedId;
         const hovered = it.id === hoverId;
         const flagged = flaggedIds?.has(it.id) && !it.ghost;
+        const previewType =
+          previewSwatch && hovered && !it.ghost && it.t !== previewSwatch
+            ? previewSwatch
+            : null;
         return (
           <div
             key={it.id}
@@ -1059,10 +1097,26 @@ export function CadPlanBoard({
                 (e.target as Element).setPointerCapture?.(e.pointerId);
               }
             }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (it.ghost) return;
+              setNodeMenu(null);
+              setItemMenu({ id: it.id, t: it.t, x: it.x, y: it.y });
+            }}
           >
             <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
               <StudioGlyph type={it.t} ink={!darkOn || frameOn} />
             </div>
+            {previewType ? (
+              <div
+                className={css.swatchPreview}
+                data-testid="swatch-hover-preview"
+                aria-hidden
+              >
+                <StudioGlyph type={previewType} ink={!darkOn || frameOn} />
+              </div>
+            ) : null}
             {flagged && (it.t === "paving" || it.t === "deck") ? (
               <div className={css.hatchOverlay} aria-hidden />
             ) : null}
@@ -1133,6 +1187,11 @@ export function CadPlanBoard({
       {crosshair ? (
         <>
           <div
+            className={css.snapPulse}
+            data-testid="snap-radial-pulse"
+            style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
+          />
+          <div
             className={`${css.crosshairV}`}
             data-testid="draft-crosshair-v"
             style={{ left: `${crosshair.x}%` }}
@@ -1181,6 +1240,21 @@ export function CadPlanBoard({
         </div>
       ) : null}
 
+      {cursorPct ? (
+        <div
+          className={css.cursorBadge}
+          data-testid="smart-cursor-badge"
+          style={{ left: `${cursorPct.x}%`, top: `${cursorPct.y}%` }}
+        >
+          <span className={css.cursorTool}>{toolLabel}</span>
+          {showCoordinatePill ? (
+            <span className={css.cursorMetric}>
+              X {cursorPct.x.toFixed(2)} · Y {cursorPct.y.toFixed(2)}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
       {nodeMenu ? (
         <div
           className={css.nodeMenu}
@@ -1213,6 +1287,53 @@ export function CadPlanBoard({
             onClick={() => setNodeMenu(null)}
           >
             Cancel
+          </button>
+        </div>
+      ) : null}
+
+      {itemMenu ? (
+        <div
+          className={css.radialMenu}
+          data-testid="item-radial-menu"
+          style={{ left: `${itemMenu.x}%`, top: `${itemMenu.y}%` }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className={`${css.radialBtn} ${css.radialNorth}`}
+            onClick={() => {
+              onSelect(itemMenu.id);
+              setItemMenu(null);
+            }}
+          >
+            Select
+          </button>
+          <button
+            type="button"
+            className={`${css.radialBtn} ${css.radialEast}`}
+            onClick={() => {
+              onEyedrop?.(itemMenu.t);
+              setItemMenu(null);
+            }}
+          >
+            Pick
+          </button>
+          <button
+            type="button"
+            className={`${css.radialBtn} ${css.radialSouth}`}
+            onClick={() => {
+              onPaintItem?.(itemMenu.id);
+              setItemMenu(null);
+            }}
+          >
+            Fill
+          </button>
+          <button
+            type="button"
+            className={`${css.radialBtn} ${css.radialWest}`}
+            onClick={() => setItemMenu(null)}
+          >
+            Close
           </button>
         </div>
       ) : null}

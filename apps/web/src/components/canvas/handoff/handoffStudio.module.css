@@ -624,6 +624,81 @@
   opacity: 0.7;
 }
 
+.undoFilmstrip {
+  position: absolute;
+  left: 74px;
+  bottom: 14px;
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border-radius: var(--hc-r-panel);
+  background: var(--hc-neu-surface, #f1e4e9);
+  box-shadow: var(
+    --hc-neu-out,
+    -3px -3px 8px rgba(255, 255, 255, 0.85),
+    4px 4px 11px rgba(42, 23, 29, 0.16)
+  );
+  color: var(--hc-ink, #241318);
+  font-family: Sora, ui-sans-serif, sans-serif;
+}
+
+.undoCells {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 38px;
+}
+
+.undoCell {
+  width: 18px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
+  cursor: pointer;
+}
+
+.undoCell:hover {
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
+}
+
+.undoFilmBtn {
+  min-height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: var(--hc-ink-muted, #7a5560);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.undoFilmBtn:disabled {
+  opacity: 0.36;
+  cursor: default;
+}
+
+.undoEmpty {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: var(--hc-ink-faint, #b08a95);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .onboardHint {
     animation: none;
