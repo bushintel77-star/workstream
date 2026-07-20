@@ -74,7 +74,7 @@ Object-local actions (materials, lock, delete, Ask AI, DBH) stay at the **prime 
 
 | Guide item | Status |
 | --- | --- |
-| Contextual materials / CAD params on selection | **Yes** — Soft/Hard bag fan + ring at prime pixel |
+| Contextual materials / CAD params on selection | **Yes** — Soft/Hard bag fan at kit dock; orbit ring clears glyph |
 | AI sidecar (dialogue + analytics) | **Partial** — utility + live measures gated by `aiSidecar` |
 | Structure rail left, collapsed | **Yes** — Layers left; gated by `structureRail` |
 | Variation filmstrip | **Not started** |
