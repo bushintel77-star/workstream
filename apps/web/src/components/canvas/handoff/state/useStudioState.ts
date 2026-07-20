@@ -160,6 +160,10 @@ type Ui = {
   gridGrain: "fine" | "medium" | "coarse";
   /** Magnetic grid snap while dragging / nudging. */
   gridSnap: boolean;
+  /** Visual mesh formation (ortho / dots / diamond / veil). */
+  gridFormation: "ortho" | "dots" | "diamond" | "veil";
+  /** Mesh ink — eye comfort + optional signal accent. */
+  gridInk: "charcoal" | "slate" | "paper" | "mist" | "signal";
   /** Active Paint swatch (Mac Paint–style fill). */
   paintSwatch: StudioItemType;
   siteIdx: number;
@@ -363,6 +367,8 @@ function initialState(opts: {
       zoneKind: "drip",
       gridGrain: "medium",
       gridSnap: true,
+      gridFormation: "ortho",
+      gridInk: "charcoal",
       paintSwatch: "lawn",
       siteIdx: 0,
       canopyScanning: false,

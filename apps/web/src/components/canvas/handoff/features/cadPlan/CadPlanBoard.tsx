@@ -7,6 +7,7 @@ import {
   edgeSegments,
   insertVertexAfter,
   polygonAreaM2,
+  GRID_INK_STROKE,
   GRID_STEP_PCT,
   ptsAttr,
   snapAlignment,
@@ -14,7 +15,9 @@ import {
   snapToGridPct,
   snapVertexDrag,
   tpzRadiusPct,
+  type GridFormation,
   type GridGrain,
+  type GridInk,
   type PctPoint,
 } from "../../geometry";
 import {
@@ -24,6 +27,7 @@ import {
   neighbourLotContext,
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
+import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
   type StudioItem,
@@ -111,6 +115,8 @@ type Props = {
   /** Magnetic drafting grid grain. */
   gridGrain?: GridGrain;
   gridSnap?: boolean;
+  gridFormation?: GridFormation;
+  gridInk?: GridInk;
   /** Paint bucket — recolor / retag a symbol. */
   onPaintItem?: (id: string) => void;
 };
@@ -168,6 +174,8 @@ export function CadPlanBoard({
   onTransformItem,
   gridGrain = "medium",
   gridSnap = true,
+  gridFormation = "ortho",
+  gridInk = "charcoal",
   onPaintItem,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -1021,40 +1029,12 @@ export function CadPlanBoard({
       ) : null}
 
       {showDraftGrid ? (
-        <svg
-          className={css.draftGrid}
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          aria-hidden
-          data-testid="draft-grid"
-          data-grain={gridGrain}
-        >
-          {Array.from(
-            { length: Math.floor(100 / gridStep) + 1 },
-            (_, i) => i * gridStep,
-          ).map((v) => (
-            <g key={`g${v}`}>
-              <line
-                x1={v}
-                y1={0}
-                x2={v}
-                y2={100}
-                stroke="rgba(28,25,23,0.08)"
-                strokeWidth={0.12}
-                vectorEffect="non-scaling-stroke"
-              />
-              <line
-                x1={0}
-                y1={v}
-                x2={100}
-                y2={v}
-                stroke="rgba(28,25,23,0.08)"
-                strokeWidth={0.12}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
-        </svg>
+        <DraftGridMesh
+          grain={gridGrain}
+          step={gridStep}
+          formation={gridFormation}
+          ink={gridInk}
+        />
       ) : null}
 
       {crosshair ? (

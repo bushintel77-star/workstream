@@ -22,6 +22,13 @@ import {
   resolveLiveAerial,
 } from "./state/studioPlane";
 import { CadPlanBoard } from "./features/cadPlan/CadPlanBoard";
+import { DraftGridStudio } from "./features/gridStudio/DraftGridStudio";
+import {
+  loadGridStudioPrefs,
+  saveGridStudioPrefs,
+  type GridFormation,
+  type GridInk,
+} from "./geometry/gridStudio";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
 import { LayersPanel } from "./features/layers/LayersPanel";
@@ -128,6 +135,10 @@ export function HandoffDesignStudio({
     initialSiteFrame,
     initialIrrigationZones,
   });
+  const [gridPreviewFormation, setGridPreviewFormation] =
+    useState<GridFormation | null>(null);
+  const [gridPreviewInk, setGridPreviewInk] = useState<GridInk | null>(null);
+
   const {
     ui,
     ai,
@@ -164,6 +175,20 @@ export function HandoffDesignStudio({
     setBoardSize({ w: el.clientWidth, h: el.clientHeight });
     return () => ro.disconnect();
   }, []);
+
+  /** Restore micro grid studio prefs for this project session. */
+  useEffect(() => {
+    const prefs = loadGridStudioPrefs(projectId);
+    if (!prefs) return;
+    studio.setUi({
+      ...(prefs.formation ? { gridFormation: prefs.formation } : {}),
+      ...(prefs.ink ? { gridInk: prefs.ink } : {}),
+      ...(prefs.grain ? { gridGrain: prefs.grain } : {}),
+      ...(prefs.snap != null ? { gridSnap: prefs.snap } : {}),
+    });
+    // once per project mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   /** Working plan — frame the outdoor garden once per Sketch/CAD visit. */
   const outdoorFitKeyRef = useRef<string | null>(null);
@@ -966,6 +991,8 @@ export function HandoffDesignStudio({
               onTransformItem={studio.transformItem}
               gridGrain={ui.gridGrain}
               gridSnap={ui.gridSnap}
+              gridFormation={gridPreviewFormation ?? ui.gridFormation}
+              gridInk={gridPreviewInk ?? ui.gridInk}
               onPaintItem={studio.paintItem}
             />
             {chrome.floraRing && ui.floraSession ? (
@@ -1143,37 +1170,29 @@ export function HandoffDesignStudio({
             !ui.clientView &&
             !ui.frameOn &&
             !ui.foundationCleanse ? (
-              <div className={css.draftGrainBar} data-testid="draft-grain-bar">
-                <button
-                  type="button"
-                  className={`${css.chip}${ui.gridSnap ? ` ${css.chipActive}` : ""}`}
-                  data-testid="draft-snap-toggle"
-                  title="Magnetic grid snap"
-                  onClick={() => studio.setUi({ gridSnap: !ui.gridSnap })}
-                >
-                  {ui.gridSnap ? "Snap" : "Free"}
-                </button>
-                {(["fine", "medium", "coarse"] as const).map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    className={`${css.chip}${ui.gridGrain === g ? ` ${css.chipActive}` : ""}`}
-                    data-testid={`draft-grain-${g}`}
-                    title={
-                      g === "fine"
-                        ? "Fine grid — small cells"
-                        : g === "medium"
-                          ? "Medium grid"
-                          : "Coarse grid — large cells"
-                    }
-                    onClick={() =>
-                      studio.setUi({ gridGrain: g, gridSnap: true })
-                    }
-                  >
-                    {g === "fine" ? "Fine" : g === "medium" ? "Med" : "Coarse"}
-                  </button>
-                ))}
-              </div>
+              <DraftGridStudio
+                formation={ui.gridFormation}
+                ink={ui.gridInk}
+                grain={ui.gridGrain}
+                snap={ui.gridSnap}
+                onPreviewFormation={setGridPreviewFormation}
+                onPreviewInk={setGridPreviewInk}
+                onCommit={(patch) => {
+                  const next = {
+                    gridFormation: patch.formation ?? ui.gridFormation,
+                    gridInk: patch.ink ?? ui.gridInk,
+                    gridGrain: patch.grain ?? ui.gridGrain,
+                    gridSnap: patch.snap ?? ui.gridSnap,
+                  };
+                  studio.setUi(next);
+                  saveGridStudioPrefs(projectId, {
+                    formation: next.gridFormation,
+                    ink: next.gridInk,
+                    grain: next.gridGrain,
+                    snap: next.gridSnap,
+                  });
+                }}
+              />
             ) : null}
             {chrome.selectionRing && selectedLive ? (
               <SelectionRing

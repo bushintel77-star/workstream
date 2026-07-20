@@ -71,6 +71,8 @@ export type StudioUiState = {
   zoneKind: IrrigationZoneKind;
   gridGrain: "fine" | "medium" | "coarse";
   gridSnap: boolean;
+  gridFormation: "ortho" | "dots" | "diamond" | "veil";
+  gridInk: "charcoal" | "slate" | "paper" | "mist" | "signal";
   paintSwatch: StudioItemType;
   siteIdx: number;
   canopyScanning: boolean;
