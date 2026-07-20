@@ -159,8 +159,16 @@ export function HandoffDesignStudio({
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
     initialTitleBlock,
   );
-  /** Last work point on the board — instruments + Add sun probe. */
+  /**
+   * Live pointer % — sun probe / proximity only. Never drive chrome position
+   * from this or the UI sticks to the cursor and steals place clicks.
+   */
   const [workPct, setWorkPct] = useState<{ x: number; y: number }>({
+    x: 50,
+    y: 58,
+  });
+  /** Sticky instrument home — updates on place / board click, not mousemove. */
+  const [anchorPct, setAnchorPct] = useState<{ x: number; y: number }>({
     x: 50,
     y: 58,
   });
@@ -478,16 +486,18 @@ export function HandoffDesignStudio({
 
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
-  /** Instruments float on the drawing — selection → draw cursor → last work. */
+  /**
+   * Stable instrument home — selection → last poly vertex → sticky anchor.
+   * Never follow live pointer / rubber-band cursor (that glued chrome to the mouse).
+   */
   const instrumentAnchor = useMemo(() => {
     if (selectedLive) return { x: selectedLive.x, y: selectedLive.y };
-    if (ui.drawCursor) return { x: ui.drawCursor.x, y: ui.drawCursor.y };
     if (ui.drawPoly && ui.drawPoly.length > 0) {
       const last = ui.drawPoly[ui.drawPoly.length - 1]!;
       return { x: last.x, y: last.y };
     }
-    return { x: workPct.x, y: workPct.y };
-  }, [selectedLive, ui.drawCursor, ui.drawPoly, workPct.x, workPct.y]);
+    return { x: anchorPct.x, y: anchorPct.y };
+  }, [selectedLive, ui.drawPoly, anchorPct.x, anchorPct.y]);
   const selectedTradeTag =
     selectedLive && chrome.tradeMargin
       ? tradeTagForItem(trade, selectedLive.id)
@@ -503,6 +513,13 @@ export function HandoffDesignStudio({
 
   const armType = (t: StudioItemType) => {
     studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
+  };
+
+  const pinInstrumentAnchor = (x: number, y: number) => {
+    setAnchorPct({
+      x: Math.max(12, Math.min(88, x)),
+      y: Math.max(14, Math.min(86, y)),
+    });
   };
 
   /** Inventory slot order for Add kit + 1–9 quick-equip. */
@@ -876,6 +893,18 @@ export function HandoffDesignStudio({
             y: Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100)),
           });
         }}
+        onPointerDown={(e) => {
+          /* Pin chrome to click site — do not let panels ride the cursor. */
+          if (e.button !== 0) return;
+          const el = boardRef.current;
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          if (r.width < 1 || r.height < 1) return;
+          pinInstrumentAnchor(
+            ((e.clientX - r.left) / r.width) * 100,
+            ((e.clientY - r.top) / r.height) * 100,
+          );
+        }}
       >
         {ui.mode === "elevation" ? (
           <ElevationBoard
@@ -1065,7 +1094,10 @@ export function HandoffDesignStudio({
               }}
               onBoundaryChange={studio.updateBoundary}
               onBuildingChange={studio.updateBuilding}
-              onPlace={studio.placeArmed}
+              onPlace={(x, y) => {
+                pinInstrumentAnchor(x, y);
+                studio.placeArmed(x, y);
+              }}
               onMoveItem={studio.moveItem}
               onMoveGroup={studio.moveGroup}
               onTransformItem={studio.transformItem}
@@ -1239,7 +1271,7 @@ export function HandoffDesignStudio({
             {ui.tool === "paint" && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
               <DesignKitInventory
                 variant="paint"
-                placement="anchor"
+                placement="dock"
                 testId="paint-swatch-bar"
                 slotTestIdPrefix="paint-swatch-"
                 types={paintKitTypes}
@@ -1247,10 +1279,6 @@ export function HandoffDesignStudio({
                 onEquip={(t) =>
                   studio.setUi({ paintSwatch: t, tool: "paint" })
                 }
-                style={{
-                  left: `${Math.max(18, Math.min(82, instrumentAnchor.x))}%`,
-                  top: `${Math.max(14, Math.min(48, instrumentAnchor.y - 10))}%`,
-                }}
               />
             ) : null}
             {(ui.tool === "edit" ||
