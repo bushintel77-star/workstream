@@ -151,7 +151,7 @@ export function TraceOverlay({
           {(
             [
               ["boundary", "Boundary"],
-              ["building", "Building"],
+              ["building", "Existing house"],
             ] as const
           ).map(([id, label]) => (
             <button

@@ -142,7 +142,14 @@ export function QuotePortal({
         {survey && (
           <section className={styles.summary}>
             <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
-            <Metric label="House" value={`${survey.house_area_m2} m²`} />
+            <Metric
+              label="Existing house"
+              value={
+                survey.house_area_m2 > 0
+                  ? `${survey.house_area_m2} m²`
+                  : "Not available"
+              }
+            />
             <Metric label="Garden" value={`${survey.garden_area_m2} m²`} />
           </section>
         )}

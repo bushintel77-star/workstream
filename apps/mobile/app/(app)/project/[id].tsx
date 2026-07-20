@@ -737,7 +737,14 @@ export default function ProjectDetailScreen() {
               <View style={styles.summaryCard}>
                 <View style={styles.metricsLedger}>
                   <LedgerRow label="Lot" value={`${survey.lot_area_m2} m²`} />
-                  <LedgerRow label="House" value={`${survey.house_area_m2} m²`} />
+                  <LedgerRow
+                    label="Existing house"
+                    value={
+                      survey.house_area_m2 > 0
+                        ? `${survey.house_area_m2} m²`
+                        : "Not available"
+                    }
+                  />
                   <LedgerRow label="Garden" value={`${survey.garden_area_m2} m²`} />
                   <View style={styles.ledgerDivider} />
                   <LedgerRow
