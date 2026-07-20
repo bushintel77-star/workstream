@@ -165,6 +165,20 @@ export function HandoffDesignStudio({
     return () => ro.disconnect();
   }, []);
 
+  /** Working plan — frame the outdoor garden once per Sketch/CAD visit. */
+  const outdoorFitKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (ui.frameOn || ui.focusOn || ui.clientView) return;
+    if (ui.mode !== "sketch" && ui.mode !== "cad") {
+      outdoorFitKeyRef.current = null;
+      return;
+    }
+    const key = `${ui.mode}:${ui.siteIdx}`;
+    if (outdoorFitKeyRef.current === key) return;
+    outdoorFitKeyRef.current = key;
+    studio.fitOutdoorView();
+  }, [ui.mode, ui.siteIdx, ui.frameOn, ui.focusOn, ui.clientView, studio]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -834,6 +848,7 @@ export function HandoffDesignStudio({
           <div
             className={`${css.zoomWorld}${ui.frameOn ? ` ${css.zoomWorldClipped}` : ""}`}
             style={{
+              transformOrigin: `${ui.focusX}% ${ui.focusY}%`,
               transform: `scale(${ui.zoom})`,
               ...(ui.frameOn
                 ? (() => {
@@ -1271,10 +1286,9 @@ export function HandoffDesignStudio({
             }}
             onFit={() => {
               if (ui.foundationCleanse) {
-                studio.setUi({ zoom: 1, sheetScaleDenom: 100 });
-                return;
+                studio.setUi({ sheetScaleDenom: 100 });
               }
-              studio.setUi({ zoom: 1 });
+              studio.fitOutdoorView();
             }}
             onOpacity={studio.setLayerOpacity}
             onParchmentPeel={(parchmentPeel) => studio.setUi({ parchmentPeel })}

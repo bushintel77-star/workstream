@@ -1,5 +1,6 @@
 import type { PctPoint } from "./types";
 import type { SketchStroke, StudioItem } from "../studioCatalog";
+import { sanitizeItemsToOutdoor } from "./outdoorClamp";
 
 type RingBBox = {
   minX: number;
@@ -74,13 +75,23 @@ export function reprojectDocToBoundary(
   if (from.length < 3) {
     return { ...snap, boundary: nextBoundary };
   }
-  return {
-    boundary: nextBoundary,
-    building: reprojectRingFromRing(snap.building, from, nextBoundary),
-    items: snap.items.map((it) => {
-      const p = reprojectPointFromRing({ x: it.x, y: it.y }, from, nextBoundary);
+  const building = reprojectRingFromRing(snap.building, from, nextBoundary);
+  const items = sanitizeItemsToOutdoor(
+    snap.items.map((it) => {
+      const p = reprojectPointFromRing(
+        { x: it.x, y: it.y },
+        from,
+        nextBoundary,
+      );
       return { ...it, x: p.x, y: p.y };
     }),
+    nextBoundary,
+    building,
+  );
+  return {
+    boundary: nextBoundary,
+    building,
+    items,
     strokes: snap.strokes.map((s) => ({
       ...s,
       points: s.points.map((p) => reprojectPointFromRing(p, from, nextBoundary)),

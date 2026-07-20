@@ -3,14 +3,11 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   buildIndicativeShadeGrid,
-  buildableEnvelopeFromBoundary,
   countNearbyCanopy,
   evaluateStudioCompliance,
   FLORA_HEIGHT_BY_FORM,
   isFloraStudioForm,
   rankCurtisFloraCandidates,
-  shouldEnforceSetback,
-  snapPointToBuildableEnvelope,
   sunHoursAtPct,
   type FloraCandidate,
   type StudioComplianceItem,
@@ -40,6 +37,11 @@ import {
 import type { PaperSize, PctPoint } from "../geometry";
 import { classifySurveyCorridor } from "../geometry/surveyCorridor";
 import { pointInPolygon } from "../geometry/polygon";
+import {
+  constrainAssetCentre,
+  outdoorFocusView,
+  sanitizeItemsToOutdoor,
+} from "../geometry/outdoorClamp";
 import {
   GRID_STEP_PCT,
   snapClockRotationDeg,
@@ -164,6 +166,9 @@ type Ui = {
   canopyScanning: boolean;
   sunPlay: boolean;
   zoom: number;
+  /** Zoom origin on the board (%) — outdoor remnant centre after Fit. */
+  focusX: number;
+  focusY: number;
   savedTick: number;
   aerialUri: string | null;
   aiBusy: "idle" | "scanning" | "assisting";
@@ -310,9 +315,13 @@ function initialState(opts: {
         irrigationZones: opts.irrigationZones ?? [],
       }
     : base;
+  const outdoorSafe: StudioSnapshot = {
+    ...snap,
+    items: sanitizeItemsToOutdoor(snap.items, snap.boundary, snap.building),
+  };
   return {
     doc: {
-      ...snap,
+      ...outdoorSafe,
       idn: 20,
       hist: [],
       redo: [],
@@ -359,6 +368,8 @@ function initialState(opts: {
       canopyScanning: false,
       sunPlay: false,
       zoom: 1,
+      focusX: 50,
+      focusY: 50,
       savedTick: 0,
       aerialUri: null,
       aiBusy: "idle",
@@ -505,11 +516,18 @@ function reducer(state: State, action: Action): State {
       const siteSnaps = [...state.siteSnaps];
       siteSnaps[state.ui.siteIdx] = cloneSnap(snapOf(state.doc));
       const next = cloneSnap(siteSnaps[idx]!);
+      const safeItems = sanitizeItemsToOutdoor(
+        next.items,
+        next.boundary,
+        next.building,
+      );
+      const focus = outdoorFocusView(next.boundary, next.building, 110);
       return {
         ...state,
         siteSnaps,
         doc: {
           ...next,
+          items: safeItems,
           idn: state.doc.idn,
           hist: [],
           redo: [],
@@ -522,6 +540,9 @@ function reducer(state: State, action: Action): State {
           drawPoly: null,
           drawCursor: null,
           ghostIdx: 0,
+          focusX: focus.focusX,
+          focusY: focus.focusY,
+          zoom: focus.zoom,
         },
       };
     }
@@ -741,13 +762,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
       let px = session.x;
       let py = session.y;
       mutate((snap, idn) => {
-        if (shouldEnforceSetback(form)) {
-          const env = buildableEnvelopeFromBoundary(snap.boundary);
-          const snapped = snapPointToBuildableEnvelope(px, py, env);
-          px = snapped.x;
-          py = snapped.y;
-          if (snapped.snapped) tip = snapped.codeHint;
-        }
+        const placed = constrainAssetCentre(
+          px,
+          py,
+          form,
+          snap.boundary,
+          snap.building,
+        );
+        px = placed.x;
+        py = placed.y;
+        if (placed.snapped) tip = placed.reason;
         const inEasement = (snap.easements ?? []).some(
           (ring) => ring.length >= 3 && pointInPolygon({ x: px, y: py }, ring),
         );
@@ -842,15 +866,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
       let tip: string | null = null;
       mutate((snap, idn) => {
-        let px = x;
-        let py = y;
-        if (shouldEnforceSetback(armed)) {
-          const env = buildableEnvelopeFromBoundary(snap.boundary);
-          const snapped = snapPointToBuildableEnvelope(px, py, env);
-          px = snapped.x;
-          py = snapped.y;
-          if (snapped.snapped) tip = snapped.codeHint;
-        }
+        const placed = constrainAssetCentre(
+          x,
+          y,
+          armed,
+          snap.boundary,
+          snap.building,
+        );
+        let px = placed.x;
+        let py = placed.y;
+        if (placed.snapped) tip = placed.reason;
         const inEasement = (snap.easements ?? []).some(
           (ring) => ring.length >= 3 && pointInPolygon({ x: px, y: py }, ring),
         );
@@ -1273,15 +1298,21 @@ export function useStudioState(opts: UseStudioStateOpts) {
           .map((v) => v.canvas_coords);
         const pct = canvasMetresRingToPct(verts);
         if (pct.length < 3) return;
-        mutate((snap) => ({
-          snap: {
+        let focus = { focusX: 50, focusY: 50, zoom: 1 };
+        mutate((snap) => {
+          const next = {
             ...snap,
             ...reprojectDocToBoundary(snap, pct),
-          },
-        }));
+          };
+          focus = outdoorFocusView(next.boundary, next.building, 110);
+          return { snap: next };
+        });
         setUi({
           boundarySource:
             res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+          focusX: focus.focusX,
+          focusY: focus.focusY,
+          zoom: focus.zoom,
         });
       } catch {
         /* keep seed boundary */
@@ -1330,12 +1361,17 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const target = snap.items.find((i) => i.id === id);
         let px = x;
         let py = y;
-        if (target && !target.ghost && shouldEnforceSetback(target.t)) {
-          const env = buildableEnvelopeFromBoundary(snap.boundary);
-          const snapped = snapPointToBuildableEnvelope(px, py, env);
-          px = snapped.x;
-          py = snapped.y;
-          if (snapped.snapped) tip = snapped.codeHint;
+        if (target && !target.ghost) {
+          const placed = constrainAssetCentre(
+            px,
+            py,
+            target.t,
+            snap.boundary,
+            snap.building,
+          );
+          px = placed.x;
+          py = placed.y;
+          if (placed.snapped) tip = placed.reason;
         }
         return {
           snap: {
@@ -1399,15 +1435,21 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ...snap,
           items: snap.items.map((i) => {
             if (!set.has(i.id) || i.ghost) return i;
-            const next = {
+            let next = {
               x: Math.max(0, Math.min(100, i.x + ndx)),
               y: Math.max(0, Math.min(100, i.y + ndy)),
             };
             if (step != null) {
-              const g = snapToGridPct(next, step);
-              return { ...i, x: g.x, y: g.y };
+              next = snapToGridPct(next, step);
             }
-            return { ...i, ...next };
+            const placed = constrainAssetCentre(
+              next.x,
+              next.y,
+              i.t,
+              snap.boundary,
+              snap.building,
+            );
+            return { ...i, x: placed.x, y: placed.y };
           }),
         },
       }));
@@ -1429,15 +1471,17 @@ export function useStudioState(opts: UseStudioStateOpts) {
       mutate((snap) => ({
         snap: {
           ...snap,
-          items: snap.items.map((i) =>
-            set.has(i.id) && !i.ghost
-              ? {
-                  ...i,
-                  x: Math.max(0, Math.min(100, i.x + dx)),
-                  y: Math.max(0, Math.min(100, i.y + dy)),
-                }
-              : i,
-          ),
+          items: snap.items.map((i) => {
+            if (!set.has(i.id) || i.ghost) return i;
+            const placed = constrainAssetCentre(
+              Math.max(0, Math.min(100, i.x + dx)),
+              Math.max(0, Math.min(100, i.y + dy)),
+              i.t,
+              snap.boundary,
+              snap.building,
+            );
+            return { ...i, x: placed.x, y: placed.y };
+          }),
         },
       }));
     },
@@ -1969,12 +2013,19 @@ export function useStudioState(opts: UseStudioStateOpts) {
         return;
       }
       mutate((snap, idn) => {
+        const placed = constrainAssetCentre(
+          card.x!,
+          card.y!,
+          card.suggestType!,
+          snap.boundary,
+          snap.building,
+        );
         const id = crypto.randomUUID();
         const item: StudioItem = {
           id,
           t: card.suggestType!,
-          x: card.x!,
-          y: card.y!,
+          x: placed.x,
+          y: placed.y,
           rot: 0,
           scale: 0.75,
           ghost: true,
@@ -1998,6 +2049,26 @@ export function useStudioState(opts: UseStudioStateOpts) {
     },
     [mutate, setUi, state.ui.mitigated],
   );
+
+  /** Fit zoom + origin to the outdoor garden remnant (lot − house). */
+  const fitOutdoorView = useCallback(() => {
+    const scaleM = state.ui.boardWidthM ?? 110;
+    const focus = outdoorFocusView(
+      state.doc.boundary,
+      state.doc.building,
+      scaleM,
+    );
+    setUi({
+      focusX: focus.focusX,
+      focusY: focus.focusY,
+      zoom: focus.zoom,
+    });
+  }, [
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.ui.boardWidthM,
+  ]);
 
   useEffect(() => {
     if (!state.ui.councilTip) return;
@@ -2073,6 +2144,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     workableOutdoorM2,
     siteSchedule,
     acceptHorizonCard,
+    fitOutdoorView,
     ai,
     mutate,
     setUi,

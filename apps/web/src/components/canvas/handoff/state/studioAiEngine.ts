@@ -9,16 +9,17 @@
 import {
   buildGhostPlacementSuggestions,
   buildStudioAiSuggestions,
-  buildableEnvelopeFromBoundary,
   detectCanopyClustersFromImageData,
   interpretSketchStrokesToCad,
   isTier1WrightsTerrace,
-  shouldEnforceSetback,
-  snapPointToBuildableEnvelope,
   type GhostPlacementSuggestion,
   type RgbaImageData,
   type StudioAiSuggestion,
 } from "@workstream/domain";
+import {
+  constrainAssetCentre,
+  sanitizeItemsToOutdoor,
+} from "../geometry/outdoorClamp";
 import type { StudioItem, StudioItemType } from "../studioCatalog";
 import type { StudioSnapshot } from "./studioTypes";
 import { markStaleGhostsNearEdit } from "./staleGhosts";
@@ -389,41 +390,22 @@ export function proposeFromStrokes(
     return { items: [], idn, count: 0 };
   }
 
-  const envelope = buildableEnvelopeFromBoundary(
-    snap.boundary,
-    undefined,
-    opts?.scaleM ?? 110,
-  );
-  const house = snap.building.length >= 3 ? snap.building : null;
-  const hMinX = house ? Math.min(...house.map((p) => p.x)) : 0;
-  const hMaxX = house ? Math.max(...house.map((p) => p.x)) : 0;
-  const hMinY = house ? Math.min(...house.map((p) => p.y)) : 0;
-  const hMaxY = house ? Math.max(...house.map((p) => p.y)) : 0;
-
   let nextIdn = idn;
   const items = suggestions.map((g) => {
     nextIdn += 1;
     const t = mapSymbolToStudioType(g.symbol_id);
-    let x = g.x_pct;
-    let y = g.y_pct;
+    const placed = constrainAssetCentre(
+      g.x_pct,
+      g.y_pct,
+      t,
+      snap.boundary,
+      snap.building,
+    );
+    const x = placed.x;
+    const y = placed.y;
     let reason = g.reason;
-
-    if (house) {
-      const inHouse =
-        x >= hMinX && x <= hMaxX && y >= hMinY && y <= hMaxY;
-      if (inHouse) {
-        y = Math.min(96, hMaxY + 5);
-        reason = `${reason} · cleared of house envelope`;
-      }
-    }
-
-    if (shouldEnforceSetback(t)) {
-      const snapped = snapPointToBuildableEnvelope(x, y, envelope);
-      x = snapped.x;
-      y = snapped.y;
-      if (snapped.codeHint) {
-        reason = `${reason} · ${snapped.codeHint}`;
-      }
+    if (placed.reason) {
+      reason = `${reason} · ${placed.reason}`;
     }
 
     const item = proposalToStudioItem(
@@ -492,7 +474,12 @@ export function mergeAiProposals(
   // Avoid stacking duplicates on nearly the same centroid
   const kept = [...committed, ...keepPending];
   const add: StudioItem[] = [];
-  for (const g of incoming) {
+  const safeIncoming = sanitizeItemsToOutdoor(
+    incoming,
+    snap.boundary,
+    snap.building,
+  );
+  for (const g of safeIncoming) {
     const clash = [...kept, ...add].some(
       (o) => o.ghost && Math.hypot(o.x - g.x, o.y - g.y) < 2.5 && o.t === g.t,
     );
@@ -507,9 +494,15 @@ export function acceptProposal(
 ): StudioSnapshot {
   return {
     ...snap,
-    items: snap.items.map((i) =>
-      i.id === id ? { ...i, ghost: false, stale: false } : i,
-    ),
+    items: snap.items.map((i) => {
+      if (i.id !== id) return i;
+      const live = { ...i, ghost: false, stale: false };
+      return sanitizeItemsToOutdoor(
+        [live],
+        snap.boundary,
+        snap.building,
+      )[0]!;
+    }),
   };
 }
 
@@ -524,11 +517,12 @@ export function rejectProposal(
 }
 
 export function acceptAllProposals(snap: StudioSnapshot): StudioSnapshot {
+  const accepted = snap.items.map((i) =>
+    i.ghost ? { ...i, ghost: false, stale: false } : i,
+  );
   return {
     ...snap,
-    items: snap.items.map((i) =>
-      i.ghost ? { ...i, ghost: false, stale: false } : i,
-    ),
+    items: sanitizeItemsToOutdoor(accepted, snap.boundary, snap.building),
   };
 }
 

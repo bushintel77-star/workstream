@@ -76,6 +76,9 @@ export type StudioUiState = {
   canopyScanning: boolean;
   sunPlay: boolean;
   zoom: number;
+  /** Zoom origin (%) — outdoor garden focus after Fit. */
+  focusX: number;
+  focusY: number;
   savedTick: number;
   aerialUri: string | null;
   /** AI engine busy flag — drives draft badge + coach dock. */
