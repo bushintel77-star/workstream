@@ -189,9 +189,12 @@ export function AmbientRibbon({
       else if (id === "fit") onFit();
       else if (id === "undo") onUndo();
       else if (id === "redo") onRedo();
-      else onTool(id as StudioTool);
+      else if (id === tool) {
+        // Click active draft tool again → return to pan (same as Esc).
+        onTool("pan");
+      } else onTool(id as StudioTool);
     },
-    [onFit, onMeasure, onRedo, onTool, onUndo, onZoom, stayEngaged],
+    [onFit, onMeasure, onRedo, onTool, onUndo, onZoom, stayEngaged, tool],
   );
 
   const cycleDraft = useCallback(

@@ -23,7 +23,7 @@ export function ComplianceTicker({ report, onOpenCompliance }: Props) {
       onClick={onOpenCompliance}
       title="Open compliance detail"
     >
-      <span className={css.kicker}>Council live</span>
+      <span className={css.kicker}>Council</span>
       <span className={css.metrics}>
         {Math.round(report.permeablePct)}% perm
         <span className={css.dot}>·</span>

@@ -43,6 +43,7 @@ import {
   currentTraceCompletion,
 } from "./features/trace/TraceOverlay";
 import { MeasureOverlay } from "./features/measure/MeasureOverlay";
+import { isStickyDraftTool } from "./features/measure/measureCancel";
 import { AerialSlot } from "./features/aerial/AerialSlot";
 import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
 import { SketchBoard } from "./features/sketch/SketchBoard";
@@ -288,6 +289,27 @@ export function HandoffDesignStudio({
           studio.cancelTrace();
           return;
         }
+        // CAD practice: Esc cancels sticky draft tools → pan (KiCad / Fusion).
+        if (isStickyDraftTool(ui.tool)) {
+          e.preventDefault();
+          studio.setTool("pan");
+          setInstrumentsSummoned(false);
+          studio.setUi({
+            factorsOpen: false,
+            ghostReviewOpen: false,
+            layersOpen: false,
+            cmdOpen: false,
+            addOpen: false,
+            sitesOpen: false,
+            coachOpen: false,
+          });
+          return;
+        }
+        if (ui.selectedId) {
+          e.preventDefault();
+          studio.setSelection(null, []);
+          return;
+        }
         studio.setUi({
           factorsOpen: false,
           ghostReviewOpen: false,
@@ -296,7 +318,10 @@ export function HandoffDesignStudio({
           addOpen: false,
           sitesOpen: false,
           coachOpen: false,
+          utilityPanel: null,
         });
+        setPointerSettingsOpen(false);
+        setInstrumentsSummoned(false);
         return;
       }
       if (e.key.toLowerCase() === "f" && !e.metaKey && !e.ctrlKey) {
@@ -1234,6 +1259,10 @@ export function HandoffDesignStudio({
             <MeasureOverlay
               active={ui.tool === "measure" && !ui.frameOn}
               scaleM={scaleM}
+              onCancel={() => {
+                studio.setTool("pan");
+                setInstrumentsSummoned(false);
+              }}
             />
             {(ui.mode === "cad" || ui.mode === "sketch") && !ui.frameOn ? (
               <ZoneOverlay

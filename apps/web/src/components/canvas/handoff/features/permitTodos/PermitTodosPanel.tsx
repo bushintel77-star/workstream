@@ -53,33 +53,9 @@ function detailFromSpec(spec: string | null): string {
   return nl >= 0 ? spec.slice(nl + 1).trim() : "";
 }
 
-function dismissKey(projectId: string) {
-  return `ws-permit-prompt:${projectId}`;
-}
-
-function readDismissed(projectId: string): Set<string> {
-  if (typeof sessionStorage === "undefined") return new Set();
-  try {
-    const raw = sessionStorage.getItem(dismissKey(projectId));
-    if (!raw) return new Set();
-    const arr = JSON.parse(raw) as string[];
-    return new Set(Array.isArray(arr) ? arr : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function writeDismissed(projectId: string, ids: Set<string>) {
-  try {
-    sessionStorage.setItem(dismissKey(projectId), JSON.stringify([...ids]));
-  } catch {
-    /* ignore */
-  }
-}
-
 /**
- * As you design: recognise likely council / TRP / stormwater needs, prompt,
- * and keep a living design-sourced to-do list. Execution of the list comes later.
+ * Council / design to-dos — always visible as a faded council zone,
+ * not a modal “Got it” card. Expand the list when the operator asks.
  */
 export function PermitTodosPanel({
   projectId,
@@ -89,10 +65,7 @@ export function PermitTodosPanel({
   compliance,
 }: Props) {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [dismissed, setDismissed] = useState<Set<string>>(() =>
-    readDismissed(projectId),
-  );
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [pending, startTransition] = useTransition();
   const syncSig = useRef("");
 
@@ -116,20 +89,25 @@ export function PermitTodosPanel({
     [tasks],
   );
 
-  const promptDraft = useMemo(() => {
-    const hot = promptableDesignTodos(drafts).filter(
-      (d) => !dismissed.has(d.trigger_id),
-    );
-    // Prefer a draft not already mirrored as an open task the user has seen.
+  const ambientAdvice = useMemo(() => {
+    const hot = promptableDesignTodos(drafts);
     const openTriggers = new Set(
       openDesignTasks
         .map((t) => parseDesignTodoTrigger(t.technical_specifications))
         .filter(Boolean),
     );
     return (
-      hot.find((d) => !openTriggers.has(d.trigger_id)) ?? hot[0] ?? null
+      hot.find((d) => !openTriggers.has(d.trigger_id)) ??
+      hot[0] ??
+      (openDesignTasks[0]
+        ? {
+            title: openDesignTasks[0].title,
+            technical_specifications:
+              openDesignTasks[0].technical_specifications,
+          }
+        : null)
     );
-  }, [drafts, dismissed, openDesignTasks]);
+  }, [drafts, openDesignTasks]);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,7 +121,10 @@ export function PermitTodosPanel({
 
   useEffect(() => {
     if (drafts.length === 0) return;
-    const sig = drafts.map((d) => d.trigger_id).sort().join("|");
+    const sig = drafts
+      .map((d) => d.trigger_id)
+      .sort()
+      .join("|");
     if (sig === syncSig.current) return;
     const existing = tasks;
     const { toCreate, toCancelIds } = diffDesignTodos(existing, drafts);
@@ -164,20 +145,12 @@ export function PermitTodosPanel({
         ).then((res) => {
           syncSig.current = sig;
           setTasks(res.tasks);
-          if (res.created > 0) setExpanded(true);
+          // Stay collapsed — ambient strip already surfaces the advisory.
         });
       });
     }, 700);
     return () => window.clearTimeout(t);
   }, [drafts, projectId, tasks]);
-
-  const onDismissPrompt = () => {
-    if (!promptDraft) return;
-    const next = new Set(dismissed);
-    next.add(promptDraft.trigger_id);
-    setDismissed(next);
-    writeDismissed(projectId, next);
-  };
 
   const setStatus = (taskId: string, status: "done" | "cancelled") => {
     const fd = new FormData();
@@ -195,37 +168,30 @@ export function PermitTodosPanel({
 
   return (
     <div className={css.root} data-testid="permit-todos">
-      {promptDraft ? (
-        <aside className={css.prompt} data-testid="permit-prompt">
-          <p className={css.promptKicker}>Council advice</p>
-          <p className={css.promptTitle}>{promptDraft.title}</p>
-          <p className={css.promptDetail}>
-            {detailFromSpec(promptDraft.technical_specifications ?? null) ||
-              "This design step likely needs a permit or specialist check. It is on your design to-do list."}
+      {ambientAdvice ? (
+        <aside
+          className={css.ambient}
+          data-testid="permit-prompt"
+          aria-label="Council advice"
+        >
+          <p className={css.ambientKicker}>Council</p>
+          <p className={css.ambientTitle}>{ambientAdvice.title}</p>
+          <p className={css.ambientDetail}>
+            {"technical_specifications" in ambientAdvice
+              ? detailFromSpec(
+                  ambientAdvice.technical_specifications ?? null,
+                ) ||
+                "Likely needs a permit or specialist check — listed in design to-dos."
+              : "Likely needs a permit or specialist check — listed in design to-dos."}
           </p>
-          <div className={css.promptActions}>
-            <button
-              type="button"
-              className={css.btn}
-              onClick={() => {
-                setExpanded(true);
-                onDismissPrompt();
-              }}
-            >
-              Got it
-            </button>
-            <button
-              type="button"
-              className={css.btnGhost}
-              onClick={onDismissPrompt}
-            >
-              Dismiss
-            </button>
-          </div>
         </aside>
       ) : null}
 
-      <section className={css.panel} data-testid="permit-todo-list">
+      <section
+        className={css.panel}
+        data-testid="permit-todo-list"
+        data-open={expanded ? "true" : "false"}
+      >
         <div className={css.head}>
           <button
             type="button"
