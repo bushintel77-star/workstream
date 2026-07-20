@@ -188,3 +188,66 @@ export function snapAlignment(
     guideY: gy,
   };
 }
+
+/** Drafting grid grain — % of board width/height per cell. */
+export type GridGrain = "fine" | "medium" | "coarse";
+
+export const GRID_STEP_PCT: Record<GridGrain, number> = {
+  fine: 1,
+  medium: 2.5,
+  coarse: 5,
+};
+
+/** Snap a %-coord to the drafting grid. */
+export function snapToGridPct(
+  target: PctPoint,
+  stepPct: number,
+): PctPoint {
+  const step = Math.max(0.25, stepPct);
+  return clampPct({
+    x: Math.round(target.x / step) * step,
+    y: Math.round(target.y / step) * step,
+  });
+}
+
+/**
+ * Clock-face rotation snap (30° = hour marks).
+ * Shift → 15° half-hours; Alt → free angle.
+ */
+export function snapClockRotationDeg(
+  angleDeg: number,
+  opts?: { shift?: boolean; alt?: boolean },
+): number {
+  let a = angleDeg % 360;
+  if (a < 0) a += 360;
+  if (opts?.alt) return a;
+  const step = opts?.shift ? 15 : 30;
+  return Math.round(a / step) * step;
+}
+
+/**
+ * Grid first (magnetic draft), then soft alignment to peers.
+ * Returns crosshair anchors for full-canvas guides.
+ */
+export function snapDraftPoint(
+  target: PctPoint,
+  others: PctPoint[],
+  stepPct: number,
+  alignThreshPct = 1.3,
+): {
+  point: PctPoint;
+  guideX: number | null;
+  guideY: number | null;
+  crossX: number;
+  crossY: number;
+} {
+  const gridded = snapToGridPct(target, stepPct);
+  const aligned = snapAlignment(gridded, others, alignThreshPct);
+  return {
+    point: aligned.point,
+    guideX: aligned.guideX,
+    guideY: aligned.guideY,
+    crossX: aligned.point.x,
+    crossY: aligned.point.y,
+  };
+}

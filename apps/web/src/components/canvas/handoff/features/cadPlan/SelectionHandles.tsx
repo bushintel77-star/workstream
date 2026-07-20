@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { snapClockRotationDeg } from "../../geometry/snap";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import css from "./cadPlan.module.css";
 
@@ -15,7 +16,8 @@ type Props = {
 };
 
 /**
- * Rotate (5° snap) + resize handles for the selected accepted symbol.
+ * Rotate (clock-face 30° snap) + resize handles for the selected symbol.
+ * Shift = 15° half-hours · Alt = free angle.
  */
 export function SelectionHandles({
   item,
@@ -59,12 +61,16 @@ export function SelectionHandles({
     >
       <div
         className={css.selStem}
-        style={{ transform: `translate(-50%, -100%) translateY(-${Math.round(h / 2)}px)` }}
+        style={{
+          transform: `translate(-50%, -100%) translateY(-${Math.round(h / 2)}px)`,
+        }}
       />
       <button
         type="button"
         className={css.rotHandle}
-        title="Drag to rotate · snaps to 5° · hold Shift for free angle"
+        data-testid="rotate-handle"
+        title="Rotate · snaps to clock hours (30°) · Shift 15° · Alt free"
+        aria-label="Rotate selection"
         style={{ transform: `translate(-50%, -50%) translateY(-${rotY}px)` }}
         onPointerDown={(e) => {
           e.stopPropagation();
@@ -75,7 +81,7 @@ export function SelectionHandles({
         onPointerMove={(e) => {
           if (drag.current?.kind !== "rotate") return;
           const p = toLocal(e.clientX, e.clientY, e.currentTarget);
-          let ang =
+          const raw =
             (Math.atan2(
               ((p.y - item.y) / 100) * p.ch,
               ((p.x - item.x) / 100) * p.cw,
@@ -83,7 +89,10 @@ export function SelectionHandles({
               180) /
               Math.PI +
             90;
-          if (!e.shiftKey) ang = Math.round(ang / 5) * 5;
+          const ang = snapClockRotationDeg(raw, {
+            shift: e.shiftKey,
+            alt: e.altKey,
+          });
           onTransform(item.id, { rot: ang });
         }}
         onPointerUp={() => {

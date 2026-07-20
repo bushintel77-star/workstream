@@ -28,6 +28,10 @@
   cursor: copy;
 }
 
+.world[data-cursor="paint"] {
+  cursor: cell;
+}
+
 /* SDS §3 — corner solid 8px · mid hollow diamond 6px */
 .cornerNode {
   position: absolute;
@@ -340,6 +344,56 @@
   justify-content: center;
   box-sizing: border-box;
   cursor: pointer;
+}
+
+.itemSelected {
+  outline: 1.5px solid #1c1917;
+  outline-offset: 2px;
+  animation: selPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes selPulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+    outline-color: rgba(28, 25, 23, 0.85);
+  }
+  50% {
+    filter: drop-shadow(0 0 3px rgba(28, 25, 23, 0.35));
+    outline-color: rgba(28, 25, 23, 0.45);
+  }
+}
+
+.draftGrid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.crosshairV,
+.crosshairH {
+  position: absolute;
+  pointer-events: none;
+  z-index: 16;
+  background: rgba(28, 25, 23, 0.28);
+}
+
+.crosshairV {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.crosshairH {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
 }
 
 .flagged {

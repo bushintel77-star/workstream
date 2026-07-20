@@ -10,6 +10,7 @@ import {
 import {
   BY_TYPE,
   MODE_TABS,
+  PAINT_SWATCHES,
   type StudioItemType,
   type StudioMode,
 } from "./studioCatalog";
@@ -252,6 +253,15 @@ export function HandoffDesignStudio({
       if (e.key.toLowerCase() === "r" && ai.current && !ui.drawPoly) {
         e.preventDefault();
         ai.reject(ai.current.id);
+        return;
+      }
+      if (
+        ui.selectedId &&
+        !ui.drawPoly &&
+        (e.key === "[" || e.key === "]")
+      ) {
+        e.preventDefault();
+        studio.rotateSelectedClock(e.key === "]" ? 1 : -1);
         return;
       }
       if (
@@ -959,6 +969,9 @@ export function HandoffDesignStudio({
               onMoveItem={studio.moveItem}
               onMoveGroup={studio.moveGroup}
               onTransformItem={studio.transformItem}
+              gridGrain={ui.gridGrain}
+              gridSnap={ui.gridSnap}
+              onPaintItem={studio.paintItem}
             />
             {chrome.floraRing && ui.floraSession ? (
               <FloraRing
@@ -1102,6 +1115,69 @@ export function HandoffDesignStudio({
                 >
                   Lighting
                 </button>
+              </div>
+            ) : null}
+            {ui.tool === "paint" && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
+              <div className={css.paintSwatchBar} data-testid="paint-swatch-bar">
+                {PAINT_SWATCHES.map((s) => (
+                  <button
+                    key={s.t}
+                    type="button"
+                    className={`${css.chip}${ui.paintSwatch === s.t ? ` ${css.chipActive}` : ""}`}
+                    data-testid={`paint-swatch-${s.t}`}
+                    title={`Fill ${s.label}`}
+                    onClick={() =>
+                      studio.setUi({ paintSwatch: s.t, tool: "paint" })
+                    }
+                  >
+                    <span
+                      className={css.swatchDot}
+                      data-swatch={s.t}
+                      aria-hidden
+                    />
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {(ui.tool === "edit" ||
+              ui.tool === "paint" ||
+              ui.tool === "add" ||
+              ui.tool === "pan") &&
+            !ui.focusOn &&
+            !ui.clientView &&
+            !ui.frameOn &&
+            !ui.foundationCleanse ? (
+              <div className={css.draftGrainBar} data-testid="draft-grain-bar">
+                <button
+                  type="button"
+                  className={`${css.chip}${ui.gridSnap ? ` ${css.chipActive}` : ""}`}
+                  data-testid="draft-snap-toggle"
+                  title="Magnetic grid snap"
+                  onClick={() => studio.setUi({ gridSnap: !ui.gridSnap })}
+                >
+                  {ui.gridSnap ? "Snap" : "Free"}
+                </button>
+                {(["fine", "medium", "coarse"] as const).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    className={`${css.chip}${ui.gridGrain === g ? ` ${css.chipActive}` : ""}`}
+                    data-testid={`draft-grain-${g}`}
+                    title={
+                      g === "fine"
+                        ? "Fine grid — small cells"
+                        : g === "medium"
+                          ? "Medium grid"
+                          : "Coarse grid — large cells"
+                    }
+                    onClick={() =>
+                      studio.setUi({ gridGrain: g, gridSnap: true })
+                    }
+                  >
+                    {g === "fine" ? "Fine" : g === "medium" ? "Med" : "Coarse"}
+                  </button>
+                ))}
               </div>
             ) : null}
             {chrome.selectionRing && selectedLive ? (

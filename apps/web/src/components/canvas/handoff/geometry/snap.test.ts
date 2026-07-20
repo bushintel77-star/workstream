@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   snapAlignment,
+  snapClockRotationDeg,
+  snapDraftPoint,
+  snapToGridPct,
   snapTracePointer,
   snapVertexDrag,
 } from "./snap";
@@ -81,5 +84,26 @@ describe("snapAlignment", () => {
     expect(r.guideX).toBe(40);
     expect(r.guideY).toBe(60);
     expect(r.point).toEqual({ x: 40, y: 60 });
+  });
+});
+
+describe("snapToGridPct / snapClockRotationDeg / snapDraftPoint", () => {
+  it("snaps to drafting grid cells", () => {
+    expect(snapToGridPct({ x: 41.2, y: 58.8 }, 2.5)).toEqual({
+      x: 40,
+      y: 60,
+    });
+  });
+
+  it("clock-snaps rotation to hour marks", () => {
+    expect(snapClockRotationDeg(37)).toBe(30);
+    expect(snapClockRotationDeg(22, { shift: true })).toBe(15);
+    expect(snapClockRotationDeg(37, { alt: true })).toBeCloseTo(37, 5);
+  });
+
+  it("draft snap returns crosshair anchors", () => {
+    const r = snapDraftPoint({ x: 41, y: 59 }, [{ x: 40, y: 10 }], 2.5);
+    expect(r.crossX).toBe(40);
+    expect(r.guideX).toBe(40);
   });
 });

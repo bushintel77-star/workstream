@@ -40,6 +40,11 @@ import {
 import type { PaperSize, PctPoint } from "../geometry";
 import { classifySurveyCorridor } from "../geometry/surveyCorridor";
 import { pointInPolygon } from "../geometry/polygon";
+import {
+  GRID_STEP_PCT,
+  snapClockRotationDeg,
+  snapToGridPct,
+} from "../geometry/snap";
 import { markStaleGhostsNearEdit } from "./staleGhosts";
 import {
   canvasToStrokes,
@@ -149,6 +154,12 @@ type Ui = {
   drawCursor: PctPoint | null;
   traceTarget: TraceTarget;
   zoneKind: IrrigationZoneKind;
+  /** Drafting grid grain for snap + visible mesh. */
+  gridGrain: "fine" | "medium" | "coarse";
+  /** Magnetic grid snap while dragging / nudging. */
+  gridSnap: boolean;
+  /** Active Paint swatch (Mac Paint–style fill). */
+  paintSwatch: StudioItemType;
   siteIdx: number;
   canopyScanning: boolean;
   sunPlay: boolean;
@@ -341,6 +352,9 @@ function initialState(opts: {
       drawCursor: null,
       traceTarget: "boundary",
       zoneKind: "drip",
+      gridGrain: "medium",
+      gridSnap: true,
+      paintSwatch: "lawn",
       siteIdx: 0,
       canopyScanning: false,
       sunPlay: false,
@@ -792,11 +806,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const placeArmed = useCallback(
     (x: number, y: number) => {
-      const armed = state.ui.armed;
+      const painting = state.ui.tool === "paint";
+      const armed = painting ? state.ui.paintSwatch : state.ui.armed;
       if (!armed) return;
 
       // Planting Add → Flora Ring (AI intelligence layer — available in Stage 1)
-      if (isFloraStudioForm(armed)) {
+      if (!painting && isFloraStudioForm(armed)) {
         const cells = buildIndicativeShadeGrid(
           FLORA_SHADE_LAT,
           FLORA_SHADE_LNG,
@@ -855,7 +870,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           x: px,
           y: py,
           rot: 0,
-          scale: 0.7,
+          scale: painting ? 1 : 0.7,
           ghost: false,
           ...(dbhM != null ? { dbhM } : {}),
         };
@@ -864,7 +879,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           items: [...snap.items, item],
         };
         let nextIdn = idn + 1;
-        if (!state.ui.foundationCleanse) {
+        if (!painting && !state.ui.foundationCleanse) {
           const follow = maybeAutoProposeAfterCommit(
             next,
             addressRef.current,
@@ -880,11 +895,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
         }
         return { snap: next, idn: nextIdn };
       });
+      // Paint stays armed (Mac Paint bucket); Add disarms after place.
       setUi({
-        armed: null,
+        armed: painting ? state.ui.armed : null,
         addOpen: false,
-        tool: "pan",
-        ghostReviewOpen: !state.ui.foundationCleanse,
+        tool: painting ? "paint" : "pan",
+        ghostReviewOpen: painting ? state.ui.ghostReviewOpen : !state.ui.foundationCleanse,
         coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
         councilTip: tip,
@@ -897,8 +913,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
       state.ui.armed,
       state.ui.existDbhM,
       state.ui.foundationCleanse,
+      state.ui.ghostReviewOpen,
+      state.ui.paintSwatch,
       state.ui.setbackOn,
       state.ui.sunMin,
+      state.ui.tool,
     ],
   );
 
@@ -1367,22 +1386,40 @@ export function useStudioState(opts: UseStudioStateOpts) {
             : [];
       if (ids.length === 0 || state.ui.locked) return;
       const set = new Set(ids);
+      const step = state.ui.gridSnap
+        ? GRID_STEP_PCT[state.ui.gridGrain]
+        : null;
+      const stepDx = step != null ? Math.sign(dx || 1) * (dx === 0 ? 0 : step) : dx;
+      const stepDy = step != null ? Math.sign(dy || 1) * (dy === 0 ? 0 : step) : dy;
+      // When grid snap is on, ignore fine nudge size — move one cell per key.
+      const ndx = step != null ? (dx === 0 ? 0 : stepDx) : dx;
+      const ndy = step != null ? (dy === 0 ? 0 : stepDy) : dy;
       mutate((snap) => ({
         snap: {
           ...snap,
-          items: snap.items.map((i) =>
-            set.has(i.id) && !i.ghost
-              ? {
-                  ...i,
-                  x: Math.max(0, Math.min(100, i.x + dx)),
-                  y: Math.max(0, Math.min(100, i.y + dy)),
-                }
-              : i,
-          ),
+          items: snap.items.map((i) => {
+            if (!set.has(i.id) || i.ghost) return i;
+            const next = {
+              x: Math.max(0, Math.min(100, i.x + ndx)),
+              y: Math.max(0, Math.min(100, i.y + ndy)),
+            };
+            if (step != null) {
+              const g = snapToGridPct(next, step);
+              return { ...i, x: g.x, y: g.y };
+            }
+            return { ...i, ...next };
+          }),
         },
       }));
     },
-    [mutate, state.ui.groupIds, state.ui.locked, state.ui.selectedId],
+    [
+      mutate,
+      state.ui.gridGrain,
+      state.ui.gridSnap,
+      state.ui.groupIds,
+      state.ui.locked,
+      state.ui.selectedId,
+    ],
   );
 
   const moveGroup = useCallback(
@@ -1439,6 +1476,55 @@ export function useStudioState(opts: UseStudioStateOpts) {
       }));
     },
     [mutate, state.ui.locked, state.ui.selectedId],
+  );
+
+  /** Paint bucket — retag a symbol with the active swatch. */
+  const paintItem = useCallback(
+    (id: string) => {
+      if (state.ui.locked) return;
+      const t = state.ui.paintSwatch;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost ? { ...i, t } : i,
+          ),
+        },
+      }));
+    },
+    [mutate, state.ui.locked, state.ui.paintSwatch],
+  );
+
+  /** Clock-face rotate (±1 hour = 30°) for the selection. */
+  const rotateSelectedClock = useCallback(
+    (hours: number) => {
+      const ids =
+        state.ui.groupIds.length > 0
+          ? state.ui.groupIds
+          : state.ui.selectedId
+            ? [state.ui.selectedId]
+            : [];
+      if (ids.length === 0 || state.ui.locked) return;
+      const set = new Set(ids);
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) => {
+            if (!set.has(i.id) || i.ghost) return i;
+            return {
+              ...i,
+              rot: snapClockRotationDeg(i.rot + hours * 30),
+            };
+          }),
+        },
+      }));
+    },
+    [
+      mutate,
+      state.ui.groupIds,
+      state.ui.locked,
+      state.ui.selectedId,
+    ],
   );
 
   const patchSelectedDbh = useCallback(
@@ -2025,6 +2111,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setSelection,
     deleteSelected,
     changeSelectedType,
+    paintItem,
+    rotateSelectedClock,
     patchSelectedDbh,
     snapSheetScale,
     setSheetScale,
@@ -2058,6 +2146,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         locked: false,
         addOpen: tool === "add",
         armed: tool === "add" ? state.ui.armed : null,
+        paintSwatch:
+          tool === "paint" ? state.ui.paintSwatch || "lawn" : state.ui.paintSwatch,
         drawPoly: tool === "trace" ? state.ui.drawPoly : null,
         drawCursor: tool === "trace" ? state.ui.drawCursor : null,
       });

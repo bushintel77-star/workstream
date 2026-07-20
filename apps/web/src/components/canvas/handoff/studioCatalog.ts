@@ -321,6 +321,12 @@ export const TOOLS = [
   { id: "edit", label: "Edit", icon: "◇" },
   { id: "add", label: "Add", icon: "+" },
   {
+    id: "paint",
+    label: "Paint",
+    icon: "▣",
+    title: "Fill swatch — click a shape or empty lot (Mac Paint–style)",
+  },
+  {
     id: "zone",
     label: "Zone",
     icon: "〰",
@@ -330,6 +336,19 @@ export const TOOLS = [
   { id: "reset", label: "Reset", icon: "↺" },
   { id: "pan", label: "Pan", icon: "✥" },
 ] as const;
+
+/** Fillable hardscape / softscape for the Paint swatch strip. */
+export const PAINT_SWATCHES: Array<{
+  t: StudioItemType;
+  label: string;
+  wash: string;
+}> = [
+  { t: "lawn", label: "Turf", wash: "rgba(74, 112, 58, 0.55)" },
+  { t: "bed", label: "Planting", wash: "rgba(90, 122, 72, 0.5)" },
+  { t: "paving", label: "Bluestone", wash: "rgba(70, 78, 88, 0.55)" },
+  { t: "deck", label: "Deck", wash: "rgba(140, 98, 58, 0.5)" },
+  { t: "hedge", label: "Hedge", wash: "rgba(52, 92, 48, 0.55)" },
+];
 
 /** Survey-mode annotation tools (ported from curtis-co prototype). */
 export const SURVEY_TOOLS = [

@@ -69,6 +69,9 @@ export type StudioUiState = {
   traceTarget: TraceTarget;
   /** Zone tool kind — drip irrigation or lighting run. */
   zoneKind: IrrigationZoneKind;
+  gridGrain: "fine" | "medium" | "coarse";
+  gridSnap: boolean;
+  paintSwatch: StudioItemType;
   siteIdx: number;
   canopyScanning: boolean;
   sunPlay: boolean;

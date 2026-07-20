@@ -57,6 +57,7 @@ const DRAWING_TOOLS: StudioTool[] = [
   "trace",
   "edit",
   "add",
+  "paint",
   "zone",
   "measure",
 ];

@@ -1035,6 +1035,80 @@
   background: rgba(242, 240, 235, 0.94);
 }
 
+/* Mac Paint–style fill palette — top centre while Paint is armed. */
+.paintSwatchBar {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--ws-safe-top, 40px) + 8px);
+  transform: translateX(-50%);
+  z-index: 14;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: min(480px, calc(100% - 140px));
+  padding: 6px 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.94);
+  animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.paintSwatchBar .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.swatchDot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(28, 25, 23, 0.35);
+  flex: none;
+}
+
+.swatchDot[data-swatch="lawn"] {
+  background: rgba(74, 112, 58, 0.75);
+}
+
+.swatchDot[data-swatch="bed"] {
+  background: rgba(90, 122, 72, 0.7);
+}
+
+.swatchDot[data-swatch="paving"] {
+  background: rgba(70, 78, 88, 0.75);
+}
+
+.swatchDot[data-swatch="deck"] {
+  background: rgba(140, 98, 58, 0.7);
+}
+
+.swatchDot[data-swatch="hedge"] {
+  background: rgba(52, 92, 48, 0.75);
+}
+
+/* Drafting grain — bottom-left, clears add strip centre. */
+.draftGrainBar {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  z-index: 14;
+  display: flex;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid rgba(28, 25, 23, 0.16);
+  background: rgba(242, 240, 235, 0.92);
+  animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.draftGrainBar .chip {
+  min-height: 26px;
+  padding: 0 8px;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
 .dbhField {
   display: inline-flex;
   align-items: center;

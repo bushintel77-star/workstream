@@ -7,10 +7,14 @@ import {
   edgeSegments,
   insertVertexAfter,
   polygonAreaM2,
+  GRID_STEP_PCT,
   ptsAttr,
   snapAlignment,
+  snapDraftPoint,
+  snapToGridPct,
   snapVertexDrag,
   tpzRadiusPct,
+  type GridGrain,
   type PctPoint,
 } from "../../geometry";
 import {
@@ -104,6 +108,11 @@ type Props = {
     id: string,
     patch: Partial<Pick<StudioItem, "rot" | "scale">>,
   ) => void;
+  /** Magnetic drafting grid grain. */
+  gridGrain?: GridGrain;
+  gridSnap?: boolean;
+  /** Paint bucket — recolor / retag a symbol. */
+  onPaintItem?: (id: string) => void;
 };
 
 function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
@@ -157,6 +166,9 @@ export function CadPlanBoard({
   onMoveItem,
   onMoveGroup,
   onTransformItem,
+  gridGrain = "medium",
+  gridSnap = true,
+  onPaintItem,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -179,10 +191,19 @@ export function CadPlanBoard({
     x2: number;
     y2: number;
   } | null>(null);
+  const [crosshair, setCrosshair] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [nodeMenu, setNodeMenu] = useState<NodeMenu | null>(null);
   const [cursorMode, setCursorMode] = useState<"default" | "move" | "add">(
     "default",
   );
+  const gridStep = GRID_STEP_PCT[gridGrain];
+  const showDraftGrid =
+    !frameOn &&
+    !foundationCleanse &&
+    (tool === "edit" || tool === "paint" || tool === "add" || tool === "pan");
 
   /** Title CAD drag when Stage 1 unlocked — snap via snapVertexDrag. */
   const titleEditing =
@@ -271,8 +292,9 @@ export function CadPlanBoard({
   }, []);
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
-    if (tool === "add") {
-      const p = toPct(e.clientX, e.clientY);
+    if (tool === "add" || tool === "paint") {
+      const raw = toPct(e.clientX, e.clientY);
+      const p = gridSnap ? snapToGridPct(raw, gridStep) : raw;
       onPlace(p.x, p.y);
       return;
     }
@@ -333,9 +355,11 @@ export function CadPlanBoard({
       return;
     }
     if (d.kind === "group" && d.ids && d.startX != null && d.startY != null) {
-      const dx = p.x - d.startX;
-      const dy = p.y - d.startY;
-      dragRef.current = { ...d, startX: p.x, startY: p.y };
+      const snapped = gridSnap ? snapToGridPct(p, gridStep) : p;
+      const dx = snapped.x - d.startX;
+      const dy = snapped.y - d.startY;
+      dragRef.current = { ...d, startX: snapped.x, startY: snapped.y };
+      setCrosshair({ x: snapped.x, y: snapped.y });
       onMoveGroup(d.ids, dx, dy);
       return;
     }
@@ -343,9 +367,17 @@ export function CadPlanBoard({
       const others = items
         .filter((o) => o.id !== d.id)
         .map((o) => ({ x: o.x, y: o.y }));
-      const snapped = snapAlignment(p, others);
-      setGuides({ x: snapped.guideX, y: snapped.guideY });
-      onMoveItem(d.id, snapped.point.x, snapped.point.y);
+      if (gridSnap) {
+        const snapped = snapDraftPoint(p, others, gridStep);
+        setGuides({ x: snapped.guideX, y: snapped.guideY });
+        setCrosshair({ x: snapped.crossX, y: snapped.crossY });
+        onMoveItem(d.id, snapped.point.x, snapped.point.y);
+      } else {
+        const snapped = snapAlignment(p, others);
+        setGuides({ x: snapped.guideX, y: snapped.guideY });
+        setCrosshair({ x: snapped.point.x, y: snapped.point.y });
+        onMoveItem(d.id, snapped.point.x, snapped.point.y);
+      }
       return;
     }
     if (
@@ -397,6 +429,7 @@ export function CadPlanBoard({
     dragRef.current = null;
     setMarquee(null);
     setGuides({ x: null, y: null });
+    setCrosshair(null);
   };
 
   const midHandles = (pts: PctPoint[], kind: "boundary" | "building") =>
@@ -427,7 +460,9 @@ export function CadPlanBoard({
       data-testid="cad-plan-board"
       data-cad-plan
       data-mode={mode}
-      data-cursor={editing ? cursorMode : "default"}
+      data-cursor={
+        tool === "paint" ? "paint" : editing ? cursorMode : "default"
+      }
       style={boardPassthrough ? { pointerEvents: "none" } : undefined}
       onPointerDown={(e) => {
         if (boardPassthrough) return;
@@ -851,9 +886,10 @@ export function CadPlanBoard({
         return (
           <div
             key={it.id}
-            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}`}
+            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}`}
             data-testid={it.ghost ? "studio-ghost" : "studio-item"}
             data-item-type={it.t}
+            data-selected={selected || groupIds.includes(it.id) ? "true" : "false"}
             style={{
               left: `${it.x}%`,
               top: `${it.y}%`,
@@ -894,23 +930,30 @@ export function CadPlanBoard({
             onPointerLeave={() => onHover(null)}
             onPointerDown={(e) => {
               e.stopPropagation();
+              if (tool === "paint" && !it.ghost && onPaintItem) {
+                onPaintItem(it.id);
+                return;
+              }
               const additive = e.shiftKey || e.metaKey;
               onSelect(it.id, { additive });
-              if (!it.ghost && tool !== "lock") {
+              if (!it.ghost && tool !== "lock" && tool !== "paint") {
                 const ids =
                   groupIds.includes(it.id) && groupIds.length > 1
                     ? groupIds
                     : [it.id];
                 if (ids.length > 1) {
                   const p = toPct(e.clientX, e.clientY);
+                  const start = gridSnap ? snapToGridPct(p, gridStep) : p;
                   dragRef.current = {
                     kind: "group",
                     ids,
-                    startX: p.x,
-                    startY: p.y,
+                    startX: start.x,
+                    startY: start.y,
                   };
+                  setCrosshair(start);
                 } else {
                   dragRef.current = { kind: "item", id: it.id, ox: 0, oy: 0 };
+                  setCrosshair({ x: it.x, y: it.y });
                 }
                 (e.target as Element).setPointerCapture?.(e.pointerId);
               }
@@ -975,6 +1018,58 @@ export function CadPlanBoard({
             height: `${Math.abs(marquee.y2 - marquee.y1)}%`,
           }}
         />
+      ) : null}
+
+      {showDraftGrid ? (
+        <svg
+          className={css.draftGrid}
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden
+          data-testid="draft-grid"
+          data-grain={gridGrain}
+        >
+          {Array.from(
+            { length: Math.floor(100 / gridStep) + 1 },
+            (_, i) => i * gridStep,
+          ).map((v) => (
+            <g key={`g${v}`}>
+              <line
+                x1={v}
+                y1={0}
+                x2={v}
+                y2={100}
+                stroke="rgba(28,25,23,0.08)"
+                strokeWidth={0.12}
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1={0}
+                y1={v}
+                x2={100}
+                y2={v}
+                stroke="rgba(28,25,23,0.08)"
+                strokeWidth={0.12}
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
+          ))}
+        </svg>
+      ) : null}
+
+      {crosshair ? (
+        <>
+          <div
+            className={`${css.crosshairV}`}
+            data-testid="draft-crosshair-v"
+            style={{ left: `${crosshair.x}%` }}
+          />
+          <div
+            className={`${css.crosshairH}`}
+            data-testid="draft-crosshair-h"
+            style={{ top: `${crosshair.y}%` }}
+          />
+        </>
       ) : null}
 
       {guides.x != null ? (
