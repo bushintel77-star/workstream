@@ -33,6 +33,8 @@ type Props = {
   onOpenPanel: (panel: UtilityPanel) => void;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
+  /** Canvas-first: dismiss the whole summoned lane back to a quiet drawing. */
+  onClose?: () => void;
   settling?: boolean;
 };
 
@@ -57,6 +59,7 @@ export function UtilityDrawer({
   onOpenPanel,
   onMitigate,
   onOpenQuote,
+  onClose,
   settling = false,
 }: Props) {
   const compliancePass = {
@@ -81,6 +84,18 @@ export function UtilityDrawer({
       data-testid="utility-drawer"
       data-collapsed={collapsed ? "true" : "false"}
     >
+      {onClose ? (
+        <button
+          type="button"
+          className={css.hubDismiss}
+          data-testid="utility-drawer-dismiss"
+          aria-label="Hide data lane"
+          title="Hide — quiet canvas"
+          onClick={onClose}
+        >
+          ×
+        </button>
+      ) : null}
       <div className={css.tabs} role="tablist" aria-label="Operational feedback">
         <button
           type="button"

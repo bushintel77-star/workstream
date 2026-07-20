@@ -1,0 +1,136 @@
+/*
+ * Swatch tray — persistent neumorphic furniture in the left gutter.
+ * Base layer beneath the glassmorphic floats; soft plastic pressed from the
+ * blush field. Never an opaque slab over the drawing — it lives in the margin.
+ */
+
+.tray {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 18;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: var(--hc-r-panel, 14px);
+  background: var(--hc-neu-surface, #f1e4e9);
+  box-shadow: var(--hc-neu-out, -3px -3px 8px rgba(255, 255, 255, 0.85), 4px 4px 11px rgba(42, 23, 29, 0.16));
+  color: var(--hc-ink, #241318);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  pointer-events: auto;
+  animation: trayIn var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7.5px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint, #b08a95);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 46px;
+  padding: 6px 4px;
+  border: none;
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(--hc-neu-out-sm, -2px -2px 5px rgba(255, 255, 255, 0.85), 2px 2px 6px rgba(42, 23, 29, 0.16));
+  color: var(--hc-ink-muted, #7a5560);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    box-shadow var(--hc-motion, 180ms) var(--ws-ease, ease),
+    color var(--hc-motion, 180ms) var(--ws-ease, ease),
+    transform var(--hc-motion, 180ms) var(--ws-ease, ease);
+}
+
+.swatch:hover {
+  color: var(--hc-ink, #241318);
+}
+
+.swatch:active {
+  box-shadow: var(--hc-neu-in, inset 2px 2px 5px rgba(42, 23, 29, 0.16), inset -2px -2px 5px rgba(255, 255, 255, 0.85));
+}
+
+/* Pressed-in — the armed swatch physically sits below the surface. */
+.swatchOn {
+  box-shadow: var(--hc-neu-in, inset 2px 2px 5px rgba(42, 23, 29, 0.16), inset -2px -2px 5px rgba(255, 255, 255, 0.85));
+  color: var(--hc-ink, #241318);
+}
+
+.swatchOn .chip {
+  transform: scale(0.9);
+}
+
+.chip {
+  width: 26px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--wash, rgba(74, 112, 58, 0.55));
+  box-shadow: inset 0 0 0 1px rgba(36, 19, 24, 0.14);
+  transition: transform var(--hc-motion, 180ms) var(--ws-ease, ease);
+}
+
+.label {
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  text-align: center;
+}
+
+@keyframes trayIn {
+  from {
+    opacity: 0;
+    transform: translate(-6px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+/* Precision mode — flatten the plastic so fine work reads crisp. */
+:global(.rootPrecision) .tray {
+  background: var(--hc-glass, rgba(255, 251, 252, 0.98));
+  box-shadow: var(--hc-elev-2, 0 2px 8px rgba(42, 23, 29, 0.2));
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.34));
+}
+
+:global(.rootPrecision) .swatch {
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.2));
+}
+
+:global(.rootPrecision) .swatchOn {
+  border-color: var(--hc-ink, #241318);
+  box-shadow: var(--hc-neu-in, inset 2px 2px 5px rgba(42, 23, 29, 0.16));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tray {
+    animation: none;
+  }
+
+  .swatch,
+  .chip {
+    transition: none;
+  }
+}

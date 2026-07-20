@@ -124,6 +124,8 @@ type Props = {
   gridInk?: GridInk;
   /** Paint bucket — recolor / retag a symbol. */
   onPaintItem?: (id: string) => void;
+  /** Item id that just received a Paint apply — settle-flash confirmation. */
+  paintFlashId?: string | null;
   /**
    * Empty-board click (not an item / CAD handle).
    * `insideLot` — true on the property drawing; false on the canvas margin.
@@ -197,6 +199,7 @@ export function CadPlanBoard({
   gridFormation = "ortho",
   gridInk = "charcoal",
   onPaintItem,
+  paintFlashId = null,
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
@@ -971,7 +974,7 @@ export function CadPlanBoard({
         return (
           <div
             key={it.id}
-            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}`}
+            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
             data-testid={it.ghost ? "studio-ghost" : "studio-item"}
             data-item-type={it.t}
             data-selected={selected || groupIds.includes(it.id) ? "true" : "false"}

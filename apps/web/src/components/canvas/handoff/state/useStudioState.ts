@@ -183,6 +183,11 @@ type Ui = {
   assistReply: string | null;
   /** Right-hand utility drawer sheet: compliance | bom | closed. */
   utilityPanel: "compliance" | "bom" | null;
+  /**
+   * Canvas-first: measures / quantity lane summoned via the AI command core.
+   * Idle CAD stays a bare drawing; false = quiet canvas.
+   */
+  dataSummoned: boolean;
   /** Brief setback / TPZ / easement tip after a preemptive snap. */
   councilTip: string | null;
   /** Authored DBH (m) for next existing-tree placement — drives AS 4970 TPZ. */
@@ -384,6 +389,7 @@ function initialState(opts: {
       coachOpen: false,
       assistReply: null,
       utilityPanel: null,
+      dataSummoned: false,
       councilTip: null,
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       sheetScaleDenom: 100,
