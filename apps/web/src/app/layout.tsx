@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
+import { DevAuthBanner } from "../components/DevAuthBanner";
 import { ToastHost } from "../components/ToastHost";
 import { clerkEnabled, isDevAuthMode } from "../lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -38,7 +39,6 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: [{ color: "#F6E6ED" }],
 };
 
 export default function RootLayout({
@@ -46,7 +46,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const devAuthMode = isDevAuthMode();
+  const shell = (
+    <>
+      <DevAuthBanner enabled={isDevAuthMode()} />
+      {children}
+    </>
+  );
+
   return (
     <html lang="en-AU">
       <head>
@@ -57,31 +63,17 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body>
         {clerkEnabled ? (
           <ClerkProvider>
-            <ToastHost>
-              {devAuthMode ? (
-                <div className="dev-auth-banner" role="status">
-                  Dev mode - auth disabled. Do not use for client work.
-                </div>
-              ) : null}
-              {children}
-            </ToastHost>
+            <ToastHost>{shell}</ToastHost>
           </ClerkProvider>
         ) : (
-          <ToastHost>
-            {devAuthMode ? (
-              <div className="dev-auth-banner" role="status">
-                Dev mode - auth disabled. Do not use for client work.
-              </div>
-            ) : null}
-            {children}
-          </ToastHost>
+          <ToastHost>{shell}</ToastHost>
         )}
       </body>
     </html>

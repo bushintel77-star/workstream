@@ -23,6 +23,12 @@ Generated 2026-05-24 for the gold-standard automation audit.
   brochure output is no longer exposed as a dead action, portal quotes show the
   confidential watermark and gate deposits until costing exists, and processing
   retry calls the real pipeline restart endpoint.
+- Dashboard and shell hardening (`ee5330a`): project register cards now expose
+  status chips, search, multi-status filters, sort controls, costing totals
+  when present, designed empty/error/no-results states, and delete undo via the
+  restore endpoint. Dev auth mode now renders a persistent warning banner, the
+  shell font tokens use IBM Plex families, and local `pnpm run ci` includes the
+  same placeholder, portal-edge, lint, typecheck, and test gates as CI.
 - Gold-standard hardening (`f00a98e`, `339361b`): route spans now preserve active
   context, provider spans retain token usage through response body reads, aerial
   image fetches and BullMQ jobs are traced, worker shutdown flushes telemetry,
@@ -46,6 +52,7 @@ Generated 2026-05-24 for the gold-standard automation audit.
 
 | Area | Status |
 |------|--------|
+| Operator dashboard | Shipped; project register cards, search, filters, sort, empty/error states, and delete undo hardened in `ee5330a`. |
 | Operator dashboard | Shipped; filters, date/name sorting, delete undo, designed empty state, and shared nav are wired. |
 | Project hub | Shipped tabs for survey, design, costing, audit, outputs, filing, tasks, recordings, measurements, and carbon. |
 | Client portal | Shipped quote/deposit portal with graceful invalid-link handling; now Edge runtime. |
@@ -64,5 +71,6 @@ pnpm mobile:check-placeholders
 pnpm web:check-portal-edge
 ```
 
+Result: 102 Vitest files, 428 tests passing.
 Result: `pnpm run ci` exits 0 with 102 Vitest files and 430 tests passing.
 Literal `pnpm ci` exits with `ERR_PNPM_CI_NOT_IMPLEMENTED` on pnpm 9.15.4.

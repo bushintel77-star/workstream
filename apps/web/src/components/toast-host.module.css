@@ -1,15 +1,14 @@
 .host {
   position: fixed;
   bottom: calc(16px + env(safe-area-inset-bottom));
-  left: 0;
-  right: 0;
+  left: 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   pointer-events: none;
   z-index: 1000;
-  padding: 0 16px;
+  padding-right: 16px;
 }
 
 .toast {
@@ -37,13 +36,13 @@
 
 .success {
   background: color-mix(in srgb, var(--ok) 92%, var(--surface-elevated));
-  color: #ffffff;
+  color: var(--ink-inverted);
   border-color: color-mix(in srgb, var(--ok) 40%, transparent);
 }
 
 .error {
   background: color-mix(in srgb, var(--block) 92%, var(--surface-elevated));
-  color: #ffffff;
+  color: var(--ink-inverted);
   border-color: color-mix(in srgb, var(--block) 40%, transparent);
 }
 
