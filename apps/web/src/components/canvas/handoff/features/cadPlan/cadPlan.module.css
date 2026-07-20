@@ -484,6 +484,26 @@
     0 0 8px rgba(250, 246, 242, 0.75);
 }
 
+.missingBuildingCue {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 8;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 5px 9px;
+  border: 1px dashed var(--hc-line, rgba(36, 19, 24, 0.12));
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  color: var(--hc-ink-muted, #7a5560);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .draftGrid {
   position: absolute;
   inset: 0;

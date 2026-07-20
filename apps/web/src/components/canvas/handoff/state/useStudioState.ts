@@ -54,6 +54,7 @@ import {
   canvasToStrokes,
   itemsToPlacements,
   placementsToItems,
+  resolveHydratedBuilding,
   siteFrameToSnapshot,
   snapshotToSiteFrame,
   strokesToCanvas,
@@ -318,6 +319,11 @@ function initialState(opts: {
     ? {
         ...base,
         ...frameOverlay,
+        building: resolveHydratedBuilding(
+          opts.siteFrame,
+          frameOverlay.building,
+          base.building,
+        ),
         items: placementsToItems(opts.placements ?? []),
         strokes: canvasToStrokes(opts.strokes ?? []),
         easements: frameOverlay.easements ?? base.easements,

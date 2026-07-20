@@ -668,6 +668,7 @@ export function CadPlanBoard({
         />
         {building.length >= 3 ? (
           <polygon
+            data-testid="building-footprint"
             points={ptsAttr(building)}
             fill={bldFill}
             stroke={bldStroke}
@@ -938,6 +939,15 @@ export function CadPlanBoard({
       {cadTitleMode && !frameOn && siteLabel ? (
         <p className={css.cadStreetCue} data-testid="cad-street-cue">
           {siteLabel}
+        </p>
+      ) : null}
+
+      {mode === "survey" && !frameOn && boundary.length >= 3 && building.length < 3 ? (
+        <p
+          className={css.missingBuildingCue}
+          data-testid="building-footprint-empty"
+        >
+          Building footprint not traced · Trace → Footprint
         </p>
       ) : null}
 
