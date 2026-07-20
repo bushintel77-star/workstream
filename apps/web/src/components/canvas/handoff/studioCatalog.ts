@@ -263,8 +263,8 @@ export const PAINT_SWATCHES: Array<{
 ];
 
 /**
- * Game-inventory bags — filter the design kit like WoW/Diablo tab bags,
- * not a Windows toolbar of text chips.
+ * Material families — softscape / hardscape / trees / water.
+ * Used for grouping; UI surfaces these as calm labels, not bag tabs.
  */
 export type KitBagId = "soft" | "hard" | "trees" | "water" | "all";
 

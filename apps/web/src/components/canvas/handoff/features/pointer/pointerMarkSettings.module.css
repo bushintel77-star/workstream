@@ -1,0 +1,140 @@
+/*
+ * Pointer mark settings — calm sheet, generous fades.
+ */
+
+.panel {
+  --ink: #e8f0f8;
+  --ink-soft: rgba(232, 240, 248, 0.72);
+  --glass: rgba(26, 36, 48, 0.9);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: absolute;
+  z-index: 30;
+  right: calc(var(--ws-safe-right, 12px) + 8px);
+  top: calc(var(--ws-safe-top, 40px) + 8px);
+  width: min(220px, 42vw);
+  padding: 12px 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(232, 240, 248, 0.2);
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(1.05);
+  box-shadow: 0 12px 32px rgba(26, 36, 48, 0.32);
+  color: var(--ink);
+  animation: panelIn 480ms var(--ease) both;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.close {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.close:hover {
+  color: var(--ink);
+  background: rgba(232, 240, 248, 0.08);
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.hint {
+  margin: 4px 0 10px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 56px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 240, 248, 0.18);
+  background: rgba(12, 16, 22, 0.4);
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 420ms var(--ease),
+    border-color 420ms var(--ease),
+    color 420ms var(--ease),
+    transform 420ms var(--ease);
+}
+
+.mark:hover {
+  color: var(--ink);
+  background: rgba(38, 52, 68, 0.85);
+  border-color: rgba(232, 240, 248, 0.35);
+  transform: translateY(-1px);
+}
+
+.markOn {
+  color: #1a2430;
+  background: rgba(232, 240, 248, 0.92);
+  border-color: rgba(232, 240, 248, 0.92);
+}
+
+.glyph {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.label {
+  font-size: 9px;
+  font-weight: 650;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .mark {
+    animation: none;
+    transition: none;
+  }
+}

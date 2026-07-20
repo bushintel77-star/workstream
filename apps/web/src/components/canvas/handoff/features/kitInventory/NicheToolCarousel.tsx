@@ -8,6 +8,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { StudioGlyph } from "../../StudioGlyph";
 import { playInstrumentTick } from "../ambient/instrumentTick";
 import {
   ATELIER_LINGER_MS,
@@ -17,7 +18,7 @@ import type { NicheTool } from "./nicheTools";
 import css from "./nicheToolCarousel.module.css";
 
 type Props = {
-  /** Board-% anchor — sits close to the object, not the side kit. */
+  /** Board-% — fans above the selected object. */
   xPct: number;
   yPct: number;
   tools: NicheTool[];
@@ -28,8 +29,8 @@ type Props = {
 };
 
 /**
- * Tight 180° carousel for niche tools around a selected object.
- * Same atelier presence as the main kit: hold, then settle — not combat snap.
+ * Contextual material fan — CAD marking-menu pattern on the canvas.
+ * Slow atelier presence; slots borrow inventory clarity without game chrome.
  */
 export function NicheToolCarousel({
   xPct,
@@ -38,7 +39,7 @@ export function NicheToolCarousel({
   activeId,
   onSelect,
   testId = "niche-tool-carousel",
-  label = "Niche tools",
+  label = "Materials",
 }: Props) {
   const [hover, setHover] = useState(false);
   const [lingering, setLingering] = useState(true);
@@ -89,7 +90,7 @@ export function NicheToolCarousel({
   const arcAngles = useMemo(() => {
     const n = tools.length;
     if (n <= 1) return [0];
-    const span = 160;
+    const span = 150;
     const start = -span / 2;
     return tools.map((_, i) => {
       const base = start + (span * i) / (n - 1);
@@ -148,7 +149,9 @@ export function NicheToolCarousel({
               key={t.id}
               type="button"
               className={`${css.slot}${on ? ` ${css.slotOn}` : ""}`}
-              data-testid={`niche-tool-${t.id}`}
+              data-testid={
+                t.material ? `paint-swatch-${t.material}` : `niche-tool-${t.id}`
+              }
               title={t.label}
               style={
                 {
@@ -162,9 +165,15 @@ export function NicheToolCarousel({
                 else stayEngaged();
               }}
             >
-              <span className={css.glyph} aria-hidden>
-                {t.icon}
-              </span>
+              {t.material ? (
+                <span className={css.swatchGlyph} aria-hidden>
+                  <StudioGlyph type={t.material} ink />
+                </span>
+              ) : (
+                <span className={css.glyph} aria-hidden>
+                  {t.icon}
+                </span>
+              )}
               <span className={css.label}>{t.label}</span>
             </button>
           );

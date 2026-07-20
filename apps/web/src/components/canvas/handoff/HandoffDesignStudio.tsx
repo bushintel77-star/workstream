@@ -8,7 +8,6 @@ import {
   type CSSProperties,
 } from "react";
 import {
-  BY_TYPE,
   MODE_TABS,
   PAINT_SWATCHES,
   type StudioItemType,
@@ -51,16 +50,23 @@ import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
-import { DesignKitInventory } from "./features/kitInventory/DesignKitInventory";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import {
   nicheActiveIdForItem,
   nicheToolsForItem,
+  nicheToolsForPlace,
   nicheToolsForZone,
   zoneNicheActiveId,
   type NicheTool,
 } from "./features/kitInventory/nicheTools";
 import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
+import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
+import {
+  loadPointerMarkId,
+  pointerMarkCursor,
+  savePointerMarkId,
+  type PointerMarkId,
+} from "./features/pointer/pointerMarks";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
@@ -74,9 +80,6 @@ import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
 import { boardScaleM } from "./features/ground/groundMetrics";
 import {
-  buildIndicativeShadeGrid,
-  meanSunHours,
-  sunHoursAtPct,
   solveLiveTradeEstimate,
   tradeTagForItem,
   type ArchitecturalTitleBlock,
@@ -170,14 +173,6 @@ export function HandoffDesignStudio({
     initialTitleBlock,
   );
   /**
-   * Live pointer % — sun probe / proximity only. Never drive chrome position
-   * from this or the UI sticks to the cursor and steals place clicks.
-   */
-  const [workPct, setWorkPct] = useState<{ x: number; y: number }>({
-    x: 50,
-    y: 58,
-  });
-  /**
    * Sticky instrument home — empty canvas margin only (off the lot drawing).
    * Does not follow selection; default parks in the left gutter.
    */
@@ -187,7 +182,15 @@ export function HandoffDesignStudio({
   });
   /** Instruments open only when summoned (margin click / hub), not on select. */
   const [instrumentsSummoned, setInstrumentsSummoned] = useState(false);
-  const addProbePct = workPct;
+  const [pointerMarkId, setPointerMarkId] = useState<PointerMarkId>("spade");
+  /** Settings hover preview — persists only on click. */
+  const [pointerMarkPreview, setPointerMarkPreview] =
+    useState<PointerMarkId | null>(null);
+  const [pointerSettingsOpen, setPointerSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    setPointerMarkId(loadPointerMarkId());
+  }, []);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -360,17 +363,28 @@ export function HandoffDesignStudio({
         studio.deleteSelected();
       }
 
-      /* Inventory quick-equip — Digit1–9, game hotbar logic. */
+      /* Digit accelerators for the active material fan (CAD hotkeys, not a hotbar). */
       if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) {
         const idx = Number(e.key) - 1;
-        if (ui.addOpen && ui.mode !== "sketch") {
-          const t = (
-            Object.keys(BY_TYPE) as StudioItemType[]
-          ).filter((type) =>
-            ui.mode === "survey"
-              ? Boolean(BY_TYPE[type].existing)
-              : !BY_TYPE[type].existing,
-          )[idx];
+        const selected = studio.items.find(
+          (i) => i.id === ui.selectedId && !i.ghost,
+        );
+        if (selected && ui.tool !== "zone") {
+          const mats = nicheToolsForItem(selected, { locked: ui.locked })
+            .map((t) => t.material)
+            .filter(Boolean) as StudioItemType[];
+          const t = mats[idx];
+          if (t) {
+            e.preventDefault();
+            studio.changeSelectedType(t);
+            return;
+          }
+        }
+        if (ui.addOpen && ui.mode !== "sketch" && !selected) {
+          const mats = nicheToolsForPlace(ui.mode)
+            .map((t) => t.material)
+            .filter(Boolean) as StudioItemType[];
+          const t = mats[idx];
           if (t) {
             e.preventDefault();
             studio.setUi({
@@ -536,41 +550,9 @@ export function HandoffDesignStudio({
     });
   };
 
-  /** Inventory slot order for Add kit + 1–9 quick-equip. */
-  const addKitTypes = useMemo(() => {
-    return (Object.keys(BY_TYPE) as StudioItemType[])
-      .filter((t) =>
-        ui.mode === "survey"
-          ? Boolean(BY_TYPE[t].existing)
-          : !BY_TYPE[t].existing,
-      )
-      .filter((t) => {
-        if (!ui.shadeOn) return true;
-        if (t !== "canopy" && t !== "feature") return true;
-        const d = new Date();
-        d.setHours(Math.floor(ui.sunMin / 60), ui.sunMin % 60, 0, 0);
-        const cells = buildIndicativeShadeGrid(
-          projectLat ?? -37.849,
-          projectLng ?? 144.993,
-          d,
-        );
-        const hours = addProbePct
-          ? sunHoursAtPct(addProbePct.x, addProbePct.y, cells)
-          : meanSunHours(cells);
-        return hours >= 3.5;
-      });
-  }, [
-    addProbePct,
-    projectLat,
-    projectLng,
-    ui.mode,
-    ui.shadeOn,
-    ui.sunMin,
-  ]);
-
-  const paintKitTypes = useMemo(
-    () => PAINT_SWATCHES.map((s) => s.t),
-    [],
+  const placeFanTools = useMemo(
+    () => nicheToolsForPlace(ui.mode),
+    [ui.mode],
   );
 
   const draftLabel =
@@ -654,6 +636,24 @@ export function HandoffDesignStudio({
         ) : null}
 
         <div className={css.headerTools} role="toolbar" aria-label="Canvas tools">
+          <button
+            type="button"
+            className={`${css.iconBtn}${pointerSettingsOpen ? ` ${css.iconBtnActive}` : ""}`}
+            data-testid="pointer-settings-top"
+            aria-label="Pointer settings"
+            title="Pointer settings"
+            onClick={() => setPointerSettingsOpen((o) => !o)}
+          >
+            <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+              <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.25" />
+              <path
+                d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
           <button
             type="button"
             className={`${css.iconBtn}${ui.foundationCleanse ? ` ${css.iconBtnActive}` : ""}`}
@@ -897,28 +897,6 @@ export function HandoffDesignStudio({
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}`}
         data-testid="studio-board"
         ref={boardRef}
-        onPointerMove={(e) => {
-          const el = boardRef.current;
-          if (!el) return;
-          const r = el.getBoundingClientRect();
-          if (r.width < 1 || r.height < 1) return;
-          setWorkPct({
-            x: Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)),
-            y: Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100)),
-          });
-        }}
-        onPointerDown={(e) => {
-          /* Pin chrome to click site — do not let panels ride the cursor. */
-          if (e.button !== 0) return;
-          const el = boardRef.current;
-          if (!el) return;
-          const r = el.getBoundingClientRect();
-          if (r.width < 1 || r.height < 1) return;
-          pinInstrumentAnchor(
-            ((e.clientX - r.left) / r.width) * 100,
-            ((e.clientY - r.top) / r.height) * 100,
-          );
-        }}
       >
         {ui.mode === "elevation" ? (
           <ElevationBoard
@@ -978,6 +956,9 @@ export function HandoffDesignStudio({
             style={{
               transformOrigin: `${ui.focusX}% ${ui.focusY}%`,
               transform: `scale(${ui.zoom})`,
+              cursor: pointerMarkCursor(
+                pointerMarkPreview ?? pointerMarkId,
+              ),
               ...(ui.frameOn
                 ? (() => {
                     const sheet = sheetBoxFor(
@@ -1123,7 +1104,6 @@ export function HandoffDesignStudio({
               onBoundaryChange={studio.updateBoundary}
               onBuildingChange={studio.updateBuilding}
               onPlace={(x, y) => {
-                pinInstrumentAnchor(x, y);
                 studio.placeArmed(x, y);
               }}
               onMoveItem={studio.moveItem}
@@ -1266,7 +1246,7 @@ export function HandoffDesignStudio({
             {ui.tool === "zone" && !ui.focusOn && !ui.clientView ? (
               <NicheToolCarousel
                 testId="zone-kind-bar"
-                label="Zone loadout"
+                label="Zone type"
                 xPct={Math.max(18, Math.min(82, instrumentAnchor.x))}
                 yPct={Math.max(14, Math.min(70, instrumentAnchor.y - 8))}
                 tools={nicheToolsForZone()}
@@ -1315,11 +1295,33 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
+            {/* Place palette — Add armed, nothing selected (canvas margin dock). */}
+            {ui.addOpen &&
+            !selectedLive &&
+            planOn &&
+            !ui.focusOn &&
+            ui.mode !== "sketch" &&
+            ui.tool !== "zone" ? (
+              <NicheToolCarousel
+                testId="add-symbol-strip"
+                label="Place"
+                xPct={instrumentAnchor.x}
+                yPct={Math.max(14, instrumentAnchor.y - 8)}
+                tools={placeFanTools}
+                activeId={ui.armed ? `mat-${ui.armed}` : null}
+                onSelect={(tool: NicheTool) => {
+                  if (tool.material) armType(tool.material);
+                }}
+              />
+            ) : null}
             {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
               <>
+                {/* Contextual materials — Fusion-style marking menu on selection. */}
                 <NicheToolCarousel
+                  testId="material-fan"
+                  label="Materials"
                   xPct={selectedLive.x}
-                  yPct={Math.max(10, selectedLive.y - 6)}
+                  yPct={Math.max(10, selectedLive.y - 8)}
                   tools={nicheToolsForItem(selectedLive, {
                     locked: ui.locked,
                   })}
@@ -1424,64 +1426,48 @@ export function HandoffDesignStudio({
         ) : null}
 
 
+        {/* Paint fallback when selection ring is off — still object-local. */}
         {ui.tool === "paint" &&
+        selectedLive &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&
-        !ui.frameOn ? (
-          <DesignKitInventory
-            variant="paint"
+        !ui.frameOn &&
+        !chrome.selectionRing ? (
+          <NicheToolCarousel
             testId="paint-swatch-bar"
-            slotTestIdPrefix="paint-swatch-"
-            types={paintKitTypes}
-            equipped={ui.paintSwatch}
-            onEquip={(t) =>
-              studio.setUi({ paintSwatch: t, tool: "paint" })
-            }
+            label="Materials"
+            xPct={selectedLive.x}
+            yPct={Math.max(10, selectedLive.y - 8)}
+            tools={nicheToolsForItem(selectedLive, { locked: ui.locked })}
+            activeId={`mat-${ui.paintSwatch}`}
+            onSelect={(tool: NicheTool) => {
+              if (tool.material) {
+                studio.setUi({ paintSwatch: tool.material, tool: "paint" });
+                studio.changeSelectedType(tool.material);
+              }
+            }}
           />
         ) : null}
 
-        {ui.addOpen && planOn && !ui.focusOn && ui.mode !== "sketch" ? (
-          <DesignKitInventory
-            variant="add"
-            testId="add-symbol-strip"
-            slotTestIdPrefix="add-symbol-"
-            types={addKitTypes}
-            equipped={ui.armed}
-            onEquip={armType}
-            sunHint={
-              ui.shadeOn
-                ? `Sun filter · ${addProbePct ? "at pointer" : "lot average"} · move to probe`
-                : null
-            }
-            footer={
-              ui.armed === "exist" ? (
-                <label className={css.dbhField} data-testid="exist-dbh-field">
-                  <span>DBH m</span>
-                  <input
-                    type="number"
-                    min={0.05}
-                    max={2}
-                    step={0.01}
-                    inputMode="decimal"
-                    value={ui.existDbhM}
-                    aria-label="Existing tree DBH in metres"
-                    onChange={(e) => {
-                      const n = Number.parseFloat(e.target.value);
-                      if (!Number.isFinite(n) || n <= 0) return;
-                      studio.setUi({
-                        existDbhM: Math.min(2, Math.max(0.05, n)),
-                      });
-                    }}
-                  />
-                </label>
-              ) : null
-            }
+        {pointerSettingsOpen ? (
+          <PointerMarkSettings
+            open
+            markId={pointerMarkId}
+            onPreview={setPointerMarkPreview}
+            onMarkId={(id) => {
+              setPointerMarkId(id);
+              savePointerMarkId(id);
+              setPointerMarkPreview(null);
+            }}
+            onClose={() => {
+              setPointerMarkPreview(null);
+              setPointerSettingsOpen(false);
+            }}
           />
         ) : null}
 
-        {!ui.addOpen &&
-        !ui.focusOn &&
+        {!ui.focusOn &&
         !ui.clientView &&
         !ui.frameOn &&
         planOn &&
@@ -1491,6 +1477,41 @@ export function HandoffDesignStudio({
             locked={ui.locked}
             onDbhM={studio.patchSelectedDbh}
           />
+        ) : null}
+
+        {ui.addOpen &&
+        ui.armed === "exist" &&
+        !selectedLive &&
+        planOn &&
+        !ui.focusOn ? (
+          <label
+            className={css.dbhField}
+            data-testid="exist-dbh-field"
+            style={
+              {
+                left: `${instrumentAnchor.x}%`,
+                top: `${Math.min(88, instrumentAnchor.y + 10)}%`,
+              } as CSSProperties
+            }
+          >
+            <span>DBH m</span>
+            <input
+              type="number"
+              min={0.05}
+              max={2}
+              step={0.01}
+              inputMode="decimal"
+              value={ui.existDbhM}
+              aria-label="Existing tree DBH in metres"
+              onChange={(e) => {
+                const n = Number.parseFloat(e.target.value);
+                if (!Number.isFinite(n) || n <= 0) return;
+                studio.setUi({
+                  existDbhM: Math.min(2, Math.max(0.05, n)),
+                });
+              }}
+            />
+          </label>
         ) : null}
 
         {planOn &&

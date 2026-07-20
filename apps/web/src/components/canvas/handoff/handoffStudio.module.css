@@ -41,7 +41,7 @@
   --ws-sheet-margin: 8px;
   --ws-title-w: 240px;
   --ws-title-gap: 12px;
-  /* Left gutter holds the kit stack — keep drawing clear of larger slots */
+  /* Left gutter for summoned instruments — keep the drawing clear */
   --ws-safe-left: 80px;
   --ws-safe-top: 40px;
   --ws-safe-right: 12px;
@@ -1226,6 +1226,9 @@
 }
 
 .dbhField {
+  position: absolute;
+  z-index: 28;
+  transform: translate(-50%, 0);
   display: inline-flex;
   align-items: center;
   gap: 6px;

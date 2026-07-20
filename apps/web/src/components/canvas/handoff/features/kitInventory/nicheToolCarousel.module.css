@@ -1,6 +1,6 @@
 /*
- * Near-object 180° niche carousel — separate from the inventory stack.
- * Small, local to the selected element; generous fade in / out.
+ * Near-object 180° material fan — contextual CAD marking menu.
+ * Local to the selection; generous atelier fade in / out.
  */
 
 .root {
@@ -10,9 +10,10 @@
   --glass-border: rgba(232, 240, 248, 0.24);
   --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
-  --enter-ms: 420ms;
-  --exit-ms: 1100ms;
-  --arc-radius: 44px;
+  --enter-ms: 480ms;
+  --exit-ms: 1200ms;
+  /* Fan above the object */
+  --arc-radius: 56px;
 
   position: absolute;
   z-index: 28;
@@ -125,6 +126,14 @@
 .glyph {
   font-size: 12px;
   line-height: 1;
+}
+
+.swatchGlyph {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
 }
 
 .label {

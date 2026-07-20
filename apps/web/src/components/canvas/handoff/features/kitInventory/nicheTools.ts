@@ -1,27 +1,26 @@
-import { BY_TYPE, type StudioItem, type StudioItemType } from "../../studioCatalog";
+import {
+  BY_TYPE,
+  PAINT_SWATCHES,
+  type StudioItem,
+  type StudioItemType,
+  type StudioMode,
+} from "../../studioCatalog";
 
-/** Compact action shown in the near-object 180° niche carousel. */
+/**
+ * Compact action in the near-object material fan.
+ * Structure: radial slots (borrowed from marking menus / inventory grids).
+ * Surface: professional materials + lock — not game loadout language.
+ */
 export type NicheTool = {
   id: string;
   label: string;
   icon: string;
-  /** When set, equipping swaps the selected item’s type. */
   material?: StudioItemType;
   kind: "material" | "action";
 };
 
-const HARD: readonly StudioItemType[] = ["paving", "deck"];
-const SOFT: readonly StudioItemType[] = ["lawn", "bed", "hedge"];
-const TREES: readonly StudioItemType[] = ["canopy", "feature"];
-
-function familyOf(t: StudioItemType): readonly StudioItemType[] {
-  if ((HARD as readonly string[]).includes(t)) return HARD;
-  if ((SOFT as readonly string[]).includes(t)) return SOFT;
-  if ((TREES as readonly string[]).includes(t)) return TREES;
-  if (t === "frenchdrain") return ["frenchdrain"];
-  if (t === "exist") return ["exist"];
-  return [t];
-}
+const MATERIAL_FAN: readonly StudioItemType[] = PAINT_SWATCHES.map((s) => s.t);
+const TREE_FAN: readonly StudioItemType[] = ["canopy", "feature"];
 
 const ICONS: Partial<Record<StudioItemType, string>> = {
   paving: "▣",
@@ -35,9 +34,19 @@ const ICONS: Partial<Record<StudioItemType, string>> = {
   exist: "⌀",
 };
 
+function materialTools(types: readonly StudioItemType[]): NicheTool[] {
+  return types.map((t) => ({
+    id: `mat-${t}`,
+    label: BY_TYPE[t].tag,
+    icon: ICONS[t] ?? "◇",
+    material: t,
+    kind: "material" as const,
+  }));
+}
+
 /**
- * Small local niche set for a selected object — not the inventory stack.
- * Related materials for that element (+ lock). Peel stays on ambient layers.
+ * Fan above a selected item — turf / bed / bluestone / deck (or trees).
+ * Canvas-first: tools come to the selection, not a permanent left album.
  */
 export function nicheToolsForItem(
   item: StudioItem,
@@ -52,16 +61,12 @@ export function nicheToolsForItem(
       icon: "⌀",
       kind: "action",
     });
+  } else if ((TREE_FAN as readonly string[]).includes(item.t)) {
+    tools.push(...materialTools(TREE_FAN));
+  } else if (item.t === "frenchdrain") {
+    tools.push(...materialTools(["frenchdrain"]));
   } else {
-    for (const t of familyOf(item.t)) {
-      tools.push({
-        id: `mat-${t}`,
-        label: BY_TYPE[t].tag,
-        icon: ICONS[t] ?? "◇",
-        material: t,
-        kind: "material",
-      });
-    }
+    tools.push(...materialTools(MATERIAL_FAN));
   }
 
   tools.push({
@@ -74,22 +79,24 @@ export function nicheToolsForItem(
   return tools;
 }
 
+/** Place palette when Add is armed — docked off the lot, not a left album. */
+export function nicheToolsForPlace(mode: StudioMode): NicheTool[] {
+  if (mode === "survey") {
+    return materialTools(["exist"]);
+  }
+  return [
+    ...materialTools(MATERIAL_FAN),
+    ...materialTools(TREE_FAN),
+    ...materialTools(["frenchdrain"]),
+  ];
+}
+
 export type ZoneNicheKind = "drip" | "lighting";
 
 export function nicheToolsForZone(): NicheTool[] {
   return [
-    {
-      id: "zone-drip",
-      label: "Drip",
-      icon: "〰",
-      kind: "action",
-    },
-    {
-      id: "zone-lighting",
-      label: "Lighting",
-      icon: "✦",
-      kind: "action",
-    },
+    { id: "zone-drip", label: "Drip", icon: "〰", kind: "action" },
+    { id: "zone-lighting", label: "Lighting", icon: "✦", kind: "action" },
   ];
 }
 
