@@ -62,6 +62,11 @@ import {
 } from "./features/kitInventory/nicheTools";
 import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
 import { CanvasMeasureSummary } from "./features/liveMeasures/CanvasMeasureSummary";
+import {
+  recordTool,
+  toggleTool,
+  type ToolStack,
+} from "./features/toolStack/toolStack";
 import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
 import {
   loadPointerMarkId,
@@ -213,6 +218,11 @@ export function HandoffDesignStudio({
     if (paintFlashTimer.current) clearTimeout(paintFlashTimer.current);
     paintFlashTimer.current = setTimeout(() => setPaintFlashId(null), 460);
   };
+  /** Two-slot tool memory — Q flips back to the tool you left (AutoCAD-style). */
+  const toolStackRef = useRef<ToolStack>({ current: ui.tool, previous: ui.tool });
+  useEffect(() => {
+    toolStackRef.current = recordTool(toolStackRef.current, ui.tool);
+  }, [ui.tool]);
   /** Eyedropper — next canvas click loads that element's style into the swatch. */
   const [eyedropArmed, setEyedropArmed] = useState(false);
   /** Swatch/stamp hover preview — shows target result before commit. */
@@ -407,6 +417,23 @@ export function HandoffDesignStudio({
       if (e.key.toLowerCase() === "f" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         studio.setUi({ frameOn: !ui.frameOn });
+        return;
+      }
+      /* Q flips back to the previous tool — no toolbar round trip. */
+      if (
+        e.key.toLowerCase() === "q" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        planOn &&
+        !ui.frameOn
+      ) {
+        const next = toggleTool(toolStackRef.current);
+        if (next !== ui.tool) {
+          e.preventDefault();
+          studio.setTool(next);
+          setInstrumentsSummoned(true);
+        }
         return;
       }
       /* Infinite zoom — + / = zoom in, - / _ zoom out (not while typing). */
