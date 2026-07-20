@@ -14,7 +14,6 @@ import { CadOpsBatchSchema } from "@workstream/contracts";
 import {
   buildGhostPlacementSuggestions,
   buildStudioSystemPrompt,
-  formatSketchBriefForAi,
   isTier1WrightsTerrace,
   parseStudioAssistResponse,
   tier1WrightsTerraceDesign,
