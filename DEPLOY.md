@@ -55,8 +55,8 @@ flyctl secrets set \
   MAPBOX_TOKEN="pk.…" \
   ANTHROPIC_API_KEY="sk-ant-…" \
   OPENAI_API_KEY="sk-…" \
-  VICMAP_ENABLED="true" \
   --config apps/api/fly.toml
+# Vicmap Property/buildings use keyless DELWP GeoServer WFS — no VICMAP secret.
 
 # 4. First deploy
 flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile

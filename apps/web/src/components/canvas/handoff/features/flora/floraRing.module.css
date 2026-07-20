@@ -1,0 +1,191 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 16;
+  pointer-events: none;
+}
+
+.layer > * {
+  pointer-events: auto;
+}
+
+.ghostCanopy {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px dashed #c99757;
+  background: rgba(201, 151, 87, 0.08);
+  pointer-events: none;
+  animation: floraIn 160ms ease both;
+}
+
+.crosshair {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  pointer-events: none;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: "";
+  position: absolute;
+  background: #1a1a1a;
+}
+
+.crosshair::before {
+  left: 50%;
+  top: 0;
+  width: 1.5px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.crosshair::after {
+  top: 50%;
+  left: 0;
+  height: 1.5px;
+  width: 100%;
+  transform: translateY(-50%);
+}
+
+.ring {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 16px));
+  width: min(280px, calc(100vw - 48px));
+  padding: 10px 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(26, 26, 26, 0.1);
+  background: rgba(247, 244, 239, 0.92);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 32px rgba(26, 26, 26, 0.12);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  color: #1a1a1a;
+  animation: floraIn 180ms ease both;
+}
+
+.kicker {
+  margin: 0 0 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8c8a85;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chip {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(26, 26, 26, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 10px;
+  padding: 7px 9px;
+  cursor: pointer;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.chip:hover,
+.chipActive {
+  border-color: rgba(201, 151, 87, 0.55);
+  background: rgba(201, 151, 87, 0.12);
+}
+
+.chipName {
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.chipMeta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: #8c8a85;
+}
+
+.chipWhy {
+  font-size: 10px;
+  color: #5c5a55;
+}
+
+.chipHold {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 9px;
+  font-weight: 650;
+  color: #c99757;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.accept,
+.dismiss {
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.accept {
+  border: 1px solid #1a1a1a;
+  background: #1a1a1a;
+  color: #f7f4ef;
+}
+
+.dismiss {
+  border: 1px solid rgba(26, 26, 26, 0.14);
+  background: transparent;
+  color: #8c8a85;
+}
+
+.honesty {
+  margin: 8px 0 0;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: #8c8a85;
+}
+
+@keyframes floraIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 10px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 16px));
+  }
+}
+
+.ghostCanopy {
+  animation-name: ghostIn;
+}
+
+@keyframes ghostIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}

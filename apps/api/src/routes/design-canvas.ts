@@ -26,6 +26,7 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
             strokes: [],
             annotations: [],
             features: [],
+            site_frame: null,
             updated_at: null,
           },
           quote: null,

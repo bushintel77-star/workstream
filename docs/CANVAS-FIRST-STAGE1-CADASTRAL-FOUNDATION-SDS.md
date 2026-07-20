@@ -1,0 +1,128 @@
+# Canvas-first Stage 1 — Cadastral Alignment & Foundation Cleanse SDS
+
+**Status:** Implementable  
+**Mode:** Deterministic vector alignment & layer purge (parser-worker pipeline v1.2)  
+**Scope:** All active interface tabs (Survey, Sketch, CAD, Elevation, Quote) via foundation chrome  
+**Trigger:** Ask AI / ⌘K — phrases matching Stage 1 foundation NLP; command "Stage 1 foundation cleanse"  
+**Related:** [Spatial Correction NLP SDS](./CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md) (subset — this SDS is stricter)
+
+---
+
+## 1. Purpose
+
+Bypass probabilistic AI design generation, purge visual noise from the active canvas, and enforce absolute alignment with authoritative Vicmap legal land records. Output is a **Stage 1 Accurate Cadastral Foundation Drawing**: clean vector surface + verified title polygon + millimetre dimensions + architectural oblique ticks.
+
+---
+
+## 2. Systemic overrides
+
+### 2.1 AI intelligence layer (retained under CAD)
+
+| Layer | Behaviour |
+|-------|-----------|
+| Flora Ring / coach / ghosts | **Kept** as underlay — dimmed under title CAD |
+| Isolith / trade (Cad) | Available while Stage 1 is on |
+| Auto aerial canopy flood | Still suppressed (opt-in Scan only) |
+| Placement | Manual + Flora still work; title nodes are the primary CAD job |
+
+### 2.2 Aerial imagery base layer purge
+
+| Parameter | Value |
+|-----------|-------|
+| `aerialUri` | `null` |
+| Raster opacity | N/A (layer removed) |
+| Background | Parchment / clean vector plane only |
+
+### 2.3 Authoritative Vicmap title boundary
+
+1. Resolve parcel via address / SPI (existing Vicmap + Nominatim path).  
+2. Convert GeoJSON ring → `%` via `canvasMetresRingToPct` / `geoRingToPct`.  
+3. **Replace** any user-sketched boundary; set `boundaryLocked: true`.  
+4. Clear conflicting sketches that duplicate the lot outline.  
+5. Metric edge lengths from Vicmap are absolute truth for dimension labels.
+
+### 2.4 Stage 1 visual layout
+
+**Concept reference:** realestate.com.au “Property boundary” (street map + title outline + edge dims + area) — **not** a clone. No purple pills, no Google chrome, no satellite.
+
+| Layer | Spec |
+|-------|------|
+| Base | Cool monochrome CAD plate (silver-grey vector street fabric) — no satellite |
+| Context | Light charcoal neighbour lot lines (indicative fabric, not Vicmap neighbours) |
+| Title CAD overlay | Deep charcoal `#1C1917`, **1.5px** stroke + light fill (`COLOR_VECTOR_PRIMARY`) |
+| Vertices | 45° architectural oblique ticks (not REA purple circles) |
+| Dimensions | Inline CAD labels `0.000 m` (mono, square frame) — millimetre truth |
+| Area | Centre title-area callout `NNN m²` |
+| Scale | Locked toward 1:100 or 1:200; zoom not free while cleanse active |
+| Content purge | Hide vegetation + loose items on plan while foundation cleanse is on |
+
+---
+
+## 3. Chrome flag
+
+```ts
+handoffChrome.foundationCleanse: boolean  // default false
+```
+
+When `true`:
+
+- Mode forced to **survey** (cadastral focus).  
+- `showDimensions: true`, `showGrid: true`.  
+- Flora / Isolith / Trade ambient HUD suppressed.  
+- CadPlanBoard renders foundation stroke + ticks + mm dims; skips veg/items draw.  
+- Elevation / Quote still use purged design state (boundary locked, no aerial).
+
+---
+
+## 4. Pipeline `runStage1FoundationCleanse`
+
+```
+1. aerialUri = null
+2. foundationCleanse = true; showDimensions = true; showGrid = true
+3. flora = idle; designAssist = idle; clear ghosts
+4. sieveVegetationItems (all plant/tree/canopy/bed keys)
+5. boundaryLocked = false briefly → Vicmap resolve → ring → boundary
+6. boundaryLocked = true
+7. clear sketches that are near-duplicate of title ring (optional loose match)
+8. mode = survey; Fit sheet opens (`frameOn`) for working-drawing detail
+9. Title Lock/Unlock for snap/drag; AI underlay retained
+10. toast: Stage 1 CAD + Fit sheet ready
+```
+
+**Detail target:** Fit sheet schedule + outside B#/F# CAD dims (see screenshot working drawing) — Stage 1 lands there with AI intelligence kept under the title layer.
+
+
+Idempotent when already cleansed + locked to same Vicmap ring.
+
+---
+
+## 5. NLP
+
+| Pattern (case-insensitive) | Match |
+|----------------------------|-------|
+| stage\s*1|cadastral\s+foundation|foundation\s+cleanse | yes |
+| purge\s+(aerial\|vegetation\|ai)|vicmap\s+title\s+boundary | yes |
+| authoritative\s+(title\|cadastral)|legal\s+land\s+records | yes |
+| to[- ]scale\s+2d\s+cad\s+title | yes |
+
+Also: ⌘K → **Stage 1 foundation cleanse**.
+
+---
+
+## 6. Acceptance
+
+- [x] Aerial gone; parchment only  
+- [x] Flora Ring / AI plant spawn disabled while cleanse on  
+- [x] Boundary = Vicmap polygon, nodes locked  
+- [x] Charcoal 1.5px title + 45° ticks + mm dims  
+- [x] Veg/items hidden on plan in foundation view  
+- [x] Survey mode; toast confirms  
+- [x] User can Exit foundation to resume design (toggle off)
+
+---
+
+## 7. Non-goals
+
+- Live MapLibre street basemap (Workflow 1 stays parchment; street names via address chrome only).  
+- Stage 2 PostGIS / GeoJSON export.  
+- Re-enabling generative flora while cleanse is active.

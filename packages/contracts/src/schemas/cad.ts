@@ -211,6 +211,11 @@ export const CadOpSchema = z.discriminatedUnion("op", [
     op: z.literal("delete_entity"),
     entity_id: z.string().uuid(),
   }),
+  /** Upsert a full entity by id — used for CAD redo and edit-handle commits. */
+  z.object({
+    op: z.literal("replace_entity"),
+    entity: CadEntitySchema,
+  }),
 ]);
 export type CadOp = z.infer<typeof CadOpSchema>;
 

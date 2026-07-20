@@ -11,6 +11,7 @@ import {
   expandPreemptiveBom,
   siteMultipliersFromSurvey,
 } from "./preemptive-bom";
+import { buildAcceptedMitigationLines } from "./mitigation-bom";
 import { assessPreemptiveRisks } from "./preemptive-risk";
 import {
   mergeSpatialFacts,
@@ -41,7 +42,7 @@ export function buildOrchestrationWorld(args: {
   const spatial_facts = mergeSpatialFacts(canvasFacts, cadFacts);
   const fingerprint = spatialFingerprint(spatial_facts);
   const multipliers = siteMultipliersFromSurvey(args.survey?.garden_area_m2);
-  const live_bom = expandPreemptiveBom(spatial_facts, args.rates, multipliers);
+  const baseBom = expandPreemptiveBom(spatial_facts, args.rates, multipliers);
   const { risks, overlays: rawOverlays } = assessPreemptiveRisks(
     spatial_facts,
     dismissed,
@@ -49,6 +50,12 @@ export function buildOrchestrationWorld(args: {
   const overlays = rawOverlays.map((o) =>
     accepted.has(o.id) ? { ...o, status: "accepted" as const } : o,
   );
+  const mitigation = buildAcceptedMitigationLines(overlays, args.rates);
+  const mitIds = new Set(mitigation.map((l) => l.id));
+  const live_bom = [
+    ...baseBom.filter((l) => !mitIds.has(l.id)),
+    ...mitigation,
+  ];
   const { subtotal, gst, total } = bomTotals(live_bom);
 
   return {

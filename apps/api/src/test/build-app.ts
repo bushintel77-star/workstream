@@ -20,6 +20,7 @@ import dictationRoutes from "../routes/dictation";
 import myobRoutes from "../routes/myob";
 import weatherRoutes from "../routes/weather";
 import siteContextRoutes from "../routes/site-context";
+import cadastralTitleRoutes from "../routes/cadastral-title";
 import measurementRoutes from "../routes/measurements";
 import supplierRoutes from "../routes/suppliers";
 import aerialRoutes from "../routes/aerial";
@@ -65,6 +66,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(dictationRoutes, { prefix: "/projects" });
   await app.register(weatherRoutes, { prefix: "/projects" });
   await app.register(siteContextRoutes, { prefix: "/projects" });
+  await app.register(cadastralTitleRoutes, { prefix: "/projects" });
   await app.register(measurementRoutes, { prefix: "/projects" });
   await app.register(aerialRoutes, { prefix: "/projects" });
   await app.register(carbonRoutes, { prefix: "/projects" });

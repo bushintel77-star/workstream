@@ -1,0 +1,129 @@
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, #faf6f2 0%, #f0e8e2 100%);
+  padding: 40px 28px 20px;
+}
+
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-right: min(180px, 28vw);
+}
+
+.toggle,
+.tracePlan {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.2);
+  background: transparent;
+  color: #1c1917;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.tracePlan {
+  border-color: #1c1917;
+  background: #1c1917;
+  color: #faf6f2;
+}
+
+.widthChip {
+  margin-left: auto;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: #6b6560;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.north {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: #6b6560;
+  z-index: 9;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+  width: 100%;
+  padding: 4px min(176px, 27vw) 8px 4px;
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+}
+
+.hud {
+  position: absolute;
+  inset: 4px min(176px, 27vw) 8px 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tick {
+  position: absolute;
+  transform: translate(-100%, -50%);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(28, 25, 23, 0.55);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Architectural callout — ink string, no pill / shadow */
+.label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -2px;
+  max-width: 160px;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #1c1917;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  box-shadow: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.label:hover,
+.labelActive {
+  color: #1c1917;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: transparent;
+  border: none;
+}

@@ -21,18 +21,18 @@ Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json
 ### Canvas product surface
 
 - Home: `/` — address composer + sites list
-- Operator canvas: `/projects/[id]?mode=survey|sketch|cad|quote|share`
-- **Fit sheet** (cream paper working drawing): `ArchitecturalSheet` + `FitSheetLayer` + MapLibre `GeoSiteMap` on the Vicmap title frame. Survey → lock title → **Open Fit sheet** (or auto on CAD/Quote/Share). Toggle with **F** / `data-testid="fit-sheet-top"`. Session prefs: `ws-fit-sheet:{projectId}`, `ws-fit-dims:{projectId}`.
+- Operator canvas: `/projects/[id]?mode=survey|sketch|cad|quote|share` — mounts `HandoffDesignStudio` (`%-coord` parchment board)
+- **Fit sheet** (cream paper working drawing): handoff `FitSheetOverlay` + Vicmap title boundary. Survey → title boundary / lock icon → Fit sheet (or auto on CAD/Quote/Share). Toggle with **F** / `data-testid="fit-sheet-top"`. Session prefs: `ws-fit-sheet:{projectId}`, `ws-fit-dims:{projectId}`. No “Stage 1” labels in the UI — progressive disclosure via icon controls.
 
-Sketch mode (`SketchInstrument`) owns: paint/save, AI ghost scan (`scanDesignGhostsAction`), NL assist (`designAssistAction` + ribbon Ask AI), Cmd+K command palette, rotate/scale handles, ribbon search, site-intelligence overlays (sun/shade + easements toggles on right rail when on static-aerial fallback).
+**Vicmap cadastral** (API): keyless DELWP GeoServer WFS at `opendata.maps.vic.gov.au` — `apps/api/src/lib/vicmap.ts` self-discovers property/building layers via GetCapabilities (no `VICMAP_ENABLED` / developer.vic.gov.au API key). MapLibre `GeoSiteMap` / `SiteCanvas` removed; Trace + Calibrate on the handoff board remains the offline fallback.
 
-**Design Studio v4/v5 handoff** (reference only): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README contains the **complete feature checklist**; track build progress in `IMPLEMENTATION-STATUS.md`. Operator chrome: `CanvasStudioHeader` + v4 tokens in `globals.css`.
+Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, title-boundary snap, Fit sheet dims.
 
-MapLibre stage needs map style routes (`/api/map-config`, `/api/map-style/satellite`) — works without keys via bundled fallbacks where configured.
+**Design Studio v4/v5 handoff** (reference): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README checklist; progress in `IMPLEMENTATION-STATUS.md`.
 
 AI pipeline: heuristic coaching (`buildSketchCanvasAiSuggestions`) + optional vision ghosts API + NL sketch assist (`POST /projects/:id/design/assist` via `buildStudioSystemPrompt`) + CAD ghosts on generate (`generateCadAction`). Ghosts are ephemeral until accept.
 
-**Single branch:** Fit sheet geo canvas and sketch-assist polish both live on `main` — do not reintroduce parallel feature branches for canvas chrome.
+**Single branch:** Handoff studio + Vicmap WFS live on `main` — do not reintroduce parallel MapLibre geo-canvas branches.
 
 ### UTF-8 / Turbopack
 

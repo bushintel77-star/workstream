@@ -1,0 +1,121 @@
+/* Micro grid studio — idle shadow → awake tray. Never a toolbar. */
+
+.root {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 3px;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  background: rgba(245, 242, 237, 0.42);
+  opacity: 0.38;
+  transform: translateY(2px);
+  transition:
+    opacity 240ms var(--ease),
+    transform 240ms var(--ease),
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.root[data-awake="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  background: rgba(245, 242, 237, 0.94);
+  border-color: rgba(28, 25, 23, 0.16);
+}
+
+.face {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.face:hover {
+  background: rgba(28, 25, 23, 0.04);
+}
+
+.glyph {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.tray {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition:
+    max-width 260ms var(--ease),
+    opacity 200ms var(--ease),
+    margin 200ms var(--ease);
+  margin-left: 0;
+}
+
+.root[data-awake="true"] .tray {
+  max-width: 120px;
+  opacity: 1;
+  pointer-events: auto;
+  margin-left: 4px;
+}
+
+.ink {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(28, 25, 23, 0.2);
+  background: var(--ink, rgba(28, 25, 23, 0.14));
+  cursor: pointer;
+  flex: none;
+}
+
+.ink:hover {
+  outline: 1px solid rgba(28, 25, 23, 0.35);
+  outline-offset: 1px;
+}
+
+.grain,
+.snap {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #44403c;
+  cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+.grain:hover,
+.snap:hover {
+  background: rgba(28, 25, 23, 0.05);
+  color: #1c1917;
+}
+
+.snapOn {
+  color: #1c1917;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .tray {
+    transition: none;
+  }
+}

@@ -1,6 +1,8 @@
 # Design Studio v4/v5 — implementation status
 
-Tracks the **Complete Feature Checklist** in [README.md](./README.md). Last full pass: checklist rebuild on `main`.
+Tracks the **Complete Feature Checklist** in [README.md](./README.md).
+
+**Visual fidelity note (2026-07-19):** `/projects/[id]` mounts `HandoffDesignStudio` — the v4 `%`-coord aerial board from `Design Studio v4.dc.html` / `screenshots/01-frame.png`. MapLibre `GeoSiteMap` / `SiteCanvas` removed. Vicmap cadastral is keyless DELWP GeoServer WFS (`apps/api/src/lib/vicmap.ts`, GetCapabilities self-discovery).
 
 Legend: **Done** · **Partial** · **Not started**
 
@@ -23,16 +25,16 @@ Legend: **Done** · **Partial** · **Not started**
 | Item | Status | Notes |
 |------|--------|-------|
 | Left tool rail | **Done** | `CanvasToolRail` — Trace/Edit/Add/Lock/Reset/Pan/Measure + zoom. |
-| Trace polygon | **Partial** | Vicmap auto-trace + boundary edit; full click-trace over aerial TBD. |
-| Ghost-geometry rectangle autocomplete | **Not started** | |
-| Edit handles | **Partial** | `BoundaryOverlay` edit; CAD via API ops. |
-| Add / place symbols | **Done** | `SketchInstrument` + catalog. |
-| Multi-select marquee | **Not started** | |
-| Keyboard nudge / delete | **Partial** | CAD undo; sketch placement delete. |
+| Trace polygon | **Done** | Handoff `TraceOverlay` click-trace; Vicmap WFS auto-trace retained. |
+| Ghost-geometry rectangle autocomplete | **Done** | `inferRectangleCompletion()` + Tab / gold preview in TraceOverlay. |
+| Edit handles | **Done** | BoundaryOverlay + `CadEntityHandles` (`replace_entity` vertex drag). |
+| Add / place symbols | **Done** | SketchInstrument + catalog. |
+| Multi-select marquee | **Done** | Marquee in SketchInstrument when Edit tool + sketch select mode. |
+| Keyboard nudge / delete | **Done** | Arrow nudge + delete for selection/group; sketch history undo. |
 | Lock tool | **Done** | Boundary lock → Fit sheet. |
-| Undo/redo (40 steps) | **Partial** | CAD line undo stack. |
+| Undo/redo (40 steps) | **Done** | `canvas-history.ts` + CAD `replace_entity` redo stack. |
 | Measure tool | **Done** | `DraftingAssist` + tool rail Measure. |
-| Snap guides | **Not started** | |
+| Snap guides | **Done** | Alignment guides while dragging placements (`snapDragPct`). |
 | Symbol palette | **Done** | `SketchRibbon`. |
 
 ---
@@ -43,10 +45,10 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | Dashed-gold ghost rendering | **Done** | CAD SVG + sketch ghosts + gold styling. |
 | Ghost review card | **Done** | `GhostReviewCard` — CAD batch + sketch layer. |
-| Confidence-factor breakdown | **Done** | Click bar → `deriveConfidenceFactors()` in domain. |
+| Confidence-factor breakdown | **Done** | Live factors via `computeLiveConfidenceFactors()` (sun / TPZ / cost; drainage neutral until services). |
 | Accept / Reject / cycle / Accept all | **Done** | Card actions + header Accept AI + shortcuts. |
-| Stale-ghost detection | **Partial** | Domain/card support; auto-stale on move not wired all paths. |
-| Aerial canopy auto-detection | **Partial** | `scanDesignGhostsAction` / vision; not pixel-cluster heuristic. |
+| Stale-ghost detection | **Done** | `markStaleGhostsNearEdit()` on sketch move/delete. |
+| Aerial canopy auto-detection | **Done** | Vision scan + `detectCanopyClustersFromImageData()` pixel heuristic. |
 | Command-palette Ask AI | **Done** | Palette + sketch assist. |
 | “AI DRAFT: UNVERIFIED” header badge | **Done** | When `ghostCount > 0`. |
 
@@ -73,8 +75,8 @@ Legend: **Done** · **Partial** · **Not started**
 | Item | Status | Notes |
 |------|--------|-------|
 | Compliance dock | **Done** | `ComplianceDock` + `computeSiteCompliance()` — independent of layer opacity. |
-| 1.5 m setback overlay | **Partial** | Orchestration overlays; dedicated setback ring TBD. |
-| TPZ / root-zone circles | **Partial** | Orchestration TRP overlays. |
+| 1.5 m setback overlay | **Done** | `inwardSetbackRing()` + MapLibre layer; Layers toggle setback. |
+| TPZ / root-zone circles | **Done** | MapLibre + sheet SVG rings from overlay `radius_m` / AS 4970 helper. |
 | Conflict mitigation chips | **Done** | Live BOM risk chips + overlay accept. |
 | Sun & Growth panel | **Done** | `SunShadeControls` dock + shade/easement toggles. |
 
@@ -86,8 +88,8 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | 4 opacity sliders | **Done** | `CanvasLayerOpacityPanel` + survey preset on mode switch. |
 | Compliance stats independent of opacity | **Done** | Compliance dock always visible when mode allows. |
-| Survey-mode auto-preset | **Done** | `SURVEY_LAYER_PRESET` in `SiteCanvas`. |
-| Opacity on render | **Partial** | CAD SVG + bucket helpers wired; MapLibre layers next. |
+| Survey-mode auto-preset | **Done** | Handoff survey mode + Vicmap WFS title hydrate. |
+| Opacity on render | **Done** | MapLibre paint + design overlay vegetation bucket. |
 
 ---
 
@@ -97,10 +99,10 @@ Legend: **Done** · **Partial** · **Not started**
 |------|--------|-------|
 | Fit sheet toggle | **Done** | Header + **F** shortcut. |
 | A3 / A4 paper size | **Done** | Header segmented control → `ArchitecturalSheet` `data-paper-size`. |
-| Title block, schedule, dimensions | **Partial** | `ArchitecturalSheet` + `FitSheetLayer` + quote QS. |
+| Title block, schedule, dimensions | **Done** | Handoff Fit sheet pulls Vicmap cadastral for selected address (`GET …/cadastral-title` + `buildArchitecturalTitleBlock`). |
 | Multi-profile elevation stacking | **Done** | `SheetElevationPanel` + **+ Elevations** toggle. |
 | North indicator | **Done** | Architectural sheet + elevation profile. |
-| Auto edge dimensions | **Partial** | Fit dims toggle. |
+| Auto edge dimensions | **Done** | `buildFitSheetEdges()` — labelled B/F edges, Fit dims toggle. |
 
 ---
 
@@ -109,8 +111,8 @@ Legend: **Done** · **Partial** · **Not started**
 | Item | Status | Notes |
 |------|--------|-------|
 | Live BOM dock | **Done** | `LiveBomHud`. |
-| Cost delta for AI | **Partial** | Optimistic mutation HUD. |
-| Mitigation schedule lines | **Partial** | Overlay accept → orchestration. |
+| Cost delta for AI | **Done** | Ghost cost hints + mutation HUD on accept. |
+| Mitigation schedule lines | **Done** | `buildAcceptedMitigationLines()` into orchestration live BOM. |
 
 ---
 
@@ -126,15 +128,35 @@ Legend: **Done** · **Partial** · **Not started**
 
 ---
 
-## Remaining (explicit backlog)
+## Canvas-First UX mandate (binding)
 
-1. Ghost-geometry rectangle autocomplete while tracing  
-2. Multi-select marquee + keyboard nudge  
-3. Global 40-step undo/redo stack  
-4. Alignment snap guides while dragging  
-5. Full click-to-place trace over aerial (vs Vicmap auto-trace)  
-6. Wire layer opacity into MapLibre layer paint  
-7. Stale-ghost auto-flag on all mutation paths  
-8. Dedicated 1.5 m setback ring geometry  
+See [README.md § UX/UI execution mandate](./README.md) and
+[`docs/CANVAS-FIRST-UX.md`](../../../CANVAS-FIRST-UX.md).
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Mode state-machine chrome (`resolveHandoffChrome`) | **Done** | Sketch/Survey hide Live BOM; CAD floating HUDs |
+| Live cost primary = total + tags; Advanced for assembly | **Done** | `LiveBomDock` disclosure |
+| Conversational AI / horizon binary actions | **Done** | Coach Accept/Reject; horizon Yes / Not now |
+| Fit sheet freezes floating cost chrome | **Done** | `frameOn` → chrome off |
+| Optimistic + skeletal Live BOM pulse | **Partial** | Continuous estimate; worker skeletal pulse TBD |
+| Flora Ring plant suggestion (micro-climate) | **Done** | `features/flora` + `rankCurtisFloraCandidates`; SDS [`CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md`](../../../CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md) |
+| Dynamic Volumetric Isolith (stockpile) | **Done** | `features/isolith` + `buildIsolithSurvey`; SDS [`CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md`](../../../CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md) |
+| Live trade sourcing HUD | **Done** | `features/trade` + `solveLiveTradeEstimate`; SDS [`CANVAS-FIRST-LIVE-TRADE-SDS.md`](../../../CANVAS-FIRST-LIVE-TRADE-SDS.md) |
+| Core canvas collision patch | **Done** | `resolveFitSheetAreas` + elev label stack + sheet clip; [`CANVAS-FIRST-PATCH-VERIFICATION.md`](../../../CANVAS-FIRST-PATCH-VERIFICATION.md) |
+| Isolith vector drafting tokens | **Done** | 0.5px contours, grain/core layers; Isolith SDS §5 |
+| Spatial correction NLP pipeline | **Done** | `runSpatialCorrection` + sieve/elev/aerial; SDS [`CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md`](../../../CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md) |
+
+---
+
+## Remaining (lower priority)
+
+See prioritized matrix in [TIER1-AI-CANVAS-GAP-AUDIT.md](./TIER1-AI-CANVAS-GAP-AUDIT.md):
+
+- **P0:** Durable persist · Share/portal unlock · AI draft gate — **Done** (`canvasBridge`, `ShareSurface`)
+- **P1:** Worker skeletal Live cost · shade grid · easements/utilities · authored DBH — **Done** on handoff
+- **P2.2:** Assist grounded on compliance + shade — **Done** (`buildAssistSiteIntel`)
+- Live cost soft pulse while saving — **Partial** (save-status pulse; full worker settle TBD)
+- DBH-authored TPZ survey fields / Stage 2 schema briefs
 
 Reference prototype: [Design Studio v4.dc.html](./Design%20Studio%20v4.dc.html) (do not port verbatim).

@@ -1,6 +1,11 @@
 import type { GeoJsonPolygon } from "@workstream/contracts";
-import { polygonArea } from "@workstream/domain";
+import { polygonArea, type VicmapParcelAttrs } from "@workstream/domain";
 
+/**
+ * DELWP public GeoServer — Vicmap Property / buildings as keyless WFS GeoJSON.
+ * Not developer.vic.gov.au (that portal does not carry Vicmap Property).
+ * Layer names are discovered from GetCapabilities rather than hard-coded.
+ */
 const WFS_BASE = "https://opendata.maps.vic.gov.au/geoserver/wfs";
 
 const COMMON_PARAMS = {
@@ -30,8 +35,224 @@ type FeatureCollection = {
   features: RawFeature[];
 };
 
+export type VicmapTitleParcel = {
+  polygon: GeoJsonPolygon;
+  attrs: VicmapParcelAttrs;
+};
+
+type DiscoveredLayer = {
+  typeName: string;
+  geomField: string;
+};
+
+let capabilitiesCache: string[] | null = null;
+let capabilitiesCacheAt = 0;
+const CAPABILITIES_TTL_MS = 60 * 60 * 1000;
+
+let propertyLayerCache: DiscoveredLayer | null = null;
+let buildingLayerCache: DiscoveredLayer | null = null;
+
+/**
+ * Vicmap cadastral is always available via the public GeoServer.
+ * Kept as a function so call sites stay readable; the old API-key gate is gone.
+ */
 export function isVicmapEnabled(): boolean {
-  return process.env.VICMAP_ENABLED === "true";
+  return true;
+}
+
+function localName(typeName: string): string {
+  const i = typeName.indexOf(":");
+  return (i >= 0 ? typeName.slice(i + 1) : typeName).toLowerCase();
+}
+
+/** Score a GetCapabilities FeatureType name for Vicmap property / parcel polygons. */
+export function scorePropertyLayerName(typeName: string): number {
+  const n = localName(typeName);
+  if (!n) return -Infinity;
+
+  // Hard rejects — wrong product or non-polygon / non-title layers.
+  if (
+    /solar|bushfire|address|point$|_line$|annotation|tenure|proposed|approved|region|lga|locality|farm/.test(
+      n,
+    )
+  ) {
+    return -100;
+  }
+
+  let score = 0;
+  if (n === "property_view") score += 100;
+  else if (n === "parcel_view") score += 90;
+  else if (n === "v_property_mp") score += 80;
+  else if (n === "vlat_property_view") score += 75;
+  else if (n === "parcel_property") score += 70;
+  else if (n === "v_parcel_mp") score += 65;
+  else if (n.includes("property") && n.includes("view")) score += 60;
+  else if (n.includes("parcel") && n.includes("view")) score += 55;
+  else if (n.includes("property")) score += 40;
+  else if (n.includes("parcel")) score += 35;
+  else if (n.includes("cad") && n.includes("bdy")) score += 25;
+  else return -Infinity;
+
+  if (n.endsWith("_view")) score += 8;
+  if (n.startsWith("v_s_")) score -= 20;
+  return score;
+}
+
+/** Score a GetCapabilities FeatureType name for building footprints. */
+export function scoreBuildingLayerName(typeName: string): number {
+  const n = localName(typeName);
+  if (!n) return -Infinity;
+  if (!n.includes("building")) return -Infinity;
+  if (/point$|_line$|address/.test(n)) return -50;
+
+  let score = 0;
+  if (n === "building_polygon") score += 100;
+  else if (n.includes("building") && n.includes("polygon")) score += 80;
+  else if (n.includes("building")) score += 40;
+  return score;
+}
+
+/** Pick the best-scoring typeName from a capabilities list. */
+export function pickBestLayerName(
+  typeNames: string[],
+  scoreFn: (name: string) => number,
+): string | null {
+  let best: string | null = null;
+  let bestScore = -Infinity;
+  for (const name of typeNames) {
+    const s = scoreFn(name);
+    if (s > bestScore) {
+      bestScore = s;
+      best = name;
+    }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+/** Parse FeatureType Name elements from a WFS GetCapabilities document. */
+export function parseFeatureTypeNames(capabilitiesXml: string): string[] {
+  const names: string[] = [];
+  const re = /<(?:\w+:)?Name>\s*([^<]+?)\s*<\/(?:\w+:)?Name>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(capabilitiesXml))) {
+    const name = m[1]?.trim();
+    if (!name || !name.includes(":")) continue;
+    // Skip ows: metadata Name elements that are not layer typeNames —
+    // FeatureType names are typically workspace:layer.
+    if (/^(WFS|Get|Describe|Create|List|service|version)/i.test(name)) continue;
+    names.push(name);
+  }
+  return [...new Set(names)];
+}
+
+/**
+ * Parse geometry property name from DescribeFeatureType XSD.
+ * Prefers elements typed as gml:*PropertyType (geom, the_geom, shape, …).
+ */
+export function parseGeometryFieldName(describeXml: string): string | null {
+  const preferred = ["geom", "the_geom", "geometry", "shape", "wkb_geometry"];
+  const found: string[] = [];
+  const re =
+    /<(?:\w+:)?element[^>]*\bname=["']([^"']+)["'][^>]*\btype=["']([^"']+)["'][^>]*\/?>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(describeXml))) {
+    const name = m[1]?.trim();
+    const type = m[2]?.trim() ?? "";
+    if (!name) continue;
+    if (/gml:|Geometry|Surface|Polygon|MultiPolygon|Curve/i.test(type)) {
+      found.push(name);
+    }
+  }
+  for (const p of preferred) {
+    const hit = found.find((f) => f.toLowerCase() === p);
+    if (hit) return hit;
+  }
+  return found[0] ?? null;
+}
+
+async function fetchCapabilitiesTypeNames(): Promise<string[]> {
+  const now = Date.now();
+  if (capabilitiesCache && now - capabilitiesCacheAt < CAPABILITIES_TTL_MS) {
+    return capabilitiesCache;
+  }
+  const url = `${WFS_BASE}?${new URLSearchParams({
+    service: "WFS",
+    version: "2.0.0",
+    request: "GetCapabilities",
+  }).toString()}`;
+  const res = await fetch(url, { headers: { accept: "application/xml,text/xml,*/*" } });
+  if (!res.ok) {
+    throw new Error(`Vicmap GetCapabilities ${res.status}: ${await res.text()}`);
+  }
+  const xml = await res.text();
+  const names = parseFeatureTypeNames(xml);
+  if (names.length === 0) {
+    throw new Error("Vicmap GetCapabilities returned no FeatureType names");
+  }
+  capabilitiesCache = names;
+  capabilitiesCacheAt = now;
+  return names;
+}
+
+async function describeGeometryField(typeName: string): Promise<string> {
+  const url = `${WFS_BASE}?${new URLSearchParams({
+    service: "WFS",
+    version: "2.0.0",
+    request: "DescribeFeatureType",
+    typeNames: typeName,
+  }).toString()}`;
+  const res = await fetch(url, { headers: { accept: "application/xml,text/xml,*/*" } });
+  if (!res.ok) {
+    throw new Error(
+      `Vicmap DescribeFeatureType ${res.status} for ${typeName}: ${await res.text()}`,
+    );
+  }
+  const xml = await res.text();
+  const field = parseGeometryFieldName(xml);
+  if (!field) {
+    throw new Error(
+      `Vicmap layer ${typeName}: could not find a geometry field in DescribeFeatureType. ` +
+        `Inspect ${url} and update the CQL INTERSECTS(<geomField>, …) field name.`,
+    );
+  }
+  return field;
+}
+
+/** Discover Vicmap property/parcel polygon layer + its geometry field. */
+export async function discoverPropertyLayer(): Promise<DiscoveredLayer> {
+  if (propertyLayerCache) return propertyLayerCache;
+  const names = await fetchCapabilitiesTypeNames();
+  const typeName = pickBestLayerName(names, scorePropertyLayerName);
+  if (!typeName) {
+    throw new Error(
+      "Vicmap: no property/parcel FeatureType found in GetCapabilities. " +
+        `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
+    );
+  }
+  const geomField = await describeGeometryField(typeName);
+  propertyLayerCache = { typeName, geomField };
+  return propertyLayerCache;
+}
+
+/** Discover Vicmap building footprint polygon layer + its geometry field. */
+export async function discoverBuildingLayer(): Promise<DiscoveredLayer> {
+  if (buildingLayerCache) return buildingLayerCache;
+  const names = await fetchCapabilitiesTypeNames();
+  const typeName = pickBestLayerName(names, scoreBuildingLayerName);
+  if (!typeName) {
+    throw new Error(
+      "Vicmap: no building polygon FeatureType found in GetCapabilities. " +
+        `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
+    );
+  }
+  const geomField = await describeGeometryField(typeName);
+  buildingLayerCache = { typeName, geomField };
+  return buildingLayerCache;
+}
+
+/** @deprecated Prefer discoverPropertyLayer(); kept for call-site clarity. */
+export async function discoverPropertyLayerName(): Promise<string> {
+  return (await discoverPropertyLayer()).typeName;
 }
 
 function buildUrl(typeName: string, cqlFilter: string): string {
@@ -46,7 +267,12 @@ function buildUrl(typeName: string, cqlFilter: string): string {
 async function wfsFetch(url: string): Promise<FeatureCollection> {
   const res = await fetch(url, { headers: { accept: "application/json" } });
   if (!res.ok) {
-    throw new Error(`Vicmap WFS ${res.status}: ${await res.text()}`);
+    const body = await res.text();
+    const geomHint =
+      /geom|geometry|IllegalAttribute|Could not locate/i.test(body)
+        ? " Geometry field may be wrong — check DescribeFeatureType for this layer."
+        : "";
+    throw new Error(`Vicmap WFS ${res.status}: ${body.slice(0, 400)}${geomHint}`);
   }
   return (await res.json()) as FeatureCollection;
 }
@@ -73,13 +299,105 @@ function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
   return { type: "Polygon", coordinates: [ring] };
 }
 
+function propStr(
+  props: Record<string, unknown> | undefined,
+  ...keys: string[]
+): string | null {
+  if (!props) return null;
+  const lower = new Map(
+    Object.entries(props).map(([k, v]) => [k.toLowerCase(), v]),
+  );
+  for (const key of keys) {
+    const v = lower.get(key.toLowerCase());
+    if (v == null) continue;
+    const s = String(v).trim();
+    if (s && s !== "null" && s !== "undefined") return s;
+  }
+  return null;
+}
+
+/** Extract cadastral labels from Vicmap property_view attributes. */
+export function extractVicmapParcelAttrs(
+  props: Record<string, unknown> | undefined,
+  lotAreaM2: number,
+): VicmapParcelAttrs {
+  return {
+    pfi: propStr(props, "PROP_PFI", "PROPV_PFI", "prop_pfi", "propv_pfi", "PFI", "pfi"),
+    propNum: propStr(
+      props,
+      "PROP_PROPNUM",
+      "PROPNUM",
+      "prop_propnum",
+      "propnum",
+    ),
+    spi: propStr(props, "SPI", "PARCEL_SPI", "spi", "parcel_spi"),
+    lgaCode: propStr(
+      props,
+      "PROP_LGA_CODE",
+      "LGA_CODE",
+      "prop_lga_code",
+      "lga_code",
+    ),
+    lotAreaM2: lotAreaM2 > 0 ? lotAreaM2 : null,
+  };
+}
+
+/**
+ * Fetch the property polygon + cadastral attributes enclosing a lat/lng.
+ * Returns null on miss.
+ */
+export async function fetchTitleParcel(
+  lat: number,
+  lng: number,
+): Promise<VicmapTitleParcel | null> {
+  const { typeName, geomField } = await discoverPropertyLayer();
+  const cql = `INTERSECTS(${geomField}, SRID=4326;POINT(${lng} ${lat}))`;
+  const url = buildUrl(typeName, cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return null;
+
+  let best: RawFeature | null = null;
+  let bestRing: Ring | null = null;
+  let bestArea = 0;
+  for (const f of fc.features) {
+    const ring = largestPolygonRing(f.geometry);
+    if (!ring) continue;
+    const area = polygonArea(ring as Coord[]);
+    if (area > bestArea) {
+      best = f;
+      bestRing = ring;
+      bestArea = area;
+    }
+  }
+  if (!best || !bestRing) return null;
+
+  const lotAreaM2 = Math.round(bestArea);
+  return {
+    polygon: toGeoJsonPolygon(bestRing),
+    attrs: extractVicmapParcelAttrs(best.properties, lotAreaM2),
+  };
+}
+
 /** Fetch the property polygon enclosing a lat/lng. Returns null on miss. */
 export async function fetchTitlePolygon(
   lat: number,
   lng: number,
 ): Promise<GeoJsonPolygon | null> {
-  const cql = `INTERSECTS(geom, SRID=4326;POINT(${lng} ${lat}))`;
-  const url = buildUrl("open-data-platform:property_view", cql);
+  const parcel = await fetchTitleParcel(lat, lng);
+  return parcel?.polygon ?? null;
+}
+
+/** Fetch the building footprint(s) intersecting a property polygon. Returns the
+ * largest one as a Polygon. Returns null if no buildings found. */
+export async function fetchBuildingPolygon(
+  titleRing: Ring,
+): Promise<GeoJsonPolygon | null> {
+  const { typeName, geomField } = await discoverBuildingLayer();
+  const wkt = `POLYGON((${titleRing
+    .map(([x, y]) => `${x} ${y}`)
+    .join(", ")}))`;
+  const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
+  const url = buildUrl(typeName, cql);
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 
@@ -97,29 +415,10 @@ export async function fetchTitlePolygon(
   return bestRing ? toGeoJsonPolygon(bestRing) : null;
 }
 
-/** Fetch the building footprint(s) intersecting a property polygon. Returns the
- * largest one as a Polygon. Returns null if no buildings found. */
-export async function fetchBuildingPolygon(
-  titleRing: Ring,
-): Promise<GeoJsonPolygon | null> {
-  const wkt = `POLYGON((${titleRing
-    .map(([x, y]) => `${x} ${y}`)
-    .join(", ")}))`;
-  const cql = `INTERSECTS(geom, SRID=4326;${wkt})`;
-  const url = buildUrl("open-data-platform:building_polygon", cql);
-  const fc = await wfsFetch(url);
-  if (fc.features.length === 0) return null;
-
-  let bestRing: Ring | null = null;
-  let bestArea = 0;
-  for (const f of fc.features) {
-    const ring = largestPolygonRing(f.geometry);
-    if (!ring) continue;
-    const area = polygonArea(ring as Coord[]);
-    if (area > bestArea) {
-      bestRing = ring;
-      bestArea = area;
-    }
-  }
-  return bestRing ? toGeoJsonPolygon(bestRing) : null;
+/** Test helper — clear discovery caches between unit tests. */
+export function __resetVicmapDiscoveryCacheForTests(): void {
+  capabilitiesCache = null;
+  capabilitiesCacheAt = 0;
+  propertyLayerCache = null;
+  buildingLayerCache = null;
 }

@@ -31,6 +31,7 @@ import myobRoutes from './routes/myob';
 import crewRoutes from './routes/crew';
 import weatherRoutes from './routes/weather';
 import siteContextRoutes from './routes/site-context';
+import cadastralTitleRoutes from './routes/cadastral-title';
 import measurementRoutes from './routes/measurements';
 import supplierRoutes from './routes/suppliers';
 import aerialRoutes from './routes/aerial';
@@ -51,8 +52,6 @@ import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from './routes/integration-hub';
 import protectedFileRoutes from './routes/protected-files';
-import configRoutes from './routes/config';
-
 const server = Fastify({ logger: true });
 
 loadEnv({
@@ -116,7 +115,6 @@ async function start() {
   registerRouteTelemetry(server);
   await server.register(protectedFileRoutes);
   await server.register(healthRoutes);
-  await server.register(configRoutes, { prefix: '/config' });
   await server.register(projectRoutes, { prefix: '/projects' });
   await server.register(recordingRoutes, { prefix: '/projects' });
   await server.register(surveyRoutes, { prefix: '/projects' });
@@ -133,6 +131,7 @@ async function start() {
   await server.register(crewRoutes, { prefix: '/crew' });
   await server.register(weatherRoutes, { prefix: '/projects' });
   await server.register(siteContextRoutes, { prefix: '/projects' });
+  await server.register(cadastralTitleRoutes, { prefix: '/projects' });
   await server.register(measurementRoutes, { prefix: '/projects' });
   await server.register(supplierRoutes, { prefix: '/suppliers' });
   await server.register(aerialRoutes, { prefix: '/projects' });

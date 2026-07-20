@@ -351,6 +351,7 @@ export async function saveDesignCanvasApi(
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations: DesignCanvas["annotations"] = [],
+  siteFrame?: DesignCanvas["site_frame"],
 ): Promise<{ canvas: DesignCanvas; quote: SketchQuoteSummary | null }> {
   const body = await apiPut<{
     canvas: DesignCanvas;
@@ -360,6 +361,7 @@ export async function saveDesignCanvasApi(
     strokes,
     irrigation_zones: irrigationZones,
     annotations,
+    ...(siteFrame != null ? { site_frame: siteFrame } : {}),
   });
   return { canvas: body.canvas, quote: body.quote ?? null };
 }
@@ -1010,6 +1012,27 @@ export async function getSiteContext(
       `/projects/${projectId}/site-context`,
     );
     return body.context;
+  } catch {
+    return null;
+  }
+}
+
+/** Architectural title block · Vicmap cadastral for selected address. */
+export type { ArchitecturalTitleBlock as CadastralTitleBlock } from "@workstream/domain";
+
+export async function getCadastralTitle(
+  projectId: string,
+  address?: string,
+): Promise<import("@workstream/domain").ArchitecturalTitleBlock | null> {
+  try {
+    const q =
+      address && address.trim()
+        ? `?address=${encodeURIComponent(address.trim())}`
+        : "";
+    const body = await apiGet<{
+      titleBlock: import("@workstream/domain").ArchitecturalTitleBlock;
+    }>(`/projects/${projectId}/cadastral-title${q}`);
+    return body.titleBlock;
   } catch {
     return null;
   }

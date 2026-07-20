@@ -215,6 +215,25 @@ export function applyCadOps(
           else skipped++;
           break;
         }
+        case "replace_entity": {
+          const entity = structuredClone(op.entity) as CadEntity;
+          ensureLayer(doc, entity.layer);
+          const idx = doc.entities.findIndex((e) => e.id === entity.id);
+          if (idx >= 0) doc.entities[idx] = entity;
+          else doc.entities.push(entity);
+          if (entity.kind === "insert") {
+            const blockName = entity.block_name;
+            if (!doc.blocks.some((b) => b.name === blockName)) {
+              doc.blocks.push({
+                name: blockName,
+                symbol_id: blockName,
+                entities: [],
+              });
+            }
+          }
+          applied++;
+          break;
+        }
         default:
           skipped++;
       }

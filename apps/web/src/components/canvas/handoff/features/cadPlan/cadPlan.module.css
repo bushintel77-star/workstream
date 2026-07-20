@@ -1,0 +1,638 @@
+.world {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  /* Transparent — AerialSlot / TactileGround own the plate. */
+  background: transparent;
+}
+
+.planSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.handleHit {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.worldEdit[data-cursor="move"] {
+  cursor: grab;
+}
+
+.worldEdit[data-cursor="add"] {
+  cursor: copy;
+}
+
+.world[data-cursor="paint"] {
+  cursor: cell;
+}
+
+/* SDS §3 — corner solid 8px · mid hollow diamond 6px */
+.cornerNode {
+  position: absolute;
+  width: var(--sds-node-corner, 8px);
+  height: var(--sds-node-corner, 8px);
+  margin: 0;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: none;
+  background: var(--sds-vector-primary, #1a1a1a);
+  cursor: grab;
+  z-index: 7;
+  pointer-events: auto;
+  box-shadow: 0 0 0 2px rgba(247, 244, 239, 0.9);
+}
+
+.cornerNodeBuilding {
+  background: var(--sds-vector-muted, #8c8a85);
+}
+
+.midHandle {
+  position: absolute;
+  width: var(--sds-node-mid, 6px);
+  height: var(--sds-node-mid, 6px);
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: transparent;
+  border: 1.5px solid var(--sds-vector-muted, #8c8a85);
+  border-radius: 1px;
+  cursor: copy;
+  z-index: 6;
+  pointer-events: auto;
+}
+
+.midHandleBuilding {
+  border-color: var(--sds-vector-muted, #8c8a85);
+}
+
+.nodeMenu {
+  position: absolute;
+  z-index: 40;
+  transform: translate(8px, 8px);
+  min-width: 148px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: rgba(255, 246, 248, 0.97);
+  box-shadow: 0 10px 28px rgba(36, 19, 24, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nodeMenuBtn {
+  min-height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #241318;
+  cursor: pointer;
+}
+
+.nodeMenuBtn:hover:not(:disabled) {
+  background: rgba(36, 19, 24, 0.06);
+}
+
+.nodeMenuBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dimMark {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.obliqueTick {
+  width: var(--sds-tick-len, 6px);
+  height: 1.5px;
+  background: var(--sds-vector-primary, #1a1a1a);
+  transform: rotate(45deg);
+  flex: none;
+}
+
+/** Stage 1 — 45° architectural oblique tick at each legal parcel vertex. */
+.foundationVertexTick {
+  position: absolute;
+  width: 8px;
+  height: 1.5px;
+  margin-left: -4px;
+  margin-top: -0.75px;
+  background: #1c1917;
+  transform: rotate(45deg);
+  pointer-events: none;
+  z-index: 6;
+}
+
+.dimLabel {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #1c1917;
+  background: rgba(242, 240, 235, 0.94);
+  border: 1px solid rgba(28, 25, 23, 0.22);
+  border-radius: 0;
+  padding: 1px 5px;
+  white-space: nowrap;
+  margin-top: 2px;
+  box-shadow: none;
+}
+
+/* CAD property-boundary language (REA concept, not REA chrome). */
+.cadContextLot {
+  fill: rgba(28, 25, 23, 0.015);
+  stroke: rgba(28, 25, 23, 0.14);
+  stroke-width: 0.7;
+}
+
+.cadDimMark {
+  gap: 3px;
+}
+
+.cadDimLabel {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #1c1917;
+  background: rgba(242, 240, 235, 0.94);
+  border: 1px solid rgba(28, 25, 23, 0.28);
+  border-radius: 0;
+  padding: 1px 5px;
+  white-space: nowrap;
+  margin-top: 2px;
+  box-shadow: none;
+}
+
+.cadDimKey {
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b6560;
+}
+
+.cadDimBearing {
+  font-size: 7.5px;
+  color: #6b6560;
+}
+
+.cadCorner {
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border: 1.5px solid #1c1917;
+  background: #f2f0eb;
+  border-radius: 0;
+  transform: rotate(45deg);
+  z-index: 12;
+}
+
+.cadCornerLocked {
+  background: #1c1917;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.itemUnderlay {
+  filter: grayscale(0.35);
+}
+
+.cadAreaLabel {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+.cadAreaValue {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: #1c1917;
+  background: rgba(242, 240, 235, 0.88);
+  padding: 1px 5px;
+  line-height: 1.1;
+}
+
+.cadAreaMeta {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b6560;
+  background: rgba(242, 240, 235, 0.88);
+  padding: 0 4px;
+}
+
+.cadLockState {
+  margin-top: 2px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 6.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b6560;
+  border-top: 1px solid rgba(28, 25, 23, 0.14);
+  padding-top: 2px;
+}
+
+.cadStreetCue {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  z-index: 6;
+  margin: 0;
+  padding: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--ws-type-kicker, 8px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(28, 25, 23, 0.55);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: min(420px, calc(100% - 160px));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fitOutsideDim {
+  z-index: 8;
+}
+
+.fitDimLabel {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #1c1917;
+  background: rgba(242, 240, 235, 0.94);
+  border: 1px solid rgba(28, 25, 23, 0.22);
+  border-radius: 0;
+  padding: 1px 5px;
+  white-space: nowrap;
+  margin-top: 2px;
+  box-shadow: none;
+}
+
+.tpzTag {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #6b5420;
+  background: rgba(250, 246, 242, 0.96);
+  border: 1px solid rgba(138, 106, 31, 0.28);
+  padding: 2px 7px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(42, 23, 29, 0.12);
+  z-index: 12;
+}
+
+.editBanner {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  max-width: min(340px, calc(100% - 200px));
+  background: rgba(28, 25, 23, 0.9);
+  color: #f2f0eb;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  padding: 7px 12px;
+  border-radius: 0;
+  white-space: normal;
+  line-height: 1.35;
+  box-shadow: none;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.itemSelected {
+  outline: 1.5px solid #1c1917;
+  outline-offset: 2px;
+  animation: selPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes selPulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+    outline-color: rgba(28, 25, 23, 0.85);
+  }
+  50% {
+    filter: drop-shadow(0 0 3px rgba(28, 25, 23, 0.35));
+    outline-color: rgba(28, 25, 23, 0.45);
+  }
+}
+
+.draftGrid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.crosshairV,
+.crosshairH {
+  position: absolute;
+  pointer-events: none;
+  z-index: 16;
+  background: rgba(28, 25, 23, 0.28);
+}
+
+.crosshairV {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.crosshairH {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.flagged {
+  /* Charcoal dashed emphasis — no neon pulse */
+  outline: 1px dashed #1c1917;
+  outline-offset: 2px;
+}
+
+.hatchOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    -35deg,
+    rgba(28, 25, 23, 0.18),
+    rgba(28, 25, 23, 0.18) 1.5px,
+    transparent 1.5px,
+    transparent 4px
+  );
+  pointer-events: none;
+}
+
+.tpzReadout {
+  position: absolute;
+  z-index: 15;
+  transform: translate(-50%, -120%);
+  padding: 2px 7px;
+  border-radius: 0;
+  background: rgba(28, 25, 23, 0.9);
+  color: #f2f0eb;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+
+.aiChip {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  height: 13px;
+  padding: 0 4px;
+  border-radius: 0;
+  background: #1c1917;
+  color: #f2f0eb;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.aiChipHot {
+  opacity: 1;
+  outline: 1px solid rgba(28, 25, 23, 0.35);
+  outline-offset: 1px;
+}
+
+.ghostActions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(242, 240, 235, 0.96);
+  border: 1px solid rgba(28, 25, 23, 0.22);
+  border-radius: 0;
+  padding: 2px 3px;
+  box-shadow: none;
+  white-space: nowrap;
+  z-index: 7;
+}
+
+.acceptBtn {
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 0;
+  border: 1px solid #1c1917;
+  background: #1c1917;
+  color: #f2f0eb;
+  font-size: 9.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.rejectBtn {
+  height: 20px;
+  width: 20px;
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.35);
+  background: transparent;
+  color: #1c1917;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tracePill {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 0;
+  border: 1px solid #1c1917;
+  background: #f2f0eb;
+  color: #1c1917;
+  font-size: 9.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
+  white-space: nowrap;
+  box-shadow: none;
+  z-index: 8;
+}
+
+@keyframes ccPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.stalePulse {
+  animation: ccPulse 1.8s ease-in-out infinite;
+}
+
+.marquee {
+  position: absolute;
+  z-index: 14;
+  border: 1px dashed #1c1917;
+  background: rgba(28, 25, 23, 0.04);
+  pointer-events: none;
+}
+
+.guideV,
+.guideH {
+  position: absolute;
+  pointer-events: none;
+  z-index: 15;
+  background: rgba(28, 25, 23, 0.45);
+}
+
+.guideV {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.guideH {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.selHandles {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 18;
+  pointer-events: none;
+}
+
+.selStem {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 14px;
+  background: #1c1917;
+  pointer-events: none;
+}
+
+.rotHandle,
+.resHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  border: 1px solid #1c1917;
+  background: #f2f0eb;
+  color: #1c1917;
+  box-shadow: none;
+  padding: 0;
+}
+
+.rotHandle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resHandle {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  cursor: nwse-resize;
+}
+
+.honestyStack {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: min(340px, calc(100% - 24px));
+  pointer-events: none;
+}
+
+.honestyFooter {
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.92);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: #57534e;
+}

@@ -1,0 +1,1264 @@
+.root {
+  /* SDS — Canvas-First Spatial Engine drafting tokens (Workflow 1 board) */
+  --sds-canvas-bg: #f3efe8;
+  --sds-vector-primary: #1c1917;
+  --sds-vector-muted: #8c8a85;
+  --sds-compliance-amber: #c99757;
+  --sds-compliance-red: #d66b6b;
+  --sds-stroke-primary: 1.5;
+  --sds-stroke-secondary: 1;
+  --sds-dash: 4 4;
+  --sds-tick-len: 6px;
+  --sds-node-corner: 8px;
+  --sds-node-mid: 6px;
+  --sds-label-offset: 8px;
+  --ws-glass: rgba(255, 251, 252, 0.72);
+  --ws-glass-border: rgba(36, 19, 24, 0.08);
+  --ws-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Sheet + chrome safe insets — keep CAD clear of HUDs */
+  --ws-sheet-pad: 12px;
+  --ws-sheet-margin: 8px;
+  --ws-title-w: 240px;
+  --ws-title-gap: 12px;
+  --ws-safe-left: 56px;
+  --ws-safe-top: 40px;
+  --ws-safe-right: 12px;
+  --ws-safe-bottom: 36px;
+  --ws-type-kicker: 8px;
+  --ws-type-dim: 9px;
+  --ws-type-hud: 11px;
+  --ws-type-title: 15px;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 80% at 8% 0%, rgba(232, 213, 188, 0.55), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.28), transparent 50%),
+    var(--sds-canvas-bg);
+  color: var(--sds-vector-primary);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  overflow: hidden;
+  min-height: 620px;
+}
+
+.rootDark {
+  background:
+    radial-gradient(100% 70% at 10% 0%, rgba(90, 50, 60, 0.35), transparent 50%),
+    #161116;
+  color: #fff6f8;
+}
+
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 16px;
+  flex-wrap: nowrap;
+  min-height: 56px;
+  z-index: 30;
+  background: color-mix(in srgb, var(--sds-canvas-bg) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  border-bottom: 1px solid var(--ws-glass-border);
+}
+
+.brandBlock {
+  flex: none;
+  min-width: 0;
+}
+
+.brandName {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.address {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  color: #7a5560;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(240px, 28vw);
+}
+
+.rootDark .address {
+  color: #d3b3bc;
+}
+
+.spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+.modes {
+  display: flex;
+  gap: 2px;
+  background: rgba(28, 25, 23, 0.06);
+  border-radius: 0;
+  padding: 3px;
+  flex: none;
+}
+
+.rootDark .modes {
+  background: rgba(255, 246, 248, 0.08);
+}
+
+.modeBtn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 0;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #6b6560;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: inherit;
+  transition:
+    background 160ms var(--ws-ease),
+    color 160ms var(--ws-ease),
+    transform 160ms var(--ws-ease);
+}
+
+.modeBtn:hover {
+  color: #1c1917;
+}
+
+.modeBtnActive {
+  background: #1c1917;
+  color: #f2f0eb;
+  box-shadow: none;
+}
+
+.rootDark .modeBtnActive {
+  background: #fff6f8;
+  color: #241318;
+}
+
+.meta {
+  flex: none;
+  max-width: min(220px, 22vw);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: #8a7a82;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.headerTools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.toolBtn {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: transparent;
+  color: #241318;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  flex: none;
+  white-space: nowrap;
+}
+
+.toolBtn:hover {
+  border-color: #1c1917;
+}
+
+.toolBtnActive {
+  background: #241318;
+  color: #fff6f8;
+  border-color: #241318;
+}
+
+.rootDark .toolBtn {
+  border-color: rgba(230, 233, 234, 0.22);
+  color: #e6e9ea;
+}
+
+/** Quiet icon controls — progressive disclosure. */
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #5a4650;
+  cursor: pointer;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 140ms var(--ws-ease),
+    color 140ms var(--ws-ease),
+    border-color 140ms var(--ws-ease),
+    transform 140ms var(--ws-ease);
+}
+
+.iconBtn:hover {
+  background: rgba(36, 19, 24, 0.06);
+  color: #241318;
+}
+
+.iconBtn:active {
+  transform: scale(0.96);
+}
+
+.iconBtnActive {
+  background: #241318;
+  color: #fff6f8;
+  border-color: #241318;
+}
+
+.rootDark .iconBtn {
+  color: #d3b3bc;
+}
+
+.rootDark .iconBtn:hover {
+  background: rgba(255, 246, 248, 0.08);
+  color: #fff6f8;
+}
+
+.rootDark .iconBtnActive {
+  background: #fff6f8;
+  color: #1a1216;
+  border-color: #fff6f8;
+}
+
+.iconBtnSvg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.cmdBtn {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid var(--ws-glass-border);
+  background: transparent;
+  color: #7a5560;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  flex: none;
+  transition: border-color 140ms var(--ws-ease), color 140ms var(--ws-ease);
+}
+
+.cmdBtn:hover {
+  border-color: rgba(36, 19, 24, 0.22);
+  color: #241318;
+}
+
+.aiPill {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.2);
+  background: rgba(242, 240, 235, 0.92);
+  color: #1c1917;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+  flex: none;
+  font-family: "IBM Plex Mono", monospace;
+  transition:
+    background 160ms var(--ws-ease),
+    border-color 160ms var(--ws-ease),
+    color 160ms var(--ws-ease);
+}
+
+.aiPill:hover {
+  border-color: rgba(28, 25, 23, 0.4);
+  background: #f2f0eb;
+}
+
+.aiPillHot {
+  border-color: #1c1917;
+  background: #1c1917;
+  color: #f2f0eb;
+}
+
+.aiPillOk {
+  border-color: rgba(28, 25, 23, 0.28);
+  background: transparent;
+  color: #1c1917;
+}
+
+.segment {
+  display: flex;
+  border: 1px solid var(--ws-glass-border);
+  border-radius: 9px;
+  overflow: hidden;
+  flex: none;
+  background: rgba(255, 251, 252, 0.45);
+}
+
+.segmentBtn {
+  height: 32px;
+  padding: 0 9px;
+  border: none;
+  background: transparent;
+  color: #5a4650;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.segmentBtn + .segmentBtn {
+  border-left: 1px solid rgba(36, 19, 24, 0.12);
+}
+
+.segmentBtnActive {
+  background: #241318;
+  color: #ffd3de;
+}
+
+.board {
+  flex: 1;
+  position: relative;
+  margin: 0 8px 8px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #e8d5bc;
+  min-height: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(90, 62, 42, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.35),
+    0 18px 40px rgba(42, 23, 29, 0.08);
+  transition:
+    box-shadow 220ms var(--ws-ease),
+    margin 220ms var(--ws-ease),
+    border-radius 220ms var(--ws-ease);
+}
+
+.board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  border-radius: inherit;
+  box-shadow: inset 0 0 80px rgba(42, 23, 29, 0.04);
+}
+
+.boardWatch {
+  box-shadow: inset 0 0 0 1.5px rgba(28, 25, 23, 0.35);
+}
+
+.boardCritical {
+  box-shadow: inset 0 0 0 2px #1c1917;
+}
+
+.councilTip {
+  position: absolute;
+  left: 50%;
+  top: 56px;
+  transform: translateX(-50%);
+  z-index: 24;
+  max-width: min(420px, calc(100% - 48px));
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 184, 75, 0.45);
+  background: rgba(42, 23, 29, 0.92);
+  color: #ffd3de;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 10px 28px rgba(42, 23, 29, 0.28);
+}
+
+.zoomWorld {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+}
+
+/** Fit sheet — clip plan vectors to the printable A3/A4 frame (no bleed). */
+.zoomWorldClipped {
+  overflow: hidden;
+}
+
+.rootClient .aiPill,
+.rootClient .ghostToast,
+.rootClient .ghostPanel,
+.rootClient .aiStatusBar {
+  display: none;
+}
+
+.aiStatusBar {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  top: 10px;
+  z-index: 13;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  max-width: min(340px, calc(100% - 340px));
+  padding: 0 8px 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--ws-glass-border);
+  background: var(--ws-glass);
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 8px 24px rgba(42, 23, 29, 0.08);
+  pointer-events: auto;
+  animation: chromeIn 220ms var(--ws-ease) both;
+}
+
+.aiStatusChip {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: #5a4650;
+  flex: none;
+}
+
+.aiStatusOk {
+  color: #1f8a5a;
+}
+
+.aiStatusMeta {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: #7a5560;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aiStatusOpen {
+  flex: none;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(36, 19, 24, 0.06);
+  color: #241318;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 140ms var(--ws-ease);
+}
+
+.aiStatusOpen:hover {
+  background: rgba(36, 19, 24, 0.1);
+}
+
+@keyframes chromeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rootFocus .aiStatusBar {
+  left: 14px;
+  max-width: min(440px, calc(100% - 40px));
+}
+
+.savedTick {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: #b08a95;
+  flex: none;
+  min-width: 2.5em;
+  text-align: right;
+}
+
+.savedTickPulse {
+  color: #7a5560;
+  animation: savePulse 1.2s ease-in-out infinite;
+}
+
+@keyframes savePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.rootFocus .header {
+  background: transparent;
+  border-bottom-color: transparent;
+  backdrop-filter: none;
+}
+
+.rootFocus .board {
+  margin: 0;
+  border-radius: 0;
+}
+
+.rootDark .board {
+  background: #212830;
+}
+
+.world {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+}
+
+.aerial {
+  position: absolute;
+  inset: 0;
+  background: #ddd5d0
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 10px,
+      rgba(36, 19, 24, 0.03) 10px,
+      rgba(36, 19, 24, 0.03) 20px
+    );
+  background-size: cover;
+  background-position: center;
+}
+
+.aerialEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7a5560;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 2rem;
+  border: 1.5px dashed rgba(36, 19, 24, 0.18);
+  margin: 18% 22%;
+  border-radius: 12px;
+  background: rgba(250, 246, 242, 0.55);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(250, 246, 242, 0.22);
+}
+
+.rootDark .scrim {
+  background: rgba(33, 40, 48, 0.22);
+}
+
+.planSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.ghostBd {
+  border: 1.5px dashed #e8b84b;
+  border-radius: inherit;
+}
+
+.aiChip {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: #e8b84b;
+  color: #241318;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.north {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 251, 252, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.3);
+  z-index: 5;
+}
+
+.rail {
+  position: absolute;
+  left: 14px;
+  top: 64px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255, 251, 252, 0.9);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.3);
+}
+
+.railBtn {
+  width: 48px;
+  height: 46px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #7a5560;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-family: inherit;
+}
+
+.railBtn:hover {
+  background: #f1d7dd;
+  color: #241318;
+}
+
+.railBtnActive {
+  background: #241318;
+  color: #fff6f8;
+}
+
+.railIcon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.railLabel {
+  font-size: 8px;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+
+.railDiv {
+  width: 100%;
+  height: 1px;
+  background: rgba(36, 19, 24, 0.1);
+  margin: 2px 0;
+}
+
+.glass {
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-sizing: border-box;
+  animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.compliance {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 200px;
+  padding: 12px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  max-height: 44%;
+  overflow: auto;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-sizing: border-box;
+  animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.sun {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  width: 268px;
+  padding: 12px 14px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-sizing: border-box;
+  animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.bom {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 300px;
+  max-height: 52%;
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  z-index: 10;
+  overflow: auto;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-sizing: border-box;
+  animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: #b08a95;
+  text-transform: uppercase;
+}
+
+.compHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(36, 19, 24, 0.07);
+}
+
+.passPill {
+  height: 17px;
+  padding: 0 7px;
+  border-radius: 0;
+  background: rgba(28, 25, 23, 0.1);
+  color: #1c1917;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.metricKey {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b08a95;
+}
+
+.metricVal {
+  margin: 1px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 15px;
+  font-weight: 500;
+  color: #241318;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricValOk {
+  color: #1c1917;
+}
+
+.bar {
+  position: relative;
+  height: 4px;
+  border-radius: 0;
+  background: rgba(28, 25, 23, 0.08);
+  margin-top: 5px;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 0;
+  background: #1c1917;
+}
+
+.barTick {
+  position: absolute;
+  top: -2.5px;
+  width: 1.5px;
+  height: 9px;
+  background: rgba(36, 19, 24, 0.4);
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
+
+.sunHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sunTime {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  min-width: 76px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sunArc {
+  position: relative;
+  height: 56px;
+}
+
+.sunArc svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sunDot {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #e8b84b;
+  box-shadow:
+    0 0 0 4px rgba(232, 184, 75, 0.25),
+    0 2px 8px rgba(42, 23, 29, 0.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.chipRow {
+  display: flex;
+  gap: 5px;
+}
+
+.chip {
+  flex: 1;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: transparent;
+  color: #241318;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chipActive {
+  background: #1c1917;
+  border-color: #1c1917;
+  color: #f2f0eb;
+}
+
+.sunFoot {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: #7a5560;
+}
+
+.bomHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bomTotal {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+
+.bomTotal:hover {
+  color: #57534e;
+}
+
+.bomGst {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 400;
+  color: #7a5560;
+}
+
+.bomLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10.5px;
+  color: #241318;
+  align-items: baseline;
+}
+
+.bomAmt {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  color: #7a5560;
+  flex: none;
+}
+
+.riskChip {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 0;
+  border: 1px dashed rgba(28, 25, 23, 0.45);
+  background: rgba(28, 25, 23, 0.04);
+  color: #1c1917;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bomFoot {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: #7a5560;
+}
+
+.ghostPanel {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  top: calc(var(--ws-safe-top, 48px) + 4px);
+  z-index: 22;
+  max-width: min(320px, calc(100% - 200px));
+}
+
+/* Bottom-centre strip — clears checklist top band. */
+.addStrip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  transform: translateX(-50%);
+  z-index: 14;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: min(520px, calc(100% - 160px));
+  padding: 8px 10px;
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.94);
+  box-shadow: none;
+  animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.addStrip .chip {
+  flex: none;
+  padding: 0 10px;
+  min-height: 28px;
+  height: auto;
+}
+
+.sunProbeHint {
+  flex: 1 1 100%;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  color: #78716c;
+  letter-spacing: 0.02em;
+}
+
+.zoneKindBar {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--ws-safe-top, 40px) + 8px);
+  transform: translateX(-50%);
+  z-index: 14;
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.94);
+  opacity: 0.55;
+  transition: opacity 220ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.zoneKindBar:hover,
+.zoneKindBar:focus-within {
+  opacity: 1;
+}
+
+/* Mac Paint–style fill palette — top centre while Paint is armed. */
+.paintSwatchBar {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--ws-safe-top, 40px) + 8px);
+  transform: translateX(-50%);
+  z-index: 14;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: min(480px, calc(100% - 140px));
+  padding: 6px 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(242, 240, 235, 0.94);
+  opacity: 0.55;
+  transition: opacity 220ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.paintSwatchBar:hover,
+.paintSwatchBar:focus-within {
+  opacity: 1;
+}
+
+.paintSwatchBar .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.swatchDot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(28, 25, 23, 0.35);
+  flex: none;
+}
+
+.swatchDot[data-swatch="lawn"] {
+  background: rgba(74, 112, 58, 0.75);
+}
+
+.swatchDot[data-swatch="bed"] {
+  background: rgba(90, 122, 72, 0.7);
+}
+
+.swatchDot[data-swatch="paving"] {
+  background: rgba(70, 78, 88, 0.75);
+}
+
+.swatchDot[data-swatch="deck"] {
+  background: rgba(140, 98, 58, 0.7);
+}
+
+.swatchDot[data-swatch="hedge"] {
+  background: rgba(52, 92, 48, 0.75);
+}
+
+/* Drafting grain — bottom-left, clears add strip centre. */
+.draftGrainBar {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  z-index: 14;
+  display: flex;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid rgba(28, 25, 23, 0.16);
+  background: rgba(242, 240, 235, 0.92);
+  opacity: 0.4;
+  transition: opacity 220ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.draftGrainBar:hover,
+.draftGrainBar:focus-within {
+  opacity: 1;
+}
+
+.draftGrainBar .chip {
+  min-height: 26px;
+  padding: 0 8px;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.dbhField {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: rgba(255, 255, 255, 0.55);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: #44403c;
+}
+
+.dbhField input {
+  width: 3.4rem;
+  height: 24px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  color: #1c1917;
+  text-align: right;
+}
+
+.dbhField input:focus {
+  outline: none;
+}
+
+.elev {
+  position: absolute;
+  inset: 0;
+  padding: 48px 56px 40px 72px;
+  color: #241318;
+}
+
+.elevSvg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.elevToggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(36, 19, 24, 0.15);
+  background: #fffbfc;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  z-index: 6;
+}
+
+.quotePanel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 90%);
+  padding: 24px;
+  z-index: 14;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-sizing: border-box;
+}
+
+.quotePanel h2 {
+  margin: 0 0 8px;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 28px;
+}
+
+.quotePanel p {
+  margin: 0 0 16px;
+  color: #7a5560;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@keyframes ccIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ccPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (max-width: 900px) {
+  .spacer {
+    display: none;
+  }
+
+  .sun,
+  .bom {
+    width: min(268px, calc(100% - 28px));
+  }
+}
+
+/** Fit sheet print — hide chrome; keep the working drawing plane. */
+@media print {
+  .root {
+    position: static;
+    background: #fff !important;
+  }
+
+  .header,
+  .councilTip,
+  .addStrip {
+    display: none !important;
+  }
+}

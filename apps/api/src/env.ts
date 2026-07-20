@@ -32,9 +32,8 @@ const EnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
   OPENAI_API_KEY: z.string().startsWith("sk-").optional(),
 
-  /* Geo */
+  /* Geo — Mapbox optional (geocode/aerial). Vicmap cadastral is keyless WFS. */
   MAPBOX_TOKEN: z.string().optional(),
-  VICMAP_ENABLED: z.enum(["true", "false"]).optional(),
 
   /* Payments */
   STRIPE_SECRET_KEY: z

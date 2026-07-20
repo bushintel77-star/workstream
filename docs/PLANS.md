@@ -15,7 +15,7 @@ hydration, Studio checkout, seat limits, and workspace membership.
 |------------|--------|
 | Core pipeline | Voice → survey → design studio → costing → audit → outputs |
 | Design studio | Catalog, sketch, envelope estimate, develop-from-sketch |
-| Dev fallbacks | Missing API keys use canned AI/transcripts/maps so the app is usable zero-keys |
+| Dev fallbacks | Missing API keys use canned AI/transcripts; Vicmap cadastral is keyless WFS; mock lot if WFS misses |
 | Client portal | Magic links (operator sends URL manually) |
 | Settings | Rate card, plant palette, crew, design assets |
 
@@ -98,6 +98,13 @@ workspace plan must be `studio` for per-owner stored live keys to hydrate.
 ## Related docs
 
 - [CANVAS-FIRST-UX.md](CANVAS-FIRST-UX.md) — **binding** operator canvas UI mandate (progressive disclosure, paper/clay, optimistic + skeletal Live BOM)
+- [CANVAS-FIRST-SPATIAL-ENGINE-SDS.md](CANVAS-FIRST-SPATIAL-ENGINE-SDS.md) — Spatial drafting engine SDS (tokens, nodes, snap, TPZ, sheet scale; Workflow 1 vs Stage 2 firewall)
+- [CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md](CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md) — Canvas-first plant suggestion + micro-climate engine (Flora Ring; Workflow 1 vs Stage 2 firewall)
+- [CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md](CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md) — Dynamic volumetric Isolith (topsoil / CR / clay stockpile UI; Workflow 1 vs Stage 2 firewall)
+- [CANVAS-FIRST-PATCH-VERIFICATION.md](CANVAS-FIRST-PATCH-VERIFICATION.md) — Core canvas collision patch rules (`resolveFitSheetAreas`, elevation stack, sheet clip, save retry)
+- [CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md](CANVAS-FIRST-SPATIAL-CORRECTION-NLP-SDS.md) — NLP spatial correction pipeline (Vicmap snap, vegetation sieve, elev rescale, aerial off)
+- [CANVAS-FIRST-LIVE-TRADE-SDS.md](CANVAS-FIRST-LIVE-TRADE-SDS.md) — Live trade sourcing & cost HUD (Melbourne hub catalog; Workflow 1 vs Stage 2 firewall)
+- [design/operator-redesign/design_handoff_landscape_cad_studio/TIER1-AI-CANVAS-GAP-AUDIT.md](design/operator-redesign/design_handoff_landscape_cad_studio/TIER1-AI-CANVAS-GAP-AUDIT.md) — 2026 tier-1 AI-first canvas-first gap audit + gold-standard logic
 - [INTEGRATIONS.md](INTEGRATIONS.md) — hub API, CRM webhook, Resend, connector keys
 - [QUOTE_WORKFLOW.md](QUOTE_WORKFLOW.md) — operator sequence
 - [../OUTSTANDING.md](../OUTSTANDING.md) — engineering punch list

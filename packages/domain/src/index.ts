@@ -53,12 +53,24 @@ export * from './envelope-brief';
 export * from './studio-strokes';
 export * from './canvas-geometry';
 export * from './canvas-snap';
+export * from './rectangle-completion';
+export * from './stale-ghosts';
+export * from './canopy-clusters';
+export * from './tpz-geometry';
+export * from './mitigation-bom';
+export * from './fit-sheet-edges';
 export * from './mass-plant';
 export * from './irrigation';
 export * from './plan';
 export * from './site-plan-projection';
 export * from './site-environment';
-export { buildStudioSystemPrompt, type StudioPromptSite, type StudioPromptProject } from './studio-ai-prompt';
+export {
+  buildStudioSystemPrompt,
+  buildAssistSiteIntel,
+  coarseSymbolToComplianceType,
+  type StudioPromptSite,
+  type StudioPromptProject,
+} from './studio-ai-prompt';
 export {
   buildIndicativeShadeGrid,
   SHADE_GRID_SIZE,
@@ -80,9 +92,18 @@ export * from './preemptive-bom';
 export * from './preemptive-risk';
 export * from './orchestration-world';
 export * from './site-compliance';
+export * from './studio-preemptive-compliance';
+export * from './studio-preemptive-estimate';
+export * from './architectural-title-block';
+export * from './flora-suggestion';
+export * from './volumetric-isolith';
+export * from './live-trade-sourcing';
 export * from './ghost-confidence';
 export * from './elevation-projection';
 export * from './first-run-seed';
 export * from './brush-recipe';
 export * from './assembly-recipe';
 export * from './spatial-turf';
+export * from './outdoor-area';
+export * from './hybrid-plane';
+export * from './sketch-to-cad';

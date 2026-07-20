@@ -2,11 +2,7 @@ import type { Store } from "@workstream/db";
 import type { GeoJsonPolygon, Survey } from "@workstream/contracts";
 import { edgeLengths, polygonArea } from "@workstream/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
-import {
-  fetchBuildingPolygon,
-  fetchTitlePolygon,
-  isVicmapEnabled,
-} from "./vicmap";
+import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
 
 const METERS_PER_DEG_LAT = 110_540;
 const FRONTAGE_M = 15;
@@ -106,7 +102,8 @@ async function buildVicmapGeometry(center: {
   lat: number;
   lng: number;
 }): Promise<SurveyGeometry | null> {
-  const titlePoly = await fetchTitlePolygon(center.lat, center.lng);
+  const titleParcel = await fetchTitleParcel(center.lat, center.lng);
+  const titlePoly = titleParcel?.polygon ?? null;
   if (!titlePoly) return null;
 
   const titleRing = titlePoly.coordinates[0];
@@ -170,12 +167,10 @@ export async function runSurvey(
       : await geocodeAddress(project.address);
 
   let geometry: SurveyGeometry | null = null;
-  if (isVicmapEnabled()) {
-    try {
-      geometry = await buildVicmapGeometry(center);
-    } catch (err) {
-      console.warn("[survey] Vicmap fetch failed, falling back to mock:", err);
-    }
+  try {
+    geometry = await buildVicmapGeometry(center);
+  } catch (err) {
+    console.warn("[survey] Vicmap WFS failed, falling back to mock:", err);
   }
   if (!geometry) {
     geometry = buildMockGeometry(center);

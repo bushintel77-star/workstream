@@ -1,0 +1,171 @@
+.dock {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 48px) + 56px);
+  top: auto;
+  z-index: 16;
+  width: min(220px, calc(100vw - 120px));
+  max-height: min(180px, calc(100% - 200px));
+  overflow: auto;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(36, 19, 24, 0.08);
+  background: rgba(255, 251, 252, 0.82);
+  backdrop-filter: blur(20px) saturate(1.15);
+  box-shadow: 0 12px 36px rgba(36, 19, 24, 0.1);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  color: #241318;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: dockIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes dockIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b08a95;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.status {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: #8a6a1f;
+}
+
+.statusOk {
+  color: #1f8a5a;
+}
+
+.statusBusy {
+  color: #7a5560;
+}
+
+.close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #7a5560;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  flex: none;
+}
+
+.close:hover {
+  background: rgba(36, 19, 24, 0.06);
+}
+
+.reply {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(36, 19, 24, 0.05);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #4a3038;
+}
+
+.tips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tip {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.tip:hover {
+  border-color: rgba(36, 19, 24, 0.18);
+  background: #fff;
+}
+
+.tipHigh {
+  border-color: rgba(232, 184, 75, 0.45);
+  background: rgba(232, 184, 75, 0.1);
+}
+
+.tipTitle {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.tipDetail {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: #7a5560;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.primary,
+.secondary {
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.primary {
+  border: 1px solid #241318;
+  background: #241318;
+  color: #ffd3de;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.secondary {
+  border: 1px solid rgba(36, 19, 24, 0.14);
+  background: transparent;
+  color: #241318;
+}

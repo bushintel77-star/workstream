@@ -1,0 +1,150 @@
+.stack {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 64px) + 8px);
+  top: calc(var(--ws-safe-top, 48px) + 52px);
+  z-index: 17;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(280px, calc(100% - 120px));
+  pointer-events: none;
+}
+
+.stack > * {
+  pointer-events: auto;
+}
+
+.card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 246, 248, 0.94);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(36, 19, 24, 0.1);
+  font-family: Sora, ui-sans-serif, sans-serif;
+  color: #241318;
+  animation: hzIn 180ms ease both;
+}
+
+.info {
+  border-color: rgba(36, 19, 24, 0.1);
+}
+
+.watch {
+  border-color: rgba(232, 184, 75, 0.45);
+  background: rgba(255, 248, 230, 0.95);
+}
+
+.critical {
+  border-color: rgba(194, 69, 95, 0.45);
+  background: rgba(255, 236, 240, 0.96);
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b08a95;
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.detail {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #7a5560;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.accept,
+.dismiss {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.accept {
+  border: 1px solid #241318;
+  background: #241318;
+  color: #ffd3de;
+}
+
+.dismiss {
+  border: 1px solid rgba(36, 19, 24, 0.14);
+  background: transparent;
+  color: #7a5560;
+}
+
+@keyframes hzIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.markers {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.pin {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid #241318;
+  background: #e8b84b;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: pinPulse 1.6s ease-in-out infinite;
+}
+
+.pin_info {
+  background: #c4b5a8;
+}
+
+.pin_watch {
+  background: #e8b84b;
+}
+
+.pin_critical {
+  background: #c2455f;
+  border-color: #241318;
+}
+
+@keyframes pinPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.55;
+  }
+}

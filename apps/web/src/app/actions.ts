@@ -15,6 +15,7 @@ import {
   getAudit,
   getDesign,
   getProject,
+  listProjects,
   getSurvey,
   saveDesignCanvasApi,
   createCatalogSymbolApi,
@@ -46,6 +47,14 @@ function wrapApiError(err: unknown, fallback: string): Error {
 }
 
 /* -- Projects --------------------------------------------------------- */
+
+export async function listProjectsAction() {
+  try {
+    return await listProjects();
+  } catch (err) {
+    throw wrapApiError(err, "Could not load sites");
+  }
+}
 
 export async function geocodeSearchAction(query: string) {
   try {
@@ -181,6 +190,7 @@ export async function saveDesignCanvasAction(
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations: DesignCanvas["annotations"] = [],
+  siteFrame?: DesignCanvas["site_frame"],
 ) {
   try {
     const result = await saveDesignCanvasApi(
@@ -189,6 +199,7 @@ export async function saveDesignCanvasAction(
       strokes,
       irrigationZones,
       annotations,
+      siteFrame,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);
@@ -217,6 +228,19 @@ export async function designAssistAction(projectId: string, message: string) {
     return await designAssistApi(projectId, message.trim());
   } catch (err) {
     throw wrapApiError(err, "AI sketch assist failed");
+  }
+}
+
+/** Architectural title block · Vicmap cadastral for the selected address. */
+export async function lookupCadastralTitleAction(
+  projectId: string,
+  address?: string,
+) {
+  const { getCadastralTitle } = await import("../lib/api");
+  try {
+    return await getCadastralTitle(projectId, address);
+  } catch (err) {
+    throw wrapApiError(err, "Cadastral title lookup failed");
   }
 }
 

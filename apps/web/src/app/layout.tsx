@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 import { ToastHost } from "../components/ToastHost";
-import { clerkEnabled, isDevAuthMode } from "../lib/auth";
+import { clerkEnabled } from "../lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
@@ -66,15 +66,7 @@ export default function RootLayout({
             <ToastHost>{children}</ToastHost>
           </ClerkProvider>
         ) : (
-          <ToastHost>
-            {isDevAuthMode() ? (
-              <div className="dev-mode-banner" role="status">
-                Dev mode — auth disabled. Do not use this environment for
-                client work.
-              </div>
-            ) : null}
-            {children}
-          </ToastHost>
+          <ToastHost>{children}</ToastHost>
         )}
       </body>
     </html>
