@@ -18,11 +18,11 @@
 | 14 | Dashboard empty/loading/error/filter/delete-undo polish verified against Aegis UX standard | User prompt | PARTIAL; current home has empty/error basics, filters and delete/undo UI still absent | UX | Agent | P2 |
 | 15 | Project hub tab locked states, empty states, form validation, destructive confirms, and output actions verified | User prompt | PARTIAL; legacy tabs redirect to canvas-first modes | UX | Agent | P2 |
 | 16 | Client portal edge-safe, responsive, graceful expired-link, quote watermark, and Stripe-disabled states verified | User prompt | CLOSED; quote/deposit portal handles invalid tokens, disabled checkout, watermark, and responsive layout | UX | Agent | P2 |
-| 17 | Design Studio tooltips, autosave/save state, pointer capture, scale bar, context labels, keyboard legend, and Phase 6 honesty UI verified | User prompt | PARTIAL; save retry and honesty caption being hardened, shortcut legend still open | UX | Agent | P2 |
+| 17 | Design Studio tooltips, autosave/save state, pointer capture, scale bar, context labels, keyboard legend, and Phase 6 honesty UI verified | User prompt | PARTIAL; save retry, honesty caption, and aerial load-failure UI closed in 0369689; shortcut legend still open | UX | Agent | P2 |
 | 18 | Settings tabs for integrations, team, billing, and audit log have no dead controls and designed empty/error states | User prompt | PARTIAL; integrations/team/billing/audit exist, design-assets and palette polish remain | UX | Agent | P2 |
-| 19 | Pipeline processing screen retry/error/complete navigation verified | User prompt | PARTIAL; route currently redirects and is being restored with stage/retry UI | UX | Agent | P2 |
-| 20 | Navigation shell route guards, dev-mode banner, not-found page, and responsive menu verified | User prompt | PARTIAL; route guards/not-found present, dev banner and mobile nav polish still being closed | UX | Agent | P2 |
-| 21 | Local `pnpm run ci` parity with GitHub CI checks | .github/workflows/ci.yml | NOT DONE; script omits placeholder, portal-edge, and lint gates | Test | Agent | P1 |
+| 19 | Pipeline processing screen retry/error/complete navigation verified | User prompt | CLOSED in 0369689; five-stage screen polls, times out with retry, and restarts via `restartPipelineAction` | UX | Agent | P2 |
+| 20 | Navigation shell route guards, dev-mode banner, not-found page, and responsive menu verified | User prompt | PARTIAL; dev banner closed in 0369689, responsive hamburger still open | UX | Agent | P2 |
+| 21 | Local `pnpm run ci` parity with GitHub CI checks | .github/workflows/ci.yml | CLOSED in 0369689; script now runs placeholder, portal-edge, typecheck, lint, and tests | Test | Agent | P1 |
 
 Gap types: Code | HumanOps | UX | Asset | Test | Doc
 Owner: Agent (can implement now) | Human (requires credentials/platform access)

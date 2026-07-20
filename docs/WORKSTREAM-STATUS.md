@@ -1,6 +1,6 @@
 # Workstream status
 
-Generated 2026-05-24 for the gold-standard automation audit.
+Generated 2026-07-20 for the gold-standard automation audit refresh.
 
 ## Shipped this session
 
@@ -23,6 +23,13 @@ Generated 2026-05-24 for the gold-standard automation audit.
   brochure output is no longer exposed as a dead action, portal quotes show the
   confidential watermark and gate deposits until costing exists, and processing
   retry calls the real pipeline restart endpoint.
+- Gold-standard refresh (`0369689`): local `pnpm run ci` now matches the
+  workflow gates for mobile placeholders, portal Edge safety, lint, typecheck,
+  and tests; dev-auth mode renders a persistent app-shell warning; the
+  processing route shows five live stages with retry/timeout handling; the
+  handoff studio save failure state has a real retry action; the studio board
+  carries the "not a construction drawing" honesty caption; aerial imagery has
+  a retryable load-failure state.
 
 ## Still human-owned
 
@@ -40,10 +47,10 @@ Generated 2026-05-24 for the gold-standard automation audit.
 | Area | Status |
 |------|--------|
 | Operator dashboard | Shipped; active UX hardening continues around filters and project cards. |
-| Project hub | Shipped tabs for survey, design, costing, audit, outputs, filing, tasks, recordings, measurements, and carbon. |
+| Project hub | Canvas-first routes shipped; legacy tabs redirect to canvas modes, while `/processing` now has a dedicated stage/retry screen. |
 | Client portal | Shipped quote/deposit portal with graceful invalid-link handling; now Edge runtime. |
-| Design Studio | Phases 2-5, 7, and 8 shipped; Phase 6 AI assist remains intentionally deferred. |
-| Pipeline | Capture pipeline, idempotent full pipeline, and processing screen are shipped. |
+| Design Studio | Phases 2-5, 7, and 8 shipped; save retry, honesty caption, and aerial failure states hardened; Phase 6 AI assist remains intentionally deferred. |
+| Pipeline | Capture pipeline, idempotent full pipeline, and retryable processing screen are shipped. |
 | API observability | Sentry scaffold and OpenTelemetry code path shipped; live exporters require human secrets. |
 | Mobile | Expo app, capture flow, and EAS profiles shipped; store credentials are human-owned. |
 
@@ -53,8 +60,8 @@ Latest local verification:
 
 ```bash
 pnpm run ci
-pnpm mobile:check-placeholders
-pnpm web:check-portal-edge
 ```
 
-Result: 31 Vitest files, 131 tests passing.
+Result: placeholder guard, portal Edge guard, typecheck, lint, and 102 Vitest
+files / 428 tests passing. Literal `pnpm ci` remains unavailable in pnpm
+9.15.4 (`ERR_PNPM_CI_NOT_IMPLEMENTED`); use `pnpm run ci`.

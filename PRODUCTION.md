@@ -19,7 +19,7 @@ Override it only when a custom portal domain is live.
 
 ## Current auth mode
 
-`AUTH_REQUIRED=false` on both Fly apps — open operator loop with shared `dev-user` until Clerk keys are provisioned.
+`AUTH_REQUIRED=false` on both Fly apps — open operator loop with shared `dev-user` until Clerk keys are provisioned. The web shell now shows a persistent dev-mode banner whenever this fallback is active.
 
 To lock down:
 
@@ -96,6 +96,7 @@ Bundle ID: `com.curtisandco.workstream`
 ## Smoke checks
 
 ```bash
+pnpm run ci
 curl -s https://construct-api.fly.dev/healthz
 curl -s https://construct-api.fly.dev/readyz
 curl -s -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/

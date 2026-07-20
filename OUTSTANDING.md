@@ -19,8 +19,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
 - [x] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`
 - [x] **NEXT_PUBLIC_API_URL** baked into web Docker build + CI `--build-arg`.
-- [x] **Build automation** — `pnpm ci`, `pnpm build:docker`, `docker-compose.yml`,
-      `scripts/deploy-fly.*`, CI smoke tests, `workflow_dispatch` deploy.
+- [x] **Build automation** — `pnpm run ci`, `pnpm build:docker`,
+      `docker-compose.yml`, `scripts/deploy-fly.*`, CI smoke tests,
+      `workflow_dispatch` deploy. Local CI now includes mobile placeholder,
+      portal Edge, typecheck, lint, and Vitest gates (`0369689`).
 - [x] **Secret scanning** — gitleaks GitHub Action at
       [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
@@ -105,7 +107,9 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 - [x] Phase 3 layout (toolbar save, aerial hero, 320px rail)
 - [x] Phase 4 asset library (code on tiles, search by code, planning pin)
 - [x] Phase 5 modeless canvas (select/move/rotate/scale, scale bar, context label)
-- [x] Phase 7 honesty UI (caption, save hand-off, clear confirms, keyboard legend)
+- [x] Phase 7 honesty UI (caption, save hand-off, clear confirms, keyboard legend);
+      active handoff studio save retry, caption, and aerial failure states
+      hardened in `0369689`.
 - [x] Phase 8 docs + E2E (`CHANGES.md`, extended Playwright)
 - [x] Gold upgrade — measure, mass plant, irrigation zones, live schedule, undo/redo, toolbar UX (`857b7af`)
 - [x] Designer handover pack — [`docs/DESIGNER-HANDOVER.md`](docs/DESIGNER-HANDOVER.md)
