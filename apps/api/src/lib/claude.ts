@@ -110,7 +110,11 @@ ${ctx.address}
 
 SURVEY
 - Lot area: ${ctx.survey.lot_area_m2} m²
-- House area: ${ctx.survey.house_area_m2} m²
+- Existing house area: ${
+    ctx.survey.house_area_m2 > 0
+      ? `${ctx.survey.house_area_m2} m² (site context only)`
+      : "unavailable — do not infer or invent"
+  }
 - Garden area: ${ctx.survey.garden_area_m2} m²
 - Measurements: ${ctx.survey.measurements
     .map((m) => `${m.label ?? m.edge_id} ${m.length_m}m @ ${m.bearing_deg}°`)

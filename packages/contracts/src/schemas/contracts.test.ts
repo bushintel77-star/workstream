@@ -96,6 +96,28 @@ describe("SurveySchema", () => {
     });
     expect(ok.success).toBe(true);
   });
+
+  it("represents an unavailable existing-house outline without invented geometry", () => {
+    const ok = SurveySchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      aerial_uri: "https://example.com/aerial.jpg",
+      title_polygon: {
+        type: "Polygon",
+        coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]],
+      },
+      house_polygon: { type: "Polygon", coordinates: [] },
+      garden_polygon: {
+        type: "Polygon",
+        coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]],
+      },
+      lot_area_m2: 600,
+      house_area_m2: 0,
+      garden_area_m2: 600,
+      measurements: [],
+    });
+    expect(ok.success).toBe(true);
+  });
 });
 
 describe("DesignSchema", () => {

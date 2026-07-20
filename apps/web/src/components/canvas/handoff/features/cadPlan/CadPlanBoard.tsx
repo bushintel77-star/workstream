@@ -681,7 +681,12 @@ export function CadPlanBoard({
               (foundationCleanse ? underlayOp : 1) *
               (sketchPassthrough ? 0.4 : 1)
             }
-          />
+          >
+            <title>
+              Existing house outline · Vicmap/site context only · confirm before
+              relying on dimensions
+            </title>
+          </polygon>
         ) : null}
         {outsideDims.map((d) => (
           <g key={`odim${d.key}`} data-testid="outside-dim">
@@ -815,7 +820,7 @@ export function CadPlanBoard({
               className={`${css.cornerNode} ${css.cornerNodeBuilding}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
               title="Corner vertex"
-              aria-label={`Footprint corner ${i + 1}`}
+              aria-label={`Existing house corner ${i + 1}`}
               onPointerEnter={() => setCursorMode("move")}
               onPointerLeave={() => setCursorMode("default")}
               onPointerDown={(e) => startCornerDrag("building", i, e)}
@@ -902,7 +907,7 @@ export function CadPlanBoard({
                   ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${
                       titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
                     }`
-                  : `${isBuilding ? "Footprint" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
+                  : `${isBuilding ? "Existing house" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
               }
             >
               {cadTitleMode ? (
@@ -947,7 +952,7 @@ export function CadPlanBoard({
           className={css.missingBuildingCue}
           data-testid="building-footprint-empty"
         >
-          Building footprint not traced · Trace → Footprint
+          Existing house outline unavailable · Trace → Existing house
         </p>
       ) : null}
 

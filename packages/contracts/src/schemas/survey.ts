@@ -22,7 +22,8 @@ export const SurveySchema = z.object({
   house_polygon: GeoJsonPolygonSchema,
   garden_polygon: GeoJsonPolygonSchema,
   lot_area_m2: z.number().positive(),
-  house_area_m2: z.number().positive(),
+  /** Zero means the existing-house outline is unavailable — never fabricate it. */
+  house_area_m2: z.number().nonnegative(),
   garden_area_m2: z.number().positive(),
   measurements: z.array(MeasurementSchema),
 });
