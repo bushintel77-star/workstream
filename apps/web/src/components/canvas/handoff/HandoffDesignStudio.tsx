@@ -669,48 +669,28 @@ export function HandoffDesignStudio({
           ) : null}
           <button
             type="button"
-            className={`${css.iconBtn}${ui.focusOn ? ` ${css.iconBtnActive}` : ""}`}
-            data-testid="canvas-focus-top"
-            aria-label={ui.focusOn ? "Exit focus" : "Focus"}
-            title={ui.focusOn ? "Exit focus" : "Focus"}
-            onClick={() => studio.setUi({ focusOn: !ui.focusOn })}
+            className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
+            data-testid="client-view-top"
+            aria-label={ui.clientView ? "Exit client view" : "Client presentation"}
+            title={ui.clientView ? "Exit client presentation" : "Client presentation"}
+            onClick={() =>
+              studio.setUi({
+                clientView: !ui.clientView,
+                focusOn: !ui.clientView,
+                ghostReviewOpen: false,
+              })
+            }
           >
             <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-              <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.25" />
               <path
-                d="M8 2.5v2M8 11.5v2M2.5 8h2M11.5 8h2"
+                d="M2.5 8s2.2-3.5 5.5-3.5S13.5 8 13.5 8s-2.2 3.5-5.5 3.5S2.5 8 2.5 8z"
                 stroke="currentColor"
                 strokeWidth="1.25"
-                strokeLinecap="round"
               />
+              <circle cx="8" cy="8" r="1.4" stroke="currentColor" strokeWidth="1.2" />
             </svg>
           </button>
-          {!ui.focusOn ? (
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="client-view-top"
-              aria-label="Client view"
-              title="Client view"
-              onClick={() =>
-                studio.setUi({
-                  clientView: !ui.clientView,
-                  focusOn: !ui.clientView,
-                  ghostReviewOpen: false,
-                })
-              }
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M2.5 8s2.2-3.5 5.5-3.5S13.5 8 13.5 8s-2.2 3.5-5.5 3.5S2.5 8 2.5 8z"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                />
-                <circle cx="8" cy="8" r="1.4" stroke="currentColor" strokeWidth="1.2" />
-              </svg>
-            </button>
-          ) : null}
-          {!ui.focusOn && !ui.clientView ? (
+          {!ui.clientView ? (
             <button
               type="button"
               className={`${css.iconBtn}${ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}

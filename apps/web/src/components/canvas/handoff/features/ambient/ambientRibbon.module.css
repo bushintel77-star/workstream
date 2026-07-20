@@ -1,53 +1,94 @@
+/* Demand-driven instrument chrome.
+ * shadow → awake → carousel (half-arc) → armed silhouette → fade.
+ * Motion is state feedback, not decoration. */
+
 .ribbon {
+  --ink: #1c1917;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: absolute;
   left: 0;
-  top: 40px;
-  bottom: 40px;
+  top: 36px;
+  bottom: 36px;
   z-index: 18;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
-  width: 48px;
-  padding: 10px 5px 10px 6px;
-  border-radius: 0 14px 14px 0;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-left: none;
-  background: rgba(255, 251, 252, 0.16);
-  backdrop-filter: blur(20px) saturate(1.1);
-  opacity: 0.22;
-  transform: translateX(-8px);
+  gap: 12px;
+  width: 44px;
+  padding: 12px 4px 12px 4px;
+  border: none;
+  background: transparent;
+  opacity: 0.12;
+  transform: translateX(-10px);
   transition:
-    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    background 180ms ease,
-    width 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 200ms ease;
+    opacity 320ms var(--ease),
+    transform 340ms var(--ease),
+    width 280ms var(--ease);
   pointer-events: auto;
 }
 
-.ribbon:hover,
-.hot {
-  opacity: 1;
-  transform: translateX(0);
-  width: 56px;
-  background: rgba(255, 251, 252, 0.9);
-  box-shadow: 0 12px 36px rgba(42, 23, 29, 0.14);
+/* Soft vertical presence so you know instruments exist without reading them. */
+.shadowStem {
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(28, 25, 23, 0.22) 18%,
+    rgba(28, 25, 23, 0.28) 50%,
+    rgba(28, 25, 23, 0.22) 82%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transition: opacity 280ms var(--ease), width 280ms var(--ease);
 }
 
-.tools {
+.ribbon[data-phase="awake"],
+.ribbon[data-phase="carousel"] {
+  opacity: 1;
+  transform: translateX(0);
+  width: 58px;
+}
+
+.ribbon[data-phase="armed"] {
+  opacity: 0.38;
+  transform: translateX(-4px);
+  width: 52px;
+}
+
+.ribbon[data-phase="awake"] .shadowStem,
+.ribbon[data-phase="carousel"] .shadowStem {
+  opacity: 0;
+}
+
+.draftWell {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 180px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 2px;
+  padding-top: 4px;
+}
+
+.ribbon[data-phase="carousel"] .draftWell,
+.ribbon[data-phase="armed"] .draftWell {
+  justify-content: center;
 }
 
 .btn {
-  width: 42px;
-  min-height: 38px;
+  width: 40px;
+  min-height: 36px;
   border: none;
-  border-radius: 10px;
+  border-radius: 0;
   background: transparent;
-  color: #7a5560;
+  color: rgba(28, 25, 23, 0.55);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -55,16 +96,30 @@
   justify-content: center;
   gap: 1px;
   font: inherit;
-  padding: 4px 0;
+  padding: 3px 0;
+  position: relative;
+  transform-origin: left center;
   transition:
     background 140ms ease,
     color 140ms ease,
-    transform 140ms ease;
+    transform 280ms var(--ease),
+    opacity 200ms ease,
+    box-shadow 180ms ease;
+}
+
+.ribbon[data-phase="shadow"] .btn {
+  opacity: 0.35;
+}
+
+.ribbon[data-phase="awake"] .btn,
+.ribbon[data-phase="carousel"] .btn,
+.ribbon[data-phase="armed"] .btn {
+  opacity: 1;
 }
 
 .btn:hover {
-  background: rgba(36, 19, 24, 0.06);
-  color: #241318;
+  background: rgba(28, 25, 23, 0.06);
+  color: var(--ink);
 }
 
 .btn:active {
@@ -72,13 +127,13 @@
 }
 
 .btn:disabled {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
 .active {
-  background: #241318;
-  color: #fff6f8;
+  background: var(--ink);
+  color: #f5f2ed;
 }
 
 .glyph {
@@ -94,20 +149,69 @@
   max-height: 0;
   overflow: hidden;
   transition:
-    opacity 140ms ease,
-    max-height 140ms ease;
+    opacity 160ms ease,
+    max-height 160ms ease;
 }
 
-.hot .label,
-.ribbon:hover .label {
+.ribbon[data-phase="awake"] .label,
+.ribbon[data-phase="carousel"] .label {
   opacity: 1;
   max-height: 12px;
 }
 
-.div {
-  height: 1px;
-  margin: 4px 8px;
-  background: rgba(36, 19, 24, 0.08);
+/* Half-circle carousel — drafting tools fan on an arc from the left stem. */
+.ribbon[data-phase="carousel"] .btn[data-kind="draft"],
+.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  margin-top: -18px;
+  transform: rotate(var(--arc, 0deg)) translateX(64px)
+    rotate(calc(-1 * var(--arc, 0deg)));
+  width: 42px;
+  min-height: 38px;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  background: rgba(245, 242, 237, 0.92);
+  box-shadow: none;
+}
+
+.ribbon[data-phase="carousel"] .btn[data-kind="draft"].active,
+.ribbon[data-phase="armed"] .btn[data-kind="draft"].active {
+  background: var(--ink);
+  color: #f5f2ed;
+  border-color: var(--ink);
+  transform: rotate(var(--arc, 0deg)) translateX(72px)
+    rotate(calc(-1 * var(--arc, 0deg))) scale(1.06);
+}
+
+.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
+  background: rgba(245, 242, 237, 0.55);
+  border-color: rgba(28, 25, 23, 0.08);
+}
+
+.ribbon[data-phase="carousel"] .btn[data-kind="draft"]:active {
+  transform: rotate(var(--arc, 0deg)) translateX(64px)
+    rotate(calc(-1 * var(--arc, 0deg))) scale(0.96);
+}
+
+.utility {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition:
+    opacity 200ms var(--ease),
+    max-height 240ms var(--ease);
+}
+
+.ribbon[data-phase="awake"] .utility,
+.ribbon[data-phase="carousel"] .utility {
+  opacity: 1;
+  max-height: 220px;
+  pointer-events: auto;
 }
 
 .layers {
@@ -116,12 +220,17 @@
   gap: 4px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 160ms ease;
+  max-height: 0;
+  overflow: hidden;
+  transition:
+    opacity 200ms var(--ease),
+    max-height 240ms var(--ease);
 }
 
-.hot .layers,
-.ribbon:hover .layers {
+.ribbon[data-phase="awake"] .layers,
+.ribbon[data-phase="carousel"] .layers {
   opacity: 1;
+  max-height: 200px;
   pointer-events: auto;
 }
 
@@ -132,12 +241,12 @@
   gap: 4px;
   min-height: 26px;
   padding: 0 6px;
-  border-radius: 8px;
-  border: 1px solid rgba(36, 19, 24, 0.08);
-  background: rgba(255, 246, 248, 0.7);
+  border-radius: 0;
+  border: 1px solid rgba(28, 25, 23, 0.12);
+  background: rgba(245, 242, 237, 0.88);
   cursor: pointer;
   font: inherit;
-  color: #241318;
+  color: var(--ink);
 }
 
 .chipName {
@@ -145,7 +254,7 @@
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #7a5560;
+  color: #57534e;
 }
 
 .chipCount {
@@ -154,4 +263,29 @@
   font-weight: 700;
   min-width: 14px;
   text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ribbon,
+  .btn,
+  .label,
+  .utility,
+  .layers,
+  .shadowStem {
+    transition: none;
+  }
+
+  .ribbon[data-phase="carousel"] .btn[data-kind="draft"],
+  .ribbon[data-phase="armed"] .btn[data-kind="draft"] {
+    position: relative;
+    left: auto;
+    top: auto;
+    margin-top: 0;
+    transform: none;
+  }
+
+  .ribbon[data-phase="carousel"] .btn[data-kind="draft"].active,
+  .ribbon[data-phase="armed"] .btn[data-kind="draft"].active {
+    transform: none;
+  }
 }

@@ -1033,6 +1033,14 @@
   padding: 6px 8px;
   border: 1px solid rgba(28, 25, 23, 0.18);
   background: rgba(242, 240, 235, 0.94);
+  opacity: 0.55;
+  transition: opacity 220ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.zoneKindBar:hover,
+.zoneKindBar:focus-within {
+  opacity: 1;
 }
 
 /* Mac Paint–style fill palette — top centre while Paint is armed. */
@@ -1050,7 +1058,14 @@
   padding: 6px 8px;
   border: 1px solid rgba(28, 25, 23, 0.18);
   background: rgba(242, 240, 235, 0.94);
+  opacity: 0.55;
+  transition: opacity 220ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
   animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.paintSwatchBar:hover,
+.paintSwatchBar:focus-within {
+  opacity: 1;
 }
 
 .paintSwatchBar .chip {
@@ -1099,7 +1114,14 @@
   padding: 5px 6px;
   border: 1px solid rgba(28, 25, 23, 0.16);
   background: rgba(242, 240, 235, 0.92);
+  opacity: 0.4;
+  transition: opacity 220ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
   animation: chromeIn 200ms var(--ws-ease) both;
+}
+
+.draftGrainBar:hover,
+.draftGrainBar:focus-within {
+  opacity: 1;
 }
 
 .draftGrainBar .chip {

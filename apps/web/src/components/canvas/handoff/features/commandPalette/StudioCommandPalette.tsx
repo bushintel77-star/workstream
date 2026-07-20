@@ -124,9 +124,9 @@ export function StudioCommandPalette({
       },
       {
         id: "focus",
-        label: "Toggle focus mode",
-        detail: "Hide docks for clean drafting",
-        keywords: "focus chrome hide",
+        label: "Quiet canvas",
+        detail: "Temporarily clear docks — instruments still awaken on approach",
+        keywords: "focus chrome hide quiet",
         run: onToggleFocus,
       },
       {
