@@ -49,7 +49,9 @@ export function PointerMarkSettings({
       </header>
       <p className={css.title}>Pointer mark</p>
       <p className={css.hint}>
-        Choose the drawing cursor. Hover to preview, click to keep.
+        Idle craft mark for drafting. The pointer still changes by tool —
+        measure, paint, place, pan, and lock each swap function. Hover to
+        preview, click to keep.
       </p>
       <div
         className={css.row}

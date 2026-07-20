@@ -5,37 +5,39 @@ Point of difference: borrow **structure** from inventory / utility UX
 then render it as calm CAD / architectural studio chrome — never as a game.
 
 **Spatial rule (Fitts’s Law + Gestalt proximity):** object-local actions
-(materials, lock, delete, place fan, instruments) sit at the **prime pixel**
-— the selection or summon point — inside a short marking-menu radius. Do not
-park related controls across the board from where the pointer already is.
+(materials, lock, delete, Ask AI) sit at the **prime pixel** — the selection —
+inside a short marking-menu radius. Place palette uses the same Soft / Hard /
+Trees / Water taxonomy at the instrument summon point.
 
 ## Structure we keep
 
 | Borrowed idea | Studio surface |
 |---------------|----------------|
 | Slot clarity | Material glyphs in a short fan |
-| Contextual radial | Fan above the selected object (marking menu) |
-| Progressive disclosure | Linger → rest fade (atelier timing) |
-| Digit 1–9 | Accelerator keys for the active fan |
+| Progressive disclosure | Soft / Hard (/ Trees / Water) → materials |
+| Atelier linger | Linger → near-rest fade (slots ~0.22) |
+| Digit 1–9 | Accelerator keys for **visible** materials |
 | Skim then commit | Pointer mark preview in settings |
 
 ## Surface we refuse
 
 - No “loadout / equip / hotbar / bag” language in the UI
 - No permanent left inventory album covering the plan
-- No combat-HUD snap fades
+- No sticky instrument hub when not summoned
+- No flat dump of every paint swatch around the selection
 - Selecting geometry does **not** summon the instrument ribbon
 
 ## Behaviour
 
-1. **Selection** → materials fan above the object (plus lock)
-2. **Add armed** → place palette docked at the instrument anchor (margin)
-3. **Pointer marks** → settings only (garden craft glyphs, cursor personalisation)
-4. **Instruments** → summon from empty canvas **off the lot**, or header tools
+1. **Selection** → bag fan at the object (Soft / Hard) + SelectionRing (delete / lock / Ask AI)
+2. **Add armed** → same Soft / Hard / Trees / Water fan at the instrument anchor
+3. **Pointer** → personal garden mark when idle; function follows tool / handle hover
+4. **Instruments** → summon only (empty margin / tool arm); disappear when dismissed
 
 ## Files
 
 - `features/kitInventory/NicheToolCarousel.tsx` — contextual fan
-- `features/kitInventory/nicheTools.ts` — place / selection / zone tools
+- `features/kitInventory/nicheTools.ts` — bag / place / selection / zone tools
+- `features/pointer/resolveStudioCursor.ts` — context-aware cursor
 - `features/pointer/*` — cursor mark settings
 - Wired from `HandoffDesignStudio` (keeps `add-symbol-strip`, `paint-swatch-*`, `material-fan` test ids)

@@ -205,6 +205,9 @@ export function AmbientRibbon({
   const ax = Math.max(10, Math.min(90, anchorXPct));
   const ay = Math.max(12, Math.min(88, anchorYPct));
 
+  /* Disappearing UI — no sticky hub; instruments exist only when summoned. */
+  if (!summoned) return null;
+
   return (
     <nav
       ref={rootRef}

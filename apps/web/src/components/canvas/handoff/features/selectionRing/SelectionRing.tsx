@@ -11,13 +11,15 @@ type Props = {
   locked: boolean;
   onDelete: () => void;
   onClose: () => void;
+  /** Toggle lock — materials live on the shared kit bag fan. */
+  onLock?: () => void;
   /** Open AI collaborator for this selection (sidecar / Cmd+K). */
   onAskAi?: () => void;
 };
 
 /**
- * Compact selection hub at the prime pixel — delete / deselect / Ask AI.
- * Materials + lock live on the near-object marking-menu fan.
+ * Compact selection hub at the prime pixel — delete / lock / deselect / Ask AI.
+ * Material families share the place kit fan (bag progressive disclosure).
  */
 export function SelectionRing({
   item,
@@ -26,6 +28,7 @@ export function SelectionRing({
   locked,
   onDelete,
   onClose,
+  onLock,
   onAskAi,
 }: Props) {
   const def = BY_TYPE[item.t];
@@ -46,6 +49,18 @@ export function SelectionRing({
       >
         Delete
       </button>
+
+      {onLock ? (
+        <button
+          type="button"
+          className={`${css.node} ${css.north}`}
+          data-testid="selection-lock"
+          title={locked ? "Unlock" : "Lock"}
+          onClick={onLock}
+        >
+          {locked ? "Unlock" : "Lock"}
+        </button>
+      ) : null}
 
       {onAskAi ? (
         <button

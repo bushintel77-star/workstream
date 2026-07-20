@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   buildOutsideDims,
   deleteVertex,
@@ -133,6 +133,8 @@ type Props = {
   }) => void;
   /** Boundary / building handle interaction — dismiss instrument summon. */
   onCadHandleInteract?: () => void;
+  /** Hover affordance on handles / insert nodes — drives context cursor. */
+  onBoardCursor?: (mode: "default" | "move" | "add" | "paint") => void;
 };
 
 function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
@@ -193,6 +195,7 @@ export function CadPlanBoard({
   onPaintItem,
   onEmptyClick,
   onCadHandleInteract,
+  onBoardCursor,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -223,6 +226,14 @@ export function CadPlanBoard({
   const [cursorMode, setCursorMode] = useState<"default" | "move" | "add">(
     "default",
   );
+  useEffect(() => {
+    if (!onBoardCursor) return;
+    if (tool === "paint") {
+      onBoardCursor("paint");
+      return;
+    }
+    onBoardCursor(cursorMode);
+  }, [cursorMode, tool, onBoardCursor]);
   const gridStep = GRID_STEP_PCT[gridGrain];
   const showDraftGrid =
     !frameOn &&

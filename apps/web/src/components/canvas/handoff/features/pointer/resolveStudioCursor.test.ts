@@ -1,0 +1,81 @@
+import { describe, expect, it } from "vitest";
+import { resolveStudioCursor } from "./resolveStudioCursor";
+
+describe("resolveStudioCursor", () => {
+  it("uses the garden mark when idle drafting", () => {
+    const cur = resolveStudioCursor({
+      markId: "spade",
+      tool: "edit",
+      mode: "cad",
+      locked: false,
+    });
+    expect(cur).toContain("data:image/svg+xml");
+  });
+
+  it("switches function by tool environment", () => {
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "measure",
+        mode: "cad",
+        locked: false,
+      }),
+    ).toBe("crosshair");
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "paint",
+        mode: "cad",
+        locked: false,
+      }),
+    ).toBe("cell");
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "add",
+        mode: "cad",
+        locked: false,
+      }),
+    ).toBe("copy");
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "pan",
+        mode: "cad",
+        locked: false,
+      }),
+    ).toBe("grab");
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "lock",
+        mode: "cad",
+        locked: true,
+      }),
+    ).toBe("not-allowed");
+  });
+
+  it("honours board drag affordance over the idle mark", () => {
+    expect(
+      resolveStudioCursor({
+        markId: "fork",
+        tool: "edit",
+        mode: "cad",
+        locked: false,
+        boardCursor: "move",
+      }),
+    ).toBe("grab");
+  });
+
+  it("uses default on the fit sheet", () => {
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "edit",
+        mode: "cad",
+        locked: false,
+        frameOn: true,
+      }),
+    ).toBe("default");
+  });
+});

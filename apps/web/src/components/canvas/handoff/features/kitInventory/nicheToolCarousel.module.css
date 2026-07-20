@@ -92,7 +92,7 @@
 }
 
 .root[data-phase="rest"] .slot {
-  opacity: 0.85;
+  opacity: 0.22;
   pointer-events: auto;
   transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.85))
     rotate(calc(-1 * var(--arc, 0deg)));

@@ -11,6 +11,7 @@ import {
   BY_TYPE,
   MODE_TABS,
   PAINT_SWATCHES,
+  type KitBagId,
   type StudioItemType,
   type StudioMode,
 } from "./studioCatalog";
@@ -55,9 +56,11 @@ import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import {
   nicheActiveIdForItem,
+  nicheActiveIdForPlace,
   nicheToolsForItem,
   nicheToolsForPlace,
   nicheToolsForZone,
+  nicheVisibleMaterials,
   zoneNicheActiveId,
   type NicheTool,
 } from "./features/kitInventory/nicheTools";
@@ -65,10 +68,10 @@ import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
 import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
 import {
   loadPointerMarkId,
-  pointerMarkCursor,
   savePointerMarkId,
   type PointerMarkId,
 } from "./features/pointer/pointerMarks";
+import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
@@ -189,6 +192,15 @@ export function HandoffDesignStudio({
   const [pointerMarkPreview, setPointerMarkPreview] =
     useState<PointerMarkId | null>(null);
   const [pointerSettingsOpen, setPointerSettingsOpen] = useState(false);
+  /**
+   * Soft / Hard / Trees / Water drill — shared by place palette + selection materials.
+   * null = family chips; set = materials inside that family.
+   */
+  const [kitBagOpen, setKitBagOpen] = useState<KitBagId | null>(null);
+  /** Handle hover from CadPlanBoard — move / add / paint affordances. */
+  const [boardCursor, setBoardCursor] = useState<
+    "default" | "move" | "add" | "paint" | null
+  >(null);
 
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
@@ -389,16 +401,19 @@ export function HandoffDesignStudio({
         studio.deleteSelected();
       }
 
-      /* Digit accelerators for the active material fan (CAD hotkeys, not a hotbar). */
+      /* Digit accelerators for visible bag materials (CAD hotkeys, not a hotbar). */
       if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) {
         const idx = Number(e.key) - 1;
         const selected = studio.items.find(
           (i) => i.id === ui.selectedId && !i.ghost,
         );
         if (selected && ui.tool !== "zone") {
-          const mats = nicheToolsForItem(selected, { locked: ui.locked })
-            .map((t) => t.material)
-            .filter(Boolean) as StudioItemType[];
+          const mats = nicheVisibleMaterials(
+            nicheToolsForItem(selected, {
+              locked: ui.locked,
+              openBag: kitBagOpen,
+            }),
+          );
           const t = mats[idx];
           if (t) {
             e.preventDefault();
@@ -407,9 +422,9 @@ export function HandoffDesignStudio({
           }
         }
         if (ui.addOpen && ui.mode !== "sketch" && !selected) {
-          const mats = nicheToolsForPlace(ui.mode)
-            .map((t) => t.material)
-            .filter(Boolean) as StudioItemType[];
+          const mats = nicheVisibleMaterials(
+            nicheToolsForPlace(ui.mode, kitBagOpen),
+          );
           const t = mats[idx];
           if (t) {
             e.preventDefault();
@@ -433,7 +448,12 @@ export function HandoffDesignStudio({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [studio, ui]);
+  }, [studio, ui, kitBagOpen]);
+
+  useEffect(() => {
+    /* New selection / place arm — start at family chips (not a flat swatch dump). */
+    setKitBagOpen(null);
+  }, [ui.selectedId, ui.addOpen, ui.mode]);
 
   useEffect(() => {
     setQuotePersisted(hasQuote);
@@ -577,9 +597,53 @@ export function HandoffDesignStudio({
   };
 
   const placeFanTools = useMemo(
-    () => nicheToolsForPlace(ui.mode),
-    [ui.mode],
+    () => nicheToolsForPlace(ui.mode, kitBagOpen),
+    [ui.mode, kitBagOpen],
   );
+
+  const selectionKitTools = useMemo(() => {
+    if (!selectedLive) return [];
+    return nicheToolsForItem(selectedLive, {
+      locked: ui.locked,
+      openBag: kitBagOpen,
+      includeLock: false,
+    });
+  }, [selectedLive, ui.locked, kitBagOpen]);
+
+  const studioCursor = pointerMarkPreview
+    ? resolveStudioCursor({
+        markId: pointerMarkPreview,
+        tool: "edit",
+        mode: ui.mode,
+        locked: false,
+      })
+    : resolveStudioCursor({
+        markId: pointerMarkId,
+        tool: ui.tool,
+        mode: ui.mode,
+        locked: ui.locked,
+        frameOn: ui.frameOn,
+        boardCursor:
+          boardCursor && boardCursor !== "default" ? boardCursor : null,
+      });
+
+  const handleKitTool = (tool: NicheTool) => {
+    if (tool.kind === "bag" && tool.bag) {
+      setKitBagOpen(tool.bag);
+      return;
+    }
+    if (tool.kind === "back") {
+      setKitBagOpen(null);
+      return;
+    }
+    if (tool.kind === "material" && tool.material) {
+      if (selectedLive && ui.tool !== "zone") {
+        studio.changeSelectedType(tool.material);
+        return;
+      }
+      armType(tool.material);
+    }
+  };
 
   const draftLabel =
     ai.status === "scanning"
@@ -794,6 +858,7 @@ export function HandoffDesignStudio({
                   />
                 </svg>
               </button>
+              {chrome.structureRail ? (
               <button
                 type="button"
                 className={`${css.iconBtn}${ui.layersOpen ? ` ${css.iconBtnActive}` : ""}`}
@@ -811,6 +876,7 @@ export function HandoffDesignStudio({
                   />
                 </svg>
               </button>
+              ) : null}
               <button
                 type="button"
                 className={css.iconBtn}
@@ -982,9 +1048,7 @@ export function HandoffDesignStudio({
             style={{
               transformOrigin: `${ui.focusX}% ${ui.focusY}%`,
               transform: `scale(${ui.zoom})`,
-              cursor: pointerMarkCursor(
-                pointerMarkPreview ?? pointerMarkId,
-              ),
+              cursor: studioCursor,
               ...(ui.frameOn
                 ? (() => {
                     const sheet = sheetBoxFor(
@@ -1140,6 +1204,7 @@ export function HandoffDesignStudio({
               gridFormation={gridPreviewFormation ?? ui.gridFormation}
               gridInk={gridPreviewInk ?? ui.gridInk}
               onPaintItem={studio.paintItem}
+              onBoardCursor={setBoardCursor}
             />
             {chrome.floraRing && ui.floraSession ? (
               <FloraRing
@@ -1325,7 +1390,7 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {/* Place palette — Add armed, nothing selected (canvas margin dock). */}
+            {/* Place palette — Soft / Hard / Trees / Water at the summon point. */}
             {ui.addOpen &&
             !selectedLive &&
             planOn &&
@@ -1338,33 +1403,24 @@ export function HandoffDesignStudio({
                 xPct={instrumentAnchor.x}
                 yPct={instrumentAnchor.y}
                 tools={placeFanTools}
-                activeId={ui.armed ? `mat-${ui.armed}` : null}
-                onSelect={(tool: NicheTool) => {
-                  if (tool.material) armType(tool.material);
-                }}
+                activeId={nicheActiveIdForPlace(ui.armed, kitBagOpen)}
+                onSelect={handleKitTool}
               />
             ) : null}
             {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
               <>
-                {/* Materials + lock at the selection (prime pixel / Fitts). */}
+                {/*
+                  Materials at the prime pixel — bag families (Soft / Hard),
+                  not every swatch at once. Lock lives on the selection ring.
+                */}
                 <NicheToolCarousel
                   testId="material-fan"
                   label="Materials"
                   xPct={selectedLive.x}
                   yPct={selectedLive.y}
-                  tools={nicheToolsForItem(selectedLive, {
-                    locked: ui.locked,
-                  })}
-                  activeId={nicheActiveIdForItem(selectedLive)}
-                  onSelect={(tool: NicheTool) => {
-                    if (tool.kind === "material" && tool.material) {
-                      studio.changeSelectedType(tool.material);
-                      return;
-                    }
-                    if (tool.id === "lock") {
-                      studio.setTool(ui.locked ? "pan" : "lock");
-                    }
-                  }}
+                  tools={selectionKitTools}
+                  activeId={nicheActiveIdForItem(selectedLive, kitBagOpen)}
+                  onSelect={handleKitTool}
                 />
                 <SelectionRing
                   item={selectedLive}
@@ -1373,6 +1429,7 @@ export function HandoffDesignStudio({
                   locked={ui.locked}
                   onDelete={studio.deleteSelected}
                   onClose={() => studio.setSelection(null, [])}
+                  onLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
                   onAskAi={() =>
                     studio.setUi({
                       cmdOpen: true,
@@ -1475,9 +1532,21 @@ export function HandoffDesignStudio({
             label="Materials"
             xPct={selectedLive.x}
             yPct={selectedLive.y}
-            tools={nicheToolsForItem(selectedLive, { locked: ui.locked })}
-            activeId={`mat-${ui.paintSwatch}`}
+            tools={nicheToolsForItem(selectedLive, {
+              locked: ui.locked,
+              openBag: kitBagOpen,
+              includeLock: false,
+            })}
+            activeId={nicheActiveIdForItem(selectedLive, kitBagOpen)}
             onSelect={(tool: NicheTool) => {
+              if (tool.kind === "bag" && tool.bag) {
+                setKitBagOpen(tool.bag);
+                return;
+              }
+              if (tool.kind === "back") {
+                setKitBagOpen(null);
+                return;
+              }
               if (tool.material) {
                 studio.setUi({ paintSwatch: tool.material, tool: "paint" });
                 studio.changeSelectedType(tool.material);
@@ -1552,7 +1621,8 @@ export function HandoffDesignStudio({
           </label>
         ) : null}
 
-        {planOn &&
+        {chrome.aiSidecar &&
+        planOn &&
         !ui.focusOn &&
         !ui.clientView &&
         !ui.frameOn &&
@@ -1663,17 +1733,19 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        <LayersPanel
-          open={ui.layersOpen}
-          opacity={ui.layerOpacity}
-          setbackOn={ui.setbackOn}
-          shadeOn={ui.shadeOn}
-          items={studio.items}
-          onClose={() => studio.setUi({ layersOpen: false })}
-          onOpacity={studio.setLayerOpacity}
-          onSetback={(setbackOn) => studio.setUi({ setbackOn })}
-          onShade={(shadeOn) => studio.setUi({ shadeOn })}
-        />
+        {chrome.structureRail ? (
+          <LayersPanel
+            open={ui.layersOpen}
+            opacity={ui.layerOpacity}
+            setbackOn={ui.setbackOn}
+            shadeOn={ui.shadeOn}
+            items={studio.items}
+            onClose={() => studio.setUi({ layersOpen: false })}
+            onOpacity={studio.setLayerOpacity}
+            onSetback={(setbackOn) => studio.setUi({ setbackOn })}
+            onShade={(shadeOn) => studio.setUi({ shadeOn })}
+          />
+        ) : null}
 
         <SiteSwitcher
           open={ui.sitesOpen}

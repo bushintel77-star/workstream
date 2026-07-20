@@ -74,9 +74,9 @@ Object-local actions (materials, lock, delete, Ask AI, DBH) stay at the **prime 
 
 | Guide item | Status |
 | --- | --- |
-| Contextual materials / CAD params on selection | **Partial** — fan + ring; AI prompt node on selection |
-| AI sidecar (dialogue + analytics) | **Partial** — utility + collapsed live measures |
-| Structure rail left, collapsed | **Partial** — Layers panel |
+| Contextual materials / CAD params on selection | **Yes** — Soft/Hard bag fan + ring at prime pixel |
+| AI sidecar (dialogue + analytics) | **Partial** — utility + live measures gated by `aiSidecar` |
+| Structure rail left, collapsed | **Yes** — Layers left; gated by `structureRail` |
 | Variation filmstrip | **Not started** |
 | 1:1 CAD plan ↔ 3D AI lock | **Not started** (Workflow 1 2D) |
 | Non-destructive zone regen | **Partial** — ghosts / flora; no mask paint yet |
