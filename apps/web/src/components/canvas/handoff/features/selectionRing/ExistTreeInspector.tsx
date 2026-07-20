@@ -1,21 +1,38 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import css from "./existTreeInspector.module.css";
 
 type Props = {
+  /** Board % — parked south of the selection (prime pixel). */
+  xPct: number;
+  yPct: number;
   dbhM: number;
   locked: boolean;
   onDbhM: (n: number) => void;
 };
 
 /**
- * Calm TPZ authoring when an existing tree is selected — AS 4970 DBH → ring.
- * Kept off the SelectionRing chrome fog path (monograph).
+ * AS 4970 DBH authoring — stays near the selected tree (Fitts proximity),
+ * not a bottom-of-screen stretch from the selection.
  */
-export function ExistTreeInspector({ dbhM, locked, onDbhM }: Props) {
+export function ExistTreeInspector({
+  xPct,
+  yPct,
+  dbhM,
+  locked,
+  onDbhM,
+}: Props) {
   const tpzM = Math.max(2, 12 * dbhM);
+  const ax = Math.max(12, Math.min(88, xPct));
+  const ay = Math.max(14, Math.min(86, yPct));
   return (
-    <div className={css.root} data-testid="exist-tree-inspector">
+    <div
+      className={css.root}
+      data-testid="exist-tree-inspector"
+      style={{ left: `${ax}%`, top: `${ay}%` } as CSSProperties}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
       <p className={css.kicker}>Existing tree · AS 4970</p>
       <label className={css.field}>
         <span>DBH m</span>

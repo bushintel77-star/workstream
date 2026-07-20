@@ -58,20 +58,22 @@
   text-overflow: ellipsis;
 }
 
+/* Nodes stay within LOCAL_ACTION_PX of the selection (Fitts). */
+
 .north {
   left: 50%;
-  top: -64px;
+  top: -52px;
   transform: translateX(-50%);
 }
 
 .east {
-  left: 56px;
+  left: 52px;
   top: 50%;
   transform: translateY(-50%);
 }
 
 .west {
-  right: 56px;
+  right: 52px;
   top: 50%;
   transform: translateY(-50%);
   left: auto;
@@ -79,7 +81,7 @@
 
 .south {
   left: 50%;
-  top: 48px;
+  top: 52px;
   transform: translateX(-50%);
 }
 
@@ -88,8 +90,8 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: grid;
   place-items: center;

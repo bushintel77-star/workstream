@@ -4,6 +4,11 @@ Point of difference: borrow **structure** from inventory / utility UX
 (radial slots, progressive disclosure, digit accelerators, skim-then-commit),
 then render it as calm CAD / architectural studio chrome — never as a game.
 
+**Spatial rule (Fitts’s Law + Gestalt proximity):** object-local actions
+(materials, lock, delete, place fan, instruments) sit at the **prime pixel**
+— the selection or summon point — inside a short marking-menu radius. Do not
+park related controls across the board from where the pointer already is.
+
 ## Structure we keep
 
 | Borrowed idea | Studio surface |

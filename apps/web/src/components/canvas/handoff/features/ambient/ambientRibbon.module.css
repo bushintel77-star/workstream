@@ -9,6 +9,8 @@
   --glass: rgba(26, 36, 48, 0.72);
   --glass-border: rgba(232, 240, 248, 0.22);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  /* Fitts / marking-menu radius — see features/reach/fittsProximity.ts */
+  --arc-radius: 64px;
   position: absolute;
   z-index: 22;
   width: 0;
@@ -109,7 +111,7 @@
 .ribbon[data-phase="carousel"] .btn[data-kind="draft"] {
   opacity: 1;
   pointer-events: auto;
-  transform: rotate(var(--arc, 0deg)) translateY(-56px)
+  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -1))
     rotate(calc(-1 * var(--arc, 0deg)));
 }
 
@@ -117,7 +119,8 @@
   background: rgba(232, 240, 248, 0.94);
   color: #1a2430;
   border-color: rgba(232, 240, 248, 0.55);
-  transform: rotate(var(--arc, 0deg)) translateY(-64px)
+  transform: rotate(var(--arc, 0deg))
+    translateY(calc(var(--arc-radius) * -1.1))
     rotate(calc(-1 * var(--arc, 0deg))) scale(1.06);
 }
 
@@ -132,7 +135,7 @@
 }
 
 .btn:active {
-  transform: rotate(var(--arc, 0deg)) translateY(-56px)
+  transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -1))
     rotate(calc(-1 * var(--arc, 0deg))) scale(0.96);
 }
 
@@ -178,7 +181,8 @@
   flex-direction: column;
   gap: 3px;
   opacity: 0;
-  transform: translate(22px, -8px);
+  /* Near hub (prime pixel) — east cluster */
+  transform: translate(28px, -12px);
   transition: opacity 180ms var(--ease);
 }
 
@@ -213,9 +217,10 @@
   flex-direction: column;
   gap: 3px;
   opacity: 0;
-  transform: translate(-110px, -8px);
+  /* West of hub within local Fitts radius (was −110px travel) */
+  transform: translate(-72px, -12px);
   transition: opacity 180ms var(--ease);
-  max-width: 96px;
+  max-width: 88px;
 }
 
 .ribbon[data-phase="awake"] .layers,

@@ -1,19 +1,20 @@
+/* Local to selection — Gestalt proximity + Fitts short travel */
+
 .root {
   position: absolute;
-  left: 50%;
-  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
-  transform: translateX(-50%);
-  z-index: 14;
+  z-index: 29;
+  transform: translate(-50%, calc(52px));
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 14px;
-  max-width: min(420px, calc(100% - 160px));
-  padding: 8px 12px;
+  gap: 8px 12px;
+  max-width: min(280px, 46vw);
+  padding: 6px 10px;
   border: 1px solid rgba(28, 25, 23, 0.18);
   background: rgba(242, 240, 235, 0.94);
   font-family: Sora, ui-sans-serif, sans-serif;
   color: #1c1917;
+  pointer-events: auto;
 }
 
 .kicker {
@@ -38,17 +39,16 @@
   width: 3.6rem;
   height: 28px;
   border: 1px solid rgba(28, 25, 23, 0.18);
-  background: rgba(255, 255, 255, 0.65);
+  background: #fff;
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   color: #1c1917;
   text-align: right;
   padding: 0 6px;
 }
 
 .field input:focus {
-  outline: 2px solid rgba(28, 25, 23, 0.35);
-  outline-offset: 1px;
+  outline: 1px solid rgba(28, 25, 23, 0.35);
 }
 
 .field input:disabled {
@@ -57,9 +57,8 @@
 
 .meta {
   margin: 0;
-  flex: 1 1 140px;
+  flex: 1 1 100%;
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
   color: #78716c;
-  line-height: 1.3;
 }

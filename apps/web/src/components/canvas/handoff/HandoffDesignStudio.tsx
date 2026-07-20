@@ -1276,8 +1276,8 @@ export function HandoffDesignStudio({
               <NicheToolCarousel
                 testId="zone-kind-bar"
                 label="Zone type"
-                xPct={Math.max(18, Math.min(82, instrumentAnchor.x))}
-                yPct={Math.max(14, Math.min(70, instrumentAnchor.y - 8))}
+                xPct={instrumentAnchor.x}
+                yPct={instrumentAnchor.y}
                 tools={nicheToolsForZone()}
                 activeId={zoneNicheActiveId(ui.zoneKind)}
                 onSelect={(tool: NicheTool) => {
@@ -1335,7 +1335,7 @@ export function HandoffDesignStudio({
                 testId="add-symbol-strip"
                 label="Place"
                 xPct={instrumentAnchor.x}
-                yPct={Math.max(14, instrumentAnchor.y - 8)}
+                yPct={instrumentAnchor.y}
                 tools={placeFanTools}
                 activeId={ui.armed ? `mat-${ui.armed}` : null}
                 onSelect={(tool: NicheTool) => {
@@ -1345,12 +1345,12 @@ export function HandoffDesignStudio({
             ) : null}
             {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
               <>
-                {/* Contextual materials — Fusion-style marking menu on selection. */}
+                {/* Materials + lock at the selection (prime pixel / Fitts). */}
                 <NicheToolCarousel
                   testId="material-fan"
                   label="Materials"
                   xPct={selectedLive.x}
-                  yPct={Math.max(10, selectedLive.y - 8)}
+                  yPct={selectedLive.y}
                   tools={nicheToolsForItem(selectedLive, {
                     locked: ui.locked,
                   })}
@@ -1467,7 +1467,7 @@ export function HandoffDesignStudio({
             testId="paint-swatch-bar"
             label="Materials"
             xPct={selectedLive.x}
-            yPct={Math.max(10, selectedLive.y - 8)}
+            yPct={selectedLive.y}
             tools={nicheToolsForItem(selectedLive, { locked: ui.locked })}
             activeId={`mat-${ui.paintSwatch}`}
             onSelect={(tool: NicheTool) => {
@@ -1502,6 +1502,8 @@ export function HandoffDesignStudio({
         planOn &&
         selectedLive?.t === "exist" ? (
           <ExistTreeInspector
+            xPct={selectedLive.x}
+            yPct={selectedLive.y}
             dbhM={selectedLive.dbhM ?? ui.existDbhM}
             locked={ui.locked}
             onDbhM={studio.patchSelectedDbh}

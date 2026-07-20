@@ -11,6 +11,10 @@ import {
 import { StudioGlyph } from "../../StudioGlyph";
 import { playInstrumentTick } from "../ambient/instrumentTick";
 import {
+  LOCAL_ACTION_PX,
+  LOCAL_ARC_SPAN_DEG,
+} from "../reach/fittsProximity";
+import {
   ATELIER_LINGER_MS,
   type AtelierPhase,
 } from "./atelierPresence";
@@ -90,7 +94,7 @@ export function NicheToolCarousel({
   const arcAngles = useMemo(() => {
     const n = tools.length;
     if (n <= 1) return [0];
-    const span = 150;
+    const span = LOCAL_ARC_SPAN_DEG;
     const start = -span / 2;
     return tools.map((_, i) => {
       const base = start + (span * i) / (n - 1);
@@ -122,7 +126,13 @@ export function NicheToolCarousel({
       data-testid={testId}
       data-phase={phase}
       aria-label={label}
-      style={{ left: `${ax}%`, top: `${ay}%` } as CSSProperties}
+      style={
+        {
+          left: `${ax}%`,
+          top: `${ay}%`,
+          ["--arc-radius" as string]: `${LOCAL_ACTION_PX}px`,
+        } as CSSProperties
+      }
       onPointerDown={(e) => e.stopPropagation()}
       onMouseEnter={() => {
         hoverRef.current = true;

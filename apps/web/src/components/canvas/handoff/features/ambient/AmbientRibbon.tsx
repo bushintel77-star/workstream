@@ -16,6 +16,7 @@ import {
 } from "../../studioCatalog";
 import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
 import { ATELIER_LINGER_MS } from "../kitInventory/atelierPresence";
+import { LOCAL_ARC_SPAN_DEG, LOCAL_ACTION_PX } from "../reach/fittsProximity";
 import { playInstrumentTick } from "./instrumentTick";
 import css from "./ambientRibbon.module.css";
 
@@ -215,7 +216,7 @@ export function AmbientRibbon({
   const arcAngles = useMemo(() => {
     const n = draftInstruments.length;
     if (n <= 1) return [0];
-    const span = 150;
+    const span = LOCAL_ARC_SPAN_DEG;
     const start = -span / 2;
     return draftInstruments.map((_, i) => {
       const base = start + (span * i) / (n - 1);
@@ -240,6 +241,7 @@ export function AmbientRibbon({
         {
           left: `${ax}%`,
           top: `${ay}%`,
+          ["--arc-radius" as string]: `${LOCAL_ACTION_PX}px`,
         } as CSSProperties
       }
       onMouseEnter={() => {

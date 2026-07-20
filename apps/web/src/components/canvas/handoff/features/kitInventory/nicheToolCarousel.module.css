@@ -12,8 +12,8 @@
   --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
   --enter-ms: 480ms;
   --exit-ms: 1200ms;
-  /* Fan above the object */
-  --arc-radius: 56px;
+  /* Fitts / marking-menu radius — see features/reach/fittsProximity.ts */
+  --arc-radius: 64px;
 
   position: absolute;
   z-index: 28;
