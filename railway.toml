@@ -19,3 +19,5 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
 
 # deploy bump 2026-07-19 06:26 — studio visual fidelity (flora/isolith/trade)
+
+# deploy bump 2026-07-20 09:20 — outdoor clamp + handoff studio on main
