@@ -2,14 +2,25 @@ import type { StudioMode, StudioTool } from "../studioCatalog";
 
 /**
  * Canvas-first progressive disclosure for HandoffDesignStudio.
- * Binding: docs/CANVAS-FIRST-UX.md + handoff README mandate.
+ * Binding: docs/CAD-AI-2026-UX.md + docs/CANVAS-FIRST-UX.md.
  *
- * Monograph rule: floating consumer docks (AI coach, sun scrubber, trade
- * pills) stay off the vector plane — telemetry lives in the right utility hub.
+ * Disappearing UI: edge-to-edge drawing; tools at the prime pixel;
+ * AI sidecar (right) + structure rail (left, collapsed); instruments on summon.
+ * AI = intelligent intern — ghosts never silent-write (constraint-first).
  */
 export type HandoffChrome = {
-  /** Compliance + Live BOM utility hub */
+  /** Right utility hub — BOM / compliance (feeds the AI sidecar pattern) */
   utilityDrawer: boolean;
+  /**
+   * AI sidecar lane (right) — dialogue, variations, environmental analytics.
+   * Today: utility hub + collapsed Live measures; not a canvas float.
+   */
+  aiSidecar: boolean;
+  /**
+   * Left structure rail — layers / constraints; collapsed until opened.
+   * True when the layers control is available (not Fit / focus / client).
+   */
+  structureRail: boolean;
   /** Compact live cost total (same estimate engine; collapsed chrome) */
   liveBom: boolean;
   /** Preemptive horizon cards + canvas pins */
@@ -18,13 +29,13 @@ export type HandoffChrome = {
   volumeIsolith: boolean;
   /** Ambient budget margin + selection SKU trade tags */
   tradeMargin: boolean;
-  /** Sun / growth scrubber (canvas float — prefer utility hub) */
+  /** Sun / growth scrubber (canvas float — prefer sidecar analytics) */
   sunGrowth: boolean;
-  /** AI coach dock (canvas float — prefer Ask AI / utility) */
+  /** AI coach dock (canvas float — prefer Ask AI on selection / sidecar) */
   aiCoach: boolean;
-  /** Ambient left ribbon (layers / peel) */
+  /** Ambient instruments (layers peel) — summon only */
   ambientRibbon: boolean;
-  /** Selection radial ring */
+  /** Selection radial ring + material fan at prime pixel */
   selectionRing: boolean;
   /** Left drawing tools implied by mode */
   drawTools: boolean;
@@ -33,8 +44,8 @@ export type HandoffChrome = {
   /** Flora Ring / botanical suggestion HUD */
   floraRing: boolean;
   /**
-   * Draft AI surface on the board (status bar, ghost toast, review panel).
-   * Off during Stage 1 / Fit sheet / focus — use header Ask AI + Cmd+K only.
+   * Draft AI surface on the board (ghost review).
+   * Off during Stage 1 / Fit sheet / focus — header Ask AI + Cmd+K + selection Ask.
    */
   draftSurface: boolean;
 };
@@ -81,17 +92,20 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const draftCrowded = pendingGhosts > 0;
 
   if (foundationCleanse) {
+    const instruments = !frameOn && !clientView && !focusOn;
     return {
       utilityDrawer: false,
+      aiSidecar: false,
+      structureRail: instruments,
       liveBom: false,
       horizon: false,
       volumeIsolith: false,
       tradeMargin: false,
       sunGrowth: false,
       aiCoach: false,
-      ambientRibbon: !frameOn && !clientView && !focusOn,
+      ambientRibbon: instruments,
       selectionRing: false,
-      drawTools: !frameOn && !clientView && !focusOn && mode !== "quote" && mode !== "share",
+      drawTools: instruments && mode !== "quote" && mode !== "share",
       collapseUtility: true,
       floraRing: false,
       draftSurface: false,
@@ -102,6 +116,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   if (focusOn || clientView || frameOn) {
     return {
       utilityDrawer: false,
+      aiSidecar: false,
+      structureRail: false,
       liveBom: false,
       horizon: false,
       volumeIsolith: false,
@@ -122,9 +138,14 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const cadLike = mode === "cad" || mode === "elevation";
   /** Sun scrubber only when shade mesh is on — otherwise stays off the plane. */
   const sunScrubber = shadeOn && plan && !draftCrowded;
+  const utility = cadLike && !draftCrowded;
 
   return {
-    utilityDrawer: cadLike && !draftCrowded,
+    utilityDrawer: utility,
+    /** Right lane for AI dialogue + analytics (utility + live measures). */
+    aiSidecar: utility || mode === "quote",
+    /** Left layers / constraints — available, collapsed until opened. */
+    structureRail: plan,
     liveBom: cadLike || mode === "quote",
     // Monograph canvas — no floating consumer widgets on the drawing plane
     horizon: false,
@@ -139,7 +160,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: false,
-    // Ghost review only when user opens it — no ambient toast/status bar
+    // Ghost review only when pending — HITL intern, not ambient toast
     draftSurface: plan && mode !== "survey" && draftCrowded,
   };
 }

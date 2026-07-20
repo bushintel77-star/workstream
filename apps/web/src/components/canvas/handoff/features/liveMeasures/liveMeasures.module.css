@@ -13,7 +13,7 @@
   position: absolute;
   z-index: 15;
   right: calc(var(--ws-safe-right, 12px) + 4px);
-  /* Mid-right — clears the utility hub up top */
+  /* AI sidecar lane — mid-right, clears utility hub */
   top: 50%;
   transform: translateY(-42%);
   width: min(168px, 28vw);
@@ -30,6 +30,36 @@
   color: var(--ink);
   pointer-events: auto;
   overflow: hidden;
+  opacity: 0.72;
+  transition: opacity 420ms var(--ease);
+}
+
+.rail:hover,
+.rail[data-expanded="true"] {
+  opacity: 0.96;
+}
+
+.railCollapsed {
+  max-height: none;
+  width: min(148px, 26vw);
+  padding: 6px 8px;
+  opacity: 0.55;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
 }
 
 .kicker {
@@ -39,6 +69,15 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-soft);
+}
+
+.summary {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
 }
 
 .srLive {

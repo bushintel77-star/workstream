@@ -8,6 +8,7 @@ import {
   type CSSProperties,
 } from "react";
 import {
+  BY_TYPE,
   MODE_TABS,
   PAINT_SWATCHES,
   type StudioItemType,
@@ -1372,6 +1373,12 @@ export function HandoffDesignStudio({
                   locked={ui.locked}
                   onDelete={studio.deleteSelected}
                   onClose={() => studio.setSelection(null, [])}
+                  onAskAi={() =>
+                    studio.setUi({
+                      cmdOpen: true,
+                      cmdQuery: `about ${BY_TYPE[selectedLive.t]?.tag ?? selectedLive.t}`,
+                    })
+                  }
                 />
               </>
             ) : null}

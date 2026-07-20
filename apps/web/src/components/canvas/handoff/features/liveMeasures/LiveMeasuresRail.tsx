@@ -23,8 +23,8 @@ const GROUP_LABEL: Record<LiveMeasureRow["group"], string> = {
 };
 
 /**
- * Live accumulating measurements — off the drawing, linked to geometry.
- * Numbers update as the plan moves; aria-live announces changes.
+ * Environmental analytics in the AI sidecar lane (right).
+ * Collapsed by default — disappearing UI; expand when the operator asks.
  */
 export function LiveMeasuresRail({
   boundary,
@@ -34,6 +34,7 @@ export function LiveMeasuresRail({
   schedule,
   selected,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const rows = useMemo(
     () =>
       buildLiveMeasures({
@@ -63,7 +64,6 @@ export function LiveMeasuresRail({
       }
       prev.set(row.id, row.numeric);
     }
-    // Drop stale keys
     for (const key of [...prev.keys()]) {
       if (!rows.some((r) => r.id === key)) prev.delete(key);
     }
@@ -79,38 +79,57 @@ export function LiveMeasuresRail({
   const groups = (["site", "edge", "material", "selection"] as const).filter(
     (g) => rows.some((r) => r.group === g),
   );
+  const siteOutdoor = rows.find((r) => r.id === "outdoor");
+  const siteLot = rows.find((r) => r.id === "lot");
+  const summary =
+    siteOutdoor?.value ?? siteLot?.value ?? `${rows.length} measures`;
 
   return (
     <aside
-      className={css.rail}
+      className={`${css.rail}${expanded ? "" : ` ${css.railCollapsed}`}`}
       data-testid="live-measures-rail"
+      data-expanded={expanded ? "true" : "false"}
       aria-label="Live plan measurements"
     >
-      <p className={css.kicker}>Live measures</p>
+      <button
+        type="button"
+        className={css.head}
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span className={css.kicker}>Live measures</span>
+        {!expanded ? (
+          <span className={css.summary}>{summary}</span>
+        ) : (
+          <span className={css.summary}>Hide</span>
+        )}
+      </button>
       <div className={css.srLive} aria-live="polite" aria-atomic="true">
         {liveText}
       </div>
-      <div className={css.body}>
-        {groups.map((g) => (
-          <section key={g} className={css.group} data-group={g}>
-            <h3 className={css.groupTitle}>{GROUP_LABEL[g]}</h3>
-            <ul className={css.list}>
-              {rows
-                .filter((r) => r.group === g)
-                .map((r) => (
-                  <li
-                    key={r.id}
-                    className={`${css.row}${flashIds.has(r.id) ? ` ${css.flash}` : ""}`}
-                    data-testid={`live-measure-${r.id}`}
-                  >
-                    <span className={css.label}>{r.label}</span>
-                    <span className={css.value}>{r.value}</span>
-                  </li>
-                ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      {expanded ? (
+        <div className={css.body}>
+          {groups.map((g) => (
+            <section key={g} className={css.group} data-group={g}>
+              <h3 className={css.groupTitle}>{GROUP_LABEL[g]}</h3>
+              <ul className={css.list}>
+                {rows
+                  .filter((r) => r.group === g)
+                  .map((r) => (
+                    <li
+                      key={r.id}
+                      className={`${css.row}${flashIds.has(r.id) ? ` ${css.flash}` : ""}`}
+                      data-testid={`live-measure-${r.id}`}
+                    >
+                      <span className={css.label}>{r.label}</span>
+                      <span className={css.value}>{r.value}</span>
+                    </li>
+                  ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ) : null}
     </aside>
   );
 }

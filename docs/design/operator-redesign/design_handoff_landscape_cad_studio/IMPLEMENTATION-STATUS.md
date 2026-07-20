@@ -149,6 +149,21 @@ See [README.md § UX/UI execution mandate](./README.md) and
 
 ---
 
+## CAD–AI 2026 UX alignment
+
+Binding: [CAD-AI-2026-UX.md](../../../CAD-AI-2026-UX.md).
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Disappearing UI / contextual tools at prime pixel | **Partial** | Material fan + selection ring + Fitts radius; instruments on summon |
+| AI sidecar (right) | **Partial** | Utility hub + Live measures collapsed by default; Ask AI on selection |
+| Structure rail (left, collapsed) | **Partial** | Layers panel (`layersOpen` false) |
+| Constraint-first + HITL ghosts | **Partial** | Council ambient; Accept/Reject ghosts; setback explain ongoing |
+| Variation filmstrip | **Not started** | |
+| 1:1 plan ↔ 3D AI sync | **Not started** | Workflow 1 2D |
+
+---
+
 ## Remaining (lower priority)
 
 See prioritized matrix in [TIER1-AI-CANVAS-GAP-AUDIT.md](./TIER1-AI-CANVAS-GAP-AUDIT.md):

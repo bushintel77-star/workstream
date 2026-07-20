@@ -5,17 +5,19 @@ import css from "./selectionRing.module.css";
 
 type Props = {
   item: StudioItem;
-  /** Board-relative % for ring anchor. */
+  /** Board-relative % for ring anchor (prime pixel). */
   xPct: number;
   yPct: number;
   locked: boolean;
   onDelete: () => void;
   onClose: () => void;
+  /** Open AI collaborator for this selection (sidecar / Cmd+K). */
+  onAskAi?: () => void;
 };
 
 /**
- * Compact selection hub — delete / deselect.
- * Material + peel + lock live on the near-object niche carousel.
+ * Compact selection hub at the prime pixel — delete / deselect / Ask AI.
+ * Materials + lock live on the near-object marking-menu fan.
  */
 export function SelectionRing({
   item,
@@ -24,6 +26,7 @@ export function SelectionRing({
   locked,
   onDelete,
   onClose,
+  onAskAi,
 }: Props) {
   const def = BY_TYPE[item.t];
 
@@ -43,6 +46,18 @@ export function SelectionRing({
       >
         Delete
       </button>
+
+      {onAskAi ? (
+        <button
+          type="button"
+          className={`${css.node} ${css.east}`}
+          data-testid="selection-ask-ai"
+          title="Ask AI about this selection"
+          onClick={onAskAi}
+        >
+          Ask AI
+        </button>
+      ) : null}
 
       <button
         type="button"

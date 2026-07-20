@@ -30,6 +30,8 @@ Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd
 
 **Design Studio v4/v5 handoff** (reference): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README checklist; progress in `IMPLEMENTATION-STATUS.md`.
 
+**CAD–AI 2026 UX (binding):** `docs/CAD-AI-2026-UX.md` — disappearing interface, contextual tools at the prime pixel, AI as spatial collaborator (sidecar), constraint-first geometry, human-in-the-loop ghosts. Do not reintroduce sticky ribbons or chatbot-only AI.
+
 AI pipeline: heuristic coaching (`buildSketchCanvasAiSuggestions`) + optional vision ghosts API + NL sketch assist (`POST /projects/:id/design/assist` via `buildStudioSystemPrompt`) + CAD ghosts on generate (`generateCadAction`). Ghosts are ephemeral until accept.
 
 **Single branch:** Handoff studio + Vicmap WFS live on `main` — do not reintroduce parallel MapLibre geo-canvas branches.

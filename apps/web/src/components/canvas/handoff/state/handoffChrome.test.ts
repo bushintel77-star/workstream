@@ -13,6 +13,8 @@ describe("resolveHandoffChrome", () => {
     const c = resolveHandoffChrome({ ...base, mode: "sketch" });
     expect(c.liveBom).toBe(false);
     expect(c.utilityDrawer).toBe(false);
+    expect(c.aiSidecar).toBe(false);
+    expect(c.structureRail).toBe(true);
     expect(c.horizon).toBe(false);
     expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
@@ -31,6 +33,8 @@ describe("resolveHandoffChrome", () => {
     const c = resolveHandoffChrome({ ...base, mode: "cad" });
     expect(c.liveBom).toBe(true);
     expect(c.utilityDrawer).toBe(true);
+    expect(c.aiSidecar).toBe(true);
+    expect(c.structureRail).toBe(true);
     expect(c.horizon).toBe(false);
     expect(c.volumeIsolith).toBe(false);
     expect(c.tradeMargin).toBe(false);

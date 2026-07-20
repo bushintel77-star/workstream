@@ -2,7 +2,7 @@
 
 **Status:** Binding for operator web — SiteCanvas / Fit sheet / Walk **and**
 `HandoffDesignStudio` (Design Studio v4/v5 handoff board).  
-**Companions:** [handoff README](./design/operator-redesign/design_handoff_landscape_cad_studio/README.md) · Fit sheet paper tokens (`--paper`, `--paper-ink`).
+**Companions:** [CAD-AI-2026-UX.md](./CAD-AI-2026-UX.md) (disappearing UI, AI sidecar, constraint-first) · [handoff README](./design/operator-redesign/design_handoff_landscape_cad_studio/README.md) · Fit sheet paper tokens (`--paper`, `--paper-ink`).
 
 ## Goal
 
