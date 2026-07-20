@@ -66,7 +66,7 @@ Golden rule: override, undo, and manual adjust must stay effortless.
 
 ## 5. Spatial clustering (Fitts + proximity)
 
-Object-local actions (materials, lock, delete, Ask AI, DBH) stay at the **prime pixel** inside `LOCAL_ACTION_PX` (~64px). See `features/reach/fittsProximity.ts`.
+Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so the drawing stays free. Material inventory docks at the instrument summon point (same Soft / Hard / Trees / Water fan as Place). See `features/reach/fittsProximity.ts`.
 
 ---
 
