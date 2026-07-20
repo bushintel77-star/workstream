@@ -5,6 +5,7 @@ import {
   boardScaleM,
   pickMetricStepM,
   resolveGroundPhase,
+  visibleMetres,
   type SheetScaleDenom,
 } from "./groundMetrics";
 import css from "./tactileGround.module.css";
@@ -52,7 +53,7 @@ export function TactileGround({
   quietChrome = false,
 }: Props) {
   const scaleM = boardScaleM(sheetScaleDenom);
-  const visibleM = scaleM / Math.max(0.4, zoom);
+  const visibleM = visibleMetres(sheetScaleDenom, zoom);
   const stepM = pickMetricStepM(visibleM);
   const stepPct = (stepM / scaleM) * 100;
   const phase = foundationCleanse

@@ -121,6 +121,22 @@ Implementation: `features/pointer/resolveStudioCursor.ts`.
 
 ---
 
+## 2b. Infinite canvas zoom
+
+Plan modes support **unbounded zoom** (soft floor `0.05` / ceiling `64` only for IEEE sanity):
+
+| Input | Behaviour |
+| --- | --- |
+| Wheel / trackpad / pinch over board | Zoom toward pointer; updates `focusX` / `focusY` |
+| Ribbon In / Out | Geometric steps (`×1.18`) |
+| `+` / `-` keys | Same geometric steps |
+| Fit | Still frames outdoor remnant (its own sensible zoom) |
+| Fit sheet (`frameOn`) | Wheel changes print scale denom — not world zoom |
+
+Implementation: `geometry/canvasZoom.ts`. Do not reintroduce `0.6–2.2` clamps.
+
+---
+
 ## 3. Spatial clustering (Fitts + proximity)
 
 File: `features/reach/fittsProximity.ts`.

@@ -1,3 +1,5 @@
+import { ZOOM_MIN } from "../../geometry/canvasZoom";
+
 /** Indicative board width in metres at architectural scale 1:100. */
 export const BOARD_WIDTH_M_AT_100 = 110;
 
@@ -16,7 +18,7 @@ export function visibleMetres(
   sheetScaleDenom: SheetScaleDenom,
   zoom: number,
 ): number {
-  return boardScaleM(sheetScaleDenom) / Math.max(0.4, zoom);
+  return boardScaleM(sheetScaleDenom) / Math.max(ZOOM_MIN, zoom);
 }
 
 export function pickMetricStepM(visibleM: number): number {

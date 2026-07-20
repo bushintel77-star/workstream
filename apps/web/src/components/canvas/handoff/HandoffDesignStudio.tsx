@@ -96,6 +96,11 @@ import {
   sheetBoxFor,
   titlePanelWidth,
 } from "./geometry";
+import {
+  zoomByKeyStep,
+  zoomByRibbonDelta,
+  zoomFromWheel,
+} from "./geometry/canvasZoom";
 import { lookupCadastralTitleAction } from "../../../app/actions";
 import css from "./handoffStudio.module.css";
 
@@ -209,6 +214,42 @@ export function HandoffDesignStudio({
     setBoardSize({ w: el.clientWidth, h: el.clientHeight });
     return () => ro.disconnect();
   }, []);
+
+  /**
+   * Infinite-feel canvas zoom — wheel / trackpad / pinch over the board.
+   * Fit sheet keeps its own scale-denom wheel; plan modes zoom the world.
+   */
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const planMode =
+      ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+    if (!planMode) return;
+    const onWheel = (e: WheelEvent) => {
+      if (ui.frameOn || ui.foundationCleanse) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.("input, textarea, select, [data-no-canvas-zoom]")) {
+        return;
+      }
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const focusX = Math.max(
+        0,
+        Math.min(100, ((e.clientX - r.left) / Math.max(1, r.width)) * 100),
+      );
+      const focusY = Math.max(
+        0,
+        Math.min(100, ((e.clientY - r.top) / Math.max(1, r.height)) * 100),
+      );
+      studio.setUi({
+        focusX: Number(focusX.toFixed(2)),
+        focusY: Number(focusY.toFixed(2)),
+        zoom: zoomFromWheel(ui.zoom, e.deltaY),
+      });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [studio, ui.frameOn, ui.foundationCleanse, ui.mode, ui.zoom]);
 
   /** Restore micro grid studio prefs for this project session. */
   useEffect(() => {
@@ -331,6 +372,18 @@ export function HandoffDesignStudio({
       if (e.key.toLowerCase() === "f" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         studio.setUi({ frameOn: !ui.frameOn });
+        return;
+      }
+      /* Infinite zoom — + / = zoom in, - / _ zoom out (not while typing). */
+      if (
+        !ui.frameOn &&
+        !ui.foundationCleanse &&
+        (e.key === "+" || e.key === "=" || e.key === "-" || e.key === "_")
+      ) {
+        e.preventDefault();
+        studio.setUi({
+          zoom: zoomByKeyStep(ui.zoom, e.key === "-" || e.key === "_" ? -1 : 1),
+        });
         return;
       }
       if (
@@ -1399,12 +1452,7 @@ export function HandoffDesignStudio({
             onRedo={studio.redo}
             onZoom={(delta) => {
               if (ui.foundationCleanse) return;
-              studio.setUi({
-                zoom: Math.max(
-                  0.6,
-                  Math.min(2.2, Number((ui.zoom + delta).toFixed(2))),
-                ),
-              });
+              studio.setUi({ zoom: zoomByRibbonDelta(ui.zoom, delta) });
             }}
             onFit={() => {
               if (ui.foundationCleanse) {
