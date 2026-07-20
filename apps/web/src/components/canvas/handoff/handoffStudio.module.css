@@ -1136,7 +1136,7 @@
   opacity: 0.9;
 }
 
-/* Paint swatches — dark slate glass over blush canvas, anchored to work. */
+/* Paint swatches — blush frost (legacy bar; niche fan is primary). */
 .paintSwatchBar {
   position: absolute;
   z-index: 21;
@@ -1146,12 +1146,12 @@
   gap: 6px;
   max-width: min(420px, 70%);
   padding: 5px 7px;
-  border-radius: 12px;
-  border: 1px solid rgba(232, 240, 248, 0.22);
-  background: rgba(26, 36, 48, 0.72);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 6px 18px rgba(26, 36, 48, 0.28);
-  color: #e8f0f8;
+  border-radius: 14px;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  color: #241318;
   transform: translate(-50%, -50%);
   opacity: 0.82;
   transition: opacity 220ms var(--ws-ease);
@@ -1237,12 +1237,14 @@
   gap: 6px;
   min-height: 28px;
   padding: 0 8px;
-  border: 1px solid rgba(232, 240, 248, 0.28);
-  border-radius: 8px;
-  background: rgba(12, 16, 22, 0.4);
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 251, 252, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #e8f0f8;
+  color: #241318;
 }
 
 .dbhField input {
@@ -1252,7 +1254,7 @@
   background: transparent;
   font: inherit;
   font-size: 11px;
-  color: #e8f0f8;
+  color: #241318;
   text-align: right;
 }
 
