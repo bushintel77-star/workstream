@@ -1,7 +1,6 @@
 /*
- * Main design kit — vertical stack, left gutter.
- * Larger slots for canvas selection; hub mark personalisable.
- * Rest stays present (no disappear) while the mode is armed.
+ * Main design kit — vertical inventory stack only (no in-stack carousel).
+ * Generous atelier fades; rest stays present while the mode is armed.
  */
 
 .root {
@@ -11,10 +10,10 @@
   --glass-border: rgba(232, 240, 248, 0.22);
   /* 52px — easier to hit than game-sized chips; 44px is the floor */
   --slot: 52px;
-  --ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
-  --enter-ms: 280ms;
-  --exit-ms: 700ms;
+  --enter-ms: 420ms;
+  --exit-ms: 1100ms;
 
   position: absolute;
   z-index: 16;
@@ -109,76 +108,6 @@
 .hubGlyph {
   font-size: 22px;
   line-height: 1;
-}
-
-.hubPicker {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 2px 0 4px;
-  border-top: 1px solid rgba(232, 240, 248, 0.1);
-  border-bottom: 1px solid rgba(232, 240, 248, 0.1);
-  animation: hubPickerIn var(--enter-ms) var(--ease-enter) both;
-}
-
-@keyframes hubPickerIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.hubOption {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 8px 0 6px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: rgba(12, 16, 22, 0.35);
-  color: var(--ink-soft);
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease;
-}
-
-.hubOption:hover,
-.hubOptionSkim {
-  background: rgba(38, 52, 68, 0.85);
-  color: var(--ink);
-  border-color: rgba(232, 240, 248, 0.28);
-}
-
-.hubOptionOn {
-  background: rgba(232, 240, 248, 0.16);
-  border-color: rgba(232, 240, 248, 0.55);
-  color: var(--ink);
-}
-
-.hubOptionGlyph {
-  width: 28px;
-  text-align: center;
-  font-size: 18px;
-  line-height: 1;
-  flex: none;
-}
-
-.hubOptionLabel {
-  font-size: 11px;
-  font-weight: 650;
-  display: none;
-}
-
-.root[data-phase="open"] .hubOptionLabel {
-  display: block;
 }
 
 .equipped {
@@ -422,8 +351,7 @@
   .root,
   .slot,
   .kicker,
-  .hub,
-  .hubPicker {
+  .hub {
     transition: none;
     animation: none;
   }

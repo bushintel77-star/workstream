@@ -16,14 +16,14 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
   opacity: 0.55;
-  /* Atelier: quick enough to feel ready, slow settle when leaving */
-  transition: opacity 700ms cubic-bezier(0.33, 0.1, 0.25, 1);
+  /* Generous atelier settle — nothing sharp */
+  transition: opacity 1100ms cubic-bezier(0.33, 0.1, 0.25, 1);
 }
 
 .ribbon[data-phase="awake"],
 .ribbon[data-phase="carousel"] {
   opacity: 1;
-  transition: opacity 280ms cubic-bezier(0.33, 1, 0.68, 1);
+  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ribbon[data-phase="shadow"] {

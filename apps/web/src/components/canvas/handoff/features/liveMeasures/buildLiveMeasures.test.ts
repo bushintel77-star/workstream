@@ -6,7 +6,7 @@ import { buildLiveMeasures } from "./buildLiveMeasures";
 const SCALE = 110;
 
 describe("buildLiveMeasures", () => {
-  it("accumulates site, edge, and material rows from the Wrights seed", () => {
+  it("accumulates site and edge rows from the Wrights cadastral seed", () => {
     const schedule = buildSiteSchedule(
       WRIGHTS_SEED.boundary,
       WRIGHTS_SEED.building,
@@ -26,19 +26,20 @@ describe("buildLiveMeasures", () => {
     expect(rows.some((r) => r.group === "edge" && r.id.startsWith("edge-B"))).toBe(
       true,
     );
-    expect(rows.some((r) => r.id === "mat-paving")).toBe(true);
-    expect(rows.some((r) => r.id === "mat-lawn")).toBe(true);
+    // Planning-relevant existing tree only — no fabricated paving/lawn on open
+    expect(rows.some((r) => r.id === "mat-exist")).toBe(true);
+    expect(rows.some((r) => r.id === "mat-paving")).toBe(false);
   });
 
   it("adds a selection row when an item is selected", () => {
-    const paving = WRIGHTS_SEED.items.find((i) => i.t === "paving")!;
+    const exist = WRIGHTS_SEED.items.find((i) => i.t === "exist")!;
     const rows = buildLiveMeasures({
       boundary: WRIGHTS_SEED.boundary,
       building: WRIGHTS_SEED.building,
-      items: [paving],
+      items: [exist],
       scaleM: SCALE,
       schedule: null,
-      selected: paving,
+      selected: exist,
     });
     expect(rows.some((r) => r.group === "selection")).toBe(true);
   });

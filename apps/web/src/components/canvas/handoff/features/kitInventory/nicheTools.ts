@@ -36,8 +36,8 @@ const ICONS: Partial<Record<StudioItemType, string>> = {
 };
 
 /**
- * Limited niche tools for a selected object — not the full design kit.
- * Material siblings + peel / lock.
+ * Small local niche set for a selected object — not the inventory stack.
+ * Related materials for that element (+ lock). Peel stays on ambient layers.
  */
 export function nicheToolsForItem(
   item: StudioItem,
@@ -64,12 +64,6 @@ export function nicheToolsForItem(
     }
   }
 
-  tools.push({
-    id: "peel",
-    label: "Peel",
-    icon: "◌",
-    kind: "action",
-  });
   tools.push({
     id: "lock",
     label: opts.locked ? "Unlock" : "Lock",

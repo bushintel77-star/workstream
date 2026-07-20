@@ -1331,21 +1331,6 @@ export function HandoffDesignStudio({
                     }
                     if (tool.id === "lock") {
                       studio.setTool(ui.locked ? "pan" : "lock");
-                      return;
-                    }
-                    if (tool.id === "peel") {
-                      if (liveAerial) {
-                        const steps = [0.12, 0.28, 0.42, 0.62, 0.85];
-                        const idx = steps.findIndex(
-                          (s) => Math.abs(s - ui.parchmentPeel) < 0.05,
-                        );
-                        const next = steps[(idx + 1) % steps.length]!;
-                        studio.setUi({ parchmentPeel: next });
-                        return;
-                      }
-                      const bucket = ITEM_LAYER[selectedLive.t];
-                      const cur = ui.layerOpacity[bucket];
-                      studio.setLayerOpacity(bucket, cur < 0.4 ? 1 : 0.25);
                     }
                   }}
                 />

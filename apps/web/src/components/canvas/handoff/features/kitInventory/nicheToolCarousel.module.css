@@ -1,6 +1,6 @@
 /*
- * Near-object 180° niche carousel.
- * Atelier motion: ~280ms enter, ~3s linger, ~700ms settle.
+ * Near-object 180° niche carousel — separate from the inventory stack.
+ * Small, local to the selected element; generous fade in / out.
  */
 
 .root {
@@ -8,11 +8,11 @@
   --ink-soft: rgba(232, 240, 248, 0.78);
   --glass: rgba(26, 36, 48, 0.84);
   --glass-border: rgba(232, 240, 248, 0.24);
-  --ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
-  --enter-ms: 280ms;
-  --exit-ms: 700ms;
-  --arc-radius: 48px;
+  --enter-ms: 420ms;
+  --exit-ms: 1100ms;
+  --arc-radius: 44px;
 
   position: absolute;
   z-index: 28;

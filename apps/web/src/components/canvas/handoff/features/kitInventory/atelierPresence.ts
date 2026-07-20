@@ -1,28 +1,25 @@
 /**
  * Presence timing for canvas design chrome (kits, niche tools, ambient instruments).
  *
- * Design-tool norms — not combat HUDs:
- * - Hold after disengage so you can glance back
- * - Ease in gently; settle slowly
- * - Never vanish while the mode is armed — rest stays clearly present
+ * Generous atelier pacing — nothing sharp:
+ * - Long hold after disengage
+ * - Soft ease in / ease out
+ * - Rest stays clearly present while the mode is armed
  */
 
-/** Stay expanded/readable after pointer leaves before compacting. */
-export const ATELIER_LINGER_MS = 3000;
+/** Stay readable after pointer leaves before settling. */
+export const ATELIER_LINGER_MS = 4800;
 
 /** CSS transition — engage / expand. */
-export const ATELIER_ENTER_MS = 280;
+export const ATELIER_ENTER_MS = 420;
 
-/** CSS transition — settle to compact rest. */
-export const ATELIER_EXIT_MS = 700;
+/** CSS transition — settle / fade. */
+export const ATELIER_EXIT_MS = 1100;
 
-/**
- * Rest opacity while tool mode is still armed.
- * High enough that slots stay selectable — chrome does not disappear.
- */
-export const ATELIER_REST_OPACITY = 0.82;
+/** Soft presence while the tool mode is still armed. */
+export const ATELIER_REST_OPACITY = 0.84;
 
 /** Held after leave — fully readable. */
-export const ATELIER_LINGER_OPACITY = 0.94;
+export const ATELIER_LINGER_OPACITY = 0.96;
 
 export type AtelierPhase = "open" | "linger" | "rest";

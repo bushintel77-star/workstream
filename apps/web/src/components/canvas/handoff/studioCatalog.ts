@@ -141,9 +141,10 @@ export const BY_TYPE: Record<StudioItemType, TypeDef> = {
 };
 
 /**
- * 12 Wrights Terrace — handoff demo seed (not live Vicmap hardscape).
- * Real items: existing tree + proposed lawn + proposed bluestone paving.
- * There is no “existing bluestone” type — only `exist` (tree) is survey-existing.
+ * 12 Wrights Terrace — cadastral frame + planning-relevant existing only.
+ * No fabricated hardscape / planting on open. Proposed work is placed by the
+ * operator (or AI ghosts after an explicit ask) — not pre-seeded as “real”.
+ * `exist` = protected / survey tree from planning context.
  */
 export const WRIGHTS_SEED = {
   boundary: [
@@ -159,81 +160,22 @@ export const WRIGHTS_SEED = {
     { x: 35.8, y: 51.6 },
   ] as Pt[],
   items: [
-    { id: "e1", t: "exist" as const, x: 35.6, y: 69.5, rot: 0, scale: 1, ghost: false },
-    { id: "r1", t: "lawn" as const, x: 38.2, y: 73, rot: 2, scale: 0.85, ghost: false },
-    { id: "r2", t: "paving" as const, x: 38.6, y: 58, rot: 3, scale: 0.62, ghost: false },
     {
-      id: "g1",
-      t: "deck" as const,
-      x: 38.4,
-      y: 64.5,
-      rot: 3,
-      scale: 0.55,
-      ghost: true,
-      why: "Links rear door to lawn · fall < 1:100",
-      conf: 0.93,
-    },
-    {
-      id: "g2",
-      t: "canopy" as const,
-      x: 36.4,
-      y: 82,
+      id: "e1",
+      t: "exist" as const,
+      x: 35.6,
+      y: 69.5,
       rot: 0,
-      scale: 0.9,
-      ghost: true,
-      why: "Shades west glazing at 3 PM in Jan",
-      conf: 0.91,
-    },
-    {
-      id: "g3",
-      t: "canopy" as const,
-      x: 40.4,
-      y: 86,
-      rot: 0,
-      scale: 0.7,
-      ghost: true,
-      why: "Lifts canopy cover toward 15% target",
-      conf: 0.88,
-    },
-    {
-      id: "g4",
-      t: "hedge" as const,
-      x: 37.4,
-      y: 16.5,
-      rot: 1,
-      scale: 0.75,
-      ghost: true,
-      why: "Screens front boundary · 1.2 m clipped",
-      conf: 0.86,
-    },
-    {
-      id: "g5",
-      t: "feature" as const,
-      x: 39.8,
-      y: 78,
-      rot: 0,
-      scale: 0.8,
-      ghost: true,
-      why: "Feature tree · frames view from living",
-      conf: 0.84,
-    },
-    {
-      id: "g6",
-      t: "frenchdrain" as const,
-      x: 38.5,
-      y: 54,
-      rot: 2,
-      scale: 0.9,
-      ghost: true,
-      why: "Intercepts runoff at paving low point",
-      conf: 0.9,
+      scale: 1,
+      ghost: false,
+      dbhM: 0.45,
     },
   ] as StudioItem[],
 };
 
 /**
- * 14 Airlie Ave — handoff demo seed (not live Vicmap hardscape).
- * Real items: proposed bluestone paving + hedge + mass plant bed.
+ * 14 Airlie Ave — cadastral frame only until planning marks exist.
+ * Empty of proposed materials on open.
  */
 export const ARMADALE_SEED = {
   boundary: [
@@ -248,44 +190,7 @@ export const ARMADALE_SEED = {
     { x: 44.4, y: 44 },
     { x: 34.6, y: 43.5 },
   ] as Pt[],
-  items: [
-    { id: "r1", t: "paving" as const, x: 39.3, y: 56, rot: 0, scale: 0.9, ghost: false },
-    { id: "r2", t: "hedge" as const, x: 33.6, y: 60, rot: 1, scale: 0.7, ghost: false },
-    { id: "r3", t: "bed" as const, x: 41.8, y: 74, rot: 0, scale: 0.8, ghost: false },
-    {
-      id: "g1",
-      t: "lawn" as const,
-      x: 39.3,
-      y: 70,
-      rot: 0,
-      scale: 0.75,
-      ghost: true,
-      why: "Permeable core · lifts site permeability",
-      conf: 0.92,
-    },
-    {
-      id: "g2",
-      t: "canopy" as const,
-      x: 35,
-      y: 80,
-      rot: 0,
-      scale: 0.65,
-      ghost: true,
-      why: "Canopy target · clear of sewer easement",
-      conf: 0.87,
-    },
-    {
-      id: "g3",
-      t: "frenchdrain" as const,
-      x: 39.3,
-      y: 50,
-      rot: 0,
-      scale: 1,
-      ghost: true,
-      why: "Intercepts runoff at paving low point",
-      conf: 0.9,
-    },
-  ] as StudioItem[],
+  items: [] as StudioItem[],
 };
 
 export type StudioSiteDef = {
