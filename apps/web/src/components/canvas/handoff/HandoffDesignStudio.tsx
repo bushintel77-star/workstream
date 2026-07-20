@@ -36,6 +36,7 @@ import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPal
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
 import { UtilityDrawer } from "./features/utilityDrawer/UtilityDrawer";
 import { ComplianceTicker } from "./features/compliance/ComplianceTicker";
+import { PermitTodosPanel } from "./features/permitTodos/PermitTodosPanel";
 import { QuoteSurface } from "./features/tier1/QuoteSurface";
 import { ElevationBoard } from "./features/elevation/ElevationBoard";
 import {
@@ -1441,6 +1442,13 @@ export function HandoffDesignStudio({
               onOpenCompliance={() =>
                 studio.setUi({ utilityPanel: "compliance", setbackOn: true })
               }
+            />
+            <PermitTodosPanel
+              projectId={projectId}
+              address={projectAddress}
+              outdoorM2={outdoor}
+              items={studio.items}
+              compliance={compliance}
             />
             {chrome.horizon ? (
               <PreemptiveHorizon

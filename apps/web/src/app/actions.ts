@@ -8,6 +8,7 @@ import {
   geocodePreviewApi,
   geocodeSearchApi,
   createTaskApi,
+  listTasks,
   deleteCrewApi,
   deleteIntegrationApi,
   deleteProjectApi,
@@ -614,12 +615,19 @@ export async function createTaskAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const assignee = String(formData.get("assignee_name") ?? "").trim();
   const priority = String(formData.get("priority") ?? "medium") as TaskPriority;
+  const sourceRaw = String(formData.get("source") ?? "manual");
+  const source =
+    sourceRaw === "design" || sourceRaw === "dictation" ? sourceRaw : "manual";
+  const technical = String(formData.get("technical_specifications") ?? "").trim();
   if (!projectId || !title) return;
   await createTaskApi(projectId, {
     title,
     assignee_name: assignee || null,
     priority,
+    source,
+    technical_specifications: technical || null,
   });
+  revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/tasks`);
 }
 
@@ -629,7 +637,62 @@ export async function updateTaskStatusAction(formData: FormData) {
   const status = String(formData.get("status") ?? "") as TaskStatus;
   if (!projectId || !taskId || !status) return;
   await updateTaskStatusApi(projectId, taskId, status);
+  revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/tasks`);
+}
+
+/**
+ * Sync design-sourced permit / compliance todos from the live canvas.
+ * Creates missing drafts; cancels pending design tasks whose trigger no longer applies.
+ */
+export async function syncDesignTodosAction(
+  projectId: string,
+  proposed: Array<{
+    title: string;
+    priority?: TaskPriority;
+    technical_specifications?: string | null;
+    trigger_id: string;
+  }>,
+): Promise<{ tasks: Awaited<ReturnType<typeof listTasks>>; created: number }> {
+  if (!projectId) return { tasks: [], created: 0 };
+  const { diffDesignTodos, encodeDesignTodoSpec } = await import(
+    "@workstream/domain"
+  );
+  const existing = await listTasks(projectId);
+  const drafts = proposed.map((p) => ({
+    trigger_id: p.trigger_id,
+    title: p.title,
+    priority: p.priority ?? ("medium" as TaskPriority),
+    source: "design" as const,
+    technical_specifications:
+      p.technical_specifications ??
+      encodeDesignTodoSpec(p.trigger_id, p.title),
+  }));
+  const { toCreate, toCancelIds } = diffDesignTodos(existing, drafts);
+  let created = 0;
+  for (const draft of toCreate) {
+    await createTaskApi(projectId, {
+      title: draft.title,
+      priority: draft.priority,
+      source: "design",
+      technical_specifications: draft.technical_specifications ?? null,
+    });
+    created += 1;
+  }
+  for (const id of toCancelIds) {
+    await updateTaskStatusApi(projectId, id, "cancelled");
+  }
+  const tasks = await listTasks(projectId);
+  if (created > 0 || toCancelIds.length > 0) {
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/tasks`);
+  }
+  return { tasks, created };
+}
+
+export async function listProjectTasksAction(projectId: string) {
+  if (!projectId) return [];
+  return listTasks(projectId);
 }
 
 /* -- Crew ------------------------------------------------------------- */

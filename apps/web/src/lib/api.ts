@@ -842,6 +842,7 @@ export async function createTaskApi(
     assignee_name?: string | null;
     priority?: TaskPriority;
     technical_specifications?: string | null;
+    source?: "manual" | "dictation" | "design";
   },
 ): Promise<Task> {
   const body = await apiPost<{ task: Task }>(
