@@ -103,6 +103,7 @@ import {
 } from "./geometry/canvasZoom";
 import { lookupCadastralTitleAction } from "../../../app/actions";
 import { useToast } from "../../ToastHost";
+import { suggestedMode, unlockedModes } from "../../../lib/canvas-mode";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -649,6 +650,49 @@ export function HandoffDesignStudio({
     ui.groupIds.length > 0 ||
     ui.addOpen ||
     ui.locked;
+  const modeProgress = useMemo(
+    () => ({
+      hasAerial:
+        Boolean(liveAerial) ||
+        Boolean(ui.aerialUri) ||
+        Boolean(titleBlock) ||
+        studio.boundary.length >= 3,
+      hasSketch: studio.items.some((i) => !i.ghost) || studio.strokes.length > 0,
+      hasCad:
+        studio.items.some((i) => !i.ghost) ||
+        studio.strokes.length > 0 ||
+        studio.irrigationZones.length > 0,
+      hasQuote: quotePersisted,
+    }),
+    [
+      liveAerial,
+      quotePersisted,
+      studio.boundary.length,
+      studio.irrigationZones.length,
+      studio.items,
+      studio.strokes.length,
+      titleBlock,
+      ui.aerialUri,
+    ],
+  );
+  const openModes = useMemo(() => unlockedModes(modeProgress), [modeProgress]);
+  const fallbackMode = useMemo(() => suggestedMode(modeProgress), [modeProgress]);
+
+  useEffect(() => {
+    if (!openModes.has(ui.mode)) {
+      studio.setMode(fallbackMode);
+    }
+  }, [fallbackMode, openModes, studio, ui.mode]);
+
+  const lockReasonForMode = (mode: StudioMode): string | null => {
+    if (openModes.has(mode)) return null;
+    if (mode === "sketch" || mode === "cad" || mode === "elevation") {
+      return "Complete survey and title boundary first.";
+    }
+    if (mode === "quote") return "Accept CAD geometry before quoting.";
+    if (mode === "share") return "Generate a quote before sharing.";
+    return "Complete the previous stage first.";
+  };
   /**
    * Instrument + inventory home — margin pin only (never lot core).
    */
@@ -730,17 +774,27 @@ export function HandoffDesignStudio({
           aria-label="Design workflow"
           data-testid="canvas-mode-strip"
         >
-          {MODE_TABS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}`}
-              data-testid={`canvas-mode-${m}`}
-              onClick={() => studio.setMode(m)}
-            >
-              {m[0]!.toUpperCase() + m.slice(1)}
-            </button>
-          ))}
+          {MODE_TABS.map((m) => {
+            const lockReason = lockReasonForMode(m);
+            const locked = Boolean(lockReason);
+            return (
+              <button
+                key={m}
+                type="button"
+                className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}${locked ? ` ${css.modeBtnLocked}` : ""}`}
+                data-testid={`canvas-mode-${m}`}
+                disabled={locked}
+                aria-disabled={locked}
+                title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
+                onClick={() => {
+                  if (!locked) studio.setMode(m);
+                }}
+              >
+                {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
+                {m[0]!.toUpperCase() + m.slice(1)}
+              </button>
+            );
+          })}
         </nav>
 
         <div className={css.spacer} />
@@ -977,8 +1031,11 @@ export function HandoffDesignStudio({
               className={`${css.iconBtn}${ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}
               data-testid="share-top"
               aria-label="Share"
-              title="Share"
-              onClick={() => studio.setMode("share")}
+              title={lockReasonForMode("share") ?? "Share"}
+              disabled={Boolean(lockReasonForMode("share"))}
+              onClick={() => {
+                if (!lockReasonForMode("share")) studio.setMode("share");
+              }}
             >
               <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
                 <circle cx="12" cy="4" r="1.6" stroke="currentColor" strokeWidth="1.2" />

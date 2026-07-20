@@ -28,10 +28,15 @@ import xeroRoutes from "../routes/xero";
 import carbonRoutes from "../routes/carbon";
 import catalogRoutes from "../routes/catalog";
 import designCanvasRoutes from "../routes/design-canvas";
+import designGhostsRoutes from "../routes/design-ghosts";
+import designAssistRoutes from "../routes/design-assist";
 import cadRoutes from "../routes/cad";
 import boundaryRoutes from "../routes/boundary";
+import orchestrationRoutes from "../routes/orchestration";
 import projectFileRoutes from "../routes/project-files";
 import portalRoutes from "../routes/portal";
+import stripeWebhookRoutes from "../routes/stripe-webhook";
+import protectedFileRoutes from "../routes/protected-files";
 import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from "../routes/integration-hub";
@@ -51,6 +56,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   const app = Fastify({ logger: false });
   app.decorate("store", store);
   await app.register(multipart);
+  await app.register(protectedFileRoutes);
   await app.register(healthRoutes);
   await app.register(projectRoutes, { prefix: "/projects" });
   await app.register(pipelineRoutes, { prefix: "/projects" });
@@ -71,8 +77,11 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(aerialRoutes, { prefix: "/projects" });
   await app.register(carbonRoutes, { prefix: "/projects" });
   await app.register(designCanvasRoutes, { prefix: "/projects" });
+  await app.register(designGhostsRoutes, { prefix: "/projects" });
+  await app.register(designAssistRoutes, { prefix: "/projects" });
   await app.register(cadRoutes, { prefix: "/projects" });
   await app.register(boundaryRoutes, { prefix: "/projects" });
+  await app.register(orchestrationRoutes, { prefix: "/projects" });
   await app.register(projectFileRoutes, { prefix: "/projects" });
   await app.register(geocodeRoutes, { prefix: "/geocode" });
   await app.register(crewRoutes, { prefix: "/crew" });
@@ -81,6 +90,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(supplierRoutes, { prefix: "/suppliers" });
   await app.register(catalogRoutes, { prefix: "/catalog" });
   await app.register(portalRoutes);
+  await app.register(stripeWebhookRoutes);
   await app.register(settingsRoutes, { prefix: "/settings" });
   await app.register(integrationHubRoutes, { prefix: "/integrations" });
   await app.register(

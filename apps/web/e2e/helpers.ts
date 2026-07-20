@@ -13,6 +13,16 @@ export function handoffStudio(page: Page) {
   return page.getByTestId("handoff-design-studio");
 }
 
+/** Open the global command palette through its visible user control. */
+export async function openCommandPalette(page: Page) {
+  const trigger = page.getByTestId("canvas-command-top");
+  await expect(trigger).toBeVisible({ timeout: 15_000 });
+  await trigger.click();
+  await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
+    timeout: 15_000,
+  });
+}
+
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */
 export const LEGACY_STUDIO_VIEWPORT = { width: 800, height: 900 };
 

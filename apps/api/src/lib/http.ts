@@ -113,6 +113,12 @@ function hrefFromInput(input: string | URL): string {
   return typeof input === "string" ? input : input.href;
 }
 
+function responseHasUsage(
+  value: unknown,
+): value is { usage?: { input_tokens?: number; output_tokens?: number } } {
+  return typeof value === "object" && value !== null && "usage" in value;
+}
+
 export async function fetchWithRetry(
   input: string | URL,
   init: RequestInit = {},
@@ -122,21 +128,79 @@ export async function fetchWithRetry(
     return await fetchWithRetryAttempt(input, init, opts);
   }
 
-  const { withTelemetrySpan, setTelemetryAttributes } = await import("./telemetry");
-  return await withTelemetrySpan(
+  const { SpanKind, SpanStatusCode, trace } = await import("@opentelemetry/api");
+  const { setTelemetryAttributes } = await import("./telemetry");
+  const tracer = trace.getTracer("workstream-api");
+
+  return await tracer.startActiveSpan(
     opts.telemetry.spanName,
     {
-      "peer.service": opts.telemetry.provider,
-      "http.request.method": methodFromInit(init),
-      "url.full": hrefFromInput(input),
-      ...opts.telemetry.attributes,
+      kind: SpanKind.CLIENT,
+      attributes: {
+        "peer.service": opts.telemetry.provider,
+        "http.request.method": methodFromInit(init),
+        "url.full": hrefFromInput(input),
+        ...opts.telemetry.attributes,
+      },
     },
     async (span) => {
+      let ended = false;
+      const endSpan = (err?: unknown) => {
+        if (ended) return;
+        ended = true;
+        if (err instanceof Error) {
+          span.recordException(err);
+          span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+        }
+        span.end();
+      };
+
+      const wrapBodyReader = <T>(
+        response: Response,
+        key: "arrayBuffer" | "blob" | "formData" | "json" | "text",
+        read: () => Promise<T>,
+      ): (() => Promise<T>) =>
+        async () => {
+          try {
+            const value = await read();
+            if (key === "json" && responseHasUsage(value)) {
+              setTelemetryAttributes(span, {
+                "tokens.input": value.usage?.input_tokens,
+                "tokens.output": value.usage?.output_tokens,
+              });
+            }
+            span.setStatus({
+              code: response.ok ? SpanStatusCode.OK : SpanStatusCode.ERROR,
+            });
+            endSpan();
+            return value;
+          } catch (err) {
+            endSpan(err);
+            throw err;
+          }
+        };
+
+      try {
       const res = await fetchWithRetryAttempt(input, init, opts);
       setTelemetryAttributes(span, {
         "http.response.status_code": res.status,
       });
+        if (!res.ok) {
+          span.setStatus({ code: SpanStatusCode.ERROR });
+          endSpan();
+          return res;
+        }
+
+        res.arrayBuffer = wrapBodyReader(res, "arrayBuffer", res.arrayBuffer.bind(res));
+        res.blob = wrapBodyReader(res, "blob", res.blob.bind(res));
+        res.formData = wrapBodyReader(res, "formData", res.formData.bind(res));
+        res.json = wrapBodyReader(res, "json", res.json.bind(res));
+        res.text = wrapBodyReader(res, "text", res.text.bind(res));
       return res;
+      } catch (err) {
+        endSpan(err);
+        throw err;
+      }
     },
   );
 }

@@ -209,6 +209,38 @@
   color: var(--hc-ink);
 }
 
+.modeBtnLocked {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.modeBtnLocked:hover {
+  color: var(--hc-ink-muted);
+}
+
+.modeLockIcon {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 7px;
+  margin-right: 5px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  transform: translateY(1px);
+}
+
+.modeLockIcon::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: -5px;
+  width: 4px;
+  height: 5px;
+  border: 1px solid currentColor;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+}
+
 .modeBtnActive {
   background: var(--hc-ink);
   color: var(--hc-invert);

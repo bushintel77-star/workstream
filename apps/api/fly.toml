@@ -17,6 +17,11 @@
 #   flyctl secrets set MAPBOX_TOKEN="…"              # optional; mock geocode/aerial if absent
 #   flyctl secrets set ANTHROPIC_API_KEY="…"         # optional; mock design/audit if absent
 #   flyctl secrets set OPENAI_API_KEY="…"            # optional; canned transcript if absent
+#   flyctl secrets set STRIPE_SECRET_KEY="…"         # optional; dev checkout fallback if absent
+#   flyctl secrets set STRIPE_WEBHOOK_SECRET="…"     # optional; verifies live Stripe webhooks
+#   flyctl secrets set REDIS_URL="…"                 # optional; enables BullMQ worker process
+#   flyctl secrets set SENTRY_DSN="…"                # optional; reports API errors
+#   flyctl secrets set OTEL_EXPORTER_OTLP_ENDPOINT="…" # optional; exports OpenTelemetry traces
 #   Vicmap cadastral: keyless DELWP GeoServer WFS (no secret)
 
 app = "construct-api"

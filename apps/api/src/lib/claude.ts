@@ -765,7 +765,16 @@ Rules:
 async function fetchAerialBase64(
   aerialUri: string,
 ): Promise<{ base64: string; mime_type: "image/jpeg" | "image/png" | "image/webp" }> {
-  const res = await fetchWithRetry(aerialUri, { method: "GET" });
+  const provider = aerialUri.includes("mapbox.com") ? "mapbox" : "external";
+  const res = await fetchWithRetry(aerialUri, { method: "GET" }, {
+    telemetry: {
+      spanName: "map.fetch_aerial_image",
+      provider,
+      attributes: {
+        "pipeline.stage": "design",
+      },
+    },
+  });
   if (!res.ok) throw new Error(`Aerial fetch failed: ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
   const ct = res.headers.get("content-type") ?? "image/jpeg";

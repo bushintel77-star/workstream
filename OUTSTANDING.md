@@ -52,7 +52,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Contract tests (extended smoke)** — Zod boundary tests +
       [`contract.test.ts`](apps/api/src/routes/contract.test.ts) covers core
       project flows plus geocode, catalog, suppliers, site context, weather,
-      carbon preconditions, readiness, validation, and auth-configuration guard.
+      carbon preconditions, readiness, validation, auth-configuration guard,
+      protected file portal scope/tombstones, studio AI, orchestration, and
+      Stripe webhook smoke coverage.
 - [x] **Unit tests on pipeline jobs** — survey, cost, design, audit, pipeline
       (`*-job.test.ts`, `pipeline-job.test.ts`).
 - [x] **Visual regression (quote markdown)** — snapshot in `output-generators.test.ts`.
@@ -71,7 +73,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
-- [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
+- [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox; route spans
+      use active context, token usage is attached to provider spans, aerial
+      fetches are traced, and worker shutdown flushes telemetry.
 - [x] **Real-user monitoring (web scaffold)** — [`instrumentation.ts`](apps/web/src/instrumentation.ts);
       needs DSN + `@sentry/nextjs` package.
 - [x] **Audio compression** — mobile walkthrough uses `LOW_QUALITY` recording preset.
@@ -85,6 +89,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.
 - [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
 - [x] **Dashboard delete undo** — toast restores via restore endpoint.
+- [x] **Dashboard filters + shell** — shared AppNav, status filters, date/name sort,
+      designed empty state, API retry affordance, and global dev-auth banner.
 - [x] **Pipeline idempotency** — `Idempotency-Key` on full pipeline POST; Redis when
       `REDIS_URL` set, in-memory fallback.
 - [x] **Task route hardening** — `PATCH /projects/:projectId/tasks/:taskId/status`
@@ -103,6 +109,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md),
 [`RECON.md`](RECON.md), [`PROPOSAL.md`](PROPOSAL.md) (AI Phase 6 deferred).
 
+- [x] Phase 1 recon (`RECON.md`)
 - [x] Phase 2 brand re-skin (Aegis tokens)
 - [x] Phase 3 layout (toolbar save, aerial hero, 320px rail)
 - [x] Phase 4 asset library (code on tiles, search by code, planning pin)
@@ -113,7 +120,7 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 - [x] Phase 8 docs + E2E (`CHANGES.md`, extended Playwright)
 - [x] Gold upgrade — measure, mass plant, irrigation zones, live schedule, undo/redo, toolbar UX (`857b7af`)
 - [x] Designer handover pack — [`docs/DESIGNER-HANDOVER.md`](docs/DESIGNER-HANDOVER.md)
-- [ ] Phases 6 AI assist (deferred)
+- [ ] Phase 6 AI assist (deferred)
 - [ ] Brochure output (deferred in spec)
 
 ## Human-only checklist (not code)

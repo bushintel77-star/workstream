@@ -1,14 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
-import { createSurveyProject, handoffStudio, pipelineShell } from "./helpers";
-
-async function openCommandPalette(page: Page) {
-  await page.getByTestId("canvas-command-top").evaluate((el) => {
-    (el as HTMLButtonElement).click();
-  });
-  await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
-    timeout: 15_000,
-  });
-}
+import { expect, test } from "@playwright/test";
+import {
+  createSurveyProject,
+  handoffStudio,
+  openCommandPalette,
+  pipelineShell,
+} from "./helpers";
 
 test.describe("Canvas sketch AI", () => {
   test("sketch board mounts without pipeline chrome", async ({
@@ -56,11 +52,10 @@ test.describe("Canvas sketch AI", () => {
 
     await openCommandPalette(page);
     await page.getByLabel("Command search").fill("place bluestone");
-    await expect(
-      page.getByRole("option", { name: /Place Bluestone/i }),
-    ).toBeVisible();
-    await page.keyboard.press("Enter");
-    await expect(page.getByTestId("add-symbol-strip")).toBeVisible({
+    const armPaving = page.getByTestId("canvas-command-arm-paving");
+    await expect(armPaving).toBeVisible();
+    await armPaving.click();
+    await expect(page.getByTestId("kit-asset-dock")).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -75,13 +70,16 @@ test.describe("Canvas sketch AI", () => {
 
     await openCommandPalette(page);
     await page.getByTestId("canvas-command-scan-ghosts").click();
-    // Either ghosts land for review, or empty state after scan completes
-    await expect(
-      page
-        .getByTestId("cad-ghost-review")
-        .or(page.getByTestId("header-accept-ghosts"))
-        .or(page.getByTestId("studio-ghost").first()),
-    ).toBeVisible({ timeout: 25_000 });
+    // Review and on-plan ghosts may both be visible; poll their combined count
+    // instead of using locator.or(), which is strict when both valid surfaces land.
+    await expect
+      .poll(
+        async () =>
+          (await page.getByTestId("cad-ghost-review").count()) +
+          (await page.getByTestId("studio-ghost").count()),
+        { timeout: 25_000 },
+      )
+      .toBeGreaterThan(0);
   });
 
   test("A / Enter accepts a pending ghost onto the board", async ({
@@ -97,11 +95,14 @@ test.describe("Canvas sketch AI", () => {
 
     await openCommandPalette(page);
     await page.getByTestId("canvas-command-scan-ghosts").click();
-    await expect(
-      page
-        .getByTestId("cad-ghost-review")
-        .or(page.getByTestId("studio-ghost").first()),
-    ).toBeVisible({ timeout: 25_000 });
+    await expect
+      .poll(
+        async () =>
+          (await page.getByTestId("cad-ghost-review").count()) +
+          (await page.getByTestId("studio-ghost").count()),
+        { timeout: 25_000 },
+      )
+      .toBeGreaterThan(0);
 
     const before = await page.getByTestId("studio-ghost").count();
     if (before === 0) {

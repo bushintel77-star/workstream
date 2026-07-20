@@ -53,16 +53,22 @@ Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time for m
 | `OPENAI_API_KEY` | construct-api | Canned transcript |
 | `ANTHROPIC_API_KEY` | construct-api | Mock design/audit |
 | `MAPBOX_TOKEN` | construct-api | Mock survey imagery |
+| `STRIPE_SECRET_KEY` | construct-api | Deposit checkout uses dev fallback |
+| `STRIPE_WEBHOOK_SECRET` | construct-api | Stripe webhooks accept dev-mode unsigned payloads |
 | `CLERK_*` | both | Dev-user mode (current) |
 | `WORKSTREAM_PORTAL_SECRET` | construct-api | Rotate from legacy `CONSTRUCT_PORTAL_SECRET` |
 | `PORTAL_BASE_URL` | construct-api | Set in `apps/api/fly.toml`; override only for a custom portal domain |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | construct-api | OpenTelemetry spans stay local/no-op |
 | `REDIS_URL` | construct-api | Pipeline runs inline instead of worker queue |
 | `SENTRY_DSN` | both | Errors are logged but not reported to Sentry |
+| `LITESTREAM_*` | construct-api | No object-store disaster-recovery replica |
 
 ## Human ops runbook
 
 Use [docs/HUMAN-OPS-RUNBOOK.md](docs/HUMAN-OPS-RUNBOOK.md) for copy-paste steps covering Clerk, Redis, Sentry, OpenTelemetry, EAS, Litestream, and branch protection.
+
+Local verification uses `pnpm run ci`. Literal `pnpm ci` is not implemented by
+pnpm 9.15.4 in this workspace.
 
 ## Deploy (one command)
 

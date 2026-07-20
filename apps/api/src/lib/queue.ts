@@ -9,6 +9,7 @@ import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";
 import { runProjectAudit } from "./audit-job";
 import { bindOwnerSecrets } from "./owner-secrets";
+import { withTelemetrySpan } from "./telemetry";
 
 type JobKind =
   | "survey"
@@ -60,30 +61,40 @@ export async function enqueuePipelineJob(
 }
 
 async function runJob(store: Store, payload: PipelineJobPayload): Promise<void> {
-  store.reloadSnapshot();
-  await bindOwnerSecrets(store, payload.ownerId);
-  const { kind, ownerId, projectId } = payload;
-  switch (kind) {
-    case "pipeline":
-      await runFullPipeline(store, ownerId, projectId);
-      break;
-    case "survey":
-      await runSurvey(store, ownerId, projectId);
-      break;
-    case "design":
-      await runDesign(store, ownerId, projectId);
-      break;
-    case "costing":
-      await runCosting(store, ownerId, projectId);
-      break;
-    case "audit":
-      await runProjectAudit(store, ownerId, projectId);
-      break;
-    case "output":
-      throw new Error("output jobs are enqueued via output routes");
-    default:
-      throw new Error(`Unknown job kind: ${kind satisfies never}`);
-  }
+  await withTelemetrySpan(
+    `pipeline.job.${payload.kind}`,
+    {
+      "pipeline.stage": payload.kind,
+      "operator.id": payload.ownerId,
+      "project.id": payload.projectId,
+    },
+    async () => {
+      store.reloadSnapshot();
+      await bindOwnerSecrets(store, payload.ownerId);
+      const { kind, ownerId, projectId } = payload;
+      switch (kind) {
+        case "pipeline":
+          await runFullPipeline(store, ownerId, projectId);
+          break;
+        case "survey":
+          await runSurvey(store, ownerId, projectId);
+          break;
+        case "design":
+          await runDesign(store, ownerId, projectId);
+          break;
+        case "costing":
+          await runCosting(store, ownerId, projectId);
+          break;
+        case "audit":
+          await runProjectAudit(store, ownerId, projectId);
+          break;
+        case "output":
+          throw new Error("output jobs are enqueued via output routes");
+        default:
+          throw new Error(`Unknown job kind: ${kind satisfies never}`);
+      }
+    },
+  );
 }
 
 export async function startWorker(store: Store): Promise<void> {

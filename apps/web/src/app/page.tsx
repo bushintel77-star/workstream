@@ -1,28 +1,18 @@
 import Link from "next/link";
-import { listProjects, type ProjectStatus } from "../lib/api";
+import { getIntegrationSummary, listProjects } from "../lib/api";
 import { requireSignedIn } from "../lib/auth";
+import { AppNav } from "../components/AppNav";
+import { DashboardProjectList } from "../components/DashboardProjectList";
 import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
 import { WorkflowPreviewStrip } from "../components/WorkflowPreviewStrip";
 import home from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
-/** Canvas-stage labels — not the old pipeline hub names. */
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  draft: "Survey",
-  recording: "Survey",
-  processing: "Survey",
-  survey_review: "Sketch",
-  design_review: "CAD",
-  cost_review: "Quote",
-  audit: "Quote",
-  outputs: "Share",
-  complete: "Share",
-};
-
 export default async function HomePage() {
   await requireSignedIn();
   let projects: Awaited<ReturnType<typeof listProjects>> = [];
+  const summary = await getIntegrationSummary().catch(() => null);
   let loadError: string | null = null;
   try {
     projects = await listProjects();
@@ -32,6 +22,7 @@ export default async function HomePage() {
 
   return (
     <main className={home.page}>
+      <AppNav summary={summary} />
       <WorkflowPreviewStrip />
       <header className={home.hero}>
         <p className={home.kicker}>Workstream</p>
@@ -40,7 +31,7 @@ export default async function HomePage() {
           Type an address. Get a concept, working drawing, and live estimate —
           then share the quote.
         </p>
-        <div className={home.composer}>
+        <div className={home.composer} id="new-project">
           <NewProjectAddressForm />
         </div>
       </header>
@@ -48,6 +39,9 @@ export default async function HomePage() {
       {loadError ? (
         <p className={home.error} role="alert">
           {loadError}
+          <Link className={home.retryLink} href="/">
+            Retry
+          </Link>
         </p>
       ) : null}
 
@@ -55,24 +49,7 @@ export default async function HomePage() {
         <h2 id="sites-heading" className={home.listTitle}>
           Sites
         </h2>
-        {projects.length === 0 ? (
-          <p className={home.empty}>
-            Start with an address — about two minutes to a shareable quote.
-          </p>
-        ) : (
-          <ul className={home.ul}>
-            {projects.map((p) => (
-              <li key={p.id}>
-                <Link className={home.row} href={`/projects/${p.id}`}>
-                  <span className={home.addr}>{p.address}</span>
-                  <span className={home.meta}>
-                    {STATUS_LABEL[p.status] ?? p.status}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <DashboardProjectList projects={projects} />
       </section>
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   buildIndicativeShadeGrid,
   countNearbyCanopy,
@@ -619,6 +619,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
   const bootstrapped = useRef(false);
   const skipPersist = useRef(true);
+  const [saveRetryNonce, setSaveRetryNonce] = useState(0);
   const addressRef = useRef(address);
   addressRef.current = address;
   const outdoorRef = useRef(outdoorM2);
@@ -1901,6 +1902,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
       )
       .join("/"),
+    saveRetryNonce,
   ]);
 
   const finishTrace = useCallback(
@@ -2237,6 +2239,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     commitZone,
     switchSite,
     resetSite,
+    retrySave: () => setSaveRetryNonce((n) => n + 1),
     bumpSaved,
     saveNow,
     moveItem,
