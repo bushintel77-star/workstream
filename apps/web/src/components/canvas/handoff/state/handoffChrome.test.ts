@@ -41,7 +41,21 @@ describe("resolveHandoffChrome", () => {
     expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
     expect(c.selectionRing).toBe(true);
+    expect(c.inventoryPopup).toBe(false);
     expect(c.draftSurface).toBe(false);
+  });
+
+  it("opens inventory frost popup only for Add / Paint", () => {
+    expect(
+      resolveHandoffChrome({ ...base, mode: "cad", tool: "add" }).inventoryPopup,
+    ).toBe(true);
+    expect(
+      resolveHandoffChrome({ ...base, mode: "cad", tool: "paint" })
+        .inventoryPopup,
+    ).toBe(true);
+    expect(
+      resolveHandoffChrome({ ...base, mode: "cad", tool: "edit" }).inventoryPopup,
+    ).toBe(false);
   });
 
   it("surfaces sun scrubber when shade mesh is on", () => {

@@ -1,81 +1,91 @@
 /*
- * Bottom asset dock — blush frost inventory for the drawing plane.
- * Gold pattern: skimable filmstrip clear of the object (not a radial overlay).
+ * Inventory frost popup — summoned Soft / Hard / Trees / Water / Library.
+ * Binding: docs/STUDIO-STYLING-AND-UX.md — never a fixed opaque slab.
  */
 
-.dock {
-  --ink: #241318;
-  --ink-soft: #7a5560;
-  --ink-faint: #b08a95;
-  --glass: rgba(255, 251, 252, 0.94);
-  --line: rgba(36, 19, 24, 0.12);
+.popup {
+  --ink: var(--hc-ink, #241318);
+  --ink-soft: var(--hc-ink-muted, #7a5560);
+  --ink-faint: var(--hc-ink-faint, #b08a95);
+  --glass: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  --line: var(--hc-line, rgba(36, 19, 24, 0.12));
+  --elev: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: absolute;
-  left: 50%;
-  bottom: calc(var(--ws-safe-bottom, 48px) + 10px);
-  transform: translateX(-50%);
-  z-index: 26;
-  width: min(720px, calc(100% - 48px));
-  padding: 8px 10px 10px;
-  border-radius: 16px;
+  z-index: 28;
+  width: min(340px, 72vw);
+  max-width: calc(100% - 24px);
+  padding: 8px 9px 9px;
+  border-radius: var(--hc-r-dock, 16px);
   border: 1px solid var(--line);
   background: var(--glass);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 10px 32px rgba(42, 23, 29, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--elev);
   color: var(--ink);
+  transform: translate(-50%, -50%);
   pointer-events: auto;
-  animation: dockIn 220ms var(--ease) both;
+  opacity: 0.92;
+  animation: frostPop 280ms var(--ease) both;
+}
+
+.popup[data-phase="linger"] {
+  opacity: 0.88;
+}
+
+.popup[data-phase="rest"] {
+  opacity: 0.72;
 }
 
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 3px;
+  margin-bottom: 7px;
 }
 
 .tab {
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: var(--hc-r-pill, 999px);
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 650;
   letter-spacing: 0.02em;
   cursor: pointer;
 }
 
 .tab:hover {
-  background: #fff6f8;
+  background: rgba(255, 246, 248, 0.55);
   color: var(--ink);
 }
 
 .tabOn {
-  background: var(--ink);
+  background: rgba(36, 19, 24, 0.88);
   color: #fff6f8;
-  border-color: var(--ink);
+  border-color: transparent;
 }
 
 .subTabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin: -2px 0 8px;
+  gap: 3px;
+  margin: -1px 0 7px;
 }
 
 .subTab {
-  min-height: 24px;
-  padding: 0 8px;
+  min-height: 22px;
+  padding: 0 7px;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--ink-faint);
   font: inherit;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
   font-family: "IBM Plex Mono", monospace;
   letter-spacing: 0.04em;
@@ -85,20 +95,20 @@
 
 .subTab:hover {
   color: var(--ink-soft);
-  background: rgba(246, 234, 237, 0.65);
+  background: rgba(246, 234, 237, 0.45);
 }
 
 .subTabOn {
   color: #c2455f;
-  background: rgba(255, 211, 222, 0.55);
+  background: rgba(255, 211, 222, 0.42);
 }
 
 .tray {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 132px;
+  overflow-y: auto;
   scrollbar-width: thin;
 }
 
@@ -108,13 +118,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  width: 64px;
-  min-height: 56px;
-  padding: 6px 4px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: rgba(255, 251, 252, 0.88);
+  gap: 2px;
+  width: 56px;
+  min-height: 48px;
+  padding: 5px 3px;
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 251, 252, 0.45);
   color: var(--ink-soft);
   font: inherit;
   cursor: pointer;
@@ -125,36 +135,36 @@
 }
 
 .chip:hover {
-  background: #fff6f8;
+  background: rgba(255, 246, 248, 0.72);
   color: var(--ink);
-  border-color: rgba(194, 69, 95, 0.3);
+  border-color: rgba(194, 69, 95, 0.28);
 }
 
 .chipOn {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: rgba(36, 19, 24, 0.88);
+  border-color: transparent;
   color: #fff6f8;
 }
 
 .glyph {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: grid;
   place-items: center;
 }
 
 .glyph svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: block;
 }
 
 .label {
-  font-size: 8.5px;
+  font-size: 8px;
   font-weight: 650;
   line-height: 1.15;
   text-align: center;
-  max-width: 56px;
+  max-width: 50px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -162,31 +172,18 @@
 
 .empty {
   margin: 0;
-  padding: 8px 4px;
-  font-size: 11px;
+  padding: 6px 2px;
+  font-size: 10.5px;
   color: var(--ink-faint);
 }
 
-@keyframes dockIn {
+@keyframes frostPop {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(8px);
+    transform: translate(-50%, -46%) scale(0.96);
   }
   to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@media (max-width: 640px) {
-  .dock {
-    width: calc(100% - 24px);
-    bottom: calc(var(--ws-safe-bottom, 40px) + 6px);
-    padding: 6px 8px 8px;
-  }
-
-  .chip {
-    width: 56px;
-    min-height: 52px;
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(1);
   }
 }

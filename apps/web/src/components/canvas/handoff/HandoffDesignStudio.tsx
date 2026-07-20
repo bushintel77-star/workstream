@@ -67,6 +67,7 @@ import {
   type PointerMarkId,
 } from "./features/pointer/pointerMarks";
 import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
+import { clampToCanvasMargin } from "./features/reach/marginSummon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
@@ -177,8 +178,8 @@ export function HandoffDesignStudio({
    * Does not follow selection; default parks in the left gutter.
    */
   const [anchorPct, setAnchorPct] = useState<{ x: number; y: number }>({
-    x: 14,
-    y: 52,
+    x: 12,
+    y: 42,
   });
   /** Instruments open only when summoned (margin click / hub), not on select. */
   const [instrumentsSummoned, setInstrumentsSummoned] = useState(false);
@@ -528,15 +529,14 @@ export function HandoffDesignStudio({
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
   /**
-   * Instrument home — sticky margin pin only.
-   * Kit inventory uses the bottom asset dock; CAD picks never move this anchor.
+   * Instrument + inventory home — margin pin only (never lot core).
    */
   const instrumentAnchor = useMemo(() => {
     if (ui.drawPoly && ui.drawPoly.length > 0) {
       const last = ui.drawPoly[ui.drawPoly.length - 1]!;
-      return { x: last.x, y: last.y };
+      return clampToCanvasMargin(last.x, last.y);
     }
-    return { x: anchorPct.x, y: anchorPct.y };
+    return clampToCanvasMargin(anchorPct.x, anchorPct.y);
   }, [ui.drawPoly, anchorPct.x, anchorPct.y]);
   const selectedTradeTag =
     selectedLive && chrome.tradeMargin
@@ -556,10 +556,7 @@ export function HandoffDesignStudio({
   };
 
   const pinInstrumentAnchor = (x: number, y: number) => {
-    setAnchorPct({
-      x: Math.max(12, Math.min(88, x)),
-      y: Math.max(14, Math.min(86, y)),
-    });
+    setAnchorPct(clampToCanvasMargin(x, y));
   };
 
   const studioCursor = pointerMarkPreview
@@ -1422,28 +1419,23 @@ export function HandoffDesignStudio({
 
 
         {/*
-          Bottom asset dock — Soft / Hard / Trees / Water + open-source Library.
-          Always available on the plan; never overlays the selected object.
+          Inventory frost popup — Soft / Hard / Trees / Water / Library.
+          Mounts only while Add / Paint armed (chrome.inventoryPopup); unmounts on pan.
         */}
-        {planOn &&
-        chrome.drawTools &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        !ui.foundationCleanse &&
-        ui.tool !== "zone" &&
-        ui.mode !== "sketch" ? (
+        {chrome.inventoryPopup &&
+        (ui.tool === "add" || ui.tool === "paint") ? (
           <KitAssetDock
+            xPct={instrumentAnchor.x}
+            yPct={instrumentAnchor.y}
             mode={ui.mode}
             armed={ui.armed}
-            selectedType={selectedLive?.t ?? null}
             paintSwatch={ui.paintSwatch}
             tool={ui.tool}
             onArmMaterial={armType}
             onPaintMaterial={(t) =>
               studio.setUi({ paintSwatch: t, tool: "paint" })
             }
-            onRetypeSelected={(t) => studio.changeSelectedType(t)}
+            onDismiss={() => studio.setTool("pan")}
           />
         ) : null}
 

@@ -1,6 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   CURTIS_DESIGN_ASSETS,
   OSMIC_LANDSCAPE_SYMBOLS,
@@ -21,21 +28,22 @@ import {
 } from "../../studioCatalog";
 import { mapSymbolToStudioType } from "../../state/studioAiEngine";
 import { playInstrumentTick } from "../ambient/instrumentTick";
+import { ATELIER_LINGER_MS, type AtelierPhase } from "./atelierPresence";
 import css from "./kitAssetDock.module.css";
 
 export type KitDockTab = KitBagId | "library";
 
 type Props = {
+  /** Board-% — instrument summon point (margin), never object centre. */
+  xPct: number;
+  yPct: number;
   mode: StudioMode;
-  /** Armed place type, if any. */
   armed: StudioItemType | null;
-  /** Selected item type — highlights matching chip when retyping. */
-  selectedType: StudioItemType | null;
   paintSwatch: StudioItemType;
-  tool: string;
+  tool: "add" | "paint";
   onArmMaterial: (t: StudioItemType) => void;
   onPaintMaterial: (t: StudioItemType) => void;
-  onRetypeSelected: (t: StudioItemType) => void;
+  onDismiss?: () => void;
 };
 
 const DRAFT_TABS: Array<{ id: KitDockTab; label: string }> = [
@@ -70,22 +78,62 @@ function typesForTab(tab: KitBagId, mode: StudioMode): StudioItemType[] {
 }
 
 /**
- * Bottom asset dock — gold-standard canvas inventory.
- * Soft / Hard / Trees / Water drafting chips + open-source Library
- * (Curtis, Osmic, PlanZV, Wikimedia). Never overlays the selected object.
+ * Transient inventory frost popup — Soft / Hard / Trees / Water + Library.
+ * Mounts only while Add / Paint is armed; dismisses on idle linger.
+ * Binding: docs/STUDIO-STYLING-AND-UX.md
  */
 export function KitAssetDock({
+  xPct,
+  yPct,
   mode,
   armed,
-  selectedType,
   paintSwatch,
   tool,
   onArmMaterial,
   onPaintMaterial,
-  onRetypeSelected,
+  onDismiss,
 }: Props) {
-  const [tab, setTab] = useState<KitDockTab>("soft");
+  const [tab, setTab] = useState<KitDockTab>(
+    mode === "survey" ? "trees" : "soft",
+  );
   const [libSub, setLibSub] = useState<SketchRibbonTab>("essentials");
+  const [hover, setHover] = useState(false);
+  const [lingering, setLingering] = useState(true);
+  const lingerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverRef = useRef(false);
+
+  const clearLinger = useCallback(() => {
+    if (lingerTimer.current) {
+      clearTimeout(lingerTimer.current);
+      lingerTimer.current = null;
+    }
+  }, []);
+
+  const beginLinger = useCallback(() => {
+    clearLinger();
+    setLingering(true);
+    lingerTimer.current = setTimeout(() => {
+      setLingering(false);
+      lingerTimer.current = null;
+      if (!hoverRef.current) onDismiss?.();
+    }, ATELIER_LINGER_MS);
+  }, [clearLinger, onDismiss]);
+
+  const stayEngaged = useCallback(() => {
+    clearLinger();
+    setLingering(true);
+  }, [clearLinger]);
+
+  useEffect(() => {
+    if (hoverRef.current) {
+      stayEngaged();
+      return clearLinger;
+    }
+    beginLinger();
+    return clearLinger;
+  }, [tool, armed, beginLinger, stayEngaged, clearLinger]);
+
+  const phase: AtelierPhase = hover ? "open" : lingering ? "linger" : "rest";
 
   const draftTypes = useMemo(() => {
     if (tab === "library") return [];
@@ -94,15 +142,12 @@ export function KitAssetDock({
 
   const librarySymbols = useMemo(() => {
     if (tab !== "library") return [];
-    return selectSketchRibbonSymbols(libraryPool(), libSub, 16);
+    return selectSketchRibbonSymbols(libraryPool(), libSub, 12);
   }, [tab, libSub]);
 
   const pickMaterial = (t: StudioItemType) => {
     playInstrumentTick("arm");
-    if (selectedType) {
-      onRetypeSelected(t);
-      return;
-    }
+    stayEngaged();
     if (tool === "paint") {
       onPaintMaterial(t);
       return;
@@ -114,14 +159,28 @@ export function KitAssetDock({
     pickMaterial(mapSymbolToStudioType(sym.id));
   };
 
-  const activeMaterial =
-    selectedType ?? (tool === "paint" ? paintSwatch : armed);
+  const activeMaterial = tool === "paint" ? paintSwatch : armed;
+  const ax = Math.max(12, Math.min(88, xPct));
+  const ay = Math.max(16, Math.min(84, yPct));
 
   return (
     <aside
-      className={css.dock}
+      className={css.popup}
       data-testid="kit-asset-dock"
+      data-phase={phase}
       aria-label="Asset library"
+      style={{ left: `${ax}%`, top: `${ay}%` } as CSSProperties}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseEnter={() => {
+        hoverRef.current = true;
+        stayEngaged();
+        setHover(true);
+      }}
+      onMouseLeave={() => {
+        hoverRef.current = false;
+        setHover(false);
+        beginLinger();
+      }}
     >
       <div className={css.tabs} role="tablist" aria-label="Asset families">
         {DRAFT_TABS.map((t) => (
@@ -135,6 +194,7 @@ export function KitAssetDock({
             onClick={() => {
               playInstrumentTick("step");
               setTab(t.id);
+              stayEngaged();
             }}
           >
             {t.label}
@@ -154,6 +214,7 @@ export function KitAssetDock({
               onClick={() => {
                 playInstrumentTick("step");
                 setLibSub(s.id);
+                stayEngaged();
               }}
             >
               {s.label}

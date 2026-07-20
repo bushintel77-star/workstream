@@ -31,7 +31,8 @@ See [AI-CAD-DESIGN-LIBRARY.md](./AI-CAD-DESIGN-LIBRARY.md) and
 
 ## Files
 
-- `features/kitInventory/KitAssetDock.tsx` — bottom inventory
-- `features/kitInventory/nicheTools.ts` — zone carousel helpers (still used)
+- `features/kitInventory/KitAssetDock.tsx` — frost popup (Add/Paint only)
+- `state/handoffChrome.ts` — `inventoryPopup` flag
+- `features/reach/marginSummon.ts` — keep summon chrome in the gutter
 - `docs/AI-CAD-DESIGN-LIBRARY.md` — PlanZV / Osmic import
 - Wired from `HandoffDesignStudio` (`kit-asset-dock`, `paint-swatch-*`)

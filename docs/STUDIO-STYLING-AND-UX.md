@@ -180,3 +180,4 @@ Answer **yes** to every item or do not merge:
 | Date | Note |
 | --- | --- |
 | 2026-07-20 | Written after canvas inventory was incorrectly shipped as a fixed opaque bottom overlay. Codifies frost popup + disappearing UI + blush tokens as binding. |
+| 2026-07-20 | Compliance rebuild: `inventoryPopup` chrome flag (Add/Paint only); margin-clamped summon; instrument dismiss 3s; paint air-lock cursor + boundary snap. |

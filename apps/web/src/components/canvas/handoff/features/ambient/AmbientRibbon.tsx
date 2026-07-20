@@ -15,9 +15,11 @@ import {
   type StudioTool,
 } from "../../studioCatalog";
 import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
-import { ATELIER_LINGER_MS } from "../kitInventory/atelierPresence";
 import { playInstrumentTick } from "./instrumentTick";
 import css from "./ambientRibbon.module.css";
+
+/** Dissolves summoned instruments if the operator does not engage (compliance). */
+const INSTRUMENT_DISMISS_MS = 3000;
 
 type LayerChip = {
   key: LayerKey;
@@ -106,7 +108,7 @@ export function AmbientRibbon({
       setLingering(false);
       fadeTimer.current = null;
       onDismissSummon?.();
-    }, ATELIER_LINGER_MS);
+    }, INSTRUMENT_DISMISS_MS);
   }, [clearFade, onDismissSummon]);
 
   const stayEngaged = useCallback(() => {

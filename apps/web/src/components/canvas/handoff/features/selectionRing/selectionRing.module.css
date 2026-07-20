@@ -14,7 +14,7 @@
   border: 1px solid rgba(255, 255, 255, 0.65);
   background: rgba(255, 246, 248, 0.92);
   backdrop-filter: blur(14px);
-  box-shadow: 0 8px 22px rgba(36, 19, 24, 0.16);
+  box-shadow: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
   color: #241318;
   font: inherit;
   cursor: pointer;

@@ -21,14 +21,14 @@ describe("resolveStudioCursor", () => {
         locked: false,
       }),
     ).toBe("crosshair");
-    expect(
-      resolveStudioCursor({
-        markId: "spade",
-        tool: "paint",
-        mode: "cad",
-        locked: false,
-      }),
-    ).toBe("cell");
+    const paint = resolveStudioCursor({
+      markId: "spade",
+      tool: "paint",
+      mode: "cad",
+      locked: false,
+    });
+    expect(paint).toContain("data:image/svg+xml");
+    expect(paint).toContain("crosshair");
     expect(
       resolveStudioCursor({
         markId: "spade",

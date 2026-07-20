@@ -38,6 +38,7 @@ import {
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
 import { ITEM_LAYER, type LayerOpacity } from "../../state/studioTypes";
+import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
 
@@ -327,7 +328,16 @@ export function CadPlanBoard({
   const onPointerDownBoard = (e: React.PointerEvent) => {
     if (tool === "add" || tool === "paint") {
       const raw = toPct(e.clientX, e.clientY);
-      const p = gridSnap ? snapToGridPct(raw, gridStep) : raw;
+      const el = rootRef.current;
+      const boardW = el?.clientWidth ?? 960;
+      const boardH = el?.clientHeight ?? 640;
+      const locked = airLockSnapToHardscape(
+        raw,
+        [boundary, building],
+        boardW,
+        boardH,
+      );
+      const p = gridSnap ? snapToGridPct(locked, gridStep) : locked;
       onPlace(p.x, p.y);
       return;
     }

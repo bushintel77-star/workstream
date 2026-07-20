@@ -2,10 +2,11 @@ import type { StudioMode, StudioTool } from "../studioCatalog";
 
 /**
  * Canvas-first progressive disclosure for HandoffDesignStudio.
- * Binding: docs/CAD-AI-2026-UX.md + docs/CANVAS-FIRST-UX.md.
+ * Binding: docs/STUDIO-STYLING-AND-UX.md + docs/CAD-AI-2026-UX.md + docs/CANVAS-FIRST-UX.md.
  *
- * Disappearing UI: edge-to-edge drawing; tools at the prime pixel;
+ * Disappearing UI: edge-to-edge drawing; frost chrome on summon;
  * AI sidecar (right) + structure rail (left, collapsed); instruments on summon.
+ * Inventory popup only while Add / Paint armed — never a fixed slab.
  * AI = intelligent intern — ghosts never silent-write (constraint-first).
  */
 export type HandoffChrome = {
@@ -35,8 +36,13 @@ export type HandoffChrome = {
   aiCoach: boolean;
   /** Ambient instruments (layers peel) — summon only */
   ambientRibbon: boolean;
-  /** Selection radial ring + material fan at prime pixel */
+  /** Selection orbit (delete / lock / Ask AI) — outside the glyph */
   selectionRing: boolean;
+  /**
+   * Inventory frost popup (Soft / Hard / Trees / Water / Library).
+   * True only while Add or Paint is armed — never a fixed slab.
+   */
+  inventoryPopup: boolean;
   /** Left drawing tools implied by mode */
   drawTools: boolean;
   /** Collapse open utility sheets while Trace/Edit/Add/Measure */
@@ -105,6 +111,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       aiCoach: false,
       ambientRibbon: instruments,
       selectionRing: false,
+      inventoryPopup: false,
       drawTools: instruments && mode !== "quote" && mode !== "share",
       collapseUtility: true,
       floraRing: false,
@@ -126,6 +133,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       aiCoach: false,
       ambientRibbon: false,
       selectionRing: false,
+      inventoryPopup: false,
       drawTools: false,
       collapseUtility: true,
       floraRing: false,
@@ -154,9 +162,14 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     sunGrowth: sunScrubber,
     aiCoach: false,
     ambientRibbon: plan,
-    /** Near-object niche carousel + compact selection hub */
+    /** Orbit actions outside the glyph */
     selectionRing:
       mode === "cad" || mode === "sketch" || mode === "survey",
+    /** Frost inventory — Add / Paint only */
+    inventoryPopup:
+      plan &&
+      mode !== "sketch" &&
+      (tool === "add" || tool === "paint"),
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: false,
