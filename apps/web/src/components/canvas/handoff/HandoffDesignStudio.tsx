@@ -207,6 +207,8 @@ export function HandoffDesignStudio({
   };
   /** Eyedropper — next canvas click loads that element's style into the swatch. */
   const [eyedropArmed, setEyedropArmed] = useState(false);
+  /** Swatch/stamp hover preview — shows target result before commit. */
+  const [previewSwatch, setPreviewSwatch] = useState<StudioItemType | null>(null);
   const pickStyle = (t: StudioItemType) => {
     setEyedropArmed(false);
     studio.setUi({ paintSwatch: t, tool: "paint" });
@@ -1247,8 +1249,10 @@ export function HandoffDesignStudio({
                 flashPaintTarget(id);
               }}
               paintFlashId={paintFlashId}
+              previewSwatch={previewSwatch}
               eyedropArmed={eyedropArmed}
               onEyedrop={pickStyle}
+              zoom={ui.zoom}
               onBoardCursor={setBoardCursor}
             />
             {chrome.floraRing && ui.floraSession ? (
@@ -1775,7 +1779,48 @@ export function HandoffDesignStudio({
               studio.setUi({ paintSwatch: t, tool: "paint" });
             }}
             onEyedrop={() => setEyedropArmed((v) => !v)}
+            onPreview={setPreviewSwatch}
           />
+        ) : null}
+
+        {swatchTrayOn && (studio.canUndo || studio.canRedo) ? (
+          <div className={css.undoFilmstrip} data-testid="undo-filmstrip">
+            <button
+              type="button"
+              className={css.undoFilmBtn}
+              disabled={!studio.canUndo}
+              onClick={studio.undo}
+              title="Undo"
+            >
+              Undo
+            </button>
+            <div className={css.undoCells} aria-label="Recent canvas states">
+              {Array.from({ length: Math.min(studio.undoDepth, 8) }).map((_, i) => (
+                <button
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={i}
+                  type="button"
+                  className={css.undoCell}
+                  title={`Step back ${i + 1}`}
+                  onClick={() => {
+                    for (let n = 0; n <= i; n += 1) studio.undo();
+                  }}
+                />
+              ))}
+              {studio.undoDepth === 0 ? (
+                <span className={css.undoEmpty}>Live</span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className={css.undoFilmBtn}
+              disabled={!studio.canRedo}
+              onClick={studio.redo}
+              title="Redo"
+            >
+              Redo
+            </button>
+          </div>
         ) : null}
 
         {swatchTrayOn &&

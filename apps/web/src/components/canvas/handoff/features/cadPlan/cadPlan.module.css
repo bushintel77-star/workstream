@@ -420,6 +420,21 @@
   cursor: pointer;
 }
 
+.swatchPreview {
+  position: absolute;
+  inset: -7px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.58;
+  background: rgba(255, 211, 222, 0.22);
+  outline: 1px solid rgba(194, 69, 95, 0.36);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(255, 211, 222, 0.24);
+}
+
 .itemSelected {
   outline: 1.5px solid #c2455f;
   outline-offset: 3px;
@@ -484,7 +499,36 @@
   position: absolute;
   pointer-events: none;
   z-index: 16;
-  background: rgba(28, 25, 23, 0.28);
+  background: rgba(28, 25, 23, 0.16);
+}
+
+.snapPulse {
+  position: absolute;
+  z-index: 17;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(112, 148, 132, 0.28) 0%,
+    rgba(112, 148, 132, 0.2) 34%,
+    transparent 72%
+  );
+  box-shadow: 0 0 0 7px rgba(112, 148, 132, 0.16);
+  animation: snapPulse 520ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@keyframes snapPulse {
+  from {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  to {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
 }
 
 .crosshairV {
@@ -678,7 +722,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .paintFlash,
-  .stalePulse {
+  .stalePulse,
+  .snapPulse {
     animation: none;
   }
 }
@@ -689,6 +734,115 @@
   pointer-events: none;
   z-index: 15;
   background: rgba(28, 25, 23, 0.45);
+}
+
+.cursorBadge {
+  position: absolute;
+  z-index: 35;
+  transform: translate(12px, 12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  max-width: min(260px, 46vw);
+  padding: 3px 8px;
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  backdrop-filter: blur(12px);
+  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  pointer-events: none;
+  color: var(--hc-ink, #241318);
+  white-space: nowrap;
+}
+
+.cursorTool,
+.cursorMetric {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.cursorTool {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+.cursorMetric {
+  font-size: 9px;
+  color: var(--hc-ink, #241318);
+}
+
+.radialMenu {
+  position: absolute;
+  z-index: 40;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.radialMenu::before {
+  content: "";
+  position: absolute;
+  left: -21px;
+  top: -21px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 251, 252, 0.52);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  pointer-events: none;
+}
+
+.radialBtn {
+  position: absolute;
+  min-width: 50px;
+  min-height: 30px;
+  padding: 0 9px;
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  backdrop-filter: blur(12px);
+  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  color: var(--hc-ink, #241318);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background var(--hc-motion, 180ms) var(--ws-ease, ease),
+    transform var(--hc-motion, 180ms) var(--ws-ease, ease);
+}
+
+.radialBtn:hover {
+  background: #fff6f8;
+}
+
+.radialNorth {
+  transform: translate(-50%, calc(-100% - 34px));
+}
+
+.radialEast {
+  transform: translate(32px, -50%);
+}
+
+.radialSouth {
+  transform: translate(-50%, 34px);
+}
+
+.radialWest {
+  transform: translate(calc(-100% - 32px), -50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radialBtn {
+    transition: none;
+  }
 }
 
 .guideV {

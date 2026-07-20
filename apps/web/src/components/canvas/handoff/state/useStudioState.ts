@@ -2172,6 +2172,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     irrigationZones: state.doc.irrigationZones ?? [],
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
+    undoDepth: state.doc.hist.length,
+    redoDepth: state.doc.redo.length,
     ui: state.ui,
     siteAddress,
     siteMeta: STUDIO_SITES[state.ui.siteIdx]?.meta ?? STUDIO_SITES[0]!.meta,
