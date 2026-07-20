@@ -22,11 +22,12 @@ See [AI-CAD-DESIGN-LIBRARY.md](./AI-CAD-DESIGN-LIBRARY.md) and
 
 ## Behaviour
 
-1. **Dock always on** in CAD / survey plan modes (hidden on Fit / focus / sketch / zone)
-2. Pick a chip → arms Place (or retypes selection / sets Paint swatch)
-3. Library chips map through `mapSymbolToStudioType` onto the drawing types
-4. Digits 1–5 accelerate Soft/Hard paint swatches
-5. Instruments still summon from empty margin — separate from inventory
+1. **Popup on demand** — Add / Paint armed or Library opened; dismiss on linger / pan
+2. Soft frost glass (`--hc-glass-soft`), not an opaque full-width overlay
+3. Pick a chip → arms Place (or retypes selection / sets Paint swatch)
+4. Library chips map through `mapSymbolToStudioType` onto the drawing types
+5. Digits 1–5 accelerate Soft/Hard paint swatches
+6. Instruments still summon from empty margin — separate from inventory
 
 ## Files
 
