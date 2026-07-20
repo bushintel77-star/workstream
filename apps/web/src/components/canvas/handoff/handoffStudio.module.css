@@ -209,6 +209,38 @@
   color: var(--hc-ink);
 }
 
+.modeBtnLocked {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.modeBtnLocked:hover {
+  color: var(--hc-ink-muted);
+}
+
+.modeLockIcon {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 7px;
+  margin-right: 5px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  transform: translateY(1px);
+}
+
+.modeLockIcon::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: -5px;
+  width: 4px;
+  height: 5px;
+  border: 1px solid currentColor;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+}
+
 .modeBtnActive {
   background: var(--hc-ink);
   color: var(--hc-invert);
@@ -580,6 +612,19 @@
 .savedTickPulse {
   color: #7a5560;
   animation: savePulse 1.2s ease-in-out infinite;
+}
+
+.savedTickButton {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  cursor: pointer;
+}
+
+.savedTickButton:hover {
+  color: var(--hc-ink);
 }
 
 @keyframes savePulse {

@@ -10,7 +10,7 @@ import { loadEnv } from "./env";
 import { assertAuthConfigured } from "./lib/auth-config";
 import { initStore } from "@workstream/db";
 import { startWorker } from "./lib/queue";
-import { initTelemetry } from "./lib/telemetry";
+import { initTelemetry, shutdownTelemetry } from "./lib/telemetry";
 
 async function main(): Promise<void> {
   loadEnv({
@@ -30,5 +30,15 @@ void main().catch((err) => {
   process.exit(1);
 });
 
-process.on("SIGTERM", () => process.exit(0));
-process.on("SIGINT", () => process.exit(0));
+async function shutdown(signal: NodeJS.Signals): Promise<void> {
+  console.log(`[worker] ${signal} received; shutting down telemetry`);
+  await shutdownTelemetry();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => {
+  void shutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+  void shutdown("SIGINT");
+});

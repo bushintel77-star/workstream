@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
+  context,
   SpanKind,
   SpanStatusCode,
   trace,
@@ -150,20 +151,29 @@ function projectIdFromRequest(request: FastifyRequest): string | undefined {
   return undefined;
 }
 
+function pathnameFromRequest(request: FastifyRequest): string {
+  try {
+    return new URL(request.url, "http://workstream.local").pathname;
+  } catch {
+    return request.url.split("?")[0] ?? request.url;
+  }
+}
+
 export function registerRouteTelemetry(fastify: FastifyInstance): void {
   fastify.addHook("onRequest", (request, _reply, done) => {
+    const pathname = pathnameFromRequest(request);
     const span = trace.getTracer("workstream-api").startSpan(
-      `api ${request.method} ${request.url}`,
+      `api ${request.method} ${pathname}`,
       {
         kind: SpanKind.SERVER,
         attributes: {
           "http.request.method": request.method,
-          "url.path": request.url,
+          "url.path": pathname,
         },
       },
     );
     request.telemetrySpan = span;
-    done();
+    context.with(trace.setSpan(context.active(), span), done);
   });
 
   fastify.addHook("onResponse", (request, reply, done) => {

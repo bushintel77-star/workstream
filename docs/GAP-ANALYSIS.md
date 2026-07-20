@@ -1,6 +1,6 @@
 # Workstream gap analysis
 
-Living audit: **current state ? gold-standard production**, with owner and
+Living audit: **current state to gold-standard production**, with owner and
 automation status. Update when PRs land. Companion: `OUTSTANDING.md` (punch list).
 
 Last reviewed: 2026-05-24. Current matrix: `docs/GAP-ANALYSIS-CURRENT.md`.
@@ -16,7 +16,7 @@ Last reviewed: 2026-05-24. Current matrix: `docs/GAP-ANALYSIS-CURRENT.md`.
 | Auth (Clerk) | Code ready | Fly secrets on api + web |
 | File delivery | **Auth-gated routes** | Portal token on quote HTML; operator Bearer |
 | Tier-1 Wrights Terrace | **Product-complete** | Studio + develop + portal ledger wired |
-| Design studio (web) | **Phases 2?5, 7 shipped** | AI assist + brochure deferred |
+| Design studio (web) | **Phase 1 recon plus Phases 2-5, 7, and 8 shipped** | AI assist + brochure deferred |
 | Multi-tenant API | **Shipped** | Integration routes aligned to `getOwnedProject` |
 | Mobile / queue | Worker reload shipped | Redis + EAS = human |
 
@@ -56,7 +56,7 @@ See `.github/workflows/ci.yml`, `pnpm ci`, `docker-compose.yml`.
 | Auth guards, upload proxies, route guards | Shipped (PR #15) |
 | Unified AppNav, not-found, locked stages | Shipped (PR #15) |
 | Project soft delete + restore undo | Shipped |
-| Design studio phases 2?5, 7 | Shipped (`CHANGES.md`) |
+| Design studio Phase 1 recon plus Phases 2-5, 7, and 8 | Shipped (`RECON.md`, `CHANGES.md`) |
 | Design studio e2e | Shipped + extended |
 
 ## 5. Remaining engineering (P1?P3)
