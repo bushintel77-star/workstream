@@ -384,7 +384,8 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 50;
+  /* Keep below selection orbit (z-index 60) — vignette only */
+  z-index: 8;
   border-radius: inherit;
   box-shadow: inset 0 0 80px rgba(36, 19, 24, 0.03);
 }

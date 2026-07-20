@@ -159,9 +159,19 @@ export function AerialSlot({
 
   const showAerial = Boolean(uri) && !frameOn && underlayEnabled;
   const planOnly = allowPlanUnderlay && !aerialEnabled;
-  /** Barren lot only — geometry or an armed tool nukes the DOM node. */
+  /**
+   * Barren idle lot only. Vicmap / title-locked sites, any vectors, armed tools,
+   * or an underlay URI all force a full unmount — never collide with CAD labels.
+   */
   const showDropCue =
-    !uri && underlayEnabled && !hasGeometry && !canvasEngaged;
+    !uri &&
+    underlayEnabled &&
+    !hasGeometry &&
+    !canvasEngaged &&
+    !titleLocked &&
+    !suppressSiteCue &&
+    !frameOn &&
+    !foundationCleanse;
 
   return (
     <div

@@ -1,6 +1,7 @@
 .ring {
   position: absolute;
-  z-index: 40;
+  /* Above board vignette (::after z-index 50) and CAD glyphs */
+  z-index: 60;
   width: 0;
   height: 0;
   transform: translate(-50%, -50%);

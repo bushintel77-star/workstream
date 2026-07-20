@@ -1,10 +1,11 @@
 "use client";
 
-import type { StudioEstimateReport } from "@workstream/domain";
+import type { StudioComplianceReport, StudioEstimateReport } from "@workstream/domain";
 import type { StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import { ComplianceDock } from "../compliance/ComplianceDock";
 import { LiveBomDock } from "../bom/LiveBomDock";
+import { PermitTodosPanel } from "../permitTodos/PermitTodosPanel";
 import css from "./utilityDrawer.module.css";
 
 export type UtilityPanel = "compliance" | "bom" | null;
@@ -26,6 +27,9 @@ type Props = {
     canopyPct: number;
     setbackM: number;
   } | null;
+  projectId?: string;
+  projectAddress?: string;
+  complianceReport?: StudioComplianceReport | null;
   onOpenPanel: (panel: UtilityPanel) => void;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
@@ -47,6 +51,9 @@ export function UtilityDrawer({
   complianceSignal = "ok",
   compliancePass: passCount = 3,
   councilSummary = null,
+  projectId,
+  projectAddress = "",
+  complianceReport = null,
   onOpenPanel,
   onMitigate,
   onOpenQuote,
@@ -144,6 +151,16 @@ export function UtilityDrawer({
                   items={items}
                   embedded
                 />
+                {projectId && complianceReport ? (
+                  <PermitTodosPanel
+                    projectId={projectId}
+                    address={projectAddress}
+                    outdoorM2={outdoorM2}
+                    items={items}
+                    compliance={complianceReport}
+                    embedded
+                  />
+                ) : null}
               </>
             ) : (
               <LiveBomDock

@@ -9,12 +9,20 @@ function showDropCue(opts: {
   underlayEnabled: boolean;
   hasGeometry: boolean;
   canvasEngaged: boolean;
+  titleLocked?: boolean;
+  suppressSiteCue?: boolean;
+  frameOn?: boolean;
+  foundationCleanse?: boolean;
 }): boolean {
   return (
     !opts.uri &&
     opts.underlayEnabled &&
     !opts.hasGeometry &&
-    !opts.canvasEngaged
+    !opts.canvasEngaged &&
+    !opts.titleLocked &&
+    !opts.suppressSiteCue &&
+    !opts.frameOn &&
+    !opts.foundationCleanse
   );
 }
 
@@ -59,6 +67,18 @@ describe("aerial drop cue gating", () => {
         underlayEnabled: true,
         hasGeometry: false,
         canvasEngaged: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("unmounts on Vicmap / title-locked sites", () => {
+    expect(
+      showDropCue({
+        uri: null,
+        underlayEnabled: true,
+        hasGeometry: false,
+        canvasEngaged: false,
+        titleLocked: true,
       }),
     ).toBe(false);
   });

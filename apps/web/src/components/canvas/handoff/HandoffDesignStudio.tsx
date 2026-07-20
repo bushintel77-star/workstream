@@ -583,16 +583,21 @@ export function HandoffDesignStudio({
   /** Any vectors / underlay / assets — kills barren-lot onboarding cue. */
   const hasGeometry =
     studio.items.some((i) => !i.ghost) ||
-    studio.boundary.length >= 3 ||
-    studio.building.length >= 3 ||
+    studio.boundary.length >= 2 ||
+    studio.building.length >= 2 ||
     Boolean(liveAerial) ||
+    Boolean(ui.aerialUri) ||
     studio.easements.length > 0 ||
-    studio.services.length > 0;
-  /** Tool armed or drawing in progress — not survey/cad idle. */
+    studio.services.length > 0 ||
+    titleLocked ||
+    ui.boundarySource === "vicmap" ||
+    ui.boundarySource === "seed";
+  /** Tool armed or drawing in progress — not barren idle. */
   const canvasEngaged =
     ui.tool !== "pan" ||
     Boolean(ui.drawPoly && ui.drawPoly.length > 0) ||
     Boolean(ui.selectedId) ||
+    ui.groupIds.length > 0 ||
     ui.addOpen ||
     ui.locked;
   /**
@@ -1392,7 +1397,12 @@ export function HandoffDesignStudio({
               />
             ) : null}
             {/* Orbit sprouts with selection wash — Delete / Lock / Ask AI clear of glyph */}
-            {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
+            {selectedLive &&
+            ui.tool !== "zone" &&
+            (chrome.selectionRing ||
+              ui.mode === "cad" ||
+              ui.mode === "sketch" ||
+              ui.mode === "survey") ? (
               <SelectionRing
                 item={selectedLive}
                 xPct={selectedLive.x}
@@ -1608,6 +1618,9 @@ export function HandoffDesignStudio({
                 canopyPct: compliance.canopyPct,
                 setbackM: compliance.setbackM,
               }}
+              projectId={projectId}
+              projectAddress={projectAddress}
+              complianceReport={compliance}
               onOpenPanel={(utilityPanel) =>
                 studio.setUi({
                   utilityPanel,
@@ -1632,13 +1645,14 @@ export function HandoffDesignStudio({
                 onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
               />
             ) : null}
-            {/* Council metrics live in utility compliance sidecar — not a corner card */}
+            {/* Design to-dos: background sync only — no canvas corner card */}
             <PermitTodosPanel
               projectId={projectId}
               address={projectAddress}
               outdoorM2={outdoor}
               items={studio.items}
               compliance={compliance}
+              syncOnly
             />
             {chrome.horizon ? (
               <PreemptiveHorizon

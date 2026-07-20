@@ -24,6 +24,13 @@ type Props = {
   outdoorM2: number;
   items: StudioItem[];
   compliance: StudioComplianceReport;
+  /**
+   * Sync design to-dos in the background with no canvas chrome.
+   * List UI belongs in the compliance sidecar (`embedded`).
+   */
+  syncOnly?: boolean;
+  /** Flow layout inside utility sheet — never a corner card. */
+  embedded?: boolean;
 };
 
 function toComplianceItems(items: StudioItem[]) {
@@ -52,8 +59,8 @@ function detailFromSpec(spec: string | null): string {
 }
 
 /**
- * Council / design to-dos — always visible as a faded council zone,
- * not a modal “Got it” card. Expand the list when the operator asks.
+ * Design to-dos — sync + list. Never a permanent bottom-left canvas card.
+ * TPZ / council meaning stays on-plan (zone + hover).
  */
 export function PermitTodosPanel({
   projectId,
@@ -61,9 +68,11 @@ export function PermitTodosPanel({
   outdoorM2,
   items,
   compliance,
+  syncOnly = false,
+  embedded = false,
 }: Props) {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(embedded);
   const [pending, startTransition] = useTransition();
   const syncSig = useRef("");
 
@@ -123,7 +132,6 @@ export function PermitTodosPanel({
         ).then((res) => {
           syncSig.current = sig;
           setTasks(res.tasks);
-          // Stay collapsed — ambient strip already surfaces the advisory.
         });
       });
     }, 700);
@@ -142,13 +150,18 @@ export function PermitTodosPanel({
     });
   };
 
+  if (syncOnly) return null;
+
   if (drafts.length === 0 && openDesignTasks.length === 0) return null;
 
-  // Council / TPZ meaning is on-plan (zone + hover), never a corner card.
   return (
-    <div className={css.root} data-testid="permit-todos">
+    <div
+      className={embedded ? css.embedded : css.root}
+      data-testid="permit-todos"
+      data-embedded={embedded ? "true" : "false"}
+    >
       <section
-        className={css.panel}
+        className={embedded ? css.embeddedPanel : css.panel}
         data-testid="permit-todo-list"
         data-open={expanded ? "true" : "false"}
       >
