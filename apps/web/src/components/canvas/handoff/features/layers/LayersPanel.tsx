@@ -81,22 +81,30 @@ export function LayersPanel({
           );
         })}
       </ul>
-      <label className={css.toggle}>
-        <input
-          type="checkbox"
-          checked={setbackOn}
-          onChange={(e) => onSetback(e.target.checked)}
-        />
-        <span>Show setback overlays</span>
+      <label className={css.switchRow}>
+        <span className={css.switchText}>Setback overlays</span>
+        <span className={css.switch} data-on={setbackOn ? "true" : "false"}>
+          <input
+            type="checkbox"
+            className={css.switchInput}
+            checked={setbackOn}
+            onChange={(e) => onSetback(e.target.checked)}
+          />
+          <span className={css.knob} aria-hidden />
+        </span>
       </label>
-      <label className={css.toggle} data-testid="layers-shade-toggle">
-        <input
-          type="checkbox"
-          checked={shadeOn}
-          onChange={(e) => onShade(e.target.checked)}
-          aria-label="Sun/shade"
-        />
-        <span>Show sun/shade mesh</span>
+      <label className={css.switchRow} data-testid="layers-shade-toggle">
+        <span className={css.switchText}>Sun/shade mesh</span>
+        <span className={css.switch} data-on={shadeOn ? "true" : "false"}>
+          <input
+            type="checkbox"
+            className={css.switchInput}
+            checked={shadeOn}
+            onChange={(e) => onShade(e.target.checked)}
+            aria-label="Sun/shade"
+          />
+          <span className={css.knob} aria-hidden />
+        </span>
       </label>
       <p className={css.foot}>
         Compliance pass/fail stays visible regardless of Council opacity. Survey mode

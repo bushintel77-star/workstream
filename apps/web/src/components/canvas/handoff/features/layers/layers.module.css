@@ -117,23 +117,136 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Dimmer — neumorphic inset track, raised knob. */
 .sliderLabel input[type="range"] {
   width: 100%;
-  accent-color: #c2455f;
+  height: 18px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
 }
 
-.toggle {
+.sliderLabel input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--hc-neu-surface, #f1e4e9);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
+}
+
+.sliderLabel input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--hc-neu-surface, #f1e4e9);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
+}
+
+.sliderLabel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
+  border: 1px solid rgba(194, 69, 95, 0.55);
+}
+
+.sliderLabel input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
+  border: 1px solid rgba(194, 69, 95, 0.55);
+}
+
+/* Physical switch — neumorphic track + sliding knob, not a checkbox. */
+.switchRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
   margin-top: 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.toggle input {
-  accent-color: #c2455f;
+.switchText {
+  color: #241318;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--hc-neu-surface, #f1e4e9);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
+  transition: background var(--hc-motion, 180ms) var(--ws-ease, ease);
+}
+
+.switch[data-on="true"] {
+  background: #c2455f;
+}
+
+.switchInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
+  transition: transform var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.switch[data-on="true"] .knob {
+  transform: translateX(18px);
+  background: #fff6f8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .knob,
+  .switch {
+    transition: none;
+  }
 }
 
 .foot {

@@ -95,6 +95,23 @@
   text-align: center;
 }
 
+.divider {
+  width: 60%;
+  height: 1px;
+  background: var(--hc-line-soft, rgba(36, 19, 24, 0.14));
+}
+
+.tool {
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+.toolGlyph {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+}
+
 @keyframes trayIn {
   from {
     opacity: 0;

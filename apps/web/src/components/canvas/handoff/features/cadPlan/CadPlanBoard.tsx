@@ -33,6 +33,7 @@ import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
   type StudioItem,
+  type StudioItemType,
   type StudioMode,
   type StudioTool,
 } from "../../studioCatalog";
@@ -126,6 +127,9 @@ type Props = {
   onPaintItem?: (id: string) => void;
   /** Item id that just received a Paint apply — settle-flash confirmation. */
   paintFlashId?: string | null;
+  /** Eyedropper armed — clicking an element loads its style into the swatch. */
+  eyedropArmed?: boolean;
+  onEyedrop?: (t: StudioItemType) => void;
   /**
    * Empty-board click (not an item / CAD handle).
    * `insideLot` — true on the property drawing; false on the canvas margin.
@@ -200,6 +204,8 @@ export function CadPlanBoard({
   gridInk = "charcoal",
   onPaintItem,
   paintFlashId = null,
+  eyedropArmed = false,
+  onEyedrop,
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
@@ -1021,6 +1027,10 @@ export function CadPlanBoard({
             onPointerLeave={() => onHover(null)}
             onPointerDown={(e) => {
               e.stopPropagation();
+              if (eyedropArmed && onEyedrop) {
+                onEyedrop(it.t);
+                return;
+              }
               if (tool === "paint" && !it.ghost && onPaintItem) {
                 onPaintItem(it.id);
                 return;

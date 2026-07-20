@@ -205,6 +205,12 @@ export function HandoffDesignStudio({
     if (paintFlashTimer.current) clearTimeout(paintFlashTimer.current);
     paintFlashTimer.current = setTimeout(() => setPaintFlashId(null), 460);
   };
+  /** Eyedropper — next canvas click loads that element's style into the swatch. */
+  const [eyedropArmed, setEyedropArmed] = useState(false);
+  const pickStyle = (t: StudioItemType) => {
+    setEyedropArmed(false);
+    studio.setUi({ paintSwatch: t, tool: "paint" });
+  };
 
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
@@ -1241,6 +1247,8 @@ export function HandoffDesignStudio({
                 flashPaintTarget(id);
               }}
               paintFlashId={paintFlashId}
+              eyedropArmed={eyedropArmed}
+              onEyedrop={pickStyle}
               onBoardCursor={setBoardCursor}
             />
             {chrome.floraRing && ui.floraSession ? (
@@ -1760,8 +1768,13 @@ export function HandoffDesignStudio({
         {swatchTrayOn ? (
           <SwatchTray
             activeSwatch={ui.paintSwatch}
-            armed={ui.tool === "paint"}
-            onPick={(t) => studio.setUi({ paintSwatch: t, tool: "paint" })}
+            armed={ui.tool === "paint" && !eyedropArmed}
+            eyedropOn={eyedropArmed}
+            onPick={(t) => {
+              setEyedropArmed(false);
+              studio.setUi({ paintSwatch: t, tool: "paint" });
+            }}
+            onEyedrop={() => setEyedropArmed((v) => !v)}
           />
         ) : null}
 
