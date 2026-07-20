@@ -122,7 +122,7 @@ export function buildLiveMeasures(args: {
     });
     rows.push({
       id: "building",
-      label: "Building",
+      label: "Existing house",
       value: `${fmtArea(schedule.buildingAreaM2)} m²`,
       group: "site",
       numeric: schedule.buildingAreaM2,
@@ -174,7 +174,7 @@ export function buildLiveMeasures(args: {
     const bPerim = polygonPerimeterM(building, scaleM);
     rows.push({
       id: "building-perim",
-      label: "Footprint P",
+      label: "Existing house P",
       value: `${fmtM(bPerim)} m`,
       group: "edge",
       numeric: bPerim,
