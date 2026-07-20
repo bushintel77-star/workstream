@@ -1,12 +1,14 @@
 # Material + library inventory (canvas-first)
 
+**Binding styling/UX:** [STUDIO-STYLING-AND-UX.md](./STUDIO-STYLING-AND-UX.md).
+
 Point of difference: borrow **structure** from inventory / asset-library UX
 (family tabs, skimable chips, digit accelerators), then render it as calm CAD
 studio chrome — never as a game, never over the selected object.
 
-**Spatial rule:** the drawing stays clear. Inventory lives in a **bottom asset
-dock** (Figma / gardenmap / CAD palette pattern). Selection actions orbit
-**outside** the glyph.
+**Spatial rule:** the drawing stays clear. Inventory is a **summoned frost
+popup** at the instrument summon point (Add / Paint / Library open) — not a
+fixed opaque bar. Selection actions orbit **outside** the glyph.
 
 ## Open-source library packs
 

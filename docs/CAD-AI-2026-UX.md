@@ -1,7 +1,7 @@
 # CAD–AI 2026 UX (binding)
 
 **Status:** Binding for `HandoffDesignStudio` and CAD/AI chrome.  
-**Companions:** [CANVAS-FIRST-UX.md](./CANVAS-FIRST-UX.md) · [DESIGN-KIT-INVENTORY.md](./DESIGN-KIT-INVENTORY.md) · Fitts proximity (`features/reach/fittsProximity.ts`).
+**Companions:** [STUDIO-STYLING-AND-UX.md](./STUDIO-STYLING-AND-UX.md) (tokens + chrome laws) · [CANVAS-FIRST-UX.md](./CANVAS-FIRST-UX.md) · [DESIGN-KIT-INVENTORY.md](./DESIGN-KIT-INVENTORY.md) · Fitts proximity (`features/reach/fittsProximity.ts`).
 
 Gold-standard UX for an AI-powered landscape / architectural CAD platform balances two paradigms:
 
