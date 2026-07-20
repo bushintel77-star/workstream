@@ -255,6 +255,24 @@
     0 0 8px rgba(242, 240, 235, 0.85);
 }
 
+.cadAreaKey {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+  text-shadow: 0 0 4px rgba(242, 240, 235, 0.95);
+}
+
+.cadAreaContext {
+  opacity: 0.72;
+}
+
+.cadAreaContext .cadAreaValue {
+  font-size: 10px;
+}
+
 .cadAreaMeta {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 9px;

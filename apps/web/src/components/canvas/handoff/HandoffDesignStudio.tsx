@@ -61,6 +61,7 @@ import {
   type NicheTool,
 } from "./features/kitInventory/nicheTools";
 import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
+import { CanvasMeasureSummary } from "./features/liveMeasures/CanvasMeasureSummary";
 import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
 import {
   loadPointerMarkId,
@@ -1256,6 +1257,14 @@ export function HandoffDesignStudio({
               titleBoundaryLocked={ui.titleBoundaryLocked}
               scaleM={scaleM}
               lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
+              siteAreas={
+                siteSchedule
+                  ? {
+                      buildingAreaM2: siteSchedule.buildingAreaM2,
+                      outdoorAreaM2: siteSchedule.outdoorAreaM2,
+                    }
+                  : null
+              }
               siteLabel={displayAddress}
               titleMeta={
                 titleBlock
@@ -1726,7 +1735,27 @@ export function HandoffDesignStudio({
           </label>
         ) : null}
 
-        {chrome.aiSidecar &&
+        {!ui.dataSummoned &&
+        planOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        !ui.foundationCleanse ? (
+          <CanvasMeasureSummary
+            mode={ui.mode}
+            boundary={studio.boundary}
+            building={studio.building}
+            items={studio.items}
+            scaleM={scaleM}
+            schedule={siteSchedule}
+            selected={selectedLive}
+            onOpen={() =>
+              studio.setUi({ dataSummoned: true, utilityPanel: null })
+            }
+          />
+        ) : null}
+
+        {ui.dataSummoned &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&
@@ -1739,6 +1768,7 @@ export function HandoffDesignStudio({
             scaleM={scaleM}
             schedule={siteSchedule}
             selected={selectedLive}
+            onClose={() => studio.setUi({ dataSummoned: false })}
           />
         ) : null}
 

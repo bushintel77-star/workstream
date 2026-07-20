@@ -68,6 +68,11 @@ type Props = {
   titleBoundaryLocked?: boolean;
   /** Optional cadastral lot area (Vicmap) for centre CAD label. */
   lotAreaM2?: number | null;
+  /** Live site-area calculation from the same schedule as the measure ledger. */
+  siteAreas?: {
+    buildingAreaM2: number;
+    outdoorAreaM2: number;
+  } | null;
   /** Street / site label for CAD annotation (not REA map chrome). */
   siteLabel?: string | null;
   /** Vicmap / title metadata for CAD edge callouts. */
@@ -175,6 +180,7 @@ export function CadPlanBoard({
   titleLocked = false,
   titleBoundaryLocked = false,
   lotAreaM2 = null,
+  siteAreas = null,
   siteLabel = null,
   titleMeta = null,
   boundary,
@@ -311,9 +317,18 @@ export function CadPlanBoard({
   const contextLots =
     cadTitleMode && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
+  const buildingCentroid = polygonCentroid(building);
   const drawnLotM2 = polygonAreaM2(boundary, scaleM);
   const areaLabelM2 =
     lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
+  const buildingAreaLabelM2 =
+    siteAreas?.buildingAreaM2 ??
+    (building.length >= 3 ? polygonAreaM2(building, scaleM) : 0);
+  const outdoorAreaLabelM2 = siteAreas?.outdoorAreaM2 ?? 0;
+  const showAutoAreaLabels =
+    !frameOn &&
+    !sketchPassthrough &&
+    (mode === "survey" || mode === "cad");
   /**
    * Always park dimensions outside the polygon — never a chip on the line.
    * Fit sheet uses tighter offsets; live CAD uses a slightly wider stand-off.
@@ -923,7 +938,7 @@ export function CadPlanBoard({
         );
       })}
 
-      {cadTitleMode && !frameOn && boundary.length >= 3 ? (
+      {showAutoAreaLabels && boundary.length >= 3 ? (
         <div
           className={css.cadAreaLabel}
           style={{ left: `${titleCentroid.x}%`, top: `${titleCentroid.y}%` }}
@@ -934,10 +949,45 @@ export function CadPlanBoard({
               : "Title unlocked — drag corner nodes to refine"
           }
         >
+          <span className={css.cadAreaKey}>Title</span>
           <span className={css.cadAreaValue}>{formatCadAreaM2(areaLabelM2)}</span>
           {titleMeta?.parcelRef ? (
             <span className={css.cadAreaMeta}>{titleMeta.parcelRef}</span>
           ) : null}
+        </div>
+      ) : null}
+
+      {showAutoAreaLabels && building.length >= 3 && buildingAreaLabelM2 > 0 ? (
+        <div
+          className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
+          style={{
+            left: `${buildingCentroid.x}%`,
+            top: `${buildingCentroid.y}%`,
+          }}
+          data-testid="cad-building-area"
+        >
+          <span className={css.cadAreaKey}>Existing house</span>
+          <span className={css.cadAreaValue}>
+            {formatCadAreaM2(buildingAreaLabelM2)}
+          </span>
+        </div>
+      ) : null}
+
+      {showAutoAreaLabels &&
+      outdoorAreaLabelM2 > 0 &&
+      Math.abs(outdoorAreaLabelM2 - areaLabelM2) > 0.5 ? (
+        <div
+          className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
+          style={{
+            left: `${titleCentroid.x}%`,
+            top: `${Math.min(94, titleCentroid.y + 7)}%`,
+          }}
+          data-testid="cad-outdoor-area"
+        >
+          <span className={css.cadAreaKey}>Outdoor</span>
+          <span className={css.cadAreaValue}>
+            {formatCadAreaM2(outdoorAreaLabelM2)}
+          </span>
         </div>
       ) : null}
 

@@ -29,19 +29,12 @@
   pointer-events: auto;
   overflow: hidden;
   opacity: 0.72;
-  transition: opacity 420ms var(--ease);
+  transition: opacity var(--hc-motion, 180ms) var(--ease);
 }
 
 .rail:hover,
 .rail[data-expanded="true"] {
   opacity: 0.98;
-}
-
-.railCollapsed {
-  max-height: none;
-  width: min(148px, 26vw);
-  padding: 6px 8px;
-  opacity: 0.55;
 }
 
 .head {
