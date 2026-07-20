@@ -87,6 +87,16 @@ test.describe("Design studio (sketch mode)", () => {
     });
   });
 
+  test("selecting a placed item shows a live shape readout", async ({ page }) => {
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    const item = page.getByTestId("studio-item").first();
+    await expect(item).toBeVisible({ timeout: 30_000 });
+    await item.click();
+    const readout = page.getByTestId("selected-shape-readout");
+    await expect(readout).toBeVisible({ timeout: 10_000 });
+    await expect(readout).toContainText(/m²|m/);
+  });
+
   test("arms symbol from command palette search", async ({ page }) => {
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(page.getByTestId("studio-item")).toHaveCount(1, {

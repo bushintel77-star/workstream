@@ -40,6 +40,7 @@ import {
 import { StudioGlyph } from "../../StudioGlyph";
 import { ITEM_LAYER, type LayerOpacity } from "../../state/studioTypes";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
+import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
 
@@ -257,6 +258,10 @@ export function CadPlanBoard({
   const [nodeMenu, setNodeMenu] = useState<NodeMenu | null>(null);
   const [itemMenu, setItemMenu] = useState<ItemMenu | null>(null);
   const [cursorPct, setCursorPct] = useState<PctPoint | null>(null);
+  /** Why the pointer snapped — surfaced as a glyph legend, not just a flash. */
+  const [snapKind, setSnapKind] = useState<
+    "grid" | "align" | "vertex" | "ortho" | null
+  >(null);
   const [cursorMode, setCursorMode] = useState<"default" | "move" | "add">(
     "default",
   );
@@ -476,11 +481,17 @@ export function CadPlanBoard({
         const snapped = snapDraftPoint(p, others, gridStep);
         setGuides({ x: snapped.guideX, y: snapped.guideY });
         setCrosshair({ x: snapped.crossX, y: snapped.crossY });
+        setSnapKind(
+          snapped.guideX != null || snapped.guideY != null ? "align" : "grid",
+        );
         onMoveItem(d.id, snapped.point.x, snapped.point.y);
       } else {
         const snapped = snapAlignment(p, others);
         setGuides({ x: snapped.guideX, y: snapped.guideY });
         setCrosshair({ x: snapped.point.x, y: snapped.point.y });
+        setSnapKind(
+          snapped.guideX != null || snapped.guideY != null ? "align" : null,
+        );
         onMoveItem(d.id, snapped.point.x, snapped.point.y);
       }
       return;
@@ -501,6 +512,14 @@ export function CadPlanBoard({
       });
       const next = pts.map((pt, i) =>
         i === d.index ? { x: snapped.x, y: snapped.y } : pt,
+      );
+      setCrosshair({ x: snapped.x, y: snapped.y });
+      setSnapKind(
+        snapped.kind === "vertex"
+          ? "vertex"
+          : snapped.kind === "ortho"
+            ? "ortho"
+            : null,
       );
       if (d.kind === "boundary") onBoundaryChange(next);
       else onBuildingChange(next);
@@ -541,6 +560,7 @@ export function CadPlanBoard({
     setMarquee(null);
     setGuides({ x: null, y: null });
     setCrosshair(null);
+    setSnapKind(null);
   };
 
   const midHandles = (pts: PctPoint[], kind: "boundary" | "building") =>
@@ -1268,6 +1288,32 @@ export function CadPlanBoard({
             data-testid="draft-crosshair-h"
             style={{ top: `${crosshair.y}%` }}
           />
+          {snapKind ? (
+            <div
+              className={css.snapGlyph}
+              data-testid="snap-glyph"
+              data-snap={snapKind}
+              style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
+              title={
+                snapKind === "vertex"
+                  ? "Snapped to vertex"
+                  : snapKind === "align"
+                    ? "Aligned to neighbour"
+                    : snapKind === "ortho"
+                      ? "Orthogonal lock"
+                      : "Snapped to grid"
+              }
+              aria-hidden
+            >
+              {snapKind === "vertex"
+                ? "◆"
+                : snapKind === "align"
+                  ? "┼"
+                  : snapKind === "ortho"
+                    ? "⊥"
+                    : "▪"}
+            </div>
+          ) : null}
         </>
       ) : null}
 
@@ -1285,6 +1331,21 @@ export function CadPlanBoard({
           boardH={rootRef.current?.clientHeight ?? 640}
           onTransform={onTransformItem}
         />
+      ) : null}
+
+      {selected && !frameOn && !dragRef.current ? (
+        <div
+          className={css.selectedReadout}
+          data-testid="selected-shape-readout"
+          style={{ left: `${selected.x}%`, top: `${selected.y}%` }}
+        >
+          <span className={css.selectedReadoutTag}>
+            {describeSelectedItem(selected).tag}
+          </span>
+          <span className={css.selectedReadoutValue}>
+            {describeSelectedItem(selected).value}
+          </span>
+        </div>
       ) : null}
 
       {tpzReadouts?.map((r) =>

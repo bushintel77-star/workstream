@@ -540,6 +540,30 @@
   background: rgba(28, 25, 23, 0.16);
 }
 
+.snapGlyph {
+  position: absolute;
+  z-index: 18;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: rgba(255, 251, 252, 0.92);
+  color: #557049;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(112, 148, 132, 0.4);
+}
+
+.snapGlyph[data-snap="vertex"] {
+  color: #c2455f;
+  box-shadow: 0 0 0 1px rgba(194, 69, 95, 0.4);
+}
+
 .snapPulse {
   position: absolute;
   z-index: 17;
@@ -903,6 +927,41 @@
   height: 0;
   z-index: 18;
   pointer-events: none;
+}
+
+/* SketchUp-style live area/size readout on the selected shape. */
+.selectedReadout {
+  position: absolute;
+  z-index: 19;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  backdrop-filter: blur(12px);
+  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.selectedReadoutTag {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+.selectedReadoutValue {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-ink, #241318);
 }
 
 .selStem {
