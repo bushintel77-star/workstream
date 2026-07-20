@@ -27,6 +27,7 @@ import {
   neighbourLotContext,
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
+import { planLinesFor } from "../../geometry/planLineStyles";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
@@ -220,30 +221,6 @@ export function CadPlanBoard({
     (tool === "edit" && !locked && !frameOn && !foundationCleanse) ||
     (titleEditing && tool === "edit");
   const titleSolid = foundationCleanse || titleLocked;
-  /** SDS — COLOR_VECTOR_PRIMARY charcoal when Vicmap/Stage 1; amber for dark. */
-  const bStroke = titleSolid
-    ? "#1C1917"
-    : darkOn && !frameOn
-      ? "#C99757"
-      : "#1A1A1A";
-  const bldStroke = darkOn && !frameOn ? "#F7F4EF" : "#1A1A1A";
-  const bldFill =
-    darkOn && !frameOn ? "rgba(247,244,239,0.35)" : "rgba(26,26,26,0.06)";
-
-  /** Fit sheet working drawing: B + F. Stage 1 plate alone: B only. */
-  const boundarySegs = edgeSegments(boundary, "B", scaleM);
-  const buildingSegs = edgeSegments(building, "F", scaleM);
-  const dimSegs = frameOn
-    ? boundarySegs.concat(buildingSegs)
-    : foundationCleanse
-      ? boundarySegs
-      : boundarySegs.concat(buildingSegs);
-  const showDims =
-    editing ||
-    frameOn ||
-    foundationCleanse ||
-    titleLocked ||
-    mode === "survey";
   const sketchPassthrough = mode === "sketch";
   /** Survey annotation tools own the pointer (prototype Level / Servc / Calib). */
   const surveyAnnotatePassthrough =
@@ -256,33 +233,55 @@ export function CadPlanBoard({
   const cadTitleMode = foundationCleanse || titleLocked;
   /** Fit sheet: classic dashed boundary + solid footprint (screenshot language). */
   const fitSheetStroke = frameOn;
+  const lines = planLinesFor({
+    darkOn,
+    titleSolid,
+    fitSheet: fitSheetStroke,
+  });
+  const bStroke = lines.boundary.stroke;
+  const bldStroke = lines.building.stroke;
+  const bldFill = lines.building.fill ?? "transparent";
+
+  /** Fit sheet working drawing: B + F. Stage 1 plate alone: B only. */
+  const boundarySegs = edgeSegments(boundary, "B", scaleM);
+  const buildingSegs = edgeSegments(building, "F", scaleM);
+  const showDims =
+    !sketchPassthrough &&
+    (editing ||
+      frameOn ||
+      foundationCleanse ||
+      titleLocked ||
+      mode === "survey");
   const contextLots =
     cadTitleMode && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
   const drawnLotM2 = polygonAreaM2(boundary, scaleM);
   const areaLabelM2 =
     lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
-  /** Compact offsets so Fit-sheet dims clear the title band / plot inset. */
-  const outsideDims = frameOn
+  /**
+   * Always park dimensions outside the polygon — never a chip on the line.
+   * Fit sheet uses tighter offsets; live CAD uses a slightly wider stand-off.
+   */
+  const outsideDims = showDims
     ? [
         ...buildOutsideDims(boundarySegs, boundary, {
-          offsetPct: 1.6,
-          labelExtraPct: 1.0,
-          tickPct: 0.9,
+          offsetPct: frameOn ? 1.6 : 2.4,
+          labelExtraPct: frameOn ? 1.0 : 1.55,
+          tickPct: frameOn ? 0.9 : 1.05,
         }),
-        ...(building.length >= 3
+        ...(building.length >= 3 && !foundationCleanse
           ? buildOutsideDims(buildingSegs, building, {
-              offsetPct: 1.2,
-              labelExtraPct: 0.85,
-              tickPct: 0.8,
+              offsetPct: frameOn ? 1.2 : 1.9,
+              labelExtraPct: frameOn ? 0.85 : 1.25,
+              tickPct: frameOn ? 0.8 : 0.95,
             })
           : []),
       ]
     : [];
 
   const existTrees = items.filter((i) => i.t === "exist" && !i.ghost);
-  /** AI / design intelligence underlay — dimmed under CAD title in Stage 1. */
-  const planItems = items;
+  /** Sketch pad strips CAD glyphs — site geometry stays as a faint guide. */
+  const planItems = sketchPassthrough ? [] : items;
   const underlayOp = foundationCleanse ? 0.38 : 1;
   const existTpz = existTrees.map((it) => {
     const dbhM = it.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
@@ -522,9 +521,9 @@ export function CadPlanBoard({
               <polygon
                 points={ptsAttr(ring)}
                 fill="url(#ws-easement-hatch)"
-                stroke="#57534E"
-                strokeWidth={0.35}
-                strokeDasharray="1.2 0.8"
+                stroke={lines.easement.stroke}
+                strokeWidth={lines.easement.strokeWidth}
+                strokeDasharray={lines.easement.dash}
                 vectorEffect="non-scaling-stroke"
               />
             </g>
@@ -540,9 +539,9 @@ export function CadPlanBoard({
               <polyline
                 points={ptsAttr(ring)}
                 fill="none"
-                stroke="#57534E"
-                strokeWidth={0.32}
-                strokeDasharray="1.8 1.1"
+                stroke={lines.service.stroke}
+                strokeWidth={lines.service.strokeWidth}
+                strokeDasharray={lines.service.dash}
                 vectorEffect="non-scaling-stroke"
               />
             </g>
@@ -564,13 +563,12 @@ export function CadPlanBoard({
               ? "rgba(28, 25, 23, 0.045)"
               : "transparent"
           }
-          stroke={fitSheetStroke ? "#1A1A1A" : bStroke}
-          strokeWidth={1.5}
-          strokeDasharray={
-            fitSheetStroke || !titleSolid ? "4 4" : undefined
-          }
+          stroke={bStroke}
+          strokeWidth={lines.boundary.strokeWidth}
+          strokeDasharray={lines.boundary.dash}
           vectorEffect="non-scaling-stroke"
-          opacity={layerOpacity.boundary}
+          opacity={layerOpacity.boundary * (sketchPassthrough ? 0.35 : 1)}
+          className={sketchPassthrough ? css.sketchQuiet : undefined}
           data-testid={
             titleSolid || fitSheetStroke
               ? "foundation-title-boundary"
@@ -582,10 +580,14 @@ export function CadPlanBoard({
             points={ptsAttr(building)}
             fill={bldFill}
             stroke={bldStroke}
-            strokeWidth={foundationCleanse ? 1 : 1.5}
+            strokeWidth={
+              foundationCleanse ? 1 : lines.building.strokeWidth
+            }
             vectorEffect="non-scaling-stroke"
             opacity={
-              layerOpacity.boundary * (foundationCleanse ? underlayOp : 1)
+              layerOpacity.boundary *
+              (foundationCleanse ? underlayOp : 1) *
+              (sketchPassthrough ? 0.4 : 1)
             }
           />
         ) : null}
@@ -596,8 +598,8 @@ export function CadPlanBoard({
               y1={d.extA.y1}
               x2={d.extA.x2}
               y2={d.extA.y2}
-              stroke="#1A1A1A"
-              strokeWidth={0.55}
+              stroke={lines.dim.stroke}
+              strokeWidth={0.5}
               vectorEffect="non-scaling-stroke"
               data-testid="outside-dim-ext"
             />
@@ -606,8 +608,8 @@ export function CadPlanBoard({
               y1={d.extB.y1}
               x2={d.extB.x2}
               y2={d.extB.y2}
-              stroke="#1A1A1A"
-              strokeWidth={0.55}
+              stroke={lines.dim.stroke}
+              strokeWidth={0.5}
               vectorEffect="non-scaling-stroke"
               data-testid="outside-dim-ext"
             />
@@ -616,8 +618,8 @@ export function CadPlanBoard({
               y1={d.y1}
               x2={d.x2}
               y2={d.y2}
-              stroke="#1A1A1A"
-              strokeWidth={0.85}
+              stroke={lines.dim.stroke}
+              strokeWidth={lines.dim.strokeWidth}
               vectorEffect="non-scaling-stroke"
             />
             <line
@@ -625,8 +627,8 @@ export function CadPlanBoard({
               y1={d.tickA.y1}
               x2={d.tickA.x2}
               y2={d.tickA.y2}
-              stroke="#1A1A1A"
-              strokeWidth={0.85}
+              stroke={lines.dim.stroke}
+              strokeWidth={lines.dim.strokeWidth}
               vectorEffect="non-scaling-stroke"
             />
             <line
@@ -634,34 +636,13 @@ export function CadPlanBoard({
               y1={d.tickB.y1}
               x2={d.tickB.x2}
               y2={d.tickB.y2}
-              stroke="#1A1A1A"
-              strokeWidth={0.85}
+              stroke={lines.dim.stroke}
+              strokeWidth={lines.dim.strokeWidth}
               vectorEffect="non-scaling-stroke"
             />
           </g>
         ))}
-        {cadTitleMode && !frameOn
-          ? dimSegs.map((d) => {
-              const nx = -(d.b.y - d.a.y);
-              const ny = d.b.x - d.a.x;
-              const len = Math.hypot(nx, ny) || 1;
-              const ox = (nx / len) * 1.1;
-              const oy = (ny / len) * 1.1;
-              return (
-                <line
-                  key={`dext${d.key}`}
-                  x1={d.mid.x - ox}
-                  y1={d.mid.y - oy}
-                  x2={d.mid.x + ox}
-                  y2={d.mid.y + oy}
-                  stroke="#1C1917"
-                  strokeWidth={0.9}
-                  vectorEffect="non-scaling-stroke"
-                />
-              );
-            })
-          : null}
-        {setbackOn && !foundationCleanse ? (
+        {setbackOn && !foundationCleanse && !sketchPassthrough ? (
           <polygon
             points={ptsAttr(
               boundary.map((p) => ({
@@ -670,9 +651,9 @@ export function CadPlanBoard({
               })),
             )}
             fill="none"
-            stroke="#1A1A1A"
-            strokeWidth={0.8}
-            strokeDasharray="3 3"
+            stroke={lines.setback.stroke}
+            strokeWidth={lines.setback.strokeWidth}
+            strokeDasharray={lines.setback.dash}
             vectorEffect="non-scaling-stroke"
             opacity={0.75 * layerOpacity.council}
           />
@@ -781,28 +762,39 @@ export function CadPlanBoard({
           ))
         : null}
 
-      {showDims &&
-        !frameOn &&
-        dimSegs.map((d) => (
+      {outsideDims.map((d) => {
+        const isBuilding = d.key.startsWith("F");
+        return (
           <div
-            key={d.key}
-            className={`${css.dimMark}${cadTitleMode ? ` ${css.cadDimMark}` : ""}`}
+            key={`olab${d.key}`}
+            className={`${css.dimMark} ${css.fitOutsideDim}${cadTitleMode ? ` ${css.cadDimMark}` : ""}`}
             style={{
-              left: `${d.mid.x}%`,
-              top: `${d.mid.y}%`,
+              left: `${d.labelX}%`,
+              top: `${d.labelY}%`,
               transform: `translate(-50%, -50%) rotate(${d.rotDeg}deg)`,
             }}
+            data-testid={
+              frameOn
+                ? "fit-outside-dim-label"
+                : cadTitleMode
+                  ? "cad-edge-dim"
+                  : "outside-dim-label"
+            }
           >
-            <span className={css.obliqueTick} aria-hidden />
             <span
-              className={cadTitleMode ? css.cadDimLabel : css.dimLabel}
-              data-testid={cadTitleMode ? "cad-edge-dim" : undefined}
+              className={
+                frameOn
+                  ? css.fitDimLabel
+                  : cadTitleMode
+                    ? css.cadDimLabel
+                    : css.dimLabel
+              }
               title={
                 cadTitleMode
                   ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${
                       titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
                     }`
-                  : undefined
+                  : `${isBuilding ? "Footprint" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
               }
             >
               {cadTitleMode ? (
@@ -815,26 +807,8 @@ export function CadPlanBoard({
               )}
             </span>
           </div>
-        ))}
-
-      {frameOn &&
-        outsideDims.map((d) => (
-          <div
-            key={`olab${d.key}`}
-            className={`${css.dimMark} ${css.fitOutsideDim}`}
-            style={{
-              left: `${d.labelX}%`,
-              top: `${d.labelY}%`,
-              transform: `translate(-50%, -50%) rotate(${d.rotDeg}deg)`,
-            }}
-            data-testid="fit-outside-dim-label"
-          >
-            <span className={css.obliqueTick} aria-hidden />
-            <span className={css.fitDimLabel}>
-              {d.key} · {d.lengthM.toFixed(2)} m
-            </span>
-          </div>
-        ))}
+        );
+      })}
 
       {cadTitleMode && !frameOn && boundary.length >= 3 ? (
         <div

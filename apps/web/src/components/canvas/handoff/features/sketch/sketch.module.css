@@ -4,6 +4,8 @@
   z-index: 40;
   touch-action: none;
   cursor: crosshair;
+  /* Stripped pad — quiet parchment, no CAD chrome competing. */
+  background: rgba(247, 244, 239, 0.28);
 }
 
 .svg {
@@ -22,48 +24,67 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  max-width: min(92%, 420px);
+  gap: 6px;
+  max-width: min(94%, 520px);
   pointer-events: none;
   z-index: 2;
 }
 
 .hint {
   margin: 0;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
-  color: #1c1917;
-  background: rgba(242, 240, 235, 0.94);
-  border: 1px solid rgba(28, 25, 23, 0.18);
+  color: rgba(28, 25, 23, 0.72);
+  background: transparent;
+  border: none;
   border-radius: 0;
-  padding: 6px 12px;
+  padding: 4px 2px;
   pointer-events: none;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow:
+    0 0 4px rgba(247, 244, 239, 0.95),
+    0 0 8px rgba(247, 244, 239, 0.75);
 }
 
+.tidy,
 .convert {
   pointer-events: auto;
   flex-shrink: 0;
   height: 28px;
-  padding: 0 12px;
-  border: 1px solid #1c1917;
-  border-radius: 0;
-  background: #1c1917;
-  color: #f2f0eb;
-  font-size: 11px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font-size: 10.5px;
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
   cursor: pointer;
-  box-shadow: none;
+  box-shadow: 0 4px 14px rgba(26, 36, 48, 0.18);
+}
+
+.tidy {
+  border: 1px solid rgba(232, 240, 248, 0.28);
+  background: rgba(26, 36, 48, 0.72);
+  color: #e8f0f8;
+  backdrop-filter: blur(12px);
+}
+
+.tidy:hover {
+  background: rgba(38, 52, 68, 0.88);
+}
+
+.convert {
+  border: 1px solid rgba(232, 240, 248, 0.45);
+  background: rgba(232, 240, 248, 0.94);
+  color: #1a2430;
 }
 
 .convert:hover {
-  background: #2a2522;
+  background: #fff;
 }
 
+.tidy:focus-visible,
 .convert:focus-visible {
   outline: 1px solid #1c1917;
   outline-offset: 2px;

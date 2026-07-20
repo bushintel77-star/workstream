@@ -139,19 +139,23 @@
   z-index: 6;
 }
 
+/* Discreet off-drawing dims — ink only, no chip on the line. */
 .dimLabel {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: #1c1917;
-  background: rgba(242, 240, 235, 0.94);
-  border: 1px solid rgba(28, 25, 23, 0.22);
+  color: rgba(28, 25, 23, 0.72);
+  background: transparent;
+  border: none;
   border-radius: 0;
-  padding: 1px 5px;
+  padding: 0;
   white-space: nowrap;
-  margin-top: 2px;
+  margin-top: 0;
   box-shadow: none;
+  text-shadow:
+    0 0 3px rgba(242, 240, 235, 0.95),
+    0 0 6px rgba(242, 240, 235, 0.7);
 }
 
 /* CAD property-boundary language (REA concept, not REA chrome). */
@@ -171,17 +175,20 @@
   align-items: baseline;
   gap: 5px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: #1c1917;
-  background: rgba(242, 240, 235, 0.94);
-  border: 1px solid rgba(28, 25, 23, 0.28);
+  color: rgba(28, 25, 23, 0.78);
+  background: transparent;
+  border: none;
   border-radius: 0;
-  padding: 1px 5px;
+  padding: 0;
   white-space: nowrap;
-  margin-top: 2px;
+  margin-top: 0;
   box-shadow: none;
+  text-shadow:
+    0 0 3px rgba(242, 240, 235, 0.95),
+    0 0 6px rgba(242, 240, 235, 0.7);
 }
 
 .cadDimKey {
@@ -236,10 +243,13 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
-  color: #1c1917;
-  background: rgba(242, 240, 235, 0.88);
-  padding: 1px 5px;
+  color: rgba(28, 25, 23, 0.78);
+  background: transparent;
+  padding: 0;
   line-height: 1.1;
+  text-shadow:
+    0 0 3px rgba(242, 240, 235, 0.95),
+    0 0 6px rgba(242, 240, 235, 0.7);
 }
 
 .cadAreaMeta {
@@ -248,8 +258,9 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #6b6560;
-  background: rgba(242, 240, 235, 0.88);
-  padding: 0 4px;
+  background: transparent;
+  padding: 0;
+  text-shadow: 0 0 3px rgba(242, 240, 235, 0.9);
 }
 
 .cadLockState {
@@ -288,17 +299,25 @@
 
 .fitDimLabel {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: #1c1917;
-  background: rgba(242, 240, 235, 0.94);
-  border: 1px solid rgba(28, 25, 23, 0.22);
+  color: rgba(28, 25, 23, 0.72);
+  background: transparent;
+  border: none;
   border-radius: 0;
-  padding: 1px 5px;
+  padding: 0;
   white-space: nowrap;
-  margin-top: 2px;
+  margin-top: 0;
   box-shadow: none;
+  text-shadow:
+    0 0 3px rgba(242, 240, 235, 0.95),
+    0 0 6px rgba(242, 240, 235, 0.7);
+}
+
+/* Sketch pad — CAD symbols sleep; site line stays as a faint guide. */
+.sketchQuiet {
+  opacity: 0.22;
 }
 
 .tpzTag {

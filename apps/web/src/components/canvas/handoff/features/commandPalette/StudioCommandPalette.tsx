@@ -99,11 +99,11 @@ export function StudioCommandPalette({
         ? [
             {
               id: "convert-sketch",
-              label: "Convert sketch to CAD",
+              label: "Formalize sketch to CAD",
               detail:
-                "Turn freehand strokes into site-anchored assets — clear of setback and house envelope",
+                "Optional step — turn freehand into site-anchored CAD assets. Tidy sketch keeps it hand-drawn.",
               keywords:
-                "convert sketch cad stroke ink deck hedge canopy paving bed lawn drain auto",
+                "formalize convert sketch cad stroke ink deck hedge canopy paving bed lawn drain auto tidy hand-drawn",
               run: onConvertSketch,
             } satisfies StudioCommand,
           ]

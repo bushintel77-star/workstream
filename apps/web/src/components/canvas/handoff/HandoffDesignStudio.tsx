@@ -1057,7 +1057,8 @@ export function HandoffDesignStudio({
                 onCommit={(stroke) => {
                   studio.setStrokes([...studio.strokes, stroke]);
                 }}
-                onConvertToCad={() => {
+                onTidy={() => studio.tidySketches()}
+                onFormalizeToCad={() => {
                   studio.interpretSketches();
                 }}
               />

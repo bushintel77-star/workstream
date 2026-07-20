@@ -1,6 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import {
+  strokePointsToPathD,
+  tidySketchPoints,
+} from "@workstream/domain";
 import type { SketchStroke } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import css from "./sketch.module.css";
@@ -10,23 +14,44 @@ type Props = {
   darkOn: boolean;
   /** Commit a finished stroke (once per pointer-up — not per move). */
   onCommit: (stroke: SketchStroke) => void;
-  /** Convert freehand ink → site-anchored CAD ghosts. */
-  onConvertToCad?: () => void;
+  /** Soften ink in place — stays hand-drawn, not CAD symbols. */
+  onTidy?: () => void;
+  /** Optional formalize: freehand → CAD ghosts on the site plan. */
+  onFormalizeToCad?: () => void;
 };
 
 /**
- * Freehand sketch — ink over parchment. CadPlanBoard is pointer-events:none
- * while this mounts so symbols don't steal the stroke.
+ * Stripped sketch pad — finger / stylus ink only.
+ * CadPlanBoard hides symbols while this mounts; site boundary stays faint.
+ * Tidy keeps the artist's hand; Formalize to CAD is a separate step.
  */
 export function SketchBoard({
   strokes,
   darkOn,
   onCommit,
-  onConvertToCad,
+  onTidy,
+  onFormalizeToCad,
 }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const drawing = useRef<PctPoint[] | null>(null);
   const idn = useRef(0);
   const [live, setLive] = useState<PctPoint[] | null>(null);
+  const [size, setSize] = useState({ w: 960, h: 640 });
+
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const sync = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 1 && r.height > 1) {
+        setSize({ w: Math.round(r.width), h: Math.round(r.height) });
+      }
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const toPct = (el: HTMLElement, clientX: number, clientY: number): PctPoint => {
     const r = el.getBoundingClientRect();
@@ -39,12 +64,15 @@ export function SketchBoard({
   const all = live
     ? [...strokes, { id: "__live", points: live }]
     : strokes;
-  const canConvert = strokes.length > 0 && Boolean(onConvertToCad);
+  const canAct = strokes.length > 0;
+  const ink = darkOn ? "#C9C2BA" : "#1C1917";
 
   return (
     <div
+      ref={rootRef}
       className={css.root}
       data-testid="sketch-board"
+      data-sketch-pad="stripped"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         const p = toPct(e.currentTarget, e.clientX, e.clientY);
@@ -63,32 +91,56 @@ export function SketchBoard({
         setLive(null);
         if (!pts || pts.length < 2) return;
         idn.current += 1;
-        onCommit({ id: `sk${Date.now()}_${idn.current}`, points: pts });
+        /* Light tidy on commit — still the artist's path, less jitter. */
+        const points = tidySketchPoints(pts);
+        onCommit({ id: `sk${Date.now()}_${idn.current}`, points });
       }}
     >
-      <svg className={css.svg} viewBox="0 0 100 100" preserveAspectRatio="none">
-        {all.map((s) => (
-          <polyline
-            key={s.id}
-            points={s.points.map((p) => `${p.x},${p.y}`).join(" ")}
-            fill="none"
-            stroke={darkOn ? "#C9C2BA" : "#1C1917"}
-            strokeWidth={s.id === "__live" ? 0.45 : 0.55}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            opacity={s.id === "__live" ? 0.7 : 0.9}
-            style={{ pointerEvents: "none" }}
-          />
-        ))}
+      <svg
+        className={css.svg}
+        viewBox={`0 0 ${size.w} ${size.h}`}
+        preserveAspectRatio="none"
+      >
+        {all.map((s) => {
+          const d = strokePointsToPathD(
+            s.points.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+            size.w,
+            size.h,
+            s.id === "__live" ? 1.6 : 2.1,
+          );
+          if (!d) return null;
+          return (
+            <path
+              key={s.id}
+              d={d}
+              fill={ink}
+              opacity={s.id === "__live" ? 0.55 : 0.88}
+              style={{ pointerEvents: "none" }}
+            />
+          );
+        })}
       </svg>
       <div className={css.bar} data-testid="sketch-convert-bar">
         <p className={css.hint}>
-          {canConvert
-            ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · convert to CAD on the site plan`
-            : "Sketch freehand · decks, hedges, canopies, beds"}
+          {canAct
+            ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
+            : "Sketch first · finger or stylus · format later"}
         </p>
-        {canConvert ? (
+        {canAct && onTidy ? (
+          <button
+            type="button"
+            className={css.tidy}
+            data-testid="sketch-tidy"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTidy();
+            }}
+          >
+            Tidy sketch
+          </button>
+        ) : null}
+        {canAct && onFormalizeToCad ? (
           <button
             type="button"
             className={css.convert}
@@ -96,10 +148,10 @@ export function SketchBoard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
-              onConvertToCad?.();
+              onFormalizeToCad();
             }}
           >
-            Convert to CAD
+            Formalize to CAD
           </button>
         ) : null}
       </div>

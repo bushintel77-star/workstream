@@ -9,14 +9,17 @@ export function StudioGlyph({
   type: StudioItemType;
   ink?: boolean;
 }) {
-  /* Monograph parchment — charcoal vectors, muted olive hatch (no neon) */
-  const W = ink ? "#1C1917" : "#3A322F";
-  const G = ink ? "#4A5340" : "#5A6550";
-  const DG = ink ? "#2F3528" : "#3D4636";
-  const B = ink ? "#4A5560" : "#5C6570";
-  const MV = ink ? "#5A4650" : "#6B5C60";
-  const hatch = ink ? "rgba(28,25,23,0.45)" : "rgba(58,50,47,0.5)";
-  const fillSoft = ink ? "rgba(28,25,23,0.06)" : "rgba(58,50,47,0.1)";
+  /*
+   * CAD glyph language — readable type difference without neon.
+   * Paving (stone grid) ≠ deck (warm plank) ≠ softscape (olive dash) ≠ drain (cool blue).
+   */
+  const W = ink ? "#1C1917" : "#2A2421";
+  const G = ink ? "#3D4A34" : "#4A5840";
+  const DG = ink ? "#2A3224" : "#354030";
+  const B = ink ? "#3A4A58" : "#4A5A68";
+  const MV = ink ? "#6B4A38" : "#7A5848";
+  const hatch = ink ? "rgba(28,25,23,0.5)" : "rgba(42,36,33,0.55)";
+  const fillSoft = ink ? "rgba(28,25,23,0.05)" : "rgba(42,36,33,0.08)";
 
   const spokes = (n: number, r1: number, r2: number, s: string, off = 0) =>
     Array.from({ length: n }, (_, i) => {
@@ -62,18 +65,18 @@ export function StudioGlyph({
     case "paving":
       children = (
         <>
-          <rect x={6} y={8} width={88} height={84} rx={1} stroke={W} strokeWidth={1.2} fill="rgba(120,118,110,0.18)" vectorEffect="non-scaling-stroke" />
+          <rect x={6} y={8} width={88} height={84} rx={0} stroke={W} strokeWidth={1.45} fill="rgba(110,108,100,0.16)" vectorEffect="non-scaling-stroke" />
           {[36, 64].map((y) => (
-            <line key={y} x1={6} y1={y} x2={94} y2={y} stroke={hatch} strokeWidth={0.8} vectorEffect="non-scaling-stroke" />
+            <line key={y} x1={6} y1={y} x2={94} y2={y} stroke={hatch} strokeWidth={0.85} vectorEffect="non-scaling-stroke" />
           ))}
           {[35, 65].map((x) => (
-            <line key={`a${x}`} x1={x} y1={8} x2={x} y2={36} stroke={hatch} strokeWidth={0.8} vectorEffect="non-scaling-stroke" />
+            <line key={`a${x}`} x1={x} y1={8} x2={x} y2={36} stroke={hatch} strokeWidth={0.85} vectorEffect="non-scaling-stroke" />
           ))}
           {[20, 50, 80].map((x) => (
-            <line key={`b${x}`} x1={x} y1={36} x2={x} y2={64} stroke={hatch} strokeWidth={0.8} vectorEffect="non-scaling-stroke" />
+            <line key={`b${x}`} x1={x} y1={36} x2={x} y2={64} stroke={hatch} strokeWidth={0.85} vectorEffect="non-scaling-stroke" />
           ))}
           {[35, 65].map((x) => (
-            <line key={`c${x}`} x1={x} y1={64} x2={x} y2={92} stroke={hatch} strokeWidth={0.8} vectorEffect="non-scaling-stroke" />
+            <line key={`c${x}`} x1={x} y1={64} x2={x} y2={92} stroke={hatch} strokeWidth={0.85} vectorEffect="non-scaling-stroke" />
           ))}
         </>
       );
@@ -81,9 +84,9 @@ export function StudioGlyph({
     case "deck":
       children = (
         <>
-          <rect x={5} y={8} width={90} height={84} rx={2} stroke={MV} strokeWidth={1.4} fill="rgba(176,138,149,0.2)" vectorEffect="non-scaling-stroke" />
+          <rect x={5} y={8} width={90} height={84} rx={1} stroke={MV} strokeWidth={1.7} fill="rgba(140,98,58,0.14)" vectorEffect="non-scaling-stroke" />
           {Array.from({ length: 8 }, (_, i) => (
-            <line key={i} x1={5} y1={17 + i * 9.5} x2={95} y2={17 + i * 9.5} stroke="rgba(226,214,218,0.75)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+            <line key={i} x1={5} y1={17 + i * 9.5} x2={95} y2={17 + i * 9.5} stroke="rgba(140,98,58,0.45)" strokeWidth={1.05} vectorEffect="non-scaling-stroke" />
           ))}
         </>
       );

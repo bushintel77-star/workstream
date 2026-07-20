@@ -9,6 +9,7 @@ import {
   isFloraStudioForm,
   rankCurtisFloraCandidates,
   sunHoursAtPct,
+  tidySketchStrokes,
   type FloraCandidate,
   type StudioComplianceItem,
   type StudioHorizonCard,
@@ -641,11 +642,29 @@ export function useStudioState(opts: UseStudioStateOpts) {
     dispatch({ type: "setUi", patch });
   }, []);
 
+  /** Soften freehand ink in place — stays hand-drawn, never CAD symbols. */
+  const tidySketches = useCallback(() => {
+    mutate((snap) => {
+      if (snap.strokes.length === 0) return { snap };
+      return {
+        snap: {
+          ...snap,
+          strokes: tidySketchStrokes(snap.strokes),
+        },
+      };
+    });
+    setUi({
+      assistReply:
+        "Sketch tidied — still hand-drawn. Formalize to CAD when you want symbols on the plan.",
+      coachOpen: false,
+    });
+  }, [mutate, setUi]);
+
   const interpretSketches = useCallback(() => {
     const strokeCount = state.doc.strokes.length;
     if (strokeCount === 0) {
       setUi({
-        assistReply: "Sketch on the plan first — then convert to CAD assets.",
+        assistReply: "Sketch on the plan first — then formalize to CAD when ready.",
         coachOpen: false,
       });
       return 0;
@@ -673,7 +692,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       coachOpen: false,
       assistReply:
         count > 0
-          ? `Converted ${count} sketch${count === 1 ? "" : "es"} into CAD assets — review sun, setback, and envelope, then accept.`
+          ? `Formalized ${count} sketch${count === 1 ? "" : "es"} into CAD assets — review sun, setback, and envelope, then accept.`
           : "No convertible strokes — draw a path, bed, or canopy mark first.",
     });
     return count;
@@ -2104,6 +2123,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ingestCanopy: ingestCanopyGhosts,
       ingestCanopyImage,
       interpretSketches,
+      tidySketches,
       openReview: () => setUi({ ghostReviewOpen: true }),
       openCoach: () => setUi({ ghostReviewOpen: true }),
     }),
@@ -2119,6 +2139,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ingestCanopyGhosts,
       ingestCanopyImage,
       interpretSketches,
+      tidySketches,
       rejectGhost,
       scanGhosts,
       setUi,
@@ -2156,6 +2177,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi,
     setMode,
     interpretSketches,
+    tidySketches,
     setLayerOpacity,
     undo,
     redo,
