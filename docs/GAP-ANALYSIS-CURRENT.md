@@ -1,3 +1,4 @@
+## Workstream Gap Matrix — generated 2026-07-20T16:30:00Z
 ## Workstream Gap Matrix — generated 2026-07-20T14:31:00Z
 
 | # | Task | Source | Status | Gap Type | Owner | Priority |
@@ -14,6 +15,9 @@
 | 10 | Litestream backup configuration promoted from template to operator setup docs | OUTSTANDING.md | CLOSED in 86db313 | Doc | Agent | P2 |
 | 11 | Mobile `REPLACE_AFTER_eas_init` placeholder extracted to EAS notes and CI linted | OUTSTANDING.md | CLOSED in 86db313 | Test | Agent | P1 |
 | 12 | `docs/WORKSTREAM-STATUS.md` authoritative status document restored or recreated | User prompt | CLOSED in 4e8bfcf | Doc | Agent | P2 |
+| 13 | Human ops runbook with copy-paste steps for Clerk, Redis, Sentry, Fly scale, EAS, external keys, branch protection, and OpenTelemetry endpoint | User prompt | CLOSED in 4e8bfcf | Doc | Agent | P0 |
+| 14 | Dashboard empty/loading/error/filter/delete-undo polish verified against Aegis UX standard | User prompt | CLOSED in ee5330a | UX | Agent | P2 |
+| 15 | Project hub tab locked states, empty states, form validation, destructive confirms, and output actions verified | User prompt | PARTIAL; dead brochure output removed in 4461b28 | UX | Agent | P2 |
 | 13 | Human ops runbook with copy-paste steps for Clerk, Redis, Sentry, Fly scale, EAS, external keys, branch protection, OpenTelemetry endpoint, and Litestream | User prompt | CLOSED in docs update after f00a98e | Doc | Agent | P0 |
 | 14 | Dashboard empty/loading/error/filter/delete-undo polish verified against Aegis UX standard | User prompt | CLOSED in f00a98e; shared nav, designed empty state, status filters, date/name sort, retry link, delete action, and undo toast wired | UX | Agent | P2 |
 | 15 | Project hub tab locked states, empty states, form validation, destructive confirms, and output actions verified | User prompt | PARTIAL; dead brochure output removed in 4461b28; canvas mode locks closed in f00a98e | UX | Agent | P2 |
@@ -21,6 +25,8 @@
 | 17 | Design Studio tooltips, autosave/save state, pointer capture, scale bar, context labels, keyboard legend, and Phase 7 honesty UI verified | User prompt | PARTIAL; autosave Retry button and progressive mode locks closed in f00a98e; Phase 6 AI assist remains intentionally deferred | UX | Agent | P2 |
 | 18 | Settings tabs for integrations, team, billing, and audit log have no dead controls and designed empty/error states | User prompt | PARTIAL | UX | Agent | P2 |
 | 19 | Pipeline processing screen retry/error/complete navigation verified | User prompt | PARTIAL; stopped-pipeline error and real retry endpoint closed in 4461b28 | UX | Agent | P2 |
+| 20 | Navigation shell route guards, dev-mode banner, not-found page, and responsive menu verified | User prompt | PARTIAL; persistent dev-mode banner and IBM Plex shell tokens closed in ee5330a | UX | Agent | P2 |
+| 21 | Local `pnpm run ci` includes placeholder guard, portal Edge guard, lint, typecheck, and Vitest | User prompt | CLOSED in ee5330a | Test | Agent | P1 |
 | 20 | Navigation shell route guards, dev-mode banner, not-found page, and responsive menu verified | User prompt | PARTIAL; global dev-mode banner and dashboard AppNav closed in f00a98e | UX | Agent | P2 |
 
 Gap types: Code | HumanOps | UX | Asset | Test | Doc

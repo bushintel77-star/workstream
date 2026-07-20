@@ -73,6 +73,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
+- [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
+- [x] **Local CI guardrails** — root `pnpm run ci` now runs install,
+      mobile placeholder detection, portal Edge import guard, typecheck, lint,
+      and Vitest.
 - [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox; route spans
       use active context, token usage is attached to provider spans, aerial
       fetches are traced, and worker shutdown flushes telemetry.
@@ -89,6 +93,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.
 - [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
 - [x] **Dashboard delete undo** — toast restores via restore endpoint.
+- [x] **Dashboard project register hardening** — status chips, project cards,
+      search, multi-status filters, sort controls, costing totals, designed
+      empty/error/no-results states, and bottom-left undo toast.
 - [x] **Dashboard filters + shell** — shared AppNav, status filters, date/name sort,
       designed empty state, API retry affordance, and global dev-auth banner.
 - [x] **Pipeline idempotency** — `Idempotency-Key` on full pipeline POST; Redis when

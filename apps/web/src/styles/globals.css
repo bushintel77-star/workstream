@@ -36,11 +36,11 @@
   --block: #b42318;
   --info: #8b6b7a;
 
-  /* type — editorial display + calm ops body */
-  --font-display: "Fraunces", "Georgia", serif;
-  --font-body: "Sora", "Segoe UI", sans-serif;
-  --font-serif: "Fraunces", "Georgia", serif;
-  --font-mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+  /* type — Aegis professional-services families */
+  --font-display: "IBM Plex Mono", monospace;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-serif: "IBM Plex Serif", serif;
+  --font-mono: "IBM Plex Mono", monospace;
 
   /* Aegis aliases */
   --color-obsidian: var(--surface-base);

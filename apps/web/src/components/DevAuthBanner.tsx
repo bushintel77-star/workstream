@@ -1,13 +1,12 @@
 import styles from "./dev-auth-banner.module.css";
 
-export function DevAuthBanner() {
+export function DevAuthBanner({ enabled }: { enabled: boolean }) {
+  if (!enabled) return null;
+
   return (
-    <div className={styles.banner} role="status" aria-live="polite">
-      <span className={styles.kicker}>DEV MODE</span>
-      <span className={styles.copy}>
-        Auth is disabled and operator requests use the shared dev-user identity.
-        Do not use this mode for client work.
-      </span>
+    <div className={styles.banner} role="status">
+      <strong>Dev mode</strong>
+      <span>Authentication is disabled. Do not treat this session as production-ready.</span>
     </div>
   );
 }

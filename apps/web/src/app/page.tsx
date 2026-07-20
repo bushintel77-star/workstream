@@ -1,21 +1,73 @@
-import Link from "next/link";
-import { getIntegrationSummary, listProjects } from "../lib/api";
+import {
+  listCostings,
+  listProjects,
+  type Project,
+  type ProjectStatus,
+} from "../lib/api";
 import { requireSignedIn } from "../lib/auth";
+import {
+  DashboardProjects,
+  type DashboardProject,
+} from "../components/DashboardProjects";
+import { getIntegrationSummary } from "../lib/api";
 import { AppNav } from "../components/AppNav";
-import { DashboardProjectList } from "../components/DashboardProjectList";
 import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
 import { WorkflowPreviewStrip } from "../components/WorkflowPreviewStrip";
 import home from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
+/** Canvas-stage labels — not the old pipeline hub names. */
+const STATUS_LABEL: Record<ProjectStatus, string> = {
+  draft: "Survey",
+  recording: "Survey",
+  processing: "Survey",
+  survey_review: "Sketch",
+  design_review: "CAD",
+  cost_review: "Quote",
+  audit: "Quote",
+  outputs: "Share",
+  complete: "Share",
+};
+
+function dashboardStatus(status: ProjectStatus): DashboardProject["status"] {
+  if (status === "draft" || status === "recording") return "draft";
+  if (status === "processing" || status === "survey_review") return "active";
+  if (status === "design_review" || status === "cost_review" || status === "audit") {
+    return "review";
+  }
+  return "complete";
+}
+
+function projectName(project: Project): string {
+  if (project.client_name?.trim()) return project.client_name.trim();
+  const [firstLine] = project.address.split(",");
+  return firstLine?.trim() || "Untitled project";
+}
+
+async function toDashboardProject(project: Project): Promise<DashboardProject> {
+  const costings = await listCostings(project.id).catch(() => []);
+  const standard =
+    costings.find((costing) => costing.scenario === "standard") ?? costings[0] ?? null;
+  return {
+    id: project.id,
+    address: project.address,
+    createdAt: project.created_at,
+    status: dashboardStatus(project.status),
+    stageLabel: STATUS_LABEL[project.status] ?? project.status,
+    projectName: projectName(project),
+    costTotal: standard?.total ?? null,
+  };
+}
+
 export default async function HomePage() {
   await requireSignedIn();
-  let projects: Awaited<ReturnType<typeof listProjects>> = [];
+  let projects: DashboardProject[] = [];
   const summary = await getIntegrationSummary().catch(() => null);
   let loadError: string | null = null;
   try {
-    projects = await listProjects();
+    const rawProjects = await listProjects();
+    projects = await Promise.all(rawProjects.map(toDashboardProject));
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Could not reach the API.";
   }
@@ -36,21 +88,7 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {loadError ? (
-        <p className={home.error} role="alert">
-          {loadError}
-          <Link className={home.retryLink} href="/">
-            Retry
-          </Link>
-        </p>
-      ) : null}
-
-      <section className={home.list} aria-labelledby="sites-heading">
-        <h2 id="sites-heading" className={home.listTitle}>
-          Sites
-        </h2>
-        <DashboardProjectList projects={projects} />
-      </section>
+      <DashboardProjects projects={projects} loadError={loadError} />
     </main>
   );
 }
