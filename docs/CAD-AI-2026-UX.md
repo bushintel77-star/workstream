@@ -19,7 +19,7 @@ AI is a **spatial collaborator inside the drawing**, not a separate chatbot. Tre
 | Pattern | Rule | Workstream today |
 | --- | --- | --- |
 | Edge-to-edge canvas | Viewport is the drawing | Handoff board; chrome floats |
-| Contextual floating tools | Object stays clear; kit dock at summon point; orbit actions outside glyph | Kit bag fan + selection ring |
+| Contextual floating tools | Object stays clear; bottom asset dock + orbit actions outside glyph | KitAssetDock + selection ring |
 | AI sidecar (right) | Collapsible: dialogue, variations, analytics | Utility hub + Live measures (collapsed by default) |
 | Structure rail (left) | Collapsed CAD data: layers, constraints | Layers panel (`layersOpen` default false) |
 | Instruments | Summon only (margin / hub) — no sticky ribbon on select | Ambient ribbon + `instrumentsSummoned` |
@@ -66,7 +66,7 @@ Golden rule: override, undo, and manual adjust must stay effortless.
 
 ## 5. Spatial clustering (Fitts + proximity)
 
-Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so the drawing stays free. Material inventory docks at the instrument summon point (same Soft / Hard / Trees / Water fan as Place). See `features/reach/fittsProximity.ts`.
+Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so the drawing stays free. Material + open-source library inventory lives in the **bottom asset dock** (Soft / Hard / Trees / Water / Library). See `features/kitInventory/KitAssetDock.tsx`.
 
 ---
 

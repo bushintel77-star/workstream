@@ -11,7 +11,6 @@ import {
   BY_TYPE,
   MODE_TABS,
   PAINT_SWATCHES,
-  type KitBagId,
   type StudioItemType,
   type StudioMode,
 } from "./studioCatalog";
@@ -54,13 +53,9 @@ import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
+import { KitAssetDock } from "./features/kitInventory/KitAssetDock";
 import {
-  nicheActiveIdForItem,
-  nicheActiveIdForPlace,
-  nicheToolsForItem,
-  nicheToolsForPlace,
   nicheToolsForZone,
-  nicheVisibleMaterials,
   zoneNicheActiveId,
   type NicheTool,
 } from "./features/kitInventory/nicheTools";
@@ -192,11 +187,6 @@ export function HandoffDesignStudio({
   const [pointerMarkPreview, setPointerMarkPreview] =
     useState<PointerMarkId | null>(null);
   const [pointerSettingsOpen, setPointerSettingsOpen] = useState(false);
-  /**
-   * Soft / Hard / Trees / Water drill — shared by place palette + selection materials.
-   * null = family chips; set = materials inside that family.
-   */
-  const [kitBagOpen, setKitBagOpen] = useState<KitBagId | null>(null);
   /** Handle hover from CadPlanBoard — move / add / paint affordances. */
   const [boardCursor, setBoardCursor] = useState<
     "default" | "move" | "add" | "paint" | null
@@ -401,59 +391,35 @@ export function HandoffDesignStudio({
         studio.deleteSelected();
       }
 
-      /* Digit accelerators for visible bag materials (CAD hotkeys, not a hotbar). */
+      /* Digit accelerators for Soft/Hard swatches (CAD hotkeys, not a hotbar). */
       if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) {
         const idx = Number(e.key) - 1;
         const selected = studio.items.find(
           (i) => i.id === ui.selectedId && !i.ghost,
         );
-        if (selected && ui.tool !== "zone") {
-          const mats = nicheVisibleMaterials(
-            nicheToolsForItem(selected, {
-              locked: ui.locked,
-              openBag: kitBagOpen,
-            }),
-          );
-          const t = mats[idx];
-          if (t) {
-            e.preventDefault();
-            studio.changeSelectedType(t);
+        const sw = PAINT_SWATCHES[idx];
+        if (sw && ui.tool !== "zone") {
+          e.preventDefault();
+          if (selected) {
+            studio.changeSelectedType(sw.t);
             return;
           }
-        }
-        if (ui.addOpen && ui.mode !== "sketch" && !selected) {
-          const mats = nicheVisibleMaterials(
-            nicheToolsForPlace(ui.mode, kitBagOpen),
-          );
-          const t = mats[idx];
-          if (t) {
-            e.preventDefault();
-            studio.setUi({
-              armed: t,
-              tool: "add",
-              addOpen: true,
-              cmdOpen: false,
-            });
-            return;
-          }
-        }
-        if (ui.tool === "paint" && !ui.frameOn) {
-          const sw = PAINT_SWATCHES[idx];
-          if (sw) {
-            e.preventDefault();
+          if (ui.tool === "paint" && !ui.frameOn) {
             studio.setUi({ paintSwatch: sw.t, tool: "paint" });
+            return;
           }
+          studio.setUi({
+            armed: sw.t,
+            tool: "add",
+            addOpen: true,
+            cmdOpen: false,
+          });
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [studio, ui, kitBagOpen]);
-
-  useEffect(() => {
-    /* New selection / place arm — start at family chips (not a flat swatch dump). */
-    setKitBagOpen(null);
-  }, [ui.selectedId, ui.addOpen, ui.mode]);
+  }, [studio, ui]);
 
   useEffect(() => {
     setQuotePersisted(hasQuote);
@@ -563,7 +529,7 @@ export function HandoffDesignStudio({
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
   /**
    * Instrument home — sticky margin pin only.
-   * Selection uses NicheToolCarousel; CAD picks never move this anchor.
+   * Kit inventory uses the bottom asset dock; CAD picks never move this anchor.
    */
   const instrumentAnchor = useMemo(() => {
     if (ui.drawPoly && ui.drawPoly.length > 0) {
@@ -596,20 +562,6 @@ export function HandoffDesignStudio({
     });
   };
 
-  const placeFanTools = useMemo(
-    () => nicheToolsForPlace(ui.mode, kitBagOpen),
-    [ui.mode, kitBagOpen],
-  );
-
-  const selectionKitTools = useMemo(() => {
-    if (!selectedLive) return [];
-    return nicheToolsForItem(selectedLive, {
-      locked: ui.locked,
-      openBag: kitBagOpen,
-      includeLock: false,
-    });
-  }, [selectedLive, ui.locked, kitBagOpen]);
-
   const studioCursor = pointerMarkPreview
     ? resolveStudioCursor({
         markId: pointerMarkPreview,
@@ -626,24 +578,6 @@ export function HandoffDesignStudio({
         boardCursor:
           boardCursor && boardCursor !== "default" ? boardCursor : null,
       });
-
-  const handleKitTool = (tool: NicheTool) => {
-    if (tool.kind === "bag" && tool.bag) {
-      setKitBagOpen(tool.bag);
-      return;
-    }
-    if (tool.kind === "back") {
-      setKitBagOpen(null);
-      return;
-    }
-    if (tool.kind === "material" && tool.material) {
-      if (selectedLive && ui.tool !== "zone") {
-        studio.changeSelectedType(tool.material);
-        return;
-      }
-      armType(tool.material);
-    }
-  };
 
   const draftLabel =
     ai.status === "scanning"
@@ -1390,32 +1324,6 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {/*
-              Kit dock — Soft / Hard / Trees / Water at the instrument anchor.
-              Never over the selected object (keeps the drawing free to see / drag).
-            */}
-            {planOn &&
-            !ui.focusOn &&
-            ui.mode !== "sketch" &&
-            ui.tool !== "zone" &&
-            ((ui.addOpen && !selectedLive) ||
-              (chrome.selectionRing && selectedLive)) ? (
-              <NicheToolCarousel
-                testId={
-                  selectedLive ? "material-fan" : "add-symbol-strip"
-                }
-                label={selectedLive ? "Materials" : "Place"}
-                xPct={instrumentAnchor.x}
-                yPct={instrumentAnchor.y}
-                tools={selectedLive ? selectionKitTools : placeFanTools}
-                activeId={
-                  selectedLive
-                    ? nicheActiveIdForItem(selectedLive, kitBagOpen)
-                    : nicheActiveIdForPlace(ui.armed, kitBagOpen)
-                }
-                onSelect={handleKitTool}
-              />
-            ) : null}
             {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
               <SelectionRing
                 item={selectedLive}
@@ -1513,39 +1421,29 @@ export function HandoffDesignStudio({
         ) : null}
 
 
-        {/* Paint fallback when selection ring is off — still object-local. */}
-        {ui.tool === "paint" &&
-        selectedLive &&
-        planOn &&
+        {/*
+          Bottom asset dock — Soft / Hard / Trees / Water + open-source Library.
+          Always available on the plan; never overlays the selected object.
+        */}
+        {planOn &&
+        chrome.drawTools &&
         !ui.focusOn &&
         !ui.clientView &&
         !ui.frameOn &&
-        !chrome.selectionRing ? (
-          <NicheToolCarousel
-            testId="paint-swatch-bar"
-            label="Materials"
-            xPct={instrumentAnchor.x}
-            yPct={instrumentAnchor.y}
-            tools={nicheToolsForItem(selectedLive, {
-              locked: ui.locked,
-              openBag: kitBagOpen,
-              includeLock: false,
-            })}
-            activeId={nicheActiveIdForItem(selectedLive, kitBagOpen)}
-            onSelect={(tool: NicheTool) => {
-              if (tool.kind === "bag" && tool.bag) {
-                setKitBagOpen(tool.bag);
-                return;
-              }
-              if (tool.kind === "back") {
-                setKitBagOpen(null);
-                return;
-              }
-              if (tool.material) {
-                studio.setUi({ paintSwatch: tool.material, tool: "paint" });
-                studio.changeSelectedType(tool.material);
-              }
-            }}
+        !ui.foundationCleanse &&
+        ui.tool !== "zone" &&
+        ui.mode !== "sketch" ? (
+          <KitAssetDock
+            mode={ui.mode}
+            armed={ui.armed}
+            selectedType={selectedLive?.t ?? null}
+            paintSwatch={ui.paintSwatch}
+            tool={ui.tool}
+            onArmMaterial={armType}
+            onPaintMaterial={(t) =>
+              studio.setUi({ paintSwatch: t, tool: "paint" })
+            }
+            onRetypeSelected={(t) => studio.changeSelectedType(t)}
           />
         ) : null}
 

@@ -1,42 +1,34 @@
-# Material fan UX (canvas-first)
+# Material + library inventory (canvas-first)
 
-Point of difference: borrow **structure** from inventory / utility UX
-(radial slots, progressive disclosure, digit accelerators, skim-then-commit),
-then render it as calm CAD / architectural studio chrome — never as a game.
+Point of difference: borrow **structure** from inventory / asset-library UX
+(family tabs, skimable chips, digit accelerators), then render it as calm CAD
+studio chrome — never as a game, never over the selected object.
 
-**Spatial rule:** the selected object stays clear. Material inventory docks at
-the **instrument anchor** (same Soft / Hard / Trees / Water fan as Place).
-Selection actions (delete / lock / Ask AI / deselect) orbit **outside** the
-glyph so the drawing stays visible and draggable.
+**Spatial rule:** the drawing stays clear. Inventory lives in a **bottom asset
+dock** (Figma / gardenmap / CAD palette pattern). Selection actions orbit
+**outside** the glyph.
 
-## Structure we keep
+## Open-source library packs
 
-| Borrowed idea | Studio surface |
-|---------------|----------------|
-| Slot clarity | Material glyphs in a short fan |
-| Progressive disclosure | Soft / Hard (/ Trees / Water) → materials |
-| Atelier linger | Linger → near-rest fade |
-| Digit 1–9 | Accelerator keys for **visible** materials |
-| Skim then commit | Pointer mark preview in settings |
+See [AI-CAD-DESIGN-LIBRARY.md](./AI-CAD-DESIGN-LIBRARY.md) and
+[OPEN-CROP-ICONS.md](./OPEN-CROP-ICONS.md).
 
-## Surface we refuse
-
-- No material carousel centred on the selected object
-- No opaque hub covering the glyph
-- No “loadout / equip / hotbar / bag” language in the UI
-- No sticky instrument hub when not summoned
-- Selecting geometry does **not** summon the instrument ribbon
+| Pack | Dock |
+|------|------|
+| Soft / Hard / Trees / Water | Drafting chips (studio types) |
+| Curtis gold + Osmic + PlanZV + Wikimedia trees | **Library** tab (Essentials / Planting / Hardscape / AI CAD) |
 
 ## Behaviour
 
-1. **Selection** → kit dock at instrument anchor; orbit actions clear of the object
-2. **Add armed** → same Soft / Hard / Trees / Water fan at the instrument anchor
-3. **Pointer** → personal garden mark when idle; function follows tool / handle hover
-4. **Instruments** → summon only (empty margin / tool arm)
+1. **Dock always on** in CAD / survey plan modes (hidden on Fit / focus / sketch / zone)
+2. Pick a chip → arms Place (or retypes selection / sets Paint swatch)
+3. Library chips map through `mapSymbolToStudioType` onto the drawing types
+4. Digits 1–5 accelerate Soft/Hard paint swatches
+5. Instruments still summon from empty margin — separate from inventory
 
 ## Files
 
-- `features/kitInventory/NicheToolCarousel.tsx` — contextual fan
-- `features/kitInventory/nicheTools.ts` — bag / place / selection / zone tools
-- `features/pointer/resolveStudioCursor.ts` — context-aware cursor
-- Wired from `HandoffDesignStudio` (keeps `add-symbol-strip`, `paint-swatch-*`, `material-fan` test ids)
+- `features/kitInventory/KitAssetDock.tsx` — bottom inventory
+- `features/kitInventory/nicheTools.ts` — zone carousel helpers (still used)
+- `docs/AI-CAD-DESIGN-LIBRARY.md` — PlanZV / Osmic import
+- Wired from `HandoffDesignStudio` (`kit-asset-dock`, `paint-swatch-*`)
