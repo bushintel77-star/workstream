@@ -17,6 +17,9 @@ import { playInstrumentTick } from "../ambient/instrumentTick";
 import css from "./draftGridStudio.module.css";
 
 type Props = {
+  /** Board-% — sits near the work, not a screen corner. */
+  anchorXPct: number;
+  anchorYPct: number;
   formation: GridFormation;
   ink: GridInk;
   grain: GridGrain;
@@ -38,6 +41,8 @@ type Props = {
  * are one-tap cycles. Top-tier: tiny, opaque when idle, alive on demand.
  */
 export function DraftGridStudio({
+  anchorXPct,
+  anchorYPct,
   formation,
   ink,
   grain,
@@ -91,6 +96,9 @@ export function DraftGridStudio({
     onPreviewFormation(null);
   };
 
+  const ax = Math.max(14, Math.min(86, anchorXPct));
+  const ay = Math.max(18, Math.min(88, anchorYPct + 16));
+
   return (
     <div
       className={css.root}
@@ -98,6 +106,7 @@ export function DraftGridStudio({
       data-awake={awake ? "true" : "false"}
       data-formation={shownF}
       data-ink={shownI}
+      style={{ left: `${ax}%`, top: `${ay}%` }}
       onMouseEnter={() => setAwake(true)}
       onMouseLeave={() => {
         setAwake(false);
@@ -185,6 +194,15 @@ export function DraftGridStudio({
   );
 }
 
+/** Face preview strokes — light on dark slate glass (canvas mesh keeps GRID_INK_STROKE). */
+const CONTROL_STROKE: Record<GridInk, string> = {
+  charcoal: "rgba(232, 240, 248, 0.55)",
+  slate: "rgba(180, 200, 220, 0.72)",
+  paper: "rgba(255, 251, 252, 0.88)",
+  mist: "rgba(210, 222, 235, 0.7)",
+  signal: "rgba(255, 150, 168, 0.8)",
+};
+
 function FormationGlyph({
   formation,
   ink,
@@ -192,7 +210,7 @@ function FormationGlyph({
   formation: GridFormation;
   ink: GridInk;
 }) {
-  const stroke = GRID_INK_STROKE[ink];
+  const stroke = CONTROL_STROKE[ink] ?? GRID_INK_STROKE[ink];
   return (
     <svg className={css.glyph} viewBox="0 0 20 20" aria-hidden>
       {formation === "ortho" || formation === "veil" ? (

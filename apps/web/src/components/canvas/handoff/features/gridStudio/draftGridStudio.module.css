@@ -1,34 +1,33 @@
-/* Micro grid studio — same DNA as instrument chrome / glass strips. */
+/* Micro grid studio — dark slate glass on blush canvas (readable + translucent). */
 
 .root {
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  --ink: #e8f0f8;
+  --ink-soft: rgba(232, 240, 248, 0.78);
+  --glass: rgba(26, 36, 48, 0.72);
+  --glass-border: rgba(232, 240, 248, 0.22);
   position: absolute;
-  left: calc(var(--ws-safe-left, 64px) + 8px);
-  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
-  z-index: 14;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 0;
   padding: 3px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
-  backdrop-filter: blur(12px);
-  opacity: 0.38;
-  transform: translateY(2px);
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 18px rgba(26, 36, 48, 0.28);
+  opacity: 0.72;
+  transform: translate(-50%, -50%);
   transition:
     opacity 240ms var(--ease),
-    transform 240ms var(--ease),
     background 200ms ease,
     border-color 200ms ease;
 }
 
 .root[data-awake="true"] {
   opacity: 1;
-  transform: translateY(0);
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
-  border-color: var(--hc-line, rgba(36, 19, 24, 0.12));
-  box-shadow: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
+  background: rgba(26, 36, 48, 0.86);
 }
 
 .face {
@@ -36,16 +35,17 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: calc(var(--hc-r-control, 10px) - 2px);
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   display: grid;
   place-items: center;
   flex: none;
+  color: var(--ink);
 }
 
 .face:hover {
-  background: rgba(36, 19, 24, 0.04);
+  background: rgba(232, 240, 248, 0.1);
 }
 
 .glyph {
@@ -81,14 +81,14 @@
   height: 18px;
   padding: 0;
   border-radius: 5px;
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  background: var(--ink, rgba(36, 19, 24, 0.14));
+  border: 1px solid var(--glass-border);
+  background: var(--ink, rgba(232, 240, 248, 0.35));
   cursor: pointer;
   flex: none;
 }
 
 .ink:hover {
-  outline: 1px solid rgba(36, 19, 24, 0.28);
+  outline: 1px solid rgba(232, 240, 248, 0.45);
   outline-offset: 1px;
 }
 
@@ -100,7 +100,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--ink-soft);
   cursor: pointer;
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
@@ -111,12 +111,13 @@
 
 .grain:hover,
 .snap:hover {
-  background: rgba(36, 19, 24, 0.05);
-  color: var(--hc-ink, #241318);
+  background: rgba(232, 240, 248, 0.1);
+  color: var(--ink);
 }
 
 .snapOn {
-  color: var(--hc-ink, #241318);
+  color: var(--ink);
+  background: rgba(232, 240, 248, 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {

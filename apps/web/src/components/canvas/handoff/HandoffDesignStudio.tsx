@@ -157,11 +157,12 @@ export function HandoffDesignStudio({
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
     initialTitleBlock,
   );
-  /** Probe point for shade → Add strip filter (follows pointer while Add open). */
-  const [addProbePct, setAddProbePct] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
+  /** Last work point on the board — instruments + Add sun probe. */
+  const [workPct, setWorkPct] = useState<{ x: number; y: number }>({
+    x: 50,
+    y: 58,
+  });
+  const addProbePct = workPct;
 
   useEffect(() => {
     const el = boardRef.current;
@@ -444,6 +445,16 @@ export function HandoffDesignStudio({
 
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
+  /** Instruments float on the drawing — selection → draw cursor → last work. */
+  const instrumentAnchor = useMemo(() => {
+    if (selectedLive) return { x: selectedLive.x, y: selectedLive.y };
+    if (ui.drawCursor) return { x: ui.drawCursor.x, y: ui.drawCursor.y };
+    if (ui.drawPoly && ui.drawPoly.length > 0) {
+      const last = ui.drawPoly[ui.drawPoly.length - 1]!;
+      return { x: last.x, y: last.y };
+    }
+    return { x: workPct.x, y: workPct.y };
+  }, [selectedLive, ui.drawCursor, ui.drawPoly, workPct.x, workPct.y]);
   const selectedTradeTag =
     selectedLive && chrome.tradeMargin
       ? tradeTagForItem(trade, selectedLive.id)
@@ -786,12 +797,11 @@ export function HandoffDesignStudio({
         data-testid="studio-board"
         ref={boardRef}
         onPointerMove={(e) => {
-          if (!ui.addOpen || !ui.shadeOn) return;
           const el = boardRef.current;
           if (!el) return;
           const r = el.getBoundingClientRect();
           if (r.width < 1 || r.height < 1) return;
-          setAddProbePct({
+          setWorkPct({
             x: Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)),
             y: Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100)),
           });
@@ -1120,7 +1130,14 @@ export function HandoffDesignStudio({
               />
             ) : null}
             {ui.tool === "zone" && !ui.focusOn && !ui.clientView ? (
-              <div className={css.zoneKindBar} data-testid="zone-kind-bar">
+              <div
+                className={css.zoneKindBar}
+                data-testid="zone-kind-bar"
+                style={{
+                  left: `${Math.max(18, Math.min(82, instrumentAnchor.x))}%`,
+                  top: `${Math.max(10, Math.min(40, instrumentAnchor.y - 12))}%`,
+                }}
+              >
                 <button
                   type="button"
                   className={`${css.chip}${ui.zoneKind === "drip" ? ` ${css.chipActive}` : ""}`}
@@ -1140,7 +1157,14 @@ export function HandoffDesignStudio({
               </div>
             ) : null}
             {ui.tool === "paint" && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
-              <div className={css.paintSwatchBar} data-testid="paint-swatch-bar">
+              <div
+                className={css.paintSwatchBar}
+                data-testid="paint-swatch-bar"
+                style={{
+                  left: `${Math.max(18, Math.min(82, instrumentAnchor.x))}%`,
+                  top: `${Math.max(10, Math.min(42, instrumentAnchor.y - 14))}%`,
+                }}
+              >
                 {PAINT_SWATCHES.map((s) => (
                   <button
                     key={s.t}
@@ -1171,6 +1195,8 @@ export function HandoffDesignStudio({
             !ui.frameOn &&
             !ui.foundationCleanse ? (
               <DraftGridStudio
+                anchorXPct={instrumentAnchor.x}
+                anchorYPct={instrumentAnchor.y}
                 formation={ui.gridFormation}
                 ink={ui.gridInk}
                 grain={ui.gridGrain}
@@ -1268,6 +1294,8 @@ export function HandoffDesignStudio({
             layerOpacity={ui.layerOpacity}
             parchmentPeel={ui.parchmentPeel}
             hasAerial={Boolean(liveAerial)}
+            anchorXPct={instrumentAnchor.x}
+            anchorYPct={instrumentAnchor.y}
             onTool={studio.setTool}
             onMeasure={() =>
               studio.setTool(ui.tool === "measure" ? "pan" : "measure")

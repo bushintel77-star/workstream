@@ -34,6 +34,9 @@ type Props = {
   layerOpacity: LayerOpacity;
   parchmentPeel: number;
   hasAerial: boolean;
+  /** Board-% anchor — selection, draw cursor, or last work point. */
+  anchorXPct: number;
+  anchorYPct: number;
   onTool: (t: StudioTool) => void;
   onMeasure: () => void;
   onUndo: () => void;
@@ -58,7 +61,7 @@ const DRAFTING: ReadonlySet<string> = new Set([
   "sketch",
 ]);
 
-const EDGE_PX = 56;
+const PROX_PCT = 14;
 const FADE_MS = 900;
 
 type Phase = "shadow" | "awake" | "carousel" | "armed";
@@ -72,9 +75,8 @@ type Instrument = {
 };
 
 /**
- * Demand-driven instrument chrome.
- * Shadow when idle → awakens on approach → half-circle carousel while drafting.
- * No focus-mode toggle — presence follows cursor + active tool.
+ * Context-aware instruments — float on the drawing, not a far-left dock.
+ * Shadow hub → awaken near work → half-circle carousel while drafting.
  */
 export function AmbientRibbon({
   tool,
@@ -86,6 +88,8 @@ export function AmbientRibbon({
   layerOpacity,
   parchmentPeel,
   hasAerial,
+  anchorXPct,
+  anchorYPct,
   onTool,
   onMeasure,
   onUndo,
@@ -97,6 +101,7 @@ export function AmbientRibbon({
 }: Props) {
   const surveyMode = mode === "survey";
   const drafting = DRAFTING.has(tool) || (tool === "lock" && locked);
+  const rootRef = useRef<HTMLElement>(null);
   const [proximity, setProximity] = useState(false);
   const [hovered, setHovered] = useState(false);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,7 +134,17 @@ export function AmbientRibbon({
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      const near = e.clientX <= EDGE_PX;
+      const board = rootRef.current?.closest(
+        "[data-testid='studio-board']",
+      ) as HTMLElement | null;
+      const el = board ?? rootRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return;
+      const px = ((e.clientX - r.left) / r.width) * 100;
+      const py = ((e.clientY - r.top) / r.height) * 100;
+      const near =
+        Math.hypot(px - anchorXPct, py - anchorYPct) <= PROX_PCT;
       setProximity(near);
       if (near) {
         clearFade();
@@ -147,7 +162,7 @@ export function AmbientRibbon({
       window.removeEventListener("mouseleave", onLeave);
       clearFade();
     };
-  }, [clearFade, scheduleFade]);
+  }, [anchorXPct, anchorYPct, clearFade, scheduleFade]);
 
   const instruments = useMemo((): Instrument[] => {
     const draft: Instrument[] = TOOLS.filter((t) => t.id !== "reset").map(
@@ -250,23 +265,32 @@ export function AmbientRibbon({
   const arcAngles = useMemo(() => {
     const n = draftInstruments.length;
     if (n <= 1) return [0];
-    const span = 132; // half-circle degrees
+    const span = 150;
     const start = -span / 2;
     return draftInstruments.map((_, i) => {
-      // Rotate so active sits near the horizontal (0°)
       const base = start + (span * i) / (n - 1);
       const activeAngle = start + (span * activeDraftIdx) / (n - 1);
       return base - activeAngle;
     });
   }, [activeDraftIdx, draftInstruments]);
 
+  const ax = Math.max(12, Math.min(88, anchorXPct));
+  const ay = Math.max(14, Math.min(86, anchorYPct));
+
   return (
     <nav
+      ref={rootRef}
       className={css.ribbon}
       data-testid="ambient-ribbon"
       data-phase={phase}
       data-expanded={hot ? "true" : "false"}
       aria-label="Drawing instruments"
+      style={
+        {
+          left: `${ax}%`,
+          top: `${ay}%`,
+        } as CSSProperties
+      }
       onMouseEnter={() => {
         clearFade();
         setHovered(true);
@@ -283,7 +307,20 @@ export function AmbientRibbon({
         cycleDraft(e.deltaY > 0 ? 1 : -1);
       }}
     >
-      <div className={css.shadowStem} aria-hidden />
+      <button
+        type="button"
+        className={css.hub}
+        data-testid="instrument-hub"
+        title="Instruments"
+        aria-label="Open drawing instruments"
+        onClick={() => {
+          clearFade();
+          setHovered(true);
+          playInstrumentTick("step");
+        }}
+      >
+        ◈
+      </button>
 
       <div className={css.draftWell} data-testid="instrument-carousel">
         {draftInstruments.map((t, i) => {
@@ -305,7 +342,7 @@ export function AmbientRibbon({
               style={
                 {
                   ["--arc" as string]: `${angle}deg`,
-                  ["--arc-i" as string]: String(i),
+                  ["--stack" as string]: `${(draftInstruments.length - 1 - i) * 38}px`,
                 } as CSSProperties
               }
               onClick={() => runInstrument(t.id)}

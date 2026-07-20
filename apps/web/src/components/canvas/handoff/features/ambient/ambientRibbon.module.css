@@ -1,91 +1,89 @@
-/* Demand-driven instrument chrome — same blush DNA as docks / strips. */
+/*
+ * Context instruments — float on the drawing.
+ * Dark slate glass (not canvas blush) so chrome stays readable at low opacity.
+ */
 
 .ribbon {
-  --ink: var(--hc-ink, #241318);
+  --ink: #e8f0f8;
+  --ink-soft: rgba(232, 240, 248, 0.78);
+  --glass: rgba(26, 36, 48, 0.72);
+  --glass-border: rgba(232, 240, 248, 0.22);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
   position: absolute;
-  left: 0;
-  top: 36px;
-  bottom: 36px;
-  z-index: 18;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
-  width: 44px;
-  padding: 12px 4px;
-  border: none;
-  background: transparent;
-  opacity: 0.14;
-  transform: translateX(-10px);
-  transition:
-    opacity 320ms var(--ease),
-    transform 340ms var(--ease),
-    width 280ms var(--ease);
-  pointer-events: auto;
-}
-
-.shadowStem {
-  position: absolute;
-  left: 0;
-  top: 12%;
-  bottom: 12%;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(36, 19, 24, 0.18) 18%,
-    rgba(36, 19, 24, 0.26) 50%,
-    rgba(36, 19, 24, 0.18) 82%,
-    transparent 100%
-  );
+  z-index: 22;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
   pointer-events: none;
+  opacity: 0.7;
   transition: opacity 280ms var(--ease);
 }
 
 .ribbon[data-phase="awake"],
 .ribbon[data-phase="carousel"] {
   opacity: 1;
-  transform: translateX(0);
-  width: 58px;
 }
 
 .ribbon[data-phase="armed"] {
-  opacity: 0.4;
-  transform: translateX(-4px);
-  width: 52px;
+  opacity: 0.85;
 }
 
-.ribbon[data-phase="awake"] .shadowStem,
-.ribbon[data-phase="carousel"] .shadowStem {
-  opacity: 0;
+.hub {
+  pointer-events: auto;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(14px) saturate(1.05);
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(26, 36, 48, 0.28);
+  transition:
+    transform 200ms var(--ease),
+    background 160ms ease,
+    opacity 200ms ease;
+}
+
+.ribbon[data-phase="shadow"] .hub {
+  opacity: 0.78;
+}
+
+.hub:hover {
+  background: rgba(38, 52, 68, 0.88);
+  transform: scale(1.06);
 }
 
 .draftWell {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 2px;
-  padding-top: 4px;
-}
-
-.ribbon[data-phase="carousel"] .draftWell,
-.ribbon[data-phase="armed"] .draftWell {
-  justify-content: center;
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
 }
 
 .btn {
+  pointer-events: auto;
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 40px;
   min-height: 36px;
-  border: none;
-  border-radius: var(--hc-r-control, 10px);
-  background: transparent;
-  color: rgba(36, 19, 24, 0.55);
+  margin: -18px 0 0 -20px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  color: var(--ink-soft);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -94,32 +92,53 @@
   gap: 1px;
   font: inherit;
   padding: 3px 0;
-  position: relative;
-  transform-origin: left center;
+  box-shadow: 0 4px 14px rgba(26, 36, 48, 0.22);
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
   transition:
+    opacity 180ms var(--ease),
+    transform 260ms var(--ease),
     background 140ms ease,
-    color 140ms ease,
-    transform 280ms var(--ease),
-    opacity 200ms ease;
+    color 140ms ease;
 }
 
-.ribbon[data-phase="shadow"] .btn {
-  opacity: 0.4;
-}
-
-.ribbon[data-phase="awake"] .btn,
-.ribbon[data-phase="carousel"] .btn,
-.ribbon[data-phase="armed"] .btn {
+.ribbon[data-phase="awake"] .btn[data-kind="draft"],
+.ribbon[data-phase="carousel"] .btn[data-kind="draft"],
+.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
   opacity: 1;
+  pointer-events: auto;
+  transform: rotate(var(--arc, 0deg)) translateY(-56px)
+    rotate(calc(-1 * var(--arc, 0deg)));
+}
+
+.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
+  opacity: 0.78;
+  background: rgba(26, 36, 48, 0.58);
+}
+
+.ribbon[data-phase="awake"] .btn[data-kind="draft"] {
+  /* Compact stack above hub when awake but not drafting */
+  transform: translateY(calc(-42px - var(--stack, 0px)));
+}
+
+.ribbon[data-phase="carousel"] .btn[data-kind="draft"].active,
+.ribbon[data-phase="armed"] .btn[data-kind="draft"].active {
+  background: rgba(232, 240, 248, 0.94);
+  color: #1a2430;
+  border-color: rgba(232, 240, 248, 0.55);
+  transform: rotate(var(--arc, 0deg)) translateY(-64px)
+    rotate(calc(-1 * var(--arc, 0deg))) scale(1.06);
 }
 
 .btn:hover {
-  background: rgba(36, 19, 24, 0.06);
+  background: rgba(38, 52, 68, 0.9);
   color: var(--ink);
 }
 
 .btn:active {
-  transform: scale(0.96);
+  transform: rotate(var(--arc, 0deg)) translateY(-56px)
+    rotate(calc(-1 * var(--arc, 0deg))) scale(0.96);
 }
 
 .btn:disabled {
@@ -128,25 +147,25 @@
 }
 
 .active {
-  background: var(--ink);
-  color: var(--hc-invert, #fff6f8);
+  background: rgba(232, 240, 248, 0.94);
+  color: #1a2430;
 }
 
 .glyph {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
 }
 
 .label {
-  font-size: 7.5px;
+  font-size: 7px;
   font-weight: 650;
   letter-spacing: 0.02em;
   opacity: 0;
   max-height: 0;
   overflow: hidden;
   transition:
-    opacity 160ms ease,
-    max-height 160ms ease;
+    opacity 140ms ease,
+    max-height 140ms ease;
 }
 
 .ribbon[data-phase="awake"] .label,
@@ -155,78 +174,58 @@
   max-height: 12px;
 }
 
-.ribbon[data-phase="carousel"] .btn[data-kind="draft"],
-.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
-  position: absolute;
-  left: 4px;
-  top: 50%;
-  margin-top: -18px;
-  transform: rotate(var(--arc, 0deg)) translateX(64px)
-    rotate(calc(-1 * var(--arc, 0deg)));
-  width: 42px;
-  min-height: 38px;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
-  backdrop-filter: blur(12px);
-  box-shadow: none;
-}
-
-.ribbon[data-phase="carousel"] .btn[data-kind="draft"].active,
-.ribbon[data-phase="armed"] .btn[data-kind="draft"].active {
-  background: var(--ink);
-  color: var(--hc-invert, #fff6f8);
-  border-color: var(--ink);
-  transform: rotate(var(--arc, 0deg)) translateX(72px)
-    rotate(calc(-1 * var(--arc, 0deg))) scale(1.05);
-}
-
-.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
-  background: rgba(255, 251, 252, 0.55);
-  border-color: var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-}
-
-.ribbon[data-phase="carousel"] .btn[data-kind="draft"]:active {
-  transform: rotate(var(--arc, 0deg)) translateX(64px)
-    rotate(calc(-1 * var(--arc, 0deg))) scale(0.96);
-}
-
 .utility {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  pointer-events: none;
-  transition:
-    opacity 200ms var(--ease),
-    max-height 240ms var(--ease);
+  transform: translate(22px, -8px);
+  transition: opacity 180ms var(--ease);
 }
 
 .ribbon[data-phase="awake"] .utility,
 .ribbon[data-phase="carousel"] .utility {
   opacity: 1;
-  max-height: 220px;
   pointer-events: auto;
 }
 
+.utility .btn {
+  position: relative;
+  left: auto;
+  top: auto;
+  margin: 0;
+  width: 34px;
+  min-height: 30px;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.utility .btn:active {
+  transform: scale(0.96);
+}
+
 .layers {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   opacity: 0;
-  pointer-events: none;
-  max-height: 0;
-  overflow: hidden;
-  transition:
-    opacity 200ms var(--ease),
-    max-height 240ms var(--ease);
+  transform: translate(-110px, -8px);
+  transition: opacity 180ms var(--ease);
+  max-width: 96px;
 }
 
 .ribbon[data-phase="awake"] .layers,
 .ribbon[data-phase="carousel"] .layers {
   opacity: 1;
-  max-height: 200px;
   pointer-events: auto;
 }
 
@@ -235,14 +234,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 4px;
-  min-height: 26px;
-  padding: 0 6px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  min-height: 24px;
+  padding: 0 7px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
   cursor: pointer;
   font: inherit;
   color: var(--ink);
+  box-shadow: 0 3px 10px rgba(26, 36, 48, 0.2);
 }
 
 .chipName {
@@ -250,7 +251,7 @@
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--ink-soft);
 }
 
 .chipCount {
@@ -264,24 +265,14 @@
 @media (prefers-reduced-motion: reduce) {
   .ribbon,
   .btn,
-  .label,
+  .hub,
   .utility,
-  .layers,
-  .shadowStem {
+  .layers {
     transition: none;
   }
 
   .ribbon[data-phase="carousel"] .btn[data-kind="draft"],
   .ribbon[data-phase="armed"] .btn[data-kind="draft"] {
-    position: relative;
-    left: auto;
-    top: auto;
-    margin-top: 0;
-    transform: none;
-  }
-
-  .ribbon[data-phase="carousel"] .btn[data-kind="draft"].active,
-  .ribbon[data-phase="armed"] .btn[data-kind="draft"].active {
-    transform: none;
+    transform: translateY(-48px);
   }
 }
