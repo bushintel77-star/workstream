@@ -24,6 +24,7 @@ import type {
 import { saveDesignCanvasAction } from "../../../../app/actions";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
 import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
+import { playMaterialFoley } from "../features/ambient/materialFoley";
 import { buildWorkableSiteSchedule } from "../geometry/workableCanvas";
 import {
   BY_TYPE,
@@ -741,9 +742,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const acceptGhost = useCallback(
     (id: string) => {
+      const ghost = state.doc.items.find((i) => i.id === id);
       mutate((snap) => ({ snap: acceptProposal(snap, id) }));
+      if (ghost) playMaterialFoley(ghost.t);
     },
-    [mutate],
+    [mutate, state.doc.items],
   );
 
   const rejectGhost = useCallback(
@@ -839,6 +842,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         }
         return { snap: next, idn: nextIdn };
       });
+      playMaterialFoley(form);
       setUi({
         floraSession: null,
         armed: null,
@@ -945,6 +949,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         }
         return { snap: next, idn: nextIdn };
       });
+      playMaterialFoley(armed);
       // Paint stays armed (Mac Paint bucket); Add disarms after place.
       setUi({
         armed: painting ? state.ui.armed : null,
@@ -1543,6 +1548,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ),
         },
       }));
+      playMaterialFoley(t);
     },
     [mutate, state.ui.locked, state.ui.selectedId],
   );
@@ -1560,6 +1566,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ),
         },
       }));
+      playMaterialFoley(t);
     },
     [mutate, state.ui.locked, state.ui.paintSwatch],
   );
