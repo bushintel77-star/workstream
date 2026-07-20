@@ -58,22 +58,25 @@
   text-overflow: ellipsis;
 }
 
-/* Nodes stay within LOCAL_ACTION_PX of the selection (Fitts). */
+/*
+ * Orbit outside the glyph — clear the object centre for view / drag / handles.
+ * Slightly beyond LOCAL_ACTION_PX so large trees stay readable.
+ */
 
 .north {
   left: 50%;
-  top: -52px;
+  top: -72px;
   transform: translateX(-50%);
 }
 
 .east {
-  left: 52px;
+  left: 72px;
   top: 50%;
   transform: translateY(-50%);
 }
 
 .west {
-  right: 52px;
+  right: 72px;
   top: 50%;
   transform: translateY(-50%);
   left: auto;
@@ -81,29 +84,20 @@
 
 .south {
   left: 50%;
-  top: 52px;
+  top: 72px;
   transform: translateX(-50%);
 }
 
-.hub {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  padding: 4px;
+.hubChip {
+  min-width: 56px;
 }
 
 .hubTag {
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 700;
   text-align: center;
   line-height: 1.15;
-  max-width: 44px;
+  max-width: 72px;
 }
 
 @keyframes ringIn {

@@ -18,8 +18,8 @@ type Props = {
 };
 
 /**
- * Compact selection hub at the prime pixel — delete / lock / deselect / Ask AI.
- * Material families share the place kit fan (bag progressive disclosure).
+ * Selection actions orbit the object — never a hub on the glyph itself.
+ * Materials live on the shared kit dock (instrument anchor), not here.
  */
 export function SelectionRing({
   item,
@@ -39,12 +39,12 @@ export function SelectionRing({
       data-testid="selection-ring"
       data-locked={locked ? "true" : "false"}
       style={{ left: `${xPct}%`, top: `${yPct}%` }}
-      onPointerDown={(e) => e.stopPropagation()}
     >
       <button
         type="button"
         className={`${css.node} ${css.west}`}
         title="Delete"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={onDelete}
       >
         Delete
@@ -56,6 +56,7 @@ export function SelectionRing({
           className={`${css.node} ${css.north}`}
           data-testid="selection-lock"
           title={locked ? "Unlock" : "Lock"}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={onLock}
         >
           {locked ? "Unlock" : "Lock"}
@@ -68,6 +69,7 @@ export function SelectionRing({
           className={`${css.node} ${css.east}`}
           data-testid="selection-ask-ai"
           title="Ask AI about this selection"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={onAskAi}
         >
           Ask AI
@@ -76,8 +78,9 @@ export function SelectionRing({
 
       <button
         type="button"
-        className={css.hub}
+        className={`${css.node} ${css.south} ${css.hubChip}`}
         title="Deselect"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={onClose}
       >
         <span className={css.hubTag}>{def.tag}</span>

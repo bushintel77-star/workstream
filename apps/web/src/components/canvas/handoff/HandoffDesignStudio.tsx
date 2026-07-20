@@ -1390,54 +1390,48 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {/* Place palette — Soft / Hard / Trees / Water at the summon point. */}
-            {ui.addOpen &&
-            !selectedLive &&
-            planOn &&
+            {/*
+              Kit dock — Soft / Hard / Trees / Water at the instrument anchor.
+              Never over the selected object (keeps the drawing free to see / drag).
+            */}
+            {planOn &&
             !ui.focusOn &&
             ui.mode !== "sketch" &&
-            ui.tool !== "zone" ? (
+            ui.tool !== "zone" &&
+            ((ui.addOpen && !selectedLive) ||
+              (chrome.selectionRing && selectedLive)) ? (
               <NicheToolCarousel
-                testId="add-symbol-strip"
-                label="Place"
+                testId={
+                  selectedLive ? "material-fan" : "add-symbol-strip"
+                }
+                label={selectedLive ? "Materials" : "Place"}
                 xPct={instrumentAnchor.x}
                 yPct={instrumentAnchor.y}
-                tools={placeFanTools}
-                activeId={nicheActiveIdForPlace(ui.armed, kitBagOpen)}
+                tools={selectedLive ? selectionKitTools : placeFanTools}
+                activeId={
+                  selectedLive
+                    ? nicheActiveIdForItem(selectedLive, kitBagOpen)
+                    : nicheActiveIdForPlace(ui.armed, kitBagOpen)
+                }
                 onSelect={handleKitTool}
               />
             ) : null}
             {chrome.selectionRing && selectedLive && ui.tool !== "zone" ? (
-              <>
-                {/*
-                  Materials at the prime pixel — bag families (Soft / Hard),
-                  not every swatch at once. Lock lives on the selection ring.
-                */}
-                <NicheToolCarousel
-                  testId="material-fan"
-                  label="Materials"
-                  xPct={selectedLive.x}
-                  yPct={selectedLive.y}
-                  tools={selectionKitTools}
-                  activeId={nicheActiveIdForItem(selectedLive, kitBagOpen)}
-                  onSelect={handleKitTool}
-                />
-                <SelectionRing
-                  item={selectedLive}
-                  xPct={selectedLive.x}
-                  yPct={selectedLive.y}
-                  locked={ui.locked}
-                  onDelete={studio.deleteSelected}
-                  onClose={() => studio.setSelection(null, [])}
-                  onLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
-                  onAskAi={() =>
-                    studio.setUi({
-                      cmdOpen: true,
-                      cmdQuery: `about ${BY_TYPE[selectedLive.t]?.tag ?? selectedLive.t}`,
-                    })
-                  }
-                />
-              </>
+              <SelectionRing
+                item={selectedLive}
+                xPct={selectedLive.x}
+                yPct={selectedLive.y}
+                locked={ui.locked}
+                onDelete={studio.deleteSelected}
+                onClose={() => studio.setSelection(null, [])}
+                onLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
+                onAskAi={() =>
+                  studio.setUi({
+                    cmdOpen: true,
+                    cmdQuery: `about ${BY_TYPE[selectedLive.t]?.tag ?? selectedLive.t}`,
+                  })
+                }
+              />
             ) : null}
             {chrome.tradeMargin && selectedTradeTag && selectedLive ? (
               <TradeSkuTag
@@ -1530,8 +1524,8 @@ export function HandoffDesignStudio({
           <NicheToolCarousel
             testId="paint-swatch-bar"
             label="Materials"
-            xPct={selectedLive.x}
-            yPct={selectedLive.y}
+            xPct={instrumentAnchor.x}
+            yPct={instrumentAnchor.y}
             tools={nicheToolsForItem(selectedLive, {
               locked: ui.locked,
               openBag: kitBagOpen,
