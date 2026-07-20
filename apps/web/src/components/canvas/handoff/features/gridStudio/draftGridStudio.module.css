@@ -1,7 +1,7 @@
-/* Micro grid studio — idle shadow → awake tray. Never a toolbar. */
+/* Micro grid studio — same DNA as instrument chrome / glass strips. */
 
 .root {
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
   position: absolute;
   left: calc(var(--ws-safe-left, 64px) + 8px);
   bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
@@ -10,8 +10,10 @@
   align-items: center;
   gap: 0;
   padding: 3px;
-  border: 1px solid rgba(28, 25, 23, 0.1);
-  background: rgba(245, 242, 237, 0.42);
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  backdrop-filter: blur(12px);
   opacity: 0.38;
   transform: translateY(2px);
   transition:
@@ -24,8 +26,9 @@
 .root[data-awake="true"] {
   opacity: 1;
   transform: translateY(0);
-  background: rgba(245, 242, 237, 0.94);
-  border-color: rgba(28, 25, 23, 0.16);
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  border-color: var(--hc-line, rgba(36, 19, 24, 0.12));
+  box-shadow: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
 }
 
 .face {
@@ -33,6 +36,7 @@
   height: 28px;
   padding: 0;
   border: none;
+  border-radius: calc(var(--hc-r-control, 10px) - 2px);
   background: transparent;
   cursor: pointer;
   display: grid;
@@ -41,7 +45,7 @@
 }
 
 .face:hover {
-  background: rgba(28, 25, 23, 0.04);
+  background: rgba(36, 19, 24, 0.04);
 }
 
 .glyph {
@@ -76,14 +80,15 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 1px solid rgba(28, 25, 23, 0.2);
-  background: var(--ink, rgba(28, 25, 23, 0.14));
+  border-radius: 5px;
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  background: var(--ink, rgba(36, 19, 24, 0.14));
   cursor: pointer;
   flex: none;
 }
 
 .ink:hover {
-  outline: 1px solid rgba(28, 25, 23, 0.35);
+  outline: 1px solid rgba(36, 19, 24, 0.28);
   outline-offset: 1px;
 }
 
@@ -93,8 +98,9 @@
   height: 22px;
   padding: 0;
   border: none;
+  border-radius: 6px;
   background: transparent;
-  color: #44403c;
+  color: var(--hc-ink-muted, #7a5560);
   cursor: pointer;
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
@@ -105,12 +111,12 @@
 
 .grain:hover,
 .snap:hover {
-  background: rgba(28, 25, 23, 0.05);
-  color: #1c1917;
+  background: rgba(36, 19, 24, 0.05);
+  color: var(--hc-ink, #241318);
 }
 
 .snapOn {
-  color: #1c1917;
+  color: var(--hc-ink, #241318);
 }
 
 @media (prefers-reduced-motion: reduce) {

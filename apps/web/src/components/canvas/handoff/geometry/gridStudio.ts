@@ -49,11 +49,11 @@ export const GRID_INK_LABEL: Record<GridInk, string> = {
 
 /** Stroke / fill colour for the draft mesh. */
 export const GRID_INK_STROKE: Record<GridInk, string> = {
-  charcoal: "rgba(28, 25, 23, 0.14)",
-  slate: "rgba(90, 90, 95, 0.2)",
-  paper: "rgba(255, 255, 255, 0.42)",
-  mist: "rgba(245, 240, 232, 0.55)",
-  signal: "rgba(255, 45, 149, 0.28)",
+  charcoal: "rgba(36, 19, 24, 0.16)",
+  slate: "rgba(122, 85, 96, 0.28)",
+  paper: "rgba(255, 251, 252, 0.5)",
+  mist: "rgba(246, 234, 237, 0.65)",
+  signal: "rgba(194, 69, 95, 0.35)",
 };
 
 export function nextInRing<T>(list: readonly T[], current: T): T {

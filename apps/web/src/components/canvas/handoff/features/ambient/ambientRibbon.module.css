@@ -1,10 +1,8 @@
-/* Demand-driven instrument chrome.
- * shadow → awake → carousel (half-arc) → armed silhouette → fade.
- * Motion is state feedback, not decoration. */
+/* Demand-driven instrument chrome — same blush DNA as docks / strips. */
 
 .ribbon {
-  --ink: #1c1917;
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ink: var(--hc-ink, #241318);
+  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
   position: absolute;
   left: 0;
   top: 36px;
@@ -15,10 +13,10 @@
   justify-content: space-between;
   gap: 12px;
   width: 44px;
-  padding: 12px 4px 12px 4px;
+  padding: 12px 4px;
   border: none;
   background: transparent;
-  opacity: 0.12;
+  opacity: 0.14;
   transform: translateX(-10px);
   transition:
     opacity 320ms var(--ease),
@@ -27,24 +25,23 @@
   pointer-events: auto;
 }
 
-/* Soft vertical presence so you know instruments exist without reading them. */
 .shadowStem {
   position: absolute;
   left: 0;
   top: 12%;
   bottom: 12%;
   width: 3px;
-  border-radius: 0 2px 2px 0;
+  border-radius: 0 3px 3px 0;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(28, 25, 23, 0.22) 18%,
-    rgba(28, 25, 23, 0.28) 50%,
-    rgba(28, 25, 23, 0.22) 82%,
+    rgba(36, 19, 24, 0.18) 18%,
+    rgba(36, 19, 24, 0.26) 50%,
+    rgba(36, 19, 24, 0.18) 82%,
     transparent 100%
   );
   pointer-events: none;
-  transition: opacity 280ms var(--ease), width 280ms var(--ease);
+  transition: opacity 280ms var(--ease);
 }
 
 .ribbon[data-phase="awake"],
@@ -55,7 +52,7 @@
 }
 
 .ribbon[data-phase="armed"] {
-  opacity: 0.38;
+  opacity: 0.4;
   transform: translateX(-4px);
   width: 52px;
 }
@@ -86,9 +83,9 @@
   width: 40px;
   min-height: 36px;
   border: none;
-  border-radius: 0;
+  border-radius: var(--hc-r-control, 10px);
   background: transparent;
-  color: rgba(28, 25, 23, 0.55);
+  color: rgba(36, 19, 24, 0.55);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -103,12 +100,11 @@
     background 140ms ease,
     color 140ms ease,
     transform 280ms var(--ease),
-    opacity 200ms ease,
-    box-shadow 180ms ease;
+    opacity 200ms ease;
 }
 
 .ribbon[data-phase="shadow"] .btn {
-  opacity: 0.35;
+  opacity: 0.4;
 }
 
 .ribbon[data-phase="awake"] .btn,
@@ -118,7 +114,7 @@
 }
 
 .btn:hover {
-  background: rgba(28, 25, 23, 0.06);
+  background: rgba(36, 19, 24, 0.06);
   color: var(--ink);
 }
 
@@ -133,7 +129,7 @@
 
 .active {
   background: var(--ink);
-  color: #f5f2ed;
+  color: var(--hc-invert, #fff6f8);
 }
 
 .glyph {
@@ -142,7 +138,7 @@
 }
 
 .label {
-  font-size: 7px;
+  font-size: 7.5px;
   font-weight: 650;
   letter-spacing: 0.02em;
   opacity: 0;
@@ -159,7 +155,6 @@
   max-height: 12px;
 }
 
-/* Half-circle carousel — drafting tools fan on an arc from the left stem. */
 .ribbon[data-phase="carousel"] .btn[data-kind="draft"],
 .ribbon[data-phase="armed"] .btn[data-kind="draft"] {
   position: absolute;
@@ -170,23 +165,24 @@
     rotate(calc(-1 * var(--arc, 0deg)));
   width: 42px;
   min-height: 38px;
-  border: 1px solid rgba(28, 25, 23, 0.1);
-  background: rgba(245, 242, 237, 0.92);
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  backdrop-filter: blur(12px);
   box-shadow: none;
 }
 
 .ribbon[data-phase="carousel"] .btn[data-kind="draft"].active,
 .ribbon[data-phase="armed"] .btn[data-kind="draft"].active {
   background: var(--ink);
-  color: #f5f2ed;
+  color: var(--hc-invert, #fff6f8);
   border-color: var(--ink);
   transform: rotate(var(--arc, 0deg)) translateX(72px)
-    rotate(calc(-1 * var(--arc, 0deg))) scale(1.06);
+    rotate(calc(-1 * var(--arc, 0deg))) scale(1.05);
 }
 
 .ribbon[data-phase="armed"] .btn[data-kind="draft"] {
-  background: rgba(245, 242, 237, 0.55);
-  border-color: rgba(28, 25, 23, 0.08);
+  background: rgba(255, 251, 252, 0.55);
+  border-color: var(--hc-line-soft, rgba(36, 19, 24, 0.08));
 }
 
 .ribbon[data-phase="carousel"] .btn[data-kind="draft"]:active {
@@ -241,9 +237,9 @@
   gap: 4px;
   min-height: 26px;
   padding: 0 6px;
-  border-radius: 0;
-  border: 1px solid rgba(28, 25, 23, 0.12);
-  background: rgba(245, 242, 237, 0.88);
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
   cursor: pointer;
   font: inherit;
   color: var(--ink);
@@ -254,7 +250,7 @@
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #57534e;
+  color: var(--hc-ink-muted, #7a5560);
 }
 
 .chipCount {

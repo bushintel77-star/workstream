@@ -31,7 +31,7 @@
 .crosshair::after {
   content: "";
   position: absolute;
-  background: #1a1a1a;
+  background: #241318;
 }
 
 .crosshair::before {
@@ -61,7 +61,7 @@
   backdrop-filter: blur(20px);
   box-shadow: 0 12px 32px rgba(26, 26, 26, 0.12);
   font-family: Sora, ui-sans-serif, sans-serif;
-  color: #1a1a1a;
+  color: #241318;
   animation: floraIn 180ms ease both;
 }
 
@@ -147,7 +147,7 @@
 
 .accept {
   border: 1px solid #1a1a1a;
-  background: #1a1a1a;
+  background: #241318;
   color: #f7f4ef;
 }
 

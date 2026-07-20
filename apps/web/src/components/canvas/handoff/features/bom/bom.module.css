@@ -80,17 +80,8 @@
 }
 
 .totalPulse {
-  animation: bomPulse 1.4s ease-in-out infinite;
-}
-
-@keyframes bomPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.42;
-  }
+  /* State feedback only — no looping pulse on the live total. */
+  transition: opacity 180ms ease;
 }
 
 .gst {
@@ -128,10 +119,10 @@
 .chip {
   min-height: 28px;
   padding: 0 10px;
-  border-radius: 0;
-  border: 1px dashed rgba(28, 25, 23, 0.4);
-  background: rgba(28, 25, 23, 0.04);
-  color: #1c1917;
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px dashed rgba(36, 19, 24, 0.28);
+  background: rgba(36, 19, 24, 0.04);
+  color: #241318;
   font: inherit;
   font-size: 10px;
   font-weight: 650;
@@ -140,9 +131,9 @@
 
 .chip[data-on="true"] {
   border-style: solid;
-  border-color: #1c1917;
-  background: #1c1917;
-  color: #f2f0eb;
+  border-color: #241318;
+  background: #241318;
+  color: #fff6f8;
 }
 
 .foot {
