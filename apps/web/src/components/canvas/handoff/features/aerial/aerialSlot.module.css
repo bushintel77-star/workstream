@@ -78,6 +78,44 @@
   color: var(--hc-ink-muted, #7a5560);
 }
 
+.errorPanel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 18;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(340px, 72%);
+  padding: 16px;
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  border-radius: var(--hc-r-panel, 14px);
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  text-align: center;
+  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
+}
+
+.retryButton {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-paper, #fffbfc);
+  color: var(--hc-ink, #241318);
+  cursor: pointer;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.retryButton:hover {
+  border-color: var(--hc-ink, #241318);
+}
+
 .scanPill {
   position: absolute;
   left: 50%;

@@ -1,0 +1,34 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line-hairline);
+  background: color-mix(in srgb, var(--warn) 18%, var(--surface-elevated));
+  color: var(--ink-primary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.kicker {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.copy {
+  color: var(--ink-secondary);
+}
+
+@media (max-width: 640px) {
+  .banner {
+    align-items: flex-start;
+    flex-direction: column;
+    text-align: left;
+  }
+}

@@ -102,6 +102,7 @@ import {
   zoomFromWheel,
 } from "./geometry/canvasZoom";
 import { lookupCadastralTitleAction } from "../../../app/actions";
+import { useToast } from "../../ToastHost";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -155,6 +156,7 @@ export function HandoffDesignStudio({
     initialSiteFrame,
     initialIrrigationZones,
   });
+  const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
     useState<GridFormation | null>(null);
   const [gridPreviewInk, setGridPreviewInk] = useState<GridInk | null>(null);
@@ -172,6 +174,7 @@ export function HandoffDesignStudio({
   /** Prefer Turf workable outdoor; fall back to project / seed area. */
   const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
+  const lastSaveToast = useRef(0);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
@@ -217,6 +220,17 @@ export function HandoffDesignStudio({
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
   }, []);
+
+  useEffect(() => {
+    if (ui.saveStatus !== "saved" || ui.savedTick === 0) return;
+    if (lastSaveToast.current === ui.savedTick) return;
+    lastSaveToast.current = ui.savedTick;
+    toast.show(
+      "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
+      "success",
+      5000,
+    );
+  }, [toast, ui.saveStatus, ui.savedTick]);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -1007,19 +1021,33 @@ export function HandoffDesignStudio({
               {draftLabel}
             </button>
           ) : null}
-          <span
-            className={`${css.savedTick}${ui.saveStatus === "saving" ? ` ${css.savedTickPulse}` : ""}`}
-            data-testid="autosave-tick"
-            data-status={ui.saveStatus}
-          >
-            {ui.saveStatus === "saving"
-              ? "Saving"
-              : ui.saveStatus === "error"
-                ? "Retry"
+          {ui.saveStatus === "error" ? (
+            <button
+              type="button"
+              className={`${css.savedTick} ${css.savedTickButton}`}
+              data-testid="autosave-tick"
+              data-status={ui.saveStatus}
+              onClick={() => {
+                void studio.saveNow().catch(() => {
+                  toast.show("Canvas save failed. Try again before leaving.", "error");
+                });
+              }}
+            >
+              Retry save
+            </button>
+          ) : (
+            <span
+              className={`${css.savedTick}${ui.saveStatus === "saving" ? ` ${css.savedTickPulse}` : ""}`}
+              data-testid="autosave-tick"
+              data-status={ui.saveStatus}
+            >
+              {ui.saveStatus === "saving"
+                ? "Saving"
                 : ui.saveStatus === "saved"
                   ? "Saved"
                   : ""}
-          </span>
+            </span>
+          )}
         </div>
       </header>
 
@@ -1028,6 +1056,9 @@ export function HandoffDesignStudio({
         data-testid="studio-board"
         ref={boardRef}
       >
+        <div className={css.honestyCaption}>
+          Concept sketch for estimating — not a construction drawing.
+        </div>
         {ui.mode === "elevation" ? (
           <ElevationBoard
             axis={ui.elevAxis}

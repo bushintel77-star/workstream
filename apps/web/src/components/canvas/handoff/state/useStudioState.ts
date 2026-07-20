@@ -1801,6 +1801,54 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({ savedTick: Date.now(), saveStatus: "saved" });
   }, [setUi]);
 
+  const saveNow = useCallback(async (): Promise<void> => {
+    const fixed = withContractIds({
+      items: state.doc.items,
+      strokes: state.doc.strokes,
+    });
+    if (fixed.remapped) {
+      dispatch({
+        type: "silentIds",
+        items: fixed.items,
+        strokes: fixed.strokes,
+      });
+    }
+    const placements = itemsToPlacements(fixed.items);
+    const canvasStrokes = strokesToCanvas(fixed.strokes);
+    const siteFrame = snapshotToSiteFrame({
+      boundary: state.doc.boundary,
+      building: state.doc.building,
+      easements: state.doc.easements ?? [],
+      services: state.doc.services ?? [],
+      levels: state.doc.levels ?? [],
+    });
+    setUi({ saveStatus: "saving" });
+    try {
+      await saveDesignCanvasAction(
+        projectIdRef.current,
+        placements,
+        canvasStrokes,
+        state.doc.irrigationZones ?? [],
+        [],
+        siteFrame,
+      );
+      setUi({ saveStatus: "saved", savedTick: Date.now() });
+    } catch {
+      setUi({ saveStatus: "error" });
+      throw new Error("Design canvas save failed");
+    }
+  }, [
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.easements,
+    state.doc.irrigationZones,
+    state.doc.items,
+    state.doc.levels,
+    state.doc.services,
+    state.doc.strokes,
+  ]);
+
   /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
   useEffect(() => {
     if (skipPersist.current) {
@@ -1808,38 +1856,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
       return;
     }
     const handle = window.setTimeout(() => {
-      const fixed = withContractIds({
-        items: state.doc.items,
-        strokes: state.doc.strokes,
-      });
-      if (fixed.remapped) {
-        dispatch({
-          type: "silentIds",
-          items: fixed.items,
-          strokes: fixed.strokes,
-        });
-      }
-      const placements = itemsToPlacements(fixed.items);
-      const canvasStrokes = strokesToCanvas(fixed.strokes);
-      const siteFrame = snapshotToSiteFrame({
-        boundary: state.doc.boundary,
-        building: state.doc.building,
-        easements: state.doc.easements ?? [],
-        services: state.doc.services ?? [],
-        levels: state.doc.levels ?? [],
-      });
-      setUi({ saveStatus: "saving" });
       const persist = async (attempt: number): Promise<void> => {
         try {
-          await saveDesignCanvasAction(
-            projectIdRef.current,
-            placements,
-            canvasStrokes,
-            state.doc.irrigationZones ?? [],
-            [],
-            siteFrame,
-          );
-          setUi({ saveStatus: "saved", savedTick: Date.now() });
+          await saveNow();
         } catch {
           if (attempt < 3) {
             setUi({ saveStatus: "error" });
@@ -2219,6 +2238,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     switchSite,
     resetSite,
     bumpSaved,
+    saveNow,
     moveItem,
     transformItem,
     nudgeSelected,
