@@ -20,11 +20,11 @@
   flex-direction: column;
   gap: 6px;
   padding: 8px 9px 9px;
-  border-radius: 16px;
+  border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--glass-border);
   background: var(--glass);
   backdrop-filter: blur(16px);
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
   color: var(--ink);
   pointer-events: auto;
   overflow: hidden;

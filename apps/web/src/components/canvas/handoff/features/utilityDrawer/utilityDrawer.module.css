@@ -15,6 +15,30 @@
   pointer-events: auto;
 }
 
+.hubDismiss {
+  align-self: flex-end;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  backdrop-filter: blur(14px);
+  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  color: var(--hc-ink-muted, #7a5560);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+  transition:
+    opacity 140ms var(--ws-ease, ease),
+    color 140ms var(--ws-ease, ease);
+}
+
+.hubDismiss:hover {
+  opacity: 1;
+  color: var(--hc-ink, #241318);
+}
+
 .tabs {
   display: flex;
   flex-direction: column;

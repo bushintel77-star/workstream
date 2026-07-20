@@ -33,6 +33,7 @@ import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
   type StudioItem,
+  type StudioItemType,
   type StudioMode,
   type StudioTool,
 } from "../../studioCatalog";
@@ -124,6 +125,11 @@ type Props = {
   gridInk?: GridInk;
   /** Paint bucket — recolor / retag a symbol. */
   onPaintItem?: (id: string) => void;
+  /** Item id that just received a Paint apply — settle-flash confirmation. */
+  paintFlashId?: string | null;
+  /** Eyedropper armed — clicking an element loads its style into the swatch. */
+  eyedropArmed?: boolean;
+  onEyedrop?: (t: StudioItemType) => void;
   /**
    * Empty-board click (not an item / CAD handle).
    * `insideLot` — true on the property drawing; false on the canvas margin.
@@ -197,6 +203,9 @@ export function CadPlanBoard({
   gridFormation = "ortho",
   gridInk = "charcoal",
   onPaintItem,
+  paintFlashId = null,
+  eyedropArmed = false,
+  onEyedrop,
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
@@ -971,7 +980,7 @@ export function CadPlanBoard({
         return (
           <div
             key={it.id}
-            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}`}
+            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
             data-testid={it.ghost ? "studio-ghost" : "studio-item"}
             data-item-type={it.t}
             data-selected={selected || groupIds.includes(it.id) ? "true" : "false"}
@@ -1018,6 +1027,10 @@ export function CadPlanBoard({
             onPointerLeave={() => onHover(null)}
             onPointerDown={(e) => {
               e.stopPropagation();
+              if (eyedropArmed && onEyedrop) {
+                onEyedrop(it.t);
+                return;
+              }
               if (tool === "paint" && !it.ghost && onPaintItem) {
                 onPaintItem(it.id);
                 return;

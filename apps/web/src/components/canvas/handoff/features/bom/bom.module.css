@@ -5,11 +5,11 @@
   z-index: 12;
   width: min(240px, calc(100vw - 28px));
   padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.9);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 28px rgba(36, 19, 24, 0.08);
+  border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  backdrop-filter: blur(16px);
+  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
   font-family: Sora, ui-sans-serif, sans-serif;
   color: #241318;
   display: flex;

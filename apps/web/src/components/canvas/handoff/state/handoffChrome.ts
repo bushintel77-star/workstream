@@ -68,6 +68,12 @@ type Input = {
   pendingGhosts?: number;
   /** Operator opted into sun/shade mesh — surface the time scrubber. */
   shadeOn?: boolean;
+  /**
+   * Canvas-first: the measures / quantity data lane is summoned, not parked.
+   * The AI/command core (Cmd+K, Ask AI, accepted proposals) raises it; idle
+   * CAD stays a bare drawing. Default false = quiet canvas.
+   */
+  dataSummoned?: boolean;
 };
 
 const DRAWING_TOOLS: StudioTool[] = [
@@ -93,6 +99,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     foundationCleanse = false,
     pendingGhosts = 0,
     shadeOn = false,
+    dataSummoned = false,
   } = input;
   const drawingHot = DRAWING_TOOLS.includes(tool);
   const draftCrowded = pendingGhosts > 0;
@@ -146,11 +153,15 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const cadLike = mode === "cad" || mode === "elevation";
   /** Sun scrubber only when shade mesh is on — otherwise stays off the plane. */
   const sunScrubber = shadeOn && plan && !draftCrowded;
-  const utility = cadLike && !draftCrowded;
+  /**
+   * Data lane is available in CAD-like modes, but only mounts once summoned.
+   * Canvas-first: the drawing owns idle; measures/quantities appear on ask.
+   */
+  const utility = cadLike && !draftCrowded && dataSummoned;
 
   return {
     utilityDrawer: utility,
-    /** Right lane for AI dialogue + analytics (utility + live measures). */
+    /** Right lane for AI dialogue + analytics — summoned, or the Quote surface. */
     aiSidecar: utility || mode === "quote",
     /** Left layers / constraints — available, collapsed until opened. */
     structureRail: plan,
@@ -165,11 +176,11 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     /** Orbit actions outside the glyph */
     selectionRing:
       mode === "cad" || mode === "sketch" || mode === "survey",
-    /** Frost inventory — Add / Paint only */
-    inventoryPopup:
-      plan &&
-      mode !== "sketch" &&
-      (tool === "add" || tool === "paint"),
+    /**
+     * Frost inventory popup — Add only. Paint fills live in the persistent
+     * SwatchTray furniture, so the popup no longer doubles for Paint.
+     */
+    inventoryPopup: plan && mode !== "sketch" && tool === "add",
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: false,

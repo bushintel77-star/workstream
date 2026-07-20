@@ -53,6 +53,7 @@ import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import { KitAssetDock } from "./features/kitInventory/KitAssetDock";
+import { SwatchTray } from "./features/swatchTray/SwatchTray";
 import {
   nicheToolsForZone,
   zoneNicheActiveId,
@@ -196,6 +197,20 @@ export function HandoffDesignStudio({
   const [boardCursor, setBoardCursor] = useState<
     "default" | "move" | "add" | "paint" | null
   >(null);
+  /** Target settle-flash after a Paint apply — presentational confirmation only. */
+  const [paintFlashId, setPaintFlashId] = useState<string | null>(null);
+  const paintFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashPaintTarget = (id: string) => {
+    setPaintFlashId(id);
+    if (paintFlashTimer.current) clearTimeout(paintFlashTimer.current);
+    paintFlashTimer.current = setTimeout(() => setPaintFlashId(null), 460);
+  };
+  /** Eyedropper — next canvas click loads that element's style into the swatch. */
+  const [eyedropArmed, setEyedropArmed] = useState(false);
+  const pickStyle = (t: StudioItemType) => {
+    setEyedropArmed(false);
+    studio.setUi({ paintSwatch: t, tool: "paint" });
+  };
 
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
@@ -490,11 +505,29 @@ export function HandoffDesignStudio({
     foundationCleanse: ui.foundationCleanse,
     pendingGhosts: ai.pendingCount,
     shadeOn: ui.shadeOn,
+    dataSummoned: ui.dataSummoned,
   });
   const titleLocked =
     ui.foundationCleanse || ui.boundarySource === "vicmap";
   const drawingHot = chrome.collapseUtility;
   const showDocks = chrome.utilityDrawer;
+  /**
+   * Dual-mode zoom — past the precision threshold, swap to the crisp skin so
+   * fine CAD work never fights the soft shell. Instant (no animated morph).
+   */
+  const precisionOn =
+    planOn &&
+    !ui.frameOn &&
+    !ui.focusOn &&
+    !ui.clientView &&
+    ui.zoom >= 2.2;
+  /** Swatch furniture — persistent fills in plan CAD / Sketch only. */
+  const swatchTrayOn =
+    (ui.mode === "cad" || ui.mode === "sketch") &&
+    !ui.frameOn &&
+    !ui.focusOn &&
+    !ui.clientView &&
+    !ui.foundationCleanse;
   /** Draft AI surface only when chrome matrix allows (never Stage 1 / Fit). */
   const draftSurface = chrome.draftSurface;
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
@@ -659,7 +692,7 @@ export function HandoffDesignStudio({
 
   return (
     <div
-      className={`${css.root}${ui.darkOn ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}`}
+      className={`${css.root}${ui.darkOn ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}`}
       data-testid="handoff-design-studio"
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
@@ -1209,7 +1242,13 @@ export function HandoffDesignStudio({
               gridSnap={ui.gridSnap}
               gridFormation={gridPreviewFormation ?? ui.gridFormation}
               gridInk={gridPreviewInk ?? ui.gridInk}
-              onPaintItem={studio.paintItem}
+              onPaintItem={(id) => {
+                studio.paintItem(id);
+                flashPaintTarget(id);
+              }}
+              paintFlashId={paintFlashId}
+              eyedropArmed={eyedropArmed}
+              onEyedrop={pickStyle}
               onBoardCursor={setBoardCursor}
             />
             {chrome.floraRing && ui.floraSession ? (
@@ -1496,10 +1535,10 @@ export function HandoffDesignStudio({
 
         {/*
           Inventory frost popup — Soft / Hard / Trees / Water / Library.
-          Mounts only while Add / Paint armed (chrome.inventoryPopup); unmounts on pan.
+          Add-only: placing assets summons the popup at the cursor. Paint fills
+          live in the persistent SwatchTray furniture, not a floating popup.
         */}
-        {chrome.inventoryPopup &&
-        (ui.tool === "add" || ui.tool === "paint") ? (
+        {chrome.inventoryPopup && ui.tool === "add" ? (
           <KitAssetDock
             xPct={instrumentAnchor.x}
             yPct={instrumentAnchor.y}
@@ -1597,75 +1636,85 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {/*
+          Canvas-first: the measures / quantity lane is summoned via the AI
+          command core (Cmd+K → Live measures, Ask AI, accepted proposals),
+          never parked on the drawing. `showDocks` reflects chrome.dataSummoned.
+        */}
         {showDocks ? (
-          <>
-            <UtilityDrawer
-              openPanel={ui.utilityPanel}
-              collapsed={drawingHot}
-              outdoorM2={outdoor}
-              boundary={studio.boundary}
-              items={studio.items}
-              estimate={estimate}
-              mitigated={ui.mitigated}
-              complianceSignal={compliance.canvasSignal}
-              compliancePass={
-                [compliance.outdoorOk, compliance.permeableOk, compliance.canopyOk].filter(
-                  Boolean,
-                ).length
-              }
-              councilSummary={{
-                permeablePct: compliance.permeablePct,
-                canopyPct: compliance.canopyPct,
-                setbackM: compliance.setbackM,
-              }}
-              projectId={projectId}
-              projectAddress={projectAddress}
-              complianceReport={compliance}
-              onOpenPanel={(utilityPanel) =>
-                studio.setUi({
-                  utilityPanel,
-                  ...(utilityPanel === "compliance" ? { setbackOn: true } : {}),
-                })
-              }
-              onMitigate={(id) =>
-                studio.setUi({
-                  mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
-                })
-              }
-              onOpenQuote={() => studio.setMode("quote")}
-              settling={estimateSettling || ui.saveStatus === "saving"}
-            />
-            {chrome.sunGrowth ? (
-              <SunGrowthDock
-                sunMin={ui.sunMin}
-                growth={ui.growth}
-                playing={ui.sunPlay}
-                onSunMin={(sunMin) => studio.setUi({ sunMin })}
-                onGrowth={(growth) => studio.setUi({ growth })}
-                onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
-              />
-            ) : null}
-            {/* Design to-dos: background sync only — no canvas corner card */}
-            <PermitTodosPanel
-              projectId={projectId}
-              address={projectAddress}
-              outdoorM2={outdoor}
-              items={studio.items}
-              compliance={compliance}
-              syncOnly
-            />
-            {chrome.horizon ? (
-              <PreemptiveHorizon
-                cards={actionHorizon}
-                onAccept={acceptHorizonCard}
-                onDismiss={(id) =>
-                  studio.setUi({
-                    mitigated: { ...ui.mitigated, [id]: true },
-                  })
-                }
-              />
-            ) : null}
-          </>
+          <UtilityDrawer
+            openPanel={ui.utilityPanel}
+            collapsed={drawingHot}
+            outdoorM2={outdoor}
+            boundary={studio.boundary}
+            items={studio.items}
+            estimate={estimate}
+            mitigated={ui.mitigated}
+            complianceSignal={compliance.canvasSignal}
+            compliancePass={
+              [compliance.outdoorOk, compliance.permeableOk, compliance.canopyOk].filter(
+                Boolean,
+              ).length
+            }
+            councilSummary={{
+              permeablePct: compliance.permeablePct,
+              canopyPct: compliance.canopyPct,
+              setbackM: compliance.setbackM,
+            }}
+            projectId={projectId}
+            projectAddress={projectAddress}
+            complianceReport={compliance}
+            onClose={() => studio.setUi({ dataSummoned: false })}
+            onOpenPanel={(utilityPanel) =>
+              studio.setUi({
+                utilityPanel,
+                ...(utilityPanel === "compliance" ? { setbackOn: true } : {}),
+              })
+            }
+            onMitigate={(id) =>
+              studio.setUi({
+                mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
+              })
+            }
+            onOpenQuote={() => studio.setMode("quote")}
+            settling={estimateSettling || ui.saveStatus === "saving"}
+          />
+        ) : null}
+
+        {/* Sun scrubber is contextual — only when the operator armed shade mesh. */}
+        {chrome.sunGrowth ? (
+          <SunGrowthDock
+            sunMin={ui.sunMin}
+            growth={ui.growth}
+            playing={ui.sunPlay}
+            onSunMin={(sunMin) => studio.setUi({ sunMin })}
+            onGrowth={(growth) => studio.setUi({ growth })}
+            onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
+          />
+        ) : null}
+
+        {/* Design to-dos: background sync only — no canvas corner card */}
+        {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
+          <PermitTodosPanel
+            projectId={projectId}
+            address={projectAddress}
+            outdoorM2={outdoor}
+            items={studio.items}
+            compliance={compliance}
+            syncOnly
+          />
+        ) : null}
+
+        {chrome.horizon ? (
+          <PreemptiveHorizon
+            cards={actionHorizon}
+            onAccept={acceptHorizonCard}
+            onDismiss={(id) =>
+              studio.setUi({
+                mitigated: { ...ui.mitigated, [id]: true },
+              })
+            }
+          />
         ) : null}
 
         {!ui.focusOn && !ui.clientView && !ui.frameOn && ui.councilTip ? (
@@ -1716,6 +1765,31 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {swatchTrayOn ? (
+          <SwatchTray
+            activeSwatch={ui.paintSwatch}
+            armed={ui.tool === "paint" && !eyedropArmed}
+            eyedropOn={eyedropArmed}
+            onPick={(t) => {
+              setEyedropArmed(false);
+              studio.setUi({ paintSwatch: t, tool: "paint" });
+            }}
+            onEyedrop={() => setEyedropArmed((v) => !v)}
+          />
+        ) : null}
+
+        {swatchTrayOn &&
+        studio.boundary.length < 3 &&
+        studio.items.length === 0 &&
+        studio.strokes.length === 0 ? (
+          <div className={css.onboardHint} data-testid="studio-onboard-hint">
+            <p className={css.onboardHintTitle}>Trace the boundary to begin</p>
+            <p className={css.onboardHintMeta}>
+              ⌘K to ask AI · summon instruments from the margin
+            </p>
+          </div>
+        ) : null}
+
         <SiteSwitcher
           open={ui.sitesOpen}
           siteIdx={ui.siteIdx}
@@ -1735,6 +1809,13 @@ export function HandoffDesignStudio({
           onToggleFitSheet={() => studio.setUi({ frameOn: !ui.frameOn })}
           onGoQuote={() => studio.setMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
+          dataOpen={ui.dataSummoned}
+          onToggleData={() =>
+            studio.setUi({
+              dataSummoned: !ui.dataSummoned,
+              utilityPanel: ui.dataSummoned ? null : (ui.utilityPanel ?? "bom"),
+            })
+          }
           onUndo={studio.undo}
           onRedo={studio.redo}
         />

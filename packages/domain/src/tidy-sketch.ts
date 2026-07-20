@@ -33,9 +33,9 @@ function resample(points: SketchPoint[], spacing = 1.2): SketchPoint[] {
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1]!;
     const b = points[i]!;
-    let dx = b.x - a.x;
-    let dy = b.y - a.y;
-    let seg = Math.hypot(dx, dy);
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const seg = Math.hypot(dx, dy);
     if (seg < 1e-6) continue;
     let t = (spacing - carry) / seg;
     while (t <= 1) {

@@ -12,11 +12,44 @@
   --hc-glass-soft: rgba(255, 251, 252, 0.72);
   --hc-line: rgba(36, 19, 24, 0.12);
   --hc-line-soft: rgba(36, 19, 24, 0.08);
+  /*
+   * Radius — one surface language. Controls tuck at 10px; every floating
+   * panel / dock / card / popup / modal shares one 14px radius (no mixed
+   * radii on chrome). Pill is full-round. --hc-r-dock kept as an alias so
+   * legacy references land on the single panel radius.
+   */
   --hc-r-control: 10px;
   --hc-r-panel: 14px;
-  --hc-r-dock: 16px;
+  --hc-r-dock: var(--hc-r-panel);
   --hc-r-pill: 999px;
-  --hc-elev: 0 8px 28px rgba(42, 23, 29, 0.12);
+  /*
+   * Elevation — matte, soft, umber (never slate, never neon glow). Three
+   * steps: ambient micro-chrome, floating panels, lifted overlays/modals.
+   */
+  --hc-elev-1: 0 4px 16px rgba(42, 23, 29, 0.08);
+  --hc-elev-2: 0 8px 28px rgba(42, 23, 29, 0.12);
+  --hc-elev-3: 0 18px 48px rgba(42, 23, 29, 0.2);
+  --hc-elev: var(--hc-elev-2);
+  /*
+   * Motion — precision, not decoration. Chrome appears/dismisses in one
+   * fast, non-bouncy beat. Canvas content itself never rides this.
+   */
+  --hc-motion: 180ms;
+  /*
+   * 2026 layer pairing: glassmorphic floats (contextual panels / inspectors)
+   * hover OVER a neumorphic base surface (canvas + swatch tray furniture).
+   * The tray is soft plastic pressed from the blush field — not glass.
+   */
+  --hc-neu-surface: #f1e4e9;
+  --hc-neu-raised: #f6ebef;
+  --hc-neu-light: rgba(255, 255, 255, 0.85);
+  --hc-neu-shadow: rgba(42, 23, 29, 0.16);
+  --hc-neu-out: -3px -3px 8px var(--hc-neu-light),
+    4px 4px 11px var(--hc-neu-shadow);
+  --hc-neu-out-sm: -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow);
+  --hc-neu-in: inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light);
   --hc-pad: 8px;
 
   /* SDS — plan vectors only (not UI chrome) */
@@ -72,6 +105,26 @@
     radial-gradient(100% 70% at 10% 0%, rgba(90, 50, 60, 0.35), transparent 50%),
     #161116;
   color: #fff6f8;
+}
+
+/*
+ * Dual-mode zoom — past the precision threshold the soft shell steps aside so
+ * fine CAD work reads crisp. Instant token swap (no animated skin-morph):
+ * glass firms up, ink lines gain contrast, radii tighten, elevation flattens.
+ * Every token-driven float inherits this automatically.
+ */
+.rootPrecision {
+  --hc-glass: rgba(255, 251, 252, 0.98);
+  --hc-glass-soft: rgba(255, 251, 252, 0.94);
+  --hc-line: rgba(36, 19, 24, 0.34);
+  --hc-line-soft: rgba(36, 19, 24, 0.2);
+  --hc-r-control: 6px;
+  --hc-r-panel: 8px;
+  --hc-elev-1: 0 1px 4px rgba(42, 23, 29, 0.16);
+  --hc-elev-2: 0 2px 8px rgba(42, 23, 29, 0.2);
+  --hc-elev-3: 0 6px 18px rgba(42, 23, 29, 0.24);
+  --ws-glass: var(--hc-glass);
+  --ws-glass-border: var(--hc-line);
 }
 
 .header {
@@ -172,6 +225,7 @@
   max-width: min(220px, 22vw);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   color: #8a7a82;
   white-space: nowrap;
@@ -222,7 +276,7 @@
   width: 32px;
   height: 32px;
   padding: 0;
-  border-radius: 9px;
+  border-radius: var(--hc-r-control);
   border: 1px solid transparent;
   background: transparent;
   color: #5a4650;
@@ -277,7 +331,7 @@
 .cmdBtn {
   height: 32px;
   padding: 0 10px;
-  border-radius: 9px;
+  border-radius: var(--hc-r-control);
   border: 1px solid var(--ws-glass-border);
   background: transparent;
   color: #7a5560;
@@ -333,7 +387,7 @@
 .segment {
   display: flex;
   border: 1px solid var(--ws-glass-border);
-  border-radius: 9px;
+  border-radius: var(--hc-r-control);
   overflow: hidden;
   flex: none;
   background: rgba(255, 251, 252, 0.45);
@@ -406,7 +460,7 @@
   z-index: 24;
   max-width: min(420px, calc(100% - 48px));
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: var(--hc-r-control);
   border: 1px solid rgba(232, 184, 75, 0.45);
   background: rgba(42, 23, 29, 0.92);
   color: #ffd3de;
@@ -414,7 +468,7 @@
   font-weight: 600;
   text-align: center;
   pointer-events: none;
-  box-shadow: 0 10px 28px rgba(42, 23, 29, 0.28);
+  box-shadow: var(--hc-elev-2);
 }
 
 .zoomWorld {
@@ -515,6 +569,7 @@
 .savedTick {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   color: #b08a95;
   flex: none;
@@ -534,6 +589,44 @@
   }
   50% {
     opacity: 0.35;
+  }
+}
+
+/* Empty / onboarding — faint ghost guide suggesting the first move. */
+.onboardHint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  pointer-events: none;
+  text-align: center;
+  animation: chromeIn var(--hc-motion, 180ms) var(--ws-ease) both;
+}
+
+.onboardHintTitle {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--hc-ink-faint);
+  letter-spacing: -0.01em;
+}
+
+.onboardHintMeta {
+  margin: 6px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboardHint {
+    animation: none;
   }
 }
 
@@ -1239,12 +1332,13 @@
   min-height: 28px;
   padding: 0 8px;
   border: 1px solid rgba(36, 19, 24, 0.12);
-  border-radius: 10px;
+  border-radius: var(--hc-r-control);
   background: rgba(255, 251, 252, 0.96);
   backdrop-filter: blur(16px);
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  box-shadow: var(--hc-elev-2);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
+  font-variant-numeric: tabular-nums;
   color: #241318;
 }
 

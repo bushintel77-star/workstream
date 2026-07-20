@@ -88,6 +88,8 @@ export type StudioUiState = {
   coachOpen: boolean;
   assistReply: string | null;
   utilityPanel: "compliance" | "bom" | null;
+  /** Canvas-first: measures / quantity lane summoned via the AI command core. */
+  dataSummoned: boolean;
   councilTip: string | null;
   sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
   parchmentPeel: number;

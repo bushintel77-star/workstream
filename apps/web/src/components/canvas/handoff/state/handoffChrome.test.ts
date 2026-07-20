@@ -29,11 +29,12 @@ describe("resolveHandoffChrome", () => {
     expect(c.draftSurface).toBe(false);
   });
 
-  it("keeps utility hub in CAD without floating coach/sun/trade", () => {
+  it("keeps idle CAD canvas-first — no parked data lane until summoned", () => {
     const c = resolveHandoffChrome({ ...base, mode: "cad" });
     expect(c.liveBom).toBe(true);
-    expect(c.utilityDrawer).toBe(true);
-    expect(c.aiSidecar).toBe(true);
+    // Canvas-first: measures / quantity lane is summoned, not parked.
+    expect(c.utilityDrawer).toBe(false);
+    expect(c.aiSidecar).toBe(false);
     expect(c.structureRail).toBe(true);
     expect(c.horizon).toBe(false);
     expect(c.volumeIsolith).toBe(false);
@@ -45,14 +46,23 @@ describe("resolveHandoffChrome", () => {
     expect(c.draftSurface).toBe(false);
   });
 
-  it("opens inventory frost popup only for Add / Paint", () => {
+  it("summons the data lane in CAD when the AI/command core asks", () => {
+    const c = resolveHandoffChrome({ ...base, mode: "cad", dataSummoned: true });
+    expect(c.utilityDrawer).toBe(true);
+    expect(c.aiSidecar).toBe(true);
+    // Summoning never resurrects the legacy floating consumer docks.
+    expect(c.aiCoach).toBe(false);
+    expect(c.tradeMargin).toBe(false);
+  });
+
+  it("opens inventory frost popup only for Add (Paint uses the swatch tray)", () => {
     expect(
       resolveHandoffChrome({ ...base, mode: "cad", tool: "add" }).inventoryPopup,
     ).toBe(true);
     expect(
       resolveHandoffChrome({ ...base, mode: "cad", tool: "paint" })
         .inventoryPopup,
-    ).toBe(true);
+    ).toBe(false);
     expect(
       resolveHandoffChrome({ ...base, mode: "cad", tool: "edit" }).inventoryPopup,
     ).toBe(false);

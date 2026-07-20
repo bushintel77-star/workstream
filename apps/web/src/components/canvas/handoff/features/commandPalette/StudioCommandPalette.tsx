@@ -24,6 +24,9 @@ type Props = {
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
   onToggleFocus: () => void;
+  /** Canvas-first: summon / dismiss the measures + quantity lane. */
+  dataOpen: boolean;
+  onToggleData: () => void;
   onUndo: () => void;
   onRedo: () => void;
 };
@@ -50,6 +53,8 @@ export function StudioCommandPalette({
   onToggleFitSheet,
   onGoQuote,
   onToggleFocus,
+  dataOpen,
+  onToggleData,
   onUndo,
   onRedo,
 }: Props) {
@@ -116,6 +121,18 @@ export function StudioCommandPalette({
         run: onToggleFitSheet,
       },
       {
+        id: "measures",
+        label: dataOpen
+          ? "Hide measures & quantities"
+          : "Live measures & quantities",
+        detail: dataOpen
+          ? "Return to a quiet canvas — the drawing owns the surface"
+          : "Summon the compliance + live cost lane over the drawing",
+        keywords:
+          "measures quantities bom cost compliance data lane sidecar summon hide quiet",
+        run: onToggleData,
+      },
+      {
         id: "quote",
         label: "Open quote",
         detail: "Live BOM and Tier-1 value ledger",
@@ -159,12 +176,14 @@ export function StudioCommandPalette({
 
     return [...base, ...arm];
   }, [
+    dataOpen,
     onArm,
     onAskAi,
     onConvertSketch,
     onGoQuote,
     onRedo,
     onScanGhosts,
+    onToggleData,
     onToggleFitSheet,
     onToggleFocus,
     onUndo,

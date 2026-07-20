@@ -10,14 +10,32 @@
   gap: 8px 12px;
   max-width: min(280px, 46vw);
   padding: 8px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
+  border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
   background: rgba(255, 251, 252, 0.96);
   backdrop-filter: blur(16px);
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
   font-family: Sora, ui-sans-serif, sans-serif;
   color: #241318;
   pointer-events: auto;
+  animation: inspectorIn var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@keyframes inspectorIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(52px - 4px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, calc(52px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    animation: none;
+  }
 }
 
 .kicker {
@@ -42,10 +60,11 @@
   width: 3.6rem;
   height: 28px;
   border: 1px solid rgba(36, 19, 24, 0.12);
-  border-radius: 10px;
+  border-radius: var(--hc-r-control, 10px);
   background: #fffbfc;
   font: inherit;
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
   color: #241318;
   text-align: right;
   padding: 0 6px;
