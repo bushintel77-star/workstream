@@ -1024,11 +1024,11 @@
   max-width: min(520px, calc(100% - 160px));
   padding: 6px 8px;
   border-radius: 12px;
-  border: 1px solid rgba(232, 240, 248, 0.22);
-  background: rgba(26, 36, 48, 0.78);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 18px rgba(26, 36, 48, 0.28);
-  color: #e8f0f8;
+  box-shadow: var(--hc-elev);
+  color: var(--hc-ink);
   opacity: 0.88;
   animation: chromeIn 200ms var(--ws-ease) both;
 }
@@ -1045,16 +1045,16 @@
   padding: 0 10px;
   min-height: 28px;
   height: auto;
-  border-color: rgba(232, 240, 248, 0.28);
-  color: #e8f0f8;
+  border-color: var(--hc-line);
+  color: var(--hc-ink-muted);
 }
 
 .addStrip .chipActive,
 .zoneKindBar .chipActive,
 .paintSwatchBar .chipActive {
-  background: rgba(232, 240, 248, 0.94);
-  border-color: rgba(232, 240, 248, 0.94);
-  color: #1a2430;
+  background: var(--hc-ink);
+  border-color: var(--hc-ink);
+  color: var(--hc-invert);
 }
 
 .sunProbeHint {
@@ -1062,7 +1062,7 @@
   text-align: center;
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
-  color: rgba(232, 240, 248, 0.65);
+  color: var(--hc-ink-faint);
   letter-spacing: 0.02em;
 }
 
@@ -1074,11 +1074,11 @@
   gap: 6px;
   padding: 6px 8px;
   border-radius: 12px;
-  border: 1px solid rgba(232, 240, 248, 0.22);
-  background: rgba(26, 36, 48, 0.82);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 18px rgba(26, 36, 48, 0.28);
-  color: #e8f0f8;
+  box-shadow: var(--hc-elev);
+  color: var(--hc-ink);
   transform: translate(-50%, -50%);
   opacity: 0.9;
   transition: opacity 220ms var(--ws-ease);
@@ -1095,7 +1095,7 @@
   font-size: 8px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(232, 240, 248, 0.55);
+  color: var(--hc-ink-faint);
   margin-right: 2px;
 }
 
@@ -1174,7 +1174,7 @@
 .swatchDot {
   width: 10px;
   height: 10px;
-  border: 1px solid rgba(232, 240, 248, 0.4);
+  border: 1px solid rgba(36, 19, 24, 0.18);
   flex: none;
 }
 

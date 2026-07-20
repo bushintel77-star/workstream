@@ -60,32 +60,33 @@
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(26, 36, 48, 0.18);
+  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.12);
 }
 
 .tidy {
-  border: 1px solid rgba(232, 240, 248, 0.28);
-  background: rgba(26, 36, 48, 0.72);
-  color: #e8f0f8;
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: rgba(255, 251, 252, 0.92);
+  color: #7a5560;
   backdrop-filter: blur(12px);
 }
 
 .tidy:hover {
-  background: rgba(38, 52, 68, 0.88);
+  background: #fff6f8;
+  color: #241318;
 }
 
 .convert {
-  border: 1px solid rgba(232, 240, 248, 0.45);
-  background: rgba(232, 240, 248, 0.94);
-  color: #1a2430;
+  border: 1px solid #241318;
+  background: #241318;
+  color: #fff6f8;
 }
 
 .convert:hover {
-  background: #fff;
+  background: #3a1f28;
 }
 
 .tidy:focus-visible,
 .convert:focus-visible {
-  outline: 1px solid #1c1917;
+  outline: 1px solid #c2455f;
   outline-offset: 2px;
 }

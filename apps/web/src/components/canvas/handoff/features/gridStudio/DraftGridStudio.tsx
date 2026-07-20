@@ -194,13 +194,13 @@ export function DraftGridStudio({
   );
 }
 
-/** Face preview strokes — light on dark slate glass (canvas mesh keeps GRID_INK_STROKE). */
+/** Face preview strokes on blush frost glass (canvas mesh keeps GRID_INK_STROKE). */
 const CONTROL_STROKE: Record<GridInk, string> = {
-  charcoal: "rgba(232, 240, 248, 0.55)",
-  slate: "rgba(180, 200, 220, 0.72)",
-  paper: "rgba(255, 251, 252, 0.88)",
-  mist: "rgba(210, 222, 235, 0.7)",
-  signal: "rgba(255, 150, 168, 0.8)",
+  charcoal: "rgba(36, 19, 24, 0.72)",
+  slate: "rgba(122, 85, 96, 0.78)",
+  paper: "rgba(176, 138, 149, 0.55)",
+  mist: "rgba(176, 138, 149, 0.4)",
+  signal: "rgba(194, 69, 95, 0.85)",
 };
 
 function FormationGlyph({
