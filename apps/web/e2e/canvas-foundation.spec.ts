@@ -1,0 +1,53 @@
+import { expect, test } from "@playwright/test";
+import { handoffStudio } from "./helpers";
+
+const API = process.env.API_URL ?? "http://localhost:3001";
+
+test.describe("Canvas foundation honesty", () => {
+  test("real title without building never displays the demo footprint", async ({
+    page,
+    request,
+  }) => {
+    const create = await request.post(`${API}/projects/`, {
+      data: {
+        address: "E2E Empty Footprint, 18 Honest Lane, Melbourne VIC 3000",
+        lat: -37.8136,
+        lng: 144.9631,
+      },
+    });
+    expect(create.ok()).toBeTruthy();
+    const body = (await create.json()) as { project: { id: string } };
+    const projectId = body.project.id;
+
+    const canvas = await request.put(
+      `${API}/projects/${projectId}/design-canvas`,
+      {
+        data: {
+          placements: [],
+          strokes: [],
+          irrigation_zones: [],
+          site_frame: {
+            boundary: [
+              { x_pct: 12, y_pct: 12 },
+              { x_pct: 88, y_pct: 12 },
+              { x_pct: 88, y_pct: 88 },
+              { x_pct: 12, y_pct: 88 },
+            ],
+            building: [],
+            easements: [],
+            services: [],
+            levels: [],
+          },
+        },
+      },
+    );
+    expect(canvas.ok()).toBeTruthy();
+
+    await page.goto(`/projects/${projectId}?mode=survey`);
+    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("building-footprint")).toHaveCount(0);
+    await expect(page.getByTestId("building-footprint-empty")).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+});

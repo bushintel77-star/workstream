@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   itemsToPlacements,
   placementsToItems,
+  resolveHydratedBuilding,
   siteFrameToSnapshot,
   snapshotToSiteFrame,
 } from "./canvasBridge";
@@ -54,6 +55,35 @@ describe("site_frame bridge", () => {
         levels: [],
       }),
     ).toEqual({});
+  });
+
+  it("does not leak a seed footprint into a real frame without a building", () => {
+    const frame = {
+      boundary: [
+        { x_pct: 10, y_pct: 10 },
+        { x_pct: 90, y_pct: 10 },
+        { x_pct: 90, y_pct: 90 },
+        { x_pct: 10, y_pct: 90 },
+      ],
+      building: [],
+      easements: [],
+      services: [],
+      levels: [],
+    };
+    const seedBuilding = [
+      { x: 30, y: 30 },
+      { x: 60, y: 30 },
+      { x: 60, y: 55 },
+      { x: 30, y: 55 },
+    ];
+    const hydrated = siteFrameToSnapshot(frame);
+
+    expect(
+      resolveHydratedBuilding(frame, hydrated.building, seedBuilding),
+    ).toEqual([]);
+    expect(resolveHydratedBuilding(undefined, undefined, seedBuilding)).toBe(
+      seedBuilding,
+    );
   });
 
   it("round-trips authored DBH on existing trees", () => {

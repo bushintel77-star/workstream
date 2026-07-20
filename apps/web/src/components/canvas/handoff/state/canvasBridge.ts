@@ -201,3 +201,18 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
   }
   return out;
 }
+
+/**
+ * A real persisted site frame is authoritative.
+ *
+ * If it contains no valid building ring, keep the building layer empty rather
+ * than leaking demo/seed footprint geometry into a live project.
+ */
+export function resolveHydratedBuilding(
+  frame: DesignSiteFrame | null | undefined,
+  hydratedBuilding: PctPoint[] | undefined,
+  fallbackBuilding: PctPoint[],
+): PctPoint[] {
+  if (hydratedBuilding) return hydratedBuilding;
+  return frame ? [] : fallbackBuilding;
+}
