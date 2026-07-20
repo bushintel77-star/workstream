@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BY_TYPE,
   MODE_TABS,
@@ -143,6 +144,8 @@ export function HandoffDesignStudio({
   quotePortalUri = null,
   initialTitleBlock = null,
 }: Props) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const fallbackOutdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
     projectId,
@@ -693,6 +696,17 @@ export function HandoffDesignStudio({
     if (mode === "share") return "Generate a quote before sharing.";
     return "Complete the previous stage first.";
   };
+
+  const setCanvasMode = (mode: StudioMode) => {
+    studio.setMode(mode);
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("mode", mode);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${pathname}?${next.toString()}`,
+    );
+  };
   /**
    * Instrument + inventory home — margin pin only (never lot core).
    */
@@ -787,7 +801,7 @@ export function HandoffDesignStudio({
                 aria-disabled={locked}
                 title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
                 onClick={() => {
-                  if (!locked) studio.setMode(m);
+                  if (!locked) setCanvasMode(m);
                 }}
               >
                 {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
