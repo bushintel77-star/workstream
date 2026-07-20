@@ -27,6 +27,9 @@ export default defineConfig({
       env: {
         AUTH_REQUIRED: "false",
         NODE_ENV: "test",
+        // E2E creates and exercises many projects from one loopback IP.
+        // Keep production throttling enabled, but prevent test-order failures.
+        RATE_LIMIT_MAX: "10000",
       },
     },
     {
