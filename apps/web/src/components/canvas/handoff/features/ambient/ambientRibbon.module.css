@@ -26,9 +26,8 @@
   transition: opacity 280ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-.ribbon[data-phase="armed"] {
-  opacity: 0.88;
-  transition: opacity 700ms cubic-bezier(0.33, 0.1, 0.25, 1);
+.ribbon[data-phase="shadow"] {
+  opacity: 0.55;
 }
 
 .hub {
@@ -106,32 +105,25 @@
     color 140ms ease;
 }
 
-.ribbon[data-phase="awake"] .btn[data-kind="draft"],
-.ribbon[data-phase="carousel"] .btn[data-kind="draft"],
-.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
+/* Tools only expand when summoned / hovered — not while selecting geometry */
+.ribbon[data-phase="carousel"] .btn[data-kind="draft"] {
   opacity: 1;
   pointer-events: auto;
   transform: rotate(var(--arc, 0deg)) translateY(-56px)
     rotate(calc(-1 * var(--arc, 0deg)));
 }
 
-.ribbon[data-phase="armed"] .btn[data-kind="draft"] {
-  opacity: 0.78;
-  background: rgba(26, 36, 48, 0.58);
-}
-
-.ribbon[data-phase="awake"] .btn[data-kind="draft"] {
-  /* Compact stack above hub when awake but not drafting */
-  transform: translateY(calc(-42px - var(--stack, 0px)));
-}
-
-.ribbon[data-phase="carousel"] .btn[data-kind="draft"].active,
-.ribbon[data-phase="armed"] .btn[data-kind="draft"].active {
+.ribbon[data-phase="carousel"] .btn[data-kind="draft"].active {
   background: rgba(232, 240, 248, 0.94);
   color: #1a2430;
   border-color: rgba(232, 240, 248, 0.55);
   transform: rotate(var(--arc, 0deg)) translateY(-64px)
     rotate(calc(-1 * var(--arc, 0deg))) scale(1.06);
+}
+
+.ribbon[data-phase="shadow"] .btn[data-kind="draft"] {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .btn:hover {
@@ -274,8 +266,7 @@
     transition: none;
   }
 
-  .ribbon[data-phase="carousel"] .btn[data-kind="draft"],
-  .ribbon[data-phase="armed"] .btn[data-kind="draft"] {
+  .ribbon[data-phase="carousel"] .btn[data-kind="draft"] {
     transform: translateY(-48px);
   }
 }

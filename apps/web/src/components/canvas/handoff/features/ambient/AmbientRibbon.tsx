@@ -35,9 +35,18 @@ type Props = {
   layerOpacity: LayerOpacity;
   parchmentPeel: number;
   hasAerial: boolean;
-  /** Board-% anchor — selection, draw cursor, or last work point. */
+  /**
+   * Sticky board-% home — pinned on empty canvas margin clicks.
+   * Does not follow selection (selection uses the niche carousel).
+   */
   anchorXPct: number;
   anchorYPct: number;
+  /**
+   * Explicit summon from empty margin click (off the lot drawing).
+   * Selecting geometry / items must not set this.
+   */
+  summoned: boolean;
+  onDismissSummon?: () => void;
   onTool: (t: StudioTool) => void;
   onMeasure: () => void;
   onUndo: () => void;
@@ -48,23 +57,7 @@ type Props = {
   onParchmentPeel: (v: number) => void;
 };
 
-/** Tools that mean “I’m drafting” — ribbon stays armed as a soft arc. */
-const DRAFTING: ReadonlySet<string> = new Set([
-  "trace",
-  "edit",
-  "add",
-  "paint",
-  "zone",
-  "measure",
-  "calib",
-  "level",
-  "service",
-  "sketch",
-]);
-
-const PROX_PCT = 14;
-
-type Phase = "shadow" | "awake" | "carousel" | "armed";
+type Phase = "shadow" | "awake" | "carousel";
 
 type Instrument = {
   id: StudioTool | "measure" | "zoomOut" | "fit" | "zoomIn" | "undo" | "redo";
@@ -75,8 +68,8 @@ type Instrument = {
 };
 
 /**
- * Context-aware instruments — float on the drawing, not a far-left dock.
- * Shadow hub → awaken near work → half-circle carousel while drafting.
+ * Drawing instruments — summon from empty canvas margin, or the hub.
+ * Selecting CAD lines / symbols does not open this toolbar (Figma-style).
  */
 export function AmbientRibbon({
   tool,
@@ -90,6 +83,8 @@ export function AmbientRibbon({
   hasAerial,
   anchorXPct,
   anchorYPct,
+  summoned,
+  onDismissSummon,
   onTool,
   onMeasure,
   onUndo,
@@ -100,21 +95,10 @@ export function AmbientRibbon({
   onParchmentPeel,
 }: Props) {
   const surveyMode = mode === "survey";
-  const drafting = DRAFTING.has(tool) || (tool === "lock" && locked);
   const rootRef = useRef<HTMLElement>(null);
-  const [proximity, setProximity] = useState(false);
   const [hovered, setHovered] = useState(false);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lingering, setLingering] = useState(false);
-
-  const hot = proximity || hovered || lingering;
-
-  const phase: Phase = useMemo(() => {
-    if (hot && drafting) return "carousel";
-    if (hot) return "awake";
-    if (drafting) return "armed";
-    return "shadow";
-  }, [hot, drafting]);
 
   const clearFade = useCallback(() => {
     if (fadeTimer.current) {
@@ -123,46 +107,31 @@ export function AmbientRibbon({
     }
   }, []);
 
-  const scheduleFade = useCallback(() => {
+  const beginLinger = useCallback(() => {
     clearFade();
     setLingering(true);
     fadeTimer.current = setTimeout(() => {
       setLingering(false);
       fadeTimer.current = null;
+      onDismissSummon?.();
     }, ATELIER_LINGER_MS);
+  }, [clearFade, onDismissSummon]);
+
+  const stayEngaged = useCallback(() => {
+    clearFade();
+    setLingering(true);
   }, [clearFade]);
 
+  // Fresh margin summon → open and hold, then settle.
   useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      const board = rootRef.current?.closest(
-        "[data-testid='studio-board']",
-      ) as HTMLElement | null;
-      const el = board ?? rootRef.current;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      if (r.width < 1 || r.height < 1) return;
-      const px = ((e.clientX - r.left) / r.width) * 100;
-      const py = ((e.clientY - r.top) / r.height) * 100;
-      const near =
-        Math.hypot(px - anchorXPct, py - anchorYPct) <= PROX_PCT;
-      setProximity(near);
-      if (near) {
-        clearFade();
-        setLingering(false);
-      }
-    };
-    const onLeave = () => {
-      setProximity(false);
-      scheduleFade();
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseleave", onLeave);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseleave", onLeave);
-      clearFade();
-    };
-  }, [anchorXPct, anchorYPct, clearFade, scheduleFade]);
+    if (!summoned) return;
+    stayEngaged();
+    if (!hovered) beginLinger();
+    return clearFade;
+  }, [summoned, stayEngaged, beginLinger, clearFade, hovered]);
+
+  const open = hovered || lingering || summoned;
+  const phase: Phase = open ? "carousel" : "shadow";
 
   const instruments = useMemo((): Instrument[] => {
     const draft: Instrument[] = TOOLS.filter((t) => t.id !== "reset").map(
@@ -200,52 +169,29 @@ export function AmbientRibbon({
     return [...draft, ...survey, ...rest];
   }, [surveyMode]);
 
-  const draftInstruments = instruments.filter((i) => i.kind === "draft");
-  const utilityInstruments = instruments.filter((i) => i.kind !== "draft");
+  const draftInstruments = instruments.filter((t) => t.kind === "draft");
+  const utilityInstruments = instruments.filter((t) => t.kind !== "draft");
 
   const activeDraftIdx = Math.max(
     0,
     draftInstruments.findIndex(
-      (i) => i.id === tool || (i.id === "lock" && locked && tool === "lock"),
+      (t) => t.id === tool || (t.id === "lock" && locked && tool === "lock"),
     ),
   );
 
   const runInstrument = useCallback(
     (id: Instrument["id"]) => {
-      if (id === "measure") {
-        playInstrumentTick("arm");
-        onMeasure();
-        return;
-      }
-      if (id === "zoomOut") {
-        playInstrumentTick("step");
-        onZoom(-0.1);
-        return;
-      }
-      if (id === "zoomIn") {
-        playInstrumentTick("step");
-        onZoom(0.1);
-        return;
-      }
-      if (id === "fit") {
-        playInstrumentTick("arm");
-        onFit();
-        return;
-      }
-      if (id === "undo") {
-        playInstrumentTick("step");
-        onUndo();
-        return;
-      }
-      if (id === "redo") {
-        playInstrumentTick("step");
-        onRedo();
-        return;
-      }
       playInstrumentTick("arm");
-      onTool(id);
+      stayEngaged();
+      if (id === "measure") onMeasure();
+      else if (id === "zoomOut") onZoom(-0.1);
+      else if (id === "zoomIn") onZoom(0.1);
+      else if (id === "fit") onFit();
+      else if (id === "undo") onUndo();
+      else if (id === "redo") onRedo();
+      else onTool(id as StudioTool);
     },
-    [onFit, onMeasure, onRedo, onTool, onUndo, onZoom],
+    [onFit, onMeasure, onRedo, onTool, onUndo, onZoom, stayEngaged],
   );
 
   const cycleDraft = useCallback(
@@ -258,8 +204,9 @@ export function AmbientRibbon({
       playInstrumentTick("step");
       if (pick.id === "measure") onMeasure();
       else onTool(pick.id as StudioTool);
+      stayEngaged();
     },
-    [activeDraftIdx, draftInstruments, onMeasure, onTool],
+    [activeDraftIdx, draftInstruments, onMeasure, onTool, stayEngaged],
   );
 
   const arcAngles = useMemo(() => {
@@ -274,8 +221,8 @@ export function AmbientRibbon({
     });
   }, [activeDraftIdx, draftInstruments]);
 
-  const ax = Math.max(12, Math.min(88, anchorXPct));
-  const ay = Math.max(14, Math.min(86, anchorYPct));
+  const ax = Math.max(10, Math.min(90, anchorXPct));
+  const ay = Math.max(12, Math.min(88, anchorYPct));
 
   return (
     <nav
@@ -283,7 +230,8 @@ export function AmbientRibbon({
       className={css.ribbon}
       data-testid="ambient-ribbon"
       data-phase={phase}
-      data-expanded={hot ? "true" : "false"}
+      data-expanded={open ? "true" : "false"}
+      data-summoned={summoned ? "true" : "false"}
       aria-label="Drawing instruments"
       style={
         {
@@ -292,16 +240,15 @@ export function AmbientRibbon({
         } as CSSProperties
       }
       onMouseEnter={() => {
-        clearFade();
+        stayEngaged();
         setHovered(true);
-        setLingering(false);
       }}
       onMouseLeave={() => {
         setHovered(false);
-        scheduleFade();
+        beginLinger();
       }}
       onWheel={(e) => {
-        if (phase !== "carousel" && phase !== "awake") return;
+        if (phase !== "carousel") return;
         if (Math.abs(e.deltaY) < 2) return;
         e.preventDefault();
         cycleDraft(e.deltaY > 0 ? 1 : -1);
@@ -311,10 +258,10 @@ export function AmbientRibbon({
         type="button"
         className={css.hub}
         data-testid="instrument-hub"
-        title="Instruments"
+        title="Instruments — or click empty canvas margin to summon"
         aria-label="Open drawing instruments"
         onClick={() => {
-          clearFade();
+          stayEngaged();
           setHovered(true);
           playInstrumentTick("step");
         }}
@@ -390,6 +337,7 @@ export function AmbientRibbon({
               const next = steps[(idx + 1) % steps.length]!;
               playInstrumentTick("step");
               onParchmentPeel(next);
+              stayEngaged();
             }}
           >
             <span className={css.chipName}>Peel</span>
@@ -409,6 +357,7 @@ export function AmbientRibbon({
               const next = cur < 0.35 ? 1 : cur < 0.7 ? 0.3 : 0.55;
               playInstrumentTick("step");
               onOpacity(chip.key, next);
+              stayEngaged();
             }}
           >
             <span className={css.chipName}>{chip.label}</span>

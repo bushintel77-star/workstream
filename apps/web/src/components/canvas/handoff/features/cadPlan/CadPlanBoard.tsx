@@ -6,6 +6,7 @@ import {
   deleteVertex,
   edgeSegments,
   insertVertexAfter,
+  pointInPolygon,
   polygonAreaM2,
   GRID_INK_STROKE,
   GRID_STEP_PCT,
@@ -120,6 +121,18 @@ type Props = {
   gridInk?: GridInk;
   /** Paint bucket — recolor / retag a symbol. */
   onPaintItem?: (id: string) => void;
+  /**
+   * Empty-board click (not an item / CAD handle).
+   * `insideLot` — true on the property drawing; false on the canvas margin.
+   * Margin clicks summon instruments; lot clicks are for selection / clear.
+   */
+  onEmptyClick?: (hit: {
+    x: number;
+    y: number;
+    insideLot: boolean;
+  }) => void;
+  /** Boundary / building handle interaction — dismiss instrument summon. */
+  onCadHandleInteract?: () => void;
 };
 
 function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
@@ -178,6 +191,8 @@ export function CadPlanBoard({
   gridFormation = "ortho",
   gridInk = "charcoal",
   onPaintItem,
+  onEmptyClick,
+  onCadHandleInteract,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -327,6 +342,7 @@ export function CadPlanBoard({
     e.stopPropagation();
     e.preventDefault();
     setNodeMenu(null);
+    onCadHandleInteract?.();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragRef.current = { kind, index, ox: 0, oy: 0 };
   };
@@ -430,7 +446,13 @@ export function CadPlanBoard({
           .map((i) => i.id);
         onMarqueeSelect(hit);
       } else {
+        // Click (not drag) on empty board — not an item / vertex handle.
+        const x = (minX + maxX) / 2;
+        const y = (minY + maxY) / 2;
+        const insideLot =
+          boundary.length >= 3 && pointInPolygon({ x, y }, boundary);
         onSelect(null);
+        onEmptyClick?.({ x, y, insideLot });
       }
     }
     dragRef.current = null;

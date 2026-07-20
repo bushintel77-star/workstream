@@ -177,11 +177,16 @@ export function HandoffDesignStudio({
     x: 50,
     y: 58,
   });
-  /** Sticky instrument home — updates on place / board click, not mousemove. */
+  /**
+   * Sticky instrument home — empty canvas margin only (off the lot drawing).
+   * Does not follow selection; default parks in the left gutter.
+   */
   const [anchorPct, setAnchorPct] = useState<{ x: number; y: number }>({
-    x: 50,
-    y: 58,
+    x: 14,
+    y: 52,
   });
+  /** Instruments open only when summoned (margin click / hub), not on select. */
+  const [instrumentsSummoned, setInstrumentsSummoned] = useState(false);
   const addProbePct = workPct;
 
   useEffect(() => {
@@ -497,17 +502,16 @@ export function HandoffDesignStudio({
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
   /**
-   * Stable instrument home — selection → last poly vertex → sticky anchor.
-   * Never follow live pointer / rubber-band cursor (that glued chrome to the mouse).
+   * Instrument home — sticky margin pin only.
+   * Selection uses NicheToolCarousel; CAD picks never move this anchor.
    */
   const instrumentAnchor = useMemo(() => {
-    if (selectedLive) return { x: selectedLive.x, y: selectedLive.y };
     if (ui.drawPoly && ui.drawPoly.length > 0) {
       const last = ui.drawPoly[ui.drawPoly.length - 1]!;
       return { x: last.x, y: last.y };
     }
     return { x: anchorPct.x, y: anchorPct.y };
-  }, [selectedLive, ui.drawPoly, anchorPct.x, anchorPct.y]);
+  }, [ui.drawPoly, anchorPct.x, anchorPct.y]);
   const selectedTradeTag =
     selectedLive && chrome.tradeMargin
       ? tradeTagForItem(trade, selectedLive.id)
@@ -1069,6 +1073,8 @@ export function HandoffDesignStudio({
               flaggedIds={flaggedIds}
               tpzReadouts={tpzReadouts}
               onSelect={(id, opts) => {
+                // Selecting geometry / symbols is not a toolbox summon.
+                setInstrumentsSummoned(false);
                 if (!id) {
                   studio.setSelection(null, []);
                   return;
@@ -1093,8 +1099,20 @@ export function HandoffDesignStudio({
                 studio.setSelection(id, [id]);
               }}
               onMarqueeSelect={(ids) => {
+                setInstrumentsSummoned(false);
                 studio.setSelection(ids[0] ?? null, ids);
               }}
+              onEmptyClick={({ x, y, insideLot }) => {
+                if (insideLot) {
+                  // On the drawing — clear selection only; keep toolbox closed.
+                  setInstrumentsSummoned(false);
+                  return;
+                }
+                // Off the lot, on the canvas margin — pin + summon instruments.
+                pinInstrumentAnchor(x, y);
+                setInstrumentsSummoned(true);
+              }}
+              onCadHandleInteract={() => setInstrumentsSummoned(false)}
               onHover={(id) => studio.setUi({ hoverId: id })}
               onAcceptGhost={ai.accept}
               onRejectGhost={ai.reject}
@@ -1262,7 +1280,8 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {(ui.tool === "edit" ||
+            {instrumentsSummoned &&
+            (ui.tool === "edit" ||
               ui.tool === "paint" ||
               ui.tool === "add" ||
               ui.tool === "pan") &&
@@ -1387,10 +1406,16 @@ export function HandoffDesignStudio({
             hasAerial={Boolean(liveAerial)}
             anchorXPct={instrumentAnchor.x}
             anchorYPct={instrumentAnchor.y}
-            onTool={studio.setTool}
-            onMeasure={() =>
-              studio.setTool(ui.tool === "measure" ? "pan" : "measure")
-            }
+            summoned={instrumentsSummoned}
+            onDismissSummon={() => setInstrumentsSummoned(false)}
+            onTool={(t) => {
+              setInstrumentsSummoned(true);
+              studio.setTool(t);
+            }}
+            onMeasure={() => {
+              setInstrumentsSummoned(true);
+              studio.setTool(ui.tool === "measure" ? "pan" : "measure");
+            }}
             onUndo={studio.undo}
             onRedo={studio.redo}
             onZoom={(delta) => {
