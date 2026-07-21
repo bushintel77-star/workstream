@@ -13,6 +13,13 @@ type Props = {
   zoom: number;
   focusX: number;
   focusY: number;
+  /**
+   * Drag-to-pan offset, in % of board size — mirrors `.zoomWorld`'s
+   * `translate()` in px. Ticks live outside the transformed world, so this
+   * is the one place the pan offset must be applied explicitly.
+   */
+  panXPct?: number;
+  panYPct?: number;
   sheetScaleDenom: SheetScaleDenom;
   darkOn?: boolean;
 };
@@ -31,6 +38,8 @@ export function GroundRulerOverlay({
   zoom,
   focusX,
   focusY,
+  panXPct = 0,
+  panYPct = 0,
   sheetScaleDenom,
   darkOn = false,
 }: Props) {
@@ -44,8 +53,8 @@ export function GroundRulerOverlay({
 
     for (let worldPct = stepPct; worldPct < 100; worldPct += stepPct) {
       const metres = Math.round((worldPct / 100) * scaleM);
-      const x = focusX + (worldPct - focusX) * zoom;
-      const y = focusY + (worldPct - focusY) * zoom;
+      const x = focusX + (worldPct - focusX) * zoom + panXPct;
+      const y = focusY + (worldPct - focusY) * zoom + panYPct;
 
       // Keep labels clear of clipped board corners.
       if (x >= 2 && x <= 98) horizontal.push({ metres, screenPct: x });
@@ -53,7 +62,7 @@ export function GroundRulerOverlay({
     }
 
     return { horizontal, vertical };
-  }, [focusX, focusY, scaleM, stepPct, zoom]);
+  }, [focusX, focusY, panXPct, panYPct, scaleM, stepPct, zoom]);
 
   return (
     <div

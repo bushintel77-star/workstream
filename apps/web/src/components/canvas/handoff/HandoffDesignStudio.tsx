@@ -118,6 +118,7 @@ import {
   zoomByRibbonDelta,
   zoomFromWheel,
 } from "./geometry/canvasZoom";
+import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
 import {
   formalizeSketchToCadAction,
   lookupCadastralTitleAction,
@@ -198,6 +199,15 @@ export function HandoffDesignStudio({
   const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
+  /**
+   * Drag-to-pan — Space held (grab, armed) vs actively dragging (grabbing).
+   * spaceHeldRef/panDragBaseRef back the gesture listeners so pan drags
+   * survive re-renders without tearing down mid-drag.
+   */
+  const spaceHeldRef = useRef(false);
+  const [spacePanArmed, setSpacePanArmed] = useState(false);
+  const [isPanningActive, setIsPanningActive] = useState(false);
+  const panBaseRef = useRef({ x: 0, y: 0 });
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
@@ -358,6 +368,100 @@ export function HandoffDesignStudio({
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, [studio, ui.frameOn, ui.mode, ui.zoom]);
+
+  /** Pan offset is view-only — never carries stale state into Fit sheet. */
+  useEffect(() => {
+    if (ui.frameOn) studio.setUi({ panX: 0, panY: 0 });
+  }, [ui.frameOn, studio]);
+
+  /** Keeps the drag-start base fresh without re-subscribing gesture listeners. */
+  useEffect(() => {
+    panBaseRef.current = { x: ui.panX, y: ui.panY };
+  }, [ui.panX, ui.panY]);
+
+  /**
+   * Space held → pan armed (CAD/Figma convention). Tracked outside React
+   * state via a ref so the gesture listener below always reads it live;
+   * mirrored into state only to drive the grab cursor.
+   */
+  useEffect(() => {
+    const planMode =
+      ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+    if (!planMode || ui.frameOn) return;
+    const release = () => {
+      spaceHeldRef.current = false;
+      setSpacePanArmed(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (typing) return;
+      e.preventDefault();
+      spaceHeldRef.current = true;
+      setSpacePanArmed(true);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      release();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    // Alt-tabbing away while Space is held would otherwise strand it "armed".
+    window.addEventListener("blur", release);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", release);
+      release();
+    };
+  }, [ui.mode, ui.frameOn]);
+
+  /**
+   * Drag-to-pan — middle-mouse or Space+drag translates the viewport
+   * without touching selection. Intercepted at capture phase, ahead of
+   * CadPlanBoard's marquee-select pointerdown, so the two never collide.
+   */
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const planMode =
+      ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+    if (!planMode || ui.frameOn) return;
+    const onPointerDownCapture = (e: PointerEvent) => {
+      if (!isPanGesture({ button: e.button, spaceHeld: spaceHeldRef.current })) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const base = panBaseRef.current;
+      setIsPanningActive(true);
+      el.setPointerCapture?.(e.pointerId);
+      const onMove = (ev: PointerEvent) => {
+        const next = nextPanOffset(base, ev.clientX - startX, ev.clientY - startY);
+        studio.setUi({ panX: next.x, panY: next.y });
+      };
+      const onUp = () => {
+        setIsPanningActive(false);
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        el.releasePointerCapture?.(e.pointerId);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp, { once: true });
+    };
+    el.addEventListener("pointerdown", onPointerDownCapture, { capture: true });
+    return () =>
+      el.removeEventListener("pointerdown", onPointerDownCapture, {
+        capture: true,
+      });
+  }, [studio, ui.frameOn, ui.mode]);
 
   /** Restore micro grid studio prefs for this project session. */
   useEffect(() => {
@@ -1034,6 +1138,13 @@ export function HandoffDesignStudio({
         sketchTip: ui.mode === "sketch" ? sketchChrome.tip : undefined,
       });
 
+  /** Drag-to-pan takes cursor priority over whatever tool is active. */
+  const effectiveCursor = isPanningActive
+    ? "grabbing"
+    : spacePanArmed
+      ? "grab"
+      : studioCursor;
+
   const draftLabel =
     ai.status === "scanning"
       ? "Scanning"
@@ -1470,7 +1581,9 @@ export function HandoffDesignStudio({
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}`}
         data-testid="studio-board"
+        data-panning={isPanningActive ? "1" : "0"}
         ref={boardRef}
+        style={{ cursor: effectiveCursor }}
       >
         <div className={css.honestyCaption}>
           Concept sketch for estimating — not a construction drawing.
@@ -1545,8 +1658,14 @@ export function HandoffDesignStudio({
               data-print-keep="plan"
               style={{
                 transformOrigin: `${planFocusX}% ${planFocusY}%`,
-                transform: `scale(${planZoom})`,
-                cursor: studioCursor,
+                /*
+                 * translate() applies in screen px, after scale() — a drag
+                 * of N px on screen always moves the view N px, independent
+                 * of zoom. Fit sheet never pans (ui.panX/Y reset to 0 on
+                 * frameOn entry), so this is a no-op there.
+                 */
+                transform: `translate(${ui.frameOn ? 0 : ui.panX}px, ${ui.frameOn ? 0 : ui.panY}px) scale(${planZoom})`,
+                cursor: effectiveCursor,
               }}
             >
             <AerialSlot
@@ -1961,6 +2080,8 @@ export function HandoffDesignStudio({
             zoom={planZoom}
             focusX={planFocusX}
             focusY={planFocusY}
+            panXPct={boardSize.w > 0 ? (ui.panX / boardSize.w) * 100 : 0}
+            panYPct={boardSize.h > 0 ? (ui.panY / boardSize.h) * 100 : 0}
             sheetScaleDenom={ui.sheetScaleDenom}
             darkOn={ui.darkOn}
           />

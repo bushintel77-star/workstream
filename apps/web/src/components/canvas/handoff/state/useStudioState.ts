@@ -199,6 +199,13 @@ type Ui = {
   /** Zoom origin on the board (%) — outdoor remnant centre after Fit. */
   focusX: number;
   focusY: number;
+  /**
+   * Drag-to-pan offset in px, applied as `translate()` alongside the zoom
+   * `scale()` — independent of focusX/focusY (which anchor zoom, not pan).
+   * Always 0 while `frameOn` (Fit sheet owns its own fixed layout).
+   */
+  panX: number;
+  panY: number;
   savedTick: number;
   /** Monotonic canvas revision after each successful autosave. */
   saveRevision: number;
@@ -413,6 +420,8 @@ function initialState(opts: {
       zoom: 1,
       focusX: 50,
       focusY: 50,
+      panX: 0,
+      panY: 0,
       savedTick: 0,
       saveRevision: hasCanvas ? 1 : 0,
       aerialUri: null,
@@ -1203,6 +1212,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       locked: false,
       sheetScaleDenom: 100,
       zoom: 1,
+      panX: 0,
+      panY: 0,
       mode: "survey",
       tool: "edit",
       layerOpacity: {
@@ -1488,6 +1499,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
           focusX: focus.focusX,
           focusY: focus.focusY,
           zoom: focus.zoom,
+          panX: 0,
+          panY: 0,
         });
       } catch {
         /* keep seed boundary */
@@ -2274,6 +2287,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       focusX: focus.focusX,
       focusY: focus.focusY,
       zoom: focus.zoom,
+      panX: 0,
+      panY: 0,
     });
   }, [
     setUi,
