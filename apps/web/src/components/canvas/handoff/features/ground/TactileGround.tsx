@@ -31,6 +31,8 @@ type Props = {
    * (Fit overlay owns N + scale).
    */
   quietChrome?: boolean;
+  /** Edge labels are normally owned by the fixed sibling ruler overlay. */
+  showEdgeLabels?: boolean;
 };
 
 /**
@@ -51,6 +53,7 @@ export function TactileGround({
   address = null,
   suppressSiteCue = false,
   quietChrome = false,
+  showEdgeLabels = true,
 }: Props) {
   const scaleM = boardScaleM(sheetScaleDenom);
   const visibleM = visibleMetres(sheetScaleDenom, zoom);
@@ -188,20 +191,24 @@ export function TactileGround({
 
       {!quietChrome ? (
         <>
-          <div className={css.edgeScale} data-edge="left">
-            {edgeLabels.map((l) => (
-              <span key={`L${l.pct}`} style={{ top: `${l.pct}%` }}>
-                {l.label}
-              </span>
-            ))}
-          </div>
-          <div className={css.edgeScale} data-edge="bottom">
-            {edgeLabels.map((l) => (
-              <span key={`B${l.pct}`} style={{ left: `${l.pct}%` }}>
-                {l.label}
-              </span>
-            ))}
-          </div>
+          {showEdgeLabels ? (
+            <>
+              <div className={css.edgeScale} data-edge="left">
+                {edgeLabels.map((l) => (
+                  <span key={`L${l.pct}`} style={{ top: `${l.pct}%` }}>
+                    {l.label}
+                  </span>
+                ))}
+              </div>
+              <div className={css.edgeScale} data-edge="bottom">
+                {edgeLabels.map((l) => (
+                  <span key={`B${l.pct}`} style={{ left: `${l.pct}%` }}>
+                    {l.label}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : null}
           <div className={css.compass} title="True north">
             <span className={css.compassN}>N</span>
             <span className={css.compassRose} />

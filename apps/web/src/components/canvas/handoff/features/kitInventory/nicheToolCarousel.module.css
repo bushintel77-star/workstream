@@ -1,12 +1,12 @@
 /*
- * Material fan — original blush frost marking menu.
+ * Material fan — matte chips (no frosted haze).
  */
 
 .root {
   --ink: #241318;
   --ink-soft: #7a5560;
-  --glass: rgba(255, 251, 252, 0.92);
-  --glass-border: rgba(36, 19, 24, 0.12);
+  --glass: var(--hc-glass, rgba(255, 251, 252, 0.97));
+  --glass-border: var(--hc-line, rgba(36, 19, 24, 0.14));
   --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
   --enter-ms: 480ms;
@@ -54,7 +54,7 @@
   border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: var(--glass);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   color: var(--ink-soft);
   cursor: pointer;
   display: flex;
@@ -63,7 +63,7 @@
   justify-content: center;
   gap: 1px;
   font: inherit;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
   opacity: 0.55;
   transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.55))
     rotate(calc(-1 * var(--arc, 0deg))) scale(0.92);

@@ -48,7 +48,7 @@
   border-radius: 10px;
   background: rgba(255, 251, 252, 0.92);
   box-shadow: 0 6px 18px rgba(42, 23, 29, 0.12);
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
   transform: translate(14px, calc(-100% - 10px));
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 9px;

@@ -11,7 +11,7 @@
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
   background: rgba(255, 251, 252, 0.82);
-  backdrop-filter: blur(20px) saturate(1.15);
+  backdrop-filter: none;
   box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
   font-family: var(--font-body);
   color: #241318;

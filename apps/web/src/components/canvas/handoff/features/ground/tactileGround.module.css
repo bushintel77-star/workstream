@@ -130,7 +130,10 @@
 .edgeScale[data-edge="left"] span {
   position: absolute;
   left: 0;
-  transform: translateY(-50%);
+  /* Counter-scale: labels live inside .zoomWorld but must stay screen-size
+     instruments (same pattern as .cornerNode). Origin locks to the rail. */
+  transform: translateY(-50%) scale(calc(1 / var(--studio-zoom, 1)));
+  transform-origin: left center;
   white-space: nowrap;
 }
 
@@ -144,6 +147,44 @@
 .edgeScale[data-edge="bottom"] span {
   position: absolute;
   bottom: 0;
+  transform: translateX(-50%) scale(calc(1 / var(--studio-zoom, 1)));
+  transform-origin: center bottom;
+  white-space: nowrap;
+}
+
+/* Fixed sibling ruler — outside `.zoomWorld`, so labels never inherit scale. */
+.rulerOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  overflow: hidden;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  font-weight: 500;
+  color: rgba(74, 48, 40, 0.55);
+}
+
+.rulerOverlayDark {
+  color: rgba(255, 230, 210, 0.45);
+}
+
+.rulerLeft,
+.rulerBottom {
+  position: absolute;
+  inset: 0;
+}
+
+.rulerLeft span {
+  position: absolute;
+  left: var(--ws-safe-left, 64px);
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.rulerBottom span {
+  position: absolute;
+  bottom: var(--ws-safe-bottom, 48px);
   transform: translateX(-50%);
   white-space: nowrap;
 }

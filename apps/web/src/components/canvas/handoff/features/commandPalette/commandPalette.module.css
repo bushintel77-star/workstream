@@ -7,7 +7,7 @@
   justify-content: center;
   padding: 12vh 16px 16px;
   background: rgba(36, 19, 24, 0.28);
-  backdrop-filter: blur(2px);
+  backdrop-filter: none;
 }
 
 .panel {

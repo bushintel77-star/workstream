@@ -189,12 +189,9 @@
   gap: 8px;
   padding: 8px 6px;
   border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.14));
   background: var(--neu-surface);
-  box-shadow: var(
-    --hc-neu-out,
-    -3px -3px 8px rgba(255, 255, 255, 0.85),
-    4px 4px 11px rgba(42, 23, 29, 0.16)
-  );
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
   opacity: 0;
   transform: translate(32px, -20px);
   transition: opacity 180ms var(--ease);
@@ -287,12 +284,9 @@
   width: 112px;
   padding: 8px;
   border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.14));
   background: var(--neu-surface);
-  box-shadow: var(
-    --hc-neu-out,
-    -3px -3px 8px rgba(255, 255, 255, 0.85),
-    4px 4px 11px rgba(42, 23, 29, 0.16)
-  );
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
   opacity: 0;
   transform: translate(-128px, -12px);
   transition: opacity 180ms var(--ease);

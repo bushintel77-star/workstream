@@ -231,6 +231,7 @@ export function AerialSlot({
         address={address ?? siteLabel}
         suppressSiteCue={suppressSiteCue}
         quietChrome={frameOn}
+        showEdgeLabels={false}
       />
 
       {showAerial && uri ? (

@@ -16,7 +16,7 @@
   border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: var(--glass);
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
   box-shadow: var(--elev);
   opacity: 0.72;
   transform: translate(-50%, -50%);

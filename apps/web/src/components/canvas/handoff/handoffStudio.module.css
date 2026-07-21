@@ -1,17 +1,19 @@
 .root {
   /*
-   * Handoff chrome DNA — one system for micro instruments and larger docks.
-   * Soft edges, blush ink, quiet glass. CAD vectors keep --sds-* separately.
+   * Handoff chrome DNA — crisp dock plastic + matte panels.
+   * No cloudy frost halos: tight shadows, hairline borders, minimal blur.
+   * CAD vectors keep --sds-* separately.
    */
   --hc-ink: #241318;
   --hc-ink-muted: #7a5560;
   --hc-ink-faint: #b08a95;
   --hc-paper: #fffbfc;
   --hc-invert: #fff6f8;
-  --hc-glass: rgba(255, 251, 252, 0.92);
-  --hc-glass-soft: rgba(255, 251, 252, 0.72);
-  --hc-line: rgba(36, 19, 24, 0.12);
-  --hc-line-soft: rgba(36, 19, 24, 0.08);
+  /* Near-opaque matte — not milky soft frost */
+  --hc-glass: rgba(255, 251, 252, 0.97);
+  --hc-glass-soft: rgba(255, 251, 252, 0.94);
+  --hc-line: rgba(36, 19, 24, 0.14);
+  --hc-line-soft: rgba(36, 19, 24, 0.1);
   /*
    * Radius — one surface language. Controls tuck at 10px; every floating
    * panel / dock / card / popup / modal shares one 14px radius (no mixed
@@ -23,33 +25,33 @@
   --hc-r-dock: var(--hc-r-panel);
   --hc-r-pill: 999px;
   /*
-   * Elevation — matte, soft, umber (never slate, never neon glow). Three
-   * steps: ambient micro-chrome, floating panels, lifted overlays/modals.
+   * Elevation — short, sharp, umber. Prefer hairline ring over soft bloom.
    */
-  --hc-elev-1: 0 4px 16px rgba(42, 23, 29, 0.08);
-  --hc-elev-2: 0 8px 28px rgba(42, 23, 29, 0.12);
-  --hc-elev-3: 0 18px 48px rgba(42, 23, 29, 0.2);
+  --hc-elev-1: 0 1px 2px rgba(42, 23, 29, 0.1), 0 0 0 1px rgba(36, 19, 24, 0.08);
+  --hc-elev-2: 0 2px 6px rgba(42, 23, 29, 0.12), 0 0 0 1px rgba(36, 19, 24, 0.1);
+  --hc-elev-3: 0 6px 16px rgba(42, 23, 29, 0.16), 0 0 0 1px rgba(36, 19, 24, 0.12);
   --hc-elev: var(--hc-elev-2);
+  /* On-canvas chrome: keep backdrop crisp (no cloudy haze). */
+  --hc-blur: 0px;
   /*
    * Motion — precision, not decoration. Chrome appears/dismisses in one
    * fast, non-bouncy beat. Canvas content itself never rides this.
    */
   --hc-motion: 180ms;
   /*
-   * 2026 layer pairing: glassmorphic floats (contextual panels / inspectors)
-   * hover OVER a neumorphic base surface (canvas + swatch tray furniture).
-   * The tray is soft plastic pressed from the blush field — not glass.
+   * Soft plastic docks — short highlight/shadow so chips read raised,
+   * not fogged. Hairline ring replaces the old white bloom halo.
    */
   --hc-neu-surface: #f1e4e9;
   --hc-neu-raised: #f6ebef;
-  --hc-neu-light: rgba(255, 255, 255, 0.85);
-  --hc-neu-shadow: rgba(42, 23, 29, 0.16);
-  --hc-neu-out: -3px -3px 8px var(--hc-neu-light),
-    4px 4px 11px var(--hc-neu-shadow);
-  --hc-neu-out-sm: -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow);
-  --hc-neu-in: inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light);
+  --hc-neu-light: rgba(255, 255, 255, 0.45);
+  --hc-neu-shadow: rgba(42, 23, 29, 0.14);
+  --hc-neu-out: -1px -1px 2px var(--hc-neu-light),
+    1px 1px 3px var(--hc-neu-shadow), 0 0 0 1px rgba(36, 19, 24, 0.08);
+  --hc-neu-out-sm: -1px -1px 1.5px var(--hc-neu-light),
+    1px 1px 2.5px var(--hc-neu-shadow), 0 0 0 1px rgba(36, 19, 24, 0.08);
+  --hc-neu-in: inset 1px 1px 2px var(--hc-neu-shadow),
+    inset -1px -1px 1.5px var(--hc-neu-light);
   --hc-pad: 8px;
 
   /* SDS — plan vectors only (not UI chrome) */
@@ -66,7 +68,7 @@
   --sds-node-mid: 6px;
   --sds-label-offset: 8px;
   --ws-glass: var(--hc-glass-soft);
-  --ws-glass-border: var(--hc-line-soft);
+  --ws-glass-border: var(--hc-line);
   --ws-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Sheet + chrome safe insets — keep CAD clear of HUDs */
@@ -91,8 +93,8 @@
   flex-direction: column;
   /* Original handoff blush field — not stained parchment */
   background:
-    radial-gradient(120% 80% at 8% 0%, rgba(255, 211, 222, 0.35), transparent 55%),
-    radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.32), transparent 50%),
+    radial-gradient(120% 80% at 8% 0%, rgba(255, 211, 222, 0.22), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.18), transparent 50%),
     var(--sds-canvas-bg);
   color: var(--hc-ink);
   font-family: var(--font-body);
@@ -136,15 +138,11 @@
   flex-wrap: nowrap;
   min-height: 56px;
   z-index: 30;
-  /* Same soft plastic dock language as the left swatch rail. */
-  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 88%, transparent);
-  backdrop-filter: blur(12px) saturate(1.05);
-  border-bottom: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.55),
-    2px 2px 6px rgba(42, 23, 29, 0.08)
-  );
+  /* Same soft plastic dock language as the left swatch rail — matte, no haze. */
+  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 94%, transparent);
+  backdrop-filter: none;
+  border-bottom: 1px solid var(--hc-line, rgba(36, 19, 24, 0.14));
+  box-shadow: none;
 }
 
 .brandBlock {
@@ -615,7 +613,22 @@
   transform-origin: center center;
 }
 
-/** Fit sheet — clip plan vectors to the printable A3/A4 frame (no bleed). */
+/**
+ * Fit sheet — fixed plot window. Clip lives here so world scale cannot drag
+ * the printable frame with the drawing.
+ */
+.sheetPlotClip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sheetPlotClip > .zoomWorld {
+  pointer-events: auto;
+}
+
+/** @deprecated — clip must not share a node with transform; use .sheetPlotClip */
 .zoomWorldClipped {
   overflow: hidden;
 }
@@ -651,8 +664,8 @@
   border-radius: 12px;
   border: 1px solid var(--ws-glass-border);
   background: var(--ws-glass);
-  backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 8px 24px rgba(42, 23, 29, 0.08);
+  backdrop-filter: none;
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
   pointer-events: auto;
   animation: chromeIn 220ms var(--ws-ease) both;
 }
@@ -1037,7 +1050,7 @@
   flex-direction: column;
   gap: 4px;
   background: rgba(255, 251, 252, 0.9);
-  backdrop-filter: blur(14px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 16px;
   padding: 6px;
@@ -1101,7 +1114,7 @@
   max-height: 44%;
   overflow: auto;
   background: rgba(255, 251, 252, 0.92);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 16px;
   box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
@@ -1120,7 +1133,7 @@
   gap: 8px;
   z-index: 10;
   background: rgba(255, 251, 252, 0.92);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 16px;
   box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
@@ -1141,7 +1154,7 @@
   z-index: 10;
   overflow: auto;
   background: rgba(255, 251, 252, 0.92);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 16px;
   box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
@@ -1387,7 +1400,7 @@
   border-radius: 12px;
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
-  backdrop-filter: blur(14px);
+  backdrop-filter: none;
   box-shadow: var(--hc-elev);
   color: var(--hc-ink);
   opacity: 0.88;
@@ -1437,7 +1450,7 @@
   border-radius: 12px;
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
-  backdrop-filter: blur(14px);
+  backdrop-filter: none;
   box-shadow: var(--hc-elev);
   color: var(--hc-ink);
   transform: translate(-50%, -50%);
@@ -1510,7 +1523,7 @@
   border-radius: 14px;
   border: 1px solid rgba(36, 19, 24, 0.12);
   background: rgba(255, 251, 252, 0.92);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
   color: #241318;
   transform: translate(-50%, -50%);
@@ -1601,7 +1614,7 @@
   border: 1px solid rgba(36, 19, 24, 0.12);
   border-radius: var(--hc-r-control);
   background: rgba(255, 251, 252, 0.96);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   box-shadow: var(--hc-elev-2);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
@@ -1667,7 +1680,7 @@
   padding: 24px;
   z-index: 14;
   background: rgba(255, 251, 252, 0.92);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 16px;
   box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
@@ -1788,6 +1801,7 @@
 
   /* Without fit sheet, avoid clipped / transformed viewport artefacts. */
   .root:not([data-fit-sheet="1"]) .zoomWorld,
+  .root:not([data-fit-sheet="1"]) .sheetPlotClip,
   .root:not([data-fit-sheet="1"]) .zoomWorldClipped {
     transform: none !important;
     clip-path: none !important;

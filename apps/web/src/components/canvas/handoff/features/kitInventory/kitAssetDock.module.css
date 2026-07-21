@@ -1,5 +1,5 @@
 /*
- * Inventory frost popup — summoned Soft / Hard / Trees / Water / Library.
+ * Inventory popup — matte summoned panel (no frosted haze).
  * Binding: docs/STUDIO-STYLING-AND-UX.md — never a fixed opaque slab.
  */
 
@@ -7,9 +7,9 @@
   --ink: var(--hc-ink, #241318);
   --ink-soft: var(--hc-ink-muted, #7a5560);
   --ink-faint: var(--hc-ink-faint, #b08a95);
-  --glass: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
-  --line: var(--hc-line, rgba(36, 19, 24, 0.12));
-  --elev: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
+  --glass: var(--hc-glass, rgba(255, 251, 252, 0.97));
+  --line: var(--hc-line, rgba(36, 19, 24, 0.14));
+  --elev: var(--hc-elev-2, 0 2px 6px rgba(42, 23, 29, 0.12));
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: absolute;
@@ -20,14 +20,14 @@
   border-radius: var(--hc-r-dock, 16px);
   border: 1px solid var(--line);
   background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: var(--elev);
   color: var(--ink);
   /* Fallback centre; edge-anchored variants below keep it on-canvas. */
   transform: translate(-50%, -50%);
   pointer-events: auto;
-  opacity: 0.96;
+  opacity: 1;
   /* Snappy summon + phase fades, without a transform-animation that would
      fight the edge-anchor transforms below. */
   transition: opacity 140ms var(--ease);
@@ -44,11 +44,11 @@
 
 /* Engaged inventory stays legible; only softens at true idle rest. */
 .popup[data-phase="linger"] {
-  opacity: 0.98;
+  opacity: 1;
 }
 
 .popup[data-phase="rest"] {
-  opacity: 0.86;
+  opacity: 0.92;
 }
 
 .tabs {

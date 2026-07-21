@@ -51,6 +51,7 @@ import {
 import { MeasureOverlay } from "./features/measure/MeasureOverlay";
 import { isStickyDraftTool } from "./features/measure/measureCancel";
 import { AerialSlot } from "./features/aerial/AerialSlot";
+import { GroundRulerOverlay } from "./features/ground/GroundRulerOverlay";
 import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
@@ -109,6 +110,7 @@ import type {
 import {
   plotBoxFor,
   sheetBoxFor,
+  sheetContentView,
   titlePanelWidth,
 } from "./geometry";
 import {
@@ -405,12 +407,12 @@ export function HandoffDesignStudio({
   }, [ui.saveStatus]);
 
   /**
-   * Fit to screen by default — outdoor garden remnant on Survey / Sketch / CAD
-   * (and again when opening the fit sheet). Infinite zoom remains available.
+   * Fit to screen by default — outdoor garden remnant on Survey / Sketch / CAD.
+   * Fit sheet uses sheetContentView (plan scales inside a fixed paper frame).
    */
   const outdoorFitKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (ui.focusOn || ui.clientView) return;
+    if (ui.focusOn || ui.clientView || ui.frameOn) return;
     if (
       ui.mode !== "survey" &&
       ui.mode !== "sketch" &&
@@ -419,7 +421,7 @@ export function HandoffDesignStudio({
       outdoorFitKeyRef.current = null;
       return;
     }
-    const key = `${ui.mode}:${ui.siteIdx}:frame=${ui.frameOn ? 1 : 0}`;
+    const key = `${ui.mode}:${ui.siteIdx}`;
     if (outdoorFitKeyRef.current === key) return;
     outdoorFitKeyRef.current = key;
     studio.fitOutdoorView();
@@ -563,7 +565,7 @@ export function HandoffDesignStudio({
         }
         return;
       }
-      /* Infinite zoom — + / = zoom in, - / _ zoom out (incl. fit sheet). */
+      /* Fit sheet: +/- steps 1:N. Else infinite world zoom. */
       if (
         (e.key === "+" || e.key === "=" || e.key === "-" || e.key === "_") &&
         ui.mode !== "elevation" &&
@@ -571,9 +573,19 @@ export function HandoffDesignStudio({
         ui.mode !== "share"
       ) {
         e.preventDefault();
-        studio.setUi({
-          zoom: zoomByKeyStep(ui.zoom, e.key === "-" || e.key === "_" ? -1 : 1),
-        });
+        if (ui.frameOn) {
+          // + → tighter print (1:50), - → wider (1:200)
+          studio.snapSheetScale(
+            e.key === "-" || e.key === "_" ? 1 : -1,
+          );
+        } else {
+          studio.setUi({
+            zoom: zoomByKeyStep(
+              ui.zoom,
+              e.key === "-" || e.key === "_" ? -1 : 1,
+            ),
+          });
+        }
         return;
       }
       if (
@@ -709,6 +721,46 @@ export function HandoffDesignStudio({
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
   const scaleM = ui.boardWidthM ?? boardScaleM(ui.sheetScaleDenom);
+
+  /**
+   * Fit sheet layout — fixed plot clip + content scale from 1:N.
+   * Clip must never share a node with transform (that locked frame to drawing).
+   */
+  const sheetPlotLayout = useMemo(() => {
+    if (!ui.frameOn || boardSize.w < 1 || boardSize.h < 1) return null;
+    const sheet = sheetBoxFor(boardSize.w, boardSize.h, ui.paper);
+    const titleW = titlePanelWidth(sheet.boxW);
+    const elevH = ui.sheetElevOn ? 56 * 2 + 34 : 0;
+    const plot = plotBoxFor(sheet, { titleW, elevH });
+    const view = sheetContentView({
+      boundary: studio.boundary,
+      building: studio.building,
+      scaleM,
+      boardW: boardSize.w,
+      boardH: boardSize.h,
+      plot,
+      scaleDenom: ui.sheetScaleDenom,
+    });
+    return {
+      plot,
+      view,
+      clipPath: `inset(${plot.boxTop}px ${Math.max(0, boardSize.w - plot.boxLeft - plot.boxW)}px ${Math.max(0, boardSize.h - plot.boxTop - plot.boxH)}px ${plot.boxLeft}px)`,
+    };
+  }, [
+    ui.frameOn,
+    ui.paper,
+    ui.sheetElevOn,
+    ui.sheetScaleDenom,
+    boardSize.w,
+    boardSize.h,
+    studio.boundary,
+    studio.building,
+    scaleM,
+  ]);
+
+  const planZoom = sheetPlotLayout?.view.zoom ?? ui.zoom;
+  const planFocusX = sheetPlotLayout?.view.focusX ?? ui.focusX;
+  const planFocusY = sheetPlotLayout?.view.focusY ?? ui.focusY;
 
   const [formalizing, setFormalizing] = useState(false);
 
@@ -1002,7 +1054,9 @@ export function HandoffDesignStudio({
       data-paper={ui.paper}
       style={
         {
-          ["--studio-zoom" as string]: String(ui.zoom),
+          /* Must match .zoomWorld scale (planZoom), not raw ui.zoom —
+             Fit sheet diverges via sheetContentView. Inverse handles depend on it. */
+          ["--studio-zoom" as string]: String(planZoom),
           ...(printSheet
             ? {
                 ["--ws-print-left" as string]: `${printSheet.left}px`,
@@ -1475,29 +1529,26 @@ export function HandoffDesignStudio({
 
         {planOn ? (
           <div
-            className={`${css.zoomWorld}${ui.frameOn ? ` ${css.zoomWorldClipped}` : ""}`}
-            data-print-keep="plan"
-            style={{
-              transformOrigin: `${ui.focusX}% ${ui.focusY}%`,
-              transform: `scale(${ui.zoom})`,
-              cursor: studioCursor,
-              ...(ui.frameOn
-                ? (() => {
-                    const sheet = sheetBoxFor(
-                      boardSize.w,
-                      boardSize.h,
-                      ui.paper,
-                    );
-                    const titleW = titlePanelWidth(sheet.boxW);
-                    const elevH = ui.sheetElevOn ? 56 * 2 + 34 : 0;
-                    const plot = plotBoxFor(sheet, { titleW, elevH });
-                    return {
-                      clipPath: `inset(${plot.boxTop}px ${Math.max(0, boardSize.w - plot.boxLeft - plot.boxW)}px ${Math.max(0, boardSize.h - plot.boxTop - plot.boxH)}px ${plot.boxLeft}px)`,
-                    };
-                  })()
-                : null),
-            }}
+            className={
+              sheetPlotLayout
+                ? `${css.sheetPlotClip}`
+                : undefined
+            }
+            style={
+              sheetPlotLayout
+                ? { clipPath: sheetPlotLayout.clipPath }
+                : undefined
+            }
           >
+            <div
+              className={css.zoomWorld}
+              data-print-keep="plan"
+              style={{
+                transformOrigin: `${planFocusX}% ${planFocusY}%`,
+                transform: `scale(${planZoom})`,
+                cursor: studioCursor,
+              }}
+            >
             <AerialSlot
               uri={liveAerial}
               dimmed={ui.darkOn}
@@ -1506,7 +1557,7 @@ export function HandoffDesignStudio({
                 aerialOk &&
                 (ui.canopyScanning || ai.busy === "scanning")
               }
-              zoom={ui.zoom}
+              zoom={planZoom}
               sheetScaleDenom={ui.sheetScaleDenom}
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}
@@ -1901,7 +1952,18 @@ export function HandoffDesignStudio({
                 displayTotalInclGst={estimate.totalInclGst}
               />
             ) : null}
+            </div>
           </div>
+        ) : null}
+
+        {planOn && !ui.frameOn ? (
+          <GroundRulerOverlay
+            zoom={planZoom}
+            focusX={planFocusX}
+            focusY={planFocusY}
+            sheetScaleDenom={ui.sheetScaleDenom}
+            darkOn={ui.darkOn}
+          />
         ) : null}
 
         {ui.frameOn && planOn ? (
@@ -1947,9 +2009,17 @@ export function HandoffDesignStudio({
             onUndo={studio.undo}
             onRedo={studio.redo}
             onZoom={(delta) => {
+              if (ui.frameOn) {
+                studio.snapSheetScale(delta > 0 ? -1 : 1);
+                return;
+              }
               studio.setUi({ zoom: zoomByRibbonDelta(ui.zoom, delta) });
             }}
             onFit={() => {
+              if (ui.frameOn) {
+                studio.setSheetScale(100);
+                return;
+              }
               if (ui.foundationCleanse) {
                 studio.setUi({ sheetScaleDenom: 100 });
               }

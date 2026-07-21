@@ -9,7 +9,7 @@
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
   background: var(--hc-glass, rgba(255, 251, 252, 0.92));
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
   color: #241318;
   font-family: var(--font-body);

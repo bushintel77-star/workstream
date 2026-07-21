@@ -39,7 +39,7 @@
   color: #1c1917;
   background: var(--hc-glass, rgba(255, 251, 252, 0.92));
   border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
   padding: 4px 9px;
   border-radius: var(--hc-r-control, 10px);
   white-space: nowrap;
@@ -63,7 +63,7 @@
   color: #6b6560;
   background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
   border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
   border-radius: var(--hc-r-control, 10px);
   padding: 5px 10px;
   pointer-events: none;

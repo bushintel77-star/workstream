@@ -16,7 +16,7 @@
   border-radius: 10px;
   border: 1px solid rgba(26, 26, 26, 0.1);
   background: rgba(247, 244, 239, 0.94);
-  backdrop-filter: blur(14px);
+  backdrop-filter: none;
   box-shadow: 0 8px 22px rgba(26, 26, 26, 0.08);
   cursor: pointer;
   font: inherit;
@@ -54,7 +54,7 @@
   border-radius: 11px;
   border: 1px solid rgba(26, 26, 26, 0.1);
   background: rgba(247, 244, 239, 0.96);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   box-shadow: 0 12px 28px rgba(26, 26, 26, 0.1);
   animation: skuIn 160ms ease both;
 }

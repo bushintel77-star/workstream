@@ -48,7 +48,7 @@
   border-radius: 14px;
   border: 1px solid var(--glass-border);
   background: var(--glass);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   color: var(--ink);
   opacity: 0.52;
   transition: opacity 420ms var(--ease);

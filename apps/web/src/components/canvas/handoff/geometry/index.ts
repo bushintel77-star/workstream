@@ -12,4 +12,5 @@ export * from "./reprojectToBoundary";
 export * from "./foundationCadContext";
 export * from "./outsideDims";
 export * from "./outdoorClamp";
+export * from "./sheetContentView";
 export * from "./gridStudio";

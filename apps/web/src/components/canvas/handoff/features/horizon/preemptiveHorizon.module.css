@@ -19,7 +19,7 @@
   border-radius: 12px;
   border: 1px solid rgba(36, 19, 24, 0.1);
   background: rgba(255, 246, 248, 0.94);
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
   box-shadow: 0 8px 24px rgba(36, 19, 24, 0.1);
   font-family: var(--font-body);
   color: #241318;

@@ -81,15 +81,15 @@
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.12);
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
 }
 
 .tool,
 .tidy {
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 251, 252, 0.92);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.14));
+  background: var(--hc-neu-raised, #f6ebef);
   color: #7a5560;
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
 }
 
 .tool:hover,
@@ -113,9 +113,9 @@
   padding: 3px;
   border-radius: 10px;
   border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 251, 252, 0.72);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.08);
+  background: var(--hc-neu-surface, #f1e4e9);
+  backdrop-filter: none;
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
 }
 
 .tip {

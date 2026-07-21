@@ -1,7 +1,6 @@
 /*
  * Swatch tray — persistent neumorphic furniture in the left gutter.
- * Base layer beneath the glassmorphic floats; soft plastic pressed from the
- * blush field. Never an opaque slab over the drawing — it lives in the margin.
+ * Soft plastic pressed from the blush field; tight shadows, no haze halo.
  */
 
 .tray {
@@ -17,7 +16,8 @@
   padding: 10px 8px;
   border-radius: var(--hc-r-panel, 14px);
   background: var(--hc-neu-surface, #f1e4e9);
-  box-shadow: var(--hc-neu-out, -3px -3px 8px rgba(255, 255, 255, 0.85), 4px 4px 11px rgba(42, 23, 29, 0.16));
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.1));
+  box-shadow: var(--hc-neu-out-sm);
   color: var(--hc-ink, #241318);
   font-family: var(--font-body);
   pointer-events: auto;
