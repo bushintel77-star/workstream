@@ -22,7 +22,7 @@ Last reviewed: 2026-05-24. Current matrix: `docs/GAP-ANALYSIS-CURRENT.md`.
 
 ## 1. Build & release automation
 
-See `.github/workflows/ci.yml`, `pnpm ci`, `docker-compose.yml`.
+See `.github/workflows/ci.yml`, `pnpm run ci`, `docker-compose.yml`.
 
 **Human:** GitHub secret `FLY_API_TOKEN`, branch protection (Pro plan).
 
@@ -82,7 +82,7 @@ See `OUTSTANDING.md`. Highest leverage next:
 ## 7. Verify after change
 
 ```bash
-pnpm ci
+pnpm run ci
 curl -sS https://construct-api.fly.dev/healthz
 # Protected file (expect 401 without auth):
 curl -sS -o /dev/null -w "%{http_code}" https://construct-api.fly.dev/uploads/test.mp3

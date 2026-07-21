@@ -107,21 +107,11 @@ production.
 
 1. `pnpm install --frozen-lockfile`
 2. `pnpm typecheck` + `pnpm test`
-3. `docker build` for `apps/api/Dockerfile` and `apps/web/Dockerfile` (web
-   passes `NEXT_PUBLIC_API_URL=https://construct-api.fly.dev`)
-4. On `main` push: `flyctl deploy` both apps + smoke `curl` health checks
+3. Playwright e2e
+4. `docker build` for `apps/api/Dockerfile` and `apps/web/Dockerfile`
 
-**CI web deploy `unauthorized`:** Use **two per-app deploy tokens** in GitHub
-secrets (regenerate with `flyctl tokens create deploy -a <app>`):
-
-| Secret | Fly app |
-|--------|---------|
-| `FLY_API_TOKEN` (or legacy `BROKKER`) | `construct-api` |
-| `FLY_API_WEB` | `construct-web` |
-
-CI job `deploy construct-web` reads `FLY_API_WEB` first. Tokens must be deploy-scoped
-for the named app on the same Fly org. Until both secrets are valid, deploy web from
-a machine with `flyctl auth login`:
+Deploy from a machine with `flyctl auth login` until deploy credentials and
+workflow policy are finalized:
 
 ```bash
 flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
@@ -129,7 +119,7 @@ flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
   --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
 ```
 
-Local mirror: `pnpm ci` and `pnpm build:docker`. Full gap audit:
+Local mirror: `pnpm run ci` and `pnpm build:docker`. Full gap audit:
 [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md).
 
 ## Local dev

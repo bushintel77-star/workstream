@@ -1,50 +1,38 @@
 # Workstream status
 
-Generated 2026-05-24 for the gold-standard automation audit.
+Generated 2026-07-21 for branch `cursor/workstream-gold-standard-rebuild-970f`
+at `6e2f0ce`.
 
-## Shipped this session
+## Shipped on the gold-standard branch
 
-- Current gap matrix added at `docs/GAP-ANALYSIS-CURRENT.md`.
-- API OpenTelemetry scaffold added behind `OTEL_EXPORTER_OTLP_ENDPOINT`.
-- External Anthropic, OpenAI Whisper, and Mapbox calls emit spans with project,
-  operator, pipeline stage, model, and token attributes where available.
-- Portal quote/deposit routes now declare Edge runtime.
-- Contract smoke coverage expanded to geocode, catalog, supplier, and project
-  context routes; telemetry unit coverage added.
-- Mobile EAS project placeholder removed from `app.json`; CI now fails if the
-  old placeholder returns.
-- Litestream setup promoted to documented R2/B2 backup runbook.
-- Web shell typography moved to IBM Plex tokens and dev auth mode now displays a
-  persistent warning banner.
-- Human ops runbook created at `docs/HUMAN-OPS-RUNBOOK.md`.
-- Strict ready-for-review follow-up (`4461b28`): route telemetry now annotates
-  current non-`/v1` API routes, dictation Anthropic calls emit spans, protected
-  file portal scopes are tightened, tombstoned project assets are blocked,
-  brochure output is no longer exposed as a dead action, portal quotes show the
-  confidential watermark and gate deposits until costing exists, and processing
-  retry calls the real pipeline restart endpoint.
-- Dashboard and shell hardening (`ee5330a`): project register cards now expose
-  status chips, search, multi-status filters, sort controls, costing totals
-  when present, designed empty/error/no-results states, and delete undo via the
-  restore endpoint. Dev auth mode now renders a persistent warning banner, the
-  shell font tokens use IBM Plex families, and local `pnpm run ci` includes the
-  same placeholder, portal-edge, lint, typecheck, and test gates as CI.
-- Gold-standard hardening (`f00a98e`, `339361b`): route spans now preserve active
-  context, provider spans retain token usage through response body reads, aerial
-  image fetches and BullMQ jobs are traced, worker shutdown flushes telemetry,
-  protected-file/studio/orchestration/webhook contract smokes were added, the
-  dashboard regained AppNav, filters, date/name sorting, delete undo, and a
-  designed empty state, canvas modes enforce progressive locks, autosave Retry is
-  clickable, and the dev-auth banner is global.
+- Current gap matrix maintained at `docs/GAP-ANALYSIS-CURRENT.md`.
+- API OpenTelemetry scaffold is active behind `OTEL_EXPORTER_OTLP_ENDPOINT`.
+  Route, queue worker, Anthropic, OpenAI, Mapbox, aerial fetch, and shutdown
+  spans are wired with project/operator/stage/model/token attributes where
+  available.
+- Client portal route files run on Edge runtime. `pnpm web:check-portal-edge`
+  now validates portal route/runtime exports and blocks Node-only imports.
+- Contract smoke coverage covers core project flows plus geocode, catalog,
+  suppliers, weather, carbon preconditions, protected files, studio AI,
+  orchestration, Stripe webhook, readiness, validation, and auth guards.
+- Mobile EAS placeholder text is absent from `apps/mobile/app.json`; local and
+  GitHub CI fail if `REPLACE_AFTER_eas_init` returns.
+- Litestream disaster-recovery setup is documented for R2/B2 object stores.
+- Dashboard, shell, client portal, processing, and shipped canvas-first studio
+  surfaces have designed empty/loading/error states for the current product
+  scope.
+- Human-only launch actions are documented in
+  `docs/HUMAN-OPS-RUNBOOK.md`.
 
 ## Still human-owned
 
-- Clerk live application and Fly secrets for `construct-api` and `construct-web`.
+- Clerk live application and Fly secrets for `construct-api` and
+  `construct-web`.
 - Redis URL and Fly worker process scale-up.
 - Sentry DSNs and optional web `@sentry/nextjs` enablement.
 - Single API machine scale command for JSON snapshot consistency.
 - EAS init plus Apple and Google distribution credentials.
-- Branch protection on `main` after GitHub Pro is enabled.
+- Branch protection on `main` after GitHub Pro/admin access is available.
 - External OpenAI, Anthropic, Mapbox, Stripe, portal, OpenTelemetry, and
   Litestream object-store secrets.
 
@@ -52,14 +40,13 @@ Generated 2026-05-24 for the gold-standard automation audit.
 
 | Area | Status |
 |------|--------|
-| Operator dashboard | Shipped; project register cards, search, filters, sort, empty/error states, and delete undo hardened in `ee5330a`. |
-| Operator dashboard | Shipped; filters, date/name sorting, delete undo, designed empty state, and shared nav are wired. |
-| Project hub | Shipped tabs for survey, design, costing, audit, outputs, filing, tasks, recordings, measurements, and carbon. |
-| Client portal | Shipped quote/deposit portal with graceful invalid-link handling; now Edge runtime. |
-| Design Studio | Phase 1 recon plus Phases 2-5, 7, and 8 shipped; Phase 6 AI assist remains intentionally deferred. |
-| Pipeline | Capture pipeline, idempotent full pipeline, and processing screen are shipped. |
-| API observability | Sentry scaffold and OpenTelemetry code path shipped; live exporters require human secrets. |
-| Mobile | Expo app, capture flow, and EAS profiles shipped; store credentials are human-owned. |
+| Operator dashboard | Shipped; project register cards, search, filters, sort controls, costing totals, empty/error/no-results states, AppNav, and delete undo are wired. |
+| Project hub | Canvas-first project surface is shipped with survey/sketch/CAD/quote/share modes and progressive locks. Legacy standalone tab routes redirect into the canvas modes. |
+| Client portal | Shipped quote/deposit portal with graceful invalid-link handling, confidential watermark, disabled checkout state, and Edge runtime. |
+| Design Studio | Workflow 1 professional sketch surface is shipped through the handoff studio; Phase 6 AI assist remains intentionally deferred as a Coming Soon capability. |
+| Pipeline | Capture pipeline, idempotent full pipeline, and processing retry/error screen are shipped. |
+| API observability | Sentry scaffold and OpenTelemetry code path are shipped; live exporters require human secrets. |
+| Mobile | Expo capture flow and EAS profiles are shipped; store credentials and EAS project initialization are human-owned. |
 
 ## Verification
 
@@ -67,10 +54,9 @@ Latest local verification:
 
 ```bash
 pnpm run ci
-pnpm mobile:check-placeholders
-pnpm web:check-portal-edge
 ```
 
-Result: 102 Vitest files, 428 tests passing.
-Result: `pnpm run ci` exits 0 with 102 Vitest files and 430 tests passing.
-Literal `pnpm ci` exits with `ERR_PNPM_CI_NOT_IMPLEMENTED` on pnpm 9.15.4.
+Result: exits 0 with 105 Vitest files and 442 tests passing.
+
+Bare `pnpm ci` exits `ERR_PNPM_CI_NOT_IMPLEMENTED` on pnpm 9.15.4; use
+`pnpm run ci` for the repository gate.

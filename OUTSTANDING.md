@@ -20,9 +20,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`
 - [x] **NEXT_PUBLIC_API_URL** baked into web Docker build + CI `--build-arg`.
 - [x] **Build automation** — `pnpm run ci`, `pnpm build:docker`,
-      `docker-compose.yml`, `scripts/deploy-fly.*`, CI smoke tests,
-      `workflow_dispatch` deploy. Local CI now includes mobile placeholder,
-      portal Edge, typecheck, lint, and Vitest gates (`0369689`).
+      `docker-compose.yml`, and `scripts/deploy-fly.*`. Local and GitHub CI
+      include mobile placeholder, portal Edge, typecheck, lint, Docker build,
+      Playwright, and Vitest gates. Bare `pnpm ci` is not implemented by pnpm
+      9.15.4.
 - [x] **Secret scanning** — gitleaks GitHub Action at
       [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
@@ -43,7 +44,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Litestream → R2/B2 (documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
       + [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
       **Human:** bucket credentials + Fly sidecar.
-- [x] **CI deploy job** — split `deploy-api` + `deploy-web`; `FLY_API_WEB` wired.
+- [ ] **CI deploy job** — not wired; deploy remains manual via
+      `scripts/deploy-fly.*` until Fly deploy credentials and workflow policy
+      are finalized.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions.
 - [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
       from API). Enable manually: Settings → Branches → require CI green.
@@ -73,7 +76,6 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
-- [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
 - [x] **Local CI guardrails** — root `pnpm run ci` now runs install,
       mobile placeholder detection, portal Edge import guard, typecheck, lint,
       and Vitest.
@@ -93,11 +95,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.
 - [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
 - [x] **Dashboard delete undo** — toast restores via restore endpoint.
-- [x] **Dashboard project register hardening** — status chips, project cards,
-      search, multi-status filters, sort controls, costing totals, designed
-      empty/error/no-results states, and bottom-left undo toast.
-- [x] **Dashboard filters + shell** — shared AppNav, status filters, date/name sort,
-      designed empty state, API retry affordance, and global dev-auth banner.
+- [x] **Dashboard project register hardening** — shared AppNav, status chips,
+      project cards, search, multi-status filters, date/name sorting, costing
+      totals, designed empty/error/no-results states, API retry affordance,
+      global dev-auth banner, and bottom-left undo toast.
 - [x] **Pipeline idempotency** — `Idempotency-Key` on full pipeline POST; Redis when
       `REDIS_URL` set, in-memory fallback.
 - [x] **Task route hardening** — `PATCH /projects/:projectId/tasks/:taskId/status`

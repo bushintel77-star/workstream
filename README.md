@@ -4,8 +4,9 @@ Voice-first landscape design and build co-pilot for **Curtis & Co** (Melbourne).
 
 **Naming:** the product is **Workstream** everywhere in UI and docs. Curtis & Co
 stays on client-facing quotes and portal pages. Legacy Fly app hostnames
-(`construct-api`, `construct-web`) and mobile bundle IDs (`com.curtisandco.construct`)
-are unchanged until the next deploy / store submission so production does not break.
+(`construct-api`, `construct-web`) are unchanged until the next deploy cutover
+so production does not break. The current mobile bundle ID is
+`com.curtisandco.workstream`.
 
 Tim walks a site and talks. By the time he's at the car the survey, design,
 costing, audit and quote are ready — Stonnington stormwater pack drafted,
@@ -74,14 +75,14 @@ the **Project hub** and surfaces the single next-step CTA on mobile.
 
 ## Deploying
 
-**CI (automatic):** push to `main` runs typecheck, tests, Docker builds, then
-deploys `construct-api` + `construct-web` when the Fly token secret is set.
-Manual re-deploy: Actions → CI → **Run workflow** → enable **Deploy to Fly**.
+**CI:** push to `main` runs typecheck, tests, Playwright, and Docker builds.
+Fly deploy remains manual through the scripts until deploy credentials and
+workflow policy are finalized.
 
 **Local / script:**
 
 ```bash
-pnpm ci                    # mirror GitHub typecheck + test
+pnpm run ci                # mirror GitHub typecheck + test
 pnpm build:docker          # both images
 docker compose up --build  # localhost :3001 / :3002
 pnpm deploy:fly            # scripts/deploy-fly (needs flyctl auth)
@@ -92,9 +93,8 @@ See [DEPLOY.md](DEPLOY.md) for first-time Fly provisioning and secrets.
 ### Persistence
 
 The JSON snapshot at `apps/api/data/store.json` is the source of truth.
-**Persistence currently requires re-enabling the volume mount** in
-[apps/api/fly.toml](apps/api/fly.toml) and running on a single machine.
-Without that, the API restarts wipe state.
+[apps/api/fly.toml](apps/api/fly.toml) mounts `construct_data_v2`; keep the API
+on one machine until the database migration lands.
 
 ## Outstanding
 
