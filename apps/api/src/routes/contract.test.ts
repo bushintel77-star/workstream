@@ -256,6 +256,10 @@ describe("API contract — projects", () => {
       `/projects/${projectId}/weather`,
       `/projects/${projectId}/site-context`,
       `/projects/${projectId}/carbon`,
+      `/projects/${projectId}/survey`,
+      `/projects/${projectId}/cadastral-title`,
+      `/projects/${projectId}/boundary`,
+      `/projects/${projectId}/cad`,
     ];
 
     for (const url of checks) {
@@ -331,6 +335,55 @@ describe("API contract — projects", () => {
       expect(res.statusCode).toBe(200);
       expect(res.json()).toBeTypeOf("object");
     }
+  });
+
+  it("smoke-tests integration hub write contracts", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Integration Write St, Carlton VIC 3053" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const checkout = await app.inject({
+      method: "POST",
+      url: "/integrations/plan/checkout",
+      payload: {},
+    });
+    expect(checkout.statusCode).toBe(200);
+    expect(checkout.json()).toMatchObject({
+      mode: "dev_fallback",
+      studio_price_configured: false,
+    });
+
+    const seats = await app.inject({
+      method: "POST",
+      url: "/integrations/plan/seats/checkout",
+      payload: { extra_seats: 2 },
+    });
+    expect(seats.statusCode).toBe(200);
+    expect(seats.json()).toMatchObject({
+      mode: "dev_fallback",
+      seat_price_configured: false,
+    });
+
+    const invalidHubTest = await app.inject({
+      method: "POST",
+      url: "/integrations/hub/test",
+      payload: { channel: "not-real" },
+    });
+    expect(invalidHubTest.statusCode).toBe(400);
+
+    const missingQuoteSync = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/integrations/sync`,
+      payload: { include_portal: true },
+    });
+    expect(missingQuoteSync.statusCode).toBe(409);
+    expect(missingQuoteSync.json()).toMatchObject({
+      error: "Generate a quote output before syncing to CRM/email",
+    });
   });
 
   it("mints separate portal quote and deposit tokens for client checkout", async () => {

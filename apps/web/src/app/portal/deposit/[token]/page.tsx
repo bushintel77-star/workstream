@@ -37,7 +37,7 @@ export default async function DepositPage({
 
       {result.session && result.session.mode === "dev_fallback" && (
         <section className={styles.successBlock}>
-          <span className={styles.eyebrow}>DEPOSIT HOLD</span>
+          <span className={styles.eyebrow}>CHECKOUT PREVIEW</span>
           <h1 className={styles.heading}>
             {new Intl.NumberFormat("en-AU", {
               style: "currency",
@@ -48,12 +48,13 @@ export default async function DepositPage({
             deposit noted
           </h1>
           <p className={styles.body}>
-            Online checkout is not available for this quote right now. Curtis
-            &amp; Co has the deposit amount on file and will confirm payment
-            options directly.
+            Secure card checkout is not accepting live payments yet. Your
+            landscaper will confirm the payment method before any deposit is
+            collected.
           </p>
           <p className={styles.bodyMuted}>
-            If you need a fresh link, contact your landscaper.
+            No payment is taken in this preview mode. Curtis &amp; Co will
+            confirm the secure payment link when live checkout is enabled.
           </p>
         </section>
       )}
