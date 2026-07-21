@@ -47,7 +47,7 @@ test.describe("Canvas foundation honesty", () => {
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("building-footprint")).toHaveCount(0);
     await expect(page.getByTestId("building-footprint-empty")).toContainText(
-      "Existing house outline unavailable",
+      "Existing dwelling outline unavailable",
       { timeout: 15_000 },
     );
     await expect(page.getByTestId("canvas-measure-summary")).toBeVisible();
