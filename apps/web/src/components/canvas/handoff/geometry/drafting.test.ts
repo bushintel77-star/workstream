@@ -3,6 +3,8 @@ import {
   deleteVertex,
   formatSegmentTip,
   insertVertexAfter,
+  pointFromSegmentInput,
+  projectPointOnSegment,
   replaceVertex,
 } from "./drafting";
 
@@ -12,6 +14,19 @@ describe("formatSegmentTip", () => {
     expect(tip.lengthM).toBeCloseTo(50, 5);
     expect(tip.angleDeg).toBeCloseTo(0, 5);
     expect(tip.text).toContain("m");
+  });
+
+  it("commits typed metres and angle through the current calibration", () => {
+    const point = pointFromSegmentInput(
+      { x: 20, y: 20 },
+      { x: 30, y: 30 },
+      100,
+      2,
+      10,
+      90,
+    );
+    expect(point.x).toBeCloseTo(20, 5);
+    expect(point.y).toBeCloseTo(40, 5);
   });
 });
 
@@ -37,6 +52,18 @@ describe("polygon vertex helpers", () => {
     const next = insertVertexAfter(square, 0);
     expect(next).toHaveLength(5);
     expect(next[1]).toEqual({ x: 5, y: 0 });
+  });
+
+  it("projects an inserted vertex onto the edge, not the raw pointer", () => {
+    expect(
+      projectPointOnSegment(
+        { x: 40, y: 25 },
+        { x: 20, y: 20 },
+        { x: 80, y: 20 },
+        1000,
+        500,
+      ),
+    ).toEqual({ x: 40, y: 20 });
   });
 
   it("replaces a vertex immutably", () => {

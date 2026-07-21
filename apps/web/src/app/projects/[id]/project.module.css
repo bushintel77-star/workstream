@@ -560,6 +560,49 @@
 
 .processingStageActive {
   border-color: color-mix(in srgb, var(--info) 42%, var(--line-hairline));
+  overflow: hidden;
+  animation: stageBreathe 2.4s var(--ease, ease-in-out) infinite;
+}
+
+/* Indeterminate progress sheen along the base of the working stage. */
+.processingStageActive::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--info) 70%, transparent) 50%,
+    transparent 100%
+  );
+  width: 40%;
+  animation: stageProgress 1.6s var(--ease, ease-in-out) infinite;
+}
+
+@keyframes stageBreathe {
+  0%,
+  100% {
+    box-shadow: var(--elev-1), var(--elev-inset);
+    border-color: color-mix(in srgb, var(--info) 34%, var(--line-hairline));
+  }
+  50% {
+    box-shadow:
+      var(--elev-1),
+      0 0 0 3px color-mix(in srgb, var(--info) 14%, transparent);
+    border-color: color-mix(in srgb, var(--info) 56%, var(--line-hairline));
+  }
+}
+
+@keyframes stageProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
 }
 
 .processingStageError {
@@ -643,6 +686,22 @@
 @keyframes processingSpin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .processingStageActive {
+    animation: none;
+    box-shadow:
+      var(--elev-1),
+      0 0 0 2px color-mix(in srgb, var(--info) 14%, transparent);
+  }
+
+  .processingStageActive::after {
+    width: 100%;
+    animation: none;
+    transform: none;
+    opacity: 0.58;
   }
 }
 

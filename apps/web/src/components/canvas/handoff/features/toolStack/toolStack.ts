@@ -22,3 +22,8 @@ export function toggleTool(stack: ToolStack): StudioTool {
   if (stack.previous === stack.current) return stack.current;
   return stack.previous;
 }
+
+/** Esc returns to Select without replacing the real previous tool. */
+export function cancelToSelect(stack: ToolStack): ToolStack {
+  return { current: SELECT_TOOL, previous: stack.previous };
+}

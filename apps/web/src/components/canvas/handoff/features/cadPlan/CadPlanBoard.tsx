@@ -8,6 +8,7 @@ import {
   insertVertexAfter,
   pointInPolygon,
   polygonAreaM2,
+  projectPointOnSegment,
   GRID_INK_STROKE,
   GRID_STEP_PCT,
   ptsAttr,
@@ -38,7 +39,12 @@ import {
   type StudioTool,
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
-import { ITEM_LAYER, type LayerOpacity } from "../../state/studioTypes";
+import {
+  ITEM_LAYER,
+  type LayerKey,
+  type LayerOpacity,
+} from "../../state/studioTypes";
+import { resolveLayerVisual } from "../../state/layerIsolate";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
 import { SelectionHandles } from "./SelectionHandles";
@@ -95,6 +101,7 @@ type Props = {
   mode?: StudioMode;
   locked: boolean;
   layerOpacity: LayerOpacity;
+  isolatedLayer?: LayerKey | null;
   setbackOn: boolean;
   /** Indicative council setback rule (m) — muted on-plan path label, not a card. */
   councilSetbackM?: number | null;
@@ -145,8 +152,6 @@ type Props = {
   /** Eyedropper armed — clicking an element loads its style into the swatch. */
   eyedropArmed?: boolean;
   onEyedrop?: (t: StudioItemType) => void;
-  /** World zoom — drives high-zoom coordinate pill / precision disclosure. */
-  zoom?: number;
   /**
    * Empty-board click (not an item / CAD handle).
    * `insideLot` — true on the property drawing; false on the canvas margin.
@@ -193,6 +198,7 @@ export function CadPlanBoard({
   mode = "cad",
   locked,
   layerOpacity,
+  isolatedLayer = null,
   setbackOn,
   councilSetbackM = null,
   growth,
@@ -225,7 +231,6 @@ export function CadPlanBoard({
   previewSwatch = null,
   eyedropArmed = false,
   onEyedrop,
-  zoom = 1,
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
@@ -257,6 +262,14 @@ export function CadPlanBoard({
   } | null>(null);
   const [nodeMenu, setNodeMenu] = useState<NodeMenu | null>(null);
   const [itemMenu, setItemMenu] = useState<ItemMenu | null>(null);
+  const [hoverEdge, setHoverEdge] = useState<{
+    kind: "boundary" | "building";
+    index: number;
+  } | null>(null);
+  const [nodeFlash, setNodeFlash] = useState<{
+    kind: "boundary" | "building";
+    index: number;
+  } | null>(null);
   const [cursorPct, setCursorPct] = useState<PctPoint | null>(null);
   /** Why the pointer snapped — surfaced as a glyph legend, not just a flash. */
   const [snapKind, setSnapKind] = useState<
@@ -418,8 +431,6 @@ export function CadPlanBoard({
               : tool === "pan"
                 ? "Pan"
                 : tool;
-  const showCoordinatePill = zoom >= 2.2 && cursorPct != null && !frameOn;
-
   const startCornerDrag = (
     kind: "boundary" | "building",
     index: number,
@@ -449,10 +460,39 @@ export function CadPlanBoard({
   const removeNode = (kind: "boundary" | "building", index: number) => {
     const pts = kind === "boundary" ? boundary : building;
     const next = deleteVertex(pts, index);
-    if (!next) return;
+    if (!next) {
+      setNodeFlash({ kind, index });
+      window.setTimeout(() => setNodeFlash(null), 220);
+      return;
+    }
     if (kind === "boundary") onBoundaryChange(next);
     else onBuildingChange(next);
     setNodeMenu(null);
+  };
+
+  const insertProjected = (
+    kind: "boundary" | "building",
+    after: number,
+    event: React.MouseEvent<SVGLineElement>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const pts = kind === "boundary" ? boundary : building;
+    const a = pts[after];
+    const b = pts[(after + 1) % pts.length];
+    const root = rootRef.current;
+    if (!a || !b || !root) return;
+    const projected = projectPointOnSegment(
+      toPct(event.clientX, event.clientY),
+      a,
+      b,
+      root.clientWidth || 960,
+      root.clientHeight || 640,
+    );
+    const next = insertVertexAfter(pts, after, projected);
+    if (kind === "boundary") onBoundaryChange(next);
+    else onBuildingChange(next);
+    setHoverEdge(null);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -539,6 +579,11 @@ export function CadPlanBoard({
           .filter(
             (i) =>
               !i.ghost &&
+              resolveLayerVisual(
+                ITEM_LAYER[i.t],
+                layerOpacity[ITEM_LAYER[i.t]] ?? 1,
+                isolatedLayer,
+              ).hittable &&
               i.x >= minX &&
               i.x <= maxX &&
               i.y >= minY &&
@@ -583,6 +628,16 @@ export function CadPlanBoard({
   };
 
   const selected = items.find((i) => i.id === selectedId && !i.ghost) ?? null;
+  const boundaryVisual = resolveLayerVisual(
+    "boundary",
+    layerOpacity.boundary,
+    isolatedLayer,
+  );
+  const councilVisual = resolveLayerVisual(
+    "council",
+    layerOpacity.council,
+    isolatedLayer,
+  );
 
   return (
     <div
@@ -640,10 +695,51 @@ export function CadPlanBoard({
             />
           </pattern>
         </defs>
+        {editing && boundaryVisual.hittable
+          ? ([
+              ["boundary", boundary],
+              ["building", building],
+            ] as const).flatMap(([kind, ring]) =>
+              ring.map((point, index) => {
+                const next = ring[(index + 1) % ring.length]!;
+                const hovered =
+                  hoverEdge?.kind === kind && hoverEdge.index === index;
+                return (
+                  <g key={`edge-hit-${kind}-${index}`}>
+                    {hovered ? (
+                      <line
+                        x1={point.x}
+                        y1={point.y}
+                        x2={next.x}
+                        y2={next.y}
+                        className={css.edgeHover}
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    ) : null}
+                    <line
+                      x1={point.x}
+                      y1={point.y}
+                      x2={next.x}
+                      y2={next.y}
+                      className={css.edgeHit}
+                      data-testid="cad-edge-hit"
+                      vectorEffect="non-scaling-stroke"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onPointerEnter={() => setHoverEdge({ kind, index })}
+                      onPointerLeave={() => setHoverEdge(null)}
+                      onDoubleClick={(event) =>
+                        insertProjected(kind, index, event)
+                      }
+                    />
+                  </g>
+                );
+              }),
+            )
+          : null}
         {easements
           .filter((r) => r.length >= 3)
           .map((ring, i) => (
-            <g key={`ease${i}`} opacity={layerOpacity.council} data-testid="easement-hatch">
+            <g key={`ease${i}`} opacity={councilVisual.opacity} data-testid="easement-hatch">
               <polygon
                 points={ptsAttr(ring)}
                 fill="url(#ws-easement-hatch)"
@@ -659,7 +755,7 @@ export function CadPlanBoard({
           .map((ring, i) => (
             <g
               key={`svc${i}`}
-              opacity={layerOpacity.council}
+              opacity={councilVisual.opacity}
               data-testid="utility-service-trace"
             >
               <polyline
@@ -693,7 +789,7 @@ export function CadPlanBoard({
           strokeWidth={lines.boundary.strokeWidth}
           strokeDasharray={lines.boundary.dash}
           vectorEffect="non-scaling-stroke"
-          opacity={layerOpacity.boundary * (sketchPassthrough ? 0.35 : 1)}
+          opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
           className={sketchPassthrough ? css.sketchQuiet : undefined}
           data-testid={
             titleSolid || fitSheetStroke
@@ -712,7 +808,7 @@ export function CadPlanBoard({
             }
             vectorEffect="non-scaling-stroke"
             opacity={
-              layerOpacity.boundary *
+              boundaryVisual.opacity *
               (foundationCleanse ? underlayOp : 1) *
               (sketchPassthrough ? 0.4 : 1)
             }
@@ -724,7 +820,11 @@ export function CadPlanBoard({
           </polygon>
         ) : null}
         {outsideDims.map((d) => (
-          <g key={`odim${d.key}`} data-testid="outside-dim">
+          <g
+            key={`odim${d.key}`}
+            data-testid="outside-dim"
+            opacity={boundaryVisual.opacity}
+          >
             <line
               x1={d.extA.x1}
               y1={d.extA.y1}
@@ -787,7 +887,7 @@ export function CadPlanBoard({
             strokeWidth={lines.setback.strokeWidth}
             strokeDasharray={lines.setback.dash}
             vectorEffect="non-scaling-stroke"
-            opacity={0.75 * layerOpacity.council}
+            opacity={0.75 * councilVisual.opacity}
             data-testid="council-setback-zone"
           >
             <title>
@@ -803,7 +903,7 @@ export function CadPlanBoard({
           return (
             <g
               key={`tpz-${it.id}`}
-              opacity={layerOpacity.council * underlayOp}
+              opacity={councilVisual.opacity * underlayOp}
               data-testid="exist-tpz-ring"
               data-tpz-state="zone"
             >
@@ -825,12 +925,12 @@ export function CadPlanBoard({
         })}
       </svg>
 
-      {editing
+      {editing && boundaryVisual.hittable
         ? boundary.map((p, i) => (
             <button
               key={`bh${i}`}
               type="button"
-              className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}`}
+              className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}${nodeFlash?.kind === "boundary" && nodeFlash.index === i ? ` ${css.cornerNodeFlash}` : ""}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
               title={
                 foundationCleanse ? "Drag boundary node" : "Corner vertex"
@@ -840,6 +940,11 @@ export function CadPlanBoard({
               onPointerEnter={() => setCursorMode("move")}
               onPointerLeave={() => setCursorMode("default")}
               onPointerDown={(e) => startCornerDrag("boundary", i, e)}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!foundationCleanse) removeNode("boundary", i);
+              }}
               onContextMenu={(e) => {
                 if (foundationCleanse) return;
                 openNodeMenu("boundary", i, e);
@@ -847,24 +952,29 @@ export function CadPlanBoard({
             />
           ))
         : null}
-      {editing && !foundationCleanse
+      {editing && boundaryVisual.hittable && !foundationCleanse
         ? building.map((p, i) => (
             <button
               key={`fh${i}`}
               type="button"
-              className={`${css.cornerNode} ${css.cornerNodeBuilding}`}
+              className={`${css.cornerNode} ${css.cornerNodeBuilding}${nodeFlash?.kind === "building" && nodeFlash.index === i ? ` ${css.cornerNodeFlash}` : ""}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
               title="Corner vertex"
               aria-label={`Existing house corner ${i + 1}`}
               onPointerEnter={() => setCursorMode("move")}
               onPointerLeave={() => setCursorMode("default")}
               onPointerDown={(e) => startCornerDrag("building", i, e)}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeNode("building", i);
+              }}
               onContextMenu={(e) => openNodeMenu("building", i, e)}
             />
           ))
         : null}
 
-      {editing && !foundationCleanse
+      {editing && boundaryVisual.hittable && !foundationCleanse
         ? midHandles(boundary, "boundary").map((m) => (
             <div
               key={`mb${m.after}`}
@@ -880,7 +990,7 @@ export function CadPlanBoard({
             />
           ))
         : null}
-      {editing && !foundationCleanse
+      {editing && boundaryVisual.hittable && !foundationCleanse
         ? midHandles(building, "building").map((m) => (
             <div
               key={`mf${m.after}`}
@@ -1061,6 +1171,8 @@ export function CadPlanBoard({
                     top: `${it.y}%`,
                     width: `${size}%`,
                     height: `${size * 0.78}%`,
+                    opacity: councilVisual.opacity,
+                    pointerEvents: councilVisual.hittable ? undefined : "none",
                   }}
                   onPointerEnter={() => onHover(it.id)}
                   onPointerLeave={() => onHover(null)}
@@ -1093,7 +1205,11 @@ export function CadPlanBoard({
         const w = Math.round(d.w * it.scale * gk);
         const h = Math.round(d.h * it.scale * gk);
         const bucket = ITEM_LAYER[it.t];
-        const bucketOp = layerOpacity[bucket] ?? 1;
+        const layerVisual = resolveLayerVisual(
+          bucket,
+          layerOpacity[bucket] ?? 1,
+          isolatedLayer,
+        );
         const isCur = it.id === curGhostId;
         const selected = it.id === selectedId;
         const hovered = it.id === hoverId;
@@ -1108,6 +1224,8 @@ export function CadPlanBoard({
             className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
             data-testid={it.ghost ? "studio-ghost" : "studio-item"}
             data-item-type={it.t}
+            data-layer={bucket}
+            data-hittable={layerVisual.hittable ? "true" : "false"}
             data-selected={selected || groupIds.includes(it.id) ? "true" : "false"}
             style={{
               left: `${it.x}%`,
@@ -1115,8 +1233,10 @@ export function CadPlanBoard({
               width: w,
               height: h,
               borderRadius: d.br,
-              opacity: (it.ghost ? 0.45 : 1) * bucketOp * underlayOp,
-              pointerEvents: foundationCleanse ? "none" : undefined,
+              opacity:
+                (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
+              pointerEvents:
+                foundationCleanse || !layerVisual.hittable ? "none" : undefined,
               transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
               border: it.ghost
                 ? isCur
@@ -1306,12 +1426,12 @@ export function CadPlanBoard({
               aria-hidden
             >
               {snapKind === "vertex"
-                ? "◆"
+                ? "●"
                 : snapKind === "align"
-                  ? "┼"
+                  ? "∥"
                   : snapKind === "ortho"
-                    ? "⊥"
-                    : "▪"}
+                    ? "∟"
+                    : "□"}
             </div>
           ) : null}
         </>
@@ -1375,11 +1495,6 @@ export function CadPlanBoard({
           style={{ left: `${cursorPct.x}%`, top: `${cursorPct.y}%` }}
         >
           <span className={css.cursorTool}>{toolLabel}</span>
-          {showCoordinatePill ? (
-            <span className={css.cursorMetric}>
-              X {cursorPct.x.toFixed(2)} · Y {cursorPct.y.toFixed(2)}
-            </span>
-          ) : null}
         </div>
       ) : null}
 

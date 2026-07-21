@@ -2,13 +2,19 @@
 
 import { useEffect } from "react";
 import type { GrowthStage } from "../../state/studioTypes";
+import {
+  sunDatePresetLabel,
+  type SunDatePreset,
+} from "./sunDatePreset";
 import css from "./sunGrowth.module.css";
 
 type Props = {
   sunMin: number;
+  datePreset: SunDatePreset;
   growth: GrowthStage;
   playing: boolean;
   onSunMin: (min: number) => void;
+  onDatePreset: (preset: SunDatePreset) => void;
   onGrowth: (g: GrowthStage) => void;
   onPlaying: (v: boolean) => void;
 };
@@ -34,9 +40,11 @@ function shadowLengthM(sunMin: number, growth: GrowthStage) {
 
 export function SunGrowthDock({
   sunMin,
+  datePreset,
   growth,
   playing,
   onSunMin,
+  onDatePreset,
   onGrowth,
   onPlaying,
 }: Props) {
@@ -79,6 +87,27 @@ export function SunGrowthDock({
             {playing ? "Pause" : "Play"}
           </button>
         </div>
+      </div>
+      <div className={css.dateRow} aria-label="Sun study date">
+        {(
+          [
+            ["today", "Today"],
+            ["march-equinox", "20 Mar"],
+            ["winter", "21 Jun"],
+            ["september-equinox", "22 Sep"],
+            ["summer", "21 Dec"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={css.dateChip}
+            data-active={datePreset === id ? "true" : "false"}
+            onClick={() => onDatePreset(id)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       <div
         className={css.arc}
@@ -141,7 +170,8 @@ export function SunGrowthDock({
         ))}
       </div>
       <p className={css.foot}>
-        Shadow ≈ {shadow.toFixed(1)} m · eaves 5 m · canopies cast at {growth}
+        {sunDatePresetLabel(datePreset)} · shadow ≈ {shadow.toFixed(1)} m ·
+        indicative until surveyed heights are available
       </p>
     </aside>
   );

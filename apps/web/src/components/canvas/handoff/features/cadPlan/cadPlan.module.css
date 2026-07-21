@@ -39,7 +39,7 @@
   height: var(--sds-node-corner, 8px);
   margin: 0;
   padding: 0;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(calc(1 / var(--studio-zoom, 1)));
   border-radius: 50%;
   border: none;
   background: var(--sds-vector-primary, #1a1a1a);
@@ -57,7 +57,10 @@
   position: absolute;
   width: var(--sds-node-mid, 6px);
   height: var(--sds-node-mid, 6px);
-  transform: translate(-50%, -50%) rotate(45deg);
+  transform:
+    translate(-50%, -50%)
+    rotate(45deg)
+    scale(calc(1 / var(--studio-zoom, 1)));
   background: transparent;
   border: 1.5px solid var(--sds-vector-muted, #8c8a85);
   border-radius: 1px;
@@ -68,6 +71,35 @@
 
 .midHandleBuilding {
   border-color: var(--sds-vector-muted, #8c8a85);
+}
+
+.edgeHit {
+  stroke: transparent;
+  stroke-width: 8;
+  pointer-events: stroke;
+  cursor: copy;
+}
+
+.edgeHover {
+  stroke: rgba(194, 69, 95, 0.54);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.cornerNodeFlash {
+  animation: cornerRefuse 220ms ease-out;
+}
+
+@keyframes cornerRefuse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(247, 244, 239, 0.9);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px rgba(194, 69, 95, 0.32),
+      0 0 0 2px rgba(247, 244, 239, 0.9);
+  }
 }
 
 .nodeMenu {
@@ -927,6 +959,34 @@
   height: 0;
   z-index: 18;
   pointer-events: none;
+}
+
+.protractorArc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  overflow: visible;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.protractorRing {
+  fill: none;
+  stroke: rgba(122, 85, 96, 0.22);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.protractorTick,
+.protractorTickActive {
+  stroke: rgba(122, 85, 96, 0.34);
+  stroke-width: 1;
+}
+
+.protractorTickActive {
+  stroke: #c2455f;
+  stroke-width: 2;
 }
 
 /* SketchUp-style live area/size readout on the selected shape. */

@@ -5,11 +5,16 @@ import {
   buildIndicativeShadeGrid,
   SHADE_GRID_SIZE,
 } from "@workstream/domain";
+import {
+  sunDateFromPreset,
+  type SunDatePreset,
+} from "../sunGrowth/sunDatePreset";
 import css from "./shadeGrid.module.css";
 
 type Props = {
   active: boolean;
   sunMin: number;
+  datePreset: SunDatePreset;
   /** Site centroid for solar position — Prahran default when unknown. */
   lat?: number;
   lng?: number;
@@ -22,14 +27,17 @@ type Props = {
 export function ShadeGridOverlay({
   active,
   sunMin,
+  datePreset,
   lat = -37.849,
   lng = 144.993,
 }: Props) {
   const cells = useMemo(() => {
-    const d = new Date();
-    d.setHours(Math.floor(sunMin / 60), sunMin % 60, 0, 0);
-    return buildIndicativeShadeGrid(lat, lng, d);
-  }, [lat, lng, sunMin]);
+    return buildIndicativeShadeGrid(
+      lat,
+      lng,
+      sunDateFromPreset(datePreset, sunMin),
+    );
+  }, [datePreset, lat, lng, sunMin]);
 
   if (!active) return null;
 
@@ -39,6 +47,7 @@ export function ShadeGridOverlay({
     <div
       className={css.root}
       data-testid="shade-grid-overlay"
+      data-date-preset={datePreset}
       aria-hidden
     >
       {cells.map((c) => {

@@ -12,6 +12,7 @@ import {
 } from "@workstream/domain";
 import { BY_TYPE, itemCost, type StudioItem } from "../../studioCatalog";
 import { tpzRadiusPct, type PctPoint } from "../../geometry";
+import type { RejectionReason } from "../../state/sessionRejectionHints";
 import styles from "./aiGhosts.module.css";
 
 type Props = {
@@ -33,6 +34,8 @@ type Props = {
   onSelect: (id: string) => void;
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
+  rejectReasonId: string | null;
+  onRejectWithReason: (id: string, reason: RejectionReason) => void;
   onCycle: (dir?: 1 | -1) => void;
   onAskAi: (id: string) => void;
 };
@@ -133,6 +136,8 @@ export function AiGhostReview({
   onSelect,
   onAccept,
   onReject,
+  rejectReasonId,
+  onRejectWithReason,
   onCycle,
   onAskAi,
 }: Props) {
@@ -286,7 +291,7 @@ export function AiGhostReview({
             Accept (A / Enter)
           </button>
           <button type="button" className={styles.reject} onClick={() => onReject(selected.id)}>
-            Reject (R)
+            {rejectReasonId === selected.id ? "Reject without reason" : "Reject (R)"}
           </button>
           <button type="button" className={styles.ask} onClick={() => onAskAi(selected.id)}>
             Ask AI
@@ -298,6 +303,24 @@ export function AiGhostReview({
             Next
           </button>
         </div>
+        {rejectReasonId === selected.id ? (
+          <div
+            className={styles.rejectReasons}
+            data-testid="ghost-rejection-reasons"
+            aria-label="Optional rejection reason"
+          >
+            <span>Steer next pass</span>
+            {(["placement", "style", "cost"] as const).map((reason) => (
+              <button
+                key={reason}
+                type="button"
+                onClick={() => onRejectWithReason(selected.id, reason)}
+              >
+                {reason[0]!.toUpperCase() + reason.slice(1)}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import type {
   StudioTool,
 } from "../studioCatalog";
 import type { PaperSize, PctPoint } from "../geometry";
+import type { SunDatePreset } from "../features/sunGrowth/sunDatePreset";
 
 export type LayerKey = "survey" | "boundary" | "council" | "vegetation";
 
@@ -43,10 +44,14 @@ export type StudioUiState = {
   clientView: boolean;
   layersOpen: boolean;
   layerOpacity: LayerOpacity;
+  /** View-only layer isolation; never persisted to DesignCanvas. */
+  isolatedLayer: LayerKey | null;
   setbackOn: boolean;
   growth: GrowthStage;
   /** Minutes past midnight Melb-ish; handoff uses sunMin */
   sunMin: number;
+  /** Practical seasonal date presets for the indicative sun study. */
+  sunDatePreset: SunDatePreset;
   elevAxis: "x" | "y";
   selectedId: string | null;
   groupIds: string[];
@@ -93,7 +98,7 @@ export type StudioUiState = {
   councilTip: string | null;
   sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
   parchmentPeel: number;
-  saveStatus: "idle" | "saving" | "saved" | "error";
+  saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

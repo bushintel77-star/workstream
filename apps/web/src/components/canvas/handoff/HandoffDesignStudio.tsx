@@ -63,10 +63,12 @@ import {
 import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
 import { CanvasMeasureSummary } from "./features/liveMeasures/CanvasMeasureSummary";
 import {
+  cancelToSelect,
   recordTool,
   toggleTool,
   type ToolStack,
 } from "./features/toolStack/toolStack";
+import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
 import {
   loadPointerMarkId,
@@ -371,6 +373,11 @@ export function HandoffDesignStudio({
       }
 
       if (e.key === "Escape") {
+        if (ui.isolatedLayer) {
+          e.preventDefault();
+          studio.setUi({ isolatedLayer: null });
+          return;
+        }
         if (ui.floraSession) {
           studio.dismissFlora();
           return;
@@ -382,6 +389,7 @@ export function HandoffDesignStudio({
         // CAD practice: Esc cancels sticky draft tools → pan (KiCad / Fusion).
         if (isStickyDraftTool(ui.tool)) {
           e.preventDefault();
+          toolStackRef.current = cancelToSelect(toolStackRef.current);
           studio.setTool("pan");
           setInstrumentsSummoned(false);
           studio.setUi({
@@ -412,6 +420,27 @@ export function HandoffDesignStudio({
         });
         setPointerSettingsOpen(false);
         setInstrumentsSummoned(false);
+        return;
+      }
+      if (
+        e.key.toLowerCase() === "i" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        planOn &&
+        !ui.frameOn
+      ) {
+        e.preventDefault();
+        if (ui.isolatedLayer) {
+          studio.setUi({ isolatedLayer: null });
+          return;
+        }
+        const selected = studio.items.find(
+          (item) => item.id === ui.selectedId && !item.ghost,
+        );
+        if (selected) {
+          studio.setUi({ isolatedLayer: ITEM_LAYER[selected.t] });
+        }
         return;
       }
       if (e.key.toLowerCase() === "f" && !e.metaKey && !e.ctrlKey) {
@@ -1136,12 +1165,14 @@ export function HandoffDesignStudio({
             </button>
           ) : (
             <span
-              className={`${css.savedTick}${ui.saveStatus === "saving" ? ` ${css.savedTickPulse}` : ""}`}
+              className={`${css.savedTick}${ui.saveStatus === "saving" || ui.saveStatus === "retrying" ? ` ${css.savedTickPulse}` : ""}`}
               data-testid="autosave-tick"
               data-status={ui.saveStatus}
             >
               {ui.saveStatus === "saving"
                 ? "Saving"
+                : ui.saveStatus === "retrying"
+                  ? "Save paused — retrying"
                 : ui.saveStatus === "saved"
                   ? "Saved"
                   : ""}
@@ -1149,6 +1180,22 @@ export function HandoffDesignStudio({
           )}
         </div>
       </header>
+
+      {!ui.clientView && !ui.frameOn ? (
+        <StudioContextBreadcrumb
+          mode={ui.mode}
+          isolatedLayer={ui.isolatedLayer}
+          layerOpacity={ui.layerOpacity}
+          setbackOn={ui.setbackOn}
+          shadeOn={ui.shadeOn}
+          growth={ui.growth}
+          onClearIsolation={() => studio.setUi({ isolatedLayer: null })}
+          onClearSetback={() => studio.setUi({ setbackOn: false })}
+          onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
+          onResetGrowth={() => studio.setUi({ growth: "mature" })}
+          onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
+        />
+      ) : null}
 
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}`}
@@ -1273,6 +1320,7 @@ export function HandoffDesignStudio({
             <ShadeGridOverlay
               active={ui.shadeOn && !ui.frameOn && !ui.focusOn}
               sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
               lat={projectLat ?? undefined}
               lng={projectLng ?? undefined}
             />
@@ -1312,6 +1360,7 @@ export function HandoffDesignStudio({
               tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}
               locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
+              isolatedLayer={ui.isolatedLayer}
               setbackOn={ui.setbackOn}
               councilSetbackM={compliance.setbackM}
               growth={ui.growth}
@@ -1390,7 +1439,6 @@ export function HandoffDesignStudio({
               previewSwatch={previewSwatch}
               eyedropArmed={eyedropArmed}
               onEyedrop={pickStyle}
-              zoom={ui.zoom}
               onBoardCursor={setBoardCursor}
             />
             {chrome.floraRing && ui.floraSession ? (
@@ -1444,23 +1492,40 @@ export function HandoffDesignStudio({
                 onCommit={(stroke) => {
                   studio.setStrokes([...studio.strokes, stroke]);
                 }}
+                onErase={(strokeId) =>
+                  studio.setStrokes(
+                    studio.strokes.filter((stroke) => stroke.id !== strokeId),
+                  )
+                }
+                onUndoLast={() =>
+                  studio.setStrokes(studio.strokes.slice(0, -1))
+                }
                 onTidy={() => studio.tidySketches()}
                 onFormalizeToCad={() => {
                   studio.interpretSketches();
                 }}
               />
             ) : null}
-            {ui.mode === "survey" && !ui.frameOn ? (
+            {ui.mode === "cad" && studio.strokes.length > 0 ? (
+              <SketchBoard
+                readOnly
+                strokes={studio.strokes}
+                darkOn={ui.darkOn}
+              />
+            ) : null}
+            {planOn && !ui.frameOn ? (
               <>
                 <SurveyAnnotationLayer
-                  active
+                  active={ui.mode === "survey"}
                   tool={ui.tool}
                   levels={studio.levels}
                   services={studio.services}
                   easements={studio.easements}
+                  showCorridors={ui.mode === "survey"}
                   scaleM={scaleM}
                   darkOn={ui.darkOn}
                   layerOpacity={ui.layerOpacity}
+                  isolatedLayer={ui.isolatedLayer}
                   onAddLevel={studio.addSpotLevel}
                   onCommitService={studio.commitService}
                   onCalibrate={(nextScaleM) => {
@@ -1484,7 +1549,7 @@ export function HandoffDesignStudio({
                     });
                   }}
                 />
-                {!ui.focusOn && !ui.clientView ? (
+                {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
                   <SurveyChecklist
                     boundary={studio.boundary}
                     building={studio.building}
@@ -1578,7 +1643,8 @@ export function HandoffDesignStudio({
               />
             ) : null}
             {/* Orbit sprouts with selection wash — Delete / Lock / Ask AI clear of glyph */}
-            {selectedLive &&
+            {!ui.clientView &&
+            selectedLive &&
             ui.tool !== "zone" &&
             (chrome.selectionRing ||
               ui.mode === "cad" ||
@@ -1840,7 +1906,11 @@ export function HandoffDesignStudio({
               })
             }
             onOpenQuote={() => studio.setMode("quote")}
-            settling={estimateSettling || ui.saveStatus === "saving"}
+            settling={
+              estimateSettling ||
+              ui.saveStatus === "saving" ||
+              ui.saveStatus === "retrying"
+            }
           />
         ) : null}
 
@@ -1848,9 +1918,11 @@ export function HandoffDesignStudio({
         {chrome.sunGrowth ? (
           <SunGrowthDock
             sunMin={ui.sunMin}
+            datePreset={ui.sunDatePreset}
             growth={ui.growth}
             playing={ui.sunPlay}
             onSunMin={(sunMin) => studio.setUi({ sunMin })}
+            onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
             onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
           />
@@ -1907,6 +1979,8 @@ export function HandoffDesignStudio({
               }}
               onAccept={ai.accept}
               onReject={ai.reject}
+              rejectReasonId={ai.rejectReasonId}
+              onRejectWithReason={ai.rejectWithReason}
               onCycle={ai.cycle}
               onAskAi={(id) => {
                 const g = ai.pending.find((x) => x.id === id);
@@ -1962,6 +2036,11 @@ export function HandoffDesignStudio({
                   key={i}
                   type="button"
                   className={css.undoCell}
+                  data-provenance={
+                    studio.undoProvenance[
+                      studio.undoProvenance.length - 1 - i
+                    ] ?? "manual"
+                  }
                   title={`Step back ${i + 1}`}
                   onClick={() => {
                     for (let n = 0; n <= i; n += 1) studio.undo();

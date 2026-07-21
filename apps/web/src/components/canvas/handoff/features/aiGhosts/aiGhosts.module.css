@@ -218,7 +218,7 @@
 .accept,
 .reject,
 .ask {
-  min-height: 32px;
+  min-height: 44px;
   padding: 0 12px;
   border-radius: 10px;
   border: 1px solid rgba(36, 19, 24, 0.12);
@@ -229,6 +229,34 @@
   font-weight: 650;
   cursor: pointer;
   transition: 0.16s background, 0.16s border-color;
+}
+
+.rejectReasons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  color: #7a5560;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+}
+
+.rejectReasons button {
+  min-height: 44px;
+  padding: 0 11px;
+  border: 1px solid rgba(194, 69, 95, 0.22);
+  border-radius: 99px;
+  background: rgba(255, 246, 248, 0.82);
+  color: #7a5560;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.rejectReasons button:hover {
+  border-color: rgba(194, 69, 95, 0.48);
+  color: #241318;
 }
 
 .accept {
