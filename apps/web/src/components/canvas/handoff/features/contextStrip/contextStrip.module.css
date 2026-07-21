@@ -1,0 +1,65 @@
+.root {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  z-index: 58;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 24px);
+  min-height: 44px;
+  overflow-x: auto;
+  transform: translateX(-50%);
+  color: var(--hc-ink-muted);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  scrollbar-width: none;
+}
+
+.root::-webkit-scrollbar {
+  display: none;
+}
+
+.mode {
+  flex: none;
+  padding: 0 7px;
+  color: var(--hc-ink);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.segment {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 9px;
+  border: 1px solid var(--hc-line-soft);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-glass-soft);
+  box-shadow: var(--hc-elev-1);
+  color: var(--hc-ink-muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--hc-motion) var(--ws-ease),
+    color var(--hc-motion) var(--ws-ease);
+}
+
+.segment:hover {
+  background: var(--hc-glass);
+  color: var(--hc-ink);
+}
+
+.isolated {
+  border-color: color-mix(in srgb, #c2455f 32%, var(--hc-line-soft));
+  color: var(--hc-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}

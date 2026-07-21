@@ -28,6 +28,7 @@ import {
 } from "../../studioCatalog";
 import { mapSymbolToStudioType } from "../../state/studioAiEngine";
 import { playInstrumentTick } from "../ambient/instrumentTick";
+import { resolveDockAnchor } from "../reach/dockAnchor";
 import { ATELIER_LINGER_MS, type AtelierPhase } from "./atelierPresence";
 import css from "./kitAssetDock.module.css";
 
@@ -160,16 +161,17 @@ export function KitAssetDock({
   };
 
   const activeMaterial = tool === "paint" ? paintSwatch : armed;
-  const ax = Math.max(12, Math.min(88, xPct));
-  const ay = Math.max(16, Math.min(84, yPct));
+  /* Edge-anchor into the board so the popup never clips at the gutter. */
+  const anchor = resolveDockAnchor(xPct, yPct);
 
   return (
     <aside
       className={css.popup}
       data-testid="kit-asset-dock"
       data-phase={phase}
+      data-side={anchor.side}
       aria-label="Asset library"
-      style={{ left: `${ax}%`, top: `${ay}%` } as CSSProperties}
+      style={{ left: `${anchor.x}%`, top: `${anchor.y}%` } as CSSProperties}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseEnter={() => {
         hoverRef.current = true;

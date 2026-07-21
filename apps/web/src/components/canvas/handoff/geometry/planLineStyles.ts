@@ -108,7 +108,7 @@ export function planLinesFor(opts: {
       },
       building: {
         ...base.building,
-        strokeWidth: opts.fitSheet ? 1.65 : 2,
+        strokeWidth: opts.fitSheet ? 1.5 : 1.6,
       },
     };
   }

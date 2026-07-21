@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runFullPipeline } from "../lib/pipeline-job";
 import { runDevelopFromSketchPipeline } from "../lib/develop-pipeline";
-import { enqueuePipelineJob } from "../lib/queue";
+import { enqueuePipelineJob, runPipelineJobWithTelemetry } from "../lib/queue";
 import {
   getIdempotentPipelineResponse,
   pipelineIdempotencyKey,
@@ -23,11 +23,13 @@ export default async function pipelineRoutes(fastify: FastifyInstance) {
         return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       }
 
-      void runDevelopFromSketchPipeline(fastify.store, ownerId, projectId).catch(
-        (err) => {
+      void runPipelineJobWithTelemetry(
+        { kind: "develop", ownerId, projectId },
+        async () =>
+          await runDevelopFromSketchPipeline(fastify.store, ownerId, projectId),
+      ).catch((err) => {
           request.log.error(err, "develop-from-sketch pipeline failed");
-        },
-      );
+        });
 
       return reply.code(202).send({ accepted: true, pipeline: "develop" });
     },
@@ -82,7 +84,10 @@ export default async function pipelineRoutes(fastify: FastifyInstance) {
         return reply.code(202).send(body);
       }
 
-      void runFullPipeline(fastify.store, ownerId, projectId).catch((err) => {
+      void runPipelineJobWithTelemetry(
+        { kind: "pipeline", ownerId, projectId },
+        async () => await runFullPipeline(fastify.store, ownerId, projectId),
+      ).catch((err) => {
         request.log.error(err, "background pipeline failed");
       });
 

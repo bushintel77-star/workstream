@@ -215,6 +215,9 @@ export const STUDIO_SITES: StudioSiteDef[] = [
 export type SketchStroke = {
   id: string;
   points: Pt[];
+  /** Existing DesignCanvas stroke width; pen pressure resolves to this on commit. */
+  widthPx?: number;
+  color?: string;
 };
 
 export const MODE_TABS = [

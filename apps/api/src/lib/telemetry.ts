@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
+  context,
   SpanKind,
   SpanStatusCode,
   trace,
@@ -7,6 +8,7 @@ import {
   type SpanAttributes,
   type SpanAttributeValue,
 } from "@opentelemetry/api";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { NodeSDK } from "@opentelemetry/sdk-node";
@@ -39,6 +41,7 @@ declare module "fastify" {
 
 let telemetrySdk: TelemetrySdk | null = null;
 let telemetryStarted = false;
+const telemetryAttributeStore = new AsyncLocalStorage<SpanAttributes>();
 
 function normaliseTraceUrl(endpoint: string): string {
   const trimmed = endpoint.trim().replace(/\/+$/, "");
@@ -104,6 +107,24 @@ export function setTelemetryAttributes(
   span.setAttributes(cleanAttributes(attributes));
 }
 
+export function getActiveTelemetryAttributes(): SpanAttributes {
+  return telemetryAttributeStore.getStore() ?? {};
+}
+
+export async function runWithTelemetryAttributes<T>(
+  attributes: Record<string, SpanAttributeValue | null | undefined>,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const inherited = getActiveTelemetryAttributes();
+  return await telemetryAttributeStore.run(
+    {
+      ...inherited,
+      ...cleanAttributes(attributes),
+    },
+    fn,
+  );
+}
+
 export function setActiveTelemetryAttributes(
   attributes: Record<string, SpanAttributeValue | null | undefined>,
 ): void {
@@ -117,12 +138,15 @@ export async function withTelemetrySpan<T>(
   fn: (span: Span) => Promise<T>,
 ): Promise<T> {
   const tracer = trace.getTracer("workstream-api");
+  const spanAttributes = cleanAttributes(attributes);
   return await tracer.startActiveSpan(
     name,
-    { kind: SpanKind.CLIENT, attributes: cleanAttributes(attributes) },
+    { kind: SpanKind.CLIENT, attributes: spanAttributes },
     async (span) => {
       try {
-        const result = await fn(span);
+        const result = await runWithTelemetryAttributes(spanAttributes, () =>
+          fn(span),
+        );
         span.setStatus({ code: SpanStatusCode.OK });
         return result;
       } catch (err) {
@@ -150,20 +174,29 @@ function projectIdFromRequest(request: FastifyRequest): string | undefined {
   return undefined;
 }
 
+function pathnameFromRequest(request: FastifyRequest): string {
+  try {
+    return new URL(request.url, "http://workstream.local").pathname;
+  } catch {
+    return request.url.split("?")[0] ?? request.url;
+  }
+}
+
 export function registerRouteTelemetry(fastify: FastifyInstance): void {
   fastify.addHook("onRequest", (request, _reply, done) => {
+    const pathname = pathnameFromRequest(request);
     const span = trace.getTracer("workstream-api").startSpan(
-      `api ${request.method} ${request.url}`,
+      `api ${request.method} ${pathname}`,
       {
         kind: SpanKind.SERVER,
         attributes: {
           "http.request.method": request.method,
-          "url.path": request.url,
+          "url.path": pathname,
         },
       },
     );
     request.telemetrySpan = span;
-    done();
+    context.with(trace.setSpan(context.active(), span), done);
   });
 
   fastify.addHook("onResponse", (request, reply, done) => {

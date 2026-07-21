@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getMyobStatus, getXeroStatus } from "../../../lib/api";
 import s from "../../../styles/app.module.css";
 import { SettingsMasthead } from "../SettingsShell";
@@ -6,6 +7,12 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountingPage() {
   const [myob, xero] = await Promise.all([getMyobStatus(), getXeroStatus()]);
+  // The status helpers degrade to null when the API call fails, so a pair of
+  // nulls means the connection is down — surface that rather than a silent blank.
+  const error =
+    myob === null && xero === null
+      ? "Accounting status could not be loaded. Check the API connection and try again."
+      : null;
 
   const fmt = (iso: string | null) =>
     iso
@@ -13,9 +20,12 @@ export default async function AccountingPage() {
           day: "numeric",
           month: "short",
           year: "numeric",
-          hour: "numeric",
+          hour: "2-digit",
           minute: "2-digit",
+          hour12: false,
         })
+          .replace(",", "")
+          .replace(" at ", " · ")
       : "—";
 
   return (
@@ -29,6 +39,16 @@ export default async function AccountingPage() {
         drafts use canned customers and items so the rest of the pipeline keeps
         working.
       </p>
+
+      {error ? (
+        <section className={s.card} role="alert">
+          <h2 className={s.cardTitle}>Accounting status unavailable</h2>
+          <p className={s.dim}>{error}</p>
+          <Link href="/settings/accounting" className={s.btn}>
+            Retry
+          </Link>
+        </section>
+      ) : null}
 
       <h2 className={s.sectionHeading}>MYOB</h2>
       <div className={s.card}>

@@ -12,7 +12,7 @@ type Props = {
 };
 
 /**
- * Indicative measure tape — click two points for approx metres on the board.
+ * Indicative measure tape — drag between two points for live metres.
  *
  * Cancel (CAD practice — KiCad / Fusion): Esc, double-click empty, or right-click
  * returns to the default pan tool. Esc clears an in-progress tape first.
@@ -25,12 +25,14 @@ export function MeasureOverlay({
   const [a, setA] = useState<PctPoint | null>(null);
   const [b, setB] = useState<PctPoint | null>(null);
   const [hover, setHover] = useState<PctPoint | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     if (!active) {
       setA(null);
       setB(null);
       setHover(null);
+      setDragging(false);
     }
   }, [active]);
 
@@ -44,6 +46,7 @@ export function MeasureOverlay({
         setA(null);
         setB(null);
         setHover(null);
+        setDragging(false);
         return;
       }
       onCancel();
@@ -74,7 +77,11 @@ export function MeasureOverlay({
     <div
       className={css.root}
       data-testid="measure-overlay"
-      onPointerMove={(e) => setHover(toPct(e.currentTarget, e.clientX, e.clientY))}
+      onPointerMove={(e) => {
+        const p = toPct(e.currentTarget, e.clientX, e.clientY);
+        setHover(p);
+        if (dragging && a) setB(p);
+      }}
       onPointerLeave={() => setHover(null)}
       onPointerDown={(e) => {
         e.stopPropagation();
@@ -91,12 +98,17 @@ export function MeasureOverlay({
           return;
         }
         const p = toPct(e.currentTarget, e.clientX, e.clientY);
-        if (!a || (a && b)) {
-          setA(p);
-          setB(null);
-          return;
-        }
+        setA(p);
         setB(p);
+        setDragging(true);
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+      }}
+      onPointerUp={(e) => {
+        if (!dragging) return;
+        e.stopPropagation();
+        const p = toPct(e.currentTarget, e.clientX, e.clientY);
+        setB(p);
+        setDragging(false);
       }}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -119,14 +131,14 @@ export function MeasureOverlay({
       </svg>
       {mid && len != null ? (
         <div
-          className={css.label}
+          className={`${css.label}${dragging ? ` ${css.labelLive}` : ""}`}
           style={{ left: `${mid.x}%`, top: `${mid.y}%` }}
         >
-          ≈ {len.toFixed(2)} m · indicative
+          {len.toFixed(2)} m
         </div>
       ) : (
         <div className={css.hint}>
-          Click two points · Esc or double-click to exit
+          Drag to measure · Esc / right-click exits
         </div>
       )}
     </div>

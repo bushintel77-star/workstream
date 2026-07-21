@@ -12,7 +12,7 @@
   backdrop-filter: blur(16px);
   box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
   color: #241318;
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   animation: railIn var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 

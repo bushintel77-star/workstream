@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   buildIndicativeShadeGrid,
   countNearbyCanopy,
@@ -25,6 +25,10 @@ import { saveDesignCanvasAction } from "../../../../app/actions";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
 import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
 import { playMaterialFoley } from "../features/ambient/materialFoley";
+import {
+  sunDateFromPreset,
+  type SunDatePreset,
+} from "../features/sunGrowth/sunDatePreset";
 import { buildWorkableSiteSchedule } from "../geometry/workableCanvas";
 import {
   BY_TYPE,
@@ -54,6 +58,7 @@ import {
   canvasToStrokes,
   itemsToPlacements,
   placementsToItems,
+  resolveHydratedBuilding,
   siteFrameToSnapshot,
   snapshotToSiteFrame,
   strokesToCanvas,
@@ -95,6 +100,16 @@ import {
 } from "./spatialCorrection";
 import { isDraftingPlate } from "./studioPlane";
 import { boardScaleM } from "../features/ground/groundMetrics";
+import {
+  classifyHistoryProvenance,
+  type HistoryProvenance,
+} from "./historyProvenance";
+import {
+  buildSessionRejectionPrompt,
+  filterProposalsBySessionRejections,
+  type RejectionReason,
+  type SessionRejectionHint,
+} from "./sessionRejectionHints";
 
 function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
   return items.map((i) => {
@@ -122,6 +137,8 @@ type Doc = StudioSnapshot & {
   idn: number;
   hist: StudioSnapshot[];
   redo: StudioSnapshot[];
+  histProvenance: HistoryProvenance[];
+  redoProvenance: HistoryProvenance[];
 };
 
 type Ui = {
@@ -136,11 +153,13 @@ type Ui = {
   clientView: boolean;
   layersOpen: boolean;
   layerOpacity: LayerOpacity;
+  isolatedLayer: LayerKey | null;
   setbackOn: boolean;
   /** Indicative sun-hours mesh on the % board. */
   shadeOn: boolean;
   growth: GrowthStage;
   sunMin: number;
+  sunDatePreset: SunDatePreset;
   elevAxis: "x" | "y";
   selectedId: string | null;
   groupIds: string[];
@@ -148,6 +167,8 @@ type Ui = {
   ghostIdx: number;
   factorsOpen: boolean;
   ghostReviewOpen: boolean;
+  /** First reject opens optional session-only steering reasons. */
+  rejectReasonId: string | null;
   cmdOpen: boolean;
   cmdQuery: string;
   sitesOpen: boolean;
@@ -209,7 +230,7 @@ type Ui = {
    */
   parchmentPeel: number;
   /** Durable DesignCanvas autosave status. */
-  saveStatus: "idle" | "saving" | "saved" | "error";
+  saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
   /** Inline Flora Ring session (planting Add click). */
   floraSession: {
     x: number;
@@ -240,12 +261,6 @@ type Ui = {
 /** Prahran / Stonnington demo centroid for indicative shade grid. */
 const FLORA_SHADE_LAT = -37.849;
 const FLORA_SHADE_LNG = 144.993;
-
-function dateFromSunMin(sunMin: number): Date {
-  const d = new Date();
-  d.setHours(Math.floor(sunMin / 60), sunMin % 60, 0, 0);
-  return d;
-}
 
 type State = {
   doc: Doc;
@@ -319,6 +334,11 @@ function initialState(opts: {
     ? {
         ...base,
         ...frameOverlay,
+        building: resolveHydratedBuilding(
+          opts.siteFrame,
+          frameOverlay.building,
+          base.building,
+        ),
         items: placementsToItems(opts.placements ?? []),
         strokes: canvasToStrokes(opts.strokes ?? []),
         easements: frameOverlay.easements ?? base.easements,
@@ -337,6 +357,8 @@ function initialState(opts: {
       idn: 20,
       hist: [],
       redo: [],
+      histProvenance: [],
+      redoProvenance: [],
     },
     siteSnaps,
     ui: {
@@ -351,10 +373,12 @@ function initialState(opts: {
       clientView: false,
       layersOpen: false,
       layerOpacity: { ...DEFAULT_LAYER_OPACITY },
+      isolatedLayer: null,
       setbackOn: false,
       shadeOn: false,
       growth: "mature",
       sunMin: 12 * 60 + 26,
+      sunDatePreset: "today",
       elevAxis: "x",
       selectedId: null,
       groupIds: [],
@@ -362,6 +386,7 @@ function initialState(opts: {
       ghostIdx: 0,
       factorsOpen: false,
       ghostReviewOpen: false,
+      rejectReasonId: null,
       cmdOpen: false,
       cmdQuery: "",
       sitesOpen: false,
@@ -427,6 +452,10 @@ function reducer(state: State, action: Action): State {
     case "mutate": {
       const before = snapOf(state.doc);
       const result = action.fn(cloneSnap(before), state.doc.idn);
+      const provenance = classifyHistoryProvenance(
+        before.items,
+        result.snap.items,
+      );
       let nextItems = markStaleGhostsNearEdit(before.items, result.snap.items);
       const hist = [...state.doc.hist, before].slice(-MAX_HIST);
       return {
@@ -437,6 +466,10 @@ function reducer(state: State, action: Action): State {
           idn: result.idn ?? state.doc.idn,
           hist,
           redo: [],
+          histProvenance: [...state.doc.histProvenance, provenance].slice(
+            -MAX_HIST,
+          ),
+          redoProvenance: [],
         },
       };
     }
@@ -444,6 +477,8 @@ function reducer(state: State, action: Action): State {
       if (state.doc.hist.length === 0) return state;
       const hist = [...state.doc.hist];
       const prev = hist.pop()!;
+      const histProvenance = [...state.doc.histProvenance];
+      const provenance = histProvenance.pop() ?? "manual";
       const current = snapOf(state.doc);
       return {
         ...state,
@@ -452,6 +487,11 @@ function reducer(state: State, action: Action): State {
           ...prev,
           hist,
           redo: [...state.doc.redo, current].slice(-MAX_HIST),
+          histProvenance,
+          redoProvenance: [
+            ...state.doc.redoProvenance,
+            provenance,
+          ].slice(-MAX_HIST),
         },
       };
     }
@@ -459,6 +499,8 @@ function reducer(state: State, action: Action): State {
       if (state.doc.redo.length === 0) return state;
       const redo = [...state.doc.redo];
       const next = redo.pop()!;
+      const redoProvenance = [...state.doc.redoProvenance];
+      const provenance = redoProvenance.pop() ?? "manual";
       const current = snapOf(state.doc);
       return {
         ...state,
@@ -467,6 +509,11 @@ function reducer(state: State, action: Action): State {
           ...next,
           hist: [...state.doc.hist, current].slice(-MAX_HIST),
           redo,
+          histProvenance: [
+            ...state.doc.histProvenance,
+            provenance,
+          ].slice(-MAX_HIST),
+          redoProvenance,
         },
       };
     }
@@ -492,6 +539,7 @@ function reducer(state: State, action: Action): State {
           ...state.ui,
           mode: action.mode,
           layerOpacity,
+          isolatedLayer: null,
           drawPoly: null,
           drawCursor: null,
           ...(drafting
@@ -546,6 +594,8 @@ function reducer(state: State, action: Action): State {
           idn: state.doc.idn,
           hist: [],
           redo: [],
+          histProvenance: [],
+          redoProvenance: [],
         },
         ui: {
           ...state.ui,
@@ -572,6 +622,11 @@ function reducer(state: State, action: Action): State {
           idn: state.doc.idn,
           hist: [...state.doc.hist, before].slice(-MAX_HIST),
           redo: [],
+          histProvenance: [
+            ...state.doc.histProvenance,
+            "manual" as HistoryProvenance,
+          ].slice(-MAX_HIST),
+          redoProvenance: [],
         },
         ui: {
           ...state.ui,
@@ -620,6 +675,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
   const bootstrapped = useRef(false);
   const skipPersist = useRef(true);
+  const [saveRetryNonce, setSaveRetryNonce] = useState(0);
+  const [sessionRejectionHints, setSessionRejectionHints] = useState<
+    SessionRejectionHint[]
+  >([]);
   const addressRef = useRef(address);
   addressRef.current = address;
   const outdoorRef = useRef(outdoorM2);
@@ -700,7 +759,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       coachOpen: false,
       assistReply:
         count > 0
-          ? `Formalized ${count} sketch${count === 1 ? "" : "es"} into CAD assets — review sun, setback, and envelope, then accept.`
+          ? `Formalized ${count} sketch${count === 1 ? "" : "es"} into suggested CAD assets. Each stroke stays visible as a reference — adjust, accept, or reject before it becomes plan geometry.`
           : "No convertible strokes — draw a path, bed, or canopy mark first.",
     });
     return count;
@@ -783,16 +842,43 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (id: string) => {
       const ghost = state.doc.items.find((i) => i.id === id);
       mutate((snap) => ({ snap: acceptProposal(snap, id) }));
+      if (state.ui.rejectReasonId === id) setUi({ rejectReasonId: null });
       if (ghost) playMaterialFoley(ghost.t);
     },
-    [mutate, state.doc.items],
+    [mutate, setUi, state.doc.items, state.ui.rejectReasonId],
   );
 
   const rejectGhost = useCallback(
     (id: string) => {
+      if (state.ui.rejectReasonId !== id) {
+        setUi({ rejectReasonId: id, ghostReviewOpen: true });
+        return;
+      }
       mutate((snap) => ({ snap: rejectProposal(snap, id) }));
+      setUi({ rejectReasonId: null });
     },
-    [mutate],
+    [mutate, setUi, state.ui.rejectReasonId],
+  );
+
+  const rejectGhostWithReason = useCallback(
+    (id: string, reason: RejectionReason) => {
+      const ghost = state.doc.items.find((item) => item.id === id && item.ghost);
+      if (ghost) {
+        setSessionRejectionHints((hints) => [
+          ...hints,
+          {
+            reason,
+            type: ghost.t,
+            x: ghost.x,
+            y: ghost.y,
+            note: ghost.why,
+          },
+        ]);
+      }
+      mutate((snap) => ({ snap: rejectProposal(snap, id) }));
+      setUi({ rejectReasonId: null });
+    },
+    [mutate, setUi, state.doc.items],
   );
 
   const acceptAllGhosts = useCallback(() => {
@@ -907,7 +993,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const cells = buildIndicativeShadeGrid(
           FLORA_SHADE_LAT,
           FLORA_SHADE_LNG,
-          dateFromSunMin(state.ui.sunMin),
+          sunDateFromPreset(state.ui.sunDatePreset, state.ui.sunMin),
         );
         const sunHours = sunHoursAtPct(x, y, cells);
         const nearby = countNearbyCanopy(x, y, state.doc.items);
@@ -1011,6 +1097,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       state.ui.paintSwatch,
       state.ui.setbackOn,
       state.ui.sunMin,
+      state.ui.sunDatePreset,
       state.ui.tool,
     ],
   );
@@ -1233,7 +1320,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
       try {
         if (projectId) {
           const { designAssistAction } = await import("../../../../app/actions");
-          const res = await designAssistAction(projectId, q);
+          const promptedQuery =
+            buildSessionRejectionPrompt(sessionRejectionHints) + q;
+          const res = await designAssistAction(projectId, promptedQuery);
           if (res?.suggestions?.length) {
             mutate((snap, idn) => {
               const mapped = proposalsFromApiSuggestions(
@@ -1286,6 +1375,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       projectId,
       runSpatialCorrection,
       runStage1FoundationCleanse,
+      sessionRejectionHints,
       setUi,
     ],
   );
@@ -1310,9 +1400,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
               addressRef.current,
               mapped.idn,
             );
+            const filtered = filterProposalsBySessionRejections(
+              [...mapped.items, ...layout.items],
+              sessionRejectionHints,
+            );
             const merged = mergeAiProposals(
               snap,
-              [...mapped.items, ...layout.items],
+              filtered,
               ["scan", "layout"],
             );
             return { snap: { ...snap, items: merged }, idn: layout.idn };
@@ -1331,10 +1425,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
     }
     mutate((snap, idn) => {
       const layout = proposeLayoutFromSnapshot(snap, addressRef.current, idn);
+      const filtered = filterProposalsBySessionRejections(
+        layout.items,
+        sessionRejectionHints,
+      );
       return {
         snap: {
           ...snap,
-          items: mergeAiProposals(snap, layout.items, ["layout", "scan"]),
+          items: mergeAiProposals(snap, filtered, ["layout", "scan"]),
         },
         idn: layout.idn,
       };
@@ -1345,7 +1443,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ghostIdx: 0,
       ghostReviewOpen: true,
     });
-  }, [mutate, projectId, setUi]);
+  }, [mutate, projectId, sessionRejectionHints, setUi]);
 
   /**
    * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
@@ -1834,6 +1932,54 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({ savedTick: Date.now(), saveStatus: "saved" });
   }, [setUi]);
 
+  const saveNow = useCallback(async (): Promise<void> => {
+    const fixed = withContractIds({
+      items: state.doc.items,
+      strokes: state.doc.strokes,
+    });
+    if (fixed.remapped) {
+      dispatch({
+        type: "silentIds",
+        items: fixed.items,
+        strokes: fixed.strokes,
+      });
+    }
+    const placements = itemsToPlacements(fixed.items);
+    const canvasStrokes = strokesToCanvas(fixed.strokes);
+    const siteFrame = snapshotToSiteFrame({
+      boundary: state.doc.boundary,
+      building: state.doc.building,
+      easements: state.doc.easements ?? [],
+      services: state.doc.services ?? [],
+      levels: state.doc.levels ?? [],
+    });
+    setUi({ saveStatus: "saving" });
+    try {
+      await saveDesignCanvasAction(
+        projectIdRef.current,
+        placements,
+        canvasStrokes,
+        state.doc.irrigationZones ?? [],
+        [],
+        siteFrame,
+      );
+      setUi({ saveStatus: "saved", savedTick: Date.now() });
+    } catch {
+      setUi({ saveStatus: "error" });
+      throw new Error("Design canvas save failed");
+    }
+  }, [
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.easements,
+    state.doc.irrigationZones,
+    state.doc.items,
+    state.doc.levels,
+    state.doc.services,
+    state.doc.strokes,
+  ]);
+
   /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
   useEffect(() => {
     if (skipPersist.current) {
@@ -1841,41 +1987,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
       return;
     }
     const handle = window.setTimeout(() => {
-      const fixed = withContractIds({
-        items: state.doc.items,
-        strokes: state.doc.strokes,
-      });
-      if (fixed.remapped) {
-        dispatch({
-          type: "silentIds",
-          items: fixed.items,
-          strokes: fixed.strokes,
-        });
-      }
-      const placements = itemsToPlacements(fixed.items);
-      const canvasStrokes = strokesToCanvas(fixed.strokes);
-      const siteFrame = snapshotToSiteFrame({
-        boundary: state.doc.boundary,
-        building: state.doc.building,
-        easements: state.doc.easements ?? [],
-        services: state.doc.services ?? [],
-        levels: state.doc.levels ?? [],
-      });
-      setUi({ saveStatus: "saving" });
       const persist = async (attempt: number): Promise<void> => {
         try {
-          await saveDesignCanvasAction(
-            projectIdRef.current,
-            placements,
-            canvasStrokes,
-            state.doc.irrigationZones ?? [],
-            [],
-            siteFrame,
-          );
-          setUi({ saveStatus: "saved", savedTick: Date.now() });
+          await saveNow();
         } catch {
           if (attempt < 3) {
-            setUi({ saveStatus: "error" });
+            setUi({ saveStatus: "retrying" });
             await new Promise((r) => window.setTimeout(r, 700 * attempt));
             return persist(attempt + 1);
           }
@@ -1896,7 +2013,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
           `${i.id}:${i.x}:${i.y}:${i.scale}:${i.rot}:${i.t}:${i.dbhM ?? ""}`,
       )
       .join("|"),
-    state.doc.strokes.map((s) => s.id).join("|"),
+    state.doc.strokes
+      .map(
+        (s) =>
+          `${s.id}:${s.widthPx ?? ""}:${s.color ?? ""}:${s.points.map((p) => `${p.x},${p.y}`).join(";")}`,
+      )
+      .join("|"),
     state.doc.strokes.length,
     state.doc.boundary.map((p) => `${p.x},${p.y}`).join("|"),
     state.doc.building.map((p) => `${p.x},${p.y}`).join("|"),
@@ -1915,6 +2037,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
       )
       .join("/"),
+    saveRetryNonce,
   ]);
 
   const finishTrace = useCallback(
@@ -2164,6 +2287,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       assist: askAi,
       accept: acceptGhost,
       reject: rejectGhost,
+      rejectWithReason: rejectGhostWithReason,
+      rejectReasonId: state.ui.rejectReasonId,
       acceptAll: acceptAllGhosts,
       cycle: cycleGhost,
       ingestCanopy: ingestCanopyGhosts,
@@ -2187,9 +2312,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
       interpretSketches,
       tidySketches,
       rejectGhost,
+      rejectGhostWithReason,
       scanGhosts,
       setUi,
       state.ui.aiBusy,
+      state.ui.rejectReasonId,
       status,
     ],
   );
@@ -2205,6 +2332,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     irrigationZones: state.doc.irrigationZones ?? [],
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
+    undoDepth: state.doc.hist.length,
+    redoDepth: state.doc.redo.length,
+    undoProvenance: state.doc.histProvenance,
     ui: state.ui,
     siteAddress,
     siteMeta: STUDIO_SITES[state.ui.siteIdx]?.meta ?? STUDIO_SITES[0]!.meta,
@@ -2250,7 +2380,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     commitZone,
     switchSite,
     resetSite,
+    retrySave: () => setSaveRetryNonce((n) => n + 1),
     bumpSaved,
+    saveNow,
     moveItem,
     transformItem,
     nudgeSelected,

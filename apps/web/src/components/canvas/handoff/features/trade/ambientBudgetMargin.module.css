@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   color: var(--sds-vector-muted, #8c8a85);
 }
 

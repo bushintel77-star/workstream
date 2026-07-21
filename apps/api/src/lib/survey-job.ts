@@ -7,9 +7,6 @@ import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
 const METERS_PER_DEG_LAT = 110_540;
 const FRONTAGE_M = 15;
 const DEPTH_M = 40;
-const HOUSE_W_M = 8;
-const HOUSE_D_M = 12;
-const HOUSE_FRONT_SETBACK_M = 5;
 
 function metersToDegrees(lat: number) {
   const latDeg = 1 / METERS_PER_DEG_LAT;
@@ -50,27 +47,13 @@ function buildMockGeometry(center: { lat: number; lng: number }): SurveyGeometry
     [west, south],
   ];
 
-  const houseHalfW = (HOUSE_W_M / 2) * lngDeg;
-  const houseSouth = south + HOUSE_FRONT_SETBACK_M * latDeg;
-  const houseNorth = houseSouth + HOUSE_D_M * latDeg;
-  const houseWest = center.lng - houseHalfW;
-  const houseEast = center.lng + houseHalfW;
-
-  const houseRing: [number, number][] = [
-    [houseWest, houseSouth],
-    [houseEast, houseSouth],
-    [houseEast, houseNorth],
-    [houseWest, houseNorth],
-    [houseWest, houseSouth],
-  ];
-
   return {
     title_polygon: { type: "Polygon", coordinates: [lotRing] },
-    house_polygon: { type: "Polygon", coordinates: [houseRing] },
-    garden_polygon: { type: "Polygon", coordinates: [lotRing, houseRing] },
+    house_polygon: { type: "Polygon", coordinates: [] },
+    garden_polygon: { type: "Polygon", coordinates: [lotRing] },
     lot_area_m2: FRONTAGE_M * DEPTH_M,
-    house_area_m2: HOUSE_W_M * HOUSE_D_M,
-    garden_area_m2: FRONTAGE_M * DEPTH_M - HOUSE_W_M * HOUSE_D_M,
+    house_area_m2: 0,
+    garden_area_m2: FRONTAGE_M * DEPTH_M,
     measurements: [
       { edge_id: "front", length_m: FRONTAGE_M, bearing_deg: 90, label: "Frontage" },
       { edge_id: "east", length_m: DEPTH_M, bearing_deg: 0, label: "East boundary" },
@@ -122,30 +105,23 @@ async function buildVicmapGeometry(center: {
       ? Math.round(polygonArea(housePoly.coordinates[0]))
       : 0;
 
-  const fallbackHouse: GeoJsonPolygon = {
+  // The Vicmap building layer is existing-site context. If no footprint is
+  // returned, preserve that uncertainty — never invent an architectural box.
+  const house: GeoJsonPolygon = housePoly ?? {
     type: "Polygon",
-    coordinates: [
-      [
-        [center.lng - 0.00005, center.lat - 0.00005],
-        [center.lng + 0.00005, center.lat - 0.00005],
-        [center.lng + 0.00005, center.lat + 0.00005],
-        [center.lng - 0.00005, center.lat + 0.00005],
-        [center.lng - 0.00005, center.lat - 0.00005],
-      ],
-    ],
+    coordinates: [],
   };
-
-  const house = housePoly ?? fallbackHouse;
+  const houseRing = housePoly?.coordinates[0];
 
   return {
     title_polygon: titlePoly,
     house_polygon: house,
     garden_polygon: {
       type: "Polygon",
-      coordinates: [titleRing, house.coordinates[0]],
+      coordinates: houseRing ? [titleRing, houseRing] : [titleRing],
     },
     lot_area_m2: Math.max(1, lotArea),
-    house_area_m2: Math.max(1, houseArea),
+    house_area_m2: Math.max(0, houseArea),
     garden_area_m2: Math.max(1, lotArea - houseArea),
     measurements: buildMeasurements(titleRing),
   };

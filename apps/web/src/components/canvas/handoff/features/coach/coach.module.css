@@ -7,7 +7,7 @@
   background: #241318;
   color: #fff6f8;
   box-shadow: 0 14px 44px rgba(42, 23, 29, 0.4);
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   animation: ccIn 0.22s ease-out;
 }
 

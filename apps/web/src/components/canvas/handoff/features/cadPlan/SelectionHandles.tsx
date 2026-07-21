@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { snapClockRotationDeg } from "../../geometry/snap";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
+import { ProtractorArc } from "./ProtractorArc";
 import css from "./cadPlan.module.css";
 
 type Props = {
@@ -30,6 +31,10 @@ export function SelectionHandles({
     | { kind: "resize"; scale0: number; dist0: number }
     | null
   >(null);
+  const [rotateFeedforward, setRotateFeedforward] = useState<{
+    angleDeg: number;
+    shiftHeld: boolean;
+  } | null>(null);
 
   const d = BY_TYPE[item.t];
   const w = d.w * item.scale;
@@ -59,6 +64,14 @@ export function SelectionHandles({
       }}
       data-testid="selection-handles"
     >
+      {rotateFeedforward ? (
+        <ProtractorArc
+          angleDeg={rotateFeedforward.angleDeg}
+          radiusPx={Math.max(w, h) / 2 + 30}
+          itemRotationDeg={item.rot}
+          shiftHeld={rotateFeedforward.shiftHeld}
+        />
+      ) : null}
       <div
         className={css.selStem}
         style={{
@@ -71,12 +84,18 @@ export function SelectionHandles({
         data-testid="rotate-handle"
         title="Rotate · snaps to clock hours (30°) · Shift 15° · Alt free"
         aria-label="Rotate selection"
-        style={{ transform: `translate(-50%, -50%) translateY(-${rotY}px)` }}
+        style={{
+          transform: `translate(-50%, -50%) translateY(-${rotY}px) scale(calc(1 / var(--studio-zoom, 1)))`,
+        }}
         onPointerDown={(e) => {
           e.stopPropagation();
           e.preventDefault();
           (e.target as Element).setPointerCapture?.(e.pointerId);
           drag.current = { kind: "rotate" };
+          setRotateFeedforward({
+            angleDeg: item.rot,
+            shiftHeld: e.shiftKey,
+          });
         }}
         onPointerMove={(e) => {
           if (drag.current?.kind !== "rotate") return;
@@ -93,10 +112,16 @@ export function SelectionHandles({
             shift: e.shiftKey,
             alt: e.altKey,
           });
+          setRotateFeedforward({ angleDeg: ang, shiftHeld: e.shiftKey });
           onTransform(item.id, { rot: ang });
         }}
         onPointerUp={() => {
           drag.current = null;
+          setRotateFeedforward(null);
+        }}
+        onPointerCancel={() => {
+          drag.current = null;
+          setRotateFeedforward(null);
         }}
       >
         ◌
@@ -105,7 +130,9 @@ export function SelectionHandles({
         type="button"
         className={css.resHandle}
         title="Drag to resize"
-        style={{ transform: `translate(-50%, -50%) translate(${rx}px, ${ry}px)` }}
+        style={{
+          transform: `translate(-50%, -50%) translate(${rx}px, ${ry}px) scale(calc(1 / var(--studio-zoom, 1)))`,
+        }}
         onPointerDown={(e) => {
           e.stopPropagation();
           e.preventDefault();

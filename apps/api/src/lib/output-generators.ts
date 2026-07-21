@@ -340,7 +340,11 @@ export function buildScope(args: Args): string {
   lines.push("");
   lines.push("## Survey");
   lines.push(`- Lot: ${survey.lot_area_m2} m²`);
-  lines.push(`- House: ${survey.house_area_m2} m²`);
+  lines.push(
+    survey.house_area_m2 > 0
+      ? `- Existing house (site context): ${survey.house_area_m2} m²`
+      : "- Existing house outline: unavailable — confirm from survey",
+  );
   lines.push(`- Garden: ${survey.garden_area_m2} m²`);
   lines.push("");
   const sitePlan = formatSitePlanQuoteSection(
@@ -454,7 +458,11 @@ export function buildStonningtonStormwaterPermit(args: Args): string {
   lines.push("");
   lines.push("## Site characteristics");
   lines.push(`- Lot area: ${survey.lot_area_m2} m²`);
-  lines.push(`- Existing house footprint: ${survey.house_area_m2} m²`);
+  lines.push(
+    survey.house_area_m2 > 0
+      ? `- Existing house footprint (site context): ${survey.house_area_m2} m²`
+      : "- Existing house footprint: unavailable — confirm before lodgement",
+  );
   lines.push(`- Garden area: ${survey.garden_area_m2} m²`);
   lines.push(`- Proposed new hardscape (impermeable): ${hardscapeM2} m²`);
   lines.push("");
@@ -484,7 +492,11 @@ export function buildYarraHeritagePermit(args: Args): string {
   lines.push("");
   lines.push("## Site");
   lines.push(`- Lot area: ${survey.lot_area_m2} m²`);
-  lines.push(`- Existing dwelling: ${survey.house_area_m2} m² (retained, no works to fabric)`);
+  lines.push(
+    survey.house_area_m2 > 0
+      ? `- Existing dwelling: ${survey.house_area_m2} m² (retained, no works to fabric)`
+      : "- Existing dwelling outline: unavailable — confirm before lodgement",
+  );
   lines.push(`- Garden area subject to works: ${survey.garden_area_m2} m²`);
   lines.push("");
   lines.push("## Proposed landscape works");

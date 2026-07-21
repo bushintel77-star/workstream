@@ -17,7 +17,7 @@ export default async function DepositPage({
     redirect(result.session.checkout_url);
   }
 
-  // Dev fallback / error → render an interstitial page
+  // Fallback / error -> render a client-safe interstitial page.
   return (
     <main className={styles.page}>
       <header className={styles.masthead}>
@@ -37,7 +37,7 @@ export default async function DepositPage({
 
       {result.session && result.session.mode === "dev_fallback" && (
         <section className={styles.successBlock}>
-          <span className={styles.eyebrow}>DEV FALLBACK</span>
+          <span className={styles.eyebrow}>CHECKOUT PREVIEW</span>
           <h1 className={styles.heading}>
             {new Intl.NumberFormat("en-AU", {
               style: "currency",
@@ -45,15 +45,17 @@ export default async function DepositPage({
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }).format(result.session.deposit_amount_aud)}{" "}
-            deposit ready
+            deposit noted
           </h1>
           <p className={styles.body}>
-            Stripe isn't configured on this API, so we'd normally redirect
-            to the hosted Checkout. With{" "}
-            <code>STRIPE_SECRET_KEY</code> set this same flow lands on
-            Stripe's payment page.
+            Secure card checkout is not accepting live payments yet. Your
+            landscaper will confirm the payment method before any deposit is
+            collected.
           </p>
-          <p className={styles.bodyMuted}>Session id: {result.session.session_id}</p>
+          <p className={styles.bodyMuted}>
+            No payment is taken in this preview mode. Curtis &amp; Co will
+            confirm the secure payment link when live checkout is enabled.
+          </p>
         </section>
       )}
     </main>

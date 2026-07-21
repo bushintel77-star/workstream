@@ -112,7 +112,11 @@ ${ctx.address}
 
 SURVEY
 - Lot area: ${ctx.survey.lot_area_m2} m²
-- House area: ${ctx.survey.house_area_m2} m²
+- Existing house area: ${
+    ctx.survey.house_area_m2 > 0
+      ? `${ctx.survey.house_area_m2} m² (site context only)`
+      : "unavailable — do not infer or invent"
+  }
 - Garden area: ${ctx.survey.garden_area_m2} m²
 - Measurements: ${ctx.survey.measurements
     .map((m) => `${m.label ?? m.edge_id} ${m.length_m}m @ ${m.bearing_deg}°`)
@@ -767,7 +771,16 @@ Rules:
 async function fetchAerialBase64(
   aerialUri: string,
 ): Promise<{ base64: string; mime_type: "image/jpeg" | "image/png" | "image/webp" }> {
-  const res = await fetchWithRetry(aerialUri, { method: "GET" });
+  const provider = aerialUri.includes("mapbox.com") ? "mapbox" : "external";
+  const res = await fetchWithRetry(aerialUri, { method: "GET" }, {
+    telemetry: {
+      spanName: "map.fetch_aerial_image",
+      provider,
+      attributes: {
+        "pipeline.stage": "design",
+      },
+    },
+  });
   if (!res.ok) throw new Error(`Aerial fetch failed: ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
   const ct = res.headers.get("content-type") ?? "image/jpeg";

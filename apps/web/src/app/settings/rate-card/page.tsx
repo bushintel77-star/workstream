@@ -92,7 +92,7 @@ export default async function RateCardPage() {
                         />
                         <button
                           type="submit"
-                          className={s.btnGhost}
+                          className={`${s.btn} ${s.btnGhost}`}
                           aria-label="Save"
                         >
                           Save

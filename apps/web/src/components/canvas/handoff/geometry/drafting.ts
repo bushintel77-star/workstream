@@ -10,7 +10,8 @@ export function formatSegmentTip(
 ): { text: string; lengthM: number; angleDeg: number } {
   const lengthM = edgeLengthM(from, to, scaleM, boardAspect);
   const angleDeg =
-    (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
+    (Math.atan2((to.y - from.y) / boardAspect, to.x - from.x) * 180) /
+    Math.PI;
   let rot = angleDeg;
   if (rot > 90) rot -= 180;
   if (rot < -90) rot += 180;
@@ -19,6 +20,39 @@ export function formatSegmentTip(
     lengthM,
     angleDeg: bearing,
     text: `${lengthM.toFixed(2)} m · ${bearing.toFixed(0)}°`,
+  };
+}
+
+/** Resolve a typed metre length / bearing back into calibrated board space. */
+export function pointFromSegmentInput(
+  from: PctPoint,
+  pointer: PctPoint,
+  scaleM: number,
+  boardAspect: number,
+  lengthM?: number | null,
+  angleDeg?: number | null,
+): PctPoint {
+  const live = formatSegmentTip(from, pointer, scaleM, boardAspect);
+  const length =
+    lengthM != null && Number.isFinite(lengthM) && lengthM > 0
+      ? lengthM
+      : live.lengthM;
+  const bearing =
+    angleDeg != null && Number.isFinite(angleDeg) ? angleDeg : live.angleDeg;
+  const radians = (bearing * Math.PI) / 180;
+  return {
+    x: Math.max(
+      0,
+      Math.min(100, from.x + ((length * Math.cos(radians)) / scaleM) * 100),
+    ),
+    y: Math.max(
+      0,
+      Math.min(
+        100,
+        from.y +
+          ((length * Math.sin(radians)) / (scaleM / boardAspect)) * 100,
+      ),
+    ),
   };
 }
 
@@ -41,6 +75,31 @@ export function insertVertexAfter(
   const b = pts[(after + 1) % pts.length]!;
   const mid = point ?? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
   return [...pts.slice(0, after + 1), mid, ...pts.slice(after + 1)];
+}
+
+/** Project a pointer onto an edge using screen-space geometry. */
+export function projectPointOnSegment(
+  point: PctPoint,
+  a: PctPoint,
+  b: PctPoint,
+  boardW: number,
+  boardH: number,
+): PctPoint {
+  const px = (point.x / 100) * boardW;
+  const py = (point.y / 100) * boardH;
+  const ax = (a.x / 100) * boardW;
+  const ay = (a.y / 100) * boardH;
+  const bx = (b.x / 100) * boardW;
+  const by = (b.y / 100) * boardH;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lengthSq = dx * dx + dy * dy;
+  if (lengthSq <= 1e-8) return { ...a };
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq));
+  return {
+    x: ((ax + t * dx) / boardW) * 100,
+    y: ((ay + t * dy) / boardH) * 100,
+  };
 }
 
 /** Replace a vertex, returning a new array (immutable). */

@@ -47,10 +47,6 @@ export function computeSiteCompliance(args: {
 }): SiteComplianceStats {
   const { outdoorAreaM2, spatialFacts, risks } = args;
   const outdoor = Math.max(outdoorAreaM2, 1);
-  const hardscape = layerArea(
-    spatialFacts,
-    new Set(["hardscape", "structure", "water"]),
-  );
   const permeable = layerArea(
     spatialFacts,
     new Set(["softscape", "planting"]),

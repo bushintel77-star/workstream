@@ -1,15 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
-import { handoffStudio, LEGACY_STUDIO_VIEWPORT, pipelineShell } from "./helpers";
-
-async function openCommandPalette(page: Page) {
-  await page.getByTestId("canvas-command-top").evaluate((el) => {
-    (el as HTMLButtonElement).click();
-  });
-  await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
-    timeout: 15_000,
-  });
-}
+import { expect, test } from "@playwright/test";
+import {
+  handoffStudio,
+  LEGACY_STUDIO_VIEWPORT,
+  openCommandPalette,
+  pipelineShell,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -91,6 +87,16 @@ test.describe("Design studio (sketch mode)", () => {
     });
   });
 
+  test("selecting a placed item shows a live shape readout", async ({ page }) => {
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    const item = page.getByTestId("studio-item").first();
+    await expect(item).toBeVisible({ timeout: 30_000 });
+    await item.click();
+    const readout = page.getByTestId("selected-shape-readout");
+    await expect(readout).toBeVisible({ timeout: 10_000 });
+    await expect(readout).toContainText(/m²|m/);
+  });
+
   test("arms symbol from command palette search", async ({ page }) => {
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(page.getByTestId("studio-item")).toHaveCount(1, {
@@ -98,11 +104,10 @@ test.describe("Design studio (sketch mode)", () => {
     });
     await openCommandPalette(page);
     await page.getByLabel("Command search").fill("place bluestone");
-    await expect(
-      page.getByRole("option", { name: /Place Bluestone/i }),
-    ).toBeVisible();
-    await page.keyboard.press("Enter");
-    await expect(page.getByTestId("add-symbol-strip")).toBeVisible({
+    const armPaving = page.getByTestId("canvas-command-arm-paving");
+    await expect(armPaving).toBeVisible();
+    await armPaving.click();
+    await expect(page.getByTestId("kit-asset-dock")).toBeVisible({
       timeout: 10_000,
     });
   });

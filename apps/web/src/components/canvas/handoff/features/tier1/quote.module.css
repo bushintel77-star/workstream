@@ -18,7 +18,7 @@
   border: 1px solid rgba(36, 19, 24, 0.1);
   background: rgba(255, 246, 248, 0.96);
   box-shadow: 0 18px 48px rgba(36, 19, 24, 0.1);
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   color: #241318;
 }
 
@@ -69,7 +69,7 @@
 
 .total {
   margin: 8px 0 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-serif);
   font-size: clamp(36px, 6vw, 48px);
   font-weight: 600;
   letter-spacing: -0.03em;

@@ -92,6 +92,12 @@ export function QuotePortal({
     allCostings.find((c) => c.scenario === "standard") ??
     allCostings[0] ??
     null;
+  const activeScenarioLabel =
+    SCENARIOS.find((item) => item.id === active?.scenario)?.label ??
+    active?.scenario.replace(/(^|-)([a-z])/g, (_match, prefix: string, letter: string) =>
+      `${prefix ? " " : ""}${letter.toUpperCase()}`,
+    ) ??
+    "selected";
 
   const generated = useMemo(
     () =>
@@ -142,7 +148,14 @@ export function QuotePortal({
         {survey && (
           <section className={styles.summary}>
             <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
-            <Metric label="House" value={`${survey.house_area_m2} m²`} />
+            <Metric
+              label="Existing house"
+              value={
+                survey.house_area_m2 > 0
+                  ? `${survey.house_area_m2} m²`
+                  : "Not available"
+              }
+            />
             <Metric label="Garden" value={`${survey.garden_area_m2} m²`} />
           </section>
         )}
@@ -258,7 +271,7 @@ export function QuotePortal({
                 Accept &amp; pay {aud2(active.total * 0.2)} deposit
               </Link>
               <p className={styles.acceptNote}>
-                A 20% deposit secures your garden on the Standard scenario.
+                A 20% deposit secures your garden on the {activeScenarioLabel} scenario.
                 Balance billed in stages as works progress.
               </p>
             </>

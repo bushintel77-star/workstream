@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  canvasToStrokes,
   itemsToPlacements,
   placementsToItems,
+  resolveHydratedBuilding,
   siteFrameToSnapshot,
   snapshotToSiteFrame,
+  strokesToCanvas,
 } from "./canvasBridge";
 import type { StudioItem } from "../studioCatalog";
 
@@ -56,6 +59,35 @@ describe("site_frame bridge", () => {
     ).toEqual({});
   });
 
+  it("does not leak a seed footprint into a real frame without a building", () => {
+    const frame = {
+      boundary: [
+        { x_pct: 10, y_pct: 10 },
+        { x_pct: 90, y_pct: 10 },
+        { x_pct: 90, y_pct: 90 },
+        { x_pct: 10, y_pct: 90 },
+      ],
+      building: [],
+      easements: [],
+      services: [],
+      levels: [],
+    };
+    const seedBuilding = [
+      { x: 30, y: 30 },
+      { x: 60, y: 30 },
+      { x: 60, y: 55 },
+      { x: 30, y: 55 },
+    ];
+    const hydrated = siteFrameToSnapshot(frame);
+
+    expect(
+      resolveHydratedBuilding(frame, hydrated.building, seedBuilding),
+    ).toEqual([]);
+    expect(resolveHydratedBuilding(undefined, undefined, seedBuilding)).toBe(
+      seedBuilding,
+    );
+  });
+
   it("round-trips authored DBH on existing trees", () => {
     const items: StudioItem[] = [
       {
@@ -73,5 +105,21 @@ describe("site_frame bridge", () => {
     expect(placements[0]!.label).toBe("exist:dbh=0.62");
     const back = placementsToItems(placements);
     expect(back[0]!.dbhM).toBeCloseTo(0.62, 5);
+  });
+
+  it("preserves sketch ink width and colour through persistence", () => {
+    const canvas = strokesToCanvas([
+      {
+        id: "sketch-1",
+        points: [{ x: 20, y: 30 }, { x: 40, y: 50 }],
+        color: "#241318",
+        widthPx: 3.2,
+      },
+    ]);
+    expect(canvas[0]?.width_px).toBe(3.2);
+    expect(canvas[0]?.color).toBe("#241318");
+    const roundTrip = canvasToStrokes(canvas);
+    expect(roundTrip[0]?.widthPx).toBe(3.2);
+    expect(roundTrip[0]?.color).toBe("#241318");
   });
 });

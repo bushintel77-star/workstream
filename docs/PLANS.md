@@ -98,6 +98,7 @@ workspace plan must be `studio` for per-owner stored live keys to hydrate.
 ## Related docs
 
 - [CANVAS-FIRST-UX.md](CANVAS-FIRST-UX.md) — **binding** operator canvas UI mandate (progressive disclosure, paper/clay, optimistic + skeletal Live BOM)
+- [CANVAS-REMAINING-FEATURES-HANDOVER.md](CANVAS-REMAINING-FEATURES-HANDOVER.md) — Canonical handover for remaining precision, field, sketch, access, drainage, height and terrain work
 - [CANVAS-FIRST-SPATIAL-ENGINE-SDS.md](CANVAS-FIRST-SPATIAL-ENGINE-SDS.md) — Spatial drafting engine SDS (tokens, nodes, snap, TPZ, sheet scale; Workflow 1 vs Stage 2 firewall)
 - [CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md](CANVAS-FIRST-AI-FLORA-ENGINE-SDS.md) — Canvas-first plant suggestion + micro-climate engine (Flora Ring; Workflow 1 vs Stage 2 firewall)
 - [CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md](CANVAS-FIRST-VOLUMETRIC-ISOLITH-SDS.md) — Dynamic volumetric Isolith (topsoil / CR / clay stockpile UI; Workflow 1 vs Stage 2 firewall)

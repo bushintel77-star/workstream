@@ -8,6 +8,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BY_TYPE,
   MODE_TABS,
@@ -62,6 +63,14 @@ import {
   type NicheTool,
 } from "./features/kitInventory/nicheTools";
 import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
+import { CanvasMeasureSummary } from "./features/liveMeasures/CanvasMeasureSummary";
+import {
+  cancelToSelect,
+  recordTool,
+  toggleTool,
+  type ToolStack,
+} from "./features/toolStack/toolStack";
+import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
 import {
   loadPointerMarkId,
@@ -107,6 +116,8 @@ import {
   formalizeSketchToCadAction,
   lookupCadastralTitleAction,
 } from "../../../app/actions";
+import { useToast } from "../../ToastHost";
+import { suggestedMode, unlockedModes } from "../../../lib/canvas-mode";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -146,6 +157,8 @@ export function HandoffDesignStudio({
   quotePortalUri = null,
   initialTitleBlock = null,
 }: Props) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const fallbackOutdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
     projectId,
@@ -160,6 +173,7 @@ export function HandoffDesignStudio({
     initialSiteFrame,
     initialIrrigationZones,
   });
+  const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
     useState<GridFormation | null>(null);
   const [gridPreviewInk, setGridPreviewInk] = useState<GridInk | null>(null);
@@ -177,6 +191,7 @@ export function HandoffDesignStudio({
   /** Prefer Turf workable outdoor; fall back to project / seed area. */
   const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
+  const lastSaveToast = useRef(0);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
@@ -210,8 +225,15 @@ export function HandoffDesignStudio({
     if (paintFlashTimer.current) clearTimeout(paintFlashTimer.current);
     paintFlashTimer.current = setTimeout(() => setPaintFlashId(null), 460);
   };
+  /** Two-slot tool memory — Q flips back to the tool you left (AutoCAD-style). */
+  const toolStackRef = useRef<ToolStack>({ current: ui.tool, previous: ui.tool });
+  useEffect(() => {
+    toolStackRef.current = recordTool(toolStackRef.current, ui.tool);
+  }, [ui.tool]);
   /** Eyedropper — next canvas click loads that element's style into the swatch. */
   const [eyedropArmed, setEyedropArmed] = useState(false);
+  /** Swatch/stamp hover preview — shows target result before commit. */
+  const [previewSwatch, setPreviewSwatch] = useState<StudioItemType | null>(null);
   const pickStyle = (t: StudioItemType) => {
     setEyedropArmed(false);
     studio.setUi({ paintSwatch: t, tool: "paint" });
@@ -220,6 +242,17 @@ export function HandoffDesignStudio({
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
   }, []);
+
+  useEffect(() => {
+    if (ui.saveStatus !== "saved" || ui.savedTick === 0) return;
+    if (lastSaveToast.current === ui.savedTick) return;
+    lastSaveToast.current = ui.savedTick;
+    toast.show(
+      "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
+      "success",
+      5000,
+    );
+  }, [toast, ui.saveStatus, ui.savedTick]);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -403,6 +436,11 @@ export function HandoffDesignStudio({
       }
 
       if (e.key === "Escape") {
+        if (ui.isolatedLayer) {
+          e.preventDefault();
+          studio.setUi({ isolatedLayer: null });
+          return;
+        }
         if (ui.floraSession) {
           studio.dismissFlora();
           return;
@@ -414,6 +452,7 @@ export function HandoffDesignStudio({
         // CAD practice: Esc cancels sticky draft tools → pan (KiCad / Fusion).
         if (isStickyDraftTool(ui.tool)) {
           e.preventDefault();
+          toolStackRef.current = cancelToSelect(toolStackRef.current);
           studio.setTool("pan");
           setInstrumentsSummoned(false);
           studio.setUi({
@@ -446,9 +485,47 @@ export function HandoffDesignStudio({
         setInstrumentsSummoned(false);
         return;
       }
+      if (
+        e.key.toLowerCase() === "i" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        planOn &&
+        !ui.frameOn
+      ) {
+        e.preventDefault();
+        if (ui.isolatedLayer) {
+          studio.setUi({ isolatedLayer: null });
+          return;
+        }
+        const selected = studio.items.find(
+          (item) => item.id === ui.selectedId && !item.ghost,
+        );
+        if (selected) {
+          studio.setUi({ isolatedLayer: ITEM_LAYER[selected.t] });
+        }
+        return;
+      }
       if (e.key.toLowerCase() === "f" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         studio.setUi({ frameOn: !ui.frameOn });
+        return;
+      }
+      /* Q flips back to the previous tool — no toolbar round trip. */
+      if (
+        e.key.toLowerCase() === "q" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        planOn &&
+        !ui.frameOn
+      ) {
+        const next = toggleTool(toolStackRef.current);
+        if (next !== ui.tool) {
+          e.preventDefault();
+          studio.setTool(next);
+          setInstrumentsSummoned(true);
+        }
         return;
       }
       /* Infinite zoom — + / = zoom in, - / _ zoom out (incl. fit sheet). */
@@ -676,8 +753,15 @@ export function HandoffDesignStudio({
         }
       }
       studio.setMode(mode);
+      const next = new URLSearchParams(searchParams.toString());
+      next.set("mode", mode);
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${pathname}?${next.toString()}`,
+      );
     },
-    [ui.mode, studio, runFormalizeToCad],
+    [ui.mode, studio, runFormalizeToCad, searchParams, pathname],
   );
 
   useEffect(() => {
@@ -779,6 +863,60 @@ export function HandoffDesignStudio({
     ui.groupIds.length > 0 ||
     ui.addOpen ||
     ui.locked;
+  const modeProgress = useMemo(
+    () => ({
+      hasAerial:
+        Boolean(liveAerial) ||
+        Boolean(ui.aerialUri) ||
+        Boolean(titleBlock) ||
+        studio.boundary.length >= 3,
+      hasSketch: studio.items.some((i) => !i.ghost) || studio.strokes.length > 0,
+      hasCad:
+        studio.items.some((i) => !i.ghost) ||
+        studio.strokes.length > 0 ||
+        studio.irrigationZones.length > 0,
+      hasQuote: quotePersisted,
+    }),
+    [
+      liveAerial,
+      quotePersisted,
+      studio.boundary.length,
+      studio.irrigationZones.length,
+      studio.items,
+      studio.strokes.length,
+      titleBlock,
+      ui.aerialUri,
+    ],
+  );
+  const openModes = useMemo(() => unlockedModes(modeProgress), [modeProgress]);
+  const fallbackMode = useMemo(() => suggestedMode(modeProgress), [modeProgress]);
+
+  useEffect(() => {
+    if (!openModes.has(ui.mode)) {
+      studio.setMode(fallbackMode);
+    }
+  }, [fallbackMode, openModes, studio, ui.mode]);
+
+  const lockReasonForMode = (mode: StudioMode): string | null => {
+    if (openModes.has(mode)) return null;
+    if (mode === "sketch" || mode === "cad" || mode === "elevation") {
+      return "Complete survey and title boundary first.";
+    }
+    if (mode === "quote") return "Accept CAD geometry before quoting.";
+    if (mode === "share") return "Generate a quote before sharing.";
+    return "Complete the previous stage first.";
+  };
+
+  const setCanvasMode = (mode: StudioMode) => {
+    studio.setMode(mode);
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("mode", mode);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${pathname}?${next.toString()}`,
+    );
+  };
   /**
    * Instrument + inventory home — margin pin only (never lot core).
    */
@@ -872,17 +1010,27 @@ export function HandoffDesignStudio({
           aria-label="Design workflow"
           data-testid="canvas-mode-strip"
         >
-          {MODE_TABS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}`}
-              data-testid={`canvas-mode-${m}`}
-              onClick={() => requestMode(m)}
-            >
-              {m[0]!.toUpperCase() + m.slice(1)}
-            </button>
-          ))}
+          {MODE_TABS.map((m) => {
+            const lockReason = lockReasonForMode(m);
+            const locked = Boolean(lockReason);
+            return (
+              <button
+                key={m}
+                type="button"
+                className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}${locked ? ` ${css.modeBtnLocked}` : ""}`}
+                data-testid={`canvas-mode-${m}`}
+                disabled={locked}
+                aria-disabled={locked}
+                title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
+                onClick={() => {
+                  if (!locked) requestMode(m);
+                }}
+              >
+                {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
+                {m[0]!.toUpperCase() + m.slice(1)}
+              </button>
+            );
+          })}
         </nav>
 
         <div className={css.spacer} />
@@ -1119,8 +1267,11 @@ export function HandoffDesignStudio({
               className={`${css.iconBtn}${ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}
               data-testid="share-top"
               aria-label="Share"
-              title="Share"
-              onClick={() => studio.setMode("share")}
+              title={lockReasonForMode("share") ?? "Share"}
+              disabled={Boolean(lockReasonForMode("share"))}
+              onClick={() => {
+                if (!lockReasonForMode("share")) studio.setMode("share");
+              }}
             >
               <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
                 <circle cx="12" cy="4" r="1.6" stroke="currentColor" strokeWidth="1.2" />
@@ -1163,27 +1314,62 @@ export function HandoffDesignStudio({
               {draftLabel}
             </button>
           ) : null}
-          <span
-            className={`${css.savedTick}${ui.saveStatus === "saving" ? ` ${css.savedTickPulse}` : ""}`}
-            data-testid="autosave-tick"
-            data-status={ui.saveStatus}
-          >
-            {ui.saveStatus === "saving"
-              ? "Saving"
-              : ui.saveStatus === "error"
-                ? "Retry"
+          {ui.saveStatus === "error" ? (
+            <button
+              type="button"
+              className={`${css.savedTick} ${css.savedTickButton}`}
+              data-testid="autosave-tick"
+              data-status={ui.saveStatus}
+              onClick={() => {
+                void studio.saveNow().catch(() => {
+                  toast.show("Canvas save failed. Try again before leaving.", "error");
+                });
+              }}
+            >
+              Retry save
+            </button>
+          ) : (
+            <span
+              className={`${css.savedTick}${ui.saveStatus === "saving" || ui.saveStatus === "retrying" ? ` ${css.savedTickPulse}` : ""}`}
+              data-testid="autosave-tick"
+              data-status={ui.saveStatus}
+            >
+              {ui.saveStatus === "saving"
+                ? "Saving"
+                : ui.saveStatus === "retrying"
+                  ? "Save paused — retrying"
                 : ui.saveStatus === "saved"
                   ? "Saved"
                   : ""}
-          </span>
+            </span>
+          )}
         </div>
       </header>
+
+      {!ui.clientView && !ui.frameOn ? (
+        <StudioContextBreadcrumb
+          mode={ui.mode}
+          isolatedLayer={ui.isolatedLayer}
+          layerOpacity={ui.layerOpacity}
+          setbackOn={ui.setbackOn}
+          shadeOn={ui.shadeOn}
+          growth={ui.growth}
+          onClearIsolation={() => studio.setUi({ isolatedLayer: null })}
+          onClearSetback={() => studio.setUi({ setbackOn: false })}
+          onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
+          onResetGrowth={() => studio.setUi({ growth: "mature" })}
+          onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
+        />
+      ) : null}
 
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}`}
         data-testid="studio-board"
         ref={boardRef}
       >
+        <div className={css.honestyCaption}>
+          Concept sketch for estimating — not a construction drawing.
+        </div>
         {ui.mode === "elevation" ? (
           <ElevationBoard
             axis={ui.elevAxis}
@@ -1300,6 +1486,7 @@ export function HandoffDesignStudio({
             <ShadeGridOverlay
               active={ui.shadeOn && !ui.frameOn && !ui.focusOn}
               sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
               lat={projectLat ?? undefined}
               lng={projectLng ?? undefined}
             />
@@ -1311,6 +1498,14 @@ export function HandoffDesignStudio({
               titleBoundaryLocked={ui.titleBoundaryLocked}
               scaleM={scaleM}
               lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
+              siteAreas={
+                siteSchedule
+                  ? {
+                      buildingAreaM2: siteSchedule.buildingAreaM2,
+                      outdoorAreaM2: siteSchedule.outdoorAreaM2,
+                    }
+                  : null
+              }
               siteLabel={displayAddress}
               titleMeta={
                 titleBlock
@@ -1331,6 +1526,7 @@ export function HandoffDesignStudio({
               tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}
               locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
+              isolatedLayer={ui.isolatedLayer}
               setbackOn={ui.setbackOn}
               councilSetbackM={compliance.setbackM}
               growth={ui.growth}
@@ -1406,6 +1602,7 @@ export function HandoffDesignStudio({
                 flashPaintTarget(id);
               }}
               paintFlashId={paintFlashId}
+              previewSwatch={previewSwatch}
               eyedropArmed={eyedropArmed}
               onEyedrop={pickStyle}
               onBoardCursor={setBoardCursor}
@@ -1462,23 +1659,40 @@ export function HandoffDesignStudio({
                 onCommit={(stroke) => {
                   studio.setStrokes([...studio.strokes, stroke]);
                 }}
+                onErase={(strokeId) =>
+                  studio.setStrokes(
+                    studio.strokes.filter((stroke) => stroke.id !== strokeId),
+                  )
+                }
+                onUndoLast={() =>
+                  studio.setStrokes(studio.strokes.slice(0, -1))
+                }
                 onTidy={() => studio.tidySketches()}
                 onFormalizeToCad={() => {
                   void runFormalizeToCad();
                 }}
               />
             ) : null}
-            {ui.mode === "survey" && !ui.frameOn ? (
+            {ui.mode === "cad" && studio.strokes.length > 0 ? (
+              <SketchBoard
+                readOnly
+                strokes={studio.strokes}
+                darkOn={ui.darkOn}
+              />
+            ) : null}
+            {planOn && !ui.frameOn ? (
               <>
                 <SurveyAnnotationLayer
-                  active
+                  active={ui.mode === "survey"}
                   tool={ui.tool}
                   levels={studio.levels}
                   services={studio.services}
                   easements={studio.easements}
+                  showCorridors={ui.mode === "survey"}
                   scaleM={scaleM}
                   darkOn={ui.darkOn}
                   layerOpacity={ui.layerOpacity}
+                  isolatedLayer={ui.isolatedLayer}
                   onAddLevel={studio.addSpotLevel}
                   onCommitService={studio.commitService}
                   onCalibrate={(nextScaleM) => {
@@ -1502,7 +1716,7 @@ export function HandoffDesignStudio({
                     });
                   }}
                 />
-                {!ui.focusOn && !ui.clientView ? (
+                {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
                   <SurveyChecklist
                     boundary={studio.boundary}
                     building={studio.building}
@@ -1596,7 +1810,8 @@ export function HandoffDesignStudio({
               />
             ) : null}
             {/* Orbit sprouts with selection wash — Delete / Lock / Ask AI clear of glyph */}
-            {selectedLive &&
+            {!ui.clientView &&
+            selectedLive &&
             ui.tool !== "zone" &&
             (chrome.selectionRing ||
               ui.mode === "cad" ||
@@ -1779,7 +1994,27 @@ export function HandoffDesignStudio({
           </label>
         ) : null}
 
-        {chrome.aiSidecar &&
+        {!ui.dataSummoned &&
+        planOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        !ui.foundationCleanse ? (
+          <CanvasMeasureSummary
+            mode={ui.mode}
+            boundary={studio.boundary}
+            building={studio.building}
+            items={studio.items}
+            scaleM={scaleM}
+            schedule={siteSchedule}
+            selected={selectedLive}
+            onOpen={() =>
+              studio.setUi({ dataSummoned: true, utilityPanel: null })
+            }
+          />
+        ) : null}
+
+        {ui.dataSummoned &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&
@@ -1792,6 +2027,7 @@ export function HandoffDesignStudio({
             scaleM={scaleM}
             schedule={siteSchedule}
             selected={selectedLive}
+            onClose={() => studio.setUi({ dataSummoned: false })}
           />
         ) : null}
 
@@ -1836,7 +2072,11 @@ export function HandoffDesignStudio({
               })
             }
             onOpenQuote={() => studio.setMode("quote")}
-            settling={estimateSettling || ui.saveStatus === "saving"}
+            settling={
+              estimateSettling ||
+              ui.saveStatus === "saving" ||
+              ui.saveStatus === "retrying"
+            }
           />
         ) : null}
 
@@ -1844,9 +2084,11 @@ export function HandoffDesignStudio({
         {chrome.sunGrowth ? (
           <SunGrowthDock
             sunMin={ui.sunMin}
+            datePreset={ui.sunDatePreset}
             growth={ui.growth}
             playing={ui.sunPlay}
             onSunMin={(sunMin) => studio.setUi({ sunMin })}
+            onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
             onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
           />
@@ -1889,6 +2131,8 @@ export function HandoffDesignStudio({
               items={studio.items}
               boundary={studio.boundary}
               building={studio.building}
+              services={studio.services}
+              easements={studio.easements}
               scaleM={scaleM}
               sunMin={ui.sunMin}
               growth={ui.growth}
@@ -1901,6 +2145,8 @@ export function HandoffDesignStudio({
               }}
               onAccept={ai.accept}
               onReject={ai.reject}
+              rejectReasonId={ai.rejectReasonId}
+              onRejectWithReason={ai.rejectWithReason}
               onCycle={ai.cycle}
               onAskAi={(id) => {
                 const g = ai.pending.find((x) => x.id === id);
@@ -1934,7 +2180,53 @@ export function HandoffDesignStudio({
               studio.setUi({ paintSwatch: t, tool: "paint" });
             }}
             onEyedrop={() => setEyedropArmed((v) => !v)}
+            onPreview={setPreviewSwatch}
           />
+        ) : null}
+
+        {swatchTrayOn && (studio.canUndo || studio.canRedo) ? (
+          <div className={css.undoFilmstrip} data-testid="undo-filmstrip">
+            <button
+              type="button"
+              className={css.undoFilmBtn}
+              disabled={!studio.canUndo}
+              onClick={studio.undo}
+              title="Undo"
+            >
+              Undo
+            </button>
+            <div className={css.undoCells} aria-label="Recent canvas states">
+              {Array.from({ length: Math.min(studio.undoDepth, 8) }).map((_, i) => (
+                <button
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={i}
+                  type="button"
+                  className={css.undoCell}
+                  data-provenance={
+                    studio.undoProvenance[
+                      studio.undoProvenance.length - 1 - i
+                    ] ?? "manual"
+                  }
+                  title={`Step back ${i + 1}`}
+                  onClick={() => {
+                    for (let n = 0; n <= i; n += 1) studio.undo();
+                  }}
+                />
+              ))}
+              {studio.undoDepth === 0 ? (
+                <span className={css.undoEmpty}>Live</span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className={css.undoFilmBtn}
+              disabled={!studio.canRedo}
+              onClick={studio.redo}
+              title="Redo"
+            >
+              Redo
+            </button>
+          </div>
         ) : null}
 
         {swatchTrayOn &&

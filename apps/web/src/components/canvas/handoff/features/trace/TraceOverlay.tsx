@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { inferRectangleCompletion } from "@workstream/domain";
 import { polygonAreaM2, ptsAttr, type PctPoint } from "../../geometry";
+import {
+  formatSegmentTip,
+  pointFromSegmentInput,
+} from "../../geometry/drafting";
 import type { TraceTarget } from "../../state/studioTypes";
 import css from "./trace.module.css";
 
@@ -46,14 +50,111 @@ export function TraceOverlay({
   onCancel,
   onPop,
 }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const lengthInputRef = useRef<HTMLInputElement>(null);
+  const angleInputRef = useRef<HTMLInputElement>(null);
+  const [activeField, setActiveField] = useState<"length" | "angle">("length");
+  const [typedLength, setTypedLength] = useState<string | null>(null);
+  const [typedAngle, setTypedAngle] = useState<string | null>(null);
   const completion = useMemo(() => {
     if (!drawPoly || locked) return null;
     return inferRectangleCompletion(drawPoly, drawCursor);
   }, [drawCursor, drawPoly, locked]);
 
+  const poly = drawPoly ?? [];
+  const last = poly[poly.length - 1] ?? null;
+  const boardAspect =
+    (rootRef.current?.clientWidth ?? 1) /
+    Math.max(1, rootRef.current?.clientHeight ?? 1);
+  const segment = useMemo(() => {
+    if (!last || !drawCursor) return null;
+    return formatSegmentTip(last, drawCursor, scaleM, boardAspect);
+  }, [boardAspect, drawCursor, last, scaleM]);
+  const hasTypedInput = typedLength != null || typedAngle != null;
+
+  const clearTypedInput = () => {
+    setTypedLength(null);
+    setTypedAngle(null);
+  };
+
+  const typedPoint = () => {
+    if (!last || !drawCursor || !hasTypedInput) return null;
+    const length = typedLength == null ? null : Number.parseFloat(typedLength);
+    const angle = typedAngle == null ? null : Number.parseFloat(typedAngle);
+    return pointFromSegmentInput(
+      last,
+      drawCursor,
+      scaleM,
+      boardAspect,
+      Number.isFinite(length) ? length : null,
+      Number.isFinite(angle) ? angle : null,
+    );
+  };
+
+  useEffect(() => {
+    if (!active || locked || !segment) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      const inDynamicInput =
+        target === lengthInputRef.current || target === angleInputRef.current;
+      if (/^[0-9.-]$/.test(event.key) && !inDynamicInput) {
+        event.preventDefault();
+        event.stopPropagation();
+        const setValue =
+          activeField === "length" ? setTypedLength : setTypedAngle;
+        setValue((value) => `${value ?? ""}${event.key}`);
+        queueMicrotask(() =>
+          (activeField === "length"
+            ? lengthInputRef.current
+            : angleInputRef.current
+          )?.focus(),
+        );
+        return;
+      }
+      if (event.key === "Tab" && hasTypedInput) {
+        event.preventDefault();
+        event.stopPropagation();
+        const next = activeField === "length" ? "angle" : "length";
+        setActiveField(next);
+        queueMicrotask(() =>
+          (next === "length"
+            ? lengthInputRef.current
+            : angleInputRef.current
+          )?.focus(),
+        );
+        return;
+      }
+      if (event.key === "Enter" && hasTypedInput) {
+        const point = typedPoint();
+        if (!point) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onPush(point);
+        clearTypedInput();
+        return;
+      }
+      if (event.key === "Escape" && hasTypedInput) {
+        event.preventDefault();
+        event.stopPropagation();
+        clearTypedInput();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [
+    active,
+    activeField,
+    hasTypedInput,
+    locked,
+    onPush,
+    segment,
+    typedAngle,
+    typedLength,
+  ]);
+
   if (!active) return null;
 
-  const poly = drawPoly ?? [];
   const linePts =
     poly.length === 0
       ? ""
@@ -74,6 +175,7 @@ export function TraceOverlay({
 
   return (
     <div
+      ref={rootRef}
       className={css.root}
       data-testid="trace-overlay"
       onPointerMove={(e) => {
@@ -84,7 +186,8 @@ export function TraceOverlay({
       onPointerDown={(e) => {
         if (locked) return;
         e.stopPropagation();
-        let p = toPct(e.currentTarget, e.clientX, e.clientY);
+        let p =
+          typedPoint() ?? toPct(e.currentTarget, e.clientX, e.clientY);
         if (poly.length >= 3) {
           const first = poly[0]!;
           const d = Math.hypot(p.x - first.x, p.y - first.y);
@@ -112,6 +215,7 @@ export function TraceOverlay({
           }
         }
         onPush(p);
+        if (hasTypedInput) clearTypedInput();
       }}
       onDoubleClick={(e) => {
         e.preventDefault();
@@ -133,6 +237,48 @@ export function TraceOverlay({
         ))}
       </svg>
 
+      {drawCursor && segment ? (
+        <div
+          className={css.dynamicInput}
+          data-testid="trace-dynamic-input"
+          style={{ left: `${drawCursor.x}%`, top: `${drawCursor.y}%` }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <label data-active={activeField === "length" ? "true" : "false"}>
+            <span>L</span>
+            <input
+              ref={lengthInputRef}
+              inputMode="decimal"
+              aria-label="Segment length in metres"
+              value={typedLength ?? segment.lengthM.toFixed(2)}
+              onFocus={(event) => {
+                setActiveField("length");
+                if (typedLength == null) setTypedLength("");
+                event.currentTarget.select();
+              }}
+              onChange={(event) => setTypedLength(event.target.value)}
+            />
+            <span>m</span>
+          </label>
+          <label data-active={activeField === "angle" ? "true" : "false"}>
+            <span>A</span>
+            <input
+              ref={angleInputRef}
+              inputMode="decimal"
+              aria-label="Segment angle in degrees"
+              value={typedAngle ?? segment.angleDeg.toFixed(0)}
+              onFocus={(event) => {
+                setActiveField("angle");
+                if (typedAngle == null) setTypedAngle("");
+                event.currentTarget.select();
+              }}
+              onChange={(event) => setTypedAngle(event.target.value)}
+            />
+            <span>°</span>
+          </label>
+        </div>
+      ) : null}
+
       {completion && c ? (
         <button
           type="button"
@@ -151,7 +297,7 @@ export function TraceOverlay({
           {(
             [
               ["boundary", "Boundary"],
-              ["building", "Building"],
+              ["building", "Existing house"],
             ] as const
           ).map(([id, label]) => (
             <button

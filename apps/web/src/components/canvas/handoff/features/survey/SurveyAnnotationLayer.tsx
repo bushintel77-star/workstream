@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SpotLevel } from "../../studioCatalog";
-import type { LayerOpacity } from "../../state/studioTypes";
+import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
+import { resolveLayerVisual } from "../../state/layerIsolate";
 import type { PctPoint } from "../../geometry";
 import { nearSurveyRingStart } from "../../geometry/surveyCorridor";
 import type { StudioTool } from "../../studioCatalog";
+import { buildSpotLevelFall } from "./spotLevelFall";
 import css from "./surveyAnnotations.module.css";
 
 type Props = {
@@ -14,9 +16,12 @@ type Props = {
   levels: SpotLevel[];
   services: PctPoint[][];
   easements?: PctPoint[][];
+  /** Corridors are already rendered by CadPlanBoard outside Survey mode. */
+  showCorridors?: boolean;
   scaleM: number;
   darkOn: boolean;
   layerOpacity: LayerOpacity;
+  isolatedLayer?: LayerKey | null;
   onAddLevel: (x: number, y: number, z: number) => void;
   onCommitService: (ring: PctPoint[]) => void;
   onCalibrate: (scaleM: number) => void;
@@ -36,9 +41,11 @@ export function SurveyAnnotationLayer({
   levels,
   services,
   easements = [],
+  showCorridors = true,
   scaleM,
   darkOn,
   layerOpacity,
+  isolatedLayer = null,
   onAddLevel,
   onCommitService,
   onCalibrate,
@@ -89,9 +96,25 @@ export function SurveyAnnotationLayer({
     active && (tool === "level" || tool === "service" || tool === "calib");
 
   const ink = darkOn ? "#E6E9EA" : "#1C1917";
-  const surveyOp = layerOpacity.survey;
-  const councilOp = layerOpacity.council;
-  const serviceRings = [...services, drawService].filter(Boolean) as PctPoint[][];
+  const surveyVisual = resolveLayerVisual(
+    "survey",
+    layerOpacity.survey,
+    isolatedLayer,
+  );
+  const councilVisual = resolveLayerVisual(
+    "council",
+    layerOpacity.council,
+    isolatedLayer,
+  );
+  const surveyOp = surveyVisual.opacity;
+  const councilOp = councilVisual.opacity;
+  const serviceRings = showCorridors
+    ? ([...services, drawService].filter(Boolean) as PctPoint[][])
+    : [];
+  const falls = levels
+    .slice(1)
+    .map((level, index) => buildSpotLevelFall(levels[index]!, level, scaleM))
+    .filter((fall): fall is NonNullable<typeof fall> => fall != null);
 
   return (
     <div
@@ -151,6 +174,19 @@ export function SurveyAnnotationLayer({
         preserveAspectRatio="none"
         aria-hidden
       >
+        <defs>
+          <marker
+            id="survey-fall-arrow"
+            markerWidth="5"
+            markerHeight="5"
+            refX="4"
+            refY="2.5"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M0,0 L5,2.5 L0,5 Z" fill={ink} />
+          </marker>
+        </defs>
         {serviceRings.map((s, si) => (
           <g key={`svc${si}`} opacity={councilOp} style={{ pointerEvents: "none" }}>
             <polyline
@@ -167,7 +203,8 @@ export function SurveyAnnotationLayer({
           </g>
         ))}
 
-        {easements
+        {showCorridors
+          ? easements
           .filter((r) => r.length >= 3)
           .map((ring, i) => (
             <g
@@ -185,7 +222,8 @@ export function SurveyAnnotationLayer({
                 vectorEffect="non-scaling-stroke"
               />
             </g>
-          ))}
+          ))
+          : null}
 
         {calibPts.length > 0 ? (
           <g style={{ pointerEvents: "none" }}>
@@ -229,15 +267,26 @@ export function SurveyAnnotationLayer({
               strokeWidth={0.2}
               vectorEffect="non-scaling-stroke"
             />
+            <line
+              x1={lv.x}
+              y1={lv.y - 4.2}
+              x2={lv.x}
+              y2={lv.y - 1.1}
+              stroke={ink}
+              strokeWidth={0.18}
+              vectorEffect="non-scaling-stroke"
+            />
+            <circle
+              cx={lv.x}
+              cy={lv.y - 4.2}
+              r={0.42}
+              fill={ink}
+              vectorEffect="non-scaling-stroke"
+            />
           </g>
         ))}
 
-        {levels.slice(1).map((lv, i) => {
-          const a = levels[i]!;
-          const b = lv;
-          const distM = (Math.hypot(b.x - a.x, b.y - a.y) / 100) * scaleM;
-          if (distM < 0.2) return null;
-          return (
+        {falls.map((fall, i) => (
             <g
               key={`fall${i}`}
               opacity={surveyOp}
@@ -245,18 +294,18 @@ export function SurveyAnnotationLayer({
               data-testid="survey-fall"
             >
               <line
-                x1={a.x}
-                y1={a.y}
-                x2={b.x}
-                y2={b.y}
+                x1={fall.high.x}
+                y1={fall.high.y}
+                x2={fall.low.x}
+                y2={fall.low.y}
                 stroke={darkOn ? "rgba(230,233,234,0.5)" : "rgba(28,25,23,0.4)"}
                 strokeWidth={0.14}
                 strokeDasharray="0.5 0.7"
+                markerEnd={fall.flat ? undefined : "url(#survey-fall-arrow)"}
                 vectorEffect="non-scaling-stroke"
               />
             </g>
-          );
-        })}
+          ))}
       </svg>
 
       {/* Fixed-px labels — never stretch with preserveAspectRatio="none" */}
@@ -276,7 +325,7 @@ export function SurveyAnnotationLayer({
         ) : null,
       )}
 
-      {easements.map((ring, i) =>
+      {showCorridors ? easements.map((ring, i) =>
         ring.length >= 3 ? (
           <span
             key={`easelab${i}`}
@@ -290,7 +339,7 @@ export function SurveyAnnotationLayer({
             Easement
           </span>
         ) : null,
-      )}
+      ) : null}
 
       {levels.map((lv, i) => (
         <span
@@ -303,31 +352,23 @@ export function SurveyAnnotationLayer({
             color: ink,
           }}
         >
-          {lv.z.toFixed(2)}
+          P{i + 1} · RL {lv.z.toFixed(2)} m
         </span>
       ))}
 
-      {levels.slice(1).map((lv, i) => {
-        const a = levels[i]!;
-        const b = lv;
-        const distM = (Math.hypot(b.x - a.x, b.y - a.y) / 100) * scaleM;
-        if (distM < 0.2) return null;
-        const dz = b.z - a.z;
-        const fall = Math.abs((dz / distM) * 100).toFixed(1);
-        return (
+      {falls.map((fall, i) => (
           <span
             key={`falllab${i}`}
             className={css.fallLabel}
             style={{
-              left: `${(a.x + b.x) / 2}%`,
-              top: `${(a.y + b.y) / 2}%`,
+              left: `${(fall.high.x + fall.low.x) / 2}%`,
+              top: `${(fall.high.y + fall.low.y) / 2}%`,
               opacity: surveyOp,
             }}
           >
-            {fall}% · {Math.round(Math.abs(dz) * 1000)} mm
+            {fall.flat ? "LEVEL" : `↓ ${fall.fallPct}%`} · {fall.deltaMm} mm
           </span>
-        );
-      })}
+        ))}
 
       {tool === "service" && drawService ? (
         <p className={css.hint} data-testid="survey-service-hint">

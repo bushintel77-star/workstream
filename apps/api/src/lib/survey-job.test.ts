@@ -24,7 +24,7 @@ describe("runSurvey", () => {
     const survey = await runSurvey(store, owner, project.id);
 
     expect(survey.lot_area_m2).toBeGreaterThan(0);
-    expect(survey.house_area_m2).toBeGreaterThan(0);
+    expect(survey.house_area_m2).toBeGreaterThanOrEqual(0);
     expect(survey.garden_area_m2).toBeGreaterThan(0);
     /* Garden = lot - house, give or take rounding. */
     const delta = Math.abs(
@@ -32,6 +32,9 @@ describe("runSurvey", () => {
     );
     expect(delta).toBeLessThan(survey.lot_area_m2 * 0.05);
     expect(survey.measurements.length).toBeGreaterThanOrEqual(3);
+    if (survey.house_area_m2 === 0) {
+      expect(survey.house_polygon.coordinates).toEqual([]);
+    }
   });
 
   it("persists the survey so a second getSurvey returns it", async () => {

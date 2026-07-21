@@ -97,7 +97,7 @@ export function IntegrationHubPanel({
             </button>
             <button
               type="button"
-              className={s.btnGhost}
+              className={`${s.btn} ${s.btnGhost}`}
               disabled={pending}
               onClick={() => {
                 startTransition(async () => {
@@ -113,7 +113,7 @@ export function IntegrationHubPanel({
         ) : (
           <button
             type="button"
-            className={s.btnGhost}
+            className={`${s.btn} ${s.btnGhost}`}
             disabled={pending}
             onClick={() => {
               startTransition(async () => {
@@ -153,7 +153,7 @@ export function IntegrationHubPanel({
               <td>
                 <button
                   type="button"
-                  className={s.btnGhost}
+                  className={`${s.btn} ${s.btnGhost}`}
                   disabled={pending}
                   onClick={() => runTest(c.channel)}
                 >

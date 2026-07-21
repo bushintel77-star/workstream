@@ -13,6 +13,29 @@ export function handoffStudio(page: Page) {
   return page.getByTestId("handoff-design-studio");
 }
 
+/** Open the global command palette through its visible user control. */
+export async function openCommandPalette(page: Page) {
+  const trigger = page.getByTestId("canvas-command-top");
+  await expect(trigger).toBeVisible({ timeout: 15_000 });
+  await trigger.click();
+  await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
+    timeout: 15_000,
+  });
+}
+
+/** Summon transient drawing instruments from the empty canvas margin. */
+export async function summonCanvasInstruments(page: Page) {
+  const board = page.getByTestId("cad-plan-board");
+  await expect(board).toBeVisible({ timeout: 15_000 });
+  const box = await board.boundingBox();
+  if (!box) throw new Error("CAD board has no bounding box");
+  // Bottom-right stays outside the title lot and clear of left/top canvas HUDs.
+  await page.mouse.click(box.x + box.width - 12, box.y + box.height - 12);
+  await expect(page.getByTestId("instrument-hub")).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */
 export const LEGACY_STUDIO_VIEWPORT = { width: 800, height: 900 };
 

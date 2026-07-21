@@ -1,17 +1,21 @@
 import { randomUUID } from "node:crypto";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { ProjectSchema } from "@workstream/contracts";
 import { buildTestApp } from "../test/build-app";
+import { signPortalToken } from "../lib/magic-link";
 
 describe("API contract — projects", () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>["app"];
+  let store: Awaited<ReturnType<typeof buildTestApp>>["store"];
 
   afterEach(async () => {
     if (app) await app.close();
   });
 
   it("GET /healthz returns ok", async () => {
-    ({ app } = await buildTestApp());
+    ({ app, store } = await buildTestApp());
     const res = await app.inject({ method: "GET", url: "/healthz" });
     expect(res.statusCode).toBe(200);
     const body = res.json() as { status: string };
@@ -19,7 +23,7 @@ describe("API contract — projects", () => {
   });
 
   it("GET /readyz returns ok", async () => {
-    ({ app } = await buildTestApp());
+    ({ app, store } = await buildTestApp());
     const res = await app.inject({ method: "GET", url: "/readyz" });
     expect([200, 503]).toContain(res.statusCode);
     expect((res.json() as { status: string }).status).toMatch(/ok|degraded/);
@@ -252,6 +256,10 @@ describe("API contract — projects", () => {
       `/projects/${projectId}/weather`,
       `/projects/${projectId}/site-context`,
       `/projects/${projectId}/carbon`,
+      `/projects/${projectId}/survey`,
+      `/projects/${projectId}/cadastral-title`,
+      `/projects/${projectId}/boundary`,
+      `/projects/${projectId}/cad`,
     ];
 
     for (const url of checks) {
@@ -327,6 +335,55 @@ describe("API contract — projects", () => {
       expect(res.statusCode).toBe(200);
       expect(res.json()).toBeTypeOf("object");
     }
+  });
+
+  it("smoke-tests integration hub write contracts", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Integration Write St, Carlton VIC 3053" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const checkout = await app.inject({
+      method: "POST",
+      url: "/integrations/plan/checkout",
+      payload: {},
+    });
+    expect(checkout.statusCode).toBe(200);
+    expect(checkout.json()).toMatchObject({
+      mode: "dev_fallback",
+      studio_price_configured: false,
+    });
+
+    const seats = await app.inject({
+      method: "POST",
+      url: "/integrations/plan/seats/checkout",
+      payload: { extra_seats: 2 },
+    });
+    expect(seats.statusCode).toBe(200);
+    expect(seats.json()).toMatchObject({
+      mode: "dev_fallback",
+      seat_price_configured: false,
+    });
+
+    const invalidHubTest = await app.inject({
+      method: "POST",
+      url: "/integrations/hub/test",
+      payload: { channel: "not-real" },
+    });
+    expect(invalidHubTest.statusCode).toBe(400);
+
+    const missingQuoteSync = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/integrations/sync`,
+      payload: { include_portal: true },
+    });
+    expect(missingQuoteSync.statusCode).toBe(409);
+    expect(missingQuoteSync.json()).toMatchObject({
+      error: "Generate a quote output before syncing to CRM/email",
+    });
   });
 
   it("mints separate portal quote and deposit tokens for client checkout", async () => {
@@ -450,6 +507,120 @@ describe("API contract — projects", () => {
     expect(activity.statusCode).toBe(200);
     const events = (activity.json() as { events: { action: string }[] }).events;
     expect(events.some((e) => e.action === "crew_member.deleted")).toBe(true);
+  });
+
+  it("protects file delivery with portal scope and project tombstones", async () => {
+    ({ app, store } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Protected Asset St, Carlton VIC 3053" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+    const recording = await store.createRecording(
+      "dev-user",
+      projectId,
+      "/uploads/contract-asset.mp3",
+      9,
+    );
+    expect(recording).not.toBeNull();
+    if (!recording) throw new Error("Expected recording fixture");
+    const uploadDir = path.join(process.cwd(), "data", "uploads");
+    const filePath = path.join(uploadDir, `${recording.id}.mp3`);
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(filePath, "contract audio");
+
+    try {
+      const quoteToken = signPortalToken({
+        project_id: projectId,
+        scope: "quote_view",
+      });
+      const depositToken = signPortalToken({
+        project_id: projectId,
+        scope: "deposit_checkout",
+      });
+
+      const wrongScope = await app.inject({
+        method: "GET",
+        url: `/uploads/${recording.id}.mp3?token=${depositToken}`,
+      });
+      expect(wrongScope.statusCode).toBe(403);
+      expect(wrongScope.json()).toEqual({
+        error: "Token scope does not allow file access",
+      });
+
+      const ok = await app.inject({
+        method: "GET",
+        url: `/uploads/${recording.id}.mp3?token=${quoteToken}`,
+      });
+      expect(ok.statusCode).toBe(200);
+      expect(ok.headers["content-type"]).toBe("audio/mpeg");
+
+      const deleted = await app.inject({
+        method: "DELETE",
+        url: `/projects/${projectId}`,
+      });
+      expect(deleted.statusCode).toBe(204);
+
+      const hidden = await app.inject({
+        method: "GET",
+        url: `/uploads/${recording.id}.mp3?token=${quoteToken}`,
+      });
+      expect(hidden.statusCode).toBe(404);
+      expect(hidden.json()).toEqual({ error: "File not found" });
+    } finally {
+      await rm(filePath, { force: true });
+    }
+  });
+
+  it("smoke-covers studio AI, orchestration, and Stripe webhook routes", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Studio Route Smoke St, Armadale VIC 3143" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+
+    const ghosts = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/design/ghosts`,
+    });
+    expect(ghosts.statusCode).toBe(400);
+    expect(ghosts.json()).toEqual({
+      error: "Survey aerial required before AI scan.",
+    });
+
+    const assistInvalid = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/design/assist`,
+      payload: { message: "" },
+    });
+    expect(assistInvalid.statusCode).toBe(400);
+    expect(assistInvalid.json()).toHaveProperty("issues");
+
+    const orchestration = await app.inject({
+      method: "GET",
+      url: `/projects/${projectId}/orchestration`,
+    });
+    expect(orchestration.statusCode).toBe(200);
+    expect(orchestration.json()).toHaveProperty("overlays");
+
+    const overlayInvalid = await app.inject({
+      method: "POST",
+      url: `/projects/${projectId}/orchestration/accept-overlay`,
+      payload: { proposal_id: "" },
+    });
+    expect(overlayInvalid.statusCode).toBe(400);
+
+    const webhook = await app.inject({
+      method: "POST",
+      url: "/webhooks/stripe",
+      headers: { "content-type": "application/json" },
+      payload: { id: "evt_contract", type: "payment_intent.succeeded", data: { object: {} } },
+    });
+    expect(webhook.statusCode).toBe(200);
+    expect(webhook.json()).toEqual({ received: true });
   });
 
   it("smoke-covers geocode preview, catalog, suppliers, and project context routes", async () => {

@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { handoffStudio, LEGACY_STUDIO_VIEWPORT } from "./helpers";
+import {
+  handoffStudio,
+  LEGACY_STUDIO_VIEWPORT,
+  openCommandPalette,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -57,7 +61,8 @@ test.describe("Authored zone BOM", () => {
       timeout: 15_000,
     });
 
-    await page.getByTestId("utility-tab-bom").click();
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-measures").click();
     await expect(page.getByTestId("utility-sheet-bom")).toBeVisible({
       timeout: 10_000,
     });

@@ -507,6 +507,204 @@
   margin-top: 2px;
 }
 
+.processingPage {
+  padding-top: var(--s-4);
+}
+
+.processingHero {
+  padding: 24px;
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-elevated);
+  box-shadow: var(--elev-1), var(--elev-inset);
+  margin-bottom: var(--s-4);
+}
+
+.processingAddress {
+  margin: 8px 0 0;
+  color: var(--ink-tertiary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.processingCopy {
+  max-width: 680px;
+  margin: 14px 0 0;
+  color: var(--ink-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.processingStages {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-2);
+}
+
+.processingStage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: var(--s-3);
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-elevated);
+  box-shadow: var(--elev-1), var(--elev-inset);
+}
+
+.processingStageDone {
+  border-color: color-mix(in srgb, var(--ok) 32%, var(--line-hairline));
+}
+
+.processingStageActive {
+  border-color: color-mix(in srgb, var(--info) 42%, var(--line-hairline));
+  overflow: hidden;
+  animation: stageBreathe 2.4s var(--ease, ease-in-out) infinite;
+}
+
+/* Indeterminate progress sheen along the base of the working stage. */
+.processingStageActive::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--info) 70%, transparent) 50%,
+    transparent 100%
+  );
+  width: 40%;
+  animation: stageProgress 1.6s var(--ease, ease-in-out) infinite;
+}
+
+@keyframes stageBreathe {
+  0%,
+  100% {
+    box-shadow: var(--elev-1), var(--elev-inset);
+    border-color: color-mix(in srgb, var(--info) 34%, var(--line-hairline));
+  }
+  50% {
+    box-shadow:
+      var(--elev-1),
+      0 0 0 3px color-mix(in srgb, var(--info) 14%, transparent);
+    border-color: color-mix(in srgb, var(--info) 56%, var(--line-hairline));
+  }
+}
+
+@keyframes stageProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.processingStageError {
+  border-color: color-mix(in srgb, var(--block) 48%, var(--line-hairline));
+}
+
+.processingStageIcon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-hairline);
+  border-radius: 999px;
+  color: var(--ink-tertiary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.processingStageDone .processingStageIcon {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 36%, var(--line-hairline));
+}
+
+.processingStageError .processingStageIcon {
+  color: var(--block);
+  border-color: color-mix(in srgb, var(--block) 42%, var(--line-hairline));
+}
+
+.processingSpinner {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--info) 24%, transparent);
+  border-top-color: var(--info);
+  animation: processingSpin var(--dur-slow) linear infinite;
+}
+
+.processingStageLabel {
+  margin: 0;
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.processingStageDescription {
+  margin: 4px 0 0;
+  color: var(--ink-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.processingError {
+  margin-top: var(--s-4);
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--block) 42%, var(--line-hairline));
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--block) 8%, var(--surface-elevated));
+}
+
+.processingError h2 {
+  margin: 0;
+  color: var(--ink-primary);
+  font-size: 16px;
+}
+
+.processingError p {
+  max-width: 640px;
+  margin: 8px 0 14px;
+  color: var(--ink-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@keyframes processingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .processingStageActive {
+    animation: none;
+    box-shadow:
+      var(--elev-1),
+      0 0 0 2px color-mix(in srgb, var(--info) 14%, transparent);
+  }
+
+  .processingStageActive::after {
+    width: 100%;
+    animation: none;
+    transform: none;
+    opacity: 0.58;
+  }
+}
+
 .taskNewForm {
   display: grid;
   grid-template-columns: 1fr 200px 140px auto;

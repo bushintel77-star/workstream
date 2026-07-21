@@ -36,11 +36,11 @@
   --block: #b42318;
   --info: #8b6b7a;
 
-  /* type — editorial display + calm ops body */
-  --font-display: "Fraunces", "Georgia", serif;
-  --font-body: "Sora", "Segoe UI", sans-serif;
-  --font-serif: "Fraunces", "Georgia", serif;
-  --font-mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+  /* type — Aegis professional-services families */
+  --font-display: "IBM Plex Mono", monospace;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-serif: "IBM Plex Serif", serif;
+  --font-mono: "IBM Plex Mono", monospace;
 
   /* Aegis aliases */
   --color-obsidian: var(--surface-base);
@@ -167,6 +167,23 @@ body {
       transparent 55%
     );
   background-attachment: fixed;
+}
+
+.dev-auth-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-warning);
+  color: var(--color-obsidian);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 button,

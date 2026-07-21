@@ -87,7 +87,7 @@ const STRUCTURE_PLACE = new Set<StudioComplianceItemType>([
 
 function itemAreaM2(
   it: StudioComplianceItem,
-  scaleM: number,
+  _scaleM: number,
 ): number {
   const wPx = it.wPx ?? 100;
   const hPx = it.hPx ?? 80;
@@ -220,7 +220,6 @@ export function evaluateStudioCompliance(args: {
 
   const outdoorOk = outdoor >= 40;
   const permeableOk = permeablePct >= permeableMin;
-  const canopyOk = canopyPct >= canopyTarget || canopyM2 === 0;
   const alerts: ComplianceAlert[] = [];
 
   if (!outdoorOk) {

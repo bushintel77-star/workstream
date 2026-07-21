@@ -22,7 +22,7 @@ export function CrewRemoveButton({
   return (
     <button
       type="button"
-      className={s.btnDanger}
+      className={`${s.btn} ${s.btnDanger}`}
       disabled={pending}
       aria-label={`Remove ${name}`}
       onClick={() => {

@@ -42,7 +42,13 @@
 
 .levelLabel {
   font-size: 10px;
-  transform: translate(10px, -40%);
+  padding: 2px 5px;
+  border: 1px solid rgba(28, 25, 23, 0.12);
+  border-radius: 6px;
+  background: rgba(242, 240, 235, 0.88);
+  box-shadow: 0 3px 10px rgba(42, 23, 29, 0.08);
+  font-variant-numeric: tabular-nums;
+  transform: translate(9px, calc(-100% - 18px));
 }
 
 .fallLabel {

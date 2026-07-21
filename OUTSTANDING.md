@@ -19,8 +19,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
 - [x] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`
 - [x] **NEXT_PUBLIC_API_URL** baked into web Docker build + CI `--build-arg`.
-- [x] **Build automation** — `pnpm ci`, `pnpm build:docker`, `docker-compose.yml`,
-      `scripts/deploy-fly.*`, CI smoke tests, `workflow_dispatch` deploy.
+- [x] **Build automation** — `pnpm run ci`, `pnpm build:docker`,
+      `docker-compose.yml`, `scripts/deploy-fly.*`, CI smoke tests,
+      `workflow_dispatch` deploy. Local CI now includes mobile placeholder,
+      portal Edge, typecheck, lint, and Vitest gates (`0369689`).
 - [x] **Secret scanning** — gitleaks GitHub Action at
       [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
@@ -38,9 +40,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **BullMQ + Redis (code path)** — worker in [`queue.ts`](apps/api/src/lib/queue.ts),
       `[processes] worker` in `fly.toml`, pipeline enqueues when `REDIS_URL` set.
       **Human:** provision Upstash/Fly Redis + `fly scale count worker=1`.
-- [x] **Litestream → R2/B2 (documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
+- [x] **Litestream -> R2/B2 (SQLite-ready documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
       + [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
-      **Human:** bucket credentials + Fly sidecar.
+      **Human:** bucket credentials + Fly sidecar after the SQLite migration.
 - [x] **CI deploy job** — split `deploy-api` + `deploy-web`; `FLY_API_WEB` wired.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions.
 - [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
@@ -50,7 +52,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Contract tests (extended smoke)** — Zod boundary tests +
       [`contract.test.ts`](apps/api/src/routes/contract.test.ts) covers core
       project flows plus geocode, catalog, suppliers, site context, weather,
-      carbon preconditions, readiness, validation, and auth-configuration guard.
+      carbon preconditions, readiness, validation, auth-configuration guard,
+      protected file portal scope/tombstones, studio AI, orchestration, and
+      Stripe webhook smoke coverage.
 - [x] **Unit tests on pipeline jobs** — survey, cost, design, audit, pipeline
       (`*-job.test.ts`, `pipeline-job.test.ts`).
 - [x] **Visual regression (quote markdown)** — snapshot in `output-generators.test.ts`.
@@ -69,7 +73,12 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
-- [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
+- [x] **Local CI guardrails** — root `pnpm run ci` now runs install,
+      mobile placeholder detection, portal Edge runtime/import guard, typecheck, lint,
+      and Vitest.
+- [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox; route spans
+      use active context, token usage is attached to provider spans, aerial
+      fetches are traced, and worker shutdown flushes telemetry.
 - [x] **Real-user monitoring (web scaffold)** — [`instrumentation.ts`](apps/web/src/instrumentation.ts);
       needs DSN + `@sentry/nextjs` package.
 - [x] **Audio compression** — mobile walkthrough uses `LOW_QUALITY` recording preset.
@@ -83,6 +92,11 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.
 - [x] **Project soft delete + restore** — `deleted_at` tombstone; `POST /projects/:id/restore`.
 - [x] **Dashboard delete undo** — toast restores via restore endpoint.
+- [x] **Dashboard project register hardening** — status chips, project cards,
+      search, multi-status filters, sort controls, costing totals, designed
+      empty/error/no-results states, and bottom-left undo toast.
+- [x] **Dashboard filters + shell** — shared AppNav, status filters, date/name sort,
+      designed empty state, API retry affordance, and global dev-auth banner.
 - [x] **Pipeline idempotency** — `Idempotency-Key` on full pipeline POST; Redis when
       `REDIS_URL` set, in-memory fallback.
 - [x] **Task route hardening** — `PATCH /projects/:projectId/tasks/:taskId/status`
@@ -101,30 +115,36 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md),
 [`RECON.md`](RECON.md), [`PROPOSAL.md`](PROPOSAL.md) (AI Phase 6 deferred).
 
+- [x] Phase 1 recon (`RECON.md`)
 - [x] Phase 2 brand re-skin (Aegis tokens)
 - [x] Phase 3 layout (toolbar save, aerial hero, 320px rail)
 - [x] Phase 4 asset library (code on tiles, search by code, planning pin)
 - [x] Phase 5 modeless canvas (select/move/rotate/scale, scale bar, context label)
-- [x] Phase 7 honesty UI (caption, save hand-off, clear confirms, keyboard legend)
+- [x] Phase 7 honesty UI (caption, save hand-off, clear confirms, keyboard legend);
+      active handoff studio save retry, caption, and aerial failure states
+      hardened in `0369689`.
 - [x] Phase 8 docs + E2E (`CHANGES.md`, extended Playwright)
 - [x] Gold upgrade — measure, mass plant, irrigation zones, live schedule, undo/redo, toolbar UX (`857b7af`)
 - [x] Designer handover pack — [`docs/DESIGNER-HANDOVER.md`](docs/DESIGNER-HANDOVER.md)
-- [ ] Phases 6 AI assist (deferred)
+- [ ] Phase 6 AI assist (deferred)
 - [ ] Brochure output (deferred in spec)
 
 ## Human-only checklist (not code)
 
 | Action | Command / where |
 |--------|-----------------|
-| Clerk on Fly | `flyctl secrets set CLERK_* -a construct-api` / `construct-web` |
-| Sentry DSN | `flyctl secrets set SENTRY_DSN=…` both apps |
-| Redis worker | `REDIS_URL` + `fly scale count worker=1 -a construct-api` |
-| EAS project | `cd apps/mobile && eas init` |
-| Branch protection | GitHub repo Settings (Pro plan) |
+| Clerk on Fly | Runbook Section 1: API `CLERK_SECRET_KEY`, web `CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `AUTH_REQUIRED=true` |
+| API base/CORS | Runbook Section 1: `PUBLIC_API_URL=https://construct-api.fly.dev`, `CORS_ORIGIN=https://construct-web.fly.dev` |
+| Sentry DSN | Runbook Section 3: `flyctl secrets set SENTRY_DSN=...` on both apps |
+| Redis worker | Runbook Section 2: `REDIS_URL` + `flyctl scale count worker=1 -a construct-api` |
+| Stripe / portal / OTEL | Runbook Section 6: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WORKSTREAM_PORTAL_SECRET`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
+| EAS project | Runbook Section 5: `cd apps/mobile && npx eas-cli init` plus store credentials |
+| Litestream | Runbook Section 7 after SQLite migration |
+| Branch protection | Runbook Section 8, GitHub repo Settings (Pro plan) |
 | Fly tokens | `FLY_API_TOKEN` + `FLY_API_WEB` — **done** |
 
 ## Sandbox-blocked actions (need the user)
 
 - `flyctl scale count 1 -a construct-api` (if not already)
-- `flyctl secrets deploy` after staging new secrets
+- `flyctl secrets set ...` commands from the runbook, then redeploy where noted
 - Valid Apple / Google credentials for EAS submit

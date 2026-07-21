@@ -60,7 +60,7 @@
   background: rgba(247, 244, 239, 0.92);
   backdrop-filter: blur(20px);
   box-shadow: 0 12px 32px rgba(26, 26, 26, 0.12);
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   color: #241318;
   animation: floraIn 180ms ease both;
 }

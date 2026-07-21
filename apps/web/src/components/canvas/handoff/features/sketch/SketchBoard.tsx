@@ -1,41 +1,73 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { strokePointsToPathD } from "@workstream/domain";
 import type { SketchStroke } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
+import {
+  findSketchStrokeAtPoint,
+  shouldAppendSketchPoint,
+  sketchWidthForPointer,
+} from "./sketchInput";
 import css from "./sketch.module.css";
 
 type Props = {
   strokes: SketchStroke[];
   darkOn: boolean;
   /** Commit a finished stroke (once per pointer-up — not per move). */
-  onCommit: (stroke: SketchStroke) => void;
+  onCommit?: (stroke: SketchStroke) => void;
+  /** Whole-stroke eraser keeps the first tablet workflow predictable. */
+  onErase?: (strokeId: string) => void;
+  onUndoLast?: () => void;
   /** Soften ink in place — stays hand-drawn, not CAD symbols. */
   onTidy?: () => void;
   /** Optional formalize: freehand → CAD ghosts on the site plan. */
   onFormalizeToCad?: () => void;
   /** True while the AI sketch→CAD pipeline is in flight. */
   formalizing?: boolean;
+  /** CAD reference underlay: shows ink without intercepting plan input. */
+  readOnly?: boolean;
+};
+
+type SketchTool = "pen" | "eraser";
+
+type ActiveStroke = {
+  pointerId: number;
+  pointerType: string;
+  points: PctPoint[];
+  pressureTotal: number;
+  pressureCount: number;
 };
 
 /**
  * Stripped sketch pad — finger / stylus ink only.
  * CadPlanBoard hides symbols while this mounts; site boundary stays faint.
- * Tidy keeps the artist's hand; Formalize to CAD is a separate step.
+ * Raw ink on commit — tidy / formalize are explicit, opt-in later steps.
  */
 export function SketchBoard({
   strokes,
   darkOn,
   onCommit,
+  onErase,
+  onUndoLast,
   onTidy,
   onFormalizeToCad,
   formalizing = false,
+  readOnly = false,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const drawing = useRef<PctPoint[] | null>(null);
+  const drawing = useRef<ActiveStroke | null>(null);
   const idn = useRef(0);
-  const [live, setLive] = useState<PctPoint[] | null>(null);
+  const [tool, setTool] = useState<SketchTool>("pen");
+  const [live, setLive] = useState<{
+    points: PctPoint[];
+    widthPx: number;
+  } | null>(null);
   const [size, setSize] = useState({ w: 960, h: 640 });
 
   useLayoutEffect(() => {
@@ -61,8 +93,33 @@ export function SketchBoard({
     };
   };
 
+  const finishDrawing = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    commit: boolean,
+  ) => {
+    const active = drawing.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    drawing.current = null;
+    setLive(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!commit || active.points.length < 2 || !onCommit) return;
+    idn.current += 1;
+    const averagePressure =
+      active.pressureCount > 0
+        ? active.pressureTotal / active.pressureCount
+        : null;
+    // Raw ink only — zero tidy/snap/resample on commit. Tidy stays opt-in.
+    onCommit({
+      id: `sk${Date.now()}_${idn.current}`,
+      points: active.points,
+      widthPx: sketchWidthForPointer(active.pointerType, averagePressure),
+    });
+  };
+
   const all = live
-    ? [...strokes, { id: "__live", points: live }]
+    ? [...strokes, { id: "__live", points: live.points, widthPx: live.widthPx }]
     : strokes;
   const canAct = strokes.length > 0;
   const ink = darkOn ? "#C9C2BA" : "#1C1917";
@@ -72,30 +129,62 @@ export function SketchBoard({
       ref={rootRef}
       className={css.root}
       data-testid="sketch-board"
-      data-sketch-pad="stripped"
+      data-sketch-pad={readOnly ? "reference" : "draw"}
+      data-read-only={readOnly ? "true" : "false"}
+      data-tool={tool}
       onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
+        if (readOnly || formalizing || !e.isPrimary) return;
+        if (e.pointerType === "mouse" && e.button !== 0) return;
         const p = toPct(e.currentTarget, e.clientX, e.clientY);
-        drawing.current = [p];
-        setLive([p]);
+        if (tool === "eraser") {
+          const strokeId = findSketchStrokeAtPoint(
+            strokes,
+            p,
+            size.w,
+            size.h,
+          );
+          if (strokeId) onErase?.(strokeId);
+          return;
+        }
+        if (drawing.current) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        const pressure =
+          e.pointerType === "pen" && e.pressure > 0 ? e.pressure : null;
+        drawing.current = {
+          pointerId: e.pointerId,
+          pointerType: e.pointerType,
+          points: [p],
+          pressureTotal: pressure ?? 0,
+          pressureCount: pressure == null ? 0 : 1,
+        };
+        setLive({
+          points: [p],
+          widthPx: sketchWidthForPointer(e.pointerType, pressure),
+        });
       }}
       onPointerMove={(e) => {
-        if (!drawing.current) return;
+        const active = drawing.current;
+        if (!active || active.pointerId !== e.pointerId) return;
         const p = toPct(e.currentTarget, e.clientX, e.clientY);
-        drawing.current = [...drawing.current, p];
-        setLive(drawing.current);
+        const previous = active.points[active.points.length - 1]!;
+        if (!shouldAppendSketchPoint(previous, p)) return;
+        active.points = [...active.points, p];
+        if (active.pointerType === "pen" && e.pressure > 0) {
+          active.pressureTotal += e.pressure;
+          active.pressureCount += 1;
+        }
+        const averagePressure =
+          active.pressureCount > 0
+            ? active.pressureTotal / active.pressureCount
+            : null;
+        setLive({
+          points: active.points,
+          widthPx: sketchWidthForPointer(active.pointerType, averagePressure),
+        });
       }}
-      onPointerUp={() => {
-        const pts = drawing.current;
-        drawing.current = null;
-        setLive(null);
-        if (!pts || pts.length < 2) return;
-        idn.current += 1;
-        // Raw ink only — the sketch layer performs ZERO smoothing, snapping,
-        // resampling, or geometry manipulation. The captured points are stored
-        // exactly as drawn. Tidy/Formalize are explicit, opt-in later steps.
-        onCommit({ id: `sk${Date.now()}_${idn.current}`, points: pts });
-      }}
+      onPointerUp={(e) => finishDrawing(e, true)}
+      onPointerCancel={(e) => finishDrawing(e, false)}
+      onLostPointerCapture={(e) => finishDrawing(e, false)}
     >
       <svg
         className={css.svg}
@@ -107,7 +196,7 @@ export function SketchBoard({
             s.points.map((p) => ({ x_pct: p.x, y_pct: p.y })),
             size.w,
             size.h,
-            s.id === "__live" ? 1.6 : 2.1,
+            s.widthPx ?? (s.id === "__live" ? 1.9 : 2.1),
             { raw: true },
           );
           if (!d) return null;
@@ -122,46 +211,78 @@ export function SketchBoard({
           );
         })}
       </svg>
-      <div className={css.bar} data-testid="sketch-convert-bar">
-        <p className={css.hint}>
-          {formalizing
-            ? "Translating sketch to CAD with AI…"
-            : canAct
-              ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
-              : "Sketch first · finger or stylus · format later"}
-        </p>
-        {canAct && onTidy ? (
-          <button
-            type="button"
-            className={css.tidy}
-            data-testid="sketch-tidy"
-            disabled={formalizing}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onTidy();
-            }}
-          >
-            Tidy sketch
-          </button>
-        ) : null}
-        {canAct && onFormalizeToCad ? (
-          <button
-            type="button"
-            className={css.convert}
-            data-testid="sketch-convert-cad"
-            disabled={formalizing}
-            aria-busy={formalizing}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onFormalizeToCad();
-            }}
-          >
-            {formalizing ? "Translating…" : "Formalize to CAD"}
-          </button>
-        ) : null}
-      </div>
+      {!readOnly ? (
+        <div className={css.bar} data-testid="sketch-convert-bar">
+          <p className={css.hint}>
+            {formalizing
+              ? "Translating sketch to CAD with AI…"
+              : canAct
+                ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
+                : "Sketch with a finger or stylus · formalize only when ready"}
+          </p>
+          <div className={css.tools} role="toolbar" aria-label="Sketch tools">
+            <button
+              type="button"
+              className={`${css.tool}${tool === "pen" ? ` ${css.toolActive}` : ""}`}
+              data-testid="sketch-pen"
+              aria-pressed={tool === "pen"}
+              disabled={formalizing}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => setTool("pen")}
+            >
+              Pen
+            </button>
+            <button
+              type="button"
+              className={`${css.tool}${tool === "eraser" ? ` ${css.toolActive}` : ""}`}
+              data-testid="sketch-eraser"
+              aria-pressed={tool === "eraser"}
+              disabled={formalizing}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => setTool("eraser")}
+            >
+              Eraser
+            </button>
+            {canAct && onUndoLast ? (
+              <button
+                type="button"
+                className={css.tool}
+                data-testid="sketch-undo-stroke"
+                disabled={formalizing}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onUndoLast}
+              >
+                Undo
+              </button>
+            ) : null}
+            {canAct && onTidy ? (
+              <button
+                type="button"
+                className={css.tidy}
+                data-testid="sketch-tidy"
+                disabled={formalizing}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onTidy}
+              >
+                Tidy
+              </button>
+            ) : null}
+            {canAct && onFormalizeToCad ? (
+              <button
+                type="button"
+                className={css.convert}
+                data-testid="sketch-convert-cad"
+                disabled={formalizing}
+                aria-busy={formalizing}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onFormalizeToCad}
+              >
+                {formalizing ? "Translating…" : "Formalize to CAD"}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

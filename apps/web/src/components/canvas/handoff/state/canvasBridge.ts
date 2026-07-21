@@ -117,8 +117,8 @@ export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
       x_pct: clampPct(p.x),
       y_pct: clampPct(p.y),
     })),
-    color: "#c2455f",
-    width_px: 2,
+    color: s.color ?? "#1c1917",
+    width_px: s.widthPx ?? 2,
   }));
 }
 
@@ -126,6 +126,8 @@ export function canvasToStrokes(strokes: CanvasStroke[]): SketchStroke[] {
   return strokes.map((s) => ({
     id: s.id,
     points: s.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+    color: s.color,
+    widthPx: s.width_px,
   }));
 }
 
@@ -200,4 +202,19 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
     }));
   }
   return out;
+}
+
+/**
+ * A real persisted site frame is authoritative.
+ *
+ * If it contains no valid building ring, keep the building layer empty rather
+ * than leaking demo/seed footprint geometry into a live project.
+ */
+export function resolveHydratedBuilding(
+  frame: DesignSiteFrame | null | undefined,
+  hydratedBuilding: PctPoint[] | undefined,
+  fallbackBuilding: PctPoint[],
+): PctPoint[] {
+  if (hydratedBuilding) return hydratedBuilding;
+  return frame ? [] : fallbackBuilding;
 }

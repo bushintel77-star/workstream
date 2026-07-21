@@ -21,7 +21,7 @@
   background: rgba(255, 246, 248, 0.94);
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 24px rgba(36, 19, 24, 0.1);
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   color: #241318;
   animation: hzIn 180ms ease both;
 }
