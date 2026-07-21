@@ -375,12 +375,15 @@ describe("API contract — projects", () => {
     });
     expect(invalidHubTest.statusCode).toBe(400);
 
-    const invalidProjectSync = await app.inject({
+    const missingQuoteSync = await app.inject({
       method: "POST",
       url: `/projects/${projectId}/integrations/sync`,
-      payload: { channel: "not-real" },
+      payload: { include_portal: true },
     });
-    expect(invalidProjectSync.statusCode).toBe(400);
+    expect(missingQuoteSync.statusCode).toBe(409);
+    expect(missingQuoteSync.json()).toMatchObject({
+      error: "Generate a quote output before syncing to CRM/email",
+    });
   });
 
   it("mints separate portal quote and deposit tokens for client checkout", async () => {
