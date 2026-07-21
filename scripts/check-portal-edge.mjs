@@ -2,8 +2,24 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const portalRoot = path.join(process.cwd(), "apps", "web", "src", "app", "portal");
-const serverRouteFiles = new Set(["layout.tsx", "page.tsx", "loading.tsx"]);
-const fsImportPattern = /(?:import\s+[^;]*\s+from\s+["'](?:node:)?fs(?:\/promises)?["']|require\(["'](?:node:)?fs(?:\/promises)?["']\))/;
+const edgeRouteFiles = new Set(["layout.tsx", "page.tsx", "loading.tsx", "error.tsx"]);
+const nodeOnlyImports = [
+  "child_process",
+  "cluster",
+  "crypto",
+  "fs",
+  "http",
+  "https",
+  "net",
+  "os",
+  "path",
+  "stream",
+  "tls",
+  "zlib",
+];
+const nodeOnlyImportPattern = new RegExp(
+  `(?:import\\s+[^;]*\\s+from\\s+["'](?:node:)?(?:${nodeOnlyImports.join("|")})(?:/promises)?["']|require\\(["'](?:node:)?(?:${nodeOnlyImports.join("|")})(?:/promises)?["']\\))`,
+);
 const edgeRuntimePattern = /export\s+const\s+runtime\s*=\s*["']edge["']/;
 
 async function walk(dir) {
@@ -26,10 +42,10 @@ const files = await walk(portalRoot);
 for (const file of files) {
   const source = await readFile(file, "utf8");
   const relative = path.relative(process.cwd(), file);
-  if (fsImportPattern.test(source)) {
-    failures.push(`${relative}: imports fs, which is not Edge-safe`);
+  if (nodeOnlyImportPattern.test(source)) {
+    failures.push(`${relative}: imports a Node-only module, which is not Edge-safe`);
   }
-  if (serverRouteFiles.has(path.basename(file)) && !source.includes('"use client"') && !edgeRuntimePattern.test(source)) {
+  if (edgeRouteFiles.has(path.basename(file)) && !edgeRuntimePattern.test(source)) {
     failures.push(`${relative}: missing export const runtime = "edge"`);
   }
 }

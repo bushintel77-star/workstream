@@ -2,6 +2,8 @@
 
 import styles from "./quote/[token]/quote.module.css";
 
+export const runtime = "edge";
+
 export default function PortalError({ reset }: { reset: () => void }) {
   return (
     <main className={styles.errorPage}>
