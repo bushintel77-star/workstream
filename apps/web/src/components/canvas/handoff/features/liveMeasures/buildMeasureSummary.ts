@@ -34,7 +34,7 @@ export function buildCanvasMeasureSummary(args: {
   const building: MeasureSummaryItem | null = buildingRow
     ? {
         id: buildingRow.id,
-        label: "Existing house",
+        label: "Existing dwelling",
         value: buildingRow.numeric > 0 ? buildingRow.value : "Not traced",
       }
     : null;

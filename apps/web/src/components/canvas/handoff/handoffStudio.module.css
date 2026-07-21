@@ -1677,32 +1677,37 @@
 }
 
 /**
- * Fit sheet print — crop the viewport to the A3/A4 paper frame and fill the
- * page. Live infinite-zoom is reset; plot clip-path stays so vectors don't
- * bleed under the title block.
+ * Fit sheet print — scale the A3/A4 sheet box to fill the physical page.
+ * The board is pinned to the paper size (from JS CSS vars); its kept children
+ * (plan + sheet chrome) are translated so the sheet origin sits at (0,0) and
+ * uniformly scaled by --ws-print-fit so 1 sheet px maps to 1 paper px. Works
+ * for window.print(), print-media emulation, and headless PDF — no reliance
+ * on the beforeprint event.
  */
 @media print {
-  .root {
-    position: static !important;
-    inset: auto !important;
+  .root[data-fit-sheet="1"] {
+    position: fixed !important;
+    inset: 0 !important;
     display: block !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     min-height: 0 !important;
-    height: auto !important;
-    width: auto !important;
     background: #fff !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  .header,
-  .councilTip,
-  .addStrip {
+  .root[data-fit-sheet="1"] .header,
+  .root[data-fit-sheet="1"] .councilTip,
+  .root[data-fit-sheet="1"] .addStrip {
     display: none !important;
   }
 
-  .board {
-    position: relative !important;
+  .root[data-fit-sheet="1"] .board {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: var(--ws-paper-w) !important;
+    height: var(--ws-paper-h) !important;
     margin: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -1713,44 +1718,35 @@
     -webkit-print-color-adjust: exact;
   }
 
-  .board::after {
+  .root[data-fit-sheet="1"] .board::after {
     display: none !important;
   }
 
-  /* Only the plan + sheet chrome leave the board. */
+  /* Only the plan + sheet chrome print — everything else is screen furniture. */
   .root[data-fit-sheet="1"] .board > :not([data-print-keep]) {
     display: none !important;
   }
 
-  .root[data-fit-sheet="1"] .board {
-    width: var(--ws-print-w) !important;
-    height: var(--ws-print-h) !important;
-  }
-
-  /*
-   * Re-home board-space content so the paper frame sits at (0,0) and fills
-   * the print page (browser scales the sheet box to @page).
-   */
   .root[data-fit-sheet="1"] .board > [data-print-keep] {
     position: absolute !important;
-    left: calc(-1 * var(--ws-print-left)) !important;
-    top: calc(-1 * var(--ws-print-top)) !important;
-    width: var(--ws-board-w) !important;
-    height: var(--ws-board-h) !important;
+    left: 0 !important;
+    top: 0 !important;
     right: auto !important;
     bottom: auto !important;
-    inset: auto !important;
+    width: var(--ws-board-w) !important;
+    height: var(--ws-board-h) !important;
+    transform-origin: top left !important;
+    transform: scale(var(--ws-print-fit))
+      translate(
+        calc(-1 * var(--ws-print-left)),
+        calc(-1 * var(--ws-print-top))
+      ) !important;
   }
 
-  /* Screen navigation zoom must not bake into the working drawing. */
-  .zoomWorld,
-  .zoomWorldClipped {
-    transform: none !important;
-  }
-
-  /* Without fit sheet, still avoid clipped / transformed viewport artefacts. */
+  /* Without fit sheet, avoid clipped / transformed viewport artefacts. */
   .root:not([data-fit-sheet="1"]) .zoomWorld,
   .root:not([data-fit-sheet="1"]) .zoomWorldClipped {
+    transform: none !important;
     clip-path: none !important;
     overflow: visible !important;
   }

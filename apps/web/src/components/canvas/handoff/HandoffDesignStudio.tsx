@@ -267,53 +267,35 @@ export function HandoffDesignStudio({
     return () => ro.disconnect();
   }, []);
 
-  /** Sheet box geometry for print — crop viewport to the A3/A4 frame. */
+  /**
+   * Print geometry — scale the A3/A4 sheet box to fill the physical paper.
+   * The sheet box and the paper share an aspect ratio (see sheetBoxFor), so
+   * the fit factor is uniform. Exposed as CSS vars so the print stylesheet
+   * works for window.print(), print-media emulation, and headless PDF alike
+   * (no dependency on the beforeprint event, which never fires for PDF).
+   */
   const printSheet = useMemo(() => {
-    if (!ui.frameOn) return null;
+    if (!ui.frameOn || boardSize.w < 1 || boardSize.h < 1) return null;
+    const MM_PX = 96 / 25.4;
+    const paperMm =
+      ui.paper === "a4"
+        ? { w: 210, h: 297 } // portrait
+        : { w: 420, h: 297 }; // A3 landscape
+    const paperW = paperMm.w * MM_PX;
+    const paperH = paperMm.h * MM_PX;
     const sheet = sheetBoxFor(boardSize.w, boardSize.h, ui.paper);
+    const fit = Math.min(paperW / sheet.boxW, paperH / sheet.boxH);
     return {
       left: sheet.boxLeft,
       top: sheet.boxTop,
-      w: sheet.boxW,
-      h: sheet.boxH,
       boardW: boardSize.w,
       boardH: boardSize.h,
+      paperW,
+      paperH,
+      fit,
       paper: ui.paper,
     };
   }, [ui.frameOn, ui.paper, boardSize.w, boardSize.h]);
-
-  /**
-   * Browser print: set @page to the active paper size and mark the document
-   * so global CSS can hide app chrome outside the studio.
-   */
-  useEffect(() => {
-    if (!printSheet) return;
-    const STYLE_ID = "ws-fit-sheet-print-page";
-    const onBefore = () => {
-      let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-      if (!el) {
-        el = document.createElement("style");
-        el.id = STYLE_ID;
-        document.head.appendChild(el);
-      }
-      el.textContent =
-        printSheet.paper === "a4"
-          ? "@page { size: A4 portrait; margin: 8mm; }"
-          : "@page { size: A3 landscape; margin: 8mm; }";
-      document.documentElement.dataset.wsPrinting = "1";
-    };
-    const onAfter = () => {
-      document.getElementById(STYLE_ID)?.remove();
-      delete document.documentElement.dataset.wsPrinting;
-    };
-    window.addEventListener("beforeprint", onBefore);
-    window.addEventListener("afterprint", onAfter);
-    return () => {
-      window.removeEventListener("beforeprint", onBefore);
-      window.removeEventListener("afterprint", onAfter);
-      onAfter();
-    };
-  }, [printSheet]);
 
   /**
    * Infinite-feel canvas zoom — wheel / trackpad / pinch over the board.
@@ -990,8 +972,9 @@ export function HandoffDesignStudio({
             ? {
                 ["--ws-print-left" as string]: `${printSheet.left}px`,
                 ["--ws-print-top" as string]: `${printSheet.top}px`,
-                ["--ws-print-w" as string]: `${printSheet.w}px`,
-                ["--ws-print-h" as string]: `${printSheet.h}px`,
+                ["--ws-print-fit" as string]: String(printSheet.fit),
+                ["--ws-paper-w" as string]: `${printSheet.paperW}px`,
+                ["--ws-paper-h" as string]: `${printSheet.paperH}px`,
                 ["--ws-board-w" as string]: `${printSheet.boardW}px`,
                 ["--ws-board-h" as string]: `${printSheet.boardH}px`,
               }
@@ -999,6 +982,13 @@ export function HandoffDesignStudio({
         } as CSSProperties
       }
     >
+      {printSheet ? (
+        <style>
+          {`@page { size: ${
+            printSheet.paper === "a4" ? "A4 portrait" : "A3 landscape"
+          }; margin: 0; }`}
+        </style>
+      ) : null}
       <header className={css.header} data-testid="canvas-studio-header">
         <div className={css.brandBlock}>
           <p className={css.brandName}>Curtis &amp; Co</p>

@@ -286,24 +286,30 @@ button:focus-visible {
   }
 }
 
-/* Fit sheet print — hide app chrome; studio owns the page. */
+/*
+ * Fit sheet print — when the studio is in fit-sheet mode, it owns the page.
+ * Hide every other element (dev banner, nav, toasts) via :has() scoping so
+ * printing any non-studio page is unaffected.
+ */
 @media print {
-  html[data-ws-printing="1"],
-  html[data-ws-printing="1"] body {
+  html:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]),
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) {
     margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     height: auto !important;
     width: auto !important;
   }
 
-  html[data-ws-printing="1"] body * {
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) * {
     visibility: hidden;
   }
 
-  html[data-ws-printing="1"] [data-testid="handoff-design-studio"],
-  html[data-ws-printing="1"] [data-testid="handoff-design-studio"] * {
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
+    [data-testid="handoff-design-studio"],
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
+    [data-testid="handoff-design-studio"] * {
     visibility: visible;
   }
 }

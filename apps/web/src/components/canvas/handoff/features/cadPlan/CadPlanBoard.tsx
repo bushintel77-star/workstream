@@ -335,11 +335,8 @@ export function CadPlanBoard({
   const contextLots =
     cadTitleMode && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
-  /** Existing dwelling shown as a plain envelope — label its footprint centre. */
   const buildingCentroid =
     building.length >= 3 ? polygonCentroid(building) : null;
-  const showHouseEnvelopeLabel =
-    buildingCentroid != null && !sketchPassthrough && !foundationCleanse;
   const drawnLotM2 = polygonAreaM2(boundary, scaleM);
   const areaLabelM2 =
     lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
@@ -351,6 +348,18 @@ export function CadPlanBoard({
     !frameOn &&
     !sketchPassthrough &&
     (mode === "survey" || mode === "cad");
+  /**
+   * Existing dwelling shown as a plain envelope. Label its centroid — but only
+   * when the richer "Existing dwelling · <area>" auto label isn't already
+   * there (survey/CAD), otherwise the two labels stack and collide.
+   */
+  const buildingAreaLabelShown =
+    showAutoAreaLabels && buildingCentroid != null && buildingAreaLabelM2 > 0;
+  const showHouseEnvelopeLabel =
+    buildingCentroid != null &&
+    !sketchPassthrough &&
+    !foundationCleanse &&
+    !buildingAreaLabelShown;
   /**
    * Always park dimensions outside the polygon — never a chip on the line.
    * Fit sheet uses tighter offsets; live CAD uses a slightly wider stand-off.
@@ -818,8 +827,8 @@ export function CadPlanBoard({
             }
           >
             <title>
-              Existing house outline · Vicmap/site context only · confirm before
-              relying on dimensions
+              Existing dwelling envelope · Vicmap/site context only · confirm
+              before relying on dimensions
             </title>
           </polygon>
         ) : null}
@@ -964,7 +973,7 @@ export function CadPlanBoard({
               className={`${css.cornerNode} ${css.cornerNodeBuilding}${nodeFlash?.kind === "building" && nodeFlash.index === i ? ` ${css.cornerNodeFlash}` : ""}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
               title="Corner vertex"
-              aria-label={`Existing house corner ${i + 1}`}
+              aria-label={`Existing dwelling corner ${i + 1}`}
               onPointerEnter={() => setCursorMode("move")}
               onPointerLeave={() => setCursorMode("default")}
               onPointerDown={(e) => startCornerDrag("building", i, e)}
