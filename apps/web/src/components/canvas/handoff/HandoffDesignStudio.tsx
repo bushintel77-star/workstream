@@ -1893,6 +1893,8 @@ export function HandoffDesignStudio({
               items={studio.items}
               boundary={studio.boundary}
               building={studio.building}
+              services={studio.services}
+              easements={studio.easements}
               scaleM={scaleM}
               sunMin={ui.sunMin}
               growth={ui.growth}

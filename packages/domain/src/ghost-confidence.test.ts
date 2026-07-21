@@ -3,6 +3,7 @@ import {
   NEUTRAL_DRAINAGE_SCORE,
   computeLiveConfidenceFactors,
   emptyLiveGhostScene,
+  nearestDrainageDistPct,
   sunShadowVector,
   type LiveGhostScene,
   type LiveGhostSubject,
@@ -94,6 +95,68 @@ describe("computeLiveConfidenceFactors", () => {
     const sunAm = am.factors.find((f) => f.label === "Sun exposure")!.pct;
     const sunPm = pm.factors.find((f) => f.label === "Sun exposure")!.pct;
     expect(sunAm).not.toBe(sunPm);
+  });
+
+  it("keeps neutral drainage when no drainage geometry is traced", () => {
+    const scene = emptyLiveGhostScene();
+    const r = computeLiveConfidenceFactors(
+      { typeId: "paving", x: 50, y: 50, rate: 320, peerRates: [45, 320, 480] },
+      scene,
+    );
+    expect(scene.drainage).toBeUndefined();
+    const drain = r.factors.find((f) => f.label === "Drainage intercept");
+    expect(drain?.pct).toBe(NEUTRAL_DRAINAGE_SCORE);
+  });
+
+  it("raises drainage intercept for a ghost near a traced service line", () => {
+    const scene: LiveGhostScene = {
+      ...emptyLiveGhostScene(),
+      drainage: {
+        lines: [
+          [
+            { x: 40, y: 50 },
+            { x: 60, y: 50 },
+          ],
+        ],
+        points: [],
+      },
+    };
+    const near = computeLiveConfidenceFactors(
+      { typeId: "paving", x: 50, y: 51, rate: 320, peerRates: [320] },
+      scene,
+    );
+    const far = computeLiveConfidenceFactors(
+      { typeId: "paving", x: 50, y: 90, rate: 320, peerRates: [320] },
+      scene,
+    );
+    const nearPct = near.factors.find((f) => f.label === "Drainage intercept")!.pct;
+    const farPct = far.factors.find((f) => f.label === "Drainage intercept")!.pct;
+    expect(nearPct).toBeGreaterThan(farPct);
+    expect(nearPct).toBeGreaterThan(NEUTRAL_DRAINAGE_SCORE);
+    expect(near.notes).toContain("Near traced drainage (indicative)");
+    expect(far.notes).toContain("No traced drainage nearby (indicative)");
+  });
+
+  it("scores drainage from a placed french-drain point", () => {
+    const scene: LiveGhostScene = {
+      ...emptyLiveGhostScene(),
+      drainage: { lines: [], points: [{ x: 30, y: 30 }] },
+    };
+    const dist = nearestDrainageDistPct({ x: 33, y: 34 }, scene.drainage);
+    expect(dist).toBeCloseTo(5, 0);
+    const r = computeLiveConfidenceFactors(
+      { typeId: "frenchdrain", x: 31, y: 31, rate: 90, peerRates: [90] },
+      scene,
+    );
+    const drain = r.factors.find((f) => f.label === "Drainage intercept")!.pct;
+    expect(drain).toBeGreaterThan(NEUTRAL_DRAINAGE_SCORE);
+  });
+
+  it("returns null nearest distance when no drainage geometry exists", () => {
+    expect(nearestDrainageDistPct({ x: 10, y: 10 })).toBeNull();
+    expect(
+      nearestDrainageDistPct({ x: 10, y: 10 }, { lines: [], points: [] }),
+    ).toBeNull();
   });
 
   it("scores cheaper materials higher on cost efficiency", () => {

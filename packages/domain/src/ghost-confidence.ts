@@ -38,6 +38,13 @@ export type LiveGhostTree = {
   existing: boolean;
 };
 
+export type DrainageScene = {
+  /** Traced service / easement polylines (board %). */
+  lines: { x: number; y: number }[][];
+  /** Placed drainage points — french drains, pits (board %). */
+  points: { x: number; y: number }[];
+};
+
 export type LiveGhostScene = {
   trees: LiveGhostTree[];
   /** Other canopy plantings that cast shade (accepted + non-ghost). */
@@ -48,6 +55,12 @@ export type LiveGhostScene = {
   shadow: { dx: number; dy: number; factor: number };
   /** Growth multiplier for non-existing canopy (plant / 5yr / mature). */
   growthFactor: number;
+  /**
+   * Traced drainage geometry. Omit → drainage stays neutral. Populated from
+   * survey service/easement traces + placed drainage symbols, never inferred
+   * from isolated spot levels (that needs a surface model — Stage 2).
+   */
+  drainage?: DrainageScene;
 };
 
 export type LiveConfidenceResult = {
@@ -62,8 +75,55 @@ export type LiveConfidenceResult = {
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
 
-/** Neutral drainage score until traced services exist (#15 follow-on). */
+/** Neutral drainage score used only when no drainage geometry is traced. */
 export const NEUTRAL_DRAINAGE_SCORE = 68;
+
+/** Board-% distance from a point to a segment. */
+function pointToSegmentPct(
+  p: { x: number; y: number },
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+  const t = clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / len2, 0, 1);
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+/** Board-% distance from a point to a polyline (single point → hypot). */
+function pointToPolylinePct(
+  p: { x: number; y: number },
+  poly: { x: number; y: number }[],
+): number {
+  if (poly.length === 0) return Infinity;
+  if (poly.length === 1) return Math.hypot(p.x - poly[0]!.x, p.y - poly[0]!.y);
+  let nearest = Infinity;
+  for (let i = 0; i < poly.length - 1; i++) {
+    nearest = Math.min(nearest, pointToSegmentPct(p, poly[i]!, poly[i + 1]!));
+  }
+  return nearest;
+}
+
+/**
+ * Board-% distance from a ghost to the nearest traced drainage feature, or
+ * `null` when no drainage geometry is traced.
+ */
+export function nearestDrainageDistPct(
+  ghost: { x: number; y: number },
+  drainage?: DrainageScene,
+): number | null {
+  if (!drainage) return null;
+  const feats: { x: number; y: number }[][] = [
+    ...drainage.lines.filter((l) => l.length > 0),
+    ...drainage.points.map((pt) => [pt]),
+  ];
+  if (feats.length === 0) return null;
+  let nearest = Infinity;
+  for (const f of feats) nearest = Math.min(nearest, pointToPolylinePct(ghost, f));
+  return Number.isFinite(nearest) ? nearest : null;
+}
 
 /**
  * Southern-hemisphere day arc shadow vector from sun minutes-of-day.
@@ -177,19 +237,24 @@ function screeningScore(
   for (let i = 0; i < boundary.length; i++) {
     const a = boundary[i]!;
     const b = boundary[(i + 1) % boundary.length]!;
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len2 = dx * dx + dy * dy || 1;
-    const t = clamp(
-      ((ghost.x - a.x) * dx + (ghost.y - a.y) * dy) / len2,
-      0,
-      1,
-    );
-    const px = a.x + t * dx;
-    const py = a.y + t * dy;
-    nearest = Math.min(nearest, Math.hypot(ghost.x - px, ghost.y - py));
+    nearest = Math.min(nearest, pointToSegmentPct(ghost, a, b));
   }
   return Math.round(clamp(95 - nearest * 9, 40, 97));
+}
+
+/**
+ * Drainage intercept score from traced drainage/service proximity. A ghost
+ * close to a traced drain/service reads as better-served (or, for a french
+ * drain, better-placed to intercept). Falls back to the neutral score only
+ * when no drainage geometry is traced yet — never inferred from spot levels.
+ */
+function drainageInterceptScore(
+  ghost: { x: number; y: number },
+  scene: LiveGhostScene,
+): number {
+  const dist = nearestDrainageDistPct(ghost, scene.drainage);
+  if (dist == null) return NEUTRAL_DRAINAGE_SCORE;
+  return Math.round(clamp(96 - dist * 6, 38, 96));
 }
 
 export type LiveConfidenceOpts = {
@@ -209,7 +274,7 @@ export function computeLiveConfidenceFactors(
   const rootScore = rootClearanceScore(ghost, scene.trees);
   const costScore = costEfficiencyScore(ghost);
   const sunScore = sunExposureScore(ghost, scene);
-  const drainageScore = NEUTRAL_DRAINAGE_SCORE;
+  const drainageScore = drainageInterceptScore(ghost, scene);
   const screen = screeningScore(ghost, opts?.boundary ?? null);
 
   const typeId = ghost.typeId.toLowerCase();
@@ -263,6 +328,22 @@ export function computeLiveConfidenceFactors(
     if (Math.hypot(ghost.x - tr.x, ghost.y - tr.y) < tr.tpzRadiusPct) {
       notes.push("Encroaches existing-tree root zone");
       break;
+    }
+  }
+
+  const drainageDrivenTypes = new Set([
+    "frenchdrain",
+    "deck",
+    "paving",
+    "lawn",
+    "bed",
+  ]);
+  if (drainageDrivenTypes.has(typeId)) {
+    const drainDist = nearestDrainageDistPct(ghost, scene.drainage);
+    if (drainDist != null) {
+      if (drainDist <= 6) notes.push("Near traced drainage (indicative)");
+      else if (drainDist >= 22)
+        notes.push("No traced drainage nearby (indicative)");
     }
   }
 

@@ -20,6 +20,10 @@ type Props = {
   items: StudioItem[];
   boundary: PctPoint[];
   building: PctPoint[];
+  /** Traced service corridors (survey) for drainage-proximity scoring. */
+  services?: PctPoint[][];
+  /** Traced easement rings (survey) for drainage-proximity scoring. */
+  easements?: PctPoint[][];
   scaleM: number;
   sunMin: number;
   growth: "plant" | "5yr" | "mature";
@@ -110,13 +114,16 @@ function buildSubject(g: StudioItem): LiveGhostSubject {
 
 /**
  * AI ghost review — confidence bar expands to live factor breakdown
- * (sun / TPZ / cost; drainage neutral until services exist).
+ * (sun / TPZ / cost; drainage from traced service/drain proximity, neutral
+ * only when no drainage geometry is traced).
  */
 export function AiGhostReview({
   ghosts,
   items,
   boundary,
   building,
+  services = [],
+  easements = [],
   scaleM,
   sunMin,
   growth,
@@ -149,6 +156,14 @@ export function AiGhostReview({
       building.length >= 3
         ? building.reduce((s, p) => s + p.y, 0) / building.length
         : 50;
+    const drainLines = [...services, ...easements].filter((r) => r.length > 0);
+    const drainPoints = items
+      .filter((it) => !it.ghost && it.t === "frenchdrain")
+      .map((it) => ({ x: it.x, y: it.y }));
+    const drainage =
+      drainLines.length > 0 || drainPoints.length > 0
+        ? { lines: drainLines, points: drainPoints }
+        : undefined;
     return {
       trees,
       shadeCasters,
@@ -156,8 +171,9 @@ export function AiGhostReview({
       scaleM,
       shadow: sunShadowVector(sunMin),
       growthFactor: growthFactorFromStage(growth),
+      drainage,
     };
-  }, [items, building, scaleM, sunMin, growth]);
+  }, [items, building, services, easements, scaleM, sunMin, growth]);
 
   if (ghosts.length === 0) {
     return (
