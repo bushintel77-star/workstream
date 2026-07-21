@@ -67,6 +67,7 @@ import {
   maybeAutoProposeAfterCommit,
   mergeAiProposals,
   proposeFromAssistQuery,
+  proposeFromCadSuggestions,
   proposeFromCanopyImage,
   proposeFromStrokes,
   proposeLayoutFromSnapshot,
@@ -705,29 +706,61 @@ export function useStudioState(opts: UseStudioStateOpts) {
     return count;
   }, [mutate, setUi, state.doc.strokes.length]);
 
+  /**
+   * Apply AI CAD suggestions (from the server vision pipeline) as reviewable
+   * ghosts. Mirrors interpretSketches but the interpretation was done by Claude.
+   */
+  const applyCadSuggestions = useCallback(
+    (
+      suggestions: Array<{
+        id: string;
+        symbol_id: string;
+        x_pct: number;
+        y_pct: number;
+        confidence: number;
+        reason: string;
+        scale_hint?: number;
+        rot_deg?: number;
+      }>,
+      opts?: { source?: "vision" | "heuristic" },
+    ) => {
+      let count = 0;
+      mutate((snap, idn) => {
+        const proposed = proposeFromCadSuggestions(snap, idn, suggestions);
+        count = proposed.count;
+        if (proposed.count === 0) return { snap, idn };
+        return {
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, proposed.items, ["sketch"]),
+          },
+          idn: proposed.idn,
+        };
+      });
+      const engine = opts?.source === "vision" ? "AI" : "quick";
+      setUi({
+        mode: "cad",
+        tool: "pan",
+        ghostIdx: 0,
+        ghostReviewOpen: count > 0,
+        coachOpen: false,
+        assistReply:
+          count > 0
+            ? `Translated ${count} sketch element${count === 1 ? "" : "s"} into CAD (${engine}) — review sun, setback, and envelope, then accept.`
+            : "No convertible strokes — draw a path, bed, or canopy mark first.",
+      });
+      return count;
+    },
+    [mutate, setUi],
+  );
+
   const setMode = useCallback(
     (mode: StudioMode) => {
-      const leavingSketch =
-        state.ui.mode === "sketch" && mode === "cad";
-      const hadStrokes = state.doc.strokes.length > 0;
-      const alreadyHasSketchGhosts = state.doc.items.some(
-        (i) => i.ghost && i.id.startsWith("ai-sketch-"),
-      );
+      // Sketch → CAD AI translation is owned by runFormalizeToCad in the
+      // studio shell (vision pipeline). Do not auto-run the local heuristic here.
       dispatch({ type: "setMode", mode });
-      // Progressive: leaving Sketch for CAD auto-interprets ink → ghosts
-      // (skip if Convert already produced pending sketch ghosts)
-      if (leavingSketch && hadStrokes && !alreadyHasSketchGhosts) {
-        queueMicrotask(() => {
-          interpretSketches();
-        });
-      }
     },
-    [
-      interpretSketches,
-      state.doc.items,
-      state.doc.strokes.length,
-      state.ui.mode,
-    ],
+    [],
   );
 
   const setLayerOpacity = useCallback((key: LayerKey, value: number) => {
@@ -2190,6 +2223,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi,
     setMode,
     interpretSketches,
+    applyCadSuggestions,
     tidySketches,
     setLayerOpacity,
     undo,

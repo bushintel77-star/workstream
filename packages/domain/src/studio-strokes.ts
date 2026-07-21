@@ -10,12 +10,23 @@ const DEFAULT_OPTIONS = {
   streamline: 0.5,
 } as const;
 
+export type StrokeRenderOptions = {
+  /**
+   * Raw ink: disable perfect-freehand streamline/smoothing so the rendered
+   * outline follows the drawn points exactly. Used by the freehand Sketch pad
+   * where NO geometry manipulation is permitted. Width thinning stays (ink
+   * weight only — it never moves points).
+   */
+  raw?: boolean;
+};
+
 /** Convert percentage points on the aerial to a closed SVG path `d` (viewBox = canvas px). */
 export function strokePointsToPathD(
   points: StrokePointPct[],
   widthPx: number,
   heightPx: number,
   strokeWidthPx = 2,
+  options?: StrokeRenderOptions,
 ): string {
   if (points.length < 2 || widthPx <= 0 || heightPx <= 0) return "";
 
@@ -26,6 +37,7 @@ export function strokePointsToPathD(
     ]),
     {
       ...DEFAULT_OPTIONS,
+      ...(options?.raw ? { smoothing: 0, streamline: 0 } : null),
       size: Math.max(4, strokeWidthPx * 4),
     },
   );

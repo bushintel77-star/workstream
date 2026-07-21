@@ -268,3 +268,25 @@ button:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Fit sheet print — hide app chrome; studio owns the page. */
+@media print {
+  html[data-ws-printing="1"],
+  html[data-ws-printing="1"] body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  html[data-ws-printing="1"] body * {
+    visibility: hidden;
+  }
+
+  html[data-ws-printing="1"] [data-testid="handoff-design-studio"],
+  html[data-ws-printing="1"] [data-testid="handoff-design-studio"] * {
+    visibility: visible;
+  }
+}

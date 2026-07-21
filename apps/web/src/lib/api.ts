@@ -9,6 +9,8 @@ import type {
   DesignAssistResponse,
   DesignGhostsResponse,
   ProjectOrchestrationWorld,
+  SketchToCadRequest,
+  SketchToCadResponse,
 } from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
 import { operatorApiUrl } from "./public-env";
@@ -379,6 +381,16 @@ export async function designAssistApi(
   return apiPost<DesignAssistResponse>(`/projects/${projectId}/design/assist`, {
     message,
   });
+}
+
+export async function formalizeSketchToCadApi(
+  projectId: string,
+  body: SketchToCadRequest,
+): Promise<SketchToCadResponse> {
+  return apiPost<SketchToCadResponse>(
+    `/projects/${projectId}/design/sketch-cad`,
+    body,
+  );
 }
 
 export async function getOrchestrationApi(

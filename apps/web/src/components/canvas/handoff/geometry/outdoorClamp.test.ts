@@ -113,4 +113,17 @@ describe("outdoorFocusView", () => {
     expect(v.focusX).toBeLessThan(70);
     expect(v.zoom).toBeGreaterThanOrEqual(1);
   });
+
+  it("allows fit zoom beyond the old 2.6 ceiling on a tight remnant", () => {
+    // Compact lot — fill ~90% → zoom past the legacy 2.6 fit cap.
+    const tight = [
+      { x: 45, y: 45 },
+      { x: 55, y: 45 },
+      { x: 55, y: 55 },
+      { x: 45, y: 55 },
+    ];
+    const v = outdoorFocusView(tight, [], 100);
+    expect(v.zoom).toBeGreaterThan(2.6);
+    expect(v.zoom).toBeLessThanOrEqual(16);
+  });
 });

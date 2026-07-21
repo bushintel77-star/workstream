@@ -294,6 +294,11 @@ export function CadPlanBoard({
   const contextLots =
     cadTitleMode && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
+  /** Existing dwelling shown as a plain envelope — label its footprint centre. */
+  const buildingCentroid =
+    building.length >= 3 ? polygonCentroid(building) : null;
+  const showHouseEnvelopeLabel =
+    buildingCentroid != null && !sketchPassthrough && !foundationCleanse;
   const drawnLotM2 = polygonAreaM2(boundary, scaleM);
   const areaLabelM2 =
     lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
@@ -865,7 +870,7 @@ export function CadPlanBoard({
                   ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${
                       titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
                     }`
-                  : `${isBuilding ? "Footprint" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
+                  : `${isBuilding ? "Dwelling envelope" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
               }
             >
               {cadTitleMode ? (
@@ -903,6 +908,19 @@ export function CadPlanBoard({
         <p className={css.cadStreetCue} data-testid="cad-street-cue">
           {siteLabel}
         </p>
+      ) : null}
+
+      {showHouseEnvelopeLabel && buildingCentroid ? (
+        <span
+          className={css.houseEnvelopeLabel}
+          style={{
+            left: `${buildingCentroid.x}%`,
+            top: `${buildingCentroid.y}%`,
+          }}
+          data-testid="house-envelope-label"
+        >
+          Existing dwelling
+        </span>
       ) : null}
 
       {setbackOn &&

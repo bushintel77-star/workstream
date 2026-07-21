@@ -27,9 +27,11 @@ export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
     dash: "5 3.5",
   },
   building: {
+    // Landscape plan: existing dwelling shown as a plain envelope outline
+    // (no fill) — this is a garden plan, not an architectural drawing.
     stroke: "#8B3A2F",
     strokeWidth: 2.15,
-    fill: "rgba(139, 58, 47, 0.1)",
+    fill: "transparent",
   },
   easement: {
     stroke: "#B45309",
@@ -60,9 +62,10 @@ export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
     dash: "5 3.5",
   },
   building: {
+    // Envelope outline only — no fill (landscape plan, not architectural).
     stroke: "#F0B4A8",
     strokeWidth: 2.15,
-    fill: "rgba(240, 180, 168, 0.28)",
+    fill: "transparent",
   },
   easement: {
     stroke: "#F0B429",

@@ -1447,16 +1447,82 @@
   }
 }
 
-/** Fit sheet print — hide chrome; keep the working drawing plane. */
+/**
+ * Fit sheet print — crop the viewport to the A3/A4 paper frame and fill the
+ * page. Live infinite-zoom is reset; plot clip-path stays so vectors don't
+ * bleed under the title block.
+ */
 @media print {
   .root {
-    position: static;
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: auto !important;
     background: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .header,
   .councilTip,
   .addStrip {
     display: none !important;
+  }
+
+  .board {
+    position: relative !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    background: #faf6f2 !important;
+    min-height: 0 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .board::after {
+    display: none !important;
+  }
+
+  /* Only the plan + sheet chrome leave the board. */
+  .root[data-fit-sheet="1"] .board > :not([data-print-keep]) {
+    display: none !important;
+  }
+
+  .root[data-fit-sheet="1"] .board {
+    width: var(--ws-print-w) !important;
+    height: var(--ws-print-h) !important;
+  }
+
+  /*
+   * Re-home board-space content so the paper frame sits at (0,0) and fills
+   * the print page (browser scales the sheet box to @page).
+   */
+  .root[data-fit-sheet="1"] .board > [data-print-keep] {
+    position: absolute !important;
+    left: calc(-1 * var(--ws-print-left)) !important;
+    top: calc(-1 * var(--ws-print-top)) !important;
+    width: var(--ws-board-w) !important;
+    height: var(--ws-board-h) !important;
+    right: auto !important;
+    bottom: auto !important;
+    inset: auto !important;
+  }
+
+  /* Screen navigation zoom must not bake into the working drawing. */
+  .zoomWorld,
+  .zoomWorldClipped {
+    transform: none !important;
+  }
+
+  /* Without fit sheet, still avoid clipped / transformed viewport artefacts. */
+  .root:not([data-fit-sheet="1"]) .zoomWorld,
+  .root:not([data-fit-sheet="1"]) .zoomWorldClipped {
+    clip-path: none !important;
+    overflow: visible !important;
   }
 }

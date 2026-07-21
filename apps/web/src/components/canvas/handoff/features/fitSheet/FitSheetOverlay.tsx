@@ -181,6 +181,9 @@ export function FitSheetOverlay({
   useEffect(() => {
     if (!onScaleDenom) return;
     const onWheel = (e: WheelEvent) => {
+      // Architectural 1:N ladder — Shift+wheel only. Plain wheel is world zoom
+      // (infinite) owned by HandoffDesignStudio on the board.
+      if (!e.shiftKey) return;
       const target = e.target as HTMLElement | null;
       if (!target?.closest?.("[data-testid='studio-board']")) return;
       e.preventDefault();
@@ -259,7 +262,11 @@ export function FitSheetOverlay({
   const scaleTxt = `1:${scaleDenom}`;
 
   return (
-    <>
+    <div
+      className={css.layer}
+      data-print-keep="sheet"
+      data-testid="fit-sheet-layer"
+    >
       <div className={css.scrim} aria-hidden>
         <div
           className={css.scrimBand}
@@ -312,6 +319,7 @@ export function FitSheetOverlay({
         />
         <div className={css.scaleHud} data-testid="fit-sheet-scale">
           {scaleTxt}
+          <span className={css.scaleHudHint}>Shift+wheel · print scale</span>
         </div>
       </div>
 
@@ -376,7 +384,7 @@ export function FitSheetOverlay({
                   })} m²`,
                 ],
                 [
-                  "Building footprint",
+                  "Existing dwelling",
                   `${areas.buildingAreaM2.toFixed(2)} m²`,
                 ],
                 [
@@ -417,7 +425,7 @@ export function FitSheetOverlay({
             <p className={css.notesBody} data-testid="fit-sheet-notes">
               {titleBlock?.notesLine ??
                 "Vicmap cadastral base · confirm title. Dimensions in metres — working drawing, indicative only."}{" "}
-              B# = boundary · F# = footprint. Not for construction.
+              B# = boundary · F# = dwelling envelope. Not for construction.
             </p>
             <div className={css.notesMeta}>
               <span data-testid="fit-sheet-scale-stamp">
@@ -472,6 +480,6 @@ export function FitSheetOverlay({
           ))}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

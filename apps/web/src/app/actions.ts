@@ -214,6 +214,18 @@ export async function saveDesignCanvasAction(
   }
 }
 
+export async function formalizeSketchToCadAction(
+  projectId: string,
+  body: import("@workstream/contracts").SketchToCadRequest,
+) {
+  const { formalizeSketchToCadApi } = await import("../lib/api");
+  try {
+    return await formalizeSketchToCadApi(projectId, body);
+  } catch (err) {
+    throw wrapApiError(err, "AI sketch → CAD translation failed");
+  }
+}
+
 export async function scanDesignGhostsAction(projectId: string) {
   const { scanDesignGhostsApi } = await import("../lib/api");
   try {

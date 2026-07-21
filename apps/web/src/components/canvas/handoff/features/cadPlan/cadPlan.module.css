@@ -277,6 +277,25 @@
   padding-top: 2px;
 }
 
+.houseEnvelopeLabel {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  margin: 0;
+  padding: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 550;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(139, 58, 47, 0.82);
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow:
+    0 0 4px rgba(242, 240, 235, 0.98),
+    0 0 8px rgba(242, 240, 235, 0.85);
+}
+
 .cadStreetCue {
   position: absolute;
   left: calc(var(--ws-safe-left, 64px) + 8px);

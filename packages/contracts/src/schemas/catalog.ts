@@ -163,6 +163,55 @@ export const DesignAssistResponseSchema = z.object({
 export type DesignAssistResponse = z.infer<typeof DesignAssistResponseSchema>;
 
 /**
+ * Sketch → CAD translation (Claude vision).
+ * The raw freehand sketch is rasterized client-side to a PNG and sent with the
+ * site frame context; the model returns typed CAD ghost suggestions. Raw stroke
+ * vectors travel alongside so the server can fall back to the heuristic
+ * interpreter when the model / API key is unavailable.
+ */
+const SketchPointSchema = z.object({ x: z.number(), y: z.number() });
+
+export const SketchToCadStrokeSchema = z.object({
+  id: z.string(),
+  points: z.array(SketchPointSchema),
+});
+export type SketchToCadStroke = z.infer<typeof SketchToCadStrokeSchema>;
+
+export const SketchToCadRequestSchema = z.object({
+  image_base64: z.string().min(1),
+  mime_type: z
+    .enum(["image/png", "image/jpeg", "image/webp"])
+    .default("image/png"),
+  boundary: z.array(SketchPointSchema).default([]),
+  building: z.array(SketchPointSchema).default([]),
+  strokes: z.array(SketchToCadStrokeSchema).default([]),
+  scale_m: z.number().positive().optional(),
+});
+export type SketchToCadRequest = z.infer<typeof SketchToCadRequestSchema>;
+
+export const SketchCadSuggestionSchema = z.object({
+  id: z.string(),
+  symbol_id: z.string(),
+  x_pct: z.number().min(0).max(100),
+  y_pct: z.number().min(0).max(100),
+  confidence: z.number().min(0).max(1),
+  reason: z.string(),
+  /** Suggested glyph scale for the studio item. */
+  scale_hint: z.number().positive().max(6).optional(),
+  /** Suggested rotation in degrees. */
+  rot_deg: z.number().optional(),
+});
+export type SketchCadSuggestion = z.infer<typeof SketchCadSuggestionSchema>;
+
+export const SketchToCadResponseSchema = z.object({
+  suggestions: z.array(SketchCadSuggestionSchema),
+  rationale: z.string().optional(),
+  /** Which engine produced the suggestions. */
+  source: z.enum(["vision", "heuristic"]).default("heuristic"),
+});
+export type SketchToCadResponse = z.infer<typeof SketchToCadResponseSchema>;
+
+/**
  * Workflow 1 % site geometry for HandoffDesignStudio.
  * Distinct from HITL SiteBoundary (geo/metres Vicmap lock).
  */

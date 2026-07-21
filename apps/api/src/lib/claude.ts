@@ -15,6 +15,7 @@ import {
   buildGhostPlacementSuggestions,
   buildStudioSystemPrompt,
   formatSketchBriefForAi,
+  interpretSketchStrokesToCad,
   isTier1WrightsTerrace,
   parseStudioAssistResponse,
   tier1WrightsTerraceDesign,
@@ -881,6 +882,229 @@ export async function scanAerialGhosts(args: {
     return out.length > 0 ? out : fallback();
   } catch {
     return fallback();
+  }
+}
+
+// ---------- Vision: freehand sketch → typed CAD suggestions ----------------
+
+const SKETCH_CAD_PROMPT = `You translate a freehand landscape concept sketch into typed CAD site-plan elements for Curtis & Co (Melbourne).
+
+The image is the operator's RAW hand-drawn sketch over the garden area (light background, dark ink). Treat it as a spatial brief, not a finished drawing.
+
+Return strict JSON only — no markdown:
+{
+  "suggestions": [
+    {
+      "symbol_id": "id-from-allowed-list",
+      "x_pct": 0-100,
+      "y_pct": 0-100,
+      "confidence": 0-1,
+      "reason": "short plain-English rationale",
+      "scale_hint": 0.4-2.0,
+      "rot_deg": 0-359
+    }
+  ],
+  "rationale": "one short sentence"
+}
+
+Rules:
+- Use ONLY symbol_id values from the allowed list provided.
+- x_pct / y_pct are percent from the TOP-LEFT of the sketch image (0-100).
+- Read the ink shapes: closed loops → planting beds / lawn / paving masses; long strokes → clipped hedges, paths, or drains; small marks → specimen trees / features.
+- Keep every placement inside the site boundary and clear of the existing dwelling footprint.
+- These are indicative concept placements, not survey CAD — never claim precision.
+- Max 16 suggestions. If nothing is interpretable, return an empty array.`;
+
+export type SketchToCadCallArgs = {
+  image_base64: string;
+  mime_type: "image/png" | "image/jpeg" | "image/webp";
+  boundary: Array<{ x: number; y: number }>;
+  building: Array<{ x: number; y: number }>;
+  strokes: Array<{ id: string; points: Array<{ x: number; y: number }> }>;
+  scale_m?: number;
+  symbol_ids: string[];
+};
+
+export type SketchCadSuggestionOut = {
+  id: string;
+  symbol_id: string;
+  x_pct: number;
+  y_pct: number;
+  confidence: number;
+  reason: string;
+  scale_hint?: number;
+  rot_deg?: number;
+};
+
+export type SketchToCadCallResult = {
+  suggestions: SketchCadSuggestionOut[];
+  rationale?: string;
+  source: "vision" | "heuristic";
+};
+
+/** Deterministic offline interpretation — used when vision is unavailable. */
+function heuristicSketchToCad(args: SketchToCadCallArgs): SketchToCadCallResult {
+  const allowed = new Set(args.symbol_ids);
+  const raw = interpretSketchStrokesToCad(args.strokes, {
+    boundary: args.boundary,
+    building: args.building,
+    scaleM: args.scale_m,
+  });
+  const suggestions = raw
+    .filter((s) => allowed.size === 0 || allowed.has(s.symbol_id))
+    .map((s) => ({
+      id: s.id,
+      symbol_id: s.symbol_id,
+      x_pct: s.x_pct,
+      y_pct: s.y_pct,
+      confidence: s.confidence,
+      reason: s.reason,
+      scale_hint: s.scaleHint,
+      rot_deg: s.rotDeg,
+    }));
+  return { suggestions, source: "heuristic" };
+}
+
+function ringBoundsSummary(ring: Array<{ x: number; y: number }>): string {
+  if (ring.length === 0) return "(none)";
+  const xs = ring.map((p) => p.x);
+  const ys = ring.map((p) => p.y);
+  return `x ${Math.min(...xs).toFixed(0)}–${Math.max(...xs).toFixed(0)}%, y ${Math.min(...ys).toFixed(0)}–${Math.max(...ys).toFixed(0)}%`;
+}
+
+/**
+ * Translate a rasterized freehand sketch into typed CAD ghost suggestions via
+ * Claude vision. Falls back to the deterministic heuristic when the API key is
+ * missing, the request fails, or the model returns nothing usable.
+ */
+export async function formalizeSketchToCad(
+  args: SketchToCadCallArgs,
+): Promise<SketchToCadCallResult> {
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
+  if (!apiKey || args.image_base64.length < 32) {
+    return heuristicSketchToCad(args);
+  }
+
+  try {
+    const allowed = args.symbol_ids.slice(0, 80).join(", ");
+    const context = [
+      `Allowed symbol_id values: ${allowed || "(none)"}`,
+      `Site boundary extent: ${ringBoundsSummary(args.boundary)}`,
+      `Existing dwelling footprint extent: ${ringBoundsSummary(args.building)}`,
+      args.scale_m ? `Board scale: ~${args.scale_m} m across` : "",
+      `${args.strokes.length} freehand stroke(s) drawn.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const body = {
+      model: VISION_MODEL,
+      max_tokens: 2048,
+      system: [{ type: "text", text: SKETCH_CAD_PROMPT }],
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: args.mime_type,
+                data: args.image_base64,
+              },
+            },
+            { type: "text", text: context },
+          ],
+        },
+      ],
+    };
+
+    const res = await fetchWithRetry(
+      MESSAGES_URL,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      },
+      {
+        telemetry: {
+          spanName: "anthropic.formalize_sketch_to_cad",
+          provider: "anthropic",
+          attributes: {
+            "pipeline.stage": "cad",
+            "model.name": VISION_MODEL,
+          },
+        },
+      },
+    );
+    if (!res.ok) return heuristicSketchToCad(args);
+
+    const json = (await res.json()) as {
+      content: Array<{ type: string; text: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+    setActiveTelemetryAttributes({
+      "tokens.input": json.usage?.input_tokens,
+      "tokens.output": json.usage?.output_tokens,
+    });
+    const textBlock = json.content.find((c) => c.type === "text");
+    if (!textBlock) return heuristicSketchToCad(args);
+
+    const cleaned = textBlock.text
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "");
+    const parsed = JSON.parse(cleaned) as {
+      suggestions?: Array<{
+        symbol_id?: string;
+        x_pct?: number;
+        y_pct?: number;
+        confidence?: number;
+        reason?: string;
+        scale_hint?: number;
+        rot_deg?: number;
+      }>;
+      rationale?: string;
+    };
+
+    const allowedSet = new Set(args.symbol_ids);
+    const suggestions: SketchCadSuggestionOut[] = [];
+    for (const s of parsed.suggestions ?? []) {
+      if (!s.symbol_id || (allowedSet.size > 0 && !allowedSet.has(s.symbol_id))) {
+        continue;
+      }
+      const x = Number(s.x_pct);
+      const y = Number(s.y_pct);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      suggestions.push({
+        id: crypto.randomUUID(),
+        symbol_id: s.symbol_id,
+        x_pct: Math.min(100, Math.max(0, x)),
+        y_pct: Math.min(100, Math.max(0, y)),
+        confidence: Math.min(1, Math.max(0, Number(s.confidence) || 0.6)),
+        reason: s.reason?.trim() || "AI sketch interpretation",
+        scale_hint:
+          Number.isFinite(Number(s.scale_hint)) && Number(s.scale_hint) > 0
+            ? Math.min(6, Number(s.scale_hint))
+            : undefined,
+        rot_deg: Number.isFinite(Number(s.rot_deg))
+          ? Number(s.rot_deg)
+          : undefined,
+      });
+    }
+
+    if (suggestions.length === 0) return heuristicSketchToCad(args);
+    return {
+      suggestions,
+      rationale: parsed.rationale?.trim(),
+      source: "vision",
+    };
+  } catch {
+    return heuristicSketchToCad(args);
   }
 }
 

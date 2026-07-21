@@ -214,8 +214,13 @@ export function outdoorFocusView(
   const midX = (minX + maxX) / 2;
   const midY = (minY + maxY) / 2;
   const span = Math.max(maxX - minX, maxY - minY, 10);
-  // Fill ~90% of the board with the outdoor bbox.
-  const zoom = Math.max(1, Math.min(2.6, Number((90 / span).toFixed(2))));
+  // Fill ~90% of the board with the outdoor bbox. Soft ceiling keeps fit
+  // usable on tiny remnants; infinite zoom still goes beyond via wheel.
+  const FIT_ZOOM_MAX = 16;
+  const zoom = Math.max(
+    1,
+    Math.min(FIT_ZOOM_MAX, Number((90 / span).toFixed(2))),
+  );
   return {
     focusX: Number(midX.toFixed(2)),
     focusY: Number(midY.toFixed(2)),

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -47,6 +48,7 @@ import { isStickyDraftTool } from "./features/measure/measureCancel";
 import { AerialSlot } from "./features/aerial/AerialSlot";
 import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
 import { SketchBoard } from "./features/sketch/SketchBoard";
+import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
@@ -101,7 +103,10 @@ import {
   zoomByRibbonDelta,
   zoomFromWheel,
 } from "./geometry/canvasZoom";
-import { lookupCadastralTitleAction } from "../../../app/actions";
+import {
+  formalizeSketchToCadAction,
+  lookupCadastralTitleAction,
+} from "../../../app/actions";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -229,9 +234,59 @@ export function HandoffDesignStudio({
     return () => ro.disconnect();
   }, []);
 
+  /** Sheet box geometry for print — crop viewport to the A3/A4 frame. */
+  const printSheet = useMemo(() => {
+    if (!ui.frameOn) return null;
+    const sheet = sheetBoxFor(boardSize.w, boardSize.h, ui.paper);
+    return {
+      left: sheet.boxLeft,
+      top: sheet.boxTop,
+      w: sheet.boxW,
+      h: sheet.boxH,
+      boardW: boardSize.w,
+      boardH: boardSize.h,
+      paper: ui.paper,
+    };
+  }, [ui.frameOn, ui.paper, boardSize.w, boardSize.h]);
+
+  /**
+   * Browser print: set @page to the active paper size and mark the document
+   * so global CSS can hide app chrome outside the studio.
+   */
+  useEffect(() => {
+    if (!printSheet) return;
+    const STYLE_ID = "ws-fit-sheet-print-page";
+    const onBefore = () => {
+      let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+      if (!el) {
+        el = document.createElement("style");
+        el.id = STYLE_ID;
+        document.head.appendChild(el);
+      }
+      el.textContent =
+        printSheet.paper === "a4"
+          ? "@page { size: A4 portrait; margin: 8mm; }"
+          : "@page { size: A3 landscape; margin: 8mm; }";
+      document.documentElement.dataset.wsPrinting = "1";
+    };
+    const onAfter = () => {
+      document.getElementById(STYLE_ID)?.remove();
+      delete document.documentElement.dataset.wsPrinting;
+    };
+    window.addEventListener("beforeprint", onBefore);
+    window.addEventListener("afterprint", onAfter);
+    return () => {
+      window.removeEventListener("beforeprint", onBefore);
+      window.removeEventListener("afterprint", onAfter);
+      onAfter();
+    };
+  }, [printSheet]);
+
   /**
    * Infinite-feel canvas zoom — wheel / trackpad / pinch over the board.
-   * Fit sheet keeps its own scale-denom wheel; plan modes zoom the world.
+   * Active on Survey / Sketch / CAD and on the A3/A4 fit sheet (world zoom).
+   * Shift+wheel on the fit sheet changes architectural print scale (1:N) —
+   * see FitSheetOverlay.
    */
   useEffect(() => {
     const el = boardRef.current;
@@ -240,7 +295,8 @@ export function HandoffDesignStudio({
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
     if (!planMode) return;
     const onWheel = (e: WheelEvent) => {
-      if (ui.frameOn || ui.foundationCleanse) return;
+      // Fit sheet: Shift+wheel is reserved for 1:N print scale.
+      if (ui.frameOn && e.shiftKey) return;
       const t = e.target as HTMLElement | null;
       if (t?.closest?.("input, textarea, select, [data-no-canvas-zoom]")) {
         return;
@@ -263,7 +319,7 @@ export function HandoffDesignStudio({
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [studio, ui.frameOn, ui.foundationCleanse, ui.mode, ui.zoom]);
+  }, [studio, ui.frameOn, ui.mode, ui.zoom]);
 
   /** Restore micro grid studio prefs for this project session. */
   useEffect(() => {
@@ -279,15 +335,22 @@ export function HandoffDesignStudio({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  /** Working plan — frame the outdoor garden once per Sketch/CAD visit. */
+  /**
+   * Fit to screen by default — outdoor garden remnant on Survey / Sketch / CAD
+   * (and again when opening the fit sheet). Infinite zoom remains available.
+   */
   const outdoorFitKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (ui.frameOn || ui.focusOn || ui.clientView) return;
-    if (ui.mode !== "sketch" && ui.mode !== "cad") {
+    if (ui.focusOn || ui.clientView) return;
+    if (
+      ui.mode !== "survey" &&
+      ui.mode !== "sketch" &&
+      ui.mode !== "cad"
+    ) {
       outdoorFitKeyRef.current = null;
       return;
     }
-    const key = `${ui.mode}:${ui.siteIdx}`;
+    const key = `${ui.mode}:${ui.siteIdx}:frame=${ui.frameOn ? 1 : 0}`;
     if (outdoorFitKeyRef.current === key) return;
     outdoorFitKeyRef.current = key;
     studio.fitOutdoorView();
@@ -388,11 +451,12 @@ export function HandoffDesignStudio({
         studio.setUi({ frameOn: !ui.frameOn });
         return;
       }
-      /* Infinite zoom — + / = zoom in, - / _ zoom out (not while typing). */
+      /* Infinite zoom — + / = zoom in, - / _ zoom out (incl. fit sheet). */
       if (
-        !ui.frameOn &&
-        !ui.foundationCleanse &&
-        (e.key === "+" || e.key === "=" || e.key === "-" || e.key === "_")
+        (e.key === "+" || e.key === "=" || e.key === "-" || e.key === "_") &&
+        ui.mode !== "elevation" &&
+        ui.mode !== "quote" &&
+        ui.mode !== "share"
       ) {
         e.preventDefault();
         studio.setUi({
@@ -533,6 +597,88 @@ export function HandoffDesignStudio({
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
   const scaleM = ui.boardWidthM ?? boardScaleM(ui.sheetScaleDenom);
+
+  const [formalizing, setFormalizing] = useState(false);
+
+  /**
+   * Sketch → CAD: rasterize the raw freehand ink and run the Claude vision
+   * pipeline server-side, then apply the returned CAD elements as reviewable
+   * ghosts. Falls back to the local heuristic when the network / model fails.
+   */
+  const runFormalizeToCad = useCallback(async () => {
+    if (formalizing) return;
+    if (studio.strokes.length === 0) {
+      studio.setMode("cad");
+      studio.setUi({
+        assistReply: "Sketch on the plan first — then formalize to CAD when ready.",
+        councilTip: "Draw a path, bed, or canopy mark before translating to CAD.",
+      });
+      return;
+    }
+    setFormalizing(true);
+    studio.setUi({
+      assistReply: "Translating sketch to CAD with AI…",
+      councilTip: null,
+    });
+    try {
+      const raster = rasterizeStrokesToPng(
+        studio.strokes,
+        boardSize.w,
+        boardSize.h,
+      );
+      if (!raster) {
+        studio.interpretSketches();
+        studio.setUi({
+          councilTip:
+            "Could not capture the sketch image — used quick geometry translation instead.",
+        });
+        return;
+      }
+      const res = await formalizeSketchToCadAction(projectId, {
+        image_base64: raster.image_base64,
+        mime_type: raster.mime_type,
+        boundary: studio.boundary.map((p) => ({ x: p.x, y: p.y })),
+        building: studio.building.map((p) => ({ x: p.x, y: p.y })),
+        strokes: studio.strokes.map((s) => ({
+          id: s.id,
+          points: s.points.map((p) => ({ x: p.x, y: p.y })),
+        })),
+        scale_m: scaleM,
+      });
+      studio.applyCadSuggestions(res.suggestions, { source: res.source });
+      if (res.source === "heuristic") {
+        studio.setUi({
+          councilTip:
+            "AI vision unavailable — used quick geometry translation. Review ghosts before accepting.",
+        });
+      }
+    } catch {
+      // Network / model failure — keep the operator moving with the heuristic.
+      studio.interpretSketches();
+      studio.setUi({
+        councilTip:
+          "AI translation failed — used quick geometry translation. Review ghosts before accepting.",
+      });
+    } finally {
+      setFormalizing(false);
+    }
+  }, [formalizing, studio, boardSize.w, boardSize.h, projectId, scaleM]);
+
+  const requestMode = useCallback(
+    (mode: (typeof MODE_TABS)[number]) => {
+      if (ui.mode === "sketch" && mode === "cad" && studio.strokes.length > 0) {
+        const alreadyHasSketchGhosts = studio.items.some(
+          (i) => i.ghost && i.id.startsWith("ai-sketch-"),
+        );
+        if (!alreadyHasSketchGhosts) {
+          void runFormalizeToCad();
+          return;
+        }
+      }
+      studio.setMode(mode);
+    },
+    [ui.mode, studio, runFormalizeToCad],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -697,9 +843,21 @@ export function HandoffDesignStudio({
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
       data-compliance={compliance.canvasSignal}
+      data-fit-sheet={ui.frameOn ? "1" : "0"}
+      data-paper={ui.paper}
       style={
         {
           ["--studio-zoom" as string]: String(ui.zoom),
+          ...(printSheet
+            ? {
+                ["--ws-print-left" as string]: `${printSheet.left}px`,
+                ["--ws-print-top" as string]: `${printSheet.top}px`,
+                ["--ws-print-w" as string]: `${printSheet.w}px`,
+                ["--ws-print-h" as string]: `${printSheet.h}px`,
+                ["--ws-board-w" as string]: `${printSheet.boardW}px`,
+                ["--ws-board-h" as string]: `${printSheet.boardH}px`,
+              }
+            : null),
         } as CSSProperties
       }
     >
@@ -720,7 +878,7 @@ export function HandoffDesignStudio({
               type="button"
               className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}`}
               data-testid={`canvas-mode-${m}`}
-              onClick={() => studio.setMode(m)}
+              onClick={() => requestMode(m)}
             >
               {m[0]!.toUpperCase() + m.slice(1)}
             </button>
@@ -1081,6 +1239,7 @@ export function HandoffDesignStudio({
         {planOn ? (
           <div
             className={`${css.zoomWorld}${ui.frameOn ? ` ${css.zoomWorldClipped}` : ""}`}
+            data-print-keep="plan"
             style={{
               transformOrigin: `${ui.focusX}% ${ui.focusY}%`,
               transform: `scale(${ui.zoom})`,
@@ -1299,12 +1458,13 @@ export function HandoffDesignStudio({
               <SketchBoard
                 strokes={studio.strokes}
                 darkOn={ui.darkOn}
+                formalizing={formalizing}
                 onCommit={(stroke) => {
                   studio.setStrokes([...studio.strokes, stroke]);
                 }}
                 onTidy={() => studio.tidySketches()}
                 onFormalizeToCad={() => {
-                  studio.interpretSketches();
+                  void runFormalizeToCad();
                 }}
               />
             ) : null}
@@ -1518,7 +1678,6 @@ export function HandoffDesignStudio({
             onUndo={studio.undo}
             onRedo={studio.redo}
             onZoom={(delta) => {
-              if (ui.foundationCleanse) return;
               studio.setUi({ zoom: zoomByRibbonDelta(ui.zoom, delta) });
             }}
             onFit={() => {
@@ -1805,7 +1964,9 @@ export function HandoffDesignStudio({
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
-          onConvertSketch={() => studio.interpretSketches()}
+          onConvertSketch={
+            formalizing ? undefined : () => void runFormalizeToCad()
+          }
           onToggleFitSheet={() => studio.setUi({ frameOn: !ui.frameOn })}
           onGoQuote={() => studio.setMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}

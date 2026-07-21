@@ -26,7 +26,7 @@ export function SurveyChecklist({
 }: Props) {
   const rows: Array<[string, boolean]> = [
     ["Boundary traced", boundary.length >= 3],
-    ["Building footprint", building.length >= 3],
+    ["Existing dwelling", building.length >= 3],
     ["Existing trees", items.some((i) => BY_TYPE[i.t]?.existing)],
     ["Spot levels", levels.length > 0],
     [

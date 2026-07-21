@@ -1,3 +1,11 @@
+/* Full-board host so print can offset the sheet to page origin. */
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
 .scrim {
   position: absolute;
   inset: 0;
@@ -61,6 +69,24 @@
   z-index: 1;
 }
 
+.scaleHudHint {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(36, 19, 24, 0.45);
+}
+
+@media print {
+  .scaleHud {
+    display: none !important;
+  }
+
+  .scrim {
+    display: none !important;
+  }
+}
+
 .panel {
   position: absolute;
   display: flex;
@@ -70,6 +96,7 @@
   box-sizing: border-box;
   z-index: 5;
   overflow: hidden;
+  pointer-events: auto;
 }
 
 .panelHead {

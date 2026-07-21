@@ -428,6 +428,58 @@ export function proposeFromStrokes(
   return { items, idn: nextIdn, count: items.length };
 }
 
+/**
+ * Map AI CAD suggestions (from the server sketch→CAD vision pipeline) into
+ * studio ghost items. Same placement constraints as the local heuristic path,
+ * but the suggestions arrive already interpreted by Claude vision.
+ */
+export function proposeFromCadSuggestions(
+  snap: StudioSnapshot,
+  idn: number,
+  suggestions: Array<{
+    id: string;
+    symbol_id: string;
+    x_pct: number;
+    y_pct: number;
+    confidence: number;
+    reason: string;
+    scale_hint?: number;
+    rot_deg?: number;
+  }>,
+): { items: StudioItem[]; idn: number; count: number } {
+  if (suggestions.length === 0) return { items: [], idn, count: 0 };
+  let nextIdn = idn;
+  const items = suggestions.map((g) => {
+    nextIdn += 1;
+    const t = mapSymbolToStudioType(g.symbol_id);
+    const placed = constrainAssetCentre(
+      g.x_pct,
+      g.y_pct,
+      t,
+      snap.boundary,
+      snap.building,
+    );
+    let reason = g.reason;
+    if (placed.reason) reason = `${reason} · ${placed.reason}`;
+    const item = proposalToStudioItem(
+      {
+        id: g.id,
+        symbol_id: g.symbol_id,
+        x_pct: placed.x,
+        y_pct: placed.y,
+        confidence: g.confidence,
+        reason,
+      },
+      `${aiItemPrefix("sketch")}${nextIdn}`,
+      "sketch",
+    );
+    if (g.scale_hint != null) item.scale = g.scale_hint;
+    if (g.rot_deg != null) item.rot = g.rot_deg;
+    return item;
+  });
+  return { items, idn: nextIdn, count: items.length };
+}
+
 export function proposeFromCanopyImage(
   image: RgbaImageData,
   idn: number,

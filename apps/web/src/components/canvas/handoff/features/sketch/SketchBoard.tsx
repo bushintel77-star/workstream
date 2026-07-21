@@ -1,10 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import {
-  strokePointsToPathD,
-  tidySketchPoints,
-} from "@workstream/domain";
+import { strokePointsToPathD } from "@workstream/domain";
 import type { SketchStroke } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import css from "./sketch.module.css";
@@ -18,6 +15,8 @@ type Props = {
   onTidy?: () => void;
   /** Optional formalize: freehand → CAD ghosts on the site plan. */
   onFormalizeToCad?: () => void;
+  /** True while the AI sketch→CAD pipeline is in flight. */
+  formalizing?: boolean;
 };
 
 /**
@@ -31,6 +30,7 @@ export function SketchBoard({
   onCommit,
   onTidy,
   onFormalizeToCad,
+  formalizing = false,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const drawing = useRef<PctPoint[] | null>(null);
@@ -91,9 +91,10 @@ export function SketchBoard({
         setLive(null);
         if (!pts || pts.length < 2) return;
         idn.current += 1;
-        /* Light tidy on commit — still the artist's path, less jitter. */
-        const points = tidySketchPoints(pts);
-        onCommit({ id: `sk${Date.now()}_${idn.current}`, points });
+        // Raw ink only — the sketch layer performs ZERO smoothing, snapping,
+        // resampling, or geometry manipulation. The captured points are stored
+        // exactly as drawn. Tidy/Formalize are explicit, opt-in later steps.
+        onCommit({ id: `sk${Date.now()}_${idn.current}`, points: pts });
       }}
     >
       <svg
@@ -107,6 +108,7 @@ export function SketchBoard({
             size.w,
             size.h,
             s.id === "__live" ? 1.6 : 2.1,
+            { raw: true },
           );
           if (!d) return null;
           return (
@@ -122,15 +124,18 @@ export function SketchBoard({
       </svg>
       <div className={css.bar} data-testid="sketch-convert-bar">
         <p className={css.hint}>
-          {canAct
-            ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
-            : "Sketch first · finger or stylus · format later"}
+          {formalizing
+            ? "Translating sketch to CAD with AI…"
+            : canAct
+              ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
+              : "Sketch first · finger or stylus · format later"}
         </p>
         {canAct && onTidy ? (
           <button
             type="button"
             className={css.tidy}
             data-testid="sketch-tidy"
+            disabled={formalizing}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
@@ -145,13 +150,15 @@ export function SketchBoard({
             type="button"
             className={css.convert}
             data-testid="sketch-convert-cad"
+            disabled={formalizing}
+            aria-busy={formalizing}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               onFormalizeToCad();
             }}
           >
-            Formalize to CAD
+            {formalizing ? "Translating…" : "Formalize to CAD"}
           </button>
         ) : null}
       </div>
