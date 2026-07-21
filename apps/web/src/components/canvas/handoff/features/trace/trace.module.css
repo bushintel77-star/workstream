@@ -123,7 +123,7 @@
   border: 1px solid rgba(28, 25, 23, 0.22);
   background: rgba(242, 240, 235, 0.96);
   box-shadow: none;
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   color: #1c1917;
 }
 

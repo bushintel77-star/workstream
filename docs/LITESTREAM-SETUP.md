@@ -1,8 +1,10 @@
 # Litestream backup setup
 
-Workstream still persists to `/repo/apps/api/data/store.json` on the single API
-machine. Litestream is a disaster-recovery layer only until the SQLite/Postgres
-migration lands.
+Workstream still persists to `/repo/apps/api/data/store.json` on a single API
+machine. Litestream replicates SQLite WAL files, not arbitrary JSON snapshots,
+so this is a SQLite-ready disaster-recovery configuration for the planned
+SQLite migration. Do not enable the sidecar until the API writes
+`/repo/apps/api/data/workstream.sqlite`.
 
 ## Cloudflare R2
 
@@ -54,7 +56,7 @@ flyctl secrets set \
 
 Copy `docs/litestream.example.yml` into the API image as
 `/etc/litestream.yml`, install the Litestream binary in `apps/api/Dockerfile`,
-then add a worker process that runs beside the API app:
+then add a backup process that runs beside the API app after SQLite is live:
 
 ```toml
 [processes]
@@ -73,7 +75,7 @@ Verify replication:
 
 ```bash
 flyctl logs -a construct-api | grep litestream
-litestream restore -config docs/litestream.example.yml -if-replica-exists /tmp/workstream-store.json
+litestream restore -config docs/litestream.example.yml -if-replica-exists /tmp/workstream.sqlite
 ```
 
 Do not scale the API app above one machine while JSON snapshot persistence is

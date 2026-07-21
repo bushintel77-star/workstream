@@ -11,7 +11,7 @@
   backdrop-filter: blur(16px);
   box-shadow: 0 14px 44px rgba(42, 23, 29, 0.25);
   color: #241318;
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   animation: ccIn 0.22s ease-out;
 }
 

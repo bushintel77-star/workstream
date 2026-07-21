@@ -19,7 +19,7 @@
   background: var(--hc-neu-surface, #f1e4e9);
   box-shadow: var(--hc-neu-out, -3px -3px 8px rgba(255, 255, 255, 0.85), 4px 4px 11px rgba(42, 23, 29, 0.16));
   color: var(--hc-ink, #241318);
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   pointer-events: auto;
   animation: trayIn var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }

@@ -1,18 +1,13 @@
 # Production human ops runbook
 
-One-time and recurring operator steps that require live platform access. Do not
-paste real secrets into git; run these commands from a trusted terminal with
-`flyctl`, `pnpm`, `openssl`, and `eas-cli` available.
+Generated 2026-07-21T00:38:19Z for branch
+`cursor/workstream-gold-standard-rebuild-1f48` through `814a3cb`.
 
-## Clerk authentication
+These steps require live platform access or credentials. Do not commit real
+secret values to this repository. Run commands from the repository root unless a
+section says otherwise.
 
-### Step 1: Create Clerk application
-
-1. Go to <https://clerk.com> and create an application.
-One-time operator steps that require live credentials or platform admin access.
-Do not commit any secret values to this repository.
-
-## Clerk Authentication
+## Section 1 - Clerk authentication (P0)
 
 ### Step 1: Create Clerk application
 
@@ -23,11 +18,15 @@ Do not commit any secret values to this repository.
 
 ### Step 2: Set Fly secrets
 
+The API needs the server secret. The web app needs the server secret plus the
+public publishable key used by Clerk middleware and client components.
+
 ```bash
 flyctl secrets set \
   CLERK_SECRET_KEY="sk_live_PASTE_HERE" \
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_PASTE_HERE" \
   AUTH_REQUIRED=true \
+  PUBLIC_API_URL="https://construct-api.fly.dev" \
+  CORS_ORIGIN="https://construct-web.fly.dev" \
   -a construct-api
 
 flyctl secrets set \
@@ -39,9 +38,7 @@ flyctl secrets set \
 
 ### Step 3: Redeploy web
 
-`NEXT_PUBLIC_*` values are baked into the Next.js build, so redeploy web after
-setting the publishable key.
-`NEXT_PUBLIC_` variables are build-time values for the web image.
+`NEXT_PUBLIC_*` values are build-time values for the web image.
 
 ```bash
 flyctl deploy --config apps/web/fly.toml \
@@ -54,35 +51,20 @@ flyctl deploy --config apps/web/fly.toml \
 ### Step 4: Verify
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/
+curl -s -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/dashboard
 ```
 
-Expect `200` for an authenticated session or a Clerk redirect/sign-in response
-for unauthenticated access.
+Expect a Clerk redirect or sign-in response for unauthenticated access when
+`AUTH_REQUIRED=true`.
 
-## Redis worker
-
-### Step 1: Provision Redis
-
-Option A — Upstash, recommended for Fly:
-
-1. Go to <https://upstash.com>.
-2. Create a Redis database in or near Sydney.
-3. Copy the Redis URL (`rediss://...`).
-
-Option B — Fly Redis:
-curl -s -o /dev/null -w "%{http_code}" https://construct-web.fly.dev/dashboard
-# Expect 302 redirect to /sign-in when auth is live.
-```
-
-## Redis Worker
+## Section 2 - Redis worker (P0)
 
 ### Step 1: Provision Redis
 
 Option A - Upstash, recommended for Fly:
 
 1. Go to https://upstash.com.
-2. Create a Redis database in the Sydney region.
+2. Create a Redis database in or near Sydney.
 3. Copy the Redis URL (`rediss://...`).
 
 Option B - Fly Redis:
@@ -111,48 +93,7 @@ flyctl logs -a construct-api | grep "worker"
 
 Expect a BullMQ worker start message.
 
-## Sentry error monitoring
-
-### Step 1: Create Sentry projects
-
-1. Go to <https://sentry.io>.
-2. Create one Node.js project for `construct-api`.
-3. Create one Next.js project for `construct-web`.
-4. Copy both DSNs.
-
-### Step 2: Install web package when enabling browser capture
-
-```bash
-pnpm --filter @workstream/web add @sentry/nextjs
-```
-
-### Step 3: Set secrets
-
-```bash
-flyctl secrets set SENTRY_DSN="https://PASTE_API_DSN@sentry.io/..." -a construct-api
-flyctl secrets set SENTRY_DSN="https://PASTE_WEB_DSN@sentry.io/..." -a construct-web
-```
-
-### Step 4: Redeploy both apps
-
-```bash
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api
-flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web \
-  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
-```
-
-## Fly machine count
-
-Keep the JSON snapshot store single-writer until the database migration lands.
-
-### Step 4: Verify
-
-```bash
-flyctl logs -a construct-api | grep "worker"
-# Expect: "[worker] BullMQ worker listening on workstream-pipeline"
-```
-
-## Sentry Error Monitoring
+## Section 3 - Sentry error monitoring (P0)
 
 ### Step 1: Create Sentry projects
 
@@ -177,24 +118,23 @@ flyctl secrets set SENTRY_DSN="https://PASTE_WEB_DSN@sentry.io/PROJECT" -a const
 ### Step 4: Redeploy both apps
 
 ```bash
-./scripts/deploy-fly.sh
+flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api
+flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web \
+  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
 ```
 
-## Fly Machine Count
+## Section 4 - Single API machine (P0)
 
-Keep the API as a single writer while JSON snapshot persistence is active.
+Keep the JSON snapshot store single-writer until the database migration lands.
 
 ```bash
 flyctl scale count 1 -a construct-api
 flyctl status -a construct-api
 ```
 
-Expect one running API machine.
+Expect one running API machine for `construct-api`.
 
-# Expect: 1 app machine running for construct-api.
-```
-
-## Mobile TestFlight and Play Store
+## Section 5 - Mobile EAS distribution (P1)
 
 ### Step 1: EAS init
 
@@ -204,9 +144,16 @@ npx eas-cli init
 ```
 
 This writes the real EAS `projectId` into `apps/mobile/app.json`.
-This writes the real EAS project ID into `apps/mobile/app.json`.
 
-### Step 2: Apple credentials
+### Step 2: Set EAS production environment
+
+```bash
+eas env:create --environment production --name EXPO_PUBLIC_API_URL --value https://construct-api.fly.dev
+eas env:create --environment production --name EXPO_PUBLIC_AUTH_REQUIRED --value true
+eas env:create --environment production --name EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY --value pk_live_PASTE_HERE
+```
+
+### Step 3: Apple credentials
 
 Requires an Apple Developer account.
 
@@ -217,22 +164,17 @@ Requires an Apple Developer account.
 eas credentials --platform ios
 ```
 
-### Step 3: iOS build and submit
-### Step 3: Build for TestFlight
+### Step 4: Build and submit for TestFlight
 
 ```bash
 eas build --platform ios --profile production
 eas submit --platform ios
 ```
 
-### Step 4: Android build and submit
-
-1. Create a Play Console app for package `com.curtisandco.workstream`.
-2. Create/download the service account JSON expected by `apps/mobile/eas.json`.
-### Step 4: Android Play Store
+### Step 5: Android build and submit
 
 1. Create a Google Play app for package `com.curtisandco.workstream`.
-2. Place the service-account file at `apps/mobile/google-service-account.json`
+2. Place the service account file at `apps/mobile/google-service-account.json`
    or update `apps/mobile/eas.json` with the chosen path.
 3. Run:
 
@@ -241,48 +183,15 @@ eas build --platform android --profile production
 eas submit --platform android
 ```
 
-## External API keys
+## Section 6 - External API keys (P1)
 
-Set these on the API app when moving from dev fallbacks to live integrations.
-## External API Keys
-
-Set live AI, map, Stripe, portal, and telemetry secrets on the API app.
+Set live AI, map, portal, Stripe, and telemetry secrets on the API app.
 
 ```bash
 flyctl secrets set \
   OPENAI_API_KEY="sk-PASTE_HERE" \
   ANTHROPIC_API_KEY="sk-ant-PASTE_HERE" \
   MAPBOX_TOKEN="pk.PASTE_HERE" \
-  WORKSTREAM_PORTAL_SECRET="$(openssl rand -hex 32)" \
-  OTEL_EXPORTER_OTLP_ENDPOINT="https://PASTE_OTEL_COLLECTOR_ENDPOINT" \
-  -a construct-api
-```
-
-Do not hardcode the OpenTelemetry endpoint. Use the endpoint issued by the
-chosen collector or observability platform.
-
-## Stripe deposits
-
-1. Create a Stripe account and switch to live mode.
-2. Copy the live secret key.
-3. Set the API secret:
-
-```bash
-flyctl secrets set STRIPE_SECRET_KEY="sk_live_PASTE_HERE" -a construct-api
-```
-
-4. Verify the key in Workstream Settings → Integrations → Stripe.
-
-## Litestream object-store backup
-
-Follow [LITESTREAM-SETUP.md](LITESTREAM-SETUP.md) for Cloudflare R2 or Backblaze
-B2 bucket setup and Fly sidecar wiring.
-
-## Branch protection
-
-Requires GitHub Pro for private repositories.
-
-1. Go to <https://github.com/Boringuy7799/workstream/settings/branches>.
   STRIPE_SECRET_KEY="sk_live_PASTE_HERE" \
   STRIPE_WEBHOOK_SECRET="whsec_PASTE_HERE" \
   WORKSTREAM_PORTAL_SECRET="$(openssl rand -hex 32)" \
@@ -290,14 +199,35 @@ Requires GitHub Pro for private repositories.
   -a construct-api
 ```
 
-The OpenTelemetry SDK appends `/v1/traces` automatically if the endpoint omits it.
+Do not hardcode the OpenTelemetry endpoint. Use the endpoint issued by the
+chosen collector or observability platform.
 
-## Litestream object-store backups
+Verify Stripe from Workstream Settings -> Integrations -> Stripe after deploy.
 
-Use Cloudflare R2 or Backblaze B2 for the disaster-recovery replica. Full setup
-details live in [LITESTREAM-SETUP.md](LITESTREAM-SETUP.md).
+## Section 7 - Litestream object-store backup (P2, SQLite-ready)
 
-### Step 1: Set object-store secrets
+The current production store is JSON snapshot persistence. Litestream replicates
+SQLite WAL files, not arbitrary JSON snapshots, so enable this sidecar only after
+the SQLite migration creates the database path documented in
+`docs/litestream.example.yml`.
+
+### Step 1: Create object storage
+
+Cloudflare R2:
+
+1. Open Cloudflare Dashboard -> R2 -> Create bucket.
+2. Bucket name: `workstream-dr`.
+3. Create an R2 API token with object read/write access.
+4. Copy the S3 endpoint, access key ID, and secret access key.
+
+Backblaze B2:
+
+1. Open Backblaze -> B2 Cloud Storage -> Create bucket.
+2. Bucket name: `workstream-dr`.
+3. Create an application key scoped to the bucket with read/write access.
+4. Copy the S3 endpoint, region, key ID, and application key.
+
+### Step 2: Set Fly secrets
 
 ```bash
 flyctl secrets set \
@@ -309,7 +239,7 @@ flyctl secrets set \
   -a construct-api
 ```
 
-### Step 2: Add sidecar process in `apps/api/fly.toml`
+### Step 3: Add sidecar after SQLite is live
 
 ```toml
 [processes]
@@ -318,14 +248,14 @@ flyctl secrets set \
   backup = "litestream replicate -config /etc/litestream.yml"
 ```
 
-### Step 3: Scale sidecar
+### Step 4: Scale and verify
 
 ```bash
 flyctl scale count backup=1 -a construct-api
 flyctl logs -a construct-api | grep "litestream"
 ```
 
-## Branch Protection
+## Section 8 - Branch protection (P1)
 
 Requires GitHub Pro for private repositories.
 
@@ -334,26 +264,24 @@ Requires GitHub Pro for private repositories.
 3. Branch name pattern: `main`.
 4. Enable:
    - Require status checks to pass before merging.
-   - Select the CI checks.
    - Require branches to be up to date before merging.
-   - Require branches to be up to date before merging.
-   - Select the `CI` checks.
    - Include administrators.
-5. Save.
+5. Select required checks:
+   - `typecheck`
+   - `playwright e2e`
+   - `build api docker image`
+   - `build web docker image`
+6. Save.
 
-## Verify after deploy
+## Section 9 - Final verification
 
 ```bash
-curl -sS https://construct-api.fly.dev/healthz
-curl -sS https://construct-api.fly.dev/readyz
-curl -sS -o /dev/null -w "%{http_code}\n" https://construct-api.fly.dev/uploads/test.mp3
 pnpm run ci
 curl -sS https://construct-api.fly.dev/healthz
 curl -sS https://construct-api.fly.dev/readyz
 curl -sS -o /dev/null -w "%{http_code}\n" https://construct-api.fly.dev/uploads/test.mp3
-# Expect healthz ok, readyz ok, and protected uploads 401 or 404 for absent test asset.
 ```
 
-Expect API health/ready to return `ok`. Protected file probes return `401`
-when the object exists and the caller is unauthenticated, or `404` if the test
-object is absent.
+Expect API health and ready checks to return `ok`. The protected upload probe
+returns `401` for an existing unauthenticated object, or `404` if the test object
+is absent.

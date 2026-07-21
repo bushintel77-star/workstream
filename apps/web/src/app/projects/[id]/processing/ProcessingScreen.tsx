@@ -120,13 +120,13 @@ export function ProcessingScreen({ projectId, address, status }: Props) {
   return (
     <main className={`${s.pageNarrow} ${styles.processingPage}`}>
       <section className={styles.processingHero}>
-        <span className={s.kicker}>PIPELINE PROCESSING</span>
-        <h1 className={s.h1}>Preparing the project hub</h1>
+        <span className={s.kicker}>SITE PROCESSING</span>
+        <h1 className={s.h1}>Preparing the drawing board</h1>
         <p className={styles.processingAddress}>{address}</p>
         <p className={styles.processingCopy}>
-          Workstream is moving the site walkthrough through the five production
-          stages. This page refreshes automatically and will stop with a retry
-          action if processing stalls.
+          Workstream is turning the site walkthrough into survey context,
+          sketch guidance, quote data, and audit checks. This page refreshes
+          automatically and will stop with a retry action if processing stalls.
         </p>
       </section>
 

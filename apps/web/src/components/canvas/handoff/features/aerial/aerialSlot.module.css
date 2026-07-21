@@ -53,7 +53,7 @@
 
 .primaryText {
   margin: 0;
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.4;

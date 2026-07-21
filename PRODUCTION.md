@@ -13,6 +13,11 @@ Live stack (May 2026). Product: **Workstream**. Studio on artefacts: **Curtis & 
 
 Fly app names remain `construct-api` / `construct-web` until cutover to `workstream-*` (see [CONSOLIDATION.md](CONSOLIDATION.md)).
 
+Current web build configuration points `NEXT_PUBLIC_API_URL` at the Railway API
+while the Fly API remains documented for the production Fly runbook and smoke
+checks. Pick one API target during cutover and keep `apps/web/fly.toml`, CI, and
+EAS env values aligned.
+
 `apps/api/fly.toml` sets `PORTAL_BASE_URL=https://construct-web.fly.dev` so
 magic links and deposit checkout callbacks resolve to the live client portal.
 Override it only when a custom portal domain is live.
@@ -26,8 +31,9 @@ To lock down:
 ```bash
 flyctl secrets set \
   CLERK_SECRET_KEY="sk_live_…" \
-  CLERK_PUBLISHABLE_KEY="pk_live_…" \
   AUTH_REQUIRED=true \
+  PUBLIC_API_URL="https://construct-api.fly.dev" \
+  CORS_ORIGIN="https://construct-web.fly.dev" \
   -a construct-api
 
 flyctl secrets set \
@@ -56,6 +62,8 @@ Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time for m
 | `STRIPE_SECRET_KEY` | construct-api | Deposit checkout uses dev fallback |
 | `STRIPE_WEBHOOK_SECRET` | construct-api | Stripe webhooks accept dev-mode unsigned payloads |
 | `CLERK_*` | both | Dev-user mode (current) |
+| `PUBLIC_API_URL` | construct-api | API readiness and generated absolute URLs may be incorrect |
+| `CORS_ORIGIN` | construct-api | Browser calls from the web app may be rejected |
 | `WORKSTREAM_PORTAL_SECRET` | construct-api | Rotate from legacy `CONSTRUCT_PORTAL_SECRET` |
 | `PORTAL_BASE_URL` | construct-api | Set in `apps/api/fly.toml`; override only for a custom portal domain |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | construct-api | OpenTelemetry spans stay local/no-op |

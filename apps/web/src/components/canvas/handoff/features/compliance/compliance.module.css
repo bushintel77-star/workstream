@@ -10,7 +10,7 @@
   background: var(--hc-glass, rgba(255, 251, 252, 0.92));
   backdrop-filter: blur(16px);
   box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   color: #241318;
   display: flex;
   flex-direction: column;

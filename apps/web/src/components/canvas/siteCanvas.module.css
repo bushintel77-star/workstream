@@ -16,8 +16,8 @@
   --radius-sheet: 18px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
-  --font: "Sora", "Segoe UI", sans-serif;
-  --display: "Fraunces", Georgia, serif;
+  --font: var(--font-body);
+  --display: var(--font-serif);
   /* Fit sheet working-drawing paper */
   --paper: #faf6f2;
   --paper-ink: #241318;

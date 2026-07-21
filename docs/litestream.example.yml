@@ -1,16 +1,16 @@
-# Litestream configuration — replicate the Workstream JSON snapshot to object
-# storage for disaster recovery.
+# Litestream configuration - SQLite-ready disaster recovery.
 #
-# This file is documentation-first until the operator provisions Cloudflare R2
-# or Backblaze B2 credentials and adds the Fly sidecar shown in
-# docs/LITESTREAM-SETUP.md. Do not hardcode credentials here.
+# Workstream currently persists to a JSON snapshot. Litestream replicates
+# SQLite WAL files, not arbitrary JSON, so do not enable this sidecar until the
+# SQLite migration creates the database path below. Do not hardcode credentials
+# here.
 
 dbs:
-  - path: /repo/apps/api/data/store.json
+  - path: /repo/apps/api/data/workstream.sqlite
     replicas:
       - type: s3
         bucket: ${LITESTREAM_BUCKET}
-        path: construct-api/store.json
+        path: construct-api/workstream.sqlite
         endpoint: ${LITESTREAM_S3_ENDPOINT}
         region: ${LITESTREAM_S3_REGION}
         access-key-id: ${LITESTREAM_ACCESS_KEY_ID}

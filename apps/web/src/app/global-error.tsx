@@ -38,7 +38,7 @@ export default function GlobalError({
             <button type="button" className={s.btn} onClick={() => reset()}>
               Reload
             </button>
-            <Link href="/" className={s.btnGhost}>
+            <Link href="/" className={`${s.btn} ${s.btnGhost}`}>
               Back to projects
             </Link>
           </div>

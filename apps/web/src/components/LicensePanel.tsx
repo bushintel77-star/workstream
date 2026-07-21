@@ -117,14 +117,14 @@ export function LicensePanel({
               onClick={runStudioCheckout}
             >
               {pending
-                ? "Starting"
+                ? "Starting..."
                 : studioPriceConfigured
                   ? "Upgrade to Studio"
                   : "Unlock Studio (dev)"}
             </button>
             <button
               type="button"
-              className={s.btnGhost}
+              className={`${s.btn} ${s.btnGhost}`}
               disabled={pending}
               onClick={() => {
                 startTransition(async () => {
@@ -146,14 +146,14 @@ export function LicensePanel({
               onClick={runSeatCheckout}
             >
               {pending
-                ? "Starting"
+                ? "Starting..."
                 : seatPriceConfigured
                   ? "Add seat"
                   : "Add seat (dev)"}
             </button>
             <button
               type="button"
-              className={s.btnGhost}
+              className={`${s.btn} ${s.btnGhost}`}
               disabled={pending || license.seats_available <= 0}
               onClick={inviteMember}
             >
@@ -161,7 +161,7 @@ export function LicensePanel({
             </button>
             <button
               type="button"
-              className={s.btnGhost}
+              className={`${s.btn} ${s.btnGhost}`}
               disabled={pending}
               onClick={() => {
                 startTransition(async () => {
@@ -197,7 +197,7 @@ export function LicensePanel({
                 {m.role !== "owner" ? (
                   <button
                     type="button"
-                    className={s.btnGhost}
+                    className={`${s.btn} ${s.btnGhost}`}
                     disabled={pending}
                     onClick={() => {
                       startTransition(async () => {

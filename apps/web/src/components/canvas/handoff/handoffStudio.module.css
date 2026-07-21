@@ -95,7 +95,7 @@
     radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.32), transparent 50%),
     var(--sds-canvas-bg);
   color: var(--hc-ink);
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
   overflow: hidden;
   min-height: 620px;
 }
@@ -148,7 +148,7 @@
 
 .brandName {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-serif);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -742,7 +742,7 @@
 
 .onboardHintTitle {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-serif);
   font-size: 19px;
   font-weight: 500;
   color: var(--hc-ink-faint);
@@ -778,7 +778,7 @@
     4px 4px 11px rgba(42, 23, 29, 0.16)
   );
   color: var(--hc-ink, #241318);
-  font-family: Sora, ui-sans-serif, sans-serif;
+  font-family: var(--font-body);
 }
 
 .undoCells {
@@ -1197,7 +1197,7 @@
 
 .sunTime {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-serif);
   font-size: 19px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -1271,7 +1271,7 @@
 
 .bomTotal {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-serif);
   font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -1633,7 +1633,7 @@
 
 .quotePanel h2 {
   margin: 0 0 8px;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--font-serif);
   font-size: 28px;
 }
 

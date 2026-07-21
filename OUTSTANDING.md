@@ -40,9 +40,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **BullMQ + Redis (code path)** — worker in [`queue.ts`](apps/api/src/lib/queue.ts),
       `[processes] worker` in `fly.toml`, pipeline enqueues when `REDIS_URL` set.
       **Human:** provision Upstash/Fly Redis + `fly scale count worker=1`.
-- [x] **Litestream → R2/B2 (documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
+- [x] **Litestream -> R2/B2 (SQLite-ready documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
       + [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
-      **Human:** bucket credentials + Fly sidecar.
+      **Human:** bucket credentials + Fly sidecar after the SQLite migration.
 - [x] **CI deploy job** — split `deploy-api` + `deploy-web`; `FLY_API_WEB` wired.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions.
 - [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
@@ -73,9 +73,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
       on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
-- [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox.
 - [x] **Local CI guardrails** — root `pnpm run ci` now runs install,
-      mobile placeholder detection, portal Edge import guard, typecheck, lint,
+      mobile placeholder detection, portal Edge runtime/import guard, typecheck, lint,
       and Vitest.
 - [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox; route spans
       use active context, token usage is attached to provider spans, aerial
@@ -134,15 +133,18 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 
 | Action | Command / where |
 |--------|-----------------|
-| Clerk on Fly | `flyctl secrets set CLERK_* -a construct-api` / `construct-web` |
-| Sentry DSN | `flyctl secrets set SENTRY_DSN=…` both apps |
-| Redis worker | `REDIS_URL` + `fly scale count worker=1 -a construct-api` |
-| EAS project | `cd apps/mobile && eas init` |
-| Branch protection | GitHub repo Settings (Pro plan) |
+| Clerk on Fly | Runbook Section 1: API `CLERK_SECRET_KEY`, web `CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `AUTH_REQUIRED=true` |
+| API base/CORS | Runbook Section 1: `PUBLIC_API_URL=https://construct-api.fly.dev`, `CORS_ORIGIN=https://construct-web.fly.dev` |
+| Sentry DSN | Runbook Section 3: `flyctl secrets set SENTRY_DSN=...` on both apps |
+| Redis worker | Runbook Section 2: `REDIS_URL` + `flyctl scale count worker=1 -a construct-api` |
+| Stripe / portal / OTEL | Runbook Section 6: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WORKSTREAM_PORTAL_SECRET`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
+| EAS project | Runbook Section 5: `cd apps/mobile && npx eas-cli init` plus store credentials |
+| Litestream | Runbook Section 7 after SQLite migration |
+| Branch protection | Runbook Section 8, GitHub repo Settings (Pro plan) |
 | Fly tokens | `FLY_API_TOKEN` + `FLY_API_WEB` — **done** |
 
 ## Sandbox-blocked actions (need the user)
 
 - `flyctl scale count 1 -a construct-api` (if not already)
-- `flyctl secrets deploy` after staging new secrets
+- `flyctl secrets set ...` commands from the runbook, then redeploy where noted
 - Valid Apple / Google credentials for EAS submit

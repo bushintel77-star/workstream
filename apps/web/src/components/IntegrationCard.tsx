@@ -98,7 +98,7 @@ export function IntegrationCard({ integration: i }: { integration: Integration }
         </SubmitButton>
         {i.source === "store" && (
           <SubmitButton
-            className={s.btnDanger}
+            className={`${s.btn} ${s.btnDanger}`}
             pendingLabel="Clearing…"
             disabled={pending}
             formAction={async (fd) => {

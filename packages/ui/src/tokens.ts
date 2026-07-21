@@ -33,8 +33,9 @@ export const tokens = {
   },
 
   font: {
-    display: "Fraunces",
-    body: "Sora",
+    display: "IBM Plex Mono",
+    body: "IBM Plex Sans",
+    serif: "IBM Plex Serif",
     mono: "IBM Plex Mono",
   },
 

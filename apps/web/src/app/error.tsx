@@ -37,7 +37,7 @@ export default function ErrorBoundary({
         <button type="button" className={s.btn} onClick={() => reset()}>
           Try again
         </button>
-        <Link href="/" className={s.btnGhost}>
+        <Link href="/" className={`${s.btn} ${s.btnGhost}`}>
           Back to projects
         </Link>
       </div>
