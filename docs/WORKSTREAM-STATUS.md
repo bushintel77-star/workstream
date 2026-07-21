@@ -1,7 +1,7 @@
 # Workstream status
 
 Generated 2026-07-21 for branch `cursor/workstream-gold-standard-rebuild-970f`
-at `6e2f0ce`.
+at `647ae84`.
 
 ## Shipped on the gold-standard branch
 

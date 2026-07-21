@@ -14,7 +14,7 @@ Live stack (July 2026). Product: **Workstream**. Studio on artefacts: **Curtis &
 Fly app names remain `construct-api` / `construct-web` until cutover to `workstream-*` (see [CONSOLIDATION.md](CONSOLIDATION.md)).
 
 Verified against branch `cursor/workstream-gold-standard-rebuild-970f` at
-`6e2f0ce` on 2026-07-21.
+`647ae84` on 2026-07-21.
 
 `apps/api/fly.toml` sets `PORTAL_BASE_URL=https://construct-web.fly.dev` so
 magic links and deposit checkout callbacks resolve to the live client portal.
