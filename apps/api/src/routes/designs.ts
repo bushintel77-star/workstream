@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runDesign } from "../lib/design-job";
+import { runPipelineJobWithTelemetry } from "../lib/queue";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function designRoutes(fastify: FastifyInstance) {
@@ -15,7 +16,10 @@ export default async function designRoutes(fastify: FastifyInstance) {
         return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       }
       try {
-        const design = await runDesign(fastify.store, ownerId, projectId);
+        const design = await runPipelineJobWithTelemetry(
+          { kind: "design", ownerId, projectId },
+          async () => await runDesign(fastify.store, ownerId, projectId),
+        );
         return reply.code(201).send({ design });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Design failed";
