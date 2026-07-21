@@ -6,15 +6,13 @@ import { SettingsMasthead } from "../SettingsShell";
 export const dynamic = "force-dynamic";
 
 export default async function AccountingPage() {
-  const status = await Promise.all([getMyobStatus(), getXeroStatus()])
-    .then(([myob, xero]) => ({ myob, xero, error: null as string | null }))
-    .catch(() => ({
-      myob: null,
-      xero: null,
-      error:
-        "Accounting status could not be loaded. Check the API connection and try again.",
-    }));
-  const { myob, xero, error } = status;
+  const [myob, xero] = await Promise.all([getMyobStatus(), getXeroStatus()]);
+  // The status helpers degrade to null when the API call fails, so a pair of
+  // nulls means the connection is down — surface that rather than a silent blank.
+  const error =
+    myob === null && xero === null
+      ? "Accounting status could not be loaded. Check the API connection and try again."
+      : null;
 
   const fmt = (iso: string | null) =>
     iso
