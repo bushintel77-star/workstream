@@ -262,7 +262,7 @@ curl -sS https://construct-api.fly.dev/readyz
 curl -sS -o /dev/null -w "%{http_code}\n" https://construct-api.fly.dev/uploads/test.mp3
 ```
 
-Expect local CI to pass. On 2026-07-21 this is 105 Vitest files and 442
+Expect local CI to pass. On 2026-07-21 this is 105 Vitest files and 443
 tests. Health and readiness return `ok`. Protected file probes return `401`
 when the object exists and the caller is unauthenticated, or `404` if the test
 object is absent.

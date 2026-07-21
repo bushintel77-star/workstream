@@ -1,6 +1,6 @@
 ## Workstream Gap Matrix — generated 2026-07-21T00:27:00Z
 
-Verification: `pnpm run ci` exits 0 with 105 Vitest files and 442 tests. Bare
+Verification: `pnpm run ci` exits 0 with 105 Vitest files and 443 tests. Bare
 `pnpm ci` exits `ERR_PNPM_CI_NOT_IMPLEMENTED` on pnpm 9.15.4.
 
 | # | Task | Source | Status | Gap Type | Owner | Priority |
@@ -13,7 +13,7 @@ Verification: `pnpm run ci` exits 0 with 105 Vitest files and 442 tests. Bare
 | 6 | Branch protection on `main` with required CI checks | OUTSTANDING.md | BLOCKED until GitHub Pro / admin action | HumanOps | Human | P1 |
 | 7 | OpenTelemetry tracing for Anthropic, OpenAI, Mapbox, queue worker, and API route handlers | GAP-ANALYSIS.md | CLOSED in `f00a98e` and hardened in `446beb5`; route, provider, aerial, worker, and shutdown spans are wired behind `OTEL_EXPORTER_OTLP_ENDPOINT` | Code | Agent | P2 |
 | 8 | Edge runtime for `/portal/*` pages and CI guard against Node-only portal imports | GAP-ANALYSIS.md | CLOSED in `6e2f0ce`; portal error boundary declares Edge runtime and `web:check-portal-edge` validates route files plus Node-only imports | Code | Agent | P2 |
-| 9 | Route contract smoke coverage extended beyond core health/projects routes | OUTSTANDING.md | CLOSED; protected files, studio AI, orchestration, Stripe webhook, geocode, catalog, supplier, weather, carbon, readiness, validation, and auth-configuration guards are covered | Test | Agent | P1 |
+| 9 | Route contract smoke coverage extended beyond core health/projects routes | OUTSTANDING.md | CLOSED in `7bcf8c1`; protected files, studio AI, orchestration, Stripe webhook, geocode, catalog, supplier, weather, carbon, readiness, validation, auth-configuration, cadastral, boundary, CAD, and integration hub write guards are covered | Test | Agent | P1 |
 | 10 | Litestream backup configuration promoted from template to operator setup docs | OUTSTANDING.md | CLOSED; `docs/litestream.example.yml` and `docs/LITESTREAM-SETUP.md` document R2/B2 and Fly sidecar steps | Doc | Agent | P2 |
 | 11 | Mobile `REPLACE_AFTER_eas_init` placeholder extracted to EAS notes and CI linted | OUTSTANDING.md | CLOSED; `apps/mobile/app.json` is clean and `mobile:check-placeholders` runs in local/GitHub CI | Test | Agent | P1 |
 | 12 | Current status document restored and kept authoritative | User prompt | CLOSED in `647ae84`; `docs/WORKSTREAM-STATUS.md` reflects current verification and remaining human-owned work | Doc | Agent | P2 |

@@ -13,8 +13,8 @@ Live stack (July 2026). Product: **Workstream**. Studio on artefacts: **Curtis &
 
 Fly app names remain `construct-api` / `construct-web` until cutover to `workstream-*` (see [CONSOLIDATION.md](CONSOLIDATION.md)).
 
-Verified against branch `cursor/workstream-gold-standard-rebuild-970f` at
-`647ae84` on 2026-07-21.
+Verified against branch `cursor/workstream-gold-standard-rebuild-970f` on
+2026-07-21.
 
 `apps/api/fly.toml` sets `PORTAL_BASE_URL=https://construct-web.fly.dev` so
 magic links and deposit checkout callbacks resolve to the live client portal.
@@ -116,5 +116,5 @@ Expect API health/ready `ok`, web `200`/redirect, and protected uploads to
 return `401` for existing unauthenticated objects or `404` when the requested
 object is absent.
 
-Expect `pnpm run ci` to pass with 105 Vitest files and 442 tests. Bare
+Expect `pnpm run ci` to pass with 105 Vitest files and 443 tests. Bare
 `pnpm ci` is not implemented by pnpm 9.15.4.

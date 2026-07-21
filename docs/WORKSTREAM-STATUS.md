@@ -1,7 +1,6 @@
 # Workstream status
 
-Generated 2026-07-21 for branch `cursor/workstream-gold-standard-rebuild-970f`
-at `647ae84`.
+Generated 2026-07-21 for branch `cursor/workstream-gold-standard-rebuild-970f`.
 
 ## Shipped on the gold-standard branch
 
@@ -56,7 +55,7 @@ Latest local verification:
 pnpm run ci
 ```
 
-Result: exits 0 with 105 Vitest files and 442 tests passing.
+Result: exits 0 with 105 Vitest files and 443 tests passing.
 
 Bare `pnpm ci` exits `ERR_PNPM_CI_NOT_IMPLEMENTED` on pnpm 9.15.4; use
 `pnpm run ci` for the repository gate.
