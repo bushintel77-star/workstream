@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  getActiveTelemetryAttributes,
   initTelemetry,
   resetTelemetryForTest,
+  runWithTelemetryAttributes,
   shutdownTelemetry,
 } from "./telemetry";
 
@@ -39,6 +41,30 @@ describe("telemetry", () => {
       traceUrl: "https://otel.example.com/v1/traces",
     });
     expect(start).toHaveBeenCalledOnce();
+  });
+
+  it("inherits active attributes for nested telemetry spans", async () => {
+    await runWithTelemetryAttributes(
+      {
+        "operator.id": "operator-1",
+        "project.id": "project-1",
+      },
+      async () => {
+        await runWithTelemetryAttributes(
+          {
+            "pipeline.stage": "design",
+            "tokens.input": undefined,
+          },
+          async () => {
+            expect(getActiveTelemetryAttributes()).toEqual({
+              "operator.id": "operator-1",
+              "project.id": "project-1",
+              "pipeline.stage": "design",
+            });
+          },
+        );
+      },
+    );
   });
 });
 

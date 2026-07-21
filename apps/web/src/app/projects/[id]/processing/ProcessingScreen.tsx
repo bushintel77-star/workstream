@@ -161,7 +161,7 @@ export function ProcessingScreen({ projectId, address, status }: Props) {
           </p>
           <button
             type="button"
-            className={s.primaryButton}
+            className={s.btn}
             onClick={retry}
             disabled={isPending}
           >

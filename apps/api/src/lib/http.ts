@@ -129,7 +129,7 @@ export async function fetchWithRetry(
   }
 
   const { SpanKind, SpanStatusCode, trace } = await import("@opentelemetry/api");
-  const { setTelemetryAttributes } = await import("./telemetry");
+  const { getActiveTelemetryAttributes, setTelemetryAttributes } = await import("./telemetry");
   const tracer = trace.getTracer("workstream-api");
 
   return await tracer.startActiveSpan(
@@ -137,6 +137,7 @@ export async function fetchWithRetry(
     {
       kind: SpanKind.CLIENT,
       attributes: {
+        ...getActiveTelemetryAttributes(),
         "peer.service": opts.telemetry.provider,
         "http.request.method": methodFromInit(init),
         "url.full": hrefFromInput(input),

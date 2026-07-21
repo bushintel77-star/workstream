@@ -42,6 +42,20 @@ export function AppNav({ summary, brandSub = false }: Props) {
             Accounting
           </Link>
         </div>
+        <details className={nav.mobileMenu}>
+          <summary className={nav.menuButton}>Menu</summary>
+          <div className={nav.mobilePanel}>
+            <Link href="/" className={nav.mobileLink}>
+              Projects
+            </Link>
+            <Link href="/settings" className={nav.mobileLink}>
+              Integrations
+            </Link>
+            <Link href="/settings/accounting" className={nav.mobileLink}>
+              Accounting
+            </Link>
+          </div>
+        </details>
         <span
           className={`${s.pill} ${plan === "studio" ? s.pillOk : s.pillInfo} ${nav.plan}`}
         >

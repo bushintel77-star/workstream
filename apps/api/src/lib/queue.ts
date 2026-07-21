@@ -17,6 +17,7 @@ type JobKind =
   | "costing"
   | "audit"
   | "output"
+  | "develop"
   | "pipeline";
 
 export type PipelineJobPayload = {
@@ -60,6 +61,21 @@ export async function enqueuePipelineJob(
   }
 }
 
+export async function runPipelineJobWithTelemetry<T>(
+  payload: PipelineJobPayload,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return await withTelemetrySpan(
+    `pipeline.job.${payload.kind}`,
+    {
+      "pipeline.stage": payload.kind,
+      "operator.id": payload.ownerId,
+      "project.id": payload.projectId,
+    },
+    async () => await fn(),
+  );
+}
+
 async function runJob(store: Store, payload: PipelineJobPayload): Promise<void> {
   await withTelemetrySpan(
     `pipeline.job.${payload.kind}`,
@@ -90,6 +106,8 @@ async function runJob(store: Store, payload: PipelineJobPayload): Promise<void> 
           break;
         case "output":
           throw new Error("output jobs are enqueued via output routes");
+        case "develop":
+          throw new Error("develop jobs are executed inline by the API route");
         default:
           throw new Error(`Unknown job kind: ${kind satisfies never}`);
       }
