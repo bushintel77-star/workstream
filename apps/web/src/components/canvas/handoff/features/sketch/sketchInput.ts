@@ -1,5 +1,9 @@
 import type { PctPoint } from "../../geometry";
 import type { SketchStroke } from "../../studioCatalog";
+import {
+  SKETCH_TIP_BAND,
+  type SketchTipGrade,
+} from "./sketchCursors";
 
 export const MIN_SKETCH_POINT_DISTANCE_PCT = 0.38;
 
@@ -11,15 +15,23 @@ export function shouldAppendSketchPoint(
   return Math.hypot(next.x - previous.x, next.y - previous.y) >= minimumDistancePct;
 }
 
+/**
+ * Graded marker tip — Fine stays a hairline nib; Marker opens to a thick felt.
+ * Stylus pressure walks the chosen tip band; mouse/touch sits mid-band
+ * (touch slightly heavier for finger ink).
+ */
 export function sketchWidthForPointer(
   pointerType: string,
   averagePressure: number | null,
+  tip: SketchTipGrade = "medium",
 ): number {
-  if (pointerType !== "pen" || averagePressure == null) {
-    return pointerType === "touch" ? 2.35 : 1.9;
+  const { min, max } = SKETCH_TIP_BAND[tip];
+  if (pointerType === "pen" && averagePressure != null) {
+    const pressure = Math.max(0, Math.min(1, averagePressure));
+    return +(min + pressure * (max - min)).toFixed(2);
   }
-  const pressure = Math.max(0, Math.min(1, averagePressure));
-  return +(1.35 + pressure * 2.25).toFixed(2);
+  const mid = min + (max - min) * (pointerType === "touch" ? 0.55 : 0.35);
+  return +mid.toFixed(2);
 }
 
 function distanceToSegmentPx(

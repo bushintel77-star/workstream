@@ -190,17 +190,33 @@ export async function saveDesignCanvasAction(
   placements: CatalogPlacement[],
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
-  annotations: DesignCanvas["annotations"] = [],
+  annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
 ) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot save site plan");
+  }
+  const { UpsertDesignCanvasSchema } = await import("@workstream/contracts");
+  const parsed = UpsertDesignCanvasSchema.safeParse({
+    placements,
+    strokes,
+    irrigation_zones: irrigationZones,
+    ...(annotations != null ? { annotations } : {}),
+    ...(siteFrame != null ? { site_frame: siteFrame } : {}),
+  });
+  if (!parsed.success) {
+    throw new Error(
+      parsed.error.issues[0]?.message ?? "Site plan failed validation",
+    );
+  }
   try {
     const result = await saveDesignCanvasApi(
       projectId,
-      placements,
-      strokes,
-      irrigationZones,
-      annotations,
-      siteFrame,
+      parsed.data.placements,
+      parsed.data.strokes ?? [],
+      parsed.data.irrigation_zones ?? [],
+      parsed.data.annotations,
+      parsed.data.site_frame,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);

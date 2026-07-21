@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import s from "../styles/app.module.css";
+import s from "../../../../styles/app.module.css";
 
-export default function ErrorBoundary({
+/**
+ * Studio-scoped boundary — keeps the operator on the project instead of a
+ * full-app crash when CadPlan / Sketch / Fit sheet throw during render.
+ */
+export default function ProjectStudioError({
   error,
   reset,
 }: {
@@ -12,14 +16,14 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[app]", error.digest ?? error.message, error);
+    console.error("[studio]", error.digest ?? error.message, error);
   }, [error]);
 
   return (
     <main className={s.pageNarrow}>
       <header className={s.masthead}>
         <div className={s.brand}>
-          Something went wrong
+          Studio interrupted
           <span className={s.brandSub}>Workstream</span>
         </div>
         <Link href="/" className={s.crumb}>
@@ -27,11 +31,10 @@ export default function ErrorBoundary({
         </Link>
       </header>
 
-      <h1 className={s.headline}>That didn&apos;t land.</h1>
+      <h1 className={s.headline}>The drawing hit an error.</h1>
       <p className={s.lede}>
-        The page hit an error. Most often that&apos;s the API briefly waking up
-        — wait a beat and try again. If it persists, screenshot this and send it
-        through.
+        Your last autosave may still be on the server. Try again to reopen the
+        canvas, or go back to projects if it keeps failing.
       </p>
 
       {error.digest ? (
@@ -40,7 +43,7 @@ export default function ErrorBoundary({
 
       <div className={s.actionBar}>
         <button type="button" className={s.btn} onClick={() => reset()}>
-          Try again
+          Reopen studio
         </button>
         <Link href="/" className={`${s.btn} ${s.btnGhost}`}>
           Back to projects

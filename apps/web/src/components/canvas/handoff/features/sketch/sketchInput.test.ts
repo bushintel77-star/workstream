@@ -4,6 +4,7 @@ import {
   shouldAppendSketchPoint,
   sketchWidthForPointer,
 } from "./sketchInput";
+import { sketchEraserCursor, sketchPenCursor } from "./sketchCursors";
 
 describe("sketch input", () => {
   it("decimates tiny pointer moves but keeps intentional movement", () => {
@@ -15,10 +16,22 @@ describe("sketch input", () => {
     );
   });
 
-  it("maps pen pressure to a restrained stroke width", () => {
-    expect(sketchWidthForPointer("pen", 0)).toBe(1.35);
-    expect(sketchWidthForPointer("pen", 1)).toBe(3.6);
-    expect(sketchWidthForPointer("touch", 0.8)).toBe(2.35);
+  it("grades pen pressure inside the chosen tip band", () => {
+    expect(sketchWidthForPointer("pen", 0, "fine")).toBe(1.05);
+    expect(sketchWidthForPointer("pen", 1, "fine")).toBe(2.25);
+    expect(sketchWidthForPointer("pen", 0, "marker")).toBe(2.85);
+    expect(sketchWidthForPointer("pen", 1, "marker")).toBe(5.5);
+    expect(sketchWidthForPointer("mouse", null, "medium")).toBeGreaterThan(1.7);
+    expect(sketchWidthForPointer("touch", null, "medium")).toBeGreaterThan(
+      sketchWidthForPointer("mouse", null, "medium"),
+    );
+  });
+
+  it("builds pen and eraser cursors", () => {
+    expect(sketchPenCursor("fine")).toContain("data:image/svg+xml");
+    expect(sketchPenCursor("marker")).toContain("data:image/svg+xml");
+    expect(sketchEraserCursor()).toContain("data:image/svg+xml");
+    expect(sketchEraserCursor()).toContain("cell");
   });
 
   it("erases the latest stroke under the pointer", () => {

@@ -9,24 +9,13 @@ import {
   listOutputs,
 } from "../../../lib/api";
 import { requireSignedIn } from "../../../lib/auth";
+import {
+  resolveCanvasMode,
+  type CanvasProgress,
+} from "../../../lib/canvas-mode";
 import type { StudioMode } from "../../../components/canvas/handoff/studioCatalog";
 
 export const dynamic = "force-dynamic";
-
-function parseMode(raw: string | string[] | undefined): StudioMode {
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  if (
-    v === "survey" ||
-    v === "sketch" ||
-    v === "cad" ||
-    v === "elevation" ||
-    v === "quote" ||
-    v === "share"
-  ) {
-    return v;
-  }
-  return "cad";
-}
 
 export default async function ProjectCanvasPage({
   params,
@@ -49,6 +38,16 @@ export default async function ProjectCanvasPage({
   if (!project) notFound();
 
   const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
+  const progress: CanvasProgress = {
+    hasAerial: Boolean(survey?.aerial_uri),
+    hasSketch: (canvas?.strokes?.length ?? 0) > 0,
+    hasCad:
+      (canvas?.placements?.length ?? 0) > 0 ||
+      Boolean(canvas?.site_frame?.boundary?.length),
+    hasQuote: Boolean(quoteOut),
+  };
+  /** Clamp locked deep-links before first paint — avoids cad→survey flash. */
+  const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
 
   return (
     <Suspense fallback={null}>
@@ -64,7 +63,7 @@ export default async function ProjectCanvasPage({
           survey?.lot_area_m2 ??
           230.82
         }
-        initialMode={parseMode(sp.mode)}
+        initialMode={initialMode}
         initialPlacements={canvas?.placements ?? []}
         initialStrokes={canvas?.strokes ?? []}
         initialSiteFrame={canvas?.site_frame ?? null}

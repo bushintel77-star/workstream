@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import s from "../styles/app.module.css";
+import "../styles/globals.css";
 
 export default function GlobalError({
   error,
@@ -10,6 +12,10 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error("[global]", error.digest ?? error.message, error);
+  }, [error]);
+
   return (
     <html lang="en-AU">
       <body className={s.globalErrorBody}>

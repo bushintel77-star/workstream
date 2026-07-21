@@ -14,10 +14,13 @@
 .node,
 .hub {
   pointer-events: auto;
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
-  backdrop-filter: blur(14px);
-  box-shadow: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
+  border: none;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
   color: var(--hc-ink, #241318);
   font: inherit;
   cursor: pointer;
@@ -26,8 +29,8 @@
 .node {
   position: absolute;
   min-width: 64px;
-  min-height: 36px;
-  padding: 4px 10px;
+  min-height: 44px;
+  padding: 6px 12px;
   border-radius: var(--hc-r-pill, 999px);
   font-size: 10px;
   font-weight: 650;
@@ -39,9 +42,15 @@
 }
 
 .node:hover {
-  background: var(--hc-ink, #241318);
-  color: #ffd3de;
-  border-color: var(--hc-ink, #241318);
+  color: var(--hc-ink, #241318);
+}
+
+.node:active {
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .nodeKicker {

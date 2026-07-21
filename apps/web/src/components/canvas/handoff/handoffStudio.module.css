@@ -136,9 +136,15 @@
   flex-wrap: nowrap;
   min-height: 56px;
   z-index: 30;
-  background: color-mix(in srgb, var(--sds-canvas-bg) 78%, transparent);
-  backdrop-filter: blur(16px) saturate(1.1);
-  border-bottom: 1px solid var(--ws-glass-border);
+  /* Same soft plastic dock language as the left swatch rail. */
+  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 88%, transparent);
+  backdrop-filter: blur(12px) saturate(1.05);
+  border-bottom: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.55),
+    2px 2px 6px rgba(42, 23, 29, 0.08)
+  );
 }
 
 .brandBlock {
@@ -178,12 +184,16 @@
 .modes {
   display: flex;
   gap: 3px;
-  background: rgba(36, 19, 24, 0.05);
+  background: var(--hc-neu-surface, #f1e4e9);
   border-radius: var(--hc-r-pill);
   padding: 3px;
   flex: none;
   /* Recessed segmented-control track so the active mode reads as raised. */
-  box-shadow: var(--hc-neu-in, inset 1px 1px 3px rgba(42, 23, 29, 0.12));
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .rootDark .modes {
@@ -191,8 +201,9 @@
 }
 
 .modeBtn {
-  height: 28px;
-  padding: 0 12px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 14px;
   border-radius: var(--hc-r-pill);
   border: none;
   cursor: pointer;
@@ -244,10 +255,14 @@
 }
 
 .modeBtnActive {
-  background: var(--hc-ink);
-  color: var(--hc-invert);
+  background: var(--hc-neu-raised, #f6ebef);
+  color: var(--hc-ink);
   /* Physical raised toggle sitting proud of the recessed track. */
-  box-shadow: var(--hc-elev-1);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
 }
 
 .rootDark .modeBtnActive {
@@ -277,13 +292,17 @@
 }
 
 .toolBtn {
-  height: 34px;
+  height: 36px;
   padding: 0 13px;
   border-radius: var(--hc-r-control);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
-  /* Tactile glass chip — matches canvas tools rather than reading flat. */
-  background: var(--hc-glass-soft, rgba(255, 250, 251, 0.66));
-  box-shadow: var(--hc-elev-1);
+  border: none;
+  /* Same raised soft-plastic chip as left rail / instruments. */
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
   color: #241318;
   font-size: 11.5px;
   font-weight: 600;
@@ -292,47 +311,53 @@
   flex: none;
   white-space: nowrap;
   transition:
-    background 140ms var(--ws-ease),
-    border-color 140ms var(--ws-ease),
     box-shadow 140ms var(--ws-ease),
+    color 140ms var(--ws-ease),
     transform 140ms var(--ws-ease);
 }
 
 .toolBtn:hover {
-  border-color: rgba(36, 19, 24, 0.2);
-  box-shadow: var(--hc-elev-2);
-  transform: translateY(-1px);
+  color: var(--hc-ink);
 }
 
 .toolBtn:active {
-  transform: translateY(0);
-  box-shadow: var(--hc-neu-in, inset 1px 1px 3px rgba(42, 23, 29, 0.14));
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .toolBtnActive,
 .toolBtnActive:hover {
-  background: #241318;
-  color: #fff6f8;
-  border-color: #241318;
-  box-shadow: var(--hc-elev-2);
-  transform: none;
+  color: var(--hc-ink);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .rootDark .toolBtn {
-  border-color: rgba(230, 233, 234, 0.2);
+  border: 1px solid rgba(230, 233, 234, 0.2);
   background: rgba(255, 246, 248, 0.06);
   color: #e6e9ea;
+  box-shadow: none;
 }
 
-/** Tactile icon controls — raised glass chips, consistent with canvas tools. */
+/** Tactile icon controls — same 46px-class dock chip as left rail instruments. */
 .iconBtn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border-radius: var(--hc-r-control);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  background: var(--hc-glass-soft, rgba(255, 250, 251, 0.6));
-  box-shadow: var(--hc-elev-1);
+  border: none;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
   color: #5a4650;
   cursor: pointer;
   flex: none;
@@ -340,39 +365,48 @@
   align-items: center;
   justify-content: center;
   transition:
-    background 140ms var(--ws-ease),
     color 140ms var(--ws-ease),
-    border-color 140ms var(--ws-ease),
     box-shadow 140ms var(--ws-ease),
     transform 140ms var(--ws-ease);
 }
 
 .iconBtn:hover {
-  background: var(--hc-glass, rgba(255, 250, 251, 0.82));
-  border-color: rgba(36, 19, 24, 0.16);
-  box-shadow: var(--hc-elev-2);
   color: #241318;
-  transform: translateY(-1px);
 }
 
 .iconBtn:active {
-  transform: translateY(0);
-  box-shadow: var(--hc-neu-in, inset 1px 1px 3px rgba(42, 23, 29, 0.14));
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
+}
+
+.iconBtn:focus-visible,
+.toolBtn:focus-visible,
+.cmdBtn:focus-visible,
+.aiPill:focus-visible,
+.modeBtn:focus-visible,
+.segmentBtn:focus-visible {
+  outline: 2px solid #c2455f;
+  outline-offset: 2px;
 }
 
 .iconBtnActive,
 .iconBtnActive:hover {
-  background: #241318;
-  color: #fff6f8;
-  border-color: #241318;
-  box-shadow: var(--hc-elev-2);
-  transform: none;
+  color: #241318;
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .rootDark .iconBtn {
   color: #d3b3bc;
   background: rgba(255, 246, 248, 0.05);
-  border-color: rgba(230, 233, 234, 0.16);
+  border: 1px solid rgba(230, 233, 234, 0.16);
+  box-shadow: none;
 }
 
 .rootDark .iconBtn:hover {
@@ -388,18 +422,22 @@
 }
 
 .iconBtnSvg {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   display: block;
 }
 
 .cmdBtn {
-  height: 32px;
-  padding: 0 10px;
+  height: 40px;
+  padding: 0 12px;
   border-radius: var(--hc-r-control);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
-  background: var(--hc-glass-soft, rgba(255, 250, 251, 0.6));
-  box-shadow: var(--hc-elev-1);
+  border: none;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
   color: #7a5560;
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
@@ -407,33 +445,33 @@
   cursor: pointer;
   flex: none;
   transition:
-    border-color 140ms var(--ws-ease),
-    background 140ms var(--ws-ease),
     box-shadow 140ms var(--ws-ease),
-    color 140ms var(--ws-ease),
-    transform 140ms var(--ws-ease);
+    color 140ms var(--ws-ease);
 }
 
 .cmdBtn:hover {
-  border-color: rgba(36, 19, 24, 0.2);
-  background: var(--hc-glass, rgba(255, 250, 251, 0.82));
-  box-shadow: var(--hc-elev-2);
-  transform: translateY(-1px);
   color: #241318;
 }
 
 .cmdBtn:active {
-  transform: translateY(0);
-  box-shadow: var(--hc-neu-in, inset 1px 1px 3px rgba(42, 23, 29, 0.14));
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .aiPill {
-  height: 30px;
-  padding: 0 11px;
+  height: 40px;
+  padding: 0 12px;
   border-radius: var(--hc-r-control);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
-  box-shadow: var(--hc-elev-1);
+  border: none;
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
   color: var(--hc-ink);
   font-size: 11px;
   font-weight: 600;
@@ -442,51 +480,56 @@
   flex: none;
   font-family: "IBM Plex Mono", monospace;
   transition:
-    background 160ms var(--ws-ease),
-    border-color 160ms var(--ws-ease),
     box-shadow 160ms var(--ws-ease),
-    transform 160ms var(--ws-ease),
     color 160ms var(--ws-ease);
 }
 
 .aiPill:hover {
-  border-color: rgba(36, 19, 24, 0.22);
-  background: var(--hc-paper);
-  box-shadow: var(--hc-elev-2);
-  transform: translateY(-1px);
+  color: var(--hc-ink);
 }
 
 .aiPill:active {
-  transform: translateY(0);
-  box-shadow: var(--hc-neu-in, inset 1px 1px 3px rgba(42, 23, 29, 0.14));
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .aiPillHot {
-  border-color: var(--hc-ink);
-  background: var(--hc-ink);
-  color: var(--hc-invert);
-  box-shadow: var(--hc-elev-2);
+  color: var(--hc-ink);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .aiPillOk {
-  border-color: var(--hc-line);
-  background: transparent;
-  color: var(--hc-ink);
+  color: var(--hc-ink-muted);
 }
 
 .segment {
   display: flex;
-  border: 1px solid var(--ws-glass-border);
+  gap: 3px;
+  border: none;
   border-radius: var(--hc-r-control);
-  overflow: hidden;
+  overflow: visible;
   flex: none;
-  background: rgba(255, 251, 252, 0.45);
+  padding: 3px;
+  background: var(--hc-neu-surface, #f1e4e9);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
 }
 
 .segmentBtn {
-  height: 32px;
-  padding: 0 9px;
+  height: 34px;
+  padding: 0 10px;
   border: none;
+  border-radius: 8px;
   background: transparent;
   color: #5a4650;
   font-size: 10px;
@@ -496,12 +539,17 @@
 }
 
 .segmentBtn + .segmentBtn {
-  border-left: 1px solid rgba(36, 19, 24, 0.12);
+  border-left: none;
 }
 
 .segmentBtnActive {
-  background: #241318;
-  color: #ffd3de;
+  background: var(--hc-neu-raised, #f6ebef);
+  color: var(--hc-ink, #241318);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
 }
 
 .board {
@@ -1040,16 +1088,6 @@
   margin: 2px 0;
 }
 
-.glass {
-  background: rgba(255, 251, 252, 0.92);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
-  box-sizing: border-box;
-  animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
 .compliance {
   position: absolute;
   right: 14px;
@@ -1584,6 +1622,11 @@
 
 .dbhField input:focus {
   outline: none;
+}
+
+.dbhField input:focus-visible {
+  outline: 2px solid #c2455f;
+  outline-offset: 2px;
 }
 
 .elev {

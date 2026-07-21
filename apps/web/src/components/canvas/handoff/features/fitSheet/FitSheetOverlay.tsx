@@ -181,9 +181,8 @@ export function FitSheetOverlay({
   useEffect(() => {
     if (!onScaleDenom) return;
     const onWheel = (e: WheelEvent) => {
-      // Architectural 1:N ladder — Shift+wheel only. Plain wheel is world zoom
-      // (infinite) owned by HandoffDesignStudio on the board.
-      if (!e.shiftKey) return;
+      // Fit sheet: plain wheel owns the 1:N print ladder (binding UX).
+      // World zoom is deferred while frameOn — see HandoffDesignStudio.
       const target = e.target as HTMLElement | null;
       if (!target?.closest?.("[data-testid='studio-board']")) return;
       e.preventDefault();
@@ -319,7 +318,7 @@ export function FitSheetOverlay({
         />
         <div className={css.scaleHud} data-testid="fit-sheet-scale">
           {scaleTxt}
-          <span className={css.scaleHudHint}>Shift+wheel · print scale</span>
+          <span className={css.scaleHudHint}>Wheel · print scale</span>
         </div>
       </div>
 

@@ -13,7 +13,7 @@ const siteRows: LiveMeasureRow[] = [
   },
   {
     id: "building",
-    label: "Existing house",
+    label: "Existing dwelling",
     value: "96.0 m²",
     group: "site",
     numeric: 96,

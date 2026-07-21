@@ -20,18 +20,6 @@
   cursor: grab;
 }
 
-.worldEdit[data-cursor="move"] {
-  cursor: grab;
-}
-
-.worldEdit[data-cursor="add"] {
-  cursor: copy;
-}
-
-.world[data-cursor="paint"] {
-  cursor: cell;
-}
-
 /* SDS §3 — corner solid 8px · mid hollow diamond 6px */
 .cornerNode {
   position: absolute;
@@ -588,7 +576,9 @@
   position: absolute;
   pointer-events: none;
   z-index: 16;
-  background: rgba(28, 25, 23, 0.16);
+  /* Sage drafting ink + paper halo — readable on cream without neon. */
+  background: rgba(85, 112, 73, 0.72);
+  box-shadow: 0 0 0 0.5px rgba(255, 251, 252, 0.7);
 }
 
 .snapGlyph {
@@ -846,7 +836,9 @@
   position: absolute;
   pointer-events: none;
   z-index: 15;
-  background: rgba(28, 25, 23, 0.45);
+  /* Signal construction pink — stronger than the live crosshair so align snaps read first. */
+  background: rgba(194, 69, 95, 0.7);
+  box-shadow: 0 0 0 0.5px rgba(255, 251, 252, 0.65);
 }
 
 .cursorBadge {

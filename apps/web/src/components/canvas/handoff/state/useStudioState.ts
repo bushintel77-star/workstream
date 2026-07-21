@@ -198,6 +198,8 @@ type Ui = {
   focusX: number;
   focusY: number;
   savedTick: number;
+  /** Monotonic canvas revision after each successful autosave. */
+  saveRevision: number;
   aerialUri: string | null;
   aiBusy: "idle" | "scanning" | "assisting";
   coachOpen: boolean;
@@ -410,6 +412,7 @@ function initialState(opts: {
       focusX: 50,
       focusY: 50,
       savedTick: 0,
+      saveRevision: hasCanvas ? 1 : 0,
       aerialUri: null,
       aiBusy: "idle",
       coachOpen: false,
@@ -685,6 +688,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
   outdoorRef.current = outdoorM2;
   const projectIdRef = useRef(projectId);
   projectIdRef.current = projectId;
+  const saveRevisionRef = useRef(state.ui.saveRevision);
 
   useEffect(() => {
     if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
@@ -1929,7 +1933,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
   }, []);
 
   const bumpSaved = useCallback(() => {
-    setUi({ savedTick: Date.now(), saveStatus: "saved" });
+    saveRevisionRef.current += 1;
+    setUi({
+      savedTick: Date.now(),
+      saveStatus: "saved",
+      saveRevision: saveRevisionRef.current,
+    });
   }, [setUi]);
 
   const saveNow = useCallback(async (): Promise<void> => {
@@ -1960,10 +1969,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
         placements,
         canvasStrokes,
         state.doc.irrigationZones ?? [],
-        [],
+        undefined,
         siteFrame,
       );
-      setUi({ saveStatus: "saved", savedTick: Date.now() });
+      saveRevisionRef.current += 1;
+      setUi({
+        saveStatus: "saved",
+        savedTick: Date.now(),
+        saveRevision: saveRevisionRef.current,
+      });
     } catch {
       setUi({ saveStatus: "error" });
       throw new Error("Design canvas save failed");

@@ -149,7 +149,7 @@ export function QuotePortal({
           <section className={styles.summary}>
             <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
             <Metric
-              label="Existing house"
+              label="Existing dwelling"
               value={
                 survey.house_area_m2 > 0
                   ? `${survey.house_area_m2} m²`

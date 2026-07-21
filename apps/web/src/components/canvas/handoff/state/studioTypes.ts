@@ -87,6 +87,8 @@ export type StudioUiState = {
   focusX: number;
   focusY: number;
   savedTick: number;
+  /** Monotonic canvas revision after each successful autosave. */
+  saveRevision: number;
   aerialUri: string | null;
   /** AI engine busy flag — drives draft badge + coach dock. */
   aiBusy: "idle" | "scanning" | "assisting";

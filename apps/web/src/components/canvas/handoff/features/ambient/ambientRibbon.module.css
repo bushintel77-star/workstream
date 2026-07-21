@@ -1,16 +1,26 @@
 /*
- * Drawing instruments — original handoff blush frost (not dark slate).
- * Tokens: README Color Palette — #FFFBFC glass, #241318 ink, #C2455F accent.
+ * Drawing instruments — same neumorphic dock language as the left swatch rail.
+ * Soft plastic raised chips (--hc-neu-*), not separate frost glass.
  */
 
 .ribbon {
   --ink: var(--hc-ink, #241318);
   --ink-soft: var(--hc-ink-muted, #7a5560);
-  --glass: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
-  --glass-border: var(--hc-line, rgba(36, 19, 24, 0.12));
-  --elev: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
+  --neu: var(--hc-neu-raised, #f6ebef);
+  --neu-surface: var(--hc-neu-surface, #f1e4e9);
+  --neu-out: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    2px 2px 6px rgba(42, 23, 29, 0.16)
+  );
+  --neu-in: var(
+    --hc-neu-in,
+    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+  );
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
-  --slot: 40px;
+  --slot: 48px;
+  --dock: 46px;
 
   position: absolute;
   z-index: 22;
@@ -19,14 +29,12 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
   opacity: 0;
-  /* Graceful dissolve on the way out. */
   transition: opacity 260ms cubic-bezier(0.33, 0.1, 0.25, 1);
 }
 
 .ribbon[data-phase="awake"],
 .ribbon[data-phase="carousel"] {
   opacity: 1;
-  /* Fast appear — a summon is a deliberate ask, so answer immediately. */
   transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -40,24 +48,23 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 32px;
-  height: 32px;
-  margin: -16px 0 0 -16px;
-  border-radius: 10px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass);
-  backdrop-filter: blur(16px);
+  width: var(--dock);
+  height: var(--dock);
+  margin: calc(var(--dock) / -2) 0 0 calc(var(--dock) / -2);
+  border: none;
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--neu);
   color: var(--ink);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
   cursor: pointer;
   display: grid;
   place-items: center;
-  box-shadow: var(--elev);
+  box-shadow: var(--neu-out);
   transition:
-    transform 200ms var(--ease),
-    background 160ms ease,
-    opacity 200ms ease;
+    box-shadow var(--hc-motion, 180ms) var(--ease),
+    color var(--hc-motion, 180ms) var(--ease),
+    transform var(--hc-motion, 180ms) var(--ease);
 }
 
 .ribbon[data-phase="shadow"] .hub {
@@ -65,9 +72,13 @@
 }
 
 .hub:hover {
-  background: #fff6f8;
-  border-color: rgba(194, 69, 95, 0.35);
-  transform: scale(1.05);
+  color: var(--ink);
+  transform: scale(1.03);
+}
+
+.hub:active {
+  box-shadow: var(--neu-in);
+  transform: scale(0.98);
 }
 
 .draftWell {
@@ -84,31 +95,30 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 40px;
-  min-height: 36px;
-  margin: -18px 0 0 -20px;
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  background: var(--glass);
-  backdrop-filter: blur(16px);
+  width: var(--dock);
+  min-height: var(--dock);
+  margin: calc(var(--dock) / -2) 0 0 calc(var(--dock) / -2);
+  border: none;
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--neu);
   color: var(--ink-soft);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 2px;
   font: inherit;
-  padding: 3px 0;
-  box-shadow: var(--elev);
+  padding: 4px 0;
+  box-shadow: var(--neu-out);
   opacity: 0;
-  transform: translateY(calc(var(--stack, 0px) * -1)) scale(0.9);
+  transform: translateY(calc(var(--stack, 0px) * -1)) scale(0.92);
   pointer-events: none;
   transition:
     opacity 180ms var(--ease),
     transform 260ms var(--ease),
-    background 140ms ease,
-    color 140ms ease;
+    box-shadow var(--hc-motion, 180ms) var(--ease),
+    color var(--hc-motion, 180ms) var(--ease);
 }
 
 .ribbon[data-phase="carousel"] .btn[data-kind="draft"] {
@@ -118,10 +128,9 @@
 }
 
 .ribbon[data-phase="carousel"] .btn[data-kind="draft"].active {
-  background: #241318;
-  color: #fff6f8;
-  border-color: #241318;
-  transform: translateY(calc(var(--stack, 0px) * -1)) scale(1.04);
+  color: var(--ink);
+  box-shadow: var(--neu-in);
+  transform: translateY(calc(var(--stack, 0px) * -1));
 }
 
 .ribbon[data-phase="shadow"] .btn[data-kind="draft"] {
@@ -130,28 +139,30 @@
 }
 
 .btn:hover {
-  background: #fff6f8;
   color: var(--ink);
-  border-color: rgba(194, 69, 95, 0.28);
+}
+
+.btn:active {
+  box-shadow: var(--neu-in);
 }
 
 .btn:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .active {
-  background: #241318;
-  color: #fff6f8;
+  color: var(--ink);
+  box-shadow: var(--neu-in);
 }
 
 .glyph {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
 }
 
 .label {
-  font-size: 7px;
+  font-size: 8px;
   font-weight: 650;
   letter-spacing: 0.02em;
   opacity: 0;
@@ -175,9 +186,17 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  padding: 8px 6px;
+  border-radius: var(--hc-r-panel, 14px);
+  background: var(--neu-surface);
+  box-shadow: var(
+    --hc-neu-out,
+    -3px -3px 8px rgba(255, 255, 255, 0.85),
+    4px 4px 11px rgba(42, 23, 29, 0.16)
+  );
   opacity: 0;
-  transform: translate(28px, -16px);
+  transform: translate(32px, -20px);
   transition: opacity 180ms var(--ease);
 }
 
@@ -192,15 +211,16 @@
   left: auto;
   top: auto;
   margin: 0;
-  width: 36px;
-  min-height: 32px;
+  width: var(--dock);
+  min-height: 40px;
   opacity: 1;
   transform: none;
   pointer-events: auto;
 }
 
 .utility .btn:active {
-  transform: scale(0.96);
+  transform: none;
+  box-shadow: var(--neu-in);
 }
 
 .peel {
@@ -209,7 +229,7 @@
   left: 0;
   top: 0;
   opacity: 0;
-  transform: translate(-20px, 28px);
+  transform: translate(-24px, 32px);
   transition: opacity 180ms var(--ease);
 }
 
@@ -223,18 +243,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
-  min-height: 26px;
-  min-width: 56px;
-  padding: 0 8px;
-  border-radius: 10px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass);
-  backdrop-filter: blur(16px);
+  gap: 6px;
+  min-height: 36px;
+  min-width: 64px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--neu);
   cursor: pointer;
   font: inherit;
   color: var(--ink);
-  box-shadow: var(--elev);
+  box-shadow: var(--neu-out);
+}
+
+.chip:active {
+  box-shadow: var(--neu-in);
 }
 
 .chipName {
@@ -251,6 +274,79 @@
   font-weight: 700;
   min-width: 14px;
   text-align: right;
+}
+
+.marks {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 112px;
+  padding: 8px;
+  border-radius: var(--hc-r-panel, 14px);
+  background: var(--neu-surface);
+  box-shadow: var(
+    --hc-neu-out,
+    -3px -3px 8px rgba(255, 255, 255, 0.85),
+    4px 4px 11px rgba(42, 23, 29, 0.16)
+  );
+  opacity: 0;
+  transform: translate(-128px, -12px);
+  transition: opacity 180ms var(--ease);
+}
+
+.ribbon[data-phase="awake"] .marks,
+.ribbon[data-phase="carousel"] .marks {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.markChip {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--neu);
+  box-shadow: var(--neu-out);
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  padding: 0;
+}
+
+.markChip:hover {
+  color: var(--ink);
+}
+
+.markChipOn {
+  color: var(--ink);
+  box-shadow: var(--neu-in);
+}
+
+/* Precision mode — flatten plastic like the left swatch rail. */
+:global(.rootPrecision) .hub,
+:global(.rootPrecision) .btn,
+:global(.rootPrecision) .chip {
+  background: var(--hc-glass, rgba(255, 251, 252, 0.98));
+  box-shadow: none;
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.2));
+}
+
+:global(.rootPrecision) .utility {
+  background: var(--hc-glass, rgba(255, 251, 252, 0.98));
+  box-shadow: var(--hc-elev-2, 0 2px 8px rgba(42, 23, 29, 0.2));
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.34));
+}
+
+:global(.rootPrecision) .btn.active,
+:global(.rootPrecision) .ribbon[data-phase="carousel"] .btn[data-kind="draft"].active {
+  border-color: var(--hc-ink, #241318);
+  box-shadow: var(--neu-in);
 }
 
 @media (prefers-reduced-motion: reduce) {

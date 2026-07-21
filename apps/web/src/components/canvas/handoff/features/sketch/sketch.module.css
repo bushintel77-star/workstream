@@ -3,13 +3,10 @@
   inset: 0;
   z-index: 40;
   touch-action: none;
-  cursor: crosshair;
+  /* Cursor owned by resolveStudioCursor on the zoom world. */
+  cursor: inherit;
   /* Stripped pad — quiet parchment, no CAD chrome competing. */
   background: rgba(247, 244, 239, 0.28);
-}
-
-.root[data-tool="eraser"] {
-  cursor: cell;
 }
 
 .root[data-read-only="true"] {
@@ -107,6 +104,64 @@
   border-color: #7a5560;
   color: #fff6f8;
   box-shadow: inset 2px 2px 5px rgba(42, 23, 29, 0.24);
+}
+
+.tipGrade {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 251, 252, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.08);
+}
+
+.tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #7a5560;
+  font-size: 10px;
+  font-weight: 650;
+  font-family: "IBM Plex Mono", monospace;
+  cursor: pointer;
+}
+
+.tip:hover {
+  color: #241318;
+  background: #fff6f8;
+}
+
+.tipActive,
+.tipActive:hover {
+  color: #fff6f8;
+  background: #241318;
+}
+
+.tipDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.tipDot[data-grade="medium"] {
+  width: 7px;
+  height: 7px;
+}
+
+.tipDot[data-grade="marker"] {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
 }
 
 .convert {

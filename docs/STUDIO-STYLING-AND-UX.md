@@ -43,13 +43,27 @@ Source of truth also lives in handoff README color table and `--hc-*` in `handof
 - Opaque solid panels that read as a second app chrome bar on the canvas
 - Game language: loadout, hotbar, equip, bag tabs as combat UI
 
+### Dock control language (binding)
+
+Micro controls share one **neumorphic soft-plastic** language with the left
+swatch rail — not a second frost/glass dialect:
+
+| Surface | Treatment |
+| --- | --- |
+| Left swatch rail, header icon/tool chips, instruments hub & draft tools, autosave chip | `--hc-neu-raised` + `--hc-neu-out-sm`; armed/pressed = `--hc-neu-in` |
+| Large summoned panels (Layers, inventory popup, pointer sheet) | Soft frost `--hc-glass` + `--hc-elev-*` |
+| Control size | ~40–46 px dock chips (match left rail width) |
+
+Do not mix flat glass chips in the header with plastic chips on the left rail.
+
 ### Glass rule
 
-Chrome must read as **frost**, not drywall.
+Large floating panels must read as **frost**, not drywall.
 
 - Prefer `--hc-glass-soft` + `backdrop-filter` for popups and docks.
 - Large surfaces must not sit at near-solid opacity (avoid `0.94+` full-width bars).
 - Idle / rest chrome fades toward transparent; engaged chrome may strengthen briefly.
+- Micro dock buttons use neumorphic plastic (see above), not glass.
 
 ---
 
@@ -106,7 +120,9 @@ Personal garden mark (settings) is the **idle craft** cursor only.
 | Pan | Grab |
 | Add / place | Copy |
 | Paint | Cell |
-| Measure / trace / sketch / zone / survey annotate | Crosshair |
+| Measure / trace / zone / survey annotate | Crosshair |
+| Sketch (pen) | Graded fine-tip → thick marker |
+| Sketch (eraser) | Eraser rubber |
 | Lock / locked edit | Not-allowed |
 | Handle hover (move / insert) | Grab / copy |
 | Fit sheet | Default |

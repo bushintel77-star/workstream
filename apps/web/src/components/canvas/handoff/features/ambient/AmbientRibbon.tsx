@@ -14,7 +14,10 @@ import {
   type StudioMode,
   type StudioTool,
 } from "../../studioCatalog";
-import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
+import {
+  POINTER_MARKS,
+  type PointerMarkId,
+} from "../pointer/pointerMarks";
 import { playInstrumentTick } from "./instrumentTick";
 import css from "./ambientRibbon.module.css";
 
@@ -27,21 +30,12 @@ import { ATELIER_LINGER_MS } from "../kitInventory/atelierPresence";
  */
 const INSTRUMENT_DISMISS_MS = ATELIER_LINGER_MS;
 
-type LayerChip = {
-  key: LayerKey;
-  label: string;
-  count: number;
-};
-
 type Props = {
   tool: StudioTool;
   mode?: StudioMode;
   locked: boolean;
   canUndo: boolean;
   canRedo: boolean;
-  /** Kept for API compat — layer inventory is the Layers panel, not this dock. */
-  layerChips: LayerChip[];
-  layerOpacity: LayerOpacity;
   parchmentPeel: number;
   hasAerial: boolean;
   anchorXPct: number;
@@ -54,8 +48,11 @@ type Props = {
   onRedo: () => void;
   onZoom: (delta: number) => void;
   onFit: () => void;
-  onOpacity: (key: LayerKey, value: number) => void;
   onParchmentPeel: (v: number) => void;
+  /** Idle craft mark — consolidated with instruments (not a separate header sheet). */
+  markId?: PointerMarkId;
+  onMarkId?: (id: PointerMarkId) => void;
+  onPreviewMark?: (id: PointerMarkId | null) => void;
 };
 
 type Phase = "shadow" | "awake" | "carousel";
@@ -68,11 +65,11 @@ type Instrument = {
   kind: "draft" | "view" | "history";
 };
 
-const SLOT_PX = 40;
+const SLOT_PX = 48;
 
 /**
- * Drawing instruments — clean vertical draft stack + east utilities.
- * Layer chips live in the Layers panel (structure rail), not piled here.
+ * Drawing instruments — neumorphic dock matching the left swatch rail.
+ * Layer chips live in the Layers panel; pointer marks live here with tools.
  */
 export function AmbientRibbon({
   tool,
@@ -93,8 +90,12 @@ export function AmbientRibbon({
   onZoom,
   onFit,
   onParchmentPeel,
+  markId,
+  onMarkId,
+  onPreviewMark,
 }: Props) {
   const surveyMode = mode === "survey";
+  const sketchMode = mode === "sketch";
   const rootRef = useRef<HTMLElement>(null);
   const [hovered, setHovered] = useState(false);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -133,15 +134,16 @@ export function AmbientRibbon({
   const phase: Phase = open ? "carousel" : "shadow";
 
   const instruments = useMemo((): Instrument[] => {
-    const draft: Instrument[] = TOOLS.filter((t) => t.id !== "reset").map(
-      (t) => ({
-        id: t.id,
-        label: t.label,
-        icon: t.icon,
-        title: "title" in t && t.title ? t.title : t.label,
-        kind: "draft" as const,
-      }),
-    );
+    /* Sketch owns pen/eraser in its dock — CAD draft tools stay off the ribbon. */
+    const draft: Instrument[] = sketchMode
+      ? []
+      : TOOLS.filter((t) => t.id !== "reset").map((t) => ({
+          id: t.id,
+          label: t.label,
+          icon: t.icon,
+          title: "title" in t && t.title ? t.title : t.label,
+          kind: "draft" as const,
+        }));
     const survey: Instrument[] = surveyMode
       ? SURVEY_TOOLS.map((t) => ({
           id: t.id,
@@ -152,13 +154,17 @@ export function AmbientRibbon({
         }))
       : [];
     const rest: Instrument[] = [
-      {
-        id: "measure",
-        label: "Measure",
-        icon: "⟋",
-        title: "Measure",
-        kind: "draft",
-      },
+      ...(sketchMode
+        ? []
+        : [
+            {
+              id: "measure" as const,
+              label: "Measure",
+              icon: "⟋",
+              title: "Measure",
+              kind: "draft" as const,
+            },
+          ]),
       { id: "zoomOut", label: "Out", icon: "−", title: "Zoom out", kind: "view" },
       { id: "fit", label: "Fit", icon: "⛶", title: "Fit outdoor", kind: "view" },
       { id: "zoomIn", label: "In", icon: "+", title: "Zoom in", kind: "view" },
@@ -166,7 +172,7 @@ export function AmbientRibbon({
       { id: "redo", label: "Redo", icon: "↪", title: "Redo", kind: "history" },
     ];
     return [...draft, ...survey, ...rest];
-  }, [surveyMode]);
+  }, [surveyMode, sketchMode]);
 
   const draftInstruments = instruments.filter((t) => t.kind === "draft");
   const utilityInstruments = instruments.filter((t) => t.kind !== "draft");
@@ -213,7 +219,6 @@ export function AmbientRibbon({
   const ax = Math.max(10, Math.min(90, anchorXPct));
   const ay = Math.max(12, Math.min(88, anchorYPct));
 
-  /* Disappearing UI — no sticky hub; instruments exist only when summoned. */
   if (!summoned) return null;
 
   return (
@@ -233,6 +238,7 @@ export function AmbientRibbon({
       onMouseLeave={() => {
         setHovered(false);
         beginLinger();
+        onPreviewMark?.(null);
       }}
       onWheel={(e) => {
         if (phase !== "carousel") return;
@@ -260,7 +266,6 @@ export function AmbientRibbon({
         {draftInstruments.map((t, i) => {
           const active =
             tool === t.id || (t.id === "lock" && locked && tool === "lock");
-          /* Closest tool nearest the hub (Fitts). */
           const stackPx = (draftInstruments.length - i) * SLOT_PX;
           return (
             <button
@@ -274,6 +279,7 @@ export function AmbientRibbon({
               }
               data-kind="draft"
               title={t.title ?? t.label}
+              aria-pressed={active}
               style={
                 {
                   ["--stack" as string]: `${stackPx}px`,
@@ -308,6 +314,43 @@ export function AmbientRibbon({
           );
         })}
       </div>
+
+      {markId && onMarkId ? (
+        <div
+          className={css.marks}
+          role="listbox"
+          aria-label="Idle pointer mark"
+          data-testid="instrument-pointer-marks"
+        >
+          {POINTER_MARKS.map((m) => {
+            const on = m.id === markId;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                role="option"
+                aria-selected={on}
+                className={`${css.markChip}${on ? ` ${css.markChipOn}` : ""}`}
+                data-testid={`pointer-mark-${m.id}`}
+                title={`${m.label} — idle craft cursor`}
+                onMouseEnter={() => {
+                  stayEngaged();
+                  onPreviewMark?.(m.id);
+                }}
+                onFocus={() => onPreviewMark?.(m.id)}
+                onBlur={() => onPreviewMark?.(null)}
+                onClick={() => {
+                  playInstrumentTick("arm");
+                  onMarkId(m.id);
+                  stayEngaged();
+                }}
+              >
+                <span aria-hidden>{m.glyph}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {hasAerial ? (
         <div className={css.peel}>

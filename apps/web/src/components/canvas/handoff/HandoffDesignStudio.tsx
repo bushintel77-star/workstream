@@ -32,6 +32,10 @@ import {
   type GridInk,
 } from "./geometry/gridStudio";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
+import {
+  loadFitSheetPrefs,
+  saveFitSheetPrefs,
+} from "./features/fitSheet/fitSheetPrefs";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
 import { LayersPanel } from "./features/layers/LayersPanel";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
@@ -71,13 +75,13 @@ import {
   type ToolStack,
 } from "./features/toolStack/toolStack";
 import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
-import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
 import {
   loadPointerMarkId,
   savePointerMarkId,
   type PointerMarkId,
 } from "./features/pointer/pointerMarks";
 import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
+import { CanvasAutosaveChip } from "./features/save/CanvasAutosaveChip";
 import { clampToCanvasMargin } from "./features/reach/marginSummon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
@@ -191,7 +195,6 @@ export function HandoffDesignStudio({
   /** Prefer Turf workable outdoor; fall back to project / seed area. */
   const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
-  const lastSaveToast = useRef(0);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
@@ -212,11 +215,23 @@ export function HandoffDesignStudio({
   /** Settings hover preview — persists only on click. */
   const [pointerMarkPreview, setPointerMarkPreview] =
     useState<PointerMarkId | null>(null);
-  const [pointerSettingsOpen, setPointerSettingsOpen] = useState(false);
   /** Handle hover from CadPlanBoard — move / add / paint affordances. */
   const [boardCursor, setBoardCursor] = useState<
     "default" | "move" | "add" | "paint" | null
   >(null);
+  const [sketchChrome, setSketchChrome] = useState<{
+    tool: "pen" | "eraser";
+    tip: import("./features/sketch/sketchCursors").SketchTipGrade;
+  }>({ tool: "pen", tip: "medium" });
+  const onSketchChromeChange = useCallback(
+    (chrome: {
+      tool: "pen" | "eraser";
+      tip: import("./features/sketch/sketchCursors").SketchTipGrade;
+    }) => {
+      setSketchChrome(chrome);
+    },
+    [],
+  );
   /** Target settle-flash after a Paint apply — presentational confirmation only. */
   const [paintFlashId, setPaintFlashId] = useState<string | null>(null);
   const paintFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -243,16 +258,23 @@ export function HandoffDesignStudio({
     setPointerMarkId(loadPointerMarkId());
   }, []);
 
+  /** Surface autosave failure once — chip stays the daily status; toast is the alert. */
+  const lastSaveErrorToast = useRef(false);
   useEffect(() => {
-    if (ui.saveStatus !== "saved" || ui.savedTick === 0) return;
-    if (lastSaveToast.current === ui.savedTick) return;
-    lastSaveToast.current = ui.savedTick;
-    toast.show(
-      "Saved — concept ready for envelope estimate. Send to draftsperson for working drawings.",
-      "success",
-      5000,
-    );
-  }, [toast, ui.saveStatus, ui.savedTick]);
+    if (ui.saveStatus === "error") {
+      if (lastSaveErrorToast.current) return;
+      lastSaveErrorToast.current = true;
+      toast.show(
+        "Canvas autosave failed. Tap Retry save in the header before leaving.",
+        "error",
+        6000,
+      );
+      return;
+    }
+    if (ui.saveStatus === "saved" || ui.saveStatus === "saving") {
+      lastSaveErrorToast.current = false;
+    }
+  }, [toast, ui.saveStatus]);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -299,9 +321,8 @@ export function HandoffDesignStudio({
 
   /**
    * Infinite-feel canvas zoom — wheel / trackpad / pinch over the board.
-   * Active on Survey / Sketch / CAD and on the A3/A4 fit sheet (world zoom).
-   * Shift+wheel on the fit sheet changes architectural print scale (1:N) —
-   * see FitSheetOverlay.
+   * Active on Survey / Sketch / CAD. On the A3/A4 fit sheet, plain wheel
+   * owns architectural print scale (FitSheetOverlay) — not world zoom.
    */
   useEffect(() => {
     const el = boardRef.current;
@@ -310,8 +331,8 @@ export function HandoffDesignStudio({
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
     if (!planMode) return;
     const onWheel = (e: WheelEvent) => {
-      // Fit sheet: Shift+wheel is reserved for 1:N print scale.
-      if (ui.frameOn && e.shiftKey) return;
+      // Fit sheet: plain wheel = 1:N print scale (see FitSheetOverlay).
+      if (ui.frameOn) return;
       const t = e.target as HTMLElement | null;
       if (t?.closest?.("input, textarea, select, [data-no-canvas-zoom]")) {
         return;
@@ -349,6 +370,39 @@ export function HandoffDesignStudio({
     // once per project mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+
+  /** Restore fit-sheet / elevation prefs for this project session. */
+  useEffect(() => {
+    const prefs = loadFitSheetPrefs(projectId);
+    if (!prefs) return;
+    studio.setUi({
+      ...(prefs.frameOn != null ? { frameOn: prefs.frameOn } : {}),
+      ...(prefs.sheetElevOn != null ? { sheetElevOn: prefs.sheetElevOn } : {}),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  useEffect(() => {
+    saveFitSheetPrefs(projectId, {
+      frameOn: ui.frameOn,
+      sheetElevOn: ui.sheetElevOn,
+    });
+  }, [projectId, ui.frameOn, ui.sheetElevOn]);
+
+  /** Warn before leaving when canvas autosave failed or is in flight. */
+  useEffect(() => {
+    const dirty =
+      ui.saveStatus === "error" ||
+      ui.saveStatus === "saving" ||
+      ui.saveStatus === "retrying";
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [ui.saveStatus]);
 
   /**
    * Fit to screen by default — outdoor garden remnant on Survey / Sketch / CAD
@@ -463,7 +517,6 @@ export function HandoffDesignStudio({
           coachOpen: false,
           utilityPanel: null,
         });
-        setPointerSettingsOpen(false);
         setInstrumentsSummoned(false);
         return;
       }
@@ -659,6 +712,21 @@ export function HandoffDesignStudio({
 
   const [formalizing, setFormalizing] = useState(false);
 
+  /** Single authority for mode + `?mode=` URL — never setMode alone. */
+  const syncModeUrl = useCallback(
+    (mode: StudioMode) => {
+      studio.setMode(mode);
+      const next = new URLSearchParams(searchParams.toString());
+      next.set("mode", mode);
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${pathname}?${next.toString()}`,
+      );
+    },
+    [studio, searchParams, pathname],
+  );
+
   /**
    * Sketch → CAD: rasterize the raw freehand ink and run the Claude vision
    * pipeline server-side, then apply the returned CAD elements as reviewable
@@ -667,7 +735,7 @@ export function HandoffDesignStudio({
   const runFormalizeToCad = useCallback(async () => {
     if (formalizing) return;
     if (studio.strokes.length === 0) {
-      studio.setMode("cad");
+      syncModeUrl("cad");
       studio.setUi({
         assistReply: "Sketch on the plan first — then formalize to CAD when ready.",
         councilTip: "Draw a path, bed, or canopy mark before translating to CAD.",
@@ -721,7 +789,7 @@ export function HandoffDesignStudio({
     } finally {
       setFormalizing(false);
     }
-  }, [formalizing, studio, boardSize.w, boardSize.h, projectId, scaleM]);
+  }, [formalizing, studio, boardSize.w, boardSize.h, projectId, scaleM, syncModeUrl]);
 
   const requestMode = useCallback(
     (mode: (typeof MODE_TABS)[number]) => {
@@ -734,16 +802,9 @@ export function HandoffDesignStudio({
           return;
         }
       }
-      studio.setMode(mode);
-      const next = new URLSearchParams(searchParams.toString());
-      next.set("mode", mode);
-      window.history.replaceState(
-        window.history.state,
-        "",
-        `${pathname}?${next.toString()}`,
-      );
+      syncModeUrl(mode);
     },
-    [ui.mode, studio, runFormalizeToCad, searchParams, pathname],
+    [ui.mode, studio, runFormalizeToCad, syncModeUrl],
   );
 
   useEffect(() => {
@@ -806,23 +867,6 @@ export function HandoffDesignStudio({
       };
     });
 
-  const layerChips = (
-    [
-      ["survey", "Survey"],
-      ["boundary", "Boundary"],
-      ["council", "Council"],
-      ["vegetation", "Veg"],
-    ] as const
-  ).map(([key, label]) => ({
-    key,
-    label,
-    count:
-      key === "boundary"
-        ? 2
-        : studio.items.filter((i) => !i.ghost && ITEM_LAYER[i.t] === key)
-            .length,
-  }));
-
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
   /** Any vectors / underlay / assets — kills barren-lot onboarding cue. */
@@ -875,9 +919,9 @@ export function HandoffDesignStudio({
 
   useEffect(() => {
     if (!openModes.has(ui.mode)) {
-      studio.setMode(fallbackMode);
+      requestMode(fallbackMode);
     }
-  }, [fallbackMode, openModes, studio, ui.mode]);
+  }, [fallbackMode, openModes, requestMode, ui.mode]);
 
   const lockReasonForMode = (mode: StudioMode): string | null => {
     if (openModes.has(mode)) return null;
@@ -887,17 +931,6 @@ export function HandoffDesignStudio({
     if (mode === "quote") return "Accept CAD geometry before quoting.";
     if (mode === "share") return "Generate a quote before sharing.";
     return "Complete the previous stage first.";
-  };
-
-  const setCanvasMode = (mode: StudioMode) => {
-    studio.setMode(mode);
-    const next = new URLSearchParams(searchParams.toString());
-    next.set("mode", mode);
-    window.history.replaceState(
-      window.history.state,
-      "",
-      `${pathname}?${next.toString()}`,
-    );
   };
   /**
    * Instrument + inventory home — margin pin only (never lot core).
@@ -945,6 +978,8 @@ export function HandoffDesignStudio({
         frameOn: ui.frameOn,
         boardCursor:
           boardCursor && boardCursor !== "default" ? boardCursor : null,
+        sketchTool: ui.mode === "sketch" ? sketchChrome.tool : undefined,
+        sketchTip: ui.mode === "sketch" ? sketchChrome.tip : undefined,
       });
 
   const draftLabel =
@@ -1011,6 +1046,7 @@ export function HandoffDesignStudio({
                 data-testid={`canvas-mode-${m}`}
                 disabled={locked}
                 aria-disabled={locked}
+                aria-current={ui.mode === m ? "page" : undefined}
                 title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
                 onClick={() => {
                   if (!locked) requestMode(m);
@@ -1060,11 +1096,13 @@ export function HandoffDesignStudio({
         <div className={css.headerTools} role="toolbar" aria-label="Canvas tools">
           <button
             type="button"
-            className={`${css.iconBtn}${pointerSettingsOpen ? ` ${css.iconBtnActive}` : ""}`}
+            className={`${css.iconBtn}${instrumentsSummoned ? ` ${css.iconBtnActive}` : ""}`}
             data-testid="pointer-settings-top"
-            aria-label="Pointer settings"
-            title="Pointer settings"
-            onClick={() => setPointerSettingsOpen((o) => !o)}
+            aria-label="Open instruments and pointer mark"
+            title="Instruments — pointer mark lives with the tool dock"
+            onClick={() => {
+              setInstrumentsSummoned(true);
+            }}
           >
             <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
               <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.25" />
@@ -1260,7 +1298,7 @@ export function HandoffDesignStudio({
               title={lockReasonForMode("share") ?? "Share"}
               disabled={Boolean(lockReasonForMode("share"))}
               onClick={() => {
-                if (!lockReasonForMode("share")) studio.setMode("share");
+                if (!lockReasonForMode("share")) requestMode("share");
               }}
             >
               <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -1304,35 +1342,27 @@ export function HandoffDesignStudio({
               {draftLabel}
             </button>
           ) : null}
-          {ui.saveStatus === "error" ? (
-            <button
-              type="button"
-              className={`${css.savedTick} ${css.savedTickButton}`}
-              data-testid="autosave-tick"
-              data-status={ui.saveStatus}
-              onClick={() => {
-                void studio.saveNow().catch(() => {
-                  toast.show("Canvas save failed. Try again before leaving.", "error");
-                });
-              }}
-            >
-              Retry save
-            </button>
-          ) : (
-            <span
-              className={`${css.savedTick}${ui.saveStatus === "saving" || ui.saveStatus === "retrying" ? ` ${css.savedTickPulse}` : ""}`}
-              data-testid="autosave-tick"
-              data-status={ui.saveStatus}
-            >
-              {ui.saveStatus === "saving"
-                ? "Saving"
-                : ui.saveStatus === "retrying"
-                  ? "Save paused — retrying"
-                : ui.saveStatus === "saved"
-                  ? "Saved"
-                  : ""}
-            </span>
-          )}
+          <CanvasAutosaveChip
+            status={ui.saveStatus}
+            savedTick={ui.savedTick}
+            revision={ui.saveRevision}
+            onSave={() => {
+              void studio.saveNow().catch(() => {
+                toast.show(
+                  "Canvas save failed. Try again before leaving.",
+                  "error",
+                );
+              });
+            }}
+            onRetry={() => {
+              void studio.saveNow().catch(() => {
+                toast.show(
+                  "Canvas save failed. Try again before leaving.",
+                  "error",
+                );
+              });
+            }}
+          />
         </div>
       </header>
 
@@ -1373,7 +1403,7 @@ export function HandoffDesignStudio({
             }
             onTraceInPlan={(id) => {
               studio.setUi({ selectedId: id });
-              studio.setMode("cad");
+              requestMode("cad");
             }}
           />
         ) : null}
@@ -1385,11 +1415,11 @@ export function HandoffDesignStudio({
             draftUnverified={ai.status === "unverified"}
             pendingGhosts={ai.pendingCount}
             onReviewGhosts={() => {
-              studio.setMode("cad");
+              requestMode("cad");
               ai.openReview();
             }}
-            onShare={() => studio.setMode("share")}
-            onBack={() => studio.setMode("cad")}
+            onShare={() => requestMode("share")}
+            onBack={() => requestMode("cad")}
           />
         ) : null}
 
@@ -1405,10 +1435,10 @@ export function HandoffDesignStudio({
               setPortalUri(uri);
             }}
             onReviewGhosts={() => {
-              studio.setMode("cad");
+              requestMode("cad");
               ai.openReview();
             }}
-            onBack={() => studio.setMode("cad")}
+            onBack={() => requestMode("cad")}
           />
         ) : null}
 
@@ -1573,7 +1603,7 @@ export function HandoffDesignStudio({
               onRejectGhost={ai.reject}
               onTraceInElevation={(id) => {
                 studio.setSelection(id, [id]);
-                studio.setMode("elevation");
+                requestMode("elevation");
               }}
               onBoundaryChange={studio.updateBoundary}
               onBuildingChange={studio.updateBuilding}
@@ -1646,6 +1676,7 @@ export function HandoffDesignStudio({
                 strokes={studio.strokes}
                 darkOn={ui.darkOn}
                 formalizing={formalizing}
+                onChromeChange={onSketchChromeChange}
                 onCommit={(stroke) => {
                   studio.setStrokes([...studio.strokes, stroke]);
                 }}
@@ -1864,8 +1895,6 @@ export function HandoffDesignStudio({
             locked={ui.locked}
             canUndo={studio.canUndo}
             canRedo={studio.canRedo}
-            layerChips={layerChips}
-            layerOpacity={ui.layerOpacity}
             parchmentPeel={ui.parchmentPeel}
             hasAerial={Boolean(liveAerial)}
             anchorXPct={instrumentAnchor.x}
@@ -1891,8 +1920,14 @@ export function HandoffDesignStudio({
               }
               studio.fitOutdoorView();
             }}
-            onOpacity={studio.setLayerOpacity}
             onParchmentPeel={(parchmentPeel) => studio.setUi({ parchmentPeel })}
+            markId={pointerMarkId}
+            onPreviewMark={setPointerMarkPreview}
+            onMarkId={(id) => {
+              setPointerMarkId(id);
+              savePointerMarkId(id);
+              setPointerMarkPreview(null);
+            }}
           />
         ) : null}
 
@@ -1915,23 +1950,6 @@ export function HandoffDesignStudio({
               studio.setUi({ paintSwatch: t, tool: "paint" })
             }
             onDismiss={() => studio.setTool("pan")}
-          />
-        ) : null}
-
-        {pointerSettingsOpen ? (
-          <PointerMarkSettings
-            open
-            markId={pointerMarkId}
-            onPreview={setPointerMarkPreview}
-            onMarkId={(id) => {
-              setPointerMarkId(id);
-              savePointerMarkId(id);
-              setPointerMarkPreview(null);
-            }}
-            onClose={() => {
-              setPointerMarkPreview(null);
-              setPointerSettingsOpen(false);
-            }}
           />
         ) : null}
 
@@ -2061,7 +2079,7 @@ export function HandoffDesignStudio({
                 mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
               })
             }
-            onOpenQuote={() => studio.setMode("quote")}
+            onOpenQuote={() => requestMode("quote")}
             settling={
               estimateSettling ||
               ui.saveStatus === "saving" ||
@@ -2250,7 +2268,7 @@ export function HandoffDesignStudio({
             formalizing ? undefined : () => void runFormalizeToCad()
           }
           onToggleFitSheet={() => studio.setUi({ frameOn: !ui.frameOn })}
-          onGoQuote={() => studio.setMode("quote")}
+          onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           dataOpen={ui.dataSummoned}
           onToggleData={() =>

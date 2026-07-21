@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -14,7 +15,14 @@ import {
   shouldAppendSketchPoint,
   sketchWidthForPointer,
 } from "./sketchInput";
+import {
+  SKETCH_TIP_GRADES,
+  SKETCH_TIP_LABEL,
+  type SketchTipGrade,
+} from "./sketchCursors";
 import css from "./sketch.module.css";
+
+type SketchTool = "pen" | "eraser";
 
 type Props = {
   strokes: SketchStroke[];
@@ -32,9 +40,12 @@ type Props = {
   formalizing?: boolean;
   /** CAD reference underlay: shows ink without intercepting plan input. */
   readOnly?: boolean;
+  /** Report pen/eraser + tip so the parent owns the canvas cursor. */
+  onChromeChange?: (chrome: {
+    tool: SketchTool;
+    tip: SketchTipGrade;
+  }) => void;
 };
-
-type SketchTool = "pen" | "eraser";
 
 type ActiveStroke = {
   pointerId: number;
@@ -59,16 +70,23 @@ export function SketchBoard({
   onFormalizeToCad,
   formalizing = false,
   readOnly = false,
+  onChromeChange,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const drawing = useRef<ActiveStroke | null>(null);
   const idn = useRef(0);
   const [tool, setTool] = useState<SketchTool>("pen");
+  const [tip, setTip] = useState<SketchTipGrade>("medium");
   const [live, setLive] = useState<{
     points: PctPoint[];
     widthPx: number;
   } | null>(null);
   const [size, setSize] = useState({ w: 960, h: 640 });
+
+  useEffect(() => {
+    if (readOnly) return;
+    onChromeChange?.({ tool, tip });
+  }, [tool, tip, readOnly, onChromeChange]);
 
   useLayoutEffect(() => {
     const el = rootRef.current;
@@ -114,7 +132,11 @@ export function SketchBoard({
     onCommit({
       id: `sk${Date.now()}_${idn.current}`,
       points: active.points,
-      widthPx: sketchWidthForPointer(active.pointerType, averagePressure),
+      widthPx: sketchWidthForPointer(
+        active.pointerType,
+        averagePressure,
+        tip,
+      ),
     });
   };
 
@@ -159,7 +181,7 @@ export function SketchBoard({
         };
         setLive({
           points: [p],
-          widthPx: sketchWidthForPointer(e.pointerType, pressure),
+          widthPx: sketchWidthForPointer(e.pointerType, pressure, tip),
         });
       }}
       onPointerMove={(e) => {
@@ -179,7 +201,11 @@ export function SketchBoard({
             : null;
         setLive({
           points: active.points,
-          widthPx: sketchWidthForPointer(active.pointerType, averagePressure),
+          widthPx: sketchWidthForPointer(
+            active.pointerType,
+            averagePressure,
+            tip,
+          ),
         });
       }}
       onPointerUp={(e) => finishDrawing(e, true)}
@@ -227,6 +253,7 @@ export function SketchBoard({
               data-testid="sketch-pen"
               aria-pressed={tool === "pen"}
               disabled={formalizing}
+              title="Fine-tip marker — grade tip for thicker ink"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setTool("pen")}
             >
@@ -238,11 +265,41 @@ export function SketchBoard({
               data-testid="sketch-eraser"
               aria-pressed={tool === "eraser"}
               disabled={formalizing}
+              title="Eraser — remove whole strokes"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setTool("eraser")}
             >
               Eraser
             </button>
+            {tool === "pen" ? (
+              <div
+                className={css.tipGrade}
+                role="group"
+                aria-label="Pen tip grade"
+                data-testid="sketch-tip-grade"
+              >
+                {SKETCH_TIP_GRADES.map((grade) => (
+                  <button
+                    key={grade}
+                    type="button"
+                    className={`${css.tip}${tip === grade ? ` ${css.tipActive}` : ""}`}
+                    data-testid={`sketch-tip-${grade}`}
+                    aria-pressed={tip === grade}
+                    disabled={formalizing}
+                    title={`${SKETCH_TIP_LABEL[grade]} tip`}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => setTip(grade)}
+                  >
+                    <span
+                      className={css.tipDot}
+                      data-grade={grade}
+                      aria-hidden
+                    />
+                    {SKETCH_TIP_LABEL[grade]}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {canAct && onUndoLast ? (
               <button
                 type="button"

@@ -21,6 +21,23 @@ describe("resolveStudioCursor", () => {
         locked: false,
       }),
     ).toBe("crosshair");
+    const sketch = resolveStudioCursor({
+      markId: "spade",
+      tool: "sketch",
+      mode: "sketch",
+      locked: false,
+      sketchTip: "fine",
+    });
+    expect(sketch).toContain("data:image/svg+xml");
+    const eraser = resolveStudioCursor({
+      markId: "spade",
+      tool: "sketch",
+      mode: "sketch",
+      locked: false,
+      sketchTool: "eraser",
+    });
+    expect(eraser).toContain("data:image/svg+xml");
+    expect(eraser).toContain("cell");
     const paint = resolveStudioCursor({
       markId: "spade",
       tool: "paint",
