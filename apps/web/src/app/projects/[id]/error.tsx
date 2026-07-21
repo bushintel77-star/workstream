@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import s from "../../../../styles/app.module.css";
+import s from "../../../styles/app.module.css";
 
 /**
  * Studio-scoped boundary — keeps the operator on the project instead of a
