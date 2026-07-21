@@ -1035,7 +1035,9 @@ export function HandoffDesignStudio({
           aria-label="Design workflow"
           data-testid="canvas-mode-strip"
         >
-          {MODE_TABS.map((m) => {
+          {/* Survey/services is a layer on the CAD canvas (Services toggle),
+              not a separate tab. Canvas-first: one canvas, dynamic. */}
+          {MODE_TABS.filter((m) => m !== "survey").map((m) => {
             const lockReason = lockReasonForMode(m);
             const locked = Boolean(lockReason);
             return (
@@ -1265,6 +1267,35 @@ export function HandoffDesignStudio({
                 </svg>
               </button>
             </>
+          ) : null}
+          {ui.mode === "cad" && !ui.focusOn && !ui.clientView ? (
+            <button
+              type="button"
+              className={`${css.iconBtn}${ui.servicesEdit ? ` ${css.iconBtnActive}` : ""}`}
+              data-testid="services-layer-top"
+              aria-label={
+                ui.servicesEdit ? "Close services layer" : "Services layer"
+              }
+              title="Services layer — drainage, utilities, RL levels, calibrate"
+              aria-pressed={ui.servicesEdit}
+              onClick={() =>
+                studio.setUi({
+                  servicesEdit: !ui.servicesEdit,
+                  tool: ui.servicesEdit ? "pan" : "service",
+                  layerOpacity: { ...ui.layerOpacity, services: 1 },
+                })
+              }
+            >
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path
+                  d="M1.5 6.5h3l2 4 2.4-8 1.6 5.5 1-1.5h2.5"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
           ) : null}
           <button
             type="button"
@@ -1704,7 +1735,10 @@ export function HandoffDesignStudio({
             {planOn && !ui.frameOn ? (
               <>
                 <SurveyAnnotationLayer
-                  active={ui.mode === "survey"}
+                  active={
+                    ui.mode === "survey" ||
+                    (ui.mode === "cad" && ui.servicesEdit)
+                  }
                   tool={ui.tool}
                   levels={studio.levels}
                   services={studio.services}
@@ -1892,6 +1926,7 @@ export function HandoffDesignStudio({
           <AmbientRibbon
             tool={ui.tool}
             mode={ui.mode}
+            servicesEdit={ui.mode === "cad" && ui.servicesEdit}
             locked={ui.locked}
             canUndo={studio.canUndo}
             canRedo={studio.canRedo}

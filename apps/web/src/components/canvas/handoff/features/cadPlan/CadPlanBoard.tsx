@@ -651,6 +651,12 @@ export function CadPlanBoard({
     layerOpacity.council,
     isolatedLayer,
   );
+  // Service corridors + easements are the "Services & utilities" layer.
+  const servicesVisual = resolveLayerVisual(
+    "services",
+    layerOpacity.services,
+    isolatedLayer,
+  );
 
   return (
     <div
@@ -752,7 +758,7 @@ export function CadPlanBoard({
         {easements
           .filter((r) => r.length >= 3)
           .map((ring, i) => (
-            <g key={`ease${i}`} opacity={councilVisual.opacity} data-testid="easement-hatch">
+            <g key={`ease${i}`} opacity={servicesVisual.opacity} data-testid="easement-hatch">
               <polygon
                 points={ptsAttr(ring)}
                 fill="url(#ws-easement-hatch)"
@@ -768,7 +774,7 @@ export function CadPlanBoard({
           .map((ring, i) => (
             <g
               key={`svc${i}`}
-              opacity={councilVisual.opacity}
+              opacity={servicesVisual.opacity}
               data-testid="utility-service-trace"
             >
               <polyline

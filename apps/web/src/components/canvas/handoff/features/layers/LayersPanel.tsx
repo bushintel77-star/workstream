@@ -6,8 +6,13 @@ import css from "./layers.module.css";
 
 const LAYERS: Array<{ key: LayerKey; label: string; hint: string }> = [
   { key: "survey", label: "Survey (existing)", hint: "Existing trees, as-built sketches" },
-  { key: "boundary", label: "Boundary & hardscape", hint: "Bounds, paving, deck, drainage" },
-  { key: "council", label: "Council & compliance", hint: "Setbacks, TPZ, easements" },
+  { key: "boundary", label: "Boundary & hardscape", hint: "Bounds, paving, deck" },
+  {
+    key: "services",
+    label: "Services & utilities",
+    hint: "Drainage, service corridors, easements, RL levels",
+  },
+  { key: "council", label: "Council & compliance", hint: "Setbacks, TPZ" },
   { key: "vegetation", label: "Vegetation (proposed)", hint: "Canopy, hedge, beds, lawn" },
 ];
 

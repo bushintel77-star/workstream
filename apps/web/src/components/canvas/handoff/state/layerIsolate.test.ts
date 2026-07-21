@@ -15,4 +15,15 @@ describe("layer isolation", () => {
       hittable: false,
     });
   });
+
+  it("treats services as its own isolatable layer", () => {
+    expect(resolveLayerVisual("services", 0.6, "services")).toEqual({
+      opacity: 0.6,
+      hittable: true,
+    });
+    expect(resolveLayerVisual("services", 1, "boundary")).toEqual({
+      opacity: 0.15,
+      hittable: false,
+    });
+  });
 });

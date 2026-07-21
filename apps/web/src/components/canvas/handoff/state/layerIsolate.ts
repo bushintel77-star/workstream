@@ -7,6 +7,7 @@ export const LAYER_LABEL: Record<LayerKey, string> = {
   boundary: "Hardscape",
   council: "Compliance",
   vegetation: "Planting",
+  services: "Services",
 };
 
 export function resolveLayerVisual(

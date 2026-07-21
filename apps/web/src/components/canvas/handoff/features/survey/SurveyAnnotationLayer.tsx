@@ -96,21 +96,20 @@ export function SurveyAnnotationLayer({
     active && (tool === "level" || tool === "service" || tool === "calib");
 
   const ink = darkOn ? "#E6E9EA" : "#1C1917";
-  const surveyVisual = resolveLayerVisual(
-    "survey",
-    layerOpacity.survey,
+  // Levels, service corridors and easements are one "Services & utilities"
+  // layer on the single canvas — toggled/dimmed together, never a separate tab.
+  const servicesVisual = resolveLayerVisual(
+    "services",
+    layerOpacity.services,
     isolatedLayer,
   );
-  const councilVisual = resolveLayerVisual(
-    "council",
-    layerOpacity.council,
-    isolatedLayer,
-  );
-  const surveyOp = surveyVisual.opacity;
-  const councilOp = councilVisual.opacity;
-  const serviceRings = showCorridors
-    ? ([...services, drawService].filter(Boolean) as PctPoint[][])
-    : [];
+  const surveyOp = servicesVisual.opacity;
+  const councilOp = servicesVisual.opacity;
+  // Committed corridors render here in Survey; on the CAD canvas they come from
+  // CadPlanBoard, so only the in-progress trace is drawn to avoid doubling.
+  const serviceRings = (
+    showCorridors ? [...services, drawService] : [drawService]
+  ).filter(Boolean) as PctPoint[][];
   const falls = levels
     .slice(1)
     .map((level, index) => buildSpotLevelFall(levels[index]!, level, scaleM))

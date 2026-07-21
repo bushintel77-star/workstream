@@ -33,6 +33,8 @@ const INSTRUMENT_DISMISS_MS = ATELIER_LINGER_MS;
 type Props = {
   tool: StudioTool;
   mode?: StudioMode;
+  /** Services layer authoring active on the CAD canvas — reveals survey tools. */
+  servicesEdit?: boolean;
   locked: boolean;
   canUndo: boolean;
   canRedo: boolean;
@@ -74,6 +76,7 @@ const SLOT_PX = 48;
 export function AmbientRibbon({
   tool,
   mode = "cad",
+  servicesEdit = false,
   locked,
   canUndo,
   canRedo,
@@ -94,7 +97,7 @@ export function AmbientRibbon({
   onMarkId,
   onPreviewMark,
 }: Props) {
-  const surveyMode = mode === "survey";
+  const surveyMode = mode === "survey" || servicesEdit;
   const sketchMode = mode === "sketch";
   const rootRef = useRef<HTMLElement>(null);
   const [hovered, setHovered] = useState(false);

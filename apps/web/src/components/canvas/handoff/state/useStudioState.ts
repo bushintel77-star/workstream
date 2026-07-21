@@ -154,6 +154,8 @@ type Ui = {
   layersOpen: boolean;
   layerOpacity: LayerOpacity;
   isolatedLayer: LayerKey | null;
+  /** Services layer authoring on the CAD canvas (Servc / Level / Calibrate). */
+  servicesEdit: boolean;
   setbackOn: boolean;
   /** Indicative sun-hours mesh on the % board. */
   shadeOn: boolean;
@@ -421,6 +423,7 @@ function initialState(opts: {
       dataSummoned: false,
       councilTip: null,
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
+      servicesEdit: false,
       sheetScaleDenom: 100,
       boardWidthM: null,
       parchmentPeel: 0.42,
@@ -1207,6 +1210,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         boundary: 1,
         council: 0.25,
         vegetation: 0.4,
+        services: 0.6,
       },
       assistReply: "Snapping Vicmap title…",
     });

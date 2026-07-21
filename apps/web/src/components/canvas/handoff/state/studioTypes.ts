@@ -10,7 +10,12 @@ import type {
 import type { PaperSize, PctPoint } from "../geometry";
 import type { SunDatePreset } from "../features/sunGrowth/sunDatePreset";
 
-export type LayerKey = "survey" | "boundary" | "council" | "vegetation";
+export type LayerKey =
+  | "survey"
+  | "boundary"
+  | "council"
+  | "vegetation"
+  | "services";
 
 export type LayerOpacity = Record<LayerKey, number>;
 
@@ -46,6 +51,12 @@ export type StudioUiState = {
   layerOpacity: LayerOpacity;
   /** View-only layer isolation; never persisted to DesignCanvas. */
   isolatedLayer: LayerKey | null;
+  /**
+   * Services layer authoring on the CAD canvas — surfaces the Servc / Level /
+   * Calibrate tools in place so services live as a toggleable layer, not a
+   * separate survey tab. Canvas-first: one canvas, dynamic.
+   */
+  servicesEdit: boolean;
   setbackOn: boolean;
   growth: GrowthStage;
   /** Minutes past midnight Melb-ish; handoff uses sunMin */
@@ -108,6 +119,7 @@ export const DEFAULT_LAYER_OPACITY: LayerOpacity = {
   boundary: 1,
   council: 1,
   vegetation: 1,
+  services: 1,
 };
 
 export const SURVEY_LAYER_PRESET: LayerOpacity = {
@@ -115,6 +127,7 @@ export const SURVEY_LAYER_PRESET: LayerOpacity = {
   boundary: 1,
   council: 0.15,
   vegetation: 0.15,
+  services: 1,
 };
 
 export const DESIGN_LAYER_PRESET: LayerOpacity = {
@@ -122,6 +135,9 @@ export const DESIGN_LAYER_PRESET: LayerOpacity = {
   boundary: 1,
   council: 1,
   vegetation: 1,
+  // Services (drainage / utilities / RL levels) stay legible on the design
+  // canvas — they are a toggleable layer, not a separate survey tab.
+  services: 1,
 };
 
 export const ITEM_LAYER: Record<StudioItemType, LayerKey> = {
@@ -133,5 +149,5 @@ export const ITEM_LAYER: Record<StudioItemType, LayerKey> = {
   exist: "survey",
   paving: "boundary",
   deck: "boundary",
-  frenchdrain: "boundary",
+  frenchdrain: "services",
 };
