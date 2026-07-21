@@ -18,8 +18,14 @@ import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
 import { playInstrumentTick } from "./instrumentTick";
 import css from "./ambientRibbon.module.css";
 
-/** Dissolves summoned instruments if the operator does not engage (compliance). */
-const INSTRUMENT_DISMISS_MS = 3000;
+import { ATELIER_LINGER_MS } from "../kitInventory/atelierPresence";
+
+/**
+ * Dissolves summoned instruments if the operator does not engage. Shares the
+ * one atelier dwell so instruments + inventory recede together, not on
+ * different clocks.
+ */
+const INSTRUMENT_DISMISS_MS = ATELIER_LINGER_MS;
 
 type LayerChip = {
   key: LayerKey;
