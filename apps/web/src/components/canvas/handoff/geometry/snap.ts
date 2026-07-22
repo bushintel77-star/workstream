@@ -1,4 +1,5 @@
 import type { PctPoint } from "./types";
+import { ZOOM_MIN } from "./canvasZoom";
 
 export type SnapKind = "close" | "vertex" | "angle" | "ortho" | null;
 
@@ -208,6 +209,61 @@ export function snapToGridPct(
     x: Math.round(target.x / step) * step,
     y: Math.round(target.y / step) * step,
   });
+}
+
+/** Working precision for metre-space grid snap (Phase 1). */
+export const GRID_SIZE_M = 0.5;
+
+/** Screen-space snap radius — divide by planZoom for world radius. */
+export const SNAP_RADIUS_PX = 10;
+
+/** Convert a metre grid to board % for the current scale. */
+export function metresGridStepPct(
+  scaleM: number,
+  gridM: number = GRID_SIZE_M,
+): number {
+  return (Math.max(1e-6, gridM) / Math.max(1e-6, scaleM)) * 100;
+}
+
+/** Half-metre (or custom) grid in calibrated board metres → % coords. */
+export function snapToGridMetres(
+  target: PctPoint,
+  scaleM: number,
+  gridM: number = GRID_SIZE_M,
+): PctPoint {
+  return snapToGridPct(target, metresGridStepPct(scaleM, gridM));
+}
+
+/**
+ * Vertex/edge snap in screen px (zoom-aware), else fall back to metre grid.
+ * `planZoom` is the camera scale on `.zoomWorld`.
+ */
+export function snapToNearby(
+  point: PctPoint,
+  candidates: PctPoint[],
+  args: {
+    planZoom: number;
+    boardW: number;
+    boardH: number;
+    scaleM: number;
+    snapRadiusPx?: number;
+    gridM?: number;
+  },
+): PctPoint {
+  const zoom = Math.max(ZOOM_MIN, args.planZoom || 1);
+  const radiusWorldPx =
+    (args.snapRadiusPx ?? SNAP_RADIUS_PX) / zoom;
+  let best: PctPoint | null = null;
+  let bestD = radiusWorldPx;
+  for (const c of candidates) {
+    const d = pctDistPx(point, c, args.boardW, args.boardH);
+    if (d <= bestD) {
+      bestD = d;
+      best = c;
+    }
+  }
+  if (best) return { x: best.x, y: best.y };
+  return snapToGridMetres(point, args.scaleM, args.gridM);
 }
 
 /**

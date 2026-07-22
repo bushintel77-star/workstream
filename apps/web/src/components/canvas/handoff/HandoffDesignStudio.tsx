@@ -125,6 +125,7 @@ import {
 import { nextBoardSize } from "./geometry/boardSizeCommit";
 import {
   normalizeViewRotationDeg,
+  stepViewRotationDeg,
   type ViewRotationStepDeg,
 } from "./geometry/canvasViewRotation";
 import { ViewNorthControl } from "./features/viewRotate/ViewNorthControl";
@@ -666,6 +667,11 @@ export function HandoffDesignStudio({
       }
       if (e.key.toLowerCase() === "f" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
+        // F = Fit sheet (product). Shift+F = zoom camera to selection.
+        if (e.shiftKey) {
+          if (!ui.frameOn) studio.fitSelectionView();
+          return;
+        }
         setFitSheetOn(!ui.frameOn);
         return;
       }
@@ -727,13 +733,36 @@ export function HandoffDesignStudio({
         ai.reject(ai.current.id);
         return;
       }
+      if (e.key === "[" || e.key === "]") {
+        e.preventDefault();
+        if (ui.selectedId && !ui.drawPoly) {
+          // Per-asset clock rotate — never touches ui.viewRotationDeg.
+          studio.rotateSelectedClock(e.key === "]" ? 1 : -1);
+          return;
+        }
+        // No selection: CAD camera rotate by the active step (15/45/90).
+        if (ui.mode === "cad" && !ui.frameOn && !ui.drawPoly) {
+          const dir = e.key === "]" ? 1 : -1;
+          studio.setUi({
+            viewRotationDeg: stepViewRotationDeg(
+              ui.viewRotationDeg,
+              dir,
+              ui.viewRotationStepDeg,
+            ),
+          });
+        }
+        return;
+      }
       if (
-        ui.selectedId &&
-        !ui.drawPoly &&
-        (e.key === "[" || e.key === "]")
+        e.key === "0" &&
+        e.shiftKey &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        ui.mode === "cad" &&
+        !ui.frameOn
       ) {
         e.preventDefault();
-        studio.rotateSelectedClock(e.key === "]" ? 1 : -1);
+        studio.setUi({ viewRotationDeg: 0 });
         return;
       }
       if (
@@ -1834,6 +1863,7 @@ export function HandoffDesignStudio({
               titleLocked={titleLocked}
               titleBoundaryLocked={ui.titleBoundaryLocked}
               scaleM={scaleM}
+              planZoom={planZoom}
               lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
               siteAreas={
                 siteSchedule
@@ -1900,8 +1930,15 @@ export function HandoffDesignStudio({
                 }
                 studio.setSelection(id, [id]);
               }}
-              onMarqueeSelect={(ids) => {
+              onMarqueeSelect={(ids, opts) => {
                 setInstrumentsSummoned(false);
+                if (opts?.additive && ids.length > 0) {
+                  const merged = new Set([...ui.groupIds, ...ids]);
+                  if (ui.selectedId) merged.add(ui.selectedId);
+                  const list = [...merged];
+                  studio.setSelection(ids[0] ?? ui.selectedId, list);
+                  return;
+                }
                 studio.setSelection(ids[0] ?? null, ids);
               }}
               onEmptyClick={({ x, y, insideLot }) => {

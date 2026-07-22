@@ -1693,15 +1693,32 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const deleteSelected = useCallback(() => {
-    const id = state.ui.selectedId;
-    if (!id || state.ui.locked) return;
-    const target = state.doc.items.find((i) => i.id === id);
-    if (!target || target.ghost) return;
+    if (state.ui.locked) return;
+    const ids =
+      state.ui.groupIds.length > 0
+        ? state.ui.groupIds
+        : state.ui.selectedId
+          ? [state.ui.selectedId]
+          : [];
+    if (ids.length === 0) return;
+    const set = new Set(ids);
+    const removable = state.doc.items.filter(
+      (i) => set.has(i.id) && !i.ghost,
+    );
+    if (removable.length === 0) return;
+    const drop = new Set(removable.map((i) => i.id));
     mutate((snap) => ({
-      snap: { ...snap, items: snap.items.filter((i) => i.id !== id) },
+      snap: { ...snap, items: snap.items.filter((i) => !drop.has(i.id)) },
     }));
-    setUi({ selectedId: null });
-  }, [mutate, setUi, state.doc.items, state.ui.locked, state.ui.selectedId]);
+    setUi({ selectedId: null, groupIds: [] });
+  }, [
+    mutate,
+    setUi,
+    state.doc.items,
+    state.ui.groupIds,
+    state.ui.locked,
+    state.ui.selectedId,
+  ]);
 
   const changeSelectedType = useCallback(
     (t: StudioItemType) => {
@@ -2306,6 +2323,50 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.ui.boardWidthM,
   ]);
 
+  /** Zoom camera to the current selection (or outdoor remnant if empty). */
+  const fitSelectionView = useCallback(() => {
+    const ids =
+      state.ui.groupIds.length > 0
+        ? state.ui.groupIds
+        : state.ui.selectedId
+          ? [state.ui.selectedId]
+          : [];
+    const pts = state.doc.items
+      .filter((i) => ids.includes(i.id) && !i.ghost)
+      .map((i) => ({ x: i.x, y: i.y }));
+    if (pts.length === 0) {
+      fitOutdoorView();
+      return;
+    }
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    const span = Math.max(maxX - minX, maxY - minY, 4);
+    const FIT_ZOOM_MAX = 16;
+    const zoom = Math.max(
+      1,
+      Math.min(FIT_ZOOM_MAX, Number((90 / span).toFixed(2))),
+    );
+    setUi({
+      focusX: Number(midX.toFixed(2)),
+      focusY: Number(midY.toFixed(2)),
+      zoom,
+      panX: 0,
+      panY: 0,
+    });
+  }, [
+    fitOutdoorView,
+    setUi,
+    state.doc.items,
+    state.ui.groupIds,
+    state.ui.selectedId,
+  ]);
+
   useEffect(() => {
     if (!state.ui.councilTip) return;
     const t = window.setTimeout(
@@ -2390,6 +2451,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     siteSchedule,
     acceptHorizonCard,
     fitOutdoorView,
+    fitSelectionView,
     ai,
     mutate,
     setUi,

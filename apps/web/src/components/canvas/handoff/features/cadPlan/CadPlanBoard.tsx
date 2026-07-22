@@ -14,8 +14,10 @@ import {
   ptsAttr,
   snapAlignment,
   snapDraftPoint,
-  snapToGridPct,
+  snapToGridMetres,
+  snapToNearby,
   snapVertexDrag,
+  metresGridStepPct,
   tpzRadiusPct,
   type GridFormation,
   type GridGrain,
@@ -123,8 +125,13 @@ type Props = {
     active: boolean;
   }>;
   scaleM?: number;
+  /** Camera zoom — for screen-px → world snap radius. */
+  planZoom?: number;
   onSelect: (id: string | null, opts?: { additive?: boolean }) => void;
-  onMarqueeSelect: (ids: string[]) => void;
+  onMarqueeSelect: (
+    ids: string[],
+    opts?: { additive?: boolean },
+  ) => void;
   onHover: (id: string | null) => void;
   onAcceptGhost: (id: string) => void;
   onRejectGhost: (id: string) => void;
@@ -210,6 +217,7 @@ export function CadPlanBoard({
   flaggedIds,
   tpzReadouts,
   scaleM = 110,
+  planZoom = 1,
   onSelect,
   onMarqueeSelect,
   onHover,
@@ -245,6 +253,8 @@ export function CadPlanBoard({
     ids?: string[];
     startX?: number;
     startY?: number;
+    /** Shift-marquee unions into the current selection. */
+    additive?: boolean;
   } | null>(null);
   const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({
     x: null,
@@ -412,7 +422,17 @@ export function CadPlanBoard({
         boardW,
         boardH,
       );
-      const p = gridSnap ? snapToGridPct(locked, gridStep) : locked;
+      const peers = items
+        .filter((i) => !i.ghost)
+        .map((i) => ({ x: i.x, y: i.y }));
+      const p = gridSnap
+        ? snapToNearby(locked, peers, {
+            planZoom,
+            boardW,
+            boardH,
+            scaleM,
+          })
+        : locked;
       onPlace(p.x, p.y);
       return;
     }
@@ -424,6 +444,7 @@ export function CadPlanBoard({
         startY: p.y,
         ox: p.x,
         oy: p.y,
+        additive: e.shiftKey || e.metaKey,
       };
       setMarquee({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
       (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
@@ -518,7 +539,7 @@ export function CadPlanBoard({
       return;
     }
     if (d.kind === "group" && d.ids && d.startX != null && d.startY != null) {
-      const snapped = gridSnap ? snapToGridPct(p, gridStep) : p;
+      const snapped = gridSnap ? snapToGridMetres(p, scaleM) : p;
       const dx = snapped.x - d.startX;
       const dy = snapped.y - d.startY;
       dragRef.current = { ...d, startX: snapped.x, startY: snapped.y };
@@ -531,7 +552,11 @@ export function CadPlanBoard({
         .filter((o) => o.id !== d.id)
         .map((o) => ({ x: o.x, y: o.y }));
       if (gridSnap) {
-        const snapped = snapDraftPoint(p, others, gridStep);
+        const snapped = snapDraftPoint(
+          p,
+          others,
+          metresGridStepPct(scaleM),
+        );
         setGuides({ x: snapped.guideX, y: snapped.guideY });
         setCrosshair({ x: snapped.crossX, y: snapped.crossY });
         setSnapKind(
@@ -603,7 +628,7 @@ export function CadPlanBoard({
               i.y <= maxY,
           )
           .map((i) => i.id);
-        onMarqueeSelect(hit);
+        onMarqueeSelect(hit, { additive: Boolean(d.additive) });
       } else {
         // Click (not drag) on empty board — not an item / vertex handle.
         const x = (minX + maxX) / 2;
@@ -1324,7 +1349,7 @@ export function CadPlanBoard({
                     : [it.id];
                 if (ids.length > 1) {
                   const p = toPct(e.clientX, e.clientY);
-                  const start = gridSnap ? snapToGridPct(p, gridStep) : p;
+                  const start = gridSnap ? snapToGridMetres(p, scaleM) : p;
                   dragRef.current = {
                     kind: "group",
                     ids,

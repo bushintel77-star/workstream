@@ -164,6 +164,17 @@ CAD free plan only: increment steps **15° / 45° / 90°** via `ViewNorthControl
 Resets to north whenever rotation ≠ 0°. Geometry `%` coords and per-asset
 `item.rot` handles are unchanged — viewport `rotate()` only.
 
+Keyboard: `[` / `]` rotate the **camera** when nothing is selected; with a
+selection they still clock-rotate **assets**. `Shift+0` resets view to north.
+`F` = Fit sheet; `Shift+F` = zoom camera to selection.
+
+### 2d. Phase 1 snap / multi-select
+
+- Place/move grid: **0.5 m** (`snapToGridMetres` / `snapToNearby`) with
+  `SNAP_RADIUS_PX / planZoom` vertex preference.
+- Shift-marquee unions selection; Delete removes the whole group.
+- Asset `item.rot` stays independent of `ui.viewRotationDeg`.
+
 ---
 
 ## 3. Spatial clustering (Fitts + proximity)

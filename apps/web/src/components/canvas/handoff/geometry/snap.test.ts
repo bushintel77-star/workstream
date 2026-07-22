@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  GRID_SIZE_M,
+  SNAP_RADIUS_PX,
+  metresGridStepPct,
   snapAlignment,
   snapClockRotationDeg,
   snapDraftPoint,
+  snapToGridMetres,
   snapToGridPct,
+  snapToNearby,
   snapTracePointer,
   snapVertexDrag,
 } from "./snap";
@@ -105,5 +110,45 @@ describe("snapToGridPct / snapClockRotationDeg / snapDraftPoint", () => {
     const r = snapDraftPoint({ x: 41, y: 59 }, [{ x: 40, y: 10 }], 2.5);
     expect(r.crossX).toBe(40);
     expect(r.guideX).toBe(40);
+  });
+});
+
+describe("snapToGridMetres / snapToNearby", () => {
+  it("uses half-metre grid in calibrated board space", () => {
+    // scaleM=100 → 0.5 m = 0.5%
+    expect(metresGridStepPct(100, GRID_SIZE_M)).toBeCloseTo(0.5, 5);
+    const p = snapToGridMetres({ x: 40.3, y: 50.1 }, 100);
+    expect(p.x).toBeCloseTo(40.5, 5);
+    expect(p.y).toBeCloseTo(50, 5);
+  });
+
+  it("prefers nearby vertex within SNAP_RADIUS_PX / planZoom", () => {
+    const hit = snapToNearby(
+      { x: 50.05, y: 50.02 },
+      [{ x: 50, y: 50 }],
+      {
+        planZoom: 1,
+        boardW: 1000,
+        boardH: 800,
+        scaleM: 100,
+        snapRadiusPx: SNAP_RADIUS_PX,
+      },
+    );
+    expect(hit).toEqual({ x: 50, y: 50 });
+  });
+
+  it("falls back to metre grid when nothing is in radius", () => {
+    const hit = snapToNearby(
+      { x: 40.3, y: 50.1 },
+      [{ x: 10, y: 10 }],
+      {
+        planZoom: 1,
+        boardW: 1000,
+        boardH: 800,
+        scaleM: 100,
+      },
+    );
+    expect(hit.x).toBeCloseTo(40.5, 5);
+    expect(hit.y).toBeCloseTo(50, 5);
   });
 });
