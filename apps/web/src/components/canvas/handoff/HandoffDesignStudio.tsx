@@ -336,9 +336,9 @@ export function HandoffDesignStudio({
   }, [ui.frameOn, ui.paper, boardSize.w, boardSize.h]);
 
   /**
-   * Infinite-feel canvas zoom — wheel / trackpad / pinch over the board.
-   * Active on Survey / Sketch / CAD. On the A3/A4 fit sheet, plain wheel
-   * owns architectural print scale (FitSheetOverlay) — not world zoom.
+   * Infinite canvas zoom — wheel / trackpad / pinch over the board.
+   * Active on Survey / Sketch / CAD including A3/A4 Fit sheet.
+   * (Print 1:N is Alt+wheel on the Fit sheet HUD — not plain wheel.)
    */
   useEffect(() => {
     const el = boardRef.current;
@@ -347,13 +347,19 @@ export function HandoffDesignStudio({
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
     if (!planMode) return;
     const onWheel = (e: WheelEvent) => {
-      // Fit sheet: plain wheel = 1:N print scale (see FitSheetOverlay).
-      if (ui.frameOn) return;
       const t = e.target as HTMLElement | null;
       if (t?.closest?.("input, textarea, select, [data-no-canvas-zoom]")) {
         return;
       }
+      // Fit sheet: Alt+wheel reserved for print 1:N (FitSheetOverlay).
+      if (ui.frameOn && e.altKey) return;
       e.preventDefault();
+      const nextZoom = zoomFromWheel(ui.zoom, e.deltaY);
+      if (ui.frameOn) {
+        // Keep lot-centred sheet origin; zoom multiplies the paper fit.
+        studio.setUi({ zoom: nextZoom });
+        return;
+      }
       const r = el.getBoundingClientRect();
       const focusX = Math.max(
         0,
@@ -366,18 +372,12 @@ export function HandoffDesignStudio({
       studio.setUi({
         focusX: Number(focusX.toFixed(2)),
         focusY: Number(focusY.toFixed(2)),
-        zoom: zoomFromWheel(ui.zoom, e.deltaY),
+        zoom: nextZoom,
       });
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, [studio, ui.frameOn, ui.mode, ui.zoom]);
-
-  /** Pan offset is view-only — clear free-drag when entering Fit sheet.
-   * Sheet centering pan comes from sheetContentView, not ui.pan. */
-  useEffect(() => {
-    if (ui.frameOn) studio.setUi({ panX: 0, panY: 0 });
-  }, [ui.frameOn, studio]);
 
   /** Keeps the drag-start base fresh without re-subscribing gesture listeners. */
   useEffect(() => {
@@ -388,11 +388,12 @@ export function HandoffDesignStudio({
    * Space held → pan armed (CAD/Figma convention). Tracked outside React
    * state via a ref so the gesture listener below always reads it live;
    * mirrored into state only to drive the grab cursor.
+   * Works on free plan and Fit sheet (pan inside the paper plot).
    */
   useEffect(() => {
     const planMode =
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
-    if (!planMode || ui.frameOn) return;
+    if (!planMode) return;
     const release = () => {
       spaceHeldRef.current = false;
       setSpacePanArmed(false);
@@ -424,19 +425,20 @@ export function HandoffDesignStudio({
       window.removeEventListener("blur", release);
       release();
     };
-  }, [ui.mode, ui.frameOn]);
+  }, [ui.mode]);
 
   /**
    * Drag-to-pan — middle-mouse or Space+drag translates the viewport
    * without touching selection. Intercepted at capture phase, ahead of
    * CadPlanBoard's marquee-select pointerdown, so the two never collide.
+   * Enabled on Fit sheet too (pans inside the A3/A4 plot).
    */
   useEffect(() => {
     const el = boardRef.current;
     if (!el) return;
     const planMode =
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
-    if (!planMode || ui.frameOn) return;
+    if (!planMode) return;
     const onPointerDownCapture = (e: PointerEvent) => {
       if (!isPanGesture({ button: e.button, spaceHeld: spaceHeldRef.current })) {
         return;
@@ -466,7 +468,7 @@ export function HandoffDesignStudio({
       el.removeEventListener("pointerdown", onPointerDownCapture, {
         capture: true,
       });
-  }, [studio, ui.frameOn, ui.mode]);
+  }, [studio, ui.mode]);
 
   /** Restore micro grid studio prefs for this project session. */
   useEffect(() => {
@@ -674,7 +676,7 @@ export function HandoffDesignStudio({
         }
         return;
       }
-      /* Fit sheet: +/- steps 1:N. Else infinite world zoom. */
+      /* +/- = infinite zoom on free plan and Fit sheet. Alt+/- = print 1:N. */
       if (
         (e.key === "+" || e.key === "=" || e.key === "-" || e.key === "_") &&
         ui.mode !== "elevation" &&
@@ -682,8 +684,7 @@ export function HandoffDesignStudio({
         ui.mode !== "share"
       ) {
         e.preventDefault();
-        if (ui.frameOn) {
-          // + → tighter print (1:50), - → wider (1:200)
+        if (ui.frameOn && e.altKey) {
           studio.snapSheetScale(
             e.key === "-" || e.key === "_" ? 1 : -1,
           );
@@ -871,21 +872,52 @@ export function HandoffDesignStudio({
     scaleM,
   ]);
 
-  const planZoom = sheetPlotLayout?.view.zoom ?? clampZoom(ui.zoom);
+  /**
+   * Absolute camera zoom on free plan and Fit sheet (0.05–64).
+   * Fit sheet seeds ui.zoom to the paper-fit value on enter; pan centres the lot.
+   */
+  const planZoom = clampZoom(ui.zoom);
   const planFocusX = sheetPlotLayout?.view.focusX ?? ui.focusX;
   const planFocusY = sheetPlotLayout?.view.focusY ?? ui.focusY;
-  /** Fit sheet centres the lot on the plot; free pan is world-only. */
-  const planPanX = sheetPlotLayout ? sheetPlotLayout.view.panX : ui.panX;
-  const planPanY = sheetPlotLayout ? sheetPlotLayout.view.panY : ui.panY;
+  /** Sheet centres the lot; ui.pan is extra drag on free plan and Fit sheet. */
+  const planPanX = (sheetPlotLayout?.view.panX ?? 0) + ui.panX;
+  const planPanY = (sheetPlotLayout?.view.panY ?? 0) + ui.panY;
   /**
    * Infinite zoom-out: hide the scaled world paper and show a full-bleed
-   * parchment underlay so the board never postage-stamps.
+   * parchment underlay so the board never postage-stamps (free plan only —
+   * Fit sheet keeps paper chrome inside the plot clip).
    */
   const worldZoomedOut = planOn && !ui.frameOn && planZoom < 0.999;
+
+  /** Seed absolute zoom to paper-fit when opening Fit sheet / changing paper. */
+  const fitSeedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!ui.frameOn || !sheetPlotLayout) {
+      fitSeedKeyRef.current = null;
+      return;
+    }
+    const key = `${ui.paper}:${ui.sheetScaleDenom}:${boardSize.w}x${boardSize.h}`;
+    if (fitSeedKeyRef.current === key) return;
+    fitSeedKeyRef.current = key;
+    studio.setUi({
+      zoom: clampZoom(sheetPlotLayout.view.zoom),
+      panX: 0,
+      panY: 0,
+    });
+  }, [
+    ui.frameOn,
+    ui.paper,
+    ui.sheetScaleDenom,
+    boardSize.w,
+    boardSize.h,
+    sheetPlotLayout,
+    studio,
+  ]);
 
   const setFitSheetOn = useCallback(
     (on: boolean) => {
       if (on) {
+        fitSeedKeyRef.current = null;
         studio.setUi({
           frameOn: true,
           panX: 0,
@@ -896,7 +928,8 @@ export function HandoffDesignStudio({
       }
       // Leaving Fit sheet — restore a coherent free-plan camera on every tab.
       outdoorFitKeyRef.current = null;
-      studio.setUi({ frameOn: false, panX: 0, panY: 0 });
+      fitSeedKeyRef.current = null;
+      studio.setUi({ frameOn: false, panX: 0, panY: 0, zoom: 1 });
       studio.fitOutdoorView();
     },
     [studio],
@@ -2191,15 +2224,16 @@ export function HandoffDesignStudio({
             onUndo={studio.undo}
             onRedo={studio.redo}
             onZoom={(delta) => {
-              if (ui.frameOn) {
-                studio.snapSheetScale(delta > 0 ? -1 : 1);
-                return;
-              }
               studio.setUi({ zoom: zoomByRibbonDelta(ui.zoom, delta) });
             }}
             onFit={() => {
               if (ui.frameOn) {
-                studio.setSheetScale(100);
+                fitSeedKeyRef.current = null;
+                studio.setUi({
+                  panX: 0,
+                  panY: 0,
+                  sheetScaleDenom: 100,
+                });
                 return;
               }
               if (ui.foundationCleanse) {

@@ -3,6 +3,7 @@ import {
   ZOOM_MAX,
   ZOOM_MIN,
   clampZoom,
+  composeSheetZoom,
   zoomByKeyStep,
   zoomByRibbonDelta,
   zoomFromWheel,
@@ -32,8 +33,10 @@ describe("canvasZoom", () => {
     expect(ZOOM_MIN).toBe(0.05);
   });
 
-  it("keyboard steps match ribbon geometry", () => {
-    expect(zoomByKeyStep(1, 1)).toBe(zoomByRibbonDelta(1, 0.1));
-    expect(zoomByKeyStep(1, -1)).toBe(zoomByRibbonDelta(1, -0.1));
+  it("composes Fit sheet paper-fit with relative user zoom", () => {
+    expect(composeSheetZoom(0.6, 1)).toBeCloseTo(0.6, 4);
+    expect(composeSheetZoom(0.6, 2)).toBeCloseTo(1.2, 4);
+    expect(composeSheetZoom(0.6, 0.1)).toBeGreaterThanOrEqual(ZOOM_MIN);
+    expect(composeSheetZoom(1, ZOOM_MAX)).toBe(ZOOM_MAX);
   });
 });

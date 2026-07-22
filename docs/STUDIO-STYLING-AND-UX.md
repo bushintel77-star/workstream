@@ -139,19 +139,20 @@ Implementation: `features/pointer/resolveStudioCursor.ts`.
 
 ## 2b. Infinite canvas zoom
 
-Plan modes support **infinite zoom in and out** (soft floor `0.05` / ceiling `64`):
+Plan modes support **infinite zoom in and out** on free board **and** A3/A4 Fit sheet (soft floor `0.05` / ceiling `64`):
 
 | Input | Behaviour |
 | --- | --- |
-| Wheel / trackpad / pinch over board | Zoom toward pointer; updates `focusX` / `focusY` |
-| Ribbon In / Out | Geometric steps (`×1.18`) |
+| Wheel / trackpad / pinch over board | Zoom toward pointer (free plan) or multiply paper-fit (Fit sheet) |
+| Ribbon In / Out | Geometric steps (`×1.18`) — same on Fit sheet |
 | `+` / `-` keys | Same geometric steps |
-| Fit | Frames outdoor remnant (free-plan camera) |
-| Fit sheet (`frameOn`) | Wheel changes print scale denom — not world zoom. Plan uses `sheetContentView` to fit the **title boundary** into the A3/A4 plot and centre it (pan after scale). |
+| `Alt` + wheel / `Alt` + `+` `-` | Fit sheet print scale denom only (`1:50`…`1:500`) |
+| Fit | Frames outdoor remnant (free-plan) or resets Fit camera to paper-fit ×1 |
+| Fit sheet (`frameOn`) | Title boundary fitted+centred in the plot; **plain wheel is infinite zoom** |
 
-**Zoom-out law:** the scaled world paper hides below `1×` and a full-bleed parchment underlay fills the board — never a postage-stamp canvas with empty chrome borders.
+**Zoom-out law (free plan):** scaled world paper hides below `1×`; full-bleed parchment underlay fills the board.
 
-Implementation: `geometry/canvasZoom.ts` + `.parchmentBleed` in `HandoffDesignStudio`. Free-plan metres use `BOARD_WIDTH_M_AT_100` (or calibrated `boardWidthM`) — print `sheetScaleDenom` does not mutate live CAD maths.
+Implementation: `geometry/canvasZoom.ts` (`composeSheetZoom`) + `.parchmentBleed` in `HandoffDesignStudio`.
 
 ---
 
