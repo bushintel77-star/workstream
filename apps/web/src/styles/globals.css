@@ -169,23 +169,6 @@ body {
   background-attachment: fixed;
 }
 
-.dev-auth-banner {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  padding: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--color-border-default);
-  background: var(--color-warning);
-  color: var(--color-obsidian);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 button,
 [role="button"],
 a {
@@ -288,7 +271,7 @@ button:focus-visible {
 
 /*
  * Fit sheet print — when the studio is in fit-sheet mode, it owns the page.
- * Hide every other element (dev banner, nav, toasts) via :has() scoping so
+ * Hide every other element (nav, toasts) via :has() scoping so
  * printing any non-studio page is unaffected.
  */
 @media print {
