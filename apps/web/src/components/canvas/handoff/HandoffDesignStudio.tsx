@@ -114,6 +114,7 @@ import {
   titlePanelWidth,
 } from "./geometry";
 import {
+  clampZoom,
   zoomByKeyStep,
   zoomByRibbonDelta,
   zoomFromWheel,
@@ -369,7 +370,8 @@ export function HandoffDesignStudio({
     return () => el.removeEventListener("wheel", onWheel);
   }, [studio, ui.frameOn, ui.mode, ui.zoom]);
 
-  /** Pan offset is view-only — never carries stale state into Fit sheet. */
+  /** Pan offset is view-only — clear free-drag when entering Fit sheet.
+   * Sheet centering pan comes from sheetContentView, not ui.pan. */
   useEffect(() => {
     if (ui.frameOn) studio.setUi({ panX: 0, panY: 0 });
   }, [ui.frameOn, studio]);
@@ -862,9 +864,12 @@ export function HandoffDesignStudio({
     scaleM,
   ]);
 
-  const planZoom = sheetPlotLayout?.view.zoom ?? ui.zoom;
+  const planZoom = sheetPlotLayout?.view.zoom ?? clampZoom(ui.zoom);
   const planFocusX = sheetPlotLayout?.view.focusX ?? ui.focusX;
   const planFocusY = sheetPlotLayout?.view.focusY ?? ui.focusY;
+  /** Fit sheet centres the lot on the plot; free pan is world-only. */
+  const planPanX = sheetPlotLayout ? sheetPlotLayout.view.panX : ui.panX;
+  const planPanY = sheetPlotLayout ? sheetPlotLayout.view.panY : ui.panY;
 
   const [formalizing, setFormalizing] = useState(false);
 
@@ -1661,10 +1666,10 @@ export function HandoffDesignStudio({
                 /*
                  * translate() applies in screen px, after scale() — a drag
                  * of N px on screen always moves the view N px, independent
-                 * of zoom. Fit sheet never pans (ui.panX/Y reset to 0 on
-                 * frameOn entry), so this is a no-op there.
+                 * of zoom. Fit sheet uses sheetContentView pan to centre
+                 * the title boundary in the A3/A4 plot (not free drag).
                  */
-                transform: `translate(${ui.frameOn ? 0 : ui.panX}px, ${ui.frameOn ? 0 : ui.panY}px) scale(${planZoom})`,
+                transform: `translate(${planPanX}px, ${planPanY}px) scale(${planZoom})`,
                 cursor: effectiveCursor,
               }}
             >

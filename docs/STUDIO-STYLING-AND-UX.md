@@ -139,7 +139,7 @@ Implementation: `features/pointer/resolveStudioCursor.ts`.
 
 ## 2b. Infinite canvas zoom
 
-Plan modes support **unbounded zoom** (soft floor `0.05` / ceiling `64` only for IEEE sanity):
+Plan modes support **unbounded zoom-in** (floor `1` = board-fill / ceiling `64`):
 
 | Input | Behaviour |
 | --- | --- |
@@ -147,9 +147,9 @@ Plan modes support **unbounded zoom** (soft floor `0.05` / ceiling `64` only for
 | Ribbon In / Out | Geometric steps (`×1.18`) |
 | `+` / `-` keys | Same geometric steps |
 | Fit | Still frames outdoor remnant (its own sensible zoom) |
-| Fit sheet (`frameOn`) | Wheel changes print scale denom — not world zoom |
+| Fit sheet (`frameOn`) | Wheel changes print scale denom — not world zoom. Plan uses `sheetContentView` to fit the **title boundary** into the A3/A4 plot and centre it (pan after scale). |
 
-Implementation: `geometry/canvasZoom.ts`. Do not reintroduce `0.6–2.2` clamps.
+Implementation: `geometry/canvasZoom.ts`. Floor stays at `1` — the %-coord world already fills the board, so zoom-out below 1 only shrinks the parchment into a postage stamp with empty borders. Do not reintroduce a sub-1 floor or the old `2.2` ceiling.
 
 ---
 

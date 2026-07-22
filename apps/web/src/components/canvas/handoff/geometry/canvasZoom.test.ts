@@ -16,16 +16,18 @@ describe("canvasZoom", () => {
     expect(z).toBeLessThanOrEqual(ZOOM_MAX);
   });
 
-  it("allows wide zoom-out past the old 0.6 floor", () => {
+  it("refuses to shrink the parchment below board-fill (no postage stamp)", () => {
     let z = 1;
     for (let i = 0; i < 40; i++) z = zoomByRibbonDelta(z, -0.1);
-    expect(z).toBeLessThan(0.6);
-    expect(z).toBeGreaterThanOrEqual(ZOOM_MIN);
+    expect(z).toBe(ZOOM_MIN);
+    expect(zoomFromWheel(1, 400)).toBe(ZOOM_MIN);
+    expect(clampZoom(0.05)).toBe(ZOOM_MIN);
   });
 
   it("wheel zooms smoothly and clamps", () => {
     expect(zoomFromWheel(1, -400)).toBeGreaterThan(1);
-    expect(zoomFromWheel(1, 400)).toBeLessThan(1);
+    expect(zoomFromWheel(2, 400)).toBeLessThan(2);
+    expect(zoomFromWheel(2, 400)).toBeGreaterThanOrEqual(ZOOM_MIN);
     expect(clampZoom(0)).toBe(1);
     expect(clampZoom(999)).toBe(ZOOM_MAX);
   });

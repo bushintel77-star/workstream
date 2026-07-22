@@ -1,10 +1,15 @@
 /**
  * Infinite-feel canvas zoom — multiplicative, pointer-anchored.
- * Practical IEEE floors/ceilings only; no CAD 0.6–2.2 hard stop.
+ * Zoom IN past the old 2.2 CAD ceiling; never shrink the parchment below
+ * filling the board (the % world is already the full board at 1× — zoom-out
+ * below that only creates empty borders, not more site).
  */
 
-/** Soft floor — whole-site context. */
-export const ZOOM_MIN = 0.05;
+/**
+ * Floor = fill the board. Below 1 the whole parchment scales into a postage
+ * stamp with a huge empty border — there is no world beyond 0–100%.
+ */
+export const ZOOM_MIN = 1;
 
 /** Soft ceiling — detail drafting (effectively unlimited for operators). */
 export const ZOOM_MAX = 64;
