@@ -206,6 +206,13 @@ type Ui = {
    */
   panX: number;
   panY: number;
+  /**
+   * CAD camera rotation (deg clockwise from north-up). Geometry coords never
+   * change — only the viewport transform. Increment steps only (15/45/90).
+   */
+  viewRotationDeg: number;
+  /** Active CAD view-rotation step size. */
+  viewRotationStepDeg: 15 | 45 | 90;
   savedTick: number;
   /** Monotonic canvas revision after each successful autosave. */
   saveRevision: number;
@@ -422,6 +429,8 @@ function initialState(opts: {
       focusY: 50,
       panX: 0,
       panY: 0,
+      viewRotationDeg: 0,
+      viewRotationStepDeg: 15,
       savedTick: 0,
       saveRevision: hasCanvas ? 1 : 0,
       aerialUri: null,

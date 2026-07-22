@@ -1,0 +1,110 @@
+.root {
+  position: absolute;
+  right: calc(var(--ws-safe-right, 12px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 12px) + 52px);
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 88px;
+  padding: 8px;
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.14));
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(--hc-neu-out-sm, 0 1px 0 rgba(255, 255, 255, 0.55));
+  pointer-events: auto;
+}
+
+.heading {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+.steps {
+  display: flex;
+  gap: 2px;
+}
+
+.stepBtn {
+  flex: 1;
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hc-ink, #241318);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stepBtnActive {
+  background: var(--hc-neu-in, #ebe0e5);
+  border-color: var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.iconBtn {
+  flex: 1;
+  min-height: 36px;
+  min-width: 36px;
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  border-radius: 8px;
+  background: var(--hc-neu-raised, #f6ebef);
+  color: var(--hc-ink, #241318);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: #fff6f8;
+}
+
+.reset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid rgba(194, 69, 95, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 246, 248, 0.95);
+  color: var(--hc-ink, #241318);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.deg {
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-ink-muted, #7a5560);
+  font-weight: 600;
+}
+
+.northIdle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+@media (min-width: 900px) {
+  .root {
+    bottom: calc(var(--ws-safe-bottom, 12px) + 24px);
+  }
+}

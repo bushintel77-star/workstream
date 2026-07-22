@@ -123,6 +123,11 @@ import {
   zoomFromWheel,
 } from "./geometry/canvasZoom";
 import { nextBoardSize } from "./geometry/boardSizeCommit";
+import {
+  normalizeViewRotationDeg,
+  type ViewRotationStepDeg,
+} from "./geometry/canvasViewRotation";
+import { ViewNorthControl } from "./features/viewRotate/ViewNorthControl";
 import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
 import {
   formalizeSketchToCadAction,
@@ -888,6 +893,14 @@ export function HandoffDesignStudio({
   const planPanX = (sheetPlotLayout?.view.panX ?? 0) + ui.panX;
   const planPanY = (sheetPlotLayout?.view.panY ?? 0) + ui.panY;
   /**
+   * CAD camera rotation — viewport only (geometry % coords unchanged).
+   * Off on Sketch / Fit / non-CAD so survey-grade print stays north-up.
+   */
+  const planRotateDeg =
+    ui.mode === "cad" && !ui.frameOn && !ui.clientView
+      ? normalizeViewRotationDeg(ui.viewRotationDeg)
+      : 0;
+  /**
    * Free-plan paper stays OUTSIDE the camera transform. Scaling parchment
    * inside `.zoomWorld` made the cream board grow/shrink with the lot on
    * every wheel tick (the reported Sketch/CAD oscillation). Bleed owns the
@@ -940,6 +953,13 @@ export function HandoffDesignStudio({
     },
     [studio],
   );
+
+  /** Leaving CAD (or Fit/client) — park camera at north so Sketch stays clean. */
+  useEffect(() => {
+    if (ui.mode === "cad" && !ui.frameOn && !ui.clientView) return;
+    if (ui.viewRotationDeg === 0) return;
+    studio.setUi({ viewRotationDeg: 0 });
+  }, [ui.mode, ui.frameOn, ui.clientView, ui.viewRotationDeg, studio]);
 
   const [formalizing, setFormalizing] = useState(false);
 
@@ -1756,12 +1776,10 @@ export function HandoffDesignStudio({
               style={{
                 transformOrigin: `${planFocusX}% ${planFocusY}%`,
                 /*
-                 * translate() applies in screen px, after scale() — a drag
-                 * of N px on screen always moves the view N px, independent
-                 * of zoom. Fit sheet uses sheetContentView pan to centre
-                 * the title boundary in the A3/A4 plot (not free drag).
+                 * Camera: pan (screen px) → rotate (CAD view) → scale.
+                 * Geometry % coords never change; asset item.rot is separate.
                  */
-                transform: `translate(${planPanX}px, ${planPanY}px) scale(${planZoom})`,
+                transform: `translate(${planPanX}px, ${planPanY}px) rotate(${planRotateDeg}deg) scale(${planZoom})`,
                 cursor: effectiveCursor,
               }}
             >
@@ -2202,6 +2220,17 @@ export function HandoffDesignStudio({
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
             titleBlock={titleBlock}
+          />
+        ) : null}
+
+        {ui.mode === "cad" && !ui.frameOn && !ui.clientView && !ui.focusOn ? (
+          <ViewNorthControl
+            rotationDeg={ui.viewRotationDeg}
+            stepDeg={ui.viewRotationStepDeg}
+            onRotation={(viewRotationDeg) => studio.setUi({ viewRotationDeg })}
+            onStep={(viewRotationStepDeg: ViewRotationStepDeg) =>
+              studio.setUi({ viewRotationStepDeg })
+            }
           />
         ) : null}
 

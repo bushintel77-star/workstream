@@ -158,6 +158,12 @@ paper grow or shrink with the lot. Fit sheet still keeps paper inside the plot.
 Implementation: `geometry/canvasZoom.ts` + `.parchmentBleed` + `hidePaper` on
 world `TactileGround` **and** `AerialSlot` (clears `#faf6f2` fill) whenever Fit is off.
 
+### 2c. CAD view rotation (camera only)
+
+CAD free plan only: increment steps **15° / 45° / 90°** via `ViewNorthControl`.
+Resets to north whenever rotation ≠ 0°. Geometry `%` coords and per-asset
+`item.rot` handles are unchanged — viewport `rotate()` only.
+
 ---
 
 ## 3. Spatial clustering (Fitts + proximity)
