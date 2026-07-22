@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { GridGrain } from "../../geometry/snap";
 import {
   GRID_FORMATIONS,
@@ -14,6 +14,8 @@ import {
   type GridInk,
 } from "../../geometry/gridStudio";
 import { playInstrumentTick } from "../ambient/instrumentTick";
+import { CameraChrome } from "../../CameraChrome";
+import type { BoardCamera } from "../../geometry/cameraPointer";
 import css from "./draftGridStudio.module.css";
 
 type Props = {
@@ -24,6 +26,11 @@ type Props = {
   ink: GridInk;
   grain: GridGrain;
   snap: boolean;
+  /**
+   * Live board camera — the grid studio glyph portals through it so the
+   * tiny badge stays a constant screen size at any camera zoom.
+   */
+  cam?: BoardCamera;
   /** Live preview while hovering the formation face (does not commit). */
   onPreviewFormation: (f: GridFormation | null) => void;
   onPreviewInk: (ink: GridInk | null) => void;
@@ -47,6 +54,7 @@ export function DraftGridStudio({
   ink,
   grain,
   snap,
+  cam,
   onPreviewFormation,
   onPreviewInk,
   onCommit,
@@ -99,22 +107,8 @@ export function DraftGridStudio({
   const ax = Math.max(14, Math.min(86, anchorXPct));
   const ay = Math.max(18, Math.min(88, anchorYPct + 16));
 
-  return (
-    <div
-      className={css.root}
-      data-testid="draft-grid-studio"
-      data-awake={awake ? "true" : "false"}
-      data-formation={shownF}
-      data-ink={shownI}
-      style={{ left: `${ax}%`, top: `${ay}%` }}
-      onMouseEnter={() => setAwake(true)}
-      onMouseLeave={() => {
-        setAwake(false);
-        leaveFormationFace();
-        setPreviewI(null);
-        onPreviewInk(null);
-      }}
-    >
+  const inner: ReactNode = (
+    <>
       <button
         type="button"
         className={css.face}
@@ -190,7 +184,48 @@ export function DraftGridStudio({
           {snap ? "⊕" : "○"}
         </button>
       </div>
-    </div>
+    </>
+  );
+
+  const onEnter = () => setAwake(true);
+  const onLeave = () => {
+    setAwake(false);
+    leaveFormationFace();
+    setPreviewI(null);
+    onPreviewInk(null);
+  };
+
+  if (!cam) {
+    return (
+      <div
+        className={css.root}
+        data-testid="draft-grid-studio"
+        data-awake={awake ? "true" : "false"}
+        data-formation={shownF}
+        data-ink={shownI}
+        style={{ left: `${ax}%`, top: `${ay}%` }}
+        onMouseEnter={onEnter}
+        onMouseLeave={onLeave}
+      >
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <CameraChrome place={{ kind: "project", pct: { x: ax, y: ay }, cam }}>
+      <div
+        className={css.root}
+        data-testid="draft-grid-studio"
+        data-awake={awake ? "true" : "false"}
+        data-formation={shownF}
+        data-ink={shownI}
+        onMouseEnter={onEnter}
+        onMouseLeave={onLeave}
+      >
+        {inner}
+      </div>
+    </CameraChrome>
   );
 }
 

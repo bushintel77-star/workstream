@@ -30,10 +30,11 @@
 }
 
 .label {
-  position: absolute;
-  transform: translate(-50%, -140%) scale(calc(1 / var(--studio-zoom, 1)));
-  transform-origin: center bottom;
-  z-index: 17;
+  /*
+   * Portaled via CameraChrome — no camera-space transform / counter-scale
+   * needed. The container's translate(-50%, -140%) is applied via the
+   * portal's transform when placed at a projected point.
+   */
   font-family: "IBM Plex Mono", monospace;
   font-size: 10.5px;
   font-variant-numeric: tabular-nums;

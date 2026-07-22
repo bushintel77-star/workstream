@@ -200,25 +200,8 @@ export function TactileGround({
 
           {!quietChrome ? (
             <>
-              {showEdgeLabels ? (
-                <>
-                  <div className={css.edgeScale} data-edge="left">
-                    {edgeLabels.map((l) => (
-                      <span key={`L${l.pct}`} style={{ top: `${l.pct}%` }}>
-                        {l.label}
-                      </span>
-                    ))}
-                  </div>
-                  <div className={css.edgeScale} data-edge="bottom">
-                    {edgeLabels.map((l) => (
-                      <span key={`B${l.pct}`} style={{ left: `${l.pct}%` }}>
-                        {l.label}
-                      </span>
-                    ))}
-                  </div>
-                </>
-              ) : null}
-              <div className={css.compass} title="True north">
+              {/* Edge metre labels belong on GroundRulerOverlay (outside camera). */}
+              <div className={css.compass} title="True north" data-plan-geometry="1">
                 <span className={css.compassN}>N</span>
                 <span className={css.compassRose} />
               </div>

@@ -48,7 +48,7 @@ import {
 import { resolveLayerVisual } from "../../state/layerIsolate";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
-import { BoardChromePortal } from "../../BoardChromePortal";
+import { CameraChrome, boardCameraFromPlan } from "../../CameraChrome";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
 
@@ -442,6 +442,25 @@ export function CadPlanBoard({
     };
   };
 
+  /**
+   * Live board camera — mirrors the `.zoomWorld` transform for every
+   * CameraChrome portal in this render. Chrome (frosted HUD, handles,
+   * menus, labels) lives outside `.zoomWorld` and projects back through
+   * this camera; plan-geometry feedback (marquee, snap pulse, crosshairs)
+   * stays inside and rides the camera transform directly.
+   */
+  const layout = boardLayout();
+  const cam = boardCameraFromPlan({
+    boardW: layout.w,
+    boardH: layout.h,
+    planZoom,
+    planRotateDeg,
+    planPanX,
+    planPanY,
+    planFocusX,
+    planFocusY,
+  });
+
   const onPointerDownBoard = (e: React.PointerEvent) => {
     if (tool === "add" || tool === "paint") {
       const raw = toPct(e.clientX, e.clientY);
@@ -743,6 +762,7 @@ export function CadPlanBoard({
       className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}`}
       data-testid="cad-plan-board"
       data-cad-plan
+      data-plan-geometry="1"
       data-mode={mode}
       data-cursor={
         tool === "paint" ? "paint" : editing ? cursorMode : "default"
@@ -1025,83 +1045,99 @@ export function CadPlanBoard({
 
       {editing && boundaryVisual.hittable
         ? boundary.map((p, i) => (
-            <button
+            <CameraChrome
               key={`bh${i}`}
-              type="button"
-              className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}${nodeFlash?.kind === "boundary" && nodeFlash.index === i ? ` ${css.cornerNodeFlash}` : ""}`}
-              style={{ left: `${p.x}%`, top: `${p.y}%` }}
-              title={
-                foundationCleanse ? "Drag boundary node" : "Corner vertex"
-              }
-              aria-label={`Boundary corner ${i + 1}`}
-              data-testid="cad-title-node"
-              onPointerEnter={() => setCursorMode("move")}
-              onPointerLeave={() => setCursorMode("default")}
-              onPointerDown={(e) => startCornerDrag("boundary", i, e)}
-              onDoubleClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!foundationCleanse) removeNode("boundary", i);
-              }}
-              onContextMenu={(e) => {
-                if (foundationCleanse) return;
-                openNodeMenu("boundary", i, e);
-              }}
-            />
+              place={{ kind: "project", pct: p, cam }}
+            >
+              <button
+                type="button"
+                className={`${css.cornerNode}${foundationCleanse ? ` ${css.cadCorner}` : ""}${nodeFlash?.kind === "boundary" && nodeFlash.index === i ? ` ${css.cornerNodeFlash}` : ""}`}
+                title={
+                  foundationCleanse ? "Drag boundary node" : "Corner vertex"
+                }
+                aria-label={`Boundary corner ${i + 1}`}
+                data-testid="cad-title-node"
+                onPointerEnter={() => setCursorMode("move")}
+                onPointerLeave={() => setCursorMode("default")}
+                onPointerDown={(e) => startCornerDrag("boundary", i, e)}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onDoubleClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!foundationCleanse) removeNode("boundary", i);
+                }}
+                onContextMenu={(e) => {
+                  if (foundationCleanse) return;
+                  openNodeMenu("boundary", i, e);
+                }}
+              />
+            </CameraChrome>
           ))
         : null}
       {editing && boundaryVisual.hittable && !foundationCleanse
         ? building.map((p, i) => (
-            <button
+            <CameraChrome
               key={`fh${i}`}
-              type="button"
-              className={`${css.cornerNode} ${css.cornerNodeBuilding}${nodeFlash?.kind === "building" && nodeFlash.index === i ? ` ${css.cornerNodeFlash}` : ""}`}
-              style={{ left: `${p.x}%`, top: `${p.y}%` }}
-              title="Corner vertex"
-              aria-label={`Existing dwelling corner ${i + 1}`}
-              onPointerEnter={() => setCursorMode("move")}
-              onPointerLeave={() => setCursorMode("default")}
-              onPointerDown={(e) => startCornerDrag("building", i, e)}
-              onDoubleClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                removeNode("building", i);
-              }}
-              onContextMenu={(e) => openNodeMenu("building", i, e)}
-            />
+              place={{ kind: "project", pct: p, cam }}
+            >
+              <button
+                type="button"
+                className={`${css.cornerNode} ${css.cornerNodeBuilding}${nodeFlash?.kind === "building" && nodeFlash.index === i ? ` ${css.cornerNodeFlash}` : ""}`}
+                title="Corner vertex"
+                aria-label={`Existing dwelling corner ${i + 1}`}
+                onPointerEnter={() => setCursorMode("move")}
+                onPointerLeave={() => setCursorMode("default")}
+                onPointerDown={(e) => startCornerDrag("building", i, e)}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onDoubleClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  removeNode("building", i);
+                }}
+                onContextMenu={(e) => openNodeMenu("building", i, e)}
+              />
+            </CameraChrome>
           ))
         : null}
 
       {editing && boundaryVisual.hittable && !foundationCleanse
         ? midHandles(boundary, "boundary").map((m) => (
-            <div
+            <CameraChrome
               key={`mb${m.after}`}
-              className={css.midHandle}
-              style={{ left: `${m.x}%`, top: `${m.y}%` }}
-              title="Split segment"
-              onPointerEnter={() => setCursorMode("add")}
-              onPointerLeave={() => setCursorMode("default")}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                insertMid("boundary", m.after);
-              }}
-            />
+              place={{ kind: "project", pct: { x: m.x, y: m.y }, cam }}
+            >
+              <div
+                className={css.midHandle}
+                title="Split segment"
+                onPointerEnter={() => setCursorMode("add")}
+                onPointerLeave={() => setCursorMode("default")}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  insertMid("boundary", m.after);
+                }}
+              />
+            </CameraChrome>
           ))
         : null}
       {editing && boundaryVisual.hittable && !foundationCleanse
         ? midHandles(building, "building").map((m) => (
-            <div
+            <CameraChrome
               key={`mf${m.after}`}
-              className={`${css.midHandle} ${css.midHandleBuilding}`}
-              style={{ left: `${m.x}%`, top: `${m.y}%` }}
-              title="Split segment"
-              onPointerEnter={() => setCursorMode("add")}
-              onPointerLeave={() => setCursorMode("default")}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                insertMid("building", m.after);
-              }}
-            />
+              place={{ kind: "project", pct: { x: m.x, y: m.y }, cam }}
+            >
+              <div
+                className={`${css.midHandle} ${css.midHandleBuilding}`}
+                title="Split segment"
+                onPointerEnter={() => setCursorMode("add")}
+                onPointerLeave={() => setCursorMode("default")}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  insertMid("building", m.after);
+                }}
+              />
+            </CameraChrome>
           ))
         : null}
 
@@ -1167,89 +1203,115 @@ export function CadPlanBoard({
       })}
 
       {showAutoAreaLabels && boundary.length >= 3 ? (
-        <div
-          className={css.cadAreaLabel}
-          style={{ left: `${titleCentroid.x}%`, top: `${titleCentroid.y}%` }}
-          data-testid="cad-title-area"
-          title={
-            titleBoundaryLocked
-              ? "Title locked"
-              : "Title unlocked — drag corner nodes to refine"
-          }
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: { x: titleCentroid.x, y: titleCentroid.y },
+            cam,
+          }}
         >
-          <span className={css.cadAreaKey}>Title</span>
-          <span className={css.cadAreaValue}>{formatCadAreaM2(areaLabelM2)}</span>
-          {titleMeta?.parcelRef ? (
-            <span className={css.cadAreaMeta}>{titleMeta.parcelRef}</span>
-          ) : null}
-        </div>
+          <div
+            className={css.cadAreaLabel}
+            data-testid="cad-title-area"
+            title={
+              titleBoundaryLocked
+                ? "Title locked"
+                : "Title unlocked — drag corner nodes to refine"
+            }
+          >
+            <span className={css.cadAreaKey}>Title</span>
+            <span className={css.cadAreaValue}>
+              {formatCadAreaM2(areaLabelM2)}
+            </span>
+            {titleMeta?.parcelRef ? (
+              <span className={css.cadAreaMeta}>{titleMeta.parcelRef}</span>
+            ) : null}
+          </div>
+        </CameraChrome>
       ) : null}
 
       {showAutoAreaLabels &&
       buildingCentroid &&
       building.length >= 3 &&
       buildingAreaLabelM2 > 0 ? (
-        <div
-          className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
-          style={{
-            left: `${buildingCentroid.x}%`,
-            top: `${buildingCentroid.y}%`,
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: { x: buildingCentroid.x, y: buildingCentroid.y },
+            cam,
           }}
-          data-testid="cad-building-area"
         >
-          <span className={css.cadAreaKey}>Existing dwelling</span>
-          <span className={css.cadAreaValue}>
-            {formatCadAreaM2(buildingAreaLabelM2)}
-          </span>
-        </div>
+          <div
+            className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
+            data-testid="cad-building-area"
+          >
+            <span className={css.cadAreaKey}>Existing dwelling</span>
+            <span className={css.cadAreaValue}>
+              {formatCadAreaM2(buildingAreaLabelM2)}
+            </span>
+          </div>
+        </CameraChrome>
       ) : null}
 
       {showAutoAreaLabels &&
       outdoorAreaLabelM2 > 0 &&
       Math.abs(outdoorAreaLabelM2 - areaLabelM2) > 0.5 ? (
-        <div
-          className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
-          style={{
-            left: `${titleCentroid.x}%`,
-            top: `${Math.min(94, titleCentroid.y + 7)}%`,
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: {
+              x: titleCentroid.x,
+              y: Math.min(94, titleCentroid.y + 7),
+            },
+            cam,
           }}
-          data-testid="cad-outdoor-area"
         >
-          <span className={css.cadAreaKey}>Outdoor</span>
-          <span className={css.cadAreaValue}>
-            {formatCadAreaM2(outdoorAreaLabelM2)}
-          </span>
-        </div>
+          <div
+            className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
+            data-testid="cad-outdoor-area"
+          >
+            <span className={css.cadAreaKey}>Outdoor</span>
+            <span className={css.cadAreaValue}>
+              {formatCadAreaM2(outdoorAreaLabelM2)}
+            </span>
+          </div>
+        </CameraChrome>
       ) : null}
 
       {cadTitleMode && !frameOn && siteLabel ? (
-        <BoardChromePortal>
+        <CameraChrome>
           <p className={css.cadStreetCue} data-testid="cad-street-cue">
             {siteLabel}
           </p>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
 
       {showHouseEnvelopeLabel && buildingCentroid ? (
-        <span
-          className={css.houseEnvelopeLabel}
-          style={{
-            left: `${buildingCentroid.x}%`,
-            top: `${buildingCentroid.y}%`,
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: { x: buildingCentroid.x, y: buildingCentroid.y },
+            cam,
           }}
-          data-testid="house-envelope-label"
         >
-          Existing dwelling
-        </span>
+          <span
+            className={css.houseEnvelopeLabel}
+            data-testid="house-envelope-label"
+          >
+            Existing dwelling
+          </span>
+        </CameraChrome>
       ) : null}
 
       {mode === "survey" && !frameOn && boundary.length >= 3 && building.length < 3 ? (
-        <p
-          className={css.missingBuildingCue}
-          data-testid="building-footprint-empty"
-        >
-          Existing dwelling outline unavailable · Trace → Existing dwelling
-        </p>
+        <CameraChrome place={{ kind: "project", pct: { x: 50, y: 46 }, cam }}>
+          <p
+            className={css.missingBuildingCue}
+            data-testid="building-footprint-empty"
+          >
+            Existing dwelling outline unavailable · Trace → Existing dwelling
+          </p>
+        </CameraChrome>
       ) : null}
 
       {setbackOn &&
@@ -1259,28 +1321,47 @@ export function CadPlanBoard({
       boundary.length >= 3 &&
       councilSetbackM != null &&
       councilSetbackM > 0 ? (
-        <p
-          className={css.councilPathLabel}
-          data-testid="council-setback-path-label"
-          style={{
-            left: `${50 + (titleCentroid.x - 50) * 0.92}%`,
-            top: `${Math.max(8, 50 + (Math.min(...boundary.map((p) => p.y)) - 50) * 0.92 - 1.2)}%`,
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: {
+              x: 50 + (titleCentroid.x - 50) * 0.92,
+              y: Math.max(
+                8,
+                50 + (Math.min(...boundary.map((p) => p.y)) - 50) * 0.92 - 1.2,
+              ),
+            },
+            cam,
           }}
         >
-          {councilSetbackM.toFixed(1)} m setback rule
-        </p>
+          <p
+            className={css.councilPathLabel}
+            data-testid="council-setback-path-label"
+          >
+            {councilSetbackM.toFixed(1)} m setback rule
+          </p>
+        </CameraChrome>
       ) : null}
 
       {!foundationCleanse
         ? existTpz.map(({ it, tpz }) => {
             const showTag = it.id === selectedId || it.id === hoverId;
             const size = Math.max(28, tpz.rxPct * 2.2);
+            const popPct = {
+              x: it.x,
+              y: Math.max(6, it.y - tpz.rxPct * 0.5),
+            };
+            const tagPct = {
+              x: Math.min(96, it.x + tpz.rxPct * 0.72),
+              y: Math.max(4, it.y - tpz.rxPct * 0.35),
+            };
             return (
               <div key={`tpzui-${it.id}`}>
                 <button
                   type="button"
                   className={css.tpzHit}
                   data-testid="exist-tpz-hit"
+                  data-plan-geometry="1"
                   aria-label={`Tree protection zone ≈ ${tpz.radiusM.toFixed(1)} metres`}
                   style={{
                     left: `${it.x}%`,
@@ -1293,22 +1374,31 @@ export function CadPlanBoard({
                   onPointerEnter={() => onHover(it.id)}
                   onPointerLeave={() => onHover(null)}
                 />
-                <div
-                  className={css.tpzPop}
-                  style={{ left: `${it.x}%`, top: `${Math.max(6, it.y - tpz.rxPct * 0.5)}%` }}
-                >
-                  Tree protection · AS 4970 · ≈ {tpz.radiusM.toFixed(1)} m
-                </div>
-                {showTag ? (
-                  <div
-                    className={css.tpzTag}
-                    style={{
-                      left: `${Math.min(96, it.x + tpz.rxPct * 0.72)}%`,
-                      top: `${Math.max(4, it.y - tpz.rxPct * 0.35)}%`,
+                {it.id === hoverId ? (
+                  <CameraChrome
+                    place={{
+                      kind: "project",
+                      pct: popPct,
+                      cam,
+                      transform: "translate(-50%, calc(-100% - 8px))",
                     }}
                   >
-                    TPZ Ø{tpz.radiusM.toFixed(1)} m
-                  </div>
+                    <div className={css.tpzPop} data-open="1">
+                      Tree protection · AS 4970 · ≈ {tpz.radiusM.toFixed(1)} m
+                    </div>
+                  </CameraChrome>
+                ) : null}
+                {showTag ? (
+                  <CameraChrome
+                    place={{
+                      kind: "project",
+                      pct: tagPct,
+                      cam,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  >
+                    <div className={css.tpzTag}>TPZ Ø{tpz.radiusM.toFixed(1)} m</div>
+                  </CameraChrome>
                 ) : null}
               </div>
             );
@@ -1320,6 +1410,8 @@ export function CadPlanBoard({
         const gk = growthFactor(growth, !!d.existing);
         const w = Math.round(d.w * it.scale * gk);
         const h = Math.round(d.h * it.scale * gk);
+        const halfWPx = w / 2;
+        const halfHPx = h / 2;
         const bucket = ITEM_LAYER[it.t];
         const layerVisual = resolveLayerVisual(
           bucket,
@@ -1334,153 +1426,198 @@ export function CadPlanBoard({
           previewSwatch && hovered && !it.ghost && it.t !== previewSwatch
             ? previewSwatch
             : null;
+        const showAiChip = it.ghost && (isCur || hovered);
+        const showGhostActions = isCur && !frameOn && !reviewOpen;
+        const showTracePill =
+          selected && !it.ghost && !!d.heightM && !frameOn;
         return (
-          <div
-            key={it.id}
-            className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
-            data-testid={it.ghost ? "studio-ghost" : "studio-item"}
-            data-item-type={it.t}
-            data-layer={bucket}
-            data-hittable={layerVisual.hittable ? "true" : "false"}
-            data-selected={selected || groupIds.includes(it.id) ? "true" : "false"}
-            style={{
-              left: `${it.x}%`,
-              top: `${it.y}%`,
-              width: w,
-              height: h,
-              borderRadius: d.br,
-              opacity:
-                (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
-              pointerEvents:
-                foundationCleanse || !layerVisual.hittable ? "none" : undefined,
-              transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
-              border: it.ghost
-                ? isCur
-                  ? "1.5px solid #1c1917"
-                  : it.stale
-                    ? "1px dashed #8a6a1f"
-                    : "1px dashed rgba(28,25,23,0.55)"
-                : flagged
-                  ? "1.5px solid #1c1917"
-                  : selected || groupIds.includes(it.id)
+          <div key={it.id}>
+            <div
+              className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
+              data-testid={it.ghost ? "studio-ghost" : "studio-item"}
+              data-item-type={it.t}
+              data-layer={bucket}
+              data-hittable={layerVisual.hittable ? "true" : "false"}
+              data-selected={
+                selected || groupIds.includes(it.id) ? "true" : "false"
+              }
+              style={{
+                left: `${it.x}%`,
+                top: `${it.y}%`,
+                width: w,
+                height: h,
+                borderRadius: d.br,
+                opacity:
+                  (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
+                pointerEvents:
+                  foundationCleanse || !layerVisual.hittable
+                    ? "none"
+                    : undefined,
+                transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
+                border: it.ghost
+                  ? isCur
                     ? "1.5px solid #1c1917"
-                    : hovered && !it.ghost
-                      ? "1px solid rgba(28,25,23,0.45)"
-                      : "none",
-              boxShadow:
-                selected || groupIds.includes(it.id)
-                  ? undefined
-                  : "none",
-              zIndex: isCur
-                ? 50
-                : selected || groupIds.includes(it.id)
-                  ? 20
-                  : hovered
-                    ? 10
-                    : 2,
-            }}
-            title={
-              it.stale
-                ? `${it.why ?? d.name} · nearby edit — recheck this`
-                : (it.why ?? d.name)
-            }
-            onPointerEnter={() => onHover(it.id)}
-            onPointerLeave={() => onHover(null)}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              if (eyedropArmed && onEyedrop) {
-                onEyedrop(it.t);
-                return;
+                    : it.stale
+                      ? "1px dashed #8a6a1f"
+                      : "1px dashed rgba(28,25,23,0.55)"
+                  : flagged
+                    ? "1.5px solid #1c1917"
+                    : selected || groupIds.includes(it.id)
+                      ? "1.5px solid #1c1917"
+                      : hovered && !it.ghost
+                        ? "1px solid rgba(28,25,23,0.45)"
+                        : "none",
+                boxShadow:
+                  selected || groupIds.includes(it.id) ? undefined : "none",
+                zIndex: isCur
+                  ? 50
+                  : selected || groupIds.includes(it.id)
+                    ? 20
+                    : hovered
+                      ? 10
+                      : 2,
+              }}
+              title={
+                it.stale
+                  ? `${it.why ?? d.name} · nearby edit — recheck this`
+                  : (it.why ?? d.name)
               }
-              if (tool === "paint" && !it.ghost && onPaintItem) {
-                onPaintItem(it.id);
-                return;
-              }
-              const additive = e.shiftKey || e.metaKey;
-              onSelect(it.id, { additive });
-              if (!it.ghost && tool !== "lock" && tool !== "paint") {
-                const ids =
-                  groupIds.includes(it.id) && groupIds.length > 1
-                    ? groupIds
-                    : [it.id];
-                if (ids.length > 1) {
-                  const p = toPct(e.clientX, e.clientY);
-                  const start = gridSnap ? snapToGridMetres(p, scaleM) : p;
-                  dragRef.current = {
-                    kind: "group",
-                    ids,
-                    startX: start.x,
-                    startY: start.y,
-                  };
-                  setCrosshair(start);
-                } else {
-                  dragRef.current = { kind: "item", id: it.id, ox: 0, oy: 0 };
-                  setCrosshair({ x: it.x, y: it.y });
+              onPointerEnter={() => onHover(it.id)}
+              onPointerLeave={() => onHover(null)}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                if (eyedropArmed && onEyedrop) {
+                  onEyedrop(it.t);
+                  return;
                 }
-                (e.target as Element).setPointerCapture?.(e.pointerId);
-              }
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (it.ghost) return;
-              setNodeMenu(null);
-              setItemMenu({ id: it.id, t: it.t, x: it.x, y: it.y });
-            }}
-          >
-            <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-              <StudioGlyph type={it.t} ink={!darkOn || frameOn} />
+                if (tool === "paint" && !it.ghost && onPaintItem) {
+                  onPaintItem(it.id);
+                  return;
+                }
+                const additive = e.shiftKey || e.metaKey;
+                onSelect(it.id, { additive });
+                if (!it.ghost && tool !== "lock" && tool !== "paint") {
+                  const ids =
+                    groupIds.includes(it.id) && groupIds.length > 1
+                      ? groupIds
+                      : [it.id];
+                  if (ids.length > 1) {
+                    const p = toPct(e.clientX, e.clientY);
+                    const start = gridSnap ? snapToGridMetres(p, scaleM) : p;
+                    dragRef.current = {
+                      kind: "group",
+                      ids,
+                      startX: start.x,
+                      startY: start.y,
+                    };
+                    setCrosshair(start);
+                  } else {
+                    dragRef.current = {
+                      kind: "item",
+                      id: it.id,
+                      ox: 0,
+                      oy: 0,
+                    };
+                    setCrosshair({ x: it.x, y: it.y });
+                  }
+                  (e.target as Element).setPointerCapture?.(e.pointerId);
+                }
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (it.ghost) return;
+                setNodeMenu(null);
+                setItemMenu({ id: it.id, t: it.t, x: it.x, y: it.y });
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  pointerEvents: "none",
+                }}
+              >
+                <StudioGlyph type={it.t} ink={!darkOn || frameOn} />
+              </div>
+              {previewType ? (
+                <div
+                  className={css.swatchPreview}
+                  data-testid="swatch-hover-preview"
+                  aria-hidden
+                >
+                  <StudioGlyph type={previewType} ink={!darkOn || frameOn} />
+                </div>
+              ) : null}
+              {flagged && (it.t === "paving" || it.t === "deck") ? (
+                <div className={css.hatchOverlay} aria-hidden />
+              ) : null}
             </div>
-            {previewType ? (
-              <div
-                className={css.swatchPreview}
-                data-testid="swatch-hover-preview"
-                aria-hidden
+            {showAiChip ? (
+              <CameraChrome
+                place={{
+                  kind: "project",
+                  pct: { x: it.x, y: it.y },
+                  cam,
+                  transform: `translate(calc(-100% + ${halfWPx + 5}px), calc(-${halfHPx + 5}px))`,
+                }}
               >
-                <StudioGlyph type={previewType} ink={!darkOn || frameOn} />
-              </div>
+                <span
+                  className={`${css.aiChip}${isCur ? ` ${css.aiChipHot}` : ""}`}
+                >
+                  AI
+                </span>
+              </CameraChrome>
             ) : null}
-            {flagged && (it.t === "paving" || it.t === "deck") ? (
-              <div className={css.hatchOverlay} aria-hidden />
-            ) : null}
-            {it.ghost && (isCur || hovered) ? (
-              <span
-                className={`${css.aiChip}${isCur ? ` ${css.aiChipHot}` : ""}`}
+            {showGhostActions ? (
+              <CameraChrome
+                place={{
+                  kind: "project",
+                  pct: { x: it.x, y: it.y },
+                  cam,
+                  transform: `translate(-50%, ${halfHPx + 6}px)`,
+                }}
               >
-                AI
-              </span>
+                <div
+                  className={css.ghostActions}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    className={css.acceptBtn}
+                    onClick={() => onAcceptGhost(it.id)}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    className={css.rejectBtn}
+                    title="Reject suggestion"
+                    onClick={() => onRejectGhost(it.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </CameraChrome>
             ) : null}
-            {isCur && !frameOn && !reviewOpen ? (
-              <div
-                className={css.ghostActions}
-                onPointerDown={(e) => e.stopPropagation()}
+            {showTracePill ? (
+              <CameraChrome
+                place={{
+                  kind: "project",
+                  pct: { x: it.x, y: it.y },
+                  cam,
+                  transform: `translate(-50%, calc(-100% - ${halfHPx + 8}px))`,
+                }}
               >
                 <button
                   type="button"
-                  className={css.acceptBtn}
-                  onClick={() => onAcceptGhost(it.id)}
+                  className={css.tracePill}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => onTraceInElevation(it.id)}
                 >
-                  Accept
+                  ⇄ Trace in elevation
                 </button>
-                <button
-                  type="button"
-                  className={css.rejectBtn}
-                  title="Reject suggestion"
-                  onClick={() => onRejectGhost(it.id)}
-                >
-                  ✕
-                </button>
-              </div>
-            ) : null}
-            {selected && !it.ghost && d.heightM && !frameOn ? (
-              <button
-                type="button"
-                className={css.tracePill}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => onTraceInElevation(it.id)}
-              >
-                ⇄ Trace in elevation
-              </button>
+              </CameraChrome>
             ) : null}
           </div>
         );
@@ -1489,6 +1626,7 @@ export function CadPlanBoard({
       {marquee ? (
         <div
           className={css.marquee}
+          data-plan-geometry="1"
           style={{
             left: `${Math.min(marquee.x1, marquee.x2)}%`,
             top: `${Math.min(marquee.y1, marquee.y2)}%`,
@@ -1512,22 +1650,26 @@ export function CadPlanBoard({
           <div
             className={css.snapPulse}
             data-testid="snap-radial-pulse"
+            data-plan-geometry="1"
             style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
           />
           <div
             className={`${css.crosshairV}`}
             data-testid="draft-crosshair-v"
+            data-plan-geometry="1"
             style={{ left: `${crosshair.x}%` }}
           />
           <div
             className={`${css.crosshairH}`}
             data-testid="draft-crosshair-h"
+            data-plan-geometry="1"
             style={{ top: `${crosshair.y}%` }}
           />
           {snapKind ? (
             <div
               className={css.snapGlyph}
               data-testid="snap-glyph"
+              data-plan-geometry="1"
               data-snap={snapKind}
               style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
               title={
@@ -1554,160 +1696,189 @@ export function CadPlanBoard({
       ) : null}
 
       {guides.x != null ? (
-        <div className={css.guideV} style={{ left: `${guides.x}%` }} />
+        <div
+          className={css.guideV}
+          data-plan-geometry="1"
+          style={{ left: `${guides.x}%` }}
+        />
       ) : null}
       {guides.y != null ? (
-        <div className={css.guideH} style={{ top: `${guides.y}%` }} />
+        <div
+          className={css.guideH}
+          data-plan-geometry="1"
+          style={{ top: `${guides.y}%` }}
+        />
       ) : null}
 
       {selected && !frameOn && tool !== "lock" ? (
         <SelectionHandles
           item={selected}
-          boardW={rootRef.current?.clientWidth ?? 960}
-          boardH={rootRef.current?.clientHeight ?? 640}
-          planZoom={planZoom}
-          planPanX={planPanX}
-          planPanY={planPanY}
-          planFocusX={planFocusX}
-          planFocusY={planFocusY}
-          planRotateDeg={planRotateDeg}
+          cam={cam}
           onTransform={onTransformItem}
         />
       ) : null}
 
       {selected && !frameOn && !dragRef.current ? (
-        <div
-          className={css.selectedReadout}
-          data-testid="selected-shape-readout"
-          style={{ left: `${selected.x}%`, top: `${selected.y}%` }}
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: { x: selected.x, y: selected.y },
+            cam,
+          }}
         >
-          <span className={css.selectedReadoutTag}>
-            {describeSelectedItem(selected).tag}
-          </span>
-          <span className={css.selectedReadoutValue}>
-            {describeSelectedItem(selected).value}
-          </span>
-        </div>
+          <div
+            className={css.selectedReadout}
+            data-testid="selected-shape-readout"
+          >
+            <span className={css.selectedReadoutTag}>
+              {describeSelectedItem(selected).tag}
+            </span>
+            <span className={css.selectedReadoutValue}>
+              {describeSelectedItem(selected).value}
+            </span>
+          </div>
+        </CameraChrome>
       ) : null}
 
       {tpzReadouts?.map((r) =>
         r.active ? (
-          <div
+          <CameraChrome
             key={r.id}
-            className={css.tpzReadout}
-            data-testid="tpz-encroach-readout"
-            style={{ left: `${r.x}%`, top: `${r.y}%` }}
+            place={{ kind: "project", pct: { x: r.x, y: r.y }, cam }}
           >
-            TPZ {Math.round(r.pct)}%
-          </div>
+            <div
+              className={css.tpzReadout}
+              data-testid="tpz-encroach-readout"
+            >
+              TPZ {Math.round(r.pct)}%
+            </div>
+          </CameraChrome>
         ) : null,
       )}
 
       {editing ? (
-        <BoardChromePortal>
+        <CameraChrome>
           <div className={css.editBanner} data-testid="edit-vector-banner">
             Hover node to move · hover edge diamond to add · right-click node to
             delete
           </div>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
 
       {cursorPct ? (
-        <div
-          className={css.cursorBadge}
-          data-testid="smart-cursor-badge"
-          style={{ left: `${cursorPct.x}%`, top: `${cursorPct.y}%` }}
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: { x: cursorPct.x, y: cursorPct.y },
+            cam,
+          }}
         >
-          <span className={css.cursorTool}>{toolLabel}</span>
-        </div>
+          <div className={css.cursorBadge} data-testid="smart-cursor-badge">
+            <span className={css.cursorTool}>{toolLabel}</span>
+          </div>
+        </CameraChrome>
       ) : null}
 
       {nodeMenu ? (
-        <div
-          className={css.nodeMenu}
-          data-testid="vector-node-menu"
-          style={{ left: `${nodeMenu.x}%`, top: `${nodeMenu.y}%` }}
-          onPointerDown={(e) => e.stopPropagation()}
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: { x: nodeMenu.x, y: nodeMenu.y },
+            cam,
+          }}
         >
-          <button
-            type="button"
-            className={css.nodeMenuBtn}
-            disabled={
-              (nodeMenu.kind === "boundary"
-                ? boundary.length
-                : building.length) <= 3
-            }
-            onClick={() => removeNode(nodeMenu.kind, nodeMenu.index)}
+          <div
+            className={css.nodeMenu}
+            data-testid="vector-node-menu"
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            Delete node
-          </button>
-          <button
-            type="button"
-            className={css.nodeMenuBtn}
-            onClick={() => insertMid(nodeMenu.kind, nodeMenu.index)}
-          >
-            Add node after
-          </button>
-          <button
-            type="button"
-            className={css.nodeMenuBtn}
-            onClick={() => setNodeMenu(null)}
-          >
-            Cancel
-          </button>
-        </div>
+            <button
+              type="button"
+              className={css.nodeMenuBtn}
+              disabled={
+                (nodeMenu.kind === "boundary"
+                  ? boundary.length
+                  : building.length) <= 3
+              }
+              onClick={() => removeNode(nodeMenu.kind, nodeMenu.index)}
+            >
+              Delete node
+            </button>
+            <button
+              type="button"
+              className={css.nodeMenuBtn}
+              onClick={() => insertMid(nodeMenu.kind, nodeMenu.index)}
+            >
+              Add node after
+            </button>
+            <button
+              type="button"
+              className={css.nodeMenuBtn}
+              onClick={() => setNodeMenu(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </CameraChrome>
       ) : null}
 
       {itemMenu ? (
-        <div
-          className={css.radialMenu}
-          data-testid="item-radial-menu"
-          style={{ left: `${itemMenu.x}%`, top: `${itemMenu.y}%` }}
-          onPointerDown={(e) => e.stopPropagation()}
+        <CameraChrome
+          place={{
+            kind: "project",
+            pct: { x: itemMenu.x, y: itemMenu.y },
+            cam,
+          }}
         >
-          <button
-            type="button"
-            className={`${css.radialBtn} ${css.radialNorth}`}
-            onClick={() => {
-              onSelect(itemMenu.id);
-              setItemMenu(null);
-            }}
+          <div
+            className={css.radialMenu}
+            data-testid="item-radial-menu"
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            Select
-          </button>
-          <button
-            type="button"
-            className={`${css.radialBtn} ${css.radialEast}`}
-            onClick={() => {
-              onEyedrop?.(itemMenu.t);
-              setItemMenu(null);
-            }}
-          >
-            Pick
-          </button>
-          <button
-            type="button"
-            className={`${css.radialBtn} ${css.radialSouth}`}
-            onClick={() => {
-              onPaintItem?.(itemMenu.id);
-              setItemMenu(null);
-            }}
-          >
-            Fill
-          </button>
-          <button
-            type="button"
-            className={`${css.radialBtn} ${css.radialWest}`}
-            onClick={() => setItemMenu(null)}
-          >
-            Close
-          </button>
-        </div>
+            <button
+              type="button"
+              className={`${css.radialBtn} ${css.radialNorth}`}
+              onClick={() => {
+                onSelect(itemMenu.id);
+                setItemMenu(null);
+              }}
+            >
+              Select
+            </button>
+            <button
+              type="button"
+              className={`${css.radialBtn} ${css.radialEast}`}
+              onClick={() => {
+                onEyedrop?.(itemMenu.t);
+                setItemMenu(null);
+              }}
+            >
+              Pick
+            </button>
+            <button
+              type="button"
+              className={`${css.radialBtn} ${css.radialSouth}`}
+              onClick={() => {
+                onPaintItem?.(itemMenu.id);
+                setItemMenu(null);
+              }}
+            >
+              Fill
+            </button>
+            <button
+              type="button"
+              className={`${css.radialBtn} ${css.radialWest}`}
+              onClick={() => setItemMenu(null)}
+            >
+              Close
+            </button>
+          </div>
+        </CameraChrome>
       ) : null}
 
       {easements.some((r) => r.length >= 3) ||
       services.some((r) => r.length >= 2) ? (
-        <BoardChromePortal>
+        <CameraChrome>
           <div className={css.honestyStack}>
             {easements.some((r) => r.length >= 3) ? (
               <p
@@ -1727,7 +1898,7 @@ export function CadPlanBoard({
               </p>
             ) : null}
           </div>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
     </div>
   );

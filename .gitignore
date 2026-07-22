@@ -22,3 +22,4 @@ data/*.m4a
 apps/web/.next/
 apps/web/playwright-report/
 apps/web/test-results/
+apps/web/e2e/artifacts/

@@ -10,6 +10,8 @@ import {
 } from "react";
 import { StudioGlyph } from "../../StudioGlyph";
 import { playInstrumentTick } from "../ambient/instrumentTick";
+import { CameraChrome } from "../../CameraChrome";
+import type { BoardCamera } from "../../geometry/cameraPointer";
 import {
   LOCAL_ACTION_PX,
   LOCAL_ARC_SPAN_DEG,
@@ -27,6 +29,11 @@ type Props = {
   yPct: number;
   tools: NicheTool[];
   activeId: string | null;
+  /**
+   * Live board camera — the tool fan portals through it so the arc chips
+   * stay a constant screen size regardless of camera zoom / rotate.
+   */
+  cam?: BoardCamera;
   onSelect: (tool: NicheTool) => void;
   testId?: string;
   label?: string;
@@ -41,6 +48,7 @@ export function NicheToolCarousel({
   yPct,
   tools,
   activeId,
+  cam,
   onSelect,
   testId = "niche-tool-carousel",
   label = "Materials",
@@ -120,19 +128,17 @@ export function NicheToolCarousel({
   const ax = Math.max(10, Math.min(90, xPct));
   const ay = Math.max(12, Math.min(88, yPct));
 
-  return (
+  const innerStyle: CSSProperties = {
+    ["--arc-radius" as string]: `${LOCAL_ACTION_PX}px`,
+  };
+
+  const inner = (
     <div
       className={css.root}
       data-testid={testId}
       data-phase={phase}
       aria-label={label}
-      style={
-        {
-          left: `${ax}%`,
-          top: `${ay}%`,
-          ["--arc-radius" as string]: `${LOCAL_ACTION_PX}px`,
-        } as CSSProperties
-      }
+      style={innerStyle}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseEnter={() => {
         hoverRef.current = true;
@@ -190,5 +196,26 @@ export function NicheToolCarousel({
         })}
       </div>
     </div>
+  );
+
+  if (!cam) {
+    return (
+      <div style={{ position: "absolute", left: `${ax}%`, top: `${ay}%` }}>
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <CameraChrome
+      place={{
+        kind: "project",
+        pct: { x: ax, y: ay },
+        cam,
+        transform: "none",
+      }}
+    >
+      {inner}
+    </CameraChrome>
   );
 }

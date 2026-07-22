@@ -2,12 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { edgeLengthM, type PctPoint } from "../../geometry";
-import { BoardChromePortal } from "../../BoardChromePortal";
+import type { BoardCamera } from "../../geometry/cameraPointer";
+import { CameraChrome } from "../../CameraChrome";
 import css from "./measure.module.css";
 
 type Props = {
   active: boolean;
   scaleM?: number;
+  /**
+   * Live board camera — matches `.zoomWorld`. The metres label portals
+   * out through this camera so it stays a constant screen size instead
+   * of stretching with the world.
+   */
+  cam?: BoardCamera;
   /** Exit measure → default pan (Esc / double-click / right-click). */
   onCancel: () => void;
 };
@@ -21,6 +28,7 @@ type Props = {
 export function MeasureOverlay({
   active,
   scaleM = 110,
+  cam,
   onCancel,
 }: Props) {
   const [a, setA] = useState<PctPoint | null>(null);
@@ -131,18 +139,40 @@ export function MeasureOverlay({
         {b ? <circle cx={b.x} cy={b.y} r={0.8} className={css.dot} /> : null}
       </svg>
       {mid && len != null ? (
-        <div
-          className={`${css.label}${dragging ? ` ${css.labelLive}` : ""}`}
-          style={{ left: `${mid.x}%`, top: `${mid.y}%` }}
-        >
-          {len.toFixed(2)} m
-        </div>
+        cam ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: mid,
+              cam,
+              transform: "translate(-50%, -140%)",
+            }}
+          >
+            <div
+              className={`${css.label}${dragging ? ` ${css.labelLive}` : ""}`}
+            >
+              {len.toFixed(2)} m
+            </div>
+          </CameraChrome>
+        ) : (
+          <div
+            className={`${css.label}${dragging ? ` ${css.labelLive}` : ""}`}
+            style={{
+              position: "absolute",
+              left: `${mid.x}%`,
+              top: `${mid.y}%`,
+              transform: "translate(-50%, -140%)",
+            }}
+          >
+            {len.toFixed(2)} m
+          </div>
+        )
       ) : (
-        <BoardChromePortal>
+        <CameraChrome>
           <div className={css.hint}>
             Drag to measure · Esc / right-click exits
           </div>
-        </BoardChromePortal>
+        </CameraChrome>
       )}
     </div>
   );

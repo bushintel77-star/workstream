@@ -18,6 +18,17 @@ After `pnpm install`, run `pnpm --filter '@workstream/*' build` once (Turbo `dev
 
 Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json`.
 
+### End of build (mandatory)
+
+Do not call a change finished until the gate has actually run:
+
+1. Typecheck green
+2. Touched/new unit tests green
+3. Any kept Playwright/smoke for the risk area **executed and passing** (authoring the file alone is not enough)
+4. Commit/push when the user asked to ship — then confirm deploy/CI or live behaviour if live was in scope
+
+A hung e2e or skipped live probe is a blocker. Binding detail: `.cursor/rules/end-of-build.mdc`.
+
 ### Canvas product surface
 
 - Home: `/` — address composer + sites list

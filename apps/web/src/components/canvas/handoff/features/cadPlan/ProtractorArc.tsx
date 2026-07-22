@@ -32,7 +32,7 @@ export function ProtractorArc({
         {
           width: size,
           height: size,
-          transform: `translate(-50%, -50%) rotate(${-itemRotationDeg}deg) scale(calc(1 / var(--studio-zoom, 1)))`,
+          transform: `translate(-50%, -50%) rotate(${-itemRotationDeg}deg)`,
         } as CSSProperties
       }
       aria-hidden

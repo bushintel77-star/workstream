@@ -20,7 +20,7 @@ import {
   SKETCH_TIP_LABEL,
   type SketchTipGrade,
 } from "./sketchCursors";
-import { BoardChromePortal } from "../../BoardChromePortal";
+import { CameraChrome } from "../../CameraChrome";
 import css from "./sketch.module.css";
 
 type SketchTool = "pen" | "eraser";
@@ -239,7 +239,7 @@ export function SketchBoard({
         })}
       </svg>
       {!readOnly ? (
-        <BoardChromePortal anchorRef={rootRef}>
+        <CameraChrome anchorRef={rootRef}>
           <div className={css.bar} data-testid="sketch-convert-bar">
             <p className={css.hint}>
               {formalizing
@@ -341,7 +341,7 @@ export function SketchBoard({
               ) : null}
             </div>
           </div>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
     </div>
   );

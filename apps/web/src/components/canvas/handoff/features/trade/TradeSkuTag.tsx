@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 import type { TradeLineMatch } from "@workstream/domain";
+import { CameraChrome } from "../../CameraChrome";
+import type { BoardCamera } from "../../geometry/cameraPointer";
 import css from "./tradeSkuTag.module.css";
 
 type Props = {
   match: TradeLineMatch;
   xPct: number;
   yPct: number;
+  /**
+   * Live board camera — SKU cost tag portals out of `.zoomWorld` so the
+   * chip and hub-alternatives popup stay at a constant screen size.
+   */
+  cam?: BoardCamera;
 };
 
 const aud = (n: number) =>
@@ -20,15 +27,14 @@ const aud = (n: number) =>
 /**
  * Contextual SKU cost tag beside selection — click for hub alternatives.
  */
-export function TradeSkuTag({ match, xPct, yPct }: Props) {
+export function TradeSkuTag({ match, xPct, yPct, cam }: Props) {
   const [open, setOpen] = useState(false);
   const unverified = match.mode === "ai_estimated";
   const oos = !match.offer.inStock;
 
-  return (
+  const body = (
     <div
       className={css.anchor}
-      style={{ left: `${xPct}%`, top: `${yPct}%` }}
       data-testid="trade-sku-tag"
       onPointerDown={(e) => e.stopPropagation()}
     >
@@ -71,5 +77,26 @@ export function TradeSkuTag({ match, xPct, yPct }: Props) {
         </div>
       ) : null}
     </div>
+  );
+
+  if (!cam) {
+    return (
+      <div style={{ position: "absolute", left: `${xPct}%`, top: `${yPct}%` }}>
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <CameraChrome
+      place={{
+        kind: "project",
+        pct: { x: xPct, y: yPct },
+        cam,
+        transform: "none",
+      }}
+    >
+      {body}
+    </CameraChrome>
   );
 }

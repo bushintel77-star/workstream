@@ -2,6 +2,11 @@
 
 import type { CSSProperties } from "react";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
+import {
+  CameraChrome,
+  type CameraChromePlace,
+} from "../../CameraChrome";
+import type { BoardCamera } from "../../geometry/cameraPointer";
 import css from "./selectionRing.module.css";
 
 type Props = {
@@ -10,6 +15,12 @@ type Props = {
   xPct: number;
   yPct: number;
   locked: boolean;
+  /**
+   * Live board camera — matches `.zoomWorld`. Ring portals out to the
+   * studio board frame so orbit nodes stay a constant screen size and
+   * clear the glyph regardless of camera zoom.
+   */
+  cam: BoardCamera;
   onDelete: () => void;
   onClose: () => void;
   /** Toggle lock — materials live on the shared kit bag fan. */
@@ -27,6 +38,7 @@ export function SelectionRing({
   xPct,
   yPct,
   locked,
+  cam,
   onDelete,
   onClose,
   onLock,
@@ -37,64 +49,70 @@ export function SelectionRing({
   /** Clear the glyph footprint — never intersect the selection centre. */
   const orbitPx = Math.max(76, Math.round(half + 40));
 
+  const place: CameraChromePlace = {
+    kind: "project",
+    pct: { x: xPct, y: yPct },
+    cam,
+  };
+
   return (
-    <div
-      className={css.ring}
-      data-testid="selection-ring"
-      data-locked={locked ? "true" : "false"}
-      style={
-        {
-          left: `${xPct}%`,
-          top: `${yPct}%`,
-          "--orbit": `${orbitPx}px`,
-        } as CSSProperties
-      }
-    >
-      <button
-        type="button"
-        className={`${css.node} ${css.west}`}
-        title="Delete"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={onDelete}
+    <CameraChrome place={place}>
+      <div
+        className={css.ring}
+        data-testid="selection-ring"
+        data-locked={locked ? "true" : "false"}
+        style={
+          {
+            "--orbit": `${orbitPx}px`,
+          } as CSSProperties
+        }
       >
-        Delete
-      </button>
-
-      {onLock ? (
         <button
           type="button"
-          className={`${css.node} ${css.north}`}
-          data-testid="selection-lock"
-          title={locked ? "Unlock" : "Lock"}
+          className={`${css.node} ${css.west}`}
+          title="Delete"
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={onLock}
+          onClick={onDelete}
         >
-          {locked ? "Unlock" : "Lock"}
+          Delete
         </button>
-      ) : null}
 
-      {onAskAi ? (
+        {onLock ? (
+          <button
+            type="button"
+            className={`${css.node} ${css.north}`}
+            data-testid="selection-lock"
+            title={locked ? "Unlock" : "Lock"}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onLock}
+          >
+            {locked ? "Unlock" : "Lock"}
+          </button>
+        ) : null}
+
+        {onAskAi ? (
+          <button
+            type="button"
+            className={`${css.node} ${css.east}`}
+            data-testid="selection-ask-ai"
+            title="Ask AI about this selection"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onAskAi}
+          >
+            Ask AI
+          </button>
+        ) : null}
+
         <button
           type="button"
-          className={`${css.node} ${css.east}`}
-          data-testid="selection-ask-ai"
-          title="Ask AI about this selection"
+          className={`${css.node} ${css.south} ${css.hubChip}`}
+          title="Deselect"
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={onAskAi}
+          onClick={onClose}
         >
-          Ask AI
+          <span className={css.hubTag}>{def.tag}</span>
         </button>
-      ) : null}
-
-      <button
-        type="button"
-        className={`${css.node} ${css.south} ${css.hubChip}`}
-        title="Deselect"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={onClose}
-      >
-        <span className={css.hubTag}>{def.tag}</span>
-      </button>
-    </div>
+      </div>
+    </CameraChrome>
   );
 }

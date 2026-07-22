@@ -615,6 +615,19 @@
 }
 
 /**
+ * Portal mount for CameraChrome — sibling of `.zoomWorld`, not an ancestor
+ * of chrome call-sites. Keeps frosted HUD out of the camera transform and
+ * preserves stamped `data-camera-chrome` wrappers (gate B).
+ */
+.cameraChromeRoot {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/**
  * Full-bleed parchment under the camera. Free-plan paper+mesh stay here
  * (outside `.zoomWorld`) so zoom scales geometry only — never the cream board.
  */

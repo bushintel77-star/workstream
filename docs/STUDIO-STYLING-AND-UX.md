@@ -81,6 +81,33 @@ Large floating panels must read as **frost**, not drywall.
 
 Progressive disclosure is owned by `resolveHandoffChrome` (`state/handoffChrome.ts`).
 
+### Camera parenting (binding)
+
+`.zoomWorld` / `[data-testid="zoom-world"]` is the **geometry camera only**
+(`translate` → `rotate` → `scale`). It must not parent frosted UI.
+
+| May live under `.zoomWorld` | Must NOT |
+| --- | --- |
+| Vectors, symbols, ink strokes, aerial imagery, mesh | Toolbars, banners, menus, badges, hints, checklists, HUD docks |
+| World-space drafting feedback marked `data-plan-geometry` (marquee, snap guides) | Anything stamped `data-camera-chrome` |
+| TPZ hit rings sized in `%` | TPZ pop/tag chrome, Accept/Reject, readouts |
+
+**Mandatory API:** `CameraChrome` in `apps/web/src/components/canvas/handoff/CameraChrome.tsx`.
+
+- Dock chrome: `place={{ kind: "dock" }}` — portals to
+  `[data-testid="camera-chrome-root"]` (sibling of `.zoomWorld`).
+- Selection-anchored chrome: `place={{ kind: "project", pct, cam }}` — portals +
+  projects board `%` through `boardPctToClientOffset` (no `scale(1/--studio-zoom)`).
+- Every `CameraChrome` stamps `data-camera-chrome="1"`.
+- Do **not** portal into `studio-board` itself when the call site is a descendant
+  of the board — React can reparent children and drop the stamped wrapper.
+
+**Detector (gate C):** `e2e/canvas-chrome-detector.spec.ts` fails if any
+`[data-camera-chrome]` node is found under `[data-testid="zoom-world"]`.
+
+Do **not** “fix” chrome zoom by counter-scaling inside the camera — pan and
+view-rotate still leak.
+
 ### Summon logic (instruments)
 
 1. Empty click **off the lot** (canvas margin) → pin instrument anchor + summon ribbon.

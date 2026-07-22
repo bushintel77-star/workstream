@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { inferRectangleCompletion } from "@workstream/domain";
 import { polygonAreaM2, ptsAttr, type PctPoint } from "../../geometry";
+import type { BoardCamera } from "../../geometry/cameraPointer";
 import {
   formatSegmentTip,
   pointFromSegmentInput,
 } from "../../geometry/drafting";
 import type { TraceTarget } from "../../state/studioTypes";
-import { BoardChromePortal } from "../../BoardChromePortal";
+import { CameraChrome } from "../../CameraChrome";
 import css from "./trace.module.css";
 
 type Props = {
@@ -18,6 +19,12 @@ type Props = {
   drawPoly: PctPoint[] | null;
   drawCursor: PctPoint | null;
   scaleM?: number;
+  /**
+   * Live board camera — matches `.zoomWorld`. Dynamic-input pill and the
+   * autocomplete badge portal through this camera so they stay a constant
+   * screen size while the polyline itself rides the world transform.
+   */
+  cam?: BoardCamera;
   onTarget: (t: TraceTarget) => void;
   onCursor: (p: PctPoint | null) => void;
   onPush: (p: PctPoint) => void;
@@ -44,6 +51,7 @@ export function TraceOverlay({
   drawPoly,
   drawCursor,
   scaleM = 110,
+  cam,
   onTarget,
   onCursor,
   onPush,
@@ -239,61 +247,127 @@ export function TraceOverlay({
       </svg>
 
       {drawCursor && segment ? (
-        <div
-          className={css.dynamicInput}
-          data-testid="trace-dynamic-input"
-          style={{ left: `${drawCursor.x}%`, top: `${drawCursor.y}%` }}
-          onPointerDown={(event) => event.stopPropagation()}
-        >
-          <label data-active={activeField === "length" ? "true" : "false"}>
-            <span>L</span>
-            <input
-              ref={lengthInputRef}
-              inputMode="decimal"
-              aria-label="Segment length in metres"
-              value={typedLength ?? segment.lengthM.toFixed(2)}
-              onFocus={(event) => {
-                setActiveField("length");
-                if (typedLength == null) setTypedLength("");
-                event.currentTarget.select();
-              }}
-              onChange={(event) => setTypedLength(event.target.value)}
-            />
-            <span>m</span>
-          </label>
-          <label data-active={activeField === "angle" ? "true" : "false"}>
-            <span>A</span>
-            <input
-              ref={angleInputRef}
-              inputMode="decimal"
-              aria-label="Segment angle in degrees"
-              value={typedAngle ?? segment.angleDeg.toFixed(0)}
-              onFocus={(event) => {
-                setActiveField("angle");
-                if (typedAngle == null) setTypedAngle("");
-                event.currentTarget.select();
-              }}
-              onChange={(event) => setTypedAngle(event.target.value)}
-            />
-            <span>°</span>
-          </label>
-        </div>
+        cam ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: drawCursor,
+              cam,
+              transform: "none",
+            }}
+          >
+            <div
+              className={css.dynamicInput}
+              data-testid="trace-dynamic-input"
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <label data-active={activeField === "length" ? "true" : "false"}>
+                <span>L</span>
+                <input
+                  ref={lengthInputRef}
+                  inputMode="decimal"
+                  aria-label="Segment length in metres"
+                  value={typedLength ?? segment.lengthM.toFixed(2)}
+                  onFocus={(event) => {
+                    setActiveField("length");
+                    if (typedLength == null) setTypedLength("");
+                    event.currentTarget.select();
+                  }}
+                  onChange={(event) => setTypedLength(event.target.value)}
+                />
+                <span>m</span>
+              </label>
+              <label data-active={activeField === "angle" ? "true" : "false"}>
+                <span>A</span>
+                <input
+                  ref={angleInputRef}
+                  inputMode="decimal"
+                  aria-label="Segment angle in degrees"
+                  value={typedAngle ?? segment.angleDeg.toFixed(0)}
+                  onFocus={(event) => {
+                    setActiveField("angle");
+                    if (typedAngle == null) setTypedAngle("");
+                    event.currentTarget.select();
+                  }}
+                  onChange={(event) => setTypedAngle(event.target.value)}
+                />
+                <span>°</span>
+              </label>
+            </div>
+          </CameraChrome>
+        ) : (
+          <div
+            className={css.dynamicInput}
+            data-testid="trace-dynamic-input"
+            style={{ left: `${drawCursor.x}%`, top: `${drawCursor.y}%` }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <label data-active={activeField === "length" ? "true" : "false"}>
+              <span>L</span>
+              <input
+                ref={lengthInputRef}
+                inputMode="decimal"
+                aria-label="Segment length in metres"
+                value={typedLength ?? segment.lengthM.toFixed(2)}
+                onFocus={(event) => {
+                  setActiveField("length");
+                  if (typedLength == null) setTypedLength("");
+                  event.currentTarget.select();
+                }}
+                onChange={(event) => setTypedLength(event.target.value)}
+              />
+              <span>m</span>
+            </label>
+            <label data-active={activeField === "angle" ? "true" : "false"}>
+              <span>A</span>
+              <input
+                ref={angleInputRef}
+                inputMode="decimal"
+                aria-label="Segment angle in degrees"
+                value={typedAngle ?? segment.angleDeg.toFixed(0)}
+                onFocus={(event) => {
+                  setActiveField("angle");
+                  if (typedAngle == null) setTypedAngle("");
+                  event.currentTarget.select();
+                }}
+                onChange={(event) => setTypedAngle(event.target.value)}
+              />
+              <span>°</span>
+            </label>
+          </div>
+        )
       ) : null}
 
       {completion && c ? (
-        <button
-          type="button"
-          className={css.autoBadge}
-          style={{ left: `${c.x}%`, top: `${c.y}%` }}
-          data-testid="trace-autocomplete"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => onFinish(completion)}
-        >
-          Autocomplete rectangle
-        </button>
+        cam ? (
+          <CameraChrome
+            place={{ kind: "project", pct: c, cam, transform: "none" }}
+          >
+            <button
+              type="button"
+              className={css.autoBadge}
+              data-testid="trace-autocomplete"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => onFinish(completion)}
+            >
+              Autocomplete rectangle
+            </button>
+          </CameraChrome>
+        ) : (
+          <button
+            type="button"
+            className={css.autoBadge}
+            style={{ left: `${c.x}%`, top: `${c.y}%` }}
+            data-testid="trace-autocomplete"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => onFinish(completion)}
+          >
+            Autocomplete rectangle
+          </button>
+        )
       ) : null}
 
-      <BoardChromePortal>
+      <CameraChrome>
         <div className={css.bar} data-testid="trace-status">
           <div className={css.targets}>
             {(
@@ -348,7 +422,7 @@ export function TraceOverlay({
             Back
           </button>
         </div>
-      </BoardChromePortal>
+      </CameraChrome>
     </div>
   );
 }

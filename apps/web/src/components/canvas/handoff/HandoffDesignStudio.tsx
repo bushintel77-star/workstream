@@ -117,6 +117,7 @@ import {
   titlePanelWidth,
   clientToBoardPct,
 } from "./geometry";
+import { boardCameraFromPlan } from "./CameraChrome";
 import {
   clampZoom,
   zoomByKeyStep,
@@ -947,6 +948,22 @@ export function HandoffDesignStudio({
     ui.mode === "cad" && !ui.frameOn && !ui.clientView
       ? normalizeViewRotationDeg(ui.viewRotationDeg)
       : 0;
+  /**
+   * Live camera matching `.zoomWorld` — passed to any overlay that portals
+   * frosted chrome via `CameraChrome` so those elements stay clear of the
+   * camera transform (constant screen size, no pan/rotate leak) while the
+   * underlying geometry rides the world scale.
+   */
+  const planCam = boardCameraFromPlan({
+    boardW: boardSize.w,
+    boardH: boardSize.h,
+    planZoom,
+    planRotateDeg,
+    planPanX,
+    planPanY,
+    planFocusX,
+    planFocusY,
+  });
   /**
    * Free-plan paper stays OUTSIDE the camera transform. Scaling parchment
    * inside `.zoomWorld` made the cream board grow/shrink with the lot on
@@ -2023,6 +2040,7 @@ export function HandoffDesignStudio({
                       ?.canopySpreadM ?? 2) * 2.4,
                   ),
                 )}
+                cam={planCam}
                 onActiveIdx={studio.setFloraActiveIdx}
                 onAccept={studio.acceptFlora}
                 onDismiss={studio.dismissFlora}
@@ -2120,6 +2138,7 @@ export function HandoffDesignStudio({
               target={ui.traceTarget}
               drawPoly={ui.drawPoly}
               drawCursor={ui.drawCursor}
+              cam={planCam}
               onTarget={studio.setTraceTarget}
               onCursor={(drawCursor) => studio.setUi({ drawCursor })}
               onPush={studio.pushTracePoint}
@@ -2130,6 +2149,7 @@ export function HandoffDesignStudio({
             <MeasureOverlay
               active={ui.tool === "measure" && !ui.frameOn}
               scaleM={scaleM}
+              cam={planCam}
               onCancel={() => {
                 studio.setTool("pan");
                 setInstrumentsSummoned(false);
@@ -2140,6 +2160,7 @@ export function HandoffDesignStudio({
                 active={ui.tool === "zone"}
                 kind={ui.zoneKind}
                 zones={studio.irrigationZones}
+                cam={planCam}
                 onCommit={studio.commitZone}
               />
             ) : null}
@@ -2151,6 +2172,7 @@ export function HandoffDesignStudio({
                 yPct={instrumentAnchor.y}
                 tools={nicheToolsForZone()}
                 activeId={zoneNicheActiveId(ui.zoneKind)}
+                cam={planCam}
                 onSelect={(tool: NicheTool) => {
                   if (tool.id === "zone-drip") {
                     studio.setUi({ zoneKind: "drip" });
@@ -2176,6 +2198,7 @@ export function HandoffDesignStudio({
                 ink={ui.gridInk}
                 grain={ui.gridGrain}
                 snap={ui.gridSnap}
+                cam={planCam}
                 onPreviewFormation={setGridPreviewFormation}
                 onPreviewInk={setGridPreviewInk}
                 onCommit={(patch) => {
@@ -2208,6 +2231,7 @@ export function HandoffDesignStudio({
                 xPct={selectedLive.x}
                 yPct={selectedLive.y}
                 locked={ui.locked}
+                cam={planCam}
                 onDelete={studio.deleteSelected}
                 onClose={() => studio.setSelection(null, [])}
                 onLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
@@ -2224,11 +2248,20 @@ export function HandoffDesignStudio({
                 match={selectedTradeTag}
                 xPct={selectedLive.x}
                 yPct={selectedLive.y}
+                cam={planCam}
               />
             ) : null}
             {/* AmbientBudgetMargin outside .zoomWorld */}
             </div>
           </div>
+          {/* Dedicated portal mount — sibling of the camera, never an ancestor
+              of chrome call-sites. Portaling into an ancestor collapses wrappers. */}
+          <div
+            data-testid="camera-chrome-root"
+            data-camera-chrome-root="1"
+            className={css.cameraChromeRoot}
+            aria-hidden
+          />
           </>
         ) : null}
 

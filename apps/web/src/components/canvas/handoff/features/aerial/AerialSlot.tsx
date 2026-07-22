@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TactileGround } from "../ground/TactileGround";
 import type { SheetScaleDenom } from "../ground/groundMetrics";
-import { BoardChromePortal } from "../../BoardChromePortal";
+import { CameraChrome } from "../../CameraChrome";
 import css from "./aerialSlot.module.css";
 
 export type CanopyImagePayload = {
@@ -239,7 +239,7 @@ export function AerialSlot({
         siteLabel={siteLabel}
         address={address ?? siteLabel}
         suppressSiteCue={suppressSiteCue}
-        quietChrome={frameOn}
+        quietChrome
         showEdgeLabels={false}
         hidePaper={hidePaper}
       />
@@ -276,7 +276,7 @@ export function AerialSlot({
       ) : null}
 
       {showAerial && aerialError ? (
-        <BoardChromePortal>
+        <CameraChrome>
           <div className={css.errorPanel} role="alert">
             <p className={css.primaryText}>Aerial image failed to load</p>
             <p className={css.metaText}>
@@ -294,11 +294,11 @@ export function AerialSlot({
               Retry image
             </button>
           </div>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
 
       {showDropCue ? (
-        <BoardChromePortal>
+        <CameraChrome>
           <div
             className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
             data-testid="aerial-drop-cue"
@@ -311,16 +311,16 @@ export function AerialSlot({
             </p>
             <p className={css.metaText}>Stays as the drafting background</p>
           </div>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
 
       {scanning && aerialEnabled ? (
-        <BoardChromePortal>
+        <CameraChrome>
           <div className={css.scanPill} data-testid="canopy-scanning">
             <span className={css.scanDot} />
             AI scanning aerial for canopy…
           </div>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
     </div>
   );

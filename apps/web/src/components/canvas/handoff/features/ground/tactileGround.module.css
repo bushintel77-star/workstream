@@ -130,10 +130,7 @@
 .edgeScale[data-edge="left"] span {
   position: absolute;
   left: 0;
-  /* Counter-scale: labels live inside .zoomWorld but must stay screen-size
-     instruments (same pattern as .cornerNode). Origin locks to the rail. */
-  transform: translateY(-50%) scale(calc(1 / var(--studio-zoom, 1)));
-  transform-origin: left center;
+  transform: translateY(-50%);
   white-space: nowrap;
 }
 
@@ -147,8 +144,7 @@
 .edgeScale[data-edge="bottom"] span {
   position: absolute;
   bottom: 0;
-  transform: translateX(-50%) scale(calc(1 / var(--studio-zoom, 1)));
-  transform-origin: center bottom;
+  transform: translateX(-50%);
   white-space: nowrap;
 }
 

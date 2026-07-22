@@ -3,13 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import type { IrrigationZone, IrrigationZoneKind } from "@workstream/contracts";
 import type { PctPoint } from "../../geometry";
-import { BoardChromePortal } from "../../BoardChromePortal";
+import type { BoardCamera } from "../../geometry/cameraPointer";
+import { CameraChrome } from "../../CameraChrome";
 import css from "./zones.module.css";
 
 type Props = {
   active: boolean;
   kind: IrrigationZoneKind;
   zones: IrrigationZone[];
+  /** Live board camera — zone labels portal through it. */
+  cam?: BoardCamera;
   onCommit: (points: PctPoint[], kind: IrrigationZoneKind) => void;
 };
 
@@ -17,7 +20,7 @@ type Props = {
  * Authored drip / lighting paths — Enter finishes; Esc cancels.
  * Feeds DesignCanvas.irrigation_zones → Advanced BOM.
  */
-export function ZoneOverlay({ active, kind, zones, onCommit }: Props) {
+export function ZoneOverlay({ active, kind, zones, cam, onCommit }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<PctPoint[] | null>(null);
 
@@ -116,28 +119,49 @@ export function ZoneOverlay({ active, kind, zones, onCommit }: Props) {
         ))}
       </svg>
 
-      {zones.map((z) =>
-        z.points[0] ? (
+      {zones.map((z) => {
+        const p0 = z.points[0];
+        if (!p0) return null;
+        const labelPct: PctPoint = { x: p0.x_pct, y: p0.y_pct };
+        const labelNode = (
+          <span className={css.label}>
+            {(z.kind ?? "drip") === "lighting" ? "Light" : "Drip"} · {z.name}
+          </span>
+        );
+        return cam ? (
+          <CameraChrome
+            key={z.id}
+            place={{
+              kind: "project",
+              pct: labelPct,
+              cam,
+              transform: "none",
+            }}
+          >
+            {labelNode}
+          </CameraChrome>
+        ) : (
           <span
             key={z.id}
             className={css.label}
             style={{
-              left: `${z.points[0].x_pct}%`,
-              top: `${z.points[0].y_pct}%`,
+              position: "absolute",
+              left: `${labelPct.x}%`,
+              top: `${labelPct.y}%`,
             }}
           >
             {(z.kind ?? "drip") === "lighting" ? "Light" : "Drip"} · {z.name}
           </span>
-        ) : null,
-      )}
+        );
+      })}
 
       {active ? (
-        <BoardChromePortal>
+        <CameraChrome>
           <p className={css.hint} data-testid="zone-draw-hint">
             {kind === "lighting" ? "Lighting run" : "Drip zone"} ·{" "}
             {draft?.length ?? 0} pts · Enter finish · Esc cancel
           </p>
-        </BoardChromePortal>
+        </CameraChrome>
       ) : null}
     </div>
   );
