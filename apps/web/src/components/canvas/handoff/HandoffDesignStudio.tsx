@@ -122,6 +122,7 @@ import {
   zoomByRibbonDelta,
   zoomFromWheel,
 } from "./geometry/canvasZoom";
+import { nextBoardSize } from "./geometry/boardSizeCommit";
 import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
 import {
   formalizeSketchToCadAction,
@@ -296,17 +297,8 @@ export function HandoffDesignStudio({
     const el = boardRef.current;
     if (!el) return;
     const commitSize = (w: number, h: number) => {
-      // contentRect / client* are CSS pixels (not device pixels). DPR > 1
-      // does not change the unit — a 960 CSS-px board is still 960 here on
-      // 2× displays. Round + equality: drop sub-pixel RO noise (960.4→960.6)
-      // without masking real layout changes (≥0.5 CSS px → new int). All
-      // paper/clip/print paths read this same boardSize, so rounding cannot
-      // desync paper from board.
-      const nextW = Math.max(0, Math.round(w));
-      const nextH = Math.max(0, Math.round(h));
-      setBoardSize((prev) =>
-        prev.w === nextW && prev.h === nextH ? prev : { w: nextW, h: nextH },
-      );
+      // CSS px only (DPR-invariant). See geometry/boardSizeCommit.ts.
+      setBoardSize((prev) => nextBoardSize(prev, w, h) ?? prev);
     };
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
