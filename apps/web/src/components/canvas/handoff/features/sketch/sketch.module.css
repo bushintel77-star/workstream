@@ -5,8 +5,8 @@
   touch-action: none;
   /* Cursor owned by resolveStudioCursor on the zoom world. */
   cursor: inherit;
-  /* Stripped pad — quiet parchment, no CAD chrome competing. */
-  background: rgba(247, 244, 239, 0.28);
+  /* Transparent — cream paper is the fixed bleed / AerialSlot, not this pad. */
+  background: transparent;
 }
 
 .root[data-read-only="true"] {

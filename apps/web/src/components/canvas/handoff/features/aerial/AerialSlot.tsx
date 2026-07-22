@@ -46,8 +46,9 @@ type Props = {
   /** 0–1 parchment tooth when aerial is stacked (soft underlay). */
   parchmentPeel?: number;
   /**
-   * Hide world parchment/mesh when zoomed out — studio shows a full-bleed
-   * underlay so infinite zoom-out never postage-stamps the board.
+   * Hide world parchment/mesh when free-plan paper is owned by the fixed
+   * bleed underlay — also clears this slot's cream `#faf6f2` fill so the
+   * sheet cannot ride `.zoomWorld` scale (postage-stamp board).
    */
   hidePaper?: boolean;
   /**
@@ -189,6 +190,7 @@ export function AerialSlot({
       data-testid="aerial-image-slot"
       data-filled={showAerial ? "true" : "false"}
       data-ground="tactile-parchment"
+      data-hide-paper={hidePaper ? "1" : "0"}
       data-foundation={foundationCleanse ? "true" : "false"}
       data-allow-aerial={aerialEnabled ? "true" : "false"}
       data-allow-plan={allowPlanUnderlay ? "true" : "false"}

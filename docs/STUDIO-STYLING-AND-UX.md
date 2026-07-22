@@ -156,7 +156,7 @@ aerial only — never the cream board plane — so Sketch/CAD zoom cannot make t
 paper grow or shrink with the lot. Fit sheet still keeps paper inside the plot.
 
 Implementation: `geometry/canvasZoom.ts` + `.parchmentBleed` + `hidePaper` on
-world `TactileGround` whenever Fit is off.
+world `TactileGround` **and** `AerialSlot` (clears `#faf6f2` fill) whenever Fit is off.
 
 ---
 

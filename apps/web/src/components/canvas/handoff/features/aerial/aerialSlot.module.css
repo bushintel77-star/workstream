@@ -3,7 +3,13 @@
   inset: 0;
   z-index: 0;
   overflow: hidden;
+  /* Cream paper fill — Fit sheet / world paper. Free-plan hidePaper clears
+     this so only geometry rides the camera; bleed owns the fixed board plane. */
   background: #faf6f2;
+}
+
+.slot[data-hide-paper="1"] {
+  background: transparent;
 }
 
 .file {
