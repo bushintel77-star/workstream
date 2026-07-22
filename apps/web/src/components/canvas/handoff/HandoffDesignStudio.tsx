@@ -295,13 +295,26 @@ export function HandoffDesignStudio({
   useEffect(() => {
     const el = boardRef.current;
     if (!el) return;
+    const commitSize = (w: number, h: number) => {
+      // contentRect / client* are CSS pixels (not device pixels). DPR > 1
+      // does not change the unit — a 960 CSS-px board is still 960 here on
+      // 2× displays. Round + equality: drop sub-pixel RO noise (960.4→960.6)
+      // without masking real layout changes (≥0.5 CSS px → new int). All
+      // paper/clip/print paths read this same boardSize, so rounding cannot
+      // desync paper from board.
+      const nextW = Math.max(0, Math.round(w));
+      const nextH = Math.max(0, Math.round(h));
+      setBoardSize((prev) =>
+        prev.w === nextW && prev.h === nextH ? prev : { w: nextW, h: nextH },
+      );
+    };
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
       if (!cr) return;
-      setBoardSize({ w: cr.width, h: cr.height });
+      commitSize(cr.width, cr.height);
     });
     ro.observe(el);
-    setBoardSize({ w: el.clientWidth, h: el.clientHeight });
+    commitSize(el.clientWidth, el.clientHeight);
     return () => ro.disconnect();
   }, []);
 
@@ -883,11 +896,12 @@ export function HandoffDesignStudio({
   const planPanX = (sheetPlotLayout?.view.panX ?? 0) + ui.panX;
   const planPanY = (sheetPlotLayout?.view.panY ?? 0) + ui.panY;
   /**
-   * Infinite zoom-out: hide the scaled world paper and show a full-bleed
-   * parchment underlay so the board never postage-stamps (free plan only —
-   * Fit sheet keeps paper chrome inside the plot clip).
+   * Free-plan paper stays OUTSIDE the camera transform. Scaling parchment
+   * inside `.zoomWorld` made the cream board grow/shrink with the lot on
+   * every wheel tick (the reported Sketch/CAD oscillation). Bleed owns the
+   * fixed paper+mesh; world ground is hidePaper whenever Fit is off.
    */
-  const worldZoomedOut = planOn && !ui.frameOn && planZoom < 0.999;
+  const worldHidePaper = planOn && !ui.frameOn;
 
   /** Seed absolute zoom to paper-fit when opening Fit sheet / changing paper. */
   const fitSeedKeyRef = useRef<string | null>(null);
@@ -1714,7 +1728,7 @@ export function HandoffDesignStudio({
             {!ui.frameOn ? (
               <div className={css.parchmentBleed} aria-hidden>
                 <TactileGround
-                  zoom={1}
+                  zoom={planZoom}
                   sheetScaleDenom={100}
                   parchmentPeel={
                     draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
@@ -1782,7 +1796,7 @@ export function HandoffDesignStudio({
               parchmentPeel={
                 draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
               }
-              hidePaper={worldZoomedOut}
+              hidePaper={worldHidePaper}
               hasGeometry={hasGeometry}
               canvasEngaged={canvasEngaged}
               onUri={(uri) => {

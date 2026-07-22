@@ -150,9 +150,13 @@ Plan modes support **infinite zoom in and out** on free board **and** A3/A4 Fit 
 | Fit | Frames outdoor remnant (free-plan) or resets Fit camera to paper-fit ×1 |
 | Fit sheet (`frameOn`) | Title boundary fitted+centred in the plot; **plain wheel is infinite zoom** |
 
-**Zoom-out law (free plan):** scaled world paper hides below `1×`; full-bleed parchment underlay fills the board.
+**Zoom-out / free-plan paper law:** parchment + metric mesh live on a **fixed**
+`.parchmentBleed` underlay (outside `.zoomWorld`). The camera scales geometry /
+aerial only — never the cream board plane — so Sketch/CAD zoom cannot make the
+paper grow or shrink with the lot. Fit sheet still keeps paper inside the plot.
 
-Implementation: `geometry/canvasZoom.ts` (`composeSheetZoom`) + `.parchmentBleed` in `HandoffDesignStudio`.
+Implementation: `geometry/canvasZoom.ts` + `.parchmentBleed` + `hidePaper` on
+world `TactileGround` whenever Fit is off.
 
 ---
 

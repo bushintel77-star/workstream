@@ -615,9 +615,8 @@
 }
 
 /**
- * Full-bleed parchment under the scaled world. When infinite zoom-out scales
- * `.zoomWorld` below 1, the world paper hides and this layer keeps the board
- * filled — no empty chrome border / postage stamp.
+ * Full-bleed parchment under the camera. Free-plan paper+mesh stay here
+ * (outside `.zoomWorld`) so zoom scales geometry only — never the cream board.
  */
 .parchmentBleed {
   position: absolute;
