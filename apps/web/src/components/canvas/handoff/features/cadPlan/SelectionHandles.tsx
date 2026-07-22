@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { clientToBoardPct } from "../../geometry/cameraPointer";
 import { snapClockRotationDeg } from "../../geometry/snap";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { ProtractorArc } from "./ProtractorArc";
@@ -10,6 +11,12 @@ type Props = {
   item: StudioItem;
   boardW: number;
   boardH: number;
+  planZoom?: number;
+  planPanX?: number;
+  planPanY?: number;
+  planFocusX?: number;
+  planFocusY?: number;
+  planRotateDeg?: number;
   onTransform: (
     id: string,
     patch: Partial<Pick<StudioItem, "rot" | "scale">>,
@@ -24,6 +31,12 @@ export function SelectionHandles({
   item,
   boardW,
   boardH,
+  planZoom = 1,
+  planPanX = 0,
+  planPanY = 0,
+  planFocusX = 50,
+  planFocusY = 50,
+  planRotateDeg = 0,
   onTransform,
 }: Props) {
   const drag = useRef<
@@ -45,12 +58,28 @@ export function SelectionHandles({
 
   const toLocal = (clientX: number, clientY: number, el: HTMLElement) => {
     const root = el.closest("[data-cad-plan]") as HTMLElement | null;
-    const r = (root ?? el).getBoundingClientRect();
+    const plan = root ?? el;
+    const board =
+      (plan.closest('[data-testid="studio-board"]') as HTMLElement | null) ??
+      plan;
+    const boardRect = board.getBoundingClientRect();
+    const layoutW = plan.clientWidth || boardW;
+    const layoutH = plan.clientHeight || boardH;
+    const pct = clientToBoardPct(clientX, clientY, boardRect, {
+      boardW: layoutW,
+      boardH: layoutH,
+      zoom: planZoom,
+      rotateDeg: planRotateDeg,
+      panX: planPanX,
+      panY: planPanY,
+      focusX: planFocusX,
+      focusY: planFocusY,
+    });
     return {
-      x: ((clientX - r.left) / r.width) * 100,
-      y: ((clientY - r.top) / r.height) * 100,
-      cw: r.width || boardW,
-      ch: r.height || boardH,
+      x: pct.x,
+      y: pct.y,
+      cw: layoutW,
+      ch: layoutH,
     };
   };
 

@@ -13,12 +13,11 @@ import {
   GRID_STEP_PCT,
   ptsAttr,
   snapAlignment,
-  snapDraftPoint,
   snapToGridMetres,
   snapToNearby,
   snapVertexDrag,
-  metresGridStepPct,
   tpzRadiusPct,
+  clientToBoardPct,
   type GridFormation,
   type GridGrain,
   type GridInk,
@@ -127,6 +126,12 @@ type Props = {
   scaleM?: number;
   /** Camera zoom — for screen-px → world snap radius. */
   planZoom?: number;
+  /** Free-plan camera (must match `.zoomWorld` transform). */
+  planPanX?: number;
+  planPanY?: number;
+  planFocusX?: number;
+  planFocusY?: number;
+  planRotateDeg?: number;
   onSelect: (id: string | null, opts?: { additive?: boolean }) => void;
   onMarqueeSelect: (
     ids: string[],
@@ -218,6 +223,11 @@ export function CadPlanBoard({
   tpzReadouts,
   scaleM = 110,
   planZoom = 1,
+  planPanX = 0,
+  planPanY = 0,
+  planFocusX = 50,
+  planFocusY = 50,
+  planRotateDeg = 0,
   onSelect,
   onMarqueeSelect,
   onHover,
@@ -400,15 +410,36 @@ export function CadPlanBoard({
     return { it, dbhM, tpz: tpzRadiusPct(dbhM, scaleM) };
   });
 
-  const toPct = useCallback((clientX: number, clientY: number) => {
+  const toPct = useCallback(
+    (clientX: number, clientY: number) => {
+      const el = rootRef.current;
+      if (!el) return { x: 50, y: 50 };
+      const board =
+        (el.closest('[data-testid="studio-board"]') as HTMLElement | null) ??
+        el;
+      const boardRect = board.getBoundingClientRect();
+      return clientToBoardPct(clientX, clientY, boardRect, {
+        boardW: el.clientWidth || 960,
+        boardH: el.clientHeight || 640,
+        zoom: planZoom,
+        rotateDeg: planRotateDeg,
+        panX: planPanX,
+        panY: planPanY,
+        focusX: planFocusX,
+        focusY: planFocusY,
+      });
+    },
+    [planZoom, planRotateDeg, planPanX, planPanY, planFocusX, planFocusY],
+  );
+
+  /** Layout px of the plan root (untransformed) — never the rotated AABB. */
+  const boardLayout = () => {
     const el = rootRef.current;
-    if (!el) return { x: 50, y: 50 };
-    const r = el.getBoundingClientRect();
     return {
-      x: Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100)),
-      y: Math.max(0, Math.min(100, ((clientY - r.top) / r.height) * 100)),
+      w: el?.clientWidth || 960,
+      h: el?.clientHeight || 640,
     };
-  }, []);
+  };
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
     if (tool === "add" || tool === "paint") {
@@ -539,7 +570,13 @@ export function CadPlanBoard({
       return;
     }
     if (d.kind === "group" && d.ids && d.startX != null && d.startY != null) {
-      const snapped = gridSnap ? snapToGridMetres(p, scaleM) : p;
+      const { w: boardW, h: boardH } = boardLayout();
+      const peers = items
+        .filter((i) => !i.ghost && !d.ids!.includes(i.id))
+        .map((i) => ({ x: i.x, y: i.y }));
+      const snapped = gridSnap
+        ? snapToNearby(p, peers, { planZoom, boardW, boardH, scaleM })
+        : p;
       const dx = snapped.x - d.startX;
       const dy = snapped.y - d.startY;
       dragRef.current = { ...d, startX: snapped.x, startY: snapped.y };
@@ -551,18 +588,21 @@ export function CadPlanBoard({
       const others = items
         .filter((o) => o.id !== d.id)
         .map((o) => ({ x: o.x, y: o.y }));
+      const { w: boardW, h: boardH } = boardLayout();
       if (gridSnap) {
-        const snapped = snapDraftPoint(
-          p,
-          others,
-          metresGridStepPct(scaleM),
-        );
-        setGuides({ x: snapped.guideX, y: snapped.guideY });
-        setCrosshair({ x: snapped.crossX, y: snapped.crossY });
+        const point = snapToNearby(p, others, {
+          planZoom,
+          boardW,
+          boardH,
+          scaleM,
+        });
+        const align = snapAlignment(point, others);
+        setGuides({ x: align.guideX, y: align.guideY });
+        setCrosshair({ x: align.point.x, y: align.point.y });
         setSnapKind(
-          snapped.guideX != null || snapped.guideY != null ? "align" : "grid",
+          align.guideX != null || align.guideY != null ? "align" : "grid",
         );
-        onMoveItem(d.id, snapped.point.x, snapped.point.y);
+        onMoveItem(d.id, align.point.x, align.point.y);
       } else {
         const snapped = snapAlignment(p, others);
         setGuides({ x: snapped.guideX, y: snapped.guideY });
@@ -580,10 +620,10 @@ export function CadPlanBoard({
     ) {
       const pts = d.kind === "boundary" ? boundary : building;
       const exclude = pts[d.index];
-      const rect = rootRef.current?.getBoundingClientRect();
+      const { w: boardW, h: boardH } = boardLayout();
       const snapped = snapVertexDrag(p, [...boundary, ...building], {
-        boardW: rect?.width ?? 960,
-        boardH: rect?.height ?? 640,
+        boardW,
+        boardH,
         exclude,
         vertexPx: 12,
         shift: e.shiftKey,
@@ -613,20 +653,33 @@ export function CadPlanBoard({
       const maxY = Math.max(marquee.y1, marquee.y2);
       const area = (maxX - minX) * (maxY - minY);
       if (area > 1.5) {
+        const { w: boardW, h: boardH } = boardLayout();
         const hit = items
-          .filter(
-            (i) =>
-              !i.ghost &&
-              resolveLayerVisual(
+          .filter((i) => {
+            if (i.ghost) return false;
+            if (
+              !resolveLayerVisual(
                 ITEM_LAYER[i.t],
                 layerOpacity[ITEM_LAYER[i.t]] ?? 1,
                 isolatedLayer,
-              ).hittable &&
-              i.x >= minX &&
-              i.x <= maxX &&
-              i.y >= minY &&
-              i.y <= maxY,
-          )
+              ).hittable
+            ) {
+              return false;
+            }
+            const def = BY_TYPE[i.t];
+            const halfWPct = ((def.w * i.scale) / 2 / boardW) * 100;
+            const halfHPct = ((def.h * i.scale) / 2 / boardH) * 100;
+            const left = i.x - halfWPct;
+            const right = i.x + halfWPct;
+            const top = i.y - halfHPct;
+            const bottom = i.y + halfHPct;
+            return (
+              right >= minX &&
+              left <= maxX &&
+              bottom >= minY &&
+              top <= maxY
+            );
+          })
           .map((i) => i.id);
         onMarqueeSelect(hit, { additive: Boolean(d.additive) });
       } else {
@@ -1509,6 +1562,12 @@ export function CadPlanBoard({
           item={selected}
           boardW={rootRef.current?.clientWidth ?? 960}
           boardH={rootRef.current?.clientHeight ?? 640}
+          planZoom={planZoom}
+          planPanX={planPanX}
+          planPanY={planPanY}
+          planFocusX={planFocusX}
+          planFocusY={planFocusY}
+          planRotateDeg={planRotateDeg}
           onTransform={onTransformItem}
         />
       ) : null}

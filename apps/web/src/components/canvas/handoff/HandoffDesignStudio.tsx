@@ -115,6 +115,7 @@ import {
   sheetBoxFor,
   sheetContentView,
   titlePanelWidth,
+  clientToBoardPct,
 } from "./geometry";
 import {
   clampZoom,
@@ -372,23 +373,40 @@ export function HandoffDesignStudio({
         return;
       }
       const r = el.getBoundingClientRect();
-      const focusX = Math.max(
-        0,
-        Math.min(100, ((e.clientX - r.left) / Math.max(1, r.width)) * 100),
-      );
-      const focusY = Math.max(
-        0,
-        Math.min(100, ((e.clientY - r.top) / Math.max(1, r.height)) * 100),
-      );
+      const rotateDeg =
+        ui.mode === "cad" && !ui.clientView
+          ? normalizeViewRotationDeg(ui.viewRotationDeg)
+          : 0;
+      const focus = clientToBoardPct(e.clientX, e.clientY, r, {
+        boardW: el.clientWidth || 1,
+        boardH: el.clientHeight || 1,
+        zoom: clampZoom(ui.zoom),
+        rotateDeg,
+        panX: ui.panX,
+        panY: ui.panY,
+        focusX: ui.focusX,
+        focusY: ui.focusY,
+      });
       studio.setUi({
-        focusX: Number(focusX.toFixed(2)),
-        focusY: Number(focusY.toFixed(2)),
+        focusX: Number(focus.x.toFixed(2)),
+        focusY: Number(focus.y.toFixed(2)),
         zoom: nextZoom,
       });
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [studio, ui.frameOn, ui.mode, ui.zoom]);
+  }, [
+    studio,
+    ui.frameOn,
+    ui.mode,
+    ui.zoom,
+    ui.panX,
+    ui.panY,
+    ui.focusX,
+    ui.focusY,
+    ui.viewRotationDeg,
+    ui.clientView,
+  ]);
 
   /** Keeps the drag-start base fresh without re-subscribing gesture listeners. */
   useEffect(() => {
@@ -1767,7 +1785,11 @@ export function HandoffDesignStudio({
         {planOn ? (
           <>
             {!ui.frameOn ? (
-              <div className={css.parchmentBleed} aria-hidden>
+              <div
+                className={css.parchmentBleed}
+                data-testid="parchment-bleed"
+                aria-hidden
+              >
                 <TactileGround
                   zoom={planZoom}
                   sheetScaleDenom={100}
@@ -1801,6 +1823,7 @@ export function HandoffDesignStudio({
           >
             <div
               className={css.zoomWorld}
+              data-testid="zoom-world"
               data-print-keep="plan"
               style={{
                 transformOrigin: `${planFocusX}% ${planFocusY}%`,
@@ -1864,6 +1887,11 @@ export function HandoffDesignStudio({
               titleBoundaryLocked={ui.titleBoundaryLocked}
               scaleM={scaleM}
               planZoom={planZoom}
+              planPanX={planPanX}
+              planPanY={planPanY}
+              planFocusX={planFocusX}
+              planFocusY={planFocusY}
+              planRotateDeg={planRotateDeg}
               lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
               siteAreas={
                 siteSchedule
