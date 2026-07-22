@@ -48,6 +48,7 @@ import {
 import { resolveLayerVisual } from "../../state/layerIsolate";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
+import { BoardChromePortal } from "../../BoardChromePortal";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
 
@@ -1222,9 +1223,11 @@ export function CadPlanBoard({
       ) : null}
 
       {cadTitleMode && !frameOn && siteLabel ? (
-        <p className={css.cadStreetCue} data-testid="cad-street-cue">
-          {siteLabel}
-        </p>
+        <BoardChromePortal>
+          <p className={css.cadStreetCue} data-testid="cad-street-cue">
+            {siteLabel}
+          </p>
+        </BoardChromePortal>
       ) : null}
 
       {showHouseEnvelopeLabel && buildingCentroid ? (
@@ -1601,10 +1604,12 @@ export function CadPlanBoard({
       )}
 
       {editing ? (
-        <div className={css.editBanner} data-testid="edit-vector-banner">
-          Hover node to move · hover edge diamond to add · right-click node to
-          delete
-        </div>
+        <BoardChromePortal>
+          <div className={css.editBanner} data-testid="edit-vector-banner">
+            Hover node to move · hover edge diamond to add · right-click node to
+            delete
+          </div>
+        </BoardChromePortal>
       ) : null}
 
       {cursorPct ? (
@@ -1702,19 +1707,27 @@ export function CadPlanBoard({
 
       {easements.some((r) => r.length >= 3) ||
       services.some((r) => r.length >= 2) ? (
-        <div className={css.honestyStack}>
-          {easements.some((r) => r.length >= 3) ? (
-            <p className={css.honestyFooter} data-testid="easement-honesty-footer">
-              Easement hatch · indicative only — confirm with title / council before
-              excavation
-            </p>
-          ) : null}
-          {services.some((r) => r.length >= 2) ? (
-            <p className={css.honestyFooter} data-testid="utility-honesty-footer">
-              Utility traces · indicative — confirm locate / DBYD before dig
-            </p>
-          ) : null}
-        </div>
+        <BoardChromePortal>
+          <div className={css.honestyStack}>
+            {easements.some((r) => r.length >= 3) ? (
+              <p
+                className={css.honestyFooter}
+                data-testid="easement-honesty-footer"
+              >
+                Easement hatch · indicative only — confirm with title / council
+                before excavation
+              </p>
+            ) : null}
+            {services.some((r) => r.length >= 2) ? (
+              <p
+                className={css.honestyFooter}
+                data-testid="utility-honesty-footer"
+              >
+                Utility traces · indicative — confirm locate / DBYD before dig
+              </p>
+            ) : null}
+          </div>
+        </BoardChromePortal>
       ) : null}
     </div>
   );

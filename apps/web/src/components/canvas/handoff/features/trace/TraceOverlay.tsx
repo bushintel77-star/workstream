@@ -8,6 +8,7 @@ import {
   pointFromSegmentInput,
 } from "../../geometry/drafting";
 import type { TraceTarget } from "../../state/studioTypes";
+import { BoardChromePortal } from "../../BoardChromePortal";
 import css from "./trace.module.css";
 
 type Props = {
@@ -292,60 +293,62 @@ export function TraceOverlay({
         </button>
       ) : null}
 
-      <div className={css.bar} data-testid="trace-status">
-        <div className={css.targets}>
-          {(
-            [
-              ["boundary", "Boundary"],
-              ["building", "Existing dwelling"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              className={css.targetBtn}
-              data-active={target === id ? "true" : "false"}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => onTarget(id)}
-            >
-              {label}
-            </button>
-          ))}
+      <BoardChromePortal>
+        <div className={css.bar} data-testid="trace-status">
+          <div className={css.targets}>
+            {(
+              [
+                ["boundary", "Boundary"],
+                ["building", "Existing dwelling"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={css.targetBtn}
+                data-active={target === id ? "true" : "false"}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => onTarget(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <span className={css.status}>
+            Tracing {target} · {poly.length} pts
+            {area > 0 ? ` · ${area.toFixed(1)} m²` : ""}
+          </span>
+          {completion ? (
+            <span className={css.tabHint}>Tab autocompletes rectangle</span>
+          ) : null}
+          <button
+            type="button"
+            className={css.finish}
+            disabled={poly.length < 3}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => onFinish(poly)}
+          >
+            Finish
+          </button>
+          <button
+            type="button"
+            className={css.cancel}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={css.cancel}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onPop}
+            title="Remove last point"
+          >
+            Back
+          </button>
         </div>
-        <span className={css.status}>
-          Tracing {target} · {poly.length} pts
-          {area > 0 ? ` · ${area.toFixed(1)} m²` : ""}
-        </span>
-        {completion ? (
-          <span className={css.tabHint}>Tab autocompletes rectangle</span>
-        ) : null}
-        <button
-          type="button"
-          className={css.finish}
-          disabled={poly.length < 3}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => onFinish(poly)}
-        >
-          Finish
-        </button>
-        <button
-          type="button"
-          className={css.cancel}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          className={css.cancel}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={onPop}
-          title="Remove last point"
-        >
-          Back
-        </button>
-      </div>
+      </BoardChromePortal>
     </div>
   );
 }

@@ -2042,17 +2042,7 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {chrome.volumeIsolith ? (
-              <VolumetricIsolith
-                estimate={estimate}
-                proximity={
-                  drawingHot &&
-                  (ui.armed === "paving" ||
-                    ui.armed === "deck" ||
-                    ui.tool === "edit")
-                }
-              />
-            ) : null}
+            {/* VolumetricIsolith + AmbientBudgetMargin render outside .zoomWorld */}
             {ui.mode === "sketch" ? (
               <SketchBoard
                 strokes={studio.strokes}
@@ -2122,16 +2112,6 @@ export function HandoffDesignStudio({
                     });
                   }}
                 />
-                {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
-                  <SurveyChecklist
-                    boundary={studio.boundary}
-                    building={studio.building}
-                    items={studio.items}
-                    levels={studio.levels}
-                    services={studio.services}
-                    easements={studio.easements}
-                  />
-                ) : null}
               </>
             ) : null}
             <TraceOverlay
@@ -2246,12 +2226,7 @@ export function HandoffDesignStudio({
                 yPct={selectedLive.y}
               />
             ) : null}
-            {chrome.tradeMargin ? (
-              <AmbientBudgetMargin
-                trade={trade}
-                displayTotalInclGst={estimate.totalInclGst}
-              />
-            ) : null}
+            {/* AmbientBudgetMargin outside .zoomWorld */}
             </div>
           </div>
           </>
@@ -2266,6 +2241,40 @@ export function HandoffDesignStudio({
             panYPct={boardSize.h > 0 ? (ui.panY / boardSize.h) * 100 : 0}
             sheetScaleDenom={100}
             darkOn={ui.darkOn}
+          />
+        ) : null}
+
+        {planOn &&
+        !ui.frameOn &&
+        ui.mode === "survey" &&
+        !ui.focusOn &&
+        !ui.clientView ? (
+          <SurveyChecklist
+            boundary={studio.boundary}
+            building={studio.building}
+            items={studio.items}
+            levels={studio.levels}
+            services={studio.services}
+            easements={studio.easements}
+          />
+        ) : null}
+
+        {planOn && chrome.volumeIsolith ? (
+          <VolumetricIsolith
+            estimate={estimate}
+            proximity={
+              drawingHot &&
+              (ui.armed === "paving" ||
+                ui.armed === "deck" ||
+                ui.tool === "edit")
+            }
+          />
+        ) : null}
+
+        {planOn && chrome.tradeMargin ? (
+          <AmbientBudgetMargin
+            trade={trade}
+            displayTotalInclGst={estimate.totalInclGst}
           />
         ) : null}
 

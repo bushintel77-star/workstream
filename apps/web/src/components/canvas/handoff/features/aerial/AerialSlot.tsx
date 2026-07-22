@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TactileGround } from "../ground/TactileGround";
 import type { SheetScaleDenom } from "../ground/groundMetrics";
+import { BoardChromePortal } from "../../BoardChromePortal";
 import css from "./aerialSlot.module.css";
 
 export type CanopyImagePayload = {
@@ -275,43 +276,51 @@ export function AerialSlot({
       ) : null}
 
       {showAerial && aerialError ? (
-        <div className={css.errorPanel} role="alert">
-          <p className={css.primaryText}>Aerial image failed to load</p>
-          <p className={css.metaText}>Check the source or retry the survey underlay</p>
-          <button
-            type="button"
-            className={css.retryButton}
-            onClick={(event) => {
-              event.stopPropagation();
-              setAerialError(false);
-              setRetryNonce((value) => value + 1);
-            }}
-          >
-            Retry image
-          </button>
-        </div>
+        <BoardChromePortal>
+          <div className={css.errorPanel} role="alert">
+            <p className={css.primaryText}>Aerial image failed to load</p>
+            <p className={css.metaText}>
+              Check the source or retry the survey underlay
+            </p>
+            <button
+              type="button"
+              className={css.retryButton}
+              onClick={(event) => {
+                event.stopPropagation();
+                setAerialError(false);
+                setRetryNonce((value) => value + 1);
+              }}
+            >
+              Retry image
+            </button>
+          </div>
+        </BoardChromePortal>
       ) : null}
 
       {showDropCue ? (
-        <div
-          className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
-          data-testid="aerial-drop-cue"
-          aria-hidden
-        >
-          <p className={css.primaryText}>
-            {planOnly
-              ? "Drop a survey plan (SVG/PNG) — no aerial required"
-              : "Drop a top-down aerial or survey plan"}
-          </p>
-          <p className={css.metaText}>Stays as the drafting background</p>
-        </div>
+        <BoardChromePortal>
+          <div
+            className={`${css.dropCue}${dragOver ? ` ${css.dropCueHot}` : ""}`}
+            data-testid="aerial-drop-cue"
+            aria-hidden
+          >
+            <p className={css.primaryText}>
+              {planOnly
+                ? "Drop a survey plan (SVG/PNG) — no aerial required"
+                : "Drop a top-down aerial or survey plan"}
+            </p>
+            <p className={css.metaText}>Stays as the drafting background</p>
+          </div>
+        </BoardChromePortal>
       ) : null}
 
       {scanning && aerialEnabled ? (
-        <div className={css.scanPill} data-testid="canopy-scanning">
-          <span className={css.scanDot} />
-          AI scanning aerial for canopy…
-        </div>
+        <BoardChromePortal>
+          <div className={css.scanPill} data-testid="canopy-scanning">
+            <span className={css.scanDot} />
+            AI scanning aerial for canopy…
+          </div>
+        </BoardChromePortal>
       ) : null}
     </div>
   );

@@ -20,6 +20,7 @@ import {
   SKETCH_TIP_LABEL,
   type SketchTipGrade,
 } from "./sketchCursors";
+import { BoardChromePortal } from "../../BoardChromePortal";
 import css from "./sketch.module.css";
 
 type SketchTool = "pen" | "eraser";
@@ -238,107 +239,109 @@ export function SketchBoard({
         })}
       </svg>
       {!readOnly ? (
-        <div className={css.bar} data-testid="sketch-convert-bar">
-          <p className={css.hint}>
-            {formalizing
-              ? "Translating sketch to CAD with AI…"
-              : canAct
-                ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
-                : "Sketch with a finger or stylus · formalize only when ready"}
-          </p>
-          <div className={css.tools} role="toolbar" aria-label="Sketch tools">
-            <button
-              type="button"
-              className={`${css.tool}${tool === "pen" ? ` ${css.toolActive}` : ""}`}
-              data-testid="sketch-pen"
-              aria-pressed={tool === "pen"}
-              disabled={formalizing}
-              title="Fine-tip marker — grade tip for thicker ink"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => setTool("pen")}
-            >
-              Pen
-            </button>
-            <button
-              type="button"
-              className={`${css.tool}${tool === "eraser" ? ` ${css.toolActive}` : ""}`}
-              data-testid="sketch-eraser"
-              aria-pressed={tool === "eraser"}
-              disabled={formalizing}
-              title="Eraser — remove whole strokes"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => setTool("eraser")}
-            >
-              Eraser
-            </button>
-            {tool === "pen" ? (
-              <div
-                className={css.tipGrade}
-                role="group"
-                aria-label="Pen tip grade"
-                data-testid="sketch-tip-grade"
-              >
-                {SKETCH_TIP_GRADES.map((grade) => (
-                  <button
-                    key={grade}
-                    type="button"
-                    className={`${css.tip}${tip === grade ? ` ${css.tipActive}` : ""}`}
-                    data-testid={`sketch-tip-${grade}`}
-                    aria-pressed={tip === grade}
-                    disabled={formalizing}
-                    title={`${SKETCH_TIP_LABEL[grade]} tip`}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => setTip(grade)}
-                  >
-                    <span
-                      className={css.tipDot}
-                      data-grade={grade}
-                      aria-hidden
-                    />
-                    {SKETCH_TIP_LABEL[grade]}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {canAct && onUndoLast ? (
+        <BoardChromePortal anchorRef={rootRef}>
+          <div className={css.bar} data-testid="sketch-convert-bar">
+            <p className={css.hint}>
+              {formalizing
+                ? "Translating sketch to CAD with AI…"
+                : canAct
+                  ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
+                  : "Sketch with a finger or stylus · formalize only when ready"}
+            </p>
+            <div className={css.tools} role="toolbar" aria-label="Sketch tools">
               <button
                 type="button"
-                className={css.tool}
-                data-testid="sketch-undo-stroke"
+                className={`${css.tool}${tool === "pen" ? ` ${css.toolActive}` : ""}`}
+                data-testid="sketch-pen"
+                aria-pressed={tool === "pen"}
                 disabled={formalizing}
+                title="Fine-tip marker — grade tip for thicker ink"
                 onPointerDown={(e) => e.stopPropagation()}
-                onClick={onUndoLast}
+                onClick={() => setTool("pen")}
               >
-                Undo
+                Pen
               </button>
-            ) : null}
-            {canAct && onTidy ? (
               <button
                 type="button"
-                className={css.tidy}
-                data-testid="sketch-tidy"
+                className={`${css.tool}${tool === "eraser" ? ` ${css.toolActive}` : ""}`}
+                data-testid="sketch-eraser"
+                aria-pressed={tool === "eraser"}
                 disabled={formalizing}
+                title="Eraser — remove whole strokes"
                 onPointerDown={(e) => e.stopPropagation()}
-                onClick={onTidy}
+                onClick={() => setTool("eraser")}
               >
-                Tidy
+                Eraser
               </button>
-            ) : null}
-            {canAct && onFormalizeToCad ? (
-              <button
-                type="button"
-                className={css.convert}
-                data-testid="sketch-convert-cad"
-                disabled={formalizing}
-                aria-busy={formalizing}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={onFormalizeToCad}
-              >
-                {formalizing ? "Translating…" : "Formalize to CAD"}
-              </button>
-            ) : null}
+              {tool === "pen" ? (
+                <div
+                  className={css.tipGrade}
+                  role="group"
+                  aria-label="Pen tip grade"
+                  data-testid="sketch-tip-grade"
+                >
+                  {SKETCH_TIP_GRADES.map((grade) => (
+                    <button
+                      key={grade}
+                      type="button"
+                      className={`${css.tip}${tip === grade ? ` ${css.tipActive}` : ""}`}
+                      data-testid={`sketch-tip-${grade}`}
+                      aria-pressed={tip === grade}
+                      disabled={formalizing}
+                      title={`${SKETCH_TIP_LABEL[grade]} tip`}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => setTip(grade)}
+                    >
+                      <span
+                        className={css.tipDot}
+                        data-grade={grade}
+                        aria-hidden
+                      />
+                      {SKETCH_TIP_LABEL[grade]}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              {canAct && onUndoLast ? (
+                <button
+                  type="button"
+                  className={css.tool}
+                  data-testid="sketch-undo-stroke"
+                  disabled={formalizing}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={onUndoLast}
+                >
+                  Undo
+                </button>
+              ) : null}
+              {canAct && onTidy ? (
+                <button
+                  type="button"
+                  className={css.tidy}
+                  data-testid="sketch-tidy"
+                  disabled={formalizing}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={onTidy}
+                >
+                  Tidy
+                </button>
+              ) : null}
+              {canAct && onFormalizeToCad ? (
+                <button
+                  type="button"
+                  className={css.convert}
+                  data-testid="sketch-convert-cad"
+                  disabled={formalizing}
+                  aria-busy={formalizing}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={onFormalizeToCad}
+                >
+                  {formalizing ? "Translating…" : "Formalize to CAD"}
+                </button>
+              ) : null}
+            </div>
           </div>
-        </div>
+        </BoardChromePortal>
       ) : null}
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { edgeLengthM, type PctPoint } from "../../geometry";
+import { BoardChromePortal } from "../../BoardChromePortal";
 import css from "./measure.module.css";
 
 type Props = {
@@ -137,9 +138,11 @@ export function MeasureOverlay({
           {len.toFixed(2)} m
         </div>
       ) : (
-        <div className={css.hint}>
-          Drag to measure · Esc / right-click exits
-        </div>
+        <BoardChromePortal>
+          <div className={css.hint}>
+            Drag to measure · Esc / right-click exits
+          </div>
+        </BoardChromePortal>
       )}
     </div>
   );

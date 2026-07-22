@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { IrrigationZone, IrrigationZoneKind } from "@workstream/contracts";
 import type { PctPoint } from "../../geometry";
+import { BoardChromePortal } from "../../BoardChromePortal";
 import css from "./zones.module.css";
 
 type Props = {
@@ -131,10 +132,12 @@ export function ZoneOverlay({ active, kind, zones, onCommit }: Props) {
       )}
 
       {active ? (
-        <p className={css.hint} data-testid="zone-draw-hint">
-          {kind === "lighting" ? "Lighting run" : "Drip zone"} ·{" "}
-          {draft?.length ?? 0} pts · Enter finish · Esc cancel
-        </p>
+        <BoardChromePortal>
+          <p className={css.hint} data-testid="zone-draw-hint">
+            {kind === "lighting" ? "Lighting run" : "Drip zone"} ·{" "}
+            {draft?.length ?? 0} pts · Enter finish · Esc cancel
+          </p>
+        </BoardChromePortal>
       ) : null}
     </div>
   );

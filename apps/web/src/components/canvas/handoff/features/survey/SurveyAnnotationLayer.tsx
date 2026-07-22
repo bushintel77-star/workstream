@@ -8,6 +8,7 @@ import type { PctPoint } from "../../geometry";
 import { nearSurveyRingStart } from "../../geometry/surveyCorridor";
 import type { StudioTool } from "../../studioCatalog";
 import { buildSpotLevelFall } from "./spotLevelFall";
+import { BoardChromePortal } from "../../BoardChromePortal";
 import css from "./surveyAnnotations.module.css";
 
 type Props = {
@@ -370,20 +371,26 @@ export function SurveyAnnotationLayer({
         ))}
 
       {tool === "service" && drawService ? (
-        <p className={css.hint} data-testid="survey-service-hint">
-          {drawService.length >= 3
-            ? `Easement hatch · ${drawService.length} pts · Enter or click start to finish · Esc cancel`
-            : `Service / easement · ${drawService.length} pts · 2 pts = service · ≥3 = easement · Enter finish`}
-        </p>
+        <BoardChromePortal>
+          <p className={css.hint} data-testid="survey-service-hint">
+            {drawService.length >= 3
+              ? `Easement hatch · ${drawService.length} pts · Enter or click start to finish · Esc cancel`
+              : `Service / easement · ${drawService.length} pts · 2 pts = service · ≥3 = easement · Enter finish`}
+          </p>
+        </BoardChromePortal>
       ) : null}
       {tool === "level" ? (
-        <p className={css.hint}>Click to place a spot level (RL)</p>
+        <BoardChromePortal>
+          <p className={css.hint}>Click to place a spot level (RL)</p>
+        </BoardChromePortal>
       ) : null}
       {tool === "calib" ? (
-        <p className={css.hint}>
-          Calibrate · click two points with a known title distance
-          {calibPts.length === 1 ? " · click second point" : ""}
-        </p>
+        <BoardChromePortal>
+          <p className={css.hint}>
+            Calibrate · click two points with a known title distance
+            {calibPts.length === 1 ? " · click second point" : ""}
+          </p>
+        </BoardChromePortal>
       ) : null}
     </div>
   );

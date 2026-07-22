@@ -38,7 +38,8 @@
   gap: 6px;
   width: min(94%, 760px);
   pointer-events: none;
-  z-index: 2;
+  /* Above .zoomWorld — portaled to studio-board (viewport chrome). */
+  z-index: 45;
 }
 
 .hint {
