@@ -33,6 +33,11 @@ type Props = {
   quietChrome?: boolean;
   /** Edge labels are normally owned by the fixed sibling ruler overlay. */
   showEdgeLabels?: boolean;
+  /**
+   * Hide parchment + mesh (geometry still draws above). Used when zoom &lt; 1
+   * so a full-bleed underlay can fill the board — no postage-stamp border.
+   */
+  hidePaper?: boolean;
 };
 
 /**
@@ -54,6 +59,7 @@ export function TactileGround({
   suppressSiteCue = false,
   quietChrome = false,
   showEdgeLabels = true,
+  hidePaper = false,
 }: Props) {
   const scaleM = boardScaleM(sheetScaleDenom);
   const visibleM = visibleMetres(sheetScaleDenom, zoom);
@@ -128,95 +134,100 @@ export function TactileGround({
       data-testid="tactile-ground"
       data-phase={foundationCleanse ? "foundation-cad" : phase}
       data-step-m={stepM}
-      style={{ ["--parchment-op" as string]: String(parchmentOp) }}
+      data-hide-paper={hidePaper ? "1" : "0"}
+      style={{ ["--parchment-op" as string]: String(hidePaper ? 0 : parchmentOp) }}
       aria-hidden
     >
-      <div className={css.parchment} />
-      {!foundationCleanse ? <div className={css.tooth} /> : null}
-
-      <svg className={css.mesh} viewBox="0 0 100 100" preserveAspectRatio="none">
-        {topo.map((r) => (
-          <ellipse
-            key={`topo${r}`}
-            cx={50}
-            cy={52}
-            rx={r * 0.55}
-            ry={r * 0.42}
-            className={css.topo}
-            vectorEffect="non-scaling-stroke"
-          />
-        ))}
-
-        {lines.minor.map((p) => (
-          <g key={`mi${p}`}>
-            <line
-              x1={p}
-              y1={0}
-              x2={p}
-              y2={100}
-              className={css.minor}
-              vectorEffect="non-scaling-stroke"
-            />
-            <line
-              x1={0}
-              y1={p}
-              x2={100}
-              y2={p}
-              className={css.minor}
-              vectorEffect="non-scaling-stroke"
-            />
-          </g>
-        ))}
-        {lines.major.map((p) => (
-          <g key={`ma${p}`}>
-            <line
-              x1={p}
-              y1={0}
-              x2={p}
-              y2={100}
-              className={css.major}
-              vectorEffect="non-scaling-stroke"
-            />
-            <line
-              x1={0}
-              y1={p}
-              x2={100}
-              y2={p}
-              className={css.major}
-              vectorEffect="non-scaling-stroke"
-            />
-          </g>
-        ))}
-      </svg>
-
-      {!quietChrome ? (
+      {!hidePaper ? (
         <>
-          {showEdgeLabels ? (
+          <div className={css.parchment} />
+          {!foundationCleanse ? <div className={css.tooth} /> : null}
+
+          <svg className={css.mesh} viewBox="0 0 100 100" preserveAspectRatio="none">
+            {topo.map((r) => (
+              <ellipse
+                key={`topo${r}`}
+                cx={50}
+                cy={52}
+                rx={r * 0.55}
+                ry={r * 0.42}
+                className={css.topo}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+
+            {lines.minor.map((p) => (
+              <g key={`mi${p}`}>
+                <line
+                  x1={p}
+                  y1={0}
+                  x2={p}
+                  y2={100}
+                  className={css.minor}
+                  vectorEffect="non-scaling-stroke"
+                />
+                <line
+                  x1={0}
+                  y1={p}
+                  x2={100}
+                  y2={p}
+                  className={css.minor}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            ))}
+            {lines.major.map((p) => (
+              <g key={`ma${p}`}>
+                <line
+                  x1={p}
+                  y1={0}
+                  x2={p}
+                  y2={100}
+                  className={css.major}
+                  vectorEffect="non-scaling-stroke"
+                />
+                <line
+                  x1={0}
+                  y1={p}
+                  x2={100}
+                  y2={p}
+                  className={css.major}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            ))}
+          </svg>
+
+          {!quietChrome ? (
             <>
-              <div className={css.edgeScale} data-edge="left">
-                {edgeLabels.map((l) => (
-                  <span key={`L${l.pct}`} style={{ top: `${l.pct}%` }}>
-                    {l.label}
-                  </span>
-                ))}
+              {showEdgeLabels ? (
+                <>
+                  <div className={css.edgeScale} data-edge="left">
+                    {edgeLabels.map((l) => (
+                      <span key={`L${l.pct}`} style={{ top: `${l.pct}%` }}>
+                        {l.label}
+                      </span>
+                    ))}
+                  </div>
+                  <div className={css.edgeScale} data-edge="bottom">
+                    {edgeLabels.map((l) => (
+                      <span key={`B${l.pct}`} style={{ left: `${l.pct}%` }}>
+                        {l.label}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+              <div className={css.compass} title="True north">
+                <span className={css.compassN}>N</span>
+                <span className={css.compassRose} />
               </div>
-              <div className={css.edgeScale} data-edge="bottom">
-                {edgeLabels.map((l) => (
-                  <span key={`B${l.pct}`} style={{ left: `${l.pct}%` }}>
-                    {l.label}
-                  </span>
-                ))}
-              </div>
+              {cue ? <p className={css.siteCue}>{cue}</p> : null}
+              <p className={css.scaleChip} data-testid="ground-metric-step">
+                {stepM} m · 1:{sheetScaleDenom}
+              </p>
             </>
           ) : null}
-          <div className={css.compass} title="True north">
-            <span className={css.compassN}>N</span>
-            <span className={css.compassRose} />
-          </div>
-          {cue ? <p className={css.siteCue}>{cue}</p> : null}
-          <p className={css.scaleChip} data-testid="ground-metric-step">
-            {stepM} m · 1:{sheetScaleDenom}
-          </p>
         </>
       ) : null}
     </div>

@@ -52,6 +52,7 @@ import { MeasureOverlay } from "./features/measure/MeasureOverlay";
 import { isStickyDraftTool } from "./features/measure/measureCancel";
 import { AerialSlot } from "./features/aerial/AerialSlot";
 import { GroundRulerOverlay } from "./features/ground/GroundRulerOverlay";
+import { TactileGround } from "./features/ground/TactileGround";
 import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
@@ -95,7 +96,9 @@ import { VolumetricIsolith } from "./features/isolith/VolumetricIsolith";
 import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
 import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
-import { boardScaleM } from "./features/ground/groundMetrics";
+import {
+  BOARD_WIDTH_M_AT_100,
+} from "./features/ground/groundMetrics";
 import {
   solveLiveTradeEstimate,
   tradeTagForItem,
@@ -651,7 +654,7 @@ export function HandoffDesignStudio({
       }
       if (e.key.toLowerCase() === "f" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        studio.setUi({ frameOn: !ui.frameOn });
+        setFitSheetOn(!ui.frameOn);
         return;
       }
       /* Q flips back to the previous tool — no toolbar round trip. */
@@ -826,7 +829,11 @@ export function HandoffDesignStudio({
   const draftSurface = chrome.draftSurface;
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
-  const scaleM = ui.boardWidthM ?? boardScaleM(ui.sheetScaleDenom);
+  /**
+   * Free-plan metres stay at the calibrated / default board width.
+   * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
+   */
+  const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
 
   /**
    * Fit sheet layout — fixed plot clip + content scale from 1:N.
@@ -870,6 +877,30 @@ export function HandoffDesignStudio({
   /** Fit sheet centres the lot on the plot; free pan is world-only. */
   const planPanX = sheetPlotLayout ? sheetPlotLayout.view.panX : ui.panX;
   const planPanY = sheetPlotLayout ? sheetPlotLayout.view.panY : ui.panY;
+  /**
+   * Infinite zoom-out: hide the scaled world paper and show a full-bleed
+   * parchment underlay so the board never postage-stamps.
+   */
+  const worldZoomedOut = planOn && !ui.frameOn && planZoom < 0.999;
+
+  const setFitSheetOn = useCallback(
+    (on: boolean) => {
+      if (on) {
+        studio.setUi({
+          frameOn: true,
+          panX: 0,
+          panY: 0,
+          sheetScaleDenom: 100,
+        });
+        return;
+      }
+      // Leaving Fit sheet — restore a coherent free-plan camera on every tab.
+      outdoorFitKeyRef.current = null;
+      studio.setUi({ frameOn: false, panX: 0, panY: 0 });
+      studio.fitOutdoorView();
+    },
+    [studio],
+  );
 
   const [formalizing, setFormalizing] = useState(false);
 
@@ -1347,7 +1378,7 @@ export function HandoffDesignStudio({
             data-testid="fit-sheet-top"
             aria-label="Fit sheet"
             title="Fit sheet"
-            onClick={() => studio.setUi({ frameOn: !ui.frameOn })}
+            onClick={() => setFitSheetOn(!ui.frameOn)}
           >
             <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
               <rect
@@ -1646,6 +1677,28 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn ? (
+          <>
+            {!ui.frameOn ? (
+              <div className={css.parchmentBleed} aria-hidden>
+                <TactileGround
+                  zoom={1}
+                  sheetScaleDenom={100}
+                  parchmentPeel={
+                    draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
+                  }
+                  hasAerial={Boolean(liveAerial)}
+                  darkOn={ui.darkOn}
+                  foundationCleanse={ui.foundationCleanse}
+                  titleLocked={titleLocked}
+                  boundarySource={ui.boundarySource}
+                  siteLabel={displayAddress}
+                  address={displayAddress}
+                  suppressSiteCue
+                  quietChrome
+                  showEdgeLabels={false}
+                />
+              </div>
+            ) : null}
           <div
             className={
               sheetPlotLayout
@@ -1682,7 +1735,7 @@ export function HandoffDesignStudio({
                 (ui.canopyScanning || ai.busy === "scanning")
               }
               zoom={planZoom}
-              sheetScaleDenom={ui.sheetScaleDenom}
+              sheetScaleDenom={100}
               darkOn={ui.darkOn}
               foundationCleanse={ui.foundationCleanse}
               allowAerial={aerialOk}
@@ -1696,6 +1749,7 @@ export function HandoffDesignStudio({
               parchmentPeel={
                 draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
               }
+              hidePaper={worldZoomedOut}
               hasGeometry={hasGeometry}
               canvasEngaged={canvasEngaged}
               onUri={(uri) => {
@@ -2078,6 +2132,7 @@ export function HandoffDesignStudio({
             ) : null}
             </div>
           </div>
+          </>
         ) : null}
 
         {planOn && !ui.frameOn ? (
@@ -2087,7 +2142,7 @@ export function HandoffDesignStudio({
             focusY={planFocusY}
             panXPct={boardSize.w > 0 ? (ui.panX / boardSize.w) * 100 : 0}
             panYPct={boardSize.h > 0 ? (ui.panY / boardSize.h) * 100 : 0}
-            sheetScaleDenom={ui.sheetScaleDenom}
+            sheetScaleDenom={100}
             darkOn={ui.darkOn}
           />
         ) : null}
@@ -2103,6 +2158,7 @@ export function HandoffDesignStudio({
             items={studio.items}
             easements={studio.easements}
             services={studio.services}
+            scaleM={scaleM}
             showElevations={ui.sheetElevOn}
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
@@ -2498,7 +2554,7 @@ export function HandoffDesignStudio({
           onConvertSketch={
             formalizing ? undefined : () => void runFormalizeToCad()
           }
-          onToggleFitSheet={() => studio.setUi({ frameOn: !ui.frameOn })}
+          onToggleFitSheet={() => setFitSheetOn(!ui.frameOn)}
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           dataOpen={ui.dataSummoned}

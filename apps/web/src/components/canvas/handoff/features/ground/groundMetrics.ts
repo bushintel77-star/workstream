@@ -6,10 +6,13 @@ export const BOARD_WIDTH_M_AT_100 = 110;
 export type SheetScaleDenom = 50 | 100 | 200 | 250 | 500;
 
 /**
- * Metres across the board at the current print-scale denominator.
- * 1:50 → tighter world; 1:500 → wider cadastral context.
+ * Metres across the board.
+ *
+ * Free-plan world metres stay at {@link BOARD_WIDTH_M_AT_100} (or a calibrated
+ * `boardWidthM`) — print 1:N must NOT mutate live CAD metres. Pass `100` for
+ * free plan; Fit sheet may still pass the print denom only for HUD copy.
  */
-export function boardScaleM(sheetScaleDenom: SheetScaleDenom): number {
+export function boardScaleM(sheetScaleDenom: SheetScaleDenom = 100): number {
   return (BOARD_WIDTH_M_AT_100 * sheetScaleDenom) / 100;
 }
 

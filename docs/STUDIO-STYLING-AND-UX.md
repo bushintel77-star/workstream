@@ -139,17 +139,19 @@ Implementation: `features/pointer/resolveStudioCursor.ts`.
 
 ## 2b. Infinite canvas zoom
 
-Plan modes support **unbounded zoom-in** (floor `1` = board-fill / ceiling `64`):
+Plan modes support **infinite zoom in and out** (soft floor `0.05` / ceiling `64`):
 
 | Input | Behaviour |
 | --- | --- |
 | Wheel / trackpad / pinch over board | Zoom toward pointer; updates `focusX` / `focusY` |
 | Ribbon In / Out | Geometric steps (`×1.18`) |
 | `+` / `-` keys | Same geometric steps |
-| Fit | Still frames outdoor remnant (its own sensible zoom) |
+| Fit | Frames outdoor remnant (free-plan camera) |
 | Fit sheet (`frameOn`) | Wheel changes print scale denom — not world zoom. Plan uses `sheetContentView` to fit the **title boundary** into the A3/A4 plot and centre it (pan after scale). |
 
-Implementation: `geometry/canvasZoom.ts`. Floor stays at `1` — the %-coord world already fills the board, so zoom-out below 1 only shrinks the parchment into a postage stamp with empty borders. Do not reintroduce a sub-1 floor or the old `2.2` ceiling.
+**Zoom-out law:** the scaled world paper hides below `1×` and a full-bleed parchment underlay fills the board — never a postage-stamp canvas with empty chrome borders.
+
+Implementation: `geometry/canvasZoom.ts` + `.parchmentBleed` in `HandoffDesignStudio`. Free-plan metres use `BOARD_WIDTH_M_AT_100` (or calibrated `boardWidthM`) — print `sheetScaleDenom` does not mutate live CAD maths.
 
 ---
 

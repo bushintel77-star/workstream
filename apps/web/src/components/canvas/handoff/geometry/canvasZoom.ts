@@ -1,15 +1,12 @@
 /**
- * Infinite-feel canvas zoom — multiplicative, pointer-anchored.
- * Zoom IN past the old 2.2 CAD ceiling; never shrink the parchment below
- * filling the board (the % world is already the full board at 1× — zoom-out
- * below that only creates empty borders, not more site).
+ * Infinite canvas zoom — multiplicative, pointer-anchored.
+ * Zoom IN and OUT freely (soft IEEE floor/ceiling only). Zoom-out is paired
+ * with a full-bleed parchment underlay in the studio shell so the board never
+ * collapses into a postage stamp with empty chrome borders.
  */
 
-/**
- * Floor = fill the board. Below 1 the whole parchment scales into a postage
- * stamp with a huge empty border — there is no world beyond 0–100%.
- */
-export const ZOOM_MIN = 1;
+/** Soft floor — whole-site / beyond-lot context. */
+export const ZOOM_MIN = 0.05;
 
 /** Soft ceiling — detail drafting (effectively unlimited for operators). */
 export const ZOOM_MAX = 64;

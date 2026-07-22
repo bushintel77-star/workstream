@@ -46,6 +46,11 @@ type Props = {
   /** 0–1 parchment tooth when aerial is stacked (soft underlay). */
   parchmentPeel?: number;
   /**
+   * Hide world parchment/mesh when zoomed out — studio shows a full-bleed
+   * underlay so infinite zoom-out never postage-stamps the board.
+   */
+  hidePaper?: boolean;
+  /**
    * Drawing-plane law: unmount onboarding drop cue when any vectors / assets
    * exist or a drafting tool is armed — never collide with live CAD text.
    */
@@ -78,6 +83,7 @@ export function AerialSlot({
   address = null,
   suppressSiteCue = false,
   parchmentPeel = 0.42,
+  hidePaper = false,
   hasGeometry = false,
   canvasEngaged = false,
   onUri,
@@ -232,6 +238,7 @@ export function AerialSlot({
         suppressSiteCue={suppressSiteCue}
         quietChrome={frameOn}
         showEdgeLabels={false}
+        hidePaper={hidePaper}
       />
 
       {showAerial && uri ? (

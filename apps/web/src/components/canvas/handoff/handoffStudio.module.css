@@ -610,7 +610,20 @@
 .zoomWorld {
   position: absolute;
   inset: 0;
+  z-index: 1;
   transform-origin: center center;
+}
+
+/**
+ * Full-bleed parchment under the scaled world. When infinite zoom-out scales
+ * `.zoomWorld` below 1, the world paper hides and this layer keeps the board
+ * filled — no empty chrome border / postage stamp.
+ */
+.parchmentBleed {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /**
