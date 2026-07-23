@@ -115,13 +115,18 @@
 .panelStrip {
   flex-direction: row;
   align-items: stretch;
+  gap: 0;
+  min-width: 0;
 }
 
 .panelStrip > * {
   flex: 1 1 0;
-  min-width: 0;
+  min-width: 72px;
+  max-width: 100%;
+  box-sizing: border-box;
   border-bottom: none;
   border-right: 1px solid rgba(36, 19, 24, 0.25);
+  overflow: hidden;
 }
 
 .panelStrip > *:last-child {
@@ -133,19 +138,47 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  gap: 4px;
+  padding: 8px 10px;
+  min-width: 88px;
+}
+
+.panelStrip .brand,
+.panelStrip .addr {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.panelStrip .addr {
+  white-space: nowrap;
 }
 
 .panelStrip .notes {
   margin-top: 0;
   display: flex;
   flex-direction: column;
+  min-width: 96px;
+  padding: 8px 10px;
+}
+
+.panelStrip .section {
+  padding: 8px 10px;
+  min-width: 80px;
 }
 
 .panelStrip .notesBody {
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 6;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
+}
+
+.panelStrip .row,
+.panelStrip .kicker {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .panelStrip .notesMeta {
