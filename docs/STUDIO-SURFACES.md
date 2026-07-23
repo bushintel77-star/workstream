@@ -68,3 +68,4 @@ nowhere else. Fit sheet contexts pass the scale/revision stamp into `stamp`.
 | Date | Note |
 | --- | --- |
 | 2026-07-23 | Written during instrument reform: four-surface constitution, ratification tests 13–16, shared engines (placement scoring, transient fade), margin strip. |
+| 2026-07-23 | Selection focus veil (surface 2): one CameraChrome scrim; hole for subject; click-dim clears; no remount on selection hop. |

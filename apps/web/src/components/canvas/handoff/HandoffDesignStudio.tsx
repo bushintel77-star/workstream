@@ -87,6 +87,7 @@ import { CanvasAutosaveChip } from "./features/save/CanvasAutosaveChip";
 import { clampToCanvasMargin } from "./features/reach/marginSummon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { SelectionDial } from "./features/selectionDial/SelectionDial";
+import { SelectionFocusVeil } from "./features/selectionFocus/SelectionFocusVeil";
 import { DialHintPill } from "./features/selectionDial/DialHintPill";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
@@ -123,7 +124,7 @@ import {
   titlePanelWidth,
   clientToBoardPct,
 } from "./geometry";
-import { boardCameraFromPlan } from "./CameraChrome";
+import { CameraChrome, boardCameraFromPlan } from "./CameraChrome";
 import {
   clampZoom,
   zoomByKeyStep,
@@ -1566,6 +1567,17 @@ export function HandoffDesignStudio({
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
 
+  /** Single-selection orbit (dial) — also drives the focus veil. */
+  const selectionOrbitOn = Boolean(
+    !ui.clientView &&
+      !ui.frameOn &&
+      !isTiltActive(ui.tiltDeg) &&
+      selectedLive &&
+      ui.groupIds.length <= 1 &&
+      ui.tool !== "zone" &&
+      (ui.mode === "cad" || ui.mode === "survey"),
+  );
+
   /** One-time dial discoverability (session). */
   useEffect(() => {
     if (dialHintSeenRef.current) return;
@@ -2205,6 +2217,7 @@ export function HandoffDesignStudio({
         data-testid="studio-board"
         data-panning={isPanningActive ? "1" : "0"}
         data-tilt={isTiltActive(ui.tiltDeg) ? "1" : "0"}
+        data-focus-veil={selectionOrbitOn ? "1" : "0"}
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
@@ -2786,14 +2799,17 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
+            {/* Selection focus veil — one scrim; persists across item hops. */}
+            {selectionOrbitOn && selectedLive ? (
+              <SelectionFocusVeil
+                focusPct={{ x: selectedLive.x, y: selectedLive.y }}
+                cam={planCam}
+                night={darkLens}
+                onDismiss={() => studio.setSelection(null, [])}
+              />
+            ) : null}
             {/* Selection dial — steering-wheel arc (single item, plan modes). */}
-            {!ui.clientView &&
-            !ui.frameOn &&
-            !isTiltActive(ui.tiltDeg) &&
-            selectedLive &&
-            ui.groupIds.length <= 1 &&
-            ui.tool !== "zone" &&
-            (ui.mode === "cad" || ui.mode === "survey") ? (
+            {selectionOrbitOn && selectedLive ? (
               <SelectionDial
                 item={selectedLive}
                 items={studio.items}
@@ -2825,12 +2841,7 @@ export function HandoffDesignStudio({
             {!ui.clientView &&
             selectedLive &&
             ui.tool !== "zone" &&
-            !(
-              !ui.frameOn &&
-              !isTiltActive(ui.tiltDeg) &&
-              ui.groupIds.length <= 1 &&
-              (ui.mode === "cad" || ui.mode === "survey")
-            ) &&
+            !selectionOrbitOn &&
             (chrome.selectionRing ||
               ui.mode === "cad" ||
               ui.mode === "sketch" ||
@@ -3078,18 +3089,24 @@ export function HandoffDesignStudio({
         !ui.clientView &&
         !ui.frameOn &&
         !ui.foundationCleanse ? (
-          <CanvasMeasureSummary
-            mode={ui.mode}
-            boundary={studio.boundary}
-            building={studio.building}
-            items={studio.items}
-            scaleM={scaleM}
-            schedule={siteSchedule}
-            selected={selectedLive}
-            onOpen={() =>
-              studio.setUi({ dataSummoned: true, utilityPanel: null })
-            }
-          />
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={52}
+            testId="canvas-measure-summary-chrome"
+          >
+            <CanvasMeasureSummary
+              mode={ui.mode}
+              boundary={studio.boundary}
+              building={studio.building}
+              items={studio.items}
+              scaleM={scaleM}
+              schedule={siteSchedule}
+              selected={selectedLive}
+              onOpen={() =>
+                studio.setUi({ dataSummoned: true, utilityPanel: null })
+              }
+            />
+          </CameraChrome>
         ) : null}
 
         {ui.dataSummoned &&

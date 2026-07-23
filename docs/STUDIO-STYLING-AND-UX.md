@@ -274,6 +274,11 @@ Answer **yes** to every item or do not merge:
     return to it** (no jump cuts, `prefers-reduced-motion` respected)?
 13. Is every >1×/minute action reachable **without crossing the canvas**
     (selection dial on the object, single tool dock, Cmd+K)?
+14. **Nonintrusive** — dormant identical to pre-feature: selection focus veil
+    mounts only while a single orbit is open; idle canvas unchanged?
+15. (Surfaces doc) Dynamic placement / empty-side scoring for transients?
+16. **Flexible** — gesture, pointer, AND keyboard (veil click + Esc dismiss;
+    dial ARIA menu / arrows)?
 
 ### Instrument ergonomics (steering-wheel)
 
@@ -303,3 +308,4 @@ cobalt arrowheads.
 | 2026-07-23 | Checklist items 9–12: seamless integration bar — new features must land in existing lenses/gestures, be discoverable in context, degrade invisibly, and animate from the live camera. No bolt-on ribbon toggles. |
 | 2026-07-23 | Annotation voice: Architects Daughter reserved for hand-lettered plan notes (presentation DNA). |
 | 2026-07-23 | Instrument ergonomics: steering-wheel principle + checklist item 13; single tool dock; selection dial; Fill as summoned popup. |
+| 2026-07-23 | Selection focus veil: one CameraChrome scrim spotlights the orbit; checklist 14/16; no remount on tree→tree hop. |

@@ -871,6 +871,16 @@
   box-shadow: var(--hc-elev-1);
 }
 
+/* Exist tree DBH card — inside the veil hole; keep above board underlay. */
+.board[data-focus-veil="1"] [data-testid="exist-tree-inspector"] {
+  z-index: 42;
+}
+
+/* Above selection focus veil — legal escape hatch never dims. */
+.board[data-focus-veil="1"] .honestyCaption {
+  z-index: 55;
+}
+
 @keyframes savePulse {
   0%,
   100% {

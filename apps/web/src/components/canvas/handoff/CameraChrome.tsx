@@ -93,6 +93,11 @@ export function CameraChrome({
   style,
   testId,
   zIndex = 45,
+  /**
+   * Inner hit wrapper. Use `"none"` for masked scrims where only painted
+   * SVG fill should receive events (hole passes through to the board).
+   */
+  contentPointerEvents = "auto",
 }: {
   children: ReactNode;
   place?: CameraChromePlace;
@@ -101,6 +106,7 @@ export function CameraChrome({
   style?: CSSProperties;
   testId?: string;
   zIndex?: number;
+  contentPointerEvents?: "auto" | "none";
 }) {
   const host = useCameraChromeHost(anchorRef);
 
@@ -146,7 +152,7 @@ export function CameraChrome({
       className={className}
       style={shellStyle}
     >
-      <div style={{ pointerEvents: "auto" }}>{children}</div>
+      <div style={{ pointerEvents: contentPointerEvents }}>{children}</div>
     </div>,
     host,
   );

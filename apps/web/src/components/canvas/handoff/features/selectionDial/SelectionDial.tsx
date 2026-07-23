@@ -169,6 +169,7 @@ export function SelectionDial({
         cam,
         transform: `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px))`,
       }}
+      zIndex={60}
     >
       <div
         className={`${css.dial}${night ? ` ${css.dialNight}` : ""}${reducedMotion ? ` ${css.instant}` : ""}`}
