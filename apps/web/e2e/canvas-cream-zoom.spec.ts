@@ -3,6 +3,14 @@ import { handoffStudio } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
+async function zoomWorldScale(page: import("@playwright/test").Page) {
+  const transform = await page
+    .getByTestId("zoom-world")
+    .evaluate((el) => getComputedStyle(el).transform);
+  const scaleMatch = /matrix\(([^,]+)/.exec(transform);
+  return scaleMatch ? Number(scaleMatch[1]) : 1;
+}
+
 /**
  * Phase 0 cream/zoom gate — parchment stays outside the camera;
  * aerial slot is transparent on free plan (hidePaper).
@@ -42,21 +50,30 @@ test.describe("Canvas cream + zoom (Phase 0)", () => {
     expect(before).toBeTruthy();
 
     const board = page.getByTestId("studio-board");
+    await expect(page.getByTestId("zoom-world")).toBeVisible({
+      timeout: 15_000,
+    });
+    // Vicmap quiet hydrate can remount the board and reset zoom — poll past
+    // that race the same way chrome-parenting / chrome-detector do.
+    await expect
+      .poll(async () => page.getByTestId("cad-plan-board").count(), {
+        timeout: 20_000,
+      })
+      .toBeGreaterThan(0);
+
     const box = await board.boundingBox();
     expect(box).toBeTruthy();
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    await page.mouse.wheel(0, 800);
-    await page.mouse.wheel(0, 800);
 
-    const zoomWorld = page.getByTestId("zoom-world");
-    const transform = await zoomWorld.evaluate(
-      (el) => getComputedStyle(el).transform,
-    );
-    // matrix(a, b, c, d, e, f) — scale factor a should be well below 1 after zoom-out.
-    const scaleMatch = /matrix\(([^,]+)/.exec(transform);
-    expect(scaleMatch).toBeTruthy();
-    const scaleA = Number(scaleMatch![1]);
-    expect(scaleA).toBeLessThan(0.95);
+    await expect
+      .poll(
+        async () => {
+          await page.mouse.wheel(0, 900);
+          return zoomWorldScale(page);
+        },
+        { timeout: 15_000 },
+      )
+      .toBeLessThan(0.95);
 
     const after = await parchment.boundingBox();
     expect(after).toBeTruthy();

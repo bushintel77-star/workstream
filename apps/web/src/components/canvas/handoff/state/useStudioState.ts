@@ -2185,13 +2185,44 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate],
   );
 
-  const switchSite = useCallback((idx: number) => {
-    dispatch({ type: "switchSite", idx });
-  }, []);
+  const switchSite = useCallback(
+    (idx: number) => {
+      // Demo site carousel is not a live-project affordance — never swap in
+      // Armadale/Wrights seed dwellings over a cadastral canvas.
+      if (projectId) return;
+      dispatch({ type: "switchSite", idx });
+    },
+    [projectId],
+  );
 
   const resetSite = useCallback(() => {
+    if (projectId) {
+      // Clear operator drawing; keep cadastral boundary + Vicmap dwelling.
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: [],
+          strokes: [],
+          irrigationZones: [],
+          annotations: [],
+          easements: [],
+          services: [],
+          levels: [],
+        },
+      }));
+      setUi({
+        selectedId: null,
+        groupIds: [],
+        drawPoly: null,
+        drawCursor: null,
+        mitigated: {},
+        ghostIdx: 0,
+        ghostReviewOpen: false,
+      });
+      return;
+    }
     dispatch({ type: "resetSite" });
-  }, []);
+  }, [mutate, projectId, setUi]);
 
   const bumpSaved = useCallback(() => {
     saveRevisionRef.current += 1;
