@@ -54,16 +54,17 @@ describe("resolveStudioCursor", () => {
         locked: false,
       }),
     ).toBe("copy");
-    // Select in sketch mode keeps the mark — the pen cursor is only for the armed pen.
-    const sketchSelect = resolveStudioCursor({
-      markId: "spade",
-      tool: "select",
-      mode: "sketch",
-      locked: false,
-      sketchTool: "pen",
-      sketchTip: "medium",
-    });
-    expect(sketchSelect).toContain("data:image/svg+xml");
+    // Select in sketch mode grabs (drag pans the pad) — pen cursor only for the armed pen.
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "select",
+        mode: "sketch",
+        locked: false,
+        sketchTool: "pen",
+        sketchTip: "medium",
+      }),
+    ).toBe("grab");
   });
 
   it("rule 1 — an armed tool's cursor is identical over objects and empty board", () => {

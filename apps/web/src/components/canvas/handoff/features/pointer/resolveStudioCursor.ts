@@ -87,7 +87,12 @@ export function resolveStudioCursor(ctx: StudioCursorContext): string {
   /* Lock selects but never moves — pointer + badge, never `not-allowed`. */
   if (tool === "lock" || ctx.locked) return lockBadgeCursor();
 
-  /* Select ground state — grab hand over a draggable, craft mark when idle. */
+  /*
+   * Select ground state. On the sketch pad a Select-drag pans the camera
+   * (nothing to marquee), so the honest cursor is the grab hand. On plan
+   * boards: grab hand over a draggable, craft mark when idle.
+   */
+  if (ctx.mode === "sketch") return "grab";
   if (ctx.boardCursor === "move") return "grab";
   if (ctx.boardCursor === "add") return "copy";
   return pointerMarkCursor(ctx.markId);
