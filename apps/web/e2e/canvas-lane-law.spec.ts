@@ -43,7 +43,7 @@ async function assertNoCardOverlap(page: import("@playwright/test").Page) {
       const b = boxes[j]!;
       expect(
         boxesIntersect(a, b),
-        `overlap ${a.testId} × ${b.testId}`,
+        `overlap ${a.testId} ${JSON.stringify(a)} × ${b.testId} ${JSON.stringify(b)}`,
       ).toBe(false);
     }
   }
