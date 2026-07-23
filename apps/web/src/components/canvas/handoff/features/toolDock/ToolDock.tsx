@@ -123,7 +123,7 @@ export function ToolDock({
             return (
               <li
                 key={chip.id}
-                className={`${css.slot}${chip.trail ? ` ${css.slotTrail}` : ""}`}
+                className={chip.trail ? css.slotTrail : undefined}
               >
                 <button
                   type="button"
