@@ -103,7 +103,31 @@
 }
 
 .rootDark {
-  /* Night shell: dolphin grey + cobalt cast, chalk type. */
+  /*
+   * Night shell: dolphin grey + cobalt cast, chalk type. The token override
+   * below is the WHOLE night theme for chrome — every panel, dock, chip and
+   * card inherits dolphin glass from these variables. Do not restyle
+   * individual components for night; if one stays light, it is hardcoding
+   * a colour and bypassing tokens — fix the component.
+   */
+  --hc-ink: #eceff4;
+  --hc-ink-muted: rgba(236, 239, 244, 0.62);
+  --hc-ink-faint: rgba(236, 239, 244, 0.4);
+  --hc-paper: #1b1e24;
+  --hc-invert: #16181c;
+  --hc-glass: rgba(32, 36, 43, 0.97);
+  --hc-glass-soft: rgba(32, 36, 43, 0.94);
+  --hc-line: rgba(236, 239, 244, 0.16);
+  --hc-line-soft: rgba(236, 239, 244, 0.1);
+  --hc-elev-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(236, 239, 244, 0.08);
+  --hc-elev-2: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(236, 239, 244, 0.1);
+  --hc-elev-3: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(236, 239, 244, 0.12);
+  --hc-neu-surface: #232730;
+  --hc-neu-raised: #2a2f39;
+  --hc-neu-light: rgba(255, 255, 255, 0.06);
+  --hc-neu-shadow: rgba(0, 0, 0, 0.5);
+  --ws-glass: var(--hc-glass-soft);
+  --ws-glass-border: var(--hc-line);
   background:
     radial-gradient(100% 70% at 10% 0%, rgba(47, 94, 207, 0.18), transparent 50%),
     #16181c;
@@ -271,14 +295,14 @@
 }
 
 .modeBtnActive {
-  background: var(--hc-neu-raised, #f6ebef);
-  color: var(--hc-ink);
-  /* Physical raised toggle sitting proud of the recessed track. */
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
-  );
+  /*
+   * Day ink anchor — the one deliberate dark accent in the blush header.
+   * Blush-on-blush active states had no weight; the current mode is the
+   * strongest fact on screen and reads as ink.
+   */
+  background: var(--hc-ink, #241318);
+  color: var(--hc-invert, #fff6f8);
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
 }
 
 .rootDark .modeBtnActive {

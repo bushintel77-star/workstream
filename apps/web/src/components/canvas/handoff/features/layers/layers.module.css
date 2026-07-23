@@ -11,7 +11,7 @@
   background: var(--hc-glass, rgba(255, 251, 252, 0.92));
   backdrop-filter: none;
   box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
-  color: #241318;
+  color: var(--hc-ink, #241318);
   font-family: var(--font-body);
   animation: railIn var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
@@ -53,7 +53,7 @@
 .close {
   border: none;
   background: transparent;
-  color: #7a5560;
+  color: var(--hc-ink-muted, #7a5560);
   font: inherit;
   font-size: 11px;
   font-weight: 600;
@@ -100,7 +100,7 @@
 
 .hint {
   font-size: 10px;
-  color: #7a5560;
+  color: var(--hc-ink-muted, #7a5560);
 }
 
 .sliderLabel {
@@ -113,7 +113,7 @@
 .pct {
   font-size: 10px;
   font-family: "IBM Plex Mono", monospace;
-  color: #7a5560;
+  color: var(--hc-ink-muted, #7a5560);
   font-variant-numeric: tabular-nums;
 }
 
@@ -191,7 +191,7 @@
 }
 
 .switchText {
-  color: #241318;
+  color: var(--hc-ink, #241318);
 }
 
 .switch {
@@ -253,5 +253,5 @@
   margin: 10px 0 0;
   font-size: 10px;
   line-height: 1.4;
-  color: #7a5560;
+  color: var(--hc-ink-muted, #7a5560);
 }
