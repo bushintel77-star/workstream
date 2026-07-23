@@ -118,6 +118,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
+  LandscapeFeature,
   IrrigationZone,
 } from "@workstream/contracts";
 import {
@@ -178,6 +179,7 @@ type Props = {
   initialSiteFrame?: DesignSiteFrame | null;
   initialIrrigationZones?: IrrigationZone[];
   initialAnnotations?: CanvasAnnotation[];
+  initialFeatures?: LandscapeFeature[];
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -200,6 +202,7 @@ export function HandoffDesignStudio({
   initialSiteFrame = null,
   initialIrrigationZones = [],
   initialAnnotations = [],
+  initialFeatures = [],
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -220,6 +223,7 @@ export function HandoffDesignStudio({
     initialSiteFrame,
     initialIrrigationZones,
     initialAnnotations,
+    initialFeatures,
   });
   const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
@@ -3137,6 +3141,25 @@ export function HandoffDesignStudio({
               }}
             />
           </label>
+        ) : null}
+
+        {/* Formalize payoff — a scan beam sweeps the board while the sketch
+            is being translated to CAD. Chrome, never inside the zoom world. */}
+        {formalizing ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={53}
+            testId="formalize-sweep-chrome"
+            contentPointerEvents="none"
+          >
+            <div
+              className={css.formalizeSweep}
+              data-testid="formalize-sweep"
+              aria-hidden
+            >
+              <div className={css.formalizeBeam} />
+            </div>
+          </CameraChrome>
         ) : null}
 
         {!measuresOpen &&

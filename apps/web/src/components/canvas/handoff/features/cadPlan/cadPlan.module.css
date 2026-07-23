@@ -1086,3 +1086,74 @@
   letter-spacing: 0.02em;
   color: #57534e;
 }
+
+/* Sketch-formalized regions — drawn shape rendered as plan geometry. */
+
+.regionHandle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid rgba(28, 25, 23, 0.6);
+  box-shadow:
+    0 0 0 2px rgba(247, 244, 239, 0.85),
+    0 1px 3px rgba(28, 25, 23, 0.25);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Accepted region: perimeter draws in, wash fades up. pathLength=1. */
+  .regionDraw {
+    animation: regionDraw 620ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+  }
+
+  @keyframes regionDraw {
+    from {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      fill-opacity: 0;
+    }
+    60% {
+      fill-opacity: 0.35;
+    }
+    to {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+      fill-opacity: 1;
+    }
+  }
+
+  /* Ghost region keeps its dashes — arrive on a soft fade. */
+  .regionGhostIn {
+    animation: regionGhostIn 420ms ease-out both;
+  }
+
+  @keyframes regionGhostIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Ghost items land with a slight overshoot — the formalize payoff.
+   * filter:opacity composes with the inline ghost opacity (never clobbers it);
+   * the scale property composes with the inline translate/rotate transform. */
+  .ghostArrive {
+    animation: ghostArrive 420ms cubic-bezier(0.34, 1.42, 0.44, 1) both;
+  }
+
+  @keyframes ghostArrive {
+    from {
+      filter: opacity(0%);
+      scale: 0.6;
+    }
+    to {
+      filter: opacity(100%);
+      scale: 1;
+    }
+  }
+}

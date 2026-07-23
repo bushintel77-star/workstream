@@ -360,6 +360,7 @@ export async function saveDesignCanvasApi(
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
+  features?: DesignCanvas["features"],
 ): Promise<{ canvas: DesignCanvas; quote: SketchQuoteSummary | null }> {
   const body = await apiPut<{
     canvas: DesignCanvas;
@@ -370,6 +371,7 @@ export async function saveDesignCanvasApi(
     irrigation_zones: irrigationZones,
     ...(annotations != null ? { annotations } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
+    ...(features != null ? { features } : {}),
   });
   return { canvas: body.canvas, quote: body.quote ?? null };
 }

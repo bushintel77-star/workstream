@@ -21,6 +21,7 @@ import type {
   DesignSiteFrame,
   IrrigationZone,
   IrrigationZoneKind,
+  LandscapeFeature,
 } from "@workstream/contracts";
 import { saveDesignCanvasAction } from "../../../../app/actions";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
@@ -58,6 +59,8 @@ import {
 import { markStaleGhostsNearEdit } from "./staleGhosts";
 import {
   canvasToStrokes,
+  featuresOntoItems,
+  itemsToFeatures,
   itemsToPlacements,
   placementsToItems,
   resolveHydratedBuilding,
@@ -308,6 +311,17 @@ type Action =
       strokes: SketchStroke[];
     };
 
+/** Move an item's centroid — its drawn region outline travels with it. */
+function itemMovedTo(i: StudioItem, x: number, y: number): StudioItem {
+  const dx = x - i.x;
+  const dy = y - i.y;
+  const outlinePct =
+    i.outlinePct && (dx !== 0 || dy !== 0)
+      ? i.outlinePct.map((p) => ({ x: p.x + dx, y: p.y + dy }))
+      : i.outlinePct;
+  return { ...i, x, y, ...(outlinePct ? { outlinePct } : {}) };
+}
+
 function cloneSnap(s: StudioSnapshot): StudioSnapshot {
   return JSON.parse(JSON.stringify(s)) as StudioSnapshot;
 }
@@ -351,6 +365,7 @@ function initialState(opts: {
   siteFrame?: DesignSiteFrame | null;
   irrigationZones?: IrrigationZone[];
   annotations?: CanvasAnnotation[];
+  features?: LandscapeFeature[];
 }): State {
   const seed = WRIGHTS_SEED;
   const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
@@ -371,7 +386,10 @@ function initialState(opts: {
           frameOverlay.building,
           base.building,
         ),
-        items: placementsToItems(opts.placements ?? []),
+        items: featuresOntoItems(
+          placementsToItems(opts.placements ?? []),
+          opts.features ?? [],
+        ),
         strokes: canvasToStrokes(opts.strokes ?? []),
         easements: frameOverlay.easements ?? base.easements,
         services: frameOverlay.services ?? base.services,
@@ -486,6 +504,8 @@ export type UseStudioStateOpts = {
   initialIrrigationZones?: IrrigationZone[];
   /** Hand-lettered notes from DesignCanvas.annotations. */
   initialAnnotations?: CanvasAnnotation[];
+  /** Persisted region outlines from DesignCanvas.features. */
+  initialFeatures?: LandscapeFeature[];
 };
 
 function reducer(state: State, action: Action): State {
@@ -710,6 +730,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialSiteFrame = null,
     initialIrrigationZones = [],
     initialAnnotations = [],
+    initialFeatures = [],
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
@@ -719,6 +740,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       siteFrame: initialSiteFrame,
       irrigationZones: initialIrrigationZones,
       annotations: initialAnnotations,
+      features: initialFeatures,
     }),
   );
   const bootstrapped = useRef(false);
@@ -829,6 +851,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         reason: string;
         scale_hint?: number;
         rot_deg?: number;
+        outline_pct?: Array<{ x_pct: number; y_pct: number }>;
       }>,
       opts?: { source?: "vision" | "heuristic" },
     ) => {
@@ -1599,7 +1622,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           snap: {
             ...snap,
             items: snap.items.map((i) =>
-              i.id === id && !i.ghost ? { ...i, x: px, y: py } : i,
+              i.id === id && !i.ghost ? itemMovedTo(i, px, py) : i,
             ),
           },
         };
@@ -1617,7 +1640,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ...snap,
           items: snap.items.map((i) => {
             if (i.id !== id || i.ghost) return i;
-            const next = { ...i, ...patch };
+            const moved =
+              patch.x != null || patch.y != null
+                ? itemMovedTo(i, patch.x ?? i.x, patch.y ?? i.y)
+                : i;
+            const next = { ...moved, ...patch };
             if (next.scale != null) {
               next.scale = Math.max(0.35, Math.min(2.5, next.scale));
             }
@@ -1671,7 +1698,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
               snap.boundary,
               snap.building,
             );
-            return { ...i, x: placed.x, y: placed.y };
+            return itemMovedTo(i, placed.x, placed.y);
           }),
         },
       }));
@@ -1702,7 +1729,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
               snap.boundary,
               snap.building,
             );
-            return { ...i, x: placed.x, y: placed.y };
+            return itemMovedTo(i, placed.x, placed.y);
           }),
         },
       }));
@@ -2113,6 +2140,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     }
     const placements = itemsToPlacements(fixed.items);
     const canvasStrokes = strokesToCanvas(fixed.strokes);
+    const features = itemsToFeatures(fixed.items);
     const siteFrame = snapshotToSiteFrame({
       boundary: state.doc.boundary,
       building: state.doc.building,
@@ -2129,6 +2157,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         state.doc.irrigationZones ?? [],
         state.doc.annotations ?? [],
         siteFrame,
+        features,
       );
       saveRevisionRef.current += 1;
       setUi({

@@ -42,6 +42,7 @@ import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
+  PAINT_SWATCHES,
   type StudioItem,
   type StudioItemType,
   type StudioMode,
@@ -81,6 +82,23 @@ import { TiltBuildingExtrusion } from "../tilt/TiltBuildingExtrusion";
 import { isTiltActive, pxPerMetre } from "../tilt/tiltMath";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
+
+/** Area types whose sketched outline renders as a plan region polygon. */
+const REGION_TYPES: ReadonlySet<StudioItemType> = new Set([
+  "bed",
+  "lawn",
+  "deck",
+  "paving",
+]);
+
+const REGION_WASH: Partial<Record<StudioItemType, string>> = {};
+for (const s of PAINT_SWATCHES) REGION_WASH[s.t] = s.wash;
+
+function isRegionItem(it: StudioItem): boolean {
+  return (
+    REGION_TYPES.has(it.t) && (it.outlinePct?.length ?? 0) >= 3
+  );
+}
 
 type NodeMenu = {
   kind: "boundary" | "building";
@@ -1158,6 +1176,51 @@ export function CadPlanBoard({
             </title>
           </polygon>
         ) : null}
+        {/* Sketch-formalized regions — the shape the operator drew, washed
+            per material. Ghosts dash; accepted regions draw in solid. */}
+        {planItems.filter(isRegionItem).map((it) => {
+          const bucket = ITEM_LAYER[it.t];
+          const visual = resolveLayerVisual(
+            bucket,
+            layerOpacity[bucket] ?? 1,
+            isolatedLayer,
+          );
+          const wash = REGION_WASH[it.t] ?? "rgba(90, 122, 72, 0.4)";
+          const hatched = it.t === "paving" || it.t === "deck";
+          const pts = ptsAttr(it.outlinePct!);
+          return (
+            <g
+              key={`region-${it.id}`}
+              data-testid="sketch-region"
+              data-item-type={it.t}
+              data-ghost={it.ghost ? "1" : "0"}
+              opacity={visual.opacity * underlayOp * (it.ghost ? 0.6 : 1)}
+              pointerEvents="none"
+            >
+              <polygon
+                points={pts}
+                pathLength={1}
+                className={it.ghost ? css.regionGhostIn : css.regionDraw}
+                fill={wash}
+                stroke={
+                  it.ghost ? "rgba(28, 25, 23, 0.55)" : "rgba(28, 25, 23, 0.75)"
+                }
+                strokeWidth={it.ghost ? 1 : 1.3}
+                strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+              {hatched ? (
+                <polygon
+                  points={pts}
+                  fill="url(#ws-hardscape-hatch)"
+                  opacity={0.45}
+                  className={css.regionGhostIn}
+                />
+              ) : null}
+            </g>
+          );
+        })}
         {outsideDims.map((d) => (
           <g
             key={`odim${d.key}`}
@@ -1668,7 +1731,7 @@ export function CadPlanBoard({
         return (
           <div key={it.id}>
             <div
-              className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
+              className={`${css.item}${it.ghost ? ` ${css.ghostArrive}` : ""}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
               data-testid={it.ghost ? "studio-ghost" : "studio-item"}
               data-item-type={it.t}
               data-layer={bucket}
@@ -1776,7 +1839,18 @@ export function CadPlanBoard({
                   pointerEvents: "none",
                 }}
               >
-                {presentationOn && isSpeciesSymbolType(it.t) ? (
+                {isRegionItem(it) ? (
+                  /* The drawn region is the visual — a small material-coloured
+                     centroid handle marks the drag/selection anchor. */
+                  <div
+                    className={css.regionHandle}
+                    data-testid="region-handle"
+                    style={{
+                      background: REGION_WASH[it.t] ?? "rgba(90, 122, 72, 0.5)",
+                    }}
+                    aria-hidden
+                  />
+                ) : presentationOn && isSpeciesSymbolType(it.t) ? (
                   <svg
                     viewBox="0 0 100 100"
                     width="100%"
