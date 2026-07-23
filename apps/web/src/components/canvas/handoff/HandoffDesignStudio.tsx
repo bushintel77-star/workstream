@@ -3162,7 +3162,11 @@ export function HandoffDesignStudio({
           </CameraChrome>
         ) : null}
 
-        {!measuresOpen &&
+        {/* Lane law: this compact chip and the right data lane share the
+            same top-right corner — hide it whenever ANY lane occupant
+            (checklist/layers/sites/measures) is open, not just "measures",
+            so it never visually collides with the open panel below it. */}
+        {!rightLaneBusy &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&
