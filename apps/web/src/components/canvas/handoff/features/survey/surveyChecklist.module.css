@@ -1,16 +1,13 @@
 .root {
-  position: absolute;
-  /* Safe left band under AmbientRibbon — clears utility/layers top-right. */
-  left: calc(var(--ws-safe-left, 64px) + 8px);
-  top: calc(var(--ws-safe-top, 48px) + 8px);
-  z-index: 40;
-  width: 188px;
+  /* Position owned by RightDataLane — no left/top here. */
+  width: 100%;
   padding: 10px 12px;
-  border-radius: 0;
-  border: 1px solid rgba(28, 25, 23, 0.18);
-  background: rgba(242, 240, 235, 0.94);
-  box-shadow: none;
-  pointer-events: none;
+  border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line, rgba(28, 25, 23, 0.18));
+  background: var(--hc-glass, rgba(242, 240, 235, 0.94));
+  box-shadow: var(--hc-elev-2, none);
+  pointer-events: auto;
+  color: var(--hc-ink, #241318);
 }
 
 .head {
@@ -26,7 +23,20 @@
   font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #6b6560;
+  color: var(--hc-ink-muted, #6b6560);
+}
+
+.close {
+  border: none;
+  background: transparent;
+  color: var(--hc-ink-muted, #7a5560);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 28px;
+  padding: 0 6px;
+  pointer-events: auto;
 }
 
 .count {
@@ -36,12 +46,12 @@
   padding: 2px 7px;
   border-radius: 0;
   background: rgba(28, 25, 23, 0.08);
-  color: #1c1917;
+  color: var(--hc-ink, #1c1917);
 }
 
 .countDone {
   background: rgba(28, 25, 23, 0.14);
-  color: #1c1917;
+  color: var(--hc-ink, #1c1917);
 }
 
 .list {
@@ -66,31 +76,31 @@
   align-items: center;
   justify-content: center;
   font-size: 8px;
-  border: 1px solid rgba(28, 25, 23, 0.22);
+  border: 1px solid var(--hc-line, rgba(28, 25, 23, 0.22));
   background: transparent;
-  color: #6b6560;
+  color: var(--hc-ink-muted, #6b6560);
 }
 
 .markOk {
-  background: #1c1917;
-  border-color: #1c1917;
-  color: #f2f0eb;
+  background: var(--hc-ink, #1c1917);
+  border-color: var(--hc-ink, #1c1917);
+  color: var(--hc-paper, #f2f0eb);
 }
 
 .label {
   font-size: 11px;
-  color: #6b6560;
+  color: var(--hc-ink-muted, #6b6560);
 }
 
 .labelOk {
   font-size: 11px;
-  color: #1c1917;
+  color: var(--hc-ink, #1c1917);
 }
 
 .foot {
   margin: 6px 0 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 8px;
-  color: #6b6560;
+  color: var(--hc-ink-muted, #6b6560);
   line-height: 1.45;
 }

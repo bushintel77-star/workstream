@@ -1,13 +1,12 @@
 .hub {
-  position: absolute;
-  right: 14px;
-  top: 14px;
-  z-index: 15;
+  /* Position owned by RightDataLane when measures are open. */
+  position: relative;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 8px;
-  max-height: calc(100% - 28px);
+  max-height: none;
   pointer-events: none;
 }
 

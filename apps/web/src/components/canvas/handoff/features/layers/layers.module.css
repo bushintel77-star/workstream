@@ -1,10 +1,6 @@
 .panel {
-  position: absolute;
-  top: 12px;
-  /* Structure rail — left, opposite the AI sidecar. */
-  left: 12px;
-  z-index: 24;
-  width: min(280px, calc(100vw - 32px));
+  /* Position owned by RightDataLane. */
+  width: 100%;
   padding: 12px 14px;
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));

@@ -30,6 +30,7 @@ import {
   sunDateFromPreset,
   type SunDatePreset,
 } from "../features/sunGrowth/sunDatePreset";
+import type { RightDataPanel } from "../features/surfaces/rightDataLane";
 import { buildWorkableSiteSchedule } from "../geometry/workableCanvas";
 import {
   BY_TYPE,
@@ -155,7 +156,7 @@ type Ui = {
   darkOn: boolean;
   focusOn: boolean;
   clientView: boolean;
-  layersOpen: boolean;
+  rightDataPanel: RightDataPanel | null;
   layerOpacity: LayerOpacity;
   isolatedLayer: LayerKey | null;
   /** Services layer authoring on the CAD canvas (Servc / Level / Calibrate). */
@@ -177,7 +178,6 @@ type Ui = {
   rejectReasonId: string | null;
   cmdOpen: boolean;
   cmdQuery: string;
-  sitesOpen: boolean;
   addOpen: boolean;
   armed: StudioItemType | null;
   mitigated: Record<string, boolean>;
@@ -232,11 +232,6 @@ type Ui = {
   assistReply: string | null;
   /** Right-hand utility drawer sheet: compliance | bom | closed. */
   utilityPanel: "compliance" | "bom" | null;
-  /**
-   * Canvas-first: measures / quantity lane summoned via the AI command core.
-   * Idle CAD stays a bare drawing; false = quiet canvas.
-   */
-  dataSummoned: boolean;
   /** Brief setback / TPZ / easement tip after a preemptive snap. */
   councilTip: string | null;
   /** Authored DBH (m) for next existing-tree placement — drives AS 4970 TPZ. */
@@ -409,7 +404,7 @@ function initialState(opts: {
       darkOn: false,
       focusOn: false,
       clientView: false,
-      layersOpen: false,
+      rightDataPanel: opts.mode === "survey" ? "checklist" : null,
       layerOpacity: { ...DEFAULT_LAYER_OPACITY },
       isolatedLayer: null,
       setbackOn: false,
@@ -427,7 +422,6 @@ function initialState(opts: {
       rejectReasonId: null,
       cmdOpen: false,
       cmdQuery: "",
-      sitesOpen: false,
       addOpen: false,
       armed: null,
       mitigated: {},
@@ -459,7 +453,6 @@ function initialState(opts: {
       coachOpen: false,
       assistReply: null,
       utilityPanel: null,
-      dataSummoned: false,
       councilTip: null,
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       servicesEdit: false,
@@ -590,6 +583,11 @@ function reducer(state: State, action: Action): State {
           isolatedLayer: null,
           drawPoly: null,
           drawCursor: null,
+          rightDataPanel: enteringSurvey
+            ? "checklist"
+            : state.ui.rightDataPanel === "checklist"
+              ? null
+              : state.ui.rightDataPanel,
           ...(drafting
             ? { aerialUri: null, aerialSuppressed: true }
             : action.mode === "survey"
@@ -622,7 +620,7 @@ function reducer(state: State, action: Action): State {
     case "switchSite": {
       const idx = action.idx;
       if (idx < 0 || idx >= state.siteSnaps.length || idx === state.ui.siteIdx) {
-        return { ...state, ui: { ...state.ui, sitesOpen: false } };
+        return { ...state, ui: { ...state.ui, rightDataPanel: null } };
       }
       const siteSnaps = [...state.siteSnaps];
       siteSnaps[state.ui.siteIdx] = cloneSnap(snapOf(state.doc));
@@ -648,7 +646,7 @@ function reducer(state: State, action: Action): State {
         ui: {
           ...state.ui,
           siteIdx: idx,
-          sitesOpen: false,
+          rightDataPanel: null,
           selectedId: null,
           drawPoly: null,
           drawCursor: null,

@@ -3,18 +3,14 @@
  */
 
 .rail {
-  --ink: #241318;
-  --ink-soft: #7a5560;
+  --ink: var(--hc-ink, #241318);
+  --ink-soft: var(--hc-ink-muted, #7a5560);
   --glass: var(--hc-glass, rgba(255, 251, 252, 0.97));
   --glass-border: var(--hc-line, rgba(36, 19, 24, 0.14));
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
-  position: absolute;
-  z-index: 15;
-  right: calc(var(--ws-safe-right, 12px) + 4px);
-  top: 50%;
-  transform: translateY(-42%);
-  width: min(168px, 28vw);
+  /* Position owned by RightDataLane — was absolute right/top. */
+  width: 100%;
   max-height: min(52vh, 480px);
   display: flex;
   flex-direction: column;

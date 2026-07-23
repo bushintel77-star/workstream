@@ -38,6 +38,11 @@ import {
 } from "./features/fitSheet/fitSheetPrefs";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
 import { LayersPanel } from "./features/layers/LayersPanel";
+import { RightDataLane } from "./features/surfaces/DataLaneSlot";
+import {
+  RIGHT_DATA_LANE_WIDTH_PX,
+  toggleRightDataPanel,
+} from "./features/surfaces/rightDataLane";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
 import { UtilityDrawer } from "./features/utilityDrawer/UtilityDrawer";
@@ -911,10 +916,9 @@ export function HandoffDesignStudio({
           studio.setUi({
             factorsOpen: false,
             ghostReviewOpen: false,
-            layersOpen: false,
+            rightDataPanel: null,
             cmdOpen: false,
             addOpen: false,
-            sitesOpen: false,
             coachOpen: false,
           });
           return;
@@ -927,10 +931,9 @@ export function HandoffDesignStudio({
         studio.setUi({
           factorsOpen: false,
           ghostReviewOpen: false,
-          layersOpen: false,
+          rightDataPanel: null,
           cmdOpen: false,
           addOpen: false,
-          sitesOpen: false,
           coachOpen: false,
           utilityPanel: null,
         });
@@ -1185,9 +1188,13 @@ export function HandoffDesignStudio({
     foundationCleanse: ui.foundationCleanse,
     pendingGhosts: ai.pendingCount,
     shadeOn: ui.shadeOn,
-    dataSummoned: ui.dataSummoned,
+    dataSummoned: ui.rightDataPanel === "measures",
   });
-  const titleLocked =
+  const measuresOpen = ui.rightDataPanel === "measures";
+  const layersOpen = ui.rightDataPanel === "layers";
+  const sitesOpen = ui.rightDataPanel === "sites";
+  const checklistOpen = ui.rightDataPanel === "checklist";
+  const rightLaneBusy = ui.rightDataPanel != null;  const titleLocked =
     ui.foundationCleanse || ui.boundarySource === "vicmap";
   const drawingHot = chrome.collapseUtility;
   const showDocks = chrome.utilityDrawer;
@@ -1772,11 +1779,17 @@ export function HandoffDesignStudio({
       data-compliance={compliance.canvasSignal}
       data-fit-sheet={ui.frameOn ? "1" : "0"}
       data-paper={ui.paper}
+      data-right-lane={rightLaneBusy ? "1" : "0"}
       style={
         {
           /* Must match .zoomWorld scale (planZoom), not raw ui.zoom —
              Fit sheet diverges via sheetContentView. Inverse handles depend on it. */
           ["--studio-zoom" as string]: String(planZoom),
+          ...(rightLaneBusy
+            ? {
+                ["--ws-safe-right" as string]: `${RIGHT_DATA_LANE_WIDTH_PX}px`,
+              }
+            : null),
           ...(printSheet
             ? {
                 ["--ws-print-left" as string]: `${printSheet.left}px`,
@@ -2007,11 +2020,19 @@ export function HandoffDesignStudio({
               {chrome.structureRail ? (
               <button
                 type="button"
-                className={`${css.iconBtn}${ui.layersOpen ? ` ${css.iconBtnActive}` : ""}`}
+                className={`${css.iconBtn}${layersOpen ? ` ${css.iconBtnActive}` : ""}`}
                 data-testid="canvas-layers-top"
                 aria-label="Layers"
                 title="Layers"
-                onClick={() => studio.setUi({ layersOpen: !ui.layersOpen })}
+                onClick={() =>
+                  studio.setUi({
+                    rightDataPanel: toggleRightDataPanel(
+                      ui.rightDataPanel,
+                      "layers",
+                    ),
+                    utilityPanel: null,
+                  })
+                }
               >
                 <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
                   <path
@@ -2025,11 +2046,19 @@ export function HandoffDesignStudio({
               ) : null}
               <button
                 type="button"
-                className={css.iconBtn}
+                className={`${css.iconBtn}${sitesOpen ? ` ${css.iconBtnActive}` : ""}`}
                 data-testid="canvas-sites-top"
                 aria-label="Sites"
                 title="Sites"
-                onClick={() => studio.setUi({ sitesOpen: !ui.sitesOpen })}
+                onClick={() =>
+                  studio.setUi({
+                    rightDataPanel: toggleRightDataPanel(
+                      ui.rightDataPanel,
+                      "sites",
+                    ),
+                    utilityPanel: null,
+                  })
+                }
               >
                 <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
                   <path
@@ -2901,15 +2930,19 @@ export function HandoffDesignStudio({
         !ui.frameOn &&
         ui.mode === "survey" &&
         !ui.focusOn &&
-        !ui.clientView ? (
-          <SurveyChecklist
-            boundary={studio.boundary}
-            building={studio.building}
-            items={studio.items}
-            levels={studio.levels}
-            services={studio.services}
-            easements={studio.easements}
-          />
+        !ui.clientView &&
+        checklistOpen ? (
+          <RightDataLane testId="right-data-lane-checklist">
+            <SurveyChecklist
+              boundary={studio.boundary}
+              building={studio.building}
+              items={studio.items}
+              levels={studio.levels}
+              services={studio.services}
+              easements={studio.easements}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+            />
+          </RightDataLane>
         ) : null}
 
         {planOn && chrome.volumeIsolith ? (
@@ -3083,7 +3116,7 @@ export function HandoffDesignStudio({
           </label>
         ) : null}
 
-        {!ui.dataSummoned &&
+        {!measuresOpen &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&
@@ -3103,76 +3136,83 @@ export function HandoffDesignStudio({
               schedule={siteSchedule}
               selected={selectedLive}
               onOpen={() =>
-                studio.setUi({ dataSummoned: true, utilityPanel: null })
+                studio.setUi({
+                  rightDataPanel: "measures",
+                  utilityPanel: null,
+                })
               }
             />
           </CameraChrome>
         ) : null}
 
-        {ui.dataSummoned &&
+        {measuresOpen &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&
         !ui.frameOn &&
         !ui.foundationCleanse ? (
-          <LiveMeasuresRail
-            boundary={studio.boundary}
-            building={studio.building}
-            items={studio.items}
-            scaleM={scaleM}
-            schedule={siteSchedule}
-            selected={selectedLive}
-            onClose={() => studio.setUi({ dataSummoned: false })}
-          />
-        ) : null}
-
-        {/*
-          Canvas-first: the measures / quantity lane is summoned via the AI
-          command core (Cmd+K → Live measures, Ask AI, accepted proposals),
-          never parked on the drawing. `showDocks` reflects chrome.dataSummoned.
-        */}
-        {showDocks ? (
-          <UtilityDrawer
-            openPanel={ui.utilityPanel}
-            collapsed={drawingHot}
-            outdoorM2={outdoor}
-            boundary={studio.boundary}
-            items={studio.items}
-            estimate={estimate}
-            mitigated={ui.mitigated}
-            complianceSignal={compliance.canvasSignal}
-            compliancePass={
-              [compliance.outdoorOk, compliance.permeableOk, compliance.canopyOk].filter(
-                Boolean,
-              ).length
-            }
-            councilSummary={{
-              permeablePct: compliance.permeablePct,
-              canopyPct: compliance.canopyPct,
-              setbackM: compliance.setbackM,
-            }}
-            projectId={projectId}
-            projectAddress={projectAddress}
-            complianceReport={compliance}
-            onClose={() => studio.setUi({ dataSummoned: false })}
-            onOpenPanel={(utilityPanel) =>
-              studio.setUi({
-                utilityPanel,
-                ...(utilityPanel === "compliance" ? { setbackOn: true } : {}),
-              })
-            }
-            onMitigate={(id) =>
-              studio.setUi({
-                mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
-              })
-            }
-            onOpenQuote={() => requestMode("quote")}
-            settling={
-              estimateSettling ||
-              ui.saveStatus === "saving" ||
-              ui.saveStatus === "retrying"
-            }
-          />
+          <RightDataLane testId="right-data-lane-measures">
+            <LiveMeasuresRail
+              boundary={studio.boundary}
+              building={studio.building}
+              items={studio.items}
+              scaleM={scaleM}
+              schedule={siteSchedule}
+              selected={selectedLive}
+              onClose={() =>
+                studio.setUi({ rightDataPanel: null, utilityPanel: null })
+              }
+            />
+            {showDocks ? (
+              <UtilityDrawer
+                openPanel={ui.utilityPanel}
+                collapsed={drawingHot}
+                outdoorM2={outdoor}
+                boundary={studio.boundary}
+                items={studio.items}
+                estimate={estimate}
+                mitigated={ui.mitigated}
+                complianceSignal={compliance.canvasSignal}
+                compliancePass={
+                  [
+                    compliance.outdoorOk,
+                    compliance.permeableOk,
+                    compliance.canopyOk,
+                  ].filter(Boolean).length
+                }
+                councilSummary={{
+                  permeablePct: compliance.permeablePct,
+                  canopyPct: compliance.canopyPct,
+                  setbackM: compliance.setbackM,
+                }}
+                projectId={projectId}
+                projectAddress={projectAddress}
+                complianceReport={compliance}
+                onClose={() =>
+                  studio.setUi({ rightDataPanel: null, utilityPanel: null })
+                }
+                onOpenPanel={(utilityPanel) =>
+                  studio.setUi({
+                    utilityPanel,
+                    ...(utilityPanel === "compliance"
+                      ? { setbackOn: true }
+                      : {}),
+                  })
+                }
+                onMitigate={(id) =>
+                  studio.setUi({
+                    mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
+                  })
+                }
+                onOpenQuote={() => requestMode("quote")}
+                settling={
+                  estimateSettling ||
+                  ui.saveStatus === "saving" ||
+                  ui.saveStatus === "retrying"
+                }
+              />
+            ) : null}
+          </RightDataLane>
         ) : null}
 
         {/* Sun scrubber is contextual — only when the operator armed shade mesh. */}
@@ -3251,20 +3291,22 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {/* Canvas panels are plan-mode chrome — meaningless on Quote/Elevation. */}
-        {chrome.structureRail && planOn ? (
-          <LayersPanel
-            open={ui.layersOpen}
-            opacity={ui.layerOpacity}
-            setbackOn={ui.setbackOn}
-            shadeOn={ui.shadeOn}
-            items={studio.items}
-            noteCount={studio.annotations.length}
-            onClose={() => studio.setUi({ layersOpen: false })}
-            onOpacity={studio.setLayerOpacity}
-            onSetback={(setbackOn) => studio.setUi({ setbackOn })}
-            onShade={(shadeOn) => studio.setUi({ shadeOn })}
-          />
+        {/* Right data lane — one panel (lane law). Layers no longer left. */}
+        {chrome.structureRail && planOn && layersOpen ? (
+          <RightDataLane testId="right-data-lane-layers">
+            <LayersPanel
+              open
+              opacity={ui.layerOpacity}
+              setbackOn={ui.setbackOn}
+              shadeOn={ui.shadeOn}
+              items={studio.items}
+              noteCount={studio.annotations.length}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onOpacity={studio.setLayerOpacity}
+              onSetback={(setbackOn) => studio.setUi({ setbackOn })}
+              onShade={(shadeOn) => studio.setUi({ shadeOn })}
+            />
+          </RightDataLane>
         ) : null}
 
         {swatchTrayOn ? (
@@ -3339,12 +3381,16 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        <SiteSwitcher
-          open={ui.sitesOpen && planOn}
-          siteIdx={ui.siteIdx}
-          onClose={() => studio.setUi({ sitesOpen: false })}
-          onPick={studio.switchSite}
-        />
+        {sitesOpen && planOn ? (
+          <RightDataLane testId="right-data-lane-sites">
+            <SiteSwitcher
+              open
+              siteIdx={ui.siteIdx}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onPick={studio.switchSite}
+            />
+          </RightDataLane>
+        ) : null}
 
         <StudioCommandPalette
           open={ui.cmdOpen}
@@ -3366,11 +3412,17 @@ export function HandoffDesignStudio({
             if (!planMode || ui.frameOn) return;
             animateTiltTo(isTiltActive(ui.tiltDeg) ? 0 : TILT_DEG);
           }}
-          dataOpen={ui.dataSummoned}
+          dataOpen={measuresOpen}
           onToggleData={() =>
             studio.setUi({
-              dataSummoned: !ui.dataSummoned,
-              utilityPanel: ui.dataSummoned ? null : (ui.utilityPanel ?? "bom"),
+              rightDataPanel: toggleRightDataPanel(
+                ui.rightDataPanel,
+                "measures",
+              ),
+              utilityPanel:
+                ui.rightDataPanel === "measures"
+                  ? null
+                  : (ui.utilityPanel ?? "bom"),
             })
           }
           onUndo={studio.undo}

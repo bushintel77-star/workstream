@@ -9,6 +9,7 @@ import type {
 } from "../studioCatalog";
 import type { PaperSize, PctPoint } from "../geometry";
 import type { SunDatePreset } from "../features/sunGrowth/sunDatePreset";
+import type { RightDataPanel } from "../features/surfaces/rightDataLane";
 
 export type LayerKey =
   | "survey"
@@ -50,7 +51,11 @@ export type StudioUiState = {
   darkOn: boolean;
   focusOn: boolean;
   clientView: boolean;
-  layersOpen: boolean;
+  /**
+   * Right data lane — one panel at a time (lane law). null = lane empty.
+   * Layers / Measures / Demo Lots / Checklist share this slot exclusively.
+   */
+  rightDataPanel: RightDataPanel | null;
   layerOpacity: LayerOpacity;
   /** View-only layer isolation; never persisted to DesignCanvas. */
   isolatedLayer: LayerKey | null;
@@ -77,7 +82,6 @@ export type StudioUiState = {
   ghostReviewOpen: boolean;
   cmdOpen: boolean;
   cmdQuery: string;
-  sitesOpen: boolean;
   addOpen: boolean;
   armed: StudioItemType | null;
   mitigated: Record<string, boolean>;
@@ -109,8 +113,6 @@ export type StudioUiState = {
   coachOpen: boolean;
   assistReply: string | null;
   utilityPanel: "compliance" | "bom" | null;
-  /** Canvas-first: measures / quantity lane summoned via the AI command core. */
-  dataSummoned: boolean;
   councilTip: string | null;
   sheetScaleDenom: 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500;
   parchmentPeel: number;

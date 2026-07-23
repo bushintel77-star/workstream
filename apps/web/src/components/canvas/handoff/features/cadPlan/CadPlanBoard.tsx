@@ -32,6 +32,11 @@ import {
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
 import { boardPctToClientOffset } from "../../geometry/cameraPointer";
+import {
+  placeScheduleCards,
+  scheduleCardTransform,
+} from "../surfaces/scheduleCardLayout";
+import { RIGHT_DATA_LANE_WIDTH_PX } from "../surfaces/rightDataLane";
 import { planLinesFor } from "../../geometry/planLineStyles";
 import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
@@ -528,25 +533,50 @@ export function CadPlanBoard({
   const allowProjectedChrome = !tiltLocked && !frameOn;
 
   /**
-   * Screen-space declutter for the projected area callouts. Offsets must be
-   * screen px (constant under zoom) — the old board-% offset between Title
-   * and Outdoor shrank as the camera zoomed out, which is how the Title /
-   * Outdoor / dwelling text garbled into one pile on the survey view.
-   * Outdoor always stacks a fixed distance below Title; the dwelling label
-   * lifts clear only when its centroid projects into the Title stack.
+   * Screen-space declutter for Title / Dwelling / Outdoor schedule cards.
+   * Shared engine — never share a projected point at any zoom / rotation.
    */
   const titleProj = boardPctToClientOffset(titleCentroid, cam);
   const buildingProj =
     buildingCentroid != null
       ? boardPctToClientOffset(buildingCentroid, cam)
       : null;
-  const dwellingNearTitle =
-    buildingProj != null &&
-    Math.abs(buildingProj.x - titleProj.x) < 140 &&
-    Math.abs(buildingProj.y - titleProj.y) < 96;
-  const dwellingLabelTransform = dwellingNearTitle
-    ? "translate(-50%, calc(-50% - 56px))"
-    : undefined;
+  const showOutdoorCard =
+    outdoorAreaLabelM2 > 0 &&
+    Math.abs(outdoorAreaLabelM2 - areaLabelM2) > 0.5;
+  const schedulePlacements = placeScheduleCards(
+    [
+      ...(showAutoAreaLabels && boundary.length >= 3
+        ? [{ id: "title", x: titleProj.x, y: titleProj.y }]
+        : []),
+      ...(showAutoAreaLabels &&
+      buildingCentroid &&
+      building.length >= 3 &&
+      buildingAreaLabelM2 > 0 &&
+      buildingProj
+        ? [{ id: "dwelling", x: buildingProj.x, y: buildingProj.y }]
+        : []),
+      ...(showAutoAreaLabels && showOutdoorCard
+        ? [{ id: "outdoor", x: titleProj.x, y: titleProj.y }]
+        : []),
+    ],
+    {
+      viewportW: layout.w,
+      safeRightPx: (() => {
+        const studio = rootRef.current?.closest(
+          '[data-testid="handoff-design-studio"]',
+        );
+        if (studio?.getAttribute("data-right-lane") === "1") {
+          return RIGHT_DATA_LANE_WIDTH_PX;
+        }
+        return 12;
+      })(),
+    },
+  );
+  const scheduleOffset = (id: string) => {
+    const p = schedulePlacements.find((x) => x.id === id);
+    return scheduleCardTransform(p?.offsetX ?? 0, p?.offsetY ?? 0);
+  };
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
     onInteract?.();
@@ -1372,11 +1402,13 @@ export function CadPlanBoard({
             kind: "project",
             pct: { x: titleCentroid.x, y: titleCentroid.y },
             cam,
+            transform: scheduleOffset("title"),
           }}
         >
           <div
             className={css.cadAreaLabel}
             data-testid="cad-title-area"
+            data-camera-chrome-card="1"
             title={
               titleBoundaryLocked
                 ? "Title locked"
@@ -1403,12 +1435,13 @@ export function CadPlanBoard({
             kind: "project",
             pct: { x: buildingCentroid.x, y: buildingCentroid.y },
             cam,
-            transform: dwellingLabelTransform,
+            transform: scheduleOffset("dwelling"),
           }}
         >
           <div
             className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
             data-testid="cad-building-area"
+            data-camera-chrome-card="1"
           >
             <span className={css.cadAreaKey}>Existing dwelling</span>
             <span className={css.cadAreaValue}>
@@ -1418,21 +1451,19 @@ export function CadPlanBoard({
         </CameraChrome>
       ) : null}
 
-      {showAutoAreaLabels &&
-      outdoorAreaLabelM2 > 0 &&
-      Math.abs(outdoorAreaLabelM2 - areaLabelM2) > 0.5 ? (
+      {showAutoAreaLabels && showOutdoorCard ? (
         <CameraChrome
           place={{
             kind: "project",
             pct: { x: titleCentroid.x, y: titleCentroid.y },
             cam,
-            /* Constant screen-px stack below Title — never collides at any zoom. */
-            transform: "translate(-50%, calc(-50% + 56px))",
+            transform: scheduleOffset("outdoor"),
           }}
         >
           <div
             className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
             data-testid="cad-outdoor-area"
+            data-camera-chrome-card="1"
           >
             <span className={css.cadAreaKey}>Outdoor</span>
             <span className={css.cadAreaValue}>

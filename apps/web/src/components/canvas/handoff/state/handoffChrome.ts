@@ -5,7 +5,7 @@ import type { StudioMode, StudioTool } from "../studioCatalog";
  * Binding: docs/STUDIO-STYLING-AND-UX.md + docs/CAD-AI-2026-UX.md + docs/CANVAS-FIRST-UX.md.
  *
  * Disappearing UI: edge-to-edge drawing; frost chrome on summon;
- * AI sidecar (right) + structure rail (left, collapsed); instruments on summon.
+ * right data lane (one panel); left = tool tray only.
  * Inventory popup only while Add / Paint armed — never a fixed slab.
  * AI = intelligent intern — ghosts never silent-write (constraint-first).
  */
@@ -18,8 +18,9 @@ export type HandoffChrome = {
    */
   aiSidecar: boolean;
   /**
-   * Left structure rail — layers / constraints; collapsed until opened.
+   * Right data lane available (Layers / Measures / Sites / Checklist).
    * True when the layers control is available (not Fit / focus / client).
+   * Actual panel mounts exclusively via `rightDataPanel` (lane law).
    */
   structureRail: boolean;
   /** Compact live cost total (same estimate engine; collapsed chrome) */
@@ -163,7 +164,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     utilityDrawer: utility,
     /** Right lane for AI dialogue + analytics — summoned, or the Quote surface. */
     aiSidecar: utility || mode === "quote",
-    /** Left layers / constraints — available, collapsed until opened. */
+    /** Right data lane affordance — Layers etc. available, collapsed until opened. */
     structureRail: plan,
     liveBom: cadLike || mode === "quote",
     // Monograph canvas — no floating consumer widgets on the drawing plane

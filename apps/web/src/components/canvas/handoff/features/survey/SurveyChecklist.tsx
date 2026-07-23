@@ -11,10 +11,11 @@ type Props = {
   levels: SpotLevel[];
   services: PctPoint[][];
   easements?: PctPoint[][];
+  onClose?: () => void;
 };
 
 /**
- * Survey completeness checklist — ported from curtis-co prototype.
+ * Survey completeness checklist — right data lane occupant (lane law).
  */
 export function SurveyChecklist({
   boundary,
@@ -23,6 +24,7 @@ export function SurveyChecklist({
   levels,
   services,
   easements = [],
+  onClose,
 }: Props) {
   const rows: Array<[string, boolean]> = [
     ["Boundary traced", boundary.length >= 3],
@@ -50,6 +52,16 @@ export function SurveyChecklist({
         >
           {done}/{rows.length}
         </span>
+        {onClose ? (
+          <button
+            type="button"
+            className={css.close}
+            onClick={onClose}
+            aria-label="Close checklist"
+          >
+            Close
+          </button>
+        ) : null}
       </div>
       <ul className={css.list}>
         {rows.map(([label, ok]) => (

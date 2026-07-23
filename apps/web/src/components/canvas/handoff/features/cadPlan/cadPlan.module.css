@@ -181,25 +181,21 @@
  */
 .boardDark .dimLabel,
 .boardDark .cadDimLabel,
-.boardDark .cadDimBearing,
-.boardDark .cadAreaValue {
+.boardDark .cadDimBearing {
   color: rgba(236, 239, 244, 0.92);
   text-shadow: 1px 0 0 rgba(22,24,28,0.95), -1px 0 0 rgba(22,24,28,0.95), 0 1px 0 rgba(22,24,28,0.95), 0 -1px 0 rgba(22,24,28,0.95);
 }
 
-.boardDark .cadDimKey,
-.boardDark .cadAreaMeta {
+.boardDark .cadDimKey {
   color: #8fb0ff; /* cobalt, lifted for dark ground */
   text-shadow: none;
 }
 
-.boardDark .cadAreaLabel {
-  background: rgba(30, 33, 39, 0.72);
-}
-
-.boardDark .cadAreaKey {
-  color: rgba(236, 239, 244, 0.6);
-  text-shadow: none;
+.boardDark .cadAreaValue,
+.boardDark .cadAreaKey,
+.boardDark .cadAreaMeta {
+  /* Schedule cards inherit --hc-ink* from rootDark — no hardcoded chalk/glass. */
+  text-shadow: 1px 0 0 rgba(22,24,28,0.95), -1px 0 0 rgba(22,24,28,0.95), 0 1px 0 rgba(22,24,28,0.95), 0 -1px 0 rgba(22,24,28,0.95);
 }
 
 /* CAD property-boundary language (REA concept, not REA chrome). */
@@ -275,10 +271,9 @@
   gap: 1px;
   padding: 3px 8px;
   border: none;
-  /* Frost pill — boundary dims / linework crossing the centroid must not
-     garble the callout text (survey-view Title/Outdoor pile-up). */
+  /* Frost pill — --hc-glass (dolphin in night); never hardcoded dark-on-dark. */
   border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   pointer-events: none;
@@ -289,7 +284,7 @@
   font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: rgba(28, 25, 23, 0.9);
+  color: var(--hc-ink, rgba(28, 25, 23, 0.9));
   background: transparent;
   padding: 0;
   line-height: 1.1;
@@ -319,7 +314,7 @@
   font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #5b6b7a;
+  color: var(--hc-ink-muted, #5b6b7a);
   background: transparent;
   padding: 0;
   text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
@@ -461,8 +456,7 @@
 
 .editBanner {
   position: absolute;
-  /* Top-centre dock — the left corner belongs to the layers panel and the
-     right to demo lots; the banner was rendering underneath the panel. */
+  /* Top-centre — left is tool tray, right is the data lane. */
   left: 50%;
   transform: translateX(-50%);
   top: 14px;
