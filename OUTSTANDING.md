@@ -10,9 +10,15 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 - [x] **Persistence on Fly** — `[mounts]` block live in
       [apps/api/fly.toml](apps/api/fly.toml) against `construct_data_v2`.
+- [x] **SQLite write-through journal** — `packages/db/src/sqlite-persist.ts`
+      (Node 22 `node:sqlite`, WAL). In-memory store retained for jobs/tests;
+      JSON snapshot retired from the hot path (first-boot import +
+      `exportSnapshot` escape hatch). Railway:
+      `CONSTRUCT_SQLITE_PATH=/repo/apps/api/data/store.sqlite3` on `api-volume`.
 - [ ] **Single API machine** — human must run
       `flyctl scale count 1 -a construct-api` after deploy to keep the
-      JSON snapshot store single-writer.
+      JSON snapshot store single-writer. (Railway: keep one API replica while
+      the store is single-writer SQLite.)
 - [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
       `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
       dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`

@@ -26,8 +26,8 @@ Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json
 | API | https://api-production-a8ff1.up.railway.app |
 
 API durability today is the Railway volume `api-volume` → `/repo/apps/api/data`
-(`CONSTRUCT_PERSIST_PATH=…/store.json`). Fly.io configs remain legacy — do not
-assume Fly is live unless product switches back.
+(`CONSTRUCT_PERSIST_PATH=…/store.json`, `CONSTRUCT_SQLITE_PATH=…/store.sqlite3`).
+Fly.io configs remain legacy — do not assume Fly is live unless product switches back.
 
 ### End of build (mandatory)
 

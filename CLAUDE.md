@@ -9,16 +9,20 @@ co-pilot for Curtis & Co (Melbourne).
 - `apps/api` Fastify; `apps/web` Next.js 15 App Router; `apps/mobile` Expo.
 - `packages/contracts` is the Zod schema boundary — change it before changing
   the API or any client.
-- `packages/db` is in-memory with `persist.ts` JSON-snapshot flush. SQLite
-  migration is on the punch list; until then assume the store is a plain
-  in-memory array set keyed by `owner_id`.
+- `packages/db` is an in-memory array set keyed by `owner_id` (pipeline jobs and
+  tests still take a fresh memory store). Durability is a SQLite write-through
+  journal (`packages/db/src/sqlite-persist.ts`, Node 22 `node:sqlite`, WAL) —
+  every mutation flushes synchronously before return. First boot imports the
+  legacy `store.json` snapshot then archives it. Env:
+  `CONSTRUCT_SQLITE_PATH` (default beside the JSON path as `store.sqlite3`).
+  Production refuses to boot if the DB directory is not writable.
 - **Canonical deploy: Railway (production).** Web
   `https://web-production-3c194.up.railway.app`, API
-  `https://api-production-a8ff1.up.railway.app`. API snapshot durability is the
-  Railway volume `api-volume` mounted at `/repo/apps/api/data`
-  (`CONSTRUCT_PERSIST_PATH=/repo/apps/api/data/store.json`). Fly.io syd configs
-  remain in-repo as legacy; do not treat Fly as the live target unless product
-  explicitly switches back.
+  `https://api-production-a8ff1.up.railway.app`. API durability volume
+  `api-volume` mounts at `/repo/apps/api/data`
+  (`CONSTRUCT_PERSIST_PATH=…/store.json`, `CONSTRUCT_SQLITE_PATH=…/store.sqlite3`).
+  Fly.io syd configs remain in-repo as legacy; do not treat Fly as the live
+  target unless product explicitly switches back.
 
 ## Conventions
 
