@@ -48,6 +48,7 @@ import orchestrationRoutes from './routes/orchestration';
 import projectFileRoutes from './routes/project-files';
 import activityRoutes from './routes/activity';
 import portalRoutes from './routes/portal';
+import shareRoutes from './routes/share';
 import stripeWebhookRoutes from './routes/stripe-webhook';
 import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
@@ -149,6 +150,7 @@ async function start() {
   await server.register(projectFileRoutes, { prefix: '/projects' });
   await server.register(activityRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);
+  await server.register(shareRoutes);
   await server.register(stripeWebhookRoutes);
   await server.register(settingsRoutes, { prefix: '/settings' });
   await server.register(integrationHubRoutes, { prefix: '/integrations' });

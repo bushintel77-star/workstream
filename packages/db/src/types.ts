@@ -45,6 +45,10 @@ import type {
   ActivityEvent,
   ActivityAction,
   OrchestrationOverlayRecord,
+  ShareRevision,
+  CreateShareRevisionInput,
+  ShareDecisionInput,
+  ShareSnapshot,
 } from "@workstream/contracts";
 
 export type {
@@ -94,6 +98,10 @@ export type {
   ActivityEvent,
   ActivityAction,
   OrchestrationOverlayRecord,
+  ShareRevision,
+  CreateShareRevisionInput,
+  ShareDecisionInput,
+  ShareSnapshot,
 };
 
 export type PhotoMeasurementInput = Omit<
@@ -356,6 +364,23 @@ export interface Store {
     projectId: string,
     input: Pick<OrchestrationOverlayRecord, "dismissed_ids" | "accepted_ids">,
   ): Promise<OrchestrationOverlayRecord>;
+  listShareRevisions(
+    ownerId: string,
+    projectId: string,
+  ): Promise<ShareRevision[]>;
+  getShareRevisionByToken(token: string): Promise<ShareRevision | null>;
+  createShareRevision(
+    ownerId: string,
+    projectId: string,
+    snapshot: ShareSnapshot,
+  ): Promise<ShareRevision | null>;
+  recordShareDecision(
+    token: string,
+    input: ShareDecisionInput,
+  ): Promise<
+    | { ok: true; revision: ShareRevision }
+    | { ok: false; reason: "not_found" | "superseded" | "already_decided" }
+  >;
   seedDefaults(): Promise<void>;
 }
 

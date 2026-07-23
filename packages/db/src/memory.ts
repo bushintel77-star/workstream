@@ -85,6 +85,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
   > = [];
   const _activityEvents: import("./types").ActivityEvent[] = [];
+  const _shareRevisions: import("./types").ShareRevision[] = [];
   let seeded = false;
 
   function logActivity(
@@ -132,6 +133,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _siteBoundaries,
     _catalogCustom,
     _activityEvents,
+    _shareRevisions,
   };
 
   const journal: SqliteJournal | undefined = opts.sqlitePath
@@ -1427,6 +1429,83 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _projectMyobLinks.push(link);
       flush();
       return link;
+    },
+
+    async listShareRevisions(ownerId, projectId) {
+      return _shareRevisions
+        .filter(
+          (r) => r.owner_id === ownerId && r.project_id === projectId,
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
+        .map((r) => structuredClone(r));
+    },
+
+    async getShareRevisionByToken(token) {
+      const row = _shareRevisions.find((r) => r.token === token);
+      return row ? structuredClone(row) : null;
+    },
+
+    async createShareRevision(ownerId, projectId, snapshot) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId && !p.deleted_at,
+      );
+      if (!project) return null;
+
+      const { nextShareRevisionLetter } = await import("@workstream/contracts");
+      const { randomBytes } = await import("node:crypto");
+
+      const existing = _shareRevisions.filter(
+        (r) => r.owner_id === ownerId && r.project_id === projectId,
+      );
+      for (const row of existing) {
+        if (row.status === "shared") {
+          row.status = "superseded";
+        }
+      }
+
+      const token = randomBytes(32).toString("base64url");
+      const row: import("./types").ShareRevision = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        owner_id: ownerId,
+        revision: nextShareRevisionLetter(existing.length),
+        token,
+        status: "shared",
+        created_at: new Date().toISOString(),
+        snapshot: structuredClone(snapshot),
+      };
+      _shareRevisions.push(row);
+      flush();
+      return structuredClone(row);
+    },
+
+    async recordShareDecision(token, input) {
+      const row = _shareRevisions.find((r) => r.token === token);
+      if (!row) return { ok: false as const, reason: "not_found" as const };
+      if (row.status === "superseded") {
+        return { ok: false as const, reason: "superseded" as const };
+      }
+      if (row.status === "accepted" || row.status === "declined") {
+        return { ok: false as const, reason: "already_decided" as const };
+      }
+      if (row.status !== "shared") {
+        return { ok: false as const, reason: "not_found" as const };
+      }
+
+      const clientName = input.clientName.trim();
+      const note = input.note?.trim();
+      row.status = input.kind === "accepted" ? "accepted" : "declined";
+      row.decision = {
+        kind: input.kind,
+        clientName,
+        ...(note ? { note } : {}),
+        decidedAt: new Date().toISOString(),
+      };
+      flush();
+      return { ok: true as const, revision: structuredClone(row) };
     },
   };
 }

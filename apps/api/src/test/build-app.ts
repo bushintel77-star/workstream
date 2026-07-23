@@ -35,6 +35,7 @@ import boundaryRoutes from "../routes/boundary";
 import orchestrationRoutes from "../routes/orchestration";
 import projectFileRoutes from "../routes/project-files";
 import portalRoutes from "../routes/portal";
+import shareRoutes from "../routes/share";
 import stripeWebhookRoutes from "../routes/stripe-webhook";
 import protectedFileRoutes from "../routes/protected-files";
 import integrationHubRoutes, {
@@ -90,6 +91,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(supplierRoutes, { prefix: "/suppliers" });
   await app.register(catalogRoutes, { prefix: "/catalog" });
   await app.register(portalRoutes);
+  await app.register(shareRoutes);
   await app.register(stripeWebhookRoutes);
   await app.register(settingsRoutes, { prefix: "/settings" });
   await app.register(integrationHubRoutes, { prefix: "/integrations" });
