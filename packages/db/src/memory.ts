@@ -19,12 +19,21 @@ import type {
   Task,
 } from "./types";
 import type { Store } from "./types";
+import { mkdirSync, renameSync, writeFileSync } from "fs";
+import { dirname } from "path";
 import { loadSnapshotInto, makeFlusher } from "./persist";
+import {
+  openSqliteJournal,
+  type SqliteJournal,
+} from "./sqlite-persist";
 
 export const SYSTEM_OWNER = "system";
 
 export type CreateStoreOptions = {
+  /** Legacy JSON snapshot path (export escape hatch / first-boot import). */
   persistPath?: string;
+  /** SQLite write-through journal. When set, replaces JSON flush on the hot path. */
+  sqlitePath?: string;
 };
 
 export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
@@ -44,6 +53,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _crew: CrewMember[];
   _photoMeasurements: PhotoMeasurement[];
   _loadSnapshot: () => boolean;
+  _sqlite?: SqliteJournal;
+  _exportSnapshot: (path: string) => void;
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
@@ -123,11 +134,38 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _activityEvents,
   };
 
-  const flush = opts.persistPath
-    ? makeFlusher(opts.persistPath, arrays as Record<string, unknown[]>)
-    : () => {};
+  const journal: SqliteJournal | undefined = opts.sqlitePath
+    ? openSqliteJournal(opts.sqlitePath)
+    : undefined;
+
+  // Bind arrays to the journal (empty DB → no-op load, arraysRef set).
+  if (journal) {
+    journal.loadInto(arrays as Record<string, unknown[]>);
+  }
+
+  const flush = journal
+    ? () => journal.flush()
+    : opts.persistPath
+      ? makeFlusher(opts.persistPath, arrays as Record<string, unknown[]>)
+      : () => {};
 
   const loadSnapshot = (): boolean => {
+    if (journal) {
+      const fromSqlite = journal.loadInto(arrays as Record<string, unknown[]>);
+      if (!fromSqlite && opts.persistPath) {
+        journal.importJsonSnapshotIfEmpty(opts.persistPath);
+      }
+      for (const link of _skuLinks) {
+        const row = link as SkuLink & { construct_sku?: string };
+        if (!row.rate_card_sku && row.construct_sku) {
+          row.rate_card_sku = row.construct_sku;
+        }
+      }
+      if (_rateCard.length > 0 && _plantPalette.length > 0) {
+        seeded = true;
+      }
+      return fromSqlite || journal.recordCount() > 0 || _projects.length > 0;
+    }
     if (!opts.persistPath) return false;
     const loaded = loadSnapshotInto(
       opts.persistPath,
@@ -164,6 +202,19 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _crew,
     _photoMeasurements,
     _loadSnapshot: loadSnapshot,
+    _sqlite: journal,
+    _exportSnapshot: (path: string) => {
+      if (journal) {
+        journal.exportSnapshot(path);
+        return;
+      }
+      const snapshot: Record<string, unknown[]> = {};
+      for (const [k, v] of Object.entries(arrays)) snapshot[k] = v;
+      mkdirSync(dirname(path), { recursive: true });
+      const tmp = `${path}.tmp`;
+      writeFileSync(tmp, JSON.stringify(snapshot, null, 2), "utf8");
+      renameSync(tmp, path);
+    },
 
     async seedDefaults() {
       if (seeded) return;
