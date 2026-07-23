@@ -1,99 +1,174 @@
+/*
+ * Tool dock as a carousel — the shell itself curves, not just the chip guts.
+ * Frost lives on each slot + the SVG rail spine; the outer nav is a transparent
+ * 3D stage so the silhouette reads as a C-arc toward the board.
+ */
+
 .dock {
+  --dock-lean: 0px;
+  --dock-scale: 1;
+  --dock-depth: 0px;
+  --dock-yaw: 0deg;
+  --dock-fade: 0.72;
+
   position: absolute;
-  left: 12px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 8px 6px;
-  border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-frost, rgba(255, 248, 250, 0.82));
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.1));
-  box-shadow: var(--hc-frost-shadow, 0 8px 28px rgba(42, 23, 29, 0.12));
-  backdrop-filter: blur(14px);
+  width: 72px;
+  padding: 10px 8px 10px 4px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--hc-ink, #241318);
   font-family: var(--font-body);
   pointer-events: auto;
+  perspective: 720px;
+  perspective-origin: 0% 50%;
 }
 
 .dockNight {
-  background: rgba(28, 36, 48, 0.78);
-  border-color: rgba(143, 176, 255, 0.22);
   color: rgba(236, 239, 244, 0.92);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+/* Frost rail spine — follows dockRailPath; this IS the animated dock shell. */
+.rail {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}
+
+.railWash {
+  fill: none;
+  stroke: var(--hc-frost, rgba(255, 248, 250, 0.82));
+  stroke-width: 52;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 8px 22px rgba(42, 23, 29, 0.14));
+}
+
+.railStroke {
+  fill: none;
+  stroke: var(--hc-line, rgba(36, 19, 24, 0.12));
+  stroke-width: 54;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+}
+
+.dockNight .railWash {
+  stroke: rgba(28, 36, 48, 0.78);
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.35));
+}
+
+.dockNight .railStroke {
+  stroke: rgba(143, 176, 255, 0.22);
 }
 
 .list {
+  position: relative;
+  z-index: 1;
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  transform-style: preserve-3d;
+}
+
+/* Slot is the carousel bead — whole chip rides the arc + depth. */
+.slot {
+  transform-style: preserve-3d;
+  transform: translate3d(
+      var(--dock-lean),
+      0,
+      var(--dock-depth)
+    )
+    rotateY(var(--dock-yaw))
+    scale(var(--dock-scale));
+  transform-origin: left center;
+  opacity: var(--dock-fade);
+  transition:
+    transform 170ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 170ms ease;
+  will-change: transform, opacity;
 }
 
 .slotTrail {
   margin-top: 4px;
   padding-top: 6px;
-  border-top: 1px solid rgba(36, 19, 24, 0.08);
 }
 
-.dockNight .slotTrail {
-  border-top-color: rgba(143, 176, 255, 0.18);
+.slotTrail::before {
+  content: "";
+  display: block;
+  height: 1px;
+  margin: 0 10px 6px;
+  background: rgba(36, 19, 24, 0.1);
+  transform: translateX(calc(var(--dock-lean) * 0.3));
+}
+
+.dockNight .slotTrail::before {
+  background: rgba(143, 176, 255, 0.18);
 }
 
 .btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   width: 100%;
   min-width: 44px;
   min-height: 44px;
   padding: 4px 6px;
-  border: none;
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
   border-radius: var(--hc-r-control, 10px);
-  background: transparent;
+  background: var(--hc-frost, rgba(255, 248, 250, 0.88));
+  box-shadow: var(--hc-neu-out-sm, 0 1px 2px rgba(42, 23, 29, 0.08));
   color: inherit;
   font: inherit;
   cursor: pointer;
-  transition: background var(--hc-motion, 180ms) ease;
+  transition:
+    background var(--hc-motion, 180ms) ease,
+    box-shadow var(--hc-motion, 180ms) ease,
+    border-color var(--hc-motion, 180ms) ease;
 }
 
 .btn:hover {
-  background: rgba(255, 211, 222, 0.28);
-}
-
-.dockNight .btn:hover {
-  background: rgba(143, 176, 255, 0.14);
-}
-
-.btnActive {
   background: rgba(255, 211, 222, 0.42);
 }
 
-.dockNight .btnActive {
-  background: rgba(143, 176, 255, 0.22);
+.dockNight .btn {
+  background: rgba(28, 36, 48, 0.86);
+  border-color: rgba(143, 176, 255, 0.18);
 }
 
-/*
- * Curve carousel body — the button keeps its 44px hit target; only this inner
- * body leans toward the board and scales at the crest (vars from ToolDock).
- */
-.chipBody {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  transform: translateX(var(--dock-lean, 0px)) scale(var(--dock-scale, 1));
-  transform-origin: left center;
-  opacity: var(--dock-fade, 0.72);
-  transition:
-    transform 170ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    opacity 170ms ease;
-  will-change: transform, opacity;
-  pointer-events: none;
+.dockNight .btn:hover {
+  background: rgba(143, 176, 255, 0.18);
+}
+
+.btnActive {
+  background: rgba(255, 211, 222, 0.55);
+  border-color: rgba(194, 69, 95, 0.28);
+  box-shadow: var(--hc-neu-in, inset 0 1px 2px rgba(42, 23, 29, 0.1));
+}
+
+.dockNight .btnActive {
+  background: rgba(143, 176, 255, 0.26);
+  border-color: rgba(143, 176, 255, 0.35);
 }
 
 .glyph {
@@ -110,7 +185,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chipBody {
+  .slot,
+  .railWash,
+  .railStroke {
     transition: none;
   }
 }

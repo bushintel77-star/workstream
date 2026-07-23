@@ -11,6 +11,7 @@ import {
   DOCK_CURVE,
   dockChipPose,
   dockFocusFromPointer,
+  dockRailPath,
   spinDockFocus,
 } from "./dockCarousel";
 import css from "./toolDock.module.css";
@@ -61,13 +62,17 @@ type Props = {
   onToggleGrid: () => void;
 };
 
+const CHIP_PITCH_PX = 48;
+const RAIL_VIEW_W = 72;
+
 /**
  * Single left tool dock — steering-wheel home for mode changes.
  * Fixed frost rail via CameraChrome dock; never under zoom-world.
  *
- * Curve carousel: chips ride a gentle arc that leans toward the drawing
- * surface. The crest follows the pointer, spins with the wheel and settles
- * on the active tool (math in dockCarousel.ts; hit targets stay 44px).
+ * The dock itself is the carousel: chips ride a vertical C-arc that bulges
+ * toward the board, with 3D depth at the crest. A frost rail spine follows
+ * that same arc (data-testid="tool-dock-rail"). Crest tracks the pointer,
+ * spins with the wheel, settles on the active tool.
  */
 export function ToolDock({
   tool,
@@ -112,6 +117,12 @@ export function ToolDock({
   const focus = crest ?? restCrest;
   const amplitude = crest != null ? 1 : DOCK_CURVE.restAmplitude;
 
+  const railPath = useMemo(
+    () => dockRailPath(chips.length, focus, amplitude, CHIP_PITCH_PX, RAIL_VIEW_W),
+    [chips.length, focus, amplitude],
+  );
+  const railH = Math.max(CHIP_PITCH_PX, chips.length * CHIP_PITCH_PX);
+
   const trackPointer = (clientY: number) => {
     const list = listRef.current;
     if (!list) return;
@@ -141,6 +152,7 @@ export function ToolDock({
       <nav
         className={`${css.dock}${night ? ` ${css.dockNight}` : ""}`}
         data-testid="tool-dock"
+        data-carousel="1"
         aria-label="Drawing tools"
         onPointerMove={(e) => trackPointer(e.clientY)}
         onPointerLeave={() => setCrest(null)}
@@ -151,6 +163,18 @@ export function ToolDock({
           );
         }}
       >
+        {/* Frost rail spine — the dock shell itself, curved to the crest. */}
+        <svg
+          className={css.rail}
+          data-testid="tool-dock-rail"
+          viewBox={`0 0 ${RAIL_VIEW_W} ${railH}`}
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <path className={css.railWash} d={railPath} />
+          <path className={css.railStroke} d={railPath} />
+        </svg>
+
         <ul className={css.list} ref={listRef}>
           {chips.map((chip, index) => {
             const active = isActive(chip);
@@ -159,6 +183,19 @@ export function ToolDock({
               <li
                 key={chip.id}
                 className={`${css.slot}${chip.trail ? ` ${css.slotTrail}` : ""}`}
+                data-testid="tool-dock-slot"
+                data-crest={
+                  Math.abs(index - focus) < 0.55 ? "1" : "0"
+                }
+                style={
+                  {
+                    "--dock-lean": `${pose.leanPx.toFixed(2)}px`,
+                    "--dock-scale": pose.scale.toFixed(3),
+                    "--dock-depth": `${pose.depthPx.toFixed(2)}px`,
+                    "--dock-yaw": `${pose.yawDeg.toFixed(2)}deg`,
+                    "--dock-fade": active ? 1 : pose.opacity.toFixed(3),
+                  } as CSSProperties
+                }
               >
                 <button
                   type="button"
@@ -172,23 +209,10 @@ export function ToolDock({
                   aria-pressed={active}
                   onClick={() => pick(chip)}
                 >
-                  <span
-                    className={css.chipBody}
-                    style={
-                      {
-                        "--dock-lean": `${pose.leanPx.toFixed(2)}px`,
-                        "--dock-scale": pose.scale.toFixed(3),
-                        "--dock-fade": active
-                          ? 1
-                          : pose.opacity.toFixed(3),
-                      } as CSSProperties
-                    }
-                  >
-                    <span className={css.glyph} aria-hidden>
-                      {chip.icon}
-                    </span>
-                    <span className={css.label}>{chip.label}</span>
+                  <span className={css.glyph} aria-hidden>
+                    {chip.icon}
                   </span>
+                  <span className={css.label}>{chip.label}</span>
                 </button>
               </li>
             );
