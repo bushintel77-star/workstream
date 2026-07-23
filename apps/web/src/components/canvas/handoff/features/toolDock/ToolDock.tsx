@@ -1,18 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState, type CSSProperties } from "react";
+import { useMemo } from "react";
 import { CameraChrome } from "../../CameraChrome";
 import {
   SURVEY_TOOLS,
   type StudioMode,
   type StudioTool,
 } from "../../studioCatalog";
-import {
-  DOCK_CURVE,
-  dockChipPose,
-  dockFocusFromPointer,
-  spinDockFocus,
-} from "./dockCarousel";
 import css from "./toolDock.module.css";
 
 const PRIMARY: Array<{
@@ -68,10 +62,7 @@ type Props = {
 /**
  * Single left tool dock — steering-wheel home for mode changes.
  * Fixed frost rail via CameraChrome dock; never under zoom-world.
- *
- * Curve carousel: chips ride a gentle arc that leans toward the drawing
- * surface. The crest follows the pointer, spins with the wheel and settles
- * on the active tool (math in dockCarousel.ts; hit targets stay 44px).
+ * Static column — no carousel / fisheye motion on the shell or chips.
  */
 export function ToolDock({
   tool,
@@ -101,27 +92,10 @@ export function ToolDock({
     ];
   }, [mode, servicesEdit]);
 
-  const listRef = useRef<HTMLUListElement | null>(null);
-  const [crest, setCrest] = useState<number | null>(null);
-
   const isActive = (chip: Chip): boolean => {
     if (chip.id === "grid") return gridOn;
     if (chip.id === "lock") return locked && tool === "lock";
     return tool === chip.id;
-  };
-
-  const activeIndex = chips.findIndex(isActive);
-  /** Rest crest: the active tool, or the middle of the arc when nothing is armed. */
-  const restCrest = activeIndex >= 0 ? activeIndex : (chips.length - 1) / 2;
-  const focus = crest ?? restCrest;
-  const amplitude = crest != null ? 1 : DOCK_CURVE.restAmplitude;
-
-  const trackPointer = (clientY: number) => {
-    const list = listRef.current;
-    if (!list) return;
-    const rect = list.getBoundingClientRect();
-    const pitch = rect.height / chips.length;
-    setCrest(dockFocusFromPointer(clientY - rect.top, pitch, chips.length));
   };
 
   const pick = (chip: Chip) => {
@@ -147,23 +121,14 @@ export function ToolDock({
         className={`${css.dock}${night ? ` ${css.dockNight}` : ""}`}
         data-testid="tool-dock"
         aria-label="Drawing tools"
-        onPointerMove={(e) => trackPointer(e.clientY)}
-        onPointerLeave={() => setCrest(null)}
-        onWheel={(e) => {
-          e.stopPropagation();
-          setCrest((cur) =>
-            spinDockFocus(cur ?? restCrest, e.deltaY, chips.length),
-          );
-        }}
       >
-        <ul className={css.list} ref={listRef}>
-          {chips.map((chip, index) => {
+        <ul className={css.list}>
+          {chips.map((chip) => {
             const active = isActive(chip);
-            const pose = dockChipPose(index, focus, amplitude);
             return (
               <li
                 key={chip.id}
-                className={`${css.slot}${chip.trail ? ` ${css.slotTrail}` : ""}`}
+                className={chip.trail ? css.slotTrail : undefined}
               >
                 <button
                   type="button"
@@ -177,23 +142,10 @@ export function ToolDock({
                   aria-pressed={active}
                   onClick={() => pick(chip)}
                 >
-                  <span
-                    className={css.chipBody}
-                    style={
-                      {
-                        "--dock-lean": `${pose.leanPx.toFixed(2)}px`,
-                        "--dock-scale": pose.scale.toFixed(3),
-                        "--dock-fade": active
-                          ? 1
-                          : pose.opacity.toFixed(3),
-                      } as CSSProperties
-                    }
-                  >
-                    <span className={css.glyph} aria-hidden>
-                      {chip.icon}
-                    </span>
-                    <span className={css.label}>{chip.label}</span>
+                  <span className={css.glyph} aria-hidden>
+                    {chip.icon}
                   </span>
+                  <span className={css.label}>{chip.label}</span>
                 </button>
               </li>
             );
