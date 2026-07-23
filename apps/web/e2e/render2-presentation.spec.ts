@@ -60,19 +60,19 @@ test.describe("Render 2 presentation + annotations", () => {
     await input.fill("Retain existing gum");
     await input.press("Enter");
 
-    await expect(page.getByTestId("annotation-note")).toBeVisible({
-      timeout: 5_000,
+    // Demo seed may already paint notes — assert the note we just authored.
+    const authored = page.getByTestId("annotation-note").filter({
+      hasText: "Retain existing gum",
     });
-    await expect(page.getByTestId("annotation-leader")).toBeVisible();
+    await expect(authored).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("annotation-leader").first()).toBeVisible();
 
     // Persist via save path, then reload
     await page.getByTestId("autosave-tick").click();
     await page.waitForTimeout(1200);
     await page.reload();
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId("annotation-note")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(authored).toBeVisible({ timeout: 15_000 });
 
     // Zoom in until species labels may appear
     for (let i = 0; i < 8; i++) {
@@ -103,7 +103,7 @@ test.describe("Render 2 presentation + annotations", () => {
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByTestId("annotation-note")).toBeVisible();
+    await expect(authored).toBeVisible();
     await shot(page, "render2-annotated-fit");
 
     // Gate C — no camera chrome inside zoom-world
