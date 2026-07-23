@@ -216,6 +216,11 @@ export const SketchCadSuggestionSchema = z.object({
   scale_hint: z.number().positive().max(6).optional(),
   /** Suggested rotation in degrees. */
   rot_deg: z.number().optional(),
+  /**
+   * Decimated drawn outline (board %) — present only for closed area masses
+   * so the plan can render the region the operator actually drew.
+   */
+  outline_pct: z.array(CanvasPointPctSchema).max(64).optional(),
 });
 export type SketchCadSuggestion = z.infer<typeof SketchCadSuggestionSchema>;
 
