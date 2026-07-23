@@ -59,7 +59,7 @@ import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
-import { AmbientRibbon } from "./features/ambient/AmbientRibbon";
+import { ToolDock } from "./features/toolDock/ToolDock";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import { KitAssetDock } from "./features/kitInventory/KitAssetDock";
 import { SwatchTray } from "./features/swatchTray/SwatchTray";
@@ -86,6 +86,8 @@ import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
 import { CanvasAutosaveChip } from "./features/save/CanvasAutosaveChip";
 import { clampToCanvasMargin } from "./features/reach/marginSummon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
+import { SelectionDial } from "./features/selectionDial/SelectionDial";
+import { DialHintPill } from "./features/selectionDial/DialHintPill";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
@@ -125,7 +127,6 @@ import { boardCameraFromPlan } from "./CameraChrome";
 import {
   clampZoom,
   zoomByKeyStep,
-  zoomByRibbonDelta,
   zoomFromWheel,
 } from "./geometry/canvasZoom";
 import { nextBoardSize } from "./geometry/boardSizeCommit";
@@ -286,6 +287,35 @@ export function HandoffDesignStudio({
   });
   /** Instruments open only when summoned (margin click / hub), not on select. */
   const [instrumentsSummoned, setInstrumentsSummoned] = useState(false);
+  /** Drafting grid controls — toggled from the tool dock (not a separate cluster). */
+  const [gridStudioOpen, setGridStudioOpen] = useState(false);
+  const [dialHint, setDialHint] = useState(false);
+  const dialHintSeenRef = useRef(false);
+  /** Hold R + arrows → rotate selection in 15° detents. */
+  const rotateChordRef = useRef(false);
+
+  useEffect(() => {
+    const onDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === "r" || e.key === "R") &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
+        rotateChordRef.current = true;
+      }
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (e.key === "r" || e.key === "R") rotateChordRef.current = false;
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+  }, []);
+
   const [pointerMarkId, setPointerMarkId] = useState<PointerMarkId>("spade");
   /** Settings hover preview — persists only on click. */
   const [pointerMarkPreview, setPointerMarkPreview] =
@@ -954,7 +984,7 @@ export function HandoffDesignStudio({
         }
         return;
       }
-      /* +/- = infinite zoom on free plan and Fit sheet. Alt+/- = print 1:N. */
+      /* +/- = scale selection when selected; else infinite zoom. Alt+/- = print 1:N. */
       if (
         (e.key === "+" || e.key === "=" || e.key === "-" || e.key === "_") &&
         ui.mode !== "elevation" &&
@@ -966,6 +996,20 @@ export function HandoffDesignStudio({
           studio.snapSheetScale(
             e.key === "-" || e.key === "_" ? 1 : -1,
           );
+        } else if (
+          ui.selectedId &&
+          !ui.drawPoly &&
+          !e.metaKey &&
+          !e.ctrlKey &&
+          !e.altKey
+        ) {
+          const item = studio.items.find((i) => i.id === ui.selectedId);
+          if (item) {
+            const delta = e.key === "-" || e.key === "_" ? -0.1 : 0.1;
+            studio.transformItem(ui.selectedId, {
+              scale: Math.max(0.35, Math.min(2.5, item.scale + delta)),
+            });
+          }
         } else {
           studio.setUi({
             zoom: zoomByKeyStep(
@@ -1035,6 +1079,23 @@ export function HandoffDesignStudio({
       ) {
         e.preventDefault();
         ai.cycle(e.key === "ArrowRight" ? 1 : -1);
+        return;
+      }
+      if (
+        ui.selectedId &&
+        !ui.drawPoly &&
+        rotateChordRef.current &&
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
+      ) {
+        e.preventDefault();
+        const dir =
+          e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : -1;
+        const item = studio.items.find((i) => i.id === ui.selectedId);
+        if (item) {
+          studio.transformItem(ui.selectedId, {
+            rot: ((Math.round(item.rot / 15) * 15 + dir * 15) % 360 + 360) % 360,
+          });
+        }
         return;
       }
       if (
@@ -1139,9 +1200,17 @@ export function HandoffDesignStudio({
     !ui.focusOn &&
     !ui.clientView &&
     ui.zoom >= 2.2;
-  /** Swatch furniture — persistent fills in plan CAD / Sketch only. */
+  /** Fill palette — summoned on Add/Paint only (checklist 2). */
   const swatchTrayOn =
     (ui.mode === "cad" || ui.mode === "sketch") &&
+    (ui.tool === "add" || ui.tool === "paint") &&
+    !ui.frameOn &&
+    !ui.focusOn &&
+    !ui.clientView &&
+    !ui.foundationCleanse;
+  /** Undo filmstrip — plan modes, not tied to fill popup. */
+  const undoFilmOn =
+    (ui.mode === "cad" || ui.mode === "sketch" || ui.mode === "survey") &&
     !ui.frameOn &&
     !ui.focusOn &&
     !ui.clientView &&
@@ -1490,6 +1559,23 @@ export function HandoffDesignStudio({
 
   const selectedLive =
     studio.items.find((i) => i.id === ui.selectedId && !i.ghost) ?? null;
+
+  /** One-time dial discoverability (session). */
+  useEffect(() => {
+    if (dialHintSeenRef.current) return;
+    if (!selectedLive || ui.frameOn || isTiltActive(ui.tiltDeg)) return;
+    if (ui.mode !== "cad" && ui.mode !== "survey") return;
+    if (ui.groupIds.length > 1) return;
+    dialHintSeenRef.current = true;
+    try {
+      if (window.localStorage.getItem("ws-dial-hint-seen") === "1") return;
+      window.localStorage.setItem("ws-dial-hint-seen", "1");
+    } catch {
+      /* ignore */
+    }
+    setDialHint(true);
+  }, [selectedLive, ui.frameOn, ui.tiltDeg, ui.mode, ui.groupIds.length]);
+
   /** Any vectors / underlay / assets — kills barren-lot onboarding cue. */
   const hasGeometry =
     studio.items.some((i) => !i.ghost) ||
@@ -2661,11 +2747,7 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {instrumentsSummoned &&
-            (ui.tool === "edit" ||
-              ui.tool === "paint" ||
-              ui.tool === "add" ||
-              ui.tool === "pan") &&
+            {gridStudioOpen &&
             !ui.focusOn &&
             !ui.clientView &&
             !ui.frameOn &&
@@ -2697,10 +2779,51 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {/* Orbit sprouts with selection wash — Delete / Lock / Ask AI clear of glyph */}
+            {/* Selection dial — steering-wheel arc (single item, plan modes). */}
+            {!ui.clientView &&
+            !ui.frameOn &&
+            !isTiltActive(ui.tiltDeg) &&
+            selectedLive &&
+            ui.groupIds.length <= 1 &&
+            ui.tool !== "zone" &&
+            (ui.mode === "cad" || ui.mode === "survey") ? (
+              <SelectionDial
+                item={selectedLive}
+                items={studio.items}
+                cam={planCam}
+                night={darkLens}
+                onTransform={studio.transformItem}
+                onChangeType={studio.changeSelectedType}
+                onDuplicate={studio.duplicateSelected}
+                onAnnotate={() => {
+                  setAnnotatePhase("place");
+                  setPendingAnnotation(null);
+                  setAnnotateDraft("");
+                }}
+                onDelete={() => {
+                  const id = selectedLive.id;
+                  studio.deleteSelected();
+                  toast.show("Deleted", "info", 5000, {
+                    action: {
+                      label: "Undo",
+                      onClick: () => studio.undo(),
+                    },
+                  });
+                  void id;
+                }}
+                onDismiss={() => studio.setSelection(null, [])}
+              />
+            ) : null}
+            {/* Multi-select / sketch keep the orbit ring; single CAD uses dial. */}
             {!ui.clientView &&
             selectedLive &&
             ui.tool !== "zone" &&
+            !(
+              !ui.frameOn &&
+              !isTiltActive(ui.tiltDeg) &&
+              ui.groupIds.length <= 1 &&
+              (ui.mode === "cad" || ui.mode === "survey")
+            ) &&
             (chrome.selectionRing ||
               ui.mode === "cad" ||
               ui.mode === "sketch" ||
@@ -2851,63 +2974,31 @@ export function HandoffDesignStudio({
         ) : null}
 
         {chrome.ambientRibbon ? (
-          <AmbientRibbon
+          <ToolDock
             tool={ui.tool}
             mode={ui.mode}
             servicesEdit={ui.mode === "cad" && ui.servicesEdit}
             locked={ui.locked}
-            canUndo={studio.canUndo}
-            canRedo={studio.canRedo}
-            parchmentPeel={ui.parchmentPeel}
-            hasAerial={Boolean(liveAerial)}
-            anchorXPct={instrumentAnchor.x}
-            anchorYPct={instrumentAnchor.y}
-            summoned={instrumentsSummoned}
-            onDismissSummon={() => setInstrumentsSummoned(false)}
+            night={darkLens}
+            gridOn={gridStudioOpen}
             onTool={(t) => {
-              setInstrumentsSummoned(true);
               studio.setTool(t);
             }}
             onMeasure={() => {
-              setInstrumentsSummoned(true);
               studio.setTool(ui.tool === "measure" ? "pan" : "measure");
             }}
-            onUndo={studio.undo}
-            onRedo={studio.redo}
-            onZoom={(delta) => {
-              studio.setUi({ zoom: zoomByRibbonDelta(ui.zoom, delta) });
-            }}
-            onFit={() => {
-              if (ui.frameOn) {
-                fitSeedKeyRef.current = null;
-                studio.setUi({
-                  panX: 0,
-                  panY: 0,
-                  sheetScaleDenom: 100,
-                });
-                return;
-              }
-              if (ui.foundationCleanse) {
-                studio.setUi({ sheetScaleDenom: 100 });
-              }
-              studio.fitOutdoorView();
-            }}
-            onParchmentPeel={(parchmentPeel) => studio.setUi({ parchmentPeel })}
-            markId={pointerMarkId}
-            onPreviewMark={setPointerMarkPreview}
-            onMarkId={(id) => {
-              setPointerMarkId(id);
-              savePointerMarkId(id);
-              setPointerMarkPreview(null);
-            }}
+            onToggleGrid={() => setGridStudioOpen((v) => !v)}
           />
         ) : null}
 
+        {dialHint && planOn && !ui.frameOn ? (
+          <DialHintPill onDismiss={() => setDialHint(false)} />
+        ) : null}
 
         {/*
           Inventory frost popup — Soft / Hard / Trees / Water / Library.
-          Add-only: placing assets summons the popup at the cursor. Paint fills
-          live in the persistent SwatchTray furniture, not a floating popup.
+          Add-only: placing assets summons the popup at the cursor. Fill
+          swatches summon beside the tool dock on Add/Paint.
         */}
         {chrome.inventoryPopup && ui.tool === "add" ? (
           <KitAssetDock
@@ -3156,6 +3247,7 @@ export function HandoffDesignStudio({
             activeSwatch={ui.paintSwatch}
             armed={ui.tool === "paint" && !eyedropArmed}
             eyedropOn={eyedropArmed}
+            night={darkLens}
             onPick={(t) => {
               setEyedropArmed(false);
               studio.setUi({ paintSwatch: t, tool: "paint" });
@@ -3165,7 +3257,7 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {swatchTrayOn && (studio.canUndo || studio.canRedo) ? (
+        {undoFilmOn && (studio.canUndo || studio.canRedo) ? (
           <div className={css.undoFilmstrip} data-testid="undo-filmstrip">
             <button
               type="button"
@@ -3210,7 +3302,7 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {swatchTrayOn &&
+        {undoFilmOn &&
         studio.boundary.length < 3 &&
         studio.items.length === 0 &&
         studio.strokes.length === 0 ? (
@@ -3264,6 +3356,11 @@ export function HandoffDesignStudio({
             setAnnotateDraft("");
             setAnnotatePhase("place");
             studio.setUi({ cmdOpen: false, cmdQuery: "", tool: "pan" });
+          }}
+          onZoomToFit={() => {
+            studio.setUi({ cmdOpen: false, cmdQuery: "" });
+            if (ui.selectedId) studio.fitSelectionView();
+            else studio.fitOutdoorView();
           }}
         />
 

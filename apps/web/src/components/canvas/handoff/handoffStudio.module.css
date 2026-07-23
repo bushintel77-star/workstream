@@ -913,7 +913,7 @@
 
 .undoFilmstrip {
   position: absolute;
-  left: 74px;
+  left: 78px;
   bottom: 14px;
   z-index: 18;
   display: flex;

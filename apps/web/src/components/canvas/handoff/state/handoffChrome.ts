@@ -34,7 +34,7 @@ export type HandoffChrome = {
   sunGrowth: boolean;
   /** AI coach dock (canvas float — prefer Ask AI on selection / sidecar) */
   aiCoach: boolean;
-  /** Ambient instruments (layers peel) — summon only */
+  /** Ambient instruments — superseded by fixed ToolDock; flag still gates dock visibility. */
   ambientRibbon: boolean;
   /** Selection orbit (delete / lock / Ask AI) — outside the glyph */
   selectionRing: boolean;

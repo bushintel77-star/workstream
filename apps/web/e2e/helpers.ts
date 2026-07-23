@@ -23,17 +23,16 @@ export async function openCommandPalette(page: Page) {
   });
 }
 
-/** Summon transient drawing instruments from the empty canvas margin. */
-export async function summonCanvasInstruments(page: Page) {
-  const board = page.getByTestId("cad-plan-board");
-  await expect(board).toBeVisible({ timeout: 15_000 });
-  const box = await board.boundingBox();
-  if (!box) throw new Error("CAD board has no bounding box");
-  // Bottom-right stays outside the title lot and clear of left/top canvas HUDs.
-  await page.mouse.click(box.x + box.width - 12, box.y + box.height - 12);
-  await expect(page.getByTestId("instrument-hub")).toBeVisible({
-    timeout: 10_000,
+/** Drawing tools live in the fixed left tool dock — always visible in plan modes. */
+export async function expectToolDock(page: Page) {
+  await expect(page.getByTestId("tool-dock")).toBeVisible({
+    timeout: 15_000,
   });
+}
+
+/** @deprecated Prefer expectToolDock — instruments are no longer margin-summoned. */
+export async function summonCanvasInstruments(page: Page) {
+  await expectToolDock(page);
 }
 
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */

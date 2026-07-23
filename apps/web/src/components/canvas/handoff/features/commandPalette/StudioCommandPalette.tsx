@@ -33,6 +33,8 @@ type Props = {
   onRedo: () => void;
   /** Arm hand-lettered annotation placement (next click on plan). */
   onAnnotate?: () => void;
+  /** Fit outdoor / selection camera (zoom column removed). */
+  onZoomToFit?: () => void;
 };
 
 function matches(cmd: StudioCommand, q: string) {
@@ -63,6 +65,7 @@ export function StudioCommandPalette({
   onUndo,
   onRedo,
   onAnnotate,
+  onZoomToFit,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [active, setActive] = useState(0);
@@ -85,6 +88,17 @@ export function StudioCommandPalette({
                 "Place a hand-lettered note with a leader — click the plan, then type",
               keywords: "annotate note annotation leader hand letter callout",
               run: onAnnotate,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onZoomToFit
+        ? [
+            {
+              id: "zoom-to-fit",
+              label: "Zoom to fit",
+              detail: "Fit the outdoor working area in the viewport",
+              keywords: "zoom fit outdoor camera frame home",
+              run: onZoomToFit,
             } satisfies StudioCommand,
           ]
         : []),
@@ -210,6 +224,7 @@ export function StudioCommandPalette({
     onArm,
     onAskAi,
     onAnnotate,
+    onZoomToFit,
     onConvertSketch,
     onGoQuote,
     onRedo,

@@ -1,0 +1,176 @@
+.dial {
+  position: relative;
+  width: 264px;
+  height: 264px;
+  pointer-events: auto;
+  animation: dialRise 180ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  outline: none;
+}
+
+.instant {
+  animation: none;
+}
+
+@keyframes dialRise {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.arc {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.arcStroke {
+  stroke: rgba(90, 70, 80, 0.35);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+
+.dialNight .arcStroke {
+  stroke: rgba(236, 239, 244, 0.35);
+}
+
+.slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: none;
+  border-radius: 999px;
+  background: var(--hc-frost, rgba(255, 248, 250, 0.9));
+  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.12);
+  color: var(--hc-ink, #241318);
+  cursor: grab;
+  padding: 0;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.slot:hover,
+.slotFocus {
+  background: rgba(255, 211, 222, 0.95);
+}
+
+.slotDanger {
+  color: #c2455f;
+}
+
+.dialNight .slot {
+  background: rgba(28, 36, 48, 0.88);
+  color: rgba(236, 239, 244, 0.92);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.dialNight .slot:hover,
+.dialNight .slotFocus {
+  background: rgba(143, 176, 255, 0.28);
+  color: #8fb0ff;
+}
+
+.slotGlyph {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.slotCap {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 6.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  max-width: 36px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.swapRail {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: var(--hc-frost, rgba(255, 248, 250, 0.92));
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  box-shadow: 0 6px 20px rgba(42, 23, 29, 0.12);
+  max-width: 240px;
+  overflow-x: auto;
+}
+
+.dialNight .swapRail {
+  background: rgba(28, 36, 48, 0.92);
+  border-color: rgba(143, 176, 255, 0.22);
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+  padding: 4px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+.swatchOn {
+  background: rgba(255, 211, 222, 0.45);
+}
+
+.dialNight .swatchOn {
+  background: rgba(143, 176, 255, 0.22);
+}
+
+.swatchSym {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+}
+
+.swatchWash {
+  width: 22px;
+  height: 16px;
+  border-radius: 4px;
+  background: rgba(90, 122, 72, 0.45);
+}
+
+.swatchWash[data-type="paving"] {
+  background: rgba(70, 78, 88, 0.55);
+}
+
+.swatchWash[data-type="deck"] {
+  background: rgba(140, 98, 58, 0.5);
+}
+
+.swatchWash[data-type="lawn"] {
+  background: rgba(74, 112, 58, 0.55);
+}
+
+.swatchName {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}

@@ -1778,6 +1778,38 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate, state.ui.locked, state.ui.paintSwatch],
   );
 
+  const duplicateSelected = useCallback(() => {
+    if (state.ui.locked) return;
+    const id = state.ui.selectedId;
+    if (!id) return;
+    const src = state.doc.items.find((i) => i.id === id && !i.ghost);
+    if (!src) return;
+    const newId = crypto.randomUUID();
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        items: [
+          ...snap.items,
+          {
+            ...src,
+            id: newId,
+            x: Math.min(96, src.x + 3),
+            y: Math.min(96, src.y + 3),
+            ghost: false,
+          },
+        ],
+      },
+    }));
+    setUi({ selectedId: newId, groupIds: [newId] });
+    playMaterialFoley(src.t);
+  }, [
+    mutate,
+    setUi,
+    state.doc.items,
+    state.ui.locked,
+    state.ui.selectedId,
+  ]);
+
   /** Clock-face rotate (±1 hour = 30°) for the selection. */
   const rotateSelectedClock = useCallback(
     (hours: number) => {
@@ -2608,6 +2640,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     deleteSelected,
     changeSelectedType,
     paintItem,
+    duplicateSelected,
     rotateSelectedClock,
     patchSelectedDbh,
     snapSheetScale,
