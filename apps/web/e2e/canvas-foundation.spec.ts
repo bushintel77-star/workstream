@@ -50,6 +50,14 @@ test.describe("Canvas foundation honesty", () => {
       "Existing dwelling outline unavailable",
       { timeout: 15_000 },
     );
+    // Survey auto-opens the checklist in the right data lane; the compact
+    // measures chip yields the corner while any lane occupant is open (lane
+    // law) and returns once the lane is free.
+    await expect(page.getByTestId("survey-checklist")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
+    await page.getByRole("button", { name: "Close checklist" }).click();
     await expect(page.getByTestId("canvas-measure-summary")).toBeVisible();
     await expect(
       page.getByTestId("canvas-measure-summary-building"),

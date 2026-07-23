@@ -2931,12 +2931,14 @@ export function HandoffDesignStudio({
             </div>
           </div>
           {/* Dedicated portal mount — sibling of the camera, never an ancestor
-              of chrome call-sites. Portaling into an ancestor collapses wrappers. */}
+              of chrome call-sites. Portaling into an ancestor collapses wrappers.
+              NOT aria-hidden: CameraChrome portals interactive chrome (tool
+              dock, checklist, measures, hint pills) into this node — hiding it
+              removed every docked control from the accessibility tree. */}
           <div
             data-testid="camera-chrome-root"
             data-camera-chrome-root="1"
             className={css.cameraChromeRoot}
-            aria-hidden
           />
           </>
         ) : null}
