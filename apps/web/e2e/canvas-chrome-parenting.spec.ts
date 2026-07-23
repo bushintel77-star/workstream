@@ -38,15 +38,21 @@ test.describe("Canvas chrome outside camera", () => {
     const box = await board.boundingBox();
     expect(box).toBeTruthy();
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    await page.mouse.wheel(0, 900);
-    await page.mouse.wheel(0, 900);
 
-    const transform = await page
-      .getByTestId("zoom-world")
-      .evaluate((el) => getComputedStyle(el).transform);
-    const scaleMatch = /matrix\(([^,]+)/.exec(transform);
-    expect(scaleMatch).toBeTruthy();
-    expect(Number(scaleMatch![1])).toBeLessThan(0.95);
+    // The quiet Vicmap hydrate resets zoom when it resolves (slow in CI) —
+    // keep wheeling until the zoom-out sticks rather than racing it.
+    await expect
+      .poll(
+        async () => {
+          await page.mouse.wheel(0, 900);
+          const transform = await page
+            .getByTestId("zoom-world")
+            .evaluate((el) => getComputedStyle(el).transform);
+          return Number(/matrix\(([^,]+)/.exec(transform)?.[1] ?? 1);
+        },
+        { timeout: 15_000 },
+      )
+      .toBeLessThan(0.95);
 
     const after = await bar.boundingBox();
     expect(after).toBeTruthy();
