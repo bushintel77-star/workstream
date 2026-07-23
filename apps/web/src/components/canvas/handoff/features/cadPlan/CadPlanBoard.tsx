@@ -43,6 +43,7 @@ import {
   type StudioTool,
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
+import { SUN_SHADOW, sunShadowFill } from "../render/renderTokens";
 import {
   ITEM_LAYER,
   type LayerKey,
@@ -940,8 +941,12 @@ export function CadPlanBoard({
               <polygon
                 key={`ctx${i}`}
                 points={ptsAttr(ring)}
-                className={css.cadContextLot}
+                fill={lines.context.fill ?? "transparent"}
+                stroke={lines.context.stroke}
+                strokeWidth={lines.context.strokeWidth}
+                opacity={lines.context.opacity ?? 1}
                 vectorEffect="non-scaling-stroke"
+                data-testid="cad-context-lot"
               />
             ))
           : null}
@@ -964,6 +969,18 @@ export function CadPlanBoard({
               : undefined
           }
         />
+        {building.length >= 3 && buildingCentroid ? (
+          <ellipse
+            data-testid="dwelling-sun-shadow"
+            cx={buildingCentroid.x + SUN_SHADOW.dxPct}
+            cy={buildingCentroid.y + SUN_SHADOW.dwellingDyPct}
+            rx={SUN_SHADOW.dwellingRxPct}
+            ry={SUN_SHADOW.dwellingRyPct}
+            fill={sunShadowFill(darkOn && !frameOn)}
+            style={{ mixBlendMode: "multiply" }}
+            pointerEvents="none"
+          />
+        ) : null}
         {building.length >= 3 ? (
           <polygon
             data-testid="building-footprint"
@@ -1603,7 +1620,11 @@ export function CadPlanBoard({
                   pointerEvents: "none",
                 }}
               >
-                <StudioGlyph type={it.t} ink={!darkOn || frameOn} />
+                <StudioGlyph
+                  type={it.t}
+                  ink={!darkOn || frameOn}
+                  night={darkOn && !frameOn}
+                />
               </div>
               {previewType ? (
                 <div
@@ -1611,7 +1632,11 @@ export function CadPlanBoard({
                   data-testid="swatch-hover-preview"
                   aria-hidden
                 >
-                  <StudioGlyph type={previewType} ink={!darkOn || frameOn} />
+                  <StudioGlyph
+                    type={previewType}
+                    ink={!darkOn || frameOn}
+                    night={darkOn && !frameOn}
+                  />
                 </div>
               ) : null}
               {flagged && (it.t === "paving" || it.t === "deck") ? (
