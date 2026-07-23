@@ -136,6 +136,8 @@ import { ViewNorthControl } from "./features/viewRotate/ViewNorthControl";
 import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
 import { TiltHintPill } from "./features/tilt/TiltHintPill";
 import {
+  TILT_ANIM_MS_FAST,
+  TILT_ANIM_MS_SLOW,
   TILT_DEG,
   isTiltActive,
   settleTiltDeg,
@@ -234,6 +236,7 @@ export function HandoffDesignStudio({
   const [tiltAnimKind, setTiltAnimKind] = useState<"fast" | "slow" | null>(
     null,
   );
+  const tiltAnimClearTimerRef = useRef<number | null>(null);
   const tiltDragRef = useRef<{ startY: number; startDeg: number } | null>(
     null,
   );
@@ -529,22 +532,55 @@ export function HandoffDesignStudio({
     tiltDegRef.current = ui.tiltDeg;
   }, [ui.tiltDeg]);
 
+  /**
+   * Drop the temp transition class. transitionend never fires when a
+   * transition is cancelled (wheel mid-flatten, display:none) — without this
+   * the class sticks and every wheel tick animates.
+   */
+  const clearTiltAnimKind = useCallback(() => {
+    if (tiltAnimClearTimerRef.current != null) {
+      window.clearTimeout(tiltAnimClearTimerRef.current);
+      tiltAnimClearTimerRef.current = null;
+    }
+    setTiltAnimKind(null);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (tiltAnimClearTimerRef.current != null) {
+        window.clearTimeout(tiltAnimClearTimerRef.current);
+      }
+    },
+    [],
+  );
+
   const animateTiltTo = useCallback(
     (nextDeg: number, slow = false) => {
       const clamped = Math.max(0, Math.min(60, nextDeg));
       if (Math.abs(tiltDegRef.current - clamped) < 0.05) {
-        setTiltAnimKind(null);
+        clearTiltAnimKind();
         return;
       }
       if (prefersReducedMotion()) {
         studio.setUi({ tiltDeg: clamped });
-        setTiltAnimKind(null);
+        clearTiltAnimKind();
         return;
+      }
+      if (tiltAnimClearTimerRef.current != null) {
+        window.clearTimeout(tiltAnimClearTimerRef.current);
+        tiltAnimClearTimerRef.current = null;
       }
       setTiltAnimKind(slow ? "slow" : "fast");
       studio.setUi({ tiltDeg: clamped });
+      tiltAnimClearTimerRef.current = window.setTimeout(
+        () => {
+          tiltAnimClearTimerRef.current = null;
+          setTiltAnimKind(null);
+        },
+        slow ? TILT_ANIM_MS_SLOW : TILT_ANIM_MS_FAST,
+      );
     },
-    [studio],
+    [studio, clearTiltAnimKind],
   );
 
   /** Force flat when leaving plan / entering Fit / elevation / quote / share. */
@@ -553,11 +589,11 @@ export function HandoffDesignStudio({
       ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
     if (!planMode || ui.frameOn) {
       if (ui.tiltDeg !== 0) studio.setUi({ tiltDeg: 0 });
-      setTiltAnimKind((k) => (k == null ? k : null));
+      clearTiltAnimKind();
       setTiltPauseHint((v) => (v ? false : v));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ui.mode, ui.frameOn, ui.tiltDeg]);
+  }, [ui.mode, ui.frameOn, ui.tiltDeg, clearTiltAnimKind]);
 
   /** Pause hint tracks the lens. */
   useEffect(() => {
@@ -635,7 +671,7 @@ export function HandoffDesignStudio({
       const startDeg = tiltDegRef.current;
       let lastY = startY;
       tiltDragRef.current = { startY, startDeg };
-      setTiltAnimKind(null);
+      clearTiltAnimKind();
       el.setPointerCapture?.(e.pointerId);
       const onMove = (ev: PointerEvent) => {
         lastY = ev.clientY;
@@ -662,7 +698,7 @@ export function HandoffDesignStudio({
       el.removeEventListener("pointerdown", onPointerDownCapture, {
         capture: true,
       });
-  }, [studio, ui.mode, ui.frameOn, animateTiltTo]);
+  }, [studio, ui.mode, ui.frameOn, animateTiltTo, clearTiltAnimKind]);
 
   /** Restore micro grid studio prefs for this project session. */
   useEffect(() => {
@@ -2063,7 +2099,11 @@ export function HandoffDesignStudio({
               data-tilt-deg={ui.tiltDeg.toFixed(1)}
               onTransitionEnd={(e) => {
                 if (e.propertyName !== "transform") return;
-                setTiltAnimKind(null);
+                clearTiltAnimKind();
+              }}
+              onTransitionCancel={(e) => {
+                if (e.propertyName !== "transform") return;
+                clearTiltAnimKind();
               }}
               style={{
                 transformOrigin: `${planFocusX}% ${planFocusY}%`,

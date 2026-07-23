@@ -4,6 +4,8 @@ import {
   TILT_EAVE_M,
   TILT_MAX,
   TILT_SNAP_FLAT,
+  TILT_ANIM_MS_FAST,
+  TILT_ANIM_MS_SLOW,
   billboardStyle,
   isTiltActive,
   pxPerMetre,
@@ -17,6 +19,8 @@ describe("tiltMath", () => {
     expect(TILT_MAX).toBe(60);
     expect(TILT_SNAP_FLAT).toBe(15);
     expect(TILT_EAVE_M).toBe(5);
+    expect(TILT_ANIM_MS_FAST).toBe(700);
+    expect(TILT_ANIM_MS_SLOW).toBe(2500);
   });
 
   it("pxPerMetre scales with board width and zoom", () => {

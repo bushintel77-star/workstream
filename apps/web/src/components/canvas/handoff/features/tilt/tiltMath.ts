@@ -15,6 +15,14 @@ export const TILT_SNAP_FLAT = 15;
 /** Dwelling eave height — same constant Fit sheet elevation profile uses. */
 export const TILT_EAVE_M = 5;
 
+/**
+ * Safety clears for the temporary transform transition class.
+ * Slightly above the CSS durations (420ms / 2000ms) so a missed
+ * transitionend / transitioncancel cannot leave the class stuck.
+ */
+export const TILT_ANIM_MS_FAST = 700;
+export const TILT_ANIM_MS_SLOW = 2500;
+
 /** Board px represented by one metre at the current camera zoom. */
 export function pxPerMetre(
   boardW: number,
