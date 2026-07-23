@@ -104,6 +104,35 @@ describe("site_frame bridge", () => {
     expect(resolveHydratedBuilding(undefined, undefined, seedBuilding)).toBe(
       seedBuilding,
     );
+    // Live projects never boot with the demo dwelling.
+    expect(
+      resolveHydratedBuilding(undefined, undefined, seedBuilding, {
+        liveProject: true,
+      }),
+    ).toEqual([]);
+  });
+
+  it("persists building_source on site_frame", () => {
+    const frame = snapshotToSiteFrame({
+      boundary: [
+        { x: 10, y: 10 },
+        { x: 90, y: 10 },
+        { x: 90, y: 90 },
+        { x: 10, y: 90 },
+      ],
+      building: [
+        { x: 30, y: 30 },
+        { x: 60, y: 30 },
+        { x: 60, y: 55 },
+        { x: 30, y: 55 },
+      ],
+      easements: [],
+      services: [],
+      levels: [],
+      buildingSource: "vicmap",
+    });
+    expect(frame.building_source).toBe("vicmap");
+    expect(siteFrameToSnapshot(frame).buildingSource).toBe("vicmap");
   });
 
   it("round-trips authored DBH on existing trees", () => {

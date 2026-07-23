@@ -1,5 +1,20 @@
 import type { PctPoint } from "./types";
 
+/**
+ * Letterbox transform that mapped a title ring into board `%`.
+ * Apply the same transform to house / easement canvas-metre verts so they
+ * co-register with the parcel instead of getting their own fit.
+ */
+export type CanvasMetresTransform = {
+  minX: number;
+  maxY: number;
+  /** Percent of board per canvas metre (isotropic). */
+  scale: number;
+  w: number;
+  h: number;
+  padPct: number;
+};
+
 export type CanvasMetresFit = {
   points: PctPoint[];
   /**
@@ -9,6 +24,8 @@ export type CanvasMetresFit = {
    * instead of the 110 m default. Null when the ring is degenerate.
    */
   boardWidthM: number | null;
+  /** Null when the ring is degenerate. */
+  transform: CanvasMetresTransform | null;
 };
 
 /**
@@ -20,7 +37,9 @@ export function fitCanvasMetresRing(
   verts: Array<{ x: number; y: number }>,
   padPct = 8,
 ): CanvasMetresFit {
-  if (verts.length < 3) return { points: [], boardWidthM: null };
+  if (verts.length < 3) {
+    return { points: [], boardWidthM: null, transform: null };
+  }
   const xs = verts.map((v) => v.x);
   const ys = verts.map((v) => v.y);
   const minX = Math.min(...xs);
@@ -32,12 +51,28 @@ export function fitCanvasMetresRing(
   const avail = 100 - 2 * padPct;
   // % per metre — isotropic, so the whole board spans 100/scale metres.
   const scale = Math.min(avail / w, avail / h);
-  const points = verts.map((v) => ({
-    x: (100 - w * scale) / 2 + (v.x - minX) * scale,
-    y: (100 - h * scale) / 2 + (maxY - v.y) * scale,
-  }));
+  const transform: CanvasMetresTransform = {
+    minX,
+    maxY,
+    scale,
+    w,
+    h,
+    padPct,
+  };
+  const points = applyCanvasMetresTransform(verts, transform);
   const boardWidthM = Number.isFinite(scale) && scale > 0 ? 100 / scale : null;
-  return { points, boardWidthM };
+  return { points, boardWidthM, transform };
+}
+
+/** Project canvas-metre verts with an existing title-fit transform. */
+export function applyCanvasMetresTransform(
+  verts: Array<{ x: number; y: number }>,
+  t: CanvasMetresTransform,
+): PctPoint[] {
+  return verts.map((v) => ({
+    x: (100 - t.w * t.scale) / 2 + (v.x - t.minX) * t.scale,
+    y: (100 - t.h * t.scale) / 2 + (t.maxY - v.y) * t.scale,
+  }));
 }
 
 /** Points-only convenience over `fitCanvasMetresRing`. */

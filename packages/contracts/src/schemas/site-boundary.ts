@@ -115,3 +115,22 @@ export const BoundaryAutoTraceRequestSchema = z.object({
 export type BoundaryAutoTraceRequest = z.infer<
   typeof BoundaryAutoTraceRequestSchema
 >;
+
+/** Canvas-metre dwelling verts co-registered with the auto-traced title. */
+export const BoundaryAutoTraceBuildingSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+export const BoundaryAutoTraceResponseSchema = z.object({
+  boundary: SiteBoundarySchema,
+  /**
+   * Existing dwelling in the same canvas-metre frame as `boundary.vertices`.
+   * Empty when Vicmap/survey has no building footprint.
+   */
+  building_canvas: z.array(BoundaryAutoTraceBuildingSchema).default([]),
+  building_source: z.enum(["vicmap"]).nullable().default(null),
+});
+export type BoundaryAutoTraceResponse = z.infer<
+  typeof BoundaryAutoTraceResponseSchema
+>;

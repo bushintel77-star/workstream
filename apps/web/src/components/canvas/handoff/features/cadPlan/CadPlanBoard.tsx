@@ -123,6 +123,11 @@ type Props = {
   titleLocked?: boolean;
   /** Title CAD nodes locked (no drag). */
   titleBoundaryLocked?: boolean;
+  /**
+   * Provenance of the dwelling ring — drives honesty copy on the footprint.
+   * Never claim Vicmap for seed / unknown geometry.
+   */
+  buildingSource?: "vicmap" | "traced" | "empty";
   /** Optional cadastral lot area (Vicmap) for centre CAD label. */
   lotAreaM2?: number | null;
   /** Live site-area calculation from the same schedule as the measure ledger. */
@@ -274,6 +279,7 @@ export function CadPlanBoard({
   foundationCleanse = false,
   titleLocked = false,
   titleBoundaryLocked = false,
+  buildingSource = "empty",
   lotAreaM2 = null,
   siteAreas = null,
   siteLabel = null,
@@ -1163,6 +1169,7 @@ export function CadPlanBoard({
         {building.length >= 3 ? (
           <polygon
             data-testid="building-footprint"
+            data-building-source={buildingSource}
             points={ptsAttr(building)}
             fill={bldFill}
             stroke={bldStroke}
@@ -1177,8 +1184,11 @@ export function CadPlanBoard({
             }
           >
             <title>
-              Existing dwelling envelope · Vicmap/site context only · confirm
-              before relying on dimensions
+              {buildingSource === "vicmap"
+                ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
+                : buildingSource === "traced"
+                  ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
+                  : "Existing dwelling envelope · confirm on site before relying on dimensions"}
             </title>
           </polygon>
         ) : null}

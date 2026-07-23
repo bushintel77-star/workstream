@@ -598,14 +598,27 @@ export async function putSiteBoundaryApi(
   );
 }
 
+export type AutoTraceBoundaryResult = {
+  boundary: SiteBoundaryLite;
+  /** Canvas-metre dwelling verts co-registered with the title (may be empty). */
+  building_canvas: Array<{ x: number; y: number }>;
+  building_source: "vicmap" | null;
+};
+
 export async function autoTraceBoundaryApi(
   projectId: string,
   preferGis = true,
-): Promise<{ boundary: SiteBoundaryLite }> {
-  return apiPost<{ boundary: SiteBoundaryLite }>(
-    `/projects/${projectId}/boundary/auto-trace`,
-    { prefer_gis: preferGis },
-  );
+): Promise<AutoTraceBoundaryResult> {
+  const raw = await apiPost<Partial<AutoTraceBoundaryResult> & {
+    boundary: SiteBoundaryLite;
+  }>(`/projects/${projectId}/boundary/auto-trace`, {
+    prefer_gis: preferGis,
+  });
+  return {
+    boundary: raw.boundary,
+    building_canvas: raw.building_canvas ?? [],
+    building_source: raw.building_source ?? null,
+  };
 }
 
 export async function lockBoundaryApi(

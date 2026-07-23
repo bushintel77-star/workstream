@@ -7,7 +7,7 @@ import {
 import { requireAuth } from "../plugins/auth";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 import {
-  autoTraceSiteBoundary,
+  autoTraceSiteBoundaryWithBuilding,
   getSiteBoundaryDoc,
   ingestBoundaryGeoJson,
   lockSiteBoundaryDoc,
@@ -78,13 +78,13 @@ export default async function boundaryRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: body.error.flatten() });
       }
       try {
-        const boundary = await autoTraceSiteBoundary(
+        const result = await autoTraceSiteBoundaryWithBuilding(
           fastify.store,
           ownerId,
           projectId,
           body.data.prefer_gis,
         );
-        return reply.code(201).send({ boundary });
+        return reply.code(201).send(result);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Auto-trace failed";
