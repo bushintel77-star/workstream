@@ -256,6 +256,22 @@ Answer **yes** to every item or do not merge:
 7. Are Layers left + AI/measures right, both collapsed by default?
 8. Is TPZ meaning on-plan (zone), not a modal card?
 
+### Seamless integration (no bolt-on toggles) — binding for every new feature
+
+9. Does the feature live inside an **existing surface, lens, or gesture**
+   (view menu, client view, Cmd+K, drag/wheel gesture, contextual popup)
+   rather than adding a new persistent button to the top ribbon?
+   The ribbon is a fixed budget, not a landing strip — a new top-level
+   toggle needs the same justification as a new page.
+10. Is the feature **discoverable in context** (hint pill on first relevant
+    action, Cmd+K entry, cursor affordance) instead of relying on the user
+    noticing a new icon?
+11. Does it **degrade invisibly** — off state indistinguishable from the app
+    before the feature existed (no reserved blank space, no dead chrome,
+    no extra empty state)?
+12. Does entering/leaving the feature **animate from the current camera and
+    return to it** (no jump cuts, `prefers-reduced-motion` respected)?
+
 ---
 
 ## 7. Revision history
@@ -264,3 +280,4 @@ Answer **yes** to every item or do not merge:
 | --- | --- |
 | 2026-07-20 | Written after canvas inventory was incorrectly shipped as a fixed opaque bottom overlay. Codifies frost popup + disappearing UI + blush tokens as binding. |
 | 2026-07-20 | Compliance rebuild: `inventoryPopup` chrome flag (Add/Paint only); margin-clamped summon; instrument dismiss 3s; paint air-lock cursor + boundary snap. |
+| 2026-07-23 | Checklist items 9–12: seamless integration bar — new features must land in existing lenses/gestures, be discoverable in context, degrade invisibly, and animate from the live camera. No bolt-on ribbon toggles. |

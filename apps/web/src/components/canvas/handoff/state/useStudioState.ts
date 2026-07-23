@@ -216,6 +216,11 @@ type Ui = {
   viewRotationDeg: number;
   /** Active CAD view-rotation step size. */
   viewRotationStepDeg: 15 | 45 | 90;
+  /**
+   * View-only tilt lens (deg). 0 = flat / identical to pre-feature camera.
+   * Ctrl/Cmd+drag continuous 0→60; Cmd+K / client view settle at 55.
+   */
+  tiltDeg: number;
   savedTick: number;
   /** Monotonic canvas revision after each successful autosave. */
   saveRevision: number;
@@ -434,6 +439,7 @@ function initialState(opts: {
       panY: 0,
       viewRotationDeg: 0,
       viewRotationStepDeg: 15,
+      tiltDeg: 0,
       savedTick: 0,
       saveRevision: hasCanvas ? 1 : 0,
       aerialUri: null,
@@ -2513,7 +2519,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setTool: (tool: StudioTool) => {
       if (tool === "reset") {
         resetSite();
-        setUi({ tool: "pan", addOpen: false, drawPoly: null, drawCursor: null });
+        setUi({
+          tool: "pan",
+          addOpen: false,
+          drawPoly: null,
+          drawCursor: null,
+          tiltDeg: 0,
+        });
         return;
       }
       if (tool === "lock") {
@@ -2524,6 +2536,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           addOpen: false,
           drawPoly: null,
           drawCursor: null,
+          tiltDeg: 0,
         });
         return;
       }
@@ -2536,6 +2549,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           tool === "paint" ? state.ui.paintSwatch || "lawn" : state.ui.paintSwatch,
         drawPoly: tool === "trace" ? state.ui.drawPoly : null,
         drawCursor: tool === "trace" ? state.ui.drawCursor : null,
+        // Tilt exit is animated by HandoffDesignStudio (temp CSS class).
       });
     },
     setPaper: (paper: PaperSize) => setUi({ paper }),

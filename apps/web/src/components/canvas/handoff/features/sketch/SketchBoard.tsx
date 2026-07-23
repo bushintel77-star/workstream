@@ -41,6 +41,11 @@ type Props = {
   formalizing?: boolean;
   /** CAD reference underlay: shows ink without intercepting plan input. */
   readOnly?: boolean;
+  /**
+   * Suppress the convert bar / hint chrome (e.g. Fit sheet on — the sheet is
+   * a proofing lens; strokes stay visible, tools step aside).
+   */
+  hideChrome?: boolean;
   /** Report pen/eraser + tip so the parent owns the canvas cursor. */
   onChromeChange?: (chrome: {
     tool: SketchTool;
@@ -71,6 +76,7 @@ export function SketchBoard({
   onFormalizeToCad,
   formalizing = false,
   readOnly = false,
+  hideChrome = false,
   onChromeChange,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -238,7 +244,7 @@ export function SketchBoard({
           );
         })}
       </svg>
-      {!readOnly ? (
+      {!readOnly && !hideChrome ? (
         <CameraChrome anchorRef={rootRef}>
           <div className={css.bar} data-testid="sketch-convert-bar">
             <p className={css.hint}>

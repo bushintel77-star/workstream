@@ -134,6 +134,13 @@ import {
 } from "./geometry/canvasViewRotation";
 import { ViewNorthControl } from "./features/viewRotate/ViewNorthControl";
 import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
+import { TiltHintPill } from "./features/tilt/TiltHintPill";
+import {
+  TILT_DEG,
+  isTiltActive,
+  settleTiltDeg,
+  tiltFromDragDelta,
+} from "./features/tilt/tiltMath";
 import {
   formalizeSketchToCadAction,
   lookupCadastralTitleAction,
@@ -223,6 +230,16 @@ export function HandoffDesignStudio({
   const [spacePanArmed, setSpacePanArmed] = useState(false);
   const [isPanningActive, setIsPanningActive] = useState(false);
   const panBaseRef = useRef({ x: 0, y: 0 });
+  /** Temporary CSS class on .zoomWorld only during tilt enter/exit (not wheel). */
+  const [tiltAnimKind, setTiltAnimKind] = useState<"fast" | "slow" | null>(
+    null,
+  );
+  const tiltDragRef = useRef<{ startY: number; startDeg: number } | null>(
+    null,
+  );
+  const [tiltDiscoverHint, setTiltDiscoverHint] = useState(false);
+  const [tiltPauseHint, setTiltPauseHint] = useState(false);
+  const tiltHintSeenRef = useRef(false);
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
@@ -502,6 +519,151 @@ export function HandoffDesignStudio({
       });
   }, [studio, ui.mode]);
 
+  const prefersReducedMotion = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /** Keep tiltDeg readable inside long-lived gesture / tool listeners. */
+  const tiltDegRef = useRef(ui.tiltDeg);
+  useEffect(() => {
+    tiltDegRef.current = ui.tiltDeg;
+  }, [ui.tiltDeg]);
+
+  const animateTiltTo = useCallback(
+    (nextDeg: number, slow = false) => {
+      const clamped = Math.max(0, Math.min(60, nextDeg));
+      if (Math.abs(tiltDegRef.current - clamped) < 0.05) {
+        setTiltAnimKind(null);
+        return;
+      }
+      if (prefersReducedMotion()) {
+        studio.setUi({ tiltDeg: clamped });
+        setTiltAnimKind(null);
+        return;
+      }
+      setTiltAnimKind(slow ? "slow" : "fast");
+      studio.setUi({ tiltDeg: clamped });
+    },
+    [studio],
+  );
+
+  /** Force flat when leaving plan / entering Fit / elevation / quote / share. */
+  useEffect(() => {
+    const planMode =
+      ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+    if (!planMode || ui.frameOn) {
+      if (ui.tiltDeg !== 0) studio.setUi({ tiltDeg: 0 });
+      setTiltAnimKind((k) => (k == null ? k : null));
+      setTiltPauseHint((v) => (v ? false : v));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ui.mode, ui.frameOn, ui.tiltDeg]);
+
+  /** Pause hint tracks the lens. */
+  useEffect(() => {
+    const active = isTiltActive(ui.tiltDeg);
+    setTiltPauseHint((v) => (v === active ? v : active));
+  }, [ui.tiltDeg]);
+
+  useEffect(() => {
+    if (!isTiltActive(ui.tiltDeg)) return;
+    if (!ui.selectedId && ui.groupIds.length === 0) return;
+    studio.setSelection(null, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ui.tiltDeg, ui.selectedId, ui.groupIds.length]);
+
+  /** Client view — slow 2s tilt-in flourish; flatten only when leaving client view. */
+  const clientTiltOnceRef = useRef(false);
+  const prevClientViewRef = useRef(ui.clientView);
+  useEffect(() => {
+    const wasClient = prevClientViewRef.current;
+    prevClientViewRef.current = ui.clientView;
+    if (!ui.clientView) {
+      clientTiltOnceRef.current = false;
+      if (wasClient && isTiltActive(tiltDegRef.current)) animateTiltTo(0);
+      return;
+    }
+    if (clientTiltOnceRef.current) return;
+    clientTiltOnceRef.current = true;
+    animateTiltTo(TILT_DEG, true);
+  }, [ui.clientView, animateTiltTo]);
+
+  /** Arming any edit tool animates the lens flat (no jump cut). */
+  const prevToolRef = useRef(ui.tool);
+  useEffect(() => {
+    const prev = prevToolRef.current;
+    prevToolRef.current = ui.tool;
+    if (prev === ui.tool) return;
+    const editing =
+      ui.tool === "add" ||
+      ui.tool === "paint" ||
+      ui.tool === "edit" ||
+      ui.tool === "trace" ||
+      ui.tool === "measure" ||
+      ui.tool === "zone" ||
+      ui.tool === "service" ||
+      ui.tool === "calib" ||
+      ui.tool === "level";
+    if (editing && isTiltActive(tiltDegRef.current)) animateTiltTo(0);
+  }, [ui.tool, animateTiltTo]);
+
+  /** One-time discoverability after first CAD view-rotation. */
+  useEffect(() => {
+    if (tiltHintSeenRef.current) return;
+    if (ui.mode !== "cad" || ui.frameOn || ui.clientView) return;
+    if (ui.viewRotationDeg === 0) return;
+    tiltHintSeenRef.current = true;
+    setTiltDiscoverHint(true);
+  }, [ui.viewRotationDeg, ui.mode, ui.frameOn, ui.clientView]);
+
+  /**
+   * Ctrl/Cmd + vertical drag tilts continuously. Capture-phase so it wins
+   * over marquee; release below snap threshold returns flat.
+   */
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const planMode =
+      ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+    if (!planMode || ui.frameOn) return;
+
+    const onPointerDownCapture = (e: PointerEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const startY = e.clientY;
+      const startDeg = tiltDegRef.current;
+      let lastY = startY;
+      tiltDragRef.current = { startY, startDeg };
+      setTiltAnimKind(null);
+      el.setPointerCapture?.(e.pointerId);
+      const onMove = (ev: PointerEvent) => {
+        lastY = ev.clientY;
+        studio.setUi({
+          tiltDeg: tiltFromDragDelta(startDeg, lastY - startY),
+        });
+      };
+      const onUp = () => {
+        tiltDragRef.current = null;
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        el.releasePointerCapture?.(e.pointerId);
+        const raw = tiltFromDragDelta(startDeg, lastY - startY);
+        const settled = settleTiltDeg(raw);
+        if (settled !== raw) animateTiltTo(settled);
+        else studio.setUi({ tiltDeg: settled });
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp, { once: true });
+    };
+
+    el.addEventListener("pointerdown", onPointerDownCapture, { capture: true });
+    return () =>
+      el.removeEventListener("pointerdown", onPointerDownCapture, {
+        capture: true,
+      });
+  }, [studio, ui.mode, ui.frameOn, animateTiltTo]);
+
   /** Restore micro grid studio prefs for this project session. */
   useEffect(() => {
     const prefs = loadGridStudioPrefs(projectId);
@@ -617,6 +779,11 @@ export function HandoffDesignStudio({
       }
 
       if (e.key === "Escape") {
+        if (isTiltActive(ui.tiltDeg)) {
+          e.preventDefault();
+          animateTiltTo(0);
+          return;
+        }
         if (ui.isolatedLayer) {
           e.preventDefault();
           studio.setUi({ isolatedLayer: null });
@@ -895,6 +1062,13 @@ export function HandoffDesignStudio({
    * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
    */
   const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
+
+  /**
+   * Dark is a *screen* lens — it must never leak into the Fit sheet, which
+   * is a print artifact and stays parchment regardless. `ui.darkOn` keeps
+   * the toggle state; every render path reads `darkLens`.
+   */
+  const darkLens = ui.darkOn && !ui.frameOn;
 
   /**
    * Fit sheet layout — fixed plot clip + content scale from 1:N.
@@ -1354,7 +1528,7 @@ export function HandoffDesignStudio({
 
   return (
     <div
-      className={`${css.root}${ui.darkOn ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}`}
+      className={`${css.root}${darkLens ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}`}
       data-testid="handoff-design-studio"
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
@@ -1777,9 +1951,10 @@ export function HandoffDesignStudio({
       ) : null}
 
       <div
-        className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}`}
+        className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.boardTiltPerspective}` : ""}`}
         data-testid="studio-board"
         data-panning={isPanningActive ? "1" : "0"}
+        data-tilt={isTiltActive(ui.tiltDeg) ? "1" : "0"}
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
@@ -1857,7 +2032,7 @@ export function HandoffDesignStudio({
                     draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
                   }
                   hasAerial={Boolean(liveAerial)}
-                  darkOn={ui.darkOn}
+                  darkOn={darkLens}
                   foundationCleanse={ui.foundationCleanse}
                   titleLocked={titleLocked}
                   boundarySource={ui.boundarySource}
@@ -1882,22 +2057,33 @@ export function HandoffDesignStudio({
             }
           >
             <div
-              className={css.zoomWorld}
+              className={`${css.zoomWorld}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.zoomWorldTilted}` : ""}${tiltAnimKind === "fast" ? ` ${css.zoomWorldTiltAnim}` : ""}${tiltAnimKind === "slow" ? ` ${css.zoomWorldTiltAnimSlow}` : ""}`}
               data-testid="zoom-world"
               data-print-keep="plan"
+              data-tilt-deg={ui.tiltDeg.toFixed(1)}
+              onTransitionEnd={(e) => {
+                if (e.propertyName !== "transform") return;
+                setTiltAnimKind(null);
+              }}
               style={{
                 transformOrigin: `${planFocusX}% ${planFocusY}%`,
                 /*
-                 * Camera: pan (screen px) → rotate (CAD view) → scale.
-                 * Geometry % coords never change; asset item.rot is separate.
+                 * Camera: optional view-only tilt → pan → rotate → scale.
+                 * Keep rotateX(0) in the string while the temp transition class
+                 * is on so flatten animates (then strip for pixel-identical off).
+                 * Tilt is never inverted in clientToBoardPct — editing locks out.
                  */
-                transform: `translate(${planPanX}px, ${planPanY}px) rotate(${planRotateDeg}deg) scale(${planZoom})`,
+                transform: `${
+                  isTiltActive(ui.tiltDeg) || tiltAnimKind
+                    ? `rotateX(${ui.tiltDeg}deg) `
+                    : ""
+                }translate(${planPanX}px, ${planPanY}px) rotate(${planRotateDeg}deg) scale(${planZoom})`,
                 cursor: effectiveCursor,
               }}
             >
             <AerialSlot
               uri={liveAerial}
-              dimmed={ui.darkOn}
+              dimmed={darkLens}
               frameOn={ui.frameOn}
               scanning={
                 aerialOk &&
@@ -1905,7 +2091,7 @@ export function HandoffDesignStudio({
               }
               zoom={planZoom}
               sheetScaleDenom={100}
-              darkOn={ui.darkOn}
+              darkOn={darkLens}
               foundationCleanse={ui.foundationCleanse}
               allowAerial={aerialOk}
               allowPlanUnderlay={draftingPlate && !ui.foundationCleanse}
@@ -1941,12 +2127,13 @@ export function HandoffDesignStudio({
             />
             <CadPlanBoard
               frameOn={ui.frameOn}
-              darkOn={ui.darkOn}
+              darkOn={darkLens}
               foundationCleanse={ui.foundationCleanse}
               titleLocked={titleLocked}
               titleBoundaryLocked={ui.titleBoundaryLocked}
               scaleM={scaleM}
               planZoom={planZoom}
+              tiltDeg={ui.tiltDeg}
               planPanX={planPanX}
               planPanY={planPanY}
               planFocusX={planFocusX}
@@ -2111,7 +2298,8 @@ export function HandoffDesignStudio({
             {ui.mode === "sketch" ? (
               <SketchBoard
                 strokes={studio.strokes}
-                darkOn={ui.darkOn}
+                darkOn={darkLens}
+                hideChrome={ui.frameOn}
                 formalizing={formalizing}
                 onChromeChange={onSketchChromeChange}
                 onCommit={(stroke) => {
@@ -2135,7 +2323,7 @@ export function HandoffDesignStudio({
               <SketchBoard
                 readOnly
                 strokes={studio.strokes}
-                darkOn={ui.darkOn}
+                darkOn={darkLens}
               />
             ) : null}
             {planOn && !ui.frameOn ? (
@@ -2151,7 +2339,7 @@ export function HandoffDesignStudio({
                   easements={studio.easements}
                   showCorridors={ui.mode === "survey"}
                   scaleM={scaleM}
-                  darkOn={ui.darkOn}
+                  darkOn={darkLens}
                   layerOpacity={ui.layerOpacity}
                   isolatedLayer={ui.isolatedLayer}
                   onAddLevel={studio.addSpotLevel}
@@ -2320,7 +2508,7 @@ export function HandoffDesignStudio({
             panXPct={boardSize.w > 0 ? (ui.panX / boardSize.w) * 100 : 0}
             panYPct={boardSize.h > 0 ? (ui.panY / boardSize.h) * 100 : 0}
             sheetScaleDenom={100}
-            darkOn={ui.darkOn}
+            darkOn={darkLens}
           />
         ) : null}
 
@@ -2385,6 +2573,19 @@ export function HandoffDesignStudio({
             onStep={(viewRotationStepDeg: ViewRotationStepDeg) =>
               studio.setUi({ viewRotationStepDeg })
             }
+          />
+        ) : null}
+
+        {tiltDiscoverHint && planOn && !ui.frameOn ? (
+          <TiltHintPill
+            kind="discover"
+            onDismiss={() => setTiltDiscoverHint(false)}
+          />
+        ) : null}
+        {tiltPauseHint && planOn && !ui.frameOn ? (
+          <TiltHintPill
+            kind="paused"
+            onDismiss={() => setTiltPauseHint(false)}
           />
         ) : null}
 
@@ -2780,6 +2981,12 @@ export function HandoffDesignStudio({
           onToggleFitSheet={() => setFitSheetOn(!ui.frameOn)}
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
+          onTiltView={() => {
+            const planMode =
+              ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+            if (!planMode || ui.frameOn) return;
+            animateTiltTo(isTiltActive(ui.tiltDeg) ? 0 : TILT_DEG);
+          }}
           dataOpen={ui.dataSummoned}
           onToggleData={() =>
             studio.setUi({

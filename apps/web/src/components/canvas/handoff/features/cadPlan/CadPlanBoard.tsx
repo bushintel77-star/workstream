@@ -52,6 +52,9 @@ import { resolveLayerVisual } from "../../state/layerIsolate";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
 import { CameraChrome, boardCameraFromPlan } from "../../CameraChrome";
+import { TiltBillboard } from "../tilt/TiltBillboard";
+import { TiltBuildingExtrusion } from "../tilt/TiltBuildingExtrusion";
+import { isTiltActive, pxPerMetre } from "../tilt/tiltMath";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
 
@@ -130,6 +133,11 @@ type Props = {
   scaleM?: number;
   /** Camera zoom — for screen-px → world snap radius. */
   planZoom?: number;
+  /**
+   * View-only tilt lens (deg). When active, editing is locked and projected
+   * CameraChrome is suppressed (boardPctToClientOffset cannot model tilt).
+   */
+  tiltDeg?: number;
   /** Free-plan camera (must match `.zoomWorld` transform). */
   planPanX?: number;
   planPanY?: number;
@@ -227,6 +235,7 @@ export function CadPlanBoard({
   tpzReadouts,
   scaleM = 110,
   planZoom = 1,
+  tiltDeg = 0,
   planPanX = 0,
   planPanY = 0,
   planFocusX = 50,
@@ -379,6 +388,7 @@ export function CadPlanBoard({
   const showAutoAreaLabels =
     !frameOn &&
     !sketchPassthrough &&
+    !isTiltActive(tiltDeg) &&
     (mode === "survey" || mode === "cad");
   /**
    * Existing dwelling shown as a plain envelope. Label its centroid — but only
@@ -471,6 +481,10 @@ export function CadPlanBoard({
     planFocusX,
     planFocusY,
   });
+  const tiltLocked = isTiltActive(tiltDeg);
+  const ppm = pxPerMetre(layout.w, scaleM, planZoom);
+  /** Projected CameraChrome mis-anchors under tilt — dock-only while tilted. */
+  const allowProjectedChrome = !tiltLocked && !frameOn;
 
   /**
    * Screen-space declutter for the projected area callouts. Offsets must be
@@ -494,6 +508,8 @@ export function CadPlanBoard({
     : undefined;
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
+    // Tilt is view-only — never start marquee / place / paint.
+    if (tiltLocked) return;
     if (tool === "add" || tool === "paint") {
       const raw = toPct(e.clientX, e.clientY);
       const el = rootRef.current;
@@ -553,6 +569,7 @@ export function CadPlanBoard({
     index: number,
     e: React.PointerEvent,
   ) => {
+    if (tiltLocked) return;
     e.stopPropagation();
     e.preventDefault();
     setNodeMenu(null);
@@ -791,7 +808,7 @@ export function CadPlanBoard({
   return (
     <div
       ref={rootRef}
-      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}`}
+      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}`}
       data-testid="cad-plan-board"
       data-cad-plan
       data-plan-geometry="1"
@@ -1075,7 +1092,7 @@ export function CadPlanBoard({
         })}
       </svg>
 
-      {editing && boundaryVisual.hittable
+      {editing && allowProjectedChrome && boundaryVisual.hittable
         ? boundary.map((p, i) => (
             <CameraChrome
               key={`bh${i}`}
@@ -1107,7 +1124,10 @@ export function CadPlanBoard({
             </CameraChrome>
           ))
         : null}
-      {editing && boundaryVisual.hittable && !foundationCleanse
+      {editing &&
+      allowProjectedChrome &&
+      boundaryVisual.hittable &&
+      !foundationCleanse
         ? building.map((p, i) => (
             <CameraChrome
               key={`fh${i}`}
@@ -1134,7 +1154,10 @@ export function CadPlanBoard({
           ))
         : null}
 
-      {editing && boundaryVisual.hittable && !foundationCleanse
+      {editing &&
+      allowProjectedChrome &&
+      boundaryVisual.hittable &&
+      !foundationCleanse
         ? midHandles(boundary, "boundary").map((m) => (
             <CameraChrome
               key={`mb${m.after}`}
@@ -1153,7 +1176,10 @@ export function CadPlanBoard({
             </CameraChrome>
           ))
         : null}
-      {editing && boundaryVisual.hittable && !foundationCleanse
+      {editing &&
+      allowProjectedChrome &&
+      boundaryVisual.hittable &&
+      !foundationCleanse
         ? midHandles(building, "building").map((m) => (
             <CameraChrome
               key={`mf${m.after}`}
@@ -1319,7 +1345,7 @@ export function CadPlanBoard({
         </CameraChrome>
       ) : null}
 
-      {showHouseEnvelopeLabel && buildingCentroid ? (
+      {showHouseEnvelopeLabel && allowProjectedChrome && buildingCentroid ? (
         <CameraChrome
           place={{
             kind: "project",
@@ -1336,7 +1362,10 @@ export function CadPlanBoard({
         </CameraChrome>
       ) : null}
 
-      {mode === "survey" && !frameOn && boundary.length >= 3 && building.length < 3 ? (
+      {mode === "survey" &&
+      allowProjectedChrome &&
+      boundary.length >= 3 &&
+      building.length < 3 ? (
         <CameraChrome place={{ kind: "project", pct: { x: 50, y: 46 }, cam }}>
           <p
             className={css.missingBuildingCue}
@@ -1348,9 +1377,9 @@ export function CadPlanBoard({
       ) : null}
 
       {setbackOn &&
+      allowProjectedChrome &&
       !foundationCleanse &&
       !sketchPassthrough &&
-      !frameOn &&
       boundary.length >= 3 &&
       councilSetbackM != null &&
       councilSetbackM > 0 ? (
@@ -1407,7 +1436,7 @@ export function CadPlanBoard({
                   onPointerEnter={() => onHover(it.id)}
                   onPointerLeave={() => onHover(null)}
                 />
-                {it.id === hoverId ? (
+                {it.id === hoverId && allowProjectedChrome ? (
                   <CameraChrome
                     place={{
                       kind: "project",
@@ -1421,7 +1450,7 @@ export function CadPlanBoard({
                     </div>
                   </CameraChrome>
                 ) : null}
-                {showTag ? (
+                {showTag && allowProjectedChrome ? (
                   <CameraChrome
                     place={{
                       kind: "project",
@@ -1481,9 +1510,11 @@ export function CadPlanBoard({
                 height: h,
                 borderRadius: d.br,
                 opacity:
-                  (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
+                  tiltLocked && (d.heightM ?? 0) > 0
+                    ? 0
+                    : (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
                 pointerEvents:
-                  foundationCleanse || !layerVisual.hittable
+                  foundationCleanse || !layerVisual.hittable || tiltLocked
                     ? "none"
                     : undefined,
                 transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
@@ -1519,6 +1550,7 @@ export function CadPlanBoard({
               onPointerLeave={() => onHover(null)}
               onPointerDown={(e) => {
                 e.stopPropagation();
+                if (tiltLocked) return;
                 if (eyedropArmed && onEyedrop) {
                   onEyedrop(it.t);
                   return;
@@ -1586,7 +1618,7 @@ export function CadPlanBoard({
                 <div className={css.hatchOverlay} aria-hidden />
               ) : null}
             </div>
-            {showAiChip ? (
+            {showAiChip && allowProjectedChrome ? (
               <CameraChrome
                 place={{
                   kind: "project",
@@ -1602,7 +1634,7 @@ export function CadPlanBoard({
                 </span>
               </CameraChrome>
             ) : null}
-            {showGhostActions ? (
+            {showGhostActions && allowProjectedChrome ? (
               <CameraChrome
                 place={{
                   kind: "project",
@@ -1633,7 +1665,7 @@ export function CadPlanBoard({
                 </div>
               </CameraChrome>
             ) : null}
-            {showTracePill ? (
+            {showTracePill && allowProjectedChrome ? (
               <CameraChrome
                 place={{
                   kind: "project",
@@ -1743,7 +1775,7 @@ export function CadPlanBoard({
         />
       ) : null}
 
-      {selected && !frameOn && tool !== "lock" ? (
+      {selected && !frameOn && allowProjectedChrome && tool !== "lock" ? (
         <SelectionHandles
           item={selected}
           cam={cam}
@@ -1751,7 +1783,7 @@ export function CadPlanBoard({
         />
       ) : null}
 
-      {selected && !frameOn && !dragRef.current ? (
+      {selected && allowProjectedChrome && !dragRef.current ? (
         <CameraChrome
           place={{
             kind: "project",
@@ -1774,7 +1806,7 @@ export function CadPlanBoard({
       ) : null}
 
       {tpzReadouts?.map((r) =>
-        r.active ? (
+        r.active && allowProjectedChrome ? (
           <CameraChrome
             key={r.id}
             place={{ kind: "project", pct: { x: r.x, y: r.y }, cam }}
@@ -1798,7 +1830,7 @@ export function CadPlanBoard({
         </CameraChrome>
       ) : null}
 
-      {cursorPct ? (
+      {cursorPct && allowProjectedChrome ? (
         <CameraChrome
           place={{
             kind: "project",
@@ -1812,7 +1844,7 @@ export function CadPlanBoard({
         </CameraChrome>
       ) : null}
 
-      {nodeMenu ? (
+      {nodeMenu && allowProjectedChrome ? (
         <CameraChrome
           place={{
             kind: "project",
@@ -1855,7 +1887,7 @@ export function CadPlanBoard({
         </CameraChrome>
       ) : null}
 
-      {itemMenu ? (
+      {itemMenu && allowProjectedChrome ? (
         <CameraChrome
           place={{
             kind: "project",
@@ -1932,6 +1964,29 @@ export function CadPlanBoard({
             ) : null}
           </div>
         </CameraChrome>
+      ) : null}
+
+      {tiltLocked ? (
+        <>
+          <TiltBuildingExtrusion
+            building={building}
+            boardW={layout.w}
+            boardH={layout.h}
+            ppm={ppm}
+            tiltDeg={tiltDeg}
+          />
+          {items
+            .filter((it) => !it.ghost && (BY_TYPE[it.t]?.heightM ?? 0) > 0)
+            .map((it) => (
+              <TiltBillboard
+                key={`tilt-${it.id}`}
+                item={it}
+                ppm={ppm}
+                tiltDeg={tiltDeg}
+                ink={!darkOn || frameOn}
+              />
+            ))}
+        </>
       ) : null}
     </div>
   );

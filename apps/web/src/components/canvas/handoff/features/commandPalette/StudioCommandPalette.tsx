@@ -24,6 +24,8 @@ type Props = {
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
   onToggleFocus: () => void;
+  /** Tilt lens — animates to the settle angle (view-only). */
+  onTiltView?: () => void;
   /** Canvas-first: summon / dismiss the measures + quantity lane. */
   dataOpen: boolean;
   onToggleData: () => void;
@@ -53,6 +55,7 @@ export function StudioCommandPalette({
   onToggleFitSheet,
   onGoQuote,
   onToggleFocus,
+  onTiltView,
   dataOpen,
   onToggleData,
   onUndo,
@@ -146,6 +149,18 @@ export function StudioCommandPalette({
         keywords: "focus chrome hide quiet",
         run: onToggleFocus,
       },
+      ...(onTiltView
+        ? [
+            {
+              id: "tilt-view",
+              label: "Tilt view",
+              detail:
+                "View-only 2.5D axonometric preview — editing pauses until Esc",
+              keywords: "tilt axonometric 2.5d perspective client preview",
+              run: onTiltView,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "undo",
         label: "Undo",
@@ -186,6 +201,7 @@ export function StudioCommandPalette({
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,
+    onTiltView,
     onUndo,
     query,
   ]);

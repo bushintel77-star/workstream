@@ -103,10 +103,11 @@
 }
 
 .rootDark {
+  /* Night shell: dolphin grey + cobalt cast, chalk type. */
   background:
-    radial-gradient(100% 70% at 10% 0%, rgba(90, 50, 60, 0.35), transparent 50%),
-    #161116;
-  color: #fff6f8;
+    radial-gradient(100% 70% at 10% 0%, rgba(47, 94, 207, 0.18), transparent 50%),
+    #16181c;
+  color: #eceff4;
 }
 
 /*
@@ -171,7 +172,7 @@
 }
 
 .rootDark .address {
-  color: #d3b3bc;
+  color: rgba(236, 239, 244, 0.72);
 }
 
 .spacer {
@@ -195,7 +196,7 @@
 }
 
 .rootDark .modes {
-  background: rgba(255, 246, 248, 0.08);
+  background: rgba(236, 239, 244, 0.08);
 }
 
 .modeBtn {
@@ -612,6 +613,31 @@
   inset: 0;
   z-index: 1;
   transform-origin: center center;
+}
+
+/** Temporary — only while entering/leaving tilt. Never permanent (fights wheel-zoom). */
+.zoomWorldTiltAnim {
+  transition: transform 420ms var(--ws-ease, ease);
+}
+
+.zoomWorldTiltAnimSlow {
+  transition: transform 2000ms var(--ws-ease, ease);
+}
+
+.boardTiltPerspective {
+  perspective: 1400px;
+  perspective-origin: 50% 65%;
+}
+
+.zoomWorldTilted {
+  transform-style: preserve-3d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoomWorldTiltAnim,
+  .zoomWorldTiltAnimSlow {
+    transition: none;
+  }
 }
 
 /**

@@ -176,6 +176,36 @@
     0 0 8px rgba(242, 240, 235, 0.85);
 }
 
+/*
+ * Night board (dolphin grey) label language — chalk ink with a board-toned
+ * halo. The day styles use dark ink + parchment halo, which on the dark
+ * ground rendered as a furry glow.
+ */
+.boardDark .dimLabel,
+.boardDark .cadDimLabel,
+.boardDark .cadDimBearing,
+.boardDark .cadAreaValue {
+  color: rgba(236, 239, 244, 0.92);
+  text-shadow:
+    0 0 4px rgba(22, 24, 28, 0.95),
+    0 0 8px rgba(22, 24, 28, 0.8);
+}
+
+.boardDark .cadDimKey,
+.boardDark .cadAreaMeta {
+  color: #8fb0ff; /* cobalt, lifted for dark ground */
+  text-shadow: none;
+}
+
+.boardDark .cadAreaLabel {
+  background: rgba(30, 33, 39, 0.72);
+}
+
+.boardDark .cadAreaKey {
+  color: rgba(236, 239, 244, 0.6);
+  text-shadow: none;
+}
+
 /* CAD property-boundary language (REA concept, not REA chrome). */
 .cadContextLot {
   fill: rgba(28, 25, 23, 0.015);
@@ -443,9 +473,12 @@
 
 .editBanner {
   position: absolute;
-  left: 14px;
+  /* Top-centre dock — the left corner belongs to the layers panel and the
+     right to demo lots; the banner was rendering underneath the panel. */
+  left: 50%;
+  transform: translateX(-50%);
   top: 14px;
-  max-width: min(340px, calc(100% - 200px));
+  max-width: min(420px, calc(100% - 480px));
   background: rgba(28, 25, 23, 0.9);
   color: #f2f0eb;
   font-family: "IBM Plex Mono", monospace;
