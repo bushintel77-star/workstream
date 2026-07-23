@@ -2,7 +2,7 @@ import type { StudioTool } from "../../studioCatalog";
 
 /**
  * Draft tools that stay sticky until cancelled.
- * CAD practice (KiCad / Fusion): Esc returns to the default pan tool.
+ * CAD practice (KiCad / Fusion): Esc returns to the ground-state Select tool.
  */
 const STICKY_TOOLS: ReadonlySet<StudioTool> = new Set([
   "measure",
@@ -10,7 +10,6 @@ const STICKY_TOOLS: ReadonlySet<StudioTool> = new Set([
   "paint",
   "trace",
   "zone",
-  "edit",
   "service",
   "calib",
   "level",

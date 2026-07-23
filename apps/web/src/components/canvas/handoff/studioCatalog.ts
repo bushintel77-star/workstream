@@ -262,7 +262,12 @@ export type StudioMode = (typeof MODE_TABS)[number];
 
 export const TOOLS = [
   { id: "trace", label: "Trace", icon: "✎" },
-  { id: "edit", label: "Edit", icon: "◇" },
+  /*
+   * Select is the ground state (docs/INTERACTION-LOGIC.md): grab, marquee and
+   * the orbit live here and only here. Pan is a gesture (Space / middle-drag),
+   * never a tool.
+   */
+  { id: "select", label: "Select", icon: "➤" },
   { id: "add", label: "Add", icon: "+" },
   {
     id: "paint",
@@ -278,7 +283,6 @@ export const TOOLS = [
   },
   { id: "lock", label: "Lock", icon: "⬡" },
   { id: "reset", label: "Reset", icon: "↺" },
-  { id: "pan", label: "Pan", icon: "✥" },
 ] as const;
 
 /** Fillable hardscape / softscape for the Paint swatch strip. */

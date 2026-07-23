@@ -64,7 +64,7 @@ test.describe("Sketch surfaces reconciliation", () => {
     expect(fs.existsSync(dest)).toBe(true);
   });
 
-  test("sketch enters on Pan — drag grabs, Pen chip re-arms ink", async ({
+  test("sketch enters on Select — drag grabs, Pen chip re-arms ink", async ({
     page,
     request,
   }) => {
@@ -74,7 +74,7 @@ test.describe("Sketch surfaces reconciliation", () => {
     const pad = page.getByTestId("sketch-board");
     await expect(pad).toBeVisible({ timeout: 15_000 });
 
-    // Ground state: Pan armed, pad steps aside, cursor is a grab (not a pen).
+    // Ground state: Select armed, pad steps aside, cursor is a grab (not a pen).
     await expect(pad).toHaveAttribute("data-active", "false");
     const board = page.getByTestId("studio-board");
     await expect(board).toHaveCSS("cursor", "grab");

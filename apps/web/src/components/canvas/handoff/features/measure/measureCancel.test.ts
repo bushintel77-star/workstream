@@ -4,6 +4,6 @@ import { isStickyDraftTool } from "./measureCancel";
 describe("measureCancel", () => {
   it("treats measure as sticky until Esc / cancel", () => {
     expect(isStickyDraftTool("measure")).toBe(true);
-    expect(isStickyDraftTool("pan")).toBe(false);
+    expect(isStickyDraftTool("select")).toBe(false);
   });
 });

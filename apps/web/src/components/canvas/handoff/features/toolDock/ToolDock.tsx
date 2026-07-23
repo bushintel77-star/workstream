@@ -22,7 +22,12 @@ const PRIMARY: Array<{
   title?: string;
 }> = [
   { id: "trace", label: "Trace", icon: "✎", title: "Trace boundary or building" },
-  { id: "edit", label: "Edit", icon: "◇", title: "Edit nodes" },
+  {
+    id: "select",
+    label: "Select",
+    icon: "➤",
+    title: "Select — grab, marquee, edit nodes (Esc)",
+  },
   { id: "add", label: "Add", icon: "+", title: "Place from inventory" },
   {
     id: "paint",
@@ -37,7 +42,6 @@ const PRIMARY: Array<{
     title: "Drip or lighting path",
   },
   { id: "measure", label: "Measure", icon: "⟋", title: "Measure" },
-  { id: "pan", label: "Pan", icon: "✥", title: "Pan" },
   { id: "lock", label: "Lock", icon: "⬡", title: "Lock selection" },
 ];
 
@@ -129,8 +133,9 @@ export function ToolDock({
       onMeasure();
       return;
     }
-    if (chip.id === tool) {
-      onTool("pan");
+    // Toggling the armed tool off drops back to the Select ground state.
+    if (chip.id === tool && chip.id !== "select") {
+      onTool("select");
       return;
     }
     onTool(chip.id as StudioTool);

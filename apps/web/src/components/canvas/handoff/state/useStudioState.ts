@@ -396,7 +396,7 @@ function initialState(opts: {
     siteSnaps,
     ui: {
       mode: opts.mode,
-      tool: "pan",
+      tool: "select",
       locked: false,
       frameOn: false,
       paper: "a3",
@@ -593,16 +593,9 @@ function reducer(state: State, action: Action): State {
             : action.mode === "survey"
               ? { aerialSuppressed: true }
               : {}),
-          // Sketch enters on Pan too — ground state is grabbable, the pen
-          // arms via the pad's Pen chip (tool owns the click).
-          tool:
-            action.mode === "survey"
-              ? state.ui.foundationCleanse
-                ? state.ui.titleBoundaryLocked
-                  ? "pan"
-                  : "edit"
-                : "edit"
-              : "pan",
+          // Every mode enters on the Select ground state — the pen arms via
+          // the pad's Pen chip, node handles live in Select (tool owns the click).
+          tool: "select",
         },
       };
     }
@@ -802,7 +795,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     });
     setUi({
       mode: "cad",
-      tool: "pan",
+      tool: "select",
       ghostIdx: 0,
       ghostReviewOpen: count > 0,
       coachOpen: false,
@@ -848,7 +841,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       const engine = opts?.source === "vision" ? "AI" : "quick";
       setUi({
         mode: "cad",
-        tool: "pan",
+        tool: "select",
         ghostIdx: 0,
         ghostReviewOpen: count > 0,
         coachOpen: false,
@@ -1021,7 +1014,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         floraSession: null,
         armed: null,
         addOpen: false,
-        tool: "pan",
+        tool: "select",
         ghostReviewOpen: true,
         coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
@@ -1128,7 +1121,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         armed: painting ? state.ui.armed : null,
         addOpen: false,
-        tool: painting ? "paint" : "pan",
+        tool: painting ? "paint" : "select",
         ghostReviewOpen: painting ? state.ui.ghostReviewOpen : !state.ui.foundationCleanse,
         coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
@@ -1248,7 +1241,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       panX: 0,
       panY: 0,
       mode: "survey",
-      tool: "edit",
+      tool: "select",
       layerOpacity: {
         survey: 0.35,
         boundary: 1,
@@ -1313,7 +1306,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({
       aiBusy: "idle",
       locked: false,
-      tool: "edit",
+      tool: "select",
       foundationCleanse: true,
       titleBoundaryLocked: snapped,
       // Open Fit sheet working drawing — schedule + outside CAD dims
@@ -1328,7 +1321,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (titleBoundaryLocked: boolean) => {
       setUi({
         titleBoundaryLocked,
-        tool: titleBoundaryLocked ? "pan" : "edit",
+        tool: "select",
         locked: false,
         assistReply: titleBoundaryLocked
           ? "Title locked"
@@ -1343,7 +1336,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       foundationCleanse: false,
       titleBoundaryLocked: false,
       locked: false,
-      tool: "pan",
+      tool: "select",
       aerialSuppressed: true,
       aerialUri: null,
       layerOpacity: { ...DESIGN_LAYER_PRESET },
@@ -2019,7 +2012,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           irrigationZones: [...(snap.irrigationZones ?? []), zone],
         },
       }));
-      setUi({ tool: "pan" });
+      setUi({ tool: "select" });
     },
     [mutate, setUi, state.doc.irrigationZones],
   );
@@ -2271,7 +2264,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         drawPoly: null,
         drawCursor: null,
-        tool: "edit",
+        tool: "select",
         ...(target === "boundary" ? { boundarySource: "manual" as const } : {}),
       });
     },
@@ -2659,7 +2652,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       if (tool === "reset") {
         resetSite();
         setUi({
-          tool: "pan",
+          tool: "select",
           addOpen: false,
           drawPoly: null,
           drawCursor: null,
@@ -2670,7 +2663,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       if (tool === "lock") {
         const nextLocked = !state.ui.locked;
         setUi({
-          tool: nextLocked ? "lock" : "pan",
+          tool: nextLocked ? "lock" : "select",
           locked: nextLocked,
           addOpen: false,
           drawPoly: null,
