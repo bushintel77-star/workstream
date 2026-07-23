@@ -1209,9 +1209,9 @@ export function HandoffDesignStudio({
     !ui.focusOn &&
     !ui.clientView &&
     !ui.foundationCleanse;
-  /** Undo filmstrip — plan modes, not tied to fill popup. */
+  /** Undo filmstrip — CAD/survey only; Sketch uses MarginStrip history. */
   const undoFilmOn =
-    (ui.mode === "cad" || ui.mode === "sketch" || ui.mode === "survey") &&
+    (ui.mode === "cad" || ui.mode === "survey") &&
     !ui.frameOn &&
     !ui.focusOn &&
     !ui.clientView &&
@@ -2221,9 +2221,8 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
-        {/* Fit sheet carries its own "Not for construction" notes — the
-            floating caption was overlapping the title block's date/scale row. */}
-        {!ui.frameOn ? (
+        {/* Fit sheet / Sketch margin own their own legal line. */}
+        {!ui.frameOn && ui.mode !== "sketch" ? (
           <div className={css.honestyCaption}>
             Concept sketch for estimating — not a construction drawing.
           </div>
@@ -2660,9 +2659,10 @@ export function HandoffDesignStudio({
                     studio.strokes.filter((stroke) => stroke.id !== strokeId),
                   )
                 }
-                onUndoLast={() =>
-                  studio.setStrokes(studio.strokes.slice(0, -1))
-                }
+                onUndoLast={() => studio.undo()}
+                onRedo={() => studio.redo()}
+                canUndo={studio.canUndo}
+                canRedo={studio.canRedo}
                 onTidy={() => studio.tidySketches()}
                 onFormalizeToCad={() => {
                   void runFormalizeToCad();

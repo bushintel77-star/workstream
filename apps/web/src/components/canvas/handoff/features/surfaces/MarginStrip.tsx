@@ -16,6 +16,7 @@ import css from "./marginStrip.module.css";
  * Slots, left → right:
  *   history  — undo/redo chips (studio passes its own wired buttons)
  *   state    — transient state pill (pan armed, edit mode…), may be null
+ *   actions  — mode commit chips (Tidy / Formalize in Sketch), may be null
  *   hint     — one-line mode hint, muted; may be null
  *   spacer
  *   stamp    — scale / revision stamp (Fit contexts); may be null
@@ -27,6 +28,7 @@ import css from "./marginStrip.module.css";
 export function MarginStrip({
   history,
   state,
+  actions,
   hint,
   stamp,
   legal,
@@ -34,22 +36,25 @@ export function MarginStrip({
 }: {
   history?: ReactNode;
   state?: ReactNode;
+  actions?: ReactNode;
   hint?: ReactNode;
   stamp?: ReactNode;
   legal?: ReactNode;
   /** Night board (pass the studio's darkLens — never raw ui.darkOn). */
   dark?: boolean;
 }) {
-  if (!history && !state && !hint && !stamp && !legal) return null;
+  if (!history && !state && !actions && !hint && !stamp && !legal) return null;
   return (
     <CameraChrome testId="margin-strip">
       <div
         className={`${css.strip}${dark ? ` ${css.stripDark}` : ""}`}
         role="contentinfo"
         aria-label="Board margin"
+        data-testid="margin-strip-body"
       >
         {history ? <div className={css.history}>{history}</div> : null}
         {state ? <div className={css.state}>{state}</div> : null}
+        {actions ? <div className={css.actions}>{actions}</div> : null}
         {hint ? <div className={css.hint}>{hint}</div> : null}
         <div className={css.spacer} aria-hidden />
         {stamp ? <div className={css.stamp}>{stamp}</div> : null}

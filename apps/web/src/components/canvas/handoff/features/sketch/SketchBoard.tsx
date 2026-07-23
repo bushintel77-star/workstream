@@ -21,6 +21,8 @@ import {
   type SketchTipGrade,
 } from "./sketchCursors";
 import { CameraChrome } from "../../CameraChrome";
+import { MarginStrip } from "../surfaces/MarginStrip";
+import marginCss from "../surfaces/marginStrip.module.css";
 import css from "./sketch.module.css";
 
 type SketchTool = "pen" | "eraser";
@@ -33,6 +35,9 @@ type Props = {
   /** Whole-stroke eraser keeps the first tablet workflow predictable. */
   onErase?: (strokeId: string) => void;
   onUndoLast?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   /** Soften ink in place — stays hand-drawn, not CAD symbols. */
   onTidy?: () => void;
   /** Optional formalize: freehand → CAD ghosts on the site plan. */
@@ -72,6 +77,9 @@ export function SketchBoard({
   onCommit,
   onErase,
   onUndoLast,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
   onTidy,
   onFormalizeToCad,
   formalizing = false,
@@ -245,19 +253,17 @@ export function SketchBoard({
         })}
       </svg>
       {!readOnly && !hideChrome ? (
-        <CameraChrome anchorRef={rootRef}>
-          <div className={css.bar} data-testid="sketch-convert-bar">
-            <p className={css.hint}>
-              {formalizing
-                ? "Translating sketch to CAD with AI…"
-                : canAct
-                  ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
-                  : "Sketch with a finger or stylus · formalize only when ready"}
-            </p>
-            <div className={css.tools} role="toolbar" aria-label="Sketch tools">
+        <>
+          <CameraChrome anchorRef={rootRef}>
+            <div
+              className={css.tray}
+              data-testid="sketch-convert-bar"
+              role="toolbar"
+              aria-label="Sketch tools"
+            >
               <button
                 type="button"
-                className={`${css.tool}${tool === "pen" ? ` ${css.toolActive}` : ""}`}
+                className={`${css.chip}${tool === "pen" ? ` ${css.chipArmed}` : ""}`}
                 data-testid="sketch-pen"
                 aria-pressed={tool === "pen"}
                 disabled={formalizing}
@@ -265,11 +271,14 @@ export function SketchBoard({
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => setTool("pen")}
               >
+                <span className={css.chipGlyph} aria-hidden>
+                  ✎
+                </span>
                 Pen
               </button>
               <button
                 type="button"
-                className={`${css.tool}${tool === "eraser" ? ` ${css.toolActive}` : ""}`}
+                className={`${css.chip}${tool === "eraser" ? ` ${css.chipArmed}` : ""}`}
                 data-testid="sketch-eraser"
                 aria-pressed={tool === "eraser"}
                 disabled={formalizing}
@@ -277,6 +286,9 @@ export function SketchBoard({
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => setTool("eraser")}
               >
+                <span className={css.chipGlyph} aria-hidden>
+                  ⌫
+                </span>
                 Eraser
               </button>
               {tool === "pen" ? (
@@ -290,7 +302,7 @@ export function SketchBoard({
                     <button
                       key={grade}
                       type="button"
-                      className={`${css.tip}${tip === grade ? ` ${css.tipActive}` : ""}`}
+                      className={`${css.tip}${tip === grade ? ` ${css.tipArmed}` : ""}`}
                       data-testid={`sketch-tip-${grade}`}
                       aria-pressed={tip === grade}
                       disabled={formalizing}
@@ -308,46 +320,77 @@ export function SketchBoard({
                   ))}
                 </div>
               ) : null}
-              {canAct && onUndoLast ? (
+            </div>
+          </CameraChrome>
+          <MarginStrip
+            dark={darkOn}
+            history={
+              <>
                 <button
                   type="button"
-                  className={css.tool}
+                  className={marginCss.chip}
                   data-testid="sketch-undo-stroke"
-                  disabled={formalizing}
+                  disabled={formalizing || (!canUndo && !canAct)}
                   onPointerDown={(e) => e.stopPropagation()}
-                  onClick={onUndoLast}
+                  onClick={() => onUndoLast?.()}
+                  title="Undo"
                 >
                   Undo
                 </button>
-              ) : null}
-              {canAct && onTidy ? (
                 <button
                   type="button"
-                  className={css.tidy}
-                  data-testid="sketch-tidy"
-                  disabled={formalizing}
+                  className={marginCss.chip}
+                  data-testid="sketch-redo"
+                  disabled={formalizing || !canRedo}
                   onPointerDown={(e) => e.stopPropagation()}
-                  onClick={onTidy}
+                  onClick={() => onRedo?.()}
+                  title="Redo"
                 >
-                  Tidy
+                  Redo
                 </button>
-              ) : null}
-              {canAct && onFormalizeToCad ? (
-                <button
-                  type="button"
-                  className={css.convert}
-                  data-testid="sketch-convert-cad"
-                  disabled={formalizing}
-                  aria-busy={formalizing}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={onFormalizeToCad}
-                >
-                  {formalizing ? "Translating…" : "Formalize to CAD"}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </CameraChrome>
+              </>
+            }
+            actions={
+              canAct ? (
+                <>
+                  {onTidy ? (
+                    <button
+                      type="button"
+                      className={marginCss.chip}
+                      data-testid="sketch-tidy"
+                      disabled={formalizing}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={onTidy}
+                    >
+                      Tidy
+                    </button>
+                  ) : null}
+                  {onFormalizeToCad ? (
+                    <button
+                      type="button"
+                      className={`${marginCss.chip} ${marginCss.chipPrimary}`}
+                      data-testid="sketch-convert-cad"
+                      disabled={formalizing}
+                      aria-busy={formalizing}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={onFormalizeToCad}
+                    >
+                      {formalizing ? "Translating…" : "Formalize to CAD"}
+                    </button>
+                  ) : null}
+                </>
+              ) : null
+            }
+            hint={
+              formalizing
+                ? "Translating sketch to CAD with AI…"
+                : canAct
+                  ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
+                  : "Sketch with a finger or stylus · formalize only when ready"
+            }
+            legal="Concept sketch for estimating — not a construction drawing."
+          />
+        </>
       ) : null}
     </div>
   );

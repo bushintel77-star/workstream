@@ -249,7 +249,8 @@ Answer **yes** to every item or do not merge:
 
 1. Does the idle CAD view show mostly drawing, with no fixed inventory bar?
 2. Does inventory **pop up** on Add/Paint (frost), then dismiss?
-3. Is chrome frost / blush — not slate, not sepia, not opaque drywall?
+3. Is chrome frost / blush / **dock plastic** (`--hc-neu-*`) — not slate, not
+   sepia, not opaque dark pills or drywall slabs?
 4. Is the selected object free of hubs and material fans on its centre?
 5. Does the idle CAD left edge show **one** tool dock — no zoom column,
    glyph stack, or duplicate Undo/Redo floating beside it?
@@ -309,3 +310,4 @@ cobalt arrowheads.
 | 2026-07-23 | Annotation voice: Architects Daughter reserved for hand-lettered plan notes (presentation DNA). |
 | 2026-07-23 | Instrument ergonomics: steering-wheel principle + checklist item 13; single tool dock; selection dial; Fill as summoned popup. |
 | 2026-07-23 | Selection focus veil: one CameraChrome scrim spotlights the orbit; checklist 14/16; no remount on tree→tree hop. |
+| 2026-07-23 | Sketch tools → plastic tray + MarginStrip (surfaces 2+3); checklist 3 plastic language. |

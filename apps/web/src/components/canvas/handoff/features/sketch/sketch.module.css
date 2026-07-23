@@ -26,85 +26,89 @@
   overflow: visible;
 }
 
-.bar {
+/*
+ * Surface 2 — sketch tool tray (pen / eraser / tip grade).
+ * Plastic chips via --hc-neu-*; sits above the margin strip, clear of rulers.
+ */
+.tray {
   position: absolute;
   left: 50%;
-  bottom: 16px;
+  bottom: calc(var(--ws-safe-bottom, 36px) + 52px);
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  width: min(94%, 760px);
-  pointer-events: none;
-  /* Above .zoomWorld — portaled to studio-board (viewport chrome). */
   z-index: 45;
-}
-
-.hint {
-  margin: 0;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: rgba(28, 25, 23, 0.72);
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 4px 2px;
-  pointer-events: none;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow:
-    0 0 4px rgba(247, 244, 239, 0.95),
-    0 0 8px rgba(247, 244, 239, 0.75);
-}
-
-.tools {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: 6px;
-  pointer-events: auto;
-}
-
-.tool,
-.tidy,
-.convert {
-  pointer-events: auto;
-  flex-shrink: 0;
-  min-height: 44px;
-  padding: 0 13px;
-  border-radius: 10px;
-  font-size: 10.5px;
-  font-weight: 650;
-  font-family: "IBM Plex Mono", monospace;
-  cursor: pointer;
+  max-width: min(94%, 520px);
+  padding: 6px 8px;
+  border-radius: var(--hc-r-panel, 14px);
+  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 88%, transparent);
   box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  pointer-events: auto;
 }
 
-.tool,
-.tidy {
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.14));
+.chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--hc-r-control, 10px);
   background: var(--hc-neu-raised, #f6ebef);
-  color: #7a5560;
-  backdrop-filter: none;
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -1px -1px 1.5px rgba(255, 255, 255, 0.45),
+    1px 1px 2.5px rgba(42, 23, 29, 0.14),
+    0 0 0 1px rgba(36, 19, 24, 0.08)
+  );
+  color: var(--hc-ink-muted, #7a5560);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 7.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    box-shadow var(--hc-motion, 180ms) ease,
+    color var(--hc-motion, 180ms) ease;
 }
 
-.tool:hover,
-.tidy:hover {
-  background: #fff6f8;
-  color: #241318;
+.chip:hover:not(:disabled) {
+  color: var(--hc-ink, #241318);
 }
 
-.toolActive,
-.toolActive:hover {
-  background: #7a5560;
-  border-color: #7a5560;
-  color: #fff6f8;
-  box-shadow: inset 2px 2px 5px rgba(42, 23, 29, 0.24);
+.chipArmed,
+.chipArmed:hover:not(:disabled) {
+  color: var(--hc-ink, #241318);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 1px 1px 2px rgba(42, 23, 29, 0.14),
+    inset -1px -1px 1.5px rgba(255, 255, 255, 0.45)
+  );
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--hc-ink-muted, #7a5560);
+  outline-offset: 2px;
+}
+
+.chipGlyph {
+  font-size: 13px;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .tipGrade {
@@ -112,11 +116,13 @@
   align-items: center;
   gap: 2px;
   padding: 3px;
-  border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
+  border-radius: var(--hc-r-control, 10px);
   background: var(--hc-neu-surface, #f1e4e9);
-  backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  box-shadow: var(
+    --hc-neu-in,
+    inset 1px 1px 2px rgba(42, 23, 29, 0.14),
+    inset -1px -1px 1.5px rgba(255, 255, 255, 0.45)
+  );
 }
 
 .tip {
@@ -128,22 +134,33 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #7a5560;
+  color: var(--hc-ink-muted, #7a5560);
   font-size: 10px;
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
   cursor: pointer;
 }
 
-.tip:hover {
-  color: #241318;
-  background: #fff6f8;
+.tip:hover:not(:disabled) {
+  color: var(--hc-ink, #241318);
+  background: color-mix(in srgb, var(--hc-neu-raised, #f6ebef) 80%, transparent);
 }
 
-.tipActive,
-.tipActive:hover {
-  color: #fff6f8;
-  background: #241318;
+.tipArmed,
+.tipArmed:hover:not(:disabled) {
+  color: var(--hc-ink, #241318);
+  background: var(--hc-neu-raised, #f6ebef);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -1px -1px 1.5px rgba(255, 255, 255, 0.45),
+    1px 1px 2.5px rgba(42, 23, 29, 0.14),
+    0 0 0 1px rgba(36, 19, 24, 0.08)
+  );
+}
+
+.tip:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .tipDot {
@@ -165,30 +182,9 @@
   border-radius: 3px;
 }
 
-.convert {
-  border: 1px solid #241318;
-  background: #241318;
-  color: #fff6f8;
-}
-
-.convert:hover {
-  background: #3a1f28;
-}
-
-.tool:focus-visible,
-.tidy:focus-visible,
-.convert:focus-visible {
-  outline: 1px solid #c2455f;
-  outline-offset: 2px;
-}
-
 @media (max-width: 640px) {
-  .bar {
-    bottom: 10px;
-  }
-
-  .hint {
-    width: 100%;
-    text-align: center;
+  .tray {
+    bottom: calc(var(--ws-safe-bottom, 36px) + 48px);
+    max-width: 96%;
   }
 }

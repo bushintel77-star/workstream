@@ -58,10 +58,12 @@ the orbit is open and restore on dismiss.
 
 ## Surface 3 mechanics (the margin)
 
-`features/surfaces/MarginStrip.tsx` — slots: history, state, hint, spacer,
-stamp, legal. It reserves the ruler gutters (`--ws-safe-*`); nothing in the
-margin may ever overlap a ruler label. The honesty caption lives here and
+`features/surfaces/MarginStrip.tsx` — slots: history, state, actions, hint,
+spacer, stamp, legal. It reserves the ruler gutters (`--ws-safe-*`); nothing in
+the margin may ever overlap a ruler label. The honesty caption lives here and
 nowhere else. Fit sheet contexts pass the scale/revision stamp into `stamp`.
+Sketch mode puts Undo/Redo + Tidy/Formalize here; pen/eraser chips stay on
+surface 2 (the tool tray).
 
 ## Revision history
 
@@ -69,3 +71,4 @@ nowhere else. Fit sheet contexts pass the scale/revision stamp into `stamp`.
 | --- | --- |
 | 2026-07-23 | Written during instrument reform: four-surface constitution, ratification tests 13–16, shared engines (placement scoring, transient fade), margin strip. |
 | 2026-07-23 | Selection focus veil (surface 2): one CameraChrome scrim; hole for subject; click-dim clears; no remount on selection hop. |
+| 2026-07-23 | Sketch toolbar reconciled: pen/eraser plastic tray (surface 2); Undo/Tidy/Formalize + hint on MarginStrip (surface 3). |
