@@ -18,6 +18,23 @@ export type SketchToCadContext = {
   scaleM?: number;
 };
 
+/**
+ * Vocabulary the stroke classifier emits. A mix of abstract studio types
+ * (hedge, deck, lawn, canopy, frenchdrain — mapped to StudioItemType by the
+ * client engine) and concrete Curtis catalog ids. The API's catalog filter
+ * must treat all of these as allowed or heuristic formalize returns empty.
+ */
+export const SKETCH_CAD_SYMBOL_IDS = [
+  "hedge",
+  "frenchdrain",
+  "bluestone-paver",
+  "deck",
+  "lawn",
+  "lomandra-mass",
+  "canopy",
+  "olive-standard",
+] as const;
+
 export type SketchCadSuggestion = {
   id: string;
   symbol_id: string;

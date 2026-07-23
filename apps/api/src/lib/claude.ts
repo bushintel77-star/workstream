@@ -17,6 +17,7 @@ import {
   interpretSketchStrokesToCad,
   isTier1WrightsTerrace,
   parseStudioAssistResponse,
+  SKETCH_CAD_SYMBOL_IDS,
   tier1WrightsTerraceDesign,
   type StudioPromptSite,
 } from "@workstream/domain";
@@ -954,9 +955,19 @@ export type SketchToCadCallResult = {
   source: "vision" | "heuristic";
 };
 
+/**
+ * Allowed vocabulary for sketch suggestions: the catalog ids plus the
+ * classifier's abstract studio ids (hedge/deck/lawn/canopy/…), which the
+ * client maps to StudioItemType. Filtering the abstract ids out silently
+ * emptied heuristic formalize.
+ */
+function sketchAllowedIds(symbolIds: string[]): Set<string> {
+  return new Set([...symbolIds, ...SKETCH_CAD_SYMBOL_IDS]);
+}
+
 /** Deterministic offline interpretation — used when vision is unavailable. */
 function heuristicSketchToCad(args: SketchToCadCallArgs): SketchToCadCallResult {
-  const allowed = new Set(args.symbol_ids);
+  const allowed = sketchAllowedIds(args.symbol_ids);
   const raw = interpretSketchStrokesToCad(args.strokes, {
     boundary: args.boundary,
     building: args.building,
@@ -998,7 +1009,10 @@ export async function formalizeSketchToCad(
   }
 
   try {
-    const allowed = args.symbol_ids.slice(0, 80).join(", ");
+    const allowed = [
+      ...SKETCH_CAD_SYMBOL_IDS,
+      ...args.symbol_ids.slice(0, 80),
+    ].join(", ");
     const context = [
       `Allowed symbol_id values: ${allowed || "(none)"}`,
       `Site boundary extent: ${ringBoundsSummary(args.boundary)}`,
@@ -1083,10 +1097,10 @@ export async function formalizeSketchToCad(
       rationale?: string;
     };
 
-    const allowedSet = new Set(args.symbol_ids);
+    const allowedSet = sketchAllowedIds(args.symbol_ids);
     const suggestions: SketchCadSuggestionOut[] = [];
     for (const s of parsed.suggestions ?? []) {
-      if (!s.symbol_id || (allowedSet.size > 0 && !allowedSet.has(s.symbol_id))) {
+      if (!s.symbol_id || !allowedSet.has(s.symbol_id)) {
         continue;
       }
       const x = Number(s.x_pct);
