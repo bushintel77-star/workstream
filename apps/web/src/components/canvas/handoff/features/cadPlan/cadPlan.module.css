@@ -6,6 +6,18 @@
   background: transparent;
 }
 
+/**
+ * Without this, `transform-style` defaults to `flat` here and the ancestor
+ * `zoomWorldTilted` preserve-3d chain breaks at this exact boundary: any
+ * descendant `translateZ`/`matrix3d` (tilt building extrusion) collapses to
+ * a no-op — the roof/walls render at zero elevation despite the transform
+ * being present in the DOM. Only set while tilted (default flat elsewhere
+ * keeps ordinary 2D stacking/paint order for every other mode).
+ */
+.worldTilted {
+  transform-style: preserve-3d;
+}
+
 .planSvg {
   position: absolute;
   inset: 0;

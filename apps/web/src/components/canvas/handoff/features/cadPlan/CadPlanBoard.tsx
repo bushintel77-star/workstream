@@ -941,7 +941,7 @@ export function CadPlanBoard({
   return (
     <div
       ref={rootRef}
-      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}`}
+      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}${tiltLocked ? ` ${css.worldTilted}` : ""}`}
       data-testid="cad-plan-board"
       data-cad-plan
       data-plan-geometry="1"
