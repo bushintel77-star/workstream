@@ -1483,6 +1483,12 @@ export function HandoffDesignStudio({
 
   const requestMode = useCallback(
     (mode: (typeof MODE_TABS)[number]) => {
+      /*
+       * Changing mode EXITS the Fit sheet first — switching tabs while
+       * frameOn left the studio in a half-state (sheet clip + seeded zoom
+       * with no sheet chrome). Same clean path as toggling Fit off.
+       */
+      if (ui.frameOn) setFitSheetOn(false);
       if (ui.mode === "sketch" && mode === "cad" && studio.strokes.length > 0) {
         const alreadyHasSketchGhosts = studio.items.some(
           (i) => i.ghost && i.id.startsWith("ai-sketch-"),
@@ -1494,7 +1500,7 @@ export function HandoffDesignStudio({
       }
       syncModeUrl(mode);
     },
-    [ui.mode, studio, runFormalizeToCad, syncModeUrl],
+    [ui.mode, ui.frameOn, setFitSheetOn, studio, runFormalizeToCad, syncModeUrl],
   );
 
   useEffect(() => {
@@ -2178,7 +2184,7 @@ export function HandoffDesignStudio({
         </p>
       ) : null}
 
-      {!ui.clientView && !ui.frameOn ? (
+      {!ui.clientView && !ui.frameOn && planOn ? (
         <StudioContextBreadcrumb
           mode={ui.mode}
           isolatedLayer={ui.isolatedLayer}
@@ -2216,6 +2222,7 @@ export function HandoffDesignStudio({
             building={studio.building}
             items={studio.items}
             selectedId={ui.selectedId}
+            dark={darkLens}
             onSelect={(id) => studio.setUi({ selectedId: id })}
             onToggleAxis={() =>
               studio.setUi({ elevAxis: ui.elevAxis === "x" ? "y" : "x" })
@@ -3227,7 +3234,8 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {chrome.structureRail ? (
+        {/* Canvas panels are plan-mode chrome — meaningless on Quote/Elevation. */}
+        {chrome.structureRail && planOn ? (
           <LayersPanel
             open={ui.layersOpen}
             opacity={ui.layerOpacity}
@@ -3315,7 +3323,7 @@ export function HandoffDesignStudio({
         ) : null}
 
         <SiteSwitcher
-          open={ui.sitesOpen}
+          open={ui.sitesOpen && planOn}
           siteIdx={ui.siteIdx}
           onClose={() => studio.setUi({ sitesOpen: false })}
           onPick={studio.switchSite}
