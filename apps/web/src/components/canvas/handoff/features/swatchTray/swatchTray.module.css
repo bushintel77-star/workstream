@@ -5,23 +5,30 @@
 
 .tray {
   position: absolute;
-  left: 12px;
+  left: 68px;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 18;
+  z-index: 22;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 10px 8px;
   border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-neu-surface, #f1e4e9);
+  background: var(--hc-frost, rgba(255, 248, 250, 0.88));
   border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.1));
-  box-shadow: var(--hc-neu-out-sm);
+  box-shadow: var(--hc-frost-shadow, 0 8px 28px rgba(42, 23, 29, 0.12));
+  backdrop-filter: blur(14px);
   color: var(--hc-ink, #241318);
   font-family: var(--font-body);
   pointer-events: auto;
   animation: trayIn var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.trayNight {
+  background: rgba(28, 36, 48, 0.82);
+  border-color: rgba(143, 176, 255, 0.22);
+  color: rgba(236, 239, 244, 0.92);
 }
 
 .kicker {

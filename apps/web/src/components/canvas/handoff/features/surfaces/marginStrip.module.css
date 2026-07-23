@@ -1,0 +1,99 @@
+/*
+ * The margin — one strip, reserved gutters, nothing overlaps a ruler.
+ * Matte plastic per the dock control language (no cloudy frost).
+ */
+
+.strip {
+  position: absolute;
+  left: var(--ws-safe-left, 80px);
+  right: var(--ws-safe-right, 12px);
+  bottom: calc(var(--ws-safe-bottom, 36px) + 6px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  padding: 4px 10px;
+  border-radius: var(--hc-r-panel, 14px);
+  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 88%, transparent);
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  pointer-events: auto;
+}
+
+.history {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.state {
+  flex: none;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+.hint {
+  flex: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+.spacer {
+  flex: 1;
+  min-width: 12px;
+}
+
+.stamp {
+  flex: none;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-ink, #241318);
+}
+
+.legal {
+  flex: none;
+  margin: 0;
+  max-width: 42ch;
+  text-align: right;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--hc-ink-muted, #7a5560);
+}
+
+/* Night board — chalk on dolphin. Modifier class (rootDark is a hashed
+   module class in another file — :global cannot reach it reliably). */
+.stripDark {
+  background: rgba(32, 35, 41, 0.82);
+}
+
+.stripDark .state,
+.stripDark .hint,
+.stripDark .legal {
+  color: rgba(236, 239, 244, 0.6);
+}
+
+.stripDark .stamp {
+  color: rgba(236, 239, 244, 0.92);
+}
+
+@media (max-width: 900px) {
+  .hint {
+    display: none;
+  }
+
+  .legal {
+    max-width: 26ch;
+  }
+}
