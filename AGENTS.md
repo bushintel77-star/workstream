@@ -18,6 +18,17 @@ After `pnpm install`, run `pnpm --filter '@workstream/*' build` once (Turbo `dev
 
 Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json`.
 
+### Canonical production (Railway)
+
+| Service | URL |
+|---------|-----|
+| Web | https://web-production-3c194.up.railway.app |
+| API | https://api-production-a8ff1.up.railway.app |
+
+API durability today is the Railway volume `api-volume` → `/repo/apps/api/data`
+(`CONSTRUCT_PERSIST_PATH=…/store.json`). Fly.io configs remain legacy — do not
+assume Fly is live unless product switches back.
+
 ### End of build (mandatory)
 
 Do not call a change finished until the gate has actually run:

@@ -12,7 +12,13 @@ co-pilot for Curtis & Co (Melbourne).
 - `packages/db` is in-memory with `persist.ts` JSON-snapshot flush. SQLite
   migration is on the punch list; until then assume the store is a plain
   in-memory array set keyed by `owner_id`.
-- Deployed on Fly.io syd. `auto_stop_machines = "stop"` so cold-starts are real.
+- **Canonical deploy: Railway (production).** Web
+  `https://web-production-3c194.up.railway.app`, API
+  `https://api-production-a8ff1.up.railway.app`. API snapshot durability is the
+  Railway volume `api-volume` mounted at `/repo/apps/api/data`
+  (`CONSTRUCT_PERSIST_PATH=/repo/apps/api/data/store.json`). Fly.io syd configs
+  remain in-repo as legacy; do not treat Fly as the live target unless product
+  explicitly switches back.
 
 ## Conventions
 
