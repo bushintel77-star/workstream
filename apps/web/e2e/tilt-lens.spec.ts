@@ -115,4 +115,45 @@ test.describe("Tilt lens", () => {
         .count(),
     ).toBe(0);
   });
+
+  test("true-3D building extrusion — roof lands above (not overlapping) the ground footprint", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createSurveyProject(request);
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
+
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-tilt-view").click();
+    await expect(page.getByTestId("studio-board")).toHaveAttribute(
+      "data-tilt",
+      "1",
+      { timeout: 5_000 },
+    );
+
+    // Regression guard for a real bug: CadPlanBoard's root previously had
+    // `transform-style: flat`, silently zeroing every translateZ/matrix3d
+    // extrusion descendant — the roof rendered flush with the ground
+    // footprint (no elevation) despite tilt being "on". Assert the roof
+    // face actually sits above the flat footprint on screen.
+    const footprint = page.getByTestId("building-footprint");
+    const roofLift = page.getByTestId("tilt-building-extrusion");
+    const walls = page.getByTestId("tilt-building-walls");
+    await expect(footprint).toBeVisible();
+    await expect(roofLift).toBeVisible();
+    await expect(walls).toBeVisible();
+
+    const footprintBox = await footprint.boundingBox();
+    const roofBox = await roofLift.boundingBox();
+    expect(footprintBox).toBeTruthy();
+    expect(roofBox).toBeTruthy();
+    // Roof must be visibly elevated (higher on screen, smaller y) — not
+    // collapsed onto the same plane as the ground footprint.
+    expect(roofBox!.y).toBeLessThan(footprintBox!.y - 10);
+
+    // Wall/post quads exist (4 walls + 4 posts for a rectangular footprint).
+    expect(await walls.locator("> div").count()).toBeGreaterThanOrEqual(4);
+  });
 });

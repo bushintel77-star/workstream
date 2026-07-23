@@ -118,6 +118,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
+  LandscapeFeature,
   IrrigationZone,
 } from "@workstream/contracts";
 import {
@@ -178,6 +179,7 @@ type Props = {
   initialSiteFrame?: DesignSiteFrame | null;
   initialIrrigationZones?: IrrigationZone[];
   initialAnnotations?: CanvasAnnotation[];
+  initialFeatures?: LandscapeFeature[];
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -200,6 +202,7 @@ export function HandoffDesignStudio({
   initialSiteFrame = null,
   initialIrrigationZones = [],
   initialAnnotations = [],
+  initialFeatures = [],
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -220,6 +223,7 @@ export function HandoffDesignStudio({
     initialSiteFrame,
     initialIrrigationZones,
     initialAnnotations,
+    initialFeatures,
   });
   const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
@@ -2945,12 +2949,14 @@ export function HandoffDesignStudio({
             </div>
           </div>
           {/* Dedicated portal mount — sibling of the camera, never an ancestor
-              of chrome call-sites. Portaling into an ancestor collapses wrappers. */}
+              of chrome call-sites. Portaling into an ancestor collapses wrappers.
+              NOT aria-hidden: CameraChrome portals interactive chrome (tool
+              dock, checklist, measures, hint pills) into this node — hiding it
+              removed every docked control from the accessibility tree. */}
           <div
             data-testid="camera-chrome-root"
             data-camera-chrome-root="1"
             className={css.cameraChromeRoot}
-            aria-hidden
           />
           </>
         ) : null}
@@ -3163,7 +3169,30 @@ export function HandoffDesignStudio({
           </label>
         ) : null}
 
-        {!measuresOpen &&
+        {/* Formalize payoff — a scan beam sweeps the board while the sketch
+            is being translated to CAD. Chrome, never inside the zoom world. */}
+        {formalizing ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={53}
+            testId="formalize-sweep-chrome"
+            contentPointerEvents="none"
+          >
+            <div
+              className={css.formalizeSweep}
+              data-testid="formalize-sweep"
+              aria-hidden
+            >
+              <div className={css.formalizeBeam} />
+            </div>
+          </CameraChrome>
+        ) : null}
+
+        {/* Lane law: this compact chip and the right data lane share the
+            same top-right corner — hide it whenever ANY lane occupant
+            (checklist/layers/sites/measures) is open, not just "measures",
+            so it never visually collides with the open panel below it. */}
+        {!rightLaneBusy &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&

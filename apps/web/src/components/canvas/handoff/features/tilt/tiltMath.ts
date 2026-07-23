@@ -76,3 +76,51 @@ export function settleTiltDeg(deg: number): number {
   if (!Number.isFinite(deg) || deg < TILT_SNAP_FLAT) return 0;
   return Math.min(TILT_MAX, deg);
 }
+
+/**
+ * True-3D vertical wall quad standing on ground edge A→B, extruded from
+ * Z=0 (ground) to Z=`eavePx` (roofline) — a `matrix3d` column-major
+ * rotation + translation, NOT a billboard. Because it shares the exact same
+ * world-Z convention as the roof plane's `translateZ(eavePx)`, the wall's
+ * top edge lands pixel-exact under the roofline corner once both are
+ * composed with the shared ancestor `rotateX(tiltDeg)` — no drift, no gap,
+ * so a low-angle tilt reads as "roof sitting on a footprint that's inside
+ * the boundary", never as a shape disconnected from its own footprint.
+ *
+ * Derivation: the quad's local axes must map to world directions
+ *   local +x (width, A→B)   → unit(B−A) in the ground (X,Y) plane
+ *   local +y (height, top→bottom) → world −Z (top=roofline, bottom=ground)
+ *   local +z                → local-x × local-y (forces a proper rotation,
+ *                              det=+1, so there is no unwanted mirroring)
+ * with the box's own width=|AB|, height=`eavePx`, origin at top-left.
+ */
+export function wallQuadMatrix3d(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  eavePx: number,
+): string {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len = Math.max(0.01, Math.hypot(dx, dy));
+  const ux = dx / len;
+  const uy = dy / len;
+  const m = [
+    ux, uy, 0, 0,
+    0, 0, -1, 0,
+    -uy, ux, 0, 0,
+    ax, ay, eavePx, 1,
+  ];
+  return `matrix3d(${m.map((v) => v.toFixed(4)).join(",")})`;
+}
+
+/**
+ * True-3D vertical pole at a single ground point (x, y), spanning the same
+ * Z=0…`eavePx` range as `wallQuadMatrix3d` — the corner-post special case
+ * (no edge direction to align to). Equivalent to `translate3d(x, y, eavePx)
+ * rotateX(-90deg)`, verified to reduce to the identical column-major matrix.
+ */
+export function poleMatrix3d(x: number, y: number, eavePx: number): string {
+  return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, ${eavePx.toFixed(2)}px) rotateX(-90deg)`;
+}

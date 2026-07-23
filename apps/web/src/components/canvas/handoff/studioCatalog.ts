@@ -24,6 +24,12 @@ export type StudioItem = {
   stale?: boolean;
   /** Authored DBH (m) for existing trees — drives AS 4970 TPZ when set. */
   dbhM?: number;
+  /**
+   * Drawn region outline (board %) for area masses formalized from sketch —
+   * the plan renders this polygon instead of the rectangular glyph. Moves
+   * with the item centroid.
+   */
+  outlinePct?: Pt[];
 };
 
 export type Pt = { x: number; y: number };

@@ -192,6 +192,7 @@ export async function saveDesignCanvasAction(
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
+  features?: DesignCanvas["features"],
 ) {
   if (!projectId.trim()) {
     throw new Error("Missing project — cannot save site plan");
@@ -203,6 +204,7 @@ export async function saveDesignCanvasAction(
     irrigation_zones: irrigationZones,
     ...(annotations != null ? { annotations } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
+    ...(features != null ? { features } : {}),
   });
   if (!parsed.success) {
     throw new Error(
@@ -217,6 +219,7 @@ export async function saveDesignCanvasAction(
       parsed.data.irrigation_zones ?? [],
       parsed.data.annotations,
       parsed.data.site_frame,
+      parsed.data.features,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);

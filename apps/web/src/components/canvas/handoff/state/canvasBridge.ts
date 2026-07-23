@@ -7,6 +7,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
+  LandscapeFeature,
 } from "@workstream/contracts";
 import type {
   SketchStroke,
@@ -106,6 +107,80 @@ export function placementsToItems(
       scale: p.scale ?? 1,
       ghost: false,
       ...(dbhM != null ? { dbhM } : {}),
+    };
+  });
+}
+
+/** Feature layer for area types whose drawn outline persists as a region. */
+const FEATURE_LAYER_BY_TYPE: Partial<
+  Record<StudioItemType, "softscape_beds" | "hardscape">
+> = {
+  bed: "softscape_beds",
+  lawn: "softscape_beds",
+  paving: "hardscape",
+  deck: "hardscape",
+};
+
+/**
+ * Accepted items with a drawn region outline → LandscapeFeatures.
+ * Feature id mirrors the item id so hydrate can re-attach the outline.
+ */
+export function itemsToFeatures(items: StudioItem[]): LandscapeFeature[] {
+  const now = new Date().toISOString();
+  const out: LandscapeFeature[] = [];
+  for (const i of items) {
+    if (i.ghost) continue;
+    const layer = FEATURE_LAYER_BY_TYPE[i.t];
+    if (!layer) continue;
+    const outline = i.outlinePct ?? [];
+    if (outline.length < 3) continue;
+    out.push({
+      id: ensureUuid(i.id),
+      type: "LandscapeFeature",
+      metadata: {
+        layer,
+        timestamp_created: now,
+        source_attribution: "human_drawn",
+        user_modification_state: "accepted",
+      },
+      geometry: {
+        type: "Polygon",
+        spatial_reference: "EPSG:3857",
+        canvas_origin_pct: { x_pct: 0, y_pct: 0 },
+        points: outline.map((p, idx) => ({
+          id: `v${idx}`,
+          pct: { x_pct: clampPct(p.x), y_pct: clampPct(p.y) },
+        })),
+      },
+      material_fill: {
+        type: "surface",
+        sku: TYPE_TO_SYMBOL[i.t],
+        depth_m: 0.075,
+        waste_allocation_pct: 10,
+      },
+    });
+  }
+  return out;
+}
+
+/** Hydrate: re-attach persisted region outlines onto items by matching id. */
+export function featuresOntoItems(
+  items: StudioItem[],
+  features: LandscapeFeature[],
+): StudioItem[] {
+  if (features.length === 0) return items;
+  const byId = new Map(features.map((f) => [f.id, f]));
+  return items.map((i) => {
+    const f = byId.get(i.id);
+    if (!f || f.geometry.type !== "Polygon" || f.geometry.points.length < 3) {
+      return i;
+    }
+    return {
+      ...i,
+      outlinePct: f.geometry.points.map((v) => ({
+        x: v.pct.x_pct,
+        y: v.pct.y_pct,
+      })),
     };
   });
 }
