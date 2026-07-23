@@ -35,15 +35,31 @@ describe("site_frame bridge", () => {
       ],
       services: [],
       levels: [{ x: 40, y: 40, z: 12.5 }],
+      boardWidthM: 35.7,
     });
     expect(frame.boundary[0]).toEqual({ x_pct: 10, y_pct: 10 });
     expect(frame.levels[0]).toEqual({ x_pct: 40, y_pct: 40, z_m: 12.5 });
+    expect(frame.board_width_m).toBeCloseTo(35.7, 6);
 
     const snap = siteFrameToSnapshot(frame);
     expect(snap.boundary).toHaveLength(4);
     expect(snap.building).toHaveLength(4);
     expect(snap.easements).toHaveLength(1);
     expect(snap.levels?.[0]).toEqual({ x: 40, y: 40, z: 12.5 });
+    expect(snap.boardWidthM).toBeCloseTo(35.7, 6);
+  });
+
+  it("omits the board scale when unset or invalid", () => {
+    const frame = snapshotToSiteFrame({
+      boundary: [],
+      building: [],
+      easements: [],
+      services: [],
+      levels: [],
+      boardWidthM: null,
+    });
+    expect(frame.board_width_m).toBeUndefined();
+    expect(siteFrameToSnapshot(frame).boardWidthM).toBeUndefined();
   });
 
   it("ignores empty frames on hydrate", () => {

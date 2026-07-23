@@ -91,7 +91,7 @@ import {
   type StudioSnapshot,
   type TraceTarget,
 } from "./studioTypes";
-import { canvasMetresRingToPct } from "../geometry/geoToPct";
+import { fitCanvasMetresRing } from "../geometry/geoToPct";
 import { reprojectDocToBoundary } from "../geometry/reprojectToBoundary";
 import {
   clampVegetationElevationScale,
@@ -457,7 +457,8 @@ function initialState(opts: {
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       servicesEdit: false,
       sheetScaleDenom: 100,
-      boardWidthM: null,
+      // Persisted board scale (Vicmap fit / calibration) — else 110 m default.
+      boardWidthM: frameOverlay.boardWidthM ?? null,
       parchmentPeel: 0.42,
       saveStatus: hasCanvas ? "saved" : "idle",
       saveErrorKind: null,
@@ -1189,7 +1190,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const verts = [...res.boundary.vertices]
           .sort((a, b) => a.sequence_index - b.sequence_index)
           .map((v) => v.canvas_coords);
-        const pct = canvasMetresRingToPct(verts);
+        const fit = fitCanvasMetresRing(verts);
+        const pct = fit.points;
         if (pct.length >= 3) {
           mutate((snap) => ({
             snap: {
@@ -1202,6 +1204,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
             boundarySource:
               res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
             aerialSuppressed: true,
+            // Parcel fit implies the true board scale — metre readouts
+            // must not stay on the 110 m default after a title snap.
+            ...(fit.boardWidthM != null
+              ? { boardWidthM: fit.boardWidthM }
+              : {}),
           });
           notes.push(
             `Boundary snapped to ${res.boundary.source_kind === "vicmap" ? "Vicmap parcel" : "title polygon"}`,
@@ -1284,7 +1291,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const verts = [...res.boundary.vertices]
           .sort((a, b) => a.sequence_index - b.sequence_index)
           .map((v) => v.canvas_coords);
-        const pct = canvasMetresRingToPct(verts);
+        const fit = fitCanvasMetresRing(verts);
+        const pct = fit.points;
         if (pct.length >= 3) {
           mutate((snap) => ({
             snap: {
@@ -1296,6 +1304,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
           setUi({
             boundarySource:
               res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+            ...(fit.boardWidthM != null
+              ? { boardWidthM: fit.boardWidthM }
+              : {}),
           });
           notes.push(
             res.boundary.source_kind === "vicmap"
@@ -1516,15 +1527,17 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const verts = [...res.boundary.vertices]
           .sort((a, b) => a.sequence_index - b.sequence_index)
           .map((v) => v.canvas_coords);
-        const pct = canvasMetresRingToPct(verts);
+        const fit = fitCanvasMetresRing(verts);
+        const pct = fit.points;
         if (pct.length < 3) return;
+        const scaleM = fit.boardWidthM ?? 110;
         let focus = { focusX: 50, focusY: 50, zoom: 1 };
         mutate((snap) => {
           const next = {
             ...snap,
             ...reprojectDocToBoundary(snap, pct),
           };
-          focus = outdoorFocusView(next.boundary, next.building, 110);
+          focus = outdoorFocusView(next.boundary, next.building, scaleM);
           return { snap: next };
         });
         setUi({
@@ -1535,6 +1548,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
           zoom: focus.zoom,
           panX: 0,
           panY: 0,
+          ...(fit.boardWidthM != null
+            ? { boardWidthM: fit.boardWidthM }
+            : {}),
         });
       } catch {
         /* keep seed boundary */
@@ -2119,6 +2135,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       easements: state.doc.easements ?? [],
       services: state.doc.services ?? [],
       levels: state.doc.levels ?? [],
+      boardWidthM: state.ui.boardWidthM,
     });
     setUi({ saveStatus: "saving" });
     try {
@@ -2160,6 +2177,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.levels,
     state.doc.services,
     state.doc.strokes,
+    state.ui.boardWidthM,
   ]);
 
   /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */

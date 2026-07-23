@@ -251,6 +251,12 @@ export const DesignSiteFrameSchema = z.object({
   easements: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   services: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   levels: z.array(DesignSiteFrameLevelSchema).default([]),
+  /**
+   * Ground truth for the board scale: metres represented by 100% board width.
+   * Set when a Vicmap parcel is fitted (implied by the letterbox fit) or when
+   * the operator calibrates; absent = legacy canvas on the 110 m default.
+   */
+  board_width_m: z.number().positive().optional(),
 });
 export type DesignSiteFrame = z.infer<typeof DesignSiteFrameSchema>;
 

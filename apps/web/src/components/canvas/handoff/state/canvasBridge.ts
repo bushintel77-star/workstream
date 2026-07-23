@@ -156,6 +156,8 @@ export function snapshotToSiteFrame(args: {
   easements: PctPoint[][];
   services: PctPoint[][];
   levels: SpotLevel[];
+  /** Metres per 100% board width (Vicmap fit or operator calibration). */
+  boardWidthM?: number | null;
 }): DesignSiteFrame {
   return {
     boundary: ringToFrame(args.boundary),
@@ -167,6 +169,11 @@ export function snapshotToSiteFrame(args: {
       y_pct: clampPct(lv.y),
       z_m: lv.z,
     })),
+    ...(args.boardWidthM != null &&
+    Number.isFinite(args.boardWidthM) &&
+    args.boardWidthM > 0
+      ? { board_width_m: args.boardWidthM }
+      : {}),
   };
 }
 
@@ -177,6 +184,7 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
   easements?: PctPoint[][];
   services?: PctPoint[][];
   levels?: SpotLevel[];
+  boardWidthM?: number;
 } {
   if (!frame) return {};
   const out: {
@@ -185,7 +193,11 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
     easements?: PctPoint[][];
     services?: PctPoint[][];
     levels?: SpotLevel[];
+    boardWidthM?: number;
   } = {};
+  if (frame.board_width_m != null && frame.board_width_m > 0) {
+    out.boardWidthM = frame.board_width_m;
+  }
   if (frame.boundary.length >= 3) out.boundary = frameToRing(frame.boundary);
   if (frame.building.length >= 3) out.building = frameToRing(frame.building);
   if (frame.easements.length > 0) {
