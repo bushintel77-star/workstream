@@ -1,11 +1,18 @@
 /**
  * CAD plan line symbology — each kind has a distinct colour + weight + dash
- * so boundary ≠ building ≠ easement ≠ service at a glance on blush parchment.
+ * so boundary ≠ building ≠ hardscape ≠ planting at a glance on blush parchment.
+ *
+ * Line-weight ladder (light): boundary 1.4 > building 0.9 > hardscape 0.6 >
+ * planting/existing 0.4. Night board uses chalk equivalents at the same weights.
  */
 
 export type PlanLineKind =
   | "boundary"
   | "building"
+  | "hardscape"
+  | "planting"
+  | "existing"
+  | "context"
   | "easement"
   | "service"
   | "setback"
@@ -19,19 +26,36 @@ export type PlanLineStyle = {
   opacity?: number;
 };
 
-/** Light parchment (default atelier). */
+/** Light parchment (default atelier) — near-black ink ladder. */
 export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
   boundary: {
     stroke: "#1A1A1A",
-    strokeWidth: 1.75,
-    dash: "5 3.5",
+    strokeWidth: 1.4,
   },
   building: {
-    // Landscape plan: existing dwelling shown as a plain envelope outline
-    // (no fill) — this is a garden plan, not an architectural drawing.
+    // Landscape plan: existing dwelling as envelope outline only.
     stroke: "#8B3A2F",
-    strokeWidth: 2.15,
+    strokeWidth: 0.9,
     fill: "transparent",
+  },
+  hardscape: {
+    stroke: "#5B6570",
+    strokeWidth: 0.6,
+  },
+  planting: {
+    stroke: "#5F7A50",
+    strokeWidth: 0.4,
+  },
+  existing: {
+    stroke: "#5A4650",
+    strokeWidth: 0.4,
+    dash: "2.5 2",
+  },
+  context: {
+    stroke: "rgba(28, 25, 23, 0.35)",
+    strokeWidth: 0.5,
+    opacity: 0.55,
+    fill: "rgba(28, 25, 23, 0.015)",
   },
   easement: {
     stroke: "#B45309",
@@ -54,18 +78,35 @@ export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
   },
 };
 
-/** Dark / night plate. */
+/** Dark / night plate — chalk linework, same weight ladder. */
 export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
   boundary: {
-    stroke: "#E8C37A",
-    strokeWidth: 1.75,
-    dash: "5 3.5",
+    stroke: "rgba(236, 239, 244, 0.92)",
+    strokeWidth: 1.4,
   },
   building: {
-    // Envelope outline only — no fill (landscape plan, not architectural).
-    stroke: "#F0B4A8",
-    strokeWidth: 2.15,
+    stroke: "#8fb0ff",
+    strokeWidth: 0.9,
     fill: "transparent",
+  },
+  hardscape: {
+    stroke: "rgba(236, 239, 244, 0.72)",
+    strokeWidth: 0.6,
+  },
+  planting: {
+    stroke: "rgba(180, 210, 170, 0.75)",
+    strokeWidth: 0.4,
+  },
+  existing: {
+    stroke: "rgba(236, 239, 244, 0.55)",
+    strokeWidth: 0.4,
+    dash: "2.5 2",
+  },
+  context: {
+    stroke: "rgba(236, 239, 244, 0.28)",
+    strokeWidth: 0.5,
+    opacity: 0.5,
+    fill: "rgba(236, 239, 244, 0.02)",
   },
   easement: {
     stroke: "#F0B429",
@@ -91,6 +132,7 @@ export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
 /**
  * Locked Vicmap / Stage 1 title — solid property line, solid footprint.
  * Keeps colour hierarchy (never flatten building to the same ink as boundary).
+ * Ladder weights apply in every mode including Fit sheet.
  */
 export function planLinesFor(opts: {
   darkOn: boolean;
@@ -103,14 +145,34 @@ export function planLinesFor(opts: {
       ...base,
       boundary: {
         ...base.boundary,
-        dash: opts.fitSheet ? "4 4" : undefined,
-        strokeWidth: opts.fitSheet ? 1.55 : 1.7,
+        // Fit sheet keeps a light dash language; locked title is solid.
+        dash: opts.fitSheet && !opts.titleSolid ? "4 4" : undefined,
+        strokeWidth: 1.4,
       },
       building: {
         ...base.building,
-        strokeWidth: opts.fitSheet ? 1.5 : 1.6,
+        strokeWidth: 0.9,
       },
     };
   }
-  return base;
+  // Unlocked survey still reads boundary as a working dashed lot line.
+  return {
+    ...base,
+    boundary: {
+      ...base.boundary,
+      dash: "5 3.5",
+      strokeWidth: 1.4,
+    },
+  };
+}
+
+/** Map catalog item types onto the line-weight ladder. */
+export function planLineKindForItem(
+  type: string,
+): "hardscape" | "planting" | "existing" {
+  if (type === "exist") return "existing";
+  if (type === "paving" || type === "deck" || type === "frenchdrain") {
+    return "hardscape";
+  }
+  return "planting";
 }
