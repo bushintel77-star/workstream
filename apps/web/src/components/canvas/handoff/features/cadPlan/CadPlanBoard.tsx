@@ -43,6 +43,7 @@ import {
   type StudioTool,
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
+import { RenderDefs } from "../render/RenderDefs";
 import { SUN_SHADOW, sunShadowFill } from "../render/renderTokens";
 import {
   ITEM_LAYER,
@@ -862,6 +863,7 @@ export function CadPlanBoard({
               strokeWidth="0.9"
             />
           </pattern>
+          <RenderDefs />
         </defs>
         {editing && boundaryVisual.hittable
           ? ([
