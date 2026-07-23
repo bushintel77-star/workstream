@@ -251,7 +251,8 @@ Answer **yes** to every item or do not merge:
 2. Does inventory **pop up** on Add/Paint (frost), then dismiss?
 3. Is chrome frost / blush — not slate, not sepia, not opaque drywall?
 4. Is the selected object free of hubs and material fans on its centre?
-5. Do instruments stay hidden until summoned?
+5. Does the idle CAD left edge show **one** tool dock — no zoom column,
+   glyph stack, or duplicate Undo/Redo floating beside it?
 6. Does the pointer change function by tool / handle context?
 7. Are Layers left + AI/measures right, both collapsed by default?
 8. Is TPZ meaning on-plan (zone), not a modal card?
@@ -271,6 +272,18 @@ Answer **yes** to every item or do not merge:
     no extra empty state)?
 12. Does entering/leaving the feature **animate from the current camera and
     return to it** (no jump cuts, `prefers-reduced-motion` respected)?
+13. Is every >1×/minute action reachable **without crossing the canvas**
+    (selection dial on the object, single tool dock, Cmd+K)?
+
+### Instrument ergonomics (steering-wheel)
+
+**The hand stays; the controls come to it.** Object adjustments live on the
+selection (dial). Mode changes live in one left frost dock. Everything visual
+first — symbol swatches, never Latin-name dropdowns. This is the game-inventory
+quick-slot pattern rendered in Curtis & Co frost DNA — zero gamified styling
+(no rarity frames, glows, or chrome borders on swatches: frost pill, symbol,
+9px caption). Zoom is wheel/pinch; Fit presets live in Cmd+K. One Undo/Redo
+pair (bottom-left filmstrip). Fill palette summons on Add/Paint only.
 
 ### Annotation voice (presentation DNA)
 
@@ -289,3 +302,4 @@ cobalt arrowheads.
 | 2026-07-20 | Compliance rebuild: `inventoryPopup` chrome flag (Add/Paint only); margin-clamped summon; instrument dismiss 3s; paint air-lock cursor + boundary snap. |
 | 2026-07-23 | Checklist items 9–12: seamless integration bar — new features must land in existing lenses/gestures, be discoverable in context, degrade invisibly, and animate from the live camera. No bolt-on ribbon toggles. |
 | 2026-07-23 | Annotation voice: Architects Daughter reserved for hand-lettered plan notes (presentation DNA). |
+| 2026-07-23 | Instrument ergonomics: steering-wheel principle + checklist item 13; single tool dock; selection dial; Fill as summoned popup. |
