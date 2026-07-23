@@ -109,7 +109,7 @@ export type StudioUiState = {
   /** Canvas-first: measures / quantity lane summoned via the AI command core. */
   dataSummoned: boolean;
   councilTip: string | null;
-  sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
+  sheetScaleDenom: 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500;
   parchmentPeel: number;
   saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
 };

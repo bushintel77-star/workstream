@@ -101,6 +101,10 @@ import {
 import { isDraftingPlate } from "./studioPlane";
 import { boardScaleM } from "../features/ground/groundMetrics";
 import {
+  SHEET_SCALE_STEPS,
+  type SheetScaleDenom,
+} from "../geometry/sheetContentView";
+import {
   classifyHistoryProvenance,
   type HistoryProvenance,
 } from "./historyProvenance";
@@ -131,7 +135,6 @@ function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
 }
 
 const MAX_HIST = 40;
-const SHEET_SCALES = [50, 100, 200, 250, 500] as const;
 
 type Doc = StudioSnapshot & {
   idn: number;
@@ -234,9 +237,9 @@ type Ui = {
   existDbhM: number;
   /**
    * Fit-sheet architectural scale denominator (1:N).
-   * Snaps to [50, 100, 200, 250, 500] — canvas is the print sheet.
+   * Snaps along SHEET_SCALE_STEPS — canvas is the print sheet.
    */
-  sheetScaleDenom: 50 | 100 | 200 | 250 | 500;
+  sheetScaleDenom: SheetScaleDenom;
   /**
    * Optional board-width metres from survey Calib (two known points).
    * When set, overrides sheetScaleDenom-derived scale for dims / fall %.
@@ -1811,10 +1814,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
   const snapSheetScale = useCallback(
     (dir: 1 | -1) => {
       const cur = state.ui.sheetScaleDenom;
-      const idx = SHEET_SCALES.indexOf(cur);
+      const idx = SHEET_SCALE_STEPS.indexOf(cur);
       const next =
-        SHEET_SCALES[
-          Math.max(0, Math.min(SHEET_SCALES.length - 1, idx + dir))
+        SHEET_SCALE_STEPS[
+          Math.max(0, Math.min(SHEET_SCALE_STEPS.length - 1, idx + dir))
         ]!;
       setUi({ sheetScaleDenom: next });
     },
@@ -1822,7 +1825,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const setSheetScale = useCallback(
-    (sheetScaleDenom: 50 | 100 | 200 | 250 | 500) => {
+    (sheetScaleDenom: SheetScaleDenom) => {
       setUi({ sheetScaleDenom });
     },
     [setUi],

@@ -114,6 +114,7 @@ import {
   plotBoxFor,
   sheetBoxFor,
   sheetContentView,
+  SHEET_SCALE_STEPS,
   titlePanelWidth,
   clientToBoardPct,
 } from "./geometry";
@@ -911,6 +912,8 @@ export function HandoffDesignStudio({
       boardW: boardSize.w,
       boardH: boardSize.h,
       plot,
+      paper: ui.paper,
+      sheetW: sheet.boxW,
       scaleDenom: ui.sheetScaleDenom,
     });
     return {
@@ -972,7 +975,36 @@ export function HandoffDesignStudio({
    */
   const worldHidePaper = planOn && !ui.frameOn;
 
-  /** Seed absolute zoom to paper-fit when opening Fit sheet / changing paper. */
+  /**
+   * Seed the honest print scale when opening Fit sheet / changing paper.
+   * Auto = rawDenom snapped up the standard ladder, so the operator clicks
+   * A3/A4 and gets a true, filled sheet with zero fiddling. Alt+wheel then
+   * overrides along the ladder until the next paper/entry reseed.
+   */
+  const autoDenomKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!ui.frameOn || !sheetPlotLayout) {
+      autoDenomKeyRef.current = null;
+      return;
+    }
+    const key = `${ui.paper}:${boardSize.w}x${boardSize.h}`;
+    if (autoDenomKeyRef.current === key) return;
+    autoDenomKeyRef.current = key;
+    const auto = sheetPlotLayout.view.autoDenom;
+    if (auto !== ui.sheetScaleDenom) {
+      studio.setUi({ sheetScaleDenom: auto });
+    }
+  }, [
+    ui.frameOn,
+    ui.paper,
+    ui.sheetScaleDenom,
+    boardSize.w,
+    boardSize.h,
+    sheetPlotLayout,
+    studio,
+  ]);
+
+  /** Seed absolute zoom to the current 1:N whenever format or denom changes. */
   const fitSeedKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!ui.frameOn || !sheetPlotLayout) {
@@ -1001,11 +1033,13 @@ export function HandoffDesignStudio({
     (on: boolean) => {
       if (on) {
         fitSeedKeyRef.current = null;
+        autoDenomKeyRef.current = null;
+        /* Denom is auto-seeded from the true fit (autoDenom effect) —
+           no hardcoded 1:100. */
         studio.setUi({
           frameOn: true,
           panX: 0,
           panY: 0,
-          sheetScaleDenom: 100,
         });
         return;
       }
@@ -2116,7 +2150,7 @@ export function HandoffDesignStudio({
                   onCalibrate={(nextScaleM) => {
                     // Prototype: board width metres from two known points.
                     // Also snap sheet denom so the ground mesh stays coherent.
-                    const denoms = [50, 100, 200, 250, 500] as const;
+                    const denoms = SHEET_SCALE_STEPS;
                     const target = (nextScaleM / 110) * 100;
                     let best: (typeof denoms)[number] = 100;
                     let bestD = Infinity;

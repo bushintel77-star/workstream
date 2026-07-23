@@ -7,16 +7,18 @@ import {
   resolveFitSheetAreas,
   SHEET_INNER_MARGIN,
   SHEET_PANEL_GAP,
+  SHEET_SCALE_STEPS,
   sheetBoxFor,
   titlePanelWidth,
   type PaperSize,
   type PctPoint,
+  type SheetScaleDenom,
 } from "../../geometry";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import css from "./fitSheet.module.css";
 
-export const SHEET_SCALE_STEPS = [50, 100, 200, 250, 500] as const;
-export type SheetScaleDenom = (typeof SHEET_SCALE_STEPS)[number];
+/** Ladder lives in geometry (single source shared with sheetContentView). */
+export { SHEET_SCALE_STEPS, type SheetScaleDenom };
 
 type Props = {
   boardW: number;

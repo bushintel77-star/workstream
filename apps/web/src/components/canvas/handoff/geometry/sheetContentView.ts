@@ -1,8 +1,54 @@
-import type { SheetBox } from "./types";
+import type { PaperSize, SheetBox } from "./types";
 import type { PctPoint } from "./types";
 
 /** Architectural reference — sheet content scale is relative to 1:100. */
 export const SHEET_REF_DENOM = 100;
+
+/**
+ * Discrete print-scale ladder (AU working-drawing standards). Ascending —
+ * `snapDenomUp` walks it in order. Single source of truth; FitSheetOverlay
+ * re-exports for its Alt+wheel stepper. Includes the 150/300/400
+ * intermediates — without them a lot needing 1:260 snapped to 1:500 and
+ * printed at half the possible size.
+ */
+export const SHEET_SCALE_STEPS = [50, 100, 150, 200, 250, 300, 400, 500] as const;
+export type SheetScaleDenom = (typeof SHEET_SCALE_STEPS)[number];
+
+/** ISO paper widths (mm) for the two supported sheet formats. */
+export const SHEET_PAPER_WIDTH_MM: Record<PaperSize, number> = {
+  a3: 420,
+  a4: 210,
+};
+
+/** Printed millimetres represented by one screen px of the sheet frame. */
+export function sheetMmPerPx(paper: PaperSize, sheetBoxW: number): number {
+  return SHEET_PAPER_WIDTH_MM[paper] / Math.max(1, sheetBoxW);
+}
+
+/**
+ * The camera zoom that renders the plan at a TRUE 1:denom on the printed
+ * sheet. Derived purely from calibration — board metres (`scaleM` across
+ * `boardW` px) against printed mm per screen px — never from "what fits".
+ * This is what makes the title-block scale stamp honest: the drawing is
+ * at the labelled scale, not fit-to-plot relabelled as 1:100.
+ */
+export function trueZoomForDenom(args: {
+  scaleM: number;
+  boardW: number;
+  mmPerPx: number;
+  denom: number;
+}): number {
+  const mPerPx = args.scaleM / Math.max(1, args.boardW);
+  const denom = Math.max(1, args.denom);
+  const mmPerPx = Math.max(1e-6, args.mmPerPx);
+  return (mPerPx * 1000) / (denom * mmPerPx);
+}
+
+/** Smallest ladder step that fits (ladder ascending); clamps to the coarsest. */
+export function snapDenomUp(rawDenom: number): SheetScaleDenom {
+  for (const d of SHEET_SCALE_STEPS) if (d + 1e-9 >= rawDenom) return d;
+  return SHEET_SCALE_STEPS[SHEET_SCALE_STEPS.length - 1]!;
+}
 
 export type SheetContentView = {
   /** Transform origin on the board (%). Lot centre. */
@@ -20,6 +66,10 @@ export type SheetContentView = {
    */
   panX: number;
   panY: number;
+  /** Exact denominator at which the lot fills `pad` of the plot. */
+  rawDenom: number;
+  /** `rawDenom` snapped up the standard ladder — the honest default 1:N. */
+  autoDenom: SheetScaleDenom;
 };
 
 function bboxOf(pts: PctPoint[]): {
@@ -44,9 +94,13 @@ function bboxOf(pts: PctPoint[]): {
 }
 
 /**
- * Fit the title boundary into the drawable A3/A4 plot, then apply 1:N print scale.
+ * Position the title boundary in the drawable A3/A4 plot at a TRUE 1:N.
  *
  * Critical:
+ * - Zoom derives from `trueZoomForDenom` (calibration), never from fit —
+ *   the old fit-then-relabel path printed "1:100" on drawings that were
+ *   nothing of the sort (A4 especially). `autoDenom` is returned so the
+ *   caller can seed an honest default that actually fits the plot.
  * - Fit the **lot** (title boundary), not the outdoor remnant — otherwise the
  *   cadastral outline overflows the paper while the garden fills the plot.
  * - Return a pan offset that centres the lot on the plot. Scale alone (with
@@ -62,24 +116,28 @@ export function sheetContentView(args: {
   boardW: number;
   boardH: number;
   plot: SheetBox;
+  /** Paper format + sheet frame width px — the print-scale calibration. */
+  paper: PaperSize;
+  sheetW: number;
   scaleDenom: number;
-  /** Padding fraction of the plot used by the lot at 1:100 (room for outside dims). */
+  /** Padding fraction of the plot used by the lot (room for outside dims). */
   pad?: number;
 }): SheetContentView {
   const {
     boundary,
     building,
+    scaleM = 110,
     boardW,
     boardH,
     plot,
+    paper,
+    sheetW,
     scaleDenom,
     pad = 0.8,
   } = args;
 
   const bw = Math.max(1, boardW);
   const bh = Math.max(1, boardH);
-  const plotWPct = (plot.boxW / bw) * 100;
-  const plotHPct = (plot.boxH / bh) * 100;
   const plotCx = ((plot.boxLeft + plot.boxW / 2) / bw) * 100;
   const plotCy = ((plot.boxTop + plot.boxH / 2) / bh) * 100;
 
@@ -91,25 +149,35 @@ export function sheetContentView(args: {
     null;
 
   const denom = Math.max(1, scaleDenom);
-  const printFactor = SHEET_REF_DENOM / denom;
+  const mmPerPx = sheetMmPerPx(paper, sheetW);
+  /** Board px → metres is isotropic (scaleM spans boardW px in both axes). */
+  const mPerPx = scaleM / bw;
+  const zoom = Number(
+    Math.max(
+      0.05,
+      Math.min(64, trueZoomForDenom({ scaleM, boardW: bw, mmPerPx, denom })),
+    ).toFixed(4),
+  );
 
-  if (!lot || plotWPct < 1 || plotHPct < 1) {
+  if (!lot || plot.boxW < 8 || plot.boxH < 8) {
     return {
       focusX: Number(plotCx.toFixed(2)),
       focusY: Number(plotCy.toFixed(2)),
-      zoom: Number((printFactor * pad).toFixed(4)),
+      zoom,
       panX: 0,
       panY: 0,
+      rawDenom: denom,
+      autoDenom: snapDenomUp(denom),
     };
   }
 
-  // Fit lot into plot at 1:100, then scale by ref/denom (1:50 → larger on paper).
-  const fitX = (plotWPct * pad) / lot.spanX;
-  const fitY = (plotHPct * pad) / lot.spanY;
-  const fitAtRef = Math.min(fitX, fitY);
-  const zoom = Number(
-    Math.max(0.05, Math.min(64, fitAtRef * printFactor)).toFixed(4),
-  );
+  // Exact denominator at which the lot spans `pad` of the plot (both axes).
+  const spanXm = (lot.spanX / 100) * bw * mPerPx;
+  const spanYm = (lot.spanY / 100) * bh * mPerPx;
+  const denomX = (spanXm * 1000) / (plot.boxW * pad * mmPerPx);
+  const denomY = (spanYm * 1000) / (plot.boxH * pad * mmPerPx);
+  const rawDenom = Number(Math.max(denomX, denomY, 1).toFixed(2));
+  const autoDenom = snapDenomUp(rawDenom);
 
   // After scale-around-lot-centre, translate so the lot centre lands on plot centre.
   const panX = Number((((plotCx - lot.midX) / 100) * bw).toFixed(2));
@@ -121,5 +189,7 @@ export function sheetContentView(args: {
     zoom,
     panX,
     panY,
+    rawDenom,
+    autoDenom,
   };
 }

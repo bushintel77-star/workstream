@@ -3,7 +3,7 @@ import { ZOOM_MIN } from "../../geometry/canvasZoom";
 /** Indicative board width in metres at architectural scale 1:100. */
 export const BOARD_WIDTH_M_AT_100 = 110;
 
-export type SheetScaleDenom = 50 | 100 | 200 | 250 | 500;
+export type SheetScaleDenom = 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500;
 
 /**
  * Metres across the board.
