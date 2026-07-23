@@ -214,6 +214,11 @@ type Props = {
   onCadHandleInteract?: () => void;
   /** Hover affordance on handles / insert nodes — drives context cursor. */
   onBoardCursor?: (mode: "default" | "move" | "add" | "paint") => void;
+  /**
+   * Click landed on an object while a drawing tool was armed (object stayed
+   * inert, rule 2) — parent may show the one-time "drop the tool" hint.
+   */
+  onInertToolClick?: () => void;
   /** Presentation lens fidelity (idle upgrade) — not a user toggle. */
   fidelity?: RenderFidelity;
   /** Client view / Fit sheet force presentation via parent lens. */
@@ -307,6 +312,7 @@ export function CadPlanBoard({
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
+  onInertToolClick,
   fidelity = "draft",
   onInteract,
   annotations = [],
@@ -373,14 +379,15 @@ export function CadPlanBoard({
   const showDraftGrid =
     !frameOn &&
     !foundationCleanse &&
-    (tool === "edit" || tool === "paint" || tool === "add" || tool === "pan");
+    (tool === "select" || tool === "paint" || tool === "add");
 
   /** Title CAD drag when Stage 1 unlocked — snap via snapVertexDrag. */
   const titleEditing =
     foundationCleanse && !titleBoundaryLocked && !frameOn;
+  /* Select is the ground state — node editing lives there (INTERACTION-LOGIC). */
   const editing =
-    (tool === "edit" && !locked && !frameOn && !foundationCleanse) ||
-    (titleEditing && tool === "edit");
+    (tool === "select" && !locked && !frameOn && !foundationCleanse) ||
+    (titleEditing && tool === "select");
   const titleSolid = foundationCleanse || titleLocked;
   const sketchPassthrough = mode === "sketch";
   /** Survey annotation tools own the pointer (prototype Level / Servc / Calib). */
@@ -634,7 +641,8 @@ export function CadPlanBoard({
       onPlace(p.x, p.y);
       return;
     }
-    if (tool === "edit" || tool === "pan") {
+    // Marquee lives in Select and only there (rule 3) — pan is a gesture.
+    if (tool === "select") {
       const p = toPct(e.clientX, e.clientY);
       dragRef.current = {
         kind: "marquee",
@@ -658,11 +666,9 @@ export function CadPlanBoard({
           ? "Place"
           : tool === "measure"
             ? "Measure"
-            : tool === "edit"
-              ? "Edit"
-              : tool === "pan"
-                ? "Pan"
-                : tool;
+            : tool === "select"
+              ? "Select"
+              : tool;
   const startCornerDrag = (
     kind: "boundary" | "building",
     index: number,
@@ -1722,19 +1728,34 @@ export function CadPlanBoard({
               onPointerEnter={() => onHover(it.id)}
               onPointerLeave={() => onHover(null)}
               onPointerDown={(e) => {
-                e.stopPropagation();
-                if (tiltLocked) return;
+                if (tiltLocked) {
+                  e.stopPropagation();
+                  return;
+                }
                 if (eyedropArmed && onEyedrop) {
+                  e.stopPropagation();
                   onEyedrop(it.t);
                   return;
                 }
                 if (tool === "paint" && !it.ghost && onPaintItem) {
+                  e.stopPropagation();
                   onPaintItem(it.id);
                   return;
                 }
+                /*
+                 * Rule 2 (INTERACTION-LOGIC): in a drawing/placing tool,
+                 * objects are inert — the click falls through to the board
+                 * so the armed tool acts. Selection never silently steals it.
+                 */
+                if (tool !== "select" && tool !== "lock") {
+                  onInertToolClick?.();
+                  return;
+                }
+                e.stopPropagation();
                 const additive = e.shiftKey || e.metaKey;
                 onSelect(it.id, { additive });
-                if (!it.ghost && tool !== "lock" && tool !== "paint") {
+                // Lock is select-only (rule 5): no drag ever starts.
+                if (!it.ghost && tool !== "lock") {
                   const ids =
                     groupIds.includes(it.id) && groupIds.length > 1
                       ? groupIds

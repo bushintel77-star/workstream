@@ -78,9 +78,9 @@ type Input = {
   dataSummoned?: boolean;
 };
 
+/* Select is the ground state, not a drawing tool — it never collapses chrome. */
 const DRAWING_TOOLS: StudioTool[] = [
   "trace",
-  "edit",
   "add",
   "paint",
   "zone",

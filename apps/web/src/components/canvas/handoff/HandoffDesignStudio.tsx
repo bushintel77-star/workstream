@@ -302,6 +302,20 @@ export function HandoffDesignStudio({
   const [gridStudioOpen, setGridStudioOpen] = useState(false);
   const [dialHint, setDialHint] = useState(false);
   const dialHintSeenRef = useRef(false);
+  /** One-time "drop the tool to select" hint — objects are inert in tools. */
+  const [selectHint, setSelectHint] = useState(false);
+  const selectHintSeenRef = useRef(false);
+  const onInertToolClick = useCallback(() => {
+    if (selectHintSeenRef.current) return;
+    selectHintSeenRef.current = true;
+    try {
+      if (window.localStorage.getItem("ws-select-hint-seen") === "1") return;
+      window.localStorage.setItem("ws-select-hint-seen", "1");
+    } catch {
+      /* ignore */
+    }
+    setSelectHint(true);
+  }, []);
   /** Hold R + arrows → rotate selection in 15° detents. */
   const rotateChordRef = useRef(false);
 
@@ -507,7 +521,11 @@ export function HandoffDesignStudio({
   }, [ui.panX, ui.panY]);
 
   useEffect(() => {
-    panToolGrabRef.current = ui.mode === "sketch" && ui.tool === "pan";
+    /*
+     * Sketch pad has nothing to marquee — Select-drag pans the camera there
+     * (the pen only inks while armed). Plan modes marquee; pan is Space/middle.
+     */
+    panToolGrabRef.current = ui.mode === "sketch" && ui.tool === "select";
   }, [ui.mode, ui.tool]);
 
   /**
@@ -720,7 +738,6 @@ export function HandoffDesignStudio({
     const editing =
       ui.tool === "add" ||
       ui.tool === "paint" ||
-      ui.tool === "edit" ||
       ui.tool === "trace" ||
       ui.tool === "measure" ||
       ui.tool === "zone" ||
@@ -928,11 +945,11 @@ export function HandoffDesignStudio({
           studio.cancelTrace();
           return;
         }
-        // CAD practice: Esc cancels sticky draft tools → pan (KiCad / Fusion).
+        // CAD practice: Esc cancels sticky draft tools → Select (KiCad / Fusion).
         if (isStickyDraftTool(ui.tool)) {
           e.preventDefault();
           toolStackRef.current = cancelToSelect(toolStackRef.current);
-          studio.setTool("pan");
+          studio.setTool("select");
           setInstrumentsSummoned(false);
           studio.setUi({
             factorsOpen: false,
@@ -1636,7 +1653,7 @@ export function HandoffDesignStudio({
     ui.boundarySource === "seed";
   /** Tool armed or drawing in progress — not barren idle. */
   const canvasEngaged =
-    ui.tool !== "pan" ||
+    ui.tool !== "select" ||
     Boolean(ui.drawPoly && ui.drawPoly.length > 0) ||
     Boolean(ui.selectedId) ||
     ui.groupIds.length > 0 ||
@@ -1759,7 +1776,7 @@ export function HandoffDesignStudio({
   const studioCursor = pointerMarkPreview
     ? resolveStudioCursor({
         markId: pointerMarkPreview,
-        tool: "edit",
+        tool: "select",
         mode: ui.mode,
         locked: false,
       })
@@ -2105,7 +2122,7 @@ export function HandoffDesignStudio({
               onClick={() =>
                 studio.setUi({
                   servicesEdit: !ui.servicesEdit,
-                  tool: ui.servicesEdit ? "pan" : "service",
+                  tool: ui.servicesEdit ? "select" : "service",
                   layerOpacity: { ...ui.layerOpacity, services: 1 },
                 })
               }
@@ -2492,7 +2509,7 @@ export function HandoffDesignStudio({
               services={studio.services}
               items={studio.items}
               mode={ui.mode}
-              tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}
+              tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "select" : ui.tool}
               locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
               isolatedLayer={ui.isolatedLayer}
@@ -2582,6 +2599,7 @@ export function HandoffDesignStudio({
               eyedropArmed={eyedropArmed}
               onEyedrop={pickStyle}
               onBoardCursor={setBoardCursor}
+              onInertToolClick={onInertToolClick}
               fidelity={fidelity}
               onInteract={markInteracting}
               annotations={studio.annotations}
@@ -2763,7 +2781,7 @@ export function HandoffDesignStudio({
                     studio.setUi({
                       boardWidthM: nextScaleM,
                       sheetScaleDenom: best,
-                      tool: "pan",
+                      tool: "select",
                     });
                   }}
                 />
@@ -2788,7 +2806,7 @@ export function HandoffDesignStudio({
               scaleM={scaleM}
               cam={planCam}
               onCancel={() => {
-                studio.setTool("pan");
+                studio.setTool("select");
                 setInstrumentsSummoned(false);
               }}
             />
@@ -2906,7 +2924,7 @@ export function HandoffDesignStudio({
                 cam={planCam}
                 onDelete={studio.deleteSelected}
                 onClose={() => studio.setSelection(null, [])}
-                onLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
+                onLock={() => studio.setTool(ui.locked ? "select" : "lock")}
                 onAskAi={() =>
                   studio.setUi({
                     cmdOpen: true,
@@ -2973,9 +2991,7 @@ export function HandoffDesignStudio({
             estimate={estimate}
             proximity={
               drawingHot &&
-              (ui.armed === "paving" ||
-                ui.armed === "deck" ||
-                ui.tool === "edit")
+              (ui.armed === "paving" || ui.armed === "deck")
             }
           />
         ) : null}
@@ -3059,7 +3075,7 @@ export function HandoffDesignStudio({
               studio.setTool(t);
             }}
             onMeasure={() => {
-              studio.setTool(ui.tool === "measure" ? "pan" : "measure");
+              studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
             onToggleGrid={() => setGridStudioOpen((v) => !v)}
           />
@@ -3067,6 +3083,14 @@ export function HandoffDesignStudio({
 
         {dialHint && planOn && !ui.frameOn ? (
           <DialHintPill onDismiss={() => setDialHint(false)} />
+        ) : null}
+
+        {selectHint && planOn && !ui.frameOn ? (
+          <DialHintPill
+            label="Drop the tool to select — Esc"
+            testId="select-hint"
+            onDismiss={() => setSelectHint(false)}
+          />
         ) : null}
 
         {/*
@@ -3086,7 +3110,7 @@ export function HandoffDesignStudio({
             onPaintMaterial={(t) =>
               studio.setUi({ paintSwatch: t, tool: "paint" })
             }
-            onDismiss={() => studio.setTool("pan")}
+            onDismiss={() => studio.setTool("select")}
           />
         ) : null}
 
@@ -3455,7 +3479,7 @@ export function HandoffDesignStudio({
             setPendingAnnotation(null);
             setAnnotateDraft("");
             setAnnotatePhase("place");
-            studio.setUi({ cmdOpen: false, cmdQuery: "", tool: "pan" });
+            studio.setUi({ cmdOpen: false, cmdQuery: "", tool: "select" });
           }}
           onZoomToFit={() => {
             studio.setUi({ cmdOpen: false, cmdQuery: "" });

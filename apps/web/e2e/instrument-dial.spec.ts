@@ -67,7 +67,7 @@ test.describe("Instrument reform — dock + selection dial", () => {
     await expect(page.getByTestId("instrument-hub")).toHaveCount(0);
     await expect(page.getByTestId("instrument-carousel")).toHaveCount(0);
 
-    await page.getByTestId("canvas-tool-pan").click();
+    await page.getByTestId("canvas-tool-select").click();
     const item = page.getByTestId("studio-item").first();
     await expect(item).toBeVisible({ timeout: 15_000 });
     await item.click();
