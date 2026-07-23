@@ -14,12 +14,22 @@ describe("API contract — projects", () => {
     if (app) await app.close();
   });
 
-  it("GET /healthz returns ok", async () => {
+  it("GET /healthz returns ok with durability fields", async () => {
     ({ app, store } = await buildTestApp());
     const res = await app.inject({ method: "GET", url: "/healthz" });
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { status: string };
+    const body = res.json() as {
+      status: string;
+      ok: boolean;
+      buildSha: string;
+      dbWritable: boolean;
+      records: number;
+    };
     expect(body.status).toBe("ok");
+    expect(body.ok).toBe(true);
+    expect(typeof body.buildSha).toBe("string");
+    expect(typeof body.dbWritable).toBe("boolean");
+    expect(typeof body.records).toBe("number");
   });
 
   it("GET /readyz returns ok", async () => {
