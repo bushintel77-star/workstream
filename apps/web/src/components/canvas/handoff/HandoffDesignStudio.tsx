@@ -1909,7 +1909,11 @@ export function HandoffDesignStudio({
               planFocusX={planFocusX}
               planFocusY={planFocusY}
               planRotateDeg={planRotateDeg}
-              lotAreaM2={titleBlock?.lotAreaM2 ?? outdoor}
+              lotAreaM2={
+                /* Cadastral only — drawn-lot fallback lives in
+                   resolveDisplayLotM2 (outdoor is not a Title figure). */
+                titleBlock?.lotAreaM2 ?? null
+              }
               siteAreas={
                 siteSchedule
                   ? {

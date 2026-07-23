@@ -31,6 +31,7 @@ import {
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
 import { planLinesFor } from "../../geometry/planLineStyles";
+import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
@@ -359,11 +360,19 @@ export function CadPlanBoard({
   const buildingCentroid =
     building.length >= 3 ? polygonCentroid(building) : null;
   const drawnLotM2 = polygonAreaM2(boundary, scaleM);
-  const areaLabelM2 =
-    lotAreaM2 != null && lotAreaM2 > 5 ? lotAreaM2 : drawnLotM2;
   const buildingAreaLabelM2 =
     siteAreas?.buildingAreaM2 ??
     (building.length >= 3 ? polygonAreaM2(building, scaleM) : 0);
+  /**
+   * Same cadastral-coherence policy as the Fit sheet and measures panel —
+   * never show a Vicmap Title figure that contradicts the drawn plan
+   * (previously "Title 185 m²" on-plan vs "Title 3013 m²" in Site measures).
+   */
+  const areaLabelM2 = resolveDisplayLotM2({
+    cadastralLotM2: lotAreaM2,
+    buildingAreaM2: buildingAreaLabelM2,
+    drawnLotM2,
+  }).lotM2;
   const outdoorAreaLabelM2 = siteAreas?.outdoorAreaM2 ?? 0;
   const showAutoAreaLabels =
     !frameOn &&

@@ -1,7 +1,51 @@
 import { describe, expect, it } from "vitest";
 import { WRIGHTS_SEED } from "../studioCatalog";
 import { buildSiteSchedule } from "./polygon";
-import { resolveFitSheetAreas } from "./siteScheduleDisplay";
+import {
+  resolveDisplayLotM2,
+  resolveFitSheetAreas,
+} from "./siteScheduleDisplay";
+
+describe("resolveDisplayLotM2", () => {
+  it("uses cadastral when coherent with the drawn building", () => {
+    expect(
+      resolveDisplayLotM2({
+        cadastralLotM2: 620,
+        buildingAreaM2: 180,
+        drawnLotM2: 640,
+      }),
+    ).toEqual({ lotM2: 620, lotSource: "cadastral" });
+  });
+
+  it("falls back to the drawn lot when cadastral contradicts the plan (185 vs 3013 bug)", () => {
+    // Vicmap parcel 185 m² but drawn dwelling 1329 m² — cadastral must lose,
+    // so the on-plan Title callout matches the Site measures panel.
+    expect(
+      resolveDisplayLotM2({
+        cadastralLotM2: 185,
+        buildingAreaM2: 1329,
+        drawnLotM2: 3013,
+      }),
+    ).toEqual({ lotM2: 3013, lotSource: "drawing" });
+  });
+
+  it("falls back to the drawn lot when cadastral is missing or degenerate", () => {
+    expect(
+      resolveDisplayLotM2({
+        cadastralLotM2: null,
+        buildingAreaM2: 100,
+        drawnLotM2: 500,
+      }).lotSource,
+    ).toBe("drawing");
+    expect(
+      resolveDisplayLotM2({
+        cadastralLotM2: 3, // below the 5 m² sanity floor
+        buildingAreaM2: 0,
+        drawnLotM2: 500,
+      }).lotSource,
+    ).toBe("drawing");
+  });
+});
 
 describe("resolveFitSheetAreas", () => {
   it("outdoor is lot minus building when cadastral lot applies", () => {
