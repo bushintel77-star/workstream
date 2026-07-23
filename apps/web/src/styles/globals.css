@@ -295,4 +295,18 @@ button:focus-visible {
     [data-testid="handoff-design-studio"] * {
     visibility: visible;
   }
+
+  /*
+   * The plan/ground is painted with CSS backgrounds — browsers drop those
+   * unless "Background graphics" is ticked, which printed a sheet with an
+   * EMPTY plot. Force colour output for the studio subtree so the working
+   * drawing always survives print / Save as PDF.
+   */
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
+    [data-testid="handoff-design-studio"],
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
+    [data-testid="handoff-design-studio"] * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }

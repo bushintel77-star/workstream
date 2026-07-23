@@ -54,9 +54,11 @@
 }
 
 .groundDark .parchment {
+  /* Night drafting board — dolphin grey with a faint cobalt cast, chalk
+     linework on top. The old warm-brown gradient read as mud. */
   background:
-    radial-gradient(120% 90% at 18% 12%, rgba(90, 70, 52, 0.45), transparent 55%),
-    linear-gradient(155deg, #2a221c 0%, #3a2e26 50%, #241c18 100%);
+    radial-gradient(120% 90% at 18% 12%, rgba(47, 94, 207, 0.1), transparent 55%),
+    linear-gradient(155deg, #202329 0%, #262a31 50%, #1a1d22 100%);
 }
 
 /* Tactile tooth — soft grain without a WebGL dependency on Workflow 1. */
@@ -99,11 +101,11 @@
 }
 
 .groundDark .minor {
-  stroke: rgba(255, 230, 210, 0.05);
+  stroke: rgba(236, 239, 244,0.05);
 }
 
 .groundDark .major {
-  stroke: rgba(255, 230, 210, 0.12);
+  stroke: rgba(236, 239, 244,0.12);
 }
 
 .edgeScale {
@@ -117,7 +119,7 @@
 }
 
 .groundDark .edgeScale {
-  color: rgba(255, 230, 210, 0.35);
+  color: rgba(236, 239, 244,0.35);
 }
 
 .edgeScale[data-edge="left"] {
@@ -162,7 +164,7 @@
 }
 
 .rulerOverlayDark {
-  color: rgba(255, 230, 210, 0.45);
+  color: rgba(236, 239, 244,0.45);
 }
 
 .rulerLeft,
@@ -261,7 +263,7 @@
 }
 
 .groundDark .topo {
-  stroke: rgba(255, 230, 210, 0.08);
+  stroke: rgba(236, 239, 244,0.08);
 }
 
 .phase_parchment .topo {
@@ -286,8 +288,8 @@
 }
 
 .groundDark .scaleChip {
-  background: rgba(36, 28, 22, 0.55);
-  color: rgba(255, 230, 210, 0.45);
+  background: rgba(32, 35, 41, 0.6);
+  color: rgba(236, 239, 244,0.45);
 }
 
 .phase_aerial .scaleChip {
