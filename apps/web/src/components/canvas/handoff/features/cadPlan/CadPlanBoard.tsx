@@ -9,6 +9,7 @@ import {
   pointInPolygon,
   polygonAreaM2,
   projectPointOnSegment,
+  readableUpDeg,
   GRID_INK_STROKE,
   GRID_STEP_PCT,
   ptsAttr,
@@ -1194,7 +1195,8 @@ export function CadPlanBoard({
             style={{
               left: `${d.labelX}%`,
               top: `${d.labelY}%`,
-              transform: `translate(-50%, -50%) rotate(${d.rotDeg}deg)`,
+              /* Readable-up: label text never renders mirrored/upside-down. */
+              transform: `translate(-50%, -50%) rotate(${readableUpDeg(d.rotDeg)}deg)`,
             }}
             data-testid={
               frameOn

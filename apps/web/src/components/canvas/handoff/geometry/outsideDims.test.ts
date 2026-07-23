@@ -1,6 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { edgeSegments } from "./polygon";
-import { buildOutsideDims } from "./outsideDims";
+import { buildOutsideDims, readableUpDeg } from "./outsideDims";
+
+describe("readableUpDeg", () => {
+  it("keeps angles already readable", () => {
+    expect(readableUpDeg(0)).toBe(0);
+    expect(readableUpDeg(45)).toBe(45);
+    expect(readableUpDeg(90)).toBe(90);
+    expect(readableUpDeg(-60)).toBe(-60);
+  });
+
+  it("flips upside-down angles by 180° (never mirrored text)", () => {
+    expect(readableUpDeg(180)).toBe(0);
+    expect(readableUpDeg(91)).toBe(-89);
+    expect(readableUpDeg(200)).toBe(20);
+    expect(readableUpDeg(270)).toBe(90);
+    expect(readableUpDeg(-135)).toBe(45);
+  });
+
+  it("result is always within the readable window (-90, 90]", () => {
+    for (let d = -720; d <= 720; d += 7) {
+      const r = readableUpDeg(d);
+      expect(r).toBeGreaterThan(-90.000001);
+      expect(r).toBeLessThanOrEqual(90);
+    }
+  });
+});
 
 const lot = [
   { x: 40, y: 20 },

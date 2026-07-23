@@ -32,6 +32,20 @@ export type OutsideDim = {
 };
 
 /**
+ * Readable-up convention: dimension text is never rendered upside-down.
+ * Angles that would flip the glyphs (past ±90°) rotate 180° so the label
+ * reads left-to-right from the bottom/right of the sheet — standard
+ * architectural drafting. Bearing values keep the raw angle; this is
+ * presentation only.
+ */
+export function readableUpDeg(deg: number): number {
+  let d = ((deg % 360) + 360) % 360;
+  if (d > 90 && d <= 270) d -= 180;
+  if (d > 180) d -= 360;
+  return d;
+}
+
+/**
  * CAD outside-plot dimensions — witness/extension lines, offset dimension
  * string, end ticks, and label placed away from the polygon centroid.
  */

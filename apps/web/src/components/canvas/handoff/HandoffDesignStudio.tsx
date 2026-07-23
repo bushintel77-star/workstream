@@ -1783,9 +1783,13 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
-        <div className={css.honestyCaption}>
-          Concept sketch for estimating — not a construction drawing.
-        </div>
+        {/* Fit sheet carries its own "Not for construction" notes — the
+            floating caption was overlapping the title block's date/scale row. */}
+        {!ui.frameOn ? (
+          <div className={css.honestyCaption}>
+            Concept sketch for estimating — not a construction drawing.
+          </div>
+        ) : null}
         {ui.mode === "elevation" ? (
           <ElevationBoard
             axis={ui.elevAxis}
