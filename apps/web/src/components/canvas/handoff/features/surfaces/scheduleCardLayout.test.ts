@@ -42,9 +42,24 @@ describe("placeScheduleCards", () => {
       viewportW: 960,
       safeRightPx: 304,
     });
-    // maxCentre = 960 - 304 - 60 - 8 = 588 → offsetX = 588 - 900
-    expect(out[0]!.offsetX).toBe(588 - 900);
+    // maxCentre = 960 - 304 - 75 - 8 = 573 → offsetX = 573 - 900
+    expect(out[0]!.offsetX).toBe(573 - 900);
     expect(out[0]!.offsetY).toBe(0);
+  });
+
+  it("still stacks cards that meet only after the lane clamp", () => {
+    // Both anchors sit beyond the lane-safe edge (zoom-out shared centroid):
+    // the clamp pushes them to the same centre, so they must still stack.
+    const out = placeScheduleCards(
+      [
+        { id: "title", x: 1500, y: 500 },
+        { id: "outdoor", x: 1500, y: 500 },
+      ],
+      { viewportW: 960, safeRightPx: 304 },
+    );
+    expect(out[0]!.offsetY).toBe(0);
+    expect(out[1]!.offsetY).toBe(SCHEDULE_CARD_STACK_PX);
+    expect(out[0]!.offsetX).toBe(out[1]!.offsetX);
   });
 
   it("builds a translate for non-zero offsets only", () => {

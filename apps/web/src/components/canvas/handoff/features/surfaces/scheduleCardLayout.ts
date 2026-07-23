@@ -19,11 +19,16 @@ export type ScheduleCardPlacement = {
   offsetY: number;
 };
 
-/** Approximate card footprint for collision (screen px). */
-export const SCHEDULE_CARD_W = 120;
-export const SCHEDULE_CARD_H = 48;
+/**
+ * Approximate card footprint for collision (screen px). The Title card grows
+ * to three lines when Vicmap parcel metadata is present (key / area / PFI),
+ * so the collision box and the stack step must cover that tallest variant —
+ * a 48/56 assumption let stacked cards overlap (lane-law e2e).
+ */
+export const SCHEDULE_CARD_W = 150;
+export const SCHEDULE_CARD_H = 68;
 /** Vertical stack step when two cards would share a point / collide. */
-export const SCHEDULE_CARD_STACK_PX = 56;
+export const SCHEDULE_CARD_STACK_PX = SCHEDULE_CARD_H + 8;
 
 function overlaps(
   ax: number,
@@ -60,19 +65,25 @@ export function placeScheduleCards(
     : Number.POSITIVE_INFINITY;
 
   for (const card of cards) {
+    /*
+     * Clamp into the lane-safe area FIRST, then collide on the clamped
+     * centre. Clamping after collision let two cards that both get pushed
+     * to the lane edge (e.g. shared centroid beyond the lane at zoom-out)
+     * pass the overlap check unclamped, then land on the same point.
+     */
+    const offsetX = Number.isFinite(maxCenterX) && card.x > maxCenterX
+      ? maxCenterX - card.x
+      : 0;
+    const cx = card.x + offsetX;
     let offsetY = 0;
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const cy = card.y + offsetY;
       const hit = placed.some((p) =>
-        overlaps(card.x, cy, p.x + p.offsetX, p.y + p.offsetY),
+        overlaps(cx, cy, p.x + p.offsetX, p.y + p.offsetY),
       );
       if (!hit) break;
       offsetY += SCHEDULE_CARD_STACK_PX;
     }
-    const cx = card.x;
-    const offsetX = Number.isFinite(maxCenterX) && cx > maxCenterX
-      ? maxCenterX - cx
-      : 0;
     placed.push({ ...card, offsetX, offsetY });
   }
 
