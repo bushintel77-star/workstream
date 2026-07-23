@@ -27,6 +27,14 @@ export {
   WIKIMEDIA_TREE_ATTRIBUTION,
 } from './wikimedia-tree-symbols';
 export {
+  TEMAKI_PLANT_SYMBOLS,
+  TEMAKI_PLANT_ATTRIBUTION,
+} from './temaki-plant-symbols';
+export {
+  TEMAKI_SITE_SYMBOLS,
+  TEMAKI_SITE_ATTRIBUTION,
+} from './temaki-site-symbols';
+export {
   buildGhostPlacementSuggestions,
   buildSketchCanvasAiSuggestions,
   buildStudioAiSuggestions,
@@ -36,10 +44,10 @@ export {
   type StudioAiSuggestion,
 } from './studio-ai-assist';
 export {
+  buildSketchLibraryGroups,
   isSketchGoldStandard,
-  selectSketchRibbonSymbols,
-  SKETCH_RIBBON_STARTERS,
-  type SketchRibbonTab,
+  searchSketchLibrary,
+  type SketchLibraryGroup,
 } from './sketch-gold-library';
 export * from './catalog-glyph';
 export * from './catalog-quote';

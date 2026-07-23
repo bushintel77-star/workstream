@@ -237,8 +237,9 @@ for (const file of files) {
     label: `Tree ${num}`,
     category: "planting",
     description: ATTRIBUTION,
-    keywords: ["wikimedia", "tree", "landscape", "planting", `tree-${num}`],
+    keywords: ["wikimedia", "tree", "landscape", "planting", `tree-${num}`, "ai cad", "design library"],
     path_d: layers[0].d,
+    default_width_m: 6,
     asset: {
       view_box: parseViewBox(svg),
       layers,

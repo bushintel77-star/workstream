@@ -3,14 +3,18 @@ import { CURTIS_DESIGN_ASSETS } from "./catalog-assets";
 import { OPEN_CROP_SYMBOLS } from "./open-crop-symbols";
 import { OSMIC_LANDSCAPE_SYMBOLS } from "./osmic-landscape-symbols";
 import { PLANZV_DESIGN_SYMBOLS } from "./planzv-design-symbols";
+import { TEMAKI_PLANT_SYMBOLS } from "./temaki-plant-symbols";
+import { TEMAKI_SITE_SYMBOLS } from "./temaki-site-symbols";
 import { WIKIMEDIA_TREE_SYMBOLS } from "./wikimedia-tree-symbols";
 
 /**
- * Curtis library + PlanZV (CC0 AI CAD) + Osmic (CC0) + Wikimedia trees + Open Crop.
- * Design / AI CAD packs are listed before edible crops so palette + AI see them first.
+ * Curtis library + Temaki plants/site + PlanZV + Osmic + Wikimedia trees + Open Crop.
+ * Design / planting / hardscape packs listed before edible crops.
  */
 export const CURTIS_CATALOG_SYMBOLS: CatalogSymbol[] = [
   ...CURTIS_DESIGN_ASSETS,
+  ...TEMAKI_PLANT_SYMBOLS,
+  ...TEMAKI_SITE_SYMBOLS,
   ...PLANZV_DESIGN_SYMBOLS,
   ...OSMIC_LANDSCAPE_SYMBOLS,
   ...WIKIMEDIA_TREE_SYMBOLS,

@@ -8,6 +8,7 @@ export const CatalogCategorySchema = z.enum([
   "water",
   "annotation",
   "furniture",
+  "lighting",
 ]);
 export type CatalogCategory = z.infer<typeof CatalogCategorySchema>;
 
@@ -65,6 +66,7 @@ export const CATALOG_CATEGORY_LABELS: Record<CatalogCategory, string> = {
   structure: "Structures",
   water: "Water",
   furniture: "Site furniture",
+  lighting: "Lighting",
   annotation: "Markup",
 };
 

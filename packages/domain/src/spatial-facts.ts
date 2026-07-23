@@ -31,6 +31,8 @@ function layerForCategory(
       return "structure";
     case "water":
       return "irrigation";
+    case "lighting":
+      return "lighting";
     case "furniture":
       return "other";
     default:
