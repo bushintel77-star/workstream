@@ -8,6 +8,7 @@ import {
   SHEET_INNER_MARGIN,
   SHEET_PANEL_GAP,
   SHEET_SCALE_STEPS,
+  SHEET_TITLE_STRIP_H,
   sheetBoxFor,
   titlePanelWidth,
   type PaperSize,
@@ -230,8 +231,11 @@ export function FitSheetOverlay({
   );
 
   const legend = useMemo(() => legendLines(items, scaleM), [items, scaleM]);
-  const panelW = titlePanelWidth(box.boxW);
-  const showPanel = panelW > 0;
+  /* A4 portrait: title block reflows to a full-width bottom strip so the
+     plot keeps the whole paper width (matches plotBoxFor reservation). */
+  const a4Strip = paper === "a4";
+  const panelW = a4Strip ? 0 : titlePanelWidth(box.boxW);
+  const showPanel = a4Strip ? box.boxW >= 260 : panelW > 0;
   const scrimBot = Math.max(0, boardH - box.boxTop - box.boxH);
   const inset = SHEET_INNER_MARGIN;
 
@@ -249,9 +253,13 @@ export function FitSheetOverlay({
     140,
     box.boxW -
       inset * 2 -
-      (showPanel ? panelW + SHEET_PANEL_GAP : 0),
+      (showPanel && !a4Strip ? panelW + SHEET_PANEL_GAP : 0),
   );
   const elevPanelH = 56 * 2 + 34;
+  /* Elevations sit above the A4 title strip when both are on. */
+  const elevBottomExtra = a4Strip
+    ? SHEET_TITLE_STRIP_H + SHEET_PANEL_GAP
+    : 0;
 
   const issued =
     issuedLabel ??
@@ -327,14 +335,23 @@ export function FitSheetOverlay({
 
       {showPanel ? (
         <aside
-          className={css.panel}
+          className={`${css.panel}${a4Strip ? ` ${css.panelStrip}` : ""}`}
           data-testid="fit-sheet-schedule"
-          style={{
-            width: panelW,
-            left: box.boxLeft + box.boxW - panelW - inset,
-            top: box.boxTop + inset,
-            bottom: scrimBot + inset,
-          }}
+          style={
+            a4Strip
+              ? {
+                  left: box.boxLeft + inset,
+                  width: box.boxW - inset * 2,
+                  height: SHEET_TITLE_STRIP_H,
+                  bottom: scrimBot + inset,
+                }
+              : {
+                  width: panelW,
+                  left: box.boxLeft + box.boxW - panelW - inset,
+                  top: box.boxTop + inset,
+                  bottom: scrimBot + inset,
+                }
+          }
         >
           <div className={css.panelHead} data-testid="fit-sheet-title-block">
             <div style={{ minWidth: 0 }}>
@@ -447,7 +464,7 @@ export function FitSheetOverlay({
           data-testid="fit-sheet-elevations"
           style={{
             left: box.boxLeft + inset,
-            bottom: scrimBot + inset,
+            bottom: scrimBot + inset + elevBottomExtra,
             width: elevPanelW,
             height: elevPanelH,
           }}

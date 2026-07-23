@@ -8,6 +8,12 @@ export const SHEET_INNER_MARGIN = 8;
 export const SHEET_PANEL_GAP = 12;
 /** Max schedule column width on wide A3 sheets. */
 export const TITLE_PANEL_MAX = 240;
+/**
+ * A4 portrait: the title block is a full-width bottom strip, not a right
+ * column — a landscape lot in a portrait plot next to a stolen column left
+ * the plan a thumbnail over dead paper. Height reserved from the plot.
+ */
+export const SHEET_TITLE_STRIP_H = 168;
 
 /**
  * Fit a landscape A3 (420×297) or portrait A4 (210×297) sheet into the board,

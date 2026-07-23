@@ -115,6 +115,7 @@ import {
   sheetBoxFor,
   sheetContentView,
   SHEET_SCALE_STEPS,
+  SHEET_TITLE_STRIP_H,
   titlePanelWidth,
   clientToBoardPct,
 } from "./geometry";
@@ -902,8 +903,12 @@ export function HandoffDesignStudio({
   const sheetPlotLayout = useMemo(() => {
     if (!ui.frameOn || boardSize.w < 1 || boardSize.h < 1) return null;
     const sheet = sheetBoxFor(boardSize.w, boardSize.h, ui.paper);
-    const titleW = titlePanelWidth(sheet.boxW);
-    const elevH = ui.sheetElevOn ? 56 * 2 + 34 : 0;
+    /* A4 portrait reflows: title block becomes a bottom strip so the plot
+       keeps full paper width (landscape lots were thumbnails otherwise). */
+    const a4 = ui.paper === "a4";
+    const titleW = a4 ? 0 : titlePanelWidth(sheet.boxW);
+    const elevH =
+      (ui.sheetElevOn ? 56 * 2 + 34 : 0) + (a4 ? SHEET_TITLE_STRIP_H : 0);
     const plot = plotBoxFor(sheet, { titleW, elevH });
     const view = sheetContentView({
       boundary: studio.boundary,

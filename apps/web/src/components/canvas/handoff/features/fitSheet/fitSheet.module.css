@@ -108,6 +108,51 @@
   gap: 8px;
 }
 
+/**
+ * A4 portrait — title block as a full-width bottom strip. Columns instead
+ * of a stacked right rail; the plot above keeps the whole paper width.
+ */
+.panelStrip {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.panelStrip > * {
+  flex: 1 1 0;
+  min-width: 0;
+  border-bottom: none;
+  border-right: 1px solid rgba(36, 19, 24, 0.25);
+}
+
+.panelStrip > *:last-child {
+  border-right: none;
+}
+
+.panelStrip .panelHead {
+  border-right: 1px solid rgba(36, 19, 24, 0.6);
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.panelStrip .notes {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelStrip .notesBody {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+}
+
+.panelStrip .notesMeta {
+  margin-top: auto;
+  padding-top: 6px;
+}
+
 .brand {
   margin: 0;
   font-family: var(--font-serif);
