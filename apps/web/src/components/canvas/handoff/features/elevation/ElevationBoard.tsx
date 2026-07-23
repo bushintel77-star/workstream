@@ -23,6 +23,8 @@ type Props = {
   building: PctPoint[];
   items: StudioItem[];
   selectedId: string | null;
+  /** Night lens (pass the studio's darkLens — elevation joins the night). */
+  dark?: boolean;
   onSelect: (id: string | null) => void;
   onToggleAxis: () => void;
   onTraceInPlan: (id: string) => void;
@@ -45,6 +47,7 @@ export function ElevationBoard({
   building,
   items,
   selectedId,
+  dark = false,
   onSelect,
   onToggleAxis,
   onTraceInPlan,
@@ -122,7 +125,10 @@ export function ElevationBoard({
   }, [maxHM]);
 
   return (
-    <div className={css.root} data-testid="elevation-profile">
+    <div
+      className={`${css.root}${dark ? ` ${css.rootNight}` : ""}`}
+      data-testid="elevation-profile"
+    >
       <div className={css.topRow}>
         <button type="button" className={css.toggle} onClick={onToggleAxis}>
           {axis === "x" ? "Front elevation" : "Side elevation"}

@@ -9,6 +9,24 @@
   padding: 40px 28px 20px;
 }
 
+/*
+ * Night — elevation joins the dark lens (dolphin field, chalk marks).
+ * Currently colours are hardcoded per-element; the night modifier flips
+ * the field and lets `currentColor`-based strokes follow. Elements with
+ * explicit ink hex get targeted overrides below.
+ */
+.rootNight {
+  background:
+    linear-gradient(180deg, #1b1e24 0%, #16181c 100%);
+  color: #eceff4;
+}
+
+.rootNight .toggle,
+.rootNight .tracePlan {
+  border-color: rgba(236, 239, 244, 0.28);
+  color: #eceff4;
+}
+
 .topRow {
   display: flex;
   flex-wrap: wrap;
