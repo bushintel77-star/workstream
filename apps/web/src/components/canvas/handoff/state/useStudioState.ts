@@ -341,7 +341,11 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
     levels: [],
     services: [],
     irrigationZones: [],
-    annotations: [],
+    annotations: (seed.annotations ?? []).map((a) => ({
+      ...a,
+      anchor: { ...a.anchor },
+      notePos: { ...a.notePos },
+    })),
   };
 }
 

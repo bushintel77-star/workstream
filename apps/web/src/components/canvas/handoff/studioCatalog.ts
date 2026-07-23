@@ -171,6 +171,34 @@ export const WRIGHTS_SEED = {
       dbhM: 0.45,
     },
   ] as StudioItem[],
+  /**
+   * Hand-lettered demo notes — the presentation annotation feature must
+   * demonstrate itself on the demo lot (it shipped invisible: zero
+   * annotations anywhere meant the layer never rendered once).
+   */
+  annotations: [
+    {
+      id: "a0000000-0000-4000-8000-000000000001",
+      text: "Retain existing tree — crown lift, TPZ respected",
+      anchor: { kind: "item" as const, itemId: "e1" },
+      notePos: { x: 20, y: 62 },
+      createdAt: "2026-07-23T00:00:00.000Z",
+    },
+    {
+      id: "a0000000-0000-4000-8000-000000000002",
+      text: "Bluestone terrace + outdoor room",
+      anchor: { kind: "point" as const, x: 39, y: 78 },
+      notePos: { x: 50, y: 80 },
+      createdAt: "2026-07-23T00:00:00.000Z",
+    },
+    {
+      id: "a0000000-0000-4000-8000-000000000003",
+      text: "Pleached screen to north boundary",
+      anchor: { kind: "point" as const, x: 38.5, y: 15 },
+      notePos: { x: 50, y: 12 },
+      createdAt: "2026-07-23T00:00:00.000Z",
+    },
+  ],
 };
 
 /**
@@ -191,6 +219,7 @@ export const ARMADALE_SEED = {
     { x: 34.6, y: 43.5 },
   ] as Pt[],
   items: [] as StudioItem[],
+  annotations: [] as typeof WRIGHTS_SEED.annotations,
 };
 
 export type StudioSiteDef = {
