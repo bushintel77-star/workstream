@@ -40,8 +40,9 @@ export type HandoffChrome = {
   /** Selection orbit (delete / lock / Ask AI) — outside the glyph */
   selectionRing: boolean;
   /**
-   * Inventory frost popup (Soft / Hard / Trees / Water / Library).
-   * True only while Add or Paint is armed — never a fixed slab.
+   * Inventory frost popup — fold-out asset library (search + Draft kit +
+   * catalog categories). True only while Add or Paint is armed — never a
+   * fixed slab.
    */
   inventoryPopup: boolean;
   /** Left drawing tools implied by mode */

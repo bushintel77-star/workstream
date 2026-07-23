@@ -1,8 +1,10 @@
+import { DWELLING_HATCH_IDS } from "../features/render/renderTokens";
+
 /**
  * CAD plan line symbology — each kind has a distinct colour + weight + dash
  * so boundary ≠ building ≠ hardscape ≠ planting at a glance on blush parchment.
  *
- * Line-weight ladder (light): boundary 1.4 > building 0.9 > hardscape 0.6 >
+ * Line-weight ladder (light): boundary 1.4 > building 1.05 > hardscape 0.6 >
  * planting/existing 0.4. Night board uses chalk equivalents at the same weights.
  */
 
@@ -33,10 +35,11 @@ export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
     strokeWidth: 1.4,
   },
   building: {
-    // Landscape plan: existing dwelling as envelope outline only.
+    // Existing dwelling: 45° convention hatch over a faint wash (plan standard
+    // for "existing structure"), envelope outline one step under boundary.
     stroke: "#8B3A2F",
-    strokeWidth: 0.9,
-    fill: "transparent",
+    strokeWidth: 1.05,
+    fill: `url(#${DWELLING_HATCH_IDS.light})`,
   },
   hardscape: {
     stroke: "#5B6570",
@@ -86,8 +89,8 @@ export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
   },
   building: {
     stroke: "#8fb0ff",
-    strokeWidth: 0.9,
-    fill: "transparent",
+    strokeWidth: 1.05,
+    fill: `url(#${DWELLING_HATCH_IDS.night})`,
   },
   hardscape: {
     stroke: "rgba(236, 239, 244, 0.72)",
@@ -151,7 +154,7 @@ export function planLinesFor(opts: {
       },
       building: {
         ...base.building,
-        strokeWidth: 0.9,
+        strokeWidth: 1.05,
       },
     };
   }

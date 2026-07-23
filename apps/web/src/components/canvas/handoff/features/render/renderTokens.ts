@@ -12,8 +12,12 @@ export const SUN_SHADOW = {
   nightOpacity: 0.3,
   /** Dwelling envelope — fixed small south offset in plan % units. */
   dwellingDyPct: 0.55,
-  dwellingRxPct: 2.2,
-  dwellingRyPct: 1.1,
+} as const;
+
+/** Dwelling envelope hatch pattern ids — defined in CadPlanBoard defs (board-space scale). */
+export const DWELLING_HATCH_IDS = {
+  light: "ws-dwelling-hatch",
+  night: "ws-dwelling-hatch-night",
 } as const;
 
 export function sunShadowFill(night: boolean): string {

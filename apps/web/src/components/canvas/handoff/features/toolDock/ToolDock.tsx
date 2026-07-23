@@ -1,11 +1,18 @@
 "use client";
 
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { CameraChrome } from "../../CameraChrome";
 import {
   SURVEY_TOOLS,
   type StudioMode,
   type StudioTool,
 } from "../../studioCatalog";
+import {
+  DOCK_CURVE,
+  dockChipPose,
+  dockFocusFromPointer,
+  spinDockFocus,
+} from "./dockCarousel";
 import css from "./toolDock.module.css";
 
 const PRIMARY: Array<{
@@ -34,6 +41,14 @@ const PRIMARY: Array<{
   { id: "lock", label: "Lock", icon: "⬡", title: "Lock selection" },
 ];
 
+type Chip = {
+  id: StudioTool | "measure" | "grid";
+  label: string;
+  icon: string;
+  title?: string;
+  trail?: boolean;
+};
+
 type Props = {
   tool: StudioTool;
   mode: StudioMode;
@@ -49,6 +64,10 @@ type Props = {
 /**
  * Single left tool dock — steering-wheel home for mode changes.
  * Fixed frost rail via CameraChrome dock; never under zoom-world.
+ *
+ * Curve carousel: chips ride a gentle arc that leans toward the drawing
+ * surface. The crest follows the pointer, spins with the wheel and settles
+ * on the active tool (math in dockCarousel.ts; hit targets stay 44px).
  */
 export function ToolDock({
   tool,
@@ -61,15 +80,61 @@ export function ToolDock({
   onMeasure,
   onToggleGrid,
 }: Props) {
-  const surveyExtras =
-    mode === "survey" || servicesEdit
-      ? SURVEY_TOOLS.map((t) => ({
-          id: t.id as StudioTool,
-          label: t.label,
-          icon: t.icon,
-          title: t.title,
-        }))
-      : [];
+  const chips = useMemo<Chip[]>(() => {
+    const surveyExtras =
+      mode === "survey" || servicesEdit
+        ? SURVEY_TOOLS.map((t) => ({
+            id: t.id as StudioTool,
+            label: t.label,
+            icon: t.icon,
+            title: t.title,
+          }))
+        : [];
+    return [
+      ...PRIMARY,
+      ...surveyExtras,
+      { id: "grid", label: "Grid", icon: "▦", title: "Drafting grid", trail: true },
+    ];
+  }, [mode, servicesEdit]);
+
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const [crest, setCrest] = useState<number | null>(null);
+
+  const isActive = (chip: Chip): boolean => {
+    if (chip.id === "grid") return gridOn;
+    if (chip.id === "lock") return locked && tool === "lock";
+    return tool === chip.id;
+  };
+
+  const activeIndex = chips.findIndex(isActive);
+  /** Rest crest: the active tool, or the middle of the arc when nothing is armed. */
+  const restCrest = activeIndex >= 0 ? activeIndex : (chips.length - 1) / 2;
+  const focus = crest ?? restCrest;
+  const amplitude = crest != null ? 1 : DOCK_CURVE.restAmplitude;
+
+  const trackPointer = (clientY: number) => {
+    const list = listRef.current;
+    if (!list) return;
+    const rect = list.getBoundingClientRect();
+    const pitch = rect.height / chips.length;
+    setCrest(dockFocusFromPointer(clientY - rect.top, pitch, chips.length));
+  };
+
+  const pick = (chip: Chip) => {
+    if (chip.id === "grid") {
+      onToggleGrid();
+      return;
+    }
+    if (chip.id === "measure") {
+      onMeasure();
+      return;
+    }
+    if (chip.id === tool) {
+      onTool("pan");
+      return;
+    }
+    onTool(chip.id as StudioTool);
+  };
 
   return (
     <CameraChrome place={{ kind: "dock" }} testId="tool-dock-chrome">
@@ -77,73 +142,58 @@ export function ToolDock({
         className={`${css.dock}${night ? ` ${css.dockNight}` : ""}`}
         data-testid="tool-dock"
         aria-label="Drawing tools"
+        onPointerMove={(e) => trackPointer(e.clientY)}
+        onPointerLeave={() => setCrest(null)}
+        onWheel={(e) => {
+          e.stopPropagation();
+          setCrest((cur) =>
+            spinDockFocus(cur ?? restCrest, e.deltaY, chips.length),
+          );
+        }}
       >
-        <ul className={css.list}>
-          {PRIMARY.map((t) => {
-            const active =
-              tool === t.id || (t.id === "lock" && locked && tool === "lock");
+        <ul className={css.list} ref={listRef}>
+          {chips.map((chip, index) => {
+            const active = isActive(chip);
+            const pose = dockChipPose(index, focus, amplitude);
             return (
-              <li key={t.id}>
+              <li
+                key={chip.id}
+                className={`${css.slot}${chip.trail ? ` ${css.slotTrail}` : ""}`}
+              >
                 <button
                   type="button"
                   className={`${css.btn}${active ? ` ${css.btnActive}` : ""}`}
                   data-testid={
-                    t.id === "measure"
+                    chip.id === "measure"
                       ? "canvas-tool-measure"
-                      : `canvas-tool-${t.id}`
+                      : `canvas-tool-${chip.id}`
                   }
-                  title={t.title ?? t.label}
+                  title={chip.title ?? chip.label}
                   aria-pressed={active}
-                  onClick={() => {
-                    if (t.id === "measure") onMeasure();
-                    else if (t.id === tool) onTool("pan");
-                    else onTool(t.id as StudioTool);
-                  }}
+                  onClick={() => pick(chip)}
                 >
-                  <span className={css.glyph} aria-hidden>
-                    {t.icon}
+                  <span
+                    className={css.chipBody}
+                    style={
+                      {
+                        "--dock-lean": `${pose.leanPx.toFixed(2)}px`,
+                        "--dock-scale": pose.scale.toFixed(3),
+                        "--dock-fade": active
+                          ? 1
+                          : pose.opacity.toFixed(3),
+                      } as CSSProperties
+                    }
+                  >
+                    <span className={css.glyph} aria-hidden>
+                      {chip.icon}
+                    </span>
+                    <span className={css.label}>{chip.label}</span>
                   </span>
-                  <span className={css.label}>{t.label}</span>
-                </button>
-              </li>
-            );
-          })}
-          {surveyExtras.map((t) => {
-            const active = tool === t.id;
-            return (
-              <li key={t.id}>
-                <button
-                  type="button"
-                  className={`${css.btn}${active ? ` ${css.btnActive}` : ""}`}
-                  data-testid={`canvas-tool-${t.id}`}
-                  title={t.title ?? t.label}
-                  aria-pressed={active}
-                  onClick={() => onTool(active ? "pan" : t.id)}
-                >
-                  <span className={css.glyph} aria-hidden>
-                    {t.icon}
-                  </span>
-                  <span className={css.label}>{t.label}</span>
                 </button>
               </li>
             );
           })}
         </ul>
-        <div className={css.trail}>
-          <button
-            type="button"
-            className={`${css.btn}${gridOn ? ` ${css.btnActive}` : ""}`}
-            data-testid="canvas-tool-grid"
-            title="Drafting grid"
-            aria-pressed={gridOn}
-            onClick={onToggleGrid}
-          >
-            <span className={css.glyph} aria-hidden>
-              ▦
-            </span>
-            <span className={css.label}>Grid</span>
-          </button>
-        </div>
       </nav>
     </CameraChrome>
   );

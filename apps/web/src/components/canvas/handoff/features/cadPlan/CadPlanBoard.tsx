@@ -49,7 +49,11 @@ import {
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
 import { RenderDefs } from "../render/RenderDefs";
-import { SUN_SHADOW, sunShadowFill } from "../render/renderTokens";
+import {
+  DWELLING_HATCH_IDS,
+  SUN_SHADOW,
+  sunShadowFill,
+} from "../render/renderTokens";
 import {
   SpeciesSymbol,
   isSpeciesSymbolType,
@@ -979,6 +983,41 @@ export function CadPlanBoard({
               strokeWidth="0.9"
             />
           </pattern>
+          {/* Existing dwelling — 45° convention hatch over faint wash. */}
+          <pattern
+            id={DWELLING_HATCH_IDS.light}
+            width="2.2"
+            height="2.2"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect width="2.2" height="2.2" fill="rgba(139,58,47,0.05)" />
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="2.2"
+              stroke="rgba(139,58,47,0.28)"
+              strokeWidth="0.28"
+            />
+          </pattern>
+          <pattern
+            id={DWELLING_HATCH_IDS.night}
+            width="2.2"
+            height="2.2"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect width="2.2" height="2.2" fill="rgba(143,176,255,0.05)" />
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="2.2"
+              stroke="rgba(143,176,255,0.26)"
+              strokeWidth="0.28"
+            />
+          </pattern>
           <RenderDefs />
         </defs>
         {editing && boundaryVisual.hittable
@@ -1087,13 +1126,11 @@ export function CadPlanBoard({
               : undefined
           }
         />
-        {building.length >= 3 && buildingCentroid ? (
-          <ellipse
+        {building.length >= 3 ? (
+          <polygon
             data-testid="dwelling-sun-shadow"
-            cx={buildingCentroid.x + SUN_SHADOW.dxPct}
-            cy={buildingCentroid.y + SUN_SHADOW.dwellingDyPct}
-            rx={SUN_SHADOW.dwellingRxPct}
-            ry={SUN_SHADOW.dwellingRyPct}
+            points={ptsAttr(building)}
+            transform={`translate(${SUN_SHADOW.dxPct} ${SUN_SHADOW.dwellingDyPct})`}
             fill={sunShadowFill(darkOn && !frameOn)}
             style={{ mixBlendMode: "multiply" }}
             pointerEvents="none"

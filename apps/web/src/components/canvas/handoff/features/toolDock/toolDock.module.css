@@ -7,7 +7,6 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
   padding: 8px 6px;
   border-radius: var(--hc-r-panel, 14px);
   background: var(--hc-frost, rgba(255, 248, 250, 0.82));
@@ -35,22 +34,21 @@
   gap: 4px;
 }
 
-.trail {
+.slotTrail {
   margin-top: 4px;
   padding-top: 6px;
   border-top: 1px solid rgba(36, 19, 24, 0.08);
 }
 
-.dockNight .trail {
+.dockNight .slotTrail {
   border-top-color: rgba(143, 176, 255, 0.18);
 }
 
 .btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  width: 100%;
   min-width: 44px;
   min-height: 44px;
   padding: 4px 6px;
@@ -60,14 +58,10 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-  opacity: 0.72;
-  transition:
-    opacity var(--hc-motion, 180ms) ease,
-    background var(--hc-motion, 180ms) ease;
+  transition: background var(--hc-motion, 180ms) ease;
 }
 
 .btn:hover {
-  opacity: 1;
   background: rgba(255, 211, 222, 0.28);
 }
 
@@ -76,12 +70,30 @@
 }
 
 .btnActive {
-  opacity: 1;
   background: rgba(255, 211, 222, 0.42);
 }
 
 .dockNight .btnActive {
   background: rgba(143, 176, 255, 0.22);
+}
+
+/*
+ * Curve carousel body — the button keeps its 44px hit target; only this inner
+ * body leans toward the board and scales at the crest (vars from ToolDock).
+ */
+.chipBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transform: translateX(var(--dock-lean, 0px)) scale(var(--dock-scale, 1));
+  transform-origin: left center;
+  opacity: var(--dock-fade, 0.72);
+  transition:
+    transform 170ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 170ms ease;
+  will-change: transform, opacity;
+  pointer-events: none;
 }
 
 .glyph {
@@ -95,4 +107,10 @@
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipBody {
+    transition: none;
+  }
 }

@@ -51,79 +51,101 @@
   opacity: 0.92;
 }
 
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin-bottom: 7px;
+.search {
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: 6px;
+  padding: 4px 9px;
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  background: rgba(255, 251, 252, 0.6);
+  color: var(--ink);
+  font: inherit;
+  /* 16px kills iOS focus zoom (CSS conventions). */
+  font-size: 16px;
+  line-height: 1.2;
 }
 
-.tab {
-  min-height: 26px;
-  padding: 0 9px;
-  border-radius: var(--hc-r-pill, 999px);
-  border: 1px solid transparent;
+.search::placeholder {
+  color: var(--ink-faint);
+}
+
+.search:focus {
+  outline: none;
+  border-color: rgba(194, 69, 95, 0.4);
+  background: rgba(255, 251, 252, 0.9);
+}
+
+/* One scroll region for the whole fold-out list; sections stay compact. */
+.scroll {
+  max-height: min(324px, 52vh);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.section + .section {
+  border-top: 1px solid rgba(36, 19, 24, 0.07);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 4px;
+  border: none;
+  border-radius: 8px;
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
   font-size: 10px;
   font-weight: 650;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  text-align: left;
   cursor: pointer;
 }
 
-.tab:hover {
+.sectionHead:hover {
   background: rgba(255, 246, 248, 0.55);
   color: var(--ink);
 }
 
-.tabOn {
-  background: rgba(36, 19, 24, 0.88);
-  color: #fff6f8;
-  border-color: transparent;
+.sectionHead[aria-expanded="true"] {
+  color: var(--ink);
 }
 
-.subTabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin: -1px 0 7px;
+.chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid currentColor;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  transition: transform 140ms var(--ease);
 }
 
-.subTab {
-  min-height: 22px;
-  padding: 0 7px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
+.chevron[data-open="1"] {
+  transform: rotate(90deg);
+}
+
+.count {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: var(--hc-r-pill, 999px);
+  background: rgba(246, 234, 237, 0.7);
   color: var(--ink-faint);
-  font: inherit;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 600;
   font-family: "IBM Plex Mono", monospace;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.subTab:hover {
-  color: var(--ink-soft);
-  background: rgba(246, 234, 237, 0.45);
-}
-
-.subTabOn {
-  color: #c2455f;
-  background: rgba(255, 211, 222, 0.42);
+  text-align: center;
 }
 
 .tray {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  max-height: 168px;
-  padding: 1px;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  padding: 3px 1px 8px;
 }
 
 .chip {

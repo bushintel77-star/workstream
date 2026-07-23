@@ -74,7 +74,7 @@ Large floating panels must read as **frost**, not drywall.
 | Drawing plane | Boundary, building, symbols, TPZ, measures on-plan | Always on |
 | Object orbit | Delete / Lock / Ask AI / deselect | Only when selected; **outside** the glyph |
 | Summoned instruments | Draft tools, measure, zoom, undo | **Hidden** until margin summon / tool arm |
-| Inventory popup | Soft / Hard / Trees / Water / Library | **Hidden** until Add / Paint / explicit open |
+| Inventory popup | Fold-out library: search + Draft kit + catalog categories | **Hidden** until Add / Paint / explicit open |
 | Structure rail (left) | Layers / constraints | Collapsed; gated by `structureRail` |
 | AI sidecar (right) | Utility, live measures, dialogue | Collapsed; gated by `aiSidecar` |
 | Fit / focus / client / foundation | Paper-first | Almost all floats off |

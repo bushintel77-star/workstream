@@ -66,7 +66,7 @@ Golden rule: override, undo, and manual adjust must stay effortless.
 
 ## 5. Spatial clustering (Fitts + proximity)
 
-Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so the drawing stays free. Material + open-source library inventory lives in the **bottom asset dock** (Soft / Hard / Trees / Water / Library). See `features/kitInventory/KitAssetDock.tsx`.
+Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so the drawing stays free. Material + open-source library inventory lives in the **summoned fold-out library** (search + Draft kit + catalog category sections). See `features/kitInventory/KitAssetDock.tsx`.
 
 ---
 

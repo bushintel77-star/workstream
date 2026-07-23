@@ -62,7 +62,7 @@ describe("planLineStyles", () => {
     expect(light.hardscape.strokeWidth).toBeGreaterThan(light.planting.strokeWidth);
     expect(light.planting.strokeWidth).toBe(light.existing.strokeWidth);
     expect(light.boundary.strokeWidth).toBe(1.4);
-    expect(light.building.strokeWidth).toBe(0.9);
+    expect(light.building.strokeWidth).toBe(1.05);
     expect(light.hardscape.strokeWidth).toBe(0.6);
     expect(light.planting.strokeWidth).toBe(0.4);
   });
@@ -77,7 +77,7 @@ describe("planLineStyles", () => {
     expect(dark.building.strokeWidth).toBeGreaterThan(dark.hardscape.strokeWidth);
     expect(dark.hardscape.strokeWidth).toBeGreaterThan(dark.planting.strokeWidth);
     expect(dark.boundary.strokeWidth).toBe(1.4);
-    expect(dark.building.strokeWidth).toBe(0.9);
+    expect(dark.building.strokeWidth).toBe(1.05);
     expect(dark.hardscape.strokeWidth).toBe(0.6);
     expect(dark.planting.strokeWidth).toBe(0.4);
   });
@@ -90,7 +90,7 @@ describe("planLineStyles", () => {
     });
     // Fit sheet forces parchment (light) even when darkOn — weights still ladder.
     expect(fit.boundary.strokeWidth).toBe(1.4);
-    expect(fit.building.strokeWidth).toBe(0.9);
+    expect(fit.building.strokeWidth).toBe(1.05);
     expect(fit.hardscape.strokeWidth).toBe(0.6);
     expect(fit.planting.strokeWidth).toBe(0.4);
   });

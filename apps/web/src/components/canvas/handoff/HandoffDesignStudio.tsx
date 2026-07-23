@@ -3047,9 +3047,9 @@ export function HandoffDesignStudio({
         ) : null}
 
         {/*
-          Inventory frost popup — Soft / Hard / Trees / Water / Library.
-          Add-only: placing assets summons the popup at the cursor. Fill
-          swatches summon beside the tool dock on Add/Paint.
+          Inventory frost popup — fold-out asset library (search + Draft kit
+          + catalog categories). Add-only: placing assets summons the popup at
+          the cursor. Fill swatches summon beside the tool dock on Add/Paint.
         */}
         {chrome.inventoryPopup && ui.tool === "add" ? (
           <KitAssetDock
