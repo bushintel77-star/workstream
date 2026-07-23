@@ -233,6 +233,7 @@ export function snapshotToSiteFrame(args: {
   levels: SpotLevel[];
   /** Metres per 100% board width (Vicmap fit or operator calibration). */
   boardWidthM?: number | null;
+  buildingSource?: DesignSiteFrame["building_source"];
 }): DesignSiteFrame {
   return {
     boundary: ringToFrame(args.boundary),
@@ -249,6 +250,9 @@ export function snapshotToSiteFrame(args: {
     args.boardWidthM > 0
       ? { board_width_m: args.boardWidthM }
       : {}),
+    ...(args.buildingSource != null
+      ? { building_source: args.buildingSource }
+      : {}),
   };
 }
 
@@ -260,6 +264,7 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
   services?: PctPoint[][];
   levels?: SpotLevel[];
   boardWidthM?: number;
+  buildingSource?: DesignSiteFrame["building_source"];
 } {
   if (!frame) return {};
   const out: {
@@ -269,10 +274,12 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
     services?: PctPoint[][];
     levels?: SpotLevel[];
     boardWidthM?: number;
+    buildingSource?: DesignSiteFrame["building_source"];
   } = {};
   if (frame.board_width_m != null && frame.board_width_m > 0) {
     out.boardWidthM = frame.board_width_m;
   }
+  if (frame.building_source) out.buildingSource = frame.building_source;
   if (frame.boundary.length >= 3) out.boundary = frameToRing(frame.boundary);
   if (frame.building.length >= 3) out.building = frameToRing(frame.building);
   if (frame.easements.length > 0) {
@@ -292,16 +299,21 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
 }
 
 /**
- * A real persisted site frame is authoritative.
+ * Resolve the dwelling ring on boot.
  *
- * If it contains no valid building ring, keep the building layer empty rather
- * than leaking demo/seed footprint geometry into a live project.
+ * - Persisted `site_frame.building` wins when present.
+ * - A real site frame with no building → empty (never seed).
+ * - Live projects (have a projectId) with no frame → empty until Vicmap hydrate.
+ * - Demo / no project → seed fallback is allowed.
  */
 export function resolveHydratedBuilding(
   frame: DesignSiteFrame | null | undefined,
   hydratedBuilding: PctPoint[] | undefined,
   fallbackBuilding: PctPoint[],
+  opts?: { liveProject?: boolean },
 ): PctPoint[] {
   if (hydratedBuilding) return hydratedBuilding;
-  return frame ? [] : fallbackBuilding;
+  if (frame) return [];
+  if (opts?.liveProject) return [];
+  return fallbackBuilding;
 }

@@ -1,15 +1,17 @@
 import type { Store } from "@workstream/db";
 import type {
+  BoundaryAutoTraceResponse,
   GeoJsonPolygon,
   SiteBoundary,
   UpsertSiteBoundaryInput,
 } from "@workstream/contracts";
 import {
   buildBoundaryFromPolygon,
+  geoJsonPolygonToCanvasMetres,
   lockBoundary,
   unlockBoundary,
 } from "@workstream/domain";
-import { fetchTitlePolygon } from "./vicmap";
+import { fetchBuildingPolygon, fetchTitlePolygon } from "./vicmap";
 
 function toUpsert(
   draft: Omit<SiteBoundary, "id" | "updated_at">,
@@ -55,6 +57,25 @@ export async function autoTraceSiteBoundary(
   projectId: string,
   preferGis = true,
 ): Promise<SiteBoundary> {
+  const result = await autoTraceSiteBoundaryWithBuilding(
+    store,
+    ownerId,
+    projectId,
+    preferGis,
+  );
+  return result.boundary;
+}
+
+/**
+ * Title auto-trace plus co-registered dwelling canvas-metre verts.
+ * House comes from survey.house_polygon when present, else Vicmap building WFS.
+ */
+export async function autoTraceSiteBoundaryWithBuilding(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+  preferGis = true,
+): Promise<BoundaryAutoTraceResponse> {
   const project = await store.getProject(ownerId, projectId);
   if (!project) throw new Error(`Project not found: ${projectId}`);
 
@@ -76,8 +97,9 @@ export async function autoTraceSiteBoundary(
     }
   }
 
+  const survey = await store.getSurvey(ownerId, projectId);
+
   if (!polygon) {
-    const survey = await store.getSurvey(ownerId, projectId);
     if (survey?.title_polygon) {
       polygon = survey.title_polygon;
       // Survey job prefers Vicmap WFS; mock rectangle is the offline fallback.
@@ -108,7 +130,44 @@ export async function autoTraceSiteBoundary(
     },
   );
 
-  return store.upsertSiteBoundary(ownerId, projectId, toUpsert(draft));
+  const boundary = await store.upsertSiteBoundary(
+    ownerId,
+    projectId,
+    toUpsert(draft),
+  );
+
+  const origin = boundary.geo_reference.canvas_origin_geo;
+  let housePoly: GeoJsonPolygon | null = null;
+  if (
+    survey?.house_polygon?.coordinates?.[0] &&
+    survey.house_polygon.coordinates[0].length >= 4 &&
+    survey.house_area_m2 > 0
+  ) {
+    housePoly = survey.house_polygon;
+  } else {
+    try {
+      const titleRing = (polygon.coordinates[0] ?? []).map(
+        ([lng, lat]) => [lng, lat] as [number, number],
+      );
+      if (titleRing.length >= 4) {
+        housePoly = await fetchBuildingPolygon(titleRing);
+      }
+    } catch (err) {
+      console.warn("[boundary] Vicmap building fetch failed:", err);
+    }
+  }
+
+  const building_canvas = housePoly
+    ? geoJsonPolygonToCanvasMetres(housePoly, origin)
+    : [];
+  const building_source =
+    building_canvas.length >= 3 ? ("vicmap" as const) : null;
+
+  return {
+    boundary,
+    building_canvas,
+    building_source,
+  };
 }
 
 export async function ingestBoundaryGeoJson(

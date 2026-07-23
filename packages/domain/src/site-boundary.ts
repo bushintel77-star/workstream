@@ -333,6 +333,22 @@ export function gisSnapTargets(
   );
 }
 
+/**
+ * Project a GeoJSON Polygon (EPSG:4326) into the same canvas-metre frame as
+ * a SiteBoundary (`geo_reference.canvas_origin_geo`). Used to co-register
+ * Vicmap/survey house footprints with the title ring.
+ */
+export function geoJsonPolygonToCanvasMetres(
+  polygon: GeoJsonPolygon,
+  origin: GeoCoords,
+): Array<{ x: number; y: number }> {
+  const ring = polygon.coordinates[0];
+  if (!ring || ring.length < 3) return [];
+  return openRing(ring).map(([lng, lat]) =>
+    geoToCanvasMetres({ lng, lat }, origin),
+  );
+}
+
 export function boundaryToGeoJsonPolygon(
   boundary: SiteBoundary,
 ): GeoJsonPolygon {

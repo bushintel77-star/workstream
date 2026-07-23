@@ -2475,6 +2475,7 @@ export function HandoffDesignStudio({
               foundationCleanse={ui.foundationCleanse}
               titleLocked={titleLocked}
               titleBoundaryLocked={ui.titleBoundaryLocked}
+              buildingSource={ui.buildingSource}
               scaleM={scaleM}
               planZoom={planZoom}
               tiltDeg={ui.tiltDeg}

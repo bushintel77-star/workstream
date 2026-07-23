@@ -250,6 +250,14 @@ export const DesignSiteFrameLevelSchema = z.object({
 });
 export type DesignSiteFrameLevel = z.infer<typeof DesignSiteFrameLevelSchema>;
 
+/** Provenance for the existing-dwelling ring on the handoff board. */
+export const DesignBuildingSourceSchema = z.enum([
+  "vicmap",
+  "traced",
+  "empty",
+]);
+export type DesignBuildingSource = z.infer<typeof DesignBuildingSourceSchema>;
+
 export const DesignSiteFrameSchema = z.object({
   boundary: z.array(DesignSiteFramePointSchema).default([]),
   building: z.array(DesignSiteFramePointSchema).default([]),
@@ -262,6 +270,11 @@ export const DesignSiteFrameSchema = z.object({
    * the operator calibrates; absent = legacy canvas on the 110 m default.
    */
   board_width_m: z.number().positive().optional(),
+  /**
+   * How the dwelling ring was authored. Omit on legacy frames.
+   * Never label seed / bbox-warped demo geometry as `"vicmap"`.
+   */
+  building_source: DesignBuildingSourceSchema.optional(),
 });
 export type DesignSiteFrame = z.infer<typeof DesignSiteFrameSchema>;
 

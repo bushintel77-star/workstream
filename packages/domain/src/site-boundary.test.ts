@@ -3,6 +3,7 @@ import {
   buildBoundaryFromGeoRing,
   computeBoundaryMetrics,
   deleteBoundaryVertex,
+  geoJsonPolygonToCanvasMetres,
   insertBoundaryVertex,
   lockBoundary,
   moveBoundaryVertex,
@@ -137,5 +138,43 @@ describe("site-boundary HITL", () => {
     const m = computeBoundaryMetrics(draft.vertices, 0.5);
     expect(m.ai_confidence).toBe(0.5);
     expect(m.total_area_m2).toBeGreaterThan(0);
+  });
+
+  it("projects a GeoJSON house into the boundary canvas-metre frame", () => {
+    const draft = buildBoundaryFromGeoRing({
+      projectId: PROJECT,
+      ring: [
+        [144.96, -37.81],
+        [144.961, -37.81],
+        [144.961, -37.809],
+        [144.96, -37.809],
+      ],
+      source: "GIS_PARCEL",
+      sourceKind: "vicmap",
+    });
+    const origin = draft.geo_reference.canvas_origin_geo;
+    const house = geoJsonPolygonToCanvasMetres(
+      {
+        type: "Polygon",
+        coordinates: [
+          [
+            [144.9602, -37.8098],
+            [144.9606, -37.8098],
+            [144.9606, -37.8094],
+            [144.9602, -37.8094],
+            [144.9602, -37.8098],
+          ],
+        ],
+      },
+      origin,
+    );
+    expect(house.length).toBe(4);
+    // House must sit inside the title canvas-metre bbox.
+    const bx = draft.vertices.map((v) => v.canvas_coords.x);
+    const by = draft.vertices.map((v) => v.canvas_coords.y);
+    expect(Math.min(...house.map((p) => p.x))).toBeGreaterThan(Math.min(...bx));
+    expect(Math.max(...house.map((p) => p.x))).toBeLessThan(Math.max(...bx));
+    expect(Math.min(...house.map((p) => p.y))).toBeGreaterThan(Math.min(...by));
+    expect(Math.max(...house.map((p) => p.y))).toBeLessThan(Math.max(...by));
   });
 });

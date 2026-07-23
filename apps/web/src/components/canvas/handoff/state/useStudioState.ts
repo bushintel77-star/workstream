@@ -94,8 +94,11 @@ import {
   type StudioSnapshot,
   type TraceTarget,
 } from "./studioTypes";
-import { fitCanvasMetresRing } from "../geometry/geoToPct";
-import { reprojectDocToBoundary } from "../geometry/reprojectToBoundary";
+import {
+  applyAutoTraceParcelSnap,
+  type AutoTraceParcelInput,
+} from "../geometry/parcelHydrate";
+import type { DesignBuildingSource } from "@workstream/contracts";
 import {
   clampVegetationElevationScale,
   clearBoundaryLikeSketches,
@@ -278,6 +281,8 @@ type Ui = {
   titleBoundaryLocked: boolean;
   /** Provenance of the active title polygon. */
   boundarySource: "vicmap" | "manual" | "seed";
+  /** Provenance of the existing-dwelling ring (never "seed" once cleared). */
+  buildingSource: DesignBuildingSource;
   /**
    * After Stage 1 / aerial purge — block re-injection of project aerial
    * until the operator explicitly drops imagery again.
@@ -366,26 +371,36 @@ function initialState(opts: {
   irrigationZones?: IrrigationZone[];
   annotations?: CanvasAnnotation[];
   features?: LandscapeFeature[];
+  /** Live project — never boot with the demo dwelling parallelogram. */
+  liveProject?: boolean;
 }): State {
   const seed = WRIGHTS_SEED;
   const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
   const base = seedToSnap(seed);
   const frameOverlay = siteFrameToSnapshot(opts.siteFrame);
+  const liveProject = Boolean(opts.liveProject);
   const hasCanvas =
     (opts.placements?.length ?? 0) > 0 ||
     (opts.strokes?.length ?? 0) > 0 ||
     (opts.irrigationZones?.length ?? 0) > 0 ||
     (opts.annotations?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
+  const building = resolveHydratedBuilding(
+    opts.siteFrame,
+    frameOverlay.building,
+    base.building,
+    { liveProject },
+  );
+  const buildingSource: DesignBuildingSource = frameOverlay.buildingSource
+    ? frameOverlay.buildingSource
+    : building.length >= 3
+      ? "traced"
+      : "empty";
   const snap: StudioSnapshot = hasCanvas
     ? {
         ...base,
         ...frameOverlay,
-        building: resolveHydratedBuilding(
-          opts.siteFrame,
-          frameOverlay.building,
-          base.building,
-        ),
+        building,
         items: featuresOntoItems(
           placementsToItems(opts.placements ?? []),
           opts.features ?? [],
@@ -397,7 +412,9 @@ function initialState(opts: {
         irrigationZones: opts.irrigationZones ?? [],
         annotations: opts.annotations ?? [],
       }
-    : base;
+    : liveProject
+      ? { ...base, building: [] }
+      : base;
   const outdoorSafe: StudioSnapshot = {
     ...snap,
     items: sanitizeItemsToOutdoor(snap.items, snap.boundary, snap.building),
@@ -484,6 +501,7 @@ function initialState(opts: {
       foundationCleanse: false,
       titleBoundaryLocked: false,
       boundarySource: "seed",
+      buildingSource,
       // Never auto-inject Mapbox/survey static aerial — optional upload only
       // (matches curtis-co prototype: parchment drafting plate by default).
       aerialSuppressed: true,
@@ -735,6 +753,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       irrigationZones: initialIrrigationZones,
       annotations: initialAnnotations,
       features: initialFeatures,
+      liveProject: Boolean(projectId),
     }),
   );
   const bootstrapped = useRef(false);
@@ -1202,32 +1221,46 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const { autoTraceBoundaryAction } = await import(
           "../../../../app/actions"
         );
-        const res = await autoTraceBoundaryAction(projectId);
-        const verts = [...res.boundary.vertices]
-          .sort((a, b) => a.sequence_index - b.sequence_index)
-          .map((v) => v.canvas_coords);
-        const fit = fitCanvasMetresRing(verts);
-        const pct = fit.points;
-        if (pct.length >= 3) {
-          mutate((snap) => ({
-            snap: {
-              ...snap,
-              ...reprojectDocToBoundary(snap, pct),
-            },
-          }));
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
+        const keepTraced = state.ui.buildingSource === "traced";
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (applied) {
+          mutate((snap) => {
+            const again = applyAutoTraceParcelSnap({
+              snap,
+              res,
+              keepTracedBuilding: keepTraced,
+            });
+            return { snap: again ? { ...snap, ...again.snap } : snap };
+          });
           boundarySnapped = true;
           setUi({
-            boundarySource:
-              res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+            boundarySource: applied.boundarySource,
+            buildingSource: applied.buildingSource,
             aerialSuppressed: true,
-            // Parcel fit implies the true board scale — metre readouts
-            // must not stay on the 110 m default after a title snap.
-            ...(fit.boardWidthM != null
-              ? { boardWidthM: fit.boardWidthM }
+            ...(applied.fit.boardWidthM != null
+              ? { boardWidthM: applied.fit.boardWidthM }
               : {}),
           });
           notes.push(
-            `Boundary snapped to ${res.boundary.source_kind === "vicmap" ? "Vicmap parcel" : "title polygon"}`,
+            `Boundary snapped to ${
+              res.boundary.source_kind === "vicmap"
+                ? "Vicmap parcel"
+                : "title polygon"
+            }`,
+          );
+          notes.push(
+            applied.buildingSource === "vicmap"
+              ? "Vicmap dwelling hydrated"
+              : applied.buildingSource === "traced"
+                ? "kept traced dwelling"
+                : "dwelling cleared (trace Existing dwelling)",
           );
         }
       } catch {
@@ -1246,7 +1279,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         boundarySnapped ? "" : ""
       }`,
     });
-  }, [mutate, projectId, setUi, state.doc.items]);
+  }, [mutate, projectId, setUi, state.doc.items, state.ui.buildingSource]);
 
   /**
    * Stage 1 CAD title overlay:
@@ -1303,25 +1336,30 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const { autoTraceBoundaryAction } = await import(
           "../../../../app/actions"
         );
-        const res = await autoTraceBoundaryAction(projectId);
-        const verts = [...res.boundary.vertices]
-          .sort((a, b) => a.sequence_index - b.sequence_index)
-          .map((v) => v.canvas_coords);
-        const fit = fitCanvasMetresRing(verts);
-        const pct = fit.points;
-        if (pct.length >= 3) {
-          mutate((snap) => ({
-            snap: {
-              ...snap,
-              ...reprojectDocToBoundary(snap, pct),
-            },
-          }));
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
+        const keepTraced = state.ui.buildingSource === "traced";
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (applied) {
+          mutate((snap) => {
+            const again = applyAutoTraceParcelSnap({
+              snap,
+              res,
+              keepTracedBuilding: keepTraced,
+            });
+            return { snap: again ? { ...snap, ...again.snap } : snap };
+          });
           snapped = true;
           setUi({
-            boundarySource:
-              res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
-            ...(fit.boardWidthM != null
-              ? { boardWidthM: fit.boardWidthM }
+            boundarySource: applied.boundarySource,
+            buildingSource: applied.buildingSource,
+            ...(applied.fit.boardWidthM != null
+              ? { boardWidthM: applied.fit.boardWidthM }
               : {}),
           });
           notes.push(
@@ -1329,6 +1367,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
               ? "Vicmap parcel snapped"
               : "Title polygon snapped",
           );
+          if (applied.buildingSource === "vicmap") {
+            notes.push("Vicmap dwelling hydrated");
+          } else if (applied.buildingSource === "empty") {
+            notes.push("Dwelling unavailable — Trace → Existing dwelling");
+          }
         }
       } catch {
         notes.push("Vicmap unavailable — drag title nodes");
@@ -1349,7 +1392,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
       aerialUri: null,
       assistReply: notes.join(" · "),
     });
-  }, [mutate, projectId, setUi, state.doc.boundary, state.doc.strokes]);
+  }, [
+    mutate,
+    projectId,
+    setUi,
+    state.doc.boundary,
+    state.doc.strokes,
+    state.ui.buildingSource,
+  ]);
 
   const setTitleBoundaryLocked = useCallback(
     (titleBoundaryLocked: boolean) => {
@@ -1538,38 +1588,52 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const { autoTraceBoundaryAction } = await import(
           "../../../../app/actions"
         );
-        const res = await autoTraceBoundaryAction(projectId);
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
         if (cancelled) return;
-        const verts = [...res.boundary.vertices]
-          .sort((a, b) => a.sequence_index - b.sequence_index)
-          .map((v) => v.canvas_coords);
-        const fit = fitCanvasMetresRing(verts);
-        const pct = fit.points;
-        if (pct.length < 3) return;
-        const scaleM = fit.boardWidthM ?? 110;
-        let focus = { focusX: 50, focusY: 50, zoom: 1 };
+        // Boot hydrate always prefers Vicmap/survey house (or empty).
+        // Persisted seed-warped dwellings must not win over cadastral truth.
+        // Operator traces after boot are protected via buildingSource === "traced"
+        // on later spatial-correction / Stage 1 snaps.
+        const keepTraced =
+          state.ui.buildingSource === "traced" &&
+          state.doc.building.length >= 3 &&
+          Boolean(initialSiteFrame?.building_source === "traced");
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (!applied) return;
+        const scaleM = applied.fit.boardWidthM ?? 110;
+        const focus = outdoorFocusView(
+          applied.snap.boundary,
+          applied.snap.building,
+          scaleM,
+        );
         mutate((snap) => {
-          const next = {
-            ...snap,
-            ...reprojectDocToBoundary(snap, pct),
-          };
-          focus = outdoorFocusView(next.boundary, next.building, scaleM);
-          return { snap: next };
+          const again = applyAutoTraceParcelSnap({
+            snap,
+            res,
+            keepTracedBuilding: keepTraced,
+          });
+          return { snap: again ? { ...snap, ...again.snap } : snap };
         });
         setUi({
-          boundarySource:
-            res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+          boundarySource: applied.boundarySource,
+          buildingSource: applied.buildingSource,
           focusX: focus.focusX,
           focusY: focus.focusY,
           zoom: focus.zoom,
           panX: 0,
           panY: 0,
-          ...(fit.boardWidthM != null
-            ? { boardWidthM: fit.boardWidthM }
+          ...(applied.fit.boardWidthM != null
+            ? { boardWidthM: applied.fit.boardWidthM }
             : {}),
         });
       } catch {
-        /* keep seed boundary */
+        /* keep seed boundary — dwelling already empty on live projects */
       }
     })();
     return () => {
@@ -1603,8 +1667,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (building: PctPoint[]) => {
       if (state.ui.locked) return;
       mutate((snap) => ({ snap: { ...snap, building } }));
+      setUi({
+        buildingSource: building.length >= 3 ? "traced" : "empty",
+      });
     },
-    [mutate, state.ui.locked],
+    [mutate, setUi, state.ui.locked],
   );
 
   const moveItem = useCallback(
@@ -2157,6 +2224,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       services: state.doc.services ?? [],
       levels: state.doc.levels ?? [],
       boardWidthM: state.ui.boardWidthM,
+      buildingSource: state.ui.buildingSource,
     });
     setUi({ saveStatus: "saving" });
     try {
@@ -2313,6 +2381,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
         drawCursor: null,
         tool: "select",
         ...(target === "boundary" ? { boundarySource: "manual" as const } : {}),
+        ...(target === "building"
+          ? { buildingSource: "traced" as const }
+          : {}),
       });
     },
     [
