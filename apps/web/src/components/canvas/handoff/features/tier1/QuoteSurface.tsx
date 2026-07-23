@@ -38,6 +38,33 @@ export function QuoteSurface({
 }: Props) {
   const tier1 = isTier1WrightsTerrace(address);
   const lines = estimate.lines.filter((l) => l.total > 0).slice(0, 18);
+  /**
+   * Empty BOM is an empty state, not a $0 quote. A "$0 incl. GST" hero next
+   * to the tier-1 ledger's target figure reads as a contradiction — and a
+   * shareable $0 quote is meaningless. Real data or graceful empty.
+   */
+  const hasCostedBom = lines.length > 0 && estimate.totalInclGst > 0;
+
+  if (!hasCostedBom) {
+    return (
+      <div className={css.root} data-testid="quote-surface">
+        <div className={css.card}>
+          <p className={css.kicker}>Indicative quote</p>
+          <div data-testid="quote-empty-state">
+            <h2 className={css.emptyTitle}>Nothing costed yet</h2>
+            <p className={css.lead}>
+              The quote builds itself from the live BOM on this working
+              drawing. Place plants, surfaces or structures in CAD and the
+              figures appear here as you draw.
+            </p>
+          </div>
+          <button type="button" className={css.back} onClick={onBack}>
+            Back to CAD
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={css.root} data-testid="quote-surface">
