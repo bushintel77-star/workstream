@@ -121,9 +121,44 @@ test.describe("Tilt lens", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
+    // Fixture a traced dwelling so the extrusion gate does not depend on
+    // Vicmap building coverage (many CBD pins have title but no building).
+    const canvas = await request.put(
+      `${process.env.API_URL ?? "http://localhost:3001"}/projects/${projectId}/design-canvas`,
+      {
+        data: {
+          placements: [],
+          strokes: [],
+          irrigation_zones: [],
+          site_frame: {
+            boundary: [
+              { x_pct: 20, y_pct: 15 },
+              { x_pct: 80, y_pct: 15 },
+              { x_pct: 80, y_pct: 85 },
+              { x_pct: 20, y_pct: 85 },
+            ],
+            building: [
+              { x_pct: 35, y_pct: 30 },
+              { x_pct: 65, y_pct: 30 },
+              { x_pct: 65, y_pct: 55 },
+              { x_pct: 35, y_pct: 55 },
+            ],
+            building_source: "traced",
+            easements: [],
+            services: [],
+            levels: [],
+          },
+        },
+      },
+    );
+    expect(canvas.ok()).toBeTruthy();
+
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("building-footprint")).toBeVisible({
+      timeout: 20_000,
+    });
 
     await openCommandPalette(page);
     await page.getByTestId("canvas-command-tilt-view").click();
@@ -142,7 +177,7 @@ test.describe("Tilt lens", () => {
     const roofLift = page.getByTestId("tilt-building-extrusion");
     const walls = page.getByTestId("tilt-building-walls");
     await expect(footprint).toBeVisible();
-    await expect(roofLift).toBeVisible();
+    await expect(roofLift).toBeVisible({ timeout: 10_000 });
     await expect(walls).toBeVisible();
 
     const footprintBox = await footprint.boundingBox();

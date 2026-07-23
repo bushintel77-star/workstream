@@ -1,5 +1,13 @@
 import type { GeoJsonPolygon } from "@workstream/contracts";
-import { polygonArea, type VicmapParcelAttrs } from "@workstream/domain";
+import {
+  pointInRing,
+  polygonArea,
+  type LngLat,
+  type VicmapParcelAttrs,
+} from "@workstream/domain";
+
+/** Reject park / suburb-scale MultiPolygon parts when a residential ring exists. */
+const MAX_SANE_TITLE_AREA_M2 = 80_000;
 
 /**
  * DELWP public GeoServer — Vicmap Property / buildings as keyless WFS GeoJSON.
@@ -277,15 +285,25 @@ async function wfsFetch(url: string): Promise<FeatureCollection> {
   return (await res.json()) as FeatureCollection;
 }
 
-function largestPolygonRing(geom: RawGeometry): Ring | null {
+/** Exterior rings from a Polygon or MultiPolygon (no holes). */
+export function explodeExteriorRings(geom: RawGeometry): Ring[] {
   if (geom.type === "Polygon") {
-    return geom.coordinates[0] ?? null;
+    const ring = geom.coordinates[0];
+    return ring && ring.length >= 3 ? [ring] : [];
   }
-  let best: Ring | null = null;
-  let bestArea = 0;
+  const out: Ring[] = [];
   for (const poly of geom.coordinates) {
     const ring = poly[0];
-    if (!ring) continue;
+    if (ring && ring.length >= 3) out.push(ring);
+  }
+  return out;
+}
+
+/** Largest exterior ring — used for building footprints (main mass). */
+function largestPolygonRing(geom: RawGeometry): Ring | null {
+  let best: Ring | null = null;
+  let bestArea = 0;
+  for (const ring of explodeExteriorRings(geom)) {
     const area = polygonArea(ring as Coord[]);
     if (area > bestArea) {
       bestArea = area;
@@ -295,8 +313,53 @@ function largestPolygonRing(geom: RawGeometry): Ring | null {
   return best;
 }
 
+/**
+ * Pick the cadastral title ring for a pin: smallest ring that contains the
+ * point and is under {@link MAX_SANE_TITLE_AREA_M2}. Avoids Vicmap
+ * MultiPolygon parts that are parks / suburb aggregates.
+ */
+export function pickTitleRingForPin(
+  rings: Ring[],
+  lng: number,
+  lat: number,
+  maxAreaM2 = MAX_SANE_TITLE_AREA_M2,
+): Ring | null {
+  const scored = rings
+    .map((ring) => {
+      const area = polygonArea(ring as Coord[]);
+      return {
+        ring,
+        area,
+        contains: pointInRing(lng, lat, ring as LngLat[]),
+      };
+    })
+    .filter((r) => Number.isFinite(r.area) && r.area > 1)
+    .sort((a, b) => a.area - b.area);
+
+  const containingSane = scored.filter(
+    (r) => r.contains && r.area <= maxAreaM2,
+  );
+  if (containingSane[0]) return containingSane[0].ring;
+
+  const containingAny = scored.filter((r) => r.contains);
+  if (containingAny[0]) return containingAny[0].ring;
+
+  const sane = scored.filter((r) => r.area <= maxAreaM2);
+  if (sane[0]) return sane[0].ring;
+
+  return scored[0]?.ring ?? null;
+}
+
+function ensureClosedRing(ring: Ring): Ring {
+  if (ring.length < 3) return ring;
+  const first = ring[0]!;
+  const last = ring[ring.length - 1]!;
+  if (first[0] === last[0] && first[1] === last[1]) return ring;
+  return [...ring, first];
+}
+
 function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
-  return { type: "Polygon", coordinates: [ring] };
+  return { type: "Polygon", coordinates: [ensureClosedRing(ring)] };
 }
 
 function propStr(
@@ -356,22 +419,24 @@ export async function fetchTitleParcel(
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 
-  let best: RawFeature | null = null;
-  let bestRing: Ring | null = null;
-  let bestArea = 0;
+  // Collect every exterior ring with its parent feature attrs.
+  const candidates: Array<{ ring: Ring; feature: RawFeature }> = [];
   for (const f of fc.features) {
-    const ring = largestPolygonRing(f.geometry);
-    if (!ring) continue;
-    const area = polygonArea(ring as Coord[]);
-    if (area > bestArea) {
-      best = f;
-      bestRing = ring;
-      bestArea = area;
+    for (const ring of explodeExteriorRings(f.geometry)) {
+      candidates.push({ ring, feature: f });
     }
   }
-  if (!best || !bestRing) return null;
+  const bestRing = pickTitleRingForPin(
+    candidates.map((c) => c.ring),
+    lng,
+    lat,
+  );
+  if (!bestRing) return null;
+  const best =
+    candidates.find((c) => c.ring === bestRing)?.feature ??
+    candidates[0]!.feature;
 
-  const lotAreaM2 = Math.round(bestArea);
+  const lotAreaM2 = Math.round(polygonArea(bestRing as Coord[]));
   return {
     polygon: toGeoJsonPolygon(bestRing),
     attrs: extractVicmapParcelAttrs(best.properties, lotAreaM2),
@@ -393,25 +458,20 @@ export async function fetchBuildingPolygon(
   titleRing: Ring,
 ): Promise<GeoJsonPolygon | null> {
   const { typeName, geomField } = await discoverBuildingLayer();
-  const wkt = `POLYGON((${titleRing
-    .map(([x, y]) => `${x} ${y}`)
-    .join(", ")}))`;
+  const closed = ensureClosedRing(titleRing);
+  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
   const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
   const url = buildUrl(typeName, cql);
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 
-  let bestRing: Ring | null = null;
-  let bestArea = 0;
-  for (const f of fc.features) {
-    const ring = largestPolygonRing(f.geometry);
-    if (!ring) continue;
-    const area = polygonArea(ring as Coord[]);
-    if (area > bestArea) {
-      bestRing = ring;
-      bestArea = area;
-    }
-  }
+  // Main dwelling = largest building footprint intersecting the title.
+  const bestRing = largestPolygonRing({
+    type: "MultiPolygon",
+    coordinates: fc.features.flatMap((f) =>
+      explodeExteriorRings(f.geometry).map((r) => [r]),
+    ),
+  });
   return bestRing ? toGeoJsonPolygon(bestRing) : null;
 }
 

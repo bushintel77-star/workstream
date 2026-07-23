@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  explodeExteriorRings,
   extractVicmapParcelAttrs,
   parseFeatureTypeNames,
   parseGeometryFieldName,
   pickBestLayerName,
+  pickTitleRingForPin,
   scoreBuildingLayerName,
   scorePropertyLayerName,
 } from "./vicmap";
@@ -113,5 +115,39 @@ describe("parseGeometryFieldName", () => {
       <xsd:element name="shape" type="gml:GeometryPropertyType"/>
       <xsd:element name="geom" type="gml:MultiSurfacePropertyType"/>`;
     expect(parseGeometryFieldName(xsd)).toBe("geom");
+  });
+});
+
+describe("pickTitleRingForPin", () => {
+  // ~400 m² residential lot around the pin (degrees ≈ metres/111km).
+  const houseLot: [number, number][] = [
+    [144.99, -37.85],
+    [144.9902, -37.85],
+    [144.9902, -37.8498],
+    [144.99, -37.8498],
+    [144.99, -37.85],
+  ];
+  // Park-scale ring that also contains the pin (MultiPolygon trap).
+  const park: [number, number][] = [
+    [144.98, -37.86],
+    [145.01, -37.86],
+    [145.01, -37.84],
+    [144.98, -37.84],
+    [144.98, -37.86],
+  ];
+
+  it("prefers the small residential ring over a park MultiPolygon part", () => {
+    const pinLng = 144.9901;
+    const pinLat = -37.8499;
+    const picked = pickTitleRingForPin([park, houseLot], pinLng, pinLat);
+    expect(picked).toBe(houseLot);
+  });
+
+  it("explodes MultiPolygon exteriors", () => {
+    const rings = explodeExteriorRings({
+      type: "MultiPolygon",
+      coordinates: [[park], [houseLot]],
+    });
+    expect(rings).toHaveLength(2);
   });
 });

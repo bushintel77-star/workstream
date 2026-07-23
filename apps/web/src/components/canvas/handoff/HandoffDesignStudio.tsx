@@ -3458,7 +3458,7 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {sitesOpen && planOn ? (
+        {sitesOpen && planOn && !projectId ? (
           <RightDataLane testId="right-data-lane-sites">
             <SiteSwitcher
               open
