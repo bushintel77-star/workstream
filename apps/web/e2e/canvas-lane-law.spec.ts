@@ -111,11 +111,12 @@ test.describe("Lane law — chrome card overlap", () => {
       fullPage: false,
     });
 
-    // Mutual exclusion — opening sites closes layers.
-    await page.getByTestId("canvas-sites-top").click();
-    await expect(page.getByTestId("sites-popover")).toBeVisible({
-      timeout: 10_000,
-    });
+    // Live projects hide the demo Sites switcher (no seed-site leakage).
+    await expect(page.getByTestId("canvas-sites-top")).toHaveCount(0);
+    await expect(page.getByTestId("sites-popover")).toHaveCount(0);
+
+    // Single right-lane occupant — toggling layers closed frees the lane.
+    await page.getByTestId("canvas-layers-top").click();
     await expect(page.getByTestId("layers-panel")).toHaveCount(0);
   });
 });

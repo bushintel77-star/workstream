@@ -180,13 +180,20 @@ test.describe("Tilt lens", () => {
     await expect(roofLift).toBeVisible({ timeout: 10_000 });
     await expect(walls).toBeVisible();
 
-    const footprintBox = await footprint.boundingBox();
-    const roofBox = await roofLift.boundingBox();
-    expect(footprintBox).toBeTruthy();
-    expect(roofBox).toBeTruthy();
     // Roof must be visibly elevated (higher on screen, smaller y) — not
-    // collapsed onto the same plane as the ground footprint.
-    expect(roofBox!.y).toBeLessThan(footprintBox!.y - 10);
+    // collapsed onto the same plane as the ground footprint. Poll until the
+    // 3D compositor settles (first paint can still be flat for a frame).
+    await expect
+      .poll(
+        async () => {
+          const footprintBox = await footprint.boundingBox();
+          const roofBox = await roofLift.boundingBox();
+          if (!footprintBox || !roofBox) return 0;
+          return footprintBox.y - roofBox.y;
+        },
+        { timeout: 8_000 },
+      )
+      .toBeGreaterThan(10);
 
     // Wall/post quads exist (4 walls + 4 posts for a rectangular footprint).
     expect(await walls.locator("> div").count()).toBeGreaterThanOrEqual(4);

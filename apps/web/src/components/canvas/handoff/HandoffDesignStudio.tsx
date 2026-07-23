@@ -2086,31 +2086,34 @@ export function HandoffDesignStudio({
                 </svg>
               </button>
               ) : null}
-              <button
-                type="button"
-                className={`${css.iconBtn}${sitesOpen ? ` ${css.iconBtnActive}` : ""}`}
-                data-testid="canvas-sites-top"
-                aria-label="Sites"
-                title="Sites"
-                onClick={() =>
-                  studio.setUi({
-                    rightDataPanel: toggleRightDataPanel(
-                      ui.rightDataPanel,
-                      "sites",
-                    ),
-                    utilityPanel: null,
-                  })
-                }
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M8 13.5s4-3.4 4-6.2A4 4 0 1 0 4 7.3C4 10.1 8 13.5 8 13.5z"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                  />
-                  <circle cx="8" cy="7.2" r="1.3" stroke="currentColor" strokeWidth="1.2" />
-                </svg>
-              </button>
+              {/* Demo seed switcher only — live projects have a single site. */}
+              {!projectId ? (
+                <button
+                  type="button"
+                  className={`${css.iconBtn}${sitesOpen ? ` ${css.iconBtnActive}` : ""}`}
+                  data-testid="canvas-sites-top"
+                  aria-label="Sites"
+                  title="Sites"
+                  onClick={() =>
+                    studio.setUi({
+                      rightDataPanel: toggleRightDataPanel(
+                        ui.rightDataPanel,
+                        "sites",
+                      ),
+                      utilityPanel: null,
+                    })
+                  }
+                >
+                  <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <path
+                      d="M8 13.5s4-3.4 4-6.2A4 4 0 1 0 4 7.3C4 10.1 8 13.5 8 13.5z"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                    />
+                    <circle cx="8" cy="7.2" r="1.3" stroke="currentColor" strokeWidth="1.2" />
+                  </svg>
+                </button>
+              ) : null}
             </>
           ) : null}
           {ui.mode === "cad" && !ui.focusOn && !ui.clientView ? (
