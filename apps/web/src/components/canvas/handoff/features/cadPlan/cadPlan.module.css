@@ -249,9 +249,14 @@
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border: none;
-  background: transparent;
+  /* Frost pill — boundary dims / linework crossing the centroid must not
+     garble the callout text (survey-view Title/Outdoor pile-up). */
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   pointer-events: none;
 }
 

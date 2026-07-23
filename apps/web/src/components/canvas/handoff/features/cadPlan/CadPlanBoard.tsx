@@ -30,6 +30,7 @@ import {
   neighbourLotContext,
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
+import { boardPctToClientOffset } from "../../geometry/cameraPointer";
 import { planLinesFor } from "../../geometry/planLineStyles";
 import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
@@ -469,6 +470,27 @@ export function CadPlanBoard({
     planFocusX,
     planFocusY,
   });
+
+  /**
+   * Screen-space declutter for the projected area callouts. Offsets must be
+   * screen px (constant under zoom) — the old board-% offset between Title
+   * and Outdoor shrank as the camera zoomed out, which is how the Title /
+   * Outdoor / dwelling text garbled into one pile on the survey view.
+   * Outdoor always stacks a fixed distance below Title; the dwelling label
+   * lifts clear only when its centroid projects into the Title stack.
+   */
+  const titleProj = boardPctToClientOffset(titleCentroid, cam);
+  const buildingProj =
+    buildingCentroid != null
+      ? boardPctToClientOffset(buildingCentroid, cam)
+      : null;
+  const dwellingNearTitle =
+    buildingProj != null &&
+    Math.abs(buildingProj.x - titleProj.x) < 140 &&
+    Math.abs(buildingProj.y - titleProj.y) < 96;
+  const dwellingLabelTransform = dwellingNearTitle
+    ? "translate(-50%, calc(-50% - 56px))"
+    : undefined;
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
     if (tool === "add" || tool === "paint") {
@@ -1248,6 +1270,7 @@ export function CadPlanBoard({
             kind: "project",
             pct: { x: buildingCentroid.x, y: buildingCentroid.y },
             cam,
+            transform: dwellingLabelTransform,
           }}
         >
           <div
@@ -1268,11 +1291,10 @@ export function CadPlanBoard({
         <CameraChrome
           place={{
             kind: "project",
-            pct: {
-              x: titleCentroid.x,
-              y: Math.min(94, titleCentroid.y + 7),
-            },
+            pct: { x: titleCentroid.x, y: titleCentroid.y },
             cam,
+            /* Constant screen-px stack below Title — never collides at any zoom. */
+            transform: "translate(-50%, calc(-50% + 56px))",
           }}
         >
           <div
