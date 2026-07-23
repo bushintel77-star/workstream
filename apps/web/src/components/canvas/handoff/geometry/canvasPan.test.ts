@@ -16,6 +16,18 @@ describe("canvasPan", () => {
     expect(isPanGesture({ button: 2, spaceHeld: true })).toBe(false);
   });
 
+  it("pan tool armed lets a plain left-drag grab (sketch pad)", () => {
+    expect(
+      isPanGesture({ button: 0, spaceHeld: false, panToolArmed: true }),
+    ).toBe(true);
+    expect(
+      isPanGesture({ button: 0, spaceHeld: false, panToolArmed: false }),
+    ).toBe(false);
+    expect(
+      isPanGesture({ button: 2, spaceHeld: false, panToolArmed: true }),
+    ).toBe(false);
+  });
+
   it("accumulates offset from a drag-start base", () => {
     expect(nextPanOffset({ x: 10, y: -5 }, 20, 30)).toEqual({ x: 30, y: 25 });
   });

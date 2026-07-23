@@ -49,7 +49,8 @@ export function resolveStudioCursor(ctx: StudioCursorContext): string {
     return paintAirLockCursor();
   }
 
-  if (tool === "sketch" || ctx.mode === "sketch") {
+  /* Pen cursor only while the pen owns the click — Pan in sketch still grabs. */
+  if (tool === "sketch") {
     if (ctx.sketchTool === "eraser") return sketchEraserCursor();
     return sketchPenCursor(ctx.sketchTip ?? "medium");
   }

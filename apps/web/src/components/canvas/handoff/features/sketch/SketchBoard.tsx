@@ -47,6 +47,13 @@ type Props = {
   /** CAD reference underlay: shows ink without intercepting plan input. */
   readOnly?: boolean;
   /**
+   * Tool owns the click (docs/INTERACTION-LOGIC.md): the pad only inks while
+   * the studio pen tool is armed. Inactive pad lets drags fall through to
+   * the grab-pan surface; picking Pen / Eraser / a tip re-arms via onActivate.
+   */
+  active?: boolean;
+  onActivate?: () => void;
+  /**
    * Suppress the convert bar / hint chrome (e.g. Fit sheet on — the sheet is
    * a proofing lens; strokes stay visible, tools step aside).
    */
@@ -84,6 +91,8 @@ export function SketchBoard({
   onFormalizeToCad,
   formalizing = false,
   readOnly = false,
+  active = true,
+  onActivate,
   hideChrome = false,
   onChromeChange,
 }: Props) {
@@ -168,9 +177,10 @@ export function SketchBoard({
       data-testid="sketch-board"
       data-sketch-pad={readOnly ? "reference" : "draw"}
       data-read-only={readOnly ? "true" : "false"}
+      data-active={active ? "true" : "false"}
       data-tool={tool}
       onPointerDown={(e) => {
-        if (readOnly || formalizing || !e.isPrimary) return;
+        if (readOnly || formalizing || !active || !e.isPrimary) return;
         if (e.pointerType === "mouse" && e.button !== 0) return;
         const p = toPct(e.currentTarget, e.clientX, e.clientY);
         if (tool === "eraser") {
@@ -263,13 +273,16 @@ export function SketchBoard({
             >
               <button
                 type="button"
-                className={`${css.chip}${tool === "pen" ? ` ${css.chipArmed}` : ""}`}
+                className={`${css.chip}${active && tool === "pen" ? ` ${css.chipArmed}` : ""}`}
                 data-testid="sketch-pen"
-                aria-pressed={tool === "pen"}
+                aria-pressed={active && tool === "pen"}
                 disabled={formalizing}
                 title="Fine-tip marker — grade tip for thicker ink"
                 onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => setTool("pen")}
+                onClick={() => {
+                  setTool("pen");
+                  onActivate?.();
+                }}
               >
                 <span className={css.chipGlyph} aria-hidden>
                   ✎
@@ -278,13 +291,16 @@ export function SketchBoard({
               </button>
               <button
                 type="button"
-                className={`${css.chip}${tool === "eraser" ? ` ${css.chipArmed}` : ""}`}
+                className={`${css.chip}${active && tool === "eraser" ? ` ${css.chipArmed}` : ""}`}
                 data-testid="sketch-eraser"
-                aria-pressed={tool === "eraser"}
+                aria-pressed={active && tool === "eraser"}
                 disabled={formalizing}
                 title="Eraser — remove whole strokes"
                 onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => setTool("eraser")}
+                onClick={() => {
+                  setTool("eraser");
+                  onActivate?.();
+                }}
               >
                 <span className={css.chipGlyph} aria-hidden>
                   ⌫
@@ -308,7 +324,10 @@ export function SketchBoard({
                       disabled={formalizing}
                       title={`${SKETCH_TIP_LABEL[grade]} tip`}
                       onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => setTip(grade)}
+                      onClick={() => {
+                        setTip(grade);
+                        onActivate?.();
+                      }}
                     >
                       <span
                         className={css.tipDot}

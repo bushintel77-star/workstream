@@ -263,6 +263,11 @@ export function HandoffDesignStudio({
   const [spacePanArmed, setSpacePanArmed] = useState(false);
   const [isPanningActive, setIsPanningActive] = useState(false);
   const panBaseRef = useRef({ x: 0, y: 0 });
+  /**
+   * Sketch pad has no marquee — while the Pan tool is armed there, a plain
+   * left-drag grabs the canvas (the pad steps aside; see SketchBoard.active).
+   */
+  const panToolGrabRef = useRef(false);
   /** Temporary CSS class on .zoomWorld only during tilt enter/exit (not wheel). */
   const [tiltAnimKind, setTiltAnimKind] = useState<"fast" | "slow" | null>(
     null,
@@ -501,6 +506,10 @@ export function HandoffDesignStudio({
     panBaseRef.current = { x: ui.panX, y: ui.panY };
   }, [ui.panX, ui.panY]);
 
+  useEffect(() => {
+    panToolGrabRef.current = ui.mode === "sketch" && ui.tool === "pan";
+  }, [ui.mode, ui.tool]);
+
   /**
    * Space held → pan armed (CAD/Figma convention). Tracked outside React
    * state via a ref so the gesture listener below always reads it live;
@@ -557,7 +566,19 @@ export function HandoffDesignStudio({
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
     if (!planMode) return;
     const onPointerDownCapture = (e: PointerEvent) => {
-      if (!isPanGesture({ button: e.button, spaceHeld: spaceHeldRef.current })) {
+      /* Pan-tool grab never swallows chrome (dock chips, tray buttons). */
+      const overChrome = Boolean(
+        (e.target as HTMLElement | null)?.closest(
+          "button, input, select, textarea, [data-camera-chrome]",
+        ),
+      );
+      if (
+        !isPanGesture({
+          button: e.button,
+          spaceHeld: spaceHeldRef.current,
+          panToolArmed: panToolGrabRef.current && !overChrome,
+        })
+      ) {
         return;
       }
       e.preventDefault();
@@ -2679,6 +2700,8 @@ export function HandoffDesignStudio({
                 darkOn={darkLens}
                 hideChrome={ui.frameOn}
                 formalizing={formalizing}
+                active={ui.tool === "sketch"}
+                onActivate={() => studio.setTool("sketch")}
                 onChromeChange={onSketchChromeChange}
                 onCommit={(stroke) => {
                   studio.setStrokes([...studio.strokes, stroke]);

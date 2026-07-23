@@ -62,6 +62,17 @@ describe("resolveStudioCursor", () => {
         locked: false,
       }),
     ).toBe("grab");
+    // Pan in sketch mode grabs — the pen cursor is only for the armed pen.
+    expect(
+      resolveStudioCursor({
+        markId: "spade",
+        tool: "pan",
+        mode: "sketch",
+        locked: false,
+        sketchTool: "pen",
+        sketchTip: "medium",
+      }),
+    ).toBe("grab");
     expect(
       resolveStudioCursor({
         markId: "spade",

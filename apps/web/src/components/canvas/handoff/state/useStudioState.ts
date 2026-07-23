@@ -593,6 +593,8 @@ function reducer(state: State, action: Action): State {
             : action.mode === "survey"
               ? { aerialSuppressed: true }
               : {}),
+          // Sketch enters on Pan too — ground state is grabbable, the pen
+          // arms via the pad's Pen chip (tool owns the click).
           tool:
             action.mode === "survey"
               ? state.ui.foundationCleanse
@@ -600,9 +602,7 @@ function reducer(state: State, action: Action): State {
                   ? "pan"
                   : "edit"
                 : "edit"
-              : action.mode === "sketch"
-                ? "sketch"
-                : "pan",
+              : "pan",
         },
       };
     }

@@ -21,9 +21,14 @@ export function clampPan(v: number): number {
 export function isPanGesture(opts: {
   button: number;
   spaceHeld: boolean;
+  /**
+   * Pan tool armed on a surface with no marquee (sketch pad) — a plain
+   * left-drag grabs the canvas, honouring the grab cursor.
+   */
+  panToolArmed?: boolean;
 }): boolean {
   if (opts.button === 1) return true;
-  return opts.button === 0 && opts.spaceHeld;
+  return opts.button === 0 && (opts.spaceHeld || opts.panToolArmed === true);
 }
 
 /** Absolute pan offset from a drag-start base plus the pointer's screen delta. */

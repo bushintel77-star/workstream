@@ -63,4 +63,52 @@ test.describe("Sketch surfaces reconciliation", () => {
     await page.screenshot({ path: dest, fullPage: false });
     expect(fs.existsSync(dest)).toBe(true);
   });
+
+  test("sketch enters on Pan — drag grabs, Pen chip re-arms ink", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createSurveyProject(request);
+    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    const pad = page.getByTestId("sketch-board");
+    await expect(pad).toBeVisible({ timeout: 15_000 });
+
+    // Ground state: Pan armed, pad steps aside, cursor is a grab (not a pen).
+    await expect(pad).toHaveAttribute("data-active", "false");
+    const board = page.getByTestId("studio-board");
+    await expect(board).toHaveCSS("cursor", "grab");
+
+    // Plain left-drag pans the camera and lays no ink.
+    const zoomWorld = page.getByTestId("zoom-world");
+    const before = await zoomWorld.evaluate(
+      (el) => getComputedStyle(el).transform,
+    );
+    const bb = await board.boundingBox();
+    if (!bb) throw new Error("studio board has no bounding box");
+    const cx = bb.x + bb.width / 2;
+    const cy = bb.y + bb.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 90, cy + 60, { steps: 5 });
+    await page.mouse.up();
+    const after = await zoomWorld.evaluate(
+      (el) => getComputedStyle(el).transform,
+    );
+    expect(after).not.toBe(before);
+    expect(
+      await page.locator('[data-testid="sketch-board"] svg path').count(),
+    ).toBe(0);
+
+    // Pen chip re-arms the pad — a drag now inks a stroke.
+    await page.getByTestId("sketch-pen").click();
+    await expect(pad).toHaveAttribute("data-active", "true");
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 60, cy + 40, { steps: 5 });
+    await page.mouse.up();
+    await expect(
+      page.locator('[data-testid="sketch-board"] svg path'),
+    ).toHaveCount(1);
+  });
 });
