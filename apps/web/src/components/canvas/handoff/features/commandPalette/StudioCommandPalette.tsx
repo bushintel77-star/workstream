@@ -31,6 +31,8 @@ type Props = {
   onToggleData: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  /** Arm hand-lettered annotation placement (next click on plan). */
+  onAnnotate?: () => void;
 };
 
 function matches(cmd: StudioCommand, q: string) {
@@ -60,6 +62,7 @@ export function StudioCommandPalette({
   onToggleData,
   onUndo,
   onRedo,
+  onAnnotate,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [active, setActive] = useState(0);
@@ -73,6 +76,18 @@ export function StudioCommandPalette({
         keywords: "ai assist ask natural language coach",
         run: () => onAskAi(query.trim() || "shade the west glazing"),
       },
+      ...(onAnnotate
+        ? [
+            {
+              id: "annotate",
+              label: "Annotate",
+              detail:
+                "Place a hand-lettered note with a leader — click the plan, then type",
+              keywords: "annotate note annotation leader hand letter callout",
+              run: onAnnotate,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "title-boundary",
         label: "Title boundary",
@@ -194,6 +209,7 @@ export function StudioCommandPalette({
     dataOpen,
     onArm,
     onAskAi,
+    onAnnotate,
     onConvertSketch,
     onGoQuote,
     onRedo,

@@ -14,6 +14,7 @@ const LAYERS: Array<{ key: LayerKey; label: string; hint: string }> = [
   },
   { key: "council", label: "Council & compliance", hint: "Setbacks, TPZ" },
   { key: "vegetation", label: "Vegetation (proposed)", hint: "Canopy, hedge, beds, lawn" },
+  { key: "notes", label: "Notes", hint: "Hand-lettered annotations with leaders" },
 ];
 
 type Props = {
@@ -22,14 +23,20 @@ type Props = {
   setbackOn: boolean;
   shadeOn: boolean;
   items: StudioItem[];
+  noteCount?: number;
   onClose: () => void;
   onOpacity: (key: LayerKey, value: number) => void;
   onSetback: (on: boolean) => void;
   onShade: (on: boolean) => void;
 };
 
-function countFor(key: LayerKey, items: StudioItem[]) {
+function countFor(
+  key: LayerKey,
+  items: StudioItem[],
+  noteCount = 0,
+) {
   if (key === "council") return setbackCountLabel();
+  if (key === "notes") return noteCount;
   return items.filter((i) => ITEM_LAYER[i.t] === key).length;
 }
 
@@ -43,6 +50,7 @@ export function LayersPanel({
   setbackOn,
   shadeOn,
   items,
+  noteCount = 0,
   onClose,
   onOpacity,
   onSetback,
@@ -60,7 +68,7 @@ export function LayersPanel({
       </div>
       <ul className={css.list}>
         {LAYERS.map((layer) => {
-          const count = countFor(layer.key, items);
+          const count = countFor(layer.key, items, noteCount);
           return (
             <li key={layer.key} className={css.row}>
               <div className={css.rowText}>

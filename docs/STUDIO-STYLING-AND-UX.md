@@ -272,6 +272,13 @@ Answer **yes** to every item or do not merge:
 12. Does entering/leaving the feature **animate from the current camera and
     return to it** (no jump cuts, `prefers-reduced-motion` respected)?
 
+### Annotation voice (presentation DNA)
+
+Hand-lettered plan notes use **Architects Daughter** (Google Fonts) — all-caps
+drafting hand — annotation-only. Do not apply it to chrome, HUD, or body copy.
+Leaders follow the planting line-weight ladder (0.4). Night board: chalk text,
+cobalt arrowheads.
+
 ---
 
 ## 7. Revision history
@@ -281,3 +288,4 @@ Answer **yes** to every item or do not merge:
 | 2026-07-20 | Written after canvas inventory was incorrectly shipped as a fixed opaque bottom overlay. Codifies frost popup + disappearing UI + blush tokens as binding. |
 | 2026-07-20 | Compliance rebuild: `inventoryPopup` chrome flag (Add/Paint only); margin-clamped summon; instrument dismiss 3s; paint air-lock cursor + boundary snap. |
 | 2026-07-23 | Checklist items 9–12: seamless integration bar — new features must land in existing lenses/gestures, be discoverable in context, degrade invisibly, and animate from the live camera. No bolt-on ribbon toggles. |
+| 2026-07-23 | Annotation voice: Architects Daughter reserved for hand-lettered plan notes (presentation DNA). |

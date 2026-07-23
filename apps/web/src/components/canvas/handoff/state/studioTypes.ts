@@ -1,4 +1,4 @@
-import type { IrrigationZone, IrrigationZoneKind } from "@workstream/contracts";
+import type { IrrigationZone, IrrigationZoneKind, CanvasAnnotation } from "@workstream/contracts";
 import type {
   SketchStroke,
   SpotLevel,
@@ -15,7 +15,8 @@ export type LayerKey =
   | "boundary"
   | "council"
   | "vegetation"
-  | "services";
+  | "services"
+  | "notes";
 
 export type LayerOpacity = Record<LayerKey, number>;
 
@@ -35,6 +36,8 @@ export type StudioSnapshot = {
   services: PctPoint[][];
   /** Authored drip / lighting paths — DesignCanvas.irrigation_zones. */
   irrigationZones: IrrigationZone[];
+  /** Hand-lettered presentation notes — DesignCanvas.annotations. */
+  annotations: CanvasAnnotation[];
 };
 
 export type StudioUiState = {
@@ -122,6 +125,7 @@ export const DEFAULT_LAYER_OPACITY: LayerOpacity = {
   council: 1,
   vegetation: 1,
   services: 1,
+  notes: 1,
 };
 
 export const SURVEY_LAYER_PRESET: LayerOpacity = {
@@ -130,6 +134,7 @@ export const SURVEY_LAYER_PRESET: LayerOpacity = {
   council: 0.15,
   vegetation: 0.15,
   services: 1,
+  notes: 0.35,
 };
 
 export const DESIGN_LAYER_PRESET: LayerOpacity = {
@@ -140,6 +145,7 @@ export const DESIGN_LAYER_PRESET: LayerOpacity = {
   // Services (drainage / utilities / RL levels) stay legible on the design
   // canvas — they are a toggleable layer, not a separate survey tab.
   services: 1,
+  notes: 1,
 };
 
 export const ITEM_LAYER: Record<StudioItemType, LayerKey> = {

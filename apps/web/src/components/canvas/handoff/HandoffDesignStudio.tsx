@@ -106,6 +106,7 @@ import {
   type ArchitecturalTitleBlock,
 } from "@workstream/domain";
 import type {
+  CanvasAnnotation,
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
@@ -144,6 +145,11 @@ import {
   settleTiltDeg,
   tiltFromDragDelta,
 } from "./features/tilt/tiltMath";
+import { usePresentationLens } from "./features/render/usePresentationLens";
+import {
+  clampNotePos,
+  defaultNotePos,
+} from "./features/render/annotationLayout";
 import {
   formalizeSketchToCadAction,
   lookupCadastralTitleAction,
@@ -164,6 +170,7 @@ type Props = {
   initialStrokes?: CanvasStroke[];
   initialSiteFrame?: DesignSiteFrame | null;
   initialIrrigationZones?: IrrigationZone[];
+  initialAnnotations?: CanvasAnnotation[];
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -185,6 +192,7 @@ export function HandoffDesignStudio({
   initialStrokes = [],
   initialSiteFrame = null,
   initialIrrigationZones = [],
+  initialAnnotations = [],
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -204,11 +212,23 @@ export function HandoffDesignStudio({
     initialStrokes,
     initialSiteFrame,
     initialIrrigationZones,
+    initialAnnotations,
   });
   const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
     useState<GridFormation | null>(null);
   const [gridPreviewInk, setGridPreviewInk] = useState<GridInk | null>(null);
+  const [annotatePhase, setAnnotatePhase] = useState<"off" | "place" | "type">(
+    "off",
+  );
+  const [pendingAnnotation, setPendingAnnotation] = useState<{
+    anchor: CanvasAnnotation["anchor"];
+    notePos: { x: number; y: number };
+  } | null>(null);
+  const [annotateDraft, setAnnotateDraft] = useState("");
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<
+    string | null
+  >(null);
 
   const {
     ui,
@@ -220,6 +240,9 @@ export function HandoffDesignStudio({
     siteSchedule,
     acceptHorizonCard,
   } = studio;
+  const { fidelity, markInteracting } = usePresentationLens({
+    forcePresentation: ui.clientView || ui.frameOn,
+  });
   /** Prefer Turf workable outdoor; fall back to project / seed area. */
   const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
@@ -394,6 +417,7 @@ export function HandoffDesignStudio({
       // Fit sheet: Alt+wheel reserved for print 1:N (FitSheetOverlay).
       if (ui.frameOn && e.altKey) return;
       e.preventDefault();
+      markInteracting();
       const nextZoom = zoomFromWheel(ui.zoom, e.deltaY);
       if (ui.frameOn) {
         // Keep lot-centred sheet origin; zoom multiplies the paper fit.
@@ -508,6 +532,7 @@ export function HandoffDesignStudio({
       setIsPanningActive(true);
       el.setPointerCapture?.(e.pointerId);
       const onMove = (ev: PointerEvent) => {
+        markInteracting();
         const next = nextPanOffset(base, ev.clientX - startX, ev.clientY - startY);
         studio.setUi({ panX: next.x, panY: next.y });
       };
@@ -680,6 +705,7 @@ export function HandoffDesignStudio({
       el.setPointerCapture?.(e.pointerId);
       const onMove = (ev: PointerEvent) => {
         lastY = ev.clientY;
+        markInteracting();
         studio.setUi({
           tiltDeg: tiltFromDragDelta(startDeg, lastY - startY),
         });
@@ -820,6 +846,13 @@ export function HandoffDesignStudio({
       }
 
       if (e.key === "Escape") {
+        if (annotatePhase !== "off") {
+          e.preventDefault();
+          setAnnotatePhase("off");
+          setPendingAnnotation(null);
+          setAnnotateDraft("");
+          return;
+        }
         if (isTiltActive(ui.tiltDeg)) {
           e.preventDefault();
           animateTiltTo(0);
@@ -1014,6 +1047,25 @@ export function HandoffDesignStudio({
         const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
         const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
         studio.nudgeSelected(dx, dy);
+        return;
+      }
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selectedAnnotationId &&
+        !ui.drawPoly &&
+        annotatePhase === "off"
+      ) {
+        e.preventDefault();
+        const removed = studio.removeAnnotation(selectedAnnotationId);
+        setSelectedAnnotationId(null);
+        if (removed) {
+          toast.show("Note removed", "info", 5000, {
+            action: {
+              label: "Undo",
+              onClick: () => studio.restoreAnnotation(removed),
+            },
+          });
+        }
         return;
       }
       if (
@@ -2375,7 +2427,83 @@ export function HandoffDesignStudio({
               eyedropArmed={eyedropArmed}
               onEyedrop={pickStyle}
               onBoardCursor={setBoardCursor}
+              fidelity={fidelity}
+              onInteract={markInteracting}
+              annotations={studio.annotations}
+              selectedAnnotationId={selectedAnnotationId}
+              onSelectAnnotation={(id) => {
+                setSelectedAnnotationId(id);
+                if (id) studio.setSelection(null, []);
+              }}
+              onMoveAnnotation={(id, notePos) => {
+                studio.updateAnnotationNotePos(
+                  id,
+                  clampNotePos(notePos, studio.boundary),
+                );
+              }}
+              annotatePlace={annotatePhase === "place"}
+              onAnnotatePlace={({ x, y, itemId }) => {
+                const anchor: CanvasAnnotation["anchor"] = itemId
+                  ? { kind: "item", itemId }
+                  : { kind: "point", x, y };
+                const notePos = defaultNotePos(x, y, studio.boundary);
+                setPendingAnnotation({ anchor, notePos });
+                setAnnotateDraft("");
+                setAnnotatePhase("type");
+              }}
             />
+            {annotatePhase === "type" && pendingAnnotation ? (
+              <div
+                className={css.annotateInputWrap}
+                data-testid="annotate-input"
+                style={{
+                  left: `${pendingAnnotation.notePos.x}%`,
+                  top: `${pendingAnnotation.notePos.y}%`,
+                }}
+              >
+                <input
+                  autoFocus
+                  type="text"
+                  maxLength={140}
+                  value={annotateDraft}
+                  placeholder="NOTE…"
+                  aria-label="Annotation text"
+                  style={{ fontSize: 16 }}
+                  onChange={(e) => setAnnotateDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setAnnotatePhase("off");
+                      setPendingAnnotation(null);
+                      setAnnotateDraft("");
+                      return;
+                    }
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const text = annotateDraft.trim();
+                      if (!text) return;
+                      const ann: CanvasAnnotation = {
+                        id: crypto.randomUUID(),
+                        text,
+                        anchor: pendingAnnotation.anchor,
+                        notePos: pendingAnnotation.notePos,
+                        createdAt: new Date().toISOString(),
+                      };
+                      studio.addAnnotation(ann);
+                      setSelectedAnnotationId(ann.id);
+                      setAnnotatePhase("off");
+                      setPendingAnnotation(null);
+                      setAnnotateDraft("");
+                      void studio.saveNow().catch(() => {
+                        /* autosave chip surfaces failure */
+                      });
+                    }
+                  }}
+                />
+              </div>
+            ) : null}
             {chrome.floraRing && ui.floraSession ? (
               <FloraRing
                 xPct={ui.floraSession.x}
@@ -3015,6 +3143,7 @@ export function HandoffDesignStudio({
             setbackOn={ui.setbackOn}
             shadeOn={ui.shadeOn}
             items={studio.items}
+            noteCount={studio.annotations.length}
             onClose={() => studio.setUi({ layersOpen: false })}
             onOpacity={studio.setLayerOpacity}
             onSetback={(setbackOn) => studio.setUi({ setbackOn })}
@@ -3129,6 +3258,13 @@ export function HandoffDesignStudio({
           }
           onUndo={studio.undo}
           onRedo={studio.redo}
+          onAnnotate={() => {
+            setSelectedAnnotationId(null);
+            setPendingAnnotation(null);
+            setAnnotateDraft("");
+            setAnnotatePhase("place");
+            studio.setUi({ cmdOpen: false, cmdQuery: "", tool: "pan" });
+          }}
         />
 
       </div>

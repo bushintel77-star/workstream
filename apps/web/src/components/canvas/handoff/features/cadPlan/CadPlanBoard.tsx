@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildOutsideDims,
   deleteVertex,
@@ -45,6 +45,19 @@ import {
 import { StudioGlyph } from "../../StudioGlyph";
 import { RenderDefs } from "../render/RenderDefs";
 import { SUN_SHADOW, sunShadowFill } from "../render/renderTokens";
+import {
+  SpeciesSymbol,
+  isSpeciesSymbolType,
+} from "../render/symbols/SpeciesSymbol";
+import { AnnotationLayer } from "../render/AnnotationLayer";
+import {
+  buildSpeciesLabelCandidates,
+  withScreenPx,
+} from "../render/buildSpeciesLabels";
+import { placeSpeciesLabels } from "../render/speciesLabels";
+import type { RenderFidelity } from "../render/usePresentationLens";
+import renderCss from "../render/presentation.module.css";
+import type { CanvasAnnotation } from "@workstream/contracts";
 import {
   ITEM_LAYER,
   type LayerKey,
@@ -192,6 +205,24 @@ type Props = {
   onCadHandleInteract?: () => void;
   /** Hover affordance on handles / insert nodes — drives context cursor. */
   onBoardCursor?: (mode: "default" | "move" | "add" | "paint") => void;
+  /** Presentation lens fidelity (idle upgrade) — not a user toggle. */
+  fidelity?: RenderFidelity;
+  /** Client view / Fit sheet force presentation via parent lens. */
+  forcePresentation?: boolean;
+  /** Notify parent of interaction so the presentation lens stays in draft. */
+  onInteract?: () => void;
+  /** Hand-lettered annotations (plan geometry / print). */
+  annotations?: CanvasAnnotation[];
+  selectedAnnotationId?: string | null;
+  onSelectAnnotation?: (id: string | null) => void;
+  onMoveAnnotation?: (id: string, notePos: { x: number; y: number }) => void;
+  /** Annotate place mode — next board click sets the anchor. */
+  annotatePlace?: boolean;
+  onAnnotatePlace?: (hit: {
+    x: number;
+    y: number;
+    itemId: string | null;
+  }) => void;
 };
 
 function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
@@ -267,6 +298,14 @@ export function CadPlanBoard({
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
+  fidelity = "draft",
+  onInteract,
+  annotations = [],
+  selectedAnnotationId = null,
+  onSelectAnnotation,
+  onMoveAnnotation,
+  annotatePlace = false,
+  onAnnotatePlace,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -510,8 +549,32 @@ export function CadPlanBoard({
     : undefined;
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
+    onInteract?.();
     // Tilt is view-only — never start marquee / place / paint.
     if (tiltLocked) return;
+    if (annotatePlace && onAnnotatePlace) {
+      const p = toPct(e.clientX, e.clientY);
+      // Prefer nearest plant/item within a small hit radius.
+      const el = rootRef.current;
+      const boardW = el?.clientWidth ?? 960;
+      const hitR = (28 / boardW) * 100;
+      let best: StudioItem | null = null;
+      let bestD = hitR;
+      for (const it of items) {
+        if (it.ghost) continue;
+        const d = Math.hypot(it.x - p.x, it.y - p.y);
+        if (d < bestD) {
+          bestD = d;
+          best = it;
+        }
+      }
+      onAnnotatePlace({
+        x: p.x,
+        y: p.y,
+        itemId: best?.id ?? null,
+      });
+      return;
+    }
     if (tool === "add" || tool === "paint") {
       const raw = toPct(e.clientX, e.clientY);
       const el = rootRef.current;
@@ -635,6 +698,7 @@ export function CadPlanBoard({
     setCursorPct(toPct(e.clientX, e.clientY));
     const d = dragRef.current;
     if (!d) return;
+    onInteract?.();
     const p = toPct(e.clientX, e.clientY);
     if (d.kind === "marquee" && d.startX != null && d.startY != null) {
       setMarquee({ x1: d.startX, y1: d.startY, x2: p.x, y2: p.y });
@@ -806,6 +870,21 @@ export function CadPlanBoard({
     layerOpacity.services,
     isolatedLayer,
   );
+  const notesVisual = resolveLayerVisual(
+    "notes",
+    layerOpacity.notes ?? 1,
+    isolatedLayer,
+  );
+
+  const presentationOn = fidelity === "presentation";
+  const speciesLabels = useMemo(() => {
+    if (!presentationOn || tiltLocked) return [];
+    const raw = withScreenPx(buildSpeciesLabelCandidates(items), ppm);
+    return placeSpeciesLabels(raw, (xPct, yPct) => {
+      const o = boardPctToClientOffset({ x: xPct, y: yPct }, cam);
+      return { x: o.x, y: o.y };
+    });
+  }, [presentationOn, tiltLocked, items, ppm, cam]);
 
   return (
     <div
@@ -815,8 +894,15 @@ export function CadPlanBoard({
       data-cad-plan
       data-plan-geometry="1"
       data-mode={mode}
+      data-fidelity={fidelity}
       data-cursor={
-        tool === "paint" ? "paint" : editing ? cursorMode : "default"
+        annotatePlace
+          ? "add"
+          : tool === "paint"
+            ? "paint"
+            : editing
+              ? cursorMode
+              : "default"
       }
       style={boardPassthrough ? { pointerEvents: "none" } : undefined}
       onPointerDown={(e) => {
@@ -1622,11 +1708,32 @@ export function CadPlanBoard({
                   pointerEvents: "none",
                 }}
               >
-                <StudioGlyph
-                  type={it.t}
-                  ink={!darkOn || frameOn}
-                  night={darkOn && !frameOn}
-                />
+                {presentationOn && isSpeciesSymbolType(it.t) ? (
+                  <svg
+                    viewBox="0 0 100 100"
+                    width="100%"
+                    height="100%"
+                    overflow="visible"
+                    aria-hidden
+                    data-testid="species-symbol"
+                    data-symbol-type={it.t}
+                  >
+                    <SpeciesSymbol
+                      type={it.t}
+                      itemId={it.id}
+                      night={darkOn && !frameOn}
+                      ghost={Boolean(it.ghost)}
+                      ink={!darkOn || frameOn}
+                      label={d.name}
+                    />
+                  </svg>
+                ) : (
+                  <StudioGlyph
+                    type={it.t}
+                    ink={!darkOn || frameOn}
+                    night={darkOn && !frameOn}
+                  />
+                )}
               </div>
               {previewType ? (
                 <div
@@ -1711,6 +1818,42 @@ export function CadPlanBoard({
                 </button>
               </CameraChrome>
             ) : null}
+          </div>
+        );
+      })}
+
+      <AnnotationLayer
+        annotations={annotations}
+        items={items}
+        selectedId={selectedAnnotationId}
+        night={darkOn && !frameOn}
+        opacity={notesVisual.opacity}
+        draft={!presentationOn}
+        onSelect={(id) => {
+          onSelectAnnotation?.(id);
+          if (id) onSelect(null);
+        }}
+        onMoveNote={(id, notePos) => onMoveAnnotation?.(id, notePos)}
+      />
+
+      {speciesLabels.map((lab) => {
+        const boardH = rootRef.current?.clientHeight ?? 640;
+        const offsetPct =
+          (lab.offsetYPx / Math.max(1, boardH * planZoom)) * 100;
+        return (
+          <div
+            key={lab.id}
+            className={`${renderCss.speciesLabel}${darkOn && !frameOn ? ` ${renderCss.speciesLabelNight}` : ""}`}
+            data-testid="species-label"
+            data-label-id={lab.id}
+            data-plan-geometry="1"
+            style={{
+              left: `${lab.xPct}%`,
+              top: `${lab.yPct + offsetPct}%`,
+            }}
+            aria-hidden
+          >
+            {lab.text}
           </div>
         );
       })}

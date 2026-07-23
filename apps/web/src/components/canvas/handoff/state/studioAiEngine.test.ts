@@ -25,6 +25,7 @@ function snapFromSeed(): StudioSnapshot {
     levels: [],
     services: [],
     irrigationZones: [],
+    annotations: [],
   };
 }
 

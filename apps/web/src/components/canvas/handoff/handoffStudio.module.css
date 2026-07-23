@@ -889,6 +889,28 @@
   opacity: 0.7;
 }
 
+.annotateInputWrap {
+  position: absolute;
+  z-index: 40;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+}
+
+.annotateInputWrap input {
+  min-width: 160px;
+  max-width: 240px;
+  padding: 6px 10px;
+  border: 1px solid rgba(36, 19, 24, 0.28);
+  border-radius: 4px;
+  background: rgba(255, 252, 247, 0.96);
+  font-family: "Architects Daughter", "Segoe Print", cursive;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #241318;
+  outline: none;
+}
+
 .undoFilmstrip {
   position: absolute;
   left: 74px;

@@ -15,6 +15,7 @@ import {
   type StudioHorizonCard,
 } from "@workstream/domain";
 import type {
+  CanvasAnnotation,
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
@@ -326,6 +327,7 @@ function snapOf(doc: Doc): StudioSnapshot {
     levels: doc.levels,
     services: doc.services,
     irrigationZones: doc.irrigationZones ?? [],
+    annotations: doc.annotations ?? [],
   };
 }
 
@@ -339,6 +341,7 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
     levels: [],
     services: [],
     irrigationZones: [],
+    annotations: [],
   };
 }
 
@@ -348,6 +351,7 @@ function initialState(opts: {
   strokes?: CanvasStroke[];
   siteFrame?: DesignSiteFrame | null;
   irrigationZones?: IrrigationZone[];
+  annotations?: CanvasAnnotation[];
 }): State {
   const seed = WRIGHTS_SEED;
   const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
@@ -357,6 +361,7 @@ function initialState(opts: {
     (opts.placements?.length ?? 0) > 0 ||
     (opts.strokes?.length ?? 0) > 0 ||
     (opts.irrigationZones?.length ?? 0) > 0 ||
+    (opts.annotations?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
   const snap: StudioSnapshot = hasCanvas
     ? {
@@ -373,6 +378,7 @@ function initialState(opts: {
         services: frameOverlay.services ?? base.services,
         levels: frameOverlay.levels ?? base.levels,
         irrigationZones: opts.irrigationZones ?? [],
+        annotations: opts.annotations ?? [],
       }
     : base;
   const outdoorSafe: StudioSnapshot = {
@@ -481,6 +487,8 @@ export type UseStudioStateOpts = {
   initialSiteFrame?: DesignSiteFrame | null;
   /** Authored drip / lighting zones from DesignCanvas.irrigation_zones. */
   initialIrrigationZones?: IrrigationZone[];
+  /** Hand-lettered notes from DesignCanvas.annotations. */
+  initialAnnotations?: CanvasAnnotation[];
 };
 
 function reducer(state: State, action: Action): State {
@@ -699,6 +707,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialStrokes = [],
     initialSiteFrame = null,
     initialIrrigationZones = [],
+    initialAnnotations = [],
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
@@ -707,6 +716,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       strokes: initialStrokes,
       siteFrame: initialSiteFrame,
       irrigationZones: initialIrrigationZones,
+      annotations: initialAnnotations,
     }),
   );
   const bootstrapped = useRef(false);
@@ -1243,6 +1253,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         council: 0.25,
         vegetation: 0.4,
         services: 0.6,
+        notes: 0.5,
       },
       assistReply: "Snapping Vicmap title…",
     });
@@ -1979,6 +1990,64 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate, setUi, state.doc.irrigationZones],
   );
 
+  const addAnnotation = useCallback(
+    (ann: CanvasAnnotation) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          annotations: [...(snap.annotations ?? []), ann],
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const updateAnnotationNotePos = useCallback(
+    (id: string, notePos: { x: number; y: number }) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          annotations: (snap.annotations ?? []).map((a) =>
+            a.id === id ? { ...a, notePos } : a,
+          ),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const removeAnnotation = useCallback(
+    (id: string): CanvasAnnotation | null => {
+      const existing = (state.doc.annotations ?? []).find((a) => a.id === id);
+      if (!existing) return null;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          annotations: (snap.annotations ?? []).filter((a) => a.id !== id),
+        },
+      }));
+      return existing;
+    },
+    [mutate, state.doc.annotations],
+  );
+
+  const restoreAnnotation = useCallback(
+    (ann: CanvasAnnotation) => {
+      mutate((snap) => {
+        if ((snap.annotations ?? []).some((a) => a.id === ann.id)) {
+          return { snap };
+        }
+        return {
+          snap: {
+            ...snap,
+            annotations: [...(snap.annotations ?? []), ann],
+          },
+        };
+      });
+    },
+    [mutate],
+  );
+
   const switchSite = useCallback((idx: number) => {
     dispatch({ type: "switchSite", idx });
   }, []);
@@ -2024,7 +2093,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         placements,
         canvasStrokes,
         state.doc.irrigationZones ?? [],
-        undefined,
+        state.doc.annotations ?? [],
         siteFrame,
       );
       saveRevisionRef.current += 1;
@@ -2052,6 +2121,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.building,
     state.doc.easements,
     state.doc.irrigationZones,
+    state.doc.annotations,
     state.doc.items,
     state.doc.levels,
     state.doc.services,
@@ -2124,6 +2194,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
       .map(
         (z) =>
           `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+      )
+      .join("/"),
+    (state.doc.annotations ?? [])
+      .map(
+        (a) =>
+          `${a.id}:${a.text}:${a.notePos.x},${a.notePos.y}:${a.anchor.kind === "item" ? a.anchor.itemId : `${a.anchor.x},${a.anchor.y}`}`,
       )
       .join("/"),
     saveRetryNonce,
@@ -2465,6 +2541,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     levels: state.doc.levels ?? [],
     services: state.doc.services ?? [],
     irrigationZones: state.doc.irrigationZones ?? [],
+    annotations: state.doc.annotations ?? [],
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     undoDepth: state.doc.hist.length,
@@ -2514,6 +2591,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
     addSpotLevel,
     commitService,
     commitZone,
+    addAnnotation,
+    updateAnnotationNotePos,
+    removeAnnotation,
+    restoreAnnotation,
     switchSite,
     resetSite,
     retrySave: () => setSaveRetryNonce((n) => n + 1),
