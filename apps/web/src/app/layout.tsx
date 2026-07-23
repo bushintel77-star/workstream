@@ -61,7 +61,14 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body
+        data-build={
+          process.env.NEXT_PUBLIC_BUILD_SHA ??
+          process.env.RAILWAY_GIT_COMMIT_SHA ??
+          process.env.VERCEL_GIT_COMMIT_SHA ??
+          "dev"
+        }
+      >
         {clerkEnabled ? (
           <ClerkProvider>
             <ToastHost>{shell}</ToastHost>

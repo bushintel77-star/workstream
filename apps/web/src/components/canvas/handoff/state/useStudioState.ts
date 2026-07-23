@@ -257,6 +257,8 @@ type Ui = {
   parchmentPeel: number;
   /** Durable DesignCanvas autosave status. */
   saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
+  /** Set when saveStatus is error — drives honest toast copy. */
+  saveErrorKind: "unreachable" | "rejected" | null;
   /** Inline Flora Ring session (planting Add click). */
   floraSession: {
     x: number;
@@ -455,6 +457,7 @@ function initialState(opts: {
       boardWidthM: null,
       parchmentPeel: 0.42,
       saveStatus: hasCanvas ? "saved" : "idle",
+      saveErrorKind: null,
       floraSession: null,
       foundationCleanse: false,
       titleBoundaryLocked: false,
@@ -2029,9 +2032,18 @@ export function useStudioState(opts: UseStudioStateOpts) {
         saveStatus: "saved",
         savedTick: Date.now(),
         saveRevision: saveRevisionRef.current,
+        saveErrorKind: null,
       });
-    } catch {
-      setUi({ saveStatus: "error" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const unreachable =
+        /fetch failed|Failed to fetch|ECONNREFUSED|ENOTFOUND|network|timeout|AbortError/i.test(
+          msg,
+        );
+      setUi({
+        saveStatus: "error",
+        saveErrorKind: unreachable ? "unreachable" : "rejected",
+      });
       throw new Error("Design canvas save failed");
     }
   }, [
@@ -2052,17 +2064,28 @@ export function useStudioState(opts: UseStudioStateOpts) {
       skipPersist.current = false;
       return;
     }
+    const backoffMs = [2_000, 8_000, 30_000];
     const handle = window.setTimeout(() => {
       const persist = async (attempt: number): Promise<void> => {
         try {
           await saveNow();
-        } catch {
-          if (attempt < 3) {
+        } catch (err) {
+          if (attempt < backoffMs.length) {
             setUi({ saveStatus: "retrying" });
-            await new Promise((r) => window.setTimeout(r, 700 * attempt));
+            await new Promise((r) =>
+              window.setTimeout(r, backoffMs[attempt - 1] ?? 2_000),
+            );
             return persist(attempt + 1);
           }
-          setUi({ saveStatus: "error" });
+          const msg = err instanceof Error ? err.message : String(err);
+          const unreachable =
+            /fetch failed|Failed to fetch|ECONNREFUSED|ENOTFOUND|network|timeout|AbortError/i.test(
+              msg,
+            );
+          setUi({
+            saveStatus: "error",
+            saveErrorKind: unreachable ? "unreachable" : "rejected",
+          });
         }
       };
       void persist(1);

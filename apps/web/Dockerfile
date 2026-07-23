@@ -7,13 +7,16 @@
 ARG NODE_VERSION=22.11.0
 ARG PNPM_VERSION=9.15.4
 ARG NEXT_PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
+ARG NEXT_PUBLIC_BUILD_SHA=unknown
 
 # ---- builder ---------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS builder
 
 ARG PNPM_VERSION
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_BUILD_SHA
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_BUILD_SHA=$NEXT_PUBLIC_BUILD_SHA
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /repo

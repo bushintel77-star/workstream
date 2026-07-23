@@ -112,6 +112,8 @@ export type StudioUiState = {
   sheetScaleDenom: 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500;
   parchmentPeel: number;
   saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
+  /** Set when saveStatus is error — drives honest toast copy. */
+  saveErrorKind: "unreachable" | "rejected" | null;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

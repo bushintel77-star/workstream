@@ -311,17 +311,17 @@ export function HandoffDesignStudio({
     if (ui.saveStatus === "error") {
       if (lastSaveErrorToast.current) return;
       lastSaveErrorToast.current = true;
-      toast.show(
-        "Canvas autosave failed. Tap Retry save in the header before leaving.",
-        "error",
-        6000,
-      );
+      const detail =
+        ui.saveErrorKind === "unreachable"
+          ? "Couldn't reach the server. Tap Retry save in the header before leaving."
+          : "Server rejected the save. Tap Retry save in the header before leaving.";
+      toast.show(detail, "error", 6000);
       return;
     }
     if (ui.saveStatus === "saved" || ui.saveStatus === "saving") {
       lastSaveErrorToast.current = false;
     }
-  }, [toast, ui.saveStatus]);
+  }, [toast, ui.saveStatus, ui.saveErrorKind]);
 
   useEffect(() => {
     const el = boardRef.current;
