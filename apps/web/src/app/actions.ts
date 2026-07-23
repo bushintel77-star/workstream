@@ -899,6 +899,39 @@ export async function copyPortalLinkAction(projectId: string): Promise<string> {
   return portal_url;
 }
 
+export async function listShareRevisionsAction(projectId: string) {
+  const { listShareRevisionsApi } = await import("../lib/api");
+  try {
+    return await listShareRevisionsApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not load share revisions");
+  }
+}
+
+export async function createShareRevisionAction(
+  projectId: string,
+  quoteLines: Array<{
+    id: string;
+    label: string;
+    unit: string;
+    qty: number;
+    total: number;
+  }>,
+  totalInclGst: number,
+) {
+  const { createShareRevisionApi } = await import("../lib/api");
+  try {
+    const result = await createShareRevisionApi(projectId, {
+      quoteLines,
+      totalInclGst,
+    });
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Could not create share link");
+  }
+}
+
 export async function saveProjectClientAction(formData: FormData): Promise<void> {
   const projectId = String(formData.get("projectId") ?? "").trim();
   if (!projectId) throw new Error("Missing project");

@@ -16,10 +16,12 @@ type Props = {
   onQuotePersisted: (uri: string | null) => void;
   onReviewGhosts: () => void;
   onBack: () => void;
+  onOpenSharePopup?: () => void;
 };
 
 /**
- * Share lens — portal unlock after quote persist; AI draft gate first.
+ * Share lens — promote quote + portal deposit link; revision share lives on
+ * the header Share frost popup (checklist 9–12).
  */
 export function ShareSurface({
   projectId,
@@ -30,6 +32,7 @@ export function ShareSurface({
   onQuotePersisted,
   onReviewGhosts,
   onBack,
+  onOpenSharePopup,
 }: Props) {
   const [pending, start] = useTransition();
   const [link, setLink] = useState<string | null>(portalUri);
@@ -137,6 +140,17 @@ export function ShareSurface({
         )}
 
         {error ? <p className={css.error}>{error}</p> : null}
+
+        {onOpenSharePopup ? (
+          <button
+            type="button"
+            className={css.primary}
+            data-testid="share-open-revision-popup"
+            onClick={onOpenSharePopup}
+          >
+            Client acceptance link
+          </button>
+        ) : null}
 
         <button type="button" className={css.ghost} onClick={onBack}>
           Back to CAD

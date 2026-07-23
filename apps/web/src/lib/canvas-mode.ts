@@ -25,7 +25,7 @@ export type CanvasProgress = {
 /**
  * Progressive unlock:
  * Sketch + CAD both open after aerial/title (CAD is the Fit sheet line-draw surface).
- * Quote needs accepted CAD; Share needs persisted quote.
+ * Quote needs accepted CAD; Share needs a live costed BOM (or persisted quote).
  */
 export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
   const open = new Set<CanvasMode>(["survey"]);

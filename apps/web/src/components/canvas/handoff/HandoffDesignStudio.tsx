@@ -91,6 +91,7 @@ import { ZoneOverlay } from "./features/zones/ZoneOverlay";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
+import { ShareRevisionPopup } from "./features/share/ShareRevisionPopup";
 import { FloraRing } from "./features/flora/FloraRing";
 import { VolumetricIsolith } from "./features/isolith/VolumetricIsolith";
 import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
@@ -245,6 +246,10 @@ export function HandoffDesignStudio({
   const tiltHintSeenRef = useRef(false);
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
+  const [sharePopupOpen, setSharePopupOpen] = useState(false);
+  const [latestShare, setLatestShare] = useState<
+    import("@workstream/contracts").ShareRevision | null
+  >(null);
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
     initialTitleBlock,
   );
@@ -1453,6 +1458,23 @@ export function HandoffDesignStudio({
     ui.groupIds.length > 0 ||
     ui.addOpen ||
     ui.locked;
+  const quoteShareLines = useMemo(
+    () =>
+      estimate.lines
+        .filter((l) => l.total > 0)
+        .slice(0, 18)
+        .map((l) => ({
+          id: l.id,
+          label: l.label,
+          unit: l.unit,
+          qty: l.qty,
+          total: l.total,
+        })),
+    [estimate.lines],
+  );
+  const hasCostedBom =
+    quoteShareLines.length > 0 && estimate.totalInclGst > 0;
+
   const modeProgress = useMemo(
     () => ({
       hasAerial:
@@ -1465,9 +1487,11 @@ export function HandoffDesignStudio({
         studio.items.some((i) => !i.ghost) ||
         studio.strokes.length > 0 ||
         studio.irrigationZones.length > 0,
-      hasQuote: quotePersisted,
+      /** Share unlocks on live costed BOM (not only persisted quote output). */
+      hasQuote: hasCostedBom || quotePersisted,
     }),
     [
+      hasCostedBom,
       liveAerial,
       quotePersisted,
       studio.boundary.length,
@@ -1487,13 +1511,34 @@ export function HandoffDesignStudio({
     }
   }, [fallbackMode, openModes, requestMode, ui.mode]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { listShareRevisionsAction } = await import(
+          "../../../app/actions"
+        );
+        const data = await listShareRevisionsAction(projectId);
+        if (!cancelled) setLatestShare(data.revisions[0] ?? null);
+      } catch {
+        /* non-blocking — share stamp is progressive */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  const openSharedRev =
+    latestShare?.status === "shared" ? latestShare : null;
+
   const lockReasonForMode = (mode: StudioMode): string | null => {
     if (openModes.has(mode)) return null;
     if (mode === "sketch" || mode === "cad" || mode === "elevation") {
       return "Complete survey and title boundary first.";
     }
     if (mode === "quote") return "Accept CAD geometry before quoting.";
-    if (mode === "share") return "Generate a quote before sharing.";
+    if (mode === "share") return "Cost something on the drawing before sharing.";
     return "Complete the previous stage first.";
   };
   /**
@@ -1894,28 +1939,46 @@ export function HandoffDesignStudio({
             </svg>
           </button>
           {!ui.clientView ? (
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="share-top"
-              aria-label="Share"
-              title={lockReasonForMode("share") ?? "Share"}
-              disabled={Boolean(lockReasonForMode("share"))}
-              onClick={() => {
-                if (!lockReasonForMode("share")) requestMode("share");
-              }}
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <circle cx="12" cy="4" r="1.6" stroke="currentColor" strokeWidth="1.2" />
-                <circle cx="4" cy="8" r="1.6" stroke="currentColor" strokeWidth="1.2" />
-                <circle cx="12" cy="12" r="1.6" stroke="currentColor" strokeWidth="1.2" />
-                <path
-                  d="M5.4 7.3 10.5 4.8M5.4 8.7l5.1 2.5"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                />
-              </svg>
-            </button>
+            <div className={css.shareWrap}>
+              <button
+                type="button"
+                className={`${css.iconBtn}${sharePopupOpen || ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="share-top"
+                aria-label="Share"
+                aria-expanded={sharePopupOpen}
+                title={
+                  lockReasonForMode("share") ??
+                  (hasCostedBom
+                    ? "Share with client"
+                    : "Cost something before sharing")
+                }
+                disabled={!hasCostedBom}
+                onClick={() => {
+                  if (!hasCostedBom) return;
+                  setSharePopupOpen((v) => !v);
+                }}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <circle cx="12" cy="4" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                  <circle cx="4" cy="8" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                  <circle cx="12" cy="12" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                  <path
+                    d="M5.4 7.3 10.5 4.8M5.4 8.7l5.1 2.5"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                  />
+                </svg>
+              </button>
+              <ShareRevisionPopup
+                open={sharePopupOpen}
+                onClose={() => setSharePopupOpen(false)}
+                projectId={projectId}
+                address={displayAddress}
+                quoteLines={quoteShareLines}
+                totalInclGst={estimate.totalInclGst}
+                onRevisionChange={setLatestShare}
+              />
+            </div>
           ) : null}
           <button
             type="button"
@@ -1969,6 +2032,13 @@ export function HandoffDesignStudio({
           />
         </div>
       </header>
+
+      {openSharedRev && !ui.clientView ? (
+        <p className={css.shareBanner} data-testid="share-open-banner">
+          Shared rev {openSharedRev.revision} is out with the client — changes
+          create a new revision.
+        </p>
+      ) : null}
 
       {!ui.clientView && !ui.frameOn ? (
         <StudioContextBreadcrumb
@@ -2029,7 +2099,9 @@ export function HandoffDesignStudio({
               requestMode("cad");
               ai.openReview();
             }}
-            onShare={() => requestMode("share")}
+            onShare={() => {
+              setSharePopupOpen(true);
+            }}
             onBack={() => requestMode("cad")}
           />
         ) : null}
@@ -2050,6 +2122,10 @@ export function HandoffDesignStudio({
               ai.openReview();
             }}
             onBack={() => requestMode("cad")}
+            onOpenSharePopup={() => {
+              setSharePopupOpen(true);
+              requestMode("cad");
+            }}
           />
         ) : null}
 
@@ -2602,6 +2678,23 @@ export function HandoffDesignStudio({
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
             titleBlock={titleBlock}
+            shareStamp={
+              latestShare
+                ? latestShare.status === "accepted"
+                  ? `Rev ${latestShare.revision} · Accepted`
+                  : latestShare.status === "declined"
+                    ? `Rev ${latestShare.revision} · Declined`
+                    : latestShare.status === "shared"
+                      ? `Rev ${latestShare.revision} · Shared ${new Date(
+                          latestShare.created_at,
+                        ).toLocaleDateString("en-AU", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}`
+                      : `Rev ${latestShare.revision} · Superseded`
+                : null
+            }
           />
         ) : null}
 

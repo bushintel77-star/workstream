@@ -1378,6 +1378,60 @@ export async function createPortalLinkApi(
   });
 }
 
+export async function listShareRevisionsApi(projectId: string) {
+  return apiGet<{
+    revisions: import("@workstream/contracts").ShareRevision[];
+    share_base_url: string;
+  }>(`/projects/${projectId}/share-revisions`);
+}
+
+export type CreateShareRevisionResult =
+  | {
+      ok: true;
+      revision: import("@workstream/contracts").ShareRevision;
+      share_url: string;
+    }
+  | {
+      ok: false;
+      unchanged: true;
+      revision: import("@workstream/contracts").ShareRevision;
+      share_url: string;
+      error: string;
+    };
+
+export async function createShareRevisionApi(
+  projectId: string,
+  body: import("@workstream/contracts").CreateShareRevisionInput,
+): Promise<CreateShareRevisionResult> {
+  const res = await fetch(`${API_URL}/projects/${projectId}/share-revisions`, {
+    method: "POST",
+    headers: await apiHeaders(true),
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    revision?: import("@workstream/contracts").ShareRevision;
+    share_url?: string;
+    error?: string;
+    unchanged?: boolean;
+  };
+  if (res.status === 409 && data.unchanged && data.revision && data.share_url) {
+    return {
+      ok: false,
+      unchanged: true,
+      revision: data.revision,
+      share_url: data.share_url,
+      error: data.error ?? "Nothing changed since the last share",
+    };
+  }
+  if (!res.ok || !data.revision || !data.share_url) {
+    throw new Error(
+      data.error ?? `API ${res.status} on POST share-revisions`,
+    );
+  }
+  return { ok: true, revision: data.revision, share_url: data.share_url };
+}
+
 export async function testIntegrationApi(
   channel: string,
   toEmail?: string,

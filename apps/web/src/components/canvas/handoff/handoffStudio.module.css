@@ -146,6 +146,23 @@
   box-shadow: none;
 }
 
+.shareWrap {
+  position: relative;
+  flex: none;
+}
+
+.shareBanner {
+  flex: none;
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #7a5560;
+  background: color-mix(in srgb, #ffd3de 55%, #fffbfc);
+  border-bottom: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  z-index: 28;
+}
+
 .brandBlock {
   flex: none;
   min-width: 0;

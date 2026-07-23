@@ -39,6 +39,8 @@ type Props = {
   onScaleDenom?: (n: SheetScaleDenom) => void;
   /** Live Vicmap cadastral title block for the selected address. */
   titleBlock?: ArchitecturalTitleBlock | null;
+  /** Doc-control stamp from the latest share revision. */
+  shareStamp?: string | null;
 };
 
 type ElevProfile = {
@@ -172,6 +174,7 @@ export function FitSheetOverlay({
   scaleDenom = 100,
   onScaleDenom,
   titleBlock = null,
+  shareStamp = null,
 }: Props) {
   const [pulse, setPulse] = useState(false);
 
@@ -452,6 +455,9 @@ export function FitSheetOverlay({
                   ? scaleTxt
                   : `${scaleTxt} (Not to scale) — Working drawing indicative only`}
               </span>
+              {shareStamp ? (
+                <span data-testid="fit-sheet-share-stamp">{shareStamp}</span>
+              ) : null}
               <span>{issued}</span>
             </div>
           </div>
