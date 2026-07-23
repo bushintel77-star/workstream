@@ -171,9 +171,7 @@
   white-space: nowrap;
   margin-top: 0;
   box-shadow: none;
-  text-shadow:
-    0 0 4px rgba(242, 240, 235, 0.98),
-    0 0 8px rgba(242, 240, 235, 0.85);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 /*
@@ -186,9 +184,7 @@
 .boardDark .cadDimBearing,
 .boardDark .cadAreaValue {
   color: rgba(236, 239, 244, 0.92);
-  text-shadow:
-    0 0 4px rgba(22, 24, 28, 0.95),
-    0 0 8px rgba(22, 24, 28, 0.8);
+  text-shadow: 1px 0 0 rgba(22,24,28,0.95), -1px 0 0 rgba(22,24,28,0.95), 0 1px 0 rgba(22,24,28,0.95), 0 -1px 0 rgba(22,24,28,0.95);
 }
 
 .boardDark .cadDimKey,
@@ -235,9 +231,7 @@
   white-space: nowrap;
   margin-top: 0;
   box-shadow: none;
-  text-shadow:
-    0 0 4px rgba(242, 240, 235, 0.98),
-    0 0 8px rgba(242, 240, 235, 0.85);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 .cadDimKey {
@@ -299,9 +293,7 @@
   background: transparent;
   padding: 0;
   line-height: 1.1;
-  text-shadow:
-    0 0 4px rgba(242, 240, 235, 0.98),
-    0 0 8px rgba(242, 240, 235, 0.85);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 .cadAreaKey {
@@ -311,7 +303,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hc-ink-muted, #7a5560);
-  text-shadow: 0 0 4px rgba(242, 240, 235, 0.95);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 .cadAreaContext {
@@ -330,7 +322,7 @@
   color: #5b6b7a;
   background: transparent;
   padding: 0;
-  text-shadow: 0 0 3px rgba(242, 240, 235, 0.9);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 .cadLockState {
@@ -358,9 +350,7 @@
   color: rgba(139, 58, 47, 0.82);
   pointer-events: none;
   white-space: nowrap;
-  text-shadow:
-    0 0 4px rgba(242, 240, 235, 0.98),
-    0 0 8px rgba(242, 240, 235, 0.85);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 .cadStreetCue {
@@ -399,9 +389,7 @@
   white-space: nowrap;
   margin-top: 0;
   box-shadow: none;
-  text-shadow:
-    0 0 3px rgba(242, 240, 235, 0.95),
-    0 0 6px rgba(242, 240, 235, 0.7);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 /* Sketch pad — CAD symbols sleep; site line stays as a faint guide. */
@@ -560,9 +548,7 @@
   color: var(--hc-ink-muted, #7a5560);
   opacity: 0.55;
   white-space: nowrap;
-  text-shadow:
-    0 0 4px rgba(250, 246, 242, 0.95),
-    0 0 8px rgba(250, 246, 242, 0.75);
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
 }
 
 .missingBuildingCue {

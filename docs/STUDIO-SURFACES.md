@@ -32,6 +32,34 @@ open at a time.
     clamp) rather than owning fixed real estate? No draggable panels.
 16. **Flexible** — does the control work by gesture, pointer, AND keyboard
     (ARIA menu, focus ring, arrow navigation)?
+17. **Lane-disciplined** — does the control read the shared lane insets
+    (`--ws-safe-*`) instead of choosing raw pixels, and does it refuse to
+    share a lane with another occupant? No panel or card may hardcode a
+    position that can land on top of another surface.
+
+## The lane law (why this section exists)
+
+We hit the overlap class four separate times — survey callouts, the A4
+strip, the edit banner, then the Layers panel landing under the tool tray
+with the schedule cards stacked on themselves. Each was patched locally and
+it kept coming back, because **nothing owned layout** — every panel and card
+chose its own `left`/`top` and hoped. This is the build that stops it
+recurring: one authority, fixed lanes, one occupant each.
+
+| Lane | Owner | Rule |
+| --- | --- | --- |
+| Left | The tool tray, and only the tool tray | Nothing else anchors left |
+| Right | ONE summoned data panel at a time (Layers, Measures, Demo Lots, Checklist) | Opening one closes the others; reserve `--ws-safe-right` |
+| Margin (bottom) | The MarginStrip | Reserves the ruler gutter; see surface 3 |
+| On-plan | Projected cards (schedule, callouts, tags) | Run through the screen-px declutter engine; never share a point |
+| Centre | One modal at a time | Fit sheet, Quote card, confirm dialogs |
+
+After this law, "where does this panel go?" has exactly one answer, and a new
+feature cannot reintroduce the overlap because it inherits a lane instead of
+choosing pixels. On-plan cards are not exempt: they route through the same
+screen-px stacking as the area callouts (`annotationLayout` / callout offsets)
+so they declutter at every zoom and rotation, and they consume `--hc-glass`
+(dolphin in night) — never a hardcoded surface that goes dark-on-dark.
 
 ## Surface 2 mechanics (the hand)
 
@@ -72,3 +100,4 @@ surface 2 (the tool tray).
 | 2026-07-23 | Written during instrument reform: four-surface constitution, ratification tests 13–16, shared engines (placement scoring, transient fade), margin strip. |
 | 2026-07-23 | Selection focus veil (surface 2): one CameraChrome scrim; hole for subject; click-dim clears; no remount on selection hop. |
 | 2026-07-23 | Sketch toolbar reconciled: pen/eraser plastic tray (surface 2); Undo/Tidy/Formalize + hint on MarginStrip (surface 3). |
+| 2026-07-23 | Lane law + checklist 17: left=tools, right=one data panel, on-plan cards declutter + use --hc-glass. Ends the recurring overlap class (survey callouts / A4 strip / edit banner / Layers-under-tray). |
