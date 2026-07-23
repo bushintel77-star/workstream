@@ -124,48 +124,23 @@ export function importSketchToCad(args: {
   }
 
   for (const ann of canvas.annotations ?? []) {
-    const pos = pctToMetres(ann.x_pct, ann.y_pct, width_m, height_m);
-    if (ann.kind === "text") {
-      entities.push({
-        id: crypto.randomUUID(),
-        kind: "text",
-        layer: "ANNOTATION",
-        ghost: false,
-        verification_state: "VERIFIED",
-        position: pos,
-        height: 0.35,
-        value: ann.text || "Note",
-        rotation_deg: 0,
-      });
-    } else if (
-      (ann.kind === "dimension" || ann.kind === "arrow") &&
-      ann.x2_pct != null &&
-      ann.y2_pct != null
-    ) {
-      const p2 = pctToMetres(ann.x2_pct, ann.y2_pct, width_m, height_m);
-      if (ann.kind === "dimension") {
-        entities.push({
-          id: crypto.randomUUID(),
-          kind: "dimension",
-          layer: "DIMENSIONS",
-          ghost: false,
-          verification_state: "VERIFIED",
-          p1: pos,
-          p2,
-          offset: 0.5,
-        });
-      } else {
-        entities.push({
-          id: crypto.randomUUID(),
-          kind: "line",
-          layer: "ANNOTATION",
-          ghost: false,
-          verification_state: "VERIFIED",
-          start: pos,
-          end: p2,
-        });
-      }
-    }
+    const pos = pctToMetres(
+      ann.notePos.x,
+      ann.notePos.y,
+      width_m,
+      height_m,
+    );
+    entities.push({
+      id: crypto.randomUUID(),
+      kind: "text",
+      layer: "ANNOTATION",
+      ghost: false,
+      verification_state: "VERIFIED",
+      position: pos,
+      height: 0.35,
+      value: ann.text || "Note",
+      rotation_deg: 0,
+    });
   }
 
   return {

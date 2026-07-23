@@ -117,18 +117,32 @@ export const IrrigationZoneSchema = z.object({
 });
 export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
 
-/** Sketch annotation — Stage 2-lite markup on Workflow 1 canvas (% geometry). */
-export const CanvasAnnotationKindSchema = z.enum(["text", "dimension", "arrow"]);
-export type CanvasAnnotationKind = z.infer<typeof CanvasAnnotationKindSchema>;
+/** Hand-lettered plan note — persists with DesignCanvas (Workflow 1 presentation). */
+export const CanvasAnnotationAnchorSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("item"),
+    itemId: z.string().min(1),
+  }),
+  z.object({
+    kind: z.literal("point"),
+    x: z.number().min(0).max(100),
+    y: z.number().min(0).max(100),
+  }),
+]);
+export type CanvasAnnotationAnchor = z.infer<
+  typeof CanvasAnnotationAnchorSchema
+>;
 
 export const CanvasAnnotationSchema = z.object({
   id: z.string().uuid(),
-  kind: CanvasAnnotationKindSchema,
-  x_pct: z.number().min(0).max(100),
-  y_pct: z.number().min(0).max(100),
-  x2_pct: z.number().min(0).max(100).optional(),
-  y2_pct: z.number().min(0).max(100).optional(),
-  text: z.string().max(240).optional(),
+  text: z.string().trim().min(1).max(140),
+  anchor: CanvasAnnotationAnchorSchema,
+  /** Note block position in board % — clamped toward plan margins in the UI. */
+  notePos: z.object({
+    x: z.number().min(0).max(100),
+    y: z.number().min(0).max(100),
+  }),
+  createdAt: z.string().datetime(),
 });
 export type CanvasAnnotation = z.infer<typeof CanvasAnnotationSchema>;
 
