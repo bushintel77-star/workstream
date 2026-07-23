@@ -73,6 +73,10 @@ test.describe("Canvas foundation honesty", () => {
     const body = (await create.json()) as { project: { id: string } };
     const projectId = body.project.id;
 
+    // Aerial unlocks CAD on the server; without survey, ?mode=cad clamps to survey.
+    const survey = await request.post(`${API}/projects/${projectId}/survey`);
+    expect(survey.ok()).toBeTruthy();
+
     const canvas = await request.put(
       `${API}/projects/${projectId}/design-canvas`,
       {
@@ -104,6 +108,11 @@ test.describe("Canvas foundation honesty", () => {
 
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("cad-plan-board")).toHaveAttribute(
+      "data-mode",
+      "cad",
+      { timeout: 15_000 },
+    );
     await expect(page.getByTestId("cad-title-area")).toBeVisible();
     await expect(page.getByTestId("cad-building-area")).toBeVisible();
     await expect(page.getByTestId("cad-outdoor-area")).toBeVisible();
