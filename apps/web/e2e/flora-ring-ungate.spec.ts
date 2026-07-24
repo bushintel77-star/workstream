@@ -19,7 +19,7 @@ test.describe("Flora Ring un-gate", () => {
     await expectToolDock(page);
 
     await page.getByTestId("canvas-tool-add").click();
-    await expect(page.getByTestId("kit-asset-dock")).toBeVisible({
+    await expect(page.getByTestId("asset-panel-expanded")).toBeVisible({
       timeout: 8_000,
     });
     await page.getByTestId("paint-swatch-canopy").click();

@@ -13,7 +13,7 @@ const GUTTER_MAX = 90;
 
 /**
  * Push a summon point into the left/right (or top/bottom) gutter so
- * AmbientRibbon / KitAssetDock never hover the drawing core.
+ * AmbientRibbon / AssetPanel never hover the drawing core.
  */
 export function clampToCanvasMargin(
   x: number,

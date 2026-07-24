@@ -6,11 +6,11 @@ import {
 } from "./helpers";
 
 /**
- * Design craft surfaces — hardscape grammar + scheme filmstrip.
+ * Design craft — unified asset panel (Fill rail → library → Path Grammar).
  * Camera chrome must stay outside zoom-world (gate C).
  */
 test.describe("Canvas design craft", () => {
-  test("path grammar + scheme filmstrip stay outside camera", async ({
+  test("unified asset panel morphs through path placement", async ({
     page,
     request,
   }) => {
@@ -22,17 +22,23 @@ test.describe("Canvas design craft", () => {
     });
     await expectToolDock(page);
 
-    await page.getByTestId("canvas-tool-add").click();
-    await expect(page.getByTestId("kit-asset-dock")).toBeVisible({
-      timeout: 8_000,
-    });
-    await expect(page.getByTestId("kit-planting-filters")).toBeVisible();
-    // Draft kit opens by default — toggling the section head would close it.
-    await page.getByTestId("paint-swatch-paving").click();
+    const panel = page.getByTestId("asset-panel");
+    await expect(panel).toBeVisible({ timeout: 8_000 });
+    await expect(panel).toHaveAttribute("data-state", "collapsed");
+    await expect(page.getByTestId("kit-asset-dock")).toHaveCount(0);
+    await expect(page.getByTestId("hardscape-craft-bar")).toHaveCount(0);
 
-    await expect(page.getByTestId("hardscape-craft-bar")).toBeVisible({
-      timeout: 8_000,
-    });
+    await page.getByTestId("swatch-paving").click();
+    await expect(panel).toHaveAttribute("data-state", "expanded");
+    await expect(page.getByTestId("asset-panel-expanded")).toBeVisible();
+    await expect(page.getByTestId("kit-section-paving")).toBeVisible();
+    await expect(page.getByTestId("kit-planting-filters")).toBeVisible();
+    await expect(page.getByTestId("asset-pinned")).toBeVisible();
+
+    await page.getByTestId("paint-swatch-paving").click();
+    await expect(panel).toHaveAttribute("data-state", "placing");
+    await expect(page.getByTestId("asset-panel-placing")).toBeVisible();
+    await expect(page.getByTestId("asset-panel-expanded")).toHaveCount(0);
     await expect(page.getByTestId("path-width-1.2")).toBeVisible();
     await expect(page.getByTestId("edge-type-sawn")).toBeVisible();
     await expect(page.getByTestId("path-fillet-0.3")).toBeVisible();
@@ -49,6 +55,10 @@ test.describe("Canvas design craft", () => {
     await expect(page.getByTestId("path-corridor").first()).toBeVisible({
       timeout: 5_000,
     });
+
+    await expect(panel).toHaveAttribute("data-state", "collapsed");
+    await expect(page.getByTestId("asset-panel-placing")).toHaveCount(0);
+    await expect(page.getByTestId("asset-panel-expanded")).toHaveCount(0);
 
     await expect(page.getByTestId("variation-filmstrip")).toBeVisible();
     await page.getByTestId("scheme-save").click();

@@ -22,6 +22,10 @@ import type {
 import type { PaperSize, PctPoint } from "../geometry";
 import type { SunDatePreset } from "../features/sunGrowth/sunDatePreset";
 import type { RightDataPanel } from "../features/surfaces/rightDataLane";
+import type {
+  LeftAssetPanel,
+  LeftAssetRestore,
+} from "../features/assetPanel/leftAssetPanel";
 
 export type LayerKey =
   | "survey"
@@ -80,6 +84,8 @@ export type StudioUiState = {
    * Layers / Measures / Services / Demo Lots / Checklist share this slot.
    */
   rightDataPanel: RightDataPanel | null;
+  leftAssetPanel: LeftAssetPanel;
+  leftAssetRestore: LeftAssetRestore | null;
   layerOpacity: LayerOpacity;
   /** View-only layer isolation; never persisted to DesignCanvas. */
   isolatedLayer: LayerKey | null;

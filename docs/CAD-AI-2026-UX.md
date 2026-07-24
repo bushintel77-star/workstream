@@ -19,7 +19,7 @@ AI is a **spatial collaborator inside the drawing**, not a separate chatbot. Tre
 | Pattern | Rule | Workstream today |
 | --- | --- | --- |
 | Edge-to-edge canvas | Viewport is the drawing | Handoff board; chrome floats |
-| Contextual floating tools | Object stays clear; inventory **pops up** as frost at summon point; orbit outside glyph | KitAssetDock (popup) + selection ring |
+| Contextual floating tools | Object stays clear; inventory grows in place from the Fill rail | AssetPanel + selection ring |
 | AI sidecar (right) | Collapsible: dialogue, variations, analytics | Utility hub + Live measures (collapsed by default) |
 | Structure rail (left) | Collapsed CAD data: layers, constraints | Layers panel (`layersOpen` default false) |
 | Instruments | Summon only (margin / hub) — no sticky ribbon on select | Ambient ribbon + `instrumentsSummoned` |
@@ -66,7 +66,7 @@ Golden rule: override, undo, and manual adjust must stay effortless.
 
 ## 5. Spatial clustering (Fitts + proximity)
 
-Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so the drawing stays free. Material + open-source library inventory lives in the **summoned fold-out library** (search + Draft kit + catalog category sections). See `features/kitInventory/KitAssetDock.tsx`.
+Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so the drawing stays free. Material + open-source library inventory lives in the **unified left AssetPanel** (Fill rail → Pinned + catalog accordion → Path Grammar). See `features/assetPanel/AssetPanel.tsx`.
 
 ---
 
@@ -74,7 +74,7 @@ Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so 
 
 | Guide item | Status |
 | --- | --- |
-| Contextual materials / CAD params on selection | **Yes** — bottom KitAssetDock + open-source Library; orbit ring clears glyph |
+| Contextual materials / CAD params on selection | **Yes** — AssetPanel Expanded / Placing; orbit ring clears glyph |
 | AI sidecar (dialogue + analytics) | **Partial** — utility + live measures gated by `aiSidecar` |
 | Structure rail left, collapsed | **Yes** — Layers left; gated by `structureRail` |
 | Variation filmstrip | **Partial** — `VariationFilmstrip` A/B/C under shared title; plan thumbs; not generative 16:9 |

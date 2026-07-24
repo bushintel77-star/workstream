@@ -1,15 +1,16 @@
 # Material + library inventory (canvas-first)
 
 **Binding styling/UX:** [STUDIO-STYLING-AND-UX.md](./STUDIO-STYLING-AND-UX.md).
+**Lane law:** [STUDIO-SURFACES.md](./STUDIO-SURFACES.md).
 
 Point of difference: borrow **structure** from inventory / asset-library UX
 (search, fold-out category sections, skimable chips, digit accelerators), then
 render it as calm CAD studio chrome — never as a game, never over the selected
 object.
 
-**Spatial rule:** the drawing stays clear. Inventory is a **summoned frost
-popup** at the instrument summon point (Add / Paint / Library open) — not a
-fixed opaque bar. Selection actions orbit **outside** the glyph.
+**Spatial rule:** the drawing stays clear. Inventory is the **unified left
+AssetPanel** — collapsed Fill rail by default; grows in place to the library
+or Path Grammar. Never a second floating Draft kit or Path Grammar card.
 
 ## Open-source library packs
 
@@ -18,29 +19,32 @@ See [AI-CAD-DESIGN-LIBRARY.md](./AI-CAD-DESIGN-LIBRARY.md) and
 
 | Pack | Dock |
 |------|------|
-| Draft kit (studio types, all bags merged) | First fold-out section |
+| Pinned (studio types from kit bags, ≤9 tiles) | Top of Expanded |
 | Full gold catalog — Curtis + Temaki plants/site + Osmic + PlanZV + Wikimedia trees | One fold-out section per catalog category (Planting / Hardscape / Structures / Water / Site furniture / Lighting / Markup) |
 
 Grouping + search are domain helpers (`buildSketchLibraryGroups`,
 `searchSketchLibrary` in `packages/domain/src/sketch-gold-library.ts`) —
 gold-filtered, Curtis-first, deterministic order.
 
-## Behaviour
+## Behaviour — three states
 
-1. **Popup on demand** — Add / Paint armed; dismiss on linger / pan
-2. Soft frost glass (`--hc-glass-soft`), not an opaque full-width overlay
-3. **Search first** — one field filters the whole gold catalog (label,
-   botanical name, keywords); results flatten into a single tray
-4. **Fold-out sections** — one open at a time; headers show live counts
-5. Pick a chip → arms Place (or retypes selection / sets Paint swatch)
-6. Library chips map through `mapSymbolToStudioType` onto the drawing types
-7. Digits 1–5 accelerate Soft/Hard paint swatches
-8. Instruments still summon from empty margin — separate from inventory
+1. **Collapsed** — Fill rail (Turf / Planting / Bluestone / Deck / Hedge / Search / Pick). Always visible in plan CAD/sketch.
+2. **Expanded** — Search, shade/soil/aspect chips, Pinned row, category accordion. Open via rail icon (pre-filtered), Search, or ADD.
+3. **Placing** — Path Grammar (width / edge / fillet / Draw path) for paving/deck. Back restores Expanded; placement complete returns to Collapsed.
+
+Mutual exclusion: Expanded/Placing and the right data / meta inspector share one docked-panel rule — opening one closes the other. Tooltip banners may co-exist.
+
+## Single asset source
+
+Fill rail chips and Pinned / accordion tiles are **two render targets** for the
+same studio types (`PAINT_SWATCHES` / `BY_TYPE` / catalog `mapSymbolToStudioType`).
+Bluestone is one `paving` record, not two.
 
 ## Files
 
-- `features/kitInventory/KitAssetDock.tsx` — frost popup (Add/Paint only)
-- `state/handoffChrome.ts` — `inventoryPopup` flag
-- `features/reach/marginSummon.ts` — keep summon chrome in the gutter
-- `docs/AI-CAD-DESIGN-LIBRARY.md` — PlanZV / Osmic import
-- Wired from `HandoffDesignStudio` (`kit-asset-dock`, `paint-swatch-*`)
+- `features/assetPanel/AssetPanel.tsx` — shell (collapsed / expanded / placing)
+- `features/assetPanel/AssetPanelExpanded.tsx` — search, filters, Pinned, accordion
+- `features/assetPanel/AssetPanelPlacing.tsx` — Path Grammar controls
+- `features/assetPanel/leftAssetPanel.ts` — state helpers + exclusivity with `rightDataPanel`
+- `state/useStudioState.ts` — `ui.leftAssetPanel` / `ui.leftAssetRestore`
+- Wired from `HandoffDesignStudio` (`asset-panel`, `swatch-*`, `paint-swatch-*`)

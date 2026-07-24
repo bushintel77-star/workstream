@@ -61,15 +61,19 @@ import {
 import { buildSiteLiveMeta } from "./features/stickyMeta/siteLiveMeta";
 import { buildTreesLiveMeta } from "./features/stickyMeta/treesLiveMeta";
 import { RightDataLane } from "./features/surfaces/DataLaneSlot";
-import {
-  RIGHT_DATA_LANE_WIDTH_PX,
-  toggleRightDataPanel,
-} from "./features/surfaces/rightDataLane";
+import { RIGHT_DATA_LANE_WIDTH_PX } from "./features/surfaces/rightDataLane";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
 import { resolveBoardSunCast } from "./features/sunGrowth/resolveBoardSunCast";
-import { HardscapeCraftBar } from "./features/hardscape/HardscapeCraftBar";
 import { PathCorridorsLayer } from "./features/hardscape/PathCorridorsLayer";
+import { AssetPanel } from "./features/assetPanel/AssetPanel";
+import {
+  categoryForSwatch,
+  needsPathGrammar,
+  openLeftAssetExclusive,
+  toggleRightDataPanelExclusive,
+  withRightDataPanel,
+} from "./features/assetPanel/leftAssetPanel";
 import { VariationFilmstrip } from "./features/schemes/VariationFilmstrip";
 import { DrainageRunsLayer } from "./features/survey/DrainageRunsLayer";
 import type { HardscapeEdgeType } from "./studioCatalog";
@@ -109,8 +113,6 @@ import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { ToolDock } from "./features/toolDock/ToolDock";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
-import { KitAssetDock } from "./features/kitInventory/KitAssetDock";
-import { SwatchTray } from "./features/swatchTray/SwatchTray";
 import {
   nicheToolsForZone,
   zoneNicheActiveId,
@@ -440,6 +442,11 @@ export function HandoffDesignStudio({
   const [eyedropArmed, setEyedropArmed] = useState(false);
   /** Swatch/stamp hover preview — shows target result before commit. */
   const [previewSwatch, setPreviewSwatch] = useState<StudioItemType | null>(null);
+  /** Prefetch accordion category when expanding from a Fill rail icon. */
+  const [assetExpandSection, setAssetExpandSection] = useState<string | null>(
+    null,
+  );
+  const [assetFocusSearch, setAssetFocusSearch] = useState(false);
   const pickStyle = (t: StudioItemType) => {
     setEyedropArmed(false);
     studio.setUi({ paintSwatch: t, tool: "paint" });
@@ -1128,9 +1135,19 @@ export function HandoffDesignStudio({
             factorsOpen: false,
             ghostReviewOpen: false,
             rightDataPanel: null,
+            leftAssetPanel: null,
+            leftAssetRestore: null,
             cmdOpen: false,
             addOpen: false,
             coachOpen: false,
+          });
+          return;
+        }
+        if (ui.leftAssetPanel != null) {
+          e.preventDefault();
+          studio.setUi({
+            leftAssetPanel: null,
+            leftAssetRestore: null,
           });
           return;
         }
@@ -1143,6 +1160,8 @@ export function HandoffDesignStudio({
           factorsOpen: false,
           ghostReviewOpen: false,
           rightDataPanel: null,
+          leftAssetPanel: null,
+          leftAssetRestore: null,
           cmdOpen: false,
           addOpen: false,
           coachOpen: false,
@@ -1557,10 +1576,9 @@ export function HandoffDesignStudio({
     !ui.focusOn &&
     !ui.clientView &&
     ui.zoom >= 2.2;
-  /** Fill palette — summoned on Add/Paint only (checklist 2). */
-  const swatchTrayOn =
+  /** Fill / asset panel — always on in plan CAD/sketch (collapsed rail by default). */
+  const assetPanelOn =
     (ui.mode === "cad" || ui.mode === "sketch") &&
-    (ui.tool === "add" || ui.tool === "paint") &&
     !ui.frameOn &&
     !ui.focusOn &&
     !ui.clientView &&
@@ -2169,7 +2187,26 @@ export function HandoffDesignStudio({
   }, [drawingHot]);
 
   const armType = (t: StudioItemType) => {
-    studio.setUi({ armed: t, tool: "add", addOpen: true, cmdOpen: false });
+    if (needsPathGrammar(t)) {
+      studio.setUi({
+        armed: t,
+        paintSwatch: t,
+        tool: "add",
+        addOpen: true,
+        cmdOpen: false,
+        leftAssetPanel: "placing",
+        leftAssetRestore: null,
+        rightDataPanel: null,
+      });
+      return;
+    }
+    studio.setUi({
+      armed: t,
+      tool: "add",
+      addOpen: true,
+      cmdOpen: false,
+      ...openLeftAssetExclusive("expanded"),
+    });
   };
 
   const pinInstrumentAnchor = (x: number, y: number) => {
@@ -2499,7 +2536,7 @@ export function HandoffDesignStudio({
                 title="Services — ticks, metrics, focus"
                 onClick={() =>
                   studio.setUi({
-                    rightDataPanel: toggleRightDataPanel(
+                    ...toggleRightDataPanelExclusive(
                       ui.rightDataPanel,
                       "services",
                     ),
@@ -2524,7 +2561,7 @@ export function HandoffDesignStudio({
                 title="Layers"
                 onClick={() =>
                   studio.setUi({
-                    rightDataPanel: toggleRightDataPanel(
+                    ...toggleRightDataPanelExclusive(
                       ui.rightDataPanel,
                       "layers",
                     ),
@@ -2553,7 +2590,7 @@ export function HandoffDesignStudio({
                   title="Sites"
                   onClick={() =>
                     studio.setUi({
-                      rightDataPanel: toggleRightDataPanel(
+                      ...toggleRightDataPanelExclusive(
                         ui.rightDataPanel,
                         "sites",
                       ),
@@ -3689,36 +3726,6 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {/*
-          Inventory frost popup — fold-out asset library (search + Draft kit
-          + catalog categories). Add-only: placing assets summons the popup at
-          the cursor. Fill swatches summon beside the tool dock on Add/Paint.
-        */}
-        {chrome.inventoryPopup && ui.tool === "add" ? (
-          <KitAssetDock
-            xPct={instrumentAnchor.x}
-            yPct={instrumentAnchor.y}
-            mode={ui.mode}
-            armed={ui.armed}
-            paintSwatch={ui.paintSwatch}
-            tool={ui.tool}
-            sunHours={kitSunHours}
-            plantingSoil={ui.plantingSoil}
-            plantingAspect={ui.plantingAspect}
-            onPlantingSoil={(plantingSoil: SoilTag) =>
-              studio.setUi({ plantingSoil })
-            }
-            onPlantingAspect={(plantingAspect: AspectTag) =>
-              studio.setUi({ plantingAspect })
-            }
-            onArmMaterial={armType}
-            onPaintMaterial={(t) =>
-              studio.setUi({ paintSwatch: t, tool: "paint" })
-            }
-            onDismiss={() => studio.setTool("select")}
-          />
-        ) : null}
-
         {!ui.focusOn &&
         !ui.clientView &&
         !ui.frameOn &&
@@ -3812,7 +3819,7 @@ export function HandoffDesignStudio({
               selected={selectedLive}
               onOpen={() =>
                 studio.setUi({
-                  rightDataPanel: "measures",
+                  ...withRightDataPanel("measures"),
                   utilityPanel: null,
                 })
               }
@@ -3902,33 +3909,6 @@ export function HandoffDesignStudio({
             onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
             onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
-          />
-        ) : null}
-
-        {(ui.tool === "path" ||
-          ((ui.tool === "add" || ui.tool === "paint") &&
-            (ui.armed === "paving" ||
-              ui.armed === "deck" ||
-              ui.paintSwatch === "paving" ||
-              ui.paintSwatch === "deck"))) &&
-        !ui.frameOn &&
-        !ui.clientView &&
-        !ui.focusOn ? (
-          <HardscapeCraftBar
-            pathWidthM={ui.pathWidthM}
-            edgeType={ui.edgeType}
-            pathFilletM={ui.pathFilletM}
-            pathDrafting={ui.tool === "path"}
-            onPathWidth={(pathWidthM: PathWidthLockM) =>
-              studio.setUi({ pathWidthM })
-            }
-            onEdgeType={(edgeType: HardscapeEdgeType) =>
-              studio.setUi({ edgeType })
-            }
-            onPathFillet={(pathFilletM: PathFilletLockM) =>
-              studio.setUi({ pathFilletM })
-            }
-            onBeginPath={studio.beginPathDraft}
           />
         ) : null}
 
@@ -4071,7 +4051,7 @@ export function HandoffDesignStudio({
               summonStickyMeta(projectId, "site");
               setStickyRestoreNonce((n) => n + 1);
               studio.setUi({
-                rightDataPanel: "site",
+                ...withRightDataPanel("site"),
                 utilityPanel: null,
               });
             }}
@@ -4079,7 +4059,7 @@ export function HandoffDesignStudio({
               summonStickyMeta(projectId, "trees");
               setStickyRestoreNonce((n) => n + 1);
               studio.setUi({
-                rightDataPanel: "trees",
+                ...withRightDataPanel("trees"),
                 utilityPanel: null,
               });
             }}
@@ -4087,7 +4067,7 @@ export function HandoffDesignStudio({
               summonStickyMeta(projectId, "services");
               setStickyRestoreNonce((n) => n + 1);
               studio.setUi({
-                rightDataPanel: "services",
+                ...withRightDataPanel("services"),
                 utilityPanel: null,
               });
             }}
@@ -4095,7 +4075,7 @@ export function HandoffDesignStudio({
               summonStickyMeta(projectId, "environment");
               setStickyRestoreNonce((n) => n + 1);
               studio.setUi({
-                rightDataPanel: "environment",
+                ...withRightDataPanel("environment"),
                 shadeOn: true,
                 utilityPanel: null,
               });
@@ -4267,7 +4247,7 @@ export function HandoffDesignStudio({
                 summonStickyMeta(projectId, "services");
                 setStickyRestoreNonce((n) => n + 1);
                 studio.setUi({
-                  rightDataPanel: "services",
+                  ...withRightDataPanel("services"),
                   utilityPanel: null,
                 });
               }}
@@ -4275,18 +4255,79 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {swatchTrayOn ? (
-          <SwatchTray
+        {assetPanelOn ? (
+          <AssetPanel
+            panel={ui.leftAssetPanel}
+            restore={ui.leftAssetRestore}
             activeSwatch={ui.paintSwatch}
-            armed={ui.tool === "paint" && !eyedropArmed}
+            paintArmed={ui.tool === "paint" && !eyedropArmed}
             eyedropOn={eyedropArmed}
             night={darkLens}
-            onPick={(t) => {
+            mode={ui.mode}
+            armed={ui.armed}
+            tool={ui.tool}
+            sunHours={kitSunHours}
+            plantingSoil={ui.plantingSoil}
+            plantingAspect={ui.plantingAspect}
+            pathWidthM={ui.pathWidthM}
+            edgeType={ui.edgeType}
+            pathFilletM={ui.pathFilletM}
+            pathDrafting={ui.tool === "path"}
+            expandSection={assetExpandSection}
+            focusSearchOnExpand={assetFocusSearch}
+            onExpand={(opts) => {
+              setAssetExpandSection(opts?.section ?? null);
+              setAssetFocusSearch(Boolean(opts?.focusSearch));
+              studio.setUi({
+                ...openLeftAssetExclusive("expanded"),
+              });
+            }}
+            onEnterPlacing={(restore, t) => {
+              studio.setUi({
+                leftAssetPanel: "placing",
+                leftAssetRestore: restore,
+                rightDataPanel: null,
+                armed: t,
+                paintSwatch: t,
+                tool: "add",
+                addOpen: true,
+                cmdOpen: false,
+              });
+            }}
+            onBackFromPlacing={() => {
+              studio.setUi({
+                leftAssetPanel: "expanded",
+                tool: "add",
+                addOpen: true,
+              });
+            }}
+            onRailPick={(t) => {
               setEyedropArmed(false);
-              studio.setUi({ paintSwatch: t, tool: "paint" });
+              setAssetExpandSection(categoryForSwatch(t));
+              studio.setUi({
+                paintSwatch: t,
+                ...openLeftAssetExclusive("expanded"),
+              });
             }}
             onEyedrop={() => setEyedropArmed((v) => !v)}
             onPreview={setPreviewSwatch}
+            onPlantingSoil={(plantingSoil: SoilTag) =>
+              studio.setUi({ plantingSoil })
+            }
+            onPlantingAspect={(plantingAspect: AspectTag) =>
+              studio.setUi({ plantingAspect })
+            }
+            onPickMaterial={armType}
+            onPathWidth={(pathWidthM: PathWidthLockM) =>
+              studio.setUi({ pathWidthM })
+            }
+            onEdgeType={(edgeType: HardscapeEdgeType) =>
+              studio.setUi({ edgeType })
+            }
+            onPathFillet={(pathFilletM: PathFilletLockM) =>
+              studio.setUi({ pathFilletM })
+            }
+            onBeginPath={studio.beginPathDraft}
           />
         ) : null}
 
@@ -4378,7 +4419,7 @@ export function HandoffDesignStudio({
             summonStickyMeta(projectId, "services");
             setStickyRestoreNonce((n) => n + 1);
             studio.setUi({
-              rightDataPanel: "services",
+              ...withRightDataPanel("services"),
               cmdOpen: false,
               cmdQuery: "",
               utilityPanel: null,
@@ -4388,7 +4429,7 @@ export function HandoffDesignStudio({
             summonStickyMeta(projectId, "environment");
             setStickyRestoreNonce((n) => n + 1);
             studio.setUi({
-              rightDataPanel: "environment",
+              ...withRightDataPanel("environment"),
               shadeOn: true,
               cmdOpen: false,
               cmdQuery: "",
@@ -4399,7 +4440,7 @@ export function HandoffDesignStudio({
             summonStickyMeta(projectId, "site");
             setStickyRestoreNonce((n) => n + 1);
             studio.setUi({
-              rightDataPanel: "site",
+              ...withRightDataPanel("site"),
               cmdOpen: false,
               cmdQuery: "",
               utilityPanel: null,
@@ -4409,7 +4450,7 @@ export function HandoffDesignStudio({
             summonStickyMeta(projectId, "trees");
             setStickyRestoreNonce((n) => n + 1);
             studio.setUi({
-              rightDataPanel: "trees",
+              ...withRightDataPanel("trees"),
               cmdOpen: false,
               cmdQuery: "",
               utilityPanel: null,
@@ -4422,7 +4463,7 @@ export function HandoffDesignStudio({
               mode: "survey",
               cmdOpen: false,
               cmdQuery: "",
-              rightDataPanel: "services",
+              ...withRightDataPanel("services"),
             });
           }}
           onConvertSketch={
@@ -4436,10 +4477,7 @@ export function HandoffDesignStudio({
           dataOpen={measuresOpen}
           onToggleData={() =>
             studio.setUi({
-              rightDataPanel: toggleRightDataPanel(
-                ui.rightDataPanel,
-                "measures",
-              ),
+              ...toggleRightDataPanelExclusive(ui.rightDataPanel, "measures"),
               utilityPanel:
                 ui.rightDataPanel === "measures"
                   ? null

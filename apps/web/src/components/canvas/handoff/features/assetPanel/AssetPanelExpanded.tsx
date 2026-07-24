@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
-  useState,
-  type CSSProperties,
+  type RefObject,
 } from "react";
 import {
   ASPECT_TAG_LABELS,
@@ -29,48 +27,42 @@ import {
 } from "../../studioCatalog";
 import { mapSymbolToStudioType } from "../../state/studioAiEngine";
 import { playInstrumentTick } from "../ambient/instrumentTick";
-import { resolveDockAnchor } from "../reach/dockAnchor";
-import { ATELIER_LINGER_MS, type AtelierPhase } from "./atelierPresence";
-import css from "./kitAssetDock.module.css";
+import css from "./assetPanel.module.css";
 
 const SOIL_OPTS: SoilTag[] = ["any", "clay", "loam", "sand"];
 const ASPECT_OPTS: AspectTag[] = ["any", "N", "E", "S", "W"];
+/** Pinned row — favorites/recents cap (replaces Draft kit grid). */
+const PINNED_MAX = 9;
 
-type Props = {
-  /** Board-% — instrument summon point (margin), never object centre. */
-  xPct: number;
-  yPct: number;
+export type AssetPanelExpandedProps = {
   mode: StudioMode;
   armed: StudioItemType | null;
   paintSwatch: StudioItemType;
-  tool: "add" | "paint";
-  /** Indicative sun hours at summon cell (shade mesh sample). */
+  tool: "add" | "paint" | "select" | "path";
   sunHours: number;
   plantingSoil: SoilTag;
   plantingAspect: AspectTag;
+  query: string;
+  openSection: string | null;
+  scrollTop: number;
+  focusSearch?: boolean;
+  searchRef?: RefObject<HTMLInputElement | null>;
+  onQuery: (q: string) => void;
+  onOpenSection: (id: string | null) => void;
+  onScrollTop: (n: number) => void;
   onPlantingSoil: (s: SoilTag) => void;
   onPlantingAspect: (a: AspectTag) => void;
-  onArmMaterial: (t: StudioItemType) => void;
-  onPaintMaterial: (t: StudioItemType) => void;
-  onDismiss?: () => void;
+  onPickMaterial: (t: StudioItemType) => void;
 };
 
-const DRAFT_SECTION_ID = "draft";
-
-function draftKitTypes(mode: StudioMode): StudioItemType[] {
+function pinnedTypes(mode: StudioMode): StudioItemType[] {
   const all = KIT_BAGS.flatMap((b) => b.types);
-  return mode === "survey" ? all.filter((t) => t === "exist") : all;
+  const filtered =
+    mode === "survey" ? all.filter((t) => t === "exist") : all;
+  return filtered.slice(0, PINNED_MAX);
 }
 
-/**
- * Fold-out asset library — one summoned frost popup for everything placeable:
- * search across the whole gold catalog, Draft kit materials first, then every
- * catalog category as a collapsible section (one open at a time).
- * Binding: docs/STUDIO-STYLING-AND-UX.md
- */
-export function KitAssetDock({
-  xPct,
-  yPct,
+export function AssetPanelExpanded({
   mode,
   armed,
   paintSwatch,
@@ -78,55 +70,34 @@ export function KitAssetDock({
   sunHours,
   plantingSoil,
   plantingAspect,
+  query,
+  openSection,
+  scrollTop,
+  focusSearch = false,
+  searchRef,
+  onQuery,
+  onOpenSection,
+  onScrollTop,
   onPlantingSoil,
   onPlantingAspect,
-  onArmMaterial,
-  onPaintMaterial,
-  onDismiss,
-}: Props) {
-  const [openSection, setOpenSection] = useState<string | null>(
-    DRAFT_SECTION_ID,
-  );
-  const [query, setQuery] = useState("");
-  const [hover, setHover] = useState(false);
-  const [lingering, setLingering] = useState(true);
-  const lingerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hoverRef = useRef(false);
-
-  const clearLinger = useCallback(() => {
-    if (lingerTimer.current) {
-      clearTimeout(lingerTimer.current);
-      lingerTimer.current = null;
-    }
-  }, []);
-
-  const beginLinger = useCallback(() => {
-    clearLinger();
-    setLingering(true);
-    lingerTimer.current = setTimeout(() => {
-      setLingering(false);
-      lingerTimer.current = null;
-      if (!hoverRef.current) onDismiss?.();
-    }, ATELIER_LINGER_MS);
-  }, [clearLinger, onDismiss]);
-
-  const stayEngaged = useCallback(() => {
-    clearLinger();
-    setLingering(true);
-  }, [clearLinger]);
+  onPickMaterial,
+}: AssetPanelExpandedProps) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const localSearchRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = searchRef ?? localSearchRef;
 
   useEffect(() => {
-    if (hoverRef.current) {
-      stayEngaged();
-      return clearLinger;
+    if (focusSearch) inputRef.current?.focus();
+  }, [focusSearch, inputRef]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && Math.abs(el.scrollTop - scrollTop) > 1) {
+      el.scrollTop = scrollTop;
     }
-    beginLinger();
-    return clearLinger;
-  }, [tool, armed, beginLinger, stayEngaged, clearLinger]);
+  }, [scrollTop, openSection, query]);
 
-  const phase: AtelierPhase = hover ? "open" : lingering ? "linger" : "rest";
-
-  const draftTypes = useMemo(() => draftKitTypes(mode), [mode]);
+  const pinned = useMemo(() => pinnedTypes(mode), [mode]);
 
   const filteredCatalog = useMemo(
     () =>
@@ -149,14 +120,12 @@ export function KitAssetDock({
     [searching, query, filteredCatalog],
   );
 
+  const activeMaterial =
+    tool === "paint" ? paintSwatch : armed ?? paintSwatch;
+
   const pickMaterial = (t: StudioItemType) => {
     playInstrumentTick("arm");
-    stayEngaged();
-    if (tool === "paint") {
-      onPaintMaterial(t);
-      return;
-    }
-    onArmMaterial(t);
+    onPickMaterial(t);
   };
 
   const pickSymbol = (sym: CatalogSymbol) => {
@@ -165,13 +134,8 @@ export function KitAssetDock({
 
   const toggleSection = (id: string) => {
     playInstrumentTick("step");
-    stayEngaged();
-    setOpenSection((cur) => (cur === id ? null : id));
+    onOpenSection(openSection === id ? null : id);
   };
-
-  const activeMaterial = tool === "paint" ? paintSwatch : armed;
-  /* Edge-anchor into the board so the popup never clips at the gutter. */
-  const anchor = resolveDockAnchor(xPct, yPct);
 
   const symbolChip = (sym: CatalogSymbol) => {
     const mapped = mapSymbolToStudioType(sym.id);
@@ -182,51 +146,34 @@ export function KitAssetDock({
         type="button"
         role="option"
         aria-selected={on}
-        className={`${css.chip}${on ? ` ${css.chipOn}` : ""}`}
+        className={`${css.tile}${on ? ` ${css.tileOn}` : ""}`}
         data-testid={`kit-library-${sym.id}`}
-        title={sym.botanical_name ? `${sym.label} · ${sym.botanical_name}` : sym.label}
+        title={
+          sym.botanical_name
+            ? `${sym.label} · ${sym.botanical_name}`
+            : sym.label
+        }
         onClick={() => pickSymbol(sym)}
       >
         <span className={css.glyph} aria-hidden>
           <DesignAssetGlyph symbol={sym} size="sm" />
         </span>
-        <span className={css.label}>{sym.label}</span>
+        <span className={css.tileLabel}>{sym.label}</span>
       </button>
     );
   };
 
   return (
-    <aside
-      className={css.popup}
-      data-testid="kit-asset-dock"
-      data-phase={phase}
-      data-side={anchor.side}
-      aria-label="Asset library"
-      style={{ left: `${anchor.x}%`, top: `${anchor.y}%` } as CSSProperties}
-      onPointerDown={(e) => e.stopPropagation()}
-      onMouseEnter={() => {
-        hoverRef.current = true;
-        stayEngaged();
-        setHover(true);
-      }}
-      onMouseLeave={() => {
-        hoverRef.current = false;
-        setHover(false);
-        beginLinger();
-      }}
-    >
+    <div className={css.body} data-testid="asset-panel-expanded">
       <input
+        ref={inputRef}
         type="search"
         className={css.search}
         value={query}
         placeholder="Search plants, hardscape, lighting…"
         aria-label="Search asset library"
         data-testid="kit-library-search"
-        onChange={(e) => {
-          setQuery(e.target.value);
-          stayEngaged();
-        }}
-        onFocus={stayEngaged}
+        onChange={(e) => onQuery(e.target.value)}
       />
 
       <div className={css.filterRow} data-testid="kit-planting-filters">
@@ -243,7 +190,6 @@ export function KitAssetDock({
               data-testid={`kit-soil-${s}`}
               onClick={() => {
                 playInstrumentTick("step");
-                stayEngaged();
                 onPlantingSoil(s);
               }}
             >
@@ -261,7 +207,6 @@ export function KitAssetDock({
               data-testid={`kit-aspect-${a}`}
               onClick={() => {
                 playInstrumentTick("step");
-                stayEngaged();
                 onPlantingAspect(a);
               }}
             >
@@ -272,7 +217,11 @@ export function KitAssetDock({
       </div>
 
       {searching ? (
-        <div className={css.scroll}>
+        <div
+          ref={scrollRef}
+          className={css.scroll}
+          onScroll={(e) => onScrollTop(e.currentTarget.scrollTop)}
+        >
           <div className={css.tray} role="listbox" aria-label="Search results">
             {results.map(symbolChip)}
             {results.length === 0 ? (
@@ -281,47 +230,35 @@ export function KitAssetDock({
           </div>
         </div>
       ) : (
-        <div className={css.scroll}>
-          <section className={css.section}>
-            <button
-              type="button"
-              className={css.sectionHead}
-              aria-expanded={openSection === DRAFT_SECTION_ID}
-              data-testid="kit-section-draft"
-              onClick={() => toggleSection(DRAFT_SECTION_ID)}
-            >
-              <span
-                className={css.chevron}
-                data-open={openSection === DRAFT_SECTION_ID ? "1" : "0"}
-                aria-hidden
-              />
-              Draft kit
-              <span className={css.count}>{draftTypes.length}</span>
-            </button>
-            {openSection === DRAFT_SECTION_ID ? (
-              <div className={css.tray} role="listbox" aria-label="Draft kit">
-                {draftTypes.map((t) => {
-                  const on = activeMaterial === t;
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      role="option"
-                      aria-selected={on}
-                      className={`${css.chip}${on ? ` ${css.chipOn}` : ""}`}
-                      data-testid={`paint-swatch-${t}`}
-                      title={BY_TYPE[t].tag}
-                      onClick={() => pickMaterial(t)}
-                    >
-                      <span className={css.glyph} aria-hidden>
-                        <StudioGlyph type={t} ink />
-                      </span>
-                      <span className={css.label}>{BY_TYPE[t].tag}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
+        <div
+          ref={scrollRef}
+          className={css.scroll}
+          onScroll={(e) => onScrollTop(e.currentTarget.scrollTop)}
+        >
+          <section className={css.section} data-testid="asset-pinned">
+            <p className={css.pinnedLabel}>Pinned</p>
+            <div className={css.tray} role="listbox" aria-label="Pinned">
+              {pinned.map((t) => {
+                const on = activeMaterial === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    role="option"
+                    aria-selected={on}
+                    className={`${css.tile}${on ? ` ${css.tileOn}` : ""}`}
+                    data-testid={`paint-swatch-${t}`}
+                    title={BY_TYPE[t].tag}
+                    onClick={() => pickMaterial(t)}
+                  >
+                    <span className={css.glyph} aria-hidden>
+                      <StudioGlyph type={t} ink />
+                    </span>
+                    <span className={css.tileLabel}>{BY_TYPE[t].tag}</span>
+                  </button>
+                );
+              })}
+            </div>
           </section>
 
           {libraryGroups.map((group) => (
@@ -342,7 +279,11 @@ export function KitAssetDock({
                 <span className={css.count}>{group.symbols.length}</span>
               </button>
               {openSection === group.category ? (
-                <div className={css.tray} role="listbox" aria-label={group.label}>
+                <div
+                  className={css.tray}
+                  role="listbox"
+                  aria-label={group.label}
+                >
                   {group.symbols.map(symbolChip)}
                 </div>
               ) : null}
@@ -350,6 +291,6 @@ export function KitAssetDock({
           ))}
         </div>
       )}
-    </aside>
+    </div>
   );
 }

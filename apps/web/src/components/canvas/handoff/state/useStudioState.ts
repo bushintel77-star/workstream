@@ -48,6 +48,10 @@ import type {
 import { saveDesignCanvasAction } from "../../../../app/actions";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
 import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
+import type {
+  LeftAssetPanel,
+  LeftAssetRestore,
+} from "../features/assetPanel/leftAssetPanel";
 import { playMaterialFoley } from "../features/ambient/materialFoley";
 import {
   sunDateFromPreset,
@@ -195,6 +199,13 @@ type Ui = {
   focusOn: boolean;
   clientView: boolean;
   rightDataPanel: RightDataPanel | null;
+  /**
+   * Left asset panel — null = collapsed Fill rail; expanded = library;
+   * placing = Path Grammar. Exclusive with rightDataPanel when non-null.
+   */
+  leftAssetPanel: LeftAssetPanel;
+  /** Restore Expanded filters/scroll when backing out of Placing. */
+  leftAssetRestore: LeftAssetRestore | null;
   layerOpacity: LayerOpacity;
   isolatedLayer: LayerKey | null;
   /**
@@ -524,6 +535,8 @@ function initialState(opts: {
       focusOn: false,
       clientView: false,
       rightDataPanel: opts.mode === "survey" ? "checklist" : null,
+      leftAssetPanel: null,
+      leftAssetRestore: null,
       layerOpacity: { ...DEFAULT_LAYER_OPACITY },
       isolatedLayer: null,
       setbackOn: false,
@@ -737,6 +750,10 @@ function reducer(state: State, action: Action): State {
             : state.ui.rightDataPanel === "checklist"
               ? null
               : state.ui.rightDataPanel,
+          // Asset panel only lives in CAD/sketch — collapse on mode leave.
+          ...(action.mode === "cad" || action.mode === "sketch"
+            ? {}
+            : { leftAssetPanel: null, leftAssetRestore: null }),
           ...(drafting
             ? { aerialUri: null, aerialSuppressed: true }
             : action.mode === "survey"
@@ -1590,6 +1607,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       titleBoundaryLocked: snapped,
       // Open Fit sheet working drawing — schedule + outside CAD dims
       frameOn: true,
+      leftAssetPanel: null,
+      leftAssetRestore: null,
       aerialSuppressed: true,
       aerialUri: null,
       assistReply: notes.join(" · "),
@@ -1842,6 +1861,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       mode: "cad",
       tool: "pan",
       rightDataPanel: "measures",
+      leftAssetPanel: null,
       utilityPanel: "bom",
       councilTip: proposal.tip,
     });
@@ -1864,6 +1884,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({
       mode: "cad",
       rightDataPanel: "measures",
+      leftAssetPanel: null,
       utilityPanel: "bom",
       councilTip: [
         developLoopTip({
@@ -2579,6 +2600,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       drawPoly: [],
       drawCursor: null,
       addOpen: false,
+      leftAssetPanel: "placing",
+      rightDataPanel: null,
       councilTip: "Path — click centreline · Enter (≥2 pts) · Esc cancel",
     });
   }, [setUi, state.ui.armed, state.ui.paintSwatch]);
@@ -2602,6 +2625,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
           drawPoly: null,
           drawCursor: null,
           tool: "pan",
+          leftAssetPanel: null,
+          leftAssetRestore: null,
         });
         return;
       }
@@ -2617,7 +2642,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         drawPoly: null,
         drawCursor: null,
-        tool: "pan",
+        tool: "select",
+        addOpen: false,
+        leftAssetPanel: null,
+        leftAssetRestore: null,
         councilTip: corridor.why,
       });
     },
@@ -2739,6 +2767,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           "Dig gate — upload BYDA plans and digitise assets (Servc + BYDA kind), or stamp an explicit dig override in Services. Vicmap easements are not dig clearance.",
         coachOpen: true,
         rightDataPanel: "services",
+        leftAssetPanel: null,
       });
       return;
     }
@@ -2872,6 +2901,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         councilTip: `${result.lines_canvas.length} council drain line${result.lines_canvas.length === 1 ? "" : "s"} digitised — confirm before dig`,
         rightDataPanel: "services",
+        leftAssetPanel: null,
       });
     },
     [mutate, projectId, setUi],
@@ -3018,6 +3048,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         mode: "survey",
         shadeOn: true,
         rightDataPanel: "services",
+        leftAssetPanel: null,
       });
     } catch (err) {
       setUi({
@@ -3448,8 +3479,19 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const cancelTrace = useCallback(() => {
+    if (state.ui.tool === "path") {
+      setUi({
+        drawPoly: null,
+        drawCursor: null,
+        tool: "select",
+        addOpen: false,
+        leftAssetPanel: null,
+        leftAssetRestore: null,
+      });
+      return;
+    }
     setUi({ drawPoly: null, drawCursor: null });
-  }, [setUi]);
+  }, [setUi, state.ui.tool]);
 
   const pushTracePoint = useCallback(
     (p: PctPoint) => {
@@ -3869,6 +3911,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         setUi({
           tool: "select",
           addOpen: false,
+          leftAssetPanel: null,
+          leftAssetRestore: null,
           drawPoly: null,
           drawCursor: null,
           tiltDeg: 0,
@@ -3881,23 +3925,48 @@ export function useStudioState(opts: UseStudioStateOpts) {
           tool: nextLocked ? "lock" : "select",
           locked: nextLocked,
           addOpen: false,
+          leftAssetPanel: null,
+          leftAssetRestore: null,
           drawPoly: null,
           drawCursor: null,
           tiltDeg: 0,
         });
         return;
       }
-      setUi({
-        tool,
-        locked: false,
-        addOpen: tool === "add",
-        armed: tool === "add" ? state.ui.armed : null,
-        paintSwatch:
-          tool === "paint" ? state.ui.paintSwatch || "lawn" : state.ui.paintSwatch,
-        drawPoly: tool === "trace" ? state.ui.drawPoly : null,
-        drawCursor: tool === "trace" ? state.ui.drawCursor : null,
-        // Tilt exit is animated by HandoffDesignStudio (temp CSS class).
-      });
+      {
+        const leavingDraft =
+          state.ui.tool === "add" ||
+          state.ui.tool === "paint" ||
+          state.ui.tool === "path";
+        const collapseAsset =
+          (tool === "select" || tool === "pan" || tool === "measure") &&
+          leavingDraft;
+        setUi({
+          tool,
+          locked: false,
+          addOpen: tool === "add",
+          armed: tool === "add" ? state.ui.armed : null,
+          paintSwatch:
+            tool === "paint"
+              ? state.ui.paintSwatch || "lawn"
+              : state.ui.paintSwatch,
+          drawPoly: tool === "trace" ? state.ui.drawPoly : null,
+          drawCursor: tool === "trace" ? state.ui.drawCursor : null,
+          // ADD opens the unified library in-place (not a separate Draft kit float).
+          // Keep Placing if already in Path Grammar; don't collapse Expanded when
+          // re-selecting Select while the Fill rail library is open from idle.
+          ...(tool === "add"
+            ? state.ui.leftAssetPanel === "placing"
+              ? { rightDataPanel: null }
+              : {
+                  leftAssetPanel: "expanded" as const,
+                  rightDataPanel: null,
+                }
+            : collapseAsset
+              ? { leftAssetPanel: null, leftAssetRestore: null }
+              : {}),
+        });
+      }
     },
     setPaper: (paper: PaperSize) => setUi({ paper }),
   };

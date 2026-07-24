@@ -55,10 +55,10 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(false);
   });
 
-  it("opens inventory frost popup only for Add (Paint uses the swatch tray)", () => {
+  it("never opens a separate inventory frost popup (unified AssetPanel)", () => {
     expect(
       resolveHandoffChrome({ ...base, mode: "cad", tool: "add" }).inventoryPopup,
-    ).toBe(true);
+    ).toBe(false);
     expect(
       resolveHandoffChrome({ ...base, mode: "cad", tool: "paint" })
         .inventoryPopup,

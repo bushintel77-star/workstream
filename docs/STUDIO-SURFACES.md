@@ -15,7 +15,7 @@ is the rule that stops the chrome government growing back.
 | # | Surface | Jurisdiction | Default state |
 | --- | --- | --- | --- |
 | 1 | **Header** | What you're looking at: modes, lenses, share, save state | Always on; icon budget ≤ 6 beyond modes |
-| 2 | **The hand** | Everything transient at the pointer: summoned instrument tray, half-orbit on selection, FILL/inventory popup | Hidden; summoned; self-dismissing |
+| 2 | **The hand** | Everything transient at the pointer: summoned instrument tray, half-orbit on selection; Fill/library lives in left AssetPanel | Hidden; summoned; self-dismissing |
 | 3 | **The margin** | One quiet bottom strip: undo/redo, state pill, mode hint, honesty caption, print/rev stamp | Always on, minimal |
 | 4 | **Cmd+K** | Everything nameable; constitutional overflow | Hidden until invoked |
 
@@ -48,8 +48,8 @@ recurring: one authority, fixed lanes, one occupant each.
 
 | Lane | Owner | Rule |
 | --- | --- | --- |
-| Left | The tool tray, and only the tool tray | Nothing else anchors left |
-| Right | ONE summoned data panel at a time (Layers, Measures, Demo Lots, Checklist) | Opening one closes the others; reserve `--ws-safe-right` |
+| Left | ToolDock + **one** AssetPanel (collapsed Fill rail / expanded library / Path Grammar placing) | Opening Expanded or Placing clears the right data panel; opening a right panel collapses Expanded/Placing (rail may remain) |
+| Right | ONE summoned data panel at a time (Layers, Measures, Demo Lots, Checklist, meta inspectors) | Opening one closes the others **and** collapses left Expanded/Placing; reserve `--ws-safe-right` |
 | Margin (bottom) | The MarginStrip | Reserves the ruler gutter; see surface 3 |
 | On-plan | Projected cards (schedule, callouts, tags) | Run through the screen-px declutter engine; never share a point |
 | Centre | One modal at a time | Fit sheet, Quote card, confirm dialogs |

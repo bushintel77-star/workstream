@@ -253,7 +253,7 @@ File: `features/reach/fittsProximity.ts`.
 | Chrome matrix | `state/handoffChrome.ts` |
 | Tokens | `handoffStudio.module.css` `--hc-*` |
 | Instruments | `features/ambient/AmbientRibbon.tsx` — render only when summoned |
-| Inventory | `features/kitInventory/KitAssetDock.tsx` — **popup**, not fixed overlay |
+| Inventory | `features/assetPanel/AssetPanel.tsx` — left dock, three states (collapsed / expanded / placing) |
 | Selection orbit | `features/selectionRing/SelectionRing.tsx` |
 | Cursor | `features/pointer/resolveStudioCursor.ts` |
 | Library data | `@workstream/domain` sketch gold + PlanZV / Osmic / Wikimedia |

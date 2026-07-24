@@ -5,8 +5,8 @@ import type { StudioMode, StudioTool } from "../studioCatalog";
  * Binding: docs/STUDIO-STYLING-AND-UX.md + docs/CAD-AI-2026-UX.md + docs/CANVAS-FIRST-UX.md.
  *
  * Disappearing UI: edge-to-edge drawing; frost chrome on summon;
- * right data lane (one panel); left = tool tray only.
- * Inventory popup only while Add / Paint armed — never a fixed slab.
+ * right data lane (one panel); left = tool tray + unified AssetPanel.
+ * Asset library is never a separate frost popup (`inventoryPopup` always false).
  * AI = intelligent intern — ghosts never silent-write (constraint-first).
  */
 export type HandoffChrome = {
@@ -40,9 +40,8 @@ export type HandoffChrome = {
   /** Selection orbit (delete / lock / Ask AI) — outside the glyph */
   selectionRing: boolean;
   /**
-   * Inventory frost popup — fold-out asset library (search + Draft kit +
-   * catalog categories). True only while Add or Paint is armed — never a
-   * fixed slab.
+   * @deprecated Unified AssetPanel owns the library. Always false — kept so
+   * chrome callers/tests don't break during the collapse.
    */
   inventoryPopup: boolean;
   /** Left drawing tools implied by mode */
@@ -234,11 +233,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     /** Orbit actions outside the glyph */
     selectionRing:
       mode === "cad" || mode === "sketch" || mode === "survey",
-    /**
-     * Frost inventory popup — Add only. Paint fills live in the persistent
-     * SwatchTray furniture, so the popup no longer doubles for Paint.
-     */
-    inventoryPopup: plan && mode !== "sketch" && tool === "add",
+    /** Library lives in AssetPanel — never a separate frost popup. */
+    inventoryPopup: false,
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: floraOn,

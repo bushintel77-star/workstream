@@ -107,7 +107,7 @@ test.describe("Design studio (sketch mode)", () => {
     const armPaving = page.getByTestId("canvas-command-arm-paving");
     await expect(armPaving).toBeVisible();
     await armPaving.click();
-    await expect(page.getByTestId("kit-asset-dock")).toBeVisible({
+    await expect(page.getByTestId("asset-panel-placing")).toBeVisible({
       timeout: 10_000,
     });
   });
