@@ -1,4 +1,9 @@
-import type { IrrigationZone, IrrigationZoneKind, CanvasAnnotation } from "@workstream/contracts";
+import type {
+  IrrigationZone,
+  IrrigationZoneKind,
+  CanvasAnnotation,
+  ConstructionTrench,
+} from "@workstream/contracts";
 import type {
   SketchStroke,
   SpotLevel,
@@ -37,6 +42,8 @@ export type StudioSnapshot = {
   services: PctPoint[][];
   /** Authored drip / lighting paths — DesignCanvas.irrigation_zones. */
   irrigationZones: IrrigationZone[];
+  /** Construction trenches / conduit — DesignCanvas.construction_trenches. */
+  constructionTrenches: ConstructionTrench[];
   /** Hand-lettered presentation notes — DesignCanvas.annotations. */
   annotations: CanvasAnnotation[];
 };

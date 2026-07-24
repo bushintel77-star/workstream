@@ -117,3 +117,4 @@ export * from './spatial-turf';
 export * from './outdoor-area';
 export * from './hybrid-plane';
 export * from './sketch-to-cad';
+export * from './auto-trench';

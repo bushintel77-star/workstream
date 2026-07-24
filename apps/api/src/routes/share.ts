@@ -77,6 +77,7 @@ export default async function shareRoutes(fastify: FastifyInstance) {
           ? {
               ...canvas,
               irrigation_zones: canvas.irrigation_zones ?? [],
+              construction_trenches: canvas.construction_trenches ?? [],
               annotations: canvas.annotations ?? [],
               features: canvas.features ?? [],
             }

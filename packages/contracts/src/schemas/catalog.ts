@@ -119,6 +119,33 @@ export const IrrigationZoneSchema = z.object({
 });
 export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
 
+/**
+ * Construction trench / conduit runs for landscape build (not survey Servc).
+ * Proposed by auto-trench from zones + drains; accepted into the canvas.
+ */
+export const ConstructionTrenchKindSchema = z.enum([
+  "irrig_main",
+  "irrig_lateral",
+  "lighting_conduit",
+  "drainage",
+]);
+export type ConstructionTrenchKind = z.infer<typeof ConstructionTrenchKindSchema>;
+
+export const ConstructionTrenchSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  kind: ConstructionTrenchKindSchema,
+  points: z.array(CanvasPointPctSchema).min(2),
+  /** Indicative trench depth (mm) — landscape construction, not DBYD. */
+  depth_mm: z.number().positive().default(300),
+  /** Provenance — auto proposal vs operator edit. */
+  source: z.enum(["auto", "traced"]).default("auto"),
+  /** Ephemeral until Accept — never ship ghosts to client quote. */
+  ghost: z.boolean().optional(),
+  why: z.string().optional(),
+});
+export type ConstructionTrench = z.infer<typeof ConstructionTrenchSchema>;
+
 /** Hand-lettered plan note — persists with DesignCanvas (Workflow 1 presentation). */
 export const CanvasAnnotationAnchorSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -284,6 +311,8 @@ export const DesignCanvasSchema = z.object({
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema),
   irrigation_zones: z.array(IrrigationZoneSchema).default([]),
+  /** Landscape construction trenches / conduit (auto or traced). */
+  construction_trenches: z.array(ConstructionTrenchSchema).default([]),
   annotations: z.array(CanvasAnnotationSchema).default([]),
   /** Lean landscape features (beds/paths) - optional until bed paint ships. */
   features: z.array(LandscapeFeatureSchema).optional().default([]),
@@ -297,6 +326,7 @@ export const UpsertDesignCanvasSchema = z.object({
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema).optional(),
   irrigation_zones: z.array(IrrigationZoneSchema).optional(),
+  construction_trenches: z.array(ConstructionTrenchSchema).optional(),
   annotations: z.array(CanvasAnnotationSchema).optional(),
   features: z.array(LandscapeFeatureSchema).optional(),
   site_frame: DesignSiteFrameSchema.optional(),

@@ -7,6 +7,7 @@ import {
   evaluateStudioCompliance,
   FLORA_HEIGHT_BY_FORM,
   isFloraStudioForm,
+  proposeAutoTrenches,
   rankCurtisFloraCandidates,
   sunHoursAtPct,
   tidySketchStrokes,
@@ -18,6 +19,7 @@ import type {
   CanvasAnnotation,
   CatalogPlacement,
   CanvasStroke,
+  ConstructionTrench,
   DesignSiteFrame,
   IrrigationZone,
   IrrigationZoneKind,
@@ -348,6 +350,7 @@ function snapOf(doc: Doc): StudioSnapshot {
     levels: doc.levels,
     services: doc.services,
     irrigationZones: doc.irrigationZones ?? [],
+    constructionTrenches: doc.constructionTrenches ?? [],
     annotations: doc.annotations ?? [],
   };
 }
@@ -362,6 +365,7 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
     levels: [],
     services: [],
     irrigationZones: [],
+    constructionTrenches: [],
     annotations: (seed.annotations ?? []).map((a) => ({
       ...a,
       anchor: { ...a.anchor },
@@ -376,6 +380,7 @@ function initialState(opts: {
   strokes?: CanvasStroke[];
   siteFrame?: DesignSiteFrame | null;
   irrigationZones?: IrrigationZone[];
+  constructionTrenches?: ConstructionTrench[];
   annotations?: CanvasAnnotation[];
   features?: LandscapeFeature[];
   /** Live project — never boot with the demo dwelling parallelogram. */
@@ -390,6 +395,7 @@ function initialState(opts: {
     (opts.placements?.length ?? 0) > 0 ||
     (opts.strokes?.length ?? 0) > 0 ||
     (opts.irrigationZones?.length ?? 0) > 0 ||
+    (opts.constructionTrenches?.length ?? 0) > 0 ||
     (opts.annotations?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
   const building = resolveHydratedBuilding(
@@ -417,6 +423,7 @@ function initialState(opts: {
         services: frameOverlay.services ?? base.services,
         levels: frameOverlay.levels ?? base.levels,
         irrigationZones: opts.irrigationZones ?? [],
+        constructionTrenches: opts.constructionTrenches ?? [],
         annotations: opts.annotations ?? [],
       }
     : liveProject
@@ -529,6 +536,8 @@ export type UseStudioStateOpts = {
   initialSiteFrame?: DesignSiteFrame | null;
   /** Authored drip / lighting zones from DesignCanvas.irrigation_zones. */
   initialIrrigationZones?: IrrigationZone[];
+  /** Construction trenches from DesignCanvas.construction_trenches. */
+  initialConstructionTrenches?: ConstructionTrench[];
   /** Hand-lettered notes from DesignCanvas.annotations. */
   initialAnnotations?: CanvasAnnotation[];
   /** Persisted region outlines from DesignCanvas.features. */
@@ -756,6 +765,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialStrokes = [],
     initialSiteFrame = null,
     initialIrrigationZones = [],
+    initialConstructionTrenches = [],
     initialAnnotations = [],
     initialFeatures = [],
   } = opts;
@@ -766,6 +776,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       strokes: initialStrokes,
       siteFrame: initialSiteFrame,
       irrigationZones: initialIrrigationZones,
+      constructionTrenches: initialConstructionTrenches,
       annotations: initialAnnotations,
       features: initialFeatures,
       liveProject: Boolean(projectId),
@@ -2158,6 +2169,92 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate, setUi, state.doc.irrigationZones],
   );
 
+  /**
+   * Landscape-architect auto trench — irrig main/laterals, lighting conduit,
+   * drainage from authored zones + french drains. Ghosts until Accept.
+   */
+  const runAutoTrench = useCallback(() => {
+    const scaleM =
+      state.ui.boardWidthM ?? boardScaleM(state.ui.sheetScaleDenom);
+    const proposals = proposeAutoTrenches({
+      zones: state.doc.irrigationZones ?? [],
+      items: (state.doc.items ?? []).map((i) => ({
+        id: i.id,
+        t: i.t,
+        x: i.x,
+        y: i.y,
+        ghost: i.ghost,
+        dbhM: i.dbhM,
+      })),
+      easements: (state.doc.easements ?? []).map((r) =>
+        r.map((p) => ({ x: p.x, y: p.y })),
+      ),
+      services: (state.doc.services ?? []).map((r) =>
+        r.map((p) => ({ x: p.x, y: p.y })),
+      ),
+      boundary: state.doc.boundary.map((p) => ({ x: p.x, y: p.y })),
+      building: state.doc.building.map((p) => ({ x: p.x, y: p.y })),
+      scaleM,
+      asGhosts: true,
+    });
+    if (proposals.length === 0) {
+      setUi({
+        assistReply:
+          "Auto trench needs a drip or lighting zone, or french-drain symbols — draw zones first, then run again.",
+        coachOpen: true,
+      });
+      return;
+    }
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: [
+          ...(snap.constructionTrenches ?? []).filter((t) => !t.ghost),
+          ...proposals,
+        ],
+      },
+    }));
+    setUi({
+      assistReply: `${proposals.length} trench proposal${proposals.length === 1 ? "" : "s"} — Accept to commit dig paths (indicative; BYDA before excavation).`,
+      coachOpen: true,
+    });
+  }, [
+    mutate,
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.easements,
+    state.doc.irrigationZones,
+    state.doc.items,
+    state.doc.services,
+    state.ui.boardWidthM,
+    state.ui.sheetScaleDenom,
+  ]);
+
+  const acceptAllTrenchGhosts = useCallback(() => {
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: (snap.constructionTrenches ?? []).map((t) =>
+          t.ghost ? { ...t, ghost: undefined } : t,
+        ),
+      },
+    }));
+    setUi({ assistReply: "Trench paths accepted — in live BOM as excavate lm." });
+  }, [mutate, setUi]);
+
+  const rejectAllTrenchGhosts = useCallback(() => {
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: (snap.constructionTrenches ?? []).filter(
+          (t) => !t.ghost,
+        ),
+      },
+    }));
+    setUi({ assistReply: "Trench proposals dismissed." });
+  }, [mutate, setUi]);
+
   const addAnnotation = useCallback(
     (ann: CanvasAnnotation) => {
       mutate((snap) => ({
@@ -2235,6 +2332,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           items: [],
           strokes: [],
           irrigationZones: [],
+          constructionTrenches: [],
           annotations: [],
           easements: [],
           services: [],
@@ -2290,6 +2388,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     });
     setUi({ saveStatus: "saving" });
     try {
+      const acceptedTrenches = (state.doc.constructionTrenches ?? []).filter(
+        (t) => !t.ghost,
+      );
       await saveDesignCanvasAction(
         projectIdRef.current,
         placements,
@@ -2298,6 +2399,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         state.doc.annotations ?? [],
         siteFrame,
         features,
+        acceptedTrenches,
       );
       saveRevisionRef.current += 1;
       setUi({
@@ -2324,6 +2426,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.building,
     state.doc.easements,
     state.doc.irrigationZones,
+    state.doc.constructionTrenches,
     state.doc.annotations,
     state.doc.items,
     state.doc.levels,
@@ -2398,6 +2501,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
       .map(
         (z) =>
           `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+      )
+      .join("/"),
+    (state.doc.constructionTrenches ?? [])
+      .filter((t) => !t.ghost)
+      .map(
+        (t) =>
+          `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
       )
       .join("/"),
     (state.doc.annotations ?? [])
@@ -2537,6 +2647,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
       accessConstrained: workableOutdoorM2 > 400,
       scaleM,
       irrigationZones: state.doc.irrigationZones ?? [],
+      constructionTrenches: (state.doc.constructionTrenches ?? []).filter(
+        (t) => !t.ghost,
+      ),
       metaByType: Object.fromEntries(
         (Object.keys(BY_TYPE) as StudioItemType[]).map((t) => {
           const d = BY_TYPE[t];
@@ -2561,6 +2674,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.boundary,
     state.doc.items,
     state.doc.irrigationZones,
+    state.doc.constructionTrenches,
     state.ui.boardWidthM,
     state.ui.sheetScaleDenom,
     workableOutdoorM2,
@@ -2748,6 +2862,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     levels: state.doc.levels ?? [],
     services: state.doc.services ?? [],
     irrigationZones: state.doc.irrigationZones ?? [],
+    constructionTrenches: state.doc.constructionTrenches ?? [],
     annotations: state.doc.annotations ?? [],
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
@@ -2798,6 +2913,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     addSpotLevel,
     commitService,
     commitZone,
+    runAutoTrench,
+    acceptAllTrenchGhosts,
+    rejectAllTrenchGhosts,
     addAnnotation,
     updateAnnotationNotePos,
     removeAnnotation,

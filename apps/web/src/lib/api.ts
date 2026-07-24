@@ -361,6 +361,7 @@ export async function saveDesignCanvasApi(
   annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
   features?: DesignCanvas["features"],
+  constructionTrenches?: DesignCanvas["construction_trenches"],
 ): Promise<{ canvas: DesignCanvas; quote: SketchQuoteSummary | null }> {
   const body = await apiPut<{
     canvas: DesignCanvas;
@@ -372,6 +373,9 @@ export async function saveDesignCanvasApi(
     ...(annotations != null ? { annotations } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
     ...(features != null ? { features } : {}),
+    ...(constructionTrenches != null
+      ? { construction_trenches: constructionTrenches }
+      : {}),
   });
   return { canvas: body.canvas, quote: body.quote ?? null };
 }

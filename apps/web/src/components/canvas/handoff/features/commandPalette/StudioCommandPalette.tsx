@@ -20,6 +20,8 @@ type Props = {
   onAskAi: (query: string) => void;
   onArm: (t: StudioItemType) => void;
   onScanGhosts: () => void;
+  /** Propose irrig / conduit / drainage trenches from zones + drains. */
+  onAutoTrench?: () => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
@@ -55,6 +57,7 @@ export function StudioCommandPalette({
   onAskAi,
   onArm,
   onScanGhosts,
+  onAutoTrench,
   onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
@@ -132,6 +135,19 @@ export function StudioCommandPalette({
         keywords: "scan ghost ai suggest propose layout",
         run: onScanGhosts,
       },
+      ...(onAutoTrench
+        ? [
+            {
+              id: "auto-trench",
+              label: "Auto trench…",
+              detail:
+                "Map irrigation main/laterals, lighting conduit, and drainage dig paths from zones — Accept before dig (BYDA)",
+              keywords:
+                "auto trench irrigation conduit lighting drainage plumbing excavate dig ag pipe mainline lateral landscape architect",
+              run: onAutoTrench,
+            } satisfies StudioCommand,
+          ]
+        : []),
       ...(onConvertSketch
         ? [
             {
@@ -229,6 +245,7 @@ export function StudioCommandPalette({
     onGoQuote,
     onRedo,
     onScanGhosts,
+    onAutoTrench,
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,

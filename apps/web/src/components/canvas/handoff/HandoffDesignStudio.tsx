@@ -97,6 +97,7 @@ import { SelectionFocusVeil } from "./features/selectionFocus/SelectionFocusVeil
 import { DialHintPill } from "./features/selectionDial/DialHintPill";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
+import { TrenchOverlay } from "./features/trenches/TrenchOverlay";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
@@ -118,6 +119,7 @@ import type {
   CanvasAnnotation,
   CatalogPlacement,
   CanvasStroke,
+  ConstructionTrench,
   DesignSiteFrame,
   LandscapeFeature,
   IrrigationZone,
@@ -179,6 +181,7 @@ type Props = {
   initialStrokes?: CanvasStroke[];
   initialSiteFrame?: DesignSiteFrame | null;
   initialIrrigationZones?: IrrigationZone[];
+  initialConstructionTrenches?: ConstructionTrench[];
   initialAnnotations?: CanvasAnnotation[];
   initialFeatures?: LandscapeFeature[];
   hasQuote?: boolean;
@@ -202,6 +205,7 @@ export function HandoffDesignStudio({
   initialStrokes = [],
   initialSiteFrame = null,
   initialIrrigationZones = [],
+  initialConstructionTrenches = [],
   initialAnnotations = [],
   initialFeatures = [],
   hasQuote = false,
@@ -223,6 +227,7 @@ export function HandoffDesignStudio({
     initialStrokes,
     initialSiteFrame,
     initialIrrigationZones,
+    initialConstructionTrenches,
     initialAnnotations,
     initialFeatures,
   });
@@ -2802,6 +2807,17 @@ export function HandoffDesignStudio({
                 onCommit={studio.commitZone}
               />
             ) : null}
+            {(ui.mode === "cad" ||
+              ui.mode === "sketch" ||
+              ui.mode === "quote") &&
+            !ui.frameOn ? (
+              <TrenchOverlay
+                trenches={studio.constructionTrenches}
+                cam={planCam}
+                onAcceptAll={studio.acceptAllTrenchGhosts}
+                onRejectAll={studio.rejectAllTrenchGhosts}
+              />
+            ) : null}
             {ui.tool === "zone" && !ui.focusOn && !ui.clientView ? (
               <NicheToolCarousel
                 testId="zone-kind-bar"
@@ -3456,6 +3472,7 @@ export function HandoffDesignStudio({
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
+          onAutoTrench={studio.runAutoTrench}
           onConvertSketch={
             formalizing ? undefined : () => void runFormalizeToCad()
           }

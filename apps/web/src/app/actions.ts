@@ -193,6 +193,7 @@ export async function saveDesignCanvasAction(
   annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
   features?: DesignCanvas["features"],
+  constructionTrenches?: DesignCanvas["construction_trenches"],
 ) {
   if (!projectId.trim()) {
     throw new Error("Missing project — cannot save site plan");
@@ -205,6 +206,9 @@ export async function saveDesignCanvasAction(
     ...(annotations != null ? { annotations } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
     ...(features != null ? { features } : {}),
+    ...(constructionTrenches != null
+      ? { construction_trenches: constructionTrenches }
+      : {}),
   });
   if (!parsed.success) {
     throw new Error(
@@ -220,6 +224,7 @@ export async function saveDesignCanvasAction(
       parsed.data.annotations,
       parsed.data.site_frame,
       parsed.data.features,
+      parsed.data.construction_trenches,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);
