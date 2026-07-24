@@ -60,6 +60,8 @@ import {
   SpeciesSymbol,
   isSpeciesSymbolType,
 } from "../render/symbols/SpeciesSymbol";
+import { SunShadowProvider } from "../shade/SunShadowContext";
+import { decorativeGlyphShadowOffset } from "@workstream/domain";
 import { AnnotationLayer } from "../render/AnnotationLayer";
 import {
   buildSpeciesLabelCandidates,
@@ -159,10 +161,12 @@ type Props = {
   /** Typed BYDA assets — stroke language distinct from title easements. */
   bydaAssets?: import("@workstream/contracts").DesignBydaAsset[];
   /**
-   * When true, dwelling shadow is driven by SunCastOverlay — skip the static
-   * south offset placeholder under the footprint.
+   * When true, dwelling shadow is driven by SunCastOverlay — skip the soft
+   * ellipse under the footprint (glyphs still follow `sunAzimuthDeg`).
    */
   timedSunCast?: boolean;
+  /** Live sun azimuth (0=N) — drives decorative glyph / dwelling soft-shadows. */
+  sunAzimuthDeg?: number;
   items: StudioItem[];
   tool: StudioTool;
   /** Studio mode — survey shows edge dims; sketch disables pointer capture. */
@@ -307,6 +311,7 @@ export function CadPlanBoard({
   services = [],
   bydaAssets = [],
   timedSunCast = false,
+  sunAzimuthDeg = 0,
   items,
   tool,
   mode = "cad",
@@ -971,11 +976,23 @@ export function CadPlanBoard({
     });
   }, [presentationOn, tiltLocked, items, ppm, cam]);
 
+  const dwellingSoftShadow = useMemo(
+    () =>
+      decorativeGlyphShadowOffset(
+        sunAzimuthDeg,
+        1,
+        SUN_SHADOW.dwellingDyPct,
+      ),
+    [sunAzimuthDeg],
+  );
+
   return (
+    <SunShadowProvider azimuthDeg={sunAzimuthDeg}>
     <div
       ref={rootRef}
       className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}${tiltLocked ? ` ${css.worldTilted}` : ""}`}
       data-testid="cad-plan-board"
+      data-sun-azimuth={sunAzimuthDeg.toFixed(1)}
       data-cad-plan
       data-plan-geometry="1"
       data-mode={mode}
@@ -1236,7 +1253,7 @@ export function CadPlanBoard({
           <polygon
             data-testid="dwelling-sun-shadow"
             points={ptsAttr(building)}
-            transform={`translate(${SUN_SHADOW.dxPct} ${SUN_SHADOW.dwellingDyPct})`}
+            transform={`translate(${dwellingSoftShadow.dx} ${dwellingSoftShadow.dy})`}
             fill={sunShadowFill(darkOn && !frameOn)}
             style={{ mixBlendMode: "multiply" }}
             pointerEvents="none"
@@ -2419,5 +2436,6 @@ export function CadPlanBoard({
         </>
       ) : null}
     </div>
+    </SunShadowProvider>
   );
 }

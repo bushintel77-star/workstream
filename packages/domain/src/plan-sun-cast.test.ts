@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   castRingShadowPct,
+  decorativeGlyphShadowOffset,
   growthHeightFactor,
   shadowLengthMetres,
   shadowOffsetPct,
@@ -18,6 +19,16 @@ describe("plan-sun-cast", () => {
     const { dx, dy } = shadowOffsetPct(10, 0, 100);
     expect(Math.abs(dx)).toBeLessThan(0.01);
     expect(dy).toBeCloseTo(10, 5);
+  });
+
+  it("decorative glyph shadows share the cast opposite-sun vector", () => {
+    const south = decorativeGlyphShadowOffset(0, 44, 0.22);
+    expect(Math.abs(south.dx)).toBeLessThan(0.01);
+    expect(south.dy).toBeCloseTo(44 * 0.22, 5);
+
+    const eastSun = decorativeGlyphShadowOffset(90, 10, 1);
+    expect(eastSun.dx).toBeCloseTo(-10, 5);
+    expect(Math.abs(eastSun.dy)).toBeLessThan(0.01);
   });
 
   it("builds a closed silhouette from a footprint", () => {
