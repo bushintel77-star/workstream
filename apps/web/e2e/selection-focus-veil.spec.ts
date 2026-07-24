@@ -65,7 +65,7 @@ test.describe("Selection focus veil", () => {
     );
     await expectToolDock(page);
 
-    await page.getByTestId("canvas-tool-edit").click();
+    await page.getByTestId("canvas-tool-select").click();
     const items = page.getByTestId("studio-item");
     await expect(items).toHaveCount(2, { timeout: 15_000 });
     await items.nth(0).dispatchEvent("pointerdown");

@@ -1,7 +1,7 @@
 import type { StudioTool } from "../../studioCatalog";
 
-/** Idle "Select" tool — Esc always returns here. */
-export const SELECT_TOOL: StudioTool = "pan";
+/** Ground-state Select tool — Esc always returns here (docs/INTERACTION-LOGIC.md). */
+export const SELECT_TOOL: StudioTool = "select";
 
 export type ToolStack = {
   current: StudioTool;

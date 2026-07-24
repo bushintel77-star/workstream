@@ -7,11 +7,6 @@ import css from "./layers.module.css";
 const LAYERS: Array<{ key: LayerKey; label: string; hint: string }> = [
   { key: "survey", label: "Survey (existing)", hint: "Existing trees, as-built sketches" },
   { key: "boundary", label: "Boundary & hardscape", hint: "Bounds, paving, deck" },
-  {
-    key: "services",
-    label: "Services & utilities",
-    hint: "Drainage, service corridors, easements, RL levels",
-  },
   { key: "council", label: "Council & compliance", hint: "Setbacks, TPZ" },
   { key: "vegetation", label: "Vegetation (proposed)", hint: "Canopy, hedge, beds, lawn" },
   { key: "notes", label: "Notes", hint: "Hand-lettered annotations with leaders" },
@@ -24,10 +19,14 @@ type Props = {
   shadeOn: boolean;
   items: StudioItem[];
   noteCount?: number;
+  /** Layer keys frozen as survey site context (no opacity slider). */
+  lockedLayers?: LayerKey[];
   onClose: () => void;
   onOpacity: (key: LayerKey, value: number) => void;
   onSetback: (on: boolean) => void;
   onShade: (on: boolean) => void;
+  /** Open the Services ledger (replaces the old services opacity dial). */
+  onOpenServices?: () => void;
 };
 
 function countFor(
@@ -51,12 +50,16 @@ export function LayersPanel({
   shadeOn,
   items,
   noteCount = 0,
+  lockedLayers = [],
   onClose,
   onOpacity,
   onSetback,
   onShade,
+  onOpenServices,
 }: Props) {
   if (!open) return null;
+
+  const locked = new Set(lockedLayers);
 
   return (
     <div className={css.panel} data-testid="layers-panel" role="dialog" aria-label="Layers">
@@ -66,30 +69,56 @@ export function LayersPanel({
           Close
         </button>
       </div>
+      {onOpenServices ? (
+        <button
+          type="button"
+          className={css.servicesLink}
+          data-testid="layers-open-services"
+          onClick={onOpenServices}
+        >
+          Services ledger — per-feature ticks & focus (not a dial)
+        </button>
+      ) : null}
       <ul className={css.list}>
         {LAYERS.map((layer) => {
           const count = countFor(layer.key, items, noteCount);
+          const frozen = locked.has(layer.key);
           return (
-            <li key={layer.key} className={css.row}>
+            <li key={layer.key} className={css.row} data-locked={frozen ? "1" : undefined}>
               <div className={css.rowText}>
                 <span className={css.label}>
                   {layer.label}
                   <span className={css.count}>{count}</span>
+                  {frozen ? (
+                    <span className={css.lockedTag} data-testid={`layers-${layer.key}-locked`}>
+                      Survey locked
+                    </span>
+                  ) : null}
                 </span>
                 <span className={css.hint}>{layer.hint}</span>
               </div>
-              <label className={css.sliderLabel}>
-                <span className={css.pct}>{Math.round(opacity[layer.key] * 100)}%</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={Math.round(opacity[layer.key] * 100)}
-                  onChange={(e) => onOpacity(layer.key, Number(e.target.value) / 100)}
-                  aria-label={`${layer.label} opacity`}
-                />
-              </label>
+              {frozen ? (
+                <span
+                  className={css.frozenOpacity}
+                  data-testid={`layers-${layer.key}-frozen-opacity`}
+                  aria-label={`${layer.label} opacity locked at ${Math.round(opacity[layer.key] * 100)} percent`}
+                >
+                  {Math.round(opacity[layer.key] * 100)}%
+                </span>
+              ) : (
+                <label className={css.sliderLabel}>
+                  <span className={css.pct}>{Math.round(opacity[layer.key] * 100)}%</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={Math.round(opacity[layer.key] * 100)}
+                    onChange={(e) => onOpacity(layer.key, Number(e.target.value) / 100)}
+                    aria-label={`${layer.label} opacity`}
+                  />
+                </label>
+              )}
             </li>
           );
         })}
@@ -121,7 +150,9 @@ export function LayersPanel({
       </label>
       <p className={css.foot}>
         Compliance pass/fail stays visible regardless of Council opacity. Survey mode
-        auto-dims proposed layers. Sun mesh is indicative — not EnergyPlus.
+        auto-dims proposed layers. Use the Services ledger for corridors, easements,
+        RLs, lighting and trenches — ticks freeze at Quote. Sun mesh is indicative —
+        not EnergyPlus.
       </p>
     </div>
   );

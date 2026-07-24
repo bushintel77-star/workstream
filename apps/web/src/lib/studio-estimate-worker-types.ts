@@ -33,6 +33,16 @@ export type StudioEstimateArgs = {
     emitter_flow_lph?: number;
     fixture_spacing_m?: number;
   }>;
+  constructionTrenches?: Array<{
+    id: string;
+    name: string;
+    kind: "irrig_main" | "irrig_lateral" | "lighting_conduit" | "drainage";
+    points: Array<{ x_pct: number; y_pct: number }>;
+    depth_mm?: number;
+    source?: "auto" | "traced";
+    ghost?: boolean;
+    why?: string;
+  }>;
 };
 
 export type StudioEstimateWorkerRequest = {

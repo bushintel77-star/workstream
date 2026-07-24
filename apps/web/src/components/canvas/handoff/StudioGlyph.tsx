@@ -12,7 +12,7 @@ import {
   hatchUrlFor,
   sunShadowFillFrom,
 } from "./features/render/renderTokens";
-import { useSunShadow } from "./features/render/SunShadowContext";
+import { useGlyphSunShadow } from "./features/shade/SunShadowContext";
 
 /**
  * Plan symbols — clean, modern landscape-CAD language on the blush field.
@@ -58,11 +58,17 @@ export function StudioGlyph({
   const castsShadow =
     Boolean(def.canopyM) || (def.heightM != null && def.heightM > 0);
   const canopyR = 44;
+  const { dx: shadowDx, dy: shadowDy } = useGlyphSunShadow(
+    canopyR,
+    SUN_SHADOW.dyFactor,
+  );
   const shadow = castsShadow ? (
     <ellipse
       data-testid="sun-shadow"
-      cx={50 + canopyR * sun.dxFactor}
-      cy={50 + canopyR * sun.dyFactor}
+      data-sun-dx={shadowDx.toFixed(2)}
+      data-sun-dy={shadowDy.toFixed(2)}
+      cx={50 + shadowDx}
+      cy={50 + shadowDy}
       rx={canopyR * 0.82}
       ry={canopyR * 0.42}
       fill={sunShadowFillFrom(sun, night)}

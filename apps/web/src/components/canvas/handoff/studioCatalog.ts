@@ -26,40 +26,12 @@ export type StudioItem = {
   stale?: boolean;
   /** Authored DBH (m) for existing trees — drives AS 4970 TPZ when set. */
   dbhM?: number;
-  /** Catalog symbol id — preserves lighting fixtures through round-trip. */
-  symbolId?: string;
-  /** Locked residential path width (m) for paving/deck. */
-  pathWidthM?: number;
-  /** Edge detailing — sawn / soldier / spalled / soft. */
-  edgeType?: HardscapeEdgeType;
-  /** Corner fillet lock (m) — residential detailing. */
-  pathFilletM?: number;
-};
-
-export type DrainageRun = {
-  id: string;
-  points: Array<{ x: number; y: number; z: number }>;
-  source: "indicative";
-};
-
-/** Authored residential path corridor (centreline + craft locks). */
-export type PathCorridor = {
-  id: string;
-  points: Pt[];
-  material: "paving" | "deck";
-  pathWidthM: number;
-  edgeType: HardscapeEdgeType;
-  pathFilletM: number;
-  why: string;
-};
-
-export type DesignSchemeSnapshot = {
-  id: string;
-  letter: "A" | "B" | "C";
-  name: string;
-  items: StudioItem[];
-  pathCorridors: PathCorridor[];
-  savedAt: string;
+  /**
+   * Drawn region outline (board %) for area masses formalized from sketch —
+   * the plan renders this polygon instead of the rectangular glyph. Moves
+   * with the item centroid.
+   */
+  outlinePct?: Pt[];
 };
 
 export type Pt = { x: number; y: number };
@@ -298,7 +270,12 @@ export type StudioMode = (typeof MODE_TABS)[number];
 
 export const TOOLS = [
   { id: "trace", label: "Trace", icon: "✎" },
-  { id: "edit", label: "Edit", icon: "◇" },
+  /*
+   * Select is the ground state (docs/INTERACTION-LOGIC.md): grab, marquee and
+   * the orbit live here and only here. Pan is a gesture (Space / middle-drag),
+   * never a tool.
+   */
+  { id: "select", label: "Select", icon: "➤" },
   { id: "add", label: "Add", icon: "+" },
   {
     id: "paint",
@@ -314,7 +291,6 @@ export const TOOLS = [
   },
   { id: "lock", label: "Lock", icon: "⬡" },
   { id: "reset", label: "Reset", icon: "↺" },
-  { id: "pan", label: "Pan", icon: "✥" },
 ] as const;
 
 /** Fillable hardscape / softscape for the Paint swatch strip. */

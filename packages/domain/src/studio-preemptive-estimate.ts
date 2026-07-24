@@ -18,6 +18,7 @@ import {
   type StudioComplianceReport,
 } from "./studio-preemptive-compliance";
 import { emitterCountForLine } from "./irrigation";
+import { trenchLineItems, type TrenchLineItem } from "./auto-trench";
 
 /** Minimal authored zone payload (matches contracts IrrigationZone). */
 export type StudioAuthoredZone = {
@@ -28,6 +29,25 @@ export type StudioAuthoredZone = {
   emitter_spacing_cm?: number;
   emitter_flow_lph?: number;
   fixture_spacing_m?: number;
+};
+
+/** Minimal trench payload for BOM (matches contracts ConstructionTrench). */
+export type StudioAuthoredTrench = {
+  id: string;
+  name: string;
+  kind: TrenchLineItem["kind"];
+  points: Array<{ x_pct: number; y_pct: number }>;
+  depth_mm?: number;
+  source?: "auto" | "traced";
+  ghost?: boolean;
+  why?: string;
+};
+
+const TRENCH_RATE: Record<TrenchLineItem["kind"], number> = {
+  irrig_main: 48,
+  irrig_lateral: 32,
+  lighting_conduit: 38,
+  drainage: 58,
 };
 
 /** Polyline length in metres — board width = scaleM across 100%. */
@@ -214,6 +234,8 @@ export function estimateStudioDrawing(args: {
    * When present, they supersede auto softscape drip / hardscape lighting.
    */
   irrigationZones?: StudioAuthoredZone[];
+  /** Accepted construction trenches / conduit (ghosts ignored). */
+  constructionTrenches?: StudioAuthoredTrench[];
   /** Board width metres (100% span) — for zone polyline lengths. */
   scaleM?: number;
 }): StudioEstimateReport {
@@ -688,6 +710,41 @@ export function estimateStudioDrawing(args: {
         45 * access,
         [z.id],
         "Ag-pipe + gravel trench · confirm outlet",
+      ),
+    );
+  }
+
+  // Construction trenches / conduit (auto-trench accept) — excavation lm
+  const trenchScale = {
+    metresPerXPx: scaleM / 100,
+    metresPerYPx: scaleM / 100,
+    canvasWidthPx: 100,
+    canvasHeightPx: 100,
+  };
+  const trenchPayload = (args.constructionTrenches ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    kind: c.kind,
+    points: c.points,
+    depth_mm: c.depth_mm ?? 300,
+    source: c.source ?? ("auto" as const),
+    ghost: c.ghost,
+    why: c.why,
+  }));
+  for (const t of trenchLineItems(trenchPayload, trenchScale)) {
+    if (t.qty < 0.5) continue;
+    lines.push(
+      line(
+        `sec-trench-${t.kind}`,
+        "secondary",
+        t.label,
+        "lm",
+        t.qty,
+        TRENCH_RATE[t.kind] * access,
+        trenchPayload
+          .filter((c) => c.kind === t.kind && !c.ghost)
+          .map((c) => c.id),
+        "Auto-trench / construction corridor — indicative, confirm BYDA before dig",
       ),
     );
   }

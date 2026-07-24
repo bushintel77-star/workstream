@@ -360,6 +360,8 @@ export async function saveDesignCanvasApi(
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
+  features?: DesignCanvas["features"],
+  constructionTrenches?: DesignCanvas["construction_trenches"],
 ): Promise<{ canvas: DesignCanvas; quote: SketchQuoteSummary | null }> {
   const body = await apiPut<{
     canvas: DesignCanvas;
@@ -370,6 +372,10 @@ export async function saveDesignCanvasApi(
     irrigation_zones: irrigationZones,
     ...(annotations != null ? { annotations } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
+    ...(features != null ? { features } : {}),
+    ...(constructionTrenches != null
+      ? { construction_trenches: constructionTrenches }
+      : {}),
   });
   return { canvas: body.canvas, quote: body.quote ?? null };
 }
@@ -596,13 +602,72 @@ export async function putSiteBoundaryApi(
   );
 }
 
+export type AutoTraceBoundaryResult = {
+  boundary: SiteBoundaryLite;
+  /** Canvas-metre dwelling verts co-registered with the title (may be empty). */
+  building_canvas: Array<{ x: number; y: number }>;
+  building_source: "vicmap" | null;
+  /** Vicmap Property easement lines (subset) in the same canvas-metre frame. */
+  easement_lines_canvas: Array<{
+    points: Array<{ x: number; y: number }>;
+    pfi?: string | null;
+    status?: string | null;
+  }>;
+  easement_source: "vicmap" | null;
+};
+
 export async function autoTraceBoundaryApi(
   projectId: string,
   preferGis = true,
-): Promise<{ boundary: SiteBoundaryLite; easements?: SiteEasementLite[] }> {
-  return apiPost<{ boundary: SiteBoundaryLite; easements?: SiteEasementLite[] }>(
-    `/projects/${projectId}/boundary/auto-trace`,
-    { prefer_gis: preferGis },
+): Promise<AutoTraceBoundaryResult> {
+  const raw = await apiPost<Partial<AutoTraceBoundaryResult> & {
+    boundary: SiteBoundaryLite;
+  }>(`/projects/${projectId}/boundary/auto-trace`, {
+    prefer_gis: preferGis,
+  });
+  return {
+    boundary: raw.boundary,
+    building_canvas: raw.building_canvas ?? [],
+    building_source: raw.building_source ?? null,
+    easement_lines_canvas: raw.easement_lines_canvas ?? [],
+    easement_source: raw.easement_source ?? null,
+  };
+}
+
+export type KeylessHydrateOverlayCanvas = {
+  kind:
+    | "planning"
+    | "bushfire"
+    | "contour"
+    | "flood"
+    | "heritage"
+    | "easement"
+    | "urban_tree"
+    | "water_corp"
+    | "road_casement"
+    | "acid_sulfate"
+    | "wetland";
+  rings: Array<Array<{ x: number; y: number }>>;
+  label: string | null;
+  fetched_at: string;
+};
+
+export type KeylessHydrateResult = {
+  overlays_canvas: KeylessHydrateOverlayCanvas[];
+  source: "vicmap" | "empty";
+};
+
+export async function hydrateKeylessApi(
+  projectId: string,
+  kinds: KeylessHydrateOverlayCanvas["kind"][] = [
+    "planning",
+    "bushfire",
+    "contour",
+  ],
+): Promise<KeylessHydrateResult> {
+  return apiPost<KeylessHydrateResult>(
+    `/projects/${projectId}/keyless-hydrate`,
+    { kinds },
   );
 }
 
@@ -1064,14 +1129,20 @@ export type WeatherDay = {
   temp_min_c: number;
   temp_max_c: number;
   precipitation_mm: number;
-  precipitation_probability: number;
-  wind_speed_kmh: number;
-  condition: string;
+  wind_max_kph: number;
+  humidity_pct: number | null;
+  /** Legacy alias — prefer wind_max_kph from the API. */
+  wind_speed_kmh?: number;
+  precipitation_probability?: number;
+  condition?: string;
 };
 
 export type WeatherForecast = {
   source: string;
   days: WeatherDay[];
+  rain_within_24h?: boolean;
+  wind_warning?: boolean;
+  fetched_at?: string;
 };
 
 export async function getWeather(

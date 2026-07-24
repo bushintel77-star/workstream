@@ -87,8 +87,9 @@ export function QuoteSurface({
         <p className={css.kicker}>Indicative quote</p>
         <h2 className={css.total}>{aud(estimate.totalInclGst)}</h2>
         <p className={css.lead}>
-          Incl. GST from the live preemptive BOM on this working drawing. Not a
-          formal tender — promote from Share when the client is ready.
+          Incl. GST from the live preemptive BOM on this working drawing. Survey
+          services (drainage, RL levels, easements) are locked as site context.
+          Promote from Share for a client-ready quote revision.
         </p>
         <ul className={css.lines}>
           {lines.map((row) => (

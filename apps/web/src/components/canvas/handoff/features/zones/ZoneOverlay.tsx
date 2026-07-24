@@ -17,6 +17,8 @@ type Props = {
   zones: IrrigationZone[];
   /** Live board camera — zone labels portal through it. */
   cam?: BoardCamera;
+  serviceFeatureHidden?: Record<string, boolean>;
+  focusedServiceIds?: string[] | null;
   onCommit: (points: PctPoint[], kind: IrrigationZoneKind) => void;
 };
 
@@ -73,7 +75,15 @@ function headTicks(
  * Authored drip / lighting / conduit / spray / agg-drain paths.
  * Enter finishes; Esc cancels. Feeds DesignCanvas.irrigation_zones → BOM.
  */
-export function ZoneOverlay({ active, kind, zones, cam, onCommit }: Props) {
+export function ZoneOverlay({
+  active,
+  kind,
+  zones,
+  cam,
+  serviceFeatureHidden = {},
+  focusedServiceIds = null,
+  onCommit,
+}: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<PctPoint[] | null>(null);
 
@@ -111,24 +121,24 @@ export function ZoneOverlay({ active, kind, zones, cam, onCommit }: Props) {
     };
   };
 
+  const focusOn = (focusedServiceIds?.length ?? 0) > 0;
   const rings = [
-    ...zones.map((z) => ({
-      id: z.id,
-      kind: (z.kind ?? "drip") as IrrigationZoneKind,
-      pts: z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
-      name: z.name,
-      spacingM: z.fixture_spacing_m ?? 2.5,
-    })),
+    ...zones
+      .filter((z) => !serviceFeatureHidden[`zone:${z.id}`])
+      .map((z) => {
+        const ledgerId = `zone:${z.id}`;
+        const dimmed =
+          focusOn && !(focusedServiceIds ?? []).includes(ledgerId);
+        return {
+          id: z.id,
+          kind: (z.kind ?? "drip") as IrrigationZoneKind,
+          pts: z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          name: z.name,
+          opacity: dimmed ? 0.12 : 1,
+        };
+      }),
     ...(draft
-      ? [
-          {
-            id: "draft",
-            kind,
-            pts: draft,
-            name: "draft",
-            spacingM: 2.5,
-          },
-        ]
+      ? [{ id: "draft", kind, pts: draft, name: "draft", opacity: 0.7 }]
       : []),
   ];
 
@@ -152,35 +162,29 @@ export function ZoneOverlay({ active, kind, zones, cam, onCommit }: Props) {
         preserveAspectRatio="none"
         aria-hidden
       >
-        {rings.map((r) => {
-          const stroke = strokeFor(r.kind);
-          const showHeads =
-            r.kind === "spray" ||
-            r.kind === "lighting" ||
-            r.kind === "lighting_conduit";
-          // ~ board % for ~2.5–3.5 m at scale ~110 m → ~2.3–3.2 %
-          const tickPct =
-            r.kind === "spray" ? 3.2 : r.kind === "lighting_conduit" ? 8 : 2.3;
-          const ticks = showHeads ? headTicks(r.pts, tickPct) : [];
-          const fitPt =
-            r.kind === "lighting_conduit" && r.pts.length >= 2
-              ? r.pts[r.pts.length - 1]!
-              : null;
-          return (
-            <g
-              key={r.id}
-              data-testid={
-                r.id === "draft" ? "zone-draft" : `zone-path-${r.kind}`
-              }
-            >
-              <polyline
-                points={r.pts.map((p) => `${p.x},${p.y}`).join(" ")}
-                fill="none"
-                stroke={stroke.color}
-                strokeWidth={stroke.width}
-                strokeDasharray={stroke.dash}
-                vectorEffect="non-scaling-stroke"
-                opacity={r.id === "draft" ? 0.7 : 0.92}
+        {rings.map((r) => (
+          <g
+            key={r.id}
+            data-testid={
+              r.id === "draft" ? "zone-draft" : `zone-path-${r.kind}`
+            }
+          >
+            <polyline
+              points={r.pts.map((p) => `${p.x},${p.y}`).join(" ")}
+              fill="none"
+              stroke={r.kind === "lighting" ? "#57534E" : "#3F6212"}
+              strokeWidth={0.35}
+              strokeDasharray={r.kind === "lighting" ? "1.4 1.1" : "2 0.9"}
+              vectorEffect="non-scaling-stroke"
+              opacity={r.opacity * (r.id === "draft" ? 1 : 0.9)}
+            />
+            {r.pts.map((p, i) => (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r={0.45}
+                fill={r.kind === "lighting" ? "#57534E" : "#3F6212"}
               />
               {r.pts.map((p, i) => (
                 <circle

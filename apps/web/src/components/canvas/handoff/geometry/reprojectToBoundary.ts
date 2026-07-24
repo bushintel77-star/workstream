@@ -60,13 +60,25 @@ export type ReprojectableDoc = {
   strokes: SketchStroke[];
 };
 
+export type ReprojectBuildingMode =
+  | /** Remap the old dwelling into the new lot (legacy). */
+    "reproject"
+  | /** Remap items/strokes only; leave building empty for the caller. */
+    "reproject-items-only"
+  | /** Use this ring as the dwelling (already in board %). */
+    PctPoint[];
+
 /**
  * After Vicmap title snap — rebind building, items, and strokes into the
  * new parcel frame so geometry does not float left of the lot.
+ *
+ * Prefer `applyParcelSnap` for cadastral hydrate so seed dwellings are not
+ * bbox-warped into the Vicmap lot.
  */
 export function reprojectDocToBoundary(
   snap: ReprojectableDoc,
   nextBoundary: PctPoint[],
+  opts?: { building?: ReprojectBuildingMode },
 ): ReprojectableDoc {
   if (nextBoundary.length < 3) {
     return { ...snap, boundary: nextBoundary };
@@ -75,7 +87,15 @@ export function reprojectDocToBoundary(
   if (from.length < 3) {
     return { ...snap, boundary: nextBoundary };
   }
-  const building = reprojectRingFromRing(snap.building, from, nextBoundary);
+  const mode = opts?.building ?? "reproject";
+  let building: PctPoint[];
+  if (mode === "reproject-items-only") {
+    building = [];
+  } else if (mode === "reproject") {
+    building = reprojectRingFromRing(snap.building, from, nextBoundary);
+  } else {
+    building = mode;
+  }
   const items = sanitizeItemsToOutdoor(
     snap.items.map((it) => {
       const p = reprojectPointFromRing(
@@ -94,7 +114,9 @@ export function reprojectDocToBoundary(
     items,
     strokes: snap.strokes.map((s) => ({
       ...s,
-      points: s.points.map((p) => reprojectPointFromRing(p, from, nextBoundary)),
+      points: s.points.map((p) =>
+        reprojectPointFromRing(p, from, nextBoundary),
+      ),
     })),
   };
 }

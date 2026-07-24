@@ -78,21 +78,102 @@ export function settleTiltDeg(deg: number): number {
 }
 
 /**
- * How far the camera-bound parchment/mesh must oversize the board so
- * rotateX + zoom-out never reveals a hard "postage stamp" plate edge.
- * Caps keep DOM cost sane; board cream still fills any extreme gap.
+ * True-3D vertical wall quad standing on ground edge A→B, extruded from
+ * Z=0 (ground) to Z=`eavePx` (roofline) — a `matrix3d` column-major
+ * rotation + translation, NOT a billboard. Because it shares the exact same
+ * world-Z convention as the roof plane's `translateZ(eavePx)`, the wall's
+ * top edge lands pixel-exact under the roofline corner once both are
+ * composed with the shared ancestor `rotateX(tiltDeg)` — no drift, no gap,
+ * so a low-angle tilt reads as "roof sitting on a footprint that's inside
+ * the boundary", never as a shape disconnected from its own footprint.
+ *
+ * Derivation: the quad's local axes must map to world directions
+ *   local +x (width, A→B)   → unit(B−A) in the ground (X,Y) plane
+ *   local +y (height, top→bottom) → world −Z (top=roofline, bottom=ground)
+ *   local +z                → local-x × local-y (forces a proper rotation,
+ *                              det=+1, so there is no unwanted mirroring)
+ * with the box's own width=|AB|, height=`eavePx`, origin at top-left.
  */
-export const TILT_SKIN_SCALE_MIN = 2.4;
-export const TILT_SKIN_SCALE_MAX = 8;
+export function wallQuadMatrix3d(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  eavePx: number,
+): string {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len = Math.max(0.01, Math.hypot(dx, dy));
+  const ux = dx / len;
+  const uy = dy / len;
+  const m = [
+    ux, uy, 0, 0,
+    0, 0, -1, 0,
+    -uy, ux, 0, 0,
+    ax, ay, eavePx, 1,
+  ];
+  return `matrix3d(${m.map((v) => v.toFixed(4)).join(",")})`;
+}
 
-export function tiltSkinScale(tiltDeg: number, zoom: number): number {
-  if (!isTiltActive(tiltDeg)) return 1;
-  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
-  const rad = (Math.min(TILT_MAX, Math.max(0, tiltDeg)) * Math.PI) / 180;
-  const foreshorten = Math.max(0.35, Math.cos(rad));
-  const raw = 1.2 / (Math.max(0.12, z) * foreshorten);
-  return Math.min(
-    TILT_SKIN_SCALE_MAX,
-    Math.max(TILT_SKIN_SCALE_MIN, raw),
-  );
+/**
+ * True-3D vertical pole at a single ground point (x, y), spanning the same
+ * Z=0…`eavePx` range as `wallQuadMatrix3d` — the corner-post special case
+ * (no edge direction to align to). Equivalent to `translate3d(x, y, eavePx)
+ * rotateX(-90deg)`, verified to reduce to the identical column-major matrix.
+ */
+export function poleMatrix3d(x: number, y: number, eavePx: number): string {
+  return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, ${eavePx.toFixed(2)}px) rotateX(-90deg)`;
+}
+
+/**
+ * Fallback drafting light when no live sun azimuth is available (deg,
+ * 0 = north, 90 = east — same convention as sunPositionAt / SunCastOverlay).
+ * 315° = NW, the classic top-left drafting light.
+ */
+export const LIGHT_AZIMUTH_DEG = 315;
+
+/**
+ * Per-wall brightness band. The darkest back facet never drops below
+ * WALL_LIGHT_MIN — in a landscaping render the dwelling is a quiet support
+ * volume for the garden, never a hero building, so shading stays soft.
+ */
+export const WALL_LIGHT_MIN = 0.72;
+export const WALL_LIGHT_MAX = 1.0;
+
+/**
+ * Roof cap lightness — the most sun-facing facet, held slightly above the
+ * wall band's average (no roof-normal computation; a constant is enough for
+ * a support massing cue).
+ */
+export const ROOF_LIGHTNESS = 1.04;
+
+/**
+ * Unit plan-space vector pointing toward the light source. Azimuth is
+ * compass degrees (0 = north, 90 = east); board space is x-right / y-down,
+ * so north maps to −y.
+ */
+export function lightVectorFromAzimuth(azimuthDeg: number = LIGHT_AZIMUTH_DEG): {
+  lx: number;
+  ly: number;
+} {
+  const rad =
+    ((Number.isFinite(azimuthDeg) ? azimuthDeg : LIGHT_AZIMUTH_DEG) * Math.PI) /
+    180;
+  return { lx: Math.sin(rad), ly: -Math.cos(rad) };
+}
+
+/**
+ * Directional lightness for one wall facet from its outward unit normal
+ * (nx, ny) versus the light vector (lx, ly). The dot product is clamped to
+ * [0, 1] (all back-facing walls share the same quiet minimum) then mapped
+ * into WALL_LIGHT_MIN…WALL_LIGHT_MAX.
+ */
+export function wallLightness(
+  nx: number,
+  ny: number,
+  lx: number,
+  ly: number,
+): number {
+  const dot = Math.max(0, Math.min(1, nx * lx + ny * ly));
+  return WALL_LIGHT_MIN + dot * (WALL_LIGHT_MAX - WALL_LIGHT_MIN);
 }

@@ -61,15 +61,37 @@
   position: absolute;
   inset: 0;
   background: rgba(255, 251, 252, 0.55);
-  border: 1px solid rgba(36, 19, 24, 0.35);
+  border: 1px solid rgba(36, 19, 24, 0.4);
   box-shadow: 0 2px 8px rgba(36, 19, 24, 0.08);
+}
+
+/* True-3D wall volume — ground footprint to eave, matching the roof's own
+ * translateZ so nothing floats disconnected from its footprint at low tilt. */
+.wallsLift {
+  position: absolute;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  z-index: 7;
+}
+
+.wallFace {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  /* Wash gradient is inline — per-facet directional shading from the sun
+   * azimuth (TiltBuildingExtrusion.wallWashGradient). Only the drafted ink
+   * outline lives here: each facet gets a crisp 1px edge so the volume reads
+   * as drawn linework even at low tilt where shading alone is subtle. */
+  border: 1px solid rgba(36, 19, 24, 0.4);
 }
 
 .cornerPost {
   position: absolute;
-  width: 2px;
-  background: rgba(36, 19, 24, 0.45);
-  transform-origin: bottom center;
+  left: 0;
+  top: 0;
+  background: rgba(36, 19, 24, 0.5);
+  transform-origin: 0 0;
   pointer-events: none;
 }
 

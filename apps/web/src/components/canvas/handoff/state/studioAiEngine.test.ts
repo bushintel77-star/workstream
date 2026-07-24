@@ -26,7 +26,10 @@ function snapFromSeed(): StudioSnapshot {
     drainageRuns: [],
     pathCorridors: [],
     services: [],
+    bydaAssets: [],
+    keylessOverlays: [],
     irrigationZones: [],
+    constructionTrenches: [],
     annotations: [],
   };
 }

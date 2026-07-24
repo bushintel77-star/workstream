@@ -18,6 +18,7 @@ import {
 } from "./studioCatalog";
 import { useStudioState } from "./state/useStudioState";
 import { resolveHandoffChrome } from "./state/handoffChrome";
+import { surveyServicesAuthoringAllowed } from "./state/servicesLock";
 import {
   allowAerialUnderlay,
   isDraftingPlate,
@@ -38,6 +39,21 @@ import {
 } from "./features/fitSheet/fitSheetPrefs";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
 import { LayersPanel } from "./features/layers/LayersPanel";
+import { ServicesLedger } from "./features/services/ServicesLedger";
+import { buildServiceLedgerRows } from "./features/services/serviceLedger";
+import {
+  StickyMetaStack,
+  summonStickyMeta,
+} from "./features/stickyMeta/StickyMetaStack";
+import { EnvironmentPanel } from "./features/stickyMeta/EnvironmentPanel";
+import { SiteMetaPanel } from "./features/stickyMeta/SiteMetaPanel";
+import { TreesMetaPanel } from "./features/stickyMeta/TreesMetaPanel";
+import {
+  buildEnvLiveMeta,
+  type EnvWeatherDay,
+} from "./features/stickyMeta/envLiveMeta";
+import { buildSiteLiveMeta } from "./features/stickyMeta/siteLiveMeta";
+import { buildTreesLiveMeta } from "./features/stickyMeta/treesLiveMeta";
 import { RightDataLane } from "./features/surfaces/DataLaneSlot";
 import {
   RIGHT_DATA_LANE_WIDTH_PX,
@@ -74,6 +90,13 @@ import { AerialSlot } from "./features/aerial/AerialSlot";
 import { GroundRulerOverlay } from "./features/ground/GroundRulerOverlay";
 import { TactileGround } from "./features/ground/TactileGround";
 import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
+import { SunCastOverlay } from "./features/shade/SunCastOverlay";
+import { SunMarkerPip } from "./features/shade/SunMarkerPip";
+import { ClimateBedWash } from "./features/shade/ClimateBedWash";
+import {
+  sunDateFromPreset,
+} from "./features/sunGrowth/sunDatePreset";
+import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
@@ -111,6 +134,7 @@ import { SelectionFocusVeil } from "./features/selectionFocus/SelectionFocusVeil
 import { DialHintPill } from "./features/selectionDial/DialHintPill";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
+import { TrenchOverlay } from "./features/trenches/TrenchOverlay";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
@@ -125,6 +149,7 @@ import {
 } from "./features/ground/groundMetrics";
 import {
   solveLiveTradeEstimate,
+  sunPositionAt,
   tradeTagForItem,
   type ArchitecturalTitleBlock,
 } from "@workstream/domain";
@@ -132,7 +157,9 @@ import type {
   CanvasAnnotation,
   CatalogPlacement,
   CanvasStroke,
+  ConstructionTrench,
   DesignSiteFrame,
+  LandscapeFeature,
   IrrigationZone,
 } from "@workstream/contracts";
 import {
@@ -193,7 +220,9 @@ type Props = {
   initialStrokes?: CanvasStroke[];
   initialSiteFrame?: DesignSiteFrame | null;
   initialIrrigationZones?: IrrigationZone[];
+  initialConstructionTrenches?: ConstructionTrench[];
   initialAnnotations?: CanvasAnnotation[];
+  initialFeatures?: LandscapeFeature[];
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -215,7 +244,9 @@ export function HandoffDesignStudio({
   initialStrokes = [],
   initialSiteFrame = null,
   initialIrrigationZones = [],
+  initialConstructionTrenches = [],
   initialAnnotations = [],
+  initialFeatures = [],
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -235,7 +266,9 @@ export function HandoffDesignStudio({
     initialStrokes,
     initialSiteFrame,
     initialIrrigationZones,
+    initialConstructionTrenches,
     initialAnnotations,
+    initialFeatures,
   });
   const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
@@ -318,6 +351,20 @@ export function HandoffDesignStudio({
   const [gridStudioOpen, setGridStudioOpen] = useState(false);
   const [dialHint, setDialHint] = useState(false);
   const dialHintSeenRef = useRef(false);
+  /** One-time "drop the tool to select" hint — objects are inert in tools. */
+  const [selectHint, setSelectHint] = useState(false);
+  const selectHintSeenRef = useRef(false);
+  const onInertToolClick = useCallback(() => {
+    if (selectHintSeenRef.current) return;
+    selectHintSeenRef.current = true;
+    try {
+      if (window.localStorage.getItem("ws-select-hint-seen") === "1") return;
+      window.localStorage.setItem("ws-select-hint-seen", "1");
+    } catch {
+      /* ignore */
+    }
+    setSelectHint(true);
+  }, []);
   /** Hold R + arrows → rotate selection in 15° detents. */
   const rotateChordRef = useRef(false);
 
@@ -523,7 +570,11 @@ export function HandoffDesignStudio({
   }, [ui.panX, ui.panY]);
 
   useEffect(() => {
-    panToolGrabRef.current = ui.mode === "sketch" && ui.tool === "pan";
+    /*
+     * Sketch pad has nothing to marquee — Select-drag pans the camera there
+     * (the pen only inks while armed). Plan modes marquee; pan is Space/middle.
+     */
+    panToolGrabRef.current = ui.mode === "sketch" && ui.tool === "select";
   }, [ui.mode, ui.tool]);
 
   /**
@@ -736,7 +787,6 @@ export function HandoffDesignStudio({
     const editing =
       ui.tool === "add" ||
       ui.tool === "paint" ||
-      ui.tool === "edit" ||
       ui.tool === "trace" ||
       ui.tool === "measure" ||
       ui.tool === "zone" ||
@@ -944,9 +994,9 @@ export function HandoffDesignStudio({
           animateTiltTo(0);
           return;
         }
-        if (ui.isolatedLayer) {
+        if (ui.focusedServiceIds?.length || ui.isolatedLayer) {
           e.preventDefault();
-          studio.setUi({ isolatedLayer: null });
+          studio.clearServiceFocus();
           return;
         }
         if (ui.floraSession) {
@@ -957,11 +1007,11 @@ export function HandoffDesignStudio({
           studio.cancelTrace();
           return;
         }
-        // CAD practice: Esc cancels sticky draft tools → pan (KiCad / Fusion).
+        // CAD practice: Esc cancels sticky draft tools → Select (KiCad / Fusion).
         if (isStickyDraftTool(ui.tool)) {
           e.preventDefault();
           toolStackRef.current = cancelToSelect(toolStackRef.current);
-          studio.setTool("pan");
+          studio.setTool("select");
           setInstrumentsSummoned(false);
           studio.setUi({
             factorsOpen: false,
@@ -1249,9 +1299,76 @@ export function HandoffDesignStudio({
   });
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
+  const servicesOpen = ui.rightDataPanel === "services";
+  const environmentOpen = ui.rightDataPanel === "environment";
+  const siteMetaOpen = ui.rightDataPanel === "site";
+  const treesMetaOpen = ui.rightDataPanel === "trees";
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
-  const rightLaneBusy = ui.rightDataPanel != null;  const titleLocked =
+  const rightLaneBusy = ui.rightDataPanel != null;
+  const [stickyRestoreNonce, setStickyRestoreNonce] = useState(0);
+  const [weatherDay, setWeatherDay] = useState<EnvWeatherDay | null>(null);
+  useEffect(() => {
+    if (!projectId) {
+      setWeatherDay(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { getWeatherAction } = await import("../../../app/actions");
+        const forecast = await getWeatherAction(projectId);
+        if (cancelled) return;
+        const day = forecast?.days?.[0];
+        setWeatherDay(
+          day
+            ? {
+                precipitation_mm: day.precipitation_mm,
+                wind_max_kph: day.wind_max_kph ?? day.wind_speed_kmh,
+                temp_max_c: day.temp_max_c,
+                temp_min_c: day.temp_min_c,
+                humidity_pct: day.humidity_pct ?? null,
+              }
+            : null,
+        );
+      } catch {
+        if (!cancelled) setWeatherDay(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+  const envLiveMeta = useMemo(
+    () =>
+      buildEnvLiveMeta({
+        sunMin: ui.sunMin,
+        sunDatePreset: ui.sunDatePreset,
+        growth: ui.growth,
+        lat: projectLat,
+        lng: projectLng,
+        shadeOn: ui.shadeOn,
+        weatherDay,
+      }),
+    [
+      ui.sunMin,
+      ui.sunDatePreset,
+      ui.growth,
+      ui.shadeOn,
+      projectLat,
+      projectLng,
+      weatherDay,
+    ],
+  );
+  const treesLiveMeta = useMemo(
+    () => buildTreesLiveMeta({ items: studio.items }),
+    [studio.items],
+  );
+  const surveyServicesAuthoring = surveyServicesAuthoringAllowed({
+    mode: ui.mode,
+    servicesLocked: ui.servicesLocked,
+  });
+  const titleLocked =
     ui.foundationCleanse || ui.boundarySource === "vicmap";
   const drawingHot = chrome.collapseUtility;
   const showDocks = chrome.utilityDrawer;
@@ -1289,6 +1406,28 @@ export function HandoffDesignStudio({
    * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
    */
   const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
+
+  /** Same azimuth vector as SunCastOverlay — drives decorative glyph shadows. */
+  const sunAzimuthDeg = useMemo(() => {
+    const when = sunDateFromPreset(ui.sunDatePreset, ui.sunMin);
+    const lat = projectLat ?? -37.849;
+    const lng = projectLng ?? 144.993;
+    return sunPositionAt(lat, lng, when).azimuth_deg;
+  }, [ui.sunDatePreset, ui.sunMin, projectLat, projectLng]);
+
+  const siteLiveMeta = useMemo(
+    () =>
+      buildSiteLiveMeta({
+        boundary: studio.boundary,
+        building: studio.building,
+        easements: studio.easements,
+        scaleM,
+        // No surveyed Vicmap title area tracked yet — estimate from the trace.
+        lotAreaM2: null,
+        titleSource: null,
+      }),
+    [studio.boundary, studio.building, studio.easements, scaleM],
+  );
 
   /**
    * Dark is a *screen* lens — it must never leak into the Fit sheet, which
@@ -1713,7 +1852,7 @@ export function HandoffDesignStudio({
     ui.boundarySource === "seed";
   /** Tool armed or drawing in progress — not barren idle. */
   const canvasEngaged =
-    ui.tool !== "pan" ||
+    ui.tool !== "select" ||
     Boolean(ui.drawPoly && ui.drawPoly.length > 0) ||
     Boolean(ui.selectedId) ||
     ui.groupIds.length > 0 ||
@@ -1854,7 +1993,7 @@ export function HandoffDesignStudio({
   const studioCursor = pointerMarkPreview
     ? resolveStudioCursor({
         markId: pointerMarkPreview,
-        tool: "edit",
+        tool: "select",
         mode: ui.mode,
         locked: false,
       })
@@ -1938,9 +2077,7 @@ export function HandoffDesignStudio({
           aria-label="Design workflow"
           data-testid="canvas-mode-strip"
         >
-          {/* Survey/services is a layer on the CAD canvas (Services toggle),
-              not a separate tab. Canvas-first: one canvas, dynamic. */}
-          {MODE_TABS.filter((m) => m !== "survey").map((m) => {
+          {MODE_TABS.map((m) => {
             const lockReason = lockReasonForMode(m);
             const locked = Boolean(lockReason);
             return (
@@ -2140,6 +2277,32 @@ export function HandoffDesignStudio({
                 </svg>
               </button>
               {chrome.structureRail ? (
+              <>
+              <button
+                type="button"
+                className={`${css.iconBtn}${servicesOpen ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="canvas-services-top"
+                aria-label="Services ledger"
+                title="Services — ticks, metrics, focus"
+                onClick={() =>
+                  studio.setUi({
+                    rightDataPanel: toggleRightDataPanel(
+                      ui.rightDataPanel,
+                      "services",
+                    ),
+                    utilityPanel: null,
+                  })
+                }
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
               <button
                 type="button"
                 className={`${css.iconBtn}${layersOpen ? ` ${css.iconBtnActive}` : ""}`}
@@ -2165,63 +2328,38 @@ export function HandoffDesignStudio({
                   />
                 </svg>
               </button>
+              </>
               ) : null}
-              <button
-                type="button"
-                className={`${css.iconBtn}${sitesOpen ? ` ${css.iconBtnActive}` : ""}`}
-                data-testid="canvas-sites-top"
-                aria-label="Sites"
-                title="Sites"
-                onClick={() =>
-                  studio.setUi({
-                    rightDataPanel: toggleRightDataPanel(
-                      ui.rightDataPanel,
-                      "sites",
-                    ),
-                    utilityPanel: null,
-                  })
-                }
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M8 13.5s4-3.4 4-6.2A4 4 0 1 0 4 7.3C4 10.1 8 13.5 8 13.5z"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                  />
-                  <circle cx="8" cy="7.2" r="1.3" stroke="currentColor" strokeWidth="1.2" />
-                </svg>
-              </button>
+              {/* Demo seed switcher only — live projects have a single site. */}
+              {!projectId ? (
+                <button
+                  type="button"
+                  className={`${css.iconBtn}${sitesOpen ? ` ${css.iconBtnActive}` : ""}`}
+                  data-testid="canvas-sites-top"
+                  aria-label="Sites"
+                  title="Sites"
+                  onClick={() =>
+                    studio.setUi({
+                      rightDataPanel: toggleRightDataPanel(
+                        ui.rightDataPanel,
+                        "sites",
+                      ),
+                      utilityPanel: null,
+                    })
+                  }
+                >
+                  <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <path
+                      d="M8 13.5s4-3.4 4-6.2A4 4 0 1 0 4 7.3C4 10.1 8 13.5 8 13.5z"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                    />
+                    <circle cx="8" cy="7.2" r="1.3" stroke="currentColor" strokeWidth="1.2" />
+                  </svg>
+                </button>
+              ) : null}
             </>
-          ) : null}
-          {ui.mode === "cad" && !ui.focusOn && !ui.clientView ? (
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.servicesEdit ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="services-layer-top"
-              aria-label={
-                ui.servicesEdit ? "Close services layer" : "Services layer"
-              }
-              title="Services layer — drainage, utilities, RL levels, calibrate"
-              aria-pressed={ui.servicesEdit}
-              onClick={() =>
-                studio.setUi({
-                  servicesEdit: !ui.servicesEdit,
-                  tool: ui.servicesEdit ? "pan" : "service",
-                  layerOpacity: { ...ui.layerOpacity, services: 1 },
-                })
-              }
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M1.5 6.5h3l2 4 2.4-8 1.6 5.5 1-1.5h2.5"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          ) : null}
+            ) : null}
           <button
             type="button"
             className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
@@ -2356,11 +2494,14 @@ export function HandoffDesignStudio({
           setbackOn={ui.setbackOn}
           shadeOn={ui.shadeOn}
           growth={ui.growth}
-          onClearIsolation={() => studio.setUi({ isolatedLayer: null })}
+          onClearIsolation={() => studio.clearServiceFocus()}
           onClearSetback={() => studio.setUi({ setbackOn: false })}
           onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
           onResetGrowth={() => studio.setUi({ growth: "mature" })}
-          onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
+          onResetLayer={(layer) => {
+            if (layer === "services" && ui.servicesLocked) return;
+            studio.setLayerOpacity(layer, 1);
+          }}
         />
       ) : null}
 
@@ -2581,13 +2722,54 @@ export function HandoffDesignStudio({
               lat={projectLat ?? undefined}
               lng={projectLng ?? undefined}
             />
+            <ClimateBedWash
+              active={
+                (environmentOpen || ui.shadeOn) &&
+                !ui.frameOn &&
+                !ui.focusOn
+              }
+              boundary={studio.boundary}
+              meta={envLiveMeta}
+            />
+            <KeylessOverlayWash
+              active={!ui.frameOn && !ui.focusOn}
+              overlays={studio.keylessOverlays}
+            />
+            <SunCastOverlay
+              active={
+                (ui.shadeOn || environmentOpen) &&
+                !ui.frameOn &&
+                !ui.focusOn
+              }
+              sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
+              growth={ui.growth}
+              boundary={studio.boundary}
+              building={studio.building}
+              items={studio.items}
+              scaleM={scaleM}
+              lat={projectLat}
+              lng={projectLng}
+            />
+            <SunMarkerPip
+              active={environmentOpen && !ui.frameOn}
+              boundary={studio.boundary}
+              sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
+              lat={projectLat}
+              lng={projectLng}
+            />
             <CadPlanBoard
               frameOn={ui.frameOn}
               darkOn={darkLens}
               foundationCleanse={ui.foundationCleanse}
               titleLocked={titleLocked}
               titleBoundaryLocked={ui.titleBoundaryLocked}
+              buildingSource={ui.buildingSource}
               scaleM={scaleM}
+              timedSunCast={ui.shadeOn || environmentOpen}
+              sunAzimuthDeg={sunAzimuthDeg}
+              bydaAssets={studio.bydaAssets}
               planZoom={planZoom}
               sunCast={boardSunCast}
               tiltDeg={ui.tiltDeg}
@@ -2626,10 +2808,12 @@ export function HandoffDesignStudio({
               services={studio.services}
               items={studio.items}
               mode={ui.mode}
-              tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "edit" : ui.tool}
+              tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "select" : ui.tool}
               locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
               isolatedLayer={ui.isolatedLayer}
+              serviceFeatureHidden={ui.serviceFeatureHidden}
+              focusedServiceIds={ui.focusedServiceIds}
               setbackOn={ui.setbackOn}
               councilSetbackM={compliance.setbackM}
               growth={ui.growth}
@@ -2720,6 +2904,7 @@ export function HandoffDesignStudio({
               eyedropArmed={eyedropArmed}
               onEyedrop={pickStyle}
               onBoardCursor={setBoardCursor}
+              onInertToolClick={onInertToolClick}
               fidelity={fidelity}
               onInteract={markInteracting}
               annotations={studio.annotations}
@@ -2904,10 +3089,7 @@ export function HandoffDesignStudio({
                   />
                 ) : null}
                 <SurveyAnnotationLayer
-                  active={
-                    ui.mode === "survey" ||
-                    (ui.mode === "cad" && ui.servicesEdit)
-                  }
+                  active={surveyServicesAuthoring}
                   tool={ui.tool}
                   levels={studio.levels}
                   services={studio.services}
@@ -2917,6 +3099,8 @@ export function HandoffDesignStudio({
                   darkOn={darkLens}
                   layerOpacity={ui.layerOpacity}
                   isolatedLayer={ui.isolatedLayer}
+                  serviceFeatureHidden={ui.serviceFeatureHidden}
+                  focusedServiceIds={ui.focusedServiceIds}
                   onAddLevel={studio.addSpotLevel}
                   onCommitService={studio.commitService}
                   onCalibrate={(nextScaleM) => {
@@ -2936,7 +3120,7 @@ export function HandoffDesignStudio({
                     studio.setUi({
                       boardWidthM: nextScaleM,
                       sheetScaleDenom: best,
-                      tool: "pan",
+                      tool: "select",
                     });
                   }}
                 />
@@ -2961,7 +3145,7 @@ export function HandoffDesignStudio({
               scaleM={scaleM}
               cam={planCam}
               onCancel={() => {
-                studio.setTool("pan");
+                studio.setTool("select");
                 setInstrumentsSummoned(false);
               }}
             />
@@ -2971,7 +3155,23 @@ export function HandoffDesignStudio({
                 kind={ui.zoneKind}
                 zones={studio.irrigationZones}
                 cam={planCam}
+                serviceFeatureHidden={ui.serviceFeatureHidden}
+                focusedServiceIds={ui.focusedServiceIds}
                 onCommit={studio.commitZone}
+              />
+            ) : null}
+            {(ui.mode === "cad" ||
+              ui.mode === "sketch" ||
+              ui.mode === "quote") &&
+            !ui.frameOn ? (
+              <TrenchOverlay
+                trenches={studio.constructionTrenches.filter((t) => {
+                  if (t.ghost) return true;
+                  return !ui.serviceFeatureHidden[`trench:${t.id}`];
+                })}
+                cam={planCam}
+                onAcceptAll={studio.acceptAllTrenchGhosts}
+                onRejectAll={studio.rejectAllTrenchGhosts}
               />
             ) : null}
             {ui.tool === "zone" && !ui.focusOn && !ui.clientView ? (
@@ -3085,7 +3285,7 @@ export function HandoffDesignStudio({
                 cam={planCam}
                 onDelete={studio.deleteSelected}
                 onClose={() => studio.setSelection(null, [])}
-                onLock={() => studio.setTool(ui.locked ? "pan" : "lock")}
+                onLock={() => studio.setTool(ui.locked ? "select" : "lock")}
                 onAskAi={() =>
                   studio.setUi({
                     cmdOpen: true,
@@ -3106,12 +3306,14 @@ export function HandoffDesignStudio({
             </div>
           </div>
           {/* Dedicated portal mount — sibling of the camera, never an ancestor
-              of chrome call-sites. Portaling into an ancestor collapses wrappers. */}
+              of chrome call-sites. Portaling into an ancestor collapses wrappers.
+              NOT aria-hidden: CameraChrome portals interactive chrome (tool
+              dock, checklist, measures, hint pills) into this node — hiding it
+              removed every docked control from the accessibility tree. */}
           <div
             data-testid="camera-chrome-root"
             data-camera-chrome-root="1"
             className={css.cameraChromeRoot}
-            aria-hidden
           />
           </>
         ) : null}
@@ -3152,9 +3354,7 @@ export function HandoffDesignStudio({
             estimate={estimate}
             proximity={
               drawingHot &&
-              (ui.armed === "paving" ||
-                ui.armed === "deck" ||
-                ui.tool === "edit")
+              (ui.armed === "paving" || ui.armed === "deck")
             }
           />
         ) : null}
@@ -3182,6 +3382,7 @@ export function HandoffDesignStudio({
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
             titleBlock={titleBlock}
+            weatherDay={weatherDay}
             shareStamp={
               latestShare
                 ? latestShare.status === "accepted"
@@ -3230,7 +3431,7 @@ export function HandoffDesignStudio({
           <ToolDock
             tool={ui.tool}
             mode={ui.mode}
-            servicesEdit={ui.mode === "cad" && ui.servicesEdit}
+            surveyServicesAuthoring={surveyServicesAuthoring}
             locked={ui.locked}
             night={darkLens}
             gridOn={gridStudioOpen}
@@ -3238,7 +3439,7 @@ export function HandoffDesignStudio({
               studio.setTool(t);
             }}
             onMeasure={() => {
-              studio.setTool(ui.tool === "measure" ? "pan" : "measure");
+              studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
             onToggleGrid={() => setGridStudioOpen((v) => !v)}
           />
@@ -3246,6 +3447,14 @@ export function HandoffDesignStudio({
 
         {dialHint && planOn && !ui.frameOn ? (
           <DialHintPill onDismiss={() => setDialHint(false)} />
+        ) : null}
+
+        {selectHint && planOn && !ui.frameOn ? (
+          <DialHintPill
+            label="Drop the tool to select — Esc"
+            testId="select-hint"
+            onDismiss={() => setSelectHint(false)}
+          />
         ) : null}
 
         {/*
@@ -3274,7 +3483,7 @@ export function HandoffDesignStudio({
             onPaintMaterial={(t) =>
               studio.setUi({ paintSwatch: t, tool: "paint" })
             }
-            onDismiss={() => studio.setTool("pan")}
+            onDismiss={() => studio.setTool("select")}
           />
         ) : null}
 
@@ -3327,7 +3536,30 @@ export function HandoffDesignStudio({
           </label>
         ) : null}
 
-        {!measuresOpen &&
+        {/* Formalize payoff — a scan beam sweeps the board while the sketch
+            is being translated to CAD. Chrome, never inside the zoom world. */}
+        {formalizing ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={53}
+            testId="formalize-sweep-chrome"
+            contentPointerEvents="none"
+          >
+            <div
+              className={css.formalizeSweep}
+              data-testid="formalize-sweep"
+              aria-hidden
+            >
+              <div className={css.formalizeBeam} />
+            </div>
+          </CameraChrome>
+        ) : null}
+
+        {/* Lane law: this compact chip and the right data lane share the
+            same top-right corner — hide it whenever ANY lane occupant
+            (checklist/layers/sites/measures) is open, not just "measures",
+            so it never visually collides with the open panel below it. */}
+        {!rightLaneBusy &&
         planOn &&
         !ui.focusOn &&
         !ui.clientView &&
@@ -3560,7 +3792,169 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {/* Right data lane — one panel (lane law). Layers no longer left. */}
+        {/* Cursor-style boundary rail — Env / Services / Site / Trees sticky until dismissed. */}
+        {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
+          <StickyMetaStack
+            projectId={projectId}
+            visible={
+              !servicesOpen &&
+              !environmentOpen &&
+              !siteMetaOpen &&
+              !treesMetaOpen
+            }
+            laneBusy={rightLaneBusy}
+            activePanel={
+              servicesOpen
+                ? "services"
+                : environmentOpen
+                  ? "environment"
+                  : siteMetaOpen
+                    ? "site"
+                    : treesMetaOpen
+                      ? "trees"
+                      : null
+            }
+            scaleM={scaleM}
+            boundary={studio.boundary}
+            building={studio.building}
+            services={studio.services}
+            easements={studio.easements}
+            bydaAssets={studio.bydaAssets}
+            levels={studio.levels}
+            irrigationZones={studio.irrigationZones}
+            constructionTrenches={studio.constructionTrenches}
+            items={studio.items}
+            servicesLocked={ui.servicesLocked}
+            sunMin={ui.sunMin}
+            sunDatePreset={ui.sunDatePreset}
+            growth={ui.growth}
+            shadeOn={ui.shadeOn}
+            lat={projectLat}
+            lng={projectLng}
+            outdoorM2={outdoor}
+            titleSource={null}
+            weatherDay={weatherDay}
+            restoreNonce={stickyRestoreNonce}
+            onExpandSite={() => {
+              summonStickyMeta(projectId, "site");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "site",
+                utilityPanel: null,
+              });
+            }}
+            onExpandTrees={() => {
+              summonStickyMeta(projectId, "trees");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "trees",
+                utilityPanel: null,
+              });
+            }}
+            onExpandServices={() => {
+              summonStickyMeta(projectId, "services");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "services",
+                utilityPanel: null,
+              });
+            }}
+            onExpandEnvironment={() => {
+              summonStickyMeta(projectId, "environment");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "environment",
+                shadeOn: true,
+                utilityPanel: null,
+              });
+            }}
+          />
+        ) : null}
+
+        {/* Right data lane — one panel (lane law). Flush to the right boundary. */}
+        {planOn && servicesOpen ? (
+          <RightDataLane testId="right-data-lane-services">
+            <ServicesLedger
+              open
+              locked={ui.servicesLocked}
+              scaleM={scaleM}
+              services={studio.services}
+              easements={studio.easements}
+              bydaAssets={studio.bydaAssets}
+              levels={studio.levels}
+              irrigationZones={studio.irrigationZones}
+              constructionTrenches={studio.constructionTrenches}
+              items={studio.items}
+              hiddenIds={ui.serviceFeatureHidden}
+              focusedIds={ui.focusedServiceIds}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onToggleVisible={studio.toggleServiceFeatureVisible}
+              onFocus={studio.focusServiceFeature}
+              onClearFocus={studio.clearServiceFocus}
+              onShowAll={studio.showAllServiceFeatures}
+              onFocusChecked={() => {
+                const rows = buildServiceLedgerRows({
+                  services: studio.services,
+                  easements: studio.easements,
+                  bydaAssets: studio.bydaAssets,
+                  levels: studio.levels,
+                  irrigationZones: studio.irrigationZones,
+                  constructionTrenches: studio.constructionTrenches,
+                  items: studio.items,
+                  scaleM,
+                });
+                const visible = rows
+                  .filter((r) => !ui.serviceFeatureHidden[r.id])
+                  .map((r) => r.id);
+                studio.focusVisibleServiceFeatures(visible);
+              }}
+            />
+          </RightDataLane>
+        ) : null}
+
+        {planOn && environmentOpen ? (
+          <RightDataLane testId="right-data-lane-environment">
+            <EnvironmentPanel
+              open
+              meta={envLiveMeta}
+              sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
+              growth={ui.growth}
+              playing={ui.sunPlay}
+              shadeOn={ui.shadeOn}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onSunMin={(sunMin) => studio.setUi({ sunMin })}
+              onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
+              onGrowth={(growth) => studio.setUi({ growth })}
+              onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
+              onShadeOn={(shadeOn) =>
+                studio.setUi({ shadeOn, sunPlay: shadeOn ? ui.sunPlay : false })
+              }
+            />
+          </RightDataLane>
+        ) : null}
+
+        {planOn && siteMetaOpen ? (
+          <RightDataLane testId="right-data-lane-site">
+            <SiteMetaPanel
+              open
+              meta={siteLiveMeta}
+              outdoorM2={outdoor}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+            />
+          </RightDataLane>
+        ) : null}
+
+        {planOn && treesMetaOpen ? (
+          <RightDataLane testId="right-data-lane-trees">
+            <TreesMetaPanel
+              open
+              meta={treesLiveMeta}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+            />
+          </RightDataLane>
+        ) : null}
+
         {chrome.structureRail && planOn && layersOpen ? (
           <RightDataLane testId="right-data-lane-layers">
             <LayersPanel
@@ -3570,10 +3964,19 @@ export function HandoffDesignStudio({
               shadeOn={ui.shadeOn}
               items={studio.items}
               noteCount={studio.annotations.length}
+              lockedLayers={ui.servicesLocked ? ["services"] : []}
               onClose={() => studio.setUi({ rightDataPanel: null })}
               onOpacity={studio.setLayerOpacity}
               onSetback={(setbackOn) => studio.setUi({ setbackOn })}
               onShade={(shadeOn) => studio.setUi({ shadeOn })}
+              onOpenServices={() => {
+                summonStickyMeta(projectId, "services");
+                setStickyRestoreNonce((n) => n + 1);
+                studio.setUi({
+                  rightDataPanel: "services",
+                  utilityPanel: null,
+                });
+              }}
             />
           </RightDataLane>
         ) : null}
@@ -3650,7 +4053,7 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {sitesOpen && planOn ? (
+        {sitesOpen && planOn && !projectId ? (
           <RightDataLane testId="right-data-lane-sites">
             <SiteSwitcher
               open
@@ -3669,8 +4072,58 @@ export function HandoffDesignStudio({
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
-          onDevelopSite={() => void ai.develop()}
-          onProposeServices={() => ai.proposeServices()}
+          onAutoTrench={studio.runAutoTrench}
+          onOpenServices={() => {
+            summonStickyMeta(projectId, "services");
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              rightDataPanel: "services",
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            });
+          }}
+          onOpenEnvironment={() => {
+            summonStickyMeta(projectId, "environment");
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              rightDataPanel: "environment",
+              shadeOn: true,
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            });
+          }}
+          onOpenSite={() => {
+            summonStickyMeta(projectId, "site");
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              rightDataPanel: "site",
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            });
+          }}
+          onOpenTrees={() => {
+            summonStickyMeta(projectId, "trees");
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              rightDataPanel: "trees",
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            });
+          }}
+          onArmByda={(kind) => {
+            studio.setUi({
+              tool: "service",
+              bydaDraftKind: kind,
+              mode: "survey",
+              cmdOpen: false,
+              cmdQuery: "",
+              rightDataPanel: "services",
+            });
+          }}
           onConvertSketch={
             formalizing ? undefined : () => void runFormalizeToCad()
           }
@@ -3703,7 +4156,7 @@ export function HandoffDesignStudio({
             setPendingAnnotation(null);
             setAnnotateDraft("");
             setAnnotatePhase("place");
-            studio.setUi({ cmdOpen: false, cmdQuery: "", tool: "pan" });
+            studio.setUi({ cmdOpen: false, cmdQuery: "", tool: "select" });
           }}
           onZoomToFit={() => {
             studio.setUi({ cmdOpen: false, cmdQuery: "" });

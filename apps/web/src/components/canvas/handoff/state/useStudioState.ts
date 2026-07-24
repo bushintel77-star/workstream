@@ -13,11 +13,7 @@ import {
   FLORA_HEIGHT_BY_FORM,
   hardscapeWhy,
   isFloraStudioForm,
-  makeIndicativeDrainageRun,
-  makePathCorridor,
-  nextSchemeLetter,
-  pathWidthToGlyphScale,
-  plantingConflictSummary,
+  proposeAutoTrenches,
   rankCurtisFloraCandidates,
   snapshotScheme,
   sunHoursAtPct,
@@ -34,9 +30,11 @@ import type {
   CanvasAnnotation,
   CatalogPlacement,
   CanvasStroke,
+  ConstructionTrench,
   DesignSiteFrame,
   IrrigationZone,
   IrrigationZoneKind,
+  LandscapeFeature,
 } from "@workstream/contracts";
 import { saveDesignCanvasAction } from "../../../../app/actions";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
@@ -78,6 +76,8 @@ import {
 import { markStaleGhostsNearEdit } from "./staleGhosts";
 import {
   canvasToStrokes,
+  featuresOntoItems,
+  itemsToFeatures,
   itemsToPlacements,
   placementsToItems,
   resolveHydratedBuilding,
@@ -111,8 +111,16 @@ import {
   type StudioSnapshot,
   type TraceTarget,
 } from "./studioTypes";
-import { canvasMetresRingToPct, easementRingsToPct } from "../geometry/geoToPct";
-import { reprojectDocToBoundary } from "../geometry/reprojectToBoundary";
+import {
+  isSurveyServicesTool,
+  lockServicesOnMode,
+  surveyServicesAuthoringAllowed,
+} from "./servicesLock";
+import {
+  applyAutoTraceParcelSnap,
+  type AutoTraceParcelInput,
+} from "../geometry/parcelHydrate";
+import type { DesignBuildingSource } from "@workstream/contracts";
 import {
   clampVegetationElevationScale,
   clearBoundaryLikeSketches,
@@ -179,8 +187,17 @@ type Ui = {
   rightDataPanel: RightDataPanel | null;
   layerOpacity: LayerOpacity;
   isolatedLayer: LayerKey | null;
-  /** Services layer authoring on the CAD canvas (Servc / Level / Calibrate). */
+  /**
+   * Per-feature Services ledger hide map (id → true = hidden).
+   * Session-only; ticks freeze when servicesLocked.
+   */
+  serviceFeatureHidden: Record<string, boolean>;
+  /** Focused service/design feature ids — others fall away. Esc clears. */
+  focusedServiceIds: string[] | null;
+  /** Legacy — always false; survey-only services authoring. */
   servicesEdit: boolean;
+  /** Survey services frozen after Quote / Share entry. */
+  servicesLocked: boolean;
   setbackOn: boolean;
   /** Indicative sun-hours mesh on the % board. */
   shadeOn: boolean;
@@ -206,6 +223,11 @@ type Ui = {
   drawCursor: PctPoint | null;
   traceTarget: TraceTarget;
   zoneKind: IrrigationZoneKind;
+  /**
+   * When set, next Servc commit lands as a typed BYDA asset (not a generic
+   * corridor / title easement). Cleared after commit or Esc.
+   */
+  bydaDraftKind: import("@workstream/contracts").BydaAssetKind | null;
   /** Drafting grid grain for snap + visible mesh. */
   gridGrain: "fine" | "medium" | "coarse";
   /** Magnetic grid snap while dragging / nudging. */
@@ -309,6 +331,8 @@ type Ui = {
   titleBoundaryLocked: boolean;
   /** Provenance of the active title polygon. */
   boundarySource: "vicmap" | "manual" | "seed";
+  /** Provenance of the existing-dwelling ring (never "seed" once cleared). */
+  buildingSource: DesignBuildingSource;
   /**
    * After Stage 1 / aerial purge — block re-injection of project aerial
    * until the operator explicitly drops imagery again.
@@ -342,6 +366,17 @@ type Action =
       strokes: SketchStroke[];
     };
 
+/** Move an item's centroid — its drawn region outline travels with it. */
+function itemMovedTo(i: StudioItem, x: number, y: number): StudioItem {
+  const dx = x - i.x;
+  const dy = y - i.y;
+  const outlinePct =
+    i.outlinePct && (dx !== 0 || dy !== 0)
+      ? i.outlinePct.map((p) => ({ x: p.x + dx, y: p.y + dy }))
+      : i.outlinePct;
+  return { ...i, x, y, ...(outlinePct ? { outlinePct } : {}) };
+}
+
 function cloneSnap(s: StudioSnapshot): StudioSnapshot {
   return JSON.parse(JSON.stringify(s)) as StudioSnapshot;
 }
@@ -357,7 +392,10 @@ function snapOf(doc: Doc): StudioSnapshot {
     drainageRuns: doc.drainageRuns ?? [],
     pathCorridors: doc.pathCorridors ?? [],
     services: doc.services,
+    bydaAssets: doc.bydaAssets ?? [],
+    keylessOverlays: doc.keylessOverlays ?? [],
     irrigationZones: doc.irrigationZones ?? [],
+    constructionTrenches: doc.constructionTrenches ?? [],
     annotations: doc.annotations ?? [],
   };
 }
@@ -373,7 +411,10 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
     drainageRuns: [],
     pathCorridors: [],
     services: [],
+    bydaAssets: [],
+    keylessOverlays: [],
     irrigationZones: [],
+    constructionTrenches: [],
     annotations: (seed.annotations ?? []).map((a) => ({
       ...a,
       anchor: { ...a.anchor },
@@ -388,38 +429,57 @@ function initialState(opts: {
   strokes?: CanvasStroke[];
   siteFrame?: DesignSiteFrame | null;
   irrigationZones?: IrrigationZone[];
+  constructionTrenches?: ConstructionTrench[];
   annotations?: CanvasAnnotation[];
+  features?: LandscapeFeature[];
+  /** Live project — never boot with the demo dwelling parallelogram. */
+  liveProject?: boolean;
 }): State {
   const seed = WRIGHTS_SEED;
   const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
   const base = seedToSnap(seed);
   const frameOverlay = siteFrameToSnapshot(opts.siteFrame);
+  const liveProject = Boolean(opts.liveProject);
   const hasCanvas =
     (opts.placements?.length ?? 0) > 0 ||
     (opts.strokes?.length ?? 0) > 0 ||
     (opts.irrigationZones?.length ?? 0) > 0 ||
+    (opts.constructionTrenches?.length ?? 0) > 0 ||
     (opts.annotations?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
+  const building = resolveHydratedBuilding(
+    opts.siteFrame,
+    frameOverlay.building,
+    base.building,
+    { liveProject },
+  );
+  const buildingSource: DesignBuildingSource = frameOverlay.buildingSource
+    ? frameOverlay.buildingSource
+    : building.length >= 3
+      ? "traced"
+      : "empty";
   const snap: StudioSnapshot = hasCanvas
     ? {
         ...base,
         ...frameOverlay,
-        building: resolveHydratedBuilding(
-          opts.siteFrame,
-          frameOverlay.building,
-          base.building,
+        building,
+        items: featuresOntoItems(
+          placementsToItems(opts.placements ?? []),
+          opts.features ?? [],
         ),
-        items: placementsToItems(opts.placements ?? []),
         strokes: canvasToStrokes(opts.strokes ?? []),
         easements: frameOverlay.easements ?? base.easements,
         services: frameOverlay.services ?? base.services,
         levels: frameOverlay.levels ?? base.levels,
-        drainageRuns: frameOverlay.drainageRuns ?? base.drainageRuns ?? [],
-        pathCorridors: base.pathCorridors ?? [],
+        bydaAssets: frameOverlay.bydaAssets ?? base.bydaAssets,
+        keylessOverlays: frameOverlay.keylessOverlays ?? base.keylessOverlays,
         irrigationZones: opts.irrigationZones ?? [],
+        constructionTrenches: opts.constructionTrenches ?? [],
         annotations: opts.annotations ?? [],
       }
-    : base;
+    : liveProject
+      ? { ...base, building: [] }
+      : base;
   const outdoorSafe: StudioSnapshot = {
     ...snap,
     items: sanitizeItemsToOutdoor(snap.items, snap.boundary, snap.building),
@@ -436,7 +496,7 @@ function initialState(opts: {
     siteSnaps,
     ui: {
       mode: opts.mode,
-      tool: "pan",
+      tool: "select",
       locked: false,
       frameOn: false,
       paper: "a3",
@@ -470,6 +530,7 @@ function initialState(opts: {
       drawCursor: null,
       traceTarget: "boundary",
       zoneKind: "drip",
+      bydaDraftKind: null,
       gridGrain: "medium",
       gridSnap: true,
       gridFormation: "ortho",
@@ -496,8 +557,12 @@ function initialState(opts: {
       councilTip: null,
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       servicesEdit: false,
+      servicesLocked: false,
+      serviceFeatureHidden: {},
+      focusedServiceIds: null,
       sheetScaleDenom: 100,
-      boardWidthM: null,
+      // Persisted board scale (Vicmap fit / calibration) — else 110 m default.
+      boardWidthM: frameOverlay.boardWidthM ?? null,
       parchmentPeel: 0.42,
       saveStatus: hasCanvas ? "saved" : "idle",
       saveErrorKind: null,
@@ -513,6 +578,7 @@ function initialState(opts: {
       foundationCleanse: false,
       titleBoundaryLocked: false,
       boundarySource: "seed",
+      buildingSource,
       // Never auto-inject Mapbox/survey static aerial — optional upload only
       // (matches curtis-co prototype: parchment drafting plate by default).
       aerialSuppressed: true,
@@ -532,8 +598,12 @@ export type UseStudioStateOpts = {
   initialSiteFrame?: DesignSiteFrame | null;
   /** Authored drip / lighting zones from DesignCanvas.irrigation_zones. */
   initialIrrigationZones?: IrrigationZone[];
+  /** Construction trenches from DesignCanvas.construction_trenches. */
+  initialConstructionTrenches?: ConstructionTrench[];
   /** Hand-lettered notes from DesignCanvas.annotations. */
   initialAnnotations?: CanvasAnnotation[];
+  /** Persisted region outlines from DesignCanvas.features. */
+  initialFeatures?: LandscapeFeature[];
 };
 
 function reducer(state: State, action: Action): State {
@@ -612,6 +682,8 @@ function reducer(state: State, action: Action): State {
       // Stage 1 keeps CAD title overlay across tabs — AI layer stays available.
       const enteringSurvey = action.mode === "survey";
       const leavingSurvey = state.ui.mode === "survey" && action.mode !== "survey";
+      const servicesLocked =
+        state.ui.servicesLocked || lockServicesOnMode(action.mode);
       let layerOpacity = state.ui.layerOpacity;
       if (enteringSurvey && !state.ui.foundationCleanse) {
         layerOpacity = { ...SURVEY_LAYER_PRESET };
@@ -631,6 +703,8 @@ function reducer(state: State, action: Action): State {
           isolatedLayer: null,
           drawPoly: null,
           drawCursor: null,
+          servicesEdit: false,
+          servicesLocked,
           rightDataPanel: enteringSurvey
             ? "checklist"
             : state.ui.rightDataPanel === "checklist"
@@ -641,20 +715,16 @@ function reducer(state: State, action: Action): State {
             : action.mode === "survey"
               ? { aerialSuppressed: true }
               : {}),
-          // Sketch enters on Pan too — ground state is grabbable, the pen
-          // arms via the pad's Pen chip (tool owns the click).
-          tool:
-            action.mode === "survey"
-              ? state.ui.foundationCleanse
-                ? state.ui.titleBoundaryLocked
-                  ? "pan"
-                  : "edit"
-                : "edit"
-              : "pan",
+          // Every mode enters on the Select ground state — the pen arms via
+          // the pad's Pen chip, node handles live in Select (tool owns the click).
+          tool: "select",
         },
       };
     }
     case "setLayerOpacity":
+      if (action.key === "services" && state.ui.servicesLocked) {
+        return state;
+      }
       return {
         ...state,
         ui: {
@@ -757,7 +827,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialStrokes = [],
     initialSiteFrame = null,
     initialIrrigationZones = [],
+    initialConstructionTrenches = [],
     initialAnnotations = [],
+    initialFeatures = [],
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
@@ -766,7 +838,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
       strokes: initialStrokes,
       siteFrame: initialSiteFrame,
       irrigationZones: initialIrrigationZones,
+      constructionTrenches: initialConstructionTrenches,
       annotations: initialAnnotations,
+      features: initialFeatures,
+      liveProject: Boolean(projectId),
     }),
   );
   const bootstrapped = useRef(false);
@@ -850,7 +925,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     });
     setUi({
       mode: "cad",
-      tool: "pan",
+      tool: "select",
       ghostIdx: 0,
       ghostReviewOpen: count > 0,
       coachOpen: false,
@@ -877,6 +952,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         reason: string;
         scale_hint?: number;
         rot_deg?: number;
+        outline_pct?: Array<{ x_pct: number; y_pct: number }>;
       }>,
       opts?: { source?: "vision" | "heuristic" },
     ) => {
@@ -896,7 +972,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       const engine = opts?.source === "vision" ? "AI" : "quick";
       setUi({
         mode: "cad",
-        tool: "pan",
+        tool: "select",
         ghostIdx: 0,
         ghostReviewOpen: count > 0,
         coachOpen: false,
@@ -1096,7 +1172,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         floraSession: null,
         armed: null,
         addOpen: false,
-        tool: "pan",
+        tool: "select",
         ghostReviewOpen: true,
         coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
@@ -1234,7 +1310,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         armed: painting ? state.ui.armed : null,
         addOpen: false,
-        tool: painting ? "paint" : "pan",
+        tool: painting ? "paint" : "select",
         ghostReviewOpen: painting ? state.ui.ghostReviewOpen : !state.ui.foundationCleanse,
         coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
@@ -1296,36 +1372,58 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const { autoTraceBoundaryAction } = await import(
           "../../../../app/actions"
         );
-        const res = await autoTraceBoundaryAction(projectId);
-        const verts = [...res.boundary.vertices]
-          .sort((a, b) => a.sequence_index - b.sequence_index)
-          .map((v) => v.canvas_coords);
-        const pct = canvasMetresRingToPct(verts);
-        if (pct.length >= 3) {
-          const vicmapEasements = easementRingsToPct(verts, res.easements ?? []);
-          let easementsInstalled = false;
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
+        const keepTraced = state.ui.buildingSource === "traced";
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (applied) {
           mutate((snap) => {
-            const keepOperator = (snap.easements ?? []).length > 0;
-            easementsInstalled = !keepOperator && vicmapEasements.length > 0;
+            const again = applyAutoTraceParcelSnap({
+              snap,
+              res,
+              keepTracedBuilding: keepTraced,
+            });
+            if (!again) return { snap };
             return {
               snap: {
                 ...snap,
-                ...reprojectDocToBoundary(snap, pct),
-                easements: easementsInstalled ? vicmapEasements : snap.easements,
+                ...again.snap,
+                ...(again.services ? { services: again.services } : {}),
               },
             };
           });
           boundarySnapped = true;
           setUi({
-            boundarySource:
-              res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+            boundarySource: applied.boundarySource,
+            buildingSource: applied.buildingSource,
             aerialSuppressed: true,
+            ...(applied.fit.boardWidthM != null
+              ? { boardWidthM: applied.fit.boardWidthM }
+              : {}),
           });
           notes.push(
-            `Boundary snapped to ${res.boundary.source_kind === "vicmap" ? "Vicmap parcel" : "title polygon"}`,
+            `Boundary snapped to ${
+              res.boundary.source_kind === "vicmap"
+                ? "Vicmap parcel"
+                : "title polygon"
+            }`,
           );
-          if (easementsInstalled) {
-            notes.push("Indicative easement — Vicmap; verify on title");
+          notes.push(
+            applied.buildingSource === "vicmap"
+              ? "Vicmap dwelling hydrated"
+              : applied.buildingSource === "traced"
+                ? "kept traced dwelling"
+                : "dwelling cleared (trace Existing dwelling)",
+          );
+          if (applied.easementSource === "vicmap" && applied.services?.length) {
+            notes.push(
+              `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            );
           }
         }
       } catch {
@@ -1344,7 +1442,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         boundarySnapped ? "" : ""
       }`,
     });
-  }, [mutate, projectId, setUi, state.doc.items]);
+  }, [mutate, projectId, setUi, state.doc.items, state.ui.buildingSource]);
 
   /**
    * Stage 1 CAD title overlay:
@@ -1369,7 +1467,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       panX: 0,
       panY: 0,
       mode: "survey",
-      tool: "edit",
+      tool: "select",
       layerOpacity: {
         survey: 0.35,
         boundary: 1,
@@ -1401,37 +1499,53 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const { autoTraceBoundaryAction } = await import(
           "../../../../app/actions"
         );
-        const res = await autoTraceBoundaryAction(projectId);
-        const verts = [...res.boundary.vertices]
-          .sort((a, b) => a.sequence_index - b.sequence_index)
-          .map((v) => v.canvas_coords);
-        const pct = canvasMetresRingToPct(verts);
-        if (pct.length >= 3) {
-          const vicmapEasements = easementRingsToPct(verts, res.easements ?? []);
-          let easementsInstalled = false;
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
+        const keepTraced = state.ui.buildingSource === "traced";
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (applied) {
           mutate((snap) => {
-            const keepOperator = (snap.easements ?? []).length > 0;
-            easementsInstalled = !keepOperator && vicmapEasements.length > 0;
+            const again = applyAutoTraceParcelSnap({
+              snap,
+              res,
+              keepTracedBuilding: keepTraced,
+            });
+            if (!again) return { snap };
             return {
               snap: {
                 ...snap,
-                ...reprojectDocToBoundary(snap, pct),
-                easements: easementsInstalled ? vicmapEasements : snap.easements,
+                ...again.snap,
+                ...(again.services ? { services: again.services } : {}),
               },
             };
           });
           snapped = true;
           setUi({
-            boundarySource:
-              res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+            boundarySource: applied.boundarySource,
+            buildingSource: applied.buildingSource,
+            ...(applied.fit.boardWidthM != null
+              ? { boardWidthM: applied.fit.boardWidthM }
+              : {}),
           });
           notes.push(
             res.boundary.source_kind === "vicmap"
               ? "Vicmap parcel snapped"
               : "Title polygon snapped",
           );
-          if (easementsInstalled) {
-            notes.push("Indicative easement — Vicmap; verify on title");
+          if (applied.buildingSource === "vicmap") {
+            notes.push("Vicmap dwelling hydrated");
+          } else if (applied.buildingSource === "empty") {
+            notes.push("Dwelling unavailable — Trace → Existing dwelling");
+          }
+          if (applied.easementSource === "vicmap" && applied.services?.length) {
+            notes.push(
+              `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            );
           }
         }
       } catch {
@@ -1444,7 +1558,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({
       aiBusy: "idle",
       locked: false,
-      tool: "edit",
+      tool: "select",
       foundationCleanse: true,
       titleBoundaryLocked: snapped,
       // Open Fit sheet working drawing — schedule + outside CAD dims
@@ -1453,13 +1567,20 @@ export function useStudioState(opts: UseStudioStateOpts) {
       aerialUri: null,
       assistReply: notes.join(" · "),
     });
-  }, [mutate, projectId, setUi, state.doc.boundary, state.doc.strokes]);
+  }, [
+    mutate,
+    projectId,
+    setUi,
+    state.doc.boundary,
+    state.doc.strokes,
+    state.ui.buildingSource,
+  ]);
 
   const setTitleBoundaryLocked = useCallback(
     (titleBoundaryLocked: boolean) => {
       setUi({
         titleBoundaryLocked,
-        tool: titleBoundaryLocked ? "pan" : "edit",
+        tool: "select",
         locked: false,
         assistReply: titleBoundaryLocked
           ? "Title locked"
@@ -1474,7 +1595,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       foundationCleanse: false,
       titleBoundaryLocked: false,
       locked: false,
-      tool: "pan",
+      tool: "select",
       aerialSuppressed: true,
       aerialUri: null,
       layerOpacity: { ...DESIGN_LAYER_PRESET },
@@ -1738,6 +1859,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   /**
    * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
+   * Then KEYLESS planning / bushfire / contour / flood / heritage washes.
    */
   useEffect(() => {
     if (bootstrapped.current) return;
@@ -1746,50 +1868,108 @@ export function useStudioState(opts: UseStudioStateOpts) {
     let cancelled = false;
     void (async () => {
       try {
-        const { autoTraceBoundaryAction } = await import(
-          "../../../../app/actions"
-        );
-        const res = await autoTraceBoundaryAction(projectId);
+        const {
+          autoTraceBoundaryAction,
+          hydrateKeylessAction,
+          getSiteBoundaryAction,
+        } = await import("../../../../app/actions");
+        const {
+          applyCanvasMetresTransform,
+          fitCanvasMetresRing,
+        } = await import("../geometry/geoToPct");
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
         if (cancelled) return;
-        const verts = [...res.boundary.vertices]
-          .sort((a, b) => a.sequence_index - b.sequence_index)
-          .map((v) => v.canvas_coords);
-        const pct = canvasMetresRingToPct(verts);
-        if (pct.length < 3) return;
-        const vicmapEasements = easementRingsToPct(verts, res.easements ?? []);
-        let focus = { focusX: 50, focusY: 50, zoom: 1 };
-        let installedVicmapEasements = false;
+        // Boot hydrate always prefers Vicmap/survey house (or empty).
+        // Persisted seed-warped dwellings must not win over cadastral truth.
+        // Operator traces after boot are protected via buildingSource === "traced"
+        // on later spatial-correction / Stage 1 snaps.
+        const keepTraced =
+          state.ui.buildingSource === "traced" &&
+          state.doc.building.length >= 3 &&
+          Boolean(initialSiteFrame?.building_source === "traced");
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (!applied) return;
+        const scaleM = applied.fit.boardWidthM ?? 110;
+        const focus = outdoorFocusView(
+          applied.snap.boundary,
+          applied.snap.building,
+          scaleM,
+        );
         mutate((snap) => {
-          const keepOperator = (snap.easements ?? []).length > 0;
-          installedVicmapEasements =
-            !keepOperator && vicmapEasements.length > 0;
-          const next = {
-            ...snap,
-            ...reprojectDocToBoundary(snap, pct),
-            easements: installedVicmapEasements
-              ? vicmapEasements
-              : snap.easements,
+          const again = applyAutoTraceParcelSnap({
+            snap,
+            res,
+            keepTracedBuilding: keepTraced,
+          });
+          if (!again) return { snap };
+          return {
+            snap: {
+              ...snap,
+              ...again.snap,
+              ...(again.services ? { services: again.services } : {}),
+            },
           };
-          focus = outdoorFocusView(next.boundary, next.building, 110);
-          return { snap: next };
         });
         setUi({
-          boundarySource:
-            res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+          boundarySource: applied.boundarySource,
+          buildingSource: applied.buildingSource,
           focusX: focus.focusX,
           focusY: focus.focusY,
           zoom: focus.zoom,
           panX: 0,
           panY: 0,
-          ...(installedVicmapEasements
+          ...(applied.fit.boardWidthM != null
+            ? { boardWidthM: applied.fit.boardWidthM }
+            : {}),
+          ...(applied.easementSource === "vicmap" && applied.services?.length
             ? {
-                councilTip:
-                  "Indicative easement — Vicmap; verify on title before excavation",
+                councilTip: `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
               }
             : {}),
         });
+
+        // KEYLESS washes — same title transform when available.
+        // Boundary fetch goes through a server action (never import server-only api).
+        try {
+          const keyless = await hydrateKeylessAction(projectId);
+          if (cancelled || keyless.overlays_canvas.length === 0) return;
+          let transform = applied.fit.transform;
+          if (!transform) {
+            const bound = await getSiteBoundaryAction(projectId);
+            const verts = [...(bound.boundary?.vertices ?? [])]
+              .sort((a, b) => a.sequence_index - b.sequence_index)
+              .map((v) => v.canvas_coords);
+            transform = fitCanvasMetresRing(verts).transform;
+          }
+          if (!transform) return;
+          const t = transform;
+          mutate((snap) => ({
+            snap: {
+              ...snap,
+              keylessOverlays: keyless.overlays_canvas.map((ov) => ({
+                kind: ov.kind,
+                label: ov.label ?? undefined,
+                fetched_at: ov.fetched_at,
+                rings: ov.rings.map((ring) =>
+                  applyCanvasMetresTransform(ring, t).map((p) => ({
+                    x_pct: p.x,
+                    y_pct: p.y,
+                  })),
+                ),
+              })),
+            },
+          }));
+        } catch {
+          /* KEYLESS optional — title still valid */
+        }
       } catch {
-        /* keep seed boundary */
+        /* keep seed boundary — dwelling already empty on live projects */
       }
     })();
     return () => {
@@ -1823,8 +2003,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (building: PctPoint[]) => {
       if (state.ui.locked) return;
       mutate((snap) => ({ snap: { ...snap, building } }));
+      setUi({
+        buildingSource: building.length >= 3 ? "traced" : "empty",
+      });
     },
-    [mutate, state.ui.locked],
+    [mutate, setUi, state.ui.locked],
   );
 
   const moveItem = useCallback(
@@ -1851,7 +2034,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           snap: {
             ...snap,
             items: snap.items.map((i) =>
-              i.id === id && !i.ghost ? { ...i, x: px, y: py } : i,
+              i.id === id && !i.ghost ? itemMovedTo(i, px, py) : i,
             ),
           },
         };
@@ -1869,7 +2052,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ...snap,
           items: snap.items.map((i) => {
             if (i.id !== id || i.ghost) return i;
-            const next = { ...i, ...patch };
+            const moved =
+              patch.x != null || patch.y != null
+                ? itemMovedTo(i, patch.x ?? i.x, patch.y ?? i.y)
+                : i;
+            const next = { ...moved, ...patch };
             if (next.scale != null) {
               next.scale = Math.max(0.35, Math.min(2.5, next.scale));
             }
@@ -1923,7 +2110,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
               snap.boundary,
               snap.building,
             );
-            return { ...i, x: placed.x, y: placed.y };
+            return itemMovedTo(i, placed.x, placed.y);
           }),
         },
       }));
@@ -1954,7 +2141,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
               snap.boundary,
               snap.building,
             );
-            return { ...i, x: placed.x, y: placed.y };
+            return itemMovedTo(i, placed.x, placed.y);
           }),
         },
       }));
@@ -2218,6 +2405,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const addSpotLevel = useCallback(
     (x: number, y: number, z: number) => {
+      if (
+        !surveyServicesAuthoringAllowed({
+          mode: state.ui.mode,
+          servicesLocked: state.ui.servicesLocked,
+        })
+      ) {
+        return;
+      }
       mutate((snap) => ({
         snap: {
           ...snap,
@@ -2225,7 +2420,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         },
       }));
     },
-    [mutate],
+    [mutate, state.ui.mode, state.ui.servicesLocked],
   );
 
   const toggleDrainageLevelIdx = useCallback(
@@ -2375,6 +2570,34 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const commitService = useCallback(
     (ring: PctPoint[]) => {
+      if (
+        !surveyServicesAuthoringAllowed({
+          mode: state.ui.mode,
+          servicesLocked: state.ui.servicesLocked,
+        })
+      ) {
+        return;
+      }
+      const bydaKind = state.ui.bydaDraftKind;
+      if (bydaKind) {
+        if (ring.length < 2) return;
+        mutate((snap) => ({
+          snap: {
+            ...snap,
+            bydaAssets: [
+              ...(snap.bydaAssets ?? []),
+              {
+                id: crypto.randomUUID(),
+                kind: bydaKind,
+                source: "traced" as const,
+                ring: ring.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+              },
+            ],
+          },
+        }));
+        setUi({ bydaDraftKind: null });
+        return;
+      }
       const classified = classifySurveyCorridor(ring);
       if (!classified) return;
       mutate((snap) => {
@@ -2394,7 +2617,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
         };
       });
     },
-    [mutate],
+    [
+      mutate,
+      setUi,
+      state.ui.mode,
+      state.ui.servicesLocked,
+      state.ui.bydaDraftKind,
+    ],
   );
 
   const commitZone = useCallback(
@@ -2421,19 +2650,152 @@ export function useStudioState(opts: UseStudioStateOpts) {
           irrigationZones: [...(snap.irrigationZones ?? []), zone],
         },
       }));
-      setUi({
-        tool: "pan",
-        councilTip:
-          kind === "lighting_conduit"
-            ? "LV conduit · fit-off to house main — verify before dig"
-            : kind === "agg_drain"
-              ? "Agg drain indicative — confirm outlet / legal point of discharge"
-              : kind === "spray"
-                ? "Sprinkler lateral indicative — confirm heads & pressure on site"
-                : null,
-      });
+      setUi({ tool: "select" });
     },
     [mutate, setUi, state.doc.irrigationZones],
+  );
+
+  /**
+   * Landscape-architect auto trench — irrig main/laterals, lighting conduit,
+   * drainage from authored zones + french drains. Ghosts until Accept.
+   */
+  const runAutoTrench = useCallback(() => {
+    const scaleM =
+      state.ui.boardWidthM ?? boardScaleM(state.ui.sheetScaleDenom);
+    const proposals = proposeAutoTrenches({
+      zones: state.doc.irrigationZones ?? [],
+      items: (state.doc.items ?? []).map((i) => ({
+        id: i.id,
+        t: i.t,
+        x: i.x,
+        y: i.y,
+        ghost: i.ghost,
+        dbhM: i.dbhM,
+      })),
+      easements: (state.doc.easements ?? []).map((r) =>
+        r.map((p) => ({ x: p.x, y: p.y })),
+      ),
+      services: (state.doc.services ?? []).map((r) =>
+        r.map((p) => ({ x: p.x, y: p.y })),
+      ),
+      boundary: state.doc.boundary.map((p) => ({ x: p.x, y: p.y })),
+      building: state.doc.building.map((p) => ({ x: p.x, y: p.y })),
+      scaleM,
+      asGhosts: true,
+    });
+    if (proposals.length === 0) {
+      setUi({
+        assistReply:
+          "Auto trench needs a drip or lighting zone, or french-drain symbols — draw zones first, then run again.",
+        coachOpen: true,
+      });
+      return;
+    }
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: [
+          ...(snap.constructionTrenches ?? []).filter((t) => !t.ghost),
+          ...proposals,
+        ],
+      },
+    }));
+    setUi({
+      assistReply: `${proposals.length} trench proposal${proposals.length === 1 ? "" : "s"} — Accept to commit dig paths (indicative; BYDA before excavation).`,
+      coachOpen: true,
+    });
+  }, [
+    mutate,
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.easements,
+    state.doc.irrigationZones,
+    state.doc.items,
+    state.doc.services,
+    state.ui.boardWidthM,
+    state.ui.sheetScaleDenom,
+  ]);
+
+  const acceptAllTrenchGhosts = useCallback(() => {
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: (snap.constructionTrenches ?? []).map((t) =>
+          t.ghost ? { ...t, ghost: undefined } : t,
+        ),
+      },
+    }));
+    setUi({ assistReply: "Trench paths accepted — in live BOM as excavate lm." });
+  }, [mutate, setUi]);
+
+  const rejectAllTrenchGhosts = useCallback(() => {
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: (snap.constructionTrenches ?? []).filter(
+          (t) => !t.ghost,
+        ),
+      },
+    }));
+    setUi({ assistReply: "Trench proposals dismissed." });
+  }, [mutate, setUi]);
+
+  const toggleServiceFeatureVisible = useCallback(
+    (id: string) => {
+      if (state.ui.servicesLocked) return;
+      const next = { ...state.ui.serviceFeatureHidden };
+      if (next[id]) delete next[id];
+      else next[id] = true;
+      setUi({ serviceFeatureHidden: next });
+    },
+    [setUi, state.ui.serviceFeatureHidden, state.ui.servicesLocked],
+  );
+
+  const focusServiceFeature = useCallback(
+    (id: string, additive: boolean) => {
+      const cur = state.ui.focusedServiceIds;
+      if (!additive) {
+        if (cur?.length === 1 && cur[0] === id) {
+          setUi({ focusedServiceIds: null, isolatedLayer: null });
+          return;
+        }
+        setUi({ focusedServiceIds: [id], isolatedLayer: "services" });
+        return;
+      }
+      const set = new Set(cur ?? []);
+      if (set.has(id)) set.delete(id);
+      else set.add(id);
+      const ids = [...set];
+      setUi({
+        focusedServiceIds: ids.length > 0 ? ids : null,
+        isolatedLayer: ids.length > 0 ? "services" : null,
+      });
+    },
+    [setUi, state.ui.focusedServiceIds],
+  );
+
+  const clearServiceFocus = useCallback(() => {
+    setUi({ focusedServiceIds: null, isolatedLayer: null });
+  }, [setUi]);
+
+  const showAllServiceFeatures = useCallback(() => {
+    if (state.ui.servicesLocked) return;
+    setUi({ serviceFeatureHidden: {} });
+  }, [setUi, state.ui.servicesLocked]);
+
+  const focusVisibleServiceFeatures = useCallback(
+    (visibleIds: string[]) => {
+      if (visibleIds.length === 0) {
+        setUi({ focusedServiceIds: null, isolatedLayer: null });
+        return;
+      }
+      setUi({
+        focusedServiceIds: visibleIds,
+        isolatedLayer: "services",
+      });
+    },
+    [setUi],
   );
 
   const addAnnotation = useCallback(
@@ -2494,13 +2856,47 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate],
   );
 
-  const switchSite = useCallback((idx: number) => {
-    dispatch({ type: "switchSite", idx });
-  }, []);
+  const switchSite = useCallback(
+    (idx: number) => {
+      // Demo site carousel is not a live-project affordance — never swap in
+      // Armadale/Wrights seed dwellings over a cadastral canvas.
+      if (projectId) return;
+      dispatch({ type: "switchSite", idx });
+    },
+    [projectId],
+  );
 
   const resetSite = useCallback(() => {
+    if (projectId) {
+      // Clear operator drawing; keep cadastral boundary + Vicmap dwelling.
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: [],
+          strokes: [],
+          irrigationZones: [],
+          constructionTrenches: [],
+          annotations: [],
+          easements: [],
+          services: [],
+          bydaAssets: [],
+          levels: [],
+        },
+      }));
+      setUi({
+        selectedId: null,
+        groupIds: [],
+        drawPoly: null,
+        drawCursor: null,
+        mitigated: {},
+        ghostIdx: 0,
+        ghostReviewOpen: false,
+        bydaDraftKind: null,
+      });
+      return;
+    }
     dispatch({ type: "resetSite" });
-  }, []);
+  }, [mutate, projectId, setUi]);
 
   const bumpSaved = useCallback(() => {
     saveRevisionRef.current += 1;
@@ -2525,16 +2921,23 @@ export function useStudioState(opts: UseStudioStateOpts) {
     }
     const placements = itemsToPlacements(fixed.items);
     const canvasStrokes = strokesToCanvas(fixed.strokes);
+    const features = itemsToFeatures(fixed.items);
     const siteFrame = snapshotToSiteFrame({
       boundary: state.doc.boundary,
       building: state.doc.building,
       easements: state.doc.easements ?? [],
       services: state.doc.services ?? [],
       levels: state.doc.levels ?? [],
-      drainageRuns: state.doc.drainageRuns ?? [],
+      bydaAssets: state.doc.bydaAssets ?? [],
+      keylessOverlays: state.doc.keylessOverlays ?? [],
+      boardWidthM: state.ui.boardWidthM,
+      buildingSource: state.ui.buildingSource,
     });
     setUi({ saveStatus: "saving" });
     try {
+      const acceptedTrenches = (state.doc.constructionTrenches ?? []).filter(
+        (t) => !t.ghost,
+      );
       await saveDesignCanvasAction(
         projectIdRef.current,
         placements,
@@ -2542,6 +2945,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         state.doc.irrigationZones ?? [],
         state.doc.annotations ?? [],
         siteFrame,
+        features,
+        acceptedTrenches,
       );
       saveRevisionRef.current += 1;
       setUi({
@@ -2568,11 +2973,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.building,
     state.doc.easements,
     state.doc.irrigationZones,
+    state.doc.constructionTrenches,
     state.doc.annotations,
     state.doc.items,
     state.doc.levels,
     state.doc.services,
+    state.doc.bydaAssets,
+    state.doc.keylessOverlays,
     state.doc.strokes,
+    state.ui.boardWidthM,
+    state.ui.buildingSource,
   ]);
 
   /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
@@ -2643,6 +3053,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
           `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
       )
       .join("/"),
+    (state.doc.constructionTrenches ?? [])
+      .filter((t) => !t.ghost)
+      .map(
+        (t) =>
+          `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+      )
+      .join("/"),
     (state.doc.annotations ?? [])
       .map(
         (a) =>
@@ -2684,8 +3101,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         drawPoly: null,
         drawCursor: null,
-        tool: "edit",
+        tool: "select",
         ...(target === "boundary" ? { boundarySource: "manual" as const } : {}),
+        ...(target === "building"
+          ? { buildingSource: "traced" as const }
+          : {}),
       });
     },
     [
@@ -2777,6 +3197,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
       accessConstrained: workableOutdoorM2 > 400,
       scaleM,
       irrigationZones: state.doc.irrigationZones ?? [],
+      constructionTrenches: (state.doc.constructionTrenches ?? []).filter(
+        (t) => !t.ghost,
+      ),
       metaByType: Object.fromEntries(
         (Object.keys(BY_TYPE) as StudioItemType[]).map((t) => {
           const d = BY_TYPE[t];
@@ -2801,6 +3224,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.boundary,
     state.doc.items,
     state.doc.irrigationZones,
+    state.doc.constructionTrenches,
     state.ui.boardWidthM,
     state.ui.sheetScaleDenom,
     workableOutdoorM2,
@@ -2993,7 +3417,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
     drainageRuns: state.doc.drainageRuns ?? [],
     pathCorridors: state.doc.pathCorridors ?? [],
     services: state.doc.services ?? [],
+    bydaAssets: state.doc.bydaAssets ?? [],
+    keylessOverlays: state.doc.keylessOverlays ?? [],
     irrigationZones: state.doc.irrigationZones ?? [],
+    constructionTrenches: state.doc.constructionTrenches ?? [],
     annotations: state.doc.annotations ?? [],
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
@@ -3052,6 +3479,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
     finishPathCorridor,
     commitService,
     commitZone,
+    runAutoTrench,
+    acceptAllTrenchGhosts,
+    rejectAllTrenchGhosts,
+    toggleServiceFeatureVisible,
+    focusServiceFeature,
+    clearServiceFocus,
+    showAllServiceFeatures,
+    focusVisibleServiceFeatures,
     addAnnotation,
     updateAnnotationNotePos,
     removeAnnotation,
@@ -3083,10 +3518,20 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setTraceTarget: (traceTarget: TraceTarget) =>
       setUi({ traceTarget, drawPoly: null, drawCursor: null }),
     setTool: (tool: StudioTool) => {
+      if (isSurveyServicesTool(tool)) {
+        if (
+          !surveyServicesAuthoringAllowed({
+            mode: state.ui.mode,
+            servicesLocked: state.ui.servicesLocked,
+          })
+        ) {
+          return;
+        }
+      }
       if (tool === "reset") {
         resetSite();
         setUi({
-          tool: "pan",
+          tool: "select",
           addOpen: false,
           drawPoly: null,
           drawCursor: null,
@@ -3097,7 +3542,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       if (tool === "lock") {
         const nextLocked = !state.ui.locked;
         setUi({
-          tool: nextLocked ? "lock" : "pan",
+          tool: nextLocked ? "lock" : "select",
           locked: nextLocked,
           addOpen: false,
           drawPoly: null,

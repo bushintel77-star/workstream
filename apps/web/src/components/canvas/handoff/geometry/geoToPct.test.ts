@@ -1,90 +1,72 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyCanvasMetresFit,
-  canvasMetresFit,
+  applyCanvasMetresTransform,
   canvasMetresRingToPct,
-  easementRingsToPct,
+  fitCanvasMetresRing,
 } from "./geoToPct";
+import { edgeLengthM, polygonAreaM2 } from "./polygon";
 
-const squareLot = [
-  { x: 0, y: 0 },
-  { x: 20, y: 0 },
-  { x: 20, y: 20 },
-  { x: 0, y: 20 },
-];
+describe("fitCanvasMetresRing", () => {
+  const parcel30x20 = [
+    { x: 0, y: 0 },
+    { x: 30, y: 0 },
+    { x: 30, y: 20 },
+    { x: 0, y: 20 },
+  ];
 
-describe("canvasMetresFit / canvasMetresRingToPct", () => {
-  it("fits a square lot centred with default padding", () => {
-    const pct = canvasMetresRingToPct(squareLot);
-    expect(pct).toHaveLength(4);
-    const xs = pct.map((p) => p.x);
-    const ys = pct.map((p) => p.y);
-    expect(Math.min(...xs)).toBeCloseTo(8);
-    expect(Math.max(...xs)).toBeCloseTo(92);
-    expect(Math.min(...ys)).toBeCloseTo(8);
-    expect(Math.max(...ys)).toBeCloseTo(92);
+  it("reports the board scale implied by the letterbox fit", () => {
+    const fit = fitCanvasMetresRing(parcel30x20);
+    // pad 8 → 84% available for 30 m → 2.8 %/m → 100% board ≈ 35.714 m
+    expect(fit.boardWidthM).toBeCloseTo(100 / (84 / 30), 6);
   });
 
-  it("flips Y — north-up metres render board-down", () => {
-    const fit = canvasMetresFit(squareLot)!;
-    const north = applyCanvasMetresFit(fit, { x: 0, y: 20 });
-    const south = applyCanvasMetresFit(fit, { x: 0, y: 0 });
-    expect(north.y).toBeLessThan(south.y);
-  });
-
-  it("returns empty for fewer than 3 vertices", () => {
-    expect(canvasMetresRingToPct([{ x: 0, y: 0 }, { x: 1, y: 1 }])).toEqual([]);
-  });
-});
-
-describe("easementRingsToPct", () => {
-  it("projects a centreline through the boundary's own fit transform", () => {
-    // Easement runs along the lot's north edge (y=19), full width.
-    const rings = easementRingsToPct(squareLot, [
-      {
-        points: [
-          { x: 0, y: 19 },
-          { x: 20, y: 19 },
-        ],
-      },
-    ]);
-    expect(rings).toHaveLength(1);
-    const ring = rings[0]!;
-    expect(ring).toHaveLength(4);
-    // Boundary fit: 20 m → 84 pct (scale 4.2). Centreline at y=19 m →
-    // pct y = 8 + (20 − 19) × 4.2 = 12.2; ±0.9 m → ±3.78 pct.
-    const ys = ring.map((p) => p.y);
-    expect(Math.min(...ys)).toBeCloseTo(12.2 - 0.9 * 4.2, 5);
-    expect(Math.max(...ys)).toBeCloseTo(12.2 + 0.9 * 4.2, 5);
-  });
-
-  it("clips block-long centrelines to the lot frame without distortion", () => {
-    // Vertical easement line running the whole street block at x=10 m.
-    const rings = easementRingsToPct(squareLot, [
-      {
-        points: [
-          { x: 10, y: -50 },
-          { x: 10, y: 80 },
-        ],
-      },
-    ]);
-    expect(rings).toHaveLength(1);
-    const ring = rings[0]!;
-    // Corridor stays a vertical band around x = 50 pct (10 m × scale 4.2 + 8),
-    // ±0.9 m × 4.2 — no corner is dragged sideways by clamping.
-    for (const p of ring) {
-      expect(p.x).toBeGreaterThanOrEqual(50 - 0.9 * 4.2 - 1e-6);
-      expect(p.x).toBeLessThanOrEqual(50 + 0.9 * 4.2 + 1e-6);
-      expect(p.y).toBeGreaterThanOrEqual(0);
-      expect(p.y).toBeLessThanOrEqual(100);
-    }
-  });
-
-  it("returns empty without a valid boundary or easements", () => {
-    expect(easementRingsToPct([], [{ points: squareLot }])).toEqual([]);
-    expect(easementRingsToPct(squareLot, [])).toEqual([]);
+  it("round-trips real metres through % space with the implied scale", () => {
+    const fit = fitCanvasMetresRing(parcel30x20);
+    const scaleM = fit.boardWidthM!;
+    // Area of the 30×20 m parcel must survive metres → % → metres.
+    expect(polygonAreaM2(fit.points, scaleM)).toBeCloseTo(600, 6);
+    // The 30 m edge must read 30 m again.
     expect(
-      easementRingsToPct(squareLot, [{ points: [{ x: 5, y: 5 }] }]),
-    ).toEqual([]);
+      edgeLengthM(fit.points[0]!, fit.points[1]!, scaleM),
+    ).toBeCloseTo(30, 6);
+  });
+
+  it("returns null scale for degenerate rings", () => {
+    expect(fitCanvasMetresRing([{ x: 0, y: 0 }])).toEqual({
+      points: [],
+      boardWidthM: null,
+      transform: null,
+    });
+  });
+
+  it("keeps the points-only wrapper behaviour", () => {
+    const pct = canvasMetresRingToPct(parcel30x20);
+    expect(pct).toEqual(fitCanvasMetresRing(parcel30x20).points);
+    expect(Math.min(...pct.map((p) => p.x))).toBeGreaterThanOrEqual(7);
+    expect(Math.max(...pct.map((p) => p.x))).toBeLessThanOrEqual(93);
+  });
+
+  it("co-registers a house ring with the title transform", () => {
+    const fit = fitCanvasMetresRing(parcel30x20);
+    expect(fit.transform).toBeTruthy();
+    // 10×10 m house inset 5 m from the SW corner of the 30×20 parcel.
+    const house = [
+      { x: 5, y: 5 },
+      { x: 15, y: 5 },
+      { x: 15, y: 15 },
+      { x: 5, y: 15 },
+    ];
+    const housePct = applyCanvasMetresTransform(house, fit.transform!);
+    // House must sit inside the fitted parcel bbox.
+    const xs = fit.points.map((p) => p.x);
+    const ys = fit.points.map((p) => p.y);
+    expect(Math.min(...housePct.map((p) => p.x))).toBeGreaterThan(
+      Math.min(...xs),
+    );
+    expect(Math.max(...housePct.map((p) => p.x))).toBeLessThan(Math.max(...xs));
+    expect(Math.min(...housePct.map((p) => p.y))).toBeGreaterThan(
+      Math.min(...ys),
+    );
+    expect(Math.max(...housePct.map((p) => p.y))).toBeLessThan(Math.max(...ys));
   });
 });

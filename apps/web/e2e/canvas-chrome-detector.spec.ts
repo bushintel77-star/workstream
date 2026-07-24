@@ -39,9 +39,22 @@ test.describe("Camera chrome detector (gate C)", () => {
     });
     expect(await cameraChromeInsideZoom(page)).toBe(0);
 
-    // Zoom out — still zero chrome under the camera
+    // Zoom out — still zero chrome under the camera. Poll the bounding box:
+    // the Vicmap hydrate can remount the board right after load and a single
+    // boundingBox() call in that window returns null (same race the
+    // chrome-parenting spec polls past).
     const board = page.getByTestId("studio-board");
-    const box = await board.boundingBox();
+    await expect(board).toBeVisible({ timeout: 15_000 });
+    let box = await board.boundingBox();
+    await expect
+      .poll(
+        async () => {
+          box = await board.boundingBox();
+          return box != null;
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(true);
     expect(box).toBeTruthy();
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
     await page.mouse.wheel(0, 900);

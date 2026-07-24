@@ -48,11 +48,19 @@ A hung e2e or skipped live probe is a blocker. Binding detail: `.cursor/rules/en
 
 **Vicmap cadastral** (API): keyless DELWP GeoServer WFS at `opendata.maps.vic.gov.au` — `apps/api/src/lib/vicmap.ts` self-discovers property/building layers via GetCapabilities (no `VICMAP_ENABLED` / developer.vic.gov.au API key). MapLibre `GeoSiteMap` / `SiteCanvas` removed; Trace + Calibrate on the handoff board remains the offline fallback.
 
-Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, title-boundary snap, Fit sheet dims.
+Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, title-boundary snap, Fit sheet dims, **Services ledger** (right lane — ticks/metrics/focus; replaces services opacity dial), **Auto trench…** (irrig/conduit/drainage dig paths from zones → `construction_trenches`, ghost until Accept; not BYDA assets).
+
+**Site infrastructure honesty:** Vicmap easements ≠ underground assets. Dig needs BYDA (+ often council drainage). Survey 5/5 = digital minimum; full LA pack = `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` (title easement hydrate LIVE; KEYLESS washes include planning/bushfire/contour/flood/heritage; BYDA / council / survey / arbor / site chase list).
+
+**Sticky boundary rail (Cursor-style):** Env + Services live meta flush to the right viewport edge — translucent, sticky until ×. Expand opens the same-seam right lane. See `docs/ENV-AND-SITE-META-STICKY.md`.
 
 **Design Studio v4/v5 handoff** (reference): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README checklist; progress in `IMPLEMENTATION-STATUS.md`.
 
 **Studio styling + UI/UX (binding):** `docs/STUDIO-STYLING-AND-UX.md` — blush frost tokens, disappearing chrome, inventory as summoned popup (never a fixed opaque bar on the drawing), orbit clear of the glyph, contextual pointer. Read this before restyling canvas chrome.
+
+**Operator training (gold walkthrough):** `docs/OPERATOR-STUDIO-GOLD-WALKTHROUGH.md` — six mode workflows, site vs design matrix, Wrights Terrace assist scripts, lane law, anti-patterns, completion checklist.
+
+**Site infrastructure / pre-construction due diligence:** `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` — full LA checklist before landscape construction (title, BYDA services, TPZ, overlays, levels, drainage) with LIVE / KEYLESS / BYDA / SITE automation status.
 
 **CAD–AI 2026 UX (binding):** `docs/CAD-AI-2026-UX.md` — disappearing interface, AI as spatial collaborator (sidecar), constraint-first geometry, human-in-the-loop ghosts. Do not reintroduce sticky ribbons or chatbot-only AI.
 

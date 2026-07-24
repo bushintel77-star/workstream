@@ -38,10 +38,12 @@ import {
 } from "../surfaces/scheduleCardLayout";
 import { RIGHT_DATA_LANE_WIDTH_PX } from "../surfaces/rightDataLane";
 import { planLinesFor } from "../../geometry/planLineStyles";
+import { bydaPlanLine } from "../../geometry/bydaPlanStyles";
 import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
+  PAINT_SWATCHES,
   type StudioItem,
   type StudioItemType,
   type StudioMode,
@@ -60,6 +62,8 @@ import {
   SpeciesSymbol,
   isSpeciesSymbolType,
 } from "../render/symbols/SpeciesSymbol";
+import { SunShadowProvider } from "../shade/SunShadowContext";
+import { decorativeGlyphShadowOffset } from "@workstream/domain";
 import { AnnotationLayer } from "../render/AnnotationLayer";
 import {
   buildSpeciesLabelCandidates,
@@ -75,6 +79,11 @@ import {
   type LayerOpacity,
 } from "../../state/studioTypes";
 import { resolveLayerVisual } from "../../state/layerIsolate";
+import {
+  corridorFeatureId,
+  easementFeatureId,
+  resolveServiceFeatureVisual,
+} from "../services/serviceLedger";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
 import { CameraChrome, boardCameraFromPlan } from "../../CameraChrome";
@@ -83,6 +92,23 @@ import { TiltBuildingExtrusion } from "../tilt/TiltBuildingExtrusion";
 import { isTiltActive, pxPerMetre } from "../tilt/tiltMath";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
+
+/** Area types whose sketched outline renders as a plan region polygon. */
+const REGION_TYPES: ReadonlySet<StudioItemType> = new Set([
+  "bed",
+  "lawn",
+  "deck",
+  "paving",
+]);
+
+const REGION_WASH: Partial<Record<StudioItemType, string>> = {};
+for (const s of PAINT_SWATCHES) REGION_WASH[s.t] = s.wash;
+
+function isRegionItem(it: StudioItem): boolean {
+  return (
+    REGION_TYPES.has(it.t) && (it.outlinePct?.length ?? 0) >= 3
+  );
+}
 
 type NodeMenu = {
   kind: "boundary" | "building";
@@ -107,6 +133,11 @@ type Props = {
   titleLocked?: boolean;
   /** Title CAD nodes locked (no drag). */
   titleBoundaryLocked?: boolean;
+  /**
+   * Provenance of the dwelling ring — drives honesty copy on the footprint.
+   * Never claim Vicmap for seed / unknown geometry.
+   */
+  buildingSource?: "vicmap" | "traced" | "empty";
   /** Optional cadastral lot area (Vicmap) for centre CAD label. */
   lotAreaM2?: number | null;
   /** Live site-area calculation from the same schedule as the measure ledger. */
@@ -129,6 +160,15 @@ type Props = {
   easements?: PctPoint[][];
   /** Open service / utility corridors — dashed locate layer. */
   services?: PctPoint[][];
+  /** Typed BYDA assets — stroke language distinct from title easements. */
+  bydaAssets?: import("@workstream/contracts").DesignBydaAsset[];
+  /**
+   * When true, dwelling shadow is driven by SunCastOverlay — skip the soft
+   * ellipse under the footprint (glyphs still follow `sunAzimuthDeg`).
+   */
+  timedSunCast?: boolean;
+  /** Live sun azimuth (0=N) — drives decorative glyph / dwelling soft-shadows. */
+  sunAzimuthDeg?: number;
   items: StudioItem[];
   tool: StudioTool;
   /** Studio mode — survey shows edge dims; sketch disables pointer capture. */
@@ -136,6 +176,10 @@ type Props = {
   locked: boolean;
   layerOpacity: LayerOpacity;
   isolatedLayer?: LayerKey | null;
+  /** Per-feature Services ledger hide map. */
+  serviceFeatureHidden?: Record<string, boolean>;
+  /** Focused service feature ids — others fall away. */
+  focusedServiceIds?: string[] | null;
   setbackOn: boolean;
   /** Indicative council setback rule (m) — muted on-plan path label, not a card. */
   councilSetbackM?: number | null;
@@ -218,6 +262,11 @@ type Props = {
   onCadHandleInteract?: () => void;
   /** Hover affordance on handles / insert nodes — drives context cursor. */
   onBoardCursor?: (mode: "default" | "move" | "add" | "paint") => void;
+  /**
+   * Click landed on an object while a drawing tool was armed (object stayed
+   * inert, rule 2) — parent may show the one-time "drop the tool" hint.
+   */
+  onInertToolClick?: () => void;
   /** Presentation lens fidelity (idle upgrade) — not a user toggle. */
   fidelity?: RenderFidelity;
   /** Client view / Fit sheet force presentation via parent lens. */
@@ -255,6 +304,7 @@ export function CadPlanBoard({
   foundationCleanse = false,
   titleLocked = false,
   titleBoundaryLocked = false,
+  buildingSource = "empty",
   lotAreaM2 = null,
   siteAreas = null,
   siteLabel = null,
@@ -263,12 +313,17 @@ export function CadPlanBoard({
   building,
   easements = [],
   services = [],
+  bydaAssets = [],
+  timedSunCast = false,
+  sunAzimuthDeg = 0,
   items,
   tool,
   mode = "cad",
   locked,
   layerOpacity,
   isolatedLayer = null,
+  serviceFeatureHidden = {},
+  focusedServiceIds = null,
   setbackOn,
   councilSetbackM = null,
   growth,
@@ -312,6 +367,7 @@ export function CadPlanBoard({
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
+  onInertToolClick,
   fidelity = "draft",
   onInteract,
   annotations = [],
@@ -378,14 +434,15 @@ export function CadPlanBoard({
   const showDraftGrid =
     !frameOn &&
     !foundationCleanse &&
-    (tool === "edit" || tool === "paint" || tool === "add" || tool === "pan");
+    (tool === "select" || tool === "paint" || tool === "add");
 
   /** Title CAD drag when Stage 1 unlocked — snap via snapVertexDrag. */
   const titleEditing =
     foundationCleanse && !titleBoundaryLocked && !frameOn;
+  /* Select is the ground state — node editing lives there (INTERACTION-LOGIC). */
   const editing =
-    (tool === "edit" && !locked && !frameOn && !foundationCleanse) ||
-    (titleEditing && tool === "edit");
+    (tool === "select" && !locked && !frameOn && !foundationCleanse) ||
+    (titleEditing && tool === "select");
   const titleSolid = foundationCleanse || titleLocked;
   const sketchPassthrough = mode === "sketch";
   /** Survey annotation tools own the pointer (prototype Level / Servc / Calib). */
@@ -639,7 +696,8 @@ export function CadPlanBoard({
       onPlace(p.x, p.y);
       return;
     }
-    if (tool === "edit" || tool === "pan") {
+    // Marquee lives in Select and only there (rule 3) — pan is a gesture.
+    if (tool === "select") {
       const p = toPct(e.clientX, e.clientY);
       dragRef.current = {
         kind: "marquee",
@@ -659,17 +717,13 @@ export function CadPlanBoard({
       ? "Pick"
       : tool === "paint"
         ? "Fill"
-        : tool === "path"
-          ? "Path"
-          : tool === "add"
-            ? "Place"
-            : tool === "measure"
-              ? "Measure"
-              : tool === "edit"
-                ? "Edit"
-                : tool === "pan"
-                  ? "Pan"
-                  : tool;
+        : tool === "add"
+          ? "Place"
+          : tool === "measure"
+            ? "Measure"
+            : tool === "select"
+              ? "Select"
+              : tool;
   const startCornerDrag = (
     kind: "boundary" | "building",
     index: number,
@@ -927,14 +981,23 @@ export function CadPlanBoard({
     });
   }, [presentationOn, tiltLocked, items, ppm, cam]);
 
-  const sunView = useMemo(() => viewFromCast(sunCast), [sunCast]);
+  const dwellingSoftShadow = useMemo(
+    () =>
+      decorativeGlyphShadowOffset(
+        sunAzimuthDeg,
+        1,
+        SUN_SHADOW.dwellingDyPct,
+      ),
+    [sunAzimuthDeg],
+  );
 
   return (
-    <SunShadowProvider cast={sunCast}>
+    <SunShadowProvider azimuthDeg={sunAzimuthDeg}>
     <div
       ref={rootRef}
-      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}`}
+      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}${tiltLocked ? ` ${css.worldTilted}` : ""}`}
       data-testid="cad-plan-board"
+      data-sun-azimuth={sunAzimuthDeg.toFixed(1)}
       data-cad-plan
       data-plan-geometry="1"
       data-mode={mode}
@@ -1073,36 +1136,91 @@ export function CadPlanBoard({
           : null}
         {easements
           .filter((r) => r.length >= 3)
-          .map((ring, i) => (
-            <g key={`ease${i}`} opacity={servicesVisual.opacity} data-testid="easement-hatch">
-              <polygon
-                points={ptsAttr(ring)}
-                fill="url(#ws-easement-hatch)"
-                stroke={lines.easement.stroke}
-                strokeWidth={lines.easement.strokeWidth}
-                strokeDasharray={lines.easement.dash}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
+          .map((ring, i) => {
+            const id = easementFeatureId(ring);
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            return (
+              <g
+                key={`ease${i}`}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="easement-hatch"
+                data-service-id={id}
+              >
+                <polygon
+                  points={ptsAttr(ring)}
+                  fill="url(#ws-easement-hatch)"
+                  stroke={lines.easement.stroke}
+                  strokeWidth={lines.easement.strokeWidth}
+                  strokeDasharray={lines.easement.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
         {services
           .filter((r) => r.length >= 2)
-          .map((ring, i) => (
-            <g
-              key={`svc${i}`}
-              opacity={servicesVisual.opacity}
-              data-testid="utility-service-trace"
-            >
-              <polyline
-                points={ptsAttr(ring)}
-                fill="none"
-                stroke={lines.service.stroke}
-                strokeWidth={lines.service.strokeWidth}
-                strokeDasharray={lines.service.dash}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
+          .map((ring, i) => {
+            const id = corridorFeatureId(ring);
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            return (
+              <g
+                key={`svc${i}`}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="utility-service-trace"
+                data-service-id={id}
+              >
+                <polyline
+                  points={ptsAttr(ring)}
+                  fill="none"
+                  stroke={lines.service.stroke}
+                  strokeWidth={lines.service.strokeWidth}
+                  strokeDasharray={lines.service.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
+        {bydaAssets
+          .filter((a) => a.ring.length >= 2)
+          .map((asset) => {
+            const id = `byda:${asset.id}`;
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            const style = bydaPlanLine(asset.kind, darkOn && !frameOn);
+            const ring = asset.ring.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+            return (
+              <g
+                key={id}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="byda-asset-trace"
+                data-byda-kind={asset.kind}
+                data-service-id={id}
+              >
+                <polyline
+                  points={ptsAttr(ring)}
+                  fill="none"
+                  stroke={style.stroke}
+                  strokeWidth={style.strokeWidth}
+                  strokeDasharray={style.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
         {cadTitleMode
           ? contextLots.map((ring, i) => (
               <polygon
@@ -1136,12 +1254,12 @@ export function CadPlanBoard({
               : undefined
           }
         />
-        {building.length >= 3 ? (
+        {building.length >= 3 && !timedSunCast ? (
           <polygon
             data-testid="dwelling-sun-shadow"
             points={ptsAttr(building)}
-            transform={`translate(${sunView.dxPct} ${sunView.dyPct})`}
-            fill={sunShadowFillFrom(sunView, darkOn && !frameOn)}
+            transform={`translate(${dwellingSoftShadow.dx} ${dwellingSoftShadow.dy})`}
+            fill={sunShadowFill(darkOn && !frameOn)}
             style={{ mixBlendMode: "multiply" }}
             pointerEvents="none"
             data-sun-live={sunCast ? "1" : "0"}
@@ -1150,6 +1268,7 @@ export function CadPlanBoard({
         {building.length >= 3 ? (
           <polygon
             data-testid="building-footprint"
+            data-building-source={buildingSource}
             points={ptsAttr(building)}
             fill={bldFill}
             stroke={bldStroke}
@@ -1164,11 +1283,59 @@ export function CadPlanBoard({
             }
           >
             <title>
-              Existing dwelling envelope · Vicmap/site context only · confirm
-              before relying on dimensions
+              {buildingSource === "vicmap"
+                ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
+                : buildingSource === "traced"
+                  ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
+                  : "Existing dwelling envelope · confirm on site before relying on dimensions"}
             </title>
           </polygon>
         ) : null}
+        {/* Sketch-formalized regions — the shape the operator drew, washed
+            per material. Ghosts dash; accepted regions draw in solid. */}
+        {planItems.filter(isRegionItem).map((it) => {
+          const bucket = ITEM_LAYER[it.t];
+          const visual = resolveLayerVisual(
+            bucket,
+            layerOpacity[bucket] ?? 1,
+            isolatedLayer,
+          );
+          const wash = REGION_WASH[it.t] ?? "rgba(90, 122, 72, 0.4)";
+          const hatched = it.t === "paving" || it.t === "deck";
+          const pts = ptsAttr(it.outlinePct!);
+          return (
+            <g
+              key={`region-${it.id}`}
+              data-testid="sketch-region"
+              data-item-type={it.t}
+              data-ghost={it.ghost ? "1" : "0"}
+              opacity={visual.opacity * underlayOp * (it.ghost ? 0.6 : 1)}
+              pointerEvents="none"
+            >
+              <polygon
+                points={pts}
+                pathLength={1}
+                className={it.ghost ? css.regionGhostIn : css.regionDraw}
+                fill={wash}
+                stroke={
+                  it.ghost ? "rgba(28, 25, 23, 0.55)" : "rgba(28, 25, 23, 0.75)"
+                }
+                strokeWidth={it.ghost ? 1 : 1.3}
+                strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+              {hatched ? (
+                <polygon
+                  points={pts}
+                  fill="url(#ws-hardscape-hatch)"
+                  opacity={0.45}
+                  className={css.regionGhostIn}
+                />
+              ) : null}
+            </g>
+          );
+        })}
         {outsideDims.map((d) => (
           <g
             key={`odim${d.key}`}
@@ -1679,7 +1846,7 @@ export function CadPlanBoard({
         return (
           <div key={it.id}>
             <div
-              className={`${css.item}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
+              className={`${css.item}${it.ghost ? ` ${css.ghostArrive}` : ""}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
               data-testid={it.ghost ? "studio-ghost" : "studio-item"}
               data-item-type={it.t}
               data-layer={bucket}
@@ -1733,19 +1900,34 @@ export function CadPlanBoard({
               onPointerEnter={() => onHover(it.id)}
               onPointerLeave={() => onHover(null)}
               onPointerDown={(e) => {
-                e.stopPropagation();
-                if (tiltLocked) return;
+                if (tiltLocked) {
+                  e.stopPropagation();
+                  return;
+                }
                 if (eyedropArmed && onEyedrop) {
+                  e.stopPropagation();
                   onEyedrop(it.t);
                   return;
                 }
                 if (tool === "paint" && !it.ghost && onPaintItem) {
+                  e.stopPropagation();
                   onPaintItem(it.id);
                   return;
                 }
+                /*
+                 * Rule 2 (INTERACTION-LOGIC): in a drawing/placing tool,
+                 * objects are inert — the click falls through to the board
+                 * so the armed tool acts. Selection never silently steals it.
+                 */
+                if (tool !== "select" && tool !== "lock") {
+                  onInertToolClick?.();
+                  return;
+                }
+                e.stopPropagation();
                 const additive = e.shiftKey || e.metaKey;
                 onSelect(it.id, { additive });
-                if (!it.ghost && tool !== "lock" && tool !== "paint") {
+                // Lock is select-only (rule 5): no drag ever starts.
+                if (!it.ghost && tool !== "lock") {
                   const ids =
                     groupIds.includes(it.id) && groupIds.length > 1
                       ? groupIds
@@ -1787,7 +1969,18 @@ export function CadPlanBoard({
                   pointerEvents: "none",
                 }}
               >
-                {presentationOn && isSpeciesSymbolType(it.t) ? (
+                {isRegionItem(it) ? (
+                  /* The drawn region is the visual — a small material-coloured
+                     centroid handle marks the drag/selection anchor. */
+                  <div
+                    className={css.regionHandle}
+                    data-testid="region-handle"
+                    style={{
+                      background: REGION_WASH[it.t] ?? "rgba(90, 122, 72, 0.5)",
+                    }}
+                    aria-hidden
+                  />
+                ) : presentationOn && isSpeciesSymbolType(it.t) ? (
                   <svg
                     viewBox="0 0 100 100"
                     width="100%"
@@ -2192,7 +2385,8 @@ export function CadPlanBoard({
       ) : null}
 
       {easements.some((r) => r.length >= 3) ||
-      services.some((r) => r.length >= 2) ? (
+      services.some((r) => r.length >= 2) ||
+      bydaAssets.some((a) => a.ring.length >= 2) ? (
         <CameraChrome>
           <div className={css.honestyStack}>
             {easements.some((r) => r.length >= 3) ? (
@@ -2210,7 +2404,17 @@ export function CadPlanBoard({
                 className={css.honestyFooter}
                 data-testid="utility-honesty-footer"
               >
-                Utility traces · indicative — confirm locate / DBYD before dig
+                Service / Vicmap easement lines · subset of title easements —
+                confirm survey / council / DBYD before dig
+              </p>
+            ) : null}
+            {bydaAssets.some((a) => a.ring.length >= 2) ? (
+              <p
+                className={css.honestyFooter}
+                data-testid="byda-honesty-footer"
+              >
+                BYDA typed assets · digitised from plans — not Vicmap easements;
+                current BYDA enquiry still required before dig
               </p>
             ) : null}
           </div>

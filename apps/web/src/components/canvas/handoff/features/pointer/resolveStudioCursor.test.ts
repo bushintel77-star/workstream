@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { resolveStudioCursor } from "./resolveStudioCursor";
 
 describe("resolveStudioCursor", () => {
-  it("uses the garden mark when idle drafting", () => {
+  it("uses the garden mark when idle in Select", () => {
     const cur = resolveStudioCursor({
       markId: "spade",
-      tool: "edit",
+      tool: "select",
       mode: "cad",
       locked: false,
     });
@@ -54,40 +54,63 @@ describe("resolveStudioCursor", () => {
         locked: false,
       }),
     ).toBe("copy");
+    // Select in sketch mode grabs (drag pans the pad) — pen cursor only for the armed pen.
     expect(
       resolveStudioCursor({
         markId: "spade",
-        tool: "pan",
-        mode: "cad",
-        locked: false,
-      }),
-    ).toBe("grab");
-    // Pan in sketch mode grabs — the pen cursor is only for the armed pen.
-    expect(
-      resolveStudioCursor({
-        markId: "spade",
-        tool: "pan",
+        tool: "select",
         mode: "sketch",
         locked: false,
         sketchTool: "pen",
         sketchTip: "medium",
       }),
     ).toBe("grab");
-    expect(
-      resolveStudioCursor({
-        markId: "spade",
-        tool: "lock",
-        mode: "cad",
-        locked: true,
-      }),
-    ).toBe("not-allowed");
   });
 
-  it("honours board drag affordance over the idle mark", () => {
+  it("rule 1 — an armed tool's cursor is identical over objects and empty board", () => {
+    for (const tool of [
+      "trace",
+      "measure",
+      "zone",
+      "calib",
+      "level",
+      "service",
+      "add",
+      "paint",
+    ] as const) {
+      const empty = resolveStudioCursor({
+        markId: "spade",
+        tool,
+        mode: "cad",
+        locked: false,
+      });
+      const overObject = resolveStudioCursor({
+        markId: "spade",
+        tool,
+        mode: "cad",
+        locked: false,
+        boardCursor: "move",
+      });
+      expect(overObject).toBe(empty);
+    }
+  });
+
+  it("rule 5 — Lock shows a pointer with a lock badge, never not-allowed", () => {
+    const lock = resolveStudioCursor({
+      markId: "spade",
+      tool: "lock",
+      mode: "cad",
+      locked: true,
+    });
+    expect(lock).not.toBe("not-allowed");
+    expect(lock).toContain("data:image/svg+xml");
+  });
+
+  it("Select closes to the grab hand over a draggable object", () => {
     expect(
       resolveStudioCursor({
         markId: "fork",
-        tool: "edit",
+        tool: "select",
         mode: "cad",
         locked: false,
         boardCursor: "move",
@@ -99,7 +122,7 @@ describe("resolveStudioCursor", () => {
     expect(
       resolveStudioCursor({
         markId: "spade",
-        tool: "edit",
+        tool: "select",
         mode: "cad",
         locked: false,
         frameOn: true,

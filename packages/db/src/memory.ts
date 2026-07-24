@@ -1155,6 +1155,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return {
         ...canvas,
         irrigation_zones: canvas.irrigation_zones ?? [],
+        construction_trenches: canvas.construction_trenches ?? [],
         annotations: canvas.annotations ?? [],
         features: canvas.features ?? [],
       };
@@ -1209,6 +1210,9 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         if (input.irrigation_zones !== undefined) {
           existing.irrigation_zones = input.irrigation_zones;
         }
+        if (input.construction_trenches !== undefined) {
+          existing.construction_trenches = input.construction_trenches;
+        }
         if (input.annotations !== undefined) {
           existing.annotations = input.annotations;
         }
@@ -1224,6 +1228,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           ...existing,
           features: existing.features ?? [],
           site_frame: existing.site_frame,
+          construction_trenches: existing.construction_trenches ?? [],
         };
       }
       const canvas: import("@workstream/contracts").DesignCanvas = {
@@ -1232,6 +1237,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         placements: input.placements,
         strokes: input.strokes ?? [],
         irrigation_zones: input.irrigation_zones ?? [],
+        construction_trenches: input.construction_trenches ?? [],
         annotations: input.annotations ?? [],
         features: input.features ?? [],
         site_frame: input.site_frame,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveHandoffChrome } from "./handoffChrome";
 
 const base = {
-  tool: "pan" as const,
+  tool: "select" as const,
   focusOn: false,
   frameOn: false,
   clientView: false,
@@ -64,7 +64,7 @@ describe("resolveHandoffChrome", () => {
         .inventoryPopup,
     ).toBe(false);
     expect(
-      resolveHandoffChrome({ ...base, mode: "cad", tool: "edit" }).inventoryPopup,
+      resolveHandoffChrome({ ...base, mode: "cad", tool: "select" }).inventoryPopup,
     ).toBe(false);
   });
 

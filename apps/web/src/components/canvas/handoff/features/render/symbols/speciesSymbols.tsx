@@ -1,8 +1,8 @@
 "use client";
 
 import { seededRandom, wobbledCirclePath } from "../seededRandom";
-import { sunShadowFillFrom } from "../renderTokens";
-import { useSunShadow } from "../SunShadowContext";
+import { SUN_SHADOW, sunShadowFill } from "../renderTokens";
+import { useGlyphSunShadow } from "../../shade/SunShadowContext";
 
 export type SymbolTone = {
   stroke: string;
@@ -11,14 +11,16 @@ export type SymbolTone = {
   ghost?: boolean;
 };
 
-function ShadowEllipse({ night }: { night: boolean }) {
-  const sun = useSunShadow();
+function GlyphSoftShadow({ night }: { night: boolean }) {
   const r = 42;
+  const { dx, dy } = useGlyphSunShadow(r, SUN_SHADOW.dyFactor);
   return (
     <ellipse
       data-testid="sun-shadow"
-      cx={50 + r * sun.dxFactor}
-      cy={50 + r * sun.dyFactor}
+      data-sun-dx={dx.toFixed(2)}
+      data-sun-dy={dy.toFixed(2)}
+      cx={50 + dx}
+      cy={50 + dy}
       rx={r * 0.82}
       ry={r * 0.42}
       fill={sunShadowFillFrom(sun, night)}
@@ -68,7 +70,7 @@ export function CanopyTreeSymbol({
       opacity={tone.ghost ? 0.4 : 1}
       strokeDasharray={tone.ghost ? "3 2.5" : undefined}
     >
-      {shadow(tone.night)}
+      <GlyphSoftShadow night={tone.night} />
       <path
         d={path}
         fill={tone.fill}
@@ -97,7 +99,7 @@ export function PleachedHornbeamSymbol({
       opacity={tone.ghost ? 0.4 : 1}
       strokeDasharray={tone.ghost ? "3 2.5" : undefined}
     >
-      {shadow(tone.night)}
+      <GlyphSoftShadow night={tone.night} />
       <rect
         x={22 + j()}
         y={18 + j()}
@@ -153,7 +155,7 @@ export function HedgeSymbol({
       opacity={tone.ghost ? 0.4 : 1}
       strokeDasharray={tone.ghost ? "3 2.5" : undefined}
     >
-      {shadow(tone.night)}
+      <GlyphSoftShadow night={tone.night} />
       <rect
         x={6}
         y={36}
@@ -203,7 +205,7 @@ export function MassPlantingSymbol({
       opacity={tone.ghost ? 0.4 : 1}
       strokeDasharray={tone.ghost ? "3 2.5" : undefined}
     >
-      {shadow(tone.night)}
+      <GlyphSoftShadow night={tone.night} />
       <g transform="translate(50 50) scale(1 0.72) translate(-50 -50)">
         <path
           d={path}
@@ -250,7 +252,7 @@ export function FeatureCycasSymbol({
       opacity={tone.ghost ? 0.4 : 1}
       strokeDasharray={tone.ghost ? "3 2.5" : undefined}
     >
-      {shadow(tone.night)}
+      <GlyphSoftShadow night={tone.night} />
       <circle
         cx={50}
         cy={50}
@@ -281,7 +283,7 @@ export function ExistingTreeSymbol({
   });
   return (
     <g opacity={tone.ghost ? 0.4 : 1}>
-      {shadow(tone.night)}
+      <GlyphSoftShadow night={tone.night} />
       <path
         d={path}
         fill="none"

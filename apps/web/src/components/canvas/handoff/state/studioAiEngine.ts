@@ -426,6 +426,12 @@ export function proposeFromStrokes(
     );
     if (g.scaleHint != null) item.scale = g.scaleHint;
     if (g.rotDeg != null) item.rot = g.rotDeg;
+    if (g.outlinePct && g.outlinePct.length >= 3) {
+      // Keep the drawn region glued to the (possibly snapped) centroid.
+      const dx = x - g.x_pct;
+      const dy = y - g.y_pct;
+      item.outlinePct = g.outlinePct.map((p) => ({ x: p.x + dx, y: p.y + dy }));
+    }
     return item;
   });
 
@@ -449,6 +455,7 @@ export function proposeFromCadSuggestions(
     reason: string;
     scale_hint?: number;
     rot_deg?: number;
+    outline_pct?: Array<{ x_pct: number; y_pct: number }>;
   }>,
 ): { items: StudioItem[]; idn: number; count: number } {
   if (suggestions.length === 0) return { items: [], idn, count: 0 };
@@ -479,6 +486,14 @@ export function proposeFromCadSuggestions(
     );
     if (g.scale_hint != null) item.scale = g.scale_hint;
     if (g.rot_deg != null) item.rot = g.rot_deg;
+    if (g.outline_pct && g.outline_pct.length >= 3) {
+      const dx = placed.x - g.x_pct;
+      const dy = placed.y - g.y_pct;
+      item.outlinePct = g.outline_pct.map((p) => ({
+        x: p.x_pct + dx,
+        y: p.y_pct + dy,
+      }));
+    }
     return item;
   });
   return { items, idn: nextIdn, count: items.length };

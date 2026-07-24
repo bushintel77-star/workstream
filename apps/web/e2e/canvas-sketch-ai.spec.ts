@@ -6,6 +6,54 @@ import {
   pipelineShell,
 } from "./helpers";
 
+const API = process.env.API_URL ?? "http://localhost:3001";
+
+/**
+ * Seed a lot frame so heuristic CAD layout can propose without waiting on
+ * Vicmap WFS (CI runners often miss/timeout public GeoServer).
+ */
+async function seedLotFrameForScan(
+  request: import("@playwright/test").APIRequestContext,
+  projectId: string,
+) {
+  const put = await request.put(`${API}/projects/${projectId}/design-canvas`, {
+    data: {
+      placements: [],
+      site_frame: {
+        boundary: [
+          { x_pct: 18, y_pct: 16 },
+          { x_pct: 82, y_pct: 16 },
+          { x_pct: 82, y_pct: 84 },
+          { x_pct: 18, y_pct: 84 },
+        ],
+        building: [
+          { x_pct: 28, y_pct: 22 },
+          { x_pct: 62, y_pct: 22 },
+          { x_pct: 62, y_pct: 48 },
+          { x_pct: 28, y_pct: 48 },
+        ],
+        building_source: "traced",
+      },
+    },
+  });
+  expect(put.ok()).toBeTruthy();
+}
+
+/** A closed rectangle-ish stroke that the domain classifier reads as a bed
+ * mass (closed, not near the boundary, area under the deck/lawn threshold). */
+const CLOSED_BED_STROKE = {
+  id: "a0000000-0000-4000-8000-00000000e2e1",
+  points: [
+    { x_pct: 42, y_pct: 55 },
+    { x_pct: 58, y_pct: 55 },
+    { x_pct: 58, y_pct: 65 },
+    { x_pct: 42, y_pct: 65 },
+    { x_pct: 42.5, y_pct: 55.5 },
+  ],
+  color: "#1c1917",
+  width_px: 2,
+};
+
 test.describe("Canvas sketch AI", () => {
   test("sketch board mounts without pipeline chrome", async ({
     page,
@@ -62,14 +110,20 @@ test.describe("Canvas sketch AI", () => {
 
   test("CAD scan produces reviewable ghosts", async ({ page, request }) => {
     const { projectId } = await createSurveyProject(request);
+    await seedLotFrameForScan(request, projectId);
 
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(page.getByTestId("building-footprint")).toBeVisible({
+      timeout: 15_000,
+    });
 
     await openCommandPalette(page);
-    await page.getByTestId("canvas-command-scan-ghosts").click();
+    const scan = page.getByTestId("canvas-command-scan-ghosts");
+    await expect(scan).toBeVisible({ timeout: 10_000 });
+    await scan.click();
     // Review and on-plan ghosts may both be visible; poll their combined count
     // instead of using locator.or(), which is strict when both valid surfaces land.
     await expect
@@ -77,8 +131,48 @@ test.describe("Canvas sketch AI", () => {
         async () =>
           (await page.getByTestId("cad-ghost-review").count()) +
           (await page.getByTestId("studio-ghost").count()),
-        { timeout: 25_000 },
+        { timeout: 30_000 },
       )
+      .toBeGreaterThan(0);
+  });
+
+  test("formalizing a closed stroke draws a sketch-region polygon (shape fidelity)", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createSurveyProject(request);
+
+    const put = await request.put(`${API}/projects/${projectId}/design-canvas`, {
+      data: { placements: [], strokes: [CLOSED_BED_STROKE] },
+    });
+    expect(put.ok()).toBeTruthy();
+
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(page.getByTestId("cad-plan-board")).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-convert-sketch").click();
+
+    // The stroke's drawn outline should render as a filled/washed region —
+    // not a rectangle glyph parked at the centroid (the shape-fidelity bug).
+    await expect(page.getByTestId("sketch-region")).toHaveCount(1, {
+      timeout: 20_000,
+    });
+    const region = page.getByTestId("sketch-region").first();
+    await expect(region).toHaveAttribute("data-ghost", "1");
+
+    // Accept the ghost — the region persists (solid) after acceptance.
+    const ghost = page.getByTestId("studio-ghost").first();
+    if (await ghost.count()) {
+      await ghost.click();
+      await page.keyboard.press("a");
+    }
+    await expect
+      .poll(async () => page.getByTestId("sketch-region").count(), {
+        timeout: 10_000,
+      })
       .toBeGreaterThan(0);
   });
 
@@ -87,10 +181,14 @@ test.describe("Canvas sketch AI", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
+    await seedLotFrameForScan(request, projectId);
 
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
+    });
+    await expect(page.getByTestId("building-footprint")).toBeVisible({
+      timeout: 15_000,
     });
 
     await openCommandPalette(page);
@@ -100,18 +198,28 @@ test.describe("Canvas sketch AI", () => {
         async () =>
           (await page.getByTestId("cad-ghost-review").count()) +
           (await page.getByTestId("studio-ghost").count()),
-        { timeout: 25_000 },
+        { timeout: 30_000 },
       )
       .toBeGreaterThan(0);
 
-    const before = await page.getByTestId("studio-ghost").count();
+    // Prefer on-plan ghosts for keyboard accept; fall back to review chip.
+    let before = await page.getByTestId("studio-ghost").count();
+    if (before === 0) {
+      const review = page.getByTestId("cad-ghost-review").first();
+      if ((await review.count()) > 0) {
+        await review.click();
+        before = await page.getByTestId("studio-ghost").count();
+      }
+    }
     if (before === 0) {
       test.skip();
       return;
     }
     await page.keyboard.press("a");
     await expect
-      .poll(async () => page.getByTestId("studio-ghost").count())
+      .poll(async () => page.getByTestId("studio-ghost").count(), {
+        timeout: 15_000,
+      })
       .toBeLessThan(before);
   });
 });

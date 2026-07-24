@@ -46,8 +46,10 @@
 
 .btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   width: 100%;
   min-width: 44px;
   min-height: 44px;
@@ -77,25 +79,6 @@
   background: rgba(143, 176, 255, 0.22);
 }
 
-/*
- * Curve carousel body — the button keeps its 44px hit target; only this inner
- * body leans toward the board and scales at the crest (vars from ToolDock).
- */
-.chipBody {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  transform: translateX(var(--dock-lean, 0px)) scale(var(--dock-scale, 1));
-  transform-origin: left center;
-  opacity: var(--dock-fade, 0.72);
-  transition:
-    transform 170ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    opacity 170ms ease;
-  will-change: transform, opacity;
-  pointer-events: none;
-}
-
 .glyph {
   font-size: 14px;
   line-height: 1;
@@ -110,7 +93,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chipBody {
+  .btn {
     transition: none;
   }
 }

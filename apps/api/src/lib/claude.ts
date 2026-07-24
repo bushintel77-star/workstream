@@ -947,6 +947,7 @@ export type SketchCadSuggestionOut = {
   reason: string;
   scale_hint?: number;
   rot_deg?: number;
+  outline_pct?: Array<{ x_pct: number; y_pct: number }>;
 };
 
 export type SketchToCadCallResult = {
@@ -984,6 +985,7 @@ function heuristicSketchToCad(args: SketchToCadCallArgs): SketchToCadCallResult 
       reason: s.reason,
       scale_hint: s.scaleHint,
       rot_deg: s.rotDeg,
+      outline_pct: s.outlinePct?.map((p) => ({ x_pct: p.x, y_pct: p.y })),
     }));
   return { suggestions, source: "heuristic" };
 }

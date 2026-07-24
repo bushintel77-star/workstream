@@ -7,7 +7,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
-  DesignSiteFrameInput,
+  LandscapeFeature,
 } from "@workstream/contracts";
 import type {
   SketchStroke,
@@ -112,6 +112,80 @@ export function placementsToItems(
   });
 }
 
+/** Feature layer for area types whose drawn outline persists as a region. */
+const FEATURE_LAYER_BY_TYPE: Partial<
+  Record<StudioItemType, "softscape_beds" | "hardscape">
+> = {
+  bed: "softscape_beds",
+  lawn: "softscape_beds",
+  paving: "hardscape",
+  deck: "hardscape",
+};
+
+/**
+ * Accepted items with a drawn region outline → LandscapeFeatures.
+ * Feature id mirrors the item id so hydrate can re-attach the outline.
+ */
+export function itemsToFeatures(items: StudioItem[]): LandscapeFeature[] {
+  const now = new Date().toISOString();
+  const out: LandscapeFeature[] = [];
+  for (const i of items) {
+    if (i.ghost) continue;
+    const layer = FEATURE_LAYER_BY_TYPE[i.t];
+    if (!layer) continue;
+    const outline = i.outlinePct ?? [];
+    if (outline.length < 3) continue;
+    out.push({
+      id: ensureUuid(i.id),
+      type: "LandscapeFeature",
+      metadata: {
+        layer,
+        timestamp_created: now,
+        source_attribution: "human_drawn",
+        user_modification_state: "accepted",
+      },
+      geometry: {
+        type: "Polygon",
+        spatial_reference: "EPSG:3857",
+        canvas_origin_pct: { x_pct: 0, y_pct: 0 },
+        points: outline.map((p, idx) => ({
+          id: `v${idx}`,
+          pct: { x_pct: clampPct(p.x), y_pct: clampPct(p.y) },
+        })),
+      },
+      material_fill: {
+        type: "surface",
+        sku: TYPE_TO_SYMBOL[i.t],
+        depth_m: 0.075,
+        waste_allocation_pct: 10,
+      },
+    });
+  }
+  return out;
+}
+
+/** Hydrate: re-attach persisted region outlines onto items by matching id. */
+export function featuresOntoItems(
+  items: StudioItem[],
+  features: LandscapeFeature[],
+): StudioItem[] {
+  if (features.length === 0) return items;
+  const byId = new Map(features.map((f) => [f.id, f]));
+  return items.map((i) => {
+    const f = byId.get(i.id);
+    if (!f || f.geometry.type !== "Polygon" || f.geometry.points.length < 3) {
+      return i;
+    }
+    return {
+      ...i,
+      outlinePct: f.geometry.points.map((v) => ({
+        x: v.pct.x_pct,
+        y: v.pct.y_pct,
+      })),
+    };
+  });
+}
+
 export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
   return strokes.map((s) => ({
     id: ensureUuid(s.id),
@@ -158,11 +232,11 @@ export function snapshotToSiteFrame(args: {
   easements: PctPoint[][];
   services: PctPoint[][];
   levels: SpotLevel[];
-  drainageRuns?: Array<{
-    id: string;
-    points: Array<{ x: number; y: number; z: number }>;
-    source: "indicative";
-  }>;
+  bydaAssets?: DesignSiteFrame["byda_assets"];
+  keylessOverlays?: DesignSiteFrame["keyless_overlays"];
+  /** Metres per 100% board width (Vicmap fit or operator calibration). */
+  boardWidthM?: number | null;
+  buildingSource?: DesignSiteFrame["building_source"];
 }): DesignSiteFrame {
   return {
     boundary: ringToFrame(args.boundary),
@@ -174,15 +248,22 @@ export function snapshotToSiteFrame(args: {
       y_pct: clampPct(lv.y),
       z_m: lv.z,
     })),
-    drainage_runs: (args.drainageRuns ?? []).map((run) => ({
-      id: run.id,
-      source: "indicative" as const,
-      points: run.points.map((p) => ({
-        x_pct: clampPct(p.x),
-        y_pct: clampPct(p.y),
-        z_m: p.z,
+    byda_assets: (args.bydaAssets ?? []).map((a) => ({
+      ...a,
+      ring: a.ring.map((p) => ({
+        x_pct: clampPct(p.x_pct),
+        y_pct: clampPct(p.y_pct),
       })),
     })),
+    keyless_overlays: args.keylessOverlays ?? [],
+    ...(args.boardWidthM != null &&
+    Number.isFinite(args.boardWidthM) &&
+    args.boardWidthM > 0
+      ? { board_width_m: args.boardWidthM }
+      : {}),
+    ...(args.buildingSource != null
+      ? { building_source: args.buildingSource }
+      : {}),
   };
 }
 
@@ -195,11 +276,10 @@ export function siteFrameToSnapshot(
   easements?: PctPoint[][];
   services?: PctPoint[][];
   levels?: SpotLevel[];
-  drainageRuns?: Array<{
-    id: string;
-    points: Array<{ x: number; y: number; z: number }>;
-    source: "indicative";
-  }>;
+  bydaAssets?: DesignSiteFrame["byda_assets"];
+  keylessOverlays?: DesignSiteFrame["keyless_overlays"];
+  boardWidthM?: number;
+  buildingSource?: DesignSiteFrame["building_source"];
 } {
   if (!frame) return {};
   const out: {
@@ -208,21 +288,19 @@ export function siteFrameToSnapshot(
     easements?: PctPoint[][];
     services?: PctPoint[][];
     levels?: SpotLevel[];
-    drainageRuns?: Array<{
-      id: string;
-      points: Array<{ x: number; y: number; z: number }>;
-      source: "indicative";
-    }>;
+    bydaAssets?: DesignSiteFrame["byda_assets"];
+    keylessOverlays?: DesignSiteFrame["keyless_overlays"];
+    boardWidthM?: number;
+    buildingSource?: DesignSiteFrame["building_source"];
   } = {};
-  const boundary = frame.boundary ?? [];
-  const building = frame.building ?? [];
-  const easements = frame.easements ?? [];
-  const services = frame.services ?? [];
-  const levels = frame.levels ?? [];
-  if (boundary.length >= 3) out.boundary = frameToRing(boundary);
-  if (building.length >= 3) out.building = frameToRing(building);
-  if (easements.length > 0) {
-    out.easements = easements.map(frameToRing);
+  if (frame.board_width_m != null && frame.board_width_m > 0) {
+    out.boardWidthM = frame.board_width_m;
+  }
+  if (frame.building_source) out.buildingSource = frame.building_source;
+  if (frame.boundary.length >= 3) out.boundary = frameToRing(frame.boundary);
+  if (frame.building.length >= 3) out.building = frameToRing(frame.building);
+  if (frame.easements.length > 0) {
+    out.easements = frame.easements.map(frameToRing);
   }
   if (services.length > 0) {
     out.services = services.map(frameToRing);
@@ -234,31 +312,31 @@ export function siteFrameToSnapshot(
       z: lv.z_m,
     }));
   }
-  if (frame.drainage_runs?.length) {
-    out.drainageRuns = frame.drainage_runs.map((run) => ({
-      id: run.id,
-      source: "indicative" as const,
-      points: run.points.map((p) => ({
-        x: p.x_pct,
-        y: p.y_pct,
-        z: p.z_m,
-      })),
-    }));
+  if ((frame.byda_assets ?? []).length > 0) {
+    out.bydaAssets = frame.byda_assets;
+  }
+  if ((frame.keyless_overlays ?? []).length > 0) {
+    out.keylessOverlays = frame.keyless_overlays;
   }
   return out;
 }
 
 /**
- * A real persisted site frame is authoritative.
+ * Resolve the dwelling ring on boot.
  *
- * If it contains no valid building ring, keep the building layer empty rather
- * than leaking demo/seed footprint geometry into a live project.
+ * - Persisted `site_frame.building` wins when present.
+ * - A real site frame with no building → empty (never seed).
+ * - Live projects (have a projectId) with no frame → empty until Vicmap hydrate.
+ * - Demo / no project → seed fallback is allowed.
  */
 export function resolveHydratedBuilding(
   frame: DesignSiteFrame | DesignSiteFrameInput | null | undefined,
   hydratedBuilding: PctPoint[] | undefined,
   fallbackBuilding: PctPoint[],
+  opts?: { liveProject?: boolean },
 ): PctPoint[] {
   if (hydratedBuilding) return hydratedBuilding;
-  return frame ? [] : fallbackBuilding;
+  if (frame) return [];
+  if (opts?.liveProject) return [];
+  return fallbackBuilding;
 }

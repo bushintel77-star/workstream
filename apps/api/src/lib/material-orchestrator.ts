@@ -146,6 +146,7 @@ export async function acceptOverlay(
         placements,
         strokes: canvas?.strokes ?? [],
         irrigation_zones: canvas?.irrigation_zones ?? [],
+        construction_trenches: canvas?.construction_trenches ?? [],
         annotations: canvas?.annotations ?? [],
       });
     }

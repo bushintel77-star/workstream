@@ -1,4 +1,12 @@
-import type { IrrigationZone, IrrigationZoneKind, CanvasAnnotation } from "@workstream/contracts";
+import type {
+  IrrigationZone,
+  IrrigationZoneKind,
+  CanvasAnnotation,
+  ConstructionTrench,
+  DesignBydaAsset,
+  DesignKeylessOverlay,
+  BydaAssetKind,
+} from "@workstream/contracts";
 import type {
   DesignSchemeSnapshot,
   DrainageRun,
@@ -43,13 +51,19 @@ export type StudioSnapshot = {
   pathCorridors: PathCorridor[];
   /** Survey service / easement polylines — prototype Servc tool. */
   services: PctPoint[][];
+  /** Typed BYDA utility assets — distinct stroke language from easements. */
+  bydaAssets: DesignBydaAsset[];
+  /** KEYLESS Vicmap washes (planning / bushfire / contour / flood / heritage…). */
+  keylessOverlays: DesignKeylessOverlay[];
   /** Authored drip / lighting paths — DesignCanvas.irrigation_zones. */
   irrigationZones: IrrigationZone[];
+  /** Construction trenches / conduit — DesignCanvas.construction_trenches. */
+  constructionTrenches: ConstructionTrench[];
   /** Hand-lettered presentation notes — DesignCanvas.annotations. */
   annotations: CanvasAnnotation[];
 };
 
-export type { DesignSchemeSnapshot, DrainageRun, HardscapeEdgeType, PathCorridor };
+export type { BydaAssetKind };
 
 export type StudioUiState = {
   mode: StudioMode;
@@ -63,18 +77,32 @@ export type StudioUiState = {
   clientView: boolean;
   /**
    * Right data lane — one panel at a time (lane law). null = lane empty.
-   * Layers / Measures / Demo Lots / Checklist share this slot exclusively.
+   * Layers / Measures / Services / Demo Lots / Checklist share this slot.
    */
   rightDataPanel: RightDataPanel | null;
   layerOpacity: LayerOpacity;
   /** View-only layer isolation; never persisted to DesignCanvas. */
   isolatedLayer: LayerKey | null;
   /**
-   * Services layer authoring on the CAD canvas — surfaces the Servc / Level /
-   * Calibrate tools in place so services live as a toggleable layer, not a
-   * separate survey tab. Canvas-first: one canvas, dynamic.
+   * Per-feature Services ledger hide map (id → true = hidden).
+   * Session-only; survives Survey → CAD; ticks freeze when servicesLocked.
+   */
+  serviceFeatureHidden: Record<string, boolean>;
+  /**
+   * Focused service / design feature ids — others on the services surface fall away.
+   * Esc clears. Shift/Cmd+click adds. Never persisted.
+   */
+  focusedServiceIds: string[] | null;
+  /**
+   * Legacy CAD services-edit toggle — superseded by survey-only authoring.
+   * Kept for session compat; always false once quote locks site services.
    */
   servicesEdit: boolean;
+  /**
+   * Survey services (corridors, RL levels, easements) frozen as site context.
+   * Set when entering Quote / Share; blocks Servc tools and opacity sliders.
+   */
+  servicesLocked: boolean;
   setbackOn: boolean;
   growth: GrowthStage;
   /** Minutes past midnight Melb-ish; handoff uses sunMin */
@@ -102,6 +130,11 @@ export type StudioUiState = {
   traceTarget: TraceTarget;
   /** Zone tool kind — drip irrigation or lighting run. */
   zoneKind: IrrigationZoneKind;
+  /**
+   * When set, next Servc commit lands as a typed BYDA asset (not a generic
+   * corridor / title easement). Cleared after commit or Esc.
+   */
+  bydaDraftKind: BydaAssetKind | null;
   gridGrain: "fine" | "medium" | "coarse";
   gridSnap: boolean;
   gridFormation: "ortho" | "dots" | "diamond" | "veil";
@@ -154,8 +187,8 @@ export const DESIGN_LAYER_PRESET: LayerOpacity = {
   boundary: 1,
   council: 1,
   vegetation: 1,
-  // Services (drainage / utilities / RL levels) stay legible on the design
-  // canvas — they are a toggleable layer, not a separate survey tab.
+  // Services (drainage / utilities / RL levels) — survey context on CAD;
+  // read-only overlay once Quote locks site services.
   services: 1,
   notes: 1,
 };

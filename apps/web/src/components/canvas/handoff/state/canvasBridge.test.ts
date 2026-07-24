@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   canvasToStrokes,
+  featuresOntoItems,
+  itemsToFeatures,
   itemsToPlacements,
   placementsToItems,
   resolveHydratedBuilding,
@@ -35,16 +37,31 @@ describe("site_frame bridge", () => {
       ],
       services: [],
       levels: [{ x: 40, y: 40, z: 12.5 }],
+      boardWidthM: 35.7,
     });
     expect(frame.boundary[0]).toEqual({ x_pct: 10, y_pct: 10 });
     expect(frame.levels[0]).toEqual({ x_pct: 40, y_pct: 40, z_m: 12.5 });
-    expect(frame.drainage_runs).toEqual([]);
+    expect(frame.board_width_m).toBeCloseTo(35.7, 6);
 
     const snap = siteFrameToSnapshot(frame);
     expect(snap.boundary).toHaveLength(4);
     expect(snap.building).toHaveLength(4);
     expect(snap.easements).toHaveLength(1);
     expect(snap.levels?.[0]).toEqual({ x: 40, y: 40, z: 12.5 });
+    expect(snap.boardWidthM).toBeCloseTo(35.7, 6);
+  });
+
+  it("omits the board scale when unset or invalid", () => {
+    const frame = snapshotToSiteFrame({
+      boundary: [],
+      building: [],
+      easements: [],
+      services: [],
+      levels: [],
+      boardWidthM: null,
+    });
+    expect(frame.board_width_m).toBeUndefined();
+    expect(siteFrameToSnapshot(frame).boardWidthM).toBeUndefined();
   });
 
   it("ignores empty frames on hydrate", () => {
@@ -56,6 +73,8 @@ describe("site_frame bridge", () => {
         easements: [],
         services: [],
         levels: [],
+        byda_assets: [],
+        keyless_overlays: [],
       }),
     ).toEqual({});
   });
@@ -72,6 +91,8 @@ describe("site_frame bridge", () => {
       easements: [],
       services: [],
       levels: [],
+      byda_assets: [],
+      keyless_overlays: [],
     };
     const seedBuilding = [
       { x: 30, y: 30 },
@@ -87,6 +108,35 @@ describe("site_frame bridge", () => {
     expect(resolveHydratedBuilding(undefined, undefined, seedBuilding)).toBe(
       seedBuilding,
     );
+    // Live projects never boot with the demo dwelling.
+    expect(
+      resolveHydratedBuilding(undefined, undefined, seedBuilding, {
+        liveProject: true,
+      }),
+    ).toEqual([]);
+  });
+
+  it("persists building_source on site_frame", () => {
+    const frame = snapshotToSiteFrame({
+      boundary: [
+        { x: 10, y: 10 },
+        { x: 90, y: 10 },
+        { x: 90, y: 90 },
+        { x: 10, y: 90 },
+      ],
+      building: [
+        { x: 30, y: 30 },
+        { x: 60, y: 30 },
+        { x: 60, y: 55 },
+        { x: 30, y: 55 },
+      ],
+      easements: [],
+      services: [],
+      levels: [],
+      buildingSource: "vicmap",
+    });
+    expect(frame.building_source).toBe("vicmap");
+    expect(siteFrameToSnapshot(frame).buildingSource).toBe("vicmap");
   });
 
   it("round-trips authored DBH on existing trees", () => {
@@ -106,6 +156,93 @@ describe("site_frame bridge", () => {
     expect(placements[0]!.label).toBe("exist:dbh=0.62");
     const back = placementsToItems(placements);
     expect(back[0]!.dbhM).toBeCloseTo(0.62, 5);
+  });
+
+  it("round-trips drawn region outlines as LandscapeFeatures", () => {
+    const items: StudioItem[] = [
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        t: "bed",
+        x: 50,
+        y: 60,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        outlinePct: [
+          { x: 40, y: 55 },
+          { x: 60, y: 55 },
+          { x: 58, y: 70 },
+          { x: 42, y: 68 },
+        ],
+      },
+      // Ghost with outline must not persist.
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        t: "lawn",
+        x: 20,
+        y: 20,
+        rot: 0,
+        scale: 1,
+        ghost: true,
+        outlinePct: [
+          { x: 10, y: 10 },
+          { x: 30, y: 10 },
+          { x: 20, y: 30 },
+        ],
+      },
+      // No outline → no feature.
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        t: "canopy",
+        x: 70,
+        y: 30,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+      },
+    ];
+    const features = itemsToFeatures(items);
+    expect(features).toHaveLength(1);
+    const f = features[0]!;
+    expect(f.id).toBe("22222222-2222-4222-8222-222222222222");
+    expect(f.type).toBe("LandscapeFeature");
+    expect(f.metadata.layer).toBe("softscape_beds");
+    expect(f.metadata.source_attribution).toBe("human_drawn");
+    expect(f.metadata.user_modification_state).toBe("accepted");
+    expect(f.geometry.type).toBe("Polygon");
+    expect(f.geometry.points).toHaveLength(4);
+    expect(f.geometry.points[0]).toMatchObject({
+      id: "v0",
+      pct: { x_pct: 40, y_pct: 55 },
+    });
+    expect(f.material_fill?.sku).toBe("lomandra-mass");
+
+    // Hydrate: outlines re-attach onto items by id.
+    const bare = items.map(({ outlinePct: _o, ...rest }) => ({ ...rest }));
+    const hydrated = featuresOntoItems(bare, features);
+    expect(hydrated[0]!.outlinePct).toEqual(items[0]!.outlinePct);
+    expect(hydrated[1]!.outlinePct).toBeUndefined();
+    expect(hydrated[2]!.outlinePct).toBeUndefined();
+  });
+
+  it("maps hardscape region types to the hardscape feature layer", () => {
+    const deck: StudioItem = {
+      id: "55555555-5555-4555-8555-555555555555",
+      t: "deck",
+      x: 50,
+      y: 65,
+      rot: 0,
+      scale: 1,
+      ghost: false,
+      outlinePct: [
+        { x: 40, y: 55 },
+        { x: 60, y: 55 },
+        { x: 60, y: 72 },
+      ],
+    };
+    const features = itemsToFeatures([deck]);
+    expect(features[0]!.metadata.layer).toBe("hardscape");
+    expect(features[0]!.material_fill?.sku).toBe("deck");
   });
 
   it("preserves sketch ink width and colour through persistence", () => {

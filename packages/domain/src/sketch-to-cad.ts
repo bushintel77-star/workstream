@@ -45,6 +45,12 @@ export type SketchCadSuggestion = {
   /** Suggested scale for the studio glyph. */
   scaleHint?: number;
   rotDeg?: number;
+  /**
+   * Decimated drawn outline (≤24 points, board %) — present only for closed
+   * area masses (deck / lawn / bed) so the CAD plan can render the region the
+   * operator actually drew instead of a glyph at the centroid.
+   */
+  outlinePct?: Array<{ x: number; y: number }>;
 };
 
 type StrokeMetrics = {
@@ -101,6 +107,63 @@ function strokeMetrics(stroke: SketchStrokeInput): StrokeMetrics | null {
   };
 }
 
+const MAX_OUTLINE_POINTS = 24;
+
+function clampPct(v: number): number {
+  return Math.min(100, Math.max(0, v));
+}
+
+/** Evenly decimate a point run to ≤ MAX_OUTLINE_POINTS, clamped to 0–100. */
+function decimateOutline(
+  pts: Array<{ x: number; y: number }>,
+): Array<{ x: number; y: number }> | undefined {
+  if (pts.length < 3) return undefined;
+  const out: Array<{ x: number; y: number }> = [];
+  const step = pts.length <= MAX_OUTLINE_POINTS ? 1 : pts.length / MAX_OUTLINE_POINTS;
+  for (let i = 0; i < pts.length && out.length < MAX_OUTLINE_POINTS; i += step) {
+    const p = pts[Math.floor(i)]!;
+    out.push({ x: clampPct(p.x), y: clampPct(p.y) });
+  }
+  return out.length >= 3 ? out : undefined;
+}
+
+/** Convex hull via Andrew's monotone chain (counter-clockwise, no repeat). */
+function convexHull(
+  pts: Array<{ x: number; y: number }>,
+): Array<{ x: number; y: number }> {
+  const sorted = [...pts].sort((a, b) => a.x - b.x || a.y - b.y);
+  if (sorted.length <= 2) return sorted;
+  const cross = (
+    o: { x: number; y: number },
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+  ) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lower: Array<{ x: number; y: number }> = [];
+  for (const p of sorted) {
+    while (
+      lower.length >= 2 &&
+      cross(lower[lower.length - 2]!, lower[lower.length - 1]!, p) <= 0
+    ) {
+      lower.pop();
+    }
+    lower.push(p);
+  }
+  const upper: Array<{ x: number; y: number }> = [];
+  for (let i = sorted.length - 1; i >= 0; i -= 1) {
+    const p = sorted[i]!;
+    while (
+      upper.length >= 2 &&
+      cross(upper[upper.length - 2]!, upper[upper.length - 1]!, p) <= 0
+    ) {
+      upper.pop();
+    }
+    upper.push(p);
+  }
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
 function ringBounds(ring: Array<{ x: number; y: number }>) {
   if (ring.length === 0) {
     return { minX: 20, maxX: 80, minY: 20, maxY: 80, cx: 50, cy: 50 };
@@ -124,6 +187,7 @@ function ringBounds(ring: Array<{ x: number; y: number }>) {
 function classifyStroke(
   m: StrokeMetrics,
   ctx: SketchToCadContext,
+  outline?: Array<{ x: number; y: number }>,
 ): SketchCadSuggestion {
   const lot = ringBounds(ctx.boundary);
   const house = ringBounds(ctx.building);
@@ -135,6 +199,7 @@ function classifyStroke(
     m.cy < lot.minY + 8 ||
     m.cy > lot.maxY - 8;
   const longLinear = m.lengthPct > 18 && Math.max(m.aspect, 1 / m.aspect) > 2.4;
+  const tinyMark = Math.max(m.spanX, m.spanY) < 6;
   const compact = m.spanX < 10 && m.spanY < 10 && m.lengthPct < 22;
 
   // Linear corridor — hedge / drain / path
@@ -175,6 +240,34 @@ function classifyStroke(
     };
   }
 
+  // Tiny mark — a dot / small circle is a tree, never a planting bed. Must
+  // fire BEFORE the closed-mass test: a 3-point dot has close-distance < 3%
+  // and would otherwise read as "closed".
+  if (tinyMark) {
+    if (westSide || rearOfHouse) {
+      return {
+        id: `stroke-${m.id}`,
+        symbol_id: "canopy",
+        x_pct: m.cx,
+        y_pct: m.cy,
+        confidence: 0.88,
+        reason: westSide
+          ? "Sketch mark west of house → shade canopy for afternoon sun"
+          : "Sketch mark → canopy anchor in the outdoor room",
+        scaleHint: 0.85,
+      };
+    }
+    return {
+      id: `stroke-${m.id}`,
+      symbol_id: "olive-standard",
+      x_pct: m.cx,
+      y_pct: m.cy,
+      confidence: 0.8,
+      reason: "Sketch mark → specimen / feature planting",
+      scaleHint: 0.75,
+    };
+  }
+
   // Closed mass — bed / lawn / deck / paving pad
   if (m.closed || (m.pointCount >= 8 && m.spanX > 6 && m.spanY > 6)) {
     const area = m.spanX * m.spanY;
@@ -187,6 +280,7 @@ function classifyStroke(
         confidence: 0.9,
         reason: "Closed sketch at rear door → deck outdoor room",
         scaleHint: Math.min(1.35, 0.6 + area / 400),
+        outlinePct: outline,
       };
     }
     if (area > 70) {
@@ -198,6 +292,7 @@ function classifyStroke(
         confidence: 0.83,
         reason: "Large closed sketch → lawn panel",
         scaleHint: Math.min(1.4, 0.65 + area / 500),
+        outlinePct: outline,
       };
     }
     return {
@@ -208,6 +303,7 @@ function classifyStroke(
       confidence: 0.85,
       reason: "Closed sketch → mass planting bed",
       scaleHint: Math.min(1.25, 0.55 + area / 350),
+      outlinePct: outline,
     };
   }
 
@@ -249,19 +345,107 @@ function classifyStroke(
   };
 }
 
+type MeasuredStroke = { stroke: SketchStrokeInput; m: StrokeMetrics };
+
+/**
+ * Substantial bbox overlap — overlap area / min(bbox area) > 0.5. Catches
+ * hatching and double outlines while leaving merely adjacent strokes alone.
+ */
+function bboxesOverlapSubstantially(a: StrokeMetrics, b: StrokeMetrics): boolean {
+  const aMinX = a.cx - a.spanX / 2;
+  const aMaxX = a.cx + a.spanX / 2;
+  const aMinY = a.cy - a.spanY / 2;
+  const aMaxY = a.cy + a.spanY / 2;
+  const bMinX = b.cx - b.spanX / 2;
+  const bMaxX = b.cx + b.spanX / 2;
+  const bMinY = b.cy - b.spanY / 2;
+  const bMaxY = b.cy + b.spanY / 2;
+  const ox = Math.min(aMaxX, bMaxX) - Math.max(aMinX, bMinX);
+  const oy = Math.min(aMaxY, bMaxY) - Math.max(aMinY, bMinY);
+  if (ox <= 0 || oy <= 0) return false;
+  const overlap = ox * oy;
+  const minArea = Math.min(a.spanX * a.spanY, b.spanX * b.spanY);
+  return overlap / Math.max(0.01, minArea) > 0.5;
+}
+
+/**
+ * A stroke may join a cluster if it reads as area work — closed, or not a
+ * long thin linear run. A drain / hedge line crossing a bed's bbox must stay
+ * its own suggestion.
+ */
+function clusterEligible(m: StrokeMetrics): boolean {
+  const thinLinear =
+    m.lengthPct > 18 && Math.max(m.aspect, 1 / m.aspect) > 2.4 && !m.closed;
+  return !thinLinear;
+}
+
+/** Greedy union of strokes whose bboxes overlap substantially. */
+function clusterStrokes(measured: MeasuredStroke[]): MeasuredStroke[][] {
+  const parent = measured.map((_, i) => i);
+  const find = (i: number): number => {
+    let r = i;
+    while (parent[r] !== r) r = parent[r]!;
+    let c = i;
+    while (parent[c] !== c) {
+      const next = parent[c]!;
+      parent[c] = r;
+      c = next;
+    }
+    return r;
+  };
+  for (let i = 0; i < measured.length; i += 1) {
+    if (!clusterEligible(measured[i]!.m)) continue;
+    for (let j = i + 1; j < measured.length; j += 1) {
+      if (!clusterEligible(measured[j]!.m)) continue;
+      if (bboxesOverlapSubstantially(measured[i]!.m, measured[j]!.m)) {
+        parent[find(j)] = find(i);
+      }
+    }
+  }
+  const groups = new Map<number, MeasuredStroke[]>();
+  measured.forEach((ms, i) => {
+    const root = find(i);
+    const g = groups.get(root);
+    if (g) g.push(ms);
+    else groups.set(root, [ms]);
+  });
+  return [...groups.values()];
+}
+
 /**
  * Convert freehand sketch strokes into CAD ghost placement suggestions.
- * One suggestion per stroke with ≥2 points; empty input → [].
+ * Strokes whose bounding boxes overlap substantially (hatching, double
+ * outlines) merge into one suggestion; each remaining cluster with ≥2 points
+ * yields one suggestion. Empty input → [].
  */
 export function interpretSketchStrokesToCad(
   strokes: SketchStrokeInput[],
   ctx: SketchToCadContext,
 ): SketchCadSuggestion[] {
-  const out: SketchCadSuggestion[] = [];
+  const measured: MeasuredStroke[] = [];
   for (const stroke of strokes) {
     const m = strokeMetrics(stroke);
     if (!m) continue;
-    out.push(classifyStroke(m, ctx));
+    measured.push({ stroke, m });
+  }
+  const out: SketchCadSuggestion[] = [];
+  for (const cluster of clusterStrokes(measured)) {
+    if (cluster.length === 1) {
+      const { stroke, m } = cluster[0]!;
+      // Single closed stroke: the drawn points ARE the outline (preserves
+      // concavity) — decimated, only attached on the closed-mass branch.
+      const outline = m.closed ? decimateOutline(stroke.points) : undefined;
+      out.push(classifyStroke(m, ctx, outline));
+      continue;
+    }
+    // Multi-stroke mass (hatching / double outline): classify the merged
+    // point cloud, convex hull as the outline.
+    const allPoints = cluster.flatMap((c) => c.stroke.points);
+    const merged = strokeMetrics({ id: cluster[0]!.stroke.id, points: allPoints });
+    if (!merged) continue;
+    merged.closed = merged.closed || cluster.some((c) => c.m.closed);
+    const outline = decimateOutline(convexHull(allPoints));
+    out.push(classifyStroke(merged, ctx, outline));
   }
   return out;
 }

@@ -21,6 +21,21 @@ export type StudioCursorContext = {
   sketchTip?: SketchTipGrade;
 };
 
+/**
+ * Pointer with a lock badge — Lock permits selection (no move), so the cursor
+ * must never claim the click does nothing (`not-allowed` lies; rule 5).
+ */
+export function lockBadgeCursor(): string {
+  const svg = encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">` +
+      `<path d="M5 3l6 14 2.2-5.4L18.6 9.4Z" fill="#1c1917" stroke="#faf7f2" stroke-width="1"/>` +
+      `<rect x="14" y="15" width="8" height="6.5" rx="1.2" fill="#faf7f2" stroke="#1c1917" stroke-width="1.2"/>` +
+      `<path d="M15.8 15v-1.6a2.2 2.2 0 0 1 4.4 0V15" fill="none" stroke="#1c1917" stroke-width="1.2"/>` +
+      `</svg>`,
+  );
+  return `url("data:image/svg+xml,${svg}") 5 3, default`;
+}
+
 /** Low-opacity ink-faint crosshair for Paint air-lock. */
 export function paintAirLockCursor(): string {
   const svg = encodeURIComponent(
@@ -34,14 +49,16 @@ export function paintAirLockCursor(): string {
 }
 
 /**
- * Context-aware canvas cursor — function follows environment, mark is idle craft.
- * Single authority for zoom world + sketch pad (no competing CSS cursors).
+ * Context-aware canvas cursor — single authority for zoom world + sketch pad.
+ *
+ * Rule 1 (docs/INTERACTION-LOGIC.md): the cursor is a pure function of
+ * (tool, hover-target, locked) and always predicts the outcome. An armed tool
+ * returns its draw cursor unconditionally — even over objects. Only Select
+ * (the ground state) reacts to the hover target, closing to the grab hand
+ * over a draggable object.
  */
 export function resolveStudioCursor(ctx: StudioCursorContext): string {
   if (ctx.frameOn) return "default";
-
-  if (ctx.boardCursor === "move") return "grab";
-  if (ctx.boardCursor === "add") return "copy";
 
   const tool = ctx.tool;
 
@@ -49,7 +66,7 @@ export function resolveStudioCursor(ctx: StudioCursorContext): string {
     return paintAirLockCursor();
   }
 
-  /* Pen cursor only while the pen owns the click — Pan in sketch still grabs. */
+  /* Pen cursor only while the pen owns the click — Select in sketch grabs. */
   if (tool === "sketch") {
     if (ctx.sketchTool === "eraser") return sketchEraserCursor();
     return sketchPenCursor(ctx.sketchTip ?? "medium");
@@ -67,8 +84,16 @@ export function resolveStudioCursor(ctx: StudioCursorContext): string {
   }
 
   if (tool === "add") return "copy";
-  if (tool === "lock" || (ctx.locked && tool === "edit")) return "not-allowed";
-  if (tool === "pan") return "grab";
+  /* Lock selects but never moves — pointer + badge, never `not-allowed`. */
+  if (tool === "lock" || ctx.locked) return lockBadgeCursor();
 
+  /*
+   * Select ground state. On the sketch pad a Select-drag pans the camera
+   * (nothing to marquee), so the honest cursor is the grab hand. On plan
+   * boards: grab hand over a draggable, craft mark when idle.
+   */
+  if (ctx.mode === "sketch") return "grab";
+  if (ctx.boardCursor === "move") return "grab";
+  if (ctx.boardCursor === "add") return "copy";
   return pointerMarkCursor(ctx.markId);
 }

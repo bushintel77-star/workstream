@@ -1,5 +1,13 @@
 import type { GeoJsonPolygon } from "@workstream/contracts";
-import { polygonArea, type VicmapParcelAttrs } from "@workstream/domain";
+import {
+  pointInRing,
+  polygonArea,
+  type LngLat,
+  type VicmapParcelAttrs,
+} from "@workstream/domain";
+
+/** Reject park / suburb-scale MultiPolygon parts when a residential ring exists. */
+const MAX_SANE_TITLE_AREA_M2 = 80_000;
 
 /**
  * DELWP public GeoServer — Vicmap Property / buildings as keyless WFS GeoJSON.
@@ -23,8 +31,6 @@ type Ring = Coord[];
 type RawGeometry =
   | { type: "Polygon"; coordinates: Ring[] }
   | { type: "MultiPolygon"; coordinates: Ring[][] }
-  // Easement layer geometry is gml:CurvePropertyType — GeoServer's GeoJSON
-  // output emits it as LineString / MultiLineString.
   | { type: "LineString"; coordinates: Coord[] }
   | { type: "MultiLineString"; coordinates: Coord[][] };
 
@@ -56,6 +62,13 @@ const CAPABILITIES_TTL_MS = 60 * 60 * 1000;
 let propertyLayerCache: DiscoveredLayer | null = null;
 let buildingLayerCache: DiscoveredLayer | null = null;
 let easementLayerCache: DiscoveredLayer | null = null;
+
+export type VicmapEasementLine = {
+  /** EPSG:4326 vertices along the easement curve. */
+  coordinates: Coord[];
+  pfi: string | null;
+  status: string | null;
+};
 
 /**
  * Vicmap cadastral is always available via the public GeoServer.
@@ -117,19 +130,187 @@ export function scoreBuildingLayerName(typeName: string): number {
   return score;
 }
 
-/** Score a GetCapabilities FeatureType name for Vicmap easement polylines. */
+/**
+ * KEYLESS next — same GetCapabilities stack as title/building.
+ * Prefer view / polygon layers. Easement hydrate is LIVE via
+ * `fetchEasementLinesForTitle` (title-ring INTERSECTS).
+ */
+export type VicmapKeylessKind =
+  | "easement"
+  | "planning"
+  | "bushfire"
+  | "urban_tree"
+  | "contour"
+  | "flood"
+  | "heritage"
+  | "water_corp"
+  | "road_casement"
+  | "acid_sulfate"
+  | "wetland";
+
+function scoreNamed(
+  typeName: string,
+  prefer: RegExp[],
+  reject: RegExp[],
+  exactBoost: Record<string, number> = {},
+): number {
+  const n = localName(typeName);
+  if (!n) return -Infinity;
+  for (const r of reject) {
+    if (r.test(n)) return -100;
+  }
+  if (exactBoost[n] != null) return exactBoost[n]!;
+  let score = -Infinity;
+  for (const p of prefer) {
+    if (p.test(n)) {
+      score = Math.max(score, 40);
+      if (n.includes("view") || n.includes("polygon")) score += 20;
+      if (n.includes("proposed")) score -= 15;
+    }
+  }
+  return score;
+}
+
+/**
+ * Score Vicmap Property easement line layers.
+ * Prefer the full `easement` layer over simplified approved/proposed views.
+ */
 export function scoreEasementLayerName(typeName: string): number {
   const n = localName(typeName);
   if (!n) return -Infinity;
   if (!n.includes("easement")) return -Infinity;
-  // Annotation / proposed / point variants are not the cadastral line layer.
-  if (/anno|annotation|proposed|point$|text/.test(n)) return -50;
+  if (/anno|annotation|label|point$/.test(n)) return -80;
 
   let score = 0;
   if (n === "easement") score += 100;
-  else if (n.includes("easement") && n.includes("view")) score += 60;
-  else score += 40;
+  else if (n.includes("easement") && n.includes("approved") && !n.includes("proposed")) {
+    score += 70;
+  } else if (n.includes("easement") && n.includes("proposed")) score += 40;
+  else if (n.includes("easement")) score += 50;
+
+  if (n.startsWith("v_s_")) score -= 5;
   return score;
+}
+
+export function scorePlanningLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/planning.?zone/, /zone.?polygon/, /\bpg_/, /land.?use.?zone/],
+    [/annotation/, /label/, /address/],
+    { planning_zone: 100, v_zone_polygon: 90 },
+  );
+}
+
+export function scoreBushfireLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/bushfire/, /\bbpa\b/, /bmo/, /fire.?prone/],
+    [/annotation/, /label/],
+    { bushfire_prone_area: 100, bpa: 90 },
+  );
+}
+
+export function scoreUrbanTreeLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/tree_urban/, /urban.?tree/, /canopy/, /veg.?tree/],
+    [/annotation/, /farm/, /plantation/],
+    { tree_urban: 100, urban_tree: 90 },
+  );
+}
+
+export function scoreContourLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/contour/, /hypsometric/, /elevation.?line/],
+    [/spot.?height/, /annotation/],
+    { contour: 90, contours_1m: 100, contours_5m: 85 },
+  );
+}
+
+export function scoreFloodLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/flood/, /lsio/, /inundation/, /overlay.?flood/],
+    [/annotation/, /label/],
+    { flood_extent: 90, lsio: 95 },
+  );
+}
+
+export function scoreHeritageLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/heritage/, /\bho\b/, /heritage.?overlay/],
+    [/annotation/, /label/],
+    { heritage_overlay: 100, heritage: 80 },
+  );
+}
+
+export function scoreWaterCorpLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/water.?corp/, /watercorp/, /melb.?water/, /authority.?boundary/],
+    [/pipe/, /main/, /sewer/, /annotation/],
+    { water_corporation: 100 },
+  );
+}
+
+export function scoreRoadCasementLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/road.?casement/, /road.?reserve/, /tr_road/, /road.?polygon/],
+    [/annotation/, /centerline/, /centreline/],
+    { road_casement_polygon: 100, tr_road: 80 },
+  );
+}
+
+export function scoreAcidSulfateLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/acid.?sulfate/, /acid.?sulphate/, /\bass\b/],
+    [/annotation/],
+    { acid_sulfate_soil: 100 },
+  );
+}
+
+export function scoreWetlandLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/wetland/, /ramsar/, /swamp/],
+    [/annotation/, /label/],
+    { wetland: 100 },
+  );
+}
+
+export const VICMAP_KEYLESS_SCORERS: Record<
+  VicmapKeylessKind,
+  (typeName: string) => number
+> = {
+  easement: scoreEasementLayerName,
+  planning: scorePlanningLayerName,
+  bushfire: scoreBushfireLayerName,
+  urban_tree: scoreUrbanTreeLayerName,
+  contour: scoreContourLayerName,
+  flood: scoreFloodLayerName,
+  heritage: scoreHeritageLayerName,
+  water_corp: scoreWaterCorpLayerName,
+  road_casement: scoreRoadCasementLayerName,
+  acid_sulfate: scoreAcidSulfateLayerName,
+  wetland: scoreWetlandLayerName,
+};
+
+/** Pick best KEYLESS layer names from a capabilities list (discovery only). */
+export function discoverKeylessLayerNames(
+  typeNames: string[],
+): Partial<Record<VicmapKeylessKind, string>> {
+  const out: Partial<Record<VicmapKeylessKind, string>> = {};
+  for (const [kind, scoreFn] of Object.entries(VICMAP_KEYLESS_SCORERS) as Array<
+    [VicmapKeylessKind, (n: string) => number]
+  >) {
+    const best = pickBestLayerName(typeNames, scoreFn);
+    if (best) out[kind] = best;
+  }
+  return out;
 }
 
 /** Pick the best-scoring typeName from a capabilities list. */
@@ -270,7 +451,7 @@ export async function discoverBuildingLayer(): Promise<DiscoveredLayer> {
   return buildingLayerCache;
 }
 
-/** Discover Vicmap easement polyline layer + its geometry field. */
+/** Discover Vicmap Property easement line layer + its geometry field. */
 export async function discoverEasementLayer(): Promise<DiscoveredLayer> {
   if (easementLayerCache) return easementLayerCache;
   const names = await fetchCapabilitiesTypeNames();
@@ -313,16 +494,40 @@ async function wfsFetch(url: string): Promise<FeatureCollection> {
   return (await res.json()) as FeatureCollection;
 }
 
-function largestPolygonRing(geom: RawGeometry): Ring | null {
+/** Exterior rings from a Polygon or MultiPolygon (no holes). */
+export function explodeExteriorRings(geom: RawGeometry): Ring[] {
   if (geom.type === "Polygon") {
-    return geom.coordinates[0] ?? null;
+    const ring = geom.coordinates[0];
+    return ring && ring.length >= 3 ? [ring] : [];
   }
-  if (geom.type !== "MultiPolygon") return null;
+  if (geom.type === "MultiPolygon") {
+    const out: Ring[] = [];
+    for (const poly of geom.coordinates) {
+      const ring = poly[0];
+      if (ring && ring.length >= 3) out.push(ring);
+    }
+    return out;
+  }
+  return [];
+}
+
+/** Line / multiline rings for contour-style KEYLESS layers. */
+export function explodeLineRings(geom: RawGeometry): Ring[] {
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  if (geom.type === "MultiLineString") {
+    return geom.coordinates.filter((r) => r.length >= 2);
+  }
+  // Some contour layers ship as thin polygons — accept those too.
+  return explodeExteriorRings(geom);
+}
+
+/** Largest exterior ring — used for building footprints (main mass). */
+function largestPolygonRing(geom: RawGeometry): Ring | null {
   let best: Ring | null = null;
   let bestArea = 0;
-  for (const poly of geom.coordinates) {
-    const ring = poly[0];
-    if (!ring) continue;
+  for (const ring of explodeExteriorRings(geom)) {
     const area = polygonArea(ring as Coord[]);
     if (area > bestArea) {
       bestArea = area;
@@ -332,20 +537,53 @@ function largestPolygonRing(geom: RawGeometry): Ring | null {
   return best;
 }
 
-/** Flatten a WFS line geometry (curves arrive as LineString variants). */
-export function extractPolylines(geom: RawGeometry | undefined): Coord[][] {
-  if (!geom) return [];
-  if (geom.type === "LineString") {
-    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
-  }
-  if (geom.type === "MultiLineString") {
-    return geom.coordinates.filter((line) => line.length >= 2);
-  }
-  return [];
+/**
+ * Pick the cadastral title ring for a pin: smallest ring that contains the
+ * point and is under {@link MAX_SANE_TITLE_AREA_M2}. Avoids Vicmap
+ * MultiPolygon parts that are parks / suburb aggregates.
+ */
+export function pickTitleRingForPin(
+  rings: Ring[],
+  lng: number,
+  lat: number,
+  maxAreaM2 = MAX_SANE_TITLE_AREA_M2,
+): Ring | null {
+  const scored = rings
+    .map((ring) => {
+      const area = polygonArea(ring as Coord[]);
+      return {
+        ring,
+        area,
+        contains: pointInRing(lng, lat, ring as LngLat[]),
+      };
+    })
+    .filter((r) => Number.isFinite(r.area) && r.area > 1)
+    .sort((a, b) => a.area - b.area);
+
+  const containingSane = scored.filter(
+    (r) => r.contains && r.area <= maxAreaM2,
+  );
+  if (containingSane[0]) return containingSane[0].ring;
+
+  const containingAny = scored.filter((r) => r.contains);
+  if (containingAny[0]) return containingAny[0].ring;
+
+  const sane = scored.filter((r) => r.area <= maxAreaM2);
+  if (sane[0]) return sane[0].ring;
+
+  return scored[0]?.ring ?? null;
+}
+
+function ensureClosedRing(ring: Ring): Ring {
+  if (ring.length < 3) return ring;
+  const first = ring[0]!;
+  const last = ring[ring.length - 1]!;
+  if (first[0] === last[0] && first[1] === last[1]) return ring;
+  return [...ring, first];
 }
 
 function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
-  return { type: "Polygon", coordinates: [ring] };
+  return { type: "Polygon", coordinates: [ensureClosedRing(ring)] };
 }
 
 function propStr(
@@ -405,22 +643,24 @@ export async function fetchTitleParcel(
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 
-  let best: RawFeature | null = null;
-  let bestRing: Ring | null = null;
-  let bestArea = 0;
+  // Collect every exterior ring with its parent feature attrs.
+  const candidates: Array<{ ring: Ring; feature: RawFeature }> = [];
   for (const f of fc.features) {
-    const ring = largestPolygonRing(f.geometry);
-    if (!ring) continue;
-    const area = polygonArea(ring as Coord[]);
-    if (area > bestArea) {
-      best = f;
-      bestRing = ring;
-      bestArea = area;
+    for (const ring of explodeExteriorRings(f.geometry)) {
+      candidates.push({ ring, feature: f });
     }
   }
-  if (!best || !bestRing) return null;
+  const bestRing = pickTitleRingForPin(
+    candidates.map((c) => c.ring),
+    lng,
+    lat,
+  );
+  if (!bestRing) return null;
+  const best =
+    candidates.find((c) => c.ring === bestRing)?.feature ??
+    candidates[0]!.feature;
 
-  const lotAreaM2 = Math.round(bestArea);
+  const lotAreaM2 = Math.round(polygonArea(bestRing as Coord[]));
   return {
     polygon: toGeoJsonPolygon(bestRing),
     attrs: extractVicmapParcelAttrs(best.properties, lotAreaM2),
@@ -442,26 +682,143 @@ export async function fetchBuildingPolygon(
   titleRing: Ring,
 ): Promise<GeoJsonPolygon | null> {
   const { typeName, geomField } = await discoverBuildingLayer();
-  const wkt = `POLYGON((${titleRing
-    .map(([x, y]) => `${x} ${y}`)
-    .join(", ")}))`;
+  const closed = ensureClosedRing(titleRing);
+  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
   const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
   const url = buildUrl(typeName, cql);
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 
-  let bestRing: Ring | null = null;
-  let bestArea = 0;
+  // Main dwelling = largest building footprint intersecting the title.
+  const bestRing = largestPolygonRing({
+    type: "MultiPolygon",
+    coordinates: fc.features.flatMap((f) =>
+      explodeExteriorRings(f.geometry).map((r) => [r]),
+    ),
+  });
+  return bestRing ? toGeoJsonPolygon(bestRing) : null;
+}
+
+type LineGeometry =
+  | { type: "LineString"; coordinates: Coord[] }
+  | { type: "MultiLineString"; coordinates: Coord[][] };
+
+function isLineGeometry(geom: unknown): geom is LineGeometry {
+  if (!geom || typeof geom !== "object") return false;
+  const g = geom as { type?: string; coordinates?: unknown };
+  return g.type === "LineString" || g.type === "MultiLineString";
+}
+
+function explodeLineCoordinates(geom: LineGeometry): Coord[][] {
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  return geom.coordinates.filter((line) => line.length >= 2);
+}
+
+/** Max easement LineStrings per title — keeps auto-trace payload bounded. */
+export const EASEMENT_LINE_CAP = 24;
+
+/**
+ * Fetch Vicmap Property easement lines intersecting a title ring.
+ * Vicmap captures only a subset of easements — treat as indicative site context.
+ */
+export async function fetchEasementLinesForTitle(
+  titleRing: Ring,
+): Promise<VicmapEasementLine[]> {
+  const { typeName, geomField } = await discoverEasementLayer();
+  const closed = ensureClosedRing(titleRing);
+  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
+  const url = buildUrl(typeName, cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return [];
+
+  const out: VicmapEasementLine[] = [];
   for (const f of fc.features) {
-    const ring = largestPolygonRing(f.geometry);
-    if (!ring) continue;
-    const area = polygonArea(ring as Coord[]);
-    if (area > bestArea) {
-      bestRing = ring;
-      bestArea = area;
+    if (!isLineGeometry(f.geometry)) continue;
+    const pfi = propStr(f.properties, "pfi", "PFI");
+    const status = propStr(f.properties, "status", "STATUS");
+    for (const coordinates of explodeLineCoordinates(f.geometry)) {
+      out.push({ coordinates, pfi, status });
+      if (out.length >= EASEMENT_LINE_CAP) return out;
     }
   }
-  return bestRing ? toGeoJsonPolygon(bestRing) : null;
+  return out;
+}
+
+const keylessLayerCache = new Map<VicmapKeylessKind, DiscoveredLayer>();
+
+/** Discover a KEYLESS layer + geometry field via scorers + DescribeFeatureType. */
+export async function discoverKeylessLayer(
+  kind: VicmapKeylessKind,
+): Promise<DiscoveredLayer | null> {
+  const hit = keylessLayerCache.get(kind);
+  if (hit) return hit;
+  const names = await fetchCapabilitiesTypeNames();
+  const scoreFn = VICMAP_KEYLESS_SCORERS[kind];
+  const typeName = pickBestLayerName(names, scoreFn);
+  if (!typeName) return null;
+  const geomField = await describeGeometryField(typeName);
+  const discovered = { typeName, geomField };
+  keylessLayerCache.set(kind, discovered);
+  return discovered;
+}
+
+export type KeylessFetchResult = {
+  kind: VicmapKeylessKind;
+  typeName: string;
+  /** Exterior rings or contour polylines in EPSG:4326. */
+  rings: Ring[];
+  label: string | null;
+};
+
+/**
+ * Fetch KEYLESS overlay geometry intersecting a lat/lng pin.
+ * Contours prefer line rings; planning / bushfire prefer polygons.
+ */
+export async function fetchKeylessRings(
+  kind: VicmapKeylessKind,
+  lat: number,
+  lng: number,
+): Promise<KeylessFetchResult | null> {
+  const layer = await discoverKeylessLayer(kind);
+  if (!layer) return null;
+  const cql = `INTERSECTS(${layer.geomField}, SRID=4326;POINT(${lng} ${lat}))`;
+  const url = buildUrl(layer.typeName, cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return null;
+
+  const rings: Ring[] = [];
+  let label: string | null = null;
+  for (const f of fc.features) {
+    const parts =
+      kind === "contour"
+        ? explodeLineRings(f.geometry)
+        : explodeExteriorRings(f.geometry);
+    for (const r of parts) rings.push(r);
+    if (!label) {
+      label = propStr(
+        f.properties,
+        "ZONE_CODE",
+        "ZONE",
+        "OVERLAY",
+        "BMO",
+        "LABEL",
+        "NAME",
+        "name",
+      );
+    }
+  }
+  if (rings.length === 0) return null;
+  // Cap payload — board washes do not need every contour statewide.
+  const capped = rings.slice(0, kind === "contour" ? 40 : 12);
+  return {
+    kind,
+    typeName: layer.typeName,
+    rings: capped,
+    label,
+  };
 }
 
 export type VicmapEasement = {
@@ -502,4 +859,5 @@ export function __resetVicmapDiscoveryCacheForTests(): void {
   propertyLayerCache = null;
   buildingLayerCache = null;
   easementLayerCache = null;
+  keylessLayerCache.clear();
 }
