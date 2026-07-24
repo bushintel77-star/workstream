@@ -19,6 +19,22 @@ describe("neighbourLotContext", () => {
     const lots = neighbourLotContext(lot);
     expect(lots.length).toBeGreaterThanOrEqual(3);
   });
+
+  it("drops collapsed verge bands when the lot sits near the board edge", () => {
+    const topHeavy = [
+      { x: 20, y: 2 },
+      { x: 80, y: 2 },
+      { x: 80, y: 40 },
+      { x: 20, y: 40 },
+    ];
+    const lots = neighbourLotContext(topHeavy);
+    for (const ring of lots) {
+      const xs = ring.map((p) => p.x);
+      const ys = ring.map((p) => p.y);
+      expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThanOrEqual(0.5);
+      expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThanOrEqual(0.5);
+    }
+  });
 });
 
 describe("polygonCentroid", () => {

@@ -62,9 +62,18 @@ export function neighbourLotContext(boundary: PctPoint[]): PctPoint[][] {
     ]);
   }
 
-  return lots.filter((ring) =>
-    ring.every((p) => p.x >= -5 && p.x <= 105 && p.y >= -5 && p.y <= 105),
-  );
+  return lots.filter((ring) => {
+    if (!ring.every((p) => p.x >= -5 && p.x <= 105 && p.y >= -5 && p.y <= 105)) {
+      return false;
+    }
+    /* Reject collapsed verge bands (clamp-to-0 turns a band into a line /
+       zero-area poly — same unclipped-fill family as board-spanning washes). */
+    const xs = ring.map((p) => p.x);
+    const ys = ring.map((p) => p.y);
+    const w = Math.max(...xs) - Math.min(...xs);
+    const h = Math.max(...ys) - Math.min(...ys);
+    return w >= 0.5 && h >= 0.5;
+  });
 }
 
 export function polygonCentroid(pts: PctPoint[]): PctPoint {
