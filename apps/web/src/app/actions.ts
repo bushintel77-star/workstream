@@ -529,6 +529,16 @@ export async function hydrateKeylessAction(
   }
 }
 
+/** Site boundary for co-registering KEYLESS canvas-metre rings (server-only). */
+export async function getSiteBoundaryAction(projectId: string) {
+  const { getSiteBoundaryApi } = await import("../lib/api");
+  try {
+    return await getSiteBoundaryApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Boundary load failed");
+  }
+}
+
 export async function saveBoundaryAction(
   projectId: string,
   boundary: import("../lib/canvas-types").SiteBoundaryLite,

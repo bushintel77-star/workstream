@@ -1633,10 +1633,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
     let cancelled = false;
     void (async () => {
       try {
-        const { autoTraceBoundaryAction, hydrateKeylessAction } = await import(
-          "../../../../app/actions"
-        );
-        const { getSiteBoundaryApi } = await import("../../../../lib/api");
+        const {
+          autoTraceBoundaryAction,
+          hydrateKeylessAction,
+          getSiteBoundaryAction,
+        } = await import("../../../../app/actions");
         const {
           applyCanvasMetresTransform,
           fitCanvasMetresRing,
@@ -1687,12 +1688,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
         });
 
         // KEYLESS washes — same title transform when available.
+        // Boundary fetch goes through a server action (never import server-only api).
         try {
           const keyless = await hydrateKeylessAction(projectId);
           if (cancelled || keyless.overlays_canvas.length === 0) return;
           let transform = applied.fit.transform;
           if (!transform) {
-            const bound = await getSiteBoundaryApi(projectId);
+            const bound = await getSiteBoundaryAction(projectId);
             const verts = [...(bound.boundary?.vertices ?? [])]
               .sort((a, b) => a.sequence_index - b.sequence_index)
               .map((v) => v.canvas_coords);
