@@ -1,9 +1,12 @@
-# Environmental & site meta — gold sticky cards
+# Environmental & site meta — Vic-gov status chips
 
 **Audience:** Curtis & Co operators reading climate / sun / services on the
 handoff board without hunting for dials.  
-**Pattern:** Small translucent sticky cards on the right (`CameraChrome` dock).
-Live meta always on. Expand for controls. Stay until you opt out (×).
+**Pattern:** One horizontal **Vic-gov status chip row** (`VicGovStatusChipRow`,
+`CameraChrome` dock) replaces the former stacked Env / Services / Site / Trees
+cards. Chips derive status from hydrated title / KEYLESS / trees / BYDA data.
+Tap a chip → shared right-lane inspector (`rightDataPanel`). Env chip still
+opens the sun scrubber.
 
 ---
 

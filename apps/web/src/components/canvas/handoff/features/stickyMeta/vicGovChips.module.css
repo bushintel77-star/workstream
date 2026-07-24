@@ -1,0 +1,139 @@
+/*
+ * Vic-gov status chip row — replaces stacked Env/Services/Site/Trees cards.
+ * One horizontal frost rail, flush-right; expands into rightDataPanel.
+ */
+
+.row {
+  --hc-ink: #241318;
+  --hc-ink-muted: #7a5560;
+  --hc-ink-faint: #b08a95;
+  --hc-line-soft: rgba(36, 19, 24, 0.1);
+  position: absolute;
+  top: calc(var(--ws-safe-top, 40px) + 28px);
+  right: 0;
+  z-index: 48;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  max-width: min(720px, calc(100vw - 72px));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  pointer-events: auto;
+  border: 1px solid var(--hc-line-soft);
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 251, 252, 0.54) 0%,
+      rgba(255, 251, 252, 0.82) 18%,
+      rgba(246, 234, 237, 0.92) 100%
+    );
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  backdrop-filter: blur(18px) saturate(1.08);
+  box-shadow:
+    -14px 0 34px rgba(42, 23, 29, 0.07),
+    inset 1px 0 rgba(255, 255, 255, 0.66);
+  animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.row[data-lane="busy"] {
+  right: min(304px, calc(100vw - 40px));
+  max-width: min(520px, calc(100vw - 320px));
+}
+
+.chip {
+  appearance: none;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-width: 72px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 0;
+  border-right: 1px solid var(--hc-line-soft);
+  background: transparent;
+  color: var(--hc-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--hc-motion, 180ms) ease;
+}
+
+.chip:last-child {
+  border-right: 0;
+}
+
+.chip:hover {
+  background: rgba(255, 246, 248, 0.55);
+}
+
+.chip[data-active="true"] {
+  background: rgba(36, 19, 24, 0.06);
+  box-shadow: inset 0 -2px 0 var(--proposed-stroke, #2f6f4e);
+}
+
+.label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.face {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--hc-ink);
+  white-space: nowrap;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status tones — map to plan semantic tokens */
+.chip[data-status="ok"] .face {
+  color: var(--proposed-stroke, #2f6f4e);
+}
+
+.chip[data-status="flag"] .face {
+  color: var(--existing-stroke, #a33a4a);
+}
+
+.chip[data-status="warn"] .face {
+  color: var(--existing-stroke, #a33a4a);
+}
+
+.chip[data-status="muted"] .face {
+  color: var(--gray-400, #9a8a90);
+}
+
+.chip[data-status="pending"] .face {
+  color: var(--gray-400, #9a8a90);
+  opacity: 0.75;
+}
+
+@keyframes railIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+}

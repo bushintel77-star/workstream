@@ -4004,16 +4004,10 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {/* Cursor-style boundary rail — Env / Services / Site / Trees sticky until dismissed. */}
+        {/* Vic-gov status chip row — replaces stacked Env/Services/Site/Trees cards. */}
         {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
           <StickyMetaStack
             projectId={projectId}
-            visible={
-              !servicesOpen &&
-              !environmentOpen &&
-              !siteMetaOpen &&
-              !treesMetaOpen
-            }
             laneBusy={rightLaneBusy}
             activePanel={
               servicesOpen
@@ -4032,6 +4026,7 @@ export function HandoffDesignStudio({
             services={studio.services}
             easements={studio.easements}
             bydaAssets={studio.bydaAssets}
+            keylessOverlays={studio.keylessOverlays}
             levels={studio.levels}
             irrigationZones={studio.irrigationZones}
             constructionTrenches={studio.constructionTrenches}
@@ -4044,41 +4039,36 @@ export function HandoffDesignStudio({
             lat={projectLat}
             lng={projectLng}
             outdoorM2={outdoor}
-            titleSource={null}
+            titleSource={titleBlock?.sourceLabel ?? null}
+            boundarySource={ui.boundarySource}
+            councilLabel={titleBlock?.councilLabel ?? null}
+            councilHref={
+              councilDrainageChase(null, titleBlock?.councilLabel ?? null).href
+            }
+            sitePackChase={ui.sitePackChase}
             weatherDay={weatherDay}
-            restoreNonce={stickyRestoreNonce}
-            onExpandSite={() => {
-              summonStickyMeta(projectId, "site");
+            onOpenPanel={(panel) => {
+              summonStickyMeta(
+                projectId,
+                panel === "environment"
+                  ? "environment"
+                  : panel === "trees"
+                    ? "trees"
+                    : panel === "site"
+                      ? "site"
+                      : "services",
+              );
               setStickyRestoreNonce((n) => n + 1);
               studio.setUi({
-                ...withRightDataPanel("site"),
+                ...withRightDataPanel(panel),
+                ...(panel === "environment" ? { shadeOn: true } : {}),
                 utilityPanel: null,
               });
             }}
-            onExpandTrees={() => {
-              summonStickyMeta(projectId, "trees");
-              setStickyRestoreNonce((n) => n + 1);
-              studio.setUi({
-                ...withRightDataPanel("trees"),
-                utilityPanel: null,
-              });
-            }}
-            onExpandServices={() => {
-              summonStickyMeta(projectId, "services");
-              setStickyRestoreNonce((n) => n + 1);
-              studio.setUi({
-                ...withRightDataPanel("services"),
-                utilityPanel: null,
-              });
-            }}
-            onExpandEnvironment={() => {
-              summonStickyMeta(projectId, "environment");
-              setStickyRestoreNonce((n) => n + 1);
-              studio.setUi({
-                ...withRightDataPanel("environment"),
-                shadeOn: true,
-                utilityPanel: null,
-              });
+            onCouncilLink={(href) => {
+              if (typeof window !== "undefined") {
+                window.open(href, "_blank", "noopener,noreferrer");
+              }
             }}
           />
         ) : null}
