@@ -124,3 +124,56 @@ export function wallQuadMatrix3d(
 export function poleMatrix3d(x: number, y: number, eavePx: number): string {
   return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, ${eavePx.toFixed(2)}px) rotateX(-90deg)`;
 }
+
+/**
+ * Fallback drafting light when no live sun azimuth is available (deg,
+ * 0 = north, 90 = east — same convention as sunPositionAt / SunCastOverlay).
+ * 315° = NW, the classic top-left drafting light.
+ */
+export const LIGHT_AZIMUTH_DEG = 315;
+
+/**
+ * Per-wall brightness band. The darkest back facet never drops below
+ * WALL_LIGHT_MIN — in a landscaping render the dwelling is a quiet support
+ * volume for the garden, never a hero building, so shading stays soft.
+ */
+export const WALL_LIGHT_MIN = 0.72;
+export const WALL_LIGHT_MAX = 1.0;
+
+/**
+ * Roof cap lightness — the most sun-facing facet, held slightly above the
+ * wall band's average (no roof-normal computation; a constant is enough for
+ * a support massing cue).
+ */
+export const ROOF_LIGHTNESS = 1.04;
+
+/**
+ * Unit plan-space vector pointing toward the light source. Azimuth is
+ * compass degrees (0 = north, 90 = east); board space is x-right / y-down,
+ * so north maps to −y.
+ */
+export function lightVectorFromAzimuth(azimuthDeg: number = LIGHT_AZIMUTH_DEG): {
+  lx: number;
+  ly: number;
+} {
+  const rad =
+    ((Number.isFinite(azimuthDeg) ? azimuthDeg : LIGHT_AZIMUTH_DEG) * Math.PI) /
+    180;
+  return { lx: Math.sin(rad), ly: -Math.cos(rad) };
+}
+
+/**
+ * Directional lightness for one wall facet from its outward unit normal
+ * (nx, ny) versus the light vector (lx, ly). The dot product is clamped to
+ * [0, 1] (all back-facing walls share the same quiet minimum) then mapped
+ * into WALL_LIGHT_MIN…WALL_LIGHT_MAX.
+ */
+export function wallLightness(
+  nx: number,
+  ny: number,
+  lx: number,
+  ly: number,
+): number {
+  const dot = Math.max(0, Math.min(1, nx * lx + ny * ly));
+  return WALL_LIGHT_MIN + dot * (WALL_LIGHT_MAX - WALL_LIGHT_MIN);
+}
