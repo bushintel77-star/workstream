@@ -32,6 +32,7 @@ import designGhostsRoutes from "../routes/design-ghosts";
 import designAssistRoutes from "../routes/design-assist";
 import cadRoutes from "../routes/cad";
 import boundaryRoutes from "../routes/boundary";
+import keylessRoutes from "../routes/keyless";
 import orchestrationRoutes from "../routes/orchestration";
 import projectFileRoutes from "../routes/project-files";
 import portalRoutes from "../routes/portal";
@@ -82,6 +83,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(designAssistRoutes, { prefix: "/projects" });
   await app.register(cadRoutes, { prefix: "/projects" });
   await app.register(boundaryRoutes, { prefix: "/projects" });
+  await app.register(keylessRoutes, { prefix: "/projects" });
   await app.register(orchestrationRoutes, { prefix: "/projects" });
   await app.register(projectFileRoutes, { prefix: "/projects" });
   await app.register(geocodeRoutes, { prefix: "/geocode" });

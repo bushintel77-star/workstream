@@ -134,3 +134,57 @@ export const BoundaryAutoTraceResponseSchema = z.object({
 export type BoundaryAutoTraceResponse = z.infer<
   typeof BoundaryAutoTraceResponseSchema
 >;
+
+/** KEYLESS Vicmap overlay hydrate (planning / bushfire / contour…). */
+export const KeylessHydrateRequestSchema = z.object({
+  kinds: z
+    .array(
+      z.enum([
+        "planning",
+        "bushfire",
+        "contour",
+        "flood",
+        "heritage",
+        "easement",
+        "urban_tree",
+        "water_corp",
+        "road_casement",
+        "acid_sulfate",
+        "wetland",
+      ]),
+    )
+    .default(["planning", "bushfire", "contour"]),
+});
+export type KeylessHydrateRequest = z.infer<typeof KeylessHydrateRequestSchema>;
+
+export const KeylessHydrateRingSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+export const KeylessHydrateOverlaySchema = z.object({
+  kind: z.enum([
+    "planning",
+    "bushfire",
+    "contour",
+    "flood",
+    "heritage",
+    "easement",
+    "urban_tree",
+    "water_corp",
+    "road_casement",
+    "acid_sulfate",
+    "wetland",
+  ]),
+  rings: z.array(z.array(KeylessHydrateRingSchema)),
+  label: z.string().nullable(),
+  fetched_at: z.string().datetime(),
+});
+
+export const KeylessHydrateResponseSchema = z.object({
+  overlays_canvas: z.array(KeylessHydrateOverlaySchema),
+  source: z.enum(["vicmap", "empty"]),
+});
+export type KeylessHydrateResponse = z.infer<
+  typeof KeylessHydrateResponseSchema
+>;

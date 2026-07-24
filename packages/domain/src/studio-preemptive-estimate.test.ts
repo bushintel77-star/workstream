@@ -187,4 +187,43 @@ describe("estimateStudioDrawing", () => {
     expect(labels.some((l) => /Lighting — Entry path/i.test(l))).toBe(true);
     expect(labels.some((l) => /Path lighting — spike/i.test(l))).toBe(false);
   });
+
+  it("accepted construction trenches land as excavate lm; ghosts ignored", () => {
+    const report = estimateStudioDrawing({
+      outdoorM2: 230,
+      boundary,
+      scaleM: 100,
+      items: [],
+      constructionTrenches: [
+        {
+          id: "33333333-3333-4333-8333-333333333333",
+          name: "Irrig main",
+          kind: "irrig_main",
+          points: [
+            { x_pct: 20, y_pct: 50 },
+            { x_pct: 40, y_pct: 50 },
+          ],
+          depth_mm: 400,
+          source: "auto",
+        },
+        {
+          id: "44444444-4444-4444-8444-444444444444",
+          name: "Ghost drain",
+          kind: "drainage",
+          points: [
+            { x_pct: 10, y_pct: 10 },
+            { x_pct: 90, y_pct: 10 },
+          ],
+          depth_mm: 450,
+          source: "auto",
+          ghost: true,
+        },
+      ],
+    });
+    const trench = report.lines.find((l) => l.id === "sec-trench-irrig_main");
+    expect(trench).toBeTruthy();
+    expect(trench!.unit).toBe("lm");
+    expect(trench!.qty).toBeCloseTo(20, 0);
+    expect(report.lines.some((l) => l.id === "sec-trench-drainage")).toBe(false);
+  });
 });

@@ -5,6 +5,14 @@ export type SunDatePreset =
   | "september-equinox"
   | "summer";
 
+export const SUN_DATE_PRESETS: SunDatePreset[] = [
+  "today",
+  "march-equinox",
+  "winter",
+  "september-equinox",
+  "summer",
+];
+
 export function sunDateFromPreset(
   preset: SunDatePreset,
   sunMin: number,

@@ -231,6 +231,8 @@ export function snapshotToSiteFrame(args: {
   easements: PctPoint[][];
   services: PctPoint[][];
   levels: SpotLevel[];
+  bydaAssets?: DesignSiteFrame["byda_assets"];
+  keylessOverlays?: DesignSiteFrame["keyless_overlays"];
   /** Metres per 100% board width (Vicmap fit or operator calibration). */
   boardWidthM?: number | null;
   buildingSource?: DesignSiteFrame["building_source"];
@@ -245,6 +247,14 @@ export function snapshotToSiteFrame(args: {
       y_pct: clampPct(lv.y),
       z_m: lv.z,
     })),
+    byda_assets: (args.bydaAssets ?? []).map((a) => ({
+      ...a,
+      ring: a.ring.map((p) => ({
+        x_pct: clampPct(p.x_pct),
+        y_pct: clampPct(p.y_pct),
+      })),
+    })),
+    keyless_overlays: args.keylessOverlays ?? [],
     ...(args.boardWidthM != null &&
     Number.isFinite(args.boardWidthM) &&
     args.boardWidthM > 0
@@ -263,6 +273,8 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
   easements?: PctPoint[][];
   services?: PctPoint[][];
   levels?: SpotLevel[];
+  bydaAssets?: DesignSiteFrame["byda_assets"];
+  keylessOverlays?: DesignSiteFrame["keyless_overlays"];
   boardWidthM?: number;
   buildingSource?: DesignSiteFrame["building_source"];
 } {
@@ -273,6 +285,8 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
     easements?: PctPoint[][];
     services?: PctPoint[][];
     levels?: SpotLevel[];
+    bydaAssets?: DesignSiteFrame["byda_assets"];
+    keylessOverlays?: DesignSiteFrame["keyless_overlays"];
     boardWidthM?: number;
     buildingSource?: DesignSiteFrame["building_source"];
   } = {};
@@ -294,6 +308,12 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
       y: lv.y_pct,
       z: lv.z_m,
     }));
+  }
+  if ((frame.byda_assets ?? []).length > 0) {
+    out.bydaAssets = frame.byda_assets;
+  }
+  if ((frame.keyless_overlays ?? []).length > 0) {
+    out.keylessOverlays = frame.keyless_overlays;
   }
   return out;
 }

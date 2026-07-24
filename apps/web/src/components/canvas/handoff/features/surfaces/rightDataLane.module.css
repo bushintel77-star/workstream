@@ -1,14 +1,18 @@
 .slot {
+  /* Cursor-style boundary panel — flush to the right edge. */
   position: absolute;
-  top: calc(var(--ws-safe-top, 40px) + 8px);
-  right: 12px;
+  top: calc(var(--ws-safe-top, 40px) + 4px);
+  right: 0;
   z-index: 52;
-  width: min(300px, calc(100vw - 40px));
+  width: min(304px, calc(100vw - 40px));
   max-height: calc(
-    100% - var(--ws-safe-top, 40px) - var(--ws-safe-bottom, 36px) - 24px
+    100% - var(--ws-safe-top, 40px) - var(--ws-safe-bottom, 36px) - 16px
   );
   overflow: auto;
   pointer-events: auto;
+  border-radius: 12px 0 0 12px;
+  border-left: 1px solid rgba(36, 19, 24, 0.1);
+  box-shadow: -8px 0 28px rgba(42, 23, 29, 0.1);
 }
 
 /* Children fill the lane — no per-panel left/top. */

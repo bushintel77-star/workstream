@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { BydaAssetKind } from "@workstream/contracts";
 import { BY_TYPE, type StudioItemType } from "../../studioCatalog";
+import { BYDA_KIND_LABEL } from "../../geometry/bydaPlanStyles";
 import css from "./commandPalette.module.css";
 
 export type StudioCommand = {
@@ -20,6 +22,18 @@ type Props = {
   onAskAi: (query: string) => void;
   onArm: (t: StudioItemType) => void;
   onScanGhosts: () => void;
+  /** Propose irrig / conduit / drainage trenches from zones + drains. */
+  onAutoTrench?: () => void;
+  /** Open the Services ledger (ticks / metrics / focus). */
+  onOpenServices?: () => void;
+  /** Open Environment boundary panel (sun / season / growth). */
+  onOpenEnvironment?: () => void;
+  /** Open Site meta panel (lot area / dwelling / easements). */
+  onOpenSite?: () => void;
+  /** Open existing Trees meta panel (count / DBH / TPZ). */
+  onOpenTrees?: () => void;
+  /** Arm Servc for a typed BYDA asset stroke (not title easement). */
+  onArmByda?: (kind: BydaAssetKind) => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
@@ -55,6 +69,12 @@ export function StudioCommandPalette({
   onAskAi,
   onArm,
   onScanGhosts,
+  onAutoTrench,
+  onOpenServices,
+  onOpenEnvironment,
+  onOpenSite,
+  onOpenTrees,
+  onArmByda,
   onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
@@ -132,6 +152,93 @@ export function StudioCommandPalette({
         keywords: "scan ghost ai suggest propose layout",
         run: onScanGhosts,
       },
+      ...(onAutoTrench
+        ? [
+            {
+              id: "auto-trench",
+              label: "Auto trench…",
+              detail:
+                "Map irrigation main/laterals, lighting conduit, and drainage dig paths from zones — Accept before dig (BYDA)",
+              keywords:
+                "auto trench irrigation conduit lighting drainage plumbing excavate dig ag pipe mainline lateral landscape architect",
+              run: onAutoTrench,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onOpenServices
+        ? [
+            {
+              id: "services-ledger",
+              label: "Services ledger",
+              detail:
+                "Boundary rail — corridors, easements, RLs, lighting & trenches",
+              keywords:
+                "services ledger easement corridor level lighting trench utilities byda tick focus isolate sticky",
+              run: onOpenServices,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onOpenEnvironment
+        ? [
+            {
+              id: "environment",
+              label: "Environment",
+              detail:
+                "Boundary rail — sun hours, season, growth, shade mesh, 12h cast",
+              keywords:
+                "environment sun shade season frost heat humidity weather growth mesh cast sticky climate",
+              run: onOpenEnvironment,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onOpenSite
+        ? [
+            {
+              id: "site-meta",
+              label: "Site",
+              detail:
+                "Boundary rail — lot area, dwelling, easements (Vicmap ≠ assets)",
+              keywords:
+                "site lot area boundary parcel cadastral vicmap dwelling easement title outdoor sticky",
+              run: onOpenSite,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onOpenTrees
+        ? [
+            {
+              id: "trees-meta",
+              label: "Existing trees",
+              detail:
+                "Boundary rail — survey trees, DBH, indicative AS 4970 TPZ",
+              keywords:
+                "trees existing survey tree canopy dbh tpz as4970 protected retention vegetation sticky",
+              run: onOpenTrees,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onArmByda
+        ? (
+            [
+              "sewer",
+              "stormwater",
+              "water",
+              "gas",
+              "power",
+              "nbn",
+            ] as BydaAssetKind[]
+          ).map(
+            (kind) =>
+              ({
+                id: `byda-${kind}`,
+                label: `BYDA ${BYDA_KIND_LABEL[kind]}…`,
+                detail:
+                  "Trace typed underground asset — separate stroke from title easements",
+                keywords: `byda ${kind} utility asset dig locate sewer gas power nbn water stormwater`,
+                run: () => onArmByda(kind),
+              }) satisfies StudioCommand,
+          )
+        : []),
       ...(onConvertSketch
         ? [
             {
@@ -229,6 +336,12 @@ export function StudioCommandPalette({
     onGoQuote,
     onRedo,
     onScanGhosts,
+    onAutoTrench,
+    onOpenServices,
+    onOpenEnvironment,
+    onOpenSite,
+    onOpenTrees,
+    onArmByda,
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,
