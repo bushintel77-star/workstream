@@ -32,12 +32,16 @@ describe("resolveBoardSunCast", () => {
       sunMin: 10 * 60,
       datePreset: "winter",
       growth: "plant",
+      lat: -37.85,
+      lng: 144.99,
     });
     const mature = resolveBoardSunCast({
       shadeOn: true,
       sunMin: 10 * 60,
       datePreset: "winter",
       growth: "mature",
+      lat: -37.85,
+      lng: 144.99,
     });
     expect(mature!.lengthM).toBeGreaterThan(plant!.lengthM);
   });
