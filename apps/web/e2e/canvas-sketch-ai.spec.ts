@@ -80,13 +80,42 @@ test.describe("Canvas sketch AI", () => {
   test("CAD scan produces reviewable ghosts", async ({ page, request }) => {
     const { projectId } = await createSurveyProject(request);
 
+    // Seed a lot frame so heuristic layout can propose without waiting on
+    // Vicmap WFS (CI runners often miss/timeout public GeoServer).
+    const put = await request.put(`${API}/projects/${projectId}/design-canvas`, {
+      data: {
+        placements: [],
+        site_frame: {
+          boundary: [
+            { x_pct: 18, y_pct: 16 },
+            { x_pct: 82, y_pct: 16 },
+            { x_pct: 82, y_pct: 84 },
+            { x_pct: 18, y_pct: 84 },
+          ],
+          building: [
+            { x_pct: 28, y_pct: 22 },
+            { x_pct: 62, y_pct: 22 },
+            { x_pct: 62, y_pct: 48 },
+            { x_pct: 28, y_pct: 48 },
+          ],
+          building_source: "traced",
+        },
+      },
+    });
+    expect(put.ok()).toBeTruthy();
+
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(page.getByTestId("building-footprint")).toBeVisible({
+      timeout: 15_000,
+    });
 
     await openCommandPalette(page);
-    await page.getByTestId("canvas-command-scan-ghosts").click();
+    const scan = page.getByTestId("canvas-command-scan-ghosts");
+    await expect(scan).toBeVisible({ timeout: 10_000 });
+    await scan.click();
     // Review and on-plan ghosts may both be visible; poll their combined count
     // instead of using locator.or(), which is strict when both valid surfaces land.
     await expect
@@ -94,7 +123,7 @@ test.describe("Canvas sketch AI", () => {
         async () =>
           (await page.getByTestId("cad-ghost-review").count()) +
           (await page.getByTestId("studio-ghost").count()),
-        { timeout: 25_000 },
+        { timeout: 30_000 },
       )
       .toBeGreaterThan(0);
   });

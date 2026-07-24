@@ -26,7 +26,9 @@ export function TreesMetaPanel({ open, meta, onClose }: Props) {
     >
       <div className={css.head}>
         <div className={css.headMain}>
-          <MetaIcon id="trees" size={20} />
+          <span className={css.headIcon}>
+            <MetaIcon id="trees" size={20} />
+          </span>
           <div>
             <p className={css.kicker}>Vegetation · survey</p>
             <p className={css.title}>Existing trees</p>
