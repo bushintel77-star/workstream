@@ -73,6 +73,8 @@ describe("site_frame bridge", () => {
         easements: [],
         services: [],
         levels: [],
+        byda_assets: [],
+        keyless_overlays: [],
       }),
     ).toEqual({});
   });
@@ -89,6 +91,8 @@ describe("site_frame bridge", () => {
       easements: [],
       services: [],
       levels: [],
+      byda_assets: [],
+      keyless_overlays: [],
     };
     const seedBuilding = [
       { x: 30, y: 30 },

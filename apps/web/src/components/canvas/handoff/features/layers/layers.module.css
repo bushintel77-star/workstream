@@ -37,6 +37,26 @@
   margin-bottom: 10px;
 }
 
+.servicesLink {
+  appearance: none;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(28, 25, 23, 0.14);
+  background: rgba(255, 255, 255, 0.55);
+  text-align: left;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  line-height: 1.35;
+  color: #44403c;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.servicesLink:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
 .kicker {
   margin: 0;
   font-size: 9px;

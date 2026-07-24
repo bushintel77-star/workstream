@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  discoverKeylessLayerNames,
   explodeExteriorRings,
   extractVicmapParcelAttrs,
   parseFeatureTypeNames,
@@ -7,8 +8,10 @@ import {
   pickBestLayerName,
   pickTitleRingForPin,
   scoreBuildingLayerName,
+  scoreBushfireLayerName,
   scoreEasementLayerName,
   scorePropertyLayerName,
+  scoreUrbanTreeLayerName,
 } from "./vicmap";
 
 describe("extractVicmapParcelAttrs", () => {
@@ -92,6 +95,28 @@ describe("layer discovery scoring", () => {
     expect(
       scorePropertyLayerName("open-data-platform:v_s_property_proposed"),
     ).toBeLessThan(0);
+  });
+
+  it("discovers KEYLESS next layer names from capabilities", () => {
+    const names = [
+      ...sampleNames,
+      "open-data-platform:easement",
+      "open-data-platform:bushfire_prone_area",
+      "open-data-platform:tree_urban",
+      "open-data-platform:planning_zone",
+      "open-data-platform:road_casement_polygon",
+    ];
+    const found = discoverKeylessLayerNames(names);
+    expect(found.easement).toBe("open-data-platform:easement");
+    expect(found.bushfire).toBe("open-data-platform:bushfire_prone_area");
+    expect(found.urban_tree).toBe("open-data-platform:tree_urban");
+    expect(found.planning).toBe("open-data-platform:planning_zone");
+    expect(found.road_casement).toBe("open-data-platform:road_casement_polygon");
+    expect(scoreEasementLayerName("open-data-platform:easement")).toBeGreaterThan(0);
+    expect(scoreBushfireLayerName("open-data-platform:address")).toBeLessThan(0);
+    expect(scoreUrbanTreeLayerName("open-data-platform:tree_urban")).toBeGreaterThan(
+      0,
+    );
   });
 
   it("scores parcel_view as a strong fallback", () => {

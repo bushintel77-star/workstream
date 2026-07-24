@@ -361,6 +361,7 @@ export async function saveDesignCanvasApi(
   annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
   features?: DesignCanvas["features"],
+  constructionTrenches?: DesignCanvas["construction_trenches"],
 ): Promise<{ canvas: DesignCanvas; quote: SketchQuoteSummary | null }> {
   const body = await apiPut<{
     canvas: DesignCanvas;
@@ -372,6 +373,9 @@ export async function saveDesignCanvasApi(
     ...(annotations != null ? { annotations } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
     ...(features != null ? { features } : {}),
+    ...(constructionTrenches != null
+      ? { construction_trenches: constructionTrenches }
+      : {}),
   });
   return { canvas: body.canvas, quote: body.quote ?? null };
 }
@@ -628,6 +632,43 @@ export async function autoTraceBoundaryApi(
     easement_lines_canvas: raw.easement_lines_canvas ?? [],
     easement_source: raw.easement_source ?? null,
   };
+}
+
+export type KeylessHydrateOverlayCanvas = {
+  kind:
+    | "planning"
+    | "bushfire"
+    | "contour"
+    | "flood"
+    | "heritage"
+    | "easement"
+    | "urban_tree"
+    | "water_corp"
+    | "road_casement"
+    | "acid_sulfate"
+    | "wetland";
+  rings: Array<Array<{ x: number; y: number }>>;
+  label: string | null;
+  fetched_at: string;
+};
+
+export type KeylessHydrateResult = {
+  overlays_canvas: KeylessHydrateOverlayCanvas[];
+  source: "vicmap" | "empty";
+};
+
+export async function hydrateKeylessApi(
+  projectId: string,
+  kinds: KeylessHydrateOverlayCanvas["kind"][] = [
+    "planning",
+    "bushfire",
+    "contour",
+  ],
+): Promise<KeylessHydrateResult> {
+  return apiPost<KeylessHydrateResult>(
+    `/projects/${projectId}/keyless-hydrate`,
+    { kinds },
+  );
 }
 
 export async function lockBoundaryApi(
@@ -1088,14 +1129,20 @@ export type WeatherDay = {
   temp_min_c: number;
   temp_max_c: number;
   precipitation_mm: number;
-  precipitation_probability: number;
-  wind_speed_kmh: number;
-  condition: string;
+  wind_max_kph: number;
+  humidity_pct: number | null;
+  /** Legacy alias — prefer wind_max_kph from the API. */
+  wind_speed_kmh?: number;
+  precipitation_probability?: number;
+  condition?: string;
 };
 
 export type WeatherForecast = {
   source: string;
   days: WeatherDay[];
+  rain_within_24h?: boolean;
+  wind_warning?: boolean;
+  fetched_at?: string;
 };
 
 export async function getWeather(

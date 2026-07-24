@@ -7,11 +7,6 @@ import css from "./layers.module.css";
 const LAYERS: Array<{ key: LayerKey; label: string; hint: string }> = [
   { key: "survey", label: "Survey (existing)", hint: "Existing trees, as-built sketches" },
   { key: "boundary", label: "Boundary & hardscape", hint: "Bounds, paving, deck" },
-  {
-    key: "services",
-    label: "Services & utilities",
-    hint: "Vicmap easement lines, Servc corridors, easement hatch, RL levels",
-  },
   { key: "council", label: "Council & compliance", hint: "Setbacks, TPZ" },
   { key: "vegetation", label: "Vegetation (proposed)", hint: "Canopy, hedge, beds, lawn" },
   { key: "notes", label: "Notes", hint: "Hand-lettered annotations with leaders" },
@@ -30,6 +25,8 @@ type Props = {
   onOpacity: (key: LayerKey, value: number) => void;
   onSetback: (on: boolean) => void;
   onShade: (on: boolean) => void;
+  /** Open the Services ledger (replaces the old services opacity dial). */
+  onOpenServices?: () => void;
 };
 
 function countFor(
@@ -58,6 +55,7 @@ export function LayersPanel({
   onOpacity,
   onSetback,
   onShade,
+  onOpenServices,
 }: Props) {
   if (!open) return null;
 
@@ -71,6 +69,16 @@ export function LayersPanel({
           Close
         </button>
       </div>
+      {onOpenServices ? (
+        <button
+          type="button"
+          className={css.servicesLink}
+          data-testid="layers-open-services"
+          onClick={onOpenServices}
+        >
+          Services ledger — per-feature ticks & focus (not a dial)
+        </button>
+      ) : null}
       <ul className={css.list}>
         {LAYERS.map((layer) => {
           const count = countFor(layer.key, items, noteCount);
@@ -142,8 +150,9 @@ export function LayersPanel({
       </label>
       <p className={css.foot}>
         Compliance pass/fail stays visible regardless of Council opacity. Survey mode
-        auto-dims proposed layers. Services lock at Quote — site context, not a live
-        dial. Sun mesh is indicative — not EnergyPlus.
+        auto-dims proposed layers. Use the Services ledger for corridors, easements,
+        RLs, lighting and trenches — ticks freeze at Quote. Sun mesh is indicative —
+        not EnergyPlus.
       </p>
     </div>
   );

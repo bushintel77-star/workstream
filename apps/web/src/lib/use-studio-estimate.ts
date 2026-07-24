@@ -25,7 +25,14 @@ function argsKey(args: StudioEstimateArgs): string {
   const boundary = args.boundary
     .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
     .join(";");
-  return `${args.outdoorM2}|${boundary}|${items}|${args.accessConstrained ? 1 : 0}`;
+  const trenches = (args.constructionTrenches ?? [])
+    .filter((t) => !t.ghost)
+    .map(
+      (t) =>
+        `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+    )
+    .join("/");
+  return `${args.outdoorM2}|${boundary}|${items}|${args.accessConstrained ? 1 : 0}|${trenches}`;
 }
 
 /**

@@ -38,6 +38,7 @@ import {
 } from "../surfaces/scheduleCardLayout";
 import { RIGHT_DATA_LANE_WIDTH_PX } from "../surfaces/rightDataLane";
 import { planLinesFor } from "../../geometry/planLineStyles";
+import { bydaPlanLine } from "../../geometry/bydaPlanStyles";
 import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
@@ -74,6 +75,11 @@ import {
   type LayerOpacity,
 } from "../../state/studioTypes";
 import { resolveLayerVisual } from "../../state/layerIsolate";
+import {
+  corridorFeatureId,
+  easementFeatureId,
+  resolveServiceFeatureVisual,
+} from "../services/serviceLedger";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
 import { CameraChrome, boardCameraFromPlan } from "../../CameraChrome";
@@ -150,6 +156,13 @@ type Props = {
   easements?: PctPoint[][];
   /** Open service / utility corridors — dashed locate layer. */
   services?: PctPoint[][];
+  /** Typed BYDA assets — stroke language distinct from title easements. */
+  bydaAssets?: import("@workstream/contracts").DesignBydaAsset[];
+  /**
+   * When true, dwelling shadow is driven by SunCastOverlay — skip the static
+   * south offset placeholder under the footprint.
+   */
+  timedSunCast?: boolean;
   items: StudioItem[];
   tool: StudioTool;
   /** Studio mode — survey shows edge dims; sketch disables pointer capture. */
@@ -157,6 +170,10 @@ type Props = {
   locked: boolean;
   layerOpacity: LayerOpacity;
   isolatedLayer?: LayerKey | null;
+  /** Per-feature Services ledger hide map. */
+  serviceFeatureHidden?: Record<string, boolean>;
+  /** Focused service feature ids — others fall away. */
+  focusedServiceIds?: string[] | null;
   setbackOn: boolean;
   /** Indicative council setback rule (m) — muted on-plan path label, not a card. */
   councilSetbackM?: number | null;
@@ -288,12 +305,16 @@ export function CadPlanBoard({
   building,
   easements = [],
   services = [],
+  bydaAssets = [],
+  timedSunCast = false,
   items,
   tool,
   mode = "cad",
   locked,
   layerOpacity,
   isolatedLayer = null,
+  serviceFeatureHidden = {},
+  focusedServiceIds = null,
   setbackOn,
   councilSetbackM = null,
   growth,
@@ -1093,36 +1114,91 @@ export function CadPlanBoard({
           : null}
         {easements
           .filter((r) => r.length >= 3)
-          .map((ring, i) => (
-            <g key={`ease${i}`} opacity={servicesVisual.opacity} data-testid="easement-hatch">
-              <polygon
-                points={ptsAttr(ring)}
-                fill="url(#ws-easement-hatch)"
-                stroke={lines.easement.stroke}
-                strokeWidth={lines.easement.strokeWidth}
-                strokeDasharray={lines.easement.dash}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
+          .map((ring, i) => {
+            const id = easementFeatureId(ring);
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            return (
+              <g
+                key={`ease${i}`}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="easement-hatch"
+                data-service-id={id}
+              >
+                <polygon
+                  points={ptsAttr(ring)}
+                  fill="url(#ws-easement-hatch)"
+                  stroke={lines.easement.stroke}
+                  strokeWidth={lines.easement.strokeWidth}
+                  strokeDasharray={lines.easement.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
         {services
           .filter((r) => r.length >= 2)
-          .map((ring, i) => (
-            <g
-              key={`svc${i}`}
-              opacity={servicesVisual.opacity}
-              data-testid="utility-service-trace"
-            >
-              <polyline
-                points={ptsAttr(ring)}
-                fill="none"
-                stroke={lines.service.stroke}
-                strokeWidth={lines.service.strokeWidth}
-                strokeDasharray={lines.service.dash}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
+          .map((ring, i) => {
+            const id = corridorFeatureId(ring);
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            return (
+              <g
+                key={`svc${i}`}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="utility-service-trace"
+                data-service-id={id}
+              >
+                <polyline
+                  points={ptsAttr(ring)}
+                  fill="none"
+                  stroke={lines.service.stroke}
+                  strokeWidth={lines.service.strokeWidth}
+                  strokeDasharray={lines.service.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
+        {bydaAssets
+          .filter((a) => a.ring.length >= 2)
+          .map((asset) => {
+            const id = `byda:${asset.id}`;
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            const style = bydaPlanLine(asset.kind, darkOn && !frameOn);
+            const ring = asset.ring.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+            return (
+              <g
+                key={id}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="byda-asset-trace"
+                data-byda-kind={asset.kind}
+                data-service-id={id}
+              >
+                <polyline
+                  points={ptsAttr(ring)}
+                  fill="none"
+                  stroke={style.stroke}
+                  strokeWidth={style.strokeWidth}
+                  strokeDasharray={style.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
         {cadTitleMode
           ? contextLots.map((ring, i) => (
               <polygon
@@ -1156,7 +1232,7 @@ export function CadPlanBoard({
               : undefined
           }
         />
-        {building.length >= 3 ? (
+        {building.length >= 3 && !timedSunCast ? (
           <polygon
             data-testid="dwelling-sun-shadow"
             points={ptsAttr(building)}
@@ -2285,7 +2361,8 @@ export function CadPlanBoard({
       ) : null}
 
       {easements.some((r) => r.length >= 3) ||
-      services.some((r) => r.length >= 2) ? (
+      services.some((r) => r.length >= 2) ||
+      bydaAssets.some((a) => a.ring.length >= 2) ? (
         <CameraChrome>
           <div className={css.honestyStack}>
             {easements.some((r) => r.length >= 3) ? (
@@ -2304,6 +2381,15 @@ export function CadPlanBoard({
               >
                 Service / Vicmap easement lines · subset of title easements —
                 confirm survey / council / DBYD before dig
+              </p>
+            ) : null}
+            {bydaAssets.some((a) => a.ring.length >= 2) ? (
+              <p
+                className={css.honestyFooter}
+                data-testid="byda-honesty-footer"
+              >
+                BYDA typed assets · digitised from plans — not Vicmap easements;
+                current BYDA enquiry still required before dig
               </p>
             ) : null}
           </div>

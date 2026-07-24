@@ -1,6 +1,6 @@
 # Pre-construction site infrastructure — landscape architect due diligence
 
-**Audience:** Curtis & Co operators / landscape architects documenting a Melburne
+**Audience:** Curtis & Co operators / landscape architects documenting a Melbourne
 residential site **before landscape construction**.  
 **Purpose:** Every item you must know and record — and whether Workstream can
 **automate it like Vicmap title** (keyless WFS INTERSECTS → canvas).
@@ -11,12 +11,28 @@ title ring → canvas-metre co-register → `site_frame` / board overlays.
 
 ---
 
+## Critical distinction (construction)
+
+| Source | What it is | Dig? |
+| --- | --- | --- |
+| **Vicmap easements** | Title easement geometry (subset) | Not asset location |
+| **BYDA** | Sewer / gas / power / NBN / water / SW plans | **Required before dig** |
+| **Council drainage** | Often not on title | Often required |
+
+**Rule:** Vicmap easements ≠ underground assets.  
+**Rule:** No dig without current BYDA plans on the job (+ council drainage when relevant).
+
+Studio Survey **5/5** (boundary, dwelling, trees, levels, services/easements) is the
+**digital minimum**. This document is the **full LA pack** before excavation.
+
+---
+
 ## How to read the columns
 
 | Auto status | Meaning |
 | --- | --- |
 | **LIVE** | Automated today (same stack as title) |
-| **KEYLESS** | Public Vicmap/DELWP WFS exists — next hydrate candidate |
+| **KEYLESS** | Public Vicmap/DELWP WFS — next hydrate candidate (scorers landed) |
 | **LINK** | Open web tool / report (not GeoJSON into canvas yet) |
 | **BYDA** | Before You Dig Australia — membership / enquiry, not keyless |
 | **COUNCIL** | Council GIS, drainage register, or permit counter |
@@ -25,6 +41,20 @@ title ring → canvas-metre co-register → `site_frame` / board overlays.
 | **ENG** | Civil / hydraulic / geotech engineer |
 | **SITE** | Walk the site — cannot be replaced by GIS |
 | **MANUAL** | Operator Servc / Trace / Level / notes in studio |
+
+---
+
+## LIVE today
+
+| Item | Canvas destination |
+| --- | --- |
+| Title boundary / lot | `site_frame.boundary` |
+| Existing dwelling | `site_frame.building` |
+| Parcel attrs (PFI, SPI, LGA…) | Title block |
+| Title easement lines (subset) | Services corridors when empty (`easement_source: vicmap`) |
+| Planning / bushfire / contour washes | Soft board wash via `POST …/keyless-hydrate` |
+| Survey corridors / easements / RLs | Servc · Level → Services ledger |
+| Construction trenches (irrig / conduit / drain) | Cmd+K **Auto trench…** → `construction_trenches` |
 
 ---
 
@@ -64,7 +94,7 @@ title ring → canvas-metre co-register → `site_frame` / board overlays.
 | B13 | **Oil/gas transmission / major pipeline** | Rare residential exclusion | **KEYLESS** (industrial) | `pipeline`, `oilgas` — flag only |
 | B14 | **DBYD / BYDA enquiry lodged + plans on file** | Mandatory dig practice | **BYDA** | Lodge → upload plans to project |
 
-**Rule:** Never treat Vicmap easement lines as “all underground services.”  
+**Rule:** Never treat Vicmap easement lines as "all underground services."  
 **Rule:** No dig without current BYDA plans on the job.
 
 ---
@@ -76,7 +106,7 @@ title ring → canvas-metre co-register → `site_frame` / board overlays.
 | C1 | **Existing trees on site** (species, height, crown, DBH) | Retain/remove, TPZ, cost | **MANUAL** + later **KEYLESS** | Survey Add `exist`; seed from `tree_urban` |
 | C2 | **Neighbour trees with TPZ into site** | AS 4970 encroachment | **SITE** + **ARBOR** | Place `exist` near boundary |
 | C3 | **TPZ (AS 4970)** | Hardscape / dig bans | **LIVE** (once `exist`+DBH) | Auto ring on board |
-| C4 | **SRZ (structural root zone)** | Critical root protection | **ARBOR** | Derive  from DBH later |
+| C4 | **SRZ (structural root zone)** | Critical root protection | **ARBOR** | Derive from DBH later |
 | C5 | **Significant / protected / SLO trees** | Planning permit | **KEYLESS** + **COUNCIL** | Overlays + local Significant Tree Register |
 | C6 | **Urban canopy / height model** | Massing, shade intent | **KEYLESS** | `tree_urban` (`canopy_radius_m`, `height_m`) |
 | C7 | **Vegetation to remove vs retain** | Demo scope, fauna | **SITE** | Sketch/CAD notation |
@@ -88,11 +118,11 @@ title ring → canvas-metre co-register → `site_frame` / board overlays.
 
 | # | What LA must know | Why | Auto | Path |
 | --- | --- | --- | --- | --- |
-| D1 | **Planning zone** (GRZ, NRZ, …) | Use, permit triggers | **KEYLESS** / **LINK** | `plan_zone` · VicPlan report |
-| D2 | **Overlays** (SLO, HO, DDO, ESO, LSIO, BMO, EAO…) | Design constraints | **KEYLESS** / **LINK** | `plan_overlay` · VicPlan |
-| D3 | **Bushfire Prone Area** | Species, materials, BAL | **KEYLESS** | `bushfire_prone_area` |
-| D4 | **Heritage register / inventory** | Fabric, materials, visibility | **KEYLESS** | `heritage_register`, `heritage_inventory` |
-| D5 | **Flood / inundation history** | Levels, materials, drainage | **KEYLESS** | `vic_flood_history_public` (+ LSIO via overlays) |
+| D1 | **Planning zone** (GRZ, NRZ, …) | Use, permit triggers | **LIVE** wash / **LINK** | `POST …/keyless-hydrate` · VicPlan report |
+| D2 | **Overlays** (SLO, HO, DDO, ESO, LSIO, BMO, EAO…) | Design constraints | **KEYLESS** / **LINK** | Soft wash kinds + VicPlan |
+| D3 | **Bushfire Prone Area** | Species, materials, BAL | **LIVE** wash | `bushfire_prone_area` |
+| D4 | **Heritage register / inventory** | Fabric, materials, visibility | **KEYLESS** | Next DEFAULT_KINDS expand |
+| D5 | **Flood / inundation history** | Levels, materials, drainage | **KEYLESS** | Next DEFAULT_KINDS expand |
 | D6 | **Environmental Audit Overlay / contamination cues** | Soil import/export, dig | **LINK** | Victoria Unearthed / EPA |
 | D7 | **Acid sulfate soils** (coastal) | Spoil handling | **KEYLESS** | `coastal_acid_sulphate_soils` |
 | D8 | **Council setbacks** (front/side/rear) | Envelope | Indicative on canvas | Studio setback overlay — confirm scheme |
@@ -106,7 +136,7 @@ title ring → canvas-metre co-register → `site_frame` / board overlays.
 | # | What LA must know | Why | Auto | Path |
 | --- | --- | --- | --- | --- |
 | E1 | **Spot levels / AHD or RL** | Falls, retaining, outdoor FFLs | **MANUAL** | Survey **Level** tool |
-| E2 | **Contours / DEM** | Cut-fill, falls | **KEYLESS** coarse | `el_contour`, `el_contour_1to5m` |
+| E2 | **Contours / DEM** | Cut-fill, falls | **LIVE** wash | Contour strokes via keyless-hydrate |
 | E3 | **Surface drainage paths / low points** | Ponding, french drains | **SITE** + E1 | Sketch arrows / Servc |
 | E4 | **Legal point of discharge** | Stormwater design | **COUNCIL** | Drainage advice letter |
 | E5 | **Soil type / bearing / fill** | Pavements, planting, spoil | **KEYLESS** coarse + **ENG** | `soil_type`; geotech if retaining/pool |
@@ -151,6 +181,23 @@ title ring → canvas-metre co-register → `site_frame` / board overlays.
 
 ---
 
+## KEYLESS next (same WFS stack)
+
+Scorers in `apps/api/src/lib/vicmap.ts` (`VICMAP_KEYLESS_SCORERS` /
+`discoverKeylessLayerNames`). Hydrate jobs land per layer.
+
+| Item | Status | Notes |
+| --- | --- | --- |
+| Flood history / LSIO | **KEYLESS → hydrate** | Expand DEFAULT_KINDS first |
+| Heritage overlay | **KEYLESS → hydrate** | Expand DEFAULT_KINDS first |
+| Urban trees / canopy | **KEYLESS** | Exist ghosts + canopy |
+| Water corporation boundary | **KEYLESS** | Title meta |
+| Road casement | **KEYLESS** | Street / crossover cue |
+| Acid sulfate soils | **KEYLESS** | Flag only |
+| Wetlands | **KEYLESS** | Flag only |
+
+---
+
 ## Automation roadmap (priority for Workstream)
 
 Ordered by landscape-construction risk × keyless feasibility:
@@ -158,11 +205,9 @@ Ordered by landscape-construction risk × keyless feasibility:
 | Priority | Item | Auto status | Canvas destination |
 | --- | --- | --- | --- |
 | P0 | Title + dwelling + easement lines | **LIVE** | Boundary / building / Services |
-| P1 | Planning zone + overlays (SLO/HO/LSIO/BMO/EAO…) | **KEYLESS** | Council layer + meta |
-| P1 | Bushfire prone area | **KEYLESS** | Compliance chip |
+| P1 | Planning zone + bushfire + contours | **LIVE** wash | Soft wash / contour strokes |
+| P1 | Flood + heritage | **KEYLESS → hydrate** | Soft wash (next DEFAULT_KINDS) |
 | P1 | Urban trees → exist ghosts + canopy | **KEYLESS** | Survey vegetation |
-| P2 | Contours (1–5 m) | **KEYLESS** | Ground / Level assist |
-| P2 | Flood history + heritage | **KEYLESS** | Horizon / compliance |
 | P2 | Water corp + road casement | **KEYLESS** | Title meta / street cue |
 | P3 | BYDA lodge + plan ingest | **BYDA** | Typed services + PDF tray |
 | P3 | Council drainage register import | **COUNCIL** | Services kind=`council_drain` |
@@ -180,6 +225,16 @@ Ordered by landscape-construction risk × keyless feasibility:
 | Title easement lines | `easement` | `site_frame.services[]` when empty |
 
 Path: survey job · `POST …/boundary/auto-trace` · spatial correction · boot hydrate.
+
+---
+
+## Operator surfaces in studio
+
+1. **Services ledger** (right lane) — live list of corridors, easements, RLs,
+   lighting/drip zones, trenches. Ticks = on/off across Survey + CAD. Click =
+   focus (others fall away). Multi-select with Shift/Cmd+click. Freezes at Quote.
+2. **Auto trench…** (Cmd+K) — landscape dig paths from zones (not BYDA assets).
+3. **Survey checklist 5/5** — digital minimum only.
 
 ---
 
@@ -202,5 +257,4 @@ overlays) before excavation and hardscape.
 
 ---
 
-*Last updated: 2026-07-24 — landscape pre-construction inventory + Vicmap keyless
-status against DELWP Open Data Platform WFS (~501 layers probed).*
+*Last updated: 2026-07-24 — Vicmap easement hydrate LIVE + KEYLESS washes + full LA pack.*

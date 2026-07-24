@@ -108,6 +108,32 @@
   gap: 8px;
 }
 
+.titleMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.weatherPip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1.5px 5px;
+  border: 1px solid rgba(36, 19, 24, 0.16);
+  border-radius: 3px;
+  background: rgba(250, 246, 242, 0.72);
+  color: #7a5560;
+}
+
+.weatherTemp {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #241318;
+}
+
 /**
  * A4 portrait — title block as a full-width bottom strip. Columns instead
  * of a stacked right rail; the plot above keeps the whole paper width.
@@ -231,8 +257,9 @@
 .northRose {
   flex: none;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   line-height: 0;
+  opacity: 0.92;
 }
 
 .section {

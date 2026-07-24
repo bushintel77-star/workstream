@@ -119,6 +119,33 @@ export const IrrigationZoneSchema = z.object({
 });
 export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
 
+/**
+ * Construction trench / conduit runs for landscape build (not survey Servc).
+ * Proposed by auto-trench from zones + drains; accepted into the canvas.
+ */
+export const ConstructionTrenchKindSchema = z.enum([
+  "irrig_main",
+  "irrig_lateral",
+  "lighting_conduit",
+  "drainage",
+]);
+export type ConstructionTrenchKind = z.infer<typeof ConstructionTrenchKindSchema>;
+
+export const ConstructionTrenchSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  kind: ConstructionTrenchKindSchema,
+  points: z.array(CanvasPointPctSchema).min(2),
+  /** Indicative trench depth (mm) — landscape construction, not DBYD. */
+  depth_mm: z.number().positive().default(300),
+  /** Provenance — auto proposal vs operator edit. */
+  source: z.enum(["auto", "traced"]).default("auto"),
+  /** Ephemeral until Accept — never ship ghosts to client quote. */
+  ghost: z.boolean().optional(),
+  why: z.string().optional(),
+});
+export type ConstructionTrench = z.infer<typeof ConstructionTrenchSchema>;
+
 /** Hand-lettered plan note — persists with DesignCanvas (Workflow 1 presentation). */
 export const CanvasAnnotationAnchorSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -258,12 +285,66 @@ export const DesignBuildingSourceSchema = z.enum([
 ]);
 export type DesignBuildingSource = z.infer<typeof DesignBuildingSourceSchema>;
 
+/**
+ * BYDA / utility asset kind — distinct stroke language from title easements.
+ * Geometry is operator-traced or BYDA-plan digitised (not Vicmap easement WFS).
+ */
+export const BydaAssetKindSchema = z.enum([
+  "sewer",
+  "stormwater",
+  "water",
+  "gas",
+  "power",
+  "nbn",
+  "other",
+]);
+export type BydaAssetKind = z.infer<typeof BydaAssetKindSchema>;
+
+export const DesignBydaAssetSchema = z.object({
+  id: z.string().min(1),
+  kind: BydaAssetKindSchema,
+  ring: z.array(DesignSiteFramePointSchema).min(2),
+  source: z.enum(["byda", "traced", "assumed"]).default("traced"),
+});
+export type DesignBydaAsset = z.infer<typeof DesignBydaAssetSchema>;
+
+/** KEYLESS Vicmap/DELWP overlay washes (planning / bushfire / contour…). */
+export const KeylessOverlayKindSchema = z.enum([
+  "planning",
+  "bushfire",
+  "contour",
+  "flood",
+  "heritage",
+  "easement",
+  "urban_tree",
+  "water_corp",
+  "road_casement",
+  "acid_sulfate",
+  "wetland",
+]);
+export type KeylessOverlayKind = z.infer<typeof KeylessOverlayKindSchema>;
+
+export const DesignKeylessOverlaySchema = z.object({
+  kind: KeylessOverlayKindSchema,
+  rings: z.array(z.array(DesignSiteFramePointSchema)).default([]),
+  label: z.string().optional(),
+  fetched_at: z.string().datetime().optional(),
+});
+export type DesignKeylessOverlay = z.infer<typeof DesignKeylessOverlaySchema>;
+
 export const DesignSiteFrameSchema = z.object({
   boundary: z.array(DesignSiteFramePointSchema).default([]),
   building: z.array(DesignSiteFramePointSchema).default([]),
   easements: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   services: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   levels: z.array(DesignSiteFrameLevelSchema).default([]),
+  /**
+   * Typed underground / utility assets (BYDA language) — never conflated with
+   * title easement hatches.
+   */
+  byda_assets: z.array(DesignBydaAssetSchema).default([]),
+  /** Soft KEYLESS Vicmap washes (planning / bushfire / contours…). */
+  keyless_overlays: z.array(DesignKeylessOverlaySchema).default([]),
   /**
    * Ground truth for the board scale: metres represented by 100% board width.
    * Set when a Vicmap parcel is fitted (implied by the letterbox fit) or when
@@ -284,6 +365,8 @@ export const DesignCanvasSchema = z.object({
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema),
   irrigation_zones: z.array(IrrigationZoneSchema).default([]),
+  /** Landscape construction trenches / conduit (auto or traced). */
+  construction_trenches: z.array(ConstructionTrenchSchema).default([]),
   annotations: z.array(CanvasAnnotationSchema).default([]),
   /** Lean landscape features (beds/paths) - optional until bed paint ships. */
   features: z.array(LandscapeFeatureSchema).optional().default([]),
@@ -297,6 +380,7 @@ export const UpsertDesignCanvasSchema = z.object({
   placements: z.array(CatalogPlacementSchema),
   strokes: z.array(CanvasStrokeSchema).optional(),
   irrigation_zones: z.array(IrrigationZoneSchema).optional(),
+  construction_trenches: z.array(ConstructionTrenchSchema).optional(),
   annotations: z.array(CanvasAnnotationSchema).optional(),
   features: z.array(LandscapeFeatureSchema).optional(),
   site_frame: DesignSiteFrameSchema.optional(),

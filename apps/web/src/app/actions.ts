@@ -193,6 +193,7 @@ export async function saveDesignCanvasAction(
   annotations?: DesignCanvas["annotations"],
   siteFrame?: DesignCanvas["site_frame"],
   features?: DesignCanvas["features"],
+  constructionTrenches?: DesignCanvas["construction_trenches"],
 ) {
   if (!projectId.trim()) {
     throw new Error("Missing project — cannot save site plan");
@@ -205,6 +206,9 @@ export async function saveDesignCanvasAction(
     ...(annotations != null ? { annotations } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
     ...(features != null ? { features } : {}),
+    ...(constructionTrenches != null
+      ? { construction_trenches: constructionTrenches }
+      : {}),
   });
   if (!parsed.success) {
     throw new Error(
@@ -220,6 +224,7 @@ export async function saveDesignCanvasAction(
       parsed.data.annotations,
       parsed.data.site_frame,
       parsed.data.features,
+      parsed.data.construction_trenches,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);
@@ -260,6 +265,17 @@ export async function designAssistAction(projectId: string, message: string) {
     return await designAssistApi(projectId, message.trim());
   } catch (err) {
     throw wrapApiError(err, "AI sketch assist failed");
+  }
+}
+
+/** Open-Meteo forecast for the Env boundary rail weather icons. */
+export async function getWeatherAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { getWeather } = await import("../lib/api");
+  try {
+    return await getWeather(projectId);
+  } catch {
+    return null;
   }
 }
 
@@ -484,6 +500,42 @@ export async function autoTraceBoundaryAction(projectId: string) {
     return result;
   } catch (err) {
     throw wrapApiError(err, "Boundary auto-trace failed");
+  }
+}
+
+export async function hydrateKeylessAction(
+  projectId: string,
+  kinds?: Array<
+    | "planning"
+    | "bushfire"
+    | "contour"
+    | "flood"
+    | "heritage"
+    | "easement"
+    | "urban_tree"
+    | "water_corp"
+    | "road_casement"
+    | "acid_sulfate"
+    | "wetland"
+  >,
+) {
+  const { hydrateKeylessApi } = await import("../lib/api");
+  try {
+    const result = await hydrateKeylessApi(projectId, kinds);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "KEYLESS hydrate failed");
+  }
+}
+
+/** Site boundary for co-registering KEYLESS canvas-metre rings (server-only). */
+export async function getSiteBoundaryAction(projectId: string) {
+  const { getSiteBoundaryApi } = await import("../lib/api");
+  try {
+    return await getSiteBoundaryApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Boundary load failed");
   }
 }
 

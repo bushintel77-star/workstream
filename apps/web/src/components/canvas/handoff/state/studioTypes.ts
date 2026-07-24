@@ -1,4 +1,12 @@
-import type { IrrigationZone, IrrigationZoneKind, CanvasAnnotation } from "@workstream/contracts";
+import type {
+  IrrigationZone,
+  IrrigationZoneKind,
+  CanvasAnnotation,
+  ConstructionTrench,
+  DesignBydaAsset,
+  DesignKeylessOverlay,
+  BydaAssetKind,
+} from "@workstream/contracts";
 import type {
   SketchStroke,
   SpotLevel,
@@ -35,11 +43,19 @@ export type StudioSnapshot = {
   levels: SpotLevel[];
   /** Survey service / easement polylines — prototype Servc tool. */
   services: PctPoint[][];
+  /** Typed BYDA utility assets — distinct stroke language from easements. */
+  bydaAssets: DesignBydaAsset[];
+  /** KEYLESS Vicmap washes (planning / bushfire / contour…). */
+  keylessOverlays: DesignKeylessOverlay[];
   /** Authored drip / lighting paths — DesignCanvas.irrigation_zones. */
   irrigationZones: IrrigationZone[];
+  /** Construction trenches / conduit — DesignCanvas.construction_trenches. */
+  constructionTrenches: ConstructionTrench[];
   /** Hand-lettered presentation notes — DesignCanvas.annotations. */
   annotations: CanvasAnnotation[];
 };
+
+export type { BydaAssetKind };
 
 export type StudioUiState = {
   mode: StudioMode;
@@ -53,12 +69,22 @@ export type StudioUiState = {
   clientView: boolean;
   /**
    * Right data lane — one panel at a time (lane law). null = lane empty.
-   * Layers / Measures / Demo Lots / Checklist share this slot exclusively.
+   * Layers / Measures / Services / Demo Lots / Checklist share this slot.
    */
   rightDataPanel: RightDataPanel | null;
   layerOpacity: LayerOpacity;
   /** View-only layer isolation; never persisted to DesignCanvas. */
   isolatedLayer: LayerKey | null;
+  /**
+   * Per-feature Services ledger hide map (id → true = hidden).
+   * Session-only; survives Survey → CAD; ticks freeze when servicesLocked.
+   */
+  serviceFeatureHidden: Record<string, boolean>;
+  /**
+   * Focused service / design feature ids — others on the services surface fall away.
+   * Esc clears. Shift/Cmd+click adds. Never persisted.
+   */
+  focusedServiceIds: string[] | null;
   /**
    * Legacy CAD services-edit toggle — superseded by survey-only authoring.
    * Kept for session compat; always false once quote locks site services.
@@ -96,6 +122,11 @@ export type StudioUiState = {
   traceTarget: TraceTarget;
   /** Zone tool kind — drip irrigation or lighting run. */
   zoneKind: IrrigationZoneKind;
+  /**
+   * When set, next Servc commit lands as a typed BYDA asset (not a generic
+   * corridor / title easement). Cleared after commit or Esc.
+   */
+  bydaDraftKind: BydaAssetKind | null;
   gridGrain: "fine" | "medium" | "coarse";
   gridSnap: boolean;
   gridFormation: "ortho" | "dots" | "diamond" | "veil";

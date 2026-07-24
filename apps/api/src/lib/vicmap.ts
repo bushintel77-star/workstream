@@ -30,7 +30,9 @@ type Ring = Coord[];
 
 type RawGeometry =
   | { type: "Polygon"; coordinates: Ring[] }
-  | { type: "MultiPolygon"; coordinates: Ring[][] };
+  | { type: "MultiPolygon"; coordinates: Ring[][] }
+  | { type: "LineString"; coordinates: Coord[] }
+  | { type: "MultiLineString"; coordinates: Coord[][] };
 
 type RawFeature = {
   type: "Feature";
@@ -129,6 +131,47 @@ export function scoreBuildingLayerName(typeName: string): number {
 }
 
 /**
+ * KEYLESS next — same GetCapabilities stack as title/building.
+ * Prefer view / polygon layers. Easement hydrate is LIVE via
+ * `fetchEasementLinesForTitle` (title-ring INTERSECTS).
+ */
+export type VicmapKeylessKind =
+  | "easement"
+  | "planning"
+  | "bushfire"
+  | "urban_tree"
+  | "contour"
+  | "flood"
+  | "heritage"
+  | "water_corp"
+  | "road_casement"
+  | "acid_sulfate"
+  | "wetland";
+
+function scoreNamed(
+  typeName: string,
+  prefer: RegExp[],
+  reject: RegExp[],
+  exactBoost: Record<string, number> = {},
+): number {
+  const n = localName(typeName);
+  if (!n) return -Infinity;
+  for (const r of reject) {
+    if (r.test(n)) return -100;
+  }
+  if (exactBoost[n] != null) return exactBoost[n]!;
+  let score = -Infinity;
+  for (const p of prefer) {
+    if (p.test(n)) {
+      score = Math.max(score, 40);
+      if (n.includes("view") || n.includes("polygon")) score += 20;
+      if (n.includes("proposed")) score -= 15;
+    }
+  }
+  return score;
+}
+
+/**
  * Score Vicmap Property easement line layers.
  * Prefer the full `easement` layer over simplified approved/proposed views.
  */
@@ -147,6 +190,127 @@ export function scoreEasementLayerName(typeName: string): number {
 
   if (n.startsWith("v_s_")) score -= 5;
   return score;
+}
+
+export function scorePlanningLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/planning.?zone/, /zone.?polygon/, /\bpg_/, /land.?use.?zone/],
+    [/annotation/, /label/, /address/],
+    { planning_zone: 100, v_zone_polygon: 90 },
+  );
+}
+
+export function scoreBushfireLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/bushfire/, /\bbpa\b/, /bmo/, /fire.?prone/],
+    [/annotation/, /label/],
+    { bushfire_prone_area: 100, bpa: 90 },
+  );
+}
+
+export function scoreUrbanTreeLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/tree_urban/, /urban.?tree/, /canopy/, /veg.?tree/],
+    [/annotation/, /farm/, /plantation/],
+    { tree_urban: 100, urban_tree: 90 },
+  );
+}
+
+export function scoreContourLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/contour/, /hypsometric/, /elevation.?line/],
+    [/spot.?height/, /annotation/],
+    { contour: 90, contours_1m: 100, contours_5m: 85 },
+  );
+}
+
+export function scoreFloodLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/flood/, /lsio/, /inundation/, /overlay.?flood/],
+    [/annotation/, /label/],
+    { flood_extent: 90, lsio: 95 },
+  );
+}
+
+export function scoreHeritageLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/heritage/, /\bho\b/, /heritage.?overlay/],
+    [/annotation/, /label/],
+    { heritage_overlay: 100, heritage: 80 },
+  );
+}
+
+export function scoreWaterCorpLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/water.?corp/, /watercorp/, /melb.?water/, /authority.?boundary/],
+    [/pipe/, /main/, /sewer/, /annotation/],
+    { water_corporation: 100 },
+  );
+}
+
+export function scoreRoadCasementLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/road.?casement/, /road.?reserve/, /tr_road/, /road.?polygon/],
+    [/annotation/, /centerline/, /centreline/],
+    { road_casement_polygon: 100, tr_road: 80 },
+  );
+}
+
+export function scoreAcidSulfateLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/acid.?sulfate/, /acid.?sulphate/, /\bass\b/],
+    [/annotation/],
+    { acid_sulfate_soil: 100 },
+  );
+}
+
+export function scoreWetlandLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/wetland/, /ramsar/, /swamp/],
+    [/annotation/, /label/],
+    { wetland: 100 },
+  );
+}
+
+export const VICMAP_KEYLESS_SCORERS: Record<
+  VicmapKeylessKind,
+  (typeName: string) => number
+> = {
+  easement: scoreEasementLayerName,
+  planning: scorePlanningLayerName,
+  bushfire: scoreBushfireLayerName,
+  urban_tree: scoreUrbanTreeLayerName,
+  contour: scoreContourLayerName,
+  flood: scoreFloodLayerName,
+  heritage: scoreHeritageLayerName,
+  water_corp: scoreWaterCorpLayerName,
+  road_casement: scoreRoadCasementLayerName,
+  acid_sulfate: scoreAcidSulfateLayerName,
+  wetland: scoreWetlandLayerName,
+};
+
+/** Pick best KEYLESS layer names from a capabilities list (discovery only). */
+export function discoverKeylessLayerNames(
+  typeNames: string[],
+): Partial<Record<VicmapKeylessKind, string>> {
+  const out: Partial<Record<VicmapKeylessKind, string>> = {};
+  for (const [kind, scoreFn] of Object.entries(VICMAP_KEYLESS_SCORERS) as Array<
+    [VicmapKeylessKind, (n: string) => number]
+  >) {
+    const best = pickBestLayerName(typeNames, scoreFn);
+    if (best) out[kind] = best;
+  }
+  return out;
 }
 
 /** Pick the best-scoring typeName from a capabilities list. */
@@ -336,12 +500,27 @@ export function explodeExteriorRings(geom: RawGeometry): Ring[] {
     const ring = geom.coordinates[0];
     return ring && ring.length >= 3 ? [ring] : [];
   }
-  const out: Ring[] = [];
-  for (const poly of geom.coordinates) {
-    const ring = poly[0];
-    if (ring && ring.length >= 3) out.push(ring);
+  if (geom.type === "MultiPolygon") {
+    const out: Ring[] = [];
+    for (const poly of geom.coordinates) {
+      const ring = poly[0];
+      if (ring && ring.length >= 3) out.push(ring);
+    }
+    return out;
   }
-  return out;
+  return [];
+}
+
+/** Line / multiline rings for contour-style KEYLESS layers. */
+export function explodeLineRings(geom: RawGeometry): Ring[] {
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  if (geom.type === "MultiLineString") {
+    return geom.coordinates.filter((r) => r.length >= 2);
+  }
+  // Some contour layers ship as thin polygons — accept those too.
+  return explodeExteriorRings(geom);
 }
 
 /** Largest exterior ring — used for building footprints (main mass). */
@@ -564,6 +743,80 @@ export async function fetchEasementLinesForTitle(
   return out;
 }
 
+const keylessLayerCache = new Map<VicmapKeylessKind, DiscoveredLayer>();
+
+/** Discover a KEYLESS layer + geometry field via scorers + DescribeFeatureType. */
+export async function discoverKeylessLayer(
+  kind: VicmapKeylessKind,
+): Promise<DiscoveredLayer | null> {
+  const hit = keylessLayerCache.get(kind);
+  if (hit) return hit;
+  const names = await fetchCapabilitiesTypeNames();
+  const scoreFn = VICMAP_KEYLESS_SCORERS[kind];
+  const typeName = pickBestLayerName(names, scoreFn);
+  if (!typeName) return null;
+  const geomField = await describeGeometryField(typeName);
+  const discovered = { typeName, geomField };
+  keylessLayerCache.set(kind, discovered);
+  return discovered;
+}
+
+export type KeylessFetchResult = {
+  kind: VicmapKeylessKind;
+  typeName: string;
+  /** Exterior rings or contour polylines in EPSG:4326. */
+  rings: Ring[];
+  label: string | null;
+};
+
+/**
+ * Fetch KEYLESS overlay geometry intersecting a lat/lng pin.
+ * Contours prefer line rings; planning / bushfire prefer polygons.
+ */
+export async function fetchKeylessRings(
+  kind: VicmapKeylessKind,
+  lat: number,
+  lng: number,
+): Promise<KeylessFetchResult | null> {
+  const layer = await discoverKeylessLayer(kind);
+  if (!layer) return null;
+  const cql = `INTERSECTS(${layer.geomField}, SRID=4326;POINT(${lng} ${lat}))`;
+  const url = buildUrl(layer.typeName, cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return null;
+
+  const rings: Ring[] = [];
+  let label: string | null = null;
+  for (const f of fc.features) {
+    const parts =
+      kind === "contour"
+        ? explodeLineRings(f.geometry)
+        : explodeExteriorRings(f.geometry);
+    for (const r of parts) rings.push(r);
+    if (!label) {
+      label = propStr(
+        f.properties,
+        "ZONE_CODE",
+        "ZONE",
+        "OVERLAY",
+        "BMO",
+        "LABEL",
+        "NAME",
+        "name",
+      );
+    }
+  }
+  if (rings.length === 0) return null;
+  // Cap payload — board washes do not need every contour statewide.
+  const capped = rings.slice(0, kind === "contour" ? 40 : 12);
+  return {
+    kind,
+    typeName: layer.typeName,
+    rings: capped,
+    label,
+  };
+}
+
 /** Test helper — clear discovery caches between unit tests. */
 export function __resetVicmapDiscoveryCacheForTests(): void {
   capabilitiesCache = null;
@@ -571,4 +824,5 @@ export function __resetVicmapDiscoveryCacheForTests(): void {
   propertyLayerCache = null;
   buildingLayerCache = null;
   easementLayerCache = null;
+  keylessLayerCache.clear();
 }
