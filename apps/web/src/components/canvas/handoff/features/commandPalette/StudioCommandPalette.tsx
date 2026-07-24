@@ -26,6 +26,10 @@ type Props = {
   onOpenServices?: () => void;
   /** Open Environment boundary panel (sun / season / growth). */
   onOpenEnvironment?: () => void;
+  /** Open Site meta panel (lot area / dwelling / easements). */
+  onOpenSite?: () => void;
+  /** Open existing Trees meta panel (count / DBH / TPZ). */
+  onOpenTrees?: () => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
@@ -64,6 +68,8 @@ export function StudioCommandPalette({
   onAutoTrench,
   onOpenServices,
   onOpenEnvironment,
+  onOpenSite,
+  onOpenTrees,
   onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
@@ -180,6 +186,32 @@ export function StudioCommandPalette({
             } satisfies StudioCommand,
           ]
         : []),
+      ...(onOpenSite
+        ? [
+            {
+              id: "site-meta",
+              label: "Site",
+              detail:
+                "Boundary rail — lot area, dwelling, easements (Vicmap ≠ assets)",
+              keywords:
+                "site lot area boundary parcel cadastral vicmap dwelling easement title outdoor sticky",
+              run: onOpenSite,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onOpenTrees
+        ? [
+            {
+              id: "trees-meta",
+              label: "Existing trees",
+              detail:
+                "Boundary rail — survey trees, DBH, indicative AS 4970 TPZ",
+              keywords:
+                "trees existing survey tree canopy dbh tpz as4970 protected retention vegetation sticky",
+              run: onOpenTrees,
+            } satisfies StudioCommand,
+          ]
+        : []),
       ...(onConvertSketch
         ? [
             {
@@ -280,6 +312,8 @@ export function StudioCommandPalette({
     onAutoTrench,
     onOpenServices,
     onOpenEnvironment,
+    onOpenSite,
+    onOpenTrees,
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,

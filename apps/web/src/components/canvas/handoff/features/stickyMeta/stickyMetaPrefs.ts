@@ -1,6 +1,10 @@
 /** Session prefs — sticky meta cards stay until the operator opts out. */
 
-export type StickyMetaCardId = "services" | "environment";
+export type StickyMetaCardId =
+  | "services"
+  | "environment"
+  | "site"
+  | "trees";
 
 const KEY = (projectId: string) => `ws-sticky-meta:${projectId || "demo"}`;
 

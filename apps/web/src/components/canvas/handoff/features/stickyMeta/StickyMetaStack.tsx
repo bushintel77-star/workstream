@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CameraChrome } from "../../CameraChrome";
 import { buildServiceLedgerRows } from "../services/serviceLedger";
 import type { ConstructionTrench, IrrigationZone } from "@workstream/contracts";
@@ -9,7 +9,10 @@ import type { PctPoint } from "../../geometry";
 import type { GrowthStage } from "../../state/studioTypes";
 import type { SunDatePreset } from "../sunGrowth/sunDatePreset";
 import { buildEnvLiveMeta, type EnvWeatherDay } from "./envLiveMeta";
+import { buildSiteLiveMeta } from "./siteLiveMeta";
+import { buildTreesLiveMeta } from "./treesLiveMeta";
 import { WeatherIcon } from "./WeatherIcon";
+import { MetaIcon } from "./MetaIcon";
 import {
   dismissStickyMeta,
   isStickyMetaDismissed,
@@ -18,12 +21,16 @@ import {
 } from "./stickyMetaPrefs";
 import css from "./stickyMeta.module.css";
 
+type ActivePanel = "services" | "environment" | "site" | "trees" | null;
+
 type Props = {
   projectId: string;
   visible: boolean;
   laneBusy: boolean;
-  activePanel: "services" | "environment" | null;
+  activePanel: ActivePanel;
   scaleM: number;
+  boundary: PctPoint[];
+  building: PctPoint[];
   services: PctPoint[][];
   easements: PctPoint[][];
   levels: SpotLevel[];
@@ -37,17 +44,31 @@ type Props = {
   shadeOn: boolean;
   lat?: number | null;
   lng?: number | null;
+  /** Turf workable outdoor remnant (m²) for the site face cue. */
+  outdoorM2?: number | null;
+  /** Cadastral source label ("Vicmap") when the title boundary is known. */
+  titleSource?: string | null;
   /** Today’s Open-Meteo day for weather icons (optional). */
   weatherDay?: EnvWeatherDay | null;
   /** Bump to re-read session dismiss prefs after restore. */
   restoreNonce?: number;
   onExpandServices: () => void;
   onExpandEnvironment: () => void;
+  onExpandSite: () => void;
+  onExpandTrees: () => void;
 };
 
+const ALL_CARDS: StickyMetaCardId[] = [
+  "environment",
+  "services",
+  "site",
+  "trees",
+];
+
 /**
- * Gold sticky meta stack — translucent live cards for Env + Services.
- * Persist until ×; expand opens the right-lane detail panel.
+ * Gold sticky meta stack — Cursor-style flush-right boundary rail with four
+ * live faces: Environment, Services, Site, Trees. Persist until ×; expand
+ * opens the matching right-lane detail panel on the same boundary seam.
  */
 export function StickyMetaStack({
   projectId,
@@ -55,6 +76,8 @@ export function StickyMetaStack({
   laneBusy,
   activePanel,
   scaleM,
+  boundary,
+  building,
   services,
   easements,
   levels,
@@ -68,15 +91,21 @@ export function StickyMetaStack({
   shadeOn,
   lat,
   lng,
+  outdoorM2 = null,
+  titleSource = null,
   weatherDay = null,
   restoreNonce = 0,
   onExpandServices,
   onExpandEnvironment,
+  onExpandSite,
+  onExpandTrees,
 }: Props) {
   const [dismissed, setDismissed] = useState<Record<StickyMetaCardId, boolean>>(
     {
       services: false,
       environment: false,
+      site: false,
+      trees: false,
     },
   );
 
@@ -84,6 +113,8 @@ export function StickyMetaStack({
     setDismissed({
       services: isStickyMetaDismissed(projectId, "services"),
       environment: isStickyMetaDismissed(projectId, "environment"),
+      site: isStickyMetaDismissed(projectId, "site"),
+      trees: isStickyMetaDismissed(projectId, "trees"),
     });
   }, [projectId, restoreNonce]);
 
@@ -126,11 +157,30 @@ export function StickyMetaStack({
     [sunMin, sunDatePreset, growth, lat, lng, shadeOn, weatherDay],
   );
 
+  const site = useMemo(
+    () =>
+      buildSiteLiveMeta({
+        boundary,
+        building,
+        easements,
+        scaleM,
+        lotAreaM2: null,
+        titleSource,
+      }),
+    [boundary, building, easements, scaleM, titleSource],
+  );
+
+  const trees = useMemo(() => buildTreesLiveMeta({ items }), [items]);
+
+  const siteDetail =
+    outdoorM2 != null && outdoorM2 > 0
+      ? `${site.detail} · ${Math.round(outdoorM2)} m² outdoor`
+      : site.detail;
+
   if (!visible) return null;
 
-  const showEnv = !dismissed.environment;
-  const showSvc = !dismissed.services;
-  if (!showEnv && !showSvc) return null;
+  const anyVisible = ALL_CARDS.some((id) => !dismissed[id]);
+  if (!anyVisible) return null;
 
   const dismiss = (id: StickyMetaCardId) => {
     dismissStickyMeta(projectId, id);
@@ -144,86 +194,125 @@ export function StickyMetaStack({
         data-testid="sticky-meta-stack"
         data-lane={laneBusy ? "busy" : "free"}
       >
-        {showEnv ? (
-          <button
-            type="button"
-            className={css.card}
-            data-testid="sticky-meta-environment"
-            data-with-icon="true"
-            data-active={activePanel === "environment" ? "true" : "false"}
-            onClick={onExpandEnvironment}
-          >
-            <span className={css.iconSlot}>
-              <WeatherIcon condition={env.weatherCondition} size={18} />
-            </span>
-            <p className={css.face}>{env.face}</p>
-            <span
-              className={css.close}
-              role="button"
-              tabIndex={0}
-              aria-label="Dismiss environment card"
-              data-testid="sticky-meta-environment-dismiss"
-              onClick={(e) => {
-                e.stopPropagation();
-                dismiss("environment");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  dismiss("environment");
-                }
-              }}
-            >
-              ×
-            </span>
-            <p className={css.detail}>{env.detail}</p>
-          </button>
+        {!dismissed.environment ? (
+          <MetaCard
+            id="environment"
+            testId="sticky-meta-environment"
+            active={activePanel === "environment"}
+            icon={<WeatherIcon condition={env.weatherCondition} size={18} />}
+            face={env.face}
+            detail={env.detail}
+            onExpand={onExpandEnvironment}
+            onDismiss={() => dismiss("environment")}
+          />
         ) : null}
 
-        {showSvc ? (
-          <button
-            type="button"
-            className={css.card}
-            data-testid="sticky-meta-services"
-            data-active={activePanel === "services" ? "true" : "false"}
-            onClick={onExpandServices}
-          >
-            <p className={css.face}>
-              Services · {siteN} site · {designN} design
-              {servicesLocked ? (
-                <span className={css.badge}>locked</span>
-              ) : null}
-            </p>
-            <span
-              className={css.close}
-              role="button"
-              tabIndex={0}
-              aria-label="Dismiss services card"
-              data-testid="sticky-meta-services-dismiss"
-              onClick={(e) => {
-                e.stopPropagation();
-                dismiss("services");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  dismiss("services");
-                }
-              }}
-            >
-              ×
-            </span>
-            <p className={css.detail}>
-              {siteN + designN === 0
+        {!dismissed.services ? (
+          <MetaCard
+            id="services"
+            testId="sticky-meta-services"
+            active={activePanel === "services"}
+            icon={<MetaIcon id="services" size={18} />}
+            face={
+              <>
+                Services · {siteN} site · {designN} design
+                {servicesLocked ? (
+                  <span className={css.badge}>locked</span>
+                ) : null}
+              </>
+            }
+            detail={
+              siteN + designN === 0
                 ? "Empty — Servc / Zone / Auto trench"
-                : "Ticks · metrics · click to focus"}
-            </p>
-          </button>
+                : "Ticks · metrics · click to focus"
+            }
+            onExpand={onExpandServices}
+            onDismiss={() => dismiss("services")}
+          />
+        ) : null}
+
+        {!dismissed.site ? (
+          <MetaCard
+            id="site"
+            testId="sticky-meta-site"
+            active={activePanel === "site"}
+            icon={<MetaIcon id="site" size={18} />}
+            face={site.face}
+            detail={siteDetail}
+            onExpand={onExpandSite}
+            onDismiss={() => dismiss("site")}
+          />
+        ) : null}
+
+        {!dismissed.trees ? (
+          <MetaCard
+            id="trees"
+            testId="sticky-meta-trees"
+            active={activePanel === "trees"}
+            icon={<MetaIcon id="trees" size={18} />}
+            face={trees.face}
+            detail={trees.detail}
+            onExpand={onExpandTrees}
+            onDismiss={() => dismiss("trees")}
+          />
         ) : null}
       </div>
     </CameraChrome>
+  );
+}
+
+function MetaCard({
+  id,
+  testId,
+  active,
+  icon,
+  face,
+  detail,
+  onExpand,
+  onDismiss,
+}: {
+  id: StickyMetaCardId;
+  testId: string;
+  active: boolean;
+  icon: ReactNode;
+  face: ReactNode;
+  detail: ReactNode;
+  onExpand: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={css.card}
+      data-testid={testId}
+      data-with-icon="true"
+      data-active={active ? "true" : "false"}
+      onClick={onExpand}
+    >
+      <span className={css.iconSlot}>{icon}</span>
+      <p className={css.face}>{face}</p>
+      <span
+        className={css.close}
+        role="button"
+        tabIndex={0}
+        aria-label={`Dismiss ${id} card`}
+        data-testid={`${testId}-dismiss`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismiss();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            onDismiss();
+          }
+        }}
+      >
+        ×
+      </span>
+      <p className={css.detail}>{detail}</p>
+    </button>
   );
 }
 

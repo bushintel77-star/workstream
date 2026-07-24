@@ -47,10 +47,20 @@ bleeding into the canvas, hard against the edge. Not floating inset cards.
 ```
                     │ Env · 6.2h · Autumn · mature × │← flush right
  drawing / parchment│ Services · 3 site · 2 design × │
+                    │ 412 m² · boundary            × │  ← Site
+                    │ Trees · 1                    × │  ← existing trees
                     └────────────────────────────────┘
                               ↓ click
-                    │ Expanded Env / Services panel   │← same seam
+                    │ Expanded Env / Services /       │← same seam
+                    │ Site / Trees panel              │
 ```
+
+Four sticky faces in order: **Environment, Services, Site, Trees**. Site face
+reads lot area + cadastral source (`412 m² · Vicmap`, else `… · boundary` /
+`Site · boundary`); expand shows dwelling / easements + Vicmap≠assets honesty.
+Trees face reads `Trees · N`; expand lists existing survey trees with
+indicative AS 4970 TPZ (12 × DBH, min 2 m). Both persist until × and re-summon
+via Cmd+K (`Site`, `Existing trees`).
 
 ### Rules
 

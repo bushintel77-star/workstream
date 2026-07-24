@@ -9,7 +9,9 @@ export type RightDataPanel =
   | "sites"
   | "checklist"
   | "services"
-  | "environment";
+  | "environment"
+  | "site"
+  | "trees";
 
 /** Nominal panel width reserved into `--ws-safe-right` while a panel is open. */
 export const RIGHT_DATA_LANE_WIDTH_PX = 304;

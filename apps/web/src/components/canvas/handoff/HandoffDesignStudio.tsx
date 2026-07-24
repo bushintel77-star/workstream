@@ -46,10 +46,14 @@ import {
   summonStickyMeta,
 } from "./features/stickyMeta/StickyMetaStack";
 import { EnvironmentPanel } from "./features/stickyMeta/EnvironmentPanel";
+import { SiteMetaPanel } from "./features/stickyMeta/SiteMetaPanel";
+import { TreesMetaPanel } from "./features/stickyMeta/TreesMetaPanel";
 import {
   buildEnvLiveMeta,
   type EnvWeatherDay,
 } from "./features/stickyMeta/envLiveMeta";
+import { buildSiteLiveMeta } from "./features/stickyMeta/siteLiveMeta";
+import { buildTreesLiveMeta } from "./features/stickyMeta/treesLiveMeta";
 import { RightDataLane } from "./features/surfaces/DataLaneSlot";
 import {
   RIGHT_DATA_LANE_WIDTH_PX,
@@ -1253,6 +1257,8 @@ export function HandoffDesignStudio({
   const layersOpen = ui.rightDataPanel === "layers";
   const servicesOpen = ui.rightDataPanel === "services";
   const environmentOpen = ui.rightDataPanel === "environment";
+  const siteMetaOpen = ui.rightDataPanel === "site";
+  const treesMetaOpen = ui.rightDataPanel === "trees";
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
   const rightLaneBusy = ui.rightDataPanel != null;
@@ -1309,6 +1315,10 @@ export function HandoffDesignStudio({
       weatherDay,
     ],
   );
+  const treesLiveMeta = useMemo(
+    () => buildTreesLiveMeta({ items: studio.items }),
+    [studio.items],
+  );
   const surveyServicesAuthoring = surveyServicesAuthoringAllowed({
     mode: ui.mode,
     servicesLocked: ui.servicesLocked,
@@ -1351,6 +1361,20 @@ export function HandoffDesignStudio({
    * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
    */
   const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
+
+  const siteLiveMeta = useMemo(
+    () =>
+      buildSiteLiveMeta({
+        boundary: studio.boundary,
+        building: studio.building,
+        easements: studio.easements,
+        scaleM,
+        // No surveyed Vicmap title area tracked yet — estimate from the trace.
+        lotAreaM2: null,
+        titleSource: null,
+      }),
+    [studio.boundary, studio.building, studio.easements, scaleM],
+  );
 
   /**
    * Dark is a *screen* lens — it must never leak into the Fit sheet, which
@@ -3464,20 +3488,31 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {/* Cursor-style boundary rail — Env + Services sticky until dismissed. */}
+        {/* Cursor-style boundary rail — Env / Services / Site / Trees sticky until dismissed. */}
         {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
           <StickyMetaStack
             projectId={projectId}
-            visible={!servicesOpen && !environmentOpen}
+            visible={
+              !servicesOpen &&
+              !environmentOpen &&
+              !siteMetaOpen &&
+              !treesMetaOpen
+            }
             laneBusy={rightLaneBusy}
             activePanel={
               servicesOpen
                 ? "services"
                 : environmentOpen
                   ? "environment"
-                  : null
+                  : siteMetaOpen
+                    ? "site"
+                    : treesMetaOpen
+                      ? "trees"
+                      : null
             }
             scaleM={scaleM}
+            boundary={studio.boundary}
+            building={studio.building}
             services={studio.services}
             easements={studio.easements}
             levels={studio.levels}
@@ -3491,8 +3526,26 @@ export function HandoffDesignStudio({
             shadeOn={ui.shadeOn}
             lat={projectLat}
             lng={projectLng}
+            outdoorM2={outdoor}
+            titleSource={null}
             weatherDay={weatherDay}
             restoreNonce={stickyRestoreNonce}
+            onExpandSite={() => {
+              summonStickyMeta(projectId, "site");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "site",
+                utilityPanel: null,
+              });
+            }}
+            onExpandTrees={() => {
+              summonStickyMeta(projectId, "trees");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "trees",
+                utilityPanel: null,
+              });
+            }}
             onExpandServices={() => {
               summonStickyMeta(projectId, "services");
               setStickyRestoreNonce((n) => n + 1);
@@ -3570,6 +3623,27 @@ export function HandoffDesignStudio({
               onShadeOn={(shadeOn) =>
                 studio.setUi({ shadeOn, sunPlay: shadeOn ? ui.sunPlay : false })
               }
+            />
+          </RightDataLane>
+        ) : null}
+
+        {planOn && siteMetaOpen ? (
+          <RightDataLane testId="right-data-lane-site">
+            <SiteMetaPanel
+              open
+              meta={siteLiveMeta}
+              outdoorM2={outdoor}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+            />
+          </RightDataLane>
+        ) : null}
+
+        {planOn && treesMetaOpen ? (
+          <RightDataLane testId="right-data-lane-trees">
+            <TreesMetaPanel
+              open
+              meta={treesLiveMeta}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
             />
           </RightDataLane>
         ) : null}
@@ -3708,6 +3782,26 @@ export function HandoffDesignStudio({
             studio.setUi({
               rightDataPanel: "environment",
               shadeOn: true,
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            });
+          }}
+          onOpenSite={() => {
+            summonStickyMeta(projectId, "site");
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              rightDataPanel: "site",
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            });
+          }}
+          onOpenTrees={() => {
+            summonStickyMeta(projectId, "trees");
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              rightDataPanel: "trees",
               cmdOpen: false,
               cmdQuery: "",
               utilityPanel: null,
