@@ -716,6 +716,9 @@ function explodeLineCoordinates(geom: LineGeometry): Coord[][] {
   return geom.coordinates.filter((line) => line.length >= 2);
 }
 
+/** Max easement LineStrings per title — keeps auto-trace payload bounded. */
+export const EASEMENT_LINE_CAP = 24;
+
 /**
  * Fetch Vicmap Property easement lines intersecting a title ring.
  * Vicmap captures only a subset of easements — treat as indicative site context.
@@ -738,6 +741,7 @@ export async function fetchEasementLinesForTitle(
     const status = propStr(f.properties, "status", "STATUS");
     for (const coordinates of explodeLineCoordinates(f.geometry)) {
       out.push({ coordinates, pfi, status });
+      if (out.length >= EASEMENT_LINE_CAP) return out;
     }
   }
   return out;

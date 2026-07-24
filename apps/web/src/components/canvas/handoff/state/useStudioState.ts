@@ -1716,6 +1716,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ...(applied.fit.boardWidthM != null
             ? { boardWidthM: applied.fit.boardWidthM }
             : {}),
+          ...(applied.easementSource === "vicmap" && applied.services?.length
+            ? {
+                councilTip: `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+              }
+            : {}),
         });
 
         // KEYLESS washes — same title transform when available.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   discoverKeylessLayerNames,
+  EASEMENT_LINE_CAP,
   explodeExteriorRings,
   extractVicmapParcelAttrs,
   parseFeatureTypeNames,
@@ -71,6 +72,10 @@ describe("layer discovery scoring", () => {
     expect(pickBestLayerName(sampleNames, scoreBuildingLayerName)).toBe(
       "open-data-platform:building_polygon",
     );
+  });
+
+  it("bounds easement line payload cap", () => {
+    expect(EASEMENT_LINE_CAP).toBe(24);
   });
 
   it("prefers easement over approved/proposed simplified views", () => {
