@@ -8,37 +8,46 @@
   overflow: visible;
 }
 
+/*
+ * KEYLESS Vicmap overlays in professional overlay-hatch language: each zone is
+ * a translucent diagonal/cross hatch (fill = pattern set in KeylessOverlayWash
+ * defs) plus a hairline dashed boundary so planning ≠ bushfire ≠ generic and
+ * none of them collides with the title easement amber hatch. Contours draw as
+ * fine sepia topo lines.
+ */
 .planning {
-  fill: rgba(124, 58, 237, 0.1);
-  stroke: rgba(109, 40, 217, 0.45);
+  stroke: rgba(107, 91, 140, 0.6);
   stroke-width: 0.35;
-  stroke-dasharray: 1.2 1;
+  stroke-dasharray: 1.4 1.1;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   mix-blend-mode: multiply;
 }
 
 .bushfire {
-  fill: rgba(220, 38, 38, 0.12);
-  stroke: rgba(185, 28, 28, 0.5);
-  stroke-width: 0.4;
+  stroke: rgba(154, 52, 18, 0.62);
+  stroke-width: 0.42;
   stroke-dasharray: 2 1.2;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   mix-blend-mode: multiply;
 }
 
 .generic {
-  fill: rgba(14, 116, 144, 0.08);
-  stroke: rgba(14, 116, 144, 0.4);
+  stroke: rgba(14, 116, 144, 0.5);
   stroke-width: 0.35;
   stroke-dasharray: 1.5 1.2;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   mix-blend-mode: multiply;
 }
 
 .contour {
   fill: none;
-  stroke: rgba(120, 113, 108, 0.55);
-  stroke-width: 0.35;
-  stroke-dasharray: 0.8 0.8;
+  stroke: rgba(138, 107, 84, 0.6);
+  stroke-width: 0.3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
   vector-effect: non-scaling-stroke;
+  mix-blend-mode: multiply;
 }

@@ -6,24 +6,53 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
+/*
+ * Small azimuth jewel — a faceted gold pip with a soft specular highlight and
+ * a hairline warm ring. Reads as a refined bearing marker, not a traffic cone.
+ */
 .dot {
-  width: 9px;
-  height: 9px;
+  position: relative;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #f59e0b;
-  border: 1.5px solid rgba(255, 251, 252, 0.95);
-  box-shadow: 0 0 0 1px rgba(28, 25, 23, 0.18);
+  background:
+    radial-gradient(
+      circle at 34% 30%,
+      #fbe6ac 0%,
+      #edb852 42%,
+      #cf8f24 78%,
+      #a86c14 100%
+    );
+  box-shadow:
+    0 0 0 1px rgba(120, 72, 20, 0.35),
+    0 0 0 2.5px rgba(255, 251, 252, 0.9),
+    0 1px 2px rgba(78, 47, 9, 0.28);
+}
+
+.dot::after {
+  content: "";
+  position: absolute;
+  top: 1.4px;
+  left: 1.8px;
+  width: 2.4px;
+  height: 2.4px;
+  border-radius: 50%;
+  background: rgba(255, 252, 240, 0.85);
 }
 
 .label {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
-  letter-spacing: 0.04em;
-  color: #78350f;
-  background: rgba(255, 251, 252, 0.82);
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a4a12;
+  background: rgba(255, 251, 252, 0.86);
   padding: 1px 4px;
-  border: 1px solid rgba(180, 83, 9, 0.25);
+  border-radius: 3px;
+  border: 1px solid rgba(120, 72, 20, 0.18);
+  box-shadow: 0 1px 2px rgba(78, 47, 9, 0.1);
 }

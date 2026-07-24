@@ -118,17 +118,20 @@
 .weatherPip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 5px;
-  border: 1px solid rgba(36, 19, 24, 0.18);
-  background: rgba(255, 255, 255, 0.55);
-  color: #292524;
+  gap: 4px;
+  padding: 1.5px 5px;
+  border: 1px solid rgba(36, 19, 24, 0.16);
+  border-radius: 3px;
+  background: rgba(250, 246, 242, 0.72);
+  color: #7a5560;
 }
 
 .weatherTemp {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #241318;
 }
 
 /**
@@ -254,8 +257,9 @@
 .northRose {
   flex: none;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   line-height: 0;
+  opacity: 0.92;
 }
 
 .section {

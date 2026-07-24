@@ -113,14 +113,28 @@ export function SunCastOverlay({
       data-testid="sun-cast-overlay"
       aria-hidden
     >
-      {polys.map((pts, i) => (
-        <polygon
-          key={i}
-          points={pts}
-          className={css.poly}
-          data-testid="sun-cast-poly"
-        />
-      ))}
+      <defs>
+        {/* Feather the cast edge so shade falls off like real penumbra. */}
+        <filter
+          id="ws-sun-cast-soft"
+          x="-6%"
+          y="-6%"
+          width="112%"
+          height="112%"
+        >
+          <feGaussianBlur stdDeviation="0.35" />
+        </filter>
+      </defs>
+      <g filter="url(#ws-sun-cast-soft)">
+        {polys.map((pts, i) => (
+          <polygon
+            key={i}
+            points={pts}
+            className={css.poly}
+            data-testid="sun-cast-poly"
+          />
+        ))}
+      </g>
     </svg>
   );
 }

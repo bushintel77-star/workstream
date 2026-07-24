@@ -59,7 +59,37 @@ export function ClimateBedWash({ active, boundary, meta }: Props) {
       data-tone={tone}
       aria-hidden
     >
-      <polygon points={ptsAttr(boundary)} className={css[tone]} />
+      <defs>
+        {/* Frost pools low in the bed; heat gathers up-slope. Others grade
+            gently top-to-bottom. Object-bbox units keep bands undistorted. */}
+        <linearGradient id="ws-climate-frost" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#8fbdd6" stopOpacity="0.06" />
+          <stop offset="0.55" stopColor="#7fb4d3" stopOpacity="0.14" />
+          <stop offset="1" stopColor="#6ea7cc" stopOpacity="0.2" />
+        </linearGradient>
+        <linearGradient id="ws-climate-heat" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#d47a68" stopOpacity="0.2" />
+          <stop offset="0.6" stopColor="#d98374" stopOpacity="0.1" />
+          <stop offset="1" stopColor="#dc9184" stopOpacity="0.04" />
+        </linearGradient>
+        <linearGradient id="ws-climate-warm" x1="0" y1="0" x2="0.9" y2="1">
+          <stop offset="0" stopColor="#dfa24d" stopOpacity="0.14" />
+          <stop offset="1" stopColor="#e2ac5f" stopOpacity="0.03" />
+        </linearGradient>
+        <linearGradient id="ws-climate-humid" x1="0" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#6fa98a" stopOpacity="0.12" />
+          <stop offset="1" stopColor="#7cb397" stopOpacity="0.02" />
+        </linearGradient>
+        <linearGradient id="ws-climate-dry" x1="0" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#c08a3e" stopOpacity="0.11" />
+          <stop offset="1" stopColor="#c9974f" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <polygon
+        points={ptsAttr(boundary)}
+        className={css[tone]}
+        fill={`url(#ws-climate-${tone})`}
+      />
     </svg>
   );
 }

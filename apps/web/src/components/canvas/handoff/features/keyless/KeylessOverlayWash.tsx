@@ -27,6 +27,74 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
       data-testid="keyless-overlay-wash"
       aria-hidden
     >
+      <defs>
+        {/* Planning: fine single diagonal + faint plum tint. */}
+        <pattern
+          id="ws-keyless-planning"
+          width="2.6"
+          height="2.6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width="2.6" height="2.6" fill="#6b5b8c" fillOpacity="0.05" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="2.6"
+            stroke="#6b5b8c"
+            strokeWidth="0.4"
+            strokeOpacity="0.42"
+          />
+        </pattern>
+        {/* Bushfire: coarser cross-hatch in ember sienna — reads as hazard. */}
+        <pattern
+          id="ws-keyless-bushfire"
+          width="2.4"
+          height="2.4"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width="2.4" height="2.4" fill="#9a3412" fillOpacity="0.06" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="2.4"
+            stroke="#9a3412"
+            strokeWidth="0.45"
+            strokeOpacity="0.45"
+          />
+          <line
+            x1="0"
+            y1="0"
+            x2="2.4"
+            y2="0"
+            stroke="#9a3412"
+            strokeWidth="0.45"
+            strokeOpacity="0.45"
+          />
+        </pattern>
+        {/* Generic overlay: opposite fine diagonal in teal. */}
+        <pattern
+          id="ws-keyless-generic"
+          width="2.8"
+          height="2.8"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(-45)"
+        >
+          <rect width="2.8" height="2.8" fill="#0e7490" fillOpacity="0.045" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="2.8"
+            stroke="#0e7490"
+            strokeWidth="0.36"
+            strokeOpacity="0.4"
+          />
+        </pattern>
+      </defs>
       {overlays.flatMap((ov) =>
         ov.rings.map((ring, i) => {
           if (ring.length < 2) return null;
@@ -42,17 +110,24 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
               />
             );
           }
+          const cls =
+            ov.kind === "bushfire"
+              ? css.bushfire
+              : ov.kind === "planning"
+                ? css.planning
+                : css.generic;
+          const patternId =
+            ov.kind === "bushfire"
+              ? "ws-keyless-bushfire"
+              : ov.kind === "planning"
+                ? "ws-keyless-planning"
+                : "ws-keyless-generic";
           return (
             <polygon
               key={`${ov.kind}-${i}`}
               points={pts}
-              className={
-                ov.kind === "bushfire"
-                  ? css.bushfire
-                  : ov.kind === "planning"
-                    ? css.planning
-                    : css.generic
-              }
+              className={cls}
+              fill={`url(#${patternId})`}
               data-kind={ov.kind}
               data-testid={`keyless-wash-${ov.kind}`}
             />

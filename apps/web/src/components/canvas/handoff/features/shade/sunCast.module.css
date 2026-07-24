@@ -8,8 +8,18 @@
   overflow: visible;
 }
 
+/*
+ * Soft plan cast ink — a cool umber-plum shade under multiply, feathered at
+ * the edge (via the shared blur filter) so timed shadows read as drawn cast
+ * shade on parchment, never a hard black blob. Thin edge keeps the cast
+ * direction legible.
+ */
 .poly {
-  fill: rgba(28, 25, 23, 0.14);
-  stroke: none;
+  fill: rgba(52, 42, 58, 0.11);
+  stroke: rgba(52, 42, 58, 0.16);
+  stroke-width: 0.22;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
   mix-blend-mode: multiply;
 }

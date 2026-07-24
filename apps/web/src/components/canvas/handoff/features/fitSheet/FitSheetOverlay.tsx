@@ -399,26 +399,30 @@ export function FitSheetOverlay({
                 </span>
               ) : null}
               <span className={css.northRose} title="True north" aria-hidden>
-                <svg viewBox="0 0 24 28" width="22" height="26">
-                  <polygon points="12,2 15,14 12,12 9,14" fill="#1a1a1a" />
-                  <line
-                    x1="12"
-                    y1="12"
-                    x2="12"
-                    y2="26"
-                    stroke="#1a1a1a"
-                    strokeWidth="1.2"
-                  />
+                <svg viewBox="0 0 22 30" width="19" height="26">
                   <text
-                    x="12"
-                    y="11"
+                    x="11"
+                    y="6.4"
                     textAnchor="middle"
-                    fontSize="6"
-                    fontFamily="IBM Plex Mono, monospace"
+                    fontSize="6.5"
+                    fontFamily="var(--font-serif)"
+                    fontWeight="600"
                     fill="#1a1a1a"
                   >
                     N
                   </text>
+                  {/* Surveyor's needle: solid north half, open south half. */}
+                  <polygon
+                    points="11,9.5 14,20 11,17 8,20"
+                    fill="#1a1a1a"
+                  />
+                  <polygon
+                    points="11,17 14,20 11,25.5 8,20"
+                    fill="none"
+                    stroke="#1a1a1a"
+                    strokeWidth="0.8"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </span>
             </div>

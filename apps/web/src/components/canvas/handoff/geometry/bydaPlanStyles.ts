@@ -6,8 +6,10 @@ import type { PlanLineStyle } from "./planLineStyles";
  * Each utility has a distinct colour + dash so sewer ≠ gas ≠ NBN at a glance.
  */
 export const BYDA_PLAN_LINES_LIGHT: Record<BydaAssetKind, PlanLineStyle> = {
+  // Sewer: drainage green (long-short-short) — never the AI purple, and clear
+  // of the title easement amber hatch.
   sewer: {
-    stroke: "#7C3AED",
+    stroke: "#2E7D54",
     strokeWidth: 1.05,
     dash: "5 1.5 1.5 1.5",
   },
@@ -21,18 +23,20 @@ export const BYDA_PLAN_LINES_LIGHT: Record<BydaAssetKind, PlanLineStyle> = {
     strokeWidth: 1.0,
     dash: "3 1.5 1 1.5",
   },
+  // Gas: warm ochre-gold, deepened for legibility on cream (not easement burnt
+  // orange, not pale yellow that vanishes on print).
   gas: {
-    stroke: "#CA8A04",
+    stroke: "#B7791F",
     strokeWidth: 1.05,
     dash: "2 1.2",
   },
   power: {
-    stroke: "#DC2626",
-    strokeWidth: 1.05,
+    stroke: "#C62828",
+    strokeWidth: 1.1,
     dash: "6 2 1.5 2",
   },
   nbn: {
-    stroke: "#DB2777",
+    stroke: "#C2185B",
     strokeWidth: 0.95,
     dash: "1.5 1.5",
   },
@@ -45,7 +49,7 @@ export const BYDA_PLAN_LINES_LIGHT: Record<BydaAssetKind, PlanLineStyle> = {
 
 export const BYDA_PLAN_LINES_DARK: Record<BydaAssetKind, PlanLineStyle> = {
   sewer: {
-    stroke: "#C4B5FD",
+    stroke: "#7FD1A6",
     strokeWidth: 1.05,
     dash: "5 1.5 1.5 1.5",
   },
@@ -60,17 +64,17 @@ export const BYDA_PLAN_LINES_DARK: Record<BydaAssetKind, PlanLineStyle> = {
     dash: "3 1.5 1 1.5",
   },
   gas: {
-    stroke: "#FDE047",
+    stroke: "#F0C24B",
     strokeWidth: 1.05,
     dash: "2 1.2",
   },
   power: {
     stroke: "#FCA5A5",
-    strokeWidth: 1.05,
+    strokeWidth: 1.1,
     dash: "6 2 1.5 2",
   },
   nbn: {
-    stroke: "#F9A8D4",
+    stroke: "#F48FB1",
     strokeWidth: 0.95,
     dash: "1.5 1.5",
   },
