@@ -22,7 +22,11 @@ type Ring = Coord[];
 
 type RawGeometry =
   | { type: "Polygon"; coordinates: Ring[] }
-  | { type: "MultiPolygon"; coordinates: Ring[][] };
+  | { type: "MultiPolygon"; coordinates: Ring[][] }
+  // Easement layer geometry is gml:CurvePropertyType — GeoServer's GeoJSON
+  // output emits it as LineString / MultiLineString.
+  | { type: "LineString"; coordinates: Coord[] }
+  | { type: "MultiLineString"; coordinates: Coord[][] };
 
 type RawFeature = {
   type: "Feature";
@@ -51,6 +55,7 @@ const CAPABILITIES_TTL_MS = 60 * 60 * 1000;
 
 let propertyLayerCache: DiscoveredLayer | null = null;
 let buildingLayerCache: DiscoveredLayer | null = null;
+let easementLayerCache: DiscoveredLayer | null = null;
 
 /**
  * Vicmap cadastral is always available via the public GeoServer.
@@ -109,6 +114,21 @@ export function scoreBuildingLayerName(typeName: string): number {
   if (n === "building_polygon") score += 100;
   else if (n.includes("building") && n.includes("polygon")) score += 80;
   else if (n.includes("building")) score += 40;
+  return score;
+}
+
+/** Score a GetCapabilities FeatureType name for Vicmap easement polylines. */
+export function scoreEasementLayerName(typeName: string): number {
+  const n = localName(typeName);
+  if (!n) return -Infinity;
+  if (!n.includes("easement")) return -Infinity;
+  // Annotation / proposed / point variants are not the cadastral line layer.
+  if (/anno|annotation|proposed|point$|text/.test(n)) return -50;
+
+  let score = 0;
+  if (n === "easement") score += 100;
+  else if (n.includes("easement") && n.includes("view")) score += 60;
+  else score += 40;
   return score;
 }
 
@@ -250,6 +270,22 @@ export async function discoverBuildingLayer(): Promise<DiscoveredLayer> {
   return buildingLayerCache;
 }
 
+/** Discover Vicmap easement polyline layer + its geometry field. */
+export async function discoverEasementLayer(): Promise<DiscoveredLayer> {
+  if (easementLayerCache) return easementLayerCache;
+  const names = await fetchCapabilitiesTypeNames();
+  const typeName = pickBestLayerName(names, scoreEasementLayerName);
+  if (!typeName) {
+    throw new Error(
+      "Vicmap: no easement FeatureType found in GetCapabilities. " +
+        `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
+    );
+  }
+  const geomField = await describeGeometryField(typeName);
+  easementLayerCache = { typeName, geomField };
+  return easementLayerCache;
+}
+
 /** @deprecated Prefer discoverPropertyLayer(); kept for call-site clarity. */
 export async function discoverPropertyLayerName(): Promise<string> {
   return (await discoverPropertyLayer()).typeName;
@@ -281,6 +317,7 @@ function largestPolygonRing(geom: RawGeometry): Ring | null {
   if (geom.type === "Polygon") {
     return geom.coordinates[0] ?? null;
   }
+  if (geom.type !== "MultiPolygon") return null;
   let best: Ring | null = null;
   let bestArea = 0;
   for (const poly of geom.coordinates) {
@@ -293,6 +330,18 @@ function largestPolygonRing(geom: RawGeometry): Ring | null {
     }
   }
   return best;
+}
+
+/** Flatten a WFS line geometry (curves arrive as LineString variants). */
+export function extractPolylines(geom: RawGeometry | undefined): Coord[][] {
+  if (!geom) return [];
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  if (geom.type === "MultiLineString") {
+    return geom.coordinates.filter((line) => line.length >= 2);
+  }
+  return [];
 }
 
 function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
@@ -415,10 +464,42 @@ export async function fetchBuildingPolygon(
   return bestRing ? toGeoJsonPolygon(bestRing) : null;
 }
 
+export type VicmapEasement = {
+  /** Easement centreline as [lng, lat] pairs (EPSG:4326). */
+  line: Coord[];
+  status: string | null;
+};
+
+/**
+ * Fetch easement polylines intersecting a property polygon.
+ * Indicative only — verify on title before excavation.
+ */
+export async function fetchEasementPolylines(
+  titleRing: Ring,
+): Promise<VicmapEasement[]> {
+  const { typeName, geomField } = await discoverEasementLayer();
+  const wkt = `POLYGON((${titleRing
+    .map(([x, y]) => `${x} ${y}`)
+    .join(", ")}))`;
+  const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
+  const url = buildUrl(typeName, cql);
+  const fc = await wfsFetch(url);
+
+  const easements: VicmapEasement[] = [];
+  for (const f of fc.features) {
+    const status = propStr(f.properties, "STATUS", "status");
+    for (const line of extractPolylines(f.geometry)) {
+      easements.push({ line, status });
+    }
+  }
+  return easements;
+}
+
 /** Test helper — clear discovery caches between unit tests. */
 export function __resetVicmapDiscoveryCacheForTests(): void {
   capabilitiesCache = null;
   capabilitiesCacheAt = 0;
   propertyLayerCache = null;
   buildingLayerCache = null;
+  easementLayerCache = null;
 }

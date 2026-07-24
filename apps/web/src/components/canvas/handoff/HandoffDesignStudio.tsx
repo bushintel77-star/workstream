@@ -45,6 +45,21 @@ import {
 } from "./features/surfaces/rightDataLane";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
+import { resolveBoardSunCast } from "./features/sunGrowth/resolveBoardSunCast";
+import { HardscapeCraftBar } from "./features/hardscape/HardscapeCraftBar";
+import { PathCorridorsLayer } from "./features/hardscape/PathCorridorsLayer";
+import { VariationFilmstrip } from "./features/schemes/VariationFilmstrip";
+import { DrainageRunsLayer } from "./features/survey/DrainageRunsLayer";
+import type { HardscapeEdgeType } from "./studioCatalog";
+import {
+  buildIndicativeShadeGrid,
+  sunHoursAtPct,
+  type AspectTag,
+  type PathFilletLockM,
+  type PathWidthLockM,
+  type SoilTag,
+} from "@workstream/domain";
+import { sunDateFromPreset } from "./features/sunGrowth/sunDatePreset";
 import { UtilityDrawer } from "./features/utilityDrawer/UtilityDrawer";
 import { PermitTodosPanel } from "./features/permitTodos/PermitTodosPanel";
 import { QuoteSurface } from "./features/tier1/QuoteSurface";
@@ -151,6 +166,7 @@ import {
   isTiltActive,
   settleTiltDeg,
   tiltFromDragDelta,
+  tiltSkinScale,
 } from "./features/tilt/tiltMath";
 import { usePresentationLens } from "./features/render/usePresentationLens";
 import {
@@ -877,6 +893,19 @@ export function HandoffDesignStudio({
       }
       if (typing || ui.cmdOpen) return;
 
+      if (ui.tool === "path" && ui.drawPoly) {
+        if (e.key === "Enter" && ui.drawPoly.length >= 2) {
+          e.preventDefault();
+          studio.finishPathCorridor(ui.drawPoly);
+          return;
+        }
+        if (e.key === "Backspace" || e.key === "Delete") {
+          e.preventDefault();
+          studio.popTracePoint();
+          return;
+        }
+      }
+
       if (ui.tool === "trace" && ui.drawPoly) {
         if (e.key === "Tab") {
           const done = currentTraceCompletion(
@@ -1200,6 +1229,11 @@ export function HandoffDesignStudio({
 
   const planOn =
     ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+  const horizonCardCount = estimate.horizon.filter(
+    (h) =>
+      !ui.mitigated[h.id] &&
+      (h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer"),
+  ).length;
   const chrome = resolveHandoffChrome({
     mode: ui.mode,
     tool: ui.tool,
@@ -1210,6 +1244,8 @@ export function HandoffDesignStudio({
     pendingGhosts: ai.pendingCount,
     shadeOn: ui.shadeOn,
     dataSummoned: ui.rightDataPanel === "measures",
+    floraSessionActive: Boolean(ui.floraSession),
+    horizonCardCount,
   });
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
@@ -1338,12 +1374,53 @@ export function HandoffDesignStudio({
     planFocusY,
   });
   /**
-   * Free-plan paper stays OUTSIDE the camera transform. Scaling parchment
-   * inside `.zoomWorld` made the cream board grow/shrink with the lot on
-   * every wheel tick (the reported Sketch/CAD oscillation). Bleed owns the
-   * fixed paper+mesh; world ground is hidePaper whenever Fit is off.
+   * Free-plan paper stays OUTSIDE the camera transform (flat). Scaling
+   * parchment inside `.zoomWorld` made the cream board grow/shrink with the
+   * lot on every wheel tick. Under tilt, paper must ride the camera (see
+   * `.tiltSkin`) so foreshortening keeps the shade — bleed hides then.
    */
+  const tiltLensOn = isTiltActive(ui.tiltDeg) || tiltAnimKind != null;
   const worldHidePaper = planOn && !ui.frameOn;
+  const skinScale = tiltLensOn
+    ? tiltSkinScale(ui.tiltDeg || TILT_DEG, planZoom)
+    : 1;
+  const boardSunCast = useMemo(
+    () =>
+      resolveBoardSunCast({
+        shadeOn: ui.shadeOn && !ui.frameOn,
+        sunMin: ui.sunMin,
+        datePreset: ui.sunDatePreset,
+        growth: ui.growth,
+        lat: projectLat,
+        lng: projectLng,
+        boardWidthM: scaleM,
+      }),
+    [
+      ui.shadeOn,
+      ui.frameOn,
+      ui.sunMin,
+      ui.sunDatePreset,
+      ui.growth,
+      projectLat,
+      projectLng,
+      scaleM,
+    ],
+  );
+
+  const floraGuardItems = useMemo(
+    () =>
+      studio.items.map((it) => ({
+        id: it.id,
+        t: it.t,
+        x: it.x,
+        y: it.y,
+        scale: it.scale,
+        ghost: it.ghost,
+        dbhM: it.dbhM,
+        canopyM: BY_TYPE[it.t]?.canopyM,
+      })),
+    [studio.items],
+  );
 
   /**
    * Seed the honest print scale when opening Fit sheet / changing paper.
@@ -1735,6 +1812,24 @@ export function HandoffDesignStudio({
     }
     return clampToCanvasMargin(anchorPct.x, anchorPct.y);
   }, [ui.drawPoly, anchorPct.x, anchorPct.y]);
+
+  /** Shade-cell sample at kit summon for planting palette filter. */
+  const kitSunHours = useMemo(() => {
+    const cells = buildIndicativeShadeGrid(
+      projectLat ?? -37.849,
+      projectLng ?? 144.993,
+      sunDateFromPreset(ui.sunDatePreset, ui.sunMin),
+    );
+    return sunHoursAtPct(instrumentAnchor.x, instrumentAnchor.y, cells);
+  }, [
+    projectLat,
+    projectLng,
+    ui.sunDatePreset,
+    ui.sunMin,
+    instrumentAnchor.x,
+    instrumentAnchor.y,
+  ]);
+
   const selectedTradeTag =
     selectedLive && chrome.tradeMargin
       ? tradeTagForItem(trade, selectedLive.id)
@@ -2000,13 +2095,19 @@ export function HandoffDesignStudio({
               <path d="M9.5 2.5v11" stroke="currentColor" strokeWidth="1.25" />
             </svg>
           </button>
-          {ui.frameOn ? (
+          {ui.frameOn || ui.clientView ? (
             <button
               type="button"
               className={css.iconBtn}
-              data-testid="fit-sheet-print"
-              aria-label="Print fit sheet"
-              title="Print fit sheet"
+              data-testid={ui.clientView ? "meeting-pack-print" : "fit-sheet-print"}
+              aria-label={
+                ui.clientView ? "Print meeting pack" : "Print fit sheet"
+              }
+              title={
+                ui.clientView
+                  ? "Print meeting pack — plan + schemes"
+                  : "Print fit sheet"
+              }
               onClick={() => window.print()}
             >
               <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -2130,7 +2231,8 @@ export function HandoffDesignStudio({
             onClick={() =>
               studio.setUi({
                 clientView: !ui.clientView,
-                focusOn: !ui.clientView,
+                // Keep shade/sun theatre alive — do not force focusOn.
+                focusOn: false,
                 ghostReviewOpen: false,
               })
             }
@@ -2267,6 +2369,7 @@ export function HandoffDesignStudio({
         data-testid="studio-board"
         data-panning={isPanningActive ? "1" : "0"}
         data-tilt={isTiltActive(ui.tiltDeg) ? "1" : "0"}
+        data-client={ui.clientView ? "1" : "0"}
         data-focus-veil={selectionOrbitOn ? "1" : "0"}
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
@@ -2338,7 +2441,7 @@ export function HandoffDesignStudio({
 
         {planOn ? (
           <>
-            {!ui.frameOn ? (
+            {!ui.frameOn && !tiltLensOn ? (
               <div
                 className={css.parchmentBleed}
                 data-testid="parchment-bleed"
@@ -2404,6 +2507,36 @@ export function HandoffDesignStudio({
                 cursor: effectiveCursor,
               }}
             >
+            {tiltLensOn ? (
+              <div
+                className={css.tiltSkin}
+                data-testid="tilt-skin"
+                aria-hidden
+                style={
+                  {
+                    ["--tilt-skin-scale"]: String(skinScale),
+                  } as CSSProperties
+                }
+              >
+                <TactileGround
+                  zoom={planZoom}
+                  sheetScaleDenom={100}
+                  parchmentPeel={
+                    draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
+                  }
+                  hasAerial={Boolean(liveAerial)}
+                  darkOn={darkLens}
+                  foundationCleanse={ui.foundationCleanse}
+                  titleLocked={titleLocked}
+                  boundarySource={ui.boundarySource}
+                  siteLabel={displayAddress}
+                  address={displayAddress}
+                  suppressSiteCue
+                  quietChrome
+                  showEdgeLabels={false}
+                />
+              </div>
+            ) : null}
             <AerialSlot
               uri={liveAerial}
               dimmed={darkLens}
@@ -2456,6 +2589,7 @@ export function HandoffDesignStudio({
               titleBoundaryLocked={ui.titleBoundaryLocked}
               scaleM={scaleM}
               planZoom={planZoom}
+              sunCast={boardSunCast}
               tiltDeg={ui.tiltDeg}
               planPanX={planPanX}
               planPanY={planPanY}
@@ -2564,6 +2698,10 @@ export function HandoffDesignStudio({
               onBoundaryChange={studio.updateBoundary}
               onBuildingChange={studio.updateBuilding}
               onPlace={(x, y) => {
+                if (ui.tool === "path") {
+                  studio.pushTracePoint({ x, y });
+                  return;
+                }
                 studio.placeArmed(x, y);
               }}
               onMoveItem={studio.moveItem}
@@ -2673,6 +2811,8 @@ export function HandoffDesignStudio({
                       ?.canopySpreadM ?? 2) * 2.4,
                   ),
                 )}
+                guardItems={floraGuardItems}
+                scaleM={scaleM}
                 cam={planCam}
                 onActiveIdx={studio.setFloraActiveIdx}
                 onAccept={studio.acceptFlora}
@@ -2730,6 +2870,39 @@ export function HandoffDesignStudio({
             ) : null}
             {planOn && !ui.frameOn ? (
               <>
+                {studio.pathCorridors.length > 0 || ui.tool === "path" ? (
+                  <PathCorridorsLayer
+                    corridors={studio.pathCorridors}
+                    scaleM={scaleM}
+                    draftPts={ui.tool === "path" ? ui.drawPoly : null}
+                    draftWidthM={ui.pathWidthM}
+                    draftEdge={ui.edgeType}
+                    draftFilletM={ui.pathFilletM}
+                  />
+                ) : null}
+                {(studio.drainageRuns.length > 0 ||
+                  ui.drainageLevelIdx.length > 0 ||
+                  ui.tool === "level" ||
+                  ui.servicesEdit) &&
+                !ui.clientView ? (
+                  <DrainageRunsLayer
+                    runs={studio.drainageRuns}
+                    levels={studio.levels}
+                    selectedIdx={ui.drainageLevelIdx}
+                    scaleM={scaleM}
+                    onToggleLevel={studio.toggleDrainageLevelIdx}
+                    onCommitRun={studio.commitDrainageRun}
+                  />
+                ) : studio.drainageRuns.length > 0 ? (
+                  <DrainageRunsLayer
+                    runs={studio.drainageRuns}
+                    levels={[]}
+                    selectedIdx={[]}
+                    scaleM={scaleM}
+                    onToggleLevel={() => {}}
+                    onCommitRun={() => {}}
+                  />
+                ) : null}
                 <SurveyAnnotationLayer
                   active={
                     ui.mode === "survey" ||
@@ -2815,6 +2988,12 @@ export function HandoffDesignStudio({
                     studio.setUi({ zoneKind: "drip" });
                   } else if (tool.id === "zone-lighting") {
                     studio.setUi({ zoneKind: "lighting" });
+                  } else if (tool.id === "zone-conduit") {
+                    studio.setUi({ zoneKind: "lighting_conduit" });
+                  } else if (tool.id === "zone-spray") {
+                    studio.setUi({ zoneKind: "spray" });
+                  } else if (tool.id === "zone-agg") {
+                    studio.setUi({ zoneKind: "agg_drain" });
                   }
                 }}
               />
@@ -3082,6 +3261,15 @@ export function HandoffDesignStudio({
             armed={ui.armed}
             paintSwatch={ui.paintSwatch}
             tool={ui.tool}
+            sunHours={kitSunHours}
+            plantingSoil={ui.plantingSoil}
+            plantingAspect={ui.plantingAspect}
+            onPlantingSoil={(plantingSoil: SoilTag) =>
+              studio.setUi({ plantingSoil })
+            }
+            onPlantingAspect={(plantingAspect: AspectTag) =>
+              studio.setUi({ plantingAspect })
+            }
             onArmMaterial={armType}
             onPaintMaterial={(t) =>
               studio.setUi({ paintSwatch: t, tool: "paint" })
@@ -3238,18 +3426,76 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {/* Sun scrubber is contextual — only when the operator armed shade mesh. */}
+        {/* Sun scrubber — shade mesh armed (operator or client theatre). */}
         {chrome.sunGrowth ? (
           <SunGrowthDock
             sunMin={ui.sunMin}
             datePreset={ui.sunDatePreset}
             growth={ui.growth}
             playing={ui.sunPlay}
+            shadowLengthM={boardSunCast?.lengthM ?? null}
             onSunMin={(sunMin) => studio.setUi({ sunMin })}
             onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
             onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
           />
+        ) : null}
+
+        {(ui.tool === "path" ||
+          ((ui.tool === "add" || ui.tool === "paint") &&
+            (ui.armed === "paving" ||
+              ui.armed === "deck" ||
+              ui.paintSwatch === "paving" ||
+              ui.paintSwatch === "deck"))) &&
+        !ui.frameOn &&
+        !ui.clientView &&
+        !ui.focusOn ? (
+          <HardscapeCraftBar
+            pathWidthM={ui.pathWidthM}
+            edgeType={ui.edgeType}
+            pathFilletM={ui.pathFilletM}
+            pathDrafting={ui.tool === "path"}
+            onPathWidth={(pathWidthM: PathWidthLockM) =>
+              studio.setUi({ pathWidthM })
+            }
+            onEdgeType={(edgeType: HardscapeEdgeType) =>
+              studio.setUi({ edgeType })
+            }
+            onPathFillet={(pathFilletM: PathFilletLockM) =>
+              studio.setUi({ pathFilletM })
+            }
+            onBeginPath={studio.beginPathDraft}
+          />
+        ) : null}
+
+        {planOn &&
+        !ui.frameOn &&
+        !ui.focusOn &&
+        (ui.clientView || ui.schemes.length > 0 || ui.mode === "cad") ? (
+          <VariationFilmstrip
+            schemes={ui.schemes}
+            activeSchemeId={ui.activeSchemeId}
+            boundary={studio.boundary}
+            building={studio.building}
+            onSave={studio.saveDesignScheme}
+            onActivate={studio.activateDesignScheme}
+          />
+        ) : null}
+
+        {ui.clientView && planOn && !ui.frameOn ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            testId="client-presentation-caption"
+          >
+            <p className={css.clientCaption} data-testid="client-meeting-caption">
+              Client meeting · concept sketch
+              {ui.schemes.length > 0
+                ? ` · schemes ${ui.schemes.map((s) => s.letter).join("/")}`
+                : ""}
+              {" · "}
+              not for construction
+            </p>
+          </CameraChrome>
         ) : null}
 
         {/* Design to-dos: background sync only — no canvas corner card */}
@@ -3423,6 +3669,8 @@ export function HandoffDesignStudio({
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
+          onDevelopSite={() => void ai.develop()}
+          onProposeServices={() => ai.proposeServices()}
           onConvertSketch={
             formalizing ? undefined : () => void runFormalizeToCad()
           }

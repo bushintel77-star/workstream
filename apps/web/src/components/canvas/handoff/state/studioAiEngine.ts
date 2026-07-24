@@ -56,6 +56,10 @@ export function mapSymbolToStudioType(symbolId: string): StudioItemType {
   const key = symbolId.toLowerCase();
   if (SYMBOL_TO_TYPE[key]) return SYMBOL_TO_TYPE[key]!;
   if (/drain|french|storm/.test(key)) return "frenchdrain";
+  // Lighting fixtures → feature glyph (symbolId preserved on StudioItem).
+  if (/light|lighting|bollard|uplight|spike|graze|wash|led-/.test(key)) {
+    return "feature";
+  }
   if (/pav|bluestone|path|step/.test(key)) return "paving";
   if (/deck/.test(key)) return "deck";
   if (/lawn|turf/.test(key)) return "lawn";

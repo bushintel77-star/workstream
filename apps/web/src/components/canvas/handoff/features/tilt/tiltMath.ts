@@ -76,3 +76,23 @@ export function settleTiltDeg(deg: number): number {
   if (!Number.isFinite(deg) || deg < TILT_SNAP_FLAT) return 0;
   return Math.min(TILT_MAX, deg);
 }
+
+/**
+ * How far the camera-bound parchment/mesh must oversize the board so
+ * rotateX + zoom-out never reveals a hard "postage stamp" plate edge.
+ * Caps keep DOM cost sane; board cream still fills any extreme gap.
+ */
+export const TILT_SKIN_SCALE_MIN = 2.4;
+export const TILT_SKIN_SCALE_MAX = 8;
+
+export function tiltSkinScale(tiltDeg: number, zoom: number): number {
+  if (!isTiltActive(tiltDeg)) return 1;
+  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+  const rad = (Math.min(TILT_MAX, Math.max(0, tiltDeg)) * Math.PI) / 180;
+  const foreshorten = Math.max(0.35, Math.cos(rad));
+  const raw = 1.2 / (Math.max(0.12, z) * foreshorten);
+  return Math.min(
+    TILT_SKIN_SCALE_MAX,
+    Math.max(TILT_SKIN_SCALE_MIN, raw),
+  );
+}

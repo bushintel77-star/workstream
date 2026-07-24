@@ -49,11 +49,13 @@ import {
 } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
 import { RenderDefs } from "../render/RenderDefs";
+import type { BoardShadowCast } from "@workstream/domain";
 import {
   DWELLING_HATCH_IDS,
-  SUN_SHADOW,
-  sunShadowFill,
+  sunShadowFillFrom,
+  viewFromCast,
 } from "../render/renderTokens";
+import { SunShadowProvider } from "../render/SunShadowContext";
 import {
   SpeciesSymbol,
   isSpeciesSymbolType,
@@ -138,6 +140,8 @@ type Props = {
   /** Indicative council setback rule (m) — muted on-plan path label, not a card. */
   councilSetbackM?: number | null;
   growth: "plant" | "5yr" | "mature";
+  /** Live sun cast when shade mesh is on; null keeps static south default. */
+  sunCast?: BoardShadowCast | null;
   selectedId: string | null;
   groupIds: string[];
   hoverId: string | null;
@@ -268,6 +272,7 @@ export function CadPlanBoard({
   setbackOn,
   councilSetbackM = null,
   growth,
+  sunCast = null,
   selectedId,
   groupIds,
   hoverId,
@@ -609,7 +614,7 @@ export function CadPlanBoard({
       });
       return;
     }
-    if (tool === "add" || tool === "paint") {
+    if (tool === "add" || tool === "paint" || tool === "path") {
       const raw = toPct(e.clientX, e.clientY);
       const el = rootRef.current;
       const boardW = el?.clientWidth ?? 960;
@@ -654,15 +659,17 @@ export function CadPlanBoard({
       ? "Pick"
       : tool === "paint"
         ? "Fill"
-        : tool === "add"
-          ? "Place"
-          : tool === "measure"
-            ? "Measure"
-            : tool === "edit"
-              ? "Edit"
-              : tool === "pan"
-                ? "Pan"
-                : tool;
+        : tool === "path"
+          ? "Path"
+          : tool === "add"
+            ? "Place"
+            : tool === "measure"
+              ? "Measure"
+              : tool === "edit"
+                ? "Edit"
+                : tool === "pan"
+                  ? "Pan"
+                  : tool;
   const startCornerDrag = (
     kind: "boundary" | "building",
     index: number,
@@ -920,7 +927,10 @@ export function CadPlanBoard({
     });
   }, [presentationOn, tiltLocked, items, ppm, cam]);
 
+  const sunView = useMemo(() => viewFromCast(sunCast), [sunCast]);
+
   return (
+    <SunShadowProvider cast={sunCast}>
     <div
       ref={rootRef}
       className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}`}
@@ -1130,10 +1140,11 @@ export function CadPlanBoard({
           <polygon
             data-testid="dwelling-sun-shadow"
             points={ptsAttr(building)}
-            transform={`translate(${SUN_SHADOW.dxPct} ${SUN_SHADOW.dwellingDyPct})`}
-            fill={sunShadowFill(darkOn && !frameOn)}
+            transform={`translate(${sunView.dxPct} ${sunView.dyPct})`}
+            fill={sunShadowFillFrom(sunView, darkOn && !frameOn)}
             style={{ mixBlendMode: "multiply" }}
             pointerEvents="none"
+            data-sun-live={sunCast ? "1" : "0"}
           />
         ) : null}
         {building.length >= 3 ? (
@@ -1945,6 +1956,7 @@ export function CadPlanBoard({
           step={gridStep}
           formation={gridFormation}
           ink={gridInk}
+          extendPadPct={tiltLocked ? 100 : 0}
         />
       ) : null}
 
@@ -2188,8 +2200,9 @@ export function CadPlanBoard({
                 className={css.honestyFooter}
                 data-testid="easement-honesty-footer"
               >
-                Easement hatch · indicative only — confirm with title / council
-                before excavation
+                {titleMeta?.sourceKind === "vicmap"
+                  ? "Indicative easement — Vicmap; verify on title before excavation"
+                  : "Easement hatch · indicative only — confirm with title / council before excavation"}
               </p>
             ) : null}
             {services.some((r) => r.length >= 2) ? (
@@ -2227,5 +2240,6 @@ export function CadPlanBoard({
         </>
       ) : null}
     </div>
+    </SunShadowProvider>
   );
 }

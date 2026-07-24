@@ -20,6 +20,10 @@ type Props = {
   onAskAi: (query: string) => void;
   onArm: (t: StudioItemType) => void;
   onScanGhosts: () => void;
+  /** Agentic-lite Develop loop — ghosts → scheme tip → Flora → Live BOM. */
+  onDevelopSite?: () => void;
+  /** LV conduit + watering (agg drain or spray laterals). */
+  onProposeServices?: () => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
@@ -55,6 +59,8 @@ export function StudioCommandPalette({
   onAskAi,
   onArm,
   onScanGhosts,
+  onDevelopSite,
+  onProposeServices,
   onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
@@ -132,6 +138,32 @@ export function StudioCommandPalette({
         keywords: "scan ghost ai suggest propose layout",
         run: onScanGhosts,
       },
+      ...(onDevelopSite
+        ? [
+            {
+              id: "develop-site",
+              label: "Develop site",
+              detail:
+                "Propose layout ghosts, tip for scheme A, Flora Ring, Live BOM — you accept each step",
+              keywords:
+                "develop site loop agentic ghosts scheme flora bom layout garden",
+              run: onDevelopSite,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onProposeServices
+        ? [
+            {
+              id: "propose-services",
+              label: "Propose lighting & watering",
+              detail:
+                "LV conduit trench to house main + aggregate drain or sprinkler laterals",
+              keywords:
+                "lighting conduit trench fitoff house main irrigation spray sprinkler agg drain watering services",
+              run: onProposeServices,
+            } satisfies StudioCommand,
+          ]
+        : []),
       ...(onConvertSketch
         ? [
             {
@@ -228,6 +260,8 @@ export function StudioCommandPalette({
     onConvertSketch,
     onGoQuote,
     onRedo,
+    onDevelopSite,
+    onProposeServices,
     onScanGhosts,
     onToggleData,
     onToggleFitSheet,

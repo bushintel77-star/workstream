@@ -1,6 +1,12 @@
 "use client";
 
-import type { FloraCandidate } from "@workstream/domain";
+import { useMemo } from "react";
+import {
+  assessPlantingPlacement,
+  plantingConflictSummary,
+  type FloraCandidate,
+  type PlantingGuardItem,
+} from "@workstream/domain";
 import { CameraChrome } from "../../CameraChrome";
 import type { BoardCamera } from "../../geometry/cameraPointer";
 import css from "./floraRing.module.css";
@@ -11,6 +17,8 @@ type Props = {
   candidates: FloraCandidate[];
   activeIdx: number;
   previewSpreadPct: number;
+  guardItems: PlantingGuardItem[];
+  scaleM: number;
   /**
    * Live board camera — the botanical card portals through it so the
    * frosted chip stays constant-size while the ghost canopy stays inside
@@ -25,6 +33,7 @@ type Props = {
 /**
  * Inline Flora Ring — holographic botanical HUD under the planting click.
  * Canvas-First: no sidebar filters; Accept / Reject only.
+ * Pre-place TPZ / mature canopy conflict surfaces before Accept.
  */
 export function FloraRing({
   xPct,
@@ -32,12 +41,26 @@ export function FloraRing({
   candidates,
   activeIdx,
   previewSpreadPct,
+  guardItems,
+  scaleM,
   cam,
   onActiveIdx,
   onAccept,
   onDismiss,
 }: Props) {
   const active = candidates[activeIdx] ?? null;
+
+  const conflict = useMemo(() => {
+    if (!active) return { blocked: false, tip: null as string | null };
+    const conflicts = assessPlantingPlacement({
+      xPct,
+      yPct,
+      canopySpreadM: active.canopySpreadM,
+      items: guardItems,
+      scaleM,
+    });
+    return plantingConflictSummary(conflicts);
+  }, [active, xPct, yPct, guardItems, scaleM]);
 
   const cardBody = (
     <div className={css.ring} data-testid="flora-ring">
@@ -51,7 +74,7 @@ export function FloraRing({
               data-testid={`flora-chip-${c.symbolId}`}
               onMouseEnter={() => onActiveIdx(i)}
               onFocus={() => onActiveIdx(i)}
-              onClick={() => onAccept(c)}
+              onClick={() => onActiveIdx(i)}
             >
               <span className={css.chipName}>{c.label}</span>
               <span className={css.chipMeta}>
@@ -66,15 +89,25 @@ export function FloraRing({
           </li>
         ))}
       </ul>
+      {conflict.tip ? (
+        <p
+          className={conflict.blocked ? css.conflictBlock : css.conflictWarn}
+          data-testid="flora-place-conflict"
+          data-severity={conflict.blocked ? "block" : "warn"}
+        >
+          {conflict.tip}
+        </p>
+      ) : null}
       <div className={css.actions}>
         {active ? (
           <button
             type="button"
             className={css.accept}
             data-testid="flora-accept"
+            disabled={conflict.blocked}
             onClick={() => onAccept(active)}
           >
-            Place {active.label}
+            {conflict.blocked ? "Blocked — shift clear" : `Place ${active.label}`}
           </button>
         ) : null}
         <button
@@ -103,6 +136,7 @@ export function FloraRing({
           className={css.ghostCanopy}
           data-testid="flora-ghost-canopy"
           data-plan-geometry="1"
+          data-conflict={conflict.blocked ? "block" : conflict.tip ? "warn" : "ok"}
           style={{
             left: `${xPct}%`,
             top: `${yPct}%`,

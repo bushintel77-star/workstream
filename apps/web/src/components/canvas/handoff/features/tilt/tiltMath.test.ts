@@ -6,11 +6,14 @@ import {
   TILT_SNAP_FLAT,
   TILT_ANIM_MS_FAST,
   TILT_ANIM_MS_SLOW,
+  TILT_SKIN_SCALE_MAX,
+  TILT_SKIN_SCALE_MIN,
   billboardStyle,
   isTiltActive,
   pxPerMetre,
   settleTiltDeg,
   tiltFromDragDelta,
+  tiltSkinScale,
 } from "./tiltMath";
 
 describe("tiltMath", () => {
@@ -57,5 +60,16 @@ describe("tiltMath", () => {
     expect(settleTiltDeg(14.9)).toBe(0);
     expect(settleTiltDeg(15)).toBe(15);
     expect(settleTiltDeg(55)).toBe(55);
+  });
+
+  it("tiltSkinScale is 1 when flat and grows under tilt/zoom-out", () => {
+    expect(tiltSkinScale(0, 1)).toBe(1);
+    expect(tiltSkinScale(TILT_DEG, 1)).toBeGreaterThanOrEqual(
+      TILT_SKIN_SCALE_MIN,
+    );
+    expect(tiltSkinScale(TILT_DEG, 0.2)).toBeGreaterThan(
+      tiltSkinScale(TILT_DEG, 1),
+    );
+    expect(tiltSkinScale(TILT_DEG, 0.05)).toBe(TILT_SKIN_SCALE_MAX);
   });
 });

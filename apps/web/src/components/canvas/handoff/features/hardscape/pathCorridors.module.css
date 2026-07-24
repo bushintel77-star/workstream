@@ -1,0 +1,79 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.fill {
+  stroke: none;
+  fill: rgba(70, 78, 88, 0.28);
+}
+
+.fill[data-material="deck"] {
+  fill: rgba(140, 98, 58, 0.3);
+}
+
+.edge {
+  fill: none;
+  stroke: rgba(55, 62, 72, 0.85);
+  stroke-width: 0.55;
+}
+
+.edge[data-edge="sawn"] {
+  stroke-dasharray: none;
+}
+
+.edge[data-edge="soldier"] {
+  stroke-width: 0.35;
+  stroke-dasharray: 0.9 0.55;
+}
+
+.edge[data-edge="spalled"] {
+  stroke-width: 0.7;
+  stroke-dasharray: 1.4 0.9 0.4 0.9;
+  stroke-linecap: round;
+}
+
+.edge[data-edge="soft"] {
+  stroke: rgba(90, 122, 72, 0.65);
+  stroke-width: 1.1;
+  stroke-opacity: 0.55;
+  stroke-linecap: round;
+}
+
+.centre {
+  fill: none;
+  stroke: rgba(36, 19, 24, 0.22);
+  stroke-width: 0.35;
+  stroke-dasharray: 1.2 0.8;
+}
+
+.fillet {
+  fill: none;
+  stroke: rgba(108, 133, 152, 0.7);
+  stroke-width: 0.3;
+  stroke-dasharray: 0.5 0.4;
+}
+
+.draftFill {
+  fill: rgba(70, 78, 88, 0.16);
+  stroke: rgba(36, 19, 24, 0.45);
+  stroke-width: 0.5;
+  stroke-dasharray: 1.2 0.7;
+}
+
+.draftCentre {
+  fill: none;
+  stroke: rgba(36, 19, 24, 0.55);
+  stroke-width: 0.45;
+  stroke-dasharray: 1 0.6;
+}

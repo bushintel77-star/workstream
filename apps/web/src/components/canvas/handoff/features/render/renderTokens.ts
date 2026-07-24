@@ -3,7 +3,9 @@
  * Keep deterministic — no Math.random.
  */
 
-/** Southern hemisphere: sun from the north → shadows cast south (+y on plan). */
+import type { BoardShadowCast } from "@workstream/domain";
+
+/** Southern hemisphere default: sun from the north → shadows cast south (+y). */
 export const SUN_SHADOW = {
   dxPct: 0,
   dyFactor: 0.22,
@@ -14,6 +16,47 @@ export const SUN_SHADOW = {
   dwellingDyPct: 0.55,
 } as const;
 
+/** Resolved shadow for glyphs + dwelling (static or live sun cast). */
+export type SunShadowView = {
+  dxPct: number;
+  dyPct: number;
+  dxFactor: number;
+  dyFactor: number;
+  opacity: number;
+  nightOpacity: number;
+};
+
+export function viewFromCast(cast: BoardShadowCast | null): SunShadowView {
+  if (!cast || cast.lengthM <= 0) {
+    return {
+      dxPct: SUN_SHADOW.dxPct,
+      dyPct: SUN_SHADOW.dwellingDyPct,
+      dxFactor: 0,
+      dyFactor: SUN_SHADOW.dyFactor,
+      opacity: SUN_SHADOW.opacity,
+      nightOpacity: SUN_SHADOW.nightOpacity,
+    };
+  }
+  // Low sun → slightly stronger multiply; high sun → soft.
+  const boost = Math.min(0.1, Math.max(0, (45 - cast.altitude_deg) / 400));
+  return {
+    dxPct: cast.dxPct,
+    dyPct: cast.dyPct,
+    dxFactor: cast.dxFactor,
+    dyFactor: cast.dyFactor,
+    opacity: SUN_SHADOW.opacity + boost,
+    nightOpacity: SUN_SHADOW.nightOpacity,
+  };
+}
+
+export function sunShadowFillFrom(
+  view: Pick<SunShadowView, "opacity" | "nightOpacity">,
+  night: boolean,
+): string {
+  const o = night ? view.nightOpacity : view.opacity;
+  return `rgba(28,25,23,${o})`;
+}
+
 /** Dwelling envelope hatch pattern ids — defined in CadPlanBoard defs (board-space scale). */
 export const DWELLING_HATCH_IDS = {
   light: "ws-dwelling-hatch",
@@ -21,8 +64,13 @@ export const DWELLING_HATCH_IDS = {
 } as const;
 
 export function sunShadowFill(night: boolean): string {
-  const o = night ? SUN_SHADOW.nightOpacity : SUN_SHADOW.opacity;
-  return `rgba(28,25,23,${o})`;
+  return sunShadowFillFrom(
+    {
+      opacity: SUN_SHADOW.opacity,
+      nightOpacity: SUN_SHADOW.nightOpacity,
+    },
+    night,
+  );
 }
 
 /** Hatch pattern ids — defined once in RenderDefs. */

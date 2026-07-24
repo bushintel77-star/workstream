@@ -78,13 +78,13 @@ export default async function boundaryRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: body.error.flatten() });
       }
       try {
-        const boundary = await autoTraceSiteBoundary(
+        const { boundary, easements } = await autoTraceSiteBoundary(
           fastify.store,
           ownerId,
           projectId,
           body.data.prefer_gis,
         );
-        return reply.code(201).send({ boundary });
+        return reply.code(201).send({ boundary, easements });
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Auto-trace failed";

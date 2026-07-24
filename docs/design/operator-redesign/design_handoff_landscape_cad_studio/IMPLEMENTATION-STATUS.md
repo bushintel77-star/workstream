@@ -159,7 +159,11 @@ Binding: [CAD-AI-2026-UX.md](../../../CAD-AI-2026-UX.md).
 | AI sidecar (right) | **Partial** | Utility hub + Live measures collapsed by default; Ask AI on selection |
 | Structure rail (left, collapsed) | **Partial** | Layers panel (`layersOpen` false) |
 | Constraint-first + HITL ghosts | **Partial** | Council ambient; Accept/Reject ghosts; setback explain ongoing |
-| Variation filmstrip | **Not started** | |
+| Variation filmstrip | **Partial** | A/B/C session schemes + plan minimap; generative AI thumbs deferred |
+| Vicmap easement auto-install | **Done** | WFS polylines → hydrate / title trace; honesty footer; utilities manual |
+| Develop site (Cmd+K) | **Partial** | `runDevelopLoop` — ghosts + tip + Live BOM; HITL accept |
+| Lighting conduit + watering | **Partial** | Fixture snap → LV trench; agg PoD / spray valves tip; Zone niche |
+| Sun-cast UI | **Done** | `resolveBoardSunCast` + CameraChrome dock; domain az 0=north |
 | 1:1 plan ↔ 3D AI sync | **Not started** | Workflow 1 2D |
 
 ---

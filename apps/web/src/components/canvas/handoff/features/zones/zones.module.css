@@ -42,3 +42,9 @@
   pointer-events: none;
   white-space: nowrap;
 }
+
+.fitoffGlyph {
+  font-size: 1.4px;
+  fill: #57534e;
+  pointer-events: none;
+}

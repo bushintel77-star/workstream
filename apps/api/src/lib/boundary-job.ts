@@ -2,14 +2,16 @@ import type { Store } from "@workstream/db";
 import type {
   GeoJsonPolygon,
   SiteBoundary,
+  SiteEasement,
   UpsertSiteBoundaryInput,
 } from "@workstream/contracts";
 import {
   buildBoundaryFromPolygon,
+  geoToCanvasMetres,
   lockBoundary,
   unlockBoundary,
 } from "@workstream/domain";
-import { fetchTitlePolygon } from "./vicmap";
+import { fetchEasementPolylines, fetchTitlePolygon } from "./vicmap";
 
 function toUpsert(
   draft: Omit<SiteBoundary, "id" | "updated_at">,
@@ -48,13 +50,19 @@ export async function saveSiteBoundaryDoc(
   });
 }
 
+export type AutoTraceBoundaryResult = {
+  boundary: SiteBoundary;
+  /** Indicative Vicmap easements in the boundary's canvas-metre frame. */
+  easements: SiteEasement[];
+};
+
 /** Auto-trace: keyless Vicmap WFS parcel, else survey title_polygon. */
 export async function autoTraceSiteBoundary(
   store: Store,
   ownerId: string,
   projectId: string,
   preferGis = true,
-): Promise<SiteBoundary> {
+): Promise<AutoTraceBoundaryResult> {
   const project = await store.getProject(ownerId, projectId);
   if (!project) throw new Error(`Project not found: ${projectId}`);
 
@@ -108,7 +116,36 @@ export async function autoTraceSiteBoundary(
     },
   );
 
-  return store.upsertSiteBoundary(ownerId, projectId, toUpsert(draft));
+  const boundary = await store.upsertSiteBoundary(
+    ownerId,
+    projectId,
+    toUpsert(draft),
+  );
+
+  // Indicative easements — best-effort, never fail the trace over them.
+  let easements: SiteEasement[] = [];
+  const titleRing = polygon.coordinates[0];
+  if (titleRing && titleRing.length >= 4) {
+    try {
+      const origin = boundary.geo_reference.canvas_origin_geo;
+      const lines = await fetchEasementPolylines(
+        titleRing as Array<[number, number]>,
+      );
+      easements = lines
+        .filter((e) => e.line.length >= 2)
+        .map((e) => ({
+          points: e.line.map(([lng, lat]) =>
+            geoToCanvasMetres({ lng, lat }, origin),
+          ),
+          status: e.status,
+          source: "vicmap" as const,
+        }));
+    } catch (err) {
+      console.warn("[boundary] Vicmap easement trace failed:", err);
+    }
+  }
+
+  return { boundary, easements };
 }
 
 export async function ingestBoundaryGeoJson(

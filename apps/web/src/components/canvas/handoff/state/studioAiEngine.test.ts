@@ -23,6 +23,8 @@ function snapFromSeed(): StudioSnapshot {
     easements: [],
     strokes: [],
     levels: [],
+    drainageRuns: [],
+    pathCorridors: [],
     services: [],
     irrigationZones: [],
     annotations: [],

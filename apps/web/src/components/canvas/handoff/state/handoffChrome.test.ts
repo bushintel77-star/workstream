@@ -84,6 +84,28 @@ describe("resolveHandoffChrome", () => {
     expect(c.sunGrowth).toBe(false);
   });
 
+  it("keeps sun scrubber in client presentation when shade is armed", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      shadeOn: true,
+      clientView: true,
+    });
+    expect(c.sunGrowth).toBe(true);
+    expect(c.utilityDrawer).toBe(false);
+    expect(c.selectionRing).toBe(false);
+  });
+
+  it("hides sun scrubber in client presentation when shade is off", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      shadeOn: false,
+      clientView: true,
+    });
+    expect(c.sunGrowth).toBe(false);
+  });
+
   it("opens draft surface only while ghosts are pending", () => {
     const c = resolveHandoffChrome({
       ...base,
@@ -94,6 +116,48 @@ describe("resolveHandoffChrome", () => {
     expect(c.utilityDrawer).toBe(false);
     expect(c.sunGrowth).toBe(false);
     expect(c.floraRing).toBe(false);
+    expect(c.horizon).toBe(false);
+  });
+
+  it("summons Flora Ring only while a planting session is active", () => {
+    expect(
+      resolveHandoffChrome({ ...base, mode: "cad" }).floraRing,
+    ).toBe(false);
+    expect(
+      resolveHandoffChrome({
+        ...base,
+        mode: "cad",
+        floraSessionActive: true,
+      }).floraRing,
+    ).toBe(true);
+    expect(
+      resolveHandoffChrome({
+        ...base,
+        mode: "cad",
+        floraSessionActive: true,
+        clientView: true,
+      }).floraRing,
+    ).toBe(false);
+  });
+
+  it("summons horizon only when foresight cards exist", () => {
+    expect(
+      resolveHandoffChrome({ ...base, mode: "cad" }).horizon,
+    ).toBe(false);
+    expect(
+      resolveHandoffChrome({
+        ...base,
+        mode: "cad",
+        horizonCardCount: 2,
+      }).horizon,
+    ).toBe(true);
+    expect(
+      resolveHandoffChrome({
+        ...base,
+        mode: "sketch",
+        horizonCardCount: 1,
+      }).horizon,
+    ).toBe(true);
   });
 
   it("collapses utility while Trace is armed", () => {

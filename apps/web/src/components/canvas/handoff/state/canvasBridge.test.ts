@@ -38,6 +38,7 @@ describe("site_frame bridge", () => {
     });
     expect(frame.boundary[0]).toEqual({ x_pct: 10, y_pct: 10 });
     expect(frame.levels[0]).toEqual({ x_pct: 40, y_pct: 40, z_m: 12.5 });
+    expect(frame.drainage_runs).toEqual([]);
 
     const snap = siteFrameToSnapshot(frame);
     expect(snap.boundary).toHaveLength(4);

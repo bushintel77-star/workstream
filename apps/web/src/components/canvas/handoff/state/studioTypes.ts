@@ -1,5 +1,9 @@
 import type { IrrigationZone, IrrigationZoneKind, CanvasAnnotation } from "@workstream/contracts";
 import type {
+  DesignSchemeSnapshot,
+  DrainageRun,
+  HardscapeEdgeType,
+  PathCorridor,
   SketchStroke,
   SpotLevel,
   StudioItem,
@@ -33,6 +37,10 @@ export type StudioSnapshot = {
   strokes: SketchStroke[];
   /** Survey spot levels (RL m) — prototype Level tool. */
   levels: SpotLevel[];
+  /** Indicative drainage runs linking spot RLs (Workflow 1 — no TIN). */
+  drainageRuns: DrainageRun[];
+  /** Authored path corridors (width / edge / fillet craft). */
+  pathCorridors: PathCorridor[];
   /** Survey service / easement polylines — prototype Servc tool. */
   services: PctPoint[][];
   /** Authored drip / lighting paths — DesignCanvas.irrigation_zones. */
@@ -40,6 +48,8 @@ export type StudioSnapshot = {
   /** Hand-lettered presentation notes — DesignCanvas.annotations. */
   annotations: CanvasAnnotation[];
 };
+
+export type { DesignSchemeSnapshot, DrainageRun, HardscapeEdgeType, PathCorridor };
 
 export type StudioUiState = {
   mode: StudioMode;

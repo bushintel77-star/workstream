@@ -7,6 +7,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
+  DesignSiteFrameInput,
 } from "@workstream/contracts";
 import type {
   SketchStroke,
@@ -82,7 +83,7 @@ export function itemsToPlacements(items: StudioItem[]): CatalogPlacement[] {
     .filter((i) => !i.ghost)
     .map((i) => ({
       id: ensureUuid(i.id),
-      symbol_id: TYPE_TO_SYMBOL[i.t],
+      symbol_id: i.symbolId?.trim() || TYPE_TO_SYMBOL[i.t],
       x_pct: clampPct(i.x),
       y_pct: clampPct(i.y),
       rotation_deg: ((i.rot % 360) + 360) % 360,
@@ -105,6 +106,7 @@ export function placementsToItems(
       rot: p.rotation_deg ?? 0,
       scale: p.scale ?? 1,
       ghost: false,
+      symbolId: p.symbol_id,
       ...(dbhM != null ? { dbhM } : {}),
     };
   });
@@ -156,6 +158,11 @@ export function snapshotToSiteFrame(args: {
   easements: PctPoint[][];
   services: PctPoint[][];
   levels: SpotLevel[];
+  drainageRuns?: Array<{
+    id: string;
+    points: Array<{ x: number; y: number; z: number }>;
+    source: "indicative";
+  }>;
 }): DesignSiteFrame {
   return {
     boundary: ringToFrame(args.boundary),
@@ -167,16 +174,32 @@ export function snapshotToSiteFrame(args: {
       y_pct: clampPct(lv.y),
       z_m: lv.z,
     })),
+    drainage_runs: (args.drainageRuns ?? []).map((run) => ({
+      id: run.id,
+      source: "indicative" as const,
+      points: run.points.map((p) => ({
+        x_pct: clampPct(p.x),
+        y_pct: clampPct(p.y),
+        z_m: p.z,
+      })),
+    })),
   };
 }
 
 /** Hydrate site_frame onto seed rings when present and non-empty. */
-export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): {
+export function siteFrameToSnapshot(
+  frame: DesignSiteFrame | DesignSiteFrameInput | null | undefined,
+): {
   boundary?: PctPoint[];
   building?: PctPoint[];
   easements?: PctPoint[][];
   services?: PctPoint[][];
   levels?: SpotLevel[];
+  drainageRuns?: Array<{
+    id: string;
+    points: Array<{ x: number; y: number; z: number }>;
+    source: "indicative";
+  }>;
 } {
   if (!frame) return {};
   const out: {
@@ -185,20 +208,41 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
     easements?: PctPoint[][];
     services?: PctPoint[][];
     levels?: SpotLevel[];
+    drainageRuns?: Array<{
+      id: string;
+      points: Array<{ x: number; y: number; z: number }>;
+      source: "indicative";
+    }>;
   } = {};
-  if (frame.boundary.length >= 3) out.boundary = frameToRing(frame.boundary);
-  if (frame.building.length >= 3) out.building = frameToRing(frame.building);
-  if (frame.easements.length > 0) {
-    out.easements = frame.easements.map(frameToRing);
+  const boundary = frame.boundary ?? [];
+  const building = frame.building ?? [];
+  const easements = frame.easements ?? [];
+  const services = frame.services ?? [];
+  const levels = frame.levels ?? [];
+  if (boundary.length >= 3) out.boundary = frameToRing(boundary);
+  if (building.length >= 3) out.building = frameToRing(building);
+  if (easements.length > 0) {
+    out.easements = easements.map(frameToRing);
   }
-  if (frame.services.length > 0) {
-    out.services = frame.services.map(frameToRing);
+  if (services.length > 0) {
+    out.services = services.map(frameToRing);
   }
-  if (frame.levels.length > 0) {
-    out.levels = frame.levels.map((lv) => ({
+  if (levels.length > 0) {
+    out.levels = levels.map((lv) => ({
       x: lv.x_pct,
       y: lv.y_pct,
       z: lv.z_m,
+    }));
+  }
+  if (frame.drainage_runs?.length) {
+    out.drainageRuns = frame.drainage_runs.map((run) => ({
+      id: run.id,
+      source: "indicative" as const,
+      points: run.points.map((p) => ({
+        x: p.x_pct,
+        y: p.y_pct,
+        z: p.z_m,
+      })),
     }));
   }
   return out;
@@ -211,7 +255,7 @@ export function siteFrameToSnapshot(frame: DesignSiteFrame | null | undefined): 
  * than leaking demo/seed footprint geometry into a live project.
  */
 export function resolveHydratedBuilding(
-  frame: DesignSiteFrame | null | undefined,
+  frame: DesignSiteFrame | DesignSiteFrameInput | null | undefined,
   hydratedBuilding: PctPoint[] | undefined,
   fallbackBuilding: PctPoint[],
 ): PctPoint[] {

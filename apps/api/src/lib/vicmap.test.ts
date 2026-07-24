@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  extractPolylines,
   extractVicmapParcelAttrs,
   parseFeatureTypeNames,
   parseGeometryFieldName,
   pickBestLayerName,
   scoreBuildingLayerName,
+  scoreEasementLayerName,
   scorePropertyLayerName,
 } from "./vicmap";
 
@@ -79,6 +81,78 @@ describe("layer discovery scoring", () => {
     expect(scorePropertyLayerName("open-data-platform:parcel_view")).toBeGreaterThan(
       scorePropertyLayerName("open-data-platform:cad_area_bdy"),
     );
+  });
+
+  it("prefers the exact easement layer over variants", () => {
+    const names = [
+      ...sampleNames,
+      "open-data-platform:easement_anno",
+      "open-data-platform:easement",
+      "open-data-platform:easement_proposed",
+    ];
+    expect(pickBestLayerName(names, scoreEasementLayerName)).toBe(
+      "open-data-platform:easement",
+    );
+  });
+
+  it("rejects annotation / proposed / non-easement names", () => {
+    expect(scoreEasementLayerName("open-data-platform:easement_anno")).toBeLessThan(0);
+    expect(
+      scoreEasementLayerName("open-data-platform:easement_proposed"),
+    ).toBeLessThan(0);
+    expect(scoreEasementLayerName("open-data-platform:property_view")).toBe(
+      -Infinity,
+    );
+  });
+});
+
+describe("extractPolylines", () => {
+  it("wraps a LineString into a single polyline", () => {
+    expect(
+      extractPolylines({
+        type: "LineString",
+        coordinates: [
+          [145.0, -37.85],
+          [145.001, -37.851],
+        ],
+      }),
+    ).toEqual([
+      [
+        [145.0, -37.85],
+        [145.001, -37.851],
+      ],
+    ]);
+  });
+
+  it("flattens MultiLineString parts and drops degenerate ones", () => {
+    const lines = extractPolylines({
+      type: "MultiLineString",
+      coordinates: [
+        [
+          [145.0, -37.85],
+          [145.001, -37.851],
+        ],
+        [[145.002, -37.852]],
+      ],
+    });
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toHaveLength(2);
+  });
+
+  it("returns empty for polygon geometry", () => {
+    expect(
+      extractPolylines({
+        type: "Polygon",
+        coordinates: [
+          [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 0],
+          ],
+        ],
+      }),
+    ).toEqual([]);
   });
 });
 

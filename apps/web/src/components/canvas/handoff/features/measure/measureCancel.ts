@@ -8,6 +8,7 @@ const STICKY_TOOLS: ReadonlySet<StudioTool> = new Set([
   "measure",
   "add",
   "paint",
+  "path",
   "trace",
   "zone",
   "edit",

@@ -1,5 +1,8 @@
+"use client";
+
 import { seededRandom, wobbledCirclePath } from "../seededRandom";
-import { SUN_SHADOW, sunShadowFill } from "../renderTokens";
+import { sunShadowFillFrom } from "../renderTokens";
+import { useSunShadow } from "../SunShadowContext";
 
 export type SymbolTone = {
   stroke: string;
@@ -8,19 +11,24 @@ export type SymbolTone = {
   ghost?: boolean;
 };
 
-function shadow(night: boolean) {
+function ShadowEllipse({ night }: { night: boolean }) {
+  const sun = useSunShadow();
   const r = 42;
   return (
     <ellipse
       data-testid="sun-shadow"
-      cx={50 + SUN_SHADOW.dxPct}
-      cy={50 + r * SUN_SHADOW.dyFactor}
+      cx={50 + r * sun.dxFactor}
+      cy={50 + r * sun.dyFactor}
       rx={r * 0.82}
       ry={r * 0.42}
-      fill={sunShadowFill(night)}
+      fill={sunShadowFillFrom(sun, night)}
       style={{ mixBlendMode: "multiply" }}
     />
   );
+}
+
+function shadow(night: boolean) {
+  return <ShadowEllipse night={night} />;
 }
 
 /** Canopy tree — lobed hand-wobbled circle + fine radial branching. */

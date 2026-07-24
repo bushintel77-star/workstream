@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import type { StudioItemType } from "./studioCatalog";
 import { BY_TYPE } from "./studioCatalog";
@@ -8,9 +10,9 @@ import {
 } from "./geometry/planLineStyles";
 import {
   hatchUrlFor,
-  SUN_SHADOW,
-  sunShadowFill,
+  sunShadowFillFrom,
 } from "./features/render/renderTokens";
+import { useSunShadow } from "./features/render/SunShadowContext";
 
 /**
  * Plan symbols — clean, modern landscape-CAD language on the blush field.
@@ -51,6 +53,7 @@ export function StudioGlyph({
   const greenFill = "rgba(122, 150, 112, 0.14)";
   const airFill = "rgba(122, 150, 112, 0.07)";
 
+  const sun = useSunShadow();
   const def = BY_TYPE[type];
   const castsShadow =
     Boolean(def.canopyM) || (def.heightM != null && def.heightM > 0);
@@ -58,11 +61,11 @@ export function StudioGlyph({
   const shadow = castsShadow ? (
     <ellipse
       data-testid="sun-shadow"
-      cx={50 + SUN_SHADOW.dxPct}
-      cy={50 + canopyR * SUN_SHADOW.dyFactor}
+      cx={50 + canopyR * sun.dxFactor}
+      cy={50 + canopyR * sun.dyFactor}
       rx={canopyR * 0.82}
       ry={canopyR * 0.42}
-      fill={sunShadowFill(night)}
+      fill={sunShadowFillFrom(sun, night)}
       style={{ mixBlendMode: "multiply" }}
     />
   ) : null;
