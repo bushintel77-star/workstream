@@ -313,6 +313,7 @@ Trainee demonstrates end-to-end without trainer prompts:
 | [STUDIO-SITE-INTELLIGENCE.md](./STUDIO-SITE-INTELLIGENCE.md) | AI HITL, horizon cards |
 | [DESIGNER-HANDOVER.md](./DESIGNER-HANDOVER.md) | Symbol palette, tier-1 species |
 | [TIER1-AI-CANVAS-GAP-AUDIT.md](./design/operator-redesign/design_handoff_landscape_cad_studio/TIER1-AI-CANVAS-GAP-AUDIT.md) | Scorecard vs gold |
+| [SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md](./SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md) | Pre-construction LA due diligence + Vicmap/BYDA automation map |
 
 ---
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   discoverKeylessLayerNames,
+  EASEMENT_LINE_CAP,
   explodeExteriorRings,
   extractVicmapParcelAttrs,
   parseFeatureTypeNames,
@@ -10,6 +11,8 @@ import {
   scoreBuildingLayerName,
   scoreBushfireLayerName,
   scoreEasementLayerName,
+  scoreFloodLayerName,
+  scoreHeritageLayerName,
   scorePropertyLayerName,
   scoreUrbanTreeLayerName,
 } from "./vicmap";
@@ -71,6 +74,26 @@ describe("layer discovery scoring", () => {
     );
   });
 
+  it("bounds easement line payload cap", () => {
+    expect(EASEMENT_LINE_CAP).toBe(24);
+  });
+
+  it("prefers easement over approved/proposed simplified views", () => {
+    const easementNames = [
+      "open-data-platform:v_s_easement_proposed",
+      "open-data-platform:v_s_easement_approved",
+      "open-data-platform:easement",
+      "open-data-platform:v_s_easement_approved_anno",
+      "open-data-platform:hy_watercourse",
+    ];
+    expect(pickBestLayerName(easementNames, scoreEasementLayerName)).toBe(
+      "open-data-platform:easement",
+    );
+    expect(
+      scoreEasementLayerName("open-data-platform:v_s_easement_approved_anno"),
+    ).toBeLessThan(0);
+  });
+
   it("rejects solar / address / proposed property-ish names", () => {
     expect(scorePropertyLayerName("open-data-platform:solar_farm_properties")).toBeLessThan(
       0,
@@ -89,6 +112,8 @@ describe("layer discovery scoring", () => {
       "open-data-platform:tree_urban",
       "open-data-platform:planning_zone",
       "open-data-platform:road_casement_polygon",
+      "open-data-platform:lsio",
+      "open-data-platform:heritage_overlay",
     ];
     const found = discoverKeylessLayerNames(names);
     expect(found.easement).toBe("open-data-platform:easement");
@@ -96,9 +121,15 @@ describe("layer discovery scoring", () => {
     expect(found.urban_tree).toBe("open-data-platform:tree_urban");
     expect(found.planning).toBe("open-data-platform:planning_zone");
     expect(found.road_casement).toBe("open-data-platform:road_casement_polygon");
+    expect(found.flood).toBe("open-data-platform:lsio");
+    expect(found.heritage).toBe("open-data-platform:heritage_overlay");
     expect(scoreEasementLayerName("open-data-platform:easement")).toBeGreaterThan(0);
     expect(scoreBushfireLayerName("open-data-platform:address")).toBeLessThan(0);
     expect(scoreUrbanTreeLayerName("open-data-platform:tree_urban")).toBeGreaterThan(
+      0,
+    );
+    expect(scoreFloodLayerName("open-data-platform:lsio")).toBeGreaterThan(0);
+    expect(scoreHeritageLayerName("open-data-platform:heritage_overlay")).toBeGreaterThan(
       0,
     );
   });

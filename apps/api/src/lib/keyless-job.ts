@@ -10,10 +10,13 @@ import {
   type VicmapKeylessKind,
 } from "./vicmap";
 
+/** Default KEYLESS washes — flood + heritage after planning / bushfire / contour. */
 const DEFAULT_KINDS: VicmapKeylessKind[] = [
   "planning",
   "bushfire",
   "contour",
+  "flood",
+  "heritage",
 ];
 
 function openRing(

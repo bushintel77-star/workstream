@@ -1284,7 +1284,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
               res,
               keepTracedBuilding: keepTraced,
             });
-            return { snap: again ? { ...snap, ...again.snap } : snap };
+            if (!again) return { snap };
+            return {
+              snap: {
+                ...snap,
+                ...again.snap,
+                ...(again.services ? { services: again.services } : {}),
+              },
+            };
           });
           boundarySnapped = true;
           setUi({
@@ -1309,6 +1316,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
                 ? "kept traced dwelling"
                 : "dwelling cleared (trace Existing dwelling)",
           );
+          if (applied.easementSource === "vicmap" && applied.services?.length) {
+            notes.push(
+              `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            );
+          }
         }
       } catch {
         notes.push("Vicmap parcel unavailable — kept drawn boundary");
@@ -1399,7 +1411,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
               res,
               keepTracedBuilding: keepTraced,
             });
-            return { snap: again ? { ...snap, ...again.snap } : snap };
+            if (!again) return { snap };
+            return {
+              snap: {
+                ...snap,
+                ...again.snap,
+                ...(again.services ? { services: again.services } : {}),
+              },
+            };
           });
           snapped = true;
           setUi({
@@ -1418,6 +1437,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
             notes.push("Vicmap dwelling hydrated");
           } else if (applied.buildingSource === "empty") {
             notes.push("Dwelling unavailable — Trace → Existing dwelling");
+          }
+          if (applied.easementSource === "vicmap" && applied.services?.length) {
+            notes.push(
+              `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            );
           }
         }
       } catch {
@@ -1624,7 +1648,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   /**
    * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
-   * Then KEYLESS planning / bushfire / contour washes (best-effort).
+   * Then KEYLESS planning / bushfire / contour / flood / heritage washes.
    */
   useEffect(() => {
     if (bootstrapped.current) return;
@@ -1672,7 +1696,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
             res,
             keepTracedBuilding: keepTraced,
           });
-          return { snap: again ? { ...snap, ...again.snap } : snap };
+          if (!again) return { snap };
+          return {
+            snap: {
+              ...snap,
+              ...again.snap,
+              ...(again.services ? { services: again.services } : {}),
+            },
+          };
         });
         setUi({
           boundarySource: applied.boundarySource,
@@ -1684,6 +1715,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
           panY: 0,
           ...(applied.fit.boardWidthM != null
             ? { boardWidthM: applied.fit.boardWidthM }
+            : {}),
+          ...(applied.easementSource === "vicmap" && applied.services?.length
+            ? {
+                councilTip: `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+              }
             : {}),
         });
 

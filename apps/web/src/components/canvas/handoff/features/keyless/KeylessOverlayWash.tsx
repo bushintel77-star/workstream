@@ -13,7 +13,7 @@ function ptsAttr(ring: Array<{ x_pct: number; y_pct: number }>): string {
 }
 
 /**
- * Soft KEYLESS Vicmap washes — planning / bushfire / contour after hydrate.
+ * Soft KEYLESS Vicmap washes — planning / bushfire / flood / heritage / contour.
  * Contours draw as strokes; area overlays as translucent fills.
  */
 export function KeylessOverlayWash({ active, overlays }: Props) {
@@ -75,6 +75,44 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
             strokeOpacity="0.45"
           />
         </pattern>
+        {/* Flood / LSIO: cool blue wash — distinct from bushfire ember. */}
+        <pattern
+          id="ws-keyless-flood"
+          width="2.5"
+          height="2.5"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(30)"
+        >
+          <rect width="2.5" height="2.5" fill="#1d4ed8" fillOpacity="0.05" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="2.5"
+            stroke="#1d4ed8"
+            strokeWidth="0.38"
+            strokeOpacity="0.4"
+          />
+        </pattern>
+        {/* Heritage: warm brick diagonal — fabric / visibility cue. */}
+        <pattern
+          id="ws-keyless-heritage"
+          width="2.7"
+          height="2.7"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(-30)"
+        >
+          <rect width="2.7" height="2.7" fill="#7c2d12" fillOpacity="0.045" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="2.7"
+            stroke="#7c2d12"
+            strokeWidth="0.36"
+            strokeOpacity="0.38"
+          />
+        </pattern>
         {/* Generic overlay: opposite fine diagonal in teal. */}
         <pattern
           id="ws-keyless-generic"
@@ -115,13 +153,21 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
               ? css.bushfire
               : ov.kind === "planning"
                 ? css.planning
-                : css.generic;
+                : ov.kind === "flood"
+                  ? css.flood
+                  : ov.kind === "heritage"
+                    ? css.heritage
+                    : css.generic;
           const patternId =
             ov.kind === "bushfire"
               ? "ws-keyless-bushfire"
               : ov.kind === "planning"
                 ? "ws-keyless-planning"
-                : "ws-keyless-generic";
+                : ov.kind === "flood"
+                  ? "ws-keyless-flood"
+                  : ov.kind === "heritage"
+                    ? "ws-keyless-heritage"
+                    : "ws-keyless-generic";
           return (
             <polygon
               key={`${ov.kind}-${i}`}

@@ -22,14 +22,14 @@ export type DueDiligenceItem = {
   group: "keyless" | "byda" | "chase";
 };
 
-/** KEYLESS next — same Vicmap/DELWP WFS stack as title. */
+/** KEYLESS / LIVE washes — same Vicmap/DELWP WFS stack as title. */
 export const KEYLESS_NEXT: DueDiligenceItem[] = [
-  { id: "k-planning", label: "Planning zone / overlays", status: "KEYLESS", group: "keyless" },
-  { id: "k-bushfire", label: "Bushfire prone area", status: "KEYLESS", group: "keyless" },
+  { id: "k-planning", label: "Planning zone / overlays", status: "LIVE", group: "keyless" },
+  { id: "k-bushfire", label: "Bushfire prone area", status: "LIVE", group: "keyless" },
+  { id: "k-contours", label: "Contours", status: "LIVE", group: "keyless" },
+  { id: "k-flood", label: "Flood history / LSIO", status: "LIVE", group: "keyless" },
+  { id: "k-heritage", label: "Heritage overlay", status: "LIVE", group: "keyless" },
   { id: "k-trees", label: "Urban trees / canopy", status: "KEYLESS", group: "keyless" },
-  { id: "k-contours", label: "Contours", status: "KEYLESS", group: "keyless" },
-  { id: "k-flood", label: "Flood history / LSIO", status: "KEYLESS", group: "keyless" },
-  { id: "k-heritage", label: "Heritage overlay", status: "KEYLESS", group: "keyless" },
   { id: "k-watercorp", label: "Water corporation boundary", status: "KEYLESS", group: "keyless" },
   { id: "k-road", label: "Road casement", status: "KEYLESS", group: "keyless" },
   { id: "k-ass", label: "Acid sulfate soils", status: "KEYLESS", group: "keyless" },

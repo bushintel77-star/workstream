@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyParcelSnap } from "./parcelHydrate";
+import { applyAutoTraceParcelSnap, applyParcelSnap } from "./parcelHydrate";
 import { fitCanvasMetresRing } from "./geoToPct";
 import type { PctPoint } from "./types";
 
@@ -96,5 +96,91 @@ describe("applyParcelSnap", () => {
     });
     expect(result.buildingSource).toBe("traced");
     expect(result.snap.building).toHaveLength(4);
+  });
+});
+
+describe("applyAutoTraceParcelSnap easement hydrate", () => {
+  const parcelM = [
+    { x: 0, y: 0 },
+    { x: 40, y: 0 },
+    { x: 40, y: 25 },
+    { x: 0, y: 25 },
+  ];
+
+  it("hydrates Vicmap easement lines onto empty services", () => {
+    const result = applyAutoTraceParcelSnap({
+      snap: {
+        boundary: SEED_BOUNDARY,
+        building: [],
+        items: [],
+        strokes: [],
+        services: [],
+      },
+      res: {
+        boundary: {
+          source_kind: "vicmap",
+          vertices: parcelM.map((v, i) => ({
+            sequence_index: i,
+            canvas_coords: v,
+          })),
+        },
+        building_canvas: [],
+        building_source: null,
+        easement_lines_canvas: [
+          {
+            points: [
+              { x: 5, y: 5 },
+              { x: 35, y: 20 },
+            ],
+            pfi: "353608",
+          },
+        ],
+        easement_source: "vicmap",
+      },
+      keepTracedBuilding: false,
+    });
+    expect(result).not.toBeNull();
+    expect(result!.easementSource).toBe("vicmap");
+    expect(result!.services).toHaveLength(1);
+    expect(result!.services![0]!.length).toBe(2);
+  });
+
+  it("keeps operator-authored services over Vicmap easement lines", () => {
+    const authored = [
+      [
+        { x: 10, y: 10 },
+        { x: 20, y: 20 },
+      ],
+    ];
+    const result = applyAutoTraceParcelSnap({
+      snap: {
+        boundary: SEED_BOUNDARY,
+        building: [],
+        items: [],
+        strokes: [],
+        services: authored,
+      },
+      res: {
+        boundary: {
+          source_kind: "vicmap",
+          vertices: parcelM.map((v, i) => ({
+            sequence_index: i,
+            canvas_coords: v,
+          })),
+        },
+        easement_lines_canvas: [
+          {
+            points: [
+              { x: 5, y: 5 },
+              { x: 35, y: 20 },
+            ],
+          },
+        ],
+        easement_source: "vicmap",
+      },
+      keepTracedBuilding: false,
+    });
+    expect(result!.services).toBeUndefined();
+    expect(result!.easementSource).toBeUndefined();
   });
 });

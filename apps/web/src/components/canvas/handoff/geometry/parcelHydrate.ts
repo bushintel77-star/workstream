@@ -29,6 +29,13 @@ export type AutoTraceParcelInput = {
   };
   building_canvas?: Array<{ x: number; y: number }> | null;
   building_source?: "vicmap" | null;
+  /** Vicmap easement LineStrings in canvas metres (same frame as title verts). */
+  easement_lines_canvas?: Array<{
+    points: Array<{ x: number; y: number }>;
+    pfi?: string | null;
+    status?: string | null;
+  }> | null;
+  easement_source?: "vicmap" | null;
 };
 
 /**
@@ -95,14 +102,20 @@ export function applyParcelSnap(args: {
 /**
  * Apply an `/boundary/auto-trace` response onto a studio snapshot.
  * Returns null when the title ring is unusable.
+ *
+ * Vicmap easement lines hydrate onto Services corridors when the operator
+ * has not already authored corridors (same honesty as dwelling hydrate).
  */
 export function applyAutoTraceParcelSnap(args: {
-  snap: ReprojectableDoc;
+  snap: ReprojectableDoc & { services?: PctPoint[][] };
   res: AutoTraceParcelInput;
   keepTracedBuilding: boolean;
 }): (ParcelSnapResult & {
   fit: CanvasMetresFit;
   boundarySource: "vicmap" | "manual";
+  /** Set when Vicmap easement lines replace empty services. */
+  services?: PctPoint[][];
+  easementSource?: "vicmap" | null;
 }) | null {
   const verts = [...args.res.boundary.vertices]
     .sort((a, b) => a.sequence_index - b.sequence_index)
@@ -116,10 +129,27 @@ export function applyAutoTraceParcelSnap(args: {
     transform: fit.transform,
     keepTracedBuilding: args.keepTracedBuilding,
   });
+
+  const existingServices = args.snap.services ?? [];
+  let services: PctPoint[][] | undefined;
+  let easementSource: "vicmap" | null | undefined;
+  if (
+    fit.transform &&
+    args.res.easement_source === "vicmap" &&
+    (args.res.easement_lines_canvas?.length ?? 0) > 0 &&
+    existingServices.length === 0
+  ) {
+    services = (args.res.easement_lines_canvas ?? [])
+      .map((line) => applyCanvasMetresTransform(line.points, fit.transform!))
+      .filter((ring) => ring.length >= 2);
+    easementSource = services.length > 0 ? "vicmap" : null;
+  }
+
   return {
     ...snapped,
     fit,
     boundarySource:
       args.res.boundary.source_kind === "vicmap" ? "vicmap" : "manual",
+    ...(services ? { services, easementSource } : {}),
   };
 }

@@ -2379,7 +2379,8 @@ export function CadPlanBoard({
                 className={css.honestyFooter}
                 data-testid="utility-honesty-footer"
               >
-                Utility traces · indicative — confirm locate / DBYD before dig
+                Service / Vicmap easement lines · subset of title easements —
+                confirm survey / council / DBYD before dig
               </p>
             ) : null}
             {bydaAssets.some((a) => a.ring.length >= 2) ? (
