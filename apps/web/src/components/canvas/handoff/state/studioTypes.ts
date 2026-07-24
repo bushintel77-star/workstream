@@ -45,7 +45,7 @@ export type StudioSnapshot = {
   services: PctPoint[][];
   /** Typed BYDA utility assets — distinct stroke language from easements. */
   bydaAssets: DesignBydaAsset[];
-  /** KEYLESS Vicmap washes (planning / bushfire / contour…). */
+  /** KEYLESS Vicmap washes (planning / bushfire / contour / flood / heritage…). */
   keylessOverlays: DesignKeylessOverlay[];
   /** Authored drip / lighting paths — DesignCanvas.irrigation_zones. */
   irrigationZones: IrrigationZone[];

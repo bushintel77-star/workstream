@@ -168,7 +168,7 @@ export const KeylessHydrateRequestSchema = z.object({
         "wetland",
       ]),
     )
-    .default(["planning", "bushfire", "contour"]),
+    .default(["planning", "bushfire", "contour", "flood", "heritage"]),
 });
 export type KeylessHydrateRequest = z.infer<typeof KeylessHydrateRequestSchema>;
 

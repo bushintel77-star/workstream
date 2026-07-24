@@ -50,7 +50,7 @@ A hung e2e or skipped live probe is a blocker. Binding detail: `.cursor/rules/en
 
 Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, title-boundary snap, Fit sheet dims, **Services ledger** (right lane — ticks/metrics/focus; replaces services opacity dial), **Auto trench…** (irrig/conduit/drainage dig paths from zones → `construction_trenches`, ghost until Accept; not BYDA assets).
 
-**Site infrastructure honesty:** Vicmap easements ≠ underground assets. Dig needs BYDA (+ often council drainage). Survey 5/5 = digital minimum; full LA pack = `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` (KEYLESS scorers on the same Vicmap WFS stack; BYDA / council / survey / arbor / site chase list).
+**Site infrastructure honesty:** Vicmap easements ≠ underground assets. Dig needs BYDA (+ often council drainage). Survey 5/5 = digital minimum; full LA pack = `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` (title easement hydrate LIVE; KEYLESS washes include planning/bushfire/contour/flood/heritage; BYDA / council / survey / arbor / site chase list).
 
 **Sticky boundary rail (Cursor-style):** Env + Services live meta flush to the right viewport edge — translucent, sticky until ×. Expand opens the same-seam right lane. See `docs/ENV-AND-SITE-META-STICKY.md`.
 

@@ -52,7 +52,7 @@ Studio Survey **5/5** (boundary, dwelling, trees, levels, services/easements) is
 | Existing dwelling | `site_frame.building` |
 | Parcel attrs (PFI, SPI, LGA…) | Title block |
 | Title easement lines (subset) | Services corridors when empty (`easement_source: vicmap`) |
-| Planning / bushfire / contour washes | Soft board wash via `POST …/keyless-hydrate` |
+| Planning / bushfire / contour / flood / heritage washes | Soft board wash via `POST …/keyless-hydrate` |
 | Survey corridors / easements / RLs | Servc · Level → Services ledger |
 | Construction trenches (irrig / conduit / drain) | Cmd+K **Auto trench…** → `construction_trenches` |
 
@@ -121,8 +121,8 @@ Studio Survey **5/5** (boundary, dwelling, trees, levels, services/easements) is
 | D1 | **Planning zone** (GRZ, NRZ, …) | Use, permit triggers | **LIVE** wash / **LINK** | `POST …/keyless-hydrate` · VicPlan report |
 | D2 | **Overlays** (SLO, HO, DDO, ESO, LSIO, BMO, EAO…) | Design constraints | **KEYLESS** / **LINK** | Soft wash kinds + VicPlan |
 | D3 | **Bushfire Prone Area** | Species, materials, BAL | **LIVE** wash | `bushfire_prone_area` |
-| D4 | **Heritage register / inventory** | Fabric, materials, visibility | **KEYLESS** | Next DEFAULT_KINDS expand |
-| D5 | **Flood / inundation history** | Levels, materials, drainage | **KEYLESS** | Next DEFAULT_KINDS expand |
+| D4 | **Heritage register / inventory** | Fabric, materials, visibility | **LIVE** wash | Soft wash via keyless-hydrate |
+| D5 | **Flood / inundation history** | Levels, materials, drainage | **LIVE** wash | Soft wash via keyless-hydrate |
 | D6 | **Environmental Audit Overlay / contamination cues** | Soil import/export, dig | **LINK** | Victoria Unearthed / EPA |
 | D7 | **Acid sulfate soils** (coastal) | Spoil handling | **KEYLESS** | `coastal_acid_sulphate_soils` |
 | D8 | **Council setbacks** (front/side/rear) | Envelope | Indicative on canvas | Studio setback overlay — confirm scheme |
@@ -188,8 +188,6 @@ Scorers in `apps/api/src/lib/vicmap.ts` (`VICMAP_KEYLESS_SCORERS` /
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Flood history / LSIO | **KEYLESS → hydrate** | Expand DEFAULT_KINDS first |
-| Heritage overlay | **KEYLESS → hydrate** | Expand DEFAULT_KINDS first |
 | Urban trees / canopy | **KEYLESS** | Exist ghosts + canopy |
 | Water corporation boundary | **KEYLESS** | Title meta |
 | Road casement | **KEYLESS** | Street / crossover cue |
@@ -205,8 +203,7 @@ Ordered by landscape-construction risk × keyless feasibility:
 | Priority | Item | Auto status | Canvas destination |
 | --- | --- | --- | --- |
 | P0 | Title + dwelling + easement lines | **LIVE** | Boundary / building / Services |
-| P1 | Planning zone + bushfire + contours | **LIVE** wash | Soft wash / contour strokes |
-| P1 | Flood + heritage | **KEYLESS → hydrate** | Soft wash (next DEFAULT_KINDS) |
+| P1 | Planning / bushfire / contours / flood / heritage | **LIVE** wash | Soft wash / contour strokes |
 | P1 | Urban trees → exist ghosts + canopy | **KEYLESS** | Survey vegetation |
 | P2 | Water corp + road casement | **KEYLESS** | Title meta / street cue |
 | P3 | BYDA lodge + plan ingest | **BYDA** | Typed services + PDF tray |

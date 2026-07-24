@@ -1648,7 +1648,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   /**
    * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
-   * Then KEYLESS planning / bushfire / contour washes (best-effort).
+   * Then KEYLESS planning / bushfire / contour / flood / heritage washes.
    */
   useEffect(() => {
     if (bootstrapped.current) return;

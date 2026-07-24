@@ -10,6 +10,8 @@ import {
   scoreBuildingLayerName,
   scoreBushfireLayerName,
   scoreEasementLayerName,
+  scoreFloodLayerName,
+  scoreHeritageLayerName,
   scorePropertyLayerName,
   scoreUrbanTreeLayerName,
 } from "./vicmap";
@@ -105,6 +107,8 @@ describe("layer discovery scoring", () => {
       "open-data-platform:tree_urban",
       "open-data-platform:planning_zone",
       "open-data-platform:road_casement_polygon",
+      "open-data-platform:lsio",
+      "open-data-platform:heritage_overlay",
     ];
     const found = discoverKeylessLayerNames(names);
     expect(found.easement).toBe("open-data-platform:easement");
@@ -112,9 +116,15 @@ describe("layer discovery scoring", () => {
     expect(found.urban_tree).toBe("open-data-platform:tree_urban");
     expect(found.planning).toBe("open-data-platform:planning_zone");
     expect(found.road_casement).toBe("open-data-platform:road_casement_polygon");
+    expect(found.flood).toBe("open-data-platform:lsio");
+    expect(found.heritage).toBe("open-data-platform:heritage_overlay");
     expect(scoreEasementLayerName("open-data-platform:easement")).toBeGreaterThan(0);
     expect(scoreBushfireLayerName("open-data-platform:address")).toBeLessThan(0);
     expect(scoreUrbanTreeLayerName("open-data-platform:tree_urban")).toBeGreaterThan(
+      0,
+    );
+    expect(scoreFloodLayerName("open-data-platform:lsio")).toBeGreaterThan(0);
+    expect(scoreHeritageLayerName("open-data-platform:heritage_overlay")).toBeGreaterThan(
       0,
     );
   });
