@@ -41,6 +41,12 @@ import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
 import { LayersPanel } from "./features/layers/LayersPanel";
 import { ServicesLedger } from "./features/services/ServicesLedger";
 import { buildServiceLedgerRows } from "./features/services/serviceLedger";
+import {
+  StickyMetaStack,
+  summonStickyMeta,
+} from "./features/stickyMeta/StickyMetaStack";
+import { EnvironmentPanel } from "./features/stickyMeta/EnvironmentPanel";
+import { buildEnvLiveMeta } from "./features/stickyMeta/envLiveMeta";
 import { RightDataLane } from "./features/surfaces/DataLaneSlot";
 import {
   RIGHT_DATA_LANE_WIDTH_PX,
@@ -1243,9 +1249,30 @@ export function HandoffDesignStudio({
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
   const servicesOpen = ui.rightDataPanel === "services";
+  const environmentOpen = ui.rightDataPanel === "environment";
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
   const rightLaneBusy = ui.rightDataPanel != null;
+  const [stickyRestoreNonce, setStickyRestoreNonce] = useState(0);
+  const envLiveMeta = useMemo(
+    () =>
+      buildEnvLiveMeta({
+        sunMin: ui.sunMin,
+        sunDatePreset: ui.sunDatePreset,
+        growth: ui.growth,
+        lat: projectLat,
+        lng: projectLng,
+        shadeOn: ui.shadeOn,
+      }),
+    [
+      ui.sunMin,
+      ui.sunDatePreset,
+      ui.growth,
+      ui.shadeOn,
+      projectLat,
+      projectLng,
+    ],
+  );
   const surveyServicesAuthoring = surveyServicesAuthoringAllowed({
     mode: ui.mode,
     servicesLocked: ui.servicesLocked,
@@ -3401,8 +3428,56 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {/* Right data lane — one panel (lane law). Layers no longer left. */}
-        {chrome.structureRail && planOn && servicesOpen ? (
+        {/* Cursor-style boundary rail — Env + Services sticky until dismissed. */}
+        {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
+          <StickyMetaStack
+            projectId={projectId}
+            visible={!servicesOpen && !environmentOpen}
+            laneBusy={rightLaneBusy}
+            activePanel={
+              servicesOpen
+                ? "services"
+                : environmentOpen
+                  ? "environment"
+                  : null
+            }
+            scaleM={scaleM}
+            services={studio.services}
+            easements={studio.easements}
+            levels={studio.levels}
+            irrigationZones={studio.irrigationZones}
+            constructionTrenches={studio.constructionTrenches}
+            items={studio.items}
+            servicesLocked={ui.servicesLocked}
+            sunMin={ui.sunMin}
+            sunDatePreset={ui.sunDatePreset}
+            growth={ui.growth}
+            shadeOn={ui.shadeOn}
+            lat={projectLat}
+            lng={projectLng}
+            restoreNonce={stickyRestoreNonce}
+            onExpandServices={() => {
+              summonStickyMeta(projectId, "services");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "services",
+                utilityPanel: null,
+              });
+            }}
+            onExpandEnvironment={() => {
+              summonStickyMeta(projectId, "environment");
+              setStickyRestoreNonce((n) => n + 1);
+              studio.setUi({
+                rightDataPanel: "environment",
+                shadeOn: true,
+                utilityPanel: null,
+              });
+            }}
+          />
+        ) : null}
+
+        {/* Right data lane — one panel (lane law). Flush to the right boundary. */}
+        {planOn && servicesOpen ? (
           <RightDataLane testId="right-data-lane-services">
             <ServicesLedger
               open
@@ -3440,6 +3515,28 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
+        {planOn && environmentOpen ? (
+          <RightDataLane testId="right-data-lane-environment">
+            <EnvironmentPanel
+              open
+              meta={envLiveMeta}
+              sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
+              growth={ui.growth}
+              playing={ui.sunPlay}
+              shadeOn={ui.shadeOn}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onSunMin={(sunMin) => studio.setUi({ sunMin })}
+              onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
+              onGrowth={(growth) => studio.setUi({ growth })}
+              onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
+              onShadeOn={(shadeOn) =>
+                studio.setUi({ shadeOn, sunPlay: shadeOn ? ui.sunPlay : false })
+              }
+            />
+          </RightDataLane>
+        ) : null}
+
         {chrome.structureRail && planOn && layersOpen ? (
           <RightDataLane testId="right-data-lane-layers">
             <LayersPanel
@@ -3454,12 +3551,14 @@ export function HandoffDesignStudio({
               onOpacity={studio.setLayerOpacity}
               onSetback={(setbackOn) => studio.setUi({ setbackOn })}
               onShade={(shadeOn) => studio.setUi({ shadeOn })}
-              onOpenServices={() =>
+              onOpenServices={() => {
+                summonStickyMeta(projectId, "services");
+                setStickyRestoreNonce((n) => n + 1);
                 studio.setUi({
                   rightDataPanel: "services",
                   utilityPanel: null,
-                })
-              }
+                });
+              }}
             />
           </RightDataLane>
         ) : null}
@@ -3556,14 +3655,27 @@ export function HandoffDesignStudio({
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
           onAutoTrench={studio.runAutoTrench}
-          onOpenServices={() =>
+          onOpenServices={() => {
+            summonStickyMeta(projectId, "services");
+            setStickyRestoreNonce((n) => n + 1);
             studio.setUi({
               rightDataPanel: "services",
               cmdOpen: false,
               cmdQuery: "",
               utilityPanel: null,
-            })
-          }
+            });
+          }}
+          onOpenEnvironment={() => {
+            summonStickyMeta(projectId, "environment");
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              rightDataPanel: "environment",
+              shadeOn: true,
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            });
+          }}
           onConvertSketch={
             formalizing ? undefined : () => void runFormalizeToCad()
           }

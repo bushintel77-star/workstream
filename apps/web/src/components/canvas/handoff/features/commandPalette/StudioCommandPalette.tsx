@@ -24,6 +24,8 @@ type Props = {
   onAutoTrench?: () => void;
   /** Open the Services ledger (ticks / metrics / focus). */
   onOpenServices?: () => void;
+  /** Open Environment boundary panel (sun / season / growth). */
+  onOpenEnvironment?: () => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
@@ -61,6 +63,7 @@ export function StudioCommandPalette({
   onScanGhosts,
   onAutoTrench,
   onOpenServices,
+  onOpenEnvironment,
   onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
@@ -157,10 +160,23 @@ export function StudioCommandPalette({
               id: "services-ledger",
               label: "Services ledger",
               detail:
-                "Live corridors, easements, RLs, lighting & trenches — ticks, metrics, click to focus",
+                "Boundary rail — corridors, easements, RLs, lighting & trenches",
               keywords:
-                "services ledger easement corridor level lighting trench utilities byda tick focus isolate",
+                "services ledger easement corridor level lighting trench utilities byda tick focus isolate sticky",
               run: onOpenServices,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onOpenEnvironment
+        ? [
+            {
+              id: "environment",
+              label: "Environment",
+              detail:
+                "Boundary rail — sun hours, season, growth, shade mesh, 12h cast",
+              keywords:
+                "environment sun shade season frost heat humidity weather growth mesh cast sticky climate",
+              run: onOpenEnvironment,
             } satisfies StudioCommand,
           ]
         : []),
@@ -263,6 +279,7 @@ export function StudioCommandPalette({
     onScanGhosts,
     onAutoTrench,
     onOpenServices,
+    onOpenEnvironment,
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,

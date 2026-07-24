@@ -1,0 +1,112 @@
+/**
+ * Cursor-style boundary rail — flush to the right viewport edge.
+ * Soft frost on the canvas side; hard against the window boundary.
+ */
+.stack {
+  position: absolute;
+  top: calc(var(--ws-safe-top, 40px) + 4px);
+  right: 0;
+  z-index: 48;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(200px, calc(100vw - 56px));
+  pointer-events: none;
+  border-left: 1px solid rgba(36, 19, 24, 0.1);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 251, 252, 0.42) 0%,
+    rgba(255, 251, 252, 0.78) 28%,
+    rgba(255, 251, 252, 0.88) 100%
+  );
+  backdrop-filter: blur(12px);
+  box-shadow: -6px 0 24px rgba(42, 23, 29, 0.06);
+  border-radius: 10px 0 0 10px;
+  overflow: hidden;
+}
+
+/* Layers / measures lane open — keep Env/Services rail on the lane's left seam. */
+.stack[data-lane="busy"] {
+  right: min(304px, calc(100vw - 40px));
+  border-radius: 10px 0 0 10px;
+}
+
+.card {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 6px;
+  align-items: start;
+  padding: 8px 8px 8px 12px;
+  border: none;
+  border-bottom: 1px solid rgba(36, 19, 24, 0.08);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #241318;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+}
+
+.card:last-child {
+  border-bottom: none;
+}
+
+.card:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.card[data-active="true"] {
+  background: rgba(236, 252, 203, 0.42);
+  box-shadow: inset 2px 0 0 #3f6212;
+}
+
+.face {
+  margin: 0;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 550;
+  color: #241318;
+  line-height: 1.25;
+}
+
+.detail {
+  margin: 0;
+  grid-column: 1;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  color: #7a5560;
+  line-height: 1.3;
+}
+
+.close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #b08a95;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+  min-width: 22px;
+  min-height: 22px;
+  cursor: pointer;
+  justify-self: end;
+}
+
+.close:hover {
+  color: #241318;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid rgba(36, 19, 24, 0.14);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8px;
+  color: #7a5560;
+  vertical-align: middle;
+}

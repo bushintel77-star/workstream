@@ -52,6 +52,8 @@ Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd
 
 **Site infrastructure honesty:** Vicmap easements ≠ underground assets. Dig needs BYDA (+ often council drainage). Survey 5/5 = digital minimum; full LA pack = `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` (KEYLESS scorers on the same Vicmap WFS stack; BYDA / council / survey / arbor / site chase list).
 
+**Sticky boundary rail (Cursor-style):** Env + Services live meta flush to the right viewport edge — translucent, sticky until ×. Expand opens the same-seam right lane. See `docs/ENV-AND-SITE-META-STICKY.md`.
+
 **Design Studio v4/v5 handoff** (reference): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README checklist; progress in `IMPLEMENTATION-STATUS.md`.
 
 **Studio styling + UI/UX (binding):** `docs/STUDIO-STYLING-AND-UX.md` — blush frost tokens, disappearing chrome, inventory as summoned popup (never a fixed opaque bar on the drawing), orbit clear of the glyph, contextual pointer. Read this before restyling canvas chrome.
