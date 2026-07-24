@@ -26,6 +26,8 @@ type Props = {
   onAutoTrench?: () => void;
   /** Agentic-lite Develop loop — ghosts → scheme tip → Flora → Live BOM. */
   onDevelopSite?: () => void;
+  /** Job intake — title + KEYLESS + urban trees + chase list. */
+  onPrepareSitePack?: () => void;
   /** LV conduit + watering (agg drain or spray laterals). */
   onProposeServices?: () => void;
   /** Open the Services ledger (ticks / metrics / focus). */
@@ -75,6 +77,7 @@ export function StudioCommandPalette({
   onScanGhosts,
   onAutoTrench,
   onDevelopSite,
+  onPrepareSitePack,
   onProposeServices,
   onOpenServices,
   onOpenEnvironment,
@@ -158,6 +161,19 @@ export function StudioCommandPalette({
         keywords: "scan ghost ai suggest propose layout",
         run: onScanGhosts,
       },
+      ...(onPrepareSitePack
+        ? [
+            {
+              id: "prepare-site-pack",
+              label: "Prepare site pack",
+              detail:
+                "Vicmap title + KEYLESS washes + urban tree ghosts + chase list (CoT, BYDA, council drain, arbor)",
+              keywords:
+                "prepare site pack intake title vicmap keyless trees byda council chase survey job hydrate",
+              run: onPrepareSitePack,
+            } satisfies StudioCommand,
+          ]
+        : []),
       ...(onDevelopSite
         ? [
             {
@@ -368,6 +384,7 @@ export function StudioCommandPalette({
     onGoQuote,
     onRedo,
     onDevelopSite,
+    onPrepareSitePack,
     onProposeServices,
     onScanGhosts,
     onAutoTrench,

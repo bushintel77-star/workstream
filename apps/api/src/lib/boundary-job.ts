@@ -10,6 +10,7 @@ import {
   buildBoundaryFromPolygon,
   geoJsonLineToCanvasMetres,
   geoJsonPolygonToCanvasMetres,
+  geoToCanvasMetres,
   lockBoundary,
   unlockBoundary,
 } from "@workstream/domain";
@@ -17,6 +18,7 @@ import {
   fetchBuildingPolygon,
   fetchEasementLinesForTitle,
   fetchTitlePolygon,
+  fetchUrbanTreePointsForTitle,
 } from "./vicmap";
 
 function toUpsert(
@@ -177,6 +179,9 @@ export async function autoTraceSiteBoundaryWithBuilding(
   let easement_lines_canvas: BoundaryAutoTraceResponse["easement_lines_canvas"] =
     [];
   let easement_source: BoundaryAutoTraceResponse["easement_source"] = null;
+  let urban_trees_canvas: BoundaryAutoTraceResponse["urban_trees_canvas"] = [];
+  let urban_trees_source: BoundaryAutoTraceResponse["urban_trees_source"] =
+    null;
   if (titleRing.length >= 4) {
     try {
       const lines = await fetchEasementLinesForTitle(titleRing);
@@ -195,6 +200,22 @@ export async function autoTraceSiteBoundaryWithBuilding(
     } catch (err) {
       console.warn("[boundary] Vicmap easement fetch failed:", err);
     }
+    try {
+      const trees = await fetchUrbanTreePointsForTitle(titleRing);
+      urban_trees_canvas = trees.map((t) => {
+        const pt = geoToCanvasMetres({ lng: t.lng, lat: t.lat }, origin);
+        return {
+          x: pt.x,
+          y: pt.y,
+          canopy_radius_m: t.canopyRadiusM,
+          height_m: t.heightM,
+          label: t.label,
+        };
+      });
+      if (urban_trees_canvas.length > 0) urban_trees_source = "vicmap";
+    } catch (err) {
+      console.warn("[boundary] Vicmap urban tree fetch failed:", err);
+    }
   }
 
   return {
@@ -203,6 +224,8 @@ export async function autoTraceSiteBoundaryWithBuilding(
     building_source,
     easement_lines_canvas,
     easement_source,
+    urban_trees_canvas,
+    urban_trees_source,
   };
 }
 

@@ -539,6 +539,28 @@ export async function getSiteBoundaryAction(projectId: string) {
   }
 }
 
+/** Council drainage GeoJSON → canvas-metre lines (server-only). */
+export async function ingestStormwaterGeoJsonAction(
+  projectId: string,
+  geojson: unknown,
+) {
+  const { ingestStormwaterGeoJsonApi } = await import("../lib/api");
+  try {
+    return await ingestStormwaterGeoJsonApi(projectId, geojson);
+  } catch (err) {
+    throw wrapApiError(err, "Stormwater GeoJSON ingest failed");
+  }
+}
+
+export async function listProjectFilesAction(projectId: string) {
+  const { listProjectFiles } = await import("../lib/api");
+  try {
+    return await listProjectFiles(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Project files list failed");
+  }
+}
+
 export async function saveBoundaryAction(
   projectId: string,
   boundary: import("../lib/canvas-types").SiteBoundaryLite,

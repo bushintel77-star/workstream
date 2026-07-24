@@ -16,8 +16,8 @@
 }
 
 .ghostRect {
-  fill: rgba(28, 25, 23, 0.04);
-  stroke: #1c1917;
+  fill: color-mix(in srgb, var(--text-primary) 4%, var(--canvas));
+  stroke: var(--text-primary);
   stroke-width: 1.1;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
@@ -25,15 +25,15 @@
 
 .drawLine {
   fill: none;
-  stroke: #1c1917;
+  stroke: var(--proposed-stroke);
   stroke-width: 1.4;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
 }
 
 .dot {
-  fill: #1c1917;
-  stroke: #f2f0eb;
+  fill: var(--proposed-stroke);
+  stroke: var(--canvas);
   stroke-width: 0.25;
   vector-effect: non-scaling-stroke;
 }

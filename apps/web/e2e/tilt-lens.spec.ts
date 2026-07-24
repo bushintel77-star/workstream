@@ -165,8 +165,8 @@ test.describe("Tilt lens", () => {
       timeout: 20_000,
     });
 
-    await openCommandPalette(page);
-    await page.getByTestId("canvas-command-tilt-view").click();
+    // Top-bar Tilt control (not Cmd+K only) — operator-discoverable path.
+    await page.getByTestId("canvas-tilt-top").click();
     await expect(page.getByTestId("studio-board")).toHaveAttribute(
       "data-tilt",
       "1",
@@ -202,5 +202,25 @@ test.describe("Tilt lens", () => {
 
     // Wall/post quads exist (4 walls + 4 posts for a rectangular footprint).
     expect(await walls.locator("> div").count()).toBeGreaterThanOrEqual(4);
+
+    // Wrappers must not paint an opaque plate over the CAD grid (AABB hole).
+    await expect
+      .poll(async () => {
+        return page.evaluate(() => {
+          const wallsEl = document.querySelector(
+            '[data-testid="tilt-building-walls"]',
+          );
+          const roofEl = document.querySelector(
+            '[data-testid="tilt-building-extrusion"]',
+          );
+          if (!wallsEl || !roofEl) return "missing";
+          const w = getComputedStyle(wallsEl).backgroundColor;
+          const r = getComputedStyle(roofEl).backgroundColor;
+          const clear = (c: string) =>
+            c === "rgba(0, 0, 0, 0)" || c === "transparent";
+          return clear(w) && clear(r) ? "ok" : `${w}|${r}`;
+        });
+      })
+      .toBe("ok");
   });
 });

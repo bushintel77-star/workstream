@@ -40,6 +40,12 @@ import {
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
 import { LayersPanel } from "./features/layers/LayersPanel";
 import { ServicesLedger } from "./features/services/ServicesLedger";
+import { SitePackPanel } from "./features/sitePack/SitePackPanel";
+import {
+  listProjectFilesClient,
+  uploadProjectFileClient,
+  type ClientProjectFile,
+} from "./features/sitePack/projectFilesClient";
 import { buildServiceLedgerRows } from "./features/services/serviceLedger";
 import {
   StickyMetaStack,
@@ -69,6 +75,8 @@ import { DrainageRunsLayer } from "./features/survey/DrainageRunsLayer";
 import type { HardscapeEdgeType } from "./studioCatalog";
 import {
   buildIndicativeShadeGrid,
+  councilDrainageChase,
+  defaultSitePackChase,
   sunHoursAtPct,
   type AspectTag,
   type PathFilletLockM,
@@ -334,6 +342,7 @@ export function HandoffDesignStudio({
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
     initialTitleBlock,
   );
+  const [bydaFiles, setBydaFiles] = useState<ClientProjectFile[]>([]);
   /**
    * Sticky instrument home — empty canvas margin only (off the lot drawing).
    * Does not follow selection; default parks in the left gutter.
@@ -517,11 +526,27 @@ export function HandoffDesignStudio({
       }
       // Fit sheet: Alt+wheel reserved for print 1:N (FitSheetOverlay).
       if (ui.frameOn && e.altKey) return;
+      /*
+       * Trackpad diagonal scrolls send deltaX+deltaY. Zooming on a
+       * sideways-dominant gesture makes the focus origin hunt L/R.
+       */
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.25) {
+        return;
+      }
       e.preventDefault();
       markInteracting();
       const nextZoom = zoomFromWheel(ui.zoom, e.deltaY);
       if (ui.frameOn) {
         // Keep lot-centred sheet origin; zoom multiplies the paper fit.
+        studio.setUi({ zoom: nextZoom });
+        return;
+      }
+      /*
+       * Tilt applies rotateX that clientToBoardPct does not invert. Updating
+       * focus from the pointer under tilt makes transform-origin jump each
+       * tick → left/right zig-zag. Freeze focus; scale straight in/out.
+       */
+      if (isTiltActive(tiltDegRef.current)) {
         studio.setUi({ zoom: nextZoom });
         return;
       }
@@ -641,6 +666,7 @@ export function HandoffDesignStudio({
           button: e.button,
           spaceHeld: spaceHeldRef.current,
           panToolArmed: panToolGrabRef.current && !overChrome,
+          tiltViewActive: isTiltActive(tiltDegRef.current) && !overChrome,
         })
       ) {
         return;
@@ -733,6 +759,43 @@ export function HandoffDesignStudio({
     },
     [studio, clearTiltAnimKind],
   );
+
+  /**
+   * Operator entry for 3D massing. Fit sheet silently blocked tilt before —
+   * exit Fit first. Walls only render when a dwelling ring exists.
+   */
+  const runTiltView = useCallback(() => {
+    const planMode =
+      ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+    if (!planMode) {
+      studio.setUi({
+        councilTip: "Tilt needs Survey / Sketch / CAD — not Quote or Share",
+        coachOpen: true,
+      });
+      return;
+    }
+    if (ui.frameOn) {
+      /* Don't call setFitSheetOn here (defined later) — clear Fit camera only. */
+      studio.setUi({ frameOn: false, panX: 0, panY: 0, zoom: 1 });
+    }
+    const turningOn = !isTiltActive(ui.tiltDeg);
+    animateTiltTo(turningOn ? TILT_DEG : 0);
+    if (turningOn) {
+      const hasDwelling = studio.building.length >= 3;
+      studio.setUi({
+        cmdOpen: false,
+        cmdQuery: "",
+        /* Centre zoom origin — stable straight in/out under rotateX. */
+        focusX: 50,
+        focusY: 50,
+        councilTip: hasDwelling
+          ? "Tilt on — drag to move · wheel zooms straight · Esc to flatten."
+          : "Tilt on — drag to move. No dwelling yet (no walls) — Trace Bldg or title hydrate.",
+        coachOpen: !hasDwelling,
+      });
+      setTiltPauseHint(true);
+    }
+  }, [animateTiltTo, studio, ui.frameOn, ui.mode, ui.tiltDeg]);
 
   /** Force flat when leaving plan / entering Fit / elevation / quote / share. */
   useEffect(() => {
@@ -1303,8 +1366,68 @@ export function HandoffDesignStudio({
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
   const rightLaneBusy = ui.rightDataPanel != null;
+  const streetContextChips = useMemo(() => {
+    const chips = studio.keylessOverlays
+      .filter(
+        (o) =>
+          o.kind === "water_corp" ||
+          o.kind === "road_casement" ||
+          o.kind === "planning" ||
+          o.kind === "flood" ||
+          o.kind === "bushfire",
+      )
+      .map((o) => {
+        if (o.kind === "water_corp") {
+          return o.label ? `Water corp · ${o.label}` : "Water corp overlay";
+        }
+        if (o.kind === "road_casement") {
+          return o.label
+            ? `Road casement · ${o.label}`
+            : "Road / frontage casement";
+        }
+        if (o.kind === "planning") {
+          return o.label ? `Planning · ${o.label}` : "Planning zone";
+        }
+        if (o.kind === "flood") return "Flood / LSIO wash";
+        if (o.kind === "bushfire") return "Bushfire / BMO wash";
+        return o.kind;
+      });
+    return [...new Set(chips)];
+  }, [studio.keylessOverlays]);
+  const councilDrainTpl = useMemo(
+    () =>
+      councilDrainageChase(null, titleBlock?.councilLabel ?? null)
+        .requestTemplate,
+    [titleBlock?.councilLabel],
+  );
   const [stickyRestoreNonce, setStickyRestoreNonce] = useState(0);
   const [weatherDay, setWeatherDay] = useState<EnvWeatherDay | null>(null);
+  useEffect(() => {
+    if (!projectId || !servicesOpen) return;
+    let cancelled = false;
+    void listProjectFilesClient(projectId)
+      .then((files) => {
+        if (cancelled) return;
+        setBydaFiles(files.filter((f) => f.kind === "byda"));
+      })
+      .catch(() => {
+        if (!cancelled) setBydaFiles([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, servicesOpen]);
+  useEffect(() => {
+    if (!servicesOpen) return;
+    if (ui.sitePackChase.length > 0) return;
+    studio.setUi({
+      sitePackChase: defaultSitePackChase({
+        councilLabel: titleBlock?.councilLabel ?? null,
+      }),
+    });
+    // studio.setUi is stable; omit studio object to avoid re-fire each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed once when Services opens empty
+  }, [servicesOpen, titleBlock?.councilLabel, ui.sitePackChase.length]);
   useEffect(() => {
     if (!projectId) {
       setWeatherDay(null);
@@ -2000,6 +2123,7 @@ export function HandoffDesignStudio({
         mode: ui.mode,
         locked: ui.locked,
         frameOn: ui.frameOn,
+        tiltViewActive: isTiltActive(ui.tiltDeg),
         boardCursor:
           boardCursor && boardCursor !== "default" ? boardCursor : null,
         sketchTool: ui.mode === "sketch" ? sketchChrome.tool : undefined,
@@ -2009,7 +2133,7 @@ export function HandoffDesignStudio({
   /** Drag-to-pan takes cursor priority over whatever tool is active. */
   const effectiveCursor = isPanningActive
     ? "grabbing"
-    : spacePanArmed
+    : spacePanArmed || isTiltActive(ui.tiltDeg)
       ? "grab"
       : studioCursor;
 
@@ -2026,6 +2150,7 @@ export function HandoffDesignStudio({
     <div
       className={`${css.root}${darkLens ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}`}
       data-testid="handoff-design-studio"
+      data-theme={darkLens && !ui.frameOn ? "dark" : "light"}
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
       data-compliance={compliance.canvasSignal}
@@ -2270,6 +2395,31 @@ export function HandoffDesignStudio({
                     stroke="currentColor"
                     strokeWidth="1.25"
                     strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`${css.iconBtn}${isTiltActive(ui.tiltDeg) ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="canvas-tilt-top"
+                aria-label="Tilt view"
+                aria-pressed={isTiltActive(ui.tiltDeg)}
+                title="Tilt view — 3D dwelling walls (needs building footprint)"
+                onClick={() => runTiltView()}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M2.5 11.5 8 4.5l5.5 7H2.5z"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 11.5v-3.2M8 11.5V7M12 11.5V9.2"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinecap="round"
+                    opacity="0.55"
                   />
                 </svg>
               </button>
@@ -3420,6 +3570,7 @@ export function HandoffDesignStudio({
         {tiltPauseHint && planOn && !ui.frameOn ? (
           <TiltHintPill
             kind="paused"
+            hasDwelling={studio.building.length >= 3}
             onDismiss={() => setTiltPauseHint(false)}
           />
         ) : null}
@@ -3871,6 +4022,67 @@ export function HandoffDesignStudio({
         {/* Right data lane — one panel (lane law). Flush to the right boundary. */}
         {planOn && servicesOpen ? (
           <RightDataLane testId="right-data-lane-services">
+            <SitePackPanel
+              chase={ui.sitePackChase}
+              bydaAssetCount={studio.bydaAssets.filter((a) => a.ring.length >= 2).length}
+              digOverrideAt={ui.digOverrideAt}
+              streetChips={streetContextChips}
+              bydaFiles={bydaFiles.map((f) => ({
+                id: f.id,
+                title: f.title,
+                uri: f.uri,
+              }))}
+              councilRequestTemplate={councilDrainTpl}
+              onToggleChase={studio.toggleSitePackChase}
+              onStampDigOverride={() => studio.stampDigOverride()}
+              onUploadBydaFile={(file) => {
+                void uploadProjectFileClient(projectId, file, "byda")
+                  .then((row) => {
+                    setBydaFiles((prev) => [row, ...prev]);
+                    const chase = ui.sitePackChase.map((c) =>
+                      c.id === "byda" ? { ...c, done: true } : c,
+                    );
+                    studio.setUi({
+                      sitePackChase: chase.length
+                        ? chase
+                        : [
+                            {
+                              id: "byda",
+                              label: "Lodge BYDA + upload plans to project (dig gate)",
+                              done: true,
+                              href: "https://www.byda.com.au/",
+                            },
+                          ],
+                      councilTip:
+                        "BYDA plan filed — digitise assets with Servc + BYDA kind to unlock dig",
+                    });
+                  })
+                  .catch(() => {
+                    studio.setUi({
+                      councilTip: "BYDA upload failed — try PDF or JPEG/PNG",
+                    });
+                  });
+              }}
+              onIngestStormwaterFile={(file) => {
+                void file.text().then((text) => {
+                  try {
+                    const geojson = JSON.parse(text) as unknown;
+                    void studio.ingestStormwaterGeoJson(geojson).then(() => {
+                      const chase = ui.sitePackChase.map((c) =>
+                        c.id === "council_drain" ? { ...c, done: true } : c,
+                      );
+                      if (chase.length) {
+                        studio.setUi({ sitePackChase: chase });
+                      }
+                    });
+                  } catch {
+                    studio.setUi({
+                      councilTip: "Could not parse GeoJSON — check council export",
+                    });
+                  }
+                });
+              }}
+            />
             <ServicesLedger
               open
               locked={ui.servicesLocked}
@@ -3919,6 +4131,7 @@ export function HandoffDesignStudio({
               growth={ui.growth}
               playing={ui.sunPlay}
               shadeOn={ui.shadeOn}
+              streetChips={streetContextChips}
               onClose={() => studio.setUi({ rightDataPanel: null })}
               onSunMin={(sunMin) => studio.setUi({ sunMin })}
               onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
@@ -4069,6 +4282,11 @@ export function HandoffDesignStudio({
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
+          onPrepareSitePack={() =>
+            void studio.ai.prepareSitePack({
+              councilLabel: titleBlock?.councilLabel ?? null,
+            })
+          }
           onDevelopSite={() => void studio.ai.develop()}
           onProposeServices={studio.ai.proposeServices}
           onAutoTrench={studio.runAutoTrench}
@@ -4129,12 +4347,7 @@ export function HandoffDesignStudio({
           onToggleFitSheet={() => setFitSheetOn(!ui.frameOn)}
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
-          onTiltView={() => {
-            const planMode =
-              ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
-            if (!planMode || ui.frameOn) return;
-            animateTiltTo(isTiltActive(ui.tiltDeg) ? 0 : TILT_DEG);
-          }}
+          onTiltView={() => runTiltView()}
           dataOpen={measuresOpen}
           onToggleData={() =>
             studio.setUi({

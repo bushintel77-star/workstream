@@ -1,5 +1,8 @@
 /* Workstream — Design Studio v4
- * Curtis & Co operator chrome — blush field, brand red accent. */
+ * Curtis & Co operator chrome — blush field, brand red accent.
+ * Plan/CAD colour system: color-tokens.css (v2 semantic tokens). */
+
+@import "./color-tokens.css";
 
 :root {
   /* surfaces */
@@ -53,7 +56,8 @@
   --color-text-primary: var(--ink-primary);
   --color-text-secondary: var(--ink-secondary);
   --color-text-tertiary: var(--ink-tertiary);
-  --color-liquid-cobalt: var(--accent);
+  /* Plan proposed — not blush accent (v2 semantic) */
+  --color-liquid-cobalt: var(--cobalt-l-600);
   --color-success: var(--ok);
   --color-warning: var(--warn);
   --color-danger: var(--block);

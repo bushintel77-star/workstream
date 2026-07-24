@@ -5,7 +5,9 @@ import {
   assessPlantingPlacement,
   buildIndicativeShadeGrid,
   countNearbyCanopy,
+  defaultSitePackChase,
   developLoopTip,
+  digToolsUnlocked,
   evaluateStudioCompliance,
   fixturesFromPlacements,
   makeIndicativeDrainageRun,
@@ -13,7 +15,9 @@ import {
   nextSchemeLetter,
   pathWidthToGlyphScale,
   plantingConflictSummary,
+  prepareSitePackTip,
   proposeLandscapeServiceZones,
+  urbanTreesToExistGhosts,
   zoneKindShortLabel,
   FLORA_HEIGHT_BY_FORM,
   hardscapeWhy,
@@ -343,6 +347,15 @@ type Ui = {
    * until the operator explicitly drops imagery again.
    */
   aerialSuppressed: boolean;
+  /** Prepare site pack chase list — persisted on site_frame.site_pack. */
+  sitePackChase: Array<{
+    id: string;
+    label: string;
+    done: boolean;
+    href?: string;
+  }>;
+  digOverrideAt: string | null;
+  digOverrideNote: string | null;
 };
 
 /** Prahran / Stonnington demo centroid for indicative shade grid. */
@@ -587,6 +600,14 @@ function initialState(opts: {
       // Never auto-inject Mapbox/survey static aerial — optional upload only
       // (matches curtis-co prototype: parchment drafting plate by default).
       aerialSuppressed: true,
+      sitePackChase: (opts.siteFrame?.site_pack?.chase ?? []).map((c) => ({
+        id: c.id,
+        label: c.label,
+        done: Boolean(c.done),
+        ...(c.href ? { href: c.href } : {}),
+      })),
+      digOverrideAt: opts.siteFrame?.site_pack?.dig_override_at ?? null,
+      digOverrideNote: opts.siteFrame?.site_pack?.dig_override_note ?? null,
     },
   };
 }
@@ -1939,39 +1960,74 @@ export function useStudioState(opts: UseStudioStateOpts) {
             : {}),
         });
 
-        // KEYLESS washes — same title transform when available.
+        // KEYLESS washes + urban tree ghosts — same title transform when available.
         // Boundary fetch goes through a server action (never import server-only api).
-        try {
-          const keyless = await hydrateKeylessAction(projectId);
-          if (cancelled || keyless.overlays_canvas.length === 0) return;
-          let transform = applied.fit.transform;
-          if (!transform) {
+        let transform = applied.fit.transform;
+        if (!transform) {
+          try {
             const bound = await getSiteBoundaryAction(projectId);
             const verts = [...(bound.boundary?.vertices ?? [])]
               .sort((a, b) => a.sequence_index - b.sequence_index)
               .map((v) => v.canvas_coords);
             transform = fitCanvasMetresRing(verts).transform;
+          } catch {
+            transform = null;
           }
-          if (!transform) return;
-          const t = transform;
-          mutate((snap) => ({
-            snap: {
-              ...snap,
-              keylessOverlays: keyless.overlays_canvas.map((ov) => ({
-                kind: ov.kind,
-                label: ov.label ?? undefined,
-                fetched_at: ov.fetched_at,
-                rings: ov.rings.map((ring) =>
-                  applyCanvasMetresTransform(ring, t).map((p) => ({
-                    x_pct: p.x,
-                    y_pct: p.y,
-                  })),
-                ),
-              })),
-            },
-          }));
+        }
+        try {
+          const keyless = await hydrateKeylessAction(projectId);
+          if (!cancelled && transform && keyless.overlays_canvas.length > 0) {
+            const t = transform;
+            mutate((snap) => ({
+              snap: {
+                ...snap,
+                keylessOverlays: keyless.overlays_canvas.map((ov) => ({
+                  kind: ov.kind,
+                  label: ov.label ?? undefined,
+                  fetched_at: ov.fetched_at,
+                  rings: ov.rings.map((ring) =>
+                    applyCanvasMetresTransform(ring, t).map((p) => ({
+                      x_pct: p.x,
+                      y_pct: p.y,
+                    })),
+                  ),
+                })),
+              },
+            }));
+          }
         } catch {
           /* KEYLESS optional — title still valid */
+        }
+        // P2 — Vicmap urban trees → exist ghosts (HITL; never invent DBH).
+        const trees = res.urban_trees_canvas ?? [];
+        if (
+          !cancelled &&
+          transform &&
+          res.urban_trees_source === "vicmap" &&
+          trees.length > 0
+        ) {
+          const { mergeUrbanTreeGhosts } = await import("./urbanTreeIngest");
+          const boardM = applied.fit.boardWidthM ?? 110;
+          const t = transform;
+          let treeCount = 0;
+          mutate((snap, idn) => {
+            const merged = mergeUrbanTreeGhosts({
+              snap,
+              trees,
+              transform: t,
+              boardWidthM: boardM,
+              idn,
+            });
+            treeCount = merged.count;
+            return { snap: merged.snap, idn: merged.idn };
+          });
+          if (treeCount > 0) {
+            setUi({
+              ghostIdx: 0,
+              ghostReviewOpen: true,
+              councilTip: `${treeCount} Vicmap tree ghost${treeCount === 1 ? "" : "s"} — measure DBH on site for TPZ`,
+            });
+          }
         }
       } catch {
         /* keep seed boundary — dwelling already empty on live projects */
@@ -2594,7 +2650,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
               {
                 id: crypto.randomUUID(),
                 kind: bydaKind,
-                source: "traced" as const,
+                source: "byda" as const,
                 ring: ring.map((p) => ({ x_pct: p.x, y_pct: p.y })),
               },
             ],
@@ -2665,6 +2721,23 @@ export function useStudioState(opts: UseStudioStateOpts) {
    * drainage from authored zones + french drains. Ghosts until Accept.
    */
   const runAutoTrench = useCallback(() => {
+    const bydaCount = (state.doc.bydaAssets ?? []).filter(
+      (a) => a.ring.length >= 2,
+    ).length;
+    if (
+      !digToolsUnlocked({
+        bydaAssetCount: bydaCount,
+        digOverrideAt: state.ui.digOverrideAt,
+      })
+    ) {
+      setUi({
+        assistReply:
+          "Dig gate — upload BYDA plans and digitise assets (Servc + BYDA kind), or stamp an explicit dig override in Services. Vicmap easements are not dig clearance.",
+        coachOpen: true,
+        rightDataPanel: "services",
+      });
+      return;
+    }
     const scaleM =
       state.ui.boardWidthM ?? boardScaleM(state.ui.sheetScaleDenom);
     const proposals = proposeAutoTrenches({
@@ -2714,12 +2787,248 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi,
     state.doc.boundary,
     state.doc.building,
+    state.doc.bydaAssets,
     state.doc.easements,
     state.doc.irrigationZones,
     state.doc.items,
     state.doc.services,
     state.ui.boardWidthM,
+    state.ui.digOverrideAt,
     state.ui.sheetScaleDenom,
+  ]);
+
+  const stampDigOverride = useCallback(
+    (note?: string) => {
+      const at = new Date().toISOString();
+      setUi({
+        digOverrideAt: at,
+        digOverrideNote: note?.trim() || "Operator dig override — BYDA pending",
+        councilTip:
+          "Dig override stamped — Auto trench unlocked. Still lodge BYDA before excavation.",
+      });
+    },
+    [setUi],
+  );
+
+  const toggleSitePackChase = useCallback(
+    (id: string) => {
+      const next = state.ui.sitePackChase.map((c) =>
+        c.id === id ? { ...c, done: !c.done } : c,
+      );
+      setUi({ sitePackChase: next });
+    },
+    [setUi, state.ui.sitePackChase],
+  );
+
+  const ingestStormwaterGeoJson = useCallback(
+    async (geojson: unknown) => {
+      if (!projectId) return;
+      const { ingestStormwaterGeoJsonAction } = await import(
+        "../../../../app/actions"
+      );
+      const {
+        applyCanvasMetresTransform,
+        fitCanvasMetresRing,
+      } = await import("../geometry/geoToPct");
+      const { getSiteBoundaryAction } = await import("../../../../app/actions");
+      const result = await ingestStormwaterGeoJsonAction(projectId, geojson);
+      if (result.lines_canvas.length === 0) {
+        setUi({
+          councilTip: "No LineString features in GeoJSON — check council export",
+        });
+        return;
+      }
+      const bound = await getSiteBoundaryAction(projectId);
+      const verts = [...(bound.boundary?.vertices ?? [])]
+        .sort((a, b) => a.sequence_index - b.sequence_index)
+        .map((v) => v.canvas_coords);
+      const fit = fitCanvasMetresRing(verts);
+      if (!fit.transform) {
+        setUi({ councilTip: "Need title boundary before stormwater GeoJSON" });
+        return;
+      }
+      const t = fit.transform;
+      mutate((snap) => {
+        const added = result.lines_canvas.map((line) => {
+          const pct = applyCanvasMetresTransform(line.points, t);
+          return {
+            id: crypto.randomUUID(),
+            kind: "stormwater" as const,
+            source: "traced" as const,
+            ring: pct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+          };
+        });
+        return {
+          snap: {
+            ...snap,
+            bydaAssets: [...(snap.bydaAssets ?? []), ...added],
+          },
+        };
+      });
+      setUi({
+        councilTip: `${result.lines_canvas.length} council drain line${result.lines_canvas.length === 1 ? "" : "s"} digitised — confirm before dig`,
+        rightDataPanel: "services",
+      });
+    },
+    [mutate, projectId, setUi],
+  );
+
+  const runPrepareSitePack = useCallback(async (opts?: {
+    councilLabel?: string | null;
+  }) => {
+    if (!projectId) {
+      setUi({
+        assistReply: "Open a live project to prepare the site pack",
+        coachOpen: true,
+      });
+      return;
+    }
+    setUi({ aiBusy: "scanning", cmdOpen: false, cmdQuery: "" });
+    try {
+      const {
+        autoTraceBoundaryAction,
+        hydrateKeylessAction,
+        getSiteBoundaryAction,
+      } = await import("../../../../app/actions");
+      const {
+        applyCanvasMetresTransform,
+        fitCanvasMetresRing,
+      } = await import("../geometry/geoToPct");
+      const { mergeUrbanTreeGhosts } = await import("./urbanTreeIngest");
+      const res = (await autoTraceBoundaryAction(
+        projectId,
+      )) as AutoTraceParcelInput & {
+        urban_trees_canvas?: Array<{
+          x: number;
+          y: number;
+          canopy_radius_m?: number | null;
+          height_m?: number | null;
+          label?: string | null;
+        }>;
+        urban_trees_source?: "vicmap" | null;
+      };
+      const keepTraced =
+        state.ui.buildingSource === "traced" &&
+        state.doc.building.length >= 3;
+      const applied = applyAutoTraceParcelSnap({
+        snap: state.doc,
+        res,
+        keepTracedBuilding: keepTraced,
+      });
+      let titleOk = Boolean(applied);
+      let transform = applied?.fit.transform ?? null;
+      if (applied) {
+        mutate((snap) => {
+          const again = applyAutoTraceParcelSnap({
+            snap,
+            res,
+            keepTracedBuilding: keepTraced,
+          });
+          if (!again) return { snap };
+          return {
+            snap: {
+              ...snap,
+              ...again.snap,
+              ...(again.services ? { services: again.services } : {}),
+            },
+          };
+        });
+        setUi({
+          boundarySource: applied.boundarySource,
+          buildingSource: applied.buildingSource,
+          ...(applied.fit.boardWidthM != null
+            ? { boardWidthM: applied.fit.boardWidthM }
+            : {}),
+        });
+      }
+      if (!transform) {
+        const bound = await getSiteBoundaryAction(projectId);
+        const verts = [...(bound.boundary?.vertices ?? [])]
+          .sort((a, b) => a.sequence_index - b.sequence_index)
+          .map((v) => v.canvas_coords);
+        transform = fitCanvasMetresRing(verts).transform;
+      }
+      let overlayCount = 0;
+      try {
+        const keyless = await hydrateKeylessAction(projectId);
+        overlayCount = keyless.overlays_canvas.length;
+        if (transform && overlayCount > 0) {
+          const t = transform;
+          mutate((snap) => ({
+            snap: {
+              ...snap,
+              keylessOverlays: keyless.overlays_canvas.map((ov) => ({
+                kind: ov.kind,
+                label: ov.label ?? undefined,
+                fetched_at: ov.fetched_at,
+                rings: ov.rings.map((ring) =>
+                  applyCanvasMetresTransform(ring, t).map((p) => ({
+                    x_pct: p.x,
+                    y_pct: p.y,
+                  })),
+                ),
+              })),
+            },
+          }));
+        }
+      } catch {
+        /* overlays optional */
+      }
+      let treeGhostCount = 0;
+      const trees = res.urban_trees_canvas ?? [];
+      if (transform && res.urban_trees_source === "vicmap" && trees.length > 0) {
+        const boardM = applied?.fit.boardWidthM ?? state.ui.boardWidthM ?? 110;
+        const t = transform;
+        mutate((snap, idn) => {
+          const merged = mergeUrbanTreeGhosts({
+            snap,
+            trees,
+            transform: t,
+            boardWidthM: boardM,
+            idn,
+          });
+          treeGhostCount = merged.count;
+          return { snap: merged.snap, idn: merged.idn };
+        });
+      }
+      const chase = defaultSitePackChase({
+        councilLabel: opts?.councilLabel ?? null,
+      });
+      const tip = prepareSitePackTip({
+        titleOk,
+        overlayCount,
+        treeGhostCount,
+        chasePending: chase.filter((c) => !c.done).length,
+      });
+      setUi({
+        aiBusy: "idle",
+        sitePackChase: chase,
+        ghostIdx: 0,
+        ghostReviewOpen: treeGhostCount > 0,
+        assistReply: tip,
+        coachOpen: true,
+        councilTip: tip,
+        mode: "survey",
+        shadeOn: true,
+        rightDataPanel: "services",
+      });
+    } catch (err) {
+      setUi({
+        aiBusy: "idle",
+        assistReply:
+          err instanceof Error
+            ? err.message
+            : "Prepare site pack failed — check pin / network",
+        coachOpen: true,
+      });
+    }
+  }, [
+    mutate,
+    projectId,
+    setUi,
+    state.doc,
+    state.ui.boardWidthM,
+    state.ui.buildingSource,
   ]);
 
   const acceptAllTrenchGhosts = useCallback(() => {
@@ -2937,6 +3246,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
       keylessOverlays: state.doc.keylessOverlays ?? [],
       boardWidthM: state.ui.boardWidthM,
       buildingSource: state.ui.buildingSource,
+      sitePack: {
+        chase: state.ui.sitePackChase,
+        ...(state.ui.digOverrideAt
+          ? {
+              dig_override_at: state.ui.digOverrideAt,
+              dig_override_note: state.ui.digOverrideNote ?? undefined,
+            }
+          : {}),
+      },
     });
     setUi({ saveStatus: "saving" });
     try {
@@ -3372,6 +3690,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       busy: state.ui.aiBusy,
       scan: scanGhosts,
       develop: runDevelopLoop,
+      prepareSitePack: runPrepareSitePack,
       proposeServices: proposeLandscapeServices,
       assist: askAi,
       accept: acceptGhost,
@@ -3404,6 +3723,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       rejectGhostWithReason,
       proposeLandscapeServices,
       runDevelopLoop,
+      runPrepareSitePack,
       scanGhosts,
       setUi,
       state.ui.aiBusy,
@@ -3470,6 +3790,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setTitleBoundaryLocked,
     scanGhosts,
     runDevelopLoop,
+    runPrepareSitePack,
+    stampDigOverride,
+    toggleSitePackChase,
+    ingestStormwaterGeoJson,
     proposeLandscapeServices,
     cycleGhost,
     ingestCanopyGhosts,

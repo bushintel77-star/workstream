@@ -22,8 +22,12 @@ describe("renderTokens", () => {
   });
 
   it("returns multiply-friendly rgba fills", () => {
-    expect(sunShadowFill(false)).toBe("rgba(28,25,23,0.12)");
-    expect(sunShadowFill(true)).toBe("rgba(28,25,23,0.3)");
+    expect(sunShadowFill(false)).toBe(
+      "color-mix(in srgb, var(--text-primary) 12%, transparent)",
+    );
+    expect(sunShadowFill(true)).toBe(
+      "color-mix(in srgb, var(--text-primary) 30%, transparent)",
+    );
   });
 
   it("viewFromCast falls back to static south when cast is null", () => {

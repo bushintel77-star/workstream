@@ -614,6 +614,15 @@ export type AutoTraceBoundaryResult = {
     status?: string | null;
   }>;
   easement_source: "vicmap" | null;
+  /** Vicmap urban tree points — exist ghost seed (no DBH). */
+  urban_trees_canvas: Array<{
+    x: number;
+    y: number;
+    canopy_radius_m?: number | null;
+    height_m?: number | null;
+    label?: string | null;
+  }>;
+  urban_trees_source: "vicmap" | null;
 };
 
 export async function autoTraceBoundaryApi(
@@ -631,6 +640,8 @@ export async function autoTraceBoundaryApi(
     building_source: raw.building_source ?? null,
     easement_lines_canvas: raw.easement_lines_canvas ?? [],
     easement_source: raw.easement_source ?? null,
+    urban_trees_canvas: raw.urban_trees_canvas ?? [],
+    urban_trees_source: raw.urban_trees_source ?? null,
   };
 }
 
@@ -663,12 +674,27 @@ export async function hydrateKeylessApi(
     "planning",
     "bushfire",
     "contour",
+    "flood",
+    "heritage",
+    "water_corp",
+    "road_casement",
   ],
 ): Promise<KeylessHydrateResult> {
   return apiPost<KeylessHydrateResult>(
     `/projects/${projectId}/keyless-hydrate`,
     { kinds },
   );
+}
+
+/** Project WGS84 stormwater GeoJSON → canvas-metre polylines (council drain). */
+export async function ingestStormwaterGeoJsonApi(
+  projectId: string,
+  geojson: unknown,
+): Promise<{
+  lines_canvas: Array<{ points: Array<{ x: number; y: number }> }>;
+  source: "traced";
+}> {
+  return apiPost(`/projects/${projectId}/stormwater-geojson`, { geojson });
 }
 
 export async function lockBoundaryApi(
@@ -1574,6 +1600,8 @@ export type ProjectFileKind =
   | "site_photo"
   | "permit"
   | "reference"
+  | "byda"
+  | "council_drain"
   | "other";
 
 export type ProjectFile = {
@@ -1601,6 +1629,35 @@ export async function listProjectFiles(
     `/projects/${projectId}/files`,
   );
   return body.files;
+}
+
+/** Multipart upload — JPEG/PNG/WEBP/PDF. Kind defaults to other server-side. */
+export async function uploadProjectFileApi(
+  projectId: string,
+  file: Blob,
+  opts: { kind?: ProjectFileKind; title?: string; filename?: string } = {},
+): Promise<ProjectFile> {
+  const fd = new FormData();
+  fd.append(
+    "file",
+    file,
+    opts.filename ?? (file instanceof File ? file.name : "upload.bin"),
+  );
+  if (opts.kind) fd.append("kind", opts.kind);
+  if (opts.title) fd.append("title", opts.title);
+  const headers = await apiHeaders(false);
+  const res = await fetch(`${API_URL}/projects/${projectId}/files`, {
+    method: "POST",
+    headers,
+    body: fd,
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API ${res.status} on POST /projects/.../files: ${text}`);
+  }
+  const body = (await res.json()) as { file: ProjectFile };
+  return body.file;
 }
 
 /* -- Activity audit trail ---------------------------------------------- */

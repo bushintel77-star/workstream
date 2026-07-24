@@ -11,6 +11,11 @@ import {
   PleachedHornbeamSymbol,
   type SymbolTone,
 } from "./speciesSymbols";
+import {
+  CSS_TOKEN,
+  mixOnCanvas,
+  semanticForTheme,
+} from "../../../../../../styles/colorTokens";
 
 const PLANT_TYPES = new Set<StudioItemType>([
   "canopy",
@@ -43,15 +48,18 @@ export const SpeciesSymbol = memo(function SpeciesSymbol({
   ink: boolean;
   label?: string;
 }) {
+  const sem = semanticForTheme(night);
   const tone: SymbolTone = {
     night,
     ghost,
     stroke: night
-      ? "rgba(236,239,244,0.82)"
+      ? sem.plantingNewText
       : ink
-        ? "#5A4650"
-        : "#5F7A50",
-    fill: night ? "rgba(236,239,244,0.06)" : "rgba(122,150,112,0.14)",
+        ? sem.textPrimary
+        : sem.plantingNewStroke,
+    fill: night
+      ? mixOnCanvas(CSS_TOKEN.textPrimary, 6)
+      : mixOnCanvas(CSS_TOKEN.plantingNewStroke, 14),
   };
 
   const pleached =
@@ -77,7 +85,9 @@ export const SpeciesSymbol = memo(function SpeciesSymbol({
           itemId={itemId}
           tone={{
             ...tone,
-            stroke: night ? "rgba(236,239,244,0.55)" : "#5A4650",
+            stroke: night
+              ? sem.plantingRetainText
+              : sem.plantingRetainStroke,
             fill: "transparent",
           }}
         />

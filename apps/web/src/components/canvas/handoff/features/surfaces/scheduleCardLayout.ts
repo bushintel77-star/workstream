@@ -1,8 +1,8 @@
 /**
- * Screen-px declutter for on-plan schedule cards (Title / Dwelling / Outdoor).
- * Cards never share a projected point — stack a constant screen offset when
+ * Screen-px declutter for on-plan schedule chips (Lot / Dwell / Out).
+ * Chips never share a projected point — stack a constant screen offset when
  * bboxes would overlap, independent of zoom / rotation. Also stay clear of
- * the right data lane (`safeRightPx`) so panels and cards cannot pile up.
+ * the right data lane (`safeRightPx`) so panels and chips cannot pile up.
  */
 
 export type ScheduleCardSeed = {
@@ -20,15 +20,13 @@ export type ScheduleCardPlacement = {
 };
 
 /**
- * Approximate card footprint for collision (screen px). The Title card grows
- * to three lines when Vicmap parcel metadata is present (key / area / PFI),
- * so the collision box and the stack step must cover that tallest variant —
- * a 48/56 assumption let stacked cards overlap (lane-law e2e).
+ * Approximate chip footprint for collision (screen px). Schedule callouts are
+ * single-line meta chips (kicker + value) — not multi-line frost cards.
  */
-export const SCHEDULE_CARD_W = 150;
-export const SCHEDULE_CARD_H = 68;
-/** Vertical stack step when two cards would share a point / collide. */
-export const SCHEDULE_CARD_STACK_PX = SCHEDULE_CARD_H + 8;
+export const SCHEDULE_CARD_W = 108;
+export const SCHEDULE_CARD_H = 28;
+/** Vertical stack step when two chips would share a point / collide. */
+export const SCHEDULE_CARD_STACK_PX = SCHEDULE_CARD_H + 6;
 
 function overlaps(
   ax: number,

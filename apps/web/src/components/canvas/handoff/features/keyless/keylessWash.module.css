@@ -60,6 +60,24 @@
   mix-blend-mode: multiply;
 }
 
+.waterCorp {
+  stroke: rgba(14, 116, 144, 0.55);
+  stroke-width: 0.36;
+  stroke-dasharray: 1.8 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  mix-blend-mode: multiply;
+}
+
+.roadCasement {
+  stroke: rgba(87, 83, 78, 0.55);
+  stroke-width: 0.38;
+  stroke-dasharray: 2.2 0.9;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  mix-blend-mode: multiply;
+}
+
 .contour {
   fill: none;
   stroke: rgba(138, 107, 84, 0.6);

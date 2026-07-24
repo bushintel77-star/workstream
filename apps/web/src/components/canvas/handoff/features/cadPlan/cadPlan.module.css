@@ -16,6 +16,7 @@
  */
 .worldTilted {
   transform-style: preserve-3d;
+  background: transparent;
 }
 
 .planSvg {
@@ -78,7 +79,7 @@
 }
 
 .edgeHover {
-  stroke: rgba(194, 69, 95, 0.54);
+  stroke: var(--existing-hover);
   stroke-width: 1.5;
   pointer-events: none;
 }
@@ -90,12 +91,12 @@
 @keyframes cornerRefuse {
   0%,
   100% {
-    box-shadow: 0 0 0 2px rgba(247, 244, 239, 0.9);
+    box-shadow: 0 0 0 2px var(--focus-ring-offset);
   }
   50% {
     box-shadow:
-      0 0 0 4px rgba(194, 69, 95, 0.32),
-      0 0 0 2px rgba(247, 244, 239, 0.9);
+      0 0 0 4px color-mix(in srgb, var(--existing-stroke) 32%, transparent),
+      0 0 0 2px var(--focus-ring-offset);
   }
 }
 
@@ -194,26 +195,26 @@
 .boardDark .dimLabel,
 .boardDark .cadDimLabel,
 .boardDark .cadDimBearing {
-  color: rgba(236, 239, 244, 0.92);
-  text-shadow: 1px 0 0 rgba(22,24,28,0.95), -1px 0 0 rgba(22,24,28,0.95), 0 1px 0 rgba(22,24,28,0.95), 0 -1px 0 rgba(22,24,28,0.95);
+  color: var(--text-primary);
+  text-shadow: 1px 0 0 var(--canvas), -1px 0 0 var(--canvas), 0 1px 0 var(--canvas), 0 -1px 0 var(--canvas);
 }
 
 .boardDark .cadDimKey {
-  color: #8fb0ff; /* cobalt, lifted for dark ground */
+  /* AA text stop — never *-stroke on labels */
+  color: var(--proposed-text);
   text-shadow: none;
 }
 
 .boardDark .cadAreaValue,
-.boardDark .cadAreaKey,
-.boardDark .cadAreaMeta {
-  /* Schedule cards inherit --hc-ink* from rootDark — no hardcoded chalk/glass. */
-  text-shadow: 1px 0 0 rgba(22,24,28,0.95), -1px 0 0 rgba(22,24,28,0.95), 0 1px 0 rgba(22,24,28,0.95), 0 -1px 0 rgba(22,24,28,0.95);
+.boardDark .cadAreaKey {
+  /* Chips sit on frost glass — no chalk halo needed. */
+  text-shadow: none;
 }
 
 /* CAD property-boundary language (REA concept, not REA chrome). */
 .cadContextLot {
-  fill: rgba(28, 25, 23, 0.015);
-  stroke: rgba(28, 25, 23, 0.14);
+  fill: color-mix(in srgb, var(--text-primary) 1.5%, var(--canvas));
+  stroke: color-mix(in srgb, var(--text-primary) 14%, var(--canvas));
   stroke-width: 0.7;
 }
 
@@ -231,7 +232,7 @@
   font-weight: 550;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: rgba(28, 25, 23, 0.9);
+  color: var(--text-primary);
   background: transparent;
   border: none;
   border-radius: 0;
@@ -239,32 +240,32 @@
   white-space: nowrap;
   margin-top: 0;
   box-shadow: none;
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
+  text-shadow: 1px 0 0 var(--label-halo, var(--canvas)), -1px 0 0 var(--label-halo, var(--canvas)), 0 1px 0 var(--label-halo, var(--canvas)), 0 -1px 0 var(--label-halo, var(--canvas));
 }
 
 .cadDimKey {
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #5b6b7a;
+  color: var(--text-secondary);
 }
 
 .cadDimBearing {
   font-size: 9px;
-  color: #5b6b7a;
+  color: var(--text-secondary);
 }
 
 .cadCorner {
   width: 10px;
   height: 10px;
-  border: 1.5px solid #1c1917;
-  background: #f2f0eb;
+  border: 1.5px solid var(--text-primary);
+  background: var(--panel);
   border-radius: 0;
   transform: rotate(45deg);
 }
 
 .cadCornerLocked {
-  background: #1c1917;
+  background: var(--text-primary);
   cursor: not-allowed;
   opacity: 0.85;
 }
@@ -273,74 +274,62 @@
   filter: grayscale(0.35);
 }
 
+/* On-plan schedule callouts — single-line meta chips (not frost cards). */
 .cadAreaLabel {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 7;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  padding: 3px 8px;
-  border: none;
-  /* Frost pill — --hc-glass (dolphin in night); never hardcoded dark-on-dark. */
-  border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+  max-width: 140px;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  border-radius: var(--hc-r-pill, 999px);
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.82));
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   pointer-events: none;
+  white-space: nowrap;
+  box-shadow: none;
 }
 
 .cadAreaValue {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--ws-type-hud, 11px);
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--hc-ink, rgba(28, 25, 23, 0.9));
   background: transparent;
   padding: 0;
-  line-height: 1.1;
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
+  line-height: 1.15;
+  text-shadow: none;
 }
 
 .cadAreaKey {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 7px;
+  font-size: var(--ws-type-kicker, 8px);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--hc-ink-muted, #7a5560);
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
+  text-shadow: none;
 }
 
 .cadAreaContext {
-  opacity: 0.72;
+  opacity: 0.85;
 }
 
 .cadAreaContext .cadAreaValue {
   font-size: 10px;
 }
 
-.cadAreaMeta {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--hc-ink-muted, #5b6b7a);
-  background: transparent;
-  padding: 0;
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
-}
-
+/* Parcel / lock detail lives in Site Meta — never inflate the chip. */
+.cadAreaMeta,
 .cadLockState {
-  margin-top: 2px;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 6.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #6b6560;
-  border-top: 1px solid rgba(28, 25, 23, 0.14);
-  padding-top: 2px;
+  display: none;
 }
 
 .houseEnvelopeLabel {
@@ -348,16 +337,18 @@
   transform: translate(-50%, -50%);
   z-index: 6;
   margin: 0;
-  padding: 0;
+  padding: 2px 6px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
-  font-weight: 550;
-  letter-spacing: 0.1em;
+  font-size: var(--ws-type-kicker, 8px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(139, 58, 47, 0.82);
+  color: var(--existing-text);
   pointer-events: none;
   white-space: nowrap;
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
+  border-radius: var(--hc-r-pill, 999px);
+  background: color-mix(in srgb, var(--canvas) 82%, transparent);
+  text-shadow: none;
 }
 
 .cadStreetCue {
@@ -404,10 +395,14 @@
   opacity: 0.22;
 }
 
-/* Soft protection wash — success green #1F8A5A from handoff palette */
+/* Soft protection wash — planting-retain + fill-tpz (§4) */
 .tpzZone {
-  fill: rgba(31, 138, 90, 0.16);
-  stroke: rgba(31, 138, 90, 0.48);
+  fill: color-mix(
+    in srgb,
+    var(--planting-retain-stroke) var(--fill-tpz),
+    var(--canvas)
+  );
+  stroke: var(--planting-retain-stroke);
   stroke-width: 1.15;
   stroke-dasharray: 5 3.5;
   pointer-events: painted;
@@ -415,8 +410,12 @@
 }
 
 .tpzZone:hover {
-  fill: rgba(31, 138, 90, 0.28);
-  stroke: rgba(31, 138, 90, 0.72);
+  fill: color-mix(
+    in srgb,
+    var(--planting-retain-stroke) 28%,
+    var(--canvas)
+  );
+  stroke: var(--planting-retain-hover);
 }
 
 .tpzHit {
@@ -436,9 +435,10 @@
   z-index: 16;
   padding: 5px 8px;
   border-radius: 10px;
-  border: 1px solid rgba(31, 138, 90, 0.28);
-  background: rgba(255, 251, 252, 0.96);
-  color: #241318;
+  border: 1px solid
+    color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
+  background: var(--panel);
+  color: var(--text-primary);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
   font-weight: 600;
@@ -446,7 +446,7 @@
   white-space: nowrap;
   pointer-events: none;
   opacity: 1;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--text-primary) 12%, transparent);
 }
 
 .tpzTag {
@@ -455,14 +455,15 @@
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #1f8a5a;
-  background: rgba(255, 251, 252, 0.96);
-  border: 1px solid rgba(31, 138, 90, 0.28);
+  color: var(--planting-retain-text);
+  background: var(--panel);
+  border: 1px solid
+    color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
   padding: 2px 7px;
   border-radius: 6px;
   pointer-events: none;
   white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.1);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--text-primary) 10%, transparent);
   z-index: 12;
 }
 
@@ -504,34 +505,40 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: 0.58;
-  background: rgba(255, 211, 222, 0.22);
-  outline: 1px solid rgba(194, 69, 95, 0.36);
+  background: color-mix(
+    in srgb,
+    var(--proposed-stroke) var(--fill-highlight),
+    var(--canvas)
+  );
+  outline: 1px solid
+    color-mix(in srgb, var(--proposed-stroke) 36%, transparent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 6px rgba(255, 211, 222, 0.24);
+  box-shadow: 0 0 0 6px
+    color-mix(in srgb, var(--proposed-stroke) 16%, transparent);
 }
 
 .itemSelected {
-  outline: 1.5px solid #c2455f;
+  outline: 1.5px solid var(--focus-ring);
   outline-offset: 3px;
   box-shadow:
-    0 0 0 6px rgba(255, 211, 222, 0.55),
-    0 0 0 10px rgba(255, 211, 222, 0.22);
+    0 0 0 6px color-mix(in srgb, var(--proposed-stroke) 22%, transparent),
+    0 0 0 10px color-mix(in srgb, var(--proposed-stroke) 12%, transparent);
   animation: selPulse 1.6s ease-in-out infinite;
 }
 
 @keyframes selPulse {
   0%,
   100% {
-    outline-color: rgba(194, 69, 95, 0.9);
+    outline-color: var(--focus-ring);
     box-shadow:
-      0 0 0 6px rgba(255, 211, 222, 0.55),
-      0 0 0 10px rgba(255, 211, 222, 0.22);
+      0 0 0 6px color-mix(in srgb, var(--proposed-stroke) 22%, transparent),
+      0 0 0 10px color-mix(in srgb, var(--proposed-stroke) 12%, transparent);
   }
   50% {
-    outline-color: rgba(194, 69, 95, 0.55);
+    outline-color: var(--proposed-hover);
     box-shadow:
-      0 0 0 7px rgba(255, 211, 222, 0.4),
-      0 0 0 12px rgba(255, 211, 222, 0.14);
+      0 0 0 7px color-mix(in srgb, var(--proposed-stroke) 16%, transparent),
+      0 0 0 12px color-mix(in srgb, var(--proposed-stroke) 8%, transparent);
   }
 }
 
@@ -589,9 +596,8 @@
   position: absolute;
   pointer-events: none;
   z-index: 16;
-  /* Sage drafting ink + paper halo — readable on cream without neon. */
-  background: rgba(85, 112, 73, 0.72);
-  box-shadow: 0 0 0 0.5px rgba(255, 251, 252, 0.7);
+  background: color-mix(in srgb, var(--planting-new-stroke) 72%, transparent);
+  box-shadow: 0 0 0 0.5px var(--canvas);
 }
 
 .snapGlyph {
@@ -604,18 +610,20 @@
   height: 14px;
   padding: 0 2px;
   border-radius: 4px;
-  background: rgba(255, 251, 252, 0.92);
-  color: #557049;
+  background: var(--panel);
+  color: var(--planting-new-text);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   line-height: 1;
   pointer-events: none;
-  box-shadow: 0 0 0 1px rgba(112, 148, 132, 0.4);
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--planting-new-stroke) 40%, transparent);
 }
 
 .snapGlyph[data-snap="vertex"] {
-  color: #c2455f;
-  box-shadow: 0 0 0 1px rgba(194, 69, 95, 0.4);
+  color: var(--existing-text);
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--existing-stroke) 40%, transparent);
 }
 
 .snapPulse {
@@ -628,11 +636,12 @@
   pointer-events: none;
   background: radial-gradient(
     circle,
-    rgba(112, 148, 132, 0.28) 0%,
-    rgba(112, 148, 132, 0.2) 34%,
+    color-mix(in srgb, var(--planting-new-stroke) 28%, transparent) 0%,
+    color-mix(in srgb, var(--planting-new-stroke) 20%, transparent) 34%,
     transparent 72%
   );
-  box-shadow: 0 0 0 7px rgba(112, 148, 132, 0.16);
+  box-shadow: 0 0 0 7px
+    color-mix(in srgb, var(--planting-new-stroke) 16%, transparent);
   animation: snapPulse 520ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
@@ -789,7 +798,7 @@
 
 /*
  * Target settle-flash — canvas content only animates on a real state change
- * (here, a Paint apply landed). Soft blush ring blooms then settles.
+ * (here, a Paint apply landed). Proposed highlight blooms then settles.
  */
 .paintFlash {
   animation: paintSettle 460ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
@@ -797,29 +806,35 @@
 
 @keyframes paintSettle {
   0% {
-    box-shadow: 0 0 0 0 rgba(194, 69, 95, 0);
+    box-shadow: 0 0 0 0 transparent;
     filter: brightness(1);
   }
   30% {
-    box-shadow: 0 0 0 4px rgba(194, 69, 95, 0.32);
+    box-shadow: 0 0 0 4px
+      color-mix(in srgb, var(--proposed-stroke) 32%, transparent);
     filter: brightness(1.08);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(194, 69, 95, 0);
+    box-shadow: 0 0 0 0 transparent;
     filter: brightness(1);
   }
 }
 
-/* Marquee — soft glow outline, not marching ants. */
+/* Marquee — proposed selection wash, not blush chrome. */
 .marquee {
   position: absolute;
   z-index: 14;
-  border: 1px solid rgba(194, 69, 95, 0.5);
+  border: 1px solid
+    color-mix(in srgb, var(--proposed-stroke) 50%, transparent);
   border-radius: 4px;
-  background: rgba(194, 69, 95, 0.06);
+  background: color-mix(
+    in srgb,
+    var(--proposed-stroke) var(--fill-highlight),
+    var(--canvas)
+  );
   box-shadow:
-    0 0 0 1px rgba(255, 211, 222, 0.5),
-    0 0 12px rgba(194, 69, 95, 0.25);
+    0 0 0 1px color-mix(in srgb, var(--proposed-stroke) 20%, transparent),
+    0 0 12px color-mix(in srgb, var(--proposed-stroke) 18%, transparent);
   pointer-events: none;
 }
 
@@ -836,9 +851,8 @@
   position: absolute;
   pointer-events: none;
   z-index: 15;
-  /* Signal construction pink — stronger than the live crosshair so align snaps read first. */
-  background: rgba(194, 69, 95, 0.7);
-  box-shadow: 0 0 0 0.5px rgba(255, 251, 252, 0.65);
+  background: color-mix(in srgb, var(--proposed-stroke) 70%, transparent);
+  box-shadow: 0 0 0 0.5px var(--canvas);
 }
 
 .cursorBadge {
@@ -996,7 +1010,7 @@
 }
 
 .protractorTickActive {
-  stroke: #c2455f;
+  stroke: var(--proposed-stroke);
   stroke-width: 2;
 }
 
@@ -1007,22 +1021,24 @@
   transform-origin: center center;
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
-  backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  gap: 5px;
+  min-height: 22px;
+  padding: 2px 7px;
+  border-radius: var(--hc-r-pill, 999px);
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.82));
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  box-shadow: none;
   pointer-events: none;
   white-space: nowrap;
 }
 
 .selectedReadoutTag {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 7.5px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+  font-size: var(--ws-type-kicker, 8px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--hc-ink-muted, #7a5560);
 }
@@ -1030,7 +1046,7 @@
 .selectedReadoutValue {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--hc-ink, #241318);
 }

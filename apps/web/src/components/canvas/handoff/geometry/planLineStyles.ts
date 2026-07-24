@@ -1,11 +1,16 @@
 import { DWELLING_HATCH_IDS } from "../features/render/renderTokens";
+import {
+  PALETTE,
+  SEMANTIC_DARK,
+  SEMANTIC_LIGHT,
+} from "../../../../styles/colorTokens";
 
 /**
- * CAD plan line symbology — each kind has a distinct colour + weight + dash
- * so boundary ≠ building ≠ hardscape ≠ planting at a glance on blush parchment.
+ * CAD plan line symbology — colour from color-tokens v2 (existing crimson,
+ * proposed cobalt, retain forest, easement slate). Weights unchanged.
  *
- * Line-weight ladder (light): boundary 1.4 > building 1.05 > hardscape 0.6 >
- * planting/existing 0.4. Night board uses chalk equivalents at the same weights.
+ * Line-weight ladder: boundary 1.4 > building 1.05 > hardscape 0.6 >
+ * planting/existing 0.4. Night board uses dark semantic stops.
  */
 
 export type PlanLineKind =
@@ -28,106 +33,111 @@ export type PlanLineStyle = {
   opacity?: number;
 };
 
-/** Light parchment (default atelier) — near-black ink ladder. */
+const L = SEMANTIC_LIGHT;
+const D = SEMANTIC_DARK;
+
+/** Light parchment (default atelier). */
 export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
   boundary: {
-    stroke: "#1A1A1A",
+    stroke: L.textPrimary,
     strokeWidth: 1.4,
   },
   building: {
-    // Existing dwelling: 45° convention hatch over a faint wash (plan standard
-    // for "existing structure"), envelope outline one step under boundary.
-    stroke: "#8B3A2F",
+    // Existing dwelling — crimson stroke + hatch wash.
+    stroke: L.existingStroke,
     strokeWidth: 1.05,
     fill: `url(#${DWELLING_HATCH_IDS.light})`,
   },
   hardscape: {
-    stroke: "#5B6570",
+    stroke: L.proposedStroke,
     strokeWidth: 0.6,
   },
   planting: {
-    stroke: "#5F7A50",
+    stroke: L.plantingNewStroke,
     strokeWidth: 0.4,
   },
   existing: {
-    stroke: "#5A4650",
+    stroke: L.plantingRetainStroke,
     strokeWidth: 0.4,
     dash: "2.5 2",
   },
   context: {
-    stroke: "rgba(28, 25, 23, 0.35)",
+    stroke: L.textMuted,
     strokeWidth: 0.5,
     opacity: 0.55,
-    fill: "rgba(28, 25, 23, 0.015)",
+    fill: "color-mix(in srgb, var(--text-primary) 1.5%, var(--canvas))",
   },
   easement: {
-    stroke: "#B45309",
+    stroke: L.easementStroke,
     strokeWidth: 0.85,
     dash: "1.4 1.1",
   },
   service: {
-    stroke: "#1D4E89",
+    /* Untyped service corridor — water APWA (typed BYDA uses bydaPlanStyles). */
+    stroke: PALETTE.apwaWater,
     strokeWidth: 0.9,
     dash: "2.4 1.5",
   },
   setback: {
-    stroke: "#6B5B8C",
+    stroke: L.textSecondary,
     strokeWidth: 0.75,
     dash: "3 3",
   },
   dim: {
-    stroke: "#5B6B7A",
+    stroke: PALETTE.grayL700,
     strokeWidth: 0.7,
   },
 };
 
-/** Dark / night plate — chalk linework, same weight ladder. */
+/** Dark / night plate — stroke stops (not text stops) for linework. */
 export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
   boundary: {
-    stroke: "rgba(236, 239, 244, 0.92)",
+    stroke: D.textPrimary,
     strokeWidth: 1.4,
   },
   building: {
-    stroke: "#8fb0ff",
+    stroke: D.existingStroke,
     strokeWidth: 1.05,
     fill: `url(#${DWELLING_HATCH_IDS.night})`,
   },
   hardscape: {
-    stroke: "rgba(236, 239, 244, 0.72)",
+    stroke: D.proposedStroke,
     strokeWidth: 0.6,
   },
   planting: {
-    stroke: "rgba(180, 210, 170, 0.75)",
+    stroke: D.plantingNewStroke,
     strokeWidth: 0.4,
   },
   existing: {
-    stroke: "rgba(236, 239, 244, 0.55)",
+    stroke: D.plantingRetainStroke,
     strokeWidth: 0.4,
     dash: "2.5 2",
   },
   context: {
-    stroke: "rgba(236, 239, 244, 0.28)",
+    /* Spec collapses muted/secondary to gray-d-500 — use gray-d-400 so
+     * street wash stays distinct from setback dashes on the night plate. */
+    stroke: PALETTE.grayD400,
     strokeWidth: 0.5,
     opacity: 0.5,
-    fill: "rgba(236, 239, 244, 0.02)",
+    fill: "color-mix(in srgb, var(--text-primary) 2%, var(--canvas))",
   },
   easement: {
-    stroke: "#F0B429",
+    stroke: D.easementStroke,
     strokeWidth: 0.85,
     dash: "1.4 1.1",
   },
   service: {
-    stroke: "#7EB6E8",
+    stroke: PALETTE.apwaWater,
     strokeWidth: 0.9,
     dash: "2.4 1.5",
   },
   setback: {
-    stroke: "#C4B5E0",
+    stroke: D.textSecondary,
     strokeWidth: 0.75,
     dash: "3 3",
   },
   dim: {
-    stroke: "rgba(200, 214, 228, 0.7)",
+    stroke: PALETTE.grayD800,
     strokeWidth: 0.7,
   },
 };
@@ -135,7 +145,6 @@ export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
 /**
  * Locked Vicmap / Stage 1 title — solid property line, solid footprint.
  * Keeps colour hierarchy (never flatten building to the same ink as boundary).
- * Ladder weights apply in every mode including Fit sheet.
  */
 export function planLinesFor(opts: {
   darkOn: boolean;
@@ -148,7 +157,6 @@ export function planLinesFor(opts: {
       ...base,
       boundary: {
         ...base.boundary,
-        // Fit sheet keeps a light dash language; locked title is solid.
         dash: opts.fitSheet && !opts.titleSolid ? "4 4" : undefined,
         strokeWidth: 1.4,
       },
@@ -158,7 +166,6 @@ export function planLinesFor(opts: {
       },
     };
   }
-  // Unlocked survey still reads boundary as a working dashed lot line.
   return {
     ...base,
     boundary: {

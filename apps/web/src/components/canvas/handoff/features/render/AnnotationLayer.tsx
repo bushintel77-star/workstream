@@ -69,7 +69,9 @@ export function AnnotationLayer({
             a.y,
             rand,
           );
-          const stroke = night ? "#8fb0ff" : "#5A4650";
+          const stroke = night
+            ? "var(--proposed-text)"
+            : "var(--text-secondary)";
           return (
             <g key={`lead-${ann.id}`} data-testid="annotation-leader">
               <path

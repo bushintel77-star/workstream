@@ -387,6 +387,26 @@ export const DesignSiteFrameSchema = z.object({
    * Never label seed / bbox-warped demo geometry as `"vicmap"`.
    */
   building_source: DesignBuildingSourceSchema.optional(),
+  /**
+   * Job intake chase list + dig override (Prepare site pack).
+   * Dig tools require BYDA assets or an explicit override stamp.
+   */
+  site_pack: z
+    .object({
+      chase: z
+        .array(
+          z.object({
+            id: z.string().min(1),
+            label: z.string().min(1),
+            done: z.boolean().default(false),
+            href: z.string().optional(),
+          }),
+        )
+        .default([]),
+      dig_override_at: z.string().datetime().optional(),
+      dig_override_note: z.string().max(280).optional(),
+    })
+    .optional(),
 });
 export type DesignSiteFrame = z.infer<typeof DesignSiteFrameSchema>;
 /** Pre-parse / hydrate input — defaults fill missing drainage_runs. */

@@ -17,6 +17,9 @@ export function clampPan(v: number): number {
  * A pointerdown starts a pan drag on middle-mouse (button 1) at any time,
  * or on the primary button (0) while Space is held — never on marquee-select
  * drags (primary button, no Space).
+ *
+ * Tilt view is edit-locked, so a plain left-drag pans the drawing (same as
+ * pan-tool armed) — operators must be able to move the card freely.
  */
 export function isPanGesture(opts: {
   button: number;
@@ -26,9 +29,16 @@ export function isPanGesture(opts: {
    * left-drag grabs the canvas, honouring the grab cursor.
    */
   panToolArmed?: boolean;
+  /** View-only tilt lens — left-drag pans (edit tools are frozen). */
+  tiltViewActive?: boolean;
 }): boolean {
   if (opts.button === 1) return true;
-  return opts.button === 0 && (opts.spaceHeld || opts.panToolArmed === true);
+  return (
+    opts.button === 0 &&
+    (opts.spaceHeld ||
+      opts.panToolArmed === true ||
+      opts.tiltViewActive === true)
+  );
 }
 
 /** Absolute pan offset from a drag-start base plus the pointer's screen delta. */

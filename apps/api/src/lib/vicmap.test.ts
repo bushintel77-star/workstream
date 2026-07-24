@@ -3,6 +3,7 @@ import {
   discoverKeylessLayerNames,
   EASEMENT_LINE_CAP,
   explodeExteriorRings,
+  extractPoints,
   extractPolylines,
   extractVicmapParcelAttrs,
   parseFeatureTypeNames,
@@ -17,6 +18,45 @@ import {
   scorePropertyLayerName,
   scoreUrbanTreeLayerName,
 } from "./vicmap";
+
+describe("extractPoints", () => {
+  it("reads a Point", () => {
+    expect(
+      extractPoints({
+        type: "Point",
+        coordinates: [145.01, -37.85],
+      }),
+    ).toEqual([[145.01, -37.85]]);
+  });
+
+  it("flattens MultiPoint and drops invalid coords", () => {
+    expect(
+      extractPoints({
+        type: "MultiPoint",
+        coordinates: [
+          [145.0, -37.85],
+          [Number.NaN, -37.9],
+          [145.02, -37.86],
+        ],
+      }),
+    ).toEqual([
+      [145.0, -37.85],
+      [145.02, -37.86],
+    ]);
+  });
+
+  it("returns empty for line geometry", () => {
+    expect(
+      extractPoints({
+        type: "LineString",
+        coordinates: [
+          [145.0, -37.85],
+          [145.001, -37.851],
+        ],
+      }),
+    ).toEqual([]);
+  });
+});
 
 describe("extractPolylines", () => {
   it("wraps a LineString into a single polyline", () => {

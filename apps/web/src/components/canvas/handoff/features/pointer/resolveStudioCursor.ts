@@ -14,6 +14,8 @@ export type StudioCursorContext = {
   locked: boolean;
   /** Fit sheet / paper — default arrow, not craft mark. */
   frameOn?: boolean;
+  /** Tilt lens — grab hand; left-drag pans the drawing. */
+  tiltViewActive?: boolean;
   /** Board reports drag / insert affordance while editing. */
   boardCursor?: "default" | "move" | "add" | "paint" | null;
   /** Sketch pad — pen tip grade / eraser (single cursor authority). */
@@ -59,6 +61,7 @@ export function paintAirLockCursor(): string {
  */
 export function resolveStudioCursor(ctx: StudioCursorContext): string {
   if (ctx.frameOn) return "default";
+  if (ctx.tiltViewActive) return "grab";
 
   const tool = ctx.tool;
 

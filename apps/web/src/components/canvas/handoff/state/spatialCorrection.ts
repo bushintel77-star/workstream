@@ -26,7 +26,10 @@ const FOUNDATION_VEG_PURGE: StudioItemType[] = [
 ];
 
 /** Vicmap title CAD overlay — deep charcoal primary vector. */
-export const COLOR_VECTOR_PRIMARY = "#1C1917";
+import { SEMANTIC_LIGHT } from "../../../../styles/colorTokens";
+
+/** Default CAD vector ink — light parchment plate. */
+export const COLOR_VECTOR_PRIMARY = SEMANTIC_LIGHT.textPrimary;
 export const FOUNDATION_BOUNDARY_STROKE_PX = 1.5;
 
 export type SpatialCorrectionReport = {

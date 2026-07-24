@@ -16,15 +16,15 @@
 }
 
 .line {
-  stroke: rgba(36, 19, 24, 0.82);
+  stroke: color-mix(in srgb, var(--text-primary) 82%, transparent);
   stroke-width: 1.1;
   stroke-dasharray: 3 3;
   vector-effect: non-scaling-stroke;
 }
 
 .dot {
-  fill: #1c1917;
-  stroke: #f2f0eb;
+  fill: var(--text-primary);
+  stroke: var(--canvas);
   stroke-width: 0.25;
   vector-effect: non-scaling-stroke;
 }
@@ -38,7 +38,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 10.5px;
   font-variant-numeric: tabular-nums;
-  color: #1c1917;
+  color: var(--text-primary);
   background: var(--hc-glass, rgba(255, 251, 252, 0.92));
   border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
   backdrop-filter: none;

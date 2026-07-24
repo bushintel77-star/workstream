@@ -162,6 +162,19 @@ export type StudioUiState = {
   saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
   /** Set when saveStatus is error — drives honest toast copy. */
   saveErrorKind: "unreachable" | "rejected" | null;
+  /**
+   * Prepare site pack chase list (CoT / BYDA / council drain / arbor).
+   * Persisted on DesignCanvas.site_frame.site_pack.
+   */
+  sitePackChase: Array<{
+    id: string;
+    label: string;
+    done: boolean;
+    href?: string;
+  }>;
+  /** Explicit dig override when BYDA assets not yet digitised — audit stamp. */
+  digOverrideAt: string | null;
+  digOverrideNote: string | null;
 };
 
 export const DEFAULT_LAYER_OPACITY: LayerOpacity = {

@@ -29,6 +29,7 @@ export type AiProposalSource =
   | "scan"
   | "assist"
   | "canopy"
+  | "vicmap_tree"
   | "layout"
   | "coach"
   | "sketch";

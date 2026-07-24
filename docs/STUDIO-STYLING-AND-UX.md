@@ -16,6 +16,8 @@ The **drawing is the product**. Chrome is frost glass that **appears when needed
 
 ## 1. Visual tokens (original blush DNA)
 
+**Plan / CAD geometry colours** are a separate system — see [COLOR-TOKENS.md](./COLOR-TOKENS.md) (`color-tokens.css` v2). Chrome blush below is UI chrome only.
+
 Source of truth also lives in handoff README color table and `--hc-*` in `handoffStudio.module.css`.
 
 | Role | Token | Value |

@@ -1,0 +1,207 @@
+/**
+ * Curtis & Co — color token spec v2
+ * Raw palette (§1) — never paint components from these directly.
+ * Semantic tokens (§2–4) — what components use.
+ * Contrast pairs verified WCAG 2.1 — see docs comment in §5 of the spec.
+ * Dark mode: never use *-stroke tokens for label text; use *-text.
+ */
+
+:root {
+  /* neutrals — light */
+  --gray-l-0: #ffffff;
+  --gray-l-25: #fafaf8;
+  --gray-l-50: #f7f6f3;
+  --gray-l-100: #f4f5f7;
+  --gray-l-150: #e9e6de;
+  --gray-l-200: #dee1e6;
+  --gray-l-300: #c7cbd1;
+  --gray-l-400: #9aa0ac;
+  --gray-l-500: #6b7078;
+  --gray-l-700: #3a3d44;
+  --gray-l-800: #24272d;
+  --gray-l-900: #1b1e23;
+
+  /* neutrals — dark */
+  --gray-d-0: #0f1115;
+  --gray-d-50: #14171c;
+  --gray-d-100: #1b1e24;
+  --gray-d-150: #20242b;
+  --gray-d-200: #2a2d34;
+  --gray-d-300: #3a3e46;
+  --gray-d-400: #6b7078;
+  --gray-d-500: #9aa0ac;
+  --gray-d-800: #d5d7db;
+  --gray-d-900: #e8e9ec;
+
+  /* crimson (existing) */
+  --crimson-l-600: #b33a32;
+  --crimson-d-500: #c4463b;
+  --crimson-d-400: #d9584c;
+
+  /* cobalt (proposed) */
+  --cobalt-l-600: #2450c7;
+  --cobalt-d-500: #3d6be0;
+  --cobalt-d-400: #6b8eea;
+
+  /* forest (retained planting) */
+  --forest-l-600: #2f5d3a;
+  --forest-d-550: #328052;
+  --forest-d-400: #4c9662;
+
+  /* easement blue */
+  --slate-l-500: #5b7fbf;
+  --slate-d-400: #6e93e0;
+
+  /* new / proposed planting */
+  --sprout-l-500: #4b8f5e;
+  --sprout-d-400: #5ca871;
+  --sage-l-400: #6fa377;
+  --sage-d-300: #7fb88a;
+  --hedge-l-600: #3b6b4a;
+  --hedge-d-500: #4c7d5c;
+  --olive-l-500: #93a85e;
+  --olive-d-400: #a6bc72;
+
+  /* materials */
+  --soil-l-500: #8b6f4e;
+  --soil-d-400: #7a6248;
+  --mulch-l-600: #6b4f3a;
+  --mulch-d-500: #5c4530;
+  --bluestone-l-400: #7c8791;
+  --bluestone-d-300: #8b96a0;
+  --concrete-l-300: #c7cbd1;
+  --concrete-d-300: #3a3e46;
+  --timber-l-400: #b98a5e;
+  --timber-d-300: #c89968;
+  --water-l-500: #2e86ab;
+  --water-d-400: #4098c4;
+  --gravel-l-400: #a69c8e;
+  --gravel-d-400: #8d8477;
+  --lawn-l-100: #e4eedd;
+  --lawn-d-800: #2b3b27;
+
+  /* APWA locate — mode-invariant */
+  --apwa-water: #1e88c7;
+  --apwa-sewer: #2f8f4e;
+  --apwa-gas: #e8b000;
+  --apwa-electric: #d63b2f;
+  --apwa-comms: #e8722f;
+  --apwa-reclaimed: #8b4fc7;
+
+  /* fill intensities (§4) */
+  --fill-structure: 8%;
+  --fill-highlight: 20%;
+  --fill-tpz: 13%;
+
+  /* locked geometry (§3) — visible reference, not editable */
+  --locked-opacity: 0.55;
+}
+
+/* Default theme = light (also when data-theme omitted). */
+:root,
+:root[data-theme="light"],
+[data-theme="light"] {
+  --canvas: var(--gray-l-50);
+  --panel: var(--gray-l-100);
+  --grid-line: var(--gray-l-150);
+  --border: var(--gray-l-200);
+  --border-strong: var(--gray-l-300);
+  --text-muted: var(--gray-l-400);
+  --text-secondary: var(--gray-l-500);
+  --text-primary: var(--gray-l-900);
+
+  --existing-stroke: var(--crimson-l-600);
+  --existing-text: var(--crimson-l-600);
+  --proposed-stroke: var(--cobalt-l-600);
+  --proposed-text: var(--cobalt-l-600);
+  --planting-retain-stroke: var(--forest-l-600);
+  --planting-retain-text: var(--forest-l-600);
+  --planting-new-stroke: var(--sprout-l-500);
+  --planting-new-text: var(--sprout-l-500);
+  --easement-stroke: var(--slate-l-500);
+
+  --proposed-hover: color-mix(in srgb, var(--cobalt-l-600) 85%, white);
+  --proposed-active: color-mix(in srgb, var(--cobalt-l-600) 80%, black);
+  --proposed-disabled: var(--gray-l-300);
+  --existing-hover: color-mix(in srgb, var(--crimson-l-600) 85%, white);
+  --existing-active: color-mix(in srgb, var(--crimson-l-600) 80%, black);
+  --existing-disabled: var(--gray-l-300);
+  --planting-retain-hover: color-mix(in srgb, var(--forest-l-600) 85%, white);
+  --planting-retain-active: color-mix(in srgb, var(--forest-l-600) 80%, black);
+  --planting-retain-disabled: var(--gray-l-300);
+  --focus-ring: var(--cobalt-l-600);
+  --focus-ring-offset: var(--canvas);
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  --canvas: var(--gray-d-0);
+  --panel: var(--gray-d-100);
+  --grid-line: var(--gray-d-150);
+  --border: var(--gray-d-200);
+  --border-strong: var(--gray-d-300);
+  --text-muted: var(--gray-d-500);
+  --text-secondary: var(--gray-d-500);
+  --text-primary: var(--gray-d-900);
+
+  /* stroke ≠ text in dark — labels must use *-text (AA). */
+  --existing-stroke: var(--crimson-d-500);
+  --existing-text: var(--crimson-d-400);
+  --proposed-stroke: var(--cobalt-d-500);
+  --proposed-text: var(--cobalt-d-400);
+  --planting-retain-stroke: var(--forest-d-550);
+  --planting-retain-text: var(--forest-d-400);
+  --planting-new-stroke: var(--sprout-d-400);
+  --planting-new-text: var(--sprout-d-400);
+  --easement-stroke: var(--slate-d-400);
+
+  --proposed-hover: color-mix(in srgb, var(--cobalt-d-500) 85%, white);
+  --proposed-active: color-mix(in srgb, var(--cobalt-d-500) 80%, black);
+  --proposed-disabled: var(--gray-d-300);
+  --existing-hover: color-mix(in srgb, var(--crimson-d-500) 85%, white);
+  --existing-active: color-mix(in srgb, var(--crimson-d-500) 80%, black);
+  --existing-disabled: var(--gray-d-300);
+  --planting-retain-hover: color-mix(in srgb, var(--forest-d-550) 85%, white);
+  --planting-retain-active: color-mix(in srgb, var(--forest-d-550) 80%, black);
+  --planting-retain-disabled: var(--gray-d-300);
+  --focus-ring: var(--cobalt-d-400);
+  --focus-ring-offset: var(--canvas);
+}
+
+/* §4 — fills via color-mix against canvas (not hex-alpha). */
+.existing-structure {
+  fill: color-mix(
+    in srgb,
+    var(--existing-stroke) var(--fill-structure),
+    var(--canvas)
+  );
+}
+.proposed-structure {
+  fill: color-mix(
+    in srgb,
+    var(--proposed-stroke) var(--fill-structure),
+    var(--canvas)
+  );
+}
+.tpz-canopy {
+  fill: color-mix(
+    in srgb,
+    var(--planting-retain-stroke) var(--fill-tpz),
+    var(--canvas)
+  );
+}
+.selected-highlight {
+  fill: color-mix(
+    in srgb,
+    var(--proposed-stroke) var(--fill-highlight),
+    var(--canvas)
+  );
+}
+
+/**
+ * LOCK tool — visible reference, not disabled.
+ * Pair with a diagonal hatch in --text-muted (drawn in SVG separately).
+ */
+.locked-geometry {
+  opacity: var(--locked-opacity);
+}

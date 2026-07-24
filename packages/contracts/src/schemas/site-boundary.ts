@@ -142,6 +142,15 @@ export const BoundaryAutoTraceEasementLineSchema = z.object({
   status: z.string().nullable().optional(),
 });
 
+/** Vicmap urban tree point co-registered with the title (indicative canopy). */
+export const BoundaryAutoTraceUrbanTreeSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  canopy_radius_m: z.number().positive().nullable().optional(),
+  height_m: z.number().positive().nullable().optional(),
+  label: z.string().nullable().optional(),
+});
+
 export const BoundaryAutoTraceResponseSchema = z.object({
   boundary: SiteBoundarySchema,
   /**
@@ -158,6 +167,12 @@ export const BoundaryAutoTraceResponseSchema = z.object({
     .array(BoundaryAutoTraceEasementLineSchema)
     .default([]),
   easement_source: z.enum(["vicmap"]).nullable().default(null),
+  /**
+   * Vicmap urban tree points (subset) — ghost `exist` seed only.
+   * Never invent DBH; TPZ stays operator-measured on site.
+   */
+  urban_trees_canvas: z.array(BoundaryAutoTraceUrbanTreeSchema).default([]),
+  urban_trees_source: z.enum(["vicmap"]).nullable().default(null),
 });
 export type BoundaryAutoTraceResponse = z.infer<
   typeof BoundaryAutoTraceResponseSchema
@@ -181,7 +196,15 @@ export const KeylessHydrateRequestSchema = z.object({
         "wetland",
       ]),
     )
-    .default(["planning", "bushfire", "contour", "flood", "heritage"]),
+    .default([
+      "planning",
+      "bushfire",
+      "contour",
+      "flood",
+      "heritage",
+      "water_corp",
+      "road_casement",
+    ]),
 });
 export type KeylessHydrateRequest = z.infer<typeof KeylessHydrateRequestSchema>;
 

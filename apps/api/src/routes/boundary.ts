@@ -179,4 +179,36 @@ export default async function boundaryRoutes(fastify: FastifyInstance) {
       return reply.send({ deleted: ok });
     },
   );
+
+  /** Council drainage GeoJSON → canvas-metre lines for BYDA-style digitise. */
+  fastify.post(
+    "/:projectId/stormwater-geojson",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      const body = request.body as { geojson?: unknown };
+      if (body?.geojson == null) {
+        return reply.code(400).send({ error: "geojson required" });
+      }
+      try {
+        const { ingestStormwaterGeoJson } = await import(
+          "../lib/stormwater-ingest"
+        );
+        const result = await ingestStormwaterGeoJson(
+          fastify.store,
+          ownerId,
+          projectId,
+          body.geojson,
+        );
+        return reply.code(201).send(result);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Stormwater ingest failed";
+        return reply.code(400).send({ error: message });
+      }
+    },
+  );
 }

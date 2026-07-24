@@ -32,7 +32,9 @@ type RawGeometry =
   | { type: "Polygon"; coordinates: Ring[] }
   | { type: "MultiPolygon"; coordinates: Ring[][] }
   | { type: "LineString"; coordinates: Coord[] }
-  | { type: "MultiLineString"; coordinates: Coord[][] };
+  | { type: "MultiLineString"; coordinates: Coord[][] }
+  | { type: "Point"; coordinates: Coord }
+  | { type: "MultiPoint"; coordinates: Coord[] };
 
 type RawFeature = {
   type: "Feature";
@@ -603,7 +605,45 @@ function propStr(
   return null;
 }
 
-/** Extract cadastral labels from Vicmap property_view attributes. */
+function propNum(
+  props: Record<string, unknown> | undefined,
+  ...keys: string[]
+): number | null {
+  if (!props) return null;
+  const lower = new Map(
+    Object.entries(props).map(([k, v]) => [k.toLowerCase(), v]),
+  );
+  for (const key of keys) {
+    const v = lower.get(key.toLowerCase());
+    if (v == null || v === "") continue;
+    const n = typeof v === "number" ? v : Number.parseFloat(String(v));
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
+/** Point / MultiPoint coordinates from a WFS feature geometry. */
+export function extractPoints(geom: RawGeometry | undefined): Coord[] {
+  if (!geom) return [];
+  if (geom.type === "Point") {
+    const [lng, lat] = geom.coordinates;
+    return Number.isFinite(lng) && Number.isFinite(lat)
+      ? [[lng, lat]]
+      : [];
+  }
+  if (geom.type === "MultiPoint") {
+    return geom.coordinates.filter(
+      (c): c is Coord =>
+        Array.isArray(c) &&
+        c.length >= 2 &&
+        Number.isFinite(c[0]) &&
+        Number.isFinite(c[1]),
+    );
+  }
+  return [];
+}
+
+/** LineString / MultiLineString parts from a WFS feature geometry. */
 export function extractPolylines(geom: RawGeometry | undefined): Coord[][] {
   if (!geom) return [];
   if (geom.type === "LineString") {
@@ -729,6 +769,73 @@ function explodeLineCoordinates(geom: LineGeometry): Coord[][] {
 
 /** Max easement LineStrings per title — keeps auto-trace payload bounded. */
 export const EASEMENT_LINE_CAP = 24;
+
+/** Max urban tree points per title — keeps auto-trace payload bounded. */
+export const URBAN_TREE_CAP = 40;
+
+export type VicmapUrbanTreePoint = {
+  /** EPSG:4326 tree centre. */
+  lng: number;
+  lat: number;
+  /** Indicative canopy radius (m) when Vicmap attrs present — never DBH. */
+  canopyRadiusM: number | null;
+  /** Indicative height (m) when present. */
+  heightM: number | null;
+  label: string | null;
+};
+
+/**
+ * Fetch Vicmap urban tree points intersecting a title ring.
+ * Ghost seed only — never invent DBH; TPZ stays operator-measured.
+ */
+export async function fetchUrbanTreePointsForTitle(
+  titleRing: Ring,
+): Promise<VicmapUrbanTreePoint[]> {
+  const layer = await discoverKeylessLayer("urban_tree");
+  if (!layer) return [];
+  const closed = ensureClosedRing(titleRing);
+  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const cql = `INTERSECTS(${layer.geomField}, SRID=4326;${wkt})`;
+  const url = buildUrl(layer.typeName, cql);
+  // Raise count for dense canopy lots (COMMON_PARAMS.count is 20).
+  const treeUrl = url.replace(/([?&])count=\d+/i, `$1count=${URBAN_TREE_CAP}`);
+  const fc = await wfsFetch(treeUrl.includes("count=") ? treeUrl : `${url}&count=${URBAN_TREE_CAP}`);
+  if (fc.features.length === 0) return [];
+
+  const out: VicmapUrbanTreePoint[] = [];
+  for (const f of fc.features) {
+    const canopyRadiusM = propNum(
+      f.properties,
+      "canopy_radius_m",
+      "CANOPY_RADIUS_M",
+      "canopy_radius",
+      "radius_m",
+    );
+    const heightM = propNum(
+      f.properties,
+      "height_m",
+      "HEIGHT_M",
+      "height",
+      "tree_height",
+    );
+    const label = propStr(
+      f.properties,
+      "common_name",
+      "COMMON_NAME",
+      "species",
+      "SPECIES",
+      "genus",
+      "NAME",
+      "name",
+      "LABEL",
+    );
+    for (const [lng, lat] of extractPoints(f.geometry)) {
+      out.push({ lng, lat, canopyRadiusM, heightM, label });
+      if (out.length >= URBAN_TREE_CAP) return out;
+    }
+  }
+  return out;
+}
 
 /**
  * Fetch Vicmap Property easement lines intersecting a title ring.

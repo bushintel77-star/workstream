@@ -194,7 +194,7 @@ export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
       x_pct: clampPct(p.x),
       y_pct: clampPct(p.y),
     })),
-    color: s.color ?? "#1c1917",
+    color: s.color ?? "var(--text-primary)",
     width_px: s.widthPx ?? 2,
   }));
 }
@@ -243,6 +243,7 @@ export function snapshotToSiteFrame(args: {
   /** Metres per 100% board width (Vicmap fit or operator calibration). */
   boardWidthM?: number | null;
   buildingSource?: DesignSiteFrame["building_source"];
+  sitePack?: DesignSiteFrame["site_pack"];
 }): DesignSiteFrame {
   return {
     boundary: ringToFrame(args.boundary),
@@ -279,6 +280,7 @@ export function snapshotToSiteFrame(args: {
     ...(args.buildingSource != null
       ? { building_source: args.buildingSource }
       : {}),
+    ...(args.sitePack != null ? { site_pack: args.sitePack } : {}),
   };
 }
 

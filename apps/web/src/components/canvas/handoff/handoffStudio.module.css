@@ -54,10 +54,10 @@
     inset -1px -1px 1.5px var(--hc-neu-light);
   --hc-pad: 8px;
 
-  /* SDS — plan vectors only (not UI chrome) */
-  --sds-canvas-bg: #f6eaed;
-  --sds-vector-primary: #241318;
-  --sds-vector-muted: #7a5560;
+  /* SDS — plan vectors only (not UI chrome); alias color-tokens v2 */
+  --sds-canvas-bg: var(--canvas);
+  --sds-vector-primary: var(--text-primary);
+  --sds-vector-muted: var(--text-secondary);
   --sds-compliance-amber: #c99757;
   --sds-compliance-red: #d66b6b;
   --sds-stroke-primary: 1.5;
@@ -654,6 +654,8 @@
   inset: 0;
   z-index: 1;
   transform-origin: center center;
+  /* Never paint a plate here — TactileGround / tiltSkin own the mesh. */
+  background: transparent;
 }
 
 /** Temporary — only while entering/leaving tilt. Never permanent (fights wheel-zoom). */
@@ -668,10 +670,15 @@
 .boardTiltPerspective {
   perspective: 1400px;
   perspective-origin: 50% 65%;
+  /* Let extruded walls/roof project past the plate edge under rotateX.
+   * Do not override `.board` parchment fill — only inner 3D wrappers
+   * (zoomWorld / wallsLift / roofLift) stay transparent over the mesh. */
+  overflow: visible;
 }
 
 .zoomWorldTilted {
   transform-style: preserve-3d;
+  background: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -721,6 +728,8 @@
   pointer-events: none;
   transform: translate(-50%, -50%) scale(var(--tilt-skin-scale, 2.4));
   transform-origin: center center;
+  /* Empty frame — TactileGround paints parchment + grid inside. */
+  background: transparent;
 }
 
 /**

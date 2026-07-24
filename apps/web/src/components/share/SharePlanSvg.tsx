@@ -1,4 +1,6 @@
+import type { CSSProperties } from "react";
 import type { DesignCanvas } from "@workstream/contracts";
+import { SEMANTIC_LIGHT, mixOnHex } from "../../styles/colorTokens";
 import css from "./sharePlan.module.css";
 
 type Props = {
@@ -6,9 +8,12 @@ type Props = {
   address: string;
 };
 
+const L = SEMANTIC_LIGHT;
+
 /**
  * Lightweight read-only plan from the frozen share snapshot.
  * Avoids mounting the full studio; SVG from placements + site_frame.
+ * Light parchment plate — semantic tokens (not blush chrome).
  */
 export function SharePlanSvg({ canvas, address }: Props) {
   const boundary = canvas?.site_frame?.boundary ?? [];
@@ -31,8 +36,21 @@ export function SharePlanSvg({ canvas, address }: Props) {
       role="img"
       aria-label={`Site plan for ${address}`}
       data-testid="share-plan-svg"
+      data-theme="light"
+      style={
+        {
+          ["--canvas"]: L.canvas,
+          ["--existing-stroke"]: L.existingStroke,
+          ["--proposed-stroke"]: L.proposedStroke,
+          ["--easement-stroke"]: L.easementStroke,
+          ["--text-primary"]: L.textPrimary,
+          ["--text-secondary"]: L.textSecondary,
+          ["--text-muted"]: L.textMuted,
+          ["--fill-structure"]: "8%",
+        } as CSSProperties
+      }
     >
-      <rect x="0" y="0" width="100" height="100" fill="#faf6f2" />
+      <rect x="0" y="0" width="100" height="100" fill={L.canvas} />
       {features.map((f) => {
         const pts = f.geometry.points
           .map((v) => `${v.pct.x_pct},${v.pct.y_pct}`)
@@ -46,7 +64,7 @@ export function SharePlanSvg({ canvas, address }: Props) {
               cx={p.x_pct}
               cy={p.y_pct}
               r={1.2}
-              fill="rgba(194,69,95,0.35)"
+              fill={mixOnHex(L.easementStroke, 35, L.canvas)}
             />
           );
         }
@@ -62,7 +80,7 @@ export function SharePlanSvg({ canvas, address }: Props) {
               key={f.id}
               d={d}
               fill="none"
-              stroke="rgba(194,69,95,0.55)"
+              stroke={L.easementStroke}
               strokeWidth="0.4"
             />
           );
@@ -71,8 +89,8 @@ export function SharePlanSvg({ canvas, address }: Props) {
           <polygon
             key={f.id}
             points={pts}
-            fill="rgba(194,69,95,0.12)"
-            stroke="rgba(194,69,95,0.45)"
+            fill={mixOnHex(L.easementStroke, 12, L.canvas)}
+            stroke={L.easementStroke}
             strokeWidth="0.35"
           />
         );
@@ -81,15 +99,15 @@ export function SharePlanSvg({ canvas, address }: Props) {
         <polygon
           points={boundaryPts}
           fill="none"
-          stroke="#241318"
+          stroke={L.textPrimary}
           strokeWidth="0.55"
         />
       ) : null}
       {buildingPts ? (
         <polygon
           points={buildingPts}
-          fill="rgba(36,19,24,0.08)"
-          stroke="#241318"
+          fill={mixOnHex(L.existingStroke, 8, L.canvas)}
+          stroke={L.existingStroke}
           strokeWidth="0.4"
         />
       ) : null}
@@ -102,7 +120,7 @@ export function SharePlanSvg({ canvas, address }: Props) {
             key={s.id}
             d={d}
             fill="none"
-            stroke={s.color || "#c2455f"}
+            stroke={s.color || L.proposedStroke}
             strokeWidth={Math.max(0.2, (s.width_px ?? 2) / 20)}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -113,7 +131,7 @@ export function SharePlanSvg({ canvas, address }: Props) {
         <g key={p.id} transform={`translate(${p.x_pct} ${p.y_pct})`}>
           <circle
             r={1.1 * (p.scale ?? 1)}
-            fill="#c2455f"
+            fill={L.proposedStroke}
             opacity={0.85}
           />
           {p.label ? (
@@ -121,7 +139,7 @@ export function SharePlanSvg({ canvas, address }: Props) {
               y={2.4}
               textAnchor="middle"
               fontSize="1.6"
-              fill="#7a5560"
+              fill={L.textSecondary}
               fontFamily="IBM Plex Mono, monospace"
             >
               {p.label.slice(0, 12)}
@@ -135,7 +153,7 @@ export function SharePlanSvg({ canvas, address }: Props) {
           y="50"
           textAnchor="middle"
           fontSize="3.2"
-          fill="#b08a95"
+          fill={L.textMuted}
           fontFamily="Sora, system-ui, sans-serif"
         >
           Plan snapshot

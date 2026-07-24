@@ -132,6 +132,44 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
             strokeOpacity="0.4"
           />
         </pattern>
+        {/* Water corp: cool aqua wash — street / authority cue, not dig truth. */}
+        <pattern
+          id="ws-keyless-water"
+          width="2.5"
+          height="2.5"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(30)"
+        >
+          <rect width="2.5" height="2.5" fill="#0e7490" fillOpacity="0.05" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="2.5"
+            stroke="#0e7490"
+            strokeWidth="0.38"
+            strokeOpacity="0.42"
+          />
+        </pattern>
+        {/* Road casement / frontage: warm slate wash. */}
+        <pattern
+          id="ws-keyless-road"
+          width="2.6"
+          height="2.6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(0)"
+        >
+          <rect width="2.6" height="2.6" fill="#57534e" fillOpacity="0.05" />
+          <line
+            x1="0"
+            y1="0"
+            x2="2.6"
+            y2="0"
+            stroke="#57534e"
+            strokeWidth="0.34"
+            strokeOpacity="0.4"
+          />
+        </pattern>
       </defs>
       {overlays.flatMap((ov) =>
         ov.rings.map((ring, i) => {
@@ -157,7 +195,11 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
                   ? css.flood
                   : ov.kind === "heritage"
                     ? css.heritage
-                    : css.generic;
+                    : ov.kind === "water_corp"
+                      ? css.waterCorp
+                      : ov.kind === "road_casement"
+                        ? css.roadCasement
+                        : css.generic;
           const patternId =
             ov.kind === "bushfire"
               ? "ws-keyless-bushfire"
@@ -167,7 +209,11 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
                   ? "ws-keyless-flood"
                   : ov.kind === "heritage"
                     ? "ws-keyless-heritage"
-                    : "ws-keyless-generic";
+                    : ov.kind === "water_corp"
+                      ? "ws-keyless-water"
+                      : ov.kind === "road_casement"
+                        ? "ws-keyless-road"
+                        : "ws-keyless-generic";
           return (
             <polygon
               key={`${ov.kind}-${i}`}

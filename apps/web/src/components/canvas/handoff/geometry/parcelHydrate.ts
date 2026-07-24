@@ -36,6 +36,14 @@ export type AutoTraceParcelInput = {
     status?: string | null;
   }> | null;
   easement_source?: "vicmap" | null;
+  urban_trees_canvas?: Array<{
+    x: number;
+    y: number;
+    canopy_radius_m?: number | null;
+    height_m?: number | null;
+    label?: string | null;
+  }> | null;
+  urban_trees_source?: "vicmap" | null;
 };
 
 /**

@@ -5,28 +5,40 @@ type Props = {
   includeNight?: boolean;
 };
 
+const STONE_FILL = "color-mix(in srgb, var(--bluestone-l-400) 14%, var(--canvas))";
+const STONE_STROKE =
+  "color-mix(in srgb, var(--bluestone-l-400) 45%, var(--text-primary))";
+const TIMBER_FILL = "color-mix(in srgb, var(--timber-l-400) 14%, var(--canvas))";
+const TIMBER_STROKE =
+  "color-mix(in srgb, var(--timber-l-400) 55%, var(--text-primary))";
+const GRAVEL_FILL = "color-mix(in srgb, var(--gravel-l-400) 8%, var(--canvas))";
+const GRAVEL_DOT = "color-mix(in srgb, var(--text-muted) 55%, var(--canvas))";
+const NIGHT_FILL = "color-mix(in srgb, var(--text-primary) 4%, var(--canvas))";
+const NIGHT_STROKE =
+  "color-mix(in srgb, var(--text-primary) 28%, transparent)";
+
 /**
  * Shared SVG pattern library — mount ONCE inside the plan SVG `<defs>`.
- * Colours are tinted from existing StudioGlyph fills (stone / timber / chalk).
+ * Materials from color-tokens v2 (bluestone / timber / gravel), not blush ink.
  */
 export function RenderDefs({ includeNight = true }: Props) {
   return (
     <g data-testid="render-defs" aria-hidden>
-      {/* Bluestone — coursed ashlar, staggered joints, fine 0.4 joints. */}
+      {/* Bluestone — coursed ashlar, staggered joints. */}
       <pattern
         id={HATCH_IDS.bluestone}
         width="18"
         height="12"
         patternUnits="userSpaceOnUse"
       >
-        <rect width="18" height="12" fill="rgba(150, 150, 158, 0.14)" />
+        <rect width="18" height="12" fill={STONE_FILL} />
         <rect
           x="0.4"
           y="0.4"
           width="8.2"
           height="5.2"
           fill="none"
-          stroke="rgba(94, 70, 80, 0.35)"
+          stroke={STONE_STROKE}
           strokeWidth="0.4"
         />
         <rect
@@ -35,7 +47,7 @@ export function RenderDefs({ includeNight = true }: Props) {
           width="8.4"
           height="5.2"
           fill="none"
-          stroke="rgba(94, 70, 80, 0.35)"
+          stroke={STONE_STROKE}
           strokeWidth="0.4"
         />
         <rect
@@ -44,7 +56,7 @@ export function RenderDefs({ includeNight = true }: Props) {
           width="5.2"
           height="5.4"
           fill="none"
-          stroke="rgba(94, 70, 80, 0.35)"
+          stroke={STONE_STROKE}
           strokeWidth="0.4"
         />
         <rect
@@ -53,7 +65,7 @@ export function RenderDefs({ includeNight = true }: Props) {
           width="5.6"
           height="5.4"
           fill="none"
-          stroke="rgba(94, 70, 80, 0.35)"
+          stroke={STONE_STROKE}
           strokeWidth="0.4"
         />
         <rect
@@ -62,25 +74,25 @@ export function RenderDefs({ includeNight = true }: Props) {
           width="5.2"
           height="5.4"
           fill="none"
-          stroke="rgba(94, 70, 80, 0.35)"
+          stroke={STONE_STROKE}
           strokeWidth="0.4"
         />
       </pattern>
 
-      {/* Deck — parallel boards along local long axis (item rot spins the glyph). */}
+      {/* Deck — parallel boards along local long axis. */}
       <pattern
         id={HATCH_IDS.deck}
         width="100"
         height="10"
         patternUnits="userSpaceOnUse"
       >
-        <rect width="100" height="10" fill="rgba(192, 148, 104, 0.14)" />
+        <rect width="100" height="10" fill={TIMBER_FILL} />
         <line
           x1="0"
           y1="9.5"
           x2="100"
           y2="9.5"
-          stroke="rgba(176, 138, 94, 0.55)"
+          stroke={TIMBER_STROKE}
           strokeWidth="0.55"
         />
       </pattern>
@@ -92,12 +104,12 @@ export function RenderDefs({ includeNight = true }: Props) {
         height="14"
         patternUnits="userSpaceOnUse"
       >
-        <rect width="14" height="14" fill="rgba(150, 150, 158, 0.06)" />
-        <circle cx="3" cy="4" r="0.7" fill="rgba(94, 70, 80, 0.4)" />
-        <circle cx="9" cy="3" r="0.55" fill="rgba(94, 70, 80, 0.32)" />
-        <circle cx="6" cy="9" r="0.65" fill="rgba(94, 70, 80, 0.36)" />
-        <circle cx="11" cy="11" r="0.5" fill="rgba(94, 70, 80, 0.28)" />
-        <circle cx="2" cy="12" r="0.55" fill="rgba(94, 70, 80, 0.3)" />
+        <rect width="14" height="14" fill={GRAVEL_FILL} />
+        <circle cx="3" cy="4" r="0.7" fill={GRAVEL_DOT} />
+        <circle cx="9" cy="3" r="0.55" fill={GRAVEL_DOT} />
+        <circle cx="6" cy="9" r="0.65" fill={GRAVEL_DOT} />
+        <circle cx="11" cy="11" r="0.5" fill={GRAVEL_DOT} />
+        <circle cx="2" cy="12" r="0.55" fill={GRAVEL_DOT} />
       </pattern>
 
       {includeNight ? (
@@ -108,14 +120,14 @@ export function RenderDefs({ includeNight = true }: Props) {
             height="12"
             patternUnits="userSpaceOnUse"
           >
-            <rect width="18" height="12" fill="rgba(236, 239, 244, 0.04)" />
+            <rect width="18" height="12" fill={NIGHT_FILL} />
             <rect
               x="0.4"
               y="0.4"
               width="8.2"
               height="5.2"
               fill="none"
-              stroke="rgba(236, 239, 244, 0.28)"
+              stroke={NIGHT_STROKE}
               strokeWidth="0.4"
             />
             <rect
@@ -124,7 +136,7 @@ export function RenderDefs({ includeNight = true }: Props) {
               width="8.4"
               height="5.2"
               fill="none"
-              stroke="rgba(236, 239, 244, 0.28)"
+              stroke={NIGHT_STROKE}
               strokeWidth="0.4"
             />
             <rect
@@ -133,7 +145,7 @@ export function RenderDefs({ includeNight = true }: Props) {
               width="5.2"
               height="5.4"
               fill="none"
-              stroke="rgba(236, 239, 244, 0.28)"
+              stroke={NIGHT_STROKE}
               strokeWidth="0.4"
             />
             <rect
@@ -142,7 +154,7 @@ export function RenderDefs({ includeNight = true }: Props) {
               width="5.6"
               height="5.4"
               fill="none"
-              stroke="rgba(236, 239, 244, 0.28)"
+              stroke={NIGHT_STROKE}
               strokeWidth="0.4"
             />
             <rect
@@ -151,7 +163,7 @@ export function RenderDefs({ includeNight = true }: Props) {
               width="5.2"
               height="5.4"
               fill="none"
-              stroke="rgba(236, 239, 244, 0.28)"
+              stroke={NIGHT_STROKE}
               strokeWidth="0.4"
             />
           </pattern>
@@ -161,13 +173,13 @@ export function RenderDefs({ includeNight = true }: Props) {
             height="10"
             patternUnits="userSpaceOnUse"
           >
-            <rect width="100" height="10" fill="rgba(236, 239, 244, 0.04)" />
+            <rect width="100" height="10" fill={NIGHT_FILL} />
             <line
               x1="0"
               y1="9.5"
               x2="100"
               y2="9.5"
-              stroke="rgba(236, 239, 244, 0.32)"
+              stroke={NIGHT_STROKE}
               strokeWidth="0.55"
             />
           </pattern>
@@ -177,12 +189,12 @@ export function RenderDefs({ includeNight = true }: Props) {
             height="14"
             patternUnits="userSpaceOnUse"
           >
-            <rect width="14" height="14" fill="rgba(236, 239, 244, 0.03)" />
-            <circle cx="3" cy="4" r="0.7" fill="rgba(236, 239, 244, 0.35)" />
-            <circle cx="9" cy="3" r="0.55" fill="rgba(236, 239, 244, 0.28)" />
-            <circle cx="6" cy="9" r="0.65" fill="rgba(236, 239, 244, 0.3)" />
-            <circle cx="11" cy="11" r="0.5" fill="rgba(236, 239, 244, 0.24)" />
-            <circle cx="2" cy="12" r="0.55" fill="rgba(236, 239, 244, 0.26)" />
+            <rect width="14" height="14" fill={NIGHT_FILL} />
+            <circle cx="3" cy="4" r="0.7" fill={NIGHT_STROKE} />
+            <circle cx="9" cy="3" r="0.55" fill={NIGHT_STROKE} />
+            <circle cx="6" cy="9" r="0.65" fill={NIGHT_STROKE} />
+            <circle cx="11" cy="11" r="0.5" fill={NIGHT_STROKE} />
+            <circle cx="2" cy="12" r="0.55" fill={NIGHT_STROKE} />
           </pattern>
         </>
       ) : null}

@@ -74,8 +74,8 @@
 
 .dialNight .slot:hover,
 .dialNight .slotFocus {
-  background: rgba(143, 176, 255, 0.28);
-  color: #8fb0ff;
+  background: color-mix(in srgb, var(--proposed-stroke) 28%, var(--canvas));
+  color: var(--proposed-text);
 }
 
 .slotGlyph {
@@ -112,8 +112,8 @@
 }
 
 .dialNight .swapRail {
-  background: rgba(28, 36, 48, 0.92);
-  border-color: rgba(143, 176, 255, 0.22);
+  background: var(--panel);
+  border-color: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
 }
 
 .swatch {
@@ -131,11 +131,15 @@
 }
 
 .swatchOn {
-  background: rgba(255, 211, 222, 0.45);
+  background: color-mix(
+    in srgb,
+    var(--proposed-stroke) var(--fill-highlight),
+    var(--canvas)
+  );
 }
 
 .dialNight .swatchOn {
-  background: rgba(143, 176, 255, 0.22);
+  background: color-mix(in srgb, var(--proposed-stroke) 22%, var(--canvas));
 }
 
 .swatchSym {

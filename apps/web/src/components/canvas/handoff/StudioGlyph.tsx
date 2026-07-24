@@ -14,17 +14,15 @@ import {
   sunShadowFill,
 } from "./features/render/renderTokens";
 import { useGlyphSunShadow } from "./features/shade/SunShadowContext";
+import {
+  CSS_TOKEN,
+  mixOnCanvas,
+  semanticForTheme,
+} from "../../../styles/colorTokens";
 
 /**
- * Plan symbols — clean, modern landscape-CAD language on the blush field.
- *
- * Design intent (2026, not old dirty CAD): thin consistent strokes, soft
- * on-palette tones, light airy hatching, generous negative space. Type reads
- * at a glance (stone grid ≠ timber plank ≠ softscape stipple ≠ drain dots)
- * without heavy near-black ink or muddy dense fills.
- *
- * Line weights come from the plan ladder (hardscape / planting / existing).
- * Material fills for paving/deck use shared SVG hatch defs (RenderDefs).
+ * Plan symbols — landscape-CAD language on semantic colour tokens (v2).
+ * Line weights from the plan ladder; materials from planting / stone / timber / water.
  */
 export function StudioGlyph({
   type,
@@ -39,20 +37,16 @@ export function StudioGlyph({
   const kind = planLineKindForItem(type);
   const ladder = night ? PLAN_LINES_DARK[kind] : PLAN_LINES_LIGHT[kind];
   const edgeW = ladder.strokeWidth;
+  const sem = semanticForTheme(night);
 
-  // Soft, refined palette — muted, never near-black or neon.
-  const LINE = night ? "rgba(236,239,244,0.75)" : ink ? "#5A4650" : "#6E5A62";
-  const GREEN = night ? "rgba(180,210,170,0.8)" : ink ? "#6E8B63" : "#7A9670";
-  const GREEN_DEEP = night
-    ? "rgba(160,190,150,0.85)"
-    : ink
-      ? "#557049"
-      : "#5F7A50";
-  const STONE = night ? "rgba(236,239,244,0.72)" : ink ? "#8C8B93" : "#9A9AA0";
-  const TIMBER = night ? "rgba(220,190,150,0.8)" : ink ? "#B58A5E" : "#C09468";
-  const WATER = night ? "#8fb0ff" : ink ? "#6C8598" : "#7C97AB";
-  const greenFill = "rgba(122, 150, 112, 0.14)";
-  const airFill = "rgba(122, 150, 112, 0.07)";
+  const LINE = ink || night ? sem.textPrimary : CSS_TOKEN.textSecondary;
+  const GREEN = sem.plantingNewStroke;
+  const GREEN_DEEP = sem.plantingRetainStroke;
+  const STONE = night ? sem.bluestone : CSS_TOKEN.bluestone;
+  const TIMBER = night ? sem.timber : CSS_TOKEN.timber;
+  const WATER = night ? sem.water : CSS_TOKEN.water;
+  const greenFill = mixOnCanvas(CSS_TOKEN.plantingNewStroke, 14);
+  const airFill = mixOnCanvas(CSS_TOKEN.plantingNewStroke, 7);
 
   const def = BY_TYPE[type];
   const castsShadow =
@@ -127,7 +121,7 @@ export function StudioGlyph({
             opacity={0.6}
             vectorEffect="non-scaling-stroke"
           />
-          {branch(7, 8, 40, "rgba(95,122,80,0.5)", 12)}
+          {branch(7, 8, 40, mixOnCanvas(CSS_TOKEN.plantingNewStroke, 50), 12)}
           <circle cx={50} cy={50} r={2.4} fill={GREEN_DEEP} />
         </>
       );
@@ -144,8 +138,8 @@ export function StudioGlyph({
             fill={airFill}
             vectorEffect="non-scaling-stroke"
           />
-          {branch(12, 6, 34, "rgba(95,122,80,0.55)", 15)}
-          {branch(12, 34, 42, "rgba(95,122,80,0.32)", 15)}
+          {branch(12, 6, 34, mixOnCanvas(CSS_TOKEN.plantingNewStroke, 55), 15)}
+          {branch(12, 34, 42, mixOnCanvas(CSS_TOKEN.plantingNewStroke, 32), 15)}
           <circle cx={50} cy={50} r={2} fill={GREEN_DEEP} />
         </>
       );
@@ -206,7 +200,7 @@ export function StudioGlyph({
                 cx={x + (r % 2 ? 8 : 0)}
                 cy={y}
                 r={0.9}
-                fill="rgba(95,122,80,0.42)"
+                fill={mixOnCanvas(CSS_TOKEN.plantingNewStroke, 42)}
               />
             )),
           )}
@@ -233,7 +227,7 @@ export function StudioGlyph({
               cx={8 + i * 7.6}
               cy={30}
               r={3.4}
-              stroke="rgba(95,122,80,0.5)"
+              stroke={mixOnCanvas(CSS_TOKEN.plantingNewStroke, 50)}
               strokeWidth={Math.max(0.55, edgeW)}
               fill="none"
               vectorEffect="non-scaling-stroke"
@@ -245,7 +239,7 @@ export function StudioGlyph({
               cx={8 + i * 7.6}
               cy={70}
               r={3.4}
-              stroke="rgba(95,122,80,0.5)"
+              stroke={mixOnCanvas(CSS_TOKEN.plantingNewStroke, 50)}
               strokeWidth={Math.max(0.55, edgeW)}
               fill="none"
               vectorEffect="non-scaling-stroke"
@@ -284,9 +278,9 @@ export function StudioGlyph({
               cx={x}
               cy={y}
               r={2.6}
-              stroke="rgba(95,122,80,0.5)"
+              stroke={mixOnCanvas(CSS_TOKEN.plantingNewStroke, 50)}
               strokeWidth={Math.max(0.55, edgeW)}
-              fill="rgba(122,150,112,0.28)"
+              fill={mixOnCanvas(CSS_TOKEN.plantingNewStroke, 28)}
               vectorEffect="non-scaling-stroke"
             />
           ))}
@@ -330,7 +324,7 @@ export function StudioGlyph({
             cx={50}
             cy={50}
             r={29}
-            stroke="rgba(232,184,75,0.85)"
+            stroke="var(--sds-compliance-amber)"
             strokeWidth={edgeW}
             fill="none"
             strokeDasharray="2.5 3.5"

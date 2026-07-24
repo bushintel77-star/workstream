@@ -33,9 +33,14 @@ type Props = {
 function wallWashGradient(lightness: number): string {
   const shade =
     (WALL_LIGHT_MAX - lightness) / (WALL_LIGHT_MAX - WALL_LIGHT_MIN);
-  const aTop = 0.08 + 0.18 * shade;
-  const aBottom = 0.14 + 0.22 * shade;
-  return `linear-gradient(180deg, rgba(36, 19, 24, ${aTop.toFixed(3)}) 0%, rgba(36, 19, 24, ${aBottom.toFixed(3)}) 100%)`;
+  /* PR #119 wash-alpha: mix against transparent so the CAD grid shows
+   * through the facets — never against opaque --canvas (that painted a
+   * solid slab over the plan). */
+  const aTop = 0.22 + 0.28 * shade;
+  const aBottom = 0.34 + 0.32 * shade;
+  const topPct = Math.round(aTop * 100);
+  const botPct = Math.round(aBottom * 100);
+  return `linear-gradient(180deg, color-mix(in srgb, var(--existing-stroke) ${topPct}%, transparent) 0%, color-mix(in srgb, var(--existing-stroke) ${botPct}%, transparent) 100%)`;
 }
 
 /**

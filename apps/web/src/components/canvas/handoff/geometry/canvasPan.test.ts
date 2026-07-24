@@ -28,6 +28,15 @@ describe("canvasPan", () => {
     ).toBe(false);
   });
 
+  it("tilt view lets a plain left-drag pan the drawing", () => {
+    expect(
+      isPanGesture({ button: 0, spaceHeld: false, tiltViewActive: true }),
+    ).toBe(true);
+    expect(
+      isPanGesture({ button: 0, spaceHeld: false, tiltViewActive: false }),
+    ).toBe(false);
+  });
+
   it("accumulates offset from a drag-start base", () => {
     expect(nextPanOffset({ x: 10, y: -5 }, 20, 30)).toEqual({ x: 30, y: 25 });
   });

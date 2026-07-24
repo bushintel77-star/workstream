@@ -23,7 +23,12 @@ export const TILT_EAVE_M = 5;
 export const TILT_ANIM_MS_FAST = 700;
 export const TILT_ANIM_MS_SLOW = 2500;
 
-/** Board px represented by one metre at the current camera zoom. */
+/**
+ * Board px represented by one metre.
+ * For geometry *inside* `.zoomWorld` (tilt walls/billboards), pass zoom=1 —
+ * the camera already scales. For screen-space HUD outside the camera, pass
+ * the live planZoom.
+ */
 export function pxPerMetre(
   boardW: number,
   scaleM: number,

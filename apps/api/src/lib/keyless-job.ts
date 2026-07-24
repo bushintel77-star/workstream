@@ -10,13 +10,19 @@ import {
   type VicmapKeylessKind,
 } from "./vicmap";
 
-/** Default KEYLESS washes — flood + heritage after planning / bushfire / contour. */
+/**
+ * Default KEYLESS washes — street context (water corp / road casement) after
+ * planning / bushfire / contour / flood / heritage. Urban trees hydrate as
+ * point ghosts via auto-trace, not polygon wash.
+ */
 const DEFAULT_KINDS: VicmapKeylessKind[] = [
   "planning",
   "bushfire",
   "contour",
   "flood",
   "heritage",
+  "water_corp",
+  "road_casement",
 ];
 
 function openRing(

@@ -19,6 +19,8 @@ type Props = {
   growth: GrowthStage;
   playing: boolean;
   shadeOn: boolean;
+  /** KEYLESS street / planning meta chips (not dig truth). */
+  streetChips?: string[];
   onClose: () => void;
   onSunMin: (min: number) => void;
   onDatePreset: (preset: SunDatePreset) => void;
@@ -42,6 +44,7 @@ export function EnvironmentPanel({
   growth,
   playing,
   shadeOn,
+  streetChips = [],
   onClose,
   onSunMin,
   onDatePreset,
@@ -87,6 +90,16 @@ export function EnvironmentPanel({
           {meta.tempMaxC != null ? ` · ${Math.round(meta.tempMaxC)}°` : ""}
         </span>
       </p>
+
+      {streetChips.length > 0 ? (
+        <div className={css.streetChips} data-testid="street-context-chips">
+          {streetChips.map((c) => (
+            <span key={c} className={css.streetChip}>
+              {c}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       <div className={css.weatherRow} data-testid="environment-weather-icons">
         {(

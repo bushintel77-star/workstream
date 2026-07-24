@@ -2,6 +2,26 @@
   height: 100%;
 }
 
+.streetChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.35rem;
+}
+
+.streetChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(14, 116, 144, 0.32);
+  background: rgba(14, 116, 144, 0.08);
+  color: #0f766e;
+  font-size: 0.68rem;
+  font-weight: 550;
+}
+
 .weatherRow {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

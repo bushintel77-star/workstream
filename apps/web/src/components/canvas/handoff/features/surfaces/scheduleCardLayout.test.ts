@@ -42,8 +42,8 @@ describe("placeScheduleCards", () => {
       viewportW: 960,
       safeRightPx: 304,
     });
-    // maxCentre = 960 - 304 - 75 - 8 = 573 → offsetX = 573 - 900
-    expect(out[0]!.offsetX).toBe(573 - 900);
+    // maxCentre = 960 - 304 - 54 - 8 = 594 → offsetX = 594 - 900
+    expect(out[0]!.offsetX).toBe(594 - 900);
     expect(out[0]!.offsetY).toBe(0);
   });
 

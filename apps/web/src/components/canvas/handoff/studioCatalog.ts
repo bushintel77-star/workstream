@@ -1,5 +1,7 @@
 /** Design Studio v4 handoff catalog + demo seeds (from Design Studio v4.dc.html). */
 
+import { PLAN_FILL } from "../../../styles/colorTokens";
+
 export type StudioItemType =
   | "canopy"
   | "feature"
@@ -333,11 +335,11 @@ export const PAINT_SWATCHES: Array<{
   label: string;
   wash: string;
 }> = [
-  { t: "lawn", label: "Turf", wash: "rgba(74, 112, 58, 0.55)" },
-  { t: "bed", label: "Planting", wash: "rgba(90, 122, 72, 0.5)" },
-  { t: "paving", label: "Bluestone", wash: "rgba(70, 78, 88, 0.55)" },
-  { t: "deck", label: "Deck", wash: "rgba(140, 98, 58, 0.5)" },
-  { t: "hedge", label: "Hedge", wash: "rgba(52, 92, 48, 0.55)" },
+  { t: "lawn", label: "Turf", wash: PLAN_FILL.lawnWash },
+  { t: "bed", label: "Planting", wash: PLAN_FILL.plantingWash },
+  { t: "paving", label: "Bluestone", wash: PLAN_FILL.bluestoneWash },
+  { t: "deck", label: "Deck", wash: PLAN_FILL.timberWash },
+  { t: "hedge", label: "Hedge", wash: PLAN_FILL.hedgeWash },
 ];
 
 /**

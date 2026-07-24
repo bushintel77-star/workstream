@@ -59,7 +59,8 @@ export function sunShadowFillFrom(
   night: boolean,
 ): string {
   const o = night ? view.nightOpacity : view.opacity;
-  return `rgba(28,25,23,${o})`;
+  const pct = Math.round(o * 100);
+  return `color-mix(in srgb, var(--text-primary) ${pct}%, transparent)`;
 }
 
 /** Dwelling envelope hatch pattern ids — defined in CadPlanBoard defs (board-space scale). */

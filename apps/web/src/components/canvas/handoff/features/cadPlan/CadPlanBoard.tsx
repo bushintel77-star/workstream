@@ -39,6 +39,11 @@ import {
 import { RIGHT_DATA_LANE_WIDTH_PX } from "../surfaces/rightDataLane";
 import { planLinesFor } from "../../geometry/planLineStyles";
 import { bydaPlanLine } from "../../geometry/bydaPlanStyles";
+import {
+  CSS_TOKEN,
+  PLAN_FILL,
+  mixOnCanvas,
+} from "../../../../../styles/colorTokens";
 import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
@@ -593,7 +598,15 @@ export function CadPlanBoard({
     planFocusY,
   });
   const tiltLocked = isTiltActive(tiltDeg);
+  /** Screen ppm — for HUD / label placement outside the camera scale. */
   const ppm = pxPerMetre(layout.w, scaleM, planZoom);
+  /**
+   * Tilt extrusions live *inside* `.zoomWorld`, which already applies
+   * `scale(planZoom)`. Use layout ppm (zoom=1) so eave/wall height matches
+   * the footprint in board space — multiplying by planZoom again made walls
+   * vanish when zoomed out and explode/clip when zoomed in.
+   */
+  const tiltPpm = pxPerMetre(layout.w, scaleM, 1);
   /** Projected CameraChrome mis-anchors under tilt — dock-only while tilted. */
   const allowProjectedChrome = !tiltLocked && !frameOn;
 
@@ -1035,7 +1048,7 @@ export function CadPlanBoard({
               y1="0"
               x2="0"
               y2="4"
-              stroke="rgba(28,25,23,0.45)"
+              stroke={mixOnCanvas(CSS_TOKEN.textPrimary, 45)}
               strokeWidth="1.2"
             />
           </pattern>
@@ -1051,11 +1064,11 @@ export function CadPlanBoard({
               y1="0"
               x2="0"
               y2="3"
-              stroke="rgba(87,83,78,0.55)"
+              stroke={mixOnCanvas(CSS_TOKEN.easementStroke, 55)}
               strokeWidth="0.9"
             />
           </pattern>
-          {/* Existing dwelling — 45° convention hatch over faint wash. */}
+          {/* Existing dwelling — 45° convention hatch (crimson, never cobalt). */}
           <pattern
             id={DWELLING_HATCH_IDS.light}
             width="2.2"
@@ -1063,13 +1076,13 @@ export function CadPlanBoard({
             patternUnits="userSpaceOnUse"
             patternTransform="rotate(45)"
           >
-            <rect width="2.2" height="2.2" fill="rgba(139,58,47,0.05)" />
+            <rect width="2.2" height="2.2" fill={PLAN_FILL.existingStructure} />
             <line
               x1="0"
               y1="0"
               x2="0"
               y2="2.2"
-              stroke="rgba(139,58,47,0.28)"
+              stroke={mixOnCanvas(CSS_TOKEN.existingStroke, 28)}
               strokeWidth="0.28"
             />
           </pattern>
@@ -1080,13 +1093,13 @@ export function CadPlanBoard({
             patternUnits="userSpaceOnUse"
             patternTransform="rotate(45)"
           >
-            <rect width="2.2" height="2.2" fill="rgba(143,176,255,0.05)" />
+            <rect width="2.2" height="2.2" fill={PLAN_FILL.existingStructure} />
             <line
               x1="0"
               y1="0"
               x2="0"
               y2="2.2"
-              stroke="rgba(143,176,255,0.26)"
+              stroke={mixOnCanvas(CSS_TOKEN.existingStroke, 32)}
               strokeWidth="0.28"
             />
           </pattern>
@@ -1238,7 +1251,7 @@ export function CadPlanBoard({
           points={ptsAttr(boundary)}
           fill={
             cadTitleMode && !fitSheetStroke
-              ? "rgba(28, 25, 23, 0.045)"
+              ? PLAN_FILL.boundaryWash
               : "transparent"
           }
           stroke={bStroke}
@@ -1269,10 +1282,19 @@ export function CadPlanBoard({
             data-testid="building-footprint"
             data-building-source={buildingSource}
             points={ptsAttr(building)}
-            fill={bldFill}
+            /* Soft ground fill under tilt — color-mix against canvas (§4). */
+            fill={
+              tiltLocked
+                ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
+                : bldFill
+            }
             stroke={bldStroke}
             strokeWidth={
-              foundationCleanse ? 1 : lines.building.strokeWidth
+              foundationCleanse
+                ? 1
+                : tiltLocked
+                  ? Math.max(1.5, lines.building.strokeWidth)
+                  : lines.building.strokeWidth
             }
             vectorEffect="non-scaling-stroke"
             opacity={
@@ -1299,7 +1321,7 @@ export function CadPlanBoard({
             layerOpacity[bucket] ?? 1,
             isolatedLayer,
           );
-          const wash = REGION_WASH[it.t] ?? "rgba(90, 122, 72, 0.4)";
+          const wash = REGION_WASH[it.t] ?? PLAN_FILL.plantingWash;
           const hatched = it.t === "paving" || it.t === "deck";
           const pts = ptsAttr(it.outlinePct!);
           return (
@@ -1317,7 +1339,9 @@ export function CadPlanBoard({
                 className={it.ghost ? css.regionGhostIn : css.regionDraw}
                 fill={wash}
                 stroke={
-                  it.ghost ? "rgba(28, 25, 23, 0.55)" : "rgba(28, 25, 23, 0.75)"
+                  it.ghost
+                    ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
+                    : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
                 }
                 strokeWidth={it.ghost ? 1 : 1.3}
                 strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
@@ -1623,19 +1647,18 @@ export function CadPlanBoard({
             className={css.cadAreaLabel}
             data-testid="cad-title-area"
             data-camera-chrome-card="1"
-            title={
-              titleBoundaryLocked
-                ? "Title locked"
-                : "Title unlocked — drag corner nodes to refine"
-            }
+            title={[
+              titleBoundaryLocked ? "Title locked" : "Title unlocked",
+              titleMeta?.parcelRef,
+              formatCadAreaM2(areaLabelM2),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           >
-            <span className={css.cadAreaKey}>Title</span>
+            <span className={css.cadAreaKey}>Lot</span>
             <span className={css.cadAreaValue}>
               {formatCadAreaM2(areaLabelM2)}
             </span>
-            {titleMeta?.parcelRef ? (
-              <span className={css.cadAreaMeta}>{titleMeta.parcelRef}</span>
-            ) : null}
           </div>
         </CameraChrome>
       ) : null}
@@ -1656,8 +1679,9 @@ export function CadPlanBoard({
             className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
             data-testid="cad-building-area"
             data-camera-chrome-card="1"
+            title={`Existing dwelling · ${formatCadAreaM2(buildingAreaLabelM2)}`}
           >
-            <span className={css.cadAreaKey}>Existing dwelling</span>
+            <span className={css.cadAreaKey}>Dwell</span>
             <span className={css.cadAreaValue}>
               {formatCadAreaM2(buildingAreaLabelM2)}
             </span>
@@ -1678,8 +1702,9 @@ export function CadPlanBoard({
             className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
             data-testid="cad-outdoor-area"
             data-camera-chrome-card="1"
+            title={`Outdoor · ${formatCadAreaM2(outdoorAreaLabelM2)}`}
           >
-            <span className={css.cadAreaKey}>Outdoor</span>
+            <span className={css.cadAreaKey}>Out</span>
             <span className={css.cadAreaValue}>
               {formatCadAreaM2(outdoorAreaLabelM2)}
             </span>
@@ -1706,8 +1731,9 @@ export function CadPlanBoard({
           <span
             className={css.houseEnvelopeLabel}
             data-testid="house-envelope-label"
+            title="Existing dwelling"
           >
-            Existing dwelling
+            Dwell
           </span>
         </CameraChrome>
       ) : null}
@@ -1870,16 +1896,16 @@ export function CadPlanBoard({
                 transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
                 border: it.ghost
                   ? isCur
-                    ? "1.5px solid #1c1917"
+                    ? `1.5px solid ${CSS_TOKEN.textPrimary}`
                     : it.stale
-                      ? "1px dashed #8a6a1f"
-                      : "1px dashed rgba(28,25,23,0.55)"
+                      ? "1px dashed var(--sds-compliance-amber)"
+                      : `1px dashed ${mixOnCanvas(CSS_TOKEN.textPrimary, 55)}`
                   : flagged
-                    ? "1.5px solid #1c1917"
+                    ? `1.5px solid ${CSS_TOKEN.focusRing}`
                     : selected || groupIds.includes(it.id)
-                      ? "1.5px solid #1c1917"
+                      ? `1.5px solid ${CSS_TOKEN.proposedStroke}`
                       : hovered && !it.ghost
-                        ? "1px solid rgba(28,25,23,0.45)"
+                        ? `1px solid ${mixOnCanvas(CSS_TOKEN.textPrimary, 45)}`
                         : "none",
                 boxShadow:
                   selected || groupIds.includes(it.id) ? undefined : "none",
@@ -1975,7 +2001,7 @@ export function CadPlanBoard({
                     className={css.regionHandle}
                     data-testid="region-handle"
                     style={{
-                      background: REGION_WASH[it.t] ?? "rgba(90, 122, 72, 0.5)",
+                      background: REGION_WASH[it.t] ?? PLAN_FILL.plantingWash,
                     }}
                     aria-hidden
                   />
@@ -2426,7 +2452,7 @@ export function CadPlanBoard({
             building={building}
             boardW={layout.w}
             boardH={layout.h}
-            ppm={ppm}
+            ppm={tiltPpm}
             tiltDeg={tiltDeg}
           />
           {items
@@ -2435,7 +2461,7 @@ export function CadPlanBoard({
               <TiltBillboard
                 key={`tilt-${it.id}`}
                 item={it}
-                ppm={ppm}
+                ppm={tiltPpm}
                 tiltDeg={tiltDeg}
                 ink={!darkOn || frameOn}
               />

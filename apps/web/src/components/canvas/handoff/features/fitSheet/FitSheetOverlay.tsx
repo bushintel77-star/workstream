@@ -16,6 +16,7 @@ import {
   type SheetScaleDenom,
 } from "../../geometry";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
+import { SEMANTIC_LIGHT, mixOnHex } from "../../../../../styles/colorTokens";
 import { WeatherIcon } from "../stickyMeta/WeatherIcon";
 import type { EnvWeatherDay } from "../stickyMeta/envLiveMeta";
 import { resolveEnvWeatherCondition } from "../stickyMeta/envLiveMeta";
@@ -108,8 +109,12 @@ function buildElevProfile(
         x,
         wPx: it.ghost ? 4 : 5,
         hPx: (hm / maxHM) * usable,
-        fill: it.ghost ? "rgba(28,25,23,0.05)" : "rgba(28,25,23,0.1)",
-        stroke: it.ghost ? "#6B6560" : "#1C1917",
+        fill: it.ghost
+          ? mixOnHex(SEMANTIC_LIGHT.textPrimary, 5, SEMANTIC_LIGHT.canvas)
+          : mixOnHex(SEMANTIC_LIGHT.textPrimary, 10, SEMANTIC_LIGHT.canvas),
+        stroke: it.ghost
+          ? SEMANTIC_LIGHT.textMuted
+          : SEMANTIC_LIGHT.textPrimary,
         dash: it.ghost ? "dashed" : "solid",
       };
     });
