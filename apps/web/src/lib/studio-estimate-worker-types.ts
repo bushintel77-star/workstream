@@ -27,7 +27,7 @@ export type StudioEstimateArgs = {
   irrigationZones?: Array<{
     id: string;
     name: string;
-    kind?: "drip" | "lighting";
+    kind?: "drip" | "lighting" | "lighting_conduit" | "spray" | "agg_drain";
     points: Array<{ x_pct: number; y_pct: number }>;
     emitter_spacing_cm?: number;
     emitter_flow_lph?: number;

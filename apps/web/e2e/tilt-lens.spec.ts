@@ -52,6 +52,9 @@ test.describe("Tilt lens", () => {
 
     await shot(page, "tilt-on");
 
+    await expect(page.getByTestId("tilt-skin")).toBeVisible();
+    await expect(page.getByTestId("parchment-bleed")).toHaveCount(0);
+
     const board = page.getByTestId("cad-plan-board");
     const box = await board.boundingBox();
     expect(box).toBeTruthy();
@@ -76,6 +79,8 @@ test.describe("Tilt lens", () => {
       "0",
       { timeout: 3_000 },
     );
+    await expect(page.getByTestId("tilt-skin")).toHaveCount(0);
+    await expect(page.getByTestId("parchment-bleed")).toBeVisible();
 
     await page.keyboard.down("Control");
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height * 0.3);

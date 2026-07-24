@@ -604,6 +604,17 @@ function propStr(
 }
 
 /** Extract cadastral labels from Vicmap property_view attributes. */
+export function extractPolylines(geom: RawGeometry | undefined): Coord[][] {
+  if (!geom) return [];
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  if (geom.type === "MultiLineString") {
+    return geom.coordinates.filter((line) => line.length >= 2);
+  }
+  return [];
+}
+
 export function extractVicmapParcelAttrs(
   props: Record<string, unknown> | undefined,
   lotAreaM2: number,
@@ -819,6 +830,37 @@ export async function fetchKeylessRings(
     rings: capped,
     label,
   };
+}
+
+export type VicmapEasement = {
+  /** Easement centreline as [lng, lat] pairs (EPSG:4326). */
+  line: Coord[];
+  status: string | null;
+};
+
+/**
+ * Fetch easement polylines intersecting a property polygon.
+ * Indicative only — verify on title before excavation.
+ */
+export async function fetchEasementPolylines(
+  titleRing: Ring,
+): Promise<VicmapEasement[]> {
+  const { typeName, geomField } = await discoverEasementLayer();
+  const wkt = `POLYGON((${titleRing
+    .map(([x, y]) => `${x} ${y}`)
+    .join(", ")}))`;
+  const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
+  const url = buildUrl(typeName, cql);
+  const fc = await wfsFetch(url);
+
+  const easements: VicmapEasement[] = [];
+  for (const f of fc.features) {
+    const status = propStr(f.properties, "STATUS", "status");
+    for (const line of extractPolylines(f.geometry)) {
+      easements.push({ line, status });
+    }
+  }
+  return easements;
 }
 
 /** Test helper — clear discovery caches between unit tests. */

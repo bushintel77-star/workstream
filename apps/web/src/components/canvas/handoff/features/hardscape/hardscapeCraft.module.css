@@ -1,0 +1,56 @@
+.bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  transform: translateX(-50%);
+  z-index: 12;
+  width: min(420px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
+  pointer-events: auto;
+}
+
+.kicker {
+  margin: 0 0 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint, #b08a95);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.chip {
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  background: transparent;
+  color: var(--hc-ink-muted, #7a5560);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.chip[data-active="true"] {
+  background: var(--hc-ink, #241318);
+  color: #fff6f8;
+  border-color: var(--hc-ink, #241318);
+}
+
+.foot {
+  margin: 4px 0 0;
+  font-size: 10px;
+  color: var(--hc-ink-muted, #7a5560);
+}

@@ -5,6 +5,12 @@
 
 import type { CatalogSymbol, PlantSun } from "@workstream/contracts";
 import { CURTIS_DESIGN_ASSETS } from "./catalog-assets";
+import {
+  preferredSunForAspect,
+  soilTagFromCatalog,
+  type AspectTag,
+  type SoilTag,
+} from "./planting-palette-filter";
 import { detectMunicipality, type Municipality } from "./planning-context";
 import { isBlocklisted } from "./plant-rules";
 
@@ -44,6 +50,10 @@ export type RankFloraInput = {
   maxHeightM?: number;
   /** Prefer matches for the armed Add tool form. */
   preferredForm?: FloraStudioForm;
+  /** Soft soil tag filter (clay / loam / sand). */
+  soil?: SoilTag;
+  /** Soft aspect tag filter (N/E/S/W). */
+  aspect?: AspectTag;
   /** Calendar month 1–12 (defaults to now). */
   month?: number;
   /** Optional catalog override (tests). */
@@ -175,6 +185,13 @@ export function rankCurtisFloraCandidates(
 
   const ranked: FloraCandidate[] = [];
 
+  const soil = input.soil ?? "any";
+  const aspect = input.aspect ?? "any";
+  const aspectSun = preferredSunForAspect(aspect);
+  const preferredMerged = aspectSun
+    ? [...new Set([...aspectSun, ...preferredSun])]
+    : preferredSun;
+
   for (const sym of symbols) {
     const botanical = sym.botanical_name ?? sym.label;
     if (isBlocklisted(botanical)) continue;
@@ -182,9 +199,14 @@ export function rankCurtisFloraCandidates(
     const height = sym.mature_height_m ?? 1.5;
     if (height > maxH + 0.05) continue;
 
+    if (soil !== "any") {
+      const tags = soilTagFromCatalog(sym.soil);
+      if (!tags.includes("any") && !tags.includes(soil)) continue;
+    }
+
     const form = inferForm(sym);
     const season = seasonality(month, form);
-    const sun = sunScore(sym.sun, preferredSun);
+    const sun = sunScore(sym.sun, preferredMerged);
     const waterBonus = sym.water === "low" ? 0.06 : 0;
     const formBonus =
       input.preferredForm && form === input.preferredForm ? 0.22 : 0;

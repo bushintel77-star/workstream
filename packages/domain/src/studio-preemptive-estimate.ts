@@ -24,7 +24,7 @@ import { trenchLineItems, type TrenchLineItem } from "./auto-trench";
 export type StudioAuthoredZone = {
   id: string;
   name: string;
-  kind?: "drip" | "lighting";
+  kind?: "drip" | "lighting" | "lighting_conduit" | "spray" | "agg_drain";
   points: Array<{ x_pct: number; y_pct: number }>;
   emitter_spacing_cm?: number;
   emitter_flow_lph?: number;
@@ -251,8 +251,12 @@ export function estimateStudioDrawing(args: {
   const zones = args.irrigationZones ?? [];
   const dripZones = zones.filter((z) => (z.kind ?? "drip") === "drip");
   const lightZones = zones.filter((z) => z.kind === "lighting");
-  const useAuthoredIrrig = dripZones.length > 0;
-  const useAuthoredLight = lightZones.length > 0;
+  const conduitZones = zones.filter((z) => z.kind === "lighting_conduit");
+  const sprayZones = zones.filter((z) => z.kind === "spray");
+  const aggDrainZones = zones.filter((z) => z.kind === "agg_drain");
+  const useAuthoredIrrig = dripZones.length > 0 || sprayZones.length > 0;
+  const useAuthoredLight =
+    lightZones.length > 0 || conduitZones.length > 0;
 
   for (const it of live) {
     const meta = metaMap[it.t] ?? {
@@ -642,6 +646,70 @@ export function estimateStudioDrawing(args: {
         95 * access,
         [z.id],
         `Authored lighting · ~${spacing} m spacing`,
+      ),
+    );
+  }
+  for (const z of conduitZones) {
+    const lm = authoredZoneLengthM(z.points, scaleM);
+    if (lm < 0.5) continue;
+    lines.push(
+      line(
+        `sec-zone-conduit-${z.id}`,
+        "secondary",
+        z.name?.trim()
+          ? `LV conduit trench — ${z.name}`
+          : "LV conduit trench — house fit-off",
+        "lm",
+        lm,
+        28 * access,
+        [z.id],
+        "Indicative conduit + trench · verify house main fit-off",
+      ),
+    );
+  }
+  for (const z of sprayZones) {
+    const lm = authoredZoneLengthM(z.points, scaleM);
+    if (lm < 0.5) continue;
+    const spacing = z.fixture_spacing_m ?? 3.5;
+    const heads = Math.max(1, Math.ceil(lm / spacing));
+    lines.push(
+      line(
+        `sec-zone-spray-${z.id}`,
+        "secondary",
+        z.name?.trim() ? `Spray lateral — ${z.name}` : "Sprinkler lateral",
+        "lm",
+        lm,
+        18 * access,
+        [z.id],
+        "Indicative piping to sprinklers",
+      ),
+    );
+    lines.push(
+      line(
+        `ter-zone-heads-${z.id}`,
+        "tertiary",
+        "Spray heads",
+        "ea",
+        heads,
+        42 * access,
+        [z.id],
+        `~${spacing} m spacing`,
+      ),
+    );
+  }
+  for (const z of aggDrainZones) {
+    const lm = authoredZoneLengthM(z.points, scaleM);
+    if (lm < 0.5) continue;
+    lines.push(
+      line(
+        `sec-zone-agg-${z.id}`,
+        "secondary",
+        z.name?.trim() ? `Agg drain — ${z.name}` : "Aggregate drain run",
+        "lm",
+        lm,
+        45 * access,
+        [z.id],
+        "Ag-pipe + gravel trench · confirm outlet",
       ),
     );
   }

@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import type { StudioItemType } from "./studioCatalog";
 import { BY_TYPE } from "./studioCatalog";

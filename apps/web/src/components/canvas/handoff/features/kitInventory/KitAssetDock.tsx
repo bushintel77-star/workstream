@@ -9,9 +9,14 @@ import {
   type CSSProperties,
 } from "react";
 import {
+  ASPECT_TAG_LABELS,
   buildSketchLibraryGroups,
   CURTIS_CATALOG_SYMBOLS,
+  filterPlantingPalette,
   searchSketchLibrary,
+  SOIL_TAG_LABELS,
+  type AspectTag,
+  type SoilTag,
 } from "@workstream/domain";
 import type { CatalogSymbol } from "@workstream/contracts";
 import { DesignAssetGlyph } from "../../../../studio/DesignAssetGlyph";
@@ -28,6 +33,9 @@ import { resolveDockAnchor } from "../reach/dockAnchor";
 import { ATELIER_LINGER_MS, type AtelierPhase } from "./atelierPresence";
 import css from "./kitAssetDock.module.css";
 
+const SOIL_OPTS: SoilTag[] = ["any", "clay", "loam", "sand"];
+const ASPECT_OPTS: AspectTag[] = ["any", "N", "E", "S", "W"];
+
 type Props = {
   /** Board-% — instrument summon point (margin), never object centre. */
   xPct: number;
@@ -36,13 +44,16 @@ type Props = {
   armed: StudioItemType | null;
   paintSwatch: StudioItemType;
   tool: "add" | "paint";
+  /** Indicative sun hours at summon cell (shade mesh sample). */
+  sunHours: number;
+  plantingSoil: SoilTag;
+  plantingAspect: AspectTag;
+  onPlantingSoil: (s: SoilTag) => void;
+  onPlantingAspect: (a: AspectTag) => void;
   onArmMaterial: (t: StudioItemType) => void;
   onPaintMaterial: (t: StudioItemType) => void;
   onDismiss?: () => void;
 };
-
-/** Whole gold catalog (Curtis + Temaki + PlanZV + Osmic + Wikimedia), grouped once. */
-const LIBRARY_GROUPS = buildSketchLibraryGroups(CURTIS_CATALOG_SYMBOLS);
 
 const DRAFT_SECTION_ID = "draft";
 
@@ -64,6 +75,11 @@ export function KitAssetDock({
   armed,
   paintSwatch,
   tool,
+  sunHours,
+  plantingSoil,
+  plantingAspect,
+  onPlantingSoil,
+  onPlantingAspect,
   onArmMaterial,
   onPaintMaterial,
   onDismiss,
@@ -112,10 +128,25 @@ export function KitAssetDock({
 
   const draftTypes = useMemo(() => draftKitTypes(mode), [mode]);
 
+  const filteredCatalog = useMemo(
+    () =>
+      filterPlantingPalette(CURTIS_CATALOG_SYMBOLS, {
+        sunHours,
+        soil: plantingSoil,
+        aspect: plantingAspect,
+      }),
+    [sunHours, plantingSoil, plantingAspect],
+  );
+
+  const libraryGroups = useMemo(
+    () => buildSketchLibraryGroups(filteredCatalog),
+    [filteredCatalog],
+  );
+
   const searching = query.trim().length > 0;
   const results = useMemo(
-    () => (searching ? searchSketchLibrary(CURTIS_CATALOG_SYMBOLS, query) : []),
-    [searching, query],
+    () => (searching ? searchSketchLibrary(filteredCatalog, query) : []),
+    [searching, query, filteredCatalog],
   );
 
   const pickMaterial = (t: StudioItemType) => {
@@ -198,6 +229,48 @@ export function KitAssetDock({
         onFocus={stayEngaged}
       />
 
+      <div className={css.filterRow} data-testid="kit-planting-filters">
+        <span className={css.filterMeta} data-testid="kit-shade-hours">
+          Shade cell · {sunHours.toFixed(1)} h
+        </span>
+        <div className={css.filterChips} aria-label="Soil tag">
+          {SOIL_OPTS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={css.filterChip}
+              data-active={plantingSoil === s ? "true" : "false"}
+              data-testid={`kit-soil-${s}`}
+              onClick={() => {
+                playInstrumentTick("step");
+                stayEngaged();
+                onPlantingSoil(s);
+              }}
+            >
+              {SOIL_TAG_LABELS[s]}
+            </button>
+          ))}
+        </div>
+        <div className={css.filterChips} aria-label="Aspect tag">
+          {ASPECT_OPTS.map((a) => (
+            <button
+              key={a}
+              type="button"
+              className={css.filterChip}
+              data-active={plantingAspect === a ? "true" : "false"}
+              data-testid={`kit-aspect-${a}`}
+              onClick={() => {
+                playInstrumentTick("step");
+                stayEngaged();
+                onPlantingAspect(a);
+              }}
+            >
+              {ASPECT_TAG_LABELS[a]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {searching ? (
         <div className={css.scroll}>
           <div className={css.tray} role="listbox" aria-label="Search results">
@@ -251,7 +324,7 @@ export function KitAssetDock({
             ) : null}
           </section>
 
-          {LIBRARY_GROUPS.map((group) => (
+          {libraryGroups.map((group) => (
             <section key={group.category} className={css.section}>
               <button
                 type="button"

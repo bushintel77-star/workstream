@@ -76,6 +76,45 @@
   background: rgba(255, 251, 252, 0.9);
 }
 
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.filterMeta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.filterChip {
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.filterChip[data-active="true"] {
+  background: var(--ink);
+  color: #fff6f8;
+  border-color: var(--ink);
+}
+
 /* One scroll region for the whole fold-out list; sections stay compact. */
 .scroll {
   max-height: min(324px, 52vh);

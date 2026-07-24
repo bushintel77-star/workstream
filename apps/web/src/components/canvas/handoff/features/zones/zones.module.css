@@ -1,4 +1,4 @@
-.root {
+﻿.root {
   position: absolute;
   inset: 0;
   z-index: 9;
@@ -41,4 +41,10 @@
   color: #44403c;
   pointer-events: none;
   white-space: nowrap;
+}
+
+.fitoffGlyph {
+  font-size: 1.4px;
+  fill: #57534e;
+  pointer-events: none;
 }

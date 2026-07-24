@@ -3,6 +3,7 @@ import type {
   BoundaryAutoTraceResponse,
   GeoJsonPolygon,
   SiteBoundary,
+  SiteEasement,
   UpsertSiteBoundaryInput,
 } from "@workstream/contracts";
 import {
@@ -54,6 +55,12 @@ export async function saveSiteBoundaryDoc(
     project_id: projectId,
   });
 }
+
+export type AutoTraceBoundaryResult = {
+  boundary: SiteBoundary;
+  /** Indicative Vicmap easements in the boundary's canvas-metre frame. */
+  easements: SiteEasement[];
+};
 
 /** Auto-trace: keyless Vicmap WFS parcel, else survey title_polygon. */
 export async function autoTraceSiteBoundary(

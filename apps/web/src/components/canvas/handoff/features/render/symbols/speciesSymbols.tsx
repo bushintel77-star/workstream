@@ -1,3 +1,5 @@
+"use client";
+
 import { seededRandom, wobbledCirclePath } from "../seededRandom";
 import { SUN_SHADOW, sunShadowFill } from "../renderTokens";
 import { useGlyphSunShadow } from "../../shade/SunShadowContext";
@@ -25,6 +27,10 @@ function GlyphSoftShadow({ night }: { night: boolean }) {
       style={{ mixBlendMode: "multiply" }}
     />
   );
+}
+
+function shadow(night: boolean) {
+  return <GlyphSoftShadow night={night} />;
 }
 
 /** Canopy tree — lobed hand-wobbled circle + fine radial branching. */

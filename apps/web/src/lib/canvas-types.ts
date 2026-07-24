@@ -87,6 +87,13 @@ export type BoundaryVertexLite = {
   is_master_reference?: boolean;
 };
 
+/** Indicative Vicmap easement polyline in the boundary's canvas-metre frame. */
+export type SiteEasementLite = {
+  points: Array<{ x: number; y: number }>;
+  status: string | null;
+  source: "vicmap";
+};
+
 export type SiteBoundaryLite = {
   id: string;
   project_id: string;

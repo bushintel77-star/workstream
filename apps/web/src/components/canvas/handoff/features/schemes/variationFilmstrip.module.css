@@ -1,0 +1,141 @@
+.strip {
+  position: absolute;
+  left: calc(var(--ws-safe-left, 80px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.78));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
+  pointer-events: auto;
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint, #b08a95);
+}
+
+.thumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 72px;
+  min-height: 56px;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 12px;
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  background: rgba(255, 251, 252, 0.55);
+  cursor: pointer;
+  color: var(--hc-ink, #241318);
+  overflow: hidden;
+}
+
+.thumb[data-active="true"] {
+  border-color: var(--hc-ink, #241318);
+  background: #241318;
+  color: #fff6f8;
+}
+
+.miniPlan {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 8px;
+  background: rgba(247, 244, 239, 0.95);
+}
+
+.thumb[data-active="true"] .miniPlan {
+  background: rgba(255, 246, 248, 0.12);
+}
+
+.miniBoundary {
+  fill: rgba(36, 19, 24, 0.04);
+  stroke: rgba(36, 19, 24, 0.45);
+  stroke-width: 1.2;
+}
+
+.miniBuilding {
+  fill: rgba(36, 19, 24, 0.12);
+  stroke: rgba(36, 19, 24, 0.55);
+  stroke-width: 0.9;
+}
+
+.miniPath {
+  fill: none;
+  stroke: rgba(70, 78, 88, 0.85);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.miniPath[data-material="deck"] {
+  stroke: rgba(140, 98, 58, 0.9);
+}
+
+.miniItem {
+  fill: rgba(74, 112, 58, 0.75);
+}
+
+.miniItem[data-type="paving"],
+.miniItem[data-type="deck"] {
+  fill: rgba(70, 78, 88, 0.7);
+}
+
+.miniItem[data-type="exist"],
+.miniItem[data-type="canopy"],
+.miniItem[data-type="feature"] {
+  fill: rgba(52, 92, 48, 0.8);
+}
+
+.thumb[data-active="true"] .miniBoundary {
+  stroke: rgba(255, 246, 248, 0.55);
+  fill: rgba(255, 246, 248, 0.06);
+}
+
+.thumb[data-active="true"] .miniBuilding {
+  fill: rgba(255, 246, 248, 0.18);
+  stroke: rgba(255, 246, 248, 0.65);
+}
+
+.thumb[data-active="true"] .miniPath,
+.thumb[data-active="true"] .miniItem {
+  stroke: rgba(255, 246, 248, 0.85);
+  fill: rgba(255, 246, 248, 0.75);
+}
+
+.letter {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.save {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--hc-line, rgba(36, 19, 24, 0.2));
+  background: transparent;
+  color: var(--hc-ink-muted, #7a5560);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  cursor: pointer;
+}

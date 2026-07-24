@@ -102,19 +102,31 @@ export const CanvasPointPctSchema = z.object({
 });
 export type CanvasPointPct = z.infer<typeof CanvasPointPctSchema>;
 
-/** Authored irrig / lighting path on the studio canvas (% geometry). */
-export const IrrigationZoneKindSchema = z.enum(["drip", "lighting"]);
+/**
+ * Authored irrig / lighting / utility path on the studio canvas (% geometry).
+ * - drip — irrigation laterals
+ * - lighting — fixture run along path
+ * - lighting_conduit — LV trench to house main fit-off
+ * - spray — sprinkler lateral (indicative heads)
+ * - agg_drain — aggregate / ag-pipe drain run
+ */
+export const IrrigationZoneKindSchema = z.enum([
+  "drip",
+  "lighting",
+  "lighting_conduit",
+  "spray",
+  "agg_drain",
+]);
 export type IrrigationZoneKind = z.infer<typeof IrrigationZoneKindSchema>;
 
 export const IrrigationZoneSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  /** drip = irrigation laterals; lighting = fixture run along path. */
   kind: IrrigationZoneKindSchema.default("drip"),
   points: z.array(CanvasPointPctSchema).min(2),
   emitter_spacing_cm: z.number().positive().default(30),
   emitter_flow_lph: z.number().positive().default(2),
-  /** Lighting only — fixture spacing along path (m). */
+  /** Lighting / spray — fixture or head spacing along path (m). */
   fixture_spacing_m: z.number().positive().default(2.5).optional(),
 });
 export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
@@ -332,12 +344,31 @@ export const DesignKeylessOverlaySchema = z.object({
 });
 export type DesignKeylessOverlay = z.infer<typeof DesignKeylessOverlaySchema>;
 
+/** Indicative drainage run between authored spot RLs (Workflow 1 — no TIN). */
+export const DesignSiteFrameDrainageRunSchema = z.object({
+  id: z.string(),
+  points: z
+    .array(
+      z.object({
+        x_pct: z.number().min(0).max(100),
+        y_pct: z.number().min(0).max(100),
+        z_m: z.number(),
+      }),
+    )
+    .min(2),
+  source: z.literal("indicative").default("indicative"),
+});
+export type DesignSiteFrameDrainageRun = z.infer<
+  typeof DesignSiteFrameDrainageRunSchema
+>;
+
 export const DesignSiteFrameSchema = z.object({
   boundary: z.array(DesignSiteFramePointSchema).default([]),
   building: z.array(DesignSiteFramePointSchema).default([]),
   easements: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   services: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   levels: z.array(DesignSiteFrameLevelSchema).default([]),
+  drainage_runs: z.array(DesignSiteFrameDrainageRunSchema).default([]),
   /**
    * Typed underground / utility assets (BYDA language) — never conflated with
    * title easement hatches.
@@ -358,6 +389,8 @@ export const DesignSiteFrameSchema = z.object({
   building_source: DesignBuildingSourceSchema.optional(),
 });
 export type DesignSiteFrame = z.infer<typeof DesignSiteFrameSchema>;
+/** Pre-parse / hydrate input — defaults fill missing drainage_runs. */
+export type DesignSiteFrameInput = z.input<typeof DesignSiteFrameSchema>;
 
 export const DesignCanvasSchema = z.object({
   id: z.string().uuid(),

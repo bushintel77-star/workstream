@@ -182,8 +182,24 @@ Plan modes support **infinite zoom in and out** on free board **and** A3/A4 Fit 
 aerial only — never the cream board plane — so Sketch/CAD zoom cannot make the
 paper grow or shrink with the lot. Fit sheet still keeps paper inside the plot.
 
+**Tilt exception:** while the tilt lens is on, parchment leaves the bleed and
+rides an oversized `.tiltSkin` inside `.zoomWorld` (`tiltSkinScale` from
+`features/tilt/tiltMath.ts`). That keeps the foreshortened shade and stops
+zoom-out from hard-cutting the drafting plate into a postage stamp. Draft
+grid uses `extendPadPct` under tilt for the same reason. Flat mode is
+unchanged — bleed returns the moment tilt settles to 0°.
+
+**Sun cast (premium):** when `shadeOn`, dwelling + canopy shadows follow
+`boardShadowCast` from domain `sunPositionAt` (az 0° = north, board y-down).
+Static `SUN_SHADOW` remains the shade-off default. `SunGrowthDock` portals
+through `CameraChrome` (blush frost, `--ws-safe-*`). Client presentation
+keeps the sun scrubber when shade is armed and shows a quiet honesty caption —
+operator docks stay off.
+
 Implementation: `geometry/canvasZoom.ts` + `.parchmentBleed` + `hidePaper` on
-world `TactileGround` **and** `AerialSlot` (clears `#faf6f2` fill) whenever Fit is off.
+world `TactileGround` **and** `AerialSlot` (clears `#faf6f2` fill) whenever Fit is off;
+tilt path adds `.tiltSkin` + `tiltSkinScale`; sun path
+`features/sunGrowth/resolveBoardSunCast.ts` + `SunShadowProvider`.
 
 ### 2c. CAD view rotation (camera only)
 

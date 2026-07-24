@@ -166,6 +166,40 @@
   color: #8c8a85;
 }
 
+.conflictWarn,
+.conflictBlock {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.conflictWarn {
+  background: rgba(201, 151, 87, 0.14);
+  color: #8a6230;
+}
+
+.conflictBlock {
+  background: rgba(180, 72, 72, 0.12);
+  color: #8a3030;
+}
+
+.accept:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ghostCanopy[data-conflict="warn"] {
+  border-color: #c99757;
+  background: rgba(201, 151, 87, 0.14);
+}
+
+.ghostCanopy[data-conflict="block"] {
+  border-color: #b44848;
+  background: rgba(180, 72, 72, 0.12);
+}
+
 @keyframes floraIn {
   from {
     opacity: 0;

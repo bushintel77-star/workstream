@@ -108,6 +108,19 @@ export type IngestBoundaryGeoJsonInput = z.infer<
   typeof IngestBoundaryGeoJsonSchema
 >;
 
+/**
+ * Indicative easement polyline auto-traced from Vicmap WFS.
+ * Points are canvas metres sharing the boundary's canvas_origin_geo, so a
+ * client that projects boundary vertices can project these with the same
+ * transform. Ephemeral — returned alongside auto-trace, never persisted.
+ */
+export const SiteEasementSchema = z.object({
+  points: z.array(CanvasMetreCoordsSchema).min(2),
+  status: z.string().nullable(),
+  source: z.literal("vicmap"),
+});
+export type SiteEasement = z.infer<typeof SiteEasementSchema>;
+
 export const BoundaryAutoTraceRequestSchema = z.object({
   /** Prefer municipal GIS (Vicmap) when available; else survey title ring. */
   prefer_gis: z.boolean().default(true),

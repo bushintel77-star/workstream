@@ -76,6 +76,16 @@ type Input = {
    * CAD stays a bare drawing. Default false = quiet canvas.
    */
   dataSummoned?: boolean;
+  /**
+   * Inline Flora Ring session active (planting Add click).
+   * Summons botanical HUD — never idle wallpaper.
+   */
+  floraSessionActive?: boolean;
+  /**
+   * Count of actionable foresight cards (drainage / TPZ / engineer).
+   * Horizon docks only when > 0 (max 2 shown in UI).
+   */
+  horizonCardCount?: number;
 };
 
 /* Select is the ground state, not a drawing tool — it never collapses chrome. */
@@ -83,9 +93,14 @@ const DRAWING_TOOLS: StudioTool[] = [
   "trace",
   "add",
   "paint",
+  "path",
   "zone",
   "measure",
 ];
+
+function planModesAllowFlora(mode: StudioMode): boolean {
+  return mode === "cad" || mode === "sketch" || mode === "survey";
+}
 
 /**
  * Pure chrome matrix — Survey → Sketch → CAD → Elevation → Quote.
@@ -102,9 +117,28 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     pendingGhosts = 0,
     shadeOn = false,
     dataSummoned = false,
+    floraSessionActive = false,
+    horizonCardCount = 0,
   } = input;
   const drawingHot = DRAWING_TOOLS.includes(tool);
   const draftCrowded = pendingGhosts > 0;
+  /** Flora only when a session exists — never idle wallpaper. */
+  const floraOn =
+    floraSessionActive &&
+    planModesAllowFlora(mode) &&
+    !focusOn &&
+    !frameOn &&
+    !clientView &&
+    !foundationCleanse;
+  /** Horizon summoned by foresight cards only (UI caps at 2). */
+  const horizonOn =
+    horizonCardCount > 0 &&
+    (mode === "cad" || mode === "sketch") &&
+    !focusOn &&
+    !frameOn &&
+    !clientView &&
+    !foundationCleanse &&
+    !draftCrowded;
 
   if (foundationCleanse) {
     const instruments = !frameOn && !clientView && !focusOn;
@@ -128,8 +162,12 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     };
   }
 
-  // Fit sheet / focus / client — paper-first composition, no floating HUDs
-  if (focusOn || clientView || frameOn) {
+  const plan =
+    mode !== "elevation" && mode !== "quote" && mode !== "share";
+
+  // Fit sheet / focus — paper-first composition, no floating HUDs.
+  // Client presentation keeps the sun scrubber when shade is armed (theatre).
+  if (focusOn || frameOn) {
     return {
       utilityDrawer: false,
       aiSidecar: false,
@@ -150,8 +188,27 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     };
   }
 
-  const plan =
-    mode !== "elevation" && mode !== "quote" && mode !== "share";
+  if (clientView) {
+    return {
+      utilityDrawer: false,
+      aiSidecar: false,
+      structureRail: false,
+      liveBom: false,
+      horizon: false,
+      volumeIsolith: false,
+      tradeMargin: false,
+      sunGrowth: shadeOn && plan,
+      aiCoach: false,
+      ambientRibbon: false,
+      selectionRing: false,
+      inventoryPopup: false,
+      drawTools: false,
+      collapseUtility: true,
+      floraRing: false,
+      draftSurface: false,
+    };
+  }
+
   const cadLike = mode === "cad" || mode === "elevation";
   /** Sun scrubber only when shade mesh is on — otherwise stays off the plane. */
   const sunScrubber = shadeOn && plan && !draftCrowded;
@@ -168,8 +225,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     /** Right data lane affordance — Layers etc. available, collapsed until opened. */
     structureRail: plan,
     liveBom: cadLike || mode === "quote",
-    // Monograph canvas — no floating consumer widgets on the drawing plane
-    horizon: false,
+    horizon: horizonOn,
     volumeIsolith: false,
     tradeMargin: false,
     sunGrowth: sunScrubber,
@@ -185,7 +241,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     inventoryPopup: plan && mode !== "sketch" && tool === "add",
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
-    floraRing: false,
+    floraRing: floraOn,
     // Ghost review only when pending — HITL intern, not ambient toast
     draftSurface: plan && mode !== "survey" && draftCrowded,
   };

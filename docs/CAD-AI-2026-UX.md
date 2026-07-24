@@ -23,7 +23,7 @@ AI is a **spatial collaborator inside the drawing**, not a separate chatbot. Tre
 | AI sidecar (right) | Collapsible: dialogue, variations, analytics | Utility hub + Live measures (collapsed by default) |
 | Structure rail (left) | Collapsed CAD data: layers, constraints | Layers panel (`layersOpen` default false) |
 | Instruments | Summon only (margin / hub) — no sticky ribbon on select | Ambient ribbon + `instrumentsSummoned` |
-| Variation filmstrip | Large 16:9 / 3:2 thumbs, bottom or sidecar | **Gap** — ghosts use review card today |
+| Variation filmstrip | Large 16:9 / 3:2 thumbs, bottom or sidecar | **Partial** — A/B/C session schemes + plan minimap thumbs; generative AI thumbs deferred |
 
 Static AutoCAD-style ribbons are forbidden. Progressive disclosure via `resolveHandoffChrome`.
 
@@ -77,9 +77,16 @@ Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so 
 | Contextual materials / CAD params on selection | **Yes** — bottom KitAssetDock + open-source Library; orbit ring clears glyph |
 | AI sidecar (dialogue + analytics) | **Partial** — utility + live measures gated by `aiSidecar` |
 | Structure rail left, collapsed | **Yes** — Layers left; gated by `structureRail` |
-| Variation filmstrip | **Not started** |
+| Variation filmstrip | **Partial** — `VariationFilmstrip` A/B/C under shared title; plan thumbs; not generative 16:9 |
 | 1:1 CAD plan ↔ 3D AI lock | **Not started** (Workflow 1 2D) |
 | Non-destructive zone regen | **Partial** — ghosts / flora; no mask paint yet |
 | Constraint-first setback explain | **Partial** — council ambient + compliance |
+| Flora Ring (planting Add) | **Partial** — summoned when `floraSession` active (`floraRing` chrome) |
+| Preemptive horizon | **Partial** — summoned when foresight cards > 0 (max 2) |
+| Meeting pack print | **Partial** — client view print + scheme caption |
+| Vicmap easement auto-install | **Yes** — WFS → quiet hydrate / title trace; hatch + honesty; utilities manual + DBYD |
+| Develop site loop (Cmd+K) | **Partial** — scan ghosts + scheme/Flora tip + Live BOM; no auto-accept |
+| Lighting conduit + watering plan | **Partial** — fixture catalog snap → LV trench→house; agg PoD / spray valve tip; Zone niche; indicative BOM |
+| Sun-cast UI | **Yes** — live `resolveBoardSunCast` + CameraChrome dock; static when shade off |
 
 Update [IMPLEMENTATION-STATUS.md](./design/operator-redesign/design_handoff_landscape_cad_studio/IMPLEMENTATION-STATUS.md) when closing gaps.

@@ -159,17 +159,37 @@ export function nicheToolsForPlace(
   return PLACE_BAGS.map(bagTool);
 }
 
-export type ZoneNicheKind = "drip" | "lighting";
+export type ZoneNicheKind =
+  | "drip"
+  | "lighting"
+  | "lighting_conduit"
+  | "spray"
+  | "agg_drain";
 
 export function nicheToolsForZone(): NicheTool[] {
   return [
     { id: "zone-drip", label: "Drip", icon: "〰", kind: "action" },
     { id: "zone-lighting", label: "Lighting", icon: "✦", kind: "action" },
+    { id: "zone-conduit", label: "LV trench", icon: "⌁", kind: "action" },
+    { id: "zone-spray", label: "Spray", icon: "◎", kind: "action" },
+    { id: "zone-agg", label: "Agg drain", icon: "≂", kind: "action" },
   ];
 }
 
 export function zoneNicheActiveId(kind: ZoneNicheKind): string {
-  return kind === "drip" ? "zone-drip" : "zone-lighting";
+  switch (kind) {
+    case "lighting":
+      return "zone-lighting";
+    case "lighting_conduit":
+      return "zone-conduit";
+    case "spray":
+      return "zone-spray";
+    case "agg_drain":
+      return "zone-agg";
+    case "drip":
+    default:
+      return "zone-drip";
+  }
 }
 
 export function nicheActiveIdForItem(

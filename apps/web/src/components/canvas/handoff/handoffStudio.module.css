@@ -697,12 +697,30 @@
 /**
  * Full-bleed parchment under the camera. Free-plan paper+mesh stay here
  * (outside `.zoomWorld`) so zoom scales geometry only — never the cream board.
+ * Hidden while tilt is active — `.tiltSkin` rides the camera instead.
  */
 .parchmentBleed {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+}
+
+/**
+ * Camera-bound parchment under tilt. Oversized via --tilt-skin-scale so
+ * rotateX + zoom-out never hard-cuts the drafting plate into a postage stamp.
+ * Lives inside `.zoomWorld` so the shade foreshortens with the lot.
+ */
+.tiltSkin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(var(--tilt-skin-scale, 2.4));
+  transform-origin: center center;
 }
 
 /**
@@ -738,8 +756,40 @@
   display: none;
 }
 
-.rootClient .headerTools [data-testid="client-view-top"] {
+.rootClient .headerTools [data-testid="client-view-top"],
+.rootClient .headerTools [data-testid="meeting-pack-print"] {
   display: inline-flex;
+}
+
+/** Quiet presentation caption — frost, bottom-centre, never under zoomWorld. */
+.clientCaption {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--ws-safe-bottom, 48px) + 10px);
+  transform: translateX(-50%);
+  z-index: 11;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.rootClient .clientCaption {
+  /* Sit clear of sun dock on the right when shade is on */
+  max-width: min(420px, calc(100vw - 380px));
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .aiStatusBar {

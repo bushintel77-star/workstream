@@ -8,6 +8,10 @@ import type {
   BydaAssetKind,
 } from "@workstream/contracts";
 import type {
+  DesignSchemeSnapshot,
+  DrainageRun,
+  HardscapeEdgeType,
+  PathCorridor,
   SketchStroke,
   SpotLevel,
   StudioItem,
@@ -41,6 +45,10 @@ export type StudioSnapshot = {
   strokes: SketchStroke[];
   /** Survey spot levels (RL m) — prototype Level tool. */
   levels: SpotLevel[];
+  /** Indicative drainage runs linking spot RLs (Workflow 1 — no TIN). */
+  drainageRuns: DrainageRun[];
+  /** Authored path corridors (width / edge / fillet craft). */
+  pathCorridors: PathCorridor[];
   /** Survey service / easement polylines — prototype Servc tool. */
   services: PctPoint[][];
   /** Typed BYDA utility assets — distinct stroke language from easements. */
