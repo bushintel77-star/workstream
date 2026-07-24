@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEnvLiveMeta } from "./envLiveMeta";
+import { buildEnvLiveMeta, resolveEnvWeatherCondition } from "./envLiveMeta";
 
 describe("buildEnvLiveMeta", () => {
   it("builds a live face line with season and sun hours", () => {
@@ -11,9 +11,19 @@ describe("buildEnvLiveMeta", () => {
       lng: 145.0,
       shadeOn: true,
     });
-    expect(meta.face).toMatch(/^Env ·/);
+    expect(meta.face).toMatch(/h ·/);
     expect(meta.avgSunHours).toBeGreaterThan(0);
     expect(meta.detail).toMatch(/mesh on/);
     expect(meta.azimuthLabel.length).toBeGreaterThan(0);
+    expect(meta.weatherCondition).toMatch(/sun|cloud|rain|wind/);
+  });
+
+  it("maps rainy Open-Meteo days to the rain icon", () => {
+    expect(
+      resolveEnvWeatherCondition(
+        { precipitation_mm: 8, wind_speed_kmh: 12, temp_max_c: 18 },
+        40,
+      ),
+    ).toBe("rain");
   });
 });

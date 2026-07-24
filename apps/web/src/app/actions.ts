@@ -268,6 +268,17 @@ export async function designAssistAction(projectId: string, message: string) {
   }
 }
 
+/** Open-Meteo forecast for the Env boundary rail weather icons. */
+export async function getWeatherAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { getWeather } = await import("../lib/api");
+  try {
+    return await getWeather(projectId);
+  } catch {
+    return null;
+  }
+}
+
 /** Architectural title block · Vicmap cadastral for the selected address. */
 export async function lookupCadastralTitleAction(
   projectId: string,

@@ -7,6 +7,7 @@ import {
   type SunDatePreset,
 } from "../sunGrowth/sunDatePreset";
 import type { EnvLiveMeta } from "./envLiveMeta";
+import { WeatherIcon } from "./WeatherIcon";
 import css from "./environmentPanel.module.css";
 
 type Props = {
@@ -72,10 +73,34 @@ export function EnvironmentPanel({
       </div>
 
       <p className={css.live} data-testid="environment-panel-live">
-        {meta.avgSunHours.toFixed(1)}h avg sun · {meta.deepShadeCells}/
-        {meta.cellCount} deep · alt {meta.altitudeDeg.toFixed(0)}° ·{" "}
-        {meta.azimuthLabel}
+        <WeatherIcon condition={meta.weatherCondition} size={20} />
+        <span>
+          {meta.avgSunHours.toFixed(1)}h avg sun · {meta.deepShadeCells}/
+          {meta.cellCount} deep · alt {meta.altitudeDeg.toFixed(0)}° ·{" "}
+          {meta.azimuthLabel}
+          {meta.tempMaxC != null ? ` · ${Math.round(meta.tempMaxC)}°` : ""}
+        </span>
       </p>
+
+      <div className={css.weatherRow} data-testid="environment-weather-icons">
+        {(
+          [
+            ["sun", "Sun"],
+            ["cloud", "Cloud"],
+            ["rain", "Rain"],
+            ["wind", "Wind"],
+          ] as const
+        ).map(([id, label]) => (
+          <span
+            key={id}
+            className={css.weatherChip}
+            data-active={meta.weatherCondition === id ? "true" : "false"}
+          >
+            <WeatherIcon condition={id} size={16} />
+            <span>{label}</span>
+          </span>
+        ))}
+      </div>
 
       <label className={css.switchRow}>
         <span>Sun / shade mesh on board</span>
@@ -166,10 +191,6 @@ export function EnvironmentPanel({
         <li>
           <span>Excessive heat</span>
           <span className={css.soon}>soon</span>
-        </li>
-        <li>
-          <span>Weather (Open-Meteo)</span>
-          <span className={css.soon}>API ready</span>
         </li>
         <li>
           <span>Engineering overshadow</span>

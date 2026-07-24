@@ -8,7 +8,8 @@ import type { SpotLevel, StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import type { GrowthStage } from "../../state/studioTypes";
 import type { SunDatePreset } from "../sunGrowth/sunDatePreset";
-import { buildEnvLiveMeta } from "./envLiveMeta";
+import { buildEnvLiveMeta, type EnvWeatherDay } from "./envLiveMeta";
+import { WeatherIcon } from "./WeatherIcon";
 import {
   dismissStickyMeta,
   isStickyMetaDismissed,
@@ -36,6 +37,8 @@ type Props = {
   shadeOn: boolean;
   lat?: number | null;
   lng?: number | null;
+  /** Today’s Open-Meteo day for weather icons (optional). */
+  weatherDay?: EnvWeatherDay | null;
   /** Bump to re-read session dismiss prefs after restore. */
   restoreNonce?: number;
   onExpandServices: () => void;
@@ -65,6 +68,7 @@ export function StickyMetaStack({
   shadeOn,
   lat,
   lng,
+  weatherDay = null,
   restoreNonce = 0,
   onExpandServices,
   onExpandEnvironment,
@@ -117,8 +121,9 @@ export function StickyMetaStack({
         lat,
         lng,
         shadeOn,
+        weatherDay,
       }),
-    [sunMin, sunDatePreset, growth, lat, lng, shadeOn],
+    [sunMin, sunDatePreset, growth, lat, lng, shadeOn, weatherDay],
   );
 
   if (!visible) return null;
@@ -144,9 +149,13 @@ export function StickyMetaStack({
             type="button"
             className={css.card}
             data-testid="sticky-meta-environment"
+            data-with-icon="true"
             data-active={activePanel === "environment" ? "true" : "false"}
             onClick={onExpandEnvironment}
           >
+            <span className={css.iconSlot}>
+              <WeatherIcon condition={env.weatherCondition} size={18} />
+            </span>
             <p className={css.face}>{env.face}</p>
             <span
               className={css.close}

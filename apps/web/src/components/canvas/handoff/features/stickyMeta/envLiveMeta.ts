@@ -6,12 +6,22 @@ import {
   buildIndicativeShadeGrid,
   melbourneSeason,
   sunPositionAt,
+  weatherConditionFromDay,
+  type WeatherCondition,
 } from "@workstream/domain";
 import type { GrowthStage } from "../../state/studioTypes";
 import {
   sunDateFromPreset,
   type SunDatePreset,
 } from "../sunGrowth/sunDatePreset";
+
+export type EnvWeatherDay = {
+  precipitation_mm?: number;
+  wind_speed_kmh?: number;
+  wind_max_kph?: number;
+  temp_max_c?: number;
+  temp_min_c?: number;
+};
 
 export type EnvLiveMeta = {
   seasonLabel: string;
@@ -23,7 +33,11 @@ export type EnvLiveMeta = {
   cellCount: number;
   altitudeDeg: number;
   azimuthLabel: string;
-  /** One-line face copy. */
+  /** Weather glyph for the boundary rail. */
+  weatherCondition: WeatherCondition;
+  /** Optional live temp face cue. */
+  tempMaxC: number | null;
+  /** One-line face copy (no emoji — icon sits beside). */
   face: string;
   detail: string;
 };
@@ -46,6 +60,19 @@ const GROWTH: Record<GrowthStage, string> = {
 const FALLBACK_LAT = -37.849;
 const FALLBACK_LNG = 144.993;
 
+/** Prefer Open-Meteo day; else indicative from solar altitude at scrubber. */
+export function resolveEnvWeatherCondition(
+  day: EnvWeatherDay | null | undefined,
+  altitudeDeg: number,
+): WeatherCondition {
+  if (day) {
+    const wind = day.wind_max_kph ?? day.wind_speed_kmh ?? 0;
+    return weatherConditionFromDay(day.precipitation_mm ?? 0, wind, 0);
+  }
+  if (altitudeDeg < 8) return "cloud";
+  return "sun";
+}
+
 export function buildEnvLiveMeta(args: {
   sunMin: number;
   sunDatePreset: SunDatePreset;
@@ -53,6 +80,7 @@ export function buildEnvLiveMeta(args: {
   lat?: number | null;
   lng?: number | null;
   shadeOn: boolean;
+  weatherDay?: EnvWeatherDay | null;
 }): EnvLiveMeta {
   const lat = args.lat ?? FALLBACK_LAT;
   const lng = args.lng ?? FALLBACK_LNG;
@@ -65,7 +93,17 @@ export function buildEnvLiveMeta(args: {
   const sun = sunPositionAt(lat, lng, when);
   const clock = formatSun(args.sunMin);
   const growthLabel = GROWTH[args.growth];
-  const face = `Env · ${avg.toFixed(1)}h · ${season.label} · ${clock}`;
+  const weatherCondition = resolveEnvWeatherCondition(
+    args.weatherDay,
+    sun.altitude_deg,
+  );
+  const tempMaxC =
+    args.weatherDay?.temp_max_c != null &&
+    Number.isFinite(args.weatherDay.temp_max_c)
+      ? args.weatherDay.temp_max_c
+      : null;
+  const tempBit = tempMaxC != null ? ` · ${Math.round(tempMaxC)}°` : "";
+  const face = `${avg.toFixed(1)}h · ${season.label} · ${clock}${tempBit}`;
   const detail = args.shadeOn
     ? `${deep}/${cells.length} deep shade · ${growthLabel} · mesh on`
     : `${deep}/${cells.length} deep shade · ${growthLabel} · mesh off`;
@@ -79,6 +117,8 @@ export function buildEnvLiveMeta(args: {
     cellCount: cells.length,
     altitudeDeg: sun.altitude_deg,
     azimuthLabel: sun.azimuth_label,
+    weatherCondition,
+    tempMaxC,
     face,
     detail,
   };

@@ -46,7 +46,10 @@ import {
   summonStickyMeta,
 } from "./features/stickyMeta/StickyMetaStack";
 import { EnvironmentPanel } from "./features/stickyMeta/EnvironmentPanel";
-import { buildEnvLiveMeta } from "./features/stickyMeta/envLiveMeta";
+import {
+  buildEnvLiveMeta,
+  type EnvWeatherDay,
+} from "./features/stickyMeta/envLiveMeta";
 import { RightDataLane } from "./features/surfaces/DataLaneSlot";
 import {
   RIGHT_DATA_LANE_WIDTH_PX,
@@ -1254,6 +1257,37 @@ export function HandoffDesignStudio({
   const checklistOpen = ui.rightDataPanel === "checklist";
   const rightLaneBusy = ui.rightDataPanel != null;
   const [stickyRestoreNonce, setStickyRestoreNonce] = useState(0);
+  const [weatherDay, setWeatherDay] = useState<EnvWeatherDay | null>(null);
+  useEffect(() => {
+    if (!projectId) {
+      setWeatherDay(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { getWeatherAction } = await import("../../../app/actions");
+        const forecast = await getWeatherAction(projectId);
+        if (cancelled) return;
+        const day = forecast?.days?.[0];
+        setWeatherDay(
+          day
+            ? {
+                precipitation_mm: day.precipitation_mm,
+                wind_speed_kmh: day.wind_speed_kmh,
+                temp_max_c: day.temp_max_c,
+                temp_min_c: day.temp_min_c,
+              }
+            : null,
+        );
+      } catch {
+        if (!cancelled) setWeatherDay(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
   const envLiveMeta = useMemo(
     () =>
       buildEnvLiveMeta({
@@ -1263,6 +1297,7 @@ export function HandoffDesignStudio({
         lat: projectLat,
         lng: projectLng,
         shadeOn: ui.shadeOn,
+        weatherDay,
       }),
     [
       ui.sunMin,
@@ -1271,6 +1306,7 @@ export function HandoffDesignStudio({
       ui.shadeOn,
       projectLat,
       projectLng,
+      weatherDay,
     ],
   );
   const surveyServicesAuthoring = surveyServicesAuthoringAllowed({
@@ -3455,6 +3491,7 @@ export function HandoffDesignStudio({
             shadeOn={ui.shadeOn}
             lat={projectLat}
             lng={projectLng}
+            weatherDay={weatherDay}
             restoreNonce={stickyRestoreNonce}
             onExpandServices={() => {
               summonStickyMeta(projectId, "services");
