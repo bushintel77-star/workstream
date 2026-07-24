@@ -4,9 +4,15 @@
 
 import {
   buildIndicativeShadeGrid,
+  frostRiskFromMinTemp,
+  frostRiskLabel,
+  heatRiskFromMaxTemp,
+  heatRiskLabel,
   melbourneSeason,
   sunPositionAt,
   weatherConditionFromDay,
+  type FrostRiskLevel,
+  type HeatRiskLevel,
   type WeatherCondition,
 } from "@workstream/domain";
 import type { GrowthStage } from "../../state/studioTypes";
@@ -21,6 +27,7 @@ export type EnvWeatherDay = {
   wind_max_kph?: number;
   temp_max_c?: number;
   temp_min_c?: number;
+  humidity_pct?: number | null;
 };
 
 export type EnvLiveMeta = {
@@ -37,6 +44,13 @@ export type EnvLiveMeta = {
   weatherCondition: WeatherCondition;
   /** Optional live temp face cue. */
   tempMaxC: number | null;
+  tempMinC: number | null;
+  humidityPct: number | null;
+  frostRisk: FrostRiskLevel | null;
+  heatRisk: HeatRiskLevel | null;
+  humidityLabel: string;
+  frostLabel: string;
+  heatLabel: string;
   /** One-line face copy (no emoji — icon sits beside). */
   face: string;
   detail: string;
@@ -102,6 +116,31 @@ export function buildEnvLiveMeta(args: {
     Number.isFinite(args.weatherDay.temp_max_c)
       ? args.weatherDay.temp_max_c
       : null;
+  const tempMinC =
+    args.weatherDay?.temp_min_c != null &&
+    Number.isFinite(args.weatherDay.temp_min_c)
+      ? args.weatherDay.temp_min_c
+      : null;
+  const humidityPct =
+    args.weatherDay?.humidity_pct != null &&
+    Number.isFinite(args.weatherDay.humidity_pct)
+      ? Math.round(args.weatherDay.humidity_pct)
+      : null;
+  const frostRisk =
+    tempMinC != null ? frostRiskFromMinTemp(tempMinC) : null;
+  const heatRisk = tempMaxC != null ? heatRiskFromMaxTemp(tempMaxC) : null;
+  const humidityLabel =
+    humidityPct != null ? `${humidityPct}%` : "—";
+  const frostLabel =
+    frostRisk != null
+      ? frostRiskLabel(frostRisk) +
+        (tempMinC != null ? ` · ${Math.round(tempMinC)}° min` : "")
+      : "—";
+  const heatLabel =
+    heatRisk != null
+      ? heatRiskLabel(heatRisk) +
+        (tempMaxC != null ? ` · ${Math.round(tempMaxC)}° max` : "")
+      : "—";
   const tempBit = tempMaxC != null ? ` · ${Math.round(tempMaxC)}°` : "";
   const face = `${avg.toFixed(1)}h · ${season.label} · ${clock}${tempBit}`;
   const detail = args.shadeOn
@@ -119,6 +158,13 @@ export function buildEnvLiveMeta(args: {
     azimuthLabel: sun.azimuth_label,
     weatherCondition,
     tempMaxC,
+    tempMinC,
+    humidityPct,
+    frostRisk,
+    heatRisk,
+    humidityLabel,
+    frostLabel,
+    heatLabel,
     face,
     detail,
   };

@@ -26,4 +26,37 @@ describe("buildEnvLiveMeta", () => {
       ),
     ).toBe("rain");
   });
+
+  it("surfaces humidity, frost, and heat from the Open-Meteo day", () => {
+    const meta = buildEnvLiveMeta({
+      sunMin: 10 * 60,
+      sunDatePreset: "today",
+      growth: "plant",
+      shadeOn: false,
+      weatherDay: {
+        precipitation_mm: 0,
+        wind_max_kph: 12,
+        temp_max_c: 36,
+        temp_min_c: 1,
+        humidity_pct: 61,
+      },
+    });
+    expect(meta.humidityLabel).toBe("61%");
+    expect(meta.frostRisk).toBe("risk");
+    expect(meta.frostLabel).toMatch(/frost risk/);
+    expect(meta.heatRisk).toBe("excessive");
+    expect(meta.heatLabel).toMatch(/excessive heat/);
+  });
+
+  it("shows pending dashes when weather has not loaded", () => {
+    const meta = buildEnvLiveMeta({
+      sunMin: 10 * 60,
+      sunDatePreset: "today",
+      growth: "plant",
+      shadeOn: false,
+    });
+    expect(meta.humidityLabel).toBe("—");
+    expect(meta.frostLabel).toBe("—");
+    expect(meta.heatLabel).toBe("—");
+  });
 });

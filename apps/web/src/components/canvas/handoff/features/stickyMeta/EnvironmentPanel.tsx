@@ -30,8 +30,8 @@ const DAY_START = 6 * 60 + 20;
 const DAY_END = 19 * 60 + 40;
 
 /**
- * Expanded Env lane — sun / season / growth instruments + honesty for
- * humidity / frost / heat (not yet live).
+ * Expanded Env lane — sun / season / growth instruments + Open-Meteo
+ * humidity / frost / heat cues (indicative Melb planting bands).
  */
 export function EnvironmentPanel({
   open,
@@ -179,18 +179,45 @@ export function EnvironmentPanel({
         </div>
       </div>
 
-      <ul className={css.missing} data-testid="environment-missing">
-        <li>
+      <ul className={css.missing} data-testid="environment-climate-cues">
+        <li data-testid="environment-humidity">
           <span>Humidity</span>
-          <span className={css.soon}>soon</span>
+          <span
+            className={meta.humidityPct != null ? css.liveVal : css.soon}
+            data-risk="ok"
+          >
+            {meta.humidityLabel}
+          </span>
         </li>
-        <li>
+        <li data-testid="environment-frost">
           <span>Frost risk</span>
-          <span className={css.soon}>soon</span>
+          <span
+            className={
+              meta.frostRisk == null
+                ? css.soon
+                : meta.frostRisk === "clear"
+                  ? css.liveVal
+                  : css.warnVal
+            }
+            data-risk={meta.frostRisk ?? "pending"}
+          >
+            {meta.frostLabel}
+          </span>
         </li>
-        <li>
+        <li data-testid="environment-heat">
           <span>Excessive heat</span>
-          <span className={css.soon}>soon</span>
+          <span
+            className={
+              meta.heatRisk == null
+                ? css.soon
+                : meta.heatRisk === "ok"
+                  ? css.liveVal
+                  : css.warnVal
+            }
+            data-risk={meta.heatRisk ?? "pending"}
+          >
+            {meta.heatLabel}
+          </span>
         </li>
         <li>
           <span>Engineering overshadow</span>

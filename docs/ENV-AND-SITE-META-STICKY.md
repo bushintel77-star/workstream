@@ -19,17 +19,17 @@ Live meta always on. Expand for controls. Stay until you opt out (×).
 | Indicative sun-hours mesh | **LIVE** | 8×8 shade grid avg / deep cells | Mesh on board when armed |
 | Solar altitude / azimuth | **LIVE** (domain) | shade-grid math | Env expand (readout) |
 | Daylight hours / sunrise–set | **API ready** | `GET …/site-context` | Env card (when fetched) |
-| Weather (temp / rain / wind) | **API ready** | `GET …/weather` (mobile uses) | Env card |
-| Weather condition glyph | **API ready** | `weatherConditionFromDay` | Env card |
+| Weather (temp / rain / wind) | **LIVE** | `GET …/weather` → Env sticky + expand | Env card |
+| Weather condition glyph | **LIVE** | `weatherConditionFromDay` | Env card |
 | Overshadowing / sun cast 12h | **PARTIAL** | heuristic mesh, not ray-cast | Future solar wedge |
 | Seasonal sun cast | **PARTIAL** | date presets drive mesh | Env season chips |
 | Exposed to sun / full-sun band | **LIVE** (flora) | flora ranking at click | Flora Ring |
 | Deep shade / dappled | **LIVE** (flora) | shade-grid bands | Flora Ring |
 | Decorative plan shadows | **PARTIAL** | static south offset — not timed | Glyph chrome |
 | Ghost sun-exposure score | **LIVE** | AI ghost confidence | Ghost review |
-| Humidity | **MISSING** | shown as `soon` in Env expand | Open-Meteo later |
-| Frost risk (plant) | **MISSING** | shown as `soon` in Env expand | Open-Meteo min temp later |
-| Excessive heat / heat stress | **MISSING** | shown as `soon` in Env expand | Open-Meteo max + heat days |
+| Humidity | **LIVE** | Open-Meteo `relative_humidity_2m_mean` | Env expand |
+| Frost risk (plant) | **LIVE** | min temp ≤2° risk / ≤0° hard | Env expand |
+| Excessive heat / heat stress | **LIVE** | max ≥32° warm / ≥35° excessive | Env expand |
 | Engineering overshadowing | **MISSING** | Stage 2 / survey | Spec only |
 | Wind exposure on site | **PARTIAL** | forecast wind warning only | Env weather line |
 | Soil moisture / drought | **MISSING** | — | chase / eng |
@@ -82,8 +82,9 @@ Sticky until × — Esc clears focus / closes expand, **not** the sticky card.
 ### Env card
 
 Face: `Env · 6.2h sun · Autumn · 1:26 pm · mature`  
-Expand: season chips, time scrubber, growth, play, arm mesh, weather note.  
-Missing humidity / frost / heat show as `—` with KEYLESS/API cue, not fake dials.
+Expand: season chips, time scrubber, growth, play, arm mesh, weather glyphs,
+humidity %, frost / heat bands from today’s Open-Meteo day. Pending weather
+shows `—` (not fake dials). Engineering overshadow stays Stage 2.
 
 ---
 

@@ -169,6 +169,20 @@
   color: #a16207;
 }
 
+.liveVal {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  color: #44403c;
+  text-align: right;
+}
+
+.warnVal {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  color: #9f1239;
+  text-align: right;
+}
+
 .foot {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;

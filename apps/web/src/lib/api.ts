@@ -1083,14 +1083,20 @@ export type WeatherDay = {
   temp_min_c: number;
   temp_max_c: number;
   precipitation_mm: number;
-  precipitation_probability: number;
-  wind_speed_kmh: number;
-  condition: string;
+  wind_max_kph: number;
+  humidity_pct: number | null;
+  /** Legacy alias — prefer wind_max_kph from the API. */
+  wind_speed_kmh?: number;
+  precipitation_probability?: number;
+  condition?: string;
 };
 
 export type WeatherForecast = {
   source: string;
   days: WeatherDay[];
+  rain_within_24h?: boolean;
+  wind_warning?: boolean;
+  fetched_at?: string;
 };
 
 export async function getWeather(

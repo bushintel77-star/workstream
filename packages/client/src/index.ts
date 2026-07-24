@@ -231,6 +231,7 @@ export class WorkstreamClient {
         temp_max_c: number;
         temp_min_c: number;
         wind_max_kph: number;
+        humidity_pct: number | null;
       }>;
       rain_within_24h: boolean;
       wind_warning: boolean;

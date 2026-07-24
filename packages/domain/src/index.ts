@@ -96,6 +96,7 @@ export { parseStudioAssistResponse } from './studio-assist-parse';
 export * from './title-planning-badges';
 export * from './site-garden-copy';
 export * from './weather-condition';
+export * from './plant-climate-cues';
 export * from './integration-setup';
 export * from './spatial-facts';
 export * from './preemptive-bom';

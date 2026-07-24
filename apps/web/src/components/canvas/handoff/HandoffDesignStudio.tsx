@@ -1280,9 +1280,10 @@ export function HandoffDesignStudio({
           day
             ? {
                 precipitation_mm: day.precipitation_mm,
-                wind_speed_kmh: day.wind_speed_kmh,
+                wind_max_kph: day.wind_max_kph ?? day.wind_speed_kmh,
                 temp_max_c: day.temp_max_c,
                 temp_min_c: day.temp_min_c,
+                humidity_pct: day.humidity_pct ?? null,
               }
             : null,
         );
