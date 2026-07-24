@@ -3,7 +3,12 @@
  * Left lane is the tool tray only. Do not anchor other chrome left.
  */
 
-export type RightDataPanel = "layers" | "measures" | "sites" | "checklist";
+export type RightDataPanel =
+  | "layers"
+  | "measures"
+  | "sites"
+  | "checklist"
+  | "services";
 
 /** Nominal panel width reserved into `--ws-safe-right` while a panel is open. */
 export const RIGHT_DATA_LANE_WIDTH_PX = 304;

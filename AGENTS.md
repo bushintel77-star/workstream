@@ -48,7 +48,9 @@ A hung e2e or skipped live probe is a blocker. Binding detail: `.cursor/rules/en
 
 **Vicmap cadastral** (API): keyless DELWP GeoServer WFS at `opendata.maps.vic.gov.au` — `apps/api/src/lib/vicmap.ts` self-discovers property/building layers via GetCapabilities (no `VICMAP_ENABLED` / developer.vic.gov.au API key). MapLibre `GeoSiteMap` / `SiteCanvas` removed; Trace + Calibrate on the handoff board remains the offline fallback.
 
-Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, title-boundary snap, Fit sheet dims, **Auto trench…** (irrig/conduit/drainage dig paths from zones → `construction_trenches`, ghost until Accept; not BYDA assets).
+Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd+K, title-boundary snap, Fit sheet dims, **Services ledger** (right lane — ticks/metrics/focus; replaces services opacity dial), **Auto trench…** (irrig/conduit/drainage dig paths from zones → `construction_trenches`, ghost until Accept; not BYDA assets).
+
+**Site infrastructure honesty:** Vicmap easements ≠ underground assets. Dig needs BYDA (+ often council drainage). Survey 5/5 = digital minimum; full LA pack = `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` (KEYLESS scorers on the same Vicmap WFS stack; BYDA / council / survey / arbor / site chase list).
 
 **Design Studio v4/v5 handoff** (reference): `docs/design/operator-redesign/design_handoff_landscape_cad_studio/`. README checklist; progress in `IMPLEMENTATION-STATUS.md`.
 

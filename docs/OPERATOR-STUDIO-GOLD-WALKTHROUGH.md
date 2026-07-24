@@ -129,7 +129,8 @@ Use **12 Wrights Terrace, Prahran** (or any live project) for tier-1 training. A
 | C2 | **Add** → inventory popup at margin | “Library summons at gutter — never a slab on the glyph.” | Placement on outdoor area |
 | C3 | **Paint** → swatch tray for fills | “Soft/Hard chips — digits 1–9 arm swatches.” | Surfaces tagged |
 | C4 | **Zone** → drip or lighting path | “Authored zones feed irrigation BOM lines.” | Zones if irrigating |
-| C4b | Cmd+K → **Auto trench…** | “Maps irrig main/laterals, lighting conduit, drainage dig paths — Accept before dig; BYDA always.” | Ghost trench polylines → Accept |
+| C4b | Open **Services ledger** (header or Cmd+K) | “Live list — ticks on/off, click to focus one corridor/easement/RL/lighting run; Shift-click multi-focus.” | Others fall away on the board |
+| C4c | Cmd+K → **Auto trench…** | “Maps irrig main/laterals, lighting conduit, drainage dig paths — Accept before dig; BYDA always.” | Ghost trench polylines → Accept |
 | C5 | Review **AI ghosts** | “Accept or Reject every ghost before client-ready quote.” | `pendingGhosts === 0` |
 | C6 | Summon **measures** (chip or Cmd+K) | “Live measures are analytics — summoned, not parked.” | Title / outdoor / selection rows |
 | C7 | Optional **Fit sheet** (**F**) | “Working drawing frame — cream paper, outside dims. Toggle off to return to board.” | Frame on/off understood |

@@ -172,6 +172,13 @@ type Ui = {
   rightDataPanel: RightDataPanel | null;
   layerOpacity: LayerOpacity;
   isolatedLayer: LayerKey | null;
+  /**
+   * Per-feature Services ledger hide map (id → true = hidden).
+   * Session-only; ticks freeze when servicesLocked.
+   */
+  serviceFeatureHidden: Record<string, boolean>;
+  /** Focused service/design feature ids — others fall away. Esc clears. */
+  focusedServiceIds: string[] | null;
   /** Legacy — always false; survey-only services authoring. */
   servicesEdit: boolean;
   /** Survey services frozen after Quote / Share entry. */
@@ -506,6 +513,8 @@ function initialState(opts: {
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       servicesEdit: false,
       servicesLocked: false,
+      serviceFeatureHidden: {},
+      focusedServiceIds: null,
       sheetScaleDenom: 100,
       // Persisted board scale (Vicmap fit / calibration) — else 110 m default.
       boardWidthM: frameOverlay.boardWidthM ?? null,
@@ -2255,6 +2264,63 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({ assistReply: "Trench proposals dismissed." });
   }, [mutate, setUi]);
 
+  const toggleServiceFeatureVisible = useCallback(
+    (id: string) => {
+      if (state.ui.servicesLocked) return;
+      const next = { ...state.ui.serviceFeatureHidden };
+      if (next[id]) delete next[id];
+      else next[id] = true;
+      setUi({ serviceFeatureHidden: next });
+    },
+    [setUi, state.ui.serviceFeatureHidden, state.ui.servicesLocked],
+  );
+
+  const focusServiceFeature = useCallback(
+    (id: string, additive: boolean) => {
+      const cur = state.ui.focusedServiceIds;
+      if (!additive) {
+        if (cur?.length === 1 && cur[0] === id) {
+          setUi({ focusedServiceIds: null, isolatedLayer: null });
+          return;
+        }
+        setUi({ focusedServiceIds: [id], isolatedLayer: "services" });
+        return;
+      }
+      const set = new Set(cur ?? []);
+      if (set.has(id)) set.delete(id);
+      else set.add(id);
+      const ids = [...set];
+      setUi({
+        focusedServiceIds: ids.length > 0 ? ids : null,
+        isolatedLayer: ids.length > 0 ? "services" : null,
+      });
+    },
+    [setUi, state.ui.focusedServiceIds],
+  );
+
+  const clearServiceFocus = useCallback(() => {
+    setUi({ focusedServiceIds: null, isolatedLayer: null });
+  }, [setUi]);
+
+  const showAllServiceFeatures = useCallback(() => {
+    if (state.ui.servicesLocked) return;
+    setUi({ serviceFeatureHidden: {} });
+  }, [setUi, state.ui.servicesLocked]);
+
+  const focusVisibleServiceFeatures = useCallback(
+    (visibleIds: string[]) => {
+      if (visibleIds.length === 0) {
+        setUi({ focusedServiceIds: null, isolatedLayer: null });
+        return;
+      }
+      setUi({
+        focusedServiceIds: visibleIds,
+        isolatedLayer: "services",
+      });
+    },
+    [setUi],
+  );
+
   const addAnnotation = useCallback(
     (ann: CanvasAnnotation) => {
       mutate((snap) => ({
@@ -2916,6 +2982,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
     runAutoTrench,
     acceptAllTrenchGhosts,
     rejectAllTrenchGhosts,
+    toggleServiceFeatureVisible,
+    focusServiceFeature,
+    clearServiceFocus,
+    showAllServiceFeatures,
+    focusVisibleServiceFeatures,
     addAnnotation,
     updateAnnotationNotePos,
     removeAnnotation,

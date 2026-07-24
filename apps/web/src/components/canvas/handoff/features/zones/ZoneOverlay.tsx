@@ -13,6 +13,8 @@ type Props = {
   zones: IrrigationZone[];
   /** Live board camera — zone labels portal through it. */
   cam?: BoardCamera;
+  serviceFeatureHidden?: Record<string, boolean>;
+  focusedServiceIds?: string[] | null;
   onCommit: (points: PctPoint[], kind: IrrigationZoneKind) => void;
 };
 
@@ -20,7 +22,15 @@ type Props = {
  * Authored drip / lighting paths — Enter finishes; Esc cancels.
  * Feeds DesignCanvas.irrigation_zones → Advanced BOM.
  */
-export function ZoneOverlay({ active, kind, zones, cam, onCommit }: Props) {
+export function ZoneOverlay({
+  active,
+  kind,
+  zones,
+  cam,
+  serviceFeatureHidden = {},
+  focusedServiceIds = null,
+  onCommit,
+}: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<PctPoint[] | null>(null);
 
@@ -58,15 +68,24 @@ export function ZoneOverlay({ active, kind, zones, cam, onCommit }: Props) {
     };
   };
 
+  const focusOn = (focusedServiceIds?.length ?? 0) > 0;
   const rings = [
-    ...zones.map((z) => ({
-      id: z.id,
-      kind: (z.kind ?? "drip") as IrrigationZoneKind,
-      pts: z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
-      name: z.name,
-    })),
+    ...zones
+      .filter((z) => !serviceFeatureHidden[`zone:${z.id}`])
+      .map((z) => {
+        const ledgerId = `zone:${z.id}`;
+        const dimmed =
+          focusOn && !(focusedServiceIds ?? []).includes(ledgerId);
+        return {
+          id: z.id,
+          kind: (z.kind ?? "drip") as IrrigationZoneKind,
+          pts: z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          name: z.name,
+          opacity: dimmed ? 0.12 : 1,
+        };
+      }),
     ...(draft
-      ? [{ id: "draft", kind, pts: draft, name: "draft" }]
+      ? [{ id: "draft", kind, pts: draft, name: "draft", opacity: 0.7 }]
       : []),
   ];
 
@@ -104,7 +123,7 @@ export function ZoneOverlay({ active, kind, zones, cam, onCommit }: Props) {
               strokeWidth={0.35}
               strokeDasharray={r.kind === "lighting" ? "1.4 1.1" : "2 0.9"}
               vectorEffect="non-scaling-stroke"
-              opacity={r.id === "draft" ? 0.7 : 0.9}
+              opacity={r.opacity * (r.id === "draft" ? 1 : 0.9)}
             />
             {r.pts.map((p, i) => (
               <circle

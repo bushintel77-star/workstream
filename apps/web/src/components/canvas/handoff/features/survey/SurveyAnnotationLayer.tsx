@@ -9,6 +9,12 @@ import { nearSurveyRingStart } from "../../geometry/surveyCorridor";
 import type { StudioTool } from "../../studioCatalog";
 import { buildSpotLevelFall } from "./spotLevelFall";
 import { CameraChrome } from "../../CameraChrome";
+import {
+  corridorFeatureId,
+  easementFeatureId,
+  levelFeatureId,
+  resolveServiceFeatureVisual,
+} from "../services/serviceLedger";
 import css from "./surveyAnnotations.module.css";
 
 type Props = {
@@ -23,6 +29,8 @@ type Props = {
   darkOn: boolean;
   layerOpacity: LayerOpacity;
   isolatedLayer?: LayerKey | null;
+  serviceFeatureHidden?: Record<string, boolean>;
+  focusedServiceIds?: string[] | null;
   onAddLevel: (x: number, y: number, z: number) => void;
   onCommitService: (ring: PctPoint[]) => void;
   onCalibrate: (scaleM: number) => void;
@@ -47,6 +55,8 @@ export function SurveyAnnotationLayer({
   darkOn,
   layerOpacity,
   isolatedLayer = null,
+  serviceFeatureHidden = {},
+  focusedServiceIds = null,
   onAddLevel,
   onCommitService,
   onCalibrate,
@@ -187,42 +197,70 @@ export function SurveyAnnotationLayer({
             <path d="M0,0 L5,2.5 L0,5 Z" fill={ink} />
           </marker>
         </defs>
-        {serviceRings.map((s, si) => (
-          <g key={`svc${si}`} opacity={councilOp} style={{ pointerEvents: "none" }}>
-            <polyline
-              points={s.map((p) => `${p.x},${p.y}`).join(" ")}
-              fill="none"
-              stroke="#57534E"
-              strokeWidth={0.28}
-              strokeDasharray="1.6 1"
-              vectorEffect="non-scaling-stroke"
-            />
-            {s.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r={0.4} fill="#57534E" />
-            ))}
-          </g>
-        ))}
+        {serviceRings.map((s, si) => {
+          // In-progress draw has no ledger id — always show at layer opacity.
+          const isDraft = drawService != null && s === drawService;
+          const id = isDraft ? null : corridorFeatureId(s);
+          const feat = id
+            ? resolveServiceFeatureVisual(
+                id,
+                serviceFeatureHidden,
+                focusedServiceIds,
+              )
+            : { opacity: 1, hittable: true, hidden: false };
+          if (feat.hidden) return null;
+          return (
+            <g
+              key={`svc${si}`}
+              opacity={councilOp * feat.opacity}
+              style={{ pointerEvents: "none" }}
+              data-service-id={id ?? undefined}
+            >
+              <polyline
+                points={s.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                stroke="#57534E"
+                strokeWidth={0.28}
+                strokeDasharray="1.6 1"
+                vectorEffect="non-scaling-stroke"
+              />
+              {s.map((p, i) => (
+                <circle key={i} cx={p.x} cy={p.y} r={0.4} fill="#57534E" />
+              ))}
+            </g>
+          );
+        })}
 
         {showCorridors
           ? easements
-          .filter((r) => r.length >= 3)
-          .map((ring, i) => (
-            <g
-              key={`ease${i}`}
-              opacity={councilOp}
-              style={{ pointerEvents: "none" }}
-              data-testid="survey-easement-ring"
-            >
-              <polygon
-                points={ring.map((p) => `${p.x},${p.y}`).join(" ")}
-                fill="none"
-                stroke="#57534E"
-                strokeWidth={0.3}
-                strokeDasharray="1.2 0.8"
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))
+              .filter((r) => r.length >= 3)
+              .map((ring, i) => {
+                const id = easementFeatureId(ring);
+                const feat = resolveServiceFeatureVisual(
+                  id,
+                  serviceFeatureHidden,
+                  focusedServiceIds,
+                );
+                if (feat.hidden) return null;
+                return (
+                  <g
+                    key={`ease${i}`}
+                    opacity={councilOp * feat.opacity}
+                    style={{ pointerEvents: "none" }}
+                    data-testid="survey-easement-ring"
+                    data-service-id={id}
+                  >
+                    <polygon
+                      points={ring.map((p) => `${p.x},${p.y}`).join(" ")}
+                      fill="none"
+                      stroke="#57534E"
+                      strokeWidth={0.3}
+                      strokeDasharray="1.2 0.8"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </g>
+                );
+              })
           : null}
 
         {calibPts.length > 0 ? (
@@ -253,12 +291,21 @@ export function SurveyAnnotationLayer({
           </g>
         ) : null}
 
-        {levels.map((lv, i) => (
+        {levels.map((lv, i) => {
+          const id = levelFeatureId(lv);
+          const feat = resolveServiceFeatureVisual(
+            id,
+            serviceFeatureHidden,
+            focusedServiceIds,
+          );
+          if (feat.hidden) return null;
+          return (
           <g
             key={`lv${i}`}
-            opacity={surveyOp}
+            opacity={surveyOp * feat.opacity}
             style={{ pointerEvents: "none" }}
             data-testid="survey-spot-level"
+            data-service-id={id}
           >
             <path
               d={`M ${lv.x} ${lv.y - 1.1} L ${lv.x - 0.9} ${lv.y + 0.55} L ${lv.x + 0.9} ${lv.y + 0.55} Z`}
@@ -284,7 +331,8 @@ export function SurveyAnnotationLayer({
               vectorEffect="non-scaling-stroke"
             />
           </g>
-        ))}
+          );
+        })}
 
         {falls.map((fall, i) => (
             <g

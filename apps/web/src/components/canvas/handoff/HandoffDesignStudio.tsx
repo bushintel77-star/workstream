@@ -39,6 +39,8 @@ import {
 } from "./features/fitSheet/fitSheetPrefs";
 import { AiGhostReview } from "./features/aiGhosts/AiGhostReview";
 import { LayersPanel } from "./features/layers/LayersPanel";
+import { ServicesLedger } from "./features/services/ServicesLedger";
+import { buildServiceLedgerRows } from "./features/services/serviceLedger";
 import { RightDataLane } from "./features/surfaces/DataLaneSlot";
 import {
   RIGHT_DATA_LANE_WIDTH_PX,
@@ -942,9 +944,9 @@ export function HandoffDesignStudio({
           animateTiltTo(0);
           return;
         }
-        if (ui.isolatedLayer) {
+        if (ui.focusedServiceIds?.length || ui.isolatedLayer) {
           e.preventDefault();
-          studio.setUi({ isolatedLayer: null });
+          studio.clearServiceFocus();
           return;
         }
         if (ui.floraSession) {
@@ -1240,6 +1242,7 @@ export function HandoffDesignStudio({
   });
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
+  const servicesOpen = ui.rightDataPanel === "services";
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
   const rightLaneBusy = ui.rightDataPanel != null;
@@ -2069,6 +2072,32 @@ export function HandoffDesignStudio({
                 </svg>
               </button>
               {chrome.structureRail ? (
+              <>
+              <button
+                type="button"
+                className={`${css.iconBtn}${servicesOpen ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="canvas-services-top"
+                aria-label="Services ledger"
+                title="Services — ticks, metrics, focus"
+                onClick={() =>
+                  studio.setUi({
+                    rightDataPanel: toggleRightDataPanel(
+                      ui.rightDataPanel,
+                      "services",
+                    ),
+                    utilityPanel: null,
+                  })
+                }
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
               <button
                 type="button"
                 className={`${css.iconBtn}${layersOpen ? ` ${css.iconBtnActive}` : ""}`}
@@ -2094,6 +2123,7 @@ export function HandoffDesignStudio({
                   />
                 </svg>
               </button>
+              </>
               ) : null}
               {/* Demo seed switcher only — live projects have a single site. */}
               {!projectId ? (
@@ -2258,7 +2288,7 @@ export function HandoffDesignStudio({
           setbackOn={ui.setbackOn}
           shadeOn={ui.shadeOn}
           growth={ui.growth}
-          onClearIsolation={() => studio.setUi({ isolatedLayer: null })}
+          onClearIsolation={() => studio.clearServiceFocus()}
           onClearSetback={() => studio.setUi({ setbackOn: false })}
           onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
           onResetGrowth={() => studio.setUi({ growth: "mature" })}
@@ -2504,6 +2534,8 @@ export function HandoffDesignStudio({
               locked={ui.foundationCleanse ? false : ui.locked}
               layerOpacity={ui.layerOpacity}
               isolatedLayer={ui.isolatedLayer}
+              serviceFeatureHidden={ui.serviceFeatureHidden}
+              focusedServiceIds={ui.focusedServiceIds}
               setbackOn={ui.setbackOn}
               councilSetbackM={compliance.setbackM}
               growth={ui.growth}
@@ -2750,6 +2782,8 @@ export function HandoffDesignStudio({
                   darkOn={darkLens}
                   layerOpacity={ui.layerOpacity}
                   isolatedLayer={ui.isolatedLayer}
+                  serviceFeatureHidden={ui.serviceFeatureHidden}
+                  focusedServiceIds={ui.focusedServiceIds}
                   onAddLevel={studio.addSpotLevel}
                   onCommitService={studio.commitService}
                   onCalibrate={(nextScaleM) => {
@@ -2804,6 +2838,8 @@ export function HandoffDesignStudio({
                 kind={ui.zoneKind}
                 zones={studio.irrigationZones}
                 cam={planCam}
+                serviceFeatureHidden={ui.serviceFeatureHidden}
+                focusedServiceIds={ui.focusedServiceIds}
                 onCommit={studio.commitZone}
               />
             ) : null}
@@ -2812,7 +2848,10 @@ export function HandoffDesignStudio({
               ui.mode === "quote") &&
             !ui.frameOn ? (
               <TrenchOverlay
-                trenches={studio.constructionTrenches}
+                trenches={studio.constructionTrenches.filter((t) => {
+                  if (t.ghost) return true;
+                  return !ui.serviceFeatureHidden[`trench:${t.id}`];
+                })}
                 cam={planCam}
                 onAcceptAll={studio.acceptAllTrenchGhosts}
                 onRejectAll={studio.rejectAllTrenchGhosts}
@@ -3363,6 +3402,44 @@ export function HandoffDesignStudio({
         ) : null}
 
         {/* Right data lane — one panel (lane law). Layers no longer left. */}
+        {chrome.structureRail && planOn && servicesOpen ? (
+          <RightDataLane testId="right-data-lane-services">
+            <ServicesLedger
+              open
+              locked={ui.servicesLocked}
+              scaleM={scaleM}
+              services={studio.services}
+              easements={studio.easements}
+              levels={studio.levels}
+              irrigationZones={studio.irrigationZones}
+              constructionTrenches={studio.constructionTrenches}
+              items={studio.items}
+              hiddenIds={ui.serviceFeatureHidden}
+              focusedIds={ui.focusedServiceIds}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onToggleVisible={studio.toggleServiceFeatureVisible}
+              onFocus={studio.focusServiceFeature}
+              onClearFocus={studio.clearServiceFocus}
+              onShowAll={studio.showAllServiceFeatures}
+              onFocusChecked={() => {
+                const rows = buildServiceLedgerRows({
+                  services: studio.services,
+                  easements: studio.easements,
+                  levels: studio.levels,
+                  irrigationZones: studio.irrigationZones,
+                  constructionTrenches: studio.constructionTrenches,
+                  items: studio.items,
+                  scaleM,
+                });
+                const visible = rows
+                  .filter((r) => !ui.serviceFeatureHidden[r.id])
+                  .map((r) => r.id);
+                studio.focusVisibleServiceFeatures(visible);
+              }}
+            />
+          </RightDataLane>
+        ) : null}
+
         {chrome.structureRail && planOn && layersOpen ? (
           <RightDataLane testId="right-data-lane-layers">
             <LayersPanel
@@ -3377,6 +3454,12 @@ export function HandoffDesignStudio({
               onOpacity={studio.setLayerOpacity}
               onSetback={(setbackOn) => studio.setUi({ setbackOn })}
               onShade={(shadeOn) => studio.setUi({ shadeOn })}
+              onOpenServices={() =>
+                studio.setUi({
+                  rightDataPanel: "services",
+                  utilityPanel: null,
+                })
+              }
             />
           </RightDataLane>
         ) : null}
@@ -3473,6 +3556,14 @@ export function HandoffDesignStudio({
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
           onAutoTrench={studio.runAutoTrench}
+          onOpenServices={() =>
+            studio.setUi({
+              rightDataPanel: "services",
+              cmdOpen: false,
+              cmdQuery: "",
+              utilityPanel: null,
+            })
+          }
           onConvertSketch={
             formalizing ? undefined : () => void runFormalizeToCad()
           }

@@ -22,6 +22,8 @@ type Props = {
   onScanGhosts: () => void;
   /** Propose irrig / conduit / drainage trenches from zones + drains. */
   onAutoTrench?: () => void;
+  /** Open the Services ledger (ticks / metrics / focus). */
+  onOpenServices?: () => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
@@ -58,6 +60,7 @@ export function StudioCommandPalette({
   onArm,
   onScanGhosts,
   onAutoTrench,
+  onOpenServices,
   onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
@@ -145,6 +148,19 @@ export function StudioCommandPalette({
               keywords:
                 "auto trench irrigation conduit lighting drainage plumbing excavate dig ag pipe mainline lateral landscape architect",
               run: onAutoTrench,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onOpenServices
+        ? [
+            {
+              id: "services-ledger",
+              label: "Services ledger",
+              detail:
+                "Live corridors, easements, RLs, lighting & trenches — ticks, metrics, click to focus",
+              keywords:
+                "services ledger easement corridor level lighting trench utilities byda tick focus isolate",
+              run: onOpenServices,
             } satisfies StudioCommand,
           ]
         : []),
@@ -246,6 +262,7 @@ export function StudioCommandPalette({
     onRedo,
     onScanGhosts,
     onAutoTrench,
+    onOpenServices,
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,

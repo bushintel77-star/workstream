@@ -24,7 +24,9 @@ possible. Proposals are **ghosts** until Accept; only accepted runs persist on
 1. Draw drip / lighting zones (and place french drains) first.  
 2. Run Auto trench → review dashed proposals → Accept or Reject.  
 3. **BYDA before excavation** — auto trench is a landscape dig plan, not DBYD.  
-4. Survey Servc / Vicmap easements remain site context; trenches are build scope.
+4. Survey Servc / Vicmap easements remain site context; trenches are build scope.  
+5. Use the **Services ledger** to focus lighting runs + power/easement corridors before routing conduit.  
+6. Full LA pack (KEYLESS / BYDA / council): `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md`.
 
 ## Code map
 

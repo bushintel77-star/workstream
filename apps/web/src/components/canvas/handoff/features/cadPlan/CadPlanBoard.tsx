@@ -74,6 +74,11 @@ import {
   type LayerOpacity,
 } from "../../state/studioTypes";
 import { resolveLayerVisual } from "../../state/layerIsolate";
+import {
+  corridorFeatureId,
+  easementFeatureId,
+  resolveServiceFeatureVisual,
+} from "../services/serviceLedger";
 import { airLockSnapToHardscape } from "../pointer/airLockSnap";
 import { describeSelectedItem } from "../liveMeasures/describeSelectedItem";
 import { CameraChrome, boardCameraFromPlan } from "../../CameraChrome";
@@ -157,6 +162,10 @@ type Props = {
   locked: boolean;
   layerOpacity: LayerOpacity;
   isolatedLayer?: LayerKey | null;
+  /** Per-feature Services ledger hide map. */
+  serviceFeatureHidden?: Record<string, boolean>;
+  /** Focused service feature ids — others fall away. */
+  focusedServiceIds?: string[] | null;
   setbackOn: boolean;
   /** Indicative council setback rule (m) — muted on-plan path label, not a card. */
   councilSetbackM?: number | null;
@@ -294,6 +303,8 @@ export function CadPlanBoard({
   locked,
   layerOpacity,
   isolatedLayer = null,
+  serviceFeatureHidden = {},
+  focusedServiceIds = null,
   setbackOn,
   councilSetbackM = null,
   growth,
@@ -1093,36 +1104,60 @@ export function CadPlanBoard({
           : null}
         {easements
           .filter((r) => r.length >= 3)
-          .map((ring, i) => (
-            <g key={`ease${i}`} opacity={servicesVisual.opacity} data-testid="easement-hatch">
-              <polygon
-                points={ptsAttr(ring)}
-                fill="url(#ws-easement-hatch)"
-                stroke={lines.easement.stroke}
-                strokeWidth={lines.easement.strokeWidth}
-                strokeDasharray={lines.easement.dash}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
+          .map((ring, i) => {
+            const id = easementFeatureId(ring);
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            return (
+              <g
+                key={`ease${i}`}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="easement-hatch"
+                data-service-id={id}
+              >
+                <polygon
+                  points={ptsAttr(ring)}
+                  fill="url(#ws-easement-hatch)"
+                  stroke={lines.easement.stroke}
+                  strokeWidth={lines.easement.strokeWidth}
+                  strokeDasharray={lines.easement.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
         {services
           .filter((r) => r.length >= 2)
-          .map((ring, i) => (
-            <g
-              key={`svc${i}`}
-              opacity={servicesVisual.opacity}
-              data-testid="utility-service-trace"
-            >
-              <polyline
-                points={ptsAttr(ring)}
-                fill="none"
-                stroke={lines.service.stroke}
-                strokeWidth={lines.service.strokeWidth}
-                strokeDasharray={lines.service.dash}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
+          .map((ring, i) => {
+            const id = corridorFeatureId(ring);
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            return (
+              <g
+                key={`svc${i}`}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="utility-service-trace"
+                data-service-id={id}
+              >
+                <polyline
+                  points={ptsAttr(ring)}
+                  fill="none"
+                  stroke={lines.service.stroke}
+                  strokeWidth={lines.service.strokeWidth}
+                  strokeDasharray={lines.service.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
         {cadTitleMode
           ? contextLots.map((ring, i) => (
               <polygon

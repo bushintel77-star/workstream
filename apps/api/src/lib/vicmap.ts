@@ -120,6 +120,176 @@ export function scoreBuildingLayerName(typeName: string): number {
   return score;
 }
 
+/**
+ * KEYLESS next — same GetCapabilities stack as title/building.
+ * Scorers only (hydrate jobs land per layer). Prefer view / polygon layers.
+ */
+export type VicmapKeylessKind =
+  | "easement"
+  | "planning"
+  | "bushfire"
+  | "urban_tree"
+  | "contour"
+  | "flood"
+  | "heritage"
+  | "water_corp"
+  | "road_casement"
+  | "acid_sulfate"
+  | "wetland";
+
+function scoreNamed(
+  typeName: string,
+  prefer: RegExp[],
+  reject: RegExp[],
+  exactBoost: Record<string, number> = {},
+): number {
+  const n = localName(typeName);
+  if (!n) return -Infinity;
+  for (const r of reject) {
+    if (r.test(n)) return -100;
+  }
+  if (exactBoost[n] != null) return exactBoost[n]!;
+  let score = -Infinity;
+  for (const p of prefer) {
+    if (p.test(n)) {
+      score = Math.max(score, 40);
+      if (n.includes("view") || n.includes("polygon")) score += 20;
+      if (n.includes("proposed")) score -= 15;
+    }
+  }
+  return score;
+}
+
+export function scoreEasementLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/easement/],
+    [/proposed(?!.*easement)/, /annotation/, /label/],
+    { easement: 100, v_s_easement: 90, easement_view: 95 },
+  );
+}
+
+export function scorePlanningLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/planning.?zone/, /zone.?polygon/, /\bpg_/, /land.?use.?zone/],
+    [/annotation/, /label/, /address/],
+    { planning_zone: 100, v_zone_polygon: 90 },
+  );
+}
+
+export function scoreBushfireLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/bushfire/, /\bbpa\b/, /bmo/, /fire.?prone/],
+    [/annotation/, /label/],
+    { bushfire_prone_area: 100, bpa: 90 },
+  );
+}
+
+export function scoreUrbanTreeLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/tree_urban/, /urban.?tree/, /canopy/, /veg.?tree/],
+    [/annotation/, /farm/, /plantation/],
+    { tree_urban: 100, urban_tree: 90 },
+  );
+}
+
+export function scoreContourLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/contour/, /hypsometric/, /elevation.?line/],
+    [/spot.?height/, /annotation/],
+    { contour: 90, contours_1m: 100, contours_5m: 85 },
+  );
+}
+
+export function scoreFloodLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/flood/, /lsio/, /inundation/, /overlay.?flood/],
+    [/annotation/, /label/],
+    { flood_extent: 90, lsio: 95 },
+  );
+}
+
+export function scoreHeritageLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/heritage/, /\bho\b/, /heritage.?overlay/],
+    [/annotation/, /label/],
+    { heritage_overlay: 100, heritage: 80 },
+  );
+}
+
+export function scoreWaterCorpLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/water.?corp/, /watercorp/, /melb.?water/, /authority.?boundary/],
+    [/pipe/, /main/, /sewer/, /annotation/],
+    { water_corporation: 100 },
+  );
+}
+
+export function scoreRoadCasementLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/road.?casement/, /road.?reserve/, /tr_road/, /road.?polygon/],
+    [/annotation/, /centerline/, /centreline/],
+    { road_casement_polygon: 100, tr_road: 80 },
+  );
+}
+
+export function scoreAcidSulfateLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/acid.?sulfate/, /acid.?sulphate/, /\bass\b/],
+    [/annotation/],
+    { acid_sulfate_soil: 100 },
+  );
+}
+
+export function scoreWetlandLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/wetland/, /ramsar/, /swamp/],
+    [/annotation/, /label/],
+    { wetland: 100 },
+  );
+}
+
+export const VICMAP_KEYLESS_SCORERS: Record<
+  VicmapKeylessKind,
+  (typeName: string) => number
+> = {
+  easement: scoreEasementLayerName,
+  planning: scorePlanningLayerName,
+  bushfire: scoreBushfireLayerName,
+  urban_tree: scoreUrbanTreeLayerName,
+  contour: scoreContourLayerName,
+  flood: scoreFloodLayerName,
+  heritage: scoreHeritageLayerName,
+  water_corp: scoreWaterCorpLayerName,
+  road_casement: scoreRoadCasementLayerName,
+  acid_sulfate: scoreAcidSulfateLayerName,
+  wetland: scoreWetlandLayerName,
+};
+
+/** Pick best KEYLESS layer names from a capabilities list (discovery only). */
+export function discoverKeylessLayerNames(
+  typeNames: string[],
+): Partial<Record<VicmapKeylessKind, string>> {
+  const out: Partial<Record<VicmapKeylessKind, string>> = {};
+  for (const [kind, scoreFn] of Object.entries(VICMAP_KEYLESS_SCORERS) as Array<
+    [VicmapKeylessKind, (n: string) => number]
+  >) {
+    const best = pickBestLayerName(typeNames, scoreFn);
+    if (best) out[kind] = best;
+  }
+  return out;
+}
+
 /** Pick the best-scoring typeName from a capabilities list. */
 export function pickBestLayerName(
   typeNames: string[],
