@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import type { IrrigationZone, IrrigationZoneKind } from "@workstream/contracts";
@@ -73,7 +73,7 @@ function headTicks(
 
 /**
  * Authored drip / lighting / conduit / spray / agg-drain paths.
- * Enter finishes; Esc cancels. Feeds DesignCanvas.irrigation_zones → BOM.
+ * Enter finishes; Esc cancels. Feeds DesignCanvas.irrigation_zones ΓåÆ BOM.
  */
 export function ZoneOverlay({
   active,
@@ -132,13 +132,23 @@ export function ZoneOverlay({
         return {
           id: z.id,
           kind: (z.kind ?? "drip") as IrrigationZoneKind,
-          pts: z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          pts: z.points.map((pt) => ({ x: pt.x_pct, y: pt.y_pct })),
           name: z.name,
+          spacingM: z.fixture_spacing_m ?? 2.5,
           opacity: dimmed ? 0.12 : 1,
         };
       }),
     ...(draft
-      ? [{ id: "draft", kind, pts: draft, name: "draft", opacity: 0.7 }]
+      ? [
+          {
+            id: "draft",
+            kind,
+            pts: draft,
+            name: "draft",
+            spacingM: 2.5,
+            opacity: 0.7,
+          },
+        ]
       : []),
   ];
 
@@ -162,29 +172,35 @@ export function ZoneOverlay({
         preserveAspectRatio="none"
         aria-hidden
       >
-        {rings.map((r) => (
-          <g
-            key={r.id}
-            data-testid={
-              r.id === "draft" ? "zone-draft" : `zone-path-${r.kind}`
-            }
-          >
-            <polyline
-              points={r.pts.map((p) => `${p.x},${p.y}`).join(" ")}
-              fill="none"
-              stroke={r.kind === "lighting" ? "#57534E" : "#3F6212"}
-              strokeWidth={0.35}
-              strokeDasharray={r.kind === "lighting" ? "1.4 1.1" : "2 0.9"}
-              vectorEffect="non-scaling-stroke"
-              opacity={r.opacity * (r.id === "draft" ? 1 : 0.9)}
-            />
-            {r.pts.map((p, i) => (
-              <circle
-                key={i}
-                cx={p.x}
-                cy={p.y}
-                r={0.45}
-                fill={r.kind === "lighting" ? "#57534E" : "#3F6212"}
+        {rings.map((r) => {
+          const stroke = strokeFor(r.kind);
+          const showHeads =
+            r.kind === "spray" ||
+            r.kind === "lighting" ||
+            r.kind === "lighting_conduit";
+          // ~ board % for ~2.5ΓÇô3.5 m at scale ~110 m ΓåÆ ~2.3ΓÇô3.2 %
+          const tickPct =
+            r.kind === "spray" ? 3.2 : r.kind === "lighting_conduit" ? 8 : 2.3;
+          const ticks = showHeads ? headTicks(r.pts, tickPct) : [];
+          const fitPt =
+            r.kind === "lighting_conduit" && r.pts.length >= 2
+              ? r.pts[r.pts.length - 1]!
+              : null;
+          return (
+            <g
+              key={r.id}
+              data-testid={
+                r.id === "draft" ? "zone-draft" : `zone-path-${r.kind}`
+              }
+            >
+              <polyline
+                points={r.pts.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                stroke={stroke.color}
+                strokeWidth={stroke.width}
+                strokeDasharray={stroke.dash}
+                vectorEffect="non-scaling-stroke"
+                opacity={r.opacity}
               />
               {r.pts.map((p, i) => (
                 <circle
@@ -244,7 +260,7 @@ export function ZoneOverlay({
         const labelPct: PctPoint = { x: p0.x_pct, y: p0.y_pct };
         const labelNode = (
           <span className={css.label}>
-            {zoneKindShortLabel(kindZ)} · {z.name}
+            {zoneKindShortLabel(kindZ)} ┬╖ {z.name}
           </span>
         );
         return cam ? (
@@ -269,7 +285,7 @@ export function ZoneOverlay({
               top: `${labelPct.y}%`,
             }}
           >
-            {zoneKindShortLabel(kindZ)} · {z.name}
+            {zoneKindShortLabel(kindZ)} ┬╖ {z.name}
           </span>
         );
       })}
@@ -277,7 +293,7 @@ export function ZoneOverlay({
       {active ? (
         <CameraChrome>
           <p className={css.hint} data-testid="zone-draw-hint">
-            {zoneKindDrawHint(kind)} · {draft?.length ?? 0} pts · Enter finish ·
+            {zoneKindDrawHint(kind)} ┬╖ {draft?.length ?? 0} pts ┬╖ Enter finish ┬╖
             Esc cancel
           </p>
         </CameraChrome>

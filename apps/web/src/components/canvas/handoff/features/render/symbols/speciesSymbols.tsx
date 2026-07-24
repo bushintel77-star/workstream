@@ -23,14 +23,14 @@ function GlyphSoftShadow({ night }: { night: boolean }) {
       cy={50 + dy}
       rx={r * 0.82}
       ry={r * 0.42}
-      fill={sunShadowFillFrom(sun, night)}
+      fill={sunShadowFill(night)}
       style={{ mixBlendMode: "multiply" }}
     />
   );
 }
 
 function shadow(night: boolean) {
-  return <ShadowEllipse night={night} />;
+  return <GlyphSoftShadow night={night} />;
 }
 
 /** Canopy tree — lobed hand-wobbled circle + fine radial branching. */

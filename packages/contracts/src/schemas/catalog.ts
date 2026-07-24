@@ -344,12 +344,31 @@ export const DesignKeylessOverlaySchema = z.object({
 });
 export type DesignKeylessOverlay = z.infer<typeof DesignKeylessOverlaySchema>;
 
+/** Indicative drainage run between authored spot RLs (Workflow 1 — no TIN). */
+export const DesignSiteFrameDrainageRunSchema = z.object({
+  id: z.string(),
+  points: z
+    .array(
+      z.object({
+        x_pct: z.number().min(0).max(100),
+        y_pct: z.number().min(0).max(100),
+        z_m: z.number(),
+      }),
+    )
+    .min(2),
+  source: z.literal("indicative").default("indicative"),
+});
+export type DesignSiteFrameDrainageRun = z.infer<
+  typeof DesignSiteFrameDrainageRunSchema
+>;
+
 export const DesignSiteFrameSchema = z.object({
   boundary: z.array(DesignSiteFramePointSchema).default([]),
   building: z.array(DesignSiteFramePointSchema).default([]),
   easements: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   services: z.array(z.array(DesignSiteFramePointSchema)).default([]),
   levels: z.array(DesignSiteFrameLevelSchema).default([]),
+  drainage_runs: z.array(DesignSiteFrameDrainageRunSchema).default([]),
   /**
    * Typed underground / utility assets (BYDA language) — never conflated with
    * title easement hatches.

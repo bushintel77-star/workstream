@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { decorativeGlyphShadowOffset } from "@workstream/domain";
-import { hatchUrlFor, SUN_SHADOW, sunShadowFill } from "./renderTokens";
+import {
+  hatchUrlFor,
+  SUN_SHADOW,
+  sunShadowFill,
+  viewFromCast,
+} from "./renderTokens";
 
 describe("renderTokens", () => {
   it("keeps soft-shadow presentation factors stable", () => {

@@ -604,6 +604,17 @@ function propStr(
 }
 
 /** Extract cadastral labels from Vicmap property_view attributes. */
+export function extractPolylines(geom: RawGeometry | undefined): Coord[][] {
+  if (!geom) return [];
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  if (geom.type === "MultiLineString") {
+    return geom.coordinates.filter((line) => line.length >= 2);
+  }
+  return [];
+}
+
 export function extractVicmapParcelAttrs(
   props: Record<string, unknown> | undefined,
   lotAreaM2: number,

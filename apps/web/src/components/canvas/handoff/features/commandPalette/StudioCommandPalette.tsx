@@ -24,6 +24,10 @@ type Props = {
   onScanGhosts: () => void;
   /** Propose irrig / conduit / drainage trenches from zones + drains. */
   onAutoTrench?: () => void;
+  /** Agentic-lite Develop loop — ghosts → scheme tip → Flora → Live BOM. */
+  onDevelopSite?: () => void;
+  /** LV conduit + watering (agg drain or spray laterals). */
+  onProposeServices?: () => void;
   /** Open the Services ledger (ticks / metrics / focus). */
   onOpenServices?: () => void;
   /** Open Environment boundary panel (sun / season / growth). */
@@ -70,6 +74,8 @@ export function StudioCommandPalette({
   onArm,
   onScanGhosts,
   onAutoTrench,
+  onDevelopSite,
+  onProposeServices,
   onOpenServices,
   onOpenEnvironment,
   onOpenSite,
@@ -152,6 +158,32 @@ export function StudioCommandPalette({
         keywords: "scan ghost ai suggest propose layout",
         run: onScanGhosts,
       },
+      ...(onDevelopSite
+        ? [
+            {
+              id: "develop-site",
+              label: "Develop site",
+              detail:
+                "Propose layout ghosts, tip for scheme A, Flora Ring, Live BOM — you accept each step",
+              keywords:
+                "develop site loop agentic ghosts scheme flora bom layout garden",
+              run: onDevelopSite,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onProposeServices
+        ? [
+            {
+              id: "propose-services",
+              label: "Propose lighting & watering",
+              detail:
+                "LV conduit trench to house main + aggregate drain or sprinkler laterals",
+              keywords:
+                "lighting conduit trench fitoff house main irrigation spray sprinkler agg drain watering services",
+              run: onProposeServices,
+            } satisfies StudioCommand,
+          ]
+        : []),
       ...(onAutoTrench
         ? [
             {

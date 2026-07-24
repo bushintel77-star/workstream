@@ -10,7 +10,8 @@ import {
 } from "./geometry/planLineStyles";
 import {
   hatchUrlFor,
-  sunShadowFillFrom,
+  SUN_SHADOW,
+  sunShadowFill,
 } from "./features/render/renderTokens";
 import { useGlyphSunShadow } from "./features/shade/SunShadowContext";
 
@@ -53,7 +54,6 @@ export function StudioGlyph({
   const greenFill = "rgba(122, 150, 112, 0.14)";
   const airFill = "rgba(122, 150, 112, 0.07)";
 
-  const sun = useSunShadow();
   const def = BY_TYPE[type];
   const castsShadow =
     Boolean(def.canopyM) || (def.heightM != null && def.heightM > 0);
@@ -71,7 +71,7 @@ export function StudioGlyph({
       cy={50 + shadowDy}
       rx={canopyR * 0.82}
       ry={canopyR * 0.42}
-      fill={sunShadowFillFrom(sun, night)}
+      fill={sunShadowFill(night)}
       style={{ mixBlendMode: "multiply" }}
     />
   ) : null;

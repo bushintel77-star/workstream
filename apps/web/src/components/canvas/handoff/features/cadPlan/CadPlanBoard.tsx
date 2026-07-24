@@ -54,10 +54,9 @@ import { RenderDefs } from "../render/RenderDefs";
 import type { BoardShadowCast } from "@workstream/domain";
 import {
   DWELLING_HATCH_IDS,
-  sunShadowFillFrom,
-  viewFromCast,
+  SUN_SHADOW,
+  sunShadowFill,
 } from "../render/renderTokens";
-import { SunShadowProvider } from "../render/SunShadowContext";
 import {
   SpeciesSymbol,
   isSpeciesSymbolType,

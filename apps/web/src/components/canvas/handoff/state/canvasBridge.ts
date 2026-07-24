@@ -7,6 +7,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   DesignSiteFrame,
+  DesignSiteFrameInput,
   LandscapeFeature,
 } from "@workstream/contracts";
 import type {
@@ -232,6 +233,11 @@ export function snapshotToSiteFrame(args: {
   easements: PctPoint[][];
   services: PctPoint[][];
   levels: SpotLevel[];
+  drainageRuns?: Array<{
+    id: string;
+    points: Array<{ x: number; y: number; z: number }>;
+    source: "indicative";
+  }>;
   bydaAssets?: DesignSiteFrame["byda_assets"];
   keylessOverlays?: DesignSiteFrame["keyless_overlays"];
   /** Metres per 100% board width (Vicmap fit or operator calibration). */
@@ -248,11 +254,20 @@ export function snapshotToSiteFrame(args: {
       y_pct: clampPct(lv.y),
       z_m: lv.z,
     })),
+    drainage_runs: (args.drainageRuns ?? []).map((run) => ({
+      id: run.id,
+      source: "indicative" as const,
+      points: run.points.map((pt) => ({
+        x_pct: clampPct(pt.x),
+        y_pct: clampPct(pt.y),
+        z_m: pt.z,
+      })),
+    })),
     byda_assets: (args.bydaAssets ?? []).map((a) => ({
       ...a,
-      ring: a.ring.map((p) => ({
-        x_pct: clampPct(p.x_pct),
-        y_pct: clampPct(p.y_pct),
+      ring: a.ring.map((pt) => ({
+        x_pct: clampPct(pt.x_pct),
+        y_pct: clampPct(pt.y_pct),
       })),
     })),
     keyless_overlays: args.keylessOverlays ?? [],
@@ -280,6 +295,11 @@ export function siteFrameToSnapshot(
   keylessOverlays?: DesignSiteFrame["keyless_overlays"];
   boardWidthM?: number;
   buildingSource?: DesignSiteFrame["building_source"];
+  drainageRuns?: Array<{
+    id: string;
+    points: Array<{ x: number; y: number; z: number }>;
+    source: "indicative";
+  }>;
 } {
   if (!frame) return {};
   const out: {
@@ -292,16 +312,26 @@ export function siteFrameToSnapshot(
     keylessOverlays?: DesignSiteFrame["keyless_overlays"];
     boardWidthM?: number;
     buildingSource?: DesignSiteFrame["building_source"];
+    drainageRuns?: Array<{
+      id: string;
+      points: Array<{ x: number; y: number; z: number }>;
+      source: "indicative";
+    }>;
   } = {};
   if (frame.board_width_m != null && frame.board_width_m > 0) {
     out.boardWidthM = frame.board_width_m;
   }
   if (frame.building_source) out.buildingSource = frame.building_source;
-  if (frame.boundary.length >= 3) out.boundary = frameToRing(frame.boundary);
-  if (frame.building.length >= 3) out.building = frameToRing(frame.building);
-  if (frame.easements.length > 0) {
-    out.easements = frame.easements.map(frameToRing);
+  const boundary = frame.boundary ?? [];
+  const building = frame.building ?? [];
+  const easements = frame.easements ?? [];
+  if (boundary.length >= 3) out.boundary = frameToRing(boundary);
+  if (building.length >= 3) out.building = frameToRing(building);
+  if (easements.length > 0) {
+    out.easements = easements.map(frameToRing);
   }
+  const services = frame.services ?? [];
+  const levels = frame.levels ?? [];
   if (services.length > 0) {
     out.services = services.map(frameToRing);
   }
@@ -312,11 +342,24 @@ export function siteFrameToSnapshot(
       z: lv.z_m,
     }));
   }
+  if (frame.drainage_runs?.length) {
+    out.drainageRuns = frame.drainage_runs.map((run) => ({
+      id: run.id,
+      source: "indicative" as const,
+      points: run.points.map((pt) => ({
+        x: pt.x_pct,
+        y: pt.y_pct,
+        z: pt.z_m,
+      })),
+    }));
+  }
   if ((frame.byda_assets ?? []).length > 0) {
-    out.bydaAssets = frame.byda_assets;
+    // Input form may omit defaults; cast to parsed DesignSiteFrame shape.
+    out.bydaAssets = frame.byda_assets as DesignSiteFrame["byda_assets"];
   }
   if ((frame.keyless_overlays ?? []).length > 0) {
-    out.keylessOverlays = frame.keyless_overlays;
+    out.keylessOverlays =
+      frame.keyless_overlays as DesignSiteFrame["keyless_overlays"];
   }
   return out;
 }

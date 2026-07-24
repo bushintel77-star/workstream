@@ -32,6 +32,40 @@ export type StudioItem = {
    * with the item centroid.
    */
   outlinePct?: Pt[];
+  /** Catalog symbol id — preserves lighting fixtures through round-trip. */
+  symbolId?: string;
+  /** Locked residential path width (m) for paving/deck. */
+  pathWidthM?: number;
+  /** Edge detailing — sawn / soldier / spalled / soft. */
+  edgeType?: HardscapeEdgeType;
+  /** Corner fillet lock (m) — residential detailing. */
+  pathFilletM?: number;
+};
+
+export type DrainageRun = {
+  id: string;
+  points: Array<{ x: number; y: number; z: number }>;
+  source: "indicative";
+};
+
+/** Authored residential path corridor (centreline + craft locks). */
+export type PathCorridor = {
+  id: string;
+  points: Pt[];
+  material: "paving" | "deck";
+  pathWidthM: number;
+  edgeType: HardscapeEdgeType;
+  pathFilletM: number;
+  why: string;
+};
+
+export type DesignSchemeSnapshot = {
+  id: string;
+  letter: "A" | "B" | "C";
+  name: string;
+  items: StudioItem[];
+  pathCorridors: PathCorridor[];
+  savedAt: string;
 };
 
 export type Pt = { x: number; y: number };
@@ -364,6 +398,8 @@ export type StudioTool =
   | (typeof SURVEY_TOOLS)[number]["id"]
   | "measure"
   | "sketch"
+  /** Space / middle-drag pan — not docked; gesture ground-state. */
+  | "pan"
   /** Residential path polyline — entered via hardscape craft bar. */
   | "path";
 

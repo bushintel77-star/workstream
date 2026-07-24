@@ -3,6 +3,8 @@
  * Keep deterministic — no Math.random.
  */
 
+import type { BoardShadowCast } from "@workstream/domain";
+
 /**
  * Soft-shadow presentation factors. Direction comes from live sun azimuth
  * (`decorativeGlyphShadowOffset` / SunShadowProvider) — same opposite-sun

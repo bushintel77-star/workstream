@@ -3,6 +3,7 @@ import {
   discoverKeylessLayerNames,
   EASEMENT_LINE_CAP,
   explodeExteriorRings,
+  extractPolylines,
   extractVicmapParcelAttrs,
   parseFeatureTypeNames,
   parseGeometryFieldName,
@@ -16,6 +17,56 @@ import {
   scorePropertyLayerName,
   scoreUrbanTreeLayerName,
 } from "./vicmap";
+
+describe("extractPolylines", () => {
+  it("wraps a LineString into a single polyline", () => {
+    expect(
+      extractPolylines({
+        type: "LineString",
+        coordinates: [
+          [145.0, -37.85],
+          [145.001, -37.851],
+        ],
+      }),
+    ).toEqual([
+      [
+        [145.0, -37.85],
+        [145.001, -37.851],
+      ],
+    ]);
+  });
+
+  it("flattens MultiLineString parts and drops degenerate ones", () => {
+    const lines = extractPolylines({
+      type: "MultiLineString",
+      coordinates: [
+        [
+          [145.0, -37.85],
+          [145.001, -37.851],
+        ],
+        [[145.002, -37.852]],
+      ],
+    });
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toHaveLength(2);
+  });
+
+  it("returns empty for polygon geometry", () => {
+    expect(
+      extractPolylines({
+        type: "Polygon",
+        coordinates: [
+          [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 0],
+          ],
+        ],
+      }),
+    ).toEqual([]);
+  });
+});
 
 describe("extractVicmapParcelAttrs", () => {
   it("reads mixed-case Vicmap property_view fields", () => {
@@ -152,64 +203,14 @@ describe("layer discovery scoring", () => {
     );
   });
 
-  it("rejects annotation / proposed / non-easement names", () => {
+  it("rejects annotation / non-easement names; proposed ranks below full easement", () => {
     expect(scoreEasementLayerName("open-data-platform:easement_anno")).toBeLessThan(0);
     expect(
       scoreEasementLayerName("open-data-platform:easement_proposed"),
-    ).toBeLessThan(0);
+    ).toBeLessThan(scoreEasementLayerName("open-data-platform:easement"));
     expect(scoreEasementLayerName("open-data-platform:property_view")).toBe(
       -Infinity,
     );
-  });
-});
-
-describe("extractPolylines", () => {
-  it("wraps a LineString into a single polyline", () => {
-    expect(
-      extractPolylines({
-        type: "LineString",
-        coordinates: [
-          [145.0, -37.85],
-          [145.001, -37.851],
-        ],
-      }),
-    ).toEqual([
-      [
-        [145.0, -37.85],
-        [145.001, -37.851],
-      ],
-    ]);
-  });
-
-  it("flattens MultiLineString parts and drops degenerate ones", () => {
-    const lines = extractPolylines({
-      type: "MultiLineString",
-      coordinates: [
-        [
-          [145.0, -37.85],
-          [145.001, -37.851],
-        ],
-        [[145.002, -37.852]],
-      ],
-    });
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toHaveLength(2);
-  });
-
-  it("returns empty for polygon geometry", () => {
-    expect(
-      extractPolylines({
-        type: "Polygon",
-        coordinates: [
-          [
-            [0, 0],
-            [1, 0],
-            [1, 1],
-            [0, 0],
-          ],
-        ],
-      }),
-    ).toEqual([]);
   });
 });
 

@@ -93,9 +93,6 @@ import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
 import { SunCastOverlay } from "./features/shade/SunCastOverlay";
 import { SunMarkerPip } from "./features/shade/SunMarkerPip";
 import { ClimateBedWash } from "./features/shade/ClimateBedWash";
-import {
-  sunDateFromPreset,
-} from "./features/sunGrowth/sunDatePreset";
 import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
@@ -4072,6 +4069,8 @@ export function HandoffDesignStudio({
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
           onScanGhosts={() => void ai.scan()}
+          onDevelopSite={() => void studio.ai.develop()}
+          onProposeServices={studio.ai.proposeServices}
           onAutoTrench={studio.runAutoTrench}
           onOpenServices={() => {
             summonStickyMeta(projectId, "services");
