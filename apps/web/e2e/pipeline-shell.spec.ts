@@ -32,12 +32,18 @@ test.describe("One canvas modes", () => {
   });
 
   test("mode strip switches Survey → Sketch → CAD", async ({ page }) => {
-    await page.goto(`/projects/${projectId}`);
+    // After survey job, empty `?mode=` suggests CAD — pin Survey first.
+    await page.goto(`/projects/${projectId}?mode=survey`);
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(page.getByTestId("canvas-mode-survey")).toBeVisible();
     await expect(page.getByTestId("canvas-mode-sketch")).toBeVisible();
     await expect(page.getByTestId("canvas-mode-cad")).toBeVisible();
+    await expect(handoffStudio(page)).toHaveAttribute(
+      "data-canvas-mode",
+      "survey",
+    );
 
     await page.getByTestId("canvas-mode-sketch").click();
     await expect(page).toHaveURL(/mode=sketch/);
@@ -49,6 +55,13 @@ test.describe("One canvas modes", () => {
     await page.getByTestId("canvas-mode-cad").click();
     await expect(page).toHaveURL(/mode=cad/);
     await expect(handoffStudio(page)).toHaveAttribute("data-canvas-mode", "cad");
+
+    await page.getByTestId("canvas-mode-survey").click();
+    await expect(page).toHaveURL(/mode=survey/);
+    await expect(handoffStudio(page)).toHaveAttribute(
+      "data-canvas-mode",
+      "survey",
+    );
   });
 
   test("legacy design route redirects into sketch mode", async ({ page }) => {

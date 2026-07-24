@@ -54,6 +54,8 @@ Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd
 
 **Studio styling + UI/UX (binding):** `docs/STUDIO-STYLING-AND-UX.md` — blush frost tokens, disappearing chrome, inventory as summoned popup (never a fixed opaque bar on the drawing), orbit clear of the glyph, contextual pointer. Read this before restyling canvas chrome.
 
+**Operator training (gold walkthrough):** `docs/OPERATOR-STUDIO-GOLD-WALKTHROUGH.md` — six mode workflows, site vs design matrix, Wrights Terrace assist scripts, lane law, anti-patterns, completion checklist.
+
 **CAD–AI 2026 UX (binding):** `docs/CAD-AI-2026-UX.md` — disappearing interface, AI as spatial collaborator (sidecar), constraint-first geometry, human-in-the-loop ghosts. Do not reintroduce sticky ribbons or chatbot-only AI.
 
 AI pipeline: heuristic coaching (`buildSketchCanvasAiSuggestions`) + optional vision ghosts API + NL sketch assist (`POST /projects/:id/design/assist` via `buildStudioSystemPrompt`) + CAD ghosts on generate (`generateCadAction`). Ghosts are ephemeral until accept.

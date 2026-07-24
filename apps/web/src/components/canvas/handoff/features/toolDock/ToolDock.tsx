@@ -50,7 +50,8 @@ type Chip = {
 type Props = {
   tool: StudioTool;
   mode: StudioMode;
-  servicesEdit?: boolean;
+  /** Survey Servc / Level / Calib — survey tab only, before Quote lock. */
+  surveyServicesAuthoring?: boolean;
   locked: boolean;
   night?: boolean;
   gridOn: boolean;
@@ -67,7 +68,7 @@ type Props = {
 export function ToolDock({
   tool,
   mode,
-  servicesEdit = false,
+  surveyServicesAuthoring = false,
   locked,
   night = false,
   gridOn,
@@ -76,21 +77,20 @@ export function ToolDock({
   onToggleGrid,
 }: Props) {
   const chips = useMemo<Chip[]>(() => {
-    const surveyExtras =
-      mode === "survey" || servicesEdit
-        ? SURVEY_TOOLS.map((t) => ({
-            id: t.id as StudioTool,
-            label: t.label,
-            icon: t.icon,
-            title: t.title,
-          }))
-        : [];
+    const surveyExtras = surveyServicesAuthoring
+      ? SURVEY_TOOLS.map((t) => ({
+          id: t.id as StudioTool,
+          label: t.label,
+          icon: t.icon,
+          title: t.title,
+        }))
+      : [];
     return [
       ...PRIMARY,
       ...surveyExtras,
       { id: "grid", label: "Grid", icon: "▦", title: "Drafting grid", trail: true },
     ];
-  }, [mode, servicesEdit]);
+  }, [surveyServicesAuthoring]);
 
   const isActive = (chip: Chip): boolean => {
     if (chip.id === "grid") return gridOn;

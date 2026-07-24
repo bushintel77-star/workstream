@@ -18,6 +18,7 @@ import {
 } from "./studioCatalog";
 import { useStudioState } from "./state/useStudioState";
 import { resolveHandoffChrome } from "./state/handoffChrome";
+import { surveyServicesAuthoringAllowed } from "./state/servicesLock";
 import {
   allowAerialUnderlay,
   isDraftingPlate,
@@ -1236,7 +1237,12 @@ export function HandoffDesignStudio({
   const layersOpen = ui.rightDataPanel === "layers";
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
-  const rightLaneBusy = ui.rightDataPanel != null;  const titleLocked =
+  const rightLaneBusy = ui.rightDataPanel != null;
+  const surveyServicesAuthoring = surveyServicesAuthoringAllowed({
+    mode: ui.mode,
+    servicesLocked: ui.servicesLocked,
+  });
+  const titleLocked =
     ui.foundationCleanse || ui.boundarySource === "vicmap";
   const drawingHot = chrome.collapseUtility;
   const showDocks = chrome.utilityDrawer;
@@ -1864,9 +1870,7 @@ export function HandoffDesignStudio({
           aria-label="Design workflow"
           data-testid="canvas-mode-strip"
         >
-          {/* Survey/services is a layer on the CAD canvas (Services toggle),
-              not a separate tab. Canvas-first: one canvas, dynamic. */}
-          {MODE_TABS.filter((m) => m !== "survey").map((m) => {
+          {MODE_TABS.map((m) => {
             const lockReason = lockReasonForMode(m);
             const locked = Boolean(lockReason);
             return (
@@ -2115,36 +2119,7 @@ export function HandoffDesignStudio({
                 </button>
               ) : null}
             </>
-          ) : null}
-          {ui.mode === "cad" && !ui.focusOn && !ui.clientView ? (
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.servicesEdit ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="services-layer-top"
-              aria-label={
-                ui.servicesEdit ? "Close services layer" : "Services layer"
-              }
-              title="Services layer — drainage, utilities, RL levels, calibrate"
-              aria-pressed={ui.servicesEdit}
-              onClick={() =>
-                studio.setUi({
-                  servicesEdit: !ui.servicesEdit,
-                  tool: ui.servicesEdit ? "select" : "service",
-                  layerOpacity: { ...ui.layerOpacity, services: 1 },
-                })
-              }
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M1.5 6.5h3l2 4 2.4-8 1.6 5.5 1-1.5h2.5"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          ) : null}
+            ) : null}
           <button
             type="button"
             className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
@@ -2282,7 +2257,10 @@ export function HandoffDesignStudio({
           onClearSetback={() => studio.setUi({ setbackOn: false })}
           onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
           onResetGrowth={() => studio.setUi({ growth: "mature" })}
-          onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
+          onResetLayer={(layer) => {
+            if (layer === "services" && ui.servicesLocked) return;
+            studio.setLayerOpacity(layer, 1);
+          }}
         />
       ) : null}
 
@@ -2757,10 +2735,7 @@ export function HandoffDesignStudio({
             {planOn && !ui.frameOn ? (
               <>
                 <SurveyAnnotationLayer
-                  active={
-                    ui.mode === "survey" ||
-                    (ui.mode === "cad" && ui.servicesEdit)
-                  }
+                  active={surveyServicesAuthoring}
                   tool={ui.tool}
                   levels={studio.levels}
                   services={studio.services}
@@ -3077,7 +3052,7 @@ export function HandoffDesignStudio({
           <ToolDock
             tool={ui.tool}
             mode={ui.mode}
-            servicesEdit={ui.mode === "cad" && ui.servicesEdit}
+            surveyServicesAuthoring={surveyServicesAuthoring}
             locked={ui.locked}
             night={darkLens}
             gridOn={gridStudioOpen}
@@ -3381,6 +3356,7 @@ export function HandoffDesignStudio({
               shadeOn={ui.shadeOn}
               items={studio.items}
               noteCount={studio.annotations.length}
+              lockedLayers={ui.servicesLocked ? ["services"] : []}
               onClose={() => studio.setUi({ rightDataPanel: null })}
               onOpacity={studio.setLayerOpacity}
               onSetback={(setbackOn) => studio.setUi({ setbackOn })}

@@ -60,11 +60,15 @@ export type StudioUiState = {
   /** View-only layer isolation; never persisted to DesignCanvas. */
   isolatedLayer: LayerKey | null;
   /**
-   * Services layer authoring on the CAD canvas — surfaces the Servc / Level /
-   * Calibrate tools in place so services live as a toggleable layer, not a
-   * separate survey tab. Canvas-first: one canvas, dynamic.
+   * Legacy CAD services-edit toggle — superseded by survey-only authoring.
+   * Kept for session compat; always false once quote locks site services.
    */
   servicesEdit: boolean;
+  /**
+   * Survey services (corridors, RL levels, easements) frozen as site context.
+   * Set when entering Quote / Share; blocks Servc tools and opacity sliders.
+   */
+  servicesLocked: boolean;
   setbackOn: boolean;
   growth: GrowthStage;
   /** Minutes past midnight Melb-ish; handoff uses sunMin */
@@ -144,8 +148,8 @@ export const DESIGN_LAYER_PRESET: LayerOpacity = {
   boundary: 1,
   council: 1,
   vegetation: 1,
-  // Services (drainage / utilities / RL levels) stay legible on the design
-  // canvas — they are a toggleable layer, not a separate survey tab.
+  // Services (drainage / utilities / RL levels) — survey context on CAD;
+  // read-only overlay once Quote locks site services.
   services: 1,
   notes: 1,
 };

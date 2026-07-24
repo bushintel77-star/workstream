@@ -95,6 +95,11 @@ import {
   type TraceTarget,
 } from "./studioTypes";
 import {
+  isSurveyServicesTool,
+  lockServicesOnMode,
+  surveyServicesAuthoringAllowed,
+} from "./servicesLock";
+import {
   applyAutoTraceParcelSnap,
   type AutoTraceParcelInput,
 } from "../geometry/parcelHydrate";
@@ -165,8 +170,10 @@ type Ui = {
   rightDataPanel: RightDataPanel | null;
   layerOpacity: LayerOpacity;
   isolatedLayer: LayerKey | null;
-  /** Services layer authoring on the CAD canvas (Servc / Level / Calibrate). */
+  /** Legacy — always false; survey-only services authoring. */
   servicesEdit: boolean;
+  /** Survey services frozen after Quote / Share entry. */
+  servicesLocked: boolean;
   setbackOn: boolean;
   /** Indicative sun-hours mesh on the % board. */
   shadeOn: boolean;
@@ -491,6 +498,7 @@ function initialState(opts: {
       councilTip: null,
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       servicesEdit: false,
+      servicesLocked: false,
       sheetScaleDenom: 100,
       // Persisted board scale (Vicmap fit / calibration) — else 110 m default.
       boardWidthM: frameOverlay.boardWidthM ?? null,
@@ -603,6 +611,8 @@ function reducer(state: State, action: Action): State {
       // Stage 1 keeps CAD title overlay across tabs — AI layer stays available.
       const enteringSurvey = action.mode === "survey";
       const leavingSurvey = state.ui.mode === "survey" && action.mode !== "survey";
+      const servicesLocked =
+        state.ui.servicesLocked || lockServicesOnMode(action.mode);
       let layerOpacity = state.ui.layerOpacity;
       if (enteringSurvey && !state.ui.foundationCleanse) {
         layerOpacity = { ...SURVEY_LAYER_PRESET };
@@ -622,6 +632,8 @@ function reducer(state: State, action: Action): State {
           isolatedLayer: null,
           drawPoly: null,
           drawCursor: null,
+          servicesEdit: false,
+          servicesLocked,
           rightDataPanel: enteringSurvey
             ? "checklist"
             : state.ui.rightDataPanel === "checklist"
@@ -639,6 +651,9 @@ function reducer(state: State, action: Action): State {
       };
     }
     case "setLayerOpacity":
+      if (action.key === "services" && state.ui.servicesLocked) {
+        return state;
+      }
       return {
         ...state,
         ui: {
@@ -2069,6 +2084,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const addSpotLevel = useCallback(
     (x: number, y: number, z: number) => {
+      if (
+        !surveyServicesAuthoringAllowed({
+          mode: state.ui.mode,
+          servicesLocked: state.ui.servicesLocked,
+        })
+      ) {
+        return;
+      }
       mutate((snap) => ({
         snap: {
           ...snap,
@@ -2076,11 +2099,19 @@ export function useStudioState(opts: UseStudioStateOpts) {
         },
       }));
     },
-    [mutate],
+    [mutate, state.ui.mode, state.ui.servicesLocked],
   );
 
   const commitService = useCallback(
     (ring: PctPoint[]) => {
+      if (
+        !surveyServicesAuthoringAllowed({
+          mode: state.ui.mode,
+          servicesLocked: state.ui.servicesLocked,
+        })
+      ) {
+        return;
+      }
       const classified = classifySurveyCorridor(ring);
       if (!classified) return;
       mutate((snap) => {
@@ -2100,7 +2131,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         };
       });
     },
-    [mutate],
+    [mutate, state.ui.mode, state.ui.servicesLocked],
   );
 
   const commitZone = useCallback(
@@ -2798,6 +2829,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setTraceTarget: (traceTarget: TraceTarget) =>
       setUi({ traceTarget, drawPoly: null, drawCursor: null }),
     setTool: (tool: StudioTool) => {
+      if (isSurveyServicesTool(tool)) {
+        if (
+          !surveyServicesAuthoringAllowed({
+            mode: state.ui.mode,
+            servicesLocked: state.ui.servicesLocked,
+          })
+        ) {
+          return;
+        }
+      }
       if (tool === "reset") {
         resetSite();
         setUi({

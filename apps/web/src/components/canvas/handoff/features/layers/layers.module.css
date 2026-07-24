@@ -99,6 +99,26 @@
   color: var(--hc-ink-muted, #7a5560);
 }
 
+.lockedTag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+  background: rgba(36, 19, 24, 0.06);
+}
+
+.frozenOpacity {
+  justify-self: end;
+  font-size: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--hc-ink-muted, #7a5560);
+  font-variant-numeric: tabular-nums;
+}
+
 .sliderLabel {
   display: grid;
   grid-template-columns: 40px 1fr;
