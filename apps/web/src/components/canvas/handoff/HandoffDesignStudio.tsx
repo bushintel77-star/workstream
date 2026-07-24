@@ -78,6 +78,9 @@ import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
 import { SunCastOverlay } from "./features/shade/SunCastOverlay";
 import { SunMarkerPip } from "./features/shade/SunMarkerPip";
 import { ClimateBedWash } from "./features/shade/ClimateBedWash";
+import {
+  sunDateFromPreset,
+} from "./features/sunGrowth/sunDatePreset";
 import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
@@ -131,6 +134,7 @@ import {
 } from "./features/ground/groundMetrics";
 import {
   solveLiveTradeEstimate,
+  sunPositionAt,
   tradeTagForItem,
   type ArchitecturalTitleBlock,
 } from "@workstream/domain";
@@ -1366,6 +1370,14 @@ export function HandoffDesignStudio({
    * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
    */
   const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
+
+  /** Same azimuth vector as SunCastOverlay — drives decorative glyph shadows. */
+  const sunAzimuthDeg = useMemo(() => {
+    const when = sunDateFromPreset(ui.sunDatePreset, ui.sunMin);
+    const lat = projectLat ?? -37.849;
+    const lng = projectLng ?? 144.993;
+    return sunPositionAt(lat, lng, when).azimuth_deg;
+  }, [ui.sunDatePreset, ui.sunMin, projectLat, projectLng]);
 
   const siteLiveMeta = useMemo(
     () =>
@@ -2623,6 +2635,7 @@ export function HandoffDesignStudio({
               buildingSource={ui.buildingSource}
               scaleM={scaleM}
               timedSunCast={ui.shadeOn || environmentOpen}
+              sunAzimuthDeg={sunAzimuthDeg}
               bydaAssets={studio.bydaAssets}
               planZoom={planZoom}
               tiltDeg={ui.tiltDeg}

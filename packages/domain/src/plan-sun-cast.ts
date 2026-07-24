@@ -56,6 +56,25 @@ export function shadowOffsetPct(
 }
 
 /**
+ * Decorative glyph / dwelling soft-shadow offset (same opposite-sun vector as
+ * `shadowOffsetPct`). `radius * factor` is the fall length in the caller's units
+ * (glyph viewBox % or board %). Azimuth 0° = north sun → south (+y) shadow.
+ */
+export function decorativeGlyphShadowOffset(
+  azimuthDeg: number,
+  radius: number,
+  factor = 0.22,
+): { dx: number; dy: number } {
+  if (!(radius > 0) || !(factor > 0)) return { dx: 0, dy: 0 };
+  const len = radius * factor;
+  const rad = (azimuthDeg * Math.PI) / 180;
+  return {
+    dx: -Math.sin(rad) * len,
+    dy: Math.cos(rad) * len,
+  };
+}
+
+/**
  * Extruded silhouette of a footprint ring under the current sun.
  * Returns a closed % polygon or null when cast is off.
  */

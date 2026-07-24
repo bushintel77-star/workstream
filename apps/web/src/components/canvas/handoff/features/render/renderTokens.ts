@@ -3,14 +3,19 @@
  * Keep deterministic — no Math.random.
  */
 
-/** Southern hemisphere: sun from the north → shadows cast south (+y on plan). */
+/**
+ * Soft-shadow presentation factors. Direction comes from live sun azimuth
+ * (`decorativeGlyphShadowOffset` / SunShadowProvider) — same opposite-sun
+ * vector as timed cast. Defaults below match north-sun → south-fall.
+ */
 export const SUN_SHADOW = {
+  /** @deprecated Prefer live azimuth via SunShadowProvider. */
   dxPct: 0,
   dyFactor: 0.22,
   opacity: 0.12,
   /** Night board — stronger chalk shadow under multiply. */
   nightOpacity: 0.3,
-  /** Dwelling envelope — fixed small south offset in plan % units. */
+  /** Dwelling envelope soft offset length in plan % units. */
   dwellingDyPct: 0.55,
 } as const;
 
