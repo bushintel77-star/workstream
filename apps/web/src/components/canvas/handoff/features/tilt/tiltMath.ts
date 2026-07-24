@@ -6,6 +6,76 @@
 /** Default settle angle for Cmd+K / client-view flourish (deg). */
 export const TILT_DEG = 55;
 
+/**
+ * Cardinal garden axon look — look *toward* title north/east/south/west.
+ * Board north-up: x→east, y↓south. Default tilt (yaw 0) looks north.
+ */
+export type GardenViewpointLook = "N" | "S" | "E" | "W";
+
+export const GARDEN_VIEWPOINT_LOOKS: readonly GardenViewpointLook[] = [
+  "N",
+  "E",
+  "S",
+  "W",
+] as const;
+
+/** Camera yaw CW from north-up for each look (compose with rotateX tilt). */
+export function viewpointYawDeg(look: GardenViewpointLook): number {
+  switch (look) {
+    case "N":
+      return 0;
+    case "E":
+      return 90;
+    case "S":
+      return 180;
+    case "W":
+      return 270;
+  }
+}
+
+export function gardenViewpointLabel(look: GardenViewpointLook): string {
+  switch (look) {
+    case "N":
+      return "Looking north";
+    case "E":
+      return "Looking east";
+    case "S":
+      return "Looking south";
+    case "W":
+      return "Looking west";
+  }
+}
+
+/** Settled camera for a named axon preset. */
+export function gardenViewpointCamera(look: GardenViewpointLook): {
+  viewRotationDeg: number;
+  tiltDeg: number;
+} {
+  return { viewRotationDeg: viewpointYawDeg(look), tiltDeg: TILT_DEG };
+}
+
+/**
+ * Which cardinal preset matches the live camera (null if flat or off-cardinal).
+ */
+export function activeGardenViewpoint(
+  tiltDeg: number,
+  viewRotationDeg: number,
+  yawTolDeg = 8,
+): GardenViewpointLook | null {
+  if (!isTiltActive(tiltDeg)) return null;
+  let yaw = viewRotationDeg % 360;
+  if (yaw < 0) yaw += 360;
+  for (const look of GARDEN_VIEWPOINT_LOOKS) {
+    const target = viewpointYawDeg(look);
+    const d = Math.min(
+      Math.abs(yaw - target),
+      360 - Math.abs(yaw - target),
+    );
+    if (d <= yawTolDeg) return look;
+  }
+  return null;
+}
+
 /** Continuous Ctrl/Cmd+drag ceiling (deg). */
 export const TILT_MAX = 60;
 

@@ -14,6 +14,10 @@
  * defs) plus a hairline dashed boundary so planning ≠ bushfire ≠ generic and
  * none of them collides with the title easement amber hatch. Contours draw as
  * fine sepia topo lines.
+ *
+ * Hatch fills are clipped to the title boundary in KeylessOverlayWash — never
+ * a full-board background. Authority-scale water_corp / planning rings skip
+ * fill (chip label only) so they cannot wash the Survey plate edge-to-edge.
  */
 .planning {
   stroke: rgba(107, 91, 140, 0.6);

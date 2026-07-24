@@ -15,6 +15,11 @@ import {
   type PctPoint,
   type SheetScaleDenom,
 } from "../../geometry";
+import {
+  elevationLookPair,
+  elevationLookProjector,
+  type ElevationLook,
+} from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { SEMANTIC_LIGHT, mixOnHex } from "../../../../../styles/colorTokens";
 import { WeatherIcon } from "../stickyMeta/WeatherIcon";
@@ -37,6 +42,8 @@ type Props = {
   services?: PctPoint[][];
   scaleM?: number;
   showElevations?: boolean;
+  /** Cardinal look for stacked elevations (primary + opposite pair). */
+  elevLook?: ElevationLook;
   issuedLabel?: string;
   /** Architectural print scale 1:N — discrete snap ladder. */
   scaleDenom?: SheetScaleDenom;
@@ -65,21 +72,31 @@ type ElevProfile = {
   }>;
 };
 
-function buildElevProfile(
+function alongPct(
+  p: { x: number; y: number },
   axis: "x" | "y",
+  reverse: boolean,
+): number {
+  const raw = axis === "x" ? p.x : p.y;
+  return reverse ? 100 - raw : raw;
+}
+
+function buildElevProfile(
+  look: ElevationLook,
   boundary: PctPoint[],
   building: PctPoint[],
   items: StudioItem[],
   scaleM: number,
   rowH: number,
 ): ElevProfile {
-  const coords = boundary.map((p) => (axis === "x" ? p.x : p.y));
+  const proj = elevationLookProjector(look);
+  const coords = boundary.map((p) => alongPct(p, proj.axis, proj.reverse));
   const minC = Math.min(...coords);
   const maxC = Math.max(...coords);
   const span = Math.max(1, maxC - minC);
   const widthM = (span / 100) * scaleM;
 
-  const bCoords = building.map((p) => (axis === "x" ? p.x : p.y));
+  const bCoords = building.map((p) => alongPct(p, proj.axis, proj.reverse));
   const b0 = bCoords.length
     ? ((Math.min(...bCoords) - minC) / span) * 96 + 2
     : 30;
@@ -94,7 +111,6 @@ function buildElevProfile(
       .map((i) => (BY_TYPE[i.t].heightM ?? 1) * i.scale),
     1,
   ) + 1;
-  const groundB = 14;
   const usable = rowH - 28;
   const bH = (eaveH / maxHM) * usable;
 
@@ -102,7 +118,7 @@ function buildElevProfile(
     .filter((i) => BY_TYPE[i.t].heightM)
     .map((it) => {
       const d = BY_TYPE[it.t];
-      const c = axis === "x" ? it.x : it.y;
+      const c = alongPct({ x: it.x, y: it.y }, proj.axis, proj.reverse);
       const x = ((c - minC) / span) * 96 + 2;
       const hm = (d.heightM ?? 1) * it.scale;
       return {
@@ -120,7 +136,7 @@ function buildElevProfile(
     });
 
   return {
-    label: axis === "x" ? "FRONT ELEVATION" : "SIDE ELEVATION",
+    label: proj.label.toUpperCase(),
     widthM,
     bld0: b0,
     bldW: Math.max(2, b1 - b0),
@@ -180,6 +196,7 @@ export function FitSheetOverlay({
   services = [],
   scaleM = 110,
   showElevations = false,
+  elevLook = "N",
   issuedLabel,
   scaleDenom = 100,
   onScaleDenom,
@@ -261,11 +278,13 @@ export function FitSheetOverlay({
   const elevProfiles = useMemo(() => {
     if (!showElevations) return [];
     const rowH = 56;
+    const primary = elevLook;
+    const secondary = elevationLookPair(elevLook);
     return [
-      buildElevProfile("x", boundary, building, items, scaleM, rowH),
-      buildElevProfile("y", boundary, building, items, scaleM, rowH),
+      buildElevProfile(primary, boundary, building, items, scaleM, rowH),
+      buildElevProfile(secondary, boundary, building, items, scaleM, rowH),
     ];
-  }, [showElevations, boundary, building, items, scaleM]);
+  }, [showElevations, elevLook, boundary, building, items, scaleM]);
 
   const elevPanelOn = elevProfiles.length > 0 && box.boxW >= 280;
   const elevPanelW = Math.max(

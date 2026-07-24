@@ -45,6 +45,10 @@ import {
   mixOnCanvas,
 } from "../../../../../styles/colorTokens";
 import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
+import {
+  PLAN_LOT_HATCH_CLIP_ID,
+  isAuthorityScalePctRing,
+} from "../../geometry/keylessRingClip";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
   BY_TYPE,
@@ -1104,6 +1108,15 @@ export function CadPlanBoard({
             />
           </pattern>
           <RenderDefs />
+          {/* Hatch fills clip to title — never the SVG board wrapper. */}
+          {boundary.length >= 3 ? (
+            <clipPath
+              id={PLAN_LOT_HATCH_CLIP_ID}
+              clipPathUnits="userSpaceOnUse"
+            >
+              <polygon points={ptsAttr(boundary)} />
+            </clipPath>
+          ) : null}
         </defs>
         {editing && boundaryVisual.hittable
           ? ([
@@ -1146,8 +1159,16 @@ export function CadPlanBoard({
               }),
             )
           : null}
+        <g
+          clipPath={
+            boundary.length >= 3
+              ? `url(#${PLAN_LOT_HATCH_CLIP_ID})`
+              : undefined
+          }
+          data-lot-hatch-clip={boundary.length >= 3 ? "1" : "0"}
+        >
         {easements
-          .filter((r) => r.length >= 3)
+          .filter((r) => r.length >= 3 && !isAuthorityScalePctRing(r))
           .map((ring, i) => {
             const id = easementFeatureId(ring);
             const feat = resolveServiceFeatureVisual(
@@ -1174,6 +1195,7 @@ export function CadPlanBoard({
               </g>
             );
           })}
+        </g>
         {services
           .filter((r) => r.length >= 2)
           .map((ring, i) => {

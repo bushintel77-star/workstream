@@ -71,6 +71,7 @@ import {
 } from "../studioCatalog";
 import type { PaperSize, PctPoint } from "../geometry";
 import { classifySurveyCorridor } from "../geometry/surveyCorridor";
+import { filterKeylessRingsToBoard } from "../geometry/keylessRingClip";
 import { pointInPolygon } from "../geometry/polygon";
 import {
   constrainAssetCentre,
@@ -213,7 +214,7 @@ type Ui = {
   growth: GrowthStage;
   sunMin: number;
   sunDatePreset: SunDatePreset;
-  elevAxis: "x" | "y";
+  elevLook: "N" | "S" | "E" | "W";
   selectedId: string | null;
   groupIds: string[];
   hoverId: string | null;
@@ -530,7 +531,7 @@ function initialState(opts: {
       growth: "mature",
       sunMin: 12 * 60 + 26,
       sunDatePreset: "today",
-      elevAxis: "x",
+      elevLook: "N",
       selectedId: null,
       groupIds: [],
       hoverId: null,
@@ -1985,11 +1986,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
                   kind: ov.kind,
                   label: ov.label ?? undefined,
                   fetched_at: ov.fetched_at,
-                  rings: ov.rings.map((ring) =>
-                    applyCanvasMetresTransform(ring, t).map((p) => ({
-                      x_pct: p.x,
-                      y_pct: p.y,
-                    })),
+                  /* Never clampPct — authority districts would become a full-board rect. */
+                  rings: filterKeylessRingsToBoard(
+                    ov.rings.map((ring) =>
+                      applyCanvasMetresTransform(ring, t).map((p) => ({
+                        x_pct: p.x,
+                        y_pct: p.y,
+                      })),
+                    ),
                   ),
                 })),
               },
@@ -2961,11 +2965,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
                 kind: ov.kind,
                 label: ov.label ?? undefined,
                 fetched_at: ov.fetched_at,
-                rings: ov.rings.map((ring) =>
-                  applyCanvasMetresTransform(ring, t).map((p) => ({
-                    x_pct: p.x,
-                    y_pct: p.y,
-                  })),
+                /* Never clampPct — authority districts would become a full-board rect. */
+                rings: filterKeylessRingsToBoard(
+                  ov.rings.map((ring) =>
+                    applyCanvasMetresTransform(ring, t).map((p) => ({
+                      x_pct: p.x,
+                      y_pct: p.y,
+                    })),
+                  ),
                 ),
               })),
             },

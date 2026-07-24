@@ -153,6 +153,7 @@ import {
   BOARD_WIDTH_M_AT_100,
 } from "./features/ground/groundMetrics";
 import {
+  cycleElevationLook,
   solveLiveTradeEstimate,
   sunPositionAt,
   tradeTagForItem,
@@ -195,11 +196,16 @@ import {
   TILT_ANIM_MS_FAST,
   TILT_ANIM_MS_SLOW,
   TILT_DEG,
+  activeGardenViewpoint,
+  gardenViewpointCamera,
+  gardenViewpointLabel,
   isTiltActive,
   settleTiltDeg,
   tiltFromDragDelta,
   tiltSkinScale,
+  type GardenViewpointLook,
 } from "./features/tilt/tiltMath";
+import { GardenViewpointStrip } from "./features/viewpoint/GardenViewpointStrip";
 import { usePresentationLens } from "./features/render/usePresentationLens";
 import {
   clampNotePos,
@@ -789,13 +795,58 @@ export function HandoffDesignStudio({
         focusX: 50,
         focusY: 50,
         councilTip: hasDwelling
-          ? "Tilt on — drag to move · wheel zooms straight · Esc to flatten."
+          ? "Looking north — Esc to flatten"
           : "Tilt on — drag to move. No dwelling yet (no walls) — Trace Bldg or title hydrate.",
         coachOpen: !hasDwelling,
       });
       setTiltPauseHint(true);
     }
   }, [animateTiltTo, studio, ui.frameOn, ui.mode, ui.tiltDeg]);
+
+  /**
+   * Named cardinal axon — yaw + tilt settle. View-only; same lock as tilt.
+   * Looking north = yaw 0 (default tilt-from-south).
+   */
+  const runGardenViewpoint = useCallback(
+    (look: GardenViewpointLook) => {
+      const planMode =
+        ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+      if (!planMode) {
+        studio.setUi({
+          councilTip: "Garden viewpoints need Survey / Sketch / CAD",
+          coachOpen: true,
+        });
+        return;
+      }
+      if (ui.frameOn) {
+        studio.setUi({ frameOn: false, panX: 0, panY: 0, zoom: 1 });
+      }
+      const cam = gardenViewpointCamera(look);
+      studio.setUi({
+        viewRotationDeg: cam.viewRotationDeg,
+        cmdOpen: false,
+        cmdQuery: "",
+        focusX: 50,
+        focusY: 50,
+        councilTip: `${gardenViewpointLabel(look)} — Esc to flatten`,
+        coachOpen: false,
+      });
+      animateTiltTo(cam.tiltDeg);
+      setTiltPauseHint(true);
+    },
+    [animateTiltTo, studio, ui.frameOn, ui.mode],
+  );
+
+  const onGardenViewpointSelect = useCallback(
+    (look: GardenViewpointLook) => {
+      if (ui.mode === "elevation") {
+        studio.setUi({ elevLook: look });
+        return;
+      }
+      runGardenViewpoint(look);
+    },
+    [runGardenViewpoint, studio, ui.mode],
+  );
 
   /** Force flat when leaving plan / entering Fit / elevation / quote / share. */
   useEffect(() => {
@@ -1339,6 +1390,10 @@ export function HandoffDesignStudio({
 
   const planOn =
     ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+  const armedGardenLook = activeGardenViewpoint(
+    ui.tiltDeg,
+    ui.viewRotationDeg,
+  );
   const horizonCardCount = estimate.horizon.filter(
     (h) =>
       !ui.mitigated[h.id] &&
@@ -1758,12 +1813,23 @@ export function HandoffDesignStudio({
     [studio],
   );
 
-  /** Leaving CAD (or Fit/client) — park camera at north so Sketch stays clean. */
+  /**
+   * Leaving CAD (or Fit/client) — park camera at north so Sketch stays clean.
+   * Keep yaw while a garden axon is tilted (Looking E/S/W in Survey/Sketch).
+   */
   useEffect(() => {
     if (ui.mode === "cad" && !ui.frameOn && !ui.clientView) return;
+    if (isTiltActive(ui.tiltDeg)) return;
     if (ui.viewRotationDeg === 0) return;
     studio.setUi({ viewRotationDeg: 0 });
-  }, [ui.mode, ui.frameOn, ui.clientView, ui.viewRotationDeg, studio]);
+  }, [
+    ui.mode,
+    ui.frameOn,
+    ui.clientView,
+    ui.tiltDeg,
+    ui.viewRotationDeg,
+    studio,
+  ]);
 
   const [formalizing, setFormalizing] = useState(false);
 
@@ -2670,15 +2736,15 @@ export function HandoffDesignStudio({
         ) : null}
         {ui.mode === "elevation" ? (
           <ElevationBoard
-            axis={ui.elevAxis}
+            look={ui.elevLook}
             boundary={studio.boundary}
             building={studio.building}
             items={studio.items}
             selectedId={ui.selectedId}
             dark={darkLens}
             onSelect={(id) => studio.setUi({ selectedId: id })}
-            onToggleAxis={() =>
-              studio.setUi({ elevAxis: ui.elevAxis === "x" ? "y" : "x" })
+            onCycleLook={() =>
+              studio.setUi({ elevLook: cycleElevationLook(ui.elevLook) })
             }
             onTraceInPlan={(id) => {
               studio.setUi({ selectedId: id });
@@ -2881,6 +2947,7 @@ export function HandoffDesignStudio({
             <KeylessOverlayWash
               active={!ui.frameOn && !ui.focusOn}
               overlays={studio.keylessOverlays}
+              boundary={studio.boundary}
             />
             <SunCastOverlay
               active={
@@ -3526,6 +3593,7 @@ export function HandoffDesignStudio({
             services={studio.services}
             scaleM={scaleM}
             showElevations={ui.sheetElevOn}
+            elevLook={ui.elevLook}
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
             titleBlock={titleBlock}
@@ -3561,6 +3629,17 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {(planOn || ui.mode === "elevation") &&
+        !ui.frameOn &&
+        !ui.focusOn ? (
+          <GardenViewpointStrip
+            mode={ui.mode === "elevation" ? "elevation" : "plan"}
+            activeLook={armedGardenLook}
+            elevLook={ui.elevLook}
+            onSelect={onGardenViewpointSelect}
+          />
+        ) : null}
+
         {tiltDiscoverHint && planOn && !ui.frameOn ? (
           <TiltHintPill
             kind="discover"
@@ -3571,6 +3650,11 @@ export function HandoffDesignStudio({
           <TiltHintPill
             kind="paused"
             hasDwelling={studio.building.length >= 3}
+            lookLabel={
+              armedGardenLook
+                ? gardenViewpointLabel(armedGardenLook)
+                : null
+            }
             onDismiss={() => setTiltPauseHint(false)}
           />
         ) : null}
@@ -4348,6 +4432,7 @@ export function HandoffDesignStudio({
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           onTiltView={() => runTiltView()}
+          onGardenViewpoint={runGardenViewpoint}
           dataOpen={measuresOpen}
           onToggleData={() =>
             studio.setUi({

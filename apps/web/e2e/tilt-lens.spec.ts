@@ -223,4 +223,78 @@ test.describe("Tilt lens", () => {
       })
       .toBe("ok");
   });
+
+  test("Looking east sets tilt + yaw; chrome stays dock-only; Esc flattens", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createSurveyProject(request);
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("zoom-world")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await expect(page.getByTestId("garden-viewpoint-strip")).toBeVisible();
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-looking-east").click();
+    await expect(page.getByTestId("studio-board")).toHaveAttribute(
+      "data-tilt",
+      "1",
+      { timeout: 5_000 },
+    );
+    await expect(page.getByTestId("garden-viewpoint-E")).toHaveAttribute(
+      "data-armed",
+      "1",
+    );
+
+    expect(
+      await page
+        .locator('[data-testid="zoom-world"] [data-camera-chrome]')
+        .count(),
+    ).toBe(0);
+    await expect(page.getByTestId("garden-viewpoint-strip")).toBeVisible();
+
+    await expect
+      .poll(async () => {
+        return page.evaluate(() => {
+          const wallsEl = document.querySelector(
+            '[data-testid="tilt-building-walls"]',
+          );
+          const roofEl = document.querySelector(
+            '[data-testid="tilt-building-extrusion"]',
+          );
+          const zoom = document.querySelector('[data-testid="zoom-world"]');
+          if (!zoom) return "missing-zoom";
+          const clear = (c: string) =>
+            c === "rgba(0, 0, 0, 0)" || c === "transparent";
+          const zBg = getComputedStyle(zoom).backgroundColor;
+          if (!clear(zBg)) return `zoom:${zBg}`;
+          if (wallsEl && !clear(getComputedStyle(wallsEl).backgroundColor)) {
+            return `walls:${getComputedStyle(wallsEl).backgroundColor}`;
+          }
+          if (roofEl && !clear(getComputedStyle(roofEl).backgroundColor)) {
+            return `roof:${getComputedStyle(roofEl).backgroundColor}`;
+          }
+          return "ok";
+        });
+      })
+      .toBe("ok");
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("studio-board")).toHaveAttribute(
+      "data-tilt",
+      "0",
+      { timeout: 3_000 },
+    );
+
+    // After Looking east, yaw may remain until North-up restore.
+    const northUp = page.getByTestId("view-rot-reset-north");
+    if (await northUp.count()) {
+      await northUp.click();
+      await expect(page.getByTestId("view-rot-at-north")).toBeVisible();
+    } else {
+      await expect(page.getByTestId("view-rot-at-north")).toBeVisible();
+    }
+  });
 });

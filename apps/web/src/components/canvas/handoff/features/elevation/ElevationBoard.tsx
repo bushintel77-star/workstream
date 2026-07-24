@@ -1,6 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
+import {
+  cycleElevationLook,
+  elevationLookProjector,
+  type ElevationLook,
+} from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import {
@@ -18,7 +23,7 @@ const PLOT_X0 = 10;
 const PLOT_W = 78;
 
 type Props = {
-  axis: "x" | "y";
+  look: ElevationLook;
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
@@ -26,7 +31,7 @@ type Props = {
   /** Night lens (pass the studio's darkLens — elevation joins the night). */
   dark?: boolean;
   onSelect: (id: string | null) => void;
-  onToggleAxis: () => void;
+  onCycleLook: () => void;
   onTraceInPlan: (id: string) => void;
 };
 
@@ -37,28 +42,34 @@ function vbToPct(x: number, y: number) {
   };
 }
 
+function alongPct(p: PctPoint, axis: "x" | "y", reverse: boolean): number {
+  const raw = axis === "x" ? p.x : p.y;
+  return reverse ? 100 - raw : raw;
+}
+
 /**
- * Front/side elevation — geometry in a stretch SVG; ticks + callouts as
- * fixed-px HTML so labels stay reading-size on wide boards.
+ * Cardinal elevation — look toward title N/S/E/W.
+ * Geometry in a stretch SVG; ticks + callouts as fixed-px HTML.
  */
 export function ElevationBoard({
-  axis,
+  look,
   boundary,
   building,
   items,
   selectedId,
   dark = false,
   onSelect,
-  onToggleAxis,
+  onCycleLook,
   onTraceInPlan,
 }: Props) {
-  const coords = boundary.map((p) => (axis === "x" ? p.x : p.y));
+  const proj = elevationLookProjector(look);
+  const coords = boundary.map((p) => alongPct(p, proj.axis, proj.reverse));
   const minC = Math.min(...coords);
   const maxC = Math.max(...coords);
   const span = Math.max(1, maxC - minC);
   const widthM = (span / 100) * 110;
 
-  const bCoords = building.map((p) => (axis === "x" ? p.x : p.y));
+  const bCoords = building.map((p) => alongPct(p, proj.axis, proj.reverse));
   const b0 = bCoords.length
     ? PLOT_X0 + ((Math.min(...bCoords) - minC) / span) * PLOT_W
     : PLOT_X0 + PLOT_W * 0.22;
@@ -66,7 +77,6 @@ export function ElevationBoard({
     ? PLOT_X0 + ((Math.max(...bCoords) - minC) / span) * PLOT_W
     : PLOT_X0 + PLOT_W * 0.55;
 
-  /** Vertical scale hugs the tallest asset — avoid empty 6–9 m air. */
   const maxHM = useMemo(() => {
     const tallest = items
       .filter((i) => BY_TYPE[i.t].heightM)
@@ -81,12 +91,20 @@ export function ElevationBoard({
       .map((it) => {
         const d = BY_TYPE[it.t];
         const hm = (d.heightM ?? 1) * it.scale;
-        const c = axis === "x" ? it.x : it.y;
+        const c = alongPct(
+          { x: it.x, y: it.y },
+          proj.axis,
+          proj.reverse,
+        );
         const x = PLOT_X0 + ((c - minC) / span) * PLOT_W;
         const h = (hm / maxHM) * PLOT_H;
         const y = GROUND_Y - h;
-        /** Narrow bars — readable as stems, not fat cards. */
-        const w = it.ghost ? 1.6 : d.elevShape === "hedge" || d.elevShape === "deck" ? 3.2 : 2.2;
+        const w =
+          it.ghost
+            ? 1.6
+            : d.elevShape === "hedge" || d.elevShape === "deck"
+              ? 3.2
+              : 2.2;
         return {
           it,
           d,
@@ -98,7 +116,7 @@ export function ElevationBoard({
           selected: it.id === selectedId && !it.ghost,
         };
       });
-  }, [items, axis, minC, span, selectedId, maxHM]);
+  }, [items, proj.axis, proj.reverse, minC, span, selectedId, maxHM]);
 
   const labelPlacements = useMemo(
     () =>
@@ -128,10 +146,17 @@ export function ElevationBoard({
     <div
       className={`${css.root}${dark ? ` ${css.rootNight}` : ""}`}
       data-testid="elevation-profile"
+      data-elev-look={look}
     >
       <div className={css.topRow}>
-        <button type="button" className={css.toggle} onClick={onToggleAxis}>
-          {axis === "x" ? "Front elevation" : "Side elevation"}
+        <button
+          type="button"
+          className={css.toggle}
+          data-testid="elevation-cycle-look"
+          onClick={onCycleLook}
+          title={`Cycle look (next ${cycleElevationLook(look)})`}
+        >
+          {proj.label}
         </button>
         {selectedId && items.some((i) => i.id === selectedId && !i.ghost) ? (
           <button
@@ -227,7 +252,6 @@ export function ElevationBoard({
             ))}
           </g>
 
-          {/* Leaders only — text is HTML */}
           <g data-layer="leaders">
             {labelPlacements.map((p) =>
               p.leader ? (

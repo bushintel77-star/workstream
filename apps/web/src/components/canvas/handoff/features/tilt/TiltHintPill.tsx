@@ -8,18 +8,27 @@ type Props = {
   onDismiss: () => void;
   /** When paused without a dwelling, explain missing walls. */
   hasDwelling?: boolean;
+  /** Armed cardinal look label, e.g. "Looking north". */
+  lookLabel?: string | null;
 };
 
 /**
  * Dock-only CameraChrome pills — never under zoom-world (gate C).
  */
-export function TiltHintPill({ kind, onDismiss, hasDwelling = true }: Props) {
+export function TiltHintPill({
+  kind,
+  onDismiss,
+  hasDwelling = true,
+  lookLabel = null,
+}: Props) {
   const label =
     kind === "discover"
       ? "Ctrl+drag to tilt — or use the Tilt button (top bar)"
-      : hasDwelling
-        ? "Tilt on — drag to move · Esc to flatten"
-        : "Tilt on — drag to move · Trace Bldg for walls";
+      : !hasDwelling
+        ? "Tilt on — drag to move · Trace Bldg for walls"
+        : lookLabel
+          ? `${lookLabel} — Esc to flatten`
+          : "Looking north — Esc to flatten";
   return (
     <CameraChrome place={{ kind: "dock" }} testId={`tilt-hint-${kind}`}>
       <div

@@ -46,6 +46,8 @@ type Props = {
   onToggleFocus: () => void;
   /** Tilt lens — animates to the settle angle (view-only). */
   onTiltView?: () => void;
+  /** Named cardinal garden axon (Looking N/S/E/W). */
+  onGardenViewpoint?: (look: "N" | "S" | "E" | "W") => void;
   /** Canvas-first: summon / dismiss the measures + quantity lane. */
   dataOpen: boolean;
   onToggleData: () => void;
@@ -89,6 +91,7 @@ export function StudioCommandPalette({
   onGoQuote,
   onToggleFocus,
   onTiltView,
+  onGardenViewpoint,
   dataOpen,
   onToggleData,
   onUndo,
@@ -345,6 +348,26 @@ export function StudioCommandPalette({
             } satisfies StudioCommand,
           ]
         : []),
+      ...(onGardenViewpoint
+        ? (
+            [
+              ["N", "Looking north", "north"],
+              ["E", "Looking east", "east"],
+              ["S", "Looking south", "south"],
+              ["W", "Looking west", "west"],
+            ] as const
+          ).map(
+            ([look, label, key]) =>
+              ({
+                id: `looking-${key}`,
+                label,
+                detail:
+                  "Cardinal garden axon — yaw + tilt (title north unchanged)",
+                keywords: `${label} viewpoint garden tilt axon cardinal ${look}`,
+                run: () => onGardenViewpoint(look),
+              }) satisfies StudioCommand,
+          )
+        : []),
       {
         id: "undo",
         label: "Undo",
@@ -397,6 +420,7 @@ export function StudioCommandPalette({
     onToggleFitSheet,
     onToggleFocus,
     onTiltView,
+    onGardenViewpoint,
     onUndo,
     query,
   ]);

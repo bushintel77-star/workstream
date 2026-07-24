@@ -1,0 +1,62 @@
+.strip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--ws-safe-bottom, 48px) + 10px);
+  transform: translateX(-50%);
+  z-index: 42;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 3px 6px 3px 8px;
+  border-radius: var(--hc-r-pill, 999px);
+  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.82));
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+.kicker {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--ws-type-kicker, 8px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted, #7a5560);
+  padding-right: 2px;
+}
+
+.chip {
+  min-width: 28px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--hc-r-pill, 999px);
+  background: transparent;
+  color: var(--hc-ink, #241318);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: color-mix(in srgb, var(--proposed-stroke) 12%, transparent);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--proposed-stroke));
+  outline-offset: 1px;
+}
+
+.chipOn {
+  background: color-mix(
+    in srgb,
+    var(--proposed-stroke) var(--fill-highlight, 20%),
+    var(--canvas, #f7f6f3)
+  );
+  color: var(--proposed-text, var(--proposed-stroke));
+}

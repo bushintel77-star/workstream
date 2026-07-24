@@ -40,7 +40,7 @@ export function ViewNorthControl({
       data-testid="view-north-control"
       data-rotated={offNorth ? "1" : "0"}
       role="group"
-      aria-label="View rotation"
+      aria-label="Plan north-up"
     >
       <span className={css.heading}>View</span>
       <div className={css.steps} role="group" aria-label="Rotation step">
@@ -85,18 +85,18 @@ export function ViewNorthControl({
           type="button"
           className={css.reset}
           data-testid="view-rot-reset-north"
-          aria-label="Reset view to north"
-          title="Reset to north"
+          aria-label="Restore plan north"
+          title="Restore plan north — title north-up (not Looking north)"
           onClick={() => onRotation(resetViewRotationToNorth())}
         >
-          N · reset
+          North-up
           <span className={css.deg} aria-hidden>
             {rot > 0 ? `+${Math.round(rot)}°` : `${Math.round(rot)}°`}
           </span>
         </button>
       ) : (
         <span className={css.northIdle} data-testid="view-rot-at-north">
-          N
+          North-up
         </span>
       )}
     </div>

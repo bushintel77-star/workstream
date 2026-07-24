@@ -10,13 +10,16 @@ import {
   TILT_ANIM_MS_SLOW,
   WALL_LIGHT_MAX,
   WALL_LIGHT_MIN,
+  activeGardenViewpoint,
   billboardStyle,
+  gardenViewpointCamera,
   isTiltActive,
   lightVectorFromAzimuth,
   poleMatrix3d,
   pxPerMetre,
   settleTiltDeg,
   tiltFromDragDelta,
+  viewpointYawDeg,
   wallLightness,
   wallQuadMatrix3d,
 } from "./tiltMath";
@@ -87,6 +90,20 @@ describe("tiltMath", () => {
     expect(isTiltActive(0)).toBe(false);
     expect(isTiltActive(0.2)).toBe(false);
     expect(isTiltActive(TILT_DEG)).toBe(true);
+  });
+
+  it("viewpointYawDeg maps Looking N/E/S/W to CW yaw", () => {
+    expect(viewpointYawDeg("N")).toBe(0);
+    expect(viewpointYawDeg("E")).toBe(90);
+    expect(viewpointYawDeg("S")).toBe(180);
+    expect(viewpointYawDeg("W")).toBe(270);
+    expect(gardenViewpointCamera("E")).toEqual({
+      viewRotationDeg: 90,
+      tiltDeg: TILT_DEG,
+    });
+    expect(activeGardenViewpoint(TILT_DEG, 0)).toBe("N");
+    expect(activeGardenViewpoint(TILT_DEG, 90)).toBe("E");
+    expect(activeGardenViewpoint(0, 90)).toBeNull();
   });
 
   it("drag delta increases tilt and clamps to TILT_MAX", () => {

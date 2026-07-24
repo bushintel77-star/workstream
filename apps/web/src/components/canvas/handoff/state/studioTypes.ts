@@ -109,7 +109,12 @@ export type StudioUiState = {
   sunMin: number;
   /** Practical seasonal date presets for the indicative sun study. */
   sunDatePreset: SunDatePreset;
-  elevAxis: "x" | "y";
+  /**
+   * Cardinal elevation look (Looking N/S/E/W). Replaces legacy elevAxis x/y.
+   */
+  elevLook: "N" | "S" | "E" | "W";
+  /** @deprecated Prefer elevLook — kept for short migration reads. */
+  elevAxis?: "x" | "y";
   selectedId: string | null;
   groupIds: string[];
   hoverId: string | null;

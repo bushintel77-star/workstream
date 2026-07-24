@@ -1,23 +1,40 @@
 "use client";
 
 import type { DesignKeylessOverlay } from "@workstream/contracts";
+import type { PctPoint } from "../../geometry";
+import {
+  PLAN_LOT_HATCH_CLIP_ID,
+  shouldPaintKeylessFill,
+} from "../../geometry/keylessRingClip";
 import css from "./keylessWash.module.css";
 
 type Props = {
   active: boolean;
   overlays: DesignKeylessOverlay[];
+  /**
+   * Title boundary — hatch fills clip to this ring (never the full SVG board).
+   * Same contract as ClimateBedWash: pattern belongs to geometry, not the wrapper.
+   */
+  boundary: PctPoint[];
 };
 
 function ptsAttr(ring: Array<{ x_pct: number; y_pct: number }>): string {
   return ring.map((p) => `${p.x_pct},${p.y_pct}`).join(" ");
 }
 
+function boundaryPtsAttr(ring: PctPoint[]): string {
+  return ring.map((p) => `${p.x},${p.y}`).join(" ");
+}
+
 /**
  * Soft KEYLESS Vicmap washes — planning / bushfire / flood / heritage / contour.
- * Contours draw as strokes; area overlays as translucent fills.
+ * Contours draw as strokes; area overlays as translucent fills clipped to title.
  */
-export function KeylessOverlayWash({ active, overlays }: Props) {
+export function KeylessOverlayWash({ active, overlays, boundary }: Props) {
   if (!active || overlays.length === 0) return null;
+
+  const lotClip =
+    boundary.length >= 3 ? boundaryPtsAttr(boundary) : null;
 
   return (
     <svg
@@ -28,6 +45,14 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
       aria-hidden
     >
       <defs>
+        {lotClip ? (
+          <clipPath
+            id={PLAN_LOT_HATCH_CLIP_ID}
+            clipPathUnits="userSpaceOnUse"
+          >
+            <polygon points={lotClip} />
+          </clipPath>
+        ) : null}
         {/* Planning: fine single diagonal + faint plum tint. */}
         <pattern
           id="ws-keyless-planning"
@@ -171,61 +196,71 @@ export function KeylessOverlayWash({ active, overlays }: Props) {
           />
         </pattern>
       </defs>
-      {overlays.flatMap((ov) =>
-        ov.rings.map((ring, i) => {
-          if (ring.length < 2) return null;
-          const pts = ptsAttr(ring);
-          if (ov.kind === "contour" || ring.length < 3) {
+      <g
+        clipPath={
+          lotClip ? `url(#${PLAN_LOT_HATCH_CLIP_ID})` : undefined
+        }
+        data-lot-clip={lotClip ? "1" : "0"}
+      >
+        {overlays.flatMap((ov) =>
+          ov.rings.map((ring, i) => {
+            if (ring.length < 2) return null;
+            const pts = ptsAttr(ring);
+            if (ov.kind === "contour" || ring.length < 3) {
+              return (
+                <polyline
+                  key={`${ov.kind}-${i}`}
+                  points={pts}
+                  className={css.contour}
+                  data-kind={ov.kind}
+                  data-testid="keyless-contour"
+                />
+              );
+            }
+            if (!shouldPaintKeylessFill(ov.kind, ring)) {
+              return null;
+            }
+            const cls =
+              ov.kind === "bushfire"
+                ? css.bushfire
+                : ov.kind === "planning"
+                  ? css.planning
+                  : ov.kind === "flood"
+                    ? css.flood
+                    : ov.kind === "heritage"
+                      ? css.heritage
+                      : ov.kind === "water_corp"
+                        ? css.waterCorp
+                        : ov.kind === "road_casement"
+                          ? css.roadCasement
+                          : css.generic;
+            const patternId =
+              ov.kind === "bushfire"
+                ? "ws-keyless-bushfire"
+                : ov.kind === "planning"
+                  ? "ws-keyless-planning"
+                  : ov.kind === "flood"
+                    ? "ws-keyless-flood"
+                    : ov.kind === "heritage"
+                      ? "ws-keyless-heritage"
+                      : ov.kind === "water_corp"
+                        ? "ws-keyless-water"
+                        : ov.kind === "road_casement"
+                          ? "ws-keyless-road"
+                          : "ws-keyless-generic";
             return (
-              <polyline
+              <polygon
                 key={`${ov.kind}-${i}`}
                 points={pts}
-                className={css.contour}
+                className={cls}
+                fill={`url(#${patternId})`}
                 data-kind={ov.kind}
-                data-testid="keyless-contour"
+                data-testid={`keyless-wash-${ov.kind}`}
               />
             );
-          }
-          const cls =
-            ov.kind === "bushfire"
-              ? css.bushfire
-              : ov.kind === "planning"
-                ? css.planning
-                : ov.kind === "flood"
-                  ? css.flood
-                  : ov.kind === "heritage"
-                    ? css.heritage
-                    : ov.kind === "water_corp"
-                      ? css.waterCorp
-                      : ov.kind === "road_casement"
-                        ? css.roadCasement
-                        : css.generic;
-          const patternId =
-            ov.kind === "bushfire"
-              ? "ws-keyless-bushfire"
-              : ov.kind === "planning"
-                ? "ws-keyless-planning"
-                : ov.kind === "flood"
-                  ? "ws-keyless-flood"
-                  : ov.kind === "heritage"
-                    ? "ws-keyless-heritage"
-                    : ov.kind === "water_corp"
-                      ? "ws-keyless-water"
-                      : ov.kind === "road_casement"
-                        ? "ws-keyless-road"
-                        : "ws-keyless-generic";
-          return (
-            <polygon
-              key={`${ov.kind}-${i}`}
-              points={pts}
-              className={cls}
-              fill={`url(#${patternId})`}
-              data-kind={ov.kind}
-              data-testid={`keyless-wash-${ov.kind}`}
-            />
-          );
-        }),
-      )}
+          }),
+        )}
+      </g>
     </svg>
   );
 }
