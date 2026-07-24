@@ -24,6 +24,8 @@ function snapFromSeed(): StudioSnapshot {
     strokes: [],
     levels: [],
     services: [],
+    bydaAssets: [],
+    keylessOverlays: [],
     irrigationZones: [],
     constructionTrenches: [],
     annotations: [],

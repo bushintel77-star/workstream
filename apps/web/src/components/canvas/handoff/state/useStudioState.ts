@@ -208,6 +208,11 @@ type Ui = {
   drawCursor: PctPoint | null;
   traceTarget: TraceTarget;
   zoneKind: IrrigationZoneKind;
+  /**
+   * When set, next Servc commit lands as a typed BYDA asset (not a generic
+   * corridor / title easement). Cleared after commit or Esc.
+   */
+  bydaDraftKind: import("@workstream/contracts").BydaAssetKind | null;
   /** Drafting grid grain for snap + visible mesh. */
   gridGrain: "fine" | "medium" | "coarse";
   /** Magnetic grid snap while dragging / nudging. */
@@ -356,6 +361,8 @@ function snapOf(doc: Doc): StudioSnapshot {
     strokes: doc.strokes,
     levels: doc.levels,
     services: doc.services,
+    bydaAssets: doc.bydaAssets ?? [],
+    keylessOverlays: doc.keylessOverlays ?? [],
     irrigationZones: doc.irrigationZones ?? [],
     constructionTrenches: doc.constructionTrenches ?? [],
     annotations: doc.annotations ?? [],
@@ -371,6 +378,8 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
     strokes: [],
     levels: [],
     services: [],
+    bydaAssets: [],
+    keylessOverlays: [],
     irrigationZones: [],
     constructionTrenches: [],
     annotations: (seed.annotations ?? []).map((a) => ({
@@ -429,6 +438,8 @@ function initialState(opts: {
         easements: frameOverlay.easements ?? base.easements,
         services: frameOverlay.services ?? base.services,
         levels: frameOverlay.levels ?? base.levels,
+        bydaAssets: frameOverlay.bydaAssets ?? base.bydaAssets,
+        keylessOverlays: frameOverlay.keylessOverlays ?? base.keylessOverlays,
         irrigationZones: opts.irrigationZones ?? [],
         constructionTrenches: opts.constructionTrenches ?? [],
         annotations: opts.annotations ?? [],
@@ -486,6 +497,7 @@ function initialState(opts: {
       drawCursor: null,
       traceTarget: "boundary",
       zoneKind: "drip",
+      bydaDraftKind: null,
       gridGrain: "medium",
       gridSnap: true,
       gridFormation: "ortho",
@@ -1612,6 +1624,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   /**
    * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
+   * Then KEYLESS planning / bushfire / contour washes (best-effort).
    */
   useEffect(() => {
     if (bootstrapped.current) return;
@@ -1620,9 +1633,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
     let cancelled = false;
     void (async () => {
       try {
-        const { autoTraceBoundaryAction } = await import(
+        const { autoTraceBoundaryAction, hydrateKeylessAction } = await import(
           "../../../../app/actions"
         );
+        const { getSiteBoundaryApi } = await import("../../../../lib/api");
+        const {
+          applyCanvasMetresTransform,
+          fitCanvasMetresRing,
+        } = await import("../geometry/geoToPct");
         const res = (await autoTraceBoundaryAction(
           projectId,
         )) as AutoTraceParcelInput;
@@ -1667,6 +1685,40 @@ export function useStudioState(opts: UseStudioStateOpts) {
             ? { boardWidthM: applied.fit.boardWidthM }
             : {}),
         });
+
+        // KEYLESS washes — same title transform when available.
+        try {
+          const keyless = await hydrateKeylessAction(projectId);
+          if (cancelled || keyless.overlays_canvas.length === 0) return;
+          let transform = applied.fit.transform;
+          if (!transform) {
+            const bound = await getSiteBoundaryApi(projectId);
+            const verts = [...(bound.boundary?.vertices ?? [])]
+              .sort((a, b) => a.sequence_index - b.sequence_index)
+              .map((v) => v.canvas_coords);
+            transform = fitCanvasMetresRing(verts).transform;
+          }
+          if (!transform) return;
+          const t = transform;
+          mutate((snap) => ({
+            snap: {
+              ...snap,
+              keylessOverlays: keyless.overlays_canvas.map((ov) => ({
+                kind: ov.kind,
+                label: ov.label ?? undefined,
+                fetched_at: ov.fetched_at,
+                rings: ov.rings.map((ring) =>
+                  applyCanvasMetresTransform(ring, t).map((p) => ({
+                    x_pct: p.x,
+                    y_pct: p.y,
+                  })),
+                ),
+              })),
+            },
+          }));
+        } catch {
+          /* KEYLESS optional — title still valid */
+        }
       } catch {
         /* keep seed boundary — dwelling already empty on live projects */
       }
@@ -2132,6 +2184,26 @@ export function useStudioState(opts: UseStudioStateOpts) {
       ) {
         return;
       }
+      const bydaKind = state.ui.bydaDraftKind;
+      if (bydaKind) {
+        if (ring.length < 2) return;
+        mutate((snap) => ({
+          snap: {
+            ...snap,
+            bydaAssets: [
+              ...(snap.bydaAssets ?? []),
+              {
+                id: crypto.randomUUID(),
+                kind: bydaKind,
+                source: "traced" as const,
+                ring: ring.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+              },
+            ],
+          },
+        }));
+        setUi({ bydaDraftKind: null });
+        return;
+      }
       const classified = classifySurveyCorridor(ring);
       if (!classified) return;
       mutate((snap) => {
@@ -2151,7 +2223,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
         };
       });
     },
-    [mutate, state.ui.mode, state.ui.servicesLocked],
+    [
+      mutate,
+      setUi,
+      state.ui.mode,
+      state.ui.servicesLocked,
+      state.ui.bydaDraftKind,
+    ],
   );
 
   const commitZone = useCallback(
@@ -2402,6 +2480,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           annotations: [],
           easements: [],
           services: [],
+          bydaAssets: [],
           levels: [],
         },
       }));
@@ -2413,6 +2492,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         mitigated: {},
         ghostIdx: 0,
         ghostReviewOpen: false,
+        bydaDraftKind: null,
       });
       return;
     }
@@ -2449,6 +2529,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       easements: state.doc.easements ?? [],
       services: state.doc.services ?? [],
       levels: state.doc.levels ?? [],
+      bydaAssets: state.doc.bydaAssets ?? [],
+      keylessOverlays: state.doc.keylessOverlays ?? [],
       boardWidthM: state.ui.boardWidthM,
       buildingSource: state.ui.buildingSource,
     });
@@ -2497,8 +2579,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.items,
     state.doc.levels,
     state.doc.services,
+    state.doc.bydaAssets,
+    state.doc.keylessOverlays,
     state.doc.strokes,
     state.ui.boardWidthM,
+    state.ui.buildingSource,
   ]);
 
   /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
@@ -2927,6 +3012,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     strokes: state.doc.strokes,
     levels: state.doc.levels ?? [],
     services: state.doc.services ?? [],
+    bydaAssets: state.doc.bydaAssets ?? [],
+    keylessOverlays: state.doc.keylessOverlays ?? [],
     irrigationZones: state.doc.irrigationZones ?? [],
     constructionTrenches: state.doc.constructionTrenches ?? [],
     annotations: state.doc.annotations ?? [],

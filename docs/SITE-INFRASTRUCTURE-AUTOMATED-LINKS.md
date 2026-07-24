@@ -63,10 +63,10 @@ Scorers in `apps/api/src/lib/vicmap.ts` (`VICMAP_KEYLESS_SCORERS` /
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Planning zone / overlays (SLO/HO/LSIO/BMO/EAO…) | **KEYLESS** | Council layer + meta |
-| Bushfire prone area | **KEYLESS** | Compliance chip |
+| Planning zone / overlays (SLO/HO/LSIO/BMO/EAO…) | **KEYLESS → hydrate** | Soft wash via `POST …/keyless-hydrate` |
+| Bushfire prone area | **KEYLESS → hydrate** | Soft wash on board |
 | Urban trees / canopy | **KEYLESS** | Exist ghosts + canopy |
-| Contours (1–5 m) | **KEYLESS** | Ground / Level assist |
+| Contours (1–5 m) | **KEYLESS → hydrate** | Contour strokes on board |
 | Flood history / LSIO | **KEYLESS** | Horizon / compliance |
 | Heritage overlay | **KEYLESS** | Horizon / compliance |
 | Water corporation boundary | **KEYLESS** | Title meta |

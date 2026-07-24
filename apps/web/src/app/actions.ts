@@ -503,6 +503,32 @@ export async function autoTraceBoundaryAction(projectId: string) {
   }
 }
 
+export async function hydrateKeylessAction(
+  projectId: string,
+  kinds?: Array<
+    | "planning"
+    | "bushfire"
+    | "contour"
+    | "flood"
+    | "heritage"
+    | "easement"
+    | "urban_tree"
+    | "water_corp"
+    | "road_casement"
+    | "acid_sulfate"
+    | "wetland"
+  >,
+) {
+  const { hydrateKeylessApi } = await import("../lib/api");
+  try {
+    const result = await hydrateKeylessApi(projectId, kinds);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "KEYLESS hydrate failed");
+  }
+}
+
 export async function saveBoundaryAction(
   projectId: string,
   boundary: import("../lib/canvas-types").SiteBoundaryLite,

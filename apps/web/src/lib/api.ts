@@ -625,6 +625,43 @@ export async function autoTraceBoundaryApi(
   };
 }
 
+export type KeylessHydrateOverlayCanvas = {
+  kind:
+    | "planning"
+    | "bushfire"
+    | "contour"
+    | "flood"
+    | "heritage"
+    | "easement"
+    | "urban_tree"
+    | "water_corp"
+    | "road_casement"
+    | "acid_sulfate"
+    | "wetland";
+  rings: Array<Array<{ x: number; y: number }>>;
+  label: string | null;
+  fetched_at: string;
+};
+
+export type KeylessHydrateResult = {
+  overlays_canvas: KeylessHydrateOverlayCanvas[];
+  source: "vicmap" | "empty";
+};
+
+export async function hydrateKeylessApi(
+  projectId: string,
+  kinds: KeylessHydrateOverlayCanvas["kind"][] = [
+    "planning",
+    "bushfire",
+    "contour",
+  ],
+): Promise<KeylessHydrateResult> {
+  return apiPost<KeylessHydrateResult>(
+    `/projects/${projectId}/keyless-hydrate`,
+    { kinds },
+  );
+}
+
 export async function lockBoundaryApi(
   projectId: string,
 ): Promise<{ boundary: SiteBoundaryLite }> {

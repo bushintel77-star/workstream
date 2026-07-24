@@ -38,6 +38,7 @@ import {
 } from "../surfaces/scheduleCardLayout";
 import { RIGHT_DATA_LANE_WIDTH_PX } from "../surfaces/rightDataLane";
 import { planLinesFor } from "../../geometry/planLineStyles";
+import { bydaPlanLine } from "../../geometry/bydaPlanStyles";
 import { resolveDisplayLotM2 } from "../../geometry/siteScheduleDisplay";
 import { DraftGridMesh } from "../gridStudio/DraftGridMesh";
 import {
@@ -155,6 +156,13 @@ type Props = {
   easements?: PctPoint[][];
   /** Open service / utility corridors — dashed locate layer. */
   services?: PctPoint[][];
+  /** Typed BYDA assets — stroke language distinct from title easements. */
+  bydaAssets?: import("@workstream/contracts").DesignBydaAsset[];
+  /**
+   * When true, dwelling shadow is driven by SunCastOverlay — skip the static
+   * south offset placeholder under the footprint.
+   */
+  timedSunCast?: boolean;
   items: StudioItem[];
   tool: StudioTool;
   /** Studio mode — survey shows edge dims; sketch disables pointer capture. */
@@ -297,6 +305,8 @@ export function CadPlanBoard({
   building,
   easements = [],
   services = [],
+  bydaAssets = [],
+  timedSunCast = false,
   items,
   tool,
   mode = "cad",
@@ -1158,6 +1168,37 @@ export function CadPlanBoard({
               </g>
             );
           })}
+        {bydaAssets
+          .filter((a) => a.ring.length >= 2)
+          .map((asset) => {
+            const id = `byda:${asset.id}`;
+            const feat = resolveServiceFeatureVisual(
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            );
+            if (feat.hidden) return null;
+            const style = bydaPlanLine(asset.kind, darkOn && !frameOn);
+            const ring = asset.ring.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+            return (
+              <g
+                key={id}
+                opacity={servicesVisual.opacity * feat.opacity}
+                data-testid="byda-asset-trace"
+                data-byda-kind={asset.kind}
+                data-service-id={id}
+              >
+                <polyline
+                  points={ptsAttr(ring)}
+                  fill="none"
+                  stroke={style.stroke}
+                  strokeWidth={style.strokeWidth}
+                  strokeDasharray={style.dash}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            );
+          })}
         {cadTitleMode
           ? contextLots.map((ring, i) => (
               <polygon
@@ -1191,7 +1232,7 @@ export function CadPlanBoard({
               : undefined
           }
         />
-        {building.length >= 3 ? (
+        {building.length >= 3 && !timedSunCast ? (
           <polygon
             data-testid="dwelling-sun-shadow"
             points={ptsAttr(building)}
@@ -2320,7 +2361,8 @@ export function CadPlanBoard({
       ) : null}
 
       {easements.some((r) => r.length >= 3) ||
-      services.some((r) => r.length >= 2) ? (
+      services.some((r) => r.length >= 2) ||
+      bydaAssets.some((a) => a.ring.length >= 2) ? (
         <CameraChrome>
           <div className={css.honestyStack}>
             {easements.some((r) => r.length >= 3) ? (
@@ -2338,6 +2380,15 @@ export function CadPlanBoard({
                 data-testid="utility-honesty-footer"
               >
                 Utility traces · indicative — confirm locate / DBYD before dig
+              </p>
+            ) : null}
+            {bydaAssets.some((a) => a.ring.length >= 2) ? (
+              <p
+                className={css.honestyFooter}
+                data-testid="byda-honesty-footer"
+              >
+                BYDA typed assets · digitised from plans — not Vicmap easements;
+                current BYDA enquiry still required before dig
               </p>
             ) : null}
           </div>

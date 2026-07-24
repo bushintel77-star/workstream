@@ -75,6 +75,10 @@ import { AerialSlot } from "./features/aerial/AerialSlot";
 import { GroundRulerOverlay } from "./features/ground/GroundRulerOverlay";
 import { TactileGround } from "./features/ground/TactileGround";
 import { ShadeGridOverlay } from "./features/shade/ShadeGridOverlay";
+import { SunCastOverlay } from "./features/shade/SunCastOverlay";
+import { SunMarkerPip } from "./features/shade/SunMarkerPip";
+import { ClimateBedWash } from "./features/shade/ClimateBedWash";
+import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
@@ -2573,6 +2577,43 @@ export function HandoffDesignStudio({
               lat={projectLat ?? undefined}
               lng={projectLng ?? undefined}
             />
+            <ClimateBedWash
+              active={
+                (environmentOpen || ui.shadeOn) &&
+                !ui.frameOn &&
+                !ui.focusOn
+              }
+              boundary={studio.boundary}
+              meta={envLiveMeta}
+            />
+            <KeylessOverlayWash
+              active={!ui.frameOn && !ui.focusOn}
+              overlays={studio.keylessOverlays}
+            />
+            <SunCastOverlay
+              active={
+                (ui.shadeOn || environmentOpen) &&
+                !ui.frameOn &&
+                !ui.focusOn
+              }
+              sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
+              growth={ui.growth}
+              boundary={studio.boundary}
+              building={studio.building}
+              items={studio.items}
+              scaleM={scaleM}
+              lat={projectLat}
+              lng={projectLng}
+            />
+            <SunMarkerPip
+              active={environmentOpen && !ui.frameOn}
+              boundary={studio.boundary}
+              sunMin={ui.sunMin}
+              datePreset={ui.sunDatePreset}
+              lat={projectLat}
+              lng={projectLng}
+            />
             <CadPlanBoard
               frameOn={ui.frameOn}
               darkOn={darkLens}
@@ -2581,6 +2622,8 @@ export function HandoffDesignStudio({
               titleBoundaryLocked={ui.titleBoundaryLocked}
               buildingSource={ui.buildingSource}
               scaleM={scaleM}
+              timedSunCast={ui.shadeOn || environmentOpen}
+              bydaAssets={studio.bydaAssets}
               planZoom={planZoom}
               tiltDeg={ui.tiltDeg}
               planPanX={planPanX}
@@ -3147,6 +3190,7 @@ export function HandoffDesignStudio({
             scaleDenom={ui.sheetScaleDenom}
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
             titleBlock={titleBlock}
+            weatherDay={weatherDay}
             shareStamp={
               latestShare
                 ? latestShare.status === "accepted"
@@ -3516,6 +3560,7 @@ export function HandoffDesignStudio({
             building={studio.building}
             services={studio.services}
             easements={studio.easements}
+            bydaAssets={studio.bydaAssets}
             levels={studio.levels}
             irrigationZones={studio.irrigationZones}
             constructionTrenches={studio.constructionTrenches}
@@ -3576,6 +3621,7 @@ export function HandoffDesignStudio({
               scaleM={scaleM}
               services={studio.services}
               easements={studio.easements}
+              bydaAssets={studio.bydaAssets}
               levels={studio.levels}
               irrigationZones={studio.irrigationZones}
               constructionTrenches={studio.constructionTrenches}
@@ -3591,6 +3637,7 @@ export function HandoffDesignStudio({
                 const rows = buildServiceLedgerRows({
                   services: studio.services,
                   easements: studio.easements,
+                  bydaAssets: studio.bydaAssets,
                   levels: studio.levels,
                   irrigationZones: studio.irrigationZones,
                   constructionTrenches: studio.constructionTrenches,
@@ -3806,6 +3853,16 @@ export function HandoffDesignStudio({
               cmdOpen: false,
               cmdQuery: "",
               utilityPanel: null,
+            });
+          }}
+          onArmByda={(kind) => {
+            studio.setUi({
+              tool: "service",
+              bydaDraftKind: kind,
+              mode: "survey",
+              cmdOpen: false,
+              cmdQuery: "",
+              rightDataPanel: "services",
             });
           }}
           onConvertSketch={

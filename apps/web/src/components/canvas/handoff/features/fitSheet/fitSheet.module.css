@@ -108,6 +108,29 @@
   gap: 8px;
 }
 
+.titleMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.weatherPip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border: 1px solid rgba(36, 19, 24, 0.18);
+  background: rgba(255, 255, 255, 0.55);
+  color: #292524;
+}
+
+.weatherTemp {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+}
+
 /**
  * A4 portrait — title block as a full-width bottom strip. Columns instead
  * of a stacked right rail; the plot above keeps the whole paper width.

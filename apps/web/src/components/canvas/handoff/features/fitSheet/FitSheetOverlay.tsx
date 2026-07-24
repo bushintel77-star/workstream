@@ -16,6 +16,9 @@ import {
   type SheetScaleDenom,
 } from "../../geometry";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
+import { WeatherIcon } from "../stickyMeta/WeatherIcon";
+import type { EnvWeatherDay } from "../stickyMeta/envLiveMeta";
+import { resolveEnvWeatherCondition } from "../stickyMeta/envLiveMeta";
 import css from "./fitSheet.module.css";
 
 /** Ladder lives in geometry (single source shared with sheetContentView). */
@@ -41,6 +44,8 @@ type Props = {
   titleBlock?: ArchitecturalTitleBlock | null;
   /** Doc-control stamp from the latest share revision. */
   shareStamp?: string | null;
+  /** Today’s Open-Meteo day — tiny weather pip in the title strip. */
+  weatherDay?: EnvWeatherDay | null;
 };
 
 type ElevProfile = {
@@ -175,8 +180,14 @@ export function FitSheetOverlay({
   onScaleDenom,
   titleBlock = null,
   shareStamp = null,
+  weatherDay = null,
 }: Props) {
   const [pulse, setPulse] = useState(false);
+  const weatherCondition = resolveEnvWeatherCondition(weatherDay, 45);
+  const weatherTemp =
+    weatherDay?.temp_max_c != null && Number.isFinite(weatherDay.temp_max_c)
+      ? Math.round(weatherDay.temp_max_c)
+      : null;
 
   useEffect(() => {
     setPulse(true);
@@ -370,29 +381,47 @@ export function FitSheetOverlay({
                 <p className={css.titleCouncil}>{titleBlock.councilLabel}</p>
               ) : null}
             </div>
-            <span className={css.northRose} title="True north" aria-hidden>
-              <svg viewBox="0 0 24 28" width="22" height="26">
-                <polygon points="12,2 15,14 12,12 9,14" fill="#1a1a1a" />
-                <line
-                  x1="12"
-                  y1="12"
-                  x2="12"
-                  y2="26"
-                  stroke="#1a1a1a"
-                  strokeWidth="1.2"
-                />
-                <text
-                  x="12"
-                  y="11"
-                  textAnchor="middle"
-                  fontSize="6"
-                  fontFamily="IBM Plex Mono, monospace"
-                  fill="#1a1a1a"
+            <div className={css.titleMeta}>
+              {weatherDay ? (
+                <span
+                  className={css.weatherPip}
+                  data-testid="fit-sheet-weather"
+                  title={
+                    weatherTemp != null
+                      ? `Forecast · ${weatherTemp}° max`
+                      : "Forecast"
+                  }
                 >
-                  N
-                </text>
-              </svg>
-            </span>
+                  <WeatherIcon condition={weatherCondition} size={14} />
+                  {weatherTemp != null ? (
+                    <span className={css.weatherTemp}>{weatherTemp}°</span>
+                  ) : null}
+                </span>
+              ) : null}
+              <span className={css.northRose} title="True north" aria-hidden>
+                <svg viewBox="0 0 24 28" width="22" height="26">
+                  <polygon points="12,2 15,14 12,12 9,14" fill="#1a1a1a" />
+                  <line
+                    x1="12"
+                    y1="12"
+                    x2="12"
+                    y2="26"
+                    stroke="#1a1a1a"
+                    strokeWidth="1.2"
+                  />
+                  <text
+                    x="12"
+                    y="11"
+                    textAnchor="middle"
+                    fontSize="6"
+                    fontFamily="IBM Plex Mono, monospace"
+                    fill="#1a1a1a"
+                  >
+                    N
+                  </text>
+                </svg>
+              </span>
+            </div>
           </div>
 
           <div className={css.section}>

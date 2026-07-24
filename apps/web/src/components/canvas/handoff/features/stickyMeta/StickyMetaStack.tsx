@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CameraChrome } from "../../CameraChrome";
 import { buildServiceLedgerRows } from "../services/serviceLedger";
-import type { ConstructionTrench, IrrigationZone } from "@workstream/contracts";
+import type {
+  ConstructionTrench,
+  DesignBydaAsset,
+  IrrigationZone,
+} from "@workstream/contracts";
 import type { SpotLevel, StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import type { GrowthStage } from "../../state/studioTypes";
@@ -33,6 +37,7 @@ type Props = {
   building: PctPoint[];
   services: PctPoint[][];
   easements: PctPoint[][];
+  bydaAssets?: DesignBydaAsset[];
   levels: SpotLevel[];
   irrigationZones: IrrigationZone[];
   constructionTrenches: ConstructionTrench[];
@@ -80,6 +85,7 @@ export function StickyMetaStack({
   building,
   services,
   easements,
+  bydaAssets = [],
   levels,
   irrigationZones,
   constructionTrenches,
@@ -123,6 +129,7 @@ export function StickyMetaStack({
       buildServiceLedgerRows({
         services,
         easements,
+        bydaAssets,
         levels,
         irrigationZones,
         constructionTrenches,
@@ -132,6 +139,7 @@ export function StickyMetaStack({
     [
       services,
       easements,
+      bydaAssets,
       levels,
       irrigationZones,
       constructionTrenches,

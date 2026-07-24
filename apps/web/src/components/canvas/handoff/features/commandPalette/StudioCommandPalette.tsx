@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { BydaAssetKind } from "@workstream/contracts";
 import { BY_TYPE, type StudioItemType } from "../../studioCatalog";
+import { BYDA_KIND_LABEL } from "../../geometry/bydaPlanStyles";
 import css from "./commandPalette.module.css";
 
 export type StudioCommand = {
@@ -30,6 +32,8 @@ type Props = {
   onOpenSite?: () => void;
   /** Open existing Trees meta panel (count / DBH / TPZ). */
   onOpenTrees?: () => void;
+  /** Arm Servc for a typed BYDA asset stroke (not title easement). */
+  onArmByda?: (kind: BydaAssetKind) => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
   onGoQuote: () => void;
@@ -70,6 +74,7 @@ export function StudioCommandPalette({
   onOpenEnvironment,
   onOpenSite,
   onOpenTrees,
+  onArmByda,
   onConvertSketch,
   onToggleFitSheet,
   onGoQuote,
@@ -212,6 +217,28 @@ export function StudioCommandPalette({
             } satisfies StudioCommand,
           ]
         : []),
+      ...(onArmByda
+        ? (
+            [
+              "sewer",
+              "stormwater",
+              "water",
+              "gas",
+              "power",
+              "nbn",
+            ] as BydaAssetKind[]
+          ).map(
+            (kind) =>
+              ({
+                id: `byda-${kind}`,
+                label: `BYDA ${BYDA_KIND_LABEL[kind]}…`,
+                detail:
+                  "Trace typed underground asset — separate stroke from title easements",
+                keywords: `byda ${kind} utility asset dig locate sewer gas power nbn water stormwater`,
+                run: () => onArmByda(kind),
+              }) satisfies StudioCommand,
+          )
+        : []),
       ...(onConvertSketch
         ? [
             {
@@ -314,6 +341,7 @@ export function StudioCommandPalette({
     onOpenEnvironment,
     onOpenSite,
     onOpenTrees,
+    onArmByda,
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,

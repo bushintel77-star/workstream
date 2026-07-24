@@ -21,8 +21,11 @@ Live meta always on. Expand for controls. Stay until you opt out (×).
 | Daylight hours / sunrise–set | **API ready** | `GET …/site-context` | Env card (when fetched) |
 | Weather (temp / rain / wind) | **LIVE** | `GET …/weather` → Env sticky + expand | Env card |
 | Weather condition glyph | **LIVE** | `weatherConditionFromDay` | Env card |
-| Overshadowing / sun cast 12h | **PARTIAL** | heuristic mesh, not ray-cast | Future solar wedge |
-| Seasonal sun cast | **PARTIAL** | date presets drive mesh | Env season chips |
+| Overshadowing / sun cast 12h | **LIVE** | timed dwelling + canopy polygons (`plan-sun-cast`) | Env expand / mesh arm |
+| Seasonal sun cast | **LIVE** | date presets drive cast + mesh | Env season chips |
+| Sun marker pip | **LIVE** | `sunMarkerOnPlanPercent` at lot centre | Env expanded |
+| Climate bed wash | **LIVE** | frost / heat / humidity soft wash | Env expand / mesh |
+| Fit sheet weather | **LIVE** | `WeatherIcon` in title strip | Fit sheet |
 | Exposed to sun / full-sun band | **LIVE** (flora) | flora ranking at click | Flora Ring |
 | Deep shade / dappled | **LIVE** (flora) | shade-grid bands | Flora Ring |
 | Decorative plan shadows | **PARTIAL** | static south offset — not timed | Glyph chrome |

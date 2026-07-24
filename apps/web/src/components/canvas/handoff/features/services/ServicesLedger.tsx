@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import type { ConstructionTrench, IrrigationZone } from "@workstream/contracts";
+import type {
+  ConstructionTrench,
+  DesignBydaAsset,
+  IrrigationZone,
+} from "@workstream/contracts";
 import type { SpotLevel, StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import {
@@ -21,6 +25,7 @@ type Props = {
   scaleM: number;
   services: PctPoint[][];
   easements: PctPoint[][];
+  bydaAssets?: DesignBydaAsset[];
   levels: SpotLevel[];
   irrigationZones: IrrigationZone[];
   constructionTrenches: ConstructionTrench[];
@@ -125,6 +130,7 @@ export function ServicesLedger({
   scaleM,
   services,
   easements,
+  bydaAssets = [],
   levels,
   irrigationZones,
   constructionTrenches,
@@ -143,6 +149,7 @@ export function ServicesLedger({
       buildServiceLedgerRows({
         services,
         easements,
+        bydaAssets,
         levels,
         irrigationZones,
         constructionTrenches,
@@ -152,6 +159,7 @@ export function ServicesLedger({
     [
       services,
       easements,
+      bydaAssets,
       levels,
       irrigationZones,
       constructionTrenches,

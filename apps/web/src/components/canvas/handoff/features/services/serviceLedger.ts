@@ -3,15 +3,21 @@
  * Stable IDs from geometry fingerprints (site_frame has no per-feature ids yet).
  */
 
-import type { ConstructionTrench, IrrigationZone } from "@workstream/contracts";
+import type {
+  ConstructionTrench,
+  DesignBydaAsset,
+  IrrigationZone,
+} from "@workstream/contracts";
 import type { SpotLevel, StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
+import { BYDA_KIND_LABEL } from "../../geometry/bydaPlanStyles";
 
 export type ServiceLedgerSection = "site" | "design";
 
 export type ServiceLedgerKind =
   | "corridor"
   | "easement"
+  | "byda"
   | "level"
   | "lighting"
   | "drip"
@@ -97,12 +103,17 @@ function fmtM2(n: number): string {
 export type BuildServiceLedgerInput = {
   services: PctPoint[][];
   easements: PctPoint[][];
+  bydaAssets?: DesignBydaAsset[];
   levels: SpotLevel[];
   irrigationZones: IrrigationZone[];
   constructionTrenches: ConstructionTrench[];
   items: StudioItem[];
   scaleM: number;
 };
+
+export function bydaFeatureId(asset: DesignBydaAsset): string {
+  return `byda:${asset.id}`;
+}
 
 export function buildServiceLedgerRows(
   input: BuildServiceLedgerInput,
@@ -137,6 +148,21 @@ export function buildServiceLedgerRows(
       glyph: "▦",
     });
   });
+
+  for (const asset of input.bydaAssets ?? []) {
+    if (asset.ring.length < 2) continue;
+    const pts = asset.ring.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+    const lm = polylineLenM(pts, scaleM);
+    rows.push({
+      id: bydaFeatureId(asset),
+      section: "site",
+      kind: "byda",
+      label: BYDA_KIND_LABEL[asset.kind],
+      metric: fmtM(lm),
+      detail: `BYDA · ${asset.source} · not title easement`,
+      glyph: "━",
+    });
+  }
 
   input.levels.forEach((lv, i) => {
     rows.push({

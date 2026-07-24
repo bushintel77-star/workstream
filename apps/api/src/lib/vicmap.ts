@@ -30,7 +30,9 @@ type Ring = Coord[];
 
 type RawGeometry =
   | { type: "Polygon"; coordinates: Ring[] }
-  | { type: "MultiPolygon"; coordinates: Ring[][] };
+  | { type: "MultiPolygon"; coordinates: Ring[][] }
+  | { type: "LineString"; coordinates: Coord[] }
+  | { type: "MultiLineString"; coordinates: Coord[][] };
 
 type RawFeature = {
   type: "Feature";
@@ -461,12 +463,27 @@ export function explodeExteriorRings(geom: RawGeometry): Ring[] {
     const ring = geom.coordinates[0];
     return ring && ring.length >= 3 ? [ring] : [];
   }
-  const out: Ring[] = [];
-  for (const poly of geom.coordinates) {
-    const ring = poly[0];
-    if (ring && ring.length >= 3) out.push(ring);
+  if (geom.type === "MultiPolygon") {
+    const out: Ring[] = [];
+    for (const poly of geom.coordinates) {
+      const ring = poly[0];
+      if (ring && ring.length >= 3) out.push(ring);
+    }
+    return out;
   }
-  return out;
+  return [];
+}
+
+/** Line / multiline rings for contour-style KEYLESS layers. */
+export function explodeLineRings(geom: RawGeometry): Ring[] {
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  if (geom.type === "MultiLineString") {
+    return geom.coordinates.filter((r) => r.length >= 2);
+  }
+  // Some contour layers ship as thin polygons — accept those too.
+  return explodeExteriorRings(geom);
 }
 
 /** Largest exterior ring — used for building footprints (main mass). */
@@ -645,10 +662,85 @@ export async function fetchBuildingPolygon(
   return bestRing ? toGeoJsonPolygon(bestRing) : null;
 }
 
+const keylessLayerCache = new Map<VicmapKeylessKind, DiscoveredLayer>();
+
+/** Discover a KEYLESS layer + geometry field via scorers + DescribeFeatureType. */
+export async function discoverKeylessLayer(
+  kind: VicmapKeylessKind,
+): Promise<DiscoveredLayer | null> {
+  const hit = keylessLayerCache.get(kind);
+  if (hit) return hit;
+  const names = await fetchCapabilitiesTypeNames();
+  const scoreFn = VICMAP_KEYLESS_SCORERS[kind];
+  const typeName = pickBestLayerName(names, scoreFn);
+  if (!typeName) return null;
+  const geomField = await describeGeometryField(typeName);
+  const discovered = { typeName, geomField };
+  keylessLayerCache.set(kind, discovered);
+  return discovered;
+}
+
+export type KeylessFetchResult = {
+  kind: VicmapKeylessKind;
+  typeName: string;
+  /** Exterior rings or contour polylines in EPSG:4326. */
+  rings: Ring[];
+  label: string | null;
+};
+
+/**
+ * Fetch KEYLESS overlay geometry intersecting a lat/lng pin.
+ * Contours prefer line rings; planning / bushfire prefer polygons.
+ */
+export async function fetchKeylessRings(
+  kind: VicmapKeylessKind,
+  lat: number,
+  lng: number,
+): Promise<KeylessFetchResult | null> {
+  const layer = await discoverKeylessLayer(kind);
+  if (!layer) return null;
+  const cql = `INTERSECTS(${layer.geomField}, SRID=4326;POINT(${lng} ${lat}))`;
+  const url = buildUrl(layer.typeName, cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return null;
+
+  const rings: Ring[] = [];
+  let label: string | null = null;
+  for (const f of fc.features) {
+    const parts =
+      kind === "contour"
+        ? explodeLineRings(f.geometry)
+        : explodeExteriorRings(f.geometry);
+    for (const r of parts) rings.push(r);
+    if (!label) {
+      label = propStr(
+        f.properties,
+        "ZONE_CODE",
+        "ZONE",
+        "OVERLAY",
+        "BMO",
+        "LABEL",
+        "NAME",
+        "name",
+      );
+    }
+  }
+  if (rings.length === 0) return null;
+  // Cap payload — board washes do not need every contour statewide.
+  const capped = rings.slice(0, kind === "contour" ? 40 : 12);
+  return {
+    kind,
+    typeName: layer.typeName,
+    rings: capped,
+    label,
+  };
+}
+
 /** Test helper — clear discovery caches between unit tests. */
 export function __resetVicmapDiscoveryCacheForTests(): void {
   capabilitiesCache = null;
   capabilitiesCacheAt = 0;
   propertyLayerCache = null;
   buildingLayerCache = null;
+  keylessLayerCache.clear();
 }
