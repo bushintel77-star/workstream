@@ -27,9 +27,9 @@ Live meta always on. Expand for controls. Stay until you opt out (×).
 | Deep shade / dappled | **LIVE** (flora) | shade-grid bands | Flora Ring |
 | Decorative plan shadows | **PARTIAL** | static south offset — not timed | Glyph chrome |
 | Ghost sun-exposure score | **LIVE** | AI ghost confidence | Ghost review |
-| Humidity | **MISSING** | — | KEYLESS / Open-Meteo later |
-| Frost risk (plant) | **MISSING** | — | Open-Meteo min temp later |
-| Excessive heat / heat stress | **MISSING** | — | Open-Meteo max + heat days |
+| Humidity | **MISSING** | shown as `soon` in Env expand | Open-Meteo later |
+| Frost risk (plant) | **MISSING** | shown as `soon` in Env expand | Open-Meteo min temp later |
+| Excessive heat / heat stress | **MISSING** | shown as `soon` in Env expand | Open-Meteo max + heat days |
 | Engineering overshadowing | **MISSING** | Stage 2 / survey | Spec only |
 | Wind exposure on site | **PARTIAL** | forecast wind warning only | Env weather line |
 | Soil moisture / drought | **MISSING** | — | chase / eng |
