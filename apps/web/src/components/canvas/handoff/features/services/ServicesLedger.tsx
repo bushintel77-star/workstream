@@ -17,6 +17,8 @@ import {
   CHASE_PACK,
   KEYLESS_NEXT,
 } from "./dueDiligenceCatalog";
+import { MetaIcon } from "../stickyMeta/MetaIcon";
+import metaCss from "../stickyMeta/metaPanel.module.css";
 import css from "./servicesLedger.module.css";
 
 type Props = {
@@ -176,29 +178,41 @@ export function ServicesLedger({
 
   return (
     <div
-      className={css.panel}
+      className={`${metaCss.panel} ${css.panel}`}
       data-testid="services-ledger"
       role="dialog"
       aria-label="Services ledger"
     >
-      <div className={css.head}>
-        <div>
-          <p className={css.kicker}>Site inventory</p>
-          <p className={css.title}>
-            Services
-            {locked ? (
-              <span className={css.locked} data-testid="services-ledger-locked">
-                Survey locked
-              </span>
-            ) : null}
-          </p>
+      <div className={metaCss.head}>
+        <div className={metaCss.headMain}>
+          <span className={metaCss.headIcon}>
+            <MetaIcon id="services" size={20} />
+          </span>
+          <div>
+            <p className={metaCss.kicker}>Site inventory · live</p>
+            <p className={metaCss.title}>
+              Services
+              {locked ? (
+                <span className={css.locked} data-testid="services-ledger-locked">
+                  Survey locked
+                </span>
+              ) : null}
+            </p>
+          </div>
         </div>
-        <button type="button" className={css.close} onClick={onClose}>
+        <button type="button" className={metaCss.close} onClick={onClose}>
           Close
         </button>
       </div>
 
-      <p className={css.honesty} data-testid="services-ledger-honesty">
+      <p className={metaCss.live} data-testid="services-ledger-live">
+        <span className={metaCss.metric}>{rows.length}</span>
+        <span>
+          mapped features · {site.length} site · {design.length} design
+        </span>
+      </p>
+
+      <p className={metaCss.honesty} data-testid="services-ledger-honesty">
         Vicmap easements ≠ underground assets. Dig still needs BYDA — and often
         council drainage.
       </p>
@@ -278,7 +292,7 @@ export function ServicesLedger({
             ),
           )}
         </ul>
-        <p className={css.foot}>
+        <p className={metaCss.foot}>
           KEYLESS = same Vicmap WFS stack as title. BYDA = membership enquiry.
           Survey 5/5 is the digital minimum — see docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md.
         </p>

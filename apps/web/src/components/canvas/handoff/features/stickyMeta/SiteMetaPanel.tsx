@@ -33,7 +33,9 @@ export function SiteMetaPanel({ open, meta, outdoorM2 = null, onClose }: Props) 
     >
       <div className={css.head}>
         <div className={css.headMain}>
-          <MetaIcon id="site" size={20} />
+          <span className={css.headIcon}>
+            <MetaIcon id="site" size={20} />
+          </span>
           <div>
             <p className={css.kicker}>Cadastral · indicative</p>
             <p className={css.title}>Site</p>

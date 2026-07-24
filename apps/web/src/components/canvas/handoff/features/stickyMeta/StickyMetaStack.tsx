@@ -207,6 +207,7 @@ export function StickyMetaStack({
             id="environment"
             testId="sticky-meta-environment"
             active={activePanel === "environment"}
+            label="Environment"
             icon={<WeatherIcon condition={env.weatherCondition} size={18} />}
             face={env.face}
             detail={env.detail}
@@ -220,10 +221,11 @@ export function StickyMetaStack({
             id="services"
             testId="sticky-meta-services"
             active={activePanel === "services"}
+            label="Services"
             icon={<MetaIcon id="services" size={18} />}
             face={
               <>
-                Services · {siteN} site · {designN} design
+                {siteN} site · {designN} design
                 {servicesLocked ? (
                   <span className={css.badge}>locked</span>
                 ) : null}
@@ -244,8 +246,9 @@ export function StickyMetaStack({
             id="site"
             testId="sticky-meta-site"
             active={activePanel === "site"}
+            label="Site"
             icon={<MetaIcon id="site" size={18} />}
-            face={site.face}
+            face={site.lotAreaM2 > 0 ? site.face : "Boundary not traced"}
             detail={siteDetail}
             onExpand={onExpandSite}
             onDismiss={() => dismiss("site")}
@@ -257,8 +260,9 @@ export function StickyMetaStack({
             id="trees"
             testId="sticky-meta-trees"
             active={activePanel === "trees"}
+            label="Trees"
             icon={<MetaIcon id="trees" size={18} />}
-            face={trees.face}
+            face={`${trees.count} existing · ${trees.tpzCount} TPZ`}
             detail={trees.detail}
             onExpand={onExpandTrees}
             onDismiss={() => dismiss("trees")}
@@ -273,6 +277,7 @@ function MetaCard({
   id,
   testId,
   active,
+  label,
   icon,
   face,
   detail,
@@ -282,6 +287,7 @@ function MetaCard({
   id: StickyMetaCardId;
   testId: string;
   active: boolean;
+  label: string;
   icon: ReactNode;
   face: ReactNode;
   detail: ReactNode;
@@ -289,38 +295,39 @@ function MetaCard({
   onDismiss: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <div
       className={css.card}
-      data-testid={testId}
-      data-with-icon="true"
       data-active={active ? "true" : "false"}
-      onClick={onExpand}
     >
-      <span className={css.iconSlot}>{icon}</span>
-      <p className={css.face}>{face}</p>
-      <span
+      <button
+        type="button"
+        className={css.expand}
+        data-testid={testId}
+        data-with-icon="true"
+        data-active={active ? "true" : "false"}
+        aria-expanded={active}
+        onClick={onExpand}
+      >
+        <span className={css.iconSlot}>{icon}</span>
+        <span className={css.copy}>
+          <span className={css.eyebrow}>{label}</span>
+          <span className={css.face}>{face}</span>
+          <span className={css.detail}>{detail}</span>
+        </span>
+      </button>
+      <button
+        type="button"
         className={css.close}
-        role="button"
-        tabIndex={0}
         aria-label={`Dismiss ${id} card`}
         data-testid={`${testId}-dismiss`}
         onClick={(e) => {
           e.stopPropagation();
           onDismiss();
         }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            e.stopPropagation();
-            onDismiss();
-          }
-        }}
       >
         ×
-      </span>
-      <p className={css.detail}>{detail}</p>
-    </button>
+      </button>
+    </div>
   );
 }
 

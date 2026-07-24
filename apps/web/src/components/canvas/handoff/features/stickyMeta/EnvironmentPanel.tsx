@@ -8,6 +8,7 @@ import {
 } from "../sunGrowth/sunDatePreset";
 import type { EnvLiveMeta } from "./envLiveMeta";
 import { WeatherIcon } from "./WeatherIcon";
+import metaCss from "./metaPanel.module.css";
 import css from "./environmentPanel.module.css";
 
 type Props = {
@@ -57,22 +58,27 @@ export function EnvironmentPanel({
 
   return (
     <div
-      className={css.panel}
+      className={`${metaCss.panel} ${css.panel}`}
       data-testid="environment-panel"
       role="dialog"
       aria-label="Environment"
     >
-      <div className={css.head}>
-        <div>
-          <p className={css.kicker}>Climate · indicative</p>
-          <p className={css.title}>Environment</p>
+      <div className={metaCss.head}>
+        <div className={metaCss.headMain}>
+          <span className={metaCss.headIcon}>
+            <WeatherIcon condition={meta.weatherCondition} size={20} />
+          </span>
+          <div>
+            <p className={metaCss.kicker}>Climate · indicative</p>
+            <p className={metaCss.title}>Environment</p>
+          </div>
         </div>
-        <button type="button" className={css.close} onClick={onClose}>
+        <button type="button" className={metaCss.close} onClick={onClose}>
           Close
         </button>
       </div>
 
-      <p className={css.live} data-testid="environment-panel-live">
+      <p className={metaCss.live} data-testid="environment-panel-live">
         <WeatherIcon condition={meta.weatherCondition} size={20} />
         <span>
           {meta.avgSunHours.toFixed(1)}h avg sun · {meta.deepShadeCells}/
@@ -113,8 +119,10 @@ export function EnvironmentPanel({
       </label>
 
       <div className={css.block}>
-        <p className={css.blockLabel}>Time of day</p>
-        <p className={css.clock}>{meta.clock}</p>
+        <div className={css.blockHead}>
+          <p className={css.blockLabel}>Time of day</p>
+          <p className={css.clock}>{meta.clock}</p>
+        </div>
         <input
           type="range"
           className={css.slider}
@@ -127,6 +135,11 @@ export function EnvironmentPanel({
             onSunMin(DAY_START + nt * (DAY_END - DAY_START));
           }}
         />
+        <div className={css.scrubberTicks} aria-hidden>
+          <span>06:20</span>
+          <span>Solar cast</span>
+          <span>19:40</span>
+        </div>
         <div className={css.row}>
           <button
             type="button"
@@ -225,7 +238,7 @@ export function EnvironmentPanel({
         </li>
       </ul>
 
-      <p className={css.foot}>
+      <p className={metaCss.foot}>
         Shade mesh and sun cast are indicative — not EnergyPlus or neighbour
         solar rights. Sticky card stays until you dismiss it.
       </p>
