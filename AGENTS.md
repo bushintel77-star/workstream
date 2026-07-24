@@ -56,7 +56,7 @@ Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd
 
 **Operator training (gold walkthrough):** `docs/OPERATOR-STUDIO-GOLD-WALKTHROUGH.md` — six mode workflows, site vs design matrix, Wrights Terrace assist scripts, lane law, anti-patterns, completion checklist.
 
-**Site infrastructure automated links:** `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` — Vicmap title/dwelling/easement hydrate (keyless WFS), what can follow (`tree_urban`, plan overlays), and what cannot (BYDA sewer/gas/power).
+**Site infrastructure / pre-construction due diligence:** `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` — full LA checklist before landscape construction (title, BYDA services, TPZ, overlays, levels, drainage) with LIVE / KEYLESS / BYDA / SITE automation status.
 
 **CAD–AI 2026 UX (binding):** `docs/CAD-AI-2026-UX.md` — disappearing interface, AI as spatial collaborator (sidecar), constraint-first geometry, human-in-the-loop ghosts. Do not reintroduce sticky ribbons or chatbot-only AI.
 
