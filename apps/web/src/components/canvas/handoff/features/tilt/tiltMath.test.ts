@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
+  LIGHT_AZIMUTH_DEG,
+  ROOF_LIGHTNESS,
   TILT_DEG,
   TILT_EAVE_M,
   TILT_MAX,
   TILT_SNAP_FLAT,
   TILT_ANIM_MS_FAST,
   TILT_ANIM_MS_SLOW,
+  WALL_LIGHT_MAX,
+  WALL_LIGHT_MIN,
   billboardStyle,
   isTiltActive,
+  lightVectorFromAzimuth,
   poleMatrix3d,
   pxPerMetre,
   settleTiltDeg,
   tiltFromDragDelta,
+  wallLightness,
   wallQuadMatrix3d,
 } from "./tiltMath";
 
@@ -167,6 +173,46 @@ describe("tiltMath", () => {
       expect(cross[0]).toBeCloseTo(c3[0]!, 5);
       expect(cross[1]).toBeCloseTo(c3[1]!, 5);
       expect(cross[2]).toBeCloseTo(c3[2]!, 5);
+    });
+  });
+
+  describe("directional wall shading", () => {
+    it("light vector follows compass azimuth in y-down board space", () => {
+      // North (0°) → light from the top of the plan (−y).
+      const n = lightVectorFromAzimuth(0);
+      expect(n.lx).toBeCloseTo(0, 5);
+      expect(n.ly).toBeCloseTo(-1, 5);
+      // East (90°) → +x.
+      const e = lightVectorFromAzimuth(90);
+      expect(e.lx).toBeCloseTo(1, 5);
+      expect(e.ly).toBeCloseTo(0, 5);
+      // Default drafting light: NW top-left.
+      expect(LIGHT_AZIMUTH_DEG).toBe(315);
+      const nw = lightVectorFromAzimuth();
+      expect(nw.lx).toBeCloseTo(-Math.SQRT1_2, 5);
+      expect(nw.ly).toBeCloseTo(-Math.SQRT1_2, 5);
+      // Always unit length.
+      expect(Math.hypot(nw.lx, nw.ly)).toBeCloseTo(1, 5);
+    });
+
+    it("wallLightness maps facing→max, away→min, never below the band", () => {
+      const { lx, ly } = lightVectorFromAzimuth(0);
+      // Normal pointing straight at the light.
+      expect(wallLightness(0, -1, lx, ly)).toBeCloseTo(WALL_LIGHT_MAX, 5);
+      // Back facet — negative dot clamps to the quiet minimum.
+      expect(wallLightness(0, 1, lx, ly)).toBeCloseTo(WALL_LIGHT_MIN, 5);
+      // Perpendicular facet sits at the minimum too (dot = 0).
+      expect(wallLightness(1, 0, lx, ly)).toBeCloseTo(WALL_LIGHT_MIN, 5);
+      // 45° facet lands mid-band.
+      const mid = wallLightness(Math.SQRT1_2, -Math.SQRT1_2, lx, ly);
+      expect(mid).toBeGreaterThan(WALL_LIGHT_MIN);
+      expect(mid).toBeLessThan(WALL_LIGHT_MAX);
+    });
+
+    it("roof reads slightly brighter than the wall band average", () => {
+      expect(ROOF_LIGHTNESS).toBeGreaterThan(
+        (WALL_LIGHT_MIN + WALL_LIGHT_MAX) / 2,
+      );
     });
   });
 

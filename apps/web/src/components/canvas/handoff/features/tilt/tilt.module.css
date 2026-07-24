@@ -61,7 +61,7 @@
   position: absolute;
   inset: 0;
   background: rgba(255, 251, 252, 0.55);
-  border: 1px solid rgba(36, 19, 24, 0.35);
+  border: 1px solid rgba(36, 19, 24, 0.4);
   box-shadow: 0 2px 8px rgba(36, 19, 24, 0.08);
 }
 
@@ -79,15 +79,11 @@
   left: 0;
   top: 0;
   transform-origin: 0 0;
-  /* Shaded darker than the roof cap — a simple fake-lighting cue that reads
-   * "vertical side surface" versus "top surface" at a glance. */
-  background: linear-gradient(
-    180deg,
-    rgba(36, 19, 24, 0.14) 0%,
-    rgba(36, 19, 24, 0.24) 100%
-  );
-  border-top: 1px solid rgba(36, 19, 24, 0.32);
-  box-shadow: inset 0 0 0 1px rgba(36, 19, 24, 0.06);
+  /* Wash gradient is inline — per-facet directional shading from the sun
+   * azimuth (TiltBuildingExtrusion.wallWashGradient). Only the drafted ink
+   * outline lives here: each facet gets a crisp 1px edge so the volume reads
+   * as drawn linework even at low tilt where shading alone is subtle. */
+  border: 1px solid rgba(36, 19, 24, 0.4);
 }
 
 .cornerPost {
