@@ -122,6 +122,13 @@ export const BoundaryAutoTraceBuildingSchema = z.object({
   y: z.number(),
 });
 
+/** Vicmap easement LineString projected into boundary canvas metres. */
+export const BoundaryAutoTraceEasementLineSchema = z.object({
+  points: z.array(BoundaryAutoTraceBuildingSchema).min(2),
+  pfi: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+});
+
 export const BoundaryAutoTraceResponseSchema = z.object({
   boundary: SiteBoundarySchema,
   /**
@@ -130,6 +137,14 @@ export const BoundaryAutoTraceResponseSchema = z.object({
    */
   building_canvas: z.array(BoundaryAutoTraceBuildingSchema).default([]),
   building_source: z.enum(["vicmap"]).nullable().default(null),
+  /**
+   * Vicmap Property easement lines (subset) co-registered with the title.
+   * Hydrated onto Services corridors — not closed hatch rings.
+   */
+  easement_lines_canvas: z
+    .array(BoundaryAutoTraceEasementLineSchema)
+    .default([]),
+  easement_source: z.enum(["vicmap"]).nullable().default(null),
 });
 export type BoundaryAutoTraceResponse = z.infer<
   typeof BoundaryAutoTraceResponseSchema

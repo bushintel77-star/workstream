@@ -10,7 +10,7 @@ const LAYERS: Array<{ key: LayerKey; label: string; hint: string }> = [
   {
     key: "services",
     label: "Services & utilities",
-    hint: "Drainage, service corridors, easements, RL levels",
+    hint: "Vicmap easement lines, Servc corridors, easement hatch, RL levels",
   },
   { key: "council", label: "Council & compliance", hint: "Setbacks, TPZ" },
   { key: "vegetation", label: "Vegetation (proposed)", hint: "Canopy, hedge, beds, lawn" },

@@ -56,6 +56,8 @@ Sketch / CAD on the handoff board own: paint/save, AI ghost scan, NL assist, Cmd
 
 **Operator training (gold walkthrough):** `docs/OPERATOR-STUDIO-GOLD-WALKTHROUGH.md` — six mode workflows, site vs design matrix, Wrights Terrace assist scripts, lane law, anti-patterns, completion checklist.
 
+**Site infrastructure automated links:** `docs/SITE-INFRASTRUCTURE-AUTOMATED-LINKS.md` — Vicmap title/dwelling/easement hydrate (keyless WFS), what can follow (`tree_urban`, plan overlays), and what cannot (BYDA sewer/gas/power).
+
 **CAD–AI 2026 UX (binding):** `docs/CAD-AI-2026-UX.md` — disappearing interface, AI as spatial collaborator (sidecar), constraint-first geometry, human-in-the-loop ghosts. Do not reintroduce sticky ribbons or chatbot-only AI.
 
 AI pipeline: heuristic coaching (`buildSketchCanvasAiSuggestions`) + optional vision ghosts API + NL sketch assist (`POST /projects/:id/design/assist` via `buildStudioSystemPrompt`) + CAD ghosts on generate (`generateCadAction`). Ghosts are ephemeral until accept.

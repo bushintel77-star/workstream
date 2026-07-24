@@ -7,6 +7,7 @@ import {
   pickBestLayerName,
   pickTitleRingForPin,
   scoreBuildingLayerName,
+  scoreEasementLayerName,
   scorePropertyLayerName,
 } from "./vicmap";
 
@@ -65,6 +66,22 @@ describe("layer discovery scoring", () => {
     expect(pickBestLayerName(sampleNames, scoreBuildingLayerName)).toBe(
       "open-data-platform:building_polygon",
     );
+  });
+
+  it("prefers easement over approved/proposed simplified views", () => {
+    const easementNames = [
+      "open-data-platform:v_s_easement_proposed",
+      "open-data-platform:v_s_easement_approved",
+      "open-data-platform:easement",
+      "open-data-platform:v_s_easement_approved_anno",
+      "open-data-platform:hy_watercourse",
+    ];
+    expect(pickBestLayerName(easementNames, scoreEasementLayerName)).toBe(
+      "open-data-platform:easement",
+    );
+    expect(
+      scoreEasementLayerName("open-data-platform:v_s_easement_approved_anno"),
+    ).toBeLessThan(0);
   });
 
   it("rejects solar / address / proposed property-ish names", () => {

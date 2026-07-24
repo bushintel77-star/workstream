@@ -59,6 +59,14 @@ const CAPABILITIES_TTL_MS = 60 * 60 * 1000;
 
 let propertyLayerCache: DiscoveredLayer | null = null;
 let buildingLayerCache: DiscoveredLayer | null = null;
+let easementLayerCache: DiscoveredLayer | null = null;
+
+export type VicmapEasementLine = {
+  /** EPSG:4326 vertices along the easement curve. */
+  coordinates: Coord[];
+  pfi: string | null;
+  status: string | null;
+};
 
 /**
  * Vicmap cadastral is always available via the public GeoServer.
@@ -117,6 +125,27 @@ export function scoreBuildingLayerName(typeName: string): number {
   if (n === "building_polygon") score += 100;
   else if (n.includes("building") && n.includes("polygon")) score += 80;
   else if (n.includes("building")) score += 40;
+  return score;
+}
+
+/**
+ * Score Vicmap Property easement line layers.
+ * Prefer the full `easement` layer over simplified approved/proposed views.
+ */
+export function scoreEasementLayerName(typeName: string): number {
+  const n = localName(typeName);
+  if (!n) return -Infinity;
+  if (!n.includes("easement")) return -Infinity;
+  if (/anno|annotation|label|point$/.test(n)) return -80;
+
+  let score = 0;
+  if (n === "easement") score += 100;
+  else if (n.includes("easement") && n.includes("approved") && !n.includes("proposed")) {
+    score += 70;
+  } else if (n.includes("easement") && n.includes("proposed")) score += 40;
+  else if (n.includes("easement")) score += 50;
+
+  if (n.startsWith("v_s_")) score -= 5;
   return score;
 }
 
@@ -256,6 +285,22 @@ export async function discoverBuildingLayer(): Promise<DiscoveredLayer> {
   const geomField = await describeGeometryField(typeName);
   buildingLayerCache = { typeName, geomField };
   return buildingLayerCache;
+}
+
+/** Discover Vicmap Property easement line layer + its geometry field. */
+export async function discoverEasementLayer(): Promise<DiscoveredLayer> {
+  if (easementLayerCache) return easementLayerCache;
+  const names = await fetchCapabilitiesTypeNames();
+  const typeName = pickBestLayerName(names, scoreEasementLayerName);
+  if (!typeName) {
+    throw new Error(
+      "Vicmap: no easement FeatureType found in GetCapabilities. " +
+        `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
+    );
+  }
+  const geomField = await describeGeometryField(typeName);
+  easementLayerCache = { typeName, geomField };
+  return easementLayerCache;
 }
 
 /** @deprecated Prefer discoverPropertyLayer(); kept for call-site clarity. */
@@ -475,10 +520,55 @@ export async function fetchBuildingPolygon(
   return bestRing ? toGeoJsonPolygon(bestRing) : null;
 }
 
+type LineGeometry =
+  | { type: "LineString"; coordinates: Coord[] }
+  | { type: "MultiLineString"; coordinates: Coord[][] };
+
+function isLineGeometry(geom: unknown): geom is LineGeometry {
+  if (!geom || typeof geom !== "object") return false;
+  const g = geom as { type?: string; coordinates?: unknown };
+  return g.type === "LineString" || g.type === "MultiLineString";
+}
+
+function explodeLineCoordinates(geom: LineGeometry): Coord[][] {
+  if (geom.type === "LineString") {
+    return geom.coordinates.length >= 2 ? [geom.coordinates] : [];
+  }
+  return geom.coordinates.filter((line) => line.length >= 2);
+}
+
+/**
+ * Fetch Vicmap Property easement lines intersecting a title ring.
+ * Vicmap captures only a subset of easements — treat as indicative site context.
+ */
+export async function fetchEasementLinesForTitle(
+  titleRing: Ring,
+): Promise<VicmapEasementLine[]> {
+  const { typeName, geomField } = await discoverEasementLayer();
+  const closed = ensureClosedRing(titleRing);
+  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
+  const url = buildUrl(typeName, cql);
+  const fc = await wfsFetch(url);
+  if (fc.features.length === 0) return [];
+
+  const out: VicmapEasementLine[] = [];
+  for (const f of fc.features) {
+    if (!isLineGeometry(f.geometry)) continue;
+    const pfi = propStr(f.properties, "pfi", "PFI");
+    const status = propStr(f.properties, "status", "STATUS");
+    for (const coordinates of explodeLineCoordinates(f.geometry)) {
+      out.push({ coordinates, pfi, status });
+    }
+  }
+  return out;
+}
+
 /** Test helper — clear discovery caches between unit tests. */
 export function __resetVicmapDiscoveryCacheForTests(): void {
   capabilitiesCache = null;
   capabilitiesCacheAt = 0;
   propertyLayerCache = null;
   buildingLayerCache = null;
+  easementLayerCache = null;
 }

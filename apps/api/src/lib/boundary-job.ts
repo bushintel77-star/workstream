@@ -7,11 +7,16 @@ import type {
 } from "@workstream/contracts";
 import {
   buildBoundaryFromPolygon,
+  geoJsonLineToCanvasMetres,
   geoJsonPolygonToCanvasMetres,
   lockBoundary,
   unlockBoundary,
 } from "@workstream/domain";
-import { fetchBuildingPolygon, fetchTitlePolygon } from "./vicmap";
+import {
+  fetchBuildingPolygon,
+  fetchEasementLinesForTitle,
+  fetchTitlePolygon,
+} from "./vicmap";
 
 function toUpsert(
   draft: Omit<SiteBoundary, "id" | "updated_at">,
@@ -137,6 +142,10 @@ export async function autoTraceSiteBoundaryWithBuilding(
   );
 
   const origin = boundary.geo_reference.canvas_origin_geo;
+  const titleRing = (polygon.coordinates[0] ?? []).map(
+    ([lng, lat]) => [lng, lat] as [number, number],
+  );
+
   let housePoly: GeoJsonPolygon | null = null;
   if (
     survey?.house_polygon?.coordinates?.[0] &&
@@ -144,14 +153,9 @@ export async function autoTraceSiteBoundaryWithBuilding(
     survey.house_area_m2 > 0
   ) {
     housePoly = survey.house_polygon;
-  } else {
+  } else if (titleRing.length >= 4) {
     try {
-      const titleRing = (polygon.coordinates[0] ?? []).map(
-        ([lng, lat]) => [lng, lat] as [number, number],
-      );
-      if (titleRing.length >= 4) {
-        housePoly = await fetchBuildingPolygon(titleRing);
-      }
+      housePoly = await fetchBuildingPolygon(titleRing);
     } catch (err) {
       console.warn("[boundary] Vicmap building fetch failed:", err);
     }
@@ -163,10 +167,35 @@ export async function autoTraceSiteBoundaryWithBuilding(
   const building_source =
     building_canvas.length >= 3 ? ("vicmap" as const) : null;
 
+  let easement_lines_canvas: BoundaryAutoTraceResponse["easement_lines_canvas"] =
+    [];
+  let easement_source: BoundaryAutoTraceResponse["easement_source"] = null;
+  if (titleRing.length >= 4) {
+    try {
+      const lines = await fetchEasementLinesForTitle(titleRing);
+      easement_lines_canvas = lines.flatMap((line) => {
+        const projected = geoJsonLineToCanvasMetres(
+          { type: "LineString", coordinates: line.coordinates },
+          origin,
+        );
+        return projected.map((points) => ({
+          points,
+          pfi: line.pfi,
+          status: line.status,
+        }));
+      });
+      if (easement_lines_canvas.length > 0) easement_source = "vicmap";
+    } catch (err) {
+      console.warn("[boundary] Vicmap easement fetch failed:", err);
+    }
+  }
+
   return {
     boundary,
     building_canvas,
     building_source,
+    easement_lines_canvas,
+    easement_source,
   };
 }
 

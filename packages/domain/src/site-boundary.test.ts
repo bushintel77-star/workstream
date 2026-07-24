@@ -3,6 +3,7 @@ import {
   buildBoundaryFromGeoRing,
   computeBoundaryMetrics,
   deleteBoundaryVertex,
+  geoJsonLineToCanvasMetres,
   geoJsonPolygonToCanvasMetres,
   insertBoundaryVertex,
   lockBoundary,
@@ -176,5 +177,32 @@ describe("site-boundary HITL", () => {
     expect(Math.max(...house.map((p) => p.x))).toBeLessThan(Math.max(...bx));
     expect(Math.min(...house.map((p) => p.y))).toBeGreaterThan(Math.min(...by));
     expect(Math.max(...house.map((p) => p.y))).toBeLessThan(Math.max(...by));
+  });
+
+  it("projects a GeoJSON easement LineString into canvas metres", () => {
+    const draft = buildBoundaryFromGeoRing({
+      projectId: PROJECT,
+      ring: [
+        [144.96, -37.81],
+        [144.961, -37.81],
+        [144.961, -37.809],
+        [144.96, -37.809],
+      ],
+      source: "GIS_PARCEL",
+      sourceKind: "vicmap",
+    });
+    const origin = draft.geo_reference.canvas_origin_geo;
+    const lines = geoJsonLineToCanvasMetres(
+      {
+        type: "LineString",
+        coordinates: [
+          [144.9601, -37.8099],
+          [144.9609, -37.8091],
+        ],
+      },
+      origin,
+    );
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.length).toBe(2);
   });
 });

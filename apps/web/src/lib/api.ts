@@ -603,6 +603,13 @@ export type AutoTraceBoundaryResult = {
   /** Canvas-metre dwelling verts co-registered with the title (may be empty). */
   building_canvas: Array<{ x: number; y: number }>;
   building_source: "vicmap" | null;
+  /** Vicmap Property easement lines (subset) in the same canvas-metre frame. */
+  easement_lines_canvas: Array<{
+    points: Array<{ x: number; y: number }>;
+    pfi?: string | null;
+    status?: string | null;
+  }>;
+  easement_source: "vicmap" | null;
 };
 
 export async function autoTraceBoundaryApi(
@@ -618,6 +625,8 @@ export async function autoTraceBoundaryApi(
     boundary: raw.boundary,
     building_canvas: raw.building_canvas ?? [],
     building_source: raw.building_source ?? null,
+    easement_lines_canvas: raw.easement_lines_canvas ?? [],
+    easement_source: raw.easement_source ?? null,
   };
 }
 
