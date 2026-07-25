@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildOutsideDims,
+  declutterOutsideDims,
   deleteVertex,
   edgeSegments,
   insertVertexAfter,
@@ -148,10 +149,15 @@ type Props = {
   buildingSource?: "vicmap" | "traced" | "empty";
   /** Optional cadastral lot area (Vicmap) for centre CAD label. */
   lotAreaM2?: number | null;
-  /** Live site-area calculation from the same schedule as the measure ledger. */
+  /**
+   * Live site-area figures — must already be resolved via
+   * {@link resolveSiteAreaDisplay} so CAD matches Fit Sheet / Measures.
+   */
   siteAreas?: {
     buildingAreaM2: number;
     outdoorAreaM2: number;
+    /** When set, preferred over re-deriving from cadastral + drawn lot. */
+    lotAreaM2?: number;
   } | null;
   /** Street / site label for CAD annotation (not REA map chrome). */
   siteLabel?: string | null;
@@ -495,15 +501,17 @@ export function CadPlanBoard({
     siteAreas?.buildingAreaM2 ??
     (building.length >= 3 ? polygonAreaM2(building, scaleM) : 0);
   /**
-   * Same cadastral-coherence policy as the Fit sheet and measures panel —
-   * never show a Vicmap Title figure that contradicts the drawn plan
-   * (previously "Title 185 m²" on-plan vs "Title 3013 m²" in Site measures).
+   * Prefer parent-resolved lot (shared with Fit Sheet / Measures). Fallback
+   * keeps cadastral-coherence policy for callers that only pass cadastral.
    */
-  const areaLabelM2 = resolveDisplayLotM2({
-    cadastralLotM2: lotAreaM2,
-    buildingAreaM2: buildingAreaLabelM2,
-    drawnLotM2,
-  }).lotM2;
+  const areaLabelM2 =
+    siteAreas?.lotAreaM2 != null && siteAreas.lotAreaM2 > 0
+      ? siteAreas.lotAreaM2
+      : resolveDisplayLotM2({
+          cadastralLotM2: lotAreaM2,
+          buildingAreaM2: buildingAreaLabelM2,
+          drawnLotM2,
+        }).lotM2;
   const outdoorAreaLabelM2 = siteAreas?.outdoorAreaM2 ?? 0;
   const showAutoAreaLabels =
     !frameOn &&
@@ -525,8 +533,9 @@ export function CadPlanBoard({
   /**
    * Always park dimensions outside the polygon — never a chip on the line.
    * Fit sheet uses tighter offsets; live CAD uses a slightly wider stand-off.
+   * Collision declutter runs after `layout` is known (zoom-aware half-box).
    */
-  const outsideDims = showDims
+  const outsideDimsRaw = showDims
     ? [
         ...buildOutsideDims(boundarySegs, boundary, {
           offsetPct: frameOn ? 1.6 : 2.4,
@@ -601,6 +610,17 @@ export function CadPlanBoard({
     planFocusX,
     planFocusY,
   });
+  /** Dense fence-jog labels: hide overlaps; reappear as zoom increases. */
+  const outsideDims = (() => {
+    if (outsideDimsRaw.length === 0) return [];
+    const z = Math.max(planZoom, 0.35);
+    const halfWPct = (58 / Math.max(layout.w, 1) / z) * 100;
+    const halfHPct = (12 / Math.max(layout.h, 1) / z) * 100;
+    return declutterOutsideDims(outsideDimsRaw, {
+      halfWPct: Math.min(6.5, Math.max(1.2, halfWPct)),
+      halfHPct: Math.min(2.2, Math.max(0.45, halfHPct)),
+    });
+  })();
   const tiltLocked = isTiltActive(tiltDeg);
   /** Screen ppm — for HUD / label placement outside the camera scale. */
   const ppm = pxPerMetre(layout.w, scaleM, planZoom);
@@ -1381,7 +1401,9 @@ export function CadPlanBoard({
             </g>
           );
         })}
-        {outsideDims.map((d) => (
+        {outsideDims
+          .filter((d) => d.visible)
+          .map((d) => (
           <g
             key={`odim${d.key}`}
             data-testid="outside-dim"
@@ -1607,7 +1629,9 @@ export function CadPlanBoard({
           ))
         : null}
 
-      {outsideDims.map((d) => {
+      {outsideDims
+        .filter((d) => d.visible)
+        .map((d) => {
         const isBuilding = d.key.startsWith("F");
         return (
           <div

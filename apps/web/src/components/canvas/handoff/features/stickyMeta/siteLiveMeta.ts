@@ -47,7 +47,7 @@ export function buildSiteLiveMeta(args: {
 
   const face =
     lotAreaM2 > 0
-      ? `${Math.round(lotAreaM2)} m² · ${titleSource ?? "boundary"}`
+      ? `${lotAreaM2.toFixed(2)} m² · ${titleSource ?? "boundary"}`
       : "Site · boundary";
 
   const dwellingBit = hasDwelling ? "Dwelling" : "No dwelling";

@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { WRIGHTS_SEED } from "../studioCatalog";
 import { buildSiteSchedule } from "./polygon";
 import {
+  MAX_FOOTPRINT_COVERAGE_FRAC,
   resolveDisplayLotM2,
-  resolveFitSheetAreas,
+  resolveSiteAreaDisplay,
 } from "./siteScheduleDisplay";
 
 describe("resolveDisplayLotM2", () => {
@@ -29,6 +30,17 @@ describe("resolveDisplayLotM2", () => {
     ).toEqual({ lotM2: 3013, lotSource: "drawing" });
   });
 
+  it("keeps cadastral when house area can replace an absurd dwelling ring", () => {
+    expect(
+      resolveDisplayLotM2({
+        cadastralLotM2: 3810,
+        buildingAreaM2: 9898,
+        drawnLotM2: 3810,
+        cadastralHouseM2: 220,
+      }),
+    ).toEqual({ lotM2: 3810, lotSource: "cadastral" });
+  });
+
   it("falls back to the drawn lot when cadastral is missing or degenerate", () => {
     expect(
       resolveDisplayLotM2({
@@ -47,7 +59,7 @@ describe("resolveDisplayLotM2", () => {
   });
 });
 
-describe("resolveFitSheetAreas", () => {
+describe("resolveSiteAreaDisplay", () => {
   it("outdoor is lot minus building when cadastral lot applies", () => {
     const schedule = buildSiteSchedule(
       WRIGHTS_SEED.boundary,
@@ -55,8 +67,9 @@ describe("resolveFitSheetAreas", () => {
       110,
     );
     expect(schedule.buildingAreaM2).toBeGreaterThan(10);
-    const lot = Math.ceil(schedule.buildingAreaM2 + 40);
-    const display = resolveFitSheetAreas({
+    // Lot must leave ≥20% remnant so the dwelling stays under the 80% cap.
+    const lot = Math.ceil(schedule.buildingAreaM2 / MAX_FOOTPRINT_COVERAGE_FRAC + 40);
+    const display = resolveSiteAreaDisplay({
       schedule,
       cadastralLotM2: lot,
     });
@@ -65,6 +78,7 @@ describe("resolveFitSheetAreas", () => {
     expect(display.outdoorAreaM2).toBeCloseTo(lot - schedule.buildingAreaM2, 5);
     expect(display.outdoorDiffersFromNaive).toBe(false);
     expect(display.lotSource).toBe("cadastral");
+    expect(display.siteCoveragePct).toBeLessThanOrEqual(100);
   });
 
   it("rejects cadastral lot smaller than drawn building (scale mismatch)", () => {
@@ -73,7 +87,7 @@ describe("resolveFitSheetAreas", () => {
       WRIGHTS_SEED.building,
       110,
     );
-    const display = resolveFitSheetAreas({
+    const display = resolveSiteAreaDisplay({
       schedule,
       cadastralLotM2: 1, // classic template disconnect
     });
@@ -91,12 +105,71 @@ describe("resolveFitSheetAreas", () => {
       WRIGHTS_SEED.building,
       110,
     );
-    const display = resolveFitSheetAreas({ schedule, cadastralLotM2: null });
+    const display = resolveSiteAreaDisplay({ schedule, cadastralLotM2: null });
     expect(display.lotSource).toBe("drawing");
     expect(display.lotAreaM2).toBe(schedule.lotAreaM2);
     expect(display.outdoorAreaM2).toBeCloseTo(schedule.outdoorAreaM2, 5);
     expect(display.outdoorDiffersFromNaive).toBe(
       schedule.outdoorDiffersFromNaive,
     );
+  });
+
+  it("never prints dwelling >80% of lot or coverage >100% (9898 on 3810 bug)", () => {
+    const schedule = buildSiteSchedule(
+      WRIGHTS_SEED.boundary,
+      WRIGHTS_SEED.building,
+      110,
+    );
+    const inflated = {
+      ...schedule,
+      buildingAreaM2: 9898.45,
+      lotAreaM2: 3810.31,
+      outdoorAreaM2: 0,
+      outdoorNaiveM2: 0,
+      siteCoveragePct: 260,
+    };
+    const display = resolveSiteAreaDisplay({
+      schedule: inflated,
+      cadastralLotM2: 3810.31,
+      cadastralHouseM2: 245,
+    });
+    expect(display.lotAreaM2).toBeCloseTo(3810.31, 2);
+    expect(display.buildingAreaM2).toBeCloseTo(245, 2);
+    expect(display.buildingSource).toBe("cadastral");
+    expect(display.buildingSanitized).toBe(true);
+    expect(display.buildingAreaM2).toBeLessThanOrEqual(
+      display.lotAreaM2 * MAX_FOOTPRINT_COVERAGE_FRAC + 0.5,
+    );
+    expect(display.siteCoveragePct).toBeLessThanOrEqual(100);
+    expect(display.siteCoveragePct).toBe(
+      Math.round((245 / 3810.31) * 100),
+    );
+  });
+
+  it("clamps absurd dwelling when no cadastral house is available", () => {
+    const schedule = buildSiteSchedule(
+      WRIGHTS_SEED.boundary,
+      WRIGHTS_SEED.building,
+      110,
+    );
+    const inflated = {
+      ...schedule,
+      buildingAreaM2: 9898.45,
+      lotAreaM2: 3810.31,
+      outdoorAreaM2: 0,
+      outdoorNaiveM2: 0,
+      siteCoveragePct: 260,
+    };
+    const display = resolveSiteAreaDisplay({
+      schedule: inflated,
+      cadastralLotM2: 3810.31,
+    });
+    // No house fallback → drawn lot kept (building contradicts cadastral alone)
+    // then clamp dwelling to 80% of that lot.
+    expect(display.buildingSanitized).toBe(true);
+    expect(display.buildingAreaM2).toBeLessThanOrEqual(
+      display.lotAreaM2 * MAX_FOOTPRINT_COVERAGE_FRAC + 0.01,
+    );
+    expect(display.siteCoveragePct).toBeLessThanOrEqual(100);
   });
 });

@@ -6,7 +6,9 @@ import {
 } from "../../studioCatalog";
 import {
   edgeSegments,
+  formatScheduleAreaM2,
   polygonPerimeterM,
+  resolveSiteAreaDisplay,
   type EdgeSegment,
   type PctPoint,
   type SiteSchedule,
@@ -31,10 +33,7 @@ function fmtM(n: number): string {
 }
 
 function fmtArea(n: number): string {
-  if (!Number.isFinite(n)) return "—";
-  if (n >= 100) return n.toFixed(0);
-  if (n >= 10) return n.toFixed(1);
-  return n.toFixed(2);
+  return formatScheduleAreaM2(n);
 }
 
 function itemAreaM2(it: StudioItem): number {
@@ -99,6 +98,7 @@ const MATERIAL_ORDER: StudioItemType[] = [
 
 /**
  * Live measure ledger — recomputed whenever geometry / selection / scale changes.
+ * Site rows use {@link resolveSiteAreaDisplay} so Fit Sheet / CAD / Sketch agree.
  */
 export function buildLiveMeasures(args: {
   boundary: PctPoint[];
@@ -107,33 +107,40 @@ export function buildLiveMeasures(args: {
   scaleM: number;
   schedule: SiteSchedule | null;
   selected: StudioItem | null;
+  cadastralLotM2?: number | null;
+  cadastralHouseM2?: number | null;
 }): LiveMeasureRow[] {
   const { boundary, building, items, scaleM, schedule, selected } = args;
   const rows: LiveMeasureRow[] = [];
 
   if (schedule) {
+    const areas = resolveSiteAreaDisplay({
+      schedule,
+      cadastralLotM2: args.cadastralLotM2,
+      cadastralHouseM2: args.cadastralHouseM2,
+    });
     rows.push({
       id: "lot",
       label: "Lot",
-      value: `${fmtArea(schedule.lotAreaM2)} m²`,
+      value: `${fmtArea(areas.lotAreaM2)} m²`,
       group: "site",
-      numeric: schedule.lotAreaM2,
+      numeric: areas.lotAreaM2,
       unit: "m²",
     });
     rows.push({
       id: "building",
       label: "Dwelling",
-      value: `${fmtArea(schedule.buildingAreaM2)} m²`,
+      value: `${fmtArea(areas.buildingAreaM2)} m²`,
       group: "site",
-      numeric: schedule.buildingAreaM2,
+      numeric: areas.buildingAreaM2,
       unit: "m²",
     });
     rows.push({
       id: "outdoor",
       label: "Outdoor",
-      value: `${fmtArea(schedule.outdoorAreaM2)} m²`,
+      value: `${fmtArea(areas.outdoorAreaM2)} m²`,
       group: "site",
-      numeric: schedule.outdoorAreaM2,
+      numeric: areas.outdoorAreaM2,
       unit: "m²",
     });
     rows.push({
@@ -144,13 +151,13 @@ export function buildLiveMeasures(args: {
       numeric: schedule.boundaryPerimeterM,
       unit: "m",
     });
-    if (schedule.siteCoveragePct > 0) {
+    if (areas.siteCoveragePct > 0) {
       rows.push({
         id: "coverage",
         label: "Coverage",
-        value: `${schedule.siteCoveragePct.toFixed(0)}%`,
+        value: `${areas.siteCoveragePct.toFixed(0)}%`,
         group: "site",
-        numeric: schedule.siteCoveragePct,
+        numeric: areas.siteCoveragePct,
         unit: "%",
       });
     }

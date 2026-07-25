@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { edgeSegments } from "./polygon";
-import { buildOutsideDims, readableUpDeg } from "./outsideDims";
+import {
+  buildOutsideDims,
+  declutterOutsideDims,
+  readableUpDeg,
+  type OutsideDim,
+} from "./outsideDims";
 
 describe("readableUpDeg", () => {
   it("keeps angles already readable", () => {
@@ -68,5 +73,73 @@ describe("buildOutsideDims", () => {
       const extDist = (extEnd.x - c.x) ** 2 + (extEnd.y - c.y) ** 2;
       expect(extDist).toBeGreaterThan(dimDist);
     }
+  });
+});
+
+describe("declutterOutsideDims", () => {
+  it("hides overlapping labels on a tight jog run, keeps the longest", () => {
+    const clustered: OutsideDim[] = Array.from({ length: 8 }, (_, i) => ({
+      key: `B${i + 1}`,
+      lengthM: i === 3 ? 12 : 2 + i * 0.1,
+      x1: 10 + i * 0.4,
+      y1: 20,
+      x2: 10.3 + i * 0.4,
+      y2: 20,
+      labelX: 10.15 + i * 0.35,
+      labelY: 18,
+      rotDeg: 0,
+      tickA: { x1: 0, y1: 0, x2: 0, y2: 0 },
+      tickB: { x1: 0, y1: 0, x2: 0, y2: 0 },
+      extA: { x1: 0, y1: 0, x2: 0, y2: 0 },
+      extB: { x1: 0, y1: 0, x2: 0, y2: 0 },
+    }));
+    const placed = declutterOutsideDims(clustered, {
+      halfWPct: 2.5,
+      halfHPct: 1.2,
+    });
+    const visible = placed.filter((d) => d.visible);
+    expect(visible.length).toBeGreaterThan(0);
+    expect(visible.length).toBeLessThan(clustered.length);
+    expect(visible.some((d) => d.key === "B4")).toBe(true);
+  });
+
+  it("keeps all labels when they are spaced far apart", () => {
+    const spaced: OutsideDim[] = [
+      {
+        key: "B1",
+        lengthM: 10,
+        x1: 10,
+        y1: 20,
+        x2: 30,
+        y2: 20,
+        labelX: 20,
+        labelY: 15,
+        rotDeg: 0,
+        tickA: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        tickB: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        extA: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        extB: { x1: 0, y1: 0, x2: 0, y2: 0 },
+      },
+      {
+        key: "B2",
+        lengthM: 10,
+        x1: 10,
+        y1: 80,
+        x2: 30,
+        y2: 80,
+        labelX: 20,
+        labelY: 85,
+        rotDeg: 0,
+        tickA: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        tickB: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        extA: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        extB: { x1: 0, y1: 0, x2: 0, y2: 0 },
+      },
+    ];
+    const placed = declutterOutsideDims(spaced, {
+      halfWPct: 4,
+      halfHPct: 1.5,
+    });
+    expect(placed.every((d) => d.visible)).toBe(true);
   });
 });

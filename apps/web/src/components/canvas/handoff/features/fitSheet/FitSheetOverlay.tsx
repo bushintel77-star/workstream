@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { ArchitecturalTitleBlock } from "@workstream/domain";
 import {
   buildWorkableSiteSchedule,
-  resolveFitSheetAreas,
+  formatScheduleAreaM2,
+  resolveSiteAreaDisplay,
   SHEET_INNER_MARGIN,
   SHEET_PANEL_GAP,
   SHEET_SCALE_STEPS,
@@ -256,14 +257,15 @@ export function FitSheetOverlay({
     [boundary, building, easements, services, items, scaleM],
   );
 
-  /** Drawn footprint wins — never template/survey house_area (1 m² bug). */
+  /** Shared policy with Live Measures / CAD — sanitize absurd dwelling rings. */
   const areas = useMemo(
     () =>
-      resolveFitSheetAreas({
+      resolveSiteAreaDisplay({
         schedule,
         cadastralLotM2: titleBlock?.lotAreaM2,
+        cadastralHouseM2: titleBlock?.houseAreaM2,
       }),
-    [schedule, titleBlock?.lotAreaM2],
+    [schedule, titleBlock?.lotAreaM2, titleBlock?.houseAreaM2],
   );
 
   const legend = useMemo(() => legendLines(items, scaleM), [items, scaleM]);
@@ -456,19 +458,14 @@ export function FitSheetOverlay({
             <p className={css.kicker}>Site schedule</p>
             {(
               [
-                [
-                  "Lot area",
-                  `${areas.lotAreaM2.toLocaleString("en-AU", {
-                    maximumFractionDigits: 2,
-                  })} m²`,
-                ],
+                ["Lot area", `${formatScheduleAreaM2(areas.lotAreaM2)} m²`],
                 [
                   "Existing dwelling",
-                  `${areas.buildingAreaM2.toFixed(2)} m²`,
+                  `${formatScheduleAreaM2(areas.buildingAreaM2)} m²`,
                 ],
                 [
                   "Outdoor area",
-                  `${areas.outdoorAreaM2.toFixed(2)} m²`,
+                  `${formatScheduleAreaM2(areas.outdoorAreaM2)} m²`,
                 ],
                 ["Site coverage", `${areas.siteCoveragePct}%`],
                 [

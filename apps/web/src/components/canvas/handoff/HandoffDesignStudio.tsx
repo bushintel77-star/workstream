@@ -172,6 +172,7 @@ import type {
 } from "@workstream/contracts";
 import {
   plotBoxFor,
+  resolveSiteAreaDisplay,
   sheetBoxFor,
   sheetContentView,
   SHEET_SCALE_STEPS,
@@ -312,8 +313,6 @@ export function HandoffDesignStudio({
   const { fidelity, markInteracting } = usePresentationLens({
     forcePresentation: ui.clientView || ui.frameOn,
   });
-  /** Prefer Turf workable outdoor; fall back to project / seed area. */
-  const outdoor = workableOutdoorM2 > 0 ? workableOutdoorM2 : fallbackOutdoor;
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   /**
@@ -350,6 +349,30 @@ export function HandoffDesignStudio({
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
     initialTitleBlock,
   );
+  /**
+   * Canonical lot / dwelling / outdoor for every surface (CAD, Fit Sheet,
+   * Measures, Site meta). Sanitizes absurd dwelling rings before print.
+   */
+  const siteAreaDisplay = useMemo(() => {
+    if (!siteSchedule) return null;
+    return resolveSiteAreaDisplay({
+      schedule: siteSchedule,
+      cadastralLotM2: titleBlock?.lotAreaM2,
+      cadastralHouseM2: titleBlock?.houseAreaM2,
+    });
+  }, [
+    siteSchedule,
+    titleBlock?.lotAreaM2,
+    titleBlock?.houseAreaM2,
+  ]);
+
+  /** Prefer resolved outdoor; fall back to raw Turf / seed area. */
+  const outdoor =
+    siteAreaDisplay != null && siteAreaDisplay.outdoorAreaM2 > 0
+      ? siteAreaDisplay.outdoorAreaM2
+      : workableOutdoorM2 > 0
+        ? workableOutdoorM2
+        : fallbackOutdoor;
   const [bydaFiles, setBydaFiles] = useState<ClientProjectFile[]>([]);
   /**
    * Sticky instrument home — empty canvas margin only (off the lot drawing).
@@ -1615,11 +1638,19 @@ export function HandoffDesignStudio({
         building: studio.building,
         easements: studio.easements,
         scaleM,
-        // No surveyed Vicmap title area tracked yet — estimate from the trace.
-        lotAreaM2: null,
-        titleSource: null,
+        lotAreaM2:
+          siteAreaDisplay?.lotAreaM2 ?? titleBlock?.lotAreaM2 ?? null,
+        titleSource: titleBlock?.sourceLabel ?? null,
       }),
-    [studio.boundary, studio.building, studio.easements, scaleM],
+    [
+      studio.boundary,
+      studio.building,
+      studio.easements,
+      scaleM,
+      siteAreaDisplay?.lotAreaM2,
+      titleBlock?.lotAreaM2,
+      titleBlock?.sourceLabel,
+    ],
   );
 
   /**
@@ -3029,16 +3060,13 @@ export function HandoffDesignStudio({
               planFocusX={planFocusX}
               planFocusY={planFocusY}
               planRotateDeg={planRotateDeg}
-              lotAreaM2={
-                /* Cadastral only — drawn-lot fallback lives in
-                   resolveDisplayLotM2 (outdoor is not a Title figure). */
-                titleBlock?.lotAreaM2 ?? null
-              }
+              lotAreaM2={titleBlock?.lotAreaM2 ?? null}
               siteAreas={
-                siteSchedule
+                siteAreaDisplay
                   ? {
-                      buildingAreaM2: siteSchedule.buildingAreaM2,
-                      outdoorAreaM2: siteSchedule.outdoorAreaM2,
+                      buildingAreaM2: siteAreaDisplay.buildingAreaM2,
+                      outdoorAreaM2: siteAreaDisplay.outdoorAreaM2,
+                      lotAreaM2: siteAreaDisplay.lotAreaM2,
                     }
                   : null
               }
@@ -3817,6 +3845,8 @@ export function HandoffDesignStudio({
               scaleM={scaleM}
               schedule={siteSchedule}
               selected={selectedLive}
+              cadastralLotM2={titleBlock?.lotAreaM2 ?? null}
+              cadastralHouseM2={titleBlock?.houseAreaM2 ?? null}
               onOpen={() =>
                 studio.setUi({
                   ...withRightDataPanel("measures"),
@@ -3841,6 +3871,8 @@ export function HandoffDesignStudio({
               scaleM={scaleM}
               schedule={siteSchedule}
               selected={selectedLive}
+              cadastralLotM2={titleBlock?.lotAreaM2 ?? null}
+              cadastralHouseM2={titleBlock?.houseAreaM2 ?? null}
               onClose={() =>
                 studio.setUi({ rightDataPanel: null, utilityPanel: null })
               }

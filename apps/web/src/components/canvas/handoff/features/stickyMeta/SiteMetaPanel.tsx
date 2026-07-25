@@ -20,9 +20,13 @@ export function SiteMetaPanel({ open, meta, outdoorM2 = null, onClose }: Props) 
   if (!open) return null;
 
   const areaLabel =
-    meta.lotAreaM2 > 0 ? `${Math.round(meta.lotAreaM2)} m²` : "—";
+    meta.lotAreaM2 > 0
+      ? `${meta.lotAreaM2.toFixed(2)} m²`
+      : "—";
   const outdoorLabel =
-    outdoorM2 != null && outdoorM2 > 0 ? `${Math.round(outdoorM2)} m²` : "—";
+    outdoorM2 != null && outdoorM2 > 0
+      ? `${outdoorM2.toFixed(2)} m²`
+      : "—";
 
   return (
     <div

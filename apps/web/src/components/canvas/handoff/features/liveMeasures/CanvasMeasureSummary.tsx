@@ -15,6 +15,8 @@ type Props = {
   scaleM: number;
   schedule: SiteSchedule | null;
   selected: StudioItem | null;
+  cadastralLotM2?: number | null;
+  cadastralHouseM2?: number | null;
   onOpen: () => void;
 };
 
@@ -27,6 +29,8 @@ export function CanvasMeasureSummary({
   scaleM,
   schedule,
   selected,
+  cadastralLotM2 = null,
+  cadastralHouseM2 = null,
   onOpen,
 }: Props) {
   const rows = useMemo(
@@ -38,8 +42,19 @@ export function CanvasMeasureSummary({
         scaleM,
         schedule,
         selected,
+        cadastralLotM2,
+        cadastralHouseM2,
       }),
-    [boundary, building, items, scaleM, schedule, selected],
+    [
+      boundary,
+      building,
+      items,
+      scaleM,
+      schedule,
+      selected,
+      cadastralLotM2,
+      cadastralHouseM2,
+    ],
   );
   const summary = useMemo(
     () =>

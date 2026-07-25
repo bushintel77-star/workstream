@@ -138,3 +138,70 @@ export function buildOutsideDims(
     };
   });
 }
+
+export type OutsideDimPlacement = OutsideDim & {
+  /** False when greedily suppressed to avoid label collisions. */
+  visible: boolean;
+};
+
+type LabelBox = { x0: number; y0: number; x1: number; y1: number };
+
+function approxLabelBox(
+  d: OutsideDim,
+  opts: { halfW: number; halfH: number },
+): LabelBox {
+  return {
+    x0: d.labelX - opts.halfW,
+    y0: d.labelY - opts.halfH,
+    x1: d.labelX + opts.halfW,
+    y1: d.labelY + opts.halfH,
+  };
+}
+
+function boxesOverlap(a: LabelBox, b: LabelBox): boolean {
+  return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+}
+
+/**
+ * Screen-space declutter for outside dimension labels on tight boundary runs.
+ * Prefer longer segments; greedily hide any label whose approx bbox overlaps
+ * an already-kept one. Labels reappear as zoom increases (caller passes
+ * smaller halfW/halfH in board-% as ppm rises).
+ */
+export function declutterOutsideDims(
+  dims: OutsideDim[],
+  opts?: {
+    /** Half-width of label bbox in board % (default ~4.2 for "B3 · 12.34 m"). */
+    halfWPct?: number;
+    /** Half-height of label bbox in board % (default ~1.1). */
+    halfHPct?: number;
+    /** Prefer keeping these keys even when short (e.g. first/last). */
+    preferKeys?: ReadonlySet<string>;
+  },
+): OutsideDimPlacement[] {
+  if (dims.length === 0) return [];
+  const halfW = opts?.halfWPct ?? 4.2;
+  const halfH = opts?.halfHPct ?? 1.1;
+  const prefer = opts?.preferKeys;
+
+  const ranked = dims
+    .map((d, i) => ({ d, i }))
+    .sort((a, b) => {
+      const ap = prefer?.has(a.d.key) ? 1 : 0;
+      const bp = prefer?.has(b.d.key) ? 1 : 0;
+      if (ap !== bp) return bp - ap;
+      if (b.d.lengthM !== a.d.lengthM) return b.d.lengthM - a.d.lengthM;
+      return a.i - b.i;
+    });
+
+  const keptBoxes: LabelBox[] = [];
+  const visible = new Set<string>();
+  for (const { d } of ranked) {
+    const box = approxLabelBox(d, { halfW, halfH });
+    if (keptBoxes.some((k) => boxesOverlap(k, box))) continue;
+    keptBoxes.push(box);
+    visible.add(d.key);
+  }
+
+  return dims.map((d) => ({ ...d, visible: visible.has(d.key) }));
+}

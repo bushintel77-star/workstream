@@ -13,6 +13,8 @@ type Props = {
   scaleM: number;
   schedule: SiteSchedule | null;
   selected: StudioItem | null;
+  cadastralLotM2?: number | null;
+  cadastralHouseM2?: number | null;
   onClose: () => void;
 };
 
@@ -34,6 +36,8 @@ export function LiveMeasuresRail({
   scaleM,
   schedule,
   selected,
+  cadastralLotM2 = null,
+  cadastralHouseM2 = null,
   onClose,
 }: Props) {
   const rows = useMemo(
@@ -45,8 +49,19 @@ export function LiveMeasuresRail({
         scaleM,
         schedule,
         selected,
+        cadastralLotM2,
+        cadastralHouseM2,
       }),
-    [boundary, building, items, scaleM, schedule, selected],
+    [
+      boundary,
+      building,
+      items,
+      scaleM,
+      schedule,
+      selected,
+      cadastralLotM2,
+      cadastralHouseM2,
+    ],
   );
 
   const prevRef = useRef<Map<string, number>>(new Map());
