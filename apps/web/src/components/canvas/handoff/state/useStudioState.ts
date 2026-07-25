@@ -45,7 +45,10 @@ import type {
   IrrigationZoneKind,
   LandscapeFeature,
 } from "@workstream/contracts";
-import { saveDesignCanvasAction } from "../../../../app/actions";
+import {
+  classifySaveError,
+  saveDesignCanvasClient,
+} from "../features/save/saveDesignCanvasClient";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
 import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
 import type {
@@ -317,7 +320,7 @@ type Ui = {
   /** Durable DesignCanvas autosave status. */
   saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
   /** Set when saveStatus is error — drives honest toast copy. */
-  saveErrorKind: "unreachable" | "rejected" | null;
+  saveErrorKind: "unreachable" | "stale_client" | "rejected" | null;
   /** Inline Flora Ring session (planting Add click). */
   floraSession: {
     x: number;
@@ -3299,16 +3302,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
       const acceptedTrenches = (state.doc.constructionTrenches ?? []).filter(
         (t) => !t.ghost,
       );
-      await saveDesignCanvasAction(
-        projectIdRef.current,
+      await saveDesignCanvasClient(projectIdRef.current, {
         placements,
-        canvasStrokes,
-        state.doc.irrigationZones ?? [],
-        state.doc.annotations ?? [],
-        siteFrame,
+        strokes: canvasStrokes,
+        irrigation_zones: state.doc.irrigationZones ?? [],
+        annotations: state.doc.annotations ?? [],
+        site_frame: siteFrame,
         features,
-        acceptedTrenches,
-      );
+        construction_trenches: acceptedTrenches,
+      });
       saveRevisionRef.current += 1;
       setUi({
         saveStatus: "saved",
@@ -3317,14 +3319,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
         saveErrorKind: null,
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const unreachable =
-        /fetch failed|Failed to fetch|ECONNREFUSED|ENOTFOUND|network|timeout|AbortError/i.test(
-          msg,
-        );
       setUi({
         saveStatus: "error",
-        saveErrorKind: unreachable ? "unreachable" : "rejected",
+        saveErrorKind: classifySaveError(err),
       });
       throw new Error("Design canvas save failed");
     }
@@ -3344,6 +3341,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.strokes,
     state.ui.boardWidthM,
     state.ui.buildingSource,
+    state.ui.digOverrideAt,
+    state.ui.digOverrideNote,
+    state.ui.sitePackChase,
   ]);
 
   /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
@@ -3358,6 +3358,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
         try {
           await saveNow();
         } catch (err) {
+          const kind = classifySaveError(err);
+          // Stale Server Action / deploy mismatch won't heal on retry — stop.
+          if (kind === "stale_client") {
+            setUi({ saveStatus: "error", saveErrorKind: kind });
+            return;
+          }
           if (attempt < backoffMs.length) {
             setUi({ saveStatus: "retrying" });
             await new Promise((r) =>
@@ -3365,14 +3371,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
             );
             return persist(attempt + 1);
           }
-          const msg = err instanceof Error ? err.message : String(err);
-          const unreachable =
-            /fetch failed|Failed to fetch|ECONNREFUSED|ENOTFOUND|network|timeout|AbortError/i.test(
-              msg,
-            );
           setUi({
             saveStatus: "error",
-            saveErrorKind: unreachable ? "unreachable" : "rejected",
+            saveErrorKind: kind,
           });
         }
       };

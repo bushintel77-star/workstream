@@ -172,7 +172,7 @@ export type StudioUiState = {
   parchmentPeel: number;
   saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
   /** Set when saveStatus is error — drives honest toast copy. */
-  saveErrorKind: "unreachable" | "rejected" | null;
+  saveErrorKind: "unreachable" | "stale_client" | "rejected" | null;
   /**
    * Prepare site pack chase list (CoT / BYDA / council drain / arbor).
    * Persisted on DesignCanvas.site_frame.site_pack.

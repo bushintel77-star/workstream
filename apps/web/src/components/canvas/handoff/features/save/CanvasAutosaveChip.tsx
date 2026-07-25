@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import css from "./canvasAutosave.module.css";
 
 type SaveStatus = "idle" | "saving" | "retrying" | "saved" | "error";
+type SaveErrorKind = "unreachable" | "stale_client" | "rejected" | null;
 
 type Props = {
   status: SaveStatus;
@@ -11,6 +12,7 @@ type Props = {
   savedTick: number;
   /** Monotonic revision after each successful autosave. */
   revision: number;
+  errorKind?: SaveErrorKind;
   onSave: () => void;
   onRetry: () => void;
 };
@@ -33,6 +35,7 @@ export function CanvasAutosaveChip({
   status,
   savedTick,
   revision,
+  errorKind = null,
   onSave,
   onRetry,
 }: Props) {
@@ -51,18 +54,30 @@ export function CanvasAutosaveChip({
   const rev = revision > 0 ? `v${revision}` : null;
 
   if (status === "error") {
+    const stale = errorKind === "stale_client";
     return (
       <button
         type="button"
         className={`${css.chip} ${css.chipError}`}
         data-testid="autosave-tick"
         data-status={status}
-        title="Autosave failed — click to retry"
-        onClick={onRetry}
+        data-error-kind={errorKind ?? "rejected"}
+        title={
+          stale
+            ? "App updated — refresh to keep saving"
+            : "Autosave failed — click to retry"
+        }
+        onClick={() => {
+          if (stale) {
+            window.location.reload();
+            return;
+          }
+          onRetry();
+        }}
       >
         <span className={css.dot} aria-hidden />
         {rev ? <span className={css.rev}>{rev}</span> : null}
-        <span className={css.label}>Retry save</span>
+        <span className={css.label}>{stale ? "Refresh" : "Retry save"}</span>
       </button>
     );
   }

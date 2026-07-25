@@ -488,7 +488,9 @@ export function HandoffDesignStudio({
       const detail =
         ui.saveErrorKind === "unreachable"
           ? "Couldn't reach the server. Tap Retry save in the header before leaving."
-          : "Server rejected the save. Tap Retry save in the header before leaving.";
+          : ui.saveErrorKind === "stale_client"
+            ? "App updated in the background. Refresh the page to keep saving."
+            : "Server rejected the save. Tap Retry save in the header before leaving.";
       toast.show(detail, "error", 6000);
       return;
     }
@@ -2740,6 +2742,7 @@ export function HandoffDesignStudio({
             status={ui.saveStatus}
             savedTick={ui.savedTick}
             revision={ui.saveRevision}
+            errorKind={ui.saveErrorKind}
             onSave={() => {
               void studio.saveNow().catch(() => {
                 toast.show(
@@ -2749,6 +2752,10 @@ export function HandoffDesignStudio({
               });
             }}
             onRetry={() => {
+              if (ui.saveErrorKind === "stale_client") {
+                window.location.reload();
+                return;
+              }
               void studio.saveNow().catch(() => {
                 toast.show(
                   "Canvas save failed. Try again before leaving.",
