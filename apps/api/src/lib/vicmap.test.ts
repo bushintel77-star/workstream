@@ -9,6 +9,7 @@ import {
   parseFeatureTypeNames,
   parseGeometryFieldName,
   pickBestLayerName,
+  pickPlausibleBuildingRing,
   pickTitleRingForPin,
   scoreBuildingLayerName,
   scoreBushfireLayerName,
@@ -319,5 +320,41 @@ describe("pickTitleRingForPin", () => {
       coordinates: [[park], [houseLot]],
     });
     expect(rings).toHaveLength(2);
+  });
+});
+
+describe("pickPlausibleBuildingRing", () => {
+  // Small title (~400 m²).
+  const title: [number, number][] = [
+    [144.99, -37.85],
+    [144.9902, -37.85],
+    [144.9902, -37.8498],
+    [144.99, -37.8498],
+    [144.99, -37.85],
+  ];
+  // House that fits inside title.
+  const house: [number, number][] = [
+    [144.99005, -37.84995],
+    [144.99012, -37.84995],
+    [144.99012, -37.84988],
+    [144.99005, -37.84988],
+    [144.99005, -37.84995],
+  ];
+  // Neighbour complex larger than the title (classic INTERSECTS trap).
+  const complex: [number, number][] = [
+    [144.989, -37.851],
+    [144.992, -37.851],
+    [144.992, -37.848],
+    [144.989, -37.848],
+    [144.989, -37.851],
+  ];
+
+  it("prefers a house that fits the title over a larger intersecting complex", () => {
+    const picked = pickPlausibleBuildingRing(title, [complex, house]);
+    expect(picked).toBe(house);
+  });
+
+  it("returns null when every candidate exceeds the coverage cap", () => {
+    expect(pickPlausibleBuildingRing(title, [complex])).toBeNull();
   });
 });

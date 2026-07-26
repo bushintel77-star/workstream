@@ -91,6 +91,7 @@ import {
 import type { PaperSize, PctPoint } from "../geometry";
 import { classifySurveyCorridor } from "../geometry/surveyCorridor";
 import { filterKeylessRingsToBoard } from "../geometry/keylessRingClip";
+import { rejectOversizedDwelling } from "../geometry/dwellingPlausibility";
 import { pointInPolygon } from "../geometry/polygon";
 import {
   constrainAssetCentre,
@@ -509,17 +510,25 @@ function initialState(opts: {
     (opts.constructionTrenches?.length ?? 0) > 0 ||
     (opts.annotations?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
-  const building = resolveHydratedBuilding(
+  const buildingRaw = resolveHydratedBuilding(
     opts.siteFrame,
     frameOverlay.building,
     base.building,
     { liveProject },
   );
-  const buildingSource: DesignBuildingSource = frameOverlay.buildingSource
-    ? frameOverlay.buildingSource
-    : building.length >= 3
-      ? "traced"
-      : "empty";
+  const healBoundary =
+    frameOverlay.boundary && frameOverlay.boundary.length >= 3
+      ? frameOverlay.boundary
+      : null;
+  const building = healBoundary
+    ? rejectOversizedDwelling(healBoundary, buildingRaw)
+    : buildingRaw;
+  const buildingSource: DesignBuildingSource =
+    building.length < 3
+      ? "empty"
+      : frameOverlay.buildingSource
+        ? frameOverlay.buildingSource
+        : "traced";
   const snap: StudioSnapshot = hasCanvas
     ? {
         ...base,

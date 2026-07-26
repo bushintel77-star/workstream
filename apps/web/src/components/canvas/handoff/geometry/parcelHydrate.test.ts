@@ -97,6 +97,31 @@ describe("applyParcelSnap", () => {
     expect(result.buildingSource).toBe("traced");
     expect(result.snap.building).toHaveLength(4);
   });
+
+  it("rejects a Vicmap house larger than 80% of the title", () => {
+    const fit = fitCanvasMetresRing(parcelM);
+    // House fills almost the whole parcel metres frame → absurd coverage.
+    const hugeHouse = [
+      { x: 0.5, y: 0.5 },
+      { x: 39.5, y: 0.5 },
+      { x: 39.5, y: 24.5 },
+      { x: 0.5, y: 24.5 },
+    ];
+    const result = applyParcelSnap({
+      snap: {
+        boundary: SEED_BOUNDARY,
+        building: SEED_BUILDING,
+        items: [],
+        strokes: [],
+      },
+      nextBoundary: fit.points,
+      houseCanvasVerts: hugeHouse,
+      transform: fit.transform,
+      keepTracedBuilding: false,
+    });
+    expect(result.buildingSource).toBe("empty");
+    expect(result.snap.building).toEqual([]);
+  });
 });
 
 describe("applyAutoTraceParcelSnap easement hydrate", () => {
