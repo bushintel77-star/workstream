@@ -560,14 +560,14 @@ export function FitSheetOverlay({
             ) : null}
             <p className={css.notesBody} data-testid="fit-sheet-notes">
               {titleBlock?.notesLine ??
-                "Vicmap cadastral base · confirm title. Dimensions in metres — working drawing, indicative only."}{" "}
-              B# = boundary · F# = dwelling envelope. Not for construction.
+                "Vicmap cadastral base · confirm title. Dimensions in metres."}{" "}
+              B# = boundary · F# = dwelling envelope.
             </p>
             <div className={css.notesMeta}>
               <span data-testid="fit-sheet-scale-stamp">
                 {SHEET_SCALE_STEPS.includes(scaleDenom)
                   ? scaleTxt
-                  : `${scaleTxt} (Not to scale) — Working drawing indicative only`}
+                  : `${scaleTxt} (Not to scale)`}
               </span>
               {shareStamp ? (
                 <span data-testid="fit-sheet-share-stamp">{shareStamp}</span>

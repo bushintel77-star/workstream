@@ -57,7 +57,7 @@ describe("sheet presentation", () => {
       "quote_total",
     );
     expect(widgetsInSlot(once, "footer_band").map((w) => w.type)).toContain(
-      "honesty_footer",
+      "material_swatches",
     );
     expect(twice).toEqual(once);
   });

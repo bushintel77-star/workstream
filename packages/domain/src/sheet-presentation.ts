@@ -67,13 +67,6 @@ export const SHEET_WIDGET_LIBRARY: Array<{
     defaultSlot: "title_meta",
     defaultEmphasis: "standard",
   },
-  {
-    type: "honesty_footer",
-    label: "Honesty footer",
-    detail: "Not for construction watermark",
-    defaultSlot: "footer_band",
-    defaultEmphasis: "quiet",
-  },
 ];
 
 export const SHEET_THEME_SWATCHES: Array<{
@@ -109,7 +102,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
   {
     id: "curtis-working-drawing",
     label: "Working drawing",
-    detail: "Title honesty + light caption — CAD paper",
+    detail: "Light caption — CAD paper",
     pack: {
       theme: "parchment",
       template_id: "curtis-working-drawing",
@@ -118,10 +111,6 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
           accent: "ink",
           emphasis: "quiet",
         }, "Working drawing — confirm title"),
-        widget("honesty_footer", "footer_band", 0, {
-          accent: "ink",
-          emphasis: "quiet",
-        }),
       ],
     },
   },
@@ -153,17 +142,13 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
           accent: "ink",
           emphasis: "quiet",
         }),
-        widget("honesty_footer", "footer_band", 1, {
-          accent: "ink",
-          emphasis: "quiet",
-        }),
       ],
     },
   },
   {
     id: "curtis-minimal-ink",
     label: "Minimal ink",
-    detail: "Quiet caption + honesty — night-meeting calm",
+    detail: "Quiet caption + quote — night-meeting calm",
     pack: {
       theme: "ink",
       template_id: "curtis-minimal-ink",
@@ -175,10 +160,6 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
         widget("quote_total", "side_stack", 0, {
           accent: "ink",
           emphasis: "hero",
-        }),
-        widget("honesty_footer", "footer_band", 0, {
-          accent: "ink",
-          emphasis: "quiet",
         }),
       ],
     },

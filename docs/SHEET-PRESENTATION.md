@@ -37,7 +37,8 @@ First Fit open with an empty pack and **no** `template_id` seeds `curtis-client-
 | `savings_ledger` | Wrights proposal ledger (Tier-1); hidden off-tier1 |
 | `zone_summary` | Irrigation zones or placement massing |
 | `material_swatches` | Placed materials |
-| `caption` / `honesty_footer` | Template or `text` |
+| `caption` | Template or `text` |
+| `honesty_footer` | Legacy only — not seeded, not rendered |
 
 ## Data
 

@@ -28,7 +28,7 @@ test.describe("Fit sheet presentation compose", () => {
     await expect(page.getByTestId("sheet-on-quote_total")).toBeVisible({
       timeout: 5_000,
     });
-    await expect(page.getByTestId("sheet-on-honesty_footer")).toBeVisible();
+    await expect(page.getByTestId("sheet-on-honesty_footer")).toHaveCount(0);
     await expect(page.getByTestId("sheet-zone-face")).toBeVisible();
 
     await page.getByTestId("sheet-compose-top").click();

@@ -407,7 +407,7 @@ export function SketchBoard({
                   ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
                   : "Sketch with a finger or stylus · formalize only when ready"
             }
-            legal="Concept sketch for estimating — not a construction drawing."
+            legal={undefined}
           />
         </>
       ) : null}

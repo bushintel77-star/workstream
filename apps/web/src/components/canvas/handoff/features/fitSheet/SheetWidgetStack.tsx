@@ -168,12 +168,8 @@ function renderBody(
         </p>
       );
     case "honesty_footer":
-      return (
-        <p className={css.sheetDetail}>
-          {widget.text ??
-            "Working drawing — indicative only. Not for construction."}
-        </p>
-      );
+      // Legacy packs may still store these — never surface as sheet cards.
+      return null;
     default:
       return null;
   }

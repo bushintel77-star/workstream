@@ -2851,12 +2851,6 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
-        {/* Fit sheet / Sketch margin own their own legal line. */}
-        {!ui.frameOn && ui.mode !== "sketch" ? (
-          <div className={css.honestyCaption}>
-            Concept sketch for estimating — not a construction drawing.
-          </div>
-        ) : null}
         {ui.mode === "elevation" ? (
           <ElevationBoard
             look={ui.elevLook}
@@ -4047,8 +4041,6 @@ export function HandoffDesignStudio({
               {ui.schemes.length > 0
                 ? ` · schemes ${ui.schemes.map((s) => s.letter).join("/")}`
                 : ""}
-              {" · "}
-              not for construction
             </p>
           </CameraChrome>
         ) : null}
