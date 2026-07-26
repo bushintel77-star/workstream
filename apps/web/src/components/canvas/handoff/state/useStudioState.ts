@@ -32,6 +32,14 @@ import {
   type PathFilletLockM,
   type PathWidthLockM,
   type SoilTag,
+  addSheetWidget,
+  applySheetTemplate,
+  clearPresentationPack,
+  emptyPresentationPack,
+  moveSheetWidget,
+  reflowSheetWidgets,
+  removeSheetWidget,
+  setSheetTheme,
   type StudioComplianceItem,
   type StudioHorizonCard,
 } from "@workstream/domain";
@@ -44,6 +52,10 @@ import type {
   IrrigationZone,
   IrrigationZoneKind,
   LandscapeFeature,
+  PresentationPack,
+  PresentationSlot,
+  PresentationTheme,
+  PresentationWidgetType,
 } from "@workstream/contracts";
 import {
   classifySaveError,
@@ -430,6 +442,7 @@ function snapOf(doc: Doc): StudioSnapshot {
     irrigationZones: doc.irrigationZones ?? [],
     constructionTrenches: doc.constructionTrenches ?? [],
     annotations: doc.annotations ?? [],
+    presentationPack: doc.presentationPack ?? emptyPresentationPack(),
   };
 }
 
@@ -453,6 +466,7 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
       anchor: { ...a.anchor },
       notePos: { ...a.notePos },
     })),
+    presentationPack: emptyPresentationPack(),
   };
 }
 
@@ -465,6 +479,7 @@ function initialState(opts: {
   constructionTrenches?: ConstructionTrench[];
   annotations?: CanvasAnnotation[];
   features?: LandscapeFeature[];
+  presentationPack?: PresentationPack | null;
   /** Live project — never boot with the demo dwelling parallelogram. */
   liveProject?: boolean;
 }): State {
@@ -509,10 +524,21 @@ function initialState(opts: {
         irrigationZones: opts.irrigationZones ?? [],
         constructionTrenches: opts.constructionTrenches ?? [],
         annotations: opts.annotations ?? [],
+        presentationPack:
+          opts.presentationPack ?? emptyPresentationPack(),
       }
     : liveProject
-      ? { ...base, building: [] }
-      : base;
+      ? {
+          ...base,
+          building: [],
+          presentationPack:
+            opts.presentationPack ?? emptyPresentationPack(),
+        }
+      : {
+          ...base,
+          presentationPack:
+            opts.presentationPack ?? emptyPresentationPack(),
+        };
   const outdoorSafe: StudioSnapshot = {
     ...snap,
     items: sanitizeItemsToOutdoor(snap.items, snap.boundary, snap.building),
@@ -647,6 +673,8 @@ export type UseStudioStateOpts = {
   initialAnnotations?: CanvasAnnotation[];
   /** Persisted region outlines from DesignCanvas.features. */
   initialFeatures?: LandscapeFeature[];
+  /** Fit-sheet compose pack from DesignCanvas.presentation_pack. */
+  initialPresentationPack?: PresentationPack | null;
 };
 
 function reducer(state: State, action: Action): State {
@@ -877,6 +905,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialConstructionTrenches = [],
     initialAnnotations = [],
     initialFeatures = [],
+    initialPresentationPack = null,
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
@@ -888,6 +917,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       constructionTrenches: initialConstructionTrenches,
       annotations: initialAnnotations,
       features: initialFeatures,
+      presentationPack: initialPresentationPack,
       liveProject: Boolean(projectId),
     }),
   );
@@ -3194,6 +3224,63 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate, state.doc.annotations],
   );
 
+  const patchPresentationPack = useCallback(
+    (fn: (pack: PresentationPack) => PresentationPack) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          presentationPack: fn(
+            snap.presentationPack ?? emptyPresentationPack(),
+          ),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const applyPresentationTemplate = useCallback(
+    (templateId: string) => {
+      patchPresentationPack(() => applySheetTemplate(templateId));
+    },
+    [patchPresentationPack],
+  );
+
+  const setPresentationTheme = useCallback(
+    (theme: PresentationTheme) => {
+      patchPresentationPack((pack) => setSheetTheme(pack, theme));
+    },
+    [patchPresentationPack],
+  );
+
+  const addPresentationWidget = useCallback(
+    (type: PresentationWidgetType) => {
+      patchPresentationPack((pack) => addSheetWidget(pack, type));
+    },
+    [patchPresentationPack],
+  );
+
+  const movePresentationWidget = useCallback(
+    (widgetId: string, slot: PresentationSlot) => {
+      patchPresentationPack((pack) => moveSheetWidget(pack, widgetId, slot));
+    },
+    [patchPresentationPack],
+  );
+
+  const removePresentationWidget = useCallback(
+    (widgetId: string) => {
+      patchPresentationPack((pack) => removeSheetWidget(pack, widgetId));
+    },
+    [patchPresentationPack],
+  );
+
+  const reflowPresentationPack = useCallback(() => {
+    patchPresentationPack((pack) => reflowSheetWidgets(pack));
+  }, [patchPresentationPack]);
+
+  const clearPresentationWidgets = useCallback(() => {
+    patchPresentationPack((pack) => clearPresentationPack(pack));
+  }, [patchPresentationPack]);
+
   const restoreAnnotation = useCallback(
     (ann: CanvasAnnotation) => {
       mutate((snap) => {
@@ -3310,6 +3397,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         site_frame: siteFrame,
         features,
         construction_trenches: acceptedTrenches,
+        presentation_pack:
+          state.doc.presentationPack ?? emptyPresentationPack(),
       });
       saveRevisionRef.current += 1;
       setUi({
@@ -3333,6 +3422,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.irrigationZones,
     state.doc.constructionTrenches,
     state.doc.annotations,
+    state.doc.presentationPack,
     state.doc.items,
     state.doc.levels,
     state.doc.services,
@@ -3428,6 +3518,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
           `${a.id}:${a.text}:${a.notePos.x},${a.notePos.y}:${a.anchor.kind === "item" ? a.anchor.itemId : `${a.anchor.x},${a.anchor.y}`}`,
       )
       .join("/"),
+    // Fit-sheet compose — theme / template / widgets must flush with canvas.
+    JSON.stringify(state.doc.presentationPack ?? null),
     saveRetryNonce,
   ]);
 
@@ -3797,6 +3889,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     irrigationZones: state.doc.irrigationZones ?? [],
     constructionTrenches: state.doc.constructionTrenches ?? [],
     annotations: state.doc.annotations ?? [],
+    presentationPack:
+      state.doc.presentationPack ?? emptyPresentationPack(),
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     undoDepth: state.doc.hist.length,
@@ -3870,6 +3964,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
     updateAnnotationNotePos,
     removeAnnotation,
     restoreAnnotation,
+    applyPresentationTemplate,
+    setPresentationTheme,
+    addPresentationWidget,
+    movePresentationWidget,
+    removePresentationWidget,
+    reflowPresentationPack,
+    clearPresentationWidgets,
     switchSite,
     resetSite,
     retrySave: () => setSaveRetryNonce((n) => n + 1),

@@ -71,6 +71,7 @@ export default async function ProjectCanvasPage({
         initialConstructionTrenches={canvas?.construction_trenches ?? []}
         initialAnnotations={canvas?.annotations ?? []}
         initialFeatures={canvas?.features ?? []}
+        initialPresentationPack={canvas?.presentation_pack ?? null}
         hasQuote={Boolean(quoteOut)}
         quotePortalUri={quoteOut?.uri ?? null}
         initialTitleBlock={titleBlock}

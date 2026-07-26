@@ -33,6 +33,7 @@ import {
   type GridInk,
 } from "./geometry/gridStudio";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
+import { SheetComposeDock } from "./features/fitSheet/SheetComposeDock";
 import {
   loadFitSheetPrefs,
   saveFitSheetPrefs,
@@ -156,6 +157,7 @@ import {
 } from "./features/ground/groundMetrics";
 import {
   cycleElevationLook,
+  isTier1WrightsTerrace,
   solveLiveTradeEstimate,
   sunPositionAt,
   tradeTagForItem,
@@ -169,6 +171,7 @@ import type {
   DesignSiteFrame,
   LandscapeFeature,
   IrrigationZone,
+  PresentationPack,
 } from "@workstream/contracts";
 import {
   plotBoxFor,
@@ -237,6 +240,7 @@ type Props = {
   initialConstructionTrenches?: ConstructionTrench[];
   initialAnnotations?: CanvasAnnotation[];
   initialFeatures?: LandscapeFeature[];
+  initialPresentationPack?: PresentationPack | null;
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -261,6 +265,7 @@ export function HandoffDesignStudio({
   initialConstructionTrenches = [],
   initialAnnotations = [],
   initialFeatures = [],
+  initialPresentationPack = null,
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -283,6 +288,7 @@ export function HandoffDesignStudio({
     initialConstructionTrenches,
     initialAnnotations,
     initialFeatures,
+    initialPresentationPack,
   });
   const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
@@ -1853,6 +1859,15 @@ export function HandoffDesignStudio({
           panX: 0,
           panY: 0,
         });
+        // First open with an empty, never-templated pack → seed the client
+        // brochure. Cleared packs keep template_id so we do not re-seed.
+        const pack = studio.presentationPack;
+        if (
+          (pack.widgets?.length ?? 0) === 0 &&
+          pack.template_id == null
+        ) {
+          studio.applyPresentationTemplate("curtis-client-brochure");
+        }
         return;
       }
       // Leaving Fit sheet — restore a coherent free-plan camera on every tab.
@@ -3670,6 +3685,10 @@ export function HandoffDesignStudio({
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
             titleBlock={titleBlock}
             weatherDay={weatherDay}
+            presentationPack={studio.presentationPack}
+            quoteTotalInclGst={estimate.totalInclGst}
+            tier1={isTier1WrightsTerrace(projectAddress)}
+            irrigationZones={studio.irrigationZones}
             shareStamp={
               latestShare
                 ? latestShare.status === "accepted"
@@ -3688,6 +3707,25 @@ export function HandoffDesignStudio({
                 : null
             }
           />
+        ) : null}
+
+        {ui.frameOn && planOn && !ui.clientView ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={54}
+            testId="sheet-compose-chrome"
+          >
+            <SheetComposeDock
+              pack={studio.presentationPack}
+              onApplyTemplate={studio.applyPresentationTemplate}
+              onTheme={studio.setPresentationTheme}
+              onAddWidget={studio.addPresentationWidget}
+              onMoveWidget={studio.movePresentationWidget}
+              onRemoveWidget={studio.removePresentationWidget}
+              onReflow={studio.reflowPresentationPack}
+              onClear={studio.clearPresentationWidgets}
+            />
+          </CameraChrome>
         ) : null}
 
         {ui.mode === "cad" && !ui.frameOn && !ui.clientView && !ui.focusOn ? (

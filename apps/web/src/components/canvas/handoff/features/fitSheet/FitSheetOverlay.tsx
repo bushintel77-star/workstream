@@ -23,9 +23,13 @@ import {
 } from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { SEMANTIC_LIGHT, mixOnHex } from "../../../../../styles/colorTokens";
+import type { IrrigationZone, PresentationPack } from "@workstream/contracts";
 import { WeatherIcon } from "../stickyMeta/WeatherIcon";
 import type { EnvWeatherDay } from "../stickyMeta/envLiveMeta";
 import { resolveEnvWeatherCondition } from "../stickyMeta/envLiveMeta";
+import { SheetWidgetStack } from "./SheetWidgetStack";
+import { buildSheetWidgetContext } from "./sheetWidgetContext";
+import composeCss from "./sheetCompose.module.css";
 import css from "./fitSheet.module.css";
 
 /** Ladder lives in geometry (single source shared with sheetContentView). */
@@ -55,6 +59,12 @@ type Props = {
   shareStamp?: string | null;
   /** Today’s Open-Meteo day — tiny weather pip in the title strip. */
   weatherDay?: EnvWeatherDay | null;
+  /** Presentation product pack — widgets around the live plot. */
+  presentationPack?: PresentationPack | null;
+  quoteTotalInclGst?: number;
+  tier1?: boolean;
+  /** Live irrigation / services zones for zone_summary honesty. */
+  irrigationZones?: IrrigationZone[];
 };
 
 type ElevProfile = {
@@ -204,9 +214,17 @@ export function FitSheetOverlay({
   titleBlock = null,
   shareStamp = null,
   weatherDay = null,
+  presentationPack = null,
+  quoteTotalInclGst = 0,
+  tier1 = false,
+  irrigationZones = [],
 }: Props) {
   const [pulse, setPulse] = useState(false);
   const weatherCondition = resolveEnvWeatherCondition(weatherDay, 45);
+  const sheetWidgetContext = useMemo(
+    () => buildSheetWidgetContext({ items, irrigationZones }),
+    [items, irrigationZones],
+  );
   const weatherTemp =
     weatherDay?.temp_max_c != null && Number.isFinite(weatherDay.temp_max_c)
       ? Math.round(weatherDay.temp_max_c)
@@ -352,10 +370,19 @@ export function FitSheetOverlay({
       </div>
 
       <div
-        className={`${css.frame}${pulse ? ` ${css.framePulse}` : ""}`}
+        className={`${css.frame}${pulse ? ` ${css.framePulse}` : ""}${
+          presentationPack?.theme === "ink"
+            ? ` ${composeCss.frameThemeInk}`
+            : ""
+        }${
+          presentationPack?.theme === "blush"
+            ? ` ${composeCss.frameThemeBlush}`
+            : ""
+        }`}
         data-testid="fit-sheet-frame"
         data-paper={paper}
         data-scale={scaleTxt}
+        data-sheet-theme={presentationPack?.theme ?? "parchment"}
         style={{
           left: box.boxLeft,
           top: box.boxTop,
@@ -396,6 +423,15 @@ export function FitSheetOverlay({
           <div className={css.panelHead} data-testid="fit-sheet-title-block">
             <div style={{ minWidth: 0 }}>
               <p className={css.brand}>Curtis &amp; Co</p>
+              {presentationPack ? (
+                <SheetWidgetStack
+                  pack={presentationPack}
+                  slot="title_meta"
+                  quoteTotalInclGst={quoteTotalInclGst}
+                  tier1={tier1}
+                  context={sheetWidgetContext}
+                />
+              ) : null}
               <p className={css.addr}>{titleBlock?.address ?? address}</p>
               <p className={css.titleSource} data-testid="fit-sheet-cadastral">
                 {titleBlock?.sourceLabel ?? "Indicative parcel"}
@@ -454,6 +490,16 @@ export function FitSheetOverlay({
             </div>
           </div>
 
+          {presentationPack ? (
+            <SheetWidgetStack
+              pack={presentationPack}
+              slot="side_stack"
+              quoteTotalInclGst={quoteTotalInclGst}
+              tier1={tier1}
+              context={sheetWidgetContext}
+            />
+          ) : null}
+
           <div className={css.section}>
             <p className={css.kicker}>Site schedule</p>
             {(
@@ -494,6 +540,16 @@ export function FitSheetOverlay({
                 </div>
               ))}
             </div>
+          ) : null}
+
+          {presentationPack ? (
+            <SheetWidgetStack
+              pack={presentationPack}
+              slot="footer_band"
+              quoteTotalInclGst={quoteTotalInclGst}
+              tier1={tier1}
+              context={sheetWidgetContext}
+            />
           ) : null}
 
           <div className={css.notes}>
