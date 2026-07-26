@@ -3,6 +3,7 @@ import {
   isViewRotatedFromNorth,
   normalizeViewRotationDeg,
   resetViewRotationToNorth,
+  resolvePlanRotateDeg,
   stepViewRotationDeg,
 } from "./canvasViewRotation";
 
@@ -26,5 +27,53 @@ describe("canvasViewRotation", () => {
     expect(resetViewRotationToNorth()).toBe(0);
     expect(isViewRotatedFromNorth(15)).toBe(true);
     expect(isViewRotatedFromNorth(0)).toBe(false);
+  });
+
+  it("resolvePlanRotateDeg applies garden axon yaw outside CAD", () => {
+    expect(
+      resolvePlanRotateDeg({
+        mode: "survey",
+        frameOn: false,
+        clientView: false,
+        tiltDeg: 55,
+        viewRotationDeg: 90,
+      }),
+    ).toBe(90);
+    expect(
+      resolvePlanRotateDeg({
+        mode: "sketch",
+        frameOn: false,
+        clientView: false,
+        tiltDeg: 55,
+        viewRotationDeg: 180,
+      }),
+    ).toBe(180);
+    expect(
+      resolvePlanRotateDeg({
+        mode: "sketch",
+        frameOn: false,
+        clientView: false,
+        tiltDeg: 0,
+        viewRotationDeg: 90,
+      }),
+    ).toBe(0);
+    expect(
+      resolvePlanRotateDeg({
+        mode: "cad",
+        frameOn: false,
+        clientView: false,
+        tiltDeg: 0,
+        viewRotationDeg: 45,
+      }),
+    ).toBe(45);
+    expect(
+      resolvePlanRotateDeg({
+        mode: "cad",
+        frameOn: true,
+        clientView: false,
+        tiltDeg: 55,
+        viewRotationDeg: 90,
+      }),
+    ).toBe(0);
   });
 });

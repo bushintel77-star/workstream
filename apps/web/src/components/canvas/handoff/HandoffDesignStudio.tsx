@@ -192,6 +192,7 @@ import {
 import { nextBoardSize } from "./geometry/boardSizeCommit";
 import {
   normalizeViewRotationDeg,
+  resolvePlanRotateDeg,
   stepViewRotationDeg,
   type ViewRotationStepDeg,
 } from "./geometry/canvasViewRotation";
@@ -862,8 +863,13 @@ export function HandoffDesignStudio({
         studio.setUi({ frameOn: false, panX: 0, panY: 0, zoom: 1 });
       }
       const cam = gardenViewpointCamera(look);
+      /*
+       * Patch yaw + tilt together so the "park yaw when flat" effect never
+       * sees Looking E/S/W without an active lens (Survey/Sketch).
+       */
       studio.setUi({
         viewRotationDeg: cam.viewRotationDeg,
+        tiltDeg: cam.tiltDeg,
         cmdOpen: false,
         cmdQuery: "",
         focusX: 50,
@@ -1723,13 +1729,17 @@ export function HandoffDesignStudio({
   const planPanX = (sheetPlotLayout?.view.panX ?? 0) + ui.panX;
   const planPanY = (sheetPlotLayout?.view.panY ?? 0) + ui.panY;
   /**
-   * CAD camera rotation — viewport only (geometry % coords unchanged).
-   * Off on Sketch / Fit / non-CAD so survey-grade print stays north-up.
+   * Camera yaw — viewport only (geometry % coords unchanged).
+   * CAD free plan + Looking N/E/S/W while tilted; flat Sketch/Fit stay north-up.
    */
-  const planRotateDeg =
-    ui.mode === "cad" && !ui.frameOn && !ui.clientView
-      ? normalizeViewRotationDeg(ui.viewRotationDeg)
-      : 0;
+  const planRotateDeg = resolvePlanRotateDeg({
+    mode: ui.mode,
+    frameOn: ui.frameOn,
+    clientView: ui.clientView,
+    tiltDeg: ui.tiltDeg,
+    viewRotationDeg: ui.viewRotationDeg,
+    tiltAnimating: tiltAnimKind != null,
+  });
   /**
    * Live camera matching `.zoomWorld` — passed to any overlay that portals
    * frosted chrome via `CameraChrome` so those elements stay clear of the
@@ -2954,6 +2964,7 @@ export function HandoffDesignStudio({
               data-testid="zoom-world"
               data-print-keep="plan"
               data-tilt-deg={ui.tiltDeg.toFixed(1)}
+              data-view-yaw={String(planRotateDeg)}
               onTransitionEnd={(e) => {
                 if (e.propertyName !== "transform") return;
                 clearTiltAnimKind();

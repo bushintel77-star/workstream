@@ -38,3 +38,32 @@ export function stepViewRotationDeg(
 export function resetViewRotationToNorth(): number {
   return 0;
 }
+
+/**
+ * Live camera yaw for `.zoomWorld`.
+ *
+ * - CAD free plan: View north control (always, north-up when 0).
+ * - Survey / Sketch / CAD: Looking N/E/S/W garden axon while tilt is on
+ *   (or mid tilt animation). Flat Sketch/Survey stays north-up.
+ * - Fit sheet / quote / share / elevation: never.
+ */
+export function resolvePlanRotateDeg(args: {
+  mode: string;
+  frameOn: boolean;
+  clientView: boolean;
+  tiltDeg: number;
+  viewRotationDeg: number;
+  /** True while the temporary tilt transition class is mounted. */
+  tiltAnimating?: boolean;
+}): number {
+  if (args.frameOn) return 0;
+  const planMode =
+    args.mode === "survey" || args.mode === "sketch" || args.mode === "cad";
+  if (!planMode) return 0;
+  const cadFree = args.mode === "cad" && !args.clientView;
+  const gardenAxon =
+    (Number.isFinite(args.tiltDeg) && args.tiltDeg > 0.5) ||
+    Boolean(args.tiltAnimating);
+  if (!cadFree && !gardenAxon) return 0;
+  return normalizeViewRotationDeg(args.viewRotationDeg);
+}
