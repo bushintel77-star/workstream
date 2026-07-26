@@ -22,7 +22,8 @@ const aud0 = (n: number) =>
   }).format(n);
 
 /**
- * Renders presentation widgets into a Fit-sheet slot (side / footer / title).
+ * Paper-ink presentation widgets — quiet faces inside the Fit schedule panel.
+ * No frosted chrome cards; the drawing / title block stay primary.
  */
 export function SheetWidgetStack({
   pack,
@@ -39,11 +40,13 @@ export function SheetWidgetStack({
       className={`${slot === "footer_band" ? css.band : ""} ${className ?? ""}`}
       data-testid={`sheet-widgets-${slot}`}
       data-theme={pack.theme}
+      data-slot={slot}
     >
       {widgets.map((w) => (
-        <WidgetCard
+        <WidgetFace
           key={w.id}
           widget={w}
+          slot={slot}
           quoteTotalInclGst={quoteTotalInclGst}
           tier1={tier1}
           context={context}
@@ -53,42 +56,32 @@ export function SheetWidgetStack({
   );
 }
 
-function WidgetCard({
+function WidgetFace({
   widget,
+  slot,
   quoteTotalInclGst,
   tier1,
   context,
 }: {
   widget: PresentationWidget;
+  slot: Props["slot"];
   quoteTotalInclGst: number;
   tier1: boolean;
   context: SheetWidgetContext | null;
 }) {
   if (widget.type === "savings_ledger" && !tier1) {
-    return (
-      <div
-        className={css.sheetWidget}
-        data-testid={`sheet-on-${widget.type}`}
-        data-accent={widget.style.accent}
-        data-emphasis={widget.style.emphasis}
-      >
-        <p className={css.sheetLabel}>Value reallocation</p>
-        <p className={css.sheetValue}>Not available</p>
-        <p className={css.sheetDetail}>
-          Wrights Terrace proposal ledger — open a Tier-1 site
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (
     <div
       className={css.sheetWidget}
       data-testid={`sheet-on-${widget.type}`}
+      data-slot={slot}
       data-accent={widget.style.accent}
       data-emphasis={widget.style.emphasis}
     >
-      {renderBody(widget, quoteTotalInclGst, tier1, context)}
+      {renderBody(widget, quoteTotalInclGst, tier1, context, slot)}
     </div>
   );
 }
@@ -98,18 +91,23 @@ function renderBody(
   quoteTotalInclGst: number,
   tier1: boolean,
   context: SheetWidgetContext | null,
+  slot: Props["slot"],
 ) {
   switch (widget.type) {
     case "quote_total":
       return (
         <>
-          <p className={css.sheetLabel}>Indicative quote</p>
+          {slot !== "title_meta" ? (
+            <p className={css.sheetLabel}>Indicative quote</p>
+          ) : null}
           <p className={css.sheetValue}>
             {quoteTotalInclGst > 0
               ? aud0(quoteTotalInclGst)
               : "Nothing costed yet"}
           </p>
-          <p className={css.sheetDetail}>Incl. GST · live BOM on this drawing</p>
+          {slot === "side_stack" ? (
+            <p className={css.sheetDetail}>Incl. GST · live BOM</p>
+          ) : null}
         </>
       );
     case "savings_ledger":
@@ -121,7 +119,7 @@ function renderBody(
           </p>
           <p className={css.sheetDetail}>
             Target {aud0(TIER1_WRIGHTS_SAVINGS.target_total_inc_gst)}
-            {tier1 ? " · Wrights Terrace demo" : ""}
+            {tier1 ? " · Wrights" : ""}
           </p>
         </>
       );
@@ -135,7 +133,7 @@ function renderBody(
               "No zones drawn yet"}
           </p>
           <p className={css.sheetDetail}>
-            {context?.zoneDetail ?? "Structure first, then mass planting"}
+            {context?.zoneDetail ?? "From this drawing"}
           </p>
         </>
       );
@@ -155,13 +153,7 @@ function renderBody(
                 />
               ))}
             </div>
-          ) : (
-            <div className={css.swatchRow} aria-hidden data-empty="1">
-              <span className={`${css.mat} ${css.matEmpty}`} />
-              <span className={`${css.mat} ${css.matEmpty}`} />
-              <span className={`${css.mat} ${css.matEmpty}`} />
-            </div>
-          )}
+          ) : null}
           <p className={css.sheetDetail} data-testid="sheet-mat-labels">
             {widget.text?.trim() ||
               context?.materialLabels ||
@@ -171,22 +163,16 @@ function renderBody(
       );
     case "caption":
       return (
-        <>
-          <p className={css.sheetLabel}>Presentation</p>
-          <p className={css.sheetValue}>
-            {widget.text ?? "Concept presentation — Curtis & Co"}
-          </p>
-        </>
+        <p className={css.sheetValue}>
+          {widget.text ?? "Concept presentation — Curtis & Co"}
+        </p>
       );
     case "honesty_footer":
       return (
-        <>
-          <p className={css.sheetLabel}>Honesty</p>
-          <p className={css.sheetDetail}>
-            {widget.text ??
-              "Working drawing — indicative only. Not for construction."}
-          </p>
-        </>
+        <p className={css.sheetDetail}>
+          {widget.text ??
+            "Working drawing — indicative only. Not for construction."}
+        </p>
       );
     default:
       return null;

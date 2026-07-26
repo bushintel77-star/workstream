@@ -24,6 +24,7 @@ import {
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { SEMANTIC_LIGHT, mixOnHex } from "../../../../../styles/colorTokens";
 import type { IrrigationZone, PresentationPack } from "@workstream/contracts";
+import { widgetsInSlot } from "@workstream/domain";
 import { WeatherIcon } from "../stickyMeta/WeatherIcon";
 import type { EnvWeatherDay } from "../stickyMeta/envLiveMeta";
 import { resolveEnvWeatherCondition } from "../stickyMeta/envLiveMeta";
@@ -423,6 +424,7 @@ export function FitSheetOverlay({
           <div className={css.panelHead} data-testid="fit-sheet-title-block">
             <div style={{ minWidth: 0 }}>
               <p className={css.brand}>Curtis &amp; Co</p>
+              <p className={css.addr}>{titleBlock?.address ?? address}</p>
               {presentationPack ? (
                 <SheetWidgetStack
                   pack={presentationPack}
@@ -432,7 +434,6 @@ export function FitSheetOverlay({
                   context={sheetWidgetContext}
                 />
               ) : null}
-              <p className={css.addr}>{titleBlock?.address ?? address}</p>
               <p className={css.titleSource} data-testid="fit-sheet-cadastral">
                 {titleBlock?.sourceLabel ?? "Indicative parcel"}
                 {titleBlock?.parcelRef
@@ -490,16 +491,6 @@ export function FitSheetOverlay({
             </div>
           </div>
 
-          {presentationPack ? (
-            <SheetWidgetStack
-              pack={presentationPack}
-              slot="side_stack"
-              quoteTotalInclGst={quoteTotalInclGst}
-              tier1={tier1}
-              context={sheetWidgetContext}
-            />
-          ) : null}
-
           <div className={css.section}>
             <p className={css.kicker}>Site schedule</p>
             {(
@@ -527,6 +518,20 @@ export function FitSheetOverlay({
             ))}
           </div>
 
+          {presentationPack &&
+          widgetsInSlot(presentationPack, "side_stack").length > 0 ? (
+            <div className={`${css.section} ${css.presentationSection}`}>
+              <p className={css.kicker}>Presentation</p>
+              <SheetWidgetStack
+                pack={presentationPack}
+                slot="side_stack"
+                quoteTotalInclGst={quoteTotalInclGst}
+                tier1={tier1}
+                context={sheetWidgetContext}
+              />
+            </div>
+          ) : null}
+
           {/* On-canvas outside dims own B#/F# callouts — schedule keeps areas + legend. */}
           {legend.length > 0 ? (
             <div className={css.sectionGrow}>
@@ -542,18 +547,17 @@ export function FitSheetOverlay({
             </div>
           ) : null}
 
-          {presentationPack ? (
-            <SheetWidgetStack
-              pack={presentationPack}
-              slot="footer_band"
-              quoteTotalInclGst={quoteTotalInclGst}
-              tier1={tier1}
-              context={sheetWidgetContext}
-            />
-          ) : null}
-
           <div className={css.notes}>
             <p className={css.kicker}>Notes</p>
+            {presentationPack ? (
+              <SheetWidgetStack
+                pack={presentationPack}
+                slot="footer_band"
+                quoteTotalInclGst={quoteTotalInclGst}
+                tier1={tier1}
+                context={sheetWidgetContext}
+              />
+            ) : null}
             <p className={css.notesBody} data-testid="fit-sheet-notes">
               {titleBlock?.notesLine ??
                 "Vicmap cadastral base · confirm title. Dimensions in metres — working drawing, indicative only."}{" "}

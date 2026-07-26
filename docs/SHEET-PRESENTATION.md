@@ -6,43 +6,45 @@
 
 ## Feature law
 
-One canvas. Fit sheet (**F**) is still the cream paper lens. When Fit is on, operators can **compose** client-facing sheet chrome around the live plot: quote callout, savings, swatches, caption — templates, theme swatches, widget library, drag between slots, Auto-format.
+One canvas. Fit sheet (**F**) is the cream paper lens. Presentation widgets are **paper ink** inside the schedule / notes regions.
 
-This is **not** a second product. Quote mode stays cost truth; Share stays send/portal; Survey/Sketch/CAD stay design authoring.
+Compose chrome is **header-summoned only** (icon next to Fit / print) — a soft frost peel that dismisses on Esc, linger, or ×. **No rail. No parked card.** Idle Fit shows the drawing + paper alone.
+
+This is **not** a second product. Quote mode stays cost truth; Share stays send/portal.
 
 ### Auto-seed
 
-First Fit open with an empty pack and **no** `template_id` seeds `curtis-client-brochure` so widgets are visible immediately. **Clear** sets `template_id: "cleared"` so Fit does not re-seed an intentional blank sheet.
+First Fit open with an empty pack and **no** `template_id` seeds `curtis-client-brochure` onto the **paper**. Compose peel stays closed.
 
-## Clever constraints (2026 brochure quality without Canva)
+**Clear** sets `template_id: "cleared"` so Fit does not re-seed.
+
+## Clever constraints
 
 | Pillar | Rule |
 |--------|------|
-| Hero | Live `%` plot stays the drawing — widgets orbit it in slots |
-| Slots | `title_meta` · `side_stack` · `footer_band` (snap, not freeform chaos) |
-| Library | Typed widgets only (quote, savings, zones, swatches, caption, honesty) |
-| Themes | `parchment` · `ink` · `blush` |
-| Templates | Curtis seeds + apply; save-custom later |
-| Auto-format | Deterministic reflow by widget priority |
-| Chrome | Compose dock via **CameraChrome** only |
-| Cap | Max 24 widgets (contract + domain) |
+| Hero | Live `%` plot + title block stay primary |
+| Chrome | Header icon → summoned peel via CameraChrome; zero chrome when closed |
+| Slots | `title_meta` (quiet caption) · `side_stack` (Presentation after schedule) · `footer_band` (notes) |
+| Library | Typed widgets; add/remove chips — no `<select>` |
+| Themes / seeds | Only while peel is open |
+| Cap | Max 24 widgets |
 
-## Widget honesty (live vs static)
+## Widget honesty
 
 | Widget | Source |
 |--------|--------|
-| `quote_total` | Live BOM / indicative quote incl. GST |
-| `savings_ledger` | Wrights Terrace **proposal** ledger (Tier-1 demo); N/A off-tier1 |
-| `zone_summary` | Live irrigation zone names, else placement massing |
-| `material_swatches` | Chips + labels from placed materials on the board |
-| `caption` / `honesty_footer` | Template or operator `text` override |
+| `quote_total` | Live BOM incl. GST |
+| `savings_ledger` | Wrights proposal ledger (Tier-1); hidden off-tier1 |
+| `zone_summary` | Irrigation zones or placement massing |
+| `material_swatches` | Placed materials |
+| `caption` / `honesty_footer` | Template or `text` |
 
 ## Data
 
-Optional `DesignCanvas.presentation_pack` — theme, template id, widgets. Autosaved with the canvas (full PUT upsert).
+Optional `DesignCanvas.presentation_pack` — autosaved with the canvas.
 
 ## Phases
 
-1. **Now** — schema, templates, themes, library, drag slots, reflow, live zone/material faces, persist, e2e  
-2. Editable widget copy; owner-saved templates  
-3. AI layout ghosts (Accept/Reject); optional mood-still widget type  
+1. **Now** — header summon, quiet on-sheet faces, live zone/material, persist, e2e  
+2. On-paper drag between slots; editable copy  
+3. AI layout ghosts; optional mood-still widget  

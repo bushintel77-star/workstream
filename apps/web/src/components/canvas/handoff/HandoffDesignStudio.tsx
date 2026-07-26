@@ -349,6 +349,8 @@ export function HandoffDesignStudio({
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
   const [sharePopupOpen, setSharePopupOpen] = useState(false);
+  /** Fit-sheet compose peel — header-summoned only (never a parked rail). */
+  const [sheetComposeOpen, setSheetComposeOpen] = useState(false);
   const [latestShare, setLatestShare] = useState<
     import("@workstream/contracts").ShareRevision | null
   >(null);
@@ -1860,7 +1862,7 @@ export function HandoffDesignStudio({
           panY: 0,
         });
         // First open with an empty, never-templated pack → seed the client
-        // brochure. Cleared packs keep template_id so we do not re-seed.
+        // brochure onto the paper. Compose peel stays closed.
         const pack = studio.presentationPack;
         if (
           (pack.widgets?.length ?? 0) === 0 &&
@@ -1871,6 +1873,7 @@ export function HandoffDesignStudio({
         return;
       }
       // Leaving Fit sheet — restore a coherent free-plan camera on every tab.
+      setSheetComposeOpen(false);
       outdoorFitKeyRef.current = null;
       fitSeedKeyRef.current = null;
       studio.setUi({ frameOn: false, panX: 0, panY: 0, zoom: 1 });
@@ -2489,6 +2492,7 @@ export function HandoffDesignStudio({
             className={`${css.iconBtn}${ui.frameOn ? ` ${css.iconBtnActive}` : ""}`}
             data-testid="fit-sheet-top"
             aria-label="Fit sheet"
+            aria-pressed={ui.frameOn}
             title="Fit sheet"
             onClick={() => setFitSheetOn(!ui.frameOn)}
           >
@@ -2505,6 +2509,35 @@ export function HandoffDesignStudio({
               <path d="M9.5 2.5v11" stroke="currentColor" strokeWidth="1.25" />
             </svg>
           </button>
+          {ui.frameOn && !ui.clientView ? (
+            <button
+              type="button"
+              className={`${css.iconBtn}${sheetComposeOpen ? ` ${css.iconBtnActive}` : ""}`}
+              data-testid="sheet-compose-top"
+              aria-label="Compose sheet"
+              aria-pressed={sheetComposeOpen}
+              title="Compose sheet"
+              onClick={() => setSheetComposeOpen((v) => !v)}
+            >
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <rect
+                  x="2.5"
+                  y="2.5"
+                  width="11"
+                  height="11"
+                  rx="1.5"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                />
+                <path
+                  d="M6 5.5h4M6 8h4M6 10.5h2.5"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          ) : null}
           {ui.frameOn || ui.clientView ? (
             <button
               type="button"
@@ -3709,18 +3742,19 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {ui.frameOn && planOn && !ui.clientView ? (
+        {ui.frameOn && planOn && !ui.clientView && sheetComposeOpen ? (
           <CameraChrome
             place={{ kind: "dock" }}
             zIndex={54}
             testId="sheet-compose-chrome"
           >
             <SheetComposeDock
+              open={sheetComposeOpen}
+              onClose={() => setSheetComposeOpen(false)}
               pack={studio.presentationPack}
               onApplyTemplate={studio.applyPresentationTemplate}
               onTheme={studio.setPresentationTheme}
               onAddWidget={studio.addPresentationWidget}
-              onMoveWidget={studio.movePresentationWidget}
               onRemoveWidget={studio.removePresentationWidget}
               onReflow={studio.reflowPresentationPack}
               onClear={studio.clearPresentationWidgets}
