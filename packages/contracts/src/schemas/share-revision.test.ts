@@ -170,6 +170,23 @@ describe("CreateShareRevisionInputSchema", () => {
       }).success,
     ).toBe(true);
   });
+
+  it("accepts a frozen QuoteDoc share payload (margined line totals)", () => {
+    expect(
+      CreateShareRevisionInputSchema.safeParse({
+        quoteLines: [
+          {
+            id: "prim-pave",
+            label: "Bluestone paving",
+            unit: "m2",
+            qty: 10,
+            total: 3520,
+          },
+        ],
+        totalInclGst: 3872,
+      }).success,
+    ).toBe(true);
+  });
 });
 
 describe("PublicSharePayloadSchema", () => {

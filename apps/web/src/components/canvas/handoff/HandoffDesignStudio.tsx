@@ -350,6 +350,17 @@ export function HandoffDesignStudio({
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
   const [sharePopupOpen, setSharePopupOpen] = useState(false);
+  /** Frozen QuoteDoc → ShareRevision payload (set from QuoteBuilder Share). */
+  const [shareQuoteFreeze, setShareQuoteFreeze] = useState<{
+    quoteLines: Array<{
+      id: string;
+      label: string;
+      unit: string;
+      qty: number;
+      total: number;
+    }>;
+    totalInclGst: number;
+  } | null>(null);
   const [headerViewMenuOpen, setHeaderViewMenuOpen] = useState(false);
   const [latestShare, setLatestShare] = useState<
     import("@workstream/contracts").ShareRevision | null
@@ -2134,7 +2145,7 @@ export function HandoffDesignStudio({
     ui.groupIds.length > 0 ||
     ui.addOpen ||
     ui.locked;
-  const quoteShareLines = useMemo(
+  const estimateShareLines = useMemo(
     () =>
       estimate.lines
         .filter((l) => l.total > 0)
@@ -2148,8 +2159,11 @@ export function HandoffDesignStudio({
         })),
     [estimate.lines],
   );
+  const quoteShareLines = shareQuoteFreeze?.quoteLines ?? estimateShareLines;
+  const quoteShareTotalInclGst =
+    shareQuoteFreeze?.totalInclGst ?? estimate.totalInclGst;
   const hasCostedBom =
-    quoteShareLines.length > 0 && estimate.totalInclGst > 0;
+    quoteShareLines.length > 0 && quoteShareTotalInclGst > 0;
 
   const modeProgress = useMemo(
     () => ({
@@ -2794,7 +2808,7 @@ export function HandoffDesignStudio({
                 projectId={projectId}
                 address={displayAddress}
                 quoteLines={quoteShareLines}
-                totalInclGst={estimate.totalInclGst}
+                totalInclGst={quoteShareTotalInclGst}
                 onRevisionChange={setLatestShare}
               />
             </div>
@@ -2950,7 +2964,8 @@ export function HandoffDesignStudio({
             projectId={projectId}
             address={displayAddress}
             estimate={estimate}
-            onShare={() => {
+            onShare={(payload) => {
+              setShareQuoteFreeze(payload);
               setSharePopupOpen(true);
             }}
             onBack={() => requestMode("cad")}
