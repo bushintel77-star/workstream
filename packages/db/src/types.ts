@@ -49,6 +49,8 @@ import type {
   CreateShareRevisionInput,
   ShareDecisionInput,
   ShareSnapshot,
+  QuoteDoc,
+  UpsertQuoteDocInput,
 } from "@workstream/contracts";
 
 export type {
@@ -192,6 +194,12 @@ export interface Store {
     input: AuditInput,
   ): Promise<Audit>;
   getAudit(ownerId: string, projectId: string): Promise<Audit | null>;
+  getQuoteDoc(ownerId: string, projectId: string): Promise<QuoteDoc | null>;
+  upsertQuoteDoc(
+    ownerId: string,
+    projectId: string,
+    input: UpsertQuoteDocInput,
+  ): Promise<QuoteDoc>;
   upsertOutput(
     ownerId: string,
     projectId: string,

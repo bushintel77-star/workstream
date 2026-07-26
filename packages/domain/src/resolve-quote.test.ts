@@ -96,6 +96,27 @@ describe("resolveQuote", () => {
     expect(result.orphanOverrides[0]!.line_id).toBe("gone-line");
   });
 
+  it("re-merges overrides by SKU when engine line ids change", () => {
+    const remapped: QuoteEngineLine[] = [
+      {
+        ...engine[0]!,
+        id: "prim-pave-v2",
+      },
+      engine[1]!,
+    ];
+    const result = resolveQuote(remapped, {
+      overrides: [
+        { line_id: "prim-pave", sku: "PAV-BLUE-SAWN", qty: 7 },
+      ],
+      custom_lines: [],
+      margin: { global_pct: 0, by_section: {} },
+    });
+    const pave = result.lines.find((l) => l.id === "prim-pave-v2")!;
+    expect(pave.qty).toBe(7);
+    expect(pave.overridden).toBe(true);
+    expect(result.orphanOverrides).toHaveLength(0);
+  });
+
   it("keeps unselected alternates out of the total", () => {
     const result = resolveQuote(engine, {
       overrides: [

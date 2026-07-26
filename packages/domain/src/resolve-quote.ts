@@ -146,13 +146,19 @@ export function resolveQuote(
   const byLineId = new Map(
     overrides.filter((o) => o.line_id).map((o) => [o.line_id, o]),
   );
+  const bySku = new Map<string, QuoteOverride>();
+  for (const o of overrides) {
+    if (o.sku && !bySku.has(o.sku)) bySku.set(o.sku, o);
+  }
   const matched = new Set<string>();
 
   const resolved: ResolvedQuoteLine[] = [];
 
   for (const eng of engineLines) {
-    const ov = byLineId.get(eng.id);
-    if (ov) matched.add(eng.id);
+    const ov =
+      byLineId.get(eng.id) ??
+      (eng.sku ? bySku.get(eng.sku) : undefined);
+    if (ov) matched.add(ov.line_id);
     const qty = ov?.qty ?? eng.qty;
     const rate = ov?.rate ?? eng.rate;
     const total = calculateLineTotal(qty, rate);
@@ -198,29 +204,34 @@ export function resolveQuote(
   }
 
   for (const custom of doc.custom_lines ?? []) {
-    const total = calculateLineTotal(custom.qty, custom.rate);
-    const section = custom.section ?? "custom";
+    const ov = byLineId.get(custom.id);
+    if (ov) matched.add(ov.line_id);
+    const qty = ov?.qty ?? custom.qty;
+    const rate = ov?.rate ?? custom.rate;
+    const total = calculateLineTotal(qty, rate);
+    const section = ov?.section ?? custom.section ?? "custom";
     const pct = marginPctFor(section, doc.margin);
     resolved.push({
       id: custom.id,
       line_id: custom.id,
-      sku: custom.sku,
+      sku: ov?.sku ?? custom.sku,
       label: custom.label,
       unit: custom.unit,
-      qty: custom.qty,
-      rate: custom.rate,
+      qty,
+      rate,
       total,
       totalAfterMargin: applyMargin(total, pct),
-      section,
-      notes: custom.notes,
-      excluded: false,
-      is_provisional: Boolean(custom.is_provisional),
+      section: ov?.is_provisional ? "provisional" : section,
+      notes: ov?.notes ?? custom.notes,
+      excluded: Boolean(ov?.excluded),
+      is_provisional: Boolean(ov?.is_provisional ?? custom.is_provisional),
       is_custom: true,
-      is_alternate: false,
-      alternate_selected: false,
+      is_alternate: Boolean(ov?.alternate_of),
+      alternate_of: ov?.alternate_of,
+      alternate_selected: Boolean(ov?.alternate_selected),
       engine_qty: custom.qty,
       engine_rate: custom.rate,
-      overridden: false,
+      overridden: Boolean(ov),
     });
   }
 

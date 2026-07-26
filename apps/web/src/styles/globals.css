@@ -122,6 +122,10 @@
   --dock-rail-collapsed-w: 56px;
   --sheet-peek-h: 72px;
 
+  /* Quote builder markers (derive from semantic tokens) */
+  --quote-provisional: color-mix(in srgb, var(--warn) 55%, transparent);
+  --quote-margin-accent: color-mix(in srgb, var(--accent) 3%, transparent);
+
   --overlay-shade: color-mix(in srgb, var(--warn) 38%, transparent);
   --overlay-trp: color-mix(in srgb, var(--ok) 38%, transparent);
   --overlay-utility: color-mix(in srgb, var(--info) 38%, transparent);

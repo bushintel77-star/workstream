@@ -1496,6 +1496,42 @@ export type CreateShareRevisionResult =
       error: string;
     };
 
+export async function getQuoteDocApi(
+  projectId: string,
+): Promise<import("@workstream/contracts").QuoteDoc | null> {
+  const res = await fetch(`${API_URL}/projects/${projectId}/quote-doc`, {
+    headers: await apiHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`API ${res.status} on GET quote-doc`);
+  }
+  const data = (await res.json()) as {
+    quoteDoc?: import("@workstream/contracts").QuoteDoc | null;
+  };
+  return data.quoteDoc ?? null;
+}
+
+export async function upsertQuoteDocApi(
+  projectId: string,
+  body: import("@workstream/contracts").UpsertQuoteDocInput,
+): Promise<import("@workstream/contracts").QuoteDoc> {
+  const res = await fetch(`${API_URL}/projects/${projectId}/quote-doc`, {
+    method: "PUT",
+    headers: await apiHeaders(true),
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    quoteDoc?: import("@workstream/contracts").QuoteDoc;
+    error?: string;
+  };
+  if (!res.ok || !data.quoteDoc) {
+    throw new Error(data.error ?? `API ${res.status} on PUT quote-doc`);
+  }
+  return data.quoteDoc;
+}
+
 export async function createShareRevisionApi(
   projectId: string,
   body: import("@workstream/contracts").CreateShareRevisionInput,

@@ -18,6 +18,7 @@ import type {
   Survey,
   Task,
 } from "./types";
+import type { QuoteDoc } from "@workstream/contracts";
 import type { Store } from "./types";
 import { mkdirSync, renameSync, writeFileSync } from "fs";
 import { dirname } from "path";
@@ -86,6 +87,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   > = [];
   const _activityEvents: import("./types").ActivityEvent[] = [];
   const _shareRevisions: import("./types").ShareRevision[] = [];
+  const _quoteDocs: QuoteDoc[] = [];
   let seeded = false;
 
   function logActivity(
@@ -134,6 +136,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _catalogCustom,
     _activityEvents,
     _shareRevisions,
+    _quoteDocs,
   };
 
   const journal: SqliteJournal | undefined = opts.sqlitePath
@@ -595,6 +598,45 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       );
       if (!project) return null;
       return _audits.find((a) => a.design_id === design.id) ?? null;
+    },
+
+    async getQuoteDoc(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      return _quoteDocs.find((q) => q.project_id === projectId) ?? null;
+    },
+
+    async upsertQuoteDoc(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const design = _designs.find((d) => d.project_id === projectId);
+      const updated_at = new Date().toISOString();
+      const existing = _quoteDocs.find((q) => q.project_id === projectId);
+      if (existing) {
+        Object.assign(existing, {
+          ...input,
+          project_id: projectId,
+          design_id: input.design_id ?? design?.id ?? existing.design_id,
+          updated_at,
+        });
+        flush();
+        return existing;
+      }
+      const doc: QuoteDoc = {
+        project_id: projectId,
+        design_id: input.design_id ?? design?.id ?? null,
+        overrides: input.overrides ?? [],
+        custom_lines: input.custom_lines ?? [],
+        margin: input.margin ?? { global_pct: 0, by_section: {} },
+        updated_at,
+      };
+      _quoteDocs.push(doc);
+      flush();
+      return doc;
     },
 
     async upsertOutput(ownerId, projectId, kind, input) {

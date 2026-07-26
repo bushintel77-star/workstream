@@ -2947,19 +2947,22 @@ export function HandoffDesignStudio({
 
         {ui.mode === "quote" ? (
           <QuoteSurface
+            projectId={projectId}
             address={displayAddress}
             estimate={estimate}
-            schemeLetters={ui.schemes.map((s) => s.letter)}
-            draftUnverified={ai.status === "unverified"}
-            pendingGhosts={ai.pendingCount}
-            onReviewGhosts={() => {
-              requestMode("cad");
-              ai.openReview();
-            }}
             onShare={() => {
               setSharePopupOpen(true);
             }}
             onBack={() => requestMode("cad")}
+            onOpenLibrary={() => {
+              requestMode("cad");
+              studio.setUi({
+                leftAssetPanel: "expanded",
+                addOpen: true,
+                cmdOpen: true,
+              });
+            }}
+            onFit={() => setFitSheetOn(!ui.frameOn)}
           />
         ) : null}
 
