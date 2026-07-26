@@ -116,6 +116,7 @@ export * from './orchestration-world';
 export * from './site-compliance';
 export * from './studio-preemptive-compliance';
 export * from './studio-preemptive-estimate';
+export * from './resolve-quote';
 export * from './architectural-title-block';
 export * from './flora-suggestion';
 export * from './volumetric-isolith';
