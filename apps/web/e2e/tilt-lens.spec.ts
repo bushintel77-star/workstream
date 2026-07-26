@@ -236,13 +236,16 @@ test.describe("Tilt lens", () => {
       timeout: 15_000,
     });
 
-    await expect(page.getByTestId("garden-viewpoint-strip")).toBeVisible();
-    await page.getByTestId("garden-viewpoint-E").click();
+    // Flat plan — no parked View strip; Cmd+K Looking east arms tilt + strip.
+    await expect(page.getByTestId("garden-viewpoint-strip")).toHaveCount(0);
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-looking-east").click();
     await expect(page.getByTestId("studio-board")).toHaveAttribute(
       "data-tilt",
       "1",
       { timeout: 5_000 },
     );
+    await expect(page.getByTestId("garden-viewpoint-strip")).toBeVisible();
     await expect(page.getByTestId("zoom-world")).toHaveAttribute(
       "data-view-yaw",
       "90",

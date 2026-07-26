@@ -4079,9 +4079,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
               : state.ui.paintSwatch,
           drawPoly: tool === "trace" ? state.ui.drawPoly : null,
           drawCursor: tool === "trace" ? state.ui.drawCursor : null,
-          // ADD opens the unified library in-place (not a separate Draft kit float).
-          // Keep Placing if already in Path Grammar; don't collapse Expanded when
-          // re-selecting Select while the Fill rail library is open from idle.
+          // Add / Paint summon the inventory peel; Select collapses it away.
+          // Keep Placing if already in Path Grammar on Add.
           ...(tool === "add"
             ? state.ui.leftAssetPanel === "placing"
               ? { rightDataPanel: null }
@@ -4089,9 +4088,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
                   leftAssetPanel: "expanded" as const,
                   rightDataPanel: null,
                 }
-            : collapseAsset
-              ? { leftAssetPanel: null, leftAssetRestore: null }
-              : {}),
+            : tool === "paint"
+              ? {
+                  leftAssetPanel: "expanded" as const,
+                  rightDataPanel: null,
+                }
+              : collapseAsset
+                ? { leftAssetPanel: null, leftAssetRestore: null }
+                : {}),
         });
       }
     },

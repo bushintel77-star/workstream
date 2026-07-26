@@ -120,7 +120,6 @@ import {
   type NicheTool,
 } from "./features/kitInventory/nicheTools";
 import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
-import { CanvasMeasureSummary } from "./features/liveMeasures/CanvasMeasureSummary";
 import {
   cancelToSelect,
   recordTool,
@@ -191,6 +190,7 @@ import {
 } from "./geometry/canvasZoom";
 import { nextBoardSize } from "./geometry/boardSizeCommit";
 import {
+  isViewRotatedFromNorth,
   normalizeViewRotationDeg,
   resolvePlanRotateDeg,
   stepViewRotationDeg,
@@ -1615,13 +1615,17 @@ export function HandoffDesignStudio({
     !ui.focusOn &&
     !ui.clientView &&
     ui.zoom >= 2.2;
-  /** Fill / asset panel — always on in plan CAD/sketch (collapsed rail by default). */
+  /**
+   * Inventory — summoned only (Add / Paint / Path Grammar). Idle Select keeps
+   * the drawing clear; no parked Fill rail on the plan.
+   */
   const assetPanelOn =
     (ui.mode === "cad" || ui.mode === "sketch") &&
     !ui.frameOn &&
     !ui.focusOn &&
     !ui.clientView &&
-    !ui.foundationCleanse;
+    !ui.foundationCleanse &&
+    ui.leftAssetPanel != null;
   /** Undo filmstrip — CAD/survey only; Sketch uses MarginStrip history. */
   const undoFilmOn =
     (ui.mode === "cad" || ui.mode === "survey") &&
@@ -3767,18 +3771,31 @@ export function HandoffDesignStudio({
           </CameraChrome>
         ) : null}
 
-        {ui.mode === "cad" && !ui.frameOn && !ui.clientView && !ui.focusOn ? (
-          <ViewNorthControl
-            rotationDeg={ui.viewRotationDeg}
-            stepDeg={ui.viewRotationStepDeg}
-            onRotation={(viewRotationDeg) => studio.setUi({ viewRotationDeg })}
-            onStep={(viewRotationStepDeg: ViewRotationStepDeg) =>
-              studio.setUi({ viewRotationStepDeg })
-            }
-          />
+        {ui.mode === "cad" &&
+        !ui.frameOn &&
+        !ui.clientView &&
+        !ui.focusOn &&
+        isViewRotatedFromNorth(ui.viewRotationDeg) ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={42}
+            testId="view-north-chrome"
+          >
+            <ViewNorthControl
+              rotationDeg={ui.viewRotationDeg}
+              stepDeg={ui.viewRotationStepDeg}
+              onRotation={(viewRotationDeg) =>
+                studio.setUi({ viewRotationDeg })
+              }
+              onStep={(viewRotationStepDeg: ViewRotationStepDeg) =>
+                studio.setUi({ viewRotationStepDeg })
+              }
+            />
+          </CameraChrome>
         ) : null}
 
-        {(planOn || ui.mode === "elevation") &&
+        {((planOn && isTiltActive(ui.tiltDeg)) ||
+          ui.mode === "elevation") &&
         !ui.frameOn &&
         !ui.focusOn ? (
           <GardenViewpointStrip
@@ -3906,40 +3923,7 @@ export function HandoffDesignStudio({
           </CameraChrome>
         ) : null}
 
-        {/* Lane law: this compact chip and the right data lane share the
-            same top-right corner — hide it whenever ANY lane occupant
-            (checklist/layers/sites/measures) is open, not just "measures",
-            so it never visually collides with the open panel below it. */}
-        {!rightLaneBusy &&
-        planOn &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        !ui.foundationCleanse ? (
-          <CameraChrome
-            place={{ kind: "dock" }}
-            zIndex={52}
-            testId="canvas-measure-summary-chrome"
-          >
-            <CanvasMeasureSummary
-              mode={ui.mode}
-              boundary={studio.boundary}
-              building={studio.building}
-              items={studio.items}
-              scaleM={scaleM}
-              schedule={siteSchedule}
-              selected={selectedLive}
-              cadastralLotM2={titleBlock?.lotAreaM2 ?? null}
-              cadastralHouseM2={titleBlock?.houseAreaM2 ?? null}
-              onOpen={() =>
-                studio.setUi({
-                  ...withRightDataPanel("measures"),
-                  utilityPanel: null,
-                })
-              }
-            />
-          </CameraChrome>
-        ) : null}
+        {/* Live measures — Cmd+K / header Data only. No parked CAD MEASURES card. */}
 
         {measuresOpen &&
         planOn &&
@@ -4031,7 +4015,7 @@ export function HandoffDesignStudio({
         {planOn &&
         !ui.frameOn &&
         !ui.focusOn &&
-        (ui.clientView || ui.schemes.length > 0 || ui.mode === "cad") ? (
+        (ui.clientView || ui.schemes.length > 0) ? (
           <VariationFilmstrip
             schemes={ui.schemes}
             activeSchemeId={ui.activeSchemeId}
@@ -4578,6 +4562,7 @@ export function HandoffDesignStudio({
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           onTiltView={() => runTiltView()}
           onGardenViewpoint={runGardenViewpoint}
+          onSaveScheme={studio.saveDesignScheme}
           dataOpen={measuresOpen}
           onToggleData={() =>
             studio.setUi({
