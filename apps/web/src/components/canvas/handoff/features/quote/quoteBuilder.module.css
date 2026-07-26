@@ -13,6 +13,18 @@
   display: none;
 }
 
+/* Mobile: full-viewport sheet; totals stick above the home indicator. */
+.rootCompact .quotePane {
+  padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+}
+
+.rootCompact .totals {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -8px 24px color-mix(in srgb, var(--hc-ink) 8%, transparent);
+}
+
 .top {
   display: flex;
   flex-wrap: wrap;
