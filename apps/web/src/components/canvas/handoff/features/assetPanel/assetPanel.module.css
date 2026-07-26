@@ -4,16 +4,16 @@
  */
 
 .panel {
-  --ink: var(--hc-ink, #241318);
-  --ink-soft: var(--hc-ink-muted, #7a5560);
-  --ink-faint: var(--hc-ink-faint, #b08a95);
-  --glass: var(--hc-glass, rgba(255, 251, 252, 0.97));
-  --line: var(--hc-line, rgba(36, 19, 24, 0.14));
-  --elev: var(--hc-elev-2, 0 2px 6px rgba(42, 23, 29, 0.12));
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --ink-faint: var(--hc-ink-faint);
+  --glass: var(--hc-glass);
+  --line: var(--hc-line);
+  --elev: var(--hc-elev-2);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: absolute;
-  left: 68px;
+  left: 58px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 22;
@@ -21,11 +21,11 @@
   flex-direction: row;
   align-items: stretch;
   gap: 0;
-  padding: 10px 8px;
+  padding: 6px 6px;
   border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-frost, rgba(255, 248, 250, 0.88));
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.1));
-  box-shadow: var(--hc-frost-shadow, 0 8px 28px rgba(42, 23, 29, 0.12));
+  background: var(--hc-frost, var(--hc-glass-soft));
+  border: 1px solid var(--hc-line, var(--hc-line-soft));
+  box-shadow: var(--hc-frost-shadow, 0 8px 28px var(--hc-neu-shadow));
   backdrop-filter: blur(14px);
   color: var(--ink);
   font-family: var(--font-body);
@@ -35,9 +35,9 @@
 }
 
 .panelNight {
-  background: rgba(28, 36, 48, 0.82);
-  border-color: rgba(143, 176, 255, 0.22);
-  color: rgba(236, 239, 244, 0.92);
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  border-color: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
+  color: color-mix(in srgb, var(--hc-ink) 92%, transparent);
 }
 
 .panel[data-state="expanded"],
@@ -52,14 +52,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
+  gap: 4px;
+  flex: 0 0 var(--dock-rail-collapsed-w, 56px);
+  width: var(--dock-rail-collapsed-w, 56px);
+}
+
+.panel[data-state="collapsed"] {
+  /* Slim command-first rail — no library body occlusion. */
+  max-width: calc(var(--dock-rail-collapsed-w, 56px) + 12px);
 }
 
 .kicker {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 7.5px;
+  font-size: 7px;
   font-weight: 650;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -69,23 +75,27 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .swatch {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  width: 46px;
-  padding: 6px 4px;
+  justify-content: center;
+  gap: 2px;
+  width: 44px;
+  min-width: 44px;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 4px 3px;
   border: none;
-  border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-neu-raised, #f6ebef);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
   );
   color: var(--ink-soft);
   font: inherit;
@@ -103,16 +113,16 @@
 .swatch:active {
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
 .swatchOn {
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
   color: var(--ink);
 }
@@ -122,16 +132,16 @@
 }
 
 .chip {
-  width: 26px;
-  height: 20px;
+  width: 24px;
+  height: 18px;
   border-radius: 6px;
-  background: var(--wash, rgba(74, 112, 58, 0.55));
-  box-shadow: inset 0 0 0 1px rgba(36, 19, 24, 0.14);
+  background: var(--wash, color-mix(in srgb, var(--planting-retain-stroke) 55%, transparent));
+  box-shadow: inset 0 0 0 1px var(--hc-line);
   transition: transform var(--hc-motion, 180ms) var(--ease);
 }
 
 .label {
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 650;
   letter-spacing: 0.01em;
   line-height: 1.1;
@@ -141,7 +151,7 @@
 .divider {
   width: 60%;
   height: 1px;
-  background: var(--hc-line-soft, rgba(36, 19, 24, 0.14));
+  background: var(--hc-line-soft, var(--hc-line));
 }
 
 .tool {
@@ -158,12 +168,52 @@
 .body {
   display: flex;
   flex-direction: column;
-  width: min(300px, 64vw);
-  min-width: 220px;
-  margin-left: 8px;
-  padding-left: 10px;
-  border-left: 1px solid rgba(36, 19, 24, 0.08);
+  width: min(280px, 58vw);
+  min-width: 200px;
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--hc-line-soft);
   min-height: 0;
+}
+
+.libraryHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.libraryHead .search {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.pinBtn {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-glass-soft);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pinBtn:hover {
+  color: var(--ink);
+}
+
+.pinBtnOn {
+  color: var(--ink);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
+  );
 }
 
 .placingHead {
@@ -174,11 +224,11 @@
 }
 
 .backBtn {
-  min-width: 36px;
-  min-height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0 8px;
   border: none;
-  border-radius: var(--hc-r-control, 10px);
+  border-radius: var(--hc-r-control);
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
@@ -188,7 +238,7 @@
 
 .backBtn:hover {
   color: var(--ink);
-  background: rgba(255, 246, 248, 0.55);
+  background: var(--hc-glass-soft);
 }
 
 .placingKicker {
@@ -205,9 +255,9 @@
   min-height: 30px;
   margin-bottom: 6px;
   padding: 4px 9px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 251, 252, 0.6);
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass-soft);
   color: var(--ink);
   font: inherit;
   font-size: 16px;
@@ -220,8 +270,8 @@
 
 .search:focus {
   outline: none;
-  border-color: rgba(194, 69, 95, 0.4);
-  background: rgba(255, 251, 252, 0.9);
+  border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
+  background: var(--hc-glass);
 }
 
 .filterRow {
@@ -249,7 +299,7 @@
   min-height: 28px;
   padding: 0 8px;
   border-radius: 999px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
+  border: 1px solid var(--hc-line-soft);
   background: transparent;
   color: var(--ink-soft);
   font-family: "IBM Plex Mono", monospace;
@@ -259,7 +309,7 @@
 
 .filterChip[data-active="true"] {
   background: var(--ink);
-  color: #fff6f8;
+  color: var(--hc-invert);
   border-color: var(--ink);
 }
 
@@ -281,7 +331,7 @@
 }
 
 .section + .section {
-  border-top: 1px solid rgba(36, 19, 24, 0.07);
+  border-top: 1px solid var(--hc-line-soft);
 }
 
 .sectionHead {
@@ -304,7 +354,7 @@
 }
 
 .sectionHead:hover {
-  background: rgba(255, 246, 248, 0.55);
+  background: var(--hc-glass-soft);
   color: var(--ink);
 }
 
@@ -330,7 +380,7 @@
   min-width: 20px;
   padding: 1px 5px;
   border-radius: var(--hc-r-pill, 999px);
-  background: rgba(246, 234, 237, 0.7);
+  background: var(--hc-glass-soft);
   color: var(--ink-faint);
   font-size: 8.5px;
   font-weight: 600;
@@ -355,24 +405,24 @@
   width: 56px;
   min-height: 48px;
   padding: 5px 3px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 251, 252, 0.45);
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
   color: var(--ink-soft);
   font: inherit;
   cursor: pointer;
 }
 
 .tile:hover {
-  background: rgba(255, 246, 248, 0.72);
+  background: var(--hc-glass-soft);
   color: var(--ink);
-  border-color: rgba(194, 69, 95, 0.28);
+  border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
 }
 
 .tileOn {
-  background: rgba(36, 19, 24, 0.88);
+  background: var(--hc-ink);
   border-color: transparent;
-  color: #fff6f8;
+  color: var(--hc-invert);
 }
 
 .glyph {
@@ -417,7 +467,7 @@
   min-height: 40px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  border: 1px solid var(--hc-line-soft);
   background: transparent;
   color: var(--ink-soft);
   font-family: "IBM Plex Mono", monospace;
@@ -427,7 +477,7 @@
 
 .craftChip[data-active="true"] {
   background: var(--ink);
-  color: #fff6f8;
+  color: var(--hc-invert);
   border-color: var(--ink);
 }
 
@@ -449,22 +499,22 @@
 }
 
 :global(.rootPrecision) .panel {
-  background: var(--hc-glass, rgba(255, 251, 252, 0.98));
-  box-shadow: var(--hc-elev-2, 0 2px 8px rgba(42, 23, 29, 0.2));
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.34));
+  background: var(--hc-glass);
+  box-shadow: var(--hc-elev-2);
+  border: 1px solid var(--hc-line);
 }
 
 :global(.rootPrecision) .swatch {
   background: transparent;
   box-shadow: none;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.2));
+  border: 1px solid var(--hc-line-soft);
 }
 
 :global(.rootPrecision) .swatchOn {
   border-color: var(--ink);
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16)
+    inset 2px 2px 5px var(--hc-neu-shadow)
   );
 }
 

@@ -118,6 +118,10 @@
   --studio-context-strip-h: 28px;
   --studio-canvas-inset: 14px;
 
+  /* Canvas-first asset dock — collapsed rail / mobile sheet peek */
+  --dock-rail-collapsed-w: 56px;
+  --sheet-peek-h: 72px;
+
   --overlay-shade: color-mix(in srgb, var(--warn) 38%, transparent);
   --overlay-trp: color-mix(in srgb, var(--ok) 38%, transparent);
   --overlay-utility: color-mix(in srgb, var(--info) 38%, transparent);

@@ -50,6 +50,9 @@ type Props = {
   /** Prefetch accordion section when opening from a rail icon. */
   expandSection?: string | null;
   focusSearchOnExpand?: boolean;
+  /** Keep expanded library through place / canvas interact. */
+  libraryPinned?: boolean;
+  onToggleLibraryPin?: () => void;
   onExpand: (opts?: {
     section?: string | null;
     focusSearch?: boolean;
@@ -91,6 +94,8 @@ export function AssetPanel({
   pathDrafting,
   expandSection = null,
   focusSearchOnExpand = false,
+  libraryPinned = false,
+  onToggleLibraryPin,
   onExpand,
   onEnterPlacing,
   onBackFromPlacing,
@@ -253,6 +258,8 @@ export function AssetPanel({
             onScrollTop={setScrollTop}
             onPlantingSoil={onPlantingSoil}
             onPlantingAspect={onPlantingAspect}
+            libraryPinned={libraryPinned}
+            onToggleLibraryPin={onToggleLibraryPin}
             onPickMaterial={(t) => {
               if (needsPathGrammar(t)) {
                 onEnterPlacing({ query, openSection, scrollTop }, t);

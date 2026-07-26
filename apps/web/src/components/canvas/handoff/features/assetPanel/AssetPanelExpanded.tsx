@@ -53,6 +53,9 @@ export type AssetPanelExpandedProps = {
   onPlantingSoil: (s: SoilTag) => void;
   onPlantingAspect: (a: AspectTag) => void;
   onPickMaterial: (t: StudioItemType) => void;
+  /** Keep library open through place / canvas interact. */
+  libraryPinned?: boolean;
+  onToggleLibraryPin?: () => void;
 };
 
 function pinnedTypes(mode: StudioMode): StudioItemType[] {
@@ -81,6 +84,8 @@ export function AssetPanelExpanded({
   onPlantingSoil,
   onPlantingAspect,
   onPickMaterial,
+  libraryPinned = false,
+  onToggleLibraryPin,
 }: AssetPanelExpandedProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const localSearchRef = useRef<HTMLInputElement | null>(null);
@@ -165,16 +170,34 @@ export function AssetPanelExpanded({
 
   return (
     <div className={css.body} data-testid="asset-panel-expanded">
-      <input
-        ref={inputRef}
-        type="search"
-        className={css.search}
-        value={query}
-        placeholder="Search plants, hardscape, lighting…"
-        aria-label="Search asset library"
-        data-testid="kit-library-search"
-        onChange={(e) => onQuery(e.target.value)}
-      />
+      <div className={css.libraryHead}>
+        <input
+          ref={inputRef}
+          type="search"
+          className={css.search}
+          value={query}
+          placeholder="Search plants, hardscape, lighting…"
+          aria-label="Search asset library"
+          data-testid="kit-library-search"
+          onChange={(e) => onQuery(e.target.value)}
+        />
+        {onToggleLibraryPin ? (
+          <button
+            type="button"
+            className={`${css.pinBtn}${libraryPinned ? ` ${css.pinBtnOn}` : ""}`}
+            aria-pressed={libraryPinned}
+            title={
+              libraryPinned
+                ? "Unpin library — collapses after place"
+                : "Pin library open"
+            }
+            data-testid="asset-panel-pin"
+            onClick={onToggleLibraryPin}
+          >
+            Pin
+          </button>
+        ) : null}
+      </div>
 
       <div className={css.filterRow} data-testid="kit-planting-filters">
         <span className={css.filterMeta} data-testid="kit-shade-hours">

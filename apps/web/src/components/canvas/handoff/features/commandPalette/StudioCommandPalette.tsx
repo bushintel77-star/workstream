@@ -2,8 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { BydaAssetKind } from "@workstream/contracts";
-import { BY_TYPE, type StudioItemType } from "../../studioCatalog";
+import {
+  BY_TYPE,
+  type StudioItemType,
+  type StudioMode,
+} from "../../studioCatalog";
 import { BYDA_KIND_LABEL } from "../../geometry/bydaPlanStyles";
+import { rankAssetCommands } from "../assetPanel/assetCommandRank";
 import css from "./commandPalette.module.css";
 
 export type StudioCommand = {
@@ -21,6 +26,10 @@ type Props = {
   onClose: () => void;
   onAskAi: (query: string) => void;
   onArm: (t: StudioItemType) => void;
+  /** Session place recents — feeds deterministic asset ranking. */
+  recentAssetTypes?: StudioItemType[];
+  /** Mode boost for planting / hardscape ranking. */
+  mode?: StudioMode;
   onScanGhosts: () => void;
   /** Propose irrig / conduit / drainage trenches from zones + drains. */
   onAutoTrench?: () => void;
@@ -76,6 +85,8 @@ export function StudioCommandPalette({
   onClose,
   onAskAi,
   onArm,
+  recentAssetTypes = [],
+  mode = "sketch",
   onScanGhosts,
   onAutoTrench,
   onDevelopSite,
@@ -384,21 +395,25 @@ export function StudioCommandPalette({
       },
     ];
 
-    const arm: StudioCommand[] = (
-      Object.keys(BY_TYPE) as StudioItemType[]
-    )
-      .filter((t) => !BY_TYPE[t].existing)
-      .map((t) => ({
-        id: `arm-${t}`,
-        label: `Place ${BY_TYPE[t].name}`,
-        detail: "Arm Add tool — click plan to place",
-        keywords: `${BY_TYPE[t].name} ${BY_TYPE[t].tag} add place`,
-        run: () => onArm(t),
-      }));
+    const rankedTypes = rankAssetCommands({
+      query,
+      recents: recentAssetTypes,
+      mode,
+    });
+    const arm: StudioCommand[] = rankedTypes.map((t) => ({
+      id: `arm-${t}`,
+      label: `Place ${BY_TYPE[t].name}`,
+      detail: "Arm Add tool — click plan to place",
+      keywords: `${BY_TYPE[t].name} ${BY_TYPE[t].tag} add place`,
+      run: () => onArm(t),
+    }));
 
-    return [...base, ...arm];
+    // Workflow commands keep substring match; place rows are pre-ranked.
+    const workflow = base.filter((c) => matches(c, query));
+    return [...workflow, ...arm];
   }, [
     dataOpen,
+    mode,
     onArm,
     onAskAi,
     onAnnotate,
@@ -423,12 +438,10 @@ export function StudioCommandPalette({
     onGardenViewpoint,
     onUndo,
     query,
+    recentAssetTypes,
   ]);
 
-  const filtered = useMemo(
-    () => commands.filter((c) => matches(c, query)),
-    [commands, query],
-  );
+  const filtered = commands;
 
   useEffect(() => {
     if (!open) return;
@@ -449,6 +462,9 @@ export function StudioCommandPalette({
     cmd.run();
     onClose();
   };
+
+  const activeId =
+    filtered[active] != null ? `canvas-command-${filtered[active]!.id}` : undefined;
 
   return (
     <div className={css.backdrop} data-testid="canvas-command-palette" onClick={onClose}>
@@ -478,16 +494,28 @@ export function StudioCommandPalette({
           className={css.input}
           value={query}
           onChange={(e) => onQuery(e.target.value)}
-          placeholder="Ask AI or run a command…"
-          aria-label="Command search"
+          placeholder="Search assets — type to place"
+          aria-label="Search assets"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded="true"
+          aria-controls="canvas-command-listbox"
+          aria-activedescendant={activeId}
         />
-        <ul className={css.list}>
+        <ul
+          id="canvas-command-listbox"
+          className={css.list}
+          role="listbox"
+          aria-label="Command results"
+        >
           {filtered.map((cmd, i) => (
-            <li key={cmd.id}>
+            <li key={cmd.id} role="presentation">
               <button
                 type="button"
+                id={`canvas-command-${cmd.id}`}
                 className={css.row}
                 role="option"
+                aria-selected={i === active}
                 data-testid={`canvas-command-${cmd.id}`}
                 data-active={i === active ? "true" : "false"}
                 onMouseEnter={() => setActive(i)}
@@ -499,7 +527,9 @@ export function StudioCommandPalette({
             </li>
           ))}
           {filtered.length === 0 ? (
-            <li className={css.empty}>No matching commands</li>
+            <li className={css.empty} role="option" aria-disabled="true">
+              No matching commands
+            </li>
           ) : null}
         </ul>
       </div>

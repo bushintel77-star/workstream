@@ -287,6 +287,8 @@ type Props = {
   forcePresentation?: boolean;
   /** Notify parent of interaction so the presentation lens stays in draft. */
   onInteract?: () => void;
+  /** Mobile: long-press empty canvas opens the asset command sheet. */
+  onLongPressCanvas?: () => void;
   /** Hand-lettered annotations (plan geometry / print). */
   annotations?: CanvasAnnotation[];
   selectedAnnotationId?: string | null;
@@ -384,6 +386,7 @@ export function CadPlanBoard({
   onInertToolClick,
   fidelity = "draft",
   onInteract,
+  onLongPressCanvas,
   annotations = [],
   selectedAnnotationId = null,
   onSelectAnnotation,
@@ -392,6 +395,13 @@ export function CadPlanBoard({
   onAnnotatePlace,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const longPressRef = useRef<number | null>(null);
+  const clearLongPress = () => {
+    if (longPressRef.current != null) {
+      window.clearTimeout(longPressRef.current);
+      longPressRef.current = null;
+    }
+  };
   const dragRef = useRef<{
     kind: "item" | "boundary" | "building" | "marquee" | "group";
     id?: string;
@@ -682,6 +692,30 @@ export function CadPlanBoard({
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
     onInteract?.();
+    clearLongPress();
+    if (onLongPressCanvas && e.button === 0 && !tiltLocked) {
+      const startX = e.clientX;
+      const startY = e.clientY;
+      longPressRef.current = window.setTimeout(() => {
+        longPressRef.current = null;
+        onLongPressCanvas();
+      }, 480);
+      const cancel = (ev: PointerEvent) => {
+        if (
+          Math.hypot(ev.clientX - startX, ev.clientY - startY) > 10 ||
+          ev.type === "pointerup" ||
+          ev.type === "pointercancel"
+        ) {
+          clearLongPress();
+          window.removeEventListener("pointermove", cancel);
+          window.removeEventListener("pointerup", cancel);
+          window.removeEventListener("pointercancel", cancel);
+        }
+      };
+      window.addEventListener("pointermove", cancel);
+      window.addEventListener("pointerup", cancel);
+      window.addEventListener("pointercancel", cancel);
+    }
     // Tilt is view-only — never start marquee / place / paint.
     if (tiltLocked) return;
     if (annotatePlace && onAnnotatePlace) {

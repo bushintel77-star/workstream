@@ -51,10 +51,12 @@ import {
 } from "../features/save/saveDesignCanvasClient";
 import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
 import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
-import type {
-  LeftAssetPanel,
-  LeftAssetRestore,
+import {
+  collapseLeftAssetUnlessPinned,
+  type LeftAssetPanel,
+  type LeftAssetRestore,
 } from "../features/assetPanel/leftAssetPanel";
+import { pushRecentAssetType } from "../features/assetPanel/assetCommandRank";
 import { playMaterialFoley } from "../features/ambient/materialFoley";
 import {
   sunDateFromPreset,
@@ -209,6 +211,10 @@ type Ui = {
   leftAssetPanel: LeftAssetPanel;
   /** Restore Expanded filters/scroll when backing out of Placing. */
   leftAssetRestore: LeftAssetRestore | null;
+  /** Pin expanded library so place / canvas interact do not auto-collapse. */
+  leftAssetPinned: boolean;
+  /** Session place recents for command-palette ranking. */
+  recentAssetTypes: StudioItemType[];
   layerOpacity: LayerOpacity;
   isolatedLayer: LayerKey | null;
   /**
@@ -540,6 +546,8 @@ function initialState(opts: {
       rightDataPanel: opts.mode === "survey" ? "checklist" : null,
       leftAssetPanel: null,
       leftAssetRestore: null,
+      leftAssetPinned: false,
+      recentAssetTypes: [],
       layerOpacity: { ...DEFAULT_LAYER_OPACITY },
       isolatedLayer: null,
       setbackOn: false,
@@ -1353,6 +1361,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
         return { snap: next, idn: nextIdn };
       });
       playMaterialFoley(armed);
+      const collapse = collapseLeftAssetUnlessPinned({
+        panel: state.ui.leftAssetPanel,
+        pinned: state.ui.leftAssetPinned,
+      });
       // Paint stays armed (Mac Paint bucket); Add disarms after place.
       setUi({
         armed: painting ? state.ui.armed : null,
@@ -1362,6 +1374,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
         coachOpen: false,
         setbackOn: tip ? true : state.ui.setbackOn,
         councilTip: tip,
+        recentAssetTypes: pushRecentAssetType(
+          state.ui.recentAssetTypes,
+          armed,
+        ),
+        ...(collapse ?? {}),
       });
     },
     [
@@ -1372,12 +1389,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
       state.ui.existDbhM,
       state.ui.foundationCleanse,
       state.ui.ghostReviewOpen,
+      state.ui.leftAssetPanel,
+      state.ui.leftAssetPinned,
       state.ui.paintSwatch,
       state.ui.pathWidthM,
       state.ui.edgeType,
       state.ui.pathFilletM,
       state.ui.plantingSoil,
       state.ui.plantingAspect,
+      state.ui.recentAssetTypes,
       state.ui.setbackOn,
       state.ui.sunMin,
       state.ui.sunDatePreset,
@@ -1399,7 +1419,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       coachOpen: false,
       assistReply: "Running spatial correction…",
     });
-    notes.push("Aerial off · parchment #F7F4EF");
+    notes.push("Aerial off · parchment sheet");
 
     const sieved = sieveVegetationItems(state.doc.items);
     const clamped = clampVegetationElevationScale(sieved.items);
@@ -2628,8 +2648,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
           drawPoly: null,
           drawCursor: null,
           tool: "pan",
-          leftAssetPanel: null,
-          leftAssetRestore: null,
+          ...(state.ui.leftAssetPinned
+            ? { leftAssetPanel: "expanded" as const }
+            : { leftAssetPanel: null, leftAssetRestore: null }),
         });
         return;
       }
@@ -2647,8 +2668,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
         drawCursor: null,
         tool: "select",
         addOpen: false,
-        leftAssetPanel: null,
-        leftAssetRestore: null,
+        recentAssetTypes: pushRecentAssetType(
+          state.ui.recentAssetTypes,
+          material,
+        ),
+        ...(state.ui.leftAssetPinned
+          ? { leftAssetPanel: "expanded" as const }
+          : { leftAssetPanel: null, leftAssetRestore: null }),
         councilTip: corridor.why,
       });
     },
@@ -2658,9 +2684,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
       state.ui.armed,
       state.ui.boardWidthM,
       state.ui.edgeType,
+      state.ui.leftAssetPinned,
       state.ui.locked,
       state.ui.pathFilletM,
       state.ui.pathWidthM,
+      state.ui.recentAssetTypes,
     ],
   );
 
@@ -3953,18 +3981,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
               : state.ui.paintSwatch,
           drawPoly: tool === "trace" ? state.ui.drawPoly : null,
           drawCursor: tool === "trace" ? state.ui.drawCursor : null,
-          // ADD opens the unified library in-place (not a separate Draft kit float).
-          // Keep Placing if already in Path Grammar; don't collapse Expanded when
-          // re-selecting Select while the Fill rail library is open from idle.
+          // Command-first: ADD arms without forcing the library open.
+          // Keep Path Grammar placing; collapse Expanded when leaving draft tools.
           ...(tool === "add"
-            ? state.ui.leftAssetPanel === "placing"
-              ? { rightDataPanel: null }
-              : {
-                  leftAssetPanel: "expanded" as const,
-                  rightDataPanel: null,
-                }
+            ? { rightDataPanel: null }
             : collapseAsset
-              ? { leftAssetPanel: null, leftAssetRestore: null }
+              ? {
+                  leftAssetPanel: null,
+                  leftAssetRestore: null,
+                  leftAssetPinned: false,
+                }
               : {}),
         });
       }
