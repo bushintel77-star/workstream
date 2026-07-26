@@ -174,6 +174,20 @@ import {
   type SessionRejectionHint,
 } from "./sessionRejectionHints";
 
+/** Stable autosave fingerprint for Fit-sheet presentation_pack. */
+export function presentationPackPersistKey(
+  pack: PresentationPack | null | undefined,
+): string {
+  if (!pack) return "";
+  const widgets = (pack.widgets ?? [])
+    .map(
+      (w) =>
+        `${w.id}:${w.type}:${w.slot}:${w.order}:${w.style?.accent ?? ""}:${w.style?.emphasis ?? ""}:${w.text ?? ""}`,
+    )
+    .join("|");
+  return `${pack.theme}:${pack.template_id ?? ""}:${widgets}`;
+}
+
 function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
   return items.map((i) => {
     const d = BY_TYPE[i.t];
@@ -3355,6 +3369,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       strokes: state.doc.strokes,
     });
     if (fixed.remapped) {
+      // Remap is local bookkeeping — do not schedule a second autosave.
+      skipPersist.current = true;
       dispatch({
         type: "silentIds",
         items: fixed.items,
@@ -3384,7 +3400,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           : {}),
       },
     });
-    setUi({ saveStatus: "saving" });
+    setUi({ saveStatus: "saving", saveErrorKind: null });
     try {
       const acceptedTrenches = (state.doc.constructionTrenches ?? []).filter(
         (t) => !t.ghost,
@@ -3408,11 +3424,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
         saveErrorKind: null,
       });
     } catch (err) {
+      const kind = classifySaveError(err);
       setUi({
         saveStatus: "error",
-        saveErrorKind: classifySaveError(err),
+        saveErrorKind: kind,
       });
-      throw new Error("Design canvas save failed");
+      // Rethrow the original error so the autosave retry loop can classify
+      // unreachable vs rejected (a generic wrap always looked like "rejected").
+      throw err instanceof Error ? err : new Error(String(err));
     }
   }, [
     setUi,
@@ -3443,11 +3462,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
       return;
     }
     const backoffMs = [2_000, 8_000, 30_000];
+    let cancelled = false;
     const handle = window.setTimeout(() => {
       const persist = async (attempt: number): Promise<void> => {
+        if (cancelled) return;
         try {
           await saveNow();
         } catch (err) {
+          if (cancelled) return;
           const kind = classifySaveError(err);
           // Stale Server Action / deploy mismatch won't heal on retry — stop.
           if (kind === "stale_client") {
@@ -3455,7 +3477,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
             return;
           }
           if (attempt < backoffMs.length) {
-            setUi({ saveStatus: "retrying" });
+            setUi({ saveStatus: "retrying", saveErrorKind: kind });
             await new Promise((r) =>
               window.setTimeout(r, backoffMs[attempt - 1] ?? 2_000),
             );
@@ -3469,7 +3491,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
       };
       void persist(1);
     }, 1100);
-    return () => window.clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
     // Persist accepted geometry + site frame — ghosts must not rewrite canvas.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -3519,7 +3544,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       )
       .join("/"),
     // Fit-sheet compose — theme / template / widgets must flush with canvas.
-    JSON.stringify(state.doc.presentationPack ?? null),
+    presentationPackPersistKey(state.doc.presentationPack),
     saveRetryNonce,
   ]);
 

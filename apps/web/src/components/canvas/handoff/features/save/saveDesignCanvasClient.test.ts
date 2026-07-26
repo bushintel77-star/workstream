@@ -24,4 +24,17 @@ describe("classifySaveError", () => {
       classifySaveError(new Error("Site plan failed validation")),
     ).toBe("rejected");
   });
+
+  it("does not treat a generic wrap as unreachable (preserve original err)", () => {
+    // Regression: saveNow used to rethrow "Design canvas save failed", which
+    // made every retry look like a server rejection.
+    expect(
+      classifySaveError(new Error("Design canvas save failed")),
+    ).toBe("rejected");
+    expect(
+      classifySaveError(
+        new Error("Couldn't reach the server: ECONNREFUSED"),
+      ),
+    ).toBe("unreachable");
+  });
 });
