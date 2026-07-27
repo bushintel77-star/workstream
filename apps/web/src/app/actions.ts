@@ -41,7 +41,10 @@ import {
   type OutputKind,
   type TaskPriority,
   type TaskStatus,
+  getQuoteDocApi,
+  upsertQuoteDocApi,
 } from "../lib/api";
+import type { UpsertQuoteDocInput } from "@workstream/contracts";
 
 function wrapApiError(err: unknown, fallback: string): Error {
   return new Error(err instanceof Error ? err.message : fallback);
@@ -1060,4 +1063,26 @@ export async function syncQuotePackAction(formData: FormData): Promise<{
   });
   revalidatePath(`/projects/${projectId}/outputs`);
   return result;
+}
+
+/** QuoteDoc — client hooks must use these actions (lib/api is server-only). */
+export async function getQuoteDocAction(projectId: string) {
+  try {
+    return await getQuoteDocApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not load quote");
+  }
+}
+
+export async function upsertQuoteDocAction(
+  projectId: string,
+  body: UpsertQuoteDocInput,
+) {
+  try {
+    const saved = await upsertQuoteDocApi(projectId, body);
+    revalidatePath(`/projects/${projectId}`);
+    return saved;
+  } catch (err) {
+    throw wrapApiError(err, "Could not save quote");
+  }
 }

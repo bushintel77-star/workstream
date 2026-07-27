@@ -16,9 +16,9 @@ import {
   type StudioEstimateReport,
 } from "@workstream/domain";
 import {
-  getQuoteDocApi,
-  upsertQuoteDocApi,
-} from "../../../../../lib/api";
+  getQuoteDocAction,
+  upsertQuoteDocAction,
+} from "../../../../../app/actions";
 
 type Args = {
   projectId: string | null | undefined;
@@ -41,7 +41,7 @@ export function useQuoteDoc({ projectId, estimate }: Args) {
     let cancelled = false;
     void (async () => {
       try {
-        const remote = await getQuoteDocApi(projectId);
+        const remote = await getQuoteDocAction(projectId);
         if (cancelled) return;
         if (remote) setDoc(remote);
         else setDoc(emptyQuoteDoc(projectId));
@@ -66,7 +66,7 @@ export function useQuoteDoc({ projectId, estimate }: Args) {
       if (!projectId) return;
       setSaving(true);
       try {
-        const saved = await upsertQuoteDocApi(projectId, {
+        const saved = await upsertQuoteDocAction(projectId, {
           project_id: projectId,
           design_id: next.design_id,
           overrides: next.overrides,
