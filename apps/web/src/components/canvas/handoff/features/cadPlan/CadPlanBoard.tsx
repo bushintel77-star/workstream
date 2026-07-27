@@ -6,11 +6,13 @@ import {
   declutterOutsideDims,
   deleteVertex,
   edgeSegments,
+  filterDimsForAnnotationLod,
   insertVertexAfter,
   pointInPolygon,
   polygonAreaM2,
   projectPointOnSegment,
   readableUpDeg,
+  resolveAnnotationLod,
   GRID_INK_STROKE,
   GRID_STEP_PCT,
   ptsAttr,
@@ -551,12 +553,20 @@ export function CadPlanBoard({
     !isTiltActive(tiltDeg) &&
     (mode === "survey" || mode === "cad");
   /**
+   * Semantic zoom (§2): low = lot only; mid = principal dims + context
+   * areas; high = full edges + species + RL. Pure over planZoom.
+   */
+  const annotationLod = resolveAnnotationLod(planZoom);
+  /**
    * Existing dwelling shown as a plain envelope. Label its centroid — but only
    * when the richer "Existing dwelling · <area>" auto label isn't already
    * there (survey/CAD), otherwise the two labels stack and collide.
    */
   const buildingAreaLabelShown =
-    showAutoAreaLabels && buildingCentroid != null && buildingAreaLabelM2 > 0;
+    showAutoAreaLabels &&
+    annotationLod.contextAreas &&
+    buildingCentroid != null &&
+    buildingAreaLabelM2 > 0;
   const showHouseEnvelopeLabel =
     buildingCentroid != null &&
     !sketchPassthrough &&
@@ -642,16 +652,20 @@ export function CadPlanBoard({
     planFocusX,
     planFocusY,
   });
-  /** Dense fence-jog labels: hide overlaps; reappear as zoom increases. */
+  /**
+   * Semantic zoom (§2): declutter still ranks by length; LOD then caps mid
+   * to principal edges and hides dims entirely at overview zoom.
+   */
   const outsideDims = (() => {
     if (outsideDimsRaw.length === 0) return [];
     const z = Math.max(planZoom, 0.35);
     const halfWPct = (58 / Math.max(layout.w, 1) / z) * 100;
     const halfHPct = (12 / Math.max(layout.h, 1) / z) * 100;
-    return declutterOutsideDims(outsideDimsRaw, {
+    const decluttered = declutterOutsideDims(outsideDimsRaw, {
       halfWPct: Math.min(6.5, Math.max(1.2, halfWPct)),
       halfHPct: Math.min(2.2, Math.max(0.45, halfHPct)),
     });
+    return filterDimsForAnnotationLod(decluttered, annotationLod);
   })();
   const tiltLocked = isTiltActive(tiltDeg);
   /** Screen ppm — for HUD / label placement outside the camera scale. */
@@ -680,17 +694,22 @@ export function CadPlanBoard({
     Math.abs(outdoorAreaLabelM2 - areaLabelM2) > 0.5;
   const schedulePlacements = placeScheduleCards(
     [
-      ...(showAutoAreaLabels && boundary.length >= 3
+      ...(showAutoAreaLabels &&
+      annotationLod.lotArea &&
+      boundary.length >= 3
         ? [{ id: "title", x: titleProj.x, y: titleProj.y }]
         : []),
       ...(showAutoAreaLabels &&
+      annotationLod.contextAreas &&
       buildingCentroid &&
       building.length >= 3 &&
       buildingAreaLabelM2 > 0 &&
       buildingProj
         ? [{ id: "dwelling", x: buildingProj.x, y: buildingProj.y }]
         : []),
-      ...(showAutoAreaLabels && showOutdoorCard
+      ...(showAutoAreaLabels &&
+      annotationLod.contextAreas &&
+      showOutdoorCard
         ? [{ id: "outdoor", x: titleProj.x, y: titleProj.y }]
         : []),
     ],
@@ -1067,13 +1086,20 @@ export function CadPlanBoard({
 
   const presentationOn = fidelity === "presentation";
   const speciesLabels = useMemo(() => {
-    if (!presentationOn || tiltLocked) return [];
+    if (!presentationOn || tiltLocked || !annotationLod.species) return [];
     const raw = withScreenPx(buildSpeciesLabelCandidates(items), ppm);
     return placeSpeciesLabels(raw, (xPct, yPct) => {
       const o = boardPctToClientOffset({ x: xPct, y: yPct }, cam);
       return { x: o.x, y: o.y };
     });
-  }, [presentationOn, tiltLocked, items, ppm, cam]);
+  }, [
+    presentationOn,
+    tiltLocked,
+    annotationLod.species,
+    items,
+    ppm,
+    cam,
+  ]);
 
   const dwellingSoftShadow = useMemo(
     () =>
@@ -1094,6 +1120,7 @@ export function CadPlanBoard({
       data-sun-azimuth={sunAzimuthDeg.toFixed(1)}
       data-cad-plan
       data-plan-geometry="1"
+      data-annotation-lod={annotationLod.tier}
       data-mode={mode}
       data-fidelity={fidelity}
       data-cursor={
@@ -1451,7 +1478,7 @@ export function CadPlanBoard({
           <g
             key={`odim${d.key}`}
             data-testid="outside-dim"
-            opacity={boundaryVisual.opacity}
+            opacity={boundaryVisual.opacity * annotationLod.opacity.dims}
           >
             <line
               x1={d.extA.x1}
@@ -1680,12 +1707,13 @@ export function CadPlanBoard({
         return (
           <div
             key={`olab${d.key}`}
-            className={`${css.dimMark} ${css.fitOutsideDim}${cadTitleMode ? ` ${css.cadDimMark}` : ""}`}
+            className={`${css.dimMark} ${css.fitOutsideDim}${cadTitleMode ? ` ${css.cadDimMark}` : ""} ${css.lodFade}`}
             style={{
               left: `${d.labelX}%`,
               top: `${d.labelY}%`,
               /* Readable-up: label text never renders mirrored/upside-down. */
               transform: `translate(-50%, -50%) rotate(${readableUpDeg(d.rotDeg)}deg)`,
+              opacity: annotationLod.opacity.dims,
             }}
             data-testid={
               frameOn
@@ -1724,7 +1752,9 @@ export function CadPlanBoard({
         );
       })}
 
-      {showAutoAreaLabels && boundary.length >= 3 ? (
+      {showAutoAreaLabels &&
+      annotationLod.lotArea &&
+      boundary.length >= 3 ? (
         <CameraChrome
           place={{
             kind: "project",
@@ -1734,9 +1764,10 @@ export function CadPlanBoard({
           }}
         >
           <div
-            className={css.cadAreaLabel}
+            className={`${css.cadAreaLabel} ${css.lodFade}`}
             data-testid="cad-title-area"
             data-camera-chrome-card="1"
+            style={{ opacity: annotationLod.opacity.lotArea }}
             title={[
               titleBoundaryLocked ? "Title locked" : "Title unlocked",
               titleMeta?.parcelRef,
@@ -1754,6 +1785,7 @@ export function CadPlanBoard({
       ) : null}
 
       {showAutoAreaLabels &&
+      annotationLod.contextAreas &&
       buildingCentroid &&
       building.length >= 3 &&
       buildingAreaLabelM2 > 0 ? (
@@ -1766,9 +1798,10 @@ export function CadPlanBoard({
           }}
         >
           <div
-            className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
+            className={`${css.cadAreaLabel} ${css.cadAreaContext} ${css.lodFade}`}
             data-testid="cad-building-area"
             data-camera-chrome-card="1"
+            style={{ opacity: annotationLod.opacity.contextAreas }}
             title={`Existing dwelling · ${formatCadAreaM2(buildingAreaLabelM2)}`}
           >
             <span className={css.cadAreaKey}>Dwell</span>
@@ -1779,7 +1812,9 @@ export function CadPlanBoard({
         </CameraChrome>
       ) : null}
 
-      {showAutoAreaLabels && showOutdoorCard ? (
+      {showAutoAreaLabels &&
+      annotationLod.contextAreas &&
+      showOutdoorCard ? (
         <CameraChrome
           place={{
             kind: "project",
@@ -1789,9 +1824,10 @@ export function CadPlanBoard({
           }}
         >
           <div
-            className={`${css.cadAreaLabel} ${css.cadAreaContext}`}
+            className={`${css.cadAreaLabel} ${css.cadAreaContext} ${css.lodFade}`}
             data-testid="cad-outdoor-area"
             data-camera-chrome-card="1"
+            style={{ opacity: annotationLod.opacity.contextAreas }}
             title={`Outdoor · ${formatCadAreaM2(outdoorAreaLabelM2)}`}
           >
             <span className={css.cadAreaKey}>Out</span>
@@ -2244,13 +2280,14 @@ export function CadPlanBoard({
         return (
           <div
             key={lab.id}
-            className={`${renderCss.speciesLabel}${darkOn && !frameOn ? ` ${renderCss.speciesLabelNight}` : ""}`}
+            className={`${renderCss.speciesLabel}${darkOn && !frameOn ? ` ${renderCss.speciesLabelNight}` : ""} ${css.lodFade}`}
             data-testid="species-label"
             data-label-id={lab.id}
             data-plan-geometry="1"
             style={{
               left: `${lab.xPct}%`,
               top: `${lab.yPct + offsetPct}%`,
+              opacity: annotationLod.opacity.species,
             }}
             aria-hidden
           >

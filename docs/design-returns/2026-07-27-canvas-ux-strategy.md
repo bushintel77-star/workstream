@@ -32,10 +32,11 @@ Paper: geometric sans for UI + serif for annotation; **labels must fade/aggregat
 cross-fade in on zoom-in**, avoiding the "chaotic overlapping text common in legacy GIS/CAD".
 
 - **HAVE:** IBM Plex Sans / Serif / Mono, mono for all numerics.
-- **GAP — semantic zoom for labels.** This is not cosmetic: our own CAD screenshots show
-  dimension strings and edge labels overlapping into illegibility at wide zoom. Implement
-  level-of-detail on annotation: at low zoom show only boundary + lot area; mid zoom add principal
-  dims; high zoom add every edge, species label, RL. Aggregate rather than overlap.
+- **HAVE — semantic zoom for labels.** `resolveAnnotationLod(planZoom)` in
+  `geometry/annotationLod.ts`: low zoom keeps boundary + lot area; mid adds
+  principal (longest) dims + dwelling/outdoor chips; high adds every decluttered
+  edge, species labels, and RL. Soft opacity ramps cross-fade around 0.85 / 2.2
+  (aligned with precision CAD skin).
 
 ---
 
@@ -44,7 +45,7 @@ cross-fade in on zoom-in**, avoiding the "chaotic overlapping text common in leg
 | Feature | Status / decision |
 | --- | --- |
 | Infinite, borderless canvas | **HAVE** — board is now full-bleed, continuous (slab + neighbour squares removed) |
-| Semantic zoom (detail changes with scale) | **GAP** — see §2 |
+| Semantic zoom (detail changes with scale) | **HAVE** — annotation LOD §2 (`annotationLod.ts`) |
 | Minimap / overview wayfinding | **HAVE** — `StudioMinimap` |
 | Artboards as viewports (borderless until active) | **GAP** — would suit multi-sheet sets (plan + sections + schedule laid out spatially) |
 | **Vector-raster hybrid** (pressure/tilt/velocity strokes that stay editable vectors) | **PARTIAL / significant** — we have pen + stroke width tiers; true pressure-sensitive natural media (Concepts/Morpholio-class) is a large engine lift. Recommend: hand-drawn *render pen* first (Rough.js, already spec'd) since it delivers the aesthetic without a new input engine |

@@ -6,6 +6,7 @@ import type { LayerKey, LayerOpacity } from "../../state/studioTypes";
 import { resolveLayerVisual } from "../../state/layerIsolate";
 import type { PctPoint } from "../../geometry";
 import { nearSurveyRingStart } from "../../geometry/surveyCorridor";
+import { resolveAnnotationLod } from "../../geometry/annotationLod";
 import type { StudioTool } from "../../studioCatalog";
 import { buildSpotLevelFall } from "./spotLevelFall";
 import { CameraChrome } from "../../CameraChrome";
@@ -31,6 +32,8 @@ type Props = {
   /** Corridors are already rendered by CadPlanBoard outside Survey mode. */
   showCorridors?: boolean;
   scaleM: number;
+  /** Live board zoom — gates RL / fall text via annotation LOD. */
+  planZoom?: number;
   darkOn: boolean;
   layerOpacity: LayerOpacity;
   isolatedLayer?: LayerKey | null;
@@ -57,6 +60,7 @@ export function SurveyAnnotationLayer({
   easements = [],
   showCorridors = true,
   scaleM,
+  planZoom = 1,
   darkOn,
   layerOpacity,
   isolatedLayer = null,
@@ -69,6 +73,8 @@ export function SurveyAnnotationLayer({
   const rootRef = useRef<HTMLDivElement>(null);
   const [drawService, setDrawService] = useState<PctPoint[] | null>(null);
   const [calibPts, setCalibPts] = useState<PctPoint[]>([]);
+  const annotationLod = resolveAnnotationLod(planZoom);
+  const rlLabelOpacity = annotationLod.opacity.rl;
 
   useEffect(() => {
     if (!active) {
@@ -394,34 +400,38 @@ export function SurveyAnnotationLayer({
         ) : null,
       ) : null}
 
-      {levels.map((lv, i) => (
-        <span
-          key={`lvlab${i}`}
-          className={css.levelLabel}
-          style={{
-            left: `${lv.x}%`,
-            top: `${lv.y}%`,
-            opacity: surveyOp,
-            color: ink,
-          }}
-        >
-          P{i + 1} · RL {lv.z.toFixed(2)} m
-        </span>
-      ))}
+      {rlLabelOpacity > 0.02
+        ? levels.map((lv, i) => (
+            <span
+              key={`lvlab${i}`}
+              className={css.levelLabel}
+              style={{
+                left: `${lv.x}%`,
+                top: `${lv.y}%`,
+                opacity: surveyOp * rlLabelOpacity,
+                color: ink,
+              }}
+            >
+              P{i + 1} · RL {lv.z.toFixed(2)} m
+            </span>
+          ))
+        : null}
 
-      {falls.map((fall, i) => (
-          <span
-            key={`falllab${i}`}
-            className={css.fallLabel}
-            style={{
-              left: `${(fall.high.x + fall.low.x) / 2}%`,
-              top: `${(fall.high.y + fall.low.y) / 2}%`,
-              opacity: surveyOp,
-            }}
-          >
-            {fall.flat ? "LEVEL" : `↓ ${fall.fallPct}%`} · {fall.deltaMm} mm
-          </span>
-        ))}
+      {rlLabelOpacity > 0.02
+        ? falls.map((fall, i) => (
+            <span
+              key={`falllab${i}`}
+              className={css.fallLabel}
+              style={{
+                left: `${(fall.high.x + fall.low.x) / 2}%`,
+                top: `${(fall.high.y + fall.low.y) / 2}%`,
+                opacity: surveyOp * rlLabelOpacity,
+              }}
+            >
+              {fall.flat ? "LEVEL" : `↓ ${fall.fallPct}%`} · {fall.deltaMm} mm
+            </span>
+          ))
+        : null}
 
       {tool === "service" && drawService ? (
         <CameraChrome>

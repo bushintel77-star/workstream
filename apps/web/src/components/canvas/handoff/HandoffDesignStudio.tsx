@@ -3644,6 +3644,7 @@ export function HandoffDesignStudio({
                   easements={studio.easements}
                   showCorridors={ui.mode === "survey"}
                   scaleM={scaleM}
+                  planZoom={planZoom}
                   darkOn={darkLens}
                   layerOpacity={ui.layerOpacity}
                   isolatedLayer={ui.isolatedLayer}

@@ -267,6 +267,11 @@
   filter: grayscale(0.35);
 }
 
+/* Semantic zoom cross-fade for dims / area chips / species (§2). */
+.lodFade {
+  transition: opacity 180ms ease;
+}
+
 /* On-plan schedule callouts — single-line meta chips (not frost cards). */
 .cadAreaLabel {
   position: absolute;

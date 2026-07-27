@@ -30,6 +30,7 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
   transform: translate(6px, -50%);
+  transition: opacity 180ms ease;
 }
 
 .serviceLabel {
