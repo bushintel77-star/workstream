@@ -1325,7 +1325,10 @@ export async function runStudioAssist(args: {
   site: StudioPromptSite;
   canvasElementCount: number;
   message: string;
-  sketch_brief?: string | null;
+  /** Whole-board snapshot (BoardContext v1) formatted for the prompt. */
+  board_context?: string | null;
+  /** Freehand markup count — layout notes the board context does not model. */
+  stroke_count?: number;
   symbol_ids: string[];
   tier1: boolean;
 }): Promise<{ reply: string; suggestions: GhostPlacementSuggestion[] }> {
@@ -1352,7 +1355,10 @@ export async function runStudioAssist(args: {
   );
 
   const userText = [
-    args.sketch_brief ? `Current sketch:\n${args.sketch_brief}\n` : "",
+    args.board_context ? `${args.board_context}\n` : "",
+    args.stroke_count
+      ? `Freehand markup: ${args.stroke_count} stroke(s) — treat as layout notes.\n`
+      : "",
     `Operator request:\n${args.message}`,
     "",
     `Allowed symbol_id values: ${args.symbol_ids.slice(0, 80).join(", ")}`,

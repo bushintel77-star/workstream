@@ -1,0 +1,132 @@
+/* Board findings — cross-artefact advisories. Right-of-canvas so they do not
+   collide with the left-anchored preemptive horizon stack. Mobile-first. */
+
+.stack {
+  position: absolute;
+  right: calc(var(--ws-safe-right, 16px) + 8px);
+  top: calc(var(--ws-safe-top, 48px) + 52px);
+  z-index: 17;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(300px, calc(100% - 96px));
+  pointer-events: none;
+}
+
+.stack > * {
+  pointer-events: auto;
+}
+
+.card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
+  box-shadow: 0 8px 24px var(--hc-line-soft);
+  font-family: var(--font-body);
+  color: var(--hc-ink);
+  animation: bfIn 180ms ease both;
+}
+
+.info {
+  border-color: var(--hc-line-soft);
+}
+
+.watch {
+  border-color: color-mix(in srgb, var(--hc-warning) 45%, transparent);
+  background: rgba(255, 248, 230, 0.95);
+}
+
+.critical {
+  border-color: rgba(194, 69, 95, 0.45);
+  background: rgba(255, 236, 240, 0.96);
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.detail {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--hc-ink-muted);
+}
+
+.cite {
+  margin: 6px 0 0;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--hc-ink-faint);
+}
+
+.citeLabel {
+  font-family: "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.basis {
+  font-weight: 650;
+  color: var(--hc-ink-muted);
+}
+
+/* Weight the evidence visually: survey fact reads solid, estimate reads soft. */
+.basis[data-basis="vicmap"] {
+  color: var(--hc-ink);
+}
+
+.basis[data-basis="derived"],
+.basis[data-basis="seed"] {
+  font-style: italic;
+  color: var(--hc-ink-faint);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dismiss {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 650;
+  cursor: pointer;
+  border: 1px solid var(--hc-line);
+  background: transparent;
+  color: var(--hc-ink-muted);
+}
+
+@keyframes bfIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 900px) {
+  .stack {
+    width: 320px;
+  }
+}

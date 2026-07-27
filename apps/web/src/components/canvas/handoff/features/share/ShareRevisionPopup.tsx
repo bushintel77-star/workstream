@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { ShareRevision } from "@workstream/contracts";
+import type { BoardDisclaimer, ShareRevision } from "@workstream/contracts";
 import { shareSnapshotFingerprint } from "@workstream/contracts";
 import {
   createShareRevisionAction,
   listShareRevisionsAction,
 } from "../../../../../app/actions";
 import { useToast } from "../../../../ToastHost";
+import { ExportLiabilityPrompt } from "./ExportLiabilityPrompt";
+import { SafetyWaiverConfirm } from "./SafetyWaiverConfirm";
+import { resolveShareLiabilityGate } from "./shareLiabilityGate";
 import css from "./shareRevisionPopup.module.css";
 
 type QuoteLine = {
@@ -27,6 +30,8 @@ type Props = {
   totalInclGst: number;
   /** Optional canvas fingerprint inputs — omit canvas when not loaded. */
   canvasFingerprint?: unknown;
+  /** Notices this board's content implies — prompted before the set is issued. */
+  disclaimers?: BoardDisclaimer[];
   onRevisionChange?: (latest: ShareRevision | null) => void;
 };
 
@@ -77,10 +82,13 @@ export function ShareRevisionPopup({
   quoteLines,
   totalInclGst,
   canvasFingerprint,
+  disclaimers = [],
   onRevisionChange,
 }: Props) {
   const toast = useToast();
   const [pending, start] = useTransition();
+  const [acknowledged, setAcknowledged] = useState<Record<string, boolean>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [revisions, setRevisions] = useState<ShareRevision[]>([]);
   const [shareBaseUrl, setShareBaseUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -161,11 +169,13 @@ export function ShareRevisionPopup({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      // The safety confirm owns Escape while it is up — cancelling the modal
+      // must not also tear down the popup behind it.
+      if (e.key === "Escape" && !confirmOpen) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, confirmOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -184,9 +194,58 @@ export function ShareRevisionPopup({
     return () => window.removeEventListener("pointerdown", onPointer);
   }, [open, onClose]);
 
+  const submitShare = () => {
+    setError(null);
+    start(async () => {
+      try {
+        const result = await createShareRevisionAction(
+          projectId,
+          quoteLines,
+          totalInclGst,
+        );
+        if (!result.ok) {
+          setError(result.error);
+          setRevisions((prev) => {
+            const rest = prev.filter((r) => r.id !== result.revision.id);
+            return [result.revision, ...rest];
+          });
+          return;
+        }
+        setRevisions((prev) => {
+          const marked = prev.map((r) =>
+            r.status === "shared"
+              ? { ...r, status: "superseded" as const }
+              : r,
+          );
+          return [
+            result.revision,
+            ...marked.filter((r) => r.id !== result.revision.id),
+          ];
+        });
+        onRevisionChange?.(result.revision);
+        await navigator.clipboard?.writeText(result.share_url);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2200);
+        toast.show(
+          `Rev ${result.revision.revision} shared — link copied`,
+          "success",
+        );
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not create share");
+      }
+    });
+  };
+
   if (!open) return null;
 
   const active = currentOpen ?? latest;
+  /*
+   * Inferred notices warn and relabel but never block — the tool can be wrong
+   * about geometry, and refusing to issue on a bad inference costs more than it
+   * saves. The required safety waiver is the exception and hard-confirms.
+   */
+  const gate = resolveShareLiabilityGate(disclaimers, acknowledged);
+  const outstanding = gate.softOutstanding;
 
   return (
     <div
@@ -235,6 +294,14 @@ export function ShareRevisionPopup({
         </div>
       ) : null}
 
+      <ExportLiabilityPrompt
+        disclaimers={disclaimers}
+        accepted={acknowledged}
+        onToggle={(id, next) =>
+          setAcknowledged((prev) => ({ ...prev, [id]: next }))
+        }
+      />
+
       <button
         type="button"
         className={css.secondary}
@@ -248,50 +315,28 @@ export function ShareRevisionPopup({
               : "Share a new revision"
         }
         onClick={() => {
-          setError(null);
-          start(async () => {
-            try {
-              const result = await createShareRevisionAction(
-                projectId,
-                quoteLines,
-                totalInclGst,
-              );
-              if (!result.ok) {
-                setError(result.error);
-                setRevisions((prev) => {
-                  const rest = prev.filter((r) => r.id !== result.revision.id);
-                  return [result.revision, ...rest];
-                });
-                return;
-              }
-              setRevisions((prev) => {
-                const marked = prev.map((r) =>
-                  r.status === "shared"
-                    ? { ...r, status: "superseded" as const }
-                    : r,
-                );
-                return [
-                  result.revision,
-                  ...marked.filter((r) => r.id !== result.revision.id),
-                ];
-              });
-              onRevisionChange?.(result.revision);
-              await navigator.clipboard?.writeText(result.share_url);
-              setCopied(true);
-              window.setTimeout(() => setCopied(false), 2200);
-              toast.show(
-                `Rev ${result.revision.revision} shared — link copied`,
-                "success",
-              );            } catch (e) {
-              setError(
-                e instanceof Error ? e.message : "Could not create share",
-              );
-            }
-          });
+          // A required safety waiver is answered before the set moves.
+          if (gate.hardConfirm) {
+            setConfirmOpen(true);
+            return;
+          }
+          submitShare();
         }}
       >
-        {pending ? "Sharing…" : "Share new revision"}
+        {pending
+          ? "Sharing…"
+          : gate.hardConfirm
+            ? "Review safety notice"
+            : outstanding > 0
+              ? "Share without acknowledging"
+              : "Share new revision"}
       </button>
+      {outstanding > 0 ? (
+        <p className={css.hint} data-testid="share-liability-outstanding">
+          {outstanding} required notice{outstanding === 1 ? "" : "s"} still
+          unacknowledged — this set would go out without {outstanding === 1 ? "it" : "them"}.
+        </p>
+      ) : null}
       {unchanged ? (
         <p className={css.hint} data-testid="share-unchanged-hint">
           Nothing changed since the last share — edit the drawing or quote
@@ -304,6 +349,21 @@ export function ShareRevisionPopup({
       <button type="button" className={css.ghost} onClick={onClose}>
         Close
       </button>
+
+      {confirmOpen && (
+        <SafetyWaiverConfirm
+          disclaimer={gate.hardConfirm}
+          onConfirm={() => {
+            setConfirmOpen(false);
+            setAcknowledged((prev) => ({
+              ...prev,
+              [gate.hardConfirm!.id]: true,
+            }));
+            submitShare();
+          }}
+          onCancel={() => setConfirmOpen(false)}
+        />
+      )}
     </div>
   );
 }

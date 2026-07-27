@@ -279,6 +279,39 @@ export async function designAssistAction(projectId: string, message: string) {
   }
 }
 
+/**
+ * Cross-artefact board findings. Server action so the studio hook never imports
+ * lib/api (Clerk / async_hooks breaks the web Docker build — ref f0239bc).
+ */
+export async function designFindingsAction(projectId: string) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot load board findings");
+  }
+  const { designFindingsApi } = await import("../lib/api");
+  try {
+    return await designFindingsApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Board findings failed");
+  }
+}
+
+/**
+ * Sustainability read-out + export disclaimers over the same board. Server
+ * action for the same reason as the findings — the studio hook must never
+ * import lib/api (ref f0239bc).
+ */
+export async function designBoardReportAction(projectId: string) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot load the board report");
+  }
+  const { designBoardReportApi } = await import("../lib/api");
+  try {
+    return await designBoardReportApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Board report failed");
+  }
+}
+
 /** Open-Meteo forecast for the Env boundary rail weather icons. */
 export async function getWeatherAction(projectId: string) {
   if (!projectId.trim()) return null;

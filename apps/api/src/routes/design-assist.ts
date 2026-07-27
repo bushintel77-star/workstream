@@ -4,12 +4,13 @@ import {
   DesignAssistResponseSchema,
 } from "@workstream/contracts";
 import {
-  buildAssistSiteIntel,
-  formatSketchBriefForAi,
+  buildBoardFindings,
+  formatBoardContextForAi,
+  formatBoardFindingsForAi,
   isTier1WrightsTerrace,
 } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
-import { groundSpanFromSurvey } from "../lib/cad-ground";
+import { loadProjectBoard } from "../lib/board-context";
 import { runStudioAssist } from "../lib/claude";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
@@ -33,34 +34,39 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const survey = await fastify.store.getSurvey(ownerId, projectId);
-      const canvas = await fastify.store.getDesignCanvas(ownerId, projectId);
-      const symbols = await fastify.store.listCatalogSymbols(ownerId);
-      const symbolIds = symbols.map((s) => s.id);
+      /*
+       * BoardContext v1 — the whole board at full depth (time, level, system,
+       * cost). Replaces the flat sketch brief on this route, which could only
+       * express label/category/count/position/SKU. The design pipeline still
+       * uses the flat brief (see lib/design-job.ts).
+       */
+      const board = await loadProjectBoard(fastify.store, ownerId, project);
+      const { context, canvas, span, intel } = board;
 
-      const span = survey ? groundSpanFromSurvey(survey) : null;
-      const sketchBrief = formatSketchBriefForAi(
-        canvas,
-        symbols,
-        survey ?? undefined,
-        project.address,
+      /*
+       * Cross-artefact findings are computed deterministically and handed to the
+       * model already cited, so consequence comes from the board rather than
+       * from the model's imagination. They propose only — accept stays human.
+       */
+      const findings = buildBoardFindings(context);
+      const boardBrief = [
+        formatBoardContextForAi(context),
+        formatBoardFindingsForAi(findings),
+      ].join("\n\n");
+      // Payload telemetry — context growth should be visible, not a surprise.
+      request.log.info(
+        {
+          project_id: projectId,
+          board_context_bytes: Buffer.byteLength(boardBrief, "utf8"),
+          planting: context.planting.length,
+          surfaces: context.surfaces.length,
+          quote_lines: context.commercial.quote_lines.length,
+          findings: findings.length,
+          findings_critical: findings.filter((f) => f.severity === "critical")
+            .length,
+        },
+        "design assist board context",
       );
-      const frame = canvas?.site_frame;
-      const easementCount =
-        frame?.easements?.filter((r) => r.length >= 3).length ?? 0;
-      const serviceCount = frame?.services?.length ?? 0;
-      const outdoorM2 =
-        survey?.garden_area_m2 ??
-        survey?.lot_area_m2 ??
-        (span ? span.width_m * span.height_m * 0.55 : 180);
-      const intel = buildAssistSiteIntel({
-        outdoorM2,
-        placements: canvas?.placements ?? [],
-        boundary: frame?.boundary,
-        lat: project.lat ?? undefined,
-        lng: project.lng ?? undefined,
-        scaleM: span?.width_m,
-      });
 
       const result = await runStudioAssist({
         project: { name: project.address, address: project.address },
@@ -69,8 +75,8 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
           height_m: span?.height_m,
           lat: project.lat ?? undefined,
           lng: project.lng ?? undefined,
-          easement_count: easementCount,
-          service_count: serviceCount,
+          easement_count: board.easementCount,
+          service_count: board.serviceCount,
           scale_m: span?.width_m,
           sun_hours: intel.sun_hours,
           compliance_summary: intel.compliance_summary,
@@ -78,8 +84,9 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
         },
         canvasElementCount: canvas?.placements.length ?? 0,
         message: parsedBody.data.message,
-        sketch_brief: sketchBrief,
-        symbol_ids: symbolIds,
+        board_context: boardBrief,
+        stroke_count: canvas?.strokes.length ?? 0,
+        symbol_ids: board.symbols.map((s) => s.id),
         tier1: isTier1WrightsTerrace(project.address),
       });
 

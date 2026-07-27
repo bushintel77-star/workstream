@@ -154,6 +154,7 @@ import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector"
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
 import { TrenchOverlay } from "./features/trenches/TrenchOverlay";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
+import { BoardFindings } from "./features/horizon/BoardFindings";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
 import { ShareRevisionPopup } from "./features/share/ShareRevisionPopup";
@@ -235,6 +236,8 @@ import {
 } from "../../../app/actions";
 import { useToast } from "../../ToastHost";
 import { suggestedMode, unlockedModes } from "../../../lib/canvas-mode";
+import { useBoardFindings } from "../../../lib/use-board-findings";
+import { useBoardReport } from "../../../lib/use-board-report";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -328,6 +331,24 @@ export function HandoffDesignStudio({
     siteSchedule,
     acceptHorizonCard,
   } = studio;
+  /*
+   * Cross-artefact findings over the *saved* board — refetched on each durable
+   * save (saveRevision). Dismissals share the horizon `mitigated` map; finding
+   * ids are `bf-`-namespaced so they never collide with `hz-` horizon cards.
+   */
+  const { findings: boardFindings } = useBoardFindings(
+    projectId,
+    ui.saveRevision,
+  );
+  const openBoardFindings = boardFindings.filter((f) => !ui.mitigated[f.id]);
+  /*
+   * Same saved board, same refetch key: the sustainability read-out (calm
+   * sidecar metric in the utility hub) and the export disclaimers prompted on
+   * the share popup. Both need survey area, irrigation geometry in metres and
+   * the planning flags, none of which the studio holds client-side.
+   */
+  const { sustainability: boardSustainability, disclaimers: boardDisclaimers } =
+    useBoardReport(projectId, ui.saveRevision);
   const { fidelity, markInteracting } = usePresentationLens({
     forcePresentation: ui.clientView || ui.frameOn,
   });
@@ -2543,8 +2564,8 @@ export function HandoffDesignStudio({
 
   const vicGovChipRow =
     planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
-      <div className={css.headerVicGov} data-testid="header-vic-gov-status">
-        <StickyMetaStack
+      <StickyMetaStack
+          placement="dock"
           projectId={projectId}
           laneBusy={rightLaneBusy}
           activePanel={
@@ -2609,7 +2630,6 @@ export function HandoffDesignStudio({
             }
           }}
         />
-      </div>
     ) : null;
 
   return (
@@ -2698,8 +2718,6 @@ export function HandoffDesignStudio({
           })}
         </nav>
 
-        {vicGovChipRow}
-
         <div className={css.spacer} />
 
         {!ui.focusOn && !ui.clientView ? (
@@ -2752,6 +2770,23 @@ export function HandoffDesignStudio({
                 stroke="currentColor"
                 strokeWidth="1.25"
                 strokeLinecap="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className={`${css.iconBtn}${isTiltActive(ui.tiltDeg) ? ` ${css.iconBtnActive}` : ""}`}
+            data-testid="tilt-view-top"
+            aria-label={isTiltActive(ui.tiltDeg) ? "Flatten to 2D" : "Tilt to 3D"}
+            title="Tilt — 3D massing view"
+            onClick={runTiltView}
+          >
+            <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path
+                d="M8 2.6 14 12.4H2z"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinejoin="round"
               />
             </svg>
           </button>
@@ -2888,6 +2923,7 @@ export function HandoffDesignStudio({
                 address={displayAddress}
                 quoteLines={quoteShareLines}
                 totalInclGst={quoteShareTotalInclGst}
+                disclaimers={boardDisclaimers}
                 onRevisionChange={setLatestShare}
               />
             </div>
@@ -3012,6 +3048,7 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
+        {vicGovChipRow}
         {ui.mode === "elevation" ? (
           <ElevationBoard
             look={ui.elevLook}
@@ -4148,6 +4185,7 @@ export function HandoffDesignStudio({
                 projectId={projectId}
                 projectAddress={projectAddress}
                 complianceReport={compliance}
+                sustainability={boardSustainability}
                 onClose={() =>
                   studio.setUi({ rightDataPanel: null, utilityPanel: null })
                 }
@@ -4234,6 +4272,17 @@ export function HandoffDesignStudio({
           <PreemptiveHorizon
             cards={actionHorizon}
             onAccept={acceptHorizonCard}
+            onDismiss={(id) =>
+              studio.setUi({
+                mitigated: { ...ui.mitigated, [id]: true },
+              })
+            }
+          />
+        ) : null}
+
+        {chrome.horizon ? (
+          <BoardFindings
+            findings={openBoardFindings}
             onDismiss={(id) =>
               studio.setUi({
                 mitigated: { ...ui.mitigated, [id]: true },

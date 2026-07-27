@@ -7,6 +7,8 @@ import type {
   CreateCatalogSymbolInput,
   DesignCanvas,
   DesignAssistResponse,
+  DesignBoardReportResponse,
+  DesignFindingsResponse,
   DesignGhostsResponse,
   ProjectOrchestrationWorld,
   SketchToCadRequest,
@@ -401,6 +403,31 @@ export async function designAssistApi(
   return apiPost<DesignAssistResponse>(`/projects/${projectId}/design/assist`, {
     message,
   });
+}
+
+/**
+ * Cross-artefact findings over the whole board. Assembled server-side, where
+ * survey, costing and rate card are real — the studio holds only geometry.
+ */
+export async function designFindingsApi(
+  projectId: string,
+): Promise<DesignFindingsResponse> {
+  return apiGet<DesignFindingsResponse>(
+    `/projects/${projectId}/design/findings`,
+  );
+}
+
+/**
+ * Sustainability read-out + export disclaimers over the whole board. Same
+ * server-side board as the findings — the studio holds neither survey area,
+ * irrigation geometry in metres, nor the planning flags these rest on.
+ */
+export async function designBoardReportApi(
+  projectId: string,
+): Promise<DesignBoardReportResponse> {
+  return apiGet<DesignBoardReportResponse>(
+    `/projects/${projectId}/design/board-report`,
+  );
 }
 
 export async function formalizeSketchToCadApi(

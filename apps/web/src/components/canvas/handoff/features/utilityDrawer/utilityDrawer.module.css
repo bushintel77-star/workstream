@@ -82,7 +82,8 @@
 }
 
 .shield,
-.dollar {
+.dollar,
+.leaf {
   width: 22px;
   height: 22px;
   border-radius: 7px;
@@ -110,12 +111,14 @@
   color: var(--hc-invert);
 }
 
-.dollar {
+.dollar,
+.leaf {
   background: var(--hc-line-soft);
   color: var(--hc-ink);
 }
 
-.tabActive .dollar {
+.tabActive .dollar,
+.tabActive .leaf {
   background: color-mix(in srgb, var(--hc-invert) 16%, transparent);
   color: var(--hc-invert);
 }

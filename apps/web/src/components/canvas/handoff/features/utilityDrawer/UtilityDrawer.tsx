@@ -1,14 +1,22 @@
 "use client";
 
+import type { BoardSustainabilityMetric } from "@workstream/contracts";
 import type { StudioComplianceReport, StudioEstimateReport } from "@workstream/domain";
 import type { StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import { ComplianceDock } from "../compliance/ComplianceDock";
 import { LiveBomDock } from "../bom/LiveBomDock";
 import { PermitTodosPanel } from "../permitTodos/PermitTodosPanel";
+import { SustainabilityDock } from "../sustainability/SustainabilityDock";
 import css from "./utilityDrawer.module.css";
 
-export type UtilityPanel = "compliance" | "bom" | null;
+export type UtilityPanel = "compliance" | "bom" | "sustainability" | null;
+
+const PANEL_TITLE: Record<Exclude<UtilityPanel, null>, string> = {
+  compliance: "Compliance",
+  bom: "Live cost",
+  sustainability: "Sustainability",
+};
 
 type Props = {
   openPanel: UtilityPanel;
@@ -30,6 +38,12 @@ type Props = {
   projectId?: string;
   projectAddress?: string;
   complianceReport?: StudioComplianceReport | null;
+  /** Board sustainability read-out — omit when the report has not landed. */
+  sustainability?: {
+    metrics: BoardSustainabilityMetric[];
+    measured: number;
+    assessed: number;
+  } | null;
   onOpenPanel: (panel: UtilityPanel) => void;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
@@ -56,6 +70,7 @@ export function UtilityDrawer({
   projectId,
   projectAddress = "",
   complianceReport = null,
+  sustainability = null,
   onOpenPanel,
   onMitigate,
   onOpenQuote,
@@ -132,14 +147,35 @@ export function UtilityDrawer({
           </span>
           <span className={css.tabLabel}>{aud}</span>
         </button>
+        {/* Calm sidecar metric — only tabbed once the board report has landed. */}
+        {sustainability && sustainability.metrics.length > 0 ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={openPanel === "sustainability"}
+            className={`${css.tab}${openPanel === "sustainability" ? ` ${css.tabActive}` : ""}`}
+            data-testid="utility-tab-sustainability"
+            title={`SITES v2 / UN SDG read-out — ${sustainability.measured} of ${sustainability.assessed} metrics measurable from this board`}
+            onClick={() =>
+              onOpenPanel(
+                openPanel === "sustainability" ? null : "sustainability",
+              )
+            }
+          >
+            <span className={css.leaf} aria-hidden>
+              ◇
+            </span>
+            <span className={css.tabLabel}>
+              {sustainability.measured}/{sustainability.assessed}
+            </span>
+          </button>
+        ) : null}
       </div>
 
       {openPanel ? (
         <div className={css.sheet} data-testid={`utility-sheet-${openPanel}`}>
           <div className={css.sheetHead}>
-            <p className={css.sheetTitle}>
-              {openPanel === "compliance" ? "Compliance" : "Live cost"}
-            </p>
+            <p className={css.sheetTitle}>{PANEL_TITLE[openPanel]}</p>
             <button
               type="button"
               className={css.sheetClose}
@@ -177,6 +213,13 @@ export function UtilityDrawer({
                   />
                 ) : null}
               </>
+            ) : openPanel === "sustainability" ? (
+              <SustainabilityDock
+                metrics={sustainability?.metrics ?? []}
+                measured={sustainability?.measured ?? 0}
+                assessed={sustainability?.assessed ?? 0}
+                embedded
+              />
             ) : (
               <LiveBomDock
                 estimate={estimate}

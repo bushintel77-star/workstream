@@ -43,6 +43,8 @@ import quoteDocRoutes from './routes/quote-doc';
 import designGhostsRoutes from './routes/design-ghosts';
 import designSketchCadRoutes from './routes/design-sketch-cad';
 import designAssistRoutes from './routes/design-assist';
+import designFindingsRoutes from './routes/design-findings';
+import designBoardReportRoutes from './routes/design-board-report';
 import cadRoutes from './routes/cad';
 import boundaryRoutes from './routes/boundary';
 import keylessRoutes from './routes/keyless';
@@ -147,6 +149,8 @@ async function start() {
   await server.register(designGhostsRoutes, { prefix: '/projects' });
   await server.register(designSketchCadRoutes, { prefix: '/projects' });
   await server.register(designAssistRoutes, { prefix: '/projects' });
+  await server.register(designFindingsRoutes, { prefix: '/projects' });
+  await server.register(designBoardReportRoutes, { prefix: '/projects' });
   await server.register(cadRoutes, { prefix: '/projects' });
   await server.register(boundaryRoutes, { prefix: '/projects' });
   await server.register(keylessRoutes, { prefix: '/projects' });

@@ -173,7 +173,7 @@ export type StudioUiState = {
   aiBusy: "idle" | "scanning" | "assisting";
   coachOpen: boolean;
   assistReply: string | null;
-  utilityPanel: "compliance" | "bom" | null;
+  utilityPanel: "compliance" | "bom" | "sustainability" | null;
   councilTip: string | null;
   sheetScaleDenom: 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500;
   parchmentPeel: number;

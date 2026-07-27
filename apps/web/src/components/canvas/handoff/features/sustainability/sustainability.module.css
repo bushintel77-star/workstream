@@ -1,0 +1,175 @@
+/* Sustainability read-out — calm sidecar metric, not a HUD figure.
+   Mobile-first; the dock form is only used outside the utility sheet. */
+
+.dock {
+  position: absolute;
+  left: 72px;
+  bottom: 14px;
+  z-index: 12;
+  width: min(240px, calc(100vw - 100px));
+  padding: 12px 14px;
+  border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
+  box-shadow: var(--hc-elev-2);
+  font-family: var(--font-body);
+  color: var(--hc-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.embedded {
+  position: static;
+  width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.countPill {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "IBM Plex Mono", monospace;
+  padding: 2px 8px;
+  background: var(--hc-line-soft);
+  color: var(--hc-ink);
+}
+
+.metric {
+  padding-top: 10px;
+  border-top: 1px solid var(--hc-line-soft);
+}
+
+.metric:first-of-type {
+  padding-top: 0;
+  border-top: none;
+}
+
+.metricKey {
+  margin: 0;
+  font-size: 10px;
+  color: var(--hc-ink-muted);
+}
+
+.target {
+  color: var(--hc-ink-faint);
+}
+
+.metricVal {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.ok {
+  color: var(--hc-ink);
+}
+
+.short {
+  color: var(--hc-ink-muted);
+}
+
+/* An unmeasured metric must not read like a measured one. */
+.absent {
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--hc-ink-faint);
+}
+
+.bar {
+  position: relative;
+  height: 6px;
+  margin-top: 6px;
+  background: var(--hc-line-soft);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--hc-ink);
+}
+
+.barFill[data-status="short"] {
+  background: var(--hc-warning);
+}
+
+.barTick {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 10px;
+  background: var(--hc-ink);
+  opacity: 0.45;
+}
+
+.statement {
+  margin: 6px 0 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--hc-ink-muted);
+}
+
+.model {
+  margin: 4px 0 0;
+  font-size: 9.5px;
+  line-height: 1.35;
+  font-style: italic;
+  color: var(--hc-ink-faint);
+}
+
+.modelLabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cite {
+  margin: 6px 0 0;
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--hc-ink-faint);
+}
+
+.basis {
+  font-weight: 650;
+  color: var(--hc-ink-muted);
+}
+
+/* Weight the evidence visually: survey fact reads solid, estimate reads soft. */
+.basis[data-basis="vicmap"] {
+  color: var(--hc-ink);
+}
+
+.basis[data-basis="derived"],
+.basis[data-basis="seed"] {
+  font-style: italic;
+  color: var(--hc-ink-faint);
+}
+
+@media (min-width: 900px) {
+  .dock {
+    width: 260px;
+  }
+}

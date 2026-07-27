@@ -218,6 +218,159 @@ export const DesignAssistResponseSchema = z.object({
 export type DesignAssistResponse = z.infer<typeof DesignAssistResponseSchema>;
 
 /**
+ * Cross-artefact finding over the whole board (BoardContext v1). Findings
+ * propose only — accepting one is a human act, exactly like a ghost.
+ */
+export const BoardFindingKindSchema = z.enum([
+  "canopy_conflict",
+  "dig_conflict",
+  "permeability",
+  "quote_mismatch",
+  "sheet_gap",
+]);
+export type BoardFindingKind = z.infer<typeof BoardFindingKindSchema>;
+
+export const BoardFindingSeveritySchema = z.enum([
+  "info",
+  "watch",
+  "critical",
+]);
+export type BoardFindingSeverity = z.infer<typeof BoardFindingSeveritySchema>;
+
+/** Where a block's data came from — lets a reader weight the claim. */
+export const BoardProvenanceSchema = z.enum([
+  "vicmap",
+  "operator",
+  "derived",
+  "seed",
+  "absent",
+]);
+export type BoardProvenance = z.infer<typeof BoardProvenanceSchema>;
+
+export const BoardFindingSchema = z.object({
+  id: z.string(),
+  kind: BoardFindingKindSchema,
+  severity: BoardFindingSeveritySchema,
+  title: z.string(),
+  detail: z.string(),
+  /** Artefacts reasoned over — the citation behind the claim. */
+  cites: z.array(z.string()),
+  /** Weakest provenance among the blocks used, so thin evidence reads thin. */
+  basis: BoardProvenanceSchema,
+  x: z.number().optional(),
+  y: z.number().optional(),
+});
+export type BoardFinding = z.infer<typeof BoardFindingSchema>;
+
+export const DesignFindingsResponseSchema = z.object({
+  findings: z.array(BoardFindingSchema),
+  /** Blocks the board cannot reason about — surfaced rather than papered over. */
+  gaps: z.array(z.string()),
+});
+export type DesignFindingsResponse = z.infer<
+  typeof DesignFindingsResponseSchema
+>;
+
+/**
+ * Sustainability read-out over the same BoardContext the findings reason on.
+ *
+ * A metric is `absent` when the board never carried the input — the dashboard
+ * says "not measured" rather than showing a comfortable zero.
+ */
+export const BoardMetricStatusSchema = z.enum([
+  "on_track",
+  "short",
+  "measured",
+  "absent",
+]);
+export type BoardMetricStatus = z.infer<typeof BoardMetricStatusSchema>;
+
+export const BoardSustainabilityMetricSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  value: z.number().nullable(),
+  unit: z.string(),
+  /** Benchmark the value is read against, when one applies. */
+  target: z.number().nullable(),
+  status: BoardMetricStatusSchema,
+  /**
+   * SITES v2 credit named by section and title rather than number — credit
+   * numbering is not something this codebase can verify, and a wrong reference
+   * on a sustainability claim is worse than none.
+   */
+  sites_credit: z.string(),
+  /** UN SDG goal numbers this metric contributes to. */
+  sdg: z.array(z.number().int()),
+  statement: z.string(),
+  /**
+   * Named assumption when the figure is modelled rather than measured.
+   *
+   * **Invariant: a metric with `model` set must never be rendered without it.**
+   * Every other metric is arithmetic over real board artefacts and can stand
+   * alone; a modelled figure is the one a competitor can attack, and stripped
+   * of its assumption it becomes a claim the practice cannot defend. Any
+   * surface that shows the value — dock, sheet widget, export, prompt block —
+   * shows the model note too, or omits the metric entirely.
+   */
+  model: z.string().nullable(),
+  cites: z.array(z.string()),
+  basis: BoardProvenanceSchema,
+});
+export type BoardSustainabilityMetric = z.infer<
+  typeof BoardSustainabilityMetricSchema
+>;
+
+export const BoardSustainabilitySchema = z.object({
+  metrics: z.array(BoardSustainabilityMetricSchema),
+  /** Metrics the board could actually measure, out of those assessed. */
+  measured: z.number().int(),
+  assessed: z.number().int(),
+});
+export type BoardSustainability = z.infer<typeof BoardSustainabilitySchema>;
+
+/**
+ * Disclaimer the drawing's own content implies, prompted on export.
+ *
+ * Duty-of-care automation: the board knows it depicts mature canopy, or that a
+ * trench crosses ground nobody has located, so it can say which notice belongs
+ * on the issued set. Prompted, never auto-applied — wording that goes to a
+ * client is the practice's to approve.
+ */
+export const BoardDisclaimerKindSchema = z.enum([
+  "maturity",
+  "design_intent",
+  "subsurface",
+  "tpo",
+  "safety_waiver",
+]);
+export type BoardDisclaimerKind = z.infer<typeof BoardDisclaimerKindSchema>;
+
+export const BoardDisclaimerSchema = z.object({
+  id: z.string(),
+  kind: BoardDisclaimerKindSchema,
+  title: z.string(),
+  /** The notice itself — this is the text that would go on the issued set. */
+  statement: z.string(),
+  /** What on the board called for it, in the operator's language. */
+  trigger: z.string(),
+  /** Required notices should not leave the practice without a decision. */
+  required: z.boolean(),
+  cites: z.array(z.string()),
+  basis: BoardProvenanceSchema,
+});
+export type BoardDisclaimer = z.infer<typeof BoardDisclaimerSchema>;
+
+export const DesignBoardReportResponseSchema = z.object({
+  sustainability: BoardSustainabilitySchema,
+  disclaimers: z.array(BoardDisclaimerSchema),
+  /** Blocks the board cannot reason about — surfaced rather than papered over. */
+  gaps: z.array(z.string()),
+});
+export type DesignBoardReportResponse = z.infer<
+  typeof DesignBoardReportResponseSchema
+>;
+
+/**
  * Sketch → CAD translation (Claude vision).
  * The raw freehand sketch is rasterized client-side to a PNG and sent with the
  * site frame context; the model returns typed CAD ghost suggestions. Raw stroke

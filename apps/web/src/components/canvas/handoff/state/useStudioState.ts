@@ -329,8 +329,8 @@ type Ui = {
   coachOpen: boolean;
   /** Last natural-language assist reply shown in the coach rail. */
   assistReply: string | null;
-  /** Right-hand utility drawer sheet: compliance | bom | closed. */
-  utilityPanel: "compliance" | "bom" | null;
+  /** Right-hand utility drawer sheet: compliance | bom | sustainability | closed. */
+  utilityPanel: "compliance" | "bom" | "sustainability" | null;
   /** Brief setback / TPZ / easement tip after a preemptive snap. */
   councilTip: string | null;
   /** Authored DBH (m) for next existing-tree placement — drives AS 4970 TPZ. */
