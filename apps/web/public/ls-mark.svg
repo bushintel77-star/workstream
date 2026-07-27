@@ -1,6 +1,5 @@
-<!-- LS trademark only — favicon / tab icon. Full lockup: /ls-lockup.svg -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LS">
-  <rect width="512" height="512" rx="96" fill="#18181B"/>
+<!-- LS geometric mark — transparent, for compositing. Lockup: /ls-lockup.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LS mark">
   <g fill="none" stroke="#FAFAF7" stroke-linecap="square" stroke-linejoin="miter">
     <path stroke-width="22" d="M 104 104 L 104 408 L 408 408"/>
     <path stroke-width="22" d="M 340 180 A 50 50 0 0 0 280 256 A 50 50 0 0 1 340 332"/>
