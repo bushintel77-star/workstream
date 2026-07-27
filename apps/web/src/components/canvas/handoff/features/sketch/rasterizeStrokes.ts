@@ -4,6 +4,8 @@
  * stored (no smoothing / snapping), matching the interference-free sketch layer.
  */
 
+import { PALETTE, SEMANTIC_LIGHT } from "../../../../../styles/colorTokens";
+
 export type RasterStroke = { points: Array<{ x: number; y: number }> };
 
 export type RasterizedSketch = {
@@ -27,9 +29,9 @@ export function rasterizeStrokesToPng(
   if (!ctx) return null;
 
   // Light ground, dark ink — high contrast for the vision model.
-  ctx.fillStyle = "#f7f5f0";
+  ctx.fillStyle = SEMANTIC_LIGHT.sheetPaper;
   ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = "#141414";
+  ctx.strokeStyle = PALETTE.grayL900;
   ctx.lineWidth = Math.max(2, Math.round(Math.min(w, h) / 300));
   ctx.lineJoin = "round";
   ctx.lineCap = "round";

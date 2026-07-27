@@ -17,6 +17,19 @@
   scrollbar-width: none;
 }
 
+.rootHeader {
+  position: static;
+  top: auto;
+  left: auto;
+  transform: none;
+  z-index: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 32px;
+  padding: 0;
+}
+
 .root::-webkit-scrollbar {
   display: none;
 }
@@ -54,7 +67,7 @@
 }
 
 .isolated {
-  border-color: color-mix(in srgb, #c2455f 32%, var(--hc-line-soft));
+  border-color: color-mix(in srgb, var(--hc-danger) 32%, var(--hc-line-soft));
   color: var(--hc-ink);
 }
 

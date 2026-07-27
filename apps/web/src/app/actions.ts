@@ -41,7 +41,10 @@ import {
   type OutputKind,
   type TaskPriority,
   type TaskStatus,
+  getQuoteDocApi,
+  upsertQuoteDocApi,
 } from "../lib/api";
+import type { UpsertQuoteDocInput } from "@workstream/contracts";
 
 function wrapApiError(err: unknown, fallback: string): Error {
   return new Error(err instanceof Error ? err.message : fallback);
@@ -90,7 +93,7 @@ export async function geocodePreviewAction(lat: number, lng: number) {
   }
 }
 
-/** Create project, run survey, return id for client redirect. */
+/** Create project, run survey, return id + Vicmap lot for locate loader. */
 export async function createProjectWithSurveyAction(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   if (address.length < 5) {
@@ -99,11 +102,19 @@ export async function createProjectWithSurveyAction(formData: FormData) {
   const { lat, lng } = parseProjectCoords(formData);
   try {
     const project = await createProjectApi({ address, lat, lng });
-    await runSurvey(project.id);
+    const survey = await runSurvey(project.id);
     revalidatePath("/");
     revalidatePath(`/projects/${project.id}`);
     revalidatePath(`/projects/${project.id}/survey`);
-    return { projectId: project.id };
+    const ring = survey.title_polygon?.coordinates?.[0] as
+      | [number, number][]
+      | undefined;
+    return {
+      projectId: project.id,
+      aerialUri: survey.aerial_uri,
+      titleRing: ring && ring.length >= 4 ? ring : null,
+      lotAreaM2: survey.lot_area_m2 ?? null,
+    };
   } catch (err) {
     throw wrapApiError(err, "Could not create project");
   }
@@ -1052,4 +1063,26 @@ export async function syncQuotePackAction(formData: FormData): Promise<{
   });
   revalidatePath(`/projects/${projectId}/outputs`);
   return result;
+}
+
+/** QuoteDoc — client hooks must use these actions (lib/api is server-only). */
+export async function getQuoteDocAction(projectId: string) {
+  try {
+    return await getQuoteDocApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not load quote");
+  }
+}
+
+export async function upsertQuoteDocAction(
+  projectId: string,
+  body: UpsertQuoteDocInput,
+) {
+  try {
+    const saved = await upsertQuoteDocApi(projectId, body);
+    revalidatePath(`/projects/${projectId}`);
+    return saved;
+  } catch (err) {
+    throw wrapApiError(err, "Could not save quote");
+  }
 }

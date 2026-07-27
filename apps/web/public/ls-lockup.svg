@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LS brand lockup — trademark stamp over quiet script expansion.
+
+  Z-order: script → halo → LS mark.
+  Script: simple restrained italic (#E8722F). Edit text to rename.
+  Mark geometry shared with icon.svg / ls-mark.svg.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" role="img" aria-label="Landscape Studio LS">
+  <title>Landscape Studio</title>
+  <defs>
+    <symbol id="ls-mark" viewBox="0 0 512 512">
+      <g fill="none" stroke="#FAFAF7" stroke-linecap="square" stroke-linejoin="miter">
+        <path stroke-width="22" d="M 104 104 L 104 408 L 408 408"/>
+        <path stroke-width="22" d="M 340 180 A 50 50 0 0 0 280 256 A 50 50 0 0 1 340 332"/>
+      </g>
+    </symbol>
+    <radialGradient id="stamp-halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#18181B" stop-opacity="0.88"/>
+      <stop offset="72%" stop-color="#18181B" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#18181B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g id="lockup-script" fill="#E8722F" opacity="0.82">
+    <text
+      x="360"
+      y="138"
+      text-anchor="middle"
+      font-family="Georgia, 'Palatino Linotype', 'Book Antiqua', serif"
+      font-style="italic"
+      font-size="46"
+      font-weight="400"
+      letter-spacing="0.04em"
+      transform="rotate(-1.5 360 138)"
+    >Landscape Studio</text>
+  </g>
+
+  <ellipse cx="360" cy="98" rx="118" ry="108" fill="url(#stamp-halo)"/>
+
+  <use href="#ls-mark" x="224" y="12" width="272" height="272"/>
+</svg>

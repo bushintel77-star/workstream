@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   categoryForSwatch,
   collapseLeftAssetPanel,
+  collapseLeftAssetUnlessPinned,
   needsPathGrammar,
   openLeftAssetExclusive,
+  resolveLeftSafeInsetPx,
+  shouldAutoCollapseLeftAsset,
   toggleRightDataPanelExclusive,
 } from "./leftAssetPanel";
 
@@ -31,6 +34,7 @@ describe("leftAssetPanel", () => {
     expect(toggleRightDataPanelExclusive(null, "layers")).toEqual({
       rightDataPanel: "layers",
       leftAssetPanel: null,
+      ghostReviewOpen: false,
     });
     expect(toggleRightDataPanelExclusive("layers", "layers")).toEqual({
       rightDataPanel: null,
@@ -43,5 +47,30 @@ describe("leftAssetPanel", () => {
       leftAssetPanel: null,
       leftAssetRestore: null,
     });
+  });
+
+  it("resolveLeftSafeInsetPx bumps for collapsed rail and open library", () => {
+    expect(resolveLeftSafeInsetPx(null, true)).toBe(120);
+    expect(resolveLeftSafeInsetPx("expanded", false)).toBeUndefined();
+    expect(resolveLeftSafeInsetPx("expanded", true)).toBe(420);
+    expect(resolveLeftSafeInsetPx("placing", true)).toBe(340);
+  });
+
+  it("auto-collapses expanded library only when unpinned", () => {
+    expect(
+      shouldAutoCollapseLeftAsset({ panel: "expanded", pinned: false }),
+    ).toBe(true);
+    expect(
+      shouldAutoCollapseLeftAsset({ panel: "expanded", pinned: true }),
+    ).toBe(false);
+    expect(
+      shouldAutoCollapseLeftAsset({ panel: "placing", pinned: false }),
+    ).toBe(false);
+    expect(
+      collapseLeftAssetUnlessPinned({ panel: "expanded", pinned: false }),
+    ).toEqual({ leftAssetPanel: null, leftAssetRestore: null });
+    expect(
+      collapseLeftAssetUnlessPinned({ panel: "expanded", pinned: true }),
+    ).toBeNull();
   });
 });

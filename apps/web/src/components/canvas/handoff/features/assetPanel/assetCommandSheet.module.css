@@ -1,0 +1,216 @@
+/*
+ * Mobile asset command sheet — peek (--sheet-peek-h) → full library.
+ * Safe-area aware; reduced-motion respectful.
+ */
+
+.sheet {
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --ink-faint: var(--hc-ink-faint);
+  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 24;
+  display: flex;
+  flex-direction: column;
+  max-height: min(72vh, 560px);
+  padding: 0 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-radius: 16px 16px 0 0;
+  background: var(--hc-frost, var(--hc-glass-soft));
+  border: 1px solid var(--hc-line, var(--hc-line-soft));
+  border-bottom: none;
+  box-shadow: var(--hc-frost-shadow, 0 -8px 28px var(--hc-neu-shadow));
+  backdrop-filter: blur(14px);
+  color: var(--ink);
+  font-family: var(--font-body);
+  pointer-events: auto;
+  transition: max-height var(--hc-motion, 180ms) var(--ease);
+}
+
+.sheetExpanded {
+  max-height: min(78vh, 640px);
+  background: var(--hc-glass, var(--hc-invert));
+}
+
+.handle {
+  align-self: center;
+  width: 48px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+
+.handle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--hc-line, var(--hc-line-soft));
+  transform: translate(-50%, -50%);
+}
+
+.peekRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--sheet-peek-h, 72px);
+  padding-bottom: 4px;
+}
+
+.peekLabel {
+  flex: 0 0 auto;
+  margin: 0;
+  max-width: 72px;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--ink-faint);
+}
+
+.peekChips {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  min-height: 44px;
+  align-items: center;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chip {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-neu-raised, var(--hc-glass-soft));
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.chipOn {
+  color: var(--ink);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
+  );
+}
+
+.close {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--hc-r-control, 10px);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding-bottom: 8px;
+  border-top: 1px solid var(--hc-line-soft, var(--hc-line));
+  padding-top: 8px;
+}
+
+.search {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-glass-soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  max-height: 42vh;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:hover,
+.row:focus-visible {
+  background: var(--hc-glass-soft);
+  outline: 2px solid var(--hc-line);
+  outline-offset: 0;
+}
+
+.rowLabel {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.rowMeta {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.empty {
+  padding: 16px 12px;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.libraryLink {
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    transition: none;
+  }
+}

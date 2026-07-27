@@ -8,6 +8,7 @@ export * from "./schemas/cad";
 export * from "./schemas/site-boundary";
 export * from "./schemas/catalog-admin";
 export * from "./schemas/costing";
+export * from "./schemas/quote-doc";
 export * from "./schemas/audit";
 export * from "./schemas/output";
 export * from "./schemas/rate-card";

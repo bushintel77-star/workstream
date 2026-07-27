@@ -1,65 +1,59 @@
 .root {
   /*
-   * Handoff chrome DNA — crisp dock plastic + matte panels.
-   * No cloudy frost halos: tight shadows, hairline borders, minimal blur.
+   * Handoff chrome API (--hc-*) — light values alias color-tokens v2.
+   * Crisp dock plastic + matte panels; no blush pink leftovers.
    * CAD vectors keep --sds-* separately.
    */
-  --hc-ink: #241318;
-  --hc-ink-muted: #7a5560;
-  --hc-ink-faint: #b08a95;
-  --hc-paper: #fffbfc;
-  --hc-invert: #fff6f8;
-  /* Near-opaque matte — not milky soft frost */
-  --hc-glass: rgba(255, 251, 252, 0.97);
-  --hc-glass-soft: rgba(255, 251, 252, 0.94);
-  --hc-line: rgba(36, 19, 24, 0.14);
-  --hc-line-soft: rgba(36, 19, 24, 0.1);
-  /*
-   * Radius — one surface language. Controls tuck at 10px; every floating
-   * panel / dock / card / popup / modal shares one 14px radius (no mixed
-   * radii on chrome). Pill is full-round. --hc-r-dock kept as an alias so
-   * legacy references land on the single panel radius.
-   */
-  --hc-r-control: 10px;
-  --hc-r-panel: 14px;
+  --hc-ink: var(--text-primary);
+  --hc-ink-muted: var(--text-secondary);
+  --hc-ink-faint: var(--text-muted);
+  --hc-paper: var(--gray-l-0);
+  --hc-invert: var(--gray-l-25);
+  --hc-glass: color-mix(in srgb, var(--gray-l-0) 97%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 94%, transparent);
+  --hc-line: color-mix(in srgb, var(--text-primary) 14%, transparent);
+  --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --hc-signal: var(--signal);
+  --hc-signal-ink: var(--signal-ink);
+  --hc-deep: var(--surface-deep);
+  --hc-r-control: 6px;
+  --hc-r-panel: 8px;
   --hc-r-dock: var(--hc-r-panel);
   --hc-r-pill: 999px;
-  /*
-   * Elevation — short, sharp, umber. Prefer hairline ring over soft bloom.
-   */
-  --hc-elev-1: 0 1px 2px rgba(42, 23, 29, 0.1), 0 0 0 1px rgba(36, 19, 24, 0.08);
-  --hc-elev-2: 0 2px 6px rgba(42, 23, 29, 0.12), 0 0 0 1px rgba(36, 19, 24, 0.1);
-  --hc-elev-3: 0 6px 16px rgba(42, 23, 29, 0.16), 0 0 0 1px rgba(36, 19, 24, 0.12);
+  --hc-elev-1: 0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --hc-elev-2: 0 2px 6px color-mix(in srgb, var(--text-primary) 12%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --hc-elev-3: 0 6px 16px color-mix(in srgb, var(--text-primary) 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--text-primary) 12%, transparent);
   --hc-elev: var(--hc-elev-2);
-  /* On-canvas chrome: keep backdrop crisp (no cloudy haze). */
   --hc-blur: 0px;
-  /*
-   * Motion — precision, not decoration. Chrome appears/dismisses in one
-   * fast, non-bouncy beat. Canvas content itself never rides this.
-   */
   --hc-motion: 180ms;
-  /*
-   * Soft plastic docks — short highlight/shadow so chips read raised,
-   * not fogged. Hairline ring replaces the old white bloom halo.
-   */
-  --hc-neu-surface: #f1e4e9;
-  --hc-neu-raised: #f6ebef;
-  --hc-neu-light: rgba(255, 255, 255, 0.45);
-  --hc-neu-shadow: rgba(42, 23, 29, 0.14);
+  --hc-neu-surface: var(--panel);
+  --hc-neu-raised: var(--gray-l-25);
+  --hc-neu-light: color-mix(in srgb, var(--gray-l-0) 45%, transparent);
+  --hc-neu-shadow: color-mix(in srgb, var(--text-primary) 14%, transparent);
   --hc-neu-out: -1px -1px 2px var(--hc-neu-light),
-    1px 1px 3px var(--hc-neu-shadow), 0 0 0 1px rgba(36, 19, 24, 0.08);
+    1px 1px 3px var(--hc-neu-shadow), 0 0 0 1px var(--hc-line-soft);
   --hc-neu-out-sm: -1px -1px 1.5px var(--hc-neu-light),
-    1px 1px 2.5px var(--hc-neu-shadow), 0 0 0 1px rgba(36, 19, 24, 0.08);
+    1px 1px 2.5px var(--hc-neu-shadow), 0 0 0 1px var(--hc-line-soft);
   --hc-neu-in: inset 1px 1px 2px var(--hc-neu-shadow),
     inset -1px -1px 1.5px var(--hc-neu-light);
   --hc-pad: 8px;
+  --hc-danger: var(--existing-stroke);
+  --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 16%, var(--canvas));
+  --hc-success: var(--planting-new-stroke);
+  --hc-warning: var(--warning);
+  --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 12%, var(--canvas));
+  --sheet-paper: var(--gray-l-25);
+  --sheet-ink: var(--text-primary);
+  --sheet-border: color-mix(in srgb, var(--text-primary) 35%, transparent);
 
-  /* SDS — plan vectors only (not UI chrome); alias color-tokens v2 */
   --sds-canvas-bg: var(--canvas);
   --sds-vector-primary: var(--text-primary);
   --sds-vector-muted: var(--text-secondary);
-  --sds-compliance-amber: #c99757;
-  --sds-compliance-red: #d66b6b;
+  --sds-compliance-amber: var(--warning);
+  --sds-compliance-red: var(--existing-stroke);
   --sds-stroke-primary: 1.5;
   --sds-stroke-secondary: 1;
   --sds-dash: 4 4;
@@ -71,18 +65,15 @@
   --ws-glass-border: var(--hc-line);
   --ws-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Sheet + chrome safe insets — keep CAD clear of HUDs */
   --ws-sheet-pad: 12px;
   --ws-sheet-margin: 8px;
   --ws-title-w: 240px;
   --ws-title-gap: 12px;
-  /* Left gutter for summoned instruments — keep the drawing clear */
-  --ws-safe-left: 80px;
+  --ws-safe-left: 120px;
   --ws-safe-top: 40px;
   --ws-safe-right: 12px;
   --ws-safe-bottom: 36px;
   --ws-type-kicker: 8px;
-  /* Live plan dims — readable on screen; print can go smaller later */
   --ws-type-dim: 11px;
   --ws-type-hud: 11px;
   --ws-type-title: 15px;
@@ -91,11 +82,7 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  /* Original handoff blush field — not stained parchment */
-  background:
-    radial-gradient(120% 80% at 8% 0%, rgba(255, 211, 222, 0.22), transparent 55%),
-    radial-gradient(90% 70% at 100% 0%, rgba(241, 215, 221, 0.18), transparent 50%),
-    var(--sds-canvas-bg);
+  background: var(--canvas);
   color: var(--hc-ink);
   font-family: var(--font-body);
   overflow: hidden;
@@ -103,53 +90,55 @@
 }
 
 .rootDark {
-  /*
-   * Night shell: dolphin grey + cobalt cast, chalk type. The token override
-   * below is the WHOLE night theme for chrome — every panel, dock, chip and
-   * card inherits dolphin glass from these variables. Do not restyle
-   * individual components for night; if one stays light, it is hardcoding
-   * a colour and bypassing tokens — fix the component.
-   */
-  --hc-ink: #eceff4;
-  --hc-ink-muted: rgba(236, 239, 244, 0.62);
-  --hc-ink-faint: rgba(236, 239, 244, 0.4);
-  --hc-paper: #1b1e24;
-  --hc-invert: #16181c;
-  --hc-glass: rgba(32, 36, 43, 0.97);
-  --hc-glass-soft: rgba(32, 36, 43, 0.94);
-  --hc-line: rgba(236, 239, 244, 0.16);
-  --hc-line-soft: rgba(236, 239, 244, 0.1);
-  --hc-elev-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(236, 239, 244, 0.08);
-  --hc-elev-2: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(236, 239, 244, 0.1);
-  --hc-elev-3: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(236, 239, 244, 0.12);
-  --hc-neu-surface: #232730;
-  --hc-neu-raised: #2a2f39;
-  --hc-neu-light: rgba(255, 255, 255, 0.06);
-  --hc-neu-shadow: rgba(0, 0, 0, 0.5);
+  --hc-ink: var(--text-primary);
+  --hc-ink-muted: var(--text-secondary);
+  --hc-ink-faint: var(--text-muted);
+  --hc-paper: var(--panel);
+  --hc-invert: var(--canvas);
+  --hc-glass: color-mix(in srgb, var(--panel) 97%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--panel) 94%, transparent);
+  --hc-line: color-mix(in srgb, var(--text-primary) 16%, transparent);
+  --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --hc-elev-1: 0 1px 2px color-mix(in srgb, var(--gray-d-0) 35%, transparent),
+    0 0 0 1px var(--hc-line-soft);
+  --hc-elev-2: 0 2px 6px color-mix(in srgb, var(--gray-d-0) 40%, transparent),
+    0 0 0 1px var(--hc-line);
+  --hc-elev-3: 0 6px 16px color-mix(in srgb, var(--gray-d-0) 50%, transparent),
+    0 0 0 1px var(--hc-line);
+  --hc-neu-surface: var(--gray-d-150);
+  --hc-neu-raised: var(--gray-d-200);
+  --hc-neu-light: color-mix(in srgb, var(--gray-d-900) 6%, transparent);
+  --hc-neu-shadow: color-mix(in srgb, var(--gray-d-0) 50%, transparent);
+  --hc-danger: var(--existing-stroke);
+  --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 22%, var(--canvas));
+  --hc-success: var(--planting-new-stroke);
+  --hc-warning: var(--warning);
+  --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 18%, var(--canvas));
+  --sheet-paper: var(--panel);
+  --sheet-ink: var(--text-primary);
+  --sheet-border: color-mix(in srgb, var(--text-primary) 35%, transparent);
   --ws-glass: var(--hc-glass-soft);
   --ws-glass-border: var(--hc-line);
   background:
-    radial-gradient(100% 70% at 10% 0%, rgba(47, 94, 207, 0.18), transparent 50%),
-    #16181c;
-  color: #eceff4;
+    radial-gradient(
+      100% 70% at 10% 0%,
+      color-mix(in srgb, var(--proposed-stroke) 18%, transparent),
+      transparent 50%
+    ),
+    var(--canvas);
+  color: var(--hc-ink);
 }
 
-/*
- * Dual-mode zoom — past the precision threshold the soft shell steps aside so
- * fine CAD work reads crisp. Instant token swap (no animated skin-morph):
- * glass firms up, ink lines gain contrast, radii tighten, elevation flattens.
- * Every token-driven float inherits this automatically.
- */
 .rootPrecision {
-  --hc-glass: rgba(255, 251, 252, 0.98);
-  --hc-glass-soft: rgba(255, 251, 252, 0.94);
-  --hc-line: rgba(36, 19, 24, 0.34);
-  --hc-line-soft: rgba(36, 19, 24, 0.2);
+  --hc-glass: color-mix(in srgb, var(--gray-l-0) 98%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 94%, transparent);
+  --hc-line: color-mix(in srgb, var(--text-primary) 34%, transparent);
+  --hc-line-soft: color-mix(in srgb, var(--text-primary) 20%, transparent);
   --hc-r-control: 6px;
   --hc-r-panel: 8px;
-  --hc-elev-1: 0 1px 4px rgba(42, 23, 29, 0.16);
-  --hc-elev-2: 0 2px 8px rgba(42, 23, 29, 0.2);
-  --hc-elev-3: 0 6px 18px rgba(42, 23, 29, 0.24);
+  --hc-elev-1: 0 1px 4px color-mix(in srgb, var(--text-primary) 16%, transparent);
+  --hc-elev-2: 0 2px 8px color-mix(in srgb, var(--text-primary) 20%, transparent);
+  --hc-elev-3: 0 6px 18px color-mix(in srgb, var(--text-primary) 24%, transparent);
   --ws-glass: var(--hc-glass);
   --ws-glass-border: var(--hc-line);
 }
@@ -157,17 +146,63 @@
 .header {
   flex: none;
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  flex-wrap: nowrap;
+  min-height: 56px;
+  z-index: 30;
+  /* Same soft plastic dock language as the left swatch rail — matte, opaque. */
+  background: var(--hc-neu-surface);
+  backdrop-filter: none;
+  border-bottom: 1px solid var(--hc-line);
+  box-shadow: none;
+}
+
+.headerRow {
+  display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 12px 8px 16px;
   flex-wrap: nowrap;
   min-height: 56px;
-  z-index: 30;
-  /* Same soft plastic dock language as the left swatch rail — matte, no haze. */
-  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 94%, transparent);
-  backdrop-filter: none;
-  border-bottom: 1px solid var(--hc-line, rgba(36, 19, 24, 0.14));
-  box-shadow: none;
+}
+
+.headerContext {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 6px 16px;
+  min-height: 32px;
+  overflow-x: auto;
+  border-top: 1px solid var(--hc-line-soft);
+  scrollbar-width: none;
+}
+
+.headerContext::-webkit-scrollbar {
+  display: none;
+}
+
+.headerCouncilTip {
+  flex: none;
+  max-width: min(360px, 42vw);
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: var(--hc-r-control);
+  border: 1px solid color-mix(in srgb, var(--hc-warning) 45%, transparent);
+  background: var(--hc-neu-raised);
+  color: var(--hc-ink);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: var(--hc-elev-1);
+}
+
+.rootHeaderContext {
+  --ws-safe-top: 92px;
 }
 
 .shareWrap {
@@ -181,9 +216,9 @@
   padding: 6px 16px;
   font-size: 12px;
   line-height: 1.35;
-  color: #7a5560;
-  background: color-mix(in srgb, #ffd3de 55%, #fffbfc);
-  border-bottom: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  color: var(--hc-ink-muted);
+  background: color-mix(in srgb, var(--hc-neu-surface) 88%, var(--canvas));
+  border-bottom: 1px solid var(--hc-line-soft);
   z-index: 28;
 }
 
@@ -205,7 +240,7 @@
 .address {
   margin: 2px 0 0;
   font-size: 10.5px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -213,7 +248,7 @@
 }
 
 .rootDark .address {
-  color: rgba(236, 239, 244, 0.72);
+  color: color-mix(in srgb, var(--hc-ink) 72%, transparent);
 }
 
 .spacer {
@@ -224,20 +259,20 @@
 .modes {
   display: flex;
   gap: 3px;
-  background: var(--hc-neu-surface, #f1e4e9);
+  background: var(--hc-neu-surface);
   border-radius: var(--hc-r-pill);
   padding: 3px;
   flex: none;
   /* Recessed segmented-control track so the active mode reads as raised. */
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
 .rootDark .modes {
-  background: rgba(236, 239, 244, 0.08);
+  background: color-mix(in srgb, var(--hc-ink) 8%, transparent);
 }
 
 .modeBtn {
@@ -295,14 +330,10 @@
 }
 
 .modeBtnActive {
-  /*
-   * Day ink anchor — the one deliberate dark accent in the blush header.
-   * Blush-on-blush active states had no weight; the current mode is the
-   * strongest fact on screen and reads as ink.
-   */
-  background: var(--hc-ink, #241318);
-  color: var(--hc-invert, #fff6f8);
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  /* Active mode — ink anchor on neutral dock plastic. */
+  background: var(--hc-ink);
+  color: var(--hc-invert);
+  box-shadow: var(--hc-elev-1);
 }
 
 .rootDark .modeBtnActive {
@@ -317,7 +348,7 @@
   font-size: 9.5px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: #8a7a82;
+  color: var(--hc-ink-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -337,13 +368,13 @@
   border-radius: var(--hc-r-control);
   border: none;
   /* Same raised soft-plastic chip as left rail / instruments. */
-  background: var(--hc-neu-raised, #f6ebef);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
   );
-  color: #241318;
+  color: var(--hc-ink);
   font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
@@ -363,8 +394,8 @@
 .toolBtn:active {
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
@@ -373,32 +404,41 @@
   color: var(--hc-ink);
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
 .rootDark .toolBtn {
-  border: 1px solid rgba(230, 233, 234, 0.2);
-  background: rgba(255, 246, 248, 0.06);
-  color: #e6e9ea;
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
+  color: var(--hc-ink-faint);
   box-shadow: none;
+}
+
+.headerVicGov {
+  flex: 1 1 auto;
+  min-width: min(320px, 28vw);
+  display: flex;
+  align-items: stretch;
 }
 
 /** Tactile icon controls — same 46px-class dock chip as left rail instruments. */
 .iconBtn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border-radius: var(--hc-r-control);
   border: none;
-  background: var(--hc-neu-raised, #f6ebef);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
   );
-  color: #5a4650;
+  color: var(--hc-ink-muted);
   cursor: pointer;
   flex: none;
   display: inline-flex;
@@ -411,14 +451,14 @@
 }
 
 .iconBtn:hover {
-  color: #241318;
+  color: var(--hc-ink);
 }
 
 .iconBtn:active {
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
@@ -428,37 +468,37 @@
 .aiPill:focus-visible,
 .modeBtn:focus-visible,
 .segmentBtn:focus-visible {
-  outline: 2px solid #c2455f;
+  outline: 2px solid var(--hc-danger);
   outline-offset: 2px;
 }
 
 .iconBtnActive,
 .iconBtnActive:hover {
-  color: #241318;
+  color: var(--hc-ink);
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
 .rootDark .iconBtn {
-  color: #d3b3bc;
-  background: rgba(255, 246, 248, 0.05);
-  border: 1px solid rgba(230, 233, 234, 0.16);
+  color: var(--hc-ink-faint);
+  background: var(--hc-glass-soft);
+  border: 1px solid var(--hc-line-soft);
   box-shadow: none;
 }
 
 .rootDark .iconBtn:hover {
-  background: rgba(255, 246, 248, 0.1);
-  color: #fff6f8;
+  background: var(--hc-glass-soft);
+  color: var(--hc-invert);
 }
 
 .rootDark .iconBtnActive,
 .rootDark .iconBtnActive:hover {
-  background: #fff6f8;
-  color: #1a1216;
-  border-color: #fff6f8;
+  background: var(--hc-invert);
+  color: var(--hc-ink);
+  border-color: var(--hc-invert);
 }
 
 .iconBtnSvg {
@@ -468,17 +508,18 @@
 }
 
 .cmdBtn {
-  height: 40px;
+  min-height: 44px;
+  height: 44px;
   padding: 0 12px;
   border-radius: var(--hc-r-control);
   border: none;
-  background: var(--hc-neu-raised, #f6ebef);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
   );
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   font-weight: 500;
@@ -490,27 +531,28 @@
 }
 
 .cmdBtn:hover {
-  color: #241318;
+  color: var(--hc-ink);
 }
 
 .cmdBtn:active {
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
 .aiPill {
-  height: 40px;
+  min-height: 44px;
+  height: 44px;
   padding: 0 12px;
   border-radius: var(--hc-r-control);
   border: none;
-  background: var(--hc-neu-raised, #f6ebef);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
   );
   color: var(--hc-ink);
   font-size: 11px;
@@ -531,8 +573,8 @@
 .aiPill:active {
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
@@ -540,8 +582,8 @@
   color: var(--hc-ink);
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
@@ -557,11 +599,11 @@
   overflow: visible;
   flex: none;
   padding: 3px;
-  background: var(--hc-neu-surface, #f1e4e9);
+  background: var(--hc-neu-surface);
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
@@ -571,7 +613,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #5a4650;
+  color: var(--hc-ink-muted);
   font-size: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -583,12 +625,12 @@
 }
 
 .segmentBtnActive {
-  background: var(--hc-neu-raised, #f6ebef);
-  color: var(--hc-ink, #241318);
+  background: var(--hc-neu-raised);
+  color: var(--hc-ink);
   box-shadow: var(
     --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
   );
 }
 
@@ -598,13 +640,13 @@
   margin: 0 8px 8px;
   border-radius: 18px;
   overflow: hidden;
-  /* Original Fit sheet / handoff paper — #faf6f2, not sepia plate */
-  background: #faf6f2;
+  /* Original Fit sheet / handoff paper — var(--sheet-paper), not sepia plate */
+  background: var(--sheet-paper);
   min-height: 0;
   box-shadow:
-    inset 0 0 0 1px rgba(36, 19, 24, 0.08),
-    0 1px 0 rgba(255, 255, 255, 0.45),
-    0 18px 40px rgba(42, 23, 29, 0.08);
+    inset 0 0 0 1px var(--hc-line-soft),
+    0 1px 0 var(--hc-neu-light),
+    0 18px 40px var(--hc-neu-shadow);
   transition:
     box-shadow 220ms var(--ws-ease),
     margin 220ms var(--ws-ease),
@@ -619,15 +661,15 @@
   /* Keep below selection orbit (z-index 60) — vignette only */
   z-index: 8;
   border-radius: inherit;
-  box-shadow: inset 0 0 80px rgba(36, 19, 24, 0.03);
+  box-shadow: inset 0 0 90px color-mix(in srgb, var(--hc-ink) 15%, transparent);
 }
 
 .boardWatch {
-  box-shadow: inset 0 0 0 1.5px rgba(28, 25, 23, 0.35);
+  box-shadow: inset 0 0 0 1.5px var(--sheet-border, var(--hc-line));
 }
 
 .boardCritical {
-  box-shadow: inset 0 0 0 2px #1c1917;
+  box-shadow: inset 0 0 0 2px var(--hc-ink);
 }
 
 .councilTip {
@@ -639,9 +681,9 @@
   max-width: min(420px, calc(100% - 48px));
   padding: 8px 14px;
   border-radius: var(--hc-r-control);
-  border: 1px solid rgba(232, 184, 75, 0.45);
-  background: rgba(42, 23, 29, 0.92);
-  color: #ffd3de;
+  border: 1px solid color-mix(in srgb, var(--hc-warning) 45%, transparent);
+  background: var(--hc-ink);
+  color: var(--hc-accent-wash);
   font-size: 12px;
   font-weight: 600;
   text-align: center;
@@ -766,7 +808,8 @@
 }
 
 .rootClient .headerTools [data-testid="client-view-top"],
-.rootClient .headerTools [data-testid="meeting-pack-print"] {
+.rootClient .headerTools [data-testid="meeting-pack-print"],
+.rootClient .headerTools [data-testid="header-view-menu"] {
   display: inline-flex;
 }
 
@@ -780,16 +823,16 @@
   margin: 0;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass-soft);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  box-shadow: var(--hc-elev-1);
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   pointer-events: none;
   white-space: nowrap;
 }
@@ -799,6 +842,32 @@
   max-width: min(420px, calc(100vw - 380px));
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.assetFab {
+  position: absolute;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  z-index: 23;
+  width: 52px;
+  height: 52px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--hc-line);
+  border-radius: 999px;
+  background: var(--hc-frost, var(--hc-glass));
+  box-shadow: var(--hc-elev-2);
+  color: var(--hc-ink);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.assetFab:focus-visible {
+  outline: 2px solid var(--hc-line);
+  outline-offset: 2px;
 }
 
 .aiStatusBar {
@@ -816,7 +885,7 @@
   border: 1px solid var(--ws-glass-border);
   background: var(--ws-glass);
   backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  box-shadow: var(--hc-elev-1);
   pointer-events: auto;
   animation: chromeIn 220ms var(--ws-ease) both;
 }
@@ -825,19 +894,19 @@
   font-size: 10px;
   font-weight: 650;
   letter-spacing: 0.02em;
-  color: #5a4650;
+  color: var(--hc-ink-muted);
   flex: none;
 }
 
 .aiStatusOk {
-  color: #1f8a5a;
+  color: var(--hc-success);
 }
 
 .aiStatusMeta {
   flex: 1;
   min-width: 0;
   font-size: 11px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -849,8 +918,8 @@
   padding: 0 10px;
   border-radius: 8px;
   border: none;
-  background: rgba(36, 19, 24, 0.06);
-  color: #241318;
+  background: var(--hc-line-soft);
+  color: var(--hc-ink);
   font: inherit;
   font-size: 10.5px;
   font-weight: 600;
@@ -859,7 +928,7 @@
 }
 
 .aiStatusOpen:hover {
-  background: rgba(36, 19, 24, 0.1);
+  background: var(--hc-line-soft);
 }
 
 @keyframes chromeIn {
@@ -883,14 +952,14 @@
   font-size: 9px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
   flex: none;
   min-width: 2.5em;
   text-align: right;
 }
 
 .savedTickPulse {
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   animation: savePulse 1.2s ease-in-out infinite;
 }
 
@@ -993,14 +1062,14 @@
   min-width: 160px;
   max-width: 240px;
   padding: 6px 10px;
-  border: 1px solid rgba(36, 19, 24, 0.28);
+  border: 1px solid var(--hc-line);
   border-radius: 4px;
-  background: rgba(255, 252, 247, 0.96);
+  background: var(--hc-glass);
   font-family: "Architects Daughter", "Segoe Print", cursive;
   font-size: 16px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #241318;
+  color: var(--hc-ink);
   outline: none;
 }
 
@@ -1015,13 +1084,13 @@
   min-height: 34px;
   padding: 6px 8px;
   border-radius: var(--hc-r-panel);
-  background: var(--hc-neu-surface, #f1e4e9);
+  background: var(--hc-neu-surface);
   box-shadow: var(
     --hc-neu-out,
-    -3px -3px 8px rgba(255, 255, 255, 0.85),
-    4px 4px 11px rgba(42, 23, 29, 0.16)
+    -3px -3px 8px var(--hc-neu-light),
+    4px 4px 11px var(--hc-neu-shadow)
   );
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   font-family: var(--font-body);
 }
 
@@ -1039,11 +1108,11 @@
   padding: 0;
   border: none;
   border-radius: 5px;
-  background: var(--hc-neu-raised, #f6ebef);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -2px -2px 5px rgba(255, 255, 255, 0.85),
-    2px 2px 6px rgba(42, 23, 29, 0.16)
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
   );
   cursor: pointer;
 }
@@ -1056,20 +1125,20 @@
   bottom: 3px;
   height: 2px;
   border-radius: 99px;
-  background: var(--hc-ink, #241318);
+  background: var(--hc-ink);
   opacity: 0.72;
 }
 
 .undoCell[data-provenance="ai"]::after {
-  background: #c2455f;
+  background: var(--hc-danger);
   opacity: 1;
 }
 
 .undoCell:hover {
   box-shadow: var(
     --hc-neu-in,
-    inset 2px 2px 5px rgba(42, 23, 29, 0.16),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85)
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
   );
 }
 
@@ -1079,7 +1148,7 @@
   border: none;
   border-radius: var(--hc-r-control);
   background: transparent;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font: inherit;
   font-size: 10px;
   font-weight: 700;
@@ -1094,7 +1163,7 @@
 .undoEmpty {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: var(--hc-ink-faint, #b08a95);
+  color: var(--hc-ink-faint);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1115,7 +1184,7 @@
 }
 
 .rootDark .board {
-  background: #212830;
+  background: var(--panel);
 }
 
 .world {
@@ -1127,13 +1196,13 @@
 .aerial {
   position: absolute;
   inset: 0;
-  background: #ddd5d0
+  background: var(--grid-line)
     repeating-linear-gradient(
       -12deg,
       transparent,
       transparent 10px,
-      rgba(36, 19, 24, 0.03) 10px,
-      rgba(36, 19, 24, 0.03) 20px
+      var(--hc-line-soft) 10px,
+      var(--hc-line-soft) 20px
     );
   background-size: cover;
   background-position: center;
@@ -1143,26 +1212,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   font-size: 13px;
   font-weight: 500;
   text-align: center;
   padding: 2rem;
-  border: 1.5px dashed rgba(36, 19, 24, 0.18);
+  border: 1.5px dashed var(--hc-line);
   margin: 18% 22%;
   border-radius: 12px;
-  background: rgba(250, 246, 242, 0.55);
+  background: color-mix(in srgb, var(--sheet-paper) 55%, transparent);
 }
 
 .scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: rgba(250, 246, 242, 0.22);
+  background: color-mix(in srgb, var(--sheet-paper) 55%, transparent);
 }
 
 .rootDark .scrim {
-  background: rgba(33, 40, 48, 0.22);
+  background: color-mix(in srgb, var(--panel) 22%, transparent);
 }
 
 .planSvg {
@@ -1185,7 +1254,7 @@
 }
 
 .ghostBd {
-  border: 1.5px dashed #e8b84b;
+  border: 1.5px dashed var(--hc-warning);
   border-radius: inherit;
 }
 
@@ -1196,8 +1265,8 @@
   height: 16px;
   padding: 0 6px;
   border-radius: 99px;
-  background: #e8b84b;
-  color: #241318;
+  background: var(--hc-warning);
+  color: var(--hc-ink);
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
   font-weight: 600;
@@ -1213,14 +1282,14 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 251, 252, 0.9);
+  background: var(--hc-glass);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.3);
+  box-shadow: 0 4px 14px var(--hc-neu-shadow);
   z-index: 5;
 }
 
@@ -1232,12 +1301,12 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: rgba(255, 251, 252, 0.9);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--hc-neu-light);
   border-radius: 16px;
   padding: 6px;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.3);
+  box-shadow: 0 8px 28px var(--hc-neu-shadow);
 }
 
 .railBtn {
@@ -1247,7 +1316,7 @@
   border: none;
   cursor: pointer;
   background: transparent;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1257,13 +1326,13 @@
 }
 
 .railBtn:hover {
-  background: #f1d7dd;
-  color: #241318;
+  background: var(--hc-accent-wash);
+  color: var(--hc-ink);
 }
 
 .railBtnActive {
-  background: #241318;
-  color: #fff6f8;
+  background: var(--hc-ink);
+  color: var(--hc-invert);
 }
 
 .railIcon {
@@ -1280,7 +1349,7 @@
 .railDiv {
   width: 100%;
   height: 1px;
-  background: rgba(36, 19, 24, 0.1);
+  background: var(--hc-line-soft);
   margin: 2px 0;
 }
 
@@ -1296,11 +1365,11 @@
   z-index: 10;
   max-height: 44%;
   overflow: auto;
-  background: rgba(255, 251, 252, 0.92);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--hc-neu-light);
   border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
   animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
@@ -1315,11 +1384,11 @@
   flex-direction: column;
   gap: 8px;
   z-index: 10;
-  background: rgba(255, 251, 252, 0.92);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--hc-neu-light);
   border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
   animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
@@ -1336,11 +1405,11 @@
   gap: 9px;
   z-index: 10;
   overflow: auto;
-  background: rgba(255, 251, 252, 0.92);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--hc-neu-light);
   border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
   animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
@@ -1350,7 +1419,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
   letter-spacing: 0.14em;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
   text-transform: uppercase;
 }
 
@@ -1360,15 +1429,15 @@
   justify-content: space-between;
   gap: 8px;
   padding-bottom: 7px;
-  border-bottom: 1px solid rgba(36, 19, 24, 0.07);
+  border-bottom: 1px solid var(--hc-line-soft);
 }
 
 .passPill {
   height: 17px;
   padding: 0 7px;
   border-radius: 0;
-  background: rgba(28, 25, 23, 0.1);
-  color: #1c1917;
+  background: var(--hc-line-soft);
+  color: var(--hc-ink);
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
   font-weight: 600;
@@ -1382,7 +1451,7 @@
   font-size: 8.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .metricVal {
@@ -1390,26 +1459,26 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 15px;
   font-weight: 500;
-  color: #241318;
+  color: var(--hc-ink);
   font-variant-numeric: tabular-nums;
 }
 
 .metricValOk {
-  color: #1c1917;
+  color: var(--hc-ink);
 }
 
 .bar {
   position: relative;
   height: 4px;
   border-radius: 0;
-  background: rgba(28, 25, 23, 0.08);
+  background: var(--hc-line-soft);
   margin-top: 5px;
 }
 
 .barFill {
   height: 100%;
   border-radius: 0;
-  background: #1c1917;
+  background: var(--hc-ink);
 }
 
 .barTick {
@@ -1417,7 +1486,7 @@
   top: -2.5px;
   width: 1.5px;
   height: 9px;
-  background: rgba(36, 19, 24, 0.4);
+  background: var(--hc-line);
   border-radius: 1px;
   transform: translateX(-50%);
 }
@@ -1458,10 +1527,10 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #e8b84b;
+  background: var(--hc-warning);
   box-shadow:
-    0 0 0 4px rgba(232, 184, 75, 0.25),
-    0 2px 8px rgba(42, 23, 29, 0.3);
+    0 0 0 4px color-mix(in srgb, var(--hc-warning) 45%, transparent),
+    0 2px 8px var(--hc-neu-shadow);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -1494,7 +1563,7 @@
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .bomHead {
@@ -1513,14 +1582,14 @@
 }
 
 .bomTotal:hover {
-  color: #57534e;
+  color: var(--hc-ink-muted);
 }
 
 .bomGst {
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   font-weight: 400;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .bomLine {
@@ -1528,14 +1597,14 @@
   justify-content: space-between;
   gap: 10px;
   font-size: 10.5px;
-  color: #241318;
+  color: var(--hc-ink);
   align-items: baseline;
 }
 
 .bomAmt {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9.5px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   flex: none;
 }
 
@@ -1543,8 +1612,8 @@
   height: 24px;
   padding: 0 10px;
   border-radius: var(--hc-r-control);
-  border: 1px dashed rgba(36, 19, 24, 0.35);
-  background: rgba(36, 19, 24, 0.04);
+  border: 1px dashed var(--hc-line);
+  background: var(--hc-line-soft);
   color: var(--hc-ink);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
@@ -1556,7 +1625,7 @@
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .ghostPanel {
@@ -1666,9 +1735,9 @@
   min-height: 44px;
   padding: 4px 2px;
   border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 251, 252, 0.92);
-  color: #7a5560;
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
+  color: var(--hc-ink-muted);
   font: inherit;
   font-size: 9px;
   font-weight: 650;
@@ -1676,14 +1745,14 @@
 }
 
 .zoneSlot:hover {
-  border-color: rgba(194, 69, 95, 0.35);
-  background: #fff6f8;
+  border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
+  background: var(--hc-invert);
 }
 
 .zoneSlotOn {
-  border-color: #241318;
-  background: #241318;
-  color: #fff6f8;
+  border-color: var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--hc-invert);
   box-shadow: none;
 }
 
@@ -1704,11 +1773,11 @@
   max-width: min(420px, 70%);
   padding: 5px 7px;
   border-radius: 14px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 251, 252, 0.92);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
-  color: #241318;
+  box-shadow: 0 8px 28px var(--hc-neu-shadow);
+  color: var(--hc-ink);
   transform: translate(-50%, -50%);
   opacity: 0.82;
   transition: opacity 220ms var(--ws-ease);
@@ -1731,28 +1800,28 @@
 .swatchDot {
   width: 10px;
   height: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.18);
+  border: 1px solid var(--hc-line);
   flex: none;
 }
 
 .swatchDot[data-swatch="lawn"] {
-  background: rgba(74, 112, 58, 0.75);
+  background: color-mix(in srgb, var(--lawn-l-100) 75%, transparent);
 }
 
 .swatchDot[data-swatch="bed"] {
-  background: rgba(90, 122, 72, 0.7);
+  background: color-mix(in srgb, var(--sage-l-400) 70%, transparent);
 }
 
 .swatchDot[data-swatch="paving"] {
-  background: rgba(70, 78, 88, 0.75);
+  background: color-mix(in srgb, var(--bluestone-l-400) 75%, transparent);
 }
 
 .swatchDot[data-swatch="deck"] {
-  background: rgba(140, 98, 58, 0.7);
+  background: color-mix(in srgb, var(--timber-l-400) 70%, transparent);
 }
 
 .swatchDot[data-swatch="hedge"] {
-  background: rgba(52, 92, 48, 0.75);
+  background: color-mix(in srgb, var(--hedge-l-600) 75%, transparent);
 }
 
 /* Drafting grain — bottom-left, clears add strip centre. */
@@ -1794,15 +1863,15 @@
   gap: 6px;
   min-height: 28px;
   padding: 0 8px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
+  border: 1px solid var(--hc-line);
   border-radius: var(--hc-r-control);
-  background: rgba(255, 251, 252, 0.96);
+  background: var(--hc-glass);
   backdrop-filter: none;
   box-shadow: var(--hc-elev-2);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
   font-variant-numeric: tabular-nums;
-  color: #241318;
+  color: var(--hc-ink);
 }
 
 .dbhField input {
@@ -1812,7 +1881,7 @@
   background: transparent;
   font: inherit;
   font-size: 11px;
-  color: #241318;
+  color: var(--hc-ink);
   text-align: right;
 }
 
@@ -1821,7 +1890,7 @@
 }
 
 .dbhField input:focus-visible {
-  outline: 2px solid #c2455f;
+  outline: 2px solid var(--hc-danger);
   outline-offset: 2px;
 }
 
@@ -1829,7 +1898,7 @@
   position: absolute;
   inset: 0;
   padding: 48px 56px 40px 72px;
-  color: #241318;
+  color: var(--hc-ink);
 }
 
 .elevSvg {
@@ -1845,8 +1914,8 @@
   height: 30px;
   padding: 0 12px;
   border-radius: 99px;
-  border: 1px solid rgba(36, 19, 24, 0.15);
-  background: #fffbfc;
+  border: 1px solid var(--hc-line);
+  background: var(--hc-paper);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -1862,11 +1931,11 @@
   width: min(420px, 90%);
   padding: 24px;
   z-index: 14;
-  background: rgba(255, 251, 252, 0.92);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--hc-neu-light);
   border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.28);
+  box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
 }
 
@@ -1878,7 +1947,7 @@
 
 .quotePanel p {
   margin: 0 0 16px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   font-size: 13px;
   line-height: 1.45;
 }
@@ -1930,7 +1999,7 @@
     display: block !important;
     overflow: hidden !important;
     min-height: 0 !important;
-    background: #fff !important;
+    background: var(--hc-paper) !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -1951,7 +2020,7 @@
     border-radius: 0 !important;
     box-shadow: none !important;
     overflow: hidden !important;
-    background: #faf6f2 !important;
+    background: var(--sheet-paper) !important;
     min-height: 0 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
@@ -2010,11 +2079,11 @@
   opacity: 0;
   background: linear-gradient(
     100deg,
-    rgba(139, 58, 47, 0) 0%,
-    rgba(139, 58, 47, 0.07) 38%,
-    rgba(247, 244, 239, 0.28) 50%,
-    rgba(139, 58, 47, 0.07) 62%,
-    rgba(139, 58, 47, 0) 100%
+    color-mix(in srgb, var(--existing-stroke) 0%, transparent) 0%,
+    color-mix(in srgb, var(--existing-stroke) 7%, transparent) 38%,
+    color-mix(in srgb, var(--sheet-paper) 28%, transparent) 50%,
+    color-mix(in srgb, var(--existing-stroke) 7%, transparent) 62%,
+    color-mix(in srgb, var(--existing-stroke) 0%, transparent) 100%
   );
 }
 

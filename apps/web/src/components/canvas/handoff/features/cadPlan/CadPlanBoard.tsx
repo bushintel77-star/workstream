@@ -287,6 +287,8 @@ type Props = {
   forcePresentation?: boolean;
   /** Notify parent of interaction so the presentation lens stays in draft. */
   onInteract?: () => void;
+  /** Mobile: long-press empty canvas opens the asset command sheet. */
+  onLongPressCanvas?: () => void;
   /** Hand-lettered annotations (plan geometry / print). */
   annotations?: CanvasAnnotation[];
   selectedAnnotationId?: string | null;
@@ -299,6 +301,13 @@ type Props = {
     y: number;
     itemId: string | null;
   }) => void;
+  /**
+   * Vector-edit instruction visible (node/edge hover or drag) — parent uses
+   * this to suppress competing top-centre hints (tilt pause pill).
+   */
+  onVectorEditHint?: (active: boolean) => void;
+  /** One-tap arm Trace → Existing dwelling when Vicmap left the footprint empty. */
+  onTraceBuilding?: () => void;
 };
 
 function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
@@ -384,14 +393,24 @@ export function CadPlanBoard({
   onInertToolClick,
   fidelity = "draft",
   onInteract,
+  onLongPressCanvas,
   annotations = [],
   selectedAnnotationId = null,
   onSelectAnnotation,
   onMoveAnnotation,
   annotatePlace = false,
   onAnnotatePlace,
+  onVectorEditHint,
+  onTraceBuilding,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const longPressRef = useRef<number | null>(null);
+  const clearLongPress = () => {
+    if (longPressRef.current != null) {
+      window.clearTimeout(longPressRef.current);
+      longPressRef.current = null;
+    }
+  };
   const dragRef = useRef<{
     kind: "item" | "boundary" | "building" | "marquee" | "group";
     id?: string;
@@ -404,6 +423,7 @@ export function CadPlanBoard({
     /** Shift-marquee unions into the current selection. */
     additive?: boolean;
   } | null>(null);
+  const [nodeDragActive, setNodeDragActive] = useState(false);
   const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({
     x: null,
     y: null,
@@ -457,6 +477,21 @@ export function CadPlanBoard({
   const editing =
     (tool === "select" && !locked && !frameOn && !foundationCleanse) ||
     (titleEditing && tool === "select");
+  /**
+   * Instruction banner only while actively editing nodes/edges — not idle select.
+   * Lane law: one top-centre contextual hint (see resolveTopHint).
+   */
+  const showEditBanner =
+    editing &&
+    (hoverEdge != null ||
+      cursorMode === "move" ||
+      cursorMode === "add" ||
+      nodeDragActive ||
+      nodeMenu != null);
+  useEffect(() => {
+    onVectorEditHint?.(showEditBanner);
+    return () => onVectorEditHint?.(false);
+  }, [showEditBanner, onVectorEditHint]);
   const titleSolid = foundationCleanse || titleLocked;
   const sketchPassthrough = mode === "sketch";
   /** Survey annotation tools own the pointer (prototype Level / Servc / Calib). */
@@ -682,6 +717,30 @@ export function CadPlanBoard({
 
   const onPointerDownBoard = (e: React.PointerEvent) => {
     onInteract?.();
+    clearLongPress();
+    if (onLongPressCanvas && e.button === 0 && !tiltLocked) {
+      const startX = e.clientX;
+      const startY = e.clientY;
+      longPressRef.current = window.setTimeout(() => {
+        longPressRef.current = null;
+        onLongPressCanvas();
+      }, 480);
+      const cancel = (ev: PointerEvent) => {
+        if (
+          Math.hypot(ev.clientX - startX, ev.clientY - startY) > 10 ||
+          ev.type === "pointerup" ||
+          ev.type === "pointercancel"
+        ) {
+          clearLongPress();
+          window.removeEventListener("pointermove", cancel);
+          window.removeEventListener("pointerup", cancel);
+          window.removeEventListener("pointercancel", cancel);
+        }
+      };
+      window.addEventListener("pointermove", cancel);
+      window.addEventListener("pointerup", cancel);
+      window.addEventListener("pointercancel", cancel);
+    }
     // Tilt is view-only — never start marquee / place / paint.
     if (tiltLocked) return;
     if (annotatePlace && onAnnotatePlace) {
@@ -769,6 +828,7 @@ export function CadPlanBoard({
     e.stopPropagation();
     e.preventDefault();
     setNodeMenu(null);
+    setNodeDragActive(true);
     onCadHandleInteract?.();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragRef.current = { kind, index, ox: 0, oy: 0 };
@@ -959,6 +1019,7 @@ export function CadPlanBoard({
       }
     }
     dragRef.current = null;
+    setNodeDragActive(false);
     setMarquee(null);
     setGuides({ x: null, y: null });
     setCrosshair(null);
@@ -1789,12 +1850,26 @@ export function CadPlanBoard({
       boundary.length >= 3 &&
       building.length < 3 ? (
         <CameraChrome place={{ kind: "project", pct: { x: 50, y: 46 }, cam }}>
-          <p
-            className={css.missingBuildingCue}
-            data-testid="building-footprint-empty"
-          >
-            Existing dwelling outline unavailable · Trace → Existing dwelling
-          </p>
+          {onTraceBuilding ? (
+            <button
+              type="button"
+              className={css.missingBuildingCue}
+              data-testid="building-footprint-empty"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTraceBuilding();
+              }}
+            >
+              Existing dwelling outline unavailable · Trace dwelling
+            </button>
+          ) : (
+            <p
+              className={css.missingBuildingCue}
+              data-testid="building-footprint-empty"
+            >
+              Existing dwelling outline unavailable · Trace → Existing dwelling
+            </p>
+          )}
         </CameraChrome>
       ) : null}
 
@@ -2335,7 +2410,7 @@ export function CadPlanBoard({
         ) : null,
       )}
 
-      {editing ? (
+      {showEditBanner ? (
         <CameraChrome>
           <div className={css.editBanner} data-testid="edit-vector-banner">
             Hover node to move · hover edge diamond to add · right-click node to
@@ -2496,6 +2571,7 @@ export function CadPlanBoard({
         <>
           <TiltBuildingExtrusion
             building={building}
+            boundary={boundary}
             boardW={layout.w}
             boardH={layout.h}
             ppm={tiltPpm}

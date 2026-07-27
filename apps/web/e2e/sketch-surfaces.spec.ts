@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import {
+  clickHeaderViewItem,
+  createSurveyProject,
+  handoffStudio,
+} from "./helpers";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -44,9 +48,9 @@ test.describe("Sketch surfaces reconciliation", () => {
     ).toBe(0);
 
     // Night — dolphin tokens, not hardcoded dark pills
-    await page.getByTestId("dark-canvas-top").click();
-    await expect(page.getByTestId("dark-canvas-top")).toHaveClass(
-      /iconBtnActive|Active/,
+    await clickHeaderViewItem(page, "dark-canvas-top");
+    await expect(page.getByTestId("header-view-menu")).toHaveClass(
+      /triggerActive|Active/,
       { timeout: 5_000 },
     );
 

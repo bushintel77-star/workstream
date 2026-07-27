@@ -12,7 +12,7 @@ export function parseMapboxStaticAerial(uri: string): {
   height: number;
 } | null {
   const match = uri.match(
-    /\/static\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
+    /\/static\/(?:[^/]+\/)?(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
   );
   if (!match) return null;
   return {

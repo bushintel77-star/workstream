@@ -9,12 +9,10 @@
   gap: 6px;
   min-width: 88px;
   padding: 8px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.1));
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
-  backdrop-filter: blur(14px) saturate(1.05);
-  -webkit-backdrop-filter: blur(14px) saturate(1.05);
-  box-shadow: var(--hc-elev, 0 10px 28px rgba(36, 19, 24, 0.12));
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-neu-raised);
+  box-shadow: var(--hc-neu-out-sm, 0 1px 0 rgba(255, 255, 255, 0.55));
   pointer-events: auto;
 }
 
@@ -23,7 +21,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .steps {
@@ -39,15 +37,15 @@
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .stepBtnActive {
-  background: var(--hc-neu-in, #ebe0e5);
-  border-color: var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  background: var(--hc-neu-in);
+  border-color: var(--hc-line-soft);
 }
 
 .actions {
@@ -59,17 +57,17 @@
   flex: 1;
   min-height: 36px;
   min-width: 36px;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  border: 1px solid var(--hc-line-soft);
   border-radius: 8px;
-  background: var(--hc-neu-raised, #f6ebef);
-  color: var(--hc-ink, #241318);
+  background: var(--hc-neu-raised);
+  color: var(--hc-ink);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
 }
 
 .iconBtn:hover {
-  background: #fff6f8;
+  background: var(--hc-invert);
 }
 
 .reset {
@@ -79,10 +77,10 @@
   gap: 6px;
   min-height: 36px;
   padding: 0 8px;
-  border: 1px solid rgba(194, 69, 95, 0.35);
+  border: 1px solid color-mix(in srgb, var(--hc-danger) 35%, transparent);
   border-radius: 8px;
-  background: rgba(255, 246, 248, 0.95);
-  color: var(--hc-ink, #241318);
+  background: var(--hc-glass);
+  color: var(--hc-ink);
   font-size: 12px;
   font-weight: 650;
   cursor: pointer;
@@ -90,7 +88,7 @@
 
 .deg {
   font-variant-numeric: tabular-nums;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font-weight: 600;
 }
 
@@ -102,7 +100,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 @media (min-width: 900px) {

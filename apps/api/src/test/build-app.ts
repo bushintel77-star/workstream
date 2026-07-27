@@ -28,6 +28,7 @@ import xeroRoutes from "../routes/xero";
 import carbonRoutes from "../routes/carbon";
 import catalogRoutes from "../routes/catalog";
 import designCanvasRoutes from "../routes/design-canvas";
+import quoteDocRoutes from "../routes/quote-doc";
 import designGhostsRoutes from "../routes/design-ghosts";
 import designAssistRoutes from "../routes/design-assist";
 import cadRoutes from "../routes/cad";
@@ -79,6 +80,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(aerialRoutes, { prefix: "/projects" });
   await app.register(carbonRoutes, { prefix: "/projects" });
   await app.register(designCanvasRoutes, { prefix: "/projects" });
+  await app.register(quoteDocRoutes, { prefix: "/projects" });
   await app.register(designGhostsRoutes, { prefix: "/projects" });
   await app.register(designAssistRoutes, { prefix: "/projects" });
   await app.register(cadRoutes, { prefix: "/projects" });

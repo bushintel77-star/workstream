@@ -39,6 +39,7 @@ import xeroRoutes from './routes/xero';
 import carbonRoutes from './routes/carbon';
 import catalogRoutes from './routes/catalog';
 import designCanvasRoutes from './routes/design-canvas';
+import quoteDocRoutes from './routes/quote-doc';
 import designGhostsRoutes from './routes/design-ghosts';
 import designSketchCadRoutes from './routes/design-sketch-cad';
 import designAssistRoutes from './routes/design-assist';
@@ -142,6 +143,7 @@ async function start() {
   await server.register(carbonRoutes, { prefix: '/projects' });
   await server.register(catalogRoutes, { prefix: '/catalog' });
   await server.register(designCanvasRoutes, { prefix: '/projects' });
+  await server.register(quoteDocRoutes, { prefix: '/projects' });
   await server.register(designGhostsRoutes, { prefix: '/projects' });
   await server.register(designSketchCadRoutes, { prefix: '/projects' });
   await server.register(designAssistRoutes, { prefix: '/projects' });

@@ -5,33 +5,44 @@
 @import "./color-tokens.css";
 
 :root {
-  /* surfaces */
-  --surface-base: #f6eaed;
-  --surface-elevated: #fffbfb;
-  --surface-sunken: #eadfe5;
-  --surface-inverted: #241318;
-  --surface-overlay: #fffbfb;
-  --surface-inset: #fff6f8;
-  --surface-panel: #fffbfb;
+  /* surfaces — neutral paper; chrome recedes so colour belongs to the plan */
+  --surface-base: #f1f0ec;
+  --surface-elevated: #ffffff;
+  --surface-sunken: #e7e6e1;
+  --surface-inverted: #1b1c1e;
+  --surface-overlay: #ffffff;
+  --surface-inset: #f7f6f3;
+  --surface-panel: #ffffff;
+  /* deep inky blue-grey — brand dark surface (frost scrim, spotlight, dark chrome) */
+  --surface-deep: #182838;
 
-  /* ink */
-  --ink-primary: #241318;
-  --ink-secondary: #7a5560;
-  --ink-tertiary: #b08a95;
-  --ink-inverted: #fff6f8;
+  /* ink — cool near-black */
+  --ink-primary: #1b1c1e;
+  --ink-secondary: #5f6165;
+  --ink-tertiary: #9a9ca1;
+  --ink-inverted: #f4f4f2;
 
-  /* lines */
-  --line-hairline: rgba(36, 19, 24, 0.12);
-  --line-subtle: rgba(36, 19, 24, 0.07);
-  --line-strong: rgba(36, 19, 24, 0.18);
-  --line-ink: #241318;
+  /* lines — solid backbone, not delicate hairline */
+  --line-hairline: rgba(27, 28, 30, 0.12);
+  --line-subtle: rgba(27, 28, 30, 0.07);
+  --line-strong: rgba(27, 28, 30, 0.2);
+  --line-ink: #1b1c1e;
 
-  /* accent — brand red */
-  --accent: #c2455f;
-  --accent-soft: #ffd3de;
-  --accent-ink: #9e3049;
-  --accent-bright: #c2455f;
-  --accent-water: #9b7b8f;
+  /* accent — muted blueprint slate.
+     Kept distinct from canvas cobalt (#2450c7 proposed) + easement slate
+     (#5b7fbf) so chrome never reads as plan geometry. */
+  --accent: #4f6a89;
+  --accent-soft: #e6ebf1;
+  --accent-ink: #3b5069;
+  --accent-bright: #5a789b;
+  --accent-water: #8a94a0;
+
+  /* signal — the single technical-annotation spark ("issued for permitting"
+     orange). One hero element per surface, never on the canvas
+     (canvas keeps crimson=existing / cobalt=proposed / amber=warning). */
+  --signal: #e65416;
+  --signal-ink: #231206;
+  --signal-soft: color-mix(in srgb, #e65416 16%, transparent);
 
   /* semantic */
   --ok: #1f8a5a;
@@ -44,6 +55,7 @@
   --font-body: "IBM Plex Sans", sans-serif;
   --font-serif: "IBM Plex Serif", serif;
   --font-mono: "IBM Plex Mono", monospace;
+  --font-hand: "Architects Daughter", cursive;
 
   /* Aegis aliases */
   --color-obsidian: var(--surface-base);
@@ -75,12 +87,12 @@
   --s-7: 48px;
   --s-8: 64px;
 
-  /* radii — subtle soft edges, never hard square frames */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
-  --r-canvas: 18px;
+  /* radii — sharp, minimal; crisp edges, not toy-soft */
+  --r-sm: 5px;
+  --r-md: 7px;
+  --r-lg: 10px;
+  --r-xl: 14px;
+  --r-canvas: 8px;
   --r-pill: 999px;
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
@@ -88,12 +100,12 @@
 
   /* depth — Design Studio glass lift (handoff) */
   --elev-0: none;
-  --elev-1: 0 8px 28px rgba(42, 23, 29, 0.18);
-  --elev-2: 0 14px 44px rgba(42, 23, 29, 0.25);
+  --elev-1: 0 8px 28px rgba(27, 28, 30, 0.14);
+  --elev-2: 0 14px 44px rgba(27, 28, 30, 0.2);
   --elev-inset: none;
   --elev-rim: none;
-  --shadow-sm: 0 4px 14px rgba(42, 23, 29, 0.2);
-  --shadow-md: 0 8px 28px rgba(42, 23, 29, 0.28);
+  --shadow-sm: 0 4px 14px rgba(27, 28, 30, 0.16);
+  --shadow-md: 0 8px 28px rgba(27, 28, 30, 0.22);
 
   --border-default: var(--line-hairline);
   --surface-raised: var(--surface-elevated);
@@ -108,15 +120,23 @@
   --dur-base: 260ms;
   --dur-slow: 480ms;
 
-  --studio-topbar-h: 40px;
-  --studio-toolrail-w: 40px;
-  --studio-toolrail-expanded-w: 160px;
-  --studio-rightrail-open-w: 260px;
-  --studio-statusbar-h: 20px;
-  --studio-transition: 180ms var(--ease);
-  --studio-ribbon-h: 28px;
-  --studio-context-strip-h: 28px;
-  --studio-canvas-inset: 14px;
+  --studio-topbar-h: 34px;
+  --studio-toolrail-w: 38px;
+  --studio-toolrail-expanded-w: 152px;
+  --studio-rightrail-open-w: 248px;
+  --studio-statusbar-h: 18px;
+  --studio-transition: 160ms var(--ease);
+  --studio-ribbon-h: 24px;
+  --studio-context-strip-h: 24px;
+  --studio-canvas-inset: 10px;
+
+  /* Canvas-first asset dock — collapsed rail / mobile sheet peek */
+  --dock-rail-collapsed-w: 56px;
+  --sheet-peek-h: 72px;
+
+  /* Quote builder markers (derive from semantic tokens) */
+  --quote-provisional: color-mix(in srgb, var(--warn) 55%, transparent);
+  --quote-margin-accent: color-mix(in srgb, var(--accent) 3%, transparent);
 
   --overlay-shade: color-mix(in srgb, var(--warn) 38%, transparent);
   --overlay-trp: color-mix(in srgb, var(--ok) 38%, transparent);
@@ -126,6 +146,29 @@
 
   --shell-max: 1080px;
   --content-max: 760px;
+
+  /* density — desk default; onsite bumps target size + line contrast */
+  --control-h: 32px;
+  --tap-min: 36px;
+  --border-weight: 1px;
+}
+
+/* On-site density — larger targets and firmer lines for daylight and gloves.
+   Opt in with [data-density="onsite"]; also auto on touch unless desk is forced. */
+[data-density="onsite"] {
+  --control-h: 44px;
+  --tap-min: 48px;
+  --border-weight: 1.5px;
+  --line-hairline: rgba(27, 28, 30, 0.2);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  :root:not([data-density="desk"]) {
+    --control-h: 44px;
+    --tap-min: 48px;
+    --border-weight: 1.5px;
+    --line-hairline: rgba(27, 28, 30, 0.2);
+  }
 }
 
 * {
@@ -159,18 +202,7 @@ body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   background-color: var(--surface-base);
-  background-image:
-    radial-gradient(
-      ellipse 70% 45% at 100% 0%,
-      color-mix(in srgb, var(--accent) 14%, transparent),
-      transparent 58%
-    ),
-    radial-gradient(
-      ellipse 50% 40% at 0% 100%,
-      color-mix(in srgb, var(--accent-bright) 10%, transparent),
-      transparent 55%
-    );
-  background-attachment: fixed;
+  background-image: none;
 }
 
 button,

@@ -14,7 +14,23 @@ Source of truth:
 4. **APWA locate colours are mode-invariant** (safety standard). BYDA lines pull from `PALETTE.apwa*`.
 5. **Theme attribute:** Design Studio root sets `data-theme="light"|"dark"` from Dark canvas (`darkLens` when not on Fit sheet).
 
-Chrome blush tokens (`--hc-*` in `handoffStudio.module.css`) are separate UI chrome; plan geometry uses this v2 system.
+## Handoff chrome (`--hc-*`)
+
+Light studio chrome **aliases this v2 system** via `--hc-*` on `.root` in `handoffStudio.module.css` (`--hc-ink` → `--text-primary`, `--hc-neu-surface` → `--panel`, field → `--canvas`, etc.). Blush pink (`#f1e4e9` / `#ffd3de` / umber `#241318`) is **retired** for light chrome.
+
+Dark `.rootDark` maps `--hc-*` onto `data-theme="dark"` neutrals (dolphin board). Plan geometry always uses the semantic strokes/fills below — never invent hex in components.
+
+### Allowlist (literal colour exceptions)
+
+| Exception | Why |
+| --- | --- |
+| APWA / BYDA locate (`--apwa-*` / `PALETTE.apwa*`) | Safety standard — mode-invariant |
+| Material swatch faces (turf/bluestone chips) | Product identity |
+| Fit sheet print plate (`--sheet-paper` / `--sheet-ink` / `--sheet-border`) | Print parchment tokens — no scattered raw hex |
+| Raster / aerial imagery | Not chrome paint |
+| SVG mask algebra (`#fff` / `#000` in SelectionFocusVeil) | Mask channel, not UI paint |
+
+CI gate: `node scripts/check-handoff-chrome-colors.mjs` (also via `pnpm web:check-handoff-colors`).
 
 ## LA UX mapping (what operators read)
 

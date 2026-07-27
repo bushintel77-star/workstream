@@ -17,21 +17,21 @@
 .card {
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 246, 248, 0.94);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
   backdrop-filter: none;
-  box-shadow: 0 8px 24px rgba(36, 19, 24, 0.1);
+  box-shadow: 0 8px 24px var(--hc-line-soft);
   font-family: var(--font-body);
-  color: #241318;
+  color: var(--hc-ink);
   animation: hzIn 180ms ease both;
 }
 
 .info {
-  border-color: rgba(36, 19, 24, 0.1);
+  border-color: var(--hc-line-soft);
 }
 
 .watch {
-  border-color: rgba(232, 184, 75, 0.45);
+  border-color: color-mix(in srgb, var(--hc-warning) 45%, transparent);
   background: rgba(255, 248, 230, 0.95);
 }
 
@@ -46,7 +46,7 @@
   font-size: 8.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .title {
@@ -60,7 +60,7 @@
   margin: 4px 0 0;
   font-size: 11px;
   line-height: 1.4;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .actions {
@@ -82,15 +82,15 @@
 }
 
 .accept {
-  border: 1px solid #241318;
-  background: #241318;
-  color: #ffd3de;
+  border: 1px solid var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--hc-accent-wash);
 }
 
 .dismiss {
-  border: 1px solid rgba(36, 19, 24, 0.14);
+  border: 1px solid var(--hc-line);
   background: transparent;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 @keyframes hzIn {
@@ -117,24 +117,24 @@
   height: 14px;
   margin: -7px 0 0 -7px;
   border-radius: 50%;
-  border: 2px solid #241318;
-  background: #e8b84b;
+  border: 2px solid var(--hc-ink);
+  background: var(--hc-warning);
   pointer-events: auto;
   cursor: pointer;
   animation: pinPulse 1.6s ease-in-out infinite;
 }
 
 .pin_info {
-  background: #c4b5a8;
+  background: var(--gravel-l-400);
 }
 
 .pin_watch {
-  background: #e8b84b;
+  background: var(--hc-warning);
 }
 
 .pin_critical {
-  background: #c2455f;
-  border-color: #241318;
+  background: var(--hc-danger);
+  border-color: var(--hc-ink);
 }
 
 @keyframes pinPulse {

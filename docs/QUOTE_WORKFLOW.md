@@ -52,4 +52,11 @@ Council is inferred from address (Stonnington / Yarra localities). Confirm on ce
 - `permit_yarra_heritage` — streetscape / overlay
 - `scope` — TRP, engineering, internal scope
 
-See also [DESIGN_STUDIO.md](DESIGN_STUDIO.md).
+## Quote builder (tier-1)
+
+Quote mode opens the editable **`QuoteBuilder`** (desktop two-pane / mobile sheet) —
+an override layer over the estimate engine (`resolveQuote` + `QuoteDoc`). Share
+freezes resolved `quoteLines` onto `ShareRevision`.
+
+See also [DESIGN_STUDIO.md](DESIGN_STUDIO.md) and
+`docs/design-returns/2026-07-27-canvas-asset-menu-and-quote-builder.md`.

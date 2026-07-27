@@ -3,8 +3,8 @@
 **Audience:** Curtis & Co operators reading climate / sun / services on the
 handoff board without hunting for dials.  
 **Pattern:** One horizontal **Vic-gov status chip row** (`VicGovStatusChipRow`,
-`CameraChrome` dock) replaces the former stacked Env / Services / Site / Trees
-cards. Chips derive status from hydrated title / KEYLESS / trees / BYDA data.
+header strip by default; legacy on-canvas dock optional) replaces the former
+stacked Env / Services / Site / Trees cards. Chips derive status from hydrated title / KEYLESS / trees / BYDA data.
 Tap a chip → shared right-lane inspector (`rightDataPanel`). Env chip still
 opens the sun scrubber.
 
@@ -75,7 +75,7 @@ via Cmd+K (`Site`, `Existing trees`).
 3. **Live meta only on the face** — one line: numbers that change with the board.  
 4. **Expand for instruments** — scrubbers, ticks, focus, play — not on the face.  
 5. **Lane law for expand** — one expanded panel on the same boundary seam.  
-6. **CameraChrome** — rail portals to `camera-chrome-root` (gate C).  
+6. **Header strip (default)** — Vic-gov chip row lives in the studio header (`placement="header"`); context breadcrumb + develop-loop council tip share a second header sub-row (`header-context-strip`); legacy on-canvas dock skips `CameraChrome`. Other chrome still portals to `camera-chrome-root` (gate C).  
 7. **Never** a fixed opaque AutoCAD ribbon or multi-slider Services dial.  
 8. **Flush edge** — `right: 0`, radius only on the canvas side.
 

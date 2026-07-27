@@ -14,34 +14,31 @@ The **drawing is the product**. Chrome is frost glass that **appears when needed
 
 ---
 
-## 1. Visual tokens (original blush DNA)
+## 1. Visual tokens (v2 neutrals + `--hc-*` chrome API)
 
-**Plan / CAD geometry colours** are a separate system — see [COLOR-TOKENS.md](./COLOR-TOKENS.md) (`color-tokens.css` v2). Chrome blush below is UI chrome only.
+**Plan / CAD geometry** and **studio chrome** both derive from [COLOR-TOKENS.md](./COLOR-TOKENS.md) (`color-tokens.css` v2). Light `--hc-*` on `.root` are **aliases** of v2 (`--canvas`, `--panel`, `--text-*`, `--border*`, `--warning` / `--danger` / `--success`). Blush pink DNA is retired for light chrome.
 
-Source of truth also lives in handoff README color table and `--hc-*` in `handoffStudio.module.css`.
-
-| Role | Token | Value |
+| Role | Token | Light source |
 | --- | --- | --- |
-| Canvas blush | — | `#F6EAED` |
-| Paper / board | `--paper` family | `#FAF6F2` / `#F7F4EF` |
-| Frost glass | `--hc-glass` | `rgba(255, 251, 252, 0.92)` |
-| Soft frost (preferred for large chrome) | `--hc-glass-soft` | `rgba(255, 251, 252, 0.72)` |
-| Ink | `--hc-ink` | `#241318` |
-| Muted | `--hc-ink-muted` | `#7A5560` |
-| Faint | `--hc-ink-faint` | `#B08A95` |
-| Accent | — | `#C2455F` |
-| Selection wash | — | `#FFD3DE` |
-| Success | — | `#1F8A5A` |
-| Ghost gold | — | `#E8B84B` |
-| Elevation | `--hc-elev` | soft umber shadow, not slate |
+| Field / page | `--canvas` / `--sds-canvas-bg` | `--gray-l-50` |
+| Panel / dock plastic | `--hc-neu-surface` | `--panel` |
+| Raised chip | `--hc-neu-raised` | `--gray-l-25` |
+| Frost glass | `--hc-glass` / `--hc-glass-soft` | `color-mix` on `--gray-l-0` |
+| Ink | `--hc-ink` | `--text-primary` |
+| Muted / faint | `--hc-ink-muted` / `--hc-ink-faint` | `--text-secondary` / `--text-muted` |
+| Lines | `--hc-line` / `--hc-line-soft` | mix of `--text-primary` |
+| Status | `--hc-warning` / `--hc-danger` / `--hc-success` | `--warning` / `--existing-stroke` / `--planting-new-stroke` |
+| Fit sheet plate | `--sheet-paper` / `--sheet-ink` / `--sheet-border` | sheet tokens on `.root` |
+| Elevation | `--hc-elev-*` | soft ink shadow, not slate |
 
 **Fonts:** Fraunces (display where used) · Sora (UI) · IBM Plex Mono (meta / CAD labels).
 
 ### Forbidden looks
 
-- Dark slate glass (`rgba(26,36,48…)`, `#e8f0f8` ink on charcoal)
-- Sepia / stained board (`#e8d5bc` plate)
-- Purple-on-white / glow / multi-layer neon shadows
+- Blush pink page wash / umber ink palette as light chrome (`#f1e4e9`, `#ffd3de`, `#241318`)
+- Hardcoded `#hex` / raw `rgba` in handoff modules (use `var(--hc-*)` / v2; CI gate `check-handoff-chrome-colors.mjs`)
+- Dark slate glass as the light default; purple-on-white / glow / multi-layer neon shadows
+- Sepia / stained board as the default canvas (print plate uses `--sheet-*` only)
 - Opaque solid panels that read as a second app chrome bar on the canvas
 - Game language: loadout, hotbar, equip, bag tabs as combat UI
 

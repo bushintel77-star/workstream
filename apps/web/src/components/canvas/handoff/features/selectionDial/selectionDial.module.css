@@ -48,9 +48,9 @@
   gap: 1px;
   border: none;
   border-radius: 999px;
-  background: var(--hc-frost, rgba(255, 248, 250, 0.9));
-  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.12);
-  color: var(--hc-ink, #241318);
+  background: var(--hc-frost);
+  box-shadow: 0 4px 14px var(--hc-neu-shadow);
+  color: var(--hc-ink);
   cursor: grab;
   padding: 0;
   min-width: 40px;
@@ -59,16 +59,16 @@
 
 .slot:hover,
 .slotFocus {
-  background: rgba(255, 211, 222, 0.95);
+  background: var(--hc-accent-wash);
 }
 
 .slotDanger {
-  color: #c2455f;
+  color: var(--hc-danger);
 }
 
 .dialNight .slot {
   background: rgba(28, 36, 48, 0.88);
-  color: rgba(236, 239, 244, 0.92);
+  color: color-mix(in srgb, var(--hc-ink) 72%, transparent);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
@@ -104,9 +104,9 @@
   gap: 6px;
   padding: 6px 8px;
   border-radius: 12px;
-  background: var(--hc-frost, rgba(255, 248, 250, 0.92));
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  box-shadow: 0 6px 20px rgba(42, 23, 29, 0.12);
+  background: var(--hc-frost);
+  border: 1px solid var(--hc-line-soft);
+  box-shadow: 0 6px 20px var(--hc-neu-shadow);
   max-width: 240px;
   overflow-x: auto;
 }

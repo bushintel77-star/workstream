@@ -3,10 +3,10 @@
  */
 
 .root {
-  --ink: #241318;
-  --ink-soft: #7a5560;
-  --glass: var(--hc-glass, rgba(255, 251, 252, 0.97));
-  --glass-border: var(--hc-line, rgba(36, 19, 24, 0.14));
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --glass: var(--hc-glass);
+  --glass-border: var(--hc-line);
   --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-exit: cubic-bezier(0.33, 0.1, 0.25, 1);
   --enter-ms: 480ms;
@@ -63,7 +63,7 @@
   justify-content: center;
   gap: 1px;
   font: inherit;
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  box-shadow: var(--hc-elev-1);
   opacity: 0.55;
   transform: rotate(var(--arc, 0deg)) translateY(calc(var(--arc-radius) * -0.55))
     rotate(calc(-1 * var(--arc, 0deg))) scale(0.92);
@@ -103,15 +103,15 @@
 }
 
 .slot:hover {
-  background: #fff6f8;
+  background: var(--hc-invert);
   color: var(--ink);
-  border-color: rgba(194, 69, 95, 0.28);
+  border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
 }
 
 .slotOn {
-  background: #241318;
-  color: #fff6f8;
-  border-color: #241318;
+  background: var(--hc-ink);
+  color: var(--hc-invert);
+  border-color: var(--hc-ink);
 }
 
 .root[data-phase="open"] .slotOn,

@@ -13,7 +13,13 @@ import {
   layoutElevationLabels,
 } from "../../geometry";
 import { PlanThumbnail } from "./PlanThumbnail";
+import {
+  SEMANTIC_LIGHT,
+  mixOnHex,
+} from "../../../../../styles/colorTokens";
 import css from "./elevation.module.css";
+
+const L = SEMANTIC_LIGHT;
 
 /** ViewBox height — geometry only; labels are HTML so they never stretch. */
 const VB_H = 40;
@@ -196,7 +202,7 @@ export function ElevationBoard({
                 y1={y}
                 x2={PLOT_X0 + PLOT_W + 4}
                 y2={y}
-                stroke="rgba(140,138,133,0.28)"
+                stroke={mixOnHex(L.textMuted, 28, L.canvas)}
                 strokeWidth={0.3}
                 vectorEffect="non-scaling-stroke"
               />
@@ -206,7 +212,7 @@ export function ElevationBoard({
               y1={GROUND_Y}
               x2={PLOT_X0 + PLOT_W + 4}
               y2={GROUND_Y}
-              stroke="rgba(26,26,26,0.45)"
+              stroke={mixOnHex(L.textPrimary, 45, L.canvas)}
               strokeWidth={0.7}
               vectorEffect="non-scaling-stroke"
             />
@@ -218,8 +224,8 @@ export function ElevationBoard({
               y={GROUND_Y - PLOT_H * 0.55}
               width={Math.max(3, b1 - b0)}
               height={PLOT_H * 0.55}
-              fill="rgba(36,19,24,0.05)"
-              stroke="#241318"
+              fill={mixOnHex(L.textPrimary, 5, L.canvas)}
+              stroke={L.textPrimary}
               strokeWidth={0.6}
               vectorEffect="non-scaling-stroke"
             />
@@ -240,9 +246,13 @@ export function ElevationBoard({
                   width={w}
                   height={h}
                   fill={
-                    it.ghost ? "rgba(28,25,23,0.06)" : "rgba(28,25,23,0.1)"
+                    it.ghost
+                      ? mixOnHex(L.textPrimary, 6, L.canvas)
+                      : mixOnHex(L.textPrimary, 10, L.canvas)
                   }
-                  stroke={selected ? "#1C1917" : it.ghost ? "#6B6560" : "#1C1917"}
+                  stroke={
+                    selected ? L.textPrimary : it.ghost ? L.textMuted : L.textPrimary
+                  }
                   strokeWidth={selected ? 0.9 : 0.55}
                   strokeDasharray={it.ghost ? "1.5 1.2" : undefined}
                   vectorEffect="non-scaling-stroke"
@@ -261,7 +271,7 @@ export function ElevationBoard({
                   y1={p.leader.y1}
                   x2={p.leader.x2}
                   y2={p.leader.y2}
-                  stroke="#1C1917"
+                  stroke={L.textPrimary}
                   strokeWidth={0.35}
                   vectorEffect="non-scaling-stroke"
                   opacity={0.55}

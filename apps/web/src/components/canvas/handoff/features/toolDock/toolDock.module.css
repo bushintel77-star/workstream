@@ -1,28 +1,28 @@
 .dock {
   position: absolute;
-  left: 12px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 8px 6px;
+  padding: 5px 4px;
   border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-frost, rgba(255, 248, 250, 0.82));
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.1));
-  box-shadow: var(--hc-frost-shadow, 0 8px 28px rgba(42, 23, 29, 0.12));
+  background: var(--hc-frost, var(--hc-glass-soft));
+  border: 1px solid var(--hc-line, var(--hc-line-soft));
+  box-shadow: var(--hc-frost-shadow, 0 8px 28px var(--hc-neu-shadow));
   backdrop-filter: blur(14px);
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   font-family: var(--font-body);
   pointer-events: auto;
 }
 
 .dockNight {
-  background: rgba(28, 36, 48, 0.78);
-  border-color: rgba(143, 176, 255, 0.22);
-  color: rgba(236, 239, 244, 0.92);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  border-color: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
+  color: color-mix(in srgb, var(--hc-ink) 92%, transparent);
+  box-shadow: var(--hc-elev-3);
 }
 
 .list {
@@ -31,17 +31,17 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .slotTrail {
-  margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(36, 19, 24, 0.08);
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hc-line-soft);
 }
 
 .dockNight .slotTrail {
-  border-top-color: rgba(143, 176, 255, 0.18);
+  border-top-color: color-mix(in srgb, var(--proposed-stroke) 18%, transparent);
 }
 
 .btn {
@@ -49,13 +49,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   width: 100%;
   min-width: 44px;
   min-height: 44px;
-  padding: 4px 6px;
+  padding: 3px 4px;
   border: none;
-  border-radius: var(--hc-r-control, 10px);
+  border-radius: var(--hc-r-control);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -64,29 +64,29 @@
 }
 
 .btn:hover {
-  background: rgba(255, 211, 222, 0.28);
+  background: var(--hc-accent-wash);
 }
 
 .dockNight .btn:hover {
-  background: rgba(143, 176, 255, 0.14);
+  background: color-mix(in srgb, var(--proposed-stroke) 14%, transparent);
 }
 
 .btnActive {
-  background: rgba(255, 211, 222, 0.42);
+  background: var(--hc-accent-wash);
 }
 
 .dockNight .btnActive {
-  background: rgba(143, 176, 255, 0.22);
+  background: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
 }
 
 .glyph {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
 }
 
 .label {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 7.5px;
+  font-size: 7px;
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;

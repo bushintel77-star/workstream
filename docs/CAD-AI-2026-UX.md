@@ -20,7 +20,7 @@ AI is a **spatial collaborator inside the drawing**, not a separate chatbot. Tre
 | --- | --- | --- |
 | Edge-to-edge canvas | Viewport is the drawing | Handoff board; chrome floats |
 | Contextual floating tools | Object stays clear; inventory grows in place from the Fill rail | AssetPanel + selection ring |
-| AI sidecar (right) | Collapsible: dialogue, variations, analytics | Utility hub + Live measures (collapsed by default) |
+| AI sidecar (right) | Collapsible: dialogue, variations, analytics | Utility hub + Live measures (collapsed by default); **ghost review** mounts in the right data lane when pending |
 | Structure rail (left) | Collapsed CAD data: layers, constraints | Layers panel (`layersOpen` default false) |
 | Instruments | Summon only (margin / hub) — no sticky ribbon on select | Ambient ribbon + `instrumentsSummoned` |
 | Variation filmstrip | Large 16:9 / 3:2 thumbs, bottom or sidecar | **Partial** — A/B/C session schemes + plan minimap thumbs; generative AI thumbs deferred |
@@ -75,7 +75,7 @@ Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so 
 | Guide item | Status |
 | --- | --- |
 | Contextual materials / CAD params on selection | **Yes** — AssetPanel Expanded / Placing; orbit ring clears glyph |
-| AI sidecar (dialogue + analytics) | **Partial** — utility + live measures gated by `aiSidecar` |
+| AI sidecar (dialogue + analytics) | **Partial** — utility + live measures gated by `aiSidecar`; ghost review in right lane via header **Ask AI** |
 | Structure rail left, collapsed | **Yes** — Layers left; gated by `structureRail` |
 | Variation filmstrip | **Partial** — `VariationFilmstrip` A/B/C under shared title; plan thumbs; not generative 16:9 |
 | 1:1 CAD plan ↔ 3D AI lock | **Not started** (Workflow 1 2D) |

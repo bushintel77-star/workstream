@@ -89,6 +89,10 @@ export type StudioUiState = {
   rightDataPanel: RightDataPanel | null;
   leftAssetPanel: LeftAssetPanel;
   leftAssetRestore: LeftAssetRestore | null;
+  /** Pin expanded library so place / canvas interact do not auto-collapse. */
+  leftAssetPinned: boolean;
+  /** Session place recents for command-palette ranking. */
+  recentAssetTypes: StudioItemType[];
   layerOpacity: LayerOpacity;
   /** View-only layer isolation; never persisted to DesignCanvas. */
   isolatedLayer: LayerKey | null;

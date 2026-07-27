@@ -3,6 +3,8 @@
  * eraser is a rubber block, not a generic cell cursor.
  */
 
+import { PALETTE } from "../../../../../styles/colorTokens";
+
 export type SketchTipGrade = "fine" | "medium" | "marker";
 
 export const SKETCH_TIP_GRADES: readonly SketchTipGrade[] = [
@@ -45,28 +47,28 @@ export function sketchPenCursor(tip: SketchTipGrade = "medium"): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">` +
       `<g transform="rotate(-35 16 16)">` +
       `<rect x="${16 - bodyW / 2}" y="4" width="${bodyW}" height="18" rx="1.4" ` +
-      `fill="#241318" fill-opacity="0.92"/>` +
+      `fill="${PALETTE.grayL900}" fill-opacity="0.92"/>` +
       `<rect x="${16 - bodyW / 2 + 0.7}" y="5" width="${Math.max(1.5, bodyW - 1.4)}" height="5" rx="0.8" ` +
-      `fill="#C2455F" fill-opacity="0.85"/>` +
+      `fill="${PALETTE.crimsonL600}" fill-opacity="0.85"/>` +
       `<path d="M${16 - r * 0.9} 22 L16 ${22 + r * 2.2} L${16 + r * 0.9} 22 Z" ` +
-      `fill="#1C1917"/>` +
-      `<circle cx="16" cy="${22 + r * 2.05}" r="${Math.max(0.7, r * 0.55)}" fill="#1C1917"/>` +
+      `fill="${PALETTE.grayL900}"/>` +
+      `<circle cx="16" cy="${22 + r * 2.05}" r="${Math.max(0.7, r * 0.55)}" fill="${PALETTE.grayL900}"/>` +
       `</g></svg>`,
   );
   return `url("data:image/svg+xml,${svg}") ${PEN_HOTSPOT.x} ${PEN_HOTSPOT.y}, crosshair`;
 }
 
-/** CSS cursor — pink rubber eraser tip. */
+/** CSS cursor — neutral rubber eraser tip. */
 export function sketchEraserCursor(): string {
   const svg = encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">` +
       `<g transform="rotate(-28 14 22)">` +
       `<rect x="6" y="14" width="14" height="10" rx="2.2" ` +
-      `fill="#FFD3DE" stroke="#C2455F" stroke-width="1.1"/>` +
-      `<rect x="6" y="14" width="14" height="3.2" rx="1.2" fill="#F6EAED"/>` +
-      `<path d="M8 24h10" stroke="#B08A95" stroke-width="1" stroke-linecap="round"/>` +
+      `fill="${PALETTE.grayL200}" stroke="${PALETTE.grayL400}" stroke-width="1.1"/>` +
+      `<rect x="6" y="14" width="14" height="3.2" rx="1.2" fill="${PALETTE.grayL100}"/>` +
+      `<path d="M8 24h10" stroke="${PALETTE.grayL400}" stroke-width="1" stroke-linecap="round"/>` +
       `</g>` +
-      `<circle cx="8" cy="26" r="1.4" fill="#7A5560" fill-opacity="0.45"/>` +
+      `<circle cx="8" cy="26" r="1.4" fill="${PALETTE.grayL500}" fill-opacity="0.45"/>` +
       `</svg>`,
   );
   return `url("data:image/svg+xml,${svg}") ${ERASER_HOTSPOT.x} ${ERASER_HOTSPOT.y}, cell`;

@@ -60,6 +60,8 @@ export const PALETTE = {
   apwaReclaimed: "#8B4FC7",
   waterL500: "#2E86AB",
   waterD400: "#4098C4",
+  warningL500: "#B8860B",
+  warningD400: "#D4A017",
 } as const;
 
 /** Semantic plan colours — light theme. */
@@ -82,6 +84,10 @@ export const SEMANTIC_LIGHT = {
   timber: PALETTE.timberL400,
   water: PALETTE.waterL500,
   hedge: PALETTE.hedgeL600,
+  warning: PALETTE.warningL500,
+  danger: PALETTE.crimsonL600,
+  success: PALETTE.sproutL500,
+  sheetPaper: PALETTE.grayL50,
 } as const;
 
 /** Semantic plan colours — dark theme (stroke ≠ text). */
@@ -104,6 +110,10 @@ export const SEMANTIC_DARK = {
   timber: PALETTE.timberD300,
   water: PALETTE.waterD400,
   hedge: PALETTE.hedgeD500,
+  warning: PALETTE.warningD400,
+  danger: PALETTE.crimsonD400,
+  success: PALETTE.sproutD400,
+  sheetPaper: PALETTE.grayD0,
 } as const;
 
 export function semanticForTheme(dark: boolean) {
@@ -158,6 +168,9 @@ export const CSS_TOKEN = {
   apwaElectric: "var(--apwa-electric)",
   apwaComms: "var(--apwa-comms)",
   apwaReclaimed: "var(--apwa-reclaimed)",
+  warning: "var(--warning)",
+  danger: "var(--danger)",
+  success: "var(--success)",
 } as const;
 
 /** Common plan fills as ready-to-paint CSS strings. */

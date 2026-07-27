@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import {
+  clickHeaderViewItem,
+  createSurveyProject,
+  handoffStudio,
+} from "./helpers";
 
 /**
  * Lane law — no two `[data-camera-chrome-card]` bboxes may intersect.
@@ -72,7 +76,7 @@ test.describe("Lane law — chrome card overlap", () => {
     });
 
     // Open layers (right lane) — must not sit under the tool tray.
-    await page.getByTestId("canvas-layers-top").click();
+    await clickHeaderViewItem(page, "canvas-layers-top");
     await expect(page.getByTestId("layers-panel")).toBeVisible({
       timeout: 10_000,
     });
@@ -91,7 +95,7 @@ test.describe("Lane law — chrome card overlap", () => {
       fullPage: false,
     });
 
-    await page.getByTestId("dark-canvas-top").click();
+    await clickHeaderViewItem(page, "dark-canvas-top");
 
     await assertNoCardOverlap(page);
     await wheelZoom(page, 400);
@@ -115,8 +119,8 @@ test.describe("Lane law — chrome card overlap", () => {
     await expect(page.getByTestId("canvas-sites-top")).toHaveCount(0);
     await expect(page.getByTestId("sites-popover")).toHaveCount(0);
 
-    // Single right-lane occupant — toggling layers closed frees the lane.
-    await page.getByTestId("canvas-layers-top").click();
+    // Single right-lane occupant — closing layers frees the lane.
+    await page.getByRole("button", { name: "Close layers" }).click();
     await expect(page.getByTestId("layers-panel")).toHaveCount(0);
   });
 });

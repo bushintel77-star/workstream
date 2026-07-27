@@ -45,14 +45,14 @@
   transform: translate(-50%, -50%);
   border-radius: 50%;
   border: none;
-  background: var(--sds-vector-primary, #1a1a1a);
+  background: var(--sds-vector-primary);
   cursor: grab;
   pointer-events: auto;
   box-shadow: 0 0 0 2px rgba(247, 244, 239, 0.9);
 }
 
 .cornerNodeBuilding {
-  background: var(--sds-vector-muted, #8c8a85);
+  background: var(--sds-vector-muted, var(--hc-ink-faint));
 }
 
 .midHandle {
@@ -61,14 +61,14 @@
   height: var(--sds-node-mid, 6px);
   transform: translate(-50%, -50%) rotate(45deg);
   background: transparent;
-  border: 1.5px solid var(--sds-vector-muted, #8c8a85);
+  border: 1.5px solid var(--sds-vector-muted, var(--hc-ink-faint));
   border-radius: 1px;
   cursor: copy;
   pointer-events: auto;
 }
 
 .midHandleBuilding {
-  border-color: var(--sds-vector-muted, #8c8a85);
+  border-color: var(--sds-vector-muted, var(--hc-ink-faint));
 }
 
 .edgeHit {
@@ -107,9 +107,9 @@
   min-width: 148px;
   padding: 4px;
   border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: rgba(255, 246, 248, 0.97);
-  box-shadow: 0 10px 28px rgba(36, 19, 24, 0.14);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
+  box-shadow: 0 10px 28px var(--hc-line);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -125,12 +125,12 @@
   font: inherit;
   font-size: 11.5px;
   font-weight: 600;
-  color: #241318;
+  color: var(--hc-ink);
   cursor: pointer;
 }
 
 .nodeMenuBtn:hover:not(:disabled) {
-  background: rgba(36, 19, 24, 0.06);
+  background: var(--hc-line-soft);
 }
 
 .nodeMenuBtn:disabled {
@@ -151,7 +151,7 @@
 .obliqueTick {
   width: var(--sds-tick-len, 6px);
   height: 1.5px;
-  background: var(--sds-vector-primary, #1a1a1a);
+  background: var(--sds-vector-primary);
   transform: rotate(45deg);
   flex: none;
 }
@@ -163,7 +163,7 @@
   height: 1.5px;
   margin-left: -4px;
   margin-top: -0.75px;
-  background: #1c1917;
+  background: var(--hc-ink);
   transform: rotate(45deg);
   pointer-events: none;
   z-index: 6;
@@ -286,9 +286,9 @@
   max-width: 140px;
   min-height: 22px;
   padding: 2px 7px;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-pill, 999px);
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.82));
+  background: var(--hc-glass-soft);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   pointer-events: none;
@@ -301,7 +301,7 @@
   font-size: var(--ws-type-hud, 11px);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  color: var(--hc-ink, rgba(28, 25, 23, 0.9));
+  color: var(--hc-ink);
   background: transparent;
   padding: 0;
   line-height: 1.15;
@@ -314,7 +314,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   text-shadow: none;
 }
 
@@ -469,13 +469,13 @@
 
 .editBanner {
   position: absolute;
-  /* Top-centre — left is tool tray, right is the data lane. */
+  /* Below header safe band — never stacks under Vic-gov / context chrome. */
   left: 50%;
   transform: translateX(-50%);
-  top: 14px;
+  top: calc(var(--ws-safe-top, 40px) + 10px);
   max-width: min(420px, calc(100% - 480px));
-  background: rgba(28, 25, 23, 0.9);
-  color: #f2f0eb;
+  background: color-mix(in srgb, var(--hc-ink) 90%, transparent);
+  color: var(--hc-invert, var(--canvas));
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   padding: 7px 12px;
@@ -483,7 +483,7 @@
   white-space: normal;
   line-height: 1.35;
   box-shadow: none;
-  z-index: 45;
+  z-index: 44;
   pointer-events: none;
 }
 
@@ -558,7 +558,7 @@
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   opacity: 0.55;
   white-space: nowrap;
   text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
@@ -568,17 +568,30 @@
   position: absolute;
   transform: translate(-50%, -50%);
   margin: 0;
-  padding: 5px 9px;
-  border: 1px dashed var(--hc-line, rgba(36, 19, 24, 0.12));
-  border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
-  color: var(--hc-ink-muted, #7a5560);
+  padding: 8px 12px;
+  min-height: 44px;
+  border: 1px dashed var(--hc-line);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-glass-soft);
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.03em;
   pointer-events: none;
   white-space: nowrap;
+}
+
+button.missingBuildingCue {
+  pointer-events: auto;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
+button.missingBuildingCue:hover {
+  color: var(--hc-ink);
+  border-color: color-mix(in srgb, var(--existing-stroke) 45%, var(--hc-line));
 }
 
 .draftGrid {
@@ -672,7 +685,7 @@
 
 .flagged {
   /* Charcoal dashed emphasis — no neon pulse */
-  outline: 1px dashed #1c1917;
+  outline: 1px dashed var(--hc-ink);
   outline-offset: 2px;
 }
 
@@ -697,7 +710,7 @@
   padding: 2px 7px;
   border-radius: 0;
   background: rgba(28, 25, 23, 0.9);
-  color: #f2f0eb;
+  color: var(--canvas);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
   font-weight: 600;
@@ -712,8 +725,8 @@
   height: 13px;
   padding: 0 4px;
   border-radius: 0;
-  background: #1c1917;
-  color: #f2f0eb;
+  background: var(--hc-ink);
+  color: var(--canvas);
   font-family: "IBM Plex Mono", monospace;
   font-size: 7.5px;
   font-weight: 600;
@@ -726,7 +739,7 @@
 
 .aiChipHot {
   opacity: 1;
-  outline: 1px solid rgba(28, 25, 23, 0.35);
+  outline: 1px solid var(--sheet-border, var(--hc-line));
   outline-offset: 1px;
 }
 
@@ -746,9 +759,9 @@
   height: 20px;
   padding: 0 8px;
   border-radius: 0;
-  border: 1px solid #1c1917;
-  background: #1c1917;
-  color: #f2f0eb;
+  border: 1px solid var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--canvas);
   font-size: 9.5px;
   font-weight: 600;
   cursor: pointer;
@@ -759,9 +772,9 @@
   height: 20px;
   width: 20px;
   border-radius: 0;
-  border: 1px solid rgba(28, 25, 23, 0.35);
+  border: 1px solid var(--sheet-border, var(--hc-line));
   background: transparent;
-  color: #1c1917;
+  color: var(--hc-ink);
   font-size: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -771,9 +784,9 @@
   height: 20px;
   padding: 0 8px;
   border-radius: 0;
-  border: 1px solid #1c1917;
-  background: #f2f0eb;
-  color: #1c1917;
+  border: 1px solid var(--hc-ink);
+  background: var(--canvas);
+  color: var(--hc-ink);
   font-size: 9.5px;
   font-weight: 600;
   cursor: pointer;
@@ -865,13 +878,13 @@
   min-height: 24px;
   max-width: min(260px, 46vw);
   padding: 3px 8px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
   backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  box-shadow: var(--hc-elev-1);
   pointer-events: none;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   white-space: nowrap;
 }
 
@@ -886,12 +899,12 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .cursorMetric {
   font-size: 9px;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
 }
 
 .radialMenu {
@@ -911,9 +924,9 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: rgba(255, 251, 252, 0.52);
+  background: var(--hc-glass-soft);
   backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
+  box-shadow: var(--hc-elev-1);
   pointer-events: none;
 }
 
@@ -922,12 +935,12 @@
   min-width: 50px;
   min-height: 30px;
   padding: 0 9px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 4px 16px rgba(42, 23, 29, 0.08));
-  color: var(--hc-ink, #241318);
+  box-shadow: var(--hc-elev-1);
+  color: var(--hc-ink);
   font: inherit;
   font-size: 10px;
   font-weight: 650;
@@ -939,7 +952,7 @@
 }
 
 .radialBtn:hover {
-  background: #fff6f8;
+  background: var(--hc-invert);
 }
 
 .radialNorth {
@@ -1025,8 +1038,8 @@
   min-height: 22px;
   padding: 2px 7px;
   border-radius: var(--hc-r-pill, 999px);
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.82));
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   box-shadow: none;
@@ -1040,7 +1053,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .selectedReadoutValue {
@@ -1048,7 +1061,7 @@
   font-size: 10px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
 }
 
 .selStem {
@@ -1057,7 +1070,7 @@
   top: 0;
   width: 1px;
   height: 14px;
-  background: #1c1917;
+  background: var(--hc-ink);
   pointer-events: none;
 }
 
@@ -1067,9 +1080,9 @@
   left: 0;
   top: 0;
   pointer-events: auto;
-  border: 1px solid #1c1917;
-  background: #f2f0eb;
-  color: #1c1917;
+  border: 1px solid var(--hc-ink);
+  background: var(--canvas);
+  color: var(--hc-ink);
   box-shadow: none;
   padding: 0;
 }
@@ -1112,7 +1125,7 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 8.5px;
   letter-spacing: 0.02em;
-  color: #57534e;
+  color: var(--hc-ink-muted);
 }
 
 /* Sketch-formalized regions — drawn shape rendered as plan geometry. */

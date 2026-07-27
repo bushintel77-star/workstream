@@ -10,6 +10,11 @@ import type { StudioTool } from "../../studioCatalog";
 import { buildSpotLevelFall } from "./spotLevelFall";
 import { CameraChrome } from "../../CameraChrome";
 import {
+  CSS_TOKEN,
+  mixOnCanvas,
+  semanticForTheme,
+} from "../../../../../styles/colorTokens";
+import {
   corridorFeatureId,
   easementFeatureId,
   levelFeatureId,
@@ -106,7 +111,7 @@ export function SurveyAnnotationLayer({
   const capturing =
     active && (tool === "level" || tool === "service" || tool === "calib");
 
-  const ink = darkOn ? "#E6E9EA" : "#1C1917";
+  const ink = semanticForTheme(darkOn).textPrimary;
   // Levels, service corridors and easements are one "Services & utilities"
   // layer on the single canvas — toggled/dimmed together, never a separate tab.
   const servicesVisual = resolveLayerVisual(
@@ -219,13 +224,13 @@ export function SurveyAnnotationLayer({
               <polyline
                 points={s.map((p) => `${p.x},${p.y}`).join(" ")}
                 fill="none"
-                stroke="#57534E"
+                stroke={CSS_TOKEN.textSecondary}
                 strokeWidth={0.28}
                 strokeDasharray="1.6 1"
                 vectorEffect="non-scaling-stroke"
               />
               {s.map((p, i) => (
-                <circle key={i} cx={p.x} cy={p.y} r={0.4} fill="#57534E" />
+                <circle key={i} cx={p.x} cy={p.y} r={0.4} fill={CSS_TOKEN.textSecondary} />
               ))}
             </g>
           );
@@ -253,7 +258,7 @@ export function SurveyAnnotationLayer({
                     <polygon
                       points={ring.map((p) => `${p.x},${p.y}`).join(" ")}
                       fill="none"
-                      stroke="#57534E"
+                      stroke={CSS_TOKEN.textSecondary}
                       strokeWidth={0.3}
                       strokeDasharray="1.2 0.8"
                       vectorEffect="non-scaling-stroke"
@@ -271,7 +276,7 @@ export function SurveyAnnotationLayer({
                 y1={calibPts[0]!.y}
                 x2={calibPts[1]!.x}
                 y2={calibPts[1]!.y}
-                stroke="#1C1917"
+                stroke={CSS_TOKEN.textPrimary}
                 strokeWidth={0.25}
                 vectorEffect="non-scaling-stroke"
               />
@@ -283,7 +288,7 @@ export function SurveyAnnotationLayer({
                 cy={p.y}
                 r={0.7}
                 fill="none"
-                stroke="#1C1917"
+                stroke={CSS_TOKEN.textPrimary}
                 strokeWidth={0.25}
                 vectorEffect="non-scaling-stroke"
               />
@@ -346,7 +351,7 @@ export function SurveyAnnotationLayer({
                 y1={fall.high.y}
                 x2={fall.low.x}
                 y2={fall.low.y}
-                stroke={darkOn ? "rgba(230,233,234,0.5)" : "rgba(28,25,23,0.4)"}
+                stroke={mixOnCanvas(CSS_TOKEN.textPrimary, darkOn ? 50 : 40)}
                 strokeWidth={0.14}
                 strokeDasharray="0.5 0.7"
                 markerEnd={fall.flat ? undefined : "url(#survey-fall-arrow)"}

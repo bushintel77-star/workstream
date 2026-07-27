@@ -9,6 +9,25 @@ import type { StudioMode, StudioTool } from "../studioCatalog";
  * Asset library is never a separate frost popup (`inventoryPopup` always false).
  * AI = intelligent intern — ghosts never silent-write (constraint-first).
  */
+
+/**
+ * One contextual top-centre hint at a time (lane law — avoid stacked overlays).
+ * Trace owns its own bar; edit banner and tilt pause pill are mutually exclusive.
+ */
+export type TopHintKind = "none" | "trace" | "edit" | "tilt";
+
+export function resolveTopHint(input: {
+  tool: StudioTool;
+  /** CadPlanBoard vector-edit affordance (node/edge hover or drag). */
+  vectorEditHint: boolean;
+  tiltPauseHint: boolean;
+}): TopHintKind {
+  if (input.tool === "trace") return "trace";
+  if (input.vectorEditHint) return "edit";
+  if (input.tiltPauseHint) return "tilt";
+  return "none";
+}
+
 export type HandoffChrome = {
   /** Right utility hub — BOM / compliance (feeds the AI sidecar pattern) */
   utilityDrawer: boolean;

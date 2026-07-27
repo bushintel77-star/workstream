@@ -61,13 +61,13 @@ export function NewProjectAddressForm() {
           setSuggestions(results);
           setHint(
             results.length === 0
-              ? "No matches in the list — you can still continue and pin on the aerial."
-              : "Tap a match below.",
+              ? "No matches — continue still locates the typed address."
+              : "Tap a match to locate the property.",
           );
         } catch {
           if (requestId !== requestIdRef.current) return;
           setSuggestions([]);
-          setHint("Search failed — continue with the typed address.");
+          setHint("Search failed — continue still locates the typed address.");
         } finally {
           if (requestId === requestIdRef.current) setSearching(false);
         }
@@ -79,34 +79,39 @@ export function NewProjectAddressForm() {
     };
   }, [query, selected]);
 
+  /** First create only — locate loader, then canvas. Reopening a project skips this. */
+  function goLocate(address: string, lat: number, lng: number) {
+    const params = new URLSearchParams({
+      address,
+      lat: String(lat),
+      lng: String(lng),
+    });
+    router.push(`/confirm-pin?${params.toString()}`);
+  }
+
   function pickSuggestion(item: Suggestion) {
     setSelected(item);
     setQuery(item.place_name);
     setSuggestions([]);
     setHint(null);
+    goLocate(item.place_name, item.lat, item.lng);
   }
 
-  function goConfirm() {
+  function goOpen() {
     const trimmed = query.trim();
     if (trimmed.length < 5) return;
 
     if (selected) {
-      const params = new URLSearchParams({
-        address: selected.place_name,
-        lat: String(selected.lat),
-        lng: String(selected.lng),
-      });
-      router.push(`/confirm-pin?${params.toString()}`);
+      goLocate(selected.place_name, selected.lat, selected.lng);
       return;
     }
 
     const fallback = suggestions[0];
-    const params = new URLSearchParams({
-      address: trimmed,
-      lat: String(fallback?.lat ?? MELBOURNE_FALLBACK.lat),
-      lng: String(fallback?.lng ?? MELBOURNE_FALLBACK.lng),
-    });
-    router.push(`/confirm-pin?${params.toString()}`);
+    goLocate(
+      trimmed,
+      fallback?.lat ?? MELBOURNE_FALLBACK.lat,
+      fallback?.lng ?? MELBOURNE_FALLBACK.lng,
+    );
   }
 
   const canContinue = query.trim().length >= 5;
@@ -129,7 +134,7 @@ export function NewProjectAddressForm() {
                 pickSuggestion(suggestions[0]);
                 return;
               }
-              goConfirm();
+              goOpen();
             }
           }}
           placeholder="Start typing — e.g. 6 Beatty Ave, Armadale"
@@ -175,9 +180,9 @@ export function NewProjectAddressForm() {
         type="button"
         className={css.submit}
         disabled={!canContinue}
-        onClick={goConfirm}
+        onClick={goOpen}
       >
-        {selected ? "Open site →" : "Continue with this address →"}
+        Locate property →
       </button>
     </div>
   );

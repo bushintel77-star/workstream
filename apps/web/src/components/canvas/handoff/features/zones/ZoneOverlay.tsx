@@ -9,6 +9,7 @@ import {
 import type { PctPoint } from "../../geometry";
 import type { BoardCamera } from "../../geometry/cameraPointer";
 import { CameraChrome } from "../../CameraChrome";
+import { CSS_TOKEN, mixOnCanvas } from "../../../../../styles/colorTokens";
 import css from "./zones.module.css";
 
 type Props = {
@@ -29,16 +30,16 @@ function strokeFor(kind: IrrigationZoneKind): {
 } {
   switch (kind) {
     case "lighting":
-      return { color: "#57534E", dash: "1.4 1.1", width: 0.35 };
+      return { color: CSS_TOKEN.textSecondary, dash: "1.4 1.1", width: 0.35 };
     case "lighting_conduit":
-      return { color: "#78716C", dash: "0.9 0.55", width: 0.42 };
+      return { color: CSS_TOKEN.textMuted, dash: "0.9 0.55", width: 0.42 };
     case "spray":
-      return { color: "#15803D", dash: "2.2 0.7", width: 0.38 };
+      return { color: CSS_TOKEN.plantingNewStroke, dash: "2.2 0.7", width: 0.38 };
     case "agg_drain":
-      return { color: "#92400E", dash: "1.1 0.7 0.35 0.7", width: 0.4 };
+      return { color: CSS_TOKEN.timber, dash: "1.1 0.7 0.35 0.7", width: 0.4 };
     case "drip":
     default:
-      return { color: "#3F6212", dash: "2 0.9", width: 0.35 };
+      return { color: CSS_TOKEN.hedge, dash: "2 0.9", width: 0.35 };
   }
 }
 
@@ -233,7 +234,7 @@ export function ZoneOverlay({
                     y={fitPt.y - 1.1}
                     width={2.2}
                     height={2.2}
-                    fill="rgba(242, 240, 235, 0.95)"
+                    fill={mixOnCanvas(CSS_TOKEN.panel, 95)}
                     stroke={stroke.color}
                     strokeWidth={0.28}
                     vectorEffect="non-scaling-stroke"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveHandoffChrome } from "./handoffChrome";
+import { resolveHandoffChrome, resolveTopHint } from "./handoffChrome";
 
 const base = {
   tool: "select" as const,
@@ -7,6 +7,38 @@ const base = {
   frameOn: false,
   clientView: false,
 };
+
+describe("resolveTopHint", () => {
+  it("prefers trace over edit and tilt", () => {
+    expect(
+      resolveTopHint({
+        tool: "trace",
+        vectorEditHint: true,
+        tiltPauseHint: true,
+      }),
+    ).toBe("trace");
+  });
+
+  it("suppresses tilt while the vector edit banner is showing", () => {
+    expect(
+      resolveTopHint({
+        tool: "select",
+        vectorEditHint: true,
+        tiltPauseHint: true,
+      }),
+    ).toBe("edit");
+  });
+
+  it("shows tilt when no edit or trace hint", () => {
+    expect(
+      resolveTopHint({
+        tool: "select",
+        vectorEditHint: false,
+        tiltPauseHint: true,
+      }),
+    ).toBe("tilt");
+  });
+});
 
 describe("resolveHandoffChrome", () => {
   it("hides Live BOM and floating consumer docks in Sketch", () => {

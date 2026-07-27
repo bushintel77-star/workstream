@@ -1,13 +1,13 @@
 /*
  * Vic-gov status chip row — replaces stacked Env/Services/Site/Trees cards.
- * One horizontal frost rail, flush-right; expands into rightDataPanel.
+ * Header strip (default) or legacy on-canvas dock.
  */
 
 .row {
-  --hc-ink: #241318;
-  --hc-ink-muted: #7a5560;
-  --hc-ink-faint: #b08a95;
-  --hc-line-soft: rgba(36, 19, 24, 0.1);
+  --hc-ink: var(--hc-ink);
+  --hc-ink-muted: var(--hc-ink-muted);
+  --hc-ink-faint: var(--hc-ink-faint);
+  --hc-line-soft: var(--hc-line-soft);
   position: absolute;
   top: calc(var(--ws-safe-top, 40px) + 28px);
   right: 0;
@@ -27,21 +27,49 @@
   background:
     linear-gradient(
       90deg,
-      rgba(255, 251, 252, 0.54) 0%,
-      rgba(255, 251, 252, 0.82) 18%,
-      rgba(246, 234, 237, 0.92) 100%
+      var(--hc-glass-soft) 0%,
+      var(--hc-glass-soft) 18%,
+      var(--hc-glass-soft) 100%
     );
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
   backdrop-filter: blur(18px) saturate(1.08);
   box-shadow:
-    -14px 0 34px rgba(42, 23, 29, 0.07),
-    inset 1px 0 rgba(255, 255, 255, 0.66);
+    -14px 0 34px var(--hc-neu-shadow),
+    inset 1px 0 var(--hc-neu-light);
   animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .row[data-lane="busy"] {
   right: min(304px, calc(100vw - 40px));
   max-width: min(520px, calc(100vw - 320px));
+}
+
+/* After .row so header placement wins the cascade (not absolute dock). */
+.row.rowHeader {
+  position: relative;
+  top: auto;
+  right: auto;
+  z-index: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(560px, 42vw);
+  border-radius: var(--hc-r-control);
+  border-right: 1px solid var(--hc-line-soft);
+  background: var(--hc-neu-surface);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
+  );
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  animation: none;
+  border: 1px solid var(--hc-line-soft);
+}
+
+.row.rowHeader[data-lane="busy"] {
+  right: auto;
+  max-width: min(420px, 34vw);
 }
 
 .chip {
@@ -70,15 +98,18 @@
 }
 
 .chip:hover {
-  background: rgba(255, 246, 248, 0.55);
+  background: var(--hc-glass-soft);
 }
 
 .chip[data-active="true"] {
-  background: rgba(36, 19, 24, 0.06);
-  box-shadow: inset 0 -2px 0 var(--proposed-stroke, #2f6f4e);
+  background: var(--hc-line-soft);
+  box-shadow: inset 0 -2px 0 var(--proposed-stroke, var(--hc-success));
 }
 
 .label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 8px;
   font-weight: 650;
@@ -101,23 +132,23 @@
 
 /* Status tones — map to plan semantic tokens */
 .chip[data-status="ok"] .face {
-  color: var(--proposed-stroke, #2f6f4e);
+  color: var(--proposed-stroke, var(--hc-success));
 }
 
 .chip[data-status="flag"] .face {
-  color: var(--existing-stroke, #a33a4a);
+  color: var(--existing-stroke, var(--hc-danger));
 }
 
 .chip[data-status="warn"] .face {
-  color: var(--existing-stroke, #a33a4a);
+  color: var(--existing-stroke, var(--hc-danger));
 }
 
 .chip[data-status="muted"] .face {
-  color: var(--gray-400, #9a8a90);
+  color: var(--gray-l-400, var(--hc-ink-faint));
 }
 
 .chip[data-status="pending"] .face {
-  color: var(--gray-400, #9a8a90);
+  color: var(--gray-l-400, var(--hc-ink-faint));
   opacity: 0.75;
 }
 

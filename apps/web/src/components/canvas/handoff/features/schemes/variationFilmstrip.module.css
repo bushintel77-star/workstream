@@ -8,11 +8,11 @@
   gap: 10px;
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.78));
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass-soft);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
+  box-shadow: var(--hc-elev-2);
   pointer-events: auto;
 }
 
@@ -22,7 +22,7 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint, #b08a95);
+  color: var(--hc-ink-faint);
 }
 
 .thumbs {
@@ -41,39 +41,39 @@
   padding: 3px;
   gap: 2px;
   border-radius: 12px;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
-  background: rgba(255, 251, 252, 0.55);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
   cursor: pointer;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   overflow: hidden;
 }
 
 .thumb[data-active="true"] {
-  border-color: var(--hc-ink, #241318);
-  background: #241318;
-  color: #fff6f8;
+  border-color: var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--hc-invert);
 }
 
 .miniPlan {
   width: 100%;
   aspect-ratio: 16 / 10;
   border-radius: 8px;
-  background: rgba(247, 244, 239, 0.95);
+  background: color-mix(in srgb, var(--sheet-paper) 95%, transparent);
 }
 
 .thumb[data-active="true"] .miniPlan {
-  background: rgba(255, 246, 248, 0.12);
+  background: color-mix(in srgb, var(--hc-invert) 12%, transparent);
 }
 
 .miniBoundary {
-  fill: rgba(36, 19, 24, 0.04);
-  stroke: rgba(36, 19, 24, 0.45);
+  fill: var(--hc-line-soft);
+  stroke: color-mix(in srgb, var(--hc-ink) 45%, transparent);
   stroke-width: 1.2;
 }
 
 .miniBuilding {
-  fill: rgba(36, 19, 24, 0.12);
-  stroke: rgba(36, 19, 24, 0.55);
+  fill: var(--hc-line);
+  stroke: color-mix(in srgb, var(--hc-ink) 55%, transparent);
   stroke-width: 0.9;
 }
 
@@ -105,19 +105,19 @@
 }
 
 .thumb[data-active="true"] .miniBoundary {
-  stroke: rgba(255, 246, 248, 0.55);
-  fill: rgba(255, 246, 248, 0.06);
+  stroke: var(--hc-glass-soft);
+  fill: var(--hc-glass-soft);
 }
 
 .thumb[data-active="true"] .miniBuilding {
-  fill: rgba(255, 246, 248, 0.18);
-  stroke: rgba(255, 246, 248, 0.65);
+  fill: color-mix(in srgb, var(--hc-invert) 18%, transparent);
+  stroke: color-mix(in srgb, var(--hc-invert) 65%, transparent);
 }
 
 .thumb[data-active="true"] .miniPath,
 .thumb[data-active="true"] .miniItem {
-  stroke: rgba(255, 246, 248, 0.85);
-  fill: rgba(255, 246, 248, 0.75);
+  stroke: color-mix(in srgb, var(--hc-invert) 85%, transparent);
+  fill: color-mix(in srgb, var(--hc-invert) 75%, transparent);
 }
 
 .letter {
@@ -132,9 +132,9 @@
   min-height: 44px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px dashed var(--hc-line, rgba(36, 19, 24, 0.2));
+  border: 1px dashed var(--hc-line);
   background: transparent;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   cursor: pointer;

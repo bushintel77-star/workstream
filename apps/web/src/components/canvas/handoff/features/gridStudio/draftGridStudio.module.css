@@ -2,11 +2,11 @@
 
 .root {
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
-  --ink: var(--hc-ink, #241318);
-  --ink-soft: var(--hc-ink-muted, #7a5560);
-  --glass: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
-  --glass-border: var(--hc-line, rgba(36, 19, 24, 0.12));
-  --elev: var(--hc-elev, 0 8px 28px rgba(42, 23, 29, 0.12));
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --glass: var(--hc-glass-soft);
+  --glass-border: var(--hc-line);
+  --elev: var(--hc-elev, 0 8px 28px var(--hc-neu-shadow));
   position: absolute;
   z-index: 20;
   display: flex;
@@ -28,7 +28,7 @@
 
 .root[data-awake="true"] {
   opacity: 0.92;
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  background: var(--hc-glass-soft);
 }
 
 .face {
@@ -46,7 +46,7 @@
 }
 
 .face:hover {
-  background: #fff6f8;
+  background: var(--hc-invert);
 }
 
 .glyph {
@@ -83,7 +83,7 @@
   padding: 0;
   border-radius: 5px;
   border: 1px solid var(--glass-border);
-  background: var(--ink, rgba(36, 19, 24, 0.2));
+  background: var(--ink);
   cursor: pointer;
   flex: none;
 }
@@ -112,13 +112,13 @@
 
 .grain:hover,
 .snap:hover {
-  background: #fff6f8;
+  background: var(--hc-invert);
   color: var(--ink);
 }
 
 .snapOn {
-  color: #c2455f;
-  background: #ffd3de;
+  color: var(--hc-danger);
+  background: var(--hc-accent-wash);
 }
 
 @media (prefers-reduced-motion: reduce) {

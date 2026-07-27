@@ -6,12 +6,12 @@
   width: min(240px, calc(100vw - 28px));
   padding: 12px 14px;
   border-radius: var(--hc-r-panel, 14px);
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
   backdrop-filter: none;
-  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
+  box-shadow: var(--hc-elev-2);
   font-family: var(--font-body);
-  color: #241318;
+  color: var(--hc-ink);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -31,7 +31,7 @@
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   line-height: 1.35;
 }
 
@@ -41,11 +41,11 @@
   font-size: 8.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .shadowLine span:first-child {
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   font-size: 10.5px;
 }
 
@@ -61,7 +61,7 @@
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
   font-family: "IBM Plex Mono", monospace;
 }
 
@@ -74,7 +74,7 @@
   font-size: 22px;
   font-weight: 650;
   letter-spacing: -0.02em;
-  color: #241318;
+  color: var(--hc-ink);
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
@@ -87,7 +87,7 @@
 .gst {
   font-size: 11px;
   font-weight: 600;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .lines {
@@ -106,7 +106,7 @@
 .amt {
   font-family: "IBM Plex Mono", monospace;
   font-variant-numeric: tabular-nums;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .chips {
@@ -119,10 +119,10 @@
 .chip {
   min-height: 28px;
   padding: 0 10px;
-  border-radius: var(--hc-r-control, 10px);
-  border: 1px dashed rgba(36, 19, 24, 0.28);
-  background: rgba(36, 19, 24, 0.04);
-  color: #241318;
+  border-radius: var(--hc-r-control);
+  border: 1px dashed var(--hc-line);
+  background: var(--hc-line-soft);
+  color: var(--hc-ink);
   font: inherit;
   font-size: 10px;
   font-weight: 650;
@@ -131,16 +131,16 @@
 
 .chip[data-on="true"] {
   border-style: solid;
-  border-color: #241318;
-  background: #241318;
-  color: #fff6f8;
+  border-color: var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--hc-invert);
 }
 
 .foot {
   margin: 0;
   font-size: 10px;
   line-height: 1.4;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .advanced {
@@ -155,7 +155,7 @@
   padding: 0 8px;
   border: none;
   background: transparent;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   font: inherit;
   font-size: 10.5px;
   font-weight: 650;
@@ -169,5 +169,5 @@
   flex-direction: column;
   gap: 4px;
   padding-top: 2px;
-  border-top: 1px solid rgba(36, 19, 24, 0.07);
+  border-top: 1px solid var(--hc-line-soft);
 }

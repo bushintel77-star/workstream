@@ -14,8 +14,8 @@
   min-height: 34px;
   padding: 4px 10px;
   border-radius: var(--hc-r-panel, 14px);
-  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 88%, transparent);
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  background: color-mix(in srgb, var(--hc-neu-surface) 88%, transparent);
+  box-shadow: var(--hc-elev-1);
   pointer-events: auto;
 }
 
@@ -39,15 +39,15 @@
   min-height: 34px;
   padding: 0 11px;
   border: none;
-  border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-neu-raised, #f6ebef);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -1px -1px 1.5px rgba(255, 255, 255, 0.45),
-    1px 1px 2.5px rgba(42, 23, 29, 0.14),
-    0 0 0 1px rgba(36, 19, 24, 0.08)
+    -1px -1px 1.5px var(--hc-neu-light),
+    1px 1px 2.5px var(--hc-neu-shadow),
+    0 0 0 1px var(--hc-line-soft)
   );
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 650;
@@ -56,7 +56,7 @@
 }
 
 .chip:hover:not(:disabled) {
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
 }
 
 .chip:disabled {
@@ -65,28 +65,28 @@
 }
 
 .chipPrimary {
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   box-shadow: var(
     --hc-neu-out,
-    -1px -1px 2px rgba(255, 255, 255, 0.45),
-    1px 1px 3px rgba(42, 23, 29, 0.14),
-    0 0 0 1px rgba(36, 19, 24, 0.08)
+    -1px -1px 2px var(--hc-neu-light),
+    1px 1px 3px var(--hc-neu-shadow),
+    0 0 0 1px var(--hc-line-soft)
   );
   font-weight: 700;
 }
 
 .chip:focus-visible {
-  outline: 2px solid var(--hc-ink-muted, #7a5560);
+  outline: 2px solid var(--hc-ink-muted);
   outline-offset: 2px;
 }
 
 .stripDark .chip {
-  background: var(--hc-neu-raised, #2a2f39);
-  color: var(--hc-ink-muted, rgba(236, 239, 244, 0.62));
+  background: var(--hc-neu-raised);
+  color: var(--hc-ink-muted);
 }
 
 .stripDark .chipPrimary {
-  color: var(--hc-ink, #eceff4);
+  color: var(--hc-ink);
 }
 
 .state {
@@ -96,7 +96,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .hint {
@@ -106,7 +106,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .spacer {
@@ -119,7 +119,7 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   font-variant-numeric: tabular-nums;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
 }
 
 .legal {
@@ -132,7 +132,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1.4;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 /* Night board — chalk on dolphin. Modifier class (rootDark is a hashed
@@ -148,7 +148,7 @@
 }
 
 .stripDark .stamp {
-  color: rgba(236, 239, 244, 0.92);
+  color: color-mix(in srgb, var(--hc-ink) 72%, transparent);
 }
 
 @media (max-width: 900px) {

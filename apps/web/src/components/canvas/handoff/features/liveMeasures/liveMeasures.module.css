@@ -3,10 +3,10 @@
  */
 
 .rail {
-  --ink: var(--hc-ink, #241318);
-  --ink-soft: var(--hc-ink-muted, #7a5560);
-  --glass: var(--hc-glass, rgba(255, 251, 252, 0.97));
-  --glass-border: var(--hc-line, rgba(36, 19, 24, 0.14));
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --glass: var(--hc-glass);
+  --glass-border: var(--hc-line);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   /* Position owned by RightDataLane — was absolute right/top. */
@@ -20,7 +20,7 @@
   border: 1px solid var(--glass-border);
   background: var(--glass);
   backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  box-shadow: var(--hc-elev-1);
   color: var(--ink);
   pointer-events: auto;
   overflow: hidden;
@@ -55,7 +55,7 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .summary {
@@ -101,7 +101,7 @@
   font-size: 8.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .list {
@@ -124,7 +124,7 @@
 }
 
 .flash {
-  background: rgba(255, 211, 222, 0.55);
+  background: var(--hc-accent-wash);
 }
 
 .label {

@@ -4,9 +4,9 @@
   width: min(280px, calc(100vw - 40px));
   padding: 14px 16px;
   border-radius: 14px;
-  background: #241318;
-  color: #fff6f8;
-  box-shadow: 0 14px 44px rgba(42, 23, 29, 0.4);
+  background: var(--hc-ink);
+  color: var(--hc-invert);
+  box-shadow: 0 14px 44px var(--hc-neu-shadow);
   font-family: var(--font-body);
   animation: ccIn 0.22s ease-out;
 }
@@ -42,7 +42,7 @@
   margin: 8px 0 0;
   font-size: 12px;
   line-height: 1.45;
-  color: rgba(255, 246, 248, 0.82);
+  color: color-mix(in srgb, var(--hc-invert) 82%, transparent);
 }
 
 .actions {
@@ -64,12 +64,12 @@
 }
 
 .primary {
-  background: #ffd3de;
-  color: #241318;
+  background: var(--hc-accent-wash);
+  color: var(--hc-ink);
 }
 
 .ghost {
   background: transparent;
-  color: rgba(255, 246, 248, 0.75);
-  border: 1px solid rgba(255, 246, 248, 0.22);
+  color: color-mix(in srgb, var(--hc-invert) 75%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hc-invert) 22%, transparent);
 }

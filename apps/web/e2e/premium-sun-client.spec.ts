@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  clickHeaderViewItem,
   createSurveyProject,
   handoffStudio,
 } from "./helpers";
@@ -20,7 +21,7 @@ test.describe("Premium sun + client", () => {
       timeout: 15_000,
     });
 
-    await page.getByTestId("canvas-layers-top").click();
+    await clickHeaderViewItem(page, "canvas-layers-top");
     const shadeToggle = page.getByTestId("layers-shade-toggle");
     await expect(shadeToggle).toBeVisible({ timeout: 10_000 });
     await shadeToggle.click();

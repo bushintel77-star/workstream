@@ -24,8 +24,10 @@ export default async function geocodeRoutes(fastify: FastifyInstance) {
           .send({ error: "Invalid coordinates", issues: parsed.error.issues });
       }
       const { lat, lng } = parsed.data;
+      // Loader zooms neighbourhood → lot (canvas design altitude).
       return reply.send({
-        aerial_uri: aerialImageUrl(lat, lng, 800, 480, 18),
+        neighbourhood_uri: aerialImageUrl(lat, lng, 800, 480, 17),
+        aerial_uri: aerialImageUrl(lat, lng, 800, 480, 20),
         lat,
         lng,
       });

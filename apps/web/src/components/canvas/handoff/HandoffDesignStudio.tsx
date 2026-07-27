@@ -17,7 +17,11 @@ import {
   type StudioMode,
 } from "./studioCatalog";
 import { useStudioState } from "./state/useStudioState";
-import { resolveHandoffChrome } from "./state/handoffChrome";
+import {
+  resolveHandoffChrome,
+  resolveTopHint,
+} from "./state/handoffChrome";
+import { armBuildingTracePatch } from "./state/armBuildingTrace";
 import { surveyServicesAuthoringAllowed } from "./state/servicesLock";
 import {
   allowAerialUnderlay,
@@ -68,10 +72,12 @@ import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
 import { resolveBoardSunCast } from "./features/sunGrowth/resolveBoardSunCast";
 import { PathCorridorsLayer } from "./features/hardscape/PathCorridorsLayer";
 import { AssetPanel } from "./features/assetPanel/AssetPanel";
+import { AssetCommandSheet } from "./features/assetPanel/AssetCommandSheet";
 import {
   categoryForSwatch,
   needsPathGrammar,
   openLeftAssetExclusive,
+  resolveLeftSafeInsetPx,
   toggleRightDataPanelExclusive,
   withRightDataPanel,
 } from "./features/assetPanel/leftAssetPanel";
@@ -134,6 +140,11 @@ import {
 } from "./features/pointer/pointerMarks";
 import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
 import { CanvasAutosaveChip } from "./features/save/CanvasAutosaveChip";
+import {
+  HeaderViewMenu,
+  type HeaderViewMenuItem,
+} from "./features/header/HeaderViewMenu";
+import { HeaderAiPill } from "./features/header/HeaderAiPill";
 import { clampToCanvasMargin } from "./features/reach/marginSummon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
 import { SelectionDial } from "./features/selectionDial/SelectionDial";
@@ -346,10 +357,24 @@ export function HandoffDesignStudio({
   );
   const [tiltDiscoverHint, setTiltDiscoverHint] = useState(false);
   const [tiltPauseHint, setTiltPauseHint] = useState(false);
+  /** CadPlanBoard node/edge edit affordance — arbitrates top-centre hints. */
+  const [vectorEditHint, setVectorEditHint] = useState(false);
   const tiltHintSeenRef = useRef(false);
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
   const [sharePopupOpen, setSharePopupOpen] = useState(false);
+  /** Frozen QuoteDoc → ShareRevision payload (set from QuoteBuilder Share). */
+  const [shareQuoteFreeze, setShareQuoteFreeze] = useState<{
+    quoteLines: Array<{
+      id: string;
+      label: string;
+      unit: string;
+      qty: number;
+      total: number;
+    }>;
+    totalInclGst: number;
+  } | null>(null);
+  const [headerViewMenuOpen, setHeaderViewMenuOpen] = useState(false);
   /** Fit-sheet compose peel — header-summoned only (never a parked rail). */
   const [sheetComposeOpen, setSheetComposeOpen] = useState(false);
   const [latestShare, setLatestShare] = useState<
@@ -479,10 +504,22 @@ export function HandoffDesignStudio({
     null,
   );
   const [assetFocusSearch, setAssetFocusSearch] = useState(false);
+  /** Mobile (<720) asset command sheet — peek / expand peer to desktop dock. */
+  const [assetSheetOpen, setAssetSheetOpen] = useState(false);
+  const [compactAssetUi, setCompactAssetUi] = useState(false);
   const pickStyle = (t: StudioItemType) => {
     setEyedropArmed(false);
     studio.setUi({ paintSwatch: t, tool: "paint" });
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 719px)");
+    const sync = () => setCompactAssetUi(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
@@ -1098,6 +1135,18 @@ export function HandoffDesignStudio({
         else studio.undo();
         return;
       }
+      if (
+        !typing &&
+        !ui.cmdOpen &&
+        e.key === "/" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        studio.setUi({ cmdOpen: true });
+        return;
+      }
       if (typing || ui.cmdOpen) return;
 
       if (ui.tool === "path" && ui.drawPoly) {
@@ -1176,6 +1225,7 @@ export function HandoffDesignStudio({
             rightDataPanel: null,
             leftAssetPanel: null,
             leftAssetRestore: null,
+            leftAssetPinned: false,
             cmdOpen: false,
             addOpen: false,
             coachOpen: false,
@@ -1187,6 +1237,7 @@ export function HandoffDesignStudio({
           studio.setUi({
             leftAssetPanel: null,
             leftAssetRestore: null,
+            leftAssetPinned: false,
           });
           return;
         }
@@ -1201,6 +1252,7 @@ export function HandoffDesignStudio({
           rightDataPanel: null,
           leftAssetPanel: null,
           leftAssetRestore: null,
+          leftAssetPinned: false,
           cmdOpen: false,
           addOpen: false,
           coachOpen: false,
@@ -1478,7 +1530,9 @@ export function HandoffDesignStudio({
   const treesMetaOpen = ui.rightDataPanel === "trees";
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
-  const rightLaneBusy = ui.rightDataPanel != null;
+  const draftSurface = chrome.draftSurface;
+  const ghostsLaneOpen = draftSurface && ui.ghostReviewOpen;
+  const rightLaneBusy = ui.rightDataPanel != null || ghostsLaneOpen;
   const streetContextChips = useMemo(() => {
     const chips = studio.keylessOverlays
       .filter(
@@ -1616,16 +1670,19 @@ export function HandoffDesignStudio({
     !ui.clientView &&
     ui.zoom >= 2.2;
   /**
-   * Inventory — summoned only (Add / Paint / Path Grammar). Idle Select keeps
-   * the drawing clear; no parked Fill rail on the plan.
+   * Fill / asset panel — always on in plan CAD/sketch (command-first collapsed
+   * rail by default). Compact widths use AssetCommandSheet instead of the dock.
    */
-  const assetPanelOn =
+  const assetChromeOn =
     (ui.mode === "cad" || ui.mode === "sketch") &&
     !ui.frameOn &&
     !ui.focusOn &&
     !ui.clientView &&
-    !ui.foundationCleanse &&
-    ui.leftAssetPanel != null;
+    !ui.foundationCleanse;
+  /** Desktop dock — hidden on compact widths (mobile sheet owns placement). */
+  const assetPanelOn = assetChromeOn && !compactAssetUi;
+  const assetSheetVisible =
+    assetChromeOn && compactAssetUi && (assetSheetOpen || Boolean(ui.armed));
   /** Undo filmstrip — CAD/survey only; Sketch uses MarginStrip history. */
   const undoFilmOn =
     (ui.mode === "cad" || ui.mode === "survey") &&
@@ -1633,8 +1690,6 @@ export function HandoffDesignStudio({
     !ui.focusOn &&
     !ui.clientView &&
     !ui.foundationCleanse;
-  /** Draft AI surface only when chrome matrix allows (never Stage 1 / Fit). */
-  const draftSurface = chrome.draftSurface;
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
   /**
@@ -2127,7 +2182,7 @@ export function HandoffDesignStudio({
     ui.groupIds.length > 0 ||
     ui.addOpen ||
     ui.locked;
-  const quoteShareLines = useMemo(
+  const estimateShareLines = useMemo(
     () =>
       estimate.lines
         .filter((l) => l.total > 0)
@@ -2141,8 +2196,11 @@ export function HandoffDesignStudio({
         })),
     [estimate.lines],
   );
+  const quoteShareLines = shareQuoteFreeze?.quoteLines ?? estimateShareLines;
+  const quoteShareTotalInclGst =
+    shareQuoteFreeze?.totalInclGst ?? estimate.totalInclGst;
   const hasCostedBom =
-    quoteShareLines.length > 0 && estimate.totalInclGst > 0;
+    quoteShareLines.length > 0 && quoteShareTotalInclGst > 0;
 
   const modeProgress = useMemo(
     () => ({
@@ -2265,14 +2323,33 @@ export function HandoffDesignStudio({
       });
       return;
     }
+    // Command-first: arm without forcing the library open.
     studio.setUi({
       armed: t,
       tool: "add",
       addOpen: true,
       cmdOpen: false,
-      ...openLeftAssetExclusive("expanded"),
+      rightDataPanel: null,
     });
   };
+
+  const collapseLibraryUnlessPinned = () => {
+    if (ui.leftAssetPanel !== "expanded" || ui.leftAssetPinned) return;
+    studio.setUi({ leftAssetPanel: null, leftAssetRestore: null });
+  };
+
+  /** Vicmap miss / empty dwelling — one tap starts Trace → Existing dwelling. */
+  const armBuildingTrace = useCallback(() => {
+    setTiltPauseHint(false);
+    setTiltDiscoverHint(false);
+    studio.setUi(armBuildingTracePatch());
+  }, [studio]);
+
+  const topHint = resolveTopHint({
+    tool: ui.tool,
+    vectorEditHint,
+    tiltPauseHint,
+  });
 
   const pinInstrumentAnchor = (x: number, y: number) => {
     setAnchorPct(clampToCanvasMargin(x, y));
@@ -2314,9 +2391,230 @@ export function HandoffDesignStudio({
           ? `Review ${ai.pendingCount}`
           : "Ask AI";
 
+  const leftSafeInset = resolveLeftSafeInsetPx(
+    ui.leftAssetPanel,
+    assetPanelOn,
+  );
+
+  const openAssetSheet = () => {
+    setAssetSheetOpen(true);
+    studio.setUi({ cmdOpen: false, cmdQuery: "" });
+  };
+
+  const headerViewMenuHot =
+    ui.darkOn ||
+    isTiltActive(ui.tiltDeg) ||
+    servicesOpen ||
+    layersOpen ||
+    sitesOpen ||
+    ui.titleBoundaryLocked;
+
+  const handleHeaderAi = useCallback(() => {
+    if (ai.status === "scanning" || ai.status === "assisting") {
+      studio.setUi({ cmdOpen: true, cmdQuery: "" });
+      return;
+    }
+    if (ai.pendingCount === 0) {
+      void ai.scan();
+      return;
+    }
+    studio.setUi({ ghostReviewOpen: true, rightDataPanel: null });
+  }, [ai, studio]);
+
+  const headerViewMenuItems = useMemo((): HeaderViewMenuItem[] => {
+    const items: HeaderViewMenuItem[] = [];
+    if (ui.foundationCleanse || titleLocked) {
+      items.push({
+        id: "title-lock",
+        label: ui.titleBoundaryLocked ? "Unlock title" : "Lock title",
+        testId: "title-boundary-lock-top",
+        active: ui.titleBoundaryLocked,
+        onSelect: () =>
+          studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked),
+      });
+    }
+    if (ui.frameOn) {
+      items.push({
+        id: "print",
+        label: "Print fit sheet",
+        testId: "fit-sheet-print",
+        onSelect: () => window.print(),
+      });
+    }
+    items.push(
+      {
+        id: "dark",
+        label: "Dark canvas",
+        testId: "dark-canvas-top",
+        active: ui.darkOn,
+        onSelect: () => studio.setUi({ darkOn: !ui.darkOn }),
+      },
+      {
+        id: "tilt",
+        label: "Tilt view",
+        testId: "canvas-tilt-top",
+        active: isTiltActive(ui.tiltDeg),
+        onSelect: () => runTiltView(),
+      },
+    );
+    if (chrome.structureRail) {
+      items.push(
+        {
+          id: "services",
+          label: "Services ledger",
+          testId: "canvas-services-top",
+          active: servicesOpen,
+          onSelect: () =>
+            studio.setUi({
+              ...toggleRightDataPanelExclusive(ui.rightDataPanel, "services"),
+              utilityPanel: null,
+            }),
+        },
+        {
+          id: "layers",
+          label: "Layers",
+          testId: "canvas-layers-top",
+          active: layersOpen,
+          onSelect: () =>
+            studio.setUi({
+              ...toggleRightDataPanelExclusive(ui.rightDataPanel, "layers"),
+              utilityPanel: null,
+            }),
+        },
+      );
+    }
+    if (!projectId) {
+      items.push({
+        id: "sites",
+        label: "Sites",
+        testId: "canvas-sites-top",
+        active: sitesOpen,
+        onSelect: () =>
+          studio.setUi({
+            ...toggleRightDataPanelExclusive(ui.rightDataPanel, "sites"),
+            utilityPanel: null,
+          }),
+      });
+    }
+    return items;
+  }, [
+    chrome.structureRail,
+    layersOpen,
+    projectId,
+    runTiltView,
+    servicesOpen,
+    sitesOpen,
+    studio,
+    titleLocked,
+    ui.darkOn,
+    ui.foundationCleanse,
+    ui.frameOn,
+    ui.rightDataPanel,
+    ui.titleBoundaryLocked,
+    ui.tiltDeg,
+  ]);
+
+  const councilTipVisible =
+    planOn &&
+    !ui.focusOn &&
+    !ui.clientView &&
+    !ui.frameOn &&
+    Boolean(ui.councilTip);
+  const headerContextActive =
+    planOn &&
+    !ui.clientView &&
+    !ui.frameOn &&
+    (councilTipVisible ||
+      ui.setbackOn ||
+      ui.shadeOn ||
+      ui.growth !== "mature" ||
+      ui.isolatedLayer != null ||
+      ui.layerOpacity.survey < 0.95 ||
+      ui.layerOpacity.boundary < 0.95 ||
+      ui.layerOpacity.council < 0.95 ||
+      ui.layerOpacity.vegetation < 0.95 ||
+      ui.layerOpacity.services < 0.95 ||
+      ui.layerOpacity.notes < 0.95);
+  const showHeaderAiPill =
+    !ui.focusOn &&
+    !ui.clientView &&
+    !ui.foundationCleanse &&
+    !ui.frameOn;
+
+  const vicGovChipRow =
+    planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
+      <div className={css.headerVicGov} data-testid="header-vic-gov-status">
+        <StickyMetaStack
+          projectId={projectId}
+          laneBusy={rightLaneBusy}
+          activePanel={
+            servicesOpen
+              ? "services"
+              : environmentOpen
+                ? "environment"
+                : siteMetaOpen
+                  ? "site"
+                  : treesMetaOpen
+                    ? "trees"
+                    : null
+          }
+          scaleM={scaleM}
+          boundary={studio.boundary}
+          building={studio.building}
+          services={studio.services}
+          easements={studio.easements}
+          bydaAssets={studio.bydaAssets}
+          keylessOverlays={studio.keylessOverlays}
+          levels={studio.levels}
+          irrigationZones={studio.irrigationZones}
+          constructionTrenches={studio.constructionTrenches}
+          items={studio.items}
+          servicesLocked={ui.servicesLocked}
+          sunMin={ui.sunMin}
+          sunDatePreset={ui.sunDatePreset}
+          growth={ui.growth}
+          shadeOn={ui.shadeOn}
+          lat={projectLat}
+          lng={projectLng}
+          outdoorM2={outdoor}
+          titleSource={titleBlock?.sourceLabel ?? null}
+          boundarySource={ui.boundarySource}
+          councilLabel={titleBlock?.councilLabel ?? null}
+          councilHref={
+            councilDrainageChase(null, titleBlock?.councilLabel ?? null).href
+          }
+          sitePackChase={ui.sitePackChase}
+          weatherDay={weatherDay}
+          onOpenPanel={(panel) => {
+            summonStickyMeta(
+              projectId,
+              panel === "environment"
+                ? "environment"
+                : panel === "trees"
+                  ? "trees"
+                  : panel === "site"
+                    ? "site"
+                    : "services",
+            );
+            setStickyRestoreNonce((n) => n + 1);
+            studio.setUi({
+              ...withRightDataPanel(panel),
+              ...(panel === "environment" ? { shadeOn: true } : {}),
+              utilityPanel: null,
+            });
+          }}
+          onCouncilLink={(href) => {
+            if (typeof window !== "undefined") {
+              window.open(href, "_blank", "noopener,noreferrer");
+            }
+          }}
+        />
+      </div>
+    ) : null;
+
   return (
     <div
-      className={`${css.root}${darkLens ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}`}
+      className={`${css.root}${darkLens ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}${headerContextActive ? ` ${css.rootHeaderContext}` : ""}`}
       data-testid="handoff-design-studio"
       data-theme={darkLens && !ui.frameOn ? "dark" : "light"}
       data-canvas-mode={ui.mode}
@@ -2333,6 +2631,11 @@ export function HandoffDesignStudio({
           ...(rightLaneBusy
             ? {
                 ["--ws-safe-right" as string]: `${RIGHT_DATA_LANE_WIDTH_PX}px`,
+              }
+            : null),
+          ...(leftSafeInset != null
+            ? {
+                ["--ws-safe-left" as string]: `${leftSafeInset}px`,
               }
             : null),
           ...(printSheet
@@ -2356,7 +2659,11 @@ export function HandoffDesignStudio({
           }; margin: 0; }`}
         </style>
       ) : null}
-      <header className={css.header} data-testid="canvas-studio-header">
+      <header
+        className={`${css.header}${headerContextActive ? ` ${css.headerHasContext}` : ""}`}
+        data-testid="canvas-studio-header"
+      >
+        <div className={css.headerRow}>
         <div className={css.brandBlock}>
           <p className={css.brandName}>Curtis &amp; Co</p>
           <p className={css.address}>{displayAddress}</p>
@@ -2390,6 +2697,8 @@ export function HandoffDesignStudio({
             );
           })}
         </nav>
+
+        {vicGovChipRow}
 
         <div className={css.spacer} />
 
@@ -2467,40 +2776,6 @@ export function HandoffDesignStudio({
               />
             </svg>
           </button>
-          {ui.foundationCleanse || titleLocked ? (
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.titleBoundaryLocked ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="title-boundary-lock-top"
-              aria-label={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
-              title={ui.titleBoundaryLocked ? "Unlock title" : "Lock title"}
-              onClick={() =>
-                studio.setTitleBoundaryLocked(!ui.titleBoundaryLocked)
-              }
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <rect
-                  x="3.5"
-                  y="7"
-                  width="9"
-                  height="6.5"
-                  rx="1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                />
-                <path
-                  d={
-                    ui.titleBoundaryLocked
-                      ? "M5.5 7V5.2a2.5 2.5 0 0 1 5 0V7"
-                      : "M5.5 7V5.2a2.5 2.5 0 0 1 4.8-.8"
-                  }
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          ) : null}
           <button
             type="button"
             className={`${css.iconBtn}${ui.frameOn ? ` ${css.iconBtnActive}` : ""}`}
@@ -2552,159 +2827,6 @@ export function HandoffDesignStudio({
               </svg>
             </button>
           ) : null}
-          {ui.frameOn || ui.clientView ? (
-            <button
-              type="button"
-              className={css.iconBtn}
-              data-testid={ui.clientView ? "meeting-pack-print" : "fit-sheet-print"}
-              aria-label={
-                ui.clientView ? "Print meeting pack" : "Print fit sheet"
-              }
-              title={
-                ui.clientView
-                  ? "Print meeting pack — plan + schemes"
-                  : "Print fit sheet"
-              }
-              onClick={() => window.print()}
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M4 6V3.5h8V6M4 11.5h8V14H4v-2.5ZM3.5 6H12.5a1 1 0 0 1 1 1v3.5H2.5V7a1 1 0 0 1 1-1Z"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          ) : null}
-          {!ui.focusOn && !ui.clientView ? (
-            <>
-              <button
-                type="button"
-                className={`${css.iconBtn}${ui.darkOn ? ` ${css.iconBtnActive}` : ""}`}
-                data-testid="dark-canvas-top"
-                aria-label="Dark canvas"
-                title="Dark canvas"
-                onClick={() => studio.setUi({ darkOn: !ui.darkOn })}
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M9.2 2.4A5.5 5.5 0 1 0 13.6 10 4.2 4.2 0 0 1 9.2 2.4z"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className={`${css.iconBtn}${isTiltActive(ui.tiltDeg) ? ` ${css.iconBtnActive}` : ""}`}
-                data-testid="canvas-tilt-top"
-                aria-label="Tilt view"
-                aria-pressed={isTiltActive(ui.tiltDeg)}
-                title="Tilt view — 3D dwelling walls (needs building footprint)"
-                onClick={() => runTiltView()}
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M2.5 11.5 8 4.5l5.5 7H2.5z"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M4 11.5v-3.2M8 11.5V7M12 11.5V9.2"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinecap="round"
-                    opacity="0.55"
-                  />
-                </svg>
-              </button>
-              {chrome.structureRail ? (
-              <>
-              <button
-                type="button"
-                className={`${css.iconBtn}${servicesOpen ? ` ${css.iconBtnActive}` : ""}`}
-                data-testid="canvas-services-top"
-                aria-label="Services ledger"
-                title="Services — ticks, metrics, focus"
-                onClick={() =>
-                  studio.setUi({
-                    ...toggleRightDataPanelExclusive(
-                      ui.rightDataPanel,
-                      "services",
-                    ),
-                    utilityPanel: null,
-                  })
-                }
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className={`${css.iconBtn}${layersOpen ? ` ${css.iconBtnActive}` : ""}`}
-                data-testid="canvas-layers-top"
-                aria-label="Layers"
-                title="Layers"
-                onClick={() =>
-                  studio.setUi({
-                    ...toggleRightDataPanelExclusive(
-                      ui.rightDataPanel,
-                      "layers",
-                    ),
-                    utilityPanel: null,
-                  })
-                }
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M2.5 5.2 8 2.8l5.5 2.4L8 7.6 2.5 5.2zm0 3.2L8 11l5.5-2.6M2.5 11.6 8 14.2l5.5-2.6"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              </>
-              ) : null}
-              {/* Demo seed switcher only — live projects have a single site. */}
-              {!projectId ? (
-                <button
-                  type="button"
-                  className={`${css.iconBtn}${sitesOpen ? ` ${css.iconBtnActive}` : ""}`}
-                  data-testid="canvas-sites-top"
-                  aria-label="Sites"
-                  title="Sites"
-                  onClick={() =>
-                    studio.setUi({
-                      ...toggleRightDataPanelExclusive(
-                        ui.rightDataPanel,
-                        "sites",
-                      ),
-                      utilityPanel: null,
-                    })
-                  }
-                >
-                  <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                    <path
-                      d="M8 13.5s4-3.4 4-6.2A4 4 0 1 0 4 7.3C4 10.1 8 13.5 8 13.5z"
-                      stroke="currentColor"
-                      strokeWidth="1.25"
-                    />
-                    <circle cx="8" cy="7.2" r="1.3" stroke="currentColor" strokeWidth="1.2" />
-                  </svg>
-                </button>
-              ) : null}
-            </>
-            ) : null}
           <button
             type="button"
             className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
@@ -2714,7 +2836,6 @@ export function HandoffDesignStudio({
             onClick={() =>
               studio.setUi({
                 clientView: !ui.clientView,
-                // Keep shade/sun theatre alive — do not force focusOn.
                 focusOn: false,
                 ghostReviewOpen: false,
               })
@@ -2766,10 +2887,22 @@ export function HandoffDesignStudio({
                 projectId={projectId}
                 address={displayAddress}
                 quoteLines={quoteShareLines}
-                totalInclGst={estimate.totalInclGst}
+                totalInclGst={quoteShareTotalInclGst}
                 onRevisionChange={setLatestShare}
               />
             </div>
+          ) : null}
+          {showHeaderAiPill ? (
+            <HeaderAiPill
+              label={draftLabel}
+              hot={
+                ai.pendingCount > 0 ||
+                ai.status === "scanning" ||
+                ai.status === "assisting"
+              }
+              ok={ai.status === "verified" && ai.pendingCount === 0}
+              onClick={handleHeaderAi}
+            />
           ) : null}
           <button
             type="button"
@@ -2780,25 +2913,32 @@ export function HandoffDesignStudio({
           >
             ⌘K
           </button>
-          {!ui.clientView && !ui.foundationCleanse && !ui.frameOn ? (
+          {ui.clientView ? (
             <button
               type="button"
-              className={`${css.aiPill}${ai.pendingCount > 0 ? ` ${css.aiPillHot}` : ""}${ai.status === "verified" && ai.pendingCount === 0 ? ` ${css.aiPillOk}` : ""}`}
-              data-testid="header-accept-ghosts"
-              onClick={() => {
-                if (ai.status === "scanning" || ai.status === "assisting") {
-                  studio.setUi({ cmdOpen: true, cmdQuery: "" });
-                  return;
-                }
-                if (ai.pendingCount === 0) {
-                  void ai.scan();
-                  return;
-                }
-                studio.setUi({ ghostReviewOpen: true });
-              }}
+              className={css.iconBtn}
+              data-testid="meeting-pack-print"
+              aria-label="Print meeting pack"
+              title="Print meeting pack — plan + schemes"
+              onClick={() => window.print()}
             >
-              {draftLabel}
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path
+                  d="M4 6V3.5h8V6M4 11.5h8V14H4v-2.5ZM3.5 6H12.5a1 1 0 0 1 1 1v3.5H2.5V7a1 1 0 0 1 1-1Z"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
+          ) : null}
+          {!ui.focusOn && !ui.clientView ? (
+            <HeaderViewMenu
+              open={headerViewMenuOpen}
+              onOpenChange={setHeaderViewMenuOpen}
+              items={headerViewMenuItems}
+              hot={headerViewMenuHot}
+            />
           ) : null}
           <CanvasAutosaveChip
             status={ui.saveStatus}
@@ -2827,6 +2967,32 @@ export function HandoffDesignStudio({
             }}
           />
         </div>
+        </div>
+        {headerContextActive ? (
+          <div className={css.headerContext} data-testid="header-context-strip">
+            <StudioContextBreadcrumb
+              mode={ui.mode}
+              isolatedLayer={ui.isolatedLayer}
+              layerOpacity={ui.layerOpacity}
+              setbackOn={ui.setbackOn}
+              shadeOn={ui.shadeOn}
+              growth={ui.growth}
+              onClearIsolation={() => studio.clearServiceFocus()}
+              onClearSetback={() => studio.setUi({ setbackOn: false })}
+              onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
+              onResetGrowth={() => studio.setUi({ growth: "mature" })}
+              onResetLayer={(layer) => {
+                if (layer === "services" && ui.servicesLocked) return;
+                studio.setLayerOpacity(layer, 1);
+              }}
+            />
+            {councilTipVisible ? (
+              <p className={css.headerCouncilTip} data-testid="council-setback-tip">
+                {ui.councilTip}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </header>
 
       {openSharedRev && !ui.clientView ? (
@@ -2834,25 +3000,6 @@ export function HandoffDesignStudio({
           Shared rev {openSharedRev.revision} is out with the client — changes
           create a new revision.
         </p>
-      ) : null}
-
-      {!ui.clientView && !ui.frameOn && planOn ? (
-        <StudioContextBreadcrumb
-          mode={ui.mode}
-          isolatedLayer={ui.isolatedLayer}
-          layerOpacity={ui.layerOpacity}
-          setbackOn={ui.setbackOn}
-          shadeOn={ui.shadeOn}
-          growth={ui.growth}
-          onClearIsolation={() => studio.clearServiceFocus()}
-          onClearSetback={() => studio.setUi({ setbackOn: false })}
-          onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
-          onResetGrowth={() => studio.setUi({ growth: "mature" })}
-          onResetLayer={(layer) => {
-            if (layer === "services" && ui.servicesLocked) return;
-            studio.setLayerOpacity(layer, 1);
-          }}
-        />
       ) : null}
 
       <div
@@ -2886,18 +3033,23 @@ export function HandoffDesignStudio({
 
         {ui.mode === "quote" ? (
           <QuoteSurface
+            projectId={projectId}
             address={displayAddress}
             estimate={estimate}
-            draftUnverified={ai.status === "unverified"}
-            pendingGhosts={ai.pendingCount}
-            onReviewGhosts={() => {
-              requestMode("cad");
-              ai.openReview();
-            }}
-            onShare={() => {
+            onShare={(payload) => {
+              setShareQuoteFreeze(payload);
               setSharePopupOpen(true);
             }}
             onBack={() => requestMode("cad")}
+            onOpenLibrary={() => {
+              requestMode("cad");
+              studio.setUi({
+                leftAssetPanel: "expanded",
+                addOpen: true,
+                cmdOpen: true,
+              });
+            }}
+            onFit={() => setFitSheetOn(!ui.frameOn)}
           />
         ) : null}
 
@@ -3170,6 +3322,7 @@ export function HandoffDesignStudio({
               onSelect={(id, opts) => {
                 // Selecting geometry / symbols is not a toolbox summon.
                 setInstrumentsSummoned(false);
+                collapseLibraryUnlessPinned();
                 if (!id) {
                   studio.setSelection(null, []);
                   return;
@@ -3181,6 +3334,7 @@ export function HandoffDesignStudio({
                     groupIds: [],
                     ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
                     ghostReviewOpen: true,
+                    rightDataPanel: null,
                   });
                   return;
                 }
@@ -3205,6 +3359,7 @@ export function HandoffDesignStudio({
                 studio.setSelection(ids[0] ?? null, ids);
               }}
               onEmptyClick={({ x, y, insideLot }) => {
+                collapseLibraryUnlessPinned();
                 if (insideLot) {
                   // On the drawing — clear selection only; keep toolbox closed.
                   setInstrumentsSummoned(false);
@@ -3214,7 +3369,10 @@ export function HandoffDesignStudio({
                 pinInstrumentAnchor(x, y);
                 setInstrumentsSummoned(true);
               }}
-              onCadHandleInteract={() => setInstrumentsSummoned(false)}
+              onCadHandleInteract={() => {
+                setInstrumentsSummoned(false);
+                collapseLibraryUnlessPinned();
+              }}
               onHover={(id) => studio.setUi({ hoverId: id })}
               onAcceptGhost={ai.accept}
               onRejectGhost={ai.reject}
@@ -3249,7 +3407,17 @@ export function HandoffDesignStudio({
               onBoardCursor={setBoardCursor}
               onInertToolClick={onInertToolClick}
               fidelity={fidelity}
-              onInteract={markInteracting}
+              onInteract={() => {
+                markInteracting();
+                collapseLibraryUnlessPinned();
+              }}
+              onLongPressCanvas={
+                compactAssetUi && assetChromeOn
+                  ? () => openAssetSheet()
+                  : undefined
+              }
+              onVectorEditHint={setVectorEditHint}
+              onTraceBuilding={armBuildingTrace}
               annotations={studio.annotations}
               selectedAnnotationId={selectedAnnotationId}
               onSelectAnnotation={(id) => {
@@ -3688,6 +3856,7 @@ export function HandoffDesignStudio({
               services={studio.services}
               easements={studio.easements}
               onClose={() => studio.setUi({ rightDataPanel: null })}
+              onTraceBuilding={armBuildingTrace}
             />
           </RightDataLane>
         ) : null}
@@ -3806,13 +3975,19 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {tiltDiscoverHint && planOn && !ui.frameOn ? (
+        {/* One contextual hint: discover (bottom) never stacks with pause (top). */}
+        {tiltDiscoverHint &&
+        planOn &&
+        !ui.frameOn &&
+        topHint !== "tilt" &&
+        topHint !== "edit" &&
+        topHint !== "trace" ? (
           <TiltHintPill
             kind="discover"
             onDismiss={() => setTiltDiscoverHint(false)}
           />
         ) : null}
-        {tiltPauseHint && planOn && !ui.frameOn ? (
+        {topHint === "tilt" && planOn && !ui.frameOn ? (
           <TiltHintPill
             kind="paused"
             hasDwelling={studio.building.length >= 3}
@@ -3822,6 +3997,9 @@ export function HandoffDesignStudio({
                 : null
             }
             onDismiss={() => setTiltPauseHint(false)}
+            onTraceDwelling={
+              studio.building.length < 3 ? armBuildingTrace : undefined
+            }
           />
         ) : null}
 
@@ -4064,14 +4242,9 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {!ui.focusOn && !ui.clientView && !ui.frameOn && ui.councilTip ? (
-          <div className={css.councilTip} data-testid="council-setback-tip">
-            {ui.councilTip}
-          </div>
-        ) : null}
-
+        {/* Ghost review — AI sidecar lane (lane law). */}
         {draftSurface && ui.ghostReviewOpen ? (
-          <div className={css.ghostPanel}>
+          <RightDataLane testId="right-data-lane-ghosts">
             <AiGhostReview
               ghosts={ai.pending}
               items={studio.items}
@@ -4099,76 +4272,7 @@ export function HandoffDesignStudio({
                 void ai.assist(g?.why ?? "refine this suggestion");
               }}
             />
-          </div>
-        ) : null}
-
-        {/* Vic-gov status chip row — replaces stacked Env/Services/Site/Trees cards. */}
-        {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
-          <StickyMetaStack
-            projectId={projectId}
-            laneBusy={rightLaneBusy}
-            activePanel={
-              servicesOpen
-                ? "services"
-                : environmentOpen
-                  ? "environment"
-                  : siteMetaOpen
-                    ? "site"
-                    : treesMetaOpen
-                      ? "trees"
-                      : null
-            }
-            scaleM={scaleM}
-            boundary={studio.boundary}
-            building={studio.building}
-            services={studio.services}
-            easements={studio.easements}
-            bydaAssets={studio.bydaAssets}
-            keylessOverlays={studio.keylessOverlays}
-            levels={studio.levels}
-            irrigationZones={studio.irrigationZones}
-            constructionTrenches={studio.constructionTrenches}
-            items={studio.items}
-            servicesLocked={ui.servicesLocked}
-            sunMin={ui.sunMin}
-            sunDatePreset={ui.sunDatePreset}
-            growth={ui.growth}
-            shadeOn={ui.shadeOn}
-            lat={projectLat}
-            lng={projectLng}
-            outdoorM2={outdoor}
-            titleSource={titleBlock?.sourceLabel ?? null}
-            boundarySource={ui.boundarySource}
-            councilLabel={titleBlock?.councilLabel ?? null}
-            councilHref={
-              councilDrainageChase(null, titleBlock?.councilLabel ?? null).href
-            }
-            sitePackChase={ui.sitePackChase}
-            weatherDay={weatherDay}
-            onOpenPanel={(panel) => {
-              summonStickyMeta(
-                projectId,
-                panel === "environment"
-                  ? "environment"
-                  : panel === "trees"
-                    ? "trees"
-                    : panel === "site"
-                      ? "site"
-                      : "services",
-              );
-              setStickyRestoreNonce((n) => n + 1);
-              studio.setUi({
-                ...withRightDataPanel(panel),
-                ...(panel === "environment" ? { shadeOn: true } : {}),
-                utilityPanel: null,
-              });
-            }}
-            onCouncilLink={(href) => {
-              if (typeof window !== "undefined") {
-                window.open(href, "_blank", "noopener,noreferrer");
-              }
-            }}
-          />
+          </RightDataLane>
         ) : null}
 
         {/* Right data lane — one panel (lane law). Flush to the right boundary. */}
@@ -4343,6 +4447,35 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
+        {assetChromeOn && compactAssetUi ? (
+          <CameraChrome place={{ kind: "dock" }} testId="asset-fab-chrome">
+            <button
+              type="button"
+              className={css.assetFab}
+              data-testid="asset-command-fab"
+              aria-label="Open asset menu"
+              onClick={openAssetSheet}
+            >
+              +
+            </button>
+          </CameraChrome>
+        ) : null}
+
+        {assetSheetVisible ? (
+          <AssetCommandSheet
+            open
+            mode={ui.mode}
+            recentAssetTypes={ui.recentAssetTypes}
+            armed={ui.armed}
+            onArm={armType}
+            onClose={() => setAssetSheetOpen(false)}
+            onExpandLibrary={() => {
+              setAssetSheetOpen(false);
+              studio.setUi({ ...openLeftAssetExclusive("expanded") });
+            }}
+          />
+        ) : null}
+
         {assetPanelOn ? (
           <AssetPanel
             panel={ui.leftAssetPanel}
@@ -4363,6 +4496,10 @@ export function HandoffDesignStudio({
             pathDrafting={ui.tool === "path"}
             expandSection={assetExpandSection}
             focusSearchOnExpand={assetFocusSearch}
+            libraryPinned={ui.leftAssetPinned}
+            onToggleLibraryPin={() =>
+              studio.setUi({ leftAssetPinned: !ui.leftAssetPinned })
+            }
             onExpand={(opts) => {
               setAssetExpandSection(opts?.section ?? null);
               setAssetFocusSearch(Boolean(opts?.focusSearch));
@@ -4494,6 +4631,8 @@ export function HandoffDesignStudio({
           onClose={() => studio.setUi({ cmdOpen: false, cmdQuery: "" })}
           onAskAi={(q) => void ai.assist(q)}
           onArm={armType}
+          recentAssetTypes={ui.recentAssetTypes}
+          mode={ui.mode}
           onScanGhosts={() => void ai.scan()}
           onPrepareSitePack={() =>
             void studio.ai.prepareSitePack({

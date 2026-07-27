@@ -14,6 +14,7 @@ import { BY_TYPE, itemCost, type StudioItem } from "../../studioCatalog";
 import { tpzRadiusPct, type PctPoint } from "../../geometry";
 import type { RejectionReason } from "../../state/sessionRejectionHints";
 import styles from "./aiGhosts.module.css";
+import { CSS_TOKEN } from "../../../../../styles/colorTokens";
 
 type Props = {
   ghosts: StudioItem[];
@@ -278,7 +279,7 @@ export function AiGhostReview({
               className={styles.confFill}
               style={{
                 width: `${pct}%`,
-                background: "#1C1917",
+                background: CSS_TOKEN.textPrimary,
               }}
             />
           </span>
