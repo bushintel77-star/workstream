@@ -10,6 +10,15 @@
   pointer-events: none;
 }
 
+.embedded {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  pointer-events: auto;
+}
+
 .stack > * {
   pointer-events: auto;
 }
@@ -18,9 +27,9 @@
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass-soft);
+  background: var(--hc-invert);
   backdrop-filter: none;
-  box-shadow: 0 8px 24px var(--hc-line-soft);
+  box-shadow: var(--hc-elev-2);
   font-family: var(--font-body);
   color: var(--hc-ink);
   animation: hzIn 180ms ease both;
@@ -32,12 +41,12 @@
 
 .watch {
   border-color: color-mix(in srgb, var(--hc-warning) 45%, transparent);
-  background: rgba(255, 248, 230, 0.95);
+  background: color-mix(in srgb, var(--hc-warning) 12%, var(--hc-invert));
 }
 
 .critical {
-  border-color: rgba(194, 69, 95, 0.45);
-  background: rgba(255, 236, 240, 0.96);
+  border-color: color-mix(in srgb, var(--hc-danger) 45%, transparent);
+  background: var(--hc-danger-soft);
 }
 
 .kicker {

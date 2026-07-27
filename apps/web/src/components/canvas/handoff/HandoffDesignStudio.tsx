@@ -73,6 +73,14 @@ import { resolveBoardSunCast } from "./features/sunGrowth/resolveBoardSunCast";
 import { PathCorridorsLayer } from "./features/hardscape/PathCorridorsLayer";
 import { AssetPanel } from "./features/assetPanel/AssetPanel";
 import { AssetCommandSheet } from "./features/assetPanel/AssetCommandSheet";
+import { CompactModeNav } from "./features/header/CompactModeNav";
+import { StudioSheetHost } from "./features/sheets/StudioSheetHost";
+import {
+  sheetSafeBottomPx,
+  type StudioSheetPage,
+  type StudioSheetSnap,
+} from "./features/sheets/studioSheet";
+import sheetCss from "./features/sheets/studioSheet.module.css";
 import {
   categoryForSwatch,
   needsPathGrammar,
@@ -525,9 +533,14 @@ export function HandoffDesignStudio({
     null,
   );
   const [assetFocusSearch, setAssetFocusSearch] = useState(false);
-  /** Mobile (<720) asset command sheet — peek / expand peer to desktop dock. */
+  /** Mobile (<720 or coarse) — sheet + FAB peer to desktop dual-rail. */
   const [assetSheetOpen, setAssetSheetOpen] = useState(false);
   const [compactAssetUi, setCompactAssetUi] = useState(false);
+  const [studioSheetOpen, setStudioSheetOpen] = useState(false);
+  const [studioSheetPage, setStudioSheetPage] =
+    useState<StudioSheetPage>("assets");
+  const [studioSheetSnap, setStudioSheetSnap] =
+    useState<StudioSheetSnap>("peek");
   const pickStyle = (t: StudioItemType) => {
     setEyedropArmed(false);
     studio.setUi({ paintSwatch: t, tool: "paint" });
@@ -535,11 +548,19 @@ export function HandoffDesignStudio({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 719px)");
-    const sync = () => setCompactAssetUi(mq.matches);
+    const sync = () => {
+      const narrow = window.innerWidth <= 719;
+      const coarse = window.matchMedia("(pointer: coarse)").matches;
+      setCompactAssetUi(narrow || coarse);
+    };
     sync();
+    window.addEventListener("resize", sync);
+    const mq = window.matchMedia("(max-width: 719px), (pointer: coarse)");
     mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
+    return () => {
+      window.removeEventListener("resize", sync);
+      mq.removeEventListener("change", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -572,6 +593,10 @@ export function HandoffDesignStudio({
     const commitSize = (w: number, h: number) => {
       // CSS px only (DPR-invariant). See geometry/boardSizeCommit.ts.
       setBoardSize((prev) => nextBoardSize(prev, w, h) ?? prev);
+      const coarse =
+        typeof window !== "undefined" &&
+        window.matchMedia("(pointer: coarse)").matches;
+      setCompactAssetUi(w <= 719 || coarse);
     };
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
@@ -1542,6 +1567,7 @@ export function HandoffDesignStudio({
     dataSummoned: ui.rightDataPanel === "measures",
     floraSessionActive: Boolean(ui.floraSession),
     horizonCardCount,
+    compact: compactAssetUi,
   });
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
@@ -1702,8 +1728,23 @@ export function HandoffDesignStudio({
     !ui.foundationCleanse;
   /** Desktop dock — hidden on compact widths (mobile sheet owns placement). */
   const assetPanelOn = assetChromeOn && !compactAssetUi;
+  /** Legacy standalone asset sheet — only when studio sheet host is off. */
   const assetSheetVisible =
-    assetChromeOn && compactAssetUi && (assetSheetOpen || Boolean(ui.armed));
+    assetChromeOn &&
+    compactAssetUi &&
+    !chrome.studioSheet &&
+    (assetSheetOpen || Boolean(ui.armed));
+  const studioSheetVisible =
+    chrome.studioSheet &&
+    (studioSheetOpen ||
+      Boolean(ui.armed) ||
+      (chrome.inboxSheet && studioSheetPage === "inbox"));
+  const inboxCardCount = horizonCardCount + openBoardFindings.length;
+  const compactSafeBottom = sheetSafeBottomPx({
+    sheetOpen: studioSheetVisible,
+    fabOn: chrome.primaryFab,
+    sunOn: chrome.sunGrowth,
+  });
   /** Undo filmstrip — CAD/survey only; Sketch uses MarginStrip history. */
   const undoFilmOn =
     (ui.mode === "cad" || ui.mode === "survey") &&
@@ -2418,7 +2459,20 @@ export function HandoffDesignStudio({
   );
 
   const openAssetSheet = () => {
-    setAssetSheetOpen(true);
+    if (chrome.studioSheet) {
+      setStudioSheetPage("assets");
+      setStudioSheetSnap("half");
+      setStudioSheetOpen(true);
+    } else {
+      setAssetSheetOpen(true);
+    }
+    studio.setUi({ cmdOpen: false, cmdQuery: "" });
+  };
+
+  const openStudioSheetPage = (page: StudioSheetPage) => {
+    setStudioSheetPage(page);
+    setStudioSheetSnap(page === "assets" ? "half" : "half");
+    setStudioSheetOpen(true);
     studio.setUi({ cmdOpen: false, cmdQuery: "" });
   };
 
@@ -2478,29 +2532,33 @@ export function HandoffDesignStudio({
         onSelect: () => runTiltView(),
       },
     );
-    if (chrome.structureRail) {
+    if (chrome.structureRail || chrome.compact) {
       items.push(
         {
           id: "services",
           label: "Services ledger",
           testId: "canvas-services-top",
           active: servicesOpen,
-          onSelect: () =>
+          onSelect: () => {
+            if (chrome.compact) openStudioSheetPage("data");
             studio.setUi({
               ...toggleRightDataPanelExclusive(ui.rightDataPanel, "services"),
               utilityPanel: null,
-            }),
+            });
+          },
         },
         {
           id: "layers",
           label: "Layers",
           testId: "canvas-layers-top",
           active: layersOpen,
-          onSelect: () =>
+          onSelect: () => {
+            if (chrome.compact) openStudioSheetPage("data");
             studio.setUi({
               ...toggleRightDataPanelExclusive(ui.rightDataPanel, "layers"),
               utilityPanel: null,
-            }),
+            });
+          },
         },
       );
     }
@@ -2519,6 +2577,7 @@ export function HandoffDesignStudio({
     }
     return items;
   }, [
+    chrome.compact,
     chrome.structureRail,
     layersOpen,
     projectId,
@@ -2565,7 +2624,7 @@ export function HandoffDesignStudio({
   const vicGovChipRow =
     planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
       <StickyMetaStack
-          placement="dock"
+          placement={chrome.compact ? "header" : "dock"}
           projectId={projectId}
           laneBusy={rightLaneBusy}
           activePanel={
@@ -2639,6 +2698,7 @@ export function HandoffDesignStudio({
       data-theme={darkLens && !ui.frameOn ? "dark" : "light"}
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
+      data-compact={chrome.compact ? "1" : "0"}
       data-compliance={compliance.canvasSignal}
       data-fit-sheet={ui.frameOn ? "1" : "0"}
       data-paper={ui.paper}
@@ -2648,6 +2708,11 @@ export function HandoffDesignStudio({
           /* Must match .zoomWorld scale (planZoom), not raw ui.zoom —
              Fit sheet diverges via sheetContentView. Inverse handles depend on it. */
           ["--studio-zoom" as string]: String(planZoom),
+          ...(chrome.compact
+            ? {
+                ["--ws-safe-bottom" as string]: `${compactSafeBottom}px`,
+              }
+            : null),
           ...(rightLaneBusy
             ? {
                 ["--ws-safe-right" as string]: `${RIGHT_DATA_LANE_WIDTH_PX}px`,
@@ -2692,30 +2757,39 @@ export function HandoffDesignStudio({
         <nav
           className={css.modes}
           aria-label="Design workflow"
-          data-testid="canvas-mode-strip"
+          data-testid={chrome.compact ? undefined : "canvas-mode-strip"}
         >
-          {MODE_TABS.map((m) => {
-            const lockReason = lockReasonForMode(m);
-            const locked = Boolean(lockReason);
-            return (
-              <button
-                key={m}
-                type="button"
-                className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}${locked ? ` ${css.modeBtnLocked}` : ""}`}
-                data-testid={`canvas-mode-${m}`}
-                disabled={locked}
-                aria-disabled={locked}
-                aria-current={ui.mode === m ? "page" : undefined}
-                title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
-                onClick={() => {
-                  if (!locked) requestMode(m);
-                }}
-              >
-                {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
-                {m[0]!.toUpperCase() + m.slice(1)}
-              </button>
-            );
-          })}
+          {chrome.compact ? (
+            <CompactModeNav
+              modes={MODE_TABS}
+              current={ui.mode}
+              lockReasonForMode={lockReasonForMode}
+              onRequestMode={requestMode}
+            />
+          ) : (
+            MODE_TABS.map((m) => {
+              const lockReason = lockReasonForMode(m);
+              const locked = Boolean(lockReason);
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}${locked ? ` ${css.modeBtnLocked}` : ""}`}
+                  data-testid={`canvas-mode-${m}`}
+                  disabled={locked}
+                  aria-disabled={locked}
+                  aria-current={ui.mode === m ? "page" : undefined}
+                  title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
+                  onClick={() => {
+                    if (!locked) requestMode(m);
+                  }}
+                >
+                  {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
+                  {m[0]!.toUpperCase() + m.slice(1)}
+                </button>
+              );
+            })
+          )}
         </nav>
 
         <div className={css.spacer} />
@@ -2940,11 +3014,23 @@ export function HandoffDesignStudio({
               onClick={handleHeaderAi}
             />
           ) : null}
+          {chrome.compact && vicGovChipRow ? (
+            <div className={css.headerVicGov} data-testid="header-vic-gov-status">
+              {vicGovChipRow}
+            </div>
+          ) : null}
           <button
             type="button"
             className={css.cmdBtn}
             data-testid="canvas-command-top"
-            onClick={() => studio.setUi({ cmdOpen: true })}
+            onClick={() => {
+              if (chrome.studioSheet) {
+                openStudioSheetPage("command");
+                studio.setUi({ cmdOpen: true });
+              } else {
+                studio.setUi({ cmdOpen: true });
+              }
+            }}
             title="Command palette"
           >
             ⌘K
@@ -3048,7 +3134,7 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
-        {vicGovChipRow}
+        {!chrome.compact ? vicGovChipRow : null}
         {ui.mode === "elevation" ? (
           <ElevationBoard
             look={ui.elevLook}
@@ -4269,7 +4355,7 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {chrome.horizon ? (
+        {chrome.horizonBoard ? (
           <PreemptiveHorizon
             cards={actionHorizon}
             onAccept={acceptHorizonCard}
@@ -4281,7 +4367,7 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {chrome.horizon ? (
+        {chrome.horizonBoard ? (
           <BoardFindings
             findings={openBoardFindings}
             onDismiss={(id) =>
@@ -4471,7 +4557,7 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {chrome.structureRail && planOn && layersOpen ? (
+        {(chrome.structureRail || chrome.compact) && planOn && layersOpen ? (
           <RightDataLane testId="right-data-lane-layers">
             <LayersPanel
               open
@@ -4497,18 +4583,172 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {assetChromeOn && compactAssetUi ? (
-          <CameraChrome place={{ kind: "dock" }} testId="asset-fab-chrome">
+        {chrome.primaryFab ? (
+          <CameraChrome place={{ kind: "dock" }} testId="studio-primary-fab-chrome">
             <button
               type="button"
               className={css.assetFab}
-              data-testid="asset-command-fab"
-              aria-label="Open asset menu"
-              onClick={openAssetSheet}
+              data-testid="studio-primary-fab"
+              data-legacy-testid="asset-command-fab"
+              aria-label="Open studio sheet"
+              onClick={() => {
+                if (studioSheetVisible && studioSheetPage === "assets") {
+                  setStudioSheetOpen(false);
+                  return;
+                }
+                openStudioSheetPage(
+                  chrome.inboxSheet && inboxCardCount > 0 ? "inbox" : "assets",
+                );
+              }}
             >
               +
             </button>
           </CameraChrome>
+        ) : null}
+
+        {studioSheetVisible ? (
+          <StudioSheetHost
+            open
+            page={studioSheetPage}
+            snap={studioSheetSnap}
+            inboxCount={inboxCardCount}
+            onPage={(page) => {
+              setStudioSheetPage(page);
+              if (page === "command") {
+                studio.setUi({ cmdOpen: true });
+              }
+              if (page === "share") {
+                if (hasCostedBom) setSharePopupOpen(true);
+              }
+            }}
+            onSnap={setStudioSheetSnap}
+            onClose={() => {
+              setStudioSheetOpen(false);
+              setAssetSheetOpen(false);
+            }}
+          >
+            {studioSheetPage === "assets" ? (
+              <AssetCommandSheet
+                open
+                embedded
+                mode={ui.mode}
+                recentAssetTypes={ui.recentAssetTypes}
+                armed={ui.armed}
+                onArm={armType}
+                onClose={() => setStudioSheetOpen(false)}
+                onExpandLibrary={
+                  compactAssetUi
+                    ? undefined
+                    : () => {
+                        setStudioSheetOpen(false);
+                        studio.setUi({ ...openLeftAssetExclusive("expanded") });
+                      }
+                }
+              />
+            ) : null}
+            {studioSheetPage === "data" ? (
+              <div data-testid="studio-sheet-data">
+                <p className={sheetCss.pageKicker}>Site and design data</p>
+                <ul className={sheetCss.actionList}>
+                  {(
+                    [
+                      ["layers", "Layers"],
+                      ["measures", "Measures"],
+                      ["services", "Services"],
+                      ["environment", "Environment"],
+                      ["site", "Site"],
+                      ["trees", "Trees"],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <li key={id}>
+                      <button
+                        type="button"
+                        className={sheetCss.actionRow}
+                        data-testid={`studio-sheet-data-${id}`}
+                        onClick={() => {
+                          if (id === "environment" || id === "services" || id === "site" || id === "trees") {
+                            summonStickyMeta(
+                              projectId,
+                              id === "environment"
+                                ? "environment"
+                                : id === "trees"
+                                  ? "trees"
+                                  : id === "site"
+                                    ? "site"
+                                    : "services",
+                            );
+                            setStickyRestoreNonce((n) => n + 1);
+                          }
+                          studio.setUi({
+                            ...withRightDataPanel(id),
+                            utilityPanel: null,
+                            ...(id === "environment" ? { shadeOn: true } : {}),
+                          });
+                          setStudioSheetSnap("full");
+                        }}
+                      >
+                        {label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {studioSheetPage === "inbox" ? (
+              <div className={sheetCss.inboxStack} data-testid="studio-sheet-inbox">
+                {actionHorizon.length === 0 && openBoardFindings.length === 0 ? (
+                  <p className={sheetCss.empty}>No open advisories on this board.</p>
+                ) : null}
+                <PreemptiveHorizon
+                  embedded
+                  cards={actionHorizon}
+                  onAccept={acceptHorizonCard}
+                  onDismiss={(id) =>
+                    studio.setUi({
+                      mitigated: { ...ui.mitigated, [id]: true },
+                    })
+                  }
+                />
+                <BoardFindings
+                  embedded
+                  findings={openBoardFindings}
+                  onDismiss={(id) =>
+                    studio.setUi({
+                      mitigated: { ...ui.mitigated, [id]: true },
+                    })
+                  }
+                />
+              </div>
+            ) : null}
+            {studioSheetPage === "command" ? (
+              <div data-testid="studio-sheet-command">
+                <p className={sheetCss.pageKicker}>Command palette</p>
+                <button
+                  type="button"
+                  className={sheetCss.actionRow}
+                  onClick={() => studio.setUi({ cmdOpen: true })}
+                >
+                  Open ⌘K
+                </button>
+              </div>
+            ) : null}
+            {studioSheetPage === "share" ? (
+              <div data-testid="studio-sheet-share">
+                <p className={sheetCss.pageKicker}>Share revision</p>
+                <button
+                  type="button"
+                  className={sheetCss.actionRow}
+                  disabled={!hasCostedBom}
+                  onClick={() => {
+                    if (!hasCostedBom) return;
+                    setSharePopupOpen(true);
+                  }}
+                >
+                  {hasCostedBom ? "Open share" : "Cost something before sharing"}
+                </button>
+              </div>
+            ) : null}
+          </StudioSheetHost>
         ) : null}
 
         {assetSheetVisible ? (

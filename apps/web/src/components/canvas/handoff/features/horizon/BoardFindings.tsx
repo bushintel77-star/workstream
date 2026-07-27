@@ -35,11 +35,19 @@ const BASIS_LABEL: Record<BoardFinding["basis"], string> = {
  * strong that evidence is, so an estimate reads weaker than a survey fact. That
  * citation is the guard against taking the machine's word for it.
  */
-export function BoardFindings({ findings, onDismiss }: Props) {
+export function BoardFindings({
+  findings,
+  onDismiss,
+  embedded = false,
+}: Props & { embedded?: boolean }) {
   if (findings.length === 0) return null;
 
   return (
-    <section className={css.stack} data-testid="board-findings" aria-live="polite">
+    <section
+      className={embedded ? css.embedded : css.stack}
+      data-testid="board-findings"
+      aria-live="polite"
+    >
       {findings.slice(0, 4).map((f) => (
         <article
           key={f.id}

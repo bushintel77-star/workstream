@@ -20,11 +20,19 @@ const KIND_LABEL: Record<StudioHorizonCard["kind"], string> = {
 /**
  * Conversational foresight cards — Accept / Dismiss only (Canvas-First HITL).
  */
-export function PreemptiveHorizon({ cards, onAccept, onDismiss }: Props) {
+export function PreemptiveHorizon({
+  cards,
+  onAccept,
+  onDismiss,
+  embedded = false,
+}: Props & { embedded?: boolean }) {
   if (cards.length === 0) return null;
 
   return (
-    <div className={css.stack} data-testid="preemptive-horizon">
+    <div
+      className={embedded ? css.embedded : css.stack}
+      data-testid="preemptive-horizon"
+    >
       {cards.slice(0, 2).map((card) => (
         <article
           key={card.id}

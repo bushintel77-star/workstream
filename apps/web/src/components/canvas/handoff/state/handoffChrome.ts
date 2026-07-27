@@ -1,5 +1,3 @@
-import type { StudioMode, StudioTool } from "../studioCatalog";
-
 /**
  * Canvas-first progressive disclosure for HandoffDesignStudio.
  * Binding: docs/STUDIO-STYLING-AND-UX.md + docs/CAD-AI-2026-UX.md + docs/CANVAS-FIRST-UX.md.
@@ -8,7 +6,12 @@ import type { StudioMode, StudioTool } from "../studioCatalog";
  * right data lane (one panel); left = tool tray + unified AssetPanel.
  * Asset library is never a separate frost popup (`inventoryPopup` always false).
  * AI = intelligent intern — ghosts never silent-write (constraint-first).
+ *
+ * Compact fork (≤719px / coarse pointer): rails demote into StudioSheetHost +
+ * primary FAB; board keeps CameraChrome / tilt / sun laws.
  */
+
+import type { StudioMode, StudioTool } from "../studioCatalog";
 
 /**
  * One contextual top-centre hint at a time (lane law — avoid stacked overlays).
@@ -40,12 +43,20 @@ export type HandoffChrome = {
    * Right data lane available (Layers / Measures / Sites / Checklist).
    * True when the layers control is available (not Fit / focus / client).
    * Actual panel mounts exclusively via `rightDataPanel` (lane law).
+   * Compact: false — Data lives in StudioSheetHost.
    */
   structureRail: boolean;
   /** Compact live cost total (same estimate engine; collapsed chrome) */
   liveBom: boolean;
-  /** Preemptive horizon cards + canvas pins */
+  /**
+   * Foresight / findings available somewhere (board stack or inbox sheet).
+   * Prefer `horizonBoard` / `inboxSheet` for where they mount.
+   */
   horizon: boolean;
+  /** Absolute left/right board card stacks — desktop only. */
+  horizonBoard: boolean;
+  /** Compact: horizon + findings ride the Inbox sheet page. */
+  inboxSheet: boolean;
   /** Dynamic volumetric Isolith (stockpile contours on sheet margin) */
   volumeIsolith: boolean;
   /** Ambient budget margin + selection SKU trade tags */
@@ -54,7 +65,10 @@ export type HandoffChrome = {
   sunGrowth: boolean;
   /** AI coach dock (canvas float — prefer Ask AI on selection / sidecar) */
   aiCoach: boolean;
-  /** Ambient instruments — superseded by fixed ToolDock; flag still gates dock visibility. */
+  /**
+   * Left ToolDock tower. Compact: false — tools via sheet / header overflow.
+   * (Previously ambientRibbon; alias kept for callers.)
+   */
   ambientRibbon: boolean;
   /** Selection orbit (delete / lock / Ask AI) — outside the glyph */
   selectionRing: boolean;
@@ -74,6 +88,12 @@ export type HandoffChrome = {
    * Off during Stage 1 / Fit sheet / focus — header Ask AI + Cmd+K + selection Ask.
    */
   draftSurface: boolean;
+  /** Compact: StudioSheetHost may mount (CameraChrome dock). */
+  studioSheet: boolean;
+  /** Compact: one primary FAB (assets / main task). */
+  primaryFab: boolean;
+  /** Compact fork active — header overflow, sheet host, no dual rails. */
+  compact: boolean;
 };
 
 type Input = {
@@ -104,6 +124,11 @@ type Input = {
    * Horizon docks only when > 0 (max 2 shown in UI).
    */
   horizonCardCount?: number;
+  /**
+   * Compact fork: ≤719px or coarse pointer.
+   * Rails → sheet + FAB; board absolute horizon stacks demote to Inbox.
+   */
+  compact?: boolean;
 };
 
 /* Select is the ground state, not a drawing tool — it never collapses chrome. */
@@ -118,6 +143,35 @@ const DRAWING_TOOLS: StudioTool[] = [
 
 function planModesAllowFlora(mode: StudioMode): boolean {
   return mode === "cad" || mode === "sketch" || mode === "survey";
+}
+
+function quietChrome(partial: Partial<HandoffChrome> & Pick<
+  HandoffChrome,
+  | "utilityDrawer"
+  | "aiSidecar"
+  | "structureRail"
+  | "liveBom"
+  | "horizon"
+  | "volumeIsolith"
+  | "tradeMargin"
+  | "sunGrowth"
+  | "aiCoach"
+  | "ambientRibbon"
+  | "selectionRing"
+  | "inventoryPopup"
+  | "drawTools"
+  | "collapseUtility"
+  | "floraRing"
+  | "draftSurface"
+>): HandoffChrome {
+  return {
+    horizonBoard: false,
+    inboxSheet: false,
+    studioSheet: false,
+    primaryFab: false,
+    compact: false,
+    ...partial,
+  };
 }
 
 /**
@@ -137,6 +191,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     dataSummoned = false,
     floraSessionActive = false,
     horizonCardCount = 0,
+    compact = false,
   } = input;
   const drawingHot = DRAWING_TOOLS.includes(tool);
   const draftCrowded = pendingGhosts > 0;
@@ -160,24 +215,29 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
 
   if (foundationCleanse) {
     const instruments = !frameOn && !clientView && !focusOn;
-    return {
+    return quietChrome({
       utilityDrawer: false,
       aiSidecar: false,
-      structureRail: instruments,
+      structureRail: instruments && !compact,
       liveBom: false,
       horizon: false,
       volumeIsolith: false,
       tradeMargin: false,
       sunGrowth: false,
       aiCoach: false,
-      ambientRibbon: instruments,
+      ambientRibbon: instruments && !compact,
       selectionRing: false,
       inventoryPopup: false,
       drawTools: instruments && mode !== "quote" && mode !== "share",
       collapseUtility: true,
       floraRing: false,
       draftSurface: false,
-    };
+      compact,
+      studioSheet: compact && instruments,
+      primaryFab: compact && instruments,
+      horizonBoard: false,
+      inboxSheet: false,
+    });
   }
 
   const plan =
@@ -186,7 +246,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   // Fit sheet / focus — paper-first composition, no floating HUDs.
   // Client presentation keeps the sun scrubber when shade is armed (theatre).
   if (focusOn || frameOn) {
-    return {
+    return quietChrome({
       utilityDrawer: false,
       aiSidecar: false,
       structureRail: false,
@@ -203,11 +263,12 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       collapseUtility: true,
       floraRing: false,
       draftSurface: false,
-    };
+      compact,
+    });
   }
 
   if (clientView) {
-    return {
+    return quietChrome({
       utilityDrawer: false,
       aiSidecar: false,
       structureRail: false,
@@ -224,7 +285,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       collapseUtility: true,
       floraRing: false,
       draftSurface: false,
-    };
+      compact,
+    });
   }
 
   const cadLike = mode === "cad" || mode === "elevation";
@@ -234,21 +296,23 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
    * Data lane is available in CAD-like modes, but only mounts once summoned.
    * Canvas-first: the drawing owns idle; measures/quantities appear on ask.
    */
-  const utility = cadLike && !draftCrowded && dataSummoned;
+  const utility = cadLike && !draftCrowded && dataSummoned && !compact;
 
   return {
     utilityDrawer: utility,
     /** Right lane for AI dialogue + analytics — summoned, or the Quote surface. */
     aiSidecar: utility || mode === "quote",
     /** Right data lane affordance — Layers etc. available, collapsed until opened. */
-    structureRail: plan,
+    structureRail: plan && !compact,
     liveBom: cadLike || mode === "quote",
     horizon: horizonOn,
+    horizonBoard: horizonOn && !compact,
+    inboxSheet: horizonOn && compact,
     volumeIsolith: false,
     tradeMargin: false,
     sunGrowth: sunScrubber,
     aiCoach: false,
-    ambientRibbon: plan,
+    ambientRibbon: plan && !compact,
     /** Orbit actions outside the glyph */
     selectionRing:
       mode === "cad" || mode === "sketch" || mode === "survey",
@@ -259,5 +323,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     floraRing: floraOn,
     // Ghost review only when pending — HITL intern, not ambient toast
     draftSurface: plan && mode !== "survey" && draftCrowded,
+    compact,
+    studioSheet: compact && plan,
+    primaryFab: compact && plan,
   };
 }

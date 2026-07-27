@@ -13,6 +13,7 @@
   border-radius: 12px 0 0 12px;
   border-left: 1px solid var(--hc-line-soft);
   box-shadow: -8px 0 28px var(--hc-neu-shadow);
+  background: var(--hc-invert);
 }
 
 /* Children fill the lane — no per-panel left/top. */
@@ -27,4 +28,19 @@
   max-height: none;
   transform: none;
   z-index: auto;
+}
+
+@media (max-width: 719px) {
+  .slot {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: min(70vh, calc(100% - var(--ws-safe-top, 40px) - 8px));
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-top: 1px solid var(--hc-line-soft);
+    box-shadow: 0 -8px 28px var(--hc-neu-shadow);
+  }
 }

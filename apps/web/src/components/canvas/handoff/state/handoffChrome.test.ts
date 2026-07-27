@@ -259,4 +259,45 @@ describe("resolveHandoffChrome", () => {
     expect(c.floraRing).toBe(false);
     expect(c.draftSurface).toBe(false);
   });
+
+  it("compact fork demotes rails into sheet + FAB", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      compact: true,
+      horizonCardCount: 2,
+    });
+    expect(c.compact).toBe(true);
+    expect(c.structureRail).toBe(false);
+    expect(c.ambientRibbon).toBe(false);
+    expect(c.studioSheet).toBe(true);
+    expect(c.primaryFab).toBe(true);
+    expect(c.horizon).toBe(true);
+    expect(c.horizonBoard).toBe(false);
+    expect(c.inboxSheet).toBe(true);
+    expect(c.utilityDrawer).toBe(false);
+  });
+
+  it("compact keeps desktop horizon board off even when cards exist", () => {
+    const desk = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      horizonCardCount: 1,
+    });
+    expect(desk.horizonBoard).toBe(true);
+    expect(desk.inboxSheet).toBe(false);
+    expect(desk.primaryFab).toBe(false);
+  });
+
+  it("compact Fit / focus still suppress sheet chrome", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      compact: true,
+      frameOn: true,
+    });
+    expect(c.studioSheet).toBe(false);
+    expect(c.primaryFab).toBe(false);
+    expect(c.horizonBoard).toBe(false);
+  });
 });
