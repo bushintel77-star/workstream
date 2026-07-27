@@ -12,6 +12,8 @@ type Props = {
   services: PctPoint[][];
   easements?: PctPoint[][];
   onClose?: () => void;
+  /** Unticked Existing dwelling — arm Trace → building. */
+  onTraceBuilding?: () => void;
 };
 
 /**
@@ -25,18 +27,33 @@ export function SurveyChecklist({
   services,
   easements = [],
   onClose,
+  onTraceBuilding,
 }: Props) {
-  const rows: Array<[string, boolean]> = [
-    ["Boundary traced", boundary.length >= 3],
-    ["Existing dwelling", building.length >= 3],
-    ["Existing trees", items.some((i) => BY_TYPE[i.t]?.existing)],
-    ["Spot levels", levels.length > 0],
-    [
-      "Services / easements",
-      services.length > 0 || easements.some((r) => r.length >= 3),
-    ],
+  const dwellingOk = building.length >= 3;
+  const rows: Array<{
+    label: string;
+    ok: boolean;
+    onArm?: () => void;
+    testId?: string;
+  }> = [
+    { label: "Boundary traced", ok: boundary.length >= 3 },
+    {
+      label: "Existing dwelling",
+      ok: dwellingOk,
+      onArm: !dwellingOk ? onTraceBuilding : undefined,
+      testId: "survey-check-dwelling",
+    },
+    {
+      label: "Existing trees",
+      ok: items.some((i) => BY_TYPE[i.t]?.existing),
+    },
+    { label: "Spot levels", ok: levels.length > 0 },
+    {
+      label: "Services / easements",
+      ok: services.length > 0 || easements.some((r) => r.length >= 3),
+    },
   ];
-  const done = rows.filter((r) => r[1]).length;
+  const done = rows.filter((r) => r.ok).length;
   const complete = done === rows.length;
 
   return (
@@ -64,12 +81,31 @@ export function SurveyChecklist({
         ) : null}
       </div>
       <ul className={css.list}>
-        {rows.map(([label, ok]) => (
-          <li key={label} className={css.row} data-done={ok ? "true" : "false"}>
-            <span className={`${css.mark}${ok ? ` ${css.markOk}` : ""}`}>
-              {ok ? "✓" : ""}
+        {rows.map((row) => (
+          <li
+            key={row.label}
+            className={css.row}
+            data-done={row.ok ? "true" : "false"}
+            data-testid={row.testId}
+          >
+            <span className={`${css.mark}${row.ok ? ` ${css.markOk}` : ""}`}>
+              {row.ok ? "✓" : ""}
             </span>
-            <span className={ok ? css.labelOk : css.label}>{label}</span>
+            {row.onArm ? (
+              <button
+                type="button"
+                className={css.armRow}
+                onClick={row.onArm}
+                data-testid="survey-arm-dwelling"
+              >
+                {row.label}
+                <span className={css.armHint}>Trace</span>
+              </button>
+            ) : (
+              <span className={row.ok ? css.labelOk : css.label}>
+                {row.label}
+              </span>
+            )}
           </li>
         ))}
       </ul>

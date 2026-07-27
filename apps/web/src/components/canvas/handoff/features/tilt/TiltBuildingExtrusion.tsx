@@ -17,6 +17,8 @@ import css from "./tilt.module.css";
 
 type Props = {
   building: PctPoint[];
+  /** Lot ring — low ground plate when dwelling is empty so tilt still reads 3D. */
+  boundary?: PctPoint[];
   boardW: number;
   boardH: number;
   ppm: number;
@@ -43,23 +45,71 @@ function wallWashGradient(lightness: number): string {
   return `linear-gradient(180deg, color-mix(in srgb, var(--existing-stroke) ${topPct}%, transparent) 0%, color-mix(in srgb, var(--existing-stroke) ${botPct}%, transparent) 100%)`;
 }
 
+function ringGeom(
+  ring: PctPoint[],
+  boardW: number,
+  boardH: number,
+  eavePx: number,
+  sunAzimuthDeg: number,
+) {
+  if (ring.length < 3) return null;
+  const pts = ring.map((p) => ({
+    x: (p.x / 100) * boardW,
+    y: (p.y / 100) * boardH,
+  }));
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const w = Math.max(4, maxX - minX);
+  const h = Math.max(4, maxY - minY);
+  const local = pts.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+  const clip = local
+    .map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`)
+    .join(", ");
+
+  let area2 = 0;
+  for (let i = 0; i < local.length; i++) {
+    const a = local[i]!;
+    const b = local[(i + 1) % local.length]!;
+    area2 += a.x * b.y - b.x * a.y;
+  }
+  const windingSign = area2 >= 0 ? 1 : -1;
+
+  const { lx, ly } = lightVectorFromAzimuth(sunAzimuthDeg);
+  const walls = local.map((p, i) => {
+    const next = local[(i + 1) % local.length]!;
+    const dx = next.x - p.x;
+    const dy = next.y - p.y;
+    const len = Math.max(0.01, Math.hypot(dx, dy));
+    const ux = dx / len;
+    const uy = dy / len;
+    const lightness = wallLightness(
+      uy * windingSign,
+      -ux * windingSign,
+      lx,
+      ly,
+    );
+    return {
+      len,
+      matrix: wallQuadMatrix3d(p.x, p.y, next.x, next.y, eavePx),
+      background: wallWashGradient(lightness),
+    };
+  });
+
+  return { minX, minY, w, h, clip, eavePx, local, walls };
+}
+
 /**
- * v2 dwelling extrusion — solid walls + corner posts in true 3D (real
- * `matrix3d`/`translateZ`, not billboards), topped with the roof plane.
- * The wall/post tops land pixel-exact under the roofline corners because
- * both use the same world-Z convention as the roof's `translateZ(eavePx)` —
- * at a low tilt angle the elevated roof visibly connects back to a
- * footprint that sits inside the boundary, instead of reading as a
- * disconnected shape that appears to breach it.
- *
- * Facets carry directional shading from the live sun azimuth (same provider
- * as glyph soft-shadows) so the volume reads lit/shaded per wall. This is a
- * landscaping render: the dwelling is a quiet support massing for the garden
- * design — shading stays soft, and the ground/garden plane is intentionally
- * untouched (no ground shadow, shading, or texture here).
+ * v2 dwelling extrusion — solid walls + corner posts in true 3D.
+ * When the dwelling ring is empty, a low boundary ground plate keeps tilt
+ * readable without inventing walls.
  */
 export function TiltBuildingExtrusion({
   building,
+  boundary = [],
   boardW,
   boardH,
   ppm,
@@ -67,85 +117,44 @@ export function TiltBuildingExtrusion({
 }: Props) {
   const sunAzimuthDeg = useSunAzimuthDeg();
 
-  /**
-   * Geometry + per-facet lightness recompute only when the footprint, board
-   * metrics, or light direction change — never per tilt animation frame
-   * (tiltDeg only gates mounting below).
-   */
   const geom = useMemo(() => {
-    if (building.length < 3) return null;
     const eavePx = TILT_EAVE_M * ppm;
-    const pts = building.map((p) => ({
-      x: (p.x / 100) * boardW,
-      y: (p.y / 100) * boardH,
-    }));
-    const xs = pts.map((p) => p.x);
-    const ys = pts.map((p) => p.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    const w = Math.max(4, maxX - minX);
-    const h = Math.max(4, maxY - minY);
-    const local = pts.map((p) => ({ x: p.x - minX, y: p.y - minY }));
-    const clip = local
-      .map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`)
-      .join(", ");
-
-    /**
-     * Shoelace winding sign so the outward normal is winding-independent
-     * (survey rings arrive in either direction). In y-down screen space a
-     * positive sum means the outward normal of edge direction (ux, uy) is
-     * (uy, -ux); negative flips it.
-     */
-    let area2 = 0;
-    for (let i = 0; i < local.length; i++) {
-      const a = local[i]!;
-      const b = local[(i + 1) % local.length]!;
-      area2 += a.x * b.y - b.x * a.y;
-    }
-    const windingSign = area2 >= 0 ? 1 : -1;
-
-    const { lx, ly } = lightVectorFromAzimuth(sunAzimuthDeg);
-    const walls = local.map((p, i) => {
-      const next = local[(i + 1) % local.length]!;
-      const dx = next.x - p.x;
-      const dy = next.y - p.y;
-      const len = Math.max(0.01, Math.hypot(dx, dy));
-      const ux = dx / len;
-      const uy = dy / len;
-      const lightness = wallLightness(
-        uy * windingSign,
-        -ux * windingSign,
-        lx,
-        ly,
-      );
+    if (building.length >= 3) {
       return {
-        len,
-        matrix: wallQuadMatrix3d(p.x, p.y, next.x, next.y, eavePx),
-        background: wallWashGradient(lightness),
+        kind: "dwelling" as const,
+        ...ringGeom(building, boardW, boardH, eavePx, sunAzimuthDeg)!,
       };
-    });
-
-    return { minX, minY, w, h, clip, eavePx, local, walls };
-  }, [building, boardW, boardH, ppm, sunAzimuthDeg]);
+    }
+    if (boundary.length >= 3) {
+      /* Shallow lift — ground plate, not fake walls. */
+      const groundEave = Math.max(6, eavePx * 0.18);
+      return {
+        kind: "ground" as const,
+        ...ringGeom(boundary, boardW, boardH, groundEave, sunAzimuthDeg)!,
+      };
+    }
+    return null;
+  }, [building, boundary, boardW, boardH, ppm, sunAzimuthDeg]);
 
   if (!geom || tiltDeg < 0.5) return null;
-  const { minX, minY, w, h, clip, eavePx, local, walls } = geom;
+  const { minX, minY, w, h, clip, eavePx, local, walls, kind } = geom;
 
   return (
     <>
       <div
         className={css.wallsLift}
-        data-testid="tilt-building-walls"
+        data-testid={
+          kind === "ground" ? "tilt-ground-plate" : "tilt-building-walls"
+        }
         data-plan-geometry="1"
+        data-tilt-volume={kind}
         style={{ left: minX, top: minY, width: w, height: h }}
         aria-hidden
       >
         {walls.map((wall, i) => (
           <div
             key={`wall-${i}`}
-            className={css.wallFace}
+            className={kind === "ground" ? css.groundFace : css.wallFace}
             style={{
               width: wall.len,
               height: eavePx,
@@ -154,39 +163,62 @@ export function TiltBuildingExtrusion({
             }}
           />
         ))}
-        {local.map((p, i) => (
+        {kind === "dwelling"
+          ? local.map((p, i) => (
+              <div
+                key={`post-${i}`}
+                className={css.cornerPost}
+                style={{
+                  width: 2,
+                  height: eavePx,
+                  transform: poleMatrix3d(p.x, p.y, eavePx),
+                }}
+              />
+            ))
+          : null}
+      </div>
+      {kind === "dwelling" ? (
+        <div
+          className={css.roofLift}
+          data-testid="tilt-building-extrusion"
+          data-plan-geometry="1"
+          style={{
+            left: minX,
+            top: minY,
+            width: w,
+            height: h,
+            transform: `translateZ(${eavePx}px)`,
+          }}
+          aria-hidden
+        >
           <div
-            key={`post-${i}`}
-            className={css.cornerPost}
+            className={css.roofFace}
             style={{
-              width: 2,
-              height: eavePx,
-              transform: poleMatrix3d(p.x, p.y, eavePx),
+              clipPath: `polygon(${clip})`,
+              filter: `brightness(${ROOF_LIGHTNESS})`,
             }}
           />
-        ))}
-      </div>
-      <div
-        className={css.roofLift}
-        data-testid="tilt-building-extrusion"
-        data-plan-geometry="1"
-        style={{
-          left: minX,
-          top: minY,
-          width: w,
-          height: h,
-          transform: `translateZ(${eavePx}px)`,
-        }}
-        aria-hidden
-      >
+        </div>
+      ) : (
         <div
-          className={css.roofFace}
+          className={css.roofLift}
+          data-testid="tilt-ground-deck"
+          data-plan-geometry="1"
           style={{
-            clipPath: `polygon(${clip})`,
-            filter: `brightness(${ROOF_LIGHTNESS})`,
+            left: minX,
+            top: minY,
+            width: w,
+            height: h,
+            transform: `translateZ(${eavePx}px)`,
           }}
-        />
-      </div>
+          aria-hidden
+        >
+          <div
+            className={css.groundDeck}
+            style={{ clipPath: `polygon(${clip})` }}
+          />
+        </div>
+      )}
     </>
   );
 }

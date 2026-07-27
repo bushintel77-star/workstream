@@ -17,7 +17,11 @@ import {
   type StudioMode,
 } from "./studioCatalog";
 import { useStudioState } from "./state/useStudioState";
-import { resolveHandoffChrome } from "./state/handoffChrome";
+import {
+  resolveHandoffChrome,
+  resolveTopHint,
+} from "./state/handoffChrome";
+import { armBuildingTracePatch } from "./state/armBuildingTrace";
 import { surveyServicesAuthoringAllowed } from "./state/servicesLock";
 import {
   allowAerialUnderlay,
@@ -353,6 +357,8 @@ export function HandoffDesignStudio({
   );
   const [tiltDiscoverHint, setTiltDiscoverHint] = useState(false);
   const [tiltPauseHint, setTiltPauseHint] = useState(false);
+  /** CadPlanBoard node/edge edit affordance — arbitrates top-centre hints. */
+  const [vectorEditHint, setVectorEditHint] = useState(false);
   const tiltHintSeenRef = useRef(false);
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
@@ -2332,6 +2338,19 @@ export function HandoffDesignStudio({
     studio.setUi({ leftAssetPanel: null, leftAssetRestore: null });
   };
 
+  /** Vicmap miss / empty dwelling — one tap starts Trace → Existing dwelling. */
+  const armBuildingTrace = useCallback(() => {
+    setTiltPauseHint(false);
+    setTiltDiscoverHint(false);
+    studio.setUi(armBuildingTracePatch());
+  }, [studio]);
+
+  const topHint = resolveTopHint({
+    tool: ui.tool,
+    vectorEditHint,
+    tiltPauseHint,
+  });
+
   const pinInstrumentAnchor = (x: number, y: number) => {
     setAnchorPct(clampToCanvasMargin(x, y));
   };
@@ -3397,6 +3416,8 @@ export function HandoffDesignStudio({
                   ? () => openAssetSheet()
                   : undefined
               }
+              onVectorEditHint={setVectorEditHint}
+              onTraceBuilding={armBuildingTrace}
               annotations={studio.annotations}
               selectedAnnotationId={selectedAnnotationId}
               onSelectAnnotation={(id) => {
@@ -3835,6 +3856,7 @@ export function HandoffDesignStudio({
               services={studio.services}
               easements={studio.easements}
               onClose={() => studio.setUi({ rightDataPanel: null })}
+              onTraceBuilding={armBuildingTrace}
             />
           </RightDataLane>
         ) : null}
@@ -3953,13 +3975,19 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {tiltDiscoverHint && planOn && !ui.frameOn ? (
+        {/* One contextual hint: discover (bottom) never stacks with pause (top). */}
+        {tiltDiscoverHint &&
+        planOn &&
+        !ui.frameOn &&
+        topHint !== "tilt" &&
+        topHint !== "edit" &&
+        topHint !== "trace" ? (
           <TiltHintPill
             kind="discover"
             onDismiss={() => setTiltDiscoverHint(false)}
           />
         ) : null}
-        {tiltPauseHint && planOn && !ui.frameOn ? (
+        {topHint === "tilt" && planOn && !ui.frameOn ? (
           <TiltHintPill
             kind="paused"
             hasDwelling={studio.building.length >= 3}
@@ -3969,6 +3997,9 @@ export function HandoffDesignStudio({
                 : null
             }
             onDismiss={() => setTiltPauseHint(false)}
+            onTraceDwelling={
+              studio.building.length < 3 ? armBuildingTrace : undefined
+            }
           />
         ) : null}
 

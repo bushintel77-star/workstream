@@ -17,7 +17,7 @@
   display: grid;
   place-items: center;
   transform-origin: bottom center;
-  filter: drop-shadow(0 1px 1px rgba(36, 19, 24, 0.18));
+  filter: drop-shadow(0 1px 1px var(--hc-line));
 }
 
 .billboardFace > * {
@@ -45,8 +45,8 @@
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
-    rgba(36, 19, 24, 0.18) 0%,
-    rgba(36, 19, 24, 0) 70%
+    var(--hc-line) 0%,
+    transparent 70%
   );
   pointer-events: none;
 }
@@ -97,11 +97,31 @@
   box-shadow: none;
 }
 
+/* Boundary ground plate when dwelling is empty — quiet lot lift, not walls. */
+.groundFace {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  backface-visibility: visible;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 22%, transparent);
+  box-shadow: none;
+  opacity: 0.55;
+}
+
+.groundDeck {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--hc-ink) 6%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--hc-ink) 28%, transparent);
+}
+
 .cornerPost {
   position: absolute;
   left: 0;
   top: 0;
-  background: rgba(36, 19, 24, 0.5);
+  background: color-mix(in srgb, var(--hc-ink) 50%, transparent);
   transform-origin: 0 0;
   pointer-events: none;
 }
@@ -117,14 +137,14 @@
   min-height: 44px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.82));
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass-soft);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(42, 23, 29, 0.1);
+  box-shadow: 0 8px 24px var(--hc-neu-shadow);
   font-family: var(--font-sans, system-ui);
   font-size: 12px;
-  color: rgba(36, 19, 24, 0.78);
+  color: color-mix(in srgb, var(--hc-ink) 78%, transparent);
   pointer-events: auto;
   white-space: nowrap;
 }
@@ -132,7 +152,8 @@
 .pausePill {
   position: absolute;
   left: 50%;
-  top: 72px;
+  /* Same band as edit-vector banner — resolveTopHint makes them exclusive. */
+  top: calc(var(--ws-safe-top, 40px) + 10px);
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
@@ -140,14 +161,14 @@
   min-height: 44px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.82));
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass-soft);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(42, 23, 29, 0.1);
+  box-shadow: 0 8px 24px var(--hc-neu-shadow);
   font-family: var(--font-sans, system-ui);
   font-size: 12px;
-  color: rgba(36, 19, 24, 0.78);
+  color: color-mix(in srgb, var(--hc-ink) 78%, transparent);
   pointer-events: auto;
   white-space: nowrap;
 }
@@ -159,9 +180,22 @@
   margin: -8px -6px -8px 0;
   border: none;
   background: transparent;
-  color: rgba(36, 19, 24, 0.55);
+  color: color-mix(in srgb, var(--hc-ink) 55%, transparent);
   font-size: 14px;
   cursor: pointer;
+}
+
+.pillAction {
+  min-width: auto !important;
+  padding: 0 10px;
+  border: 1px solid var(--hc-line) !important;
+  border-radius: var(--hc-r-control, 8px);
+  background: var(--hc-glass-soft) !important;
+  color: var(--hc-ink) !important;
+  font-size: 11px !important;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .hintPill button:focus-visible,
