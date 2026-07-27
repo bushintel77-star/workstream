@@ -96,10 +96,13 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
   }, [boundaryPoints]);
 
   useEffect(() => {
+    // One run per address pin. Do not gate with a sticky `started` ref + cancel
+    // on dep churn — toast/router identity used to abort after create succeeded
+    // and leave the map frozen forever.
     if (started.current) return;
     started.current = true;
 
-    let cancelled = false;
+    let alive = true;
 
     void (async () => {
       try {
@@ -112,53 +115,53 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
         })();
 
         const preview = await geocodePreviewAction(lat, lng).catch(() => null);
-        if (cancelled) return;
-
-        if (preview) {
+        if (alive && preview) {
           setNeighbourhoodUri(preview.neighbourhood_uri);
           setLotUri(preview.aerial_uri);
         }
 
         await sleep(120);
-        if (cancelled) return;
-        setZoomIn(true);
+        if (alive) setZoomIn(true);
 
         await sleep(Math.round(ZOOM_MS * 0.62));
-        if (cancelled) return;
-        setShowLot(true);
-        setMeasuring(true);
+        if (alive) {
+          setShowLot(true);
+          setMeasuring(true);
+        }
 
         const [, created] = await Promise.all([
           sleep(Math.round(ZOOM_MS * 0.38)),
           createPromise,
         ]);
-        if (cancelled) return;
 
-        if (created.aerialUri) setLotUri(created.aerialUri);
-        if (created.titleRing) {
-          setTitleRing(created.titleRing);
-          requestAnimationFrame(() => {
-            if (!cancelled) setShowBoundary(true);
-          });
+        if (alive) {
+          if (created.aerialUri) setLotUri(created.aerialUri);
+          if (created.titleRing) {
+            setTitleRing(created.titleRing);
+            requestAnimationFrame(() => {
+              if (alive) setShowBoundary(true);
+            });
+          }
+          if (created.lotAreaM2 != null) setLotAreaM2(created.lotAreaM2);
         }
-        if (created.lotAreaM2 != null) setLotAreaM2(created.lotAreaM2);
 
         await sleep(SETTLE_MS);
-        if (cancelled) return;
 
+        // Always enter the canvas once the project exists — never strand the
+        // loader because a parent remount cancelled the effect mid-flight.
         router.replace(`/projects/${created.projectId}?guide=1`);
         router.refresh();
       } catch (e) {
-        if (cancelled) return;
         const msg =
           e instanceof Error ? e.message : "Could not create project";
-        setError(msg);
+        if (alive) setError(msg);
         toast.show(msg, "error", 6000);
+        started.current = false;
       }
     })();
 
     return () => {
-      cancelled = true;
+      alive = false;
     };
   }, [address, lat, lng, router, toast]);
 
