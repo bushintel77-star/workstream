@@ -38,6 +38,19 @@ Data already exists (studioCatalog + Curtis flora palette); the gap is the catal
 - **Working drawing** — technical pen, title block, annotations, "issued for permitting" status (ref: AS-DRAWN / 30x40, OUTPOST).
 - **Client brochure** — a designed presentation page, not just a plan: index number (NO.1), section title, short concept blurb, then exploded **axonometric + plan + elevation** on a typographic grid with title block. Available on light paper or the **dark concept** deep grey-blue ground. Ref: the NO.1 axonometric board.
 - Orange signal is the annotation/callout spark in both; semantics stay on the drawing.
+
+## Elevations vs Fit Sheet (surface split)
+
+- **Fit Sheet** owns the **creative** output: the render pens (technical / hand-drawn / watercolour / dark), annotations, and the composed brochure/working-drawing pages. This is where the client-facing, hand-drawn, presentation stuff lives.
+- **Elevations** is **technical**: the different **aspects** (N/S/E/W, or operator-chosen aspects) rendered as proper elevations / sections — datum line, spot heights (RL), material hatch, dimension ticks, section markers. Not the render playground. Best practice: show the principal aspects that matter (street frontage + key garden sections), operator picks — don't force a rote four. Present as a stack/filmstrip, one per chosen aspect.
+
+## Metadata chips — off the header, onto the canvas edges
+
+The council / e-forms / overlays / services metadata should **not** live in the header. Move it to **minimal chips docked around the canvas boundary** (CameraChrome edge pattern — the "Cursor-style" floating minimal cards), keeping the canvas centre clear. Header stays clean; each datum is a small chip/card, expandable to its panel on tap. (Interim: a slim tinted ribbon under the header — done — but the target is edge chips.)
+
+## Header — thinned + depth
+
+Header thinned (≈46–50px) with layered depth (inner top highlight + hairline + soft shade) so it reads as more than a flat slab — done in `handoffStudio.module.css`.
 - Orange signal stays the technical-annotation spark on the working-drawing pen (ref: the OUTPOST "issued for permitting" sheet).
 
 **Out of scope / separate track:** photoreal raster render, and true vanishing-point perspective 3D (the canvas is axonometric, not a perspective camera) — both bigger lifts, don't bundle.
