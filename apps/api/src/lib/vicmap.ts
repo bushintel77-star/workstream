@@ -25,6 +25,9 @@ const COMMON_PARAMS = {
   count: "20",
 };
 
+/** Vicmap WFS can stall; abort each call so runSurvey never hangs the loader. */
+const WFS_TIMEOUT_MS = 8000;
+
 type Coord = [number, number];
 type Ring = Coord[];
 
@@ -383,7 +386,10 @@ async function fetchCapabilitiesTypeNames(): Promise<string[]> {
     version: "2.0.0",
     request: "GetCapabilities",
   }).toString()}`;
-  const res = await fetch(url, { headers: { accept: "application/xml,text/xml,*/*" } });
+  const res = await fetch(url, {
+    headers: { accept: "application/xml,text/xml,*/*" },
+    signal: AbortSignal.timeout(WFS_TIMEOUT_MS),
+  });
   if (!res.ok) {
     throw new Error(`Vicmap GetCapabilities ${res.status}: ${await res.text()}`);
   }
@@ -404,7 +410,10 @@ async function describeGeometryField(typeName: string): Promise<string> {
     request: "DescribeFeatureType",
     typeNames: typeName,
   }).toString()}`;
-  const res = await fetch(url, { headers: { accept: "application/xml,text/xml,*/*" } });
+  const res = await fetch(url, {
+    headers: { accept: "application/xml,text/xml,*/*" },
+    signal: AbortSignal.timeout(WFS_TIMEOUT_MS),
+  });
   if (!res.ok) {
     throw new Error(
       `Vicmap DescribeFeatureType ${res.status} for ${typeName}: ${await res.text()}`,
@@ -484,7 +493,10 @@ function buildUrl(typeName: string, cqlFilter: string): string {
 }
 
 async function wfsFetch(url: string): Promise<FeatureCollection> {
-  const res = await fetch(url, { headers: { accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(WFS_TIMEOUT_MS),
+  });
   if (!res.ok) {
     const body = await res.text();
     const geomHint =
