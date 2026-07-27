@@ -13,8 +13,11 @@
   --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 94%, transparent);
   --hc-line: color-mix(in srgb, var(--text-primary) 14%, transparent);
   --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
-  --hc-r-control: 10px;
-  --hc-r-panel: 14px;
+  --hc-signal: var(--signal, #e65416);
+  --hc-signal-ink: var(--signal-ink, #231206);
+  --hc-deep: var(--surface-deep, #182838);
+  --hc-r-control: 6px;
+  --hc-r-panel: 8px;
   --hc-r-dock: var(--hc-r-panel);
   --hc-r-pill: 999px;
   --hc-elev-1: 0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
@@ -658,7 +661,7 @@
   /* Keep below selection orbit (z-index 60) — vignette only */
   z-index: 8;
   border-radius: inherit;
-  box-shadow: inset 0 0 80px var(--hc-line-soft);
+  box-shadow: inset 0 0 90px color-mix(in srgb, var(--hc-ink) 15%, transparent);
 }
 
 .boardWatch {

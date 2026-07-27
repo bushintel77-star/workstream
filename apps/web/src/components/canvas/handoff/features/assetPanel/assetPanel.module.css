@@ -43,11 +43,26 @@
 .panel[data-state="expanded"],
 .panel[data-state="placing"] {
   padding-right: 10px;
-  /* Soft frost — never drywall opacity on the drawing. */
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.72));
+  /* Thin frost pane on the canvas — dissolves at the edges. */
+  background: var(--hc-glass-soft);
   backdrop-filter: blur(16px) saturate(1.06);
   -webkit-backdrop-filter: blur(16px) saturate(1.06);
-  box-shadow: var(--hc-elev, 0 10px 28px rgba(36, 19, 24, 0.12));
+  box-shadow: var(--hc-elev);
+  border-color: color-mix(in srgb, var(--hc-line) 55%, transparent);
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 10px,
+    #000 calc(100% - 14px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 10px,
+    #000 calc(100% - 14px),
+    transparent 100%
+  );
 }
 
 .rail {
@@ -318,9 +333,24 @@
 .scroll {
   max-height: min(324px, 52vh);
   overflow-y: auto;
-  scrollbar-width: thin;
   flex: 1 1 auto;
   min-height: 0;
+  /* Super-thin scrub rail — catalogue glass pane. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--hc-line) transparent;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--hc-line);
+  border-radius: 999px;
 }
 
 .pinnedLabel {
@@ -393,62 +423,117 @@
 .tray {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
-  padding: 3px 1px 8px;
+  gap: 10px;
+  padding: 6px 2px 12px;
 }
 
 .tile {
   flex: 0 0 auto;
   display: inline-flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 56px;
-  min-height: 48px;
-  padding: 5px 3px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px;
+  width: 88px;
+  min-height: 72px;
+  padding: 8px 7px;
   border-radius: var(--hc-r-control);
-  border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass-soft);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--ink-soft);
   font: inherit;
   cursor: pointer;
 }
 
 .tile:hover {
-  background: var(--hc-glass-soft);
+  background: color-mix(in srgb, var(--hc-glass) 55%, transparent);
   color: var(--ink);
-  border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
 }
 
 .tileOn {
-  background: var(--hc-ink);
-  border-color: transparent;
-  color: var(--hc-invert);
+  background: color-mix(in srgb, var(--hc-line-soft) 80%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hc-signal, var(--signal));
+  color: var(--ink);
 }
 
 .glyph {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
 }
 
 .glyph svg {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   display: block;
 }
 
 .tileLabel {
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 650;
-  line-height: 1.15;
-  text-align: center;
-  max-width: 50px;
+  line-height: 1.2;
+  text-align: left;
+  max-width: 74px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tileBotanical {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: var(--ink-faint);
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.tileScale {
+  width: 100%;
+  height: 2px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: var(--hc-line-soft);
+  overflow: hidden;
+}
+
+.tileScaleFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--hc-ink-muted);
+  max-width: 100%;
+}
+
+.tileSeasons {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.tileSeasonDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hc-line);
+}
+
+.tileSeasonDot[data-on="1"] {
+  background: var(--planting-new-stroke, var(--hc-success));
+}
+
+.tileSeasonDot[data-kind="sun"][data-on="1"] {
+  background: var(--hc-signal, var(--signal));
+}
+
+.tileSeasonDot[data-kind="water"][data-on="1"] {
+  background: var(--water-stroke, var(--proposed-stroke));
 }
 
 .empty {

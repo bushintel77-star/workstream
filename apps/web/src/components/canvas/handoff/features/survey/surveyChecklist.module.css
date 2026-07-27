@@ -50,7 +50,7 @@
 }
 
 .countDone {
-  background: rgba(28, 25, 23, 0.14);
+  background: var(--hc-line-soft);
   color: var(--hc-ink);
 }
 

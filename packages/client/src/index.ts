@@ -50,7 +50,12 @@ export class WorkstreamClient {
   async geocodePreview(
     lat: number,
     lng: number,
-  ): Promise<{ aerial_uri: string; lat: number; lng: number }> {
+  ): Promise<{
+    neighbourhood_uri: string;
+    aerial_uri: string;
+    lat: number;
+    lng: number;
+  }> {
     return this.request(
       "GET",
       `/geocode/preview?lat=${lat}&lng=${lng}`,

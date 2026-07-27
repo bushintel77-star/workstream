@@ -75,7 +75,8 @@ export const SHEET_THEME_SWATCHES: Array<{
 }> = [
   { id: "parchment", label: "Parchment" },
   { id: "ink", label: "Ink" },
-  { id: "blush", label: "Blush" },
+  /** Contract id stays `blush` — UI is dark-concept / `--surface-deep`. */
+  { id: "blush", label: "Deep" },
 ];
 
 export type SheetTemplate = {

@@ -7,12 +7,12 @@ import type {
   DesignKeylessOverlay,
   IrrigationZone,
 } from "@workstream/contracts";
-import { CameraChrome } from "../../CameraChrome";
 import type { SpotLevel, StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import type { GrowthStage } from "../../state/studioTypes";
 import type { SunDatePreset } from "../sunGrowth/sunDatePreset";
 import { buildEnvLiveMeta, type EnvWeatherDay } from "./envLiveMeta";
+import { WeatherIcon } from "./WeatherIcon";
 import {
   buildVicGovChipModels,
   type VicGovChipId,
@@ -51,6 +51,8 @@ type Props = {
   weatherDay?: EnvWeatherDay | null;
   onOpenPanel: (panel: Exclude<VicGovChipPanel, null>) => void;
   onCouncilLink?: (href: string) => void;
+  /** Header strip (default) vs legacy on-canvas dock — header skips CameraChrome. */
+  placement?: "header" | "dock";
 };
 
 /**
@@ -79,6 +81,7 @@ export function VicGovStatusChipRow({
   weatherDay = null,
   onOpenPanel,
   onCouncilLink,
+  placement = "header",
 }: Props) {
   const env = useMemo(
     () =>
@@ -135,36 +138,45 @@ export function VicGovStatusChipRow({
     if (panel) onOpenPanel(panel);
   };
 
-  return (
-    <CameraChrome place={{ kind: "dock" }} zIndex={48} testId="sticky-meta-chrome">
-      <div
-        className={css.row}
-        data-testid="vic-gov-status-chips"
-        data-lane={laneBusy ? "busy" : "free"}
-        role="toolbar"
-        aria-label="Victorian government site status"
-      >
-        {chips.map((chip) => {
-          const active =
-            chip.panel != null && activePanel === chip.panel;
-          return (
-            <button
-              key={chip.id}
-              type="button"
-              className={css.chip}
-              data-testid={`vic-gov-chip-${chip.id}`}
-              data-status={chip.tone}
-              data-active={active ? "true" : "false"}
-              aria-pressed={active}
-              title={`${chip.label}: ${chip.face}`}
-              onClick={() => activate(chip.id, chip.panel, chip.href)}
-            >
-              <span className={css.label}>{chip.label}</span>
-              <span className={css.face}>{chip.face}</span>
-            </button>
-          );
-        })}
-      </div>
-    </CameraChrome>
+  const row = (
+    <div
+      className={`${css.row}${placement === "header" ? ` ${css.rowHeader}` : ""}`}
+      data-testid="vic-gov-status-chips"
+      data-lane={laneBusy ? "busy" : "free"}
+      data-placement={placement}
+      role="toolbar"
+      aria-label="Victorian government site status"
+    >
+      {chips.map((chip) => {
+        const active = chip.panel != null && activePanel === chip.panel;
+        return (
+          <button
+            key={chip.id}
+            type="button"
+            className={css.chip}
+            data-testid={`vic-gov-chip-${chip.id}`}
+            data-status={chip.tone}
+            data-active={active ? "true" : "false"}
+            aria-pressed={active}
+            title={`${chip.label}: ${chip.face}`}
+            onClick={() => activate(chip.id, chip.panel, chip.href)}
+          >
+            <span className={css.label}>
+              {chip.id === "environment" ? (
+                <WeatherIcon
+                  condition={env.weatherCondition}
+                  size={12}
+                  label={chip.label}
+                />
+              ) : null}
+              {chip.label}
+            </span>
+            <span className={css.face}>{chip.face}</span>
+          </button>
+        );
+      })}
+    </div>
   );
+
+  return row;
 }

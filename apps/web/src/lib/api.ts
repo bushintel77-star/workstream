@@ -177,10 +177,18 @@ export type GeocodeSuggestion = {
 export async function geocodePreviewApi(
   lat: number,
   lng: number,
-): Promise<{ aerial_uri: string; lat: number; lng: number }> {
-  return apiGet<{ aerial_uri: string; lat: number; lng: number }>(
-    `/geocode/preview?lat=${lat}&lng=${lng}`,
-  );
+): Promise<{
+  neighbourhood_uri: string;
+  aerial_uri: string;
+  lat: number;
+  lng: number;
+}> {
+  return apiGet<{
+    neighbourhood_uri: string;
+    aerial_uri: string;
+    lat: number;
+    lng: number;
+  }>(`/geocode/preview?lat=${lat}&lng=${lng}`);
 }
 
 export async function geocodeSearchApi(

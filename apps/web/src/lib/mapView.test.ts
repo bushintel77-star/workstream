@@ -53,6 +53,19 @@ describe("mapView", () => {
     });
   });
 
+  it("parses confirm-pin URLs with a Mapbox pin overlay", () => {
+    const uri =
+      "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/pin-l+c45c26(145.00807,-37.85403)/145.00807,-37.85403,20,0/800x480@2x?access_token=x";
+    const view = parseMapboxStaticAerial(uri);
+    expect(view).toEqual({
+      lng: 145.00807,
+      lat: -37.85403,
+      zoom: 20,
+      width: 800,
+      height: 480,
+    });
+  });
+
   it("preserves aerial aspect in display size", () => {
     const landscape = displaySizeForAerial(1600, 960, 960);
     expect(landscape.width).toBe(960);

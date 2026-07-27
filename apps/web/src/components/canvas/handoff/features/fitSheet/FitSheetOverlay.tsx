@@ -377,13 +377,17 @@ export function FitSheetOverlay({
             : ""
         }${
           presentationPack?.theme === "blush"
-            ? ` ${composeCss.frameThemeBlush}`
+            ? ` ${composeCss.frameThemeDeep}`
             : ""
         }`}
         data-testid="fit-sheet-frame"
         data-paper={paper}
         data-scale={scaleTxt}
-        data-sheet-theme={presentationPack?.theme ?? "parchment"}
+        data-sheet-theme={
+          presentationPack?.theme === "blush"
+            ? "deep"
+            : (presentationPack?.theme ?? "parchment")
+        }
         style={{
           left: box.boxLeft,
           top: box.boxTop,
@@ -470,19 +474,19 @@ export function FitSheetOverlay({
                     fontSize="6.5"
                     fontFamily="var(--font-serif)"
                     fontWeight="600"
-                    fill="#1a1a1a"
+                    fill={SEMANTIC_LIGHT.textPrimary}
                   >
                     N
                   </text>
                   {/* Surveyor's needle: solid north half, open south half. */}
                   <polygon
                     points="11,9.5 14,20 11,17 8,20"
-                    fill="#1a1a1a"
+                    fill={SEMANTIC_LIGHT.textPrimary}
                   />
                   <polygon
                     points="11,17 14,20 11,25.5 8,20"
                     fill="none"
-                    stroke="#1a1a1a"
+                    stroke={SEMANTIC_LIGHT.textPrimary}
                     strokeWidth="0.8"
                     strokeLinejoin="round"
                   />
@@ -539,7 +543,7 @@ export function FitSheetOverlay({
               {legend.map((r) => (
                 <div key={r.name} className={css.row}>
                   <span>{r.name}</span>
-                  <span className={css.mono} style={{ color: "#7A5560" }}>
+                  <span className={css.mono} style={{ color: SEMANTIC_LIGHT.textMuted }}>
                     {r.v}
                   </span>
                 </div>

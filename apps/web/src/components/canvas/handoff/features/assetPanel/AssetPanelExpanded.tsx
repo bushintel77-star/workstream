@@ -145,6 +145,12 @@ export function AssetPanelExpanded({
   const symbolChip = (sym: CatalogSymbol) => {
     const mapped = mapSymbolToStudioType(sym.id);
     const on = activeMaterial === mapped;
+    const spreadM = sym.default_width_m ?? sym.mature_height_m;
+    const scalePct = spreadM
+      ? Math.max(12, Math.min(100, (spreadM / 8) * 100))
+      : null;
+    const sunOn = sym.sun === "full" || sym.sun === "partial";
+    const waterOn = sym.water === "moderate" || sym.water === "high";
     return (
       <button
         key={sym.id}
@@ -164,6 +170,38 @@ export function AssetPanelExpanded({
           <DesignAssetGlyph symbol={sym} size="sm" />
         </span>
         <span className={css.tileLabel}>{sym.label}</span>
+        {sym.botanical_name ? (
+          <span className={css.tileBotanical}>{sym.botanical_name}</span>
+        ) : null}
+        {scalePct != null ? (
+          <span
+            className={css.tileScale}
+            title={
+              spreadM != null ? `Mature ~${spreadM.toFixed(1)} m` : undefined
+            }
+            aria-hidden
+          >
+            <span
+              className={css.tileScaleFill}
+              style={{ width: `${scalePct}%` }}
+            />
+          </span>
+        ) : null}
+        {sym.sun || sym.water ? (
+          <span className={css.tileSeasons} aria-hidden>
+            <span
+              className={css.tileSeasonDot}
+              data-kind="sun"
+              data-on={sunOn ? "1" : "0"}
+            />
+            <span
+              className={css.tileSeasonDot}
+              data-kind="water"
+              data-on={waterOn ? "1" : "0"}
+            />
+            <span className={css.tileSeasonDot} data-on="0" />
+          </span>
+        ) : null}
       </button>
     );
   };

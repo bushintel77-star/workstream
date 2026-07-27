@@ -90,7 +90,7 @@ export async function geocodePreviewAction(lat: number, lng: number) {
   }
 }
 
-/** Create project, run survey, return id for client redirect. */
+/** Create project, run survey, return id + Vicmap lot for locate loader. */
 export async function createProjectWithSurveyAction(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   if (address.length < 5) {
@@ -99,11 +99,19 @@ export async function createProjectWithSurveyAction(formData: FormData) {
   const { lat, lng } = parseProjectCoords(formData);
   try {
     const project = await createProjectApi({ address, lat, lng });
-    await runSurvey(project.id);
+    const survey = await runSurvey(project.id);
     revalidatePath("/");
     revalidatePath(`/projects/${project.id}`);
     revalidatePath(`/projects/${project.id}/survey`);
-    return { projectId: project.id };
+    const ring = survey.title_polygon?.coordinates?.[0] as
+      | [number, number][]
+      | undefined;
+    return {
+      projectId: project.id,
+      aerialUri: survey.aerial_uri,
+      titleRing: ring && ring.length >= 4 ? ring : null,
+      lotAreaM2: survey.lot_area_m2 ?? null,
+    };
   } catch (err) {
     throw wrapApiError(err, "Could not create project");
   }

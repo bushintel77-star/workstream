@@ -150,7 +150,18 @@ describe("API contract — projects", () => {
       url: "/geocode/preview?lat=-37.84&lng=145.01",
     });
     expect(preview.statusCode).toBe(200);
-    expect(preview.json()).toMatchObject({ lat: -37.84, lng: 145.01 });
+    const previewBody = preview.json() as {
+      lat: number;
+      lng: number;
+      aerial_uri: string;
+      neighbourhood_uri: string;
+    };
+    expect(previewBody).toMatchObject({ lat: -37.84, lng: 145.01 });
+    // Lot altitude for canvas + neighbourhood for locate zoom-in.
+    expect(previewBody.aerial_uri).toMatch(/(?:,20,0\/800x480|[?&]z=20\b)/);
+    expect(previewBody.neighbourhood_uri).toMatch(
+      /(?:,17,0\/800x480|[?&]z=17\b)/,
+    );
 
     const search = await app.inject({
       method: "GET",

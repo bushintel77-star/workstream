@@ -152,7 +152,8 @@ export async function runSurvey(
     geometry = buildMockGeometry(center);
   }
 
-  const aerial_uri = aerialImageUrl(center.lat, center.lng, 800, 480, 19);
+  // Match locate-loader lot altitude — canvas design perspective.
+  const aerial_uri = aerialImageUrl(center.lat, center.lng, 800, 480, 20);
 
   const survey = await store.upsertSurvey(ownerId, projectId, {
     aerial_uri,
