@@ -12,6 +12,8 @@ type Props = {
   setbackOn: boolean;
   shadeOn: boolean;
   growth: GrowthStage;
+  /** Header sub-row (default) vs legacy canvas float. */
+  placement?: "header" | "canvas";
   onClearIsolation: () => void;
   onClearSetback: () => void;
   onClearShade: () => void;
@@ -28,6 +30,7 @@ export function StudioContextBreadcrumb({
   setbackOn,
   shadeOn,
   growth,
+  placement = "header",
   onClearIsolation,
   onClearSetback,
   onClearShade,
@@ -35,8 +38,20 @@ export function StudioContextBreadcrumb({
   onResetLayer,
 }: Props) {
   const dimmedLayers = LAYERS.filter((layer) => layerOpacity[layer] < 0.95);
+  const hasSegments =
+    dimmedLayers.length > 0 ||
+    setbackOn ||
+    shadeOn ||
+    growth !== "mature" ||
+    isolatedLayer != null;
+  if (placement === "header" && !hasSegments) return null;
+
   return (
-    <nav className={css.root} data-testid="studio-context-breadcrumb" aria-label="Canvas state">
+    <nav
+      className={`${css.root}${placement === "header" ? ` ${css.rootHeader}` : ""}`}
+      data-testid="studio-context-breadcrumb"
+      aria-label="Canvas state"
+    >
       <span className={css.mode}>{mode.toUpperCase()}</span>
       {dimmedLayers.map((layer) => (
         <button

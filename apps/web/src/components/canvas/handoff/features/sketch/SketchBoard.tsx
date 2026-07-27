@@ -21,6 +21,7 @@ import {
   type SketchTipGrade,
 } from "./sketchCursors";
 import { CameraChrome } from "../../CameraChrome";
+import { semanticForTheme } from "../../../../../styles/colorTokens";
 import { MarginStrip } from "../surfaces/MarginStrip";
 import marginCss from "../surfaces/marginStrip.module.css";
 import css from "./sketch.module.css";
@@ -168,7 +169,7 @@ export function SketchBoard({
     ? [...strokes, { id: "__live", points: live.points, widthPx: live.widthPx }]
     : strokes;
   const canAct = strokes.length > 0;
-  const ink = darkOn ? "#C9C2BA" : "#1C1917";
+  const ink = semanticForTheme(darkOn).textPrimary;
 
   return (
     <div

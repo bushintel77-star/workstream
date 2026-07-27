@@ -13,7 +13,7 @@
   position: absolute;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 1px dashed #c99757;
+  border: 1px dashed var(--hc-warning);
   background: rgba(201, 151, 87, 0.08);
   pointer-events: none;
   animation: floraIn 160ms ease both;
@@ -31,7 +31,7 @@
 .crosshair::after {
   content: "";
   position: absolute;
-  background: #241318;
+  background: var(--hc-ink);
 }
 
 .crosshair::before {
@@ -63,7 +63,7 @@
   backdrop-filter: none;
   box-shadow: 0 12px 32px rgba(26, 26, 26, 0.12);
   font-family: var(--font-body);
-  color: #241318;
+  color: var(--hc-ink);
   animation: floraIn 180ms ease both;
 }
 
@@ -73,7 +73,7 @@
   font-size: 8.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #8c8a85;
+  color: var(--hc-ink-faint);
 }
 
 .list {
@@ -113,12 +113,12 @@
 .chipMeta {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #8c8a85;
+  color: var(--hc-ink-faint);
 }
 
 .chipWhy {
   font-size: 10px;
-  color: #5c5a55;
+  color: var(--hc-ink-faint);
 }
 
 .chipHold {
@@ -126,7 +126,7 @@
   margin-top: 2px;
   font-size: 9px;
   font-weight: 650;
-  color: #c99757;
+  color: var(--hc-warning);
 }
 
 .actions {
@@ -148,22 +148,22 @@
 }
 
 .accept {
-  border: 1px solid #241318;
-  background: #241318;
-  color: #fff6f8;
+  border: 1px solid var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--hc-invert);
 }
 
 .dismiss {
   border: 1px solid rgba(26, 26, 26, 0.14);
   background: transparent;
-  color: #8c8a85;
+  color: var(--hc-ink-faint);
 }
 
 .honesty {
   margin: 8px 0 0;
   font-size: 9.5px;
   line-height: 1.35;
-  color: #8c8a85;
+  color: var(--hc-ink-faint);
 }
 
 .conflictWarn,
@@ -176,13 +176,13 @@
 }
 
 .conflictWarn {
-  background: rgba(201, 151, 87, 0.14);
-  color: #8a6230;
+  background: color-mix(in srgb, var(--hc-warning) 14%, transparent);
+  color: var(--hc-warning);
 }
 
 .conflictBlock {
-  background: rgba(180, 72, 72, 0.12);
-  color: #8a3030;
+  background: color-mix(in srgb, var(--hc-danger) 12%, transparent);
+  color: var(--hc-danger);
 }
 
 .accept:disabled {
@@ -191,13 +191,13 @@
 }
 
 .ghostCanopy[data-conflict="warn"] {
-  border-color: #c99757;
+  border-color: var(--hc-warning);
   background: rgba(201, 151, 87, 0.14);
 }
 
 .ghostCanopy[data-conflict="block"] {
-  border-color: #b44848;
-  background: rgba(180, 72, 72, 0.12);
+  border-color: var(--hc-danger);
+  background: color-mix(in srgb, var(--hc-danger) 12%, transparent);
 }
 
 @keyframes floraIn {

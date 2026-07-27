@@ -140,13 +140,13 @@
 
 /* Contract id `blush` = dark concept / --surface-deep */
 .themeChip[data-theme="blush"] {
-  background: var(--hc-deep, var(--surface-deep, #182838));
+  background: var(--hc-deep);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hc-paper) 22%, transparent);
 }
 
 .themeChip[data-on="1"] {
-  border-color: var(--hc-signal, var(--signal, #e65416));
-  box-shadow: 0 0 0 2px var(--signal-soft, color-mix(in srgb, var(--signal) 16%, transparent));
+  border-color: var(--hc-signal);
+  box-shadow: 0 0 0 2px var(--signal-soft);
 }
 
 .seedRow,
@@ -312,8 +312,8 @@
 
 /* Dark concept — blueprint-negative on --surface-deep */
 .frameThemeDeep {
-  --sheet-paper: var(--hc-deep, var(--surface-deep, #182838));
-  --sheet-ink: color-mix(in srgb, var(--hc-paper, #fff) 92%, transparent);
+  --sheet-paper: var(--hc-deep);
+  --sheet-ink: color-mix(in srgb, var(--hc-paper) 92%, transparent);
   --sheet-border: color-mix(in srgb, var(--hc-paper) 28%, transparent);
   background: var(--sheet-paper);
   border-color: var(--sheet-border);
@@ -330,7 +330,7 @@
 }
 
 .frameThemeDeep .sheetWidget[data-emphasis="hero"] .sheetValue {
-  color: var(--hc-signal, var(--signal, #e65416));
+  color: var(--hc-signal);
 }
 
 @media print {

@@ -3,9 +3,9 @@
  */
 
 .panel {
-  --ink: #241318;
-  --ink-soft: #7a5560;
-  --glass: rgba(255, 251, 252, 0.96);
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --glass: var(--hc-glass);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: absolute;
@@ -15,7 +15,7 @@
   width: min(220px, 42vw);
   padding: 12px 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
+  border: 1px solid var(--hc-line-soft);
   background: var(--glass);
   backdrop-filter: none;
   box-shadow: 0 14px 44px rgba(42, 23, 29, 0.22);
@@ -48,7 +48,7 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .close {
@@ -64,8 +64,8 @@
 }
 
 .close:hover {
-  color: #c2455f;
-  background: #fff6f8;
+  color: var(--hc-danger);
+  background: var(--hc-invert);
 }
 
 .title {
@@ -96,8 +96,8 @@
   min-height: 56px;
   padding: 6px 4px;
   border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  background: #fff6f8;
+  border: 1px solid var(--hc-line);
+  background: var(--hc-invert);
   color: var(--ink-soft);
   font: inherit;
   cursor: pointer;
@@ -110,15 +110,15 @@
 
 .mark:hover {
   color: var(--ink);
-  background: #ffd3de;
-  border-color: rgba(194, 69, 95, 0.28);
+  background: var(--hc-accent-wash);
+  border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
   transform: translateY(-1px);
 }
 
 .markOn {
-  color: #fff6f8;
-  background: #241318;
-  border-color: #241318;
+  color: var(--hc-invert);
+  background: var(--hc-ink);
+  border-color: var(--hc-ink);
 }
 
 .glyph {

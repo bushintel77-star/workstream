@@ -5,6 +5,7 @@ import { trenchKindLabel } from "@workstream/domain";
 import type { PctPoint } from "../../geometry";
 import type { BoardCamera } from "../../geometry/cameraPointer";
 import { CameraChrome } from "../../CameraChrome";
+import { CSS_TOKEN } from "../../../../../styles/colorTokens";
 import css from "./trenches.module.css";
 
 type Props = {
@@ -15,10 +16,10 @@ type Props = {
 };
 
 const STROKE: Record<ConstructionTrench["kind"], string> = {
-  irrig_main: "#3F6212",
-  irrig_lateral: "#65A30D",
-  lighting_conduit: "#57534E",
-  drainage: "#0369A1",
+  irrig_main: CSS_TOKEN.hedge,
+  irrig_lateral: CSS_TOKEN.plantingNewStroke,
+  lighting_conduit: CSS_TOKEN.textSecondary,
+  drainage: CSS_TOKEN.water,
 };
 
 /**

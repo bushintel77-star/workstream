@@ -16,7 +16,7 @@
 
 .wash {
   /* Day blush wash — ink at ~10% (token-driven). */
-  fill: color-mix(in srgb, var(--hc-ink, #241318) 10%, transparent);
+  fill: color-mix(in srgb, var(--hc-ink) 10%, transparent);
 }
 
 .veilNight .wash {
@@ -24,7 +24,7 @@
    * Dolphin night wash — prefer paper/invert mix over raw hex.
    * Targets ~rgba(16,24,28,0.34) feel.
    */
-  fill: color-mix(in srgb, var(--hc-invert, #16181c) 34%, transparent);
+  fill: color-mix(in srgb, var(--hc-invert) 34%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

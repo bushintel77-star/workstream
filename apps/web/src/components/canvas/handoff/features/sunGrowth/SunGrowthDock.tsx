@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { CSS_TOKEN, mixOnCanvas } from "@/styles/colorTokens";
 import { CameraChrome } from "../../CameraChrome";
 import type { GrowthStage } from "../../state/studioTypes";
 import {
@@ -134,7 +135,7 @@ export function SunGrowthDock({
               y1={38}
               x2={100}
               y2={38}
-              stroke="rgba(36,19,24,0.22)"
+              stroke={mixOnCanvas(CSS_TOKEN.textPrimary, 22)}
               strokeWidth={1}
               vectorEffect="non-scaling-stroke"
             />

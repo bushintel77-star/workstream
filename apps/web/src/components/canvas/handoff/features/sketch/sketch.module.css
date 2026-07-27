@@ -44,8 +44,8 @@
   max-width: min(94%, 520px);
   padding: 6px 8px;
   border-radius: var(--hc-r-panel, 14px);
-  background: color-mix(in srgb, var(--hc-neu-surface, #f1e4e9) 88%, transparent);
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
+  background: color-mix(in srgb, var(--hc-neu-surface) 88%, transparent);
+  box-shadow: var(--hc-elev-1);
   pointer-events: auto;
 }
 
@@ -60,15 +60,15 @@
   min-height: 44px;
   padding: 4px 8px;
   border: none;
-  border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-neu-raised, #f6ebef);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -1px -1px 1.5px rgba(255, 255, 255, 0.45),
-    1px 1px 2.5px rgba(42, 23, 29, 0.14),
-    0 0 0 1px rgba(36, 19, 24, 0.08)
+    -1px -1px 1.5px var(--hc-neu-light),
+    1px 1px 2.5px var(--hc-neu-shadow),
+    0 0 0 1px var(--hc-line-soft)
   );
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 7.5px;
   font-weight: 650;
@@ -81,16 +81,16 @@
 }
 
 .chip:hover:not(:disabled) {
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
 }
 
 .chipArmed,
 .chipArmed:hover:not(:disabled) {
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   box-shadow: var(
     --hc-neu-in,
-    inset 1px 1px 2px rgba(42, 23, 29, 0.14),
-    inset -1px -1px 1.5px rgba(255, 255, 255, 0.45)
+    inset 1px 1px 2px var(--hc-neu-shadow),
+    inset -1px -1px 1.5px var(--hc-neu-light)
   );
 }
 
@@ -100,7 +100,7 @@
 }
 
 .chip:focus-visible {
-  outline: 2px solid var(--hc-ink-muted, #7a5560);
+  outline: 2px solid var(--hc-ink-muted);
   outline-offset: 2px;
 }
 
@@ -116,12 +116,12 @@
   align-items: center;
   gap: 2px;
   padding: 3px;
-  border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-neu-surface, #f1e4e9);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-neu-surface);
   box-shadow: var(
     --hc-neu-in,
-    inset 1px 1px 2px rgba(42, 23, 29, 0.14),
-    inset -1px -1px 1.5px rgba(255, 255, 255, 0.45)
+    inset 1px 1px 2px var(--hc-neu-shadow),
+    inset -1px -1px 1.5px var(--hc-neu-light)
   );
 }
 
@@ -134,7 +134,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font-size: 10px;
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
@@ -142,19 +142,19 @@
 }
 
 .tip:hover:not(:disabled) {
-  color: var(--hc-ink, #241318);
-  background: color-mix(in srgb, var(--hc-neu-raised, #f6ebef) 80%, transparent);
+  color: var(--hc-ink);
+  background: color-mix(in srgb, var(--hc-neu-raised) 80%, transparent);
 }
 
 .tipArmed,
 .tipArmed:hover:not(:disabled) {
-  color: var(--hc-ink, #241318);
-  background: var(--hc-neu-raised, #f6ebef);
+  color: var(--hc-ink);
+  background: var(--hc-neu-raised);
   box-shadow: var(
     --hc-neu-out-sm,
-    -1px -1px 1.5px rgba(255, 255, 255, 0.45),
-    1px 1px 2.5px rgba(42, 23, 29, 0.14),
-    0 0 0 1px rgba(36, 19, 24, 0.08)
+    -1px -1px 1.5px var(--hc-neu-light),
+    1px 1px 2.5px var(--hc-neu-shadow),
+    0 0 0 1px var(--hc-line-soft)
   );
 }
 

@@ -3,10 +3,10 @@
  */
 
 .root {
-  --ink: #241318;
-  --ink-soft: #7a5560;
-  --glass: rgba(255, 251, 252, 0.92);
-  --glass-border: rgba(36, 19, 24, 0.12);
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --glass: var(--hc-glass);
+  --glass-border: var(--hc-line);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   /* Legacy absolute slot — prefer embedded / syncOnly (no corner card). */
@@ -22,10 +22,10 @@
 }
 
 .embedded {
-  --ink: #241318;
-  --ink-soft: #7a5560;
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
   --glass: transparent;
-  --glass-border: rgba(36, 19, 24, 0.1);
+  --glass-border: var(--hc-line-soft);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: static;
@@ -37,7 +37,7 @@
 .embeddedPanel {
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  background: rgba(255, 251, 252, 0.55);
+  background: var(--hc-glass-soft);
   color: var(--ink);
   padding: 6px 8px 7px;
 }
@@ -52,7 +52,7 @@
   color: var(--ink);
   opacity: 0.52;
   transition: opacity 420ms var(--ease);
-  box-shadow: 0 8px 28px rgba(42, 23, 29, 0.12);
+  box-shadow: 0 8px 28px var(--hc-neu-shadow);
 }
 
 .ambient:hover,
@@ -74,7 +74,7 @@
   font-size: 8px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .ambientTitle {
@@ -121,13 +121,13 @@
   font-size: 8px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
   cursor: pointer;
   text-align: left;
 }
 
 .kicker:hover {
-  color: #c2455f;
+  color: var(--hc-danger);
 }
 
 .count {
@@ -156,8 +156,8 @@
   align-items: start;
   padding: 5px 6px;
   border-radius: 10px;
-  border-left: 2px solid rgba(194, 69, 95, 0.35);
-  background: rgba(255, 211, 222, 0.22);
+  border-left: 2px solid color-mix(in srgb, var(--hc-danger) 35%, transparent);
+  background: var(--hc-accent-wash);
 }
 
 .title {
@@ -184,7 +184,7 @@
   font-size: 8px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
   padding-top: 2px;
 }
 
@@ -198,7 +198,7 @@
   min-height: 24px;
   padding: 0 8px;
   border-radius: 10px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
+  border: 1px solid var(--hc-line);
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
@@ -208,9 +208,9 @@
 }
 
 .mini:hover {
-  color: #c2455f;
-  border-color: rgba(194, 69, 95, 0.35);
-  background: #fff6f8;
+  color: var(--hc-danger);
+  border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
+  background: var(--hc-invert);
 }
 
 .empty {

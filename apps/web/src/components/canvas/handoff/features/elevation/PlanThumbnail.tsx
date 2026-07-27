@@ -2,7 +2,13 @@
 
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { ptsAttr, type PctPoint } from "../../geometry";
+import {
+  SEMANTIC_LIGHT,
+  mixOnHex,
+} from "../../../../../styles/colorTokens";
 import css from "./planThumbnail.module.css";
+
+const L = SEMANTIC_LIGHT;
 
 type Props = {
   boundary: PctPoint[];
@@ -33,12 +39,12 @@ export function PlanThumbnail({
         preserveAspectRatio="xMidYMid meet"
         aria-hidden
       >
-        <rect width="100" height="100" fill="#faf6f2" />
+        <rect width="100" height="100" fill={L.sheetPaper} />
         {boundary.length >= 3 ? (
           <polygon
             points={ptsAttr(boundary)}
-            fill="rgba(36,19,24,0.04)"
-            stroke="#241318"
+            fill={mixOnHex(L.textPrimary, 4, L.canvas)}
+            stroke={L.textPrimary}
             strokeWidth={1.2}
             vectorEffect="non-scaling-stroke"
           />
@@ -46,8 +52,8 @@ export function PlanThumbnail({
         {building.length >= 3 ? (
           <polygon
             points={ptsAttr(building)}
-            fill="rgba(36,19,24,0.08)"
-            stroke="#241318"
+            fill={mixOnHex(L.textPrimary, 8, L.canvas)}
+            stroke={L.textPrimary}
             strokeWidth={0.9}
             vectorEffect="non-scaling-stroke"
           />
@@ -66,9 +72,11 @@ export function PlanThumbnail({
                   rx={r * (d.w / 40)}
                   ry={r * (d.h / 40)}
                   fill={
-                    active ? "rgba(28,25,23,0.28)" : "rgba(28,25,23,0.14)"
+                    active
+                      ? mixOnHex(L.textPrimary, 28, L.canvas)
+                      : mixOnHex(L.textPrimary, 14, L.canvas)
                   }
-                  stroke={active ? "#1C1917" : "transparent"}
+                  stroke={active ? L.textPrimary : "transparent"}
                   strokeWidth={active ? 1.2 : 0}
                   vectorEffect="non-scaling-stroke"
                 />
@@ -78,7 +86,7 @@ export function PlanThumbnail({
                     cy={it.y}
                     r={5.5}
                     fill="none"
-                    stroke="#1C1917"
+                    stroke={L.textPrimary}
                     strokeWidth={1}
                     strokeDasharray="2 1.5"
                     vectorEffect="non-scaling-stroke"

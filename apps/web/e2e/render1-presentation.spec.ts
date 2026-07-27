@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import {
+  clickHeaderViewItem,
+  createSurveyProject,
+  handoffStudio,
+} from "./helpers";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -53,7 +57,7 @@ test.describe("Render 1 presentation screenshots", () => {
     await page.getByTestId("fit-sheet-top").click();
 
     // Night board
-    await page.getByTestId("dark-canvas-top").click();
+    await clickHeaderViewItem(page, "dark-canvas-top");
     await expect(page.getByTestId("cad-plan-board")).toBeVisible();
     await shot(page, "render1-night");
     expect(

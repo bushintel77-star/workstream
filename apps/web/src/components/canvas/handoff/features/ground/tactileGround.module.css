@@ -11,11 +11,11 @@
   position: absolute;
   inset: 0;
   opacity: var(--parchment-op);
-  /* Warm Architectural Parchment #F7F4EF + blush mist — original handoff DNA */
+  /* Warm Architectural Parchment var(--sheet-paper) + blush mist — original handoff DNA */
   background:
-    radial-gradient(120% 90% at 18% 12%, rgba(255, 211, 222, 0.28), transparent 55%),
-    radial-gradient(90% 80% at 82% 78%, rgba(246, 234, 237, 0.45), transparent 50%),
-    linear-gradient(155deg, #faf6f2 0%, #f7f4ef 48%, #f0ebe4 100%);
+    radial-gradient(120% 90% at 18% 12%, var(--hc-accent-wash), transparent 55%),
+    radial-gradient(90% 80% at 82% 78%, color-mix(in srgb, var(--panel) 45%, transparent), transparent 50%),
+    linear-gradient(155deg, var(--sheet-paper) 0%, var(--sheet-paper) 48%, var(--sheet-paper) 100%);
   transition: opacity 420ms ease;
 }
 
@@ -25,7 +25,12 @@
  */
 .phase_foundation .parchment {
   background:
-    linear-gradient(180deg, #ececea 0%, #e4e2de 48%, #ddd9d2 100%);
+    linear-gradient(
+      180deg,
+      var(--gray-l-150) 0%,
+      var(--gray-l-200) 48%,
+      var(--gray-l-300) 100%
+    );
 }
 
 .phase_foundation .minor {
@@ -49,8 +54,8 @@
 .phase_foundation .scaleChip {
   border-radius: 0;
   border: 1px solid rgba(28, 25, 23, 0.28);
-  background: #f2f0eb;
-  color: #1c1917;
+  background: var(--canvas);
+  color: var(--hc-ink);
 }
 
 .groundDark .parchment {
@@ -58,7 +63,12 @@
      linework on top. The old warm-brown gradient read as mud. */
   background:
     radial-gradient(120% 90% at 18% 12%, rgba(47, 94, 207, 0.1), transparent 55%),
-    linear-gradient(155deg, #202329 0%, #262a31 50%, #1a1d22 100%);
+    linear-gradient(
+      155deg,
+      var(--gray-d-150) 0%,
+      var(--gray-d-200) 50%,
+      var(--gray-d-100) 100%
+    );
 }
 
 /* Tactile tooth — soft grain without a WebGL dependency on Workflow 1. */
@@ -224,8 +234,8 @@
   height: 22px;
   background: linear-gradient(
     180deg,
-    #1c1917 0%,
-    #1c1917 48%,
+    var(--hc-ink) 0%,
+    var(--hc-ink) 48%,
     rgba(28, 25, 23, 0.25) 52%,
     rgba(28, 25, 23, 0.25) 100%
   );
@@ -263,7 +273,7 @@
 }
 
 .groundDark .topo {
-  stroke: rgba(236, 239, 244,0.08);
+  stroke: color-mix(in srgb, var(--hc-ink) 8%, transparent);
 }
 
 .phase_parchment .topo {

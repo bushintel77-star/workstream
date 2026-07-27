@@ -21,7 +21,7 @@
   background: rgba(242, 240, 235, 0.92);
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
-  color: #44403c;
+  color: var(--hc-ink-muted);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -38,13 +38,13 @@
   background: rgba(242, 240, 235, 0.94);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: #44403c;
+  color: var(--hc-ink-muted);
   pointer-events: none;
   white-space: nowrap;
 }
 
 .fitoffGlyph {
   font-size: 1.4px;
-  fill: #57534e;
+  fill: var(--hc-ink-muted);
   pointer-events: none;
 }

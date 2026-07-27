@@ -3,11 +3,11 @@
  * the window edge stays optically hard, so this reads as one docked instrument.
  */
 .stack {
-  --hc-ink: #241318;
-  --hc-ink-muted: #7a5560;
-  --hc-ink-faint: #b08a95;
-  --hc-line: rgba(36, 19, 24, 0.14);
-  --hc-line-soft: rgba(36, 19, 24, 0.1);
+  --hc-ink: var(--hc-ink);
+  --hc-ink-muted: var(--hc-ink-muted);
+  --hc-ink-faint: var(--hc-ink-faint);
+  --hc-line: var(--hc-line);
+  --hc-line-soft: var(--hc-line-soft);
   position: absolute;
   top: calc(var(--ws-safe-top, 40px) + 4px);
   right: 0;
@@ -15,21 +15,21 @@
   width: min(220px, calc(100vw - 56px));
   overflow: hidden;
   pointer-events: none;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.1));
+  border: 1px solid var(--hc-line-soft);
   border-right: 0;
   border-radius: 12px 0 0 12px;
   background:
     linear-gradient(
       90deg,
-      rgba(255, 251, 252, 0.54) 0%,
-      rgba(255, 251, 252, 0.82) 18%,
-      rgba(246, 234, 237, 0.92) 100%
+      var(--hc-glass-soft) 0%,
+      var(--hc-glass-soft) 18%,
+      var(--hc-glass-soft) 100%
     );
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
   backdrop-filter: blur(18px) saturate(1.08);
   box-shadow:
-    -14px 0 34px rgba(42, 23, 29, 0.07),
-    inset 1px 0 rgba(255, 255, 255, 0.66);
+    -14px 0 34px var(--hc-neu-shadow),
+    inset 1px 0 var(--hc-neu-light);
   animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -42,8 +42,8 @@
   background: linear-gradient(
     180deg,
     transparent,
-    rgba(194, 69, 95, 0.32) 16%,
-    rgba(194, 69, 95, 0.14) 84%,
+    color-mix(in srgb, var(--hc-danger) 32%, transparent) 16%,
+    color-mix(in srgb, var(--hc-danger) 14%, transparent) 84%,
     transparent
   );
   pointer-events: none;
@@ -62,12 +62,12 @@
 .card {
   position: relative;
   pointer-events: auto;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   isolation: isolate;
 }
 
 .card + .card {
-  border-top: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  border-top: 1px solid var(--hc-line-soft);
 }
 
 .card[data-active="true"]::before {
@@ -77,8 +77,8 @@
   width: 2px;
   border-radius: 0 2px 2px 0;
   content: "";
-  background: #c2455f;
-  box-shadow: 1px 0 5px rgba(194, 69, 95, 0.22);
+  background: var(--hc-danger);
+  box-shadow: 1px 0 5px color-mix(in srgb, var(--hc-danger) 22%, transparent);
 }
 
 .expand {
@@ -102,13 +102,13 @@
 }
 
 .expand:hover {
-  background: rgba(255, 211, 222, 0.28);
+  background: var(--hc-accent-wash);
 }
 
 .card[data-active="true"] .expand {
   background:
-    linear-gradient(90deg, rgba(255, 211, 222, 0.54), rgba(246, 234, 237, 0.76));
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.48);
+    linear-gradient(90deg, var(--hc-accent-wash), var(--hc-glass-soft));
+  box-shadow: inset 0 1px var(--hc-neu-light);
 }
 
 .iconSlot {
@@ -117,12 +117,12 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 1px solid rgba(194, 69, 95, 0.13);
+  border: 1px solid color-mix(in srgb, var(--hc-danger) 13%, transparent);
   border-radius: 8px;
-  background: rgba(255, 251, 252, 0.5);
+  background: var(--hc-glass-soft);
   box-shadow:
-    inset 0 1px rgba(255, 255, 255, 0.72),
-    0 1px 2px rgba(42, 23, 29, 0.06);
+    inset 0 1px var(--hc-neu-light),
+    0 1px 2px var(--hc-neu-shadow);
 }
 
 .copy {
@@ -134,7 +134,7 @@
 
 .eyebrow {
   overflow: hidden;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
   font-size: 7.5px;
   font-weight: 600;
@@ -147,7 +147,7 @@
 
 .face {
   overflow: hidden;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   font-family: var(--font-body, "Sora", system-ui, sans-serif);
   font-size: 11px;
   font-weight: 650;
@@ -159,7 +159,7 @@
 
 .detail {
   overflow: hidden;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
   font-size: 8px;
   line-height: 1.35;
@@ -183,7 +183,7 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--hc-ink-faint, #b08a95);
+  color: var(--hc-ink-faint);
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
   font-weight: 400;
@@ -201,8 +201,8 @@
 }
 
 .close:hover {
-  background: rgba(255, 251, 252, 0.62);
-  color: #c2455f;
+  background: var(--hc-glass-soft);
+  color: var(--hc-danger);
 }
 
 .expand:focus-visible,
@@ -217,8 +217,8 @@
   padding: 0 4px;
   border: 1px solid rgba(194, 69, 95, 0.24);
   border-radius: 999px;
-  background: rgba(255, 251, 252, 0.48);
-  color: #c2455f;
+  background: var(--hc-glass-soft);
+  color: var(--hc-danger);
   font-family: "IBM Plex Mono", monospace;
   font-size: 7px;
   font-weight: 600;

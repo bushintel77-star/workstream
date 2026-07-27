@@ -14,6 +14,7 @@ import {
   type GridInk,
 } from "../../geometry/gridStudio";
 import { playInstrumentTick } from "../ambient/instrumentTick";
+import { CSS_TOKEN, mixOnCanvas } from "@/styles/colorTokens";
 import { CameraChrome } from "../../CameraChrome";
 import type { BoardCamera } from "../../geometry/cameraPointer";
 import css from "./draftGridStudio.module.css";
@@ -229,13 +230,13 @@ export function DraftGridStudio({
   );
 }
 
-/** Face preview strokes on blush frost glass (canvas mesh keeps GRID_INK_STROKE). */
+/** Face preview strokes on dock glass (canvas mesh keeps GRID_INK_STROKE). */
 const CONTROL_STROKE: Record<GridInk, string> = {
-  charcoal: "rgba(36, 19, 24, 0.72)",
-  slate: "rgba(122, 85, 96, 0.78)",
-  paper: "rgba(176, 138, 149, 0.55)",
-  mist: "rgba(176, 138, 149, 0.4)",
-  signal: "rgba(194, 69, 95, 0.85)",
+  charcoal: mixOnCanvas(CSS_TOKEN.textPrimary, 72),
+  slate: mixOnCanvas(CSS_TOKEN.textMuted, 78),
+  paper: mixOnCanvas(CSS_TOKEN.textPrimary, 55),
+  mist: mixOnCanvas(CSS_TOKEN.textMuted, 40),
+  signal: mixOnCanvas(CSS_TOKEN.existingStroke, 85),
 };
 
 function FormationGlyph({

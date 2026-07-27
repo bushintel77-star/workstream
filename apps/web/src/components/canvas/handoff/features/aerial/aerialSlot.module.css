@@ -5,7 +5,7 @@
   overflow: hidden;
   /* Cream paper fill — Fit sheet / world paper. Free-plan hidePaper clears
      this so only geometry rides the camera; bleed owns the fixed board plane. */
-  background: #faf6f2;
+  background: var(--sheet-paper);
 }
 
 .slot[data-hide-paper="1"] {
@@ -63,7 +63,7 @@
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.4;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .metaText {
@@ -73,15 +73,15 @@
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint, #b08a95);
+  color: var(--hc-ink-faint);
 }
 
 .dropCueHot .primaryText {
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
 }
 
 .dropCueHot .metaText {
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .errorPanel {
@@ -96,20 +96,20 @@
   gap: 8px;
   width: min(340px, 72%);
   padding: 16px;
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
+  border: 1px solid var(--hc-line);
   border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-glass, rgba(255, 251, 252, 0.92));
+  background: var(--hc-glass);
   text-align: center;
-  box-shadow: var(--hc-elev-2, 0 8px 28px rgba(42, 23, 29, 0.12));
+  box-shadow: var(--hc-elev-2);
 }
 
 .retryButton {
   min-height: 36px;
   padding: 0 12px;
-  border: 1px solid var(--hc-line, rgba(36, 19, 24, 0.12));
-  border-radius: var(--hc-r-control, 10px);
-  background: var(--hc-paper, #fffbfc);
-  color: var(--hc-ink, #241318);
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-paper);
+  color: var(--hc-ink);
   cursor: pointer;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
@@ -119,7 +119,7 @@
 }
 
 .retryButton:hover {
-  border-color: var(--hc-ink, #241318);
+  border-color: var(--hc-ink);
 }
 
 .scanPill {
@@ -134,9 +134,9 @@
   height: 34px;
   padding: 0 14px 0 10px;
   border-radius: 0;
-  border: 1px solid rgba(28, 25, 23, 0.35);
+  border: 1px solid var(--sheet-border, var(--hc-line));
   background: rgba(242, 240, 235, 0.94);
-  color: #1c1917;
+  color: var(--hc-ink);
   font-size: 11px;
   font-weight: 600;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -148,7 +148,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #e8b84b;
+  background: var(--hc-warning);
   animation: ccPulse 1.8s ease-in-out infinite;
 }
 

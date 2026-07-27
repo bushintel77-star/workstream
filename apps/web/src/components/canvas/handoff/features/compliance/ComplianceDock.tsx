@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { polygonAreaM2, type PctPoint } from "../../geometry";
 import css from "./compliance.module.css";
+import { CSS_TOKEN } from "../../../../../styles/colorTokens";
 
 type Props = {
   outdoorM2: number;
@@ -115,7 +116,7 @@ export function ComplianceDock({
         <div className={css.bar}>
           <div
             className={css.barFill}
-            style={{ width: `${stats.canopyPct}%`, background: "#E8B84B" }}
+            style={{ width: `${stats.canopyPct}%`, background: CSS_TOKEN.warning }}
           />
           <div className={css.barTick} style={{ left: "15%" }} />
         </div>

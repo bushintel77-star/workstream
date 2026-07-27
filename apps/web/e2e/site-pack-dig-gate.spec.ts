@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  clickHeaderViewItem,
   createSurveyProject,
   handoffStudio,
   openCommandPalette,
@@ -53,7 +54,7 @@ test.describe("Site pack dig gate", () => {
       timeout: 15_000,
     });
 
-    await page.getByTestId("canvas-services-top").click();
+    await clickHeaderViewItem(page, "canvas-services-top");
     await expect(page.getByTestId("right-data-lane-services")).toBeVisible({
       timeout: 10_000,
     });

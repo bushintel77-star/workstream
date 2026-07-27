@@ -5,12 +5,12 @@
   z-index: 18;
   width: min(236px, calc(100% - 96px));
   padding: 8px 10px 9px;
-  border: 1px solid var(--hc-line-soft, rgba(36, 19, 24, 0.08));
+  border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.94));
+  background: var(--hc-glass-soft);
   backdrop-filter: none;
-  box-shadow: var(--hc-elev-1, 0 1px 2px rgba(42, 23, 29, 0.1));
-  color: var(--hc-ink, #241318);
+  box-shadow: var(--hc-elev-1);
+  color: var(--hc-ink);
   cursor: pointer;
   opacity: 0.88;
   text-align: left;
@@ -45,13 +45,13 @@
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint, #b08a95);
+  color: var(--hc-ink-faint);
 }
 
 .open {
   font-size: 14px;
   line-height: 1;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
 }
 
 .metrics {
@@ -71,7 +71,7 @@
   overflow: hidden;
   font-size: 7.5px;
   letter-spacing: 0.02em;
-  color: var(--hc-ink-muted, #7a5560);
+  color: var(--hc-ink-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -81,7 +81,7 @@
   font-size: 10px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  color: var(--hc-ink, #241318);
+  color: var(--hc-ink);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

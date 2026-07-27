@@ -131,6 +131,10 @@
   --planting-retain-disabled: var(--gray-l-300);
   --focus-ring: var(--cobalt-l-600);
   --focus-ring-offset: var(--canvas);
+  /* Chrome status (toast / compliance) */
+  --warning: #b8860b;
+  --danger: var(--crimson-l-600);
+  --success: var(--sprout-l-500);
 }
 
 :root[data-theme="dark"],
@@ -166,6 +170,9 @@
   --planting-retain-disabled: var(--gray-d-300);
   --focus-ring: var(--cobalt-d-400);
   --focus-ring-offset: var(--canvas);
+  --warning: #d4a017;
+  --danger: var(--crimson-d-400);
+  --success: var(--sprout-d-400);
 }
 
 /* §4 — fills via color-mix against canvas (not hex-alpha). */

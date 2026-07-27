@@ -14,7 +14,7 @@ is the rule that stops the chrome government growing back.
 
 | # | Surface | Jurisdiction | Default state |
 | --- | --- | --- | --- |
-| 1 | **Header** | What you're looking at: modes, lenses, share, save state | Always on; icon budget ≤ 6 beyond modes |
+| 1 | **Header** | What you're looking at: modes, Vic-gov chips, context breadcrumb, **Ask AI** + ⌘K, lenses, share, save | Always on; primary icon budget ≤ 6 beyond modes; AI pill is primary (not overflow) |
 | 2 | **The hand** | Everything transient at the pointer: summoned instrument tray, half-orbit on selection; Fill/library lives in left AssetPanel | Hidden; summoned; self-dismissing |
 | 3 | **The margin** | One quiet bottom strip: undo/redo, state pill, mode hint, honesty caption, print/rev stamp | Always on, minimal |
 | 4 | **Cmd+K** | Everything nameable; constitutional overflow | Hidden until invoked |

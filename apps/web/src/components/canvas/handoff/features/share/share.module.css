@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in srgb, #f2f0eb 88%, transparent);
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
   backdrop-filter: none;
 }
 
@@ -13,11 +13,11 @@
   width: min(420px, 100%);
   padding: 22px 24px;
   border-radius: 16px;
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 251, 252, 0.96);
-  box-shadow: 0 14px 44px rgba(42, 23, 29, 0.18);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass);
+  box-shadow: 0 14px 44px var(--hc-neu-shadow);
   font-family: var(--font-body);
-  color: #241318;
+  color: var(--hc-ink);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -29,7 +29,7 @@
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .title {
@@ -44,7 +44,7 @@
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .actions {
@@ -70,9 +70,9 @@
 }
 
 .primary {
-  border: 1px solid #1c1917;
-  background: #1c1917;
-  color: #f2f0eb;
+  border: 1px solid var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--canvas);
 }
 
 .primary:disabled {
@@ -81,15 +81,15 @@
 }
 
 .secondary {
-  border: 1px solid rgba(36, 19, 24, 0.14);
+  border: 1px solid var(--hc-line);
   background: transparent;
-  color: #241318;
+  color: var(--hc-ink);
 }
 
 .ghost {
   border: none;
   background: transparent;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
   align-self: flex-start;
   padding-left: 0;
 }
@@ -97,7 +97,7 @@
 .error {
   margin: 0;
   font-size: 12px;
-  color: #1c1917;
+  color: var(--hc-ink);
 }
 
 .defer {
@@ -105,5 +105,5 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
   line-height: 1.35;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }

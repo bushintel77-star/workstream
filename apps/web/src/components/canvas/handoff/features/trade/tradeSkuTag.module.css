@@ -21,7 +21,7 @@
   cursor: pointer;
   font: inherit;
   text-align: left;
-  color: var(--sds-vector-primary, #1a1a1a);
+  color: var(--sds-vector-primary);
 }
 
 .tag:hover {
@@ -29,7 +29,7 @@
 }
 
 .amber {
-  color: var(--sds-compliance-amber, #c99757);
+  color: var(--sds-compliance-amber, var(--hc-warning));
   border-color: rgba(201, 151, 87, 0.45);
 }
 
@@ -41,11 +41,11 @@
 .meta {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: var(--sds-vector-muted, #8c8a85);
+  color: var(--sds-vector-muted, var(--hc-ink-faint));
 }
 
 .amber .meta {
-  color: var(--sds-compliance-amber, #c99757);
+  color: var(--sds-compliance-amber, var(--hc-warning));
 }
 
 .popup {
@@ -65,7 +65,7 @@
   font-size: 8.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--sds-vector-muted, #8c8a85);
+  color: var(--sds-vector-muted, var(--hc-ink-faint));
 }
 
 .list {
@@ -86,14 +86,14 @@
 .altMeta {
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
-  color: var(--sds-vector-muted, #8c8a85);
+  color: var(--sds-vector-muted, var(--hc-ink-faint));
 }
 
 .empty,
 .honesty {
   margin: 0;
   font-size: 9.5px;
-  color: var(--sds-vector-muted, #8c8a85);
+  color: var(--sds-vector-muted, var(--hc-ink-faint));
 }
 
 .honesty {

@@ -23,6 +23,21 @@ export async function openCommandPalette(page: Page) {
   });
 }
 
+/** Open header View/More overflow, then click a menu item by test id. */
+export async function clickHeaderViewItem(page: Page, testId: string) {
+  const menu = page.getByTestId("header-view-menu");
+  await expect(menu).toBeVisible({ timeout: 15_000 });
+  await menu.click();
+  await expect(page.getByTestId("header-view-menu-panel")).toBeVisible({
+    timeout: 5_000,
+  });
+  const item = page.getByTestId(testId);
+  await expect(item).toBeVisible({ timeout: 5_000 });
+  // Portaled right-lane panels can sit under the View dropdown — force keeps
+  // header toggles reliable without reverting lane layout.
+  await item.click({ force: true });
+}
+
 /** Drawing tools live in the fixed left tool dock — always visible in plan modes. */
 export async function expectToolDock(page: Page) {
   await expect(page.getByTestId("tool-dock")).toBeVisible({

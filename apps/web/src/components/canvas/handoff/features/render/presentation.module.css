@@ -7,7 +7,7 @@
   font-weight: 500;
   letter-spacing: 0.02em;
   line-height: 1.2;
-  color: #241318;
+  color: var(--hc-ink);
   white-space: nowrap;
   transform: translate(-50%, -100%);
 }

@@ -44,10 +44,10 @@
   display: flex;
   gap: 4px;
   padding: 4px;
-  border: 1px solid rgba(36, 19, 24, 0.12);
+  border: 1px solid var(--hc-line);
   border-radius: 10px;
-  background: rgba(255, 251, 252, 0.92);
-  box-shadow: 0 6px 18px rgba(42, 23, 29, 0.12);
+  background: var(--hc-glass);
+  box-shadow: 0 6px 18px var(--hc-neu-shadow);
   backdrop-filter: none;
   transform: translate(14px, calc(-100% - 10px));
   font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -63,13 +63,13 @@
   padding: 0 5px;
   border: 1px solid transparent;
   border-radius: 7px;
-  color: #7a5560;
+  color: var(--hc-ink-muted);
 }
 
 .dynamicInput label[data-active="true"] {
   border-color: rgba(194, 69, 95, 0.3);
   background: rgba(194, 69, 95, 0.06);
-  color: #241318;
+  color: var(--hc-ink);
 }
 
 .dynamicInput input {
@@ -92,9 +92,9 @@
   height: 22px;
   padding: 0 10px;
   border-radius: 0;
-  border: 1px dashed #1c1917;
+  border: 1px dashed var(--hc-ink);
   background: rgba(242, 240, 235, 0.94);
-  color: #1c1917;
+  color: var(--hc-ink);
   font-size: 10px;
   font-weight: 600;
   font-family: "IBM Plex Mono", monospace;
@@ -103,7 +103,7 @@
 }
 
 .autoBadge:hover {
-  background: #f2f0eb;
+  background: var(--canvas);
 }
 
 .bar {
@@ -124,7 +124,7 @@
   background: rgba(242, 240, 235, 0.96);
   box-shadow: none;
   font-family: var(--font-body);
-  color: #1c1917;
+  color: var(--hc-ink);
 }
 
 .targets {
@@ -141,7 +141,7 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  color: #6b6560;
+  color: var(--hc-ink-muted);
   font: inherit;
   font-size: 10px;
   font-weight: 650;
@@ -149,8 +149,8 @@
 }
 
 .targetBtn[data-active="true"] {
-  background: #1c1917;
-  color: #f2f0eb;
+  background: var(--hc-ink);
+  color: var(--canvas);
 }
 
 .status {
@@ -163,7 +163,7 @@
 .tabHint {
   font-size: 10px;
   font-weight: 650;
-  color: #6b6560;
+  color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
   white-space: nowrap;
 }
@@ -181,8 +181,8 @@
 }
 
 .finish {
-  background: #1c1917;
-  color: #f2f0eb;
+  background: var(--hc-ink);
+  color: var(--canvas);
 }
 
 .finish:disabled {
@@ -193,5 +193,5 @@
 .cancel {
   background: transparent;
   border: 1px solid rgba(28, 25, 23, 0.22);
-  color: #6b6560;
+  color: var(--hc-ink-muted);
 }

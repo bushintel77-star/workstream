@@ -46,16 +46,16 @@
   margin: -11px 0 0 -11px;
   border-radius: 50%;
   border: 1.5px solid rgba(108, 133, 152, 0.55);
-  background: rgba(255, 251, 252, 0.35);
+  background: var(--hc-glass-soft);
   pointer-events: auto;
   cursor: pointer;
   padding: 0;
 }
 
 .levelHit[data-selected="true"] {
-  border-color: #6c8598;
-  background: rgba(108, 133, 152, 0.35);
-  box-shadow: 0 0 0 3px rgba(108, 133, 152, 0.2);
+  border-color: var(--easement-stroke);
+  background: color-mix(in srgb, var(--easement-stroke) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--easement-stroke) 20%, transparent);
 }
 
 .commit {
@@ -68,8 +68,8 @@
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid rgba(108, 133, 152, 0.45);
-  background: var(--hc-glass-soft, rgba(255, 251, 252, 0.85));
-  color: #6c8598;
+  background: var(--hc-glass-soft);
+  color: var(--easement-stroke);
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   pointer-events: auto;

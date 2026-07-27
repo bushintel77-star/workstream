@@ -13,9 +13,9 @@
   --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 94%, transparent);
   --hc-line: color-mix(in srgb, var(--text-primary) 14%, transparent);
   --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
-  --hc-signal: var(--signal, #e65416);
-  --hc-signal-ink: var(--signal-ink, #231206);
-  --hc-deep: var(--surface-deep, #182838);
+  --hc-signal: var(--signal);
+  --hc-signal-ink: var(--signal-ink);
+  --hc-deep: var(--surface-deep);
   --hc-r-control: 6px;
   --hc-r-panel: 8px;
   --hc-r-dock: var(--hc-r-panel);

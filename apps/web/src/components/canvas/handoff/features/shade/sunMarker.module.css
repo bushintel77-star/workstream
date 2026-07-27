@@ -10,8 +10,7 @@
 }
 
 /*
- * Small azimuth jewel — a faceted gold pip with a soft specular highlight and
- * a hairline warm ring. Reads as a refined bearing marker, not a traffic cone.
+ * Small azimuth jewel — faceted warning/amber pip with soft specular highlight.
  */
 .dot {
   position: relative;
@@ -21,15 +20,15 @@
   background:
     radial-gradient(
       circle at 34% 30%,
-      #fbe6ac 0%,
-      #edb852 42%,
-      #cf8f24 78%,
-      #a86c14 100%
+      color-mix(in srgb, var(--hc-warning) 35%, var(--hc-paper)) 0%,
+      color-mix(in srgb, var(--hc-warning) 75%, transparent) 42%,
+      color-mix(in srgb, var(--hc-warning) 90%, black) 78%,
+      color-mix(in srgb, var(--hc-warning) 70%, black) 100%
     );
   box-shadow:
-    0 0 0 1px rgba(120, 72, 20, 0.35),
-    0 0 0 2.5px rgba(255, 251, 252, 0.9),
-    0 1px 2px rgba(78, 47, 9, 0.28);
+    0 0 0 1px color-mix(in srgb, var(--hc-warning) 35%, transparent),
+    0 0 0 2.5px var(--hc-glass),
+    0 1px 2px color-mix(in srgb, var(--hc-warning) 28%, transparent);
 }
 
 .dot::after {
@@ -40,7 +39,7 @@
   width: 2.4px;
   height: 2.4px;
   border-radius: 50%;
-  background: rgba(255, 252, 240, 0.85);
+  background: var(--hc-neu-light);
 }
 
 .label {
@@ -49,10 +48,10 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #7a4a12;
-  background: rgba(255, 251, 252, 0.86);
+  color: color-mix(in srgb, var(--hc-warning) 70%, black);
+  background: var(--hc-glass);
   padding: 1px 4px;
   border-radius: 3px;
-  border: 1px solid rgba(120, 72, 20, 0.18);
-  box-shadow: 0 1px 2px rgba(78, 47, 9, 0.1);
+  border: 1px solid color-mix(in srgb, var(--hc-warning) 18%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--hc-warning) 10%, transparent);
 }
