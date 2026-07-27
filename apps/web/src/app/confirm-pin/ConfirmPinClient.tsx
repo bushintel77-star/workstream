@@ -26,7 +26,8 @@ type Props = {
 };
 
 const ZOOM_MS = 1500;
-const SETTLE_MS = 1200;
+/** Hold on the identified/spotlit lot before entering the studio. */
+const SETTLE_MS = 1800;
 
 /** Loader narrative — the studio doing the council/state paperwork the operator
  *  would otherwise chase by hand. Every line maps to a real Vicmap/keyless pull. */
@@ -170,7 +171,7 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
     if (!measuring || error) return;
     const id = window.setInterval(() => {
       setCapIdx((i) => Math.min(i + 1, CAPABILITY_PHRASES.length - 1));
-    }, 650);
+    }, 900);
     return () => window.clearInterval(id);
   }, [measuring, error]);
 
