@@ -724,4 +724,50 @@ describe("API contract — projects", () => {
       error: "Costing required before carbon estimate.",
     });
   });
+
+  it("persists Fit-sheet presentation_pack on design-canvas upsert", async () => {
+    ({ app } = await buildTestApp());
+    const create = await app.inject({
+      method: "POST",
+      url: "/projects/",
+      payload: { address: "Sheet Pack St, Richmond VIC 3121" },
+    });
+    const projectId = (create.json() as { project: { id: string } }).project.id;
+    const widgetId = randomUUID();
+
+    const put = await app.inject({
+      method: "PUT",
+      url: `/projects/${projectId}/design-canvas`,
+      payload: {
+        placements: [],
+        strokes: [],
+        presentation_pack: {
+          theme: "blush",
+          template_id: "curtis-client-brochure",
+          widgets: [
+            {
+              id: widgetId,
+              type: "quote_total",
+              slot: "side_stack",
+              order: 0,
+              style: { accent: "rose", emphasis: "hero" },
+            },
+          ],
+        },
+      },
+    });
+    expect(put.statusCode).toBe(200);
+    expect(put.json().canvas.presentation_pack).toMatchObject({
+      theme: "blush",
+      template_id: "curtis-client-brochure",
+    });
+
+    const get = await app.inject({
+      method: "GET",
+      url: `/projects/${projectId}/design-canvas`,
+    });
+    expect(get.statusCode).toBe(200);
+    expect(get.json().canvas.presentation_pack.widgets).toHaveLength(1);
+    expect(get.json().canvas.presentation_pack.widgets[0].id).toBe(widgetId);
+  });
 });

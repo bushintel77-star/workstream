@@ -1,0 +1,121 @@
+.wrap {
+  position: relative;
+  flex: none;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: var(--hc-neu-raised);
+  box-shadow: var(
+    --hc-neu-out-sm,
+    -2px -2px 5px var(--hc-neu-light),
+    2px 2px 6px var(--hc-neu-shadow)
+  );
+  color: var(--hc-ink-muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 140ms var(--ws-ease),
+    box-shadow 140ms var(--ws-ease);
+}
+
+.trigger:hover {
+  color: var(--hc-ink);
+}
+
+.trigger:active,
+.triggerActive {
+  color: var(--hc-ink);
+  box-shadow: var(
+    --hc-neu-in,
+    inset 2px 2px 5px var(--hc-neu-shadow),
+    inset -2px -2px 5px var(--hc-neu-light)
+  );
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--hc-danger);
+  outline-offset: 2px;
+}
+
+.triggerLabel {
+  letter-spacing: 0.02em;
+}
+
+.triggerMore {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 42;
+  min-width: 168px;
+  padding: 6px;
+  border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass);
+  box-shadow: var(--hc-elev-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: menuIn var(--hc-motion, 180ms) var(--ws-ease) both;
+}
+
+.item {
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: var(--hc-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover:not(:disabled) {
+  background: var(--hc-accent-wash);
+}
+
+.item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.itemActive {
+  background: color-mix(in srgb, var(--hc-accent-wash) 65%, transparent);
+  box-shadow: inset 0 -2px 0 var(--proposed-stroke);
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    animation: none;
+  }
+}

@@ -33,6 +33,7 @@ import {
   type GridInk,
 } from "./geometry/gridStudio";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
+import { SheetComposeDock } from "./features/fitSheet/SheetComposeDock";
 import {
   loadFitSheetPrefs,
   saveFitSheetPrefs,
@@ -121,7 +122,6 @@ import {
   type NicheTool,
 } from "./features/kitInventory/nicheTools";
 import { LiveMeasuresRail } from "./features/liveMeasures/LiveMeasuresRail";
-import { CanvasMeasureSummary } from "./features/liveMeasures/CanvasMeasureSummary";
 import {
   cancelToSelect,
   recordTool,
@@ -163,6 +163,7 @@ import {
 } from "./features/ground/groundMetrics";
 import {
   cycleElevationLook,
+  isTier1WrightsTerrace,
   solveLiveTradeEstimate,
   sunPositionAt,
   tradeTagForItem,
@@ -176,6 +177,7 @@ import type {
   DesignSiteFrame,
   LandscapeFeature,
   IrrigationZone,
+  PresentationPack,
 } from "@workstream/contracts";
 import {
   plotBoxFor,
@@ -195,7 +197,9 @@ import {
 } from "./geometry/canvasZoom";
 import { nextBoardSize } from "./geometry/boardSizeCommit";
 import {
+  isViewRotatedFromNorth,
   normalizeViewRotationDeg,
+  resolvePlanRotateDeg,
   stepViewRotationDeg,
   type ViewRotationStepDeg,
 } from "./geometry/canvasViewRotation";
@@ -244,6 +248,7 @@ type Props = {
   initialConstructionTrenches?: ConstructionTrench[];
   initialAnnotations?: CanvasAnnotation[];
   initialFeatures?: LandscapeFeature[];
+  initialPresentationPack?: PresentationPack | null;
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -268,6 +273,7 @@ export function HandoffDesignStudio({
   initialConstructionTrenches = [],
   initialAnnotations = [],
   initialFeatures = [],
+  initialPresentationPack = null,
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -290,6 +296,7 @@ export function HandoffDesignStudio({
     initialConstructionTrenches,
     initialAnnotations,
     initialFeatures,
+    initialPresentationPack,
   });
   const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
@@ -362,6 +369,8 @@ export function HandoffDesignStudio({
     totalInclGst: number;
   } | null>(null);
   const [headerViewMenuOpen, setHeaderViewMenuOpen] = useState(false);
+  /** Fit-sheet compose peel — header-summoned only (never a parked rail). */
+  const [sheetComposeOpen, setSheetComposeOpen] = useState(false);
   const [latestShare, setLatestShare] = useState<
     import("@workstream/contracts").ShareRevision | null
   >(null);
@@ -885,8 +894,13 @@ export function HandoffDesignStudio({
         studio.setUi({ frameOn: false, panX: 0, panY: 0, zoom: 1 });
       }
       const cam = gardenViewpointCamera(look);
+      /*
+       * Patch yaw + tilt together so the "park yaw when flat" effect never
+       * sees Looking E/S/W without an active lens (Survey/Sketch).
+       */
       studio.setUi({
         viewRotationDeg: cam.viewRotationDeg,
+        tiltDeg: cam.tiltDeg,
         cmdOpen: false,
         cmdQuery: "",
         focusX: 50,
@@ -1649,7 +1663,10 @@ export function HandoffDesignStudio({
     !ui.focusOn &&
     !ui.clientView &&
     ui.zoom >= 2.2;
-  /** Fill / asset panel — always on in plan CAD/sketch (collapsed rail by default). */
+  /**
+   * Fill / asset panel — always on in plan CAD/sketch (command-first collapsed
+   * rail by default). Compact widths use AssetCommandSheet instead of the dock.
+   */
   const assetChromeOn =
     (ui.mode === "cad" || ui.mode === "sketch") &&
     !ui.frameOn &&
@@ -1765,13 +1782,17 @@ export function HandoffDesignStudio({
   const planPanX = (sheetPlotLayout?.view.panX ?? 0) + ui.panX;
   const planPanY = (sheetPlotLayout?.view.panY ?? 0) + ui.panY;
   /**
-   * CAD camera rotation — viewport only (geometry % coords unchanged).
-   * Off on Sketch / Fit / non-CAD so survey-grade print stays north-up.
+   * Camera yaw — viewport only (geometry % coords unchanged).
+   * CAD free plan + Looking N/E/S/W while tilted; flat Sketch/Fit stay north-up.
    */
-  const planRotateDeg =
-    ui.mode === "cad" && !ui.frameOn && !ui.clientView
-      ? normalizeViewRotationDeg(ui.viewRotationDeg)
-      : 0;
+  const planRotateDeg = resolvePlanRotateDeg({
+    mode: ui.mode,
+    frameOn: ui.frameOn,
+    clientView: ui.clientView,
+    tiltDeg: ui.tiltDeg,
+    viewRotationDeg: ui.viewRotationDeg,
+    tiltAnimating: tiltAnimKind != null,
+  });
   /**
    * Live camera matching `.zoomWorld` — passed to any overlay that portals
    * frosted chrome via `CameraChrome` so those elements stay clear of the
@@ -1903,9 +1924,19 @@ export function HandoffDesignStudio({
           panX: 0,
           panY: 0,
         });
+        // First open with an empty, never-templated pack → seed the client
+        // brochure onto the paper. Compose peel stays closed.
+        const pack = studio.presentationPack;
+        if (
+          (pack.widgets?.length ?? 0) === 0 &&
+          pack.template_id == null
+        ) {
+          studio.applyPresentationTemplate("curtis-client-brochure");
+        }
         return;
       }
       // Leaving Fit sheet — restore a coherent free-plan camera on every tab.
+      setSheetComposeOpen(false);
       outdoorFitKeyRef.current = null;
       fitSeedKeyRef.current = null;
       studio.setUi({ frameOn: false, panX: 0, panY: 0, zoom: 1 });
@@ -2558,7 +2589,6 @@ export function HandoffDesignStudio({
               window.open(href, "_blank", "noopener,noreferrer");
             }
           }}
-          placement="header"
         />
       </div>
     ) : null;
@@ -2732,6 +2762,7 @@ export function HandoffDesignStudio({
             className={`${css.iconBtn}${ui.frameOn ? ` ${css.iconBtnActive}` : ""}`}
             data-testid="fit-sheet-top"
             aria-label="Fit sheet"
+            aria-pressed={ui.frameOn}
             title="Fit sheet"
             onClick={() => setFitSheetOn(!ui.frameOn)}
           >
@@ -2748,6 +2779,35 @@ export function HandoffDesignStudio({
               <path d="M9.5 2.5v11" stroke="currentColor" strokeWidth="1.25" />
             </svg>
           </button>
+          {ui.frameOn && !ui.clientView ? (
+            <button
+              type="button"
+              className={`${css.iconBtn}${sheetComposeOpen ? ` ${css.iconBtnActive}` : ""}`}
+              data-testid="sheet-compose-top"
+              aria-label="Compose sheet"
+              aria-pressed={sheetComposeOpen}
+              title="Compose sheet"
+              onClick={() => setSheetComposeOpen((v) => !v)}
+            >
+              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                <rect
+                  x="2.5"
+                  y="2.5"
+                  width="11"
+                  height="11"
+                  rx="1.5"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                />
+                <path
+                  d="M6 5.5h4M6 8h4M6 10.5h2.5"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          ) : null}
           <button
             type="button"
             className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
@@ -2898,7 +2958,6 @@ export function HandoffDesignStudio({
               setbackOn={ui.setbackOn}
               shadeOn={ui.shadeOn}
               growth={ui.growth}
-              placement="header"
               onClearIsolation={() => studio.clearServiceFocus()}
               onClearSetback={() => studio.setUi({ setbackOn: false })}
               onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
@@ -2934,12 +2993,6 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
-        {/* Fit sheet / Sketch margin own their own legal line. */}
-        {!ui.frameOn && ui.mode !== "sketch" ? (
-          <div className={css.honestyCaption}>
-            Concept sketch for estimating — not a construction drawing.
-          </div>
-        ) : null}
         {ui.mode === "elevation" ? (
           <ElevationBoard
             look={ui.elevLook}
@@ -3048,6 +3101,7 @@ export function HandoffDesignStudio({
               data-testid="zoom-world"
               data-print-keep="plan"
               data-tilt-deg={ui.tiltDeg.toFixed(1)}
+              data-view-yaw={String(planRotateDeg)}
               onTransitionEnd={(e) => {
                 if (e.propertyName !== "transform") return;
                 clearTiltAnimKind();
@@ -3820,6 +3874,10 @@ export function HandoffDesignStudio({
             onScaleDenom={(sheetScaleDenom) => studio.setUi({ sheetScaleDenom })}
             titleBlock={titleBlock}
             weatherDay={weatherDay}
+            presentationPack={studio.presentationPack}
+            quoteTotalInclGst={estimate.totalInclGst}
+            tier1={isTier1WrightsTerrace(projectAddress)}
+            irrigationZones={studio.irrigationZones}
             shareStamp={
               latestShare
                 ? latestShare.status === "accepted"
@@ -3840,18 +3898,51 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {ui.mode === "cad" && !ui.frameOn && !ui.clientView && !ui.focusOn ? (
-          <ViewNorthControl
-            rotationDeg={ui.viewRotationDeg}
-            stepDeg={ui.viewRotationStepDeg}
-            onRotation={(viewRotationDeg) => studio.setUi({ viewRotationDeg })}
-            onStep={(viewRotationStepDeg: ViewRotationStepDeg) =>
-              studio.setUi({ viewRotationStepDeg })
-            }
-          />
+        {ui.frameOn && planOn && !ui.clientView && sheetComposeOpen ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={54}
+            testId="sheet-compose-chrome"
+          >
+            <SheetComposeDock
+              open={sheetComposeOpen}
+              onClose={() => setSheetComposeOpen(false)}
+              pack={studio.presentationPack}
+              onApplyTemplate={studio.applyPresentationTemplate}
+              onTheme={studio.setPresentationTheme}
+              onAddWidget={studio.addPresentationWidget}
+              onRemoveWidget={studio.removePresentationWidget}
+              onReflow={studio.reflowPresentationPack}
+              onClear={studio.clearPresentationWidgets}
+            />
+          </CameraChrome>
         ) : null}
 
-        {(planOn || ui.mode === "elevation") &&
+        {ui.mode === "cad" &&
+        !ui.frameOn &&
+        !ui.clientView &&
+        !ui.focusOn &&
+        isViewRotatedFromNorth(ui.viewRotationDeg) ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={42}
+            testId="view-north-chrome"
+          >
+            <ViewNorthControl
+              rotationDeg={ui.viewRotationDeg}
+              stepDeg={ui.viewRotationStepDeg}
+              onRotation={(viewRotationDeg) =>
+                studio.setUi({ viewRotationDeg })
+              }
+              onStep={(viewRotationStepDeg: ViewRotationStepDeg) =>
+                studio.setUi({ viewRotationStepDeg })
+              }
+            />
+          </CameraChrome>
+        ) : null}
+
+        {((planOn && isTiltActive(ui.tiltDeg)) ||
+          ui.mode === "elevation") &&
         !ui.frameOn &&
         !ui.focusOn ? (
           <GardenViewpointStrip
@@ -3979,40 +4070,7 @@ export function HandoffDesignStudio({
           </CameraChrome>
         ) : null}
 
-        {/* Lane law: this compact chip and the right data lane share the
-            same top-right corner — hide it whenever ANY lane occupant
-            (checklist/layers/sites/measures) is open, not just "measures",
-            so it never visually collides with the open panel below it. */}
-        {!rightLaneBusy &&
-        planOn &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        !ui.foundationCleanse ? (
-          <CameraChrome
-            place={{ kind: "dock" }}
-            zIndex={52}
-            testId="canvas-measure-summary-chrome"
-          >
-            <CanvasMeasureSummary
-              mode={ui.mode}
-              boundary={studio.boundary}
-              building={studio.building}
-              items={studio.items}
-              scaleM={scaleM}
-              schedule={siteSchedule}
-              selected={selectedLive}
-              cadastralLotM2={titleBlock?.lotAreaM2 ?? null}
-              cadastralHouseM2={titleBlock?.houseAreaM2 ?? null}
-              onOpen={() =>
-                studio.setUi({
-                  ...withRightDataPanel("measures"),
-                  utilityPanel: null,
-                })
-              }
-            />
-          </CameraChrome>
-        ) : null}
+        {/* Live measures — Cmd+K / header Data only. No parked CAD MEASURES card. */}
 
         {measuresOpen &&
         planOn &&
@@ -4104,7 +4162,7 @@ export function HandoffDesignStudio({
         {planOn &&
         !ui.frameOn &&
         !ui.focusOn &&
-        (ui.clientView || ui.schemes.length > 0 || ui.mode === "cad") ? (
+        (ui.clientView || ui.schemes.length > 0) ? (
           <VariationFilmstrip
             schemes={ui.schemes}
             activeSchemeId={ui.activeSchemeId}
@@ -4125,8 +4183,6 @@ export function HandoffDesignStudio({
               {ui.schemes.length > 0
                 ? ` · schemes ${ui.schemes.map((s) => s.letter).join("/")}`
                 : ""}
-              {" · "}
-              not for construction
             </p>
           </CameraChrome>
         ) : null}
@@ -4614,6 +4670,7 @@ export function HandoffDesignStudio({
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           onTiltView={() => runTiltView()}
           onGardenViewpoint={runGardenViewpoint}
+          onSaveScheme={studio.saveDesignScheme}
           dataOpen={measuresOpen}
           onToggleData={() =>
             studio.setUi({

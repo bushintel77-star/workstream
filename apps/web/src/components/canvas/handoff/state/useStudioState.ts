@@ -32,6 +32,14 @@ import {
   type PathFilletLockM,
   type PathWidthLockM,
   type SoilTag,
+  addSheetWidget,
+  applySheetTemplate,
+  clearPresentationPack,
+  emptyPresentationPack,
+  moveSheetWidget,
+  reflowSheetWidgets,
+  removeSheetWidget,
+  setSheetTheme,
   type StudioComplianceItem,
   type StudioHorizonCard,
 } from "@workstream/domain";
@@ -44,6 +52,10 @@ import type {
   IrrigationZone,
   IrrigationZoneKind,
   LandscapeFeature,
+  PresentationPack,
+  PresentationSlot,
+  PresentationTheme,
+  PresentationWidgetType,
 } from "@workstream/contracts";
 import {
   classifySaveError,
@@ -81,6 +93,7 @@ import {
 import type { PaperSize, PctPoint } from "../geometry";
 import { classifySurveyCorridor } from "../geometry/surveyCorridor";
 import { filterKeylessRingsToBoard } from "../geometry/keylessRingClip";
+import { rejectOversizedDwelling } from "../geometry/dwellingPlausibility";
 import { pointInPolygon } from "../geometry/polygon";
 import {
   constrainAssetCentre,
@@ -163,6 +176,20 @@ import {
   type RejectionReason,
   type SessionRejectionHint,
 } from "./sessionRejectionHints";
+
+/** Stable autosave fingerprint for Fit-sheet presentation_pack. */
+export function presentationPackPersistKey(
+  pack: PresentationPack | null | undefined,
+): string {
+  if (!pack) return "";
+  const widgets = (pack.widgets ?? [])
+    .map(
+      (w) =>
+        `${w.id}:${w.type}:${w.slot}:${w.order}:${w.style?.accent ?? ""}:${w.style?.emphasis ?? ""}:${w.text ?? ""}`,
+    )
+    .join("|");
+  return `${pack.theme}:${pack.template_id ?? ""}:${widgets}`;
+}
 
 function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
   return items.map((i) => {
@@ -436,6 +463,7 @@ function snapOf(doc: Doc): StudioSnapshot {
     irrigationZones: doc.irrigationZones ?? [],
     constructionTrenches: doc.constructionTrenches ?? [],
     annotations: doc.annotations ?? [],
+    presentationPack: doc.presentationPack ?? emptyPresentationPack(),
   };
 }
 
@@ -459,6 +487,7 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
       anchor: { ...a.anchor },
       notePos: { ...a.notePos },
     })),
+    presentationPack: emptyPresentationPack(),
   };
 }
 
@@ -471,6 +500,7 @@ function initialState(opts: {
   constructionTrenches?: ConstructionTrench[];
   annotations?: CanvasAnnotation[];
   features?: LandscapeFeature[];
+  presentationPack?: PresentationPack | null;
   /** Live project — never boot with the demo dwelling parallelogram. */
   liveProject?: boolean;
 }): State {
@@ -486,17 +516,25 @@ function initialState(opts: {
     (opts.constructionTrenches?.length ?? 0) > 0 ||
     (opts.annotations?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
-  const building = resolveHydratedBuilding(
+  const buildingRaw = resolveHydratedBuilding(
     opts.siteFrame,
     frameOverlay.building,
     base.building,
     { liveProject },
   );
-  const buildingSource: DesignBuildingSource = frameOverlay.buildingSource
-    ? frameOverlay.buildingSource
-    : building.length >= 3
-      ? "traced"
-      : "empty";
+  const healBoundary =
+    frameOverlay.boundary && frameOverlay.boundary.length >= 3
+      ? frameOverlay.boundary
+      : null;
+  const building = healBoundary
+    ? rejectOversizedDwelling(healBoundary, buildingRaw)
+    : buildingRaw;
+  const buildingSource: DesignBuildingSource =
+    building.length < 3
+      ? "empty"
+      : frameOverlay.buildingSource
+        ? frameOverlay.buildingSource
+        : "traced";
   const snap: StudioSnapshot = hasCanvas
     ? {
         ...base,
@@ -515,10 +553,21 @@ function initialState(opts: {
         irrigationZones: opts.irrigationZones ?? [],
         constructionTrenches: opts.constructionTrenches ?? [],
         annotations: opts.annotations ?? [],
+        presentationPack:
+          opts.presentationPack ?? emptyPresentationPack(),
       }
     : liveProject
-      ? { ...base, building: [] }
-      : base;
+      ? {
+          ...base,
+          building: [],
+          presentationPack:
+            opts.presentationPack ?? emptyPresentationPack(),
+        }
+      : {
+          ...base,
+          presentationPack:
+            opts.presentationPack ?? emptyPresentationPack(),
+        };
   const outdoorSafe: StudioSnapshot = {
     ...snap,
     items: sanitizeItemsToOutdoor(snap.items, snap.boundary, snap.building),
@@ -655,6 +704,8 @@ export type UseStudioStateOpts = {
   initialAnnotations?: CanvasAnnotation[];
   /** Persisted region outlines from DesignCanvas.features. */
   initialFeatures?: LandscapeFeature[];
+  /** Fit-sheet compose pack from DesignCanvas.presentation_pack. */
+  initialPresentationPack?: PresentationPack | null;
 };
 
 function reducer(state: State, action: Action): State {
@@ -885,6 +936,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialConstructionTrenches = [],
     initialAnnotations = [],
     initialFeatures = [],
+    initialPresentationPack = null,
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
@@ -896,6 +948,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       constructionTrenches: initialConstructionTrenches,
       annotations: initialAnnotations,
       features: initialFeatures,
+      presentationPack: initialPresentationPack,
       liveProject: Boolean(projectId),
     }),
   );
@@ -3222,6 +3275,63 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [mutate, state.doc.annotations],
   );
 
+  const patchPresentationPack = useCallback(
+    (fn: (pack: PresentationPack) => PresentationPack) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          presentationPack: fn(
+            snap.presentationPack ?? emptyPresentationPack(),
+          ),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const applyPresentationTemplate = useCallback(
+    (templateId: string) => {
+      patchPresentationPack(() => applySheetTemplate(templateId));
+    },
+    [patchPresentationPack],
+  );
+
+  const setPresentationTheme = useCallback(
+    (theme: PresentationTheme) => {
+      patchPresentationPack((pack) => setSheetTheme(pack, theme));
+    },
+    [patchPresentationPack],
+  );
+
+  const addPresentationWidget = useCallback(
+    (type: PresentationWidgetType) => {
+      patchPresentationPack((pack) => addSheetWidget(pack, type));
+    },
+    [patchPresentationPack],
+  );
+
+  const movePresentationWidget = useCallback(
+    (widgetId: string, slot: PresentationSlot) => {
+      patchPresentationPack((pack) => moveSheetWidget(pack, widgetId, slot));
+    },
+    [patchPresentationPack],
+  );
+
+  const removePresentationWidget = useCallback(
+    (widgetId: string) => {
+      patchPresentationPack((pack) => removeSheetWidget(pack, widgetId));
+    },
+    [patchPresentationPack],
+  );
+
+  const reflowPresentationPack = useCallback(() => {
+    patchPresentationPack((pack) => reflowSheetWidgets(pack));
+  }, [patchPresentationPack]);
+
+  const clearPresentationWidgets = useCallback(() => {
+    patchPresentationPack((pack) => clearPresentationPack(pack));
+  }, [patchPresentationPack]);
+
   const restoreAnnotation = useCallback(
     (ann: CanvasAnnotation) => {
       mutate((snap) => {
@@ -3296,6 +3406,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       strokes: state.doc.strokes,
     });
     if (fixed.remapped) {
+      // Remap is local bookkeeping — do not schedule a second autosave.
+      skipPersist.current = true;
       dispatch({
         type: "silentIds",
         items: fixed.items,
@@ -3325,7 +3437,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           : {}),
       },
     });
-    setUi({ saveStatus: "saving" });
+    setUi({ saveStatus: "saving", saveErrorKind: null });
     try {
       const acceptedTrenches = (state.doc.constructionTrenches ?? []).filter(
         (t) => !t.ghost,
@@ -3338,6 +3450,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
         site_frame: siteFrame,
         features,
         construction_trenches: acceptedTrenches,
+        presentation_pack:
+          state.doc.presentationPack ?? emptyPresentationPack(),
       });
       saveRevisionRef.current += 1;
       setUi({
@@ -3347,11 +3461,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
         saveErrorKind: null,
       });
     } catch (err) {
+      const kind = classifySaveError(err);
       setUi({
         saveStatus: "error",
-        saveErrorKind: classifySaveError(err),
+        saveErrorKind: kind,
       });
-      throw new Error("Design canvas save failed");
+      // Rethrow the original error so the autosave retry loop can classify
+      // unreachable vs rejected (a generic wrap always looked like "rejected").
+      throw err instanceof Error ? err : new Error(String(err));
     }
   }, [
     setUi,
@@ -3361,6 +3478,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.irrigationZones,
     state.doc.constructionTrenches,
     state.doc.annotations,
+    state.doc.presentationPack,
     state.doc.items,
     state.doc.levels,
     state.doc.services,
@@ -3381,11 +3499,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
       return;
     }
     const backoffMs = [2_000, 8_000, 30_000];
+    let cancelled = false;
     const handle = window.setTimeout(() => {
       const persist = async (attempt: number): Promise<void> => {
+        if (cancelled) return;
         try {
           await saveNow();
         } catch (err) {
+          if (cancelled) return;
           const kind = classifySaveError(err);
           // Stale Server Action / deploy mismatch won't heal on retry — stop.
           if (kind === "stale_client") {
@@ -3393,7 +3514,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
             return;
           }
           if (attempt < backoffMs.length) {
-            setUi({ saveStatus: "retrying" });
+            setUi({ saveStatus: "retrying", saveErrorKind: kind });
             await new Promise((r) =>
               window.setTimeout(r, backoffMs[attempt - 1] ?? 2_000),
             );
@@ -3407,7 +3528,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
       };
       void persist(1);
     }, 1100);
-    return () => window.clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
     // Persist accepted geometry + site frame — ghosts must not rewrite canvas.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -3456,6 +3580,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
           `${a.id}:${a.text}:${a.notePos.x},${a.notePos.y}:${a.anchor.kind === "item" ? a.anchor.itemId : `${a.anchor.x},${a.anchor.y}`}`,
       )
       .join("/"),
+    // Fit-sheet compose — theme / template / widgets must flush with canvas.
+    presentationPackPersistKey(state.doc.presentationPack),
     saveRetryNonce,
   ]);
 
@@ -3825,6 +3951,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     irrigationZones: state.doc.irrigationZones ?? [],
     constructionTrenches: state.doc.constructionTrenches ?? [],
     annotations: state.doc.annotations ?? [],
+    presentationPack:
+      state.doc.presentationPack ?? emptyPresentationPack(),
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     undoDepth: state.doc.hist.length,
@@ -3898,6 +4026,13 @@ export function useStudioState(opts: UseStudioStateOpts) {
     updateAnnotationNotePos,
     removeAnnotation,
     restoreAnnotation,
+    applyPresentationTemplate,
+    setPresentationTheme,
+    addPresentationWidget,
+    movePresentationWidget,
+    removePresentationWidget,
+    reflowPresentationPack,
+    clearPresentationWidgets,
     switchSite,
     resetSite,
     retrySave: () => setSaveRetryNonce((n) => n + 1),
@@ -3983,15 +4118,21 @@ export function useStudioState(opts: UseStudioStateOpts) {
           drawCursor: tool === "trace" ? state.ui.drawCursor : null,
           // Command-first: ADD arms without forcing the library open.
           // Keep Path Grammar placing; collapse Expanded when leaving draft tools.
+          // Paint still summons the inventory peel (main canvas-first).
           ...(tool === "add"
             ? { rightDataPanel: null }
-            : collapseAsset
+            : tool === "paint"
               ? {
-                  leftAssetPanel: null,
-                  leftAssetRestore: null,
-                  leftAssetPinned: false,
+                  leftAssetPanel: "expanded" as const,
+                  rightDataPanel: null,
                 }
-              : {}),
+              : collapseAsset
+                ? {
+                    leftAssetPanel: null,
+                    leftAssetRestore: null,
+                    leftAssetPinned: false,
+                  }
+                : {}),
         });
       }
     },

@@ -3,10 +3,11 @@ import {
   createSurveyProject,
   expectToolDock,
   handoffStudio,
+  openCommandPalette,
 } from "./helpers";
 
 /**
- * Design craft — unified asset panel (Fill rail → library → Path Grammar).
+ * Design craft — inventory summons on Add (no parked Fill rail).
  * Camera chrome must stay outside zoom-world (gate C).
  */
 test.describe("Canvas design craft", () => {
@@ -22,15 +23,22 @@ test.describe("Canvas design craft", () => {
     });
     await expectToolDock(page);
 
-    const panel = page.getByTestId("asset-panel");
-    await expect(panel).toBeVisible({ timeout: 8_000 });
-    await expect(panel).toHaveAttribute("data-state", "collapsed");
+    // Idle CAD — drawing only; inventory stays off the plan.
+    await expect(page.getByTestId("asset-panel")).toHaveCount(0);
     await expect(page.getByTestId("kit-asset-dock")).toHaveCount(0);
     await expect(page.getByTestId("hardscape-craft-bar")).toHaveCount(0);
+    await expect(page.getByTestId("variation-filmstrip")).toHaveCount(0);
+    await expect(page.getByTestId("view-north-control")).toHaveCount(0);
+    await expect(page.getByTestId("garden-viewpoint-strip")).toHaveCount(0);
+    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
 
-    await page.getByTestId("swatch-paving").click();
+    await page.getByTestId("canvas-tool-add").click();
+    const panel = page.getByTestId("asset-panel");
+    await expect(panel).toBeVisible({ timeout: 8_000 });
     await expect(panel).toHaveAttribute("data-state", "expanded");
     await expect(page.getByTestId("asset-panel-expanded")).toBeVisible();
+
+    await page.getByTestId("swatch-paving").click();
     await expect(page.getByTestId("kit-section-paving")).toBeVisible();
     await expect(page.getByTestId("kit-planting-filters")).toBeVisible();
     await expect(page.getByTestId("asset-pinned")).toBeVisible();
@@ -56,12 +64,14 @@ test.describe("Canvas design craft", () => {
       timeout: 5_000,
     });
 
-    await expect(panel).toHaveAttribute("data-state", "collapsed");
-    await expect(page.getByTestId("asset-panel-placing")).toHaveCount(0);
-    await expect(page.getByTestId("asset-panel-expanded")).toHaveCount(0);
+    // Back to Select — inventory dismisses.
+    await expect(page.getByTestId("asset-panel")).toHaveCount(0);
 
-    await expect(page.getByTestId("variation-filmstrip")).toBeVisible();
-    await page.getByTestId("scheme-save").click();
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-save-scheme").click();
+    await expect(page.getByTestId("variation-filmstrip")).toBeVisible({
+      timeout: 5_000,
+    });
     await expect(page.getByTestId("scheme-thumb-A")).toBeVisible({
       timeout: 5_000,
     });

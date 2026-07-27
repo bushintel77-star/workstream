@@ -28,6 +28,7 @@ export async function saveDesignCanvasClient(
     site_frame?: DesignCanvas["site_frame"];
     features?: DesignCanvas["features"];
     construction_trenches?: DesignCanvas["construction_trenches"];
+    presentation_pack?: DesignCanvas["presentation_pack"];
   },
 ): Promise<SaveDesignCanvasClientResult> {
   if (!projectId.trim()) {

@@ -20,7 +20,7 @@ describe("buildSiteLiveMeta", () => {
     // 40% × 40% of a 100 m board = 40 m × 40 m = 1600 m²
     expect(meta.lotAreaM2).toBeCloseTo(1600, 0);
     expect(meta.areaSurveyed).toBe(false);
-    expect(meta.face).toMatch(/1600 m² · boundary/);
+    expect(meta.face).toMatch(/1600\.00 m² · boundary/);
     expect(meta.detail).toMatch(/No dwelling · no easements/);
   });
 
@@ -34,7 +34,7 @@ describe("buildSiteLiveMeta", () => {
       titleSource: "Vicmap",
     });
     expect(meta.areaSurveyed).toBe(true);
-    expect(meta.face).toBe("412 m² · Vicmap");
+    expect(meta.face).toBe("412.00 m² · Vicmap");
     expect(meta.hasDwelling).toBe(true);
     expect(meta.easementCount).toBe(1);
     expect(meta.detail).toBe("Dwelling · 1 easement");

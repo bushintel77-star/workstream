@@ -108,6 +108,14 @@
   gap: 8px;
 }
 
+/** Live quote / massing — after schedule metrics, before legend. */
+.presentationSection {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 28%;
+  overflow: auto;
+}
+
 .titleMeta {
   display: flex;
   align-items: center;
@@ -191,6 +199,13 @@
 .panelStrip .section {
   padding: 8px 10px;
   min-width: 80px;
+}
+
+.panelStrip .presentationSection {
+  max-height: none;
+  flex: 1.1 1 0;
+  min-width: 96px;
+  overflow: auto;
 }
 
 .panelStrip .notesBody {

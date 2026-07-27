@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { handoffStudio } from "./helpers";
+import { handoffStudio, openCommandPalette } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -50,18 +50,13 @@ test.describe("Canvas foundation honesty", () => {
       "Existing dwelling outline unavailable",
       { timeout: 15_000 },
     );
-    // Survey auto-opens the checklist in the right data lane; the compact
-    // measures chip yields the corner while any lane occupant is open (lane
-    // law) and returns once the lane is free.
+    // Survey auto-opens the checklist; measures are summoned (Cmd+K), not parked.
     await expect(page.getByTestId("survey-checklist")).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
     await page.getByRole("button", { name: "Close checklist" }).click();
-    await expect(page.getByTestId("canvas-measure-summary")).toBeVisible();
-    await expect(
-      page.getByTestId("canvas-measure-summary-building"),
-    ).toContainText("Not traced");
+    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
     await expect(page.getByTestId("cad-title-area")).toBeVisible();
     await expect(page.getByTestId("cad-building-area")).toHaveCount(0);
   });
@@ -125,9 +120,9 @@ test.describe("Canvas foundation honesty", () => {
     await expect(page.getByTestId("cad-building-area")).toBeVisible();
     await expect(page.getByTestId("cad-outdoor-area")).toBeVisible();
 
-    const summary = page.getByTestId("canvas-measure-summary");
-    await expect(summary).toHaveAttribute("data-mode", "cad");
-    await summary.click();
+    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-measures").click();
     await expect(page.getByTestId("live-measures-rail")).toBeVisible();
     await expect(page.getByTestId("live-measure-building")).toBeVisible();
     await expect(page.getByTestId("live-measure-outdoor")).toBeVisible();

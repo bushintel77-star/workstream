@@ -727,8 +727,35 @@ export async function fetchTitlePolygon(
   return parcel?.polygon ?? null;
 }
 
+/**
+ * Max dwelling footprint as a fraction of title area. Matches web
+ * `MAX_FOOTPRINT_COVERAGE_FRAC` — Vicmap INTERSECTS can return a neighbour
+ * complex larger than the lot; never hydrate that as the house.
+ */
+export const MAX_DWELLING_COVERAGE_FRAC = 0.8;
+
+/**
+ * Among INTERSECTS candidates, pick the largest footprint that still fits
+ * under the title coverage cap. Returns null when every candidate is absurd.
+ */
+export function pickPlausibleBuildingRing(
+  titleRing: Ring,
+  candidateRings: Ring[],
+  maxCoverageFrac = MAX_DWELLING_COVERAGE_FRAC,
+): Ring | null {
+  const closed = ensureClosedRing(titleRing);
+  const titleArea = polygonArea(closed as Coord[]);
+  if (!(titleArea > 1)) return null;
+  const maxHouse = titleArea * maxCoverageFrac;
+  const sane = candidateRings
+    .map((ring) => ({ ring, area: polygonArea(ring as Coord[]) }))
+    .filter((c) => Number.isFinite(c.area) && c.area > 1 && c.area <= maxHouse)
+    .sort((a, b) => b.area - a.area);
+  return sane[0]?.ring ?? null;
+}
+
 /** Fetch the building footprint(s) intersecting a property polygon. Returns the
- * largest one as a Polygon. Returns null if no buildings found. */
+ * largest *plausible* one as a Polygon. Returns null if none fit the title. */
 export async function fetchBuildingPolygon(
   titleRing: Ring,
 ): Promise<GeoJsonPolygon | null> {
@@ -740,14 +767,10 @@ export async function fetchBuildingPolygon(
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 
-  // Main dwelling = largest building footprint intersecting the title.
-  const bestRing = largestPolygonRing({
-    type: "MultiPolygon",
-    coordinates: fc.features.flatMap((f) =>
-      explodeExteriorRings(f.geometry).map((r) => [r]),
-    ),
-  });
-  return bestRing ? toGeoJsonPolygon(bestRing) : null;
+  const rings = fc.features.flatMap((f) => explodeExteriorRings(f.geometry));
+  const best = pickPlausibleBuildingRing(closed, rings);
+  // No footprint fits the lot — prefer empty over an envelope larger than title.
+  return best ? toGeoJsonPolygon(best) : null;
 }
 
 type LineGeometry =

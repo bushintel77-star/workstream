@@ -23,9 +23,14 @@ import {
 } from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { SEMANTIC_LIGHT, mixOnHex } from "../../../../../styles/colorTokens";
+import type { IrrigationZone, PresentationPack } from "@workstream/contracts";
+import { widgetsInSlot } from "@workstream/domain";
 import { WeatherIcon } from "../stickyMeta/WeatherIcon";
 import type { EnvWeatherDay } from "../stickyMeta/envLiveMeta";
 import { resolveEnvWeatherCondition } from "../stickyMeta/envLiveMeta";
+import { SheetWidgetStack } from "./SheetWidgetStack";
+import { buildSheetWidgetContext } from "./sheetWidgetContext";
+import composeCss from "./sheetCompose.module.css";
 import css from "./fitSheet.module.css";
 
 /** Ladder lives in geometry (single source shared with sheetContentView). */
@@ -55,6 +60,12 @@ type Props = {
   shareStamp?: string | null;
   /** Today’s Open-Meteo day — tiny weather pip in the title strip. */
   weatherDay?: EnvWeatherDay | null;
+  /** Presentation product pack — widgets around the live plot. */
+  presentationPack?: PresentationPack | null;
+  quoteTotalInclGst?: number;
+  tier1?: boolean;
+  /** Live irrigation / services zones for zone_summary honesty. */
+  irrigationZones?: IrrigationZone[];
 };
 
 type ElevProfile = {
@@ -204,9 +215,17 @@ export function FitSheetOverlay({
   titleBlock = null,
   shareStamp = null,
   weatherDay = null,
+  presentationPack = null,
+  quoteTotalInclGst = 0,
+  tier1 = false,
+  irrigationZones = [],
 }: Props) {
   const [pulse, setPulse] = useState(false);
   const weatherCondition = resolveEnvWeatherCondition(weatherDay, 45);
+  const sheetWidgetContext = useMemo(
+    () => buildSheetWidgetContext({ items, irrigationZones }),
+    [items, irrigationZones],
+  );
   const weatherTemp =
     weatherDay?.temp_max_c != null && Number.isFinite(weatherDay.temp_max_c)
       ? Math.round(weatherDay.temp_max_c)
@@ -352,10 +371,19 @@ export function FitSheetOverlay({
       </div>
 
       <div
-        className={`${css.frame}${pulse ? ` ${css.framePulse}` : ""}`}
+        className={`${css.frame}${pulse ? ` ${css.framePulse}` : ""}${
+          presentationPack?.theme === "ink"
+            ? ` ${composeCss.frameThemeInk}`
+            : ""
+        }${
+          presentationPack?.theme === "blush"
+            ? ` ${composeCss.frameThemeBlush}`
+            : ""
+        }`}
         data-testid="fit-sheet-frame"
         data-paper={paper}
         data-scale={scaleTxt}
+        data-sheet-theme={presentationPack?.theme ?? "parchment"}
         style={{
           left: box.boxLeft,
           top: box.boxTop,
@@ -397,6 +425,15 @@ export function FitSheetOverlay({
             <div style={{ minWidth: 0 }}>
               <p className={css.brand}>Curtis &amp; Co</p>
               <p className={css.addr}>{titleBlock?.address ?? address}</p>
+              {presentationPack ? (
+                <SheetWidgetStack
+                  pack={presentationPack}
+                  slot="title_meta"
+                  quoteTotalInclGst={quoteTotalInclGst}
+                  tier1={tier1}
+                  context={sheetWidgetContext}
+                />
+              ) : null}
               <p className={css.titleSource} data-testid="fit-sheet-cadastral">
                 {titleBlock?.sourceLabel ?? "Indicative parcel"}
                 {titleBlock?.parcelRef
@@ -481,6 +518,20 @@ export function FitSheetOverlay({
             ))}
           </div>
 
+          {presentationPack &&
+          widgetsInSlot(presentationPack, "side_stack").length > 0 ? (
+            <div className={`${css.section} ${css.presentationSection}`}>
+              <p className={css.kicker}>Presentation</p>
+              <SheetWidgetStack
+                pack={presentationPack}
+                slot="side_stack"
+                quoteTotalInclGst={quoteTotalInclGst}
+                tier1={tier1}
+                context={sheetWidgetContext}
+              />
+            </div>
+          ) : null}
+
           {/* On-canvas outside dims own B#/F# callouts — schedule keeps areas + legend. */}
           {legend.length > 0 ? (
             <div className={css.sectionGrow}>
@@ -498,16 +549,25 @@ export function FitSheetOverlay({
 
           <div className={css.notes}>
             <p className={css.kicker}>Notes</p>
+            {presentationPack ? (
+              <SheetWidgetStack
+                pack={presentationPack}
+                slot="footer_band"
+                quoteTotalInclGst={quoteTotalInclGst}
+                tier1={tier1}
+                context={sheetWidgetContext}
+              />
+            ) : null}
             <p className={css.notesBody} data-testid="fit-sheet-notes">
               {titleBlock?.notesLine ??
-                "Vicmap cadastral base · confirm title. Dimensions in metres — working drawing, indicative only."}{" "}
-              B# = boundary · F# = dwelling envelope. Not for construction.
+                "Vicmap cadastral base · confirm title. Dimensions in metres."}{" "}
+              B# = boundary · F# = dwelling envelope.
             </p>
             <div className={css.notesMeta}>
               <span data-testid="fit-sheet-scale-stamp">
                 {SHEET_SCALE_STEPS.includes(scaleDenom)
                   ? scaleTxt
-                  : `${scaleTxt} (Not to scale) — Working drawing indicative only`}
+                  : `${scaleTxt} (Not to scale)`}
               </span>
               {shareStamp ? (
                 <span data-testid="fit-sheet-share-stamp">{shareStamp}</span>

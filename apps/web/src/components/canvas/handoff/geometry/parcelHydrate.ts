@@ -6,6 +6,7 @@ import {
   type CanvasMetresFit,
   type CanvasMetresTransform,
 } from "./geoToPct";
+import { rejectOversizedDwelling } from "./dwellingPlausibility";
 import {
   reprojectDocToBoundary,
   reprojectRingFromRing,
@@ -76,15 +77,17 @@ export function applyParcelSnap(args: {
     snap.building.length >= 3 &&
     snap.boundary.length >= 3
   ) {
-    const building = reprojectRingFromRing(
-      snap.building,
-      snap.boundary,
+    const building = rejectOversizedDwelling(
       nextBoundary,
+      reprojectRingFromRing(snap.building, snap.boundary, nextBoundary),
     );
-    return {
-      snap: reprojectDocToBoundary(snap, nextBoundary, { building }),
-      buildingSource: "traced",
-    };
+    if (building.length >= 3) {
+      return {
+        snap: reprojectDocToBoundary(snap, nextBoundary, { building }),
+        buildingSource: "traced",
+      };
+    }
+    // Seed-warped "traced" rings that fill the lot fall through to Vicmap/empty.
   }
 
   if (
@@ -92,11 +95,18 @@ export function applyParcelSnap(args: {
     houseCanvasVerts.length >= 3 &&
     transform != null
   ) {
-    const building = applyCanvasMetresTransform(houseCanvasVerts, transform);
-    return {
-      snap: reprojectDocToBoundary(snap, nextBoundary, { building }),
-      buildingSource: "vicmap",
-    };
+    const building = rejectOversizedDwelling(
+      nextBoundary,
+      applyCanvasMetresTransform(houseCanvasVerts, transform),
+    );
+    if (building.length >= 3) {
+      return {
+        snap: reprojectDocToBoundary(snap, nextBoundary, { building }),
+        buildingSource: "vicmap",
+      };
+    }
+    // Vicmap INTERSECTS often returns a neighbour / complex larger than the
+    // title — never park that as the housing envelope (tilt would extrude it).
   }
 
   return {

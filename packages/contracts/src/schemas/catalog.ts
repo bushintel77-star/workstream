@@ -412,6 +412,65 @@ export type DesignSiteFrame = z.infer<typeof DesignSiteFrameSchema>;
 /** Pre-parse / hydrate input — defaults fill missing drainage_runs. */
 export type DesignSiteFrameInput = z.input<typeof DesignSiteFrameSchema>;
 
+/**
+ * Fit-sheet presentation pack — widgets around the live plot (canvas feature).
+ * See docs/SHEET-PRESENTATION.md.
+ */
+export const PresentationThemeSchema = z.enum(["parchment", "ink", "blush"]);
+export type PresentationTheme = z.infer<typeof PresentationThemeSchema>;
+
+export const PresentationSlotSchema = z.enum([
+  "title_meta",
+  "side_stack",
+  "footer_band",
+]);
+export type PresentationSlot = z.infer<typeof PresentationSlotSchema>;
+
+export const PresentationWidgetTypeSchema = z.enum([
+  "quote_total",
+  "savings_ledger",
+  "zone_summary",
+  "material_swatches",
+  "caption",
+  "honesty_footer",
+]);
+export type PresentationWidgetType = z.infer<
+  typeof PresentationWidgetTypeSchema
+>;
+
+export const PresentationWidgetStyleSchema = z.object({
+  /** Accent wash for the widget chrome. */
+  accent: z.enum(["rose", "ink", "sage", "gold"]).default("rose"),
+  /** Emphasise display type (quote total / caption). */
+  emphasis: z.enum(["quiet", "standard", "hero"]).default("standard"),
+});
+export type PresentationWidgetStyle = z.infer<
+  typeof PresentationWidgetStyleSchema
+>;
+
+export const PresentationWidgetSchema = z.object({
+  id: z.string().uuid(),
+  type: PresentationWidgetTypeSchema,
+  slot: PresentationSlotSchema,
+  /** Order within the slot (0 = top / leading). */
+  order: z.number().int().min(0).max(40).default(0),
+  style: PresentationWidgetStyleSchema.default({
+    accent: "rose",
+    emphasis: "standard",
+  }),
+  /** Operator override copy — empty means live/auto text. */
+  text: z.string().trim().max(280).optional(),
+});
+export type PresentationWidget = z.infer<typeof PresentationWidgetSchema>;
+
+export const PresentationPackSchema = z.object({
+  theme: PresentationThemeSchema.default("parchment"),
+  /** Seed or saved template id last applied. */
+  template_id: z.string().min(1).max(64).optional(),
+  widgets: z.array(PresentationWidgetSchema).max(24).default([]),
+});
+export type PresentationPack = z.infer<typeof PresentationPackSchema>;
+
 export const DesignCanvasSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
@@ -425,6 +484,8 @@ export const DesignCanvasSchema = z.object({
   features: z.array(LandscapeFeatureSchema).optional().default([]),
   /** Durable title / survey frame — boundary, building, easements, levels. */
   site_frame: DesignSiteFrameSchema.optional(),
+  /** Fit-sheet presentation product (widgets + theme). */
+  presentation_pack: PresentationPackSchema.optional(),
   updated_at: z.string().datetime(),
 });
 export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
@@ -437,5 +498,6 @@ export const UpsertDesignCanvasSchema = z.object({
   annotations: z.array(CanvasAnnotationSchema).optional(),
   features: z.array(LandscapeFeatureSchema).optional(),
   site_frame: DesignSiteFrameSchema.optional(),
+  presentation_pack: PresentationPackSchema.optional(),
 });
 export type UpsertDesignCanvasInput = z.infer<typeof UpsertDesignCanvasSchema>;

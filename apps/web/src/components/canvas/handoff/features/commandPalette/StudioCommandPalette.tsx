@@ -57,6 +57,8 @@ type Props = {
   onTiltView?: () => void;
   /** Named cardinal garden axon (Looking N/S/E/W). */
   onGardenViewpoint?: (look: "N" | "S" | "E" | "W") => void;
+  /** Snapshot current design as scheme A/B/C (filmstrip only after save). */
+  onSaveScheme?: () => void;
   /** Canvas-first: summon / dismiss the measures + quantity lane. */
   dataOpen: boolean;
   onToggleData: () => void;
@@ -103,6 +105,7 @@ export function StudioCommandPalette({
   onToggleFocus,
   onTiltView,
   onGardenViewpoint,
+  onSaveScheme,
   dataOpen,
   onToggleData,
   onUndo,
@@ -379,6 +382,17 @@ export function StudioCommandPalette({
               }) satisfies StudioCommand,
           )
         : []),
+      ...(onSaveScheme
+        ? [
+            {
+              id: "save-scheme",
+              label: "Save design scheme",
+              detail: "Snapshot A/B/C for client comparison — filmstrip appears after save",
+              keywords: "scheme save abc variation filmstrip client meeting",
+              run: onSaveScheme,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "undo",
         label: "Undo",
@@ -436,6 +450,7 @@ export function StudioCommandPalette({
     onToggleFocus,
     onTiltView,
     onGardenViewpoint,
+    onSaveScheme,
     onUndo,
     query,
     recentAssetTypes,

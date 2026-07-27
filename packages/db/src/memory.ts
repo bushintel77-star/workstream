@@ -1200,6 +1200,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         construction_trenches: canvas.construction_trenches ?? [],
         annotations: canvas.annotations ?? [],
         features: canvas.features ?? [],
+        presentation_pack: canvas.presentation_pack,
       };
     },
 
@@ -1264,6 +1265,9 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         if (input.site_frame !== undefined) {
           existing.site_frame = input.site_frame;
         }
+        if (input.presentation_pack !== undefined) {
+          existing.presentation_pack = input.presentation_pack;
+        }
         existing.updated_at = now;
         flush();
         return {
@@ -1271,6 +1275,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           features: existing.features ?? [],
           site_frame: existing.site_frame,
           construction_trenches: existing.construction_trenches ?? [],
+          presentation_pack: existing.presentation_pack,
         };
       }
       const canvas: import("@workstream/contracts").DesignCanvas = {
@@ -1283,6 +1288,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         annotations: input.annotations ?? [],
         features: input.features ?? [],
         site_frame: input.site_frame,
+        presentation_pack: input.presentation_pack,
         updated_at: now,
       };
       _designCanvases.push(canvas);

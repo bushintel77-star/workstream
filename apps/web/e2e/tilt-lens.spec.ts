@@ -229,13 +229,15 @@ test.describe("Tilt lens", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    // Survey (not only CAD) — yaw must apply while the garden axon is on.
+    await page.goto(`/projects/${projectId}?mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({
       timeout: 15_000,
     });
 
-    await expect(page.getByTestId("garden-viewpoint-strip")).toBeVisible();
+    // Flat plan — no parked View strip; Cmd+K Looking east arms tilt + strip.
+    await expect(page.getByTestId("garden-viewpoint-strip")).toHaveCount(0);
     await openCommandPalette(page);
     await page.getByTestId("canvas-command-looking-east").click();
     await expect(page.getByTestId("studio-board")).toHaveAttribute(
@@ -243,7 +245,22 @@ test.describe("Tilt lens", () => {
       "1",
       { timeout: 5_000 },
     );
+    await expect(page.getByTestId("garden-viewpoint-strip")).toBeVisible();
+    await expect(page.getByTestId("zoom-world")).toHaveAttribute(
+      "data-view-yaw",
+      "90",
+    );
     await expect(page.getByTestId("garden-viewpoint-E")).toHaveAttribute(
+      "data-armed",
+      "1",
+    );
+
+    await page.getByTestId("garden-viewpoint-S").click();
+    await expect(page.getByTestId("zoom-world")).toHaveAttribute(
+      "data-view-yaw",
+      "180",
+    );
+    await expect(page.getByTestId("garden-viewpoint-S")).toHaveAttribute(
       "data-armed",
       "1",
     );
@@ -287,14 +304,10 @@ test.describe("Tilt lens", () => {
       "0",
       { timeout: 3_000 },
     );
-
-    // After Looking east, yaw may remain until North-up restore.
-    const northUp = page.getByTestId("view-rot-reset-north");
-    if (await northUp.count()) {
-      await northUp.click();
-      await expect(page.getByTestId("view-rot-at-north")).toBeVisible();
-    } else {
-      await expect(page.getByTestId("view-rot-at-north")).toBeVisible();
-    }
+    // Survey parks yaw when the lens flattens (CAD keeps it until North-up).
+    await expect(page.getByTestId("zoom-world")).toHaveAttribute(
+      "data-view-yaw",
+      "0",
+    );
   });
 });

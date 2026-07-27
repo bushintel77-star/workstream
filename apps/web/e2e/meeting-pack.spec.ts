@@ -3,10 +3,12 @@ import {
   createSurveyProject,
   expectToolDock,
   handoffStudio,
+  openCommandPalette,
 } from "./helpers";
 
 /**
  * Client meeting pack — schemes + print affordance + honesty caption.
+ * Schemes strip is summoned after save (not parked on idle CAD).
  */
 test.describe("Meeting pack", () => {
   test("client view exposes print + scheme thumbs + caption", async ({
@@ -18,7 +20,9 @@ test.describe("Meeting pack", () => {
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expectToolDock(page);
 
-    await page.getByTestId("scheme-save").click();
+    await expect(page.getByTestId("variation-filmstrip")).toHaveCount(0);
+    await openCommandPalette(page);
+    await page.getByTestId("canvas-command-save-scheme").click();
     await expect(page.getByTestId("scheme-thumb-A")).toBeVisible({
       timeout: 5_000,
     });
