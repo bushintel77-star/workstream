@@ -29,7 +29,6 @@ import {
   formatCadAreaM2,
   formatCadBearing,
   formatCadMetres,
-  neighbourLotContext,
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
 import { boardPctToClientOffset } from "../../geometry/cameraPointer";
@@ -526,8 +525,6 @@ export function CadPlanBoard({
   const showDims =
     !sketchPassthrough &&
     (editing || frameOn || foundationCleanse || mode === "survey");
-  const contextLots =
-    cadTitleMode && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
   const buildingCentroid =
     building.length >= 3 ? polygonCentroid(building) : null;
@@ -1336,20 +1333,6 @@ export function CadPlanBoard({
               </g>
             );
           })}
-        {cadTitleMode
-          ? contextLots.map((ring, i) => (
-              <polygon
-                key={`ctx${i}`}
-                points={ptsAttr(ring)}
-                fill={lines.context.fill ?? "transparent"}
-                stroke={lines.context.stroke}
-                strokeWidth={lines.context.strokeWidth}
-                opacity={lines.context.opacity ?? 1}
-                vectorEffect="non-scaling-stroke"
-                data-testid="cad-context-lot"
-              />
-            ))
-          : null}
         <polygon
           points={ptsAttr(boundary)}
           fill={

@@ -211,13 +211,6 @@
   text-shadow: none;
 }
 
-/* CAD property-boundary language (REA concept, not REA chrome). */
-.cadContextLot {
-  fill: color-mix(in srgb, var(--text-primary) 1.5%, var(--canvas));
-  stroke: color-mix(in srgb, var(--text-primary) 14%, var(--canvas));
-  stroke-width: 0.7;
-}
-
 .cadDimMark {
   gap: 3px;
 }

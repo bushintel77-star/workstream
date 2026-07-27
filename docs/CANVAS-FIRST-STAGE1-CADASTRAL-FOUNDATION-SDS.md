@@ -48,7 +48,7 @@ Bypass probabilistic AI design generation, purge visual noise from the active ca
 | Layer | Spec |
 |-------|------|
 | Base | Cool monochrome CAD plate (silver-grey vector street fabric) — no satellite |
-| Context | Light charcoal neighbour lot lines (indicative fabric, not Vicmap neighbours) |
+| Context | Title lot only — no indicative neighbour / street-square fabric |
 | Title CAD overlay | Deep charcoal `#1C1917`, **1.5px** stroke + light fill (`COLOR_VECTOR_PRIMARY`) |
 | Vertices | 45° architectural oblique ticks (not REA purple circles) |
 | Dimensions | Inline CAD labels `0.000 m` (mono, square frame) — millimetre truth |

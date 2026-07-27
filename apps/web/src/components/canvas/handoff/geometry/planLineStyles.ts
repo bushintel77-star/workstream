@@ -19,7 +19,6 @@ export type PlanLineKind =
   | "hardscape"
   | "planting"
   | "existing"
-  | "context"
   | "easement"
   | "service"
   | "setback"
@@ -60,12 +59,6 @@ export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
     stroke: L.plantingRetainStroke,
     strokeWidth: 0.4,
     dash: "2.5 2",
-  },
-  context: {
-    stroke: L.textMuted,
-    strokeWidth: 0.5,
-    opacity: 0.55,
-    fill: "color-mix(in srgb, var(--text-primary) 1.5%, var(--canvas))",
   },
   easement: {
     stroke: L.easementStroke,
@@ -112,14 +105,6 @@ export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
     stroke: D.plantingRetainStroke,
     strokeWidth: 0.4,
     dash: "2.5 2",
-  },
-  context: {
-    /* Spec collapses muted/secondary to gray-d-500 — use gray-d-400 so
-     * street wash stays distinct from setback dashes on the night plate. */
-    stroke: PALETTE.grayD400,
-    strokeWidth: 0.5,
-    opacity: 0.5,
-    fill: "color-mix(in srgb, var(--text-primary) 2%, var(--canvas))",
   },
   easement: {
     stroke: D.easementStroke,

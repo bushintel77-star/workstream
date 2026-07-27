@@ -13,7 +13,6 @@ const KINDS: PlanLineKind[] = [
   "hardscape",
   "planting",
   "existing",
-  "context",
   "easement",
   "service",
   "setback",
