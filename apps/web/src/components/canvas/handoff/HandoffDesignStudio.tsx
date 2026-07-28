@@ -164,6 +164,13 @@ import { SelectionFocusVeil } from "./features/selectionFocus/SelectionFocusVeil
 import { DialHintPill } from "./features/selectionDial/DialHintPill";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
+import { IrrigationUniformityWash } from "./features/zones/IrrigationUniformityWash";
+import { IrrigationUniformityDock } from "./features/zones/IrrigationUniformityDock";
+import { PhaseManagerChip } from "./features/phase/PhaseManagerChip";
+import {
+  loadLifecyclePhasePrefs,
+  saveLifecyclePhasePrefs,
+} from "./features/phase/phasePrefs";
 import { TrenchOverlay } from "./features/trenches/TrenchOverlay";
 import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { BoardFindings } from "./features/horizon/BoardFindings";
@@ -180,8 +187,10 @@ import {
   BOARD_WIDTH_M_AT_100,
 } from "./features/ground/groundMetrics";
 import {
+  assessIrrigationUniformity,
   assessLvCircuit,
   cycleElevationLook,
+  DESIGN_LIFECYCLE_PHASES,
   isLightingSymbolId,
   isTier1WrightsTerrace,
   nextTransformerVa,
@@ -197,6 +206,7 @@ import type {
   CatalogSymbol,
   CanvasStroke,
   ConstructionTrench,
+  DesignLifecyclePhase,
   DesignSiteFrame,
   LandscapeFeature,
   IrrigationZone,
@@ -274,6 +284,7 @@ type Props = {
   initialAnnotations?: CanvasAnnotation[];
   initialFeatures?: LandscapeFeature[];
   initialPresentationPack?: PresentationPack | null;
+  initialLifecyclePhase?: DesignLifecyclePhase;
   hasQuote?: boolean;
   quotePortalUri?: string | null;
   initialTitleBlock?: ArchitecturalTitleBlock | null;
@@ -299,6 +310,7 @@ export function HandoffDesignStudio({
   initialAnnotations = [],
   initialFeatures = [],
   initialPresentationPack = null,
+  initialLifecyclePhase = "concept",
   hasQuote = false,
   quotePortalUri = null,
   initialTitleBlock = null,
@@ -321,6 +333,7 @@ export function HandoffDesignStudio({
     initialAnnotations,
     initialFeatures,
     initialPresentationPack,
+    initialLifecyclePhase,
   });
   const toast = useToast();
   const [gridPreviewFormation, setGridPreviewFormation] =
@@ -1147,6 +1160,18 @@ export function HandoffDesignStudio({
     });
   }, [projectId, ui.frameOn, ui.sheetElevOn]);
 
+  /** Session phase override wins over the canvas/status boot value. */
+  useEffect(() => {
+    const prefs = loadLifecyclePhasePrefs(projectId);
+    if (!prefs) return;
+    studio.setUi({ lifecyclePhase: prefs });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  useEffect(() => {
+    saveLifecyclePhasePrefs(projectId, ui.lifecyclePhase);
+  }, [projectId, ui.lifecyclePhase]);
+
   /** Warn before leaving when canvas autosave failed or is in flight. */
   useEffect(() => {
     const dirty =
@@ -1825,6 +1850,11 @@ export function HandoffDesignStudio({
     ui.lightingTransformerVa,
     ui.lightingWireGauge,
   ]);
+
+  const irrigUniformity = useMemo(
+    () => assessIrrigationUniformity(studio.irrigationZones, scaleM),
+    [studio.irrigationZones, scaleM],
+  );
 
   /** Same azimuth vector as SunCastOverlay — drives decorative glyph shadows. */
   const sunAzimuthDeg = useMemo(() => {
@@ -3888,6 +3918,14 @@ export function HandoffDesignStudio({
             ) : null}
             {(ui.mode === "cad" || ui.mode === "sketch") &&
             !ui.frameOn &&
+            ui.irrigationUniformityOn ? (
+              <IrrigationUniformityWash
+                active
+                report={irrigUniformity}
+              />
+            ) : null}
+            {(ui.mode === "cad" || ui.mode === "sketch") &&
+            !ui.frameOn &&
             ui.lightingWorkspaceOn ? (
               <LightingBeams
                 items={studio.items}
@@ -4478,6 +4516,25 @@ export function HandoffDesignStudio({
               );
             }}
             onClose={() => studio.setUi({ lightingWorkspaceOn: false })}
+          />
+        ) : null}
+
+        {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
+          <PhaseManagerChip
+            phase={ui.lifecyclePhase}
+            onPhase={(lifecyclePhase) => studio.setUi({ lifecyclePhase })}
+          />
+        ) : null}
+
+        {planOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        ui.irrigationUniformityOn &&
+        irrigUniformity.heads.length > 0 ? (
+          <IrrigationUniformityDock
+            report={irrigUniformity}
+            onClose={() => studio.setUi({ irrigationUniformityOn: false })}
           />
         ) : null}
 
@@ -5184,6 +5241,19 @@ export function HandoffDesignStudio({
             formalizing ? undefined : () => void runFormalizeToCad()
           }
           onToggleFitSheet={() => setFitSheetOn(!ui.frameOn)}
+          onCycleLifecyclePhase={() => {
+            const idx = DESIGN_LIFECYCLE_PHASES.indexOf(ui.lifecyclePhase);
+            const next =
+              DESIGN_LIFECYCLE_PHASES[
+                (idx < 0 ? 0 : idx + 1) % DESIGN_LIFECYCLE_PHASES.length
+              ]!;
+            studio.setUi({ lifecyclePhase: next });
+          }}
+          onToggleIrrigationUniformity={() =>
+            studio.setUi({
+              irrigationUniformityOn: !ui.irrigationUniformityOn,
+            })
+          }
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           onTiltView={() => runTiltView()}

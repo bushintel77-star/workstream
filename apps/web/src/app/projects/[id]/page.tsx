@@ -1,6 +1,11 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { isSeedSurveyLot, resolveOutdoorAreaM2 } from "@workstream/domain";
+import {
+  isDesignLifecyclePhase,
+  isSeedSurveyLot,
+  resolveOutdoorAreaM2,
+  suggestPhaseFromProjectStatus,
+} from "@workstream/domain";
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
 import {
   getCadastralTitle,
@@ -99,6 +104,11 @@ export default async function ProjectCanvasPage({
         initialAnnotations={canvas?.annotations ?? []}
         initialFeatures={canvas?.features ?? []}
         initialPresentationPack={canvas?.presentation_pack ?? null}
+        initialLifecyclePhase={
+          isDesignLifecyclePhase(canvas?.lifecycle_phase)
+            ? canvas.lifecycle_phase
+            : suggestPhaseFromProjectStatus(project.status)
+        }
         hasQuote={Boolean(quoteOut)}
         quotePortalUri={quoteOut?.uri ?? null}
         initialTitleBlock={titleBlock}

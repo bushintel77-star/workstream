@@ -68,6 +68,10 @@ type Props = {
   onAnnotate?: () => void;
   /** Fit outdoor / selection camera (zoom column removed). */
   onZoomToFit?: () => void;
+  /** Toggle indicative spray DU wash. */
+  onToggleIrrigationUniformity?: () => void;
+  /** Cycle ASLA/SILA lifecycle phase. */
+  onCycleLifecyclePhase?: () => void;
 };
 
 function matches(cmd: StudioCommand, q: string) {
@@ -112,6 +116,8 @@ export function StudioCommandPalette({
   onRedo,
   onAnnotate,
   onZoomToFit,
+  onToggleIrrigationUniformity,
+  onCycleLifecyclePhase,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [active, setActive] = useState(0);
@@ -324,6 +330,32 @@ export function StudioCommandPalette({
         keywords: "fit sheet a3 a4 paper frame",
         run: onToggleFitSheet,
       },
+      ...(onCycleLifecyclePhase
+        ? [
+            {
+              id: "lifecycle-phase",
+              label: "Cycle design phase",
+              detail:
+                "ASLA/SILA stage — concept through post-occupancy (soft expected detail)",
+              keywords:
+                "phase lifecycle asla sila concept design development construction tendering admin occupancy",
+              run: onCycleLifecyclePhase,
+            } satisfies StudioCommand,
+          ]
+        : []),
+      ...(onToggleIrrigationUniformity
+        ? [
+            {
+              id: "irrigation-uniformity",
+              label: "Spray uniformity wash",
+              detail:
+                "Indicative DU / dry spots over spray zones — confirm pressure on site",
+              keywords:
+                "irrigation spray uniformity du cu heat map dry wet hydrozone coverage",
+              run: onToggleIrrigationUniformity,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "measures",
         label: dataOpen
@@ -448,6 +480,8 @@ export function StudioCommandPalette({
     onToggleData,
     onToggleFitSheet,
     onToggleFocus,
+    onToggleIrrigationUniformity,
+    onCycleLifecyclePhase,
     onTiltView,
     onGardenViewpoint,
     onSaveScheme,

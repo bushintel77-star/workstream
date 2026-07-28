@@ -288,6 +288,13 @@ type Ui = {
   lightingKelvin: number;
   lightingWireGauge: import("@workstream/contracts").LvWireGauge;
   lightingTransformerVa: number;
+  /**
+   * ASLA/SILA lifecycle phase — soft expected-detail tip + durable on canvas.
+   * Distinct from mode (survey/sketch/cad) and ProjectStatus (pipeline).
+   */
+  lifecyclePhase: import("@workstream/contracts").DesignLifecyclePhase;
+  /** Spray distribution uniformity wash — session only. */
+  irrigationUniformityOn: boolean;
   mitigated: Record<string, boolean>;
   coachStep: number;
   drawPoly: PctPoint[] | null;
@@ -515,6 +522,7 @@ function initialState(opts: {
   annotations?: CanvasAnnotation[];
   features?: LandscapeFeature[];
   presentationPack?: PresentationPack | null;
+  lifecyclePhase?: import("@workstream/contracts").DesignLifecyclePhase;
   /** Live project — never boot with the demo dwelling parallelogram. */
   liveProject?: boolean;
 }): State {
@@ -635,6 +643,8 @@ function initialState(opts: {
       lightingKelvin: 2700,
       lightingWireGauge: "12/2",
       lightingTransformerVa: 200,
+      lifecyclePhase: opts.lifecyclePhase ?? "concept",
+      irrigationUniformityOn: false,
       mitigated: {},
       coachStep: -1,
       drawPoly: null,
@@ -726,6 +736,8 @@ export type UseStudioStateOpts = {
   initialFeatures?: LandscapeFeature[];
   /** Fit-sheet compose pack from DesignCanvas.presentation_pack. */
   initialPresentationPack?: PresentationPack | null;
+  /** ASLA/SILA phase from canvas or project-status suggestion. */
+  initialLifecyclePhase?: import("@workstream/contracts").DesignLifecyclePhase;
 };
 
 function reducer(state: State, action: Action): State {
@@ -957,6 +969,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialAnnotations = [],
     initialFeatures = [],
     initialPresentationPack = null,
+    initialLifecyclePhase = "concept",
   } = opts;
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     initialState({
@@ -969,6 +982,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       annotations: initialAnnotations,
       features: initialFeatures,
       presentationPack: initialPresentationPack,
+      lifecyclePhase: initialLifecyclePhase,
       liveProject: Boolean(projectId),
     }),
   );
@@ -3508,6 +3522,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         construction_trenches: acceptedTrenches,
         presentation_pack:
           state.doc.presentationPack ?? emptyPresentationPack(),
+        lifecycle_phase: state.ui.lifecyclePhase,
       });
       saveRevisionRef.current += 1;
       setUi({
@@ -3638,6 +3653,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       .join("/"),
     // Fit-sheet compose — theme / template / widgets must flush with canvas.
     presentationPackPersistKey(state.doc.presentationPack),
+    state.ui.lifecyclePhase,
     saveRetryNonce,
   ]);
 

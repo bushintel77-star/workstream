@@ -140,3 +140,5 @@ export * from './board-findings';
 export * from './board-sustainability';
 export * from './board-liability';
 export * from './lv-lighting';
+export * from './design-lifecycle';
+export * from './irrigation-uniformity';

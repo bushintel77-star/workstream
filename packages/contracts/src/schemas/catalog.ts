@@ -656,6 +656,20 @@ export const PresentationPackSchema = z.object({
 });
 export type PresentationPack = z.infer<typeof PresentationPackSchema>;
 
+/**
+ * ASLA/SILA-style design lifecycle — gates expected detail, not studio mode.
+ * Distinct from ProjectStatus (pipeline) and StudioMode (survey/sketch/cad…).
+ */
+export const DesignLifecyclePhaseSchema = z.enum([
+  "concept",
+  "design_development",
+  "construction_docs",
+  "tendering",
+  "construction_admin",
+  "post_occupancy",
+]);
+export type DesignLifecyclePhase = z.infer<typeof DesignLifecyclePhaseSchema>;
+
 export const DesignCanvasSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
@@ -671,6 +685,8 @@ export const DesignCanvasSchema = z.object({
   site_frame: DesignSiteFrameSchema.optional(),
   /** Fit-sheet presentation product (widgets + theme). */
   presentation_pack: PresentationPackSchema.optional(),
+  /** Operator-set ASLA/SILA lifecycle phase for the board. */
+  lifecycle_phase: DesignLifecyclePhaseSchema.optional(),
   updated_at: z.string().datetime(),
 });
 export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
@@ -684,5 +700,6 @@ export const UpsertDesignCanvasSchema = z.object({
   features: z.array(LandscapeFeatureSchema).optional(),
   site_frame: DesignSiteFrameSchema.optional(),
   presentation_pack: PresentationPackSchema.optional(),
+  lifecycle_phase: DesignLifecyclePhaseSchema.optional(),
 });
 export type UpsertDesignCanvasInput = z.infer<typeof UpsertDesignCanvasSchema>;

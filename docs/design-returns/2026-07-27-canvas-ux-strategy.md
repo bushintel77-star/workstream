@@ -81,8 +81,8 @@ Engineering the UI must carry:
 **distribution uniformity as a heat map** to expose over-watering and dry spots pre-construction.
 ET controllers + backflow preventers specified (per deliverables spec §6).
 
-- **PARTIAL:** irrigation zones, service corridors, trenches exist. **GAP:** fixtures with
-  photometric beams, transformer load model, hydrozone uniformity heat map.
+- **PARTIAL → LIVE for lighting + spray DU:** irrigation zones, trenches, LV beams + transformer
+  model, indicative spray DU wash (atelier cells). Still soft on hydrozone water-need taxonomy.
 
 ---
 
@@ -218,10 +218,10 @@ cross-artefact findings (§8.1) → then it doubles as the data source for the s
 
 ## 9. Phase manager + liability overlay — strong professional additions
 
-**Phase manager (GAP).** Structure the workspace by ASLA/SILA stage, so tool availability and
-expected detail match the phase: 1 Concept → 2 Design development → 3 Construction docs →
-4 Tendering → 5 Construction admin → 6 Post-occupancy. We already gate chrome by mode; this is the
-project-lifecycle equivalent and would map cleanly onto our existing project statuses.
+**Phase manager (shipped soft).** Structure the workspace by ASLA/SILA stage, so expected detail
+matches the phase: 1 Concept → 2 Design development → 3 Construction docs → 4 Tendering →
+5 Construction admin → 6 Post-occupancy. Soft tip chip + durable `lifecycle_phase` on the canvas
+(suggested from project status); does not hard-lock tools.
 
 **Liability overlay on export (GAP, high value / low effort).** On export, auto-prompt the
 disclaimers the drawing's content implies:
@@ -277,7 +277,7 @@ drawing tool.
 7. **Sustainability dashboard** (§6) — shipped: UHI / ET / cut-fill on BoardContext sidecar.
 8. **Client WebGL portal** — shipped on `/share/[token]`: sun scrub, lighting toggle, Atmosphere switch (digital-twin step 1).
 9. **Board-level AI reasoning** on top of 2 — shipped: cross-artefact findings with provenance, gaps surface, Show on board, site_compliance + overlay_watch.
-10. **Phase manager** (§9), irrigation uniformity heat map.
+10. **Phase manager** (§9), irrigation uniformity heat map — shipped: lifecycle chip + spray DU wash.
 
 **Stage 2 track (unlocks the rest of the 2026 standard):** metre-space survey geometry →
 glTF/USD export → **UE5 live-sync (Nanite/Lumen)** → telemetry ingest → **live digital twin** → AR

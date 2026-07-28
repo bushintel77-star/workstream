@@ -8,9 +8,11 @@ import type {
 import {
   buildAssistSiteIntel,
   buildStudioBoardContext,
+  isDesignLifecyclePhase,
   isSeedSurveyLot,
   preferredCosting,
   resolveOutdoorAreaM2,
+  suggestPhaseFromProjectStatus,
   type BoardContext,
   type LngLat,
 } from "@workstream/domain";
@@ -95,6 +97,10 @@ export async function loadProjectBoard(
     scaleM: scaleM ?? undefined,
   });
 
+  const lifecyclePhase = isDesignLifecyclePhase(canvas?.lifecycle_phase)
+    ? canvas.lifecycle_phase
+    : suggestPhaseFromProjectStatus(project.status);
+
   const context = buildStudioBoardContext({
     project,
     canvas,
@@ -107,6 +113,7 @@ export async function loadProjectBoard(
     costing: preferredCosting(costings),
     rateCard,
     mode: design?.mode ?? null,
+    phase: lifecyclePhase,
     seedLot,
   });
 
