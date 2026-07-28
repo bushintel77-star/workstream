@@ -105,16 +105,6 @@
     0 0 0 1px var(--hc-line);
   --hc-elev-3: 0 6px 16px color-mix(in srgb, var(--gray-d-0) 50%, transparent),
     0 0 0 1px var(--hc-line);
-}
-
-/* LV lighting workspace — deepen the board for beam theatre. */
-.rootLighting .board {
-  background: color-mix(in srgb, var(--panel) 88%, #0a1018);
-}
-
-.rootLighting [data-testid="cad-plan-board"] {
-  filter: brightness(0.86) saturate(0.92);
-}
   --hc-neu-surface: var(--gray-d-150);
   --hc-neu-raised: var(--gray-d-200);
   --hc-neu-light: color-mix(in srgb, var(--gray-d-900) 6%, transparent);
@@ -137,6 +127,15 @@
     ),
     var(--canvas);
   color: var(--hc-ink);
+}
+
+/* LV lighting workspace — deepen the board for beam theatre. */
+.rootLighting .board {
+  background: color-mix(in srgb, var(--panel) 88%, #0a1018);
+}
+
+.rootLighting [data-testid="cad-plan-board"] {
+  filter: brightness(0.86) saturate(0.92);
 }
 
 .rootPrecision {
