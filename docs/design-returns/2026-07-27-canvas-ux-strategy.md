@@ -296,4 +296,7 @@ external UE5 / Datasmith client.
 `sediment`) + `POST/GET …/design/telemetry` + studio **Live telemetry** toggle.
 
 **Gate 5 shipped:** performance alerts (`sediment_buildup`, `vegetation_stress`) from twin
-samples into board findings — maintenance watches, confirm on site. AR remains next.
+samples into board findings — maintenance watches, confirm on site.
+
+**Gate 6 shipped:** on-site AR bird's-eye overlay (studio Cmd+K + share twin) with footprint
+occlusion and indicative IoU align score. Not Vision Pro / full city-twin chroma-key.

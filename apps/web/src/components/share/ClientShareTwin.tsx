@@ -14,6 +14,7 @@ import {
   sunPositionAt,
 } from "@workstream/domain";
 import { SharePlanSvg } from "./SharePlanSvg";
+import { ArBirdseyeOverlay } from "../canvas/handoff/features/ar/ArBirdseyeOverlay";
 import css from "./clientShareTwin.module.css";
 
 const DEFAULT_LAT = -37.849;
@@ -76,6 +77,7 @@ export function ClientShareTwin({ snapshot }: Props) {
   const [atmosphere, setAtmosphere] = useState<AtmospherePigment>(() =>
     initialAtmosphere(snapshot.canvas),
   );
+  const [arOn, setArOn] = useState(false);
 
   const lat = snapshot.lat ?? DEFAULT_LAT;
   const lng = snapshot.lng ?? DEFAULT_LNG;
@@ -381,7 +383,27 @@ export function ClientShareTwin({ snapshot }: Props) {
             ))}
           </div>
         </div>
+        <div className={css.row}>
+          <p className={css.label}>AR</p>
+          <button
+            type="button"
+            className={css.chip}
+            data-testid="share-twin-ar"
+            aria-pressed={arOn}
+            onClick={() => setArOn(true)}
+          >
+            Bird&apos;s-eye overlay
+          </button>
+          <span className={css.hint}>Footprint occlusion</span>
+        </div>
       </div>
+      {arOn ? (
+        <ArBirdseyeOverlay
+          canvas={canvas}
+          address={snapshot.address}
+          onClose={() => setArOn(false)}
+        />
+      ) : null}
     </div>
   );
 }

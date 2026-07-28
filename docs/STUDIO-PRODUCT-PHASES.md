@@ -49,7 +49,9 @@
 
 **Phase 4 gate (shipped):** twin telemetry ingest (`POST/GET …/design/telemetry`) for soil moisture, thermal comfort, flow, sediment + studio **Live telemetry** toggle (Cmd+K). Demo seeds labelled `demo` — not sensor fact.
 
-**Phase 5 gate (shipped):** twin performance alerts — `sediment_buildup` / `vegetation_stress` board findings when readings cross indicative thresholds; merge into `GET …/design/findings`. AR remains next.
+**Phase 5 gate (shipped):** twin performance alerts — `sediment_buildup` / `vegetation_stress` board findings when readings cross indicative thresholds; merge into `GET …/design/findings`.
+
+**Phase 6 gate (shipped):** on-site **AR bird's-eye** overlay (Cmd+K / share twin) with building **footprint occlusion**, pan/rotate/scale calibrate, indicative IoU align score. Not Vision Pro / city-twin chroma-key — confirm on site.
 
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 

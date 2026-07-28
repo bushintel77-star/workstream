@@ -72,6 +72,8 @@ type Props = {
   onToggleIrrigationUniformity?: () => void;
   /** Toggle live twin telemetry overlay. */
   onToggleLiveTelemetry?: () => void;
+  /** Toggle on-site bird's-eye AR overlay. */
+  onToggleArBirdseye?: () => void;
   /** Cycle ASLA/SILA lifecycle phase. */
   onCycleLifecyclePhase?: () => void;
 };
@@ -120,6 +122,7 @@ export function StudioCommandPalette({
   onZoomToFit,
   onToggleIrrigationUniformity,
   onToggleLiveTelemetry,
+  onToggleArBirdseye,
   onCycleLifecyclePhase,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -372,6 +375,19 @@ export function StudioCommandPalette({
             } satisfies StudioCommand,
           ]
         : []),
+      ...(onToggleArBirdseye
+        ? [
+            {
+              id: "ar-birdseye",
+              label: "AR bird's-eye",
+              detail:
+                "On-site camera overlay with footprint occlusion — calibrate for stakeholder consensus",
+              keywords:
+                "ar birdseye bird eye occlusion camera overlay site align twin vision",
+              run: onToggleArBirdseye,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "measures",
         label: dataOpen
@@ -498,6 +514,7 @@ export function StudioCommandPalette({
     onToggleFocus,
     onToggleIrrigationUniformity,
     onToggleLiveTelemetry,
+    onToggleArBirdseye,
     onCycleLifecyclePhase,
     onTiltView,
     onGardenViewpoint,

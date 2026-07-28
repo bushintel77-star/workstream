@@ -297,6 +297,8 @@ type Ui = {
   irrigationUniformityOn: boolean;
   /** Live twin telemetry overlay — session only. */
   liveTelemetryOn: boolean;
+  /** On-site bird's-eye AR overlay — session only. */
+  arBirdseyeOn: boolean;
   mitigated: Record<string, boolean>;
   coachStep: number;
   drawPoly: PctPoint[] | null;
@@ -648,6 +650,7 @@ function initialState(opts: {
       lifecyclePhase: opts.lifecyclePhase ?? "concept",
       irrigationUniformityOn: false,
       liveTelemetryOn: false,
+      arBirdseyeOn: false,
       mitigated: {},
       coachStep: -1,
       drawPoly: null,

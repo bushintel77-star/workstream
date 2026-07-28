@@ -168,6 +168,7 @@ import { IrrigationUniformityWash } from "./features/zones/IrrigationUniformityW
 import { IrrigationUniformityDock } from "./features/zones/IrrigationUniformityDock";
 import { LiveTelemetryWash } from "./features/telemetry/LiveTelemetryWash";
 import { LiveTelemetryDock } from "./features/telemetry/LiveTelemetryDock";
+import { ArBirdseyeOverlay } from "./features/ar/ArBirdseyeOverlay";
 import { PhaseManagerChip } from "./features/phase/PhaseManagerChip";
 import {
   loadLifecyclePhasePrefs,
@@ -4575,6 +4576,29 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {ui.arBirdseyeOn ? (
+          <ArBirdseyeOverlay
+            address={displayAddress}
+            boundary={studio.boundary.map((p) => ({
+              x_pct: p.x,
+              y_pct: p.y,
+            }))}
+            building={studio.building.map((p) => ({
+              x_pct: p.x,
+              y_pct: p.y,
+            }))}
+            placements={studio.items
+              .filter((it) => !it.ghost)
+              .map((it) => ({
+                id: it.id,
+                x_pct: it.x,
+                y_pct: it.y,
+                symbol_id: it.symbolId ?? it.t,
+              }))}
+            onClose={() => studio.setUi({ arBirdseyeOn: false })}
+          />
+        ) : null}
+
         {planOn &&
         !ui.frameOn &&
         !ui.focusOn &&
@@ -5293,6 +5317,9 @@ export function HandoffDesignStudio({
           }
           onToggleLiveTelemetry={() =>
             studio.setUi({ liveTelemetryOn: !ui.liveTelemetryOn })
+          }
+          onToggleArBirdseye={() =>
+            studio.setUi({ arBirdseyeOn: !ui.arBirdseyeOn })
           }
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
