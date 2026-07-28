@@ -93,6 +93,8 @@ export type StudioBoardContextInput = {
   /** Design lifecycle fields when the caller has them loaded. */
   mode?: string | null;
   phase?: string | null;
+  /** Legacy 15×40 seed survey — geometry provenance must read seed, not Vicmap. */
+  seedLot?: boolean;
 };
 
 type PlacedSymbol = {
@@ -383,17 +385,20 @@ export function buildStudioBoardContext(
 
   /* ---- provenance: never label traced or seed geometry as Vicmap ---- */
   const buildingSource = frame?.building_source;
+  const seedLot = Boolean(input.seedLot);
   const provenance: Record<string, BoardProvenance> = {
     // A Vicmap fit lands the parcel and the dwelling together; anything else the
-    // operator traced on the board.
-    geometry:
-      buildingSource === "vicmap"
+    // operator traced on the board. Seed surveys stay seed.
+    geometry: seedLot
+      ? "seed"
+      : buildingSource === "vicmap"
         ? "vicmap"
         : boundary.length >= 3
           ? "operator"
           : "absent",
-    building:
-      buildingSource === "vicmap"
+    building: seedLot
+      ? "seed"
+      : buildingSource === "vicmap"
         ? "vicmap"
         : buildingSource === "traced"
           ? "operator"

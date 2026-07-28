@@ -48,7 +48,7 @@ export function BoardFindings({
       data-testid="board-findings"
       aria-live="polite"
     >
-      {findings.slice(0, 4).map((f) => (
+      {findings.map((f) => (
         <article
           key={f.id}
           className={`${css.card} ${css[f.severity]}`}

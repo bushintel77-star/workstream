@@ -107,6 +107,7 @@ export async function loadProjectBoard(
     costing: preferredCosting(costings),
     rateCard,
     mode: design?.mode ?? null,
+    seedLot,
   });
 
   return {

@@ -4,9 +4,13 @@ import {
   DesignAssistResponseSchema,
 } from "@workstream/contracts";
 import {
+  buildBoardDisclaimers,
   buildBoardFindings,
+  buildBoardSustainability,
   formatBoardContextForAi,
+  formatBoardDisclaimersForAi,
   formatBoardFindingsForAi,
+  formatBoardSustainabilityForAi,
   isTier1WrightsTerrace,
 } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
@@ -49,9 +53,13 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
        * from the model's imagination. They propose only — accept stays human.
        */
       const findings = buildBoardFindings(context);
+      const sustainability = buildBoardSustainability(context);
+      const disclaimers = buildBoardDisclaimers(context);
       const boardBrief = [
         formatBoardContextForAi(context),
         formatBoardFindingsForAi(findings),
+        formatBoardSustainabilityForAi(sustainability),
+        formatBoardDisclaimersForAi(disclaimers),
       ].join("\n\n");
       // Payload telemetry — context growth should be visible, not a surprise.
       request.log.info(
@@ -64,6 +72,8 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
           findings: findings.length,
           findings_critical: findings.filter((f) => f.severity === "critical")
             .length,
+          metrics_measured: sustainability.measured,
+          disclaimers: disclaimers.length,
         },
         "design assist board context",
       );

@@ -303,6 +303,27 @@ describe("buildStudioBoardContext", () => {
     });
     expect(fitted.provenance.geometry).toBe("vicmap");
     expect(fitted.provenance.building).toBe("vicmap");
+
+    const seed = buildStudioBoardContext({
+      project: PROJECT,
+      canvas: canvasOf({
+        site_frame: {
+          boundary: SQUARE,
+          building: SQUARE,
+          easements: [],
+          services: [],
+          levels: [],
+          drainage_runs: [],
+          byda_assets: [],
+          keyless_overlays: [],
+          building_source: "vicmap",
+        },
+      }),
+      survey: SURVEY,
+      seedLot: true,
+    });
+    expect(seed.provenance.geometry).toBe("seed");
+    expect(seed.provenance.building).toBe("seed");
   });
 
   it("prefers the calibrated board scale over the caller fallback", () => {

@@ -255,9 +255,10 @@ export function buildBoardContext(input: BoardContextInput): BoardContext {
     }))
     .sort((a, b) => a.x - b.x || a.y - b.y);
 
+  // Never invent Vicmap — rings without an explicit override are operator.
   const provenance: Record<string, BoardProvenance> = {
-    geometry: boundary.length >= 3 ? "vicmap" : "absent",
-    building: building.length >= 3 ? "vicmap" : "absent",
+    geometry: boundary.length >= 3 ? "operator" : "absent",
+    building: building.length >= 3 ? "operator" : "absent",
     planting: planting.length > 0 ? "operator" : "absent",
     surfaces: surfaces.length > 0 ? "operator" : "absent",
     levels: levels.length > 0 ? "operator" : "absent",

@@ -84,7 +84,7 @@ describe("buildBoardContext", () => {
       geometry: { boundary: SQUARE },
       planting: [{ code: "B01" }],
     });
-    expect(ctx.provenance.geometry).toBe("vicmap");
+    expect(ctx.provenance.geometry).toBe("operator");
     expect(ctx.provenance.planting).toBe("operator");
     expect(ctx.provenance.building).toBe("absent");
   });
