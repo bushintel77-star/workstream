@@ -4,6 +4,20 @@
   z-index: 9;
 }
 
+.overloadPulse {
+  animation: zoneOverloadPulse 1.05s ease-in-out infinite;
+}
+
+@keyframes zoneOverloadPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .svg {
   position: absolute;
   inset: 0;

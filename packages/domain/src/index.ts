@@ -139,3 +139,4 @@ export * from './board-context-studio';
 export * from './board-findings';
 export * from './board-sustainability';
 export * from './board-liability';
+export * from './lv-lighting';

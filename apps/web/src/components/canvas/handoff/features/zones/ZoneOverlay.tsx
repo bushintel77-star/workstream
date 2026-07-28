@@ -20,6 +20,8 @@ type Props = {
   cam?: BoardCamera;
   serviceFeatureHidden?: Record<string, boolean>;
   focusedServiceIds?: string[] | null;
+  /** Pulse lighting / conduit runs when the transformer is overloaded. */
+  lightingOverload?: boolean;
   onCommit: (points: PctPoint[], kind: IrrigationZoneKind) => void;
 };
 
@@ -83,6 +85,7 @@ export function ZoneOverlay({
   cam,
   serviceFeatureHidden = {},
   focusedServiceIds = null,
+  lightingOverload = false,
   onCommit,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -187,21 +190,26 @@ export function ZoneOverlay({
             r.kind === "lighting_conduit" && r.pts.length >= 2
               ? r.pts[r.pts.length - 1]!
               : null;
+          const pulseWire =
+            lightingOverload &&
+            (r.kind === "lighting" || r.kind === "lighting_conduit");
           return (
             <g
               key={r.id}
               data-testid={
                 r.id === "draft" ? "zone-draft" : `zone-path-${r.kind}`
               }
+              data-overload={pulseWire ? "1" : "0"}
             >
               <polyline
                 points={r.pts.map((p) => `${p.x},${p.y}`).join(" ")}
                 fill="none"
-                stroke={stroke.color}
-                strokeWidth={stroke.width}
+                stroke={pulseWire ? "var(--hc-signal)" : stroke.color}
+                strokeWidth={pulseWire ? stroke.width * 1.35 : stroke.width}
                 strokeDasharray={stroke.dash}
                 vectorEffect="non-scaling-stroke"
                 opacity={r.opacity}
+                className={pulseWire ? css.overloadPulse : undefined}
               />
               {r.pts.map((p, i) => (
                 <circle

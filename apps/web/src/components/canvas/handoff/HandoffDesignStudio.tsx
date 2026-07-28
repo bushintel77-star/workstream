@@ -70,6 +70,8 @@ import { RIGHT_DATA_LANE_WIDTH_PX } from "./features/surfaces/rightDataLane";
 import { StudioCommandPalette } from "./features/commandPalette/StudioCommandPalette";
 import { SunGrowthDock } from "./features/sunGrowth/SunGrowthDock";
 import { resolveBoardSunCast } from "./features/sunGrowth/resolveBoardSunCast";
+import { LightingDock } from "./features/lighting/LightingDock";
+import { LightingBeams } from "./features/lighting/LightingBeams";
 import { PathCorridorsLayer } from "./features/hardscape/PathCorridorsLayer";
 import { AssetPanel } from "./features/assetPanel/AssetPanel";
 import { AssetCommandSheet } from "./features/assetPanel/AssetCommandSheet";
@@ -173,12 +175,17 @@ import { VolumetricIsolith } from "./features/isolith/VolumetricIsolith";
 import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
 import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
+import { mapSymbolToStudioType } from "./state/studioAiEngine";
 import {
   BOARD_WIDTH_M_AT_100,
 } from "./features/ground/groundMetrics";
 import {
+  assessLvCircuit,
   cycleElevationLook,
+  isLightingSymbolId,
   isTier1WrightsTerrace,
+  nextTransformerVa,
+  polylineLengthM,
   solveLiveTradeEstimate,
   sunPositionAt,
   tradeTagForItem,
@@ -187,6 +194,7 @@ import {
 import type {
   CanvasAnnotation,
   CatalogPlacement,
+  CatalogSymbol,
   CanvasStroke,
   ConstructionTrench,
   DesignSiteFrame,
@@ -1571,6 +1579,7 @@ export function HandoffDesignStudio({
     floraSessionActive: Boolean(ui.floraSession),
     horizonCardCount,
     compact: compactAssetUi,
+    lightingWorkspaceOn: ui.lightingWorkspaceOn,
   });
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
@@ -1766,6 +1775,46 @@ export function HandoffDesignStudio({
    * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
    */
   const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
+
+  const lvCircuit = useMemo(() => {
+    const boardW = scaleM > 0 ? scaleM : 110;
+    const lightingZones = studio.irrigationZones.filter(
+      (z) => z.kind === "lighting" || z.kind === "lighting_conduit",
+    );
+    const runLengthM = lightingZones.reduce(
+      (sum, z) =>
+        sum +
+        polylineLengthM(
+          z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          boardW,
+        ),
+      0,
+    );
+    const fixtures = studio.items
+      .filter(
+        (i) =>
+          !i.ghost && i.symbolId != null && isLightingSymbolId(i.symbolId),
+      )
+      .map((i) => ({
+        id: i.id,
+        symbolId: i.symbolId!,
+        x: i.x,
+        y: i.y,
+        rot: i.rot,
+      }));
+    return assessLvCircuit({
+      fixtures,
+      runLengthM,
+      transformerVa: ui.lightingTransformerVa,
+      wireGauge: ui.lightingWireGauge,
+    });
+  }, [
+    scaleM,
+    studio.irrigationZones,
+    studio.items,
+    ui.lightingTransformerVa,
+    ui.lightingWireGauge,
+  ]);
 
   /** Same azimuth vector as SunCastOverlay — drives decorative glyph shadows. */
   const sunAzimuthDeg = useMemo(() => {
@@ -2382,6 +2431,7 @@ export function HandoffDesignStudio({
     if (needsPathGrammar(t)) {
       studio.setUi({
         armed: t,
+        armedSymbolId: null,
         paintSwatch: t,
         tool: "add",
         addOpen: true,
@@ -2395,10 +2445,25 @@ export function HandoffDesignStudio({
     // Command-first: arm without forcing the library open.
     studio.setUi({
       armed: t,
+      armedSymbolId: null,
       tool: "add",
       addOpen: true,
       cmdOpen: false,
       rightDataPanel: null,
+    });
+  };
+
+  const armSymbol = (sym: CatalogSymbol) => {
+    const t = mapSymbolToStudioType(sym.id);
+    const lighting = isLightingSymbolId(sym.id);
+    studio.setUi({
+      armed: t,
+      armedSymbolId: sym.id,
+      tool: "add",
+      addOpen: true,
+      cmdOpen: false,
+      rightDataPanel: null,
+      ...(lighting ? { lightingWorkspaceOn: true } : {}),
     });
   };
 
@@ -2700,14 +2765,17 @@ export function HandoffDesignStudio({
 
   return (
     <div
-      className={`${css.root}${darkLens ? ` ${css.rootDark}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}${headerContextActive ? ` ${css.rootHeaderContext}` : ""}`}
+      className={`${css.root}${darkLens || ui.lightingWorkspaceOn ? ` ${css.rootDark}` : ""}${ui.lightingWorkspaceOn ? ` ${css.rootLighting}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}${headerContextActive ? ` ${css.rootHeaderContext}` : ""}`}
       data-testid="handoff-design-studio"
-      data-theme={darkLens && !ui.frameOn ? "dark" : "light"}
+      data-theme={
+        (darkLens || ui.lightingWorkspaceOn) && !ui.frameOn ? "dark" : "light"
+      }
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
       data-compact={chrome.compact ? "1" : "0"}
       data-compliance={compliance.canvasSignal}
       data-fit-sheet={ui.frameOn ? "1" : "0"}
+      data-lighting-workspace={ui.lightingWorkspaceOn ? "1" : "0"}
       data-paper={ui.paper}
       data-right-lane={rightLaneBusy ? "1" : "0"}
       style={
@@ -3802,7 +3870,19 @@ export function HandoffDesignStudio({
                 cam={planCam}
                 serviceFeatureHidden={ui.serviceFeatureHidden}
                 focusedServiceIds={ui.focusedServiceIds}
+                lightingOverload={
+                  ui.lightingWorkspaceOn && lvCircuit.overloaded
+                }
                 onCommit={studio.commitZone}
+              />
+            ) : null}
+            {(ui.mode === "cad" || ui.mode === "sketch") &&
+            !ui.frameOn &&
+            ui.lightingWorkspaceOn ? (
+              <LightingBeams
+                items={studio.items}
+                kelvin={ui.lightingKelvin}
+                active
               />
             ) : null}
             {(ui.mode === "cad" ||
@@ -3832,9 +3912,15 @@ export function HandoffDesignStudio({
                   if (tool.id === "zone-drip") {
                     studio.setUi({ zoneKind: "drip" });
                   } else if (tool.id === "zone-lighting") {
-                    studio.setUi({ zoneKind: "lighting" });
+                    studio.setUi({
+                      zoneKind: "lighting",
+                      lightingWorkspaceOn: true,
+                    });
                   } else if (tool.id === "zone-conduit") {
-                    studio.setUi({ zoneKind: "lighting_conduit" });
+                    studio.setUi({
+                      zoneKind: "lighting_conduit",
+                      lightingWorkspaceOn: true,
+                    });
                   } else if (tool.id === "zone-spray") {
                     studio.setUi({ zoneKind: "spray" });
                   } else if (tool.id === "zone-agg") {
@@ -4346,6 +4432,42 @@ export function HandoffDesignStudio({
             onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
             onPlaying={(sunPlay) => studio.setUi({ sunPlay })}
+          />
+        ) : null}
+
+        {chrome.lightingWorkspace ? (
+          <LightingDock
+            assessment={lvCircuit}
+            kelvin={ui.lightingKelvin}
+            onKelvin={(lightingKelvin) => studio.setUi({ lightingKelvin })}
+            wireGauge={ui.lightingWireGauge}
+            onWireGauge={(lightingWireGauge) =>
+              studio.setUi({ lightingWireGauge })
+            }
+            transformerVa={ui.lightingTransformerVa}
+            onTransformerVa={(lightingTransformerVa) =>
+              studio.setUi({ lightingTransformerVa })
+            }
+            onUpgradeTransformer={() => {
+              studio.setUi({
+                lightingTransformerVa: nextTransformerVa(
+                  ui.lightingTransformerVa,
+                ),
+              });
+              toast.show(
+                "Transformer upgraded — recheck the capacity ring.",
+                "info",
+                4000,
+              );
+            }}
+            onSplitHint={() => {
+              toast.show(
+                "Split circuit — draw a second lighting run to a new transformer.",
+                "info",
+                5000,
+              );
+            }}
+            onClose={() => studio.setUi({ lightingWorkspaceOn: false })}
           />
         ) : null}
 
@@ -4891,6 +5013,7 @@ export function HandoffDesignStudio({
               studio.setUi({ plantingAspect })
             }
             onPickMaterial={armType}
+            onPickSymbol={armSymbol}
             onPathWidth={(pathWidthM: PathWidthLockM) =>
               studio.setUi({ pathWidthM })
             }

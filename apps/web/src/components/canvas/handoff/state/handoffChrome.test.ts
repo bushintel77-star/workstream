@@ -73,9 +73,19 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(false);
     expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
+    expect(c.lightingWorkspace).toBe(false);
     expect(c.selectionRing).toBe(true);
     expect(c.inventoryPopup).toBe(false);
     expect(c.draftSurface).toBe(false);
+  });
+
+  it("surfaces lighting workspace dock when summoned in CAD", () => {
+    const c = resolveHandoffChrome({
+      ...base,
+      mode: "cad",
+      lightingWorkspaceOn: true,
+    });
+    expect(c.lightingWorkspace).toBe(true);
   });
 
   it("summons the data lane in CAD when the AI/command core asks", () => {

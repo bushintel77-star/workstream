@@ -278,6 +278,16 @@ type Ui = {
   cmdQuery: string;
   addOpen: boolean;
   armed: StudioItemType | null;
+  /** Catalog symbol for armed place — preserves lighting fixtures. */
+  armedSymbolId: string | null;
+  /**
+   * Low-voltage lighting workspace — session engineering + beam theatre.
+   * Not a mode tab; summoned from Lighting zone / library.
+   */
+  lightingWorkspaceOn: boolean;
+  lightingKelvin: number;
+  lightingWireGauge: import("@workstream/contracts").LvWireGauge;
+  lightingTransformerVa: number;
   mitigated: Record<string, boolean>;
   coachStep: number;
   drawPoly: PctPoint[] | null;
@@ -620,6 +630,11 @@ function initialState(opts: {
       cmdQuery: "",
       addOpen: false,
       armed: null,
+      armedSymbolId: null,
+      lightingWorkspaceOn: false,
+      lightingKelvin: 2700,
+      lightingWireGauge: "12/2",
+      lightingTransformerVa: 200,
       mitigated: {},
       coachStep: -1,
       drawPoly: null,
@@ -1379,6 +1394,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
                 ),
               }
             : null;
+        const symbolId =
+          !painting && state.ui.armedSymbolId?.trim()
+            ? state.ui.armedSymbolId.trim()
+            : undefined;
         const item: StudioItem = {
           id,
           t: armed,
@@ -1387,6 +1406,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           rot: 0,
           scale: hard?.scale ?? (painting ? 1 : 0.7),
           ghost: false,
+          ...(symbolId ? { symbolId } : {}),
           ...(dbhM != null ? { dbhM } : {}),
           ...(hard
             ? {
@@ -1426,6 +1446,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       // Paint stays armed (Mac Paint bucket); Add disarms after place.
       setUi({
         armed: painting ? state.ui.armed : null,
+        armedSymbolId: painting ? state.ui.armedSymbolId : null,
         addOpen: false,
         tool: painting ? "paint" : "select",
         ghostReviewOpen: painting ? state.ui.ghostReviewOpen : !state.ui.foundationCleanse,
@@ -1444,6 +1465,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi,
       state.doc.items,
       state.ui.armed,
+      state.ui.armedSymbolId,
       state.ui.existDbhM,
       state.ui.foundationCleanse,
       state.ui.ghostReviewOpen,
@@ -2813,6 +2835,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       if (points.length < 2) return;
       const n = (state.doc.irrigationZones ?? []).length + 1;
       const label = zoneKindShortLabel(kind);
+      const lighting =
+        kind === "lighting" || kind === "lighting_conduit";
       const zone: IrrigationZone = {
         id: crypto.randomUUID(),
         name: `${label} ${n}`,
@@ -2820,11 +2844,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
         points: points.map((p) => ({ x_pct: p.x, y_pct: p.y })),
         emitter_spacing_cm: kind === "spray" ? 350 : 30,
         emitter_flow_lph: kind === "spray" ? 40 : 2,
-        ...((kind === "lighting" ||
-          kind === "lighting_conduit" ||
-          kind === "spray") && {
+        ...((lighting || kind === "spray") && {
           fixture_spacing_m: kind === "spray" ? 3.5 : 2.5,
         }),
+        ...(lighting
+          ? {
+              wire_gauge: state.ui.lightingWireGauge,
+              transformer_va: state.ui.lightingTransformerVa,
+            }
+          : {}),
       };
       mutate((snap) => ({
         snap: {
@@ -2832,9 +2860,18 @@ export function useStudioState(opts: UseStudioStateOpts) {
           irrigationZones: [...(snap.irrigationZones ?? []), zone],
         },
       }));
-      setUi({ tool: "select" });
+      setUi({
+        tool: "select",
+        ...(lighting ? { lightingWorkspaceOn: true } : {}),
+      });
     },
-    [mutate, setUi, state.doc.irrigationZones],
+    [
+      mutate,
+      setUi,
+      state.doc.irrigationZones,
+      state.ui.lightingWireGauge,
+      state.ui.lightingTransformerVa,
+    ],
   );
 
   /**

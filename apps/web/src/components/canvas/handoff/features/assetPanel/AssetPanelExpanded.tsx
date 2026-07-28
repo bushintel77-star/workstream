@@ -53,6 +53,8 @@ export type AssetPanelExpandedProps = {
   onPlantingSoil: (s: SoilTag) => void;
   onPlantingAspect: (a: AspectTag) => void;
   onPickMaterial: (t: StudioItemType) => void;
+  /** Catalog symbol place — preserves lighting fixture identity. */
+  onPickSymbol?: (sym: CatalogSymbol) => void;
   /** Keep library open through place / canvas interact. */
   libraryPinned?: boolean;
   onToggleLibraryPin?: () => void;
@@ -84,6 +86,7 @@ export function AssetPanelExpanded({
   onPlantingSoil,
   onPlantingAspect,
   onPickMaterial,
+  onPickSymbol,
   libraryPinned = false,
   onToggleLibraryPin,
 }: AssetPanelExpandedProps) {
@@ -134,7 +137,9 @@ export function AssetPanelExpanded({
   };
 
   const pickSymbol = (sym: CatalogSymbol) => {
-    pickMaterial(mapSymbolToStudioType(sym.id));
+    playInstrumentTick("arm");
+    if (onPickSymbol) onPickSymbol(sym);
+    else onPickMaterial(mapSymbolToStudioType(sym.id));
   };
 
   const toggleSection = (id: string) => {

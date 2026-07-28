@@ -63,6 +63,8 @@ export type HandoffChrome = {
   tradeMargin: boolean;
   /** Sun / growth scrubber (canvas float — prefer sidecar analytics) */
   sunGrowth: boolean;
+  /** Low-voltage lighting workspace dock (beams + capacity ring). */
+  lightingWorkspace: boolean;
   /** AI coach dock (canvas float — prefer Ask AI on selection / sidecar) */
   aiCoach: boolean;
   /**
@@ -134,6 +136,8 @@ type Input = {
    * Rails → sheet + FAB; board absolute horizon stacks demote to Inbox.
    */
   compact?: boolean;
+  /** Operator summoned the LV lighting workspace. */
+  lightingWorkspaceOn?: boolean;
 };
 
 /* Select is the ground state, not a drawing tool — it never collapses chrome. */
@@ -160,6 +164,7 @@ function quietChrome(partial: Partial<HandoffChrome> & Pick<
   | "volumeIsolith"
   | "tradeMargin"
   | "sunGrowth"
+  | "lightingWorkspace"
   | "aiCoach"
   | "ambientRibbon"
   | "selectionRing"
@@ -198,6 +203,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     floraSessionActive = false,
     horizonCardCount = 0,
     compact = false,
+    lightingWorkspaceOn = false,
   } = input;
   const drawingHot = DRAWING_TOOLS.includes(tool);
   const draftCrowded = pendingGhosts > 0;
@@ -230,6 +236,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       volumeIsolith: false,
       tradeMargin: false,
       sunGrowth: false,
+      lightingWorkspace: false,
       aiCoach: false,
       ambientRibbon: instruments && !compact,
       selectionRing: false,
@@ -263,6 +270,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       volumeIsolith: false,
       tradeMargin: false,
       sunGrowth: false,
+      lightingWorkspace: false,
       aiCoach: false,
       ambientRibbon: false,
       selectionRing: false,
@@ -285,6 +293,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       volumeIsolith: false,
       tradeMargin: false,
       sunGrowth: shadeOn && plan,
+      lightingWorkspace: false,
       aiCoach: false,
       ambientRibbon: false,
       selectionRing: false,
@@ -300,6 +309,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   const cadLike = mode === "cad" || mode === "elevation";
   /** Sun scrubber only when shade mesh is on — otherwise stays off the plane. */
   const sunScrubber = shadeOn && plan && !draftCrowded;
+  const lightingDock =
+    lightingWorkspaceOn && plan && !draftCrowded && !clientView;
   /**
    * Data lane is available in CAD-like modes, but only mounts once summoned.
    * Canvas-first: the drawing owns idle; measures/quantities appear on ask.
@@ -319,6 +330,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     volumeIsolith: false,
     tradeMargin: false,
     sunGrowth: sunScrubber,
+    lightingWorkspace: lightingDock,
     aiCoach: false,
     ambientRibbon: plan && !compact,
     /** Orbit actions outside the glyph */

@@ -119,6 +119,9 @@ export const IrrigationZoneKindSchema = z.enum([
 ]);
 export type IrrigationZoneKind = z.infer<typeof IrrigationZoneKindSchema>;
 
+export const LvWireGaugeSchema = z.enum(["12/2", "14/2"]);
+export type LvWireGauge = z.infer<typeof LvWireGaugeSchema>;
+
 export const IrrigationZoneSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -128,6 +131,10 @@ export const IrrigationZoneSchema = z.object({
   emitter_flow_lph: z.number().positive().default(2),
   /** Lighting / spray — fixture or head spacing along path (m). */
   fixture_spacing_m: z.number().positive().default(2.5).optional(),
+  /** Lighting circuit — LV cable gauge (session default 12/2). */
+  wire_gauge: LvWireGaugeSchema.optional(),
+  /** Lighting circuit — transformer VA rating (80% load rule). */
+  transformer_va: z.number().positive().max(2000).optional(),
 });
 export type IrrigationZone = z.infer<typeof IrrigationZoneSchema>;
 

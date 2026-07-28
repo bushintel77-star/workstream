@@ -65,6 +65,7 @@ type Props = {
   onPlantingSoil: (s: SoilTag) => void;
   onPlantingAspect: (a: AspectTag) => void;
   onPickMaterial: (t: StudioItemType) => void;
+  onPickSymbol?: (sym: import("@workstream/contracts").CatalogSymbol) => void;
   onPathWidth: (w: PathWidthLockM) => void;
   onEdgeType: (e: HardscapeEdgeType) => void;
   onPathFillet: (r: PathFilletLockM) => void;
@@ -105,6 +106,7 @@ export function AssetPanel({
   onPlantingSoil,
   onPlantingAspect,
   onPickMaterial,
+  onPickSymbol,
   onPathWidth,
   onEdgeType,
   onPathFillet,
@@ -267,6 +269,7 @@ export function AssetPanel({
               }
               onPickMaterial(t);
             }}
+            onPickSymbol={onPickSymbol}
           />
         ) : null}
 
