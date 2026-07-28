@@ -28,3 +28,4 @@ export * from "./schemas/orchestration";
 export * from "./schemas/landscape-feature";
 export * from "./schemas/assembly-recipe";
 export * from "./schemas/share-revision";
+export * from "./schemas/board-telemetry";

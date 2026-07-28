@@ -70,6 +70,8 @@ type Props = {
   onZoomToFit?: () => void;
   /** Toggle indicative spray DU wash. */
   onToggleIrrigationUniformity?: () => void;
+  /** Toggle live twin telemetry overlay. */
+  onToggleLiveTelemetry?: () => void;
   /** Cycle ASLA/SILA lifecycle phase. */
   onCycleLifecyclePhase?: () => void;
 };
@@ -117,6 +119,7 @@ export function StudioCommandPalette({
   onAnnotate,
   onZoomToFit,
   onToggleIrrigationUniformity,
+  onToggleLiveTelemetry,
   onCycleLifecyclePhase,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -356,6 +359,19 @@ export function StudioCommandPalette({
             } satisfies StudioCommand,
           ]
         : []),
+      ...(onToggleLiveTelemetry
+        ? [
+            {
+              id: "live-telemetry",
+              label: "Live telemetry",
+              detail:
+                "Soil moisture, thermal comfort, flow, sediment — twin samples on the board",
+              keywords:
+                "telemetry twin iot soil moisture thermal comfort flow sediment sensor live",
+              run: onToggleLiveTelemetry,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "measures",
         label: dataOpen
@@ -481,6 +497,7 @@ export function StudioCommandPalette({
     onToggleFitSheet,
     onToggleFocus,
     onToggleIrrigationUniformity,
+    onToggleLiveTelemetry,
     onCycleLifecyclePhase,
     onTiltView,
     onGardenViewpoint,

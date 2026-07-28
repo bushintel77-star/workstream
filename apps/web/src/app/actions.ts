@@ -312,6 +312,34 @@ export async function designBoardReportAction(projectId: string) {
   }
 }
 
+/** Live twin telemetry — measured samples for the Live telemetry overlay. */
+export async function designTelemetryAction(projectId: string) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot load telemetry");
+  }
+  const { designTelemetryApi } = await import("../lib/api");
+  try {
+    return await designTelemetryApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Telemetry load failed");
+  }
+}
+
+export async function ingestDesignTelemetryAction(
+  projectId: string,
+  body: import("@workstream/contracts").IngestTelemetryRequest,
+) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot ingest telemetry");
+  }
+  const { ingestDesignTelemetryApi } = await import("../lib/api");
+  try {
+    return await ingestDesignTelemetryApi(projectId, body);
+  } catch (err) {
+    throw wrapApiError(err, "Telemetry ingest failed");
+  }
+}
+
 /** Open-Meteo forecast for the Env boundary rail weather icons. */
 export async function getWeatherAction(projectId: string) {
   if (!projectId.trim()) return null;

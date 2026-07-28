@@ -9,7 +9,9 @@ import type {
   DesignAssistResponse,
   DesignBoardReportResponse,
   DesignFindingsResponse,
+  DesignTelemetryResponse,
   DesignGhostsResponse,
+  IngestTelemetryRequest,
   ProjectOrchestrationWorld,
   SketchToCadRequest,
   SketchToCadResponse,
@@ -427,6 +429,24 @@ export async function designBoardReportApi(
 ): Promise<DesignBoardReportResponse> {
   return apiGet<DesignBoardReportResponse>(
     `/projects/${projectId}/design/board-report`,
+  );
+}
+
+export async function designTelemetryApi(
+  projectId: string,
+): Promise<DesignTelemetryResponse> {
+  return apiGet<DesignTelemetryResponse>(
+    `/projects/${projectId}/design/telemetry`,
+  );
+}
+
+export async function ingestDesignTelemetryApi(
+  projectId: string,
+  body: IngestTelemetryRequest,
+): Promise<DesignTelemetryResponse> {
+  return apiPost<DesignTelemetryResponse>(
+    `/projects/${projectId}/design/telemetry`,
+    body,
   );
 }
 

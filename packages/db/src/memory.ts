@@ -17,6 +17,7 @@ import type {
   SkuLink,
   Survey,
   Task,
+  TelemetryReading,
 } from "./types";
 import type { QuoteDoc } from "@workstream/contracts";
 import type { Store } from "./types";
@@ -53,6 +54,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _projectMyobLinks: ProjectMyobLink[];
   _crew: CrewMember[];
   _photoMeasurements: PhotoMeasurement[];
+  _telemetryReadings: TelemetryReading[];
   _loadSnapshot: () => boolean;
   _sqlite?: SqliteJournal;
   _exportSnapshot: (path: string) => void;
@@ -72,6 +74,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _projectMyobLinks: ProjectMyobLink[] = [];
   const _crew: CrewMember[] = [];
   const _photoMeasurements: PhotoMeasurement[] = [];
+  const _telemetryReadings: TelemetryReading[] = [];
   const _integrations: IntegrationSecret[] = [];
   const _workspaceBilling: import("./types").WorkspaceBilling[] = [];
   const _workspaceMembers: import("./types").WorkspaceMember[] = [];
@@ -124,6 +127,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _projectMyobLinks,
     _crew,
     _photoMeasurements,
+    _telemetryReadings,
     _integrations,
     _workspaceBilling,
     _workspaceMembers,
@@ -206,6 +210,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _projectMyobLinks,
     _crew,
     _photoMeasurements,
+    _telemetryReadings,
     _loadSnapshot: loadSnapshot,
     _sqlite: journal,
     _exportSnapshot: (path: string) => {
@@ -910,6 +915,36 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           (a, b) =>
             new Date(b.created_at).getTime() -
             new Date(a.created_at).getTime(),
+        );
+    },
+
+    async createTelemetryReading(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const row: TelemetryReading = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        ...input,
+        created_at: new Date().toISOString(),
+      };
+      _telemetryReadings.push(row);
+      flush();
+      return row;
+    },
+
+    async listTelemetryReadings(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      return _telemetryReadings
+        .filter((m) => m.project_id === projectId)
+        .sort(
+          (a, b) =>
+            new Date(b.observed_at).getTime() -
+            new Date(a.observed_at).getTime(),
         );
     },
 

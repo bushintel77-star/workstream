@@ -33,6 +33,7 @@ import designGhostsRoutes from "../routes/design-ghosts";
 import designAssistRoutes from "../routes/design-assist";
 import designFindingsRoutes from "../routes/design-findings";
 import designBoardReportRoutes from "../routes/design-board-report";
+import designTelemetryRoutes from "../routes/design-telemetry";
 import cadRoutes from "../routes/cad";
 import boundaryRoutes from "../routes/boundary";
 import keylessRoutes from "../routes/keyless";
@@ -87,6 +88,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(designAssistRoutes, { prefix: "/projects" });
   await app.register(designFindingsRoutes, { prefix: "/projects" });
   await app.register(designBoardReportRoutes, { prefix: "/projects" });
+  await app.register(designTelemetryRoutes, { prefix: "/projects" });
   await app.register(cadRoutes, { prefix: "/projects" });
   await app.register(boundaryRoutes, { prefix: "/projects" });
   await app.register(keylessRoutes, { prefix: "/projects" });

@@ -47,6 +47,8 @@
 
 **Phase 3 gate (shipped):** `cad.sync.json` live-sync manifest + stable `symbol_id` / entity IDs on glTF extras for an external UE5 importer. Nanite/Lumen stay in Unreal — Workstream publishes the metre contract.
 
+**Phase 4 gate (shipped):** twin telemetry ingest (`POST/GET …/design/telemetry`) for soil moisture, thermal comfort, flow, sediment + studio **Live telemetry** toggle (Cmd+K). Demo seeds labelled `demo` — not sensor fact. Alerts are Phase 5.
+
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 
 ---

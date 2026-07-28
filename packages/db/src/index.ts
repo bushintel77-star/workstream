@@ -45,6 +45,8 @@ export type {
   UpdateCrewMemberInput,
   PhotoMeasurement,
   PhotoMeasurementInput,
+  TelemetryReading,
+  TelemetryReadingInput,
   OrchestrationOverlayState,
 } from "./types";
 export { SYSTEM_OWNER, createMemoryStore } from "./memory";

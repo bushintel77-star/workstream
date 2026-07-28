@@ -290,4 +290,8 @@ with occlusion. Each depends on the one before; metre geometry is the gate.
 download.
 
 **Gate 3 shipped:** `GET …/cad.sync.json` + glTF `sync_assets` (stable entity/symbol IDs) for an
-external UE5 / Datasmith client. Twin / AR still blocked.
+external UE5 / Datasmith client.
+
+**Gate 4 shipped:** telemetry ingest schema (`soil_moisture` / `thermal_comfort` / `flow` /
+`sediment`) + `POST/GET …/design/telemetry` + studio **Live telemetry** toggle. Performance alerts
+and AR remain next.

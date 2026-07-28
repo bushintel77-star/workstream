@@ -138,6 +138,7 @@ export * from './board-context';
 export * from './board-context-studio';
 export * from './board-findings';
 export * from './board-sustainability';
+export * from './board-telemetry';
 export * from './board-liability';
 export * from './lv-lighting';
 export * from './design-lifecycle';

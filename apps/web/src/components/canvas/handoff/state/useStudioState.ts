@@ -295,6 +295,8 @@ type Ui = {
   lifecyclePhase: import("@workstream/contracts").DesignLifecyclePhase;
   /** Spray distribution uniformity wash — session only. */
   irrigationUniformityOn: boolean;
+  /** Live twin telemetry overlay — session only. */
+  liveTelemetryOn: boolean;
   mitigated: Record<string, boolean>;
   coachStep: number;
   drawPoly: PctPoint[] | null;
@@ -645,6 +647,7 @@ function initialState(opts: {
       lightingTransformerVa: 200,
       lifecyclePhase: opts.lifecyclePhase ?? "concept",
       irrigationUniformityOn: false,
+      liveTelemetryOn: false,
       mitigated: {},
       coachStep: -1,
       drawPoly: null,

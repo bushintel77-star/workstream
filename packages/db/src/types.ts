@@ -51,6 +51,7 @@ import type {
   ShareSnapshot,
   QuoteDoc,
   UpsertQuoteDocInput,
+  TelemetryReading,
 } from "@workstream/contracts";
 
 export type {
@@ -104,7 +105,13 @@ export type {
   CreateShareRevisionInput,
   ShareDecisionInput,
   ShareSnapshot,
+  TelemetryReading,
 };
+
+export type TelemetryReadingInput = Omit<
+  TelemetryReading,
+  "id" | "created_at" | "project_id"
+>;
 
 export type PhotoMeasurementInput = Omit<
   PhotoMeasurement,
@@ -259,6 +266,15 @@ export interface Store {
     ownerId: string,
     projectId: string,
   ): Promise<PhotoMeasurement[]>;
+  createTelemetryReading(
+    ownerId: string,
+    projectId: string,
+    input: TelemetryReadingInput,
+  ): Promise<TelemetryReading>;
+  listTelemetryReadings(
+    ownerId: string,
+    projectId: string,
+  ): Promise<TelemetryReading[]>;
   listIntegrations(ownerId: string): Promise<IntegrationSecret[]>;
   getIntegration(
     ownerId: string,

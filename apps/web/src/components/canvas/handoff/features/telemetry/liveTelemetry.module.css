@@ -1,0 +1,139 @@
+/* Board wash in zoom-world; dock is CameraChrome. */
+
+.wash {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 7;
+  overflow: visible;
+}
+
+.dot {
+  fill: var(--hc-ink);
+  opacity: 0.85;
+}
+
+.halo {
+  fill: none;
+  stroke-width: 0.35;
+  opacity: 0.55;
+}
+
+.soil_moisture {
+  stroke: color-mix(in srgb, var(--hc-water, #5b7c8a) 80%, transparent);
+  fill: color-mix(in srgb, var(--hc-water, #5b7c8a) 70%, transparent);
+}
+
+.thermal_comfort {
+  stroke: color-mix(in srgb, var(--hc-warning) 75%, transparent);
+  fill: color-mix(in srgb, var(--hc-warning) 65%, transparent);
+}
+
+.flow {
+  stroke: color-mix(in srgb, var(--hc-signal, #c45c26) 70%, transparent);
+  fill: color-mix(in srgb, var(--hc-signal, #c45c26) 60%, transparent);
+}
+
+.sediment {
+  stroke: color-mix(in srgb, var(--hc-ink-muted) 70%, transparent);
+  fill: color-mix(in srgb, var(--hc-ink-muted) 55%, transparent);
+}
+
+.dock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: min(260px, calc(100vw - 48px));
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--hc-line-soft);
+  background: color-mix(in srgb, var(--hc-invert) 90%, transparent);
+  box-shadow: var(--hc-elev-2);
+  backdrop-filter: blur(10px);
+  font-family: var(--font-body);
+  color: var(--hc-ink);
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.close {
+  min-width: 28px;
+  min-height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--hc-ink-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tip {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--hc-ink-muted);
+}
+
+.seed {
+  margin-top: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--hc-line-soft);
+  background: color-mix(in srgb, var(--hc-invert) 70%, transparent);
+  color: var(--hc-ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.kind {
+  color: var(--hc-ink-muted);
+}
+
+.value {
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 650;
+  font-size: 12px;
+}
+
+.honesty {
+  margin: 6px 0 0;
+  font-size: 9.5px;
+  line-height: 1.35;
+  font-style: italic;
+  color: var(--hc-ink-faint);
+}

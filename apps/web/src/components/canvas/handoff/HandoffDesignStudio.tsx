@@ -166,6 +166,8 @@ import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector"
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
 import { IrrigationUniformityWash } from "./features/zones/IrrigationUniformityWash";
 import { IrrigationUniformityDock } from "./features/zones/IrrigationUniformityDock";
+import { LiveTelemetryWash } from "./features/telemetry/LiveTelemetryWash";
+import { LiveTelemetryDock } from "./features/telemetry/LiveTelemetryDock";
 import { PhaseManagerChip } from "./features/phase/PhaseManagerChip";
 import {
   loadLifecyclePhasePrefs,
@@ -266,6 +268,8 @@ import { useToast } from "../../ToastHost";
 import { suggestedMode, unlockedModes } from "../../../lib/canvas-mode";
 import { useBoardFindings } from "../../../lib/use-board-findings";
 import { useBoardReport } from "../../../lib/use-board-report";
+import { useBoardTelemetry } from "../../../lib/use-board-telemetry";
+import { telemetryBoardPoints } from "@workstream/domain";
 import css from "./handoffStudio.module.css";
 
 type Props = {
@@ -389,6 +393,12 @@ export function HandoffDesignStudio({
    */
   const { sustainability: boardSustainability, disclaimers: boardDisclaimers } =
     useBoardReport(projectId, ui.saveRevision);
+  const boardTelemetry = useBoardTelemetry(
+    projectId,
+    ui.saveRevision,
+    ui.liveTelemetryOn,
+  );
+  const telemetryPoints = telemetryBoardPoints(boardTelemetry.readings);
   const { fidelity, markInteracting } = usePresentationLens({
     forcePresentation: ui.clientView || ui.frameOn,
   });
@@ -3926,6 +3936,11 @@ export function HandoffDesignStudio({
             ) : null}
             {(ui.mode === "cad" || ui.mode === "sketch") &&
             !ui.frameOn &&
+            ui.liveTelemetryOn ? (
+              <LiveTelemetryWash active points={telemetryPoints} />
+            ) : null}
+            {(ui.mode === "cad" || ui.mode === "sketch") &&
+            !ui.frameOn &&
             ui.lightingWorkspaceOn ? (
               <LightingBeams
                 items={studio.items}
@@ -4535,6 +4550,20 @@ export function HandoffDesignStudio({
           <IrrigationUniformityDock
             report={irrigUniformity}
             onClose={() => studio.setUi({ irrigationUniformityOn: false })}
+          />
+        ) : null}
+
+        {planOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        ui.liveTelemetryOn ? (
+          <LiveTelemetryDock
+            latest={boardTelemetry.latest}
+            points={telemetryPoints}
+            loading={boardTelemetry.loading}
+            onSeedDemo={() => void boardTelemetry.seedDemo()}
+            onClose={() => studio.setUi({ liveTelemetryOn: false })}
           />
         ) : null}
 
@@ -5253,6 +5282,9 @@ export function HandoffDesignStudio({
             studio.setUi({
               irrigationUniformityOn: !ui.irrigationUniformityOn,
             })
+          }
+          onToggleLiveTelemetry={() =>
+            studio.setUi({ liveTelemetryOn: !ui.liveTelemetryOn })
           }
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
