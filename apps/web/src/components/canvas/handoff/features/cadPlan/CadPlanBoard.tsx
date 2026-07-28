@@ -71,6 +71,11 @@ import { StudioGlyph } from "../../StudioGlyph";
 import { RenderDefs } from "../render/RenderDefs";
 import type { BoardShadowCast } from "@workstream/domain";
 import {
+  buildGrowthTemporalRings,
+  decorativeGlyphShadowOffset,
+  growthStageSpreadFactor,
+} from "@workstream/domain";
+import {
   DWELLING_HATCH_IDS,
   SUN_SHADOW,
   sunShadowFill,
@@ -80,7 +85,6 @@ import {
   isSpeciesSymbolType,
 } from "../render/symbols/SpeciesSymbol";
 import { SunShadowProvider } from "../shade/SunShadowContext";
-import { decorativeGlyphShadowOffset } from "@workstream/domain";
 import { AnnotationLayer } from "../render/AnnotationLayer";
 import {
   buildSpeciesLabelCandidates,
@@ -620,6 +624,30 @@ export function CadPlanBoard({
     const dbhM = it.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
     return { it, dbhM, tpz: tpzRadiusPct(dbhM, scaleM) };
   });
+  const vegetationVisual = resolveLayerVisual(
+    "vegetation",
+    layerOpacity.vegetation ?? 1,
+    isolatedLayer,
+  );
+  const temporalRings = useMemo(
+    () =>
+      sketchPassthrough || frameOn || foundationCleanse
+        ? []
+        : buildGrowthTemporalRings({
+            growth,
+            scaleM,
+            items: items
+              .filter((it) => !it.ghost)
+              .map((it) => ({
+                id: it.id,
+                type: it.t,
+                x: it.x,
+                y: it.y,
+                existing: !!BY_TYPE[it.t]?.existing,
+              })),
+          }),
+    [items, growth, scaleM, sketchPassthrough, frameOn, foundationCleanse],
+  );
 
   const toPct = useCallback(
     (clientX: number, clientY: number) => {
@@ -1700,6 +1728,54 @@ export function CadPlanBoard({
             </g>
           );
         })}
+        {temporalRings.map((ring) => (
+          <g
+            key={`grow-${ring.id}`}
+            opacity={vegetationVisual.opacity * underlayOp}
+            data-testid="growth-temporal-ring"
+            data-stage={ring.stage}
+            data-crowded={ring.crowded ? "1" : "0"}
+          >
+            <ellipse
+              cx={ring.x}
+              cy={ring.y}
+              rx={ring.root_rx_pct}
+              ry={ring.root_rx_pct * 0.82}
+              className={css.growthRoot}
+              vectorEffect="non-scaling-stroke"
+            >
+              <title>
+                {`Indicative root zone · Ø ${(
+                  ring.mature_spread_m *
+                  growthStageSpreadFactor(ring.stage) *
+                  0.55
+                ).toFixed(1)} m`}
+              </title>
+            </ellipse>
+            <ellipse
+              cx={ring.x}
+              cy={ring.y}
+              rx={ring.canopy_rx_pct}
+              ry={ring.canopy_rx_pct * 0.78}
+              className={
+                ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
+              }
+              vectorEffect="non-scaling-stroke"
+            >
+              <title>
+                {`Canopy · Ø ${(
+                  ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
+                ).toFixed(1)} m at ${
+                  ring.stage === "plant"
+                    ? "Year 1"
+                    : ring.stage === "5yr"
+                      ? "Year 5"
+                      : "Year 10"
+                }${ring.crowded ? " · crowding" : ""}`}
+              </title>
+            </ellipse>
+          </g>
+        ))}
       </svg>
 
       {editing && allowProjectedChrome && boundaryVisual.hittable

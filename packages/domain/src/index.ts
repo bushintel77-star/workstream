@@ -141,6 +141,7 @@ export * from './board-sustainability';
 export * from './board-telemetry';
 export * from './board-twin-alerts';
 export * from './ar-birdseye';
+export * from './growth-temporal-rings';
 export * from './board-liability';
 export * from './lv-lighting';
 export * from './design-lifecycle';

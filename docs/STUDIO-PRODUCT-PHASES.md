@@ -53,6 +53,8 @@
 
 **Phase 6 gate (shipped):** on-site **AR bird's-eye** overlay (Cmd+K / share twin) with building **footprint occlusion**, pan/rotate/scale calibrate, indicative IoU align score. Not Vision Pro / city-twin chroma-key — confirm on site.
 
+**Workflow 1 §4 (shipped):** temporal growth scrub draws canopy + root rings on the plan; crowded discs tint at Year 10 alongside findings.
+
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 
 ---

@@ -416,6 +416,31 @@
   stroke: var(--planting-retain-hover);
 }
 
+/* Temporal growth scrub — canopy + root (indicative; confirm on site). */
+.growthRoot {
+  fill: color-mix(in srgb, var(--planting-retain-stroke, #5a7a62) 10%, transparent);
+  stroke: color-mix(in srgb, var(--planting-retain-stroke, #5a7a62) 45%, transparent);
+  stroke-width: 0.85;
+  stroke-dasharray: 2.5 2.5;
+  pointer-events: none;
+}
+
+.growthCanopy {
+  fill: color-mix(in srgb, var(--proposed-stroke, #3d6b8a) 12%, transparent);
+  stroke: color-mix(in srgb, var(--proposed-stroke, #3d6b8a) 55%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.growthCanopyCrowded {
+  fill: color-mix(in srgb, var(--hc-warning, #b45309) 18%, transparent);
+  stroke: color-mix(in srgb, var(--hc-warning, #b45309) 70%, transparent);
+  stroke-width: 1.15;
+  stroke-dasharray: 3 2;
+  pointer-events: none;
+}
+
 .tpzHit {
   position: absolute;
   transform: translate(-50%, -50%);

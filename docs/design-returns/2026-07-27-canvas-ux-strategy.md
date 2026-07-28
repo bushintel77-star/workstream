@@ -59,10 +59,9 @@ Paper: landscape is a living medium; static CAD "fails to account for the tempor
 drives overplanting → plant mortality from overcrowding.
 
 - **PARTIAL:** growth stages (`growth`, `GrowthStage`) and a sun/growth dock already exist.
-- **GAP:** surface as a **temporal slider** with Year 1 / Year 5 / Year 10 states driving canopy
-  spread, shadow, and root zones — and, critically, **flag canopy collision / root competition at
-  Year 10** so the designer can retro-space. That collision warning is the feature that prevents a
-  real, expensive failure mode; it's also the honesty story for clients (see deliverables spec §8).
+- **HAVE:** temporal slider Year 1 / 5 / 10 drives canopy glyph scale + shadow; Year-10 canopy
+  conflict warn on the sun dock; **growth-scrubbed canopy + root rings** on the plan
+  (`growth-temporal-ring`) so crowding is visible for retro-space — indicative metres.
 
 ---
 
@@ -271,7 +270,7 @@ drawing tool.
 1. **Semantic zoom for labels** (§2) — fixes a live legibility bug, cheap.
 2. **Board context contract** (§8.1) — the AI-awareness foundation; also unlocks 6 and 9.
 3. **Liability overlay on export** (§9) — low effort, protects the practice, differentiating.
-4. **Temporal slider + Year-10 collision warning** (§4) — builds on existing growth model.
+4. **Temporal slider + Year-10 collision warning** (§4) — shipped: Y1/Y5/Y10 scrub, canopy/root rings, findings + dock warn.
 5. **Hand-drawn pen + Atmosphere Palette** (§7, fit-sheet brief) — the aesthetic win.
 6. **Lighting workspace** (§5) — beams, transformer 80% rule, pulse-not-dialog.
 7. **Sustainability dashboard** (§6) — shipped: UHI / ET / cut-fill on BoardContext sidecar.
