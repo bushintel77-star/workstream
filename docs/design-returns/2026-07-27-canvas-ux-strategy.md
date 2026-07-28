@@ -88,11 +88,11 @@ ET controllers + backflow preventers specified (per deliverables spec §6).
 
 ## 6. Sustainability dashboard
 
-**GAP.** Unobtrusive overlay computing, live as the designer works: water budget, carbon
-sequestration, UHI mitigation, cut/fill, evapotranspiration, permeability — aligned to
-**SITES v2** and mapped to **UN SDGs** (11, 3). We already compute permeability/canopy targets in
-`studio-preemptive-compliance`, so this is an extension, not a new engine. Keep it a calm sidebar
-metric, never a primary HUD figure (invisible-engine law).
+**HAVE (partial → live).** Calm utility-drawer sidecar over BoardContext: permeability, canopy,
+UHI shade-vs-sealed, irrigation peak draw, peak ET water budget, carbon stock at maturity, open
+space, site fall, indicative cut/fill — SITES v2 credit names + UN SDG chips. Measured or absent
+(never a comfortable zero); modelled figures always print their assumption. Refetched on save via
+`design/board-report`. Still not a primary HUD figure (invisible-engine law).
 
 ---
 
@@ -274,7 +274,7 @@ drawing tool.
 4. **Temporal slider + Year-10 collision warning** (§4) — builds on existing growth model.
 5. **Hand-drawn pen + Atmosphere Palette** (§7, fit-sheet brief) — the aesthetic win.
 6. **Lighting workspace** (§5) — beams, transformer 80% rule, pulse-not-dialog.
-7. **Sustainability dashboard** (§6) — extend existing compliance engine.
+7. **Sustainability dashboard** (§6) — shipped: UHI / ET / cut-fill on BoardContext sidecar.
 8. **Client WebGL portal** — time-of-day scrub, lighting toggle, material switch (digital-twin step 1).
 9. **Board-level AI reasoning** on top of 2 — cross-artefact findings with provenance.
 10. **Phase manager** (§9), irrigation uniformity heat map.

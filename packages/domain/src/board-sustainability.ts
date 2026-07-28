@@ -70,6 +70,21 @@ const DEFAULT_FIXTURE_SPACING_M = 2.5;
 /** Fall across the site below which drainage reads as flat rather than graded. */
 const FLAT_SITE_FALL_M = 0.15;
 
+/**
+ * Peak-month reference ET₀ for temperate Melbourne (mm/day) — order of
+ * magnitude for a summer design day, not a weather service.
+ */
+const MELBOURNE_PEAK_ET0_MM = 5;
+
+/** Landscape coefficient for mixed Curtis garden (lawn + beds), not turf only. */
+const LANDSCAPE_KC = 0.6;
+
+/**
+ * Assumed daily irrigation run length when comparing peak ET demand to
+ * authored emitter capacity (L/h × hours).
+ */
+const IRRIGATION_RUN_HOURS = 1;
+
 const PROVENANCE_RANK: Record<BoardProvenance, number> = {
   absent: 0,
   seed: 1,
@@ -356,6 +371,139 @@ function carbonMetric(ctx: BoardContext): BoardSustainabilityMetric {
   };
 }
 
+/* ---------------------------------------------------------- UHI / shade -- */
+
+/**
+ * Indicative shade available to cool sealed ground — canopy m² vs sealed m².
+ * Not a spatial intersection (Workflow 1 has no hardscape/canopy overlay
+ * geometry); the model note says so.
+ */
+function uhiShadeMetric(ctx: BoardContext): BoardSustainabilityMetric {
+  const base = {
+    id: "uhi-shade",
+    label: "Shade vs sealed ground",
+    unit: "%",
+    sites_credit: "Soil + vegetation — reduce urban heat island effects",
+    sdg: [3, 11, 13],
+    statement: "",
+    cites: ["planting", "surfaces"],
+    basis: weakest(ctx, ["planting", "surfaces"]),
+  };
+
+  const sealedM2 = ctx.surfaces
+    .filter((s) => s.permeable === false && s.area_m2 != null && s.area_m2 > 0)
+    .reduce((sum, s) => sum + (s.area_m2 ?? 0), 0);
+  const canopyM2 = totalCanopyM2(ctx.planting);
+
+  if (sealedM2 <= 0) {
+    return absentMetric(
+      base,
+      "No sealed surface measured — urban heat load from hardscape cannot be read.",
+    );
+  }
+  if (canopyM2 <= 0) {
+    return absentMetric(
+      base,
+      "No planting with mature spread — shade available to cool sealed ground is unknown, not nil.",
+    );
+  }
+
+  const pct = (canopyM2 / sealedM2) * 100;
+  const target = 50;
+  const status: BoardMetricStatus = pct >= target ? "on_track" : "short";
+
+  return {
+    ...base,
+    value: round1(Math.min(pct, 999)),
+    target,
+    status,
+    model:
+      "Projected mature canopy area ÷ sealed hardscape area. Not a planimetric intersection — Workflow 1 cannot yet say which paving lies under which crown. A 50% benchmark is a design heuristic for shade available to take heat out of hardscape, not a council figure.",
+    statement: `Projected crowns (${Math.round(canopyM2)} m²) equal about ${Math.round(pct)}% of sealed ground (${Math.round(sealedM2)} m²)${
+      status === "on_track"
+        ? " — enough canopy mass to argue for UHI relief if the trees establish."
+        : " — sealed ground still outruns shade at maturity; add canopy or reduce hardscape."
+    }`,
+  };
+}
+
+/* ----------------------------------------------------- ET water budget -- */
+
+function plantedAreaM2(ctx: BoardContext): number {
+  let sum = 0;
+  for (const s of ctx.surfaces) {
+    if (s.area_m2 == null || s.area_m2 <= 0) continue;
+    const t = s.type.toLowerCase();
+    if (
+      t === "lawn" ||
+      t === "bed" ||
+      t === "planting" ||
+      t === "garden" ||
+      (s.permeable === true && t !== "paving" && t !== "deck")
+    ) {
+      sum += s.area_m2;
+    }
+  }
+  return sum;
+}
+
+/**
+ * Peak design-day landscape water demand (L/day) from Melbourne ET₀ × Kc ×
+ * planted area, compared to authored irrigation peak draw for a 1 h run.
+ */
+function etWaterBudgetMetric(ctx: BoardContext): BoardSustainabilityMetric {
+  const base = {
+    id: "et-water-budget",
+    label: "Peak ET water budget",
+    unit: "L/day",
+    sites_credit: "Water — reduce water use for landscape irrigation",
+    sdg: [6, 12, 13],
+    statement: "",
+    cites: ["surfaces", "systems.irrigation_zones", "meta.scale_m"],
+    basis: weakest(ctx, ["surfaces", "systems"]),
+  };
+
+  const planted = plantedAreaM2(ctx);
+  if (planted <= 0) {
+    return absentMetric(
+      base,
+      "No lawn or permeable planting area measured — ET demand cannot be budgeted.",
+    );
+  }
+
+  const demandLpd = planted * MELBOURNE_PEAK_ET0_MM * LANDSCAPE_KC;
+  const scaleM = ctx.meta.scale_m;
+  const zones =
+    scaleM != null && scaleM > 0 ? readWateredZones(ctx, scaleM) : [];
+  const supplyLpd =
+    zones.length > 0
+      ? zones.reduce((sum, z) => sum + z.litresPerHour, 0) * IRRIGATION_RUN_HOURS
+      : null;
+
+  let status: BoardMetricStatus = "measured";
+  let statement = `About ${Math.round(demandLpd)} L/day peak demand over ${Math.round(planted)} m² planted ground (Melbourne summer ET₀ ${MELBOURNE_PEAK_ET0_MM} mm × Kc ${LANDSCAPE_KC}).`;
+
+  if (supplyLpd == null) {
+    statement +=
+      " No drip or spray zone drawn — demand is known; supply capacity is not.";
+  } else if (supplyLpd + 1e-6 < demandLpd) {
+    status = "short";
+    statement += ` Authored irrigation supplies about ${Math.round(supplyLpd)} L in a ${IRRIGATION_RUN_HOURS} h run — short of the peak day. Lengthen the run, add laterals, or reduce water-hungry area.`;
+  } else {
+    status = "on_track";
+    statement += ` Authored irrigation can put about ${Math.round(supplyLpd)} L in a ${IRRIGATION_RUN_HOURS} h run — covers the peak-day estimate. Confirm with an ET controller and meter reading.`;
+  }
+
+  return {
+    ...base,
+    value: Math.round(demandLpd),
+    target: supplyLpd == null ? null : Math.round(supplyLpd),
+    status,
+    model: `Demand = planted m² × ${MELBOURNE_PEAK_ET0_MM} mm ET₀ × Kc ${LANDSCAPE_KC}. Supply (when zones exist) = peak L/h × ${IRRIGATION_RUN_HOURS} h assumed daily run. Planning-stage Melbourne summer heuristic — not a weather-service ET controller schedule.`,
+    statement,
+  };
+}
+
 /* ----------------------------------------------------------- open space -- */
 
 function openSpaceMetric(ctx: BoardContext): BoardSustainabilityMetric {
@@ -427,6 +575,64 @@ function gradeMetric(ctx: BoardContext): BoardSustainabilityMetric {
   };
 }
 
+/* -------------------------------------------------------- cut / fill m³ -- */
+
+/**
+ * Order-of-magnitude earthworks volume from fall × outdoor area.
+ * Average depth ≈ fall/4 (conservative wedge) — never a cut/fill schedule.
+ */
+function cutFillMetric(ctx: BoardContext): BoardSustainabilityMetric {
+  const base = {
+    id: "cut-fill-indicative",
+    label: "Indicative earthworks",
+    unit: "m³",
+    sites_credit: "Soil + vegetation — reduce soil disturbance in design and construction",
+    sdg: [12, 15],
+    statement: "",
+    cites: ["geometry.levels", "geometry.outdoor_m2"],
+    basis: weakest(ctx, ["levels", "geometry"]),
+  };
+
+  const levels = ctx.geometry.levels;
+  const outdoor = ctx.geometry.outdoor_m2;
+  if (levels.length < 2) {
+    return absentMetric(
+      base,
+      "Fewer than two spot levels — cut/fill volume cannot be estimated from this board.",
+    );
+  }
+  if (outdoor == null || outdoor <= 0) {
+    return absentMetric(
+      base,
+      "No outdoor area measured — fall alone cannot become a volume.",
+    );
+  }
+
+  const rls = levels.map((l) => l.rl_m);
+  const fall = Math.max(...rls) - Math.min(...rls);
+  if (fall < FLAT_SITE_FALL_M) {
+    return {
+      ...base,
+      value: 0,
+      target: null,
+      status: "on_track",
+      model:
+        "Fall below 0.15 m treated as nil earthworks for planning. Not a surveyor cut/fill.",
+      statement: `Fall is only ${fall.toFixed(2)} m across the outdoor area — treat earthworks as negligible until a survey TIN says otherwise.`,
+    };
+  }
+
+  const volume = outdoor * (fall / 4);
+  return {
+    ...base,
+    value: Math.round(volume),
+    target: null,
+    status: "measured",
+    model: `V ≈ outdoor m² × (fall m ÷ 4). Average depth = fall/4 over the outdoor garden — a wedge heuristic, not balanced cut vs fill. Construction needs a surveyor TIN and soil report.`,
+    statement: `About ${Math.round(volume)} m³ of grade change over ${Math.round(outdoor)} m² outdoor at ${fall.toFixed(2)} m fall. Prefer working with the fall before carting spoil.`,
+  };
+}
+
 /**
  * The sustainability read-out this board can honestly support. Deterministic:
  * the same board always yields the same metrics in the same order.
@@ -435,10 +641,13 @@ export function buildBoardSustainability(ctx: BoardContext): BoardSustainability
   const metrics = [
     permeabilityMetric(ctx),
     canopyMetric(ctx),
+    uhiShadeMetric(ctx),
     waterMetric(ctx),
+    etWaterBudgetMetric(ctx),
     carbonMetric(ctx),
     openSpaceMetric(ctx),
     gradeMetric(ctx),
+    cutFillMetric(ctx),
   ];
   return {
     metrics,

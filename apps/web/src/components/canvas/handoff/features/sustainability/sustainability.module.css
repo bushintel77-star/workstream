@@ -53,6 +53,17 @@
   color: var(--hc-ink);
 }
 
+.countPill[data-short="1"] {
+  background: color-mix(in srgb, var(--hc-warning, #c4a35a) 28%, transparent);
+}
+
+.liveHint {
+  margin: 0;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--hc-ink-faint);
+}
+
 .metric {
   padding-top: 10px;
   border-top: 1px solid var(--hc-line-soft);
@@ -86,7 +97,7 @@
 }
 
 .short {
-  color: var(--hc-ink-muted);
+  color: var(--hc-warning, #c4a35a);
 }
 
 /* An unmeasured metric must not read like a measured one. */
@@ -145,14 +156,46 @@
   text-transform: uppercase;
 }
 
+.citeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
 .cite {
-  margin: 6px 0 0;
+  margin: 0;
+  flex: 1 1 100%;
   font-size: 9px;
   line-height: 1.35;
   color: var(--hc-ink-faint);
 }
 
+.sdgRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.sdgChip {
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--hc-r-control, 4px);
+  border: 1px solid var(--hc-line-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 650;
+  color: var(--hc-ink-muted);
+}
+
 .basis {
+  margin-left: auto;
+  font-size: 9px;
   font-weight: 650;
   color: var(--hc-ink-muted);
 }

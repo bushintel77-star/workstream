@@ -200,10 +200,89 @@ describe("open space and fall", () => {
   });
 });
 
+describe("UHI shade vs sealed ground", () => {
+  it("reads canopy mass against sealed hardscape", () => {
+    const ctx = ctxOf({
+      surfaces: [
+        { type: "paving", area_m2: 100, material: "Bluestone", permeable: false },
+      ],
+      planting: [{ code: "B01", x: 10, y: 10, mature_spread_m: 8 }],
+    });
+    // π×16 ≈ 50.3 m² canopy / 100 m² sealed ≈ 50.3%
+    const m = metric(ctx, "uhi-shade");
+    expect(m.value).toBeCloseTo(50.3, 0);
+    expect(m.status).toBe("on_track");
+    expect(m.model).toContain("Not a planimetric intersection");
+  });
+
+  it("is absent without sealed ground", () => {
+    const ctx = ctxOf({
+      planting: [{ code: "B01", x: 10, y: 10, mature_spread_m: 8 }],
+    });
+    expect(metric(ctx, "uhi-shade").status).toBe("absent");
+  });
+});
+
+describe("peak ET water budget", () => {
+  it("budgets Melbourne peak-day demand over planted area", () => {
+    const ctx = ctxOf({
+      surfaces: [{ type: "lawn", area_m2: 100, permeable: true }],
+    });
+    // 100 × 5 × 0.6 = 300 L/day
+    const m = metric(ctx, "et-water-budget");
+    expect(m.value).toBe(300);
+    expect(m.status).toBe("measured");
+    expect(m.model).toContain("ET₀");
+  });
+
+  it("flags short when irrigation cannot cover the peak day", () => {
+    const ctx = ctxOf({
+      surfaces: [{ type: "lawn", area_m2: 200, permeable: true }],
+      systems: {
+        irrigation_zones: [
+          {
+            id: "z1",
+            name: "Lawn",
+            kind: "drip",
+            points: [
+              { x_pct: 10, y_pct: 50 },
+              { x_pct: 20, y_pct: 50 },
+            ],
+            emitter_spacing_cm: 40,
+            emitter_flow_lph: 2,
+          },
+        ],
+      },
+    });
+    // Demand 200×5×0.6 = 600; run ≈ 4 m → 10 emitters × 2 = 20 L/h
+    const m = metric(ctx, "et-water-budget");
+    expect(m.status).toBe("short");
+    expect(m.target).toBeLessThan(m.value!);
+  });
+});
+
+describe("indicative cut/fill", () => {
+  it("estimates volume from fall and outdoor area", () => {
+    const ctx = ctxOf({
+      geometry: {
+        outdoor_m2: 200,
+        levels: [
+          { rl_m: 12.0, x: 10, y: 10 },
+          { rl_m: 11.0, x: 80, y: 80 },
+        ],
+      },
+    });
+    // 200 × (1/4) = 50 m³
+    const m = metric(ctx, "cut-fill-indicative");
+    expect(m.value).toBe(50);
+    expect(m.model).toContain("fall/4");
+  });
+});
+
 describe("the read-out as a whole", () => {
   it("assesses every metric and counts only the measurable ones", () => {
     const empty = buildBoardSustainability(ctxOf({}));
-    expect(empty.assessed).toBe(6);
+    expect(empty.assessed).toBe(9);
     expect(empty.measured).toBe(0);
     expect(empty.metrics.every((m) => m.status === "absent")).toBe(true);
   });
@@ -246,7 +325,7 @@ describe("the read-out as a whole", () => {
     const block = formatBoardSustainabilityForAi(
       buildBoardSustainability(ctxOf({})),
     );
-    expect(block).toContain("0 of 6 metrics measurable");
+    expect(block).toContain("0 of 9 metrics measurable");
     expect(block).toContain("not measured");
     expect(block).not.toMatch(/: 0 /);
   });
