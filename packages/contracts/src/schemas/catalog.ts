@@ -234,6 +234,8 @@ export const BoardFindingKindSchema = z.enum([
   "permeability",
   "quote_mismatch",
   "sheet_gap",
+  "site_compliance",
+  "overlay_watch",
 ]);
 export type BoardFindingKind = z.infer<typeof BoardFindingKindSchema>;
 

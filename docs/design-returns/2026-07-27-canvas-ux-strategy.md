@@ -276,7 +276,7 @@ drawing tool.
 6. **Lighting workspace** (§5) — beams, transformer 80% rule, pulse-not-dialog.
 7. **Sustainability dashboard** (§6) — shipped: UHI / ET / cut-fill on BoardContext sidecar.
 8. **Client WebGL portal** — shipped on `/share/[token]`: sun scrub, lighting toggle, Atmosphere switch (digital-twin step 1).
-9. **Board-level AI reasoning** on top of 2 — cross-artefact findings with provenance.
+9. **Board-level AI reasoning** on top of 2 — shipped: cross-artefact findings with provenance, gaps surface, Show on board, site_compliance + overlay_watch.
 10. **Phase manager** (§9), irrigation uniformity heat map.
 
 **Stage 2 track (unlocks the rest of the 2026 standard):** metre-space survey geometry →

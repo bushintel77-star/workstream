@@ -389,6 +389,73 @@ describe("buildBoardFindings", () => {
   });
 });
 
+describe("site compliance findings", () => {
+  it("flags a setback encroachment from compliance state", () => {
+    const ctx = ctxOf({
+      geometry: { outdoor_m2: 200, boundary: DWELLING },
+      compliance: { setback_state: "encroachment" },
+    });
+    const hit = find(buildBoardFindings(ctx), "bf-setback-encroachment");
+    expect(hit).toBeDefined();
+    expect(hit!.kind).toBe("site_compliance");
+    expect(hit!.severity).toBe("critical");
+    expect(hit!.cites).toContain("compliance.setback_state");
+  });
+
+  it("watches high measured site coverage", () => {
+    const ctx = ctxOf({
+      geometry: { lot_m2: 400, coverage_pct: 68, outdoor_m2: 120 },
+    });
+    const hit = find(buildBoardFindings(ctx), "bf-site-coverage");
+    expect(hit).toBeDefined();
+    expect(hit!.kind).toBe("site_compliance");
+    expect(hit!.title).toMatch(/68%/);
+  });
+
+  it("stays silent when setback is clear and coverage is modest", () => {
+    const ctx = ctxOf({
+      geometry: { lot_m2: 400, coverage_pct: 35, outdoor_m2: 200, boundary: DWELLING },
+      compliance: { setback_state: "clear" },
+    });
+    expect(find(buildBoardFindings(ctx), "bf-setback-encroachment")).toBeUndefined();
+    expect(find(buildBoardFindings(ctx), "bf-site-coverage")).toBeUndefined();
+  });
+});
+
+describe("overlay findings", () => {
+  it("watches planting under a sensitive keyless overlay", () => {
+    const ctx = ctxOf({
+      planting: [tree("B01", 40, 60, 6)],
+      overlays: {
+        keyless: [{ kind: "heritage", label: "HO123" }],
+        tpz: [],
+      },
+      provenance: { overlays: "vicmap", planting: "operator" },
+    });
+    const hit = find(buildBoardFindings(ctx), "bf-overlay-sensitive");
+    expect(hit).toBeDefined();
+    expect(hit!.kind).toBe("overlay_watch");
+    expect(hit!.basis).toBe("operator");
+  });
+
+  it("flags planting inside a measured TPZ disc", () => {
+    const ctx = ctxOf({
+      planting: [tree("B14", 50, 50, 4)],
+      overlays: {
+        keyless: [],
+        tpz: [{ code: "E01", radius_m: 6, x: 50, y: 50 }],
+      },
+    });
+    const hit = buildBoardFindings(ctx).find((f) =>
+      f.id.startsWith("bf-tpz-plant-"),
+    );
+    expect(hit).toBeDefined();
+    expect(hit!.x).toBe(50);
+    expect(hit!.y).toBe(50);
+    expect(hit!.kind).toBe("overlay_watch");
+  });
+});
+
 describe("formatBoardFindingsForAi", () => {
   it("cites artefacts and basis on every line", () => {
     const ctx = ctxOf({

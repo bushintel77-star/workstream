@@ -353,11 +353,21 @@ export function HandoffDesignStudio({
    * save (saveRevision). Dismissals share the horizon `mitigated` map; finding
    * ids are `bf-`-namespaced so they never collide with `hz-` horizon cards.
    */
-  const { findings: boardFindings } = useBoardFindings(
+  const { findings: boardFindings, gaps: boardGaps } = useBoardFindings(
     projectId,
     ui.saveRevision,
   );
   const openBoardFindings = boardFindings.filter((f) => !ui.mitigated[f.id]);
+  const showBoardFinding = (f: (typeof openBoardFindings)[number]) => {
+    if (typeof f.x !== "number" || typeof f.y !== "number") return;
+    studio.setUi({
+      focusX: Number(f.x.toFixed(2)),
+      focusY: Number(f.y.toFixed(2)),
+      zoom: Math.max(ui.zoom, 1.35),
+      panX: 0,
+      panY: 0,
+    });
+  };
   /*
    * Same saved board, same refetch key: the sustainability read-out (calm
    * sidecar metric in the utility hub) and the export disclaimers prompted on
@@ -4526,6 +4536,8 @@ export function HandoffDesignStudio({
         {chrome.horizonBoard ? (
           <BoardFindings
             findings={openBoardFindings}
+            gaps={boardGaps}
+            onShow={showBoardFinding}
             onDismiss={(id) =>
               studio.setUi({
                 mitigated: { ...ui.mitigated, [id]: true },
@@ -4876,7 +4888,9 @@ export function HandoffDesignStudio({
             ) : null}
             {studioSheetPage === "inbox" ? (
               <div className={sheetCss.inboxStack} data-testid="studio-sheet-inbox">
-                {actionHorizon.length === 0 && openBoardFindings.length === 0 ? (
+                {actionHorizon.length === 0 &&
+                openBoardFindings.length === 0 &&
+                boardGaps.length === 0 ? (
                   <p className={sheetCss.empty}>No open advisories on this board.</p>
                 ) : null}
                 <PreemptiveHorizon
@@ -4892,6 +4906,8 @@ export function HandoffDesignStudio({
                 <BoardFindings
                   embedded
                   findings={openBoardFindings}
+                  gaps={boardGaps}
+                  onShow={showBoardFinding}
                   onDismiss={(id) =>
                     studio.setUi({
                       mitigated: { ...ui.mitigated, [id]: true },

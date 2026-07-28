@@ -47,6 +47,12 @@ const TURF_SHADE_CANOPY_PCT = 40;
 /** Quote quantity may drift this far from the drawn area before it is a mismatch. */
 const QUOTE_DRIFT_TOLERANCE = 0.1;
 
+/**
+ * Indicative Vic residential site-coverage watch — planning schemes vary; this
+ * only fires when measured coverage is already on the board.
+ */
+const SITE_COVERAGE_WATCH_PCT = 60;
+
 const SEVERITY_RANK: Record<BoardFindingSeverity, number> = {
   critical: 0,
   watch: 1,
@@ -502,6 +508,102 @@ function quoteFindings(ctx: BoardContext): BoardFinding[] {
   return out;
 }
 
+/* ----------------------------------------------------- site compliance -- */
+
+function siteComplianceFindings(ctx: BoardContext): BoardFinding[] {
+  const out: BoardFinding[] = [];
+
+  if (ctx.compliance.setback_state === "encroachment") {
+    out.push({
+      id: "bf-setback-encroachment",
+      kind: "site_compliance",
+      severity: "critical",
+      title: "Placement sits in the setback strip",
+      detail:
+        "Live compliance already flagged a setback encroachment on this board. Move the placement inside the buildable envelope before the sheet goes to the client.",
+      cites: ["compliance.setback_state", "geometry.boundary"],
+      basis: weakest(ctx, ["compliance", "geometry"]),
+    });
+  }
+
+  const coverage = ctx.geometry.coverage_pct;
+  const lot = ctx.geometry.lot_m2;
+  if (
+    coverage != null &&
+    coverage >= SITE_COVERAGE_WATCH_PCT &&
+    lot != null &&
+    lot > 0
+  ) {
+    out.push({
+      id: "bf-site-coverage",
+      kind: "site_compliance",
+      severity: "watch",
+      title: `Site coverage about ${Math.round(coverage)}% of the lot`,
+      detail: `Dwelling footprint covers about ${Math.round(coverage)}% of ${Math.round(lot)} m². Confirm the planning-scheme maximum before treating the outdoor envelope as settled.`,
+      cites: ["geometry.coverage_pct", "geometry.lot_m2"],
+      basis: weakest(ctx, ["geometry"]),
+    });
+  }
+
+  return out;
+}
+
+/* -------------------------------------------------------- overlay watch -- */
+
+const SENSITIVE_OVERLAY =
+  /heritage|bushfire|flood|inundation|vegetation|significant/i;
+
+function overlayFindings(ctx: BoardContext): BoardFinding[] {
+  const out: BoardFinding[] = [];
+  const scaleM = ctx.meta.scale_m;
+
+  const sensitive = ctx.overlays.keyless.filter(
+    (o) => SENSITIVE_OVERLAY.test(o.kind) || (o.label != null && SENSITIVE_OVERLAY.test(o.label)),
+  );
+  if (sensitive.length > 0 && ctx.planting.length > 0) {
+    const labels = [
+      ...new Set(
+        sensitive.map((o) => o.label?.trim() || o.kind).filter(Boolean),
+      ),
+    ].slice(0, 4);
+    out.push({
+      id: "bf-overlay-sensitive",
+      kind: "overlay_watch",
+      severity: "watch",
+      title: "Planting under a sensitive overlay",
+      detail: `${ctx.planting.length} planting placement(s) sit on a board carrying ${labels.join(", ")}. Check species and works controls before pricing or issuing the sheet.`,
+      cites: ["overlays.keyless", "planting"],
+      basis: weakest(ctx, ["overlays", "planting"]),
+    });
+  }
+
+  if (scaleM != null && scaleM > 0) {
+    for (const zone of ctx.overlays.tpz) {
+      if (zone.radius_m == null || zone.radius_m <= 0) continue;
+      if (zone.x == null || zone.y == null) continue;
+      const radiusPct = mToPct(zone.radius_m, scaleM);
+      for (const p of ctx.planting) {
+        const gapPct = Math.hypot(p.x - zone.x, p.y - zone.y);
+        if (gapPct > radiusPct) continue;
+        const gapM = pctToM(gapPct, scaleM);
+        out.push({
+          id: `bf-tpz-plant-${zone.code ?? "tpz"}-${p.code}-${p.x}-${p.y}`,
+          kind: "overlay_watch",
+          severity: "watch",
+          title: "Planting inside an existing TPZ",
+          detail: `${plantAt(p)} sits ${gapM.toFixed(1)} m from a marked tree protection zone (${zone.radius_m.toFixed(1)} m radius). Excavation and root conflict need an arborist call before dig.`,
+          cites: [plantRef(p), `overlays.tpz.${zone.code ?? "tree"}`],
+          basis: weakest(ctx, ["overlays", "planting"]),
+          x: p.x,
+          y: p.y,
+        });
+      }
+    }
+  }
+
+  return out;
+}
+
 /* ----------------------------------------------------------------- sheet -- */
 
 function sheetFindings(ctx: BoardContext): BoardFinding[] {
@@ -564,6 +666,8 @@ export function buildBoardFindings(ctx: BoardContext): BoardFinding[] {
     ...canopyFindings(ctx),
     ...digFindings(ctx),
     ...permeabilityFindings(ctx),
+    ...siteComplianceFindings(ctx),
+    ...overlayFindings(ctx),
     ...quoteFindings(ctx),
     ...sheetFindings(ctx),
   ].sort(
