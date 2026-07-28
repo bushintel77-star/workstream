@@ -187,9 +187,9 @@ export function EnvironmentPanel({
         <div className={css.chips}>
           {(
             [
-              ["plant", "Plant"],
-              ["5yr", "5 yr"],
-              ["mature", "Mature"],
+              ["plant", "Year 1"],
+              ["5yr", "Year 5"],
+              ["mature", "Year 10"],
             ] as const
           ).map(([id, label]) => (
             <button

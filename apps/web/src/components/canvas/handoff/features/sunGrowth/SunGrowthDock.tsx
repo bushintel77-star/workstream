@@ -8,6 +8,12 @@ import {
   sunDatePresetLabel,
   type SunDatePreset,
 } from "./sunDatePreset";
+import {
+  GROWTH_TEMPORAL_STAGES,
+  growthStageFromIndex,
+  growthStageIndex,
+  growthStageLabel,
+} from "./growthTemporal";
 import css from "./sunGrowth.module.css";
 
 type Props = {
@@ -17,6 +23,8 @@ type Props = {
   playing: boolean;
   /** Indicative shadow length from live sun cast (m). */
   shadowLengthM?: number | null;
+  /** Open canopy_conflict findings — shown when scrubbed to Year 10. */
+  year10CanopyConflicts?: number;
   onSunMin: (min: number) => void;
   onDatePreset: (preset: SunDatePreset) => void;
   onGrowth: (g: GrowthStage) => void;
@@ -40,6 +48,7 @@ export function SunGrowthDock({
   growth,
   playing,
   shadowLengthM = null,
+  year10CanopyConflicts = 0,
   onSunMin,
   onDatePreset,
   onGrowth,
@@ -54,6 +63,8 @@ export function SunGrowthDock({
     shadowLengthM != null && shadowLengthM > 0
       ? shadowLengthM
       : Math.max(1.1, Math.min(3.6, 2.2));
+  const stageIdx = growthStageIndex(growth);
+  const showYear10Warn = growth === "mature" && year10CanopyConflicts > 0;
 
   useEffect(() => {
     if (!playing) return;
@@ -151,29 +162,51 @@ export function SunGrowthDock({
           </svg>
           <div className={css.dot} style={{ left: `${sunPX}%`, top: `${sunPY}%` }} />
         </div>
-        <div className={css.chips}>
-          {(
-            [
-              ["plant", "Plant"],
-              ["5yr", "+5 yr"],
-              ["mature", "Mature"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              className={css.chip}
-              data-active={growth === id ? "true" : "false"}
-              onClick={() => onGrowth(id)}
-            >
-              {label}
-            </button>
-          ))}
+        <div className={css.growthBlock}>
+          <label className={css.growthLabel} htmlFor="growth-temporal-slider">
+            Growth · {growthStageLabel(growth)}
+          </label>
+          <input
+            id="growth-temporal-slider"
+            className={css.growthSlider}
+            type="range"
+            min={0}
+            max={GROWTH_TEMPORAL_STAGES.length - 1}
+            step={1}
+            value={stageIdx}
+            data-testid="growth-temporal-slider"
+            aria-valuetext={growthStageLabel(growth)}
+            onChange={(e) =>
+              onGrowth(growthStageFromIndex(Number(e.currentTarget.value)))
+            }
+          />
+          <div className={css.chips}>
+            {GROWTH_TEMPORAL_STAGES.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                className={css.chip}
+                data-active={growth === id ? "true" : "false"}
+                data-testid={`growth-chip-${id}`}
+                onClick={() => onGrowth(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-        <p className={css.foot}>
-          {sunDatePresetLabel(datePreset)} · shadow ≈ {shadow.toFixed(1)} m ·
-          indicative until surveyed heights are available
-        </p>
+        {showYear10Warn ? (
+          <p className={css.warn} data-testid="year10-canopy-warn">
+            {year10CanopyConflicts} canopy conflict
+            {year10CanopyConflicts === 1 ? "" : "s"} at Year 10 — retro-space
+            before share
+          </p>
+        ) : (
+          <p className={css.foot}>
+            {sunDatePresetLabel(datePreset)} · shadow ≈ {shadow.toFixed(1)} m ·
+            indicative until surveyed heights are available
+          </p>
+        )}
       </aside>
     </CameraChrome>
   );

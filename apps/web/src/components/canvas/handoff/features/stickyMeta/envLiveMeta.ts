@@ -65,9 +65,9 @@ function formatSun(min: number) {
 }
 
 const GROWTH: Record<GrowthStage, string> = {
-  plant: "plant",
-  "5yr": "5 yr",
-  mature: "mature",
+  plant: "Year 1",
+  "5yr": "Year 5",
+  mature: "Year 10",
 };
 
 /** Prahran demo centroid when live lat/lng absent — matches flora shade sample. */

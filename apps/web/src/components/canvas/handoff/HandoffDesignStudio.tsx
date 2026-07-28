@@ -4333,6 +4333,10 @@ export function HandoffDesignStudio({
             growth={ui.growth}
             playing={ui.sunPlay}
             shadowLengthM={boardSunCast?.lengthM ?? null}
+            year10CanopyConflicts={
+              openBoardFindings.filter((f) => f.kind === "canopy_conflict")
+                .length
+            }
             onSunMin={(sunMin) => studio.setUi({ sunMin })}
             onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
