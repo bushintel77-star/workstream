@@ -8,8 +8,11 @@ import type {
 import {
   buildAssistSiteIntel,
   buildStudioBoardContext,
+  isSeedSurveyLot,
   preferredCosting,
+  resolveOutdoorAreaM2,
   type BoardContext,
+  type LngLat,
 } from "@workstream/domain";
 import { groundSpanFromSurvey } from "./cad-ground";
 
@@ -22,7 +25,8 @@ export type ProjectBoard = {
   survey: Survey | null;
   symbols: CatalogSymbol[];
   span: ReturnType<typeof groundSpanFromSurvey> | null;
-  outdoorM2: number;
+  /** null when Vicmap and the traced boundary both absent — never invented. */
+  outdoorM2: number | null;
   easementCount: number;
   serviceCount: number;
   intel: ReturnType<typeof buildAssistSiteIntel>;
@@ -53,18 +57,42 @@ export async function loadProjectBoard(
   const easementCount =
     frame?.easements?.filter((r) => r.length >= 3).length ?? 0;
   const serviceCount = frame?.services?.length ?? 0;
-  const outdoorM2 =
-    survey?.garden_area_m2 ??
-    survey?.lot_area_m2 ??
-    (span ? span.width_m * span.height_m * 0.55 : 180);
+
+  const titleRing = survey?.title_polygon?.coordinates?.[0] as
+    | LngLat[]
+    | undefined;
+  const seedLot = survey
+    ? isSeedSurveyLot({
+        lot_area_m2: survey.lot_area_m2,
+        measurements: survey.measurements,
+      })
+    : false;
+  const scaleM =
+    frame?.board_width_m ?? span?.width_m ?? null;
+  const resolved = resolveOutdoorAreaM2({
+    garden_area_m2: survey?.garden_area_m2,
+    lot_area_m2: survey?.lot_area_m2,
+    house_area_m2: survey?.house_area_m2,
+    seedLot,
+    titleRing: titleRing && titleRing.length >= 3 ? titleRing : null,
+    houseRing:
+      survey?.house_polygon?.coordinates?.[0] &&
+      survey.house_polygon.coordinates[0].length >= 3
+        ? (survey.house_polygon.coordinates[0] as LngLat[])
+        : null,
+    boundary: frame?.boundary,
+    building: frame?.building,
+    scaleM,
+  });
+  const outdoorM2 = resolved.outdoor_m2;
 
   const intel = buildAssistSiteIntel({
-    outdoorM2,
+    outdoorM2: outdoorM2 ?? 0,
     placements: canvas?.placements ?? [],
     boundary: frame?.boundary,
     lat: project.lat ?? undefined,
     lng: project.lng ?? undefined,
-    scaleM: span?.width_m,
+    scaleM: scaleM ?? undefined,
   });
 
   const context = buildStudioBoardContext({
@@ -72,7 +100,7 @@ export async function loadProjectBoard(
     canvas,
     survey,
     symbols,
-    scaleM: span?.width_m ?? null,
+    scaleM,
     outdoorM2,
     sunHours: intel.sun_hours ?? null,
     shadeSummary: intel.shade_summary ?? null,

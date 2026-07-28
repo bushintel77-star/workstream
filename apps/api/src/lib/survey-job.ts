@@ -4,16 +4,6 @@ import { edgeLengths, polygonArea } from "@workstream/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
 import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
 
-const METERS_PER_DEG_LAT = 110_540;
-const FRONTAGE_M = 15;
-const DEPTH_M = 40;
-
-function metersToDegrees(lat: number) {
-  const latDeg = 1 / METERS_PER_DEG_LAT;
-  const lngDeg = 1 / (METERS_PER_DEG_LAT * Math.cos((lat * Math.PI) / 180));
-  return { latDeg, lngDeg };
-}
-
 type SurveyGeometry = {
   title_polygon: GeoJsonPolygon;
   house_polygon: GeoJsonPolygon;
@@ -29,37 +19,17 @@ type SurveyGeometry = {
   }>;
 };
 
-function buildMockGeometry(center: { lat: number; lng: number }): SurveyGeometry {
-  const { latDeg, lngDeg } = metersToDegrees(center.lat);
-
-  const halfFront = (FRONTAGE_M / 2) * lngDeg;
-  const halfDepth = (DEPTH_M / 2) * latDeg;
-  const south = center.lat - halfDepth;
-  const north = center.lat + halfDepth;
-  const west = center.lng - halfFront;
-  const east = center.lng + halfFront;
-
-  const lotRing: [number, number][] = [
-    [west, south],
-    [east, south],
-    [east, north],
-    [west, north],
-    [west, south],
-  ];
-
+/** Aerial-only survey when Vicmap misses — Mapbox still grounds Trace / Calibrate. */
+function buildAerialOnlyGeometry(): SurveyGeometry {
+  const empty: GeoJsonPolygon = { type: "Polygon", coordinates: [] };
   return {
-    title_polygon: { type: "Polygon", coordinates: [lotRing] },
-    house_polygon: { type: "Polygon", coordinates: [] },
-    garden_polygon: { type: "Polygon", coordinates: [lotRing] },
-    lot_area_m2: FRONTAGE_M * DEPTH_M,
+    title_polygon: empty,
+    house_polygon: empty,
+    garden_polygon: empty,
+    lot_area_m2: 0,
     house_area_m2: 0,
-    garden_area_m2: FRONTAGE_M * DEPTH_M,
-    measurements: [
-      { edge_id: "front", length_m: FRONTAGE_M, bearing_deg: 90, label: "Frontage" },
-      { edge_id: "east", length_m: DEPTH_M, bearing_deg: 0, label: "East boundary" },
-      { edge_id: "back", length_m: FRONTAGE_M, bearing_deg: 270, label: "Rear" },
-      { edge_id: "west", length_m: DEPTH_M, bearing_deg: 180, label: "West boundary" },
-    ],
+    garden_area_m2: 0,
+    measurements: [],
   };
 }
 
@@ -146,10 +116,13 @@ export async function runSurvey(
   try {
     geometry = await buildVicmapGeometry(center);
   } catch (err) {
-    console.warn("[survey] Vicmap WFS failed, falling back to mock:", err);
+    console.warn(
+      "[survey] Vicmap WFS failed — aerial only (Trace title on Mapbox):",
+      err,
+    );
   }
   if (!geometry) {
-    geometry = buildMockGeometry(center);
+    geometry = buildAerialOnlyGeometry();
   }
 
   // Match locate-loader lot altitude — canvas design perspective.

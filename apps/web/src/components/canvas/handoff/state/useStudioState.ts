@@ -691,6 +691,7 @@ export type UseStudioStateOpts = {
   projectId: string;
   address: string;
   aerialUri?: string | null;
+  /** Surveyed outdoor m² when known — omit rather than invent. */
   outdoorM2?: number;
   initialPlacements?: CatalogPlacement[];
   initialStrokes?: CanvasStroke[];
@@ -928,7 +929,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     projectId,
     address,
     aerialUri: aerialProp = null,
-    outdoorM2 = 230.82,
+    outdoorM2,
     initialPlacements = [],
     initialStrokes = [],
     initialSiteFrame = null,
@@ -3701,7 +3702,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
   const workableOutdoorM2 =
     siteSchedule != null && siteSchedule.outdoorAreaM2 > 0
       ? siteSchedule.outdoorAreaM2
-      : outdoorRef.current;
+      : outdoorRef.current != null && outdoorRef.current > 0
+        ? outdoorRef.current
+        : 0;
 
   /** Continuous council inspector — recomputes on every geometry commit. */
   const compliance = useMemo(

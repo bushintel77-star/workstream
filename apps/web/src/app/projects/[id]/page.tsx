@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { isSeedSurveyLot, resolveOutdoorAreaM2 } from "@workstream/domain";
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
 import {
   getCadastralTitle,
@@ -16,6 +17,32 @@ import {
 import type { StudioMode } from "../../../components/canvas/handoff/studioCatalog";
 
 export const dynamic = "force-dynamic";
+
+function resolveAreaM2(args: {
+  titleLotM2: number | null | undefined;
+  titleHouseM2: number | null | undefined;
+  survey: Awaited<ReturnType<typeof getSurvey>> | null;
+  canvas: Awaited<ReturnType<typeof getDesignCanvas>> | null;
+}): number | null {
+  const survey = args.survey;
+  const frame = args.canvas?.site_frame;
+  const seedLot = survey
+    ? isSeedSurveyLot({
+        lot_area_m2: survey.lot_area_m2,
+        measurements: survey.measurements,
+      })
+    : false;
+  const resolved = resolveOutdoorAreaM2({
+    garden_area_m2: survey?.garden_area_m2,
+    lot_area_m2: args.titleLotM2 ?? survey?.lot_area_m2,
+    house_area_m2: args.titleHouseM2 ?? survey?.house_area_m2,
+    seedLot,
+    boundary: frame?.boundary,
+    building: frame?.building,
+    scaleM: frame?.board_width_m ?? null,
+  });
+  return resolved.outdoor_m2;
+}
 
 export default async function ProjectCanvasPage({
   params,
@@ -57,12 +84,12 @@ export default async function ProjectCanvasPage({
         projectLat={project.lat ?? null}
         projectLng={project.lng ?? null}
         aerialUri={survey?.aerial_uri ?? null}
-        areaM2={
-          titleBlock?.lotAreaM2 ??
-          survey?.garden_area_m2 ??
-          survey?.lot_area_m2 ??
-          230.82
-        }
+        areaM2={resolveAreaM2({
+          titleLotM2: titleBlock?.lotAreaM2,
+          titleHouseM2: titleBlock?.houseAreaM2,
+          survey,
+          canvas,
+        })}
         initialMode={initialMode}
         initialPlacements={canvas?.placements ?? []}
         initialStrokes={canvas?.strokes ?? []}

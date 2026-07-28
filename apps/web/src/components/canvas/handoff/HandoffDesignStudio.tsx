@@ -279,7 +279,7 @@ export function HandoffDesignStudio({
   projectLat = null,
   projectLng = null,
   aerialUri = null,
-  areaM2 = 230.82,
+  areaM2 = null,
   initialMode = "cad",
   initialPlacements = [],
   initialStrokes = [],
@@ -295,12 +295,11 @@ export function HandoffDesignStudio({
 }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const fallbackOutdoor = areaM2 ?? 230.82;
   const studio = useStudioState({
     projectId,
     address: projectAddress,
     aerialUri,
-    outdoorM2: fallbackOutdoor,
+    outdoorM2: areaM2 != null && areaM2 > 0 ? areaM2 : undefined,
     initialMode: MODE_TABS.includes(initialMode as StudioMode)
       ? initialMode
       : "cad",
@@ -429,13 +428,15 @@ export function HandoffDesignStudio({
     titleBlock?.houseAreaM2,
   ]);
 
-  /** Prefer resolved outdoor; fall back to raw Turf / seed area. */
+  /** Prefer resolved outdoor; never invent a seed figure when absent. */
   const outdoor =
     siteAreaDisplay != null && siteAreaDisplay.outdoorAreaM2 > 0
       ? siteAreaDisplay.outdoorAreaM2
       : workableOutdoorM2 > 0
         ? workableOutdoorM2
-        : fallbackOutdoor;
+        : areaM2 != null && areaM2 > 0
+          ? areaM2
+          : 0;
   const [bydaFiles, setBydaFiles] = useState<ClientProjectFile[]>([]);
   /**
    * Sticky instrument home — empty canvas margin only (off the lot drawing).

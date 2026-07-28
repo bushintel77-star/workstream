@@ -118,6 +118,22 @@ describe("SurveySchema", () => {
     });
     expect(ok.success).toBe(true);
   });
+
+  it("allows zero lot/garden when Vicmap missed — aerial Trace is the redundancy", () => {
+    const ok = SurveySchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      aerial_uri: "https://example.com/aerial.jpg",
+      title_polygon: { type: "Polygon", coordinates: [] },
+      house_polygon: { type: "Polygon", coordinates: [] },
+      garden_polygon: { type: "Polygon", coordinates: [] },
+      lot_area_m2: 0,
+      house_area_m2: 0,
+      garden_area_m2: 0,
+      measurements: [],
+    });
+    expect(ok.success).toBe(true);
+  });
 });
 
 describe("DesignSchema", () => {

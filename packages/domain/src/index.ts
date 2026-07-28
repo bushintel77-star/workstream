@@ -128,6 +128,8 @@ export * from './brush-recipe';
 export * from './assembly-recipe';
 export * from './spatial-turf';
 export * from './outdoor-area';
+export * from './resolve-outdoor-area';
+
 export * from './hybrid-plane';
 export * from './sketch-to-cad';
 export * from './auto-trench';

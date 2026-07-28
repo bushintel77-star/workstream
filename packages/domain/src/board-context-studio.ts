@@ -228,7 +228,13 @@ export function buildStudioBoardContext(
   const boundary = pct(frame?.boundary);
   const building = pct(frame?.building);
   const scaleM = frame?.board_width_m ?? input.scaleM ?? null;
-  const outdoorM2 = input.outdoorM2 ?? survey?.garden_area_m2 ?? null;
+  // Prefer the caller's resolved outdoor (honest cascade). Never invent.
+  const outdoorM2 =
+    input.outdoorM2 !== undefined
+      ? input.outdoorM2
+      : survey?.garden_area_m2 && survey.garden_area_m2 > 0
+        ? survey.garden_area_m2
+        : null;
 
   /* ---- planting: one row per placement, so spatial reasoning survives ---- */
   const planting: Array<Partial<BoardPlanting> & { code: string }> = [];
@@ -436,9 +442,10 @@ export function buildStudioBoardContext(
       boundary,
       building,
       building_source: buildingSource ?? null,
-      lot_m2: survey?.lot_area_m2 ?? null,
+      lot_m2:
+        survey && survey.lot_area_m2 > 0 ? survey.lot_area_m2 : null,
       outdoor_m2: outdoorM2,
-      // house_area_m2 of 0 means the outline is unavailable — never infer it.
+      // house_area_m2 / lot of 0 means unavailable — never infer coverage.
       coverage_pct:
         survey && survey.house_area_m2 > 0 && survey.lot_area_m2 > 0
           ? (survey.house_area_m2 / survey.lot_area_m2) * 100

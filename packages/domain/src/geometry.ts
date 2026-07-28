@@ -143,12 +143,16 @@ export function outdoorWorkspaceSpan(args: {
     }
   }
 
-  const area = Math.max(outdoor_area_m2, 80);
-  const side = Math.sqrt(area);
+  // No title ring and no surveyed area — do not invent an 80 m² lot.
+  // Callers (groundSpanFromSurvey) fall through to Mapbox aerial span.
+  if (outdoor_area_m2 <= 0) {
+    return { width_m: 0, height_m: 0, outdoor_area_m2: 0 };
+  }
+  const side = Math.sqrt(outdoor_area_m2);
   return {
     width_m: Math.round(side * 1.25 * 10) / 10,
     height_m: Math.round(side * 0.8 * 10) / 10,
-    outdoor_area_m2: Math.round(area),
+    outdoor_area_m2: Math.round(outdoor_area_m2),
   };
 }
 
