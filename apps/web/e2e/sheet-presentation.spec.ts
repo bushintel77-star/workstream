@@ -39,10 +39,36 @@ test.describe("Fit sheet presentation compose", () => {
       page.getByTestId("sheet-template-curtis-client-brochure"),
     ).toHaveAttribute("data-on", "1");
 
+    // Brochure seed: freehand + cherry before operator overrides.
+    await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
+      "data-sheet-pen",
+      "hand_drawn",
+    );
+    await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
+      "data-sheet-atmosphere",
+      "cherry",
+    );
+    await expect(page.getByTestId("cad-plan-board")).toHaveAttribute(
+      "data-sheet-pen",
+      "hand_drawn",
+    );
+
     await page.getByTestId("sheet-theme-blush").click();
+    // Contract id `blush` renders as deep concept on the frame.
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
       "data-sheet-theme",
-      "blush",
+      "deep",
+    );
+
+    await page.getByTestId("sheet-pen-technical").click();
+    await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
+      "data-sheet-pen",
+      "technical",
+    );
+    await page.getByTestId("sheet-atmosphere-sage").click();
+    await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
+      "data-sheet-atmosphere",
+      "sage",
     );
 
     await page.getByTestId("sheet-reflow").click();
@@ -61,7 +87,12 @@ test.describe("Fit sheet presentation compose", () => {
           if (!res.ok()) return null;
           const body = (await res.json()) as {
             canvas?: {
-              presentation_pack?: { theme?: string; template_id?: string };
+              presentation_pack?: {
+                theme?: string;
+                template_id?: string;
+                pen?: string;
+                atmosphere?: string;
+              };
             };
           };
           return body.canvas?.presentation_pack ?? null;
@@ -71,6 +102,8 @@ test.describe("Fit sheet presentation compose", () => {
       .toMatchObject({
         theme: "blush",
         template_id: "curtis-client-brochure",
+        pen: "technical",
+        atmosphere: "sage",
       });
 
     // Persist check via API — avoid Fit toggle races after reload.
@@ -79,8 +112,16 @@ test.describe("Fit sheet presentation compose", () => {
     );
     expect(reload.ok()).toBeTruthy();
     const saved = (await reload.json()) as {
-      canvas?: { presentation_pack?: { theme?: string } };
+      canvas?: {
+        presentation_pack?: {
+          theme?: string;
+          pen?: string;
+          atmosphere?: string;
+        };
+      };
     };
     expect(saved.canvas?.presentation_pack?.theme).toBe("blush");
+    expect(saved.canvas?.presentation_pack?.pen).toBe("technical");
+    expect(saved.canvas?.presentation_pack?.atmosphere).toBe("sage");
   });
 });

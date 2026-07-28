@@ -39,6 +39,8 @@ import {
   moveSheetWidget,
   reflowSheetWidgets,
   removeSheetWidget,
+  setSheetAtmosphere,
+  setSheetPen,
   setSheetTheme,
   type StudioComplianceItem,
   type StudioHorizonCard,
@@ -52,7 +54,9 @@ import type {
   IrrigationZone,
   IrrigationZoneKind,
   LandscapeFeature,
+  AtmospherePigment,
   PresentationPack,
+  PresentationPen,
   PresentationSlot,
   PresentationTheme,
   PresentationWidgetType,
@@ -188,7 +192,7 @@ export function presentationPackPersistKey(
         `${w.id}:${w.type}:${w.slot}:${w.order}:${w.style?.accent ?? ""}:${w.style?.emphasis ?? ""}:${w.text ?? ""}`,
     )
     .join("|");
-  return `${pack.theme}:${pack.template_id ?? ""}:${widgets}`;
+  return `${pack.theme}:${pack.pen ?? "technical"}:${pack.atmosphere ?? "graphite"}:${pack.template_id ?? ""}:${widgets}`;
 }
 
 function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
@@ -3304,6 +3308,20 @@ export function useStudioState(opts: UseStudioStateOpts) {
     [patchPresentationPack],
   );
 
+  const setPresentationPen = useCallback(
+    (pen: PresentationPen) => {
+      patchPresentationPack((pack) => setSheetPen(pack, pen));
+    },
+    [patchPresentationPack],
+  );
+
+  const setPresentationAtmosphere = useCallback(
+    (atmosphere: AtmospherePigment) => {
+      patchPresentationPack((pack) => setSheetAtmosphere(pack, atmosphere));
+    },
+    [patchPresentationPack],
+  );
+
   const addPresentationWidget = useCallback(
     (type: PresentationWidgetType) => {
       patchPresentationPack((pack) => addSheetWidget(pack, type));
@@ -4031,6 +4049,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     restoreAnnotation,
     applyPresentationTemplate,
     setPresentationTheme,
+    setPresentationPen,
+    setPresentationAtmosphere,
     addPresentationWidget,
     movePresentationWidget,
     removePresentationWidget,

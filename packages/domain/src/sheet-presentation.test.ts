@@ -9,6 +9,8 @@ import {
   moveSheetWidget,
   reflowSheetWidgets,
   removeSheetWidget,
+  setSheetAtmosphere,
+  setSheetPen,
   setSheetTheme,
   SHEET_TEMPLATE_CLEARED,
   widgetsInSlot,
@@ -19,13 +21,21 @@ describe("sheet presentation", () => {
     expect(CURTIS_SHEET_TEMPLATES.length).toBeGreaterThanOrEqual(3);
     const pack = applySheetTemplate("curtis-client-brochure");
     expect(pack.theme).toBe("parchment");
+    expect(pack.pen).toBe("hand_drawn");
+    expect(pack.atmosphere).toBe("cherry");
     expect(pack.template_id).toBe("curtis-client-brochure");
     expect(pack.widgets.length).toBeGreaterThanOrEqual(5);
     const ids = new Set(pack.widgets.map((w) => w.id));
     expect(ids.size).toBe(pack.widgets.length);
   });
 
-  it("adds singleton widgets once and allows theme change", () => {
+  it("working drawing seeds technical graphite", () => {
+    const pack = applySheetTemplate("curtis-working-drawing");
+    expect(pack.pen).toBe("technical");
+    expect(pack.atmosphere).toBe("graphite");
+  });
+
+  it("adds singleton widgets once and allows theme / pen / atmosphere", () => {
     let pack = emptyPresentationPack();
     pack = addSheetWidget(pack, "quote_total");
     pack = addSheetWidget(pack, "quote_total");
@@ -34,6 +44,10 @@ describe("sheet presentation", () => {
     );
     pack = setSheetTheme(pack, "blush");
     expect(pack.theme).toBe("blush");
+    pack = setSheetPen(pack, "hand_drawn");
+    pack = setSheetAtmosphere(pack, "terre_verte");
+    expect(pack.pen).toBe("hand_drawn");
+    expect(pack.atmosphere).toBe("terre_verte");
   });
 
   it("moves widgets between slots and removes them", () => {

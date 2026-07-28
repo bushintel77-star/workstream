@@ -1,5 +1,7 @@
 import type {
+  AtmospherePigment,
   PresentationPack,
+  PresentationPen,
   PresentationSlot,
   PresentationTheme,
   PresentationWidget,
@@ -79,6 +81,39 @@ export const SHEET_THEME_SWATCHES: Array<{
   { id: "blush", label: "Deep" },
 ];
 
+export const SHEET_PEN_SWATCHES: Array<{
+  id: PresentationPen;
+  label: string;
+  detail: string;
+}> = [
+  {
+    id: "technical",
+    label: "Technical",
+    detail: "Thin mono CAD line — working drawing",
+  },
+  {
+    id: "hand_drawn",
+    label: "Freehand",
+    detail: "Seeded pencil wobble — concept presentation",
+  },
+];
+
+/** Atmosphere Palette — pigments, not hex. */
+export const ATMOSPHERE_PIGMENT_SWATCHES: Array<{
+  id: AtmospherePigment;
+  label: string;
+  /** CSS colour for chip preview / selective accent. */
+  hex: string;
+}> = [
+  { id: "graphite", label: "Graphite", hex: "#5c5a56" },
+  { id: "cherry", label: "Cherry", hex: "#b85c6a" },
+  { id: "pale_blue", label: "Pale blue", hex: "#7a9bb8" },
+  { id: "terre_verte", label: "Terre verte", hex: "#6b7f5a" },
+  { id: "yellow_ochre", label: "Ochre", hex: "#c4a35a" },
+  { id: "burnt_umber", label: "Umber", hex: "#8b5e3c" },
+  { id: "sage", label: "Sage", hex: "#7d8f74" },
+];
+
 export type SheetTemplate = {
   id: string;
   label: string;
@@ -106,6 +141,8 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
     detail: "Light caption — CAD paper",
     pack: {
       theme: "parchment",
+      pen: "technical",
+      atmosphere: "graphite",
       template_id: "curtis-working-drawing",
       widgets: [
         widget("caption", "title_meta", 0, {
@@ -121,6 +158,8 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
     detail: "Quote hero + ledger + swatches on one sheet",
     pack: {
       theme: "parchment",
+      pen: "hand_drawn",
+      atmosphere: "cherry",
       template_id: "curtis-client-brochure",
       widgets: [
         widget("caption", "title_meta", 0, {
@@ -152,6 +191,8 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
     detail: "Quiet caption + quote — night-meeting calm",
     pack: {
       theme: "ink",
+      pen: "technical",
+      atmosphere: "graphite",
       template_id: "curtis-minimal-ink",
       widgets: [
         widget("caption", "title_meta", 0, {
@@ -168,15 +209,22 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
 ];
 
 export function emptyPresentationPack(): PresentationPack {
-  return { theme: "parchment", widgets: [] };
+  return {
+    theme: "parchment",
+    pen: "technical",
+    atmosphere: "graphite",
+    widgets: [],
+  };
 }
 
-/** Explicit Clear — keeps theme, marks template so Fit does not auto-seed. */
+/** Explicit Clear — keeps theme/pen/atmosphere, marks template so Fit does not auto-seed. */
 export function clearPresentationPack(
   pack: PresentationPack = emptyPresentationPack(),
 ): PresentationPack {
   return {
     theme: pack.theme,
+    pen: pack.pen ?? "technical",
+    atmosphere: pack.atmosphere ?? "graphite",
     template_id: SHEET_TEMPLATE_CLEARED,
     widgets: [],
   };
@@ -193,6 +241,8 @@ export function applySheetTemplate(templateId: string): PresentationPack {
   }
   return {
     theme: tpl.pack.theme,
+    pen: tpl.pack.pen ?? "technical",
+    atmosphere: tpl.pack.atmosphere ?? "graphite",
     template_id: tpl.id,
     widgets: tpl.pack.widgets.map((w) => ({
       ...w,
@@ -262,6 +312,26 @@ export function setSheetTheme(
   theme: PresentationTheme,
 ): PresentationPack {
   return { ...pack, theme };
+}
+
+export function setSheetPen(
+  pack: PresentationPack,
+  pen: PresentationPen,
+): PresentationPack {
+  return { ...pack, pen };
+}
+
+export function setSheetAtmosphere(
+  pack: PresentationPack,
+  atmosphere: AtmospherePigment,
+): PresentationPack {
+  return { ...pack, atmosphere };
+}
+
+export function atmospherePigmentHex(id: AtmospherePigment): string {
+  return (
+    ATMOSPHERE_PIGMENT_SWATCHES.find((p) => p.id === id)?.hex ?? "#5c5a56"
+  );
 }
 
 /**

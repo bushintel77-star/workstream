@@ -3570,6 +3570,9 @@ export function HandoffDesignStudio({
                 setAnnotateDraft("");
                 setAnnotatePhase("type");
               }}
+              sheetPen={studio.presentationPack.pen ?? "technical"}
+              atmosphere={studio.presentationPack.atmosphere ?? "graphite"}
+              handDrawnSeed={projectId}
             />
             {annotatePhase === "type" && pendingAnnotation ? (
               <div
@@ -4063,6 +4066,8 @@ export function HandoffDesignStudio({
               pack={studio.presentationPack}
               onApplyTemplate={studio.applyPresentationTemplate}
               onTheme={studio.setPresentationTheme}
+              onPen={studio.setPresentationPen}
+              onAtmosphere={studio.setPresentationAtmosphere}
               onAddWidget={studio.addPresentationWidget}
               onRemoveWidget={studio.removePresentationWidget}
               onReflow={studio.reflowPresentationPack}

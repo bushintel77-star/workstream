@@ -572,6 +572,25 @@ export type DesignSiteFrameInput = z.input<typeof DesignSiteFrameSchema>;
 export const PresentationThemeSchema = z.enum(["parchment", "ink", "blush"]);
 export type PresentationTheme = z.infer<typeof PresentationThemeSchema>;
 
+/** Fit-sheet render pen — one geometry, multiple looks. */
+export const PresentationPenSchema = z.enum(["technical", "hand_drawn"]);
+export type PresentationPen = z.infer<typeof PresentationPenSchema>;
+
+/**
+ * Atmosphere Palette — curated pigments for selective colour (not a HEX picker).
+ * graphite = greyscale base; cherry default accent per Curtis house style.
+ */
+export const AtmospherePigmentSchema = z.enum([
+  "graphite",
+  "cherry",
+  "pale_blue",
+  "terre_verte",
+  "yellow_ochre",
+  "burnt_umber",
+  "sage",
+]);
+export type AtmospherePigment = z.infer<typeof AtmospherePigmentSchema>;
+
 export const PresentationSlotSchema = z.enum([
   "title_meta",
   "side_stack",
@@ -618,6 +637,10 @@ export type PresentationWidget = z.infer<typeof PresentationWidgetSchema>;
 
 export const PresentationPackSchema = z.object({
   theme: PresentationThemeSchema.default("parchment"),
+  /** Render pen — technical mono or freehand CAD pencil. */
+  pen: PresentationPenSchema.default("technical"),
+  /** Selective colour pigment — graphite = no accent wash. */
+  atmosphere: AtmospherePigmentSchema.default("graphite"),
   /** Seed or saved template id last applied. */
   template_id: z.string().min(1).max(64).optional(),
   widgets: z.array(PresentationWidgetSchema).max(24).default([]),

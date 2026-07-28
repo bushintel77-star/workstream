@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   buildOutsideDims,
   declutterOutsideDims,
@@ -82,6 +89,8 @@ import {
 import { placeSpeciesLabels } from "../render/speciesLabels";
 import type { RenderFidelity } from "../render/usePresentationLens";
 import renderCss from "../render/presentation.module.css";
+import { atmosphereCssVars, atmosphereHasAccent } from "../render/atmospherePalette";
+import { wobbledPolylinePath } from "../render/handDrawnPen";
 import type { CanvasAnnotation } from "@workstream/contracts";
 import {
   ITEM_LAYER,
@@ -309,6 +318,12 @@ type Props = {
   onVectorEditHint?: (active: boolean) => void;
   /** One-tap arm Trace → Existing dwelling when Vicmap left the footprint empty. */
   onTraceBuilding?: () => void;
+  /** Fit-sheet render pen — technical or freehand pencil. */
+  sheetPen?: import("@workstream/contracts").PresentationPen;
+  /** Atmosphere Palette selective accent. */
+  atmosphere?: import("@workstream/contracts").AtmospherePigment;
+  /** Stable seed for hand-drawn wobble (project id). */
+  handDrawnSeed?: string | null;
 };
 
 function growthFactor(stage: "plant" | "5yr" | "mature", existing: boolean) {
@@ -403,6 +418,9 @@ export function CadPlanBoard({
   onAnnotatePlace,
   onVectorEditHint,
   onTraceBuilding,
+  sheetPen = "technical",
+  atmosphere = "graphite",
+  handDrawnSeed = null,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const longPressRef = useRef<number | null>(null);
@@ -1111,6 +1129,34 @@ export function CadPlanBoard({
     [sunAzimuthDeg],
   );
 
+  const handDrawn = sheetPen === "hand_drawn" && fitSheetStroke;
+  const wobbleSeed = handDrawnSeed?.trim() || "fit-sheet";
+  const boundaryHandPath = useMemo(
+    () =>
+      handDrawn && boundary.length >= 2
+        ? wobbledPolylinePath(boundary, {
+            seed: `${wobbleSeed}:boundary`,
+            closed: true,
+          })
+        : null,
+    [handDrawn, boundary, wobbleSeed],
+  );
+  const buildingHandPath = useMemo(
+    () =>
+      handDrawn && building.length >= 3
+        ? wobbledPolylinePath(building, {
+            seed: `${wobbleSeed}:building`,
+            closed: true,
+          })
+        : null,
+    [handDrawn, building, wobbleSeed],
+  );
+  const atmosphereVars = useMemo(
+    () => atmosphereCssVars(atmosphere),
+    [atmosphere],
+  );
+  const accentAtmosphere = atmosphereHasAccent(atmosphere);
+
   return (
     <SunShadowProvider azimuthDeg={sunAzimuthDeg}>
     <div
@@ -1123,6 +1169,8 @@ export function CadPlanBoard({
       data-annotation-lod={annotationLod.tier}
       data-mode={mode}
       data-fidelity={fidelity}
+      data-sheet-pen={sheetPen}
+      data-sheet-atmosphere={atmosphere}
       data-cursor={
         annotatePlace
           ? "add"
@@ -1132,7 +1180,12 @@ export function CadPlanBoard({
               ? cursorMode
               : "default"
       }
-      style={boardPassthrough ? { pointerEvents: "none" } : undefined}
+      style={
+        {
+          ...atmosphereVars,
+          ...(boardPassthrough ? { pointerEvents: "none" as const } : null),
+        } as CSSProperties
+      }
       onPointerDown={(e) => {
         if (boardPassthrough) return;
         if (nodeMenu) setNodeMenu(null);
@@ -1360,25 +1413,50 @@ export function CadPlanBoard({
               </g>
             );
           })}
-        <polygon
-          points={ptsAttr(boundary)}
-          fill={
-            cadTitleMode && !fitSheetStroke
-              ? PLAN_FILL.boundaryWash
-              : "transparent"
-          }
-          stroke={bStroke}
-          strokeWidth={lines.boundary.strokeWidth}
-          strokeDasharray={lines.boundary.dash}
-          vectorEffect="non-scaling-stroke"
-          opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
-          className={sketchPassthrough ? css.sketchQuiet : undefined}
-          data-testid={
-            titleSolid || fitSheetStroke
-              ? "foundation-title-boundary"
-              : undefined
-          }
-        />
+        {boundaryHandPath ? (
+          <path
+            d={boundaryHandPath}
+            fill={
+              cadTitleMode && !fitSheetStroke
+                ? PLAN_FILL.boundaryWash
+                : "transparent"
+            }
+            stroke={bStroke}
+            strokeWidth={lines.boundary.strokeWidth}
+            strokeDasharray={lines.boundary.dash}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
+            className={sketchPassthrough ? css.sketchQuiet : undefined}
+            data-testid={
+              titleSolid || fitSheetStroke
+                ? "foundation-title-boundary"
+                : undefined
+            }
+            data-pen="hand_drawn"
+          />
+        ) : (
+          <polygon
+            points={ptsAttr(boundary)}
+            fill={
+              cadTitleMode && !fitSheetStroke
+                ? PLAN_FILL.boundaryWash
+                : "transparent"
+            }
+            stroke={bStroke}
+            strokeWidth={lines.boundary.strokeWidth}
+            strokeDasharray={lines.boundary.dash}
+            vectorEffect="non-scaling-stroke"
+            opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
+            className={sketchPassthrough ? css.sketchQuiet : undefined}
+            data-testid={
+              titleSolid || fitSheetStroke
+                ? "foundation-title-boundary"
+                : undefined
+            }
+          />
+        )}
         {building.length >= 3 && !timedSunCast ? (
           <polygon
             data-testid="dwelling-sun-shadow"
@@ -1391,39 +1469,76 @@ export function CadPlanBoard({
           />
         ) : null}
         {building.length >= 3 ? (
-          <polygon
-            data-testid="building-footprint"
-            data-building-source={buildingSource}
-            points={ptsAttr(building)}
-            /* Soft ground fill under tilt — color-mix against canvas (§4). */
-            fill={
-              tiltLocked
-                ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
-                : bldFill
-            }
-            stroke={bldStroke}
-            strokeWidth={
-              foundationCleanse
-                ? 1
-                : tiltLocked
-                  ? Math.max(1.5, lines.building.strokeWidth)
-                  : lines.building.strokeWidth
-            }
-            vectorEffect="non-scaling-stroke"
-            opacity={
-              boundaryVisual.opacity *
-              (foundationCleanse ? underlayOp : 1) *
-              (sketchPassthrough ? 0.4 : 1)
-            }
-          >
-            <title>
-              {buildingSource === "vicmap"
-                ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
-                : buildingSource === "traced"
-                  ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
-                  : "Existing dwelling envelope · confirm on site before relying on dimensions"}
-            </title>
-          </polygon>
+          buildingHandPath ? (
+            <path
+              data-testid="building-footprint"
+              data-building-source={buildingSource}
+              data-pen="hand_drawn"
+              d={buildingHandPath}
+              fill={
+                tiltLocked
+                  ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
+                  : bldFill
+              }
+              stroke={bldStroke}
+              strokeWidth={
+                foundationCleanse
+                  ? 1
+                  : tiltLocked
+                    ? Math.max(1.5, lines.building.strokeWidth)
+                    : lines.building.strokeWidth
+              }
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              opacity={
+                boundaryVisual.opacity *
+                (foundationCleanse ? underlayOp : 1) *
+                (sketchPassthrough ? 0.4 : 1)
+              }
+            >
+              <title>
+                {buildingSource === "vicmap"
+                  ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
+                  : buildingSource === "traced"
+                    ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
+                    : "Existing dwelling envelope · confirm on site before relying on dimensions"}
+              </title>
+            </path>
+          ) : (
+            <polygon
+              data-testid="building-footprint"
+              data-building-source={buildingSource}
+              points={ptsAttr(building)}
+              fill={
+                tiltLocked
+                  ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
+                  : bldFill
+              }
+              stroke={bldStroke}
+              strokeWidth={
+                foundationCleanse
+                  ? 1
+                  : tiltLocked
+                    ? Math.max(1.5, lines.building.strokeWidth)
+                    : lines.building.strokeWidth
+              }
+              vectorEffect="non-scaling-stroke"
+              opacity={
+                boundaryVisual.opacity *
+                (foundationCleanse ? underlayOp : 1) *
+                (sketchPassthrough ? 0.4 : 1)
+              }
+            >
+              <title>
+                {buildingSource === "vicmap"
+                  ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
+                  : buildingSource === "traced"
+                    ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
+                    : "Existing dwelling envelope · confirm on site before relying on dimensions"}
+              </title>
+            </polygon>
+          )
         ) : null}
         {/* Sketch-formalized regions — the shape the operator drew, washed
             per material. Ghosts dash; accepted regions draw in solid. */}
@@ -1434,7 +1549,14 @@ export function CadPlanBoard({
             layerOpacity[bucket] ?? 1,
             isolatedLayer,
           );
-          const wash = REGION_WASH[it.t] ?? PLAN_FILL.plantingWash;
+          const baseWash = REGION_WASH[it.t] ?? PLAN_FILL.plantingWash;
+          const plantingAccent =
+            accentAtmosphere &&
+            fitSheetStroke &&
+            (it.t === "bed" || it.t === "lawn");
+          const wash = plantingAccent
+            ? "var(--sheet-atmosphere-wash)"
+            : baseWash;
           const hatched = it.t === "paving" || it.t === "deck";
           const pts = ptsAttr(it.outlinePct!);
           return (

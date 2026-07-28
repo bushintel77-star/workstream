@@ -29,7 +29,7 @@
 
 .peel {
   width: min(300px, calc(100vw - 48px));
-  max-height: min(42vh, 380px);
+  max-height: min(52vh, 480px);
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -145,6 +145,49 @@
 }
 
 .themeChip[data-on="1"] {
+  border-color: var(--hc-signal);
+  box-shadow: 0 0 0 2px var(--signal-soft);
+}
+
+.atmosphereChip {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--hc-r-control, 6px);
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 0 0 1px var(--hc-line-soft);
+}
+
+.atmosphereChip[data-atmosphere="graphite"] {
+  background: #5c5a56;
+}
+
+.atmosphereChip[data-atmosphere="cherry"] {
+  background: #b85c6a;
+}
+
+.atmosphereChip[data-atmosphere="pale_blue"] {
+  background: #7a9bb8;
+}
+
+.atmosphereChip[data-atmosphere="terre_verte"] {
+  background: #6b7f5a;
+}
+
+.atmosphereChip[data-atmosphere="yellow_ochre"] {
+  background: #c4a35a;
+}
+
+.atmosphereChip[data-atmosphere="burnt_umber"] {
+  background: #8b5e3c;
+}
+
+.atmosphereChip[data-atmosphere="sage"] {
+  background: #7d8f74;
+}
+
+.atmosphereChip[data-on="1"] {
   border-color: var(--hc-signal);
   box-shadow: 0 0 0 2px var(--signal-soft);
 }

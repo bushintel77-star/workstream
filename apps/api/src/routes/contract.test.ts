@@ -754,6 +754,8 @@ describe("API contract — projects", () => {
         strokes: [],
         presentation_pack: {
           theme: "blush",
+          pen: "hand_drawn",
+          atmosphere: "cherry",
           template_id: "curtis-client-brochure",
           widgets: [
             {
@@ -770,6 +772,8 @@ describe("API contract — projects", () => {
     expect(put.statusCode).toBe(200);
     expect(put.json().canvas.presentation_pack).toMatchObject({
       theme: "blush",
+      pen: "hand_drawn",
+      atmosphere: "cherry",
       template_id: "curtis-client-brochure",
     });
 

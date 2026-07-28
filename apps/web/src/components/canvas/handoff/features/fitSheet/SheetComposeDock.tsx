@@ -2,13 +2,17 @@
 
 import { useEffect, useRef } from "react";
 import type {
+  AtmospherePigment,
   PresentationPack,
+  PresentationPen,
   PresentationTheme,
   PresentationWidgetType,
 } from "@workstream/contracts";
 import {
+  ATMOSPHERE_PIGMENT_SWATCHES,
   CURTIS_SHEET_TEMPLATES,
   MAX_SHEET_WIDGETS,
+  SHEET_PEN_SWATCHES,
   SHEET_THEME_SWATCHES,
   SHEET_WIDGET_LIBRARY,
 } from "@workstream/domain";
@@ -23,6 +27,8 @@ type Props = {
   pack: PresentationPack;
   onApplyTemplate: (templateId: string) => void;
   onTheme: (theme: PresentationTheme) => void;
+  onPen: (pen: PresentationPen) => void;
+  onAtmosphere: (atmosphere: AtmospherePigment) => void;
   onAddWidget: (type: PresentationWidgetType) => void;
   onRemoveWidget: (widgetId: string) => void;
   onReflow: () => void;
@@ -40,6 +46,8 @@ export function SheetComposeDock({
   pack,
   onApplyTemplate,
   onTheme,
+  onPen,
+  onAtmosphere,
   onAddWidget,
   onRemoveWidget,
   onReflow,
@@ -47,6 +55,8 @@ export function SheetComposeDock({
 }: Props) {
   const lingerRef = useRef<number | null>(null);
   const atCap = pack.widgets.length >= MAX_SHEET_WIDGETS;
+  const pen = pack.pen ?? "technical";
+  const atmosphere = pack.atmosphere ?? "graphite";
 
   const bumpLinger = () => {
     if (lingerRef.current != null) window.clearTimeout(lingerRef.current);
@@ -142,6 +152,66 @@ export function SheetComposeDock({
                 title={t.label}
                 onClick={() => {
                   onTheme(t.id);
+                  bumpLinger();
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className={css.peelRow}>
+          <p className={css.peelKicker}>Pen</p>
+          <div
+            className={css.seedRow}
+            role="radiogroup"
+            aria-label="Sheet pen"
+            data-testid="sheet-pen-swatches"
+          >
+            {SHEET_PEN_SWATCHES.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                role="radio"
+                className={css.seedChip}
+                data-pen={p.id}
+                data-on={pen === p.id ? "1" : "0"}
+                data-testid={`sheet-pen-${p.id}`}
+                aria-label={p.label}
+                aria-checked={pen === p.id}
+                title={p.detail}
+                onClick={() => {
+                  onPen(p.id);
+                  bumpLinger();
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={css.peelRow}>
+          <p className={css.peelKicker}>Atmosphere</p>
+          <div
+            className={css.themeRow}
+            role="radiogroup"
+            aria-label="Atmosphere palette"
+            data-testid="sheet-atmosphere-swatches"
+          >
+            {ATMOSPHERE_PIGMENT_SWATCHES.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                role="radio"
+                className={css.atmosphereChip}
+                data-atmosphere={a.id}
+                data-on={atmosphere === a.id ? "1" : "0"}
+                data-testid={`sheet-atmosphere-${a.id}`}
+                aria-label={a.label}
+                aria-checked={atmosphere === a.id}
+                title={a.label}
+                onClick={() => {
+                  onAtmosphere(a.id);
                   bumpLinger();
                 }}
               />

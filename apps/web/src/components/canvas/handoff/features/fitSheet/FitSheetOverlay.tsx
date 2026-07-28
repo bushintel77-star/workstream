@@ -388,6 +388,8 @@ export function FitSheetOverlay({
             ? "deep"
             : (presentationPack?.theme ?? "parchment")
         }
+        data-sheet-pen={presentationPack?.pen ?? "technical"}
+        data-sheet-atmosphere={presentationPack?.atmosphere ?? "graphite"}
         style={{
           left: box.boxLeft,
           top: box.boxTop,
