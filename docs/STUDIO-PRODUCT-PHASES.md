@@ -43,7 +43,9 @@
 
 **Phase 1 gate (shipped):** calibrated plan-metre frame (`site_frame.board_width_m` preferred over survey/aerial span), site boundary/building/easements stamped into `CadDocument`, Share **Download DXF**.
 
-**Phase 2 gate (shipped):** `cadDocumentToGltf` + Share **Download glTF** — extruded STRUCTURES / planting cylinders; not Nanite, not USD/UE5.
+**Phase 2 gate (shipped):** `cadDocumentToGltf` + Share **Download glTF** — extruded STRUCTURES / planting cylinders; not Nanite, not USD.
+
+**Phase 3 gate (shipped):** `cad.sync.json` live-sync manifest + stable `symbol_id` / entity IDs on glTF extras for an external UE5 importer. Nanite/Lumen stay in Unreal — Workstream publishes the metre contract.
 
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 

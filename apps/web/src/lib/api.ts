@@ -544,6 +544,18 @@ export async function downloadCadGltfApi(projectId: string): Promise<Blob> {
   return res.blob();
 }
 
+export async function downloadCadSyncApi(projectId: string): Promise<Blob> {
+  const res = await fetch(`${API_URL}/projects/${projectId}/cad.sync.json`, {
+    cache: "no-store",
+    headers: await apiHeaders(),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API ${res.status} on GET cad.sync.json: ${text}`);
+  }
+  return res.blob();
+}
+
 export type CadQuantitySurveyApi = {
   project_id: string;
   committed_only: boolean;

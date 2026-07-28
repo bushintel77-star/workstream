@@ -1,4 +1,5 @@
 import type { CadDocument, CadEntity } from "@workstream/contracts";
+import { collectCadSyncAssets } from "./cad-sync";
 
 /**
  * Minimal glTF 2.0 JSON (embedded buffer) from a CadDocument.
@@ -363,6 +364,9 @@ export function cadDocumentToGltf(doc: CadDocument): string {
         width_m: doc.width_m,
         height_m: doc.height_m,
         project_id: doc.project_id,
+        document_id: doc.id,
+        /** Stable entity/symbol IDs for UE5 / Datasmith remapping. */
+        sync_assets: collectCadSyncAssets(doc),
       },
     },
     scene: 0,

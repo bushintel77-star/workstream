@@ -240,3 +240,59 @@ export const CadAcceptRequestSchema = z.object({
   entity_ids: z.array(z.string().uuid()).optional(),
 });
 export type CadAcceptRequest = z.infer<typeof CadAcceptRequestSchema>;
+
+/**
+ * UE5 / external live-sync contract (Stage 2 gate 3).
+ * Poll this JSON, then fetch gltf_path with the same auth — Nanite/Lumen stay
+ * in Unreal; Workstream only publishes stable metre assets + IDs.
+ */
+export const CadSyncProxySchema = z.enum([
+  "wall",
+  "slab",
+  "cylinder",
+  "ribbon",
+  "skip",
+]);
+export type CadSyncProxy = z.infer<typeof CadSyncProxySchema>;
+
+export const CadSyncAssetSchema = z.object({
+  entity_id: z.string().uuid(),
+  kind: z.enum([
+    "line",
+    "polyline",
+    "circle",
+    "arc",
+    "text",
+    "insert",
+    "dimension",
+  ]),
+  layer: z.string(),
+  /** Catalog symbol when the insert maps to a library asset. */
+  symbol_id: z.string().nullable(),
+  block_name: z.string().nullable(),
+  proxy: CadSyncProxySchema,
+  x: z.number().optional(),
+  y: z.number().optional(),
+  height_m: z.number().optional(),
+  radius_m: z.number().optional(),
+});
+export type CadSyncAsset = z.infer<typeof CadSyncAssetSchema>;
+
+export const CadSyncManifestSchema = z.object({
+  version: z.literal("cad-sync/1"),
+  project_id: z.string().uuid(),
+  document_id: z.string().uuid(),
+  updated_at: z.string().datetime(),
+  honesty: z.literal("working_plan"),
+  note: z.string(),
+  width_m: z.number().positive(),
+  height_m: z.number().positive(),
+  units: z.literal("m"),
+  gltf_path: z.string(),
+  dxf_path: z.string(),
+  /** Suggested poll interval for an external UE5 importer. */
+  poll_hint_s: z.number().int().positive().default(15),
+  assets: z.array(CadSyncAssetSchema),
+  ghost_count: z.number().int().nonnegative(),
+});
+export type CadSyncManifest = z.infer<typeof CadSyncManifestSchema>;

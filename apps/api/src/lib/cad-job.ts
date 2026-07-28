@@ -3,6 +3,7 @@ import type { CadDocument, DesignCanvas } from "@workstream/contracts";
 import {
   acceptCadGhosts,
   applyCadOps,
+  buildCadSyncManifest,
   cadDocumentToDxf,
   cadDocumentToGltf,
   cadDocumentToSvg,
@@ -11,7 +12,7 @@ import {
   importSketchToCad,
   stampSiteFrameToCad,
 } from "@workstream/cad";
-import type { CadOp } from "@workstream/contracts";
+import type { CadOp, CadSyncManifest } from "@workstream/contracts";
 import {
   formatPlanningFlagsForAi,
   assessPlanningFromSketch,
@@ -380,4 +381,18 @@ export async function exportCadGltf(
     doc = ensured.document;
   }
   return cadDocumentToGltf(doc);
+}
+
+/** Ensure sheet exists, then emit UE5 live-sync manifest (IDs + paths). */
+export async function exportCadSync(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+): Promise<CadSyncManifest> {
+  let doc = await store.getCadDocument(ownerId, projectId);
+  if (!doc) {
+    const ensured = await ensureCadDocument(store, ownerId, projectId);
+    doc = ensured.document;
+  }
+  return buildCadSyncManifest(doc);
 }

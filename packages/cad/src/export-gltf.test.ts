@@ -57,6 +57,8 @@ describe("cadDocumentToGltf", () => {
     expect(gltf.asset.version).toBe("2.0");
     expect(gltf.asset.copyright).toMatch(/Working plan metres/);
     expect(gltf.asset.extras.honesty).toBe("working_plan");
+    expect(Array.isArray(gltf.asset.extras.sync_assets)).toBe(true);
+    expect(gltf.asset.extras.sync_assets.length).toBeGreaterThan(0);
     expect(gltf.meshes.length).toBeGreaterThan(0);
     expect(gltf.buffers[0].uri).toMatch(/^data:application\/octet-stream;base64,/);
   });

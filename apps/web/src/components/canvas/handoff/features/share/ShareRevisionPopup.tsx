@@ -7,6 +7,7 @@ import {
   createShareRevisionAction,
   downloadCadDxfAction,
   downloadCadGltfAction,
+  downloadCadSyncAction,
   listShareRevisionsAction,
 } from "../../../../../app/actions";
 import { useToast } from "../../../../ToastHost";
@@ -286,6 +287,30 @@ export function ShareRevisionPopup({
     });
   };
 
+  const downloadSync = () => {
+    setError(null);
+    start(async () => {
+      try {
+        const json = await downloadCadSyncAction(projectId);
+        const blob = new Blob([json], { type: "application/json" });
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = `workstream-plan-${projectId.slice(0, 8)}.sync.json`;
+        a.click();
+        URL.revokeObjectURL(href);
+        toast.show(
+          "UE5 sync manifest downloaded — poll glTF with the same auth",
+          "info",
+        );
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Could not download sync manifest",
+        );
+      }
+    });
+  };
+
   if (!open) return null;
 
   const active = currentOpen ?? latest;
@@ -311,8 +336,8 @@ export function ShareRevisionPopup({
       </h2>
       <p className={css.lead}>
         {active
-          ? "Copy the link for the homeowner. A new share supersedes the open revision. DXF / glTF are working plan metres — confirm on site."
-          : "Capture this quote as an immutable revision the client can accept. Download DXF or glTF (working plan metres)."}
+          ? "Copy the link for the homeowner. DXF / glTF / UE5 sync are working plan metres — confirm on site."
+          : "Capture this quote as an immutable revision. Download DXF, glTF, or the UE5 sync manifest."}
       </p>
 
       {active ? (
@@ -361,6 +386,16 @@ export function ShareRevisionPopup({
           >
             Download glTF
           </button>
+          <button
+            type="button"
+            className={css.secondary}
+            data-testid="share-download-sync"
+            disabled={pending}
+            title="UE5 live-sync manifest — stable asset IDs"
+            onClick={downloadSync}
+          >
+            UE5 sync
+          </button>
         </div>
       ) : (
         <div className={css.actions}>
@@ -383,6 +418,16 @@ export function ShareRevisionPopup({
             onClick={downloadGltf}
           >
             Download glTF
+          </button>
+          <button
+            type="button"
+            className={css.secondary}
+            data-testid="share-download-sync"
+            disabled={pending}
+            title="UE5 live-sync manifest — stable asset IDs"
+            onClick={downloadSync}
+          >
+            UE5 sync
           </button>
         </div>
       )}

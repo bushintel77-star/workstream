@@ -510,6 +510,17 @@ export async function downloadCadGltfAction(projectId: string): Promise<string> 
   }
 }
 
+export async function downloadCadSyncAction(projectId: string): Promise<string> {
+  const { downloadCadSyncApi, ensureCadApi } = await import("../lib/api");
+  try {
+    await ensureCadApi(projectId);
+    const blob = await downloadCadSyncApi(projectId);
+    return await blob.text();
+  } catch (err) {
+    throw wrapApiError(err, "CAD sync manifest download failed");
+  }
+}
+
 export async function cadQuantitySurveyAction(projectId: string) {
   const { cadQuantitySurveyApi } = await import("../lib/api");
   try {

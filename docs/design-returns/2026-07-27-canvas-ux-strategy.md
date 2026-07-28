@@ -287,4 +287,7 @@ with occlusion. Each depends on the one before; metre geometry is the gate.
 `CadDocument` + Share DXF download.
 
 **Gate 2 shipped:** minimal glTF 2.0 from CadDocument (extruded rings + planting proxies) + Share
-download. UE5 / twin / AR still blocked.
+download.
+
+**Gate 3 shipped:** `GET …/cad.sync.json` + glTF `sync_assets` (stable entity/symbol IDs) for an
+external UE5 / Datasmith client. Twin / AR still blocked.
