@@ -58,7 +58,23 @@ test.describe("Client share acceptance", () => {
     await expect(page.getByTestId("share-client-page")).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByTestId("share-plan-svg")).toBeVisible();
+    // Digital-twin step 1 — WebGL scrub / lighting / atmosphere (SVG fallback ok).
+    const twin = page.getByTestId("share-client-twin");
+    const planSvg = page.getByTestId("share-plan-svg");
+    await expect(twin.or(planSvg)).toBeVisible({ timeout: 15_000 });
+    if (await twin.isVisible()) {
+      await expect(page.getByTestId("share-twin-sun")).toBeVisible();
+      await page.getByTestId("share-twin-lights").click();
+      await expect(page.getByTestId("share-twin-lights")).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+      await page.getByTestId("share-twin-atm-sage").click();
+      await expect(page.getByTestId("share-twin-atm-sage")).toHaveAttribute(
+        "data-on",
+        "1",
+      );
+    }
     await expect(page.getByTestId("share-total")).toContainText("$4,620");
     await expect(page.getByTestId("share-disclaimer")).toContainText(
       "Not a formal tender",

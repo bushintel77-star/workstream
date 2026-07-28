@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import type { PublicSharePayload } from "@workstream/contracts";
 import { submitShareDecision } from "../../lib/share-api";
-import { SharePlanSvg } from "./SharePlanSvg";
+import { ClientShareTwin } from "./ClientShareTwin";
 import css from "./clientShare.module.css";
 
 const DISCLAIMER =
@@ -88,10 +88,7 @@ export function ClientShareDecision({ token, initial }: Props) {
 
       <h1 className={css.address}>{payload.snapshot.address}</h1>
 
-      <SharePlanSvg
-        canvas={payload.snapshot.canvas}
-        address={payload.snapshot.address}
-      />
+      <ClientShareTwin snapshot={payload.snapshot} />
 
       <section className={css.quote} aria-label="Indicative quote">
         <p className={css.kicker}>Indicative quote</p>

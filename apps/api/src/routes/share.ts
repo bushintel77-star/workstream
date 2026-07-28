@@ -85,6 +85,8 @@ export default async function shareRoutes(fastify: FastifyInstance) {
         quoteLines: parsed.data.quoteLines,
         totalInclGst: parsed.data.totalInclGst,
         address: project.address,
+        lat: project.lat ?? null,
+        lng: project.lng ?? null,
       };
 
       const existing = await fastify.store.listShareRevisions(ownerId, projectId);

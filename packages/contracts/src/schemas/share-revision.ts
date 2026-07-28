@@ -34,6 +34,9 @@ export const ShareSnapshotSchema = z.object({
   quoteLines: z.array(ShareQuoteLineSchema).min(1),
   totalInclGst: z.number().positive(),
   address: z.string().min(3).max(300),
+  /** Site coords for client sun scrub (digital-twin step 1). */
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
 });
 export type ShareSnapshot = z.infer<typeof ShareSnapshotSchema>;
 
@@ -93,7 +96,7 @@ export type PublicSharePayload = z.infer<typeof PublicSharePayloadSchema>;
 export function shareSnapshotFingerprint(
   snapshot: Pick<
     ShareSnapshot,
-    "quoteLines" | "totalInclGst" | "address" | "canvas"
+    "quoteLines" | "totalInclGst" | "address" | "canvas" | "lat" | "lng"
   >,
 ): string {
   const canvasKey = snapshot.canvas
@@ -108,6 +111,8 @@ export function shareSnapshotFingerprint(
     : null;
   return JSON.stringify({
     address: snapshot.address,
+    lat: snapshot.lat ?? null,
+    lng: snapshot.lng ?? null,
     totalInclGst: snapshot.totalInclGst,
     quoteLines: snapshot.quoteLines.map((l) => ({
       id: l.id,
