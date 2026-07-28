@@ -6,6 +6,7 @@ import { shareSnapshotFingerprint } from "@workstream/contracts";
 import {
   createShareRevisionAction,
   downloadCadDxfAction,
+  downloadCadGltfAction,
   listShareRevisionsAction,
 } from "../../../../../app/actions";
 import { useToast } from "../../../../ToastHost";
@@ -261,6 +262,30 @@ export function ShareRevisionPopup({
     });
   };
 
+  const downloadGltf = () => {
+    setError(null);
+    start(async () => {
+      try {
+        const gltf = await downloadCadGltfAction(projectId);
+        const blob = new Blob([gltf], { type: "model/gltf+json" });
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = `workstream-plan-${projectId.slice(0, 8)}.gltf`;
+        a.click();
+        URL.revokeObjectURL(href);
+        toast.show(
+          "glTF downloaded — working plan metres, confirm on site",
+          "info",
+        );
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Could not download glTF",
+        );
+      }
+    });
+  };
+
   if (!open) return null;
 
   const active = currentOpen ?? latest;
@@ -286,8 +311,8 @@ export function ShareRevisionPopup({
       </h2>
       <p className={css.lead}>
         {active
-          ? "Copy the link for the homeowner. A new share supersedes the open revision. DXF is working plan metres — confirm on site."
-          : "Capture this quote as an immutable revision the client can accept. Download DXF for LibreCAD (working plan metres)."}
+          ? "Copy the link for the homeowner. A new share supersedes the open revision. DXF / glTF are working plan metres — confirm on site."
+          : "Capture this quote as an immutable revision the client can accept. Download DXF or glTF (working plan metres)."}
       </p>
 
       {active ? (
@@ -326,6 +351,16 @@ export function ShareRevisionPopup({
           >
             Download DXF
           </button>
+          <button
+            type="button"
+            className={css.secondary}
+            data-testid="share-download-gltf"
+            disabled={pending}
+            title="Working plan metres — confirm on site"
+            onClick={downloadGltf}
+          >
+            Download glTF
+          </button>
         </div>
       ) : (
         <div className={css.actions}>
@@ -338,6 +373,16 @@ export function ShareRevisionPopup({
             onClick={downloadDxf}
           >
             Download DXF
+          </button>
+          <button
+            type="button"
+            className={css.secondary}
+            data-testid="share-download-gltf"
+            disabled={pending}
+            title="Working plan metres — confirm on site"
+            onClick={downloadGltf}
+          >
+            Download glTF
           </button>
         </div>
       )}

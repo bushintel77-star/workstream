@@ -284,4 +284,7 @@ glTF/USD export → **UE5 live-sync (Nanite/Lumen)** → telemetry ingest → **
 with occlusion. Each depends on the one before; metre geometry is the gate.
 
 **Gate 1 shipped:** calibrated working-plan metres (`resolvePlanMetres`) + site-frame stamp into
-`CadDocument` + Share DXF download. glTF / UE5 / twin / AR still blocked.
+`CadDocument` + Share DXF download.
+
+**Gate 2 shipped:** minimal glTF 2.0 from CadDocument (extruded rings + planting proxies) + Share
+download. UE5 / twin / AR still blocked.

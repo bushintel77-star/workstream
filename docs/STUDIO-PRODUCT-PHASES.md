@@ -38,10 +38,12 @@
 | **Geometry** | Metres from aerial-frame origin (`CadDocument`); Y-up. |
 | **AI** | Claude emits `CadOp[]`; `@workstream/cad` applies ops. All AI geometry is **ghost** until Accept. |
 | **Layers** | SKETCH-REF, PLANTING, HARDSCAPE, STRUCTURES, WATER, IRRIGATION, TRP, ANNOTATION, DIMENSIONS, PERMITS. |
-| **Export** | SVG preview in-app; **DXF for LibreCAD** (working plan metres — confirm on site). |
+| **Export** | SVG preview in-app; **DXF for LibreCAD**; **glTF 2.0** (extruded proxies). Working plan metres — confirm on site. |
 | **Workflow 1 link** | Import sketch → inserts + stroke polylines; upgrade via `/design/cad`. |
 
-**Phase 1 gate (shipped):** calibrated plan-metre frame (`site_frame.board_width_m` preferred over survey/aerial span), site boundary/building/easements stamped into `CadDocument`, Share **Download DXF**. Not survey lodgement; not glTF/UE5 yet.
+**Phase 1 gate (shipped):** calibrated plan-metre frame (`site_frame.board_width_m` preferred over survey/aerial span), site boundary/building/easements stamped into `CadDocument`, Share **Download DXF**.
+
+**Phase 2 gate (shipped):** `cadDocumentToGltf` + Share **Download glTF** — extruded STRUCTURES / planting cylinders; not Nanite, not USD/UE5.
 
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 

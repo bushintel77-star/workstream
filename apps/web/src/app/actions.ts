@@ -499,6 +499,17 @@ export async function downloadCadDxfAction(projectId: string): Promise<string> {
   }
 }
 
+export async function downloadCadGltfAction(projectId: string): Promise<string> {
+  const { downloadCadGltfApi, ensureCadApi } = await import("../lib/api");
+  try {
+    await ensureCadApi(projectId);
+    const blob = await downloadCadGltfApi(projectId);
+    return await blob.text();
+  } catch (err) {
+    throw wrapApiError(err, "glTF download failed");
+  }
+}
+
 export async function cadQuantitySurveyAction(projectId: string) {
   const { cadQuantitySurveyApi } = await import("../lib/api");
   try {

@@ -4,6 +4,7 @@ import {
   acceptCadGhosts,
   applyCadOps,
   cadDocumentToDxf,
+  cadDocumentToGltf,
   cadDocumentToSvg,
   countGhosts,
   emptyCadDocument,
@@ -365,4 +366,18 @@ export async function exportCadDxf(
     doc = ensured.document;
   }
   return cadDocumentToDxf(doc);
+}
+
+/** Ensure a calibrated metre sheet exists, then emit glTF 2.0 JSON. */
+export async function exportCadGltf(
+  store: Store,
+  ownerId: string,
+  projectId: string,
+): Promise<string> {
+  let doc = await store.getCadDocument(ownerId, projectId);
+  if (!doc) {
+    const ensured = await ensureCadDocument(store, ownerId, projectId);
+    doc = ensured.document;
+  }
+  return cadDocumentToGltf(doc);
 }
