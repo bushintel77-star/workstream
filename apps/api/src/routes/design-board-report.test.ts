@@ -137,7 +137,7 @@ describe("GET /projects/:id/design/board-report", () => {
     expect(parsed.success).toBe(true);
     const { sustainability } = parsed.data!;
 
-    expect(sustainability.assessed).toBe(6);
+    expect(sustainability.assessed).toBe(9);
     expect(sustainability.measured).toBeGreaterThan(0);
     // Canopy and irrigation are drawn on this board, so both are measurable.
     const canopy = sustainability.metrics.find((m) => m.id === "canopy-cover");
