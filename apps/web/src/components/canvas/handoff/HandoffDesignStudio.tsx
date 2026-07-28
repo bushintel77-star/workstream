@@ -370,9 +370,12 @@ export function HandoffDesignStudio({
    * save (saveRevision). Dismissals share the horizon `mitigated` map; finding
    * ids are `bf-`-namespaced so they never collide with `hz-` horizon cards.
    */
+  const [telemetryRevision, setTelemetryRevision] = useState(0);
   const { findings: boardFindings, gaps: boardGaps } = useBoardFindings(
     projectId,
     ui.saveRevision,
+    true,
+    telemetryRevision,
   );
   const openBoardFindings = boardFindings.filter((f) => !ui.mitigated[f.id]);
   const showBoardFinding = (f: (typeof openBoardFindings)[number]) => {
@@ -4560,9 +4563,14 @@ export function HandoffDesignStudio({
         ui.liveTelemetryOn ? (
           <LiveTelemetryDock
             latest={boardTelemetry.latest}
+            readings={boardTelemetry.readings}
             points={telemetryPoints}
             loading={boardTelemetry.loading}
-            onSeedDemo={() => void boardTelemetry.seedDemo()}
+            onSeedDemo={() => {
+              void boardTelemetry.seedDemo().then(() => {
+                setTelemetryRevision((n) => n + 1);
+              });
+            }}
             onClose={() => studio.setUi({ liveTelemetryOn: false })}
           />
         ) : null}

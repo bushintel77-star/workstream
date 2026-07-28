@@ -93,5 +93,8 @@ describe("board-telemetry", () => {
     expect(demo).toHaveLength(4);
     expect(demo.every((d) => d.source === "demo")).toBe(true);
     expect(new Set(demo.map((d) => d.kind)).size).toBe(4);
+    // Stressed enough that Phase 5 alerts fire on Load demo sensors.
+    expect(demo.find((d) => d.kind === "soil_moisture")!.value).toBeLessThan(30);
+    expect(demo.find((d) => d.kind === "sediment")!.value).toBeGreaterThan(25);
   });
 });

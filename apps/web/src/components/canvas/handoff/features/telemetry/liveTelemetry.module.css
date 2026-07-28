@@ -130,6 +130,13 @@
   font-size: 12px;
 }
 
+.alertTip {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--hc-warning, #b45309);
+}
+
 .honesty {
   margin: 6px 0 0;
   font-size: 9.5px;

@@ -1,6 +1,10 @@
 import { FastifyInstance } from "fastify";
 import { DesignFindingsResponseSchema } from "@workstream/contracts";
-import { boardContextGaps, buildBoardFindings } from "@workstream/domain";
+import {
+  boardContextGaps,
+  buildBoardFindings,
+  buildTwinPerformanceAlerts,
+} from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
 import { loadProjectBoard } from "../lib/board-context";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
@@ -13,6 +17,9 @@ import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
  * and area truth and would report conflicts that are not there. Findings are
  * assembled server-side where every artefact is real, and reach the client
  * through a server action (client hooks must never import lib/api — ref f0239bc).
+ *
+ * Twin performance alerts (sediment / vegetation stress) merge in when
+ * telemetry samples exist — same dismiss surface as board findings.
  *
  * They propose only. Accepting or dismissing one stays a human act.
  */
@@ -29,12 +36,18 @@ export default async function designFindingsRoutes(fastify: FastifyInstance) {
       }
 
       const board = await loadProjectBoard(fastify.store, ownerId, project);
-      const findings = buildBoardFindings(board.context);
+      const telemetry = await fastify.store.listTelemetryReadings(
+        ownerId,
+        projectId,
+      );
+      const twinAlerts = buildTwinPerformanceAlerts(telemetry);
+      const findings = [...buildBoardFindings(board.context), ...twinAlerts];
 
       request.log.info(
         {
           project_id: projectId,
           findings: findings.length,
+          twin_alerts: twinAlerts.length,
           findings_critical: findings.filter((f) => f.severity === "critical")
             .length,
         },

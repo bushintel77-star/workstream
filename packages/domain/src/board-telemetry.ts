@@ -131,7 +131,8 @@ export function demoTelemetryIngest(): Array<{
   return [
     {
       kind: "soil_moisture",
-      value: 34,
+      /** Below moisture watch so Load demo sensors exercises Phase 5 alerts. */
+      value: 22,
       unit: TELEMETRY_UNITS.soil_moisture,
       x_pct: 38,
       y_pct: 62,
@@ -141,7 +142,7 @@ export function demoTelemetryIngest(): Array<{
     },
     {
       kind: "thermal_comfort",
-      value: 28.4,
+      value: 33.2,
       unit: TELEMETRY_UNITS.thermal_comfort,
       x_pct: 52,
       y_pct: 44,
@@ -161,7 +162,7 @@ export function demoTelemetryIngest(): Array<{
     },
     {
       kind: "sediment",
-      value: 18,
+      value: 32,
       unit: TELEMETRY_UNITS.sediment,
       x_pct: 70,
       y_pct: 58,

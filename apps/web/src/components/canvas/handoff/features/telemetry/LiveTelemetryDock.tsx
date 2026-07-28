@@ -1,8 +1,9 @@
 "use client";
 
-import type { TelemetryLatest } from "@workstream/contracts";
+import type { TelemetryLatest, TelemetryReading } from "@workstream/contracts";
 import {
   TELEMETRY_KIND_LABEL,
+  buildTwinPerformanceAlerts,
   type TelemetryBoardPoint,
 } from "@workstream/domain";
 import { CameraChrome } from "../../CameraChrome";
@@ -10,6 +11,7 @@ import css from "./liveTelemetry.module.css";
 
 type Props = {
   latest: TelemetryLatest[];
+  readings: TelemetryReading[];
   points: TelemetryBoardPoint[];
   loading: boolean;
   onSeedDemo: () => void;
@@ -29,6 +31,7 @@ function formatValue(row: TelemetryLatest): string {
  */
 export function LiveTelemetryDock({
   latest,
+  readings,
   points,
   loading,
   onSeedDemo,
@@ -36,6 +39,8 @@ export function LiveTelemetryDock({
 }: Props) {
   const demoOnly =
     latest.length > 0 && latest.every((r) => r.source === "demo");
+  const alerts = buildTwinPerformanceAlerts(readings);
+  const alertN = alerts.length;
 
   return (
     <CameraChrome
@@ -48,6 +53,7 @@ export function LiveTelemetryDock({
         data-testid="live-telemetry-dock"
         data-count={String(latest.length)}
         data-points={String(points.length)}
+        data-alerts={String(alertN)}
       >
         <div className={css.headRow}>
           <p className={css.kicker}>Live telemetry</p>
@@ -96,6 +102,12 @@ export function LiveTelemetryDock({
                 </li>
               ))}
             </ul>
+            {alertN > 0 ? (
+              <p className={css.alertTip} data-testid="live-telemetry-alerts">
+                {alertN} performance alert{alertN === 1 ? "" : "s"} in findings
+                — sediment / vegetation stress.
+              </p>
+            ) : null}
             <p className={css.honesty}>
               {demoOnly
                 ? "Demo samples — not site sensors. Replace via POST /design/telemetry."

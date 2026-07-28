@@ -236,6 +236,10 @@ export const BoardFindingKindSchema = z.enum([
   "sheet_gap",
   "site_compliance",
   "overlay_watch",
+  /** Twin: sediment / turbidity rising at an outlet sensor. */
+  "sediment_buildup",
+  /** Twin: soil moisture / heat stress on planting. */
+  "vegetation_stress",
 ]);
 export type BoardFindingKind = z.infer<typeof BoardFindingKindSchema>;
 

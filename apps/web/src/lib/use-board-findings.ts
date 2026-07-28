@@ -8,6 +8,7 @@ export type BoardFindingsState = {
   findings: BoardFinding[];
   gaps: string[];
   loading: boolean;
+  refresh: () => Promise<void>;
 };
 
 /**
@@ -15,8 +16,11 @@ export type BoardFindingsState = {
  *
  * The findings read the *saved* board server-side (canvas + survey + costing +
  * rate card), so `saveRevision` — bumped on every durable save — is the refetch
- * key. The studio hook must never import lib/api (Clerk / async_hooks breaks the
- * Docker build), so this goes through the `designFindingsAction` server action.
+ * key. Twin performance alerts also land here after telemetry ingest; pass
+ * `telemetryRevision` (or call `refresh`) when samples change without a canvas
+ * save. The studio hook must never import lib/api (Clerk / async_hooks breaks
+ * the Docker build), so this goes through the `designFindingsAction` server
+ * action.
  *
  * Errors keep the last good result rather than blanking the panel — a failed
  * poll should never erase a warning the operator was reading.
@@ -25,8 +29,9 @@ export function useBoardFindings(
   projectId: string,
   saveRevision: number,
   enabled = true,
+  telemetryRevision = 0,
 ): BoardFindingsState {
-  const [state, setState] = useState<BoardFindingsState>({
+  const [state, setState] = useState<Omit<BoardFindingsState, "refresh">>({
     findings: [],
     gaps: [],
     loading: false,
@@ -46,7 +51,7 @@ export function useBoardFindings(
 
   useEffect(() => {
     void load();
-  }, [load, saveRevision]);
+  }, [load, saveRevision, telemetryRevision]);
 
-  return state;
+  return { ...state, refresh: load };
 }

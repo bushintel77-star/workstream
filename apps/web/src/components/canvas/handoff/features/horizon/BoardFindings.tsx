@@ -21,6 +21,8 @@ const KIND_LABEL: Record<BoardFinding["kind"], string> = {
   sheet_gap: "Deliverable set",
   site_compliance: "Site compliance",
   overlay_watch: "Overlay watch",
+  sediment_buildup: "Sediment watch",
+  vegetation_stress: "Vegetation stress",
 };
 
 /** How strong the evidence is — the operator reads this before trusting it. */

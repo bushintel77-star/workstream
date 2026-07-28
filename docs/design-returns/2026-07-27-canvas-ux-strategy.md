@@ -293,5 +293,7 @@ download.
 external UE5 / Datasmith client.
 
 **Gate 4 shipped:** telemetry ingest schema (`soil_moisture` / `thermal_comfort` / `flow` /
-`sediment`) + `POST/GET …/design/telemetry` + studio **Live telemetry** toggle. Performance alerts
-and AR remain next.
+`sediment`) + `POST/GET …/design/telemetry` + studio **Live telemetry** toggle.
+
+**Gate 5 shipped:** performance alerts (`sediment_buildup`, `vegetation_stress`) from twin
+samples into board findings — maintenance watches, confirm on site. AR remains next.
