@@ -8,6 +8,7 @@ export const DEFAULT_CAD_LAYERS: CadLayer[] = [
   { name: "STRUCTURES", color: 4 },
   { name: "WATER", color: 5 },
   { name: "IRRIGATION", color: 140 },
+  { name: "SERVICES", color: 150 },
   { name: "TRP", color: 1 },
   { name: "ANNOTATION", color: 2 },
   { name: "DIMENSIONS", color: 6 },

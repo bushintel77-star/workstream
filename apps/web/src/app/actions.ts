@@ -488,8 +488,10 @@ export async function acceptCadAction(
 }
 
 export async function downloadCadDxfAction(projectId: string): Promise<string> {
-  const { downloadCadDxfApi } = await import("../lib/api");
+  const { downloadCadDxfApi, ensureCadApi } = await import("../lib/api");
   try {
+    // Ensure calibrated metre sheet exists (stamps site frame when present).
+    await ensureCadApi(projectId);
     const blob = await downloadCadDxfApi(projectId);
     return await blob.text();
   } catch (err) {

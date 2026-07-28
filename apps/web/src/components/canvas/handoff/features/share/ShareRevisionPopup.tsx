@@ -5,6 +5,7 @@ import type { BoardDisclaimer, ShareRevision } from "@workstream/contracts";
 import { shareSnapshotFingerprint } from "@workstream/contracts";
 import {
   createShareRevisionAction,
+  downloadCadDxfAction,
   listShareRevisionsAction,
 } from "../../../../../app/actions";
 import { useToast } from "../../../../ToastHost";
@@ -236,6 +237,30 @@ export function ShareRevisionPopup({
     });
   };
 
+  const downloadDxf = () => {
+    setError(null);
+    start(async () => {
+      try {
+        const dxf = await downloadCadDxfAction(projectId);
+        const blob = new Blob([dxf], { type: "application/dxf" });
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = `workstream-plan-${projectId.slice(0, 8)}.dxf`;
+        a.click();
+        URL.revokeObjectURL(href);
+        toast.show(
+          "DXF downloaded — working plan metres, confirm on site",
+          "info",
+        );
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Could not download DXF",
+        );
+      }
+    });
+  };
+
   if (!open) return null;
 
   const active = currentOpen ?? latest;
@@ -261,8 +286,8 @@ export function ShareRevisionPopup({
       </h2>
       <p className={css.lead}>
         {active
-          ? "Copy the link for the homeowner. A new share supersedes the open revision."
-          : "Capture this quote as an immutable revision the client can accept."}
+          ? "Copy the link for the homeowner. A new share supersedes the open revision. DXF is working plan metres — confirm on site."
+          : "Capture this quote as an immutable revision the client can accept. Download DXF for LibreCAD (working plan metres)."}
       </p>
 
       {active ? (
@@ -291,8 +316,31 @@ export function ShareRevisionPopup({
           >
             {copied ? "Copied" : "Copy link"}
           </button>
+          <button
+            type="button"
+            className={css.secondary}
+            data-testid="share-download-dxf"
+            disabled={pending}
+            title="Working plan metres — confirm on site"
+            onClick={downloadDxf}
+          >
+            Download DXF
+          </button>
         </div>
-      ) : null}
+      ) : (
+        <div className={css.actions}>
+          <button
+            type="button"
+            className={css.secondary}
+            data-testid="share-download-dxf"
+            disabled={pending}
+            title="Working plan metres — confirm on site"
+            onClick={downloadDxf}
+          >
+            Download DXF
+          </button>
+        </div>
+      )}
 
       <ExportLiabilityPrompt
         disclaimers={disclaimers}

@@ -7,5 +7,6 @@ export {
   isUnverified,
 } from "./apply-ops";
 export { importSketchToCad } from "./import-sketch";
+export { pctToCadMetres, stampSiteFrameToCad } from "./stamp-site-frame";
 export { cadDocumentToDxf } from "./export-dxf";
 export { cadDocumentToSvg } from "./export-svg";

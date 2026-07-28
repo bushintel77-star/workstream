@@ -1,5 +1,5 @@
 import type { Store } from "@workstream/db";
-import type { CadDocument } from "@workstream/contracts";
+import type { CadDocument, DesignCanvas } from "@workstream/contracts";
 import {
   acceptCadGhosts,
   applyCadOps,
@@ -8,9 +8,15 @@ import {
   countGhosts,
   emptyCadDocument,
   importSketchToCad,
+  stampSiteFrameToCad,
 } from "@workstream/cad";
 import type { CadOp } from "@workstream/contracts";
-import { formatPlanningFlagsForAi, assessPlanningFromSketch } from "@workstream/domain";
+import {
+  formatPlanningFlagsForAi,
+  assessPlanningFromSketch,
+  resolvePlanMetres,
+  type PlanMetres,
+} from "@workstream/domain";
 import { generateCadOps } from "./claude";
 import { groundSpanFromSurvey } from "./cad-ground";
 
@@ -41,13 +47,52 @@ function sketchSummary(canvas: {
   for (const p of canvas.placements) {
     counts.set(p.symbol_id, (counts.get(p.symbol_id) ?? 0) + 1);
   }
-  const lines = [...counts.entries()].map(([id, n]) => `${id} ? ${n}`);
+  const lines = [...counts.entries()].map(([id, n]) => `${id} × ${n}`);
   return [
     `placements: ${canvas.placements.length}`,
     `strokes: ${canvas.strokes?.length ?? 0}`,
     `irrigation_zones: ${canvas.irrigation_zones?.length ?? 0}`,
     ...lines.slice(0, 30),
   ].join("\n");
+}
+
+function planFromSurveyAndCanvas(
+  survey: Parameters<typeof groundSpanFromSurvey>[0],
+  canvas: DesignCanvas | null,
+): PlanMetres {
+  const span = groundSpanFromSurvey(survey);
+  const aspect =
+    span.width_m > 0 ? span.height_m / span.width_m : 1;
+  return resolvePlanMetres({
+    boardWidthM: canvas?.site_frame?.board_width_m ?? null,
+    boardAspect: aspect,
+    surveySpan: {
+      width_m: span.width_m,
+      height_m: span.height_m,
+      outdoor_area_m2: span.outdoor_area_m2,
+      fromAerial: span.fromAerial,
+    },
+  });
+}
+
+function canvasHasSketchContent(canvas: DesignCanvas | null): boolean {
+  if (!canvas) return false;
+  return (
+    (canvas.placements?.length ?? 0) > 0 ||
+    (canvas.strokes?.length ?? 0) > 0 ||
+    (canvas.irrigation_zones?.length ?? 0) > 0 ||
+    (canvas.annotations?.length ?? 0) > 0
+  );
+}
+
+function canvasHasSiteFrame(canvas: DesignCanvas | null): boolean {
+  const f = canvas?.site_frame;
+  if (!f) return false;
+  return (
+    f.boundary.length >= 3 ||
+    f.building.length >= 3 ||
+    (f.easements?.some((r) => r.length >= 2) ?? false)
+  );
 }
 
 async function persist(
@@ -86,7 +131,10 @@ export async function getCadWithSvg(
   };
 }
 
-/** Blank metre-space CAD sheet from survey title/aerial span (no sketch required). */
+/**
+ * Metre-space CAD sheet: prefer calibrated board width, stamp site frame,
+ * import sketch when present. Working-plan honesty — not survey lodgement.
+ */
 export async function ensureCadDocument(
   store: Store,
   ownerId: string,
@@ -102,28 +150,39 @@ export async function ensureCadDocument(
   }
   const survey = await store.getSurvey(ownerId, projectId);
   if (!survey) throw new Error("Survey required before CAD");
-  const span = groundSpanFromSurvey(survey);
-  const seed = emptyCadDocument({
-    projectId,
-    width_m: span.width_m,
-    height_m: span.height_m,
-  });
-  const saved = await store.upsertCadDocument(ownerId, projectId, {
-    version: 1,
-    units: "m",
-    origin: seed.origin,
-    width_m: seed.width_m,
-    height_m: seed.height_m,
-    layers: seed.layers,
-    entities: [],
-    blocks: [],
-    ai_run_id: null,
-    source_sketch_id: null,
-  });
+  const canvas = await store.getDesignCanvas(ownerId, projectId);
+  const plan = planFromSurveyAndCanvas(survey, canvas);
+
+  let doc: CadDocument;
+  if (canvasHasSketchContent(canvas)) {
+    doc = importSketchToCad({
+      projectId,
+      canvas: canvas!,
+      width_m: plan.width_m,
+      height_m: plan.height_m,
+    });
+  } else {
+    const seed = emptyCadDocument({
+      projectId,
+      width_m: plan.width_m,
+      height_m: plan.height_m,
+      source_sketch_id: canvas?.id ?? null,
+    });
+    doc = {
+      ...seed,
+      id: crypto.randomUUID(),
+      updated_at: new Date().toISOString(),
+    } as CadDocument;
+    if (canvasHasSiteFrame(canvas)) {
+      doc = stampSiteFrameToCad(doc, canvas);
+    }
+  }
+
+  const saved = await persist(store, ownerId, projectId, doc);
   return {
     document: saved,
     svg: cadDocumentToSvg(saved),
-    ghost_count: 0,
+    ghost_count: countGhosts(saved),
   };
 }
 
@@ -171,10 +230,10 @@ export async function generateCadDocument(
     throw new Error("Save a site sketch before generating AI CAD");
   }
 
-  const span = groundSpanFromSurvey(survey);
-  const width_m = opts?.width_m ?? span.width_m;
-  const height_m = opts?.height_m ?? span.height_m;
-  const outdoor_area_m2 = span.outdoor_area_m2;
+  const plan = planFromSurveyAndCanvas(survey, canvas);
+  const width_m = opts?.width_m ?? plan.width_m;
+  const height_m = opts?.height_m ?? plan.height_m;
+  const outdoor_area_m2 = plan.outdoor_area_m2 ?? 0;
 
   let doc = await store.getCadDocument(ownerId, projectId);
   if (!doc) {
@@ -184,32 +243,6 @@ export async function generateCadDocument(
       width_m,
       height_m,
     });
-    // Stamp outdoor workspace from aerial/title survey onto the CAD template.
-    const margin = Math.min(width_m, height_m) * 0.04;
-    const stamped = applyCadOps(doc, [
-      {
-        op: "add_polyline",
-        layer: "SKETCH-REF",
-        closed: true,
-        ghost: false,
-        points: [
-          { x: margin, y: margin },
-          { x: width_m - margin, y: margin },
-          { x: width_m - margin, y: height_m - margin },
-          { x: margin, y: height_m - margin },
-        ],
-      },
-      {
-        op: "add_text",
-        layer: "ANNOTATION",
-        ghost: false,
-        position: { x: margin, y: height_m - margin * 1.5 },
-        height: 0.45,
-        value: `Outdoor workspace ${outdoor_area_m2} m? ? ${width_m.toFixed(1)}?${height_m.toFixed(1)} m`,
-        rotation_deg: 0,
-      },
-    ]);
-    doc = stamped.document;
   }
 
   const symbols = await store.listCatalogSymbols(ownerId);
@@ -226,9 +259,10 @@ export async function generateCadDocument(
     height_m: doc.height_m,
     sketch_summary: [
       sketchSummary(canvas),
-      `Outdoor area (aerial/title): ${outdoor_area_m2} m?`,
-      `CAD template: ${width_m.toFixed(1)} m ? ${height_m.toFixed(1)} m`,
-      `Garden ${survey.garden_area_m2} m? ? lot ${survey.lot_area_m2} m? ? house ${survey.house_area_m2} m?`,
+      `Outdoor area (working plan): ${outdoor_area_m2} m²`,
+      `CAD template: ${width_m.toFixed(1)} m × ${height_m.toFixed(1)} m (${plan.source})`,
+      `Garden ${survey.garden_area_m2} m² · lot ${survey.lot_area_m2} m² · house ${survey.house_area_m2} m²`,
+      "Honesty: working plan metres — confirm on site",
     ].join("\n"),
     planning_notes: formatPlanningFlagsForAi(planning),
     existing_entity_brief: entityBrief(doc),
@@ -245,7 +279,7 @@ export async function generateCadDocument(
     document: saved,
     svg: cadDocumentToSvg(saved),
     ghost_count: countGhosts(saved),
-    rationale: `${rationale} Outdoor template ${outdoor_area_m2} m?.`,
+    rationale: `${rationale} Working-plan template ${outdoor_area_m2} m² (${plan.source}).`,
     applied,
   };
 }
@@ -266,7 +300,6 @@ export async function editCadDocument(
   if (!project) throw new Error("Project not found");
   let doc = await store.getCadDocument(ownerId, projectId);
   if (!doc) {
-    // Bootstrap blank sheet from survey ? sketch optional for line draw.
     const ensured = await ensureCadDocument(store, ownerId, projectId);
     doc = ensured.document;
   }
@@ -310,7 +343,7 @@ export async function acceptCadDocument(
   entityIds?: string[],
 ): Promise<{ document: CadDocument; svg: string; ghost_count: number }> {
   const doc = await store.getCadDocument(ownerId, projectId);
-  if (!doc) throw new Error("No CAD document ? generate first");
+  if (!doc) throw new Error("No CAD document — generate first");
   const next = acceptCadGhosts(doc, entityIds);
   const saved = await persist(store, ownerId, projectId, next);
   return {
@@ -320,12 +353,16 @@ export async function acceptCadDocument(
   };
 }
 
+/** Ensure a calibrated metre sheet exists, then emit DXF. */
 export async function exportCadDxf(
   store: Store,
   ownerId: string,
   projectId: string,
 ): Promise<string> {
-  const doc = await store.getCadDocument(ownerId, projectId);
-  if (!doc) throw new Error("No CAD document ? generate first");
+  let doc = await store.getCadDocument(ownerId, projectId);
+  if (!doc) {
+    const ensured = await ensureCadDocument(store, ownerId, projectId);
+    doc = ensured.document;
+  }
   return cadDocumentToDxf(doc);
 }

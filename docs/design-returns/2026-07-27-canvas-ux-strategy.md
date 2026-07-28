@@ -282,3 +282,6 @@ drawing tool.
 **Stage 2 track (unlocks the rest of the 2026 standard):** metre-space survey geometry →
 glTF/USD export → **UE5 live-sync (Nanite/Lumen)** → telemetry ingest → **live digital twin** → AR
 with occlusion. Each depends on the one before; metre geometry is the gate.
+
+**Gate 1 shipped:** calibrated working-plan metres (`resolvePlanMetres`) + site-frame stamp into
+`CadDocument` + Share DXF download. glTF / UE5 / twin / AR still blocked.

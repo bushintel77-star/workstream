@@ -142,3 +142,4 @@ export * from './board-liability';
 export * from './lv-lighting';
 export * from './design-lifecycle';
 export * from './irrigation-uniformity';
+export * from './plan-metres';
