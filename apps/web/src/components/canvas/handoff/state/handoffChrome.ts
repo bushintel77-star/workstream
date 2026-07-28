@@ -92,6 +92,11 @@ export type HandoffChrome = {
   studioSheet: boolean;
   /** Compact: one primary FAB (assets / main task). */
   primaryFab: boolean;
+  /**
+   * Compact: horizontal ContextualToolStrip (CameraChrome dock).
+   * Same chips as ToolDock; hidden when Fit / focus / client.
+   */
+  contextualStrip: boolean;
   /** Compact fork active — header overflow, sheet host, no dual rails. */
   compact: boolean;
 };
@@ -169,6 +174,7 @@ function quietChrome(partial: Partial<HandoffChrome> & Pick<
     inboxSheet: false,
     studioSheet: false,
     primaryFab: false,
+    contextualStrip: false,
     compact: false,
     ...partial,
   };
@@ -235,6 +241,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       compact,
       studioSheet: compact && instruments,
       primaryFab: compact && instruments,
+      contextualStrip:
+        compact && instruments && mode !== "quote" && mode !== "share",
       horizonBoard: false,
       inboxSheet: false,
     });
@@ -326,5 +334,6 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     compact,
     studioSheet: compact && plan,
     primaryFab: compact && plan,
+    contextualStrip: compact && plan,
   };
 }

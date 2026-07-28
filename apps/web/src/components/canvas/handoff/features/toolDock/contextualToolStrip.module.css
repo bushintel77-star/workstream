@@ -1,0 +1,100 @@
+.strip {
+  position: absolute;
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  /* Clear the primary FAB on the right. */
+  right: calc(72px + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  z-index: 20;
+  max-width: none;
+  padding: 4px 6px;
+  border-radius: var(--hc-r-panel, 14px);
+  background: var(--hc-frost, var(--hc-glass-soft));
+  border: 1px solid var(--hc-line, var(--hc-line-soft));
+  box-shadow: var(--hc-frost-shadow, 0 8px 28px var(--hc-neu-shadow));
+  backdrop-filter: blur(14px);
+  color: var(--hc-ink);
+  font-family: var(--font-body);
+  pointer-events: auto;
+}
+
+.stripNight {
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  border-color: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
+  color: color-mix(in srgb, var(--hc-ink) 92%, transparent);
+  box-shadow: var(--hc-elev-3);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.slotTrail {
+  margin-left: 2px;
+  padding-left: 4px;
+  border-left: 1px solid var(--hc-line-soft);
+}
+
+.stripNight .slotTrail {
+  border-left-color: color-mix(in srgb, var(--proposed-stroke) 18%, transparent);
+}
+
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: var(--tap-min, 44px);
+  min-height: var(--tap-min, 44px);
+  padding: 3px 6px;
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--hc-motion, 180ms) ease;
+}
+
+.btn:hover {
+  background: var(--hc-accent-wash);
+}
+
+.stripNight .btn:hover {
+  background: color-mix(in srgb, var(--proposed-stroke) 14%, transparent);
+}
+
+.btnActive {
+  background: var(--hc-accent-wash);
+}
+
+.stripNight .btnActive {
+  background: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
+}
+
+.glyph {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+}

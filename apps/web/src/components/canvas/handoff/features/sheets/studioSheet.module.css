@@ -180,6 +180,12 @@
   gap: 8px;
 }
 
+.bomEmbed {
+  margin: 0 0 14px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--hc-line-soft);
+}
+
 .empty {
   margin: 12px 0;
   font-size: 13px;

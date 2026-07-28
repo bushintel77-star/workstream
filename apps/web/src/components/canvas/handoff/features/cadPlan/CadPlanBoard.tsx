@@ -2322,9 +2322,10 @@ export function CadPlanBoard({
       {crosshair ? (
         <>
           <div
-            className={css.snapPulse}
+            className={`${css.snapPulse}${snapKind ? ` ${css.snapPulseLocked}` : ` ${css.snapPulseApproach}`}`}
             data-testid="snap-radial-pulse"
             data-plan-geometry="1"
+            data-snap={snapKind ?? "approach"}
             style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
           />
           <div

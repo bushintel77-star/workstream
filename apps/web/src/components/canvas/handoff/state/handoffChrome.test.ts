@@ -272,6 +272,7 @@ describe("resolveHandoffChrome", () => {
     expect(c.ambientRibbon).toBe(false);
     expect(c.studioSheet).toBe(true);
     expect(c.primaryFab).toBe(true);
+    expect(c.contextualStrip).toBe(true);
     expect(c.horizon).toBe(true);
     expect(c.horizonBoard).toBe(false);
     expect(c.inboxSheet).toBe(true);

@@ -127,6 +127,8 @@ import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { ToolDock } from "./features/toolDock/ToolDock";
+import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
+import { LiveBomDock } from "./features/bom/LiveBomDock";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import {
   nicheToolsForZone,
@@ -1741,10 +1743,14 @@ export function HandoffDesignStudio({
       Boolean(ui.armed) ||
       (chrome.inboxSheet && studioSheetPage === "inbox"));
   const inboxCardCount = horizonCardCount + openBoardFindings.length;
+  const contextualStripVisible =
+    chrome.contextualStrip &&
+    !(studioSheetVisible && studioSheetSnap === "full");
   const compactSafeBottom = sheetSafeBottomPx({
     sheetOpen: studioSheetVisible,
     fabOn: chrome.primaryFab,
     sunOn: chrome.sunGrowth,
+    toolStripOn: contextualStripVisible,
   });
   /** Undo filmstrip — CAD/survey only; Sketch uses MarginStrip history. */
   const undoFilmOn =
@@ -4146,6 +4152,24 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {contextualStripVisible ? (
+          <ContextualToolStrip
+            tool={ui.tool}
+            mode={ui.mode}
+            surveyServicesAuthoring={surveyServicesAuthoring}
+            locked={ui.locked}
+            night={darkLens}
+            gridOn={gridStudioOpen}
+            onTool={(t) => {
+              studio.setTool(t);
+            }}
+            onMeasure={() => {
+              studio.setTool(ui.tool === "measure" ? "select" : "measure");
+            }}
+            onToggleGrid={() => setGridStudioOpen((v) => !v)}
+          />
+        ) : null}
+
         {dialHint && planOn && !ui.frameOn ? (
           <DialHintPill onDismiss={() => setDialHint(false)} />
         ) : null}
@@ -4649,6 +4673,30 @@ export function HandoffDesignStudio({
             ) : null}
             {studioSheetPage === "data" ? (
               <div data-testid="studio-sheet-data">
+                {chrome.liveBom ? (
+                  <div className={sheetCss.bomEmbed} data-testid="studio-sheet-live-bom">
+                    <p className={sheetCss.pageKicker}>Live cost</p>
+                    <LiveBomDock
+                      embedded
+                      estimate={estimate}
+                      mitigated={ui.mitigated}
+                      settling={
+                        estimateSettling ||
+                        ui.saveStatus === "saving" ||
+                        ui.saveStatus === "retrying"
+                      }
+                      onMitigate={(id) =>
+                        studio.setUi({
+                          mitigated: {
+                            ...ui.mitigated,
+                            [id]: !ui.mitigated[id],
+                          },
+                        })
+                      }
+                      onOpenQuote={() => requestMode("quote")}
+                    />
+                  </div>
+                ) : null}
                 <p className={sheetCss.pageKicker}>Site and design data</p>
                 <ul className={sheetCss.actionList}>
                   {(

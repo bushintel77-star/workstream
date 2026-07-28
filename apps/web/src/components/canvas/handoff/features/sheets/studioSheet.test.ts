@@ -35,4 +35,15 @@ describe("sheetSafeBottomPx", () => {
     });
     expect(n).toBe(96);
   });
+
+  it("raises the inset for the contextual tool strip", () => {
+    expect(
+      sheetSafeBottomPx({
+        sheetOpen: false,
+        fabOn: true,
+        sunOn: false,
+        toolStripOn: true,
+      }),
+    ).toBeGreaterThanOrEqual(112);
+  });
 });

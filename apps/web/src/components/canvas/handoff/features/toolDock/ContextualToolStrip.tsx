@@ -9,12 +9,11 @@ import {
   toolChipTestId,
   type ToolChip,
 } from "./toolChips";
-import css from "./toolDock.module.css";
+import css from "./contextualToolStrip.module.css";
 
 type Props = {
   tool: StudioTool;
   mode: StudioMode;
-  /** Survey Servc / Level / Calib — survey tab only, before Quote lock. */
   surveyServicesAuthoring?: boolean;
   locked: boolean;
   night?: boolean;
@@ -25,11 +24,10 @@ type Props = {
 };
 
 /**
- * Single left tool dock — steering-wheel home for mode changes.
- * Fixed frost rail via CameraChrome dock; never under zoom-world.
- * Static column — no carousel / fisheye motion on the shell or chips.
+ * Compact horizontal draw tools — same chips as ToolDock, CameraChrome dock,
+ * clear of FAB / sheet peek via --ws-safe-bottom.
  */
-export function ToolDock({
+export function ContextualToolStrip({
   tool,
   mode: _mode,
   surveyServicesAuthoring = false,
@@ -54,7 +52,6 @@ export function ToolDock({
       onMeasure();
       return;
     }
-    // Toggling the armed tool off drops back to the Select ground state.
     if (chip.id === tool && chip.id !== "select") {
       onTool("select");
       return;
@@ -63,10 +60,10 @@ export function ToolDock({
   };
 
   return (
-    <CameraChrome place={{ kind: "dock" }} testId="tool-dock-chrome">
+    <CameraChrome place={{ kind: "dock" }} testId="contextual-tool-strip-chrome">
       <nav
-        className={`${css.dock}${night ? ` ${css.dockNight}` : ""}`}
-        data-testid="tool-dock"
+        className={`${css.strip}${night ? ` ${css.stripNight}` : ""}`}
+        data-testid="contextual-tool-strip"
         aria-label="Drawing tools"
       >
         <ul className={css.list}>

@@ -7,8 +7,8 @@ async function openSketch(page: Page, projectId: string) {
   await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
 }
 
-test.describe("Compact canvas-first chrome (Phase 1)", () => {
-  test("375: sheet + FAB, no dual rails; 960: desktop rails", async ({
+test.describe("Compact canvas-first chrome", () => {
+  test("375: sheet + FAB + strip, no dual rails; 960: desktop rails", async ({
     page,
     request,
   }) => {
@@ -20,6 +20,8 @@ test.describe("Compact canvas-first chrome (Phase 1)", () => {
     await expect(studio).toHaveAttribute("data-compact", "1");
     await expect(page.getByTestId("studio-primary-fab")).toBeVisible();
     await expect(page.getByTestId("tool-dock")).toHaveCount(0);
+    await expect(page.getByTestId("contextual-tool-strip")).toBeVisible();
+    await expect(page.getByTestId("canvas-tool-trace")).toBeVisible();
     await expect(page.getByTestId("canvas-mode-overflow")).toBeVisible();
 
     await page.getByTestId("studio-primary-fab").click();
@@ -36,6 +38,21 @@ test.describe("Compact canvas-first chrome (Phase 1)", () => {
     await openSketch(page, projectId);
     await expect(handoffStudio(page)).toHaveAttribute("data-compact", "0");
     await expect(page.getByTestId("tool-dock")).toBeVisible();
+    await expect(page.getByTestId("contextual-tool-strip")).toHaveCount(0);
     await expect(page.getByTestId("studio-primary-fab")).toHaveCount(0);
+  });
+
+  test("375 CAD Data sheet embeds live cost", async ({ page, request }) => {
+    const { projectId } = await createSurveyProject(request);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(`/projects/${projectId}?mode=cad`);
+    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    await expect(handoffStudio(page)).toHaveAttribute("data-compact", "1");
+
+    await page.getByTestId("studio-primary-fab").click();
+    await page.getByTestId("studio-sheet-tab-data").click();
+    await expect(page.getByTestId("studio-sheet-data")).toBeVisible();
+    await expect(page.getByTestId("studio-sheet-live-bom")).toBeVisible();
+    await expect(page.getByTestId("live-bom-hud")).toBeVisible();
   });
 });
