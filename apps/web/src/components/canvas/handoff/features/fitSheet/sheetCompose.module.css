@@ -138,8 +138,8 @@
   background: color-mix(in srgb, var(--text-primary) 88%, var(--panel));
 }
 
-/* Contract id `blush` = dark concept / --surface-deep */
-.themeChip[data-theme="blush"] {
+/* Dark concept / --surface-deep */
+.themeChip[data-theme="deep"] {
   background: var(--hc-deep);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hc-paper) 22%, transparent);
 }

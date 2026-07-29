@@ -582,7 +582,14 @@ export type DesignSiteFrameInput = z.input<typeof DesignSiteFrameSchema>;
  * Fit-sheet presentation pack — widgets around the live plot (canvas feature).
  * See docs/SHEET-PRESENTATION.md.
  */
-export const PresentationThemeSchema = z.enum(["parchment", "ink", "blush"]);
+/**
+ * Fit-sheet paper theme. Legacy `blush` (pink) migrates to `deep`
+ * (dark-concept / --surface-deep) on parse.
+ */
+export const PresentationThemeSchema = z
+  .string()
+  .transform((v) => (v === "blush" ? "deep" : v))
+  .pipe(z.enum(["parchment", "ink", "deep"]));
 export type PresentationTheme = z.infer<typeof PresentationThemeSchema>;
 
 /** Fit-sheet render pen — one geometry, multiple looks. */
@@ -623,9 +630,15 @@ export type PresentationWidgetType = z.infer<
   typeof PresentationWidgetTypeSchema
 >;
 
+/** Widget chrome accent — legacy `rose` migrates to `ink`. */
+export const PresentationWidgetAccentSchema = z
+  .string()
+  .transform((v) => (v === "rose" ? "ink" : v))
+  .pipe(z.enum(["ink", "sage", "gold"]));
+
 export const PresentationWidgetStyleSchema = z.object({
   /** Accent wash for the widget chrome. */
-  accent: z.enum(["rose", "ink", "sage", "gold"]).default("rose"),
+  accent: PresentationWidgetAccentSchema.default("ink"),
   /** Emphasise display type (quote total / caption). */
   emphasis: z.enum(["quiet", "standard", "hero"]).default("standard"),
 });
@@ -640,7 +653,7 @@ export const PresentationWidgetSchema = z.object({
   /** Order within the slot (0 = top / leading). */
   order: z.number().int().min(0).max(40).default(0),
   style: PresentationWidgetStyleSchema.default({
-    accent: "rose",
+    accent: "ink",
     emphasis: "standard",
   }),
   /** Operator override copy — empty means live/auto text. */

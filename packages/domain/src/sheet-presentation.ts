@@ -77,8 +77,8 @@ export const SHEET_THEME_SWATCHES: Array<{
 }> = [
   { id: "parchment", label: "Parchment" },
   { id: "ink", label: "Ink" },
-  /** Contract id stays `blush` — UI is dark-concept / `--surface-deep`. */
-  { id: "blush", label: "Deep" },
+  /** Dark-concept chalk on `--surface-deep`. */
+  { id: "deep", label: "Deep" },
 ];
 
 export const SHEET_PEN_SWATCHES: Array<{
@@ -163,11 +163,11 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
       template_id: "curtis-client-brochure",
       widgets: [
         widget("caption", "title_meta", 0, {
-          accent: "rose",
+          accent: "ink",
           emphasis: "standard",
         }, "Concept presentation — Curtis & Co"),
         widget("quote_total", "side_stack", 0, {
-          accent: "rose",
+          accent: "ink",
           emphasis: "hero",
         }),
         widget("savings_ledger", "side_stack", 1, {
@@ -271,7 +271,7 @@ export function addSheetWidget(
     slot: meta.defaultSlot,
     order,
     style: {
-      accent: type === "savings_ledger" ? "gold" : "rose",
+      accent: type === "savings_ledger" ? "gold" : "ink",
       emphasis: meta.defaultEmphasis,
     },
   };

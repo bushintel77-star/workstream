@@ -53,8 +53,7 @@ test.describe("Fit sheet presentation compose", () => {
       "hand_drawn",
     );
 
-    await page.getByTestId("sheet-theme-blush").click();
-    // Contract id `blush` renders as deep concept on the frame.
+    await page.getByTestId("sheet-theme-deep").click();
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
       "data-sheet-theme",
       "deep",
@@ -100,7 +99,7 @@ test.describe("Fit sheet presentation compose", () => {
         { timeout: 20_000 },
       )
       .toMatchObject({
-        theme: "blush",
+        theme: "deep",
         template_id: "curtis-client-brochure",
         pen: "technical",
         atmosphere: "sage",
@@ -120,7 +119,7 @@ test.describe("Fit sheet presentation compose", () => {
         };
       };
     };
-    expect(saved.canvas?.presentation_pack?.theme).toBe("blush");
+    expect(saved.canvas?.presentation_pack?.theme).toBe("deep");
     expect(saved.canvas?.presentation_pack?.pen).toBe("technical");
     expect(saved.canvas?.presentation_pack?.atmosphere).toBe("sage");
   });

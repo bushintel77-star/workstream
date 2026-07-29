@@ -42,8 +42,8 @@ describe("sheet presentation", () => {
     expect(pack.widgets.filter((w) => w.type === "quote_total")).toHaveLength(
       1,
     );
-    pack = setSheetTheme(pack, "blush");
-    expect(pack.theme).toBe("blush");
+    pack = setSheetTheme(pack, "deep");
+    expect(pack.theme).toBe("deep");
     pack = setSheetPen(pack, "hand_drawn");
     pack = setSheetAtmosphere(pack, "terre_verte");
     expect(pack.pen).toBe("hand_drawn");

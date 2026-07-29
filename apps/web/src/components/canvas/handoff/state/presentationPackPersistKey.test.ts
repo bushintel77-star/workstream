@@ -10,7 +10,7 @@ describe("presentationPackPersistKey", () => {
 
   it("changes when theme, pen, atmosphere, or widgets change", () => {
     const a = applySheetTemplate("curtis-client-brochure");
-    const b = { ...a, theme: "blush" as const };
+    const b = { ...a, theme: "deep" as const };
     const c = { ...a, pen: "technical" as const };
     const d = { ...a, atmosphere: "sage" as const };
     expect(presentationPackPersistKey(a)).not.toBe(

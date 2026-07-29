@@ -770,12 +770,16 @@ describe("API contract — projects", () => {
       },
     });
     expect(put.statusCode).toBe(200);
+    // Legacy blush/rose migrate to deep/ink on parse.
     expect(put.json().canvas.presentation_pack).toMatchObject({
-      theme: "blush",
+      theme: "deep",
       pen: "hand_drawn",
       atmosphere: "cherry",
       template_id: "curtis-client-brochure",
     });
+    expect(put.json().canvas.presentation_pack.widgets[0].style.accent).toBe(
+      "ink",
+    );
 
     const get = await app.inject({
       method: "GET",

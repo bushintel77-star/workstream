@@ -376,18 +376,14 @@ export function FitSheetOverlay({
             ? ` ${composeCss.frameThemeInk}`
             : ""
         }${
-          presentationPack?.theme === "blush"
+          presentationPack?.theme === "deep"
             ? ` ${composeCss.frameThemeDeep}`
             : ""
         }`}
         data-testid="fit-sheet-frame"
         data-paper={paper}
         data-scale={scaleTxt}
-        data-sheet-theme={
-          presentationPack?.theme === "blush"
-            ? "deep"
-            : (presentationPack?.theme ?? "parchment")
-        }
+        data-sheet-theme={presentationPack?.theme ?? "parchment"}
         data-sheet-pen={presentationPack?.pen ?? "technical"}
         data-sheet-atmosphere={presentationPack?.atmosphere ?? "graphite"}
         style={{
