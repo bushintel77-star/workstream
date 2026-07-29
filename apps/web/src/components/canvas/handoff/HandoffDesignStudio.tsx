@@ -4287,6 +4287,7 @@ export function HandoffDesignStudio({
         {(planOn || ui.mode === "elevation") &&
         !ui.focusOn &&
         !ui.clientView &&
+        !ui.frameOn &&
         !ui.lightingWorkspaceOn ? (
           <ArtboardStrip active={activeArtboard} onSelect={selectArtboard} />
         ) : null}

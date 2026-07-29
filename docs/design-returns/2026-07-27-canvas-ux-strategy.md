@@ -47,7 +47,7 @@ cross-fade in on zoom-in**, avoiding the "chaotic overlapping text common in leg
 | Infinite, borderless canvas | **HAVE** — board is now full-bleed, continuous (slab + neighbour squares removed) |
 | Semantic zoom (detail changes with scale) | **HAVE** — annotation LOD §2 (`annotationLod.ts`) |
 | Minimap / overview wayfinding | **HAVE** — `StudioMinimap` |
-| Artboards as viewports (borderless until active) | **HAVE** — session **Sheets** strip (`ArtboardStrip`): Plan / Fit / Elev N·E·S·W switches existing cameras; not persisted multi-canvas or Stage 2 paper space |
+| Artboards as viewports (borderless until active) | **HAVE** — session **Sheets** strip (`ArtboardStrip`): Plan / Fit / Elev N·E·S·W; **hidden while Fit is on** (paper-first / 2026 disappearing chrome) |
 | **Vector-raster hybrid** (pressure/tilt/velocity strokes that stay editable vectors) | **PARTIAL / significant** — we have pen + stroke width tiers; true pressure-sensitive natural media (Concepts/Morpholio-class) is a large engine lift. Recommend: hand-drawn *render pen* first (Rough.js, already spec'd) since it delivers the aesthetic without a new input engine |
 | Stylus-first gestures (two-finger undo, three-finger overlay toggle, dual-handed nav) | **GAP** — pairs with the on-site/tablet density mode already tokenised (`--tap-min`, `data-density="onsite"`) |
 
@@ -224,8 +224,8 @@ matches the phase: 1 Concept → 2 Design development → 3 Construction docs �
 5 Construction admin → 6 Post-occupancy. Soft tip chip + durable `lifecycle_phase` on the canvas
 (suggested from project status); does not hard-lock tools.
 
-**Liability overlay on export (GAP, high value / low effort).** On export, auto-prompt the
-disclaimers the drawing's content implies:
+**Liability overlay on export (HAVE).** On export, auto-prompt the
+notices this drawing's own content implies (`ExportLiabilityPrompt` + share gate):
 - **Maturity watermark** — "visualisation depicts Year 5/10 maturity; installation uses immature stock".
 - **Design-intent + subsurface** — no liability for unforeseen subsurface conditions, utility
   conflicts, or contractor deviation.
@@ -271,7 +271,7 @@ drawing tool.
 
 1. **Semantic zoom for labels** (§2) — fixes a live legibility bug, cheap.
 2. **Board context contract** (§8.1) — the AI-awareness foundation; also unlocks 6 and 9.
-3. **Liability overlay on export** (§9) — low effort, protects the practice, differentiating.
+3. **Liability overlay on export** (§9) — **HAVE**: share gate + BoardContext notices.
 4. **Temporal slider + Year-10 collision warning** (§4) — shipped: Y1/Y5/Y10 scrub, canopy/root rings, findings + dock warn.
 5. **Hand-drawn pen + Atmosphere Palette** (§7, fit-sheet brief) — **HAVE**: Rough.js freehand,
    grey wash / watercolour pens, deep chalk, Atmosphere pigments, technical CAD furniture.

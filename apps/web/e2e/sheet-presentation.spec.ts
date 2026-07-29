@@ -39,7 +39,7 @@ test.describe("Fit sheet presentation compose", () => {
       page.getByTestId("sheet-template-curtis-client-brochure"),
     ).toHaveAttribute("data-on", "1");
 
-    // Brochure seed: freehand + cherry before operator overrides.
+    // Brochure seed: freehand — no technical furniture (pen honesty matrix).
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
       "data-sheet-pen",
       "hand_drawn",
@@ -52,6 +52,9 @@ test.describe("Fit sheet presentation compose", () => {
       "data-sheet-pen",
       "hand_drawn",
     );
+    await expect(page.getByTestId("sheet-furniture")).toHaveCount(0);
+    // Idle Fit: Sheets strip stays off the paper (2026 disappearing chrome).
+    await expect(page.getByTestId("artboard-strip")).toHaveCount(0);
 
     await page.getByTestId("sheet-theme-deep").click();
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
@@ -78,16 +81,21 @@ test.describe("Fit sheet presentation compose", () => {
       "data-sheet-pen",
       "grey_wash",
     );
+    await expect(page.getByTestId("sheet-furniture")).toHaveCount(0);
     await page.getByTestId("sheet-pen-watercolour").click();
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
       "data-sheet-pen",
       "watercolour",
     );
+    await expect(page.getByTestId("sheet-furniture")).toHaveCount(0);
+    await page.getByTestId("sheet-pen-hand_drawn").click();
+    await expect(page.getByTestId("sheet-furniture")).toHaveCount(0);
     await page.getByTestId("sheet-pen-technical").click();
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
       "data-sheet-pen",
       "technical",
     );
+    await expect(page.getByTestId("sheet-furniture")).toBeVisible();
 
     await page.getByTestId("sheet-reflow").click();
     await expect(page.getByTestId("sheet-widgets-side_stack")).toBeVisible();

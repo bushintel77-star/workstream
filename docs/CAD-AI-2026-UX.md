@@ -88,5 +88,7 @@ Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so 
 | Develop site loop (Cmd+K) | **Partial** — scan ghosts + scheme/Flora tip + Live BOM; no auto-accept |
 | Lighting conduit + watering plan | **Partial** — fixture catalog snap → LV trench→house; agg PoD / spray valve tip; Zone niche; indicative BOM |
 | Sun-cast UI | **Yes** — live `resolveBoardSunCast` + CameraChrome dock; static when shade off |
+| Fit Sheet pens + compose | **Yes** — header-summoned CameraChrome peel; pens `technical` / Rough freehand / grey_wash / watercolour; Atmosphere pigments; idle Fit = paper only (Sheets strip hidden); technical furniture honesty matrix |
+| Export liability overlay | **Yes** — `ExportLiabilityPrompt` + share gate before issue |
 
 Update [IMPLEMENTATION-STATUS.md](./design/operator-redesign/design_handoff_landscape_cad_studio/IMPLEMENTATION-STATUS.md) when closing gaps.

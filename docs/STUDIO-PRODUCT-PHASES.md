@@ -57,7 +57,7 @@
 
 **Workflow 1 §3 artboards (shipped):** session Sheets strip — Plan / Fit / Elev N·E·S·W viewports (CameraChrome). Persisted multi-sheet pasteboard remains later.
 
-**Workflow 1 Fit Sheet pens (shipped):** `technical` / `hand_drawn` (Rough.js) / `grey_wash` / `watercolour` + Atmosphere pigments + deep chalk theme; technical CAD furniture (scale bar, status stamp, hatch key, elev A–A′ / RL); Dark concept seed; brochure elev pick by dwelling span. Growth Year 1/5/10 rings draw on the Fit plan via the board scrub.
+**Workflow 1 Fit Sheet pens (shipped):** `technical` / `hand_drawn` (Rough.js) / `grey_wash` / `watercolour` + Atmosphere pigments + deep chalk theme; technical CAD furniture (scale bar, status stamp, hatch key, elev A–A′ / RL); Dark concept seed; brochure elev pick by dwelling span. Growth Year 1/5/10 rings draw on the Fit plan via the board scrub. **2026 UX:** idle Fit is paper-only (Sheets strip off); compose CameraChrome peel; furniture technical-pen only.
 
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 
