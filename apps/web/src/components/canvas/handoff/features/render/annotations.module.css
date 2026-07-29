@@ -45,6 +45,13 @@
   word-break: break-word;
 }
 
+.technicalInk .hand {
+  color: var(--signal);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
 .stale {
   display: inline-block;
   margin-left: 4px;

@@ -2596,6 +2596,7 @@ export function CadPlanBoard({
         night={darkOn && !frameOn}
         opacity={notesVisual.opacity}
         draft={!presentationOn}
+        technicalInk={sheetPen === "technical" && fitSheetStroke}
         onSelect={(id) => {
           onSelectAnnotation?.(id);
           if (id) onSelect(null);

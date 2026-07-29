@@ -398,6 +398,17 @@
   opacity: 0.5;
 }
 
+.elevDatumLabel {
+  position: absolute;
+  left: 0;
+  bottom: 3px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7px;
+  letter-spacing: 0.04em;
+  color: var(--hc-ink-faint);
+  white-space: nowrap;
+}
+
 .elevBld {
   position: absolute;
   bottom: 14px;

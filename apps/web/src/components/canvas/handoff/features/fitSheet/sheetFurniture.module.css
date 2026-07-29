@@ -1,0 +1,139 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hc-line-soft);
+}
+
+.scaleBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.scaleTrack {
+  position: relative;
+  height: 8px;
+  min-width: 48px;
+  border-bottom: 1.5px solid var(--text-primary);
+  border-left: 1.5px solid var(--text-primary);
+  border-right: 1.5px solid var(--text-primary);
+}
+
+.scaleTick {
+  position: absolute;
+  bottom: 0;
+  width: 1.5px;
+  height: 6px;
+  background: var(--text-primary);
+}
+
+.scaleTick[data-end="0"] {
+  left: 0;
+}
+
+.scaleTick[data-end="1"] {
+  right: 0;
+}
+
+.scaleLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.statusStamp {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 2px 7px;
+  border: 1.5px solid var(--hc-signal, var(--signal));
+  color: var(--hc-signal, var(--signal));
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.statusHonesty {
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.hatchKey {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hatchKicker {
+  margin: 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hatchList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+}
+
+.hatchList li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.hatchSwatch {
+  width: 14px;
+  height: 10px;
+  flex-shrink: 0;
+  border: 1px solid var(--hc-line);
+}
+
+.hatchList li[data-swatch="dwelling"] .hatchSwatch {
+  background: color-mix(in srgb, var(--existing-stroke) 28%, var(--canvas));
+}
+
+.hatchList li[data-swatch="hardscape"] .hatchSwatch {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 2px,
+    color-mix(in srgb, var(--text-primary) 45%, transparent) 2px,
+    color-mix(in srgb, var(--text-primary) 45%, transparent) 3px
+  );
+}
+
+.hatchList li[data-swatch="easement"] .hatchSwatch {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    color-mix(in srgb, var(--warn, #b08900) 55%, transparent) 2px,
+    color-mix(in srgb, var(--warn, #b08900) 55%, transparent) 3px
+  );
+}
+
+.hatchList li[data-swatch="planting"] .hatchSwatch {
+  background: color-mix(in srgb, var(--sheet-atmosphere, #6b7f5a) 35%, var(--canvas));
+}

@@ -64,6 +64,10 @@ test.describe("Fit sheet presentation compose", () => {
       "data-sheet-pen",
       "technical",
     );
+    await expect(page.getByTestId("sheet-furniture")).toBeVisible();
+    await expect(page.getByTestId("sheet-graphic-scale")).toBeVisible();
+    await expect(page.getByTestId("sheet-status-stamp")).toBeVisible();
+    await expect(page.getByTestId("sheet-hatch-key")).toBeVisible();
     await page.getByTestId("sheet-atmosphere-sage").click();
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
       "data-sheet-atmosphere",

@@ -14,6 +14,8 @@ type Props = {
   opacity: number;
   /** draft fidelity → 50% extra dim. */
   draft: boolean;
+  /** Technical pen → orange --signal callout ink. */
+  technicalInk?: boolean;
   onSelect: (id: string | null) => void;
   onMoveNote: (id: string, notePos: { x: number; y: number }) => void;
 };
@@ -41,6 +43,7 @@ export function AnnotationLayer({
   night,
   opacity,
   draft,
+  technicalInk = false,
   onSelect,
   onMoveNote,
 }: Props) {
@@ -49,8 +52,9 @@ export function AnnotationLayer({
 
   return (
     <div
-      className={css.root}
+      className={`${css.root}${technicalInk ? ` ${css.technicalInk}` : ""}`}
       data-testid="annotation-layer"
+      data-ink={technicalInk ? "technical" : "hand"}
       style={{ opacity: dim }}
       aria-label="Notes"
     >
@@ -69,9 +73,11 @@ export function AnnotationLayer({
             a.y,
             rand,
           );
-          const stroke = night
-            ? "var(--proposed-text)"
-            : "var(--text-secondary)";
+          const stroke = technicalInk
+            ? "var(--signal)"
+            : night
+              ? "var(--proposed-text)"
+              : "var(--text-secondary)";
           return (
             <g key={`lead-${ann.id}`} data-testid="annotation-leader">
               <path

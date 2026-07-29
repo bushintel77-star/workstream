@@ -29,6 +29,7 @@ import { WeatherIcon } from "../stickyMeta/WeatherIcon";
 import type { EnvWeatherDay } from "../stickyMeta/envLiveMeta";
 import { resolveEnvWeatherCondition } from "../stickyMeta/envLiveMeta";
 import { SheetWidgetStack } from "./SheetWidgetStack";
+import { SheetFurniture } from "./SheetFurniture";
 import { buildSheetWidgetContext } from "./sheetWidgetContext";
 import composeCss from "./sheetCompose.module.css";
 import css from "./fitSheet.module.css";
@@ -576,6 +577,11 @@ export function FitSheetOverlay({
               ) : null}
               <span>{issued}</span>
             </div>
+            <SheetFurniture
+              scaleM={scaleM ?? 20}
+              frameWidthPx={box.boxW}
+              technical={(presentationPack?.pen ?? "technical") === "technical"}
+            />
           </div>
         </aside>
       ) : null}
@@ -591,10 +597,21 @@ export function FitSheetOverlay({
             height: elevPanelH,
           }}
         >
-          {elevProfiles.map((pf) => (
-            <div key={pf.label} className={css.elevRow}>
-              <span className={css.elevLabel}>{pf.label}</span>
-              <div className={css.elevGround} />
+          {elevProfiles.map((pf, idx) => {
+            const sectionId = String.fromCharCode(65 + (idx % 26));
+            return (
+            <div
+              key={pf.label}
+              className={css.elevRow}
+              data-section-id={sectionId}
+              data-testid={`fit-elev-section-${sectionId}`}
+            >
+              <span className={css.elevLabel}>
+                {sectionId}–{sectionId}′ · {pf.label}
+              </span>
+              <div className={css.elevGround} data-testid="fit-elev-datum">
+                <span className={css.elevDatumLabel}>RL 0.00</span>
+              </div>
               <div
                 className={css.elevBld}
                 style={{
@@ -618,7 +635,8 @@ export function FitSheetOverlay({
               ))}
               <span className={css.elevWidth}>{pf.widthM.toFixed(1)} m</span>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : null}
     </div>
