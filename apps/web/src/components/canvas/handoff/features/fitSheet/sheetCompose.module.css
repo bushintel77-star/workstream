@@ -219,6 +219,29 @@
   background: var(--signal-soft, color-mix(in srgb, var(--signal) 16%, transparent));
 }
 
+.seedChip[data-pen="technical"] {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.02em;
+}
+
+.seedChip[data-pen="hand_drawn"] {
+  font-family: "Architects Daughter", "Segoe Print", cursive;
+  font-weight: 500;
+}
+
+.seedChip[data-pen="grey_wash"] {
+  background: color-mix(in srgb, var(--text-primary) 8%, var(--panel, var(--hc-paper)));
+  color: color-mix(in srgb, var(--text-primary) 78%, transparent);
+}
+
+.seedChip[data-pen="watercolour"] {
+  background: color-mix(
+    in srgb,
+    var(--sheet-atmosphere, #7d8f74) 18%,
+    var(--panel, var(--hc-paper))
+  );
+}
+
 .addChip:disabled {
   opacity: 0.45;
   cursor: default;

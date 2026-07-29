@@ -1174,6 +1174,7 @@ export function CadPlanBoard({
         ? wobbledPolylinePath(boundary, {
             seed: `${wobbleSeed}:boundary`,
             closed: true,
+            profile: "boundary",
           })
         : null,
     [handDrawn, boundary, wobbleSeed],
@@ -1184,6 +1185,7 @@ export function CadPlanBoard({
         ? wobbledPolylinePath(building, {
             seed: `${wobbleSeed}:building`,
             closed: true,
+            profile: "building",
           })
         : null,
     [handDrawn, building, wobbleSeed],
@@ -1241,65 +1243,83 @@ export function CadPlanBoard({
       onPointerLeave={() => setCursorPct(null)}
     >
       <svg
-        className={`${css.planSvg}${greyWash ? ` ${css.planGreyWash}` : ""}${watercolour ? ` ${css.planWatercolour}` : ""}${deepChalk ? ` ${css.planDeepChalk}` : ""}`}
+        className={`${css.planSvg}${greyWash ? ` ${css.planGreyWash}` : ""}${watercolour ? ` ${css.planWatercolour}` : ""}${deepChalk ? ` ${css.planDeepChalk}` : ""}${handDrawn ? ` ${css.planHandDrawn}` : ""}`}
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
-        style={
-          watercolour
-            ? { filter: "url(#ws-watercolour)" }
-            : undefined
-        }
       >
         <defs>
           {/* Graphite tooth for freehand pen — subtle, non-animated. */}
           <filter
             id="ws-pencil-grain"
-            x="-8%"
-            y="-8%"
-            width="116%"
-            height="116%"
+            x="-10%"
+            y="-10%"
+            width="120%"
+            height="120%"
             colorInterpolationFilters="sRGB"
           >
             <feTurbulence
               type="fractalNoise"
-              baseFrequency="0.9"
-              numOctaves="2"
+              baseFrequency="1.35"
+              numOctaves="3"
               seed="7"
               result="noise"
             />
             <feColorMatrix
               in="noise"
               type="matrix"
-              values="0 0 0 0 0.15  0 0 0 0 0.14  0 0 0 0 0.12  0 0 0 0.35 0"
+              values="0 0 0 0 0.22  0 0 0 0 0.2  0 0 0 0 0.18  0 0 0 0.22 0"
               result="grain"
             />
-            <feComposite in="SourceGraphic" in2="grain" operator="over" />
+            <feBlend in="SourceGraphic" in2="grain" mode="multiply" result="ink" />
+            <feComponentTransfer in="ink">
+              <feFuncA type="linear" slope="1.05" />
+            </feComponentTransfer>
           </filter>
           <filter
             id="ws-watercolour"
-            x="-12%"
-            y="-12%"
-            width="124%"
-            height="124%"
+            x="-18%"
+            y="-18%"
+            width="136%"
+            height="136%"
             colorInterpolationFilters="sRGB"
           >
             <feTurbulence
               type="fractalNoise"
-              baseFrequency="0.04"
-              numOctaves="3"
+              baseFrequency="0.035"
+              numOctaves="4"
               seed="3"
               result="paper"
             />
             <feDisplacementMap
               in="SourceGraphic"
               in2="paper"
-              scale="1.4"
+              scale="2.2"
               xChannelSelector="R"
               yChannelSelector="G"
               result="warp"
             />
-            <feGaussianBlur in="warp" stdDeviation="0.35" result="soft" />
-            <feBlend in="soft" in2="SourceGraphic" mode="multiply" />
+            <feGaussianBlur in="warp" stdDeviation="0.55" result="soft" />
+            <feColorMatrix
+              in="soft"
+              type="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.82 0"
+              result="wash"
+            />
+            <feBlend in="wash" in2="SourceGraphic" mode="multiply" />
+          </filter>
+          <filter
+            id="ws-chalk-soft"
+            x="-12%"
+            y="-12%"
+            width="124%"
+            height="124%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feGaussianBlur in="SourceGraphic" stdDeviation="0.15" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
           <pattern
             id="ws-hardscape-hatch"
@@ -1530,7 +1550,11 @@ export function CadPlanBoard({
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
-            filter="url(#ws-pencil-grain)"
+            filter={
+              deepChalk
+                ? "url(#ws-chalk-soft)"
+                : "url(#ws-pencil-grain)"
+            }
             opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
             className={sketchPassthrough ? css.sketchQuiet : undefined}
             data-testid={
@@ -1595,7 +1619,11 @@ export function CadPlanBoard({
               strokeLinecap="round"
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
-              filter="url(#ws-pencil-grain)"
+              filter={
+                deepChalk
+                  ? "url(#ws-chalk-soft)"
+                  : "url(#ws-pencil-grain)"
+              }
               opacity={
                 boundaryVisual.opacity *
                 (foundationCleanse ? underlayOp : 1) *
@@ -1663,10 +1691,14 @@ export function CadPlanBoard({
               it.t === "paving" ||
               it.t === "deck");
           const wash = greyWash
-            ? "color-mix(in srgb, var(--text-primary) 12%, var(--canvas))"
-            : plantingAccent
-              ? "var(--sheet-atmosphere-wash)"
-              : baseWash;
+            ? "color-mix(in srgb, var(--text-primary) 14%, var(--canvas))"
+            : watercolour && plantingAccent
+              ? "color-mix(in srgb, var(--sheet-atmosphere-wash) 72%, transparent)"
+              : plantingAccent
+                ? "var(--sheet-atmosphere-wash)"
+                : watercolour
+                  ? "color-mix(in srgb, var(--text-primary) 8%, transparent)"
+                  : baseWash;
           const hatched = it.t === "paving" || it.t === "deck";
           const outline = it.outlinePct!;
           const pts = ptsAttr(outline);
@@ -1675,6 +1707,7 @@ export function CadPlanBoard({
               ? wobbledPolylinePath(outline, {
                   seed: `${wobbleSeed}:region:${it.id}`,
                   closed: true,
+                  profile: "region",
                 })
               : null;
           return (
@@ -1703,7 +1736,13 @@ export function CadPlanBoard({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
-                  filter="url(#ws-pencil-grain)"
+                  filter={
+                    handPath
+                      ? "url(#ws-pencil-grain)"
+                      : watercolour
+                        ? "url(#ws-watercolour)"
+                        : undefined
+                  }
                 />
               ) : (
                 <polygon
@@ -1712,14 +1751,17 @@ export function CadPlanBoard({
                   className={it.ghost ? css.regionGhostIn : css.regionDraw}
                   fill={wash}
                   stroke={
-                    it.ghost
-                      ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
-                      : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
+                    greyWash
+                      ? mixOnCanvas(CSS_TOKEN.textPrimary, 88)
+                      : it.ghost
+                        ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
+                        : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
                   }
-                  strokeWidth={it.ghost ? 1 : 1.3}
+                  strokeWidth={greyWash ? 1.45 : it.ghost ? 1 : 1.3}
                   strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
+                  filter={watercolour ? "url(#ws-watercolour)" : undefined}
                 />
               )}
               {hatched ? (
@@ -1857,6 +1899,7 @@ export function CadPlanBoard({
                   ring.canopy_rx_pct,
                   ring.canopy_rx_pct * 0.78,
                   `${wobbleSeed}:canopy:${ring.id}`,
+                  { profile: "canopy" },
                 )
               : null;
           const rootPath =
@@ -1867,6 +1910,7 @@ export function CadPlanBoard({
                   ring.root_rx_pct,
                   ring.root_rx_pct * 0.82,
                   `${wobbleSeed}:root:${ring.id}`,
+                  { profile: "canopy" },
                 )
               : null;
           return (
@@ -1884,7 +1928,11 @@ export function CadPlanBoard({
                 className={css.growthRoot}
                 vectorEffect="non-scaling-stroke"
                 fill="none"
-                filter="url(#ws-pencil-grain)"
+                filter={
+                  deepChalk
+                    ? "url(#ws-chalk-soft)"
+                    : "url(#ws-pencil-grain)"
+                }
               >
                 <title>
                   {`Indicative root zone · Ø ${(
@@ -1920,7 +1968,11 @@ export function CadPlanBoard({
                 }
                 vectorEffect="non-scaling-stroke"
                 fill="none"
-                filter="url(#ws-pencil-grain)"
+                filter={
+                  deepChalk
+                    ? "url(#ws-chalk-soft)"
+                    : "url(#ws-pencil-grain)"
+                }
               >
                 <title>
                   {`Canopy · Ø ${(

@@ -29,16 +29,37 @@
 }
 
 .planGreyWash {
-  filter: grayscale(1) contrast(1.05);
+  /* Tonal plate — keep stroke ink readable (not a flat grayscale of everything). */
+  --plan-fill-desat: grayscale(1) contrast(1.08) brightness(1.02);
+}
+
+.planGreyWash :is([data-testid="sketch-region"] polygon, [data-testid="sketch-region"] path) {
+  filter: var(--plan-fill-desat);
+}
+
+.planGreyWash :is(polygon, path)[data-testid="building-footprint"],
+.planGreyWash :is(polygon, path)[data-testid="foundation-title-boundary"] {
+  stroke: color-mix(in srgb, var(--text-primary) 92%, transparent);
+  stroke-opacity: 0.95;
 }
 
 .planDeepChalk :is(polygon, path, line, ellipse, circle, polyline) {
-  stroke: var(--plan-stroke, color-mix(in srgb, var(--hc-paper) 88%, transparent));
+  stroke: var(
+    --plan-stroke,
+    color-mix(in srgb, var(--hc-paper) 90%, transparent)
+  );
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.planWatercolour {
-  /* Filter applied inline via #ws-watercolour for fill softness. */
-  opacity: 0.96;
+.planWatercolour :is([data-testid="sketch-region"] polygon, [data-testid="sketch-region"] path) {
+  stroke-opacity: 0.55;
+}
+
+.planHandDrawn :is(path[data-pen="hand_drawn"]) {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
 }
 
 .handleHit {

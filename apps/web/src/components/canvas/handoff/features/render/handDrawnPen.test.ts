@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  handDrawnProfileDefaults,
   roughCirclePath,
   roughEllipsePath,
   wobbledPolylinePath,
@@ -43,6 +44,20 @@ describe("wobbledPolylinePath (Rough.js)", () => {
     expect(d.length).toBeGreaterThan(20);
     expect(d.startsWith("M")).toBe(true);
   });
+
+  it("boundary profile differs from region profile", () => {
+    const boundary = wobbledPolylinePath(SQUARE, {
+      seed: "same",
+      profile: "boundary",
+      closed: true,
+    });
+    const region = wobbledPolylinePath(SQUARE, {
+      seed: "same",
+      profile: "region",
+      closed: true,
+    });
+    expect(boundary).not.toBe(region);
+  });
 });
 
 describe("roughEllipsePath", () => {
@@ -56,5 +71,13 @@ describe("roughEllipsePath", () => {
   it("roughCirclePath delegates", () => {
     const a = roughCirclePath(40, 40, 5, "disc");
     expect(a).toBe(roughEllipsePath(40, 40, 5, 5, "disc"));
+  });
+});
+
+describe("handDrawnProfileDefaults", () => {
+  it("keeps boundary firmer than canopy", () => {
+    expect(handDrawnProfileDefaults("boundary").roughness!).toBeLessThan(
+      handDrawnProfileDefaults("canopy").roughness!,
+    );
   });
 });

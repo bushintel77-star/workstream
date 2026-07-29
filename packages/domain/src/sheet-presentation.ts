@@ -94,17 +94,17 @@ export const SHEET_PEN_SWATCHES: Array<{
   {
     id: "hand_drawn",
     label: "Freehand",
-    detail: "Seeded Rough.js pencil — concept presentation",
+    detail: "Role-tuned Rough pencil — boundary firm, canopy soft",
   },
   {
     id: "grey_wash",
     label: "Grey wash",
-    detail: "Greyscale fills + crisp outline — illustrator register",
+    detail: "Tonal fills + crisp dark outline — illustrator register",
   },
   {
     id: "watercolour",
     label: "Watercolour",
-    detail: "Soft wash fills + paper tooth — concept brochure",
+    detail: "Soft wash + paper tooth on regions — concept brochure",
   },
 ];
 

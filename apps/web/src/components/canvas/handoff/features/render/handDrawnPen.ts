@@ -4,25 +4,91 @@
  */
 
 import { RoughGenerator } from "roughjs/bin/generator";
+import type { Options } from "roughjs/bin/core";
 import { fnv1a32 } from "./seededRandom";
 import type { PctPoint } from "../../geometry/types";
+
+/** Role-tuned pencil weight — boundary firmer than canopy. */
+export type HandDrawnProfile =
+  | "boundary"
+  | "building"
+  | "region"
+  | "canopy"
+  | "leader";
 
 export type HandDrawnOpts = {
   /** Seed key — typically projectId + ring role. */
   seed: string;
-  /** Rough.js roughness (default 1.05). */
+  /** Rough.js roughness override. */
   roughness?: number;
-  /** Rough.js bowing (default 0.85). */
+  /** Rough.js bowing override. */
   bowing?: number;
   /** Force a closed path (title rings often omit the repeated first vertex). */
   closed?: boolean;
+  /** Pencil profile — defaults to boundary. */
+  profile?: HandDrawnProfile;
 };
 
 const generator = new RoughGenerator();
 
+const PROFILE: Record<
+  HandDrawnProfile,
+  Pick<Options, "roughness" | "bowing" | "maxRandomnessOffset" | "disableMultiStroke">
+> = {
+  // Title ring — readable, slight graphite wobble.
+  boundary: {
+    roughness: 0.85,
+    bowing: 0.55,
+    maxRandomnessOffset: 1.1,
+    disableMultiStroke: false,
+  },
+  // Dwelling — a touch firmer / less bow than the lot ring.
+  building: {
+    roughness: 0.75,
+    bowing: 0.45,
+    maxRandomnessOffset: 0.95,
+    disableMultiStroke: false,
+  },
+  // Planting / hardscape regions — softer concept stroke.
+  region: {
+    roughness: 1.05,
+    bowing: 0.7,
+    maxRandomnessOffset: 1.25,
+    disableMultiStroke: true,
+  },
+  // Canopy / root discs — sketchiest.
+  canopy: {
+    roughness: 1.25,
+    bowing: 0.95,
+    maxRandomnessOffset: 1.4,
+    disableMultiStroke: true,
+  },
+  leader: {
+    roughness: 0.9,
+    bowing: 0.6,
+    maxRandomnessOffset: 1.0,
+    disableMultiStroke: true,
+  },
+};
+
 function seedNum(seed: string): number {
   // Rough seeds are 31-bit positive ints.
   return (fnv1a32(seed) & 0x7fffffff) || 1;
+}
+
+function profileOpts(
+  profile: HandDrawnProfile,
+  overrides?: Pick<HandDrawnOpts, "roughness" | "bowing">,
+): Options {
+  const base = PROFILE[profile];
+  return {
+    seed: 0, // filled by caller
+    stroke: "#000",
+    fill: "none",
+    ...base,
+    ...(overrides?.roughness != null ? { roughness: overrides.roughness } : null),
+    ...(overrides?.bowing != null ? { bowing: overrides.bowing } : null),
+  };
 }
 
 function ringPoints(
@@ -70,22 +136,14 @@ export function wobbledPolylinePath(
     Math.abs(pts[0]![0] - pts[pts.length - 1]![0]) < 1e-6 &&
     Math.abs(pts[0]![1] - pts[pts.length - 1]![1]) < 1e-6;
   const closed = opts.closed === true || endsMatch;
+  const profile = opts.profile ?? (closed ? "boundary" : "leader");
+  const roughOpts: Options = {
+    ...profileOpts(profile, opts),
+    seed: seedNum(opts.seed),
+  };
   const drawable = closed
-    ? generator.polygon(pts, {
-        seed: seedNum(opts.seed),
-        roughness: opts.roughness ?? 1.05,
-        bowing: opts.bowing ?? 0.85,
-        stroke: "#000",
-        fill: "none",
-        disableMultiStroke: true,
-      })
-    : generator.linearPath(pts, {
-        seed: seedNum(opts.seed),
-        roughness: opts.roughness ?? 1.05,
-        bowing: opts.bowing ?? 0.85,
-        stroke: "#000",
-        disableMultiStroke: true,
-      });
+    ? generator.polygon(pts, roughOpts)
+    : generator.linearPath(pts, roughOpts);
   return drawableToD(drawable);
 }
 
@@ -96,17 +154,19 @@ export function roughEllipsePath(
   rx: number,
   ry: number,
   seed: string,
-  opts?: { roughness?: number; bowing?: number },
+  opts?: {
+    roughness?: number;
+    bowing?: number;
+    profile?: HandDrawnProfile;
+  },
 ): string {
   if (!(rx > 0) || !(ry > 0)) return "";
-  const drawable = generator.ellipse(cx, cy, rx * 2, ry * 2, {
+  const profile = opts?.profile ?? "canopy";
+  const roughOpts: Options = {
+    ...profileOpts(profile, opts),
     seed: seedNum(seed),
-    roughness: opts?.roughness ?? 1.1,
-    bowing: opts?.bowing ?? 0.9,
-    stroke: "#000",
-    fill: "none",
-    disableMultiStroke: true,
-  });
+  };
+  const drawable = generator.ellipse(cx, cy, rx * 2, ry * 2, roughOpts);
   return drawableToD(drawable);
 }
 
@@ -116,7 +176,18 @@ export function roughCirclePath(
   cy: number,
   r: number,
   seed: string,
-  opts?: { roughness?: number; bowing?: number },
+  opts?: {
+    roughness?: number;
+    bowing?: number;
+    profile?: HandDrawnProfile;
+  },
 ): string {
   return roughEllipsePath(cx, cy, r, r, seed, opts);
+}
+
+/** Expose profiles for unit tests / compose previews. */
+export function handDrawnProfileDefaults(
+  profile: HandDrawnProfile,
+): (typeof PROFILE)[HandDrawnProfile] {
+  return PROFILE[profile];
 }
