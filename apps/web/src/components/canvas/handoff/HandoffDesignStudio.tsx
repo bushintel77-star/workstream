@@ -3721,6 +3721,7 @@ export function HandoffDesignStudio({
                 setAnnotatePhase("type");
               }}
               sheetPen={studio.presentationPack.pen ?? "technical"}
+              sheetTheme={studio.presentationPack.theme ?? "parchment"}
               atmosphere={studio.presentationPack.atmosphere ?? "graphite"}
               handDrawnSeed={projectId}
             />

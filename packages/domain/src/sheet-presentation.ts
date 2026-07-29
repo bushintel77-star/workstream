@@ -96,6 +96,16 @@ export const SHEET_PEN_SWATCHES: Array<{
     label: "Freehand",
     detail: "Seeded Rough.js pencil — concept presentation",
   },
+  {
+    id: "grey_wash",
+    label: "Grey wash",
+    detail: "Greyscale fills + crisp outline — illustrator register",
+  },
+  {
+    id: "watercolour",
+    label: "Watercolour",
+    detail: "Soft wash fills + paper tooth — concept brochure",
+  },
 ];
 
 /** Atmosphere Palette — pigments, not hex. */

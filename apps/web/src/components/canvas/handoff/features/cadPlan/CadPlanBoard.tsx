@@ -327,6 +327,8 @@ type Props = {
   onTraceBuilding?: () => void;
   /** Fit-sheet render pen — technical or freehand pencil. */
   sheetPen?: import("@workstream/contracts").PresentationPen;
+  /** Fit-sheet paper theme — deep uses chalk strokes. */
+  sheetTheme?: import("@workstream/contracts").PresentationTheme;
   /** Atmosphere Palette selective accent. */
   atmosphere?: import("@workstream/contracts").AtmospherePigment;
   /** Stable seed for hand-drawn wobble (project id). */
@@ -426,6 +428,7 @@ export function CadPlanBoard({
   onVectorEditHint,
   onTraceBuilding,
   sheetPen = "technical",
+  sheetTheme = "parchment",
   atmosphere = "graphite",
   handDrawnSeed = null,
 }: Props) {
@@ -1161,6 +1164,9 @@ export function CadPlanBoard({
   );
 
   const handDrawn = sheetPen === "hand_drawn" && fitSheetStroke;
+  const greyWash = sheetPen === "grey_wash" && fitSheetStroke;
+  const watercolour = sheetPen === "watercolour" && fitSheetStroke;
+  const deepChalk = sheetTheme === "deep" && fitSheetStroke;
   const wobbleSeed = handDrawnSeed?.trim() || "fit-sheet";
   const boundaryHandPath = useMemo(
     () =>
@@ -1201,6 +1207,7 @@ export function CadPlanBoard({
       data-mode={mode}
       data-fidelity={fidelity}
       data-sheet-pen={sheetPen}
+      data-sheet-theme={sheetTheme}
       data-sheet-atmosphere={atmosphere}
       data-cursor={
         annotatePlace
@@ -1215,6 +1222,12 @@ export function CadPlanBoard({
         {
           ...atmosphereVars,
           ...(boardPassthrough ? { pointerEvents: "none" as const } : null),
+          ...(deepChalk
+            ? {
+                ["--plan-stroke" as string]:
+                  "color-mix(in srgb, var(--hc-paper) 88%, transparent)",
+              }
+            : null),
         } as CSSProperties
       }
       onPointerDown={(e) => {
@@ -1227,7 +1240,16 @@ export function CadPlanBoard({
       onPointerUp={boardPassthrough ? undefined : onPointerUp}
       onPointerLeave={() => setCursorPct(null)}
     >
-      <svg className={css.planSvg} viewBox="0 0 100 100" preserveAspectRatio="none">
+      <svg
+        className={`${css.planSvg}${greyWash ? ` ${css.planGreyWash}` : ""}${watercolour ? ` ${css.planWatercolour}` : ""}${deepChalk ? ` ${css.planDeepChalk}` : ""}`}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        style={
+          watercolour
+            ? { filter: "url(#ws-watercolour)" }
+            : undefined
+        }
+      >
         <defs>
           {/* Graphite tooth for freehand pen — subtle, non-animated. */}
           <filter
@@ -1252,6 +1274,32 @@ export function CadPlanBoard({
               result="grain"
             />
             <feComposite in="SourceGraphic" in2="grain" operator="over" />
+          </filter>
+          <filter
+            id="ws-watercolour"
+            x="-12%"
+            y="-12%"
+            width="124%"
+            height="124%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.04"
+              numOctaves="3"
+              seed="3"
+              result="paper"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="paper"
+              scale="1.4"
+              xChannelSelector="R"
+              yChannelSelector="G"
+              result="warp"
+            />
+            <feGaussianBlur in="warp" stdDeviation="0.35" result="soft" />
+            <feBlend in="soft" in2="SourceGraphic" mode="multiply" />
           </filter>
           <pattern
             id="ws-hardscape-hatch"
@@ -1610,10 +1658,15 @@ export function CadPlanBoard({
           const plantingAccent =
             accentAtmosphere &&
             fitSheetStroke &&
-            (it.t === "bed" || it.t === "lawn");
-          const wash = plantingAccent
-            ? "var(--sheet-atmosphere-wash)"
-            : baseWash;
+            (it.t === "bed" ||
+              it.t === "lawn" ||
+              it.t === "paving" ||
+              it.t === "deck");
+          const wash = greyWash
+            ? "color-mix(in srgb, var(--text-primary) 12%, var(--canvas))"
+            : plantingAccent
+              ? "var(--sheet-atmosphere-wash)"
+              : baseWash;
           const hatched = it.t === "paving" || it.t === "deck";
           const outline = it.outlinePct!;
           const pts = ptsAttr(outline);

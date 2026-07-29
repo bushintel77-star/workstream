@@ -73,6 +73,21 @@ test.describe("Fit sheet presentation compose", () => {
       "data-sheet-atmosphere",
       "sage",
     );
+    await page.getByTestId("sheet-pen-grey_wash").click();
+    await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
+      "data-sheet-pen",
+      "grey_wash",
+    );
+    await page.getByTestId("sheet-pen-watercolour").click();
+    await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
+      "data-sheet-pen",
+      "watercolour",
+    );
+    await page.getByTestId("sheet-pen-technical").click();
+    await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
+      "data-sheet-pen",
+      "technical",
+    );
 
     await page.getByTestId("sheet-reflow").click();
     await expect(page.getByTestId("sheet-widgets-side_stack")).toBeVisible();

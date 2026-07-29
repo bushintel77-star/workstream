@@ -28,6 +28,19 @@
   pointer-events: none;
 }
 
+.planGreyWash {
+  filter: grayscale(1) contrast(1.05);
+}
+
+.planDeepChalk :is(polygon, path, line, ellipse, circle, polyline) {
+  stroke: var(--plan-stroke, color-mix(in srgb, var(--hc-paper) 88%, transparent));
+}
+
+.planWatercolour {
+  /* Filter applied inline via #ws-watercolour for fill softness. */
+  opacity: 0.96;
+}
+
 .handleHit {
   pointer-events: auto;
   cursor: grab;

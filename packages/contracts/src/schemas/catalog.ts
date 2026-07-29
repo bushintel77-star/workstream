@@ -593,7 +593,12 @@ export const PresentationThemeSchema = z
 export type PresentationTheme = z.infer<typeof PresentationThemeSchema>;
 
 /** Fit-sheet render pen — one geometry, multiple looks. */
-export const PresentationPenSchema = z.enum(["technical", "hand_drawn"]);
+export const PresentationPenSchema = z.enum([
+  "technical",
+  "hand_drawn",
+  "grey_wash",
+  "watercolour",
+]);
 export type PresentationPen = z.infer<typeof PresentationPenSchema>;
 
 /**
