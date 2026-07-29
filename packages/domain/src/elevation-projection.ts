@@ -77,6 +77,30 @@ export function elevationLookPair(look: ElevationLook): ElevationLook {
   return cycleElevationLook(look);
 }
 
+/**
+ * Brochure / dark-concept elev pick — cardinal look that shows the widest
+ * dwelling face (street-front heuristic when Vicmap building is wide).
+ */
+export function preferBrochureElevLook(
+  building: Array<{ x: number; y: number }>,
+): ElevationLook {
+  if (building.length < 2) return "N";
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const p of building) {
+    minX = Math.min(minX, p.x);
+    maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y);
+    maxY = Math.max(maxY, p.y);
+  }
+  const spanX = maxX - minX;
+  const spanY = maxY - minY;
+  // Wider east-west face → look north/south; taller N–S mass → look east/west.
+  return spanX >= spanY ? "N" : "E";
+}
+
 function lookFromLegacyAxis(axis: ElevationAxis): ElevationLook {
   return axis === "front" ? "N" : "E";
 }

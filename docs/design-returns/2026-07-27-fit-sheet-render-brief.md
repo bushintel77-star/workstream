@@ -142,9 +142,9 @@ new render/compose hook here.
 
 ## 9. Sequencing
 
-1. Token cleanup on the compose panel + kill `blush`.
-2. Pen architecture (`renderStyle` on the plan renderer) + **technical** and **freehand pencil** pens.
-3. CAD symbols/annotation kit (§4) on the technical pen.
-4. Auto-compose + seed presets (§5).
-5. Selective colour + dark concept pens.
-6. Phase 2: temporal (Year 1/5/10), multi-sheet sets, best-aspect elevations.
+1. Token cleanup on the compose panel + kill `blush`. **HAVE** (`deep` theme + rose→ink migrate).
+2. Pen architecture (`sheetPen` on the plan renderer) + **technical** and **freehand pencil** pens. **HAVE** (Rough.js).
+3. CAD symbols/annotation kit (§4) on the technical pen. **HAVE** (scale / stamp / hatch key / elev A–A′ / RL / `--signal` ink).
+4. Auto-compose + seed presets (§5). **HAVE** (Working / Brochure / Minimal / Dark + margin policy).
+5. Selective colour + dark concept pens. **HAVE** (Atmosphere + grey_wash / watercolour / deep chalk).
+6. Phase 2: temporal (Year 1/5/10 on Fit via board scrub), multi-sheet sets, best-aspect elevations. **PARTIAL** — temporal rings + brochure elev pick shipped; persisted multi-sheet later.

@@ -3,6 +3,7 @@ import {
   cycleElevationLook,
   elevationLookPair,
   elevationLookProjector,
+  preferBrochureElevLook,
   projectElevationItems,
 } from "./elevation-projection";
 
@@ -66,5 +67,29 @@ describe("projectElevationItems", () => {
   it("legacy front/side map to N/E", () => {
     expect(projectElevationItems(sample, "front").look).toBe("N");
     expect(projectElevationItems(sample, "side").look).toBe("E");
+  });
+});
+
+describe("preferBrochureElevLook", () => {
+  it("picks N when the dwelling is wider east-west", () => {
+    expect(
+      preferBrochureElevLook([
+        { x: 20, y: 40 },
+        { x: 80, y: 40 },
+        { x: 80, y: 55 },
+        { x: 20, y: 55 },
+      ]),
+    ).toBe("N");
+  });
+
+  it("picks E when the dwelling is taller north-south", () => {
+    expect(
+      preferBrochureElevLook([
+        { x: 40, y: 20 },
+        { x: 55, y: 20 },
+        { x: 55, y: 80 },
+        { x: 40, y: 80 },
+      ]),
+    ).toBe("E");
   });
 });

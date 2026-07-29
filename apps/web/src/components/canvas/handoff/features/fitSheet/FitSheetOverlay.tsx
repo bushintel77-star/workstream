@@ -19,6 +19,7 @@ import {
 import {
   elevationLookPair,
   elevationLookProjector,
+  preferBrochureElevLook,
   type ElevationLook,
 } from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
@@ -300,13 +301,26 @@ export function FitSheetOverlay({
   const elevProfiles = useMemo(() => {
     if (!showElevations) return [];
     const rowH = 56;
-    const primary = elevLook;
-    const secondary = elevationLookPair(elevLook);
+    const brochure =
+      presentationPack?.template_id === "curtis-client-brochure" ||
+      presentationPack?.template_id === "curtis-dark-concept";
+    const primary = brochure
+      ? preferBrochureElevLook(building)
+      : elevLook;
+    const secondary = elevationLookPair(primary);
     return [
       buildElevProfile(primary, boundary, building, items, scaleM, rowH),
       buildElevProfile(secondary, boundary, building, items, scaleM, rowH),
     ];
-  }, [showElevations, elevLook, boundary, building, items, scaleM]);
+  }, [
+    showElevations,
+    elevLook,
+    boundary,
+    building,
+    items,
+    scaleM,
+    presentationPack?.template_id,
+  ]);
 
   const elevPanelOn = elevProfiles.length > 0 && box.boxW >= 280;
   const elevPanelW = Math.max(

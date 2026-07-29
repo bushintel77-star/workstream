@@ -99,11 +99,11 @@ space, site fall, indicative cut/fill — SITES v2 credit names + UN SDG chips. 
 
 ## 7. Rendering + the Atmosphere Palette
 
-- **Hand-drawn hybrid + selective colour:** already the plan (fit-sheet brief §3).
-- **NEW and worth taking — "Atmosphere Palette".** Replace the RGB/HEX picker for render colour
-  with a **curated pigment palette**: terre verte, yellow ochre, naphtol red, burnt umber, cherry
-  blossom, sage. This is a genuinely boutique detail — designers choose pigments, not hex codes —
-  and it structurally prevents the garish full-saturation output we're trying to avoid.
+- **HAVE — Hand-drawn hybrid + selective colour:** Fit Sheet pens (`technical` /
+  `hand_drawn` / `grey_wash` / `watercolour`) + Atmosphere pigments on
+  `presentation_pack`; Rough.js freehand; deep chalk theme.
+- **HAVE — Atmosphere Palette.** Curated pigments (terre verte, ochre, cherry…)
+  replace HEX for selective accent washes — boutique, not garish.
 - **UE5 (Nanite/Lumen) live sync, path tracing, Beer's-Law water:** **ROADMAP — target, not
   exclusion.** This is the 2026 standard for cinematic interactive client presentation and should be
   the destination. Honest prerequisite: it needs **metre-space survey geometry** (Stage 2), because a
@@ -273,7 +273,8 @@ drawing tool.
 2. **Board context contract** (§8.1) — the AI-awareness foundation; also unlocks 6 and 9.
 3. **Liability overlay on export** (§9) — low effort, protects the practice, differentiating.
 4. **Temporal slider + Year-10 collision warning** (§4) — shipped: Y1/Y5/Y10 scrub, canopy/root rings, findings + dock warn.
-5. **Hand-drawn pen + Atmosphere Palette** (§7, fit-sheet brief) — the aesthetic win.
+5. **Hand-drawn pen + Atmosphere Palette** (§7, fit-sheet brief) — **HAVE**: Rough.js freehand,
+   grey wash / watercolour pens, deep chalk, Atmosphere pigments, technical CAD furniture.
 6. **Lighting workspace** (§5) — beams, transformer 80% rule, pulse-not-dialog.
 7. **Sustainability dashboard** (§6) — shipped: UHI / ET / cut-fill on BoardContext sidecar.
 8. **Client WebGL portal** — shipped on `/share/[token]`: sun scrub, lighting toggle, Atmosphere switch (digital-twin step 1).
