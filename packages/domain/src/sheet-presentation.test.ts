@@ -18,7 +18,7 @@ import {
 
 describe("sheet presentation", () => {
   it("seeds Curtis templates with unique widget ids", () => {
-    expect(CURTIS_SHEET_TEMPLATES.length).toBeGreaterThanOrEqual(3);
+    expect(CURTIS_SHEET_TEMPLATES.length).toBeGreaterThanOrEqual(4);
     const pack = applySheetTemplate("curtis-client-brochure");
     expect(pack.theme).toBe("parchment");
     expect(pack.pen).toBe("hand_drawn");
@@ -27,6 +27,13 @@ describe("sheet presentation", () => {
     expect(pack.widgets.length).toBeGreaterThanOrEqual(5);
     const ids = new Set(pack.widgets.map((w) => w.id));
     expect(ids.size).toBe(pack.widgets.length);
+  });
+
+  it("dark concept seeds deep grey wash", () => {
+    const pack = applySheetTemplate("curtis-dark-concept");
+    expect(pack.theme).toBe("deep");
+    expect(pack.pen).toBe("grey_wash");
+    expect(pack.atmosphere).toBe("pale_blue");
   });
 
   it("working drawing seeds technical graphite", () => {

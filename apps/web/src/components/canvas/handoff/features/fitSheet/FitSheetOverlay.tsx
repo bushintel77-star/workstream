@@ -6,11 +6,11 @@ import {
   buildWorkableSiteSchedule,
   formatScheduleAreaM2,
   resolveSiteAreaDisplay,
-  SHEET_INNER_MARGIN,
   SHEET_PANEL_GAP,
   SHEET_SCALE_STEPS,
   SHEET_TITLE_STRIP_H,
   sheetBoxFor,
+  sheetInnerMarginForTemplate,
   titlePanelWidth,
   type PaperSize,
   type PctPoint,
@@ -295,7 +295,7 @@ export function FitSheetOverlay({
   const panelW = a4Strip ? 0 : titlePanelWidth(box.boxW);
   const showPanel = a4Strip ? box.boxW >= 260 : panelW > 0;
   const scrimBot = Math.max(0, boardH - box.boxTop - box.boxH);
-  const inset = SHEET_INNER_MARGIN;
+  const inset = sheetInnerMarginForTemplate(presentationPack?.template_id);
 
   const elevProfiles = useMemo(() => {
     if (!showElevations) return [];

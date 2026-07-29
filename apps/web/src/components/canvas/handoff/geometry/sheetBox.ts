@@ -89,3 +89,31 @@ export function plotBoxFor(sheet: SheetBox, opts: PlotBoxOpts = {}): SheetBox {
 export function paperAspect(paper: PaperSize): number {
   return paper === "a4" ? 210 / 297 : 420 / 297;
 }
+
+/**
+ * Prefer A3 landscape for wide boards; A4 portrait when the board is tall
+ * (tablet / phone Fit) so the plot isn't a thumbnail beside a stolen column.
+ */
+export function recommendPaperForBoard(
+  boardW: number,
+  boardH: number,
+): PaperSize {
+  if (!(boardW > 0) || !(boardH > 0)) return "a3";
+  return boardH / boardW > 1.15 ? "a4" : "a3";
+}
+
+/**
+ * Inner printable margin — brochure / dark concept get more breathing room.
+ */
+export function sheetInnerMarginForTemplate(
+  templateId: string | undefined | null,
+): number {
+  if (
+    templateId === "curtis-client-brochure" ||
+    templateId === "curtis-dark-concept"
+  ) {
+    return 14;
+  }
+  if (templateId === "curtis-minimal-ink") return 10;
+  return SHEET_INNER_MARGIN;
+}

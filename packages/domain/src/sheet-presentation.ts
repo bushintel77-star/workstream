@@ -158,7 +158,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
         widget("caption", "title_meta", 0, {
           accent: "ink",
           emphasis: "quiet",
-        }, "Working drawing — confirm title"),
+        }, "Working drawing — indicative · not for construction"),
       ],
     },
   },
@@ -175,7 +175,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
         widget("caption", "title_meta", 0, {
           accent: "ink",
           emphasis: "standard",
-        }, "Concept presentation — Curtis & Co"),
+        }, "NO.1 · Concept presentation — Curtis & Co"),
         widget("quote_total", "side_stack", 0, {
           accent: "ink",
           emphasis: "hero",
@@ -212,6 +212,35 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
         widget("quote_total", "side_stack", 0, {
           accent: "ink",
           emphasis: "hero",
+        }),
+      ],
+    },
+  },
+  {
+    id: "curtis-dark-concept",
+    label: "Dark concept",
+    detail: "Chalk on deep ground — night presentation",
+    pack: {
+      theme: "deep",
+      pen: "grey_wash",
+      atmosphere: "pale_blue",
+      template_id: "curtis-dark-concept",
+      widgets: [
+        widget("caption", "title_meta", 0, {
+          accent: "ink",
+          emphasis: "standard",
+        }, "NO.1 · Dark concept — Curtis & Co"),
+        widget("quote_total", "side_stack", 0, {
+          accent: "gold",
+          emphasis: "hero",
+        }),
+        widget("zone_summary", "side_stack", 1, {
+          accent: "sage",
+          emphasis: "quiet",
+        }),
+        widget("material_swatches", "footer_band", 0, {
+          accent: "ink",
+          emphasis: "quiet",
         }),
       ],
     },

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   paperAspect,
   plotBoxFor,
+  recommendPaperForBoard,
   sheetBoxFor,
+  sheetInnerMarginForTemplate,
   titlePanelWidth,
   SHEET_OUTER_PAD,
 } from "./sheetBox";
@@ -61,5 +63,20 @@ describe("plotBoxFor", () => {
     const plain = plotBoxFor(sheet, { titleW });
     const withElev = plotBoxFor(sheet, { titleW, elevH: 146 });
     expect(withElev.boxH).toBeLessThan(plain.boxH);
+  });
+});
+
+describe("recommendPaperForBoard", () => {
+  it("picks A3 for wide boards and A4 for tall boards", () => {
+    expect(recommendPaperForBoard(1200, 800)).toBe("a3");
+    expect(recommendPaperForBoard(800, 1200)).toBe("a4");
+  });
+});
+
+describe("sheetInnerMarginForTemplate", () => {
+  it("widens brochure and dark-concept margins", () => {
+    expect(sheetInnerMarginForTemplate("curtis-client-brochure")).toBe(14);
+    expect(sheetInnerMarginForTemplate("curtis-dark-concept")).toBe(14);
+    expect(sheetInnerMarginForTemplate("curtis-working-drawing")).toBe(8);
   });
 });
