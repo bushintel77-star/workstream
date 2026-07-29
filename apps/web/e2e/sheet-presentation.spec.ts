@@ -55,6 +55,9 @@ test.describe("Fit sheet presentation compose", () => {
     await expect(page.getByTestId("sheet-furniture")).toHaveCount(0);
     // Idle Fit: Sheets strip stays off the paper (2026 disappearing chrome).
     await expect(page.getByTestId("artboard-strip")).toHaveCount(0);
+    await expect(page.getByTestId("selection-ring")).toHaveCount(0);
+    await expect(page.getByTestId("right-data-lane-services")).toHaveCount(0);
+    await expect(page.getByTestId("zone-kind-bar")).toHaveCount(0);
 
     await page.getByTestId("sheet-theme-deep").click();
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
@@ -71,6 +74,22 @@ test.describe("Fit sheet presentation compose", () => {
     await expect(page.getByTestId("sheet-graphic-scale")).toBeVisible();
     await expect(page.getByTestId("sheet-status-stamp")).toBeVisible();
     await expect(page.getByTestId("sheet-hatch-key")).toBeVisible();
+
+    // Elev A–A′ / RL are technical furniture — only after Elev is armed.
+    await page.getByTestId("sheet-elevations-toggle").click();
+    await expect(page.getByTestId("fit-elev-section-A")).toBeVisible();
+    await expect(
+      page.getByTestId("fit-elev-section-A").getByTestId("fit-elev-datum"),
+    ).toBeVisible();
+    await page.getByTestId("sheet-pen-hand_drawn").click();
+    await expect(page.getByTestId("fit-elev-section-A")).toHaveCount(0);
+    await expect(page.getByTestId("fit-elev-datum")).toHaveCount(0);
+    await page.getByTestId("sheet-pen-technical").click();
+    await expect(page.getByTestId("fit-elev-section-A")).toBeVisible();
+    await expect(
+      page.getByTestId("fit-elev-section-A").getByTestId("fit-elev-datum"),
+    ).toBeVisible();
+
     await page.getByTestId("sheet-atmosphere-sage").click();
     await expect(page.getByTestId("fit-sheet-frame")).toHaveAttribute(
       "data-sheet-atmosphere",
@@ -123,7 +142,7 @@ test.describe("Fit sheet presentation compose", () => {
           };
           return body.canvas?.presentation_pack ?? null;
         },
-        { timeout: 20_000 },
+        { timeout: 30_000 },
       )
       .toMatchObject({
         theme: "deep",

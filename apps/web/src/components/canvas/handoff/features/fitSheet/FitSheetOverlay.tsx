@@ -323,6 +323,8 @@ export function FitSheetOverlay({
   ]);
 
   const elevPanelOn = elevProfiles.length > 0 && box.boxW >= 280;
+  const technicalFurniture =
+    (presentationPack?.pen ?? "technical") === "technical";
   const elevPanelW = Math.max(
     140,
     box.boxW -
@@ -594,7 +596,7 @@ export function FitSheetOverlay({
             <SheetFurniture
               scaleM={scaleM ?? 20}
               frameWidthPx={box.boxW}
-              technical={(presentationPack?.pen ?? "technical") === "technical"}
+              technical={technicalFurniture}
             />
           </div>
         </aside>
@@ -617,15 +619,27 @@ export function FitSheetOverlay({
             <div
               key={pf.label}
               className={css.elevRow}
-              data-section-id={sectionId}
-              data-testid={`fit-elev-section-${sectionId}`}
+              data-section-id={technicalFurniture ? sectionId : undefined}
+              data-testid={
+                technicalFurniture
+                  ? `fit-elev-section-${sectionId}`
+                  : "fit-elev-concept"
+              }
             >
-              <span className={css.elevLabel}>
-                {sectionId}–{sectionId}′ · {pf.label}
-              </span>
-              <div className={css.elevGround} data-testid="fit-elev-datum">
-                <span className={css.elevDatumLabel}>RL 0.00</span>
-              </div>
+              {technicalFurniture ? (
+                <span className={css.elevLabel}>
+                  {sectionId}–{sectionId}′ · {pf.label}
+                </span>
+              ) : (
+                <span className={css.elevLabel}>{pf.label}</span>
+              )}
+              {technicalFurniture ? (
+                <div className={css.elevGround} data-testid="fit-elev-datum">
+                  <span className={css.elevDatumLabel}>RL 0.00</span>
+                </div>
+              ) : (
+                <div className={css.elevGround} />
+              )}
               <div
                 className={css.elevBld}
                 style={{

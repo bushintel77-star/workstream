@@ -2099,10 +2099,18 @@ export function HandoffDesignStudio({
         autoDenomKeyRef.current = null;
         /* Denom is auto-seeded from the true fit (autoDenom effect) —
            no hardcoded 1:100. */
+        /* Paper-first: clear orbit chrome, lanes, and armed tools. */
+        studio.setSelection(null, []);
         studio.setUi({
           frameOn: true,
           panX: 0,
           panY: 0,
+          tool: "select",
+          rightDataPanel: null,
+          cmdOpen: false,
+          arBirdseyeOn: false,
+          lightingWorkspaceOn: false,
+          ghostReviewOpen: false,
         });
         // First open with an empty, never-templated pack → seed the client
         // brochure onto the paper. Compose peel stays closed.
@@ -3274,7 +3282,7 @@ export function HandoffDesignStudio({
         ) : null}
       </header>
 
-      {openSharedRev && !ui.clientView ? (
+      {openSharedRev && !ui.clientView && !ui.frameOn ? (
         <p className={css.shareBanner} data-testid="share-open-banner">
           Shared rev {openSharedRev.revision} is out with the client — changes
           create a new revision.
@@ -3998,7 +4006,10 @@ export function HandoffDesignStudio({
                 onRejectAll={studio.rejectAllTrenchGhosts}
               />
             ) : null}
-            {ui.tool === "zone" && !ui.focusOn && !ui.clientView ? (
+            {ui.tool === "zone" &&
+            !ui.focusOn &&
+            !ui.clientView &&
+            !ui.frameOn ? (
               <NicheToolCarousel
                 testId="zone-kind-bar"
                 label="Zone type"
@@ -4098,8 +4109,10 @@ export function HandoffDesignStudio({
                 onDismiss={() => studio.setSelection(null, [])}
               />
             ) : null}
-            {/* Multi-select / sketch keep the orbit ring; single CAD uses dial. */}
+            {/* Multi-select / sketch keep the orbit ring; single CAD uses dial.
+                Fit is paper-only — chrome.selectionRing is false; do not bypass. */}
             {!ui.clientView &&
+            !ui.frameOn &&
             selectedLive &&
             ui.tool !== "zone" &&
             !selectionOrbitOn &&
@@ -4616,7 +4629,7 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {ui.arBirdseyeOn ? (
+        {ui.arBirdseyeOn && !ui.frameOn ? (
           <ArBirdseyeOverlay
             address={displayAddress}
             boundary={studio.boundary.map((p) => ({
@@ -4737,8 +4750,9 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {/* Right data lane — one panel (lane law). Flush to the right boundary. */}
-        {planOn && servicesOpen ? (
+        {/* Right data lane — one panel (lane law). Flush to the right boundary.
+            Fit dismisses lanes on enter; keep mounts gated while paper is up. */}
+        {planOn && servicesOpen && !ui.frameOn ? (
           <RightDataLane testId="right-data-lane-services">
             <SitePackPanel
               chase={ui.sitePackChase}
@@ -4839,7 +4853,7 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {planOn && environmentOpen ? (
+        {planOn && environmentOpen && !ui.frameOn ? (
           <RightDataLane testId="right-data-lane-environment">
             <EnvironmentPanel
               open
@@ -4862,7 +4876,7 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {planOn && siteMetaOpen ? (
+        {planOn && siteMetaOpen && !ui.frameOn ? (
           <RightDataLane testId="right-data-lane-site">
             <SiteMetaPanel
               open
@@ -4873,7 +4887,7 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {planOn && treesMetaOpen ? (
+        {planOn && treesMetaOpen && !ui.frameOn ? (
           <RightDataLane testId="right-data-lane-trees">
             <TreesMetaPanel
               open
@@ -4883,7 +4897,10 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
-        {(chrome.structureRail || chrome.compact) && planOn && layersOpen ? (
+        {(chrome.structureRail || chrome.compact) &&
+        planOn &&
+        layersOpen &&
+        !ui.frameOn ? (
           <RightDataLane testId="right-data-lane-layers">
             <LayersPanel
               open
@@ -5258,7 +5275,7 @@ export function HandoffDesignStudio({
           </div>
         ) : null}
 
-        {sitesOpen && planOn && !projectId ? (
+        {sitesOpen && planOn && !projectId && !ui.frameOn ? (
           <RightDataLane testId="right-data-lane-sites">
             <SiteSwitcher
               open

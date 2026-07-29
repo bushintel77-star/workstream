@@ -14,6 +14,15 @@ export type SheetFurnitureProps = {
   technical: boolean;
 };
 
+/** Pure gate — technical pen + valid scale/frame only. */
+export function sheetFurnitureVisible(opts: {
+  technical: boolean;
+  scaleM: number;
+  frameWidthPx: number;
+}): boolean {
+  return opts.technical && opts.scaleM > 0 && opts.frameWidthPx > 0;
+}
+
 const SCALE_NICE = [1, 2, 5, 10, 20, 50, 100] as const;
 
 function pickBarMetres(scaleM: number, frameWidthPx: number): {
@@ -46,7 +55,7 @@ export function SheetFurniture({
   frameWidthPx,
   technical,
 }: SheetFurnitureProps) {
-  if (!technical || !(scaleM > 0) || !(frameWidthPx > 0)) return null;
+  if (!sheetFurnitureVisible({ technical, scaleM, frameWidthPx })) return null;
   const bar = pickBarMetres(scaleM, frameWidthPx);
 
   return (

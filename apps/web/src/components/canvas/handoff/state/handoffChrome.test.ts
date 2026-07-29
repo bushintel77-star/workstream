@@ -243,6 +243,10 @@ describe("resolveHandoffChrome", () => {
     expect(c.tradeMargin).toBe(false);
     expect(c.ambientRibbon).toBe(false);
     expect(c.draftSurface).toBe(false);
+    expect(c.selectionRing).toBe(false);
+    expect(c.sunGrowth).toBe(false);
+    expect(c.lightingWorkspace).toBe(false);
+    expect(c.primaryFab).toBe(false);
   });
 
   it("Focus mode clears ambient chrome for a single composition", () => {

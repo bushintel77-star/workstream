@@ -139,6 +139,38 @@ describe("site_frame bridge", () => {
     expect(siteFrameToSnapshot(frame).buildingSource).toBe("vicmap");
   });
 
+  it("clamps keyless overlay rings into 0–100 board %", () => {
+    const frame = snapshotToSiteFrame({
+      boundary: [
+        { x: 10, y: 10 },
+        { x: 90, y: 10 },
+        { x: 90, y: 90 },
+        { x: 10, y: 90 },
+      ],
+      building: [],
+      easements: [],
+      services: [],
+      levels: [],
+      keylessOverlays: [
+        {
+          kind: "flood",
+          rings: [
+            [
+              { x_pct: -12, y_pct: -4 },
+              { x_pct: 110, y_pct: 50 },
+              { x_pct: 40, y_pct: 140 },
+            ],
+          ],
+        },
+      ],
+    });
+    expect(frame.keyless_overlays?.[0]?.rings[0]).toEqual([
+      { x_pct: 0, y_pct: 0 },
+      { x_pct: 100, y_pct: 50 },
+      { x_pct: 40, y_pct: 100 },
+    ]);
+  });
+
   it("round-trips authored DBH on existing trees", () => {
     const items: StudioItem[] = [
       {

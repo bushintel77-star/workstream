@@ -271,7 +271,15 @@ export function snapshotToSiteFrame(args: {
         y_pct: clampPct(pt.y_pct),
       })),
     })),
-    keyless_overlays: args.keylessOverlays ?? [],
+    keyless_overlays: (args.keylessOverlays ?? []).map((overlay) => ({
+      ...overlay,
+      rings: overlay.rings.map((ring) =>
+        ring.map((pt) => ({
+          x_pct: clampPct(pt.x_pct),
+          y_pct: clampPct(pt.y_pct),
+        })),
+      ),
+    })),
     ...(args.boardWidthM != null &&
     Number.isFinite(args.boardWidthM) &&
     args.boardWidthM > 0
