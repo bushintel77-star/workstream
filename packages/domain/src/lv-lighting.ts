@@ -2,7 +2,8 @@
  * Low-voltage landscape lighting — load + voltage-drop model (Workflow 1).
  * Indicative engineering for the lighting workspace; confirm with electrician.
  *
- * Spec: wattage × 1.2 design load; transformer 80% rule; 12/2 | 14/2 drop.
+ * Spec: wattage × 1.2 design load; transformer 80% rule; 12/2 | 14/2 drop;
+ * spline wire theatre + pulse only the offending run(s).
  */
 
 import { isLightingSymbolId } from "./landscape-services";
@@ -46,6 +47,8 @@ export const TRANSFORMER_LOAD_FRACTION = 0.8;
 export const DESIGN_LOAD_FACTOR = 1.2;
 /** Nominal LV circuit voltage. */
 export const LV_VOLTS = 12;
+/** Assign a fixture to a lighting run within this board distance (m). */
+export const LV_FIXTURE_ASSIGN_RADIUS_M = 4;
 
 export type LvFixtureInput = {
   id: string;
@@ -80,6 +83,21 @@ export type LvCircuitAssessment = {
   /** Drop above ~5% of 12 V — soft warn. */
   dropWarn: boolean;
   tip: string;
+};
+
+export type LvRunZone = {
+  id: string;
+  kind: "lighting" | "lighting_conduit";
+  points: Array<{ x: number; y: number }>;
+  wire_gauge?: LvWireGauge;
+  transformer_va?: number;
+};
+
+export type LvRunsAssessment = {
+  aggregate: LvCircuitAssessment;
+  runs: Array<{ zoneId: string; assessment: LvCircuitAssessment }>;
+  /** Zone ids whose cable should pulse — overloaded lighting runs (+ conduits when aggregate overloads). */
+  overloadedZoneIds: string[];
 };
 
 export function fixtureWattage(symbolId: string): number {
@@ -117,6 +135,61 @@ export function polylineLengthM(
     m += Math.hypot(b.x - a.x, b.y - a.y) / ppm;
   }
   return m;
+}
+
+/** Min distance in board % from a point to a polyline. */
+export function distPointToPolylinePct(
+  p: { x: number; y: number },
+  pts: Array<{ x: number; y: number }>,
+): number {
+  if (pts.length === 0) return Infinity;
+  if (pts.length === 1) {
+    return Math.hypot(p.x - pts[0]!.x, p.y - pts[0]!.y);
+  }
+  let best = Infinity;
+  for (let i = 1; i < pts.length; i += 1) {
+    const a = pts[i - 1]!;
+    const b = pts[i]!;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    let t = 0;
+    if (len2 > 0) {
+      t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+      t = Math.max(0, Math.min(1, t));
+    }
+    const qx = a.x + t * dx;
+    const qy = a.y + t * dy;
+    best = Math.min(best, Math.hypot(p.x - qx, p.y - qy));
+  }
+  return best;
+}
+
+/**
+ * Catmull-Rom → cubic Bezier SVG path through board-% control points.
+ * Stored geometry stays a polyline; this is presentation only.
+ */
+export function catmullRomSvgPath(
+  pts: Array<{ x: number; y: number }>,
+): string {
+  if (pts.length === 0) return "";
+  if (pts.length === 1) return `M ${pts[0]!.x} ${pts[0]!.y}`;
+  if (pts.length === 2) {
+    return `M ${pts[0]!.x} ${pts[0]!.y} L ${pts[1]!.x} ${pts[1]!.y}`;
+  }
+  let d = `M ${pts[0]!.x} ${pts[0]!.y}`;
+  for (let i = 0; i < pts.length - 1; i += 1) {
+    const p0 = pts[i === 0 ? i : i - 1]!;
+    const p1 = pts[i]!;
+    const p2 = pts[i + 1]!;
+    const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1]!;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
 }
 
 export function assessLvCircuit(input: LvCircuitInput): LvCircuitAssessment {
@@ -173,6 +246,102 @@ export function assessLvCircuit(input: LvCircuitInput): LvCircuitAssessment {
     dropWarn,
     tip,
   };
+}
+
+/**
+ * Per-run assessments so only overloaded lighting cables pulse.
+ * Fixtures assign to the nearest `lighting` run within assignRadiusM.
+ * Conduit runs pulse when the aggregate circuit is overloaded (house feed).
+ */
+export function assessLvRuns(input: {
+  zones: LvRunZone[];
+  fixtures: LvFixtureInput[];
+  boardWidthM: number;
+  defaultTransformerVa?: number;
+  defaultWireGauge?: LvWireGauge;
+  assignRadiusM?: number;
+}): LvRunsAssessment {
+  const boardW = input.boardWidthM > 0 ? input.boardWidthM : 110;
+  const assignR = input.assignRadiusM ?? LV_FIXTURE_ASSIGN_RADIUS_M;
+  const assignPct = (assignR / boardW) * 100;
+  const defVa = input.defaultTransformerVa ?? DEFAULT_TRANSFORMER_VA;
+  const defGauge = input.defaultWireGauge ?? DEFAULT_WIRE_GAUGE;
+
+  const lightingRuns = input.zones.filter((z) => z.kind === "lighting");
+  const conduitRuns = input.zones.filter((z) => z.kind === "lighting_conduit");
+  const fixtures = input.fixtures.filter((f) =>
+    isLightingSymbolId(f.symbolId),
+  );
+
+  const assigned = new Map<string, LvFixtureInput[]>();
+  for (const z of lightingRuns) assigned.set(z.id, []);
+  const orphan: LvFixtureInput[] = [];
+
+  for (const f of fixtures) {
+    let bestId: string | null = null;
+    let bestD = Infinity;
+    for (const z of lightingRuns) {
+      const d = distPointToPolylinePct(f, z.points);
+      if (d < bestD) {
+        bestD = d;
+        bestId = z.id;
+      }
+    }
+    if (bestId != null && bestD <= assignPct) {
+      assigned.get(bestId)!.push(f);
+    } else {
+      orphan.push(f);
+    }
+  }
+
+  // Orphans ride the longest lighting run, else stay aggregate-only.
+  if (orphan.length > 0 && lightingRuns.length > 0) {
+    let longest = lightingRuns[0]!;
+    let longestM = polylineLengthM(longest.points, boardW);
+    for (const z of lightingRuns.slice(1)) {
+      const m = polylineLengthM(z.points, boardW);
+      if (m > longestM) {
+        longest = z;
+        longestM = m;
+      }
+    }
+    assigned.get(longest.id)!.push(...orphan);
+  }
+
+  const runs: LvRunsAssessment["runs"] = [];
+  const overloadedZoneIds: string[] = [];
+
+  for (const z of lightingRuns) {
+    const assessment = assessLvCircuit({
+      fixtures: assigned.get(z.id) ?? [],
+      runLengthM: polylineLengthM(z.points, boardW),
+      transformerVa: z.transformer_va ?? defVa,
+      wireGauge: z.wire_gauge ?? defGauge,
+    });
+    runs.push({ zoneId: z.id, assessment });
+    if (assessment.overloaded) overloadedZoneIds.push(z.id);
+  }
+
+  const totalLen = input.zones.reduce(
+    (s, z) => s + polylineLengthM(z.points, boardW),
+    0,
+  );
+  const aggregate = assessLvCircuit({
+    fixtures,
+    runLengthM: totalLen,
+    transformerVa: defVa,
+    wireGauge: defGauge,
+  });
+
+  // House feed pulses when the whole board circuit is over — or when any
+  // lighting run is over.
+  if (aggregate.overloaded || overloadedZoneIds.length > 0) {
+    for (const z of conduitRuns) {
+      if (!overloadedZoneIds.includes(z.id)) overloadedZoneIds.push(z.id);
+    }
+  }
+
+  return { aggregate, runs, overloadedZoneIds };
 }
 
 /** Suggest next transformer VA rung when overloaded. */

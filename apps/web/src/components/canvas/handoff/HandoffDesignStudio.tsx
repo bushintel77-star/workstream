@@ -191,13 +191,12 @@ import {
 } from "./features/ground/groundMetrics";
 import {
   assessIrrigationUniformity,
-  assessLvCircuit,
+  assessLvRuns,
   cycleElevationLook,
   DESIGN_LIFECYCLE_PHASES,
   isLightingSymbolId,
   isTier1WrightsTerrace,
   nextTransformerVa,
-  polylineLengthM,
   solveLiveTradeEstimate,
   sunPositionAt,
   tradeTagForItem,
@@ -1825,20 +1824,17 @@ export function HandoffDesignStudio({
    */
   const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
 
-  const lvCircuit = useMemo(() => {
+  const lvRuns = useMemo(() => {
     const boardW = scaleM > 0 ? scaleM : 110;
-    const lightingZones = studio.irrigationZones.filter(
-      (z) => z.kind === "lighting" || z.kind === "lighting_conduit",
-    );
-    const runLengthM = lightingZones.reduce(
-      (sum, z) =>
-        sum +
-        polylineLengthM(
-          z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
-          boardW,
-        ),
-      0,
-    );
+    const zones = studio.irrigationZones
+      .filter((z) => z.kind === "lighting" || z.kind === "lighting_conduit")
+      .map((z) => ({
+        id: z.id,
+        kind: z.kind as "lighting" | "lighting_conduit",
+        points: z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+        wire_gauge: z.wire_gauge,
+        transformer_va: z.transformer_va,
+      }));
     const fixtures = studio.items
       .filter(
         (i) =>
@@ -1851,11 +1847,12 @@ export function HandoffDesignStudio({
         y: i.y,
         rot: i.rot,
       }));
-    return assessLvCircuit({
+    return assessLvRuns({
+      zones,
       fixtures,
-      runLengthM,
-      transformerVa: ui.lightingTransformerVa,
-      wireGauge: ui.lightingWireGauge,
+      boardWidthM: boardW,
+      defaultTransformerVa: ui.lightingTransformerVa,
+      defaultWireGauge: ui.lightingWireGauge,
     });
   }, [
     scaleM,
@@ -1864,6 +1861,7 @@ export function HandoffDesignStudio({
     ui.lightingTransformerVa,
     ui.lightingWireGauge,
   ]);
+  const lvCircuit = lvRuns.aggregate;
 
   const irrigUniformity = useMemo(
     () => assessIrrigationUniformity(studio.irrigationZones, scaleM),
@@ -3926,6 +3924,9 @@ export function HandoffDesignStudio({
                 focusedServiceIds={ui.focusedServiceIds}
                 lightingOverload={
                   ui.lightingWorkspaceOn && lvCircuit.overloaded
+                }
+                overloadedZoneIds={
+                  ui.lightingWorkspaceOn ? lvRuns.overloadedZoneIds : []
                 }
                 onCommit={studio.commitZone}
               />

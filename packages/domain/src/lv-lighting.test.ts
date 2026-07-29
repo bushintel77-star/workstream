@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   assessLvCircuit,
+  assessLvRuns,
+  catmullRomSvgPath,
   DEFAULT_TRANSFORMER_VA,
   fixtureWattage,
   nextTransformerVa,
@@ -86,5 +88,68 @@ describe("lv-lighting", () => {
     expect(nextTransformerVa(150)).toBe(200);
     expect(nextTransformerVa(200)).toBe(300);
     expect(nextTransformerVa(300)).toBe(600);
+  });
+
+  it("builds a Catmull-Rom SVG path for wire theatre", () => {
+    const d = catmullRomSvgPath([
+      { x: 10, y: 10 },
+      { x: 40, y: 20 },
+      { x: 70, y: 15 },
+    ]);
+    expect(d.startsWith("M ")).toBe(true);
+    expect(d).toContain(" C ");
+  });
+
+  it("pulses only the overloaded lighting run after a split", () => {
+    // 20 × 7 W → 168 W design vs 160 W capacity on 200 VA
+    const heavy = Array.from({ length: 20 }, (_, i) => ({
+      id: `h${i}`,
+      symbolId: "brass-uplight",
+      x: 20 + i * 0.2,
+      y: 30,
+    }));
+    const light = Array.from({ length: 2 }, (_, i) => ({
+      id: `l${i}`,
+      symbolId: "path-spike-light",
+      x: 70 + i,
+      y: 70,
+    }));
+    const res = assessLvRuns({
+      boardWidthM: 40,
+      defaultTransformerVa: 200,
+      defaultWireGauge: "12/2",
+      zones: [
+        {
+          id: "run-heavy",
+          kind: "lighting",
+          points: [
+            { x: 10, y: 30 },
+            { x: 40, y: 30 },
+          ],
+          transformer_va: 200,
+        },
+        {
+          id: "run-light",
+          kind: "lighting",
+          points: [
+            { x: 60, y: 70 },
+            { x: 90, y: 70 },
+          ],
+          transformer_va: 200,
+        },
+        {
+          id: "conduit",
+          kind: "lighting_conduit",
+          points: [
+            { x: 40, y: 30 },
+            { x: 50, y: 10 },
+          ],
+        },
+      ],
+      fixtures: [...heavy, ...light],
+    });
+    expect(res.overloadedZoneIds).toContain("run-heavy");
+    expect(res.overloadedZoneIds).not.toContain("run-light");
+    expect(res.overloadedZoneIds).toContain("conduit");
   });
 });

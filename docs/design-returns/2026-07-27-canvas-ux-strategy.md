@@ -82,6 +82,8 @@ ET controllers + backflow preventers specified (per deliverables spec §6).
 
 - **PARTIAL → LIVE for lighting + spray DU:** irrigation zones, trenches, LV beams + transformer
   model, indicative spray DU wash (atelier cells). Still soft on hydrozone water-need taxonomy.
+  **LV wire theatre:** lighting / conduit paths render as Catmull-Rom splines; overload pulses only
+  the offending run(s) after split circuits (`assessLvRuns`).
 
 ---
 

@@ -5,6 +5,7 @@ import type { IrrigationZone, IrrigationZoneKind } from "@workstream/contracts";
 import {
   zoneKindDrawHint,
   zoneKindShortLabel,
+  catmullRomSvgPath,
 } from "@workstream/domain";
 import type { PctPoint } from "../../geometry";
 import type { BoardCamera } from "../../geometry/cameraPointer";
@@ -20,8 +21,13 @@ type Props = {
   cam?: BoardCamera;
   serviceFeatureHidden?: Record<string, boolean>;
   focusedServiceIds?: string[] | null;
-  /** Pulse lighting / conduit runs when the transformer is overloaded. */
+  /**
+   * Legacy: pulse every lighting / conduit run when the board circuit overloads.
+   * Prefer overloadedZoneIds for per-run pulse after split circuits.
+   */
   lightingOverload?: boolean;
+  /** Zone ids whose LV cable should pulse (offending runs only). */
+  overloadedZoneIds?: readonly string[];
   onCommit: (points: PctPoint[], kind: IrrigationZoneKind) => void;
 };
 
@@ -86,8 +92,10 @@ export function ZoneOverlay({
   serviceFeatureHidden = {},
   focusedServiceIds = null,
   lightingOverload = false,
+  overloadedZoneIds = [],
   onCommit,
 }: Props) {
+  const overloadSet = new Set(overloadedZoneIds);
   const rootRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<PctPoint[] | null>(null);
 
@@ -190,9 +198,14 @@ export function ZoneOverlay({
             r.kind === "lighting_conduit" && r.pts.length >= 2
               ? r.pts[r.pts.length - 1]!
               : null;
+          const isLv =
+            r.kind === "lighting" || r.kind === "lighting_conduit";
           const pulseWire =
-            lightingOverload &&
-            (r.kind === "lighting" || r.kind === "lighting_conduit");
+            isLv &&
+            r.id !== "draft" &&
+            (overloadSet.has(r.id) ||
+              (lightingOverload && overloadSet.size === 0));
+          const pathD = isLv ? catmullRomSvgPath(r.pts) : "";
           return (
             <g
               key={r.id}
@@ -200,17 +213,36 @@ export function ZoneOverlay({
                 r.id === "draft" ? "zone-draft" : `zone-path-${r.kind}`
               }
               data-overload={pulseWire ? "1" : "0"}
+              data-wire={isLv ? "spline" : "poly"}
             >
-              <polyline
-                points={r.pts.map((p) => `${p.x},${p.y}`).join(" ")}
-                fill="none"
-                stroke={pulseWire ? "var(--hc-signal)" : stroke.color}
-                strokeWidth={pulseWire ? stroke.width * 1.35 : stroke.width}
-                strokeDasharray={stroke.dash}
-                vectorEffect="non-scaling-stroke"
-                opacity={r.opacity}
-                className={pulseWire ? css.overloadPulse : undefined}
-              />
+              {isLv && pathD ? (
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke={pulseWire ? "var(--hc-signal)" : stroke.color}
+                  strokeWidth={pulseWire ? stroke.width * 1.35 : stroke.width}
+                  strokeDasharray={stroke.dash}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                  opacity={r.opacity}
+                  className={pulseWire ? css.overloadPulse : undefined}
+                  data-testid={
+                    pulseWire ? "lv-wire-overload" : "lv-wire-spline"
+                  }
+                />
+              ) : (
+                <polyline
+                  points={r.pts.map((p) => `${p.x},${p.y}`).join(" ")}
+                  fill="none"
+                  stroke={pulseWire ? "var(--hc-signal)" : stroke.color}
+                  strokeWidth={pulseWire ? stroke.width * 1.35 : stroke.width}
+                  strokeDasharray={stroke.dash}
+                  vectorEffect="non-scaling-stroke"
+                  opacity={r.opacity}
+                  className={pulseWire ? css.overloadPulse : undefined}
+                />
+              )}
               {r.pts.map((p, i) => (
                 <circle
                   key={i}
