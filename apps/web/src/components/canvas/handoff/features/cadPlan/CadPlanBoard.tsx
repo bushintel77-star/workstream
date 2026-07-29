@@ -94,7 +94,10 @@ import { placeSpeciesLabels } from "../render/speciesLabels";
 import type { RenderFidelity } from "../render/usePresentationLens";
 import renderCss from "../render/presentation.module.css";
 import { atmosphereCssVars, atmosphereHasAccent } from "../render/atmospherePalette";
-import { wobbledPolylinePath } from "../render/handDrawnPen";
+import {
+  roughEllipsePath,
+  wobbledPolylinePath,
+} from "../render/handDrawnPen";
 import type { CanvasAnnotation } from "@workstream/contracts";
 import {
   ITEM_LAYER,
@@ -1226,6 +1229,30 @@ export function CadPlanBoard({
     >
       <svg className={css.planSvg} viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
+          {/* Graphite tooth for freehand pen — subtle, non-animated. */}
+          <filter
+            id="ws-pencil-grain"
+            x="-8%"
+            y="-8%"
+            width="116%"
+            height="116%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.9"
+              numOctaves="2"
+              seed="7"
+              result="noise"
+            />
+            <feColorMatrix
+              in="noise"
+              type="matrix"
+              values="0 0 0 0 0.15  0 0 0 0 0.14  0 0 0 0 0.12  0 0 0 0.35 0"
+              result="grain"
+            />
+            <feComposite in="SourceGraphic" in2="grain" operator="over" />
+          </filter>
           <pattern
             id="ws-hardscape-hatch"
             width="4"
@@ -1455,6 +1482,7 @@ export function CadPlanBoard({
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
+            filter="url(#ws-pencil-grain)"
             opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
             className={sketchPassthrough ? css.sketchQuiet : undefined}
             data-testid={
@@ -1519,6 +1547,7 @@ export function CadPlanBoard({
               strokeLinecap="round"
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
+              filter="url(#ws-pencil-grain)"
               opacity={
                 boundaryVisual.opacity *
                 (foundationCleanse ? underlayOp : 1) *
@@ -1586,38 +1615,76 @@ export function CadPlanBoard({
             ? "var(--sheet-atmosphere-wash)"
             : baseWash;
           const hatched = it.t === "paving" || it.t === "deck";
-          const pts = ptsAttr(it.outlinePct!);
+          const outline = it.outlinePct!;
+          const pts = ptsAttr(outline);
+          const handPath =
+            handDrawn && outline.length >= 3
+              ? wobbledPolylinePath(outline, {
+                  seed: `${wobbleSeed}:region:${it.id}`,
+                  closed: true,
+                })
+              : null;
           return (
             <g
               key={`region-${it.id}`}
               data-testid="sketch-region"
               data-item-type={it.t}
               data-ghost={it.ghost ? "1" : "0"}
+              data-pen={handPath ? "hand_drawn" : undefined}
               opacity={visual.opacity * underlayOp * (it.ghost ? 0.6 : 1)}
               pointerEvents="none"
             >
-              <polygon
-                points={pts}
-                pathLength={1}
-                className={it.ghost ? css.regionGhostIn : css.regionDraw}
-                fill={wash}
-                stroke={
-                  it.ghost
-                    ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
-                    : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
-                }
-                strokeWidth={it.ghost ? 1 : 1.3}
-                strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-              />
-              {hatched ? (
+              {handPath ? (
+                <path
+                  d={handPath}
+                  pathLength={1}
+                  className={it.ghost ? css.regionGhostIn : css.regionDraw}
+                  fill={wash}
+                  stroke={
+                    it.ghost
+                      ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
+                      : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
+                  }
+                  strokeWidth={it.ghost ? 1 : 1.3}
+                  strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                  filter="url(#ws-pencil-grain)"
+                />
+              ) : (
                 <polygon
                   points={pts}
-                  fill="url(#ws-hardscape-hatch)"
-                  opacity={0.45}
-                  className={css.regionGhostIn}
+                  pathLength={1}
+                  className={it.ghost ? css.regionGhostIn : css.regionDraw}
+                  fill={wash}
+                  stroke={
+                    it.ghost
+                      ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
+                      : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
+                  }
+                  strokeWidth={it.ghost ? 1 : 1.3}
+                  strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
                 />
+              )}
+              {hatched ? (
+                handPath ? (
+                  <path
+                    d={handPath}
+                    fill="url(#ws-hardscape-hatch)"
+                    opacity={0.45}
+                    className={css.regionGhostIn}
+                  />
+                ) : (
+                  <polygon
+                    points={pts}
+                    fill="url(#ws-hardscape-hatch)"
+                    opacity={0.45}
+                    className={css.regionGhostIn}
+                  />
+                )
               ) : null}
             </g>
           );
@@ -1728,54 +1795,119 @@ export function CadPlanBoard({
             </g>
           );
         })}
-        {temporalRings.map((ring) => (
+        {temporalRings.map((ring) => {
+          const canopyPath =
+            handDrawn && ring.canopy_rx_pct > 0
+              ? roughEllipsePath(
+                  ring.x,
+                  ring.y,
+                  ring.canopy_rx_pct,
+                  ring.canopy_rx_pct * 0.78,
+                  `${wobbleSeed}:canopy:${ring.id}`,
+                )
+              : null;
+          const rootPath =
+            handDrawn && ring.root_rx_pct > 0
+              ? roughEllipsePath(
+                  ring.x,
+                  ring.y,
+                  ring.root_rx_pct,
+                  ring.root_rx_pct * 0.82,
+                  `${wobbleSeed}:root:${ring.id}`,
+                )
+              : null;
+          return (
           <g
             key={`grow-${ring.id}`}
             opacity={vegetationVisual.opacity * underlayOp}
             data-testid="growth-temporal-ring"
             data-stage={ring.stage}
             data-crowded={ring.crowded ? "1" : "0"}
+            data-pen={handDrawn ? "hand_drawn" : undefined}
           >
-            <ellipse
-              cx={ring.x}
-              cy={ring.y}
-              rx={ring.root_rx_pct}
-              ry={ring.root_rx_pct * 0.82}
-              className={css.growthRoot}
-              vectorEffect="non-scaling-stroke"
-            >
-              <title>
-                {`Indicative root zone · Ø ${(
-                  ring.mature_spread_m *
-                  growthStageSpreadFactor(ring.stage) *
-                  0.55
-                ).toFixed(1)} m`}
-              </title>
-            </ellipse>
-            <ellipse
-              cx={ring.x}
-              cy={ring.y}
-              rx={ring.canopy_rx_pct}
-              ry={ring.canopy_rx_pct * 0.78}
-              className={
-                ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
-              }
-              vectorEffect="non-scaling-stroke"
-            >
-              <title>
-                {`Canopy · Ø ${(
-                  ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
-                ).toFixed(1)} m at ${
-                  ring.stage === "plant"
-                    ? "Year 1"
-                    : ring.stage === "5yr"
-                      ? "Year 5"
-                      : "Year 10"
-                }${ring.crowded ? " · crowding" : ""}`}
-              </title>
-            </ellipse>
+            {rootPath ? (
+              <path
+                d={rootPath}
+                className={css.growthRoot}
+                vectorEffect="non-scaling-stroke"
+                fill="none"
+                filter="url(#ws-pencil-grain)"
+              >
+                <title>
+                  {`Indicative root zone · Ø ${(
+                    ring.mature_spread_m *
+                    growthStageSpreadFactor(ring.stage) *
+                    0.55
+                  ).toFixed(1)} m`}
+                </title>
+              </path>
+            ) : (
+              <ellipse
+                cx={ring.x}
+                cy={ring.y}
+                rx={ring.root_rx_pct}
+                ry={ring.root_rx_pct * 0.82}
+                className={css.growthRoot}
+                vectorEffect="non-scaling-stroke"
+              >
+                <title>
+                  {`Indicative root zone · Ø ${(
+                    ring.mature_spread_m *
+                    growthStageSpreadFactor(ring.stage) *
+                    0.55
+                  ).toFixed(1)} m`}
+                </title>
+              </ellipse>
+            )}
+            {canopyPath ? (
+              <path
+                d={canopyPath}
+                className={
+                  ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
+                }
+                vectorEffect="non-scaling-stroke"
+                fill="none"
+                filter="url(#ws-pencil-grain)"
+              >
+                <title>
+                  {`Canopy · Ø ${(
+                    ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
+                  ).toFixed(1)} m at ${
+                    ring.stage === "plant"
+                      ? "Year 1"
+                      : ring.stage === "5yr"
+                        ? "Year 5"
+                        : "Year 10"
+                  }${ring.crowded ? " · crowding" : ""}`}
+                </title>
+              </path>
+            ) : (
+              <ellipse
+                cx={ring.x}
+                cy={ring.y}
+                rx={ring.canopy_rx_pct}
+                ry={ring.canopy_rx_pct * 0.78}
+                className={
+                  ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
+                }
+                vectorEffect="non-scaling-stroke"
+              >
+                <title>
+                  {`Canopy · Ø ${(
+                    ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
+                  ).toFixed(1)} m at ${
+                    ring.stage === "plant"
+                      ? "Year 1"
+                      : ring.stage === "5yr"
+                        ? "Year 5"
+                        : "Year 10"
+                  }${ring.crowded ? " · crowding" : ""}`}
+                </title>
+              </ellipse>
+            )}
           </g>
-        ))}
+          );
+        })}
       </svg>
 
       {editing && allowProjectedChrome && boundaryVisual.hittable

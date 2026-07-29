@@ -94,7 +94,7 @@ export const SHEET_PEN_SWATCHES: Array<{
   {
     id: "hand_drawn",
     label: "Freehand",
-    detail: "Seeded pencil wobble — concept presentation",
+    detail: "Seeded Rough.js pencil — concept presentation",
   },
 ];
 

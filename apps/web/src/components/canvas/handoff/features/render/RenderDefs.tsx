@@ -198,6 +198,30 @@ export function RenderDefs({ includeNight = true }: Props) {
           </pattern>
         </>
       ) : null}
+      {/* Graphite tooth for freehand Fit pen (shared defs). */}
+      <filter
+        id="ws-pencil-grain-shared"
+        x="-8%"
+        y="-8%"
+        width="116%"
+        height="116%"
+        colorInterpolationFilters="sRGB"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.9"
+          numOctaves="2"
+          seed="7"
+          result="noise"
+        />
+        <feColorMatrix
+          in="noise"
+          type="matrix"
+          values="0 0 0 0 0.15  0 0 0 0 0.14  0 0 0 0 0.12  0 0 0 0.35 0"
+          result="grain"
+        />
+        <feComposite in="SourceGraphic" in2="grain" operator="over" />
+      </filter>
     </g>
   );
 }
