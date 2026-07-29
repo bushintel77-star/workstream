@@ -74,6 +74,8 @@ type Props = {
   onToggleLiveTelemetry?: () => void;
   /** Toggle on-site bird's-eye AR overlay. */
   onToggleArBirdseye?: () => void;
+  /** Open the Plan artboard viewport. */
+  onArtboardPlan?: () => void;
   /** Cycle ASLA/SILA lifecycle phase. */
   onCycleLifecyclePhase?: () => void;
 };
@@ -123,6 +125,7 @@ export function StudioCommandPalette({
   onToggleIrrigationUniformity,
   onToggleLiveTelemetry,
   onToggleArBirdseye,
+  onArtboardPlan,
   onCycleLifecyclePhase,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -388,6 +391,17 @@ export function StudioCommandPalette({
             } satisfies StudioCommand,
           ]
         : []),
+      ...(onArtboardPlan
+        ? [
+            {
+              id: "artboard-plan",
+              label: "Artboard · Plan",
+              detail: "Switch to the plan viewport (Sheets strip)",
+              keywords: "artboard sheet plan viewport fit elevation",
+              run: onArtboardPlan,
+            } satisfies StudioCommand,
+          ]
+        : []),
       {
         id: "measures",
         label: dataOpen
@@ -515,6 +529,7 @@ export function StudioCommandPalette({
     onToggleIrrigationUniformity,
     onToggleLiveTelemetry,
     onToggleArBirdseye,
+    onArtboardPlan,
     onCycleLifecyclePhase,
     onTiltView,
     onGardenViewpoint,

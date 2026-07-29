@@ -47,7 +47,7 @@ cross-fade in on zoom-in**, avoiding the "chaotic overlapping text common in leg
 | Infinite, borderless canvas | **HAVE** — board is now full-bleed, continuous (slab + neighbour squares removed) |
 | Semantic zoom (detail changes with scale) | **HAVE** — annotation LOD §2 (`annotationLod.ts`) |
 | Minimap / overview wayfinding | **HAVE** — `StudioMinimap` |
-| Artboards as viewports (borderless until active) | **GAP** — would suit multi-sheet sets (plan + sections + schedule laid out spatially) |
+| Artboards as viewports (borderless until active) | **HAVE** — session **Sheets** strip (`ArtboardStrip`): Plan / Fit / Elev N·E·S·W switches existing cameras; not persisted multi-canvas or Stage 2 paper space |
 | **Vector-raster hybrid** (pressure/tilt/velocity strokes that stay editable vectors) | **PARTIAL / significant** — we have pen + stroke width tiers; true pressure-sensitive natural media (Concepts/Morpholio-class) is a large engine lift. Recommend: hand-drawn *render pen* first (Rough.js, already spec'd) since it delivers the aesthetic without a new input engine |
 | Stylus-first gestures (two-finger undo, three-finger overlay toggle, dual-handed nav) | **GAP** — pairs with the on-site/tablet density mode already tokenised (`--tap-min`, `data-density="onsite"`) |
 

@@ -55,6 +55,8 @@
 
 **Workflow 1 §4 (shipped):** temporal growth scrub draws canopy + root rings on the plan; crowded discs tint at Year 10 alongside findings.
 
+**Workflow 1 §3 artboards (shipped):** session Sheets strip — Plan / Fit / Elev N·E·S·W viewports (CameraChrome). Persisted multi-sheet pasteboard remains later.
+
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 
 ---

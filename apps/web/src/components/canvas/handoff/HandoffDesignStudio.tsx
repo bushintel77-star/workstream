@@ -192,15 +192,18 @@ import {
 import {
   assessIrrigationUniformity,
   assessLvRuns,
+  artboardElevLook,
   cycleElevationLook,
   DESIGN_LIFECYCLE_PHASES,
   isLightingSymbolId,
   isTier1WrightsTerrace,
   nextTransformerVa,
+  resolveActiveArtboard,
   solveLiveTradeEstimate,
   sunPositionAt,
   tradeTagForItem,
   type ArchitecturalTitleBlock,
+  type ArtboardId,
 } from "@workstream/domain";
 import type {
   CanvasAnnotation,
@@ -255,6 +258,7 @@ import {
   type GardenViewpointLook,
 } from "./features/tilt/tiltMath";
 import { GardenViewpointStrip } from "./features/viewpoint/GardenViewpointStrip";
+import { ArtboardStrip } from "./features/artboards/ArtboardStrip";
 import { usePresentationLens } from "./features/render/usePresentationLens";
 import {
   clampNotePos,
@@ -2240,6 +2244,32 @@ export function HandoffDesignStudio({
       syncModeUrl(mode);
     },
     [ui.mode, ui.frameOn, setFitSheetOn, studio, runFormalizeToCad, syncModeUrl],
+  );
+
+  const activeArtboard = resolveActiveArtboard({
+    mode: ui.mode,
+    frameOn: ui.frameOn,
+    elevLook: ui.elevLook,
+  });
+
+  const selectArtboard = useCallback(
+    (id: ArtboardId) => {
+      const look = artboardElevLook(id);
+      if (look) {
+        if (ui.frameOn) setFitSheetOn(false);
+        syncModeUrl("elevation");
+        studio.setUi({ elevLook: look });
+        return;
+      }
+      if (id === "fit") {
+        if (ui.mode === "elevation") syncModeUrl("cad");
+        setFitSheetOn(true);
+        return;
+      }
+      if (ui.mode === "elevation") syncModeUrl("cad");
+      else if (ui.frameOn) setFitSheetOn(false);
+    },
+    [ui.frameOn, ui.mode, setFitSheetOn, syncModeUrl, studio],
   );
 
   useEffect(() => {
@@ -4253,6 +4283,13 @@ export function HandoffDesignStudio({
           </CameraChrome>
         ) : null}
 
+        {(planOn || ui.mode === "elevation") &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.lightingWorkspaceOn ? (
+          <ArtboardStrip active={activeArtboard} onSelect={selectArtboard} />
+        ) : null}
+
         {((planOn && isTiltActive(ui.tiltDeg)) ||
           ui.mode === "elevation") &&
         !ui.frameOn &&
@@ -5322,6 +5359,7 @@ export function HandoffDesignStudio({
           onToggleArBirdseye={() =>
             studio.setUi({ arBirdseyeOn: !ui.arBirdseyeOn })
           }
+          onArtboardPlan={() => selectArtboard("plan")}
           onGoQuote={() => requestMode("quote")}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           onTiltView={() => runTiltView()}
