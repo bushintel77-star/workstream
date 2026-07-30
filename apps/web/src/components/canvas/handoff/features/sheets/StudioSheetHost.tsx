@@ -57,7 +57,12 @@ export function StudioSheetHost({
           onClick={() => onSnap(nextSheetSnap(snap))}
         />
 
-        <div className={css.tabs} role="tablist" aria-label="Sheet pages">
+        <div
+          className={css.tabs}
+          role="tablist"
+          aria-label="Sheet pages"
+          data-testid="studio-sheet-tabs"
+        >
           {STUDIO_SHEET_PAGES.map((p) => (
             <button
               key={p.id}

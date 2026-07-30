@@ -44,6 +44,7 @@
   --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 16%, var(--canvas));
   --hc-success: var(--planting-new-stroke);
   --hc-warning: var(--warning);
+  --hc-water: var(--water-l-500);
   --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 12%, var(--canvas));
   --sheet-paper: var(--gray-l-25);
   --sheet-ink: var(--text-primary);
@@ -131,7 +132,7 @@
 
 /* LV lighting workspace — deepen the board for beam theatre. */
 .rootLighting .board {
-  background: color-mix(in srgb, var(--panel) 88%, #0a1018);
+  background: color-mix(in srgb, var(--panel) 88%, var(--hc-deep));
 }
 
 .rootLighting [data-testid="cad-plan-board"] {
@@ -222,16 +223,51 @@
   flex: none;
 }
 
-.shareBanner {
-  flex: none;
+.shareToast {
+  position: absolute;
+  top: calc(var(--ws-safe-top, 40px) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 42;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 32px));
   margin: 0;
-  padding: 6px 16px;
+  padding: 10px 12px 10px 14px;
+  border-radius: var(--hc-r-panel, 12px);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass-soft);
+  backdrop-filter: blur(14px) saturate(1.06);
+  -webkit-backdrop-filter: blur(14px) saturate(1.06);
+  box-shadow: var(--hc-elev-2);
+  color: var(--hc-ink-muted);
   font-size: 12px;
   line-height: 1.35;
-  color: var(--hc-ink-muted);
-  background: color-mix(in srgb, var(--hc-neu-surface) 88%, var(--canvas));
-  border-bottom: 1px solid var(--hc-line-soft);
-  z-index: 28;
+  pointer-events: auto;
+}
+
+.shareToast p {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.shareToastDismiss {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border: 0;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: var(--hc-ink-faint);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shareToastDismiss:hover {
+  color: var(--hc-ink);
 }
 
 .brandBlock {
@@ -454,6 +490,34 @@
 
 .headerVicGov::-webkit-scrollbar {
   display: none;
+}
+
+/** Compact canvas-first — single Tools peek when the instrument strip is idle. */
+.instrumentsPeek {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left, 0px));
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  z-index: 20;
+  min-width: 56px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--hc-r-pill, 999px);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-frost, var(--hc-glass-soft));
+  box-shadow: var(--hc-elev-1);
+  backdrop-filter: blur(12px);
+  color: var(--hc-ink);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.instrumentsPeek:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 2px;
 }
 
 /** Tactile icon controls — same 46px-class dock chip as left rail instruments. */
@@ -1888,34 +1952,37 @@
 }
 
 .dbhField {
-  position: absolute;
-  z-index: 28;
-  transform: translate(-50%, 0);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 28px;
-  padding: 0 8px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
   border: 1px solid var(--hc-line);
-  border-radius: var(--hc-r-control);
-  background: var(--hc-glass);
-  backdrop-filter: none;
+  border-radius: var(--hc-r-panel, 12px);
+  background: var(--hc-glass-soft);
+  backdrop-filter: blur(14px) saturate(1.06);
+  -webkit-backdrop-filter: blur(14px) saturate(1.06);
   box-shadow: var(--hc-elev-2);
   font-family: "IBM Plex Mono", monospace;
   font-size: 9px;
   font-variant-numeric: tabular-nums;
   color: var(--hc-ink);
+  pointer-events: auto;
 }
 
 .dbhField input {
-  width: 3.4rem;
-  height: 24px;
+  width: 3.6rem;
+  min-height: 44px;
+  height: 44px;
   border: none;
-  background: transparent;
+  border-radius: var(--hc-r-control);
+  background: var(--hc-neu-raised);
+  box-shadow: var(--hc-neu-out-sm);
   font: inherit;
   font-size: 11px;
   color: var(--hc-ink);
   text-align: right;
+  padding: 0 8px;
 }
 
 .dbhField input:focus {

@@ -54,7 +54,7 @@
 }
 
 .countPill[data-short="1"] {
-  background: color-mix(in srgb, var(--hc-warning, #c4a35a) 28%, transparent);
+  background: color-mix(in srgb, var(--hc-warning) 28%, transparent);
 }
 
 .liveHint {
@@ -97,7 +97,7 @@
 }
 
 .short {
-  color: var(--hc-warning, #c4a35a);
+  color: var(--hc-warning);
 }
 
 /* An unmeasured metric must not read like a measured one. */

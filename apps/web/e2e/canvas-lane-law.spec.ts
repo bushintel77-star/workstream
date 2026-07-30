@@ -82,6 +82,8 @@ test.describe("Lane law — chrome card overlap", () => {
     });
     await expect(page.getByTestId("right-data-lane-layers")).toBeVisible();
 
+    await page.getByTestId("pointer-settings-top").click();
+    await expect(page.getByTestId("tool-dock")).toBeVisible({ timeout: 10_000 });
     const layersBox = await page.getByTestId("layers-panel").boundingBox();
     const dockBox = await page.getByTestId("tool-dock").boundingBox();
     expect(layersBox).toBeTruthy();

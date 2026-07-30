@@ -181,9 +181,6 @@ import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
 import { ShareRevisionPopup } from "./features/share/ShareRevisionPopup";
 import { FloraRing } from "./features/flora/FloraRing";
-import { VolumetricIsolith } from "./features/isolith/VolumetricIsolith";
-import { AmbientBudgetMargin } from "./features/trade/AmbientBudgetMargin";
-import { TradeSkuTag } from "./features/trade/TradeSkuTag";
 import { ITEM_LAYER } from "./state/studioTypes";
 import { mapSymbolToStudioType } from "./state/studioAiEngine";
 import {
@@ -201,7 +198,6 @@ import {
   resolveActiveArtboard,
   solveLiveTradeEstimate,
   sunPositionAt,
-  tradeTagForItem,
   type ArchitecturalTitleBlock,
   type ArtboardId,
 } from "@workstream/domain";
@@ -498,6 +494,8 @@ export function HandoffDesignStudio({
   });
   /** Instruments open only when summoned (margin click / hub), not on select. */
   const [instrumentsSummoned, setInstrumentsSummoned] = useState(false);
+  /** Shared-rev frost toast — dismissible; not a sticky slab. */
+  const [shareBannerDismissed, setShareBannerDismissed] = useState(false);
   /** Drafting grid controls — toggled from the tool dock (not a separate cluster). */
   const [gridStudioOpen, setGridStudioOpen] = useState(false);
   const [dialHint, setDialHint] = useState(false);
@@ -584,8 +582,7 @@ export function HandoffDesignStudio({
     null,
   );
   const [assetFocusSearch, setAssetFocusSearch] = useState(false);
-  /** Mobile (<720 or coarse) — sheet + FAB peer to desktop dual-rail. */
-  const [assetSheetOpen, setAssetSheetOpen] = useState(false);
+  /** Compact fork: viewport ≤719 only — never coarse pointer or board inset width. */
   const [compactAssetUi, setCompactAssetUi] = useState(false);
   const [studioSheetOpen, setStudioSheetOpen] = useState(false);
   const [studioSheetPage, setStudioSheetPage] =
@@ -600,13 +597,11 @@ export function HandoffDesignStudio({
   useEffect(() => {
     if (typeof window === "undefined") return;
     const sync = () => {
-      const narrow = window.innerWidth <= 719;
-      const coarse = window.matchMedia("(pointer: coarse)").matches;
-      setCompactAssetUi(narrow || coarse);
+      setCompactAssetUi(window.innerWidth <= 719);
     };
     sync();
     window.addEventListener("resize", sync);
-    const mq = window.matchMedia("(max-width: 719px), (pointer: coarse)");
+    const mq = window.matchMedia("(max-width: 719px)");
     mq.addEventListener("change", sync);
     return () => {
       window.removeEventListener("resize", sync);
@@ -644,10 +639,8 @@ export function HandoffDesignStudio({
     const commitSize = (w: number, h: number) => {
       // CSS px only (DPR-invariant). See geometry/boardSizeCommit.ts.
       setBoardSize((prev) => nextBoardSize(prev, w, h) ?? prev);
-      const coarse =
-        typeof window !== "undefined" &&
-        window.matchMedia("(pointer: coarse)").matches;
-      setCompactAssetUi(w <= 719 || coarse);
+      // Compact is viewport-gated only (see effect above) — do not key off
+      // board inset width or coarse pointer, or desktop grows a mobile FAB.
     };
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
@@ -1323,11 +1316,12 @@ export function HandoffDesignStudio({
           return;
         }
         // CAD practice: Esc cancels sticky draft tools → Select (KiCad / Fusion).
+        // Keep the dock summoned so Select stays visible — Esc drops the craft tool, not the UI.
         if (isStickyDraftTool(ui.tool)) {
           e.preventDefault();
           toolStackRef.current = cancelToSelect(toolStackRef.current);
           studio.setTool("select");
-          setInstrumentsSummoned(false);
+          setInstrumentsSummoned(true);
           studio.setUi({
             factorsOpen: false,
             ghostReviewOpen: false,
@@ -1792,12 +1786,7 @@ export function HandoffDesignStudio({
     !ui.foundationCleanse;
   /** Desktop dock — hidden on compact widths (mobile sheet owns placement). */
   const assetPanelOn = assetChromeOn && !compactAssetUi;
-  /** Legacy standalone asset sheet — only when studio sheet host is off. */
-  const assetSheetVisible =
-    assetChromeOn &&
-    compactAssetUi &&
-    !chrome.studioSheet &&
-    (assetSheetOpen || Boolean(ui.armed));
+  /** One assets path: compact uses StudioSheetHost Assets only (no second floater). */
   const studioSheetVisible =
     chrome.studioSheet &&
     (studioSheetOpen ||
@@ -1807,14 +1796,30 @@ export function HandoffDesignStudio({
   const contextualStripVisible =
     chrome.contextualStrip &&
     !(studioSheetVisible && studioSheetSnap === "full");
+  /**
+   * Canvas-first mandate: idle parchment is tool-free.
+   * Summon via header Instruments / margin / Q; stay up while a craft tool is armed.
+   */
+  const instrumentsVisible =
+    instrumentsSummoned ||
+    (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock");
   const compactSafeBottom = sheetSafeBottomPx({
     sheetOpen: studioSheetVisible,
     fabOn: chrome.primaryFab,
     sunOn: chrome.sunGrowth,
-    toolStripOn: contextualStripVisible,
+    toolStripOn: contextualStripVisible && instrumentsVisible,
   });
-  /** Undo filmstrip — CAD/survey only; Sketch uses MarginStrip history. */
+
+  /* Canvas-first linger — idle summoned tools fade so parchment returns. */
+  useEffect(() => {
+    if (!instrumentsSummoned) return;
+    if (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock") return;
+    const id = window.setTimeout(() => setInstrumentsSummoned(false), 4_200);
+    return () => window.clearTimeout(id);
+  }, [instrumentsSummoned, ui.tool]);
+  /** Undo filmstrip — desktop CAD/survey only; compact uses ⌘K / strip. */
   const undoFilmOn =
+    !compactAssetUi &&
     (ui.mode === "cad" || ui.mode === "survey") &&
     !ui.frameOn &&
     !ui.focusOn &&
@@ -2467,6 +2472,10 @@ export function HandoffDesignStudio({
   const openSharedRev =
     latestShare?.status === "shared" ? latestShare : null;
 
+  useEffect(() => {
+    setShareBannerDismissed(false);
+  }, [openSharedRev?.revision]);
+
   const lockReasonForMode = (mode: StudioMode): string | null => {
     if (openModes.has(mode)) return null;
     if (mode === "sketch" || mode === "cad" || mode === "elevation") {
@@ -2503,11 +2512,6 @@ export function HandoffDesignStudio({
     instrumentAnchor.x,
     instrumentAnchor.y,
   ]);
-
-  const selectedTradeTag =
-    selectedLive && chrome.tradeMargin
-      ? tradeTagForItem(trade, selectedLive.id)
-      : null;
 
   useEffect(() => {
     if (!drawingHot) return;
@@ -2625,15 +2629,26 @@ export function HandoffDesignStudio({
       setStudioSheetPage("assets");
       setStudioSheetSnap("half");
       setStudioSheetOpen(true);
-    } else {
-      setAssetSheetOpen(true);
+      studio.setUi({ cmdOpen: false, cmdQuery: "" });
+      return;
+    }
+    if (!compactAssetUi) {
+      studio.setUi({
+        ...openLeftAssetExclusive("expanded"),
+        cmdOpen: false,
+        cmdQuery: "",
+      });
+      return;
     }
     studio.setUi({ cmdOpen: false, cmdQuery: "" });
   };
 
-  const openStudioSheetPage = (page: StudioSheetPage) => {
+  const openStudioSheetPage = (
+    page: StudioSheetPage,
+    snap: StudioSheetSnap = "half",
+  ) => {
     setStudioSheetPage(page);
-    setStudioSheetSnap(page === "assets" ? "half" : "half");
+    setStudioSheetSnap(snap);
     setStudioSheetOpen(true);
     studio.setUi({ cmdOpen: false, cmdQuery: "" });
   };
@@ -2678,51 +2693,29 @@ export function HandoffDesignStudio({
         onSelect: () => window.print(),
       });
     }
-    items.push(
-      {
-        id: "dark",
-        label: "Dark canvas",
-        testId: "dark-canvas-top",
-        active: ui.darkOn,
-        onSelect: () => studio.setUi({ darkOn: !ui.darkOn }),
-      },
-      {
-        id: "tilt",
-        label: "Tilt view",
-        testId: "canvas-tilt-top",
-        active: isTiltActive(ui.tiltDeg),
-        onSelect: () => runTiltView(),
-      },
-    );
+    items.push({
+      id: "dark",
+      label: "Dark canvas",
+      testId: "dark-canvas-top",
+      active: ui.darkOn,
+      onSelect: () => studio.setUi({ darkOn: !ui.darkOn }),
+    });
+    // Tilt lives on the header icon only (tilt-view-top) — no View-menu duplicate.
+    // Layers only — Services lives on Vic-gov sticky chips (ENV-AND-SITE-META-STICKY).
     if (chrome.structureRail || chrome.compact) {
-      items.push(
-        {
-          id: "services",
-          label: "Services ledger",
-          testId: "canvas-services-top",
-          active: servicesOpen,
-          onSelect: () => {
-            if (chrome.compact) openStudioSheetPage("data");
-            studio.setUi({
-              ...toggleRightDataPanelExclusive(ui.rightDataPanel, "services"),
-              utilityPanel: null,
-            });
-          },
+      items.push({
+        id: "layers",
+        label: "Layers",
+        testId: "canvas-layers-top",
+        active: layersOpen,
+        onSelect: () => {
+          if (chrome.compact) openStudioSheetPage("data");
+          studio.setUi({
+            ...withRightDataPanel("layers"),
+            utilityPanel: null,
+          });
         },
-        {
-          id: "layers",
-          label: "Layers",
-          testId: "canvas-layers-top",
-          active: layersOpen,
-          onSelect: () => {
-            if (chrome.compact) openStudioSheetPage("data");
-            studio.setUi({
-              ...toggleRightDataPanelExclusive(ui.rightDataPanel, "layers"),
-              utilityPanel: null,
-            });
-          },
-        },
-      );
+      });
     }
     if (!projectId) {
       items.push({
@@ -2732,7 +2725,7 @@ export function HandoffDesignStudio({
         active: sitesOpen,
         onSelect: () =>
           studio.setUi({
-            ...toggleRightDataPanelExclusive(ui.rightDataPanel, "sites"),
+            ...withRightDataPanel("sites"),
             utilityPanel: null,
           }),
       });
@@ -2742,18 +2735,15 @@ export function HandoffDesignStudio({
     chrome.compact,
     chrome.structureRail,
     layersOpen,
+    openStudioSheetPage,
     projectId,
-    runTiltView,
-    servicesOpen,
     sitesOpen,
     studio,
     titleLocked,
     ui.darkOn,
     ui.foundationCleanse,
     ui.frameOn,
-    ui.rightDataPanel,
     ui.titleBoundaryLocked,
-    ui.tiltDeg,
   ]);
 
   const councilTipVisible =
@@ -2786,7 +2776,7 @@ export function HandoffDesignStudio({
   const vicGovChipRow =
     planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
       <StickyMetaStack
-          placement={chrome.compact ? "header" : "dock"}
+          placement="dock"
           projectId={projectId}
           laneBusy={rightLaneBusy}
           activePanel={
@@ -2994,12 +2984,23 @@ export function HandoffDesignStudio({
         <div className={css.headerTools} role="toolbar" aria-label="Canvas tools">
           <button
             type="button"
-            className={`${css.iconBtn}${instrumentsSummoned ? ` ${css.iconBtnActive}` : ""}`}
+            className={`${css.iconBtn}${instrumentsVisible ? ` ${css.iconBtnActive}` : ""}`}
             data-testid="pointer-settings-top"
-            aria-label="Open instruments and pointer mark"
-            title="Instruments — pointer mark lives with the tool dock"
+            aria-label={
+              instrumentsVisible
+                ? "Hide instruments"
+                : "Open instruments and pointer mark"
+            }
+            title="Instruments — summon tools; parchment stays clear when idle"
             onClick={() => {
-              setInstrumentsSummoned(true);
+              if (instrumentsVisible) {
+                setInstrumentsSummoned(false);
+                if (ui.tool !== "select" && ui.tool !== "pan") {
+                  studio.setTool("select");
+                }
+              } else {
+                setInstrumentsSummoned(true);
+              }
             }}
           >
             <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -3179,22 +3180,12 @@ export function HandoffDesignStudio({
               onClick={handleHeaderAi}
             />
           ) : null}
-          {chrome.compact && vicGovChipRow ? (
-            <div className={css.headerVicGov} data-testid="header-vic-gov-status">
-              {vicGovChipRow}
-            </div>
-          ) : null}
           <button
             type="button"
             className={css.cmdBtn}
             data-testid="canvas-command-top"
             onClick={() => {
-              if (chrome.studioSheet) {
-                openStudioSheetPage("command");
-                studio.setUi({ cmdOpen: true });
-              } else {
-                studio.setUi({ cmdOpen: true });
-              }
+              studio.setUi({ cmdOpen: true });
             }}
             title="Command palette"
           >
@@ -3282,13 +3273,6 @@ export function HandoffDesignStudio({
         ) : null}
       </header>
 
-      {openSharedRev && !ui.clientView && !ui.frameOn ? (
-        <p className={css.shareBanner} data-testid="share-open-banner">
-          Shared rev {openSharedRev.revision} is out with the client — changes
-          create a new revision.
-        </p>
-      ) : null}
-
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.boardTiltPerspective}` : ""}`}
         data-testid="studio-board"
@@ -3299,7 +3283,32 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
-        {!chrome.compact ? vicGovChipRow : null}
+        {vicGovChipRow}
+        {openSharedRev &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        !shareBannerDismissed ? (
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={42}
+            testId="share-open-banner-chrome"
+          >
+            <div className={css.shareToast} data-testid="share-open-banner">
+              <p>
+                Shared rev {openSharedRev.revision} is out with the client —
+                changes create a new revision.
+              </p>
+              <button
+                type="button"
+                className={css.shareToastDismiss}
+                aria-label="Dismiss share notice"
+                onClick={() => setShareBannerDismissed(true)}
+              >
+                ×
+              </button>
+            </div>
+          </CameraChrome>
+        ) : null}
         {ui.mode === "elevation" ? (
           <ElevationBoard
             look={ui.elevLook}
@@ -3821,7 +3830,6 @@ export function HandoffDesignStudio({
                 }}
               />
             ) : null}
-            {/* VolumetricIsolith + AmbientBudgetMargin render outside .zoomWorld */}
             {ui.mode === "sketch" ? (
               <SketchBoard
                 strokes={studio.strokes}
@@ -4137,15 +4145,6 @@ export function HandoffDesignStudio({
                 }
               />
             ) : null}
-            {chrome.tradeMargin && selectedTradeTag && selectedLive ? (
-              <TradeSkuTag
-                match={selectedTradeTag}
-                xPct={selectedLive.x}
-                yPct={selectedLive.y}
-                cam={planCam}
-              />
-            ) : null}
-            {/* AmbientBudgetMargin outside .zoomWorld */}
             </div>
           </div>
           {/* Dedicated portal mount — sibling of the camera, never an ancestor
@@ -4191,23 +4190,6 @@ export function HandoffDesignStudio({
               onTraceBuilding={armBuildingTrace}
             />
           </RightDataLane>
-        ) : null}
-
-        {planOn && chrome.volumeIsolith ? (
-          <VolumetricIsolith
-            estimate={estimate}
-            proximity={
-              drawingHot &&
-              (ui.armed === "paving" || ui.armed === "deck")
-            }
-          />
-        ) : null}
-
-        {planOn && chrome.tradeMargin ? (
-          <AmbientBudgetMargin
-            trade={trade}
-            displayTotalInclGst={estimate.totalInclGst}
-          />
         ) : null}
 
         {ui.frameOn && planOn ? (
@@ -4301,7 +4283,8 @@ export function HandoffDesignStudio({
         !ui.focusOn &&
         !ui.clientView &&
         !ui.frameOn &&
-        !ui.lightingWorkspaceOn ? (
+        !ui.lightingWorkspaceOn &&
+        !chrome.compact ? (
           <ArtboardStrip active={activeArtboard} onSelect={selectArtboard} />
         ) : null}
 
@@ -4345,7 +4328,28 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {chrome.ambientRibbon ? (
+        {/* Compact: single Tools peek — header Instruments is often under mode nav. */}
+        {chrome.compact &&
+        planOn &&
+        !ui.frameOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !instrumentsVisible ? (
+          <CameraChrome place={{ kind: "dock" }} zIndex={36} testId="instruments-peek-chrome">
+            <button
+              type="button"
+              className={css.instrumentsPeek}
+              data-testid="instruments-peek"
+              aria-label="Summon instruments"
+              onClick={() => setInstrumentsSummoned(true)}
+            >
+              Tools
+            </button>
+          </CameraChrome>
+        ) : null}
+
+        {/* Canvas-first: instruments are summoned only (header / margin / peek), not sticky. */}
+        {chrome.ambientRibbon && instrumentsVisible ? (
           <ToolDock
             tool={ui.tool}
             mode={ui.mode}
@@ -4354,16 +4358,18 @@ export function HandoffDesignStudio({
             night={darkLens}
             gridOn={gridStudioOpen}
             onTool={(t) => {
+              setInstrumentsSummoned(true);
               studio.setTool(t);
             }}
             onMeasure={() => {
+              setInstrumentsSummoned(true);
               studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
             onToggleGrid={() => setGridStudioOpen((v) => !v)}
           />
         ) : null}
 
-        {contextualStripVisible ? (
+        {contextualStripVisible && instrumentsVisible ? (
           <ContextualToolStrip
             tool={ui.tool}
             mode={ui.mode}
@@ -4372,9 +4378,11 @@ export function HandoffDesignStudio({
             night={darkLens}
             gridOn={gridStudioOpen}
             onTool={(t) => {
+              setInstrumentsSummoned(true);
               studio.setTool(t);
             }}
             onMeasure={() => {
+              setInstrumentsSummoned(true);
               studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
             onToggleGrid={() => setGridStudioOpen((v) => !v)}
@@ -4401,6 +4409,7 @@ export function HandoffDesignStudio({
           <ExistTreeInspector
             xPct={selectedLive.x}
             yPct={selectedLive.y}
+            cam={planCam}
             dbhM={selectedLive.dbhM ?? ui.existDbhM}
             locked={ui.locked}
             onDbhM={studio.patchSelectedDbh}
@@ -4412,34 +4421,38 @@ export function HandoffDesignStudio({
         !selectedLive &&
         planOn &&
         !ui.focusOn ? (
-          <label
-            className={css.dbhField}
-            data-testid="exist-dbh-field"
-            style={
-              {
-                left: `${instrumentAnchor.x}%`,
-                top: `${Math.min(88, instrumentAnchor.y + 10)}%`,
-              } as CSSProperties
-            }
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: {
+                x: instrumentAnchor.x,
+                y: Math.min(88, instrumentAnchor.y + 10),
+              },
+              cam: planCam,
+              transform: "translate(-50%, -50%)",
+            }}
+            testId="exist-dbh-field-chrome"
           >
-            <span>DBH m</span>
-            <input
-              type="number"
-              min={0.05}
-              max={2}
-              step={0.01}
-              inputMode="decimal"
-              value={ui.existDbhM}
-              aria-label="Existing tree DBH in metres"
-              onChange={(e) => {
-                const n = Number.parseFloat(e.target.value);
-                if (!Number.isFinite(n) || n <= 0) return;
-                studio.setUi({
-                  existDbhM: Math.min(2, Math.max(0.05, n)),
-                });
-              }}
-            />
-          </label>
+            <label className={css.dbhField} data-testid="exist-dbh-field">
+              <span>DBH m</span>
+              <input
+                type="number"
+                min={0.05}
+                max={2}
+                step={0.01}
+                inputMode="decimal"
+                value={ui.existDbhM}
+                aria-label="Existing tree DBH in metres"
+                onChange={(e) => {
+                  const n = Number.parseFloat(e.target.value);
+                  if (!Number.isFinite(n) || n <= 0) return;
+                  studio.setUi({
+                    existDbhM: Math.min(2, Math.max(0.05, n)),
+                  });
+                }}
+              />
+            </label>
+          </CameraChrome>
         ) : null}
 
         {/* Formalize payoff — a scan beam sweeps the board while the sketch
@@ -4591,7 +4604,11 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
+        {planOn &&
+        !ui.focusOn &&
+        !ui.clientView &&
+        !ui.frameOn &&
+        !chrome.compact ? (
           <PhaseManagerChip
             phase={ui.lifecyclePhase}
             onPhase={(lifecyclePhase) => studio.setUi({ lifecyclePhase })}
@@ -4939,9 +4956,8 @@ export function HandoffDesignStudio({
                   setStudioSheetOpen(false);
                   return;
                 }
-                openStudioSheetPage(
-                  chrome.inboxSheet && inboxCardCount > 0 ? "inbox" : "assets",
-                );
+                // Assets card at half — larger sheet with tabs (DNA). No Inbox diversion.
+                openStudioSheetPage("assets", "half");
               }}
             >
               +
@@ -4957,36 +4973,20 @@ export function HandoffDesignStudio({
             inboxCount={inboxCardCount}
             onPage={(page) => {
               setStudioSheetPage(page);
-              if (page === "command") {
-                studio.setUi({ cmdOpen: true });
-              }
-              if (page === "share") {
-                if (hasCostedBom) setSharePopupOpen(true);
-              }
             }}
             onSnap={setStudioSheetSnap}
             onClose={() => {
               setStudioSheetOpen(false);
-              setAssetSheetOpen(false);
             }}
           >
             {studioSheetPage === "assets" ? (
               <AssetCommandSheet
                 open
-                embedded
                 mode={ui.mode}
                 recentAssetTypes={ui.recentAssetTypes}
                 armed={ui.armed}
                 onArm={armType}
                 onClose={() => setStudioSheetOpen(false)}
-                onExpandLibrary={
-                  compactAssetUi
-                    ? undefined
-                    : () => {
-                        setStudioSheetOpen(false);
-                        studio.setUi({ ...openLeftAssetExclusive("expanded") });
-                      }
-                }
               />
             ) : null}
             {studioSheetPage === "data" ? (
@@ -5091,50 +5091,7 @@ export function HandoffDesignStudio({
                 />
               </div>
             ) : null}
-            {studioSheetPage === "command" ? (
-              <div data-testid="studio-sheet-command">
-                <p className={sheetCss.pageKicker}>Command palette</p>
-                <button
-                  type="button"
-                  className={sheetCss.actionRow}
-                  onClick={() => studio.setUi({ cmdOpen: true })}
-                >
-                  Open ⌘K
-                </button>
-              </div>
-            ) : null}
-            {studioSheetPage === "share" ? (
-              <div data-testid="studio-sheet-share">
-                <p className={sheetCss.pageKicker}>Share revision</p>
-                <button
-                  type="button"
-                  className={sheetCss.actionRow}
-                  disabled={!hasCostedBom}
-                  onClick={() => {
-                    if (!hasCostedBom) return;
-                    setSharePopupOpen(true);
-                  }}
-                >
-                  {hasCostedBom ? "Open share" : "Cost something before sharing"}
-                </button>
-              </div>
-            ) : null}
           </StudioSheetHost>
-        ) : null}
-
-        {assetSheetVisible ? (
-          <AssetCommandSheet
-            open
-            mode={ui.mode}
-            recentAssetTypes={ui.recentAssetTypes}
-            armed={ui.armed}
-            onArm={armType}
-            onClose={() => setAssetSheetOpen(false)}
-            onExpandLibrary={() => {
-              setAssetSheetOpen(false);
-              studio.setUi({ ...openLeftAssetExclusive("expanded") });
-            }}
-          />
         ) : null}
 
         {assetPanelOn ? (

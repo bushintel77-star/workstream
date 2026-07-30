@@ -165,8 +165,8 @@ test.describe("Tilt lens", () => {
       timeout: 20_000,
     });
 
-    // Top-bar Tilt control (not Cmd+K only) — operator-discoverable path.
-    await page.getByTestId("canvas-tilt-top").click();
+    // Top-bar Tilt control (header icon — not View-menu duplicate).
+    await page.getByTestId("tilt-view-top").click();
     await expect(page.getByTestId("studio-board")).toHaveAttribute(
       "data-tilt",
       "1",

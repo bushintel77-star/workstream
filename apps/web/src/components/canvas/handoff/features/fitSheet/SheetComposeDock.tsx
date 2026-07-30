@@ -210,6 +210,7 @@ export function SheetComposeDock({
                 aria-label={a.label}
                 aria-checked={atmosphere === a.id}
                 title={a.label}
+                style={{ background: a.hex }}
                 onClick={() => {
                   onAtmosphere(a.id);
                   bumpLinger();

@@ -4,11 +4,12 @@
  *
  * Disappearing UI: edge-to-edge drawing; frost chrome on summon;
  * right data lane (one panel); left = tool tray + unified AssetPanel.
- * Asset library is never a separate frost popup (`inventoryPopup` always false).
+ * Asset library is never a separate frost popup.
  * AI = intelligent intern — ghosts never silent-write (constraint-first).
  *
- * Compact fork (≤719px / coarse pointer): rails demote into StudioSheetHost +
- * primary FAB; board keeps CameraChrome / tilt / sun laws.
+ * Compact fork (viewport ≤719px): rails demote into StudioSheetHost +
+ * primary FAB. Desktop (≥720) keeps dual-rail / structure chrome — never
+ * flipped by coarse pointer or board inset width alone.
  */
 
 import type { StudioMode, StudioTool } from "../studioCatalog";
@@ -44,6 +45,7 @@ export type HandoffChrome = {
    * True when the layers control is available (not Fit / focus / client).
    * Actual panel mounts exclusively via `rightDataPanel` (lane law).
    * Compact: false — Data lives in StudioSheetHost.
+   * Services/Env/Site/Trees: Vic-gov sticky chips (docs/ENV-AND-SITE-META-STICKY.md).
    */
   structureRail: boolean;
   /** Compact live cost total (same estimate engine; collapsed chrome) */
@@ -57,16 +59,10 @@ export type HandoffChrome = {
   horizonBoard: boolean;
   /** Compact: horizon + findings ride the Inbox sheet page. */
   inboxSheet: boolean;
-  /** Dynamic volumetric Isolith (stockpile contours on sheet margin) */
-  volumeIsolith: boolean;
-  /** Ambient budget margin + selection SKU trade tags */
-  tradeMargin: boolean;
   /** Sun / growth scrubber (canvas float — prefer sidecar analytics) */
   sunGrowth: boolean;
   /** Low-voltage lighting workspace dock (beams + capacity ring). */
   lightingWorkspace: boolean;
-  /** AI coach dock (canvas float — prefer Ask AI on selection / sidecar) */
-  aiCoach: boolean;
   /**
    * Left ToolDock tower. Compact: false — tools via sheet / header overflow.
    * (Previously ambientRibbon; alias kept for callers.)
@@ -74,11 +70,6 @@ export type HandoffChrome = {
   ambientRibbon: boolean;
   /** Selection orbit (delete / lock / Ask AI) — outside the glyph */
   selectionRing: boolean;
-  /**
-   * @deprecated Unified AssetPanel owns the library. Always false — kept so
-   * chrome callers/tests don't break during the collapse.
-   */
-  inventoryPopup: boolean;
   /** Left drawing tools implied by mode */
   drawTools: boolean;
   /** Collapse open utility sheets while Trace/Edit/Add/Measure */
@@ -132,7 +123,8 @@ type Input = {
    */
   horizonCardCount?: number;
   /**
-   * Compact fork: ≤719px or coarse pointer.
+   * Compact fork: viewport ≤719px only (see HandoffDesignStudio sync).
+   * Coarse pointer must not flip desktop into FAB/sheet chrome.
    * Rails → sheet + FAB; board absolute horizon stacks demote to Inbox.
    */
   compact?: boolean;
@@ -161,14 +153,10 @@ function quietChrome(partial: Partial<HandoffChrome> & Pick<
   | "structureRail"
   | "liveBom"
   | "horizon"
-  | "volumeIsolith"
-  | "tradeMargin"
   | "sunGrowth"
   | "lightingWorkspace"
-  | "aiCoach"
   | "ambientRibbon"
   | "selectionRing"
-  | "inventoryPopup"
   | "drawTools"
   | "collapseUtility"
   | "floraRing"
@@ -205,9 +193,9 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     compact = false,
     lightingWorkspaceOn = false,
   } = input;
+
   const drawingHot = DRAWING_TOOLS.includes(tool);
-  const draftCrowded = pendingGhosts > 0;
-  /** Flora only when a session exists — never idle wallpaper. */
+  const draftCrowded = (pendingGhosts ?? 0) > 0;
   const floraOn =
     floraSessionActive &&
     planModesAllowFlora(mode) &&
@@ -215,7 +203,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     !frameOn &&
     !clientView &&
     !foundationCleanse;
-  /** Horizon summoned by foresight cards only (UI caps at 2). */
+
   const horizonOn =
     horizonCardCount > 0 &&
     (mode === "cad" || mode === "sketch") &&
@@ -233,14 +221,10 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       structureRail: instruments && !compact,
       liveBom: false,
       horizon: false,
-      volumeIsolith: false,
-      tradeMargin: false,
       sunGrowth: false,
       lightingWorkspace: false,
-      aiCoach: false,
       ambientRibbon: instruments && !compact,
       selectionRing: false,
-      inventoryPopup: false,
       drawTools: instruments && mode !== "quote" && mode !== "share",
       collapseUtility: true,
       floraRing: false,
@@ -267,14 +251,10 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       structureRail: false,
       liveBom: false,
       horizon: false,
-      volumeIsolith: false,
-      tradeMargin: false,
       sunGrowth: false,
       lightingWorkspace: false,
-      aiCoach: false,
       ambientRibbon: false,
       selectionRing: false,
-      inventoryPopup: false,
       drawTools: false,
       collapseUtility: true,
       floraRing: false,
@@ -290,14 +270,10 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
       structureRail: false,
       liveBom: false,
       horizon: false,
-      volumeIsolith: false,
-      tradeMargin: false,
       sunGrowth: shadeOn && plan,
       lightingWorkspace: false,
-      aiCoach: false,
       ambientRibbon: false,
       selectionRing: false,
-      inventoryPopup: false,
       drawTools: false,
       collapseUtility: true,
       floraRing: false,
@@ -327,17 +303,12 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     horizon: horizonOn,
     horizonBoard: horizonOn && !compact,
     inboxSheet: horizonOn && compact,
-    volumeIsolith: false,
-    tradeMargin: false,
     sunGrowth: sunScrubber,
     lightingWorkspace: lightingDock,
-    aiCoach: false,
     ambientRibbon: plan && !compact,
     /** Orbit actions outside the glyph */
     selectionRing:
       mode === "cad" || mode === "sketch" || mode === "survey",
-    /** Library lives in AssetPanel — never a separate frost popup. */
-    inventoryPopup: false,
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: floraOn,

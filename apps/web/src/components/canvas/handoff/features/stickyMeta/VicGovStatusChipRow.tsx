@@ -7,6 +7,7 @@ import type {
   DesignKeylessOverlay,
   IrrigationZone,
 } from "@workstream/contracts";
+import { CameraChrome } from "../../CameraChrome";
 import type { SpotLevel, StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import type { GrowthStage } from "../../state/studioTypes";
@@ -51,7 +52,10 @@ type Props = {
   weatherDay?: EnvWeatherDay | null;
   onOpenPanel: (panel: Exclude<VicGovChipPanel, null>) => void;
   onCouncilLink?: (href: string) => void;
-  /** Header strip (default) vs legacy on-canvas dock — header skips CameraChrome. */
+  /**
+   * `dock` (default) — frost rail via CameraChrome (canvas-first).
+   * `header` kept for tests / rare embeds; prefer dock.
+   */
   placement?: "header" | "dock";
 };
 
@@ -81,7 +85,7 @@ export function VicGovStatusChipRow({
   weatherDay = null,
   onOpenPanel,
   onCouncilLink,
-  placement = "header",
+  placement = "dock",
 }: Props) {
   const env = useMemo(
     () =>
@@ -178,5 +182,11 @@ export function VicGovStatusChipRow({
     </div>
   );
 
-  return row;
+  if (placement === "header") return row;
+
+  return (
+    <CameraChrome place={{ kind: "dock" }} zIndex={48} testId="vic-gov-status-chrome">
+      {row}
+    </CameraChrome>
+  );
 }

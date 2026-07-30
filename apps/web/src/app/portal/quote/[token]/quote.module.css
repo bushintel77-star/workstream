@@ -24,7 +24,7 @@
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1;
-  color: #faf4f6;
+  color: var(--surface-elevated);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -107,7 +107,7 @@
   letter-spacing: -0.03em;
   font-weight: 700;
   margin: 8px 0 0;
-  color: #1a1218;
+  color: var(--ink-primary);
   max-width: 18ch;
 }
 
@@ -248,15 +248,15 @@
 .acceptSection {
   margin: var(--s-6) 0 0;
   padding: var(--s-5);
-  background: #1a1218;
+  background: var(--ink-primary);
   border-radius: var(--r-lg);
   text-align: center;
-  color: #faf4f6;
+  color: var(--surface-elevated);
 }
 .acceptButton {
   display: inline-block;
-  background: #d4849a;
-  color: #1a1218 !important;
+  background: var(--accent);
+  color: var(--surface-elevated) !important;
   padding: 14px 22px;
   border-radius: var(--r-md);
   font-size: 15px;
@@ -267,7 +267,8 @@
 .acceptButton:hover {
   opacity: 1 !important;
   transform: translateY(-1px);
-  color: #1a1218 !important;
+  color: var(--surface-elevated) !important;
+  background: var(--accent-bright);
 }
 .acceptButtonDisabled {
   display: inline-block;

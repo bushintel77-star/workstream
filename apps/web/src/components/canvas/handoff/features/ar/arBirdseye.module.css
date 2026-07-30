@@ -1,11 +1,12 @@
+/* Always-dark AR stage — uses dark gray scale from color-tokens (not blush). */
 .root {
   position: fixed;
   inset: 0;
   z-index: 80;
   display: flex;
   flex-direction: column;
-  background: #0c1016;
-  color: var(--hc-ink, #e8e4dc);
+  background: var(--gray-d-0);
+  color: var(--gray-d-900);
   font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
 }
 
@@ -14,7 +15,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background: #121820;
+  background: var(--gray-d-100);
 }
 
 .video {
@@ -32,11 +33,11 @@
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(ellipse at 30% 20%, #2a3340 0%, transparent 55%),
-    #1a222c;
+    radial-gradient(ellipse at 30% 20%, var(--gray-d-200) 0%, transparent 55%),
+    var(--gray-d-150);
   text-align: center;
   font-size: 13px;
-  color: #c8c2b6;
+  color: var(--gray-d-800);
 }
 
 .overlayHost {
@@ -59,32 +60,32 @@
 
 .boundary {
   fill: none;
-  stroke: color-mix(in srgb, #f4efe6 70%, transparent);
+  stroke: color-mix(in srgb, var(--gray-l-0) 70%, transparent);
   stroke-width: 0.45;
   stroke-dasharray: 1.2 0.8;
 }
 
 .building {
-  fill: color-mix(in srgb, #0c1016 55%, transparent);
-  stroke: #f4efe6;
+  fill: color-mix(in srgb, var(--gray-d-0) 55%, transparent);
+  stroke: var(--gray-l-0);
   stroke-width: 0.55;
 }
 
 .plant {
-  fill: color-mix(in srgb, #5a8f6a 75%, transparent);
-  stroke: #2f5a3c;
+  fill: color-mix(in srgb, var(--planting-new-stroke) 75%, transparent);
+  stroke: var(--planting-retain-stroke);
   stroke-width: 0.2;
 }
 
 .hard {
-  fill: color-mix(in srgb, #8a8f98 55%, transparent);
-  stroke: #4a5058;
+  fill: color-mix(in srgb, var(--bluestone-l-400) 55%, transparent);
+  stroke: var(--border-strong);
   stroke-width: 0.2;
 }
 
 .other {
-  fill: color-mix(in srgb, #c45c26 55%, transparent);
-  stroke: #8a3a12;
+  fill: color-mix(in srgb, var(--signal) 55%, transparent);
+  stroke: var(--signal-ink);
   stroke-width: 0.2;
 }
 
@@ -94,8 +95,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid color-mix(in srgb, #f4efe6 12%, transparent);
-  background: color-mix(in srgb, #121820 92%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--gray-l-0) 12%, transparent);
+  background: color-mix(in srgb, var(--gray-d-100) 92%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -112,7 +113,7 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #9a9488;
+  color: var(--gray-d-500);
 }
 
 .close {
@@ -121,7 +122,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #c8c2b6;
+  color: var(--gray-d-800);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
@@ -138,7 +139,7 @@
   font-size: 10px;
   line-height: 1.4;
   font-style: italic;
-  color: #9a9488;
+  color: var(--gray-d-500);
 }
 
 .align {
@@ -148,20 +149,20 @@
 }
 
 .align[data-band="poor"] {
-  color: #d4a017;
+  color: var(--warning);
 }
 
 .align[data-band="fair"] {
-  color: #c8c2b6;
+  color: var(--gray-d-800);
 }
 
 .align[data-band="good"] {
-  color: #6faf7e;
+  color: var(--planting-new-stroke);
 }
 
 .muted {
   font-weight: 500;
-  color: #9a9488;
+  color: var(--gray-d-500);
 }
 
 .controls {
@@ -178,21 +179,21 @@
   min-width: 120px;
   flex: 1;
   font-size: 10px;
-  color: #9a9488;
+  color: var(--gray-d-500);
 }
 
 .slider input {
   width: 100%;
-  accent-color: #c45c26;
+  accent-color: var(--signal);
 }
 
 .toggle {
   min-height: 36px;
   padding: 6px 10px;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, #f4efe6 18%, transparent);
-  background: color-mix(in srgb, #1a222c 80%, transparent);
-  color: #e8e4dc;
+  border: 1px solid color-mix(in srgb, var(--gray-l-0) 18%, transparent);
+  background: color-mix(in srgb, var(--gray-d-150) 80%, transparent);
+  color: var(--gray-d-900);
   font-size: 12px;
   cursor: pointer;
 }
@@ -201,7 +202,7 @@
   margin: 6px 0 0;
   font-size: 10px;
   line-height: 1.35;
-  color: #7a7468;
+  color: var(--gray-d-400);
 }
 
 @media (min-width: 720px) {
@@ -216,6 +217,6 @@
   .dock {
     width: min(320px, 38vw);
     border-top: none;
-    border-left: 1px solid color-mix(in srgb, #f4efe6 12%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--gray-l-0) 12%, transparent);
   }
 }

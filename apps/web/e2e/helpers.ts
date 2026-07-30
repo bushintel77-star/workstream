@@ -38,16 +38,28 @@ export async function clickHeaderViewItem(page: Page, testId: string) {
   await item.click({ force: true });
 }
 
-/** Drawing tools live in the fixed left tool dock — always visible in plan modes. */
+/**
+ * Canvas-first: instruments are summoned (peek / header / margin), not sticky.
+ */
+export async function summonCanvasInstruments(page: Page) {
+  const dock = page.getByTestId("tool-dock");
+  const strip = page.getByTestId("contextual-tool-strip");
+  if ((await dock.count()) > 0 || (await strip.count()) > 0) return;
+  const peek = page.getByTestId("instruments-peek");
+  if ((await peek.count()) > 0) {
+    await peek.click();
+  } else {
+    await page.getByTestId("pointer-settings-top").click({ force: true });
+  }
+  await expect(dock.or(strip)).toBeVisible({ timeout: 10_000 });
+}
+
+/** Desktop left tool dock — summon first if idle parchment. */
 export async function expectToolDock(page: Page) {
+  await summonCanvasInstruments(page);
   await expect(page.getByTestId("tool-dock")).toBeVisible({
     timeout: 15_000,
   });
-}
-
-/** @deprecated Prefer expectToolDock — instruments are no longer margin-summoned. */
-export async function summonCanvasInstruments(page: Page) {
-  await expectToolDock(page);
 }
 
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */

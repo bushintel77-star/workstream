@@ -68,6 +68,14 @@
   padding-bottom: 4px;
 }
 
+.peekView {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: calc(var(--sheet-peek-h, 72px) - 8px);
+  padding: 2px 0 4px;
+}
+
 .peekLabel {
   flex: 0 0 auto;
   margin: 0;
@@ -86,6 +94,51 @@
   min-height: 44px;
   align-items: center;
   -webkit-overflow-scrolling: touch;
+}
+
+.swatchRow {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  min-height: 44px;
+  align-items: center;
+  -webkit-overflow-scrolling: touch;
+}
+
+.swatch {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control, 10px);
+  background: var(--hc-neu-raised, var(--hc-glass-soft));
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--hc-motion, 180ms) var(--ease),
+    box-shadow var(--hc-motion, 180ms) var(--ease);
+}
+
+.swatchOn {
+  color: var(--ink);
+  border-color: var(--hc-signal, var(--hc-line));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hc-signal, var(--hc-line)) 45%, transparent);
+}
+
+.swatchGlyph {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .chip {
@@ -211,6 +264,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sheet {
+    transition: none;
+  }
+
+  .swatch {
     transition: none;
   }
 }

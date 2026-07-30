@@ -2,12 +2,7 @@
  * Compact studio sheet — page + snap helpers (pure, unit-testable).
  */
 
-export type StudioSheetPage =
-  | "assets"
-  | "data"
-  | "inbox"
-  | "command"
-  | "share";
+export type StudioSheetPage = "assets" | "data" | "inbox";
 
 export type StudioSheetSnap = "peek" | "half" | "full";
 
@@ -18,8 +13,6 @@ export const STUDIO_SHEET_PAGES: ReadonlyArray<{
   { id: "assets", label: "Assets" },
   { id: "data", label: "Data" },
   { id: "inbox", label: "Inbox" },
-  { id: "command", label: "Command" },
-  { id: "share", label: "Share" },
 ];
 
 /** Peek height reserved into --ws-safe-bottom when sheet is open. */

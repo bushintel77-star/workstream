@@ -48,7 +48,6 @@ describe("resolveHandoffChrome", () => {
     expect(c.aiSidecar).toBe(false);
     expect(c.structureRail).toBe(true);
     expect(c.horizon).toBe(false);
-    expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
     expect(c.draftSurface).toBe(false);
   });
@@ -69,13 +68,9 @@ describe("resolveHandoffChrome", () => {
     expect(c.aiSidecar).toBe(false);
     expect(c.structureRail).toBe(true);
     expect(c.horizon).toBe(false);
-    expect(c.volumeIsolith).toBe(false);
-    expect(c.tradeMargin).toBe(false);
-    expect(c.aiCoach).toBe(false);
     expect(c.sunGrowth).toBe(false);
     expect(c.lightingWorkspace).toBe(false);
     expect(c.selectionRing).toBe(true);
-    expect(c.inventoryPopup).toBe(false);
     expect(c.draftSurface).toBe(false);
   });
 
@@ -92,28 +87,12 @@ describe("resolveHandoffChrome", () => {
     const c = resolveHandoffChrome({ ...base, mode: "cad", dataSummoned: true });
     expect(c.utilityDrawer).toBe(true);
     expect(c.aiSidecar).toBe(true);
-    // Summoning never resurrects the legacy floating consumer docks.
-    expect(c.aiCoach).toBe(false);
-    expect(c.tradeMargin).toBe(false);
   });
 
-  it("never opens a separate inventory frost popup (unified AssetPanel)", () => {
-    expect(
-      resolveHandoffChrome({ ...base, mode: "cad", tool: "add" }).inventoryPopup,
-    ).toBe(false);
-    expect(
-      resolveHandoffChrome({ ...base, mode: "cad", tool: "paint" })
-        .inventoryPopup,
-    ).toBe(false);
-    expect(
-      resolveHandoffChrome({ ...base, mode: "cad", tool: "select" }).inventoryPopup,
-    ).toBe(false);
-  });
 
   it("surfaces sun scrubber when shade mesh is on", () => {
     const c = resolveHandoffChrome({ ...base, mode: "cad", shadeOn: true });
     expect(c.sunGrowth).toBe(true);
-    expect(c.aiCoach).toBe(false);
   });
 
   it("keeps sun scrubber off Fit sheet even with shade mesh", () => {
@@ -227,7 +206,6 @@ describe("resolveHandoffChrome", () => {
     expect(c.utilityDrawer).toBe(false);
     expect(c.drawTools).toBe(false);
     expect(c.horizon).toBe(false);
-    expect(c.aiCoach).toBe(false);
   });
 
   it("Fit sheet is paper-only — no Isolith, trade, or ribbon", () => {
@@ -238,9 +216,6 @@ describe("resolveHandoffChrome", () => {
     });
     expect(c.utilityDrawer).toBe(false);
     expect(c.horizon).toBe(false);
-    expect(c.aiCoach).toBe(false);
-    expect(c.volumeIsolith).toBe(false);
-    expect(c.tradeMargin).toBe(false);
     expect(c.ambientRibbon).toBe(false);
     expect(c.draftSurface).toBe(false);
     expect(c.selectionRing).toBe(false);
@@ -256,7 +231,6 @@ describe("resolveHandoffChrome", () => {
       focusOn: true,
     });
     expect(c.ambientRibbon).toBe(false);
-    expect(c.volumeIsolith).toBe(false);
     expect(c.floraRing).toBe(false);
     expect(c.draftSurface).toBe(false);
   });
@@ -267,9 +241,6 @@ describe("resolveHandoffChrome", () => {
       mode: "cad",
       foundationCleanse: true,
     });
-    expect(c.volumeIsolith).toBe(false);
-    expect(c.tradeMargin).toBe(false);
-    expect(c.aiCoach).toBe(false);
     expect(c.floraRing).toBe(false);
     expect(c.draftSurface).toBe(false);
   });

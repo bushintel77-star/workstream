@@ -22,8 +22,8 @@
 }
 
 .soil_moisture {
-  stroke: color-mix(in srgb, var(--hc-water, #5b7c8a) 80%, transparent);
-  fill: color-mix(in srgb, var(--hc-water, #5b7c8a) 70%, transparent);
+  stroke: color-mix(in srgb, var(--hc-water) 80%, transparent);
+  fill: color-mix(in srgb, var(--hc-water) 70%, transparent);
 }
 
 .thermal_comfort {
@@ -32,8 +32,8 @@
 }
 
 .flow {
-  stroke: color-mix(in srgb, var(--hc-signal, #c45c26) 70%, transparent);
-  fill: color-mix(in srgb, var(--hc-signal, #c45c26) 60%, transparent);
+  stroke: color-mix(in srgb, var(--hc-signal) 70%, transparent);
+  fill: color-mix(in srgb, var(--hc-signal) 60%, transparent);
 }
 
 .sediment {
@@ -134,7 +134,7 @@
   margin: 6px 0 0;
   font-size: 11px;
   line-height: 1.35;
-  color: var(--hc-warning, #b45309);
+  color: var(--hc-warning);
 }
 
 .honesty {

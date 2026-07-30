@@ -124,7 +124,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
   font-weight: 500;
-  color: rgba(74, 48, 40, 0.45);
+  color: color-mix(in srgb, var(--hc-ink-muted, var(--text-secondary)) 65%, transparent);
   pointer-events: none;
 }
 
@@ -170,11 +170,11 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
   font-weight: 500;
-  color: rgba(74, 48, 40, 0.55);
+  color: color-mix(in srgb, var(--hc-ink-muted, var(--text-secondary)) 70%, transparent);
 }
 
 .rulerOverlayDark {
-  color: rgba(236, 239, 244,0.45);
+  color: color-mix(in srgb, var(--hc-ink-muted, var(--text-secondary)) 55%, transparent);
 }
 
 .rulerLeft,
@@ -206,7 +206,7 @@
   height: 40px;
   border-radius: 50%;
   border: 1px solid rgba(90, 62, 42, 0.18);
-  background: rgba(255, 246, 238, 0.55);
+  background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
   display: grid;
   place-items: center;
   opacity: calc(0.35 + var(--parchment-op) * 0.3);
@@ -249,12 +249,12 @@
   margin: 0;
   padding: 4px 10px;
   border-radius: 8px;
-  background: rgba(255, 246, 238, 0.55);
+  background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(74, 48, 40, 0.5);
+  color: color-mix(in srgb, var(--hc-ink-muted, var(--text-secondary)) 70%, transparent);
   white-space: nowrap;
   opacity: calc(var(--parchment-op) * 0.9);
   transition: opacity 420ms ease;
@@ -287,12 +287,12 @@
   margin: 0;
   padding: 3px 8px;
   border-radius: 7px;
-  background: rgba(255, 246, 238, 0.55);
+  background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--ws-type-kicker, 8px);
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgba(74, 48, 40, 0.5);
+  color: color-mix(in srgb, var(--hc-ink-muted, var(--text-secondary)) 70%, transparent);
   pointer-events: none;
   opacity: calc(0.4 + var(--parchment-op) * 0.5);
 }

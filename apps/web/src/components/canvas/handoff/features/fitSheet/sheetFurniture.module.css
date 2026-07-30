@@ -129,11 +129,11 @@
     45deg,
     transparent,
     transparent 2px,
-    color-mix(in srgb, var(--warn, #b08900) 55%, transparent) 2px,
-    color-mix(in srgb, var(--warn, #b08900) 55%, transparent) 3px
+    color-mix(in srgb, var(--hc-warning) 55%, transparent) 2px,
+    color-mix(in srgb, var(--hc-warning) 55%, transparent) 3px
   );
 }
 
 .hatchList li[data-swatch="planting"] .hatchSwatch {
-  background: color-mix(in srgb, var(--sheet-atmosphere, #6b7f5a) 35%, var(--canvas));
+  background: color-mix(in srgb, var(--sheet-atmosphere) 35%, var(--canvas));
 }

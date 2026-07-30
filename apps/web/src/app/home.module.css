@@ -171,8 +171,7 @@
   text-transform: uppercase;
 }
 
-.searchInput,
-.sortSelect {
+.searchInput {
   min-height: 44px;
   padding: 0 12px;
   border: 1px solid var(--line-hairline);
@@ -183,10 +182,15 @@
   font-size: 16px;
 }
 
-.searchInput:focus,
-.sortSelect:focus {
+.searchInput:focus {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.sortChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .statusChips {

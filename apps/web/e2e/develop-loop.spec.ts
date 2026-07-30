@@ -21,7 +21,7 @@ test.describe("Develop site loop", () => {
     });
 
     await openCommandPalette(page);
-    await page.getByLabel("Command search").fill("develop site");
+    await page.getByLabel("Search assets").fill("develop site");
     const cmd = page.getByTestId("canvas-command-develop-site");
     await expect(cmd).toBeVisible({ timeout: 5_000 });
     await cmd.click();

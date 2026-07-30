@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 import {
-  clickHeaderViewItem,
   createSurveyProject,
   handoffStudio,
   openCommandPalette,
@@ -54,7 +53,7 @@ test.describe("Site pack dig gate", () => {
       timeout: 15_000,
     });
 
-    await clickHeaderViewItem(page, "canvas-services-top");
+    await page.getByTestId("vic-gov-chip-byda").click();
     await expect(page.getByTestId("right-data-lane-services")).toBeVisible({
       timeout: 10_000,
     });
@@ -81,7 +80,7 @@ test.describe("Site pack dig gate", () => {
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     await openCommandPalette(page);
-    await page.getByLabel("Command search").fill("prepare site pack");
+    await page.getByLabel("Search assets").fill("prepare site pack");
     await expect(
       page.getByTestId("canvas-command-prepare-site-pack"),
     ).toBeVisible({ timeout: 5_000 });

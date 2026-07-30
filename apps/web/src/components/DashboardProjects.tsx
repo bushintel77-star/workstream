@@ -190,18 +190,28 @@ export function DashboardProjects({
           })}
         </div>
 
-        <label className={home.sortLabel}>
+        <div className={home.sortLabel} role="group" aria-label="Sort projects">
           <span>Sort</span>
-          <select
-            value={sort}
-            onChange={(event) => setSort(event.target.value as DashboardSort)}
-            className={home.sortSelect}
-          >
-            <option value="activity">Last activity</option>
-            <option value="name">Name</option>
-            <option value="cost">Cost</option>
-          </select>
-        </label>
+          <div className={home.sortChips}>
+            {(
+              [
+                ["activity", "Last activity"],
+                ["name", "Name"],
+                ["cost", "Cost"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`${home.filterChip} ${sort === value ? home.filterChipActive : ""}`}
+                aria-pressed={sort === value}
+                onClick={() => setSort(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {items.length === 0 ? (

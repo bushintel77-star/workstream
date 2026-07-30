@@ -99,7 +99,7 @@ test.describe("Canvas sketch AI", () => {
     });
 
     await openCommandPalette(page);
-    await page.getByLabel("Command search").fill("place bluestone");
+    await page.getByLabel("Search assets").fill("place bluestone");
     const armPaving = page.getByTestId("canvas-command-arm-paving");
     await expect(armPaving).toBeVisible();
     await armPaving.click();

@@ -87,7 +87,7 @@ test.describe("Landscape lighting & watering services", () => {
     });
 
     await openCommandPalette(page);
-    await page.getByLabel("Command search").fill("lighting watering");
+    await page.getByLabel("Search assets").fill("lighting watering");
     await page.getByTestId("canvas-command-propose-services").click();
 
     await expect(page.getByTestId("council-setback-tip")).toContainText(

@@ -13,7 +13,7 @@ export function atmosphereCssVars(
   return {
     "--sheet-atmosphere": hex,
     "--sheet-atmosphere-wash": `color-mix(in srgb, ${hex} 28%, transparent)`,
-    "--sheet-atmosphere-line": `color-mix(in srgb, ${hex} 72%, #2a171d)`,
+    "--sheet-atmosphere-line": `color-mix(in srgb, ${hex} 72%, var(--sheet-ink))`,
   };
 }
 

@@ -22,7 +22,7 @@ AI is a **spatial collaborator inside the drawing**, not a separate chatbot. Tre
 | Contextual floating tools | Object stays clear; inventory grows in place from the Fill rail | AssetPanel + selection ring |
 | AI sidecar (right) | Collapsible: dialogue, variations, analytics | Utility hub + Live measures (collapsed by default); **ghost review** mounts in the right data lane when pending |
 | Structure rail (left) | Collapsed CAD data: layers, constraints | Layers panel (`layersOpen` default false) |
-| Instruments | Summon only (margin / hub) — no sticky ribbon on select | Ambient ribbon + `instrumentsSummoned` |
+| Instruments | Summon only (header / margin / Q) — no sticky ribbon on idle | `instrumentsSummoned` gates ToolDock + ContextualToolStrip; craft tools keep strip until Select |
 | Variation filmstrip | Large 16:9 / 3:2 thumbs, bottom or sidecar | **Partial** — A/B/C session schemes + plan minimap thumbs; generative AI thumbs deferred |
 
 Static AutoCAD-style ribbons are forbidden. Progressive disclosure via `resolveHandoffChrome`.
