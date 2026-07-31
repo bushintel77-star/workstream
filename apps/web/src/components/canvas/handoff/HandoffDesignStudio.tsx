@@ -239,6 +239,18 @@ import {
 } from "./geometry/canvasViewRotation";
 import { ViewNorthControl } from "./features/viewRotate/ViewNorthControl";
 import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
+import {
+  isTwoFingerCameraGesture,
+  panFromTouchMidpoint,
+  touchDistance,
+  touchMidpoint,
+  zoomFromPinch,
+} from "./geometry/canvasTouchCamera";
+import {
+  PHONE_DATA_SHEET_HEIGHT_PX,
+  PHONE_TOOL_DOCK_CLEARANCE_PX,
+  useStudioLayout,
+} from "../../../hooks/useStudioLayout";
 import { TiltHintPill } from "./features/tilt/TiltHintPill";
 import {
   TILT_ANIM_MS_FAST,
@@ -407,6 +419,9 @@ export function HandoffDesignStudio({
   });
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
+  /** Phone vs desktop chrome — adaptive shell; board engines unchanged. */
+  const studioLayout = useStudioLayout();
+  const isPhoneLayout = studioLayout === "phone";
   /**
    * Drag-to-pan — Space held (grab, armed) vs actively dragging (grabbing).
    * spaceHeldRef/panDragBaseRef back the gesture listeners so pan drags
@@ -416,6 +431,13 @@ export function HandoffDesignStudio({
   const [spacePanArmed, setSpacePanArmed] = useState(false);
   const [isPanningActive, setIsPanningActive] = useState(false);
   const panBaseRef = useRef({ x: 0, y: 0 });
+  /** Live zoom for multi-touch pinch (avoids stale closures mid-gesture). */
+  const zoomRef = useRef(1);
+  /**
+   * True while a two-finger pan/pinch is active — single-finger pan/sketch
+   * capture listeners must stand down.
+   */
+  const touchCameraActiveRef = useRef(false);
   /**
    * Sketch pad has no marquee — while the Pan tool is armed there, a plain
    * left-drag grabs the canvas (the pad steps aside; see SketchBoard.active).
@@ -766,6 +788,10 @@ export function HandoffDesignStudio({
   }, [ui.panX, ui.panY]);
 
   useEffect(() => {
+    zoomRef.current = clampZoom(ui.zoom);
+  }, [ui.zoom]);
+
+  useEffect(() => {
     /*
      * Sketch pad has nothing to marquee — Select-drag pans the camera there
      * (the pen only inks while armed). Plan modes marquee; pan is Space/middle.
@@ -829,6 +855,8 @@ export function HandoffDesignStudio({
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
     if (!planMode) return;
     const onPointerDownCapture = (e: PointerEvent) => {
+      /* Two-finger camera owns the board — do not start a one-finger pan. */
+      if (touchCameraActiveRef.current) return;
       /* Pan-tool grab never swallows chrome (dock chips, tray buttons). */
       const overChrome = Boolean(
         (e.target as HTMLElement | null)?.closest(
@@ -872,6 +900,101 @@ export function HandoffDesignStudio({
         capture: true,
       });
   }, [studio, ui.mode]);
+
+  /**
+   * Two-finger pan + pinch zoom (phone / tablet). Desktop Space/wheel paths
+   * stay above; this only arms on `pointerType === "touch"`.
+   */
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const planMode =
+      ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+    if (!planMode) return;
+
+    const pointers = new Map<number, { x: number; y: number }>();
+    let gesture: {
+      startMid: { x: number; y: number };
+      startDist: number;
+      basePan: { x: number; y: number };
+      baseZoom: number;
+    } | null = null;
+
+    const overChrome = (target: EventTarget | null) =>
+      Boolean(
+        (target as HTMLElement | null)?.closest?.(
+          "button, input, select, textarea, [data-camera-chrome]",
+        ),
+      );
+
+    const endGesture = (opts?: { updateCursor?: boolean }) => {
+      const wasActive = gesture != null || touchCameraActiveRef.current;
+      gesture = null;
+      touchCameraActiveRef.current = false;
+      /* Never setState from effect cleanup — that re-subscribes forever. */
+      if (wasActive && opts?.updateCursor) setIsPanningActive(false);
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      if (overChrome(e.target)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!isTwoFingerCameraGesture(pointers.size)) return;
+      const pts = [...pointers.values()];
+      const a = pts[0]!;
+      const b = pts[1]!;
+      gesture = {
+        startMid: touchMidpoint(a, b),
+        startDist: touchDistance(a, b),
+        basePan: { ...panBaseRef.current },
+        baseZoom: zoomRef.current,
+      };
+      touchCameraActiveRef.current = true;
+      setIsPanningActive(true);
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!gesture || !isTwoFingerCameraGesture(pointers.size)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      markInteracting();
+      const pts = [...pointers.values()];
+      const a = pts[0]!;
+      const b = pts[1]!;
+      const mid = touchMidpoint(a, b);
+      const dist = touchDistance(a, b);
+      const nextPan = panFromTouchMidpoint(gesture.basePan, gesture.startMid, mid);
+      const nextZoom = zoomFromPinch(gesture.baseZoom, gesture.startDist, dist);
+      /* Pan + scale only — avoid focus re-anchor fights mid-pinch (tilt path). */
+      studio.setUi({ panX: nextPan.x, panY: nextPan.y, zoom: nextZoom });
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) endGesture({ updateCursor: true });
+    };
+
+    el.addEventListener("pointerdown", onPointerDown, { capture: true });
+    el.addEventListener("pointermove", onPointerMove, { capture: true });
+    el.addEventListener("pointerup", onPointerUp, { capture: true });
+    el.addEventListener("pointercancel", onPointerUp, { capture: true });
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown, { capture: true });
+      el.removeEventListener("pointermove", onPointerMove, { capture: true });
+      el.removeEventListener("pointerup", onPointerUp, { capture: true });
+      el.removeEventListener("pointercancel", onPointerUp, { capture: true });
+      endGesture();
+    };
+    // markInteracting / studio.setUi are stable enough for the listener closure;
+    // only re-bind when plan mode changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
+  }, [ui.mode]);
 
   const prefersReducedMotion = () =>
     typeof window !== "undefined" &&
@@ -2847,9 +2970,8 @@ export function HandoffDesignStudio({
     <div
       className={`${css.root}${darkLens || ui.lightingWorkspaceOn ? ` ${css.rootDark}` : ""}${ui.lightingWorkspaceOn ? ` ${css.rootLighting}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}${headerContextActive ? ` ${css.rootHeaderContext}` : ""}`}
       data-testid="handoff-design-studio"
-      data-theme={
-        (darkLens || ui.lightingWorkspaceOn) && !ui.frameOn ? "dark" : "light"
-      }
+      data-layout={studioLayout}
+      data-theme={darkLens && !ui.frameOn ? "dark" : "light"}
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
       data-compact={chrome.compact ? "1" : "0"}
@@ -2863,21 +2985,19 @@ export function HandoffDesignStudio({
           /* Must match .zoomWorld scale (planZoom), not raw ui.zoom —
              Fit sheet diverges via sheetContentView. Inverse handles depend on it. */
           ["--studio-zoom" as string]: String(planZoom),
-          ...(chrome.compact
+          ...(isPhoneLayout
             ? {
-                ["--ws-safe-bottom" as string]: `${compactSafeBottom}px`,
+                ["--ws-safe-bottom" as string]: rightLaneBusy
+                  ? `${PHONE_DATA_SHEET_HEIGHT_PX + 12}px`
+                  : `${PHONE_TOOL_DOCK_CLEARANCE_PX}px`,
+                ["--ws-safe-left" as string]: "12px",
+                ["--ws-safe-right" as string]: "12px",
               }
-            : null),
-          ...(rightLaneBusy
-            ? {
-                ["--ws-safe-right" as string]: `${RIGHT_DATA_LANE_WIDTH_PX}px`,
-              }
-            : null),
-          ...(leftSafeInset != null
-            ? {
-                ["--ws-safe-left" as string]: `${leftSafeInset}px`,
-              }
-            : null),
+            : rightLaneBusy
+              ? {
+                  ["--ws-safe-right" as string]: `${RIGHT_DATA_LANE_WIDTH_PX}px`,
+                }
+              : null),
           ...(printSheet
             ? {
                 ["--ws-print-left" as string]: `${printSheet.left}px`,

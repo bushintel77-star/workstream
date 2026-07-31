@@ -2084,30 +2084,69 @@
   }
 }
 
-@media (max-width: 719px) {
-  .root {
-    min-height: 0;
-  }
+/*
+ * Phone adaptive shell — same studio engines; thumb chrome instead of dense
+ * left/right docks. Desktop (data-layout="desktop") is unchanged.
+ */
+.root[data-layout="phone"] {
+  min-height: 100dvh;
+  min-height: 100svh;
+  --ws-safe-left: 12px;
+  --ws-safe-right: 12px;
+  --ws-safe-bottom: 88px;
+  --ws-safe-top: 108px;
+}
 
-  .modes {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
+.root[data-layout="phone"] .header {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  min-height: 0;
+}
 
-  .meta {
-    display: none;
-  }
+.root[data-layout="phone"] .brandBlock {
+  order: 0;
+  flex: 1 1 auto;
+  max-width: calc(100% - 96px);
+}
 
-  .headerVicGov {
-    max-width: min(200px, 42vw);
-  }
+.root[data-layout="phone"] .brandName {
+  font-size: 16px;
+}
 
-  .iconBtn,
-  .modeBtn,
-  .cmdBtn {
-    min-width: var(--tap-min, 44px);
-    min-height: var(--tap-min, 44px);
-  }
+.root[data-layout="phone"] .address {
+  max-width: min(220px, 70vw);
+}
+
+.root[data-layout="phone"] .modes {
+  order: 3;
+  flex: 1 1 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+
+.root[data-layout="phone"] .modes::-webkit-scrollbar {
+  display: none;
+}
+
+.root[data-layout="phone"] .modeBtn {
+  flex: 0 0 auto;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.root[data-layout="phone"] .spacer {
+  display: none;
+}
+
+.root[data-layout="phone"] .headerTools {
+  order: 1;
+  margin-left: auto;
 }
 
 /**

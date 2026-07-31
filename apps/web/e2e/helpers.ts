@@ -65,6 +65,9 @@ export async function expectToolDock(page: Page) {
 /** Legacy studio layout (viewport under 960px) — matches rail tabs and counts. */
 export const LEGACY_STUDIO_VIEWPORT = { width: 800, height: 900 };
 
+/** Phone adaptive shell — triggers `data-layout="phone"` (≤720px). */
+export const PHONE_STUDIO_VIEWPORT = { width: 390, height: 844 };
+
 /** Fresh project with survey only — empty sketch for ghost bootstrap. */
 export async function createSurveyProject(request: APIRequestContext) {
   const create = await request.post(`${API}/projects/`, {

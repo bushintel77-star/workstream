@@ -34,6 +34,19 @@
   animation: panelIn var(--hc-motion, 180ms) var(--ease) both;
 }
 
+/* Phone — summoned inventory as a bottom sheet above the tool strip. */
+:global([data-testid="handoff-design-studio"][data-layout="phone"]) .panel {
+  left: 8px;
+  right: 8px;
+  top: auto;
+  bottom: calc(var(--ws-safe-bottom, 88px) + 4px);
+  transform: none;
+  width: auto;
+  max-height: min(48vh, 360px);
+  overflow: auto;
+  flex-direction: column;
+}
+
 .panelNight {
   background: color-mix(in srgb, var(--panel) 82%, transparent);
   border-color: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
