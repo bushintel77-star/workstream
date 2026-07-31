@@ -1,21 +1,28 @@
 /*
  * The margin — one strip, reserved gutters, nothing overlaps a ruler.
- * Matte plastic per the dock control language (no cloudy frost).
+ * Dock chrome (board-relative, gate B) with the frame-native dark chip
+ * language (§0.1). Shelf 2 of the bottom-left stack, stacked above the
+ * sketch tray (shelf 1) using the same --ws-stack-* constants so it lines
+ * up with the shell-relative shelves used by phase chip / artboard strip.
  */
 
 .strip {
   position: absolute;
-  left: var(--ws-safe-left, 80px);
-  right: var(--ws-safe-right, 12px);
-  bottom: calc(var(--ws-safe-bottom, 36px) + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--ws-stack-gap) + var(--ws-stack-tray-h) + var(--ws-stack-gap));
   display: flex;
   align-items: center;
   gap: 12px;
   min-height: 34px;
+  max-width: min(94%, 640px);
   padding: 4px 10px;
-  border-radius: var(--hc-r-panel, 14px);
-  background: color-mix(in srgb, var(--hc-neu-surface) 88%, transparent);
-  box-shadow: var(--hc-elev-1);
+  border-radius: var(--ws-r-3, 12px);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, #000 72%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
   pointer-events: auto;
 }
 
@@ -33,30 +40,30 @@
   flex: none;
 }
 
-/* Plastic chips shared by history + sketch actions (token-driven). */
+/* Flat frame chip shared by history + sketch actions — dim ink at rest, wash
+   on hover, hairline ring when primary (same recipe as the frame rails). */
 .chip {
   flex-shrink: 0;
   min-height: 34px;
   padding: 0 11px;
   border: none;
-  border-radius: var(--hc-r-control);
-  background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -1px -1px 1.5px var(--hc-neu-light),
-    1px 1px 2.5px var(--hc-neu-shadow),
-    0 0 0 1px var(--hc-line-soft)
-  );
-  color: var(--hc-ink-muted);
+  border-radius: var(--ws-r-2, 8px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 650;
   letter-spacing: 0.04em;
   cursor: pointer;
+  transition:
+    background 140ms var(--ws-ease, ease),
+    color 140ms var(--ws-ease, ease);
 }
 
 .chip:hover:not(:disabled) {
-  color: var(--hc-ink);
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
 }
 
 .chip:disabled {
@@ -65,28 +72,15 @@
 }
 
 .chipPrimary {
-  color: var(--hc-ink);
-  box-shadow: var(
-    --hc-neu-out,
-    -1px -1px 2px var(--hc-neu-light),
-    1px 1px 3px var(--hc-neu-shadow),
-    0 0 0 1px var(--hc-line-soft)
-  );
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
   font-weight: 700;
 }
 
 .chip:focus-visible {
-  outline: 2px solid var(--hc-ink-muted);
+  outline: 2px solid var(--hc-signal);
   outline-offset: 2px;
-}
-
-.stripDark .chip {
-  background: var(--hc-neu-raised);
-  color: var(--hc-ink-muted);
-}
-
-.stripDark .chipPrimary {
-  color: var(--hc-ink);
 }
 
 .state {
@@ -96,7 +90,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .hint {
@@ -106,7 +100,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .spacer {
@@ -119,7 +113,7 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   font-variant-numeric: tabular-nums;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
 }
 
 .legal {
@@ -132,23 +126,13 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1.4;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-faint);
 }
 
-/* Night board — chalk on dolphin. Modifier class (rootDark is a hashed
-   module class in another file — :global cannot reach it reliably). */
-.stripDark {
-  background: rgba(32, 35, 41, 0.82);
-}
-
-.stripDark .state,
-.stripDark .hint,
-.stripDark .legal {
-  color: rgba(236, 239, 244, 0.6);
-}
-
+/* One frame identity in both lenses — .stripDark no longer swaps palette,
+   it only nudges emphasis (frame is already dark in both themes, §0.1). */
 .stripDark .stamp {
-  color: color-mix(in srgb, var(--hc-ink) 72%, transparent);
+  color: var(--ws-frame-ink-dim);
 }
 
 @media (max-width: 900px) {

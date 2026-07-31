@@ -27,13 +27,16 @@
 }
 
 /*
- * Surface 2 — sketch tool tray (pen / eraser / tip grade).
- * Plastic chips via --hc-neu-*; sits above the margin strip, clear of rulers.
+ * Surface 2 — sketch tool tray (pen / eraser / tip grade). Dock chrome
+ * (board-relative, gate B) with frame-native dark chip language (§0.1).
+ * Shelf 1 of the bottom-left stack — board-relative equivalent of
+ * --ws-stack-1, so it lines up with the shell-relative shelves used by
+ * margin strip / phase chip / artboard strip and never collides with them.
  */
 .tray {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--ws-safe-bottom, 36px) + 52px);
+  bottom: var(--ws-stack-gap);
   transform: translateX(-50%);
   z-index: 45;
   display: flex;
@@ -43,9 +46,12 @@
   gap: 6px;
   max-width: min(94%, 520px);
   padding: 6px 8px;
-  border-radius: var(--hc-r-panel, 14px);
-  background: color-mix(in srgb, var(--hc-neu-surface) 88%, transparent);
-  box-shadow: var(--hc-elev-1);
+  border-radius: var(--ws-r-3, 12px);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, #000 72%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
   pointer-events: auto;
 }
 
@@ -60,15 +66,10 @@
   min-height: 44px;
   padding: 4px 8px;
   border: none;
-  border-radius: var(--hc-r-control);
-  background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -1px -1px 1.5px var(--hc-neu-light),
-    1px 1px 2.5px var(--hc-neu-shadow),
-    0 0 0 1px var(--hc-line-soft)
-  );
-  color: var(--hc-ink-muted);
+  border-radius: var(--ws-r-2, 8px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 7.5px;
   font-weight: 650;
@@ -76,22 +77,20 @@
   text-transform: uppercase;
   cursor: pointer;
   transition:
-    box-shadow var(--hc-motion, 180ms) ease,
-    color var(--hc-motion, 180ms) ease;
+    background 140ms var(--ws-ease, ease),
+    color 140ms var(--ws-ease, ease);
 }
 
 .chip:hover:not(:disabled) {
-  color: var(--hc-ink);
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
 }
 
 .chipArmed,
 .chipArmed:hover:not(:disabled) {
-  color: var(--hc-ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 1px 1px 2px var(--hc-neu-shadow),
-    inset -1px -1px 1.5px var(--hc-neu-light)
-  );
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
 }
 
 .chip:disabled {
@@ -100,7 +99,7 @@
 }
 
 .chip:focus-visible {
-  outline: 2px solid var(--hc-ink-muted);
+  outline: 2px solid var(--hc-signal);
   outline-offset: 2px;
 }
 
@@ -116,13 +115,9 @@
   align-items: center;
   gap: 2px;
   padding: 3px;
-  border-radius: var(--hc-r-control);
-  background: var(--hc-neu-surface);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 1px 1px 2px var(--hc-neu-shadow),
-    inset -1px -1px 1.5px var(--hc-neu-light)
-  );
+  border-radius: var(--ws-r-2, 8px);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
 }
 
 .tip {
@@ -134,7 +129,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   font-size: 10px;
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
@@ -142,20 +137,15 @@
 }
 
 .tip:hover:not(:disabled) {
-  color: var(--hc-ink);
-  background: color-mix(in srgb, var(--hc-neu-raised) 80%, transparent);
+  color: var(--ws-frame-ink);
+  background: var(--ws-frame-wash);
 }
 
 .tipArmed,
 .tipArmed:hover:not(:disabled) {
-  color: var(--hc-ink);
-  background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -1px -1px 1.5px var(--hc-neu-light),
-    1px 1px 2.5px var(--hc-neu-shadow),
-    0 0 0 1px var(--hc-line-soft)
-  );
+  color: var(--ws-frame-ink);
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
 }
 
 .tip:disabled {
@@ -184,7 +174,6 @@
 
 @media (max-width: 640px) {
   .tray {
-    bottom: calc(var(--ws-safe-bottom, 36px) + 48px);
     max-width: 96%;
   }
 }

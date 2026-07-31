@@ -44,10 +44,8 @@
 }
 
 .planDeepChalk :is(polygon, path, line, ellipse, circle, polyline) {
-  stroke: var(
-    --plan-stroke,
-    color-mix(in srgb, var(--hc-paper) 90%, transparent)
-  );
+  stroke: var(--plan-stroke,
+      color-mix(in srgb, var(--hc-paper) 90%, transparent));
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -123,10 +121,12 @@
 }
 
 @keyframes cornerRefuse {
+
   0%,
   100% {
     box-shadow: 0 0 0 2px var(--focus-ring-offset);
   }
+
   50% {
     box-shadow:
       0 0 0 4px color-mix(in srgb, var(--existing-stroke) 32%, transparent),
@@ -218,7 +218,7 @@
   white-space: nowrap;
   margin-top: 0;
   box-shadow: none;
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242, 240, 235, 0.92)), -1px 0 0 var(--label-halo, rgba(242, 240, 235, 0.92)), 0 1px 0 var(--label-halo, rgba(242, 240, 235, 0.92)), 0 -1px 0 var(--label-halo, rgba(242, 240, 235, 0.92));
 }
 
 /*
@@ -419,7 +419,7 @@
   white-space: nowrap;
   margin-top: 0;
   box-shadow: none;
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242, 240, 235, 0.92)), -1px 0 0 var(--label-halo, rgba(242, 240, 235, 0.92)), 0 1px 0 var(--label-halo, rgba(242, 240, 235, 0.92)), 0 -1px 0 var(--label-halo, rgba(242, 240, 235, 0.92));
 }
 
 /* Sketch pad — CAD symbols sleep; site line stays as a faint guide. */
@@ -429,11 +429,9 @@
 
 /* Soft protection wash — planting-retain + fill-tpz (§4) */
 .tpzZone {
-  fill: color-mix(
-    in srgb,
-    var(--planting-retain-stroke) var(--fill-tpz),
-    var(--canvas)
-  );
+  fill: color-mix(in srgb,
+      var(--planting-retain-stroke) var(--fill-tpz),
+      var(--canvas));
   stroke: var(--planting-retain-stroke);
   stroke-width: 1.15;
   stroke-dasharray: 5 3.5;
@@ -442,11 +440,9 @@
 }
 
 .tpzZone:hover {
-  fill: color-mix(
-    in srgb,
-    var(--planting-retain-stroke) 28%,
-    var(--canvas)
-  );
+  fill: color-mix(in srgb,
+      var(--planting-retain-stroke) 28%,
+      var(--canvas));
   stroke: var(--planting-retain-hover);
 }
 
@@ -492,8 +488,7 @@
   z-index: 16;
   padding: 5px 8px;
   border-radius: 10px;
-  border: 1px solid
-    color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
+  border: 1px solid color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
   background: var(--panel);
   color: var(--text-primary);
   font-family: "IBM Plex Mono", monospace;
@@ -514,8 +509,7 @@
   letter-spacing: 0.02em;
   color: var(--planting-retain-text);
   background: var(--panel);
-  border: 1px solid
-    color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
+  border: 1px solid color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
   padding: 2px 7px;
   border-radius: 6px;
   pointer-events: none;
@@ -562,16 +556,12 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: 0.58;
-  background: color-mix(
-    in srgb,
-    var(--proposed-stroke) var(--fill-highlight),
-    var(--canvas)
-  );
-  outline: 1px solid
-    color-mix(in srgb, var(--proposed-stroke) 36%, transparent);
+  background: color-mix(in srgb,
+      var(--proposed-stroke) var(--fill-highlight),
+      var(--canvas));
+  outline: 1px solid color-mix(in srgb, var(--proposed-stroke) 36%, transparent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 6px
-    color-mix(in srgb, var(--proposed-stroke) 16%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--proposed-stroke) 16%, transparent);
 }
 
 .itemSelected {
@@ -584,6 +574,7 @@
 }
 
 @keyframes selPulse {
+
   0%,
   100% {
     outline-color: var(--focus-ring);
@@ -591,6 +582,7 @@
       0 0 0 6px color-mix(in srgb, var(--proposed-stroke) 22%, transparent),
       0 0 0 10px color-mix(in srgb, var(--proposed-stroke) 12%, transparent);
   }
+
   50% {
     outline-color: var(--proposed-hover);
     box-shadow:
@@ -618,7 +610,7 @@
   color: var(--hc-ink-muted);
   opacity: 0.55;
   white-space: nowrap;
-  text-shadow: 1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), -1px 0 0 var(--label-halo, rgba(242,240,235,0.92)), 0 1px 0 var(--label-halo, rgba(242,240,235,0.92)), 0 -1px 0 var(--label-halo, rgba(242,240,235,0.92));
+  text-shadow: 1px 0 0 var(--label-halo, rgba(242, 240, 235, 0.92)), -1px 0 0 var(--label-halo, rgba(242, 240, 235, 0.92)), 0 1px 0 var(--label-halo, rgba(242, 240, 235, 0.92)), 0 -1px 0 var(--label-halo, rgba(242, 240, 235, 0.92));
 }
 
 .missingBuildingCue {
@@ -686,14 +678,12 @@ button.missingBuildingCue:hover {
   font-size: 10px;
   line-height: 1;
   pointer-events: none;
-  box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--planting-new-stroke) 40%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--planting-new-stroke) 40%, transparent);
 }
 
 .snapGlyph[data-snap="vertex"] {
   color: var(--existing-text);
-  box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--existing-stroke) 40%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--existing-stroke) 40%, transparent);
 }
 
 .snapPulse {
@@ -704,14 +694,11 @@ button.missingBuildingCue:hover {
   transform: translate(-50%, -50%);
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--planting-new-stroke) 28%, transparent) 0%,
-    color-mix(in srgb, var(--planting-new-stroke) 20%, transparent) 34%,
-    transparent 72%
-  );
-  box-shadow: 0 0 0 7px
-    color-mix(in srgb, var(--planting-new-stroke) 16%, transparent);
+  background: radial-gradient(circle,
+      color-mix(in srgb, var(--planting-new-stroke) 28%, transparent) 0%,
+      color-mix(in srgb, var(--planting-new-stroke) 20%, transparent) 34%,
+      transparent 72%);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--planting-new-stroke) 16%, transparent);
   animation: snapPulse 520ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
@@ -719,14 +706,11 @@ button.missingBuildingCue:hover {
 .snapPulseApproach {
   width: 40px;
   height: 40px;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--planting-new-stroke) 18%, transparent) 0%,
-    color-mix(in srgb, var(--planting-new-stroke) 12%, transparent) 42%,
-    transparent 78%
-  );
-  box-shadow: 0 0 0 10px
-    color-mix(in srgb, var(--planting-new-stroke) 10%, transparent);
+  background: radial-gradient(circle,
+      color-mix(in srgb, var(--planting-new-stroke) 18%, transparent) 0%,
+      color-mix(in srgb, var(--planting-new-stroke) 12%, transparent) 42%,
+      transparent 78%);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--planting-new-stroke) 10%, transparent);
   animation: snapPulseApproach 720ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
@@ -734,20 +718,16 @@ button.missingBuildingCue:hover {
 .snapPulseLocked {
   width: 32px;
   height: 32px;
-  box-shadow: 0 0 0 9px
-    color-mix(in srgb, var(--planting-new-stroke) 22%, transparent);
+  box-shadow: 0 0 0 9px color-mix(in srgb, var(--planting-new-stroke) 22%, transparent);
   animation: snapPulse 420ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .snapPulseLocked[data-snap="vertex"] {
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--existing-stroke) 32%, transparent) 0%,
-    color-mix(in srgb, var(--existing-stroke) 16%, transparent) 40%,
-    transparent 74%
-  );
-  box-shadow: 0 0 0 10px
-    color-mix(in srgb, var(--existing-stroke) 20%, transparent);
+  background: radial-gradient(circle,
+      color-mix(in srgb, var(--existing-stroke) 32%, transparent) 0%,
+      color-mix(in srgb, var(--existing-stroke) 16%, transparent) 40%,
+      transparent 74%);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--existing-stroke) 20%, transparent);
 }
 
 @keyframes snapPulse {
@@ -755,6 +735,7 @@ button.missingBuildingCue:hover {
     opacity: 0.95;
     transform: translate(-50%, -50%) scale(0.7);
   }
+
   to {
     opacity: 0.35;
     transform: translate(-50%, -50%) scale(1.18);
@@ -766,6 +747,7 @@ button.missingBuildingCue:hover {
     opacity: 0.55;
     transform: translate(-50%, -50%) scale(0.85);
   }
+
   to {
     opacity: 0.2;
     transform: translate(-50%, -50%) scale(1.35);
@@ -796,13 +778,11 @@ button.missingBuildingCue:hover {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: repeating-linear-gradient(
-    -35deg,
-    rgba(28, 25, 23, 0.18),
-    rgba(28, 25, 23, 0.18) 1.5px,
-    transparent 1.5px,
-    transparent 4px
-  );
+  background: repeating-linear-gradient(-35deg,
+      rgba(28, 25, 23, 0.18),
+      rgba(28, 25, 23, 0.18) 1.5px,
+      transparent 1.5px,
+      transparent 4px);
   pointer-events: none;
 }
 
@@ -899,10 +879,12 @@ button.missingBuildingCue:hover {
 }
 
 @keyframes ccPulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.3;
   }
@@ -925,11 +907,12 @@ button.missingBuildingCue:hover {
     box-shadow: 0 0 0 0 transparent;
     filter: brightness(1);
   }
+
   30% {
-    box-shadow: 0 0 0 4px
-      color-mix(in srgb, var(--proposed-stroke) 32%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--proposed-stroke) 32%, transparent);
     filter: brightness(1.08);
   }
+
   100% {
     box-shadow: 0 0 0 0 transparent;
     filter: brightness(1);
@@ -940,14 +923,11 @@ button.missingBuildingCue:hover {
 .marquee {
   position: absolute;
   z-index: 14;
-  border: 1px solid
-    color-mix(in srgb, var(--proposed-stroke) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--proposed-stroke) 50%, transparent);
   border-radius: 4px;
-  background: color-mix(
-    in srgb,
-    var(--proposed-stroke) var(--fill-highlight),
-    var(--canvas)
-  );
+  background: color-mix(in srgb,
+      var(--proposed-stroke) var(--fill-highlight),
+      var(--canvas));
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--proposed-stroke) 20%, transparent),
     0 0 12px color-mix(in srgb, var(--proposed-stroke) 18%, transparent);
@@ -955,6 +935,7 @@ button.missingBuildingCue:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .paintFlash,
   .stalePulse,
   .snapPulse {
@@ -1222,13 +1203,16 @@ button.missingBuildingCue:hover {
 
 .honestyFooter {
   margin: 0;
-  padding: 4px 8px;
-  border: 1px solid rgba(28, 25, 23, 0.18);
-  background: rgba(242, 240, 235, 0.92);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--ws-frame-hair, rgba(28, 25, 23, 0.18));
+  background: color-mix(in srgb, var(--ws-frame) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 8.5px;
   letter-spacing: 0.02em;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
 }
 
 /* Sketch-formalized regions — drawn shape rendered as plan geometry. */
@@ -1248,6 +1232,7 @@ button.missingBuildingCue:hover {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+
   /* Accepted region: perimeter draws in, wash fades up. pathLength=1. */
   .regionDraw {
     animation: regionDraw 620ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
@@ -1259,9 +1244,11 @@ button.missingBuildingCue:hover {
       stroke-dashoffset: 1;
       fill-opacity: 0;
     }
+
     60% {
       fill-opacity: 0.35;
     }
+
     to {
       stroke-dasharray: 1;
       stroke-dashoffset: 0;
@@ -1278,6 +1265,7 @@ button.missingBuildingCue:hover {
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -1295,6 +1283,7 @@ button.missingBuildingCue:hover {
       filter: opacity(0%);
       scale: 0.6;
     }
+
     to {
       filter: opacity(100%);
       scale: 1;

@@ -27,6 +27,7 @@
   color: var(--ink);
   font-family: var(--font-body);
   pointer-events: auto;
+  overflow: hidden;
   transition: max-height var(--hc-motion, 180ms) var(--ease);
 }
 
@@ -158,11 +159,9 @@
 
 .chipOn {
   color: var(--ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .close {
@@ -182,10 +181,12 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1 1 auto;
   min-height: 0;
   padding-bottom: 8px;
   border-top: 1px solid var(--hc-line-soft, var(--hc-line));
   padding-top: 8px;
+  overflow: hidden;
 }
 
 .search {
@@ -204,8 +205,9 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow: auto;
-  max-height: 42vh;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .row {
@@ -260,6 +262,21 @@
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/*
+ * Desktop pop-out card from the canvas border — no bottom-sheet shape.
+ * The wrapper sets size/position; this class fills it and trims sheet edges.
+ */
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px 12px;
+  border-radius: 0;
+  background: transparent;
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {

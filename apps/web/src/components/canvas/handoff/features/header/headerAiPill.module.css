@@ -1,16 +1,13 @@
+/* Seated in the gallery frame's top band — flat frame language, no chip. */
 .pill {
-  min-height: 44px;
-  height: 44px;
-  padding: 0 12px;
-  border-radius: var(--hc-r-control);
+  min-height: var(--ws-frame-tap, 38px);
+  height: var(--ws-frame-tap, 38px);
+  padding: 0 10px;
+  border-radius: 7px;
   border: none;
-  background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
-  color: var(--hc-ink);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0;
@@ -18,20 +15,17 @@
   flex: none;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   transition:
-    box-shadow 160ms var(--ws-ease),
+    background 160ms var(--ws-ease),
     color 160ms var(--ws-ease);
 }
 
 .pill:hover:not(:disabled) {
-  color: var(--hc-ink);
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
 }
 
 .pill:active:not(:disabled) {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  background: var(--ws-frame-wash);
 }
 
 .pill:disabled {
@@ -39,20 +33,24 @@
   cursor: default;
 }
 
+/* Pending work to review — the one place the frame earns a signal tint. */
 .pillHot {
-  color: var(--hc-ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
 }
 
 .pillOk {
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-faint);
 }
 
 .pill:focus-visible {
-  outline: 2px solid var(--hc-danger);
-  outline-offset: 2px;
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill {
+    transition: none;
+  }
 }

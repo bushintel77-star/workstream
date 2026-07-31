@@ -268,6 +268,7 @@ export function SketchBoard({
           <CameraChrome anchorRef={rootRef}>
             <div
               className={css.tray}
+              data-frame-rail="bottom"
               data-testid="sketch-convert-bar"
               role="toolbar"
               aria-label="Sketch tools"

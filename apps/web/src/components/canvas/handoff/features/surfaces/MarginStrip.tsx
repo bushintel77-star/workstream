@@ -23,7 +23,9 @@ import css from "./marginStrip.module.css";
  *   legal    — the honesty caption (always last, never wraps over rulers)
  *
  * Mounted through CameraChrome dock placement: this is chrome, never a
- * child of zoom-world (gate C).
+ * child of zoom-world (gate C). Seats on the same bottom-left shelf ladder
+ * (board-relative equivalent of --ws-stack-2) as the sketch tray / phase
+ * chip / artboard strip so it never collides with them.
  */
 export function MarginStrip({
   history,
@@ -48,6 +50,7 @@ export function MarginStrip({
     <CameraChrome testId="margin-strip">
       <div
         className={`${css.strip}${dark ? ` ${css.stripDark}` : ""}`}
+        data-frame-rail="bottom"
         role="contentinfo"
         aria-label="Board margin"
         data-testid="margin-strip-body"

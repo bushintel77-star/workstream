@@ -1,0 +1,47 @@
+/**
+ * Top-right frame band. Paints nothing — the dark grey frame is the surface.
+ * Flat line icons only, IDE-titlebar style.
+ */
+.rail {
+  position: absolute;
+  top: 0;
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  height: var(--ws-frame-top);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  pointer-events: auto;
+  z-index: 2;
+  transition: opacity 220ms var(--ws-ease, ease);
+}
+
+/* Idle: icons recede into the frame until the operator reaches for them. */
+:global([data-idle="true"]) .rail {
+  opacity: 0.5;
+}
+
+:global([data-idle="true"]) .rail:hover,
+.rail:hover {
+  opacity: 1;
+}
+
+/* Client presentation view: show only the three client-facing controls. */
+.rail[data-client-view="true"] [data-testid] {
+  display: none;
+}
+
+.rail[data-client-view="true"] [data-testid="client-view-top"],
+.rail[data-client-view="true"] [data-testid="meeting-pack-print"],
+.rail[data-client-view="true"] [data-testid="header-view-menu"] {
+  display: inline-flex;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    transition: none;
+  }
+}

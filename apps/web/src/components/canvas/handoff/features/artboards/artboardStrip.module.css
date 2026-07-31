@@ -1,7 +1,13 @@
+/*
+ * Session artboard strip — floats over the cream plan, so it wears the gallery
+ * frame's dark translucent language (§0.1) instead of light frost.
+ */
 .strip {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--ws-safe-bottom, 48px) + 44px);
+  /* Shelf 4 of the bottom-left stack — above the phase chip (--ws-stack-*),
+     so it never collides with it or the rows below (docs/CANVAS-FRAME-HANDOVER.md). */
+  bottom: var(--ws-stack-4);
   transform: translateX(-50%);
   z-index: 41;
   display: inline-flex;
@@ -10,11 +16,12 @@
   min-height: 28px;
   padding: 3px 6px 3px 8px;
   border-radius: var(--hc-r-pill, 999px);
-  border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass-soft);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  box-shadow: none;
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  /* Deep cast shadow so the dark strip separates from the cream plan. */
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, #000 72%, transparent);
   pointer-events: auto;
 }
 
@@ -24,7 +31,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   padding-right: 2px;
 }
 
@@ -33,9 +40,10 @@
   min-height: 24px;
   padding: 0 8px;
   border: none;
-  border-radius: var(--hc-r-pill, 999px);
+  border-radius: 7px;
   background: transparent;
-  color: var(--hc-ink);
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 650;
@@ -44,7 +52,8 @@
 }
 
 .chip:hover {
-  background: color-mix(in srgb, var(--proposed-stroke) 12%, transparent);
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
 }
 
 .chip:focus-visible {
@@ -53,17 +62,16 @@
 }
 
 .chipOn {
-  background: color-mix(
-    in srgb,
-    var(--proposed-stroke) var(--fill-highlight, 20%),
-    var(--canvas)
-  );
-  color: var(--proposed-text, var(--proposed-stroke));
+  background: var(--ws-frame-wash);
+  /* Frame hairline ring, plus the existing proposed-accent selected underline. */
+  box-shadow:
+    inset 0 0 0 1px var(--ws-frame-hair),
+    inset 0 -2px 0 var(--proposed-stroke);
+  color: var(--ws-frame-ink);
 }
 
 @media (max-width: 720px) {
   .strip {
-    bottom: calc(var(--ws-safe-bottom, 48px) + 52px);
     max-width: calc(100vw - 24px);
     overflow-x: auto;
   }

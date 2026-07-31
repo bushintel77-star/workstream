@@ -1,17 +1,13 @@
 .portal-root {
   min-height: 100dvh;
-  background-color: #1a1218;
+  background-color: var(--portal-surface-0);
   background-image:
-    radial-gradient(
-      ellipse 80% 50% at 85% -5%,
-      rgba(212, 132, 154, 0.42),
-      transparent 55%
-    ),
-    radial-gradient(
-      ellipse 55% 40% at 5% 95%,
-      rgba(240, 180, 196, 0.12),
-      transparent 50%
-    ),
-    linear-gradient(180deg, #261820 0%, #1a1218 42%, #140e12 100%);
-  color: #faf4f6;
+    radial-gradient(ellipse 80% 50% at 85% -5%,
+      var(--portal-glow-a),
+      transparent 55%),
+    radial-gradient(ellipse 55% 40% at 5% 95%,
+      var(--portal-glow-b),
+      transparent 50%),
+    linear-gradient(180deg, var(--portal-surface-1) 0%, var(--portal-surface-0) 42%, var(--portal-surface-2) 100%);
+  color: var(--portal-ink-inverted);
 }

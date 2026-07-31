@@ -1,7 +1,13 @@
+/*
+ * Summoned lifecycle chip — floats over the cream plan, so it wears the gallery
+ * frame's dark translucent language (§0.1), not a light frost slab.
+ */
 .chip {
   position: absolute;
   left: max(12px, env(safe-area-inset-left, 0px));
-  bottom: max(72px, calc(env(safe-area-inset-bottom, 0px) + 64px));
+  /* Shelf 3 of the bottom-left stack — above the sketch tray + margin strip
+     (--ws-stack-*), so it never collides with them (docs/CANVAS-FRAME-HANDOVER.md). */
+  bottom: var(--ws-stack-3);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -9,12 +15,13 @@
   max-width: min(320px, calc(100vw - 32px));
   padding: 8px 10px;
   border-radius: 12px;
-  border: 1px solid var(--hc-line-soft);
-  background: color-mix(in srgb, var(--hc-invert) 88%, transparent);
-  box-shadow: var(--hc-elev-1);
-  backdrop-filter: blur(10px);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, #000 72%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
   font-family: var(--font-body);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
 }
 
 .chip[data-open="0"] {
@@ -30,6 +37,7 @@
   padding: 0 4px;
   border: 0;
   background: transparent;
+  box-shadow: none;
   color: inherit;
   font: inherit;
   cursor: pointer;
@@ -48,13 +56,13 @@
   font-size: 8.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
 }
 
 .summaryValue {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
 }
 
 .chipRow {
@@ -63,14 +71,16 @@
   gap: 6px;
 }
 
+/* Flat frame control: dim ink at rest, wash on hover, hairline ring when on. */
 .phaseChip {
   min-height: 36px;
   min-width: 44px;
   padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--hc-line);
+  border-radius: 7px;
+  border: 1px solid var(--ws-frame-hair);
   background: transparent;
-  color: var(--hc-ink-muted);
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
   font: inherit;
   font-size: 11.5px;
   font-weight: 600;
@@ -83,8 +93,9 @@
 }
 
 .phaseChip:hover {
-  border-color: var(--hc-line-strong, var(--hc-line));
-  color: var(--hc-ink);
+  background: var(--ws-frame-wash);
+  border-color: var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
 }
 
 .phaseChip:focus-visible {
@@ -93,9 +104,11 @@
 }
 
 .phaseChip[data-on="1"] {
-  border-color: color-mix(in srgb, var(--hc-signal) 55%, var(--hc-line));
-  background: color-mix(in srgb, var(--hc-signal) 14%, var(--hc-invert));
-  color: var(--hc-ink);
+  /* Signal accent kept as the selected cue; surface is the neutral frame wash. */
+  border-color: color-mix(in srgb, var(--hc-signal) 55%, var(--ws-frame-hair));
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
   font-weight: 700;
 }
 
@@ -103,5 +116,5 @@
   margin: 2px 0 0;
   font-size: 10.5px;
   line-height: 1.35;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
