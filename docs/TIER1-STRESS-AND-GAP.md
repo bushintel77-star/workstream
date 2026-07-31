@@ -77,6 +77,10 @@ Updated from live code + stress stance (not Landmark chase).
 - Live BYDA underground APIs  
 - Multiplayer / Postgres  
 
+## Fortune-500 expansion
+
+See [TIER1-FORTUNE500-READINESS.md](./TIER1-FORTUNE500-READINESS.md) for the expanded battery (2000-address fuzz, concurrent costing, portal token hygiene, dual-session Quote e2e).
+
 ## Verdict
 
-Tier-1 **money + massing lock is stress-hard**: address gate, design shape, and `$58,410.35` standard costing hold under repeated and fuzzed load. Remaining tier-1 product gaps are **surface polish** (Quote e2e smoke, vision quality) and **site due-diligence chase** (BYDA), not workbook arithmetic.
+Tier-1 **money + massing lock is stress-hard**: address gate, design shape, and `$58,410.35` standard costing hold under repeated and fuzzed load. Remaining tier-1 product gaps are **surface polish** (vision quality) and **site due-diligence chase** (BYDA), not workbook arithmetic. Quote e2e + portal honesty are covered in the Fortune-500 battery.

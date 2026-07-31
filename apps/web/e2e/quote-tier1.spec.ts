@@ -1,8 +1,9 @@
-import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { handoffStudio } from "./helpers";
-
-const API = process.env.API_URL ?? "http://localhost:3001";
+import {
+  createCarltonControlProject,
+  createWrightsTier1Project,
+  handoffStudio,
+} from "./helpers";
 
 /**
  * Kept Tier-1 Quote smoke — Wrights Terrace address gate + savings ledger
@@ -16,39 +17,7 @@ test.describe("Tier-1 Quote ledger", () => {
     page,
     request,
   }) => {
-    const create = await request.post(`${API}/projects/`, {
-      data: {
-        address: "36 Wrights Terrace, Prahran VIC 3181",
-        lat: -37.849,
-        lng: 144.993,
-      },
-    });
-    expect(create.ok()).toBeTruthy();
-    const body = (await create.json()) as { project: { id: string } };
-    const projectId = body.project.id;
-
-    const survey = await request.post(`${API}/projects/${projectId}/survey`);
-    expect(survey.ok()).toBeTruthy();
-
-    const seed = await request.put(
-      `${API}/projects/${projectId}/design-canvas`,
-      {
-        data: {
-          placements: [
-            {
-              id: randomUUID(),
-              symbol_id: "bluestone-paver",
-              x_pct: 42,
-              y_pct: 48,
-              rotation_deg: 0,
-              scale: 1,
-            },
-          ],
-          strokes: [],
-        },
-      },
-    );
-    expect(seed.ok()).toBeTruthy();
+    const { projectId } = await createWrightsTier1Project(request);
 
     await page.goto(`/projects/${projectId}?mode=quote`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
@@ -72,33 +41,7 @@ test.describe("Tier-1 Quote ledger", () => {
     page,
     request,
   }) => {
-    const create = await request.post(`${API}/projects/`, {
-      data: {
-        address: "3 Test St, Carlton VIC 3053",
-        lat: -37.8,
-        lng: 144.96,
-      },
-    });
-    expect(create.ok()).toBeTruthy();
-    const body = (await create.json()) as { project: { id: string } };
-    const projectId = body.project.id;
-
-    await request.post(`${API}/projects/${projectId}/survey`);
-    await request.put(`${API}/projects/${projectId}/design-canvas`, {
-      data: {
-        placements: [
-          {
-            id: randomUUID(),
-            symbol_id: "bluestone-paver",
-            x_pct: 40,
-            y_pct: 40,
-            rotation_deg: 0,
-            scale: 1,
-          },
-        ],
-        strokes: [],
-      },
-    });
+    const { projectId } = await createCarltonControlProject(request);
 
     await page.goto(`/projects/${projectId}?mode=quote`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });

@@ -1,7 +1,15 @@
+import { randomUUID } from "node:crypto";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
+
+/** Canonical Tier-1 Wrights address (proposal v3 / workbook lock). */
+export const TIER1_WRIGHTS_ADDRESS =
+  "36 Wrights Terrace, Prahran VIC 3181";
+
+/** Control site that must never unlock Tier-1 surfaces. */
+export const TIER1_CONTROL_ADDRESS = "3 Test St, Carlton VIC 3053";
 
 /** Legacy pipeline chrome — must stay absent on canvas-first routes. */
 export function pipelineShell(page: Page) {
@@ -85,4 +93,78 @@ export async function createSurveyProject(request: APIRequestContext) {
   expect(survey.ok()).toBeTruthy();
 
   return { projectId };
+}
+
+type SeedProjectOpts = {
+  address: string;
+  lat?: number;
+  lng?: number;
+  /** When true, seeds a costed placement so Quote is not empty. */
+  seedCanvas?: boolean;
+};
+
+/** Create + survey (+ optional canvas seed) for Tier-1 / control e2e. */
+export async function createAddressProject(
+  request: APIRequestContext,
+  opts: SeedProjectOpts,
+) {
+  const create = await request.post(`${API}/projects/`, {
+    data: {
+      address: opts.address,
+      lat: opts.lat ?? -37.85,
+      lng: opts.lng ?? 145.0,
+    },
+  });
+  expect(create.ok()).toBeTruthy();
+  const body = (await create.json()) as { project: { id: string } };
+  const projectId = body.project.id;
+
+  const survey = await request.post(`${API}/projects/${projectId}/survey`);
+  expect(survey.ok()).toBeTruthy();
+
+  if (opts.seedCanvas) {
+    const seed = await request.put(
+      `${API}/projects/${projectId}/design-canvas`,
+      {
+        data: {
+          placements: [
+            {
+              id: randomUUID(),
+              symbol_id: "bluestone-paver",
+              x_pct: 42,
+              y_pct: 48,
+              rotation_deg: 0,
+              scale: 1,
+            },
+          ],
+          strokes: [],
+        },
+      },
+    );
+    expect(seed.ok()).toBeTruthy();
+  }
+
+  return { projectId };
+}
+
+export async function createWrightsTier1Project(
+  request: APIRequestContext,
+  opts: { seedCanvas?: boolean } = {},
+) {
+  return createAddressProject(request, {
+    address: TIER1_WRIGHTS_ADDRESS,
+    seedCanvas: opts.seedCanvas ?? true,
+  });
+}
+
+export async function createCarltonControlProject(
+  request: APIRequestContext,
+  opts: { seedCanvas?: boolean } = {},
+) {
+  return createAddressProject(request, {
+    address: TIER1_CONTROL_ADDRESS,
+    lat: -37.8,
+    lng: 144.96,
+    seedCanvas: opts.seedCanvas ?? true,
+  });
 }
