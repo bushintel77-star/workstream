@@ -58,12 +58,12 @@ test.describe("Quote left ToolDock", () => {
     await openQuote(page, projectId);
 
     // Quote overlay is open and the left ToolDock is reachable.
-    await expect(page.getByTestId("quote-builder")).toBeVisible();
+    await expect(page.getByTestId("quote-surface")).toBeVisible();
     await expect(page.getByTestId("tool-dock")).toBeVisible();
 
     // Clicking the Select tool returns to CAD with the drawing visible.
     await page.getByTestId("canvas-tool-select").click();
-    await expect(page.getByTestId("quote-builder")).toHaveCount(0, {
+    await expect(page.getByTestId("quote-surface")).toHaveCount(0, {
       timeout: 10_000,
     });
     await expect(page.getByTestId("zoom-world")).toBeVisible();

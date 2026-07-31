@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { StudioEstimateReport } from "@workstream/domain";
-import { quoteDocToShareLines } from "@workstream/domain";
+import { isTier1WrightsTerrace, quoteDocToShareLines, TIER1_WRIGHTS_SAVINGS } from "@workstream/domain";
+import { Tier1SavingsLedger } from "@/components/tier1/Tier1SavingsLedger";
 import { QuoteLineRow } from "./QuoteLineRow";
 import { QuoteTotalsBar } from "./QuoteTotalsBar";
 import { useQuoteDoc } from "./useQuoteDoc";
@@ -71,11 +72,12 @@ export function QuoteBuilder({
   }, []);
 
   const empty = estimate.lines.filter((l) => l.total > 0).length === 0;
+  const tier1 = isTier1WrightsTerrace(address);
 
   return (
     <div
       className={`${css.root}${compact ? ` ${css.rootCompact}` : ""}`}
-      data-testid="quote-builder"
+      data-testid="quote-surface"
     >
       <header className={css.top}>
         <div className={css.topMain}>
@@ -151,6 +153,13 @@ export function QuoteBuilder({
         ) : null}
 
         <main className={css.quotePane}>
+          {tier1 && !estimateSettling ? (
+            <Tier1SavingsLedger
+              savings={TIER1_WRIGHTS_SAVINGS}
+              variant="compact"
+              heading="Tier-1 value reallocation"
+            />
+          ) : null}
           {!loaded || estimateSettling ? (
             <div className={css.skeleton} data-testid="quote-loading" />
           ) : empty ? (

@@ -57,7 +57,7 @@ test.describe("Quote line items", () => {
     await seedDesignCanvas(request, projectId);
     await openQuote(page, projectId);
 
-    await expect(page.getByTestId("quote-builder")).toBeVisible();
+    await expect(page.getByTestId("quote-surface")).toBeVisible();
     await expect(page.getByTestId("quote-totals-bar")).toBeVisible();
     await expect(page.getByText("Total incl GST")).toBeVisible();
 
@@ -96,7 +96,7 @@ test.describe("Quote line items mobile", () => {
     await seedDesignCanvas(request, projectId);
     await openQuote(page, projectId);
 
-    await expect(page.getByTestId("quote-builder")).toBeVisible();
+    await expect(page.getByTestId("quote-surface")).toBeVisible();
 
     const firstRow = page.locator('[data-testid^="quote-line-"]').first();
     await expect(firstRow).toBeVisible();

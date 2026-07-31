@@ -16,6 +16,7 @@ import {
 export type PlanLineKind =
   | "boundary"
   | "building"
+  | "context"
   | "hardscape"
   | "planting"
   | "existing"

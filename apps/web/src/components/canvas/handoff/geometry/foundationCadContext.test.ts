@@ -3,6 +3,7 @@ import {
   formatCadAreaM2,
   formatCadBearing,
   formatCadMetres,
+  neighbourLotContext,
   polygonCentroid,
 } from "./foundationCadContext";
 

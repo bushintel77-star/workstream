@@ -38,7 +38,11 @@ export function Tier1SavingsLedger({
     variant === "compact" ? `${lg.wrap} ${lg.wrapCompact}` : lg.wrap;
 
   return (
-    <section className={wrapClass} aria-labelledby="tier1-ledger-heading">
+    <section
+      className={wrapClass}
+      aria-labelledby="tier1-ledger-heading"
+      data-testid="tier1-quote-ledger"
+    >
       <h2 id="tier1-ledger-heading" className={lg.heading}>
         {heading}
       </h2>
