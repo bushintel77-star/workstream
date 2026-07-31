@@ -6,6 +6,7 @@
 
 import type { PctPoint } from "../../geometry";
 import { polygonAreaM2 } from "../../geometry/polygon";
+import { formatScheduleAreaM2 } from "../../geometry/siteScheduleDisplay";
 
 export type SiteLiveMeta = {
   /** Best-known lot area in m² (0 when no boundary traced). */
@@ -47,7 +48,7 @@ export function buildSiteLiveMeta(args: {
 
   const face =
     lotAreaM2 > 0
-      ? `${lotAreaM2.toFixed(2)} m² · ${titleSource ?? "boundary"}`
+      ? `${formatScheduleAreaM2(lotAreaM2)} m² · ${titleSource ?? "boundary"}`
       : "Site · boundary";
 
   const dwellingBit = hasDwelling ? "Dwelling" : "No dwelling";
