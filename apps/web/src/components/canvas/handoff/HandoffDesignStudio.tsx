@@ -3450,8 +3450,7 @@ export function HandoffDesignStudio({
 
         {ui.mode === "quote" ? (
           <QuoteSurface
-            projectId={projectId}
-            address={displayAddress}
+            address={projectAddress}
             estimate={estimate}
             onShare={(payload) => {
               setShareQuoteFreeze(payload);

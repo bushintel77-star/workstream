@@ -43,7 +43,7 @@ export function Tier1SavingsLedger({
         {heading}
       </h2>
       {showTarget ? (
-        <p className={lg.target}>
+        <p className={lg.target} data-testid="tier1-quote-target">
           Target quote {aud(savings.target_total_inc_gst)} incl. GST · net saving{" "}
           {aud(Math.abs(savings.net_inc_gst))} vs cottage-scatter scope
         </p>

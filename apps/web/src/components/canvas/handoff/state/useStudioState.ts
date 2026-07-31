@@ -29,6 +29,7 @@ import {
   tidySketchStrokes,
   type AspectTag,
   type FloraCandidate,
+  type GhostPlacementSuggestion,
   type PathFilletLockM,
   type PathWidthLockM,
   type SoilTag,
@@ -2573,15 +2574,29 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const ingestCanopyImage = useCallback(
-    (image: {
+    async (image: {
       width: number;
       height: number;
       data: ArrayLike<number>;
     }) => {
       if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
       setUi({ canopyScanning: true, aiBusy: "scanning" });
+      let apiClusters: GhostPlacementSuggestion[] | undefined;
+      if (projectId) {
+        try {
+          const { scanDesignGhostsAction } = await import(
+            "../../../../app/actions"
+          );
+          const res = await scanDesignGhostsAction(projectId);
+          if (res?.suggestions?.length) {
+            apiClusters = res.suggestions;
+          }
+        } catch {
+          /* colour heuristic fallback */
+        }
+      }
       mutate((snap, idn) => {
-        const proposed = proposeFromCanopyImage(image, idn);
+        const proposed = proposeFromCanopyImage(image, idn, apiClusters);
         return {
           snap: {
             ...snap,
@@ -2599,6 +2614,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     },
     [
       mutate,
+      projectId,
       setUi,
       state.ui.aerialSuppressed,
       state.ui.foundationCleanse,

@@ -60,7 +60,7 @@ type Props = {
   canvasEngaged?: boolean;
   onUri: (uri: string | null) => void;
   onScanning: (v: boolean) => void;
-  onCanopyImage: (image: CanopyImagePayload) => void;
+  onCanopyImage: (image: CanopyImagePayload) => void | Promise<void>;
 };
 
 /**
