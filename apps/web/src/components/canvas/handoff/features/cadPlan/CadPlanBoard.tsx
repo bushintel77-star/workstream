@@ -555,6 +555,13 @@ export function CadPlanBoard({
   const showDims =
     !sketchPassthrough &&
     (editing || frameOn || foundationCleanse || mode === "survey");
+  /**
+   * Neighbour-lot fabric is Stage-1 foundation chrome only. When Vicmap locks
+   * the title, `cadTitleMode` stays true in Sketch/CAD — painting filled
+   * terrace rectangles then reads as a dark “skin” glued to the drawing.
+   */
+  const contextLots =
+    foundationCleanse && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
   const buildingCentroid =
     building.length >= 3 ? polygonCentroid(building) : null;
@@ -1536,55 +1543,37 @@ export function CadPlanBoard({
               </g>
             );
           })}
-        {boundaryHandPath ? (
-          <path
-            d={boundaryHandPath}
-            fill={
-              cadTitleMode && !fitSheetStroke
-                ? PLAN_FILL.boundaryWash
-                : "transparent"
-            }
-            stroke={bStroke}
-            strokeWidth={lines.boundary.strokeWidth}
-            strokeDasharray={lines.boundary.dash}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            filter={
-              deepChalk
-                ? "url(#ws-chalk-soft)"
-                : "url(#ws-pencil-grain)"
-            }
-            opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
-            className={sketchPassthrough ? css.sketchQuiet : undefined}
-            data-testid={
-              titleSolid || fitSheetStroke
-                ? "foundation-title-boundary"
-                : undefined
-            }
-            data-pen="hand_drawn"
-          />
-        ) : (
+        {contextLots.map((ring, i) => (
           <polygon
-            points={ptsAttr(boundary)}
-            fill={
-              cadTitleMode && !fitSheetStroke
-                ? PLAN_FILL.boundaryWash
-                : "transparent"
-            }
-            stroke={bStroke}
-            strokeWidth={lines.boundary.strokeWidth}
-            strokeDasharray={lines.boundary.dash}
+            key={`ctx${i}`}
+            points={ptsAttr(ring)}
+            fill={lines.context.fill ?? "transparent"}
+            stroke={lines.context.stroke}
+            strokeWidth={lines.context.strokeWidth}
+            opacity={lines.context.opacity ?? 1}
             vectorEffect="non-scaling-stroke"
-            opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
-            className={sketchPassthrough ? css.sketchQuiet : undefined}
-            data-testid={
-              titleSolid || fitSheetStroke
-                ? "foundation-title-boundary"
-                : undefined
-            }
+            data-testid="cad-context-lot"
           />
-        )}
+        ))}
+        <polygon
+          points={ptsAttr(boundary)}
+          fill={
+            cadTitleMode && !fitSheetStroke
+              ? PLAN_FILL.boundaryWash
+              : "transparent"
+          }
+          stroke={bStroke}
+          strokeWidth={lines.boundary.strokeWidth}
+          strokeDasharray={lines.boundary.dash}
+          vectorEffect="non-scaling-stroke"
+          opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
+          className={sketchPassthrough ? css.sketchQuiet : undefined}
+          data-testid={
+            titleSolid || fitSheetStroke
+              ? "foundation-title-boundary"
+              : undefined
+          }
+        />
         {building.length >= 3 && !timedSunCast ? (
           <polygon
             data-testid="dwelling-sun-shadow"
