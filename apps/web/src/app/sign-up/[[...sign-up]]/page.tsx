@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default function SignUpPage() {
   if (!clerkEnabled) {
-    redirect("/");
+    redirect("/home");
   }
   return (
     <main className={s.pageNarrow}>
@@ -20,7 +20,7 @@ export default function SignUpPage() {
       </header>
       <SignUp />
       <p className={s.meta}>
-        <Link href="/">← Back to projects</Link>
+        <Link href="/home">← Back to projects</Link>
       </p>
     </main>
   );

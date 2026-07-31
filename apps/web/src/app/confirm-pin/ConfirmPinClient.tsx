@@ -240,22 +240,52 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
           <span className={cp.brandMark}>Curtis &amp; Co</span>
           <span className={cp.status}>{status}</span>
         </div>
-        <p className={cp.address}>{address}</p>
-        {lotAreaM2 != null && lotAreaM2 > 0 ? (
-          <p className={cp.meta}>
-            {Math.round(lotAreaM2).toLocaleString("en-AU")} m²
-          </p>
-        ) : null}
+        <Link href="/home" className={s.crumb}>
+          ← Projects
+        </Link>
       </header>
 
-      {error ? (
-        <div className={cp.errorPlate}>
-          <p className={cp.error}>{error}</p>
-          <Link href="/" className={cp.errorLink}>
-            Back to projects
-          </Link>
-        </div>
-      ) : null}
-    </div>
+      <h1 className={s.headline}>Is this the right lot?</h1>
+      <p className={s.lede}>
+        Confirm the aerial. We load the site plan instantly — then one tap
+        prepares concept, drawing, and estimate.
+      </p>
+
+      <p className={cp.address}>{address}</p>
+      <p className={cp.coords}>
+        {lat.toFixed(5)}, {lng.toFixed(5)}
+      </p>
+
+      <div className={cp.aerialFrame}>
+        {loadingPreview && (
+          <div className={`${sk.skel} ${cp.aerialSkeleton}`} aria-hidden />
+        )}
+        {!loadingPreview && aerialUri && !previewError && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={aerialUri} alt="" className={cp.aerial} />
+        )}
+        {!loadingPreview && (previewError || !aerialUri) && (
+          <div className={cp.aerialFallback}>
+            Aerial preview unavailable — add Mapbox in Settings, or continue
+            anyway.
+          </div>
+        )}
+      </div>
+
+      <div className={cp.actions}>
+        <button
+          type="button"
+          className={s.btn}
+          disabled={submitting}
+          data-testid="confirm-open-site"
+          onClick={() => submit()}
+        >
+          {submitting ? "Opening site…" : "Looks right → Open site"}
+        </button>
+        <Link href="/home" className={cp.adjust}>
+          Adjust address
+        </Link>
+      </div>
+    </main>
   );
 }

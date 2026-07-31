@@ -25,7 +25,7 @@ export default async function ConfirmPinPage({
         <p className={s.lede}>
           Pick an address from the dashboard list first.
         </p>
-        <Link href="/" className={s.btn}>
+        <Link href="/home" className={s.btn}>
           Back to projects
         </Link>
       </main>

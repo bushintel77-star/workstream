@@ -25,7 +25,7 @@ export default function GlobalError({
               Workstream
               <span className={s.brandSub}>Hard error</span>
             </div>
-            <Link href="/" className={s.crumb}>
+            <Link href="/home" className={s.crumb}>
               ← Projects
             </Link>
           </header>
@@ -44,7 +44,7 @@ export default function GlobalError({
             <button type="button" className={s.btn} onClick={() => reset()}>
               Reload
             </button>
-            <Link href="/" className={`${s.btn} ${s.btnGhost}`}>
+            <Link href="/home" className={`${s.btn} ${s.btnGhost}`}>
               Back to projects
             </Link>
           </div>
