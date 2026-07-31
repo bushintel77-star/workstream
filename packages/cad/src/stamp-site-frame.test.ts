@@ -32,6 +32,7 @@ function canvasWithFrame(
     irrigation_zones: [],
     construction_trenches: [],
     annotations: [],
+    image_layers: [],
     features: [],
     site_frame: frame,
     updated_at: new Date().toISOString(),

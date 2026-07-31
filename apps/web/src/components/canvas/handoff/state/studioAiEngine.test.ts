@@ -33,6 +33,7 @@ function snapFromSeed(): StudioSnapshot {
     irrigationZones: [],
     constructionTrenches: [],
     annotations: [],
+    imageLayers: [],
   };
 }
 

@@ -20,6 +20,7 @@ type Props = {
   onTool: (tool: SketchTool) => void;
   onTip: (tip: SketchTipGrade) => void;
   onActivate?: () => void;
+  onOpenImageLayers?: () => void;
 };
 
 function PenIcon() {
@@ -58,6 +59,25 @@ function EraserIcon() {
   );
 }
 
+function ImageIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <circle cx="8" cy="10" r="1.5" fill="currentColor" />
+      <path d="M4 17l5-5 3 3 5-6 3 3" />
+    </svg>
+  );
+}
+
 function TipIcon() {
   return (
     <svg
@@ -91,6 +111,7 @@ export function SketchDock({
   onTool,
   onTip,
   onActivate,
+  onOpenImageLayers,
 }: Props) {
   const [tipOpen, setTipOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement | null>(null);
@@ -161,6 +182,20 @@ export function SketchDock({
           onClick={toggleTip}
         >
           <TipIcon />
+        </button>
+
+        <div className={css.divider} aria-hidden />
+
+        <button
+          type="button"
+          className={css.tool}
+          data-testid="sketch-image"
+          disabled={formalizing}
+          title="Image layers — upload or manage underlays"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onOpenImageLayers}
+        >
+          <ImageIcon />
         </button>
 
         {tipOpen ? (

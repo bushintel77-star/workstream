@@ -678,6 +678,42 @@ export const PresentationPackSchema = z.object({
 });
 export type PresentationPack = z.infer<typeof PresentationPackSchema>;
 
+export const ImageBlendModeSchema = z.enum([
+  "normal",
+  "multiply",
+  "screen",
+  "overlay",
+  "soft-light",
+  "hard-light",
+  "color-burn",
+  "color-dodge",
+  "difference",
+  "exclusion",
+]);
+export type ImageBlendMode = z.infer<typeof ImageBlendModeSchema>;
+
+/** Imported photo or plan underlay that the operator can trace over. */
+export const ImageLayerSchema = z.object({
+  id: z.string().uuid(),
+  /** Source file, if it is a project upload. */
+  project_file_id: z.string().uuid().optional(),
+  name: z.string().min(1).max(200),
+  uri: z.string().url(),
+  /** Natural aspect (width / height). Used to keep the image true as the board resizes. */
+  natural_aspect: z.number().positive(),
+  /** Centre in percent of the board. */
+  x_pct: z.number().min(0).max(100).default(50),
+  y_pct: z.number().min(0).max(100).default(50),
+  /** Width in percent of the board. Height is derived from natural aspect. */
+  width_pct: z.number().min(1).max(100).default(40),
+  rotation: z.number().default(0),
+  opacity: z.number().min(0).max(1).default(0.5),
+  visible: z.boolean().default(true),
+  locked: z.boolean().default(false),
+  blend_mode: ImageBlendModeSchema.default("normal"),
+});
+export type ImageLayer = z.infer<typeof ImageLayerSchema>;
+
 /**
  * ASLA/SILA-style design lifecycle — gates expected detail, not studio mode.
  * Distinct from ProjectStatus (pipeline) and StudioMode (survey/sketch/cad…).
@@ -701,6 +737,8 @@ export const DesignCanvasSchema = z.object({
   /** Landscape construction trenches / conduit (auto or traced). */
   construction_trenches: z.array(ConstructionTrenchSchema).default([]),
   annotations: z.array(CanvasAnnotationSchema).default([]),
+  /** Imported photo / plan underlays for sketch tracing. */
+  image_layers: z.array(ImageLayerSchema).default([]),
   /** Lean landscape features (beds/paths) - optional until bed paint ships. */
   features: z.array(LandscapeFeatureSchema).optional().default([]),
   /** Durable title / survey frame — boundary, building, easements, levels. */
@@ -719,6 +757,7 @@ export const UpsertDesignCanvasSchema = z.object({
   irrigation_zones: z.array(IrrigationZoneSchema).optional(),
   construction_trenches: z.array(ConstructionTrenchSchema).optional(),
   annotations: z.array(CanvasAnnotationSchema).optional(),
+  image_layers: z.array(ImageLayerSchema).optional(),
   features: z.array(LandscapeFeatureSchema).optional(),
   site_frame: DesignSiteFrameSchema.optional(),
   presentation_pack: PresentationPackSchema.optional(),

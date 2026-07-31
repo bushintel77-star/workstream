@@ -21,6 +21,7 @@ function emptySnap(): StudioSnapshot {
     irrigationZones: [],
     constructionTrenches: [],
     annotations: [],
+    imageLayers: [],
     drainageRuns: [],
     pathCorridors: [],
   };

@@ -62,6 +62,8 @@ type Props = {
     tool: SketchTool;
     tip: SketchTipGrade;
   }) => void;
+  /** Open the image-layers right panel (upload / manage underlays). */
+  onOpenImageLayers?: () => void;
 };
 
 type ActiveStroke = {
@@ -94,6 +96,7 @@ export function SketchBoard({
   onActivate,
   hideChrome = false,
   onChromeChange,
+  onOpenImageLayers,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const drawing = useRef<ActiveStroke | null>(null);
@@ -272,6 +275,7 @@ export function SketchBoard({
             onTool={setTool}
             onTip={setTip}
             onActivate={onActivate}
+            onOpenImageLayers={onOpenImageLayers}
           />
           <MarginStrip
             dark={darkOn}

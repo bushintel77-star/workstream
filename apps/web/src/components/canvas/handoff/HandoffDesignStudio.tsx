@@ -124,6 +124,8 @@ import { SunMarkerPip } from "./features/shade/SunMarkerPip";
 import { ClimateBedWash } from "./features/shade/ClimateBedWash";
 import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { SketchBoard } from "./features/sketch/SketchBoard";
+import { ImageLayerSlot } from "./features/sketch/ImageLayerSlot";
+import { ImageLayerPanel } from "./features/sketch/ImageLayerPanel";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
@@ -303,6 +305,7 @@ type Props = {
   initialIrrigationZones?: IrrigationZone[];
   initialConstructionTrenches?: ConstructionTrench[];
   initialAnnotations?: CanvasAnnotation[];
+  initialImageLayers?: import("@workstream/contracts").ImageLayer[];
   initialFeatures?: LandscapeFeature[];
   initialPresentationPack?: PresentationPack | null;
   initialLifecyclePhase?: DesignLifecyclePhase;
@@ -329,6 +332,7 @@ export function HandoffDesignStudio({
   initialIrrigationZones = [],
   initialConstructionTrenches = [],
   initialAnnotations = [],
+  initialImageLayers = [],
   initialFeatures = [],
   initialPresentationPack = null,
   initialLifecyclePhase = "concept",
@@ -352,6 +356,7 @@ export function HandoffDesignStudio({
     initialIrrigationZones,
     initialConstructionTrenches,
     initialAnnotations,
+    initialImageLayers,
     initialFeatures,
     initialPresentationPack,
     initialLifecyclePhase,
@@ -1757,6 +1762,7 @@ export function HandoffDesignStudio({
   });
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
+  const imageLayersOpen = ui.rightDataPanel === "image_layers";
   const servicesOpen = ui.rightDataPanel === "services";
   const environmentOpen = ui.rightDataPanel === "environment";
   const siteMetaOpen = ui.rightDataPanel === "site";
@@ -3667,6 +3673,7 @@ export function HandoffDesignStudio({
                   onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
                   onCanopyImage={ai.ingestCanopyImage}
                 />
+                <ImageLayerSlot layers={studio.imageLayers} />
                 <ShadeGridOverlay
                   active={ui.shadeOn && !ui.frameOn && !ui.focusOn}
                   sunMin={ui.sunMin}
@@ -4013,6 +4020,9 @@ export function HandoffDesignStudio({
                     onFormalizeToCad={() => {
                       void runFormalizeToCad();
                     }}
+                    onOpenImageLayers={() =>
+                      studio.setUi({ rightDataPanel: "image_layers" })
+                    }
                   />
                 ) : null}
                 {ui.mode === "cad" && studio.strokes.length > 0 ? (
@@ -5147,6 +5157,23 @@ export function HandoffDesignStudio({
                   utilityPanel: null,
                 });
               }}
+            />
+          </RightDataLane>
+        ) : null}
+
+        {planOn && imageLayersOpen && !ui.frameOn ? (
+          <RightDataLane
+            testId="right-data-lane-image-layers"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
+            <ImageLayerPanel
+              projectId={projectId}
+              layers={studio.imageLayers}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onAdd={studio.addImageLayer}
+              onUpdate={studio.updateImageLayer}
+              onRemove={studio.removeImageLayer}
+              onSetLayers={studio.setImageLayers}
             />
           </RightDataLane>
         ) : null}
