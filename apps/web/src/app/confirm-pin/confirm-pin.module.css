@@ -5,7 +5,7 @@
   inset: 0;
   z-index: 1;
   overflow: hidden;
-  background: var(--canvas, var(--gray-l-50, #f4f5f6));
+  background: var(--canvas);
   animation: stageIn 0.4s ease-out;
 }
 
@@ -13,6 +13,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -22,7 +23,7 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--sheet-paper, var(--canvas, #f4f5f6));
+  background: var(--sheet-paper, var(--canvas));
   pointer-events: none;
 }
 
@@ -94,7 +95,7 @@
 }
 
 .surroundFill {
-  fill: color-mix(in srgb, var(--surface-deep, #182838) 52%, transparent);
+  fill: color-mix(in srgb, var(--surface-deep) 52%, transparent);
 }
 
 .boundaryOverlay {
@@ -113,13 +114,13 @@
 }
 
 .boundaryFill {
-  fill: color-mix(in srgb, var(--planting-new-stroke, #c4463b) 18%, transparent);
+  fill: color-mix(in srgb, var(--planting-new-stroke) 18%, transparent);
   stroke: none;
 }
 
 .boundaryStroke {
   fill: none;
-  stroke: var(--existing-stroke, #c4463b);
+  stroke: var(--existing-stroke);
   stroke-width: 0.35;
   vector-effect: non-scaling-stroke;
 }
@@ -132,20 +133,15 @@
   left: 0;
   right: 0;
   padding:
-    max(16px, env(safe-area-inset-top))
-    max(20px, env(safe-area-inset-right))
-    20px
-    max(20px, env(safe-area-inset-left));
+    max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 20px max(20px, env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
   gap: 6px;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--surface-deep, #182838) 88%, transparent) 0%,
-    color-mix(in srgb, var(--surface-deep, #182838) 46%, transparent) 52%,
-    transparent 100%
-  );
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--surface-deep) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface-deep) 46%, transparent) 52%,
+      transparent 100%);
   backdrop-filter: blur(7px) saturate(130%);
   -webkit-backdrop-filter: blur(7px) saturate(130%);
 }
@@ -161,13 +157,13 @@
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: color-mix(in srgb, #ffffff 82%, transparent);
+  color: color-mix(in srgb, var(--ink-inverted) 82%, transparent);
 }
 
 .status {
   font-size: 15px;
   font-weight: 550;
-  color: #ffffff;
+  color: var(--ink-inverted);
   min-height: 1.2em;
   font-variant-numeric: tabular-nums;
 }
@@ -179,8 +175,8 @@
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.01em;
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  color: var(--ink-inverted);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 .meta {
@@ -189,7 +185,7 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   font-weight: 600;
-  color: var(--signal, #d8a12a);
+  color: var(--signal);
 }
 
 .errorPlate {
@@ -201,11 +197,11 @@
   width: min(420px, calc(100% - 32px));
   padding: 16px 18px;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--panel, #fff) 88%, transparent);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid var(--border, rgb(0 0 0 / 0.08));
-  box-shadow: 0 8px 28px rgb(0 0 0 / 0.12);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-2);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -215,13 +211,13 @@
 .error {
   margin: 0;
   font-size: 14px;
-  color: var(--danger, #c4463b);
+  color: var(--danger);
 }
 
 .errorLink {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary, #1a1218);
+  color: var(--text-primary);
   text-decoration: none;
   min-height: 44px;
   display: inline-flex;

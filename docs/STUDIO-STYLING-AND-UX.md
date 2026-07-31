@@ -14,6 +14,56 @@ The **drawing is the product**. Chrome is frost glass that **appears when needed
 
 ---
 
+## 0.1 Gallery frame (binding)
+
+The studio is a **framed artwork**: a premium dark grey frame holds the tools,
+the cream plan is the subject, and nothing persistent is ever painted on the
+plan. Think iPad bezel / gallery mount, not app toolbar.
+
+| Part | Rule |
+| --- | --- |
+| Frame | `.root` background `--ws-frame` (`--gray-d-50`). **Always dark, both themes** — the cream plan must always read as the subject. |
+| Artwork | `.board` is inset by `--ws-frame-top/right/bottom/left`, radius 4px, with a rabbet lip (hairline + deep cast shadow) so the plan sits *in* the frame. |
+| Band chrome | Lives in the frame bands via `CameraChrome place={{ kind: "frame" }}` → `[data-testid="studio-frame-root"]`, a **sibling of the board**. Categorically outside the camera. |
+| Band sizes | Desktop 46/48/14/46 (t/l/r/b). `@media (pointer: coarse)` and `[data-compact="1"]` widen bands and raise `--ws-frame-tap` to 44px. |
+| Frame never jumps | Band sizes are stable across modes. Client view empties the left/bottom bands but the top band keeps its height (client controls live there). |
+
+### Frame control language (overrides the neu-plastic chip rule)
+
+Controls **in the frame band** are flat monochrome line icons — IDE-titlebar
+style. The frame is already the surface, so band controls paint **no chip, no
+frost, no plastic**:
+
+| State | Treatment |
+| --- | --- |
+| Rest | `--ws-frame-ink-dim` glyph, transparent background |
+| Hover | `--ws-frame-wash` background + `--ws-frame-ink` glyph |
+| Engaged | `--ws-frame-wash` + `inset 0 0 0 1px --ws-frame-hair` + full ink |
+| Glyph / tap | `--ws-frame-glyph` (17px) inside `--ws-frame-tap` (38px desktop, 44px touch) |
+
+Implemented once as `[data-frame-rail] .iconBtn / .modeBtn / .segmentBtn / …`
+in `handoffStudio.module.css`. Stamp any new band rail with `data-frame-rail`
+and it inherits the language — do not re-declare it per module.
+
+The neumorphic chip language in §1 still governs chrome that floats **on** the
+canvas (summoned instruments, orbit). Two surfaces, two dialects — but they
+never appear in the same rail.
+
+### Summoned surfaces over the plan
+
+Transient panels (context readout, Add card, pointer sheet) are **dark
+translucent** — `color-mix(--ws-frame 86%, transparent)` + `backdrop-filter`,
+matching the frame. Never light drywall over a dark frame. They mount only
+while active and animate in from the frame edge.
+
+### Idle recession
+
+`.root` carries `data-idle` (see `hooks/useChromeIdle.ts`, 6s). Frame rails drop
+to ~0.5 opacity when idle and return to 1 on hover or any input. Idle is
+suspended while any panel / palette / sheet is open.
+
+---
+
 ## 1. Visual tokens (v2 neutrals + `--hc-*` chrome API)
 
 **Plan / CAD geometry** and **studio chrome** both derive from [COLOR-TOKENS.md](./COLOR-TOKENS.md) (`color-tokens.css` v2). Light `--hc-*` on `.root` are **aliases** of v2 (`--canvas`, `--panel`, `--text-*`, `--border*`, `--warning` / `--danger` / `--success`). Blush pink DNA is retired for light chrome.
@@ -95,6 +145,9 @@ Progressive disclosure is owned by `resolveHandoffChrome` (`state/handoffChrome.
 
 - Dock chrome: `place={{ kind: "dock" }}` — portals to
   `[data-testid="camera-chrome-root"]` (sibling of `.zoomWorld`).
+- Frame-band chrome: `place={{ kind: "frame" }}` — portals to
+  `[data-testid="studio-frame-root"]` (sibling of `.board`, spans the whole
+  shell). Use this for anything seated in the gallery frame; see §0.1.
 - Selection-anchored chrome: `place={{ kind: "project", pct, cam }}` — portals +
   projects board `%` through `boardPctToClientOffset` (no `scale(1/--studio-zoom)`).
 - Every `CameraChrome` stamps `data-camera-chrome="1"`.

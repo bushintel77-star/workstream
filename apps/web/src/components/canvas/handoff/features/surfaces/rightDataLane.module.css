@@ -5,9 +5,7 @@
   right: 0;
   z-index: 52;
   width: min(304px, calc(100vw - 40px));
-  max-height: calc(
-    100% - var(--ws-safe-top, 40px) - var(--ws-safe-bottom, 36px) - 16px
-  );
+  max-height: calc(100% - var(--ws-safe-top, 40px) - var(--ws-safe-bottom, 36px) - 16px);
   overflow: auto;
   pointer-events: auto;
   border-radius: 12px 0 0 12px;
@@ -16,8 +14,15 @@
   background: var(--hc-invert);
 }
 
+/* Programmatic focus on open (Esc/Tab trap owner) — visible, not a stray
+   default outline box around the whole lane. */
+.slot:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: -2px;
+}
+
 /* Children fill the lane — no per-panel left/top. */
-.slot > * {
+.slot>* {
   position: relative;
   top: auto;
   left: auto;
@@ -30,16 +35,17 @@
   z-index: auto;
 }
 
-/* Phone — bottom sheet over the tool dock (lane law preserved). */
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .slot {
-  top: auto;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  max-height: min(55vh, 360px);
-  border-radius: 16px 16px 0 0;
-  border-left: none;
-  border-top: 1px solid rgba(36, 19, 24, 0.12);
-  box-shadow: 0 -10px 32px rgba(42, 23, 29, 0.14);
+@media (max-width: 719px) {
+  .slot {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: min(70vh, calc(100% - var(--ws-safe-top, 40px) - 8px));
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-top: 1px solid var(--hc-line-soft);
+    box-shadow: 0 -8px 28px var(--hc-neu-shadow);
+  }
 }

@@ -16,6 +16,27 @@
   /* deep inky blue-grey — brand dark surface (frost scrim, spotlight, dark chrome) */
   --surface-deep: #182838;
 
+  /* Client-presentation dark chrome (portal/quote/confirm-pin/share) — one
+     identity, aliased to the same brand tokens used everywhere else. No
+     separate blush/plum palette: --surface-deep + --accent are the only
+     dark-chrome + hero-colour vocabulary in the app. */
+  --portal-surface-0: var(--surface-deep);
+  --portal-surface-1: color-mix(in srgb, var(--surface-deep) 82%, white);
+  --portal-surface-2: color-mix(in srgb, var(--surface-deep) 78%, black);
+  --portal-glow-a: color-mix(in srgb, var(--accent-bright) 40%, transparent);
+  --portal-glow-b: color-mix(in srgb, var(--accent-bright) 12%, transparent);
+  --portal-ink-inverted: var(--ink-inverted);
+  --portal-hairline: color-mix(in srgb, var(--ink-inverted) 16%, transparent);
+  --portal-accent: var(--accent-bright);
+  --portal-accent-bright: var(--accent-bright);
+  --portal-sheet: var(--canvas);
+  --portal-sheet-ink: var(--text-primary);
+  /* Client-twin viewer chrome (light frosted panel — same ink/accent as the
+     rest of the app, not a separate sub-brand). */
+  --portal-ink-muted: var(--ink-secondary);
+  --portal-ink-strong: var(--ink-primary);
+  --portal-accent-muted: var(--accent);
+
   /* ink — cool near-black */
   --ink-primary: #1b1c1e;
   --ink-secondary: #5f6165;
@@ -218,6 +239,7 @@ select {
 }
 
 @media (hover: none) and (pointer: coarse) {
+
   button:active,
   [role="button"]:active,
   a:active {
@@ -231,9 +253,11 @@ a {
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease);
 }
+
 a:hover {
   color: var(--accent);
 }
+
 a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
@@ -245,6 +269,7 @@ button {
   font-size: inherit;
   cursor: pointer;
 }
+
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
@@ -261,6 +286,7 @@ button:focus-visible {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -272,6 +298,7 @@ button:focus-visible {
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -283,6 +310,7 @@ button:focus-visible {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -296,6 +324,7 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -311,6 +340,7 @@ button:focus-visible {
  * printing any non-studio page is unaffected.
  */
 @media print {
+
   html:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]),
   body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) {
     margin: 0 !important;
@@ -325,10 +355,8 @@ button:focus-visible {
     visibility: hidden;
   }
 
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
-    [data-testid="handoff-design-studio"],
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
-    [data-testid="handoff-design-studio"] * {
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"],
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"] * {
     visibility: visible;
   }
 
@@ -338,10 +366,8 @@ button:focus-visible {
    * EMPTY plot. Force colour output for the studio subtree so the working
    * drawing always survives print / Save as PDF.
    */
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
-    [data-testid="handoff-design-studio"],
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"])
-    [data-testid="handoff-design-studio"] * {
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"],
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"] * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }

@@ -1,28 +1,43 @@
+/**
+ * Left frame band tool column. Paints nothing — the dark grey gallery frame is
+ * already the surface. Flat line glyphs, dim at rest, full ink on hover.
+ */
 .dock {
   position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 20;
+  left: 0;
+  /* Activity-bar rhythm: anchored just under the top band, running down. */
+  top: calc(var(--ws-frame-top, 46px) + 8px);
+  width: var(--ws-frame-left);
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  padding: 5px 4px;
-  border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-frost, var(--hc-glass-soft));
-  border: 1px solid var(--hc-line, var(--hc-line-soft));
-  box-shadow: var(--hc-frost-shadow, 0 8px 28px var(--hc-neu-shadow));
-  backdrop-filter: blur(14px);
-  color: var(--hc-ink);
+  align-items: center;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--ws-frame-ink);
   font-family: var(--font-body);
   pointer-events: auto;
+  transition: opacity 220ms var(--ws-ease, ease);
 }
 
+/* Idle: tools recede into the frame so the plan is all that reads. */
+:global([data-idle="true"]) .dock {
+  opacity: 0.5;
+}
+
+:global([data-idle="true"]) .dock:hover,
+.dock:hover {
+  opacity: 1;
+}
+
+/*
+ * Night lens keeps the same frame language — the frame is already dark, so
+ * this only lifts ink contrast rather than swapping to a second dialect.
+ */
 .dockNight {
-  background: color-mix(in srgb, var(--panel) 78%, transparent);
-  border-color: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
-  color: color-mix(in srgb, var(--hc-ink) 92%, transparent);
-  box-shadow: var(--hc-elev-3);
+  color: var(--ws-frame-ink);
 }
 
 .list {
@@ -31,119 +46,109 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 3px;
 }
 
 .slotTrail {
-  margin-top: 2px;
-  padding-top: 4px;
-  border-top: 1px solid var(--hc-line-soft);
-}
-
-.dockNight .slotTrail {
-  border-top-color: color-mix(in srgb, var(--proposed-stroke) 18%, transparent);
+  margin-top: 6px;
+  padding-top: 7px;
+  border-top: 1px solid var(--ws-frame-hair);
+  /* Hairline divider spans the band, engraved into the frame. */
+  width: 22px;
+  display: flex;
+  justify-content: center;
 }
 
 .btn {
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  width: 100%;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 3px 4px;
+  width: var(--ws-frame-tap);
+  height: var(--ws-frame-tap);
+  min-width: var(--ws-frame-tap);
+  min-height: var(--ws-frame-tap);
+  padding: 0;
   border: none;
-  border-radius: var(--hc-r-control);
+  border-radius: var(--ws-r-2, 8px);
   background: transparent;
-  color: inherit;
+  color: var(--ws-frame-ink-dim);
   font: inherit;
   cursor: pointer;
-  transition: background var(--hc-motion, 180ms) ease;
+  transition:
+    background var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
+    color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
+    transform var(--ws-dur-1, 120ms) var(--ws-ease-out, ease);
 }
 
 .btn:hover {
-  background: var(--hc-accent-wash);
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
 }
 
-.dockNight .btn:hover {
-  background: color-mix(in srgb, var(--proposed-stroke) 14%, transparent);
+.btn:active {
+  transform: scale(0.94);
 }
 
-.btnActive {
-  background: var(--hc-accent-wash);
+.btnActive,
+.btnActive:hover {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
 }
 
-.dockNight .btnActive {
-  background: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
+/*
+ * VS Code-style active indicator — a lit accent bar on the button's inner edge
+ * (toward the canvas), so the armed tool visually points at the drawing.
+ */
+.activeBar {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5px;
+  height: 18px;
+  border-radius: 2px 0 0 2px;
+  background: var(--hc-signal);
+  box-shadow: 0 0 8px -1px var(--hc-signal);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 1px;
 }
 
 .glyph {
-  font-size: 13px;
-  line-height: 1;
-}
-
-.label {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 7px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  width: var(--ws-frame-glyph);
+  height: var(--ws-frame-glyph);
+  display: block;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn {
+
+  .btn,
+  .btn:active {
     transition: none;
+    transform: none;
   }
 }
 
-/* Phone — horizontal thumb strip above the home indicator (tools, not inventory). */
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .dock {
-  left: 50%;
-  right: auto;
-  top: auto;
-  bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  flex-direction: row;
-  align-items: stretch;
-  max-width: calc(100vw - 12px);
-  padding: 6px 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+.label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .dock::-webkit-scrollbar {
-  display: none;
-}
+@media (prefers-reduced-motion: reduce) {
 
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .list {
-  flex-direction: row;
-  align-items: stretch;
-  gap: 2px;
-}
-
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .slotTrail {
-  margin-top: 0;
-  margin-left: 4px;
-  padding-top: 0;
-  padding-left: 6px;
-  border-top: none;
-  border-left: 1px solid rgba(36, 19, 24, 0.08);
-}
-
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .dockNight .slotTrail {
-  border-left-color: rgba(143, 176, 255, 0.18);
-}
-
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .btn {
-  min-width: 48px;
-  min-height: 48px;
-  padding: 4px 8px;
-}
-
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .label {
-  font-size: 7px;
+  .btn,
+  .dock {
+    transition: none;
+  }
 }

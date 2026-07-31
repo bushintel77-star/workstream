@@ -1,0 +1,51 @@
+/**
+ * Top-left frame band. The dark grey frame IS the surface, so this rail paints
+ * nothing — no frost, no border, no shadow. It only lays controls out inside
+ * the band that already exists around the artwork.
+ */
+.rail {
+  position: absolute;
+  top: 0;
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  height: var(--ws-frame-top);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  pointer-events: auto;
+  z-index: 2;
+  /* Reserve room for the top-right control cluster so nothing collides. */
+  max-width: calc(100% - 470px);
+  flex-wrap: nowrap;
+  overflow: hidden;
+  transition: opacity 220ms var(--ws-ease, ease);
+}
+
+.railCompact {
+  gap: 6px;
+  max-width: calc(100% - 150px);
+}
+
+/* Idle: frame engraving recedes; the plan is what's left. */
+:global([data-idle="true"]) .rail {
+  opacity: 0.55;
+}
+
+:global([data-idle="true"]) .rail:hover,
+.rail:hover {
+  opacity: 1;
+}
+
+/* Client presentation view: the frame empties out completely. */
+.rail[data-client-view="true"] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    transition: none;
+  }
+}

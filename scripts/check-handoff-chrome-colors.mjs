@@ -1,24 +1,43 @@
 /**
- * CI gate: forbid raw #hex in handoff chrome CSS/TSX outside allowlist.
+ * CI gate: forbid raw hex colour literals in apps/web CSS/TSX outside
+ * allowlist. Originally handoff-only; broadened to all of apps/web/src so
+ * the "scrub hardcoded colour" pass on every page (not just the canvas
+ * studio) stays enforced.
  *
- * Allowlist:
- * - color-tokens.css / colorTokens.ts (token source of truth)
- * - SVG mask algebra #fff/#000 in SelectionFocusVeil
- * - Comments containing hex
- * - APWA palette only inside colorTokens.ts (already SoT)
+ * Allowlist — deliberately small; every entry is a literal *data* colour
+ * (paint choice / render value), never chrome identity:
+ * - color-tokens.css, colorTokens.ts, globals.css (token source of truth)
+ * - SVG mask algebra fff/000 in SelectionFocusVeil
+ * - clientShareTwin.module.css: atmosphere swatch options are literal paint
+ *   colours by definition (the swatch is the colour choice), not chrome
+ * - ClientShareTwin.tsx: THREE.js scene/material colours (sky, ground,
+ *   windows, sun-elevation gradient) — physical render values, not chrome
+ * - comments containing hex
+ * - APWA palette only inside colorTokens.ts (already source of truth)
+ *
+ * All chrome (portal, quote, confirm-pin, share, siteCanvas, studio widgets)
+ * is unified on one dark identity (--surface-deep) and one hero accent
+ * (--accent) — see globals.css. No per-surface bespoke palettes.
  *
  * Usage: node scripts/check-handoff-chrome-colors.mjs
  */
 import fs from "fs";
 import path from "path";
 
-const HANDOFF = "apps/web/src/components/canvas/handoff";
+const ROOT = "apps/web/src";
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 
 /** Paths (posix) that may contain literal hex. */
 const ALLOW_PATH_SUBSTR = [
   // Mask algebra — not chrome paint
   "features/selectionFocus/SelectionFocusVeil.tsx",
+  // Token source of truth
+  "styles/color-tokens.css",
+  "styles/colorTokens.ts",
+  "styles/globals.css",
+  // Literal colour-choice swatches / 3D render material colours (data, not chrome)
+  "components/share/clientShareTwin.module.css",
+  "components/share/ClientShareTwin.tsx",
 ];
 
 /** Hex values permitted when they appear (mask / none). */
@@ -28,7 +47,7 @@ function walk(dir, out = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);
     if (ent.isDirectory()) walk(p, out);
-    else if (/\.(module\.css|tsx|ts)$/.test(ent.name) && !ent.name.endsWith(".test.ts"))
+    else if (/\.(module\.css|css|tsx|ts)$/.test(ent.name) && !ent.name.endsWith(".test.ts"))
       out.push(p);
   }
   return out;
@@ -43,7 +62,7 @@ function stripComments(src, isCss) {
     .replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
-const files = walk(HANDOFF);
+const files = walk(ROOT);
 const violations = [];
 
 for (const file of files) {
@@ -65,14 +84,14 @@ for (const file of files) {
 }
 
 if (violations.length) {
-  console.error("FAIL: raw hex in handoff chrome (use var(--hc-*) / CSS_TOKEN):\n");
+  console.error("FAIL: raw hex in apps/web chrome (use var(--token) / CSS_TOKEN):\n");
   for (const v of violations) {
     console.error(`  ${v.file} (${v.count}) ${v.samples.join(" ")}`);
   }
   console.error(
-    `\n${violations.length} file(s). Allowlist: SelectionFocusVeil mask #fff/#000; APWA via color-tokens.`,
+    `\n${violations.length} file(s). Allowlist: SelectionFocusVeil mask #fff/#000; clientShareTwin atmosphere swatches / THREE.js render colours; APWA via color-tokens.`,
   );
   process.exit(1);
 }
 
-console.log(`ok: no raw hex in ${files.length} handoff chrome files`);
+console.log(`ok: no raw hex in ${files.length} apps/web files`);

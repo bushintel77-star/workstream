@@ -19,13 +19,19 @@ export const CAMERA_CHROME_ATTR = "data-camera-chrome";
 
 export type CameraChromePlace =
   | { kind: "dock" }
+  /**
+   * Gallery-frame band chrome. Portals to `[data-testid=studio-frame-root]`,
+   * a sibling of the board that spans the whole shell — so frame controls sit
+   * in the dark border around the artwork, never on top of it.
+   */
+  | { kind: "frame" }
   | {
-      kind: "project";
-      pct: PctPoint;
-      cam: BoardCamera;
-      /** Extra CSS transform after positioning at projected point. */
-      transform?: string;
-    };
+    kind: "project";
+    pct: PctPoint;
+    cam: BoardCamera;
+    /** Extra CSS transform after positioning at projected point. */
+    transform?: string;
+  };
 
 /**
  * Resolve the chrome portal mount.
@@ -34,13 +40,24 @@ export type CameraChromePlace =
  * `.zoomWorld` inside the board. Portaling into an *ancestor* of the call
  * site (e.g. `studio-board` itself) lets React reconcile by moving the
  * child DOM without preserving our stamped wrapper, which breaks gate B.
+ *
+ * `frame` chrome resolves to `[data-testid=studio-frame-root]` instead, which
+ * lives outside the board entirely.
  */
-function useCameraChromeHost(anchorRef?: RefObject<HTMLElement | null>) {
+function useCameraChromeHost(
+  anchorRef?: RefObject<HTMLElement | null>,
+  frame = false,
+) {
   const [host, setHost] = useState<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
     let cancelled = false;
     const resolve = () => {
+      if (frame) {
+        return document.querySelector(
+          '[data-testid="studio-frame-root"]',
+        ) as HTMLElement | null;
+      }
       const board =
         (anchorRef?.current?.closest(
           '[data-testid="studio-board"]',
@@ -69,7 +86,7 @@ function useCameraChromeHost(anchorRef?: RefObject<HTMLElement | null>) {
       clearInterval(poll);
       clearTimeout(stop);
     };
-  }, [anchorRef]);
+  }, [anchorRef, frame]);
 
   return host;
 }
@@ -108,7 +125,7 @@ export function CameraChrome({
   zIndex?: number;
   contentPointerEvents?: "auto" | "none";
 }) {
-  const host = useCameraChromeHost(anchorRef);
+  const host = useCameraChromeHost(anchorRef, place.kind === "frame");
 
   if (!host) return null;
 
@@ -120,21 +137,21 @@ export function CameraChrome({
   const shellStyle: CSSProperties =
     place.kind === "project" && projected
       ? {
-          position: "absolute",
-          left: projected.x,
-          top: projected.y,
-          zIndex,
-          pointerEvents: "none",
-          transform: place.transform ?? "translate(-50%, -50%)",
-          ...style,
-        }
+        position: "absolute",
+        left: projected.x,
+        top: projected.y,
+        zIndex,
+        pointerEvents: "none",
+        transform: place.transform ?? "translate(-50%, -50%)",
+        ...style,
+      }
       : {
-          position: "absolute",
-          inset: 0,
-          zIndex,
-          pointerEvents: "none",
-          ...style,
-        };
+        position: "absolute",
+        inset: 0,
+        zIndex,
+        pointerEvents: "none",
+        ...style,
+      };
 
   const stamp = {
     [CAMERA_CHROME_ATTR]: "1",

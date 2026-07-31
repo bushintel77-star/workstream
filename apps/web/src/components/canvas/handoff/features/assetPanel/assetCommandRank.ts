@@ -125,7 +125,7 @@ function scoreType(
     band = 400;
   } else {
     const toks = q.split(/\s+/).filter(Boolean);
-    const hay = `${name} ${tag} ${skus.join(" ")}`;
+    const hay = `place add ${name} ${tag} ${skus.join(" ")}`;
     if (toks.every((tok) => hay.includes(tok))) band = 300;
     else return -1;
   }

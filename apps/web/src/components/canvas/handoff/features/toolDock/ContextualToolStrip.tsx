@@ -9,6 +9,7 @@ import {
   toolChipTestId,
   type ToolChip,
 } from "./toolChips";
+import { ToolGlyph } from "./ToolGlyph";
 import css from "./contextualToolStrip.module.css";
 
 type Props = {
@@ -24,8 +25,8 @@ type Props = {
 };
 
 /**
- * Compact horizontal draw tools — same chips as ToolDock, CameraChrome dock,
- * clear of FAB / sheet peek via --ws-safe-bottom.
+ * Compact horizontal draw tools — same chips as ToolDock, seated in the gallery
+ * frame's bottom band, clear of FAB / sheet peek via --ws-safe-bottom.
  */
 export function ContextualToolStrip({
   tool,
@@ -60,9 +61,13 @@ export function ContextualToolStrip({
   };
 
   return (
-    <CameraChrome place={{ kind: "dock" }} testId="contextual-tool-strip-chrome">
+    <CameraChrome
+      place={{ kind: "frame" }}
+      testId="contextual-tool-strip-chrome"
+    >
       <nav
         className={`${css.strip}${night ? ` ${css.stripNight}` : ""}`}
+        data-frame-rail="bottom"
         data-testid="contextual-tool-strip"
         aria-label="Drawing tools"
       >
@@ -82,9 +87,7 @@ export function ContextualToolStrip({
                   aria-pressed={active}
                   onClick={() => pick(chip)}
                 >
-                  <span className={css.glyph} aria-hidden>
-                    {chip.icon}
-                  </span>
+                  <ToolGlyph id={chip.id} className={css.glyph} size={17} />
                   <span className={css.label}>{chip.label}</span>
                 </button>
               </li>

@@ -90,12 +90,12 @@
 }
 
 .stageDone {
-  background: color-mix(in srgb, #dcfce7 22%, var(--surface-elevated));
+  background: color-mix(in srgb, var(--ok) 12%, var(--surface-elevated));
   border-color: color-mix(in srgb, var(--ok) 20%, var(--line-hairline));
 }
 
 .stageBlocked {
-  background: color-mix(in srgb, #fee2e2 22%, var(--surface-elevated));
+  background: color-mix(in srgb, var(--block) 12%, var(--surface-elevated));
   border-color: color-mix(in srgb, var(--block) 18%, var(--line-hairline));
 }
 
@@ -572,22 +572,22 @@
   right: 0;
   bottom: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--info) 70%, transparent) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--info) 70%, transparent) 50%,
+      transparent 100%);
   width: 40%;
   animation: stageProgress 1.6s var(--ease, ease-in-out) infinite;
 }
 
 @keyframes stageBreathe {
+
   0%,
   100% {
     box-shadow: var(--elev-1), var(--elev-inset);
     border-color: color-mix(in srgb, var(--info) 34%, var(--line-hairline));
   }
+
   50% {
     box-shadow:
       var(--elev-1),
@@ -600,6 +600,7 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(350%);
   }
@@ -775,7 +776,9 @@
   list-style: none;
 }
 
-.overrideSummary::-webkit-details-marker { display: none; }
+.overrideSummary::-webkit-details-marker {
+  display: none;
+}
 
 .overrideSummary::before {
   content: "+ ";

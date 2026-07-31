@@ -3,30 +3,34 @@
  * Same left gutter slot as the former SwatchTray (left: 68px).
  */
 
+/*
+ * Collapsed: seated IN the gallery frame's left band — paints nothing, because
+ * the frame is already the surface. Expanded / placing: lifts off as a dark
+ * translucent panel reaching over the plan.
+ */
 .panel {
-  --ink: var(--hc-ink);
-  --ink-soft: var(--hc-ink-muted);
-  --ink-faint: var(--hc-ink-faint);
-  --glass: var(--hc-glass);
-  --line: var(--hc-line);
-  --elev: var(--hc-elev-2);
+  --ink: var(--ws-frame-ink);
+  --ink-soft: var(--ws-frame-ink-dim);
+  --ink-faint: var(--ws-frame-ink-faint);
+  --glass: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  --line: var(--ws-frame-hair);
+  --elev: 0 16px 40px -10px color-mix(in srgb, #000 72%, transparent);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: absolute;
-  left: 58px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 22;
+  z-index: 3;
   display: flex;
   flex-direction: row;
   align-items: stretch;
   gap: 0;
-  padding: 6px 6px;
-  border-radius: var(--hc-r-panel, 14px);
-  background: var(--hc-frost, var(--hc-glass-soft));
-  border: 1px solid var(--hc-line, var(--hc-line-soft));
-  box-shadow: var(--hc-frost-shadow, 0 8px 28px var(--hc-neu-shadow));
-  backdrop-filter: blur(14px);
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
   color: var(--ink);
   font-family: var(--font-body);
   pointer-events: auto;
@@ -34,62 +38,44 @@
   animation: panelIn var(--hc-motion, 180ms) var(--ease) both;
 }
 
-/* Phone — summoned inventory as a bottom sheet above the tool strip. */
-:global([data-testid="handoff-design-studio"][data-layout="phone"]) .panel {
-  left: 8px;
-  right: 8px;
-  top: auto;
-  bottom: calc(var(--ws-safe-bottom, 88px) + 4px);
-  transform: none;
-  width: auto;
-  max-height: min(48vh, 360px);
-  overflow: auto;
-  flex-direction: column;
-}
-
+/* Night lens keeps one frame language — the frame is already dark. */
 .panelNight {
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-  border-color: color-mix(in srgb, var(--proposed-stroke) 22%, transparent);
-  color: color-mix(in srgb, var(--hc-ink) 92%, transparent);
+  color: var(--ws-frame-ink);
 }
 
+/*
+ * Lifted states reach over the plan, so they need their own surface: dark
+ * translucent to match the frame, never light drywall on a dark mount.
+ */
 .panel[data-state="expanded"],
 .panel[data-state="placing"] {
-  padding-right: 10px;
-  /* Thin frost pane on the canvas — dissolves at the edges. */
-  background: var(--hc-glass-soft);
-  backdrop-filter: blur(16px) saturate(1.06);
-  -webkit-backdrop-filter: blur(16px) saturate(1.06);
-  box-shadow: var(--hc-elev);
-  border-color: color-mix(in srgb, var(--hc-line) 55%, transparent);
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    #000 10px,
-    #000 calc(100% - 14px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    #000 10px,
-    #000 calc(100% - 14px),
-    transparent 100%
-  );
+  left: var(--ws-frame-left);
+  padding: 6px 10px 6px 6px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  border: 1px solid var(--ws-frame-hair);
+  box-shadow: var(--elev);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
 }
 
 .rail {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: 0 0 var(--dock-rail-collapsed-w, 56px);
   width: var(--dock-rail-collapsed-w, 56px);
 }
 
+/* Collapsed rail is exactly the frame band — no overhang onto the plan. */
 .panel[data-state="collapsed"] {
-  /* Slim command-first rail — no library body occlusion. */
-  max-width: calc(var(--dock-rail-collapsed-w, 56px) + 12px);
+  max-width: var(--ws-frame-left);
+}
+
+.panel[data-state="collapsed"] .rail {
+  flex-basis: var(--ws-frame-left);
+  width: var(--ws-frame-left);
 }
 
 .kicker {
@@ -108,52 +94,43 @@
   gap: 4px;
 }
 
+/* Flat frame language — the swatch colour chip is the only fill. */
 .swatch {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  width: 44px;
-  min-width: 44px;
+  width: var(--ws-frame-tap, 40px);
+  min-width: var(--ws-frame-tap, 40px);
   max-width: 100%;
-  min-height: 44px;
-  padding: 4px 3px;
+  min-height: var(--ws-frame-tap, 40px);
+  padding: 3px 2px;
   border: none;
-  border-radius: var(--hc-r-control);
-  background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
   color: var(--ink-soft);
   font: inherit;
   cursor: pointer;
   transition:
-    box-shadow var(--hc-motion, 180ms) var(--ease),
-    color var(--hc-motion, 180ms) var(--ease),
-    transform var(--hc-motion, 180ms) var(--ease);
+    background var(--hc-motion, 180ms) var(--ease),
+    color var(--hc-motion, 180ms) var(--ease);
 }
 
 .swatch:hover {
+  background: var(--ws-frame-wash);
   color: var(--ink);
 }
 
 .swatch:active {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  background: var(--ws-frame-wash);
 }
 
-.swatchOn {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+.swatchOn,
+.swatchOn:hover {
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
   color: var(--ink);
 }
 
@@ -239,11 +216,9 @@
 
 .pinBtnOn {
   color: var(--ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .placingHead {
@@ -375,7 +350,7 @@
   color: var(--ink-faint);
 }
 
-.section + .section {
+.section+.section {
   border-top: 1px solid var(--hc-line-soft);
 }
 
@@ -592,6 +567,7 @@
     opacity: 0;
     transform: translate(-6px, -50%);
   }
+
   to {
     opacity: 1;
     transform: translate(0, -50%);
@@ -612,10 +588,8 @@
 
 :global(.rootPrecision) .swatchOn {
   border-color: var(--ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow));
 }
 
 @media (prefers-reduced-motion: reduce) {
