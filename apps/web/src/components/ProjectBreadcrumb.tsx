@@ -4,6 +4,14 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import layout from "../app/projects/[id]/project-layout.module.css";
 
+const CANVAS_REDIRECTS = new Set([
+  "overview",
+  "design",
+  "design/cad",
+  "design/develop",
+  "design/studio",
+]);
+
 const SECTION_LABELS: Record<string, string> = {
   survey: "Survey",
   measurements: "Measurements",
@@ -32,6 +40,7 @@ export function ProjectBreadcrumb({ projectId, address }: Props) {
   if (segments.length < 3) return null;
 
   const subPath = segments.slice(2).join("/");
+  if (CANVAS_REDIRECTS.has(subPath)) return null;
   const label = SECTION_LABELS[subPath] ?? subPath;
   const shortAddress =
     address.length > 40 ? `${address.slice(0, 40)}…` : address;
