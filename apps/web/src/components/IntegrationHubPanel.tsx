@@ -16,6 +16,7 @@ import {
 import s from "../styles/app.module.css";
 import styles from "../app/settings/settings.module.css";
 import { useToast } from "./ToastHost";
+import { Button } from "./ui";
 
 export function IntegrationHubPanel({
   billing,
@@ -87,17 +88,11 @@ export function IntegrationHubPanel({
       <div className={styles.hubActions}>
         {billing.plan === "lite" ? (
           <>
-            <button
-              type="button"
-              className={s.btn}
-              disabled={pending}
-              onClick={runCheckout}
-            >
+            <Button disabled={pending} onClick={runCheckout}>
               {pending ? "Starting…" : "Upgrade to Studio"}
-            </button>
-            <button
-              type="button"
-              className={`${s.btn} ${s.btnGhost}`}
+            </Button>
+            <Button
+              variant="ghost"
               disabled={pending}
               onClick={() => {
                 startTransition(async () => {
@@ -108,12 +103,11 @@ export function IntegrationHubPanel({
               }}
             >
               Dev unlock
-            </button>
+            </Button>
           </>
         ) : (
-          <button
-            type="button"
-            className={`${s.btn} ${s.btnGhost}`}
+          <Button
+            variant="ghost"
             disabled={pending}
             onClick={() => {
               startTransition(async () => {
@@ -124,7 +118,7 @@ export function IntegrationHubPanel({
             }}
           >
             Switch to Lite (dev)
-          </button>
+          </Button>
         )}
       </div>
 
@@ -151,14 +145,13 @@ export function IntegrationHubPanel({
                 ) : null}
               </td>
               <td>
-                <button
-                  type="button"
-                  className={`${s.btn} ${s.btnGhost}`}
+                <Button
+                  variant="ghost"
                   disabled={pending}
                   onClick={() => runTest(c.channel)}
                 >
                   Test
-                </button>
+                </Button>
               </td>
             </tr>
           ))}

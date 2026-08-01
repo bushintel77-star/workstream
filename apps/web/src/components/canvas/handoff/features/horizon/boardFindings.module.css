@@ -69,7 +69,7 @@
 
 .detail {
   margin: 4px 0 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--hc-ink-muted);
 }
@@ -122,7 +122,7 @@
 .gapsList {
   margin: 6px 0 0;
   padding: 0 0 0 1.1em;
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--hc-ink-muted);
 }

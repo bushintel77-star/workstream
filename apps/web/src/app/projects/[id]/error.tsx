@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { Button } from "../../../components/ui";
 import s from "../../../styles/app.module.css";
 
 /**
@@ -42,11 +43,11 @@ export default function ProjectStudioError({
       ) : null}
 
       <div className={s.actionBar}>
-        <button type="button" className={s.btn} onClick={() => reset()}>
+        <Button variant="secondary" size="sm" onClick={() => reset()}>
           Reopen studio
-        </button>
-        <Link href="/home" className={`${s.btn} ${s.btnGhost}`}>
-          Back to projects
+        </Button>
+        <Link href="/home" passHref>
+          <Button as="a" variant="ghost" size="sm">Back to projects</Button>
         </Link>
       </div>
     </main>

@@ -60,7 +60,7 @@
 
 .summary {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -128,14 +128,14 @@
 }
 
 .label {
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   color: var(--ink-soft);
 }
 
 .value {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--ink);

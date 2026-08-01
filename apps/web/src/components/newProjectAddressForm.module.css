@@ -20,7 +20,7 @@
   background: var(--surface-elevated);
   color: var(--ink-primary);
   font: inherit;
-  font-size: 16px;
+  font-size: var(--text-base);
 }
 
 .input:focus {
@@ -34,7 +34,7 @@
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--ink-tertiary);
   pointer-events: none;
@@ -85,7 +85,7 @@
 .primary {
   font-weight: 600;
   color: var(--ink-primary);
-  font-size: 0.95rem;
+  font-size: var(--text-base);
 }
 
 .secondary {
@@ -96,14 +96,14 @@
 
 .hint {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--ink-tertiary);
 }
 
 .pinned {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--accent-ink);
   background: var(--accent-soft);

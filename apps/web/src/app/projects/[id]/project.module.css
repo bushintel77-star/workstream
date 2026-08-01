@@ -24,7 +24,7 @@
 .subnavItem {
   padding: 10px 16px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--ink-secondary);
@@ -49,7 +49,7 @@
 }
 
 .processingHint {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-tertiary);
   margin-top: var(--s-4);
 }
@@ -107,7 +107,7 @@
 
 .stageNum {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   color: var(--ink-tertiary);
   letter-spacing: 0.05em;
@@ -115,12 +115,12 @@
 
 .stageLabel {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--ink-primary);
 }
 
 .stageMeta {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   font-weight: 500;
 }
@@ -136,7 +136,7 @@
 
 .zoneName {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: var(--text-md);
   font-weight: 700;
   letter-spacing: -0.01em;
   margin: 0 0 4px;
@@ -144,14 +144,14 @@
 }
 
 .zoneTreatment {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-secondary);
   margin: 0 0 14px;
   line-height: 1.5;
 }
 
 .zoneSubhead {
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -160,7 +160,7 @@
 }
 
 .zoneItems {
-  font-size: 13px;
+  font-size: var(--text-sm);
   margin: 0;
   padding-left: 18px;
   color: var(--ink-secondary);
@@ -186,7 +186,7 @@
   background: transparent;
   border-radius: 7px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--ink-tertiary);
   cursor: pointer;
@@ -213,7 +213,7 @@
 }
 
 .totalKicker {
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -222,7 +222,7 @@
 
 .totalAmount {
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: var(--text-3xl);
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--ink-primary);
@@ -230,7 +230,7 @@
 }
 
 .totalSub {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   font-family: var(--font-mono);
 }
@@ -261,19 +261,19 @@
 
 .findingLocation {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
 }
 
 .findingStatement {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--ink-primary);
   margin: 0 0 6px;
 }
 
 .findingAction {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-secondary);
   margin: 0;
   line-height: 1.5;
@@ -315,7 +315,7 @@
 }
 
 .columnTitle {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -324,7 +324,7 @@
 
 .columnCount {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
 }
 
@@ -340,7 +340,7 @@
 
 .taskTitle {
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-primary);
   line-height: 1.35;
 }
@@ -353,7 +353,7 @@
 }
 
 .taskAssignee {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
 }
 
@@ -368,7 +368,7 @@
   color: var(--ink-tertiary);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 2px 4px;
 }
 
@@ -396,12 +396,12 @@
 
 .outputKind {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--ink-primary);
 }
 
 .outputMeta {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   font-family: var(--font-mono);
 }
@@ -436,7 +436,7 @@
 }
 
 .weatherDate {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -445,18 +445,18 @@
 
 .weatherTemp {
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--ink-primary);
 }
 
 .weatherCond {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-secondary);
 }
 
 .weatherRain {
-  font-size: 10px;
+  font-size: var(--text-micro);
   color: var(--info);
   font-family: var(--font-mono);
 }
@@ -479,7 +479,7 @@
 }
 
 .transcript {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-secondary);
   line-height: 1.6;
   margin: 0;
@@ -502,7 +502,7 @@
 }
 
 .lineNotes {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   margin-top: 2px;
 }
@@ -524,14 +524,14 @@
   margin: 8px 0 0;
   color: var(--ink-tertiary);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .processingCopy {
   max-width: 680px;
   margin: 14px 0 0;
   color: var(--ink-secondary);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 
@@ -620,7 +620,7 @@
   border-radius: 999px;
   color: var(--ink-tertiary);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -650,7 +650,7 @@
   margin: 0;
   color: var(--ink-primary);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -658,7 +658,7 @@
 .processingStageDescription {
   margin: 4px 0 0;
   color: var(--ink-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
@@ -673,14 +673,14 @@
 .processingError h2 {
   margin: 0;
   color: var(--ink-primary);
-  font-size: 16px;
+  font-size: var(--text-base);
 }
 
 .processingError p {
   max-width: 640px;
   margin: 8px 0 14px;
   color: var(--ink-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 
@@ -720,7 +720,7 @@
 }
 
 .columnEmpty {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   text-align: center;
   padding: 12px 0;
@@ -730,7 +730,7 @@
 .taskStatusSelect {
   min-height: 36px !important;
   padding: 6px 32px 6px 10px !important;
-  font-size: 12px !important;
+  font-size: var(--text-xs) !important;
   font-weight: 600;
   background-color: var(--surface-sunken);
 }
@@ -757,7 +757,7 @@
 
 .overrideReason {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-secondary);
   font-style: italic;
   line-height: 1.5;
@@ -768,7 +768,7 @@
 }
 
 .overrideSummary {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--ink-tertiary);
   cursor: pointer;
@@ -805,7 +805,7 @@
 .measurementHead {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 
 .measurementImage {

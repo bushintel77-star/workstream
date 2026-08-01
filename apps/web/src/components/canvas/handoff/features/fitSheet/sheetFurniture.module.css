@@ -40,7 +40,7 @@
 
 .scaleLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-micro);
   letter-spacing: 0.02em;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -66,7 +66,7 @@
 }
 
 .statusHonesty {
-  font-size: 10px;
+  font-size: var(--text-micro);
   line-height: 1.35;
   color: var(--text-muted);
 }
@@ -99,7 +99,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--text-micro);
   color: var(--text-secondary);
 }
 

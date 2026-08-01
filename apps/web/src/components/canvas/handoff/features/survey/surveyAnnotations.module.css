@@ -42,7 +42,7 @@
 }
 
 .levelLabel {
-  font-size: 10px;
+  font-size: var(--text-micro);
   padding: 2px 5px;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
   border-radius: 6px;
@@ -68,7 +68,7 @@
   transform: translateX(-50%);
   z-index: var(--ws-z-dock);
   margin: 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--hc-ink);
   background: color-mix(in srgb, var(--hc-paper) 94%, transparent);

@@ -69,9 +69,7 @@ export default async function CrewPage() {
           min="0"
           placeholder="$/hr"
         />
-        <SubmitButton className={s.btn} pendingLabel="Adding…">
-          Add
-        </SubmitButton>
+        <SubmitButton pendingLabel="Adding…">Add</SubmitButton>
       </form>
 
       {loadError && (

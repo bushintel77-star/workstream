@@ -95,21 +95,20 @@ export function IntegrationCard({ integration: i }: { integration: Integration }
             disabled={pending}
           />
         </label>
-        <SubmitButton className={s.btn} pendingLabel="Saving…" disabled={pending}>
+        <SubmitButton pendingLabel="Saving…" disabled={pending}>
           {i.source === "store" ? "Replace" : "Save"}
         </SubmitButton>
         {i.source === "store" && (
           <>
-            <SubmitButton
-              className={`${s.btn} ${s.btnDanger}`}
-              pendingLabel="Clearing…"
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
               disabled={pending}
-              formAction={async (fd) => {
-                setConfirmClear(true);
-              }}
+              onClick={() => setConfirmClear(true)}
             >
               Clear
-            </SubmitButton>
+            </Button>
             <Dialog
               open={confirmClear}
               onClose={() => setConfirmClear(false)}

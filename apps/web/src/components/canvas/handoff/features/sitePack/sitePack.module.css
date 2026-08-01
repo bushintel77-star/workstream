@@ -13,7 +13,7 @@
 
 .title {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--hc-ink);
@@ -21,7 +21,7 @@
 
 .lede {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   line-height: 1.35;
   color: var(--hc-ink-muted);
 }
@@ -41,7 +41,7 @@
   border: 1px solid color-mix(in srgb, var(--hc-water) 35%, transparent);
   background: color-mix(in srgb, var(--hc-water) 8%, transparent);
   color: var(--hc-success);
-  font-size: 0.68rem;
+  font-size: var(--text-micro);
   font-weight: 550;
 }
 
@@ -80,7 +80,7 @@
 
 .link {
   flex-shrink: 0;
-  font-size: 0.68rem;
+  font-size: var(--text-micro);
   color: var(--proposed-text);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -106,7 +106,7 @@
 
 .digCopy {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   line-height: 1.35;
   color: var(--hc-ink-muted);
 }
@@ -121,7 +121,7 @@
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 18%, transparent);
   background: var(--hc-paper);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   font-weight: 550;
   color: var(--hc-ink);
   cursor: pointer;
@@ -142,7 +142,7 @@
   border-radius: 8px;
   border: 1px dashed color-mix(in srgb, var(--hc-ink) 18%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 90%, transparent);
-  font-size: 0.68rem;
+  font-size: var(--text-micro);
   line-height: 1.4;
   color: var(--hc-ink-muted);
 }
@@ -159,14 +159,14 @@
 
 .trayHead {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   font-weight: 600;
   color: var(--hc-ink);
 }
 
 .trayEmpty {
   margin: 0;
-  font-size: 0.68rem;
+  font-size: var(--text-micro);
   line-height: 1.35;
   color: var(--hc-ink-faint);
 }

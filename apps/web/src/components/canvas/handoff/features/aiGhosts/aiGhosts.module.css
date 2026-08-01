@@ -68,12 +68,12 @@
 }
 
 .rowTitle {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
 .rowMeta {
-  font-size: 10px;
+  font-size: var(--text-micro);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
 }
@@ -99,13 +99,13 @@
 
 .detailTitle {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 650;
   letter-spacing: -0.02em;
 }
 
 .badge {
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 650;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -119,14 +119,14 @@
 
 .reason {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.45;
   color: var(--hc-ink-muted);
 }
 
 .impact {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   font-family: "IBM Plex Mono", monospace;
   color: var(--hc-success);
@@ -147,7 +147,7 @@
 }
 
 .confLabel {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
   color: var(--hc-ink);
@@ -186,7 +186,7 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-family: "IBM Plex Mono", monospace;
   color: var(--hc-ink-muted);
 }
@@ -226,7 +226,7 @@
   background: var(--hc-glass);
   color: var(--hc-ink);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 650;
   cursor: pointer;
   transition: 0.16s background, 0.16s border-color;
@@ -251,7 +251,7 @@
   background: var(--hc-glass-soft);
   color: var(--hc-ink-muted);
   font: inherit;
-  font-size: 10px;
+  font-size: var(--text-micro);
   cursor: pointer;
 }
 
@@ -286,13 +286,13 @@
 
 .emptyTitle {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 650;
 }
 
 .emptyBody {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.45;
   color: var(--hc-ink-muted);
   max-width: 36ch;

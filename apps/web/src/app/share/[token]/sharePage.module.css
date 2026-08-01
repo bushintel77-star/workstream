@@ -29,7 +29,7 @@
 
 .kicker {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-tertiary);
@@ -37,7 +37,7 @@
 
 .errorHeading {
   margin: 8px 0;
-  font-size: 22px;
+  font-size: var(--text-lg);
   font-weight: 650;
   letter-spacing: -0.02em;
 }

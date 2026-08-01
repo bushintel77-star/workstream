@@ -196,7 +196,7 @@
   margin-right: 3px;
   color: var(--hc-danger);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   text-align: center;
 }

@@ -45,7 +45,7 @@
   box-shadow: none;
   color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 650;
   letter-spacing: 0.04em;
   cursor: pointer;

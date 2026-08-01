@@ -16,7 +16,7 @@
 
 .brand {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--text-lg);
   font-weight: 600;
   letter-spacing: -0.01em;
   display: flex;
@@ -25,7 +25,7 @@
 }
 
 .brandSub {
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -33,7 +33,7 @@
 }
 
 .back {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -46,7 +46,7 @@
 }
 
 .lede {
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--ink-secondary);
   margin: 0 0 var(--s-5);
   line-height: 1.5;
@@ -57,7 +57,7 @@
   border-radius: 8px;
   background: var(--accent-soft);
   color: var(--accent-ink);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.5;
   margin-bottom: var(--s-5);
   border: 1px solid var(--accent-soft);
@@ -68,12 +68,12 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--block) 10%, var(--surface-elevated));
   color: var(--block);
-  font-size: 13px;
+  font-size: var(--text-sm);
   margin-bottom: var(--s-4);
 }
 
 .groupHeading {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -109,19 +109,19 @@
 
 .label {
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--text-base);
   color: var(--ink-primary);
 }
 
 .envName {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   margin-left: 6px;
 }
 
 .pill {
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -146,14 +146,14 @@
 }
 
 .description {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-secondary);
   line-height: 1.5;
   margin: 0;
 }
 
 .maskRow {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   font-family: var(--font-mono);
 }
@@ -173,7 +173,7 @@
   border-radius: 8px;
   font: inherit;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-sm);
   background: var(--surface-base);
   color: var(--ink-primary);
 }
@@ -191,7 +191,7 @@
   color: var(--surface-elevated);
   border-radius: 8px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -204,7 +204,7 @@
   color: var(--ink-secondary);
   border-radius: 8px;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
   cursor: pointer;
 }
@@ -223,7 +223,7 @@
 
 .licenseStats dt {
   margin: 0;
-  font-size: 0.68rem;
+  font-size: var(--text-micro);
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -232,19 +232,19 @@
 
 .licenseStats dd {
   margin: 0.2rem 0 0;
-  font-size: 1.05rem;
+  font-size: var(--text-base);
   font-weight: 650;
   color: var(--ink, var(--ink-primary));
 }
 
 .licenseMembersTitle {
   margin: 1.25rem 0 0.5rem;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 650;
 }
 
 .memberId {
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   word-break: break-all;
 }
 
@@ -256,7 +256,7 @@
 
 .channelNote {
   display: block;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   margin-top: 4px;
 }

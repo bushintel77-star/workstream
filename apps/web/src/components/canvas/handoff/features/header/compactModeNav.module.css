@@ -17,7 +17,7 @@
   background: var(--hc-glass-soft);
   color: var(--hc-ink);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 650;
   cursor: pointer;
 }

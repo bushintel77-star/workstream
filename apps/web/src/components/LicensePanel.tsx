@@ -13,6 +13,7 @@ import {
 import s from "../styles/app.module.css";
 import styles from "../app/settings/settings.module.css";
 import { useToast } from "./ToastHost";
+import { Button } from "./ui";
 
 export function LicensePanel({
   license,
@@ -110,9 +111,7 @@ export function LicensePanel({
       <div className={styles.hubActions}>
         {!isStudio ? (
           <>
-            <button
-              type="button"
-              className={s.btn}
+            <Button
               disabled={pending}
               onClick={runStudioCheckout}
             >
@@ -121,10 +120,9 @@ export function LicensePanel({
                 : studioPriceConfigured
                   ? "Upgrade to Studio"
                   : "Unlock Studio (dev)"}
-            </button>
-            <button
-              type="button"
-              className={`${s.btn} ${s.btnGhost}`}
+            </Button>
+            <Button
+              variant="ghost"
               disabled={pending}
               onClick={() => {
                 startTransition(async () => {
@@ -135,13 +133,11 @@ export function LicensePanel({
               }}
             >
               Dev unlock
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <button
-              type="button"
-              className={s.btn}
+            <Button
               disabled={pending}
               onClick={runSeatCheckout}
             >
@@ -150,18 +146,16 @@ export function LicensePanel({
                 : seatPriceConfigured
                   ? "Add seat"
                   : "Add seat (dev)"}
-            </button>
-            <button
-              type="button"
-              className={`${s.btn} ${s.btnGhost}`}
+            </Button>
+            <Button
+              variant="ghost"
               disabled={pending || license.seats_available <= 0}
               onClick={inviteMember}
             >
               Invite operator
-            </button>
-            <button
-              type="button"
-              className={`${s.btn} ${s.btnGhost}`}
+            </Button>
+            <Button
+              variant="ghost"
               disabled={pending}
               onClick={() => {
                 startTransition(async () => {
@@ -172,7 +166,7 @@ export function LicensePanel({
               }}
             >
               Switch to Lite (dev)
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -195,9 +189,8 @@ export function LicensePanel({
               <td>{m.role}</td>
               <td>
                 {m.role !== "owner" ? (
-                  <button
-                    type="button"
-                    className={`${s.btn} ${s.btnGhost}`}
+                  <Button
+                    variant="ghost"
                     disabled={pending}
                     onClick={() => {
                       startTransition(async () => {
@@ -215,7 +208,7 @@ export function LicensePanel({
                     }}
                   >
                     Remove
-                  </button>
+                  </Button>
                 ) : null}
               </td>
             </tr>

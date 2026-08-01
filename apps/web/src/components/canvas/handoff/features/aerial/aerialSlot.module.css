@@ -69,7 +69,7 @@
 .metaText {
   margin: 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -112,7 +112,7 @@
   color: var(--hc-ink);
   cursor: pointer;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -137,7 +137,7 @@
   border: 1px solid var(--sheet-border, var(--hc-line));
   background: color-mix(in srgb, var(--hc-paper) 94%, transparent);
   color: var(--hc-ink);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   box-shadow: none;

@@ -117,7 +117,7 @@
 }
 
 .chipWhy {
-  font-size: 10px;
+  font-size: var(--text-micro);
   color: var(--hc-ink-faint);
 }
 
@@ -142,7 +142,7 @@
   padding: 0 11px;
   border-radius: 8px;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 650;
   cursor: pointer;
 }

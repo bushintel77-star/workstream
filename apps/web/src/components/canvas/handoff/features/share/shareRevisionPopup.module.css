@@ -49,7 +49,7 @@
 
 .title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--text-md);
   font-weight: 650;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -57,7 +57,7 @@
 
 .lead {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--hc-ink-muted);
 }
@@ -73,7 +73,7 @@
 .ghost {
   min-height: 44px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -109,13 +109,13 @@
 
 .hint {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--hc-ink-faint);
 }
 
 .error {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--hc-danger);
 }

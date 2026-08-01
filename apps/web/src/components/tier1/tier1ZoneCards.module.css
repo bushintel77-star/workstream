@@ -32,7 +32,7 @@
 
 .treatment {
   margin: var(--s-1) 0 0;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   line-height: 1.45;
   color: var(--ink-secondary);
 }

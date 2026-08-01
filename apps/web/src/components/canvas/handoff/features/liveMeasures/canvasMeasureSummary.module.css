@@ -49,7 +49,7 @@
 }
 
 .open {
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1;
   color: var(--hc-ink-muted);
 }
@@ -78,7 +78,7 @@
 
 .value {
   overflow: hidden;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--hc-ink);

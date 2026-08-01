@@ -1,8 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Spinner } from "./Spinner";
-import styles from "./submit-button.module.css";
+import { Button } from "./ui";
 
 type Props = {
   children: React.ReactNode;
@@ -11,6 +10,8 @@ type Props = {
   formAction?: (formData: FormData) => void | Promise<void>;
   ariaLabel?: string;
   disabled?: boolean;
+  variant?: "primary" | "secondary" | "ghost" | "danger";
+  type?: "submit" | "button" | "reset";
 };
 
 export function SubmitButton({
@@ -20,25 +21,21 @@ export function SubmitButton({
   formAction,
   ariaLabel,
   disabled = false,
+  variant = "secondary",
+  type = "submit",
 }: Props) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      className={className}
-      disabled={pending || disabled}
-      aria-busy={pending}
+    <Button
+      type={type}
+      variant={variant}
+      loading={pending}
+      disabled={disabled}
       aria-label={ariaLabel}
       formAction={formAction}
+      className={className}
     >
-      {pending ? (
-        <span className={styles.pending}>
-          <Spinner size="sm" label={pendingLabel ?? "Working"} />
-          {pendingLabel ?? "Working…"}
-        </span>
-      ) : (
-        children
-      )}
-    </button>
+      {pending ? pendingLabel ?? children : children}
+    </Button>
   );
 }

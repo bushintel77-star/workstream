@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getMyobStatus, getXeroStatus } from "../../../lib/api";
 import s from "../../../styles/app.module.css";
 import { SettingsMasthead } from "../SettingsShell";
+import { Button } from "../../../components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -17,15 +18,15 @@ export default async function AccountingPage() {
   const fmt = (iso: string | null) =>
     iso
       ? new Date(iso).toLocaleString("en-AU", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })
-          .replace(",", "")
-          .replace(" at ", " · ")
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+        .replace(",", "")
+        .replace(" at ", " · ")
       : "—";
 
   return (
@@ -44,8 +45,8 @@ export default async function AccountingPage() {
         <section className={s.card} role="alert">
           <h2 className={s.cardTitle}>Accounting status unavailable</h2>
           <p className={s.dim}>{error}</p>
-          <Link href="/settings/accounting" className={s.btn}>
-            Retry
+          <Link href="/settings/accounting" passHref>
+            <Button as="a" size="sm">Retry</Button>
           </Link>
         </section>
       ) : null}

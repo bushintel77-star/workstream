@@ -2,6 +2,7 @@ import { listRateCard } from "../../../lib/api";
 import s from "../../../styles/app.module.css";
 import { updateRateAction } from "../../actions";
 import { SettingsMasthead } from "../SettingsShell";
+import { SubmitButton } from "../../../components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -90,13 +91,13 @@ export default async function RateCardPage() {
                           className={`${s.input} ${s.mono}`}
                           aria-label={`Rate for ${r.label}`}
                         />
-                        <button
-                          type="submit"
-                          className={`${s.btn} ${s.btnGhost}`}
+                        <SubmitButton
+                          variant="ghost"
+                          pendingLabel="Saving…"
                           aria-label="Save"
                         >
                           Save
-                        </button>
+                        </SubmitButton>
                       </form>
                     </td>
                   </tr>

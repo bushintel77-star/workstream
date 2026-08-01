@@ -78,7 +78,7 @@
 .lede {
   margin: 0;
   max-width: 32ch;
-  font-size: 0.98rem;
+  font-size: var(--text-base);
   line-height: 1.5;
   color: color-mix(in srgb, var(--ink-inverted) 38%, transparent);
   opacity: 0;
@@ -107,7 +107,7 @@
   background: var(--surface-elevated);
   color: var(--ink-primary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   font-weight: 600;
   letter-spacing: -0.01em;
   text-decoration: none;
@@ -136,7 +136,7 @@
   border: 1px solid color-mix(in srgb, var(--ink-inverted) 22%, transparent);
   background: transparent;
   color: color-mix(in srgb, var(--ink-inverted) 62%, transparent);
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   font-weight: 500;
   text-decoration: none;
   transition:
@@ -165,7 +165,7 @@
   padding: 1rem clamp(1.5rem, 5vw, 3.5rem) calc(1rem + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid color-mix(in srgb, var(--ink-inverted) 8%, transparent);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;

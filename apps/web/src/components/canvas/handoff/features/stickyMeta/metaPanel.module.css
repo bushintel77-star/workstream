@@ -98,7 +98,7 @@
   margin: 3px 0 0;
   color: var(--hc-ink);
   font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -168,7 +168,7 @@
 .metric {
   flex-shrink: 0;
   color: var(--hc-danger);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -212,7 +212,7 @@
 .statValue {
   color: var(--hc-ink);
   font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -259,7 +259,7 @@
   gap: 6px;
   color: var(--hc-ink);
   font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 

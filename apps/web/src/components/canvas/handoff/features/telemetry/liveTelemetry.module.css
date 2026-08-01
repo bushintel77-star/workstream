@@ -79,14 +79,14 @@
   border-radius: 8px;
   background: transparent;
   color: var(--hc-ink-muted);
-  font-size: 18px;
+  font-size: var(--text-md);
   line-height: 1;
   cursor: pointer;
 }
 
 .tip {
   margin: 2px 0 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--hc-ink-muted);
 }
@@ -99,7 +99,7 @@
   border: 1px solid var(--hc-line-soft);
   background: color-mix(in srgb, var(--hc-invert) 70%, transparent);
   color: var(--hc-ink);
-  font-size: 12px;
+  font-size: var(--text-xs);
   cursor: pointer;
 }
 
@@ -117,7 +117,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .kind {
@@ -127,12 +127,12 @@
 .value {
   font-family: "IBM Plex Mono", monospace;
   font-weight: 650;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .alertTip {
   margin: 6px 0 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.35;
   color: var(--hc-warning);
 }

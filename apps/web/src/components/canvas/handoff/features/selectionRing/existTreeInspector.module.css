@@ -67,7 +67,7 @@
     2px 2px 6px var(--hc-neu-shadow)
   );
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--hc-ink);
   text-align: right;

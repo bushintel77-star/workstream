@@ -61,7 +61,7 @@
   bottom: 18px;
   transform: translateX(-50%);
   z-index: var(--ws-z-dock);
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
   color: var(--hc-ink-muted);
   background: var(--hc-glass-soft);

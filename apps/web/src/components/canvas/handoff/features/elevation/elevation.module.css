@@ -45,7 +45,7 @@
   background: transparent;
   color: var(--hc-ink);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 550;
   cursor: pointer;
 }
@@ -59,7 +59,7 @@
 .widthChip {
   margin-left: auto;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 500;
   color: var(--hc-ink-muted);
   letter-spacing: 0.02em;
@@ -71,7 +71,7 @@
   top: 14px;
   right: 18px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   color: var(--hc-ink-muted);
   z-index: var(--ws-z-interact);
 }

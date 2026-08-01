@@ -122,7 +122,7 @@
 
 .letter {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   text-align: center;
   line-height: 1.2;
@@ -136,6 +136,6 @@
   background: transparent;
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   cursor: pointer;
 }

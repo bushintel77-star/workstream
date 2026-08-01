@@ -71,7 +71,7 @@
   background: var(--hc-glass-soft);
   color: var(--easement-stroke);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: var(--text-micro);
   pointer-events: auto;
   cursor: pointer;
 }

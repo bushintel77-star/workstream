@@ -52,7 +52,7 @@
   background: transparent;
   color: var(--hc-ink-muted);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   cursor: pointer;
   min-height: 28px;
@@ -90,12 +90,12 @@
 }
 
 .addr {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 650;
 }
 
 .meta {
-  font-size: 10px;
+  font-size: var(--text-micro);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
 }

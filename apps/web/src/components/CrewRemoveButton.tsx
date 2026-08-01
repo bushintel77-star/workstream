@@ -3,9 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteCrewAction } from "../app/actions";
-import s from "../styles/app.module.css";
-import btn from "./submit-button.module.css";
-import { Spinner } from "./Spinner";
 import { useToast } from "./ToastHost";
 import { Button, Dialog } from "./ui";
 
@@ -42,22 +39,16 @@ export function CrewRemoveButton({
 
   return (
     <>
-      <button
-        type="button"
-        className={`${s.btn} ${s.btnDanger}`}
+      <Button
+        variant="danger"
+        size="sm"
+        loading={pending}
         disabled={pending}
         aria-label={`Remove ${name}`}
         onClick={() => setConfirmOpen(true)}
       >
-        {pending ? (
-          <span className={btn.pending}>
-            <Spinner size="sm" label="Removing crew member" />
-            Removing…
-          </span>
-        ) : (
-          "Remove"
-        )}
-      </button>
+        Remove
+      </Button>
       <Dialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}

@@ -32,7 +32,7 @@
 
 .name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--text-base);
   color: var(--ink-primary);
 }
 
@@ -40,7 +40,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   flex-wrap: wrap;
 }

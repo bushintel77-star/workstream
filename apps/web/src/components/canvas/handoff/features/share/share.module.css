@@ -34,7 +34,7 @@
 
 .title {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--text-lg);
   font-weight: 650;
   letter-spacing: -0.02em;
   line-height: 1.2;
@@ -42,7 +42,7 @@
 
 .lead {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--hc-ink-muted);
 }
@@ -96,7 +96,7 @@
 
 .error {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--hc-ink);
 }
 
