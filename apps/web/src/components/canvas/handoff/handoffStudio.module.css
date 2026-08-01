@@ -79,15 +79,137 @@
   --ws-type-hud: 11px;
   --ws-type-title: 15px;
 
+  /*
+   * Gallery frame (binding) — the drawing is the artwork, the frame is the
+   * mount. Premium dark grey in BOTH themes so the cream plan always reads as
+   * the subject. Icons live inside these bands, never on the plan.
+   */
+  --ws-frame: var(--gray-d-50);
+  --ws-frame-raise: var(--gray-d-150);
+  /* Matte-metal endpoints — top catches ambient light, base sinks. */
+  --ws-frame-lit: color-mix(in srgb, var(--gray-d-50) 88%, #fff);
+  --ws-frame-sunk: color-mix(in srgb, var(--gray-d-50) 82%, #000);
+  --ws-frame-ink: var(--gray-d-900);
+  --ws-frame-ink-dim: color-mix(in srgb, var(--gray-d-900) 58%, transparent);
+  --ws-frame-ink-faint: color-mix(in srgb, var(--gray-d-900) 34%, transparent);
+  --ws-frame-hair: color-mix(in srgb, var(--gray-d-900) 12%, transparent);
+  --ws-frame-wash: color-mix(in srgb, var(--gray-d-900) 10%, transparent);
+  --ws-frame-top: 46px;
+  --ws-frame-left: 48px;
+  --ws-frame-right: 14px;
+  --ws-frame-bottom: 46px;
+  --ws-frame-tap: 38px;
+  --ws-frame-glyph: 17px;
+
+  /*
+   * Bottom-left floating stack (sketch pen/eraser tray, margin strip,
+   * phase chip, artboard strip) — one shared shelf ladder, shell-relative,
+   * so these never guess their own offset and collide. Each shelf is the
+   * previous shelf plus that row's own height plus one gap.
+   */
+  --ws-stack-gap: 8px;
+  --ws-stack-tray-h: 52px;
+  --ws-stack-margin-h: 42px;
+  --ws-stack-phase-h: 44px;
+  --ws-stack-1: calc(var(--ws-frame-bottom) + var(--ws-stack-gap));
+  --ws-stack-2: calc(var(--ws-stack-1) + var(--ws-stack-tray-h) + var(--ws-stack-gap));
+  --ws-stack-3: calc(var(--ws-stack-2) + var(--ws-stack-margin-h) + var(--ws-stack-gap));
+  --ws-stack-4: calc(var(--ws-stack-3) + var(--ws-stack-phase-h) + var(--ws-stack-gap));
+
+  /*
+   * Motion + form system (binding) — one radius scale, one easing, three
+   * durations. Everything that moves or rounds pulls from these, so the whole
+   * product shares a single physical language.
+   */
+  --ws-r-1: 6px;
+  --ws-r-2: 8px;
+  --ws-r-3: 12px;
+  --ws-r-4: 16px;
+  --ws-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ws-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ws-dur-1: 120ms;
+  --ws-dur-2: 200ms;
+  --ws-dur-3: 320ms;
+  --ws-focus: 0 0 0 2px var(--hc-paper), 0 0 0 3.5px var(--hc-signal);
+
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: var(--canvas);
+  /*
+   * Premium matte mount: a soft top-down light, a faint warm glow behind the
+   * artwork, settling to a sunk base. Reads as a physical frame, not flat fill.
+   */
+  background:
+    radial-gradient(120% 80% at 50% 0%,
+      var(--ws-frame-lit),
+      transparent 46%),
+    linear-gradient(180deg,
+      var(--ws-frame) 0%,
+      var(--ws-frame) 62%,
+      var(--ws-frame-sunk) 100%);
   color: var(--hc-ink);
   font-family: var(--font-body);
+  /* Crisp type rendering — the difference between "web app" and "product". */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv01", "ss01";
   overflow: hidden;
   min-height: 0;
+}
+
+/* Product-grade finish: branded selection + slim designed scrollbars. */
+.root ::selection {
+  background: color-mix(in srgb, var(--hc-signal) 28%, transparent);
+}
+
+.root ::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.root ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: color-mix(in srgb, var(--hc-ink) 22%, transparent);
+}
+
+.root ::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--hc-ink) 34%, transparent);
+}
+
+.root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Compact: slimmer bands so the phone canvas keeps its area. */
+.root[data-compact="1"] {
+  --ws-frame-top: 52px;
+  --ws-frame-left: 12px;
+  --ws-frame-right: 12px;
+  --ws-frame-bottom: 56px;
+}
+
+/* Touch: 44px tap minimum wins over the thin desktop look. */
+@media (pointer: coarse) {
+  .root {
+    --ws-frame-top: 52px;
+    --ws-frame-left: 54px;
+    --ws-frame-bottom: 52px;
+    --ws-frame-tap: 44px;
+  }
+}
+
+/*
+ * Client presentation: the left/bottom tool bands close up because operator
+ * tools are gone, but the top band keeps its height — the three client
+ * controls still live there. The frame itself never jumps size.
+ */
+.root.rootClient {
+  --ws-frame-left: 14px;
+  --ws-frame-bottom: 14px;
 }
 
 .rootDark {
@@ -121,11 +243,9 @@
   --ws-glass: var(--hc-glass-soft);
   --ws-glass-border: var(--hc-line);
   background:
-    radial-gradient(
-      100% 70% at 10% 0%,
+    radial-gradient(100% 70% at 10% 0%,
       color-mix(in srgb, var(--proposed-stroke) 18%, transparent),
-      transparent 50%
-    ),
+      transparent 50%),
     var(--canvas);
   color: var(--hc-ink);
 }
@@ -153,69 +273,22 @@
   --ws-glass-border: var(--hc-line);
 }
 
-.header {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  padding: 0;
-  flex-wrap: nowrap;
-  min-height: 50px;
-  z-index: 30;
-  /* Soft plastic dock — layered for depth, not a flat slab. */
-  background: var(--hc-neu-surface);
-  backdrop-filter: none;
-  border-bottom: 1px solid var(--hc-line);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #ffffff 42%, transparent),
-    0 1px 0 var(--hc-line-soft),
-    0 3px 8px color-mix(in srgb, var(--hc-ink) 6%, transparent);
-}
-
-.headerRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 16px;
-  flex-wrap: nowrap;
-  min-height: 46px;
-}
-
-.headerContext {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px 6px 16px;
-  min-height: 32px;
-  overflow-x: auto;
-  border-top: 1px solid var(--hc-line-soft);
-  scrollbar-width: none;
-}
-
-.headerContext::-webkit-scrollbar {
-  display: none;
-}
-
+/* Same frame-native card as its CanvasContextCard parent — a warning-accent
+   left rule marks it as a tip, not a second opaque pill nested in the card. */
 .headerCouncilTip {
   flex: none;
   max-width: min(360px, 42vw);
   margin: 0;
-  padding: 4px 10px;
-  border-radius: var(--hc-r-control);
-  border: 1px solid color-mix(in srgb, var(--hc-warning) 45%, transparent);
-  background: var(--hc-neu-raised);
-  color: var(--hc-ink);
+  padding: 2px 0 2px 10px;
+  border-left: 2px solid color-mix(in srgb, var(--hc-warning) 65%, transparent);
+  background: transparent;
+  color: var(--ws-frame-ink);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: var(--hc-elev-1);
-}
-
-.rootHeaderContext {
-  --ws-safe-top: 92px;
+  box-shadow: none;
 }
 
 .shareWrap {
@@ -253,10 +326,12 @@
 }
 
 .shareToastDismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   border-radius: var(--hc-r-control);
   background: transparent;
@@ -312,11 +387,9 @@
   padding: 3px;
   flex: none;
   /* Recessed segmented-control track so the active mode reads as raised. */
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .rootDark .modes {
@@ -425,11 +498,9 @@
   border: none;
   /* Same raised soft-plastic chip as left rail / instruments. */
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
   color: var(--hc-ink);
   font-size: 11.5px;
   font-weight: 600;
@@ -448,21 +519,17 @@
 }
 
 .toolBtn:active {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .toolBtnActive,
 .toolBtnActive:hover {
   color: var(--hc-ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .rootDark .toolBtn {
@@ -530,11 +597,9 @@
   border-radius: var(--hc-r-control);
   border: none;
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
   color: var(--hc-ink-muted);
   cursor: pointer;
   flex: none;
@@ -552,11 +617,9 @@
 }
 
 .iconBtn:active {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .iconBtn:focus-visible,
@@ -572,11 +635,9 @@
 .iconBtnActive,
 .iconBtnActive:hover {
   color: var(--hc-ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .rootDark .iconBtn {
@@ -611,11 +672,9 @@
   border-radius: var(--hc-r-control);
   border: none;
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
@@ -632,11 +691,9 @@
 }
 
 .cmdBtn:active {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .aiPill {
@@ -646,11 +703,9 @@
   border-radius: var(--hc-r-control);
   border: none;
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
   color: var(--hc-ink);
   font-size: 11px;
   font-weight: 600;
@@ -668,20 +723,16 @@
 }
 
 .aiPill:active {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .aiPillHot {
   color: var(--hc-ink);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .aiPillOk {
@@ -697,11 +748,9 @@
   flex: none;
   padding: 3px;
   background: var(--hc-neu-surface);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .segmentBtn {
@@ -717,37 +766,300 @@
   font-family: inherit;
 }
 
-.segmentBtn + .segmentBtn {
+.segmentBtn+.segmentBtn {
   border-left: none;
 }
 
 .segmentBtnActive {
   background: var(--hc-neu-raised);
   color: var(--hc-ink);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
 }
 
+/**
+ * The artwork. Inset by the frame bands on all four sides so the dark grey
+ * shell reads as a gallery frame with a rabbet lip. Never carries chrome.
+ */
 .board {
   flex: 1;
   position: relative;
-  margin: 0 8px 8px;
-  border-radius: 18px;
+  margin:
+    var(--ws-frame-top) var(--ws-frame-right) var(--ws-frame-bottom) var(--ws-frame-left);
+  border-radius: 5px;
   overflow: hidden;
   /* Original Fit sheet / handoff paper — var(--sheet-paper), not sepia plate */
   background: var(--sheet-paper);
   min-height: 0;
+  /*
+   * Rabbet lip — how the artwork sits *inside* the mount:
+   *  1) a dark cut-line where mount meets paper,
+   *  2) a 1px light catch on the bevel (top-lit),
+   *  3) a deep, soft cast shadow the mount throws onto the paper,
+   *  4) a broad ambient occlusion to seat the whole plate.
+   */
   box-shadow:
-    inset 0 0 0 1px var(--hc-line-soft),
-    0 1px 0 var(--hc-neu-light),
-    0 18px 40px var(--hc-neu-shadow);
+    0 0 0 1px color-mix(in srgb, var(--hc-ink) 62%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--hc-paper) 6%, transparent),
+    inset 0 2px 5px -1px color-mix(in srgb, var(--hc-ink) 30%, transparent),
+    0 2px 3px color-mix(in srgb, var(--hc-ink) 30%, transparent),
+    0 30px 70px -16px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+  /* The mount breathes: bands ease in/out when entering client / fit view. */
   transition:
-    box-shadow 220ms var(--ws-ease),
-    margin 220ms var(--ws-ease),
-    border-radius 220ms var(--ws-ease);
+    box-shadow var(--ws-dur-3) var(--ws-ease-in-out),
+    margin var(--ws-dur-3) var(--ws-ease-in-out),
+    border-radius var(--ws-dur-3) var(--ws-ease-in-out);
+}
+
+/**
+ * Frame portal mount — spans the whole shell (bands included) and is a
+ * SIBLING of `.board`, so frame chrome is categorically outside the camera.
+ * `CameraChrome place={{ kind: "frame" }}` targets this.
+ */
+.studioFrameRoot {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/**
+ * Frame control language (binding) — flat monochrome line icons that sit IN
+ * the dark band, IDE-titlebar style. The frame is the surface, so controls
+ * carry no chip, no frost, no plastic: dim ink at rest, full ink on hover,
+ * faint wash when engaged. This intentionally overrides the neumorphic dock
+ * chip language, which applies only to chrome floating ON the canvas.
+ */
+.studioFrameRoot [data-frame-rail] {
+  color: var(--ws-frame-ink);
+}
+
+[data-frame-rail] .iconBtn,
+[data-frame-rail] .cmdBtn {
+  width: var(--ws-frame-tap);
+  height: var(--ws-frame-tap);
+  min-width: var(--ws-frame-tap);
+  min-height: var(--ws-frame-tap);
+  padding: 0;
+  border: none;
+  border-radius: var(--ws-r-2);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
+  transition:
+    color var(--ws-dur-1) var(--ws-ease-out),
+    background var(--ws-dur-1) var(--ws-ease-out),
+    transform var(--ws-dur-1) var(--ws-ease-out);
+}
+
+/* Text controls in the band — Ask AI, View, draft tools. Same flat language. */
+[data-frame-rail] .aiPill,
+[data-frame-rail] .toolBtn {
+  height: var(--ws-frame-tap);
+  min-height: var(--ws-frame-tap);
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--ws-r-2);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
+  transition:
+    color var(--ws-dur-1) var(--ws-ease-out),
+    background var(--ws-dur-1) var(--ws-ease-out),
+    transform var(--ws-dur-1) var(--ws-ease-out);
+}
+
+[data-frame-rail] .iconBtn:hover,
+[data-frame-rail] .cmdBtn:hover,
+[data-frame-rail] .aiPill:hover,
+[data-frame-rail] .toolBtn:hover {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+/* Tactile press — the control sinks a half-pixel, like a real key. */
+[data-frame-rail] .iconBtn:active,
+[data-frame-rail] .cmdBtn:active,
+[data-frame-rail] .aiPill:active,
+[data-frame-rail] .toolBtn:active {
+  background: var(--ws-frame-wash);
+  box-shadow: none;
+  transform: translateY(0.5px) scale(0.97);
+}
+
+[data-frame-rail] .iconBtnActive,
+[data-frame-rail] .iconBtnActive:hover {
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
+}
+
+[data-frame-rail] .iconBtnSvg {
+  width: var(--ws-frame-glyph);
+  height: var(--ws-frame-glyph);
+}
+
+/* Tighten the icon cluster and add hairline group seams in the top-right band. */
+[data-frame-rail="top-right"] .headerTools {
+  gap: 1px;
+}
+
+[data-frame-rail="top-right"] .headerTools .shareWrap {
+  margin-left: 5px;
+  padding-left: 6px;
+  border-left: 1px solid var(--ws-frame-hair);
+}
+
+/* Mode strip — hairline group in the band, not a recessed plastic track. */
+[data-frame-rail] .modes {
+  gap: 1px;
+  padding: 2px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hc-ink) 26%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+}
+
+[data-frame-rail] .modeBtn {
+  height: calc(var(--ws-frame-tap) - 6px);
+  min-height: calc(var(--ws-frame-tap) - 6px);
+  padding: 0 12px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ws-frame-ink-dim);
+  font-size: 11.5px;
+  font-weight: 550;
+  letter-spacing: 0.015em;
+}
+
+[data-frame-rail] .modeBtn:hover {
+  color: var(--ws-frame-ink);
+}
+
+/* Active mode — a lit raised key with a top-catch, like a pressed hardware button. */
+[data-frame-rail] .modeBtnActive,
+[data-frame-rail] .modeBtnActive:hover {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ws-frame-raise) 82%, #fff),
+      var(--ws-frame-raise));
+  color: var(--ws-frame-ink);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--hc-paper) 10%, transparent),
+    inset 0 0 0 1px var(--ws-frame-hair),
+    0 1px 2px color-mix(in srgb, var(--hc-ink) 45%, transparent);
+}
+
+[data-frame-rail] .modeBtnLocked,
+[data-frame-rail] .modeBtnLocked:hover {
+  color: var(--ws-frame-ink-faint);
+}
+
+/* Paper / elevation segment — same flat language. */
+[data-frame-rail] .segment {
+  gap: 1px;
+  padding: 2px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hc-ink) 26%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+}
+
+[data-frame-rail] .segmentBtn {
+  height: calc(var(--ws-frame-tap) - 8px);
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
+}
+
+[data-frame-rail] .segmentBtn:hover {
+  color: var(--ws-frame-ink);
+}
+
+[data-frame-rail] .segmentBtnActive,
+[data-frame-rail] .segmentBtnActive:hover {
+  background: var(--ws-frame-raise);
+  color: var(--ws-frame-ink);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+}
+
+/* Brand + meta read as quiet frame engraving, never as page headings. */
+[data-frame-rail] .brandName {
+  color: var(--ws-frame-ink);
+}
+
+[data-frame-rail] .address,
+[data-frame-rail] .meta {
+  color: var(--ws-frame-ink-dim);
+}
+
+/* Hairline seam between the brand plate and the mode strip — a real frame cut. */
+[data-frame-rail="top-left"] .brandBlock {
+  padding-right: 10px;
+  margin-right: 2px;
+  border-right: 1px solid var(--ws-frame-hair);
+}
+
+[data-frame-rail] .iconBtn:focus-visible,
+[data-frame-rail] .cmdBtn:focus-visible,
+[data-frame-rail] .aiPill:focus-visible,
+[data-frame-rail] .toolBtn:focus-visible,
+[data-frame-rail] .modeBtn:focus-visible,
+[data-frame-rail] .segmentBtn:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 1px;
+}
+
+/*
+ * Brand truncates gracefully instead of clipping. The address gives way first,
+ * then the meta — the brand name never gets cut.
+ */
+[data-frame-rail] .brandBlock {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+[data-frame-rail] .brandName {
+  font-size: 14.5px;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-frame-rail] .address {
+  margin-top: 1px;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  max-width: min(240px, 20vw);
+}
+
+/* Cadastral meta is the first thing to give way when the band gets tight. */
+[data-frame-rail] .meta {
+  flex: 0 100 auto;
+  min-width: 0;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  [data-frame-rail] .iconBtn,
+  [data-frame-rail] .cmdBtn,
+  [data-frame-rail] .aiPill,
+  [data-frame-rail] .toolBtn {
+    transition: none;
+  }
+
+  [data-frame-rail] .iconBtn:active,
+  [data-frame-rail] .cmdBtn:active,
+  [data-frame-rail] .aiPill:active,
+  [data-frame-rail] .toolBtn:active {
+    transform: none;
+  }
 }
 
 .board::after {
@@ -755,10 +1067,18 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* Keep below selection orbit (z-index 60) — vignette only */
+  /* Keep below selection orbit (z-index 60) — optical edge only */
   z-index: 8;
   border-radius: inherit;
-  box-shadow: inset 0 0 90px color-mix(in srgb, var(--hc-ink) 15%, transparent);
+  /*
+   * Optical seating, not a muddy vignette: a hairline paper edge, a faint
+   * top light catch on the sheet, and a whisper of perimeter shade — enough
+   * to seat the plate in the rabbet without greying the drawing.
+   */
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--hc-ink) 8%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--hc-paper) 55%, transparent),
+    inset 0 0 44px -6px color-mix(in srgb, var(--hc-ink) 7%, transparent);
 }
 
 .boardWatch {
@@ -821,6 +1141,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .zoomWorldTiltAnim,
   .zoomWorldTiltAnimSlow {
     transition: none;
@@ -882,7 +1203,7 @@
   pointer-events: none;
 }
 
-.sheetPlotClip > .zoomWorld {
+.sheetPlotClip>.zoomWorld {
   pointer-events: auto;
 }
 
@@ -900,7 +1221,7 @@
 
 .rootClient .modes,
 .rootClient .meta,
-.rootClient .headerTools > * {
+.rootClient .headerTools>* {
   display: none;
 }
 
@@ -1033,6 +1354,7 @@
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1107,10 +1429,12 @@
 }
 
 @keyframes savePulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.35;
   }
@@ -1170,6 +1494,11 @@
   outline: none;
 }
 
+.annotateInputWrap input:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 2px;
+}
+
 .undoFilmstrip {
   position: absolute;
   left: 78px;
@@ -1182,11 +1511,9 @@
   padding: 6px 8px;
   border-radius: var(--hc-r-panel);
   background: var(--hc-neu-surface);
-  box-shadow: var(
-    --hc-neu-out,
-    -3px -3px 8px var(--hc-neu-light),
-    4px 4px 11px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out,
+      -3px -3px 8px var(--hc-neu-light),
+      4px 4px 11px var(--hc-neu-shadow));
   color: var(--hc-ink);
   font-family: var(--font-body);
 }
@@ -1206,11 +1533,9 @@
   border: none;
   border-radius: 5px;
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
   cursor: pointer;
 }
 
@@ -1232,11 +1557,9 @@
 }
 
 .undoCell:hover {
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .undoFilmBtn {
@@ -1293,14 +1616,11 @@
 .aerial {
   position: absolute;
   inset: 0;
-  background: var(--grid-line)
-    repeating-linear-gradient(
-      -12deg,
+  background: var(--grid-line) repeating-linear-gradient(-12deg,
       transparent,
       transparent 10px,
       var(--hc-line-soft) 10px,
-      var(--hc-line-soft) 20px
-    );
+      var(--hc-line-soft) 20px);
   background-size: cover;
   background-position: center;
 }
@@ -2057,6 +2377,7 @@
     opacity: 0;
     transform: translateY(7px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2064,10 +2385,12 @@
 }
 
 @keyframes ccPulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.3;
   }
@@ -2084,30 +2407,69 @@
   }
 }
 
-@media (max-width: 719px) {
-  .root {
-    min-height: 0;
-  }
+/*
+ * Phone adaptive shell — same studio engines; thumb chrome instead of dense
+ * left/right docks. Desktop (data-layout="desktop") is unchanged.
+ */
+.root[data-layout="phone"] {
+  min-height: 100dvh;
+  min-height: 100svh;
+  --ws-safe-left: 12px;
+  --ws-safe-right: 12px;
+  --ws-safe-bottom: 88px;
+  --ws-safe-top: 108px;
+}
 
-  .modes {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
+.root[data-layout="phone"] .header {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  min-height: 0;
+}
 
-  .meta {
-    display: none;
-  }
+.root[data-layout="phone"] .brandBlock {
+  order: 0;
+  flex: 1 1 auto;
+  max-width: calc(100% - 96px);
+}
 
-  .headerVicGov {
-    max-width: min(200px, 42vw);
-  }
+.root[data-layout="phone"] .brandName {
+  font-size: 16px;
+}
 
-  .iconBtn,
-  .modeBtn,
-  .cmdBtn {
-    min-width: var(--tap-min, 44px);
-    min-height: var(--tap-min, 44px);
-  }
+.root[data-layout="phone"] .address {
+  max-width: min(220px, 70vw);
+}
+
+.root[data-layout="phone"] .modes {
+  order: 3;
+  flex: 1 1 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+
+.root[data-layout="phone"] .modes::-webkit-scrollbar {
+  display: none;
+}
+
+.root[data-layout="phone"] .modeBtn {
+  flex: 0 0 auto;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.root[data-layout="phone"] .spacer {
+  display: none;
+}
+
+.root[data-layout="phone"] .headerTools {
+  order: 1;
+  margin-left: auto;
 }
 
 /**
@@ -2157,11 +2519,11 @@
   }
 
   /* Only the plan + sheet chrome print — everything else is screen furniture. */
-  .root[data-fit-sheet="1"] .board > :not([data-print-keep]) {
+  .root[data-fit-sheet="1"] .board> :not([data-print-keep]) {
     display: none !important;
   }
 
-  .root[data-fit-sheet="1"] .board > [data-print-keep] {
+  .root[data-fit-sheet="1"] .board>[data-print-keep] {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
@@ -2170,11 +2532,8 @@
     width: var(--ws-board-w) !important;
     height: var(--ws-board-h) !important;
     transform-origin: top left !important;
-    transform: scale(var(--ws-print-fit))
-      translate(
-        calc(-1 * var(--ws-print-left)),
-        calc(-1 * var(--ws-print-top))
-      ) !important;
+    transform: scale(var(--ws-print-fit)) translate(calc(-1 * var(--ws-print-left)),
+        calc(-1 * var(--ws-print-top))) !important;
   }
 
   /* Without fit sheet, avoid clipped / transformed viewport artefacts. */
@@ -2203,14 +2562,12 @@
   left: 0;
   width: 22%;
   opacity: 0;
-  background: linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--existing-stroke) 0%, transparent) 0%,
-    color-mix(in srgb, var(--existing-stroke) 7%, transparent) 38%,
-    color-mix(in srgb, var(--sheet-paper) 28%, transparent) 50%,
-    color-mix(in srgb, var(--existing-stroke) 7%, transparent) 62%,
-    color-mix(in srgb, var(--existing-stroke) 0%, transparent) 100%
-  );
+  background: linear-gradient(100deg,
+      color-mix(in srgb, var(--existing-stroke) 0%, transparent) 0%,
+      color-mix(in srgb, var(--existing-stroke) 7%, transparent) 38%,
+      color-mix(in srgb, var(--sheet-paper) 28%, transparent) 50%,
+      color-mix(in srgb, var(--existing-stroke) 7%, transparent) 62%,
+      color-mix(in srgb, var(--existing-stroke) 0%, transparent) 100%);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -2223,6 +2580,7 @@
     from {
       transform: translateX(-120%);
     }
+
     to {
       transform: translateX(560%);
     }

@@ -29,6 +29,7 @@ import {
   tidySketchStrokes,
   type AspectTag,
   type FloraCandidate,
+  type GhostPlacementSuggestion,
   type PathFilletLockM,
   type PathWidthLockM,
   type SoilTag,
@@ -51,6 +52,7 @@ import type {
   CanvasStroke,
   ConstructionTrench,
   DesignSiteFrame,
+  ImageLayer,
   IrrigationZone,
   IrrigationZoneKind,
   LandscapeFeature,
@@ -452,10 +454,10 @@ type Action =
   | { type: "switchSite"; idx: number }
   | { type: "resetSite" }
   | {
-      type: "silentIds";
-      items: StudioItem[];
-      strokes: SketchStroke[];
-    };
+    type: "silentIds";
+    items: StudioItem[];
+    strokes: SketchStroke[];
+  };
 
 /** Move an item's centroid — its drawn region outline travels with it. */
 function itemMovedTo(i: StudioItem, x: number, y: number): StudioItem {
@@ -488,6 +490,7 @@ function snapOf(doc: Doc): StudioSnapshot {
     irrigationZones: doc.irrigationZones ?? [],
     constructionTrenches: doc.constructionTrenches ?? [],
     annotations: doc.annotations ?? [],
+    imageLayers: doc.imageLayers ?? [],
     presentationPack: doc.presentationPack ?? emptyPresentationPack(),
   };
 }
@@ -512,6 +515,7 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
       anchor: { ...a.anchor },
       notePos: { ...a.notePos },
     })),
+    imageLayers: [],
     presentationPack: emptyPresentationPack(),
   };
 }
@@ -524,6 +528,7 @@ function initialState(opts: {
   irrigationZones?: IrrigationZone[];
   constructionTrenches?: ConstructionTrench[];
   annotations?: CanvasAnnotation[];
+  imageLayers?: ImageLayer[];
   features?: LandscapeFeature[];
   presentationPack?: PresentationPack | null;
   lifecyclePhase?: import("@workstream/contracts").DesignLifecyclePhase;
@@ -541,6 +546,7 @@ function initialState(opts: {
     (opts.irrigationZones?.length ?? 0) > 0 ||
     (opts.constructionTrenches?.length ?? 0) > 0 ||
     (opts.annotations?.length ?? 0) > 0 ||
+    (opts.imageLayers?.length ?? 0) > 0 ||
     Boolean(frameOverlay.boundary);
   const buildingRaw = resolveHydratedBuilding(
     opts.siteFrame,
@@ -563,37 +569,38 @@ function initialState(opts: {
         : "traced";
   const snap: StudioSnapshot = hasCanvas
     ? {
+      ...base,
+      ...frameOverlay,
+      building,
+      items: featuresOntoItems(
+        placementsToItems(opts.placements ?? []),
+        opts.features ?? [],
+      ),
+      strokes: canvasToStrokes(opts.strokes ?? []),
+      easements: frameOverlay.easements ?? base.easements,
+      services: frameOverlay.services ?? base.services,
+      levels: frameOverlay.levels ?? base.levels,
+      bydaAssets: frameOverlay.bydaAssets ?? base.bydaAssets,
+      keylessOverlays: frameOverlay.keylessOverlays ?? base.keylessOverlays,
+      irrigationZones: opts.irrigationZones ?? [],
+      constructionTrenches: opts.constructionTrenches ?? [],
+      annotations: opts.annotations ?? [],
+      imageLayers: opts.imageLayers ?? [],
+      presentationPack:
+        opts.presentationPack ?? emptyPresentationPack(),
+    }
+    : liveProject
+      ? {
         ...base,
-        ...frameOverlay,
-        building,
-        items: featuresOntoItems(
-          placementsToItems(opts.placements ?? []),
-          opts.features ?? [],
-        ),
-        strokes: canvasToStrokes(opts.strokes ?? []),
-        easements: frameOverlay.easements ?? base.easements,
-        services: frameOverlay.services ?? base.services,
-        levels: frameOverlay.levels ?? base.levels,
-        bydaAssets: frameOverlay.bydaAssets ?? base.bydaAssets,
-        keylessOverlays: frameOverlay.keylessOverlays ?? base.keylessOverlays,
-        irrigationZones: opts.irrigationZones ?? [],
-        constructionTrenches: opts.constructionTrenches ?? [],
-        annotations: opts.annotations ?? [],
+        building: [],
         presentationPack:
           opts.presentationPack ?? emptyPresentationPack(),
       }
-    : liveProject
-      ? {
-          ...base,
-          building: [],
-          presentationPack:
-            opts.presentationPack ?? emptyPresentationPack(),
-        }
       : {
-          ...base,
-          presentationPack:
-            opts.presentationPack ?? emptyPresentationPack(),
-        };
+        ...base,
+        presentationPack:
+          opts.presentationPack ?? emptyPresentationPack(),
+      };
   const outdoorSafe: StudioSnapshot = {
     ...snap,
     items: sanitizeItemsToOutdoor(snap.items, snap.boundary, snap.building),
@@ -738,6 +745,8 @@ export type UseStudioStateOpts = {
   initialConstructionTrenches?: ConstructionTrench[];
   /** Hand-lettered notes from DesignCanvas.annotations. */
   initialAnnotations?: CanvasAnnotation[];
+  /** Imported photo / plan underlays from DesignCanvas.image_layers. */
+  initialImageLayers?: ImageLayer[];
   /** Persisted region outlines from DesignCanvas.features. */
   initialFeatures?: LandscapeFeature[];
   /** Fit-sheet compose pack from DesignCanvas.presentation_pack. */
@@ -973,6 +982,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     initialIrrigationZones = [],
     initialConstructionTrenches = [],
     initialAnnotations = [],
+    initialImageLayers = [],
     initialFeatures = [],
     initialPresentationPack = null,
     initialLifecyclePhase = "concept",
@@ -986,6 +996,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       irrigationZones: initialIrrigationZones,
       constructionTrenches: initialConstructionTrenches,
       annotations: initialAnnotations,
+      imageLayers: initialImageLayers,
       features: initialFeatures,
       presentationPack: initialPresentationPack,
       lifecyclePhase: initialLifecyclePhase,
@@ -1156,8 +1167,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     ghostCount === 0
       ? null
       : ghosts[
-          (((state.ui.ghostIdx % ghostCount) + ghostCount) % ghostCount)
-        ]!;
+      (((state.ui.ghostIdx % ghostCount) + ghostCount) % ghostCount)
+      ]!;
 
   const acceptGhost = useCallback(
     (id: string) => {
@@ -1403,16 +1414,16 @@ export function useStudioState(opts: UseStudioStateOpts) {
         const hard =
           armed === "paving" || armed === "deck"
             ? {
-                pathWidthM: state.ui.pathWidthM,
-                edgeType: state.ui.edgeType,
-                pathFilletM: state.ui.pathFilletM,
-                scale: pathWidthToGlyphScale(state.ui.pathWidthM),
-                why: hardscapeWhy(
-                  state.ui.pathWidthM,
-                  state.ui.edgeType,
-                  state.ui.pathFilletM,
-                ),
-              }
+              pathWidthM: state.ui.pathWidthM,
+              edgeType: state.ui.edgeType,
+              pathFilletM: state.ui.pathFilletM,
+              scale: pathWidthToGlyphScale(state.ui.pathWidthM),
+              why: hardscapeWhy(
+                state.ui.pathWidthM,
+                state.ui.edgeType,
+                state.ui.pathFilletM,
+              ),
+            }
             : null;
         const symbolId =
           !painting && state.ui.armedSymbolId?.trim()
@@ -1430,11 +1441,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ...(dbhM != null ? { dbhM } : {}),
           ...(hard
             ? {
-                pathWidthM: hard.pathWidthM,
-                edgeType: hard.edgeType,
-                pathFilletM: hard.pathFilletM,
-                why: hard.why,
-              }
+              pathWidthM: hard.pathWidthM,
+              edgeType: hard.edgeType,
+              pathFilletM: hard.pathFilletM,
+              why: hard.why,
+            }
             : {}),
         };
         let next: StudioSnapshot = {
@@ -1574,10 +1585,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
               : {}),
           });
           notes.push(
-            `Boundary snapped to ${
-              res.boundary.source_kind === "vicmap"
-                ? "Vicmap parcel"
-                : "title polygon"
+            `Boundary snapped to ${res.boundary.source_kind === "vicmap"
+              ? "Vicmap parcel"
+              : "title polygon"
             }`,
           );
           notes.push(
@@ -1605,9 +1615,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       locked: false,
       aerialUri: null,
       aerialSuppressed: true,
-      assistReply: `Spatial correction complete. ${notes.join(" · ")}${
-        boundarySnapped ? "" : ""
-      }`,
+      assistReply: `Spatial correction complete. ${notes.join(" · ")}${boundarySnapped ? "" : ""
+        }`,
     });
   }, [mutate, projectId, setUi, state.doc.items, state.ui.buildingSource]);
 
@@ -2100,8 +2109,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
             : {}),
           ...(applied.easementSource === "vicmap" && applied.services?.length
             ? {
-                councilTip: `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
-              }
+              councilTip: `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            }
             : {}),
         });
 
@@ -2184,8 +2193,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     return () => {
       cancelled = true;
     };
-  // once on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateBoundary = useCallback(
@@ -2519,7 +2528,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       const idx = SHEET_SCALE_STEPS.indexOf(cur);
       const next =
         SHEET_SCALE_STEPS[
-          Math.max(0, Math.min(SHEET_SCALE_STEPS.length - 1, idx + dir))
+        Math.max(0, Math.min(SHEET_SCALE_STEPS.length - 1, idx + dir))
         ]!;
       setUi({ sheetScaleDenom: next });
     },
@@ -2573,15 +2582,29 @@ export function useStudioState(opts: UseStudioStateOpts) {
   );
 
   const ingestCanopyImage = useCallback(
-    (image: {
+    async (image: {
       width: number;
       height: number;
       data: ArrayLike<number>;
     }) => {
       if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
       setUi({ canopyScanning: true, aiBusy: "scanning" });
+      let apiClusters: GhostPlacementSuggestion[] | undefined;
+      if (projectId) {
+        try {
+          const { scanDesignGhostsAction } = await import(
+            "../../../../app/actions"
+          );
+          const res = await scanDesignGhostsAction(projectId);
+          if (res?.suggestions?.length) {
+            apiClusters = res.suggestions;
+          }
+        } catch {
+          /* colour heuristic fallback */
+        }
+      }
       mutate((snap, idn) => {
-        const proposed = proposeFromCanopyImage(image, idn);
+        const proposed = proposeFromCanopyImage(image, idn, apiClusters);
         return {
           snap: {
             ...snap,
@@ -2599,6 +2622,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     },
     [
       mutate,
+      projectId,
       setUi,
       state.ui.aerialSuppressed,
       state.ui.foundationCleanse,
@@ -2608,6 +2632,48 @@ export function useStudioState(opts: UseStudioStateOpts) {
   const setStrokes = useCallback(
     (strokes: SketchStroke[]) => {
       mutate((snap) => ({ snap: { ...snap, strokes } }));
+    },
+    [mutate],
+  );
+
+  const setImageLayers = useCallback(
+    (imageLayers: ImageLayer[]) => {
+      mutate((snap) => ({ snap: { ...snap, imageLayers } }));
+    },
+    [mutate],
+  );
+
+  const addImageLayer = useCallback(
+    (layer: ImageLayer) => {
+      mutate((snap) => ({
+        snap: { ...snap, imageLayers: [...snap.imageLayers, layer] },
+      }));
+    },
+    [mutate],
+  );
+
+  const updateImageLayer = useCallback(
+    (id: string, patch: Partial<ImageLayer>) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          imageLayers: snap.imageLayers.map((l) =>
+            l.id === id ? { ...l, ...patch } : l
+          ),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const removeImageLayer = useCallback(
+    (id: string) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          imageLayers: snap.imageLayers.filter((l) => l.id !== id),
+        },
+      }));
     },
     [mutate],
   );
@@ -2869,9 +2935,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
         }),
         ...(lighting
           ? {
-              wire_gauge: state.ui.lightingWireGauge,
-              transformer_va: state.ui.lightingTransformerVa,
-            }
+            wire_gauge: state.ui.lightingWireGauge,
+            transformer_va: state.ui.lightingTransformerVa,
+          }
           : {}),
       };
       mutate((snap) => ({
@@ -3446,6 +3512,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           irrigationZones: [],
           constructionTrenches: [],
           annotations: [],
+          imageLayers: snap.imageLayers,
           easements: [],
           services: [],
           bydaAssets: [],
@@ -3507,9 +3574,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
         chase: state.ui.sitePackChase,
         ...(state.ui.digOverrideAt
           ? {
-              dig_override_at: state.ui.digOverrideAt,
-              dig_override_note: state.ui.digOverrideNote ?? undefined,
-            }
+            dig_override_at: state.ui.digOverrideAt,
+            dig_override_note: state.ui.digOverrideNote ?? undefined,
+          }
           : {}),
       },
     });
@@ -3523,6 +3590,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         strokes: canvasStrokes,
         irrigation_zones: state.doc.irrigationZones ?? [],
         annotations: state.doc.annotations ?? [],
+        image_layers: state.doc.imageLayers ?? [],
         site_frame: siteFrame,
         features,
         construction_trenches: acceptedTrenches,
@@ -3539,6 +3607,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
       });
     } catch (err) {
       const kind = classifySaveError(err);
+      // eslint-disable-next-line no-console
+      console.error("saveNow failed", err);
       setUi({
         saveStatus: "error",
         saveErrorKind: kind,
@@ -3555,6 +3625,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.irrigationZones,
     state.doc.constructionTrenches,
     state.doc.annotations,
+    state.doc.imageLayers,
     state.doc.presentationPack,
     state.doc.items,
     state.doc.levels,
@@ -4031,6 +4102,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     irrigationZones: state.doc.irrigationZones ?? [],
     constructionTrenches: state.doc.constructionTrenches ?? [],
     annotations: state.doc.annotations ?? [],
+    imageLayers: state.doc.imageLayers ?? [],
     presentationPack:
       state.doc.presentationPack ?? emptyPresentationPack(),
     canUndo: state.doc.hist.length > 0,
@@ -4085,6 +4157,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
     ingestCanopyGhosts,
     ingestCanopyImage,
     setStrokes,
+    setImageLayers,
+    addImageLayer,
+    updateImageLayer,
+    removeImageLayer,
     addSpotLevel,
     toggleDrainageLevelIdx,
     commitDrainageRun,
@@ -4205,15 +4281,15 @@ export function useStudioState(opts: UseStudioStateOpts) {
             ? { rightDataPanel: null }
             : tool === "paint"
               ? {
-                  leftAssetPanel: "expanded" as const,
-                  rightDataPanel: null,
-                }
+                leftAssetPanel: "expanded" as const,
+                rightDataPanel: null,
+              }
               : collapseAsset
                 ? {
-                    leftAssetPanel: null,
-                    leftAssetRestore: null,
-                    leftAssetPinned: false,
-                  }
+                  leftAssetPanel: null,
+                  leftAssetRestore: null,
+                  leftAssetPinned: false,
+                }
                 : {}),
         });
       }

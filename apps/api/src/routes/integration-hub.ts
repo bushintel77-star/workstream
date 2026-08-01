@@ -106,7 +106,7 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
     const ownerId = request.userId!;
     const parsed = TestBodySchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({ error: "Invalid body", issues: parsed.error.issues });
+      return reply.code(400).send({ error: "Validation failed", issues: parsed.error.issues });
     }
     await hydrateEnvForOwner(fastify.store, ownerId);
     const billing = await fastify.store.getWorkspaceBilling(ownerId);
@@ -316,16 +316,15 @@ export async function registerProjectIntegrationRoutes(
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
       const parsed = IntegrationNotifyInputSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply
           .code(400)
-          .send({ error: "Invalid body", issues: parsed.error.issues });
-      }
-
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+          .send({ error: "Validation failed", issues: parsed.error.issues });
       }
 
       const outputs = await fastify.store.listOutputs(ownerId, projectId);

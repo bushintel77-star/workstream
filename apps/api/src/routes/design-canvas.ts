@@ -25,6 +25,7 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
             placements: [],
             strokes: [],
             annotations: [],
+            image_layers: [],
             features: [],
             site_frame: null,
             presentation_pack: null,
@@ -39,7 +40,7 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
 
   fastify.put(
     "/:projectId/design-canvas",
-    { preHandler: requireAuth },
+    { preHandler: requireAuth, bodyLimit: 10 * 1024 * 1024 },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;

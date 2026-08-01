@@ -74,7 +74,9 @@ type Props = {
 
 /**
  * Unified left asset panel — collapsed Fill rail → expanded library → Path Grammar.
- * One CameraChrome dock slot; never coexists with a second asset floater.
+ * Collapsed, it is seated in the gallery frame's left band (transparent, flat).
+ * Expanded / placing, it becomes a dark translucent panel that reaches over the
+ * plan. One frame slot; never coexists with a second asset floater.
  */
 export function AssetPanel({
   panel,
@@ -140,9 +142,10 @@ export function AssetPanel({
       : "add";
 
   return (
-    <CameraChrome place={{ kind: "dock" }} testId="asset-panel-chrome">
+    <CameraChrome place={{ kind: "frame" }} testId="asset-panel-chrome">
       <aside
         className={`${css.panel}${night ? ` ${css.panelNight}` : ""}`}
+        data-frame-rail="left-assets"
         data-testid="asset-panel"
         data-state={stateKey}
         aria-label="Asset library"

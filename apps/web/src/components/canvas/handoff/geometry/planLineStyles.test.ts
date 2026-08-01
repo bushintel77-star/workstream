@@ -101,4 +101,9 @@ describe("planLineStyles", () => {
     expect(planLineKindForItem("canopy")).toBe("planting");
     expect(planLineKindForItem("lawn")).toBe("planting");
   });
+
+  it("keeps neighbour context stroke-only (no filled skin)", () => {
+    expect(PLAN_LINES_LIGHT.context.fill).toBe("transparent");
+    expect(PLAN_LINES_DARK.context.fill).toBe("transparent");
+  });
 });

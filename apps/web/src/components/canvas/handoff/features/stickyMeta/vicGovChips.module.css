@@ -1,52 +1,51 @@
 /*
  * Vic-gov status chip row — replaces stacked Env/Services/Site/Trees cards.
  * Header strip (default) or legacy on-canvas dock.
+ *
+ * Gallery frame (§0.1): this rail floats over the cream plan, so it is dark
+ * translucent like the frame — never light frost drywall on a dark mount.
  */
 
 .row {
-  --hc-ink: var(--hc-ink);
-  --hc-ink-muted: var(--hc-ink-muted);
-  --hc-ink-faint: var(--hc-ink-faint);
-  --hc-line-soft: var(--hc-line-soft);
+  /*
+   * Local ink aliases now resolve to the frame's light ink, so anything nested
+   * in the rail that still reads --hc-ink* inherits frame values.
+   */
+  --hc-ink: var(--ws-frame-ink);
+  --hc-ink-muted: var(--ws-frame-ink-dim);
+  --hc-ink-faint: var(--ws-frame-ink-faint);
+  --hc-line-soft: var(--ws-frame-hair);
   position: absolute;
-  top: calc(var(--ws-safe-top, 40px) + 28px);
-  right: 0;
+  /* Clear of the top frame band, inset from the right frame edge — a clean
+     floating chip on the plan, never flush to the edge nor clipping. */
+  top: calc(var(--ws-frame-top, 46px) + 12px);
+  right: calc(var(--ws-frame-right, 14px) + 12px);
   z-index: 48;
   display: flex;
   flex-direction: row;
   align-items: stretch;
   gap: 0;
-  max-width: min(720px, calc(100vw - 72px));
+  max-width: min(720px, calc(100vw - var(--ws-frame-left, 48px) - 96px));
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   pointer-events: auto;
-  border: 1px solid var(--hc-line-soft);
-  border-right: 0;
-  border-radius: 12px 0 0 12px;
-  background:
-    linear-gradient(
-      90deg,
-      var(--hc-glass-soft) 0%,
-      var(--hc-glass-soft) 18%,
-      var(--hc-glass-soft) 100%
-    );
-  -webkit-backdrop-filter: blur(18px) saturate(1.08);
-  backdrop-filter: blur(18px) saturate(1.08);
-  box-shadow:
-    -14px 0 34px var(--hc-neu-shadow),
-    inset 1px 0 var(--hc-neu-light);
+  border: 1px solid var(--ws-frame-hair);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
   animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .row[data-lane="busy"] {
-  right: min(304px, calc(100vw - 40px));
-  max-width: min(520px, calc(100vw - 320px));
+  right: calc(var(--ws-safe-right, 12px) + 12px);
+  max-width: min(520px, calc(100vw - var(--ws-safe-right, 12px) - 340px));
 }
 
-/* After .row so header placement wins the cascade (not absolute dock). */
-.row.rowHeader {
-  position: relative;
+/* Phone — full-width chip scroller above the tool dock / sheet. */
+:global([data-testid="handoff-design-studio"][data-layout="phone"]) .row {
   top: auto;
   right: auto;
   z-index: auto;
@@ -54,56 +53,92 @@
   min-width: 0;
   max-width: min(560px, 42vw);
   border-radius: var(--hc-r-control);
-  border-right: 1px solid var(--hc-line-soft);
-  background: var(--hc-neu-surface);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  border-right: 1px solid var(--ws-frame-hair);
+  /* Seated in the frame band: same dark surface, flat — no plastic in-shadow. */
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   animation: none;
-  border: 1px solid var(--hc-line-soft);
+  border: 1px solid var(--ws-frame-hair);
 }
 
-.row.rowHeader[data-lane="busy"] {
-  right: auto;
-  max-width: min(420px, 34vw);
+:global([data-testid="handoff-design-studio"][data-layout="phone"])
+  .row[data-lane="busy"] {
+  right: 0;
+  left: 0;
+  max-width: 100%;
+  bottom: calc(var(--ws-safe-bottom, 360px) + 4px);
 }
 
 .chip {
   appearance: none;
+  position: relative;
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 2px;
-  min-width: 72px;
-  min-height: 44px;
-  padding: 6px 10px;
+  gap: 3px;
+  min-width: 76px;
+  min-height: 40px;
+  padding: 5px 13px;
   border: 0;
-  border-right: 1px solid var(--hc-line-soft);
+  border-radius: 0;
   background: transparent;
-  color: var(--hc-ink);
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--hc-motion, 180ms) ease;
+  transition:
+    background-color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
+    color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease);
+}
+
+/* Hairline seams engraved between chips — a single crisp rule, not per-chip. */
+.chip+.chip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--ws-frame-hair);
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.chip:first-child {
+  border-radius: 12px 0 0 12px;
 }
 
 .chip:last-child {
-  border-right: 0;
+  border-radius: 0 12px 12px 0;
 }
 
 .chip:hover {
-  background: var(--hc-glass-soft);
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
 }
 
 .chip[data-active="true"] {
-  background: var(--hc-line-soft);
-  box-shadow: inset 0 -2px 0 var(--proposed-stroke, var(--hc-success));
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+/* Active accent — a lit top bar, matching the tool rail's signal language. */
+.chip[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 0;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--proposed-stroke, var(--hc-success));
 }
 
 .label {
@@ -111,44 +146,55 @@
   align-items: center;
   gap: 4px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 650;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
 }
 
 .face {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
-  line-height: 1.15;
-  color: var(--hc-ink);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--ws-frame-ink);
   white-space: nowrap;
-  max-width: 96px;
+  max-width: 104px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Status tones — map to plan semantic tokens */
+/*
+ * Status tones — map to plan semantic tokens. The plan tokens are dark-on-cream
+ * values, so on the dark panel they are lifted toward frame ink to stay legible;
+ * the semantic hue is unchanged.
+ */
 .chip[data-status="ok"] .face {
-  color: var(--proposed-stroke, var(--hc-success));
+  color: color-mix(in srgb,
+      var(--proposed-stroke, var(--hc-success)) 70%,
+      var(--ws-frame-ink));
 }
 
 .chip[data-status="flag"] .face {
-  color: var(--existing-stroke, var(--hc-danger));
+  color: color-mix(in srgb,
+      var(--existing-stroke, var(--hc-danger)) 70%,
+      var(--ws-frame-ink));
 }
 
 .chip[data-status="warn"] .face {
-  color: var(--existing-stroke, var(--hc-danger));
+  color: color-mix(in srgb,
+      var(--existing-stroke, var(--hc-danger)) 70%,
+      var(--ws-frame-ink));
 }
 
 .chip[data-status="muted"] .face {
-  color: var(--gray-l-400, var(--hc-ink-faint));
+  color: var(--ws-frame-ink-faint);
 }
 
 .chip[data-status="pending"] .face {
-  color: var(--gray-l-400, var(--hc-ink-faint));
+  color: var(--ws-frame-ink-faint);
   opacity: 0.75;
 }
 
@@ -157,6 +203,7 @@
     opacity: 0;
     transform: translateX(8px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);

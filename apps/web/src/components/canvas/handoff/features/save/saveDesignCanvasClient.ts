@@ -25,6 +25,7 @@ export async function saveDesignCanvasClient(
     strokes?: DesignCanvas["strokes"];
     irrigation_zones?: DesignCanvas["irrigation_zones"];
     annotations?: DesignCanvas["annotations"];
+    image_layers?: DesignCanvas["image_layers"];
     site_frame?: DesignCanvas["site_frame"];
     features?: DesignCanvas["features"];
     construction_trenches?: DesignCanvas["construction_trenches"];

@@ -63,7 +63,7 @@ export function ShadeGridOverlay({
               top: `${c.row * cellPct}%`,
               width: `${cellPct}%`,
               height: `${cellPct}%`,
-              background: `rgba(28, 25, 23, ${alpha.toFixed(3)})`,
+              background: `color-mix(in srgb, var(--hc-ink) ${(alpha * 100).toFixed(0)}%, transparent)`,
             }}
             title={`${c.sunHours.toFixed(1)} h sun (indicative)`}
           />

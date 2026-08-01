@@ -35,7 +35,7 @@ export function SettingsMasthead({
           Curtis &amp; Co
           <span className={s.brandSub}>Settings · {subtitle}</span>
         </div>
-        <Link href="/" className={s.crumb}>
+        <Link href="/home" className={s.crumb}>
           ← Projects
         </Link>
       </header>

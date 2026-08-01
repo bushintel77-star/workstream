@@ -20,7 +20,7 @@ describe("buildSiteLiveMeta", () => {
     // 40% × 40% of a 100 m board = 40 m × 40 m = 1600 m²
     expect(meta.lotAreaM2).toBeCloseTo(1600, 0);
     expect(meta.areaSurveyed).toBe(false);
-    expect(meta.face).toMatch(/1600\.00 m² · boundary/);
+    expect(meta.face).toBe("1600.00 m² · boundary");
     expect(meta.detail).toMatch(/No dwelling · no easements/);
   });
 

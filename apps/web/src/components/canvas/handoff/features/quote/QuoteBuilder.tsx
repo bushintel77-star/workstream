@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from "react";
 import type { StudioEstimateReport } from "@workstream/domain";
-import { quoteDocToShareLines } from "@workstream/domain";
+import { isTier1WrightsTerrace, quoteDocToShareLines, TIER1_WRIGHTS_SAVINGS } from "@workstream/domain";
+import { Tier1SavingsLedger } from "@/components/tier1/Tier1SavingsLedger";
 import { QuoteLineRow } from "./QuoteLineRow";
 import { QuoteTotalsBar } from "./QuoteTotalsBar";
 import { useQuoteDoc } from "./useQuoteDoc";
 import css from "./quoteBuilder.module.css";
+
+const aud = new Intl.NumberFormat("en-AU", {
+  style: "currency",
+  currency: "AUD",
+});
 
 type Props = {
   projectId?: string | null;
@@ -58,7 +64,7 @@ export function QuoteBuilder({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 899px)");
+    const mq = window.matchMedia("(max-width: 719px)");
     const sync = () => setCompact(mq.matches);
     sync();
     mq.addEventListener("change", sync);
@@ -66,11 +72,12 @@ export function QuoteBuilder({
   }, []);
 
   const empty = estimate.lines.filter((l) => l.total > 0).length === 0;
+  const tier1 = isTier1WrightsTerrace(address);
 
   return (
     <div
       className={`${css.root}${compact ? ` ${css.rootCompact}` : ""}`}
-      data-testid="quote-builder"
+      data-testid="quote-surface"
     >
       <header className={css.top}>
         <div className={css.topMain}>
@@ -128,7 +135,7 @@ export function QuoteBuilder({
       ) : null}
 
       <div className={css.body}>
-        {(!compact || showPlan) && !compact ? (
+        {!compact ? (
           <aside className={css.planPane} aria-label="Plan preview">
             <p className={css.planCue}>Live plan totals feed this quote</p>
             <p className={css.mono}>
@@ -146,6 +153,13 @@ export function QuoteBuilder({
         ) : null}
 
         <main className={css.quotePane}>
+          {tier1 && !estimateSettling ? (
+            <Tier1SavingsLedger
+              savings={TIER1_WRIGHTS_SAVINGS}
+              variant="compact"
+              heading="Tier-1 value reallocation"
+            />
+          ) : null}
           {!loaded || estimateSettling ? (
             <div className={css.skeleton} data-testid="quote-loading" />
           ) : empty ? (
@@ -164,21 +178,36 @@ export function QuoteBuilder({
                 className={css.section}
                 open={!compact || section.id === resolved.sections[0]?.id}
               >
-                <summary>{section.label}</summary>
-                <table className={css.table}>
+                <summary>
+                  <span className={css.sectionName}>{section.label}</span>
+                  <span className={css.sectionMeta}>
+                    {section.lines.length} line{section.lines.length === 1 ? "" : "s"} · {aud.format(section.subtotal)}
+                  </span>
+                </summary>
+                <div className={css.table} role="grid" aria-label={section.label}>
                   {!compact ? (
-                    <thead>
-                      <tr>
-                        <th scope="col">Label</th>
-                        <th scope="col">Unit</th>
-                        <th scope="col">Qty</th>
-                        <th scope="col">Rate</th>
-                        <th scope="col">Total</th>
-                        <th scope="col">Actions</th>
-                      </tr>
-                    </thead>
+                    <div className={`${css.row} ${css.headerRow}`} role="row">
+                      <div className={`${css.lineCell} ${css.lineCellLabel}`} role="columnheader">
+                        Label
+                      </div>
+                      <div className={`${css.lineCell} ${css.lineCellUnit}`} role="columnheader">
+                        Unit
+                      </div>
+                      <div className={`${css.lineCell} ${css.lineCellQty}`} role="columnheader">
+                        Qty
+                      </div>
+                      <div className={`${css.lineCell} ${css.lineCellRate}`} role="columnheader">
+                        Rate
+                      </div>
+                      <div className={`${css.lineCell} ${css.lineCellTotal}`} role="columnheader">
+                        Total
+                      </div>
+                      <div className={`${css.lineCell} ${css.lineCellActions}`} role="columnheader">
+                        Actions
+                      </div>
+                    </div>
                   ) : null}
-                  <tbody>
+                  <div role="rowgroup">
                     {section.lines.map((line) => (
                       <QuoteLineRow
                         key={line.id}
@@ -199,8 +228,8 @@ export function QuoteBuilder({
                         onReset={() => resetLine(line.line_id)}
                       />
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                </div>
               </details>
             ))
           )}
@@ -209,14 +238,14 @@ export function QuoteBuilder({
             Indicative — confirm before tender. Prices ex-supplier at time of
             estimate.
           </p>
+
+          <QuoteTotalsBar
+            resolved={resolved}
+            marginPct={doc.margin.global_pct}
+            onMarginPct={setMarginPct}
+          />
         </main>
       </div>
-
-      <QuoteTotalsBar
-        resolved={resolved}
-        marginPct={doc.margin.global_pct}
-        onMarginPct={setMarginPct}
-      />
     </div>
   );
 }

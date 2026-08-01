@@ -14,7 +14,7 @@ export default function DesignAssetsSettingsPage() {
         Open a project from the home list to design on the site canvas.
       </p>
       <p>
-        <Link href="/">Back to projects</Link>
+        <Link href="/home">Back to projects</Link>
       </p>
     </main>
   );

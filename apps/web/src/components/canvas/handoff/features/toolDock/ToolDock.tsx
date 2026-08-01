@@ -9,6 +9,7 @@ import {
   toolChipTestId,
   type ToolChip,
 } from "./toolChips";
+import { ToolGlyph } from "./ToolGlyph";
 import css from "./toolDock.module.css";
 
 type Props = {
@@ -26,7 +27,8 @@ type Props = {
 
 /**
  * Single left tool dock — steering-wheel home for mode changes.
- * Fixed frost rail via CameraChrome dock; never under zoom-world.
+ * Seated in the gallery frame's left band via CameraChrome frame placement;
+ * never under zoom-world, never painted over the drawing.
  * Static column — no carousel / fisheye motion on the shell or chips.
  */
 export function ToolDock({
@@ -63,9 +65,10 @@ export function ToolDock({
   };
 
   return (
-    <CameraChrome place={{ kind: "dock" }} testId="tool-dock-chrome">
+    <CameraChrome place={{ kind: "frame" }} testId="tool-dock-chrome">
       <nav
         className={`${css.dock}${night ? ` ${css.dockNight}` : ""}`}
+        data-frame-rail="left"
         data-testid="tool-dock"
         aria-label="Drawing tools"
       >
@@ -85,9 +88,8 @@ export function ToolDock({
                   aria-pressed={active}
                   onClick={() => pick(chip)}
                 >
-                  <span className={css.glyph} aria-hidden>
-                    {chip.icon}
-                  </span>
+                  {active ? <span className={css.activeBar} aria-hidden /> : null}
+                  <ToolGlyph id={chip.id} className={css.glyph} />
                   <span className={css.label}>{chip.label}</span>
                 </button>
               </li>

@@ -1,23 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio, expectToolDock } from "./helpers";
-import path from "node:path";
-import fs from "node:fs";
+import {
+  createSurveyProject,
+  handoffStudio,
+  expectToolDock,
+  takeScreenshot,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
-const OUT = path.join(__dirname, "artifacts", "camera-chrome-shots");
-
-async function shot(
-  page: import("@playwright/test").Page,
-  name: string,
-) {
-  fs.mkdirSync(OUT, { recursive: true });
-  const dest = path.join(OUT, `${name}.png`);
-  await page.screenshot({ path: dest, fullPage: false });
-  if (!fs.existsSync(dest)) {
-    throw new Error(`screenshot missing after write: ${dest}`);
-  }
-}
 
 test.describe("Instrument reform — dock + selection dial", () => {
   test("single dock idle, dial rotate, tilt suppress, chrome gate", async ({
@@ -60,7 +50,7 @@ test.describe("Instrument reform — dock + selection dial", () => {
     );
 
     await expectToolDock(page);
-    await shot(page, "dock-consolidated");
+    await takeScreenshot(page, "dock-consolidated");
 
     // Demolition — old clusters gone
     await expect(page.getByTestId("ambient-ribbon")).toHaveCount(0);
@@ -85,7 +75,7 @@ test.describe("Instrument reform — dock + selection dial", () => {
         .count(),
     ).toBe(0);
 
-    await shot(page, "dial-open");
+    await takeScreenshot(page, "dial-open");
 
     const rotateSlot = page.getByTestId("dial-slot-rotate");
     await expect(rotateSlot).toBeVisible();

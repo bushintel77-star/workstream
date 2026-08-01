@@ -12,11 +12,13 @@ type Props = {
   armed: StudioItemType | null;
   onArm: (t: StudioItemType) => void;
   onClose: () => void;
+  /** Card variant for desktop pop-out; sheet variant for compact bottom sheet. */
+  variant?: "sheet" | "card";
 };
 
 /**
- * Compact asset library body — mounted only inside StudioSheetHost.
- * Desktop uses AssetPanel; no second floater.
+ * Compact asset library body — mounted inside StudioSheetHost or a pop-out card.
+ * Desktop can use it as a summoned card from the border Add icon.
  */
 export function AssetCommandSheet({
   open,
@@ -25,6 +27,7 @@ export function AssetCommandSheet({
   armed,
   onArm,
   onClose,
+  variant = "sheet",
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -47,7 +50,11 @@ export function AssetCommandSheet({
   if (!open) return null;
 
   return (
-    <div data-testid="asset-command-sheet" data-state="embedded">
+    <div
+      data-testid="asset-command-sheet"
+      data-state={variant === "card" ? "card" : "embedded"}
+      className={variant === "card" ? css.card : undefined}
+    >
       <div className={css.peekRow}>
         <p className={css.peekLabel}>Recent · tap to place</p>
         <div

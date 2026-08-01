@@ -26,7 +26,7 @@ export default function ProjectStudioError({
           Studio interrupted
           <span className={s.brandSub}>Workstream</span>
         </div>
-        <Link href="/" className={s.crumb}>
+        <Link href="/home" className={s.crumb}>
           ← Projects
         </Link>
       </header>
@@ -45,7 +45,7 @@ export default function ProjectStudioError({
         <button type="button" className={s.btn} onClick={() => reset()}>
           Reopen studio
         </button>
-        <Link href="/" className={`${s.btn} ${s.btnGhost}`}>
+        <Link href="/home" className={`${s.btn} ${s.btnGhost}`}>
           Back to projects
         </Link>
       </div>

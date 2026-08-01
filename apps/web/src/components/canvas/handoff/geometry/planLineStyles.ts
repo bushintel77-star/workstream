@@ -16,6 +16,7 @@ import {
 export type PlanLineKind =
   | "boundary"
   | "building"
+  | "context"
   | "hardscape"
   | "planting"
   | "existing"
@@ -59,6 +60,13 @@ export const PLAN_LINES_LIGHT: Record<PlanLineKind, PlanLineStyle> = {
     stroke: L.plantingRetainStroke,
     strokeWidth: 0.4,
     dash: "2.5 2",
+  },
+  context: {
+    stroke: L.textMuted,
+    strokeWidth: 0.5,
+    opacity: 0.45,
+    /* Stroke-only — filled neighbour blocks read as a dark skin beside the lot. */
+    fill: "transparent",
   },
   easement: {
     stroke: L.easementStroke,
@@ -105,6 +113,15 @@ export const PLAN_LINES_DARK: Record<PlanLineKind, PlanLineStyle> = {
     stroke: D.plantingRetainStroke,
     strokeWidth: 0.4,
     dash: "2.5 2",
+  },
+  context: {
+    /* Spec collapses muted/secondary to gray-d-500 — use gray-d-400 so
+     * street wash stays distinct from setback dashes on the night plate. */
+    stroke: PALETTE.grayD400,
+    strokeWidth: 0.5,
+    opacity: 0.4,
+    /* Stroke-only — filled neighbour blocks read as a dark skin beside the lot. */
+    fill: "transparent",
   },
   easement: {
     stroke: D.easementStroke,

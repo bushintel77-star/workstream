@@ -371,6 +371,7 @@ export async function saveDesignCanvasApi(
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations?: DesignCanvas["annotations"],
+  imageLayers?: DesignCanvas["image_layers"],
   siteFrame?: DesignCanvas["site_frame"],
   features?: DesignCanvas["features"],
   constructionTrenches?: DesignCanvas["construction_trenches"],
@@ -383,6 +384,7 @@ export async function saveDesignCanvasApi(
     strokes,
     irrigation_zones: irrigationZones,
     ...(annotations != null ? { annotations } : {}),
+    ...(imageLayers != null ? { image_layers: imageLayers } : {}),
     ...(siteFrame != null ? { site_frame: siteFrame } : {}),
     ...(features != null ? { features } : {}),
     ...(constructionTrenches != null

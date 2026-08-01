@@ -3,28 +3,13 @@ import {
   clickHeaderViewItem,
   createSurveyProject,
   handoffStudio,
+  takeScreenshot,
 } from "./helpers";
-import path from "node:path";
-import fs from "node:fs";
 
 /**
  * Presentation linework (Render 1) screenshot pack — CAD / Fit A3 / night.
  * Artifacts: e2e/artifacts/camera-chrome-shots/render1-*.png
  */
-
-const OUT = path.join(__dirname, "artifacts", "camera-chrome-shots");
-
-async function shot(
-  page: import("@playwright/test").Page,
-  name: string,
-) {
-  fs.mkdirSync(OUT, { recursive: true });
-  const dest = path.join(OUT, `${name}.png`);
-  await page.screenshot({ path: dest, fullPage: false });
-  if (!fs.existsSync(dest)) {
-    throw new Error(`screenshot missing after write: ${dest}`);
-  }
-}
 
 test.describe("Render 1 presentation screenshots", () => {
   test("cad + fit a3 + night board", async ({ page, request }) => {
@@ -35,7 +20,7 @@ test.describe("Render 1 presentation screenshots", () => {
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 15_000,
     });
-    await shot(page, "render1-cad");
+    await takeScreenshot(page, "render1-cad");
     expect(
       await page
         .locator('[data-testid="zoom-world"] [data-camera-chrome]')
@@ -53,13 +38,13 @@ test.describe("Render 1 presentation screenshots", () => {
     if (await paperA3.isVisible().catch(() => false)) {
       await paperA3.click();
     }
-    await shot(page, "render1-fit-a3");
+    await takeScreenshot(page, "render1-fit-a3");
     await page.getByTestId("fit-sheet-top").click();
 
     // Night board
     await clickHeaderViewItem(page, "dark-canvas-top");
     await expect(page.getByTestId("cad-plan-board")).toBeVisible();
-    await shot(page, "render1-night");
+    await takeScreenshot(page, "render1-night");
     expect(
       await page
         .locator('[data-testid="zoom-world"] [data-camera-chrome]')

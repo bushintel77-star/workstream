@@ -305,7 +305,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     inboxSheet: horizonOn && compact,
     sunGrowth: sunScrubber,
     lightingWorkspace: lightingDock,
-    ambientRibbon: plan && !compact,
+    ambientRibbon: (plan || mode === "quote") && !compact,
     /** Orbit actions outside the glyph */
     selectionRing:
       mode === "cad" || mode === "sketch" || mode === "survey",

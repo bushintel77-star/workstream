@@ -23,7 +23,7 @@
 
 .rootNight .toggle,
 .rootNight .tracePlan {
-  border-color: rgba(236, 239, 244, 0.28);
+  border-color: color-mix(in srgb, var(--hc-paper) 28%, transparent);
   color: var(--hc-ink);
 }
 
@@ -41,7 +41,7 @@
   min-height: 28px;
   padding: 0 10px;
   border-radius: 0;
-  border: 1px solid rgba(28, 25, 23, 0.2);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 20%, transparent);
   background: transparent;
   color: var(--hc-ink);
   font: inherit;
@@ -105,7 +105,7 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 9px;
   font-weight: 500;
-  color: rgba(28, 25, 23, 0.55);
+  color: color-mix(in srgb, var(--hc-ink) 55%, transparent);
   letter-spacing: 0.02em;
   white-space: nowrap;
   pointer-events: none;

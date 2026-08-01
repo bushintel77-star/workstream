@@ -4,7 +4,7 @@ import type { StudioEstimateReport } from "@workstream/domain";
 import { QuoteBuilder } from "../quote/QuoteBuilder";
 
 type Props = {
-  projectId?: string | null;
+  /** Project create address — not the studio seed site label (defaults Wrights). */
   address: string;
   estimate: StudioEstimateReport;
   estimateSettling?: boolean;

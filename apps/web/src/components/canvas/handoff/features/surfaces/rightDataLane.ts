@@ -5,6 +5,7 @@
 
 export type RightDataPanel =
   | "layers"
+  | "image_layers"
   | "measures"
   | "sites"
   | "checklist"

@@ -38,6 +38,7 @@ import {
   formatCadAreaM2,
   formatCadBearing,
   formatCadMetres,
+  neighbourLotContext,
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
 import { boardPctToClientOffset } from "../../geometry/cameraPointer";
@@ -555,6 +556,13 @@ export function CadPlanBoard({
   const showDims =
     !sketchPassthrough &&
     (editing || frameOn || foundationCleanse || mode === "survey");
+  /**
+   * Neighbour-lot fabric is Stage-1 foundation chrome only. When Vicmap locks
+   * the title, `cadTitleMode` stays true in Sketch/CAD — painting filled
+   * terrace rectangles then reads as a dark “skin” glued to the drawing.
+   */
+  const contextLots =
+    foundationCleanse && !frameOn ? neighbourLotContext(boundary) : [];
   const titleCentroid = polygonCentroid(boundary);
   const buildingCentroid =
     building.length >= 3 ? polygonCentroid(building) : null;
@@ -570,10 +578,10 @@ export function CadPlanBoard({
     siteAreas?.lotAreaM2 != null && siteAreas.lotAreaM2 > 0
       ? siteAreas.lotAreaM2
       : resolveDisplayLotM2({
-          cadastralLotM2: lotAreaM2,
-          buildingAreaM2: buildingAreaLabelM2,
-          drawnLotM2,
-        }).lotM2;
+        cadastralLotM2: lotAreaM2,
+        buildingAreaM2: buildingAreaLabelM2,
+        drawnLotM2,
+      }).lotM2;
   const outdoorAreaLabelM2 = siteAreas?.outdoorAreaM2 ?? 0;
   const showAutoAreaLabels =
     !frameOn &&
@@ -607,19 +615,19 @@ export function CadPlanBoard({
    */
   const outsideDimsRaw = showDims
     ? [
-        ...buildOutsideDims(boundarySegs, boundary, {
-          offsetPct: frameOn ? 1.6 : 2.4,
-          labelExtraPct: frameOn ? 1.0 : 1.55,
-          tickPct: frameOn ? 0.9 : 1.05,
-        }),
-        ...(building.length >= 3 && !foundationCleanse
-          ? buildOutsideDims(buildingSegs, building, {
-              offsetPct: frameOn ? 1.2 : 1.9,
-              labelExtraPct: frameOn ? 0.85 : 1.25,
-              tickPct: frameOn ? 0.8 : 0.95,
-            })
-          : []),
-      ]
+      ...buildOutsideDims(boundarySegs, boundary, {
+        offsetPct: frameOn ? 1.6 : 2.4,
+        labelExtraPct: frameOn ? 1.0 : 1.55,
+        tickPct: frameOn ? 0.9 : 1.05,
+      }),
+      ...(building.length >= 3 && !foundationCleanse
+        ? buildOutsideDims(buildingSegs, building, {
+          offsetPct: frameOn ? 1.2 : 1.9,
+          labelExtraPct: frameOn ? 0.85 : 1.25,
+          tickPct: frameOn ? 0.8 : 0.95,
+        })
+        : []),
+    ]
     : [];
 
   const existTrees = items.filter((i) => i.t === "exist" && !i.ghost);
@@ -640,18 +648,18 @@ export function CadPlanBoard({
       sketchPassthrough || frameOn || foundationCleanse
         ? []
         : buildGrowthTemporalRings({
-            growth,
-            scaleM,
-            items: items
-              .filter((it) => !it.ghost)
-              .map((it) => ({
-                id: it.id,
-                type: it.t,
-                x: it.x,
-                y: it.y,
-                existing: !!BY_TYPE[it.t]?.existing,
-              })),
-          }),
+          growth,
+          scaleM,
+          items: items
+            .filter((it) => !it.ghost)
+            .map((it) => ({
+              id: it.id,
+              type: it.t,
+              x: it.x,
+              y: it.y,
+              existing: !!BY_TYPE[it.t]?.existing,
+            })),
+        }),
     [items, growth, scaleM, sketchPassthrough, frameOn, foundationCleanse],
   );
 
@@ -747,21 +755,21 @@ export function CadPlanBoard({
   const schedulePlacements = placeScheduleCards(
     [
       ...(showAutoAreaLabels &&
-      annotationLod.lotArea &&
-      boundary.length >= 3
+        annotationLod.lotArea &&
+        boundary.length >= 3
         ? [{ id: "title", x: titleProj.x, y: titleProj.y }]
         : []),
       ...(showAutoAreaLabels &&
-      annotationLod.contextAreas &&
-      buildingCentroid &&
-      building.length >= 3 &&
-      buildingAreaLabelM2 > 0 &&
-      buildingProj
+        annotationLod.contextAreas &&
+        buildingCentroid &&
+        building.length >= 3 &&
+        buildingAreaLabelM2 > 0 &&
+        buildingProj
         ? [{ id: "dwelling", x: buildingProj.x, y: buildingProj.y }]
         : []),
       ...(showAutoAreaLabels &&
-      annotationLod.contextAreas &&
-      showOutdoorCard
+        annotationLod.contextAreas &&
+        showOutdoorCard
         ? [{ id: "outdoor", x: titleProj.x, y: titleProj.y }]
         : []),
     ],
@@ -850,11 +858,11 @@ export function CadPlanBoard({
         .map((i) => ({ x: i.x, y: i.y }));
       const p = gridSnap
         ? snapToNearby(locked, peers, {
-            planZoom,
-            boardW,
-            boardH,
-            scaleM,
-          })
+          planZoom,
+          boardW,
+          boardH,
+          scaleM,
+        })
         : locked;
       onPlace(p.x, p.y);
       return;
@@ -1172,10 +1180,10 @@ export function CadPlanBoard({
     () =>
       handDrawn && boundary.length >= 2
         ? wobbledPolylinePath(boundary, {
-            seed: `${wobbleSeed}:boundary`,
-            closed: true,
-            profile: "boundary",
-          })
+          seed: `${wobbleSeed}:boundary`,
+          closed: true,
+          profile: "boundary",
+        })
         : null,
     [handDrawn, boundary, wobbleSeed],
   );
@@ -1183,10 +1191,10 @@ export function CadPlanBoard({
     () =>
       handDrawn && building.length >= 3
         ? wobbledPolylinePath(building, {
-            seed: `${wobbleSeed}:building`,
-            closed: true,
-            profile: "building",
-          })
+          seed: `${wobbleSeed}:building`,
+          closed: true,
+          profile: "building",
+        })
         : null,
     [handDrawn, building, wobbleSeed],
   );
@@ -1198,209 +1206,209 @@ export function CadPlanBoard({
 
   return (
     <SunShadowProvider azimuthDeg={sunAzimuthDeg}>
-    <div
-      ref={rootRef}
-      className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}${tiltLocked ? ` ${css.worldTilted}` : ""}`}
-      data-testid="cad-plan-board"
-      data-sun-azimuth={sunAzimuthDeg.toFixed(1)}
-      data-cad-plan
-      data-plan-geometry="1"
-      data-annotation-lod={annotationLod.tier}
-      data-mode={mode}
-      data-fidelity={fidelity}
-      data-sheet-pen={sheetPen}
-      data-sheet-theme={sheetTheme}
-      data-sheet-atmosphere={atmosphere}
-      data-cursor={
-        annotatePlace
-          ? "add"
-          : tool === "paint"
-            ? "paint"
-            : editing
-              ? cursorMode
-              : "default"
-      }
-      style={
-        {
-          ...atmosphereVars,
-          ...(boardPassthrough ? { pointerEvents: "none" as const } : null),
-          ...(deepChalk
-            ? {
+      <div
+        ref={rootRef}
+        className={`${css.world}${editing ? ` ${css.worldEdit}` : ""}${darkOn && !frameOn ? ` ${css.boardDark}` : ""}${tiltLocked ? ` ${css.worldTilted}` : ""}`}
+        data-testid="cad-plan-board"
+        data-sun-azimuth={sunAzimuthDeg.toFixed(1)}
+        data-cad-plan
+        data-plan-geometry="1"
+        data-annotation-lod={annotationLod.tier}
+        data-mode={mode}
+        data-fidelity={fidelity}
+        data-sheet-pen={sheetPen}
+        data-sheet-theme={sheetTheme}
+        data-sheet-atmosphere={atmosphere}
+        data-cursor={
+          annotatePlace
+            ? "add"
+            : tool === "paint"
+              ? "paint"
+              : editing
+                ? cursorMode
+                : "default"
+        }
+        style={
+          {
+            ...atmosphereVars,
+            ...(boardPassthrough ? { pointerEvents: "none" as const } : null),
+            ...(deepChalk
+              ? {
                 ["--plan-stroke" as string]:
                   "color-mix(in srgb, var(--hc-paper) 88%, transparent)",
               }
-            : null),
-        } as CSSProperties
-      }
-      onPointerDown={(e) => {
-        if (boardPassthrough) return;
-        if (nodeMenu) setNodeMenu(null);
-        if (itemMenu) setItemMenu(null);
-        onPointerDownBoard(e);
-      }}
-      onPointerMove={boardPassthrough ? undefined : onPointerMove}
-      onPointerUp={boardPassthrough ? undefined : onPointerUp}
-      onPointerLeave={() => setCursorPct(null)}
-    >
-      <svg
-        className={`${css.planSvg}${greyWash ? ` ${css.planGreyWash}` : ""}${watercolour ? ` ${css.planWatercolour}` : ""}${deepChalk ? ` ${css.planDeepChalk}` : ""}${handDrawn ? ` ${css.planHandDrawn}` : ""}`}
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
+              : null),
+          } as CSSProperties
+        }
+        onPointerDown={(e) => {
+          if (boardPassthrough) return;
+          if (nodeMenu) setNodeMenu(null);
+          if (itemMenu) setItemMenu(null);
+          onPointerDownBoard(e);
+        }}
+        onPointerMove={boardPassthrough ? undefined : onPointerMove}
+        onPointerUp={boardPassthrough ? undefined : onPointerUp}
+        onPointerLeave={() => setCursorPct(null)}
       >
-        <defs>
-          {/* Graphite tooth for freehand pen — subtle, non-animated. */}
-          <filter
-            id="ws-pencil-grain"
-            x="-10%"
-            y="-10%"
-            width="120%"
-            height="120%"
-            colorInterpolationFilters="sRGB"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="1.35"
-              numOctaves="3"
-              seed="7"
-              result="noise"
-            />
-            <feColorMatrix
-              in="noise"
-              type="matrix"
-              values="0 0 0 0 0.22  0 0 0 0 0.2  0 0 0 0 0.18  0 0 0 0.22 0"
-              result="grain"
-            />
-            <feBlend in="SourceGraphic" in2="grain" mode="multiply" result="ink" />
-            <feComponentTransfer in="ink">
-              <feFuncA type="linear" slope="1.05" />
-            </feComponentTransfer>
-          </filter>
-          <filter
-            id="ws-watercolour"
-            x="-18%"
-            y="-18%"
-            width="136%"
-            height="136%"
-            colorInterpolationFilters="sRGB"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.035"
-              numOctaves="4"
-              seed="3"
-              result="paper"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="paper"
-              scale="2.2"
-              xChannelSelector="R"
-              yChannelSelector="G"
-              result="warp"
-            />
-            <feGaussianBlur in="warp" stdDeviation="0.55" result="soft" />
-            <feColorMatrix
-              in="soft"
-              type="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.82 0"
-              result="wash"
-            />
-            <feBlend in="wash" in2="SourceGraphic" mode="multiply" />
-          </filter>
-          <filter
-            id="ws-chalk-soft"
-            x="-12%"
-            y="-12%"
-            width="124%"
-            height="124%"
-            colorInterpolationFilters="sRGB"
-          >
-            <feGaussianBlur in="SourceGraphic" stdDeviation="0.15" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <pattern
-            id="ws-hardscape-hatch"
-            width="4"
-            height="4"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(35)"
-          >
-            <line
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="4"
-              stroke={mixOnCanvas(CSS_TOKEN.textPrimary, 45)}
-              strokeWidth="1.2"
-            />
-          </pattern>
-          <pattern
-            id="ws-easement-hatch"
-            width="3"
-            height="3"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(-45)"
-          >
-            <line
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="3"
-              stroke={mixOnCanvas(CSS_TOKEN.easementStroke, 55)}
-              strokeWidth="0.9"
-            />
-          </pattern>
-          {/* Existing dwelling — 45° convention hatch (crimson, never cobalt). */}
-          <pattern
-            id={DWELLING_HATCH_IDS.light}
-            width="2.2"
-            height="2.2"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <rect width="2.2" height="2.2" fill={PLAN_FILL.existingStructure} />
-            <line
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="2.2"
-              stroke={mixOnCanvas(CSS_TOKEN.existingStroke, 28)}
-              strokeWidth="0.28"
-            />
-          </pattern>
-          <pattern
-            id={DWELLING_HATCH_IDS.night}
-            width="2.2"
-            height="2.2"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <rect width="2.2" height="2.2" fill={PLAN_FILL.existingStructure} />
-            <line
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="2.2"
-              stroke={mixOnCanvas(CSS_TOKEN.existingStroke, 32)}
-              strokeWidth="0.28"
-            />
-          </pattern>
-          <RenderDefs />
-          {/* Hatch fills clip to title — never the SVG board wrapper. */}
-          {boundary.length >= 3 ? (
-            <clipPath
-              id={PLAN_LOT_HATCH_CLIP_ID}
-              clipPathUnits="userSpaceOnUse"
+        <svg
+          className={`${css.planSvg}${greyWash ? ` ${css.planGreyWash}` : ""}${watercolour ? ` ${css.planWatercolour}` : ""}${deepChalk ? ` ${css.planDeepChalk}` : ""}${handDrawn ? ` ${css.planHandDrawn}` : ""}`}
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            {/* Graphite tooth for freehand pen — subtle, non-animated. */}
+            <filter
+              id="ws-pencil-grain"
+              x="-10%"
+              y="-10%"
+              width="120%"
+              height="120%"
+              colorInterpolationFilters="sRGB"
             >
-              <polygon points={ptsAttr(boundary)} />
-            </clipPath>
-          ) : null}
-        </defs>
-        {editing && boundaryVisual.hittable
-          ? ([
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="1.35"
+                numOctaves="3"
+                seed="7"
+                result="noise"
+              />
+              <feColorMatrix
+                in="noise"
+                type="matrix"
+                values="0 0 0 0 0.22  0 0 0 0 0.2  0 0 0 0 0.18  0 0 0 0.22 0"
+                result="grain"
+              />
+              <feBlend in="SourceGraphic" in2="grain" mode="multiply" result="ink" />
+              <feComponentTransfer in="ink">
+                <feFuncA type="linear" slope="1.05" />
+              </feComponentTransfer>
+            </filter>
+            <filter
+              id="ws-watercolour"
+              x="-18%"
+              y="-18%"
+              width="136%"
+              height="136%"
+              colorInterpolationFilters="sRGB"
+            >
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.035"
+                numOctaves="4"
+                seed="3"
+                result="paper"
+              />
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="paper"
+                scale="2.2"
+                xChannelSelector="R"
+                yChannelSelector="G"
+                result="warp"
+              />
+              <feGaussianBlur in="warp" stdDeviation="0.55" result="soft" />
+              <feColorMatrix
+                in="soft"
+                type="matrix"
+                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.82 0"
+                result="wash"
+              />
+              <feBlend in="wash" in2="SourceGraphic" mode="multiply" />
+            </filter>
+            <filter
+              id="ws-chalk-soft"
+              x="-12%"
+              y="-12%"
+              width="124%"
+              height="124%"
+              colorInterpolationFilters="sRGB"
+            >
+              <feGaussianBlur in="SourceGraphic" stdDeviation="0.15" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <pattern
+              id="ws-hardscape-hatch"
+              width="4"
+              height="4"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(35)"
+            >
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="4"
+                stroke={mixOnCanvas(CSS_TOKEN.textPrimary, 45)}
+                strokeWidth="1.2"
+              />
+            </pattern>
+            <pattern
+              id="ws-easement-hatch"
+              width="3"
+              height="3"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(-45)"
+            >
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="3"
+                stroke={mixOnCanvas(CSS_TOKEN.easementStroke, 55)}
+                strokeWidth="0.9"
+              />
+            </pattern>
+            {/* Existing dwelling — 45° convention hatch (crimson, never cobalt). */}
+            <pattern
+              id={DWELLING_HATCH_IDS.light}
+              width="2.2"
+              height="2.2"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <rect width="2.2" height="2.2" fill={PLAN_FILL.existingStructure} />
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="2.2"
+                stroke={mixOnCanvas(CSS_TOKEN.existingStroke, 28)}
+                strokeWidth="0.28"
+              />
+            </pattern>
+            <pattern
+              id={DWELLING_HATCH_IDS.night}
+              width="2.2"
+              height="2.2"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <rect width="2.2" height="2.2" fill={PLAN_FILL.existingStructure} />
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="2.2"
+                stroke={mixOnCanvas(CSS_TOKEN.existingStroke, 32)}
+                strokeWidth="0.28"
+              />
+            </pattern>
+            <RenderDefs />
+            {/* Hatch fills clip to title — never the SVG board wrapper. */}
+            {boundary.length >= 3 ? (
+              <clipPath
+                id={PLAN_LOT_HATCH_CLIP_ID}
+                clipPathUnits="userSpaceOnUse"
+              >
+                <polygon points={ptsAttr(boundary)} />
+              </clipPath>
+            ) : null}
+          </defs>
+          {editing && boundaryVisual.hittable
+            ? ([
               ["boundary", boundary],
               ["building", building],
             ] as const).flatMap(([kind, ring]) =>
@@ -1439,132 +1447,115 @@ export function CadPlanBoard({
                 );
               }),
             )
-          : null}
-        <g
-          clipPath={
-            boundary.length >= 3
-              ? `url(#${PLAN_LOT_HATCH_CLIP_ID})`
-              : undefined
-          }
-          data-lot-hatch-clip={boundary.length >= 3 ? "1" : "0"}
-        >
-        {easements
-          .filter((r) => r.length >= 3 && !isAuthorityScalePctRing(r))
-          .map((ring, i) => {
-            const id = easementFeatureId(ring);
-            const feat = resolveServiceFeatureVisual(
-              id,
-              serviceFeatureHidden,
-              focusedServiceIds,
-            );
-            if (feat.hidden) return null;
-            return (
-              <g
-                key={`ease${i}`}
-                opacity={servicesVisual.opacity * feat.opacity}
-                data-testid="easement-hatch"
-                data-service-id={id}
-              >
-                <polygon
-                  points={ptsAttr(ring)}
-                  fill="url(#ws-easement-hatch)"
-                  stroke={lines.easement.stroke}
-                  strokeWidth={lines.easement.strokeWidth}
-                  strokeDasharray={lines.easement.dash}
-                  vectorEffect="non-scaling-stroke"
-                />
-              </g>
-            );
-          })}
-        </g>
-        {services
-          .filter((r) => r.length >= 2)
-          .map((ring, i) => {
-            const id = corridorFeatureId(ring);
-            const feat = resolveServiceFeatureVisual(
-              id,
-              serviceFeatureHidden,
-              focusedServiceIds,
-            );
-            if (feat.hidden) return null;
-            return (
-              <g
-                key={`svc${i}`}
-                opacity={servicesVisual.opacity * feat.opacity}
-                data-testid="utility-service-trace"
-                data-service-id={id}
-              >
-                <polyline
-                  points={ptsAttr(ring)}
-                  fill="none"
-                  stroke={lines.service.stroke}
-                  strokeWidth={lines.service.strokeWidth}
-                  strokeDasharray={lines.service.dash}
-                  vectorEffect="non-scaling-stroke"
-                />
-              </g>
-            );
-          })}
-        {bydaAssets
-          .filter((a) => a.ring.length >= 2)
-          .map((asset) => {
-            const id = `byda:${asset.id}`;
-            const feat = resolveServiceFeatureVisual(
-              id,
-              serviceFeatureHidden,
-              focusedServiceIds,
-            );
-            if (feat.hidden) return null;
-            const style = bydaPlanLine(asset.kind, darkOn && !frameOn);
-            const ring = asset.ring.map((p) => ({ x: p.x_pct, y: p.y_pct }));
-            return (
-              <g
-                key={id}
-                opacity={servicesVisual.opacity * feat.opacity}
-                data-testid="byda-asset-trace"
-                data-byda-kind={asset.kind}
-                data-service-id={id}
-              >
-                <polyline
-                  points={ptsAttr(ring)}
-                  fill="none"
-                  stroke={style.stroke}
-                  strokeWidth={style.strokeWidth}
-                  strokeDasharray={style.dash}
-                  vectorEffect="non-scaling-stroke"
-                />
-              </g>
-            );
-          })}
-        {boundaryHandPath ? (
-          <path
-            d={boundaryHandPath}
-            fill={
-              cadTitleMode && !fitSheetStroke
-                ? PLAN_FILL.boundaryWash
-                : "transparent"
-            }
-            stroke={bStroke}
-            strokeWidth={lines.boundary.strokeWidth}
-            strokeDasharray={lines.boundary.dash}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            filter={
-              deepChalk
-                ? "url(#ws-chalk-soft)"
-                : "url(#ws-pencil-grain)"
-            }
-            opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
-            className={sketchPassthrough ? css.sketchQuiet : undefined}
-            data-testid={
-              titleSolid || fitSheetStroke
-                ? "foundation-title-boundary"
+            : null}
+          <g
+            clipPath={
+              boundary.length >= 3
+                ? `url(#${PLAN_LOT_HATCH_CLIP_ID})`
                 : undefined
             }
-            data-pen="hand_drawn"
-          />
-        ) : (
+            data-lot-hatch-clip={boundary.length >= 3 ? "1" : "0"}
+          >
+            {easements
+              .filter((r) => r.length >= 3 && !isAuthorityScalePctRing(r))
+              .map((ring, i) => {
+                const id = easementFeatureId(ring);
+                const feat = resolveServiceFeatureVisual(
+                  id,
+                  serviceFeatureHidden,
+                  focusedServiceIds,
+                );
+                if (feat.hidden) return null;
+                return (
+                  <g
+                    key={`ease${i}`}
+                    opacity={servicesVisual.opacity * feat.opacity}
+                    data-testid="easement-hatch"
+                    data-service-id={id}
+                  >
+                    <polygon
+                      points={ptsAttr(ring)}
+                      fill="url(#ws-easement-hatch)"
+                      stroke={lines.easement.stroke}
+                      strokeWidth={lines.easement.strokeWidth}
+                      strokeDasharray={lines.easement.dash}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </g>
+                );
+              })}
+          </g>
+          {services
+            .filter((r) => r.length >= 2)
+            .map((ring, i) => {
+              const id = corridorFeatureId(ring);
+              const feat = resolveServiceFeatureVisual(
+                id,
+                serviceFeatureHidden,
+                focusedServiceIds,
+              );
+              if (feat.hidden) return null;
+              return (
+                <g
+                  key={`svc${i}`}
+                  opacity={servicesVisual.opacity * feat.opacity}
+                  data-testid="utility-service-trace"
+                  data-service-id={id}
+                >
+                  <polyline
+                    points={ptsAttr(ring)}
+                    fill="none"
+                    stroke={lines.service.stroke}
+                    strokeWidth={lines.service.strokeWidth}
+                    strokeDasharray={lines.service.dash}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              );
+            })}
+          {bydaAssets
+            .filter((a) => a.ring.length >= 2)
+            .map((asset) => {
+              const id = `byda:${asset.id}`;
+              const feat = resolveServiceFeatureVisual(
+                id,
+                serviceFeatureHidden,
+                focusedServiceIds,
+              );
+              if (feat.hidden) return null;
+              const style = bydaPlanLine(asset.kind, darkOn && !frameOn);
+              const ring = asset.ring.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+              return (
+                <g
+                  key={id}
+                  opacity={servicesVisual.opacity * feat.opacity}
+                  data-testid="byda-asset-trace"
+                  data-byda-kind={asset.kind}
+                  data-service-id={id}
+                >
+                  <polyline
+                    points={ptsAttr(ring)}
+                    fill="none"
+                    stroke={style.stroke}
+                    strokeWidth={style.strokeWidth}
+                    strokeDasharray={style.dash}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              );
+            })}
+          {contextLots.map((ring, i) => (
+            <polygon
+              key={`ctx${i}`}
+              points={ptsAttr(ring)}
+              fill={lines.context.fill ?? "transparent"}
+              stroke={lines.context.stroke}
+              strokeWidth={lines.context.strokeWidth}
+              opacity={lines.context.opacity ?? 1}
+              vectorEffect="non-scaling-stroke"
+              data-testid="cad-context-lot"
+            />
+          ))}
           <polygon
             points={ptsAttr(boundary)}
             fill={
@@ -1584,316 +1575,315 @@ export function CadPlanBoard({
                 : undefined
             }
           />
-        )}
-        {building.length >= 3 && !timedSunCast ? (
-          <polygon
-            data-testid="dwelling-sun-shadow"
-            points={ptsAttr(building)}
-            transform={`translate(${dwellingSoftShadow.dx} ${dwellingSoftShadow.dy})`}
-            fill={sunShadowFill(darkOn && !frameOn)}
-            style={{ mixBlendMode: "multiply" }}
-            pointerEvents="none"
-            data-sun-live={sunCast ? "1" : "0"}
-          />
-        ) : null}
-        {building.length >= 3 ? (
-          buildingHandPath ? (
-            <path
-              data-testid="building-footprint"
-              data-building-source={buildingSource}
-              data-pen="hand_drawn"
-              d={buildingHandPath}
-              fill={
-                tiltLocked
-                  ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
-                  : bldFill
-              }
-              stroke={bldStroke}
-              strokeWidth={
-                foundationCleanse
-                  ? 1
-                  : tiltLocked
-                    ? Math.max(1.5, lines.building.strokeWidth)
-                    : lines.building.strokeWidth
-              }
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke"
-              filter={
-                deepChalk
-                  ? "url(#ws-chalk-soft)"
-                  : "url(#ws-pencil-grain)"
-              }
-              opacity={
-                boundaryVisual.opacity *
-                (foundationCleanse ? underlayOp : 1) *
-                (sketchPassthrough ? 0.4 : 1)
-              }
-            >
-              <title>
-                {buildingSource === "vicmap"
-                  ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
-                  : buildingSource === "traced"
-                    ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
-                    : "Existing dwelling envelope · confirm on site before relying on dimensions"}
-              </title>
-            </path>
-          ) : (
+          {building.length >= 3 && !timedSunCast ? (
             <polygon
-              data-testid="building-footprint"
-              data-building-source={buildingSource}
+              data-testid="dwelling-sun-shadow"
               points={ptsAttr(building)}
-              fill={
-                tiltLocked
-                  ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
-                  : bldFill
-              }
-              stroke={bldStroke}
-              strokeWidth={
-                foundationCleanse
-                  ? 1
-                  : tiltLocked
-                    ? Math.max(1.5, lines.building.strokeWidth)
-                    : lines.building.strokeWidth
-              }
-              vectorEffect="non-scaling-stroke"
-              opacity={
-                boundaryVisual.opacity *
-                (foundationCleanse ? underlayOp : 1) *
-                (sketchPassthrough ? 0.4 : 1)
-              }
-            >
-              <title>
-                {buildingSource === "vicmap"
-                  ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
-                  : buildingSource === "traced"
-                    ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
-                    : "Existing dwelling envelope · confirm on site before relying on dimensions"}
-              </title>
-            </polygon>
-          )
-        ) : null}
-        {/* Sketch-formalized regions — the shape the operator drew, washed
+              transform={`translate(${dwellingSoftShadow.dx} ${dwellingSoftShadow.dy})`}
+              fill={sunShadowFill(darkOn && !frameOn)}
+              style={{ mixBlendMode: "multiply" }}
+              pointerEvents="none"
+              data-sun-live={sunCast ? "1" : "0"}
+            />
+          ) : null}
+          {building.length >= 3 ? (
+            buildingHandPath ? (
+              <path
+                data-testid="building-footprint"
+                data-building-source={buildingSource}
+                data-pen="hand_drawn"
+                d={buildingHandPath}
+                fill={
+                  tiltLocked
+                    ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
+                    : bldFill
+                }
+                stroke={bldStroke}
+                strokeWidth={
+                  foundationCleanse
+                    ? 1
+                    : tiltLocked
+                      ? Math.max(1.5, lines.building.strokeWidth)
+                      : lines.building.strokeWidth
+                }
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+                filter={
+                  deepChalk
+                    ? "url(#ws-chalk-soft)"
+                    : "url(#ws-pencil-grain)"
+                }
+                opacity={
+                  boundaryVisual.opacity *
+                  (foundationCleanse ? underlayOp : 1) *
+                  (sketchPassthrough ? 0.4 : 1)
+                }
+              >
+                <title>
+                  {buildingSource === "vicmap"
+                    ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
+                    : buildingSource === "traced"
+                      ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
+                      : "Existing dwelling envelope · confirm on site before relying on dimensions"}
+                </title>
+              </path>
+            ) : (
+              <polygon
+                data-testid="building-footprint"
+                data-building-source={buildingSource}
+                points={ptsAttr(building)}
+                fill={
+                  tiltLocked
+                    ? "color-mix(in srgb, var(--existing-stroke) var(--fill-structure), var(--canvas))"
+                    : bldFill
+                }
+                stroke={bldStroke}
+                strokeWidth={
+                  foundationCleanse
+                    ? 1
+                    : tiltLocked
+                      ? Math.max(1.5, lines.building.strokeWidth)
+                      : lines.building.strokeWidth
+                }
+                vectorEffect="non-scaling-stroke"
+                opacity={
+                  boundaryVisual.opacity *
+                  (foundationCleanse ? underlayOp : 1) *
+                  (sketchPassthrough ? 0.4 : 1)
+                }
+              >
+                <title>
+                  {buildingSource === "vicmap"
+                    ? "Existing dwelling · Vicmap building footprint · confirm on site before relying on dimensions"
+                    : buildingSource === "traced"
+                      ? "Existing dwelling · operator-traced envelope · confirm on site before relying on dimensions"
+                      : "Existing dwelling envelope · confirm on site before relying on dimensions"}
+                </title>
+              </polygon>
+            )
+          ) : null}
+          {/* Sketch-formalized regions — the shape the operator drew, washed
             per material. Ghosts dash; accepted regions draw in solid. */}
-        {planItems.filter(isRegionItem).map((it) => {
-          const bucket = ITEM_LAYER[it.t];
-          const visual = resolveLayerVisual(
-            bucket,
-            layerOpacity[bucket] ?? 1,
-            isolatedLayer,
-          );
-          const baseWash = REGION_WASH[it.t] ?? PLAN_FILL.plantingWash;
-          const plantingAccent =
-            accentAtmosphere &&
-            fitSheetStroke &&
-            (it.t === "bed" ||
-              it.t === "lawn" ||
-              it.t === "paving" ||
-              it.t === "deck");
-          const wash = greyWash
-            ? "color-mix(in srgb, var(--text-primary) 14%, var(--canvas))"
-            : watercolour && plantingAccent
-              ? "color-mix(in srgb, var(--sheet-atmosphere-wash) 72%, transparent)"
-              : plantingAccent
-                ? "var(--sheet-atmosphere-wash)"
-                : watercolour
-                  ? "color-mix(in srgb, var(--text-primary) 8%, transparent)"
-                  : baseWash;
-          const hatched = it.t === "paving" || it.t === "deck";
-          const outline = it.outlinePct!;
-          const pts = ptsAttr(outline);
-          const handPath =
-            handDrawn && outline.length >= 3
-              ? wobbledPolylinePath(outline, {
+          {planItems.filter(isRegionItem).map((it) => {
+            const bucket = ITEM_LAYER[it.t];
+            const visual = resolveLayerVisual(
+              bucket,
+              layerOpacity[bucket] ?? 1,
+              isolatedLayer,
+            );
+            const baseWash = REGION_WASH[it.t] ?? PLAN_FILL.plantingWash;
+            const plantingAccent =
+              accentAtmosphere &&
+              fitSheetStroke &&
+              (it.t === "bed" ||
+                it.t === "lawn" ||
+                it.t === "paving" ||
+                it.t === "deck");
+            const wash = greyWash
+              ? "color-mix(in srgb, var(--text-primary) 14%, var(--canvas))"
+              : watercolour && plantingAccent
+                ? "color-mix(in srgb, var(--sheet-atmosphere-wash) 72%, transparent)"
+                : plantingAccent
+                  ? "var(--sheet-atmosphere-wash)"
+                  : watercolour
+                    ? "color-mix(in srgb, var(--text-primary) 8%, transparent)"
+                    : baseWash;
+            const hatched = it.t === "paving" || it.t === "deck";
+            const outline = it.outlinePct!;
+            const pts = ptsAttr(outline);
+            const handPath =
+              handDrawn && outline.length >= 3
+                ? wobbledPolylinePath(outline, {
                   seed: `${wobbleSeed}:region:${it.id}`,
                   closed: true,
                   profile: "region",
                 })
-              : null;
-          return (
-            <g
-              key={`region-${it.id}`}
-              data-testid="sketch-region"
-              data-item-type={it.t}
-              data-ghost={it.ghost ? "1" : "0"}
-              data-pen={handPath ? "hand_drawn" : undefined}
-              opacity={visual.opacity * underlayOp * (it.ghost ? 0.6 : 1)}
-              pointerEvents="none"
-            >
-              {handPath ? (
-                <path
-                  d={handPath}
-                  pathLength={1}
-                  className={it.ghost ? css.regionGhostIn : css.regionDraw}
-                  fill={wash}
-                  stroke={
-                    it.ghost
-                      ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
-                      : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
-                  }
-                  strokeWidth={it.ghost ? 1 : 1.3}
-                  strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
-                  filter={
-                    handPath
-                      ? "url(#ws-pencil-grain)"
-                      : watercolour
-                        ? "url(#ws-watercolour)"
-                        : undefined
-                  }
-                />
-              ) : (
-                <polygon
-                  points={pts}
-                  pathLength={1}
-                  className={it.ghost ? css.regionGhostIn : css.regionDraw}
-                  fill={wash}
-                  stroke={
-                    greyWash
-                      ? mixOnCanvas(CSS_TOKEN.textPrimary, 88)
-                      : it.ghost
-                        ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
-                        : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
-                  }
-                  strokeWidth={greyWash ? 1.45 : it.ghost ? 1 : 1.3}
-                  strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
-                  strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
-                  filter={watercolour ? "url(#ws-watercolour)" : undefined}
-                />
-              )}
-              {hatched ? (
-                handPath ? (
+                : null;
+            return (
+              <g
+                key={`region-${it.id}`}
+                data-testid="sketch-region"
+                data-item-type={it.t}
+                data-ghost={it.ghost ? "1" : "0"}
+                data-pen={handPath ? "hand_drawn" : undefined}
+                opacity={visual.opacity * underlayOp * (it.ghost ? 0.6 : 1)}
+                pointerEvents="none"
+              >
+                {handPath ? (
                   <path
                     d={handPath}
-                    fill="url(#ws-hardscape-hatch)"
-                    opacity={0.45}
-                    className={css.regionGhostIn}
+                    pathLength={1}
+                    className={it.ghost ? css.regionGhostIn : css.regionDraw}
+                    fill={wash}
+                    stroke={
+                      it.ghost
+                        ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
+                        : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
+                    }
+                    strokeWidth={it.ghost ? 1 : 1.3}
+                    strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    filter={
+                      handPath
+                        ? "url(#ws-pencil-grain)"
+                        : watercolour
+                          ? "url(#ws-watercolour)"
+                          : undefined
+                    }
                   />
                 ) : (
                   <polygon
                     points={pts}
-                    fill="url(#ws-hardscape-hatch)"
-                    opacity={0.45}
-                    className={css.regionGhostIn}
+                    pathLength={1}
+                    className={it.ghost ? css.regionGhostIn : css.regionDraw}
+                    fill={wash}
+                    stroke={
+                      greyWash
+                        ? mixOnCanvas(CSS_TOKEN.textPrimary, 88)
+                        : it.ghost
+                          ? mixOnCanvas(CSS_TOKEN.textPrimary, 55)
+                          : mixOnCanvas(CSS_TOKEN.textPrimary, 75)
+                    }
+                    strokeWidth={greyWash ? 1.45 : it.ghost ? 1 : 1.3}
+                    strokeDasharray={it.ghost ? "0.018 0.011" : undefined}
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    filter={watercolour ? "url(#ws-watercolour)" : undefined}
                   />
-                )
-              ) : null}
-            </g>
-          );
-        })}
-        {outsideDims
-          .filter((d) => d.visible)
-          .map((d) => (
-          <g
-            key={`odim${d.key}`}
-            data-testid="outside-dim"
-            opacity={boundaryVisual.opacity * annotationLod.opacity.dims}
-          >
-            <line
-              x1={d.extA.x1}
-              y1={d.extA.y1}
-              x2={d.extA.x2}
-              y2={d.extA.y2}
-              stroke={lines.dim.stroke}
-              strokeWidth={0.5}
-              vectorEffect="non-scaling-stroke"
-              data-testid="outside-dim-ext"
-            />
-            <line
-              x1={d.extB.x1}
-              y1={d.extB.y1}
-              x2={d.extB.x2}
-              y2={d.extB.y2}
-              stroke={lines.dim.stroke}
-              strokeWidth={0.5}
-              vectorEffect="non-scaling-stroke"
-              data-testid="outside-dim-ext"
-            />
-            <line
-              x1={d.x1}
-              y1={d.y1}
-              x2={d.x2}
-              y2={d.y2}
-              stroke={lines.dim.stroke}
-              strokeWidth={lines.dim.strokeWidth}
-              vectorEffect="non-scaling-stroke"
-            />
-            <line
-              x1={d.tickA.x1}
-              y1={d.tickA.y1}
-              x2={d.tickA.x2}
-              y2={d.tickA.y2}
-              stroke={lines.dim.stroke}
-              strokeWidth={lines.dim.strokeWidth}
-              vectorEffect="non-scaling-stroke"
-            />
-            <line
-              x1={d.tickB.x1}
-              y1={d.tickB.y1}
-              x2={d.tickB.x2}
-              y2={d.tickB.y2}
-              stroke={lines.dim.stroke}
-              strokeWidth={lines.dim.strokeWidth}
-              vectorEffect="non-scaling-stroke"
-            />
-          </g>
-        ))}
-        {setbackOn && !foundationCleanse && !sketchPassthrough ? (
-          <polygon
-            points={ptsAttr(
-              boundary.map((p) => ({
-                x: 50 + (p.x - 50) * 0.92,
-                y: 50 + (p.y - 50) * 0.92,
-              })),
-            )}
-            fill="none"
-            stroke={lines.setback.stroke}
-            strokeWidth={lines.setback.strokeWidth}
-            strokeDasharray={lines.setback.dash}
-            vectorEffect="non-scaling-stroke"
-            opacity={0.75 * councilVisual.opacity}
-            data-testid="council-setback-zone"
-          >
-            <title>
-              {councilSetbackM != null && councilSetbackM > 0
-                ? `Council setback rule · ${councilSetbackM.toFixed(1)} m (indicative)`
-                : "Council setback zone (indicative)"}
-            </title>
-          </polygon>
-        ) : null}
-        {existTpz.map(({ it, tpz }) => {
-          const dbh = it.dbhM ?? 0.45;
-          const tpzM = Math.max(2, 12 * dbh);
-          return (
-            <g
-              key={`tpz-${it.id}`}
-              opacity={councilVisual.opacity * underlayOp}
-              data-testid="exist-tpz-ring"
-              data-tpz-state="zone"
-            >
-              {/* Tree protection as a readable council zone — not a text card */}
-              <ellipse
-                cx={it.x}
-                cy={it.y}
-                rx={tpz.rxPct}
-                ry={tpz.rxPct * 0.78}
-                className={css.tpzZone}
-                vectorEffect="non-scaling-stroke"
+                )}
+                {hatched ? (
+                  handPath ? (
+                    <path
+                      d={handPath}
+                      fill="url(#ws-hardscape-hatch)"
+                      opacity={0.45}
+                      className={css.regionGhostIn}
+                    />
+                  ) : (
+                    <polygon
+                      points={pts}
+                      fill="url(#ws-hardscape-hatch)"
+                      opacity={0.45}
+                      className={css.regionGhostIn}
+                    />
+                  )
+                ) : null}
+              </g>
+            );
+          })}
+          {outsideDims
+            .filter((d) => d.visible)
+            .map((d) => (
+              <g
+                key={`odim${d.key}`}
+                data-testid="outside-dim"
+                opacity={boundaryVisual.opacity * annotationLod.opacity.dims}
               >
-                <title>
-                  {`Tree protection zone · AS 4970 · TPZ ≈ ${tpzM.toFixed(1)} m (12 × DBH)`}
-                </title>
-              </ellipse>
-            </g>
-          );
-        })}
-        {temporalRings.map((ring) => {
-          const canopyPath =
-            handDrawn && ring.canopy_rx_pct > 0
-              ? roughEllipsePath(
+                <line
+                  x1={d.extA.x1}
+                  y1={d.extA.y1}
+                  x2={d.extA.x2}
+                  y2={d.extA.y2}
+                  stroke={lines.dim.stroke}
+                  strokeWidth={0.5}
+                  vectorEffect="non-scaling-stroke"
+                  data-testid="outside-dim-ext"
+                />
+                <line
+                  x1={d.extB.x1}
+                  y1={d.extB.y1}
+                  x2={d.extB.x2}
+                  y2={d.extB.y2}
+                  stroke={lines.dim.stroke}
+                  strokeWidth={0.5}
+                  vectorEffect="non-scaling-stroke"
+                  data-testid="outside-dim-ext"
+                />
+                <line
+                  x1={d.x1}
+                  y1={d.y1}
+                  x2={d.x2}
+                  y2={d.y2}
+                  stroke={lines.dim.stroke}
+                  strokeWidth={lines.dim.strokeWidth}
+                  vectorEffect="non-scaling-stroke"
+                />
+                <line
+                  x1={d.tickA.x1}
+                  y1={d.tickA.y1}
+                  x2={d.tickA.x2}
+                  y2={d.tickA.y2}
+                  stroke={lines.dim.stroke}
+                  strokeWidth={lines.dim.strokeWidth}
+                  vectorEffect="non-scaling-stroke"
+                />
+                <line
+                  x1={d.tickB.x1}
+                  y1={d.tickB.y1}
+                  x2={d.tickB.x2}
+                  y2={d.tickB.y2}
+                  stroke={lines.dim.stroke}
+                  strokeWidth={lines.dim.strokeWidth}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            ))}
+          {setbackOn && !foundationCleanse && !sketchPassthrough ? (
+            <polygon
+              points={ptsAttr(
+                boundary.map((p) => ({
+                  x: 50 + (p.x - 50) * 0.92,
+                  y: 50 + (p.y - 50) * 0.92,
+                })),
+              )}
+              fill="none"
+              stroke={lines.setback.stroke}
+              strokeWidth={lines.setback.strokeWidth}
+              strokeDasharray={lines.setback.dash}
+              vectorEffect="non-scaling-stroke"
+              opacity={0.75 * councilVisual.opacity}
+              data-testid="council-setback-zone"
+            >
+              <title>
+                {councilSetbackM != null && councilSetbackM > 0
+                  ? `Council setback rule · ${councilSetbackM.toFixed(1)} m (indicative)`
+                  : "Council setback zone (indicative)"}
+              </title>
+            </polygon>
+          ) : null}
+          {existTpz.map(({ it, tpz }) => {
+            const dbh = it.dbhM ?? 0.45;
+            const tpzM = Math.max(2, 12 * dbh);
+            return (
+              <g
+                key={`tpz-${it.id}`}
+                opacity={councilVisual.opacity * underlayOp}
+                data-testid="exist-tpz-ring"
+                data-tpz-state="zone"
+              >
+                {/* Tree protection as a readable council zone — not a text card */}
+                <ellipse
+                  cx={it.x}
+                  cy={it.y}
+                  rx={tpz.rxPct}
+                  ry={tpz.rxPct * 0.78}
+                  className={css.tpzZone}
+                  vectorEffect="non-scaling-stroke"
+                >
+                  <title>
+                    {`Tree protection zone · AS 4970 · TPZ ≈ ${tpzM.toFixed(1)} m (12 × DBH)`}
+                  </title>
+                </ellipse>
+              </g>
+            );
+          })}
+          {temporalRings.map((ring) => {
+            const canopyPath =
+              handDrawn && ring.canopy_rx_pct > 0
+                ? roughEllipsePath(
                   ring.x,
                   ring.y,
                   ring.canopy_rx_pct,
@@ -1901,10 +1891,10 @@ export function CadPlanBoard({
                   `${wobbleSeed}:canopy:${ring.id}`,
                   { profile: "canopy" },
                 )
-              : null;
-          const rootPath =
-            handDrawn && ring.root_rx_pct > 0
-              ? roughEllipsePath(
+                : null;
+            const rootPath =
+              handDrawn && ring.root_rx_pct > 0
+                ? roughEllipsePath(
                   ring.x,
                   ring.y,
                   ring.root_rx_pct,
@@ -1912,111 +1902,109 @@ export function CadPlanBoard({
                   `${wobbleSeed}:root:${ring.id}`,
                   { profile: "canopy" },
                 )
-              : null;
-          return (
-          <g
-            key={`grow-${ring.id}`}
-            opacity={vegetationVisual.opacity * underlayOp}
-            data-testid="growth-temporal-ring"
-            data-stage={ring.stage}
-            data-crowded={ring.crowded ? "1" : "0"}
-            data-pen={handDrawn ? "hand_drawn" : undefined}
-          >
-            {rootPath ? (
-              <path
-                d={rootPath}
-                className={css.growthRoot}
-                vectorEffect="non-scaling-stroke"
-                fill="none"
-                filter={
-                  deepChalk
-                    ? "url(#ws-chalk-soft)"
-                    : "url(#ws-pencil-grain)"
-                }
+                : null;
+            return (
+              <g
+                key={`grow-${ring.id}`}
+                opacity={vegetationVisual.opacity * underlayOp}
+                data-testid="growth-temporal-ring"
+                data-stage={ring.stage}
+                data-crowded={ring.crowded ? "1" : "0"}
+                data-pen={handDrawn ? "hand_drawn" : undefined}
               >
-                <title>
-                  {`Indicative root zone · Ø ${(
-                    ring.mature_spread_m *
-                    growthStageSpreadFactor(ring.stage) *
-                    0.55
-                  ).toFixed(1)} m`}
-                </title>
-              </path>
-            ) : (
-              <ellipse
-                cx={ring.x}
-                cy={ring.y}
-                rx={ring.root_rx_pct}
-                ry={ring.root_rx_pct * 0.82}
-                className={css.growthRoot}
-                vectorEffect="non-scaling-stroke"
-              >
-                <title>
-                  {`Indicative root zone · Ø ${(
-                    ring.mature_spread_m *
-                    growthStageSpreadFactor(ring.stage) *
-                    0.55
-                  ).toFixed(1)} m`}
-                </title>
-              </ellipse>
-            )}
-            {canopyPath ? (
-              <path
-                d={canopyPath}
-                className={
-                  ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
-                }
-                vectorEffect="non-scaling-stroke"
-                fill="none"
-                filter={
-                  deepChalk
-                    ? "url(#ws-chalk-soft)"
-                    : "url(#ws-pencil-grain)"
-                }
-              >
-                <title>
-                  {`Canopy · Ø ${(
-                    ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
-                  ).toFixed(1)} m at ${
-                    ring.stage === "plant"
-                      ? "Year 1"
-                      : ring.stage === "5yr"
-                        ? "Year 5"
-                        : "Year 10"
-                  }${ring.crowded ? " · crowding" : ""}`}
-                </title>
-              </path>
-            ) : (
-              <ellipse
-                cx={ring.x}
-                cy={ring.y}
-                rx={ring.canopy_rx_pct}
-                ry={ring.canopy_rx_pct * 0.78}
-                className={
-                  ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
-                }
-                vectorEffect="non-scaling-stroke"
-              >
-                <title>
-                  {`Canopy · Ø ${(
-                    ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
-                  ).toFixed(1)} m at ${
-                    ring.stage === "plant"
-                      ? "Year 1"
-                      : ring.stage === "5yr"
-                        ? "Year 5"
-                        : "Year 10"
-                  }${ring.crowded ? " · crowding" : ""}`}
-                </title>
-              </ellipse>
-            )}
-          </g>
-          );
-        })}
-      </svg>
+                {rootPath ? (
+                  <path
+                    d={rootPath}
+                    className={css.growthRoot}
+                    vectorEffect="non-scaling-stroke"
+                    fill="none"
+                    filter={
+                      deepChalk
+                        ? "url(#ws-chalk-soft)"
+                        : "url(#ws-pencil-grain)"
+                    }
+                  >
+                    <title>
+                      {`Indicative root zone · Ø ${(
+                        ring.mature_spread_m *
+                        growthStageSpreadFactor(ring.stage) *
+                        0.55
+                      ).toFixed(1)} m`}
+                    </title>
+                  </path>
+                ) : (
+                  <ellipse
+                    cx={ring.x}
+                    cy={ring.y}
+                    rx={ring.root_rx_pct}
+                    ry={ring.root_rx_pct * 0.82}
+                    className={css.growthRoot}
+                    vectorEffect="non-scaling-stroke"
+                  >
+                    <title>
+                      {`Indicative root zone · Ø ${(
+                        ring.mature_spread_m *
+                        growthStageSpreadFactor(ring.stage) *
+                        0.55
+                      ).toFixed(1)} m`}
+                    </title>
+                  </ellipse>
+                )}
+                {canopyPath ? (
+                  <path
+                    d={canopyPath}
+                    className={
+                      ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
+                    }
+                    vectorEffect="non-scaling-stroke"
+                    fill="none"
+                    filter={
+                      deepChalk
+                        ? "url(#ws-chalk-soft)"
+                        : "url(#ws-pencil-grain)"
+                    }
+                  >
+                    <title>
+                      {`Canopy · Ø ${(
+                        ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
+                      ).toFixed(1)} m at ${ring.stage === "plant"
+                          ? "Year 1"
+                          : ring.stage === "5yr"
+                            ? "Year 5"
+                            : "Year 10"
+                        }${ring.crowded ? " · crowding" : ""}`}
+                    </title>
+                  </path>
+                ) : (
+                  <ellipse
+                    cx={ring.x}
+                    cy={ring.y}
+                    rx={ring.canopy_rx_pct}
+                    ry={ring.canopy_rx_pct * 0.78}
+                    className={
+                      ring.crowded ? css.growthCanopyCrowded : css.growthCanopy
+                    }
+                    vectorEffect="non-scaling-stroke"
+                  >
+                    <title>
+                      {`Canopy · Ø ${(
+                        ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
+                      ).toFixed(1)} m at ${ring.stage === "plant"
+                          ? "Year 1"
+                          : ring.stage === "5yr"
+                            ? "Year 5"
+                            : "Year 10"
+                        }${ring.crowded ? " · crowding" : ""}`}
+                    </title>
+                  </ellipse>
+                )}
+              </g>
+            );
+          })}
+        </svg>
 
-      {editing && allowProjectedChrome && boundaryVisual.hittable
-        ? boundary.map((p, i) => (
+        {editing && allowProjectedChrome && boundaryVisual.hittable
+          ? boundary.map((p, i) => (
             <CameraChrome
               key={`bh${i}`}
               place={{ kind: "project", pct: p, cam }}
@@ -2046,12 +2034,12 @@ export function CadPlanBoard({
               />
             </CameraChrome>
           ))
-        : null}
-      {editing &&
-      allowProjectedChrome &&
-      boundaryVisual.hittable &&
-      !foundationCleanse
-        ? building.map((p, i) => (
+          : null}
+        {editing &&
+          allowProjectedChrome &&
+          boundaryVisual.hittable &&
+          !foundationCleanse
+          ? building.map((p, i) => (
             <CameraChrome
               key={`fh${i}`}
               place={{ kind: "project", pct: p, cam }}
@@ -2075,13 +2063,13 @@ export function CadPlanBoard({
               />
             </CameraChrome>
           ))
-        : null}
+          : null}
 
-      {editing &&
-      allowProjectedChrome &&
-      boundaryVisual.hittable &&
-      !foundationCleanse
-        ? midHandles(boundary, "boundary").map((m) => (
+        {editing &&
+          allowProjectedChrome &&
+          boundaryVisual.hittable &&
+          !foundationCleanse
+          ? midHandles(boundary, "boundary").map((m) => (
             <CameraChrome
               key={`mb${m.after}`}
               place={{ kind: "project", pct: { x: m.x, y: m.y }, cam }}
@@ -2098,12 +2086,12 @@ export function CadPlanBoard({
               />
             </CameraChrome>
           ))
-        : null}
-      {editing &&
-      allowProjectedChrome &&
-      boundaryVisual.hittable &&
-      !foundationCleanse
-        ? midHandles(building, "building").map((m) => (
+          : null}
+        {editing &&
+          allowProjectedChrome &&
+          boundaryVisual.hittable &&
+          !foundationCleanse
+          ? midHandles(building, "building").map((m) => (
             <CameraChrome
               key={`mf${m.after}`}
               place={{ kind: "project", pct: { x: m.x, y: m.y }, cam }}
@@ -2120,11 +2108,11 @@ export function CadPlanBoard({
               />
             </CameraChrome>
           ))
-        : null}
+          : null}
 
-      {/* Ticks only when locked (nodes are the edit affordance — never both). */}
-      {titleSolid && !editing
-        ? boundary.map((p, i) => (
+        {/* Ticks only when locked (nodes are the edit affordance — never both). */}
+        {titleSolid && !editing
+          ? boundary.map((p, i) => (
             <span
               key={`ftick${i}`}
               className={css.foundationVertexTick}
@@ -2133,231 +2121,230 @@ export function CadPlanBoard({
               data-testid="foundation-vertex-tick"
             />
           ))
-        : null}
+          : null}
 
-      {outsideDims
-        .filter((d) => d.visible)
-        .map((d) => {
-        const isBuilding = d.key.startsWith("F");
-        return (
-          <div
-            key={`olab${d.key}`}
-            className={`${css.dimMark} ${css.fitOutsideDim}${cadTitleMode ? ` ${css.cadDimMark}` : ""} ${css.lodFade}`}
-            style={{
-              left: `${d.labelX}%`,
-              top: `${d.labelY}%`,
-              /* Readable-up: label text never renders mirrored/upside-down. */
-              transform: `translate(-50%, -50%) rotate(${readableUpDeg(d.rotDeg)}deg)`,
-              opacity: annotationLod.opacity.dims,
+        {outsideDims
+          .filter((d) => d.visible)
+          .map((d) => {
+            const isBuilding = d.key.startsWith("F");
+            return (
+              <div
+                key={`olab${d.key}`}
+                className={`${css.dimMark} ${css.fitOutsideDim}${cadTitleMode ? ` ${css.cadDimMark}` : ""} ${css.lodFade}`}
+                style={{
+                  left: `${d.labelX}%`,
+                  top: `${d.labelY}%`,
+                  /* Readable-up: label text never renders mirrored/upside-down. */
+                  transform: `translate(-50%, -50%) rotate(${readableUpDeg(d.rotDeg)}deg)`,
+                  opacity: annotationLod.opacity.dims,
+                }}
+                data-testid={
+                  frameOn
+                    ? "fit-outside-dim-label"
+                    : cadTitleMode
+                      ? "cad-edge-dim"
+                      : "outside-dim-label"
+                }
+              >
+                <span
+                  className={
+                    frameOn
+                      ? css.fitDimLabel
+                      : cadTitleMode
+                        ? css.cadDimLabel
+                        : css.dimLabel
+                  }
+                  title={
+                    cadTitleMode
+                      ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
+                      }`
+                      : `${isBuilding ? "Dwelling envelope" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
+                  }
+                >
+                  {cadTitleMode ? (
+                    <>
+                      <span className={css.cadDimKey}>{d.key}</span>
+                      <span>{formatCadMetres(d.lengthM)}</span>
+                    </>
+                  ) : (
+                    `${d.key} · ${d.lengthM.toFixed(2)} m`
+                  )}
+                </span>
+              </div>
+            );
+          })}
+
+        {showAutoAreaLabels &&
+          annotationLod.lotArea &&
+          boundary.length >= 3 ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: { x: titleCentroid.x, y: titleCentroid.y },
+              cam,
+              transform: scheduleOffset("title"),
             }}
-            data-testid={
-              frameOn
-                ? "fit-outside-dim-label"
-                : cadTitleMode
-                  ? "cad-edge-dim"
-                  : "outside-dim-label"
-            }
+          >
+            <div
+              className={`${css.cadAreaLabel} ${css.lodFade}`}
+              data-testid="cad-title-area"
+              data-camera-chrome-card="1"
+              style={{ opacity: annotationLod.opacity.lotArea }}
+              title={[
+                titleBoundaryLocked ? "Title locked" : "Title unlocked",
+                titleMeta?.parcelRef,
+                formatCadAreaM2(areaLabelM2),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            >
+              <span className={css.cadAreaKey}>Lot</span>
+              <span className={css.cadAreaValue}>
+                {formatCadAreaM2(areaLabelM2)}
+              </span>
+            </div>
+          </CameraChrome>
+        ) : null}
+
+        {showAutoAreaLabels &&
+          annotationLod.contextAreas &&
+          buildingCentroid &&
+          building.length >= 3 &&
+          buildingAreaLabelM2 > 0 ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: { x: buildingCentroid.x, y: buildingCentroid.y },
+              cam,
+              transform: scheduleOffset("dwelling"),
+            }}
+          >
+            <div
+              className={`${css.cadAreaLabel} ${css.cadAreaContext} ${css.lodFade}`}
+              data-testid="cad-building-area"
+              data-camera-chrome-card="1"
+              style={{ opacity: annotationLod.opacity.contextAreas }}
+              title={`Existing dwelling · ${formatCadAreaM2(buildingAreaLabelM2)}`}
+            >
+              <span className={css.cadAreaKey}>Dwell</span>
+              <span className={css.cadAreaValue}>
+                {formatCadAreaM2(buildingAreaLabelM2)}
+              </span>
+            </div>
+          </CameraChrome>
+        ) : null}
+
+        {showAutoAreaLabels &&
+          annotationLod.contextAreas &&
+          showOutdoorCard ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: { x: titleCentroid.x, y: titleCentroid.y },
+              cam,
+              transform: scheduleOffset("outdoor"),
+            }}
+          >
+            <div
+              className={`${css.cadAreaLabel} ${css.cadAreaContext} ${css.lodFade}`}
+              data-testid="cad-outdoor-area"
+              data-camera-chrome-card="1"
+              style={{ opacity: annotationLod.opacity.contextAreas }}
+              title={`Outdoor · ${formatCadAreaM2(outdoorAreaLabelM2)}`}
+            >
+              <span className={css.cadAreaKey}>Out</span>
+              <span className={css.cadAreaValue}>
+                {formatCadAreaM2(outdoorAreaLabelM2)}
+              </span>
+            </div>
+          </CameraChrome>
+        ) : null}
+
+        {cadTitleMode && !frameOn && siteLabel ? (
+          <CameraChrome>
+            <p className={css.cadStreetCue} data-testid="cad-street-cue">
+              {siteLabel}
+            </p>
+          </CameraChrome>
+        ) : null}
+
+        {showHouseEnvelopeLabel && allowProjectedChrome && buildingCentroid ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: { x: buildingCentroid.x, y: buildingCentroid.y },
+              cam,
+            }}
           >
             <span
-              className={
-                frameOn
-                  ? css.fitDimLabel
-                  : cadTitleMode
-                    ? css.cadDimLabel
-                    : css.dimLabel
-              }
-              title={
-                cadTitleMode
-                  ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${
-                      titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
-                    }`
-                  : `${isBuilding ? "Dwelling envelope" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
-              }
+              className={css.houseEnvelopeLabel}
+              data-testid="house-envelope-label"
+              title="Existing dwelling"
             >
-              {cadTitleMode ? (
-                <>
-                  <span className={css.cadDimKey}>{d.key}</span>
-                  <span>{formatCadMetres(d.lengthM)}</span>
-                </>
-              ) : (
-                `${d.key} · ${d.lengthM.toFixed(2)} m`
-              )}
+              Dwell
             </span>
-          </div>
-        );
-      })}
+          </CameraChrome>
+        ) : null}
 
-      {showAutoAreaLabels &&
-      annotationLod.lotArea &&
-      boundary.length >= 3 ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: titleCentroid.x, y: titleCentroid.y },
-            cam,
-            transform: scheduleOffset("title"),
-          }}
-        >
-          <div
-            className={`${css.cadAreaLabel} ${css.lodFade}`}
-            data-testid="cad-title-area"
-            data-camera-chrome-card="1"
-            style={{ opacity: annotationLod.opacity.lotArea }}
-            title={[
-              titleBoundaryLocked ? "Title locked" : "Title unlocked",
-              titleMeta?.parcelRef,
-              formatCadAreaM2(areaLabelM2),
-            ]
-              .filter(Boolean)
-              .join(" · ")}
+        {mode === "survey" &&
+          allowProjectedChrome &&
+          boundary.length >= 3 &&
+          building.length < 3 ? (
+          <CameraChrome place={{ kind: "project", pct: { x: 50, y: 46 }, cam }}>
+            {onTraceBuilding ? (
+              <button
+                type="button"
+                className={css.missingBuildingCue}
+                data-testid="building-footprint-empty"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTraceBuilding();
+                }}
+              >
+                Existing dwelling outline unavailable · Trace dwelling
+              </button>
+            ) : (
+              <p
+                className={css.missingBuildingCue}
+                data-testid="building-footprint-empty"
+              >
+                Existing dwelling outline unavailable · Trace → Existing dwelling
+              </p>
+            )}
+          </CameraChrome>
+        ) : null}
+
+        {setbackOn &&
+          allowProjectedChrome &&
+          !foundationCleanse &&
+          !sketchPassthrough &&
+          boundary.length >= 3 &&
+          councilSetbackM != null &&
+          councilSetbackM > 0 ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: {
+                x: 50 + (titleCentroid.x - 50) * 0.92,
+                y: Math.max(
+                  8,
+                  50 + (Math.min(...boundary.map((p) => p.y)) - 50) * 0.92 - 1.2,
+                ),
+              },
+              cam,
+            }}
           >
-            <span className={css.cadAreaKey}>Lot</span>
-            <span className={css.cadAreaValue}>
-              {formatCadAreaM2(areaLabelM2)}
-            </span>
-          </div>
-        </CameraChrome>
-      ) : null}
-
-      {showAutoAreaLabels &&
-      annotationLod.contextAreas &&
-      buildingCentroid &&
-      building.length >= 3 &&
-      buildingAreaLabelM2 > 0 ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: buildingCentroid.x, y: buildingCentroid.y },
-            cam,
-            transform: scheduleOffset("dwelling"),
-          }}
-        >
-          <div
-            className={`${css.cadAreaLabel} ${css.cadAreaContext} ${css.lodFade}`}
-            data-testid="cad-building-area"
-            data-camera-chrome-card="1"
-            style={{ opacity: annotationLod.opacity.contextAreas }}
-            title={`Existing dwelling · ${formatCadAreaM2(buildingAreaLabelM2)}`}
-          >
-            <span className={css.cadAreaKey}>Dwell</span>
-            <span className={css.cadAreaValue}>
-              {formatCadAreaM2(buildingAreaLabelM2)}
-            </span>
-          </div>
-        </CameraChrome>
-      ) : null}
-
-      {showAutoAreaLabels &&
-      annotationLod.contextAreas &&
-      showOutdoorCard ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: titleCentroid.x, y: titleCentroid.y },
-            cam,
-            transform: scheduleOffset("outdoor"),
-          }}
-        >
-          <div
-            className={`${css.cadAreaLabel} ${css.cadAreaContext} ${css.lodFade}`}
-            data-testid="cad-outdoor-area"
-            data-camera-chrome-card="1"
-            style={{ opacity: annotationLod.opacity.contextAreas }}
-            title={`Outdoor · ${formatCadAreaM2(outdoorAreaLabelM2)}`}
-          >
-            <span className={css.cadAreaKey}>Out</span>
-            <span className={css.cadAreaValue}>
-              {formatCadAreaM2(outdoorAreaLabelM2)}
-            </span>
-          </div>
-        </CameraChrome>
-      ) : null}
-
-      {cadTitleMode && !frameOn && siteLabel ? (
-        <CameraChrome>
-          <p className={css.cadStreetCue} data-testid="cad-street-cue">
-            {siteLabel}
-          </p>
-        </CameraChrome>
-      ) : null}
-
-      {showHouseEnvelopeLabel && allowProjectedChrome && buildingCentroid ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: buildingCentroid.x, y: buildingCentroid.y },
-            cam,
-          }}
-        >
-          <span
-            className={css.houseEnvelopeLabel}
-            data-testid="house-envelope-label"
-            title="Existing dwelling"
-          >
-            Dwell
-          </span>
-        </CameraChrome>
-      ) : null}
-
-      {mode === "survey" &&
-      allowProjectedChrome &&
-      boundary.length >= 3 &&
-      building.length < 3 ? (
-        <CameraChrome place={{ kind: "project", pct: { x: 50, y: 46 }, cam }}>
-          {onTraceBuilding ? (
-            <button
-              type="button"
-              className={css.missingBuildingCue}
-              data-testid="building-footprint-empty"
-              onClick={(e) => {
-                e.stopPropagation();
-                onTraceBuilding();
-              }}
-            >
-              Existing dwelling outline unavailable · Trace dwelling
-            </button>
-          ) : (
             <p
-              className={css.missingBuildingCue}
-              data-testid="building-footprint-empty"
+              className={css.councilPathLabel}
+              data-testid="council-setback-path-label"
             >
-              Existing dwelling outline unavailable · Trace → Existing dwelling
+              {councilSetbackM.toFixed(1)} m setback rule
             </p>
-          )}
-        </CameraChrome>
-      ) : null}
+          </CameraChrome>
+        ) : null}
 
-      {setbackOn &&
-      allowProjectedChrome &&
-      !foundationCleanse &&
-      !sketchPassthrough &&
-      boundary.length >= 3 &&
-      councilSetbackM != null &&
-      councilSetbackM > 0 ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: {
-              x: 50 + (titleCentroid.x - 50) * 0.92,
-              y: Math.max(
-                8,
-                50 + (Math.min(...boundary.map((p) => p.y)) - 50) * 0.92 - 1.2,
-              ),
-            },
-            cam,
-          }}
-        >
-          <p
-            className={css.councilPathLabel}
-            data-testid="council-setback-path-label"
-          >
-            {councilSetbackM.toFixed(1)} m setback rule
-          </p>
-        </CameraChrome>
-      ) : null}
-
-      {!foundationCleanse
-        ? existTpz.map(({ it, tpz }) => {
+        {!foundationCleanse
+          ? existTpz.map(({ it, tpz }) => {
             const showTag = it.id === selectedId || it.id === hoverId;
             const size = Math.max(28, tpz.rxPct * 2.2);
             const popPct = {
@@ -2416,638 +2403,638 @@ export function CadPlanBoard({
               </div>
             );
           })
-        : null}
+          : null}
 
-      {planItems.map((it) => {
-        const d = BY_TYPE[it.t];
-        const gk = growthFactor(growth, !!d.existing);
-        const w = Math.round(d.w * it.scale * gk);
-        const h = Math.round(d.h * it.scale * gk);
-        const halfWPx = w / 2;
-        const halfHPx = h / 2;
-        const bucket = ITEM_LAYER[it.t];
-        const layerVisual = resolveLayerVisual(
-          bucket,
-          layerOpacity[bucket] ?? 1,
-          isolatedLayer,
-        );
-        const isCur = it.id === curGhostId;
-        const selected = it.id === selectedId;
-        const hovered = it.id === hoverId;
-        const flagged = flaggedIds?.has(it.id) && !it.ghost;
-        const previewType =
-          previewSwatch && hovered && !it.ghost && it.t !== previewSwatch
-            ? previewSwatch
-            : null;
-        const showAiChip = it.ghost && (isCur || hovered);
-        const showGhostActions = isCur && !frameOn && !reviewOpen;
-        const showTracePill =
-          selected && !it.ghost && !!d.heightM && !frameOn;
-        return (
-          <div key={it.id}>
-            <div
-              className={`${css.item}${it.ghost ? ` ${css.ghostArrive}` : ""}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
-              data-testid={it.ghost ? "studio-ghost" : "studio-item"}
-              data-item-type={it.t}
-              data-layer={bucket}
-              data-hittable={layerVisual.hittable ? "true" : "false"}
-              data-selected={
-                selected || groupIds.includes(it.id) ? "true" : "false"
-              }
-              style={{
-                left: `${it.x}%`,
-                top: `${it.y}%`,
-                width: w,
-                height: h,
-                borderRadius: d.br,
-                opacity:
-                  tiltLocked && (d.heightM ?? 0) > 0
-                    ? 0
-                    : (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
-                pointerEvents:
-                  foundationCleanse || !layerVisual.hittable || tiltLocked
-                    ? "none"
-                    : undefined,
-                transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
-                border: it.ghost
-                  ? isCur
-                    ? `1.5px solid ${CSS_TOKEN.textPrimary}`
-                    : it.stale
-                      ? "1px dashed var(--sds-compliance-amber)"
-                      : `1px dashed ${mixOnCanvas(CSS_TOKEN.textPrimary, 55)}`
-                  : flagged
-                    ? `1.5px solid ${CSS_TOKEN.focusRing}`
-                    : selected || groupIds.includes(it.id)
-                      ? `1.5px solid ${CSS_TOKEN.proposedStroke}`
-                      : hovered && !it.ghost
-                        ? `1px solid ${mixOnCanvas(CSS_TOKEN.textPrimary, 45)}`
-                        : "none",
-                boxShadow:
-                  selected || groupIds.includes(it.id) ? undefined : "none",
-                zIndex: isCur
-                  ? 50
-                  : selected || groupIds.includes(it.id)
-                    ? 20
-                    : hovered
-                      ? 10
-                      : 2,
-              }}
-              title={
-                it.stale
-                  ? `${it.why ?? d.name} · nearby edit — recheck this`
-                  : (it.why ?? d.name)
-              }
-              onPointerEnter={() => onHover(it.id)}
-              onPointerLeave={() => onHover(null)}
-              onPointerDown={(e) => {
-                if (tiltLocked) {
-                  e.stopPropagation();
-                  return;
-                }
-                if (eyedropArmed && onEyedrop) {
-                  e.stopPropagation();
-                  onEyedrop(it.t);
-                  return;
-                }
-                if (tool === "paint" && !it.ghost && onPaintItem) {
-                  e.stopPropagation();
-                  onPaintItem(it.id);
-                  return;
-                }
-                /*
-                 * Rule 2 (INTERACTION-LOGIC): in a drawing/placing tool,
-                 * objects are inert — the click falls through to the board
-                 * so the armed tool acts. Selection never silently steals it.
-                 */
-                if (tool !== "select" && tool !== "lock") {
-                  onInertToolClick?.();
-                  return;
-                }
-                e.stopPropagation();
-                const additive = e.shiftKey || e.metaKey;
-                onSelect(it.id, { additive });
-                // Lock is select-only (rule 5): no drag ever starts.
-                if (!it.ghost && tool !== "lock") {
-                  const ids =
-                    groupIds.includes(it.id) && groupIds.length > 1
-                      ? groupIds
-                      : [it.id];
-                  if (ids.length > 1) {
-                    const p = toPct(e.clientX, e.clientY);
-                    const start = gridSnap ? snapToGridMetres(p, scaleM) : p;
-                    dragRef.current = {
-                      kind: "group",
-                      ids,
-                      startX: start.x,
-                      startY: start.y,
-                    };
-                    setCrosshair(start);
-                  } else {
-                    dragRef.current = {
-                      kind: "item",
-                      id: it.id,
-                      ox: 0,
-                      oy: 0,
-                    };
-                    setCrosshair({ x: it.x, y: it.y });
-                  }
-                  (e.target as Element).setPointerCapture?.(e.pointerId);
-                }
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (it.ghost) return;
-                setNodeMenu(null);
-                setItemMenu({ id: it.id, t: it.t, x: it.x, y: it.y });
-              }}
-            >
+        {planItems.map((it) => {
+          const d = BY_TYPE[it.t];
+          const gk = growthFactor(growth, !!d.existing);
+          const w = Math.round(d.w * it.scale * gk);
+          const h = Math.round(d.h * it.scale * gk);
+          const halfWPx = w / 2;
+          const halfHPx = h / 2;
+          const bucket = ITEM_LAYER[it.t];
+          const layerVisual = resolveLayerVisual(
+            bucket,
+            layerOpacity[bucket] ?? 1,
+            isolatedLayer,
+          );
+          const isCur = it.id === curGhostId;
+          const selected = it.id === selectedId;
+          const hovered = it.id === hoverId;
+          const flagged = flaggedIds?.has(it.id) && !it.ghost;
+          const previewType =
+            previewSwatch && hovered && !it.ghost && it.t !== previewSwatch
+              ? previewSwatch
+              : null;
+          const showAiChip = it.ghost && (isCur || hovered);
+          const showGhostActions = isCur && !frameOn && !reviewOpen;
+          const showTracePill =
+            selected && !it.ghost && !!d.heightM && !frameOn;
+          return (
+            <div key={it.id}>
               <div
+                className={`${css.item}${it.ghost ? ` ${css.ghostArrive}` : ""}${it.ghost && it.stale ? ` ${css.stalePulse}` : ""}${flagged ? ` ${css.flagged}` : ""}${foundationCleanse ? ` ${css.itemUnderlay}` : ""}${selected || groupIds.includes(it.id) ? ` ${css.itemSelected}` : ""}${paintFlashId === it.id ? ` ${css.paintFlash}` : ""}`}
+                data-testid={it.ghost ? "studio-ghost" : "studio-item"}
+                data-item-type={it.t}
+                data-layer={bucket}
+                data-hittable={layerVisual.hittable ? "true" : "false"}
+                data-selected={
+                  selected || groupIds.includes(it.id) ? "true" : "false"
+                }
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
+                  left: `${it.x}%`,
+                  top: `${it.y}%`,
+                  width: w,
+                  height: h,
+                  borderRadius: d.br,
+                  opacity:
+                    tiltLocked && (d.heightM ?? 0) > 0
+                      ? 0
+                      : (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
+                  pointerEvents:
+                    foundationCleanse || !layerVisual.hittable || tiltLocked
+                      ? "none"
+                      : undefined,
+                  transform: `translate(-50%, -50%) rotate(${it.rot}deg)`,
+                  border: it.ghost
+                    ? isCur
+                      ? `1.5px solid ${CSS_TOKEN.textPrimary}`
+                      : it.stale
+                        ? "1px dashed var(--sds-compliance-amber)"
+                        : `1px dashed ${mixOnCanvas(CSS_TOKEN.textPrimary, 55)}`
+                    : flagged
+                      ? `1.5px solid ${CSS_TOKEN.focusRing}`
+                      : selected || groupIds.includes(it.id)
+                        ? `1.5px solid ${CSS_TOKEN.proposedStroke}`
+                        : hovered && !it.ghost
+                          ? `1px solid ${mixOnCanvas(CSS_TOKEN.textPrimary, 45)}`
+                          : "none",
+                  boxShadow:
+                    selected || groupIds.includes(it.id) ? undefined : "none",
+                  zIndex: isCur
+                    ? 50
+                    : selected || groupIds.includes(it.id)
+                      ? 20
+                      : hovered
+                        ? 10
+                        : 2,
+                }}
+                title={
+                  it.stale
+                    ? `${it.why ?? d.name} · nearby edit — recheck this`
+                    : (it.why ?? d.name)
+                }
+                onPointerEnter={() => onHover(it.id)}
+                onPointerLeave={() => onHover(null)}
+                onPointerDown={(e) => {
+                  if (tiltLocked) {
+                    e.stopPropagation();
+                    return;
+                  }
+                  if (eyedropArmed && onEyedrop) {
+                    e.stopPropagation();
+                    onEyedrop(it.t);
+                    return;
+                  }
+                  if (tool === "paint" && !it.ghost && onPaintItem) {
+                    e.stopPropagation();
+                    onPaintItem(it.id);
+                    return;
+                  }
+                  /*
+                   * Rule 2 (INTERACTION-LOGIC): in a drawing/placing tool,
+                   * objects are inert — the click falls through to the board
+                   * so the armed tool acts. Selection never silently steals it.
+                   */
+                  if (tool !== "select" && tool !== "lock") {
+                    onInertToolClick?.();
+                    return;
+                  }
+                  e.stopPropagation();
+                  const additive = e.shiftKey || e.metaKey;
+                  onSelect(it.id, { additive });
+                  // Lock is select-only (rule 5): no drag ever starts.
+                  if (!it.ghost && tool !== "lock") {
+                    const ids =
+                      groupIds.includes(it.id) && groupIds.length > 1
+                        ? groupIds
+                        : [it.id];
+                    if (ids.length > 1) {
+                      const p = toPct(e.clientX, e.clientY);
+                      const start = gridSnap ? snapToGridMetres(p, scaleM) : p;
+                      dragRef.current = {
+                        kind: "group",
+                        ids,
+                        startX: start.x,
+                        startY: start.y,
+                      };
+                      setCrosshair(start);
+                    } else {
+                      dragRef.current = {
+                        kind: "item",
+                        id: it.id,
+                        ox: 0,
+                        oy: 0,
+                      };
+                      setCrosshair({ x: it.x, y: it.y });
+                    }
+                    (e.target as Element).setPointerCapture?.(e.pointerId);
+                  }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (it.ghost) return;
+                  setNodeMenu(null);
+                  setItemMenu({ id: it.id, t: it.t, x: it.x, y: it.y });
                 }}
               >
-                {isRegionItem(it) ? (
-                  /* The drawn region is the visual — a small material-coloured
-                     centroid handle marks the drag/selection anchor. */
-                  <div
-                    className={css.regionHandle}
-                    data-testid="region-handle"
-                    style={{
-                      background: REGION_WASH[it.t] ?? PLAN_FILL.plantingWash,
-                    }}
-                    aria-hidden
-                  />
-                ) : presentationOn && isSpeciesSymbolType(it.t) ? (
-                  <svg
-                    viewBox="0 0 100 100"
-                    width="100%"
-                    height="100%"
-                    overflow="visible"
-                    aria-hidden
-                    data-testid="species-symbol"
-                    data-symbol-type={it.t}
-                  >
-                    <SpeciesSymbol
-                      type={it.t}
-                      itemId={it.id}
-                      night={darkOn && !frameOn}
-                      ghost={Boolean(it.ghost)}
-                      ink={!darkOn || frameOn}
-                      label={d.name}
-                    />
-                  </svg>
-                ) : (
-                  <StudioGlyph
-                    type={it.t}
-                    ink={!darkOn || frameOn}
-                    night={darkOn && !frameOn}
-                  />
-                )}
-              </div>
-              {previewType ? (
                 <div
-                  className={css.swatchPreview}
-                  data-testid="swatch-hover-preview"
-                  aria-hidden
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    pointerEvents: "none",
+                  }}
                 >
-                  <StudioGlyph
-                    type={previewType}
-                    ink={!darkOn || frameOn}
-                    night={darkOn && !frameOn}
-                  />
+                  {isRegionItem(it) ? (
+                    /* The drawn region is the visual — a small material-coloured
+                       centroid handle marks the drag/selection anchor. */
+                    <div
+                      className={css.regionHandle}
+                      data-testid="region-handle"
+                      style={{
+                        background: REGION_WASH[it.t] ?? PLAN_FILL.plantingWash,
+                      }}
+                      aria-hidden
+                    />
+                  ) : presentationOn && isSpeciesSymbolType(it.t) ? (
+                    <svg
+                      viewBox="0 0 100 100"
+                      width="100%"
+                      height="100%"
+                      overflow="visible"
+                      aria-hidden
+                      data-testid="species-symbol"
+                      data-symbol-type={it.t}
+                    >
+                      <SpeciesSymbol
+                        type={it.t}
+                        itemId={it.id}
+                        night={darkOn && !frameOn}
+                        ghost={Boolean(it.ghost)}
+                        ink={!darkOn || frameOn}
+                        label={d.name}
+                      />
+                    </svg>
+                  ) : (
+                    <StudioGlyph
+                      type={it.t}
+                      ink={!darkOn || frameOn}
+                      night={darkOn && !frameOn}
+                    />
+                  )}
                 </div>
+                {previewType ? (
+                  <div
+                    className={css.swatchPreview}
+                    data-testid="swatch-hover-preview"
+                    aria-hidden
+                  >
+                    <StudioGlyph
+                      type={previewType}
+                      ink={!darkOn || frameOn}
+                      night={darkOn && !frameOn}
+                    />
+                  </div>
+                ) : null}
+                {flagged && (it.t === "paving" || it.t === "deck") ? (
+                  <div className={css.hatchOverlay} aria-hidden />
+                ) : null}
+              </div>
+              {showAiChip && allowProjectedChrome ? (
+                <CameraChrome
+                  place={{
+                    kind: "project",
+                    pct: { x: it.x, y: it.y },
+                    cam,
+                    transform: `translate(calc(-100% + ${halfWPx + 5}px), calc(-${halfHPx + 5}px))`,
+                  }}
+                >
+                  <span
+                    className={`${css.aiChip}${isCur ? ` ${css.aiChipHot}` : ""}`}
+                  >
+                    AI
+                  </span>
+                </CameraChrome>
               ) : null}
-              {flagged && (it.t === "paving" || it.t === "deck") ? (
-                <div className={css.hatchOverlay} aria-hidden />
+              {showGhostActions && allowProjectedChrome ? (
+                <CameraChrome
+                  place={{
+                    kind: "project",
+                    pct: { x: it.x, y: it.y },
+                    cam,
+                    transform: `translate(-50%, ${halfHPx + 6}px)`,
+                  }}
+                >
+                  <div
+                    className={css.ghostActions}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className={css.acceptBtn}
+                      onClick={() => onAcceptGhost(it.id)}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      className={css.rejectBtn}
+                      title="Reject suggestion"
+                      onClick={() => onRejectGhost(it.id)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </CameraChrome>
+              ) : null}
+              {showTracePill && allowProjectedChrome ? (
+                <CameraChrome
+                  place={{
+                    kind: "project",
+                    pct: { x: it.x, y: it.y },
+                    cam,
+                    transform: `translate(-50%, calc(-100% - ${halfHPx + 8}px))`,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={css.tracePill}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => onTraceInElevation(it.id)}
+                  >
+                    ⇄ Trace in elevation
+                  </button>
+                </CameraChrome>
               ) : null}
             </div>
-            {showAiChip && allowProjectedChrome ? (
-              <CameraChrome
-                place={{
-                  kind: "project",
-                  pct: { x: it.x, y: it.y },
-                  cam,
-                  transform: `translate(calc(-100% + ${halfWPx + 5}px), calc(-${halfHPx + 5}px))`,
-                }}
-              >
-                <span
-                  className={`${css.aiChip}${isCur ? ` ${css.aiChipHot}` : ""}`}
-                >
-                  AI
-                </span>
-              </CameraChrome>
-            ) : null}
-            {showGhostActions && allowProjectedChrome ? (
-              <CameraChrome
-                place={{
-                  kind: "project",
-                  pct: { x: it.x, y: it.y },
-                  cam,
-                  transform: `translate(-50%, ${halfHPx + 6}px)`,
-                }}
-              >
-                <div
-                  className={css.ghostActions}
-                  onPointerDown={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    className={css.acceptBtn}
-                    onClick={() => onAcceptGhost(it.id)}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    className={css.rejectBtn}
-                    title="Reject suggestion"
-                    onClick={() => onRejectGhost(it.id)}
-                  >
-                    ✕
-                  </button>
-                </div>
-              </CameraChrome>
-            ) : null}
-            {showTracePill && allowProjectedChrome ? (
-              <CameraChrome
-                place={{
-                  kind: "project",
-                  pct: { x: it.x, y: it.y },
-                  cam,
-                  transform: `translate(-50%, calc(-100% - ${halfHPx + 8}px))`,
-                }}
-              >
-                <button
-                  type="button"
-                  className={css.tracePill}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={() => onTraceInElevation(it.id)}
-                >
-                  ⇄ Trace in elevation
-                </button>
-              </CameraChrome>
-            ) : null}
-          </div>
-        );
-      })}
+          );
+        })}
 
-      <AnnotationLayer
-        annotations={annotations}
-        items={items}
-        selectedId={selectedAnnotationId}
-        night={darkOn && !frameOn}
-        opacity={notesVisual.opacity}
-        draft={!presentationOn}
-        technicalInk={sheetPen === "technical" && fitSheetStroke}
-        onSelect={(id) => {
-          onSelectAnnotation?.(id);
-          if (id) onSelect(null);
-        }}
-        onMoveNote={(id, notePos) => onMoveAnnotation?.(id, notePos)}
-      />
-
-      {speciesLabels.map((lab) => {
-        const boardH = rootRef.current?.clientHeight ?? 640;
-        const offsetPct =
-          (lab.offsetYPx / Math.max(1, boardH * planZoom)) * 100;
-        return (
-          <div
-            key={lab.id}
-            className={`${renderCss.speciesLabel}${darkOn && !frameOn ? ` ${renderCss.speciesLabelNight}` : ""} ${css.lodFade}`}
-            data-testid="species-label"
-            data-label-id={lab.id}
-            data-plan-geometry="1"
-            style={{
-              left: `${lab.xPct}%`,
-              top: `${lab.yPct + offsetPct}%`,
-              opacity: annotationLod.opacity.species,
-            }}
-            aria-hidden
-          >
-            {lab.text}
-          </div>
-        );
-      })}
-
-      {marquee ? (
-        <div
-          className={css.marquee}
-          data-plan-geometry="1"
-          style={{
-            left: `${Math.min(marquee.x1, marquee.x2)}%`,
-            top: `${Math.min(marquee.y1, marquee.y2)}%`,
-            width: `${Math.abs(marquee.x2 - marquee.x1)}%`,
-            height: `${Math.abs(marquee.y2 - marquee.y1)}%`,
+        <AnnotationLayer
+          annotations={annotations}
+          items={items}
+          selectedId={selectedAnnotationId}
+          night={darkOn && !frameOn}
+          opacity={notesVisual.opacity}
+          draft={!presentationOn}
+          technicalInk={sheetPen === "technical" && fitSheetStroke}
+          onSelect={(id) => {
+            onSelectAnnotation?.(id);
+            if (id) onSelect(null);
           }}
+          onMoveNote={(id, notePos) => onMoveAnnotation?.(id, notePos)}
         />
-      ) : null}
 
-      {showDraftGrid ? (
-        <DraftGridMesh
-          grain={gridGrain}
-          step={gridStep}
-          formation={gridFormation}
-          ink={gridInk}
-          extendPadPct={tiltLocked ? 100 : 0}
-        />
-      ) : null}
-
-      {crosshair ? (
-        <>
-          <div
-            className={`${css.snapPulse}${snapKind ? ` ${css.snapPulseLocked}` : ` ${css.snapPulseApproach}`}`}
-            data-testid="snap-radial-pulse"
-            data-plan-geometry="1"
-            data-snap={snapKind ?? "approach"}
-            style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
-          />
-          <div
-            className={`${css.crosshairV}`}
-            data-testid="draft-crosshair-v"
-            data-plan-geometry="1"
-            style={{ left: `${crosshair.x}%` }}
-          />
-          <div
-            className={`${css.crosshairH}`}
-            data-testid="draft-crosshair-h"
-            data-plan-geometry="1"
-            style={{ top: `${crosshair.y}%` }}
-          />
-          {snapKind ? (
+        {speciesLabels.map((lab) => {
+          const boardH = rootRef.current?.clientHeight ?? 640;
+          const offsetPct =
+            (lab.offsetYPx / Math.max(1, boardH * planZoom)) * 100;
+          return (
             <div
-              className={css.snapGlyph}
-              data-testid="snap-glyph"
+              key={lab.id}
+              className={`${renderCss.speciesLabel}${darkOn && !frameOn ? ` ${renderCss.speciesLabelNight}` : ""} ${css.lodFade}`}
+              data-testid="species-label"
+              data-label-id={lab.id}
               data-plan-geometry="1"
-              data-snap={snapKind}
-              style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
-              title={
-                snapKind === "vertex"
-                  ? "Snapped to vertex"
-                  : snapKind === "align"
-                    ? "Aligned to neighbour"
-                    : snapKind === "ortho"
-                      ? "Orthogonal lock"
-                      : "Snapped to grid"
-              }
+              style={{
+                left: `${lab.xPct}%`,
+                top: `${lab.yPct + offsetPct}%`,
+                opacity: annotationLod.opacity.species,
+              }}
               aria-hidden
             >
-              {snapKind === "vertex"
-                ? "●"
-                : snapKind === "align"
-                  ? "∥"
-                  : snapKind === "ortho"
-                    ? "∟"
-                    : "□"}
+              {lab.text}
             </div>
-          ) : null}
-        </>
-      ) : null}
+          );
+        })}
 
-      {guides.x != null ? (
-        <div
-          className={css.guideV}
-          data-plan-geometry="1"
-          style={{ left: `${guides.x}%` }}
-        />
-      ) : null}
-      {guides.y != null ? (
-        <div
-          className={css.guideH}
-          data-plan-geometry="1"
-          style={{ top: `${guides.y}%` }}
-        />
-      ) : null}
-
-      {selected && !frameOn && allowProjectedChrome && tool !== "lock" ? (
-        <SelectionHandles
-          item={selected}
-          cam={cam}
-          onTransform={onTransformItem}
-        />
-      ) : null}
-
-      {selected && allowProjectedChrome && !dragRef.current ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: selected.x, y: selected.y },
-            cam,
-          }}
-        >
+        {marquee ? (
           <div
-            className={css.selectedReadout}
-            data-testid="selected-shape-readout"
-          >
-            <span className={css.selectedReadoutTag}>
-              {describeSelectedItem(selected).tag}
-            </span>
-            <span className={css.selectedReadoutValue}>
-              {describeSelectedItem(selected).value}
-            </span>
-          </div>
-        </CameraChrome>
-      ) : null}
+            className={css.marquee}
+            data-plan-geometry="1"
+            style={{
+              left: `${Math.min(marquee.x1, marquee.x2)}%`,
+              top: `${Math.min(marquee.y1, marquee.y2)}%`,
+              width: `${Math.abs(marquee.x2 - marquee.x1)}%`,
+              height: `${Math.abs(marquee.y2 - marquee.y1)}%`,
+            }}
+          />
+        ) : null}
 
-      {tpzReadouts?.map((r) =>
-        r.active && allowProjectedChrome ? (
+        {showDraftGrid ? (
+          <DraftGridMesh
+            grain={gridGrain}
+            step={gridStep}
+            formation={gridFormation}
+            ink={gridInk}
+            extendPadPct={tiltLocked ? 100 : 0}
+          />
+        ) : null}
+
+        {crosshair ? (
+          <>
+            <div
+              className={`${css.snapPulse}${snapKind ? ` ${css.snapPulseLocked}` : ` ${css.snapPulseApproach}`}`}
+              data-testid="snap-radial-pulse"
+              data-plan-geometry="1"
+              data-snap={snapKind ?? "approach"}
+              style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
+            />
+            <div
+              className={`${css.crosshairV}`}
+              data-testid="draft-crosshair-v"
+              data-plan-geometry="1"
+              style={{ left: `${crosshair.x}%` }}
+            />
+            <div
+              className={`${css.crosshairH}`}
+              data-testid="draft-crosshair-h"
+              data-plan-geometry="1"
+              style={{ top: `${crosshair.y}%` }}
+            />
+            {snapKind ? (
+              <div
+                className={css.snapGlyph}
+                data-testid="snap-glyph"
+                data-plan-geometry="1"
+                data-snap={snapKind}
+                style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
+                title={
+                  snapKind === "vertex"
+                    ? "Snapped to vertex"
+                    : snapKind === "align"
+                      ? "Aligned to neighbour"
+                      : snapKind === "ortho"
+                        ? "Orthogonal lock"
+                        : "Snapped to grid"
+                }
+                aria-hidden
+              >
+                {snapKind === "vertex"
+                  ? "●"
+                  : snapKind === "align"
+                    ? "∥"
+                    : snapKind === "ortho"
+                      ? "∟"
+                      : "□"}
+              </div>
+            ) : null}
+          </>
+        ) : null}
+
+        {guides.x != null ? (
+          <div
+            className={css.guideV}
+            data-plan-geometry="1"
+            style={{ left: `${guides.x}%` }}
+          />
+        ) : null}
+        {guides.y != null ? (
+          <div
+            className={css.guideH}
+            data-plan-geometry="1"
+            style={{ top: `${guides.y}%` }}
+          />
+        ) : null}
+
+        {selected && !frameOn && allowProjectedChrome && tool !== "lock" ? (
+          <SelectionHandles
+            item={selected}
+            cam={cam}
+            onTransform={onTransformItem}
+          />
+        ) : null}
+
+        {selected && allowProjectedChrome && !dragRef.current ? (
           <CameraChrome
-            key={r.id}
-            place={{ kind: "project", pct: { x: r.x, y: r.y }, cam }}
+            place={{
+              kind: "project",
+              pct: { x: selected.x, y: selected.y },
+              cam,
+            }}
           >
             <div
-              className={css.tpzReadout}
-              data-testid="tpz-encroach-readout"
+              className={css.selectedReadout}
+              data-testid="selected-shape-readout"
             >
-              TPZ {Math.round(r.pct)}%
+              <span className={css.selectedReadoutTag}>
+                {describeSelectedItem(selected).tag}
+              </span>
+              <span className={css.selectedReadoutValue}>
+                {describeSelectedItem(selected).value}
+              </span>
             </div>
           </CameraChrome>
-        ) : null,
-      )}
+        ) : null}
 
-      {showEditBanner ? (
-        <CameraChrome>
-          <div className={css.editBanner} data-testid="edit-vector-banner">
-            Hover node to move · hover edge diamond to add · right-click node to
-            delete
-          </div>
-        </CameraChrome>
-      ) : null}
+        {tpzReadouts?.map((r) =>
+          r.active && allowProjectedChrome ? (
+            <CameraChrome
+              key={r.id}
+              place={{ kind: "project", pct: { x: r.x, y: r.y }, cam }}
+            >
+              <div
+                className={css.tpzReadout}
+                data-testid="tpz-encroach-readout"
+              >
+                TPZ {Math.round(r.pct)}%
+              </div>
+            </CameraChrome>
+          ) : null,
+        )}
 
-      {cursorPct && allowProjectedChrome ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: cursorPct.x, y: cursorPct.y },
-            cam,
-          }}
-        >
-          <div className={css.cursorBadge} data-testid="smart-cursor-badge">
-            <span className={css.cursorTool}>{toolLabel}</span>
-          </div>
-        </CameraChrome>
-      ) : null}
+        {showEditBanner ? (
+          <CameraChrome>
+            <div className={css.editBanner} data-testid="edit-vector-banner">
+              Hover node to move · hover edge diamond to add · right-click node to
+              delete
+            </div>
+          </CameraChrome>
+        ) : null}
 
-      {nodeMenu && allowProjectedChrome ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: nodeMenu.x, y: nodeMenu.y },
-            cam,
-          }}
-        >
-          <div
-            className={css.nodeMenu}
-            data-testid="vector-node-menu"
-            onPointerDown={(e) => e.stopPropagation()}
+        {cursorPct && allowProjectedChrome ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: { x: cursorPct.x, y: cursorPct.y },
+              cam,
+            }}
           >
-            <button
-              type="button"
-              className={css.nodeMenuBtn}
-              disabled={
-                (nodeMenu.kind === "boundary"
-                  ? boundary.length
-                  : building.length) <= 3
-              }
-              onClick={() => removeNode(nodeMenu.kind, nodeMenu.index)}
-            >
-              Delete node
-            </button>
-            <button
-              type="button"
-              className={css.nodeMenuBtn}
-              onClick={() => insertMid(nodeMenu.kind, nodeMenu.index)}
-            >
-              Add node after
-            </button>
-            <button
-              type="button"
-              className={css.nodeMenuBtn}
-              onClick={() => setNodeMenu(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </CameraChrome>
-      ) : null}
+            <div className={css.cursorBadge} data-testid="smart-cursor-badge">
+              <span className={css.cursorTool}>{toolLabel}</span>
+            </div>
+          </CameraChrome>
+        ) : null}
 
-      {itemMenu && allowProjectedChrome ? (
-        <CameraChrome
-          place={{
-            kind: "project",
-            pct: { x: itemMenu.x, y: itemMenu.y },
-            cam,
-          }}
-        >
-          <div
-            className={css.radialMenu}
-            data-testid="item-radial-menu"
-            onPointerDown={(e) => e.stopPropagation()}
+        {nodeMenu && allowProjectedChrome ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: { x: nodeMenu.x, y: nodeMenu.y },
+              cam,
+            }}
           >
-            <button
-              type="button"
-              className={`${css.radialBtn} ${css.radialNorth}`}
-              onClick={() => {
-                onSelect(itemMenu.id);
-                setItemMenu(null);
-              }}
+            <div
+              className={css.nodeMenu}
+              data-testid="vector-node-menu"
+              onPointerDown={(e) => e.stopPropagation()}
             >
-              Select
-            </button>
-            <button
-              type="button"
-              className={`${css.radialBtn} ${css.radialEast}`}
-              onClick={() => {
-                onEyedrop?.(itemMenu.t);
-                setItemMenu(null);
-              }}
-            >
-              Pick
-            </button>
-            <button
-              type="button"
-              className={`${css.radialBtn} ${css.radialSouth}`}
-              onClick={() => {
-                onPaintItem?.(itemMenu.id);
-                setItemMenu(null);
-              }}
-            >
-              Fill
-            </button>
-            <button
-              type="button"
-              className={`${css.radialBtn} ${css.radialWest}`}
-              onClick={() => setItemMenu(null)}
-            >
-              Close
-            </button>
-          </div>
-        </CameraChrome>
-      ) : null}
+              <button
+                type="button"
+                className={css.nodeMenuBtn}
+                disabled={
+                  (nodeMenu.kind === "boundary"
+                    ? boundary.length
+                    : building.length) <= 3
+                }
+                onClick={() => removeNode(nodeMenu.kind, nodeMenu.index)}
+              >
+                Delete node
+              </button>
+              <button
+                type="button"
+                className={css.nodeMenuBtn}
+                onClick={() => insertMid(nodeMenu.kind, nodeMenu.index)}
+              >
+                Add node after
+              </button>
+              <button
+                type="button"
+                className={css.nodeMenuBtn}
+                onClick={() => setNodeMenu(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </CameraChrome>
+        ) : null}
 
-      {easements.some((r) => r.length >= 3) ||
-      services.some((r) => r.length >= 2) ||
-      bydaAssets.some((a) => a.ring.length >= 2) ? (
-        <CameraChrome>
-          <div className={css.honestyStack}>
-            {easements.some((r) => r.length >= 3) ? (
-              <p
-                className={css.honestyFooter}
-                data-testid="easement-honesty-footer"
+        {itemMenu && allowProjectedChrome ? (
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: { x: itemMenu.x, y: itemMenu.y },
+              cam,
+            }}
+          >
+            <div
+              className={css.radialMenu}
+              data-testid="item-radial-menu"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className={`${css.radialBtn} ${css.radialNorth}`}
+                onClick={() => {
+                  onSelect(itemMenu.id);
+                  setItemMenu(null);
+                }}
               >
-                {titleMeta?.sourceKind === "vicmap"
-                  ? "Indicative easement — Vicmap; verify on title before excavation"
-                  : "Easement hatch · indicative only — confirm with title / council before excavation"}
-              </p>
-            ) : null}
-            {services.some((r) => r.length >= 2) ? (
-              <p
-                className={css.honestyFooter}
-                data-testid="utility-honesty-footer"
+                Select
+              </button>
+              <button
+                type="button"
+                className={`${css.radialBtn} ${css.radialEast}`}
+                onClick={() => {
+                  onEyedrop?.(itemMenu.t);
+                  setItemMenu(null);
+                }}
               >
-                Service / Vicmap easement lines · subset of title easements —
-                confirm survey / council / DBYD before dig
-              </p>
-            ) : null}
-            {bydaAssets.some((a) => a.ring.length >= 2) ? (
-              <p
-                className={css.honestyFooter}
-                data-testid="byda-honesty-footer"
+                Pick
+              </button>
+              <button
+                type="button"
+                className={`${css.radialBtn} ${css.radialSouth}`}
+                onClick={() => {
+                  onPaintItem?.(itemMenu.id);
+                  setItemMenu(null);
+                }}
               >
-                BYDA typed assets · digitised from plans — not Vicmap easements;
-                current BYDA enquiry still required before dig
-              </p>
-            ) : null}
-          </div>
-        </CameraChrome>
-      ) : null}
+                Fill
+              </button>
+              <button
+                type="button"
+                className={`${css.radialBtn} ${css.radialWest}`}
+                onClick={() => setItemMenu(null)}
+              >
+                Close
+              </button>
+            </div>
+          </CameraChrome>
+        ) : null}
 
-      {tiltLocked ? (
-        <>
-          <TiltBuildingExtrusion
-            building={building}
-            boundary={boundary}
-            boardW={layout.w}
-            boardH={layout.h}
-            ppm={tiltPpm}
-            tiltDeg={tiltDeg}
-          />
-          {items
-            .filter((it) => !it.ghost && (BY_TYPE[it.t]?.heightM ?? 0) > 0)
-            .map((it) => (
-              <TiltBillboard
-                key={`tilt-${it.id}`}
-                item={it}
-                ppm={tiltPpm}
-                tiltDeg={tiltDeg}
-                ink={!darkOn || frameOn}
-              />
-            ))}
-        </>
-      ) : null}
-    </div>
+        {easements.some((r) => r.length >= 3) ||
+          services.some((r) => r.length >= 2) ||
+          bydaAssets.some((a) => a.ring.length >= 2) ? (
+          <CameraChrome>
+            <div className={css.honestyStack}>
+              {easements.some((r) => r.length >= 3) ? (
+                <p
+                  className={css.honestyFooter}
+                  data-testid="easement-honesty-footer"
+                >
+                  {titleMeta?.sourceKind === "vicmap"
+                    ? "Indicative easement — Vicmap; verify on title before excavation"
+                    : "Easement hatch · indicative only — confirm with title / council before excavation"}
+                </p>
+              ) : null}
+              {services.some((r) => r.length >= 2) ? (
+                <p
+                  className={css.honestyFooter}
+                  data-testid="utility-honesty-footer"
+                >
+                  Service / Vicmap easement lines · subset of title easements —
+                  confirm survey / council / DBYD before dig
+                </p>
+              ) : null}
+              {bydaAssets.some((a) => a.ring.length >= 2) ? (
+                <p
+                  className={css.honestyFooter}
+                  data-testid="byda-honesty-footer"
+                >
+                  BYDA typed assets · digitised from plans — not Vicmap easements;
+                  current BYDA enquiry still required before dig
+                </p>
+              ) : null}
+            </div>
+          </CameraChrome>
+        ) : null}
+
+        {tiltLocked ? (
+          <>
+            <TiltBuildingExtrusion
+              building={building}
+              boundary={boundary}
+              boardW={layout.w}
+              boardH={layout.h}
+              ppm={tiltPpm}
+              tiltDeg={tiltDeg}
+            />
+            {items
+              .filter((it) => !it.ghost && (BY_TYPE[it.t]?.heightM ?? 0) > 0)
+              .map((it) => (
+                <TiltBillboard
+                  key={`tilt-${it.id}`}
+                  item={it}
+                  ppm={tiltPpm}
+                  tiltDeg={tiltDeg}
+                  ink={!darkOn || frameOn}
+                />
+              ))}
+          </>
+        ) : null}
+      </div>
     </SunShadowProvider>
   );
 }

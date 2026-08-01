@@ -424,7 +424,7 @@ async function describeGeometryField(typeName: string): Promise<string> {
   if (!field) {
     throw new Error(
       `Vicmap layer ${typeName}: could not find a geometry field in DescribeFeatureType. ` +
-        `Inspect ${url} and update the CQL INTERSECTS(<geomField>, …) field name.`,
+      `Inspect ${url} and update the CQL INTERSECTS(<geomField>, …) field name.`,
     );
   }
   return field;
@@ -438,7 +438,7 @@ export async function discoverPropertyLayer(): Promise<DiscoveredLayer> {
   if (!typeName) {
     throw new Error(
       "Vicmap: no property/parcel FeatureType found in GetCapabilities. " +
-        `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
+      `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
     );
   }
   const geomField = await describeGeometryField(typeName);
@@ -454,7 +454,7 @@ export async function discoverBuildingLayer(): Promise<DiscoveredLayer> {
   if (!typeName) {
     throw new Error(
       "Vicmap: no building polygon FeatureType found in GetCapabilities. " +
-        `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
+      `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
     );
   }
   const geomField = await describeGeometryField(typeName);
@@ -470,7 +470,7 @@ export async function discoverEasementLayer(): Promise<DiscoveredLayer> {
   if (!typeName) {
     throw new Error(
       "Vicmap: no easement FeatureType found in GetCapabilities. " +
-        `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
+      `Inspect ${WFS_BASE}?service=WFS&request=GetCapabilities`,
     );
   }
   const geomField = await describeGeometryField(typeName);
@@ -538,7 +538,7 @@ export function explodeLineRings(geom: RawGeometry): Ring[] {
 }
 
 /** Largest exterior ring — used for building footprints (main mass). */
-function largestPolygonRing(geom: RawGeometry): Ring | null {
+function _largestPolygonRing(geom: RawGeometry): Ring | null {
   let best: Ring | null = null;
   let bestArea = 0;
   for (const ring of explodeExteriorRings(geom)) {

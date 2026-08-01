@@ -3,11 +3,8 @@ import {
   clickHeaderViewItem,
   createSurveyProject,
   handoffStudio,
+  takeScreenshot,
 } from "./helpers";
-import path from "node:path";
-import fs from "node:fs";
-
-const OUT = path.join(__dirname, "artifacts", "camera-chrome-shots");
 
 test.describe("Sketch surfaces reconciliation", () => {
   test("plastic tray + margin strip; night dolphin; chrome gate", async ({
@@ -62,10 +59,7 @@ test.describe("Sketch surfaces reconciliation", () => {
     expect(penBg.bg).not.toMatch(/rgba?\(36,\s*19,\s*24/);
     expect(penBg.bg).not.toMatch(/rgba?\(28,\s*25,\s*23/);
 
-    fs.mkdirSync(OUT, { recursive: true });
-    const dest = path.join(OUT, "night-sketch.png");
-    await page.screenshot({ path: dest, fullPage: false });
-    expect(fs.existsSync(dest)).toBe(true);
+    await takeScreenshot(page, "night-sketch");
   });
 
   test("sketch enters on Select — drag grabs, Pen chip re-arms ink", async ({

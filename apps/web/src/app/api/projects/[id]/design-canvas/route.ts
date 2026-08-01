@@ -23,7 +23,7 @@ export async function PUT(
 
   let body: unknown;
   try {
-    body = await req.json();
+    body = JSON.parse(await req.text());
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }

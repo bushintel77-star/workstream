@@ -5,9 +5,7 @@
   right: 0;
   z-index: 52;
   width: min(304px, calc(100vw - 40px));
-  max-height: calc(
-    100% - var(--ws-safe-top, 40px) - var(--ws-safe-bottom, 36px) - 16px
-  );
+  max-height: calc(100% - var(--ws-safe-top, 40px) - var(--ws-safe-bottom, 36px) - 16px);
   overflow: auto;
   pointer-events: auto;
   border-radius: 12px 0 0 12px;
@@ -16,8 +14,15 @@
   background: var(--hc-invert);
 }
 
+/* Programmatic focus on open (Esc/Tab trap owner) — visible, not a stray
+   default outline box around the whole lane. */
+.slot:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: -2px;
+}
+
 /* Children fill the lane — no per-panel left/top. */
-.slot > * {
+.slot>* {
   position: relative;
   top: auto;
   left: auto;

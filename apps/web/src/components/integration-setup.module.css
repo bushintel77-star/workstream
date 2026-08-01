@@ -30,7 +30,7 @@
 }
 
 .stepDone {
-  color: #15803d;
+  color: var(--ok);
   font-weight: 700;
 }
 

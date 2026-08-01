@@ -1,30 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
-import path from "node:path";
-import fs from "node:fs";
+import { createSurveyProject, handoffStudio, takeScreenshot } from "./helpers";
 
 /**
  * Two-zoom screenshot pack per mode for camera-chrome sign-off.
  * Artifacts land under e2e/artifacts/camera-chrome-shots/ (outside Playwright's
  * cleaned test-results/ outputDir).
  */
-
-const OUT = path.join(__dirname, "artifacts", "camera-chrome-shots");
-
-async function shot(
-  page: import("@playwright/test").Page,
-  name: string,
-) {
-  fs.mkdirSync(OUT, { recursive: true });
-  const dest = path.join(OUT, `${name}.png`);
-  await page.screenshot({
-    path: dest,
-    fullPage: false,
-  });
-  if (!fs.existsSync(dest)) {
-    throw new Error(`screenshot missing after write: ${dest}`);
-  }
-}
 
 async function zoomOut(page: import("@playwright/test").Page, ticks: number) {
   const board = page.getByTestId("studio-board");
@@ -55,9 +36,9 @@ test.describe("Camera chrome screenshot pack", () => {
     await expect(page.getByTestId("sketch-convert-bar")).toBeVisible({
       timeout: 15_000,
     });
-    await shot(page, "sketch-zoom-near");
+    await takeScreenshot(page, "sketch-zoom-near");
     await zoomOut(page, 3);
-    await shot(page, "sketch-zoom-far");
+    await takeScreenshot(page, "sketch-zoom-far");
     expect(
       await page.locator('[data-testid="zoom-world"] [data-camera-chrome]').count(),
     ).toBe(0);
@@ -68,9 +49,9 @@ test.describe("Camera chrome screenshot pack", () => {
       timeout: 15_000,
     });
     await zoomIn(page, 2);
-    await shot(page, "cad-zoom-near");
+    await takeScreenshot(page, "cad-zoom-near");
     await zoomOut(page, 4);
-    await shot(page, "cad-zoom-far");
+    await takeScreenshot(page, "cad-zoom-far");
     expect(
       await page.locator('[data-testid="zoom-world"] [data-camera-chrome]').count(),
     ).toBe(0);
@@ -79,9 +60,9 @@ test.describe("Camera chrome screenshot pack", () => {
     await page.goto(`/projects/${projectId}?mode=survey`);
     await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
     await zoomIn(page, 2);
-    await shot(page, "survey-zoom-near");
+    await takeScreenshot(page, "survey-zoom-near");
     await zoomOut(page, 4);
-    await shot(page, "survey-zoom-far");
+    await takeScreenshot(page, "survey-zoom-far");
 
     // Fit sheet
     await page.goto(`/projects/${projectId}?mode=cad`);
@@ -92,16 +73,16 @@ test.describe("Camera chrome screenshot pack", () => {
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 15_000,
     });
-    await shot(page, "fit-zoom-a");
+    await takeScreenshot(page, "fit-zoom-a");
     await zoomOut(page, 2);
-    await shot(page, "fit-zoom-b");
+    await takeScreenshot(page, "fit-zoom-b");
 
     // Elevation (no zoomWorld)
     await page.goto(`/projects/${projectId}?mode=elevation`);
     await expect(page.getByTestId("elevation-profile")).toBeVisible({
       timeout: 15_000,
     });
-    await shot(page, "elevation-a");
-    await shot(page, "elevation-b");
+    await takeScreenshot(page, "elevation-a");
+    await takeScreenshot(page, "elevation-b");
   });
 });

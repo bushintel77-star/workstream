@@ -60,7 +60,7 @@ type Props = {
   canvasEngaged?: boolean;
   onUri: (uri: string | null) => void;
   onScanning: (v: boolean) => void;
-  onCanopyImage: (image: CanopyImagePayload) => void;
+  onCanopyImage: (image: CanopyImagePayload) => void | Promise<void>;
 };
 
 /**
@@ -251,6 +251,7 @@ export function AerialSlot({
           ref={imgRef}
           src={uri}
           alt=""
+          aria-hidden="true"
           className={`${css.img}${aerialReady ? ` ${css.imgReady}` : ""}`}
           style={{
             opacity: frameOn

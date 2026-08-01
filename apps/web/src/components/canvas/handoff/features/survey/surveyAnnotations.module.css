@@ -44,9 +44,9 @@
 .levelLabel {
   font-size: 10px;
   padding: 2px 5px;
-  border: 1px solid rgba(28, 25, 23, 0.12);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
   border-radius: 6px;
-  background: rgba(242, 240, 235, 0.88);
+  background: color-mix(in srgb, var(--hc-paper) 88%, transparent);
   box-shadow: 0 3px 10px var(--hc-neu-shadow);
   font-variant-numeric: tabular-nums;
   transform: translate(9px, calc(-100% - 18px));
@@ -55,8 +55,8 @@
 .fallLabel {
   font-size: 9px;
   color: var(--hc-ink-faint);
-  background: rgba(242, 240, 235, 0.88);
-  border: 1px solid rgba(28, 25, 23, 0.12);
+  background: color-mix(in srgb, var(--hc-paper) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
   padding: 1px 5px;
   transform: translate(-50%, calc(-100% - 6px));
 }
@@ -71,8 +71,8 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--hc-ink);
-  background: rgba(242, 240, 235, 0.94);
-  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: color-mix(in srgb, var(--hc-paper) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 18%, transparent);
   border-radius: 0;
   padding: 6px 12px;
   pointer-events: none;

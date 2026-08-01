@@ -16,11 +16,9 @@ import {
   sketchWidthForPointer,
 } from "./sketchInput";
 import {
-  SKETCH_TIP_GRADES,
-  SKETCH_TIP_LABEL,
   type SketchTipGrade,
 } from "./sketchCursors";
-import { CameraChrome } from "../../CameraChrome";
+import { SketchDock } from "./SketchDock";
 import { semanticForTheme } from "../../../../../styles/colorTokens";
 import { MarginStrip } from "../surfaces/MarginStrip";
 import marginCss from "../surfaces/marginStrip.module.css";
@@ -64,6 +62,8 @@ type Props = {
     tool: SketchTool;
     tip: SketchTipGrade;
   }) => void;
+  /** Open the image-layers right panel (upload / manage underlays). */
+  onOpenImageLayers?: () => void;
 };
 
 type ActiveStroke = {
@@ -96,6 +96,7 @@ export function SketchBoard({
   onActivate,
   hideChrome = false,
   onChromeChange,
+  onOpenImageLayers,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const drawing = useRef<ActiveStroke | null>(null);
@@ -265,83 +266,17 @@ export function SketchBoard({
       </svg>
       {!readOnly && !hideChrome ? (
         <>
-          <CameraChrome anchorRef={rootRef}>
-            <div
-              className={css.tray}
-              data-testid="sketch-convert-bar"
-              role="toolbar"
-              aria-label="Sketch tools"
-            >
-              <button
-                type="button"
-                className={`${css.chip}${active && tool === "pen" ? ` ${css.chipArmed}` : ""}`}
-                data-testid="sketch-pen"
-                aria-pressed={active && tool === "pen"}
-                disabled={formalizing}
-                title="Fine-tip marker — grade tip for thicker ink"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setTool("pen");
-                  onActivate?.();
-                }}
-              >
-                <span className={css.chipGlyph} aria-hidden>
-                  ✎
-                </span>
-                Pen
-              </button>
-              <button
-                type="button"
-                className={`${css.chip}${active && tool === "eraser" ? ` ${css.chipArmed}` : ""}`}
-                data-testid="sketch-eraser"
-                aria-pressed={active && tool === "eraser"}
-                disabled={formalizing}
-                title="Eraser — remove whole strokes"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setTool("eraser");
-                  onActivate?.();
-                }}
-              >
-                <span className={css.chipGlyph} aria-hidden>
-                  ⌫
-                </span>
-                Eraser
-              </button>
-              {tool === "pen" ? (
-                <div
-                  className={css.tipGrade}
-                  role="group"
-                  aria-label="Pen tip grade"
-                  data-testid="sketch-tip-grade"
-                >
-                  {SKETCH_TIP_GRADES.map((grade) => (
-                    <button
-                      key={grade}
-                      type="button"
-                      className={`${css.tip}${tip === grade ? ` ${css.tipArmed}` : ""}`}
-                      data-testid={`sketch-tip-${grade}`}
-                      aria-pressed={tip === grade}
-                      disabled={formalizing}
-                      title={`${SKETCH_TIP_LABEL[grade]} tip`}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => {
-                        setTip(grade);
-                        onActivate?.();
-                      }}
-                    >
-                      <span
-                        className={css.tipDot}
-                        data-grade={grade}
-                        aria-hidden
-                      />
-                      {SKETCH_TIP_LABEL[grade]}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </CameraChrome>
+          <SketchDock
+            tool={tool}
+            tip={tip}
+            active={active}
+            formalizing={formalizing}
+            anchorRef={rootRef}
+            onTool={setTool}
+            onTip={setTip}
+            onActivate={onActivate}
+            onOpenImageLayers={onOpenImageLayers}
+          />
           <MarginStrip
             dark={darkOn}
             history={

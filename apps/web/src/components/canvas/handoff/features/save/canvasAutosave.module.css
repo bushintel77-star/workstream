@@ -5,16 +5,12 @@
 .chip {
   --ink: var(--hc-ink-muted);
   --neu: var(--hc-neu-raised);
-  --neu-out: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
-  --neu-in: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  --neu-out: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
+  --neu-in: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 
   display: inline-flex;
   align-items: center;
@@ -53,7 +49,7 @@
 
 .chipSaved .dot {
   background: var(--hc-success);
-  box-shadow: 0 0 0 2px rgba(31, 138, 90, 0.16);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hc-success) 16%, transparent);
 }
 
 .chipBusy .dot {
@@ -87,10 +83,12 @@
 }
 
 @keyframes autosavePulse {
+
   0%,
   100% {
     opacity: 0.45;
   }
+
   50% {
     opacity: 1;
   }

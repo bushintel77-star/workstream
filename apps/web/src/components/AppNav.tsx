@@ -16,7 +16,7 @@ export function AppNav({ summary, brandSub = false }: Props) {
   return (
     <nav className={nav.bar} aria-label="Workstream">
       <div className={nav.inner}>
-        <Link href="/" className={nav.brand}>
+        <Link href="/home" className={nav.brand}>
           <span className={nav.brandMark} aria-hidden />
           <span className={nav.brandText}>
             Workstream
@@ -26,7 +26,7 @@ export function AppNav({ summary, brandSub = false }: Props) {
           </span>
         </Link>
         <div className={nav.links}>
-          <Link href="/" className={nav.link}>
+          <Link href="/home" className={nav.link}>
             Projects
           </Link>
           <Link href="/settings" className={nav.link}>
@@ -45,7 +45,7 @@ export function AppNav({ summary, brandSub = false }: Props) {
         <details className={nav.mobileMenu}>
           <summary className={nav.menuButton}>Menu</summary>
           <div className={nav.mobilePanel}>
-            <Link href="/" className={nav.mobileLink}>
+            <Link href="/home" className={nav.mobileLink}>
               Projects
             </Link>
             <Link href="/settings" className={nav.mobileLink}>

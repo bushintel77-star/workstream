@@ -1,4 +1,5 @@
 import type { GridGrain } from "./snap";
+import { CSS_TOKEN, mixOnCanvas } from "../../../../styles/colorTokens";
 
 export type { GridGrain };
 
@@ -49,11 +50,11 @@ export const GRID_INK_LABEL: Record<GridInk, string> = {
 
 /** Stroke / fill colour for the draft mesh. */
 export const GRID_INK_STROKE: Record<GridInk, string> = {
-  charcoal: "rgba(36, 19, 24, 0.16)",
-  slate: "rgba(122, 85, 96, 0.28)",
-  paper: "rgba(255, 251, 252, 0.5)",
-  mist: "rgba(246, 234, 237, 0.65)",
-  signal: "rgba(194, 69, 95, 0.35)",
+  charcoal: mixOnCanvas(CSS_TOKEN.textPrimary, 16),
+  slate: mixOnCanvas(CSS_TOKEN.textMuted, 28),
+  paper: mixOnCanvas(CSS_TOKEN.textPrimary, 50),
+  mist: mixOnCanvas(CSS_TOKEN.textMuted, 65),
+  signal: mixOnCanvas(CSS_TOKEN.existingStroke, 35),
 };
 
 export function nextInRing<T>(list: readonly T[], current: T): T {

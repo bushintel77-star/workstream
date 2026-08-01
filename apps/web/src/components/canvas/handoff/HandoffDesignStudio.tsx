@@ -124,12 +124,18 @@ import { SunMarkerPip } from "./features/shade/SunMarkerPip";
 import { ClimateBedWash } from "./features/shade/ClimateBedWash";
 import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { SketchBoard } from "./features/sketch/SketchBoard";
+import { ImageLayerSlot } from "./features/sketch/ImageLayerSlot";
+import { ImageLayerPanel } from "./features/sketch/ImageLayerPanel";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { ToolDock } from "./features/toolDock/ToolDock";
 import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
+import { CanvasToolCard } from "./features/toolDock/CanvasToolCard";
+import { CanvasTopBorder } from "./features/toolDock/CanvasTopBorder";
+import { CanvasHeaderRail } from "./features/toolDock/CanvasHeaderRail";
+import { CanvasContextCard } from "./features/toolDock/CanvasContextCard";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import {
@@ -239,6 +245,18 @@ import {
 } from "./geometry/canvasViewRotation";
 import { ViewNorthControl } from "./features/viewRotate/ViewNorthControl";
 import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
+import {
+  isTwoFingerCameraGesture,
+  panFromTouchMidpoint,
+  touchDistance,
+  touchMidpoint,
+  zoomFromPinch,
+} from "./geometry/canvasTouchCamera";
+import {
+  PHONE_DATA_SHEET_HEIGHT_PX,
+  PHONE_TOOL_DOCK_CLEARANCE_PX,
+  useStudioLayout,
+} from "../../../hooks/useStudioLayout";
 import { TiltHintPill } from "./features/tilt/TiltHintPill";
 import {
   TILT_ANIM_MS_FAST,
@@ -265,6 +283,7 @@ import {
   lookupCadastralTitleAction,
 } from "../../../app/actions";
 import { useToast } from "../../ToastHost";
+import { useChromeIdle } from "./hooks/useChromeIdle";
 import { suggestedMode, unlockedModes } from "../../../lib/canvas-mode";
 import { useBoardFindings } from "../../../lib/use-board-findings";
 import { useBoardReport } from "../../../lib/use-board-report";
@@ -286,6 +305,7 @@ type Props = {
   initialIrrigationZones?: IrrigationZone[];
   initialConstructionTrenches?: ConstructionTrench[];
   initialAnnotations?: CanvasAnnotation[];
+  initialImageLayers?: import("@workstream/contracts").ImageLayer[];
   initialFeatures?: LandscapeFeature[];
   initialPresentationPack?: PresentationPack | null;
   initialLifecyclePhase?: DesignLifecyclePhase;
@@ -312,6 +332,7 @@ export function HandoffDesignStudio({
   initialIrrigationZones = [],
   initialConstructionTrenches = [],
   initialAnnotations = [],
+  initialImageLayers = [],
   initialFeatures = [],
   initialPresentationPack = null,
   initialLifecyclePhase = "concept",
@@ -335,6 +356,7 @@ export function HandoffDesignStudio({
     initialIrrigationZones,
     initialConstructionTrenches,
     initialAnnotations,
+    initialImageLayers,
     initialFeatures,
     initialPresentationPack,
     initialLifecyclePhase,
@@ -407,6 +429,9 @@ export function HandoffDesignStudio({
   });
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
+  /** Phone vs desktop chrome — adaptive shell; board engines unchanged. */
+  const studioLayout = useStudioLayout();
+  const isPhoneLayout = studioLayout === "phone";
   /**
    * Drag-to-pan — Space held (grab, armed) vs actively dragging (grabbing).
    * spaceHeldRef/panDragBaseRef back the gesture listeners so pan drags
@@ -416,6 +441,13 @@ export function HandoffDesignStudio({
   const [spacePanArmed, setSpacePanArmed] = useState(false);
   const [isPanningActive, setIsPanningActive] = useState(false);
   const panBaseRef = useRef({ x: 0, y: 0 });
+  /** Live zoom for multi-touch pinch (avoids stale closures mid-gesture). */
+  const zoomRef = useRef(1);
+  /**
+   * True while a two-finger pan/pinch is active — single-finger pan/sketch
+   * capture listeners must stand down.
+   */
+  const touchCameraActiveRef = useRef(false);
   /**
    * Sketch pad has no marquee — while the Pan tool is armed there, a plain
    * left-drag grabs the canvas (the pad steps aside; see SketchBoard.active).
@@ -766,6 +798,10 @@ export function HandoffDesignStudio({
   }, [ui.panX, ui.panY]);
 
   useEffect(() => {
+    zoomRef.current = clampZoom(ui.zoom);
+  }, [ui.zoom]);
+
+  useEffect(() => {
     /*
      * Sketch pad has nothing to marquee — Select-drag pans the camera there
      * (the pen only inks while armed). Plan modes marquee; pan is Space/middle.
@@ -829,6 +865,8 @@ export function HandoffDesignStudio({
       ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
     if (!planMode) return;
     const onPointerDownCapture = (e: PointerEvent) => {
+      /* Two-finger camera owns the board — do not start a one-finger pan. */
+      if (touchCameraActiveRef.current) return;
       /* Pan-tool grab never swallows chrome (dock chips, tray buttons). */
       const overChrome = Boolean(
         (e.target as HTMLElement | null)?.closest(
@@ -872,6 +910,101 @@ export function HandoffDesignStudio({
         capture: true,
       });
   }, [studio, ui.mode]);
+
+  /**
+   * Two-finger pan + pinch zoom (phone / tablet). Desktop Space/wheel paths
+   * stay above; this only arms on `pointerType === "touch"`.
+   */
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const planMode =
+      ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+    if (!planMode) return;
+
+    const pointers = new Map<number, { x: number; y: number }>();
+    let gesture: {
+      startMid: { x: number; y: number };
+      startDist: number;
+      basePan: { x: number; y: number };
+      baseZoom: number;
+    } | null = null;
+
+    const overChrome = (target: EventTarget | null) =>
+      Boolean(
+        (target as HTMLElement | null)?.closest?.(
+          "button, input, select, textarea, [data-camera-chrome]",
+        ),
+      );
+
+    const endGesture = (opts?: { updateCursor?: boolean }) => {
+      const wasActive = gesture != null || touchCameraActiveRef.current;
+      gesture = null;
+      touchCameraActiveRef.current = false;
+      /* Never setState from effect cleanup — that re-subscribes forever. */
+      if (wasActive && opts?.updateCursor) setIsPanningActive(false);
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      if (overChrome(e.target)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!isTwoFingerCameraGesture(pointers.size)) return;
+      const pts = [...pointers.values()];
+      const a = pts[0]!;
+      const b = pts[1]!;
+      gesture = {
+        startMid: touchMidpoint(a, b),
+        startDist: touchDistance(a, b),
+        basePan: { ...panBaseRef.current },
+        baseZoom: zoomRef.current,
+      };
+      touchCameraActiveRef.current = true;
+      setIsPanningActive(true);
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!gesture || !isTwoFingerCameraGesture(pointers.size)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      markInteracting();
+      const pts = [...pointers.values()];
+      const a = pts[0]!;
+      const b = pts[1]!;
+      const mid = touchMidpoint(a, b);
+      const dist = touchDistance(a, b);
+      const nextPan = panFromTouchMidpoint(gesture.basePan, gesture.startMid, mid);
+      const nextZoom = zoomFromPinch(gesture.baseZoom, gesture.startDist, dist);
+      /* Pan + scale only — avoid focus re-anchor fights mid-pinch (tilt path). */
+      studio.setUi({ panX: nextPan.x, panY: nextPan.y, zoom: nextZoom });
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) endGesture({ updateCursor: true });
+    };
+
+    el.addEventListener("pointerdown", onPointerDown, { capture: true });
+    el.addEventListener("pointermove", onPointerMove, { capture: true });
+    el.addEventListener("pointerup", onPointerUp, { capture: true });
+    el.addEventListener("pointercancel", onPointerUp, { capture: true });
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown, { capture: true });
+      el.removeEventListener("pointermove", onPointerMove, { capture: true });
+      el.removeEventListener("pointerup", onPointerUp, { capture: true });
+      el.removeEventListener("pointercancel", onPointerUp, { capture: true });
+      endGesture();
+    };
+    // markInteracting / studio.setUi are stable enough for the listener closure;
+    // only re-bind when plan mode changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
+  }, [ui.mode]);
 
   const prefersReducedMotion = () =>
     typeof window !== "undefined" &&
@@ -1629,6 +1762,7 @@ export function HandoffDesignStudio({
   });
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
+  const imageLayersOpen = ui.rightDataPanel === "image_layers";
   const servicesOpen = ui.rightDataPanel === "services";
   const environmentOpen = ui.rightDataPanel === "environment";
   const siteMetaOpen = ui.rightDataPanel === "site";
@@ -1715,12 +1849,12 @@ export function HandoffDesignStudio({
         setWeatherDay(
           day
             ? {
-                precipitation_mm: day.precipitation_mm,
-                wind_max_kph: day.wind_max_kph ?? day.wind_speed_kmh,
-                temp_max_c: day.temp_max_c,
-                temp_min_c: day.temp_min_c,
-                humidity_pct: day.humidity_pct ?? null,
-              }
+              precipitation_mm: day.precipitation_mm,
+              wind_max_kph: day.wind_max_kph ?? day.wind_speed_kmh,
+              temp_max_c: day.temp_max_c,
+              temp_min_c: day.temp_min_c,
+              humidity_pct: day.humidity_pct ?? null,
+            }
             : null,
         );
       } catch {
@@ -1785,7 +1919,17 @@ export function HandoffDesignStudio({
     !ui.clientView &&
     !ui.foundationCleanse;
   /** Desktop dock — hidden on compact widths (mobile sheet owns placement). */
-  const assetPanelOn = assetChromeOn && !compactAssetUi;
+  const assetPanelOn =
+    assetChromeOn &&
+    !compactAssetUi &&
+    (ui.tool !== "add" || ui.leftAssetPanel === "placing");
+  /** Summoned Add card from the border icon — no persistent panel for type pick. */
+  const canvasToolCardOn =
+    assetChromeOn &&
+    !compactAssetUi &&
+    ui.tool === "add" &&
+    ui.addOpen &&
+    ui.leftAssetPanel !== "placing";
   /** One assets path: compact uses StudioSheetHost Assets only (no second floater). */
   const studioSheetVisible =
     chrome.studioSheet &&
@@ -1802,12 +1946,30 @@ export function HandoffDesignStudio({
    */
   const instrumentsVisible =
     instrumentsSummoned ||
-    (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock");
+    (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock") ||
+    ui.mode === "quote";
   const compactSafeBottom = sheetSafeBottomPx({
     sheetOpen: studioSheetVisible,
     fabOn: chrome.primaryFab,
     sunOn: chrome.sunGrowth,
     toolStripOn: contextualStripVisible && instrumentsVisible,
+  });
+
+  /* Canvas-first auto-fade: rails dim after inactivity so the drawing is the product. */
+  const idleDisabled =
+    ui.cmdOpen ||
+    sharePopupOpen ||
+    sheetComposeOpen ||
+    ui.addOpen ||
+    ui.coachOpen ||
+    ui.factorsOpen ||
+    ui.ghostReviewOpen ||
+    ui.rightDataPanel != null ||
+    headerViewMenuOpen ||
+    studioSheetVisible;
+  const idle = useChromeIdle({
+    timeout: 6000,
+    disabled: idleDisabled,
   });
 
   /* Canvas-first linger — idle summoned tools fade so parchment returns. */
@@ -2351,12 +2513,12 @@ export function HandoffDesignStudio({
   /** Single-selection orbit (dial) — also drives the focus veil. */
   const selectionOrbitOn = Boolean(
     !ui.clientView &&
-      !ui.frameOn &&
-      !isTiltActive(ui.tiltDeg) &&
-      selectedLive &&
-      ui.groupIds.length <= 1 &&
-      ui.tool !== "zone" &&
-      (ui.mode === "cad" || ui.mode === "survey"),
+    !ui.frameOn &&
+    !isTiltActive(ui.tiltDeg) &&
+    selectedLive &&
+    ui.groupIds.length <= 1 &&
+    ui.tool !== "zone" &&
+    (ui.mode === "cad" || ui.mode === "survey"),
   );
 
   /** One-time dial discoverability (session). */
@@ -2585,23 +2747,23 @@ export function HandoffDesignStudio({
 
   const studioCursor = pointerMarkPreview
     ? resolveStudioCursor({
-        markId: pointerMarkPreview,
-        tool: "select",
-        mode: ui.mode,
-        locked: false,
-      })
+      markId: pointerMarkPreview,
+      tool: "select",
+      mode: ui.mode,
+      locked: false,
+    })
     : resolveStudioCursor({
-        markId: pointerMarkId,
-        tool: ui.tool,
-        mode: ui.mode,
-        locked: ui.locked,
-        frameOn: ui.frameOn,
-        tiltViewActive: isTiltActive(ui.tiltDeg),
-        boardCursor:
-          boardCursor && boardCursor !== "default" ? boardCursor : null,
-        sketchTool: ui.mode === "sketch" ? sketchChrome.tool : undefined,
-        sketchTip: ui.mode === "sketch" ? sketchChrome.tip : undefined,
-      });
+      markId: pointerMarkId,
+      tool: ui.tool,
+      mode: ui.mode,
+      locked: ui.locked,
+      frameOn: ui.frameOn,
+      tiltViewActive: isTiltActive(ui.tiltDeg),
+      boardCursor:
+        boardCursor && boardCursor !== "default" ? boardCursor : null,
+      sketchTool: ui.mode === "sketch" ? sketchChrome.tool : undefined,
+      sketchTip: ui.mode === "sketch" ? sketchChrome.tip : undefined,
+    });
 
   /** Drag-to-pan takes cursor priority over whatever tool is active. */
   const effectiveCursor = isPanningActive
@@ -2776,82 +2938,82 @@ export function HandoffDesignStudio({
   const vicGovChipRow =
     planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
       <StickyMetaStack
-          placement="dock"
-          projectId={projectId}
-          laneBusy={rightLaneBusy}
-          activePanel={
-            servicesOpen
-              ? "services"
-              : environmentOpen
-                ? "environment"
-                : siteMetaOpen
-                  ? "site"
-                  : treesMetaOpen
-                    ? "trees"
-                    : null
-          }
-          scaleM={scaleM}
-          boundary={studio.boundary}
-          building={studio.building}
-          services={studio.services}
-          easements={studio.easements}
-          bydaAssets={studio.bydaAssets}
-          keylessOverlays={studio.keylessOverlays}
-          levels={studio.levels}
-          irrigationZones={studio.irrigationZones}
-          constructionTrenches={studio.constructionTrenches}
-          items={studio.items}
-          servicesLocked={ui.servicesLocked}
-          sunMin={ui.sunMin}
-          sunDatePreset={ui.sunDatePreset}
-          growth={ui.growth}
-          shadeOn={ui.shadeOn}
-          lat={projectLat}
-          lng={projectLng}
-          outdoorM2={outdoor}
-          titleSource={titleBlock?.sourceLabel ?? null}
-          boundarySource={ui.boundarySource}
-          councilLabel={titleBlock?.councilLabel ?? null}
-          councilHref={
-            councilDrainageChase(null, titleBlock?.councilLabel ?? null).href
-          }
-          sitePackChase={ui.sitePackChase}
-          weatherDay={weatherDay}
-          onOpenPanel={(panel) => {
-            summonStickyMeta(
-              projectId,
-              panel === "environment"
-                ? "environment"
-                : panel === "trees"
+        placement="dock"
+        projectId={projectId}
+        laneBusy={rightLaneBusy}
+        activePanel={
+          servicesOpen
+            ? "services"
+            : environmentOpen
+              ? "environment"
+              : siteMetaOpen
+                ? "site"
+                : treesMetaOpen
                   ? "trees"
-                  : panel === "site"
-                    ? "site"
-                    : "services",
-            );
-            setStickyRestoreNonce((n) => n + 1);
-            studio.setUi({
-              ...withRightDataPanel(panel),
-              ...(panel === "environment" ? { shadeOn: true } : {}),
-              utilityPanel: null,
-            });
-          }}
-          onCouncilLink={(href) => {
-            if (typeof window !== "undefined") {
-              window.open(href, "_blank", "noopener,noreferrer");
-            }
-          }}
-        />
+                  : null
+        }
+        scaleM={scaleM}
+        boundary={studio.boundary}
+        building={studio.building}
+        services={studio.services}
+        easements={studio.easements}
+        bydaAssets={studio.bydaAssets}
+        keylessOverlays={studio.keylessOverlays}
+        levels={studio.levels}
+        irrigationZones={studio.irrigationZones}
+        constructionTrenches={studio.constructionTrenches}
+        items={studio.items}
+        servicesLocked={ui.servicesLocked}
+        sunMin={ui.sunMin}
+        sunDatePreset={ui.sunDatePreset}
+        growth={ui.growth}
+        shadeOn={ui.shadeOn}
+        lat={projectLat}
+        lng={projectLng}
+        outdoorM2={outdoor}
+        titleSource={titleBlock?.sourceLabel ?? null}
+        boundarySource={ui.boundarySource}
+        councilLabel={titleBlock?.councilLabel ?? null}
+        councilHref={
+          councilDrainageChase(null, titleBlock?.councilLabel ?? null).href
+        }
+        sitePackChase={ui.sitePackChase}
+        weatherDay={weatherDay}
+        onOpenPanel={(panel) => {
+          summonStickyMeta(
+            projectId,
+            panel === "environment"
+              ? "environment"
+              : panel === "trees"
+                ? "trees"
+                : panel === "site"
+                  ? "site"
+                  : "services",
+          );
+          setStickyRestoreNonce((n) => n + 1);
+          studio.setUi({
+            ...withRightDataPanel(panel),
+            ...(panel === "environment" ? { shadeOn: true } : {}),
+            utilityPanel: null,
+          });
+        }}
+        onCouncilLink={(href) => {
+          if (typeof window !== "undefined") {
+            window.open(href, "_blank", "noopener,noreferrer");
+          }
+        }}
+      />
     ) : null;
 
   return (
     <div
-      className={`${css.root}${darkLens || ui.lightingWorkspaceOn ? ` ${css.rootDark}` : ""}${ui.lightingWorkspaceOn ? ` ${css.rootLighting}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}${headerContextActive ? ` ${css.rootHeaderContext}` : ""}`}
+      className={`${css.root}${darkLens || ui.lightingWorkspaceOn ? ` ${css.rootDark}` : ""}${ui.lightingWorkspaceOn ? ` ${css.rootLighting}` : ""}${ui.focusOn ? ` ${css.rootFocus}` : ""}${ui.clientView ? ` ${css.rootClient}` : ""}${precisionOn ? ` ${css.rootPrecision}` : ""}`}
       data-testid="handoff-design-studio"
-      data-theme={
-        (darkLens || ui.lightingWorkspaceOn) && !ui.frameOn ? "dark" : "light"
-      }
+      data-layout={studioLayout}
+      data-theme={darkLens && !ui.frameOn ? "dark" : "light"}
       data-canvas-mode={ui.mode}
       data-studio-surface="handoff-v4"
+      data-idle={idle ? "true" : "false"}
       data-compact={chrome.compact ? "1" : "0"}
       data-compliance={compliance.canvasSignal}
       data-fit-sheet={ui.frameOn ? "1" : "0"}
@@ -2863,47 +3025,53 @@ export function HandoffDesignStudio({
           /* Must match .zoomWorld scale (planZoom), not raw ui.zoom —
              Fit sheet diverges via sheetContentView. Inverse handles depend on it. */
           ["--studio-zoom" as string]: String(planZoom),
-          ...(chrome.compact
+          ...(isPhoneLayout
             ? {
-                ["--ws-safe-bottom" as string]: `${compactSafeBottom}px`,
-              }
+              ["--ws-safe-bottom" as string]: `${compactSafeBottom}px`,
+            }
             : null),
           ...(rightLaneBusy
             ? {
-                ["--ws-safe-right" as string]: `${RIGHT_DATA_LANE_WIDTH_PX}px`,
-              }
+              ["--ws-safe-right" as string]: `${RIGHT_DATA_LANE_WIDTH_PX}px`,
+            }
             : null),
           ...(leftSafeInset != null
             ? {
-                ["--ws-safe-left" as string]: `${leftSafeInset}px`,
-              }
+              ["--ws-safe-left" as string]: `${leftSafeInset}px`,
+            }
             : null),
           ...(printSheet
             ? {
-                ["--ws-print-left" as string]: `${printSheet.left}px`,
-                ["--ws-print-top" as string]: `${printSheet.top}px`,
-                ["--ws-print-fit" as string]: String(printSheet.fit),
-                ["--ws-paper-w" as string]: `${printSheet.paperW}px`,
-                ["--ws-paper-h" as string]: `${printSheet.paperH}px`,
-                ["--ws-board-w" as string]: `${printSheet.boardW}px`,
-                ["--ws-board-h" as string]: `${printSheet.boardH}px`,
-              }
+              ["--ws-print-left" as string]: `${printSheet.left}px`,
+              ["--ws-print-top" as string]: `${printSheet.top}px`,
+              ["--ws-print-fit" as string]: String(printSheet.fit),
+              ["--ws-paper-w" as string]: `${printSheet.paperW}px`,
+              ["--ws-paper-h" as string]: `${printSheet.paperH}px`,
+              ["--ws-board-w" as string]: `${printSheet.boardW}px`,
+              ["--ws-board-h" as string]: `${printSheet.boardH}px`,
+            }
             : null),
         } as CSSProperties
       }
     >
       {printSheet ? (
         <style>
-          {`@page { size: ${
-            printSheet.paper === "a4" ? "A4 portrait" : "A3 landscape"
-          }; margin: 0; }`}
+          {`@page { size: ${printSheet.paper === "a4" ? "A4 portrait" : "A3 landscape"
+            }; margin: 0; }`}
         </style>
       ) : null}
-      <header
-        className={`${css.header}${headerContextActive ? ` ${css.headerHasContext}` : ""}`}
-        data-testid="canvas-studio-header"
+      {/* Gallery-frame portal mount — sibling of the board, spans the whole
+        shell so frame-band chrome sits in the dark border, never on the plan. */}
+      <div
+        data-testid="studio-frame-root"
+        data-studio-frame-root="1"
+        className={css.studioFrameRoot}
+      />
+      <CanvasHeaderRail
+        clientView={ui.clientView}
+        compact={chrome.compact}
+        aria-label="Canvas header"
       >
-        <div className={css.headerRow}>
         <div className={css.brandBlock}>
           <p className={css.brandName}>Curtis &amp; Co</p>
           <p className={css.address}>{displayAddress}</p>
@@ -2980,7 +3148,31 @@ export function HandoffDesignStudio({
             </button>
           </div>
         ) : null}
-
+      </CanvasHeaderRail>
+      <CanvasContextCard active={headerContextActive}>
+        <StudioContextBreadcrumb
+          mode={ui.mode}
+          isolatedLayer={ui.isolatedLayer}
+          layerOpacity={ui.layerOpacity}
+          setbackOn={ui.setbackOn}
+          shadeOn={ui.shadeOn}
+          growth={ui.growth}
+          onClearIsolation={() => studio.clearServiceFocus()}
+          onClearSetback={() => studio.setUi({ setbackOn: false })}
+          onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
+          onResetGrowth={() => studio.setUi({ growth: "mature" })}
+          onResetLayer={(layer) => {
+            if (layer === "services" && ui.servicesLocked) return;
+            studio.setLayerOpacity(layer, 1);
+          }}
+        />
+        {councilTipVisible ? (
+          <p className={css.headerCouncilTip} data-testid="council-setback-tip">
+            {ui.councilTip}
+          </p>
+        ) : null}
+      </CanvasContextCard>
+      <CanvasTopBorder clientView={ui.clientView}>
         <div className={css.headerTools} role="toolbar" aria-label="Canvas tools">
           <button
             type="button"
@@ -3245,33 +3437,7 @@ export function HandoffDesignStudio({
             }}
           />
         </div>
-        </div>
-        {headerContextActive ? (
-          <div className={css.headerContext} data-testid="header-context-strip">
-            <StudioContextBreadcrumb
-              mode={ui.mode}
-              isolatedLayer={ui.isolatedLayer}
-              layerOpacity={ui.layerOpacity}
-              setbackOn={ui.setbackOn}
-              shadeOn={ui.shadeOn}
-              growth={ui.growth}
-              onClearIsolation={() => studio.clearServiceFocus()}
-              onClearSetback={() => studio.setUi({ setbackOn: false })}
-              onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
-              onResetGrowth={() => studio.setUi({ growth: "mature" })}
-              onResetLayer={(layer) => {
-                if (layer === "services" && ui.servicesLocked) return;
-                studio.setLayerOpacity(layer, 1);
-              }}
-            />
-            {councilTipVisible ? (
-              <p className={css.headerCouncilTip} data-testid="council-setback-tip">
-                {ui.councilTip}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-      </header>
+      </CanvasTopBorder>
 
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.boardTiltPerspective}` : ""}`}
@@ -3285,9 +3451,9 @@ export function HandoffDesignStudio({
       >
         {vicGovChipRow}
         {openSharedRev &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        !shareBannerDismissed ? (
+          !ui.clientView &&
+          !ui.frameOn &&
+          !shareBannerDismissed ? (
           <CameraChrome
             place={{ kind: "dock" }}
             zIndex={42}
@@ -3330,8 +3496,7 @@ export function HandoffDesignStudio({
 
         {ui.mode === "quote" ? (
           <QuoteSurface
-            projectId={projectId}
-            address={displayAddress}
+            address={projectAddress}
             estimate={estimate}
             onShare={(payload) => {
               setShareQuoteFreeze(payload);
@@ -3400,763 +3565,766 @@ export function HandoffDesignStudio({
                 />
               </div>
             ) : null}
-          <div
-            className={
-              sheetPlotLayout
-                ? `${css.sheetPlotClip}`
-                : undefined
-            }
-            style={
-              sheetPlotLayout
-                ? { clipPath: sheetPlotLayout.clipPath }
-                : undefined
-            }
-          >
             <div
-              className={`${css.zoomWorld}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.zoomWorldTilted}` : ""}${tiltAnimKind === "fast" ? ` ${css.zoomWorldTiltAnim}` : ""}${tiltAnimKind === "slow" ? ` ${css.zoomWorldTiltAnimSlow}` : ""}`}
-              data-testid="zoom-world"
-              data-print-keep="plan"
-              data-tilt-deg={ui.tiltDeg.toFixed(1)}
-              data-view-yaw={String(planRotateDeg)}
-              onTransitionEnd={(e) => {
-                if (e.propertyName !== "transform") return;
-                clearTiltAnimKind();
-              }}
-              onTransitionCancel={(e) => {
-                if (e.propertyName !== "transform") return;
-                clearTiltAnimKind();
-              }}
-              style={{
-                transformOrigin: `${planFocusX}% ${planFocusY}%`,
-                /*
-                 * Camera: optional view-only tilt → pan → rotate → scale.
-                 * Keep rotateX(0) in the string while the temp transition class
-                 * is on so flatten animates (then strip for pixel-identical off).
-                 * Tilt is never inverted in clientToBoardPct — editing locks out.
-                 */
-                transform: `${
-                  isTiltActive(ui.tiltDeg) || tiltAnimKind
+              className={
+                sheetPlotLayout
+                  ? `${css.sheetPlotClip}`
+                  : undefined
+              }
+              style={
+                sheetPlotLayout
+                  ? { clipPath: sheetPlotLayout.clipPath }
+                  : undefined
+              }
+            >
+              <div
+                className={`${css.zoomWorld}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.zoomWorldTilted}` : ""}${tiltAnimKind === "fast" ? ` ${css.zoomWorldTiltAnim}` : ""}${tiltAnimKind === "slow" ? ` ${css.zoomWorldTiltAnimSlow}` : ""}`}
+                data-testid="zoom-world"
+                data-print-keep="plan"
+                data-tilt-deg={ui.tiltDeg.toFixed(1)}
+                data-view-yaw={String(planRotateDeg)}
+                onTransitionEnd={(e) => {
+                  if (e.propertyName !== "transform") return;
+                  clearTiltAnimKind();
+                }}
+                onTransitionCancel={(e) => {
+                  if (e.propertyName !== "transform") return;
+                  clearTiltAnimKind();
+                }}
+                style={{
+                  transformOrigin: `${planFocusX}% ${planFocusY}%`,
+                  /*
+                   * Camera: optional view-only tilt → pan → rotate → scale.
+                   * Keep rotateX(0) in the string while the temp transition class
+                   * is on so flatten animates (then strip for pixel-identical off).
+                   * Tilt is never inverted in clientToBoardPct — editing locks out.
+                   */
+                  transform: `${isTiltActive(ui.tiltDeg) || tiltAnimKind
                     ? `rotateX(${ui.tiltDeg}deg) `
                     : ""
-                }translate(${planPanX}px, ${planPanY}px) rotate(${planRotateDeg}deg) scale(${planZoom})`,
-                cursor: effectiveCursor,
-              }}
-            >
-            {tiltLensOn ? (
-              <div
-                className={css.tiltSkin}
-                data-testid="tilt-skin"
-                aria-hidden
-                style={
-                  {
-                    ["--tilt-skin-scale"]: String(skinScale),
-                  } as CSSProperties
-                }
+                    }translate(${planPanX}px, ${planPanY}px) rotate(${planRotateDeg}deg) scale(${planZoom})`,
+                  cursor: effectiveCursor,
+                }}
               >
-                <TactileGround
+                {tiltLensOn ? (
+                  <div
+                    className={css.tiltSkin}
+                    data-testid="tilt-skin"
+                    aria-hidden
+                    style={
+                      {
+                        ["--tilt-skin-scale"]: String(skinScale),
+                      } as CSSProperties
+                    }
+                  >
+                    <TactileGround
+                      zoom={planZoom}
+                      sheetScaleDenom={100}
+                      parchmentPeel={
+                        draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
+                      }
+                      hasAerial={Boolean(liveAerial)}
+                      darkOn={darkLens}
+                      foundationCleanse={ui.foundationCleanse}
+                      titleLocked={titleLocked}
+                      boundarySource={ui.boundarySource}
+                      siteLabel={displayAddress}
+                      address={displayAddress}
+                      suppressSiteCue
+                      quietChrome
+                      showEdgeLabels={false}
+                    />
+                  </div>
+                ) : null}
+                <AerialSlot
+                  uri={liveAerial}
+                  dimmed={darkLens}
+                  frameOn={ui.frameOn}
+                  scanning={
+                    aerialOk &&
+                    (ui.canopyScanning || ai.busy === "scanning")
+                  }
                   zoom={planZoom}
                   sheetScaleDenom={100}
-                  parchmentPeel={
-                    draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
-                  }
-                  hasAerial={Boolean(liveAerial)}
                   darkOn={darkLens}
                   foundationCleanse={ui.foundationCleanse}
+                  allowAerial={aerialOk}
+                  allowPlanUnderlay={draftingPlate && !ui.foundationCleanse}
+                  autoCanopyScan={false}
                   titleLocked={titleLocked}
                   boundarySource={ui.boundarySource}
                   siteLabel={displayAddress}
                   address={displayAddress}
-                  suppressSiteCue
-                  quietChrome
-                  showEdgeLabels={false}
-                />
-              </div>
-            ) : null}
-            <AerialSlot
-              uri={liveAerial}
-              dimmed={darkLens}
-              frameOn={ui.frameOn}
-              scanning={
-                aerialOk &&
-                (ui.canopyScanning || ai.busy === "scanning")
-              }
-              zoom={planZoom}
-              sheetScaleDenom={100}
-              darkOn={darkLens}
-              foundationCleanse={ui.foundationCleanse}
-              allowAerial={aerialOk}
-              allowPlanUnderlay={draftingPlate && !ui.foundationCleanse}
-              autoCanopyScan={false}
-              titleLocked={titleLocked}
-              boundarySource={ui.boundarySource}
-              siteLabel={displayAddress}
-              address={displayAddress}
-              suppressSiteCue={titleCueOnCad}
-              parchmentPeel={
-                draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
-              }
-              hidePaper={worldHidePaper}
-              hasGeometry={hasGeometry}
-              canvasEngaged={canvasEngaged}
-              onUri={(uri) => {
-                // Survey aerial OR CAD/Sketch plan underlay (SVG/PNG)
-                if (!aerialOk && !draftingPlate) return;
-                studio.setUi({
-                  aerialUri: uri,
-                  aerialSuppressed: uri == null,
-                });
-              }}
-              onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
-              onCanopyImage={ai.ingestCanopyImage}
-            />
-            <ShadeGridOverlay
-              active={ui.shadeOn && !ui.frameOn && !ui.focusOn}
-              sunMin={ui.sunMin}
-              datePreset={ui.sunDatePreset}
-              lat={projectLat ?? undefined}
-              lng={projectLng ?? undefined}
-            />
-            <ClimateBedWash
-              active={
-                (environmentOpen || ui.shadeOn) &&
-                !ui.frameOn &&
-                !ui.focusOn
-              }
-              boundary={studio.boundary}
-              meta={envLiveMeta}
-            />
-            <KeylessOverlayWash
-              active={!ui.frameOn && !ui.focusOn}
-              overlays={studio.keylessOverlays}
-              boundary={studio.boundary}
-            />
-            <SunCastOverlay
-              active={
-                (ui.shadeOn || environmentOpen) &&
-                !ui.frameOn &&
-                !ui.focusOn
-              }
-              sunMin={ui.sunMin}
-              datePreset={ui.sunDatePreset}
-              growth={ui.growth}
-              boundary={studio.boundary}
-              building={studio.building}
-              items={studio.items}
-              scaleM={scaleM}
-              lat={projectLat}
-              lng={projectLng}
-            />
-            <SunMarkerPip
-              active={environmentOpen && !ui.frameOn}
-              boundary={studio.boundary}
-              sunMin={ui.sunMin}
-              datePreset={ui.sunDatePreset}
-              lat={projectLat}
-              lng={projectLng}
-            />
-            <CadPlanBoard
-              frameOn={ui.frameOn}
-              darkOn={darkLens}
-              foundationCleanse={ui.foundationCleanse}
-              titleLocked={titleLocked}
-              titleBoundaryLocked={ui.titleBoundaryLocked}
-              buildingSource={ui.buildingSource}
-              scaleM={scaleM}
-              timedSunCast={ui.shadeOn || environmentOpen}
-              sunAzimuthDeg={sunAzimuthDeg}
-              bydaAssets={studio.bydaAssets}
-              planZoom={planZoom}
-              sunCast={boardSunCast}
-              tiltDeg={ui.tiltDeg}
-              planPanX={planPanX}
-              planPanY={planPanY}
-              planFocusX={planFocusX}
-              planFocusY={planFocusY}
-              planRotateDeg={planRotateDeg}
-              lotAreaM2={titleBlock?.lotAreaM2 ?? null}
-              siteAreas={
-                siteAreaDisplay
-                  ? {
-                      buildingAreaM2: siteAreaDisplay.buildingAreaM2,
-                      outdoorAreaM2: siteAreaDisplay.outdoorAreaM2,
-                      lotAreaM2: siteAreaDisplay.lotAreaM2,
-                    }
-                  : null
-              }
-              siteLabel={displayAddress}
-              titleMeta={
-                titleBlock
-                  ? {
-                      parcelRef: titleBlock.parcelRef,
-                      sourceLabel: titleBlock.sourceLabel,
-                      councilLabel: titleBlock.councilLabel,
-                      sourceKind: titleBlock.sourceKind,
-                    }
-                  : null
-              }
-              boundary={studio.boundary}
-              building={studio.building}
-              easements={studio.easements}
-              services={studio.services}
-              items={studio.items}
-              mode={ui.mode}
-              tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "select" : ui.tool}
-              locked={ui.foundationCleanse ? false : ui.locked}
-              layerOpacity={ui.layerOpacity}
-              isolatedLayer={ui.isolatedLayer}
-              serviceFeatureHidden={ui.serviceFeatureHidden}
-              focusedServiceIds={ui.focusedServiceIds}
-              setbackOn={ui.setbackOn}
-              councilSetbackM={compliance.setbackM}
-              growth={ui.growth}
-              selectedId={ui.selectedId}
-              groupIds={ui.groupIds}
-              hoverId={ui.hoverId}
-              curGhostId={ai.current?.id ?? null}
-              reviewOpen={ui.ghostReviewOpen}
-              flaggedIds={flaggedIds}
-              tpzReadouts={tpzReadouts}
-              onSelect={(id, opts) => {
-                // Selecting geometry / symbols is not a toolbox summon.
-                setInstrumentsSummoned(false);
-                collapseLibraryUnlessPinned();
-                if (!id) {
-                  studio.setSelection(null, []);
-                  return;
-                }
-                if (ai.pending.some((g) => g.id === id)) {
-                  const idx = ai.pending.findIndex((g) => g.id === id);
-                  studio.setUi({
-                    selectedId: id,
-                    groupIds: [],
-                    ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
-                    ghostReviewOpen: true,
-                    rightDataPanel: null,
-                  });
-                  return;
-                }
-                if (opts?.additive) {
-                  const next = ui.groupIds.includes(id)
-                    ? ui.groupIds.filter((g) => g !== id)
-                    : [...ui.groupIds, id];
-                  studio.setSelection(id, next.length ? next : [id]);
-                  return;
-                }
-                studio.setSelection(id, [id]);
-              }}
-              onMarqueeSelect={(ids, opts) => {
-                setInstrumentsSummoned(false);
-                if (opts?.additive && ids.length > 0) {
-                  const merged = new Set([...ui.groupIds, ...ids]);
-                  if (ui.selectedId) merged.add(ui.selectedId);
-                  const list = [...merged];
-                  studio.setSelection(ids[0] ?? ui.selectedId, list);
-                  return;
-                }
-                studio.setSelection(ids[0] ?? null, ids);
-              }}
-              onEmptyClick={({ x, y, insideLot }) => {
-                collapseLibraryUnlessPinned();
-                if (insideLot) {
-                  // On the drawing — clear selection only; keep toolbox closed.
-                  setInstrumentsSummoned(false);
-                  return;
-                }
-                // Off the lot, on the canvas margin — pin + summon instruments.
-                pinInstrumentAnchor(x, y);
-                setInstrumentsSummoned(true);
-              }}
-              onCadHandleInteract={() => {
-                setInstrumentsSummoned(false);
-                collapseLibraryUnlessPinned();
-              }}
-              onHover={(id) => studio.setUi({ hoverId: id })}
-              onAcceptGhost={ai.accept}
-              onRejectGhost={ai.reject}
-              onTraceInElevation={(id) => {
-                studio.setSelection(id, [id]);
-                requestMode("elevation");
-              }}
-              onBoundaryChange={studio.updateBoundary}
-              onBuildingChange={studio.updateBuilding}
-              onPlace={(x, y) => {
-                if (ui.tool === "path") {
-                  studio.pushTracePoint({ x, y });
-                  return;
-                }
-                studio.placeArmed(x, y);
-              }}
-              onMoveItem={studio.moveItem}
-              onMoveGroup={studio.moveGroup}
-              onTransformItem={studio.transformItem}
-              gridGrain={ui.gridGrain}
-              gridSnap={ui.gridSnap}
-              gridFormation={gridPreviewFormation ?? ui.gridFormation}
-              gridInk={gridPreviewInk ?? ui.gridInk}
-              onPaintItem={(id) => {
-                studio.paintItem(id);
-                flashPaintTarget(id);
-              }}
-              paintFlashId={paintFlashId}
-              previewSwatch={previewSwatch}
-              eyedropArmed={eyedropArmed}
-              onEyedrop={pickStyle}
-              onBoardCursor={setBoardCursor}
-              onInertToolClick={onInertToolClick}
-              fidelity={fidelity}
-              onInteract={() => {
-                markInteracting();
-                collapseLibraryUnlessPinned();
-              }}
-              onLongPressCanvas={
-                compactAssetUi && assetChromeOn
-                  ? () => openAssetSheet()
-                  : undefined
-              }
-              onVectorEditHint={setVectorEditHint}
-              onTraceBuilding={armBuildingTrace}
-              annotations={studio.annotations}
-              selectedAnnotationId={selectedAnnotationId}
-              onSelectAnnotation={(id) => {
-                setSelectedAnnotationId(id);
-                if (id) studio.setSelection(null, []);
-              }}
-              onMoveAnnotation={(id, notePos) => {
-                studio.updateAnnotationNotePos(
-                  id,
-                  clampNotePos(notePos, studio.boundary),
-                );
-              }}
-              annotatePlace={annotatePhase === "place"}
-              onAnnotatePlace={({ x, y, itemId }) => {
-                const anchor: CanvasAnnotation["anchor"] = itemId
-                  ? { kind: "item", itemId }
-                  : { kind: "point", x, y };
-                const notePos = defaultNotePos(x, y, studio.boundary);
-                setPendingAnnotation({ anchor, notePos });
-                setAnnotateDraft("");
-                setAnnotatePhase("type");
-              }}
-              sheetPen={studio.presentationPack.pen ?? "technical"}
-              sheetTheme={studio.presentationPack.theme ?? "parchment"}
-              atmosphere={studio.presentationPack.atmosphere ?? "graphite"}
-              handDrawnSeed={projectId}
-            />
-            {annotatePhase === "type" && pendingAnnotation ? (
-              <div
-                className={css.annotateInputWrap}
-                data-testid="annotate-input"
-                style={{
-                  left: `${pendingAnnotation.notePos.x}%`,
-                  top: `${pendingAnnotation.notePos.y}%`,
-                }}
-              >
-                <input
-                  autoFocus
-                  type="text"
-                  maxLength={140}
-                  value={annotateDraft}
-                  placeholder="NOTE…"
-                  aria-label="Annotation text"
-                  style={{ fontSize: 16 }}
-                  onChange={(e) => setAnnotateDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setAnnotatePhase("off");
-                      setPendingAnnotation(null);
-                      setAnnotateDraft("");
-                      return;
-                    }
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const text = annotateDraft.trim();
-                      if (!text) return;
-                      const ann: CanvasAnnotation = {
-                        id: crypto.randomUUID(),
-                        text,
-                        anchor: pendingAnnotation.anchor,
-                        notePos: pendingAnnotation.notePos,
-                        createdAt: new Date().toISOString(),
-                      };
-                      studio.addAnnotation(ann);
-                      setSelectedAnnotationId(ann.id);
-                      setAnnotatePhase("off");
-                      setPendingAnnotation(null);
-                      setAnnotateDraft("");
-                      void studio.saveNow().catch(() => {
-                        /* autosave chip surfaces failure */
-                      });
-                    }
-                  }}
-                />
-              </div>
-            ) : null}
-            {chrome.floraRing && ui.floraSession ? (
-              <FloraRing
-                xPct={ui.floraSession.x}
-                yPct={ui.floraSession.y}
-                candidates={ui.floraSession.candidates}
-                activeIdx={ui.floraSession.activeIdx}
-                previewSpreadPct={Math.min(
-                  28,
-                  Math.max(
-                    6,
-                    (ui.floraSession.candidates[ui.floraSession.activeIdx]
-                      ?.canopySpreadM ?? 2) * 2.4,
-                  ),
-                )}
-                guardItems={floraGuardItems}
-                scaleM={scaleM}
-                cam={planCam}
-                onActiveIdx={studio.setFloraActiveIdx}
-                onAccept={studio.acceptFlora}
-                onDismiss={studio.dismissFlora}
-              />
-            ) : null}
-            {chrome.horizon ? (
-              <HorizonMarkers
-                cards={actionHorizon}
-                onFocus={(card) => {
-                  if (card.suggestType) {
-                    acceptHorizonCard(card);
-                    return;
+                  suppressSiteCue={titleCueOnCad}
+                  parchmentPeel={
+                    draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
                   }
-                  studio.setUi({
-                    utilityPanel: "bom",
-                  });
-                }}
-              />
-            ) : null}
-            {ui.mode === "sketch" ? (
-              <SketchBoard
-                strokes={studio.strokes}
-                darkOn={darkLens}
-                hideChrome={ui.frameOn}
-                formalizing={formalizing}
-                active={ui.tool === "sketch"}
-                onActivate={() => studio.setTool("sketch")}
-                onChromeChange={onSketchChromeChange}
-                onCommit={(stroke) => {
-                  studio.setStrokes([...studio.strokes, stroke]);
-                }}
-                onErase={(strokeId) =>
-                  studio.setStrokes(
-                    studio.strokes.filter((stroke) => stroke.id !== strokeId),
-                  )
-                }
-                onUndoLast={() => studio.undo()}
-                onRedo={() => studio.redo()}
-                canUndo={studio.canUndo}
-                canRedo={studio.canRedo}
-                onTidy={() => studio.tidySketches()}
-                onFormalizeToCad={() => {
-                  void runFormalizeToCad();
-                }}
-              />
-            ) : null}
-            {ui.mode === "cad" && studio.strokes.length > 0 ? (
-              <SketchBoard
-                readOnly
-                strokes={studio.strokes}
-                darkOn={darkLens}
-              />
-            ) : null}
-            {planOn && !ui.frameOn ? (
-              <>
-                {studio.pathCorridors.length > 0 || ui.tool === "path" ? (
-                  <PathCorridorsLayer
-                    corridors={studio.pathCorridors}
-                    scaleM={scaleM}
-                    draftPts={ui.tool === "path" ? ui.drawPoly : null}
-                    draftWidthM={ui.pathWidthM}
-                    draftEdge={ui.edgeType}
-                    draftFilletM={ui.pathFilletM}
-                  />
-                ) : null}
-                {(studio.drainageRuns.length > 0 ||
-                  ui.drainageLevelIdx.length > 0 ||
-                  ui.tool === "level" ||
-                  ui.servicesEdit) &&
-                !ui.clientView ? (
-                  <DrainageRunsLayer
-                    runs={studio.drainageRuns}
-                    levels={studio.levels}
-                    selectedIdx={ui.drainageLevelIdx}
-                    scaleM={scaleM}
-                    onToggleLevel={studio.toggleDrainageLevelIdx}
-                    onCommitRun={studio.commitDrainageRun}
-                  />
-                ) : studio.drainageRuns.length > 0 ? (
-                  <DrainageRunsLayer
-                    runs={studio.drainageRuns}
-                    levels={[]}
-                    selectedIdx={[]}
-                    scaleM={scaleM}
-                    onToggleLevel={() => {}}
-                    onCommitRun={() => {}}
-                  />
-                ) : null}
-                <SurveyAnnotationLayer
-                  active={surveyServicesAuthoring}
-                  tool={ui.tool}
-                  levels={studio.levels}
-                  services={studio.services}
-                  easements={studio.easements}
-                  showCorridors={ui.mode === "survey"}
+                  hidePaper={worldHidePaper}
+                  hasGeometry={hasGeometry}
+                  canvasEngaged={canvasEngaged}
+                  onUri={(uri) => {
+                    // Survey aerial OR CAD/Sketch plan underlay (SVG/PNG)
+                    if (!aerialOk && !draftingPlate) return;
+                    studio.setUi({
+                      aerialUri: uri,
+                      aerialSuppressed: uri == null,
+                    });
+                  }}
+                  onScanning={(canopyScanning) => studio.setUi({ canopyScanning })}
+                  onCanopyImage={ai.ingestCanopyImage}
+                />
+                <ImageLayerSlot layers={studio.imageLayers} />
+                <ShadeGridOverlay
+                  active={ui.shadeOn && !ui.frameOn && !ui.focusOn}
+                  sunMin={ui.sunMin}
+                  datePreset={ui.sunDatePreset}
+                  lat={projectLat ?? undefined}
+                  lng={projectLng ?? undefined}
+                />
+                <ClimateBedWash
+                  active={
+                    (environmentOpen || ui.shadeOn) &&
+                    !ui.frameOn &&
+                    !ui.focusOn
+                  }
+                  boundary={studio.boundary}
+                  meta={envLiveMeta}
+                />
+                <KeylessOverlayWash
+                  active={!ui.frameOn && !ui.focusOn}
+                  overlays={studio.keylessOverlays}
+                  boundary={studio.boundary}
+                />
+                <SunCastOverlay
+                  active={
+                    (ui.shadeOn || environmentOpen) &&
+                    !ui.frameOn &&
+                    !ui.focusOn
+                  }
+                  sunMin={ui.sunMin}
+                  datePreset={ui.sunDatePreset}
+                  growth={ui.growth}
+                  boundary={studio.boundary}
+                  building={studio.building}
+                  items={studio.items}
                   scaleM={scaleM}
-                  planZoom={planZoom}
+                  lat={projectLat}
+                  lng={projectLng}
+                />
+                <SunMarkerPip
+                  active={environmentOpen && !ui.frameOn}
+                  boundary={studio.boundary}
+                  sunMin={ui.sunMin}
+                  datePreset={ui.sunDatePreset}
+                  lat={projectLat}
+                  lng={projectLng}
+                />
+                <CadPlanBoard
+                  frameOn={ui.frameOn}
                   darkOn={darkLens}
+                  foundationCleanse={ui.foundationCleanse}
+                  titleLocked={titleLocked}
+                  titleBoundaryLocked={ui.titleBoundaryLocked}
+                  buildingSource={ui.buildingSource}
+                  scaleM={scaleM}
+                  timedSunCast={ui.shadeOn || environmentOpen}
+                  sunAzimuthDeg={sunAzimuthDeg}
+                  bydaAssets={studio.bydaAssets}
+                  planZoom={planZoom}
+                  sunCast={boardSunCast}
+                  tiltDeg={ui.tiltDeg}
+                  planPanX={planPanX}
+                  planPanY={planPanY}
+                  planFocusX={planFocusX}
+                  planFocusY={planFocusY}
+                  planRotateDeg={planRotateDeg}
+                  lotAreaM2={titleBlock?.lotAreaM2 ?? null}
+                  siteAreas={
+                    siteAreaDisplay
+                      ? {
+                        buildingAreaM2: siteAreaDisplay.buildingAreaM2,
+                        outdoorAreaM2: siteAreaDisplay.outdoorAreaM2,
+                        lotAreaM2: siteAreaDisplay.lotAreaM2,
+                      }
+                      : null
+                  }
+                  siteLabel={displayAddress}
+                  titleMeta={
+                    titleBlock
+                      ? {
+                        parcelRef: titleBlock.parcelRef,
+                        sourceLabel: titleBlock.sourceLabel,
+                        councilLabel: titleBlock.councilLabel,
+                        sourceKind: titleBlock.sourceKind,
+                      }
+                      : null
+                  }
+                  boundary={studio.boundary}
+                  building={studio.building}
+                  easements={studio.easements}
+                  services={studio.services}
+                  items={studio.items}
+                  mode={ui.mode}
+                  tool={ui.foundationCleanse && !ui.titleBoundaryLocked ? "select" : ui.tool}
+                  locked={ui.foundationCleanse ? false : ui.locked}
                   layerOpacity={ui.layerOpacity}
                   isolatedLayer={ui.isolatedLayer}
                   serviceFeatureHidden={ui.serviceFeatureHidden}
                   focusedServiceIds={ui.focusedServiceIds}
-                  onAddLevel={studio.addSpotLevel}
-                  onCommitService={studio.commitService}
-                  onCalibrate={(nextScaleM) => {
-                    // Prototype: board width metres from two known points.
-                    // Also snap sheet denom so the ground mesh stays coherent.
-                    const denoms = SHEET_SCALE_STEPS;
-                    const target = (nextScaleM / 110) * 100;
-                    let best: (typeof denoms)[number] = 100;
-                    let bestD = Infinity;
-                    for (const d of denoms) {
-                      const err = Math.abs(d - target);
-                      if (err < bestD) {
-                        bestD = err;
-                        best = d;
-                      }
+                  setbackOn={ui.setbackOn}
+                  councilSetbackM={compliance.setbackM}
+                  growth={ui.growth}
+                  selectedId={ui.selectedId}
+                  groupIds={ui.groupIds}
+                  hoverId={ui.hoverId}
+                  curGhostId={ai.current?.id ?? null}
+                  reviewOpen={ui.ghostReviewOpen}
+                  flaggedIds={flaggedIds}
+                  tpzReadouts={tpzReadouts}
+                  onSelect={(id, opts) => {
+                    // Selecting geometry / symbols is not a toolbox summon.
+                    setInstrumentsSummoned(false);
+                    collapseLibraryUnlessPinned();
+                    if (!id) {
+                      studio.setSelection(null, []);
+                      return;
                     }
-                    studio.setUi({
-                      boardWidthM: nextScaleM,
-                      sheetScaleDenom: best,
-                      tool: "select",
-                    });
+                    if (ai.pending.some((g) => g.id === id)) {
+                      const idx = ai.pending.findIndex((g) => g.id === id);
+                      studio.setUi({
+                        selectedId: id,
+                        groupIds: [],
+                        ghostIdx: idx >= 0 ? idx : ui.ghostIdx,
+                        ghostReviewOpen: true,
+                        rightDataPanel: null,
+                      });
+                      return;
+                    }
+                    if (opts?.additive) {
+                      const next = ui.groupIds.includes(id)
+                        ? ui.groupIds.filter((g) => g !== id)
+                        : [...ui.groupIds, id];
+                      studio.setSelection(id, next.length ? next : [id]);
+                      return;
+                    }
+                    studio.setSelection(id, [id]);
+                  }}
+                  onMarqueeSelect={(ids, opts) => {
+                    setInstrumentsSummoned(false);
+                    if (opts?.additive && ids.length > 0) {
+                      const merged = new Set([...ui.groupIds, ...ids]);
+                      if (ui.selectedId) merged.add(ui.selectedId);
+                      const list = [...merged];
+                      studio.setSelection(ids[0] ?? ui.selectedId, list);
+                      return;
+                    }
+                    studio.setSelection(ids[0] ?? null, ids);
+                  }}
+                  onEmptyClick={({ x, y, insideLot }) => {
+                    collapseLibraryUnlessPinned();
+                    if (insideLot) {
+                      // On the drawing — clear selection only; keep toolbox closed.
+                      setInstrumentsSummoned(false);
+                      return;
+                    }
+                    // Off the lot, on the canvas margin — pin + summon instruments.
+                    pinInstrumentAnchor(x, y);
+                    setInstrumentsSummoned(true);
+                  }}
+                  onCadHandleInteract={() => {
+                    setInstrumentsSummoned(false);
+                    collapseLibraryUnlessPinned();
+                  }}
+                  onHover={(id) => studio.setUi({ hoverId: id })}
+                  onAcceptGhost={ai.accept}
+                  onRejectGhost={ai.reject}
+                  onTraceInElevation={(id) => {
+                    studio.setSelection(id, [id]);
+                    requestMode("elevation");
+                  }}
+                  onBoundaryChange={studio.updateBoundary}
+                  onBuildingChange={studio.updateBuilding}
+                  onPlace={(x, y) => {
+                    if (ui.tool === "path") {
+                      studio.pushTracePoint({ x, y });
+                      return;
+                    }
+                    studio.placeArmed(x, y);
+                  }}
+                  onMoveItem={studio.moveItem}
+                  onMoveGroup={studio.moveGroup}
+                  onTransformItem={studio.transformItem}
+                  gridGrain={ui.gridGrain}
+                  gridSnap={ui.gridSnap}
+                  gridFormation={gridPreviewFormation ?? ui.gridFormation}
+                  gridInk={gridPreviewInk ?? ui.gridInk}
+                  onPaintItem={(id) => {
+                    studio.paintItem(id);
+                    flashPaintTarget(id);
+                  }}
+                  paintFlashId={paintFlashId}
+                  previewSwatch={previewSwatch}
+                  eyedropArmed={eyedropArmed}
+                  onEyedrop={pickStyle}
+                  onBoardCursor={setBoardCursor}
+                  onInertToolClick={onInertToolClick}
+                  fidelity={fidelity}
+                  onInteract={() => {
+                    markInteracting();
+                    collapseLibraryUnlessPinned();
+                  }}
+                  onLongPressCanvas={
+                    compactAssetUi && assetChromeOn
+                      ? () => openAssetSheet()
+                      : undefined
+                  }
+                  onVectorEditHint={setVectorEditHint}
+                  onTraceBuilding={armBuildingTrace}
+                  annotations={studio.annotations}
+                  selectedAnnotationId={selectedAnnotationId}
+                  onSelectAnnotation={(id) => {
+                    setSelectedAnnotationId(id);
+                    if (id) studio.setSelection(null, []);
+                  }}
+                  onMoveAnnotation={(id, notePos) => {
+                    studio.updateAnnotationNotePos(
+                      id,
+                      clampNotePos(notePos, studio.boundary),
+                    );
+                  }}
+                  annotatePlace={annotatePhase === "place"}
+                  onAnnotatePlace={({ x, y, itemId }) => {
+                    const anchor: CanvasAnnotation["anchor"] = itemId
+                      ? { kind: "item", itemId }
+                      : { kind: "point", x, y };
+                    const notePos = defaultNotePos(x, y, studio.boundary);
+                    setPendingAnnotation({ anchor, notePos });
+                    setAnnotateDraft("");
+                    setAnnotatePhase("type");
+                  }}
+                  sheetPen={studio.presentationPack.pen ?? "technical"}
+                  sheetTheme={studio.presentationPack.theme ?? "parchment"}
+                  atmosphere={studio.presentationPack.atmosphere ?? "graphite"}
+                  handDrawnSeed={projectId}
+                />
+                {annotatePhase === "type" && pendingAnnotation ? (
+                  <div
+                    className={css.annotateInputWrap}
+                    data-testid="annotate-input"
+                    style={{
+                      left: `${pendingAnnotation.notePos.x}%`,
+                      top: `${pendingAnnotation.notePos.y}%`,
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      type="text"
+                      maxLength={140}
+                      value={annotateDraft}
+                      placeholder="NOTE…"
+                      aria-label="Annotation text"
+                      style={{ fontSize: 16 }}
+                      onChange={(e) => setAnnotateDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setAnnotatePhase("off");
+                          setPendingAnnotation(null);
+                          setAnnotateDraft("");
+                          return;
+                        }
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const text = annotateDraft.trim();
+                          if (!text) return;
+                          const ann: CanvasAnnotation = {
+                            id: crypto.randomUUID(),
+                            text,
+                            anchor: pendingAnnotation.anchor,
+                            notePos: pendingAnnotation.notePos,
+                            createdAt: new Date().toISOString(),
+                          };
+                          studio.addAnnotation(ann);
+                          setSelectedAnnotationId(ann.id);
+                          setAnnotatePhase("off");
+                          setPendingAnnotation(null);
+                          setAnnotateDraft("");
+                          void studio.saveNow().catch(() => {
+                            /* autosave chip surfaces failure */
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                ) : null}
+                {chrome.floraRing && ui.floraSession ? (
+                  <FloraRing
+                    xPct={ui.floraSession.x}
+                    yPct={ui.floraSession.y}
+                    candidates={ui.floraSession.candidates}
+                    activeIdx={ui.floraSession.activeIdx}
+                    previewSpreadPct={Math.min(
+                      28,
+                      Math.max(
+                        6,
+                        (ui.floraSession.candidates[ui.floraSession.activeIdx]
+                          ?.canopySpreadM ?? 2) * 2.4,
+                      ),
+                    )}
+                    guardItems={floraGuardItems}
+                    scaleM={scaleM}
+                    cam={planCam}
+                    onActiveIdx={studio.setFloraActiveIdx}
+                    onAccept={studio.acceptFlora}
+                    onDismiss={studio.dismissFlora}
+                  />
+                ) : null}
+                {chrome.horizon ? (
+                  <HorizonMarkers
+                    cards={actionHorizon}
+                    onFocus={(card) => {
+                      if (card.suggestType) {
+                        acceptHorizonCard(card);
+                        return;
+                      }
+                      studio.setUi({
+                        utilityPanel: "bom",
+                      });
+                    }}
+                  />
+                ) : null}
+                {ui.mode === "sketch" ? (
+                  <SketchBoard
+                    strokes={studio.strokes}
+                    darkOn={darkLens}
+                    hideChrome={ui.frameOn}
+                    formalizing={formalizing}
+                    active={ui.tool === "sketch"}
+                    onActivate={() => studio.setTool("sketch")}
+                    onChromeChange={onSketchChromeChange}
+                    onCommit={(stroke) => {
+                      studio.setStrokes([...studio.strokes, stroke]);
+                    }}
+                    onErase={(strokeId) =>
+                      studio.setStrokes(
+                        studio.strokes.filter((stroke) => stroke.id !== strokeId),
+                      )
+                    }
+                    onUndoLast={() => studio.undo()}
+                    onRedo={() => studio.redo()}
+                    canUndo={studio.canUndo}
+                    canRedo={studio.canRedo}
+                    onTidy={() => studio.tidySketches()}
+                    onFormalizeToCad={() => {
+                      void runFormalizeToCad();
+                    }}
+                    onOpenImageLayers={() =>
+                      studio.setUi({ rightDataPanel: "image_layers" })
+                    }
+                  />
+                ) : null}
+                {ui.mode === "cad" && studio.strokes.length > 0 ? (
+                  <SketchBoard
+                    readOnly
+                    strokes={studio.strokes}
+                    darkOn={darkLens}
+                  />
+                ) : null}
+                {planOn && !ui.frameOn ? (
+                  <>
+                    {studio.pathCorridors.length > 0 || ui.tool === "path" ? (
+                      <PathCorridorsLayer
+                        corridors={studio.pathCorridors}
+                        scaleM={scaleM}
+                        draftPts={ui.tool === "path" ? ui.drawPoly : null}
+                        draftWidthM={ui.pathWidthM}
+                        draftEdge={ui.edgeType}
+                        draftFilletM={ui.pathFilletM}
+                      />
+                    ) : null}
+                    {(studio.drainageRuns.length > 0 ||
+                      ui.drainageLevelIdx.length > 0 ||
+                      ui.tool === "level" ||
+                      ui.servicesEdit) &&
+                      !ui.clientView ? (
+                      <DrainageRunsLayer
+                        runs={studio.drainageRuns}
+                        levels={studio.levels}
+                        selectedIdx={ui.drainageLevelIdx}
+                        scaleM={scaleM}
+                        onToggleLevel={studio.toggleDrainageLevelIdx}
+                        onCommitRun={studio.commitDrainageRun}
+                      />
+                    ) : studio.drainageRuns.length > 0 ? (
+                      <DrainageRunsLayer
+                        runs={studio.drainageRuns}
+                        levels={[]}
+                        selectedIdx={[]}
+                        scaleM={scaleM}
+                        onToggleLevel={() => { }}
+                        onCommitRun={() => { }}
+                      />
+                    ) : null}
+                    <SurveyAnnotationLayer
+                      active={surveyServicesAuthoring}
+                      tool={ui.tool}
+                      levels={studio.levels}
+                      services={studio.services}
+                      easements={studio.easements}
+                      showCorridors={ui.mode === "survey"}
+                      scaleM={scaleM}
+                      planZoom={planZoom}
+                      darkOn={darkLens}
+                      layerOpacity={ui.layerOpacity}
+                      isolatedLayer={ui.isolatedLayer}
+                      serviceFeatureHidden={ui.serviceFeatureHidden}
+                      focusedServiceIds={ui.focusedServiceIds}
+                      onAddLevel={studio.addSpotLevel}
+                      onCommitService={studio.commitService}
+                      onCalibrate={(nextScaleM) => {
+                        // Prototype: board width metres from two known points.
+                        // Also snap sheet denom so the ground mesh stays coherent.
+                        const denoms = SHEET_SCALE_STEPS;
+                        const target = (nextScaleM / 110) * 100;
+                        let best: (typeof denoms)[number] = 100;
+                        let bestD = Infinity;
+                        for (const d of denoms) {
+                          const err = Math.abs(d - target);
+                          if (err < bestD) {
+                            bestD = err;
+                            best = d;
+                          }
+                        }
+                        studio.setUi({
+                          boardWidthM: nextScaleM,
+                          sheetScaleDenom: best,
+                          tool: "select",
+                        });
+                      }}
+                    />
+                  </>
+                ) : null}
+                <TraceOverlay
+                  active={ui.tool === "trace" && !ui.frameOn && ui.mode !== "sketch"}
+                  locked={ui.locked}
+                  target={ui.traceTarget}
+                  drawPoly={ui.drawPoly}
+                  drawCursor={ui.drawCursor}
+                  cam={planCam}
+                  onTarget={studio.setTraceTarget}
+                  onCursor={(drawCursor) => studio.setUi({ drawCursor })}
+                  onPush={studio.pushTracePoint}
+                  onFinish={studio.finishTrace}
+                  onCancel={studio.cancelTrace}
+                  onPop={studio.popTracePoint}
+                />
+                <MeasureOverlay
+                  active={ui.tool === "measure" && !ui.frameOn}
+                  scaleM={scaleM}
+                  cam={planCam}
+                  onCancel={() => {
+                    studio.setTool("select");
+                    setInstrumentsSummoned(false);
                   }}
                 />
-              </>
-            ) : null}
-            <TraceOverlay
-              active={ui.tool === "trace" && !ui.frameOn && ui.mode !== "sketch"}
-              locked={ui.locked}
-              target={ui.traceTarget}
-              drawPoly={ui.drawPoly}
-              drawCursor={ui.drawCursor}
-              cam={planCam}
-              onTarget={studio.setTraceTarget}
-              onCursor={(drawCursor) => studio.setUi({ drawCursor })}
-              onPush={studio.pushTracePoint}
-              onFinish={studio.finishTrace}
-              onCancel={studio.cancelTrace}
-              onPop={studio.popTracePoint}
-            />
-            <MeasureOverlay
-              active={ui.tool === "measure" && !ui.frameOn}
-              scaleM={scaleM}
-              cam={planCam}
-              onCancel={() => {
-                studio.setTool("select");
-                setInstrumentsSummoned(false);
-              }}
-            />
-            {(ui.mode === "cad" || ui.mode === "sketch") && !ui.frameOn ? (
-              <ZoneOverlay
-                active={ui.tool === "zone"}
-                kind={ui.zoneKind}
-                zones={studio.irrigationZones}
-                cam={planCam}
-                serviceFeatureHidden={ui.serviceFeatureHidden}
-                focusedServiceIds={ui.focusedServiceIds}
-                lightingOverload={
-                  ui.lightingWorkspaceOn && lvCircuit.overloaded
-                }
-                overloadedZoneIds={
-                  ui.lightingWorkspaceOn ? lvRuns.overloadedZoneIds : []
-                }
-                onCommit={studio.commitZone}
-              />
-            ) : null}
-            {(ui.mode === "cad" || ui.mode === "sketch") &&
-            !ui.frameOn &&
-            ui.irrigationUniformityOn ? (
-              <IrrigationUniformityWash
-                active
-                report={irrigUniformity}
-              />
-            ) : null}
-            {(ui.mode === "cad" || ui.mode === "sketch") &&
-            !ui.frameOn &&
-            ui.liveTelemetryOn ? (
-              <LiveTelemetryWash active points={telemetryPoints} />
-            ) : null}
-            {(ui.mode === "cad" || ui.mode === "sketch") &&
-            !ui.frameOn &&
-            ui.lightingWorkspaceOn ? (
-              <LightingBeams
-                items={studio.items}
-                kelvin={ui.lightingKelvin}
-                active
-              />
-            ) : null}
-            {(ui.mode === "cad" ||
-              ui.mode === "sketch" ||
-              ui.mode === "quote") &&
-            !ui.frameOn ? (
-              <TrenchOverlay
-                trenches={studio.constructionTrenches.filter((t) => {
-                  if (t.ghost) return true;
-                  return !ui.serviceFeatureHidden[`trench:${t.id}`];
-                })}
-                cam={planCam}
-                onAcceptAll={studio.acceptAllTrenchGhosts}
-                onRejectAll={studio.rejectAllTrenchGhosts}
-              />
-            ) : null}
-            {ui.tool === "zone" &&
-            !ui.focusOn &&
-            !ui.clientView &&
-            !ui.frameOn ? (
-              <NicheToolCarousel
-                testId="zone-kind-bar"
-                label="Zone type"
-                xPct={instrumentAnchor.x}
-                yPct={instrumentAnchor.y}
-                tools={nicheToolsForZone()}
-                activeId={zoneNicheActiveId(ui.zoneKind)}
-                cam={planCam}
-                onSelect={(tool: NicheTool) => {
-                  if (tool.id === "zone-drip") {
-                    studio.setUi({ zoneKind: "drip" });
-                  } else if (tool.id === "zone-lighting") {
-                    studio.setUi({
-                      zoneKind: "lighting",
-                      lightingWorkspaceOn: true,
-                    });
-                  } else if (tool.id === "zone-conduit") {
-                    studio.setUi({
-                      zoneKind: "lighting_conduit",
-                      lightingWorkspaceOn: true,
-                    });
-                  } else if (tool.id === "zone-spray") {
-                    studio.setUi({ zoneKind: "spray" });
-                  } else if (tool.id === "zone-agg") {
-                    studio.setUi({ zoneKind: "agg_drain" });
-                  }
-                }}
-              />
-            ) : null}
-            {gridStudioOpen &&
-            !ui.focusOn &&
-            !ui.clientView &&
-            !ui.frameOn &&
-            !ui.foundationCleanse ? (
-              <DraftGridStudio
-                anchorXPct={instrumentAnchor.x}
-                anchorYPct={instrumentAnchor.y}
-                formation={ui.gridFormation}
-                ink={ui.gridInk}
-                grain={ui.gridGrain}
-                snap={ui.gridSnap}
-                cam={planCam}
-                onPreviewFormation={setGridPreviewFormation}
-                onPreviewInk={setGridPreviewInk}
-                onCommit={(patch) => {
-                  const next = {
-                    gridFormation: patch.formation ?? ui.gridFormation,
-                    gridInk: patch.ink ?? ui.gridInk,
-                    gridGrain: patch.grain ?? ui.gridGrain,
-                    gridSnap: patch.snap ?? ui.gridSnap,
-                  };
-                  studio.setUi(next);
-                  saveGridStudioPrefs(projectId, {
-                    formation: next.gridFormation,
-                    ink: next.gridInk,
-                    grain: next.gridGrain,
-                    snap: next.gridSnap,
-                  });
-                }}
-              />
-            ) : null}
-            {/* Selection focus veil — one scrim; persists across item hops. */}
-            {selectionOrbitOn && selectedLive ? (
-              <SelectionFocusVeil
-                focusPct={{ x: selectedLive.x, y: selectedLive.y }}
-                cam={planCam}
-                night={darkLens}
-                onDismiss={() => studio.setSelection(null, [])}
-              />
-            ) : null}
-            {/* Selection dial — steering-wheel arc (single item, plan modes). */}
-            {selectionOrbitOn && selectedLive ? (
-              <SelectionDial
-                item={selectedLive}
-                items={studio.items}
-                cam={planCam}
-                night={darkLens}
-                onTransform={studio.transformItem}
-                onChangeType={studio.changeSelectedType}
-                onDuplicate={studio.duplicateSelected}
-                onAnnotate={() => {
-                  setAnnotatePhase("place");
-                  setPendingAnnotation(null);
-                  setAnnotateDraft("");
-                }}
-                onDelete={() => {
-                  const id = selectedLive.id;
-                  studio.deleteSelected();
-                  toast.show("Deleted", "info", 5000, {
-                    action: {
-                      label: "Undo",
-                      onClick: () => studio.undo(),
-                    },
-                  });
-                  void id;
-                }}
-                onDismiss={() => studio.setSelection(null, [])}
-              />
-            ) : null}
-            {/* Multi-select / sketch keep the orbit ring; single CAD uses dial.
+                {(ui.mode === "cad" || ui.mode === "sketch") && !ui.frameOn ? (
+                  <ZoneOverlay
+                    active={ui.tool === "zone"}
+                    kind={ui.zoneKind}
+                    zones={studio.irrigationZones}
+                    cam={planCam}
+                    serviceFeatureHidden={ui.serviceFeatureHidden}
+                    focusedServiceIds={ui.focusedServiceIds}
+                    lightingOverload={
+                      ui.lightingWorkspaceOn && lvCircuit.overloaded
+                    }
+                    overloadedZoneIds={
+                      ui.lightingWorkspaceOn ? lvRuns.overloadedZoneIds : []
+                    }
+                    onCommit={studio.commitZone}
+                  />
+                ) : null}
+                {(ui.mode === "cad" || ui.mode === "sketch") &&
+                  !ui.frameOn &&
+                  ui.irrigationUniformityOn ? (
+                  <IrrigationUniformityWash
+                    active
+                    report={irrigUniformity}
+                  />
+                ) : null}
+                {(ui.mode === "cad" || ui.mode === "sketch") &&
+                  !ui.frameOn &&
+                  ui.liveTelemetryOn ? (
+                  <LiveTelemetryWash active points={telemetryPoints} />
+                ) : null}
+                {(ui.mode === "cad" || ui.mode === "sketch") &&
+                  !ui.frameOn &&
+                  ui.lightingWorkspaceOn ? (
+                  <LightingBeams
+                    items={studio.items}
+                    kelvin={ui.lightingKelvin}
+                    active
+                  />
+                ) : null}
+                {(ui.mode === "cad" ||
+                  ui.mode === "sketch" ||
+                  ui.mode === "quote") &&
+                  !ui.frameOn ? (
+                  <TrenchOverlay
+                    trenches={studio.constructionTrenches.filter((t) => {
+                      if (t.ghost) return true;
+                      return !ui.serviceFeatureHidden[`trench:${t.id}`];
+                    })}
+                    cam={planCam}
+                    onAcceptAll={studio.acceptAllTrenchGhosts}
+                    onRejectAll={studio.rejectAllTrenchGhosts}
+                  />
+                ) : null}
+                {ui.tool === "zone" &&
+                  !ui.focusOn &&
+                  !ui.clientView &&
+                  !ui.frameOn ? (
+                  <NicheToolCarousel
+                    testId="zone-kind-bar"
+                    label="Zone type"
+                    xPct={instrumentAnchor.x}
+                    yPct={instrumentAnchor.y}
+                    tools={nicheToolsForZone()}
+                    activeId={zoneNicheActiveId(ui.zoneKind)}
+                    cam={planCam}
+                    onSelect={(tool: NicheTool) => {
+                      if (tool.id === "zone-drip") {
+                        studio.setUi({ zoneKind: "drip" });
+                      } else if (tool.id === "zone-lighting") {
+                        studio.setUi({
+                          zoneKind: "lighting",
+                          lightingWorkspaceOn: true,
+                        });
+                      } else if (tool.id === "zone-conduit") {
+                        studio.setUi({
+                          zoneKind: "lighting_conduit",
+                          lightingWorkspaceOn: true,
+                        });
+                      } else if (tool.id === "zone-spray") {
+                        studio.setUi({ zoneKind: "spray" });
+                      } else if (tool.id === "zone-agg") {
+                        studio.setUi({ zoneKind: "agg_drain" });
+                      }
+                    }}
+                  />
+                ) : null}
+                {gridStudioOpen &&
+                  !ui.focusOn &&
+                  !ui.clientView &&
+                  !ui.frameOn &&
+                  !ui.foundationCleanse ? (
+                  <DraftGridStudio
+                    anchorXPct={instrumentAnchor.x}
+                    anchorYPct={instrumentAnchor.y}
+                    formation={ui.gridFormation}
+                    ink={ui.gridInk}
+                    grain={ui.gridGrain}
+                    snap={ui.gridSnap}
+                    cam={planCam}
+                    onPreviewFormation={setGridPreviewFormation}
+                    onPreviewInk={setGridPreviewInk}
+                    onCommit={(patch) => {
+                      const next = {
+                        gridFormation: patch.formation ?? ui.gridFormation,
+                        gridInk: patch.ink ?? ui.gridInk,
+                        gridGrain: patch.grain ?? ui.gridGrain,
+                        gridSnap: patch.snap ?? ui.gridSnap,
+                      };
+                      studio.setUi(next);
+                      saveGridStudioPrefs(projectId, {
+                        formation: next.gridFormation,
+                        ink: next.gridInk,
+                        grain: next.gridGrain,
+                        snap: next.gridSnap,
+                      });
+                    }}
+                  />
+                ) : null}
+                {/* Selection focus veil — one scrim; persists across item hops. */}
+                {selectionOrbitOn && selectedLive ? (
+                  <SelectionFocusVeil
+                    focusPct={{ x: selectedLive.x, y: selectedLive.y }}
+                    cam={planCam}
+                    night={darkLens}
+                    onDismiss={() => studio.setSelection(null, [])}
+                  />
+                ) : null}
+                {/* Selection dial — steering-wheel arc (single item, plan modes). */}
+                {selectionOrbitOn && selectedLive ? (
+                  <SelectionDial
+                    item={selectedLive}
+                    items={studio.items}
+                    cam={planCam}
+                    night={darkLens}
+                    onTransform={studio.transformItem}
+                    onChangeType={studio.changeSelectedType}
+                    onDuplicate={studio.duplicateSelected}
+                    onAnnotate={() => {
+                      setAnnotatePhase("place");
+                      setPendingAnnotation(null);
+                      setAnnotateDraft("");
+                    }}
+                    onDelete={() => {
+                      const id = selectedLive.id;
+                      studio.deleteSelected();
+                      toast.show("Deleted", "info", 5000, {
+                        action: {
+                          label: "Undo",
+                          onClick: () => studio.undo(),
+                        },
+                      });
+                      void id;
+                    }}
+                    onDismiss={() => studio.setSelection(null, [])}
+                  />
+                ) : null}
+                {/* Multi-select / sketch keep the orbit ring; single CAD uses dial.
                 Fit is paper-only — chrome.selectionRing is false; do not bypass. */}
-            {!ui.clientView &&
-            !ui.frameOn &&
-            selectedLive &&
-            ui.tool !== "zone" &&
-            !selectionOrbitOn &&
-            (chrome.selectionRing ||
-              ui.mode === "cad" ||
-              ui.mode === "sketch" ||
-              ui.mode === "survey") ? (
-              <SelectionRing
-                item={selectedLive}
-                xPct={selectedLive.x}
-                yPct={selectedLive.y}
-                locked={ui.locked}
-                cam={planCam}
-                onDelete={studio.deleteSelected}
-                onClose={() => studio.setSelection(null, [])}
-                onLock={() => studio.setTool(ui.locked ? "select" : "lock")}
-                onAskAi={() =>
-                  studio.setUi({
-                    cmdOpen: true,
-                    cmdQuery: `about ${BY_TYPE[selectedLive.t]?.tag ?? selectedLive.t}`,
-                  })
-                }
-              />
-            ) : null}
+                {!ui.clientView &&
+                  !ui.frameOn &&
+                  selectedLive &&
+                  ui.tool !== "zone" &&
+                  !selectionOrbitOn &&
+                  (chrome.selectionRing ||
+                    ui.mode === "cad" ||
+                    ui.mode === "sketch" ||
+                    ui.mode === "survey") ? (
+                  <SelectionRing
+                    item={selectedLive}
+                    xPct={selectedLive.x}
+                    yPct={selectedLive.y}
+                    locked={ui.locked}
+                    cam={planCam}
+                    onDelete={studio.deleteSelected}
+                    onClose={() => studio.setSelection(null, [])}
+                    onLock={() => studio.setTool(ui.locked ? "select" : "lock")}
+                    onAskAi={() =>
+                      studio.setUi({
+                        cmdOpen: true,
+                        cmdQuery: `about ${BY_TYPE[selectedLive.t]?.tag ?? selectedLive.t}`,
+                      })
+                    }
+                  />
+                ) : null}
+              </div>
             </div>
-          </div>
-          {/* Dedicated portal mount — sibling of the camera, never an ancestor
+            {/* Dedicated portal mount — sibling of the camera, never an ancestor
               of chrome call-sites. Portaling into an ancestor collapses wrappers.
               NOT aria-hidden: CameraChrome portals interactive chrome (tool
               dock, checklist, measures, hint pills) into this node — hiding it
               removed every docked control from the accessibility tree. */}
-          <div
-            data-testid="camera-chrome-root"
-            data-camera-chrome-root="1"
-            className={css.cameraChromeRoot}
-          />
+            <div
+              data-testid="camera-chrome-root"
+              data-camera-chrome-root="1"
+              className={css.cameraChromeRoot}
+            />
           </>
         ) : null}
 
@@ -4173,12 +4341,15 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn &&
-        !ui.frameOn &&
-        ui.mode === "survey" &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        checklistOpen ? (
-          <RightDataLane testId="right-data-lane-checklist">
+          !ui.frameOn &&
+          ui.mode === "survey" &&
+          !ui.focusOn &&
+          !ui.clientView &&
+          checklistOpen ? (
+          <RightDataLane
+            testId="right-data-lane-checklist"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
             <SurveyChecklist
               boundary={studio.boundary}
               building={studio.building}
@@ -4222,12 +4393,12 @@ export function HandoffDesignStudio({
                     ? `Rev ${latestShare.revision} · Declined`
                     : latestShare.status === "shared"
                       ? `Rev ${latestShare.revision} · Shared ${new Date(
-                          latestShare.created_at,
-                        ).toLocaleDateString("en-AU", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}`
+                        latestShare.created_at,
+                      ).toLocaleDateString("en-AU", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}`
                       : `Rev ${latestShare.revision} · Superseded`
                 : null
             }
@@ -4257,10 +4428,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {ui.mode === "cad" &&
-        !ui.frameOn &&
-        !ui.clientView &&
-        !ui.focusOn &&
-        isViewRotatedFromNorth(ui.viewRotationDeg) ? (
+          !ui.frameOn &&
+          !ui.clientView &&
+          !ui.focusOn &&
+          isViewRotatedFromNorth(ui.viewRotationDeg) ? (
           <CameraChrome
             place={{ kind: "dock" }}
             zIndex={42}
@@ -4280,18 +4451,18 @@ export function HandoffDesignStudio({
         ) : null}
 
         {(planOn || ui.mode === "elevation") &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        !ui.lightingWorkspaceOn &&
-        !chrome.compact ? (
+          !ui.focusOn &&
+          !ui.clientView &&
+          !ui.frameOn &&
+          !ui.lightingWorkspaceOn &&
+          !chrome.compact ? (
           <ArtboardStrip active={activeArtboard} onSelect={selectArtboard} />
         ) : null}
 
         {((planOn && isTiltActive(ui.tiltDeg)) ||
           ui.mode === "elevation") &&
-        !ui.frameOn &&
-        !ui.focusOn ? (
+          !ui.frameOn &&
+          !ui.focusOn ? (
           <GardenViewpointStrip
             mode={ui.mode === "elevation" ? "elevation" : "plan"}
             activeLook={armedGardenLook}
@@ -4302,11 +4473,11 @@ export function HandoffDesignStudio({
 
         {/* One contextual hint: discover (bottom) never stacks with pause (top). */}
         {tiltDiscoverHint &&
-        planOn &&
-        !ui.frameOn &&
-        topHint !== "tilt" &&
-        topHint !== "edit" &&
-        topHint !== "trace" ? (
+          planOn &&
+          !ui.frameOn &&
+          topHint !== "tilt" &&
+          topHint !== "edit" &&
+          topHint !== "trace" ? (
           <TiltHintPill
             kind="discover"
             onDismiss={() => setTiltDiscoverHint(false)}
@@ -4330,11 +4501,11 @@ export function HandoffDesignStudio({
 
         {/* Compact: single Tools peek — header Instruments is often under mode nav. */}
         {chrome.compact &&
-        planOn &&
-        !ui.frameOn &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !instrumentsVisible ? (
+          planOn &&
+          !ui.frameOn &&
+          !ui.focusOn &&
+          !ui.clientView &&
+          !instrumentsVisible ? (
           <CameraChrome place={{ kind: "dock" }} zIndex={36} testId="instruments-peek-chrome">
             <button
               type="button"
@@ -4358,14 +4529,19 @@ export function HandoffDesignStudio({
             night={darkLens}
             gridOn={gridStudioOpen}
             onTool={(t) => {
+              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(t);
             }}
             onMeasure={() => {
+              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
-            onToggleGrid={() => setGridStudioOpen((v) => !v)}
+            onToggleGrid={() => {
+              if (ui.mode === "quote") requestMode("cad");
+              setGridStudioOpen((v) => !v);
+            }}
           />
         ) : null}
 
@@ -4378,14 +4554,33 @@ export function HandoffDesignStudio({
             night={darkLens}
             gridOn={gridStudioOpen}
             onTool={(t) => {
+              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(t);
             }}
             onMeasure={() => {
+              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
-            onToggleGrid={() => setGridStudioOpen((v) => !v)}
+            onToggleGrid={() => {
+              if (ui.mode === "quote") requestMode("cad");
+              setGridStudioOpen((v) => !v);
+            }}
+          />
+        ) : null}
+
+        {canvasToolCardOn ? (
+          <CanvasToolCard
+            open
+            mode={ui.mode}
+            recentAssetTypes={ui.recentAssetTypes}
+            armed={ui.armed}
+            onArm={(t) => {
+              armType(t);
+              studio.setUi({ addOpen: false });
+            }}
+            onClose={() => studio.setUi({ addOpen: false })}
           />
         ) : null}
 
@@ -4402,10 +4597,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {!ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        planOn &&
-        selectedLive?.t === "exist" ? (
+          !ui.clientView &&
+          !ui.frameOn &&
+          planOn &&
+          selectedLive?.t === "exist" ? (
           <ExistTreeInspector
             xPct={selectedLive.x}
             yPct={selectedLive.y}
@@ -4417,10 +4612,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {ui.addOpen &&
-        ui.armed === "exist" &&
-        !selectedLive &&
-        planOn &&
-        !ui.focusOn ? (
+          ui.armed === "exist" &&
+          !selectedLive &&
+          planOn &&
+          !ui.focusOn ? (
           <CameraChrome
             place={{
               kind: "project",
@@ -4477,12 +4672,17 @@ export function HandoffDesignStudio({
         {/* Live measures — Cmd+K / header Data only. No parked CAD MEASURES card. */}
 
         {measuresOpen &&
-        planOn &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        !ui.foundationCleanse ? (
-          <RightDataLane testId="right-data-lane-measures">
+          planOn &&
+          !ui.focusOn &&
+          !ui.clientView &&
+          !ui.frameOn &&
+          !ui.foundationCleanse ? (
+          <RightDataLane
+            testId="right-data-lane-measures"
+            onClose={() =>
+              studio.setUi({ rightDataPanel: null, utilityPanel: null })
+            }
+          >
             <LiveMeasuresRail
               boundary={studio.boundary}
               building={studio.building}
@@ -4605,10 +4805,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        !chrome.compact ? (
+          !ui.focusOn &&
+          !ui.clientView &&
+          !ui.frameOn &&
+          !chrome.compact ? (
           <PhaseManagerChip
             phase={ui.lifecyclePhase}
             onPhase={(lifecyclePhase) => studio.setUi({ lifecyclePhase })}
@@ -4616,11 +4816,11 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        ui.irrigationUniformityOn &&
-        irrigUniformity.heads.length > 0 ? (
+          !ui.focusOn &&
+          !ui.clientView &&
+          !ui.frameOn &&
+          ui.irrigationUniformityOn &&
+          irrigUniformity.heads.length > 0 ? (
           <IrrigationUniformityDock
             report={irrigUniformity}
             onClose={() => studio.setUi({ irrigationUniformityOn: false })}
@@ -4628,10 +4828,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn &&
-        !ui.focusOn &&
-        !ui.clientView &&
-        !ui.frameOn &&
-        ui.liveTelemetryOn ? (
+          !ui.focusOn &&
+          !ui.clientView &&
+          !ui.frameOn &&
+          ui.liveTelemetryOn ? (
           <LiveTelemetryDock
             latest={boardTelemetry.latest}
             readings={boardTelemetry.readings}
@@ -4670,9 +4870,9 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn &&
-        !ui.frameOn &&
-        !ui.focusOn &&
-        (ui.clientView || ui.schemes.length > 0) ? (
+          !ui.frameOn &&
+          !ui.focusOn &&
+          (ui.clientView || ui.schemes.length > 0) ? (
           <VariationFilmstrip
             schemes={ui.schemes}
             activeSchemeId={ui.activeSchemeId}
@@ -4736,7 +4936,10 @@ export function HandoffDesignStudio({
 
         {/* Ghost review — AI sidecar lane (lane law). */}
         {draftSurface && ui.ghostReviewOpen ? (
-          <RightDataLane testId="right-data-lane-ghosts">
+          <RightDataLane
+            testId="right-data-lane-ghosts"
+            onClose={() => studio.setUi({ ghostReviewOpen: false })}
+          >
             <AiGhostReview
               ghosts={ai.pending}
               items={studio.items}
@@ -4770,7 +4973,10 @@ export function HandoffDesignStudio({
         {/* Right data lane — one panel (lane law). Flush to the right boundary.
             Fit dismisses lanes on enter; keep mounts gated while paper is up. */}
         {planOn && servicesOpen && !ui.frameOn ? (
-          <RightDataLane testId="right-data-lane-services">
+          <RightDataLane
+            testId="right-data-lane-services"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
             <SitePackPanel
               chase={ui.sitePackChase}
               bydaAssetCount={studio.bydaAssets.filter((a) => a.ring.length >= 2).length}
@@ -4795,13 +5001,13 @@ export function HandoffDesignStudio({
                       sitePackChase: chase.length
                         ? chase
                         : [
-                            {
-                              id: "byda",
-                              label: "Lodge BYDA + upload plans to project (dig gate)",
-                              done: true,
-                              href: "https://www.byda.com.au/",
-                            },
-                          ],
+                          {
+                            id: "byda",
+                            label: "Lodge BYDA + upload plans to project (dig gate)",
+                            done: true,
+                            href: "https://www.byda.com.au/",
+                          },
+                        ],
                       councilTip:
                         "BYDA plan filed — digitise assets with Servc + BYDA kind to unlock dig",
                     });
@@ -4871,7 +5077,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn && environmentOpen && !ui.frameOn ? (
-          <RightDataLane testId="right-data-lane-environment">
+          <RightDataLane
+            testId="right-data-lane-environment"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
             <EnvironmentPanel
               open
               meta={envLiveMeta}
@@ -4894,7 +5103,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn && siteMetaOpen && !ui.frameOn ? (
-          <RightDataLane testId="right-data-lane-site">
+          <RightDataLane
+            testId="right-data-lane-site"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
             <SiteMetaPanel
               open
               meta={siteLiveMeta}
@@ -4905,7 +5117,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn && treesMetaOpen && !ui.frameOn ? (
-          <RightDataLane testId="right-data-lane-trees">
+          <RightDataLane
+            testId="right-data-lane-trees"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
             <TreesMetaPanel
               open
               meta={treesLiveMeta}
@@ -4915,10 +5130,13 @@ export function HandoffDesignStudio({
         ) : null}
 
         {(chrome.structureRail || chrome.compact) &&
-        planOn &&
-        layersOpen &&
-        !ui.frameOn ? (
-          <RightDataLane testId="right-data-lane-layers">
+          planOn &&
+          layersOpen &&
+          !ui.frameOn ? (
+          <RightDataLane
+            testId="right-data-lane-layers"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
             <LayersPanel
               open
               opacity={ui.layerOpacity}
@@ -4939,6 +5157,23 @@ export function HandoffDesignStudio({
                   utilityPanel: null,
                 });
               }}
+            />
+          </RightDataLane>
+        ) : null}
+
+        {planOn && imageLayersOpen && !ui.frameOn ? (
+          <RightDataLane
+            testId="right-data-lane-image-layers"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
+            <ImageLayerPanel
+              projectId={projectId}
+              layers={studio.imageLayers}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+              onAdd={studio.addImageLayer}
+              onUpdate={studio.updateImageLayer}
+              onRemove={studio.removeImageLayer}
+              onSetLayers={studio.setImageLayers}
             />
           </RightDataLane>
         ) : null}
@@ -5064,8 +5299,8 @@ export function HandoffDesignStudio({
             {studioSheetPage === "inbox" ? (
               <div className={sheetCss.inboxStack} data-testid="studio-sheet-inbox">
                 {actionHorizon.length === 0 &&
-                openBoardFindings.length === 0 &&
-                boardGaps.length === 0 ? (
+                  openBoardFindings.length === 0 &&
+                  boardGaps.length === 0 ? (
                   <p className={sheetCss.empty}>No open advisories on this board.</p>
                 ) : null}
                 <PreemptiveHorizon
@@ -5195,10 +5430,11 @@ export function HandoffDesignStudio({
                   className={css.undoCell}
                   data-provenance={
                     studio.undoProvenance[
-                      studio.undoProvenance.length - 1 - i
+                    studio.undoProvenance.length - 1 - i
                     ] ?? "manual"
                   }
                   title={`Step back ${i + 1}`}
+                  aria-label={`Step back ${i + 1}`}
                   onClick={() => {
                     for (let n = 0; n <= i; n += 1) studio.undo();
                   }}
@@ -5221,9 +5457,9 @@ export function HandoffDesignStudio({
         ) : null}
 
         {undoFilmOn &&
-        studio.boundary.length < 3 &&
-        studio.items.length === 0 &&
-        studio.strokes.length === 0 ? (
+          studio.boundary.length < 3 &&
+          studio.items.length === 0 &&
+          studio.strokes.length === 0 ? (
           <div className={css.onboardHint} data-testid="studio-onboard-hint">
             <p className={css.onboardHintTitle}>Trace the boundary to begin</p>
             <p className={css.onboardHintMeta}>
@@ -5233,7 +5469,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {sitesOpen && planOn && !projectId && !ui.frameOn ? (
-          <RightDataLane testId="right-data-lane-sites">
+          <RightDataLane
+            testId="right-data-lane-sites"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
             <SiteSwitcher
               open
               siteIdx={ui.siteIdx}
@@ -5320,7 +5559,7 @@ export function HandoffDesignStudio({
             const idx = DESIGN_LIFECYCLE_PHASES.indexOf(ui.lifecyclePhase);
             const next =
               DESIGN_LIFECYCLE_PHASES[
-                (idx < 0 ? 0 : idx + 1) % DESIGN_LIFECYCLE_PHASES.length
+              (idx < 0 ? 0 : idx + 1) % DESIGN_LIFECYCLE_PHASES.length
               ]!;
             studio.setUi({ lifecyclePhase: next });
           }}

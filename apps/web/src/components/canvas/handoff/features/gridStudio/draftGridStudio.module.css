@@ -89,7 +89,7 @@
 }
 
 .ink:hover {
-  outline: 1px solid rgba(194, 69, 95, 0.45);
+  outline: 1px solid color-mix(in srgb, var(--hc-danger) 45%, transparent);
   outline-offset: 1px;
 }
 
@@ -122,6 +122,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .root,
   .tray {
     transition: none;

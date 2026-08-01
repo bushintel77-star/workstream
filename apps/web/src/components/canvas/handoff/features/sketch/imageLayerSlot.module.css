@@ -1,0 +1,15 @@
+.slot {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.image {
+  position: absolute;
+  height: auto;
+  transform-origin: center center;
+  user-select: none;
+  -webkit-user-drag: none;
+}

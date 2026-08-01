@@ -1,5 +1,6 @@
 "use client";
 
+import { formatScheduleAreaM2 } from "../../geometry/siteScheduleDisplay";
 import { MetaIcon } from "./MetaIcon";
 import type { SiteLiveMeta } from "./siteLiveMeta";
 import css from "./metaPanel.module.css";
@@ -21,11 +22,11 @@ export function SiteMetaPanel({ open, meta, outdoorM2 = null, onClose }: Props) 
 
   const areaLabel =
     meta.lotAreaM2 > 0
-      ? `${meta.lotAreaM2.toFixed(2)} m²`
+      ? `${formatScheduleAreaM2(meta.lotAreaM2)} m²`
       : "—";
   const outdoorLabel =
     outdoorM2 != null && outdoorM2 > 0
-      ? `${outdoorM2.toFixed(2)} m²`
+      ? `${formatScheduleAreaM2(outdoorM2)} m²`
       : "—";
 
   return (

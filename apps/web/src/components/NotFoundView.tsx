@@ -18,7 +18,7 @@ export function NotFoundView({
       <div className={s.empty}>
         <h1 className={s.headline}>{title}</h1>
         <p className={s.lede}>{message}</p>
-        <Link href="/" className={s.btn}>
+        <Link href="/home" className={s.btn}>
           Go to dashboard
         </Link>
       </div>

@@ -156,7 +156,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     ? () => journal.flush()
     : opts.persistPath
       ? makeFlusher(opts.persistPath, arrays as Record<string, unknown[]>)
-      : () => {};
+      : () => { };
 
   const loadSnapshot = (): boolean => {
     if (journal) {
@@ -1234,6 +1234,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         irrigation_zones: canvas.irrigation_zones ?? [],
         construction_trenches: canvas.construction_trenches ?? [],
         annotations: canvas.annotations ?? [],
+        image_layers: canvas.image_layers ?? [],
         features: canvas.features ?? [],
         presentation_pack: canvas.presentation_pack,
         lifecycle_phase: canvas.lifecycle_phase,
@@ -1295,6 +1296,9 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         if (input.annotations !== undefined) {
           existing.annotations = input.annotations;
         }
+        if (input.image_layers !== undefined) {
+          existing.image_layers = input.image_layers;
+        }
         if (input.features !== undefined) {
           existing.features = input.features;
         }
@@ -1314,6 +1318,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           features: existing.features ?? [],
           site_frame: existing.site_frame,
           construction_trenches: existing.construction_trenches ?? [],
+          image_layers: existing.image_layers ?? [],
           presentation_pack: existing.presentation_pack,
           lifecycle_phase: existing.lifecycle_phase,
         };
@@ -1326,6 +1331,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         irrigation_zones: input.irrigation_zones ?? [],
         construction_trenches: input.construction_trenches ?? [],
         annotations: input.annotations ?? [],
+        image_layers: input.image_layers ?? [],
         features: input.features ?? [],
         site_frame: input.site_frame,
         presentation_pack: input.presentation_pack,

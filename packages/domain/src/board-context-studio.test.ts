@@ -57,6 +57,7 @@ function canvasOf(partial: Partial<DesignCanvas> = {}): DesignCanvas {
     irrigation_zones: [],
     construction_trenches: [],
     annotations: [],
+    image_layers: [],
     features: [],
     updated_at: "2026-07-27T00:00:00.000Z",
     ...partial,

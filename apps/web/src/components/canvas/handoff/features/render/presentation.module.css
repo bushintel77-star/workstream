@@ -13,14 +13,14 @@
 }
 
 .speciesLabelNight {
-  color: rgba(236, 239, 244, 0.88);
+  color: color-mix(in srgb, var(--hc-paper) 88%, transparent);
 }
 
 .speciesLeader {
   position: absolute;
   pointer-events: none;
   width: 1px;
-  background: rgba(90, 70, 80, 0.55);
+  background: color-mix(in srgb, var(--hc-ink) 55%, transparent);
   transform-origin: top center;
 }
 

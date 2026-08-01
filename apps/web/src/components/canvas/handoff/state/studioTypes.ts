@@ -7,6 +7,7 @@ import type {
   DesignKeylessOverlay,
   BydaAssetKind,
   PresentationPack,
+  ImageLayer,
 } from "@workstream/contracts";
 import type {
   DesignSchemeSnapshot,
@@ -66,6 +67,8 @@ export type StudioSnapshot = {
   constructionTrenches: ConstructionTrench[];
   /** Hand-lettered presentation notes — DesignCanvas.annotations. */
   annotations: CanvasAnnotation[];
+  /** Imported photo / plan underlays — DesignCanvas.image_layers. */
+  imageLayers: ImageLayer[];
   /** Fit-sheet compose pack — DesignCanvas.presentation_pack. */
   presentationPack?: PresentationPack;
 };

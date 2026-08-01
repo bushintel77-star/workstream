@@ -500,32 +500,50 @@ export function proposeFromCadSuggestions(
   return { items, idn: nextIdn, count: items.length };
 }
 
+/** Vision / API ghosts that should land as canopy (or retained tree) proposals. */
+export function isCanopyLikeSuggestion(symbolId: string): boolean {
+  const t = mapSymbolToStudioType(symbolId);
+  return t === "canopy" || t === "exist";
+}
+
+/**
+ * Aerial canopy ghosts — prefer non-empty vision/API clusters (P2.1);
+ * colour-heuristic fallback when the API returns nothing.
+ */
 export function proposeFromCanopyImage(
   image: RgbaImageData,
   idn: number,
-): { items: StudioItem[]; idn: number } {
-  const clusters = detectCanopyClustersFromImageData(image, {
-    gridSize: 24,
-    maxClusters: 6,
-    symbolId: "canopy",
-  });
+  apiClusters?: GhostPlacementSuggestion[],
+): { items: StudioItem[]; idn: number; source: "vision" | "heuristic" } {
+  const fromApi = (apiClusters ?? []).filter((c) =>
+    isCanopyLikeSuggestion(c.symbol_id),
+  );
+  const clusters: GhostPlacementSuggestion[] =
+    fromApi.length > 0
+      ? fromApi
+      : detectCanopyClustersFromImageData(image, {
+          gridSize: 24,
+          maxClusters: 6,
+          symbolId: "canopy",
+        }).map((c) => ({
+          id: c.id,
+          symbol_id: "canopy",
+          x_pct: c.x_pct,
+          y_pct: c.y_pct,
+          confidence: c.confidence,
+          reason: c.reason,
+        }));
+  const source = fromApi.length > 0 ? "vision" : "heuristic";
   let nextIdn = idn;
   const items = clusters.map((c) => {
     nextIdn += 1;
     return proposalToStudioItem(
-      {
-        id: c.id,
-        symbol_id: "canopy",
-        x_pct: c.x_pct,
-        y_pct: c.y_pct,
-        confidence: c.confidence,
-        reason: c.reason,
-      },
+      c,
       `${aiItemPrefix("canopy")}${nextIdn}`,
       "canopy",
     );
   });
-  return { items, idn: nextIdn };
+  return { items, idn: nextIdn, source };
 }
 
 /** Merge new AI proposals; drop prior proposals from the same source family. */

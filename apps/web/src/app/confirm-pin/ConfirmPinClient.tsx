@@ -198,6 +198,7 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
           <img
             src={neighbourhoodUri}
             alt=""
+            aria-hidden="true"
             className={`${cp.aerial} ${cp.aerialNeighbourhood}${zoomIn ? ` ${cp.aerialZoomIn}` : ""}${showLot ? ` ${cp.aerialFaded}` : ""}`}
           />
         ) : null}
@@ -207,6 +208,7 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
           <img
             src={lotUri}
             alt=""
+            aria-hidden="true"
             className={`${cp.aerial} ${cp.aerialLot}${showLot ? ` ${cp.aerialLotVisible}` : ""}`}
           />
         ) : null}

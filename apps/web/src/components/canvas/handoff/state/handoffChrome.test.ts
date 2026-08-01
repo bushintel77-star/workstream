@@ -192,10 +192,11 @@ describe("resolveHandoffChrome", () => {
     expect(c.selectionRing).toBe(true);
   });
 
-  it("Quote keeps estimate path without draw chrome", () => {
+  it("Quote keeps estimate path with left ToolDock", () => {
     const c = resolveHandoffChrome({ ...base, mode: "quote" });
     expect(c.liveBom).toBe(true);
     expect(c.utilityDrawer).toBe(false);
+    expect(c.ambientRibbon).toBe(true);
     expect(c.drawTools).toBe(false);
     expect(c.horizon).toBe(false);
   });
