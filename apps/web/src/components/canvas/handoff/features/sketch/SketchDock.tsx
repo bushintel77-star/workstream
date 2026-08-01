@@ -145,6 +145,7 @@ export function SketchDock({
           className={`${css.tool}${tool === "pen" ? ` ${css.toolActive}` : ""}`}
           data-testid="sketch-pen"
           aria-pressed={tool === "pen"}
+          aria-label={tool === "pen" ? "Pen" : "Switch to pen"}
           disabled={formalizing}
           title={tool === "pen" ? "Pen — draw ink strokes" : "Switch to pen"}
           onPointerDown={(e) => e.stopPropagation()}
@@ -158,6 +159,7 @@ export function SketchDock({
           className={`${css.tool}${tool === "eraser" ? ` ${css.toolActive}` : ""}`}
           data-testid="sketch-eraser"
           aria-pressed={tool === "eraser"}
+          aria-label={tool === "eraser" ? "Eraser" : "Switch to eraser"}
           disabled={formalizing}
           title={
             tool === "eraser" ? "Eraser — remove strokes" : "Switch to eraser"
@@ -176,6 +178,7 @@ export function SketchDock({
           data-testid="sketch-brush"
           aria-pressed={tipOpen}
           aria-expanded={tipOpen}
+          aria-label={`Tip: ${SKETCH_TIP_LABEL[tip]}`}
           disabled={formalizing}
           title={`Tip: ${SKETCH_TIP_LABEL[tip]}`}
           onPointerDown={(e) => e.stopPropagation()}
@@ -190,6 +193,7 @@ export function SketchDock({
           type="button"
           className={css.tool}
           data-testid="sketch-image"
+          aria-label="Image layers"
           disabled={formalizing}
           title="Image layers — upload or manage underlays"
           onPointerDown={(e) => e.stopPropagation()}

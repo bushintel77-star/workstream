@@ -19,12 +19,10 @@
   border-right: 0;
   border-radius: 12px 0 0 12px;
   background:
-    linear-gradient(
-      90deg,
+    linear-gradient(90deg,
       var(--hc-glass-soft) 0%,
       var(--hc-glass-soft) 18%,
-      var(--hc-glass-soft) 100%
-    );
+      var(--hc-glass-soft) 100%);
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
   backdrop-filter: blur(18px) saturate(1.08);
   box-shadow:
@@ -39,13 +37,11 @@
   z-index: 2;
   width: 1px;
   content: "";
-  background: linear-gradient(
-    180deg,
-    transparent,
-    color-mix(in srgb, var(--hc-danger) 32%, transparent) 16%,
-    color-mix(in srgb, var(--hc-danger) 14%, transparent) 84%,
-    transparent
-  );
+  background: linear-gradient(180deg,
+      transparent,
+      color-mix(in srgb, var(--hc-danger) 32%, transparent) 16%,
+      color-mix(in srgb, var(--hc-danger) 14%, transparent) 84%,
+      transparent);
   pointer-events: none;
 }
 
@@ -66,7 +62,7 @@
   isolation: isolate;
 }
 
-.card + .card {
+.card+.card {
   border-top: 1px solid var(--hc-line-soft);
 }
 
@@ -207,7 +203,7 @@
 
 .expand:focus-visible,
 .close:focus-visible {
-  outline: 2px solid rgba(194, 69, 95, 0.62);
+  outline: 2px solid color-mix(in srgb, var(--hc-danger) 62%, transparent);
   outline-offset: -2px;
 }
 
@@ -215,7 +211,7 @@
   display: inline-block;
   margin-left: 5px;
   padding: 0 4px;
-  border: 1px solid rgba(194, 69, 95, 0.24);
+  border: 1px solid color-mix(in srgb, var(--hc-danger) 24%, transparent);
   border-radius: 999px;
   background: var(--hc-glass-soft);
   color: var(--hc-danger);

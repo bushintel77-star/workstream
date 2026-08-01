@@ -1,23 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio, expectToolDock } from "./helpers";
-import path from "node:path";
-import fs from "node:fs";
+import {
+  createSurveyProject,
+  handoffStudio,
+  expectToolDock,
+  takeScreenshot,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
-const OUT = path.join(__dirname, "artifacts", "camera-chrome-shots");
-
-async function shot(
-  page: import("@playwright/test").Page,
-  name: string,
-) {
-  fs.mkdirSync(OUT, { recursive: true });
-  const dest = path.join(OUT, `${name}.png`);
-  await page.screenshot({ path: dest, fullPage: false });
-  if (!fs.existsSync(dest)) {
-    throw new Error(`screenshot missing after write: ${dest}`);
-  }
-}
 
 test.describe("Selection focus veil", () => {
   test("veil docks above board, persists hop, click clears, chrome gate", async ({
@@ -102,7 +92,7 @@ test.describe("Selection focus veil", () => {
       expect(Number(o)).toBeGreaterThan(0.95);
     }
 
-    await shot(page, "orbit-focus-veil");
+    await takeScreenshot(page, "orbit-focus-veil");
 
     // Tree→tree hop — veil must stay mounted (no remount strobe).
     const veilHandle = await veil.elementHandle();

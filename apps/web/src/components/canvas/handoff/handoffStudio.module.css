@@ -326,10 +326,12 @@
 }
 
 .shareToastDismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   border-radius: var(--hc-r-control);
   background: transparent;
@@ -798,11 +800,11 @@
    *  4) a broad ambient occlusion to seat the whole plate.
    */
   box-shadow:
-    0 0 0 1px color-mix(in srgb, #000 62%, transparent),
-    0 0 0 2px color-mix(in srgb, #fff 6%, transparent),
-    inset 0 2px 5px -1px color-mix(in srgb, #000 30%, transparent),
-    0 2px 3px color-mix(in srgb, #000 30%, transparent),
-    0 30px 70px -16px color-mix(in srgb, #000 72%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--hc-ink) 62%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--hc-paper) 6%, transparent),
+    inset 0 2px 5px -1px color-mix(in srgb, var(--hc-ink) 30%, transparent),
+    0 2px 3px color-mix(in srgb, var(--hc-ink) 30%, transparent),
+    0 30px 70px -16px color-mix(in srgb, var(--hc-ink) 72%, transparent);
   /* The mount breathes: bands ease in/out when entering client / fit view. */
   transition:
     box-shadow var(--ws-dur-3) var(--ws-ease-in-out),
@@ -915,7 +917,7 @@
   gap: 1px;
   padding: 2px;
   border-radius: 8px;
-  background: color-mix(in srgb, #000 26%, transparent);
+  background: color-mix(in srgb, var(--hc-ink) 26%, transparent);
   box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
 }
 
@@ -944,9 +946,9 @@
       var(--ws-frame-raise));
   color: var(--ws-frame-ink);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--hc-paper) 10%, transparent),
     inset 0 0 0 1px var(--ws-frame-hair),
-    0 1px 2px color-mix(in srgb, #000 45%, transparent);
+    0 1px 2px color-mix(in srgb, var(--hc-ink) 45%, transparent);
 }
 
 [data-frame-rail] .modeBtnLocked,
@@ -959,7 +961,7 @@
   gap: 1px;
   padding: 2px;
   border-radius: 8px;
-  background: color-mix(in srgb, #000 26%, transparent);
+  background: color-mix(in srgb, var(--hc-ink) 26%, transparent);
   box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
 }
 
@@ -1075,7 +1077,7 @@
    */
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--hc-ink) 8%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--hc-paper) 55%, transparent),
     inset 0 0 44px -6px color-mix(in srgb, var(--hc-ink) 7%, transparent);
 }
 
@@ -1490,6 +1492,11 @@
   text-transform: uppercase;
   color: var(--hc-ink);
   outline: none;
+}
+
+.annotateInputWrap input:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 2px;
 }
 
 .undoFilmstrip {

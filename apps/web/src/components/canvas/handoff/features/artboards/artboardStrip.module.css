@@ -21,7 +21,7 @@
   backdrop-filter: blur(18px) saturate(1.15);
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
   /* Deep cast shadow so the dark strip separates from the cream plan. */
-  box-shadow: 0 14px 36px -10px color-mix(in srgb, #000 72%, transparent);
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
   pointer-events: auto;
 }
 

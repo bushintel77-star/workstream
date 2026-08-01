@@ -38,6 +38,9 @@ const ALLOW_PATH_SUBSTR = [
   // Literal colour-choice swatches / 3D render material colours (data, not chrome)
   "components/share/clientShareTwin.module.css",
   "components/share/ClientShareTwin.tsx",
+  // Brand landing composition — raw palette is the artwork, not product chrome
+  "app/landing.module.css",
+  "components/landing/PlanHeroVisual.tsx",
 ];
 
 /** Hex values permitted when they appear (mask / none). */

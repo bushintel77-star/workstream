@@ -79,29 +79,29 @@
 
 .miniPath {
   fill: none;
-  stroke: rgba(70, 78, 88, 0.85);
+  stroke: color-mix(in srgb, var(--hc-ink) 85%, transparent);
   stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .miniPath[data-material="deck"] {
-  stroke: rgba(140, 98, 58, 0.9);
+  stroke: color-mix(in srgb, var(--hc-warning) 90%, transparent);
 }
 
 .miniItem {
-  fill: rgba(74, 112, 58, 0.75);
+  fill: color-mix(in srgb, var(--hc-success) 75%, transparent);
 }
 
 .miniItem[data-type="paving"],
 .miniItem[data-type="deck"] {
-  fill: rgba(70, 78, 88, 0.7);
+  fill: color-mix(in srgb, var(--hc-ink) 70%, transparent);
 }
 
 .miniItem[data-type="exist"],
 .miniItem[data-type="canopy"],
 .miniItem[data-type="feature"] {
-  fill: rgba(52, 92, 48, 0.8);
+  fill: color-mix(in srgb, var(--hc-success) 80%, transparent);
 }
 
 .thumb[data-active="true"] .miniBoundary {

@@ -23,8 +23,11 @@
 }
 
 .close {
-  width: 32px;
-  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   border: none;
   border-radius: 8px;
   background: transparent;

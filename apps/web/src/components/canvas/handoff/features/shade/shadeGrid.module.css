@@ -8,7 +8,7 @@
 .cell {
   position: absolute;
   box-sizing: border-box;
-  border: 1px solid rgba(28, 25, 23, 0.04);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 4%, transparent);
 }
 
 .legend {
@@ -17,8 +17,8 @@
   top: 10px;
   margin: 0;
   padding: 3px 7px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
-  background: rgba(242, 240, 235, 0.9);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 16%, transparent);
+  background: color-mix(in srgb, var(--hc-paper) 90%, transparent);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 8px;
   letter-spacing: 0.08em;

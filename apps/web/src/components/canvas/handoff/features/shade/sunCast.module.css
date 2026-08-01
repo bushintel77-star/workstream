@@ -15,8 +15,8 @@
  * direction legible.
  */
 .poly {
-  fill: rgba(52, 42, 58, 0.11);
-  stroke: rgba(52, 42, 58, 0.16);
+  fill: color-mix(in srgb, var(--hc-ink) 11%, transparent);
+  stroke: color-mix(in srgb, var(--hc-ink) 16%, transparent);
   stroke-width: 0.22;
   stroke-linejoin: round;
   stroke-linecap: round;

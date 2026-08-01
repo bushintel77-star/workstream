@@ -15,28 +15,28 @@
 
 .run {
   fill: none;
-  stroke: rgba(108, 133, 152, 0.85);
+  stroke: color-mix(in srgb, var(--hc-water) 85%, transparent);
   stroke-width: 1.4;
   stroke-dasharray: 3 2;
 }
 
 .fallLabel {
-  fill: rgba(108, 133, 152, 0.95);
+  fill: color-mix(in srgb, var(--hc-water) 95%, transparent);
   font-family: "IBM Plex Mono", monospace;
   font-size: 2.2px;
   text-anchor: middle;
 }
 
 .fallLabel[data-adverse="true"] {
-  fill: rgba(180, 72, 72, 0.9);
+  fill: color-mix(in srgb, var(--hc-danger) 90%, transparent);
 }
 
 .fallArrow {
-  fill: rgba(108, 133, 152, 0.85);
+  fill: color-mix(in srgb, var(--hc-water) 85%, transparent);
 }
 
 .fallArrow[data-adverse="true"] {
-  fill: rgba(180, 72, 72, 0.85);
+  fill: color-mix(in srgb, var(--hc-danger) 85%, transparent);
 }
 
 .levelHit {
@@ -45,7 +45,7 @@
   height: 22px;
   margin: -11px 0 0 -11px;
   border-radius: 50%;
-  border: 1.5px solid rgba(108, 133, 152, 0.55);
+  border: 1.5px solid color-mix(in srgb, var(--hc-water) 55%, transparent);
   background: var(--hc-glass-soft);
   pointer-events: auto;
   cursor: pointer;
@@ -67,7 +67,7 @@
   min-height: 44px;
   padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid rgba(108, 133, 152, 0.45);
+  border: 1px solid color-mix(in srgb, var(--hc-water) 45%, transparent);
   background: var(--hc-glass-soft);
   color: var(--easement-stroke);
   font-family: "IBM Plex Mono", monospace;

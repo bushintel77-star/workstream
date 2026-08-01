@@ -10,6 +10,11 @@
   outline: none;
 }
 
+.veil:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 2px;
+}
+
 .veilShown {
   opacity: 1;
 }
@@ -22,7 +27,7 @@
 .veilNight .wash {
   /*
    * Dolphin night wash — prefer paper/invert mix over raw hex.
-   * Targets ~rgba(16,24,28,0.34) feel.
+   * Targets ~color-mix(in srgb, var(--hc-ink) 34%, transparent) feel.
    */
   fill: color-mix(in srgb, var(--hc-invert) 34%, transparent);
 }

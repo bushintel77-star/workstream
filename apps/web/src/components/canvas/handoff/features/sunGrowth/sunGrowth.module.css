@@ -84,7 +84,7 @@
   border-color: var(--hc-ink-muted);
   background: var(--hc-ink-muted);
   color: var(--hc-invert);
-  box-shadow: inset 2px 2px 5px rgba(42, 23, 29, 0.22);
+  box-shadow: inset 2px 2px 5px color-mix(in srgb, var(--hc-ink) 22%, transparent);
 }
 
 .play[data-active="true"] {

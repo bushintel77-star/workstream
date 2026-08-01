@@ -14,7 +14,7 @@
   --ink-faint: var(--ws-frame-ink-faint);
   --glass: color-mix(in srgb, var(--ws-frame) 88%, transparent);
   --line: var(--ws-frame-hair);
-  --elev: 0 16px 40px -10px color-mix(in srgb, #000 72%, transparent);
+  --elev: 0 16px 40px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: absolute;
@@ -277,6 +277,11 @@
   outline: none;
   border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
   background: var(--hc-glass);
+}
+
+.search:focus-visible {
+  outline: 2px solid var(--hc-signal);
+  outline-offset: 2px;
 }
 
 .filterRow {

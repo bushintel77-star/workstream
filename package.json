@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:e2e": "pnpm --filter @workstream/web test:e2e",
     "test:watch": "vitest",
-    "mobile:check-placeholders": "grep -r 'REPLACE_AFTER_eas_init' apps/mobile/app.json && exit 1 || exit 0",
+    "mobile:check-placeholders": "node scripts/check-mobile-placeholders.mjs",
     "web:check-portal-edge": "node scripts/check-portal-edge.mjs",
     "web:check-handoff-colors": "node scripts/check-handoff-chrome-colors.mjs",
     "ci": "pnpm install --frozen-lockfile && pnpm mobile:check-placeholders && pnpm web:check-portal-edge && pnpm web:check-handoff-colors && pnpm typecheck && pnpm lint && pnpm test",
@@ -30,6 +30,7 @@
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.46.4",
+    "vite": "^6.0.0",
     "vitest": "^4.1.10"
   }
 }

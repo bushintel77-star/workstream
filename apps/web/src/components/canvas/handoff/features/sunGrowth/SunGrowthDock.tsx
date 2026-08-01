@@ -136,7 +136,7 @@ export function SunGrowthDock({
             <path
               d="M2,38 Q50,-14 98,38"
               fill="none"
-              stroke="rgba(194,69,95,0.3)"
+              stroke={mixOnCanvas(CSS_TOKEN.existingStroke, 30)}
               strokeWidth={1.5}
               strokeDasharray="3 3"
               vectorEffect="non-scaling-stroke"
@@ -155,7 +155,7 @@ export function SunGrowthDock({
               y1={sunY}
               x2={sunX}
               y2={38}
-              stroke="rgba(232,184,75,0.6)"
+              stroke={mixOnCanvas(CSS_TOKEN.warning, 60)}
               strokeWidth={1}
               vectorEffect="non-scaling-stroke"
             />

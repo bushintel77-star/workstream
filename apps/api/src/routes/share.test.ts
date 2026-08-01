@@ -18,14 +18,13 @@ const quoteBody = {
 
 describe("API — share revisions", () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>["app"];
-  let store: Awaited<ReturnType<typeof buildTestApp>>["store"];
 
   afterEach(async () => {
     if (app) await app.close();
   });
 
   async function createProject() {
-    ({ app, store } = await buildTestApp());
+    ({ app } = await buildTestApp());
     const res = await app.inject({
       method: "POST",
       url: "/projects/",

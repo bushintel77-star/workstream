@@ -236,7 +236,7 @@ export function ImageLayerPanel({
                 onClick={() => void insertFromGallery(f)}
                 disabled={busy}
               >
-                <img src={f.uri} alt="" className={css.galleryThumb} />
+                <img src={f.uri} alt="" aria-hidden="true" className={css.galleryThumb} />
                 <span className={css.galleryName}>{f.title}</span>
               </button>
             ))
@@ -255,6 +255,7 @@ export function ImageLayerPanel({
               <img
                 src={layer.uri}
                 alt=""
+                aria-hidden="true"
                 className={css.thumb}
                 draggable={false}
               />

@@ -3,24 +3,13 @@ import {
   createSurveyProject,
   handoffStudio,
   openCommandPalette,
+  takeScreenshot,
 } from "./helpers";
-import path from "node:path";
-import fs from "node:fs";
 
 /**
  * Tilt lens — view-only axonometric preview.
  * Must keep gate C (zero data-camera-chrome under zoom-world).
  */
-
-const OUT = path.join(__dirname, "artifacts", "camera-chrome-shots");
-
-async function shot(page: import("@playwright/test").Page, name: string) {
-  fs.mkdirSync(OUT, { recursive: true });
-  await page.screenshot({
-    path: path.join(OUT, `${name}.png`),
-    fullPage: false,
-  });
-}
 
 test.describe("Tilt lens", () => {
   test("chrome gate, no-edit while tilted, Esc exits, ctrl-drag snaps", async ({
@@ -34,7 +23,7 @@ test.describe("Tilt lens", () => {
       timeout: 15_000,
     });
 
-    await shot(page, "tilt-off");
+    await takeScreenshot(page, "tilt-off");
 
     await openCommandPalette(page);
     await page.getByTestId("canvas-command-tilt-view").click();
@@ -50,7 +39,7 @@ test.describe("Tilt lens", () => {
         .count(),
     ).toBe(0);
 
-    await shot(page, "tilt-on");
+    await takeScreenshot(page, "tilt-on");
 
     await expect(page.getByTestId("tilt-skin")).toBeVisible();
     await expect(page.getByTestId("parchment-bleed")).toHaveCount(0);

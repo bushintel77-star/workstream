@@ -18,6 +18,8 @@ After `pnpm install`, run `pnpm --filter '@workstream/*' build` once (Turbo `dev
 
 Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json`.
 
+Continuous integration gate: `pnpm run ci` (installs frozen lockfile, checks mobile placeholders, portal edge runtime, handoff hex colors, then typecheck + lint + vitest).
+
 ### Canonical production (Railway)
 
 | Service | URL |

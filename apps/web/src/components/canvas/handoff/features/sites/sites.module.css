@@ -16,6 +16,7 @@
     opacity: 0;
     transform: translateY(7px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -84,8 +85,8 @@
 
 .row[data-active="true"],
 .row:hover {
-  background: rgba(28, 25, 23, 0.06);
-  border-color: rgba(28, 25, 23, 0.12);
+  background: color-mix(in srgb, var(--hc-ink) 6%, transparent);
+  border-color: color-mix(in srgb, var(--hc-ink) 12%, transparent);
 }
 
 .addr {

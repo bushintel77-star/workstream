@@ -35,7 +35,7 @@
   background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
   backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 14px 36px -10px color-mix(in srgb, #000 72%, transparent);
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
   animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 

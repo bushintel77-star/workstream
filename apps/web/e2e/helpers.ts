@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
@@ -167,4 +169,24 @@ export async function createCarltonControlProject(
     lng: 144.96,
     seedCanvas: opts.seedCanvas ?? true,
   });
+}
+
+const DEFAULT_SCREENSHOT_DIR = path.join(
+  __dirname,
+  "artifacts",
+  "camera-chrome-shots",
+);
+
+/** Persist a named camera-chrome screenshot outside Playwright's test-results. */
+export async function takeScreenshot(
+  page: Page,
+  name: string,
+  outDir: string = DEFAULT_SCREENSHOT_DIR,
+) {
+  fs.mkdirSync(outDir, { recursive: true });
+  const dest = path.join(outDir, `${name}.png`);
+  await page.screenshot({ path: dest, fullPage: false });
+  if (!fs.existsSync(dest)) {
+    throw new Error(`screenshot missing after write: ${dest}`);
+  }
 }

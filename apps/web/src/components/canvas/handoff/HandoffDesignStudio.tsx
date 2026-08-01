@@ -5434,6 +5434,7 @@ export function HandoffDesignStudio({
                     ] ?? "manual"
                   }
                   title={`Step back ${i + 1}`}
+                  aria-label={`Step back ${i + 1}`}
                   onClick={() => {
                     for (let n = 0; n <= i; n += 1) studio.undo();
                   }}

@@ -31,7 +31,7 @@
 }
 
 .noteNight .hand {
-  color: rgba(236, 239, 244, 0.9);
+  color: color-mix(in srgb, var(--hc-paper) 90%, transparent);
 }
 
 .hand {
@@ -59,7 +59,7 @@
   min-height: 16px;
   padding: 0 4px;
   border-radius: 4px;
-  border: 1px dashed rgba(194, 69, 95, 0.7);
+  border: 1px dashed color-mix(in srgb, var(--hc-danger) 70%, transparent);
   color: var(--hc-danger);
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;

@@ -7,6 +7,7 @@ import {
   pathRingToSvg,
 } from "@workstream/domain";
 import type { PathCorridor } from "../../studioCatalog";
+import { CSS_TOKEN, mixOnCanvas } from "@/styles/colorTokens";
 import css from "./pathCorridors.module.css";
 
 type Props = {
@@ -38,7 +39,7 @@ export function PathCorridorsLayer({
             height="2.4"
             patternUnits="userSpaceOnUse"
           >
-            <path d="M0 0V2.4" stroke="rgba(70,78,88,0.55)" strokeWidth="0.35" />
+            <path d="M0 0V2.4" stroke={mixOnCanvas(CSS_TOKEN.textSecondary, 55)} strokeWidth="0.35" />
           </pattern>
           <pattern
             id="edge-spalled"
@@ -46,8 +47,8 @@ export function PathCorridorsLayer({
             height="3"
             patternUnits="userSpaceOnUse"
           >
-            <circle cx="0.6" cy="0.8" r="0.35" fill="rgba(70,78,88,0.35)" />
-            <circle cx="2.1" cy="1.9" r="0.45" fill="rgba(70,78,88,0.28)" />
+            <circle cx="0.6" cy="0.8" r="0.35" fill={mixOnCanvas(CSS_TOKEN.textSecondary, 35)} />
+            <circle cx="2.1" cy="1.9" r="0.45" fill={mixOnCanvas(CSS_TOKEN.textSecondary, 28)} />
           </pattern>
         </defs>
         {corridors.map((c) => {

@@ -17,6 +17,7 @@
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -42,8 +43,8 @@
   width: 100%;
   margin: 0 0 10px;
   padding: 8px 10px;
-  border: 1px solid rgba(28, 25, 23, 0.14);
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 14%, transparent);
+  background: color-mix(in srgb, var(--hc-paper) 55%, transparent);
   text-align: left;
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
@@ -167,22 +168,18 @@
   height: 6px;
   border-radius: 999px;
   background: var(--hc-neu-surface);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .sliderLabel input[type="range"]::-moz-range-track {
   height: 6px;
   border-radius: 999px;
   background: var(--hc-neu-surface);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
 }
 
 .sliderLabel input[type="range"]::-webkit-slider-thumb {
@@ -193,12 +190,10 @@
   margin-top: -4.5px;
   border-radius: 50%;
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
-  border: 1px solid rgba(194, 69, 95, 0.55);
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
+  border: 1px solid color-mix(in srgb, var(--hc-danger) 55%, transparent);
 }
 
 .sliderLabel input[type="range"]::-moz-range-thumb {
@@ -206,12 +201,10 @@
   height: 15px;
   border-radius: 50%;
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
-  border: 1px solid rgba(194, 69, 95, 0.55);
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
+  border: 1px solid color-mix(in srgb, var(--hc-danger) 55%, transparent);
 }
 
 /* Physical switch — neumorphic track + sliding knob, not a checkbox. */
@@ -237,11 +230,9 @@
   height: 22px;
   border-radius: 999px;
   background: var(--hc-neu-surface);
-  box-shadow: var(
-    --hc-neu-in,
-    inset 2px 2px 5px var(--hc-neu-shadow),
-    inset -2px -2px 5px var(--hc-neu-light)
-  );
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
   transition: background var(--hc-motion, 180ms) var(--ws-ease, ease);
 }
 
@@ -265,11 +256,9 @@
   height: 16px;
   border-radius: 50%;
   background: var(--hc-neu-raised);
-  box-shadow: var(
-    --hc-neu-out-sm,
-    -2px -2px 5px var(--hc-neu-light),
-    2px 2px 6px var(--hc-neu-shadow)
-  );
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
   transition: transform var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
@@ -279,6 +268,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .knob,
   .switch {
     transition: none;

@@ -251,6 +251,7 @@ export function AerialSlot({
           ref={imgRef}
           src={uri}
           alt=""
+          aria-hidden="true"
           className={`${css.img}${aerialReady ? ` ${css.imgReady}` : ""}`}
           style={{
             opacity: frameOn

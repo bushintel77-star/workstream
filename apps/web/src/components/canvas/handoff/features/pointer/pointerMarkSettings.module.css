@@ -18,7 +18,7 @@
   border: 1px solid var(--hc-line-soft);
   background: var(--glass);
   backdrop-filter: none;
-  box-shadow: 0 14px 44px rgba(42, 23, 29, 0.22);
+  box-shadow: 0 14px 44px color-mix(in srgb, var(--hc-ink) 22%, transparent);
   color: var(--ink);
   animation: panelIn 480ms var(--ease) both;
 }
@@ -28,6 +28,7 @@
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -132,6 +133,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .panel,
   .mark {
     animation: none;

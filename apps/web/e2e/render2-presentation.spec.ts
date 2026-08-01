@@ -3,28 +3,13 @@ import {
   createSurveyProject,
   handoffStudio,
   openCommandPalette,
+  takeScreenshot,
 } from "./helpers";
-import path from "node:path";
-import fs from "node:fs";
 
 /**
  * Render 2 — presentation symbols, idle lens, annotations, LOD labels.
  * Artifacts: e2e/artifacts/camera-chrome-shots/render2-*.png
  */
-
-const OUT = path.join(__dirname, "artifacts", "camera-chrome-shots");
-
-async function shot(
-  page: import("@playwright/test").Page,
-  name: string,
-) {
-  fs.mkdirSync(OUT, { recursive: true });
-  const dest = path.join(OUT, `${name}.png`);
-  await page.screenshot({ path: dest, fullPage: false });
-  if (!fs.existsSync(dest)) {
-    throw new Error(`screenshot missing after write: ${dest}`);
-  }
-}
 
 test.describe("Render 2 presentation + annotations", () => {
   test("annotate happy path, labels, chrome detector, screenshots", async ({
@@ -96,7 +81,7 @@ test.describe("Render 2 presentation + annotations", () => {
       }
     }
 
-    await shot(page, "render2-presentation");
+    await takeScreenshot(page, "render2-presentation");
 
     // Fit sheet annotated
     await page.getByTestId("fit-sheet-top").click();
@@ -104,7 +89,7 @@ test.describe("Render 2 presentation + annotations", () => {
       timeout: 15_000,
     });
     await expect(authored).toBeVisible();
-    await shot(page, "render2-annotated-fit");
+    await takeScreenshot(page, "render2-annotated-fit");
 
     // Gate C — no camera chrome inside zoom-world
     expect(
