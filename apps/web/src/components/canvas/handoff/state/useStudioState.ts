@@ -4278,7 +4278,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
           // Keep Path Grammar placing; collapse Expanded when leaving draft tools.
           // Paint still summons the inventory peel (main canvas-first).
           ...(tool === "add"
-            ? { rightDataPanel: null }
+            ? {
+              rightDataPanel: null,
+              leftAssetPanel: "expanded" as const,
+            }
             : tool === "paint"
               ? {
                 leftAssetPanel: "expanded" as const,

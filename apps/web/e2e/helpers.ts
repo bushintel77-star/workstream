@@ -64,10 +64,12 @@ export async function summonCanvasInstruments(page: Page) {
   await expect(dock.or(strip)).toBeVisible({ timeout: 10_000 });
 }
 
-/** Desktop left tool dock — summon first if idle parchment. */
+/** Desktop left tool dock or phone bottom strip — summon first if idle parchment. */
 export async function expectToolDock(page: Page) {
   await summonCanvasInstruments(page);
-  await expect(page.getByTestId("tool-dock")).toBeVisible({
+  const dock = page.getByTestId("tool-dock");
+  const strip = page.getByTestId("contextual-tool-strip");
+  await expect(dock.or(strip)).toBeVisible({
     timeout: 15_000,
   });
 }

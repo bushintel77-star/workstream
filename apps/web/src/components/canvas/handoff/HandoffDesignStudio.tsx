@@ -1922,14 +1922,14 @@ export function HandoffDesignStudio({
   const assetPanelOn =
     assetChromeOn &&
     !compactAssetUi &&
-    (ui.tool !== "add" || ui.leftAssetPanel === "placing");
+    (ui.leftAssetPanel === "expanded" || ui.leftAssetPanel === "placing");
   /** Summoned Add card from the border icon — no persistent panel for type pick. */
   const canvasToolCardOn =
     assetChromeOn &&
     !compactAssetUi &&
     ui.tool === "add" &&
     ui.addOpen &&
-    ui.leftAssetPanel !== "placing";
+    ui.leftAssetPanel == null;
   /** One assets path: compact uses StudioSheetHost Assets only (no second floater). */
   const studioSheetVisible =
     chrome.studioSheet &&
@@ -2871,11 +2871,18 @@ export function HandoffDesignStudio({
         testId: "canvas-layers-top",
         active: layersOpen,
         onSelect: () => {
+          // eslint-disable-next-line no-console
+          console.log("[debug] layers onSelect", {
+            compact: chrome.compact,
+            before: ui.rightDataPanel,
+          });
           if (chrome.compact) openStudioSheetPage("data");
           studio.setUi({
             ...withRightDataPanel("layers"),
             utilityPanel: null,
           });
+          // eslint-disable-next-line no-console
+          console.log("[debug] layers onSelect after setUi");
         },
       });
     }

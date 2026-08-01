@@ -61,8 +61,10 @@ test.describe("Client share acceptance", () => {
     // Digital-twin step 1 — WebGL scrub / lighting / atmosphere (SVG fallback ok).
     const twin = page.getByTestId("share-client-twin");
     const planSvg = page.getByTestId("share-plan-svg");
+    const twinCanvas = page.getByTestId("share-twin-canvas");
     await expect(twin.or(planSvg)).toBeVisible({ timeout: 15_000 });
     if (await twin.isVisible()) {
+      await expect(twinCanvas).toBeVisible({ timeout: 10_000 });
       await expect(page.getByTestId("share-twin-sun")).toBeVisible();
       await page.getByTestId("share-twin-lights").click();
       await expect(page.getByTestId("share-twin-lights")).toHaveAttribute(
