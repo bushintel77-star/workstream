@@ -540,3 +540,48 @@
     display: none;
   }
 }
+
+@media print {
+  .page {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    animation: none;
+  }
+
+  .masthead {
+    border-bottom: 2px solid var(--ink-primary);
+    padding-bottom: var(--s-3);
+  }
+
+  .sheet {
+    border-radius: 0;
+    border: none;
+    padding: 0;
+    animation: none;
+    box-shadow: none;
+  }
+
+  .acceptSection,
+  .colophon {
+    display: none !important;
+  }
+
+  .scenarioCard {
+    break-inside: avoid;
+  }
+
+  .lineItems {
+    break-inside: avoid;
+  }
+
+  .heroVisual {
+    break-inside: avoid;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

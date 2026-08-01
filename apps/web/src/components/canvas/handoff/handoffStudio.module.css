@@ -2508,6 +2508,80 @@
   margin-left: auto;
 }
 
+/*
+ * Phone bottom-sheet variants — compliance / sun / BOM docks slide up
+ * from the bottom edge instead of sitting in corners. Drag handle glyph
+ * at the top centre. Tapped to expand/collapse.
+ */
+.root[data-layout="phone"] .compliance,
+.root[data-layout="phone"] .sun,
+.root[data-layout="phone"] .bom {
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  top: auto;
+  width: auto;
+  max-height: 50svh;
+  border-radius: 14px 14px 4px 4px;
+  animation: sheetSlideUp 220ms var(--ws-ease, ease) both;
+}
+
+.root[data-layout="phone"] .compliance {
+  top: auto;
+  right: 8px;
+  left: 8px;
+  width: auto;
+}
+
+.root[data-layout="phone"] .sun {
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  width: auto;
+}
+
+.root[data-layout="phone"] .bom {
+  right: 8px;
+  left: 8px;
+  bottom: 8px;
+  width: auto;
+  max-height: 50svh;
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Phone: hide desktop-only rail + undo filmstrip (thumb chrome replaces them) */
+.root[data-layout="phone"] .rail,
+.root[data-layout="phone"] .undoFilmstrip {
+  display: none;
+}
+
+/* Phone: ghost panel + add strip go full-width */
+.root[data-layout="phone"] .ghostPanel {
+  left: 8px;
+  right: 8px;
+  top: calc(var(--ws-safe-top, 108px) + 4px);
+  max-width: none;
+}
+
+.root[data-layout="phone"] .addStrip {
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  transform: none;
+  max-width: none;
+}
+
 /**
  * Fit sheet print — scale the A3/A4 sheet box to fill the physical page.
  * The board is pinned to the paper size (from JS CSS vars); its kept children
@@ -2620,5 +2694,64 @@
     to {
       transform: translateX(560%);
     }
+  }
+}
+
+/*
+ * View transitions — smooth cross-fade when switching studio modes.
+ * The board element gets a named transition; everything else stays put.
+ */
+@supports (view-transition-name: none) {
+  .board {
+    view-transition-name: studio-board;
+  }
+
+  ::view-transition-group(studio-board) {
+    animation-duration: 280ms;
+    animation-timing-function: var(--ws-ease, ease);
+  }
+
+  ::view-transition-old(studio-board),
+  ::view-transition-new(studio-board) {
+    animation: studioModeFade 280ms var(--ws-ease, ease) both;
+  }
+
+  ::view-transition-old(studio-board) {
+    animation-name: studioModeFadeOut;
+  }
+
+  ::view-transition-new(studio-board) {
+    animation-name: studioModeFadeIn;
+  }
+}
+
+@keyframes studioModeFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes studioModeFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.01);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  ::view-transition-group(studio-board),
+  ::view-transition-old(studio-board),
+  ::view-transition-new(studio-board) {
+    animation: none;
   }
 }

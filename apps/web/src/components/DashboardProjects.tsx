@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { deleteProjectAction, restoreProjectAction } from "../app/actions";
 import { useToast } from "./ToastHost";
+import { Button, Dialog, Popover, SkeletonRow } from "./ui";
 import home from "../app/home.module.css";
 
 type DashboardStatus = "draft" | "active" | "review" | "complete" | "deleted";
@@ -64,6 +65,8 @@ export function DashboardProjects({
   const [selectedStatuses, setSelectedStatuses] = useState<DashboardStatus[]>([]);
   const [sort, setSort] = useState<DashboardSort>("activity");
   const [isPending, startTransition] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState<DashboardProject | null>(null);
+  const [loadingSkeleton, setLoadingSkeleton] = useState(false);
 
   const visibleProjects = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,10 +96,13 @@ export function DashboardProjects({
   }
 
   function deleteProject(project: DashboardProject) {
-    const confirmed = window.confirm(
-      `Delete ${project.projectName}? The site is removed from the dashboard until you use Undo.`,
-    );
-    if (!confirmed) return;
+    setConfirmDelete(project);
+  }
+
+  function confirmDeleteProject() {
+    const project = confirmDelete;
+    if (!project) return;
+    setConfirmDelete(null);
 
     const formData = new FormData();
     formData.set("id", project.id);
@@ -214,7 +220,9 @@ export function DashboardProjects({
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {loadingSkeleton ? (
+        <SkeletonRow count={3} />
+      ) : items.length === 0 ? (
         <DashboardEmptyState />
       ) : visibleProjects.length === 0 ? (
         <div className={home.noResults}>
@@ -231,15 +239,16 @@ export function DashboardProjects({
                   <span className={`${home.statusChip} ${home[`status_${project.status}`]}`}>
                     {project.status}
                   </span>
-                  <details className={home.actionMenu}>
-                    <summary>Actions</summary>
-                    <div className={home.actionMenuPanel}>
-                      <Link href={`/projects/${project.id}`}>Open</Link>
-                      <button type="button" onClick={() => deleteProject(project)}>
-                        Delete
-                      </button>
-                    </div>
-                  </details>
+                  <Popover trigger={<>Actions</>} label="Project actions">
+                    <Link href={`/projects/${project.id}`}>Open</Link>
+                    <button
+                      type="button"
+                      data-variant="danger"
+                      onClick={() => deleteProject(project)}
+                    >
+                      Delete
+                    </button>
+                  </Popover>
                 </div>
                 <Link href={`/projects/${project.id}`} className={home.cardLink}>
                   <h3>{project.projectName}</h3>
@@ -265,6 +274,34 @@ export function DashboardProjects({
           ))}
         </ul>
       )}
+
+      <Dialog
+        open={confirmDelete != null}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete project?"
+        destructive
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" size="sm" onClick={confirmDeleteProject}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        {confirmDelete ? (
+          <p>
+            <strong>{confirmDelete.projectName}</strong>
+            <br />
+            {confirmDelete.address}
+            <br />
+            <br />
+            The project moves to trash and can be restored from the dashboard.
+          </p>
+        ) : null}
+      </Dialog>
     </section>
   );
 }

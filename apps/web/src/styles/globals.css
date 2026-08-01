@@ -80,6 +80,26 @@
   --font-mono: "IBM Plex Mono", monospace;
   --font-hand: "Architects Daughter", cursive;
 
+  /* type scale — 1.125 ratio, all components reference these */
+  --text-micro: 10px;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-3xl: 42px;
+  --text-micro-lh: 14px;
+  --text-xs-lh: 16px;
+  --text-sm-lh: 18px;
+  --text-base-lh: 22px;
+  --text-md-lh: 24px;
+  --text-lg-lh: 28px;
+  --text-xl-lh: 32px;
+  --text-2xl-lh: 38px;
+  --text-3xl-lh: 48px;
+
   /* Aegis aliases */
   --color-obsidian: var(--surface-base);
   --color-graphite-900: var(--surface-elevated);

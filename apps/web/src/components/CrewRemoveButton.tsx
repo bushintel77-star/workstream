@@ -1,12 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteCrewAction } from "../app/actions";
 import s from "../styles/app.module.css";
 import btn from "./submit-button.module.css";
 import { Spinner } from "./Spinner";
 import { useToast } from "./ToastHost";
+import { Button, Dialog } from "./ui";
 
 export function CrewRemoveButton({
   id,
@@ -18,46 +19,66 @@ export function CrewRemoveButton({
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  function doRemove() {
+    setConfirmOpen(false);
+    const fd = new FormData();
+    fd.set("id", id);
+    startTransition(async () => {
+      try {
+        await deleteCrewAction(fd);
+        toast.show(`${name} removed`, "success", 3000);
+        router.refresh();
+      } catch (e) {
+        toast.show(
+          e instanceof Error ? e.message : "Could not remove crew member",
+          "error",
+          5000,
+        );
+      }
+    });
+  }
 
   return (
-    <button
-      type="button"
-      className={`${s.btn} ${s.btnDanger}`}
-      disabled={pending}
-      aria-label={`Remove ${name}`}
-      onClick={() => {
-        if (
-          !window.confirm(
-            `Remove ${name} from crew? This is logged in the workspace audit trail.`,
-          )
-        ) {
-          return;
+    <>
+      <button
+        type="button"
+        className={`${s.btn} ${s.btnDanger}`}
+        disabled={pending}
+        aria-label={`Remove ${name}`}
+        onClick={() => setConfirmOpen(true)}
+      >
+        {pending ? (
+          <span className={btn.pending}>
+            <Spinner size="sm" label="Removing crew member" />
+            Removing…
+          </span>
+        ) : (
+          "Remove"
+        )}
+      </button>
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Remove crew member?"
+        destructive
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" size="sm" onClick={doRemove}>
+              Remove
+            </Button>
+          </>
         }
-        const fd = new FormData();
-        fd.set("id", id);
-        startTransition(async () => {
-          try {
-            await deleteCrewAction(fd);
-            toast.show(`${name} removed`, "success", 3000);
-            router.refresh();
-          } catch (e) {
-            toast.show(
-              e instanceof Error ? e.message : "Could not remove crew member",
-              "error",
-              5000,
-            );
-          }
-        });
-      }}
-    >
-      {pending ? (
-        <span className={btn.pending}>
-          <Spinner size="sm" label="Removing crew member" />
-          Removing…
-        </span>
-      ) : (
-        "Remove"
-      )}
-    </button>
+      >
+        <p>
+          Remove <strong>{name}</strong> from crew? This is logged in the
+          workspace audit trail.
+        </p>
+      </Dialog>
+    </>
   );
 }

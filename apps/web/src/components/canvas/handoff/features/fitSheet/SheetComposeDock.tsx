@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   AtmospherePigment,
   PresentationPack,
@@ -17,6 +17,7 @@ import {
   SHEET_WIDGET_LIBRARY,
 } from "@workstream/domain";
 import css from "./sheetCompose.module.css";
+import { Button, Dialog } from "../../../../ui";
 
 /** Summoned peel dismisses when the operator walks away. */
 const COMPOSE_LINGER_MS = 4_200;
@@ -57,6 +58,8 @@ export function SheetComposeDock({
   const atCap = pack.widgets.length >= MAX_SHEET_WIDGETS;
   const pen = pack.pen ?? "technical";
   const atmosphere = pack.atmosphere ?? "graphite";
+  const [pendingTemplate, setPendingTemplate] = useState<string | null>(null);
+  const [pendingClear, setPendingClear] = useState(false);
 
   const bumpLinger = () => {
     if (lingerRef.current != null) window.clearTimeout(lingerRef.current);
@@ -235,9 +238,9 @@ export function SheetComposeDock({
                 onClick={() => {
                   if (
                     pack.widgets.length > 0 &&
-                    pack.template_id !== tpl.id &&
-                    !window.confirm(`Replace sheet with “${tpl.label}”?`)
+                    pack.template_id !== tpl.id
                   ) {
+                    setPendingTemplate(tpl.id);
                     return;
                   }
                   onApplyTemplate(tpl.id);
@@ -302,12 +305,11 @@ export function SheetComposeDock({
             className={css.clearBtn}
             data-testid="sheet-clear"
             onClick={() => {
-              if (
-                pack.widgets.length === 0 ||
-                window.confirm("Clear presentation widgets?")
-              ) {
-                onClear();
+              if (pack.widgets.length > 0) {
+                setPendingClear(true);
+                return;
               }
+              onClear();
               bumpLinger();
             }}
           >
@@ -315,6 +317,60 @@ export function SheetComposeDock({
           </button>
         ) : null}
       </div>
+
+      <Dialog
+        open={pendingTemplate != null}
+        onClose={() => setPendingTemplate(null)}
+        title="Replace sheet?"
+        destructive
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setPendingTemplate(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                if (pendingTemplate) onApplyTemplate(pendingTemplate);
+                setPendingTemplate(null);
+                bumpLinger();
+              }}
+            >
+              Replace
+            </Button>
+          </>
+        }
+      >
+        <p>Replace the current sheet with a new template? Existing widgets will be cleared.</p>
+      </Dialog>
+
+      <Dialog
+        open={pendingClear}
+        onClose={() => setPendingClear(false)}
+        title="Clear widgets?"
+        destructive
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setPendingClear(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                setPendingClear(false);
+                onClear?.();
+                bumpLinger();
+              }}
+            >
+              Clear
+            </Button>
+          </>
+        }
+      >
+        <p>Clear all presentation widgets from the sheet?</p>
+      </Dialog>
     </div>
   );
 }

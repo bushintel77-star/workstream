@@ -1,5 +1,10 @@
 # Design Studio v4/v5 — implementation status
 
+> **⚠️ HISTORICAL DOCUMENT — superseded 2026-08-02.**
+> Live source of truth: [`docs/MASTER-GAP-ANALYSIS-2026-08-02.md`](../../../MASTER-GAP-ANALYSIS-2026-08-02.md)
+> This file references removed MapLibre surfaces and pre-rename component names.
+> Do not use for scoring or implementation decisions.
+
 Tracks the **Complete Feature Checklist** in [README.md](./README.md).
 
 **Visual fidelity note (2026-07-19):** `/projects/[id]` mounts `HandoffDesignStudio` — the v4 `%`-coord aerial board from `Design Studio v4.dc.html` / `screenshots/01-frame.png`. MapLibre `GeoSiteMap` / `SiteCanvas` removed. Vicmap cadastral is keyless DELWP GeoServer WFS (`apps/api/src/lib/vicmap.ts`, GetCapabilities self-discovery).
