@@ -110,6 +110,15 @@
   --ws-safe-top: 40px;
   --ws-safe-right: 12px;
   --ws-safe-bottom: 36px;
+  /*
+   * Right data lane width — single source of truth for the lane shell AND for
+   * anything that must clear it when a panel is open (vic-gov chip row, context
+   * strip). Keeps the "lane law" (no card overlap) satisfied by construction
+   * instead of each occupant re-guessing the reserve. --ws-lane-reserve is the
+   * lane plus one gutter, used as the right inset for busy-state floaters.
+   */
+  --ws-lane-w: min(304px, calc(100vw - 40px));
+  --ws-lane-reserve: calc(var(--ws-lane-w) + 16px);
   --ws-type-kicker: 8px;
   --ws-type-dim: 11px;
   --ws-type-hud: 11px;
@@ -491,10 +500,14 @@
 }
 
 .modeBtnActive {
-  /* Active mode — ink anchor on neutral dock plastic. */
+  /* Active mode — a lit key raised out of the recessed track: ink face,
+     top specular catch, and a contact shadow so it reads as pressed home. */
   background: var(--hc-ink);
   color: var(--hc-invert);
-  box-shadow: var(--hc-elev-1);
+  box-shadow:
+    var(--hc-elev-1),
+    inset 0 1px 0 color-mix(in srgb, var(--hc-invert) 24%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--hc-ink) 40%, transparent);
 }
 
 .rootDark .modeBtnActive {
@@ -840,11 +853,19 @@
    *  4) a broad ambient occlusion to seat the whole plate.
    */
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--hc-ink) 62%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--hc-paper) 6%, transparent),
-    inset 0 2px 5px -1px color-mix(in srgb, var(--hc-ink) 30%, transparent),
-    0 2px 3px color-mix(in srgb, var(--hc-ink) 30%, transparent),
-    0 30px 70px -16px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+    /* 1) dark cut-line where mount meets paper */
+    0 0 0 1px color-mix(in srgb, var(--hc-ink) 64%, transparent),
+    /* 2) top-lit bevel catch on the mount lip */
+    0 0 0 2px color-mix(in srgb, var(--hc-paper) 7%, transparent),
+    /* 3) top rabbet shade — the plate sits down into the mount */
+    inset 0 3px 7px -1px color-mix(in srgb, var(--hc-ink) 34%, transparent),
+    /* 4) bottom light-rim — the near lip catches the room light */
+    inset 0 -1.5px 0 color-mix(in srgb, var(--hc-paper) 42%, transparent),
+    /* 5) all-round inner hairline so every edge reads machined */
+    inset 0 0 0 1px color-mix(in srgb, var(--hc-ink) 7%, transparent),
+    /* 6) contact shadow + 7) deep ambient cast that seats the whole plate */
+    0 2px 3px color-mix(in srgb, var(--hc-ink) 32%, transparent),
+    0 38px 82px -18px color-mix(in srgb, var(--hc-ink) 78%, transparent);
   /* The mount breathes: bands ease in/out when entering client / fit view. */
   transition:
     box-shadow var(--ws-dur-3) var(--ws-ease-in-out),

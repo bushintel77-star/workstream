@@ -29,9 +29,13 @@
   max-width: calc(100% - 150px);
 }
 
-/* Idle: frame engraving recedes; the plan is what's left. */
+/*
+ * Header stays persistent through idle — it carries identity, the mode tabs
+ * and the cadastral meta (navigation, not on-canvas tools). Only the tool
+ * chrome (dock / contextual strip) recedes so the parchment reads clean.
+ */
 :global([data-idle="true"]) .rail {
-  opacity: 0.55;
+  opacity: 1;
 }
 
 :global([data-idle="true"]) .rail:hover,

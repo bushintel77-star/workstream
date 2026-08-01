@@ -7,7 +7,13 @@
 .card {
   position: absolute;
   left: calc(var(--ws-frame-left) + 4px);
-  bottom: calc(var(--ws-frame-bottom) + 10px);
+  /*
+   * Lift clear of the bottom stamp band — the site-address caption
+   * (TactileGround .siteCue, safe-bottom + 28) and the edge ruler labels
+   * live in the low gutter; anchoring the panel just above them stops the
+   * three from stacking into one bottom-left smudge.
+   */
+  bottom: calc(var(--ws-safe-bottom, 36px) + 50px);
   display: flex;
   align-items: center;
   gap: 8px;

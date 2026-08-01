@@ -1,6 +1,8 @@
 /**
- * Left frame band tool column. Paints nothing — the dark grey gallery frame is
- * already the surface. Flat line glyphs, dim at rest, full ink on hover.
+ * Left frame band tool column — the persistent primary instrument rail.
+ * A milled dark dial standing proud of the flat frame: a thin crisp outline
+ * and five-to-six graded grey layers give it carbon/plastic depth, like a
+ * premium instrument bezel. Armed tool lit by a red edge needle.
  */
 .dock {
   position: absolute;
@@ -12,19 +14,47 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0;
-  background: none;
+  padding: 8px 0;
+  /*
+   * Depth from graded tone, never one flat fill:
+   *   · spine gradient — lit crown → base → sunk foot (vertical dial travel)
+   *   · edge gradient  — a darker inner lip toward the canvas side
+   */
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 76%,
+      color-mix(in srgb, #000 20%, transparent) 100%
+    ),
+    linear-gradient(
+      180deg,
+      var(--ws-frame-lit) 0%,
+      var(--ws-frame) 46%,
+      var(--ws-frame) 66%,
+      var(--ws-frame-sunk) 100%
+    );
   border: none;
-  box-shadow: none;
+  /* Thin crisp outline on the canvas-facing edge. */
+  border-right: 1px solid color-mix(in srgb, #000 55%, transparent);
+  border-radius: 0 13px 13px 0;
+  /* Five-to-six layered greys — outer lift, lit crown, recessed lip, dark foot. */
+  box-shadow:
+    3px 0 12px -5px color-mix(in srgb, #000 72%, transparent),
+    1px 0 0 0 color-mix(in srgb, var(--ws-frame-ink) 6%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ws-frame-ink) 17%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--ws-frame-ink) 9%, transparent),
+    inset -1px 0 0 color-mix(in srgb, #000 45%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, #000 40%, transparent);
   color: var(--ws-frame-ink);
   font-family: var(--font-body);
   pointer-events: auto;
   transition: opacity 220ms var(--ws-ease, ease);
 }
 
-/* Idle: tools recede into the frame so the plan is all that reads. */
+/* Idle: rail recedes but never leaves — persistent by design. */
 :global([data-idle="true"]) .dock {
-  opacity: 0.5;
+  opacity: 0.72;
 }
 
 :global([data-idle="true"]) .dock:hover,
@@ -91,14 +121,26 @@
   transform: scale(0.94);
 }
 
+/*
+ * Armed tool — recessed dial seat: a red-tinted well with an inset shadow so
+ * the key sits pressed into the bezel, lifted ink, crisp red hairline frame.
+ */
 .btnActive,
 .btnActive:hover {
-  background: var(--ws-frame-wash);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--existing-stroke) 16%, transparent) 0%,
+      color-mix(in srgb, var(--existing-stroke) 8%, transparent) 100%
+    );
   color: var(--ws-frame-ink);
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, #000 55%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--existing-stroke) 34%, transparent);
 }
 
 /*
- * VS Code-style active indicator — a lit accent bar on the button's inner edge
+ * VS Code-style active indicator — a lit RED needle on the button's inner edge
  * (toward the canvas), so the armed tool visually points at the drawing.
  */
 .activeBar {
@@ -109,8 +151,10 @@
   width: 2.5px;
   height: 18px;
   border-radius: 2px 0 0 2px;
-  background: var(--hc-signal);
-  box-shadow: 0 0 8px -1px var(--hc-signal);
+  background: var(--existing-stroke);
+  box-shadow:
+    0 0 8px -1px color-mix(in srgb, var(--existing-stroke) 90%, transparent),
+    0 0 2px 0 color-mix(in srgb, var(--existing-stroke) 70%, transparent);
 }
 
 .btn:focus-visible {

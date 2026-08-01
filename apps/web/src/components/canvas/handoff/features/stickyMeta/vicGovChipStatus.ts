@@ -29,12 +29,20 @@ export type VicGovChipPanel =
   | "environment"
   | null;
 
+/**
+ * Frame corner the chip lives in (gallery frame §0.1 — meta lives in the border,
+ * never on the plan). `title` = statutory / title layer, top-left; `context` =
+ * site & authority context, top-right.
+ */
+export type VicGovChipCluster = "title" | "context";
+
 export type VicGovChipModel = {
   id: VicGovChipId;
   label: string;
   face: string;
   tone: VicGovChipTone;
   panel: VicGovChipPanel;
+  cluster: VicGovChipCluster;
   href?: string;
   /** When true, chip is omitted from the row (Heritage gated on HO). */
   hidden?: boolean;
@@ -135,6 +143,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
           : "Traced",
       tone: !boundaryOk ? "muted" : vicmap ? "ok" : "flag",
       panel: "site",
+      cluster: "title",
     },
     {
       id: "easements",
@@ -142,6 +151,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
       face: easementN === 0 ? "Clean" : `${easementN} found`,
       tone: easementN === 0 ? (boundaryOk ? "ok" : "muted") : "flag",
       panel: "services",
+      cluster: "title",
     },
     {
       id: "zoning",
@@ -153,6 +163,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
           : "—",
       tone: planning?.label ? "ok" : "muted",
       panel: "site",
+      cluster: "title",
     },
     {
       id: "overlays",
@@ -165,6 +176,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
             : "muted"
           : "flag",
       panel: "services",
+      cluster: "title",
     },
     {
       id: "heritage",
@@ -172,6 +184,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
       face: ho?.label?.slice(0, 16) ?? "HO",
       tone: "flag",
       panel: "site",
+      cluster: "title",
       hidden: !ho,
     },
     {
@@ -183,6 +196,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
           : `${trees.count}${trees.tpzCount > 0 ? ` · ${trees.tpzCount} TPZ` : ""}`,
       tone: trees.count === 0 ? "muted" : trees.tpzCount > 0 ? "flag" : "ok",
       panel: "trees",
+      cluster: "context",
     },
     {
       id: "byda",
@@ -195,6 +209,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
             : "Confirm dig",
       tone: bydaN > 0 || bydaChaseDone ? "ok" : "warn",
       panel: "services",
+      cluster: "context",
       href: bydaN > 0 ? undefined : "https://www.byda.com.au/",
     },
     {
@@ -203,6 +218,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
       face: councilName,
       tone: boundaryOk ? "ok" : "muted",
       panel: "services",
+      cluster: "context",
       href: input.councilHref ?? "https://www.vic.gov.au/find-my-local-council",
     },
     {
@@ -211,6 +227,7 @@ export function buildVicGovChipModels(input: VicGovChipInput): VicGovChipModel[]
       face: input.envFace?.slice(0, 18) || (input.shadeOn ? "Shade on" : "Sun"),
       tone: input.shadeOn ? "ok" : "muted",
       panel: "environment",
+      cluster: "context",
     },
   ];
 

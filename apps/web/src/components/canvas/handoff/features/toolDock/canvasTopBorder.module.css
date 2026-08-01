@@ -19,9 +19,13 @@
   transition: opacity 220ms var(--ws-ease, ease);
 }
 
-/* Idle: icons recede into the frame until the operator reaches for them. */
+/*
+ * Top-right controls stay persistent through idle — Ask AI / Cmd-K / View /
+ * Share / instruments are navigation the operator reaches for at any time.
+ * Only the on-canvas tool chrome recedes on idle.
+ */
 :global([data-idle="true"]) .rail {
-  opacity: 0.5;
+  opacity: 1;
 }
 
 :global([data-idle="true"]) .rail:hover,

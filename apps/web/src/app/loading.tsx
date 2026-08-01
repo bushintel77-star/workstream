@@ -1,24 +1,39 @@
-import s from "../styles/app.module.css";
+import home from "./home.module.css";
 
+/**
+ * Register loading state. Uses the SAME full-bleed `/home` shell (not the
+ * narrow operator column) so no responsive "compromise" frame flashes between
+ * the landing page and the desktop register — this app is desktop-only, and
+ * the loading state must not momentarily render as a centered ~720px
+ * mobile-width card and then jump to full width.
+ */
 export default function DashboardLoading() {
   return (
-    <main className={s.pageNarrow} aria-busy="true" aria-label="Loading">
-      <header className={s.masthead}>
-        <div className={s.brand}>
-          Curtis &amp; Co
-          <span className={s.brandSub}>Workstream · Projects</span>
-        </div>
+    <main className={home.page} aria-busy="true" aria-label="Loading">
+      <header className={home.hero}>
+        <p className={home.kicker}>Workstream</p>
+        <h1 className={home.brand}>Curtis &amp; Co</h1>
       </header>
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "24px" }}>
-        <div style={{ height: "28px", width: "40%", borderRadius: "5px", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
-        <div style={{ height: "16px", width: "80%", borderRadius: "5px", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
-        <div style={{ height: "16px", width: "60%", borderRadius: "5px", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
-        <div style={{ height: "1px", background: "var(--line-subtle)", margin: "16px 0" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-          {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} style={{ minHeight: "220px", borderRadius: "7px", border: "1px solid var(--line-hairline)", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
-          ))}
-        </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: "16px",
+          marginTop: "28px",
+        }}
+      >
+        {Array.from({ length: 6 }, (_, i) => (
+          <div
+            key={i}
+            style={{
+              minHeight: "200px",
+              borderRadius: "12px",
+              border: "1px solid var(--line-hairline)",
+              background: "var(--surface-elevated)",
+              animation: "skelPulse 1.4s ease infinite",
+            }}
+          />
+        ))}
       </div>
       <style>{`@keyframes skelPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.7; } } @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`}</style>
     </main>

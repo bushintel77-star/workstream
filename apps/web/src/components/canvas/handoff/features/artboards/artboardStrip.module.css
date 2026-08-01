@@ -20,8 +20,13 @@
   background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
   backdrop-filter: blur(18px) saturate(1.15);
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  /* Deep cast shadow so the dark strip separates from the cream plan. */
-  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+  /* Deep cast shadow so the dark strip separates from the cream plan, plus a
+     machined channel: a top light edge and an inner bottom shade so the
+     segmented control reads as a milled track the chips seat into. */
+  box-shadow:
+    0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--hc-paper) 12%, transparent),
+    inset 0 -1px 2px color-mix(in srgb, var(--hc-ink) 28%, transparent);
   pointer-events: auto;
 }
 
@@ -63,8 +68,10 @@
 
 .chipOn {
   background: var(--ws-frame-wash);
-  /* Frame hairline ring, plus the existing proposed-accent selected underline. */
+  /* Raised key: top specular catch, hairline ring, and the proposed-accent
+     selected underline — the active sheet sits proud of the milled track. */
   box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--hc-paper) 20%, transparent),
     inset 0 0 0 1px var(--ws-frame-hair),
     inset 0 -2px 0 var(--proposed-stroke);
   color: var(--ws-frame-ink);

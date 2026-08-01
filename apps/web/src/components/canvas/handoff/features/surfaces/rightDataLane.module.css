@@ -4,7 +4,7 @@
   top: calc(var(--ws-safe-top, 40px) + 4px);
   right: 0;
   z-index: var(--ws-z-lane);
-  width: min(304px, calc(100vw - 40px));
+  width: var(--ws-lane-w, min(304px, calc(100vw - 40px)));
   max-height: calc(100% - var(--ws-safe-top, 40px) - var(--ws-safe-bottom, 36px) - 16px);
   overflow: auto;
   pointer-events: auto;

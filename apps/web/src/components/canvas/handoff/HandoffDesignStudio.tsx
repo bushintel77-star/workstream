@@ -4541,8 +4541,10 @@ export function HandoffDesignStudio({
           </CameraChrome>
         ) : null}
 
-        {/* Canvas-first: instruments are summoned only (header / margin / peek), not sticky. */}
-        {chrome.ambientRibbon && instrumentsVisible ? (
+        {/* Persistent left tool rail — the primary instrument column stays down
+            the left frame band at all times on desktop (activity-bar model),
+            never summon-gated. Idle only dims it; it never leaves. */}
+        {chrome.ambientRibbon ? (
           <ToolDock
             tool={ui.tool}
             mode={ui.mode}

@@ -16,38 +16,79 @@
   --hc-ink-faint: var(--ws-frame-ink-faint);
   --hc-line-soft: var(--ws-frame-hair);
   position: absolute;
-  /* Clear of the top frame band, inset from the right frame edge — a clean
-     floating chip on the plan, never flush to the edge nor clipping. */
+  /* Clear of the top frame band. Each cluster anchors to its own frame corner
+     (see .title / .context) — never a single full-width bar across the plan,
+     which collided with the right data lane and clipped the tail chip. */
   top: calc(var(--ws-frame-top, 46px) + 12px);
-  right: calc(var(--ws-frame-right, 14px) + 12px);
   z-index: var(--ws-z-sticky);
   display: flex;
   flex-direction: row;
   align-items: stretch;
   gap: 0;
-  max-width: min(720px, calc(100vw - var(--ws-frame-left, 48px) - 96px));
+  /* A corner cluster is a handful of chips — cap it well short of centre so the
+     two clusters never meet over the canvas. */
+  max-width: min(420px, calc((100vw - var(--ws-frame-left, 48px) - var(--ws-frame-right, 14px)) / 2 - 40px));
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
   pointer-events: auto;
   border: 1px solid var(--ws-frame-hair);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+  border-radius: 13px;
+  /*
+   * Premium instrument-dial face — a milled carbon/plastic bezel, not flat
+   * frost. Top-lit gradient reads as a dial you could touch; the layered
+   * shadow stack gives it real depth off the plan:
+   *   · outer drop      — floats the cluster above the cream board
+   *   · inset top hair   — a lit top edge (the milled highlight)
+   *   · inset base shade — the recessed lower lip
+   */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ws-frame-ink) 6%, transparent) 0%,
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--ws-frame) 90%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow:
+    0 16px 38px -12px color-mix(in srgb, var(--hc-ink) 74%, transparent),
+    0 2px 6px -2px color-mix(in srgb, var(--hc-ink) 50%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ws-frame-ink) 18%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--hc-ink) 40%, transparent);
   animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.row[data-lane="busy"] {
-  right: calc(var(--ws-safe-right, 12px) + 12px);
-  max-width: min(520px, calc(100vw - var(--ws-safe-right, 12px) - 340px));
+/* Title / planning cluster — top-left frame corner. */
+.title {
+  left: calc(var(--ws-frame-left, 48px) + 12px);
 }
 
-/* Phone — full-width chip scroller above the tool dock / sheet. */
+/* Site context / authorities cluster — top-right frame corner. */
+.context {
+  right: calc(var(--ws-frame-right, 14px) + 12px);
+}
+
+/*
+ * Lane open — only the right (context) cluster is at risk of the right data
+ * lane. Reserve the lane width and pull it in; the left (title) cluster is
+ * unaffected and stays put.
+ */
+.context[data-lane="busy"] {
+  right: var(--ws-lane-reserve, calc(min(304px, calc(100vw - 40px)) + 16px));
+  max-width: min(
+    360px,
+    calc(100vw - var(--ws-frame-left, 48px) - var(--ws-lane-reserve, 320px) - 24px)
+  );
+}
+
+/* Phone — clusters drop out of the frame corners and flow in the chip band
+   above the tool dock / sheet, each a scroller. */
 :global([data-testid="handoff-design-studio"][data-layout="phone"]) .row {
+  position: relative;
   top: auto;
   right: auto;
+  left: auto;
   z-index: auto;
   flex: 1 1 auto;
   min-width: 0;

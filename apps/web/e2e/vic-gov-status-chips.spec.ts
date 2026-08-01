@@ -20,11 +20,15 @@ test.describe("Vic-gov status chips", () => {
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expectToolDock(page);
 
-    const row = page.getByTestId("vic-gov-status-chips");
-    await expect(row).toBeVisible({ timeout: 15_000 });
+    const titleCluster = page.getByTestId("vic-gov-status-chips-title");
+    const contextCluster = page.getByTestId("vic-gov-status-chips-context");
+    await expect(titleCluster).toBeVisible({ timeout: 15_000 });
+    await expect(contextCluster).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("header-vic-gov-status")).toHaveCount(0);
     await expect(page.getByTestId("vic-gov-status-chrome")).toBeVisible();
-    await expect(row).toHaveAttribute("data-placement", "dock");
+    await expect(titleCluster).toHaveAttribute("data-placement", "dock");
+    await expect(titleCluster).toHaveAttribute("data-cluster", "title");
+    await expect(contextCluster).toHaveAttribute("data-cluster", "context");
     await expect(page.getByTestId("sticky-meta-stack")).toHaveCount(0);
     await expect(page.getByTestId("vic-gov-chip-boundary")).toBeVisible();
     await expect(page.getByTestId("vic-gov-chip-easements")).toBeVisible();
