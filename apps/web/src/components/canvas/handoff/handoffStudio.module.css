@@ -7,10 +7,10 @@
   --hc-ink: var(--text-primary);
   --hc-ink-muted: var(--text-secondary);
   --hc-ink-faint: var(--text-muted);
-  --hc-paper: var(--gray-d-50);
-  --hc-invert: var(--gray-d-100);
-  --hc-glass: color-mix(in srgb, var(--gray-d-50) 97%, transparent);
-  --hc-glass-soft: color-mix(in srgb, var(--gray-d-50) 94%, transparent);
+  --hc-paper: var(--gray-l-0);
+  --hc-invert: var(--gray-l-25);
+  --hc-glass: color-mix(in srgb, var(--gray-l-0) 97%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 94%, transparent);
   --hc-line: color-mix(in srgb, var(--text-primary) 14%, transparent);
   --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
   --hc-signal: var(--signal);
@@ -30,8 +30,8 @@
   --hc-blur: 0px;
   --hc-motion: 180ms;
   --hc-neu-surface: var(--panel);
-  --hc-neu-raised: var(--gray-d-100);
-  --hc-neu-light: color-mix(in srgb, var(--gray-d-0) 45%, transparent);
+  --hc-neu-raised: var(--gray-l-25);
+  --hc-neu-light: color-mix(in srgb, var(--gray-l-0) 45%, transparent);
   --hc-neu-shadow: color-mix(in srgb, var(--text-primary) 14%, transparent);
   --hc-neu-out: -1px -1px 2px var(--hc-neu-light),
     1px 1px 3px var(--hc-neu-shadow), 0 0 0 1px var(--hc-line-soft);
@@ -44,9 +44,9 @@
   --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 16%, var(--canvas));
   --hc-success: var(--planting-new-stroke);
   --hc-warning: var(--warning);
-  --hc-water: var(--water-d-400);
+  --hc-water: var(--water-l-500);
   --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 12%, var(--canvas));
-  --sheet-paper: var(--gray-d-100);
+  --sheet-paper: var(--gray-l-25);
   --sheet-ink: var(--text-primary);
   --sheet-border: color-mix(in srgb, var(--text-primary) 35%, transparent);
 
@@ -249,15 +249,15 @@
 }
 
 .rootDark {
-  --hc-ink: var(--text-primary);
-  --hc-ink-muted: var(--text-secondary);
-  --hc-ink-faint: var(--text-muted);
-  --hc-paper: var(--panel);
-  --hc-invert: var(--canvas);
-  --hc-glass: color-mix(in srgb, var(--panel) 97%, transparent);
-  --hc-glass-soft: color-mix(in srgb, var(--panel) 94%, transparent);
-  --hc-line: color-mix(in srgb, var(--text-primary) 16%, transparent);
-  --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --hc-ink: var(--gray-d-900);
+  --hc-ink-muted: var(--gray-d-500);
+  --hc-ink-faint: var(--gray-d-400);
+  --hc-paper: var(--gray-d-50);
+  --hc-invert: var(--gray-d-0);
+  --hc-glass: color-mix(in srgb, var(--gray-d-50) 97%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--gray-d-50) 94%, transparent);
+  --hc-line: color-mix(in srgb, var(--gray-d-900) 16%, transparent);
+  --hc-line-soft: color-mix(in srgb, var(--gray-d-900) 10%, transparent);
   --hc-elev-1: 0 1px 2px color-mix(in srgb, var(--gray-d-0) 35%, transparent),
     0 0 0 1px var(--hc-line-soft);
   --hc-elev-2: 0 2px 6px color-mix(in srgb, var(--gray-d-0) 40%, transparent),
@@ -269,26 +269,30 @@
   --hc-neu-light: color-mix(in srgb, var(--gray-d-900) 6%, transparent);
   --hc-neu-shadow: color-mix(in srgb, var(--gray-d-0) 50%, transparent);
   --hc-danger: var(--existing-stroke);
-  --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 22%, var(--canvas));
+  --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 22%, var(--gray-d-0));
   --hc-success: var(--planting-new-stroke);
   --hc-warning: var(--warning);
-  --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 18%, var(--canvas));
-  --sheet-paper: var(--panel);
-  --sheet-ink: var(--text-primary);
-  --sheet-border: color-mix(in srgb, var(--text-primary) 35%, transparent);
+  --hc-water: var(--water-d-400);
+  --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 18%, var(--gray-d-0));
+  --sheet-paper: var(--gray-d-100);
+  --sheet-ink: var(--gray-d-900);
+  --sheet-border: color-mix(in srgb, var(--gray-d-900) 35%, transparent);
+  --sds-canvas-bg: var(--gray-d-0);
+  --sds-vector-primary: var(--gray-d-900);
+  --sds-vector-muted: var(--gray-d-500);
   --ws-glass: var(--hc-glass-soft);
   --ws-glass-border: var(--hc-line);
   background:
     radial-gradient(100% 70% at 10% 0%,
       color-mix(in srgb, var(--proposed-stroke) 18%, transparent),
       transparent 50%),
-    var(--canvas);
+    var(--gray-d-0);
   color: var(--hc-ink);
 }
 
 /* LV lighting workspace — deepen the board for beam theatre. */
 .rootLighting .board {
-  background: color-mix(in srgb, var(--panel) 88%, var(--hc-deep));
+  background: color-mix(in srgb, var(--gray-d-100) 88%, var(--hc-deep));
 }
 
 .rootLighting [data-testid="cad-plan-board"] {

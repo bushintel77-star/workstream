@@ -64,12 +64,12 @@
   height: 60px;
   border-radius: 12px;
   background: linear-gradient(90deg,
-      var(--gray-d-150) 0%,
-      var(--gray-d-300) 45%,
-      var(--gray-d-150) 100%);
+      var(--gray-l-150) 0%,
+      var(--gray-l-300) 45%,
+      var(--gray-l-150) 100%);
   background-size: 200% 100%;
   animation: skelShimmer 1.4s var(--ease, ease) infinite;
-  opacity: 0.15;
+  opacity: 0.4;
 }
 
 .ghostDock {
@@ -81,12 +81,12 @@
   height: 44px;
   border-radius: 999px;
   background: linear-gradient(90deg,
-      var(--gray-d-150) 0%,
-      var(--gray-d-300) 45%,
-      var(--gray-d-150) 100%);
+      var(--gray-l-150) 0%,
+      var(--gray-l-300) 45%,
+      var(--gray-l-150) 100%);
   background-size: 200% 100%;
   animation: skelShimmer 1.4s var(--ease, ease) infinite;
-  opacity: 0.12;
+  opacity: 0.35;
 }
 
 @keyframes skelShimmer {
