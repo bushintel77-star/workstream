@@ -36,7 +36,7 @@
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  z-index: 40;
+  z-index: var(--ws-z-dock);
   display: flex;
   flex-direction: column;
   gap: 4px;

@@ -1,34 +1,48 @@
-/** Workstream Design System 3.0 — soft-pink editorial, canvas-first. */
+/**
+ * Workstream Design System 4.0 — unified dark-grey identity.
+ * One token source consumed by both apps/mobile (RN) and apps/web (CSS alias).
+ * Palette aligned with web --gray-d-* / --surface-deep system.
+ * Studio frame is the brand identity: dark grey gallery mount, cream plan is the subject.
+ */
 export const tokens = {
   color: {
     surface: {
-      base: "#F3ECEF",
-      elevated: "#FFF9FB",
-      sunken: "#E8DFE4",
-      inverted: "#1A1218",
+      /** Darkest — full-screen backgrounds, studio frame, app shell */
+      base: "#14171C",
+      /** Raised cards, sheets, panels sitting above base */
+      elevated: "#1B1E24",
+      /** Recessed inputs, wells, sunken states */
+      sunken: "#0F1115",
+      /** Inverted text on dark surfaces */
+      inverted: "#E8E9EC",
     },
     ink: {
-      primary: "#1A1218",
-      secondary: "#5C4A52",
-      tertiary: "#8A7580",
-      inverted: "#FAF4F6",
+      /** Primary text on dark surfaces */
+      primary: "#E8E9EC",
+      /** Secondary text — metadata, captions */
+      secondary: "#9AA0AC",
+      /** Tertiary — placeholders, disabled */
+      tertiary: "#6B7078",
+      /** Inverted text on light surfaces (portal sheet, plan) */
+      inverted: "#1B1E23",
     },
     line: {
-      hairline: "#E0D4DA",
-      strong: "#C9B6BF",
-      ink: "#1A1218",
+      hairline: "#2A2D34",
+      strong: "#3A3E46",
+      ink: "#E8E9EC",
     },
     accent: {
-      default: "#D4849A",
-      soft: "#F7DCE4",
-      ink: "#7A3348",
-      bright: "#F0B4C4",
+      /** Blueprint slate — matches web --accent (#4f6a89) */
+      default: "#5A789B",
+      soft: "#1E2A38",
+      ink: "#8BA4C4",
+      bright: "#7B9BC4",
     },
     semantic: {
-      ok: "#3D8B6E",
-      warn: "#B8893A",
-      block: "#B42318",
-      info: "#8B6B7A",
+      ok: "#4C9662",
+      warn: "#D4A017",
+      block: "#C4463B",
+      info: "#6E93E0",
     },
   },
 
@@ -96,10 +110,11 @@ export const tokens = {
   },
 
   radius: {
-    sm: 10,
-    md: 14,
-    lg: 20,
-    canvas: 16,
+    sm: 5,
+    md: 7,
+    lg: 10,
+    xl: 14,
+    canvas: 8,
     pill: 999,
   },
 
@@ -107,15 +122,15 @@ export const tokens = {
     1: {
       shadowOffset: { width: 0, height: 1 },
       shadowRadius: 0,
-      shadowOpacity: 0.05,
-      shadowColor: "#1A1218",
+      shadowOpacity: 0.08,
+      shadowColor: "#000000",
       elevation: 1,
     },
     2: {
       shadowOffset: { width: 0, height: 18 },
       shadowRadius: 48,
-      shadowOpacity: 0.09,
-      shadowColor: "#1A1218",
+      shadowOpacity: 0.14,
+      shadowColor: "#000000",
       elevation: 4,
     },
   },

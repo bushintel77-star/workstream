@@ -2,7 +2,7 @@
   position: absolute;
   left: calc(var(--ws-safe-left, 64px) + 8px);
   top: calc(var(--ws-safe-top, 48px) + 52px);
-  z-index: 17;
+  z-index: var(--ws-z-interact);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -116,7 +116,7 @@
 .markers {
   position: absolute;
   inset: 0;
-  z-index: 12;
+  z-index: var(--ws-z-interact);
   pointer-events: none;
 }
 

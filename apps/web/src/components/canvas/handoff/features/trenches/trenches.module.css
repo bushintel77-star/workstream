@@ -1,7 +1,7 @@
 .root {
   position: absolute;
   inset: 0;
-  z-index: 8;
+  z-index: var(--ws-z-annotate);
   pointer-events: none;
 }
 
@@ -32,7 +32,7 @@
   left: 50%;
   bottom: 14px;
   transform: translateX(-50%);
-  z-index: 46;
+  z-index: var(--ws-z-contextual);
   display: flex;
   align-items: center;
   gap: 8px;

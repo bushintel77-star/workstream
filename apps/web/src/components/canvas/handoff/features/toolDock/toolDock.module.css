@@ -8,7 +8,7 @@
   /* Activity-bar rhythm: anchored just under the top band, running down. */
   top: calc(var(--ws-frame-top, 46px) + 8px);
   width: var(--ws-frame-left);
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   display: flex;
   flex-direction: column;
   align-items: center;

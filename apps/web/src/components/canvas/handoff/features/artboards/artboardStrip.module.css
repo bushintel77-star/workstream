@@ -9,7 +9,7 @@
      so it never collides with it or the rows below (docs/CANVAS-FRAME-HANDOVER.md). */
   bottom: var(--ws-stack-4);
   transform: translateX(-50%);
-  z-index: 41;
+  z-index: var(--ws-z-dock);
   display: inline-flex;
   align-items: center;
   gap: 3px;

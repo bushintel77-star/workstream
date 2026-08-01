@@ -4,7 +4,7 @@
   top: 120px;
   width: min(320px, calc(100% - 78px));
   height: min(460px, 62vh);
-  z-index: 22;
+  z-index: var(--ws-z-chrome);
   display: flex;
   flex-direction: column;
   border-radius: var(--hc-r-panel, 14px);

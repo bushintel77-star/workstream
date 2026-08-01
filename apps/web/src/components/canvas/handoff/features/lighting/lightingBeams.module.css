@@ -5,7 +5,7 @@
   height: 100%;
   overflow: visible;
   pointer-events: none;
-  z-index: 8;
+  z-index: var(--ws-z-annotate);
   mix-blend-mode: screen;
 }
 

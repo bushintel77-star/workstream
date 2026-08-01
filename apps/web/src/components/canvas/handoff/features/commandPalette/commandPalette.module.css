@@ -1,7 +1,7 @@
 .backdrop {
   position: absolute;
   inset: 0;
-  z-index: 40;
+  z-index: var(--ws-z-dock);
   display: flex;
   align-items: flex-start;
   justify-content: center;

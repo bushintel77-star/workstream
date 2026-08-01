@@ -14,7 +14,7 @@
   --arc-radius: 64px;
 
   position: absolute;
-  z-index: 28;
+  z-index: var(--ws-z-panel);
   width: 0;
   height: 0;
   transform: translate(-50%, -50%);

@@ -3,7 +3,7 @@
   left: 50%;
   bottom: calc(var(--ws-safe-bottom, 48px) + 10px);
   transform: translateX(-50%);
-  z-index: 42;
+  z-index: var(--ws-z-contextual);
   display: inline-flex;
   align-items: center;
   gap: 4px;

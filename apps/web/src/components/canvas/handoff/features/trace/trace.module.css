@@ -1,7 +1,7 @@
 .root {
   position: absolute;
   inset: 0;
-  z-index: 16;
+  z-index: var(--ws-z-interact);
   cursor: crosshair;
   touch-action: none;
 }
@@ -40,7 +40,7 @@
 
 .dynamicInput {
   position: absolute;
-  z-index: 19;
+  z-index: var(--ws-z-chrome);
   display: flex;
   gap: 4px;
   padding: 4px;
@@ -88,7 +88,7 @@
 .autoBadge {
   position: absolute;
   transform: translate(-50%, -50%);
-  z-index: 17;
+  z-index: var(--ws-z-interact);
   height: 22px;
   padding: 0 10px;
   border-radius: 0;
@@ -111,7 +111,7 @@
   left: 50%;
   bottom: 14px;
   transform: translateX(-50%);
-  z-index: 45;
+  z-index: var(--ws-z-dock);
   display: flex;
   align-items: center;
   gap: 8px;

@@ -2,7 +2,7 @@
   position: absolute;
   right: calc(var(--ws-safe-right, 12px) + 8px);
   bottom: calc(var(--ws-safe-bottom, 12px) + 52px);
-  z-index: 22;
+  z-index: var(--ws-z-chrome);
   display: flex;
   flex-direction: column;
   align-items: stretch;

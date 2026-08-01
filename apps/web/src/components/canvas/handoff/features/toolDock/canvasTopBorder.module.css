@@ -15,7 +15,7 @@
   border: none;
   box-shadow: none;
   pointer-events: auto;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   transition: opacity 220ms var(--ws-ease, ease);
 }
 

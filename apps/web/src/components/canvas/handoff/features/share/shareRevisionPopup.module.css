@@ -6,7 +6,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 40;
+  z-index: var(--ws-z-dock);
   width: min(340px, calc(100vw - 24px));
   padding: 16px 18px;
   border-radius: 14px;

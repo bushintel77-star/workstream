@@ -3,14 +3,14 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 4;
+  z-index: var(--ws-z-wash);
 }
 
 .scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 4;
+  z-index: var(--ws-z-wash);
 }
 
 .scrimBand {
@@ -23,7 +23,7 @@
   border: 1.5px solid color-mix(in srgb, var(--sheet-ink) 55%, transparent);
   box-sizing: border-box;
   pointer-events: none;
-  z-index: 4;
+  z-index: var(--ws-z-wash);
   transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -66,7 +66,7 @@
   padding: 4px 10px;
   border-radius: 8px;
   border: 1px solid var(--hc-line);
-  z-index: 1;
+  z-index: var(--ws-z-geometry);
 }
 
 .scaleHudHint {
@@ -94,7 +94,7 @@
   background: var(--sheet-paper);
   border: 1px solid color-mix(in srgb, var(--sheet-ink) 60%, transparent);
   box-sizing: border-box;
-  z-index: 5;
+  z-index: var(--ws-z-annotate);
   overflow: hidden;
   pointer-events: auto;
 }
@@ -363,7 +363,7 @@
   border: 1px solid color-mix(in srgb, var(--sheet-ink) 55%, transparent);
   box-sizing: border-box;
   padding: 10px 14px;
-  z-index: 5;
+  z-index: var(--ws-z-annotate);
 }
 
 .elevRow {
@@ -412,7 +412,7 @@
 .elevBld {
   position: absolute;
   bottom: 14px;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   background: var(--hc-line-soft);
   border: 1.2px solid var(--hc-ink);
   box-sizing: border-box;
@@ -421,7 +421,7 @@
 .elevItem {
   position: absolute;
   bottom: 14px;
-  z-index: 3;
+  z-index: var(--ws-z-annotate);
   transform: translateX(-50%);
   border-radius: 2px 2px 0 0;
   box-sizing: border-box;

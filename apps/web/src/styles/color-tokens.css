@@ -97,44 +97,44 @@
   --locked-opacity: 0.55;
 }
 
-/* Default theme = light (also when data-theme omitted). */
+/* Default theme = dark grey (unified with @workstream/ui tokens). */
 :root,
 :root[data-theme="light"],
 [data-theme="light"] {
-  --canvas: var(--gray-l-50);
-  --panel: var(--gray-l-100);
-  --grid-line: var(--gray-l-150);
-  --border: var(--gray-l-200);
-  --border-strong: var(--gray-l-300);
-  --text-muted: var(--gray-l-400);
-  --text-secondary: var(--gray-l-500);
-  --text-primary: var(--gray-l-900);
+  --canvas: var(--gray-d-0);
+  --panel: var(--gray-d-100);
+  --grid-line: var(--gray-d-150);
+  --border: var(--gray-d-200);
+  --border-strong: var(--gray-d-300);
+  --text-muted: var(--gray-d-500);
+  --text-secondary: var(--gray-d-500);
+  --text-primary: var(--gray-d-900);
 
-  --existing-stroke: var(--crimson-l-600);
-  --existing-text: var(--crimson-l-600);
-  --proposed-stroke: var(--cobalt-l-600);
-  --proposed-text: var(--cobalt-l-600);
-  --planting-retain-stroke: var(--forest-l-600);
-  --planting-retain-text: var(--forest-l-600);
-  --planting-new-stroke: var(--sprout-l-500);
-  --planting-new-text: var(--sprout-l-500);
-  --easement-stroke: var(--slate-l-500);
+  --existing-stroke: var(--crimson-d-500);
+  --existing-text: var(--crimson-d-400);
+  --proposed-stroke: var(--cobalt-d-500);
+  --proposed-text: var(--cobalt-d-400);
+  --planting-retain-stroke: var(--forest-d-550);
+  --planting-retain-text: var(--forest-d-400);
+  --planting-new-stroke: var(--sprout-d-400);
+  --planting-new-text: var(--sprout-d-400);
+  --easement-stroke: var(--slate-d-400);
 
-  --proposed-hover: color-mix(in srgb, var(--cobalt-l-600) 85%, white);
-  --proposed-active: color-mix(in srgb, var(--cobalt-l-600) 80%, black);
-  --proposed-disabled: var(--gray-l-300);
-  --existing-hover: color-mix(in srgb, var(--crimson-l-600) 85%, white);
-  --existing-active: color-mix(in srgb, var(--crimson-l-600) 80%, black);
-  --existing-disabled: var(--gray-l-300);
-  --planting-retain-hover: color-mix(in srgb, var(--forest-l-600) 85%, white);
-  --planting-retain-active: color-mix(in srgb, var(--forest-l-600) 80%, black);
-  --planting-retain-disabled: var(--gray-l-300);
-  --focus-ring: var(--cobalt-l-600);
+  --proposed-hover: color-mix(in srgb, var(--cobalt-d-500) 85%, white);
+  --proposed-active: color-mix(in srgb, var(--cobalt-d-500) 80%, black);
+  --proposed-disabled: var(--gray-d-300);
+  --existing-hover: color-mix(in srgb, var(--crimson-d-500) 85%, white);
+  --existing-active: color-mix(in srgb, var(--crimson-d-500) 80%, black);
+  --existing-disabled: var(--gray-d-300);
+  --planting-retain-hover: color-mix(in srgb, var(--forest-d-550) 85%, white);
+  --planting-retain-active: color-mix(in srgb, var(--forest-d-550) 80%, black);
+  --planting-retain-disabled: var(--gray-d-300);
+  --focus-ring: var(--cobalt-d-400);
   --focus-ring-offset: var(--canvas);
   /* Chrome status (toast / compliance) */
-  --warning: #b8860b;
-  --danger: var(--crimson-l-600);
-  --success: var(--sprout-l-500);
+  --warning: #d4a017;
+  --danger: var(--crimson-d-400);
+  --success: var(--sprout-d-400);
 }
 
 :root[data-theme="dark"],
@@ -177,32 +177,27 @@
 
 /* §4 — fills via color-mix against canvas (not hex-alpha). */
 .existing-structure {
-  fill: color-mix(
-    in srgb,
-    var(--existing-stroke) var(--fill-structure),
-    var(--canvas)
-  );
+  fill: color-mix(in srgb,
+      var(--existing-stroke) var(--fill-structure),
+      var(--canvas));
 }
+
 .proposed-structure {
-  fill: color-mix(
-    in srgb,
-    var(--proposed-stroke) var(--fill-structure),
-    var(--canvas)
-  );
+  fill: color-mix(in srgb,
+      var(--proposed-stroke) var(--fill-structure),
+      var(--canvas));
 }
+
 .tpz-canopy {
-  fill: color-mix(
-    in srgb,
-    var(--planting-retain-stroke) var(--fill-tpz),
-    var(--canvas)
-  );
+  fill: color-mix(in srgb,
+      var(--planting-retain-stroke) var(--fill-tpz),
+      var(--canvas));
 }
+
 .selected-highlight {
-  fill: color-mix(
-    in srgb,
-    var(--proposed-stroke) var(--fill-highlight),
-    var(--canvas)
-  );
+  fill: color-mix(in srgb,
+      var(--proposed-stroke) var(--fill-highlight),
+      var(--canvas));
 }
 
 /**

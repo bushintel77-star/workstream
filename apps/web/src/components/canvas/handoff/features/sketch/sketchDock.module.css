@@ -8,7 +8,7 @@
   left: 50%;
   bottom: var(--ws-stack-gap);
   transform: translateX(-50%);
-  z-index: 45;
+  z-index: var(--ws-z-dock);
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -83,7 +83,7 @@
   left: 50%;
   bottom: calc(100% + 10px);
   transform: translateX(-50%);
-  z-index: 46;
+  z-index: var(--ws-z-contextual);
   display: inline-flex;
   align-items: center;
   gap: 2px;

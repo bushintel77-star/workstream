@@ -1,7 +1,7 @@
 .slot {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   pointer-events: none;
   overflow: visible;
 }

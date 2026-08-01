@@ -1,6 +1,6 @@
 .mark {
   position: absolute;
-  z-index: 30;
+  z-index: var(--ws-z-frame);
   width: min(280px, calc(100vw - 40px));
   padding: 14px 16px;
   border-radius: 14px;

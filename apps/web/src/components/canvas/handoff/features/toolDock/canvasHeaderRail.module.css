@@ -16,7 +16,7 @@
   border: none;
   box-shadow: none;
   pointer-events: auto;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   /* Reserve room for the top-right control cluster so nothing collides. */
   max-width: calc(100% - 470px);
   flex-wrap: nowrap;

@@ -5,7 +5,7 @@
   position: absolute;
   right: calc(var(--ws-safe-right, 16px) + 8px);
   top: calc(var(--ws-safe-top, 48px) + 52px);
-  z-index: 17;
+  z-index: var(--ws-z-interact);
   display: flex;
   flex-direction: column;
   gap: 8px;

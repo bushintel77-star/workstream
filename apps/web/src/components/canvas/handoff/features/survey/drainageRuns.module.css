@@ -1,7 +1,7 @@
 .layer {
   position: absolute;
   inset: 0;
-  z-index: 6;
+  z-index: var(--ws-z-annotate);
   pointer-events: none;
 }
 
@@ -63,7 +63,7 @@
   left: 50%;
   bottom: 12%;
   transform: translateX(-50%);
-  z-index: 7;
+  z-index: var(--ws-z-annotate);
   min-height: 44px;
   padding: 0 14px;
   border-radius: 999px;

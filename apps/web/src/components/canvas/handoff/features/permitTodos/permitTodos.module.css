@@ -13,7 +13,7 @@
   position: absolute;
   left: calc(var(--ws-safe-left, 64px) + 8px);
   bottom: calc(var(--ws-safe-bottom, 48px) + 52px);
-  z-index: 12;
+  z-index: var(--ws-z-interact);
   width: min(260px, calc(100% - 100px));
   display: flex;
   flex-direction: column;

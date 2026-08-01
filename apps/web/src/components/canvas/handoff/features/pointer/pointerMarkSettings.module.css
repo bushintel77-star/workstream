@@ -9,7 +9,7 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: absolute;
-  z-index: 30;
+  z-index: var(--ws-z-frame);
   right: calc(var(--ws-safe-right, 12px) + 8px);
   top: calc(var(--ws-safe-top, 40px) + 8px);
   width: min(220px, 42vw);
