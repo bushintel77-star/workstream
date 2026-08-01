@@ -1,3 +1,8 @@
+> **⚠️ HISTORICAL DOCUMENT — superseded 2026-08-02.**
+> Live source of truth: [`docs/MASTER-GAP-ANALYSIS-2026-08-02.md`](./MASTER-GAP-ANALYSIS-2026-08-02.md)
+> This matrix predates the canvas-first studio rebuild and unified token
+> system. Retained for change-history reference only.
+
 ## Workstream Gap Matrix - generated 2026-07-21T00:38:19Z
 
 Branch: `cursor/workstream-gold-standard-rebuild-1f48`  

@@ -112,7 +112,7 @@
 
 .chipMeta {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-faint);
 }
 
@@ -124,7 +124,7 @@
 .chipHold {
   align-self: flex-start;
   margin-top: 2px;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 650;
   color: var(--hc-warning);
 }

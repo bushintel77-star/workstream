@@ -51,7 +51,7 @@
   backdrop-filter: none;
   transform: translate(14px, calc(-100% - 10px));
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-variant-numeric: tabular-nums;
 }
 

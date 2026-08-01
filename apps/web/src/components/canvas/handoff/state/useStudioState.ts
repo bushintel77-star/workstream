@@ -360,6 +360,8 @@ type Ui = {
   utilityPanel: "compliance" | "bom" | "sustainability" | null;
   /** Brief setback / TPZ / easement tip after a preemptive snap. */
   councilTip: string | null;
+  /** Council label from Vicmap title block — drives multi-council compliance profile. */
+  councilLabel: string | null;
   /** Authored DBH (m) for next existing-tree placement — drives AS 4970 TPZ. */
   existDbhM: number;
   /**
@@ -689,6 +691,7 @@ function initialState(opts: {
       assistReply: null,
       utilityPanel: null,
       councilTip: null,
+      councilLabel: null,
       existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
       servicesEdit: false,
       servicesLocked: false,
@@ -3861,8 +3864,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
         outdoorM2: workableOutdoorM2,
         boundary: state.doc.boundary,
         items: toComplianceItems(state.doc.items),
+        lgaCode: state.ui.councilLabel,
       }),
-    [state.doc.boundary, state.doc.items, workableOutdoorM2],
+    [state.doc.boundary, state.doc.items, workableOutdoorM2, state.ui.councilLabel],
   );
 
   const estimateArgs = useMemo((): StudioEstimateArgs => {

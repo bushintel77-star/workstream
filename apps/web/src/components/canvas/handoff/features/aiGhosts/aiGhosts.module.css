@@ -240,7 +240,7 @@
   margin-top: 8px;
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
 }
 
 .rejectReasons button {

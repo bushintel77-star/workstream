@@ -1,5 +1,10 @@
 # Workstream gap analysis
 
+> **⚠️ HISTORICAL DOCUMENT — superseded 2026-08-02.**
+> Live source of truth: [`docs/MASTER-GAP-ANALYSIS-2026-08-02.md`](./MASTER-GAP-ANALYSIS-2026-08-02.md)
+> This audit predates the canvas-first studio rebuild, Vicmap WFS, and the
+> unified token system. Retained for change-history reference only.
+
 Living audit: **current state to gold-standard production**, with owner and
 automation status. Update when PRs land. Companion: `OUTSTANDING.md` (punch list).
 

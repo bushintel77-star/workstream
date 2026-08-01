@@ -489,6 +489,10 @@ export function HandoffDesignStudio({
   const [titleBlock, setTitleBlock] = useState<ArchitecturalTitleBlock | null>(
     initialTitleBlock,
   );
+  // Sync council label into studio state for multi-council compliance profile.
+  useEffect(() => {
+    studio.setUi({ councilLabel: titleBlock?.councilLabel ?? null });
+  }, [titleBlock?.councilLabel, studio.setUi]);
   /**
    * Canonical lot / dwelling / outdoor for every surface (CAD, Fit Sheet,
    * Measures, Site meta). Sanitizes absurd dwelling rings before print.

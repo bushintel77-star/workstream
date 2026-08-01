@@ -271,14 +271,14 @@
 }
 
 .cadDimKey {
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-secondary);
 }
 
 .cadDimBearing {
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--text-secondary);
 }
 
@@ -492,7 +492,7 @@
   background: var(--panel);
   color: var(--text-primary);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -504,7 +504,7 @@
 .tpzTag {
   position: relative;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--planting-retain-text);
@@ -603,7 +603,7 @@
   box-shadow: none;
   pointer-events: none;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -624,7 +624,7 @@
   background: var(--hc-glass-soft);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.03em;
   pointer-events: none;
@@ -795,7 +795,7 @@ button.missingBuildingCue:hover {
   background: color-mix(in srgb, var(--hc-ink) 90%, transparent);
   color: var(--canvas);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.04em;
   pointer-events: none;
@@ -979,7 +979,7 @@ button.missingBuildingCue:hover {
 }
 
 .cursorTool {
-  font-size: 8px;
+  font-size: var(--text-pico);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -987,7 +987,7 @@ button.missingBuildingCue:hover {
 }
 
 .cursorMetric {
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink);
 }
 

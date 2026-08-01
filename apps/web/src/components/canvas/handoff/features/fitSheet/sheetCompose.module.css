@@ -102,7 +102,7 @@
 .peelKicker {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   font-weight: 650;
   letter-spacing: 0.1em;
   text-transform: uppercase;

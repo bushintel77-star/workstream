@@ -32,7 +32,7 @@
 
 .kicker {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
@@ -42,7 +42,7 @@
 .note {
   margin: 0 0 10px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   line-height: 1.35;
   color: var(--hc-ink-muted);
 }

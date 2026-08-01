@@ -157,7 +157,7 @@
   overflow: hidden;
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   line-height: 1.35;
   letter-spacing: -0.01em;
   text-overflow: ellipsis;
@@ -216,7 +216,7 @@
   background: var(--hc-glass-soft);
   color: var(--hc-danger);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 7px;
+  font-size: var(--text-femto);
   font-weight: 600;
   line-height: 1.45;
   letter-spacing: 0.04em;

@@ -68,10 +68,49 @@ export const COUNCIL_PROFILES: Record<string, CouncilProfile> = {
 
 const DEFAULT_PROFILE = COUNCIL_PROFILES.STON!;
 
-export function councilProfileFor(lgaCode: string | null | undefined): CouncilProfile {
+/** Vicmap numeric LGA code → council profile key. */
+const LGA_CODE_TO_KEY: Record<string, string> = {
+  "363": "STON",
+  "373": "YARR",
+  "318": "MELB",
+  "343": "PORT",
+  "311": "BORO",
+  "341": "GLEN",
+  "361": "BAYS",
+};
+
+/** Council name fragment → profile key (for "City of Stonnington" etc). */
+const NAME_TO_KEY: Record<string, string> = {
+  stonnington: "STON",
+  yarra: "YARR",
+  melbourne: "MELB",
+  "port phillip": "PORT",
+  boroondara: "BORO",
+  "glen eira": "GLEN",
+  bayside: "BAYS",
+};
+
+/**
+ * Resolve a council profile from any reasonable identifier:
+ * - 4-char profile key ("STON", "BAYS")
+ * - Vicmap numeric LGA code ("363", "373")
+ * - Council label / name ("City of Stonnington", "Bayside")
+ */
+export function councilProfileFor(
+  lgaCode: string | null | undefined,
+): CouncilProfile {
   if (!lgaCode) return DEFAULT_PROFILE;
-  const key = lgaCode.slice(0, 4).toUpperCase();
-  return COUNCIL_PROFILES[key] ?? DEFAULT_PROFILE;
+  const raw = lgaCode.trim();
+  if (!raw) return DEFAULT_PROFILE;
+  // Direct profile key match
+  const key4 = raw.slice(0, 4).toUpperCase();
+  if (COUNCIL_PROFILES[key4]) return COUNCIL_PROFILES[key4]!;
+  // Vicmap numeric LGA code
+  if (LGA_CODE_TO_KEY[raw]) return COUNCIL_PROFILES[LGA_CODE_TO_KEY[raw]!]!;
+  // Council name (case-insensitive, strips "City of " prefix)
+  const name = raw.toLowerCase().replace(/^city of\s+/, "");
+  if (NAME_TO_KEY[name]) return COUNCIL_PROFILES[NAME_TO_KEY[name]!]!;
+  return DEFAULT_PROFILE;
 }
 
 /** @deprecated Use councilProfileFor(lgaCode).permeableMinPct */
@@ -192,7 +231,7 @@ function pctToM(dxPct: number, scaleM: number): number {
 /** Axis-aligned buildable envelope from parcel bbox + council setback. */
 export function buildableEnvelopeFromBoundary(
   boundary: BoardPoint[],
-  setbackM = COUNCIL_SETBACK_M,
+  setbackM = DEFAULT_PROFILE.setbackM,
   scaleM = 110,
 ): BuildableEnvelope | null {
   if (boundary.length < 3) return null;
@@ -227,7 +266,7 @@ export function snapPointToBuildableEnvelope(
     y: ny,
     snapped,
     codeHint: snapped
-      ? `Snapped clear of ${COUNCIL_SETBACK_M.toFixed(1)} m council setback`
+      ? `Snapped clear of ${DEFAULT_PROFILE.setbackM.toFixed(1)} m council setback`
       : null,
   };
 }
@@ -238,22 +277,27 @@ export function shouldEnforceSetback(type: StudioComplianceItemType): boolean {
 
 /**
  * Continuous compliance evaluation — call after every mutate / place / move.
+ * Pass `lgaCode` (Vicmap numeric code, council name, or 4-char profile key)
+ * to resolve the right council profile. Explicit `permeableMinPct` /
+ * `canopyTargetPct` / `setbackM` override the profile defaults.
  */
 export function evaluateStudioCompliance(args: {
   outdoorM2: number;
   boundary: BoardPoint[];
   items: StudioComplianceItem[];
   scaleM?: number;
+  /** Council identifier — Vicmap LGA code ("363"), name ("Stonnington"),
+   *  or 4-char key ("STON"). Resolves via councilProfileFor(). */
+  lgaCode?: string | null;
   permeableMinPct?: number;
   canopyTargetPct?: number;
   setbackM?: number;
 }): StudioComplianceReport {
   const scaleM = args.scaleM ?? 110;
-  const permeableMin =
-    args.permeableMinPct ?? STONNINGTON_PERMEABLE_MIN_PCT;
-  const canopyTarget =
-    args.canopyTargetPct ?? STONNINGTON_CANOPY_TARGET_PCT;
-  const setbackM = args.setbackM ?? COUNCIL_SETBACK_M;
+  const profile = councilProfileFor(args.lgaCode);
+  const permeableMin = args.permeableMinPct ?? profile.permeableMinPct;
+  const canopyTarget = args.canopyTargetPct ?? profile.canopyTargetPct;
+  const setbackM = args.setbackM ?? profile.setbackM;
   const outdoor = Math.max(args.outdoorM2, 1);
   const live = args.items.filter((i) => !i.ghost);
 
@@ -310,7 +354,7 @@ export function evaluateStudioCompliance(args: {
       id: "permeability",
       severity: "critical",
       code: "permeability",
-      title: `Permeability below ${permeableMin}% (Stonnington-style)`,
+      title: `Permeability below ${permeableMin}% (${profile.label} standard)`,
       detail: `Site at ${Math.round(permeablePct)}% permeable. Hardscape items are driving the shortfall — reduce paving/deck or add lawn/beds.`,
       sourceIds: hardIds,
     });

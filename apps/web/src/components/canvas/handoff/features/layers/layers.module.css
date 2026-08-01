@@ -60,7 +60,7 @@
 
 .kicker {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
@@ -124,7 +124,7 @@
   margin-left: 6px;
   padding: 1px 6px;
   border-radius: 999px;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

@@ -107,7 +107,7 @@
 }
 
 .hubTag {
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 700;
   text-align: center;
   line-height: 1.15;

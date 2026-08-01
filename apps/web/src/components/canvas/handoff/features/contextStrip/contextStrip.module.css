@@ -12,7 +12,7 @@
   transform: translateX(-50%);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-variant-numeric: tabular-nums;
   scrollbar-width: none;
 }

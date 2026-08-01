@@ -23,7 +23,7 @@
   color: var(--ink);
   font: inherit;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;

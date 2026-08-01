@@ -46,7 +46,7 @@
 .kicker {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
@@ -128,7 +128,7 @@
 }
 
 .label {
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 650;
 }
 

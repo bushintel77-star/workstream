@@ -81,7 +81,7 @@
 .kicker {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 7px;
+  font-size: var(--text-femto);
   font-weight: 650;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -249,7 +249,7 @@
 .placingKicker {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -293,7 +293,7 @@
 
 .filterMeta {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -313,7 +313,7 @@
   background: transparent;
   color: var(--ink-soft);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   cursor: pointer;
 }
 
@@ -349,7 +349,7 @@
 .pinnedLabel {
   margin: 0 0 4px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-faint);

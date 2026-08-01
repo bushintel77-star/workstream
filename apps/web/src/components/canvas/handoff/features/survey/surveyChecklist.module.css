@@ -41,7 +41,7 @@
 
 .count {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 0;
@@ -75,7 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
+  font-size: var(--text-pico);
   border: 1px solid var(--hc-line);
   background: transparent;
   color: var(--hc-ink-muted);
@@ -116,7 +116,7 @@
 
 .armHint {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -127,7 +127,7 @@
 .foot {
   margin: 6px 0 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   color: var(--hc-ink-muted);
   line-height: 1.45;
 }

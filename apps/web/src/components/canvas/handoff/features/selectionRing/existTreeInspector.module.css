@@ -50,7 +50,7 @@
   align-items: center;
   gap: 6px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-muted);
 }
 
@@ -91,6 +91,6 @@
   margin: 0;
   flex: 1 1 100%;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-muted);
 }

@@ -70,7 +70,7 @@
 }
 
 .scaleHudHint {
-  font-size: 8px;
+  font-size: var(--text-pico);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -248,7 +248,7 @@
 .titleSource {
   margin: 4px 0 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--hc-ink);
@@ -264,7 +264,7 @@
 
 .north {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink);
   flex: none;
 }
@@ -293,7 +293,7 @@
 .kicker {
   margin: 0 0 5px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   letter-spacing: 0.14em;
   color: var(--hc-ink-faint);
   text-transform: uppercase;
@@ -339,7 +339,7 @@
 
 .notesBody {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-muted);
   line-height: 1.55;
   text-wrap: pretty;
@@ -350,7 +350,7 @@
   justify-content: space-between;
   margin-top: 8px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink);
 }
 
@@ -403,7 +403,7 @@
   left: 0;
   bottom: 3px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 7px;
+  font-size: var(--text-femto);
   letter-spacing: 0.04em;
   color: var(--hc-ink-faint);
   white-space: nowrap;

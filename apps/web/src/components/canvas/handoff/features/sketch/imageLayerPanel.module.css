@@ -114,7 +114,7 @@
 }
 
 .galleryName {
-  font-size: 9px;
+  font-size: var(--text-nano);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -178,7 +178,7 @@
   background: transparent;
   color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 650;
   cursor: pointer;
   transition: background 140ms var(--ws-ease, ease);

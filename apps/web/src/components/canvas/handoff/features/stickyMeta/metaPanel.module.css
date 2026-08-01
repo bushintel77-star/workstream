@@ -114,7 +114,7 @@
   box-shadow: inset 0 1px color-mix(in srgb, var(--hc-paper) 60%, transparent);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -284,7 +284,7 @@
   background: var(--hc-glass-soft);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   line-height: 1.5;
 }
 

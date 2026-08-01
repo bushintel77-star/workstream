@@ -175,7 +175,7 @@
 
 .swatchName {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.02em;
   max-width: 52px;
   overflow: hidden;

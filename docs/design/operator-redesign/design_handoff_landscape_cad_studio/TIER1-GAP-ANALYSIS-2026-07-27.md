@@ -1,5 +1,10 @@
 # Tier-1 gap analysis — refresh (2026-07-27)
 
+> **⚠️ HISTORICAL DOCUMENT — superseded 2026-08-02.**
+> Live source of truth: [`docs/MASTER-GAP-ANALYSIS-2026-08-02.md`](../../../MASTER-GAP-ANALYSIS-2026-08-02.md)
+> Scores here are stale; the canvas-first studio, Vicmap WFS, and unified
+> token system shipped after this audit.
+
 **Author:** Claude (chief design + architect)
 **Supersedes for scoring:** [TIER1-AI-CANVAS-GAP-AUDIT.md](./TIER1-AI-CANVAS-GAP-AUDIT.md) (2026-07-19)
 **Surface:** live `HandoffDesignStudio` (`%`-coord aerial board), tree `main @ a6565f2`

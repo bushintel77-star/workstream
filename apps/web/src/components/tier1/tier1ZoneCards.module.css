@@ -16,7 +16,7 @@
 
 .index {
   font-family: "JetBrains Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-tertiary);

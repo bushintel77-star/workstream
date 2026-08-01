@@ -1081,7 +1081,7 @@
 [data-frame-rail] .meta {
   flex: 0 100 auto;
   min-width: 0;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.06em;
 }
 
@@ -1408,7 +1408,7 @@
 
 .savedTick {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   color: var(--hc-ink-faint);
@@ -1622,7 +1622,7 @@
 
 .undoEmpty {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-faint);
 }
 
@@ -1798,7 +1798,7 @@
 }
 
 .railLabel {
-  font-size: 8px;
+  font-size: var(--text-pico);
   letter-spacing: 0.03em;
   font-weight: 600;
 }
@@ -2005,7 +2005,7 @@
   background: transparent;
   color: var(--hc-ink);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 600;
   cursor: pointer;
 }
@@ -2019,7 +2019,7 @@
 .sunFoot {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-muted);
 }
 
@@ -2073,7 +2073,7 @@
   background: var(--hc-line-soft);
   color: var(--hc-ink);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -2081,7 +2081,7 @@
 .bomFoot {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-muted);
 }
 
@@ -2175,7 +2175,7 @@
 
 .zoneKitLabel {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
@@ -2196,7 +2196,7 @@
   background: var(--hc-glass);
   color: var(--hc-ink-muted);
   font: inherit;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 650;
   cursor: pointer;
 }
@@ -2324,7 +2324,7 @@
   -webkit-backdrop-filter: blur(14px) saturate(1.06);
   box-shadow: var(--hc-elev-2);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-variant-numeric: tabular-nums;
   color: var(--hc-ink);
   pointer-events: auto;

@@ -41,7 +41,7 @@
 }
 
 .kicker {
-  font-size: 8px;
+  font-size: var(--text-pico);
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;

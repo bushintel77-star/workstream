@@ -135,7 +135,7 @@
 }
 
 .label {
-  font-size: 7px;
+  font-size: var(--text-femto);
   font-weight: 650;
   letter-spacing: 0.02em;
   max-width: 36px;

@@ -103,7 +103,7 @@
   position: absolute;
   transform: translate(-100%, -50%);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9px;
+  font-size: var(--text-nano);
   font-weight: 500;
   color: color-mix(in srgb, var(--hc-ink) 55%, transparent);
   letter-spacing: 0.02em;

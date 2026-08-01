@@ -1,5 +1,10 @@
 # Tier-1 stress test + gap analysis
 
+> **⚠️ HISTORICAL DOCUMENT — superseded 2026-08-02.**
+> Live source of truth: [`docs/MASTER-GAP-ANALYSIS-2026-08-02.md`](./MASTER-GAP-ANALYSIS-2026-08-02.md)
+> The Wrights Terrace stress battery itself remains valid (see
+> `apps/web/e2e/*wrights*`), but the gap scorecard here is stale.
+
 **Date:** 2026-07-26  
 **Branch context:** stress battery on `main` tip  
 **Gold reference:** [TIER1-AI-CANVAS-GAP-AUDIT.md](./design/operator-redesign/design_handoff_landscape_cad_studio/TIER1-AI-CANVAS-GAP-AUDIT.md)

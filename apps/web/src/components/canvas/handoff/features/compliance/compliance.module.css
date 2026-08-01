@@ -36,7 +36,7 @@
 
 .kicker {
   margin: 0;
-  font-size: 9px;
+  font-size: var(--text-nano);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);

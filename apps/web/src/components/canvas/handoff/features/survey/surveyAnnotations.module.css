@@ -34,7 +34,7 @@
 }
 
 .serviceLabel {
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -53,7 +53,7 @@
 }
 
 .fallLabel {
-  font-size: 9px;
+  font-size: var(--text-nano);
   color: var(--hc-ink-faint);
   background: color-mix(in srgb, var(--hc-paper) 88%, transparent);
   border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);

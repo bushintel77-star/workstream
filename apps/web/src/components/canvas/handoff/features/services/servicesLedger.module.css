@@ -12,7 +12,7 @@
   background: var(--hc-accent-wash);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 7px;
+  font-size: var(--text-femto);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.04em;
@@ -34,7 +34,7 @@
   margin: 3px 1px 0;
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
+  font-size: var(--text-pico);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -306,7 +306,7 @@
 .dueLabel {
   color: var(--hc-ink-muted);
   font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
-  font-size: 9px;
+  font-size: var(--text-nano);
 }
 
 .dueStatus {
