@@ -9,7 +9,7 @@
   right: calc(72px + env(safe-area-inset-right, 0px));
   bottom: 0;
   height: var(--ws-frame-bottom);
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   display: flex;
   align-items: center;
   max-width: none;

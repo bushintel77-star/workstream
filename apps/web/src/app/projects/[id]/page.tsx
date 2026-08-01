@@ -7,6 +7,7 @@ import {
   suggestPhaseFromProjectStatus,
 } from "@workstream/domain";
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
+import { StudioSkeleton } from "../../../components/canvas/handoff/StudioSkeleton";
 import {
   getCadastralTitle,
   getDesignCanvas,
@@ -82,7 +83,7 @@ export default async function ProjectCanvasPage({
   const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<StudioSkeleton />}>
       <HandoffDesignStudio
         projectId={id}
         projectAddress={project.address}

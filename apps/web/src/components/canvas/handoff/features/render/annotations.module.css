@@ -2,7 +2,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 6;
+  z-index: var(--ws-z-annotate);
 }
 
 .leaders {

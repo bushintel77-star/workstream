@@ -1,7 +1,7 @@
 .root {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: var(--ws-z-wash);
   pointer-events: none;
 }
 

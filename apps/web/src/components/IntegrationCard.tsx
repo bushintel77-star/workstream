@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Integration } from "../lib/api";
 import {
@@ -11,11 +11,13 @@ import s from "../styles/app.module.css";
 import styles from "../app/settings/settings.module.css";
 import { SubmitButton } from "./SubmitButton";
 import { useToast } from "./ToastHost";
+import { Button, Dialog } from "./ui";
 
 export function IntegrationCard({ integration: i }: { integration: Integration }) {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const pillClass =
     i.source === "store"
@@ -33,11 +35,11 @@ export function IntegrationCard({ integration: i }: { integration: Integration }
   const pillClassLive = i.live ? s.pillOk : pillClass;
   const fmtUpdated = i.updated_at
     ? new Date(i.updated_at).toLocaleString("en-AU", {
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-        minute: "2-digit",
-      })
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    })
     : null;
 
   function run(action: (fd: FormData) => Promise<void>, success: string) {
@@ -97,23 +99,49 @@ export function IntegrationCard({ integration: i }: { integration: Integration }
           {i.source === "store" ? "Replace" : "Save"}
         </SubmitButton>
         {i.source === "store" && (
-          <SubmitButton
-            className={`${s.btn} ${s.btnDanger}`}
-            pendingLabel="Clearing…"
-            disabled={pending}
-            formAction={async (fd) => {
-              if (
-                !window.confirm(
-                  `Clear saved ${i.label} token? You can re-enter it later.`,
-                )
-              ) {
-                return;
+          <>
+            <SubmitButton
+              className={`${s.btn} ${s.btnDanger}`}
+              pendingLabel="Clearing…"
+              disabled={pending}
+              formAction={async (fd) => {
+                setConfirmClear(true);
+              }}
+            >
+              Clear
+            </SubmitButton>
+            <Dialog
+              open={confirmClear}
+              onClose={() => setConfirmClear(false)}
+              title="Clear token?"
+              destructive
+              footer={
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => setConfirmClear(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => {
+                      setConfirmClear(false);
+                      const fd = new FormData();
+                      fd.set("key", i.key);
+                      startTransition(async () => {
+                        await run(clearIntegrationAction, `${i.label} cleared`)(fd);
+                      });
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </>
               }
-              await run(clearIntegrationAction, `${i.label} cleared`)(fd);
-            }}
-          >
-            Clear
-          </SubmitButton>
+            >
+              <p>
+                Clear saved <strong>{i.label}</strong> token? You can re-enter it later.
+              </p>
+            </Dialog>
+          </>
         )}
       </form>
     </li>

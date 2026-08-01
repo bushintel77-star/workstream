@@ -1,7 +1,7 @@
 ﻿.root {
   position: absolute;
   inset: 0;
-  z-index: 9;
+  z-index: var(--ws-z-interact);
 }
 
 .overloadPulse {
@@ -47,7 +47,7 @@
   left: 50%;
   bottom: 10px;
   transform: translateX(-50%);
-  z-index: 45;
+  z-index: var(--ws-z-dock);
   margin: 0;
   padding: 4px 10px;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 18%, transparent);

@@ -83,7 +83,7 @@
   font-weight: 500;
   color: var(--ink-secondary);
   text-decoration: none;
-  min-height: 36px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -116,7 +116,7 @@
 }
 
 .menuButton {
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   padding: 0 12px;
@@ -130,6 +130,11 @@
   text-transform: uppercase;
   list-style: none;
   cursor: pointer;
+}
+
+.menuButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .menuButton::-webkit-details-marker {

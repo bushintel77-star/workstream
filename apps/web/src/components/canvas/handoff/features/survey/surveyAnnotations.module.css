@@ -2,7 +2,7 @@
   position: absolute;
   inset: 0;
   /* Above CadPlanBoard glyphs/handles so Level / Servc / Calib receive clicks. */
-  z-index: 36;
+  z-index: var(--ws-z-dock);
   touch-action: none;
 }
 
@@ -23,7 +23,7 @@
 .levelLabel,
 .fallLabel {
   position: absolute;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   pointer-events: none;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-weight: 600;
@@ -66,7 +66,7 @@
   left: 50%;
   bottom: 14px;
   transform: translateX(-50%);
-  z-index: 45;
+  z-index: var(--ws-z-dock);
   margin: 0;
   font-size: 11px;
   font-weight: 600;

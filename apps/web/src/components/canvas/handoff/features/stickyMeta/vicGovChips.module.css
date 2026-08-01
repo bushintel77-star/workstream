@@ -20,7 +20,7 @@
      floating chip on the plan, never flush to the edge nor clipping. */
   top: calc(var(--ws-frame-top, 46px) + 12px);
   right: calc(var(--ws-frame-right, 14px) + 12px);
-  z-index: 48;
+  z-index: var(--ws-z-sticky);
   display: flex;
   flex-direction: row;
   align-items: stretch;

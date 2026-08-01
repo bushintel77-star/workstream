@@ -3,7 +3,7 @@
   width: 0;
   height: 0;
   pointer-events: none;
-  z-index: 12;
+  z-index: var(--ws-z-interact);
   transform-style: preserve-3d;
   background: transparent;
 }
@@ -55,7 +55,7 @@
   position: absolute;
   pointer-events: none;
   transform-style: preserve-3d;
-  z-index: 8;
+  z-index: var(--ws-z-annotate);
   /* No plate fill — AABB is only a positioning frame; grid shows through. */
   background: transparent;
 }
@@ -76,7 +76,7 @@
   position: absolute;
   pointer-events: none;
   transform-style: preserve-3d;
-  z-index: 7;
+  z-index: var(--ws-z-annotate);
   /* Wrapper must stay empty — opaque fill here hides the CAD grid under
    * the building AABB while edges outside the box still show mesh. */
   background: transparent;

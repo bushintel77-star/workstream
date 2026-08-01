@@ -8,7 +8,7 @@
   --glass-border: var(--hc-line);
   --elev: var(--hc-elev, 0 8px 28px var(--hc-neu-shadow));
   position: absolute;
-  z-index: 20;
+  z-index: var(--ws-z-chrome);
   display: flex;
   align-items: center;
   gap: 0;

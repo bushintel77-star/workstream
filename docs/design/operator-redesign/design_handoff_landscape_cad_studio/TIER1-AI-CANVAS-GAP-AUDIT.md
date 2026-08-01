@@ -1,5 +1,9 @@
 # Tier-1 AI-first · Canvas-first · CAD landscape — gap audit
 
+> **⚠️ HISTORICAL DOCUMENT — superseded 2026-08-02.**
+> Live source of truth: [`docs/MASTER-GAP-ANALYSIS-2026-08-02.md`](../../../MASTER-GAP-ANALYSIS-2026-08-02.md)
+> This audit references removed MapLibre surfaces and uses pre-rename component names.
+
 **Date:** 2026-07-19  
 **Surface audited:** Live mount `HandoffDesignStudio` (`%-coord` parchment / aerial board on `/projects/[id]`)  
 **Residual surface:** MapLibre `SiteCanvas` (geo Fit sheet, Clay Walk, worker BOM) — still in repo, **not** default  

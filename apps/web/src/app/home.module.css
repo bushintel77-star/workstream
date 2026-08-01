@@ -19,11 +19,9 @@
   z-index: 0;
   pointer-events: none;
   opacity: 0.35;
-  background-image: radial-gradient(
-    circle at center,
-    color-mix(in srgb, var(--ink-primary) 14%, transparent) 1px,
-    transparent 1.15px
-  );
+  background-image: radial-gradient(circle at center,
+      color-mix(in srgb, var(--ink-primary) 14%, transparent) 1px,
+      transparent 1.15px);
   background-size: 24px 24px;
 }
 
@@ -252,6 +250,16 @@
   background: color-mix(in srgb, var(--surface-elevated) 86%, transparent);
   box-shadow: var(--elev-1);
   backdrop-filter: blur(12px);
+  transition:
+    border-color 180ms var(--ease),
+    box-shadow 180ms var(--ease),
+    transform 180ms var(--ease);
+}
+
+.projectCard:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--elev-2);
+  transform: translateY(-2px);
 }
 
 .cardTopline {

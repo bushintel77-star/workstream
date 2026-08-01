@@ -2,11 +2,83 @@
  * Preemptive "invisible council inspector" for the Design Studio handoff board.
  *
  * Runs as a pure background evaluation on every geometry commit — no Calculate
- * button. Tuned for Stonnington-style residential gardens + AS 4970 TPZ.
+ * button. Tuned for Melbourne residential gardens + AS 4970 TPZ.
+ * Multi-council profiles via `councilProfileFor(lgaCode)`.
  */
 
+export type CouncilProfile = {
+  id: string;
+  label: string;
+  permeableMinPct: number;
+  canopyTargetPct: number;
+  setbackM: number;
+};
+
+export const COUNCIL_PROFILES: Record<string, CouncilProfile> = {
+  STON: {
+    id: "STON",
+    label: "Stonnington",
+    permeableMinPct: 20,
+    canopyTargetPct: 15,
+    setbackM: 1.5,
+  },
+  PORT: {
+    id: "PORT",
+    label: "Port Phillip",
+    permeableMinPct: 20,
+    canopyTargetPct: 15,
+    setbackM: 1.5,
+  },
+  BAYS: {
+    id: "BAYS",
+    label: "Bayside",
+    permeableMinPct: 25,
+    canopyTargetPct: 20,
+    setbackM: 2.0,
+  },
+  BORO: {
+    id: "BORO",
+    label: "Boroondara",
+    permeableMinPct: 20,
+    canopyTargetPct: 15,
+    setbackM: 1.5,
+  },
+  GLEN: {
+    id: "GLEN",
+    label: "Glen Eira",
+    permeableMinPct: 20,
+    canopyTargetPct: 15,
+    setbackM: 1.5,
+  },
+  MELB: {
+    id: "MELB",
+    label: "Melbourne",
+    permeableMinPct: 15,
+    canopyTargetPct: 10,
+    setbackM: 1.5,
+  },
+  YARR: {
+    id: "YARR",
+    label: "Yarra",
+    permeableMinPct: 20,
+    canopyTargetPct: 15,
+    setbackM: 1.5,
+  },
+};
+
+const DEFAULT_PROFILE = COUNCIL_PROFILES.STON!;
+
+export function councilProfileFor(lgaCode: string | null | undefined): CouncilProfile {
+  if (!lgaCode) return DEFAULT_PROFILE;
+  const key = lgaCode.slice(0, 4).toUpperCase();
+  return COUNCIL_PROFILES[key] ?? DEFAULT_PROFILE;
+}
+
+/** @deprecated Use councilProfileFor(lgaCode).permeableMinPct */
 export const STONNINGTON_PERMEABLE_MIN_PCT = 20;
+/** @deprecated Use councilProfileFor(lgaCode).canopyTargetPct */
 export const STONNINGTON_CANOPY_TARGET_PCT = 15;
+/** @deprecated Use councilProfileFor(lgaCode).setbackM */
 export const COUNCIL_SETBACK_M = 1.5;
 /** AS 4970 TPZ encroachment watch threshold (indicative). */
 export const TPZ_ENCROACH_WARN_PCT = 10;
@@ -366,7 +438,7 @@ export function approximateDiscOverlapPct(
     r2 * Math.acos((d * d + r2 - R2) / (2 * d * r)) +
     R2 * Math.acos((d * d + R2 - r2) / (2 * d * R)) -
     0.5 *
-      Math.sqrt((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R));
+    Math.sqrt((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R));
   if (!Number.isFinite(a) || a <= 0) return 0;
   return Math.min(100, (a / (Math.PI * r2)) * 100);
 }

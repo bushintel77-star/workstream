@@ -52,7 +52,7 @@ test.describe("Studio phone adaptive layout", () => {
       await page.locator('[data-testid="zoom-world"] [data-camera-chrome]').count(),
     ).toBe(0);
 
-    const dock = page.getByTestId("tool-dock");
+    const dock = page.getByTestId("contextual-tool-strip");
     const board = page.getByTestId("studio-board");
     const dockBox = await dock.boundingBox();
     const boardBox = await board.boundingBox();

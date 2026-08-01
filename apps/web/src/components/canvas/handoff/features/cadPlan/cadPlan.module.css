@@ -179,7 +179,7 @@
   align-items: center;
   gap: 2px;
   pointer-events: none;
-  z-index: 5;
+  z-index: var(--ws-z-annotate);
 }
 
 .obliqueTick {
@@ -200,7 +200,7 @@
   background: var(--hc-ink);
   transform: rotate(45deg);
   pointer-events: none;
-  z-index: 6;
+  z-index: var(--ws-z-annotate);
 }
 
 /* Off-drawing dims — readable floor for live plan work (not print-only 8px). */
@@ -310,7 +310,7 @@
 .cadAreaLabel {
   position: absolute;
   transform: translate(-50%, -50%);
-  z-index: 7;
+  z-index: var(--ws-z-annotate);
   display: inline-flex;
   flex-direction: row;
   align-items: baseline;
@@ -367,7 +367,7 @@
 .houseEnvelopeLabel {
   position: absolute;
   transform: translate(-50%, -50%);
-  z-index: 6;
+  z-index: var(--ws-z-annotate);
   margin: 0;
   padding: 2px 6px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -387,7 +387,7 @@
   position: absolute;
   left: calc(var(--ws-safe-left, 64px) + 8px);
   bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
-  z-index: 40;
+  z-index: var(--ws-z-dock);
   margin: 0;
   padding: 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -403,7 +403,7 @@
 }
 
 .fitOutsideDim {
-  z-index: 8;
+  z-index: var(--ws-z-annotate);
 }
 
 .fitDimLabel {
@@ -479,13 +479,13 @@
   background: transparent;
   padding: 0;
   cursor: help;
-  z-index: 11;
+  z-index: var(--ws-z-interact);
   pointer-events: auto;
 }
 
 .tpzPop {
   position: relative;
-  z-index: 16;
+  z-index: var(--ws-z-interact);
   padding: 5px 8px;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
@@ -515,7 +515,7 @@
   pointer-events: none;
   white-space: nowrap;
   box-shadow: 0 4px 14px color-mix(in srgb, var(--text-primary) 10%, transparent);
-  z-index: 12;
+  z-index: var(--ws-z-interact);
 }
 
 .editBanner {
@@ -534,7 +534,7 @@
   white-space: normal;
   line-height: 1.35;
   box-shadow: none;
-  z-index: 44;
+  z-index: var(--ws-z-contextual);
   pointer-events: none;
 }
 
@@ -550,7 +550,7 @@
 .swatchPreview {
   position: absolute;
   inset: -7px;
-  z-index: 5;
+  z-index: var(--ws-z-annotate);
   display: grid;
   place-items: center;
   border-radius: inherit;
@@ -594,7 +594,7 @@
 /* Council rule — muted ink tracking the setback / boundary, not a corner card */
 .councilPathLabel {
   position: absolute;
-  z-index: 6;
+  z-index: var(--ws-z-annotate);
   transform: translate(-50%, -50%);
   margin: 0;
   padding: 0;
@@ -649,7 +649,7 @@ button.missingBuildingCue:hover {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--ws-z-geometry);
   overflow: visible;
 }
 
@@ -657,14 +657,14 @@ button.missingBuildingCue:hover {
 .crosshairH {
   position: absolute;
   pointer-events: none;
-  z-index: 16;
+  z-index: var(--ws-z-interact);
   background: color-mix(in srgb, var(--planting-new-stroke) 72%, transparent);
   box-shadow: 0 0 0 0.5px var(--canvas);
 }
 
 .snapGlyph {
   position: absolute;
-  z-index: 18;
+  z-index: var(--ws-z-interact);
   transform: translate(-50%, -50%);
   display: grid;
   place-items: center;
@@ -688,7 +688,7 @@ button.missingBuildingCue:hover {
 
 .snapPulse {
   position: absolute;
-  z-index: 17;
+  z-index: var(--ws-z-interact);
   width: 28px;
   height: 28px;
   transform: translate(-50%, -50%);
@@ -922,7 +922,7 @@ button.missingBuildingCue:hover {
 /* Marquee — proposed selection wash, not blush chrome. */
 .marquee {
   position: absolute;
-  z-index: 14;
+  z-index: var(--ws-z-interact);
   border: 1px solid color-mix(in srgb, var(--proposed-stroke) 50%, transparent);
   border-radius: 4px;
   background: color-mix(in srgb,
@@ -947,7 +947,7 @@ button.missingBuildingCue:hover {
 .guideH {
   position: absolute;
   pointer-events: none;
-  z-index: 15;
+  z-index: var(--ws-z-interact);
   background: color-mix(in srgb, var(--proposed-stroke) 70%, transparent);
   box-shadow: 0 0 0 0.5px var(--canvas);
 }
@@ -1079,7 +1079,7 @@ button.missingBuildingCue:hover {
   position: absolute;
   width: 0;
   height: 0;
-  z-index: 18;
+  z-index: var(--ws-z-interact);
   pointer-events: none;
 }
 
@@ -1089,6 +1089,7 @@ button.missingBuildingCue:hover {
   top: 0;
   z-index: -1;
   overflow: visible;
+  /* -1 keeps SVG defs below geometry inside zoomWorld; not a --ws-z token */
   pointer-events: none;
   transform-origin: center;
 }
@@ -1193,7 +1194,7 @@ button.missingBuildingCue:hover {
   position: absolute;
   left: 10px;
   bottom: 8px;
-  z-index: 40;
+  z-index: var(--ws-z-dock);
   display: flex;
   flex-direction: column;
   gap: 4px;

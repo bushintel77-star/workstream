@@ -11,7 +11,7 @@
 .root {
   position: absolute;
   inset: 0;
-  z-index: 30;
+  z-index: var(--ws-z-frame);
   display: flex;
   flex-direction: column;
   background: var(--hc-paper, var(--surface-elevated));
@@ -157,7 +157,7 @@
 .section summary {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -615,7 +615,7 @@
   background: color-mix(in srgb, var(--hc-paper) 92%, transparent);
   backdrop-filter: blur(12px);
   box-shadow: 0 -4px 24px color-mix(in srgb, var(--hc-ink) 5%, transparent);
-  z-index: 3;
+  z-index: var(--ws-z-annotate);
 }
 
 .marginField {

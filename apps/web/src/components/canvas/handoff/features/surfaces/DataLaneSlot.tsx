@@ -44,7 +44,9 @@ export function RightDataLane({
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        e.stopPropagation();
+        // Don't stop propagation — the studio's global Escape handler may
+        // need to flatten an active tilt lens first. Closing the lane is
+        // still triggered, and the global handler will also clear panels.
         onClose?.();
         return;
       }

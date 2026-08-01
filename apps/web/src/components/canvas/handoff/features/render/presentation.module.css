@@ -1,7 +1,7 @@
 .speciesLabel {
   position: absolute;
   pointer-events: none;
-  z-index: 5;
+  z-index: var(--ws-z-annotate);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 9px;
   font-weight: 500;

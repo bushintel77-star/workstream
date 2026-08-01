@@ -1,6 +1,6 @@
 .root {
   position: absolute;
-  z-index: 6;
+  z-index: var(--ws-z-annotate);
   transform: translate(-50%, -50%);
   pointer-events: none;
   display: flex;

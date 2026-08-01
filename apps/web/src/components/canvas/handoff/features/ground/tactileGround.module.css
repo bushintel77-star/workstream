@@ -1,7 +1,7 @@
 .ground {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: var(--ws-z-base);
   overflow: hidden;
   pointer-events: none;
   --parchment-op: 1;
@@ -116,7 +116,7 @@
 
 .edgeScale {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ws-z-geometry);
   font-family: "IBM Plex Mono", monospace;
   font-size: 8.5px;
   font-weight: 500;
@@ -160,7 +160,7 @@
 .rulerOverlay {
   position: absolute;
   inset: 0;
-  z-index: 9;
+  z-index: var(--ws-z-interact);
   pointer-events: none;
   overflow: hidden;
   font-family: "IBM Plex Mono", monospace;
@@ -208,7 +208,7 @@
   opacity: calc(0.35 + var(--parchment-op) * 0.3);
   transition: opacity 420ms ease;
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
 }
 
 .phase_aerial .compass {

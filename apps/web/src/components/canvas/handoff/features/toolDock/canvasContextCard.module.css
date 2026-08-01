@@ -20,7 +20,7 @@
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
   color: var(--ws-frame-ink);
   pointer-events: auto;
-  z-index: 22;
+  z-index: var(--ws-z-chrome);
   max-width: min(720px, calc(100% - var(--ws-frame-left) - 180px));
   flex-wrap: nowrap;
   overflow: hidden;

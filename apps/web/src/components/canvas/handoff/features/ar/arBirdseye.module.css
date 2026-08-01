@@ -2,7 +2,7 @@
 .root {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: var(--ws-z-fullscreen);
   display: flex;
   flex-direction: column;
   background: var(--gray-d-0);

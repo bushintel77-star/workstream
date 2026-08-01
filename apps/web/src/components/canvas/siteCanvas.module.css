@@ -138,7 +138,7 @@
 
 /** Uniform drafting-board dots behind the site sheet. */
 .draftGrid {
-  --grid-dot: rgba(27, 28, 30, 0.16);
+  --grid-dot: color-mix(in srgb, var(--ink) 16%, transparent);
   --grid-step: 24px;
   position: absolute;
   inset: 0;
@@ -168,7 +168,7 @@
   border-radius: var(--radius-sheet);
   box-shadow:
     var(--shadow-lift),
-    0 0 0 1px rgba(255, 255, 255, 0.35);
+    0 0 0 1px color-mix(in srgb, var(--pink-soft) 35%, transparent);
   user-select: none;
   pointer-events: none;
 }
@@ -233,9 +233,9 @@
   gap: 0.45rem 0.75rem;
   padding: 0.45rem 0.75rem;
   border-radius: 12px;
-  background: rgba(255, 251, 252, 0.9);
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  box-shadow: 0 8px 22px rgba(27, 28, 30, 0.1);
+  background: color-mix(in srgb, var(--pink-soft) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 10%, transparent);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   pointer-events: none;
 }
@@ -265,7 +265,7 @@
   background: color-mix(in srgb, var(--paper) 94%, transparent);
   border: 1px solid var(--paper-rule);
   border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(27, 28, 30, 0.08);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 8%, transparent);
   color: var(--paper-ink);
 }
 
@@ -397,7 +397,7 @@
   gap: 3px;
   padding: 4px;
   border-radius: 999px;
-  background: rgba(36, 19, 24, 0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
   pointer-events: auto;
 }
 
@@ -460,7 +460,7 @@
   }
 
   50% {
-    box-shadow: inset 0 0 0 1.5px rgba(36, 19, 24, 0.35);
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 35%, transparent);
   }
 }
 
@@ -469,7 +469,7 @@
   border: 1px solid var(--paper-rule);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: 0 8px 22px rgba(27, 28, 30, 0.08);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .modeStripPaper .modeBtnActive {
@@ -562,11 +562,11 @@
 }
 
 .shareSheetPaper {
-  background: rgba(250, 246, 242, 0.96);
-  border: 1px solid rgba(36, 19, 24, 0.16);
+  background: color-mix(in srgb, var(--pink-soft) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: 0 14px 36px rgba(27, 28, 30, 0.1);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
 .shareSheet h2 {
@@ -588,8 +588,8 @@
   margin: 0;
   padding: 0.55rem 0.65rem;
   border-radius: 10px;
-  background: rgba(27, 28, 30, 0.05);
-  border: 1px solid rgba(27, 28, 30, 0.08);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.68rem;
   line-height: 1.4;
@@ -734,7 +734,7 @@
 .iconBtn:hover {
   background: var(--frost-strong);
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(27, 28, 30, 0.08);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .iconBtn:active {
@@ -744,7 +744,7 @@
 .iconBtnActive {
   background: var(--ink);
   color: var(--accent-bright);
-  box-shadow: 0 8px 22px rgba(27, 28, 30, 0.18);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 18%, transparent);
 }
 
 .iconBtnActive:hover {
@@ -753,8 +753,8 @@
 }
 
 .topActionsPaper .iconBtn {
-  background: rgba(250, 246, 242, 0.94);
-  border: 1px solid rgba(36, 19, 24, 0.18);
+  background: color-mix(in srgb, var(--pink-soft) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
@@ -803,7 +803,7 @@
   color: var(--paper-ink);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: 0 14px 36px rgba(27, 28, 30, 0.1);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
 /** Brand lives on the architectural sheet — top bar is actions only. */
@@ -820,8 +820,8 @@
   max-height: 220px;
   overflow: auto;
   padding: 0.35rem 0;
-  border-top: 1px solid rgba(27, 28, 30, 0.08);
-  border-bottom: 1px solid rgba(27, 28, 30, 0.08);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 @keyframes dockIn {
@@ -894,7 +894,7 @@
 .btn:hover:not(:disabled) {
   background: var(--surface-elevated);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(27, 28, 30, 0.07);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
 .btnGhost {
@@ -911,13 +911,13 @@
 
 .btnGhost:hover {
   color: var(--ink);
-  background: rgba(27, 28, 30, 0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
 .btnPrimary {
   background: var(--ink);
   color: var(--ink-inverted);
-  box-shadow: 0 4px 14px rgba(27, 28, 30, 0.16);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
 .keysHelp {
@@ -928,9 +928,9 @@
   width: min(240px, calc(100vw - 2rem));
   padding: 0.9rem 1rem;
   border-radius: 8px;
-  background: rgba(250, 246, 242, 0.98);
-  border: 1px solid rgba(36, 19, 24, 0.2);
-  box-shadow: 0 16px 40px rgba(27, 28, 30, 0.14);
+  background: color-mix(in srgb, var(--pink-soft) 98%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--ink) 14%, transparent);
   display: grid;
   gap: 0.55rem;
 }
@@ -956,13 +956,13 @@
   font-size: 0.68rem;
   padding: 0.15rem 0.4rem;
   border-radius: 6px;
-  background: rgba(36, 19, 24, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink-soft);
 }
 
 .btnPrimary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--ink) 88%, black);
-  box-shadow: 0 8px 20px rgba(27, 28, 30, 0.2);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--ink) 20%, transparent);
 }
 
 .btnAccent {
@@ -1010,16 +1010,16 @@
 
 .scheduleSheetPaper {
   border-radius: 8px;
-  background: rgba(250, 246, 242, 0.97);
-  border: 1px solid rgba(36, 19, 24, 0.18);
+  background: color-mix(in srgb, var(--pink-soft) 97%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: 0 14px 36px rgba(27, 28, 30, 0.1);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
 .scheduleSheetPaper .sheetClose {
   border-radius: 4px;
-  background: rgba(36, 19, 24, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 @keyframes sheetIn {
@@ -1094,8 +1094,8 @@
   inset: 0;
   z-index: 10;
   background:
-    radial-gradient(80% 60% at 50% 0%, rgba(255, 232, 240, 0.75) 0%, transparent 55%),
-    rgba(246, 230, 237, 0.88);
+    radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, color-mix(in srgb, var(--crimson-d-500) 10%, var(--pink-soft)) 75%, transparent) 0%, transparent 55%),
+    color-mix(in srgb, color-mix(in srgb, var(--crimson-d-500) 12%, var(--pink-soft)) 88%, transparent);
   backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
@@ -1174,22 +1174,22 @@
 }
 
 .ghostReview {
-  border: 1px solid rgba(212, 137, 158, 0.35);
+  border: 1px solid color-mix(in srgb, color-mix(in srgb, var(--crimson-d-500) 30%, var(--pink-soft)) 35%, transparent);
   box-shadow:
     var(--shadow-lift),
     inset 0 1px 0 var(--glass-edge);
 }
 
 .emptyHintPaper {
-  background: rgba(250, 246, 242, 0.96);
-  border: 1px solid rgba(36, 19, 24, 0.22);
-  box-shadow: 0 12px 32px rgba(27, 28, 30, 0.1);
+  background: color-mix(in srgb, var(--pink-soft) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--ink) 10%, transparent);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
 .emptyHintPaper.ghostReview {
-  border-color: rgba(36, 19, 24, 0.35);
+  border-color: color-mix(in srgb, var(--ink) 35%, transparent);
 }
 
 .emptyHint p {

@@ -1,7 +1,7 @@
 .root {
   position: absolute;
   inset: 0;
-  z-index: 6;
+  z-index: var(--ws-z-annotate);
   display: flex;
   flex-direction: column;
   background:
@@ -73,7 +73,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   color: var(--hc-ink-muted);
-  z-index: 9;
+  z-index: var(--ws-z-interact);
 }
 
 .stage {
@@ -96,7 +96,7 @@
   position: absolute;
   inset: 4px min(176px, 27vw) 8px 4px;
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--ws-z-annotate);
 }
 
 .tick {

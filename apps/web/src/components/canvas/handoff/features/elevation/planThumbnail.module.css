@@ -2,7 +2,7 @@
   position: absolute;
   right: 12px;
   top: 48px;
-  z-index: 8;
+  z-index: var(--ws-z-annotate);
   width: min(148px, 24vw);
   padding: 8px 10px 10px;
   border-radius: 10px;
