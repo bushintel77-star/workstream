@@ -1384,6 +1384,17 @@ export function HandoffDesignStudio({
       }
       if (typing || ui.cmdOpen) return;
 
+      /* Mode-switch shortcuts — 1 through 6 map to MODE_TABS order. */
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && /^[1-6]$/.test(e.key)) {
+        const idx = Number(e.key) - 1;
+        const mode = MODE_TABS[idx];
+        if (mode && mode !== ui.mode) {
+          e.preventDefault();
+          studio.setMode(mode);
+          return;
+        }
+      }
+
       if (ui.tool === "path" && ui.drawPoly) {
         if (e.key === "Enter" && ui.drawPoly.length >= 2) {
           e.preventDefault();

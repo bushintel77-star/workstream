@@ -118,7 +118,7 @@
   --planting-retain-text: var(--forest-d-400);
   --planting-new-stroke: var(--sprout-d-400);
   --planting-new-text: var(--sprout-d-400);
-  --easement-stroke: var(--slate-d-400);
+  --easement-stroke: #8BA4C4;
 
   --proposed-hover: color-mix(in srgb, var(--cobalt-d-500) 85%, white);
   --proposed-active: color-mix(in srgb, var(--cobalt-d-500) 80%, black);
@@ -157,7 +157,7 @@
   --planting-retain-text: var(--forest-d-400);
   --planting-new-stroke: var(--sprout-d-400);
   --planting-new-text: var(--sprout-d-400);
-  --easement-stroke: var(--slate-d-400);
+  --easement-stroke: #8BA4C4;
 
   --proposed-hover: color-mix(in srgb, var(--cobalt-d-500) 85%, white);
   --proposed-active: color-mix(in srgb, var(--cobalt-d-500) 80%, black);

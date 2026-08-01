@@ -11,7 +11,7 @@
   --surface-elevated: #1B1E24;
   --surface-sunken: #0F1115;
   --surface-inverted: #E8E9EC;
-  --surface-overlay: #1B1E24;
+  --surface-overlay: #20242B;
   --surface-inset: #0F1115;
   --surface-panel: #1B1E24;
   /* deep — same as base now; kept for portal/hero gradient compat */
@@ -42,7 +42,7 @@
   /* ink — light text on dark surfaces */
   --ink-primary: #E8E9EC;
   --ink-secondary: #9AA0AC;
-  --ink-tertiary: #6B7078;
+  --ink-tertiary: #7A8088;
   --ink-inverted: #1B1E23;
 
   /* lines — dark grey hairlines on dark surfaces */

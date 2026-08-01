@@ -1,5 +1,4 @@
 import s from "../styles/app.module.css";
-import sk from "../styles/skeleton.module.css";
 
 export default function DashboardLoading() {
   return (
@@ -10,13 +9,18 @@ export default function DashboardLoading() {
           <span className={s.brandSub}>Workstream · Projects</span>
         </div>
       </header>
-      <div className={`${sk.skel} ${sk.lineLg} ${sk.w40}`} />
-      <div className={`${sk.skel} ${sk.line} ${sk.w80}`} />
-      <div className={`${sk.skel} ${sk.line} ${sk.w60}`} />
-      <div className={sk.gap} />
-      <div className={`${sk.skel} ${sk.card}`} />
-      <div className={`${sk.skel} ${sk.card}`} />
-      <div className={`${sk.skel} ${sk.card}`} />
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "24px" }}>
+        <div style={{ height: "28px", width: "40%", borderRadius: "5px", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
+        <div style={{ height: "16px", width: "80%", borderRadius: "5px", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
+        <div style={{ height: "16px", width: "60%", borderRadius: "5px", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
+        <div style={{ height: "1px", background: "var(--line-subtle)", margin: "16px 0" }} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} style={{ minHeight: "220px", borderRadius: "7px", border: "1px solid var(--line-hairline)", background: "var(--surface-elevated)", animation: "skelPulse 1.4s ease infinite" }} />
+          ))}
+        </div>
+      </div>
+      <style>{`@keyframes skelPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.7; } } @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`}</style>
     </main>
   );
 }

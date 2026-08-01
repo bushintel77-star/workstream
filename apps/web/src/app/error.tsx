@@ -27,6 +27,13 @@ export default function ErrorBoundary({
         </Link>
       </header>
 
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden style={{ opacity: 0.3, marginBottom: 16 }}>
+        <circle cx="32" cy="32" r="28" stroke="var(--ink-tertiary)" strokeWidth="1.5" />
+        <line x1="32" y1="32" x2="48" y2="16" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
+        <line x1="32" y1="32" x2="20" y2="48" stroke="var(--ink-secondary)" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="32" cy="32" r="3" fill="var(--accent)" />
+      </svg>
+
       <h1 className={s.headline}>That didn&apos;t land.</h1>
       <p className={s.lede}>
         The page hit an error. Most often that&apos;s the API briefly waking up
