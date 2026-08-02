@@ -1,25 +1,23 @@
 .bar {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  max-width: var(--shell-max, 1080px);
-  margin: 0 auto var(--s-4);
-  padding: 8px 4px;
   position: sticky;
   top: 0;
   z-index: 30;
-  flex-wrap: wrap;
+  width: 100%;
+  padding: 0;
+  background: color-mix(in srgb, var(--surface-base) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line-subtle);
 }
 
 .inner {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  flex-wrap: wrap;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--line-subtle);
-  background: transparent;
+  gap: var(--s-3);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px clamp(1.5rem, 4vw, 3rem);
+  flex-wrap: nowrap;
 }
 
 .brand {
@@ -187,12 +185,9 @@
 }
 
 @media (max-width: 640px) {
-  .bar {
-    padding-inline: 0;
-  }
-
   .inner {
     gap: var(--s-2);
+    padding: 8px 1.25rem;
   }
 
   .links {
@@ -204,8 +199,6 @@
   }
 
   .plan {
-    order: 4;
-    width: 100%;
-    justify-content: center;
+    flex-shrink: 0;
   }
 }

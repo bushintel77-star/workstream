@@ -533,8 +533,22 @@
 .headerTools {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex: none;
+}
+
+/* Tool groups — hairline-separated clusters */
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding-left: 6px;
+  border-left: 1px solid var(--ws-frame-hair);
+}
+
+.toolGroup:first-child {
+  padding-left: 0;
+  border-left: 0;
 }
 
 .headerVicGov {
@@ -963,15 +977,15 @@
   height: var(--ws-frame-glyph);
 }
 
-/* Tighten the icon cluster and add hairline group seams in the top-right band. */
+/* Tighten the icon cluster in the top-right band. */
 [data-frame-rail="top-right"] .headerTools {
-  gap: 1px;
+  gap: 6px;
 }
 
 [data-frame-rail="top-right"] .headerTools .shareWrap {
-  margin-left: 5px;
-  padding-left: 6px;
-  border-left: 1px solid var(--ws-frame-hair);
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
 }
 
 /* Mode strip — hairline group in the band, not a recessed plastic track. */

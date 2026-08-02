@@ -46,8 +46,8 @@ export default function ProjectStudioError({
         <Button variant="secondary" size="sm" onClick={() => reset()}>
           Reopen studio
         </Button>
-        <Link href="/home" passHref>
-          <Button as="a" variant="ghost" size="sm">Back to projects</Button>
+        <Link href="/home" className={s.crumb}>
+          Back to projects
         </Link>
       </div>
     </main>

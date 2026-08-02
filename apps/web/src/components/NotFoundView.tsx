@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AppNav } from "./AppNav";
-import { Button } from "./ui";
 import s from "../styles/app.module.css";
 
 type Props = {
@@ -19,8 +18,8 @@ export function NotFoundView({
       <div className={s.empty}>
         <h1 className={s.headline}>{title}</h1>
         <p className={s.lede}>{message}</p>
-        <Link href="/home" passHref>
-          <Button as="a" variant="secondary" size="md">Go to dashboard</Button>
+        <Link href="/home" className={s.crumb}>
+          Go to dashboard
         </Link>
       </div>
     </main>

@@ -9,6 +9,9 @@ import {
   DashboardProjects,
   type DashboardProject,
 } from "../../components/DashboardProjects";
+import { HomePlanner } from "../../components/HomePlanner";
+import { RailDrawer } from "../../components/RailDrawer";
+import { BottomDock } from "../../components/BottomDock";
 import { getIntegrationSummary } from "../../lib/api";
 import { AppNav } from "../../components/AppNav";
 import { NewProjectAddressForm } from "../../components/NewProjectAddressForm";
@@ -59,7 +62,7 @@ async function toDashboardProject(project: Project): Promise<DashboardProject> {
   };
 }
 
-/** Operator project register — editorial index. */
+/** Operator dashboard — Swiss grid planner + project register. */
 export default async function HomePage() {
   await requireSignedIn();
   let projects: DashboardProject[] = [];
@@ -77,26 +80,59 @@ export default async function HomePage() {
       <AppNav summary={summary} />
 
       <div className={home.layout}>
-        {/* Masthead — matches the landing page tone */}
-        <header className={home.masthead}>
-          <p className={home.mastheadMark}>CURTIS &amp; CO</p>
-          <h1 className={home.mastheadTitle}>Workstream</h1>
-          <p className={home.mastheadLede}>
-            Type an address. Get a concept, working drawing, and live estimate.
-          </p>
-        </header>
+        {/* Left column — masthead + address composer */}
+        <aside className={home.aside}>
+          <header className={home.masthead}>
+            <div className={home.titleBlock}>
+              <p className={home.mastheadMark}>Curtis &amp; Co · Melbourne</p>
+              <div className={home.titleBlockMeta}>
+                <span>DWG-001</span>
+                <span>1:200</span>
+                <span>{new Intl.DateTimeFormat("en-AU", { day: "2-digit", month: "short", year: "numeric" }).format(new Date())}</span>
+              </div>
+            </div>
+            <h1 className={home.mastheadTitle}>STUDIOK</h1>
+            <div className={home.dimLine} aria-hidden />
+          </header>
 
-        {/* Address composer — minimal, no card wrapper */}
-        <section className={home.composer} id="new-project">
-          <label className={home.composerLabel} htmlFor="project-address">
-            Address
-          </label>
-          <NewProjectAddressForm />
+          <section className={home.composer} id="new-project">
+            <label className={home.composerLabel} htmlFor="project-address">
+              New address
+            </label>
+            <NewProjectAddressForm />
+          </section>
+        </aside>
+
+        {/* Main area — project register */}
+        <section className={home.index}>
+          <DashboardProjects projects={projects} loadError={loadError} />
         </section>
-
-        {/* Project index */}
-        <DashboardProjects projects={projects} loadError={loadError} />
       </div>
+
+      {/* Right rail — planner widgets slide out on hover (desktop) */}
+      <RailDrawer label="Planner" accent="blue" width={420}>
+        <HomePlanner projects={projects} />
+      </RailDrawer>
+
+      {/* Bottom dock — planner widgets slide up on tap (mobile) */}
+      <BottomDock label="Planner" accent="blue">
+        <HomePlanner projects={projects} />
+      </BottomDock>
+
+      {/* Drawing footer — north arrow + scale bar */}
+      <footer className={home.drawingFooter} aria-hidden>
+        <div className={home.northArrow}>
+          <span className={home.northN}>N</span>
+          <span className={home.northGlyph}>↑</span>
+        </div>
+        <div className={home.scaleBar}>
+          <span className={home.scaleSeg} />
+          <span className={`${home.scaleSeg} ${home.scaleSegAlt}`} />
+          <span className={home.scaleSeg} />
+          <span className={`${home.scaleSeg} ${home.scaleSegAlt}`} />
+          <span className={home.scaleLabel}>0 — 10m</span>
+        </div>
+      </footer>
     </main>
   );
 }

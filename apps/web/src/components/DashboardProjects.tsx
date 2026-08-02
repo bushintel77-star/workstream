@@ -184,50 +184,49 @@ export function DashboardProjects({
           <p>Adjust your search to bring projects back into view.</p>
         </div>
       ) : (
-        <ul className={home.projectList} aria-busy={isPending}>
+        <ul className={home.cardGrid} aria-busy={isPending}>
           {visibleProjects.map((project, i) => (
-            <li key={project.id}>
+            <li key={project.id} className={home.cardItem}>
               <Link
                 href={`/projects/${project.id}`}
-                className={home.projectRow}
+                className={`${home.card} ${home[`status_${project.status}`]}`}
               >
-                <span className={home.rowIndex}>{pad2(i + 1)}</span>
-                <span className={home.rowBody}>
-                  <span className={home.rowName}>{project.projectName}</span>
-                  <span className={home.rowAddress}>{project.address}</span>
-                  <span className={home.rowMeta}>
-                    <span className={home.statusGroup}>
-                      <span
-                        className={`${home.statusDot} ${home[`status_${project.status}`]}`}
-                        aria-hidden
-                      />
-                      <span className={home.statusText}>
-                        {STATUS_LABEL[project.status]}
-                      </span>
+                {/* Thumbnail — oversized index number on accent surface */}
+                <div className={home.cardThumb}>
+                  <span className={home.cardIndex}>{pad2(i + 1)}</span>
+                  <span
+                    className={`${home.cardDot} ${home[`status_${project.status}`]}`}
+                    aria-hidden
+                  />
+                </div>
+
+                {/* Body — project name + address */}
+                <div className={home.cardBody}>
+                  <span className={home.cardName}>{project.projectName}</span>
+                  <span className={home.cardAddress}>{project.address}</span>
+                </div>
+
+                {/* Footer — stage + cost + date */}
+                <div className={home.cardFooter}>
+                  <span className={home.cardStage}>{project.stageLabel}</span>
+                  {project.costTotal != null ? (
+                    <span className={home.cardCost}>
+                      {formatMoney(project.costTotal)}
                     </span>
-                    <span className={home.rowStage}>{project.stageLabel}</span>
-                    {project.costTotal != null ? (
-                      <span className={home.rowCost}>
-                        {formatMoney(project.costTotal)}
-                      </span>
-                    ) : (
-                      <span className={`${home.rowCost} ${home.rowCostPending}`}>
-                        —
-                      </span>
-                    )}
-                    <span className={home.rowDate}>
-                      {formatDate(project.createdAt)}
+                  ) : (
+                    <span className={`${home.cardCost} ${home.cardCostPending}`}>
+                      —
                     </span>
+                  )}
+                  <span className={home.cardDate}>
+                    {formatDate(project.createdAt)}
                   </span>
-                </span>
-                <span className={home.rowArrow} aria-hidden>
-                  {"\u2192"}
-                </span>
+                </div>
               </Link>
-              <div className={home.rowActions}>
+              <div className={home.cardActions}>
                 <button
                   type="button"
-                  className={home.rowDeleteBtn}
+                  className={home.cardDeleteBtn}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

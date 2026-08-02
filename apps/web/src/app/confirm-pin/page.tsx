@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ConfirmPinClient } from "./ConfirmPinClient";
-import { Button } from "../../components/ui";
 import s from "../../styles/app.module.css";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +25,8 @@ export default async function ConfirmPinPage({
         <p className={s.lede}>
           Pick an address from the dashboard list first.
         </p>
-        <Link href="/home" passHref>
-          <Button as="a" variant="secondary" size="md">Back to projects</Button>
+        <Link href="/home" className={s.crumb}>
+          Back to projects
         </Link>
       </main>
     );
