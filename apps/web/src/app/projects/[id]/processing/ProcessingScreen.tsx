@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { restartPipelineAction } from "../../../actions";
 import { useToast } from "../../../../components/ToastHost";
-import { Button } from "../../../../components/ui";
+import { KitButton } from "../../../../components/ui/kit";
 import type { ProjectStatus } from "../../../../lib/api";
 import s from "../../../../styles/app.module.css";
 import styles from "../project.module.css";
@@ -160,14 +160,14 @@ export function ProcessingScreen({ projectId, address, status }: Props) {
             The pipeline did not report progress after one minute. Retry now; if
             it fails again, check the API worker logs before sending a client link.
           </p>
-          <Button
+          <KitButton
             type="button"
-            variant="primary"
+            variant="accent"
             onClick={retry}
             disabled={isPending}
           >
             {isPending ? "Retrying…" : "Retry processing"}
-          </Button>
+          </KitButton>
         </section>
       ) : (
         <p className={styles.processingHint} aria-live="polite">

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { deleteProjectAction, restoreProjectAction } from "../app/actions";
 import { useToast } from "./ToastHost";
-import { Dialog, Button } from "./ui";
+import { Dialog } from "./ui";
+import { KitButton } from "./ui/kit";
 import home from "../app/home.module.css";
 
 type DashboardStatus = "draft" | "active" | "review" | "complete" | "deleted";
@@ -249,12 +250,12 @@ export function DashboardProjects({
         destructive
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(null)}>
+            <KitButton variant="ghost" size="sm" onClick={() => setConfirmDelete(null)}>
               Cancel
-            </Button>
-            <Button variant="danger" size="sm" onClick={confirmDeleteProject}>
+            </KitButton>
+            <KitButton variant="destructive" size="sm" onClick={confirmDeleteProject}>
               Delete
-            </Button>
+            </KitButton>
           </>
         }
       >

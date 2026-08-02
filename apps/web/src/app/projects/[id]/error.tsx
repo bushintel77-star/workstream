@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { Button } from "../../../components/ui";
+import { KitButton } from "../../../components/ui/kit";
 import s from "../../../styles/app.module.css";
 
 /**
@@ -43,9 +43,9 @@ export default function ProjectStudioError({
       ) : null}
 
       <div className={s.actionBar}>
-        <Button variant="secondary" size="sm" onClick={() => reset()}>
+        <KitButton variant="secondary" size="sm" onClick={() => reset()}>
           Reopen studio
-        </Button>
+        </KitButton>
         <Link href="/home" className={s.crumb}>
           Back to projects
         </Link>

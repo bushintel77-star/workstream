@@ -17,7 +17,8 @@ import {
   SHEET_WIDGET_LIBRARY,
 } from "@workstream/domain";
 import css from "./sheetCompose.module.css";
-import { Button, Dialog } from "../../../../ui";
+import { Dialog } from "../../../../ui";
+import { KitButton } from "../../../../ui/kit";
 
 /** Summoned peel dismisses when the operator walks away. */
 const COMPOSE_LINGER_MS = 4_200;
@@ -325,11 +326,11 @@ export function SheetComposeDock({
         destructive
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setPendingTemplate(null)}>
+            <KitButton variant="ghost" size="sm" onClick={() => setPendingTemplate(null)}>
               Cancel
-            </Button>
-            <Button
-              variant="danger"
+            </KitButton>
+            <KitButton
+              variant="destructive"
               size="sm"
               onClick={() => {
                 if (pendingTemplate) onApplyTemplate(pendingTemplate);
@@ -338,7 +339,7 @@ export function SheetComposeDock({
               }}
             >
               Replace
-            </Button>
+            </KitButton>
           </>
         }
       >
@@ -352,11 +353,11 @@ export function SheetComposeDock({
         destructive
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setPendingClear(false)}>
+            <KitButton variant="ghost" size="sm" onClick={() => setPendingClear(false)}>
               Cancel
-            </Button>
-            <Button
-              variant="danger"
+            </KitButton>
+            <KitButton
+              variant="destructive"
               size="sm"
               onClick={() => {
                 setPendingClear(false);
@@ -365,7 +366,7 @@ export function SheetComposeDock({
               }}
             >
               Clear
-            </Button>
+            </KitButton>
           </>
         }
       >
