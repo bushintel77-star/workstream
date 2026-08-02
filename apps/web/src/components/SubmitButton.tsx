@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import s from "../styles/app.module.css";
+import { KitButton } from "./ui/kit";
 
 type Props = {
   children: React.ReactNode;
@@ -21,18 +21,16 @@ export function SubmitButton({
   "aria-label": ariaLabel,
 }: Props) {
   const { pending } = useFormStatus();
-  const cls =
-    variant === "ghost"
-      ? `${s.btnGhost} ${className ?? ""}`
-      : `${s.btn} ${className ?? ""}`;
   return (
-    <button
+    <KitButton
       type="submit"
-      className={cls.trim()}
-      disabled={pending || disabled}
+      variant={variant === "ghost" ? "ghost" : "default"}
+      loading={pending}
+      disabled={disabled}
+      className={className}
       aria-label={ariaLabel}
     >
       {pending ? pendingLabel : children}
-    </button>
+    </KitButton>
   );
 }
