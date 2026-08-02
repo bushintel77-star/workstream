@@ -20,27 +20,26 @@
 
 .root {
   /*
-   * Present material palette — the warm "paper document on a desk" instrument
-   * surface. Defined once here so the whole workspace shares one material and
-   * can be re-themed in a single place, instead of scattering warm hex through
-   * every rule. Neutral chrome (desk, wells, hairlines, neu shadows) keeps
-   * using the shared --gray-* / --text-* tokens; only the bespoke warm
-   * paper/ink and the tight chip radii live here.
+   * Present material palette — the working-drawing "paper document" surface.
+   * Defined once here (single source) and derived from the v2 neutral tokens,
+   * not raw hex: the studio retired the warm blush/umber light palette
+   * (see docs/STUDIO-STYLING-AND-UX.md § Forbidden looks), so paper/ink read
+   * as neutral sheet tokens. One place to re-theme the whole workspace.
    */
-  --pv-paper: #fffdf8;
-  --pv-plan-bg: #f5f0e6;
-  --pv-ink: #1a1218;
-  --pv-ink-muted: #666;
-  --pv-ink-faint: #888;
-  --pv-ink-hint: #999;
-  --pv-print-line: #ccc;
-  --pv-r-chip: 3px;
-  --pv-r-hair: 2px;
+  --pv-paper: var(--gray-l-25);
+  --pv-plan-bg: var(--gray-l-100);
+  --pv-ink: var(--text-primary);
+  --pv-ink-muted: var(--text-secondary);
+  --pv-ink-faint: var(--text-muted);
+  --pv-ink-hint: var(--text-muted);
+  --pv-print-line: var(--border);
+  --pv-r-chip: var(--r-sm);
+  --pv-r-hair: var(--r-sm);
 
   position: absolute;
   inset: 0;
   display: flex;
-  background: var(--gray-l-50, #f7f6f3);
+  background: var(--gray-l-50);
   z-index: 10;
 }
 
@@ -53,8 +52,8 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  background: var(--gray-l-0, #ffffff);
-  border-right: 1px solid var(--gray-l-200, #dee1e6);
+  background: var(--gray-l-0);
+  border-right: 1px solid var(--gray-l-200);
   overflow-y: auto;
 }
 
@@ -133,10 +132,10 @@
   margin: 0;
   padding: 8px 12px;
   font-size: 13px;
-  color: var(--color-danger, #c4463b);
-  background: color-mix(in srgb, var(--color-danger, #c4463b) 8%, var(--gray-l-0));
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--gray-l-0));
   border-radius: var(--r-sm);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 20%, transparent);
 }
 
 .docList {
@@ -217,8 +216,8 @@
 }
 
 .docDelete:hover {
-  color: var(--color-danger, #c4463b);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 30%, transparent);
+  color: var(--color-danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 30%, transparent);
 }
 
 .empty {
@@ -242,8 +241,8 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: var(--gray-l-0, #ffffff);
-  border-bottom: 1px solid var(--gray-l-200, #dee1e6);
+  background: var(--gray-l-0);
+  border-bottom: 1px solid var(--gray-l-200);
   flex-wrap: wrap;
 }
 
@@ -496,11 +495,11 @@
   background: rgba(229, 72, 77, 0.1);
   border: 0;
   border-radius: var(--pv-r-chip);
-  color: var(--color-danger, #c4463b);
+  color: var(--color-danger);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 25%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent);
   z-index: 6;
 }
 
@@ -823,25 +822,25 @@
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 600;
-  background: var(--color-danger, #c4463b);
+  background: var(--color-danger);
   color: var(--gray-l-0);
   border: 0;
   border-radius: var(--r-sm);
   cursor: pointer;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 25%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 16%, transparent),
-    0 2px 4px color-mix(in srgb, var(--color-danger, #c4463b) 10%, transparent),
-    0 4px 8px color-mix(in srgb, var(--color-danger, #c4463b) 6%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 16%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-danger) 10%, transparent),
+    0 4px 8px color-mix(in srgb, var(--color-danger) 6%, transparent);
   transition: box-shadow 160ms var(--ease);
 }
 
 .dissectBtn:hover:not(:disabled) {
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 35%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 20%, transparent),
-    0 2px 6px color-mix(in srgb, var(--color-danger, #c4463b) 14%, transparent),
-    0 6px 16px color-mix(in srgb, var(--color-danger, #c4463b) 10%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 35%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 20%, transparent),
+    0 2px 6px color-mix(in srgb, var(--color-danger) 14%, transparent),
+    0 6px 16px color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
 .dissectBtn:disabled {
@@ -931,15 +930,15 @@
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--color-danger, #c4463b);
+  background: var(--color-danger);
   color: var(--gray-l-0);
   border: 0;
   border-radius: var(--r-sm);
   cursor: pointer;
   align-self: flex-start;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 25%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 12%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 12%, transparent);
 }
 
 .ghostList {
@@ -981,7 +980,7 @@
 
 .ghostReason {
   font-size: 11px;
-  color: var(--color-danger, #c4463b);
+  color: var(--color-danger);
   text-transform: capitalize;
 }
 
@@ -1001,14 +1000,14 @@
   padding: 3px 8px;
   font-size: 11px;
   font-weight: 600;
-  background: var(--color-danger, #c4463b);
+  background: var(--color-danger);
   color: var(--gray-l-0);
   border: 0;
   border-radius: var(--pv-r-chip);
   cursor: pointer;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 25%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 10%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
 .ghostRejectBtn {
@@ -1181,14 +1180,14 @@
   padding: 3px 10px;
   font-size: 11px;
   font-family: inherit;
-  background: var(--color-danger, #c4463b);
+  background: var(--color-danger);
   color: var(--gray-l-0);
   border: 0;
   border-radius: var(--pv-r-chip);
   cursor: pointer;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 25%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 10%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
 .swatchPickerEmpty {
@@ -1249,14 +1248,14 @@
 .swatchPickerCheck {
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-danger, #c4463b);
+  color: var(--color-danger);
 }
 
 /* -- Phase 2 stretch: stale detection + sync -- */
 
 .panel[data-stale="1"] {
   box-shadow:
-    inset 0 0 0 1px var(--color-warning, #d4a017),
+    inset 0 0 0 1px var(--color-warning),
     0 1px 2px color-mix(in srgb, var(--text-primary) 5%, transparent),
     0 2px 4px color-mix(in srgb, var(--text-primary) 4%, transparent);
 }
@@ -1268,16 +1267,16 @@
   padding: 3px 8px;
   font-size: 10px;
   font-family: inherit;
-  background: color-mix(in srgb, var(--color-warning, #d4a017) 12%, var(--gray-l-0));
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--gray-l-0));
   border: 0;
   border-radius: var(--pv-r-chip);
-  color: var(--color-warning, #d4a017);
+  color: var(--color-warning);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s;
   z-index: 5;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-warning, #d4a017) 25%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-warning) 25%, transparent),
     0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
@@ -1297,7 +1296,7 @@
   border-radius: var(--r-sm);
   cursor: pointer;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 40%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 40%, transparent),
     0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
   transition:
     color 140ms var(--ease),
@@ -1307,7 +1306,7 @@
 .formatBtn:hover:not(:disabled) {
   color: var(--text-primary);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 60%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 60%, transparent),
     0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
     0 2px 6px color-mix(in srgb, var(--text-primary) 6%, transparent);
 }
@@ -1322,25 +1321,25 @@
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 600;
-  background: var(--color-danger, #c4463b);
+  background: var(--color-danger);
   color: var(--gray-l-0);
   border: 0;
   border-radius: var(--r-sm);
   cursor: pointer;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 25%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 12%, transparent),
-    0 2px 4px color-mix(in srgb, var(--color-danger, #c4463b) 8%, transparent),
-    0 4px 8px color-mix(in srgb, var(--color-danger, #c4463b) 5%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-danger) 8%, transparent),
+    0 4px 8px color-mix(in srgb, var(--color-danger) 5%, transparent);
   transition: box-shadow 160ms var(--ease);
 }
 
 .templateBtn:hover:not(:disabled) {
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 35%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 16%, transparent),
-    0 2px 6px color-mix(in srgb, var(--color-danger, #c4463b) 12%, transparent),
-    0 6px 16px color-mix(in srgb, var(--color-danger, #c4463b) 8%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 35%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 16%, transparent),
+    0 2px 6px color-mix(in srgb, var(--color-danger) 12%, transparent),
+    0 6px 16px color-mix(in srgb, var(--color-danger) 8%, transparent);
 }
 
 .templateBtn:disabled {
@@ -1351,7 +1350,7 @@
 
 .panel[data-format-pending="1"] {
   box-shadow:
-    inset 0 0 0 2px var(--color-danger, #c4463b),
+    inset 0 0 0 2px var(--color-danger),
     0 1px 2px color-mix(in srgb, var(--text-primary) 5%, transparent),
     0 2px 4px color-mix(in srgb, var(--text-primary) 4%, transparent);
 }
@@ -1422,9 +1421,9 @@
 
 .formatGhostBox {
   position: absolute;
-  border: 2px dashed var(--color-danger, #c4463b);
+  border: 2px dashed var(--color-danger);
   border-radius: var(--pv-r-chip);
-  background: color-mix(in srgb, var(--color-danger, #c4463b) 6%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1439,7 +1438,7 @@
 .formatGhostRationale {
   font-size: 9px;
   line-height: 1.3;
-  color: var(--color-danger, #c4463b);
+  color: var(--color-danger);
   background: var(--gray-l-0);
   padding: 2px 4px;
   border-radius: var(--pv-r-hair);
@@ -1470,17 +1469,17 @@
 }
 
 .formatGhostAccept {
-  background: var(--color-danger, #c4463b);
+  background: var(--color-danger);
   color: var(--gray-l-0);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 25%, transparent),
-    0 1px 2px color-mix(in srgb, var(--color-danger, #c4463b) 10%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
 .formatGhostAccept:hover {
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--color-danger, #c4463b) 35%, transparent),
-    0 1px 4px color-mix(in srgb, var(--color-danger, #c4463b) 14%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 35%, transparent),
+    0 1px 4px color-mix(in srgb, var(--color-danger) 14%, transparent);
 }
 
 .formatGhostReject:hover {

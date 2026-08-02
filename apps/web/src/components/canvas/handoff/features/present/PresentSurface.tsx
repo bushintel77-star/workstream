@@ -1652,7 +1652,7 @@ function PlanCropSvg({
         y={y_pct}
         width={w_pct}
         height={h_pct}
-        fill="var(--plan-crop-bg, #f5f0e6)"
+        style={{ fill: "var(--pv-plan-bg)" }}
       />
       {snapshot.items.map((item) => {
         if (item.outlinePct && item.outlinePct.length >= 3) {
@@ -1663,8 +1663,10 @@ function PlanCropSvg({
             <polygon
               key={item.id}
               points={pts}
-              fill="rgba(61,107,79,0.18)"
-              stroke="#3d6b4f"
+              style={{
+                fill: "color-mix(in srgb, var(--planting-retain-stroke) 18%, transparent)",
+                stroke: "var(--planting-retain-stroke)",
+              }}
               strokeWidth="0.3"
             />
           );
@@ -1675,7 +1677,7 @@ function PlanCropSvg({
             cx={item.x}
             cy={item.y}
             r="1"
-            fill="#3d6b4f"
+            style={{ fill: "var(--planting-retain-stroke)" }}
             opacity="0.7"
           />
         );
@@ -1690,7 +1692,7 @@ function PlanCropSvg({
             key={stroke.id}
             d={d}
             fill="none"
-            stroke="#ff2ef6"
+            style={{ stroke: "var(--proposed-stroke)" }}
             strokeWidth="0.3"
             opacity="0.6"
           />
@@ -1699,8 +1701,10 @@ function PlanCropSvg({
       {buildingPts ? (
         <polygon
           points={buildingPts}
-          fill="rgba(26,18,24,0.08)"
-          stroke="#1a1218"
+          style={{
+            fill: "color-mix(in srgb, var(--text-primary) 8%, transparent)",
+            stroke: "var(--text-primary)",
+          }}
           strokeWidth="0.3"
         />
       ) : null}
@@ -1708,7 +1712,7 @@ function PlanCropSvg({
         <polygon
           points={boundaryPts}
           fill="none"
-          stroke="#1a1218"
+          style={{ stroke: "var(--text-primary)" }}
           strokeWidth="0.4"
         />
       ) : null}
