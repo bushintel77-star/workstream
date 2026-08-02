@@ -10,6 +10,7 @@ import type {
   DesignSiteFrameInput,
   LandscapeFeature,
 } from "@workstream/contracts";
+import { symbolMatureHeightM } from "@workstream/domain";
 import type {
   SketchStroke,
   SpotLevel,
@@ -93,12 +94,22 @@ export function itemsToPlacements(items: StudioItem[]): CatalogPlacement[] {
     }));
 }
 
+/**
+ * Hydrate placements back into studio items.
+ *
+ * `CatalogPlacement` carries no height, so the mature height is re-derived
+ * from the persisted `symbol_id` — one symbol always means one height, which
+ * is what keeps the plan and the elevation agreeing after a reload. Symbols
+ * with no catalogued height leave `heightM` unset and fall back to the coarse
+ * studio type in `resolveItemHeightM`.
+ */
 export function placementsToItems(
   placements: CatalogPlacement[],
 ): StudioItem[] {
   return placements.map((p) => {
     const t = mapSymbolToStudioType(p.symbol_id);
     const dbhM = t === "exist" ? dbhFromLabel(p.label) : undefined;
+    const heightM = symbolMatureHeightM(p.symbol_id);
     return {
       id: p.id,
       t,
@@ -109,6 +120,7 @@ export function placementsToItems(
       ghost: false,
       symbolId: p.symbol_id,
       ...(dbhM != null ? { dbhM } : {}),
+      ...(heightM != null ? { heightM } : {}),
     };
   });
 }

@@ -9,6 +9,7 @@ export * from "./dwellingPlausibility";
 export * from "./workableCanvas";
 export * from "./surveyCorridor";
 export * from "./elevationLabels";
+export * from "./itemHeight";
 export * from "./geoToPct";
 export * from "./reprojectToBoundary";
 export * from "./foundationCadContext";

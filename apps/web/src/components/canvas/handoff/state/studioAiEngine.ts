@@ -10,8 +10,10 @@ import {
   buildGhostPlacementSuggestions,
   buildStudioAiSuggestions,
   detectCanopyClustersFromImageData,
+  getCatalogSymbol,
   interpretSketchStrokesToCad,
   isTier1WrightsTerrace,
+  symbolMatureHeightM,
   type GhostPlacementSuggestion,
   type RgbaImageData,
   type StudioAiSuggestion,
@@ -40,6 +42,19 @@ const SYMBOL_TO_TYPE: Record<string, StudioItemType> = {
   canopy: "canopy",
   "olive-standard": "canopy",
   "hornbeam-pleached": "hedge",
+  /*
+   * Curtis size ladder — mapped explicitly so placement never depends on the
+   * keyword fallthrough below (a rung id carries no material word).
+   */
+  "curtis-tree-780": "canopy",
+  "curtis-tree-690": "canopy",
+  "curtis-tree-500": "feature",
+  "curtis-tree-350": "feature",
+  "curtis-hedge-180": "hedge",
+  "curtis-hedge-140": "hedge",
+  "curtis-hedge-120": "hedge",
+  "curtis-hedge-090": "hedge",
+  "curtis-deck-050": "deck",
   "existing-tree-retain": "exist",
   "tree-root-protection": "exist",
   "bluestone-paver": "paving",
@@ -79,6 +94,18 @@ export function proposalToStudioItem(
   const t = mapSymbolToStudioType(g.symbol_id);
   const scale =
     t === "exist" ? 1 : Math.max(0.5, Math.min(1.3, 0.55 + g.confidence * 0.7));
+  /*
+   * Only carry the proposal's symbol when it is a real catalog id. Some ghost
+   * sources propose coarse ids ("canopy", "hedge") that are not catalog
+   * symbols; persisting one would put a junk `symbol_id` on the wire and
+   * confuse the spatial-facts layer mapping. Those fall back to the coarse
+   * studio type exactly as before.
+   */
+  const proposed = g.symbol_id?.trim() ?? "";
+  const symbolId = proposed && getCatalogSymbol(proposed) ? proposed : undefined;
+  // Ghosts preview at the proposed symbol's real height, so accepting one
+  // does not change how tall it draws.
+  const heightM = symbolId ? symbolMatureHeightM(symbolId) : null;
   return {
     id,
     t,
@@ -90,6 +117,8 @@ export function proposalToStudioItem(
     why: g.reason,
     conf: g.confidence,
     stale: false,
+    ...(symbolId ? { symbolId } : {}),
+    ...(heightM != null ? { heightM } : {}),
     // source encoded in id prefix for lifecycle filters
     // e.g. ai-scan-…, ai-assist-…, ai-canopy-…
   };
@@ -522,17 +551,17 @@ export function proposeFromCanopyImage(
     fromApi.length > 0
       ? fromApi
       : detectCanopyClustersFromImageData(image, {
-          gridSize: 24,
-          maxClusters: 6,
-          symbolId: "canopy",
-        }).map((c) => ({
-          id: c.id,
-          symbol_id: "canopy",
-          x_pct: c.x_pct,
-          y_pct: c.y_pct,
-          confidence: c.confidence,
-          reason: c.reason,
-        }));
+        gridSize: 24,
+        maxClusters: 6,
+        symbolId: "canopy",
+      }).map((c) => ({
+        id: c.id,
+        symbol_id: "canopy",
+        x_pct: c.x_pct,
+        y_pct: c.y_pct,
+        confidence: c.confidence,
+        reason: c.reason,
+      }));
   const source = fromApi.length > 0 ? "vision" : "heuristic";
   let nextIdn = idn;
   const items = clusters.map((c) => {
@@ -557,10 +586,10 @@ export function mergeAiProposals(
     replaceSources === "all-pending"
       ? []
       : snap.items.filter(
-          (i) =>
-            i.ghost &&
-            !replaceSources.some((s) => i.id.startsWith(aiItemPrefix(s))),
-        );
+        (i) =>
+          i.ghost &&
+          !replaceSources.some((s) => i.id.startsWith(aiItemPrefix(s))),
+      );
   // Avoid stacking duplicates on nearly the same centroid
   const kept = [...committed, ...keepPending];
   const add: StudioItem[] = [];

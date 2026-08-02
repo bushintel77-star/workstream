@@ -29,6 +29,14 @@ export type StudioItem = {
   /** Authored DBH (m) for existing trees — drives AS 4970 TPZ when set. */
   dbhM?: number;
   /**
+   * Mature height (m) for this placement, hydrated from the placed catalog
+   * symbol. Never persisted — `CatalogPlacement` has no height field, so the
+   * value is re-derived from `symbolId` on load. Read it through
+   * `resolveItemHeightM` (geometry/itemHeight), never directly, so the
+   * symbol → coarse-type fallback stays in one place.
+   */
+  heightM?: number;
+  /**
    * Drawn region outline (board %) for area masses formalized from sketch —
    * the plan renders this polygon instead of the rectangular glyph. Moves
    * with the item centroid.

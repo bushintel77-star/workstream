@@ -11,6 +11,7 @@ import {
   proposeFromCanopyImage,
   proposeFromStrokes,
   proposeLayoutFromSnapshot,
+  proposalToStudioItem,
   rejectProposal,
 } from "./studioAiEngine";
 import type { StudioSnapshot } from "./studioTypes";
@@ -42,6 +43,55 @@ describe("studioAiEngine", () => {
     expect(mapSymbolToStudioType("bluestone-paver")).toBe("paving");
     expect(mapSymbolToStudioType("hornbeam-pleached")).toBe("hedge");
     expect(mapSymbolToStudioType("french-drain-line")).toBe("frenchdrain");
+  });
+
+  it("maps every size-ladder rung explicitly, not by keyword luck", () => {
+    expect(mapSymbolToStudioType("curtis-tree-780")).toBe("canopy");
+    expect(mapSymbolToStudioType("curtis-tree-690")).toBe("canopy");
+    expect(mapSymbolToStudioType("curtis-tree-500")).toBe("feature");
+    expect(mapSymbolToStudioType("curtis-tree-350")).toBe("feature");
+    expect(mapSymbolToStudioType("curtis-hedge-180")).toBe("hedge");
+    expect(mapSymbolToStudioType("curtis-hedge-140")).toBe("hedge");
+    expect(mapSymbolToStudioType("curtis-hedge-120")).toBe("hedge");
+    expect(mapSymbolToStudioType("curtis-hedge-090")).toBe("hedge");
+    expect(mapSymbolToStudioType("curtis-deck-050")).toBe("deck");
+  });
+
+  it("ghosts carry the proposed symbol height so accept does not resize", () => {
+    const ghost = proposalToStudioItem(
+      {
+        id: "g1",
+        symbol_id: "hornbeam-pleached",
+        x_pct: 40,
+        y_pct: 50,
+        confidence: 0.9,
+        reason: "Screen to north boundary",
+      },
+      "ai-assist-1",
+      "assist",
+    );
+    expect(ghost.symbolId).toBe("hornbeam-pleached");
+    expect(ghost.heightM).toBe(3.5);
+    expect(ghost.ghost).toBe(true);
+  });
+
+  it("never puts a non-catalog proposal id on the item", () => {
+    const ghost = proposalToStudioItem(
+      {
+        id: "g2",
+        symbol_id: "canopy",
+        x_pct: 40,
+        y_pct: 50,
+        confidence: 0.8,
+        reason: "Shade",
+      },
+      "ai-canopy-1",
+      "canopy",
+    );
+    // "canopy" is a coarse type hint, not a catalog symbol — must not persist.
+    expect(ghost.symbolId).toBeUndefined();
+    expect(ghost.heightM).toBeUndefined();
+    expect(ghost.t).toBe("canopy");
   });
 
   it("proposes layout ghosts from live geometry", () => {

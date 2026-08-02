@@ -17,6 +17,7 @@ import {
   plantingConflictSummary,
   prepareSitePackTip,
   proposeLandscapeServiceZones,
+  symbolMatureHeightM,
   urbanTreesToExistGhosts,
   zoneKindShortLabel,
   FLORA_HEIGHT_BY_FORM,
@@ -1432,6 +1433,11 @@ export function useStudioState(opts: UseStudioStateOpts) {
           !painting && state.ui.armedSymbolId?.trim()
             ? state.ui.armedSymbolId.trim()
             : undefined;
+        /*
+         * Height rides with the symbol, never alone — an unpaired heightM
+         * cannot survive persistence (canvasBridge.test.ts documents why).
+         */
+        const heightM = symbolId ? symbolMatureHeightM(symbolId) : null;
         const item: StudioItem = {
           id,
           t: armed,
@@ -1441,6 +1447,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           scale: hard?.scale ?? (painting ? 1 : 0.7),
           ghost: false,
           ...(symbolId ? { symbolId } : {}),
+          ...(heightM != null ? { heightM } : {}),
           ...(dbhM != null ? { dbhM } : {}),
           ...(hard
             ? {

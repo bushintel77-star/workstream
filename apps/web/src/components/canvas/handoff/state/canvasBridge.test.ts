@@ -190,6 +190,105 @@ describe("site_frame bridge", () => {
     expect(back[0]!.dbhM).toBeCloseTo(0.62, 5);
   });
 
+  it("re-derives mature height from the persisted symbol", () => {
+    const items: StudioItem[] = [
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        t: "canopy",
+        x: 30,
+        y: 40,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        symbolId: "curtis-tree-780",
+        heightM: 7.8,
+      },
+      {
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        t: "hedge",
+        x: 50,
+        y: 60,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        symbolId: "curtis-hedge-140",
+        heightM: 1.4,
+      },
+    ];
+    // Height is not written to the wire — the symbol carries it.
+    const placements = itemsToPlacements(items);
+    expect(placements[0]!.symbol_id).toBe("curtis-tree-780");
+    expect(placements[0]).not.toHaveProperty("height_m");
+
+    const back = placementsToItems(placements);
+    expect(back[0]!.heightM).toBe(7.8);
+    expect(back[1]!.heightM).toBe(1.4);
+    expect(back[0]!.symbolId).toBe("curtis-tree-780");
+  });
+
+  it("leaves heightM unset for symbols with no catalogued height", () => {
+    const placements = itemsToPlacements([
+      {
+        id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        t: "paving",
+        x: 20,
+        y: 20,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        symbolId: "bluestone-paver",
+      },
+    ]);
+    expect(placementsToItems(placements)[0]!.heightM).toBeUndefined();
+  });
+
+  /*
+   * Known limit of deriving height from the symbol (no height field on
+   * CatalogPlacement): an unpaired heightM is not preserved — it is replaced by
+   * the height of the type's default symbol (canopy → olive-standard → 5 m).
+   * The invariant that keeps this harmless is enforced at the write sites:
+   * heightM is only ever stamped alongside a symbolId, so the two travel
+   * together. This test pins the boundary so the limit stays deliberate and
+   * visible rather than surfacing later as a "height changed itself" bug.
+   */
+  it("replaces an unpaired height with the type's default symbol height", () => {
+    const placements = itemsToPlacements([
+      {
+        id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        t: "canopy",
+        x: 20,
+        y: 20,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        heightM: 7.8,
+      },
+    ]);
+    expect(placements[0]!.symbol_id).toBe("olive-standard");
+    expect(placementsToItems(placements)[0]!.heightM).toBe(5);
+  });
+
+  it("keeps heightM paired with symbolId on every accepted placement", () => {
+    const placements = itemsToPlacements([
+      {
+        id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        t: "canopy",
+        x: 20,
+        y: 20,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        symbolId: "curtis-tree-690",
+        heightM: 6.9,
+      },
+    ]);
+    const back = placementsToItems(placements);
+    for (const it of back) {
+      if (it.heightM != null) expect(it.symbolId).toBeTruthy();
+    }
+    expect(back[0]!.heightM).toBe(6.9);
+  });
+
   it("round-trips drawn region outlines as LandscapeFeatures", () => {
     const items: StudioItem[] = [
       {
