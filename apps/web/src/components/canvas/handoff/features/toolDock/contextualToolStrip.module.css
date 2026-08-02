@@ -72,7 +72,7 @@
   height: var(--ws-frame-tap);
   padding: 0 4px;
   border: none;
-  border-radius: 7px;
+  border-radius: var(--r-md);
   background: transparent;
   color: var(--ws-frame-ink-dim);
   font: inherit;

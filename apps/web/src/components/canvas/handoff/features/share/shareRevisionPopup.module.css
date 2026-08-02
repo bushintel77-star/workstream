@@ -9,7 +9,7 @@
   z-index: var(--ws-z-dock);
   width: min(340px, calc(100vw - 24px));
   padding: 16px 18px;
-  border-radius: 14px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
   box-shadow: 0 14px 44px var(--hc-neu-shadow);
@@ -65,14 +65,14 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .primary,
 .secondary,
 .ghost {
   min-height: 44px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;

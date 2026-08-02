@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   margin-bottom: 10px;
 }
 
@@ -56,7 +56,7 @@
 
 .ringRow {
   display: flex;
-  gap: 12px;
+  gap: var(--s-3);
   align-items: center;
   margin-bottom: 10px;
 }
@@ -167,7 +167,7 @@
 .row {
   display: grid;
   grid-template-columns: 72px 1fr auto;
-  gap: 8px;
+  gap: var(--s-2);
   align-items: center;
   margin-bottom: 8px;
 }

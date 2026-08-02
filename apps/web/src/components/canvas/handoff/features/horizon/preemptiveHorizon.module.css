@@ -5,7 +5,7 @@
   z-index: var(--ws-z-interact);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
   width: min(280px, calc(100% - 120px));
   pointer-events: none;
 }
@@ -14,7 +14,7 @@
   position: static;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
   width: 100%;
   pointer-events: auto;
 }
@@ -25,7 +25,7 @@
 
 .card {
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-invert);
   backdrop-filter: none;
@@ -83,7 +83,7 @@
 .dismiss {
   min-height: 28px;
   padding: 0 10px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   font: inherit;
   font-size: var(--hc-fs-3);
   font-weight: 650;

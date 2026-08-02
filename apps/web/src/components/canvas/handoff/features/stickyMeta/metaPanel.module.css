@@ -109,7 +109,7 @@
   min-height: 32px;
   padding: 5px 10px;
   border: 1px solid var(--hc-line-soft);
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: var(--hc-glass-soft);
   box-shadow: inset 0 1px color-mix(in srgb, var(--hc-paper) 60%, transparent);
   color: var(--hc-ink-muted);
@@ -140,12 +140,12 @@
   display: flex;
   min-height: 38px;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   margin: 0;
   padding: 7px 9px 7px 11px;
   overflow: hidden;
   border: 1px solid var(--hc-line-soft);
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: var(--hc-glass-soft);
   box-shadow:
     inset 0 1px var(--hc-neu-light),
@@ -188,7 +188,7 @@
   padding: 8px 9px;
   overflow: hidden;
   border: 1px solid var(--hc-line-soft);
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: var(--hc-glass-soft);
 }
 
@@ -232,7 +232,7 @@
   display: flex;
   max-height: 240px;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   margin: 0;
   padding: 0 2px 0 0;
   overflow-y: auto;
@@ -246,10 +246,10 @@
   min-height: 38px;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   padding: 7px 8px;
   border: 1px solid var(--hc-line-soft);
-  border-radius: 7px;
+  border-radius: var(--r-md);
   background: var(--hc-glass-soft);
 }
 
@@ -280,7 +280,7 @@
   margin: 0;
   padding: 10px;
   border: 1px dashed var(--hc-line);
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: var(--hc-glass-soft);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
@@ -292,7 +292,7 @@
   margin: 0;
   padding: 8px 9px;
   border: 1px solid color-mix(in srgb, var(--hc-warning) 22%, transparent);
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: color-mix(in srgb, var(--hc-warning) 10%, transparent);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;

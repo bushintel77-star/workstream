@@ -56,7 +56,7 @@
   top: 50%;
   width: 36px;
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-line, var(--hc-line-soft));
   transform: translate(-50%, -50%);
 }
@@ -64,7 +64,7 @@
 .peekRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   min-height: var(--sheet-peek-h, 72px);
   padding-bottom: 4px;
 }
@@ -180,7 +180,7 @@
 .body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
   flex: 1 1 auto;
   min-height: 0;
   padding-bottom: 8px;
@@ -219,7 +219,7 @@
   min-height: 44px;
   padding: 10px 12px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: transparent;
   color: inherit;
   font: inherit;

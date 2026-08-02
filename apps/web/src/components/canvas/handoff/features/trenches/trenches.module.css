@@ -35,7 +35,7 @@
   z-index: var(--ws-z-contextual);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   margin: 0;
   padding: 6px 10px;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 18%, transparent);

@@ -53,7 +53,7 @@
   justify-content: center;
   gap: 1px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-frost);
   box-shadow: 0 4px 14px var(--hc-neu-shadow);
   color: var(--hc-ink);
@@ -109,7 +109,7 @@
   display: flex;
   gap: 6px;
   padding: 6px 8px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   background: var(--hc-frost);
   border: 1px solid var(--hc-line-soft);
   box-shadow: 0 6px 20px var(--hc-neu-shadow);
@@ -129,9 +129,9 @@
   gap: 2px;
   min-width: 44px;
   min-height: 44px;
-  padding: 4px;
+  padding: var(--s-1);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: transparent;
   cursor: pointer;
   color: inherit;

@@ -31,7 +31,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: var(--s-5);
   background:
     radial-gradient(ellipse at 30% 20%, var(--gray-d-200) 0%, transparent 55%),
     var(--gray-d-150);
@@ -93,7 +93,7 @@
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid color-mix(in srgb, var(--gray-l-0) 12%, transparent);
   background: color-mix(in srgb, var(--gray-d-100) 92%, transparent);
@@ -104,7 +104,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .kicker {
@@ -120,7 +120,7 @@
   min-width: 36px;
   min-height: 36px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: transparent;
   color: var(--gray-d-800);
   font-size: var(--text-lg);
@@ -168,7 +168,7 @@
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--s-2);
   margin-top: 8px;
 }
 
@@ -190,7 +190,7 @@
 .toggle {
   min-height: 36px;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   border: 1px solid color-mix(in srgb, var(--gray-l-0) 18%, transparent);
   background: color-mix(in srgb, var(--gray-d-150) 80%, transparent);
   color: var(--gray-d-900);

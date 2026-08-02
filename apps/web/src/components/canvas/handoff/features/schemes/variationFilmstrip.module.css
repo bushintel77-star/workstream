@@ -7,7 +7,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass-soft);
   backdrop-filter: blur(10px);
@@ -40,7 +40,7 @@
   min-height: 56px;
   padding: 3px;
   gap: 2px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass-soft);
   cursor: pointer;
@@ -57,7 +57,7 @@
 .miniPlan {
   width: 100%;
   aspect-ratio: 16 / 10;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: color-mix(in srgb, var(--sheet-paper) 95%, transparent);
 }
 
@@ -131,7 +131,7 @@
 .save {
   min-height: 44px;
   padding: 0 12px;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   border: 1px dashed var(--hc-line);
   background: transparent;
   color: var(--hc-ink-muted);

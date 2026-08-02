@@ -51,14 +51,14 @@
 
 .peel::-webkit-scrollbar-thumb {
   background: var(--hc-line);
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
 }
 
 .peelHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .peelHeadActions {
@@ -117,7 +117,7 @@
 
 .themeRow {
   display: flex;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .themeChip {

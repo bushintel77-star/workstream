@@ -42,10 +42,10 @@
   position: absolute;
   z-index: var(--ws-z-chrome);
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  gap: var(--s-1);
+  padding: var(--s-1);
   border: 1px solid var(--hc-line);
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: var(--hc-glass);
   box-shadow: 0 6px 18px var(--hc-neu-shadow);
   backdrop-filter: none;
@@ -62,7 +62,7 @@
   min-height: 32px;
   padding: 0 5px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--r-md);
   color: var(--hc-ink-muted);
 }
 
@@ -114,7 +114,7 @@
   z-index: var(--ws-z-dock);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   flex-wrap: wrap;
   justify-content: center;
   max-width: min(720px, calc(100% - 28px));
@@ -129,7 +129,7 @@
 
 .targets {
   display: flex;
-  gap: 4px;
+  gap: var(--s-1);
   padding: 2px;
   border-radius: 0;
   background: color-mix(in srgb, var(--hc-ink) 5%, transparent);

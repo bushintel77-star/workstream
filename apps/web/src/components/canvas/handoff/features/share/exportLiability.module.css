@@ -4,7 +4,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
   padding: 10px 0 0;
   border-top: 1px solid var(--hc-line-soft);
 }
@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .kicker {
@@ -58,7 +58,7 @@
 .item {
   padding: 6px 8px;
   border: 1px solid var(--hc-line-soft);
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: var(--hc-glass-soft);
 }
 
@@ -69,7 +69,7 @@
 .row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--s-2);
   min-height: 44px;
   cursor: pointer;
 }

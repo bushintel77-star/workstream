@@ -4,7 +4,7 @@
 
 :root {
   --quote-row-h: 52px;
-  --quote-row-gap: 8px;
+  --quote-row-gap: var(--s-2);
   --quote-r: var(--hc-r-panel, 8px);
 }
 
@@ -33,7 +33,7 @@
 .topMain {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--s-3);
   min-width: 0;
   flex: 1;
 }
@@ -124,7 +124,7 @@
 }
 
 .planPane {
-  padding: 16px;
+  padding: var(--s-4);
   border-right: 1px solid var(--hc-line-soft);
   overflow: auto;
   background: color-mix(in srgb, var(--hc-ink) 1.5%, transparent);
@@ -149,7 +149,7 @@
 .section {
   margin: 0;
   border: 1px solid var(--hc-line-soft);
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   overflow: hidden;
   background: var(--hc-glass-soft);
 }
@@ -161,7 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s-3);
   min-height: 48px;
   padding: 0 16px;
   font-weight: 650;
@@ -203,7 +203,7 @@
   letter-spacing: -0.01em;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .sectionMeta {
@@ -309,14 +309,14 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   font-weight: 500;
 }
 
 .lineBadges {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .lineBadge {
@@ -367,7 +367,7 @@
 .lineActionChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .lineActionChips[data-size="md"] {
@@ -526,7 +526,7 @@
 }
 
 .editDrawer {
-  padding: 16px;
+  padding: var(--s-4);
 }
 
 .drawerFields {
@@ -538,7 +538,7 @@
 .drawerFields label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   font-size: var(--text-xs);
   color: var(--hc-ink-muted);
 }
@@ -585,7 +585,7 @@
 
 .skeleton {
   height: 120px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   background: linear-gradient(90deg,
       var(--hc-glass-soft),
       color-mix(in srgb, var(--hc-line) 40%, transparent),
@@ -621,7 +621,7 @@
 .marginField {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   margin-bottom: 4px;
   padding: 6px 10px;
   border-radius: var(--hc-r-control);
@@ -688,7 +688,7 @@
 
 .rootCompact .topMain {
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .rootCompact .h1 {
@@ -700,7 +700,7 @@
 }
 
 .rootCompact .actions {
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .rootCompact .actions button {
@@ -718,7 +718,7 @@
 }
 
 .rootCompact .planPane {
-  padding: 12px;
+  padding: var(--s-3);
 }
 
 @media (prefers-reduced-motion: reduce) {

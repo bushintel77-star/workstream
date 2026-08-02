@@ -2,7 +2,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   min-width: 0;
 }
 
@@ -39,7 +39,7 @@
   z-index: var(--ws-z-dock);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   min-width: 148px;
   padding: 6px;
   border: 1px solid var(--hc-line);

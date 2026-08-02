@@ -14,7 +14,7 @@
   min-width: 0;
   max-width: min(320px, calc(100vw - 32px));
   padding: 8px 10px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: 1px solid var(--ws-frame-hair);
   background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
   box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
@@ -31,7 +31,7 @@
 .summary {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   min-height: 36px;
   margin: 0;
   padding: 0 4px;
@@ -47,7 +47,7 @@
 .summary:focus-visible {
   outline: 2px solid var(--hc-accent);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
 }
 
 .label {
@@ -76,7 +76,7 @@
   min-height: 36px;
   min-width: 44px;
   padding: 6px 10px;
-  border-radius: 7px;
+  border-radius: var(--r-md);
   border: 1px solid var(--ws-frame-hair);
   background: transparent;
   box-shadow: none;

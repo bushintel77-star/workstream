@@ -45,7 +45,7 @@
   font-size: var(--text-micro);
   padding: 2px 5px;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
-  border-radius: 6px;
+  border-radius: var(--hc-r-control);
   background: color-mix(in srgb, var(--hc-paper) 88%, transparent);
   box-shadow: 0 3px 10px var(--hc-neu-shadow);
   font-variant-numeric: tabular-nums;

@@ -5,7 +5,7 @@
   z-index: var(--ws-z-annotate);
   width: min(148px, 24vw);
   padding: 8px 10px 10px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
   backdrop-filter: none;
@@ -35,7 +35,7 @@
   display: block;
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 6px;
+  border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line-soft);
   background: var(--sheet-paper);
 }

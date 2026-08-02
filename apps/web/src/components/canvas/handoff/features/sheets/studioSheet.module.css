@@ -59,7 +59,7 @@
   top: 50%;
   width: 36px;
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-line, var(--hc-line-soft));
   transform: translate(-50%, -50%);
 }
@@ -67,7 +67,7 @@
 .tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   min-height: var(--tap-min, 44px);
   padding-bottom: 6px;
   overflow-x: auto;
@@ -78,7 +78,7 @@
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   min-height: var(--tap-min, 44px);
   padding: 0 10px;
   border: 1px solid transparent;
@@ -104,7 +104,7 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-signal, var(--hc-warning));
   color: var(--hc-signal-ink, var(--hc-ink));
   font-size: var(--text-micro);
@@ -155,7 +155,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   width: 100%;
   min-height: var(--tap-min, 44px);
   padding: 8px 12px;
@@ -177,7 +177,7 @@
 .inboxStack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .bomEmbed {

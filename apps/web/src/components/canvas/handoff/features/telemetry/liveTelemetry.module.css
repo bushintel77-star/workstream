@@ -44,10 +44,10 @@
 .dock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   min-width: min(260px, calc(100vw - 48px));
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line-soft);
   background: color-mix(in srgb, var(--hc-invert) 90%, transparent);
   box-shadow: var(--hc-elev-2);
@@ -60,7 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .kicker {
@@ -76,7 +76,7 @@
   min-width: 28px;
   min-height: 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: transparent;
   color: var(--hc-ink-muted);
   font-size: var(--text-md);
@@ -95,7 +95,7 @@
   margin-top: 6px;
   min-height: 36px;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   border: 1px solid var(--hc-line-soft);
   background: color-mix(in srgb, var(--hc-invert) 70%, transparent);
   color: var(--hc-ink);
@@ -109,7 +109,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .row {

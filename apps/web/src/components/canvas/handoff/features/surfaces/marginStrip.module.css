@@ -13,7 +13,7 @@
   bottom: calc(var(--ws-stack-gap) + var(--ws-stack-tray-h) + var(--ws-stack-gap));
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s-3);
   min-height: 34px;
   max-width: min(94%, 640px);
   padding: 4px 10px;
@@ -29,7 +29,7 @@
 .history {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   flex: none;
 }
 

@@ -57,14 +57,14 @@
   bottom: var(--ws-sheet-margin, 12px);
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--s-2);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--ws-type-hud, 11px);
   font-weight: 700;
   color: var(--hc-ink);
   background: color-mix(in srgb, var(--sheet-paper) 94%, transparent);
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   border: 1px solid var(--hc-line);
   z-index: var(--ws-z-geometry);
 }
@@ -105,7 +105,7 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 /** Live quote / massing — after schedule metrics, before legend. */
@@ -119,14 +119,14 @@
 .titleMeta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   flex-shrink: 0;
 }
 
 .weatherPip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   padding: 1.5px 5px;
   border: 1px solid var(--hc-line);
   border-radius: 3px;
@@ -172,7 +172,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--s-1);
   padding: 8px 10px;
   min-width: 88px;
 }
@@ -302,7 +302,7 @@
 .row {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   padding: 2.5px 0;
   font-size: var(--text-micro);
   color: var(--hc-ink);
@@ -316,7 +316,7 @@
 .dimGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 16px;
+  column-gap: var(--s-4);
 }
 
 .dimRow {

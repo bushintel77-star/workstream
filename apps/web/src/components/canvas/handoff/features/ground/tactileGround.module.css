@@ -244,7 +244,7 @@
   bottom: calc(var(--ws-safe-bottom, 48px) + 28px);
   margin: 0;
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--ws-type-kicker, 8px);
@@ -282,7 +282,7 @@
   bottom: var(--ws-safe-bottom, 48px);
   margin: 0;
   padding: 3px 8px;
-  border-radius: 7px;
+  border-radius: var(--r-md);
   background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--ws-type-kicker, 8px);

@@ -8,7 +8,7 @@
   align-items: stretch;
   gap: 6px;
   min-width: 88px;
-  padding: 8px;
+  padding: var(--s-2);
   border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line);
   background: var(--hc-neu-raised);
@@ -35,7 +35,7 @@
   min-width: 28px;
   padding: 0 4px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--hc-r-control);
   background: transparent;
   color: var(--hc-ink);
   font-size: var(--text-xs);
@@ -50,7 +50,7 @@
 
 .actions {
   display: flex;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .iconBtn {
@@ -58,7 +58,7 @@
   min-height: 36px;
   min-width: 36px;
   border: 1px solid var(--hc-line-soft);
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: var(--hc-neu-raised);
   color: var(--hc-ink);
   font-size: var(--text-base);
@@ -78,7 +78,7 @@
   min-height: 36px;
   padding: 0 8px;
   border: 1px solid color-mix(in srgb, var(--hc-danger) 35%, transparent);
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: var(--hc-glass);
   color: var(--hc-ink);
   font-size: var(--text-xs);

@@ -1,7 +1,7 @@
 .panel {
   /* Position owned by RightDataLane. */
   width: 100%;
-  padding: 12px;
+  padding: var(--s-3);
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--hc-line, var(--hc-line-soft));
   background: var(--hc-glass, var(--hc-paper));
@@ -64,7 +64,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .row {
@@ -75,7 +75,7 @@
   width: 100%;
   padding: 9px 10px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: transparent;
   color: inherit;
   font: inherit;

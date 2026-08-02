@@ -13,7 +13,7 @@
   align-items: center;
   gap: 0;
   padding: 3px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--glass-border);
   background: var(--glass);
   backdrop-filter: none;
@@ -36,7 +36,7 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: transparent;
   cursor: pointer;
   display: grid;
@@ -81,7 +81,7 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  border-radius: 5px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--glass-border);
   background: var(--ink);
   cursor: pointer;
@@ -99,7 +99,7 @@
   height: 22px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--hc-r-control);
   background: transparent;
   color: var(--ink-soft);
   cursor: pointer;

@@ -10,7 +10,7 @@
   height: var(--ws-frame-top);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   padding: 0;
   background: none;
   border: none;

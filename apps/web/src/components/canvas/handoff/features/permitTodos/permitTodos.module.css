@@ -17,7 +17,7 @@
   width: min(260px, calc(100% - 100px));
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   pointer-events: none;
 }
 
@@ -35,7 +35,7 @@
 }
 
 .embeddedPanel {
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--glass-border);
   background: var(--hc-glass-soft);
   color: var(--ink);
@@ -45,7 +45,7 @@
 .ambient,
 .panel {
   pointer-events: auto;
-  border-radius: 14px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--glass-border);
   background: var(--glass);
   backdrop-filter: none;
@@ -104,7 +104,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   margin-bottom: 0;
 }
 
@@ -155,7 +155,7 @@
   gap: 6px;
   align-items: start;
   padding: 5px 6px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border-left: 2px solid color-mix(in srgb, var(--hc-danger) 35%, transparent);
   background: var(--hc-accent-wash);
 }
@@ -191,13 +191,13 @@
 .itemActions {
   grid-column: 1 / -1;
   display: flex;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .mini {
   min-height: 24px;
   padding: 0 8px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--hc-line);
   background: transparent;
   color: var(--ink-soft);

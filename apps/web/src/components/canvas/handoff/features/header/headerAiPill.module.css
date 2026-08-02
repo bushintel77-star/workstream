@@ -3,7 +3,7 @@
   min-height: var(--ws-frame-tap, 38px);
   height: var(--ws-frame-tap, 38px);
   padding: 0 10px;
-  border-radius: 7px;
+  border-radius: var(--r-md);
   border: none;
   background: transparent;
   box-shadow: none;

@@ -10,7 +10,7 @@
 .scaleBar {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .scaleTrack {
@@ -74,7 +74,7 @@
 .hatchKey {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .hatchKicker {

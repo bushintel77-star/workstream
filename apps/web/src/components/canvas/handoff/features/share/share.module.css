@@ -4,7 +4,7 @@
   z-index: var(--ws-z-chrome);
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: var(--s-5);
   background: color-mix(in srgb, var(--canvas) 88%, transparent);
   backdrop-filter: none;
 }
@@ -12,7 +12,7 @@
 .card {
   width: min(420px, 100%);
   padding: 22px 24px;
-  border-radius: 16px;
+  border-radius: var(--hc-r-glass);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
   box-shadow: 0 14px 44px var(--hc-neu-shadow);
@@ -20,7 +20,7 @@
   color: var(--hc-ink);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s-3);
 }
 
 .kicker {
@@ -50,7 +50,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .primary,
@@ -58,7 +58,7 @@
 .ghost {
   min-height: 40px;
   padding: 0 14px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   font: inherit;
   font-size: 12.5px;
   font-weight: 650;

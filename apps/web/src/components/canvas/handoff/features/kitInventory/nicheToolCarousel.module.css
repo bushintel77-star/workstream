@@ -51,7 +51,7 @@
   min-height: 44px;
   margin: -22px 0 0 -24px;
   padding: 3px 0;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--glass-border);
   background: var(--glass);
   backdrop-filter: none;

@@ -3,7 +3,7 @@
   z-index: var(--ws-z-frame);
   width: min(280px, calc(100vw - 40px));
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: var(--r-xl);
   background: var(--hc-ink);
   color: var(--hc-invert);
   box-shadow: 0 14px 44px var(--hc-neu-shadow);
@@ -47,7 +47,7 @@
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: var(--s-2);
   margin-top: 12px;
 }
 
@@ -55,7 +55,7 @@
 .ghost {
   min-height: 32px;
   padding: 0 12px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: none;
   font: inherit;
   font-size: var(--text-xs);

@@ -185,7 +185,7 @@
 .label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   font-family: "IBM Plex Mono", monospace;
   font-size: 7.5px;
   font-weight: 650;

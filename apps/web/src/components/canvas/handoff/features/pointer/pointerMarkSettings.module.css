@@ -14,7 +14,7 @@
   top: calc(var(--ws-safe-top, 40px) + 8px);
   width: min(220px, 42vw);
   padding: 12px 12px 14px;
-  border-radius: 14px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--hc-line-soft);
   background: var(--glass);
   backdrop-filter: none;
@@ -39,7 +39,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   margin-bottom: 8px;
 }
 
@@ -61,7 +61,7 @@
   font-weight: 650;
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
 }
 
 .close:hover {
@@ -96,7 +96,7 @@
   gap: 3px;
   min-height: 56px;
   padding: 6px 4px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--hc-line);
   background: var(--hc-invert);
   color: var(--ink-soft);

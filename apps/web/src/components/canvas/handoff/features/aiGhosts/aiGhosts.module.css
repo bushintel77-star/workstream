@@ -5,7 +5,7 @@
   min-height: 0;
   width: min(520px, calc(100vw - 48px));
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
   backdrop-filter: blur(18px) saturate(1.15);
@@ -30,7 +30,7 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   overflow: auto;
   min-height: 0;
   max-height: 300px;
@@ -94,7 +94,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .detailTitle {
@@ -156,7 +156,7 @@
 .confTrack {
   display: block;
   height: 6px;
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-line-soft);
   overflow: hidden;
 }
@@ -164,7 +164,7 @@
 .confFill {
   display: block;
   height: 100%;
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
 }
 
 .factors {
@@ -173,19 +173,19 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .factorRow {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
 }
 
 .factorMeta {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   font-size: var(--text-micro);
   font-family: "IBM Plex Mono", monospace;
   color: var(--hc-ink-muted);
@@ -197,14 +197,14 @@
 
 .factorBar {
   height: 4px;
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-line-soft);
   overflow: hidden;
 }
 
 .factorFill {
   height: 100%;
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-danger);
 }
 
@@ -221,7 +221,7 @@
 .ask {
   min-height: 44px;
   padding: 0 12px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
   color: var(--hc-ink);
@@ -247,7 +247,7 @@
   min-height: 44px;
   padding: 0 11px;
   border: 1px solid color-mix(in srgb, var(--hc-danger) 22%, transparent);
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-glass-soft);
   color: var(--hc-ink-muted);
   font: inherit;
@@ -279,7 +279,7 @@
   min-height: 120px;
   width: min(360px, calc(100vw - 48px));
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
 }

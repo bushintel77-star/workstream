@@ -37,7 +37,7 @@
   align-items: center;
   min-height: 28px;
   padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   border: 1px solid color-mix(in srgb, var(--hc-water) 35%, transparent);
   background: color-mix(in srgb, var(--hc-water) 8%, transparent);
   color: var(--hc-success);
@@ -94,7 +94,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.65rem 0.7rem;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid color-mix(in srgb, var(--hc-danger) 28%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 45%, transparent);
 }
@@ -118,7 +118,7 @@
   justify-content: center;
   min-height: 44px;
   padding: 0 0.85rem;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   border: 1px solid color-mix(in srgb, var(--hc-ink) 18%, transparent);
   background: var(--hc-paper);
   font-size: var(--text-micro);
@@ -139,7 +139,7 @@
 .requestTpl {
   margin: 0;
   padding: 0.55rem 0.65rem;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   border: 1px dashed color-mix(in srgb, var(--hc-ink) 18%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 90%, transparent);
   font-size: var(--text-micro);
@@ -152,7 +152,7 @@
   flex-direction: column;
   gap: 0.45rem;
   padding: 0.55rem 0.65rem;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 70%, transparent);
 }
