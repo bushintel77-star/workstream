@@ -41,9 +41,13 @@ co-pilot for Curtis & Co (Melbourne).
   for primitives (page shell, button, card, pill, table, metric).
 - CSS variables only — tokens defined in `styles/globals.css`. Dark mode is
   `prefers-color-scheme`-driven; don't introduce a class-based switcher.
-- **Mobile-first**: write the small viewport first, then `@media (min-width: …)`
-  for tablet/desktop.
-- 44 px minimum tap targets. 16 px input font (kills iOS focus zoom).
+- **Web is desktop-first.** `apps/web` is the desktop product — design the
+  desktop viewport first, then scale down with `@media (max-width: …)`. The
+  mobile-first product is the separate `apps/mobile` (Expo) app; the two are
+  **forked**, not one responsive codebase.
+- Comfortable pointer targets on desktop; **44 px minimum on touch / on-site**
+  (`[data-density="onsite"]`, coarse pointer). 16 px input font (kills iOS
+  focus zoom) on any touch input.
 - The linter complains about inline styles — push them into the module.
 
 ## Server actions + forms
