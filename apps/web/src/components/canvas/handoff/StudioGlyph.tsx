@@ -9,9 +9,11 @@ import {
   PLAN_LINES_LIGHT,
 } from "./geometry/planLineStyles";
 import {
+  hatchKindForSymbol,
   hatchUrlFor,
   SUN_SHADOW,
   sunShadowFill,
+  type HatchKind,
 } from "./features/render/renderTokens";
 import { useGlyphSunShadow } from "./features/shade/SunShadowContext";
 import {
@@ -21,6 +23,31 @@ import {
 } from "../../../styles/colorTokens";
 
 /**
+ * Hatch family for a surface placement. `paving` and `deck` cover several
+ * Curtis materials, so the placed catalog symbol decides which hatch is drawn —
+ * porcelain should not read as bluestone. Returns null for types that carry no
+ * hatch, so callers can skip the lookup entirely.
+ */
+export function planHatchForItem(
+  type: StudioItemType,
+  symbolId?: string,
+): HatchKind | null {
+  if (type === "paving") return hatchKindForSymbol(symbolId, "bluestone");
+  if (type === "deck") return hatchKindForSymbol(symbolId, "deck");
+  return null;
+}
+
+/** Materials whose edge reads as timber rather than stone. */
+const TIMBER_HATCHES: ReadonlySet<HatchKind> = new Set<HatchKind>(["deck"]);
+/** Materials whose edge reads as loose / earthy rather than cut stone. */
+const EARTH_HATCHES: ReadonlySet<HatchKind> = new Set<HatchKind>([
+  "gravel",
+  "crazypave",
+  "aggregate",
+  "hoggin",
+]);
+
+/**
  * Plan symbols — landscape-CAD language on semantic colour tokens (v2).
  * Line weights from the plan ladder; materials from planting / stone / timber / water.
  */
@@ -28,11 +55,14 @@ export function StudioGlyph({
   type,
   ink = false,
   night = false,
+  symbolId,
 }: {
   type: StudioItemType;
   ink?: boolean;
   /** Night board — chalk shadows + night hatch variants. Fit sheet is never night. */
   night?: boolean;
+  /** Placed catalog symbol — selects the material hatch for paving / deck. */
+  symbolId?: string;
 }) {
   const kind = planLineKindForItem(type);
   const ladder = night ? PLAN_LINES_DARK[kind] : PLAN_LINES_LIGHT[kind];
@@ -145,39 +175,35 @@ export function StudioGlyph({
       );
       break;
     case "paving":
+    case "deck": {
+      /*
+       * One surface case for both: the material comes from the placed symbol,
+       * so a granite stepper, crazy-pave or porcelain terrace each read as
+       * themselves instead of defaulting to bluestone.
+       */
+      const hatch = planHatchForItem(type, symbolId) ?? "bluestone";
+      const edge = TIMBER_HATCHES.has(hatch)
+        ? TIMBER
+        : EARTH_HATCHES.has(hatch)
+          ? night
+            ? sem.textSecondary
+            : CSS_TOKEN.gravel
+          : STONE;
       children = (
-        <>
-          <rect
-            x={5}
-            y={7}
-            width={90}
-            height={86}
-            rx={2}
-            stroke={STONE}
-            strokeWidth={edgeW}
-            fill={hatchUrlFor("bluestone", night)}
-            vectorEffect="non-scaling-stroke"
-          />
-        </>
+        <rect
+          x={5}
+          y={7}
+          width={90}
+          height={86}
+          rx={2}
+          stroke={edge}
+          strokeWidth={edgeW}
+          fill={hatchUrlFor(hatch, night)}
+          vectorEffect="non-scaling-stroke"
+        />
       );
       break;
-    case "deck":
-      children = (
-        <>
-          <rect
-            x={5}
-            y={7}
-            width={90}
-            height={86}
-            rx={2}
-            stroke={TIMBER}
-            strokeWidth={edgeW}
-            fill={hatchUrlFor("deck", night)}
-            vectorEffect="non-scaling-stroke"
-          />
-        </>
-      );
-      break;
+    }
     case "lawn":
       children = (
         <>

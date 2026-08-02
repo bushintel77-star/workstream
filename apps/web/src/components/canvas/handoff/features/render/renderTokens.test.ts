@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { decorativeGlyphShadowOffset } from "@workstream/domain";
 import {
+  elevationTextureUrl,
+  hatchKindForSymbol,
   hatchUrlFor,
+  ELEV_TEXTURE_IDS,
+  HATCH_IDS,
   SUN_SHADOW,
   sunShadowFill,
   viewFromCast,
+  type HatchKind,
 } from "./renderTokens";
 
 describe("renderTokens", () => {
@@ -56,5 +61,57 @@ describe("renderTokens", () => {
     expect(hatchUrlFor("bluestone", false)).toBe("url(#ws-hatch-bluestone)");
     expect(hatchUrlFor("deck", true)).toBe("url(#ws-hatch-deck-night)");
     expect(hatchUrlFor("gravel", false)).toBe("url(#ws-hatch-gravel)");
+  });
+
+  it("covers every Curtis hardscape family day and night", () => {
+    const kinds: HatchKind[] = [
+      "bluestone",
+      "deck",
+      "gravel",
+      "porcelain",
+      "stepper",
+      "crazypave",
+      "aggregate",
+      "hoggin",
+    ];
+    for (const kind of kinds) {
+      expect(hatchUrlFor(kind, false)).toMatch(/^url\(#ws-hatch-[a-z]+\)$/);
+      expect(hatchUrlFor(kind, true)).toMatch(/^url\(#ws-hatch-[a-z]+-night\)$/);
+    }
+    const ids = Object.values(HATCH_IDS);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("resolves the hatch from the placed catalog symbol", () => {
+    expect(hatchKindForSymbol("porcelain-tile", "bluestone")).toBe("porcelain");
+    expect(hatchKindForSymbol("granite-stepper", "bluestone")).toBe("stepper");
+    expect(hatchKindForSymbol("sandstone-crazy", "bluestone")).toBe("crazypave");
+    expect(hatchKindForSymbol("exposed-aggregate", "bluestone")).toBe(
+      "aggregate",
+    );
+    expect(hatchKindForSymbol("hoggin-path", "bluestone")).toBe("hoggin");
+    expect(hatchKindForSymbol("curtis-deck-050", "bluestone")).toBe("deck");
+  });
+
+  it("falls back to the coarse type for legacy or untagged placements", () => {
+    expect(hatchKindForSymbol(undefined, "bluestone")).toBe("bluestone");
+    expect(hatchKindForSymbol("", "deck")).toBe("deck");
+    expect(hatchKindForSymbol("some-future-symbol", "gravel")).toBe("gravel");
+  });
+
+  it("points elevation textures at their own defs ids", () => {
+    expect(elevationTextureUrl("foliage", false)).toBe("url(#ws-elev-foliage)");
+    expect(elevationTextureUrl("foliage", true)).toBe(
+      "url(#ws-elev-foliage-night)",
+    );
+    expect(elevationTextureUrl("timber", false)).toBe("url(#ws-elev-timber)");
+    expect(elevationTextureUrl("clip", true)).toBe("url(#ws-elev-clip-night)");
+  });
+
+  it("keeps elevation texture ids distinct from the plan hatches", () => {
+    const elev = Object.values(ELEV_TEXTURE_IDS);
+    const plan = Object.values(HATCH_IDS);
+    expect(new Set(elev).size).toBe(elev.length);
+    for (const id of elev) expect(plan).not.toContain(id);
   });
 });

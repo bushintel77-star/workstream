@@ -18,6 +18,122 @@ const NIGHT_STROKE =
   "color-mix(in srgb, var(--text-primary) 28%, transparent)";
 
 /**
+ * Ink for the material families added alongside the garden asset pass.
+ * Composed from the three v2 material tokens (bluestone / timber / gravel) —
+ * no new tokens, no literal hex (CI gate `check-handoff-chrome-colors`).
+ */
+type HatchInk = {
+  fill: string;
+  stroke: string;
+  speck: string;
+};
+
+const STONE_INK: HatchInk = {
+  fill: "color-mix(in srgb, var(--bluestone-l-400) 18%, var(--canvas))",
+  stroke: "color-mix(in srgb, var(--bluestone-l-400) 50%, var(--text-primary))",
+  speck: "color-mix(in srgb, var(--bluestone-l-400) 40%, var(--canvas))",
+};
+
+const EARTH_INK: HatchInk = {
+  fill: "color-mix(in srgb, var(--gravel-l-400) 14%, var(--canvas))",
+  stroke: "color-mix(in srgb, var(--gravel-l-400) 45%, var(--text-primary))",
+  speck: "color-mix(in srgb, var(--text-muted) 45%, var(--canvas))",
+};
+
+const PALE_INK: HatchInk = {
+  fill: "color-mix(in srgb, var(--gravel-l-400) 8%, var(--canvas))",
+  stroke: "color-mix(in srgb, var(--gravel-l-400) 38%, var(--text-primary))",
+  speck: "color-mix(in srgb, var(--text-muted) 32%, var(--canvas))",
+};
+
+const NIGHT_INK: HatchInk = {
+  fill: NIGHT_FILL,
+  stroke: NIGHT_STROKE,
+  speck: NIGHT_STROKE,
+};
+
+/** Large-format porcelain — wide plate, tight joint. */
+function PorcelainHatch({ id, ink }: { id: string; ink: HatchInk }) {
+  return (
+    <pattern id={id} width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect width="24" height="24" fill={ink.fill} />
+      <path
+        d="M0 23.6h24M23.6 0v24"
+        stroke={ink.stroke}
+        strokeWidth="0.45"
+        fill="none"
+      />
+    </pattern>
+  );
+}
+
+/** Granite steppers — discrete pads, ground reads between them. */
+function StepperHatch({ id, ink }: { id: string; ink: HatchInk }) {
+  return (
+    <pattern id={id} width="22" height="16" patternUnits="userSpaceOnUse">
+      <rect
+        x="1.5"
+        y="1.5"
+        width="14"
+        height="10"
+        rx="1"
+        fill={ink.fill}
+        stroke={ink.stroke}
+        strokeWidth="0.5"
+      />
+    </pattern>
+  );
+}
+
+/** Crazy-pave sandstone — irregular facets, no repeating joint grid. */
+function CrazyPaveHatch({ id, ink }: { id: string; ink: HatchInk }) {
+  return (
+    <pattern id={id} width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill={ink.fill} />
+      <path
+        d="M0 6l7 3 5-4 8 5M0 15l6-2 5 4 9-3M7 9v6M12 5v8"
+        stroke={ink.stroke}
+        strokeWidth="0.4"
+        fill="none"
+      />
+    </pattern>
+  );
+}
+
+/** Exposed aggregate — dense fine stipple over a warm base. */
+function AggregateHatch({ id, ink }: { id: string; ink: HatchInk }) {
+  return (
+    <pattern id={id} width="12" height="12" patternUnits="userSpaceOnUse">
+      <rect width="12" height="12" fill={ink.fill} />
+      <circle cx="2" cy="3" r="0.55" fill={ink.speck} />
+      <circle cx="6" cy="1.5" r="0.42" fill={ink.speck} />
+      <circle cx="9.5" cy="4" r="0.5" fill={ink.speck} />
+      <circle cx="4" cy="7" r="0.48" fill={ink.speck} />
+      <circle cx="8" cy="9" r="0.4" fill={ink.speck} />
+      <circle cx="11" cy="10.5" r="0.45" fill={ink.speck} />
+    </pattern>
+  );
+}
+
+/** Hoggin — compacted fines, faint grain, almost no texture. */
+function HogginHatch({ id, ink }: { id: string; ink: HatchInk }) {
+  return (
+    <pattern id={id} width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill={ink.fill} />
+      <path
+        d="M0 5h10"
+        stroke={ink.stroke}
+        strokeWidth="0.3"
+        opacity="0.35"
+        fill="none"
+      />
+      <circle cx="3" cy="2.5" r="0.32" fill={ink.speck} />
+      <circle cx="7.5" cy="7" r="0.3" fill={ink.speck} />
+    </pattern>
+  );
+}
+
+/**
  * Shared SVG pattern library — mount ONCE inside the plan SVG `<defs>`.
  * Materials from color-tokens v2 (bluestone / timber / gravel), not blush ink.
  */
@@ -112,6 +228,13 @@ export function RenderDefs({ includeNight = true }: Props) {
         <circle cx="2" cy="12" r="0.55" fill={GRAVEL_DOT} />
       </pattern>
 
+      {/* Curtis hardscape families — one hatch per material. */}
+      <PorcelainHatch id={HATCH_IDS.porcelain} ink={PALE_INK} />
+      <StepperHatch id={HATCH_IDS.stepper} ink={STONE_INK} />
+      <CrazyPaveHatch id={HATCH_IDS.crazypave} ink={EARTH_INK} />
+      <AggregateHatch id={HATCH_IDS.aggregate} ink={EARTH_INK} />
+      <HogginHatch id={HATCH_IDS.hoggin} ink={PALE_INK} />
+
       {includeNight ? (
         <>
           <pattern
@@ -196,6 +319,11 @@ export function RenderDefs({ includeNight = true }: Props) {
             <circle cx="11" cy="11" r="0.5" fill={NIGHT_STROKE} />
             <circle cx="2" cy="12" r="0.55" fill={NIGHT_STROKE} />
           </pattern>
+          <PorcelainHatch id={HATCH_IDS.porcelainNight} ink={NIGHT_INK} />
+          <StepperHatch id={HATCH_IDS.stepperNight} ink={NIGHT_INK} />
+          <CrazyPaveHatch id={HATCH_IDS.crazypaveNight} ink={NIGHT_INK} />
+          <AggregateHatch id={HATCH_IDS.aggregateNight} ink={NIGHT_INK} />
+          <HogginHatch id={HATCH_IDS.hogginNight} ink={NIGHT_INK} />
         </>
       ) : null}
       {/* Graphite tooth for freehand Fit pen (shared defs). */}
