@@ -38,7 +38,7 @@
 .shadowHead {
   margin-top: 4px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
@@ -46,7 +46,7 @@
 
 .shadowLine span:first-child {
   color: var(--hc-ink-muted);
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
 }
 
 .head {
@@ -157,7 +157,7 @@
   background: transparent;
   color: var(--hc-ink-muted);
   font: inherit;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   font-weight: 650;
   text-decoration: underline;
   text-underline-offset: 2px;

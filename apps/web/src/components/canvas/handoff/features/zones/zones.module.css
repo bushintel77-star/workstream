@@ -36,7 +36,7 @@
   border: 1px solid color-mix(in srgb, var(--hc-ink) 16%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 92%, transparent);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   color: var(--hc-ink-muted);
   white-space: nowrap;
   pointer-events: none;

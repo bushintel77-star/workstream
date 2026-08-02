@@ -76,7 +76,7 @@
   background: var(--hc-glass-soft);
   color: var(--hc-ink);
   font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   font-weight: 600;
 }
 

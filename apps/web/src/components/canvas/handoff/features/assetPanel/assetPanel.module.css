@@ -407,7 +407,7 @@
   border-radius: var(--hc-r-pill, 999px);
   background: var(--hc-glass-soft);
   color: var(--ink-faint);
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 600;
   font-family: "IBM Plex Mono", monospace;
   text-align: center;
@@ -532,7 +532,7 @@
 .empty {
   margin: 0;
   padding: 6px 2px;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   color: var(--ink-faint);
 }
 

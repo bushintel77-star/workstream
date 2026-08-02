@@ -52,7 +52,7 @@
 .kicker {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
@@ -85,7 +85,7 @@
   padding: 0 10px;
   border-radius: 8px;
   font: inherit;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   font-weight: 650;
   cursor: pointer;
 }

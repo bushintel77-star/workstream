@@ -87,7 +87,7 @@
   margin: 0;
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.1em;
@@ -152,7 +152,7 @@
     0 1px 2px color-mix(in srgb, var(--hc-ink) 4%, transparent);
   color: var(--hc-ink);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   line-height: 1.4;
 }
 
@@ -222,7 +222,7 @@
   margin: 0;
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;

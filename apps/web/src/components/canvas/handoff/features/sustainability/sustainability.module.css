@@ -59,7 +59,7 @@
 
 .liveHint {
   margin: 0;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   line-height: 1.35;
   color: var(--hc-ink-faint);
 }
@@ -136,14 +136,14 @@
 
 .statement {
   margin: 6px 0 0;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   line-height: 1.4;
   color: var(--hc-ink-muted);
 }
 
 .model {
   margin: 4px 0 0;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   line-height: 1.35;
   font-style: italic;
   color: var(--hc-ink-faint);

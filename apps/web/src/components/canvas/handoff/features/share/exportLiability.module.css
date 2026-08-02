@@ -99,7 +99,7 @@
 .requiredTag {
   margin-left: 6px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -134,7 +134,7 @@
   border: none;
   background: transparent;
   font: inherit;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   font-weight: 650;
   color: var(--hc-ink-muted);
   text-decoration: underline;
@@ -150,7 +150,7 @@
 
 .footnote {
   margin: 0;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   line-height: 1.35;
   color: var(--hc-ink-faint);
 }

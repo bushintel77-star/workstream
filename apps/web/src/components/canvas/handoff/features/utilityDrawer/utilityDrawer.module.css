@@ -125,7 +125,7 @@
 
 .tabLabel {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   font-weight: 600;
   color: var(--hc-ink-muted);
 }

@@ -289,7 +289,7 @@
 
 .sheetLabel {
   margin: 0;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 650;
   letter-spacing: 0.07em;
   text-transform: uppercase;

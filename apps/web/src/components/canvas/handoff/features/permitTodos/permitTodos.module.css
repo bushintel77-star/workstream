@@ -162,7 +162,7 @@
 
 .title {
   margin: 0;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   font-weight: 650;
   line-height: 1.3;
   color: var(--ink);
@@ -170,7 +170,7 @@
 
 .detail {
   margin: 2px 0 0;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   line-height: 1.35;
   color: var(--ink-soft);
   display: -webkit-box;

@@ -196,7 +196,7 @@
 
 .face {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 10.5px;
+  font-size: var(--hc-fs-3);
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: 0.01em;

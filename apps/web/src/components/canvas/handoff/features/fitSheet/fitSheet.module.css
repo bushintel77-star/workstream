@@ -136,7 +136,7 @@
 
 .weatherTemp {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--hc-ink);
@@ -238,7 +238,7 @@
 .addr {
   margin: 2px 0 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   color: var(--hc-ink-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -257,7 +257,7 @@
 
 .titleCouncil {
   margin: 2px 0 0;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   color: var(--hc-ink-muted);
   line-height: 1.3;
 }
@@ -310,7 +310,7 @@
 
 .mono {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
 }
 
 .dimGrid {
@@ -324,7 +324,7 @@
   justify-content: space-between;
   padding: 2px 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   color: var(--hc-ink);
 }
 

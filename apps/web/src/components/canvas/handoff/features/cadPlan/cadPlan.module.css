@@ -157,7 +157,7 @@
   background: transparent;
   text-align: left;
   font: inherit;
-  font-size: 11.5px;
+  font-size: var(--hc-fs-4);
   font-weight: 600;
   color: var(--hc-ink);
   cursor: pointer;
@@ -408,7 +408,7 @@
 
 .fitDimLabel {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 500;
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--hc-ink) 72%, transparent);
@@ -845,7 +845,7 @@ button.missingBuildingCue:hover {
   border: 1px solid var(--hc-ink);
   background: var(--hc-ink);
   color: var(--canvas);
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   font-weight: 600;
   cursor: pointer;
   font-family: "IBM Plex Mono", monospace;
@@ -870,7 +870,7 @@ button.missingBuildingCue:hover {
   border: 1px solid var(--hc-ink);
   background: var(--canvas);
   color: var(--hc-ink);
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   font-weight: 600;
   cursor: pointer;
   font-family: "IBM Plex Mono", monospace;
@@ -1211,7 +1211,7 @@ button.missingBuildingCue:hover {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   letter-spacing: 0.02em;
   color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
 }

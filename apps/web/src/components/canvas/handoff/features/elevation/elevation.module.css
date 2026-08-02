@@ -124,7 +124,7 @@
   background: transparent;
   color: var(--hc-ink);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.2;

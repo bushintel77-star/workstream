@@ -66,7 +66,7 @@
 .kicker {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
@@ -139,7 +139,7 @@
 
 .honesty {
   margin: 6px 0 0;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   line-height: 1.35;
   font-style: italic;
   color: var(--hc-ink-faint);

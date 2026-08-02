@@ -98,7 +98,7 @@
 .groupTitle {
   margin: 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);

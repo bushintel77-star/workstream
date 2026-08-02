@@ -325,7 +325,7 @@
   height: 18px;
   padding: 0 6px;
   border-radius: 4px;
-  font-size: 9.5px;
+  font-size: var(--hc-fs-2);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;

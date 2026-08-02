@@ -118,7 +118,7 @@
   position: absolute;
   z-index: var(--ws-z-geometry);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 550;
   /* Legible against the light plate — the ruler is a working reference, not
      a whisper. Raised from 65% so metres read at a glance. */
@@ -166,7 +166,7 @@
   pointer-events: none;
   overflow: hidden;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 8.5px;
+  font-size: var(--hc-fs-1);
   font-weight: 550;
   color: color-mix(in srgb, var(--hc-ink-muted, var(--text-secondary)) 88%, transparent);
 }
