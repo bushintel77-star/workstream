@@ -25,6 +25,16 @@ import {
   listPresentationDocumentsClient,
   updatePresentationDocumentClient,
 } from "./presentClient";
+import {
+  KitButton,
+  KitSelect,
+  KitInput,
+  KitTextarea,
+  KitTabs,
+  KitSeparator,
+  KitSheet,
+  KitTooltip,
+} from "@/components/ui/kit";
 import css from "./present.module.css";
 
 /**
@@ -634,25 +644,22 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
     <div className={css.root} data-testid="present-surface">
       <div className={css.sidebar}>
         <div className={css.sidebarHeader}>
-          <button
-            type="button"
-            className={css.backBtn}
-            onClick={onBack}
-            aria-label="Back to CAD"
-          >
+          <KitButton variant="ghost" size="sm" onClick={onBack} aria-label="Back to CAD">
             Back
-          </button>
+          </KitButton>
           <h2 className={css.sidebarTitle}>Present</h2>
         </div>
 
-        <button
-          type="button"
-          className={css.createBtn}
+        <KitButton
+          variant="default"
+          size="md"
           onClick={handleCreate}
           disabled={pending}
+          fullWidth
+          className={css.createBtn}
         >
           New deck
-        </button>
+        </KitButton>
 
         {error ? <p className={css.error}>{error}</p> : null}
 
@@ -673,14 +680,15 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                   {doc.status === "issued" ? " — issued" : ""}
                 </span>
               </button>
-              <button
-                type="button"
-                className={css.docDelete}
+              <KitButton
+                variant="ghost"
+                size="sm"
                 onClick={() => handleDelete(doc.id)}
                 aria-label={`Delete ${doc.title}`}
+                className={css.docDelete}
               >
                 Delete
-              </button>
+              </KitButton>
             </li>
           ))}
           {loading && documents.length === 0 ? (
@@ -695,14 +703,14 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
       {activeDoc ? (
         <div className={css.workspace}>
           <div className={css.toolbar}>
-            <input
+            <KitInput
               className={css.titleInput}
               value={activeDoc.title}
               onChange={(e) => updateDoc({ title: e.target.value })}
               placeholder="Deck title"
               aria-label="Deck title"
             />
-            <select
+            <KitSelect
               className={css.select}
               value={activeDoc.deliverable_type}
               onChange={(e) =>
@@ -718,8 +726,8 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                   {label}
                 </option>
               ))}
-            </select>
-            <select
+            </KitSelect>
+            <KitSelect
               className={css.select}
               value={activeDoc.template_id}
               onChange={(e) =>
@@ -734,8 +742,8 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                   {label}
                 </option>
               ))}
-            </select>
-            <select
+            </KitSelect>
+            <KitSelect
               className={css.select}
               value={activeDoc.theme.palette}
               onChange={(e) =>
@@ -753,8 +761,8 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                   {label}
                 </option>
               ))}
-            </select>
-            <select
+            </KitSelect>
+            <KitSelect
               className={css.select}
               value={activeDoc.theme.font}
               onChange={(e) =>
@@ -772,7 +780,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                   {label}
                 </option>
               ))}
-            </select>
+            </KitSelect>
             <span className={css.saveStatus} data-testid="present-save-status">
               {saveStatus === "saving"
                 ? "Saving..."
@@ -782,14 +790,14 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                     ? "Save error"
                     : ""}
             </span>
-            <button
-              type="button"
-              className={css.printBtn}
+            <KitButton
+              variant="outline"
+              size="sm"
               onClick={() => window.print()}
               data-testid="print-deck-btn"
             >
               Print
-            </button>
+            </KitButton>
           </div>
 
           <div className={css.pageArea}>
@@ -843,32 +851,29 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
             ) : (
               <div className={css.noPage}>
                 <p>No pages. Add one to start composing.</p>
-                <button type="button" className={css.createBtn} onClick={addPage}>
+                <KitButton variant="default" size="md" onClick={addPage}>
                   Add page
-                </button>
+                </KitButton>
               </div>
             )}
           </div>
 
           <div className={css.pageNav}>
-            <div className={css.pageTabs}>
-              {activeDoc.pages.map((p, i) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`${css.pageTab}${i === activePageIndex ? ` ${css.pageTabActive}` : ""}`}
-                  onClick={() => setActivePageIndex(i)}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
+            <KitTabs
+              tabs={activeDoc.pages.map((p, i) => ({
+                value: String(i),
+                label: String(i + 1),
+              }))}
+              value={String(activePageIndex)}
+              onChange={(v) => setActivePageIndex(Number(v))}
+              className={css.pageTabs}
+            />
             <span className={css.pageCount}>
               {activeDoc.pages.length} page{activeDoc.pages.length === 1 ? "" : "s"}
             </span>
-            <button type="button" className={css.addPageBtn} onClick={addPage}>
+            <KitButton variant="secondary" size="sm" onClick={addPage}>
               Add page
-            </button>
+            </KitButton>
           </div>
         </div>
       ) : (
@@ -876,14 +881,14 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
           <p className={css.emptyLead}>
             Select a deck or create one to start composing.
           </p>
-          <button
-            type="button"
-            className={css.createBtn}
+          <KitButton
+            variant="default"
+            size="lg"
             onClick={handleCreate}
             disabled={pending}
           >
             New deck
-          </button>
+          </KitButton>
         </div>
       )}
     </div>
@@ -1006,63 +1011,66 @@ function PageCanvas({
         ) : null}
       </div>
       <div className={css.panelAddBar}>
-        <button
-          type="button"
-          className={css.addPanelBtn}
+        <KitButton
+          variant="secondary"
+          size="sm"
           onClick={() => onAddPanel("text")}
         >
           Add text
-        </button>
-        <button
-          type="button"
-          className={css.addPanelBtn}
+        </KitButton>
+        <KitButton
+          variant="secondary"
+          size="sm"
           onClick={() => onAddPanel("swatch_board")}
         >
           Add swatch board
-        </button>
-        <button
-          type="button"
-          className={css.addPanelBtn}
+        </KitButton>
+        <KitButton
+          variant="secondary"
+          size="sm"
           onClick={() => setImagePickerOpen(!imagePickerOpen)}
           aria-expanded={imagePickerOpen}
         >
           Add image
-        </button>
-        <button
-          type="button"
-          className={css.addPanelBtn}
+        </KitButton>
+        <KitButton
+          variant="secondary"
+          size="sm"
           onClick={() => setWidgetPickerOpen(!widgetPickerOpen)}
           aria-expanded={widgetPickerOpen}
         >
           Add widget
-        </button>
-        <button
-          type="button"
-          className={css.dissectBtn}
+        </KitButton>
+        <KitSeparator orientation="vertical" className={css.addBarSep} />
+        <KitButton
+          variant="accent"
+          size="sm"
           onClick={onDissect}
           disabled={dissecting}
+          loading={dissecting}
           data-testid="dissect-plan-btn"
         >
-          {dissecting ? "Dissecting..." : "Dissect plan"}
-        </button>
-        <button
-          type="button"
-          className={css.formatBtn}
+          {dissecting ? "Dissecting" : "Dissect plan"}
+        </KitButton>
+        <KitButton
+          variant="outline"
+          size="sm"
           onClick={onFormat}
           disabled={formatting || page.panels.length === 0}
+          loading={formatting}
           data-testid="format-page-btn"
         >
-          {formatting ? "Formatting..." : "Format page"}
-        </button>
-        <button
-          type="button"
-          className={css.templateBtn}
+          {formatting ? "Formatting" : "Format page"}
+        </KitButton>
+        <KitButton
+          variant="destructive"
+          size="sm"
           onClick={onApplyTemplate}
           disabled={formatting || page.panels.length === 0}
           data-testid="apply-template-btn"
         >
           Apply template
-        </button>
+        </KitButton>
       </div>
 
       {imagePickerOpen ? (
@@ -1126,14 +1134,9 @@ function ImagePicker({
       <div className={css.picker} data-testid="image-picker">
         <div className={css.pickerHeader}>
           <span className={css.pickerTitle}>Pick an image layer</span>
-          <button
-            type="button"
-            className={css.pickerClose}
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <KitButton variant="ghost" size="sm" onClick={onClose} aria-label="Close">
             Close
-          </button>
+          </KitButton>
         </div>
         <p className={css.pickerEmpty}>
           No image layers on the canvas. Import a photo or plan underlay in
@@ -1146,14 +1149,9 @@ function ImagePicker({
     <div className={css.picker} data-testid="image-picker">
       <div className={css.pickerHeader}>
         <span className={css.pickerTitle}>Pick an image layer</span>
-        <button
-          type="button"
-          className={css.pickerClose}
-          onClick={onClose}
-          aria-label="Close"
-        >
+        <KitButton variant="ghost" size="sm" onClick={onClose} aria-label="Close">
           Close
-        </button>
+        </KitButton>
       </div>
       <ul className={css.pickerList}>
         {layers.map((layer) => (
@@ -1190,14 +1188,9 @@ function WidgetPicker({
     <div className={css.picker} data-testid="widget-picker">
       <div className={css.pickerHeader}>
         <span className={css.pickerTitle}>Pick a widget</span>
-        <button
-          type="button"
-          className={css.pickerClose}
-          onClick={onClose}
-          aria-label="Close"
-        >
+        <KitButton variant="ghost" size="sm" onClick={onClose} aria-label="Close">
           Close
-        </button>
+        </KitButton>
       </div>
       <ul className={css.pickerList}>
         {(Object.keys(WIDGET_LABELS) as PresentationWidgetType[]).map((wt) => (
@@ -1354,7 +1347,7 @@ function PanelView({
       >
         {editing ? (
           <div className={css.panelEdit} onPointerDown={(e) => e.stopPropagation()}>
-            <input
+            <KitInput
               className={css.panelHeadingInput}
               value={panel.heading}
               onChange={(e) =>
@@ -1362,7 +1355,7 @@ function PanelView({
               }
               placeholder="Heading"
             />
-            <textarea
+            <KitTextarea
               className={css.panelBodyInput}
               value={panel.body}
               onChange={(e) =>
@@ -1371,13 +1364,14 @@ function PanelView({
               placeholder="Body text..."
               rows={4}
             />
-            <button
-              type="button"
-              className={css.panelDoneBtn}
+            <KitButton
+              variant="default"
+              size="sm"
               onClick={() => setEditing(false)}
+              className={css.panelDoneBtn}
             >
               Done
-            </button>
+            </KitButton>
           </div>
         ) : (
           <div
@@ -1480,8 +1474,9 @@ function PanelView({
             {isStale ? " (stale)" : ""}
           </span>
           {isStale ? (
-            <button
-              type="button"
+            <KitButton
+              variant="outline"
+              size="sm"
               className={css.syncBtn}
               onClick={(e) => {
                 e.stopPropagation();
@@ -1490,7 +1485,7 @@ function PanelView({
               data-testid="sync-plan-crop"
             >
               Sync to latest
-            </button>
+            </KitButton>
           ) : null}
         </div>
         <ResizeHandles onPointerDown={onPointerDown} />
@@ -1545,8 +1540,9 @@ function PanelView({
           {panel.caption ? (
             <p className={css.swatchCaption}>{panel.caption}</p>
           ) : null}
-          <button
-            type="button"
+          <KitButton
+            variant="ghost"
+            size="sm"
             className={css.swatchEditBtn}
             onClick={(e) => {
               e.stopPropagation();
@@ -1555,7 +1551,7 @@ function PanelView({
             data-testid="edit-swatch-btn"
           >
             Edit swatches
-          </button>
+          </KitButton>
           {swatchPickerOpen ? (
             <SwatchPicker
               materials={materials}
@@ -1607,8 +1603,9 @@ function ResizeHandles({
 
 function PanelActions({ onRemove }: { onRemove: () => void }) {
   return (
-    <button
-      type="button"
+    <KitButton
+      variant="ghost"
+      size="sm"
       className={css.panelRemove}
       onClick={(e) => {
         e.stopPropagation();
@@ -1617,7 +1614,7 @@ function PanelActions({ onRemove }: { onRemove: () => void }) {
       aria-label="Remove panel"
     >
       Remove
-    </button>
+    </KitButton>
   );
 }
 
@@ -1740,14 +1737,15 @@ function GhostReview({
         <span className={css.ghostReviewTitle}>
           Plan dissection ({ghosts.length} panel{ghosts.length === 1 ? "" : "s"})
         </span>
-        <button
-          type="button"
+        <KitButton
+          variant="ghost"
+          size="sm"
           className={css.ghostReviewClose}
           onClick={onClose}
           aria-label="Close review"
         >
           Close
-        </button>
+        </KitButton>
       </div>
       {ghosts.length === 0 ? (
         <p className={css.ghostReviewEmpty}>
@@ -1755,14 +1753,15 @@ function GhostReview({
         </p>
       ) : (
         <>
-          <button
-            type="button"
+          <KitButton
+            variant="accent"
+            size="sm"
             className={css.ghostAcceptAll}
             onClick={onAcceptAll}
             data-testid="ghost-accept-all"
           >
             Accept all
-          </button>
+          </KitButton>
           <ul className={css.ghostList}>
             {ghosts.map((ghost, i) => (
               <li key={`${ghost.label}-${i}`} className={css.ghostItem}>
@@ -1775,22 +1774,24 @@ function GhostReview({
                   </span>
                 </div>
                 <div className={css.ghostActions}>
-                  <button
-                    type="button"
+                  <KitButton
+                    variant="accent"
+                    size="sm"
                     className={css.ghostAcceptBtn}
                     onClick={() => onAccept(i)}
                     data-testid={`ghost-accept-${i}`}
                   >
                     Accept
-                  </button>
-                  <button
-                    type="button"
+                  </KitButton>
+                  <KitButton
+                    variant="ghost"
+                    size="sm"
                     className={css.ghostRejectBtn}
                     onClick={() => onReject(i)}
                     data-testid={`ghost-reject-${i}`}
                   >
                     Reject
-                  </button>
+                  </KitButton>
                 </div>
               </li>
             ))}
@@ -1821,14 +1822,15 @@ function SwatchPicker({
         <span className={css.swatchPickerTitle}>
           Materials on this drawing
         </span>
-        <button
-          type="button"
+        <KitButton
+          variant="accent"
+          size="sm"
           className={css.swatchPickerClose}
           onClick={onClose}
           aria-label="Close swatch picker"
         >
           Done
-        </button>
+        </KitButton>
       </div>
       {materials.length === 0 ? (
         <p className={css.swatchPickerEmpty}>
@@ -1971,8 +1973,9 @@ function FormatGhostOverlay({
         >
           <span className={css.formatGhostRationale}>{ghost.rationale}</span>
           <div className={css.formatGhostActions}>
-            <button
-              type="button"
+            <KitButton
+              variant="accent"
+              size="sm"
               className={css.formatGhostAccept}
               onClick={(e) => {
                 e.stopPropagation();
@@ -1981,9 +1984,10 @@ function FormatGhostOverlay({
               data-testid={`format-ghost-accept-${ghost.id}`}
             >
               Accept
-            </button>
-            <button
-              type="button"
+            </KitButton>
+            <KitButton
+              variant="ghost"
+              size="sm"
               className={css.formatGhostReject}
               onClick={(e) => {
                 e.stopPropagation();
@@ -1991,7 +1995,7 @@ function FormatGhostOverlay({
               }}
             >
               Reject
-            </button>
+            </KitButton>
           </div>
         </div>
       ))}
@@ -2022,14 +2026,15 @@ function FormatReview({
         <span className={css.ghostReviewTitle}>
           Layout proposal ({ghosts.length} panel{ghosts.length === 1 ? "" : "s"})
         </span>
-        <button
-          type="button"
+        <KitButton
+          variant="ghost"
+          size="sm"
           className={css.ghostReviewClose}
           onClick={onClose}
           aria-label="Close review"
         >
           Close
-        </button>
+        </KitButton>
       </div>
       {rationale ? (
         <p className={css.formatRationale}>{rationale}</p>
@@ -2040,14 +2045,15 @@ function FormatReview({
         </p>
       ) : (
         <>
-          <button
-            type="button"
+          <KitButton
+            variant="accent"
+            size="sm"
             className={css.ghostAcceptAll}
             onClick={onAcceptAll}
             data-testid="format-accept-all"
           >
             Accept all
-          </button>
+          </KitButton>
           <ul className={css.ghostList}>
             {ghosts.map((ghost) => (
               <li key={ghost.id} className={css.ghostItem}>
@@ -2059,21 +2065,23 @@ function FormatReview({
                   </span>
                 </div>
                 <div className={css.ghostActions}>
-                  <button
-                    type="button"
+                  <KitButton
+                    variant="accent"
+                    size="sm"
                     className={css.ghostAcceptBtn}
                     onClick={() => onAccept(ghost.id)}
                     data-testid={`format-accept-${ghost.id}`}
                   >
                     Accept
-                  </button>
-                  <button
-                    type="button"
+                  </KitButton>
+                  <KitButton
+                    variant="ghost"
+                    size="sm"
                     className={css.ghostRejectBtn}
                     onClick={() => onReject(ghost.id)}
                   >
                     Reject
-                  </button>
+                  </KitButton>
                 </div>
               </li>
             ))}

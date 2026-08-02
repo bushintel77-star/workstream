@@ -27,7 +27,8 @@ export type CanvasProgress = {
 /**
  * Progressive unlock:
  * Sketch + CAD both open after aerial/title (CAD is the Fit sheet line-draw surface).
- * Quote needs accepted CAD; Share needs a live costed BOM (or persisted quote).
+ * Quote needs accepted CAD; Present opens with CAD too (so the deck composer is
+ * available for layout even before costing); Share needs a live costed BOM.
  */
 export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
   const open = new Set<CanvasMode>(["survey"]);
@@ -36,9 +37,11 @@ export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
     open.add("cad");
     open.add("elevation");
   }
-  if (progress.hasCad) open.add("quote");
-  if (progress.hasQuote) {
+  if (progress.hasCad) {
+    open.add("quote");
     open.add("present");
+  }
+  if (progress.hasQuote) {
     open.add("share");
   }
   return open;

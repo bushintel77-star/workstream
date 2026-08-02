@@ -344,6 +344,12 @@
 .panelAddBar {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.addBarSep {
+  height: 24px;
+  margin: 0 4px;
 }
 
 .addPanelBtn {

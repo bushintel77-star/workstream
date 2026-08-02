@@ -2675,7 +2675,7 @@ export function HandoffDesignStudio({
     }
     if (mode === "quote") return "Accept CAD geometry before quoting.";
     if (mode === "present")
-      return "Cost something on the drawing before presenting.";
+      return "Accept CAD geometry before presenting.";
     if (mode === "share") return "Cost something on the drawing before sharing.";
     return "Complete the previous stage first.";
   };
