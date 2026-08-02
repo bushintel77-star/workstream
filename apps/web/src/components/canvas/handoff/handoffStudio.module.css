@@ -20,6 +20,8 @@
   --hc-r-control: 6px;
   --hc-r-panel: 8px;
   --hc-r-dock: var(--hc-r-panel);
+  --hc-r-pop: 12px;
+  --hc-r-glass: 16px;
   --hc-r-pill: 999px;
   --hc-elev-1: 0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
     0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent);
@@ -217,7 +219,7 @@
 
 .root ::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   background-clip: padding-box;
   background-color: color-mix(in srgb, var(--hc-ink) 22%, transparent);
 }
@@ -825,7 +827,7 @@
   height: 34px;
   padding: 0 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: transparent;
   color: var(--hc-ink-muted);
   font-size: var(--text-micro);
@@ -855,7 +857,7 @@
   position: relative;
   margin:
     var(--ws-frame-top) var(--ws-frame-right) var(--ws-frame-bottom) var(--ws-frame-left);
-  border-radius: 5px;
+  border-radius: var(--r-sm);
   overflow: hidden;
   /* Original Fit sheet / handoff paper — var(--sheet-paper), not sepia plate */
   background: var(--sheet-paper);
@@ -992,7 +994,7 @@
 [data-frame-rail] .modes {
   gap: 1px;
   padding: 2px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: color-mix(in srgb, var(--hc-ink) 26%, transparent);
   box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
 }
@@ -1001,7 +1003,7 @@
   height: calc(var(--ws-frame-tap) - 6px);
   min-height: calc(var(--ws-frame-tap) - 6px);
   padding: 0 12px;
-  border-radius: 6px;
+  border-radius: var(--hc-r-control);
   background: transparent;
   color: var(--ws-frame-ink-dim);
   font-size: 11.5px;
@@ -1036,14 +1038,14 @@
 [data-frame-rail] .segment {
   gap: 1px;
   padding: 2px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: color-mix(in srgb, var(--hc-ink) 26%, transparent);
   box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
 }
 
 [data-frame-rail] .segmentBtn {
   height: calc(var(--ws-frame-tap) - 8px);
-  border-radius: 6px;
+  border-radius: var(--hc-r-control);
   background: transparent;
   box-shadow: none;
   color: var(--ws-frame-ink-dim);
@@ -1316,7 +1318,7 @@
   z-index: var(--ws-z-chrome);
   margin: 0;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass-soft);
   backdrop-filter: blur(8px);
@@ -1348,7 +1350,7 @@
   min-width: var(--tap-min, 44px);
   min-height: var(--tap-min, 44px);
   border: 1px solid var(--hc-line);
-  border-radius: 999px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-frost, var(--hc-invert));
   box-shadow: var(--hc-elev-2);
   color: var(--hc-ink);
@@ -1375,7 +1377,7 @@
   min-height: 34px;
   max-width: min(340px, calc(100% - 340px));
   padding: 0 8px 0 12px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: 1px solid var(--ws-glass-border);
   background: var(--ws-glass);
   backdrop-filter: none;
@@ -1410,7 +1412,7 @@
   flex: none;
   min-height: 26px;
   padding: 0 10px;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   border: none;
   background: var(--hc-line-soft);
   color: var(--hc-ink);
@@ -1607,7 +1609,7 @@
   height: 20px;
   padding: 0;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--r-sm);
   background: var(--hc-neu-raised);
   box-shadow: var(--hc-neu-out-sm,
       -2px -2px 5px var(--hc-neu-light),
@@ -1622,7 +1624,7 @@
   right: 4px;
   bottom: 3px;
   height: 2px;
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-ink);
   opacity: 0.72;
 }
@@ -1712,7 +1714,7 @@
   padding: 2rem;
   border: 1.5px dashed var(--hc-line);
   margin: 18% 22%;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   background: color-mix(in srgb, var(--sheet-paper) 55%, transparent);
 }
 
@@ -1757,7 +1759,7 @@
   right: -8px;
   height: 16px;
   padding: 0 6px;
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
   background: var(--hc-warning);
   color: var(--hc-ink);
   font-family: "IBM Plex Mono", monospace;
@@ -1797,7 +1799,7 @@
   background: var(--hc-glass);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
-  border-radius: 16px;
+  border-radius: var(--hc-r-glass);
   padding: 6px;
   box-shadow: 0 8px 28px var(--hc-neu-shadow);
 }
@@ -1805,7 +1807,7 @@
 .railBtn {
   width: 48px;
   height: 46px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: none;
   cursor: pointer;
   background: transparent;
@@ -1861,7 +1863,7 @@
   background: var(--hc-glass);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
-  border-radius: 16px;
+  border-radius: var(--hc-r-glass);
   box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
   animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -1880,7 +1882,7 @@
   background: var(--hc-glass);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
-  border-radius: 16px;
+  border-radius: var(--hc-r-glass);
   box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
   animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -1901,7 +1903,7 @@
   background: var(--hc-glass);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
-  border-radius: 16px;
+  border-radius: var(--hc-r-glass);
   box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
   animation: ccIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -2142,7 +2144,7 @@
   gap: 6px;
   max-width: min(520px, calc(100% - 160px));
   padding: 6px 8px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
   backdrop-filter: none;
@@ -2192,7 +2194,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
   backdrop-filter: none;
@@ -2227,7 +2229,7 @@
   width: 52px;
   min-height: 44px;
   padding: 4px 2px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
   color: var(--hc-ink-muted);
@@ -2265,7 +2267,7 @@
   gap: 6px;
   max-width: min(420px, 70%);
   padding: 5px 7px;
-  border-radius: 14px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
   backdrop-filter: none;
@@ -2409,7 +2411,7 @@
   right: 14px;
   height: 30px;
   padding: 0 12px;
-  border-radius: 99px;
+  border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line);
   background: var(--hc-paper);
   font-size: var(--text-xs);
@@ -2430,7 +2432,7 @@
   background: var(--hc-glass);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
-  border-radius: 16px;
+  border-radius: var(--hc-r-glass);
   box-shadow: 0 8px 28px var(--hc-neu-shadow);
   box-sizing: border-box;
 }
