@@ -1,41 +1,38 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Button } from "./ui";
+import s from "../styles/app.module.css";
 
 type Props = {
   children: React.ReactNode;
-  className?: string;
   pendingLabel?: string;
-  formAction?: (formData: FormData) => void | Promise<void>;
-  ariaLabel?: string;
+  variant?: "primary" | "ghost";
   disabled?: boolean;
-  variant?: "primary" | "secondary" | "ghost" | "danger";
-  type?: "submit" | "button" | "reset";
+  className?: string;
+  "aria-label"?: string;
 };
 
 export function SubmitButton({
   children,
-  className,
-  pendingLabel,
-  formAction,
-  ariaLabel,
+  pendingLabel = "Saving…",
+  variant = "primary",
   disabled = false,
-  variant = "secondary",
-  type = "submit",
+  className,
+  "aria-label": ariaLabel,
 }: Props) {
   const { pending } = useFormStatus();
+  const cls =
+    variant === "ghost"
+      ? `${s.btnGhost} ${className ?? ""}`
+      : `${s.btn} ${className ?? ""}`;
   return (
-    <Button
-      type={type}
-      variant={variant}
-      loading={pending}
-      disabled={disabled}
+    <button
+      type="submit"
+      className={cls.trim()}
+      disabled={pending || disabled}
       aria-label={ariaLabel}
-      formAction={formAction}
-      className={className}
     >
-      {pending ? pendingLabel ?? children : children}
-    </Button>
+      {pending ? pendingLabel : children}
+    </button>
   );
 }
