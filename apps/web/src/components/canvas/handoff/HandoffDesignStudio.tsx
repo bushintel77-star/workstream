@@ -94,6 +94,7 @@ import {
 } from "./features/assetPanel/leftAssetPanel";
 import { VariationFilmstrip } from "./features/schemes/VariationFilmstrip";
 import { DrainageRunsLayer } from "./features/survey/DrainageRunsLayer";
+import { FrameDrawer } from "./features/frameDrawer/FrameDrawer";
 import type { HardscapeEdgeType } from "./studioCatalog";
 import {
   buildIndicativeShadeGrid,
@@ -3488,7 +3489,17 @@ export function HandoffDesignStudio({
         ref={boardRef}
         style={{ cursor: effectiveCursor }}
       >
-        {vicGovChipRow}
+        {vicGovChipRow ? (
+          <FrameDrawer
+            edge="right"
+            testId="frame-drawer-site-meta"
+            label="Site metadata and environment"
+            size={320}
+            zIndex={30}
+          >
+            {vicGovChipRow}
+          </FrameDrawer>
+        ) : null}
         {openSharedRev &&
           !ui.clientView &&
           !ui.frameOn &&
@@ -4544,19 +4555,24 @@ export function HandoffDesignStudio({
           !ui.frameOn &&
           !ui.lightingWorkspaceOn &&
           !chrome.compact ? (
-          <ArtboardStrip active={activeArtboard} onSelect={selectArtboard} />
-        ) : null}
-
-        {((planOn && isTiltActive(ui.tiltDeg)) ||
-          ui.mode === "elevation") &&
-          !ui.frameOn &&
-          !ui.focusOn ? (
-          <GardenViewpointStrip
-            mode={ui.mode === "elevation" ? "elevation" : "plan"}
-            activeLook={armedGardenLook}
-            elevLook={ui.elevLook}
-            onSelect={onGardenViewpointSelect}
-          />
+          <FrameDrawer
+            edge="top"
+            testId="frame-drawer-artboards"
+            label="Artboards and viewpoints"
+            size={52}
+            zIndex={30}
+          >
+            <ArtboardStrip active={activeArtboard} onSelect={selectArtboard} />
+            {((planOn && isTiltActive(ui.tiltDeg)) ||
+              ui.mode === "elevation") ? (
+              <GardenViewpointStrip
+                mode={ui.mode === "elevation" ? "elevation" : "plan"}
+                activeLook={armedGardenLook}
+                elevLook={ui.elevLook}
+                onSelect={onGardenViewpointSelect}
+              />
+            ) : null}
+          </FrameDrawer>
         ) : null}
 
         {/* One contextual hint: discover (bottom) never stacks with pause (top). */}
@@ -4963,14 +4979,22 @@ export function HandoffDesignStudio({
           !ui.frameOn &&
           !ui.focusOn &&
           (ui.clientView || ui.schemes.length > 0) ? (
-          <VariationFilmstrip
-            schemes={ui.schemes}
-            activeSchemeId={ui.activeSchemeId}
-            boundary={studio.boundary}
-            building={studio.building}
-            onSave={studio.saveDesignScheme}
-            onActivate={studio.activateDesignScheme}
-          />
+          <FrameDrawer
+            edge="bottom"
+            testId="frame-drawer-variations"
+            label="Design variations"
+            size={64}
+            zIndex={30}
+          >
+            <VariationFilmstrip
+              schemes={ui.schemes}
+              activeSchemeId={ui.activeSchemeId}
+              boundary={studio.boundary}
+              building={studio.building}
+              onSave={studio.saveDesignScheme}
+              onActivate={studio.activateDesignScheme}
+            />
+          </FrameDrawer>
         ) : null}
 
         {ui.clientView && planOn && !ui.frameOn ? (

@@ -12,7 +12,6 @@ import {
 import { getIntegrationSummary } from "../../lib/api";
 import { AppNav } from "../../components/AppNav";
 import { NewProjectAddressForm } from "../../components/NewProjectAddressForm";
-import { WorkflowPreviewStrip } from "../../components/WorkflowPreviewStrip";
 import home from "../home.module.css";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +59,7 @@ async function toDashboardProject(project: Project): Promise<DashboardProject> {
   };
 }
 
-/** Operator project register — address composer + sites list. */
+/** Operator project register — editorial index. */
 export default async function HomePage() {
   await requireSignedIn();
   let projects: DashboardProject[] = [];
@@ -76,20 +75,28 @@ export default async function HomePage() {
   return (
     <main className={home.page}>
       <AppNav summary={summary} />
-      <WorkflowPreviewStrip />
-      <header className={home.hero}>
-        <p className={home.kicker}>Workstream</p>
-        <h1 className={home.brand}>Curtis &amp; Co</h1>
-        <p className={home.lede}>
-          Type an address. Get a concept, working drawing, and live estimate —
-          then share the quote.
-        </p>
-        <div className={home.composer} id="new-project">
-          <NewProjectAddressForm />
-        </div>
-      </header>
 
-      <DashboardProjects projects={projects} loadError={loadError} />
+      <div className={home.layout}>
+        {/* Masthead — matches the landing page tone */}
+        <header className={home.masthead}>
+          <p className={home.mastheadMark}>CURTIS &amp; CO</p>
+          <h1 className={home.mastheadTitle}>Workstream</h1>
+          <p className={home.mastheadLede}>
+            Type an address. Get a concept, working drawing, and live estimate.
+          </p>
+        </header>
+
+        {/* Address composer — minimal, no card wrapper */}
+        <section className={home.composer} id="new-project">
+          <label className={home.composerLabel} htmlFor="project-address">
+            Address
+          </label>
+          <NewProjectAddressForm />
+        </section>
+
+        {/* Project index */}
+        <DashboardProjects projects={projects} loadError={loadError} />
+      </div>
     </main>
   );
 }

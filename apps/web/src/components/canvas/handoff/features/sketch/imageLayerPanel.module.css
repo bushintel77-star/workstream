@@ -166,7 +166,7 @@
 .slider {
   width: 64px;
   flex-shrink: 0;
-  accent-color: var(--hc-signal);
+  accent-color: var(--hc-accent);
 }
 
 .chip {

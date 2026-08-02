@@ -1,0 +1,147 @@
+/*
+ * FrameDrawer — slimline handle in the gallery frame edge.
+ *
+ * Closed: a 2px line barely visible in the frame border.
+ * Open: a dark frost panel slides out from the frame edge.
+ *
+ * The drawer lives in the frame (via CameraChrome place="frame"),
+ * never on the canvas. It inherits the frame's dark surface tokens.
+ */
+
+.drawer {
+  position: absolute;
+  display: flex;
+  background: color-mix(in srgb, var(--ws-frame) 92%, transparent);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow:
+    inset 0 0 0 1px var(--ws-frame-hair),
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 16px 48px rgba(0, 0, 0, 0.2);
+  color: var(--ws-frame-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  will-change: transform;
+  z-index: inherit;
+}
+
+/* --- Edge positioning --- */
+
+.left {
+  top: var(--ws-frame-top);
+  bottom: var(--ws-frame-bottom);
+  left: 0;
+  flex-direction: row;
+  border-radius: 0 8px 8px 0;
+}
+
+.right {
+  top: var(--ws-frame-top);
+  bottom: var(--ws-frame-bottom);
+  right: 0;
+  flex-direction: row-reverse;
+  border-radius: 8px 0 0 8px;
+}
+
+.top {
+  left: var(--ws-frame-left);
+  right: var(--ws-frame-right);
+  top: 0;
+  flex-direction: column;
+  border-radius: 0 0 8px 8px;
+}
+
+.bottom {
+  left: var(--ws-frame-left);
+  right: var(--ws-frame-right);
+  bottom: 0;
+  flex-direction: column-reverse;
+  border-radius: 8px 8px 0 0;
+}
+
+/* --- Slimline handle --- */
+
+.handle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: default;
+  opacity: 0.3;
+  transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.drawer[data-open="1"] .handle {
+  opacity: 0.6;
+}
+
+.drawer:hover .handle {
+  opacity: 0.8;
+}
+
+.handleLine {
+  background: var(--ws-frame-ink);
+  border-radius: 1px;
+}
+
+/* Handle orientation per edge */
+.left .handle,
+.right .handle {
+  width: 6px;
+  height: 100%;
+}
+
+.left .handleLine,
+.right .handleLine {
+  width: 2px;
+  height: 40px;
+}
+
+.top .handle,
+.bottom .handle {
+  width: 100%;
+  height: 6px;
+}
+
+.top .handleLine,
+.bottom .handleLine {
+  width: 40px;
+  height: 2px;
+}
+
+/* --- Panel content --- */
+
+.panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ws-frame-hair) transparent;
+}
+
+.panel::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel::-webkit-scrollbar-thumb {
+  background: var(--ws-frame-hair);
+  border-radius: 2px;
+}
+
+/* --- Reduced motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    transition: none !important;
+  }
+}

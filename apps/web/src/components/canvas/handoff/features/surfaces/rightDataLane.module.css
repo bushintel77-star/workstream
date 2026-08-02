@@ -17,7 +17,7 @@
 /* Programmatic focus on open (Esc/Tab trap owner) — visible, not a stray
    default outline box around the whole lane. */
 .slot:focus-visible {
-  outline: 2px solid var(--hc-signal);
+  outline: 2px solid var(--hc-accent);
   outline-offset: -2px;
 }
 

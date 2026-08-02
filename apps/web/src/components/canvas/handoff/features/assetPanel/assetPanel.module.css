@@ -280,7 +280,7 @@
 }
 
 .search:focus-visible {
-  outline: 2px solid var(--hc-signal);
+  outline: 2px solid var(--hc-accent);
   outline-offset: 2px;
 }
 
@@ -445,7 +445,7 @@
 
 .tileOn {
   background: color-mix(in srgb, var(--hc-line-soft) 80%, transparent);
-  box-shadow: inset 0 0 0 1px var(--hc-signal, var(--signal));
+  box-shadow: inset 0 0 0 1px var(--hc-accent);
   color: var(--ink);
 }
 

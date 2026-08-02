@@ -130,8 +130,8 @@
 
 .swatchOn {
   color: var(--ink);
-  border-color: var(--hc-signal, var(--hc-line));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hc-signal, var(--hc-line)) 45%, transparent);
+  border-color: var(--hc-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hc-accent) 45%, transparent);
 }
 
 .swatchGlyph {

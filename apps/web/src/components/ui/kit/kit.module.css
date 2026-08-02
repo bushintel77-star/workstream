@@ -159,21 +159,21 @@
 }
 
 .btn[data-variant="accent"] {
-  background: var(--accent, #b33a32);
-  color: #fff;
+  background: var(--accent);
+  color: var(--ink-inverted, #fff);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent, #b33a32) 25%, transparent),
-    0 1px 2px color-mix(in srgb, var(--accent, #b33a32) 12%, transparent),
-    0 2px 4px color-mix(in srgb, var(--accent, #b33a32) 8%, transparent),
-    0 4px 8px color-mix(in srgb, var(--accent, #b33a32) 5%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--accent) 8%, transparent),
+    0 4px 8px color-mix(in srgb, var(--accent) 5%, transparent);
 }
 
 .btn[data-variant="accent"]:hover:not(:disabled) {
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent, #b33a32) 35%, transparent),
-    0 1px 2px color-mix(in srgb, var(--accent, #b33a32) 16%, transparent),
-    0 2px 6px color-mix(in srgb, var(--accent, #b33a32) 12%, transparent),
-    0 6px 16px color-mix(in srgb, var(--accent, #b33a32) 8%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 1px 2px color-mix(in srgb, var(--accent) 16%, transparent),
+    0 2px 6px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 6px 16px color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 /* Loading spinner */

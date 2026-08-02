@@ -427,7 +427,7 @@
   outline: none;
   background: var(--hc-glass);
   border-color: var(--hc-line);
-  box-shadow: var(--ws-focus, 0 0 0 2px var(--hc-paper), 0 0 0 3.5px var(--hc-signal));
+  box-shadow: var(--ws-focus, 0 0 0 2px var(--hc-paper), 0 0 0 3.5px var(--hc-accent));
 }
 
 .lineInputNum {
