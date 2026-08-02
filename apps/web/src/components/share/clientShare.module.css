@@ -121,41 +121,6 @@
   gap: 10px;
 }
 
-.accept,
-.decline,
-.ghost {
-  min-height: 44px;
-  border-radius: 10px;
-  font-size: var(--text-base);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.accept {
-  border: none;
-  background: var(--ink-primary);
-  color: var(--surface-elevated);
-}
-
-.decline {
-  border: 1px solid var(--line-hairline);
-  background: var(--surface-elevated);
-  color: var(--ink-primary);
-}
-
-.accept:disabled,
-.decline:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.ghost {
-  border: none;
-  background: transparent;
-  color: var(--ink-secondary);
-}
-
 .form {
   display: flex;
   flex-direction: column;

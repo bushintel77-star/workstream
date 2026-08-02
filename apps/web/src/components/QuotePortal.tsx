@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Tier1SavingsLedger } from "./tier1";
+import { KitButton } from "./ui/kit";
 import styles from "../app/portal/quote/[token]/quote.module.css";
 
 export type PortalCosting = {
@@ -264,12 +264,14 @@ export function QuotePortal({
         <section className={styles.acceptSection}>
           {active ? (
             <>
-              <Link
+              <KitButton
+                as="a"
                 href={`/portal/deposit/${token}`}
-                className={styles.acceptButton}
+                variant="accent"
+                size="lg"
               >
                 Accept &amp; pay {aud2(active.total * 0.2)} deposit
-              </Link>
+              </KitButton>
               <p className={styles.acceptNote}>
                 A 20% deposit secures your garden on the {activeScenarioLabel} scenario.
                 Balance billed in stages as works progress.
@@ -277,9 +279,9 @@ export function QuotePortal({
             </>
           ) : (
             <>
-              <span className={styles.acceptButtonDisabled}>
+              <KitButton variant="secondary" size="lg" disabled>
                 Deposit unavailable
-              </span>
+              </KitButton>
               <p className={styles.acceptNote}>
                 Curtis &amp; Co will issue the deposit link once the quote total
                 is confirmed.

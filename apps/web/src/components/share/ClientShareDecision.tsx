@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { PublicSharePayload } from "@workstream/contracts";
 import { submitShareDecision } from "../../lib/share-api";
 import { ClientShareTwin } from "./ClientShareTwin";
+import { KitButton } from "../ui/kit";
 import css from "./clientShare.module.css";
 
 const DISCLAIMER =
@@ -44,12 +45,12 @@ export function ClientShareDecision({ token, initial }: Props) {
   if (payload.status === "accepted" || payload.status === "declined") {
     const when = payload.decision
       ? new Date(payload.decision.decidedAt).toLocaleString("en-AU", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
       : null;
     return (
       <div className={css.card} data-testid="share-decision-done">
@@ -119,9 +120,10 @@ export function ClientShareDecision({ token, initial }: Props) {
 
       {mode === "idle" ? (
         <div className={css.actions}>
-          <button
-            type="button"
-            className={css.accept}
+          <KitButton
+            variant="default"
+            size="lg"
+            fullWidth
             data-testid="share-accept"
             onClick={() => {
               setMode("accept");
@@ -129,10 +131,11 @@ export function ClientShareDecision({ token, initial }: Props) {
             }}
           >
             Accept
-          </button>
-          <button
-            type="button"
-            className={css.decline}
+          </KitButton>
+          <KitButton
+            variant="secondary"
+            size="lg"
+            fullWidth
             data-testid="share-decline"
             onClick={() => {
               setMode("decline");
@@ -140,7 +143,7 @@ export function ClientShareDecision({ token, initial }: Props) {
             }}
           >
             Decline
-          </button>
+          </KitButton>
         </div>
       ) : null}
 
@@ -184,21 +187,21 @@ export function ClientShareDecision({ token, initial }: Props) {
             placeholder="Type your full name"
           />
           <div className={css.formActions}>
-            <button
+            <KitButton
               type="submit"
-              className={css.accept}
+              variant="default"
               data-testid="share-accept-confirm"
-              disabled={pending || name.trim().length < 2}
+              loading={pending}
+              disabled={name.trim().length < 2}
             >
               {pending ? "Saving…" : "Confirm acceptance"}
-            </button>
-            <button
-              type="button"
-              className={css.ghost}
+            </KitButton>
+            <KitButton
+              variant="ghost"
               onClick={() => setMode("idle")}
             >
               Cancel
-            </button>
+            </KitButton>
           </div>
         </form>
       ) : null}
@@ -254,21 +257,21 @@ export function ClientShareDecision({ token, initial }: Props) {
             rows={3}
           />
           <div className={css.formActions}>
-            <button
+            <KitButton
               type="submit"
-              className={css.decline}
+              variant="secondary"
               data-testid="share-decline-confirm"
-              disabled={pending || name.trim().length < 2}
+              loading={pending}
+              disabled={name.trim().length < 2}
             >
               {pending ? "Saving…" : "Confirm decline"}
-            </button>
-            <button
-              type="button"
-              className={css.ghost}
+            </KitButton>
+            <KitButton
+              variant="ghost"
               onClick={() => setMode("idle")}
             >
               Cancel
-            </button>
+            </KitButton>
           </div>
         </form>
       ) : null}

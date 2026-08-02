@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { geocodeSearchAction } from "../app/actions";
+import { KitButton } from "./ui/kit";
 import css from "./newProjectAddressForm.module.css";
+// .submit button styles retired — now KitButton
 
 type Suggestion = {
   id: string;
@@ -176,14 +178,14 @@ export function NewProjectAddressForm() {
 
       {hint && !selected ? <p className={css.hint}>{hint}</p> : null}
 
-      <button
+      <KitButton
         type="button"
-        className={css.submit}
+        variant="default"
         disabled={!canContinue}
         onClick={goOpen}
       >
         Locate property →
-      </button>
+      </KitButton>
     </div>
   );
 }

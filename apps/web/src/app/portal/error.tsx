@@ -1,6 +1,7 @@
 "use client";
 
 import styles from "./quote/[token]/quote.module.css";
+import { KitButton } from "../../components/ui/kit";
 
 export const runtime = "edge";
 
@@ -13,9 +14,9 @@ export default function PortalError({ reset }: { reset: () => void }) {
         Please try again. If the issue continues, contact your landscaper for a
         fresh secure link.
       </p>
-      <button type="button" className={styles.acceptButton} onClick={reset}>
+      <KitButton variant="accent" size="lg" onClick={reset}>
         Try again
-      </button>
+      </KitButton>
     </main>
   );
 }

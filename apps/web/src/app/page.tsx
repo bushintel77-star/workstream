@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PlanHeroVisual } from "../components/landing/PlanHeroVisual";
+import { KitButton } from "../components/ui/kit";
 import css from "./landing.module.css";
 
 export const metadata: Metadata = {
@@ -27,12 +28,18 @@ export default function LandingPage() {
           Survey, sketch, CAD, and quote — one board for Curtis &amp; Co.
         </p>
         <div className={css.cta}>
-          <Link href="/home" className={css.primary} data-testid="landing-enter-studio">
+          <KitButton
+            as="a"
+            href="/home"
+            variant="secondary"
+            size="lg"
+            data-testid="landing-enter-studio"
+          >
             Enter studio
-          </Link>
-          <Link href="/home#new-project" className={css.secondary}>
+          </KitButton>
+          <KitButton as="a" href="/home#new-project" variant="outline" size="lg">
             New address
-          </Link>
+          </KitButton>
         </div>
       </div>
 
