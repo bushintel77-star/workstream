@@ -1373,7 +1373,7 @@
   z-index: var(--ws-z-chrome);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   min-height: 34px;
   max-width: min(340px, calc(100% - 340px));
   padding: 0 8px 0 12px;
@@ -1711,7 +1711,7 @@
   font-size: var(--text-sm);
   font-weight: 500;
   text-align: center;
-  padding: 2rem;
+  padding: var(--s-6);
   border: 1.5px dashed var(--hc-line);
   margin: 18% 22%;
   border-radius: var(--hc-r-pop);
@@ -1795,7 +1795,7 @@
   z-index: var(--ws-z-annotate);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
   background: var(--hc-glass);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
@@ -1856,7 +1856,7 @@
   padding: 12px 15px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
   z-index: var(--ws-z-interact);
   max-height: 44%;
   overflow: auto;
@@ -1877,7 +1877,7 @@
   padding: 12px 14px 11px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
   z-index: var(--ws-z-interact);
   background: var(--hc-glass);
   backdrop-filter: none;
@@ -1922,7 +1922,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
   padding-bottom: 7px;
   border-bottom: 1px solid var(--hc-line-soft);
 }
@@ -1990,7 +1990,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .sunTime {
@@ -2327,7 +2327,7 @@
   bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
   z-index: var(--ws-z-panel);
   display: flex;
-  gap: 4px;
+  gap: var(--s-1);
   padding: 4px 5px;
   border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line-soft);
@@ -2352,7 +2352,7 @@
 .dbhField {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   min-height: 44px;
   padding: 0 10px;
   border: 1px solid var(--hc-line);
@@ -2427,7 +2427,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   width: min(420px, 90%);
-  padding: 24px;
+  padding: var(--s-5);
   z-index: var(--ws-z-panel);
   background: var(--hc-glass);
   backdrop-filter: none;
@@ -2501,7 +2501,7 @@
 .root[data-layout="phone"] .header {
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--s-2);
   padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
   padding-top: calc(8px + env(safe-area-inset-top, 0px));
   min-height: 0;
