@@ -300,3 +300,22 @@ export function boardShadowCast(
     azimuth_deg: az,
   };
 }
+
+/**
+ * Convert a true-north solar azimuth (0° = true north, as `sunPositionAt`
+ * returns) into a board azimuth for a board whose up direction (screen-up)
+ * points at compass bearing `northBearingDeg` (the `DesignSiteFrame.north_bearing`
+ * convention). `boardShadowCast` expects a board azimuth (0° = board-up), so
+ * overshadowing on a rotated board must pass its azimuth through here first.
+ * A north-up board (bearing 0 / omitted) makes this a no-op. This is the single
+ * orientation adjustment shared by dwelling sun/shade and neighbour massing.
+ */
+export function boardAzimuthDeg(
+  trueAzimuthDeg: number,
+  northBearingDeg = 0,
+): number {
+  const t = Number.isFinite(trueAzimuthDeg) ? trueAzimuthDeg : 0;
+  const n = Number.isFinite(northBearingDeg) ? northBearingDeg : 0;
+  const a = (((t - n) % 360) + 360) % 360;
+  return Math.round(a * 10) / 10;
+}

@@ -299,6 +299,7 @@ export const MODE_TABS = [
   "cad",
   "elevation",
   "quote",
+  "present",
   "share",
 ] as const;
 
@@ -335,12 +336,12 @@ export const PAINT_SWATCHES: Array<{
   label: string;
   wash: string;
 }> = [
-  { t: "lawn", label: "Turf", wash: PLAN_FILL.lawnWash },
-  { t: "bed", label: "Planting", wash: PLAN_FILL.plantingWash },
-  { t: "paving", label: "Bluestone", wash: PLAN_FILL.bluestoneWash },
-  { t: "deck", label: "Deck", wash: PLAN_FILL.timberWash },
-  { t: "hedge", label: "Hedge", wash: PLAN_FILL.hedgeWash },
-];
+    { t: "lawn", label: "Turf", wash: PLAN_FILL.lawnWash },
+    { t: "bed", label: "Planting", wash: PLAN_FILL.plantingWash },
+    { t: "paving", label: "Bluestone", wash: PLAN_FILL.bluestoneWash },
+    { t: "deck", label: "Deck", wash: PLAN_FILL.timberWash },
+    { t: "hedge", label: "Hedge", wash: PLAN_FILL.hedgeWash },
+  ];
 
 /**
  * Material families — softscape / hardscape / trees / water.
@@ -353,27 +354,27 @@ export const KIT_BAGS: ReadonlyArray<{
   label: string;
   types: readonly StudioItemType[];
 }> = [
-  {
-    id: "soft",
-    label: "Softscape",
-    types: ["lawn", "bed", "hedge"],
-  },
-  {
-    id: "hard",
-    label: "Hardscape",
-    types: ["paving", "deck"],
-  },
-  {
-    id: "trees",
-    label: "Trees",
-    types: ["canopy", "feature", "exist"],
-  },
-  {
-    id: "water",
-    label: "Water",
-    types: ["frenchdrain"],
-  },
-];
+    {
+      id: "soft",
+      label: "Softscape",
+      types: ["lawn", "bed", "hedge"],
+    },
+    {
+      id: "hard",
+      label: "Hardscape",
+      types: ["paving", "deck"],
+    },
+    {
+      id: "trees",
+      label: "Trees",
+      types: ["canopy", "feature", "exist"],
+    },
+    {
+      id: "water",
+      label: "Water",
+      types: ["frenchdrain"],
+    },
+  ];
 
 export function kitBagFor(type: StudioItemType): KitBagId {
   for (const bag of KIT_BAGS) {

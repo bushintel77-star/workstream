@@ -18,6 +18,9 @@ import {
   scoreHeritageLayerName,
   scorePropertyLayerName,
   scoreUrbanTreeLayerName,
+  bufferedTitleBboxRing,
+  selectNeighbourRings,
+  NEIGHBOUR_BUILDING_CAP,
 } from "./vicmap";
 
 describe("extractPoints", () => {
@@ -356,5 +359,63 @@ describe("pickPlausibleBuildingRing", () => {
 
   it("returns null when every candidate exceeds the coverage cap", () => {
     expect(pickPlausibleBuildingRing(title, [complex])).toBeNull();
+  });
+});
+
+describe("neighbour building selection", () => {
+  // A ~20 x 20 m subject lot near Melbourne (degrees; ~1.1e-5 deg ≈ 1.2 m lat).
+  const subjectTitle: [number, number][] = [
+    [145.0, -37.85],
+    [145.00025, -37.85],
+    [145.00025, -37.84982],
+    [145.0, -37.84982],
+    [145.0, -37.85],
+  ];
+  // Dwelling whose centroid sits inside the title.
+  const subjectDwelling: [number, number][] = [
+    [145.00005, -37.84996],
+    [145.0002, -37.84996],
+    [145.0002, -37.84986],
+    [145.00005, -37.84986],
+  ];
+  // Neighbour to the east, centroid clearly outside the title.
+  const neighbourEast: [number, number][] = [
+    [145.0004, -37.84996],
+    [145.00055, -37.84996],
+    [145.00055, -37.84986],
+    [145.0004, -37.84986],
+  ];
+
+  it("buffers the title bbox outward so adjacent lots are reached", () => {
+    const ring = bufferedTitleBboxRing(subjectTitle);
+    const xs = ring.map((c) => c[0]);
+    expect(Math.min(...xs)).toBeLessThan(145.0);
+    expect(Math.max(...xs)).toBeGreaterThan(145.00025);
+    // Closed ring (first === last).
+    expect(ring[0]).toEqual(ring[ring.length - 1]);
+  });
+
+  it("drops the subject dwelling and keeps neighbours", () => {
+    const kept = selectNeighbourRings(subjectTitle, [
+      subjectDwelling,
+      neighbourEast,
+    ]);
+    expect(kept).toHaveLength(1);
+    expect(kept[0]).toBe(neighbourEast);
+  });
+
+  it("caps the number of neighbours returned", () => {
+    const many = Array.from({ length: NEIGHBOUR_BUILDING_CAP + 5 }, (_, i) => {
+      const x = 145.0004 + i * 0.0002;
+      return [
+        [x, -37.84996],
+        [x + 0.00015, -37.84996],
+        [x + 0.00015, -37.84986],
+        [x, -37.84986],
+      ] as [number, number][];
+    });
+    expect(selectNeighbourRings(subjectTitle, many)).toHaveLength(
+      NEIGHBOUR_BUILDING_CAP,
+    );
   });
 });

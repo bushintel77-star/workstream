@@ -4,6 +4,7 @@ export type CanvasMode =
   | "cad"
   | "elevation"
   | "quote"
+  | "present"
   | "share";
 
 export const CANVAS_MODES: Array<{ id: CanvasMode; label: string }> = [
@@ -12,6 +13,7 @@ export const CANVAS_MODES: Array<{ id: CanvasMode; label: string }> = [
   { id: "cad", label: "CAD" },
   { id: "elevation", label: "Elevation" },
   { id: "quote", label: "Quote" },
+  { id: "present", label: "Present" },
   { id: "share", label: "Share" },
 ];
 
@@ -35,7 +37,10 @@ export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
     open.add("elevation");
   }
   if (progress.hasCad) open.add("quote");
-  if (progress.hasQuote) open.add("share");
+  if (progress.hasQuote) {
+    open.add("present");
+    open.add("share");
+  }
   return open;
 }
 
@@ -49,7 +54,7 @@ export function suggestedMode(progress: CanvasProgress): CanvasMode {
 
 export function parseCanvasMode(raw: string | null | undefined): CanvasMode | null {
   const v = (raw ?? "").toLowerCase();
-  if (v === "survey" || v === "sketch" || v === "cad" || v === "elevation" || v === "quote" || v === "share") {
+  if (v === "survey" || v === "sketch" || v === "cad" || v === "elevation" || v === "quote" || v === "present" || v === "share") {
     return v;
   }
   return null;

@@ -728,17 +728,17 @@ export async function autoTraceBoundaryApi(
 
 export type KeylessHydrateOverlayCanvas = {
   kind:
-    | "planning"
-    | "bushfire"
-    | "contour"
-    | "flood"
-    | "heritage"
-    | "easement"
-    | "urban_tree"
-    | "water_corp"
-    | "road_casement"
-    | "acid_sulfate"
-    | "wetland";
+  | "planning"
+  | "bushfire"
+  | "contour"
+  | "flood"
+  | "heritage"
+  | "easement"
+  | "urban_tree"
+  | "water_corp"
+  | "road_casement"
+  | "acid_sulfate"
+  | "wetland";
   rings: Array<Array<{ x: number; y: number }>>;
   label: string | null;
   fetched_at: string;
@@ -1060,12 +1060,12 @@ export type PhotoMeasurementItem = {
   description: string;
   value: number;
   unit:
-    | "meters"
-    | "centimeters"
-    | "millimeters"
-    | "square_meters"
-    | "cubic_meters"
-    | "unknown";
+  | "meters"
+  | "centimeters"
+  | "millimeters"
+  | "square_meters"
+  | "cubic_meters"
+  | "unknown";
   confidence: number;
   reference_used: string | null;
 };
@@ -1167,11 +1167,11 @@ export async function getCarbon(projectId: string): Promise<CarbonReport | null>
 export type TitlePlanningBadge = {
   id: string;
   category:
-    | "tree_protection"
-    | "stormwater"
-    | "heritage"
-    | "permit"
-    | "council";
+  | "tree_protection"
+  | "stormwater"
+  | "heritage"
+  | "permit"
+  | "council";
   label: string;
   severity: "likely" | "review" | "clear";
 };
@@ -1565,17 +1565,17 @@ export async function listShareRevisionsApi(projectId: string) {
 
 export type CreateShareRevisionResult =
   | {
-      ok: true;
-      revision: import("@workstream/contracts").ShareRevision;
-      share_url: string;
-    }
+    ok: true;
+    revision: import("@workstream/contracts").ShareRevision;
+    share_url: string;
+  }
   | {
-      ok: false;
-      unchanged: true;
-      revision: import("@workstream/contracts").ShareRevision;
-      share_url: string;
-      error: string;
-    };
+    ok: false;
+    unchanged: true;
+    revision: import("@workstream/contracts").ShareRevision;
+    share_url: string;
+    error: string;
+  };
 
 export async function getQuoteDocApi(
   projectId: string,
@@ -1784,13 +1784,13 @@ export type ActivityEvent = {
   owner_id: string;
   project_id: string | null;
   action:
-    | "project.deleted"
-    | "project.restored"
-    | "project_file.deleted"
-    | "crew_member.deleted"
-    | "catalog_symbol.deleted"
-    | "integration.deleted"
-    | "sku_link.deleted";
+  | "project.deleted"
+  | "project.restored"
+  | "project_file.deleted"
+  | "crew_member.deleted"
+  | "catalog_symbol.deleted"
+  | "integration.deleted"
+  | "sku_link.deleted";
   subject_id: string | null;
   detail: string;
   created_at: string;
@@ -1808,5 +1808,60 @@ export async function listProjectActivity(
 export async function listWorkspaceActivity(): Promise<ActivityEvent[]> {
   const body = await apiGet<{ events: ActivityEvent[] }>("/settings/activity");
   return body.events;
+}
+
+/* -- Presentation documents (Present tab) ------------------------------- */
+
+export async function listPresentationDocumentsApi(
+  projectId: string,
+): Promise<import("@workstream/contracts").PresentationDocument[]> {
+  const body = await apiGet<{
+    documents: import("@workstream/contracts").PresentationDocument[];
+  }>(`/projects/${projectId}/presentation-documents`);
+  return body.documents;
+}
+
+export async function getPresentationDocumentApi(
+  projectId: string,
+  docId: string,
+): Promise<import("@workstream/contracts").PresentationDocument | null> {
+  try {
+    const body = await apiGet<{
+      document: import("@workstream/contracts").PresentationDocument;
+    }>(`/projects/${projectId}/presentation-documents/${docId}`);
+    return body.document;
+  } catch {
+    return null;
+  }
+}
+
+export async function createPresentationDocumentApi(
+  projectId: string,
+  body: import("@workstream/contracts").CreatePresentationDocumentInput,
+): Promise<import("@workstream/contracts").PresentationDocument> {
+  const res = await apiPost<{
+    document: import("@workstream/contracts").PresentationDocument;
+  }>(`/projects/${projectId}/presentation-documents`, body);
+  return res.document;
+}
+
+export async function updatePresentationDocumentApi(
+  projectId: string,
+  docId: string,
+  body: import("@workstream/contracts").UpdatePresentationDocumentInput,
+): Promise<import("@workstream/contracts").PresentationDocument> {
+  const res = await apiPut<{
+    document: import("@workstream/contracts").PresentationDocument;
+  }>(`/projects/${projectId}/presentation-documents/${docId}`, body);
+  return res.document;
+}
+
+export async function deletePresentationDocumentApi(
+  projectId: string,
+  docId: string,
+): Promise<void> {
+  await apiDelete(
+    `/projects/${projectId}/presentation-documents/${docId}`,
+  );
 }
 

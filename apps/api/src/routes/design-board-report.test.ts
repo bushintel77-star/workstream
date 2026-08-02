@@ -108,6 +108,7 @@ async function seedBoard(
       drainage_runs: [],
       byda_assets: [],
       keyless_overlays: [],
+      neighbour_buildings: [],
       building_source: "traced",
     },
   });

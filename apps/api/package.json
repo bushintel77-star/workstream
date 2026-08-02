@@ -23,6 +23,7 @@
     "@opentelemetry/auto-instrumentations-node": "^0.76.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
     "@opentelemetry/sdk-node": "^0.218.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@sentry/node": "^10.53.1",
     "@workstream/cad": "workspace:*",
     "@workstream/contracts": "workspace:*",

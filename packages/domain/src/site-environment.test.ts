@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   approximateDaylight,
+  boardAzimuthDeg,
   boardShadowCast,
   melbourneSeason,
   sunPositionAt,
@@ -39,5 +40,18 @@ describe("site-environment", () => {
     const high = boardShadowCast(90, 55, { growthScale: 1 });
     expect(low.lengthM).toBeGreaterThan(high.lengthM);
     expect(boardShadowCast(0, 0).lengthM).toBe(0);
+  });
+
+  it("boardAzimuthDeg is a no-op on a north-up board", () => {
+    expect(boardAzimuthDeg(0)).toBe(0);
+    expect(boardAzimuthDeg(215.4)).toBe(215.4);
+  });
+
+  it("boardAzimuthDeg subtracts north_bearing and wraps into 0–360", () => {
+    // Board rotated so up faces east (bearing 90): a true-north sun (0°) sits
+    // at board azimuth 270.
+    expect(boardAzimuthDeg(0, 90)).toBe(270);
+    // True azimuth behind board-up wraps rather than going negative.
+    expect(boardAzimuthDeg(30, 45)).toBe(345);
   });
 });

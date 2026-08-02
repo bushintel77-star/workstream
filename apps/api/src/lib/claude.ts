@@ -21,10 +21,15 @@ import {
   tier1WrightsTerraceDesign,
   type StudioPromptSite,
 } from "@workstream/domain";
-import type { GhostPlacementSuggestion } from "@workstream/contracts";
+import type {
+  GhostPlacementSuggestion,
+  PresentationDissectGhost,
+  PresentationDissectResponse,
+} from "@workstream/contracts";
 import { getOwnerEnv } from "./owner-secrets";
 import { fetchWithRetry } from "./http";
 import { setActiveTelemetryAttributes } from "./telemetry";
+import { dissectPlan } from "./plan-dissect";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -112,15 +117,14 @@ ${ctx.address}
 
 SURVEY
 - Lot area: ${ctx.survey.lot_area_m2} m²
-- Existing house area: ${
-    ctx.survey.house_area_m2 > 0
+- Existing house area: ${ctx.survey.house_area_m2 > 0
       ? `${ctx.survey.house_area_m2} m² (site context only)`
       : "unavailable — do not infer or invent"
-  }
+    }
 - Garden area: ${ctx.survey.garden_area_m2} m²
 - Measurements: ${ctx.survey.measurements
-    .map((m) => `${m.label ?? m.edge_id} ${m.length_m}m @ ${m.bearing_deg}°`)
-    .join("; ")}
+      .map((m) => `${m.label ?? m.edge_id} ${m.length_m}m @ ${m.bearing_deg}°`)
+      .join("; ")}
 
 WALKTHROUGH TRANSCRIPT
 ${ctx.transcript ?? "(none — auto mode)"}
@@ -156,14 +160,14 @@ function devFallbackDesign(ctx: DesignContext): DesignGeneration {
             "Mass planting of Lomandra ‘Tanika’ in disciplined blocks, low-maintenance, no irrigation to honour the brief.",
           plantings: lomandra
             ? [
-                {
-                  species: lomandra.species,
-                  common_name: lomandra.common_name,
-                  count: 36,
-                  form: "mass",
-                  sku: "PLT-LOM-140",
-                },
-              ]
+              {
+                species: lomandra.species,
+                common_name: lomandra.common_name,
+                count: 36,
+                form: "mass",
+                sku: "PLT-LOM-140",
+              },
+            ]
             : [],
           hardscape: [],
           lighting: [],
@@ -176,14 +180,14 @@ function devFallbackDesign(ctx: DesignContext): DesignGeneration {
             "Bluestone paving from the entry to the rear, pleached hornbeam screen along the west boundary at 2.4m, brass uplights at the screen and key trees.",
           plantings: hornbeam
             ? [
-                {
-                  species: hornbeam.species,
-                  common_name: hornbeam.common_name,
-                  count: 6,
-                  form: "hedge",
-                  sku: "PLT-CARP-PL24",
-                },
-              ]
+              {
+                species: hornbeam.species,
+                common_name: hornbeam.common_name,
+                count: 6,
+                form: "hedge",
+                sku: "PLT-CARP-PL24",
+              },
+            ]
             : [],
           hardscape: bluestone
             ? [{ item: bluestone.label, qty: 38, unit: "m2", sku: bluestone.sku }]
@@ -201,15 +205,15 @@ function devFallbackDesign(ctx: DesignContext): DesignGeneration {
     gaps:
       ctx.mode === "auto"
         ? [
-            {
-              zone: "front-garden",
-              description: "No watering strategy specified for front mass planting.",
-              proposed_fill:
-                "Hand-water for establishment year, then dry-tolerant — no permanent irrigation.",
-              rationale:
-                "Lomandra ‘Tanika’ is drought-tolerant once established and the auto-design defaults to lower-maintenance unless the brief says otherwise.",
-            },
-          ]
+          {
+            zone: "front-garden",
+            description: "No watering strategy specified for front mass planting.",
+            proposed_fill:
+              "Hand-water for establishment year, then dry-tolerant — no permanent irrigation.",
+            rationale:
+              "Lomandra ‘Tanika’ is drought-tolerant once established and the auto-design defaults to lower-maintenance unless the brief says otherwise.",
+          },
+        ]
         : [],
     rationale:
       "A two-zone scheme: a disciplined mass-planted front and a paved-screen rear in keeping with Curtis & Co's Stonnington period-home vocabulary. " +
@@ -345,14 +349,14 @@ ${JSON.stringify({ proposal: args.design.proposal, gaps: args.design.gaps, ratio
 
 COSTINGS
 ${args.costings
-  .map(
-    (c) =>
-      `[${c.scenario}] subtotal=${c.subtotal} gst=${c.gst} total=${c.total} ${c.line_items.length} line items` +
-      (c.line_items.some((l) => l.is_provisional)
-        ? ` (incl. ${c.line_items.filter((l) => l.is_provisional).length} provisional/POA)`
-        : ""),
-  )
-  .join("\n")}
+      .map(
+        (c) =>
+          `[${c.scenario}] subtotal=${c.subtotal} gst=${c.gst} total=${c.total} ${c.line_items.length} line items` +
+          (c.line_items.some((l) => l.is_provisional)
+            ? ` (incl. ${c.line_items.filter((l) => l.is_provisional).length} provisional/POA)`
+            : ""),
+      )
+      .join("\n")}
 
 Audit now. Return JSON only.`;
 }
@@ -516,12 +520,12 @@ export type PhotoMeasurementCallResult = {
     description: string;
     value: number;
     unit:
-      | "meters"
-      | "centimeters"
-      | "millimeters"
-      | "square_meters"
-      | "cubic_meters"
-      | "unknown";
+    | "meters"
+    | "centimeters"
+    | "millimeters"
+    | "square_meters"
+    | "cubic_meters"
+    | "unknown";
     confidence: number;
     reference_used: string | null;
   }>;
@@ -1133,6 +1137,186 @@ export async function formalizeSketchToCad(
     };
   } catch {
     return heuristicSketchToCad(args);
+  }
+}
+
+// --- Plan dissection vision enhancement (Phase 2 stretch) ---
+
+const DISSECT_VISION_SYSTEM = `You are the presentation engine for Curtis & Co, a Melbourne boutique landscape design studio.
+You receive the structured plan data (boundary, building, placements, strokes) for a finished garden design.
+Your job is to enhance the heuristic plan dissection with semantic feature-area labels.
+
+DESIGN PHILOSOPHY
+- Architectural restraint. Singular species in disciplined mass blocks.
+- Period-home gardens (Stonnington, Armadale, Malvern). North-facing terraces are heroes.
+- Hard materials: bluestone, corten, in-situ concrete, spotted gum.
+
+TASK
+Given the heuristic cuts (overview, aspect quadrants, feature clusters) and the plan data,
+propose enhanced labels for the feature-area cuts. Identify semantic zones where the plan
+geometry suggests them: courtyard, terrace, edible garden, entry court, lawn, pool zone,
+entertainment area, native garden, etc.
+
+Return strict JSON only — no markdown.
+Schema:
+{
+  "enhanced_labels": [
+    { "index": <0-based index into the feature ghosts array>, "label": "Semantic name" }
+  ],
+  "rationale": "One sentence on the composition logic."
+}
+
+RULES
+- Only relabel feature cuts (reason = "feature"). Never change overview or aspect labels.
+- Use Australian landscape vocabulary (courtyard, terrace, alfresco, native garden).
+- If no feature cuts need relabelling, return an empty enhanced_labels array.
+- Keep labels under 60 characters.`;
+
+/**
+ * Vision-enhanced plan dissection. Renders the plan to a PNG image server-side
+ * and sends it to Claude's vision model alongside the structured plan data,
+ * so Claude can see the spatial layout (not just read a list of items) and
+ * enhance the heuristic feature-cluster labels with semantic zone names
+ * (courtyard, terrace, edible garden, etc.). Falls back to the pure heuristic
+ * when the API key is missing, the request fails, the renderer fails, or there
+ * are no feature cuts to enhance.
+ */
+export async function dissectPlanWithVision(
+  canvas: import("@workstream/contracts").DesignCanvas,
+): Promise<PresentationDissectResponse> {
+  const heuristic = dissectPlan(canvas);
+  const apiKey = getOwnerEnv("ANTHROPIC_API_KEY");
+  const featureIndices = heuristic.ghosts
+    .map((g, i) => ({ g, i }))
+    .filter((x) => x.g.reason === "feature");
+
+  // No feature cuts to enhance, or no API key → pure heuristic
+  if (!apiKey || featureIndices.length === 0) {
+    return { ...heuristic, source: "heuristic" };
+  }
+
+  try {
+    // Render the plan to a PNG image for Claude's vision model
+    const { renderPlanPng } = await import("./plan-render");
+    const pngBuffer = await renderPlanPng(canvas);
+    const imageBase64 = pngBuffer.toString("base64");
+
+    const placementSummary = canvas.placements
+      .slice(0, 40)
+      .map(
+        (p) =>
+          `  ${p.symbol_id} at (${p.x_pct.toFixed(0)}, ${p.y_pct.toFixed(0)})`,
+      )
+      .join("\n");
+
+    const strokeCount = canvas.strokes.length;
+    const bearing = canvas.site_frame?.north_bearing;
+
+    const featureCutsBrief = featureIndices
+      .map((x) => `${x.i}: ${x.g.label} at (${x.g.crop.x_pct},${x.g.crop.y_pct}) ${x.g.crop.w_pct}x${x.g.crop.h_pct}`)
+      .join("\n");
+
+    const userText = [
+      `PLACEMENTS (${canvas.placements.length} total, showing first 40):`,
+      placementSummary || "  (none)",
+      ``,
+      `STROKES: ${strokeCount} freehand stroke(s)`,
+      bearing != null ? `NORTH_BEARING: ${bearing} degrees` : `NORTH_BEARING: uncalibrated`,
+      ``,
+      `HEURISTIC FEATURE CUTS (index → label):`,
+      featureCutsBrief,
+      ``,
+      `The attached image is a top-down rendering of this plan. Use both the image and the structured data above to enhance the labels for these feature cuts with semantic zone names.`,
+    ].join("\n");
+
+    const body = {
+      model: VISION_MODEL,
+      max_tokens: 1024,
+      system: [{ type: "text", text: DISSECT_VISION_SYSTEM }],
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/png",
+                data: imageBase64,
+              },
+            },
+            { type: "text", text: userText },
+          ],
+        },
+      ],
+    };
+
+    const res = await fetchWithRetry(
+      MESSAGES_URL,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify(body),
+      },
+      {
+        telemetry: {
+          spanName: "anthropic.dissect_plan_vision",
+          provider: "anthropic",
+          attributes: {
+            "pipeline.stage": "present",
+            "model.name": VISION_MODEL,
+          },
+        },
+      },
+    );
+    if (!res.ok) return { ...heuristic, source: "heuristic" };
+
+    const json = (await res.json()) as {
+      content: Array<{ type: string; text: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+    setActiveTelemetryAttributes({
+      "tokens.input": json.usage?.input_tokens,
+      "tokens.output": json.usage?.output_tokens,
+    });
+    const textBlock = json.content.find((c) => c.type === "text");
+    if (!textBlock) return { ...heuristic, source: "heuristic" };
+
+    const cleaned = textBlock.text
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "");
+    const parsed = JSON.parse(cleaned) as {
+      enhanced_labels?: Array<{ index: number; label: string }>;
+      rationale?: string;
+    };
+
+    // Apply enhanced labels to feature ghosts
+    const labelMap = new Map<number, string>();
+    for (const e of parsed.enhanced_labels ?? []) {
+      if (Number.isFinite(e.index) && e.label?.trim()) {
+        labelMap.set(e.index, e.label.trim().slice(0, 120));
+      }
+    }
+
+    const ghosts: PresentationDissectGhost[] = heuristic.ghosts.map(
+      (g, i) =>
+        labelMap.has(i)
+          ? { ...g, label: labelMap.get(i)! }
+          : g,
+    );
+
+    return {
+      canvas_revision: heuristic.canvas_revision,
+      ghosts,
+      source: "vision",
+    };
+  } catch {
+    return { ...heuristic, source: "heuristic" };
   }
 }
 

@@ -38,6 +38,7 @@ import {
 } from "./geometry/gridStudio";
 import { FitSheetOverlay } from "./features/fitSheet/FitSheetOverlay";
 import { SheetComposeDock } from "./features/fitSheet/SheetComposeDock";
+import { buildSheetWidgetContext } from "./features/fitSheet/sheetWidgetContext";
 import {
   loadFitSheetPrefs,
   saveFitSheetPrefs,
@@ -185,6 +186,7 @@ import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { BoardFindings } from "./features/horizon/BoardFindings";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
+import { PresentSurface } from "./features/present/PresentSurface";
 import { ShareRevisionPopup } from "./features/share/ShareRevisionPopup";
 import { FloraRing } from "./features/flora/FloraRing";
 import { ITEM_LAYER } from "./state/studioTypes";
@@ -1750,7 +1752,10 @@ export function HandoffDesignStudio({
   }, [hasQuote, quotePortalUri]);
 
   const planOn =
-    ui.mode !== "elevation" && ui.mode !== "quote" && ui.mode !== "share";
+    ui.mode !== "elevation" &&
+    ui.mode !== "quote" &&
+    ui.mode !== "share" &&
+    ui.mode !== "present";
   const armedGardenLook = activeGardenViewpoint(
     ui.tiltDeg,
     ui.viewRotationDeg,
@@ -2178,7 +2183,13 @@ export function HandoffDesignStudio({
    * `.tiltSkin`) so foreshortening keeps the shade — bleed hides then.
    */
   const tiltLensOn = isTiltActive(ui.tiltDeg) || tiltAnimKind != null;
-  const worldHidePaper = planOn && !ui.frameOn;
+  /*
+   * The in-world (zoom-world) parchment scales with the camera, so on the Fit
+   * sheet it shrank away from the paper. Hide it in sheet mode too and let the
+   * viewport-fixed ground (clipped to the plot rect) fill the sheet instead —
+   * the canvas stays full, only the plan vectors scale.
+   */
+  const worldHidePaper = planOn && (!ui.frameOn || Boolean(sheetPlotLayout));
   const skinScale = tiltLensOn
     ? tiltSkinScale(ui.tiltDeg || TILT_DEG, planZoom)
     : 1;
@@ -2572,6 +2583,10 @@ export function HandoffDesignStudio({
     ui.groupIds.length > 0 ||
     ui.addOpen ||
     ui.locked;
+  const presentMaterials = useMemo(
+    () => buildSheetWidgetContext({ items: studio.items }).materialChips,
+    [studio.items],
+  );
   const estimateShareLines = useMemo(
     () =>
       estimate.lines
@@ -2659,6 +2674,8 @@ export function HandoffDesignStudio({
       return "Complete survey and title boundary first.";
     }
     if (mode === "quote") return "Accept CAD geometry before quoting.";
+    if (mode === "present")
+      return "Cost something on the drawing before presenting.";
     if (mode === "share") return "Cost something on the drawing before sharing.";
     return "Complete the previous stage first.";
   };
@@ -3560,19 +3577,68 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {ui.mode === "present" ? (
+          <PresentSurface
+            projectId={projectId}
+            imageLayers={studio.imageLayers}
+            planSnapshot={{
+              boundary: studio.boundary.map((p) => ({ x: p.x, y: p.y })),
+              building: studio.building.map((p) => ({ x: p.x, y: p.y })),
+              items: studio.items.map((i) => ({
+                id: i.id,
+                t: i.t,
+                x: i.x,
+                y: i.y,
+                outlinePct: i.outlinePct?.map((p) => ({ x: p.x, y: p.y })),
+              })),
+              strokes: studio.strokes.map((s) => ({
+                id: s.id,
+                points: s.points.map((p) => ({ x: p.x, y: p.y })),
+              })),
+              revision: ui.savedTick ?? 0,
+            }}
+            estimate={{
+              totalInclGst: estimate.totalInclGst,
+              materialsExGst: estimate.materialsExGst,
+              gst: estimate.gst,
+              lines: estimate.lines.map((l) => ({
+                id: l.id,
+                label: l.label,
+                unit: l.unit,
+                qty: l.qty,
+                total: l.total,
+              })),
+              hardscapeM2: estimate.hardscapeM2,
+              excavateM3: estimate.excavateM3,
+            }}
+            materials={presentMaterials}
+            onBack={() => requestMode("cad")}
+          />
+        ) : null}
+
         {planOn ? (
           <>
-            {!ui.frameOn && !tiltLensOn ? (
+            {!tiltLensOn && (!ui.frameOn || sheetPlotLayout) ? (
               <div
                 className={css.parchmentBleed}
                 data-testid="parchment-bleed"
                 aria-hidden
+                /* Fit sheet: pin the ground to the plot rect so it fills the
+                   sheet permanently — only the plan vectors (in .zoomWorld)
+                   scale on top. */
+                style={
+                  ui.frameOn && sheetPlotLayout
+                    ? { clipPath: sheetPlotLayout.clipPath }
+                    : undefined
+                }
               >
                 <TactileGround
                   zoom={planZoom}
                   sheetScaleDenom={100}
                   parchmentPeel={
-                    draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
+                    ui.frameOn || draftingPlate || ui.foundationCleanse
+                      ? 1
+                      : ui.parchmentPeel
                   }
                   hasAerial={Boolean(liveAerial)}
                   darkOn={darkLens}

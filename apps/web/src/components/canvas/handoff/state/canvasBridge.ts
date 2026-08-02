@@ -281,14 +281,15 @@ export function snapshotToSiteFrame(args: {
       ),
     })),
     ...(args.boardWidthM != null &&
-    Number.isFinite(args.boardWidthM) &&
-    args.boardWidthM > 0
+      Number.isFinite(args.boardWidthM) &&
+      args.boardWidthM > 0
       ? { board_width_m: args.boardWidthM }
       : {}),
     ...(args.buildingSource != null
       ? { building_source: args.buildingSource }
       : {}),
     ...(args.sitePack != null ? { site_pack: args.sitePack } : {}),
+    neighbour_buildings: [],
   };
 }
 

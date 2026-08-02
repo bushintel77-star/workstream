@@ -785,6 +785,132 @@ export async function fetchBuildingPolygon(
   return best ? toGeoJsonPolygon(best) : null;
 }
 
+/** Max neighbour footprints returned for overshadowing — bounds the payload. */
+export const NEIGHBOUR_BUILDING_CAP = 12;
+
+/** Plausible neighbour footprint area window (m²) — drop noise + park-scale. */
+const MIN_NEIGHBOUR_AREA_M2 = 8;
+const MAX_NEIGHBOUR_AREA_M2 = 4000;
+
+function ringCentroidCoord(ring: Ring): Coord {
+  let x = 0;
+  let y = 0;
+  for (const [px, py] of ring) {
+    x += px;
+    y += py;
+  }
+  const n = ring.length || 1;
+  return [x / n, y / n];
+}
+
+/**
+ * Expand a title ring's bbox outward to reach immediately adjacent lots.
+ * Immediate neighbours dominate overshadowing, so the reach is indicative, not
+ * exhaustive. `marginFrac` grows with the lot; the floor (~35 m in degrees)
+ * keeps tiny lots reaching past their own fence line. Returns a closed
+ * rectangular ring in EPSG:4326.
+ */
+export function bufferedTitleBboxRing(titleRing: Ring, marginFrac = 1.5): Ring {
+  const xs = titleRing.map((c) => c[0]);
+  const ys = titleRing.map((c) => c[1]);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const mx = Math.max((maxX - minX) * marginFrac, 0.0004);
+  const my = Math.max((maxY - minY) * marginFrac, 0.00035);
+  return [
+    [minX - mx, minY - my],
+    [maxX + mx, minY - my],
+    [maxX + mx, maxY + my],
+    [minX - mx, maxY + my],
+    [minX - mx, minY - my],
+  ];
+}
+
+/**
+ * From INTERSECTS candidates in the buffered area, keep the neighbour
+ * footprints: drop the subject dwelling (its centroid sits inside the title
+ * ring; neighbours' do not), drop noise / park-scale rings, cap the count.
+ * Largest first so the most significant overshadowers survive the cap.
+ * Pure — unit-tested without a live WFS.
+ */
+export function selectNeighbourRings(
+  titleRing: Ring,
+  candidateRings: Ring[],
+  cap = NEIGHBOUR_BUILDING_CAP,
+): Ring[] {
+  const closed = ensureClosedRing(titleRing) as LngLat[];
+  return candidateRings
+    .map((ring) => ({ ring, area: polygonArea(ring as Coord[]) }))
+    .filter(
+      (c) =>
+        Number.isFinite(c.area) &&
+        c.area >= MIN_NEIGHBOUR_AREA_M2 &&
+        c.area <= MAX_NEIGHBOUR_AREA_M2,
+    )
+    .filter((c) => {
+      const [cx, cy] = ringCentroidCoord(c.ring);
+      return !pointInRing(cx, cy, closed);
+    })
+    .sort((a, b) => b.area - a.area)
+    .slice(0, cap)
+    .map((c) => c.ring);
+}
+
+export type VicmapNeighbourBuilding = {
+  polygon: GeoJsonPolygon;
+  /** Vicmap height attr in metres when present — usually absent for residential. */
+  heightM: number | null;
+};
+
+/**
+ * Fetch adjacent building footprints around a title for sun/overshadowing so
+ * the design does not sit in a vacuum. INTERSECTS a buffered bbox (not the
+ * title ring), then drops the subject dwelling and absurd rings. Height is read
+ * opportunistically; Vicmap rarely carries it for residential, so the caller
+ * usually falls back to a default storey assumption (height_source "assumed").
+ */
+export async function fetchNeighbourBuildingPolygons(
+  titleRing: Ring,
+): Promise<VicmapNeighbourBuilding[]> {
+  const { typeName, geomField } = await discoverBuildingLayer();
+  const buffered = bufferedTitleBboxRing(titleRing);
+  const wkt = `POLYGON((${buffered.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
+  const url = buildUrl(typeName, cql);
+  const bumpCount = NEIGHBOUR_BUILDING_CAP * 3;
+  const bumped = url.includes("count=")
+    ? url.replace(/([?&])count=\d+/i, `$1count=${bumpCount}`)
+    : `${url}&count=${bumpCount}`;
+  const fc = await wfsFetch(bumped);
+  if (fc.features.length === 0) return [];
+
+  // Keep each exterior ring tagged with its feature so height attrs survive selection.
+  const tagged: { ring: Ring; feature: RawFeature }[] = [];
+  for (const f of fc.features) {
+    for (const ring of explodeExteriorRings(f.geometry)) {
+      tagged.push({ ring, feature: f });
+    }
+  }
+  const kept = selectNeighbourRings(
+    titleRing,
+    tagged.map((t) => t.ring),
+  );
+  return kept.map((ring) => {
+    const feature = tagged.find((t) => t.ring === ring)?.feature;
+    const heightM = propNum(
+      feature?.properties,
+      "height_m",
+      "HEIGHT_M",
+      "height",
+      "bld_height",
+      "roof_height",
+    );
+    return { polygon: toGeoJsonPolygon(ring), heightM };
+  });
+}
+
 type LineGeometry =
   | { type: "LineString"; coordinates: Coord[] }
   | { type: "MultiLineString"; coordinates: Coord[][] };

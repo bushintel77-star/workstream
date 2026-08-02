@@ -52,6 +52,9 @@ const emptyFrame = {
   keyless_overlays: [] as NonNullable<
     DesignCanvas["site_frame"]
   >["keyless_overlays"],
+  neighbour_buildings: [] as NonNullable<
+    DesignCanvas["site_frame"]
+  >["neighbour_buildings"],
 };
 
 describe("stampSiteFrameToCad", () => {

@@ -528,6 +528,37 @@ export type DesignSiteFrameDrainageRun = z.infer<
   typeof DesignSiteFrameDrainageRunSchema
 >;
 
+/**
+ * Adjacent-structure footprint used for sun/overshadowing so the design does
+ * not sit in a vacuum. Indicative Workflow 1 massing — a footprint ring plus a
+ * single height; no roof form, no survey grid (Stage 2 CAD territory).
+ * `source` is the footprint provenance; `height_source` is tracked separately
+ * because heights are usually assumed, and an assumed height must never be
+ * presented as measured truth.
+ */
+export const DesignNeighbourBuildingSchema = z.object({
+  id: z.string().min(1),
+  /** Footprint polygon in board `%` coords (min 3 points). */
+  ring: z.array(DesignSiteFramePointSchema).min(3),
+  /**
+   * Massing height in metres (eaves / parapet, ground to top). Optional —
+   * absent means a downstream default storey assumption applies. When present
+   * it wins over `storeys`.
+   */
+  height_m: z.number().positive().optional(),
+  /** Alternative height expression; height_m is derived if only this is set. */
+  storeys: z.number().int().positive().optional(),
+  /** Footprint geometry provenance. */
+  source: z.enum(["vicmap", "traced", "assumed"]).default("vicmap"),
+  /** Height provenance — assumed by default; never label an assumption measured. */
+  height_source: z
+    .enum(["assumed", "measured", "operator"])
+    .default("assumed"),
+});
+export type DesignNeighbourBuilding = z.infer<
+  typeof DesignNeighbourBuildingSchema
+>;
+
 export const DesignSiteFrameSchema = z.object({
   boundary: z.array(DesignSiteFramePointSchema).default([]),
   building: z.array(DesignSiteFramePointSchema).default([]),
@@ -543,11 +574,30 @@ export const DesignSiteFrameSchema = z.object({
   /** Soft KEYLESS Vicmap washes (planning / bushfire / contours…). */
   keyless_overlays: z.array(DesignKeylessOverlaySchema).default([]),
   /**
+   * Adjacent-structure footprints (+ massing height) for sun/overshadowing.
+   * Real Vicmap footprints or operator-traced; never the synthetic
+   * `neighbourLotContext` street fabric. Overshadowing reads these with
+   * `north_bearing` to cast indicative shadows the design works around.
+   */
+  neighbour_buildings: z.array(DesignNeighbourBuildingSchema).default([]),
+  /**
    * Ground truth for the board scale: metres represented by 100% board width.
    * Set when a Vicmap parcel is fitted (implied by the letterbox fit) or when
    * the operator calibrates; absent = legacy canvas on the 110 m default.
    */
   board_width_m: z.number().positive().optional(),
+  /**
+   * True-north orientation of the board, in degrees 0–360: the compass bearing,
+   * clockwise from true north, that the top of the board (screen-up) points
+   * toward. 0 = board-up is true north; 90 = board-up faces east. True north,
+   * not magnetic; stamped by aerial / Vicmap calibration. Absent = orientation
+   * not yet calibrated (legacy frames) — consumers treat absent as "unknown
+   * orientation". The aspect quadrant (N/E/S/W) and any sun/overshadowing vector
+   * are *computed* from this, never stored — keeps the field minimal and avoids
+   * persisting a modelled figure. Sun/shade and neighbour-massing overshadowing
+   * both consume this one value.
+   */
+  north_bearing: z.number().min(0).max(360).optional(),
   /**
    * How the dwelling ring was authored. Omit on legacy frames.
    * Never label seed / bbox-warped demo geometry as `"vicmap"`.

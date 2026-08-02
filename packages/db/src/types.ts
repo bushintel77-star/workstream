@@ -52,6 +52,9 @@ import type {
   QuoteDoc,
   UpsertQuoteDocInput,
   TelemetryReading,
+  PresentationDocument,
+  CreatePresentationDocumentInput,
+  UpdatePresentationDocumentInput,
 } from "@workstream/contracts";
 
 export type {
@@ -106,6 +109,9 @@ export type {
   ShareDecisionInput,
   ShareSnapshot,
   TelemetryReading,
+  PresentationDocument,
+  CreatePresentationDocumentInput,
+  UpdatePresentationDocumentInput,
 };
 
 export type TelemetryReadingInput = Omit<
@@ -405,6 +411,31 @@ export interface Store {
     | { ok: true; revision: ShareRevision }
     | { ok: false; reason: "not_found" | "superseded" | "already_decided" }
   >;
+  listPresentationDocuments(
+    ownerId: string,
+    projectId: string,
+  ): Promise<PresentationDocument[]>;
+  getPresentationDocument(
+    ownerId: string,
+    projectId: string,
+    docId: string,
+  ): Promise<PresentationDocument | null>;
+  createPresentationDocument(
+    ownerId: string,
+    projectId: string,
+    input: CreatePresentationDocumentInput,
+  ): Promise<PresentationDocument>;
+  updatePresentationDocument(
+    ownerId: string,
+    projectId: string,
+    docId: string,
+    input: UpdatePresentationDocumentInput,
+  ): Promise<PresentationDocument | null>;
+  deletePresentationDocument(
+    ownerId: string,
+    projectId: string,
+    docId: string,
+  ): Promise<boolean>;
   seedDefaults(): Promise<void>;
 }
 

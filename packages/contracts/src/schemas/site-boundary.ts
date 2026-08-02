@@ -142,6 +142,16 @@ export const BoundaryAutoTraceEasementLineSchema = z.object({
   status: z.string().nullable().optional(),
 });
 
+/**
+ * Neighbour building footprint co-registered with the title (canvas metres) plus
+ * an indicative massing height for sun/overshadowing. Height is usually absent —
+ * Vicmap rarely carries it — so a default storey assumption applies downstream.
+ */
+export const BoundaryAutoTraceNeighbourSchema = z.object({
+  ring: z.array(BoundaryAutoTraceBuildingSchema).min(3),
+  height_m: z.number().positive().nullable().optional(),
+});
+
 /** Vicmap urban tree point co-registered with the title (indicative canopy). */
 export const BoundaryAutoTraceUrbanTreeSchema = z.object({
   x: z.number(),
@@ -173,6 +183,15 @@ export const BoundaryAutoTraceResponseSchema = z.object({
    */
   urban_trees_canvas: z.array(BoundaryAutoTraceUrbanTreeSchema).default([]),
   urban_trees_source: z.enum(["vicmap"]).nullable().default(null),
+  /**
+   * Vicmap neighbour building footprints around the title (buffered INTERSECTS),
+   * co-registered in canvas metres, for sun/overshadowing. Subject dwelling
+   * excluded. Height usually absent — default storey assumption applies later.
+   */
+  neighbour_buildings_canvas: z
+    .array(BoundaryAutoTraceNeighbourSchema)
+    .default([]),
+  neighbour_buildings_source: z.enum(["vicmap"]).nullable().default(null),
 });
 export type BoundaryAutoTraceResponse = z.infer<
   typeof BoundaryAutoTraceResponseSchema

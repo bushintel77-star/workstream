@@ -17,6 +17,7 @@ import {
 import {
   fetchBuildingPolygon,
   fetchEasementLinesForTitle,
+  fetchNeighbourBuildingPolygons,
   fetchTitlePolygon,
   fetchUrbanTreePointsForTitle,
 } from "./vicmap";
@@ -182,6 +183,10 @@ export async function autoTraceSiteBoundaryWithBuilding(
   let urban_trees_canvas: BoundaryAutoTraceResponse["urban_trees_canvas"] = [];
   let urban_trees_source: BoundaryAutoTraceResponse["urban_trees_source"] =
     null;
+  let neighbour_buildings_canvas: BoundaryAutoTraceResponse["neighbour_buildings_canvas"] =
+    [];
+  let neighbour_buildings_source: BoundaryAutoTraceResponse["neighbour_buildings_source"] =
+    null;
   if (titleRing.length >= 4) {
     try {
       const lines = await fetchEasementLinesForTitle(titleRing);
@@ -216,6 +221,20 @@ export async function autoTraceSiteBoundaryWithBuilding(
     } catch (err) {
       console.warn("[boundary] Vicmap urban tree fetch failed:", err);
     }
+    try {
+      const neighbours = await fetchNeighbourBuildingPolygons(titleRing);
+      neighbour_buildings_canvas = neighbours
+        .map((n) => ({
+          ring: geoJsonPolygonToCanvasMetres(n.polygon, origin),
+          height_m: n.heightM,
+        }))
+        .filter((n) => n.ring.length >= 3);
+      if (neighbour_buildings_canvas.length > 0) {
+        neighbour_buildings_source = "vicmap";
+      }
+    } catch (err) {
+      console.warn("[boundary] Vicmap neighbour fetch failed:", err);
+    }
   }
 
   return {
@@ -226,6 +245,8 @@ export async function autoTraceSiteBoundaryWithBuilding(
     easement_source,
     urban_trees_canvas,
     urban_trees_source,
+    neighbour_buildings_canvas,
+    neighbour_buildings_source,
   };
 }
 

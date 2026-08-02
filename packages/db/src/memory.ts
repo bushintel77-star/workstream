@@ -91,6 +91,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _activityEvents: import("./types").ActivityEvent[] = [];
   const _shareRevisions: import("./types").ShareRevision[] = [];
   const _quoteDocs: QuoteDoc[] = [];
+  const _presentationDocuments: import("@workstream/contracts").PresentationDocument[] =
+    [];
   let seeded = false;
 
   function logActivity(
@@ -141,6 +143,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _activityEvents,
     _shareRevisions,
     _quoteDocs,
+    _presentationDocuments,
   };
 
   const journal: SqliteJournal | undefined = opts.sqlitePath
@@ -233,6 +236,128 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _plantPalette.push(...seedPlantPalette());
       seeded = true;
       flush();
+    },
+
+    async listPresentationDocuments(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      return _presentationDocuments
+        .filter((d) => d.project_id === projectId)
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+        .map((d) => structuredClone(d));
+    },
+
+    async getPresentationDocument(ownerId, projectId, docId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const doc = _presentationDocuments.find(
+        (d) => d.id === docId && d.project_id === projectId,
+      );
+      return doc ? structuredClone(doc) : null;
+    },
+
+    async createPresentationDocument(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const now = new Date().toISOString();
+      const doc: import("@workstream/contracts").PresentationDocument = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        owner_id: ownerId,
+        title: input.title ?? "Untitled deck",
+        deliverable_type: input.deliverable_type ?? "deck",
+        template_id: input.template_id ?? "editorial_classic",
+        theme: {
+          palette: input.theme?.palette ?? "stone",
+          highlight_colour: input.theme?.highlight_colour ?? "#b33a32",
+          font: input.theme?.font ?? "fraunces",
+          pen: input.theme?.pen ?? "technical",
+        },
+        status: "draft",
+        pages: [
+          {
+            id: crypto.randomUUID(),
+            order: 0,
+            paper_size: "a3",
+            orientation: "landscape",
+            title_block: {
+              title: "",
+              subtitle: "",
+              practice: "",
+              revision: "",
+              date_label: "",
+              scale_label: "",
+            },
+            margins: {
+              top_mm: 15,
+              right_mm: 15,
+              bottom_mm: 15,
+              left_mm: 15,
+            },
+            panels: [],
+          },
+        ],
+        created_at: now,
+        updated_at: now,
+      };
+      _presentationDocuments.push(doc);
+      flush();
+      return structuredClone(doc);
+    },
+
+    async updatePresentationDocument(ownerId, projectId, docId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const doc = _presentationDocuments.find(
+        (d) => d.id === docId && d.project_id === projectId,
+      );
+      if (!doc) return null;
+      const now = new Date().toISOString();
+      if (input.title !== undefined) doc.title = input.title;
+      if (input.deliverable_type !== undefined)
+        doc.deliverable_type = input.deliverable_type;
+      if (input.template_id !== undefined) doc.template_id = input.template_id;
+      if (input.theme !== undefined) {
+        doc.theme = {
+          palette: input.theme.palette ?? doc.theme.palette,
+          highlight_colour:
+            input.theme.highlight_colour ?? doc.theme.highlight_colour,
+          font: input.theme.font ?? doc.theme.font,
+          pen: input.theme.pen ?? doc.theme.pen,
+        };
+      }
+      if (input.status !== undefined) {
+        doc.status = input.status;
+        if (input.status === "issued" && !doc.issued_at) {
+          doc.issued_at = now;
+        }
+      }
+      if (input.pages !== undefined) doc.pages = input.pages;
+      doc.updated_at = now;
+      flush();
+      return structuredClone(doc);
+    },
+
+    async deletePresentationDocument(ownerId, projectId, docId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return false;
+      const idx = _presentationDocuments.findIndex(
+        (d) => d.id === docId && d.project_id === projectId,
+      );
+      if (idx < 0) return false;
+      _presentationDocuments.splice(idx, 1);
+      flush();
+      return true;
     },
 
     async listProjects(ownerId) {
