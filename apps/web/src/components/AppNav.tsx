@@ -11,7 +11,6 @@ type Props = {
 
 export function AppNav({ summary, brandSub = false }: Props) {
   const plan = summary?.plan ?? "lite";
-  const attention = summary?.needs_attention ?? false;
 
   return (
     <nav className={nav.bar} aria-label="Workstream">
@@ -29,30 +28,12 @@ export function AppNav({ summary, brandSub = false }: Props) {
           <Link href="/home" className={nav.link}>
             Projects
           </Link>
-          <Link href="/settings" className={nav.link}>
-            Integrations
-            {attention ? (
-              <>
-                <span className={nav.dot} aria-hidden />
-                <span className={nav.srOnly}>Setup incomplete</span>
-              </>
-            ) : null}
-          </Link>
-          <Link href="/settings/accounting" className={nav.link}>
-            Accounting
-          </Link>
         </div>
         <details className={nav.mobileMenu}>
           <summary className={nav.menuButton}>Menu</summary>
           <div className={nav.mobilePanel}>
             <Link href="/home" className={nav.mobileLink}>
               Projects
-            </Link>
-            <Link href="/settings" className={nav.mobileLink}>
-              Integrations
-            </Link>
-            <Link href="/settings/accounting" className={nav.mobileLink}>
-              Accounting
             </Link>
           </div>
         </details>

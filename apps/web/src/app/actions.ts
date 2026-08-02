@@ -2,15 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  createCrewApi,
   createOverrideApi,
   createProjectApi,
   geocodePreviewApi,
   geocodeSearchApi,
   createTaskApi,
   listTasks,
-  deleteCrewApi,
-  deleteIntegrationApi,
   deleteProjectApi,
   restoreProjectApi,
   getAudit,
@@ -19,10 +16,7 @@ import {
   listProjects,
   getSurvey,
   saveDesignCanvasApi,
-  createCatalogSymbolApi,
-  deleteCatalogSymbolApi,
   type CatalogPlacement,
-  type CreateCatalogSymbolInput,
   type DesignCanvas,
   listCostings,
   listRecordings,
@@ -34,10 +28,7 @@ import {
   runDevelopFromSketchPipeline,
   runOutput,
   runSurvey,
-  setIntegrationApi,
-  updateRateCardItemApi,
   updateTaskStatusApi,
-  type CrewRole,
   type OutputKind,
   type TaskPriority,
   type TaskStatus,
@@ -897,154 +888,6 @@ export async function syncDesignTodosAction(
 export async function listProjectTasksAction(projectId: string) {
   if (!projectId) return [];
   return listTasks(projectId);
-}
-
-/* -- Crew ------------------------------------------------------------- */
-
-export async function createCrewAction(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const role = String(formData.get("role") ?? "tradesperson") as CrewRole;
-  const phone = String(formData.get("phone") ?? "").trim() || null;
-  const email = String(formData.get("email") ?? "").trim() || null;
-  const rateRaw = String(formData.get("hourly_rate") ?? "0");
-  const hourly_rate = Number.isFinite(Number(rateRaw)) ? Number(rateRaw) : 0;
-  if (!name) return;
-  await createCrewApi({ name, role, phone, email, hourly_rate });
-  revalidatePath("/settings/crew");
-}
-
-export async function deleteCrewAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  if (!id) return;
-  await deleteCrewApi(id);
-  revalidatePath("/settings/crew");
-}
-
-/* -- Design assets (catalog) ------------------------------------------ */
-
-export async function createCatalogSymbolAction(formData: FormData) {
-  const label = String(formData.get("label") ?? "").trim();
-  const category = String(
-    formData.get("category") ?? "planting",
-  ) as CreateCatalogSymbolInput["category"];
-  const path_d = String(formData.get("path_d") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const rate_card_sku = String(formData.get("rate_card_sku") ?? "").trim();
-  const preview_bg = String(formData.get("preview_bg") ?? "").trim();
-  const accent = String(formData.get("accent") ?? "").trim();
-  if (!label || !path_d) throw new Error("Label and SVG path are required");
-  const input: CreateCatalogSymbolInput = {
-    label,
-    category,
-    path_d,
-  };
-  if (description) input.description = description;
-  if (rate_card_sku) input.rate_card_sku = rate_card_sku;
-  if (preview_bg) input.preview_bg = preview_bg;
-  if (accent) input.accent = accent;
-  try {
-    await createCatalogSymbolApi(input);
-  } catch (err) {
-    throw wrapApiError(err, "Failed to upload design asset");
-  }
-  revalidatePath("/settings/design-assets");
-}
-
-export async function deleteCatalogSymbolAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  if (!id.startsWith("custom-")) return;
-  try {
-    await deleteCatalogSymbolApi(id);
-  } catch (err) {
-    throw wrapApiError(err, "Failed to delete design asset");
-  }
-  revalidatePath("/settings/design-assets");
-}
-
-/* -- Rate card -------------------------------------------------------- */
-
-export async function updateRateAction(formData: FormData) {
-  const sku = String(formData.get("sku") ?? "");
-  const rateRaw = String(formData.get("rate") ?? "");
-  const rate = Number(rateRaw);
-  if (!sku || !Number.isFinite(rate) || rate < 0) return;
-  await updateRateCardItemApi(sku, { rate });
-  revalidatePath("/settings/rate-card");
-}
-
-/* -- Integrations ----------------------------------------------------- */
-
-export async function setIntegrationAction(formData: FormData) {
-  const key = String(formData.get("key") ?? "").trim();
-  const value = String(formData.get("value") ?? "").trim();
-  if (!key || !value) throw new Error("Key and value are required");
-  try {
-    await setIntegrationApi(key, value);
-  } catch (err) {
-    throw wrapApiError(err, "Could not save integration");
-  }
-  revalidatePath("/settings");
-}
-
-export async function clearIntegrationAction(formData: FormData) {
-  const key = String(formData.get("key") ?? "").trim();
-  if (!key) throw new Error("Missing integration key");
-  try {
-    await deleteIntegrationApi(key);
-  } catch (err) {
-    throw wrapApiError(err, "Could not clear integration");
-  }
-  revalidatePath("/settings");
-}
-
-export async function testIntegrationAction(
-  channel: string,
-  toEmail?: string,
-): Promise<{ ok: boolean; detail: string }> {
-  const { testIntegrationApi } = await import("../lib/api");
-  const result = await testIntegrationApi(channel, toEmail);
-  revalidatePath("/settings");
-  return result;
-}
-
-export async function upgradePlanAction(plan: "lite" | "studio"): Promise<void> {
-  const { upgradeWorkspacePlanApi } = await import("../lib/api");
-  await upgradeWorkspacePlanApi(plan);
-  revalidatePath("/settings");
-  revalidatePath("/settings/license");
-}
-
-export async function startStudioCheckoutAction(): Promise<{
-  checkout_url: string;
-  mode: "live" | "dev_fallback";
-}> {
-  const { startStudioCheckoutApi } = await import("../lib/api");
-  const result = await startStudioCheckoutApi();
-  revalidatePath("/settings/license");
-  return result;
-}
-
-export async function startSeatCheckoutAction(extraSeats = 1): Promise<{
-  checkout_url: string;
-  mode: "live" | "dev_fallback";
-  seat_limit: number;
-}> {
-  const { startSeatCheckoutApi } = await import("../lib/api");
-  const result = await startSeatCheckoutApi(extraSeats);
-  revalidatePath("/settings/license");
-  return result;
-}
-
-export async function inviteWorkspaceMemberAction(userId: string): Promise<void> {
-  const { inviteWorkspaceMemberApi } = await import("../lib/api");
-  await inviteWorkspaceMemberApi(userId);
-  revalidatePath("/settings/license");
-}
-
-export async function removeWorkspaceMemberAction(userId: string): Promise<void> {
-  const { removeWorkspaceMemberApi } = await import("../lib/api");
-  await removeWorkspaceMemberApi(userId);
-  revalidatePath("/settings/license");
 }
 
 export type PortalLinkState = {
