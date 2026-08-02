@@ -6,20 +6,29 @@ import {
   elevationLookProjector,
   type ElevationLook,
 } from "@workstream/domain";
-import { BY_TYPE, type StudioItem } from "../../studioCatalog";
+import type { StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import {
   elevationLabelText,
   layoutElevationLabels,
 } from "../../geometry";
+import { BOARD_WIDTH_M_AT_100 } from "../ground/groundMetrics";
 import { PlanThumbnail } from "./PlanThumbnail";
+import { ElevationTextureDefs } from "./ElevationTextureDefs";
+import { GardenElevationGlyph } from "./GardenElevationGlyph";
 import {
-  SEMANTIC_LIGHT,
+  elevationBars,
+  elevationBuildingBox,
+  elevationCeilingM,
+  elevationParcelWidthM,
+  elevationSpan,
+  type ElevationPlot,
+} from "./elevationBars";
+import {
   mixOnHex,
+  semanticForTheme,
 } from "../../../../../styles/colorTokens";
 import css from "./elevation.module.css";
-
-const L = SEMANTIC_LIGHT;
 
 /** ViewBox height — geometry only; labels are HTML so they never stretch. */
 const VB_H = 40;
@@ -28,12 +37,25 @@ const PLOT_H = 30;
 const PLOT_X0 = 10;
 const PLOT_W = 78;
 
+/** The board's plot in its own viewBox units. */
+const PLOT: ElevationPlot = {
+  x0: PLOT_X0,
+  w: PLOT_W,
+  groundY: GROUND_Y,
+  h: PLOT_H,
+};
+
+/** Indicative bar widths when nothing knows the asset's spread. */
+const FALLBACK_WIDTH = { ghost: 1.6, wide: 3.2, narrow: 2.2 } as const;
+
 type Props = {
   look: ElevationLook;
   boundary: PctPoint[];
   building: PctPoint[];
   items: StudioItem[];
   selectedId: string | null;
+  /** Metres across the full board width — the live calibrated plan scale. */
+  scaleM?: number;
   /** Night lens (pass the studio's darkLens — elevation joins the night). */
   dark?: boolean;
   onSelect: (id: string | null) => void;
@@ -48,13 +70,12 @@ function vbToPct(x: number, y: number) {
   };
 }
 
-function alongPct(p: PctPoint, axis: "x" | "y", reverse: boolean): number {
-  const raw = axis === "x" ? p.x : p.y;
-  return reverse ? 100 - raw : raw;
-}
-
 /**
  * Cardinal elevation — look toward title N/S/E/W.
+ *
+ * Every profile is a real garden silhouette: family, mature height, spread and
+ * callout name come from the shared `elevationBars` layout, so a pleached
+ * hornbeam draws as a panel on stems and a 7.8 m tree overtops the dwelling.
  * Geometry in a stretch SVG; ticks + callouts as fixed-px HTML.
  */
 export function ElevationBoard({
@@ -63,90 +84,68 @@ export function ElevationBoard({
   building,
   items,
   selectedId,
+  scaleM = BOARD_WIDTH_M_AT_100,
   dark = false,
   onSelect,
   onCycleLook,
   onTraceInPlan,
 }: Props) {
+  const ink = semanticForTheme(dark);
   const proj = elevationLookProjector(look);
-  const coords = boundary.map((p) => alongPct(p, proj.axis, proj.reverse));
-  const minC = Math.min(...coords);
-  const maxC = Math.max(...coords);
-  const span = Math.max(1, maxC - minC);
-  const widthM = (span / 100) * 110;
+  const widthM = elevationParcelWidthM(
+    elevationSpan(boundary, look).span,
+    scaleM,
+  );
 
-  const bCoords = building.map((p) => alongPct(p, proj.axis, proj.reverse));
-  const b0 = bCoords.length
-    ? PLOT_X0 + ((Math.min(...bCoords) - minC) / span) * PLOT_W
-    : PLOT_X0 + PLOT_W * 0.22;
-  const b1 = bCoords.length
-    ? PLOT_X0 + ((Math.max(...bCoords) - minC) / span) * PLOT_W
-    : PLOT_X0 + PLOT_W * 0.55;
+  /** One vertical scale for the ticks, the dwelling mass and every profile. */
+  const ceilingM = useMemo(() => elevationCeilingM(items), [items]);
 
-  const maxHM = useMemo(() => {
-    const tallest = items
-      .filter((i) => BY_TYPE[i.t].heightM)
-      .reduce((m, it) => Math.max(m, (BY_TYPE[it.t].heightM ?? 1) * it.scale), 0);
-    if (tallest <= 0) return 6;
-    return Math.min(12, Math.max(tallest + 0.75, tallest * 1.2));
-  }, [items]);
+  const bars = useMemo(
+    () =>
+      elevationBars(items, {
+        look,
+        boundary,
+        scaleM,
+        plot: PLOT,
+        ceilingM,
+        fallbackWidth: FALLBACK_WIDTH,
+        selectedId,
+      }),
+    [items, look, boundary, scaleM, ceilingM, selectedId],
+  );
 
-  const elevItems = useMemo(() => {
-    return items
-      .filter((i) => BY_TYPE[i.t].heightM)
-      .map((it) => {
-        const d = BY_TYPE[it.t];
-        const hm = (d.heightM ?? 1) * it.scale;
-        const c = alongPct(
-          { x: it.x, y: it.y },
-          proj.axis,
-          proj.reverse,
-        );
-        const x = PLOT_X0 + ((c - minC) / span) * PLOT_W;
-        const h = (hm / maxHM) * PLOT_H;
-        const y = GROUND_Y - h;
-        const w =
-          it.ghost
-            ? 1.6
-            : d.elevShape === "hedge" || d.elevShape === "deck"
-              ? 3.2
-              : 2.2;
-        return {
-          it,
-          d,
-          hm,
-          x,
-          y,
-          w,
-          h,
-          selected: it.id === selectedId && !it.ghost,
-        };
-      });
-  }, [items, proj.axis, proj.reverse, minC, span, selectedId, maxHM]);
+  const bld = useMemo(
+    () =>
+      elevationBuildingBox(building, {
+        look,
+        boundary,
+        plot: PLOT,
+        ceilingM,
+      }),
+    [building, look, boundary, ceilingM],
+  );
 
   const labelPlacements = useMemo(
     () =>
       layoutElevationLabels(
-        elevItems.map((e) => ({
-          id: e.it.id,
-          barX: e.x + e.w / 2,
-          barTopY: e.y,
-          text: elevationLabelText(e.d.tag, e.hm),
+        bars.map((bar) => ({
+          id: bar.item.id,
+          barX: bar.box.x + bar.box.w / 2,
+          barTopY: bar.box.y,
+          text: elevationLabelText(bar.tag, bar.heightM),
         })),
         { viewW: 100, viewH: VB_H, pad: 1 },
       ),
-    [elevItems],
+    [bars],
   );
 
   const ticks = useMemo(() => {
     const steps = 4;
     return Array.from({ length: steps + 1 }, (_, i) => {
       const t = i / steps;
-      const m = maxHM * t;
-      const y = GROUND_Y - t * PLOT_H;
-      return { m, y, t };
+      return { m: ceilingM * t, y: GROUND_Y - t * PLOT_H, t };
     });
-  }, [maxHM]);
+  }, [ceilingM]);
 
   return (
     <div
@@ -186,6 +185,7 @@ export function ElevationBoard({
         building={building}
         items={items}
         selectedId={selectedId}
+        night={dark}
       />
       <div className={css.stage}>
         <svg
@@ -194,6 +194,12 @@ export function ElevationBoard({
           preserveAspectRatio="none"
           aria-hidden
         >
+          {/* Material textures — the glyph washes under them, so a missing
+              def degrades to a flat silhouette rather than an invisible one. */}
+          <defs>
+            <ElevationTextureDefs />
+          </defs>
+
           <g data-layer="datum">
             {ticks.map(({ y, t }) => (
               <line
@@ -202,7 +208,7 @@ export function ElevationBoard({
                 y1={y}
                 x2={PLOT_X0 + PLOT_W + 4}
                 y2={y}
-                stroke={mixOnHex(L.textMuted, 28, L.canvas)}
+                stroke={mixOnHex(ink.textMuted, 28, ink.canvas)}
                 strokeWidth={0.3}
                 vectorEffect="non-scaling-stroke"
               />
@@ -212,7 +218,7 @@ export function ElevationBoard({
               y1={GROUND_Y}
               x2={PLOT_X0 + PLOT_W + 4}
               y2={GROUND_Y}
-              stroke={mixOnHex(L.textPrimary, 45, L.canvas)}
+              stroke={mixOnHex(ink.textPrimary, 45, ink.canvas)}
               strokeWidth={0.7}
               vectorEffect="non-scaling-stroke"
             />
@@ -220,43 +226,33 @@ export function ElevationBoard({
 
           <g data-layer="building">
             <rect
-              x={b0}
-              y={GROUND_Y - PLOT_H * 0.55}
-              width={Math.max(3, b1 - b0)}
-              height={PLOT_H * 0.55}
-              fill={mixOnHex(L.textPrimary, 5, L.canvas)}
-              stroke={L.textPrimary}
+              x={bld.x}
+              y={bld.y}
+              width={bld.w}
+              height={bld.h}
+              fill={mixOnHex(ink.textPrimary, 5, ink.canvas)}
+              stroke={ink.textPrimary}
               strokeWidth={0.6}
               vectorEffect="non-scaling-stroke"
             />
           </g>
 
           <g data-layer="vegetation">
-            {elevItems.map(({ it, x, y, w, h, selected }) => (
+            {bars.map((bar) => (
               <g
-                key={it.id}
-                style={{ cursor: it.ghost ? "default" : "pointer" }}
+                key={bar.item.id}
+                style={{ cursor: bar.item.ghost ? "default" : "pointer" }}
                 onClick={() => {
-                  if (!it.ghost) onSelect(it.id);
+                  if (!bar.item.ghost) onSelect(bar.item.id);
                 }}
               >
-                <rect
-                  x={x}
-                  y={y}
-                  width={w}
-                  height={h}
-                  fill={
-                    it.ghost
-                      ? mixOnHex(L.textPrimary, 6, L.canvas)
-                      : mixOnHex(L.textPrimary, 10, L.canvas)
-                  }
-                  stroke={
-                    selected ? L.textPrimary : it.ghost ? L.textMuted : L.textPrimary
-                  }
-                  strokeWidth={selected ? 0.9 : 0.55}
-                  strokeDasharray={it.ghost ? "1.5 1.2" : undefined}
-                  vectorEffect="non-scaling-stroke"
-                  opacity={it.ghost ? 0.55 : 1}
+                <GardenElevationGlyph
+                  family={bar.family}
+                  box={bar.box}
+                  night={dark}
+                  ghost={bar.item.ghost}
+                  selected={bar.selected}
+                  textured
                 />
               </g>
             ))}
@@ -271,7 +267,7 @@ export function ElevationBoard({
                   y1={p.leader.y1}
                   x2={p.leader.x2}
                   y2={p.leader.y2}
-                  stroke={L.textPrimary}
+                  stroke={ink.textPrimary}
                   strokeWidth={0.35}
                   vectorEffect="non-scaling-stroke"
                   opacity={0.55}
@@ -296,19 +292,18 @@ export function ElevationBoard({
           })}
 
           {labelPlacements.map((p) => {
-            const active =
-              elevItems.find((e) => e.it.id === p.id)?.selected ?? false;
+            const bar = bars.find((b) => b.item.id === p.id);
             const pos = vbToPct(p.x, p.y);
             return (
               <button
                 key={`lbl-${p.id}`}
                 type="button"
-                className={`${css.label}${active ? ` ${css.labelActive}` : ""}`}
+                className={`${css.label}${bar?.selected ? ` ${css.labelActive}` : ""}`}
                 data-testid="elevation-label"
+                data-elev-family={bar?.family ?? "plain"}
                 style={{ left: pos.left, top: pos.top }}
                 onClick={() => {
-                  const item = elevItems.find((e) => e.it.id === p.id)?.it;
-                  if (item && !item.ghost) onSelect(item.id);
+                  if (bar && !bar.item.ghost) onSelect(bar.item.id);
                 }}
               >
                 {p.text}

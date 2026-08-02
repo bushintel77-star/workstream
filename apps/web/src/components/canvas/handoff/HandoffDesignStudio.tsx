@@ -3547,6 +3547,7 @@ export function HandoffDesignStudio({
             building={studio.building}
             items={studio.items}
             selectedId={ui.selectedId}
+            scaleM={scaleM}
             dark={darkLens}
             onSelect={(id) => studio.setUi({ selectedId: id })}
             onCycleLook={() =>
