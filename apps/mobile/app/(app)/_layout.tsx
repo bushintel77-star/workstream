@@ -25,7 +25,7 @@ export default function AppLayout() {
         name="new-project"
         options={{
           headerShown: true,
-          title: "New Project",
+          title: "New project",
           headerStyle: { backgroundColor: tokens.color.surface.base },
           headerTintColor: tokens.color.ink.primary,
         }}
@@ -75,7 +75,7 @@ export default function AppLayout() {
         name="filing/[id]"
         options={{
           headerShown: true,
-          title: "Plans & pics",
+          title: "Plans and photos",
           headerStyle: { backgroundColor: tokens.color.surface.base },
           headerTintColor: tokens.color.ink.primary,
         }}

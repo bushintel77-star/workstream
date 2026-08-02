@@ -1,11 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { tokens } from "@workstream/ui";
 import { useAppAuth } from "../../../src/lib/auth";
 
 const ROWS = [
   { label: "Crew", href: "/(app)/settings/crew" as const },
-  { label: "Rate Card", href: "/(app)/settings/rate-card" as const },
-  { label: "Plant Palette", href: "/(app)/settings/plant-palette" as const },
+  { label: "Rate card", href: "/(app)/settings/rate-card" as const },
+  { label: "Plant palette", href: "/(app)/settings/plant-palette" as const },
   { label: "MYOB", href: "/(app)/settings/myob" as const },
 ] as const;
 
@@ -40,46 +41,50 @@ export default function SettingsIndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    backgroundColor: tokens.color.surface.base,
+    paddingHorizontal: tokens.space[5],
+    paddingTop: tokens.space[4],
   },
   cards: {
-    gap: 10,
+    gap: tokens.space[2],
   },
   card: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
+    minHeight: 44,
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
     borderWidth: 1,
-    borderColor: "#E4E4E7",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderColor: tokens.color.line.hairline,
+    paddingHorizontal: tokens.space[4],
+    paddingVertical: tokens.space[3],
   },
   cardLabel: {
-    fontSize: 15,
+    fontSize: tokens.type.body.fontSize,
     fontWeight: "500",
-    color: "#18181B",
+    color: tokens.color.ink.primary,
   },
   chevron: {
     fontSize: 20,
-    color: "#A1A1AA",
+    color: tokens.color.ink.tertiary,
     fontWeight: "300",
   },
   footer: {
     flex: 1,
     justifyContent: "flex-end",
-    paddingBottom: 32,
+    paddingBottom: tokens.space[6],
     alignItems: "center",
   },
   signOutButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingVertical: tokens.space[3],
+    paddingHorizontal: tokens.space[5],
   },
   signOutText: {
-    fontSize: 15,
+    fontSize: tokens.type.body.fontSize,
     fontWeight: "500",
-    color: "#B91C1C",
+    color: tokens.color.semantic.block,
   },
 });

@@ -120,7 +120,7 @@ export default function HomeScreen() {
         </Text>
         <Pressable
           onPress={() => router.push("/(app)/settings")}
-          hitSlop={12}
+          hitSlop={16}
           accessibilityRole="link"
           accessibilityLabel="Open settings"
         >
@@ -135,7 +135,7 @@ export default function HomeScreen() {
       ) : error ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={load} hitSlop={12}>
+          <Pressable onPress={load} hitSlop={16}>
             <Text style={styles.retry}>Retry</Text>
           </Pressable>
         </View>

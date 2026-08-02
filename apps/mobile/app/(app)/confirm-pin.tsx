@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   error: {
-    color: "#c4463b",
+    color: tokens.color.semantic.block,
     fontSize: tokens.type.body.fontSize,
   },
   link: {
