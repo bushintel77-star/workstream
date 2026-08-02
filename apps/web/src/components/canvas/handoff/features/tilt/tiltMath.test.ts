@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BILLBOARD_MIN_W_PX,
   LIGHT_AZIMUTH_DEG,
   ROOF_LIGHTNESS,
   TILT_DEG,
@@ -84,6 +85,26 @@ describe("tiltMath", () => {
     expect(at2.height).toBe("120px");
     expect(at1.transform).toBe(`rotateX(-${TILT_DEG}deg)`);
     expect(at1.transformOrigin).toBe("bottom center");
+    // No spread given — the face keeps its CSS sprite width.
+    expect(at1.width).toBeUndefined();
+    expect(at1.marginLeft).toBeUndefined();
+  });
+
+  it("sizes the standing face at real spread when one is known", () => {
+    const ppm = pxPerMetre(1100, 110, 1);
+    const face = billboardStyle(6, ppm, TILT_DEG, 6.5);
+    expect(face.width).toBe("65px");
+    // Centred on the plan position.
+    expect(face.marginLeft).toBe("-32.5px");
+  });
+
+  it("keeps a hairline spread visible and ignores a missing one", () => {
+    const ppm = pxPerMetre(1100, 110, 1);
+    expect(billboardStyle(1, ppm, TILT_DEG, 0.1).width).toBe(
+      `${BILLBOARD_MIN_W_PX}px`,
+    );
+    expect(billboardStyle(1, ppm, TILT_DEG, null).width).toBeUndefined();
+    expect(billboardStyle(1, ppm, TILT_DEG, 0).width).toBeUndefined();
   });
 
   it("isTiltActive only when meaningfully tilted", () => {

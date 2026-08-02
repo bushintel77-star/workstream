@@ -42,6 +42,7 @@ import {
   polygonCentroid,
 } from "../../geometry/foundationCadContext";
 import { boardPctToClientOffset } from "../../geometry/cameraPointer";
+import { hasElevationPresence } from "../../geometry/itemHeight";
 import {
   placeScheduleCards,
   scheduleCardTransform,
@@ -1968,10 +1969,10 @@ export function CadPlanBoard({
                       {`Canopy · Ø ${(
                         ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
                       ).toFixed(1)} m at ${ring.stage === "plant"
-                          ? "Year 1"
-                          : ring.stage === "5yr"
-                            ? "Year 5"
-                            : "Year 10"
+                        ? "Year 1"
+                        : ring.stage === "5yr"
+                          ? "Year 5"
+                          : "Year 10"
                         }${ring.crowded ? " · crowding" : ""}`}
                     </title>
                   </path>
@@ -1990,10 +1991,10 @@ export function CadPlanBoard({
                       {`Canopy · Ø ${(
                         ring.mature_spread_m * growthStageSpreadFactor(ring.stage)
                       ).toFixed(1)} m at ${ring.stage === "plant"
-                          ? "Year 1"
-                          : ring.stage === "5yr"
-                            ? "Year 5"
-                            : "Year 10"
+                        ? "Year 1"
+                        : ring.stage === "5yr"
+                          ? "Year 5"
+                          : "Year 10"
                         }${ring.crowded ? " · crowding" : ""}`}
                     </title>
                   </ellipse>
@@ -2428,8 +2429,9 @@ export function CadPlanBoard({
               : null;
           const showAiChip = it.ghost && (isCur || hovered);
           const showGhostActions = isCur && !frameOn && !reviewOpen;
+          const standsInElevation = hasElevationPresence(it);
           const showTracePill =
-            selected && !it.ghost && !!d.heightM && !frameOn;
+            selected && !it.ghost && standsInElevation && !frameOn;
           return (
             <div key={it.id}>
               <div
@@ -2448,7 +2450,7 @@ export function CadPlanBoard({
                   height: h,
                   borderRadius: d.br,
                   opacity:
-                    tiltLocked && (d.heightM ?? 0) > 0
+                    tiltLocked && standsInElevation
                       ? 0
                       : (it.ghost ? 0.45 : 1) * layerVisual.opacity * underlayOp,
                   pointerEvents:
@@ -2591,6 +2593,7 @@ export function CadPlanBoard({
                       type={it.t}
                       ink={!darkOn || frameOn}
                       night={darkOn && !frameOn}
+                      symbolId={it.symbolId}
                     />
                   )}
                 </div>
@@ -3022,7 +3025,7 @@ export function CadPlanBoard({
               tiltDeg={tiltDeg}
             />
             {items
-              .filter((it) => !it.ghost && (BY_TYPE[it.t]?.heightM ?? 0) > 0)
+              .filter((it) => !it.ghost && hasElevationPresence(it))
               .map((it) => (
                 <TiltBillboard
                   key={`tilt-${it.id}`}
@@ -3030,6 +3033,7 @@ export function CadPlanBoard({
                   ppm={tiltPpm}
                   tiltDeg={tiltDeg}
                   ink={!darkOn || frameOn}
+                  growth={growthFactor(growth, false)}
                 />
               ))}
           </>

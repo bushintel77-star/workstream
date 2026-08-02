@@ -3,6 +3,13 @@
 import type { StudioItem, StudioItemType } from "../../studioCatalog";
 import { BY_TYPE } from "../../studioCatalog";
 import { StudioGlyph } from "../../StudioGlyph";
+import {
+  hasElevationPresence,
+  resolveItemFamily,
+  resolveItemHeightGrownM,
+  resolveItemSpreadGrownM,
+} from "../../geometry/itemHeight";
+import { GardenElevationGlyph } from "../elevation/GardenElevationGlyph";
 import { billboardStyle } from "./tiltMath";
 import css from "./tilt.module.css";
 
@@ -11,17 +18,32 @@ type Props = {
   ppm: number;
   tiltDeg: number;
   ink: boolean;
+  /** Growth stage factor — existing trees are exempt inside the resolvers. */
+  growth?: number;
 };
 
 /**
- * Standing sprite for planted items with height — plan glyph stays as a
- * dimmed footprint; the face counters the world rotateX so it reads upright.
+ * Standing sprite for planted items with height.
+ *
+ * The plan glyph stays as a dimmed footprint; the standing face is the *same
+ * orthographic silhouette the elevation board draws* (tree on a trunk, pleached
+ * panel on stems, deck on posts), sized at real spread × mature height, so the
+ * tilt lens and the elevation agree. The face counters the world rotateX so it
+ * reads upright.
+ *
+ * Untextured by design — `ElevationTextureDefs` is mounted once by the
+ * elevation board, so the glyph's flat token wash is the tilt look.
  */
-export function TiltBillboard({ item, ppm, tiltDeg, ink }: Props) {
+export function TiltBillboard({ item, ppm, tiltDeg, ink, growth = 1 }: Props) {
   const d = BY_TYPE[item.t as StudioItemType];
-  const heightM = d?.heightM ?? 0;
-  if (heightM <= 0 || tiltDeg < 0.5) return null;
-  const face = billboardStyle(heightM, ppm, tiltDeg);
+  if (!hasElevationPresence(item) || tiltDeg < 0.5) return null;
+  const heightM = resolveItemHeightGrownM(item, growth);
+  const face = billboardStyle(
+    heightM,
+    ppm,
+    tiltDeg,
+    resolveItemSpreadGrownM(item, growth),
+  );
   const footprintW = Math.max(12, Math.round((d?.w ?? 24) * item.scale));
   const footprintH = Math.max(10, Math.round((d?.h ?? 20) * item.scale));
 
@@ -39,10 +61,23 @@ export function TiltBillboard({ item, ppm, tiltDeg, ink }: Props) {
         className={css.footprint}
         style={{ width: footprintW, height: footprintH }}
       >
-        <StudioGlyph type={item.t} ink={ink} />
+        <StudioGlyph type={item.t} ink={ink} symbolId={item.symbolId} />
       </div>
       <div className={css.billboardFace} style={face}>
-        <StudioGlyph type={item.t} ink={ink} />
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          overflow="visible"
+          data-elev-family={resolveItemFamily(item) ?? "plain"}
+          aria-hidden
+        >
+          <GardenElevationGlyph
+            family={resolveItemFamily(item)}
+            box={{ x: 0, y: 0, w: 100, h: 100 }}
+            night={!ink}
+            ghost={item.ghost}
+          />
+        </svg>
       </div>
     </div>
   );

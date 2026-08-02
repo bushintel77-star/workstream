@@ -110,21 +110,38 @@ export function pxPerMetre(
   return (w / m) * z;
 }
 
-/** Standing billboard CSS for a planted item of known height. */
+/** Narrowest standing face — a hairline sprite is worse than a thin one. */
+export const BILLBOARD_MIN_W_PX = 6;
+
+/**
+ * Standing billboard CSS for a planted item of known height.
+ *
+ * Pass `spreadM` to size the face at its real mature spread as well — the
+ * silhouette then stands at true proportions instead of a fixed sprite width.
+ */
 export function billboardStyle(
   heightM: number,
   ppm: number,
   tiltDeg: number,
+  spreadM?: number | null,
 ): {
   transform: string;
   transformOrigin: string;
   height: string;
+  width?: string;
+  marginLeft?: string;
 } {
-  const h = Math.max(0, heightM) * Math.max(0, ppm);
+  const px = Math.max(0, ppm);
+  const h = Math.max(0, heightM) * px;
+  const w =
+    spreadM != null && spreadM > 0
+      ? Math.max(BILLBOARD_MIN_W_PX, spreadM * px)
+      : null;
   return {
     transform: `rotateX(${-tiltDeg}deg)`,
     transformOrigin: "bottom center",
     height: `${h}px`,
+    ...(w != null ? { width: `${w}px`, marginLeft: `${-w / 2}px` } : {}),
   };
 }
 

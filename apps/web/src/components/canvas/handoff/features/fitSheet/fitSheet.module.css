@@ -35,9 +35,11 @@
   0% {
     transform: scale(1);
   }
+
   40% {
     transform: scale(1.012);
   }
+
   100% {
     transform: scale(1);
   }
@@ -153,7 +155,7 @@
   min-width: 0;
 }
 
-.panelStrip > * {
+.panelStrip>* {
   flex: 1 1 0;
   min-width: 72px;
   max-width: 100%;
@@ -163,7 +165,7 @@
   overflow: hidden;
 }
 
-.panelStrip > *:last-child {
+.panelStrip>*:last-child {
   border-right: none;
 }
 
@@ -373,7 +375,7 @@
   min-height: 48px;
 }
 
-.elevRow + .elevRow {
+.elevRow+.elevRow {
   border-top: 1px solid var(--hc-line);
   padding-top: 8px;
 }
@@ -409,22 +411,15 @@
   white-space: nowrap;
 }
 
-.elevBld {
+/* Silhouette strip — shares the datum with .elevGround (left 2% / right 36px) */
+.elevProfile {
   position: absolute;
+  left: 2%;
+  right: 36px;
   bottom: 14px;
+  height: 28px;
   z-index: var(--ws-z-annotate);
-  background: var(--hc-line-soft);
-  border: 1.2px solid var(--hc-ink);
-  box-sizing: border-box;
-}
-
-.elevItem {
-  position: absolute;
-  bottom: 14px;
-  z-index: var(--ws-z-annotate);
-  transform: translateX(-50%);
-  border-radius: 2px 2px 0 0;
-  box-sizing: border-box;
+  overflow: visible;
 }
 
 .elevWidth {

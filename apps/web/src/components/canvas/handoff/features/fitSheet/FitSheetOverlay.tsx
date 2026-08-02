@@ -23,6 +23,16 @@ import {
   type ElevationLook,
 } from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
+import {
+  elevationBars,
+  elevationBuildingBox,
+  elevationCeilingM,
+  elevationParcelWidthM,
+  elevationSpan,
+  type ElevationBar,
+} from "../elevation/elevationBars";
+import type { ElevBox } from "../elevation/gardenElevationGeometry";
+import { GardenElevationGlyph } from "../elevation/GardenElevationGlyph";
 import { SEMANTIC_LIGHT, mixOnHex } from "../../../../../styles/colorTokens";
 import type { IrrigationZone, PresentationPack } from "@workstream/contracts";
 import { widgetsInSlot } from "@workstream/domain";
@@ -73,89 +83,69 @@ type Props = {
 type ElevProfile = {
   label: string;
   widthM: number;
-  bld0: number;
-  bldW: number;
-  bH: number;
-  items: Array<{
-    x: number;
-    wPx: number;
-    hPx: number;
-    fill: string;
-    stroke: string;
-    dash: string;
-  }>;
+  building: ElevBox;
+  bars: ElevationBar[];
 };
 
-function alongPct(
-  p: { x: number; y: number },
-  axis: "x" | "y",
-  reverse: boolean,
-): number {
-  const raw = axis === "x" ? p.x : p.y;
-  return reverse ? 100 - raw : raw;
+/**
+ * Elevation strip geometry, in px — the SVG viewBox is sized 1 unit = 1 px so
+ * the silhouettes (trunks, deck posts, clip ticks) render undistorted inside
+ * each bar. Values track `.elevRow` / `.elevGround` in fitSheet.module.css.
+ */
+const SHEET_ROW_H = 56;
+/** `.elevStack` horizontal padding. */
+const SHEET_ROW_PAD_X = 14;
+/** Right-hand reserve for the site-width readout (`.elevGround` right). */
+const SHEET_WIDTH_LABEL_W = 36;
+/** Drawable height above the datum. */
+const SHEET_PLOT_H = SHEET_ROW_H - 28;
+/** `.elevGround` starts 2% in. */
+const SHEET_PLOT_INSET = 0.98;
+/** Indicative bar widths (px) — see ElevationBarWidthMode for why. */
+const SHEET_BAR_WIDTH = { ghost: 4, wide: 6, narrow: 5 } as const;
+
+function sheetPlotW(panelW: number): number {
+  const row = panelW - SHEET_ROW_PAD_X * 2;
+  return Math.max(40, row * SHEET_PLOT_INSET - SHEET_WIDTH_LABEL_W);
 }
 
+/**
+ * One elevation row.
+ *
+ * Heights, silhouette families and callout names come from the shared
+ * `elevationBars` layout, so the sheet and the elevation board cannot disagree
+ * about how tall a placement stands or what it looks like. Bar widths stay
+ * indicative here: the strip squeezes the whole datum into 28 px.
+ */
 function buildElevProfile(
   look: ElevationLook,
   boundary: PctPoint[],
   building: PctPoint[],
   items: StudioItem[],
   scaleM: number,
-  rowH: number,
+  plotW: number,
 ): ElevProfile {
-  const proj = elevationLookProjector(look);
-  const coords = boundary.map((p) => alongPct(p, proj.axis, proj.reverse));
-  const minC = Math.min(...coords);
-  const maxC = Math.max(...coords);
-  const span = Math.max(1, maxC - minC);
-  const widthM = (span / 100) * scaleM;
-
-  const bCoords = building.map((p) => alongPct(p, proj.axis, proj.reverse));
-  const b0 = bCoords.length
-    ? ((Math.min(...bCoords) - minC) / span) * 96 + 2
-    : 30;
-  const b1 = bCoords.length
-    ? ((Math.max(...bCoords) - minC) / span) * 96 + 2
-    : 55;
-  const eaveH = 5;
-  const maxHM = Math.max(
-    eaveH,
-    ...items
-      .filter((i) => BY_TYPE[i.t].heightM)
-      .map((i) => (BY_TYPE[i.t].heightM ?? 1) * i.scale),
-    1,
-  ) + 1;
-  const usable = rowH - 28;
-  const bH = (eaveH / maxHM) * usable;
-
-  const elevItems = items
-    .filter((i) => BY_TYPE[i.t].heightM)
-    .map((it) => {
-      const d = BY_TYPE[it.t];
-      const c = alongPct({ x: it.x, y: it.y }, proj.axis, proj.reverse);
-      const x = ((c - minC) / span) * 96 + 2;
-      const hm = (d.heightM ?? 1) * it.scale;
-      return {
-        x,
-        wPx: it.ghost ? 4 : 5,
-        hPx: (hm / maxHM) * usable,
-        fill: it.ghost
-          ? mixOnHex(SEMANTIC_LIGHT.textPrimary, 5, SEMANTIC_LIGHT.canvas)
-          : mixOnHex(SEMANTIC_LIGHT.textPrimary, 10, SEMANTIC_LIGHT.canvas),
-        stroke: it.ghost
-          ? SEMANTIC_LIGHT.textMuted
-          : SEMANTIC_LIGHT.textPrimary,
-        dash: it.ghost ? "dashed" : "solid",
-      };
-    });
-
+  const plot = { x0: 0, w: plotW, groundY: SHEET_PLOT_H, h: SHEET_PLOT_H };
+  const ceilingM = elevationCeilingM(items);
   return {
-    label: proj.label.toUpperCase(),
-    widthM,
-    bld0: b0,
-    bldW: Math.max(2, b1 - b0),
-    bH,
-    items: elevItems,
+    label: elevationLookProjector(look).label.toUpperCase(),
+    widthM: elevationParcelWidthM(elevationSpan(boundary, look).span, scaleM),
+    building: elevationBuildingBox(building, {
+      look,
+      boundary,
+      plot,
+      ceilingM,
+      fallbackSpan: { from: 0.29, to: 0.55 },
+    }),
+    bars: elevationBars(items, {
+      look,
+      boundary,
+      scaleM,
+      plot,
+      ceilingM,
+      fallbackWidth: SHEET_BAR_WIDTH,
+      widthMode: "indicative",
+    }),
   };
 }
 
@@ -252,7 +242,7 @@ export function FitSheetOverlay({
       const dir = e.deltaY > 0 ? 1 : -1;
       const next =
         SHEET_SCALE_STEPS[
-          Math.max(0, Math.min(SHEET_SCALE_STEPS.length - 1, idx + dir))
+        Math.max(0, Math.min(SHEET_SCALE_STEPS.length - 1, idx + dir))
         ]!;
       if (next !== scaleDenom) onScaleDenom(next);
     };
@@ -298,9 +288,16 @@ export function FitSheetOverlay({
   const scrimBot = Math.max(0, boardH - box.boxTop - box.boxH);
   const inset = sheetInnerMarginForTemplate(presentationPack?.template_id);
 
+  const elevPanelW = Math.max(
+    140,
+    box.boxW -
+    inset * 2 -
+    (showPanel && !a4Strip ? panelW + SHEET_PANEL_GAP : 0),
+  );
+  const elevPlotW = sheetPlotW(elevPanelW);
+
   const elevProfiles = useMemo(() => {
     if (!showElevations) return [];
-    const rowH = 56;
     const brochure =
       presentationPack?.template_id === "curtis-client-brochure" ||
       presentationPack?.template_id === "curtis-dark-concept";
@@ -309,8 +306,8 @@ export function FitSheetOverlay({
       : elevLook;
     const secondary = elevationLookPair(primary);
     return [
-      buildElevProfile(primary, boundary, building, items, scaleM, rowH),
-      buildElevProfile(secondary, boundary, building, items, scaleM, rowH),
+      buildElevProfile(primary, boundary, building, items, scaleM, elevPlotW),
+      buildElevProfile(secondary, boundary, building, items, scaleM, elevPlotW),
     ];
   }, [
     showElevations,
@@ -319,19 +316,14 @@ export function FitSheetOverlay({
     building,
     items,
     scaleM,
+    elevPlotW,
     presentationPack?.template_id,
   ]);
 
   const elevPanelOn = elevProfiles.length > 0 && box.boxW >= 280;
   const technicalFurniture =
     (presentationPack?.pen ?? "technical") === "technical";
-  const elevPanelW = Math.max(
-    140,
-    box.boxW -
-      inset * 2 -
-      (showPanel && !a4Strip ? panelW + SHEET_PANEL_GAP : 0),
-  );
-  const elevPanelH = 56 * 2 + 34;
+  const elevPanelH = SHEET_ROW_H * 2 + 34;
   /* Elevations sit above the A4 title strip when both are on. */
   const elevBottomExtra = a4Strip
     ? SHEET_TITLE_STRIP_H + SHEET_PANEL_GAP
@@ -388,15 +380,13 @@ export function FitSheetOverlay({
       </div>
 
       <div
-        className={`${css.frame}${pulse ? ` ${css.framePulse}` : ""}${
-          presentationPack?.theme === "ink"
-            ? ` ${composeCss.frameThemeInk}`
-            : ""
-        }${
-          presentationPack?.theme === "deep"
+        className={`${css.frame}${pulse ? ` ${css.framePulse}` : ""}${presentationPack?.theme === "ink"
+          ? ` ${composeCss.frameThemeInk}`
+          : ""
+          }${presentationPack?.theme === "deep"
             ? ` ${composeCss.frameThemeDeep}`
             : ""
-        }`}
+          }`}
         data-testid="fit-sheet-frame"
         data-paper={paper}
         data-scale={scaleTxt}
@@ -427,17 +417,17 @@ export function FitSheetOverlay({
           style={
             a4Strip
               ? {
-                  left: box.boxLeft + inset,
-                  width: box.boxW - inset * 2,
-                  height: SHEET_TITLE_STRIP_H,
-                  bottom: scrimBot + inset,
-                }
+                left: box.boxLeft + inset,
+                width: box.boxW - inset * 2,
+                height: SHEET_TITLE_STRIP_H,
+                bottom: scrimBot + inset,
+              }
               : {
-                  width: panelW,
-                  left: box.boxLeft + box.boxW - panelW - inset,
-                  top: box.boxTop + inset,
-                  bottom: scrimBot + inset,
-                }
+                width: panelW,
+                left: box.boxLeft + box.boxW - panelW - inset,
+                top: box.boxTop + inset,
+                bottom: scrimBot + inset,
+              }
           }
         >
           <div className={css.panelHead} data-testid="fit-sheet-title-block">
@@ -538,7 +528,7 @@ export function FitSheetOverlay({
           </div>
 
           {presentationPack &&
-          widgetsInSlot(presentationPack, "side_stack").length > 0 ? (
+            widgetsInSlot(presentationPack, "side_stack").length > 0 ? (
             <div className={`${css.section} ${css.presentationSection}`}>
               <p className={css.kicker}>Presentation</p>
               <SheetWidgetStack
@@ -616,53 +606,65 @@ export function FitSheetOverlay({
           {elevProfiles.map((pf, idx) => {
             const sectionId = String.fromCharCode(65 + (idx % 26));
             return (
-            <div
-              key={pf.label}
-              className={css.elevRow}
-              data-section-id={technicalFurniture ? sectionId : undefined}
-              data-testid={
-                technicalFurniture
-                  ? `fit-elev-section-${sectionId}`
-                  : "fit-elev-concept"
-              }
-            >
-              {technicalFurniture ? (
-                <span className={css.elevLabel}>
-                  {sectionId}–{sectionId}′ · {pf.label}
-                </span>
-              ) : (
-                <span className={css.elevLabel}>{pf.label}</span>
-              )}
-              {technicalFurniture ? (
-                <div className={css.elevGround} data-testid="fit-elev-datum">
-                  <span className={css.elevDatumLabel}>RL 0.00</span>
-                </div>
-              ) : (
-                <div className={css.elevGround} />
-              )}
               <div
-                className={css.elevBld}
-                style={{
-                  left: `${pf.bld0}%`,
-                  width: `${pf.bldW}%`,
-                  height: pf.bH,
-                }}
-              />
-              {pf.items.map((pi, i) => (
-                <div
-                  key={i}
-                  className={css.elevItem}
-                  style={{
-                    left: `${pi.x}%`,
-                    width: pi.wPx,
-                    height: pi.hPx,
-                    background: pi.fill,
-                    border: `1px ${pi.dash} ${pi.stroke}`,
-                  }}
-                />
-              ))}
-              <span className={css.elevWidth}>{pf.widthM.toFixed(1)} m</span>
-            </div>
+                key={pf.label}
+                className={css.elevRow}
+                data-section-id={technicalFurniture ? sectionId : undefined}
+                data-testid={
+                  technicalFurniture
+                    ? `fit-elev-section-${sectionId}`
+                    : "fit-elev-concept"
+                }
+              >
+                {technicalFurniture ? (
+                  <span className={css.elevLabel}>
+                    {sectionId}–{sectionId}′ · {pf.label}
+                  </span>
+                ) : (
+                  <span className={css.elevLabel}>{pf.label}</span>
+                )}
+                {technicalFurniture ? (
+                  <div className={css.elevGround} data-testid="fit-elev-datum">
+                    <span className={css.elevDatumLabel}>RL 0.00</span>
+                  </div>
+                ) : (
+                  <div className={css.elevGround} />
+                )}
+                {/* Silhouettes share the board's geometry. Untextured on
+                    purpose: ElevationTextureDefs is mounted by the elevation
+                    board, and duplicating those pattern ids in one document is
+                    invalid — the glyph's flat token wash is the print look. */}
+                <svg
+                  className={css.elevProfile}
+                  viewBox={`0 0 ${elevPlotW} ${SHEET_PLOT_H}`}
+                  preserveAspectRatio="none"
+                  aria-hidden
+                >
+                  <rect
+                    x={pf.building.x}
+                    y={pf.building.y}
+                    width={pf.building.w}
+                    height={pf.building.h}
+                    fill={mixOnHex(
+                      SEMANTIC_LIGHT.textPrimary,
+                      5,
+                      SEMANTIC_LIGHT.canvas,
+                    )}
+                    stroke={SEMANTIC_LIGHT.textPrimary}
+                    strokeWidth={1.2}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  {pf.bars.map((bar) => (
+                    <GardenElevationGlyph
+                      key={bar.item.id}
+                      family={bar.family}
+                      box={bar.box}
+                      ghost={bar.item.ghost}
+                    />
+                  ))}
+                </svg>
+                <span className={css.elevWidth}>{pf.widthM.toFixed(1)} m</span>
+              </div>
             );
           })}
         </div>
