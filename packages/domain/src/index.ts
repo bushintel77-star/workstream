@@ -16,6 +16,8 @@ export {
   catalogAssetCode,
   filterCatalogSymbols,
 } from './catalog-assets';
+export * from './garden-size-ladder';
+export * from './garden-asset-height';
 export { OPEN_CROP_SYMBOLS } from './open-crop-symbols';
 export { OSMIC_LANDSCAPE_SYMBOLS } from './osmic-landscape-symbols';
 export {

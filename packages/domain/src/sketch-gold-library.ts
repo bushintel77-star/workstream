@@ -3,6 +3,7 @@ import {
   type CatalogCategory,
   type CatalogSymbol,
 } from "@workstream/contracts";
+import { isGardenLadderId } from "./garden-size-ladder";
 
 /**
  * Gold-standard sketching library - only symbols fit for 2026 one-canvas design.
@@ -111,6 +112,8 @@ export function isSketchGoldStandard(symbol: CatalogSymbol): boolean {
   if (!symbol.default_width_m || symbol.default_width_m <= 0) return false;
   if (!symbol.path_d && !symbol.asset?.layers?.length) return false;
   if (symbol.id.startsWith("opencrop-")) return false;
+  // Curtis size ladder — the mature-height rungs the elevation reads.
+  if (isGardenLadderId(symbol.id)) return true;
   if (CURTIS_GOLD_IDS.has(symbol.id)) return true;
   if (symbol.id.startsWith("wikimedia-tree-")) return true;
   if (TEMAKI_PLANT_GOLD.test(symbol.id)) return true;
@@ -120,10 +123,15 @@ export function isSketchGoldStandard(symbol: CatalogSymbol): boolean {
   return false;
 }
 
-/** Curtis-first, then alphabetical — deterministic order inside a category. */
+/** Size ladder, then Curtis, then alphabetical — deterministic per category. */
+function libraryRank(symbol: CatalogSymbol): number {
+  if (isGardenLadderId(symbol.id)) return 0;
+  if (CURTIS_GOLD_IDS.has(symbol.id)) return 1;
+  return 2;
+}
+
 function compareLibrarySymbols(a: CatalogSymbol, b: CatalogSymbol): number {
-  const boost =
-    (CURTIS_GOLD_IDS.has(a.id) ? 0 : 1) - (CURTIS_GOLD_IDS.has(b.id) ? 0 : 1);
+  const boost = libraryRank(a) - libraryRank(b);
   if (boost !== 0) return boost;
   return a.label.localeCompare(b.label, "en-AU");
 }

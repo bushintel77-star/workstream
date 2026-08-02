@@ -64,6 +64,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Agapanthus drift",
     category: "planting",
     description: "Blue/white drift along paths",
+    mature_height_m: 0.9,
     keywords: ["perennial", "border"],
     path_d: "M12 8a4 4 0 100 8 4 4 0 000-8M28 10a3 3 0 110 6",
     asset: G(
@@ -900,6 +901,11 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Formal clipped hedge",
     category: "planting",
     description: "Generic formal green wall",
+    /*
+     * Deliberately heightless: `rootRadiusM` (spatial-facts) prefers
+     * mature_height_m over spread, so setting one here shrinks the root
+     * protection radius. Elevation height comes from the coarse studio type.
+     */
     keywords: ["hedge", "formal", "screen", "evergreen"],
     path_d: "M4 16h40v16H4z",
     asset: G(
@@ -1009,6 +1015,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Timber deck",
     category: "paving",
     description: "Spotted gum deck boards",
+    mature_height_m: 0.4,
     keywords: ["deck", "timber"],
     path_d: "M3 6h18v3H3zm0 5h18v3H3z",
     asset: G(
@@ -1061,6 +1068,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Bluestone step",
     category: "paving",
     description: "Tread + riser — Curtis step",
+    mature_height_m: 0.15,
     keywords: ["step", "stair", "bluestone"],
     path_d: "M4 20h16v4H4zM8 14h16v4H8zM12 8h16v4H12z",
     asset: G(
@@ -1134,6 +1142,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Timber pergola",
     category: "structure",
     description: "Overhead timber pergola",
+    mature_height_m: 2.7,
     keywords: ["shade", "timber"],
     path_d: "M4 20V8h16v12M4 8l8-4 8 4",
     asset: G(
@@ -1152,6 +1161,12 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Retaining wall",
     category: "structure",
     description: "Stone/block retaining",
+    /**
+     * Conservative retaining assumption — matches the `wallHeightM` fallback in
+     * `spatial-facts.ts` and stays above `RETAINING_ENGINEER_HEIGHT_M` (1.2 m).
+     * Lowering this silently switches off the engineer-hold risk overlay.
+     */
+    mature_height_m: 1.4,
     keywords: ["wall", "level"],
     path_d: "M3 14h18v6H3z",
     asset: G(
@@ -1170,6 +1185,8 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Sleeper retaining",
     category: "structure",
     description: "Hardwood sleeper retaining wall",
+    /** Same conservative retaining assumption as `retaining-wall` above. */
+    mature_height_m: 1.4,
     keywords: ["wall", "timber", "retaining"],
     path_d: "M4 10h40v20H4z",
     asset: G(
@@ -1188,6 +1205,8 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Pool fence",
     category: "structure",
     description: "Compliant pool barrier (AS 1926)",
+    /** AS 1926.1 minimum effective barrier height. */
+    mature_height_m: 1.2,
     keywords: ["fence", "pool", "safety", "barrier"],
     path_d: "M4 12h40M8 12v20M16 12v20M24 12v20M32 12v20M40 12v20",
     asset: G(
@@ -1206,6 +1225,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Privacy screen",
     category: "structure",
     description: "Vertical batten privacy screen",
+    mature_height_m: 1.8,
     keywords: ["screen", "fence", "timber"],
     path_d: "M8 8v32M16 8v32M24 8v32M32 8v32M40 8v32",
     asset: G(
@@ -1223,6 +1243,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Side gate",
     category: "structure",
     description: "Timber side access gate",
+    mature_height_m: 1.8,
     keywords: ["gate", "access", "fence"],
     path_d: "M10 8h20v32H10z",
     asset: G(
@@ -1276,6 +1297,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Seat wall",
     category: "furniture",
     description: "Stone seat wall",
+    mature_height_m: 0.45,
     keywords: ["seat", "wall"],
     path_d: "M3 14h18v4H3z",
     asset: G(
@@ -1294,6 +1316,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Fire pit",
     category: "furniture",
     description: "Entertainment fire pit",
+    mature_height_m: 0.4,
     keywords: ["fire", "entertain"],
     path_d: "M8 12a4 4 0 108 0M12 8v8",
     asset: G(
@@ -1333,6 +1356,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Brass bollard light",
     category: "lighting",
     description: "Path bollard down-light",
+    mature_height_m: 0.6,
     keywords: ["light", "bollard", "path", "fixture"],
     path_d: "M18 8v28M14 12h8",
     asset: G(
@@ -1391,6 +1415,7 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Path spike light",
     category: "lighting",
     description: "Stake-mounted path marker",
+    mature_height_m: 0.3,
     keywords: ["light", "path", "spike", "marker"],
     path_d: "M18 8v28M14 12h8",
     asset: G(
@@ -1463,6 +1488,13 @@ export const CURTIS_DESIGN_ASSETS: CatalogSymbol[] = [
     label: "Existing tree (retain)",
     category: "planting",
     description: "Retain — TPZ / SRP per arborist (AS 4970)",
+    /*
+     * Deliberately heightless. `rootRadiusM` (spatial-facts) prefers
+     * mature_height_m over spread: a height here would cut the root protection
+     * radius from 12 m (8 m spread x 1.5) to 3.6 m and under-report dig
+     * conflicts around a protected tree. Elevation height comes from the
+     * coarse `exist` studio type.
+     */
     keywords: ["TRP", "arborist", "canopy"],
     path_d: "M12 8a8 8 0 1016 0 8 8 0 00-16 0M12 6v16",
     asset: G(
