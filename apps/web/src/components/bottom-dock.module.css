@@ -1,11 +1,33 @@
 /*
- * BottomDock — mobile bottom-edge slide-up card.
- * Mirrors the desktop RailDrawer and canvas FrameDrawer DNA:
- * slimline handle, tap to slide, graceful 280ms ease.
+ * BottomDock — mobile bottom-edge slide-up panel.
+ * Best-practice drawer: click-to-toggle, Escape, focus trap, body scroll lock,
+ * scrim, 44px tap target. Uses home tokens.
  *
  * Only visible on mobile/tablet (<=768px).
  * Desktop uses the right-edge RailDrawer instead.
  */
+
+/* --- Scrim — dimmed background when open --- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 49;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- Dock --- */
 
 .dock {
   position: fixed;
@@ -30,7 +52,7 @@
   z-index: 50;
 }
 
-/* --- Slimline handle — always visible --- */
+/* --- Handle — 44px tap target button --- */
 
 .handle {
   flex-shrink: 0;
@@ -40,7 +62,8 @@
   justify-content: center;
   gap: 0.6rem;
   width: 100%;
-  height: 32px;
+  min-height: 44px;
+  /* WCAG 2.5.5 — 44px minimum tap target */
   padding: 0;
   border: 0;
   background: transparent;
@@ -60,6 +83,12 @@
   opacity: 1;
 }
 
+.handle:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: -2px;
+  opacity: 1;
+}
+
 .handleLine {
   width: 40px;
   height: 2px;
@@ -68,10 +97,21 @@
 }
 
 /* Accent bar on the handle */
-.blue .handleLine { background: var(--info); }
-.red .handleLine { background: var(--block); }
-.green .handleLine { background: var(--ok); }
-.yellow .handleLine { background: var(--warn); }
+.blue .handleLine {
+  background: var(--info);
+}
+
+.red .handleLine {
+  background: var(--block);
+}
+
+.green .handleLine {
+  background: var(--ok);
+}
+
+.yellow .handleLine {
+  background: var(--warn);
+}
 
 .handleLabel {
   font-family: var(--font-mono);
@@ -94,6 +134,12 @@
   scrollbar-width: thin;
   scrollbar-color: var(--line-hairline) transparent;
   -webkit-overflow-scrolling: touch;
+  /* Focusable region — remove default outline, we manage focus visually */
+  outline: none;
+}
+
+.panel:focus-visible {
+  outline: none;
 }
 
 .panel::-webkit-scrollbar {
@@ -116,12 +162,20 @@
   .dock {
     transition: none !important;
   }
+
+  .scrim {
+    animation: none !important;
+  }
 }
 
 /* --- Desktop: hide bottom dock, use right rail instead --- */
 
 @media (min-width: 769px) {
   .dock {
+    display: none;
+  }
+
+  .scrim {
     display: none;
   }
 }

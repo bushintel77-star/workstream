@@ -1,12 +1,34 @@
 /*
- * RailDrawer — home page right-edge slide-out card.
- * Mirrors the canvas FrameDrawer: slimline handle, hover to slide,
- * linger then retract. Uses home tokens, no CameraChrome.
+ * RailDrawer — home page right-edge slide-out panel.
+ * Best-practice drawer: click-to-toggle, Escape, focus trap, body scroll lock,
+ * scrim, hover peek. Uses home tokens, no CameraChrome.
  */
+
+/* --- Scrim — dimmed background when open --- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 49;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- Drawer --- */
 
 .drawer {
   position: fixed;
-  top: 5rem;
+  top: 0;
   bottom: 0;
   right: 0;
   display: flex;
@@ -26,7 +48,7 @@
   z-index: 50;
 }
 
-/* --- Slimline handle --- */
+/* --- Handle — button with aria-expanded --- */
 
 .handle {
   flex-shrink: 0;
@@ -36,18 +58,27 @@
   justify-content: flex-start;
   gap: 0.5rem;
   padding: 1.5rem 0 0;
-  width: 24px;
+  width: 28px;
+  border: 0;
+  background: transparent;
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.handle:hover {
+  opacity: 1;
+}
+
+.handle:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: -2px;
+  opacity: 1;
 }
 
 .drawer[data-open="1"] .handle {
   opacity: 0.5;
-}
-
-.drawer:hover .handle {
-  opacity: 1;
 }
 
 .handleLine {
@@ -97,6 +128,12 @@
   padding: 1.5rem 1.25rem;
   scrollbar-width: thin;
   scrollbar-color: var(--line-hairline) transparent;
+  /* Focusable region — remove default outline, we manage focus visually */
+  outline: none;
+}
+
+.panel:focus-visible {
+  outline: none;
 }
 
 .panel::-webkit-scrollbar {
@@ -119,12 +156,20 @@
   .drawer {
     transition: none !important;
   }
+
+  .scrim {
+    animation: none !important;
+  }
 }
 
-/* --- Mobile: hide rail drawer, use bottom sheet instead --- */
+/* --- Desktop only — mobile uses BottomDock --- */
 
 @media (max-width: 768px) {
   .drawer {
+    display: none;
+  }
+
+  .scrim {
     display: none;
   }
 }

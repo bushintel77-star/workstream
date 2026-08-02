@@ -10,8 +10,7 @@ import {
   type DashboardProject,
 } from "../../components/DashboardProjects";
 import { HomePlanner } from "../../components/HomePlanner";
-import { RailDrawer } from "../../components/RailDrawer";
-import { BottomDock } from "../../components/BottomDock";
+import { PlannerDock } from "../../components/PlannerDock";
 import { getIntegrationSummary } from "../../lib/api";
 import { AppNav } from "../../components/AppNav";
 import { NewProjectAddressForm } from "../../components/NewProjectAddressForm";
@@ -109,15 +108,10 @@ export default async function HomePage() {
         </section>
       </div>
 
-      {/* Right rail — planner widgets slide out on hover (desktop) */}
-      <RailDrawer label="Planner" accent="blue" width={420}>
+      {/* Planner dock — RailDrawer on desktop, BottomDock on mobile */}
+      <PlannerDock label="Planner" accent="blue">
         <HomePlanner projects={projects} />
-      </RailDrawer>
-
-      {/* Bottom dock — planner widgets slide up on tap (mobile) */}
-      <BottomDock label="Planner" accent="blue">
-        <HomePlanner projects={projects} />
-      </BottomDock>
+      </PlannerDock>
 
       {/* Drawing footer — north arrow + scale bar */}
       <footer className={home.drawingFooter} aria-hidden>

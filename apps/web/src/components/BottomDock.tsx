@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   type CSSProperties,
@@ -11,14 +12,18 @@ import {
 import css from "./bottom-dock.module.css";
 
 /**
- * BottomDock — mobile bottom-edge slide-up card.
- * Same DNA as the desktop RailDrawer and canvas FrameDrawer:
- * slimline handle, tap to slide, linger then retract, graceful 280ms ease.
+ * BottomDock — mobile bottom-edge slide-up panel.
  *
- * UX:
- * - Closed: a 2px line + label sits at the bottom edge, always visible.
- * - Tap the handle: the card slides up (280ms ease).
- * - Tap outside or tap handle again: retracts.
+ * Best-practice drawer pattern (mobile):
+ * - Handle is a <button> with aria-expanded + aria-controls
+ * - Tap handle to toggle open/closed
+ * - Escape key closes
+ * - Focus moves into panel on open, returns to handle on close
+ * - Focus trap within panel while open
+ * - Body scroll locked while open
+ * - Scrim (tap to close)
+ * - 44px minimum tap target on handle
+ * - Reduced motion respected
  */
 
 const ANIM_MS = 280;
@@ -35,58 +40,153 @@ export function BottomDock({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const ref = useRef<HTMLDivElement>(null);
+  const [animating, setAnimating] = useState(false);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+  const reactId = useId();
+  const panelId = `dock-panel-${reactId}`;
 
-  // Tap outside to close
+  // --- Animation state ---
+
+  useEffect(() => {
+    setAnimating(true);
+    const t = setTimeout(() => setAnimating(false), ANIM_MS + 50);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  // --- Escape to close ---
+
   useEffect(() => {
     if (!open) return;
-    function handleOutside(e: TouchEvent | MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
         setOpen(false);
       }
     }
-    document.addEventListener("touchstart", handleOutside);
-    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // --- Body scroll lock ---
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("touchstart", handleOutside);
-      document.removeEventListener("mousedown", handleOutside);
+      document.body.style.overflow = prev;
     };
   }, [open]);
+
+  // --- Focus management: move focus into panel on open ---
+
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    const t = setTimeout(() => {
+      panelRef.current?.focus();
+    }, ANIM_MS);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  // --- Focus return: move focus back to handle on close ---
+
+  useEffect(() => {
+    if (open) return;
+    if (previouslyFocused.current) {
+      previouslyFocused.current.focus();
+      previouslyFocused.current = null;
+    }
+  }, [open]);
+
+  // --- Focus trap ---
+
+  const handlePanelKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const tabbables = panel.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (tabbables.length === 0) return;
+      const first = tabbables[0];
+      const last = tabbables[tabbables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    },
+    [],
+  );
+
+  // --- Toggle ---
+
+  const toggleOpen = useCallback(() => {
+    setOpen((v) => !v);
+  }, []);
+
+  // --- Render ---
 
   const transform: CSSProperties["transform"] = open
     ? "translateY(0)"
     : "translateY(calc(100% - 2px))";
 
   return (
-    <div
-      ref={ref}
-      className={`${css.dock} ${css[accent]}`}
-      data-open={open ? "1" : "0"}
-      style={{
-        transform,
-        transition: `transform ${ANIM_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-      }}
-    >
-      {/* Slimline handle — always visible at the bottom edge */}
-      <button
-        type="button"
-        className={css.handle}
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-label={open ? `Close ${label}` : `Open ${label}`}
-      >
-        <span className={css.handleLine} />
-        <span className={css.handleLabel}>{label}</span>
-      </button>
+    <>
+      {/* Scrim — dimmed background when open */}
+      {open ? (
+        <div
+          className={css.scrim}
+          onClick={() => setOpen(false)}
+          aria-hidden
+          style={{ animation: `fadeIn ${ANIM_MS}ms ease` }}
+        />
+      ) : null}
 
-      {/* Card content — slides up */}
       <div
-        className={css.panel}
-        role="region"
-        aria-label={label}
+        ref={dockRef}
+        className={`${css.dock} ${css[accent]}`}
+        data-open={open ? "1" : "0"}
+        style={{
+          transform,
+          transition: `transform ${ANIM_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        }}
       >
-        {children}
+        {/* Handle — 44px tap target button */}
+        <button
+          ref={handleRef}
+          type="button"
+          className={css.handle}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={open ? `Close ${label}` : `Open ${label}`}
+          onClick={toggleOpen}
+        >
+          <span className={css.handleLine} aria-hidden />
+          <span className={css.handleLabel}>{label}</span>
+        </button>
+
+        {/* Panel content — focusable region with focus trap */}
+        <div
+          ref={panelRef}
+          id={panelId}
+          className={css.panel}
+          role="region"
+          aria-label={label}
+          tabIndex={-1}
+          onKeyDown={handlePanelKeyDown}
+          inert={!open && !animating ? true : undefined}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
