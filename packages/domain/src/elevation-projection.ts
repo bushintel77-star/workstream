@@ -1,12 +1,73 @@
+import {
+  gardenFamilyForSymbol,
+  symbolMatureHeightM,
+  symbolSpreadM,
+} from "./garden-asset-height";
+import type { GardenAssetFamily } from "./garden-size-ladder";
+
 export type ElevationItem = {
   id: string;
   label: string;
   xPct: number;
   widthPct: number;
+  /** Drawn height (m) — mature height with the placement scale applied. */
   heightM: number;
+  /** Catalog mature height (m) before scale. */
+  matureHeightM: number;
+  /** Placement scale (1 = as catalogued). */
+  scale: number;
+  /** Mature spread / platform width (m), null when the symbol is unknown. */
+  spreadM: number | null;
+  /** Silhouette family, null for structures / fixtures (plain profile). */
+  family: GardenAssetFamily | null;
+  symbolId: string | null;
+  /**
+   * True when the height is *known* (given by the caller or carried by the
+   * symbol) rather than guessed. Elevation surfaces draw only these.
+   */
+  hasPresence: boolean;
   ghost: boolean;
   stale?: boolean;
 };
+
+export type ElevationProjectionInput = {
+  id: string;
+  label: string;
+  x_pct: number;
+  y_pct: number;
+  scale?: number;
+  /** Explicit height (m) — wins over the symbol's catalogued height. */
+  height_m?: number;
+  /** Placed catalog symbol — the durable source of height and family. */
+  symbol_id?: string;
+  /** Explicit spread (m) — wins over the symbol's default width. */
+  spread_m?: number;
+  ghost?: boolean;
+  stale?: boolean;
+};
+
+export type ElevationProjectionOpts = {
+  /** Dwelling envelope height (m) for the building mass. */
+  buildingHeightM?: number;
+  /**
+   * Metres across the full board width. Supplied → bar widths come from real
+   * spread; omitted → the indicative scale-based width is used.
+   */
+  boardWidthM?: number;
+};
+
+export type ElevationProjection = {
+  groundY: number;
+  buildingH: number;
+  items: ElevationItem[];
+  /** Tallest drawn height (m) among items with presence; 0 when none. */
+  maxHeightM: number;
+  look: ElevationLook;
+};
+
+/** Minimum / maximum bar width (% of board) so no profile vanishes or floods. */
+const MIN_BAR_PCT = 0.6;
+const MAX_BAR_PCT = 40;
 
 /** @deprecated Prefer ElevationLook — front≈looking north, side≈looking east. */
 export type ElevationAxis = "front" | "side";
@@ -105,46 +166,74 @@ function lookFromLegacyAxis(axis: ElevationAxis): ElevationLook {
   return axis === "front" ? "N" : "E";
 }
 
-/** Project plan items onto a 1D elevation axis (indicative). */
+/** Last-resort height when neither the caller nor the symbol knows one. */
+function guessHeightM(label: string): number {
+  return label.toLowerCase().includes("tree") ? 4 : 1.2;
+}
+
+function barWidthPct(
+  spreadM: number | null,
+  scale: number,
+  boardWidthM: number | undefined,
+): number {
+  if (boardWidthM != null && boardWidthM > 0 && spreadM != null && spreadM > 0) {
+    const pct = ((spreadM * scale) / boardWidthM) * 100;
+    return Math.min(MAX_BAR_PCT, Math.max(MIN_BAR_PCT, pct));
+  }
+  return Math.max(2, scale * 4);
+}
+
+/**
+ * Project plan items onto a 1D elevation axis.
+ *
+ * Single source of truth for plan → elevation: the elevation board and the fit
+ * sheet both read this so their profiles cannot drift apart. Height comes from
+ * the caller, else the placed symbol, else an indicative guess.
+ */
 export function projectElevationItems(
-  items: Array<{
-    id: string;
-    label: string;
-    x_pct: number;
-    y_pct: number;
-    scale?: number;
-    height_m?: number;
-    ghost?: boolean;
-    stale?: boolean;
-  }>,
+  items: ElevationProjectionInput[],
   axisOrLook: ElevationAxis | ElevationLook,
-  buildingHeightM = 2.7,
-): { groundY: number; buildingH: number; items: ElevationItem[]; look: ElevationLook } {
+  opts: ElevationProjectionOpts = {},
+): ElevationProjection {
   const look: ElevationLook =
     axisOrLook === "front" || axisOrLook === "side"
       ? lookFromLegacyAxis(axisOrLook)
       : axisOrLook;
   const proj = elevationLookProjector(look);
-  const raw = items.map((it) => {
+  const raw = items.map((it): ElevationItem => {
     const along = proj.axis === "x" ? it.x_pct : it.y_pct;
     const xPct = proj.reverse ? 100 - along : along;
+    const scale = it.scale != null && it.scale > 0 ? it.scale : 1;
+    const symbolId = it.symbol_id?.trim() || null;
+    const known = it.height_m ?? symbolMatureHeightM(symbolId) ?? null;
+    const matureHeightM = known ?? guessHeightM(it.label);
+    const spreadM = it.spread_m ?? symbolSpreadM(symbolId) ?? null;
     return {
       id: it.id,
       label: it.label,
       xPct,
-      widthPct: Math.max(2, (it.scale ?? 1) * 4),
-      heightM:
-        it.height_m ??
-        (it.label.toLowerCase().includes("tree") ? 4 : 1.2),
+      widthPct: barWidthPct(spreadM, scale, opts.boardWidthM),
+      heightM: matureHeightM * scale,
+      matureHeightM,
+      scale,
+      spreadM,
+      family: gardenFamilyForSymbol(symbolId),
+      symbolId,
+      hasPresence: (known ?? 0) > 0,
       ghost: Boolean(it.ghost),
       stale: it.stale,
     };
   });
   const sorted = [...raw].sort((a, b) => a.xPct - b.xPct);
+  const maxHeightM = sorted.reduce(
+    (max, it) => (it.hasPresence ? Math.max(max, it.heightM) : max),
+    0,
+  );
   return {
     groundY: 0,
-    buildingH: buildingHeightM,
+    buildingH: opts.buildingHeightM ?? 2.7,
     items: sorted,
+    maxHeightM,
     look,
   };
 }
