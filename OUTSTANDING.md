@@ -115,6 +115,32 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [ ] Bundle-size budget in CI.
 - [ ] PostgreSQL migration once the data model stabilises.
 - [ ] Multi-region Fly deploy for HA.
+- [ ] **`moduleResolution: node` (node10) removal in TypeScript 7.** Source is
+      [`tsconfig.node.json`](tsconfig.node.json) line 5, inherited by `apps/api`
+      and `packages/{contracts,db,cad,domain}`. Harmless today — TS 5.9.3 exits 0
+      (verified uncached, not turbo cache), so `pnpm typecheck` / `pnpm run ci`
+      are green; editors on a newer TS surface it as an error.
+      **Do not apply the editor's suggested fix:** `"ignoreDeprecations": "6.0"`
+      fails on the installed compiler with `error TS5103: Invalid value` — it
+      converts an editor warning into a build break in five packages. (`"5.0"`
+      is accepted but silences a different deprecation cycle, so it fixes
+      nothing.) Real fix is migrating those five to `node16` resolution, which
+      makes TS honour package `exports` maps — needs its own change plus a full
+      typecheck + test + build run. `tsconfig.base.json` (web, mobile, ui,
+      client) is already on `bundler` and unaffected.
+- [ ] **Artboard strip eats elevation callout clicks.** In `?mode=elevation` the
+      bottom-centre `artboard-strip` (`ArtboardStrip`, `CameraChrome` dock,
+      `bottom: --ws-stack-4`) floats over the *middle of the drawing* — measured
+      at `x 531–783, y 426–458` on a 1280x720 board — and swallows pointer
+      events on any `elevation-label` callout under it. The callout is a real
+      control (click = select + locate in plan), so a profile whose leader lands
+      mid-board cannot be selected by its label. Clicking the silhouette still
+      works, which is why `e2e/elevation-silhouettes.spec.ts` drives selection
+      through `[data-elev-family]` instead. Pre-existing (predates the Tier 4
+      silhouette work — the label anchor only moved ~16 px). Fix is a chrome
+      placement decision: either reserve a dock shelf in the elevation stage or
+      move the strip out of the drawing band in elevation mode; do not "fix" it
+      by making callouts non-interactive.
 
 ## Aerial Design Studio (separate track)
 

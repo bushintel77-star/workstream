@@ -18,6 +18,12 @@ After `pnpm install`, run `pnpm --filter '@workstream/*' build` once (Turbo `dev
 
 Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json`.
 
+**Build order gotcha:** `apps/api` tests resolve `@workstream/domain` from its built
+`dist`, not `src`. After editing `packages/domain`, run
+`pnpm --filter @workstream/domain build` before `pnpm test`, or api specs will
+pass/fail against stale domain code. (`pnpm typecheck` builds deps, so running it
+first also refreshes `dist`.)
+
 Continuous integration gate: `pnpm run ci` (installs frozen lockfile, checks mobile placeholders, portal edge runtime, handoff hex colors, then typecheck + lint + vitest).
 
 ### Canonical production (Railway)
