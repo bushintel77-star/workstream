@@ -1104,7 +1104,7 @@ export function HandoffDesignStudio({
         focusY: 50,
         councilTip: hasDwelling
           ? "Looking north — Esc to flatten"
-          : "Tilt on — drag to move. No dwelling yet (no walls) — Trace Bldg or title hydrate.",
+          : "Tilt on — drag to move. No dwelling yet (no walls) — trace the building or hydrate the title.",
         coachOpen: !hasDwelling,
       });
       setTiltPauseHint(true);

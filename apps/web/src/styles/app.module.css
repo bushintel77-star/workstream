@@ -183,7 +183,7 @@
 .metric {
   padding: 14px 16px;
   border: 1px solid var(--line-hairline);
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -222,7 +222,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   white-space: nowrap;
   background: var(--surface-sunken);
   color: var(--ink-secondary);
@@ -275,7 +275,7 @@
   border: 1px solid color-mix(in srgb, var(--ink-primary) 8%, transparent);
   background: var(--ink-primary);
   color: var(--surface-elevated);
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   font: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
@@ -368,7 +368,7 @@
   min-height: 44px;
   padding: 11px 14px;
   border: 1px solid var(--line-hairline);
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   font: inherit;
   font-size: var(--text-base);
   background: var(--surface-elevated);
@@ -417,7 +417,7 @@
 
 .error {
   padding: 12px 16px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: color-mix(in srgb, var(--block) 10%, var(--surface-elevated));
   color: color-mix(in srgb, var(--block) 85%, var(--ink-primary));
   font-size: var(--text-sm);
@@ -428,7 +428,7 @@
 
 .banner {
   padding: 12px 16px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: color-mix(in srgb, var(--accent) 8%, var(--surface-elevated));
   color: var(--accent-ink);
   font-size: var(--text-sm);
