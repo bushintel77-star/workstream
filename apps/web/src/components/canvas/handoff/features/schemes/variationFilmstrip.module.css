@@ -1,19 +1,18 @@
+/*
+ * Scheme thumbs — a row *inside* the bottom-edge FrameDrawer.
+ *
+ * The drawer owns the surface: it portals to the gallery frame, supplies the
+ * frost and runs the reveal. So this carries no placement and no surface — no
+ * absolute offset, no backdrop, no cast shadow. Giving those back floats it on
+ * the drawing (docs/STUDIO-STYLING-AND-UX.md §0 — chrome lives in the frame,
+ * never on the plan; cover in e2e/canvas-design-craft.spec.ts).
+ */
 .strip {
-  position: absolute;
-  left: calc(var(--ws-safe-left, 80px) + 8px);
-  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
-  z-index: var(--ws-z-interact);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s-2);
-  padding: 8px 12px;
-  border-radius: var(--hc-r-pill);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass-soft);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--hc-elev-2);
-  pointer-events: auto;
+  padding: 0 12px;
 }
 
 .kicker {

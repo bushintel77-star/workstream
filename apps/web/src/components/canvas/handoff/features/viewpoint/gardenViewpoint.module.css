@@ -1,21 +1,20 @@
+/*
+ * Cardinal viewpoint chips — a row *inside* the top-edge FrameDrawer, beside
+ * the Sheets strip.
+ *
+ * The drawer owns the surface: it portals to the gallery frame, supplies the
+ * frost and runs the reveal. So this carries no placement and no surface — no
+ * absolute offset, no backdrop, no border. Giving those back floats it on the
+ * drawing and swallows clicks on the geometry below
+ * (docs/STUDIO-STYLING-AND-UX.md §0 — chrome lives in the frame, never on the
+ * plan; cover in e2e/canvas-chrome-detector.spec.ts and tilt-lens.spec.ts).
+ */
 .strip {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--ws-safe-bottom, 48px) + 10px);
-  transform: translateX(-50%);
-  z-index: var(--ws-z-contextual);
   display: inline-flex;
   align-items: center;
   gap: var(--s-1);
-  min-height: 28px;
-  padding: var(--s-1) var(--s-1) var(--s-1) var(--s-2);
-  border-radius: var(--hc-r-pill, 999px);
-  border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass-soft);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  box-shadow: none;
-  pointer-events: auto;
+  min-height: 24px;
+  padding: 0 var(--s-1) 0 var(--s-2);
 }
 
 .kicker {
@@ -53,10 +52,8 @@
 }
 
 .chipOn {
-  background: color-mix(
-    in srgb,
-    var(--proposed-stroke) var(--fill-highlight, 20%),
-    var(--canvas)
-  );
+  background: color-mix(in srgb,
+      var(--proposed-stroke) var(--fill-highlight, 20%),
+      var(--canvas));
   color: var(--proposed-text, var(--proposed-stroke));
 }

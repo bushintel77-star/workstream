@@ -244,6 +244,23 @@ test.describe("Tilt lens", () => {
       "1",
     );
 
+    /*
+     * The strip lives in the top-edge FrameDrawer beside the Sheets strip, not
+     * on the drawing. The drawer parks it off the frame edge until revealed, so
+     * a chip is only reachable once the drawer is open. Reveal it by focus —
+     * the drawer opens on focus as well as hover (§6 item 16: gesture, pointer
+     * AND keyboard), and focus does not depend on the parked geometry.
+     */
+    const viewpointDrawer = page
+      .getByTestId("garden-viewpoint-strip")
+      .locator('xpath=ancestor::*[@data-testid="frame-drawer-artboards"]');
+    await expect(viewpointDrawer).toHaveCount(1);
+
+    await page.getByTestId("garden-viewpoint-S").focus();
+    await expect(
+      page.locator('[data-testid="frame-drawer-artboards"] [data-open]'),
+    ).toHaveAttribute("data-open", "1", { timeout: 5_000 });
+
     await page.getByTestId("garden-viewpoint-S").click();
     await expect(page.getByTestId("zoom-world")).toHaveAttribute(
       "data-view-yaw",

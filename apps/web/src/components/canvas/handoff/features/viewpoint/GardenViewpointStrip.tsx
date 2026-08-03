@@ -5,7 +5,6 @@ import {
   gardenViewpointLabel,
   type GardenViewpointLook,
 } from "../tilt/tiltMath";
-import { CameraChrome } from "../../CameraChrome";
 import css from "./gardenViewpoint.module.css";
 
 type Props = {
@@ -18,8 +17,13 @@ type Props = {
 };
 
 /**
- * Meta-chip cardinal strip — CameraChrome dock only (never under zoom-world).
- * Plan: settles named 3D axon. Elevation: sets look direction.
+ * Meta-chip cardinal strip. Plan: settles named 3D axon. Elevation: sets look
+ * direction.
+ *
+ * Renders *in flow* inside the top-edge `FrameDrawer`, beside `ArtboardStrip`,
+ * which already portals to the gallery frame. Do not wrap this in its own
+ * `CameraChrome`: a second portal escapes the drawer and drops the strip onto
+ * the drawing with whatever absolute offset its CSS still carries (`7a3b7ed`).
  */
 export function GardenViewpointStrip({
   activeLook,
@@ -29,32 +33,31 @@ export function GardenViewpointStrip({
 }: Props) {
   const armed = mode === "elevation" ? elevLook : activeLook;
   return (
-    <CameraChrome place={{ kind: "dock" }} testId="garden-viewpoint-strip">
-      <div
-        className={css.strip}
-        role="group"
-        aria-label="Garden viewpoints"
-        data-mode={mode}
-      >
-        <span className={css.kicker}>View</span>
-        {GARDEN_VIEWPOINT_LOOKS.map((look) => {
-          const on = armed === look;
-          return (
-            <button
-              key={look}
-              type="button"
-              className={`${css.chip}${on ? ` ${css.chipOn}` : ""}`}
-              data-testid={`garden-viewpoint-${look}`}
-              data-armed={on ? "1" : "0"}
-              aria-pressed={on}
-              title={gardenViewpointLabel(look)}
-              onClick={() => onSelect(look)}
-            >
-              {look}
-            </button>
-          );
-        })}
-      </div>
-    </CameraChrome>
+    <div
+      className={css.strip}
+      role="group"
+      aria-label="Garden viewpoints"
+      data-testid="garden-viewpoint-strip"
+      data-mode={mode}
+    >
+      <span className={css.kicker}>View</span>
+      {GARDEN_VIEWPOINT_LOOKS.map((look) => {
+        const on = armed === look;
+        return (
+          <button
+            key={look}
+            type="button"
+            className={`${css.chip}${on ? ` ${css.chipOn}` : ""}`}
+            data-testid={`garden-viewpoint-${look}`}
+            data-armed={on ? "1" : "0"}
+            aria-pressed={on}
+            title={gardenViewpointLabel(look)}
+            onClick={() => onSelect(look)}
+          >
+            {look}
+          </button>
+        );
+      })}
+    </div>
   );
 }

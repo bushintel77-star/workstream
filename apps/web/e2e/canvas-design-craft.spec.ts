@@ -77,6 +77,34 @@ test.describe("Canvas design craft", () => {
     });
     await expect(page.getByTestId("scheme-plan-A")).toBeVisible();
 
+    /*
+     * The filmstrip lives in the bottom-edge FrameDrawer, not on the drawing.
+     * It used to wrap itself in its own CameraChrome on top of the drawer's
+     * portal, so it escaped and floated over the plan with a stale
+     * `bottom: calc(--ws-safe-bottom + 8px)` — the same double portal that
+     * parked the Sheets strip mid-plan (7a3b7ed).
+     */
+    await expect(
+      page
+        .getByTestId("variation-filmstrip")
+        .locator('xpath=ancestor::*[@data-testid="frame-drawer-variations"]'),
+    ).toHaveCount(1);
+
+    // Parked drawer must clear the drawing band entirely.
+    const stripBox = await page.getByTestId("variation-filmstrip").boundingBox();
+    const worldBox = await page.getByTestId("zoom-world").boundingBox();
+    if (stripBox && worldBox) {
+      const overlaps =
+        stripBox.x < worldBox.x + worldBox.width &&
+        stripBox.x + stripBox.width > worldBox.x &&
+        stripBox.y < worldBox.y + worldBox.height &&
+        stripBox.y + stripBox.height > worldBox.y;
+      expect(
+        overlaps,
+        `variation filmstrip ${JSON.stringify(stripBox)} overlaps the drawing ${JSON.stringify(worldBox)}`,
+      ).toBe(false);
+    }
+
     await expect(
       page.locator('[data-testid="zoom-world"] [data-camera-chrome]'),
     ).toHaveCount(0);

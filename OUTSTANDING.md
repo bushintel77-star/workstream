@@ -139,16 +139,32 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       laying the strip out in flow inside the drawer panel. Kept probe:
       `e2e/elevation-callout-hit.spec.ts` (hit-tests every callout, so any future
       dock landing on the drawing band fails too).
-- [ ] **`GardenViewpointStrip` and `VariationFilmstrip` have the same double
-      portal.** Both were migrated into FrameDrawers by `ebf1872` and both still
-      wrap themselves in `CameraChrome place="dock"`, so they also escape their
-      drawer and float on the drawing (`bottom: calc(--ws-safe-bottom + 10px)`
-      and `left/bottom: calc(--ws-safe-* + 8px)`). Left as-is deliberately:
-      `e2e/tilt-lens.spec.ts` and `e2e/canvas-design-craft.spec.ts` assert those
-      strips are *visible on the canvas* after an explicit summon, so collapsing
-      them into hover drawers is a product decision, not a bug fix. Decide
-      whether the drawers or the summoned floaters are the intended UX, then make
-      the code and the probes agree.
+- [x] **`GardenViewpointStrip` and `VariationFilmstrip` double portal — fixed.**
+      Both were migrated into FrameDrawers by `ebf1872` and both still wrapped
+      themselves in `CameraChrome place="dock"`, so they escaped their drawer and
+      floated on the drawing with a stale absolute offset. **Product decision:
+      the drawers are the intended UX**, so the inner portals are dropped and
+      both strips lay out in flow inside their drawer panel, exactly as
+      `ArtboardStrip` was fixed in `7a3b7ed`. Their stylesheets no longer carry
+      placement or surface — the drawer owns both.
+
+      Probes updated to agree rather than routed around: `tilt-lens.spec.ts` now
+      asserts the viewpoint strip is inside `frame-drawer-artboards` and reveals
+      the drawer by **focus** before clicking a chip (the drawer opens on focus
+      as well as hover, so this also covers §6 item 16), and
+      `canvas-design-craft.spec.ts` asserts the filmstrip is inside
+      `frame-drawer-variations` and that its parked box never overlaps the
+      drawing.
+
+- [ ] **`meeting-pack.spec.ts` is stale — red on a clean tree.** `client view
+      exposes print + scheme thumbs + caption` fails at
+      `meeting-pack-print` → `toBeVisible()` with "hidden". Confirmed
+      pre-existing by stashing all local work and re-running against `HEAD`, so
+      it is not fallout from the drawer migration. The button's visibility is
+      governed by `.rootClient .headerTools` rules in
+      `handoffStudio.module.css` and `canvasTopBorder.module.css`. Same class as
+      `dashboard-filter-sort.spec.ts`: rewrite against current markup or delete
+      the assertion.
 - [x] **WCAG 2.2 AA text contrast on the canvas** — kept gate
       [`e2e/canvas-contrast-aa.spec.ts`](apps/web/e2e/canvas-contrast-aa.spec.ts)
       walks survey/sketch/cad/elevation/quote and flattens each text node's
