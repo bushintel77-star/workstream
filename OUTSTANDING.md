@@ -222,6 +222,54 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `exhaustive-deps` suppression. Fixing it properly means reordering
       declarations in a 5,700-line component.
 
+## Idle chrome coverage — the canvas is not yet the hero
+
+`STUDIO-STYLING-AND-UX.md` §6 item 1 has two clauses: no fixed inventory bar,
+**and** the idle view is mostly drawing. Only the first was ever probed, and a
+width test passes happily while many small cards accumulate — no single element
+is a bar, but a fifth of the plan is covered.
+
+Measured 2026-08-04 at 1280x720, union of painted chrome intersected with the
+board (`e2e/canvas-checklist-s6.spec.ts`, item 1b). Ratchets both ways: a rise
+fails, and a real drop fails too until the baseline is lowered.
+
+| Mode | Idle chrome over the drawing |
+|---|---|
+| Survey | **18.8%** |
+| Sketch | 12.7% |
+| CAD | 9.4% |
+| Elevation | 0.1% |
+
+Survey contributors, largest first:
+
+| Element | Share of board |
+|---|---|
+| `right-data-lane-checklist` | 7.57% |
+| `building-footprint-empty` (trace-dwelling modal) | 2.47% |
+| `vic-gov-status-chips-context` | 2.09% |
+| `vic-gov-status-chips-title` | 1.82% |
+| `utility-honesty-footer` | 1.80% |
+| `header-context-strip` | 1.76% |
+| `phase-manager` | 0.73% |
+
+Ordered work to bring it down:
+
+- [ ] **Trace-dwelling modal off the optical centre.** `building-footprint-empty`
+      is a blocking card parked over the middle of the artwork for what is an
+      empty state. Make it a non-blocking affordance anchored to where the
+      dwelling would be.
+- [ ] **`SELECT` chip anchored to its selection**, not floating in whitespace.
+- [ ] **Dock the two Vicmap clusters into the frame band.** 3.9% combined.
+      Keep two corner clusters — a single full-width strip regresses the lane
+      collision that the current layout was written to fix (00-DISCOVERY §6).
+- [ ] **Survey checklist needs a permanent home.** At 7.57% it is the single
+      largest occupier, and it is good product thinking presented as a
+      dismissible card floating over the drawing.
+
+Elevation reporting 0.1% is **unverified, not clean**: 13 painted chrome
+elements were found but none intersected the board. Plausible, since its chrome
+sits in the frame band — confirm before trusting it.
+
 ## Shipped inert — features complete except for one connection
 
 Found the moment `apps/web` was first linted (2026-08), then two more by the
