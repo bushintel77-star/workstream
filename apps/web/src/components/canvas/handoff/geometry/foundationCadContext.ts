@@ -104,7 +104,7 @@ export function formatCadAreaM2(m2: number): string {
  */
 export function formatCadBearing(rotDeg: number): string {
   // rotDeg is atan2(dy, dx) with y-down; convert to compass-ish from +x east
-  let deg = ((90 - rotDeg) % 360 + 360) % 360;
+  const deg = ((90 - rotDeg) % 360 + 360) % 360;
   const card = ["N", "E", "S", "W"] as const;
   const sector = Math.floor(((deg + 45) % 360) / 90);
   const primary = card[sector]!;

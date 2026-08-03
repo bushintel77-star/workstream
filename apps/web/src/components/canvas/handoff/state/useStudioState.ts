@@ -779,7 +779,7 @@ function reducer(state: State, action: Action): State {
         before.items,
         result.snap.items,
       );
-      let nextItems = markStaleGhostsNearEdit(before.items, result.snap.items);
+      const nextItems = markStaleGhostsNearEdit(before.items, result.snap.items);
       const hist = [...state.doc.hist, before].slice(-MAX_HIST);
       return {
         ...state,
@@ -1411,8 +1411,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
           snap.boundary,
           snap.building,
         );
-        let px = placed.x;
-        let py = placed.y;
+        const px = placed.x;
+        const py = placed.y;
         if (placed.snapped) tip = placed.reason;
         const inEasement = (snap.easements ?? []).some(
           (ring) => ring.length >= 3 && pointInPolygon({ x: px, y: py }, ring),
@@ -3183,7 +3183,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         res,
         keepTracedBuilding: keepTraced,
       });
-      let titleOk = Boolean(applied);
+      const titleOk = Boolean(applied);
       let transform = applied?.fit.transform ?? null;
       if (applied) {
         mutate((snap) => {
@@ -3629,7 +3629,6 @@ export function useStudioState(opts: UseStudioStateOpts) {
       });
     } catch (err) {
       const kind = classifySaveError(err);
-      // eslint-disable-next-line no-console
       console.error("saveNow failed", err);
       setUi({
         saveStatus: "error",

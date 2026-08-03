@@ -1288,7 +1288,7 @@ function PanelView({
     const dxPct = ((e.clientX - drag.startX) / paperRect.width) * 100;
     const dyPct = ((e.clientY - drag.startY) / paperRect.height) * 100;
     const orig = drag.origRect;
-    let newRect = { ...orig };
+    const newRect = { ...orig };
 
     if (drag.mode === "move") {
       newRect.x_pct = Math.max(0, Math.min(100 - orig.w_pct, orig.x_pct + dxPct));

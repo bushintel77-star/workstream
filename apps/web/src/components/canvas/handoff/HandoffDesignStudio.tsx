@@ -2904,18 +2904,11 @@ export function HandoffDesignStudio({
         testId: "canvas-layers-top",
         active: layersOpen,
         onSelect: () => {
-          // eslint-disable-next-line no-console
-          console.log("[debug] layers onSelect", {
-            compact: chrome.compact,
-            before: ui.rightDataPanel,
-          });
           if (chrome.compact) openStudioSheetPage("data");
           studio.setUi({
             ...withRightDataPanel("layers"),
             utilityPanel: null,
           });
-          // eslint-disable-next-line no-console
-          console.log("[debug] layers onSelect after setUi");
         },
       });
     }
@@ -5554,7 +5547,6 @@ export function HandoffDesignStudio({
             <div className={css.undoCells} aria-label="Recent canvas states">
               {Array.from({ length: Math.min(studio.undoDepth, 8) }).map((_, i) => (
                 <button
-                  // eslint-disable-next-line react/no-array-index-key
                   key={i}
                   type="button"
                   className={css.undoCell}

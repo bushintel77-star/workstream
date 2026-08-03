@@ -66,7 +66,7 @@ describe("transient fade machine", () => {
   });
 
   it("escape and choose hide immediately", () => {
-    let s = at(HIDDEN_FADE, "summon", 0);
+    const s = at(HIDDEN_FADE, "summon", 0);
     expect(at(s, "escape", 10).phase).toBe("hidden");
     expect(at(s, "choose", 10).phase).toBe("hidden");
   });

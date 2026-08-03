@@ -9,7 +9,6 @@ export async function initSentry(): Promise<void> {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn || typeof window !== "undefined") return;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Sentry: any = await import("@sentry/nextjs" as string).catch(() => null);
     if (!Sentry?.init) {
       console.warn("[sentry] @sentry/nextjs not installed; skipping");
@@ -33,7 +32,6 @@ export function captureWebError(
   if (!sentryReady) return;
   void (async () => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Sentry: any = await import("@sentry/nextjs" as string).catch(
         () => null,
       );
