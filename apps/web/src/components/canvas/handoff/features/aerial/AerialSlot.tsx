@@ -244,7 +244,6 @@ export function AerialSlot({
       />
 
       {showAerial && uri ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           key={retryNonce}
           ref={imgRef}

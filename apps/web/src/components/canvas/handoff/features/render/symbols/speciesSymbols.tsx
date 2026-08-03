@@ -29,10 +29,6 @@ function GlyphSoftShadow({ night }: { night: boolean }) {
   );
 }
 
-function shadow(night: boolean) {
-  return <GlyphSoftShadow night={night} />;
-}
-
 /** Canopy tree — lobed hand-wobbled circle + fine radial branching. */
 export function CanopyTreeSymbol({
   itemId,

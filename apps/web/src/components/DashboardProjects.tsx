@@ -21,14 +21,6 @@ export type DashboardProject = {
   costTotal: number | null;
 };
 
-const STATUS_LABEL: Record<DashboardStatus, string> = {
-  draft: "Draft",
-  active: "Active",
-  review: "Review",
-  complete: "Complete",
-  deleted: "Deleted",
-};
-
 const DATE_FORMAT = new Intl.DateTimeFormat("en-AU", {
   day: "numeric",
   month: "short",
@@ -64,7 +56,14 @@ export function DashboardProjects({
   const toast = useToast();
   const [items, setItems] = useState(projects);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<DashboardSort>("activity");
+  /*
+   * `_setSort` is unused: the sort control was removed from /home in the
+   * editorial redesign and never replaced, so sorting is locked to "activity"
+   * while the name/cost comparators below stay reachable-in-principle only.
+   * Kept, not deleted — see OUTSTANDING.md. This is also why
+   * dashboard-filter-sort.spec.ts is red.
+   */
+  const [sort, _setSort] = useState<DashboardSort>("activity");
   const [isPending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState<DashboardProject | null>(null);
 

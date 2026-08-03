@@ -86,10 +86,16 @@ export function mapSymbolToStudioType(symbolId: string): StudioItemType {
   return "canopy";
 }
 
+/**
+ * `_source` is redundant: every call site builds `id` from
+ * `aiItemPrefix(source)`, so the provenance is already encoded in the item id
+ * (`ai-layout-3`, `ai-canopy-7`). Kept in the signature so the eight proposal
+ * sources stay explicit at each call site.
+ */
 export function proposalToStudioItem(
   g: GhostPlacementSuggestion,
   id: string,
-  source: AiProposalSource,
+  _source: AiProposalSource,
 ): StudioItem {
   const t = mapSymbolToStudioType(g.symbol_id);
   const scale =

@@ -128,7 +128,6 @@ export function QuotePortal({
         <section className={styles.hero}>
           {data.hero_url ? (
             <div className={styles.heroVisual}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={data.hero_url} alt="Site aerial" />
             </div>
           ) : null}

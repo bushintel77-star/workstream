@@ -194,7 +194,6 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
 
       <div className={cp.zoomWorld} data-testid="locate-loader-aerial">
         {neighbourhoodUri ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={neighbourhoodUri}
             alt=""
@@ -204,7 +203,6 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
         ) : null}
 
         {lotUri ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={lotUri}
             alt=""

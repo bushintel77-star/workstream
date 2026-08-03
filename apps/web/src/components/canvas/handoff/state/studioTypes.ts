@@ -10,9 +10,7 @@ import type {
   ImageLayer,
 } from "@workstream/contracts";
 import type {
-  DesignSchemeSnapshot,
   DrainageRun,
-  HardscapeEdgeType,
   PathCorridor,
   SketchStroke,
   SpotLevel,

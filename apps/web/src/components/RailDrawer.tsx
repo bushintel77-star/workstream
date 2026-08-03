@@ -28,7 +28,11 @@ import css from "./rail-drawer.module.css";
  * Same DNA as the canvas FrameDrawer: slimline handle, graceful ease.
  */
 
-const HOVER_DELAY_MS = 250;  // pause before opening on hover — prevents accidental triggers
+// pause before opening on hover — prevents accidental triggers.
+// Unused: the hover effect below calls setOpen(true) immediately, so the drawer
+// opens the instant the pointer crosses it. Kept, not deleted — see
+// OUTSTANDING.md.
+const _HOVER_DELAY_MS = 250;
 const LINGER_MS = 1200;      // pause before retracting on mouse leave — lets user move to panel
 const ANIM_MS = 450;         // slide animation duration — slow and deliberate
 

@@ -15,6 +15,13 @@ type Props = {
   tool: SketchTool;
   tip: SketchTipGrade;
   formalizing?: boolean;
+  /**
+   * Whether the dock is the active surface. Passed by SketchBoard and currently
+   * ignored — the counterpart `onActivate` fires on every tool/tip change, but
+   * nothing reads `active`, so the dock always renders at full presence instead
+   * of receding when it is not the active surface. Kept, not deleted — see
+   * OUTSTANDING.md.
+   */
   active?: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   onTool: (tool: SketchTool) => void;
@@ -106,7 +113,7 @@ export function SketchDock({
   tool,
   tip,
   formalizing = false,
-  active = true,
+  active: _active = true,
   anchorRef,
   onTool,
   onTip,

@@ -20,7 +20,6 @@ import {
   projectPointOnSegment,
   readableUpDeg,
   resolveAnnotationLod,
-  GRID_INK_STROKE,
   GRID_STEP_PCT,
   ptsAttr,
   snapAlignment,

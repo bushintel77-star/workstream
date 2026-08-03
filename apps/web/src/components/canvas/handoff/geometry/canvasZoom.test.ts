@@ -39,4 +39,15 @@ describe("canvasZoom", () => {
     expect(composeSheetZoom(0.6, 0.1)).toBeGreaterThanOrEqual(ZOOM_MIN);
     expect(composeSheetZoom(1, ZOOM_MAX)).toBe(ZOOM_MAX);
   });
+
+  it("keyboard +/- steps match the ribbon and clamp at both ends", () => {
+    // zoomByKeyStep was imported here but never asserted, so the keyboard zoom
+    // path had no coverage at all.
+    expect(zoomByKeyStep(1, 1)).toBe(zoomByRibbonDelta(1, 1));
+    expect(zoomByKeyStep(1, -1)).toBe(zoomByRibbonDelta(1, -1));
+    expect(zoomByKeyStep(1, 1)).toBeGreaterThan(1);
+    expect(zoomByKeyStep(1, -1)).toBeLessThan(1);
+    expect(zoomByKeyStep(ZOOM_MAX, 1)).toBe(ZOOM_MAX);
+    expect(zoomByKeyStep(ZOOM_MIN, -1)).toBe(ZOOM_MIN);
+  });
 });

@@ -663,7 +663,7 @@ export async function cadQuoteApi(
 /* -- HITL site boundary ------------------------------------------------ */
 
 export type { SiteBoundaryLite, SiteEasementLite } from "./canvas-types";
-import type { SiteBoundaryLite, SiteEasementLite } from "./canvas-types";
+import type { SiteBoundaryLite } from "./canvas-types";
 
 export async function getSiteBoundaryApi(
   projectId: string,

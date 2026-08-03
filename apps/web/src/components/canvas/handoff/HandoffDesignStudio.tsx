@@ -154,7 +154,6 @@ import {
 import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import {
   loadPointerMarkId,
-  savePointerMarkId,
   type PointerMarkId,
 } from "./features/pointer/pointerMarks";
 import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
@@ -255,11 +254,7 @@ import {
   touchMidpoint,
   zoomFromPinch,
 } from "./geometry/canvasTouchCamera";
-import {
-  PHONE_DATA_SHEET_HEIGHT_PX,
-  PHONE_TOOL_DOCK_CLEARANCE_PX,
-  useStudioLayout,
-} from "../../../hooks/useStudioLayout";
+import { useStudioLayout } from "../../../hooks/useStudioLayout";
 import { TiltHintPill } from "./features/tilt/TiltHintPill";
 import {
   TILT_ANIM_MS_FAST,
@@ -579,8 +574,16 @@ export function HandoffDesignStudio({
   }, []);
 
   const [pointerMarkId, setPointerMarkId] = useState<PointerMarkId>("spade");
-  /** Settings hover preview — persists only on click. */
-  const [pointerMarkPreview, setPointerMarkPreview] =
+  /**
+   * Settings hover preview — persists only on click.
+   *
+   * `_setPointerMarkPreview` is unused because `PointerMarkSettings` (which owns
+   * the `onPreview` / `onMarkId` callbacks) is never mounted anywhere. The
+   * component, its stylesheet and its unit tests all exist; only the mount is
+   * missing, so the cursor mark can never be changed. Kept, not deleted — see
+   * OUTSTANDING.md.
+   */
+  const [pointerMarkPreview, _setPointerMarkPreview] =
     useState<PointerMarkId | null>(null);
   /** Handle hover from CadPlanBoard — move / add / paint affordances. */
   const [boardCursor, setBoardCursor] = useState<
@@ -1827,7 +1830,8 @@ export function HandoffDesignStudio({
         .requestTemplate,
     [titleBlock?.councilLabel],
   );
-  const [stickyRestoreNonce, setStickyRestoreNonce] = useState(0);
+  /* Bump-to-refresh nonce — nothing reads the value, only the re-render. */
+  const [, setStickyRestoreNonce] = useState(0);
   const [weatherDay, setWeatherDay] = useState<EnvWeatherDay | null>(null);
   useEffect(() => {
     if (!projectId || !servicesOpen) return;
@@ -2511,7 +2515,13 @@ export function HandoffDesignStudio({
     (h) => h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer",
   );
 
-  const trade = useMemo(
+  /*
+   * `_trade` is unused: the live trade estimate is solved on every estimate
+   * change and never surfaced anywhere in the studio. Kept, not deleted — the
+   * calculation is real and owned by @workstream/domain; what is missing is the
+   * display. See OUTSTANDING.md.
+   */
+  const _trade = useMemo(
     () => solveLiveTradeEstimate({ report: estimate }),
     [estimate],
   );

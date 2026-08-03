@@ -1,7 +1,4 @@
 import type { PctPoint } from "./types";
-import { bufferPolylineToRing, clipPolylineToBbox } from "./bufferPolyline";
-
-type MetreVert = { x: number; y: number };
 
 /**
  * Letterbox transform that mapped a title ring into board `%`.

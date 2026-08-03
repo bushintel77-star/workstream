@@ -88,7 +88,8 @@ export function sunDateFromPreset(
   now = new Date(),
 ): Date {
   const mel = melbourneParts(now);
-  let { year, month, day } = mel;
+  const { year } = mel;
+  let { month, day } = mel;
   if (preset === "march-equinox") {
     month = 3;
     day = 20;

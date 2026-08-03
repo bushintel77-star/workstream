@@ -32,8 +32,6 @@ import {
   KitTextarea,
   KitTabs,
   KitSeparator,
-  KitSheet,
-  KitTooltip,
 } from "@/components/ui/kit";
 import css from "./present.module.css";
 
