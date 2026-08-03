@@ -92,8 +92,15 @@ test.describe("Lane law — chrome card overlap", () => {
       expect(layersBox.x).toBeGreaterThan(dockBox.x + dockBox.width);
     }
 
+    /*
+     * Diagnostic capture only — write to the gitignored artifacts dir.
+     * `e2e/screenshots/` holds committed *input* fixtures (
+     * sketch-image-layers.spec.ts loads cards-decluttered-night.png as its
+     * sample upload), so writing run output there mutated another spec's
+     * fixture and dirtied committed binaries on every run.
+     */
     await page.screenshot({
-      path: "e2e/screenshots/layers-right-slot.png",
+      path: "e2e/artifacts/lane-law/layers-right-slot.png",
       fullPage: false,
     });
 
@@ -113,7 +120,7 @@ test.describe("Lane law — chrome card overlap", () => {
     }
 
     await page.screenshot({
-      path: "e2e/screenshots/cards-decluttered-night.png",
+      path: "e2e/artifacts/lane-law/cards-decluttered-night.png",
       fullPage: false,
     });
 

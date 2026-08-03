@@ -16,7 +16,7 @@
   gap: var(--s-3);
   min-height: 34px;
   max-width: min(94%, 640px);
-  padding: 4px 10px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--ws-r-3, 12px);
   border: 1px solid var(--ws-frame-hair);
   background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
@@ -36,7 +36,7 @@
 .actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   flex: none;
 }
 
@@ -45,7 +45,7 @@
 .chip {
   flex-shrink: 0;
   min-height: 34px;
-  padding: 0 11px;
+  padding: 0 var(--s-3);
   border: none;
   border-radius: var(--ws-r-2, 8px);
   background: transparent;

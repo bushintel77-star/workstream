@@ -14,8 +14,8 @@
   max-height: min(52vh, 480px);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 9px 9px;
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-2) var(--s-2);
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--glass-border);
   background: var(--glass);
@@ -92,7 +92,7 @@
 .group {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--s-1);
 }
 
 .groupTitle {

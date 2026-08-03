@@ -301,6 +301,7 @@ export function ElevationBoard({
                 className={`${css.label}${bar?.selected ? ` ${css.labelActive}` : ""}`}
                 data-testid="elevation-label"
                 data-elev-family={bar?.family ?? "plain"}
+                aria-pressed={bar?.selected ?? false}
                 style={{ left: pos.left, top: pos.top }}
                 onClick={() => {
                   if (bar && !bar.item.ghost) onSelect(bar.item.id);

@@ -4,7 +4,7 @@
   bottom: 14px;
   z-index: var(--ws-z-interact);
   width: min(220px, calc(100vw - 100px));
-  padding: 12px 14px;
+  padding: var(--s-3) var(--s-3);
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -14,7 +14,7 @@
   color: var(--hc-ink);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s-2);
 }
 
 .embedded {
@@ -78,7 +78,7 @@
 .bar {
   position: relative;
   height: 6px;
-  margin-top: 6px;
+  margin-top: var(--s-1);
   border-radius: 0;
   background: var(--hc-line-soft);
   overflow: hidden;

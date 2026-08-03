@@ -50,7 +50,6 @@ import { SitePackPanel } from "./features/sitePack/SitePackPanel";
 import {
   listProjectFilesClient,
   uploadProjectFileClient,
-  type ClientProjectFile,
 } from "./features/sitePack/projectFilesClient";
 import { buildServiceLedgerRows } from "./features/services/serviceLedger";
 import {
@@ -221,6 +220,7 @@ import type {
   LandscapeFeature,
   IrrigationZone,
   PresentationPack,
+  ProjectFile,
 } from "@workstream/contracts";
 import {
   plotBoxFor,
@@ -522,7 +522,7 @@ export function HandoffDesignStudio({
         : areaM2 != null && areaM2 > 0
           ? areaM2
           : 0;
-  const [bydaFiles, setBydaFiles] = useState<ClientProjectFile[]>([]);
+  const [bydaFiles, setBydaFiles] = useState<ProjectFile[]>([]);
   /**
    * Sticky instrument home — empty canvas margin only (off the lot drawing).
    * Does not follow selection; default parks in the left gutter.
@@ -5121,7 +5121,7 @@ export function HandoffDesignStudio({
               onToggleChase={studio.toggleSitePackChase}
               onStampDigOverride={() => studio.stampDigOverride()}
               onUploadBydaFile={(file) => {
-                void uploadProjectFileClient(projectId, file, "byda")
+                void uploadProjectFileClient(projectId, file, { kind: "byda" })
                   .then((row) => {
                     setBydaFiles((prev) => [row, ...prev]);
                     const chase = ui.sitePackChase.map((c) =>

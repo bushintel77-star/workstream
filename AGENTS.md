@@ -79,3 +79,25 @@ AI pipeline: heuristic coaching (`buildSketchCanvasAiSuggestions`) + optional vi
 ### UTF-8 / Turbopack
 
 Next.js dev requires valid UTF-8 in imported TS files. Lone Windows-1252 bytes (e.g. `0x97` em dash) cause 500s. Fix only files Turbopack names — do not bulk sed the repo.
+
+**Never rewrite source files through PowerShell text cmdlets on Windows.**
+`(Get-Content -Raw) ... | Set-Content` round-trips through the console codepage
+and re-encodes: every `—`/`…` in the file becomes `â€"`/`â€¦` mojibake, and
+`-Encoding utf8` on PowerShell 5.1 also prepends a BOM. Use the editing tools, or
+Node (`fs.readFileSync/writeFileSync` with `"utf8"`, which is byte-exact and adds
+no BOM) for scripted sweeps. Verify after any bulk edit:
+
+```powershell
+$b=[IO.File]::ReadAllBytes($p)   # 239,187,191 prefix = stray BOM
+for($i=0;$i -lt $b.Length-1;$i++){ if($b[$i]-eq 0xC3 -and $b[$i+1]-eq 0xA2){"mojibake"} }
+```
+
+### E2E against an already-running dev server
+
+`playwright.config.ts` sets `RATE_LIMIT_MAX: 10000` on the API it starts, because
+e2e creates many projects from one loopback IP. `reuseExistingServer` is on
+outside CI, so if you reuse a plain `pnpm dev` API you inherit production
+throttling and batches of 4+ spec files fail at
+`createSurveyProject`/`createAddressProject` with `expect(create.ok())` false.
+That is the limiter, not the code — re-run smaller batches, or start the API with
+`RATE_LIMIT_MAX=10000`.

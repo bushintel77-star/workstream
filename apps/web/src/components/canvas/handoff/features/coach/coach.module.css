@@ -2,7 +2,7 @@
   position: absolute;
   z-index: var(--ws-z-frame);
   width: min(280px, calc(100vw - 40px));
-  padding: 14px 16px;
+  padding: var(--s-3) var(--s-4);
   border-radius: var(--r-xl);
   background: var(--hc-ink);
   color: var(--hc-invert);

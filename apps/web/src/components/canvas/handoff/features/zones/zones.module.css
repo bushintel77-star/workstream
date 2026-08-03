@@ -32,7 +32,7 @@
 .label {
   position: absolute;
   transform: translate(6px, -10px);
-  padding: 2px 5px;
+  padding: 2px var(--s-1);
   border: 1px solid color-mix(in srgb, var(--hc-ink) 16%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 92%, transparent);
   font-family: "IBM Plex Mono", monospace;
@@ -49,7 +49,7 @@
   transform: translateX(-50%);
   z-index: var(--ws-z-dock);
   margin: 0;
-  padding: 4px 10px;
+  padding: var(--s-1) var(--s-2);
   border: 1px solid color-mix(in srgb, var(--hc-ink) 18%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 94%, transparent);
   font-family: "IBM Plex Mono", monospace;

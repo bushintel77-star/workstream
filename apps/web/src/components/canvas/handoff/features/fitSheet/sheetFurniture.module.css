@@ -1,7 +1,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s-2);
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--hc-line-soft);
@@ -49,13 +49,13 @@
 .statusStamp {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--s-1);
 }
 
 .statusBadge {
   display: inline-flex;
   align-self: flex-start;
-  padding: 2px 7px;
+  padding: 2px var(--s-2);
   border: 1.5px solid var(--hc-signal, var(--signal));
   color: var(--hc-signal, var(--signal));
   font-family: var(--font-mono);
@@ -92,13 +92,13 @@
   padding: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px 10px;
+  gap: var(--s-1) var(--s-2);
 }
 
 .hatchList li {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   font-size: var(--text-micro);
   color: var(--text-secondary);
 }

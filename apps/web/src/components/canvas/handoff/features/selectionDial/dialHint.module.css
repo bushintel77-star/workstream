@@ -6,7 +6,7 @@
   z-index: var(--ws-z-frame);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   padding: 8px 12px;
   border-radius: var(--hc-r-pill);
   background: var(--hc-frost);

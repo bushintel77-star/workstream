@@ -82,7 +82,7 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
 }
 
 .crumb:hover {
@@ -127,7 +127,7 @@
 }
 
 .card {
-  padding: 14px 16px;
+  padding: var(--s-3) var(--s-4);
   border: 1px solid var(--line-subtle);
   border-radius: var(--r-md);
   background: var(--surface-elevated);
@@ -181,7 +181,7 @@
 }
 
 .metric {
-  padding: 14px 16px;
+  padding: var(--s-3) var(--s-4);
   border: 1px solid var(--line-hairline);
   border-radius: var(--r-lg);
   display: flex;
@@ -221,7 +221,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 3px 9px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--r-pill);
   white-space: nowrap;
   background: var(--surface-sunken);
@@ -294,7 +294,7 @@
 .select {
   width: 100%;
   min-height: 44px;
-  padding: 11px 14px;
+  padding: var(--s-3) var(--s-3);
   border: 1px solid var(--line-hairline);
   border-radius: var(--r-lg);
   font: inherit;
@@ -310,10 +310,14 @@
 }
 
 .select {
+  /* Chevron width matches the inline SVG below; the text reserve is derived
+     from it so the label can never run under the glyph. */
+  --select-chevron-w: 12px;
+  --select-chevron-inset: var(--s-3);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%2371717a' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
+  background-position: right var(--select-chevron-inset) center;
+  padding-right: calc(var(--select-chevron-inset) * 2 + var(--select-chevron-w));
 }
 
 .input:focus,
@@ -375,7 +379,7 @@
 .table th,
 .table td {
   text-align: left;
-  padding: 10px 12px;
+  padding: var(--s-2) var(--s-3);
   border-bottom: 1px solid var(--line-hairline);
   vertical-align: top;
 }

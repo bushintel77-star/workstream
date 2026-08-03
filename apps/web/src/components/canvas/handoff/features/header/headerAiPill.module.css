@@ -2,7 +2,7 @@
 .pill {
   min-height: var(--ws-frame-tap, 38px);
   height: var(--ws-frame-tap, 38px);
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border-radius: var(--r-md);
   border: none;
   background: transparent;

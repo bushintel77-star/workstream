@@ -8,6 +8,15 @@
   --hc-ink-faint: var(--hc-ink-faint);
   --hc-line: var(--hc-line);
   --hc-line-soft: var(--hc-line-soft);
+  /*
+   * The dismiss button overlays the card, so the label must reserve room for it.
+   * Derive that reserve from the button's own size + inset instead of restating
+   * it as a literal: a hardcoded reserve silently stops clearing the control the
+   * moment the control resizes.
+   */
+  --meta-close-size: 30px;
+  --meta-close-inset: var(--s-1);
+  --meta-close-reserve: calc(var(--meta-close-inset) + var(--meta-close-size) + var(--s-1));
   position: absolute;
   top: calc(var(--ws-safe-top, 40px) + 4px);
   right: 0;
@@ -85,7 +94,7 @@
   gap: var(--s-2);
   width: 100%;
   min-height: 66px;
-  padding: 9px 38px 9px 10px;
+  padding: var(--s-2) var(--meta-close-reserve) var(--s-2) var(--s-2);
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -168,11 +177,11 @@
   appearance: none;
   position: absolute;
   top: 50%;
-  right: 5px;
+  right: var(--meta-close-inset);
   z-index: var(--ws-z-wash);
   display: inline-grid;
-  width: 30px;
-  height: 30px;
+  width: var(--meta-close-size);
+  height: var(--meta-close-size);
   padding: 0;
   place-items: center;
   transform: translateY(-50%);
@@ -209,7 +218,7 @@
 
 .badge {
   display: inline-block;
-  margin-left: 5px;
+  margin-left: var(--s-1);
   padding: 0 4px;
   border: 1px solid color-mix(in srgb, var(--hc-danger) 24%, transparent);
   border-radius: var(--hc-r-pill);

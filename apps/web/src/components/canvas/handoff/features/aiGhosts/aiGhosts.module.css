@@ -1,10 +1,10 @@
 .root {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
-  gap: 10px;
+  gap: var(--s-2);
   min-height: 0;
   width: min(520px, calc(100vw - 48px));
-  padding: 12px 14px;
+  padding: var(--s-3) var(--s-3);
   border-radius: var(--r-xl);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
@@ -43,7 +43,7 @@
   align-items: flex-start;
   gap: 2px;
   width: 100%;
-  padding: 8px 10px;
+  padding: var(--s-2) var(--s-2);
   border: 1px solid transparent;
   border-radius: 9px;
   background: transparent;
@@ -81,11 +81,11 @@
 .detail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s-2);
   min-height: 0;
   overflow: auto;
   max-height: 300px;
-  padding: 2px 2px 2px 10px;
+  padding: 2px 2px 2px var(--s-2);
   border-left: 1px solid var(--hc-line-soft);
 }
 
@@ -135,7 +135,7 @@
 .confBtn {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s-1);
   width: 100%;
   padding: 0;
   border: none;
@@ -211,7 +211,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
   margin-top: auto;
   padding-top: 8px;
 }
@@ -236,7 +236,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
   margin-top: 8px;
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
@@ -245,7 +245,7 @@
 
 .rejectReasons button {
   min-height: 44px;
-  padding: 0 11px;
+  padding: 0 var(--s-3);
   border: 1px solid color-mix(in srgb, var(--hc-danger) 22%, transparent);
   border-radius: var(--hc-r-pill);
   background: var(--hc-glass-soft);
@@ -275,10 +275,10 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
+  gap: var(--s-1);
   min-height: 120px;
   width: min(360px, calc(100vw - 48px));
-  padding: 14px 16px;
+  padding: var(--s-3) var(--s-4);
   border-radius: var(--r-xl);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -307,6 +307,6 @@
     border-left: none;
     border-top: 1px solid var(--hc-line-soft);
     padding-left: 2px;
-    padding-top: 10px;
+    padding-top: var(--s-2);
   }
 }

@@ -43,11 +43,9 @@
    *   · inset base shade — the recessed lower lip
    */
   background:
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       color-mix(in srgb, var(--ws-frame-ink) 6%, transparent) 0%,
-      transparent 42%
-    ),
+      transparent 42%),
     color-mix(in srgb, var(--ws-frame) 90%, transparent);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
   backdrop-filter: blur(18px) saturate(1.2);
@@ -76,10 +74,8 @@
  */
 .context[data-lane="busy"] {
   right: var(--ws-lane-reserve, calc(min(304px, calc(100vw - 40px)) + 16px));
-  max-width: min(
-    360px,
-    calc(100vw - var(--ws-frame-left, 48px) - var(--ws-lane-reserve, 320px) - 24px)
-  );
+  max-width: min(360px,
+      calc(100vw - var(--ws-frame-left, 48px) - var(--ws-lane-reserve, 320px) - 24px));
 }
 
 /* Phone — clusters drop out of the frame corners and flow in the chip band
@@ -104,8 +100,7 @@
   border: 1px solid var(--ws-frame-hair);
 }
 
-:global([data-testid="handoff-design-studio"][data-layout="phone"])
-  .row[data-lane="busy"] {
+:global([data-testid="handoff-design-studio"][data-layout="phone"]) .row[data-lane="busy"] {
   right: 0;
   left: 0;
   max-width: 100%;
@@ -120,10 +115,10 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 3px;
+  gap: var(--s-1);
   min-width: 76px;
   min-height: 40px;
-  padding: 5px 13px;
+  padding: var(--s-1) var(--s-3);
   border: 0;
   border-radius: 0;
   background: transparent;

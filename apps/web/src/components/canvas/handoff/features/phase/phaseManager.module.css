@@ -10,10 +10,10 @@
   bottom: var(--ws-stack-3);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s-1);
   min-width: 0;
   max-width: min(320px, calc(100vw - 32px));
-  padding: 8px 10px;
+  padding: var(--s-2) var(--s-2);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--ws-frame-hair);
   background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
@@ -25,7 +25,7 @@
 }
 
 .chip[data-open="0"] {
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
 }
 
 .summary {
@@ -68,14 +68,14 @@
 .chipRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
 }
 
 /* Flat frame control: dim ink at rest, wash on hover, hairline ring when on. */
 .phaseChip {
   min-height: 36px;
   min-width: 44px;
-  padding: 6px 10px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--r-md);
   border: 1px solid var(--ws-frame-hair);
   background: transparent;

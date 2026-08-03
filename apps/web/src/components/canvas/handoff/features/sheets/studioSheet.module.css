@@ -14,7 +14,7 @@
   z-index: var(--ws-z-panel);
   display: flex;
   flex-direction: column;
-  padding: 0 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 0 var(--s-3) calc(var(--s-2) + env(safe-area-inset-bottom, 0px));
   border-radius: 16px 16px 0 0;
   background: var(--hc-frost, var(--hc-invert));
   border: 1px solid var(--hc-line, var(--hc-line-soft));
@@ -69,7 +69,7 @@
   align-items: center;
   gap: var(--s-1);
   min-height: var(--tap-min, 44px);
-  padding-bottom: 6px;
+  padding-bottom: var(--s-1);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -80,7 +80,7 @@
   align-items: center;
   gap: var(--s-1);
   min-height: var(--tap-min, 44px);
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border: 1px solid transparent;
   border-radius: var(--hc-r-pill, 999px);
   background: transparent;
@@ -145,7 +145,7 @@
 .actionList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s-1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -181,7 +181,7 @@
 }
 
 .bomEmbed {
-  margin: 0 0 14px;
+  margin: 0 0 var(--s-3);
   padding: 0 0 12px;
   border-bottom: 1px solid var(--hc-line-soft);
 }

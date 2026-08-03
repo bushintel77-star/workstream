@@ -64,7 +64,7 @@
 }
 
 .backBtn {
-  padding: 6px 14px;
+  padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-family: inherit;
   background: var(--gray-l-100);
@@ -97,7 +97,7 @@
 }
 
 .createBtn {
-  padding: 10px 16px;
+  padding: var(--s-2) var(--s-4);
   font-size: 14px;
   font-family: inherit;
   background: var(--text-primary);
@@ -158,7 +158,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 10px 12px;
+  padding: var(--s-2) var(--s-3);
   background: transparent;
   border: 0;
   border-radius: var(--r-sm);
@@ -199,7 +199,7 @@
 }
 
 .docDelete {
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
   font-size: 11px;
   font-family: inherit;
   background: transparent;
@@ -240,7 +240,7 @@
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  padding: 10px 16px;
+  padding: var(--s-2) var(--s-4);
   background: var(--gray-l-0);
   border-bottom: 1px solid var(--gray-l-200);
   flex-wrap: wrap;
@@ -445,7 +445,7 @@
 }
 
 .panelHeadingInput {
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
   font-size: 15px;
   font-family: inherit;
   background: rgba(0, 0, 0, 0.04);
@@ -457,7 +457,7 @@
 
 .panelBodyInput {
   flex: 1;
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
   font-size: 14px;
   font-family: inherit;
   background: rgba(0, 0, 0, 0.04);
@@ -471,7 +471,7 @@
 
 .panelDoneBtn {
   align-self: flex-start;
-  padding: 6px 12px;
+  padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-family: inherit;
   background: var(--pv-ink);
@@ -618,7 +618,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: var(--s-2) var(--s-3);
   box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
 }
 
@@ -629,7 +629,7 @@
 }
 
 .pickerClose {
-  padding: 4px 10px;
+  padding: var(--s-1) var(--s-2);
   font-size: 12px;
   font-family: inherit;
   background: transparent;
@@ -711,7 +711,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--s-3);
-  padding: 10px 16px;
+  padding: var(--s-2) var(--s-4);
   background: linear-gradient(180deg,
       color-mix(in srgb, var(--gray-l-0) 92%, transparent),
       color-mix(in srgb, var(--gray-l-0) 80%, transparent));
@@ -727,7 +727,7 @@
 }
 
 .pageTab {
-  padding: 6px 12px;
+  padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-family: inherit;
   background: var(--gray-l-100);
@@ -767,7 +767,7 @@
 }
 
 .addPageBtn {
-  padding: 6px 16px;
+  padding: var(--s-1) var(--s-4);
   font-size: 13px;
   font-family: inherit;
   background: var(--gray-l-100);
@@ -819,7 +819,7 @@
 /* -- Plan dissection (Phase 2) -- */
 
 .dissectBtn {
-  padding: 6px 14px;
+  padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-weight: 600;
   background: var(--color-danger);
@@ -927,7 +927,7 @@
 }
 
 .ghostAcceptAll {
-  padding: 6px 12px;
+  padding: var(--s-1) var(--s-3);
   font-size: 12px;
   font-weight: 600;
   background: var(--color-danger);
@@ -947,7 +947,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s-1);
 }
 
 .ghostItem {
@@ -997,7 +997,7 @@
 }
 
 .ghostAcceptBtn {
-  padding: 3px 8px;
+  padding: var(--s-1) var(--s-2);
   font-size: 11px;
   font-weight: 600;
   background: var(--color-danger);
@@ -1011,7 +1011,7 @@
 }
 
 .ghostRejectBtn {
-  padding: 3px 8px;
+  padding: var(--s-1) var(--s-2);
   font-size: 11px;
   background: none;
   border: 0;
@@ -1035,7 +1035,7 @@
 }
 
 .printBtn {
-  padding: 6px 14px;
+  padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-weight: 600;
   background: var(--gray-l-0);
@@ -1119,7 +1119,7 @@
   position: absolute;
   bottom: 4px;
   right: 28px;
-  padding: 3px 8px;
+  padding: var(--s-1) var(--s-2);
   font-size: 10px;
   font-family: inherit;
   background: rgba(255, 255, 255, 0.9);
@@ -1151,7 +1151,7 @@
   border: 0;
   border-radius: var(--r-md);
   z-index: 100;
-  padding: 10px;
+  padding: var(--s-2);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -1177,7 +1177,7 @@
 }
 
 .swatchPickerClose {
-  padding: 3px 10px;
+  padding: var(--s-1) var(--s-2);
   font-size: 11px;
   font-family: inherit;
   background: var(--color-danger);
@@ -1211,7 +1211,7 @@
   align-items: center;
   gap: var(--s-2);
   width: 100%;
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
   font-family: inherit;
   font-size: 12px;
   background: transparent;
@@ -1264,7 +1264,7 @@
   position: absolute;
   top: 4px;
   right: 60px;
-  padding: 3px 8px;
+  padding: var(--s-1) var(--s-2);
   font-size: 10px;
   font-family: inherit;
   background: color-mix(in srgb, var(--color-warning) 12%, var(--gray-l-0));
@@ -1287,7 +1287,7 @@
 /* -- Phase 3: editorial formatting -- */
 
 .formatBtn {
-  padding: 6px 14px;
+  padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-weight: 600;
   background: var(--gray-l-0);
@@ -1318,7 +1318,7 @@
 }
 
 .templateBtn {
-  padding: 6px 14px;
+  padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-weight: 600;
   background: var(--color-danger);
@@ -1384,7 +1384,7 @@
   font-size: 12px;
   color: var(--text-muted);
   line-height: 1.4;
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
   background: var(--gray-l-100);
   border-radius: var(--r-sm);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);

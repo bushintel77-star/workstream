@@ -1,7 +1,7 @@
 "use client";
 
 import type { DesignKeylessOverlay } from "@workstream/contracts";
-import type { PctPoint } from "../../geometry";
+import { ptsAttr, type PctPoint } from "../../geometry";
 import {
   PLAN_LOT_HATCH_CLIP_ID,
   shouldPaintKeylessFill,
@@ -19,12 +19,9 @@ type Props = {
   boundary: PctPoint[];
 };
 
-function ptsAttr(ring: Array<{ x_pct: number; y_pct: number }>): string {
+/** Overlay rings arrive in contract `x_pct`/`y_pct` form, not `PctPoint`. */
+function overlayPtsAttr(ring: Array<{ x_pct: number; y_pct: number }>): string {
   return ring.map((p) => `${p.x_pct},${p.y_pct}`).join(" ");
-}
-
-function boundaryPtsAttr(ring: PctPoint[]): string {
-  return ring.map((p) => `${p.x},${p.y}`).join(" ");
 }
 
 /**
@@ -35,7 +32,7 @@ export function KeylessOverlayWash({ active, overlays, boundary }: Props) {
   if (!active || overlays.length === 0) return null;
 
   const lotClip =
-    boundary.length >= 3 ? boundaryPtsAttr(boundary) : null;
+    boundary.length >= 3 ? ptsAttr(boundary) : null;
 
   return (
     <svg
@@ -206,7 +203,7 @@ export function KeylessOverlayWash({ active, overlays, boundary }: Props) {
         {overlays.flatMap((ov) =>
           ov.rings.map((ring, i) => {
             if (ring.length < 2) return null;
-            const pts = ptsAttr(ring);
+            const pts = overlayPtsAttr(ring);
             if (ov.kind === "contour" || ring.length < 3) {
               return (
                 <polyline

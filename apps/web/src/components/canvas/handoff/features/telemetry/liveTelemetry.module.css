@@ -46,7 +46,7 @@
   flex-direction: column;
   gap: var(--s-1);
   min-width: min(260px, calc(100vw - 48px));
-  padding: 10px 12px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line-soft);
   background: color-mix(in srgb, var(--hc-invert) 90%, transparent);
@@ -92,9 +92,9 @@
 }
 
 .seed {
-  margin-top: 6px;
+  margin-top: var(--s-1);
   min-height: 36px;
-  padding: 6px 10px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-panel);
   border: 1px solid var(--hc-line-soft);
   background: color-mix(in srgb, var(--hc-invert) 70%, transparent);
@@ -116,7 +116,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--s-2);
   font-size: var(--text-xs);
 }
 
@@ -131,14 +131,14 @@
 }
 
 .alertTip {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-size: var(--text-xs);
   line-height: 1.35;
   color: var(--hc-warning);
 }
 
 .honesty {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-size: var(--hc-fs-2);
   line-height: 1.35;
   font-style: italic;

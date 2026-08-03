@@ -42,7 +42,7 @@
   background: var(--hc-glass);
   border: 1px solid var(--hc-line);
   backdrop-filter: none;
-  padding: 4px 9px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-control);
   white-space: nowrap;
   pointer-events: none;
@@ -68,7 +68,7 @@
   border: 1px solid var(--hc-line-soft);
   backdrop-filter: none;
   border-radius: var(--hc-r-control);
-  padding: 5px 10px;
+  padding: var(--s-1) var(--s-2);
   pointer-events: none;
   font-family: "IBM Plex Mono", monospace;
 }

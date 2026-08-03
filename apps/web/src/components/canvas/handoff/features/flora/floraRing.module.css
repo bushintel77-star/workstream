@@ -56,7 +56,7 @@
    * offset so we don't compound it here. Kept as a plain block card.
    */
   width: min(280px, calc(100vw - 48px));
-  padding: 10px 12px 12px;
+  padding: var(--s-2) var(--s-3) var(--s-3);
   border-radius: var(--r-xl);
   border: 1px solid color-mix(in srgb, var(--hc-ink) 10%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 92%, transparent);
@@ -68,7 +68,7 @@
 }
 
 .kicker {
-  margin: 0 0 6px;
+  margin: 0 0 var(--s-1);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--hc-fs-1);
   letter-spacing: 0.12em;
@@ -91,7 +91,7 @@
   border: 1px solid color-mix(in srgb, var(--hc-ink) 8%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 55%, transparent);
   border-radius: var(--r-lg);
-  padding: 7px 9px;
+  padding: var(--s-2) var(--s-2);
   cursor: pointer;
   font: inherit;
   display: flex;
@@ -132,14 +132,14 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
   margin-top: 8px;
 }
 
 .accept,
 .dismiss {
   min-height: 32px;
-  padding: 0 11px;
+  padding: 0 var(--s-3);
   border-radius: var(--hc-r-panel);
   font: inherit;
   font-size: var(--text-xs);
@@ -168,8 +168,8 @@
 
 .conflictWarn,
 .conflictBlock {
-  margin: 6px 0 0;
-  padding: 6px 8px;
+  margin: var(--s-1) 0 0;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-panel);
   font-size: var(--hc-fs-3);
   line-height: 1.35;

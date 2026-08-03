@@ -8,7 +8,7 @@
   right: 0;
   z-index: var(--ws-z-dock);
   width: min(340px, calc(100vw - 24px));
-  padding: 16px 18px;
+  padding: var(--s-4) var(--s-4);
   border-radius: var(--r-xl);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
@@ -17,7 +17,7 @@
   color: var(--hc-ink);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s-2);
   animation: sharePop 160ms ease-out both;
 }
 

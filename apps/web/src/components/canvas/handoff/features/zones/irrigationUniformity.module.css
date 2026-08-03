@@ -35,7 +35,7 @@
   flex-direction: column;
   gap: var(--s-1);
   min-width: min(260px, calc(100vw - 48px));
-  padding: 10px 12px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line-soft);
   background: color-mix(in srgb, var(--hc-invert) 90%, transparent);
@@ -96,7 +96,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-size: var(--text-micro);
   color: var(--hc-ink-faint);
 }
@@ -107,7 +107,7 @@
   display: inline-block;
   width: 10px;
   height: 10px;
-  margin-right: 3px;
+  margin-right: var(--s-1);
   border-radius: 2px;
   vertical-align: -1px;
 }

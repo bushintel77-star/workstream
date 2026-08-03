@@ -50,7 +50,7 @@
 .panel[data-state="expanded"],
 .panel[data-state="placing"] {
   left: var(--ws-frame-left);
-  padding: 6px 10px 6px 6px;
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-1);
   border-radius: var(--hc-r-pop);
   background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
   border: 1px solid var(--ws-frame-hair);
@@ -105,7 +105,7 @@
   min-width: var(--ws-frame-tap, 40px);
   max-width: 100%;
   min-height: var(--ws-frame-tap, 40px);
-  padding: 3px 2px;
+  padding: var(--s-1) 2px;
   border: none;
   border-radius: var(--r-md);
   background: transparent;
@@ -177,7 +177,7 @@
   flex-direction: column;
   width: min(280px, 58vw);
   min-width: 200px;
-  margin-left: 6px;
+  margin-left: var(--s-1);
   padding-left: 8px;
   border-left: 1px solid var(--hc-line-soft);
   min-height: 0;
@@ -186,8 +186,8 @@
 .libraryHead {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: var(--s-1);
+  margin-bottom: var(--s-1);
 }
 
 .libraryHead .search {
@@ -224,8 +224,8 @@
 .placingHead {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: var(--s-1);
+  margin-bottom: var(--s-1);
 }
 
 .backBtn {
@@ -258,8 +258,8 @@
 .search {
   width: 100%;
   min-height: 30px;
-  margin-bottom: 6px;
-  padding: 4px 9px;
+  margin-bottom: var(--s-1);
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass-soft);
@@ -302,7 +302,7 @@
 .filterChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: var(--s-1);
 }
 
 .filterChip {
@@ -362,10 +362,10 @@
 .sectionHead {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   width: 100%;
   min-height: 28px;
-  padding: 3px 4px;
+  padding: var(--s-1) var(--s-1);
   border: none;
   border-radius: var(--hc-r-panel);
   background: transparent;
@@ -403,7 +403,7 @@
 .count {
   margin-left: auto;
   min-width: 20px;
-  padding: 1px 5px;
+  padding: 1px var(--s-1);
   border-radius: var(--hc-r-pill, 999px);
   background: var(--hc-glass-soft);
   color: var(--ink-faint);
@@ -416,8 +416,8 @@
 .tray {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 6px 2px 12px;
+  gap: var(--s-2);
+  padding: var(--s-1) 2px var(--s-3);
 }
 
 .tile {
@@ -429,7 +429,7 @@
   gap: var(--s-1);
   width: 88px;
   min-height: 72px;
-  padding: 8px 7px;
+  padding: var(--s-2) var(--s-2);
   border-radius: var(--hc-r-control);
   border: 1px solid transparent;
   background: transparent;
@@ -506,7 +506,7 @@
 
 .tileSeasons {
   display: flex;
-  gap: 3px;
+  gap: var(--s-1);
   margin-top: 2px;
 }
 
@@ -531,7 +531,7 @@
 
 .empty {
   margin: 0;
-  padding: 6px 2px;
+  padding: var(--s-1) 2px;
   font-size: var(--hc-fs-3);
   color: var(--ink-faint);
 }
@@ -540,12 +540,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-1);
-  margin-bottom: 6px;
+  margin-bottom: var(--s-1);
 }
 
 .craftChip {
   min-height: 40px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line-soft);
   background: transparent;

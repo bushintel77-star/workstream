@@ -19,12 +19,14 @@
   pointer-events: auto;
 }
 
-.stack > * {
+.stack>* {
   pointer-events: auto;
 }
 
 .card {
-  padding: 10px 12px;
+  position: relative;
+  overflow: hidden;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-invert);
@@ -75,14 +77,14 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
   margin-top: 8px;
 }
 
 .accept,
 .dismiss {
   min-height: 28px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border-radius: var(--hc-r-panel);
   font: inherit;
   font-size: var(--hc-fs-3);
@@ -107,6 +109,7 @@
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -147,11 +150,13 @@
 }
 
 @keyframes pinPulse {
+
   0%,
   100% {
     transform: scale(1);
     opacity: 0.95;
   }
+
   50% {
     transform: scale(1.35);
     opacity: 0.55;

@@ -1,17 +1,16 @@
-/** Browser helpers for project filing via Next BFF (not server-only api.ts). */
+/**
+ * Browser helpers for project filing via Next BFF (not server-only api.ts).
+ *
+ * Single client for the `/api/projects/:id/files` pair — the sketch image-layer
+ * panel used to carry its own copy of both calls, which meant two places knew
+ * the endpoint and only one of them typed `kind` against the contract.
+ */
 
-export type ClientProjectFile = {
-  id: string;
-  kind: string;
-  title: string;
-  mime_type: string;
-  uri: string;
-  created_at: string;
-};
+import type { ProjectFile, ProjectFileKind } from "@workstream/contracts";
 
 export async function listProjectFilesClient(
   projectId: string,
-): Promise<ClientProjectFile[]> {
+): Promise<ProjectFile[]> {
   const res = await fetch(`/api/projects/${projectId}/files`, {
     cache: "no-store",
   });
@@ -19,19 +18,19 @@ export async function listProjectFilesClient(
     const text = await res.text().catch(() => "");
     throw new Error(`List files failed (${res.status}): ${text}`);
   }
-  const body = (await res.json()) as { files: ClientProjectFile[] };
+  const body = (await res.json()) as { files: ProjectFile[] };
   return body.files ?? [];
 }
 
 export async function uploadProjectFileClient(
   projectId: string,
   file: File,
-  kind: "byda" | "council_drain" | "other" = "byda",
-): Promise<ClientProjectFile> {
+  opts: { kind?: ProjectFileKind; title?: string } = {},
+): Promise<ProjectFile> {
   const fd = new FormData();
   fd.append("file", file, file.name);
-  fd.append("kind", kind);
-  fd.append("title", file.name);
+  fd.append("kind", opts.kind ?? "byda");
+  fd.append("title", opts.title ?? file.name);
   const res = await fetch(`/api/projects/${projectId}/files`, {
     method: "POST",
     body: fd,
@@ -40,6 +39,6 @@ export async function uploadProjectFileClient(
     const text = await res.text().catch(() => "");
     throw new Error(`Upload failed (${res.status}): ${text}`);
   }
-  const body = (await res.json()) as { file: ClientProjectFile };
+  const body = (await res.json()) as { file: ProjectFile };
   return body.file;
 }

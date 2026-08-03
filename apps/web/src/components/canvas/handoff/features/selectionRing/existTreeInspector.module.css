@@ -48,7 +48,7 @@
 .field {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-nano);
   color: var(--hc-ink-muted);

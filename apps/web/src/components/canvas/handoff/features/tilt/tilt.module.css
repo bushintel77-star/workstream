@@ -133,9 +133,9 @@
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   min-height: 44px;
-  padding: 8px 14px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass-soft);
@@ -157,9 +157,9 @@
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   min-height: 44px;
-  padding: 8px 14px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass-soft);
@@ -187,7 +187,7 @@
 
 .pillAction {
   min-width: auto !important;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border: 1px solid var(--hc-line) !important;
   border-radius: var(--hc-r-control, 8px);
   background: var(--hc-glass-soft) !important;

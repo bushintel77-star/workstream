@@ -1,7 +1,7 @@
 .root {
   /* Position owned by RightDataLane — no left/top here. */
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -14,7 +14,7 @@
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  margin-bottom: 6px;
+  margin-bottom: var(--s-1);
 }
 
 .title {
@@ -35,7 +35,7 @@
   font-weight: 600;
   cursor: pointer;
   min-height: 28px;
-  padding: 0 6px;
+  padding: 0 var(--s-1);
   pointer-events: auto;
 }
 
@@ -43,7 +43,7 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: var(--text-nano);
   font-weight: 600;
-  padding: 2px 7px;
+  padding: 2px var(--s-2);
   border-radius: 0;
   background: var(--hc-line-soft);
   color: var(--hc-ink);
@@ -125,7 +125,7 @@
 }
 
 .foot {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: var(--text-pico);
   color: var(--hc-ink-muted);

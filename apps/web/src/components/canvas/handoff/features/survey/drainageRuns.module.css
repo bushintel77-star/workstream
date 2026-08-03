@@ -65,7 +65,7 @@
   transform: translateX(-50%);
   z-index: var(--ws-z-annotate);
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--s-3);
   border-radius: var(--hc-r-pill);
   border: 1px solid color-mix(in srgb, var(--hc-water) 45%, transparent);
   background: var(--hc-glass-soft);

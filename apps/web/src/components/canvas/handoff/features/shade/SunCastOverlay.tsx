@@ -8,7 +8,7 @@ import {
   sunPositionAt,
   type GrowthStageCast,
 } from "@workstream/domain";
-import type { PctPoint } from "../../geometry";
+import { ptsAttr, type PctPoint } from "../../geometry";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import {
   sunDateFromPreset,
@@ -32,10 +32,6 @@ type Props = {
 const FALLBACK_LAT = -37.849;
 const FALLBACK_LNG = 144.993;
 const DWELLING_HEIGHT_M = 5.2;
-
-function ptsAttr(ring: Array<{ x: number; y: number }>): string {
-  return ring.map((p) => `${p.x},${p.y}`).join(" ");
-}
 
 /**
  * Timed dwelling + canopy shadow polygons on the % board.

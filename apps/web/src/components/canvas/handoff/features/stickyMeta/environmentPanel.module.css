@@ -26,7 +26,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--s-1);
-  padding: 3px;
+  padding: var(--s-1);
   border: 1px solid var(--hc-line-soft);
   border-radius: 9px;
   background: var(--hc-glass-soft);
@@ -41,7 +41,7 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  padding: 3px 2px;
+  padding: var(--s-1) 2px;
   border: 1px solid transparent;
   border-radius: var(--hc-r-control);
   color: var(--hc-ink-muted);
@@ -70,7 +70,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
-  padding: 6px 8px 6px 10px;
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-2);
   border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-panel);
   background: var(--hc-glass-soft);
@@ -127,8 +127,8 @@
 .block {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding: 9px;
+  gap: var(--s-2);
+  padding: var(--s-2);
   border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-panel);
   background: var(--hc-glass-soft);
@@ -240,7 +240,7 @@
 
 .row {
   display: flex;
-  gap: 6px;
+  gap: var(--s-1);
 }
 
 .chip {
@@ -284,7 +284,7 @@
 .missing {
   list-style: none;
   margin: 0;
-  padding: 2px 9px;
+  padding: 2px var(--s-2);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--hc-line-soft);
@@ -309,7 +309,7 @@
 }
 
 .soon {
-  padding: 2px 5px;
+  padding: 2px var(--s-1);
   border: 1px solid color-mix(in srgb, var(--hc-warning) 18%, transparent);
   border-radius: var(--hc-r-pill);
   background: color-mix(in srgb, var(--hc-warning) 9%, transparent);

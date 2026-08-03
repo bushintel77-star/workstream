@@ -65,7 +65,7 @@
   font-weight: 700;
   color: var(--hc-ink);
   background: color-mix(in srgb, var(--sheet-paper) 94%, transparent);
-  padding: 4px 10px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-panel);
   border: 1px solid var(--hc-line);
   z-index: var(--ws-z-geometry);
@@ -102,7 +102,7 @@
 }
 
 .panelHead {
-  padding: 13px 15px 11px;
+  padding: var(--s-3) var(--s-4) var(--s-3);
   border-bottom: 1px solid color-mix(in srgb, var(--sheet-ink) 60%, transparent);
   display: flex;
   justify-content: space-between;
@@ -129,7 +129,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-1);
-  padding: 1.5px 5px;
+  padding: 1.5px var(--s-1);
   border: 1px solid var(--hc-line);
   border-radius: 3px;
   background: color-mix(in srgb, var(--sheet-paper) 72%, transparent);
@@ -175,7 +175,7 @@
   justify-content: flex-start;
   align-items: flex-start;
   gap: var(--s-1);
-  padding: 8px 10px;
+  padding: var(--s-2) var(--s-2);
   min-width: 88px;
 }
 
@@ -195,11 +195,11 @@
   display: flex;
   flex-direction: column;
   min-width: 96px;
-  padding: 8px 10px;
+  padding: var(--s-2) var(--s-2);
 }
 
 .panelStrip .section {
-  padding: 8px 10px;
+  padding: var(--s-2) var(--s-2);
   min-width: 80px;
 }
 
@@ -226,7 +226,7 @@
 
 .panelStrip .notesMeta {
   margin-top: auto;
-  padding-top: 6px;
+  padding-top: var(--s-1);
 }
 
 .brand {
@@ -280,12 +280,12 @@
 }
 
 .section {
-  padding: 10px 15px 11px;
+  padding: var(--s-2) var(--s-4) var(--s-3);
   border-bottom: 1px solid color-mix(in srgb, var(--sheet-ink) 25%, transparent);
 }
 
 .sectionGrow {
-  padding: 10px 15px 11px;
+  padding: var(--s-2) var(--s-4) var(--s-3);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -293,7 +293,7 @@
 }
 
 .kicker {
-  margin: 0 0 5px;
+  margin: 0 0 var(--s-1);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-pico);
   letter-spacing: 0.14em;
@@ -335,7 +335,7 @@
 }
 
 .notes {
-  padding: 10px 15px 12px;
+  padding: var(--s-2) var(--s-4) var(--s-3);
   margin-top: auto;
 }
 
@@ -360,11 +360,11 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s-2);
   background: var(--sheet-paper);
   border: 1px solid color-mix(in srgb, var(--sheet-ink) 55%, transparent);
   box-sizing: border-box;
-  padding: 10px 14px;
+  padding: var(--s-2) var(--s-3);
   z-index: var(--ws-z-annotate);
 }
 

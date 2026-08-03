@@ -281,7 +281,7 @@
   right: var(--ws-safe-right, 16px);
   bottom: var(--ws-safe-bottom, 48px);
   margin: 0;
-  padding: 3px 8px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
   font-family: "IBM Plex Mono", monospace;

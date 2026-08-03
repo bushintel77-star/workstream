@@ -151,7 +151,7 @@
 
 .nodeMenuBtn {
   min-height: 32px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border: none;
   border-radius: var(--r-md);
   background: transparent;
@@ -246,14 +246,14 @@
 }
 
 .cadDimMark {
-  gap: 3px;
+  gap: var(--s-1);
 }
 
 .cadDimLabel {
   display: flex;
   flex-direction: row;
   align-items: baseline;
-  gap: 5px;
+  gap: var(--s-1);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: var(--ws-type-dim, 11px);
   font-weight: 550;
@@ -314,10 +314,10 @@
   display: inline-flex;
   flex-direction: row;
   align-items: baseline;
-  gap: 5px;
+  gap: var(--s-1);
   max-width: 140px;
   min-height: 22px;
-  padding: 2px 7px;
+  padding: 2px var(--s-2);
   border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-pill, 999px);
   background: var(--hc-glass-soft);
@@ -369,7 +369,7 @@
   transform: translate(-50%, -50%);
   z-index: var(--ws-z-annotate);
   margin: 0;
-  padding: 2px 6px;
+  padding: 2px var(--s-1);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: var(--ws-type-kicker, 8px);
   font-weight: 700;
@@ -486,7 +486,7 @@
 .tpzPop {
   position: relative;
   z-index: var(--ws-z-interact);
-  padding: 5px 8px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--r-lg);
   border: 1px solid color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
   background: var(--panel);
@@ -510,7 +510,7 @@
   color: var(--planting-retain-text);
   background: var(--panel);
   border: 1px solid color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
-  padding: 2px 7px;
+  padding: 2px var(--s-2);
   border-radius: var(--hc-r-control);
   pointer-events: none;
   white-space: nowrap;
@@ -529,7 +529,7 @@
   color: var(--hc-invert, var(--canvas));
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-micro);
-  padding: 7px 12px;
+  padding: var(--s-2) var(--s-3);
   border-radius: 0;
   white-space: normal;
   line-height: 1.35;
@@ -790,7 +790,7 @@ button.missingBuildingCue:hover {
   position: absolute;
   transform: translate(-50%, -120%);
   transform-origin: center bottom;
-  padding: 2px 7px;
+  padding: 2px var(--s-2);
   border-radius: 0;
   background: color-mix(in srgb, var(--hc-ink) 90%, transparent);
   color: var(--canvas);
@@ -829,11 +829,11 @@ button.missingBuildingCue:hover {
 .ghostActions {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--s-1);
   background: color-mix(in srgb, var(--hc-paper) 96%, transparent);
   border: 1px solid color-mix(in srgb, var(--hc-ink) 22%, transparent);
   border-radius: 0;
-  padding: 2px 3px;
+  padding: 2px var(--s-1);
   box-shadow: none;
   white-space: nowrap;
 }
@@ -958,10 +958,10 @@ button.missingBuildingCue:hover {
   transform-origin: top left;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   min-height: 24px;
   max-width: min(260px, 46vw);
-  padding: 3px 8px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass-soft);
@@ -1018,7 +1018,7 @@ button.missingBuildingCue:hover {
   position: absolute;
   min-width: 50px;
   min-height: 30px;
-  padding: 0 9px;
+  padding: 0 var(--s-2);
   border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -1119,9 +1119,9 @@ button.missingBuildingCue:hover {
   transform-origin: center center;
   display: inline-flex;
   align-items: baseline;
-  gap: 5px;
+  gap: var(--s-1);
   min-height: 22px;
-  padding: 2px 7px;
+  padding: 2px var(--s-2);
   border-radius: var(--hc-r-pill, 999px);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass-soft);
@@ -1204,7 +1204,7 @@ button.missingBuildingCue:hover {
 
 .honestyFooter {
   margin: 0;
-  padding: 3px 7px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-control);
   border: 1px solid var(--ws-frame-hair, color-mix(in srgb, var(--hc-ink) 18%, transparent));
   background: color-mix(in srgb, var(--ws-frame) 82%, transparent);

@@ -11,7 +11,7 @@
 
 .card {
   width: min(420px, 100%);
-  padding: 22px 24px;
+  padding: var(--s-5) var(--s-5);
   border-radius: var(--hc-r-glass);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
@@ -57,7 +57,7 @@
 .secondary,
 .ghost {
   min-height: 40px;
-  padding: 0 14px;
+  padding: 0 var(--s-3);
   border-radius: var(--r-lg);
   font: inherit;
   font-size: 12.5px;

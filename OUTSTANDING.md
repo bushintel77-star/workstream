@@ -78,7 +78,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       portal file access is quote-view scoped and tombstoned projects are blocked.
 - [x] **Worker snapshot reload** — `reloadSnapshot()` before BullMQ jobs.
 - [x] **ESLint (initial)** — root [`eslint.config.mjs`](eslint.config.mjs); CI `pnpm lint`
-      on api/web/domain/contracts. Mobile/ui excluded until RN rules land.
+      on api/domain/contracts. Mobile/ui excluded until RN rules land, and
+      **web is not covered** — see the P3 item below.
 - [x] **Local CI guardrails** — root `pnpm run ci` now runs install,
       mobile placeholder detection, portal Edge runtime/import guard, typecheck, lint,
       and Vitest.

@@ -40,7 +40,7 @@
 }
 
 .note {
-  margin: 0 0 10px;
+  margin: 0 0 var(--s-2);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-nano);
   line-height: 1.35;
@@ -73,7 +73,7 @@
   align-items: flex-start;
   gap: 2px;
   width: 100%;
-  padding: 9px 10px;
+  padding: var(--s-2) var(--s-2);
   border: 1px solid transparent;
   border-radius: var(--r-lg);
   background: transparent;

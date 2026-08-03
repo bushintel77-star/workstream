@@ -7,7 +7,7 @@
   bottom: 14px;
   z-index: var(--ws-z-interact);
   width: min(240px, calc(100vw - 100px));
-  padding: 12px 14px;
+  padding: var(--s-3) var(--s-3);
   border-radius: var(--hc-r-panel, 14px);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -65,7 +65,7 @@
 }
 
 .metric {
-  padding-top: 10px;
+  padding-top: var(--s-2);
   border-top: 1px solid var(--hc-line-soft);
 }
 
@@ -111,7 +111,7 @@
 .bar {
   position: relative;
   height: 6px;
-  margin-top: 6px;
+  margin-top: var(--s-1);
   background: var(--hc-line-soft);
   overflow: hidden;
 }
@@ -135,7 +135,7 @@
 }
 
 .statement {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-size: var(--hc-fs-3);
   line-height: 1.4;
   color: var(--hc-ink-muted);
@@ -160,8 +160,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
+  gap: var(--s-1);
+  margin-top: var(--s-1);
 }
 
 .cite {
@@ -175,13 +175,13 @@
 .sdgRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: var(--s-1);
 }
 
 .sdgChip {
   min-width: 20px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0 var(--s-1);
   display: inline-flex;
   align-items: center;
   justify-content: center;

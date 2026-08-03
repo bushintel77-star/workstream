@@ -22,12 +22,14 @@
   pointer-events: auto;
 }
 
-.stack > * {
+.stack>* {
   pointer-events: auto;
 }
 
 .card {
-  padding: 10px 12px;
+  position: relative;
+  overflow: hidden;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-invert);
@@ -75,7 +77,7 @@
 }
 
 .cite {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-size: var(--hc-fs-2);
   line-height: 1.35;
   color: var(--hc-ink-faint);
@@ -120,28 +122,28 @@
 }
 
 .gapsList {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   padding: 0 0 0 1.1em;
   font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--hc-ink-muted);
 }
 
-.gapsList li + li {
+.gapsList li+li {
   margin-top: 2px;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
   margin-top: 8px;
 }
 
 .show,
 .dismiss {
   min-height: 28px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border-radius: var(--hc-r-panel);
   font: inherit;
   font-size: var(--hc-fs-3);
@@ -162,6 +164,7 @@
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

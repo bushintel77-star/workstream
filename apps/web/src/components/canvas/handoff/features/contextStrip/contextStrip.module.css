@@ -36,7 +36,7 @@
 
 .mode {
   flex: none;
-  padding: 0 7px;
+  padding: 0 var(--s-2);
   color: var(--hc-ink);
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -46,9 +46,9 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   min-height: 44px;
-  padding: 0 9px;
+  padding: 0 var(--s-2);
   border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-control);
   background: var(--hc-glass-soft);

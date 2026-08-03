@@ -2,6 +2,10 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { ImageLayer, ProjectFile } from "@workstream/contracts";
+import {
+  listProjectFilesClient,
+  uploadProjectFileClient,
+} from "../sitePack/projectFilesClient";
 import css from "./imageLayerPanel.module.css";
 
 type Props = {
@@ -13,40 +17,6 @@ type Props = {
   onRemove: (id: string) => void;
   onSetLayers: (layers: ImageLayer[]) => void;
 };
-
-async function uploadProjectFileClient(
-  projectId: string,
-  file: File,
-  opts: { kind?: string; title?: string } = {},
-): Promise<ProjectFile> {
-  const fd = new FormData();
-  fd.append("file", file);
-  if (opts.kind) fd.append("kind", opts.kind);
-  if (opts.title) fd.append("title", opts.title);
-  const res = await fetch(`/api/projects/${projectId}/files`, {
-    method: "POST",
-    body: fd,
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Upload failed: ${res.status} ${text}`);
-  }
-  const body = (await res.json()) as { file: ProjectFile };
-  return body.file;
-}
-
-async function listProjectFilesClient(projectId: string): Promise<ProjectFile[]> {
-  const res = await fetch(`/api/projects/${projectId}/files`, {
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`List files failed: ${res.status} ${text}`);
-  }
-  const body = (await res.json()) as { files: ProjectFile[] };
-  return body.files;
-}
 
 function isImageMime(mime: string) {
   return /^image\/(jpeg|png|webp|jpg)/i.test(mime);

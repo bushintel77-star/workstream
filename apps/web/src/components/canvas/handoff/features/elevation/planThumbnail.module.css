@@ -25,7 +25,7 @@
 }
 
 .title {
-  margin: 3px 0 6px;
+  margin: var(--s-1) 0 var(--s-1);
   font-size: var(--hc-fs-3);
   font-weight: 650;
   line-height: 1.25;
@@ -43,7 +43,7 @@
 /* Elevation preview — hairline rule, never a second card */
 .profile {
   margin-top: var(--s-2);
-  padding-top: 6px;
+  padding-top: var(--s-1);
   border-top: 1px solid var(--hc-line-soft);
 }
 
@@ -55,7 +55,7 @@
 
 .profileMeta {
   display: block;
-  margin-top: 3px;
+  margin-top: var(--s-1);
   font-family: var(--font-mono);
   font-size: var(--text-pico);
   letter-spacing: 0.04em;
@@ -63,7 +63,7 @@
 }
 
 .meta {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-size: var(--hc-fs-1);
   color: var(--hc-ink-muted);
   font-family: var(--font-mono);

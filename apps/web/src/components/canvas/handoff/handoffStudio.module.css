@@ -339,7 +339,7 @@
   flex: none;
   max-width: min(360px, 42vw);
   margin: 0;
-  padding: 2px 0 2px 10px;
+  padding: 2px 0 2px var(--s-2);
   border-left: 2px solid color-mix(in srgb, var(--hc-warning) 65%, transparent);
   background: transparent;
   color: var(--ws-frame-ink);
@@ -364,10 +364,10 @@
   z-index: var(--ws-z-contextual);
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--s-2);
   max-width: min(420px, calc(100vw - 32px));
   margin: 0;
-  padding: 10px 12px 10px 14px;
+  padding: var(--s-2) var(--s-3) var(--s-2) var(--s-3);
   border-radius: var(--hc-r-panel, 12px);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass-soft);
@@ -441,10 +441,10 @@
 
 .modes {
   display: flex;
-  gap: 3px;
+  gap: var(--s-1);
   background: var(--hc-neu-surface);
   border-radius: var(--hc-r-pill);
-  padding: 3px;
+  padding: var(--s-1);
   flex: none;
   /* Recessed segmented-control track so the active mode reads as raised. */
   box-shadow: var(--hc-neu-in,
@@ -459,7 +459,7 @@
 .modeBtn {
   min-height: 44px;
   height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--s-3);
   border-radius: var(--hc-r-pill);
   border: none;
   cursor: pointer;
@@ -492,7 +492,7 @@
   display: inline-block;
   width: 8px;
   height: 7px;
-  margin-right: 5px;
+  margin-right: var(--s-1);
   border: 1px solid currentColor;
   border-radius: 2px;
   transform: translateY(1px);
@@ -543,7 +543,7 @@
 .headerTools {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   flex: none;
 }
 
@@ -552,7 +552,7 @@
   display: flex;
   align-items: center;
   gap: 1px;
-  padding-left: 6px;
+  padding-left: var(--s-1);
   border-left: 1px solid var(--ws-frame-hair);
 }
 
@@ -571,7 +571,7 @@
 
 .toolBtn {
   height: 36px;
-  padding: 0 13px;
+  padding: 0 var(--s-3);
   border-radius: var(--hc-r-control);
   border: none;
   /* Same raised soft-plastic chip as left rail / instruments. */
@@ -621,9 +621,9 @@
 .headerVicGov {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   width: 100%;
-  padding: 3px 16px 4px;
+  padding: var(--s-1) var(--s-4) var(--s-1);
   min-height: 28px;
   overflow-x: auto;
   border-top: 1px solid var(--hc-line-soft);
@@ -645,7 +645,7 @@
   z-index: var(--ws-z-chrome);
   min-width: 56px;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--s-3);
   border-radius: var(--hc-r-pill, 999px);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-frost, var(--hc-glass-soft));
@@ -819,12 +819,12 @@
 
 .segment {
   display: flex;
-  gap: 3px;
+  gap: var(--s-1);
   border: none;
   border-radius: var(--hc-r-control);
   overflow: visible;
   flex: none;
-  padding: 3px;
+  padding: var(--s-1);
   background: var(--hc-neu-surface);
   box-shadow: var(--hc-neu-in,
       inset 2px 2px 5px var(--hc-neu-shadow),
@@ -833,7 +833,7 @@
 
 .segmentBtn {
   height: 34px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border: none;
   border-radius: var(--hc-r-panel);
   background: transparent;
@@ -945,7 +945,7 @@
 [data-frame-rail] .toolBtn {
   height: var(--ws-frame-tap);
   min-height: var(--ws-frame-tap);
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border: none;
   border-radius: var(--ws-r-2);
   background: transparent;
@@ -989,7 +989,7 @@
 
 /* Tighten the icon cluster in the top-right band. */
 [data-frame-rail="top-right"] .headerTools {
-  gap: 6px;
+  gap: var(--s-1);
 }
 
 [data-frame-rail="top-right"] .headerTools .shareWrap {
@@ -1082,7 +1082,7 @@
 
 /* Hairline seam between the brand plate and the mode strip — a real frame cut. */
 [data-frame-rail="top-left"] .brandBlock {
-  padding-right: 10px;
+  padding-right: var(--s-2);
   margin-right: 2px;
   border-right: 1px solid var(--ws-frame-hair);
 }
@@ -1182,7 +1182,7 @@
   transform: translateX(-50%);
   z-index: var(--ws-z-panel);
   max-width: min(420px, calc(100% - 48px));
-  padding: 8px 14px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-control);
   border: 1px solid color-mix(in srgb, var(--hc-warning) 45%, transparent);
   background: var(--hc-ink);
@@ -1325,7 +1325,7 @@
   transform: translateX(-50%);
   z-index: var(--ws-z-chrome);
   margin: 0;
-  padding: 8px 14px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass-soft);
@@ -1419,7 +1419,7 @@
 .aiStatusOpen {
   flex: none;
   min-height: 26px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border-radius: var(--hc-r-panel);
   border: none;
   background: var(--hc-line-soft);
@@ -1489,7 +1489,7 @@
   bottom: 12px;
   z-index: var(--ws-z-chrome);
   max-width: min(360px, calc(100% - 28px));
-  padding: 7px 10px;
+  padding: var(--s-2) var(--s-2);
   border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-control);
   background: var(--hc-glass-soft);
@@ -1548,7 +1548,7 @@
 }
 
 .onboardHintMeta {
-  margin: 6px 0 0;
+  margin: var(--s-1) 0 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--hc-fs-2);
   font-variant-numeric: tabular-nums;
@@ -1568,7 +1568,7 @@
 .annotateInputWrap input {
   min-width: 160px;
   max-width: 240px;
-  padding: 6px 10px;
+  padding: var(--s-1) var(--s-2);
   border: 1px solid var(--hc-line);
   border-radius: 4px;
   background: var(--hc-glass);
@@ -1592,9 +1592,9 @@
   z-index: var(--ws-z-chrome);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--s-2);
   min-height: 34px;
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-panel);
   background: var(--hc-neu-surface);
   box-shadow: var(--hc-neu-out,
@@ -1607,7 +1607,7 @@
 .undoCells {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--s-1);
   min-width: 38px;
 }
 
@@ -1766,7 +1766,7 @@
   top: -8px;
   right: -8px;
   height: 16px;
-  padding: 0 6px;
+  padding: 0 var(--s-1);
   border-radius: var(--hc-r-pill);
   background: var(--hc-warning);
   color: var(--hc-ink);
@@ -1808,7 +1808,7 @@
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
   border-radius: var(--hc-r-glass);
-  padding: 6px;
+  padding: var(--s-1);
   box-shadow: 0 8px 28px var(--hc-neu-shadow);
 }
 
@@ -1861,7 +1861,7 @@
   right: 14px;
   top: 14px;
   width: 200px;
-  padding: 12px 15px;
+  padding: var(--s-3) var(--s-4);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -1882,7 +1882,7 @@
   left: 14px;
   bottom: 14px;
   width: 268px;
-  padding: 12px 14px 11px;
+  padding: var(--s-3) var(--s-3) var(--s-3);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -1902,10 +1902,10 @@
   bottom: 14px;
   width: 300px;
   max-height: 52%;
-  padding: 13px 15px;
+  padding: var(--s-3) var(--s-4);
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: var(--s-2);
   z-index: var(--ws-z-interact);
   overflow: auto;
   background: var(--hc-glass);
@@ -1931,13 +1931,13 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
-  padding-bottom: 7px;
+  padding-bottom: var(--s-2);
   border-bottom: 1px solid var(--hc-line-soft);
 }
 
 .passPill {
   height: 17px;
-  padding: 0 7px;
+  padding: 0 var(--s-2);
   border-radius: 0;
   background: var(--hc-line-soft);
   color: var(--hc-ink);
@@ -1975,7 +1975,7 @@
   height: 4px;
   border-radius: 0;
   background: var(--hc-line-soft);
-  margin-top: 5px;
+  margin-top: var(--s-1);
 }
 
 .barFill {
@@ -2040,7 +2040,7 @@
 
 .chipRow {
   display: flex;
-  gap: 5px;
+  gap: var(--s-1);
 }
 
 .chip {
@@ -2098,7 +2098,7 @@
 .bomLine {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--s-2);
   font-size: var(--hc-fs-3);
   color: var(--hc-ink);
   align-items: baseline;
@@ -2113,7 +2113,7 @@
 
 .riskChip {
   height: 24px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border-radius: var(--hc-r-control);
   border: 1px dashed var(--hc-line);
   background: var(--hc-line-soft);
@@ -2149,9 +2149,9 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  gap: var(--s-1);
   max-width: min(520px, calc(100% - 160px));
-  padding: 6px 8px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -2171,7 +2171,7 @@
 .zoneKindBar .chip,
 .paintSwatchBar .chip {
   flex: none;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   min-height: 28px;
   height: auto;
   border-color: var(--hc-line);
@@ -2200,8 +2200,8 @@
   z-index: var(--ws-z-chrome);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -2272,9 +2272,9 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  gap: var(--s-1);
   max-width: min(420px, 70%);
-  padding: 5px 7px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--r-xl);
   border: 1px solid var(--hc-line);
   background: var(--hc-glass);
@@ -2295,9 +2295,9 @@
 .paintSwatchBar .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-1);
   min-height: 28px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
 }
 
 .swatchDot {
@@ -2336,7 +2336,7 @@
   z-index: var(--ws-z-panel);
   display: flex;
   gap: var(--s-1);
-  padding: 4px 5px;
+  padding: var(--s-1) var(--s-1);
   border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-glass);
@@ -2362,7 +2362,7 @@
   align-items: center;
   gap: var(--s-2);
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 var(--s-2);
   border: 1px solid var(--hc-line);
   border-radius: var(--hc-r-panel, 12px);
   background: var(--hc-glass-soft);
@@ -2510,8 +2510,10 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--s-2);
-  padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
-  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  /* Only the top clears the notch. The three-value shorthand used to put
+     safe-area-inset-top on the *bottom* edge as well, which added ~55px of dead
+     header on a notched phone. */
+  padding: calc(var(--s-2) + env(safe-area-inset-top, 0px)) var(--s-2) var(--s-2);
   min-height: 0;
 }
 

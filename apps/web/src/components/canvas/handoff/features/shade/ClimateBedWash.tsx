@@ -1,7 +1,7 @@
 "use client";
 
 import type { EnvLiveMeta } from "../stickyMeta/envLiveMeta";
-import type { PctPoint } from "../../geometry";
+import { ptsAttr, type PctPoint } from "../../geometry";
 import { CSS_TOKEN } from "../../../../../styles/colorTokens";
 import css from "./climateBedWash.module.css";
 
@@ -10,10 +10,6 @@ type Props = {
   boundary: PctPoint[];
   meta: EnvLiveMeta;
 };
-
-function ptsAttr(ring: PctPoint[]): string {
-  return ring.map((p) => `${p.x},${p.y}`).join(" ");
-}
 
 /**
  * Soft outdoor-bed wash from live Open-Meteo frost / heat / humidity cues.

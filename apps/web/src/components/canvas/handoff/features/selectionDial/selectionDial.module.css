@@ -107,8 +107,8 @@
   bottom: 4px;
   transform: translateX(-50%);
   display: flex;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-pop);
   background: var(--hc-frost);
   border: 1px solid var(--hc-line-soft);
