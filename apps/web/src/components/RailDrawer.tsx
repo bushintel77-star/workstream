@@ -28,11 +28,7 @@ import css from "./rail-drawer.module.css";
  * Same DNA as the canvas FrameDrawer: slimline handle, graceful ease.
  */
 
-// pause before opening on hover — prevents accidental triggers.
-// Unused: the hover effect below calls setOpen(true) immediately, so the drawer
-// opens the instant the pointer crosses it. Kept, not deleted — see
-// OUTSTANDING.md.
-const _HOVER_DELAY_MS = 250;
+const HOVER_DELAY_MS = 250;  // dwell before hover-opening — an incidental crossing must not open it
 const LINGER_MS = 1200;      // pause before retracting on mouse leave — lets user move to panel
 const ANIM_MS = 450;         // slide animation duration — slow and deliberate
 
@@ -57,6 +53,18 @@ export function RailDrawer({
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const lingerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverOpenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * True while the drawer is open *because of* hover. A peek retracts when the
+   * pointer leaves; a click pins it open until dismissed.
+   */
+  const openedByHoverRef = useRef(false);
+  /**
+   * Set when the operator closes the drawer while the pointer is still on it.
+   * Without this the hover effect re-opens immediately, so clicking the handle
+   * to close does nothing until the pointer leaves.
+   */
+  const dismissedRef = useRef(false);
   const reactId = useId();
   const panelId = `rail-panel-${reactId}`;
 
@@ -69,34 +77,66 @@ export function RailDrawer({
     }
   }, []);
 
+  const clearHoverOpen = useCallback(() => {
+    if (hoverOpenRef.current) {
+      clearTimeout(hoverOpenRef.current);
+      hoverOpenRef.current = null;
+    }
+  }, []);
+
   const scheduleRetract = useCallback(() => {
     clearLinger();
     lingerRef.current = setTimeout(() => {
+      openedByHoverRef.current = false;
       setOpen(false);
     }, LINGER_MS);
   }, [clearLinger]);
 
+  /**
+   * Explicit dismissal — handle click, Escape, scrim, click-outside.
+   *
+   * Latches `dismissedRef` so the hover effect does not re-open while the
+   * pointer is still on the drawer, and clears the peek flag so a click-opened
+   * drawer is never auto-retracted. Declared above the effects that call it so
+   * they can depend on it directly.
+   */
+  const dismiss = useCallback(() => {
+    clearLinger();
+    clearHoverOpen();
+    openedByHoverRef.current = false;
+    dismissedRef.current = true;
+    setOpen(false);
+  }, [clearLinger, clearHoverOpen]);
+
   // --- Hover peek (progressive enhancement — doesn't override click-open) ---
 
   useEffect(() => {
-    if (open) return; // already open via click, hover doesn't matter
     if (hovered) {
       clearLinger();
-      setOpen(true);
-      // Hover-open auto-retracts after linger on mouse leave
-    } else {
-      // mouse left — if it was opened by hover (not click), retract
-      // We can't distinguish, so we schedule retract; if user clicks to
-      // pin it open, the click handler cancels the linger.
-      scheduleRetract();
+      // Already open, or explicitly dismissed without leaving first: do nothing.
+      if (open || dismissedRef.current) return;
+      hoverOpenRef.current = setTimeout(() => {
+        hoverOpenRef.current = null;
+        openedByHoverRef.current = true;
+        setOpen(true);
+      }, HOVER_DELAY_MS);
+      return () => clearHoverOpen();
     }
+    // Pointer left. Cancel any pending peek, release the dismissal latch, and
+    // retract only a peek — a click-opened drawer stays pinned.
+    clearHoverOpen();
+    dismissedRef.current = false;
+    if (open && openedByHoverRef.current) scheduleRetract();
     return () => clearLinger();
-  }, [hovered, open, clearLinger, scheduleRetract]);
+  }, [hovered, open, clearLinger, clearHoverOpen, scheduleRetract]);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => clearLinger();
-  }, [clearLinger]);
+    return () => {
+      clearLinger();
+      clearHoverOpen();
+    };
+  }, [clearLinger, clearHoverOpen]);
 
   // --- Animation state ---
 
@@ -113,12 +153,12 @@ export function RailDrawer({
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        setOpen(false);
+        dismiss();
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  }, [open, dismiss]);
 
   // --- Body scroll lock ---
 
@@ -180,9 +220,15 @@ export function RailDrawer({
   // --- Click handle to toggle ---
 
   const toggleOpen = useCallback(() => {
+    if (open) {
+      dismiss();
+      return;
+    }
     clearLinger();
-    setOpen((v) => !v);
-  }, [clearLinger]);
+    clearHoverOpen();
+    openedByHoverRef.current = false;
+    setOpen(true);
+  }, [open, dismiss, clearLinger, clearHoverOpen]);
 
   // --- Click outside (scrim) to close ---
 
@@ -192,12 +238,12 @@ export function RailDrawer({
       const drawer = drawerRef.current;
       if (!drawer) return;
       if (!drawer.contains(e.target as Node)) {
-        setOpen(false);
+        dismiss();
       }
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [open]);
+  }, [open, dismiss]);
 
   // --- Render ---
 
@@ -212,7 +258,7 @@ export function RailDrawer({
       {open ? (
         <div
           className={css.scrim}
-          onClick={() => setOpen(false)}
+          onClick={() => dismiss()}
           aria-hidden
           style={{ animation: `fadeIn ${ANIM_MS}ms ease` }}
         />
@@ -221,6 +267,7 @@ export function RailDrawer({
       <div
         ref={drawerRef}
         className={`${css.drawer} ${css[accent]}`}
+        data-testid="rail-drawer"
         data-open={open ? "1" : "0"}
         style={{
           ...panelStyle,
