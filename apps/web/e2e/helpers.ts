@@ -99,6 +99,56 @@ export async function createSurveyProject(request: APIRequestContext) {
   return { projectId };
 }
 
+/**
+ * One tree (7.8 m), one pleached screen (3.5 m), one deck (0.5 m) and one flat
+ * paver that must never grow a profile — the shared elevation fixture for the
+ * silhouette and callout-hit probes.
+ */
+export async function seedElevationGarden(
+  request: APIRequestContext,
+  projectId: string,
+) {
+  const place = (symbol_id: string, x_pct: number, y_pct: number) => ({
+    id: randomUUID(),
+    symbol_id,
+    x_pct,
+    y_pct,
+    rotation_deg: 0,
+    scale: 1,
+  });
+  const res = await request.put(`${API}/projects/${projectId}/design-canvas`, {
+    data: {
+      placements: [
+        place("curtis-tree-780", 30, 40),
+        place("hornbeam-pleached", 55, 45),
+        place("curtis-deck-050", 72, 60),
+        place("bluestone-paver", 45, 72),
+      ],
+      strokes: [],
+      irrigation_zones: [],
+      site_frame: {
+        boundary: [
+          { x_pct: 20, y_pct: 15 },
+          { x_pct: 80, y_pct: 15 },
+          { x_pct: 80, y_pct: 85 },
+          { x_pct: 20, y_pct: 85 },
+        ],
+        building: [
+          { x_pct: 35, y_pct: 20 },
+          { x_pct: 65, y_pct: 20 },
+          { x_pct: 65, y_pct: 35 },
+          { x_pct: 35, y_pct: 35 },
+        ],
+        building_source: "traced",
+        easements: [],
+        services: [],
+        levels: [],
+      },
+    },
+  });
+  expect(res.ok()).toBeTruthy();
+}
+
 type SeedProjectOpts = {
   address: string;
   lat?: number;

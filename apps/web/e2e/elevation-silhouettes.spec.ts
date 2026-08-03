@@ -1,9 +1,9 @@
-import { randomUUID } from "node:crypto";
-import type { APIRequestContext } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
-
-const API = process.env.API_URL ?? "http://localhost:3001";
+import {
+  createSurveyProject,
+  handoffStudio,
+  seedElevationGarden,
+} from "./helpers";
 
 /**
  * Garden elevation silhouettes (Tier 4).
@@ -66,7 +66,7 @@ test.describe("Garden elevation silhouettes", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await seedGarden(request, projectId);
+    await seedElevationGarden(request, projectId);
 
     await page.goto(`/projects/${projectId}?mode=elevation`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
@@ -123,9 +123,8 @@ test.describe("Garden elevation silhouettes", () => {
      * The thumbnail title is the untruncated species name — board callouts are
      * deliberately shortened (`shortenElevationTag`).
      *
-     * Click the silhouette, not the callout: the bottom-centre artboard strip
-     * floats over the middle of the drawing and eats callout clicks (recorded
-     * in OUTSTANDING.md — pre-existing chrome collision, not a Tier 4 change).
+     * Click the silhouette here — this probe owns the geometry. Callout clicks
+     * are covered separately by e2e/elevation-callout-hit.spec.ts.
      */
     await expect(page.getByTestId("elevation-profile-swatch")).toHaveCount(0);
     await board
@@ -150,7 +149,7 @@ test.describe("Garden elevation silhouettes", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await seedGarden(request, projectId);
+    await seedElevationGarden(request, projectId);
 
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
