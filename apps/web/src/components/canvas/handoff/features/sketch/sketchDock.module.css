@@ -23,6 +23,37 @@
   pointer-events: auto;
 }
 
+/*
+ * Dormant — the pen tool is not armed, so drags fall through to grab-pan and
+ * these controls are a re-arm affordance rather than a live toolbar. The dock
+ * recedes instead of holding full presence over the drawing
+ * (docs/STUDIO-STYLING-AND-UX.md — chrome is quiet until summoned).
+ *
+ * Opacity and lift only. `pointer-events` deliberately stays on: clicking any
+ * tool is the documented way to re-arm (SketchBoard `onActivate`). Full presence
+ * returns on hover AND focus-within, so the affordance is never hidden from
+ * either pointer or keyboard (checklist item 16).
+ */
+.dock[data-active="0"] {
+  opacity: 0.62;
+  box-shadow: 0 6px 18px -12px color-mix(in srgb, var(--hc-ink) 55%, transparent);
+  transition:
+    opacity 160ms var(--ws-ease, ease),
+    box-shadow 160ms var(--ws-ease, ease);
+}
+
+.dock[data-active="0"]:hover,
+.dock[data-active="0"]:focus-within {
+  opacity: 1;
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock[data-active="0"] {
+    transition: none;
+  }
+}
+
 .tool {
   display: inline-flex;
   align-items: center;

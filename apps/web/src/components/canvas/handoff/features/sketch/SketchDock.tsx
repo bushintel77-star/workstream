@@ -16,11 +16,9 @@ type Props = {
   tip: SketchTipGrade;
   formalizing?: boolean;
   /**
-   * Whether the dock is the active surface. Passed by SketchBoard and currently
-   * ignored — the counterpart `onActivate` fires on every tool/tip change, but
-   * nothing reads `active`, so the dock always renders at full presence instead
-   * of receding when it is not the active surface. Kept, not deleted — see
-   * OUTSTANDING.md.
+   * Whether the pen tool is armed (see `SketchBoard`). When it is not, drags
+   * fall through to grab-pan and these controls act as a re-arm affordance
+   * rather than a live toolbar, so the dock recedes.
    */
   active?: boolean;
   anchorRef: RefObject<HTMLElement | null>;
@@ -113,7 +111,7 @@ export function SketchDock({
   tool,
   tip,
   formalizing = false,
-  active: _active = true,
+  active = true,
   anchorRef,
   onTool,
   onTip,
@@ -144,6 +142,7 @@ export function SketchDock({
       <div
         className={css.dock}
         data-testid="sketch-convert-bar"
+        data-active={active ? "1" : "0"}
         role="toolbar"
         aria-label="Sketch tools"
       >
