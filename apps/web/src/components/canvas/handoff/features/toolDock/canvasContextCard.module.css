@@ -13,11 +13,11 @@
    * live in the low gutter; anchoring the panel just above them stops the
    * three from stacking into one bottom-left smudge.
    */
-  bottom: calc(var(--ws-safe-bottom, 36px) + 50px);
+  bottom: var(--ws-gutter-3, calc(var(--ws-safe-bottom, 36px) + 52px));
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  padding: 7px 12px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--r-lg);
   background: color-mix(in srgb, var(--ws-frame) 86%, transparent);
   border: 1px solid var(--ws-frame-hair);

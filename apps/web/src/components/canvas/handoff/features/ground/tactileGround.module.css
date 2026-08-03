@@ -191,7 +191,8 @@
 
 .rulerBottom span {
   position: absolute;
-  bottom: var(--ws-safe-bottom, 48px);
+  /* Floor shelf of the bottom gutter ladder (handoffStudio --ws-gutter-*). */
+  bottom: var(--ws-gutter-1, var(--ws-safe-bottom, 48px));
   transform: translateX(-50%);
   white-space: nowrap;
 }
@@ -241,10 +242,12 @@
 
 .siteCue {
   position: absolute;
-  left: calc(var(--ws-safe-left, 64px) + 8px);
-  bottom: calc(var(--ws-safe-bottom, 48px) + 28px);
+  left: calc(var(--ws-safe-left, 64px) + var(--s-2));
+  /* Caption shelf — shares it with the CAD street cue, which never renders in
+     the same mode (handoffStudio --ws-gutter-*). */
+  bottom: var(--ws-gutter-2, calc(var(--ws-safe-bottom, 48px) + 28px));
   margin: 0;
-  padding: 4px 10px;
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-panel);
   background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
   font-family: "IBM Plex Mono", monospace;

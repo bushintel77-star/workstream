@@ -385,8 +385,10 @@
 
 .cadStreetCue {
   position: absolute;
-  left: calc(var(--ws-safe-left, 64px) + 8px);
-  bottom: calc(var(--ws-safe-bottom, 48px) + 8px);
+  left: calc(var(--ws-safe-left, 64px) + var(--s-2));
+  /* Caption shelf of the bottom gutter — clear of the metre ruler on the floor
+     shelf (handoffStudio --ws-gutter-*). */
+  bottom: var(--ws-gutter-2, calc(var(--ws-safe-bottom, 48px) + 28px));
   z-index: var(--ws-z-dock);
   margin: 0;
   padding: 0;
@@ -394,7 +396,8 @@
   font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--hc-ink) 55%, transparent);
+  /* 55% measured 3.74:1 on cream; 78% clears AA for this 8px caption. */
+  color: color-mix(in srgb, var(--hc-ink) 78%, transparent);
   pointer-events: none;
   white-space: nowrap;
   max-width: min(420px, calc(100% - 160px));

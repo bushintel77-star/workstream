@@ -178,6 +178,18 @@
   --ws-stack-4: calc(var(--ws-stack-3) + var(--ws-stack-phase-h) + var(--ws-stack-gap));
 
   /*
+   * Bottom gutter band (board-relative) — the same law as --ws-stack-* for the
+   * low edge of the drawing. The metre ruler owns the floor, the site-address
+   * caption sits one shelf up, contextual panels one above that. Occupants read
+   * a shelf; they never guess an offset. The CAD street cue used to guess
+   * `safe-bottom + 8px` and printed straight through the ruler's metre labels
+   * (measured overlap: cue y 848-859 vs ruler y 855-869).
+   */
+  --ws-gutter-1: var(--ws-safe-bottom);
+  --ws-gutter-2: calc(var(--ws-gutter-1) + 28px);
+  --ws-gutter-3: calc(var(--ws-gutter-2) + var(--s-5));
+
+  /*
    * Motion + form system (binding) — one radius scale, one easing, three
    * durations. Everything that moves or rounds pulls from these, so the whole
    * product shares a single physical language.
