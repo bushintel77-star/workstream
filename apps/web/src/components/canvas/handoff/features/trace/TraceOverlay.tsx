@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { inferRectangleCompletion } from "@workstream/domain";
 import { polygonAreaM2, ptsAttr, type PctPoint } from "../../geometry";
 import type { BoardCamera } from "../../geometry/cameraPointer";
@@ -86,7 +86,7 @@ export function TraceOverlay({
     setTypedAngle(null);
   };
 
-  const typedPoint = () => {
+  const typedPoint = useCallback(() => {
     if (!last || !drawCursor || !hasTypedInput) return null;
     const length = typedLength == null ? null : Number.parseFloat(typedLength);
     const angle = typedAngle == null ? null : Number.parseFloat(typedAngle);
@@ -98,7 +98,7 @@ export function TraceOverlay({
       Number.isFinite(length) ? length : null,
       Number.isFinite(angle) ? angle : null,
     );
-  };
+  }, [last, drawCursor, hasTypedInput, typedLength, typedAngle, scaleM, boardAspect]);
 
   useEffect(() => {
     if (!active || locked || !segment) return;
@@ -160,6 +160,7 @@ export function TraceOverlay({
     segment,
     typedAngle,
     typedLength,
+    typedPoint,
   ]);
 
   if (!active) return null;

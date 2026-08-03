@@ -1639,7 +1639,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       assistReply: `Spatial correction complete. ${notes.join(" · ")}${boundarySnapped ? "" : ""
         }`,
     });
-  }, [mutate, projectId, setUi, state.doc.items, state.ui.buildingSource]);
+  }, [mutate, projectId, setUi, state.doc, state.ui.buildingSource]);
 
   /**
    * Stage 1 CAD title overlay:
@@ -1766,14 +1766,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       aerialUri: null,
       assistReply: notes.join(" · "),
     });
-  }, [
-    mutate,
-    projectId,
-    setUi,
-    state.doc.boundary,
-    state.doc.strokes,
-    state.ui.buildingSource,
-  ]);
+  }, [mutate, projectId, setUi, state.doc, state.ui.buildingSource]);
 
   const setTitleBoundaryLocked = useCallback(
     (titleBoundaryLocked: boolean) => {
@@ -2022,6 +2015,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
   }, [
     mutate,
     setUi,
+    state.doc.boundary,
     state.doc.building,
     state.doc.items,
     state.doc.irrigationZones,
@@ -3639,6 +3633,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     }
   }, [
     setUi,
+    state.ui.lifecyclePhase,
     state.doc.boundary,
     state.doc.building,
     state.doc.easements,

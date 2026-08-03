@@ -488,9 +488,13 @@ export function HandoffDesignStudio({
     initialTitleBlock,
   );
   // Sync council label into studio state for multi-council compliance profile.
+  // `setUi` is destructured so the effect depends on the stable callback rather
+  // than the whole `studio` object — depending on `studio` would re-run this on
+  // every studio state change and setUi back into it.
+  const { setUi: studioSetUi } = studio;
   useEffect(() => {
-    studio.setUi({ councilLabel: titleBlock?.councilLabel ?? null });
-  }, [titleBlock?.councilLabel, studio.setUi]);
+    studioSetUi({ councilLabel: titleBlock?.councilLabel ?? null });
+  }, [titleBlock?.councilLabel, studioSetUi]);
   /**
    * Canonical lot / dwelling / outdoor for every surface (CAD, Fit Sheet,
    * Measures, Site meta). Sanitizes absurd dwelling rings before print.
@@ -791,6 +795,7 @@ export function HandoffDesignStudio({
     return () => el.removeEventListener("wheel", onWheel);
   }, [
     studio,
+    markInteracting,
     ui.frameOn,
     ui.mode,
     ui.zoom,
@@ -919,7 +924,7 @@ export function HandoffDesignStudio({
       el.removeEventListener("pointerdown", onPointerDownCapture, {
         capture: true,
       });
-  }, [studio, ui.mode]);
+  }, [studio, markInteracting, ui.mode]);
 
   /**
    * Two-finger pan + pinch zoom (phone / tablet). Desktop Space/wheel paths
@@ -1279,7 +1284,14 @@ export function HandoffDesignStudio({
       el.removeEventListener("pointerdown", onPointerDownCapture, {
         capture: true,
       });
-  }, [studio, ui.mode, ui.frameOn, animateTiltTo, clearTiltAnimKind]);
+  }, [
+    studio,
+    markInteracting,
+    ui.mode,
+    ui.frameOn,
+    animateTiltTo,
+    clearTiltAnimKind,
+  ]);
 
   /** Restore micro grid studio prefs for this project session. */
   useEffect(() => {
@@ -1748,7 +1760,25 @@ export function HandoffDesignStudio({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [studio, ui]);
+    // Depends on `studio` and `ui` wholesale, so it already re-binds on most
+    // state changes; the rest are listed so the shortcut closure cannot go stale.
+    //
+    // `planOn` and `setFitSheetOn` are deliberately absent: both are declared
+    // below this effect, so naming them in the dependency array is a temporal
+    // dead zone reference (TS2448). The effect body reads them when a key fires,
+    // which is after render, so the closure is correct — only the dep array
+    // cannot see them. Fixing this properly means reordering declarations in a
+    // 5,700-line component; tracked in OUTSTANDING.md.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    studio,
+    ui,
+    ai,
+    animateTiltTo,
+    annotatePhase,
+    selectedAnnotationId,
+    toast,
+  ]);
 
   useEffect(() => {
     setQuotePersisted(hasQuote);
@@ -2848,15 +2878,17 @@ export function HandoffDesignStudio({
     studio.setUi({ cmdOpen: false, cmdQuery: "" });
   };
 
-  const openStudioSheetPage = (
-    page: StudioSheetPage,
-    snap: StudioSheetSnap = "half",
-  ) => {
-    setStudioSheetPage(page);
-    setStudioSheetSnap(snap);
-    setStudioSheetOpen(true);
-    studio.setUi({ cmdOpen: false, cmdQuery: "" });
-  };
+  /* useCallback because a useMemo below depends on this; a fresh function every
+   * render invalidated that memo on every render. */
+  const openStudioSheetPage = useCallback(
+    (page: StudioSheetPage, snap: StudioSheetSnap = "half") => {
+      setStudioSheetPage(page);
+      setStudioSheetSnap(snap);
+      setStudioSheetOpen(true);
+      studioSetUi({ cmdOpen: false, cmdQuery: "" });
+    },
+    [studioSetUi],
+  );
 
   const headerViewMenuHot =
     ui.darkOn ||
