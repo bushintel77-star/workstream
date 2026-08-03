@@ -44,3 +44,13 @@ the gate below has been executed (or an item is explicitly waived with a reason)
   `[data-testid=zoom-world] [data-camera-chrome]` after zoom-out. Do not use
   `scale(1/--studio-zoom)` as a substitute. See `docs/STUDIO-STYLING-AND-UX.md`
   § Camera parenting.
+- **Nested chrome portals:** a component rendered inside a `FrameDrawer` must
+  NOT wrap itself in `CameraChrome` — the drawer already portals. A second
+  portal escapes the drawer and drops the component on the drawing with whatever
+  absolute offset its CSS still carries (this is what parked the Sheets strip
+  mid-plan and ate elevation callout clicks). Cover:
+  `e2e/elevation-callout-hit.spec.ts`.
+- **Contrast:** `e2e/canvas-contrast-aa.spec.ts` must stay at zero WCAG AA text
+  failures across all five modes. When touching ink tokens or any translucent
+  chrome surface, run it — it flattens the composited background, so it catches
+  what eyeballing a token value cannot.

@@ -129,19 +129,53 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       makes TS honour package `exports` maps — needs its own change plus a full
       typecheck + test + build run. `tsconfig.base.json` (web, mobile, ui,
       client) is already on `bundler` and unaffected.
-- [ ] **Artboard strip eats elevation callout clicks.** In `?mode=elevation` the
-      bottom-centre `artboard-strip` (`ArtboardStrip`, `CameraChrome` dock,
-      `bottom: --ws-stack-4`) floats over the *middle of the drawing* — measured
-      at `x 531–783, y 426–458` on a 1280x720 board — and swallows pointer
-      events on any `elevation-label` callout under it. The callout is a real
-      control (click = select + locate in plan), so a profile whose leader lands
-      mid-board cannot be selected by its label. Clicking the silhouette still
-      works, which is why `e2e/elevation-silhouettes.spec.ts` drives selection
-      through `[data-elev-family]` instead. Pre-existing (predates the Tier 4
-      silhouette work — the label anchor only moved ~16 px). Fix is a chrome
-      placement decision: either reserve a dock shelf in the elevation stage or
-      move the strip out of the drawing band in elevation mode; do not "fix" it
-      by making callouts non-interactive.
+- [x] **Artboard strip eats elevation callout clicks.** Root cause was a double
+      portal, not a placement choice: `ebf1872` moved `ArtboardStrip` inside the
+      top-edge `FrameDrawer` ("lives in the frame, never on the canvas") but left
+      the strip's own `CameraChrome place="dock"` wrapper in place, so its DOM
+      portaled straight back out of the drawer to `camera-chrome-root` and its
+      stale `bottom: var(--ws-stack-4)` parked it mid-drawing. The drawer had
+      been rendering empty the whole time. Fixed by dropping the inner portal and
+      laying the strip out in flow inside the drawer panel. Kept probe:
+      `e2e/elevation-callout-hit.spec.ts` (hit-tests every callout, so any future
+      dock landing on the drawing band fails too).
+- [ ] **`GardenViewpointStrip` and `VariationFilmstrip` have the same double
+      portal.** Both were migrated into FrameDrawers by `ebf1872` and both still
+      wrap themselves in `CameraChrome place="dock"`, so they also escape their
+      drawer and float on the drawing (`bottom: calc(--ws-safe-bottom + 10px)`
+      and `left/bottom: calc(--ws-safe-* + 8px)`). Left as-is deliberately:
+      `e2e/tilt-lens.spec.ts` and `e2e/canvas-design-craft.spec.ts` assert those
+      strips are *visible on the canvas* after an explicit summon, so collapsing
+      them into hover drawers is a product decision, not a bug fix. Decide
+      whether the drawers or the summoned floaters are the intended UX, then make
+      the code and the probes agree.
+- [x] **WCAG 2.2 AA text contrast on the canvas** — kept gate
+      [`e2e/canvas-contrast-aa.spec.ts`](apps/web/e2e/canvas-contrast-aa.spec.ts)
+      walks survey/sketch/cad/elevation/quote and flattens each text node's
+      translucent ancestor chain before measuring. It found **23 failures across
+      22 rules**; all are fixed and the gate is at zero. Root causes worth
+      remembering: `--text-muted` (`--gray-l-400` #9aa0ac) was 2.63:1 on white
+      wherever it labelled chrome; the Tier-1 ledger rendered dark app-shell ink
+      (`--ink-primary` #E8E9EC) on the Quote's white pane at **1.21:1**; and
+      card-wide severity tints on the coaching cards spent the whole contrast
+      budget (3.64:1 on blush) — those are now hairline + 24x2 accent bars, per
+      the house rule that accents are top bars, not fills.
+- [ ] **`dashboard-filter-sort.spec.ts` is stale.** Two of its five tests fail on
+      a clean tree: they look for `[class*="projectGrid"]` / `emptyState` and a
+      search input, all of which `ebf1872` removed when `/home` became the
+      editorial index. Rewrite against the current hairline-row markup or delete
+      the assertions — they have been red since that redesign.
+- [ ] **Quote line table header crowds at wide viewports.** `.row`
+      `grid-template-columns: 1fr 36px 72px 84px 108px minmax(120px, 180px)` runs
+      `TOTAL` and `ACTIONS` together with no gutter, and a long unit note
+      ("~1.73 t spoil · 8 t/load") bleeds into the actions column. Content-sized
+      columns, so it needs a measured pass rather than a token swap.
+- [ ] **`apps/web` is not linted.** Root `pnpm lint` covers only
+      `apps/api/src packages/domain/src packages/contracts/src`, and
+      `apps/web`'s own `lint` script is `echo ok`. So no ESLint runs over the
+      largest surface in the repo, including every canvas feature. (This doc
+      previously claimed CI lints web — it does not.) Enabling it needs its own
+      change: expect a large first-run backlog.
 
 ## Aerial Design Studio (separate track)
 
