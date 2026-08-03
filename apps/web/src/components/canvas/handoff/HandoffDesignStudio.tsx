@@ -162,6 +162,7 @@ import {
   HeaderViewMenu,
   type HeaderViewMenuItem,
 } from "./features/header/HeaderViewMenu";
+import { AiCapabilityCue } from "./features/aiCue/AiCapabilityCue";
 import { HeaderAiPill } from "./features/header/HeaderAiPill";
 import { clampToCanvasMargin } from "./features/reach/marginSummon";
 import { SelectionRing } from "./features/selectionRing/SelectionRing";
@@ -3550,6 +3551,37 @@ export function HandoffDesignStudio({
             {vicGovChipRow}
           </FrameDrawer>
         ) : null}
+        {/*
+         * Teaching cue for the AI capabilities that have no other surface.
+         * Renders nothing unless one is both applicable and unacknowledged —
+         * policy and reasoning live in features/aiCue/aiCuePolicy.ts.
+         * Placed at chrome level, outside the camera transform, so it does not
+         * pan with the drawing.
+         */}
+        <AiCapabilityCue
+          projectId={projectId}
+          laneBusy={rightLaneBusy}
+          context={{
+            mode: ui.mode,
+            hasAerial: Boolean(liveAerial),
+            boundaryPoints: studio.boundary.length,
+            // Committed placements only — a pending ghost is not yet the
+            // operator's work, and counting it would silence the cue for the
+            // exact state the cue exists to serve.
+            itemCount: studio.items.filter((i) => !i.ghost).length,
+            treeCount: studio.items.filter(
+              (i) => !i.ghost && (i.t === "canopy" || i.t === "exist"),
+            ).length,
+            ghostCount: ai.pendingCount,
+            // `ai.busy` is "idle" | "scanning" | "assisting", so Boolean() is
+            // true even when idle and the cue could never render.
+            aiBusy: ai.busy !== "idle",
+            clientView: ui.clientView,
+            focusOn: ui.focusOn,
+            frameOn: ui.frameOn,
+          }}
+          onRun={() => void ai.scan()}
+        />
         {openSharedRev &&
           !ui.clientView &&
           !ui.frameOn &&
