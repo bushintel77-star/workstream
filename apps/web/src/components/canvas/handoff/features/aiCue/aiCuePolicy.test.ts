@@ -14,7 +14,7 @@ const base: AiCueContext = {
   itemCount: 0,
   treeCount: 0,
   ghostCount: 0,
-  aiBusy: false,
+  aiStatus: "idle",
   clientView: false,
   focusOn: false,
   frameOn: false,
@@ -44,7 +44,15 @@ describe("suppression — degrade invisibly", () => {
 
   it("shows nothing while the AI is mid-flight", () => {
     // The busy state is its own signal; a cue would talk over it.
-    expect(nextAiCue(ctx({ aiBusy: true }))).toBeNull();
+    expect(nextAiCue(ctx({ aiStatus: "scanning" }))).toBeNull();
+    expect(nextAiCue(ctx({ aiStatus: "assisting" }))).toBeNull();
+  });
+
+  it('treats "idle" as available — the regression that shipped this inert', () => {
+    // The original interface took a boolean and the call site passed
+    // Boolean(ai.busy). "idle" is a truthy string, so the cue was permanently
+    // suppressed. Taking the union makes that mistake unrepresentable.
+    expect(nextAiCue(ctx({ aiStatus: "idle" }))).not.toBeNull();
   });
 
   it("shows nothing while ghosts await review", () => {

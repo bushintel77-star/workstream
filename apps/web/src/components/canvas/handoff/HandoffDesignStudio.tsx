@@ -3573,9 +3573,8 @@ export function HandoffDesignStudio({
               (i) => !i.ghost && (i.t === "canopy" || i.t === "exist"),
             ).length,
             ghostCount: ai.pendingCount,
-            // `ai.busy` is "idle" | "scanning" | "assisting", so Boolean() is
-            // true even when idle and the cue could never render.
-            aiBusy: ai.busy !== "idle",
+            // Passed as the union, not coerced — see aiCuePolicy.ts.
+            aiStatus: ai.busy,
             clientView: ui.clientView,
             focusOn: ui.focusOn,
             frameOn: ui.frameOn,

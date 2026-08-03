@@ -101,8 +101,19 @@ export type AiCueContext = {
   treeCount: number;
   /** Unreviewed AI ghosts. */
   ghostCount: number;
-  /** AI mid-flight — scanning or assisting. */
-  aiBusy: boolean;
+  /**
+   * The engine's own status, deliberately NOT a boolean.
+   *
+   * This field was `aiBusy: boolean` and the call site passed `Boolean(ai.busy)`
+   * — but `ai.busy` is this union, and `"idle"` is a truthy string, so the flag
+   * was permanently `true` and the cue could never render. It typechecked, and
+   * the policy tests passed because they were handed a real boolean. Only an
+   * end-to-end run caught it.
+   *
+   * Taking the union directly makes that coercion a compile error rather than a
+   * silent always-true.
+   */
+  aiStatus: "idle" | "scanning" | "assisting";
   /** Presentation-ish states where all teaching chrome is wrong. */
   clientView: boolean;
   focusOn: boolean;
@@ -127,7 +138,7 @@ export function nextAiCue(ctx: AiCueContext): AiCapability | null {
   // Not a drawing surface.
   if (!DRAWING_MODES.has(ctx.mode)) return null;
   // Mid-flight — the busy state is its own signal, don't talk over it.
-  if (ctx.aiBusy) return null;
+  if (ctx.aiStatus !== "idle") return null;
   // Ghosts pending: the operator already has an AI decision in front of them.
   // A second AI prompt here competes with the one that matters.
   if (ctx.ghostCount > 0) return null;
