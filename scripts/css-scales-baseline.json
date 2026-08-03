@@ -1,0 +1,302 @@
+{
+  "apps/web/src/app/confirm-pin/confirm-pin.module.css": {
+    "zIndex": 9,
+    "radius": 1
+  },
+  "apps/web/src/app/dashboard.module.css": {
+    "zIndex": 1
+  },
+  "apps/web/src/app/home.module.css": {
+    "zIndex": 3,
+    "radius": 4
+  },
+  "apps/web/src/app/landing.module.css": {
+    "zIndex": 3
+  },
+  "apps/web/src/app/portal/quote/[token]/quote.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/app/projects/[id]/project.module.css": {
+    "zIndex": 1,
+    "radius": 14,
+    "opacity": 2
+  },
+  "apps/web/src/components/app-nav.module.css": {
+    "zIndex": 1,
+    "radius": 2
+  },
+  "apps/web/src/components/bottom-dock.module.css": {
+    "zIndex": 2,
+    "radius": 2,
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/aerial/aerialSlot.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/aiGhosts/aiGhosts.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/assetPanel/assetCommandSheet.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/assetPanel/assetPanel.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/cadPlan/cadPlan.module.css": {
+    "zIndex": 1,
+    "radius": 10,
+    "opacity": 12
+  },
+  "apps/web/src/components/canvas/handoff/features/compliance/compliance.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/contextStrip/contextStrip.module.css": {
+    "zIndex": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/fitSheet/fitSheet.module.css": {
+    "radius": 1,
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/fitSheet/sheetCompose.module.css": {
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/flora/floraRing.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/frameDrawer/frameDrawer.module.css": {
+    "zIndex": 1,
+    "radius": 4,
+    "opacity": 3
+  },
+  "apps/web/src/components/canvas/handoff/features/gridStudio/draftGridStudio.module.css": {
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/ground/tactileGround.module.css": {
+    "radius": 1,
+    "opacity": 3
+  },
+  "apps/web/src/components/canvas/handoff/features/header/compactModeNav.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/header/headerAiPill.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/header/headerViewMenu.module.css": {
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/horizon/preemptiveHorizon.module.css": {
+    "radius": 1,
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/kitInventory/nicheToolCarousel.module.css": {
+    "opacity": 5
+  },
+  "apps/web/src/components/canvas/handoff/features/layers/layers.module.css": {
+    "radius": 3
+  },
+  "apps/web/src/components/canvas/handoff/features/lighting/lighting.module.css": {
+    "radius": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/lighting/lightingBeams.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/liveMeasures/canvasMeasureSummary.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/liveMeasures/liveMeasures.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/permitTodos/permitTodos.module.css": {
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/present/present.module.css": {
+    "zIndex": 11,
+    "radius": 1,
+    "opacity": 4
+  },
+  "apps/web/src/components/canvas/handoff/features/quote/quoteBuilder.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/render/annotations.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/save/canvasAutosave.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/selectionDial/dialHint.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/selectionDial/selectionDial.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/selectionRing/existTreeInspector.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/selectionRing/selectionRing.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/services/servicesLedger.module.css": {
+    "radius": 2,
+    "opacity": 3
+  },
+  "apps/web/src/components/canvas/handoff/features/shade/climateBedWash.module.css": {
+    "opacity": 5
+  },
+  "apps/web/src/components/canvas/handoff/features/shade/sunMarker.module.css": {
+    "radius": 3
+  },
+  "apps/web/src/components/canvas/handoff/features/share/share.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/share/shareRevisionPopup.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/sheets/studioSheet.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/sketch/imageLayerPanel.module.css": {
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/sketch/sketch.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/sketch/sketchDock.module.css": {
+    "radius": 3,
+    "opacity": 4
+  },
+  "apps/web/src/components/canvas/handoff/features/stickyMeta/environmentPanel.module.css": {
+    "radius": 4,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/stickyMeta/metaPanel.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/stickyMeta/stickyMeta.module.css": {
+    "radius": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/stickyMeta/vicGovChips.module.css": {
+    "zIndex": 1,
+    "radius": 2,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/sunGrowth/sunGrowth.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/surfaces/marginStrip.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/surfaces/rightDataLane.module.css": {
+    "zIndex": 1,
+    "radius": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/survey/drainageRuns.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/sustainability/sustainability.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/telemetry/liveTelemetry.module.css": {
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/tilt/tilt.module.css": {
+    "radius": 1,
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/toolDock/contextualToolStrip.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/toolDock/toolDock.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/trace/trace.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/utilityDrawer/utilityDrawer.module.css": {
+    "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/features/zones/irrigationUniformity.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/features/zones/zones.module.css": {
+    "opacity": 1
+  },
+  "apps/web/src/components/canvas/handoff/handoffStudio.module.css": {
+    "radius": 7,
+    "opacity": 11
+  },
+  "apps/web/src/components/canvas/handoff/StudioSkeleton.module.css": {
+    "radius": 3,
+    "opacity": 3
+  },
+  "apps/web/src/components/canvas/siteCanvas.module.css": {
+    "zIndex": 17,
+    "radius": 15,
+    "opacity": 8
+  },
+  "apps/web/src/components/integration-setup.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/newProjectAddressForm.module.css": {
+    "zIndex": 2
+  },
+  "apps/web/src/components/project-client.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/rail-drawer.module.css": {
+    "zIndex": 2,
+    "radius": 2,
+    "opacity": 2
+  },
+  "apps/web/src/components/share/clientShare.module.css": {
+    "radius": 4
+  },
+  "apps/web/src/components/share/clientShareTwin.module.css": {
+    "radius": 4
+  },
+  "apps/web/src/components/share/sharePlan.module.css": {
+    "radius": 1
+  },
+  "apps/web/src/components/spinner.module.css": {
+    "radius": 1,
+    "opacity": 1
+  },
+  "apps/web/src/components/studio/ghostCursor.module.css": {
+    "zIndex": 1,
+    "radius": 2,
+    "opacity": 2
+  },
+  "apps/web/src/components/studio/placement.module.css": {
+    "zIndex": 2,
+    "radius": 1
+  },
+  "apps/web/src/components/studio/swatchPad.module.css": {
+    "zIndex": 1,
+    "radius": 3,
+    "opacity": 2
+  },
+  "apps/web/src/components/toast-host.module.css": {
+    "zIndex": 1,
+    "radius": 2
+  },
+  "apps/web/src/components/ui/kit/kit.module.css": {
+    "zIndex": 3,
+    "radius": 3,
+    "opacity": 5
+  },
+  "apps/web/src/components/ui/ui.module.css": {
+    "zIndex": 2
+  },
+  "apps/web/src/styles/app.module.css": {
+    "zIndex": 2
+  },
+  "apps/web/src/styles/skeleton.module.css": {
+    "radius": 3
+  }
+}
