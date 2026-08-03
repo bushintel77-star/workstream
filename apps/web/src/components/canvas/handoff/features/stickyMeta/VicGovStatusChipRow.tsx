@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type {
   ConstructionTrench,
   DesignBydaAsset,
@@ -22,6 +22,77 @@ import {
   type VicGovChipPanel,
 } from "./vicGovChipStatus";
 import css from "./vicGovChips.module.css";
+
+/**
+ * A corner chip cluster. Capped by `max-width` and horizontally scrollable with
+ * the scrollbar hidden, so it publishes its own overflow state as data attributes:
+ * the stylesheet fades the trailing edge only while there is more to reach.
+ * Without this the tail chip is cut mid-word with no signal that it continues.
+ */
+function ChipCluster({
+  className,
+  testId,
+  cluster,
+  lane,
+  placement,
+  label,
+  children,
+}: {
+  className: string;
+  testId: string;
+  cluster: VicGovChipCluster;
+  lane: "busy" | "free";
+  placement: "header" | "dock";
+  label: string;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [overflow, setOverflow] = useState(false);
+  const [atEnd, setAtEnd] = useState(true);
+
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const slack = el.scrollWidth - el.clientWidth;
+    const over = slack > 1;
+    setOverflow(over);
+    setAtEnd(!over || el.scrollLeft >= slack - 1);
+  }, []);
+
+  // Chip content changes on nearly every studio tick; re-measuring per render is
+  // two layout reads and keeps the flag honest without a dependency list that
+  // would thrash the observer.
+  useEffect(measure);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    el.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, [measure]);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      data-testid={testId}
+      data-cluster={cluster}
+      data-lane={lane}
+      data-placement={placement}
+      data-overflow={overflow ? "true" : "false"}
+      data-scroll-end={atEnd ? "true" : "false"}
+      role="toolbar"
+      aria-label={label}
+    >
+      {children}
+    </div>
+  );
+}
 
 type Props = {
   projectId: string;
@@ -180,17 +251,16 @@ export function VicGovStatusChipRow({
     const group = cluster(id);
     if (group.length === 0) return null;
     return (
-      <div
+      <ChipCluster
         className={`${css.row} ${css[id]}${placement === "header" ? ` ${css.rowHeader}` : ""}`}
-        data-testid={`vic-gov-status-chips-${id}`}
-        data-cluster={id}
-        data-lane={laneBusy ? "busy" : "free"}
-        data-placement={placement}
-        role="toolbar"
-        aria-label={label}
+        testId={`vic-gov-status-chips-${id}`}
+        cluster={id}
+        lane={laneBusy ? "busy" : "free"}
+        placement={placement}
+        label={label}
       >
         {group.map(renderChip)}
-      </div>
+      </ChipCluster>
     );
   };
 

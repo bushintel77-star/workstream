@@ -57,6 +57,22 @@
   animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/*
+ * Overflow affordance. The cluster is capped by `max-width` and scrolls with its
+ * scrollbar hidden, so without this the tail chip is cut mid-word with nothing to
+ * signal that more exists — the only recovery was the native `title` tooltip,
+ * which is neither keyboard- nor touch-reachable.
+ *
+ * Scoped to `[data-overflow="true"]` (published by VicGovStatusChipRow via
+ * ResizeObserver) so a row that fits keeps its crisp last-chip corner, and
+ * suppressed at `[data-scroll-end="true"]` so the fade means "there is more this
+ * way" rather than being permanent decoration.
+ */
+.row[data-overflow="true"]:not([data-scroll-end="true"]) {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+}
+
 /* Title / planning cluster — top-left frame corner. */
 .title {
   left: calc(var(--ws-frame-left, 48px) + 12px);
