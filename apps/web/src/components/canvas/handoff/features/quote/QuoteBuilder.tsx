@@ -71,7 +71,8 @@ export function QuoteBuilder({
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  const empty = estimate.lines.filter((l) => l.total > 0).length === 0;
+  const costedLineCount = estimate.lines.filter((l) => l.total > 0).length;
+  const empty = costedLineCount === 0;
   const tier1 = isTier1WrightsTerrace(address);
 
   return (
@@ -136,10 +137,13 @@ export function QuoteBuilder({
 
       <div className={css.body}>
         {!compact ? (
-          <aside className={css.planPane} aria-label="Plan preview">
+          <aside className={css.planPane} aria-label="Plan summary">
             <p className={css.planCue}>Live plan totals feed this quote</p>
-            <p className={css.mono}>
-              {estimate.lines.filter((l) => l.total > 0).length} costed lines
+            <p className={css.planCount}>
+              <span className={css.planCountValue}>{costedLineCount}</span>
+              <span className={css.planCountUnit}>
+                costed line{costedLineCount === 1 ? "" : "s"}
+              </span>
             </p>
             {estimateSettling ? (
               <div className={css.skeleton} aria-hidden />
@@ -147,7 +151,7 @@ export function QuoteBuilder({
           </aside>
         ) : null}
         {compact && showPlan ? (
-          <aside className={css.planPane} aria-label="Plan preview">
+          <aside className={css.planPane} aria-label="Plan summary">
             <p className={css.planCue}>Live plan totals feed this quote</p>
           </aside>
         ) : null}

@@ -80,19 +80,25 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
   align-items: center;
 }
 
+/*
+ * Solid fill needs more depth than the ring accent: --accent behind --hc-invert
+ * text measures 4.37:1, just under AA. Mixing toward ink clears it at ~5.4:1,
+ * and hover now darkens (it used to lighten to --accent-ink, which dropped the
+ * label to 2.5:1 on the one state a pointer is guaranteed to see).
+ */
 .primary {
-  background: var(--accent) !important;
-  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 84%, var(--gray-l-900)) !important;
+  border-color: color-mix(in srgb, var(--accent) 84%, var(--gray-l-900)) !important;
   color: var(--hc-invert) !important;
 }
 
 .primary:hover {
-  background: var(--accent-ink) !important;
-  border-color: var(--accent-ink) !important;
+  background: color-mix(in srgb, var(--accent) 66%, var(--gray-l-900)) !important;
+  border-color: color-mix(in srgb, var(--accent) 66%, var(--gray-l-900)) !important;
 }
 
 .overflowAction {
@@ -117,7 +123,12 @@
 .body {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 40%) minmax(0, 60%);
+  /*
+   * The left rail is a summary, not a drawing: a flat 40% gave ~640px at
+   * 1600w to two lines of text while the priced work fought for the rest.
+   * Size it to its content and let the quote take the remainder.
+   */
+  grid-template-columns: minmax(200px, 24%) minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
   position: relative;
@@ -131,19 +142,57 @@
 }
 
 .planCue {
-  margin: 0 0 8px;
-  font-size: var(--text-sm);
+  margin: 0 0 var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--hc-ink-muted);
+}
+
+/* The count is the rail's one fact — let it carry the weight. */
+.planCount {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+}
+
+.planCountValue {
+  font-family: var(--font-body);
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-ink);
+}
+
+.planCountUnit {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--hc-ink-muted);
 }
 
 .quotePane {
   position: relative;
-  padding: 12px 16px 160px;
+  /*
+   * No deep bottom reserve. `.totals` is sticky bottom:0 inside this scroller,
+   * and sticky resolves against the *padding* box — so a 160px floor pinned the
+   * totals 160px up, leaving a dead band under it and clipping the section list
+   * above. The sticky footer already reserves its own flow space.
+   */
+  padding: var(--s-3) var(--s-4) var(--s-4);
   overflow: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--s-3);
 }
 
 .section {
