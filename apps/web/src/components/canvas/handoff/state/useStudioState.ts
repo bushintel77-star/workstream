@@ -112,6 +112,7 @@ import {
   snapClockRotationDeg,
   snapToGridPct,
 } from "../geometry/snap";
+import { resolveSiteAddress } from "./resolveSiteAddress";
 import { markStaleGhostsNearEdit } from "./staleGhosts";
 import {
   canvasToStrokes,
@@ -324,6 +325,15 @@ type Ui = {
   /** Active Paint swatch (Mac Paint–style fill). */
   paintSwatch: StudioItemType;
   siteIdx: number;
+  /**
+   * True once the operator has explicitly picked a demo site from the switcher.
+   * Until then `siteIdx` is only a seed-geometry index and must NOT override the
+   * real project address — see `siteAddress` below.
+   *
+   * Optional so the parallel `StudioUiState` in `studioTypes.ts` stays
+   * structurally compatible; absent is treated as "not explicit".
+   */
+  siteExplicit?: boolean;
   canopyScanning: boolean;
   sunPlay: boolean;
   zoom: number;
@@ -674,6 +684,7 @@ function initialState(opts: {
       gridInk: "charcoal",
       paintSwatch: "lawn",
       siteIdx: 0,
+      siteExplicit: false,
       canopyScanning: false,
       sunPlay: false,
       zoom: 1,
@@ -921,6 +932,7 @@ function reducer(state: State, action: Action): State {
         ui: {
           ...state.ui,
           siteIdx: idx,
+          siteExplicit: true,
           rightDataPanel: null,
           selectedId: null,
           drawPoly: null,
@@ -3823,8 +3835,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
     else setUi({ drawPoly: cur.slice(0, -1) });
   }, [setUi, state.ui.drawPoly]);
 
-  const siteAddress =
-    STUDIO_SITES[state.ui.siteIdx]?.addr ?? (address || STUDIO_SITES[0]!.addr);
+  /** Precedence rule and its regression history live in `resolveSiteAddress`. */
+  const siteAddress = resolveSiteAddress({
+    projectAddress: address,
+    siteIdx: state.ui.siteIdx,
+    siteExplicit: state.ui.siteExplicit,
+  });
 
   const coaching = useMemo(
     () => buildHandoffCoaching(snapOf(state.doc), siteAddress, ghostCount),
