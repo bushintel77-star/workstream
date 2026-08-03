@@ -1557,25 +1557,53 @@ export function CadPlanBoard({
               data-testid="cad-context-lot"
             />
           ))}
-          <polygon
-            points={ptsAttr(boundary)}
-            fill={
-              cadTitleMode && !fitSheetStroke
-                ? PLAN_FILL.boundaryWash
-                : "transparent"
-            }
-            stroke={bStroke}
-            strokeWidth={lines.boundary.strokeWidth}
-            strokeDasharray={lines.boundary.dash}
-            vectorEffect="non-scaling-stroke"
-            opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
-            className={sketchPassthrough ? css.sketchQuiet : undefined}
-            data-testid={
-              titleSolid || fitSheetStroke
-                ? "foundation-title-boundary"
-                : undefined
-            }
-          />
+          {boundaryHandPath ? (
+            <path
+              data-pen="hand_drawn"
+              d={boundaryHandPath}
+              fill={
+                cadTitleMode && !fitSheetStroke
+                  ? PLAN_FILL.boundaryWash
+                  : "transparent"
+              }
+              stroke={bStroke}
+              strokeWidth={lines.boundary.strokeWidth}
+              strokeDasharray={lines.boundary.dash}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              filter={
+                deepChalk ? "url(#ws-chalk-soft)" : "url(#ws-pencil-grain)"
+              }
+              opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
+              className={sketchPassthrough ? css.sketchQuiet : undefined}
+              data-testid={
+                titleSolid || fitSheetStroke
+                  ? "foundation-title-boundary"
+                  : undefined
+              }
+            />
+          ) : (
+            <polygon
+              points={ptsAttr(boundary)}
+              fill={
+                cadTitleMode && !fitSheetStroke
+                  ? PLAN_FILL.boundaryWash
+                  : "transparent"
+              }
+              stroke={bStroke}
+              strokeWidth={lines.boundary.strokeWidth}
+              strokeDasharray={lines.boundary.dash}
+              vectorEffect="non-scaling-stroke"
+              opacity={boundaryVisual.opacity * (sketchPassthrough ? 0.35 : 1)}
+              className={sketchPassthrough ? css.sketchQuiet : undefined}
+              data-testid={
+                titleSolid || fitSheetStroke
+                  ? "foundation-title-boundary"
+                  : undefined
+              }
+            />
+          )}
           {building.length >= 3 && !timedSunCast ? (
             <polygon
               data-testid="dwelling-sun-shadow"
