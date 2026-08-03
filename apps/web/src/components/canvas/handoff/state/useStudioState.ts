@@ -18,7 +18,6 @@ import {
   prepareSitePackTip,
   proposeLandscapeServiceZones,
   symbolMatureHeightM,
-  urbanTreesToExistGhosts,
   zoneKindShortLabel,
   FLORA_HEIGHT_BY_FORM,
   hardscapeWhy,
@@ -3661,6 +3660,81 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.ui.sitePackChase,
   ]);
 
+  /**
+   * What counts as a change worth persisting — a content hash of the accepted
+   * document, ghosts excluded.
+   *
+   * This was previously twelve inline `.map().join()` expressions in the
+   * autosave effect's dependency array, which the exhaustive-deps rule cannot
+   * statically check (it reported all twelve). Naming it makes the persist
+   * trigger reviewable in one place and keeps the effect's deps comparable.
+   */
+  const persistKey = useMemo(
+    () =>
+      [
+        state.doc.items.filter((i) => !i.ghost).length,
+        state.doc.items
+          .filter((i) => !i.ghost)
+          .map(
+            (i) =>
+              `${i.id}:${i.x}:${i.y}:${i.scale}:${i.rot}:${i.t}:${i.dbhM ?? ""}`,
+          )
+          .join("|"),
+        state.doc.strokes
+          .map(
+            (s) =>
+              `${s.id}:${s.widthPx ?? ""}:${s.color ?? ""}:${s.points.map((p) => `${p.x},${p.y}`).join(";")}`,
+          )
+          .join("|"),
+        state.doc.strokes.length,
+        state.doc.boundary.map((p) => `${p.x},${p.y}`).join("|"),
+        state.doc.building.map((p) => `${p.x},${p.y}`).join("|"),
+        (state.doc.easements ?? [])
+          .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
+          .join("/"),
+        (state.doc.services ?? [])
+          .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
+          .join("/"),
+        (state.doc.levels ?? []).map((lv) => `${lv.x},${lv.y},${lv.z}`).join("|"),
+        (state.doc.irrigationZones ?? [])
+          .map(
+            (z) =>
+              `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+          )
+          .join("/"),
+        (state.doc.constructionTrenches ?? [])
+          .filter((t) => !t.ghost)
+          .map(
+            (t) =>
+              `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+          )
+          .join("/"),
+        (state.doc.annotations ?? [])
+          .map(
+            (a) =>
+              `${a.id}:${a.text}:${a.notePos.x},${a.notePos.y}:${a.anchor.kind === "item" ? a.anchor.itemId : `${a.anchor.x},${a.anchor.y}`}`,
+          )
+          .join("/"),
+        // Fit-sheet compose — theme / template / widgets must flush with canvas.
+        presentationPackPersistKey(state.doc.presentationPack),
+        state.ui.lifecyclePhase,
+      ].join("~"),
+    [
+      state.doc.items,
+      state.doc.strokes,
+      state.doc.boundary,
+      state.doc.building,
+      state.doc.easements,
+      state.doc.services,
+      state.doc.levels,
+      state.doc.irrigationZones,
+      state.doc.constructionTrenches,
+      state.doc.annotations,
+      state.doc.presentationPack,
+      state.ui.lifecyclePhase,
+    ],
+  );
+
   /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
   useEffect(() => {
     if (skipPersist.current) {
@@ -3702,58 +3776,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
       window.clearTimeout(handle);
     };
     // Persist accepted geometry + site frame — ghosts must not rewrite canvas.
+    // Keyed on content, not on callback identity: saveNow/setUi are deliberately
+    // out of the deps so a re-render cannot restart the debounce.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    state.doc.items.filter((i) => !i.ghost).length,
-    state.doc.items
-      .filter((i) => !i.ghost)
-      .map(
-        (i) =>
-          `${i.id}:${i.x}:${i.y}:${i.scale}:${i.rot}:${i.t}:${i.dbhM ?? ""}`,
-      )
-      .join("|"),
-    state.doc.strokes
-      .map(
-        (s) =>
-          `${s.id}:${s.widthPx ?? ""}:${s.color ?? ""}:${s.points.map((p) => `${p.x},${p.y}`).join(";")}`,
-      )
-      .join("|"),
-    state.doc.strokes.length,
-    state.doc.boundary.map((p) => `${p.x},${p.y}`).join("|"),
-    state.doc.building.map((p) => `${p.x},${p.y}`).join("|"),
-    (state.doc.easements ?? [])
-      .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
-      .join("/"),
-    (state.doc.services ?? [])
-      .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
-      .join("/"),
-    (state.doc.levels ?? [])
-      .map((lv) => `${lv.x},${lv.y},${lv.z}`)
-      .join("|"),
-    (state.doc.irrigationZones ?? [])
-      .map(
-        (z) =>
-          `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
-      )
-      .join("/"),
-    (state.doc.constructionTrenches ?? [])
-      .filter((t) => !t.ghost)
-      .map(
-        (t) =>
-          `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
-      )
-      .join("/"),
-    (state.doc.annotations ?? [])
-      .map(
-        (a) =>
-          `${a.id}:${a.text}:${a.notePos.x},${a.notePos.y}:${a.anchor.kind === "item" ? a.anchor.itemId : `${a.anchor.x},${a.anchor.y}`}`,
-      )
-      .join("/"),
-    // Fit-sheet compose — theme / template / widgets must flush with canvas.
-    presentationPackPersistKey(state.doc.presentationPack),
-    state.ui.lifecyclePhase,
-    saveRetryNonce,
-  ]);
+  }, [persistKey, saveRetryNonce]);
 
   const finishTrace = useCallback(
     (pts: PctPoint[]) => {
