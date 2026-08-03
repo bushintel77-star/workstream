@@ -208,9 +208,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## Shipped inert — features complete except for one connection
 
-Found the moment `apps/web` was first linted (2026-08). Each is a finished
-implementation missing its final wiring; all six passed typecheck and unit tests
-and shipped doing nothing. Deliberately marked `_`-prefixed rather than deleted.
+Found the moment `apps/web` was first linted (2026-08), then two more by the
+reachability gate below. Each is a finished implementation missing its final
+wiring; every one passed typecheck and unit tests and shipped doing nothing.
+Deliberately marked `_`-prefixed or allowlisted rather than deleted.
 
 - [x] **`boundaryHandPath`** — hand-drawn pen computed a wobbled title boundary
       and never rendered it, so in `hand_drawn` mode the dwelling wobbled while
@@ -232,23 +233,65 @@ and shipped doing nothing. Deliberately marked `_`-prefixed rather than deleted.
 - [ ] **`_trade`** — `solveLiveTradeEstimate` is solved on every estimate change
       and never displayed. The calculation is real and owned by
       `@workstream/domain`; the display is missing.
-- [ ] **`_HOVER_DELAY_MS` (`RailDrawer`)** — the hover effect calls
+- [x] **`HOVER_DELAY_MS` (`RailDrawer`)** — the hover effect called
       `setOpen(true)` immediately, so the 250 ms guard its own comment describes
-      never applies and the drawer opens the instant the pointer crosses it.
-- [ ] **`_active` (`SketchDock`)** — passed by `SketchBoard`, never read. Its
-      counterpart `onActivate` fires on every tool/tip change, but the dock never
-      recedes when it is not the active surface, against "chrome is quiet until
-      summoned".
+      never applied and the drawer opened the instant the pointer crossed it.
+      **Fixed** (`3fdea04`), along with two more bugs the wiring exposed: the
+      drawer could not be closed by clicking while hovered, and the documented
+      hover auto-retract never ran. Kept probe `e2e/rail-drawer-hover.spec.ts`,
+      verified to fail against the pre-fix component.
+- [x] **`active` (`SketchDock`)** — passed by `SketchBoard`, never read, so the
+      dock held full presence while the pen was unarmed. **Fixed** (`9d37607`):
+      recedes to 0.62 opacity with reduced lift, `pointer-events` kept so
+      clicking re-arms, full presence back on hover and `focus-within`.
+- [ ] **`StudioCoachMarks` is never mounted — logged, deliberately not wired.**
+      A complete three-step onboarding tour (trace the lot / add planting / fit
+      sheet + quote) with its own stylesheet and `cc_coach_done` localStorage
+      first-run gating. Nothing imports it, so first-run onboarding has never
+      appeared. **Decision: leave it unmounted.** `AiCapabilityCue` now covers
+      the same teaching ground contextually rather than as an upfront tour, and
+      two teaching surfaces would stack — which is exactly what
+      `STUDIO-STYLING-AND-UX.md` §6 item 11 forbids. Delete it or fold its
+      copy into the cue when someone owns that call; do not mount both.
+- [ ] **`CanvasMeasureSummary` is never mounted.** "Small, stage-aware
+      measurement card; click for the full live ledger." Its pure helper
+      `buildCanvasMeasureSummary` *is* imported and has four passing tests, so
+      the logic is covered while the card never renders — a clean illustration
+      of why green unit tests were not evidence of a shipped feature.
 
-- [ ] **Proposed: `scripts/check-feature-reachability.mjs`.** None of the above
-      is detectable by typecheck or unit tests, and ESLint only catches the ones
-      that leave an unused binding behind — an exported component that nothing
-      imports (`PointerMarkSettings`) is invisible to all three. Proposal: walk
-      `apps/web/src/components/canvas/handoff/features/**`, collect every
-      exported component, and fail when one is imported nowhere outside its own
-      file and test, with an explicit allowlist for deliberate exceptions.
-      Same shape as the existing `check-*.mjs` gates. **Not yet built — design
-      agreed, awaiting go-ahead.**
+- [x] **`scripts/check-feature-reachability.mjs` — built and wired into
+      `pnpm ci`.** Walks the canvas feature folders, collects PascalCase
+      component exports, and fails when one has no import, JSX tag, call or
+      barrel re-export anywhere else. 121 components scanned, 3 allowlisted
+      (each entry carries a reason and an item above). The allowlist is a
+      ratchet: the gate also fails on a **stale** entry, so wiring a component
+      up forces its exception to be removed.
+
+      Two notes on its limits, kept honest rather than hidden. It found
+      `StudioCoachMarks` and `CanvasMeasureSummary` that ESLint could not see,
+      but it would only have caught one of the original six — the other five
+      left an unused binding, which the lint gate now catches. And it cannot see
+      a component that *is* imported yet rendered behind a condition that is
+      never true; that needs a runtime probe.
+
+      Its first version counted a code comment naming `PointerMarkSettings` as
+      proof the component was mounted, which silenced the exact finding it was
+      written for. Reachability is therefore matched on real syntax (import /
+      JSX / call / re-export), not word presence.
+
+- [x] **`scripts/check-css-scales.mjs` — built and wired into `pnpm ci`.**
+      Freezes the off-scale CSS backlog per file and lets it only shrink:
+      **85 files, 326 declarations** across raw `z-index` (bypassing the 15-step
+      `--ws-z-*` scale), raw `border-radius` px, and raw `opacity` decimals.
+      A ban would mean an unreviewable diff across every canvas surface and a
+      gate that lands red gets reverted, so this is a ratchet — it fails when a
+      file goes up, and equally when the baseline is *stale* after an
+      improvement, which forces the recorded number down and locks the gain in.
+      `node scripts/check-css-scales.mjs --update` after a deliberate reduction.
+
+      Opacity is counted rather than token-checked because there is no opacity
+      scale to check against yet (00-DISCOVERY §4.1 — the ink-tier scale is
+      still unbuilt). Freezing the count stops it growing while that lands.
 
 ## Aerial Design Studio (separate track)
 
