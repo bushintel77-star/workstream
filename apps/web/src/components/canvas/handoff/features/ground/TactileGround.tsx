@@ -31,8 +31,6 @@ type Props = {
    * (Fit overlay owns N + scale).
    */
   quietChrome?: boolean;
-  /** Edge labels are normally owned by the fixed sibling ruler overlay. */
-  showEdgeLabels?: boolean;
   /**
    * Hide parchment + mesh (geometry still draws above). Used when zoom &lt; 1
    * so a full-bleed underlay can fill the board — no postage-stamp border.
@@ -58,7 +56,6 @@ export function TactileGround({
   address = null,
   suppressSiteCue = false,
   quietChrome = false,
-  showEdgeLabels = true,
   hidePaper = false,
 }: Props) {
   const scaleM = boardScaleM(sheetScaleDenom);
@@ -68,10 +65,10 @@ export function TactileGround({
   const phase = foundationCleanse
     ? "cadastral"
     : resolveGroundPhase({
-        hasAerial,
-        hasBoundary: false,
-        address: address ?? siteLabel,
-      });
+      hasAerial,
+      hasBoundary: false,
+      address: address ?? siteLabel,
+    });
 
   const lines = useMemo(() => {
     const major: number[] = [];
@@ -88,18 +85,6 @@ export function TactileGround({
     }
     return { major, minor };
   }, [stepPct]);
-
-  const edgeLabels = useMemo(() => {
-    const out: Array<{ pct: number; label: string }> = [];
-    let metres = 0;
-    for (const pct of lines.major) {
-      if (pct > 0 && pct < 100) {
-        out.push({ pct, label: `${metres} m` });
-      }
-      metres += stepM;
-    }
-    return out;
-  }, [lines.major, stepM]);
 
   // Soft topo-ish contours — generative context, not survey contours.
   const topo = useMemo(() => {

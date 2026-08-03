@@ -3669,7 +3669,6 @@ export function HandoffDesignStudio({
                   address={displayAddress}
                   suppressSiteCue
                   quietChrome
-                  showEdgeLabels={false}
                 />
               </div>
             ) : null}
@@ -3740,7 +3739,6 @@ export function HandoffDesignStudio({
                       address={displayAddress}
                       suppressSiteCue
                       quietChrome
-                      showEdgeLabels={false}
                     />
                   </div>
                 ) : null}
