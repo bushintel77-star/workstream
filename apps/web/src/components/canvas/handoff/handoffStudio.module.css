@@ -131,9 +131,44 @@
   --ws-lane-w: min(304px, calc(100vw - 40px));
   --ws-lane-reserve: calc(var(--ws-lane-w) + 16px);
   --ws-type-kicker: 8px;
+  /*
+   * KNOWN GAP — these are deliberately identical today, and that is the bug.
+   *
+   * On-plan dimension text (drawing content) and chrome HUD text
+   * (instrumentation) are typographically indistinguishable by construction, so
+   * the drawing cannot out-rank its own instrumentation. Dimensions should sit
+   * one step above HUD.
+   *
+   * Left unchanged here on purpose: raising `--ws-type-dim` to 12px is a live
+   * layout change on a dense plan and needs `canvas-chrome-screenshots.spec.ts`
+   * plus a tight-zoom overlap check, which were not runnable when this was
+   * written. It is a one-line flip once those can run.
+   */
   --ws-type-dim: 11px;
   --ws-type-hud: 11px;
   --ws-type-title: 15px;
+
+  /*
+   * Line-weight ladder — mirrors LINE_WEIGHT in
+   * features/render/lineWeight.ts. That module is the source of truth (SVG
+   * takes numeric stroke widths); these exist for CSS-styled strokes and
+   * borders that need to sit on the same hierarchy.
+   *
+   * Root-2 progression, doubling every two rungs, anchored on 0.4 — the most
+   * common existing value and the leader weight mandated by
+   * docs/STUDIO-STYLING-AND-UX.md. See lineWeight.ts for the full rationale
+   * and the role mapping.
+   *
+   * Do not add in-between values. If a stroke does not fit a rung, the
+   * hierarchy is wrong, not the ladder.
+   */
+  --ws-w-hairline: 0.2;
+  --ws-w-fine: 0.28;
+  --ws-w-thin: 0.4;
+  --ws-w-medium: 0.56;
+  --ws-w-thick: 0.8;
+  --ws-w-heavy: 1.12;
+  --ws-w-accent: 1.6;
 
   /*
    * Gallery frame (binding) — the drawing is the artwork, the frame is the
