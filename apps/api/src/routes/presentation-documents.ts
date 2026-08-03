@@ -8,7 +8,6 @@ import {
 } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
-import { dissectPlan } from "../lib/plan-dissect";
 import { dissectPlanWithVision } from "../lib/claude";
 import { formatPageLayout } from "../lib/page-format";
 

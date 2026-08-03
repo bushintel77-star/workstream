@@ -28,6 +28,12 @@ co-pilot for Curtis & Co (Melbourne).
 
 - **Conventional Commits** — `feat(web):`, `fix(api):`, `chore(deploy):`. Match
   the existing log; don't invent new prefixes.
+- **Lint is a zero-tolerance gate.** `pnpm lint` runs ESLint over `apps/api/src`,
+  `apps/web/src`, `packages/domain/src` and `packages/contracts/src` at
+  `--max-warnings 0`. `apps/web` was unlinted until 2026-08; five features had
+  shipped inert because nothing reported the unused variable that proved it. Do
+  not raise the ceiling to land work — fix it, or mark it `_`-prefixed with the
+  reason inline and an `OUTSTANDING.md` entry.
 - **No emojis** in code, commits, or docs unless the user asks.
 - **Sentence case** for headings, button labels, page titles.
 - **AU locale** — `en-AU`, AUD, GST math, ABN, ATO retention windows,
@@ -86,5 +92,9 @@ co-pilot for Curtis & Co (Melbourne).
 
 - Real-time multi-user sync. The store is single-tenant.
 - Postgres. Stay on the JSON snapshot path until SQLite migration lands.
-- Native ESLint plugin churn — see `OUTSTANDING.md`.
+- The React Compiler rule set in `eslint-plugin-react-hooks` v7
+  (`set-state-in-effect`, `refs`, `immutability`, `purity`,
+  `preserve-manual-memoization`) — 71 errors in the canvas components, tracked as
+  its own scoped work in `OUTSTANDING.md`. Do not widen the hooks config to
+  `configs.flat["recommended-latest"]`; it takes the gate red on contact.
 - Stage 2 CAD export / survey-grade studio (Workflow 1 only until product opens Stage 2).

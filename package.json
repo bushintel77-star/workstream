@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "eslint apps/api/src packages/domain/src packages/contracts/src --max-warnings 50",
+    "lint": "eslint apps/api/src apps/web/src packages/domain/src packages/contracts/src --max-warnings 0",
     "typecheck": "turbo typecheck",
     "test": "vitest run",
     "test:e2e": "pnpm --filter @workstream/web test:e2e",

@@ -170,12 +170,85 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `TOTAL` and `ACTIONS` together with no gutter, and a long unit note
       ("~1.73 t spoil · 8 t/load") bleeds into the actions column. Content-sized
       columns, so it needs a measured pass rather than a token swap.
-- [ ] **`apps/web` is not linted.** Root `pnpm lint` covers only
-      `apps/api/src packages/domain/src packages/contracts/src`, and
-      `apps/web`'s own `lint` script is `echo ok`. So no ESLint runs over the
-      largest surface in the repo, including every canvas feature. (This doc
-      previously claimed CI lints web — it does not.) Enabling it needs its own
-      change: expect a large first-run backlog.
+- [x] **`apps/web` is now linted, at `--max-warnings 0`.** Root `pnpm lint`
+      covers `apps/api/src apps/web/src packages/domain/src
+      packages/contracts/src`. The predicted "large first-run backlog" did not
+      materialise: the base config found 61 problems across 467 files, of which
+      21 were `Definition for rule was not found` from `eslint-disable` comments
+      referencing plugins that were never installed. Real backlog was 40
+      mechanical findings.
+      `eslint-plugin-react-hooks` 7.1.1 and `@next/eslint-plugin-next` 16.2.12
+      are installed and scoped to `apps/web` via `files:`. Only
+      `rules-of-hooks` (already at zero — no hook-ordering bugs anywhere) and
+      `exhaustive-deps` are enabled; see the React Compiler item below.
+      `no-img-element` and `no-page-custom-font` are off in config with reasons.
+
+- [ ] **React Compiler rule set — scoped follow-up.** `react-hooks` v7's
+      `configs.flat["recommended-latest"]` also enables the compiler correctness
+      rules, which report **71 errors** in the canvas components:
+      `set-state-in-effect` (42), `refs` (29), `preserve-manual-memoization` (7),
+      `immutability` (4), `purity` (1). These are often deliberate canvas sync
+      patterns, so each is a judgement call, and the files are locked by
+      `canvas-chrome-*` specs. Deliberately deferred so the gate could go on.
+      Do not widen the hooks config without scoping this first.
+
+- [ ] **Google Fonts `<link>` → `next/font`.** `@next/next/no-page-custom-font`
+      fires on `app/layout.tsx`. The rule's `pages/_document.js` premise does not
+      apply under App Router, but its advice does. Migrating Fraunces / Sora /
+      IBM Plex loading is a real change to studio typography — rule is off in
+      config, not suppressed inline.
+
+- [ ] **`HandoffDesignStudio` keyboard-shortcut effect can go stale.** The
+      global `keydown` effect (~:1763) cannot list `planOn` or `setFitSheetOn` in
+      its dependency array because both are declared *below* it — naming them is
+      a temporal dead zone reference (TS2448). The closure is correct at call
+      time; only the dep array cannot see them, so the hook carries a documented
+      `exhaustive-deps` suppression. Fixing it properly means reordering
+      declarations in a 5,700-line component.
+
+## Shipped inert — features complete except for one connection
+
+Found the moment `apps/web` was first linted (2026-08). Each is a finished
+implementation missing its final wiring; all six passed typecheck and unit tests
+and shipped doing nothing. Deliberately marked `_`-prefixed rather than deleted.
+
+- [x] **`boundaryHandPath`** — hand-drawn pen computed a wobbled title boundary
+      and never rendered it, so in `hand_drawn` mode the dwelling wobbled while
+      the lot ring drew mechanically straight. **Fixed** (`10fac0c`).
+- [x] **`edgeLabels` / `showEdgeLabels`** — ground-grid metre labels computed and
+      never rendered; all three call sites passed `false`. Superseded by the
+      sibling ruler overlay, so **deleted** (`0c997a8`).
+- [ ] **`setSort` (`DashboardProjects`) — live defect, not inert code.** The sort
+      comparator runs (name / cost / activity) but no control calls `setSort`, so
+      sorting is permanently locked to "activity". This is why
+      `dashboard-filter-sort.spec.ts` is red. Resolve together with that spec.
+- [ ] **`PointerMarkSettings` is never mounted.** A finished 91-line component
+      with its own stylesheet, `data-testid="pointer-mark-settings"`, full
+      `role="listbox"` / `aria-selected` a11y and passing unit tests. Nothing
+      imports it, so `_setPointerMarkPreview` (its `onPreview`) and the dropped
+      `savePointerMarkId` import (its `onMarkId`) have no caller and the drawing
+      cursor can never be changed. Restoring the mount is a Cmd+K decision per
+      `STUDIO-STYLING-AND-UX.md` §6 item 9 — the ribbon is a fixed budget.
+- [ ] **`_trade`** — `solveLiveTradeEstimate` is solved on every estimate change
+      and never displayed. The calculation is real and owned by
+      `@workstream/domain`; the display is missing.
+- [ ] **`_HOVER_DELAY_MS` (`RailDrawer`)** — the hover effect calls
+      `setOpen(true)` immediately, so the 250 ms guard its own comment describes
+      never applies and the drawer opens the instant the pointer crosses it.
+- [ ] **`_active` (`SketchDock`)** — passed by `SketchBoard`, never read. Its
+      counterpart `onActivate` fires on every tool/tip change, but the dock never
+      recedes when it is not the active surface, against "chrome is quiet until
+      summoned".
+
+- [ ] **Proposed: `scripts/check-feature-reachability.mjs`.** None of the above
+      is detectable by typecheck or unit tests, and ESLint only catches the ones
+      that leave an unused binding behind — an exported component that nothing
+      imports (`PointerMarkSettings`) is invisible to all three. Proposal: walk
+      `apps/web/src/components/canvas/handoff/features/**`, collect every
+      exported component, and fail when one is imported nowhere outside its own
+      file and test, with an explicit allowlist for deliberate exceptions.
+      Same shape as the existing `check-*.mjs` gates. **Not yet built — design
+      agreed, awaiting go-ahead.**
 
 ## Aerial Design Studio (separate track)
 
