@@ -43,14 +43,38 @@
   border-color: var(--hc-line-soft);
 }
 
+/* Severity = border + 24x2 accent bar, never a card-wide tint. See the same
+   note in preemptiveHorizon.module.css: the tint cost every label its AA
+   headroom (cite/kicker measured 3.64:1 on blush, 4.23:1 on amber). */
+.watch,
+.critical {
+  background: var(--hc-invert);
+}
+
+.watch::before,
+.critical::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 2px;
+}
+
 .watch {
   border-color: color-mix(in srgb, var(--hc-warning) 45%, transparent);
-  background: color-mix(in srgb, var(--hc-warning) 12%, var(--hc-invert));
+}
+
+.watch::before {
+  background: var(--hc-warning);
 }
 
 .critical {
   border-color: color-mix(in srgb, var(--hc-danger) 45%, transparent);
-  background: var(--hc-danger-soft);
+}
+
+.critical::before {
+  background: var(--hc-danger);
 }
 
 .kicker {
@@ -106,10 +130,12 @@
 }
 
 .gaps {
-  padding: 10px 12px;
+  padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pop);
   border: 1px dashed var(--hc-line-soft);
-  background: color-mix(in srgb, var(--hc-ink-faint) 6%, var(--hc-invert));
+  /* Dashed border already separates this block; the 6% wash only cost the
+     kicker its AA headroom (4.43:1). */
+  background: var(--hc-invert);
 }
 
 .gapsKicker {

@@ -109,7 +109,15 @@
   --grid-line: var(--gray-l-150);
   --border: var(--gray-l-200);
   --border-strong: var(--gray-l-300);
-  --text-muted: var(--gray-l-400);
+  /*
+   * WCAG 2.2 AA floor on paper. --gray-l-400 (#9aa0ac) is only 2.63:1 on white,
+   * so it failed 4.5:1 everywhere it was used for 8-11px chrome labels. On a
+   * white surface any AA-passing grey sits in a narrow band, so "muted" and
+   * "secondary" share one ink and the quiet tier is carried by size, weight,
+   * letter-spacing and caps instead of lightness. --gray-l-400 stays on the
+   * ramp for hairlines, borders and disabled fills.
+   */
+  --text-muted: var(--gray-l-500);
   --text-secondary: var(--gray-l-500);
   --text-primary: var(--gray-l-900);
 

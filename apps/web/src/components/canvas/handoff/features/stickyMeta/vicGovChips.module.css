@@ -207,21 +207,18 @@
  * values, so on the dark panel they are lifted toward frame ink to stay legible;
  * the semantic hue is unchanged.
  */
+/* 70% of a dark-on-cream plan colour only reaches 3.52:1 on the dark frame;
+   45% keeps the hue reading while clearing AA. */
 .chip[data-status="ok"] .face {
   color: color-mix(in srgb,
-      var(--proposed-stroke, var(--hc-success)) 70%,
+      var(--proposed-stroke, var(--hc-success)) 45%,
       var(--ws-frame-ink));
 }
 
-.chip[data-status="flag"] .face {
-  color: color-mix(in srgb,
-      var(--existing-stroke, var(--hc-danger)) 70%,
-      var(--ws-frame-ink));
-}
-
+.chip[data-status="flag"] .face,
 .chip[data-status="warn"] .face {
   color: color-mix(in srgb,
-      var(--existing-stroke, var(--hc-danger)) 70%,
+      var(--existing-stroke, var(--hc-danger)) 45%,
       var(--ws-frame-ink));
 }
 

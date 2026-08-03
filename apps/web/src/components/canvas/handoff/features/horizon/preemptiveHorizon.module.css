@@ -41,14 +41,42 @@
   border-color: var(--hc-line-soft);
 }
 
+/*
+ * Severity reads from the border plus a 24x2 accent bar, never a card-wide
+ * tint. A tinted fill spends the whole contrast budget: --hc-ink-muted on the
+ * old blush fill measured 3.64:1 and on the amber 4.23:1, so every label on a
+ * flagged card failed AA. Keeping the paper white puts them back at ~4.9:1 and
+ * matches the house rule (accents are top bars, not fills).
+ */
+.watch,
+.critical {
+  background: var(--hc-invert);
+}
+
+.watch::before,
+.critical::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 2px;
+}
+
 .watch {
   border-color: color-mix(in srgb, var(--hc-warning) 45%, transparent);
-  background: color-mix(in srgb, var(--hc-warning) 12%, var(--hc-invert));
+}
+
+.watch::before {
+  background: var(--hc-warning);
 }
 
 .critical {
   border-color: color-mix(in srgb, var(--hc-danger) 45%, transparent);
-  background: var(--hc-danger-soft);
+}
+
+.critical::before {
+  background: var(--hc-danger);
 }
 
 .kicker {

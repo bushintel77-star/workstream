@@ -168,7 +168,8 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--hc-fs-1);
   font-weight: 550;
-  color: color-mix(in srgb, var(--hc-ink-muted, var(--text-secondary)) 88%, transparent);
+  /* Full-strength muted ink: the 88% wash measured 3.77:1 on cream. */
+  color: var(--hc-ink-muted, var(--text-secondary));
 }
 
 .rulerOverlayDark {
