@@ -58,7 +58,7 @@ const SCENARIOS = [
   {
     id: "standard",
     label: "Standard",
-    note: "Tier-1 redesign as specified. Curtis recommended scope.",
+    note: "Recommended scope — architectural massing as specified.",
   },
   {
     id: "buffer",
@@ -115,7 +115,7 @@ export function QuotePortal({
     <main className={styles.page}>
       <header className={styles.masthead}>
         <div className={styles.brand}>
-          Curtis &amp; Co
+          Workstream
           <span className={styles.brandSub}>
             Landscape design · Melbourne
           </span>
@@ -134,7 +134,7 @@ export function QuotePortal({
             </div>
           ) : null}
           <span className={styles.kicker}>
-            {tier1 ? "Tier-1 architectural massing" : "Prepared for your garden"}
+            {tier1 ? "Architectural massing" : "Prepared for your garden"}
           </span>
           <h1 className={styles.address}>{project.address}</h1>
           {tier1 && (
@@ -297,7 +297,7 @@ export function QuotePortal({
                 Deposit unavailable
               </KitButton>
               <p className={styles.acceptNote}>
-                Curtis &amp; Co will issue the deposit link once the quote total
+                Workstream will issue the deposit link once the quote total
                 is confirmed.
               </p>
             </>
@@ -306,7 +306,7 @@ export function QuotePortal({
       </div>
 
       <footer className={styles.colophon}>
-        <span>Curtis &amp; Co · {project.address}</span>
+        <span>Workstream · {project.address}</span>
         <span>Valid 30 days</span>
       </footer>
     </main>

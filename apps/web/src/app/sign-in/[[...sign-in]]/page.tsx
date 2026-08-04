@@ -14,7 +14,7 @@ export default function SignInPage() {
     <main className={s.pageNarrow}>
       <header className={s.masthead}>
         <div className={s.brand}>
-          Curtis &amp; Co
+          Workstream
           <span className={s.brandSub}>Workstream · Sign in</span>
         </div>
       </header>

@@ -13,7 +13,7 @@ export function buildWhatsAppShareUrl(args: {
   if (args.portalUrl) {
     lines.push(`View online: ${args.portalUrl}`);
   }
-  lines.push("", "— Curtis & Co");
+  lines.push("", "— Workstream");
   const text = lines.join("\n");
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }

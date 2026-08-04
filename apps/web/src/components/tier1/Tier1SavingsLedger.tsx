@@ -54,14 +54,14 @@ export function Tier1SavingsLedger({
       ) : null}
       <div className={lg.ledger}>
         <div className={lg.col}>
-          <span className={lg.kicker}>Removed</span>
+          <span className={lg.kicker}>Simplified</span>
           <span className={lg.amount}>{aud(savings.removed_ex)}</span>
           <p className={lg.note}>
             Cottage perennials, ferns, organic mulch, redundant irrigation zone.
           </p>
         </div>
         <div className={lg.col}>
-          <span className={lg.kicker}>Deployed</span>
+          <span className={lg.kicker}>Reinvested</span>
           <span className={lg.amount}>{aud(savings.deployed_ex)}</span>
           <p className={lg.note}>
             Cycas anchors, Buxus structure, Mondo grid, bluestone screenings, deck

@@ -14,7 +14,10 @@ The value is in the joins.
 
 ## A. Vicmap WFS — `opendata.maps.vic.gov.au/geoserver/wfs`
 
-`apps/api/src/lib/vicmap.ts` discovers layers by name-scoring. Nine categories:
+`apps/api/src/lib/vicmap.ts` discovers layers by name-scoring. Eleven keyless
+kinds (easement, planning, bushfire, urban_tree, contour, flood, heritage,
+water_corp, road_casement, acid_sulfate, wetland) plus dedicated property/parcel
+and building fetchers:
 
 | Source | What it gives | Status today |
 |---|---|---|
@@ -24,7 +27,7 @@ The value is in the joins.
 | planning | Zone + overlay codes | Chip only |
 | bushfire (BMO) | Bushfire management overlay | Chip only |
 | urban_tree | Council tree records, height, canopy radius | **Used** — tree ghosts |
-| **contour** | **Elevation lines** | **Decoration only — elevation discarded at fetch** |
+| **contour** | **Elevation lines** | **Elevation fetched + IDW-interpolated to spot levels** (see below) |
 | flood | Flood overlay extent | Overlay wash |
 | heritage | Heritage overlay extent | Overlay wash |
 
@@ -258,7 +261,13 @@ Almost none of this needs a new data source. It needs the sources you already
 fetch to be **joined**, and the results **drawn on the canvas** rather than
 reported in a dock.
 
-The two exceptions are worth naming: contour elevations are discarded at the
-fetch (`DesignKeylessOverlaySchema` has no elevation field), and trench lengths
-are never computed from the polylines. Both are small fixes that unlock large
-features.
+The two "small fixes" this doc originally named are both already done:
+
+- **Contour elevations** are fetched (`fetchKeylessRings` returns `elevations[]`
+  for contour kind) and IDW-interpolated to spot levels at boundary corners via
+  `contour-levels.ts` (`deriveCornerLevels`). `DesignKeylessOverlaySchema` has no
+  elevation field by design — elevation is consumed into a separate
+  `derived_levels` path, not stored per-overlay.
+- **Trench lengths** are computed from polylines
+  (`auto-trench.ts:trenchLineItems` calls `polylineLengthFromCanvasPercent`,
+  producing BOM lines with `length_m`, `volume_m3`, `depth_mm`).

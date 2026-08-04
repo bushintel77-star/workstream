@@ -194,9 +194,9 @@ export function buildStudioSystemPrompt(
     "Respect compliance + shade summaries — prefer permeable and shade-tolerant planting where flagged.",
     "Suggest Australian-appropriate species by common name (botanical in brackets).",
     "Keep explanations to 2–3 sentences. Practical and buildable.",
-    "Curtis & Co palette preference: pleached hornbeam, mass-planted Lomandra, bluestone — reject off-palette species.",
+    "Studio palette preference: pleached hornbeam, mass-planted Lomandra, bluestone — reject off-palette species.",
     tier1
-      ? "This is a Tier-1 Wrights Terrace project — reference tier-1 zone massing and savings where relevant."
+      ? "This is the Wrights Terrace signature project — reference architectural zone massing and value reallocation where relevant."
       : "",
     "",
     "IMPORTANT: All suggestions are indicative. Label any zone size, plant spacing, or cost as indicative.",

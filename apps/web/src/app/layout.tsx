@@ -5,9 +5,9 @@ import { clerkEnabled } from "../lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
-  title: "Workstream — Curtis & Co",
+  title: "Workstream",
   description:
-    "Voice-first landscape design and build co-pilot. Curtis & Co, Melbourne.",
+    "Voice-first landscape design and build co-pilot. Melbourne.",
   metadataBase: new URL(
     process.env.PORTAL_BASE_URL ?? "http://localhost:3002",
   ),
@@ -23,9 +23,9 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
-    title: "Workstream — Curtis & Co",
+    title: "Workstream",
     description:
-      "Voice-first landscape design and build co-pilot. Curtis & Co, Melbourne.",
+      "Voice-first landscape design and build co-pilot. Melbourne.",
     type: "website",
     locale: "en_AU",
   },

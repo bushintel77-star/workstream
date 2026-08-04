@@ -139,6 +139,6 @@ export function tier1WrightsTerraceDesign(
       },
     ],
     rationale:
-      "Tier-1 architectural massing for 36 Wrights Terrace: singular species in disciplined blocks, permanent bluestone ground plane (zero re-mulch over five years), and one irrigation controller serving both zones. Capital reclaimed from cottage perennials and a redundant rear irrigation zone, reinvested into anchors, structure, and deck-reveal lighting.",
+      "Architectural massing for 36 Wrights Terrace: singular species in disciplined blocks, permanent bluestone ground plane (zero re-mulch over five years), and one irrigation controller serving both zones. Capital reclaimed from cottage perennials and a redundant rear irrigation zone, reinvested into anchors, structure, and deck-reveal lighting.",
   };
 }

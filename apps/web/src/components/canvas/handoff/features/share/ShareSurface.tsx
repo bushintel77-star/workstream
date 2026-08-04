@@ -69,7 +69,7 @@ export function ShareSurface({
         </h2>
         <p className={css.lead}>
           {quotePersisted
-            ? "Copy a magic link for the homeowner — same Workstream quote, Curtis & Co brand on the portal."
+            ? "Copy a magic link for the homeowner — same Workstream quote, your brand on the portal."
             : "Persist an indicative quote from this drawing, then copy the client portal link."}
         </p>
 

@@ -6,7 +6,7 @@ export default function DepositSuccessPage() {
   return (
     <main className={styles.page}>
       <header className={styles.masthead}>
-        <div className={styles.brand}>Curtis &amp; Co</div>
+        <div className={styles.brand}>Workstream</div>
         <span className={styles.kicker}>DEPOSIT RECEIVED</span>
       </header>
 
@@ -14,7 +14,7 @@ export default function DepositSuccessPage() {
         <span className={styles.eyebrow}>NEXT STEP</span>
         <h1 className={styles.heading}>Thank you. Your deposit is confirmed.</h1>
         <p className={styles.body}>
-          Curtis &amp; Co will reconcile the payment and confirm your project
+          We will reconcile the payment and confirm your project
           start window directly.
         </p>
         <p className={styles.bodyMuted}>

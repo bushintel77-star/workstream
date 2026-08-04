@@ -7,7 +7,9 @@
     "mature_h_m": 8,
     "mature_w_m": 1.5,
     "use_description": "Boundary screen, pleached at 2.4–4.5 m",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -18,7 +20,9 @@
     "mature_h_m": 11,
     "mature_w_m": 3,
     "use_description": "Tight upright screen, deciduous",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -29,7 +33,9 @@
     "mature_h_m": 14,
     "mature_w_m": 4,
     "use_description": "Larger lots, deciduous",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -40,7 +46,9 @@
     "mature_h_m": 12,
     "mature_w_m": 6,
     "use_description": "Pleached avenue, deciduous",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -51,7 +59,9 @@
     "mature_h_m": 10,
     "mature_w_m": 7,
     "use_description": "Semi-evergreen screen",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -61,7 +71,9 @@
     "mature_h_m": 4,
     "mature_w_m": 2,
     "use_description": "Workhorse hedge",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -71,7 +83,9 @@
     "mature_h_m": 3,
     "mature_w_m": 2,
     "use_description": "Dense, fragrant",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -81,7 +95,9 @@
     "mature_h_m": 3,
     "mature_w_m": 2,
     "use_description": "Flowering screen, shade-tolerant",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -91,7 +107,9 @@
     "mature_h_m": 1.5,
     "mature_w_m": 1.5,
     "use_description": "Native, drought-tolerant",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -101,7 +119,9 @@
     "mature_h_m": 5,
     "mature_w_m": 2,
     "use_description": "Light, fine-leafed screen",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -111,7 +131,9 @@
     "mature_h_m": 3,
     "mature_w_m": 2,
     "use_description": "Shade-tolerant, evergreen",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -121,7 +143,9 @@
     "mature_h_m": 6,
     "mature_w_m": 3,
     "use_description": "Compact evergreen",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -131,7 +155,9 @@
     "mature_h_m": 6,
     "mature_w_m": 4,
     "use_description": "Improved Little Gem, denser foliage",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -141,7 +167,9 @@
     "mature_h_m": 5,
     "mature_w_m": 4,
     "use_description": "Deciduous, winter interest",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -151,7 +179,9 @@
     "mature_h_m": 6,
     "mature_w_m": 2,
     "use_description": "Architectural, evergreen, drought-tolerant",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -161,7 +191,9 @@
     "mature_h_m": 6,
     "mature_w_m": 4,
     "use_description": "Summer flowering, deciduous",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -171,7 +203,9 @@
     "mature_h_m": 5,
     "mature_w_m": 5,
     "use_description": "Deciduous, spring flower, dark foliage",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -181,7 +215,9 @@
     "mature_h_m": 1.5,
     "mature_w_m": 1.5,
     "use_description": "Clipped, formal",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -191,7 +227,9 @@
     "mature_h_m": 1.2,
     "mature_w_m": 1,
     "use_description": "Clipped, blight-resistant",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -201,7 +239,9 @@
     "mature_h_m": 1,
     "mature_w_m": 1,
     "use_description": "Native alternative to box",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -211,7 +251,9 @@
     "mature_h_m": 3,
     "mature_w_m": 2,
     "use_description": "Shade specimen, formal",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -221,7 +263,9 @@
     "mature_h_m": 7,
     "mature_w_m": 5,
     "use_description": "Architectural native",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -231,7 +275,9 @@
     "mature_h_m": 0.4,
     "mature_w_m": 0.45,
     "use_description": "Workhorse mass, deep green",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -241,7 +287,9 @@
     "mature_h_m": 0.6,
     "mature_w_m": 0.6,
     "use_description": "Native grass mass",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -251,7 +299,9 @@
     "mature_h_m": 0.4,
     "mature_w_m": 0.4,
     "use_description": "Smaller mass",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -261,7 +311,9 @@
     "mature_h_m": 0.4,
     "mature_w_m": 0.4,
     "use_description": "Native, low, hardy",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -271,7 +323,9 @@
     "mature_h_m": 1.2,
     "mature_w_m": 0.8,
     "use_description": "Architectural verticals",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -281,7 +335,9 @@
     "mature_h_m": 0.8,
     "mature_w_m": 0.8,
     "use_description": "Mass, native cultivar",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -291,7 +347,9 @@
     "mature_h_m": 1.5,
     "mature_w_m": 0.6,
     "use_description": "Strong vertical line",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -301,7 +359,9 @@
     "mature_h_m": 0.05,
     "mature_w_m": 0.5,
     "use_description": "Lawn alternative",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -311,7 +371,9 @@
     "mature_h_m": 0.3,
     "mature_w_m": 1,
     "use_description": "Groundcover or climber",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -321,7 +383,9 @@
     "mature_h_m": 0.1,
     "mature_w_m": 2,
     "use_description": "Native, dense mat",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -331,7 +395,9 @@
     "mature_h_m": 6,
     "mature_w_m": 2,
     "use_description": "Wall cover, fragrant",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -341,7 +407,9 @@
     "mature_h_m": 15,
     "mature_w_m": 5,
     "use_description": "Deciduous wall, autumn colour",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -351,7 +419,9 @@
     "mature_h_m": 8,
     "mature_w_m": 3,
     "use_description": "Aggressive — use only on dedicated walls with control plan",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -361,7 +431,9 @@
     "mature_h_m": 0.1,
     "mature_w_m": 1,
     "use_description": "Shade-tolerant warm-season turf",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -371,7 +443,9 @@
     "mature_h_m": 0.15,
     "mature_w_m": 1,
     "use_description": "Cool-season turf",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -381,8 +455,10 @@
     "form": "Specimen / anchor",
     "mature_h_m": 2.5,
     "mature_w_m": 2,
-    "use_description": "Biological sculpture against masonry — Tier-1 anchor",
-    "climate_zones": ["temperate"],
+    "use_description": "Biological sculpture against masonry — signature anchor",
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -393,7 +469,9 @@
     "mature_h_m": 0.6,
     "mature_w_m": 0.6,
     "use_description": "Monoblock foliage — not cottage scatter",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -404,7 +482,9 @@
     "mature_h_m": 0.5,
     "mature_w_m": 0.5,
     "use_description": "Structural spheres in grid planting",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -415,7 +495,9 @@
     "mature_h_m": 0.1,
     "mature_w_m": 0.15,
     "use_description": "Strict grid ground plane — textile, not meadow",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -426,7 +508,9 @@
     "mature_h_m": 1.2,
     "mature_w_m": 1,
     "use_description": "Burgundy mass against green render",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   },
   {
@@ -437,7 +521,9 @@
     "mature_h_m": 8,
     "mature_w_m": 3,
     "use_description": "Flat on brick — dissolves boundary",
-    "climate_zones": ["temperate"],
+    "climate_zones": [
+      "temperate"
+    ],
     "curtis_approved": true
   }
 ]

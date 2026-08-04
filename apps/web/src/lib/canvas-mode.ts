@@ -50,6 +50,7 @@ export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
 /** Suggested next mode for empty `?mode=` or after completing a step. */
 export function suggestedMode(progress: CanvasProgress): CanvasMode {
   if (!progress.hasAerial) return "survey";
+  if (!progress.hasSketch) return "sketch";
   if (!progress.hasCad) return "cad";
   if (!progress.hasQuote) return "quote";
   return "share";

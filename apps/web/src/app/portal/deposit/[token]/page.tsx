@@ -21,7 +21,7 @@ export default async function DepositPage({
   return (
     <main className={styles.page}>
       <header className={styles.masthead}>
-        <div className={styles.brand}>Curtis &amp; Co</div>
+        <div className={styles.brand}>Workstream</div>
         <span className={styles.kicker}>DEPOSIT</span>
       </header>
 
@@ -53,7 +53,7 @@ export default async function DepositPage({
             collected.
           </p>
           <p className={styles.bodyMuted}>
-            No payment is taken in this preview mode. Curtis &amp; Co will
+            No payment is taken in this preview mode. Workstream will
             confirm the secure payment link when live checkout is enabled.
           </p>
         </section>

@@ -16,7 +16,7 @@ export default async function ShareTokenPage({
         <span className={css.kicker}>Link unavailable</span>
         <h1 className={css.errorHeading}>This share link is not available</h1>
         <p className={css.errorBody}>
-          It may have been replaced by a newer revision. Contact Curtis &amp; Co
+          It may have been replaced by a newer revision. Contact the studio
           for an updated link.
         </p>
       </main>

@@ -121,6 +121,8 @@ export type StudioUiState = {
    */
   servicesLocked: boolean;
   setbackOn: boolean;
+  /** Buildable area wash — site minus every exclusion, with attribution. */
+  buildableAreaOn: boolean;
   growth: GrowthStage;
   /** Minutes past midnight Melb-ish; handoff uses sunMin */
   sunMin: number;

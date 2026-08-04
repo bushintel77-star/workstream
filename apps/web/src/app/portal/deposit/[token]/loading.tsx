@@ -6,7 +6,7 @@ export default function LoadingDepositPortal() {
   return (
     <main className={styles.page} aria-busy="true">
       <header className={styles.masthead}>
-        <div className={styles.brand}>Curtis &amp; Co</div>
+        <div className={styles.brand}>Workstream</div>
         <span className={styles.kicker}>DEPOSIT</span>
       </header>
       <section className={styles.successBlock}>

@@ -7,7 +7,7 @@ export default function LoadingQuotePortal() {
     <main className={styles.page} aria-busy="true">
       <header className={styles.masthead}>
         <div className={styles.brand}>
-          Curtis &amp; Co
+          Workstream
           <span className={styles.brandSub}>Quote portal</span>
         </div>
         <div className={styles.docMeta}>

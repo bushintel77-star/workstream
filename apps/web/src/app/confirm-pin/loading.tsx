@@ -10,7 +10,7 @@ export default function ConfirmPinLoading() {
       <div className={cp.bleed} aria-hidden />
       <header className={cp.chrome}>
         <div className={cp.chromeBrand}>
-          <span className={cp.brandMark}>Curtis &amp; Co</span>
+          <span className={cp.brandMark}>Workstream</span>
           <span className={cp.status}>Locating your property…</span>
         </div>
       </header>

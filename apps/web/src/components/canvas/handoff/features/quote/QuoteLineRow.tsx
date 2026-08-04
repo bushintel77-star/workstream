@@ -183,10 +183,13 @@ export function QuoteLineRow({
       className={`${css.row}${struck ? ` ${css.rowStruck}` : ""}`}
       role="row"
       data-testid={`quote-line-${line.id}`}
+      style={{ position: "relative" }}
     >
       <div className={`${css.lineCell} ${css.lineCellLabel}`} role="rowheader">
         <span className={css.lineName}>{line.label}</span>
-        <span className={css.lineBadges}>{badges}</span>
+        {line.is_provisional || line.is_alternate || line.is_custom || line.excluded || line.overridden ? (
+          <span className={css.lineBadges}>{badges}</span>
+        ) : null}
       </div>
       <div className={`${css.lineCell} ${css.lineCellUnit}`} role="cell">
         {line.unit}
@@ -215,18 +218,38 @@ export function QuoteLineRow({
         {aud.format(line.totalAfterMargin)}
       </div>
       <div className={`${css.lineCell} ${css.lineCellActions}`} role="cell">
-        <div className={css.lineActions}>
+        <div className={css.rowActions}>
+          <button
+            type="button"
+            className={css.rowMenuBtn}
+            aria-label="Line actions"
+            data-testid={`quote-line-menu-${line.id}`}
+            onClick={() => setDrawerOpen((v) => !v)}
+          >
+            ⋯
+          </button>
+        </div>
+      </div>
+      {drawerOpen ? (
+        <div className={css.rowPopover} data-testid="quote-line-popover">
           <input
             type="text"
             value={line.notes ?? ""}
-            placeholder="Notes"
+            placeholder="Add a note…"
             aria-label={`${line.label} notes`}
             className={`${css.lineInput} ${css.lineInputNotes}`}
             onChange={(e) => onNotes(e.target.value)}
           />
           {actionChips("sm")}
+          <button
+            type="button"
+            className={css.lineActionChip}
+            onClick={() => setDrawerOpen(false)}
+          >
+            Done
+          </button>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

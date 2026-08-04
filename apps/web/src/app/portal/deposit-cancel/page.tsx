@@ -6,7 +6,7 @@ export default function DepositCancelPage() {
   return (
     <main className={styles.page}>
       <header className={styles.masthead}>
-        <div className={styles.brand}>Curtis &amp; Co</div>
+        <div className={styles.brand}>Workstream</div>
         <span className={styles.kicker}>CHECKOUT CANCELLED</span>
       </header>
 

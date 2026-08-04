@@ -1,11 +1,11 @@
 import Link from "next/link";
 import s from "../../../styles/app.module.css";
 
-export const metadata = { title: "Terms · Curtis & Co" };
+export const metadata = { title: "Terms · Workstream" };
 
 const ABN = process.env.NEXT_PUBLIC_ABN ?? "—";
 const TRADING_NAME =
-  process.env.NEXT_PUBLIC_TRADING_NAME ?? "Curtis & Co Pty Ltd";
+  process.env.NEXT_PUBLIC_TRADING_NAME ?? "Workstream Pty Ltd";
 const LAST_UPDATED = "19 May 2026";
 
 export default function TermsPage() {
@@ -14,7 +14,7 @@ export default function TermsPage() {
       <header className={s.masthead}>
         <div className={s.brand}>
           Terms
-          <span className={s.brandSub}>Curtis &amp; Co · Workstream</span>
+          <span className={s.brandSub}>Workstream</span>
         </div>
         <Link href="/" className={s.crumb}>← Home</Link>
       </header>

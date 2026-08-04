@@ -164,7 +164,7 @@ function renderBody(
     case "caption":
       return (
         <p className={css.sheetValue}>
-          {widget.text ?? "Concept presentation — Curtis & Co"}
+          {widget.text ?? "Concept presentation"}
         </p>
       );
     case "honesty_footer":

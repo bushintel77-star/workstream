@@ -25,7 +25,7 @@ describe("buildStudioSystemPrompt", () => {
     expect(prompt).toContain("easement hatch");
     expect(prompt).toContain("service corridor");
     expect(prompt).toContain("outside easement hatch");
-    expect(prompt).toContain("Curtis & Co palette");
+    expect(prompt).toContain("Studio palette");
     expect(prompt).toContain("permeable fail");
     expect(prompt).toContain("Shade mesh");
   });

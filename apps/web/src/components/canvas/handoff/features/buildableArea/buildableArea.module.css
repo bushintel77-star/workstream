@@ -1,0 +1,106 @@
+.root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--ws-z-annotate);
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.attribution {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  max-width: 240px;
+  padding: 10px 12px;
+  border-radius: var(--hc-r-pop, 8px);
+  background: color-mix(in srgb, var(--hc-invert) 82%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--hc-line-soft);
+  pointer-events: auto;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--hc-ink);
+}
+
+.headline {
+  margin: 0 0 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.buildableValue {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-buildable, #4a9);
+}
+
+.headlineLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--hc-ink-muted);
+}
+
+.lotValue {
+  font-size: 11px;
+  color: var(--hc-ink-faint);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.sub {
+  margin: 0;
+  font-size: 11px;
+  color: var(--hc-ink-muted);
+}
+
+.exclusionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.exclusionItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--hc-line-soft) 50%, transparent);
+}
+
+.exclusionItem:last-child {
+  border-bottom: none;
+}
+
+.exclusionLabel {
+  font-size: 11px;
+  color: var(--hc-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exclusionArea {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-ink-muted);
+  white-space: nowrap;
+}

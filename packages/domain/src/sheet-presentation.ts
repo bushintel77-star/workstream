@@ -34,79 +34,79 @@ export const SHEET_WIDGET_LIBRARY: Array<{
   defaultSlot: PresentationSlot;
   defaultEmphasis: PresentationWidget["style"]["emphasis"];
 }> = [
-  {
-    type: "quote_total",
-    label: "Quote total",
-    detail: "Incl. GST hero from the live BOM",
-    defaultSlot: "side_stack",
-    defaultEmphasis: "hero",
-  },
-  {
-    type: "savings_ledger",
-    label: "Savings ledger",
-    detail: "Tier-1 Wrights value reallocation",
-    defaultSlot: "side_stack",
-    defaultEmphasis: "standard",
-  },
-  {
-    type: "zone_summary",
-    label: "Zone summary",
-    detail: "Live irrigation zones or placement massing",
-    defaultSlot: "side_stack",
-    defaultEmphasis: "quiet",
-  },
-  {
-    type: "material_swatches",
-    label: "Material swatches",
-    detail: "Chips from placed materials on the drawing",
-    defaultSlot: "footer_band",
-    defaultEmphasis: "quiet",
-  },
-  {
-    type: "caption",
-    label: "Caption",
-    detail: "Client-facing one-liner",
-    defaultSlot: "title_meta",
-    defaultEmphasis: "standard",
-  },
-];
+    {
+      type: "quote_total",
+      label: "Quote total",
+      detail: "Incl. GST hero from the live BOM",
+      defaultSlot: "side_stack",
+      defaultEmphasis: "hero",
+    },
+    {
+      type: "savings_ledger",
+      label: "Savings ledger",
+      detail: "Wrights Terrace value reallocation",
+      defaultSlot: "side_stack",
+      defaultEmphasis: "standard",
+    },
+    {
+      type: "zone_summary",
+      label: "Zone summary",
+      detail: "Live irrigation zones or placement massing",
+      defaultSlot: "side_stack",
+      defaultEmphasis: "quiet",
+    },
+    {
+      type: "material_swatches",
+      label: "Material swatches",
+      detail: "Chips from placed materials on the drawing",
+      defaultSlot: "footer_band",
+      defaultEmphasis: "quiet",
+    },
+    {
+      type: "caption",
+      label: "Caption",
+      detail: "Client-facing one-liner",
+      defaultSlot: "title_meta",
+      defaultEmphasis: "standard",
+    },
+  ];
 
 export const SHEET_THEME_SWATCHES: Array<{
   id: PresentationTheme;
   label: string;
 }> = [
-  { id: "parchment", label: "Parchment" },
-  { id: "ink", label: "Ink" },
-  /** Dark-concept chalk on `--surface-deep`. */
-  { id: "deep", label: "Deep" },
-];
+    { id: "parchment", label: "Parchment" },
+    { id: "ink", label: "Ink" },
+    /** Dark-concept chalk on `--surface-deep`. */
+    { id: "deep", label: "Deep" },
+  ];
 
 export const SHEET_PEN_SWATCHES: Array<{
   id: PresentationPen;
   label: string;
   detail: string;
 }> = [
-  {
-    id: "technical",
-    label: "Technical",
-    detail: "Thin mono CAD line — working drawing",
-  },
-  {
-    id: "hand_drawn",
-    label: "Freehand",
-    detail: "Role-tuned Rough pencil — boundary firm, canopy soft",
-  },
-  {
-    id: "grey_wash",
-    label: "Grey wash",
-    detail: "Tonal fills + crisp dark outline — illustrator register",
-  },
-  {
-    id: "watercolour",
-    label: "Watercolour",
-    detail: "Soft wash + paper tooth on regions — concept brochure",
-  },
-];
+    {
+      id: "technical",
+      label: "Technical",
+      detail: "Thin mono CAD line — working drawing",
+    },
+    {
+      id: "hand_drawn",
+      label: "Freehand",
+      detail: "Role-tuned Rough pencil — boundary firm, canopy soft",
+    },
+    {
+      id: "grey_wash",
+      label: "Grey wash",
+      detail: "Tonal fills + crisp dark outline — illustrator register",
+    },
+    {
+      id: "watercolour",
+      label: "Watercolour",
+      detail: "Soft wash + paper tooth on regions — concept brochure",
+    },
+  ];
 
 /** Atmosphere Palette — pigments, not hex. */
 export const ATMOSPHERE_PIGMENT_SWATCHES: Array<{
@@ -115,14 +115,14 @@ export const ATMOSPHERE_PIGMENT_SWATCHES: Array<{
   /** CSS colour for chip preview / selective accent. */
   hex: string;
 }> = [
-  { id: "graphite", label: "Graphite", hex: "#5c5a56" },
-  { id: "cherry", label: "Cherry", hex: "#b85c6a" },
-  { id: "pale_blue", label: "Pale blue", hex: "#7a9bb8" },
-  { id: "terre_verte", label: "Terre verte", hex: "#6b7f5a" },
-  { id: "yellow_ochre", label: "Ochre", hex: "#c4a35a" },
-  { id: "burnt_umber", label: "Umber", hex: "#8b5e3c" },
-  { id: "sage", label: "Sage", hex: "#7d8f74" },
-];
+    { id: "graphite", label: "Graphite", hex: "#5c5a56" },
+    { id: "cherry", label: "Cherry", hex: "#b85c6a" },
+    { id: "pale_blue", label: "Pale blue", hex: "#7a9bb8" },
+    { id: "terre_verte", label: "Terre verte", hex: "#6b7f5a" },
+    { id: "yellow_ochre", label: "Ochre", hex: "#c4a35a" },
+    { id: "burnt_umber", label: "Umber", hex: "#8b5e3c" },
+    { id: "sage", label: "Sage", hex: "#7d8f74" },
+  ];
 
 export type SheetTemplate = {
   id: string;
@@ -175,7 +175,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
         widget("caption", "title_meta", 0, {
           accent: "ink",
           emphasis: "standard",
-        }, "NO.1 · Concept presentation — Curtis & Co"),
+        }, "NO.1 · Concept presentation"),
         widget("quote_total", "side_stack", 0, {
           accent: "ink",
           emphasis: "hero",
@@ -229,7 +229,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
         widget("caption", "title_meta", 0, {
           accent: "ink",
           emphasis: "standard",
-        }, "NO.1 · Dark concept — Curtis & Co"),
+        }, "NO.1 · Dark concept"),
         widget("quote_total", "side_stack", 0, {
           accent: "gold",
           emphasis: "hero",

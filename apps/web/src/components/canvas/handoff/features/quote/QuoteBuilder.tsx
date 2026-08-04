@@ -59,7 +59,6 @@ export function QuoteBuilder({
     addCustomLine,
     setMarginPct,
   } = useQuoteDoc({ projectId, estimate });
-  const [showPlan, setShowPlan] = useState(false);
   const [compact, setCompact] = useState(false);
 
   useEffect(() => {
@@ -82,18 +81,27 @@ export function QuoteBuilder({
     >
       <header className={css.top}>
         <div className={css.topMain}>
-          <button type="button" className={css.back} onClick={onBack}>
-            Back
+          <button
+            type="button"
+            className={css.closeBtn}
+            aria-label="Close quote panel"
+            data-testid="quote-close"
+            onClick={onBack}
+          >
+            ×
           </button>
           <h1 className={css.h1}>Quote</h1>
-          <p className={css.addr}>{address}</p>
+          <span className={css.countBadge}>
+            {costedLineCount} line{costedLineCount === 1 ? "" : "s"}
+          </span>
+          {!compact ? <p className={css.addr}>{address}</p> : null}
         </div>
         <div className={css.actions}>
           <button type="button" onClick={addCustomLine}>
             Add line
           </button>
           <button type="button" onClick={resetAll}>
-            Reset to estimate
+            Reset
           </button>
           {onFit ? (
             <button type="button" className={css.overflowAction} onClick={onFit}>
@@ -114,11 +122,6 @@ export function QuoteBuilder({
               Share
             </button>
           ) : null}
-          {compact ? (
-            <button type="button" onClick={() => setShowPlan((v) => !v)}>
-              {showPlan ? "Hide plan" : "View plan"}
-            </button>
-          ) : null}
         </div>
         {dirty || saving ? (
           <p className={css.savePulse} data-testid="quote-save-status">
@@ -136,32 +139,12 @@ export function QuoteBuilder({
       ) : null}
 
       <div className={css.body}>
-        {!compact ? (
-          <aside className={css.planPane} aria-label="Plan summary">
-            <p className={css.planCue}>Live plan totals feed this quote</p>
-            <p className={css.planCount}>
-              <span className={css.planCountValue}>{costedLineCount}</span>
-              <span className={css.planCountUnit}>
-                costed line{costedLineCount === 1 ? "" : "s"}
-              </span>
-            </p>
-            {estimateSettling ? (
-              <div className={css.skeleton} aria-hidden />
-            ) : null}
-          </aside>
-        ) : null}
-        {compact && showPlan ? (
-          <aside className={css.planPane} aria-label="Plan summary">
-            <p className={css.planCue}>Live plan totals feed this quote</p>
-          </aside>
-        ) : null}
-
         <main className={css.quotePane}>
           {tier1 && !estimateSettling ? (
             <Tier1SavingsLedger
               savings={TIER1_WRIGHTS_SAVINGS}
               variant="compact"
-              heading="Tier-1 value reallocation"
+              heading="Value reallocation"
             />
           ) : null}
           {!loaded || estimateSettling ? (
@@ -176,66 +159,66 @@ export function QuoteBuilder({
               ) : null}
             </div>
           ) : (
-            resolved.sections.map((section) => (
-              <details
-                key={section.id}
-                className={css.section}
-                open={!compact || section.id === resolved.sections[0]?.id}
-              >
-                <summary>
-                  <span className={css.sectionName}>{section.label}</span>
-                  <span className={css.sectionMeta}>
-                    {section.lines.length} line{section.lines.length === 1 ? "" : "s"} · {aud.format(section.subtotal)}
-                  </span>
-                </summary>
-                <div className={css.table} role="grid" aria-label={section.label}>
-                  {!compact ? (
-                    <div className={`${css.row} ${css.headerRow}`} role="row">
-                      <div className={`${css.lineCell} ${css.lineCellLabel}`} role="columnheader">
-                        Label
-                      </div>
-                      <div className={`${css.lineCell} ${css.lineCellUnit}`} role="columnheader">
-                        Unit
-                      </div>
-                      <div className={`${css.lineCell} ${css.lineCellQty}`} role="columnheader">
-                        Qty
-                      </div>
-                      <div className={`${css.lineCell} ${css.lineCellRate}`} role="columnheader">
-                        Rate
-                      </div>
-                      <div className={`${css.lineCell} ${css.lineCellTotal}`} role="columnheader">
-                        Total
-                      </div>
-                      <div className={`${css.lineCell} ${css.lineCellActions}`} role="columnheader">
-                        Actions
-                      </div>
-                    </div>
-                  ) : null}
-                  <div role="rowgroup">
-                    {section.lines.map((line) => (
-                      <QuoteLineRow
-                        key={line.id}
-                        line={line}
-                        compact={compact}
-                        onQty={(qty) => setOverride(line.line_id, { qty })}
-                        onRate={(rate) => setOverride(line.line_id, { rate })}
-                        onNotes={(notes) => setOverride(line.line_id, { notes })}
-                        onExclude={(excluded) =>
-                          setOverride(line.line_id, { excluded })
-                        }
-                        onProvisional={(is_provisional) =>
-                          setOverride(line.line_id, { is_provisional })
-                        }
-                        onAlternateSelect={(alternate_selected) =>
-                          setOverride(line.line_id, { alternate_selected })
-                        }
-                        onReset={() => resetLine(line.line_id)}
-                      />
-                    ))}
+            <>
+              {!compact ? (
+                <div className={css.globalHeader} role="row" data-testid="quote-global-header">
+                  <div className={`${css.lineCell} ${css.lineCellLabel}`} role="columnheader">
+                    Item
                   </div>
+                  <div className={`${css.lineCell} ${css.lineCellUnit}`} role="columnheader">
+                    Unit
+                  </div>
+                  <div className={`${css.lineCell} ${css.lineCellQty}`} role="columnheader">
+                    Qty
+                  </div>
+                  <div className={`${css.lineCell} ${css.lineCellRate}`} role="columnheader">
+                    Rate
+                  </div>
+                  <div className={`${css.lineCell} ${css.lineCellTotal}`} role="columnheader">
+                    Total
+                  </div>
+                  <div className={`${css.lineCell} ${css.lineCellActions}`} role="columnheader" />
                 </div>
-              </details>
-            ))
+              ) : null}
+              {resolved.sections.map((section) => (
+                <details
+                  key={section.id}
+                  className={css.section}
+                  open={!compact || section.id === resolved.sections[0]?.id}
+                >
+                  <summary>
+                    <span className={css.sectionName}>{section.label}</span>
+                    <span className={css.sectionMeta}>
+                      {section.lines.length} line{section.lines.length === 1 ? "" : "s"} · {aud.format(section.subtotal)}
+                    </span>
+                  </summary>
+                  <div className={css.table} role="grid" aria-label={section.label}>
+                    <div role="rowgroup">
+                      {section.lines.map((line) => (
+                        <QuoteLineRow
+                          key={line.id}
+                          line={line}
+                          compact={compact}
+                          onQty={(qty) => setOverride(line.line_id, { qty })}
+                          onRate={(rate) => setOverride(line.line_id, { rate })}
+                          onNotes={(notes) => setOverride(line.line_id, { notes })}
+                          onExclude={(excluded) =>
+                            setOverride(line.line_id, { excluded })
+                          }
+                          onProvisional={(is_provisional) =>
+                            setOverride(line.line_id, { is_provisional })
+                          }
+                          onAlternateSelect={(alternate_selected) =>
+                            setOverride(line.line_id, { alternate_selected })
+                          }
+                          onReset={() => resetLine(line.line_id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </details>
+              ))}
+            </>
           )}
 
           <p className={css.honesty}>

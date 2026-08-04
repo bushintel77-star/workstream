@@ -36,7 +36,7 @@ export function ClientShareDecision({ token, initial }: Props) {
       <div className={css.card} data-testid="share-superseded">
         <h2 className={css.title}>A newer version exists</h2>
         <p className={css.lead}>
-          A newer version of this design exists — contact Curtis &amp; Co.
+          A newer version of this design exists — contact the studio.
         </p>
       </div>
     );
@@ -70,7 +70,7 @@ export function ClientShareDecision({ token, initial }: Props) {
         </p>
         {payload.status === "accepted" ? (
           <p className={css.lead} data-testid="share-accept-followup">
-            Curtis &amp; Co will be in touch.
+            We will be in touch.
           </p>
         ) : null}
       </div>
@@ -81,7 +81,7 @@ export function ClientShareDecision({ token, initial }: Props) {
     <div className={css.root} data-testid="share-client-page">
       <header className={css.masthead}>
         <div>
-          <p className={css.brand}>Curtis &amp; Co</p>
+          <p className={css.brand}>Workstream</p>
           <p className={css.brandSub}>Landscape design</p>
         </div>
         <p className={css.rev}>Rev {payload.revision}</p>

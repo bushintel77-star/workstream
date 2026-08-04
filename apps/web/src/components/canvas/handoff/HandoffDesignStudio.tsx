@@ -124,6 +124,7 @@ import { SunCastOverlay } from "./features/shade/SunCastOverlay";
 import { SunMarkerPip } from "./features/shade/SunMarkerPip";
 import { ClimateBedWash } from "./features/shade/ClimateBedWash";
 import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
+import { BuildableAreaOverlay } from "./features/buildableArea/BuildableAreaOverlay";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { ImageLayerSlot } from "./features/sketch/ImageLayerSlot";
 import { ImageLayerPanel } from "./features/sketch/ImageLayerPanel";
@@ -2051,8 +2052,7 @@ export function HandoffDesignStudio({
    */
   const instrumentsVisible =
     instrumentsSummoned ||
-    (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock") ||
-    ui.mode === "quote";
+    (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock");
   const compactSafeBottom = sheetSafeBottomPx({
     sheetOpen: studioSheetVisible,
     fabOn: chrome.primaryFab,
@@ -3201,7 +3201,7 @@ export function HandoffDesignStudio({
         left={
           <>
             <div className={css.brandBlock}>
-              <p className={css.brandName}>Curtis &amp; Co</p>
+              <p className={css.brandName}>Workstream</p>
               <p className={css.address}>{displayAddress}</p>
             </div>
 
@@ -3710,24 +3710,30 @@ export function HandoffDesignStudio({
         ) : null}
 
         {ui.mode === "quote" ? (
-          <QuoteSurface
-            address={projectAddress}
-            estimate={estimate}
-            onShare={(payload) => {
-              setShareQuoteFreeze(payload);
-              setSharePopupOpen(true);
-            }}
-            onBack={() => requestMode("cad")}
-            onOpenLibrary={() => {
-              requestMode("cad");
-              studio.setUi({
-                leftAssetPanel: "expanded",
-                addOpen: true,
-                cmdOpen: true,
-              });
-            }}
-            onFit={() => setFitSheetOn(!ui.frameOn)}
-          />
+          <CameraChrome
+            place={{ kind: "dock" }}
+            zIndex={52}
+            testId="quote-surface-chrome"
+          >
+            <QuoteSurface
+              address={projectAddress}
+              estimate={estimate}
+              onShare={(payload) => {
+                setShareQuoteFreeze(payload);
+                setSharePopupOpen(true);
+              }}
+              onBack={() => requestMode("cad")}
+              onOpenLibrary={() => {
+                requestMode("cad");
+                studio.setUi({
+                  leftAssetPanel: "expanded",
+                  addOpen: true,
+                  cmdOpen: true,
+                });
+              }}
+              onFit={() => setFitSheetOn(!ui.frameOn)}
+            />
+          </CameraChrome>
         ) : null}
 
         {ui.mode === "share" ? (
@@ -3961,6 +3967,17 @@ export function HandoffDesignStudio({
                   active={!ui.frameOn && !ui.focusOn}
                   overlays={studio.keylessOverlays}
                   boundary={studio.boundary}
+                />
+                <BuildableAreaOverlay
+                  active={ui.buildableAreaOn && !ui.frameOn && !ui.focusOn}
+                  boundary={studio.boundary}
+                  building={studio.building}
+                  easements={studio.easements ?? []}
+                  bydaAssets={studio.bydaAssets ?? []}
+                  keylessOverlays={studio.keylessOverlays ?? []}
+                  items={studio.items}
+                  setbackM={compliance.setbackM}
+                  boardWidthM={scaleM}
                 />
                 <SunCastOverlay
                   active={

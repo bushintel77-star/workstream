@@ -1,13 +1,13 @@
 import Link from "next/link";
 import s from "../../../styles/app.module.css";
 
-export const metadata = { title: "Privacy · Curtis & Co" };
+export const metadata = { title: "Privacy · Workstream" };
 
 const CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_PRIVACY_EMAIL ?? "privacy@curtisandco.com.au";
 const ABN = process.env.NEXT_PUBLIC_ABN ?? "—";
 const TRADING_NAME =
-  process.env.NEXT_PUBLIC_TRADING_NAME ?? "Curtis & Co Pty Ltd";
+  process.env.NEXT_PUBLIC_TRADING_NAME ?? "Workstream Pty Ltd";
 const LAST_UPDATED = "19 May 2026";
 
 export default function PrivacyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       <header className={s.masthead}>
         <div className={s.brand}>
           Privacy
-          <span className={s.brandSub}>Curtis &amp; Co · Workstream</span>
+          <span className={s.brandSub}>Workstream</span>
         </div>
         <Link href="/" className={s.crumb}>← Home</Link>
       </header>
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Payment information</strong> — handled exclusively by Stripe
-          when you accept a quote. Curtis &amp; Co never sees or stores your
+          when you accept a quote. We never see or store your
           card details.
         </li>
         <li>

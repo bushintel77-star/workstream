@@ -568,7 +568,7 @@ export function FitSheetOverlay({
         >
           <div className={css.panelHead} data-testid="fit-sheet-title-block">
             <div style={{ minWidth: 0 }}>
-              <p className={css.brand}>Curtis &amp; Co</p>
+              <p className={css.brand}>Workstream</p>
               <p className={css.addr}>{titleBlock?.address ?? address}</p>
               {presentationPack ? (
                 <SheetWidgetStack

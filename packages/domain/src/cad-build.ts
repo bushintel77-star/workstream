@@ -23,32 +23,32 @@ const LAYER_SKU_HINTS: Array<{
   unit: CadQuantityRow["unit"] | "*";
   skus: string[];
 }> = [
-  {
-    match: /HARD|PAV|PATIO|PATH/i,
-    unit: "m2",
-    skus: ["PAV-BLU", "PAVE", "HARDSCAPE", "PAVING"],
-  },
-  {
-    match: /LAWN|TURF/i,
-    unit: "m2",
-    skus: ["LAWN", "TURF"],
-  },
-  {
-    match: /PLANT|TREE|SKETCH/i,
-    unit: "ea",
-    skus: ["PLANT", "TREE", "SHRUB"],
-  },
-  {
-    match: /IRRIG|WATER/i,
-    unit: "lm",
-    skus: ["IRRIG", "DRIP", "PIPE"],
-  },
-  {
-    match: /STRUCT|RETAIN|FENCE|WALL/i,
-    unit: "*",
-    skus: ["RETAIN", "FENCE", "WALL", "STRUCT"],
-  },
-];
+    {
+      match: /HARD|PAV|PATIO|PATH/i,
+      unit: "m2",
+      skus: ["PAV-BLU", "PAVE", "HARDSCAPE", "PAVING"],
+    },
+    {
+      match: /LAWN|TURF/i,
+      unit: "m2",
+      skus: ["LAWN", "TURF"],
+    },
+    {
+      match: /PLANT|TREE|SKETCH/i,
+      unit: "ea",
+      skus: ["PLANT", "TREE", "SHRUB"],
+    },
+    {
+      match: /IRRIG|WATER/i,
+      unit: "lm",
+      skus: ["IRRIG", "DRIP", "PIPE"],
+    },
+    {
+      match: /STRUCT|RETAIN|FENCE|WALL/i,
+      unit: "*",
+      skus: ["RETAIN", "FENCE", "WALL", "STRUCT"],
+    },
+  ];
 
 function findRate(
   rates: RateCard[],
@@ -194,7 +194,7 @@ export function alignCadBuildToTier1Workbook(
   if (Math.abs(delta) >= 0.01) {
     line_items.push({
       sku: "ALW-TIER1-ALIGN",
-      label: "Tier-1 proposal workbook alignment (36 Wrights Tce)",
+      label: "Proposal workbook alignment (36 Wrights Tce)",
       unit: "allowance",
       qty: 1,
       rate: delta,

@@ -20,7 +20,7 @@ export function AppNav({ summary, brandSub = false }: Props) {
           <span className={nav.brandText}>
             Workstream
             {brandSub ? (
-              <span className={nav.brandSub}>Curtis &amp; Co</span>
+              <span className={nav.brandSub}>Workstream</span>
             ) : null}
           </span>
         </Link>

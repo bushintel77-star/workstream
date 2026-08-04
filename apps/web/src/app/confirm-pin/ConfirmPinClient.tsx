@@ -237,7 +237,7 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
 
       <header className={cp.chrome} data-camera-chrome>
         <div className={cp.chromeBrand}>
-          <span className={cp.brandMark}>Curtis &amp; Co</span>
+          <span className={cp.brandMark}>Workstream</span>
           <span className={cp.status}>{status}</span>
         </div>
         <p className={cp.address}>{address}</p>

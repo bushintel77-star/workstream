@@ -5,9 +5,9 @@ import { KitButton } from "../components/ui/kit";
 import css from "./landing.module.css";
 
 export const metadata: Metadata = {
-  title: "Workstream — Curtis & Co",
+  title: "Workstream",
   description:
-    "Landscape design studio for Curtis & Co. Survey, sketch, CAD, and quote on one board.",
+    "Landscape design studio. Survey, sketch, CAD, and quote on one board.",
   robots: { index: true, follow: true },
 };
 
@@ -25,7 +25,7 @@ export default function LandingPage() {
         <p className={css.brand}>Workstream</p>
         <h1 className={css.headline}>Garden design that starts on the site.</h1>
         <p className={css.lede}>
-          Survey, sketch, CAD, and quote — one board for Curtis &amp; Co.
+          Survey, sketch, CAD, and quote — one board.
         </p>
         <div className={css.cta}>
           <KitButton
@@ -44,7 +44,7 @@ export default function LandingPage() {
       </div>
 
       <footer className={css.foot}>
-        <span>Curtis &amp; Co · Melbourne</span>
+        <span>Workstream · Melbourne</span>
         <Link href="/legal/privacy">Privacy</Link>
       </footer>
     </main>

@@ -263,6 +263,8 @@ type Ui = {
   /** Survey services frozen after Quote / Share entry. */
   servicesLocked: boolean;
   setbackOn: boolean;
+  /** Buildable area wash — site minus every exclusion, with attribution. */
+  buildableAreaOn: boolean;
   /** Indicative sun-hours mesh on the % board. */
   shadeOn: boolean;
   growth: GrowthStage;
@@ -645,6 +647,7 @@ function initialState(opts: {
       layerOpacity: { ...DEFAULT_LAYER_OPACITY },
       isolatedLayer: null,
       setbackOn: false,
+      buildableAreaOn: false,
       shadeOn: false,
       growth: "mature",
       sunMin: 12 * 60 + 26,
