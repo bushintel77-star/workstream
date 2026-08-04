@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildQuote } from "./output-generators";
+import {
+  buildEstablishmentCalendarDoc,
+  buildHandoverPackDoc,
+  buildQuote,
+} from "./output-generators";
 import type { GeneratorArgs } from "./output-generators";
 
 const baseArgs = (): GeneratorArgs => ({
@@ -119,5 +123,106 @@ describe("buildQuote", () => {
       .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z/g, "TIMESTAMP")
       .replace(/Project [a-f0-9-]+/gi, "Project ID");
     expect(normalised).toMatchSnapshot();
+  });
+});
+
+const argsWithPlantings = (): GeneratorArgs => ({
+  ...baseArgs(),
+  design: {
+    ...baseArgs().design!,
+    proposal: {
+      ...baseArgs().design!.proposal,
+      zones: [
+        {
+          id: "z1",
+          name: "Rear garden",
+          treatment: "Formal planting",
+          plantings: [
+            {
+              species: "Quercus robur",
+              common_name: "English oak",
+              count: 2,
+              form: "200L bag",
+            },
+            {
+              species: "Lomandra longifolia",
+              common_name: "Mat rush",
+              count: 20,
+              form: "140mm pot",
+            },
+          ],
+          hardscape: [
+            { item: "Bluestone paving", qty: 40, unit: "m2", sku: "PAV-BLUE" },
+          ],
+          lighting: [
+            { fixture: "Garden spike light", count: 6, sku: "SL-01" },
+          ],
+          irrigation: [
+            { item: "Drip line 16mm", qty: 50, unit: "m", sku: "DRIP-16" },
+          ],
+        },
+      ],
+    },
+  },
+});
+
+describe("buildEstablishmentCalendarDoc", () => {
+  it("generates calendar with planting schedule and care notes", () => {
+    const md = buildEstablishmentCalendarDoc(argsWithPlantings());
+    expect(md).toContain("# Establishment calendar");
+    expect(md).toContain("Quercus robur");
+    expect(md).toContain("Lomandra longifolia");
+    expect(md).toContain("Plant window");
+    expect(md).toContain("Summer 1");
+    expect(md).toContain("Care notes");
+    expect(md).toContain("Stake");
+  });
+
+  it("includes general guidance", () => {
+    const md = buildEstablishmentCalendarDoc(argsWithPlantings());
+    expect(md).toContain("## General guidance");
+    expect(md).toContain("mulch");
+  });
+
+  it("handles empty plantings", () => {
+    const md = buildEstablishmentCalendarDoc(baseArgs());
+    expect(md).toContain("No plantings recorded");
+  });
+});
+
+describe("buildHandoverPackDoc", () => {
+  it("generates handover pack with all sections", () => {
+    const md = buildHandoverPackDoc(argsWithPlantings());
+    expect(md).toContain("# Maintenance & handover pack");
+    expect(md).toContain("## Plant schedule");
+    expect(md).toContain("## Irrigation");
+    expect(md).toContain("## Lighting circuits");
+    expect(md).toContain("## Materials");
+    expect(md).toContain("## Warranty periods");
+  });
+
+  it("includes plant care notes", () => {
+    const md = buildHandoverPackDoc(argsWithPlantings());
+    expect(md).toContain("Quercus robur");
+    expect(md).toContain("Watering");
+    expect(md).toContain("Pruning");
+  });
+
+  it("includes irrigation items", () => {
+    const md = buildHandoverPackDoc(argsWithPlantings());
+    expect(md).toContain("Drip line 16mm");
+    expect(md).toContain("DRIP-16");
+  });
+
+  it("includes lighting fixtures", () => {
+    const md = buildHandoverPackDoc(argsWithPlantings());
+    expect(md).toContain("Garden spike light");
+    expect(md).toContain("SL-01");
+  });
+
+  it("includes warranty periods", () => {
+    const md = buildHandoverPackDoc(argsWithPlantings());
+    expect(md).toContain("Hardscape construction");
+    expect(md).toContain("Plant material");
   });
 });

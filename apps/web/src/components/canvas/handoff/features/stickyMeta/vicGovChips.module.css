@@ -55,6 +55,20 @@
     inset 0 1px 0 color-mix(in srgb, var(--ws-frame-ink) 18%, transparent),
     inset 0 -1px 0 color-mix(in srgb, var(--hc-ink) 40%, transparent);
   animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: opacity var(--ws-dur-1, 120ms) var(--ws-ease-out, ease);
+}
+
+/*
+ * Idle recession — match the tool dock / top bar / header rail behaviour so the
+ * only always-on frost over the plan fades when the operator is looking at the
+ * drawing, not the chrome. Hover or any input restores full opacity.
+ */
+:global([data-idle="true"]) .row {
+  opacity: 0.5;
+}
+
+:global([data-idle="true"]) .row:hover {
+  opacity: 1;
 }
 
 /*

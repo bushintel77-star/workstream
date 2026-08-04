@@ -23,6 +23,8 @@ const KIND_TITLE: Record<OutputKind, string> = {
   permit_stonnington_stormwater: "Stonnington Stormwater Permit",
   permit_yarra_heritage: "Yarra Heritage Application",
   brochure: "Brochure",
+  establishment_calendar: "Establishment Calendar",
+  handover_pack: "Maintenance & Handover Pack",
 };
 
 const KIND_CLASS: Record<OutputKind, string> = {
@@ -34,6 +36,8 @@ const KIND_CLASS: Record<OutputKind, string> = {
   permit_stonnington_stormwater: "tone-permit",
   permit_yarra_heritage: "tone-permit",
   brochure: "tone-client",
+  establishment_calendar: "tone-client",
+  handover_pack: "tone-client",
 };
 
 function escapeHtml(s: string): string {

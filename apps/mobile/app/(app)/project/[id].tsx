@@ -1329,6 +1329,8 @@ const OUTPUT_ORDER: OutputKind[] = [
   "daily_site_report",
   "permit_stonnington_stormwater",
   "permit_yarra_heritage",
+  "establishment_calendar",
+  "handover_pack",
 ];
 const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
   task_list: { title: "Task list", sub: "Site sequence for the crew" },
@@ -1348,6 +1350,14 @@ const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
     sub: "Pre-filled draft application",
   },
   brochure: { title: "Brochure", sub: "Client concept brochure with aerial hero" },
+  establishment_calendar: {
+    title: "Establishment calendar",
+    sub: "Planting windows + watering schedule",
+  },
+  handover_pack: {
+    title: "Handover pack",
+    sub: "Care notes, irrigation, lighting, warranty",
+  },
 };
 
 function OutputsSection({

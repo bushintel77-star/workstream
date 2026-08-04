@@ -13,6 +13,8 @@ import type {
 } from "@workstream/contracts";
 import {
   buildEnvelopeBrief,
+  buildEstablishmentCalendar,
+  buildHandoverPack,
   formatSitePlanQuoteSection,
   isTier1WrightsTerrace,
   TIER1_WRIGHTS_SAVINGS,
@@ -512,6 +514,176 @@ export function buildYarraHeritagePermit(args: Args): string {
   return lines.join("\n");
 }
 
+export function buildEstablishmentCalendarDoc(args: Args): string {
+  const design = requireDesign(args, "establishment_calendar");
+  const lines: string[] = [];
+  lines.push(`# Establishment calendar — ${args.project.address}`);
+  lines.push("");
+  lines.push(`Generated ${new Date().toISOString().slice(0, 10)}.`);
+  lines.push("");
+
+  const allPlantings = zones(design).flatMap((z) =>
+    z.plantings.map((p) => ({
+      species: p.species,
+      common_name: p.common_name,
+      count: p.count,
+      form: p.form,
+    })),
+  );
+
+  const calendar = buildEstablishmentCalendar(allPlantings);
+
+  lines.push("## General guidance");
+  lines.push(calendar.guidance);
+  lines.push("");
+
+  if (calendar.entries.length === 0) {
+    lines.push("_No plantings recorded._");
+    return lines.join("\n");
+  }
+
+  lines.push("## Planting schedule");
+  lines.push("");
+  lines.push("| # | Species | Common | Qty | Category | Plant window | Summer 1 | Summer 2 | Weeks |");
+  lines.push("|---|---------|--------|-----|----------|-------------|----------|----------|-------|");
+  calendar.entries.forEach((e, i) => {
+    lines.push(
+      `| ${i + 1} | ${e.species_name} | ${e.common_name} | ${e.count} | ${e.category} | ${e.plant_window} | ${e.summer1_watering_per_week}/wk | ${e.summer2_watering_per_week}/wk | ${e.establishment_weeks} |`,
+    );
+  });
+  lines.push("");
+
+  lines.push("## Care notes");
+  lines.push("");
+  for (const e of calendar.entries) {
+    lines.push(`### ${e.species_name} (${e.common_name}) — ${e.count} x ${e.category}`);
+    lines.push(`- **Plant window:** ${e.plant_window}`);
+    lines.push(`- **Summer 1 watering:** ${e.summer1_watering_per_week}x per week`);
+    lines.push(`- **Summer 2 watering:** ${e.summer2_watering_per_week}x per week`);
+    lines.push(`- **Establishment period:** ${e.establishment_weeks} weeks`);
+    lines.push(`- **Notes:** ${e.notes}`);
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+export function buildHandoverPackDoc(args: Args): string {
+  const design = requireDesign(args, "handover_pack");
+  const lines: string[] = [];
+  lines.push(`# Maintenance & handover pack — ${args.project.address}`);
+  lines.push("");
+  lines.push(`Generated ${new Date().toISOString().slice(0, 10)}.`);
+  lines.push("");
+
+  const allPlantings = zones(design).flatMap((z) =>
+    z.plantings.map((p) => ({
+      species: p.species,
+      common_name: p.common_name,
+      count: p.count,
+      form: p.form,
+    })),
+  );
+  const allLighting = zones(design).flatMap((z) => z.lighting);
+  const allIrrigation = zones(design).flatMap((z) => z.irrigation);
+  const allHardscape = zones(design).flatMap((z) => z.hardscape);
+
+  const pack = buildHandoverPack({
+    plantings: allPlantings,
+    lighting: allLighting.map((l) => ({
+      fixture: l.fixture,
+      count: l.count,
+      sku: l.sku,
+    })),
+    irrigation: allIrrigation.map((ir) => ({
+      item: ir.item,
+      qty: ir.qty,
+      unit: ir.unit,
+      sku: ir.sku,
+    })),
+    materials: allHardscape.map((h) => ({
+      item: h.item,
+      sku: h.sku,
+      supplier: "TBA",
+    })),
+  });
+
+  // Plant schedule with care notes
+  lines.push("## Plant schedule");
+  lines.push("");
+  if (pack.plants.length === 0) {
+    lines.push("_No plantings recorded._");
+  } else {
+    lines.push("| # | Species | Common | Qty | Watering | Pruning | Care notes |");
+    lines.push("|---|---------|--------|-----|----------|---------|------------|");
+    pack.plants.forEach((p, i) => {
+      lines.push(
+        `| ${i + 1} | ${p.species} | ${p.common_name} | ${p.count} | ${p.watering} | ${p.pruning} | ${p.care_notes} |`,
+      );
+    });
+  }
+  lines.push("");
+
+  // Irrigation zones
+  lines.push("## Irrigation");
+  lines.push("");
+  if (pack.irrigation.length === 0) {
+    lines.push("_No irrigation items recorded._");
+  } else {
+    lines.push("| # | Item | Qty | Unit | SKU |");
+    lines.push("|---|------|-----|------|-----|");
+    pack.irrigation.forEach((ir, i) => {
+      lines.push(`| ${i + 1} | ${ir.item} | ${ir.qty} | ${ir.unit} | ${ir.sku ?? "—"} |`);
+    });
+  }
+  lines.push("");
+
+  // Lighting circuits
+  lines.push("## Lighting circuits");
+  lines.push("");
+  if (pack.lighting.length === 0) {
+    lines.push("_No lighting circuits recorded._");
+  } else {
+    lines.push("| # | Fixture | Qty | SKU |");
+    lines.push("|---|---------|-----|-----|");
+    pack.lighting.forEach((l, i) => {
+      lines.push(`| ${i + 1} | ${l.fixture} | ${l.count} | ${l.sku ?? "—"} |`);
+    });
+  }
+  lines.push("");
+
+  // Materials
+  lines.push("## Materials");
+  lines.push("");
+  if (pack.materials.length === 0) {
+    lines.push("_No materials recorded._");
+  } else {
+    lines.push("| # | Item | SKU | Supplier |");
+    lines.push("|---|------|-----|----------|");
+    pack.materials.forEach((m, i) => {
+      lines.push(`| ${i + 1} | ${m.item} | ${m.sku ?? "—"} | ${m.supplier} |`);
+    });
+  }
+  lines.push("");
+
+  // Warranty
+  lines.push("## Warranty periods");
+  lines.push("");
+  if (pack.warranty_periods.length === 0) {
+    lines.push("_No warranty periods recorded._");
+  } else {
+    lines.push("| Item | Period |");
+    lines.push("|------|--------|");
+    for (const w of pack.warranty_periods) {
+      lines.push(`| ${w.item} | ${w.period} |`);
+    }
+  }
+  lines.push("");
+
+  lines.push("> Generated from Workstream design data. Verify all care notes with your nursery before issuing to the client.");
+  return lines.join("\n");
+}
+
 export function generateForKind(kind: OutputKind, args: Args): string {
   switch (kind) {
     case "task_list":
@@ -530,5 +702,9 @@ export function generateForKind(kind: OutputKind, args: Args): string {
       return buildYarraHeritagePermit(args);
     case "brochure":
       return buildBrochure(args);
+    case "establishment_calendar":
+      return buildEstablishmentCalendarDoc(args);
+    case "handover_pack":
+      return buildHandoverPackDoc(args);
   }
 }
