@@ -91,6 +91,9 @@ export function itemsToPlacements(items: StudioItem[]): CatalogPlacement[] {
       rotation_deg: ((i.rot % 360) + 360) % 360,
       scale: Math.max(0.05, i.scale),
       label: placementLabel(i),
+      // Persist tree provenance so it survives a reload (not just the ghost
+      // id prefix, which is stripped on accept).
+      ...(i.source ? { source: i.source } : {}),
     }));
 }
 
@@ -121,6 +124,9 @@ export function placementsToItems(
       symbolId: p.symbol_id,
       ...(dbhM != null ? { dbhM } : {}),
       ...(heightM != null ? { heightM } : {}),
+      // Hydrate tree provenance — a Vicmap tree or detected canopy keeps its
+      // source after a reload so the plan/elevation/share still distinguish it.
+      ...(p.source ? { source: p.source } : {}),
     };
   });
 }

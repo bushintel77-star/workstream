@@ -190,6 +190,60 @@ describe("site_frame bridge", () => {
     expect(back[0]!.dbhM).toBeCloseTo(0.62, 5);
   });
 
+  /*
+   * Provenance survives acceptance — a Vicmap urban tree and a vision-detected
+   * canopy keep their `source` after a reload so the plan, elevation, fit sheet
+   * and client share still distinguish them. Before Part 2 the source lived
+   * only in the ghost id prefix (`ai-canopy-7`), which is stripped on accept.
+   */
+  it("round-trips tree source (vicmap_tree / canopy) through placements", () => {
+    const items: StudioItem[] = [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        t: "exist",
+        x: 40,
+        y: 50,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        source: "vicmap_tree",
+      },
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        t: "exist",
+        x: 60,
+        y: 50,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        source: "canopy",
+      },
+    ];
+    const placements = itemsToPlacements(items);
+    expect(placements[0]!.source).toBe("vicmap_tree");
+    expect(placements[1]!.source).toBe("canopy");
+
+    const back = placementsToItems(placements);
+    expect(back[0]!.source).toBe("vicmap_tree");
+    expect(back[1]!.source).toBe("canopy");
+  });
+
+  it("omits source on the wire when the item has no provenance (operator)", () => {
+    const placements = itemsToPlacements([
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        t: "paving",
+        x: 20,
+        y: 20,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+      },
+    ]);
+    expect(placements[0]).not.toHaveProperty("source");
+    expect(placementsToItems(placements)[0]!.source).toBeUndefined();
+  });
+
   it("re-derives mature height from the persisted symbol", () => {
     const items: StudioItem[] = [
       {

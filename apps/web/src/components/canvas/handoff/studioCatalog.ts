@@ -50,6 +50,13 @@ export type StudioItem = {
   edgeType?: HardscapeEdgeType;
   /** Corner fillet lock (m) — residential detailing. */
   pathFilletM?: number;
+  /**
+   * Existing-tree provenance — first-class field (not just the id prefix) so
+   * the plan, elevation, fit sheet and client share can distinguish a Vicmap
+   * urban tree from a vision-detected canopy after acceptance. See
+   * `treeSourceLabel` / `isIndicativeCanopySource` (domain).
+   */
+  source?: "vicmap_tree" | "canopy" | "operator";
 };
 
 export type DrainageRun = {

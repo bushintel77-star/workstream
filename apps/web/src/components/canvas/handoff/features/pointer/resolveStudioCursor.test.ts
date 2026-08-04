@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { resolveStudioCursor } from "./resolveStudioCursor";
 
 describe("resolveStudioCursor", () => {
-  it("uses the garden mark when idle in Select", () => {
+  it("shows the grab hand when idle in Select (drag-on-empty pans)", () => {
     const cur = resolveStudioCursor({
       markId: "spade",
       tool: "select",
       mode: "cad",
       locked: false,
     });
-    expect(cur).toContain("data:image/svg+xml");
+    expect(cur).toBe("grab");
   });
 
   it("switches function by tool environment", () => {

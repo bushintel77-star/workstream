@@ -44,6 +44,14 @@ export function mergeUrbanTreeGhosts(args: {
     why: p.reason,
     conf: p.confidence,
     stale: false,
+    // First-class provenance — survives acceptance so every render surface
+    // (plan, elevation, fit sheet, share) reads "Vicmap urban tree" not a
+    // bare "Existing tree".
+    source: "vicmap_tree" as const,
+    // Persist the Vicmap LiDAR height so the elevation board draws the same
+    // metres the plan tooltip reads. resolveItemHeightM treats an authored
+    // exist-tree height as actual (not placement-scaled).
+    ...(p.heightM != null && p.heightM > 0 ? { heightM: p.heightM } : {}),
   }));
   return {
     snap: {

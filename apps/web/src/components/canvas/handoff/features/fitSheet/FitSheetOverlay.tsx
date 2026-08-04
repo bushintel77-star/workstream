@@ -677,6 +677,7 @@ export function FitSheetOverlay({
                       family={bar.family}
                       box={bar.box}
                       ghost={bar.item.ghost}
+                      indicative={bar.indicative}
                     />
                   ))}
                 </svg>

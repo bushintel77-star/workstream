@@ -1,5 +1,6 @@
 import {
   elevationLookProjector,
+  isIndicativeCanopySource,
   type ElevationLook,
   type GardenAssetFamily,
 } from "@workstream/domain";
@@ -59,6 +60,8 @@ export type ElevationBar = {
   /** Silhouette box, ground-anchored and centred on the projected position. */
   box: ElevBox;
   selected: boolean;
+  /** Vision-detected canopy — render with indicative line-weight. */
+  indicative: boolean;
 };
 
 /**
@@ -193,6 +196,7 @@ export function elevationBars(
       tag: elevationTagFor(item),
       box: { x: centre - w / 2, y: opts.plot.groundY - h, w, h },
       selected: !item.ghost && item.id === opts.selectedId,
+      indicative: isIndicativeCanopySource(item.source),
     };
   });
 }

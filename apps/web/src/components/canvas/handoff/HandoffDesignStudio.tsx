@@ -870,6 +870,43 @@ export function HandoffDesignStudio({
   }, [ui.mode]);
 
   /**
+   * Start a viewport pan drag from a pointer origin. Shared by the
+   * capture-phase gesture listener (Space / middle-drag / pan-tool / tilt)
+   * and by CadPlanBoard's Select-on-empty path (drag the empty board to pan;
+   * Alt/Option+drag still marquee-selects). Reads `panBaseRef` live so the
+   * drag survives re-renders without tearing down mid-gesture.
+   */
+  const startBoardPan = useCallback(
+    (origin: { clientX: number; clientY: number; pointerId: number }) => {
+      const el = boardRef.current;
+      if (!el) return;
+      const startX = origin.clientX;
+      const startY = origin.clientY;
+      const base = panBaseRef.current;
+      setIsPanningActive(true);
+      el.setPointerCapture?.(origin.pointerId);
+      const onMove = (ev: PointerEvent) => {
+        markInteracting();
+        const next = nextPanOffset(
+          base,
+          ev.clientX - startX,
+          ev.clientY - startY,
+        );
+        studio.setUi({ panX: next.x, panY: next.y });
+      };
+      const onUp = () => {
+        setIsPanningActive(false);
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        el.releasePointerCapture?.(origin.pointerId);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp, { once: true });
+    },
+    [studio, markInteracting],
+  );
+
+  /**
    * Drag-to-pan — middle-mouse or Space+drag translates the viewport
    * without touching selection. Intercepted at capture phase, ahead of
    * CadPlanBoard's marquee-select pointerdown, so the two never collide.
@@ -902,31 +939,14 @@ export function HandoffDesignStudio({
       }
       e.preventDefault();
       e.stopPropagation();
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const base = panBaseRef.current;
-      setIsPanningActive(true);
-      el.setPointerCapture?.(e.pointerId);
-      const onMove = (ev: PointerEvent) => {
-        markInteracting();
-        const next = nextPanOffset(base, ev.clientX - startX, ev.clientY - startY);
-        studio.setUi({ panX: next.x, panY: next.y });
-      };
-      const onUp = () => {
-        setIsPanningActive(false);
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        el.releasePointerCapture?.(e.pointerId);
-      };
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp, { once: true });
+      startBoardPan(e);
     };
     el.addEventListener("pointerdown", onPointerDownCapture, { capture: true });
     return () =>
       el.removeEventListener("pointerdown", onPointerDownCapture, {
         capture: true,
       });
-  }, [studio, markInteracting, ui.mode]);
+  }, [studio, markInteracting, ui.mode, startBoardPan]);
 
   /**
    * Two-finger pan + pinch zoom (phone / tablet). Desktop Space/wheel paths
@@ -4098,6 +4118,7 @@ export function HandoffDesignStudio({
                   eyedropArmed={eyedropArmed}
                   onEyedrop={pickStyle}
                   onBoardCursor={setBoardCursor}
+                  onPanDrag={startBoardPan}
                   onInertToolClick={onInertToolClick}
                   fidelity={fidelity}
                   onInteract={() => {

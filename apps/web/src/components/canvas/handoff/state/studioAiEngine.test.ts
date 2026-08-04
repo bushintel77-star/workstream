@@ -263,4 +263,67 @@ describe("studioAiEngine", () => {
     expect(items.length).toBeGreaterThan(0);
     expect(items.every((i) => i.ghost)).toBe(true);
   });
+
+  it("stamps the canopy source on every proposal so it survives acceptance", () => {
+    const blank = {
+      width: 8,
+      height: 8,
+      data: new Uint8ClampedArray(8 * 8 * 4),
+    };
+    const { items } = proposeFromCanopyImage(blank, 0, [
+      {
+        id: "vision-1",
+        symbol_id: "canopy",
+        x_pct: 33,
+        y_pct: 44,
+        confidence: 0.91,
+        reason: "Vision canopy cluster",
+      },
+    ]);
+    expect(items.every((i) => i.source === "canopy")).toBe(true);
+  });
+
+  it("folds the aerial capture date into the canopy reason", () => {
+    const blank = {
+      width: 8,
+      height: 8,
+      data: new Uint8ClampedArray(8 * 8 * 4),
+    };
+    const { items } = proposeFromCanopyImage(
+      blank,
+      0,
+      [
+        {
+          id: "vision-1",
+          symbol_id: "canopy",
+          x_pct: 33,
+          y_pct: 44,
+          confidence: 0.91,
+          reason: "Detected canopy from aerial imagery",
+        },
+      ],
+      "2023",
+    );
+    expect(items[0]!.why).toMatch(/2023 imagery/);
+    expect(items[0]!.why).not.toMatch(/aerial imagery$/);
+  });
+
+  it("leaves the reason undated when no capture date is known", () => {
+    const blank = {
+      width: 8,
+      height: 8,
+      data: new Uint8ClampedArray(8 * 8 * 4),
+    };
+    const { items } = proposeFromCanopyImage(blank, 0, [
+      {
+        id: "vision-1",
+        symbol_id: "canopy",
+        x_pct: 33,
+        y_pct: 44,
+        confidence: 0.91,
+        reason: "Detected canopy from aerial imagery",
+      },
+    ]);
+    expect(items[0]!.why).toBe("Detected canopy from aerial imagery");
+  });
 });

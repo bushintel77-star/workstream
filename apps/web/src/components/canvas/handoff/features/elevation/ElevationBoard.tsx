@@ -252,6 +252,7 @@ export function ElevationBoard({
                   night={dark}
                   ghost={bar.item.ghost}
                   selected={bar.selected}
+                  indicative={bar.indicative}
                   textured
                 />
               </g>

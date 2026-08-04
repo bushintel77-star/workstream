@@ -73,8 +73,11 @@ import { RenderDefs } from "../render/RenderDefs";
 import type { BoardShadowCast } from "@workstream/domain";
 import {
   buildGrowthTemporalRings,
+  canDeriveTpz,
   decorativeGlyphShadowOffset,
   growthStageSpreadFactor,
+  isIndicativeCanopySource,
+  treeSourceLabel,
 } from "@workstream/domain";
 import {
   DWELLING_HATCH_IDS,
@@ -135,6 +138,19 @@ function isRegionItem(it: StudioItem): boolean {
   return (
     REGION_TYPES.has(it.t) && (it.outlinePct?.length ?? 0) >= 3
   );
+}
+
+/**
+ * Plan tooltip for a placed item — the authored `why` (Vicmap reason, canopy
+ * detection reason) OR the catalog name, with the first-class tree-source
+ * label appended so an accepted Vicmap / detected-canopy tree carries its
+ * provenance on hover. A bare "Existing tree" must never replace the honest
+ * "Indicative canopy · detected from aerial imagery · …" wording.
+ */
+function planItemTitle(it: StudioItem, name: string): string {
+  const base = it.why ?? name;
+  const src = treeSourceLabel(it.source);
+  return src ? `${base} · ${src}` : base;
 }
 
 type NodeMenu = {
@@ -295,6 +311,12 @@ type Props = {
   /** Hover affordance on handles / insert nodes — drives context cursor. */
   onBoardCursor?: (mode: "default" | "move" | "add" | "paint") => void;
   /**
+   * Start a viewport pan drag from a pointer origin. Select+drag on empty
+   * board pans (Alt/Option+drag still marquee-selects); Space / middle-drag
+   * are intercepted earlier by the parent capture listener.
+   */
+  onPanDrag?: (origin: { clientX: number; clientY: number; pointerId: number }) => void;
+  /**
    * Click landed on an object while a drawing tool was armed (object stayed
    * inert, rule 2) — parent may show the one-time "drop the tool" hint.
    */
@@ -416,6 +438,7 @@ export function CadPlanBoard({
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
+  onPanDrag,
   onInertToolClick,
   fidelity = "draft",
   onInteract,
@@ -634,10 +657,17 @@ export function CadPlanBoard({
   /** Sketch pad strips CAD glyphs — site geometry stays as a faint guide. */
   const planItems = sketchPassthrough ? [] : items;
   const underlayOp = foundationCleanse ? 0.38 : 1;
-  const existTpz = existTrees.map((it) => {
-    const dbhM = it.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
-    return { it, dbhM, tpz: tpzRadiusPct(dbhM, scaleM) };
-  });
+  // AS 4970 TPZ needs trunk position + DBH measured on site. A vision-detected
+  // canopy has neither (only a colour centroid), so it must never produce a
+  // TPZ ring — `canDeriveTpz` is false for the canopy source. Vicmap trees
+  // carry a real trunk point and the tooltip already says "measure DBH on
+  // site for TPZ", so the indicative default-DBH ring stays with that caveat.
+  const existTpz = existTrees
+    .filter((it) => canDeriveTpz(it.source))
+    .map((it) => {
+      const dbhM = it.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
+      return { it, dbhM, tpz: tpzRadiusPct(dbhM, scaleM) };
+    });
   const vegetationVisual = resolveLayerVisual(
     "vegetation",
     layerOpacity.vegetation ?? 1,
@@ -867,19 +897,31 @@ export function CadPlanBoard({
       onPlace(p.x, p.y);
       return;
     }
-    // Marquee lives in Select and only there (rule 3) — pan is a gesture.
+    /*
+     * Select ground state. Drag on empty board pans the viewport (trackpad
+     * users have no two-finger pan — wheel is zoom-only — so drag-on-empty is
+     * their primary pan gesture alongside Space+drag). Alt/Option+drag keeps
+     * the marquee-select rubber band; Shift/meta still unions into the
+     * selection once the marquee starts. Space / middle-drag never reach here
+     * — the parent capture listener intercepts them first.
+     */
     if (tool === "select") {
-      const p = toPct(e.clientX, e.clientY);
-      dragRef.current = {
-        kind: "marquee",
-        startX: p.x,
-        startY: p.y,
-        ox: p.x,
-        oy: p.y,
-        additive: e.shiftKey || e.metaKey,
-      };
-      setMarquee({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
-      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+      if (e.altKey || !onPanDrag) {
+        const p = toPct(e.clientX, e.clientY);
+        dragRef.current = {
+          kind: "marquee",
+          startX: p.x,
+          startY: p.y,
+          ox: p.x,
+          oy: p.y,
+          additive: e.shiftKey || e.metaKey,
+        };
+        setMarquee({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+        (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+        return;
+      }
+      e.stopPropagation();
+      onPanDrag({ clientX: e.clientX, clientY: e.clientY, pointerId: e.pointerId });
     }
   };
 
@@ -2155,18 +2197,28 @@ export function CadPlanBoard({
           .filter((d) => d.visible)
           .map((d) => {
             const isBuilding = d.key.startsWith("F");
+            /*
+             * Dimension labels are viewport instruments (ruler comment +
+             * CadPlanBoard:700): they must NOT inherit `.zoomWorld`'s scale or
+             * translation. Portal through CameraChrome so the fixed-px font
+             * stays constant on screen and the projected point tracks the
+             * camera. Screen rotation = readableUpDeg(edge) + view yaw, which
+             * is what the previous in-world div rendered (parent rotate + child
+             * readable-up). `transform: "none"` on the shell lets the inner
+             * dimMark own its translate(-50%,-50%) + rotate, mirroring the
+             * cadAreaLabel pattern.
+             */
+            const screenRotDeg = readableUpDeg(d.rotDeg) + planRotateDeg;
             return (
-              <div
+              <CameraChrome
                 key={`olab${d.key}`}
-                className={`${css.dimMark} ${css.fitOutsideDim}${cadTitleMode ? ` ${css.cadDimMark}` : ""} ${css.lodFade}`}
-                style={{
-                  left: `${d.labelX}%`,
-                  top: `${d.labelY}%`,
-                  /* Readable-up: label text never renders mirrored/upside-down. */
-                  transform: `translate(-50%, -50%) rotate(${readableUpDeg(d.rotDeg)}deg)`,
-                  opacity: annotationLod.opacity.dims,
+                place={{
+                  kind: "project",
+                  pct: { x: d.labelX, y: d.labelY },
+                  cam,
+                  transform: "none",
                 }}
-                data-testid={
+                testId={
                   frameOn
                     ? "fit-outside-dim-label"
                     : cadTitleMode
@@ -2174,31 +2226,40 @@ export function CadPlanBoard({
                       : "outside-dim-label"
                 }
               >
-                <span
-                  className={
-                    frameOn
-                      ? css.fitDimLabel
-                      : cadTitleMode
-                        ? css.cadDimLabel
-                        : css.dimLabel
-                  }
-                  title={
-                    cadTitleMode
-                      ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
-                      }`
-                      : `${isBuilding ? "Dwelling envelope" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
-                  }
+                <div
+                  className={`${css.dimMark} ${css.fitOutsideDim}${cadTitleMode ? ` ${css.cadDimMark}` : ""} ${css.lodFade}`}
+                  style={{
+                    /* Readable-up: label text never renders mirrored/upside-down. */
+                    transform: `translate(-50%, -50%) rotate(${screenRotDeg}deg)`,
+                    opacity: annotationLod.opacity.dims,
+                  }}
                 >
-                  {cadTitleMode ? (
-                    <>
-                      <span className={css.cadDimKey}>{d.key}</span>
-                      <span>{formatCadMetres(d.lengthM)}</span>
-                    </>
-                  ) : (
-                    `${d.key} · ${d.lengthM.toFixed(2)} m`
-                  )}
-                </span>
-              </div>
+                  <span
+                    className={
+                      frameOn
+                        ? css.fitDimLabel
+                        : cadTitleMode
+                          ? css.cadDimLabel
+                          : css.dimLabel
+                    }
+                    title={
+                      cadTitleMode
+                        ? `${d.key} · ${formatCadMetres(d.lengthM)} · ${formatCadBearing(d.rotDeg)}${titleMeta?.parcelRef ? ` · ${titleMeta.parcelRef}` : ""
+                        }`
+                        : `${isBuilding ? "Dwelling envelope" : "Boundary"} · ${d.lengthM.toFixed(2)} m`
+                    }
+                  >
+                    {cadTitleMode ? (
+                      <>
+                        <span className={css.cadDimKey}>{d.key}</span>
+                        <span>{formatCadMetres(d.lengthM)}</span>
+                      </>
+                    ) : (
+                      `${d.key} · ${d.lengthM.toFixed(2)} m`
+                    )}
+                  </span>
+                </div>
+              </CameraChrome>
             );
           })}
 
@@ -2490,6 +2551,7 @@ export function CadPlanBoard({
                 data-selected={
                   selected || groupIds.includes(it.id) ? "true" : "false"
                 }
+                data-tree-source={it.source ?? undefined}
                 style={{
                   left: `${it.x}%`,
                   top: `${it.y}%`,
@@ -2517,7 +2579,9 @@ export function CadPlanBoard({
                         ? `1.5px solid ${CSS_TOKEN.proposedStroke}`
                         : hovered && !it.ghost
                           ? `1px solid ${mixOnCanvas(CSS_TOKEN.textPrimary, 45)}`
-                          : "none",
+                          : isIndicativeCanopySource(it.source)
+                            ? `1px dashed ${mixOnCanvas(CSS_TOKEN.textPrimary, 50)}`
+                            : "none",
                   boxShadow:
                     selected || groupIds.includes(it.id) ? undefined : "none",
                   zIndex: isCur
@@ -2530,8 +2594,8 @@ export function CadPlanBoard({
                 }}
                 title={
                   it.stale
-                    ? `${it.why ?? d.name} · nearby edit — recheck this`
-                    : (it.why ?? d.name)
+                    ? `${planItemTitle(it, d.name)} · nearby edit — recheck this`
+                    : planItemTitle(it, d.name)
                 }
                 onPointerEnter={() => onHover(it.id)}
                 onPointerLeave={() => onHover(null)}
@@ -2748,24 +2812,34 @@ export function CadPlanBoard({
 
         {speciesLabels.map((lab) => {
           const boardH = rootRef.current?.clientHeight ?? 640;
+          /*
+           * offsetYPx is a screen-px lift; convert to board-% so the projected
+           * point (via cam, which replicates zoomWorld) lands offsetYPx above
+             the anchor on screen — identical to the old in-world render, minus
+           * the zoom scale leak.
+           */
           const offsetPct =
             (lab.offsetYPx / Math.max(1, boardH * planZoom)) * 100;
           return (
-            <div
+            <CameraChrome
               key={lab.id}
-              className={`${renderCss.speciesLabel}${darkOn && !frameOn ? ` ${renderCss.speciesLabelNight}` : ""} ${css.lodFade}`}
-              data-testid="species-label"
-              data-label-id={lab.id}
-              data-plan-geometry="1"
-              style={{
-                left: `${lab.xPct}%`,
-                top: `${lab.yPct + offsetPct}%`,
-                opacity: annotationLod.opacity.species,
+              place={{
+                kind: "project",
+                pct: { x: lab.xPct, y: lab.yPct + offsetPct },
+                cam,
+                transform: "none",
               }}
-              aria-hidden
+              testId="species-label"
             >
-              {lab.text}
-            </div>
+              <div
+                className={`${renderCss.speciesLabel}${darkOn && !frameOn ? ` ${renderCss.speciesLabelNight}` : ""} ${css.lodFade}`}
+                data-label-id={lab.id}
+                style={{ opacity: annotationLod.opacity.species }}
+                aria-hidden
+              >
+                {lab.text}
+              </div>
+            </CameraChrome>
           );
         })}
 

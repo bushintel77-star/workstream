@@ -102,4 +102,46 @@ describe("layoutElevationLabels", () => {
       "Existing · 8.0 m",
     );
   });
+
+  /*
+   * Overprint regression — three tall Vicmap trees near the ceiling. Their bar
+   * tops clamp to the same top baseline, and the masks are nearly half the
+   * view wide so no sideways nudge clears a sibling. Before the fix every
+   * fallback force-placed at the same baseline, so the three "Existing · 11.6 m"
+   * callouts collapsed into one overprinted glob ("ExistiRgstlde5milting").
+   * The fallback must now stack downward until each box clears the others —
+   * same discipline as the plan-surface chip declutter (scheduleCardLayout).
+   */
+  it("does not overprint tall-tree callouts that clamp to the top", () => {
+    const text = elevationLabelText("Existing tree · DBH 450", 11.6);
+    const placed = layoutElevationLabels([
+      { id: "t1", barX: 50, barTopY: 1, text },
+      { id: "t2", barX: 50, barTopY: 1, text },
+      { id: "t3", barX: 50, barTopY: 1, text },
+    ]);
+    expect(placed).toHaveLength(3);
+    const boxes = placed.map((p) => ({
+      x: p.x - p.maskW / 2,
+      y: p.y - 2.15,
+      w: p.maskW,
+      h: p.maskH,
+    }));
+    const GAP = 0.45;
+    for (let i = 0; i < boxes.length; i += 1) {
+      for (let j = i + 1; j < boxes.length; j += 1) {
+        const a = boxes[i]!;
+        const b = boxes[j]!;
+        const overlap = !(
+          a.x + a.w + GAP <= b.x ||
+          b.x + b.w + GAP <= a.x ||
+          a.y + a.h + GAP <= b.y ||
+          b.y + b.h + GAP <= a.y
+        );
+        expect(overlap).toBe(false);
+      }
+    }
+    // Sanity: the three baselines are distinct (they stacked, not collapsed).
+    const baselines = placed.map((p) => p.y);
+    expect(new Set(baselines).size).toBe(3);
+  });
 });

@@ -2622,7 +2622,18 @@ export function useStudioState(opts: UseStudioStateOpts) {
         }
       }
       mutate((snap, idn) => {
-        const proposed = proposeFromCanopyImage(image, idn, apiClusters);
+        // Fold the aerial's capture date (when known) into the canopy reason
+        // so the plan tooltip reads "Detected from 2023 imagery" — honest
+        // dating, not an undated indicative circle.
+        const captureDate = snap.imageLayers.find(
+          (l) => l.capture_date,
+        )?.capture_date;
+        const proposed = proposeFromCanopyImage(
+          image,
+          idn,
+          apiClusters,
+          captureDate,
+        );
         return {
           snap: {
             ...snap,

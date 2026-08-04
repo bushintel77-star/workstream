@@ -127,26 +127,37 @@ export function SharePlanSvg({ canvas, address }: Props) {
           />
         );
       })}
-      {placements.map((p) => (
-        <g key={p.id} transform={`translate(${p.x_pct} ${p.y_pct})`}>
-          <circle
-            r={1.1 * (p.scale ?? 1)}
-            fill={L.proposedStroke}
-            opacity={0.85}
-          />
-          {p.label ? (
-            <text
-              y={2.4}
-              textAnchor="middle"
-              fontSize="1.6"
-              fill={L.textSecondary}
-              fontFamily="IBM Plex Mono, monospace"
-            >
-              {p.label.slice(0, 12)}
-            </text>
-          ) : null}
-        </g>
-      ))}
+      {placements.map((p) => {
+        // Existing-tree provenance survives acceptance (CatalogPlacement.source).
+        // A detected canopy reads as indicative — dashed, lighter ink — never
+        // the same weight as a surveyed or council-recorded tree. Same honesty
+        // discipline as "Vicmap building footprint" vs "operator-traced envelope".
+        const indicative = p.source === "canopy";
+        const r = 1.1 * (p.scale ?? 1);
+        return (
+          <g key={p.id} transform={`translate(${p.x_pct} ${p.y_pct})`}>
+            <circle
+              r={r}
+              fill={indicative ? "none" : L.proposedStroke}
+              stroke={indicative ? L.proposedStroke : "none"}
+              strokeWidth={indicative ? 0.35 : 0}
+              strokeDasharray={indicative ? "0.6 0.5" : undefined}
+              opacity={indicative ? 0.7 : 0.85}
+            />
+            {p.label ? (
+              <text
+                y={2.4}
+                textAnchor="middle"
+                fontSize="1.6"
+                fill={L.textSecondary}
+                fontFamily="IBM Plex Mono, monospace"
+              >
+                {p.label.slice(0, 12)}
+              </text>
+            ) : null}
+          </g>
+        );
+      })}
       {!boundaryPts && placements.length === 0 && strokes.length === 0 ? (
         <text
           x="50"

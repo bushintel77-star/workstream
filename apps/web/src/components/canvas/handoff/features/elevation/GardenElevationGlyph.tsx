@@ -51,6 +51,15 @@ const ELEV_STROKE = {
 
 const GHOST_DASH = "1.5 1.2";
 const GHOST_OPACITY = 0.55;
+/**
+ * Indicative canopy — vision-detected, not surveyed or council-recorded. Reads
+ * as a lighter, dashed silhouette per the line-weight ladder: never the same
+ * weight as a real existing tree. Distinct from a ghost (which is a pending
+ * proposal at lower opacity) — an accepted detected canopy is committed but
+ * stays visually honest about its provenance.
+ */
+const INDICATIVE_DASH = "1 0.9";
+const INDICATIVE_OPACITY = 0.7;
 
 type Props = {
   family: GardenAssetFamily | null;
@@ -61,6 +70,11 @@ type Props = {
   selected?: boolean;
   /** Paint material texture over the flat wash (needs ElevationTextureDefs). */
   textured?: boolean;
+  /**
+   * Vision-detected canopy — render with indicative line-weight (dashed /
+   * lighter ink). See `isIndicativeCanopySource` (domain).
+   */
+  indicative?: boolean;
 };
 
 function paintFor(night: boolean) {
@@ -85,12 +99,23 @@ export function GardenElevationGlyph({
   ghost = false,
   selected = false,
   textured = false,
+  indicative = false,
 }: Props) {
   const ink = paintFor(night);
   const outlineW = selected ? ELEV_STROKE.outlineSelected : ELEV_STROKE.outline;
-  const dash = ghost ? GHOST_DASH : undefined;
-  const opacity = ghost ? GHOST_OPACITY : 1;
-  const stroke = (edge: string) => (ghost ? ink.plainEdge : edge);
+  // Indicative canopy: dashed + lighter, but NOT a ghost — it is committed.
+  // Ghost dashes win only for unaccepted proposals; an accepted detected canopy
+  // keeps the indicative dash at its own (higher) opacity.
+  const dash = ghost ? GHOST_DASH : indicative ? INDICATIVE_DASH : undefined;
+  const opacity = ghost
+    ? GHOST_OPACITY
+    : indicative
+      ? INDICATIVE_OPACITY
+      : 1;
+  // Indicative ink uses the lighter plain edge, like a ghost, so the silhouette
+  // reads as a lighter presence than a surveyed tree.
+  const stroke = (edge: string) =>
+    ghost || indicative ? ink.plainEdge : edge;
 
   const shell = (children: ReactNode) => (
     <g

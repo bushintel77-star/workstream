@@ -78,6 +78,14 @@ export const CatalogPlacementSchema = z.object({
   rotation_deg: z.number().min(0).max(360).default(0),
   scale: z.number().positive().default(1),
   label: z.string().optional(),
+  /**
+   * Existing-tree provenance — survives acceptance so every render surface
+   * (plan, elevation, fit sheet, share) can distinguish a Vicmap urban tree
+   * from a vision-detected canopy. See `treeSourceLabel` (domain). Optional so
+   * pre-existing placements without a source still parse (treated as
+   * operator-placed).
+   */
+  source: z.enum(["vicmap_tree", "canopy", "operator"]).optional(),
 });
 export type CatalogPlacement = z.infer<typeof CatalogPlacementSchema>;
 
@@ -761,6 +769,14 @@ export const ImageLayerSchema = z.object({
   visible: z.boolean().default(true),
   locked: z.boolean().default(false),
   blend_mode: ImageBlendModeSchema.default("normal"),
+  /**
+   * Optional imagery capture date (ISO yyyy-mm-dd or yyyy). When present on
+   * the aerial an operator uploaded, vision-detected canopy labels read
+   * "Detected from 2023 imagery" instead of an undated circle. Populated by
+   * EXIF parsing or a future Mapbox satellite pipeline; absent for undated
+   * uploads.
+   */
+  capture_date: z.string().optional(),
 });
 export type ImageLayer = z.infer<typeof ImageLayerSchema>;
 

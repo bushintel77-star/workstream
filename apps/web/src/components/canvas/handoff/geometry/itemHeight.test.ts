@@ -102,6 +102,24 @@ describe("resolveItemHeightM", () => {
       resolveItemHeightM(item({ t: "canopy", symbolId: "curtis-tree-780", scale: 0 })),
     ).toBe(7.8);
   });
+
+  it("does not scale an authored exist-tree height (Vicmap LiDAR / arborist)", () => {
+    // The placement scale is a canopy-glyph hint for the plan, not a maturity
+    // factor. A 10.4 m LiDAR tree must stand 10.4 m on the elevation regardless
+    // of the canopy radius that sized its plan circle.
+    expect(
+      resolveItemHeightM(item({ t: "exist", heightM: 10.4, scale: 1.45 })),
+    ).toBe(10.4);
+    expect(
+      resolveItemHeightM(item({ t: "exist", heightM: 10.4, scale: 0.55 })),
+    ).toBe(10.4);
+  });
+
+  it("keeps placement-scale behaviour for a default-height exist tree", () => {
+    // No authored heightM -> falls back to BY_TYPE.exist.heightM (8 m) and the
+    // operator's placement scale still applies.
+    expect(resolveItemHeightM(item({ t: "exist", scale: 0.5 }))).toBe(4);
+  });
 });
 
 describe("resolveItemHeightGrownM", () => {
@@ -198,5 +216,30 @@ describe("elevationTagFor", () => {
     expect(elevationTagFor(item({ t: "hedge", symbolId: "not-a-symbol" }))).toBe(
       "Hedge",
     );
+  });
+
+  /*
+   * Provenance on the elevation — a Vicmap or detected-canopy tree names its
+   * source instead of the bare "Existing tree · DBH 450", so the elevation
+   * callout cannot silently drop the provenance the plan tooltip carries.
+   * The short tag joins the height as "Indicative canopy · 8.0 m".
+   */
+  it("names the Vicmap source on the elevation callout", () => {
+    expect(elevationTagFor(item({ t: "exist", source: "vicmap_tree" }))).toBe(
+      "Vicmap urban tree",
+    );
+  });
+
+  it("names the detected-canopy source on the elevation callout", () => {
+    expect(elevationTagFor(item({ t: "exist", source: "canopy" }))).toBe(
+      "Indicative canopy",
+    );
+  });
+
+  it("keeps the default tag for an operator-placed tree (no provenance)", () => {
+    expect(elevationTagFor(item({ t: "exist", source: "operator" }))).toBe(
+      "Existing tree · DBH 450",
+    );
+    expect(elevationTagFor(item({ t: "exist" }))).toBe("Existing tree · DBH 450");
   });
 });

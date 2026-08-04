@@ -87,10 +87,12 @@ export function mapSymbolToStudioType(symbolId: string): StudioItemType {
 }
 
 /**
- * `_source` is redundant: every call site builds `id` from
- * `aiItemPrefix(source)`, so the provenance is already encoded in the item id
- * (`ai-layout-3`, `ai-canopy-7`). Kept in the signature so the eight proposal
- * sources stay explicit at each call site.
+ * `_source` is now ALSO persisted as the first-class `source` field on
+ * existing-tree placements (canopy / vicmap_tree), so the provenance survives
+ * acceptance and every render surface can read it — not just the ghost id
+ * prefix (`ai-canopy-7`) which is stripped on accept. Other proposal sources
+ * (layout / scan / assist / sketch) are operator-class AI proposals, not tree
+ * provenance, so they do not set `source`.
  */
 export function proposalToStudioItem(
   g: GhostPlacementSuggestion,
@@ -112,6 +114,9 @@ export function proposalToStudioItem(
   // Ghosts preview at the proposed symbol's real height, so accepting one
   // does not change how tall it draws.
   const heightM = symbolId ? symbolMatureHeightM(symbolId) : null;
+  // Tree provenance — only the two existing-tree AI sources carry it.
+  const treeSource =
+    _source === "canopy" || _source === "vicmap_tree" ? _source : undefined;
   return {
     id,
     t,
@@ -125,6 +130,7 @@ export function proposalToStudioItem(
     stale: false,
     ...(symbolId ? { symbolId } : {}),
     ...(heightM != null ? { heightM } : {}),
+    ...(treeSource ? { source: treeSource } : {}),
     // source encoded in id prefix for lifecycle filters
     // e.g. ai-scan-…, ai-assist-…, ai-canopy-…
   };
@@ -544,18 +550,31 @@ export function isCanopyLikeSuggestion(symbolId: string): boolean {
 /**
  * Aerial canopy ghosts — prefer non-empty vision/API clusters (P2.1);
  * colour-heuristic fallback when the API returns nothing.
+ *
+ * `captureDate` (from the aerial ImageLayer, when known) is folded into the
+ * ghost reason so the plan tooltip reads "Detected from 2023 imagery" rather
+ * than an undated circle. Honest dating beats an undated indicative blob.
  */
 export function proposeFromCanopyImage(
   image: RgbaImageData,
   idn: number,
   apiClusters?: GhostPlacementSuggestion[],
+  captureDate?: string | null,
 ): { items: StudioItem[]; idn: number; source: "vision" | "heuristic" } {
   const fromApi = (apiClusters ?? []).filter((c) =>
     isCanopyLikeSuggestion(c.symbol_id),
   );
+  const datedReason = (base: string): string => {
+    if (!captureDate?.trim()) return base;
+    // Replace the generic "aerial imagery" phrasing with the dated form.
+    if (/aerial imagery/i.test(base)) {
+      return base.replace(/aerial imagery/i, `${captureDate.trim()} imagery`);
+    }
+    return `${base} · ${captureDate.trim()} imagery`;
+  };
   const clusters: GhostPlacementSuggestion[] =
     fromApi.length > 0
-      ? fromApi
+      ? fromApi.map((c) => ({ ...c, reason: datedReason(c.reason) }))
       : detectCanopyClustersFromImageData(image, {
         gridSize: 24,
         maxClusters: 6,
@@ -566,7 +585,7 @@ export function proposeFromCanopyImage(
         x_pct: c.x_pct,
         y_pct: c.y_pct,
         confidence: c.confidence,
-        reason: c.reason,
+        reason: datedReason(c.reason),
       }));
   const source = fromApi.length > 0 ? "vision" : "heuristic";
   let nextIdn = idn;

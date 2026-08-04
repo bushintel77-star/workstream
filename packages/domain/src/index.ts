@@ -78,6 +78,7 @@ export * from './design-schemes';
 export * from './develop-loop';
 export * from './prepare-site-pack';
 export * from './urban-tree-ghosts';
+export * from './tree-source';
 export * from './landscape-services';
 export * from './mitigation-bom';
 export * from './fit-sheet-edges';

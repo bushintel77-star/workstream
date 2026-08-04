@@ -162,24 +162,42 @@ export function layoutElevationLabels(
           maskH: MASK_H,
           leader: dy
             ? {
-                x1: cx,
-                y1: box.y + box.h,
-                x2: input.barX,
-                y2: input.barTopY,
-              }
+              x1: cx,
+              y1: box.y + box.h,
+              x2: input.barX,
+              y2: input.barTopY,
+            }
             : null,
         };
         break outer;
       }
     }
 
-    // Fallback: force-clamp even if still tight
+    // Fallback: every upward stack clamped to the same top line (tall trees
+    // near the ceiling) and the sideways nudges could not clear a neighbour
+    // because the mask is nearly half the view. The old fallback force-placed
+    // at a fixed baseline, so three "Existing · 11.6 m" callouts collapsed into
+    // one overprinted glob. Clamp first, then collide on the clamped centre and
+    // step DOWNWARD until the box clears an existing one — same discipline as
+    // the plan-surface chip declutter (scheduleCardLayout). A label may end up
+    // over its own profile; that is preferable to overprinting a sibling.
     if (!best) {
       const cx = Math.max(
         pad + maskW / 2,
         Math.min(viewW - pad - maskW / 2, input.barX),
       );
-      const baseline = Math.max(pad + 2.15, preferredBaseline - 6);
+      let baseline = Math.max(pad + 2.15, preferredBaseline - 6);
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const probe = {
+          x: cx - maskW / 2,
+          y: baseline - 2.15,
+          w: maskW,
+          h: MASK_H,
+        };
+        if (!boxes.some((b) => boxesOverlap(probe, b))) break;
+        baseline += STACK_STEP;
+      }
+      baseline = Math.min(baseline, viewH - pad);
       best = {
         id: input.id,
         text: input.text,

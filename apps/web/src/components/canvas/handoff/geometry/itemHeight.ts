@@ -3,6 +3,7 @@ import {
   getCatalogSymbol,
   symbolMatureHeightM,
   symbolSpreadM,
+  treeSourceShortTag,
   type GardenAssetFamily,
 } from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../studioCatalog";
@@ -30,8 +31,21 @@ export function resolveItemMatureHeightM(it: StudioItem): number {
   return BY_TYPE[it.t]?.heightM ?? 0;
 }
 
-/** Drawn height (m) — mature height with placement scale applied. */
+/**
+ * Drawn height (m) — mature height with placement scale applied.
+ *
+ * Exception: an existing tree carrying an authored `heightM` (Vicmap LiDAR
+ * height, or an arborist field measurement) reports the ACTUAL height of that
+ * tree. The placement `scale` is a canopy-glyph hint for the plan circle, not a
+ * maturity factor, so applying it would shrink a 10 m LiDAR tree to whatever
+ * the canopy radius implies and make the elevation disagree with the plan
+ * tooltip. Default-height exist trees (no authored `heightM`) keep the
+ * placement-scale behaviour the operator chose.
+ */
 export function resolveItemHeightM(it: StudioItem): number {
+  if (it.t === "exist" && it.heightM != null && it.heightM > 0) {
+    return it.heightM;
+  }
   return resolveItemMatureHeightM(it) * safeScale(it);
 }
 
@@ -97,8 +111,16 @@ export function resolveItemFamily(it: StudioItem): GardenAssetFamily | null {
 /**
  * Name for the elevation callout — the placed symbol's label when we have one
  * (so the drawing says "Pleached hornbeam", not "Hedge"), else the type tag.
+ *
+ * An existing tree with a first-class `source` (Vicmap / detected canopy) names
+ * its source instead of the bare "Existing tree · DBH 450", so the elevation
+ * cannot silently drop the provenance the plan tooltip carries. The short tag
+ * ("Vicmap urban tree" / "Indicative canopy") joins the height as
+ * "Indicative canopy · 8.0 m".
  */
 export function elevationTagFor(it: StudioItem): string {
+  const srcTag = treeSourceShortTag(it.source);
+  if (srcTag) return srcTag;
   const label = it.symbolId ? getCatalogSymbol(it.symbolId)?.label : undefined;
   return label?.trim() || BY_TYPE[it.t]?.tag || it.t;
 }
