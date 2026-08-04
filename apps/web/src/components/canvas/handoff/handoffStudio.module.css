@@ -474,6 +474,37 @@
   color: var(--hc-ink);
 }
 
+/* Quote mode has no interactive plan (`planOn` excludes it) — this is a
+   read-only site backdrop so the quote still visually reads as "this site",
+   not a form floating in blank space. Never wire up pointer events here. */
+.quoteBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-geometry);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.quoteBackdropPlan {
+  width: min(100%, 640px);
+  height: min(100%, 640px);
+  opacity: 0.5;
+}
+
+.quoteBackdropBoundary {
+  fill: none;
+  stroke: var(--hc-ink-muted);
+  stroke-width: 0.4;
+}
+
+.quoteBackdropBuilding {
+  fill: color-mix(in srgb, var(--hc-ink) 8%, transparent);
+  stroke: var(--hc-ink-faint);
+  stroke-width: 0.3;
+}
+
 .brandBlock {
   flex: none;
   min-width: 0;

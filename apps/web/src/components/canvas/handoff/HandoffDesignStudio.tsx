@@ -3709,6 +3709,27 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {ui.mode === "quote" && studio.boundary.length >= 3 ? (
+          <div className={css.quoteBackdrop} aria-hidden="true">
+            <svg
+              viewBox="0 0 100 100"
+              preserveAspectRatio="xMidYMid meet"
+              className={css.quoteBackdropPlan}
+            >
+              <path
+                d={`${studio.boundary.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")} Z`}
+                className={css.quoteBackdropBoundary}
+              />
+              {studio.building.length >= 3 ? (
+                <path
+                  d={`${studio.building.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")} Z`}
+                  className={css.quoteBackdropBuilding}
+                />
+              ) : null}
+            </svg>
+          </div>
+        ) : null}
+
         {ui.mode === "quote" ? (
           <CameraChrome
             place={{ kind: "dock" }}
@@ -4308,7 +4329,10 @@ export function HandoffDesignStudio({
                       void runFormalizeToCad();
                     }}
                     onOpenImageLayers={() =>
-                      studio.setUi({ rightDataPanel: "image_layers" })
+                      studio.setUi({
+                        rightDataPanel: "image_layers",
+                        ghostReviewOpen: false,
+                      })
                     }
                   />
                 ) : null}
