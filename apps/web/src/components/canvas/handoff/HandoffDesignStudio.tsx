@@ -4519,6 +4519,22 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
+        {/*
+          * Collapsed-state marker for the right data lane. When no panel is
+          * open, this hidden span gives the STUDIO-STYLING-AND-UX §6 item-7
+          * probe a stable testid to assert against. The open panels carry
+          * their own testids (right-data-lane-checklist, -measures, -layers,
+          * …), so the probe distinguishes "collapsed" from "open"
+          * structurally — by which testid exists — rather than inferring it
+          * from geometry, which is the trap that kept item 7 unprobed.
+          *
+          * `hidden` = not rendered visually, which is exactly what collapsed
+          * means. Zero paint, zero pointer-events, zero coverage impact.
+          */}
+        {planOn && !ui.frameOn && ui.rightDataPanel == null ? (
+          <span data-testid="right-data-lane-collapsed" hidden aria-hidden />
+        ) : null}
+
         {planOn &&
           !ui.frameOn &&
           ui.mode === "survey" &&
