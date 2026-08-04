@@ -2013,6 +2013,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       mode: "cad",
       tool: "pan",
       rightDataPanel: "measures",
+      ghostReviewOpen: false,
       leftAssetPanel: null,
       utilityPanel: "bom",
       councilTip: proposal.tip,
@@ -2037,6 +2038,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     setUi({
       mode: "cad",
       rightDataPanel: "measures",
+      ghostReviewOpen: false,
       leftAssetPanel: null,
       utilityPanel: "bom",
       councilTip: [
@@ -3042,6 +3044,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
           "Dig gate — upload BYDA plans and digitise assets (Servc + BYDA kind), or stamp an explicit dig override in Services. Vicmap easements are not dig clearance.",
         coachOpen: true,
         rightDataPanel: "services",
+        ghostReviewOpen: false,
         leftAssetPanel: null,
       });
       return;
@@ -3176,6 +3179,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       setUi({
         councilTip: `${result.lines_canvas.length} council drain line${result.lines_canvas.length === 1 ? "" : "s"} digitised — confirm before dig`,
         rightDataPanel: "services",
+        ghostReviewOpen: false,
         leftAssetPanel: null,
       });
     },
@@ -3352,7 +3356,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         councilTip: tip,
         mode: "survey",
         shadeOn: true,
-        rightDataPanel: "services",
+        rightDataPanel: treeGhostCount > 0 ? null : "services",
         leftAssetPanel: null,
       });
     } catch (err) {
