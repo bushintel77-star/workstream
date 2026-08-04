@@ -1,0 +1,13 @@
+revert(quote): restore quote overlay to pre-HUD state
+
+Reverts QuoteBuilder.tsx, QuoteLineRow.tsx, and quoteBuilder.module.css
+to their state before the canvas-first HUD refactor. The quote panel
+returns to its original layout and styling.
+
+Also includes user edits to quoteBuilder.module.css (CSS variable font
+sizes, restored mono font on financial cells) and new domain modules
+(establishment-calendar, handover-pack).
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>
