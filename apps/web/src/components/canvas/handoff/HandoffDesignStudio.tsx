@@ -3034,7 +3034,7 @@ export function HandoffDesignStudio({
   const vicGovChipRow =
     planOn && !ui.focusOn && !ui.clientView && !ui.frameOn ? (
       <StickyMetaStack
-        placement="dock"
+        placement="header"
         projectId={projectId}
         laneBusy={rightLaneBusy}
         activePanel={

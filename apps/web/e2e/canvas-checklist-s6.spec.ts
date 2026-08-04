@@ -113,11 +113,21 @@ const BOARD_SPANNING_ALLOWED = new Set([
  * checklist occupied is gone with no replacement. Remaining contributors:
  * the two Vicmap clusters (4.6% combined), utility-honesty-footer (1.8%),
  * header-context-strip (1.8%), phase-manager (0.7%).
+ *
+ * 4.8 (survey/cad) / 8.6 (sketch) — the VicGov chip clusters stopped
+ * escaping their FrameDrawer. The chips used position: absolute to paint
+ * at the frame corners regardless of whether the drawer was open, and
+ * wrapped themselves in a nested CameraChrome that portalled out of the
+ * drawer entirely. Switching to placement="header" (no CameraChrome) and
+ * overriding the CSS to flow inside the drawer removed the 4.57% the two
+ * clusters occupied. The drawer handles overflow with its own scrollbar.
+ * Remaining survey contributors: utility-honesty-footer (1.8%),
+ * header-context-strip (1.8%), phase-manager (0.7%).
  */
 const COVERAGE_BASELINE: Record<string, number> = {
-  survey: 9.4,
-  sketch: 12.7,
-  cad: 9.4,
+  survey: 4.8,
+  sketch: 8.6,
+  cad: 4.8,
   elevation: 0.1,
 };
 

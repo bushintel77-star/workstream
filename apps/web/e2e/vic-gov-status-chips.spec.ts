@@ -24,9 +24,11 @@ test.describe("Vic-gov status chips", () => {
     const contextCluster = page.getByTestId("vic-gov-status-chips-context");
     await expect(titleCluster).toBeVisible({ timeout: 15_000 });
     await expect(contextCluster).toBeVisible({ timeout: 15_000 });
+    // Chips now live inside a FrameDrawer (placement="header", no nested
+    // CameraChrome). The drawer's CameraChrome shell carries the testid.
     await expect(page.getByTestId("header-vic-gov-status")).toHaveCount(0);
-    await expect(page.getByTestId("vic-gov-status-chrome")).toBeVisible();
-    await expect(titleCluster).toHaveAttribute("data-placement", "dock");
+    await expect(page.getByTestId("vic-gov-status-chrome")).toHaveCount(0);
+    await expect(titleCluster).toHaveAttribute("data-placement", "header");
     await expect(titleCluster).toHaveAttribute("data-cluster", "title");
     await expect(contextCluster).toHaveAttribute("data-cluster", "context");
     await expect(page.getByTestId("sticky-meta-stack")).toHaveCount(0);
@@ -46,22 +48,23 @@ test.describe("Vic-gov status chips", () => {
   });
 
   /*
-   * The context cluster (top-right) was clipped at 1280px when the right data
-   * lane was forced open — the `.context[data-lane="busy"]` rule capped it at
-   * 360px while the content needed 386px, so data-overflow read true and the
-   * tail chip was cut mid-word with no affordance. Collapsing the lane by
-   * default (§6 item 7) released the cap to 420px; the content now fits at
-   * 388px and data-overflow reads false. This test records that the clipping
-   * is resolved as a side effect, so it cannot silently regress when the lane
-   * state or cluster cap changes.
+   * The context cluster was clipped at 1280px when the right data lane was
+   * forced open — the `.context[data-lane="busy"]` rule capped it at 360px
+   * while the content needed 386px, so data-overflow read true and the tail
+   * chip was cut mid-word. The original complaint was "6.1h · Lat…" cut off
+   * at the viewport edge.
    *
-   * Measured at 1280 (the original complaint viewport) and 1920 (wide desktop).
+   * The cluster now lives inside a FrameDrawer (320px panel). The original
+   * viewport-clipping bug is resolved because the cluster is no longer at the
+   * viewport edge — it's inside the drawer, which is translated off-screen
+   * when closed. This test verifies the cluster is a DOM descendant of the
+   * drawer, not escaped to the viewport corners via a nested CameraChrome.
    */
   for (const [label, width, height] of [
     ["1280x720", 1280, 720],
     ["1920x1080", 1920, 1080],
   ] as const) {
-    test(`context cluster does not overflow at ${label}`, async ({
+    test(`context cluster is contained in the drawer at ${label}`, async ({
       page,
       request,
     }) => {
@@ -73,8 +76,16 @@ test.describe("Vic-gov status chips", () => {
 
       const context = page.getByTestId("vic-gov-status-chips-context");
       await expect(context).toBeVisible({ timeout: 15_000 });
-      await expect(context).toHaveAttribute("data-overflow", "false");
-      await expect(context).toHaveAttribute("data-lane", "free");
+
+      // The cluster must be a descendant of the drawer, not escaped via a
+      // nested CameraChrome portal to the viewport corners.
+      const isInDrawer = await page.evaluate(() => {
+        const chip = document.querySelector('[data-testid="vic-gov-status-chips-context"]');
+        const drawer = document.querySelector('[data-testid="frame-drawer-site-meta"]');
+        if (!chip || !drawer) return false;
+        return drawer.contains(chip);
+      });
+      expect(isInDrawer, "cluster must be inside the FrameDrawer").toBe(true);
     });
   }
 });

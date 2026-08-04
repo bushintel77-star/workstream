@@ -123,6 +123,47 @@
   bottom: calc(var(--ws-safe-bottom, 360px) + 4px);
 }
 
+/*
+ * Inside a FrameDrawer — the clusters must flow inside the drawer panel, not
+ * escape to the frame corners. Before this override, the chips used
+ * position: absolute to paint at the viewport corners regardless of whether
+ * the drawer was open, which is the same class of escape bug as the ArtboardStrip
+ * fix in ebf1872. The root cause was nested CameraChrome: the chip row wrapped
+ * itself in its own CameraChrome (placement="dock"), which portals to
+ * camera-chrome-root — a sibling of .zoomWorld — escaping the FrameDrawer
+ * entirely. The fix switches to placement="header" (no CameraChrome wrap) and
+ * this override makes the clusters flow as flex items inside the drawer.
+ */
+:global([data-testid="frame-drawer-site-meta"]) .row {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  z-index: auto;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  margin-bottom: var(--s-2);
+  border-radius: var(--hc-r-control);
+  /* Seated in the drawer: same dark surface, flat — no plastic in-shadow. */
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  animation: none;
+}
+
+:global([data-testid="frame-drawer-site-meta"]) .row:last-child {
+  margin-bottom: 0;
+}
+
+/* The lane-busy cap is irrelevant inside a drawer — the drawer is the lane. */
+:global([data-testid="frame-drawer-site-meta"]) .context[data-lane="busy"] {
+  right: auto;
+  max-width: 100%;
+}
+
 .chip {
   appearance: none;
   position: relative;
