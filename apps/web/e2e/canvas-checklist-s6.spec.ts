@@ -21,10 +21,13 @@ import { createSurveyProject, handoffStudio } from "./helpers";
  * actual complaint: no single element is a bar, but a fifth of the drawing is
  * covered.
  *
- * Item 7 (Layers left + AI/measures right, both collapsed by default) is
- * deliberately NOT probed here: the right data lane has no stable testid in the
- * collapsed state, so any assertion would be inferred from geometry and would
- * pass for the wrong reason. Logged in OUTSTANDING.md rather than faked.
+ *   7.  Right data lane collapsed by default on idle survey — no panel open
+ *       until the operator asks for one.
+ *
+ * Item 7 was deliberately NOT probed until the collapsed state got a stable
+ * testid (right-data-lane-collapsed, committed separately). Before that, any
+ * assertion would have been inferred from geometry and would have passed for
+ * the wrong reason. See OUTSTANDING.md for the history.
  */
 
 type Box = { id: string; x: number; y: number; w: number; h: number };
@@ -292,6 +295,48 @@ test.describe("STUDIO-STYLING-AND-UX §6 — idle canvas", () => {
       ).toBeGreaterThan(baseline - COVERAGE_STALE_PP);
     });
   }
+
+  /**
+   * Every right-data-lane panel testid. When the lane is collapsed, none of
+   * these should be present and `right-data-lane-collapsed` should be.
+   */
+  const RIGHT_LANE_PANELS = [
+    "checklist",
+    "measures",
+    "layers",
+    "image-layers",
+    "services",
+    "environment",
+    "site",
+    "trees",
+    "sites",
+    "ghosts",
+  ] as const;
+
+  test("item 7: right data lane collapsed by default on idle survey", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createSurveyProject(request);
+    await page.goto(`/projects/${projectId}?mode=survey`);
+    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    // No pointer input — "idle" means nothing has been touched yet.
+    await page.waitForTimeout(4_000);
+
+    // The collapsed marker must be present — the lane is not open.
+    await expect(
+      page.getByTestId("right-data-lane-collapsed"),
+      "right data lane must be collapsed on idle survey load",
+    ).toHaveCount(1);
+
+    // No panel testid may be present — nothing is open.
+    for (const panel of RIGHT_LANE_PANELS) {
+      await expect(
+        page.getByTestId(`right-data-lane-${panel}`),
+        `right-data-lane-${panel} must not be open on idle survey load`,
+      ).toHaveCount(0);
+    }
+  });
 
   test("item 5: exactly one tool dock on the idle left edge", async ({
     page,
