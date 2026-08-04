@@ -28,6 +28,7 @@ export type PortalQuote = {
       total: number;
       is_provisional: boolean;
     }>;
+    assumptions?: string[];
   } | null;
   deposit_url: string | null;
 };

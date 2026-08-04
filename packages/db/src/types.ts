@@ -55,6 +55,8 @@ import type {
   PresentationDocument,
   CreatePresentationDocumentInput,
   UpdatePresentationDocumentInput,
+  OperatorPlantProfile,
+  OperatorPlantProfileInput,
 } from "@workstream/contracts";
 
 export type {
@@ -112,6 +114,8 @@ export type {
   PresentationDocument,
   CreatePresentationDocumentInput,
   UpdatePresentationDocumentInput,
+  OperatorPlantProfile,
+  OperatorPlantProfileInput,
 };
 
 export type TelemetryReadingInput = Omit<
@@ -436,6 +440,11 @@ export interface Store {
     projectId: string,
     docId: string,
   ): Promise<boolean>;
+  getOperatorPlantProfile(ownerId: string): Promise<OperatorPlantProfile | null>;
+  upsertOperatorPlantProfile(
+    ownerId: string,
+    input: OperatorPlantProfileInput,
+  ): Promise<OperatorPlantProfile>;
   seedDefaults(): Promise<void>;
 }
 

@@ -34,7 +34,12 @@ import {
 import type { ElevBox } from "../elevation/gardenElevationGeometry";
 import { GardenElevationGlyph } from "../elevation/GardenElevationGlyph";
 import { SEMANTIC_LIGHT, mixOnHex } from "../../../../../styles/colorTokens";
-import type { IrrigationZone, PresentationPack } from "@workstream/contracts";
+import type {
+  ConstructionTrench,
+  DesignBydaAsset,
+  IrrigationZone,
+  PresentationPack,
+} from "@workstream/contracts";
 import { widgetsInSlot } from "@workstream/domain";
 import { WeatherIcon } from "../stickyMeta/WeatherIcon";
 import type { EnvWeatherDay } from "../stickyMeta/envLiveMeta";
@@ -78,6 +83,10 @@ type Props = {
   tier1?: boolean;
   /** Live irrigation / services zones for zone_summary honesty. */
   irrigationZones?: IrrigationZone[];
+  /** Construction trenches — legend rows with dash swatches + total lm. */
+  constructionTrenches?: ConstructionTrench[];
+  /** BYDA typed assets — legend rows with colour swatches + total lm. */
+  bydaAssets?: DesignBydaAsset[];
 };
 
 type ElevProfile = {
@@ -184,6 +193,123 @@ function legendLines(
   });
 }
 
+/** Trench legend rows — per-kind dash swatch + total length + depth. */
+function trenchLegendLines(
+  trenches: ConstructionTrench[],
+  scaleM: number,
+): { name: string; v: string; swatch: string; dash: string }[] {
+  const live = trenches.filter((t) => !t.ghost && t.points.length >= 2);
+  if (live.length === 0) return [];
+  const totals = new Map<
+    ConstructionTrench["kind"],
+    { length: number; depthMm: number }
+  >();
+  for (const t of live) {
+    let lm = 0;
+    for (let i = 1; i < t.points.length; i++) {
+      const a = t.points[i - 1]!;
+      const b = t.points[i]!;
+      const dx = ((b.x_pct - a.x_pct) / 100) * scaleM;
+      const dy = ((b.y_pct - a.y_pct) / 100) * scaleM;
+      lm += Math.hypot(dx, dy);
+    }
+    const prev = totals.get(t.kind);
+    totals.set(t.kind, {
+      length: (prev?.length ?? 0) + lm,
+      depthMm: prev?.depthMm ?? (t.depth_mm ?? 300),
+    });
+  }
+  const STROKE_COLOR: Record<ConstructionTrench["kind"], string> = {
+    irrig_main: SEMANTIC_LIGHT.hedge,
+    irrig_lateral: SEMANTIC_LIGHT.plantingNewStroke,
+    lighting_conduit: SEMANTIC_LIGHT.textSecondary,
+    drainage: SEMANTIC_LIGHT.water,
+  };
+  const DASH: Record<ConstructionTrench["kind"], string> = {
+    irrig_main: "6 1.6",
+    irrig_lateral: "2.4 1.8",
+    lighting_conduit: "3.2 1.6 0.6 1.6",
+    drainage: "4.8 1.4 1.6 1.4",
+  };
+  const LABEL: Record<ConstructionTrench["kind"], string> = {
+    irrig_main: "Irrigation main",
+    irrig_lateral: "Irrigation lateral",
+    lighting_conduit: "Lighting conduit",
+    drainage: "Drainage",
+  };
+  return [...totals.entries()].map(([kind, t]) => ({
+    name: LABEL[kind],
+    v: `${fmtLm(t.length)} · ${t.depthMm} mm`,
+    swatch: STROKE_COLOR[kind],
+    dash: DASH[kind],
+  }));
+}
+
+/** BYDA legend rows — per-kind colour swatch + total length + source. */
+function bydaLegendLines(
+  assets: DesignBydaAsset[],
+  scaleM: number,
+): { name: string; v: string; swatch: string; dash: string }[] {
+  const live = assets.filter((a) => a.ring.length >= 2);
+  if (live.length === 0) return [];
+  const totals = new Map<DesignBydaAsset["kind"], { length: number; sources: Set<string> }>();
+  for (const a of live) {
+    let lm = 0;
+    for (let i = 1; i < a.ring.length; i++) {
+      const p = a.ring[i - 1]!;
+      const q = a.ring[i]!;
+      const dx = ((q.x_pct - p.x_pct) / 100) * scaleM;
+      const dy = ((q.y_pct - p.y_pct) / 100) * scaleM;
+      lm += Math.hypot(dx, dy);
+    }
+    const prev = totals.get(a.kind);
+    if (prev) {
+      prev.length += lm;
+      prev.sources.add(a.source);
+    } else {
+      totals.set(a.kind, { length: lm, sources: new Set([a.source]) });
+    }
+  }
+  const STROKE: Record<DesignBydaAsset["kind"], string> = {
+    sewer: "#7a4a2a",
+    stormwater: "#2a7ab8",
+    water: "#3a7ac0",
+    gas: "#c8a23a",
+    power: "#c83a3a",
+    nbn: "#7a3ac8",
+    other: "#8a7a6a",
+  };
+  const DASH: Record<DesignBydaAsset["kind"], string> = {
+    sewer: "5 1.5 1.5 1.5",
+    stormwater: "4 2",
+    water: "3 1.5 1 1.5",
+    gas: "2 1.2",
+    power: "6 2 1.5 2",
+    nbn: "1.5 1.5",
+    other: "3 2",
+  };
+  const LABEL: Record<DesignBydaAsset["kind"], string> = {
+    sewer: "Sewer (BYDA)",
+    stormwater: "Stormwater (BYDA)",
+    water: "Water (BYDA)",
+    gas: "Gas (BYDA)",
+    power: "Power (BYDA)",
+    nbn: "NBN / telecom (BYDA)",
+    other: "Other utility (BYDA)",
+  };
+  return [...totals.entries()].map(([kind, t]) => ({
+    name: LABEL[kind],
+    v: `${fmtLm(t.length)} · ${[...t.sources].join("/")}`,
+    swatch: STROKE[kind],
+    dash: DASH[kind],
+  }));
+}
+
+function fmtLm(n: number): string {
+  if (n < 10) return `${n.toFixed(1)} m`;
+  return `${Math.round(n)} m`;
+}
+
 /**
  * Fit sheet chrome: centred A3/A4 paper frame, site schedule panel,
  * optional stacked front/side elevation profiles.
@@ -211,6 +337,8 @@ export function FitSheetOverlay({
   quoteTotalInclGst = 0,
   tier1 = false,
   irrigationZones = [],
+  constructionTrenches = [],
+  bydaAssets = [],
 }: Props) {
   const [pulse, setPulse] = useState(false);
   const weatherCondition = resolveEnvWeatherCondition(weatherDay, 45);
@@ -280,6 +408,14 @@ export function FitSheetOverlay({
   );
 
   const legend = useMemo(() => legendLines(items, scaleM), [items, scaleM]);
+  const trenchLegend = useMemo(
+    () => trenchLegendLines(constructionTrenches, scaleM),
+    [constructionTrenches, scaleM],
+  );
+  const bydaLegend = useMemo(
+    () => bydaLegendLines(bydaAssets, scaleM),
+    [bydaAssets, scaleM],
+  );
   /* A4 portrait: title block reflows to a full-width bottom strip so the
      plot keeps the whole paper width (matches plotBoxFor reservation). */
   const a4Strip = paper === "a4";
@@ -564,6 +700,70 @@ export function FitSheetOverlay({
               <p className={css.kicker}>Landscape legend</p>
               {legend.map((r) => (
                 <div key={r.name} className={css.row}>
+                  <span>{r.name}</span>
+                  <span className={css.mono} style={{ color: SEMANTIC_LIGHT.textMuted }}>
+                    {r.v}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Trench legend — dash swatch + total lm + depth per kind. */}
+          {trenchLegend.length > 0 ? (
+            <div className={css.sectionGrow} data-testid="fit-sheet-trench-legend">
+              <p className={css.kicker}>Trenches</p>
+              {trenchLegend.map((r) => (
+                <div key={r.name} className={css.row}>
+                  <svg
+                    width={28}
+                    height={6}
+                    viewBox="0 0 28 6"
+                    aria-hidden
+                    style={{ flexShrink: 0 }}
+                  >
+                    <line
+                      x1={0}
+                      y1={3}
+                      x2={28}
+                      y2={3}
+                      stroke={r.swatch}
+                      strokeWidth={2}
+                      strokeDasharray={r.dash}
+                    />
+                  </svg>
+                  <span>{r.name}</span>
+                  <span className={css.mono} style={{ color: SEMANTIC_LIGHT.textMuted }}>
+                    {r.v}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* BYDA legend — colour swatch + total lm + source per kind. */}
+          {bydaLegend.length > 0 ? (
+            <div className={css.sectionGrow} data-testid="fit-sheet-byda-legend">
+              <p className={css.kicker}>BYDA assets</p>
+              {bydaLegend.map((r) => (
+                <div key={r.name} className={css.row}>
+                  <svg
+                    width={28}
+                    height={6}
+                    viewBox="0 0 28 6"
+                    aria-hidden
+                    style={{ flexShrink: 0 }}
+                  >
+                    <line
+                      x1={0}
+                      y1={3}
+                      x2={28}
+                      y2={3}
+                      stroke={r.swatch}
+                      strokeWidth={2.5}
+                      strokeDasharray={r.dash}
+                    />
+                  </svg>
                   <span>{r.name}</span>
                   <span className={css.mono} style={{ color: SEMANTIC_LIGHT.textMuted }}>
                     {r.v}

@@ -32,6 +32,9 @@ export type ProjectBoard = {
   easementCount: number;
   serviceCount: number;
   intel: ReturnType<typeof buildAssistSiteIntel>;
+  /** Machine-access override (mm) from site_frame, if set. */
+  machineAccessOverrideMm?: number;
+  machineAccessSource?: "computed" | "measured";
 };
 
 /**
@@ -65,9 +68,9 @@ export async function loadProjectBoard(
     | undefined;
   const seedLot = survey
     ? isSeedSurveyLot({
-        lot_area_m2: survey.lot_area_m2,
-        measurements: survey.measurements,
-      })
+      lot_area_m2: survey.lot_area_m2,
+      measurements: survey.measurements,
+    })
     : false;
   const scaleM =
     frame?.board_width_m ?? span?.width_m ?? null;
@@ -79,7 +82,7 @@ export async function loadProjectBoard(
     titleRing: titleRing && titleRing.length >= 3 ? titleRing : null,
     houseRing:
       survey?.house_polygon?.coordinates?.[0] &&
-      survey.house_polygon.coordinates[0].length >= 3
+        survey.house_polygon.coordinates[0].length >= 3
         ? (survey.house_polygon.coordinates[0] as LngLat[])
         : null,
     boundary: frame?.boundary,
@@ -127,5 +130,7 @@ export async function loadProjectBoard(
     easementCount,
     serviceCount,
     intel,
+    machineAccessOverrideMm: frame?.machine_access_override_mm,
+    machineAccessSource: frame?.machine_access_source,
   };
 }

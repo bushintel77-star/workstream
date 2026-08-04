@@ -1050,6 +1050,12 @@ export type KeylessFetchResult = {
   /** Exterior rings or contour polylines in EPSG:4326. */
   rings: Ring[];
   label: string | null;
+  /**
+   * Contour elevation per ring (metres AHD), aligned with `rings` index.
+   * Absent for non-contour kinds. Vicmap contour layers typically carry
+   * ELEVATION, ELEV, HEIGHT, or ALTI_300 as the altitude attribute.
+   */
+  elevations?: (number | null)[];
 };
 
 /**
@@ -1069,13 +1075,34 @@ export async function fetchKeylessRings(
   if (fc.features.length === 0) return null;
 
   const rings: Ring[] = [];
+  const elevations: (number | null)[] = [];
   let label: string | null = null;
   for (const f of fc.features) {
     const parts =
       kind === "contour"
         ? explodeLineRings(f.geometry)
         : explodeExteriorRings(f.geometry);
-    for (const r of parts) rings.push(r);
+    // Contour elevation — Vicmap layers use ELEVATION, ELEV, HEIGHT, ALTI_300.
+    const elev =
+      kind === "contour"
+        ? propNum(
+          f.properties,
+          "ELEVATION",
+          "ELEV",
+          "HEIGHT",
+          "ALTI_300",
+          "ALTITUDE",
+          "Z_VALUE",
+          "CONTOUR",
+          "elevation",
+          "elev",
+          "height",
+        )
+        : null;
+    for (const r of parts) {
+      rings.push(r);
+      elevations.push(elev);
+    }
     if (!label) {
       label = propStr(
         f.properties,
@@ -1091,12 +1118,15 @@ export async function fetchKeylessRings(
   }
   if (rings.length === 0) return null;
   // Cap payload — board washes do not need every contour statewide.
-  const capped = rings.slice(0, kind === "contour" ? 40 : 12);
+  const cap = kind === "contour" ? 40 : 12;
+  const capped = rings.slice(0, cap);
+  const cappedElev = elevations.slice(0, cap);
   return {
     kind,
     typeName: layer.typeName,
     rings: capped,
     label,
+    ...(kind === "contour" ? { elevations: cappedElev } : {}),
   };
 }
 

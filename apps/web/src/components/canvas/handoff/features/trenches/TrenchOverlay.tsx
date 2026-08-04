@@ -6,11 +6,14 @@ import type { PctPoint } from "../../geometry";
 import type { BoardCamera } from "../../geometry/cameraPointer";
 import { CameraChrome } from "../../CameraChrome";
 import { CSS_TOKEN } from "../../../../../styles/colorTokens";
+import { weightFor } from "../render/lineWeight";
 import css from "./trenches.module.css";
 
 type Props = {
   trenches: ConstructionTrench[];
   cam?: BoardCamera;
+  /** Board width metres (100% span) — for per-run length labels. */
+  scaleM?: number;
   onAcceptAll?: () => void;
   onRejectAll?: () => void;
 };
@@ -23,12 +26,47 @@ const STROKE: Record<ConstructionTrench["kind"], string> = {
 };
 
 /**
+ * Distinct dash signature per trench kind — readable at a glance on the plan.
+ *   irrig_main:    long dash (solid-ish, main feed)
+ *   irrig_lateral: short dash (lateral feeder)
+ *   lighting_conduit: dot-dash (conduit, electrical signature)
+ *   drainage:      long-short (ag-pipe, distinct from irrigation)
+ * Ghosts use a tight dotted pattern regardless of kind.
+ */
+const DASH_LIVE: Record<ConstructionTrench["kind"], string> = {
+  irrig_main: "3 0.8",
+  irrig_lateral: "1.2 0.9",
+  lighting_conduit: "1.6 0.8 0.3 0.8",
+  drainage: "2.4 0.7 0.8 0.7",
+};
+const DASH_GHOST = "1 1";
+
+/** Per-run polyline length in metres — board width = scaleM across 100%. */
+function trenchLengthM(
+  t: ConstructionTrench,
+  scaleM: number,
+): string {
+  if (t.points.length < 2 || scaleM <= 0) return "0";
+  let sum = 0;
+  for (let i = 1; i < t.points.length; i++) {
+    const a = t.points[i - 1]!;
+    const b = t.points[i]!;
+    const dx = ((b.x_pct - a.x_pct) / 100) * scaleM;
+    const dy = ((b.y_pct - a.y_pct) / 100) * scaleM;
+    sum += Math.hypot(dx, dy);
+  }
+  if (sum < 10) return sum.toFixed(1);
+  return Math.round(sum).toString();
+}
+
+/**
  * Construction trench / conduit runs — landscape dig paths (not survey Servc).
  * Ghost proposals show Accept / Reject until committed to DesignCanvas.
  */
 export function TrenchOverlay({
   trenches,
   cam,
+  scaleM = 110,
   onAcceptAll,
   onRejectAll,
 }: Props) {
@@ -57,16 +95,12 @@ export function TrenchOverlay({
                 points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
                 fill="none"
                 stroke={stroke}
-                strokeWidth={t.kind === "irrig_main" ? 0.55 : 0.4}
-                strokeDasharray={
-                  t.ghost
-                    ? "1.2 0.9"
-                    : t.kind === "lighting_conduit"
-                      ? "1.6 0.8"
-                      : t.kind === "drainage"
-                        ? "2.2 0.7"
-                        : undefined
+                strokeWidth={
+                  t.kind === "irrig_main"
+                    ? weightFor("trench-main")
+                    : weightFor("trench")
                 }
+                strokeDasharray={t.ghost ? DASH_GHOST : DASH_LIVE[t.kind]}
                 vectorEffect="non-scaling-stroke"
                 opacity={t.ghost ? 0.65 : 0.92}
               />
@@ -80,10 +114,11 @@ export function TrenchOverlay({
         if (!p0) return null;
         const labelPct: PctPoint = { x: p0.x_pct, y: p0.y_pct };
         const depth = t.depth_mm ?? 300;
+        const lengthM = trenchLengthM(t, scaleM);
         const labelNode = (
           <span className={css.label}>
             {t.ghost ? "Propose · " : ""}
-            {trenchKindLabel(t.kind)} · {depth} mm
+            {trenchKindLabel(t.kind)} · {lengthM} m @ {depth} mm
           </span>
         );
         return cam ? (
@@ -109,7 +144,7 @@ export function TrenchOverlay({
             }}
           >
             {t.ghost ? "Propose · " : ""}
-            {trenchKindLabel(t.kind)} · {depth} mm
+            {trenchKindLabel(t.kind)} · {lengthM} m @ {depth} mm
           </span>
         );
       })}

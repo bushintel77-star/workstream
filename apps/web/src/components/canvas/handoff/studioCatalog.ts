@@ -421,7 +421,17 @@ export type StudioTool =
   /** Residential path polyline — entered via hardscape craft bar. */
   | "path";
 
-export type SpotLevel = { x: number; y: number; z: number };
+export type SpotLevel = {
+  x: number;
+  y: number;
+  z: number;
+  /**
+   * Provenance — `authored` (operator-placed, default) or `vicmap_contour`
+   * (derived from Vicmap contour interpolation, indicative ±0.5–1 m).
+   * Surfaced on the plan so the operator sees which levels are indicative.
+   */
+  source?: "authored" | "vicmap_contour" | "survey";
+};
 export function ptsStr(pts: Pt[]) {
   return pts.map((p) => `${p.x},${p.y}`).join(" ");
 }

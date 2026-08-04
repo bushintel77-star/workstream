@@ -31,6 +31,12 @@ export type StudioPromptSite = {
   compliance_summary?: string;
   /** One-line indicative shade mesh readout. */
   shade_summary?: string;
+  /** Machine-access pinch-point width in mm (computed or measured). */
+  machine_access_mm?: number;
+  /** Access band: barrow / narrow / standard / none. */
+  machine_access_band?: string;
+  /** Whether the figure was measured on site or computed from title. */
+  machine_access_source?: "computed" | "measured";
 };
 
 /** Coarse symbol_id → compliance item type for assist grounding. */
@@ -158,6 +164,20 @@ export function buildStudioSystemPrompt(
   }
   if (site.shade_summary) {
     siteFacts.push(site.shade_summary);
+  }
+  if (site.machine_access_mm != null && Number.isFinite(site.machine_access_mm)) {
+    const widthM = (site.machine_access_mm / 1000).toFixed(2);
+    const band = site.machine_access_band ?? "unknown";
+    const source = site.machine_access_source ?? "computed";
+    const cue =
+      band === "none"
+        ? `Machine access: ${widthM} m (${band}, ${source}) — no machine can reach the rear; flag barrow-only logistics and labour surcharge.`
+        : band === "barrow"
+          ? `Machine access: ${widthM} m (${band}, ${source}) — wheelbarrow access only; no bobcat or narrow excavator. Plan labour accordingly.`
+          : band === "narrow"
+            ? `Machine access: ${widthM} m (${band}, ${source}) — narrow excavator or bobcat only; verify gate posts / meter boxes on site before quoting.`
+            : `Machine access: ${widthM} m (${band}, ${source}) — standard machine access.`;
+    siteFacts.push(cue);
   }
 
   return [

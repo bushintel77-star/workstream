@@ -2170,6 +2170,37 @@ export function useStudioState(opts: UseStudioStateOpts) {
               },
             }));
           }
+          // Contour-derived levels — merge into studio levels as fallback.
+          if (!cancelled && keyless.derived_levels && keyless.derived_levels.length > 0) {
+            const derived = keyless.derived_levels;
+            mutate((snap) => {
+              const existing = snap.levels ?? [];
+              // Only add derived levels at corners that don't already have a level nearby.
+              const newLevels = [
+                ...existing,
+                ...derived
+                  .filter(
+                    (d) =>
+                      !existing.some(
+                        (lv) =>
+                          Math.hypot(lv.x - d.x_pct, lv.y - d.y_pct) < 2,
+                      ),
+                  )
+                  .map((d) => ({
+                    x: d.x_pct,
+                    y: d.y_pct,
+                    z: d.z_m,
+                    source: "vicmap_contour" as const,
+                  })),
+              ];
+              return {
+                snap: {
+                  ...snap,
+                  levels: newLevels,
+                },
+              };
+            });
+          }
         } catch {
           /* KEYLESS optional — title still valid */
         }
@@ -3249,6 +3280,36 @@ export function useStudioState(opts: UseStudioStateOpts) {
             },
           }));
         }
+        // Contour-derived levels — merge into studio levels as fallback.
+        if (keyless.derived_levels && keyless.derived_levels.length > 0) {
+          const derived = keyless.derived_levels;
+          mutate((snap) => {
+            const existing = snap.levels ?? [];
+            const newLevels = [
+              ...existing,
+              ...derived
+                .filter(
+                  (d) =>
+                    !existing.some(
+                      (lv) =>
+                        Math.hypot(lv.x - d.x_pct, lv.y - d.y_pct) < 2,
+                    ),
+                )
+                .map((d) => ({
+                  x: d.x_pct,
+                  y: d.y_pct,
+                  z: d.z_m,
+                  source: "vicmap_contour" as const,
+                })),
+            ];
+            return {
+              snap: {
+                ...snap,
+                levels: newLevels,
+              },
+            };
+          });
+        }
       } catch {
         /* overlays optional */
       }
@@ -3608,6 +3669,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
           }
           : {}),
       },
+      machineAccessOverrideMm: state.doc.machineAccessOverrideMm,
+      machineAccessSource: state.doc.machineAccessSource,
     });
     setUi({ saveStatus: "saving", saveErrorKind: null });
     try {
@@ -3667,6 +3730,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.ui.digOverrideAt,
     state.ui.digOverrideNote,
     state.ui.sitePackChase,
+    state.doc.machineAccessOverrideMm,
+    state.doc.machineAccessSource,
   ]);
 
   /**
@@ -4166,6 +4231,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
     imageLayers: state.doc.imageLayers ?? [],
     presentationPack:
       state.doc.presentationPack ?? emptyPresentationPack(),
+    machineAccessOverrideMm: state.doc.machineAccessOverrideMm,
+    machineAccessSource: state.doc.machineAccessSource,
     canUndo: state.doc.hist.length > 0,
     canRedo: state.doc.redo.length > 0,
     undoDepth: state.doc.hist.length,

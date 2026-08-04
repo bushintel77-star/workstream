@@ -74,6 +74,7 @@ import type { BoardShadowCast } from "@workstream/domain";
 import {
   buildGrowthTemporalRings,
   canDeriveTpz,
+  computeMachineAccess,
   decorativeGlyphShadowOffset,
   growthStageSpreadFactor,
   isIndicativeCanopySource,
@@ -210,6 +211,9 @@ type Props = {
   services?: PctPoint[][];
   /** Typed BYDA assets — stroke language distinct from title easements. */
   bydaAssets?: import("@workstream/contracts").DesignBydaAsset[];
+  /** Operator-measured side-corridor width (mm) — wins over computed. */
+  machineAccessOverrideMm?: number;
+  machineAccessSource?: "computed" | "measured";
   /**
    * When true, dwelling shadow is driven by SunCastOverlay — skip the soft
    * ellipse under the footprint (glyphs still follow `sunAzimuthDeg`).
@@ -385,6 +389,8 @@ export function CadPlanBoard({
   easements = [],
   services = [],
   bydaAssets = [],
+  machineAccessOverrideMm,
+  machineAccessSource,
   timedSunCast = false,
   sunAzimuthDeg = 0,
   items,
@@ -1567,12 +1573,26 @@ export function CadPlanBoard({
               if (feat.hidden) return null;
               const style = bydaPlanLine(asset.kind, darkOn && !frameOn);
               const ring = asset.ring.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+              // Midpoint of the asset ring — where the source label sits.
+              const mid = ring.reduce(
+                (acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }),
+                { x: 0, y: 0 },
+              );
+              mid.x /= ring.length;
+              mid.y /= ring.length;
+              const sourceLabel =
+                asset.source === "byda"
+                  ? "BYDA"
+                  : asset.source === "assumed"
+                    ? "assumed"
+                    : "traced";
               return (
                 <g
                   key={id}
                   opacity={servicesVisual.opacity * feat.opacity}
                   data-testid="byda-asset-trace"
                   data-byda-kind={asset.kind}
+                  data-byda-source={asset.source}
                   data-service-id={id}
                 >
                   <polyline
@@ -1583,6 +1603,21 @@ export function CadPlanBoard({
                     strokeDasharray={style.dash}
                     vectorEffect="non-scaling-stroke"
                   />
+                  {feat.opacity > 0.5 ? (
+                    <text
+                      x={mid.x}
+                      y={mid.y}
+                      fill={style.stroke}
+                      fontSize={1.4}
+                      fontWeight={600}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      opacity={0.85}
+                      data-testid="byda-source-label"
+                    >
+                      {sourceLabel}
+                    </text>
+                  ) : null}
                 </g>
               );
             })}
@@ -2450,6 +2485,53 @@ export function CadPlanBoard({
               {councilSetbackM.toFixed(1)} m setback rule
             </p>
           </CameraChrome>
+        ) : null}
+
+        {/* Machine-access pinch-point callout — shows the narrowest side
+            corridor width so the operator can see plant feasibility at a
+            glance. Uses the override when present, otherwise the computed
+            value from boundary + building geometry. */}
+        {allowProjectedChrome &&
+          !foundationCleanse &&
+          !sketchPassthrough &&
+          boundary.length >= 3 &&
+          building.length >= 3 ? (
+          (() => {
+            const access = computeMachineAccess(
+              boundary.map((p) => ({ x: p.x, y: p.y })),
+              building.map((p) => ({ x: p.x, y: p.y })),
+              scaleM ?? 110,
+              null,
+            );
+            if (!access) return null;
+            const widthMm =
+              machineAccessOverrideMm ?? Math.round(access.widthM * 1000);
+            if (widthMm == null || !Number.isFinite(widthMm)) return null;
+            const widthM = widthMm / 1000;
+            const band = access.band;
+            const source =
+              machineAccessSource ??
+              (machineAccessOverrideMm != null ? "measured" : "computed");
+            // Place at the midpoint of the narrowest corridor edge.
+            const mid = access.pinchPoint;
+            return (
+              <CameraChrome
+                place={{
+                  kind: "project",
+                  pct: { x: mid.x, y: mid.y },
+                  cam,
+                }}
+              >
+                <p
+                  className={css.machineAccessCallout}
+                  data-testid="machine-access-callout"
+                >
+                  Access {widthM.toFixed(2)} m · {band}
+                  {source === "measured" ? " (measured)" : ""}
+                </p>
+              </CameraChrome>
+            );
+          })()
         ) : null}
 
         {!foundationCleanse

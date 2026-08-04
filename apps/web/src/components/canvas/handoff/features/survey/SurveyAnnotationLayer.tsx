@@ -214,10 +214,10 @@ export function SurveyAnnotationLayer({
           const id = isDraft ? null : corridorFeatureId(s);
           const feat = id
             ? resolveServiceFeatureVisual(
-                id,
-                serviceFeatureHidden,
-                focusedServiceIds,
-              )
+              id,
+              serviceFeatureHidden,
+              focusedServiceIds,
+            )
             : { opacity: 1, hittable: true, hidden: false };
           if (feat.hidden) return null;
           return (
@@ -244,34 +244,34 @@ export function SurveyAnnotationLayer({
 
         {showCorridors
           ? easements
-              .filter((r) => r.length >= 3)
-              .map((ring, i) => {
-                const id = easementFeatureId(ring);
-                const feat = resolveServiceFeatureVisual(
-                  id,
-                  serviceFeatureHidden,
-                  focusedServiceIds,
-                );
-                if (feat.hidden) return null;
-                return (
-                  <g
-                    key={`ease${i}`}
-                    opacity={councilOp * feat.opacity}
-                    style={{ pointerEvents: "none" }}
-                    data-testid="survey-easement-ring"
-                    data-service-id={id}
-                  >
-                    <polygon
-                      points={ring.map((p) => `${p.x},${p.y}`).join(" ")}
-                      fill="none"
-                      stroke={CSS_TOKEN.textSecondary}
-                      strokeWidth={0.3}
-                      strokeDasharray="1.2 0.8"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  </g>
-                );
-              })
+            .filter((r) => r.length >= 3)
+            .map((ring, i) => {
+              const id = easementFeatureId(ring);
+              const feat = resolveServiceFeatureVisual(
+                id,
+                serviceFeatureHidden,
+                focusedServiceIds,
+              );
+              if (feat.hidden) return null;
+              return (
+                <g
+                  key={`ease${i}`}
+                  opacity={councilOp * feat.opacity}
+                  style={{ pointerEvents: "none" }}
+                  data-testid="survey-easement-ring"
+                  data-service-id={id}
+                >
+                  <polygon
+                    points={ring.map((p) => `${p.x},${p.y}`).join(" ")}
+                    fill="none"
+                    stroke={CSS_TOKEN.textSecondary}
+                    strokeWidth={0.3}
+                    strokeDasharray="1.2 0.8"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              );
+            })
           : null}
 
         {calibPts.length > 0 ? (
@@ -311,60 +311,60 @@ export function SurveyAnnotationLayer({
           );
           if (feat.hidden) return null;
           return (
-          <g
-            key={`lv${i}`}
-            opacity={surveyOp * feat.opacity}
-            style={{ pointerEvents: "none" }}
-            data-testid="survey-spot-level"
-            data-service-id={id}
-          >
-            <path
-              d={`M ${lv.x} ${lv.y - 1.1} L ${lv.x - 0.9} ${lv.y + 0.55} L ${lv.x + 0.9} ${lv.y + 0.55} Z`}
-              fill="none"
-              stroke={ink}
-              strokeWidth={0.2}
-              vectorEffect="non-scaling-stroke"
-            />
-            <line
-              x1={lv.x}
-              y1={lv.y - 4.2}
-              x2={lv.x}
-              y2={lv.y - 1.1}
-              stroke={ink}
-              strokeWidth={0.18}
-              vectorEffect="non-scaling-stroke"
-            />
-            <circle
-              cx={lv.x}
-              cy={lv.y - 4.2}
-              r={0.42}
-              fill={ink}
-              vectorEffect="non-scaling-stroke"
-            />
-          </g>
+            <g
+              key={`lv${i}`}
+              opacity={surveyOp * feat.opacity}
+              style={{ pointerEvents: "none" }}
+              data-testid="survey-spot-level"
+              data-service-id={id}
+            >
+              <path
+                d={`M ${lv.x} ${lv.y - 1.1} L ${lv.x - 0.9} ${lv.y + 0.55} L ${lv.x + 0.9} ${lv.y + 0.55} Z`}
+                fill="none"
+                stroke={ink}
+                strokeWidth={0.2}
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1={lv.x}
+                y1={lv.y - 4.2}
+                x2={lv.x}
+                y2={lv.y - 1.1}
+                stroke={ink}
+                strokeWidth={0.18}
+                vectorEffect="non-scaling-stroke"
+              />
+              <circle
+                cx={lv.x}
+                cy={lv.y - 4.2}
+                r={0.42}
+                fill={ink}
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
           );
         })}
 
         {falls.map((fall, i) => (
-            <g
-              key={`fall${i}`}
-              opacity={surveyOp}
-              style={{ pointerEvents: "none" }}
-              data-testid="survey-fall"
-            >
-              <line
-                x1={fall.high.x}
-                y1={fall.high.y}
-                x2={fall.low.x}
-                y2={fall.low.y}
-                stroke={mixOnCanvas(CSS_TOKEN.textPrimary, darkOn ? 50 : 40)}
-                strokeWidth={0.14}
-                strokeDasharray="0.5 0.7"
-                markerEnd={fall.flat ? undefined : "url(#survey-fall-arrow)"}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          ))}
+          <g
+            key={`fall${i}`}
+            opacity={surveyOp}
+            style={{ pointerEvents: "none" }}
+            data-testid="survey-fall"
+          >
+            <line
+              x1={fall.high.x}
+              y1={fall.high.y}
+              x2={fall.low.x}
+              y2={fall.low.y}
+              stroke={mixOnCanvas(CSS_TOKEN.textPrimary, darkOn ? 50 : 40)}
+              strokeWidth={0.14}
+              strokeDasharray="0.5 0.7"
+              markerEnd={fall.flat ? undefined : "url(#survey-fall-arrow)"}
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        ))}
       </svg>
 
       {/* Fixed-px labels — never stretch with preserveAspectRatio="none" */}
@@ -402,35 +402,36 @@ export function SurveyAnnotationLayer({
 
       {rlLabelOpacity > 0.02
         ? levels.map((lv, i) => (
-            <span
-              key={`lvlab${i}`}
-              className={css.levelLabel}
-              style={{
-                left: `${lv.x}%`,
-                top: `${lv.y}%`,
-                opacity: surveyOp * rlLabelOpacity,
-                color: ink,
-              }}
-            >
-              P{i + 1} · RL {lv.z.toFixed(2)} m
-            </span>
-          ))
+          <span
+            key={`lvlab${i}`}
+            className={css.levelLabel}
+            style={{
+              left: `${lv.x}%`,
+              top: `${lv.y}%`,
+              opacity: surveyOp * rlLabelOpacity,
+              color: ink,
+            }}
+          >
+            P{i + 1} · RL {lv.z.toFixed(2)} m
+            {lv.source === "vicmap_contour" ? " · Vicmap" : ""}
+          </span>
+        ))
         : null}
 
       {rlLabelOpacity > 0.02
         ? falls.map((fall, i) => (
-            <span
-              key={`falllab${i}`}
-              className={css.fallLabel}
-              style={{
-                left: `${(fall.high.x + fall.low.x) / 2}%`,
-                top: `${(fall.high.y + fall.low.y) / 2}%`,
-                opacity: surveyOp * rlLabelOpacity,
-              }}
-            >
-              {fall.flat ? "LEVEL" : `↓ ${fall.fallPct}%`} · {fall.deltaMm} mm
-            </span>
-          ))
+          <span
+            key={`falllab${i}`}
+            className={css.fallLabel}
+            style={{
+              left: `${(fall.high.x + fall.low.x) / 2}%`,
+              top: `${(fall.high.y + fall.low.y) / 2}%`,
+              opacity: surveyOp * rlLabelOpacity,
+            }}
+          >
+            {fall.flat ? "LEVEL" : `↓ ${fall.fallPct}%`} · {fall.deltaMm} mm
+          </span>
+        ))
         : null}
 
       {tool === "service" && drawService ? (

@@ -40,7 +40,7 @@ describe("site_frame bridge", () => {
       boardWidthM: 35.7,
     });
     expect(frame.boundary[0]).toEqual({ x_pct: 10, y_pct: 10 });
-    expect(frame.levels[0]).toEqual({ x_pct: 40, y_pct: 40, z_m: 12.5 });
+    expect(frame.levels[0]).toEqual({ x_pct: 40, y_pct: 40, z_m: 12.5, source: "authored" });
     expect(frame.board_width_m).toBeCloseTo(35.7, 6);
 
     const snap = siteFrameToSnapshot(frame);

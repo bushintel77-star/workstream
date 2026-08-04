@@ -4,7 +4,11 @@ import type {
   GeoCoords,
   KeylessOverlayKind,
 } from "@workstream/contracts";
-import { geoToCanvasMetres } from "@workstream/domain";
+import {
+  deriveCornerLevels,
+  geoToCanvasMetres,
+  type ContourLine,
+} from "@workstream/domain";
 import {
   fetchKeylessRings,
   type VicmapKeylessKind,
@@ -52,12 +56,24 @@ export async function hydrateKeylessOverlays(
     label: string | null;
     fetched_at: string;
   }>;
+  /**
+   * Contour-derived spot levels at boundary corners (board % coords).
+   * Only present when contour data was fetched and interpolation succeeded.
+   * These are indicative (±0.5–1 m) and never override authored levels.
+   */
+  derived_levels: Array<{
+    x_pct: number;
+    y_pct: number;
+    z_m: number;
+    source: "vicmap_contour";
+    accuracy_m: number;
+  }>;
   source: "vicmap" | "empty";
 }> {
   const project = await store.getProject(ownerId, projectId);
   if (!project) throw new Error(`Project not found: ${projectId}`);
   if (project.lat == null || project.lng == null) {
-    return { overlays_canvas: [], source: "empty" };
+    return { overlays_canvas: [], derived_levels: [], source: "empty" };
   }
 
   const boundary = await store.getSiteBoundary(ownerId, projectId);
@@ -72,6 +88,13 @@ export async function hydrateKeylessOverlays(
     rings: Array<Array<{ x: number; y: number }>>;
     label: string | null;
     fetched_at: string;
+  }> = [];
+  let derived_levels: Array<{
+    x_pct: number;
+    y_pct: number;
+    z_m: number;
+    source: "vicmap_contour";
+    accuracy_m: number;
   }> = [];
 
   for (const kind of kinds) {
@@ -89,6 +112,84 @@ export async function hydrateKeylessOverlays(
         label: hit.label,
         fetched_at,
       });
+
+      // Contour-derived levels: interpolate at boundary corners.
+      if (kind === "contour" && hit.elevations && boundary) {
+        const contourLines: ContourLine[] = [];
+        for (let i = 0; i < hit.rings.length; i++) {
+          const elev = hit.elevations[i];
+          if (elev == null) continue;
+          const ring = openRing(hit.rings[i]!);
+          if (ring.length < 2) continue;
+          // Convert to canvas metres, then to % coords via the boundary vertices.
+          const ptsM = ring.map(([lng, lat]) =>
+            geoToCanvasMetres({ lng, lat }, origin),
+          );
+          // Convert canvas metres to % using the boundary's canvas-to-% transform.
+          // The boundary vertices are in canvas metres; we need the same transform.
+          // For now, use the boundary's vertex range as the scale reference.
+          const bVerts = boundary.vertices ?? [];
+          if (bVerts.length === 0) continue;
+          const bPtsM = bVerts.map((v) => ({
+            x: v.canvas_coords.x,
+            y: v.canvas_coords.y,
+          }));
+          const bbox = bPtsM.reduce(
+            (acc, p) => ({
+              minX: Math.min(acc.minX, p.x),
+              maxX: Math.max(acc.maxX, p.x),
+              minY: Math.min(acc.minY, p.y),
+              maxY: Math.max(acc.maxY, p.y),
+            }),
+            { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+          );
+          const w = bbox.maxX - bbox.minX;
+          const h = bbox.maxY - bbox.minY;
+          if (w <= 0 || h <= 0) continue;
+          const ptsPct = ptsM.map((p) => ({
+            x: ((p.x - bbox.minX) / w) * 100,
+            y: ((p.y - bbox.minY) / h) * 100,
+          }));
+          contourLines.push({ points: ptsPct, elevationM: elev });
+        }
+        if (contourLines.length > 0) {
+          // Boundary corners in % coords.
+          const bVerts = boundary.vertices ?? [];
+          const bPtsM = bVerts.map((v) => ({
+            x: v.canvas_coords.x,
+            y: v.canvas_coords.y,
+          }));
+          const bbox = bPtsM.reduce(
+            (acc, p) => ({
+              minX: Math.min(acc.minX, p.x),
+              maxX: Math.max(acc.maxX, p.x),
+              minY: Math.min(acc.minY, p.y),
+              maxY: Math.max(acc.maxY, p.y),
+            }),
+            { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+          );
+          const w = bbox.maxX - bbox.minX;
+          const h = bbox.maxY - bbox.minY;
+          if (w > 0 && h > 0) {
+            const cornersPct = bPtsM.map((p) => ({
+              x: ((p.x - bbox.minX) / w) * 100,
+              y: ((p.y - bbox.minY) / h) * 100,
+            }));
+            // Get existing authored levels from the design canvas.
+            const canvas = await store.getDesignCanvas(ownerId, projectId);
+            const existing = (canvas?.site_frame?.levels ?? []).map((lv) => ({
+              x_pct: lv.x_pct,
+              y_pct: lv.y_pct,
+              z_m: lv.z_m,
+            }));
+            derived_levels = deriveCornerLevels(
+              contourLines,
+              cornersPct,
+              existing,
+            );
+          }
+        }
+      }
     } catch (err) {
       console.warn(`[keyless] ${kind} hydrate failed:`, err);
     }
@@ -96,6 +197,7 @@ export async function hydrateKeylessOverlays(
 
   return {
     overlays_canvas,
+    derived_levels,
     source: overlays_canvas.length > 0 ? "vicmap" : "empty",
   };
 }

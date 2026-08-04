@@ -19,6 +19,8 @@ export type PortalCosting = {
     is_provisional: boolean;
     sku?: string;
   }>;
+  /** Non-costed written assumptions — machine access, derived-level provenance. */
+  assumptions?: string[];
 };
 
 export type PortalQuoteData = {
@@ -225,6 +227,19 @@ export function QuotePortal({
                     Subtotal {aud2(active.subtotal)} · GST {aud2(active.gst)}
                   </span>
                 </div>
+
+                {active.assumptions && active.assumptions.length > 0 ? (
+                  <div className={styles.assumptions}>
+                    <p className={styles.assumptionsKicker}>
+                      Quote assumptions
+                    </p>
+                    <ul>
+                      {active.assumptions.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
                 <table className={styles.lineItems}>
                   <thead>

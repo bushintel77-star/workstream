@@ -746,6 +746,17 @@ export type KeylessHydrateOverlayCanvas = {
 
 export type KeylessHydrateResult = {
   overlays_canvas: KeylessHydrateOverlayCanvas[];
+  /**
+   * Contour-derived spot levels at boundary corners (board % coords).
+   * Indicative (±0.5–1 m) — never override authored levels.
+   */
+  derived_levels?: Array<{
+    x_pct: number;
+    y_pct: number;
+    z_m: number;
+    source: "vicmap_contour";
+    accuracy_m: number;
+  }>;
   source: "vicmap" | "empty";
 };
 

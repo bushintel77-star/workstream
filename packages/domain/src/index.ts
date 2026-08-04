@@ -136,6 +136,8 @@ export * from './resolve-outdoor-area';
 export * from './hybrid-plane';
 export * from './sketch-to-cad';
 export * from './auto-trench';
+export * from './machine-access';
+export * from './contour-levels';
 export * from './sheet-presentation';
 export * from './board-context';
 export * from './board-context-studio';

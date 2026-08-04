@@ -7,6 +7,7 @@ import {
   buildBoardDisclaimers,
   buildBoardFindings,
   buildBoardSustainability,
+  computeMachineAccess,
   formatBoardContextForAi,
   formatBoardDisclaimersForAi,
   formatBoardFindingsForAi,
@@ -78,6 +79,36 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
         "design assist board context",
       );
 
+      // Machine access — use override if present, otherwise compute from frame.
+      const frame = board.canvas?.site_frame;
+      let machineAccessMm: number | undefined;
+      let machineAccessBand: string | undefined;
+      let machineAccessSource: "computed" | "measured" | undefined;
+      if (board.machineAccessOverrideMm != null) {
+        machineAccessMm = board.machineAccessOverrideMm;
+        machineAccessSource = board.machineAccessSource ?? "measured";
+        // Band still needs computing from the width.
+        const access = computeMachineAccess(
+          (frame?.boundary ?? []).map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          (frame?.building ?? []).map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          span?.width_m ?? 110,
+          null,
+        );
+        machineAccessBand = access?.band;
+      } else if (frame && (frame.boundary?.length ?? 0) >= 3 && (frame.building?.length ?? 0) >= 3) {
+        const access = computeMachineAccess(
+          frame.boundary!.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          frame.building!.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+          span?.width_m ?? 110,
+          null,
+        );
+        if (access) {
+          machineAccessMm = Math.round(access.widthM * 1000);
+          machineAccessBand = access.band;
+          machineAccessSource = "computed";
+        }
+      }
+
       const result = await runStudioAssist({
         project: { name: project.address, address: project.address },
         site: {
@@ -91,6 +122,9 @@ export default async function designAssistRoutes(fastify: FastifyInstance) {
           sun_hours: intel.sun_hours,
           compliance_summary: intel.compliance_summary,
           shade_summary: intel.shade_summary,
+          machine_access_mm: machineAccessMm,
+          machine_access_band: machineAccessBand,
+          machine_access_source: machineAccessSource,
         },
         canvasElementCount: canvas?.placements.length ?? 0,
         message: parsedBody.data.message,

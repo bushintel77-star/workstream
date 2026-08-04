@@ -135,8 +135,6 @@ import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { ToolDock } from "./features/toolDock/ToolDock";
 import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
 import { CanvasToolCard } from "./features/toolDock/CanvasToolCard";
-import { CanvasTopBorder } from "./features/toolDock/CanvasTopBorder";
-import { CanvasHeaderRail } from "./features/toolDock/CanvasHeaderRail";
 import { CanvasContextCard } from "./features/toolDock/CanvasContextCard";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
@@ -158,7 +156,6 @@ import {
   type PointerMarkId,
 } from "./features/pointer/pointerMarks";
 import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
-import { CanvasAutosaveChip } from "./features/save/CanvasAutosaveChip";
 import {
   HeaderViewMenu,
   type HeaderViewMenuItem,
@@ -188,6 +185,8 @@ import { BoardFindings } from "./features/horizon/BoardFindings";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
 import { PresentSurface } from "./features/present/PresentSurface";
+import { Tier1TopBar } from "./features/tier1TopBar/Tier1TopBar";
+import { UnifiedSaveStatus } from "./features/tier1TopBar/UnifiedSaveStatus";
 import { ShareRevisionPopup } from "./features/share/ShareRevisionPopup";
 import { FloraRing } from "./features/flora/FloraRing";
 import { ITEM_LAYER } from "./state/studioTypes";
@@ -469,6 +468,16 @@ export function HandoffDesignStudio({
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
   const [sharePopupOpen, setSharePopupOpen] = useState(false);
+  /*
+   * Deck save status lifted from PresentSurface — the UnifiedSaveStatus in the
+   * Tier-1 Top Bar reads this when mode === "present" so only one save
+   * indicator shows at a time (audit 2.3 / spec §4).
+   */
+  const [deckSaveStatus, setDeckSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [deckSavedTick, setDeckSavedTick] = useState(0);
+  const [deckRevision, setDeckRevision] = useState(0);
   /** Frozen QuoteDoc → ShareRevision payload (set from QuoteBuilder Share). */
   const [shareQuoteFreeze, setShareQuoteFreeze] = useState<{
     quoteLines: Array<{
@@ -3185,118 +3194,401 @@ export function HandoffDesignStudio({
         data-studio-frame-root="1"
         className={css.studioFrameRoot}
       />
-      <CanvasHeaderRail
-        clientView={ui.clientView}
+      <Tier1TopBar
         compact={chrome.compact}
+        clientView={ui.clientView}
         aria-label="Canvas header"
-      >
-        <div className={css.brandBlock}>
-          <p className={css.brandName}>Curtis &amp; Co</p>
-          <p className={css.address}>{displayAddress}</p>
-        </div>
+        left={
+          <>
+            <div className={css.brandBlock}>
+              <p className={css.brandName}>Curtis &amp; Co</p>
+              <p className={css.address}>{displayAddress}</p>
+            </div>
 
-        <nav
-          className={css.modes}
-          aria-label="Design workflow"
-          data-testid={chrome.compact ? undefined : "canvas-mode-strip"}
-        >
-          {chrome.compact ? (
-            <CompactModeNav
-              modes={MODE_TABS}
-              current={ui.mode}
-              lockReasonForMode={lockReasonForMode}
-              onRequestMode={requestMode}
-            />
-          ) : (
-            MODE_TABS.map((m) => {
-              const lockReason = lockReasonForMode(m);
-              const locked = Boolean(lockReason);
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}${locked ? ` ${css.modeBtnLocked}` : ""}`}
-                  data-testid={`canvas-mode-${m}`}
-                  disabled={locked}
-                  aria-disabled={locked}
-                  aria-current={ui.mode === m ? "page" : undefined}
-                  title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
-                  onClick={() => {
-                    if (!locked) requestMode(m);
-                  }}
-                >
-                  {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
-                  {m[0]!.toUpperCase() + m.slice(1)}
-                </button>
-              );
-            })
-          )}
-        </nav>
-
-        <div className={css.spacer} />
-
-        {/*
-          * Survey progress pill — compact "2/5" indicator in the frame band.
-          * Replaces the right-data-lane-checklist that was forced open on
-          * every survey load (7.57% of the drawing). The pill lives in the
-          * frame band, not on the canvas, so it does not paint over the plan.
-          * Click opens the full checklist in the right data lane on demand.
-          *
-          * §6 item 9 justification (ribbon budget): this is a new persistent
-          * element in the frame band, but it replaces 7.57% of idle chrome
-          * coverage — a net reduction of the drawing surface covered. The
-          * pill is the entry point for the checklist, which is no longer
-          * forced open by default (§6 item 7).
-          */}
-        {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
-          <button
-            type="button"
-            className={`${css.surveyProgress}${surveyProgress.complete ? ` ${css.surveyProgressDone}` : ""}${checklistOpen ? ` ${css.surveyProgressActive}` : ""}`}
-            data-testid="survey-progress-pill"
-            onClick={() =>
-              studio.setUi({
-                rightDataPanel: checklistOpen ? null : "checklist",
-              })
-            }
-            aria-label={`Survey checklist: ${surveyProgress.done} of ${surveyProgress.total} complete`}
-            title="Survey checklist"
-          >
-            {surveyProgress.done}/{surveyProgress.total}
-          </button>
-        ) : null}
-
-        {!ui.focusOn && !ui.clientView ? (
-          <div className={css.meta} data-testid="header-cadastral-meta">
-            {titleBlock?.metaLine ??
-              `${studio.siteMeta} · ${Number(outdoor).toFixed(0)} m²`}
-          </div>
-        ) : null}
-
-        {ui.frameOn && !ui.clientView ? (
-          <div className={css.segment} data-testid="paper-size-control">
-            {(["a3", "a4"] as const).map((p) => (
+            {/*
+              * Survey progress pill — compact "2/5" indicator in the frame band.
+              * Replaces the right-data-lane-checklist that was forced open on
+              * every survey load (7.57% of the drawing). The pill lives in the
+              * frame band, not on the canvas, so it does not paint over the plan.
+              * Click opens the full checklist in the right data lane on demand.
+              *
+              * §6 item 9 justification (ribbon budget): this is a new persistent
+              * element in the frame band, but it replaces 7.57% of idle chrome
+              * coverage — a net reduction of the drawing surface covered. The
+              * pill is the entry point for the checklist, which is no longer
+              * forced open by default (§6 item 7).
+              */}
+            {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
               <button
-                key={p}
                 type="button"
-                className={`${css.segmentBtn}${ui.paper === p ? ` ${css.segmentBtnActive}` : ""}`}
-                onClick={() => studio.setPaper(p)}
+                className={`${css.surveyProgress}${surveyProgress.complete ? ` ${css.surveyProgressDone}` : ""}${checklistOpen ? ` ${css.surveyProgressActive}` : ""}`}
+                data-testid="survey-progress-pill"
+                onClick={() =>
+                  studio.setUi({
+                    rightDataPanel: checklistOpen ? null : "checklist",
+                  })
+                }
+                aria-label={`Survey checklist: ${surveyProgress.done} of ${surveyProgress.total} complete`}
+                title="Survey checklist"
               >
-                {p.toUpperCase()}
+                {surveyProgress.done}/{surveyProgress.total}
               </button>
-            ))}
-            <button
-              type="button"
-              className={`${css.segmentBtn}${ui.sheetElevOn ? ` ${css.segmentBtnActive}` : ""}`}
-              data-testid="sheet-elevations-toggle"
-              onClick={() => studio.setUi({ sheetElevOn: !ui.sheetElevOn })}
-              title="Elevations"
-              aria-label="Elevations"
-            >
-              Elev
-            </button>
+            ) : null}
+
+            {!ui.focusOn && !ui.clientView ? (
+              <div className={css.meta} data-testid="header-cadastral-meta">
+                {titleBlock?.metaLine ??
+                  `${studio.siteMeta} · ${Number(outdoor).toFixed(0)} m²`}
+              </div>
+            ) : null}
+
+            {ui.frameOn && !ui.clientView ? (
+              <div className={css.segment} data-testid="paper-size-control">
+                {(["a3", "a4"] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`${css.segmentBtn}${ui.paper === p ? ` ${css.segmentBtnActive}` : ""}`}
+                    onClick={() => studio.setPaper(p)}
+                  >
+                    {p.toUpperCase()}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`${css.segmentBtn}${ui.sheetElevOn ? ` ${css.segmentBtnActive}` : ""}`}
+                  data-testid="sheet-elevations-toggle"
+                  onClick={() => studio.setUi({ sheetElevOn: !ui.sheetElevOn })}
+                  title="Elevations"
+                  aria-label="Elevations"
+                >
+                  Elev
+                </button>
+              </div>
+            ) : null}
+          </>
+        }
+        center={
+          <nav
+            className={css.modes}
+            aria-label="Design workflow"
+            data-testid={chrome.compact ? undefined : "canvas-mode-strip"}
+          >
+            {chrome.compact ? (
+              <CompactModeNav
+                modes={MODE_TABS}
+                current={ui.mode}
+                lockReasonForMode={lockReasonForMode}
+                onRequestMode={requestMode}
+              />
+            ) : (
+              MODE_TABS.map((m) => {
+                const lockReason = lockReasonForMode(m);
+                const locked = Boolean(lockReason);
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`${css.modeBtn}${ui.mode === m ? ` ${css.modeBtnActive}` : ""}${locked ? ` ${css.modeBtnLocked}` : ""}`}
+                    data-testid={`canvas-mode-${m}`}
+                    disabled={locked}
+                    aria-disabled={locked}
+                    aria-current={ui.mode === m ? "page" : undefined}
+                    title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
+                    onClick={() => {
+                      if (!locked) requestMode(m);
+                    }}
+                  >
+                    {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
+                    {m[0]!.toUpperCase() + m.slice(1)}
+                  </button>
+                );
+              })
+            )}
+          </nav>
+        }
+        right={
+          <div className={css.headerTools} role="toolbar" aria-label="Canvas tools">
+            {/* Group 1 — Drawing tools */}
+            <div className={css.toolGroup}>
+              <button
+                type="button"
+                className={`${css.iconBtn}${instrumentsVisible ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="pointer-settings-top"
+                aria-label={
+                  instrumentsVisible
+                    ? "Hide instruments"
+                    : "Open instruments and pointer mark"
+                }
+                title="Instruments — summon tools; parchment stays clear when idle"
+                onClick={() => {
+                  if (instrumentsVisible) {
+                    setInstrumentsSummoned(false);
+                    if (ui.tool !== "select" && ui.tool !== "pan") {
+                      studio.setTool("select");
+                    }
+                  } else {
+                    setInstrumentsSummoned(true);
+                  }
+                }}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.25" />
+                  <path
+                    d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`${css.iconBtn}${isTiltActive(ui.tiltDeg) ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="tilt-view-top"
+                aria-label={isTiltActive(ui.tiltDeg) ? "Flatten to 2D" : "Tilt to 3D"}
+                title="Tilt — 3D massing view"
+                onClick={runTiltView}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M8 2.6 14 12.4H2z"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`${css.iconBtn}${ui.foundationCleanse ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="title-boundary-top"
+                aria-label={
+                  ui.foundationCleanse ? "Close title boundary" : "Title boundary"
+                }
+                title="Title boundary"
+                onClick={() => {
+                  if (ui.foundationCleanse) studio.exitStage1Foundation();
+                  else void studio.runStage1FoundationCleanse();
+                }}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M2.5 3.5h11v9H2.5zM5 3.5v9M11 3.5v9M2.5 8h11"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`${css.iconBtn}${ui.frameOn ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="fit-sheet-top"
+                aria-label="Fit sheet"
+                aria-pressed={ui.frameOn}
+                title="Fit sheet"
+                onClick={() => setFitSheetOn(!ui.frameOn)}
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <rect
+                    x="3"
+                    y="2.5"
+                    width="10"
+                    height="11"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                  />
+                  <path d="M9.5 2.5v11" stroke="currentColor" strokeWidth="1.25" />
+                </svg>
+              </button>
+              {ui.frameOn && !ui.clientView ? (
+                <button
+                  type="button"
+                  className={`${css.iconBtn}${sheetComposeOpen ? ` ${css.iconBtnActive}` : ""}`}
+                  data-testid="sheet-compose-top"
+                  aria-label="Compose sheet"
+                  aria-pressed={sheetComposeOpen}
+                  title="Compose sheet"
+                  onClick={() => setSheetComposeOpen((v) => !v)}
+                >
+                  <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <rect
+                      x="2.5"
+                      y="2.5"
+                      width="11"
+                      height="11"
+                      rx="1.5"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                    />
+                    <path
+                      d="M6 5.5h4M6 8h4M6 10.5h2.5"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
+
+            {/* Group 2 — Output */}
+            <div className={css.toolGroup}>
+              <button
+                type="button"
+                className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
+                data-testid="client-view-top"
+                aria-label={ui.clientView ? "Exit client view" : "Client presentation"}
+                title={ui.clientView ? "Exit client presentation" : "Client presentation"}
+                onClick={() =>
+                  studio.setUi({
+                    clientView: !ui.clientView,
+                    focusOn: false,
+                    ghostReviewOpen: false,
+                  })
+                }
+              >
+                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M2.5 8s2.2-3.5 5.5-3.5S13.5 8 13.5 8s-2.2 3.5-5.5 3.5S2.5 8 2.5 8z"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                  />
+                  <circle cx="8" cy="8" r="1.4" stroke="currentColor" strokeWidth="1.2" />
+                </svg>
+              </button>
+              {!ui.clientView ? (
+                <div className={css.shareWrap}>
+                  <button
+                    type="button"
+                    className={`${css.iconBtn}${sharePopupOpen || ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}
+                    data-testid="share-top"
+                    aria-label="Share"
+                    aria-expanded={sharePopupOpen}
+                    title={
+                      lockReasonForMode("share") ??
+                      (hasCostedBom
+                        ? "Share with client"
+                        : "Cost something before sharing")
+                    }
+                    disabled={!hasCostedBom}
+                    onClick={() => {
+                      if (!hasCostedBom) return;
+                      setSharePopupOpen((v) => !v);
+                    }}
+                  >
+                    <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                      <circle cx="12" cy="4" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                      <circle cx="4" cy="8" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                      <circle cx="12" cy="12" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+                      <path
+                        d="M5.4 7.3 10.5 4.8M5.4 8.7l5.1 2.5"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                      />
+                    </svg>
+                  </button>
+                  <ShareRevisionPopup
+                    open={sharePopupOpen}
+                    onClose={() => setSharePopupOpen(false)}
+                    projectId={projectId}
+                    address={displayAddress}
+                    quoteLines={quoteShareLines}
+                    totalInclGst={quoteShareTotalInclGst}
+                    disclaimers={boardDisclaimers}
+                    onRevisionChange={setLatestShare}
+                  />
+                </div>
+              ) : null}
+              {ui.clientView ? (
+                <button
+                  type="button"
+                  className={css.iconBtn}
+                  data-testid="meeting-pack-print"
+                  aria-label="Print meeting pack"
+                  title="Print meeting pack — plan + schemes"
+                  onClick={() => window.print()}
+                >
+                  <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <path
+                      d="M4 6V3.5h8V6M4 11.5h8V14H4v-2.5ZM3.5 6H12.5a1 1 0 0 1 1 1v3.5H2.5V7a1 1 0 0 1 1-1Z"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
+
+            {/* Group 3 — AI */}
+            {showHeaderAiPill ? (
+              <div className={css.toolGroup}>
+                <HeaderAiPill
+                  label={draftLabel}
+                  hot={
+                    ai.pendingCount > 0 ||
+                    ai.status === "scanning" ||
+                    ai.status === "assisting"
+                  }
+                  ok={ai.status === "verified" && ai.pendingCount === 0}
+                  onClick={handleHeaderAi}
+                />
+              </div>
+            ) : null}
+
+            {/* Group 4 — System */}
+            <div className={css.toolGroup}>
+              <button
+                type="button"
+                className={css.cmdBtn}
+                data-testid="canvas-command-top"
+                onClick={() => {
+                  studio.setUi({ cmdOpen: true });
+                }}
+                title="Command palette"
+              >
+                ⌘K
+              </button>
+              {!ui.focusOn && !ui.clientView ? (
+                <HeaderViewMenu
+                  open={headerViewMenuOpen}
+                  onOpenChange={setHeaderViewMenuOpen}
+                  items={headerViewMenuItems}
+                  hot={headerViewMenuHot}
+                />
+              ) : null}
+              <UnifiedSaveStatus
+                status={ui.mode === "present" ? deckSaveStatus : ui.saveStatus}
+                savedTick={ui.mode === "present" ? deckSavedTick : ui.savedTick}
+                revision={ui.mode === "present" ? deckRevision : ui.saveRevision}
+                errorKind={ui.mode === "present" ? null : ui.saveErrorKind}
+                onSave={() => {
+                  void studio.saveNow().catch(() => {
+                    toast.show(
+                      "Canvas save failed. Try again before leaving.",
+                      "error",
+                    );
+                  });
+                }}
+                onRetry={() => {
+                  if (ui.saveErrorKind === "stale_client") {
+                    window.location.reload();
+                    return;
+                  }
+                  void studio.saveNow().catch(() => {
+                    toast.show(
+                      "Canvas save failed. Try again before leaving.",
+                      "error",
+                    );
+                  });
+                }}
+              />
+            </div>
           </div>
-        ) : null}
-      </CanvasHeaderRail>
+        }
+      />
       <CanvasContextCard active={headerContextActive}>
         <StudioContextBreadcrumb
           mode={ui.mode}
@@ -3320,287 +3612,6 @@ export function HandoffDesignStudio({
           </p>
         ) : null}
       </CanvasContextCard>
-      <CanvasTopBorder clientView={ui.clientView}>
-        <div className={css.headerTools} role="toolbar" aria-label="Canvas tools">
-          {/* Group 1 — Drawing tools */}
-          <div className={css.toolGroup}>
-            <button
-              type="button"
-              className={`${css.iconBtn}${instrumentsVisible ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="pointer-settings-top"
-              aria-label={
-                instrumentsVisible
-                  ? "Hide instruments"
-                  : "Open instruments and pointer mark"
-              }
-              title="Instruments — summon tools; parchment stays clear when idle"
-              onClick={() => {
-                if (instrumentsVisible) {
-                  setInstrumentsSummoned(false);
-                  if (ui.tool !== "select" && ui.tool !== "pan") {
-                    studio.setTool("select");
-                  }
-                } else {
-                  setInstrumentsSummoned(true);
-                }
-              }}
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.25" />
-                <path
-                  d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className={`${css.iconBtn}${isTiltActive(ui.tiltDeg) ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="tilt-view-top"
-              aria-label={isTiltActive(ui.tiltDeg) ? "Flatten to 2D" : "Tilt to 3D"}
-              title="Tilt — 3D massing view"
-              onClick={runTiltView}
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M8 2.6 14 12.4H2z"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.foundationCleanse ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="title-boundary-top"
-              aria-label={
-                ui.foundationCleanse ? "Close title boundary" : "Title boundary"
-              }
-              title="Title boundary"
-              onClick={() => {
-                if (ui.foundationCleanse) studio.exitStage1Foundation();
-                else void studio.runStage1FoundationCleanse();
-              }}
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M2.5 3.5h11v9H2.5zM5 3.5v9M11 3.5v9M2.5 8h11"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.frameOn ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="fit-sheet-top"
-              aria-label="Fit sheet"
-              aria-pressed={ui.frameOn}
-              title="Fit sheet"
-              onClick={() => setFitSheetOn(!ui.frameOn)}
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <rect
-                  x="3"
-                  y="2.5"
-                  width="10"
-                  height="11"
-                  rx="1"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                />
-                <path d="M9.5 2.5v11" stroke="currentColor" strokeWidth="1.25" />
-              </svg>
-            </button>
-            {ui.frameOn && !ui.clientView ? (
-              <button
-                type="button"
-                className={`${css.iconBtn}${sheetComposeOpen ? ` ${css.iconBtnActive}` : ""}`}
-                data-testid="sheet-compose-top"
-                aria-label="Compose sheet"
-                aria-pressed={sheetComposeOpen}
-                title="Compose sheet"
-                onClick={() => setSheetComposeOpen((v) => !v)}
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <rect
-                    x="2.5"
-                    y="2.5"
-                    width="11"
-                    height="11"
-                    rx="1.5"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                  />
-                  <path
-                    d="M6 5.5h4M6 8h4M6 10.5h2.5"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            ) : null}
-          </div>
-
-          {/* Group 2 — Output */}
-          <div className={css.toolGroup}>
-            <button
-              type="button"
-              className={`${css.iconBtn}${ui.clientView ? ` ${css.iconBtnActive}` : ""}`}
-              data-testid="client-view-top"
-              aria-label={ui.clientView ? "Exit client view" : "Client presentation"}
-              title={ui.clientView ? "Exit client presentation" : "Client presentation"}
-              onClick={() =>
-                studio.setUi({
-                  clientView: !ui.clientView,
-                  focusOn: false,
-                  ghostReviewOpen: false,
-                })
-              }
-            >
-              <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M2.5 8s2.2-3.5 5.5-3.5S13.5 8 13.5 8s-2.2 3.5-5.5 3.5S2.5 8 2.5 8z"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                />
-                <circle cx="8" cy="8" r="1.4" stroke="currentColor" strokeWidth="1.2" />
-              </svg>
-            </button>
-            {!ui.clientView ? (
-              <div className={css.shareWrap}>
-                <button
-                  type="button"
-                  className={`${css.iconBtn}${sharePopupOpen || ui.mode === "share" ? ` ${css.iconBtnActive}` : ""}`}
-                  data-testid="share-top"
-                  aria-label="Share"
-                  aria-expanded={sharePopupOpen}
-                  title={
-                    lockReasonForMode("share") ??
-                    (hasCostedBom
-                      ? "Share with client"
-                      : "Cost something before sharing")
-                  }
-                  disabled={!hasCostedBom}
-                  onClick={() => {
-                    if (!hasCostedBom) return;
-                    setSharePopupOpen((v) => !v);
-                  }}
-                >
-                  <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                    <circle cx="12" cy="4" r="1.6" stroke="currentColor" strokeWidth="1.2" />
-                    <circle cx="4" cy="8" r="1.6" stroke="currentColor" strokeWidth="1.2" />
-                    <circle cx="12" cy="12" r="1.6" stroke="currentColor" strokeWidth="1.2" />
-                    <path
-                      d="M5.4 7.3 10.5 4.8M5.4 8.7l5.1 2.5"
-                      stroke="currentColor"
-                      strokeWidth="1.2"
-                    />
-                  </svg>
-                </button>
-                <ShareRevisionPopup
-                  open={sharePopupOpen}
-                  onClose={() => setSharePopupOpen(false)}
-                  projectId={projectId}
-                  address={displayAddress}
-                  quoteLines={quoteShareLines}
-                  totalInclGst={quoteShareTotalInclGst}
-                  disclaimers={boardDisclaimers}
-                  onRevisionChange={setLatestShare}
-                />
-              </div>
-            ) : null}
-            {ui.clientView ? (
-              <button
-                type="button"
-                className={css.iconBtn}
-                data-testid="meeting-pack-print"
-                aria-label="Print meeting pack"
-                title="Print meeting pack — plan + schemes"
-                onClick={() => window.print()}
-              >
-                <svg className={css.iconBtnSvg} viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M4 6V3.5h8V6M4 11.5h8V14H4v-2.5ZM3.5 6H12.5a1 1 0 0 1 1 1v3.5H2.5V7a1 1 0 0 1 1-1Z"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            ) : null}
-          </div>
-
-          {/* Group 3 — AI */}
-          {showHeaderAiPill ? (
-            <div className={css.toolGroup}>
-              <HeaderAiPill
-                label={draftLabel}
-                hot={
-                  ai.pendingCount > 0 ||
-                  ai.status === "scanning" ||
-                  ai.status === "assisting"
-                }
-                ok={ai.status === "verified" && ai.pendingCount === 0}
-                onClick={handleHeaderAi}
-              />
-            </div>
-          ) : null}
-
-          {/* Group 4 — System */}
-          <div className={css.toolGroup}>
-            <button
-              type="button"
-              className={css.cmdBtn}
-              data-testid="canvas-command-top"
-              onClick={() => {
-                studio.setUi({ cmdOpen: true });
-              }}
-              title="Command palette"
-            >
-              ⌘K
-            </button>
-            {!ui.focusOn && !ui.clientView ? (
-              <HeaderViewMenu
-                open={headerViewMenuOpen}
-                onOpenChange={setHeaderViewMenuOpen}
-                items={headerViewMenuItems}
-                hot={headerViewMenuHot}
-              />
-            ) : null}
-            <CanvasAutosaveChip
-              status={ui.saveStatus}
-              savedTick={ui.savedTick}
-              revision={ui.saveRevision}
-              errorKind={ui.saveErrorKind}
-              onSave={() => {
-                void studio.saveNow().catch(() => {
-                  toast.show(
-                    "Canvas save failed. Try again before leaving.",
-                    "error",
-                  );
-                });
-              }}
-              onRetry={() => {
-                if (ui.saveErrorKind === "stale_client") {
-                  window.location.reload();
-                  return;
-                }
-                void studio.saveNow().catch(() => {
-                  toast.show(
-                    "Canvas save failed. Try again before leaving.",
-                    "error",
-                  );
-                });
-              }}
-            />
-          </div>
-        </div>
-      </CanvasTopBorder>
 
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.boardTiltPerspective}` : ""}`}
@@ -3778,6 +3789,11 @@ export function HandoffDesignStudio({
             }}
             materials={presentMaterials}
             onBack={() => requestMode("cad")}
+            onSaveStatusChange={(status, savedTick, revision) => {
+              setDeckSaveStatus(status);
+              if (savedTick !== undefined) setDeckSavedTick(savedTick);
+              if (revision !== undefined) setDeckRevision(revision);
+            }}
           />
         ) : null}
 
@@ -3981,6 +3997,8 @@ export function HandoffDesignStudio({
                   timedSunCast={ui.shadeOn || environmentOpen}
                   sunAzimuthDeg={sunAzimuthDeg}
                   bydaAssets={studio.bydaAssets}
+                  machineAccessOverrideMm={studio.machineAccessOverrideMm}
+                  machineAccessSource={studio.machineAccessSource}
                   planZoom={planZoom}
                   sunCast={boardSunCast}
                   tiltDeg={ui.tiltDeg}
@@ -4430,6 +4448,7 @@ export function HandoffDesignStudio({
                       return !ui.serviceFeatureHidden[`trench:${t.id}`];
                     })}
                     cam={planCam}
+                    scaleM={scaleM}
                     onAcceptAll={studio.acceptAllTrenchGhosts}
                     onRejectAll={studio.rejectAllTrenchGhosts}
                   />
@@ -4653,6 +4672,8 @@ export function HandoffDesignStudio({
             quoteTotalInclGst={estimate.totalInclGst}
             tier1={isTier1WrightsTerrace(projectAddress)}
             irrigationZones={studio.irrigationZones}
+            constructionTrenches={studio.constructionTrenches}
+            bydaAssets={studio.bydaAssets}
             shareStamp={
               latestShare
                 ? latestShare.status === "accepted"
@@ -5889,6 +5910,6 @@ export function HandoffDesignStudio({
         />
 
       </div>
-    </div>
+    </div >
   );
 }

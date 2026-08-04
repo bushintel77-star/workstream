@@ -209,6 +209,19 @@ describe("resolveHandoffChrome", () => {
     expect(c.horizon).toBe(false);
   });
 
+  it("Present is a deck composer — no ToolDock, draw tools, or data lane", () => {
+    const c = resolveHandoffChrome({ ...base, mode: "present" });
+    expect(c.ambientRibbon).toBe(false);
+    expect(c.drawTools).toBe(false);
+    expect(c.structureRail).toBe(false);
+    expect(c.liveBom).toBe(false);
+    expect(c.utilityDrawer).toBe(false);
+    expect(c.selectionRing).toBe(false);
+    expect(c.studioSheet).toBe(false);
+    expect(c.primaryFab).toBe(false);
+    expect(c.contextualStrip).toBe(false);
+  });
+
   it("Fit sheet is paper-only — no Isolith, trade, or ribbon", () => {
     const c = resolveHandoffChrome({
       ...base,

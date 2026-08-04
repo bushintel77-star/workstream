@@ -1,0 +1,188 @@
+/**
+ * Deck Inspector Dock — summoned right-side panel for deck configuration.
+ *
+ * Dark-slate surface matching the Tier-1 Top Bar, with high-contrast
+ * selects (audit 2.2). The dock is a summoned popup, not a fixed bar —
+ * it overlays the right edge of the workspace when open and closes on
+ * demand. Per STUDIO-STYLING-AND-UX: "inventory as summoned popup."
+ *
+ * Tactile treatment: the dock panel has a subtle inset bezel (engraved
+ * into the workspace edge), the selects are recessed into the panel with
+ * inset shadows, and the close button depresses on click. Depth confirms
+ * quality, not decoration.
+ */
+
+.dock {
+  position: absolute;
+  top: var(--s-4, 16px);
+  right: var(--s-4, 16px);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  background: var(--tier1-bar-bg, #1E2229);
+  border-radius: var(--r-md, 8px);
+  box-shadow:
+    0 4px 16px color-mix(in srgb, #000 30%, transparent),
+    0 1px 3px color-mix(in srgb, #000 20%, transparent),
+    inset 0 0 0 1px var(--tier1-bar-line, #2A2F38);
+  z-index: 20;
+  pointer-events: auto;
+  animation: dockSlideIn 180ms var(--ws-ease, ease) both;
+}
+
+@keyframes dockSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock {
+    animation: none;
+  }
+}
+
+.dockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-3, 12px) var(--s-4, 16px);
+  border-bottom: 1px solid var(--tier1-bar-line, #2A2F38);
+}
+
+.dockTitle {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tier1-bar-ink-muted, #9CA3AF);
+}
+
+.dockClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  background: transparent;
+  color: var(--tier1-bar-ink-muted, #9CA3AF);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition:
+    color 140ms var(--ws-ease, ease),
+    box-shadow 140ms var(--ws-ease, ease);
+}
+
+.dockClose:hover {
+  color: var(--tier1-bar-ink, #F9FAFB);
+  box-shadow: inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150);
+}
+
+.dockClose:active {
+  box-shadow:
+    inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150),
+    inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
+}
+
+.dockBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3, 12px);
+  padding: var(--s-4, 16px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tier1-bar-ink-muted, #9CA3AF);
+}
+
+/*
+ * High-contrast selects on the dark surface (audit 2.2).
+ * Recessed into the panel with an inset bezel — tactile depth confirms
+ * these are interactive controls, not flat labels.
+ */
+.select {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--tier1-bar-active-bg, #11151C);
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  color: var(--tier1-bar-ink, #F9FAFB);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150),
+    inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
+  transition: box-shadow 140ms var(--ws-ease, ease);
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%239CA3AF' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+.select:hover {
+  box-shadow:
+    inset 0 0 0 1px var(--tier1-bar-focus-ring, #6B7280),
+    inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
+}
+
+.select:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--tier1-bar-focus-ring, #6B7280),
+    inset 0 1px 2px color-mix(in srgb, #000 30%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--tier1-bar-focus-ring, #6B7280) 40%, transparent);
+}
+
+.select option {
+  background: var(--tier1-bar-bg, #1E2229);
+  color: var(--tier1-bar-ink, #F9FAFB);
+}
+
+.input {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--tier1-bar-active-bg, #11151C);
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  color: var(--tier1-bar-ink, #F9FAFB);
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150),
+    inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
+  transition: box-shadow 140ms var(--ws-ease, ease);
+}
+
+.input::placeholder {
+  color: var(--tier1-bar-ink-muted, #9CA3AF);
+}
+
+.input:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--tier1-bar-focus-ring, #6B7280),
+    inset 0 1px 2px color-mix(in srgb, #000 30%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--tier1-bar-focus-ring, #6B7280) 40%, transparent);
+}

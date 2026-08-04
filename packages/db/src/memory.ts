@@ -18,6 +18,7 @@ import type {
   Survey,
   Task,
   TelemetryReading,
+  OperatorPlantProfile,
 } from "./types";
 import type { QuoteDoc } from "@workstream/contracts";
 import type { Store } from "./types";
@@ -55,6 +56,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _crew: CrewMember[];
   _photoMeasurements: PhotoMeasurement[];
   _telemetryReadings: TelemetryReading[];
+  _operatorPlantProfiles: OperatorPlantProfile[];
   _loadSnapshot: () => boolean;
   _sqlite?: SqliteJournal;
   _exportSnapshot: (path: string) => void;
@@ -93,6 +95,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _quoteDocs: QuoteDoc[] = [];
   const _presentationDocuments: import("@workstream/contracts").PresentationDocument[] =
     [];
+  const _operatorPlantProfiles: OperatorPlantProfile[] = [];
   let seeded = false;
 
   function logActivity(
@@ -144,6 +147,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _shareRevisions,
     _quoteDocs,
     _presentationDocuments,
+    _operatorPlantProfiles,
   };
 
   const journal: SqliteJournal | undefined = opts.sqlitePath
@@ -214,6 +218,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _crew,
     _photoMeasurements,
     _telemetryReadings,
+    _operatorPlantProfiles,
     _loadSnapshot: loadSnapshot,
     _sqlite: journal,
     _exportSnapshot: (path: string) => {
@@ -236,6 +241,32 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _plantPalette.push(...seedPlantPalette());
       seeded = true;
       flush();
+    },
+
+    async getOperatorPlantProfile(ownerId) {
+      const row = _operatorPlantProfiles.find((p) => p.owner_id === ownerId);
+      return row ? structuredClone(row) : null;
+    },
+
+    async upsertOperatorPlantProfile(ownerId, input) {
+      const existing = _operatorPlantProfiles.find(
+        (p) => p.owner_id === ownerId,
+      );
+      const now = new Date().toISOString();
+      if (existing) {
+        existing.machines = input.machines;
+        existing.updated_at = now;
+        flush();
+        return structuredClone(existing);
+      }
+      const profile: OperatorPlantProfile = {
+        owner_id: ownerId,
+        machines: input.machines,
+        updated_at: now,
+      };
+      _operatorPlantProfiles.push(profile);
+      flush();
+      return structuredClone(profile);
     },
 
     async listPresentationDocuments(ownerId, projectId) {

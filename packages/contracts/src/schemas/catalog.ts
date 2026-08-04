@@ -460,6 +460,17 @@ export const DesignSiteFrameLevelSchema = z.object({
   y_pct: z.number().min(0).max(100),
   /** Reduced level (m AHD / local RL). */
   z_m: z.number(),
+  /**
+   * Level provenance — who/what authored the figure.
+   * - `authored`: operator-placed spot level (the default, legacy).
+   * - `vicmap_contour`: derived from Vicmap contour interpolation (indicative,
+   *   ±0.5–1 m typical for 1 m contour data). Surfaced as a fallback when no
+   *   authored level exists nearby; never silently overrides an authored figure.
+   * - `survey`: from a licensed survey (future — not yet wired).
+   */
+  source: z
+    .enum(["authored", "vicmap_contour", "survey"])
+    .optional(),
 });
 export type DesignSiteFrameLevel = z.infer<typeof DesignSiteFrameLevelSchema>;
 
@@ -630,6 +641,17 @@ export const DesignSiteFrameSchema = z.object({
       dig_override_at: z.string().datetime().optional(),
       dig_override_note: z.string().max(280).optional(),
     })
+    .optional(),
+  /**
+   * Machine-access override — an operator-measured side-corridor width in
+   * millimetres. When present, it wins over the computed value (fences, gate
+   * posts and meter boxes reduce the theoretical gap). `machine_access_source`
+   * records whether the figure was measured on site or computed from title +
+   * footprint geometry.
+   */
+  machine_access_override_mm: z.number().int().nonnegative().optional(),
+  machine_access_source: z
+    .enum(["computed", "measured"])
     .optional(),
 });
 export type DesignSiteFrame = z.infer<typeof DesignSiteFrameSchema>;

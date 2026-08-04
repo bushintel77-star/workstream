@@ -240,7 +240,10 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
   }
 
   const plan =
-    mode !== "elevation" && mode !== "quote" && mode !== "share";
+    mode !== "elevation" &&
+    mode !== "quote" &&
+    mode !== "share" &&
+    mode !== "present";
 
   // Fit sheet / focus — paper-first composition, no floating HUDs.
   // Client presentation keeps the sun scrubber when shade is armed (theatre).

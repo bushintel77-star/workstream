@@ -69,6 +69,9 @@ export type StudioSnapshot = {
   imageLayers: ImageLayer[];
   /** Fit-sheet compose pack — DesignCanvas.presentation_pack. */
   presentationPack?: PresentationPack;
+  /** Operator-measured side-corridor width (mm) — wins over computed. */
+  machineAccessOverrideMm?: number;
+  machineAccessSource?: "computed" | "measured";
 };
 
 export type { BydaAssetKind };

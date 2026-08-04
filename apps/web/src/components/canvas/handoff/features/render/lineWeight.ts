@@ -88,7 +88,11 @@ export type DrawingRole =
   | "dimension"
   | "annotation"
   | "easement"
-  | "emphasis";
+  | "emphasis"
+  // — service infrastructure —
+  | "trench"
+  | "trench-main"
+  | "byda";
 
 export const ROLE_WEIGHT: Record<DrawingRole, LineWeightName> = {
   grid: "hairline",
@@ -103,6 +107,13 @@ export const ROLE_WEIGHT: Record<DrawingRole, LineWeightName> = {
   building: "thick",
   boundary: "heavy",
   emphasis: "accent",
+  // Trenches: dig paths sit between construction and region — visible but
+  // subordinate to built form. Main feed is one rung heavier than laterals.
+  trench: "medium",
+  "trench-main": "thick",
+  // BYDA assets: dig-safety weight — heavier than trenches, lighter than
+  // the lot boundary. They must dominate the services layer.
+  byda: "thick",
 };
 
 /** Resolve a role to its stroke width. */

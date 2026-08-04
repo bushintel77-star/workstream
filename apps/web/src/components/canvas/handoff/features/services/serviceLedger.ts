@@ -193,18 +193,42 @@ export function buildServiceLedgerRows(
     });
   }
 
+  // Per-run trench rows + a per-kind totals row.
+  const trenchTotalsByKind = new Map<
+    ConstructionTrench["kind"],
+    { length: number; depthMm: number; count: number }
+  >();
   for (const t of input.constructionTrenches) {
     if (t.ghost) continue;
     const pts = t.points.map((p) => ({ x: p.x_pct, y: p.y_pct }));
     const lm = polylineLenM(pts, scaleM);
+    const depthMm = t.depth_mm ?? 300;
     rows.push({
       id: `trench:${t.id}`,
       section: "design",
       kind: "trench",
       label: t.name?.trim() || t.kind,
       metric: fmtM(lm),
-      detail: `Trench · ${t.depth_mm ?? 300} mm · ${t.kind}`,
+      detail: `Trench · ${depthMm} mm · ${t.kind}`,
       glyph: "⎓",
+    });
+    const prev = trenchTotalsByKind.get(t.kind);
+    trenchTotalsByKind.set(t.kind, {
+      length: (prev?.length ?? 0) + lm,
+      depthMm: prev?.depthMm ?? depthMm,
+      count: (prev?.count ?? 0) + 1,
+    });
+  }
+  // Per-kind totals row — the figure that flows into the quote.
+  for (const [kind, totals] of trenchTotalsByKind) {
+    rows.push({
+      id: `trench-total:${kind}`,
+      section: "design",
+      kind: "trench",
+      label: `${kind} total`,
+      metric: fmtM(totals.length),
+      detail: `${totals.count} run${totals.count > 1 ? "s" : ""} · ${totals.depthMm} mm · to quote`,
+      glyph: "Σ",
     });
   }
 

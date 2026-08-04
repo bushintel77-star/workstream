@@ -23,5 +23,13 @@ export const CostingSchema = z.object({
   subtotal: z.number().nonnegative(),
   gst: z.number().nonnegative(),
   total: z.number().nonnegative(),
+  /**
+   * Non-costed written assumptions surfaced on the quote — e.g. machine
+   * access width, derived-level provenance. These protect margin: a site that
+   * contradicts a stated assumption is a documented variation, not an argument.
+   * Renders in a dedicated block on the portal, separate from line items.
+   * Optional — absent on legacy costings.
+   */
+  assumptions: z.array(z.string()).optional(),
 });
 export type Costing = z.infer<typeof CostingSchema>;

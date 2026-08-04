@@ -30,3 +30,4 @@ export * from "./schemas/assembly-recipe";
 export * from "./schemas/share-revision";
 export * from "./schemas/presentation-document";
 export * from "./schemas/board-telemetry";
+export * from "./schemas/operator-profile";

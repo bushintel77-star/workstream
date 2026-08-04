@@ -262,6 +262,9 @@ export function snapshotToSiteFrame(args: {
   boardWidthM?: number | null;
   buildingSource?: DesignSiteFrame["building_source"];
   sitePack?: DesignSiteFrame["site_pack"];
+  /** Operator-measured side-corridor width (mm) — wins over computed. */
+  machineAccessOverrideMm?: number;
+  machineAccessSource?: "computed" | "measured";
 }): DesignSiteFrame {
   return {
     boundary: ringToFrame(args.boundary),
@@ -272,6 +275,7 @@ export function snapshotToSiteFrame(args: {
       x_pct: clampPct(lv.x),
       y_pct: clampPct(lv.y),
       z_m: lv.z,
+      source: "authored" as const,
     })),
     drainage_runs: (args.drainageRuns ?? []).map((run) => ({
       id: run.id,
@@ -307,6 +311,14 @@ export function snapshotToSiteFrame(args: {
       ? { building_source: args.buildingSource }
       : {}),
     ...(args.sitePack != null ? { site_pack: args.sitePack } : {}),
+    ...(args.machineAccessOverrideMm != null &&
+      Number.isFinite(args.machineAccessOverrideMm) &&
+      args.machineAccessOverrideMm >= 0
+      ? { machine_access_override_mm: args.machineAccessOverrideMm }
+      : {}),
+    ...(args.machineAccessSource != null
+      ? { machine_access_source: args.machineAccessSource }
+      : {}),
     neighbour_buildings: [],
   };
 }
@@ -329,6 +341,8 @@ export function siteFrameToSnapshot(
     points: Array<{ x: number; y: number; z: number }>;
     source: "indicative";
   }>;
+  machineAccessOverrideMm?: number;
+  machineAccessSource?: "computed" | "measured";
 } {
   if (!frame) return {};
   const out: {
@@ -346,6 +360,8 @@ export function siteFrameToSnapshot(
       points: Array<{ x: number; y: number; z: number }>;
       source: "indicative";
     }>;
+    machineAccessOverrideMm?: number;
+    machineAccessSource?: "computed" | "measured";
   } = {};
   if (frame.board_width_m != null && frame.board_width_m > 0) {
     out.boardWidthM = frame.board_width_m;
@@ -389,6 +405,12 @@ export function siteFrameToSnapshot(
   if ((frame.keyless_overlays ?? []).length > 0) {
     out.keylessOverlays =
       frame.keyless_overlays as DesignSiteFrame["keyless_overlays"];
+  }
+  if (frame.machine_access_override_mm != null) {
+    out.machineAccessOverrideMm = frame.machine_access_override_mm;
+  }
+  if (frame.machine_access_source) {
+    out.machineAccessSource = frame.machine_access_source;
   }
   return out;
 }

@@ -27,13 +27,13 @@ import {
 } from "./presentClient";
 import {
   KitButton,
-  KitSelect,
   KitInput,
   KitTextarea,
   KitTabs,
   KitSeparator,
 } from "@/components/ui/kit";
 import css from "./present.module.css";
+import { DeckInspectorDock } from "./DeckInspectorDock";
 
 /**
  * Lightweight serializable snapshot of the plan for rendering plan crops.
@@ -94,6 +94,16 @@ type Props = {
   /** Material swatches from the live board — for swatch_board panels. */
   materials: MaterialSwatch[];
   onBack: () => void;
+  /**
+   * Lifted save status — the UnifiedSaveStatus in the Tier-1 Top Bar reads
+   * this so only one save indicator shows at a time (audit 2.3 / spec §4).
+   * Called whenever the deck autosave state changes.
+   */
+  onSaveStatusChange?: (
+    status: "idle" | "saving" | "saved" | "error",
+    savedTick?: number,
+    revision?: number,
+  ) => void;
 };
 
 const DELIVERABLE_LABELS: Record<PresentationDeliverableType, string> = {
@@ -217,7 +227,7 @@ function newPanel(
   };
 }
 
-export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate, materials, onBack }: Props) {
+export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate, materials, onBack, onSaveStatusChange }: Props) {
   const [documents, setDocuments] = useState<PresentationDocument[]>([]);
   const [activeDoc, setActiveDoc] = useState<PresentationDocument | null>(null);
   const [loading, setLoading] = useState(true);
@@ -229,10 +239,25 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   const [activePageIndex, setActivePageIndex] = useState(0);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [widgetPickerOpen, setWidgetPickerOpen] = useState(false);
+  const [deckSettingsOpen, setDeckSettingsOpen] = useState(false);
   const [swatchPickerPanelId, setSwatchPickerPanelId] = useState<string | null>(
     null,
   );
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deckRevisionRef = useRef(0);
+
+  // Lift save status to parent for UnifiedSaveStatus (audit 2.3 / spec §4)
+  useEffect(() => {
+    if (!onSaveStatusChange) return;
+    if (saveStatus === "saved") {
+      deckRevisionRef.current += 1;
+      onSaveStatusChange("saved", Date.now(), deckRevisionRef.current);
+    } else if (saveStatus === "saving") {
+      onSaveStatusChange("saving");
+    } else if (saveStatus === "error") {
+      onSaveStatusChange("error");
+    }
+  }, [saveStatus, onSaveStatusChange]);
 
   // --- Plan dissection ghost review state (Phase 2) ---
   const [ghosts, setGhosts] = useState<PresentationDissectGhost[]>([]);
@@ -701,93 +726,19 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
       {activeDoc ? (
         <div className={css.workspace}>
           <div className={css.toolbar}>
-            <KitInput
-              className={css.titleInput}
-              value={activeDoc.title}
-              onChange={(e) => updateDoc({ title: e.target.value })}
-              placeholder="Deck title"
-              aria-label="Deck title"
-            />
-            <KitSelect
-              className={css.select}
-              value={activeDoc.deliverable_type}
-              onChange={(e) =>
-                updateDoc({
-                  deliverable_type: e.target
-                    .value as PresentationDeliverableType,
-                })
-              }
-              aria-label="Deliverable type"
-            >
-              {Object.entries(DELIVERABLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </KitSelect>
-            <KitSelect
-              className={css.select}
-              value={activeDoc.template_id}
-              onChange={(e) =>
-                updateDoc({
-                  template_id: e.target.value as PresentationTemplateId,
-                })
-              }
-              aria-label="Template"
-            >
-              {Object.entries(TEMPLATE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </KitSelect>
-            <KitSelect
-              className={css.select}
-              value={activeDoc.theme.palette}
-              onChange={(e) =>
-                updateDoc({
-                  theme: {
-                    ...activeDoc.theme,
-                    palette: e.target.value as PresentationPalette,
-                  },
-                })
-              }
-              aria-label="Palette"
-            >
-              {Object.entries(PALETTE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </KitSelect>
-            <KitSelect
-              className={css.select}
-              value={activeDoc.theme.font}
-              onChange={(e) =>
-                updateDoc({
-                  theme: {
-                    ...activeDoc.theme,
-                    font: e.target.value as PresentationFont,
-                  },
-                })
-              }
-              aria-label="Font"
-            >
-              {Object.entries(FONT_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </KitSelect>
-            <span className={css.saveStatus} data-testid="present-save-status">
-              {saveStatus === "saving"
-                ? "Saving..."
-                : saveStatus === "saved"
-                  ? "Saved"
-                  : saveStatus === "error"
-                    ? "Save error"
-                    : ""}
+            <span className={css.toolbarTitle} data-testid="present-deck-title">
+              {activeDoc.title || "Untitled deck"}
             </span>
+            <KitButton
+              variant="secondary"
+              size="sm"
+              onClick={() => setDeckSettingsOpen((v) => !v)}
+              aria-expanded={deckSettingsOpen}
+              aria-label="Deck settings"
+              data-testid="deck-settings-toggle"
+            >
+              Deck settings
+            </KitButton>
             <KitButton
               variant="outline"
               size="sm"
@@ -797,6 +748,46 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
               Print
             </KitButton>
           </div>
+          <DeckInspectorDock
+            open={deckSettingsOpen}
+            onClose={() => setDeckSettingsOpen(false)}
+            title={activeDoc.title}
+            onTitleChange={(title) => updateDoc({ title })}
+            deliverableType={activeDoc.deliverable_type}
+            onDeliverableTypeChange={(value) =>
+              updateDoc({
+                deliverable_type: value as PresentationDeliverableType,
+              })
+            }
+            templateId={activeDoc.template_id}
+            onTemplateIdChange={(value) =>
+              updateDoc({
+                template_id: value as PresentationTemplateId,
+              })
+            }
+            palette={activeDoc.theme.palette}
+            onPaletteChange={(value) =>
+              updateDoc({
+                theme: {
+                  ...activeDoc.theme,
+                  palette: value as PresentationPalette,
+                },
+              })
+            }
+            font={activeDoc.theme.font}
+            onFontChange={(value) =>
+              updateDoc({
+                theme: {
+                  ...activeDoc.theme,
+                  font: value as PresentationFont,
+                },
+              })
+            }
+            deliverableOptions={Object.entries(DELIVERABLE_LABELS)}
+            templateOptions={Object.entries(TEMPLATE_LABELS)}
+            paletteOptions={Object.entries(PALETTE_LABELS)}
+            fontOptions={Object.entries(FONT_LABELS)}
+          />
 
           <div className={css.pageArea}>
             {currentPage ? (

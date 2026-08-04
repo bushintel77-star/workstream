@@ -57,6 +57,23 @@
   --hc-warning: var(--warning);
   --hc-water: var(--water-l-500);
   --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 12%, var(--canvas));
+
+  /*
+   * Tier-1 Top Bar — unified dark-slate header surface (spec §1).
+   * Mode-agnostic (always dark, like a VS Code titlebar); the gallery frame
+   * is already dark grey, so these tokens define the consolidated top bar's
+   * surface, ink, dividers, active backlight, and focus ring. Single source
+   * for Tier1TopBar + DeckInspectorDock.
+   */
+  --tier1-bar-bg: #1E2229;
+  --tier1-bar-ink: #F9FAFB;
+  --tier1-bar-ink-muted: #9CA3AF;
+  --tier1-bar-line: #2A2F38;
+  --tier1-bar-line-strong: #3A4150;
+  --tier1-bar-active-bg: #11151C;
+  --tier1-bar-active-ink: #F9FAFB;
+  --tier1-bar-focus-ring: #6B7280;
+
   --sheet-paper: var(--gray-l-25);
   --sheet-ink: var(--text-primary);
   --sheet-border: color-mix(in srgb, var(--text-primary) 35%, transparent);

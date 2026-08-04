@@ -337,6 +337,12 @@ export type TrenchLineItem = {
   unit: string;
   qty: number;
   kind: ConstructionTrenchKind;
+  /** Representative trench depth (mm) — the second cost dimension. */
+  depth_mm: number;
+  /** Excavation volume (m³) — length × width × depth. Indicative. */
+  volume_m3: number;
+  /** Total length in metres (before rounding to qty). */
+  length_m: number;
 };
 
 const SKU: Record<ConstructionTrenchKind, { sku: string; label: string }> = {
@@ -358,30 +364,53 @@ const SKU: Record<ConstructionTrenchKind, { sku: string; label: string }> = {
   },
 };
 
+/** Indicative trench width per kind (mm) — industry typical for residential landscape. */
+const TRENCH_WIDTH_MM: Record<ConstructionTrenchKind, number> = {
+  irrig_main: 200,
+  irrig_lateral: 150,
+  lighting_conduit: 200,
+  drainage: 300,
+};
+
 /** BOM lm lines from accepted (non-ghost) trenches. */
 export function trenchLineItems(
   trenches: ConstructionTrench[],
   scale: CanvasGroundScale,
 ): TrenchLineItem[] {
   const live = trenches.filter((t) => !t.ghost);
-  const byKind = new Map<ConstructionTrenchKind, number>();
+  const byKind = new Map<
+    ConstructionTrenchKind,
+    { length: number; depthMm: number }
+  >();
   for (const t of live) {
     const lm = polylineLengthFromCanvasPercent(
       t.points.map((p) => ({ x_pct: p.x_pct, y_pct: p.y_pct })),
       scale,
     );
-    byKind.set(t.kind, (byKind.get(t.kind) ?? 0) + lm);
+    const prev = byKind.get(t.kind);
+    const depthMm = t.depth_mm ?? 300;
+    byKind.set(t.kind, {
+      length: (prev?.length ?? 0) + lm,
+      // Representative depth — the first trench of this kind encountered.
+      depthMm: prev?.depthMm ?? depthMm,
+    });
   }
   const items: TrenchLineItem[] = [];
-  for (const [kind, lm] of byKind) {
+  for (const [kind, { length: lm, depthMm }] of byKind) {
     if (lm <= 0) continue;
     const meta = SKU[kind];
+    const widthM = TRENCH_WIDTH_MM[kind] / 1000;
+    const depthM = depthMm / 1000;
+    const volumeM3 = lm * widthM * depthM;
     items.push({
       sku: meta.sku,
       label: meta.label,
       unit: "lm",
       qty: Math.ceil(lm * 10) / 10,
       kind,
+      depth_mm: depthMm,
+      volume_m3: Math.round(volumeM3 * 100) / 100,
+      length_m: Math.round(lm * 100) / 100,
     });
   }
   return items;

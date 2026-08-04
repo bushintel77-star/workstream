@@ -230,6 +230,12 @@ export function estimateStudioDrawing(args: {
   /** Constrained access bumps labour / tipper count. */
   accessConstrained?: boolean;
   /**
+   * Computed machine-access labour multiplier — when present, overrides the
+   * binary `accessConstrained` flag. Derived from `computeMachineAccess` +
+   * `machineAccessLabourMultiplier` in machine-access.ts.
+   */
+  accessMultiplier?: number;
+  /**
    * Authored irrig / lighting paths on DesignCanvas.
    * When present, they supersede auto softscape drip / hardscape lighting.
    */
@@ -240,7 +246,9 @@ export function estimateStudioDrawing(args: {
   scaleM?: number;
 }): StudioEstimateReport {
   const metaMap = { ...DEFAULT_META, ...args.metaByType };
-  const access = args.accessConstrained ? 1.15 : 1;
+  const access =
+    args.accessMultiplier ??
+    (args.accessConstrained ? 1.15 : 1);
   const live = args.items.filter((i) => !i.ghost);
   const lines: StudioEstimateLine[] = [];
   const horizon: StudioHorizonCard[] = [];
