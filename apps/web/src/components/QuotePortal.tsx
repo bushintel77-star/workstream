@@ -115,7 +115,7 @@ export function QuotePortal({
     <main className={styles.page}>
       <header className={styles.masthead}>
         <div className={styles.brand}>
-          Workstream
+          Curtis &amp; Co
           <span className={styles.brandSub}>
             Landscape design · Melbourne
           </span>
@@ -306,7 +306,7 @@ export function QuotePortal({
       </div>
 
       <footer className={styles.colophon}>
-        <span>Workstream · {project.address}</span>
+        <span>Curtis &amp; Co · {project.address}</span>
         <span>Valid 30 days</span>
       </footer>
     </main>

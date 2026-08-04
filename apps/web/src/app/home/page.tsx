@@ -83,7 +83,7 @@ export default async function HomePage() {
         <aside className={home.aside}>
           <header className={home.masthead}>
             <div className={home.titleBlock}>
-              <p className={home.mastheadMark}>Workstream · Melbourne</p>
+              <p className={home.mastheadMark}>Curtis &amp; Co · Melbourne</p>
               <div className={home.titleBlockMeta}>
                 <span>DWG-001</span>
                 <span>1:200</span>
