@@ -2,10 +2,8 @@
 
 import { useMemo } from "react";
 import {
-  boardScaleM,
   pickMetricStepM,
-  visibleMetres,
-  type SheetScaleDenom,
+  visibleMetresFromScale,
 } from "./groundMetrics";
 import css from "./tactileGround.module.css";
 
@@ -20,7 +18,13 @@ type Props = {
    */
   panXPct?: number;
   panYPct?: number;
-  sheetScaleDenom: SheetScaleDenom;
+  /**
+   * Metres across 100% of the board — the SAME `scaleM` the dimension engine
+   * (edge lengths, lot area) reads. Free plan passes the fitted `boardWidthM`;
+   * Fit sheet passes the print-plot scale. Never a hardcoded 1:100 denominator
+   * or the ruler prints one metre scale while the boundary labels read another.
+   */
+  scaleM: number;
   darkOn?: boolean;
 };
 
@@ -40,11 +44,10 @@ export function GroundRulerOverlay({
   focusY,
   panXPct = 0,
   panYPct = 0,
-  sheetScaleDenom,
+  scaleM,
   darkOn = false,
 }: Props) {
-  const scaleM = boardScaleM(sheetScaleDenom);
-  const stepM = pickMetricStepM(visibleMetres(sheetScaleDenom, zoom));
+  const stepM = pickMetricStepM(visibleMetresFromScale(scaleM, zoom));
   const stepPct = (stepM / scaleM) * 100;
 
   const ticks = useMemo(() => {

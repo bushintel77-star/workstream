@@ -111,6 +111,19 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P3 — Nice to have
 
+- [ ] **TactileGround mesh + scale chip use hardcoded 1:100 board scale.**
+      `TactileGround` derives `scaleM = boardScaleM(sheetScaleDenom=100) = 110 m`
+      and prints "{stepM} m · 1:100" on the ground mesh / scale chip, while the
+      dimension engine and `GroundRulerOverlay` (fixed) read the fitted
+      `ui.boardWidthM`. On a rural parcel the mesh grid and scale chip show
+      10 m / 1:100 while boundary labels correctly read ~1600 m — the same
+      two-scale bug that was fixed for the ruler in
+      `GroundRulerOverlay`. Scoped out of the measurement-integrity fix because
+      it touches visible chrome (mesh density, scale chip copy) and the Fit
+      sheet legitimately uses the print denominator there. Fix: pass the live
+      `scaleM` to `TactileGround` and update the chip copy to drop the hardcoded
+      "1:100" when `boardWidthM` is fitted. Cover with the
+      `measurement-integrity.test.ts` probe pattern.
 - [ ] Storybook for web primitives.
 - [x] **Local docker-compose** — [docker-compose.yml](docker-compose.yml).
 - [ ] Bundle-size budget in CI.

@@ -24,6 +24,18 @@ export function visibleMetres(
   return boardScaleM(sheetScaleDenom) / Math.max(ZOOM_MIN, zoom);
 }
 
+/**
+ * Visible metres across the viewport from a live board scale (metres across
+ * 100% of the board), e.g. the fitted `boardWidthM` the dimension engine uses.
+ * Free-plan instruments (ruler, mesh) MUST pass the same scale the dimension
+ * engine reads so one view never shows two metre scales — a hardcoded 1:100
+ * denominator prints 10 m ticks on a 1.6 km rural lot while its boundary labels
+ * correctly read ~1600 m.
+ */
+export function visibleMetresFromScale(scaleM: number, zoom: number): number {
+  return scaleM / Math.max(ZOOM_MIN, zoom);
+}
+
 export function pickMetricStepM(visibleM: number): number {
   if (visibleM < 35) return 1;
   if (visibleM < 70) return 5;

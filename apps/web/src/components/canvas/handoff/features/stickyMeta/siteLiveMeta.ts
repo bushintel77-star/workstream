@@ -6,7 +6,10 @@
 
 import type { PctPoint } from "../../geometry";
 import { polygonAreaM2 } from "../../geometry/polygon";
-import { formatScheduleAreaM2 } from "../../geometry/siteScheduleDisplay";
+import {
+  formatScheduleAreaM2,
+  type LotDisagreement,
+} from "../../geometry/siteScheduleDisplay";
 
 export type SiteLiveMeta = {
   /** Best-known lot area in m² (0 when no boundary traced). */
@@ -17,6 +20,8 @@ export type SiteLiveMeta = {
   easementCount: number;
   /** Title / cadastral source label ("Vicmap") when known. */
   titleSource: string | null;
+  /** Title-vs-drawn lot-area provenance — null when no cadastral figure or no boundary. */
+  lotDisagreement: LotDisagreement | null;
   /** One-line face copy (no emoji — icon sits beside). */
   face: string;
   detail: string;
@@ -32,6 +37,8 @@ export function buildSiteLiveMeta(args: {
   lotAreaM2?: number | null;
   /** Cadastral source label for the face, e.g. "Vicmap". */
   titleSource?: string | null;
+  /** Title-vs-drawn disagreement from `resolveSiteAreaDisplay`, when available. */
+  lotDisagreement?: LotDisagreement | null;
 }): SiteLiveMeta {
   const boardAspect = args.boardAspect ?? 1;
   const surveyed =
@@ -45,6 +52,7 @@ export function buildSiteLiveMeta(args: {
   const hasDwelling = args.building.length >= 3;
   const easementCount = args.easements.filter((r) => r.length >= 3).length;
   const titleSource = args.titleSource?.trim() || null;
+  const lotDisagreement = args.lotDisagreement ?? null;
 
   const face =
     lotAreaM2 > 0
@@ -56,7 +64,13 @@ export function buildSiteLiveMeta(args: {
     easementCount === 0
       ? "no easements"
       : `${easementCount} easement${easementCount === 1 ? "" : "s"}`;
-  const detail = `${dwellingBit} · ${easementBit}`;
+  const parts = [dwellingBit, easementBit];
+  if (lotDisagreement?.mismatch) {
+    parts.push(
+      `title ${formatScheduleAreaM2(lotDisagreement.cadastralLotM2!)} m² — confirm parcel`,
+    );
+  }
+  const detail = parts.join(" · ");
 
   return {
     lotAreaM2,
@@ -64,6 +78,7 @@ export function buildSiteLiveMeta(args: {
     hasDwelling,
     easementCount,
     titleSource,
+    lotDisagreement,
     face,
     detail,
   };

@@ -51,4 +51,38 @@ describe("buildSiteLiveMeta", () => {
     expect(meta.lotAreaM2).toBe(0);
     expect(meta.face).toBe("Site · boundary");
   });
+
+  it("surfaces lot disagreement in the detail line", () => {
+    const meta = buildSiteLiveMeta({
+      boundary: SQUARE,
+      building: [],
+      easements: [],
+      scaleM: 100,
+      lotAreaM2: 1_088_000,
+      titleSource: "Vicmap",
+      lotDisagreement: {
+        cadastralLotM2: 10_340_197,
+        drawnLotM2: 1_088_000,
+        mismatch: true,
+      },
+    });
+    expect(meta.lotDisagreement?.mismatch).toBe(true);
+    expect(meta.detail).toMatch(/title 10340197\.00 m² — confirm parcel/);
+  });
+
+  it("does not add disagreement copy when title and drawn match", () => {
+    const meta = buildSiteLiveMeta({
+      boundary: SQUARE,
+      building: [],
+      easements: [],
+      scaleM: 100,
+      lotAreaM2: 1600,
+      lotDisagreement: {
+        cadastralLotM2: 1600,
+        drawnLotM2: 1600,
+        mismatch: false,
+      },
+    });
+    expect(meta.detail).not.toMatch(/confirm parcel/);
+  });
 });

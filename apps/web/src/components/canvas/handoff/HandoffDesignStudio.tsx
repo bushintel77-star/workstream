@@ -2133,6 +2133,7 @@ export function HandoffDesignStudio({
         lotAreaM2:
           siteAreaDisplay?.lotAreaM2 ?? titleBlock?.lotAreaM2 ?? null,
         titleSource: titleBlock?.sourceLabel ?? null,
+        lotDisagreement: siteAreaDisplay?.lotDisagreement ?? null,
       }),
     [
       studio.boundary,
@@ -2140,6 +2141,7 @@ export function HandoffDesignStudio({
       studio.easements,
       scaleM,
       siteAreaDisplay?.lotAreaM2,
+      siteAreaDisplay?.lotDisagreement,
       titleBlock?.lotAreaM2,
       titleBlock?.sourceLabel,
     ],
@@ -4564,7 +4566,7 @@ export function HandoffDesignStudio({
             focusY={planFocusY}
             panXPct={boardSize.w > 0 ? (ui.panX / boardSize.w) * 100 : 0}
             panYPct={boardSize.h > 0 ? (ui.panY / boardSize.h) * 100 : 0}
-            sheetScaleDenom={100}
+            scaleM={scaleM}
             darkOn={darkLens}
           />
         ) : null}

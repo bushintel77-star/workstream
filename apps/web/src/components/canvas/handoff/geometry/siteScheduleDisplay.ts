@@ -3,6 +3,47 @@ import type { SiteSchedule } from "./types";
 /** Footprint coverage over this fraction of lot is treated as corrupt geometry. */
 export const MAX_FOOTPRINT_COVERAGE_FRAC = 0.8;
 
+/**
+ * Largest ratio between the cadastral lot area and the drawn shoelace at which
+ * the two are still considered to describe the same polygon. Beyond this, the
+ * Vicmap figure is a different parcel (whole-farm parent, neighbour, or stale
+ * ring) than what the boundary labels measure, and the display follows the
+ * drawing — a landscape architect stakes liability on the polygon actually
+ * drawn, and the quote is driven by its area. Observed in the wild: a rural
+ * lot whose edges bound ~1.1M m^2 while the Vicmap label read 10.3M m^2
+ * (~9.4x) — mathematically impossible for that perimeter, so the label was
+ * describing a different polygon.
+ *
+ * This is a SYMPTOM guard, not a root fix. The root cause is that the title-
+ * block route (`/cadastral-title`) and the boundary auto-trace
+ * (`/boundary/auto-trace`) make independent Vicmap WFS calls with potentially
+ * different pins: the title-block geocodes `displayAddress` (which may differ
+ * from `project.address`), while the boundary auto-trace uses
+ * `project.lat/lng`. For rural parcels exceeding `MAX_SANE_TITLE_AREA_M2`
+ * (80 000 m²), `pickTitleRingForPin` falls through to `containingAny` and
+ * different pins can land in different rings of a Vicmap MultiPolygon — a
+ * subset lot vs a parent/aggregate parcel. The proper fix is to join the two
+ * calls via a shared ring identifier (PFI) or ring-geometry comparison at the
+ * API level; until then, this guard + the `lotDisagreement` provenance flag
+ * surface the mismatch so the architect decides whether they traced the wrong
+ * parcel or the title covers multiple lots.
+ */
+export const LOT_AGREEMENT_FACTOR = 2;
+
+/**
+ * Provenance flag for when the title-block lot area and the drawn shoelace
+ * disagree. Surfaces both numbers so the architect can reconcile — same
+ * discipline as "Vicmap footprint" vs "operator-traced envelope".
+ */
+export type LotDisagreement = {
+  /** Title-block / Vicmap lot area (m²), or null when no cadastral fetch. */
+  cadastralLotM2: number | null;
+  /** Shoelace area of the drawn boundary ring (m²). */
+  drawnLotM2: number;
+  /** True when the two differ by more than {@link LOT_AGREEMENT_FACTOR}. */
+  mismatch: boolean;
+};
+
 export type FitSheetAreaDisplay = {
   lotAreaM2: number;
   buildingAreaM2: number;
@@ -16,6 +57,8 @@ export type FitSheetAreaDisplay = {
   buildingSource: "drawing" | "cadastral" | "clamped";
   /** True when drawn dwelling m² was rejected as impossible vs lot. */
   buildingSanitized: boolean;
+  /** Title vs drawn lot-area provenance — null when no cadastral figure was supplied. */
+  lotDisagreement: LotDisagreement | null;
 };
 
 export type DisplayLotResolution = {
@@ -60,7 +103,17 @@ export function resolveDisplayLotM2(args: {
     args.cadastralHouseM2 != null &&
     args.cadastralHouseM2 > 5 &&
     args.cadastralHouseM2 <= cap + 0.5;
-  if (buildingOk || houseOk) {
+  // The cadastral figure must describe the SAME polygon as the drawn ring.
+  // When the drawn shoelace is positive and the title area is more than
+  // LOT_AGREEMENT_FACTOR times it, the title is a different (larger) polygon
+  // than the boundary labels measure — a Vicmap whole-parcel/parent figure
+  // while the drawn ring is a subset — so keep the drawing. The smaller-title
+  // direction is already guarded by the building-coverage check below (a title
+  // too small for the dwelling loses), so this is intentionally asymmetric.
+  const areaConsistent =
+    args.drawnLotM2 > 5 &&
+    cadastral / args.drawnLotM2 <= LOT_AGREEMENT_FACTOR;
+  if ((buildingOk || houseOk) && areaConsistent) {
     return { lotM2: cadastral, lotSource: "cadastral" };
   }
   return { lotM2: args.drawnLotM2, lotSource: "drawing" };
@@ -102,8 +155,8 @@ export function resolveBuildingAreaM2(args: {
   }
   const house =
     args.cadastralHouseM2 != null &&
-    args.cadastralHouseM2 > 5 &&
-    args.cadastralHouseM2 <= cap + 0.5
+      args.cadastralHouseM2 > 5 &&
+      args.cadastralHouseM2 <= cap + 0.5
       ? args.cadastralHouseM2
       : null;
   if (house != null) {
@@ -137,10 +190,15 @@ export function resolveSiteAreaDisplay(args: {
   cadastralHouseM2?: number | null;
 }): FitSheetAreaDisplay {
   const drawnBuilding = args.schedule.buildingAreaM2;
+  const drawnLotM2 = args.schedule.lotAreaM2;
+  const cadastralLotM2 =
+    args.cadastralLotM2 != null && args.cadastralLotM2 > 5
+      ? args.cadastralLotM2
+      : null;
   const lotResolved = resolveDisplayLotM2({
     cadastralLotM2: args.cadastralLotM2,
     buildingAreaM2: drawnBuilding,
-    drawnLotM2: args.schedule.lotAreaM2,
+    drawnLotM2,
     cadastralHouseM2: args.cadastralHouseM2,
   });
   const lotAreaM2 = lotResolved.lotM2;
@@ -164,7 +222,7 @@ export function resolveSiteAreaDisplay(args: {
   } else if (
     building.buildingSanitized &&
     lotResolved.lotSource === "drawing" &&
-    args.schedule.lotAreaM2 > 0
+    drawnLotM2 > 0
   ) {
     // Drawn lot kept, but dwelling was clamped — outdoor must follow the
     // sanitized footprint so coverage never implies negative outdoor.
@@ -175,10 +233,21 @@ export function resolveSiteAreaDisplay(args: {
   const siteCoveragePct =
     lotAreaM2 > 0
       ? Math.min(
-          100,
-          Math.round((building.buildingAreaM2 / lotAreaM2) * 100),
-        )
+        100,
+        Math.round((building.buildingAreaM2 / lotAreaM2) * 100),
+      )
       : 0;
+
+  // Provenance: surface title-vs-drawn disagreement so the architect decides
+  // whether they traced the wrong parcel or the title covers multiple lots.
+  const lotDisagreement: LotDisagreement | null =
+    cadastralLotM2 != null && drawnLotM2 > 5
+      ? {
+        cadastralLotM2,
+        drawnLotM2,
+        mismatch: cadastralLotM2 / drawnLotM2 > LOT_AGREEMENT_FACTOR,
+      }
+      : null;
 
   return {
     lotAreaM2,
@@ -190,6 +259,7 @@ export function resolveSiteAreaDisplay(args: {
     lotSource: lotResolved.lotSource,
     buildingSource: building.buildingSource,
     buildingSanitized: building.buildingSanitized,
+    lotDisagreement,
   };
 }
 

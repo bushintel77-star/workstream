@@ -525,6 +525,23 @@ export function FitSheetOverlay({
                 <span className={css.mono}>{v}</span>
               </div>
             ))}
+            {areas.lotDisagreement?.mismatch ? (
+              <div className={css.row} data-testid="lot-disagreement">
+                <span>Title area</span>
+                <span className={css.mono}>
+                  {formatScheduleAreaM2(
+                    areas.lotDisagreement.cadastralLotM2!,
+                  )}{" "}
+                  m²
+                </span>
+              </div>
+            ) : null}
+            {areas.lotDisagreement?.mismatch ? (
+              <p className={css.notesLine}>
+                Title lot area disagrees with drawn boundary — confirm parcel
+                or re-trace.
+              </p>
+            ) : null}
           </div>
 
           {presentationPack &&
