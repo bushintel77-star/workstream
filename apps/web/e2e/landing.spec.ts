@@ -18,7 +18,9 @@ test.describe("Workstream landing", () => {
 
     await page.getByTestId("landing-enter-studio").click();
     await expect(page).toHaveURL(/\/home/);
-    await expect(page.getByText("Curtis & Co").first()).toBeVisible({
+    // Operator dashboard is Workstream-branded; Curtis & Co is portal/quote-only
+    // (docs/EXTERNAL-DESIGNER-BRIEF.md §2 — do not mix brands).
+    await expect(page.getByText("Workstream", { exact: true }).first()).toBeVisible({
       timeout: 30_000,
     });
   });
