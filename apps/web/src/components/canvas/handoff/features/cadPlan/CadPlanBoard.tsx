@@ -2314,11 +2314,31 @@ export function CadPlanBoard({
           </CameraChrome>
         ) : null}
 
+        {/*
+          * Missing-dwelling cue. Anchored just inside the TOP edge of the title
+          * boundary, not the optical centre: it is an empty state, and a card
+          * parked over the middle of the artwork both hides the plan and — as a
+          * button with pointer-events — swallows clicks on the geometry below.
+          * Tracks the lot so it reads as a note on the parcel, the same way
+          * councilPathLabel tracks the setback.
+          */}
         {mode === "survey" &&
           allowProjectedChrome &&
           boundary.length >= 3 &&
           building.length < 3 ? (
-          <CameraChrome place={{ kind: "project", pct: { x: 50, y: 46 }, cam }}>
+          <CameraChrome
+            place={{
+              kind: "project",
+              pct: {
+                x: titleCentroid.x,
+                y: Math.max(
+                  6,
+                  Math.min(...boundary.map((p) => p.y)) + 3.5,
+                ),
+              },
+              cam,
+            }}
+          >
             {onTraceBuilding ? (
               <button
                 type="button"

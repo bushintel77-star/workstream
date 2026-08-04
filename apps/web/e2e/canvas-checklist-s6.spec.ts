@@ -97,12 +97,15 @@ const BOARD_SPANNING_ALLOWED = new Set([
  * well below its number, which forces the gain to be recorded here so it cannot
  * be given back later.
  *
- * Survey's 18.8% is dominated by right-data-lane-checklist (7.6%),
+ * Survey started at 18.8%, dominated by right-data-lane-checklist (7.6%),
  * building-footprint-empty (2.5%) and the two Vicmap clusters (3.9% combined).
  * Getting these down is the Phase 2 work; see OUTSTANDING.md.
+ *
+ * 16.8 — the missing-dwelling cue stopped being a glass card at the optical
+ * centre and became haloed ink on the lot's top edge, so it no longer paints.
  */
 const COVERAGE_BASELINE: Record<string, number> = {
-  survey: 18.8,
+  survey: 16.8,
   sketch: 12.7,
   cad: 9.4,
   elevation: 0.1,

@@ -616,22 +616,48 @@
   text-shadow: 1px 0 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent)), -1px 0 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent)), 0 1px 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent)), 0 -1px 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent));
 }
 
+/*
+ * Missing-dwelling cue — muted ink tracking the title boundary, not a card.
+ *
+ * This was a 44px dashed glass card centred on the board. As an empty state it
+ * had no business at the optical centre of the artwork, and as a button with
+ * pointer-events it swallowed clicks on the plan underneath. It now reads like
+ * councilPathLabel: paper-haloed ink on the drawing, carrying no surface of its
+ * own, anchored to the lot's top edge (docs/STUDIO-STYLING-AND-UX.md §6 item 1
+ * — the idle canvas is mostly drawing; coverage probe in
+ * e2e/canvas-checklist-s6.spec.ts).
+ */
 .missingBuildingCue {
   position: absolute;
   transform: translate(-50%, -50%);
   margin: 0;
-  padding: 8px 12px;
-  min-height: 44px;
-  border: 1px dashed var(--hc-line);
-  border-radius: var(--hc-r-control);
-  background: var(--hc-glass-soft);
-  color: var(--hc-ink-muted);
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  /*
+   * Primary ink, not muted — this label sits directly on the parchment with no
+   * panel behind it, so it must clear AA on its own.
+   *
+   * `.councilPathLabel` above uses `--hc-ink-muted` at opacity 0.55 and looks
+   * like the precedent, but it does not render in the survey state, so
+   * canvas-contrast-aa has never measured it. Copying it took this cue below AA
+   * the moment the glass backing came off. `.cadAreaValue` (line ~336) is the
+   * pattern that actually renders on the plan and actually passes: --hc-ink,
+   * transparent background, mono.
+   */
+  color: var(--hc-ink);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.03em;
   pointer-events: none;
   white-space: nowrap;
+  text-shadow:
+    1px 0 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent)),
+    -1px 0 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent)),
+    0 1px 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent)),
+    0 -1px 0 var(--label-halo, color-mix(in srgb, var(--hc-paper) 92%, transparent));
 }
 
 button.missingBuildingCue {
@@ -639,11 +665,24 @@ button.missingBuildingCue {
   cursor: pointer;
   font: inherit;
   text-align: center;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
 }
 
-button.missingBuildingCue:hover {
-  color: var(--hc-ink);
-  border-color: color-mix(in srgb, var(--existing-stroke) 45%, var(--hc-line));
+/* Already at primary ink, so hover reads through the underline, not the colour. */
+button.missingBuildingCue:hover,
+button.missingBuildingCue:focus-visible {
+  text-decoration-style: solid;
+  text-underline-offset: 2px;
+}
+
+/* On-site / touch keeps a real 44px target (CLAUDE.md pointer rules). */
+@media (pointer: coarse) {
+  button.missingBuildingCue {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
 }
 
 .draftGrid {
