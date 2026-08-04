@@ -61,6 +61,7 @@
   padding: 0;
   border: none;
   background: transparent;
+  font-variant-numeric: tabular-nums;
 }
 
 .composerWrap {
@@ -238,6 +239,7 @@
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: none;

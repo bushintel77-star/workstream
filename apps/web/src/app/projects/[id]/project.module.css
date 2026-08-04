@@ -111,6 +111,7 @@
   font-weight: 600;
   color: var(--ink-tertiary);
   letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
 }
 
 .stageLabel {
@@ -227,6 +228,7 @@
   letter-spacing: -0.025em;
   color: var(--ink-primary);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .totalSub {
@@ -326,6 +328,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--ink-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 .taskCard {
