@@ -102,13 +102,20 @@ const BOARD_SPANNING_ALLOWED = new Set([
  *
  * Survey started at 18.8%, dominated by right-data-lane-checklist (7.6%),
  * building-footprint-empty (2.5%) and the two Vicmap clusters (3.9% combined).
- * Getting these down is the Phase 2 work; see OUTSTANDING.md.
  *
  * 16.8 — the missing-dwelling cue stopped being a glass card at the optical
  * centre and became haloed ink on the lot's top edge, so it no longer paints.
+ *
+ * 9.4 — the right data lane stopped forcing the checklist open on every
+ * survey load (§6 item 7). The checklist is now collapsed by default,
+ * reachable via a "2/5" progress pill in the frame band. The pill lives in
+ * the gallery frame and does not paint over the board, so the 7.57% the
+ * checklist occupied is gone with no replacement. Remaining contributors:
+ * the two Vicmap clusters (4.6% combined), utility-honesty-footer (1.8%),
+ * header-context-strip (1.8%), phase-manager (0.7%).
  */
 const COVERAGE_BASELINE: Record<string, number> = {
-  survey: 16.8,
+  survey: 9.4,
   sketch: 12.7,
   cad: 9.4,
   elevation: 0.1,

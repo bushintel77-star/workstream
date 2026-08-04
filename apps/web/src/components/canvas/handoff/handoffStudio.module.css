@@ -592,6 +592,49 @@
   text-align: right;
 }
 
+/*
+ * Survey progress pill — compact "2/5" in the frame band. Matches the .meta
+ * typography (mono, tabular-nums, muted ink) but is interactive: neu-surface
+ * inset like .segment, raised on hover. Lives in the gallery frame, not on
+ * the drawing, so it does not add to chrome coverage over the board.
+ */
+.surveyProgress {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--s-2);
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: var(--hc-neu-surface);
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
+  color: var(--hc-ink-muted);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--hc-fs-2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 160ms var(--ws-ease);
+}
+
+.surveyProgress:hover {
+  color: var(--hc-ink);
+}
+
+.surveyProgressDone {
+  color: var(--hc-ink);
+}
+
+.surveyProgressActive {
+  box-shadow: var(--hc-neu-out-sm,
+      -2px -2px 5px var(--hc-neu-light),
+      2px 2px 6px var(--hc-neu-shadow));
+  color: var(--hc-ink);
+}
+
 .headerTools {
   display: flex;
   align-items: center;
@@ -757,7 +800,8 @@
 .cmdBtn:focus-visible,
 .aiPill:focus-visible,
 .modeBtn:focus-visible,
-.segmentBtn:focus-visible {
+.segmentBtn:focus-visible,
+.surveyProgress:focus-visible {
   outline: 2px solid var(--hc-danger);
   outline-offset: 2px;
 }

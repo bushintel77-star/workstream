@@ -1,7 +1,8 @@
 "use client";
 
-import { BY_TYPE, type SpotLevel, type StudioItem } from "../../studioCatalog";
+import type { SpotLevel, StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
+import { surveyChecklistRows } from "./surveyChecklistRows";
 import css from "./surveyChecklist.module.css";
 
 type Props = {
@@ -29,30 +30,28 @@ export function SurveyChecklist({
   onClose,
   onTraceBuilding,
 }: Props) {
-  const dwellingOk = building.length >= 3;
+  const baseRows = surveyChecklistRows({
+    boundary,
+    building,
+    items,
+    levels,
+    services,
+    easements,
+  });
   const rows: Array<{
     label: string;
     ok: boolean;
     onArm?: () => void;
     testId?: string;
-  }> = [
-    { label: "Boundary traced", ok: boundary.length >= 3 },
-    {
-      label: "Existing dwelling",
-      ok: dwellingOk,
-      onArm: !dwellingOk ? onTraceBuilding : undefined,
-      testId: "survey-check-dwelling",
-    },
-    {
-      label: "Existing trees",
-      ok: items.some((i) => BY_TYPE[i.t]?.existing),
-    },
-    { label: "Spot levels", ok: levels.length > 0 },
-    {
-      label: "Services / easements",
-      ok: services.length > 0 || easements.some((r) => r.length >= 3),
-    },
-  ];
+  }> = baseRows.map((row) => {
+    if (row.label === "Existing dwelling" && !row.ok) {
+      return { ...row, onArm: onTraceBuilding, testId: "survey-check-dwelling" };
+    }
+    if (row.label === "Existing dwelling") {
+      return { ...row, testId: "survey-check-dwelling" };
+    }
+    return row;
+  });
   const done = rows.filter((r) => r.ok).length;
   const complete = done === rows.length;
 

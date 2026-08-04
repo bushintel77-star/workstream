@@ -637,7 +637,7 @@ function initialState(opts: {
       darkOn: false,
       focusOn: false,
       clientView: false,
-      rightDataPanel: opts.mode === "survey" ? "checklist" : null,
+      rightDataPanel: null,
       leftAssetPanel: null,
       leftAssetRestore: null,
       leftAssetPinned: false,
@@ -868,9 +868,12 @@ function reducer(state: State, action: Action): State {
           drawCursor: null,
           servicesEdit: false,
           servicesLocked,
-          rightDataPanel: enteringSurvey
-            ? "checklist"
-            : state.ui.rightDataPanel === "checklist"
+          // The checklist is survey-specific and collapsed by default
+          // (STUDIO-STYLING-AND-UX §6 item 7). Close it when leaving survey;
+          // do not force it open on entry — the progress pill in the frame
+          // band is the entry point.
+          rightDataPanel:
+            !enteringSurvey && state.ui.rightDataPanel === "checklist"
               ? null
               : state.ui.rightDataPanel,
           // Asset panel only lives in CAD/sketch — collapse on mode leave.

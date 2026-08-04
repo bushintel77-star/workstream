@@ -130,6 +130,7 @@ import { ImageLayerPanel } from "./features/sketch/ImageLayerPanel";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
 import { SurveyAnnotationLayer } from "./features/survey/SurveyAnnotationLayer";
 import { SurveyChecklist } from "./features/survey/SurveyChecklist";
+import { surveyChecklistProgress } from "./features/survey/surveyChecklistRows";
 import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { ToolDock } from "./features/toolDock/ToolDock";
 import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
@@ -1827,6 +1828,25 @@ export function HandoffDesignStudio({
   const draftSurface = chrome.draftSurface;
   const ghostsLaneOpen = draftSurface && ui.ghostReviewOpen;
   const rightLaneBusy = ui.rightDataPanel != null || ghostsLaneOpen;
+  const surveyProgress = useMemo(
+    () =>
+      surveyChecklistProgress({
+        boundary: studio.boundary,
+        building: studio.building,
+        items: studio.items,
+        levels: studio.levels,
+        services: studio.services,
+        easements: studio.easements,
+      }),
+    [
+      studio.boundary,
+      studio.building,
+      studio.items,
+      studio.levels,
+      studio.services,
+      studio.easements,
+    ],
+  );
   const streetContextChips = useMemo(() => {
     const chips = studio.keylessOverlays
       .filter(
@@ -3192,6 +3212,36 @@ export function HandoffDesignStudio({
         </nav>
 
         <div className={css.spacer} />
+
+        {/*
+          * Survey progress pill — compact "2/5" indicator in the frame band.
+          * Replaces the right-data-lane-checklist that was forced open on
+          * every survey load (7.57% of the drawing). The pill lives in the
+          * frame band, not on the canvas, so it does not paint over the plan.
+          * Click opens the full checklist in the right data lane on demand.
+          *
+          * §6 item 9 justification (ribbon budget): this is a new persistent
+          * element in the frame band, but it replaces 7.57% of idle chrome
+          * coverage — a net reduction of the drawing surface covered. The
+          * pill is the entry point for the checklist, which is no longer
+          * forced open by default (§6 item 7).
+          */}
+        {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
+          <button
+            type="button"
+            className={`${css.surveyProgress}${surveyProgress.complete ? ` ${css.surveyProgressDone}` : ""}${checklistOpen ? ` ${css.surveyProgressActive}` : ""}`}
+            data-testid="survey-progress-pill"
+            onClick={() =>
+              studio.setUi({
+                rightDataPanel: checklistOpen ? null : "checklist",
+              })
+            }
+            aria-label={`Survey checklist: ${surveyProgress.done} of ${surveyProgress.total} complete`}
+            title="Survey checklist"
+          >
+            {surveyProgress.done}/{surveyProgress.total}
+          </button>
+        ) : null}
 
         {!ui.focusOn && !ui.clientView ? (
           <div className={css.meta} data-testid="header-cadastral-meta">
