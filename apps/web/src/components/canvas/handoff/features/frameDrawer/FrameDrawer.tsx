@@ -17,8 +17,9 @@ import css from "./frameDrawer.module.css";
  *
  * UX:
  * - Closed: a slimline handle (2px line) sits in the frame edge, barely visible.
- * - Hover (or focus) the handle: the drawer slides out gracefully (280ms
- *   cubic-bezier(0.22, 1, 0.36, 1)).
+ * - Hover (or focus) the handle: after a 250ms dwell, the drawer slides out
+ *   gracefully (280ms cubic-bezier(0.22, 1, 0.36, 1)). An incidental pointer
+ *   crossing that leaves before the dwell does not open it.
  * - Mouse leaves: the drawer lingers for 600ms, then retracts.
  * - Focus inside or mouse re-enters: the linger timer cancels — stays open.
  * - While idle (no interaction for 4s): retracts automatically.
@@ -32,6 +33,14 @@ export type FrameEdge = "left" | "right" | "top" | "bottom";
 const LINGER_MS = 600;
 const IDLE_RETRACT_MS = 4000;
 const ANIM_MS = 280;
+/**
+ * Dwell before hover-opening — an incidental pointer crossing must not slide
+ * the drawer over the drawing. Same contract as RailDrawer's HOVER_DELAY_MS
+ * (see rail-drawer-hover.spec.ts). Before this, setOpen(true) fired the instant
+ * the pointer entered, so the 320px right drawer and the top sheets bar both
+ * slid over the plan on every incidental crossing.
+ */
+const HOVER_DELAY_MS = 250;
 
 export function FrameDrawer({
   edge,
@@ -57,6 +66,7 @@ export function FrameDrawer({
   const [hovered, setHovered] = useState(false);
   const lingerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverOpenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const interactedAt = useRef(0);
 
   const clearLinger = useCallback(() => {
@@ -70,6 +80,13 @@ export function FrameDrawer({
     if (idleRef.current) {
       clearTimeout(idleRef.current);
       idleRef.current = null;
+    }
+  }, []);
+
+  const clearHoverOpen = useCallback(() => {
+    if (hoverOpenRef.current) {
+      clearTimeout(hoverOpenRef.current);
+      hoverOpenRef.current = null;
     }
   }, []);
 
@@ -87,28 +104,41 @@ export function FrameDrawer({
     }, IDLE_RETRACT_MS);
   }, [clearIdle]);
 
-  // Open on hover, cancel retract.
+  // Open on hover after a dwell, cancel retract.
   useEffect(() => {
     if (hovered) {
       clearLinger();
-      setOpen(true);
-      interactedAt.current = Date.now();
-      scheduleIdle();
-    } else {
-      scheduleRetract();
+      // Already open: keep it open, just reset the idle timer.
+      if (open) {
+        interactedAt.current = Date.now();
+        scheduleIdle();
+        return;
+      }
+      // Schedule the open after the dwell. An incidental crossing that leaves
+      // before HOVER_DELAY_MS cancels the pending open and the drawer stays
+      // shut — same contract as RailDrawer's hover peek.
+      hoverOpenRef.current = setTimeout(() => {
+        hoverOpenRef.current = null;
+        setOpen(true);
+        interactedAt.current = Date.now();
+        scheduleIdle();
+      }, HOVER_DELAY_MS);
+      return () => clearHoverOpen();
     }
-    return () => {
-      clearLinger();
-    };
-  }, [hovered, clearLinger, scheduleRetract, scheduleIdle]);
+    // Pointer left. Cancel any pending open, then retract after linger.
+    clearHoverOpen();
+    scheduleRetract();
+    return () => clearLinger();
+  }, [hovered, open, clearLinger, clearHoverOpen, scheduleRetract, scheduleIdle]);
 
   // Clean up timers on unmount.
   useEffect(() => {
     return () => {
       clearLinger();
       clearIdle();
+      clearHoverOpen();
     };
-  }, [clearLinger, clearIdle]);
+  }, [clearLinger, clearIdle, clearHoverOpen]);
 
   // Reset idle timer on any interaction inside the drawer.
   const handleInteraction = useCallback(() => {
