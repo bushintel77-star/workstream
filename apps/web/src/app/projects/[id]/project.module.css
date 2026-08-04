@@ -127,12 +127,13 @@
 }
 
 .zone {
-  padding: 18px 20px;
-  border: 1px solid var(--line-hairline);
-  border-radius: var(--r-lg);
-  background: var(--surface-elevated);
-  margin-bottom: var(--s-3);
-  box-shadow: var(--elev-1), var(--elev-inset);
+  padding: 14px 4px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--line-hairline);
+  border-radius: 0;
+  background: transparent;
+  margin-bottom: 0;
+  box-shadow: none;
 }
 
 .zoneName {
@@ -332,10 +333,11 @@
 }
 
 .taskCard {
-  padding: 12px 14px;
-  border: 1px solid var(--line-hairline);
-  background: var(--surface-elevated);
-  border-radius: 8px;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line-hairline);
+  background: transparent;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -383,10 +385,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  border: 1px solid var(--line-hairline);
-  border-radius: 10px;
-  background: var(--surface-elevated);
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line-hairline);
+  border-radius: 0;
+  background: transparent;
   gap: var(--s-3);
 }
 
@@ -465,10 +468,11 @@
 }
 
 .recordingCard {
-  padding: 14px 16px;
-  border: 1px solid var(--line-hairline);
-  border-radius: 10px;
-  background: var(--surface-elevated);
+  padding: 14px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line-hairline);
+  border-radius: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -795,14 +799,15 @@
 }
 
 .measurementCard {
-  padding: 16px;
-  border: 1px solid var(--line-hairline);
-  border-radius: 12px;
-  background: var(--surface-elevated);
+  padding: 14px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line-hairline);
+  border-radius: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .measurementHead {
