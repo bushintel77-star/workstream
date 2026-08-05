@@ -332,6 +332,32 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
 - [ ] **`_trade`** — `solveLiveTradeEstimate` is solved on every estimate change
       and never displayed. The calculation is real and owned by
       `@workstream/domain`; the display is missing.
+- [x] **`BuildableAreaOverlay` was gated behind `buildableAreaOn` which was never
+      set to true.** The overlay was fully implemented (setbacks, TPZ, easement
+      exclusion) but had no UI toggle — `ui.buildableAreaOn` was initialized
+      `false` and nothing ever set it to `true`. **Fixed**: added a "Buildable
+      area envelope" toggle in `LayersPanel` (`data-testid="layers-buildable-area-toggle"`)
+      and a Cmd+K command "Buildable area envelope" that toggles the flag.
+- [x] **Canopy image scan was disabled (`autoCanopyScan={false}` hardcoded).**
+      `ingestCanopyImage` and `proposeFromCanopyImage` were wired but never
+      triggered because `AerialSlot`'s auto-scan effect was permanently gated
+      off. **Fixed**: added a `canopyScanRequest` nonce to UI state and a
+      Cmd+K command "Scan canopy from aerial" that increments it. `AerialSlot`
+      watches the nonce and runs `runCanopyScan` once on change — manual
+      trigger, no auto-firing on every aerial load.
+- [x] **Five dead components deleted (2026-08-05 feature audit).**
+      `QuoteSurface` (superseded by `LiveCostRail`), `PhaseManagerChip`
+      (superseded by `HeaderPhaseSelect`), `CanvasAutosaveChip` (superseded
+      by `UnifiedSaveStatus`), `CanvasHeaderRail` and `CanvasTopBorder`
+      (both superseded by `Tier1TopBar`). All were exported, never imported,
+      and had live replacements. Deleted with their orphan CSS modules.
+- [x] **`MarginStrip` deleted (2026-08-05 feature audit).** Was wired
+      pre-`8661779`, dropped in the "restore DNA chrome" consolidation. Its
+      function (bottom strip with history/state/actions/hint/stamp/legal) was
+      absorbed by individual components — `CadPlanBoard` renders its own
+      honesty footer, `SketchDock` has undo/redo, `Tier1TopBar` handles the
+      top bar. No clear home remained; deleted per the "don't add backwards-
+      compatibility shims for removed code" rule.
 - [x] **`HOVER_DELAY_MS` (`RailDrawer`)** — the hover effect called
       `setOpen(true)` immediately, so the 250 ms guard its own comment describes
       never applied and the drawer opened the instant the pointer crossed it.

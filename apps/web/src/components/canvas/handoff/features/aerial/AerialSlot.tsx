@@ -37,6 +37,13 @@ type Props = {
    * was flooding Cad with AI proposals on every aerial load.
    */
   autoCanopyScan?: boolean;
+  /**
+   * One-shot canopy scan request — when this nonce changes, run the scan
+   * once against the loaded aerial. Lets the operator trigger canopy
+   * detection manually (Cmd+K "Scan canopy from aerial") without auto-firing
+   * on every aerial load.
+   */
+  canopyScanRequest?: number;
   /** Vicmap / Stage 1 title cue (not "ghost cadastral"). */
   titleLocked?: boolean;
   boundarySource?: "vicmap" | "manual" | "seed";
@@ -79,6 +86,7 @@ export function AerialSlot({
   allowAerial = true,
   allowPlanUnderlay = false,
   autoCanopyScan = false,
+  canopyScanRequest = 0,
   titleLocked = false,
   boundarySource = "seed",
   siteLabel = null,
@@ -149,6 +157,15 @@ export function AerialSlot({
     if (!aerialEnabled || !autoCanopyScan || !uri || frameOn) return;
     void runCanopyScan(uri);
   }, [uri, frameOn, aerialEnabled, autoCanopyScan, runCanopyScan]);
+
+  // One-shot manual canopy scan — triggered when canopyScanRequest changes.
+  const lastScanReq = useRef(0);
+  useEffect(() => {
+    if (canopyScanRequest === lastScanReq.current) return;
+    lastScanReq.current = canopyScanRequest;
+    if (!aerialEnabled || !uri || frameOn) return;
+    void runCanopyScan(uri);
+  }, [canopyScanRequest, aerialEnabled, uri, frameOn, runCanopyScan]);
 
   const acceptFile = (file: File | null) => {
     if (!underlayEnabled) return;

@@ -3935,6 +3935,7 @@ export function HandoffDesignStudio({
                   allowAerial={aerialOk}
                   allowPlanUnderlay={draftingPlate && !ui.foundationCleanse}
                   autoCanopyScan={false}
+                  canopyScanRequest={ui.canopyScanRequest}
                   titleLocked={titleLocked}
                   boundarySource={ui.boundarySource}
                   siteLabel={displayAddress}
@@ -5456,6 +5457,7 @@ export function HandoffDesignStudio({
               opacity={ui.layerOpacity}
               setbackOn={ui.setbackOn}
               shadeOn={ui.shadeOn}
+              buildableAreaOn={ui.buildableAreaOn}
               items={studio.items}
               noteCount={studio.annotations.length}
               lockedLayers={ui.servicesLocked ? ["services"] : []}
@@ -5463,6 +5465,7 @@ export function HandoffDesignStudio({
               onOpacity={studio.setLayerOpacity}
               onSetback={(setbackOn) => studio.setUi({ setbackOn })}
               onShade={(shadeOn) => studio.setUi({ shadeOn })}
+              onBuildableArea={(buildableAreaOn) => studio.setUi({ buildableAreaOn })}
               onOpenServices={() => {
                 summonStickyMeta(projectId, "services");
                 setStickyRestoreNonce((n) => n + 1);
@@ -5920,6 +5923,12 @@ export function HandoffDesignStudio({
           }
           onToggleArBirdseye={() =>
             studio.setUi({ arBirdseyeOn: !ui.arBirdseyeOn })
+          }
+          onToggleBuildableArea={() =>
+            studio.setUi({ buildableAreaOn: !ui.buildableAreaOn })
+          }
+          onScanCanopy={() =>
+            studio.setUi({ canopyScanRequest: ui.canopyScanRequest + 1 })
           }
           onArtboardPlan={() => selectArtboard("plan")}
           onGoQuote={() => studio.setUi({ rightDataPanel: "quote" })}

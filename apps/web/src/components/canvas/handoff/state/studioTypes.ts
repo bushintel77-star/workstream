@@ -166,6 +166,8 @@ export type StudioUiState = {
   paintSwatch: StudioItemType;
   siteIdx: number;
   canopyScanning: boolean;
+  /** Increment to request a one-shot canopy scan from the loaded aerial. */
+  canopyScanRequest: number;
   sunPlay: boolean;
   zoom: number;
   /** Zoom origin (%) — outdoor garden focus after Fit. */

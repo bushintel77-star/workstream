@@ -149,7 +149,7 @@ export function ImageLayerPanel({
   );
 
   return (
-    <div className={css.panel}>
+    <div className={css.panel} data-testid="image-layer-panel">
       <div className={css.header}>
         <h3 className={css.title}>Image layers</h3>
         <button

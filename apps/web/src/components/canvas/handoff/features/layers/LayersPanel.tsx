@@ -17,6 +17,7 @@ type Props = {
   opacity: LayerOpacity;
   setbackOn: boolean;
   shadeOn: boolean;
+  buildableAreaOn: boolean;
   items: StudioItem[];
   noteCount?: number;
   /** Layer keys frozen as survey site context (no opacity slider). */
@@ -25,6 +26,7 @@ type Props = {
   onOpacity: (key: LayerKey, value: number) => void;
   onSetback: (on: boolean) => void;
   onShade: (on: boolean) => void;
+  onBuildableArea: (on: boolean) => void;
   /** Open the Services ledger (replaces the old services opacity dial). */
   onOpenServices?: () => void;
 };
@@ -48,6 +50,7 @@ export function LayersPanel({
   opacity,
   setbackOn,
   shadeOn,
+  buildableAreaOn,
   items,
   noteCount = 0,
   lockedLayers = [],
@@ -55,6 +58,7 @@ export function LayersPanel({
   onOpacity,
   onSetback,
   onShade,
+  onBuildableArea,
   onOpenServices,
 }: Props) {
   if (!open) return null;
@@ -144,6 +148,19 @@ export function LayersPanel({
             checked={shadeOn}
             onChange={(e) => onShade(e.target.checked)}
             aria-label="Sun/shade"
+          />
+          <span className={css.knob} aria-hidden />
+        </span>
+      </label>
+      <label className={css.switchRow} data-testid="layers-buildable-area-toggle">
+        <span className={css.switchText}>Buildable area envelope</span>
+        <span className={css.switch} data-on={buildableAreaOn ? "true" : "false"}>
+          <input
+            type="checkbox"
+            className={css.switchInput}
+            checked={buildableAreaOn}
+            onChange={(e) => onBuildableArea(e.target.checked)}
+            aria-label="Buildable area"
           />
           <span className={css.knob} aria-hidden />
         </span>

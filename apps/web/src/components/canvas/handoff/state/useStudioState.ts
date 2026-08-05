@@ -336,6 +336,8 @@ type Ui = {
    */
   siteExplicit?: boolean;
   canopyScanning: boolean;
+  /** Increment to request a one-shot canopy scan from the loaded aerial. */
+  canopyScanRequest: number;
   sunPlay: boolean;
   zoom: number;
   /** Zoom origin on the board (%) — outdoor remnant centre after Fit. */
@@ -688,6 +690,7 @@ function initialState(opts: {
       siteIdx: 0,
       siteExplicit: false,
       canopyScanning: false,
+      canopyScanRequest: 0,
       sunPlay: false,
       zoom: 1,
       focusX: 50,

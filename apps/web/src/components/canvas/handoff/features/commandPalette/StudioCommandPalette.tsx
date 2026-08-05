@@ -75,6 +75,10 @@ type Props = {
   onToggleLiveTelemetry?: () => void;
   /** Toggle on-site bird's-eye AR overlay. */
   onToggleArBirdseye?: () => void;
+  /** Toggle buildable area envelope (setbacks + TPZ + easements). */
+  onToggleBuildableArea?: () => void;
+  /** Trigger a one-shot canopy scan from the loaded aerial. */
+  onScanCanopy?: () => void;
   /** Open the Plan artboard viewport. */
   onArtboardPlan?: () => void;
   /** Cycle ASLA/SILA lifecycle phase. */
@@ -126,6 +130,8 @@ export function StudioCommandPalette({
   onToggleIrrigationUniformity,
   onToggleLiveTelemetry,
   onToggleArBirdseye,
+  onToggleBuildableArea,
+  onScanCanopy,
   onArtboardPlan,
   onCycleLifecyclePhase,
 }: Props) {
@@ -393,6 +399,32 @@ export function StudioCommandPalette({
           } satisfies StudioCommand,
         ]
         : []),
+      ...(onToggleBuildableArea
+        ? [
+          {
+            id: "buildable-area",
+            label: "Buildable area envelope",
+            detail:
+              "Setback lines, TPZ rings, easement exclusion — the compliant buildable footprint",
+            keywords:
+              "buildable area envelope setback tpz easement compliance footprint boundary",
+            run: onToggleBuildableArea,
+          } satisfies StudioCommand,
+        ]
+        : []),
+      ...(onScanCanopy
+        ? [
+          {
+            id: "scan-canopy",
+            label: "Scan canopy from aerial",
+            detail:
+              "Colour-heuristic canopy detection from the loaded aerial — ghost tree proposals",
+            keywords:
+              "canopy scan aerial colour heuristic tree detection ghost propose vision",
+            run: onScanCanopy,
+          } satisfies StudioCommand,
+        ]
+        : []),
       ...(onArtboardPlan
         ? [
           {
@@ -531,6 +563,8 @@ export function StudioCommandPalette({
     onToggleIrrigationUniformity,
     onToggleLiveTelemetry,
     onToggleArBirdseye,
+    onToggleBuildableArea,
+    onScanCanopy,
     onArtboardPlan,
     onCycleLifecyclePhase,
     onTiltView,
