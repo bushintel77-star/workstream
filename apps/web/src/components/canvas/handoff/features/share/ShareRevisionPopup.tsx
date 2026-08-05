@@ -167,7 +167,7 @@ export function ShareRevisionPopup({
     refresh();
     const id = window.setInterval(refresh, 12_000);
     return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh on open only
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh on open only; projectId is route-scoped and cannot change without remounting the popup (Next.js App Router remounts on route change), so the refresh closure is never stale
   }, [open, projectId]);
 
   // Esc/trap/autofocus/restore — gated on !confirmOpen so the nested

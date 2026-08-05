@@ -393,6 +393,8 @@ export function HandoffDesignStudio({
     workableOutdoorM2,
     siteSchedule,
     acceptHorizonCard,
+    setUi,
+    setSelection,
   } = studio;
   /*
    * Cross-artefact findings over the *saved* board — refetched on each durable
@@ -1213,12 +1215,11 @@ export function HandoffDesignStudio({
     const planMode =
       ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
     if (!planMode || ui.frameOn) {
-      if (ui.tiltDeg !== 0) studio.setUi({ tiltDeg: 0 });
+      if (ui.tiltDeg !== 0) setUi({ tiltDeg: 0 });
       clearTiltAnimKind();
       setTiltPauseHint((v) => (v ? false : v));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ui.mode, ui.frameOn, ui.tiltDeg, clearTiltAnimKind]);
+  }, [ui.mode, ui.frameOn, ui.tiltDeg, clearTiltAnimKind, setUi]);
 
   /** Pause hint tracks the lens. */
   useEffect(() => {
@@ -1229,9 +1230,8 @@ export function HandoffDesignStudio({
   useEffect(() => {
     if (!isTiltActive(ui.tiltDeg)) return;
     if (!ui.selectedId && ui.groupIds.length === 0) return;
-    studio.setSelection(null, []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ui.tiltDeg, ui.selectedId, ui.groupIds.length]);
+    setSelection(null, []);
+  }, [ui.tiltDeg, ui.selectedId, ui.groupIds.length, setSelection]);
 
   /** Client view — slow 2s tilt-in flourish; flatten only when leaving client view. */
   const clientTiltOnceRef = useRef(false);
@@ -2846,7 +2846,7 @@ export function HandoffDesignStudio({
     if (ui.utilityPanel != null || ui.coachOpen) {
       studio.setUi({ utilityPanel: null, coachOpen: false });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot: clear panels when drawing becomes hot, not every time a panel opens while drawing
   }, [drawingHot]);
 
   const armType = (t: StudioItemType) => {
