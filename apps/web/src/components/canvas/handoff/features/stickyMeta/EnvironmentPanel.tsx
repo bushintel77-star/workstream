@@ -73,7 +73,7 @@ export function EnvironmentPanel({
           </span>
           <div>
             <p className={metaCss.kicker}>Climate · indicative</p>
-            <p className={metaCss.title}>Environment</p>
+            <h2 className={metaCss.title}>Environment</h2>
           </div>
         </div>
         <button type="button" className={metaCss.close} onClick={onClose}>

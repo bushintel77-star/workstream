@@ -31,7 +31,7 @@ export function TreesMetaPanel({ open, meta, onClose }: Props) {
           </span>
           <div>
             <p className={css.kicker}>Vegetation · survey</p>
-            <p className={css.title}>Existing trees</p>
+            <h2 className={css.title}>Existing trees</h2>
           </div>
         </div>
         <button type="button" className={css.close} onClick={onClose}>

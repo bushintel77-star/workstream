@@ -43,7 +43,7 @@ export function SiteMetaPanel({ open, meta, outdoorM2 = null, onClose }: Props) 
           </span>
           <div>
             <p className={css.kicker}>Cadastral · indicative</p>
-            <p className={css.title}>Site</p>
+            <h2 className={css.title}>Site</h2>
           </div>
         </div>
         <button type="button" className={css.close} onClick={onClose}>

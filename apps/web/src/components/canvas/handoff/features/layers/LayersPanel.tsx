@@ -64,7 +64,7 @@ export function LayersPanel({
   return (
     <div className={css.panel} data-testid="layers-panel" role="dialog" aria-label="Layers">
       <div className={css.head}>
-        <p className={css.kicker}>Layers</p>
+        <h2 className={css.kicker}>Layers</h2>
         <button type="button" className={css.close} onClick={onClose} aria-label="Close layers">
           Close
         </button>

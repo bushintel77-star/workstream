@@ -186,14 +186,14 @@ export function ServicesLedger({
           </span>
           <div>
             <p className={metaCss.kicker}>Site inventory · live</p>
-            <p className={metaCss.title}>
+            <h2 className={metaCss.title}>
               Services
               {locked ? (
                 <span className={css.locked} data-testid="services-ledger-locked">
                   Survey locked
                 </span>
               ) : null}
-            </p>
+            </h2>
           </div>
         </div>
         <button type="button" className={metaCss.close} onClick={onClose}>
