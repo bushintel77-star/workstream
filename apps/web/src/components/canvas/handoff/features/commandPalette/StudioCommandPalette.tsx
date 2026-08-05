@@ -9,6 +9,7 @@ import {
 } from "../../studioCatalog";
 import { BYDA_KIND_LABEL } from "../../geometry/bydaPlanStyles";
 import { rankAssetCommands } from "../assetPanel/assetCommandRank";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import css from "./commandPalette.module.css";
 
 export type StudioCommand = {
@@ -129,6 +130,7 @@ export function StudioCommandPalette({
   onCycleLifecyclePhase,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
   const commands = useMemo<StudioCommand[]>(() => {
@@ -544,9 +546,12 @@ export function StudioCommandPalette({
   useEffect(() => {
     if (!open) return;
     setActive(0);
-    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
-    return () => window.clearTimeout(t);
   }, [open]);
+
+  // Esc/trap/autofocus/restore — the input is the first focusable in .panel
+  // DOM order, so the hook's generic autofocus lands there. Keep Arrow/Enter
+  // nav in the panel's own onKeyDown below.
+  useFocusTrap(open, panelRef, onClose);
 
   useEffect(() => {
     setActive(0);
@@ -568,14 +573,12 @@ export function StudioCommandPalette({
     <div className={css.backdrop} data-testid="canvas-command-palette" onClick={onClose}>
       <div
         className={css.panel}
+        ref={panelRef}
         role="dialog"
         aria-label="Command palette"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            e.preventDefault();
-            onClose();
-          } else if (e.key === "ArrowDown") {
+          if (e.key === "ArrowDown") {
             e.preventDefault();
             setActive((i) => Math.min(filtered.length - 1, i + 1));
           } else if (e.key === "ArrowUp") {

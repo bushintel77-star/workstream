@@ -13,6 +13,10 @@ test.describe("Right data lane keyboard contract", () => {
     await page.goto(`/projects/${projectId}?mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
+    // The checklist is collapsed by default (§6 item 7) — open it via the
+    // progress pill before testing keyboard behavior.
+    await page.getByTestId("survey-progress-pill").click();
+
     const lane = page.getByTestId("right-data-lane-checklist");
     await expect(lane).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("survey-checklist")).toBeVisible();
@@ -29,6 +33,10 @@ test.describe("Right data lane keyboard contract", () => {
     const { projectId } = await createSurveyProject(request);
     await page.goto(`/projects/${projectId}?mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+
+    // The checklist is collapsed by default (§6 item 7) — open it via the
+    // progress pill before testing keyboard behavior.
+    await page.getByTestId("survey-progress-pill").click();
 
     const lane = page.getByTestId("right-data-lane-checklist");
     await expect(lane).toBeVisible({ timeout: 15_000 });

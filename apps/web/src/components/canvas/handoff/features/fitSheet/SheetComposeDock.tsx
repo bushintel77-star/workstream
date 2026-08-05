@@ -19,6 +19,7 @@ import {
 import css from "./sheetCompose.module.css";
 import { Dialog } from "../../../../ui";
 import { KitButton } from "../../../../ui/kit";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 /** Summoned peel dismisses when the operator walks away. */
 const COMPOSE_LINGER_MS = 4_200;
@@ -56,6 +57,7 @@ export function SheetComposeDock({
   onClear,
 }: Props) {
   const lingerRef = useRef<number | null>(null);
+  const peelRef = useRef<HTMLDivElement>(null);
   const atCap = pack.widgets.length >= MAX_SHEET_WIDGETS;
   const pen = pack.pen ?? "technical";
   const atmosphere = pack.atmosphere ?? "graphite";
@@ -77,20 +79,13 @@ export function SheetComposeDock({
     return () => {
       if (lingerRef.current != null) window.clearTimeout(lingerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bumpLinger closes over open/onClose; re-fire only on open toggle
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  // Esc/trap/autofocus/restore — replaces the bespoke Esc effect. The linger
+  // timer resets on pointer activity below; onFocus mirrors that for keyboard
+  // nav now that Tab-trap makes keyboard use of this panel real.
+  useFocusTrap(open, peelRef, onClose);
 
   if (!open) return null;
 
@@ -103,8 +98,9 @@ export function SheetComposeDock({
         if (lingerRef.current != null) window.clearTimeout(lingerRef.current);
       }}
       onPointerLeave={bumpLinger}
+      onFocus={bumpLinger}
     >
-      <div className={css.peel} data-testid="sheet-compose-peel" role="dialog">
+      <div className={css.peel} ref={peelRef} data-testid="sheet-compose-peel" role="dialog">
         <div className={css.peelHead}>
           <p className={css.peelKicker}>Sheet</p>
           <div className={css.peelHeadActions}>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import type { BoardDisclaimer } from "@workstream/contracts";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import css from "./safetyWaiverConfirm.module.css";
 
 type Props = {
@@ -29,22 +30,13 @@ export function SafetyWaiverConfirm({
   onConfirm,
   onCancel,
 }: Props) {
-  const cancelRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!disclaimer) return;
-    // Land on Cancel: the safe choice should be the one already under the hand.
-    cancelRef.current?.focus();
-  }, [disclaimer]);
-
-  useEffect(() => {
-    if (!disclaimer) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [disclaimer, onCancel]);
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Cancel is the first focusable in .card DOM order (precedes Confirm), so
+  // the hook's generic autofocus lands on Cancel — the safe default.
+  // Tab-trap also closes the gap where Tab could reach content behind the
+  // scrim (there is no click-outside dismiss by design — a hard confirm is
+  // answered, not escaped past — and an un-trapped Tab undermined that).
+  useFocusTrap(Boolean(disclaimer), cardRef, onCancel);
 
   if (!disclaimer) return null;
 
@@ -53,6 +45,7 @@ export function SafetyWaiverConfirm({
     <div className={css.scrim} data-testid="safety-waiver-confirm">
       <div
         className={css.card}
+        ref={cardRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="safety-waiver-title"
@@ -74,7 +67,6 @@ export function SafetyWaiverConfirm({
           <button
             type="button"
             className={css.cancel}
-            ref={cancelRef}
             data-testid="safety-waiver-cancel"
             onClick={onCancel}
           >

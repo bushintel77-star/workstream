@@ -1,6 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import { KitInput, KitSelect } from "@/components/ui/kit";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import css from "./deckInspectorDock.module.css";
 
 type Props = {
@@ -51,17 +53,20 @@ export function DeckInspectorDock({
   paletteOptions,
   fontOptions,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(open, containerRef, onClose);
   if (!open) return null;
 
   return (
     <div
+      ref={containerRef}
       className={css.dock}
       data-testid="deck-inspector-dock"
       role="dialog"
       aria-label="Deck settings"
     >
       <div className={css.dockHeader}>
-        <span className={css.dockTitle}>Deck settings</span>
+        <h2 className={css.dockTitle}>Deck settings</h2>
         <button
           type="button"
           className={css.dockClose}

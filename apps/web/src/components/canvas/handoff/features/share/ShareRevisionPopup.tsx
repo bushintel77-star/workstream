@@ -11,6 +11,7 @@ import {
   listShareRevisionsAction,
 } from "../../../../../app/actions";
 import { useToast } from "../../../../ToastHost";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { ExportLiabilityPrompt } from "./ExportLiabilityPrompt";
 import { SafetyWaiverConfirm } from "./SafetyWaiverConfirm";
 import { resolveShareLiabilityGate } from "./shareLiabilityGate";
@@ -169,16 +170,9 @@ export function ShareRevisionPopup({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh on open only
   }, [open, projectId]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      // The safety confirm owns Escape while it is up — cancelling the modal
-      // must not also tear down the popup behind it.
-      if (e.key === "Escape" && !confirmOpen) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, confirmOpen]);
+  // Esc/trap/autofocus/restore — gated on !confirmOpen so the nested
+  // SafetyWaiverConfirm alertdialog owns Escape and Tab while it is up.
+  useFocusTrap(open && !confirmOpen, panelRef, onClose);
 
   useEffect(() => {
     if (!open) return;

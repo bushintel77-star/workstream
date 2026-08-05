@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import css from "./coach.module.css";
 
 const STORAGE_KEY = "cc_coach_done";
@@ -29,6 +30,7 @@ type Props = {
 
 export function StudioCoachMarks({ force = false }: Props) {
   const [step, setStep] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (force) {
@@ -43,11 +45,6 @@ export function StudioCoachMarks({ force = false }: Props) {
     setStep(0);
   }, [force]);
 
-  if (step == null || step >= STEPS.length) return null;
-  const current = STEPS[step]!;
-  const placement =
-    current.placement === "topRight" ? css.topRight : css.bottomLeft;
-
   const finish = () => {
     try {
       localStorage.setItem(STORAGE_KEY, "1");
@@ -57,16 +54,25 @@ export function StudioCoachMarks({ force = false }: Props) {
     setStep(null);
   };
 
+  // Active only while a coach step is actually mounted.
+  useFocusTrap(step != null, containerRef, finish);
+
+  if (step == null || step >= STEPS.length) return null;
+  const current = STEPS[step]!;
+  const placement =
+    current.placement === "topRight" ? css.topRight : css.bottomLeft;
+
   return (
     <div
+      ref={containerRef}
       className={`${css.mark} ${placement}`}
       data-testid="canvas-coach-mark"
       role="dialog"
       aria-label="Onboarding"
     >
-      <p className={css.title}>
+      <h2 className={css.title}>
         {step + 1}. {current.title}
-      </p>
+      </h2>
       <p className={css.body}>{current.body}</p>
       <div className={css.actions}>
         <button
