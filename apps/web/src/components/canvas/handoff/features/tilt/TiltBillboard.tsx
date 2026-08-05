@@ -10,6 +10,10 @@ import {
   resolveItemSpreadGrownM,
 } from "../../geometry/itemHeight";
 import { GardenElevationGlyph } from "../elevation/GardenElevationGlyph";
+import {
+  SpeciesSymbol,
+  isSpeciesSymbolType,
+} from "../render/symbols/SpeciesSymbol";
 import { billboardStyle } from "./tiltMath";
 import css from "./tilt.module.css";
 
@@ -61,7 +65,28 @@ export function TiltBillboard({ item, ppm, tiltDeg, ink, growth = 1 }: Props) {
         className={css.footprint}
         style={{ width: footprintW, height: footprintH }}
       >
-        <StudioGlyph type={item.t} ink={ink} symbolId={item.symbolId} />
+        {isSpeciesSymbolType(item.t) ? (
+          <svg
+            viewBox="0 0 100 100"
+            width="100%"
+            height="100%"
+            overflow="visible"
+            aria-hidden
+            data-testid="tilt-billboard-species"
+            data-symbol-type={item.t}
+          >
+            <SpeciesSymbol
+              type={item.t}
+              itemId={item.id}
+              night={!ink}
+              ghost={Boolean(item.ghost)}
+              ink={ink}
+              label={d?.name}
+            />
+          </svg>
+        ) : (
+          <StudioGlyph type={item.t} ink={ink} symbolId={item.symbolId} />
+        )}
       </div>
       <div className={css.billboardFace} style={face}>
         <svg
