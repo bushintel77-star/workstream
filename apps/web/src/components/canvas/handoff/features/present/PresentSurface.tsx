@@ -1368,6 +1368,12 @@ function PanelView({
           <div
             className={css.panelContent}
             onClick={() => setEditing(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setEditing(true);
+              }
+            }}
             role="button"
             tabIndex={0}
           >
