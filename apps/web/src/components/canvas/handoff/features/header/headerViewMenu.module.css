@@ -67,6 +67,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-height: calc(100dvh - var(--ws-frame-top, 46px) - 24px);
+  overflow-y: auto;
   animation: menuIn var(--hc-motion, 180ms) var(--ws-ease) both;
 }
 

@@ -425,6 +425,14 @@
   flex: none;
 }
 
+/* View menu wrapper — direct child of headerTools so client view can show only
+   the trigger while hiding the rest of the right zone. */
+.viewMenuWrap {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
 .shareToast {
   position: absolute;
   top: calc(var(--ws-safe-top, 40px) + 10px);
@@ -1455,10 +1463,10 @@
   display: none;
 }
 
-.rootClient .headerTools [data-testid="client-view-top"],
-.rootClient .headerTools [data-testid="meeting-pack-print"],
-.rootClient .headerTools [data-testid="header-view-menu"] {
-  display: inline-flex;
+/* Client view keeps only the View menu trigger; the exit/print actions live
+   inside the menu itself. .viewMenuWrap is the direct headerTools child. */
+.rootClient .headerTools>.viewMenuWrap {
+  display: inline-flex !important;
 }
 
 /** Quiet presentation caption — frost, bottom-centre, never under zoomWorld. */
