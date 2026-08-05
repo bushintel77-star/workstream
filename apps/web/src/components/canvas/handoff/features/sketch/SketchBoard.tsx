@@ -20,8 +20,6 @@ import {
 } from "./sketchCursors";
 import { SketchDock } from "./SketchDock";
 import { semanticForTheme } from "../../../../../styles/colorTokens";
-import { MarginStrip } from "../surfaces/MarginStrip";
-import marginCss from "../surfaces/marginStrip.module.css";
 import css from "./sketch.module.css";
 
 type SketchTool = "pen" | "eraser";
@@ -169,7 +167,6 @@ export function SketchBoard({
   const all = live
     ? [...strokes, { id: "__live", points: live.points, widthPx: live.widthPx }]
     : strokes;
-  const canAct = strokes.length > 0;
   const ink = semanticForTheme(darkOn).textPrimary;
 
   return (
@@ -265,87 +262,24 @@ export function SketchBoard({
         })}
       </svg>
       {!readOnly && !hideChrome ? (
-        <>
-          <SketchDock
-            tool={tool}
-            tip={tip}
-            active={active}
-            formalizing={formalizing}
-            anchorRef={rootRef}
-            onTool={setTool}
-            onTip={setTip}
-            onActivate={onActivate}
-            onOpenImageLayers={onOpenImageLayers}
-          />
-          <MarginStrip
-            dark={darkOn}
-            history={
-              <>
-                <button
-                  type="button"
-                  className={marginCss.chip}
-                  data-testid="sketch-undo-stroke"
-                  disabled={formalizing || (!canUndo && !canAct)}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={() => onUndoLast?.()}
-                  title="Undo"
-                >
-                  Undo
-                </button>
-                <button
-                  type="button"
-                  className={marginCss.chip}
-                  data-testid="sketch-redo"
-                  disabled={formalizing || !canRedo}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={() => onRedo?.()}
-                  title="Redo"
-                >
-                  Redo
-                </button>
-              </>
-            }
-            actions={
-              canAct ? (
-                <>
-                  {onTidy ? (
-                    <button
-                      type="button"
-                      className={marginCss.chip}
-                      data-testid="sketch-tidy"
-                      disabled={formalizing}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={onTidy}
-                    >
-                      Tidy
-                    </button>
-                  ) : null}
-                  {onFormalizeToCad ? (
-                    <button
-                      type="button"
-                      className={`${marginCss.chip} ${marginCss.chipPrimary}`}
-                      data-testid="sketch-convert-cad"
-                      disabled={formalizing}
-                      aria-busy={formalizing}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={onFormalizeToCad}
-                    >
-                      {formalizing ? "Translating…" : "Formalize to CAD"}
-                    </button>
-                  ) : null}
-                </>
-              ) : null
-            }
-            hint={
-              formalizing
-                ? "Translating sketch to CAD with AI…"
-                : canAct
-                  ? `${strokes.length} stroke${strokes.length === 1 ? "" : "s"} · tidy stays hand-drawn · formalize when ready`
-                  : "Sketch with a finger or stylus · formalize only when ready"
-            }
-            legal={undefined}
-          />
-        </>
+        <SketchDock
+          tool={tool}
+          tip={tip}
+          active={active}
+          formalizing={formalizing}
+          anchorRef={rootRef}
+          onTool={setTool}
+          onTip={setTip}
+          onActivate={onActivate}
+          onOpenImageLayers={onOpenImageLayers}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={() => onUndoLast?.()}
+          onRedo={onRedo}
+          onTidy={onTidy}
+          onFormalizeToCad={onFormalizeToCad}
+          strokeCount={strokes.length}
+        />
       ) : null}
     </div>
   );

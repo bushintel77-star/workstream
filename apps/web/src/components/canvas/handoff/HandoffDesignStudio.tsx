@@ -175,7 +175,7 @@ import { IrrigationUniformityDock } from "./features/zones/IrrigationUniformityD
 import { LiveTelemetryWash } from "./features/telemetry/LiveTelemetryWash";
 import { LiveTelemetryDock } from "./features/telemetry/LiveTelemetryDock";
 import { ArBirdseyeOverlay } from "./features/ar/ArBirdseyeOverlay";
-import { PhaseManagerChip } from "./features/phase/PhaseManagerChip";
+import { HeaderPhaseSelect } from "./features/phase/HeaderPhaseSelect";
 import {
   loadLifecyclePhasePrefs,
   saveLifecyclePhasePrefs,
@@ -3366,6 +3366,20 @@ export function HandoffDesignStudio({
               </div>
             ) : null}
 
+            {/*
+              * Lifecycle phase dropdown — project-level setting, lives with
+              * brand/address/meta in the header left zone, not floating over
+              * the canvas. Hidden in compact/phone/focus/client views.
+              */}
+            {!ui.focusOn &&
+              !ui.clientView &&
+              !chrome.compact ? (
+              <HeaderPhaseSelect
+                phase={ui.lifecyclePhase}
+                onPhase={(lifecyclePhase) => studio.setUi({ lifecyclePhase })}
+              />
+            ) : null}
+
             {ui.frameOn && !ui.clientView ? (
               <div className={css.segment} data-testid="paper-size-control">
                 {(["a3", "a4"] as const).map((p) => (
@@ -5079,16 +5093,6 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {planOn &&
-          !ui.focusOn &&
-          !ui.clientView &&
-          !ui.frameOn &&
-          !chrome.compact ? (
-          <PhaseManagerChip
-            phase={ui.lifecyclePhase}
-            onPhase={(lifecyclePhase) => studio.setUi({ lifecyclePhase })}
-          />
-        ) : null}
 
         {planOn &&
           !ui.focusOn &&

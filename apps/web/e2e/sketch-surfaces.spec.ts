@@ -7,7 +7,7 @@ import {
 } from "./helpers";
 
 test.describe("Sketch surfaces reconciliation", () => {
-  test("plastic tray + margin strip; night dolphin; chrome gate", async ({
+  test("plastic tray + dock undo; night dolphin; chrome gate", async ({
     page,
     request,
   }) => {
@@ -21,21 +21,17 @@ test.describe("Sketch surfaces reconciliation", () => {
     const tray = page.getByTestId("sketch-convert-bar");
     await expect(tray).toBeVisible();
     await expect(page.getByTestId("sketch-pen")).toBeVisible();
-    await expect(page.getByTestId("margin-strip")).toBeVisible();
+    // Undo/Redo now live in the sketch dock, not a separate margin strip.
     await expect(page.getByTestId("sketch-undo-stroke")).toBeVisible();
+    await expect(page.getByTestId("margin-strip")).toHaveCount(0);
 
     // No duplicate floating undo filmstrip in sketch
     await expect(page.getByTestId("undo-filmstrip")).toHaveCount(0);
 
-    // Gate C — tray + strip outside zoom-world
+    // Gate C — tray outside zoom-world
     expect(
       await page
         .locator('[data-testid="zoom-world"] [data-testid="sketch-convert-bar"]')
-        .count(),
-    ).toBe(0);
-    expect(
-      await page
-        .locator('[data-testid="zoom-world"] [data-testid="margin-strip"]')
         .count(),
     ).toBe(0);
     expect(

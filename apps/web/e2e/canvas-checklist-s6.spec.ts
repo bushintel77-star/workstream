@@ -84,7 +84,6 @@ const BOARD_SPANNING_ALLOWED = new Set([
   "canvas-context-card-chrome",
   "canvas-header-rail-chrome",
   "canvas-top-border-chrome",
-  "phase-manager-chrome",
   "tool-dock-chrome",
   "vic-gov-status-chrome",
   "frame-drawer-artboards",
@@ -123,11 +122,17 @@ const BOARD_SPANNING_ALLOWED = new Set([
  * clusters occupied. The drawer handles overflow with its own scrollbar.
  * Remaining survey contributors: utility-honesty-footer (1.8%),
  * header-context-strip (1.8%), phase-manager (0.7%).
+ *
+ * 4.1 (survey/cad) / 7.9 (sketch) — the floating PhaseManagerChip moved
+ * into the header left zone (HeaderPhaseSelect), removing the 0.7% it
+ * occupied over the board. Remaining survey contributors:
+ * utility-honesty-footer (1.8%), header-context-strip (1.8%),
+ * vic-gov chips (0.5%).
  */
 const COVERAGE_BASELINE: Record<string, number> = {
-  survey: 4.8,
-  sketch: 8.6,
-  cad: 4.8,
+  survey: 4.1,
+  sketch: 7.9,
+  cad: 4.1,
   elevation: 0.1,
 };
 

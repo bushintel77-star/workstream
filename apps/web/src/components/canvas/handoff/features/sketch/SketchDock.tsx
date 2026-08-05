@@ -26,6 +26,17 @@ type Props = {
   onTip: (tip: SketchTipGrade) => void;
   onActivate?: () => void;
   onOpenImageLayers?: () => void;
+  /** Undo last stroke — disabled when no strokes or formalizing. */
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  /** Soften ink in place — stays hand-drawn. */
+  onTidy?: () => void;
+  /** Freehand → CAD ghosts. */
+  onFormalizeToCad?: () => void;
+  /** Stroke count — drives Tidy/Formalize visibility. */
+  strokeCount?: number;
 };
 
 function PenIcon() {
@@ -101,6 +112,77 @@ function TipIcon() {
   );
 }
 
+function UndoIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 7v6h6" />
+      <path d="M3 13a9 9 0 1 1 3 7" />
+    </svg>
+  );
+}
+
+function RedoIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 7v6h-6" />
+      <path d="M21 13a9 9 0 1 0-3 7" />
+    </svg>
+  );
+}
+
+function TidyIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 20l4-12 4 12M6 16h4M14 20l3-10 3 10M15.5 16h3" />
+    </svg>
+  );
+}
+
+function FormalizeIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 18L14 8M10 6h4v4M6 14H4v-2" />
+      <path d="M16 14l4 4M20 14v4h-4" />
+    </svg>
+  );
+}
+
 /**
  * Clean Procreate-style sketch tool dock.
  *
@@ -117,6 +199,13 @@ export function SketchDock({
   onTip,
   onActivate,
   onOpenImageLayers,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
+  onTidy,
+  onFormalizeToCad,
+  strokeCount = 0,
 }: Props) {
   const [tipOpen, setTipOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement | null>(null);
@@ -207,6 +296,75 @@ export function SketchDock({
         >
           <ImageIcon />
         </button>
+
+        {onUndo || onRedo ? (
+          <>
+            <div className={css.divider} aria-hidden />
+            <button
+              type="button"
+              className={css.tool}
+              data-testid="sketch-undo-stroke"
+              aria-label="Undo"
+              disabled={formalizing || (!canUndo && strokeCount === 0)}
+              title="Undo last stroke"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => onUndo?.()}
+            >
+              <UndoIcon />
+            </button>
+            <button
+              type="button"
+              className={css.tool}
+              data-testid="sketch-redo"
+              aria-label="Redo"
+              disabled={formalizing || !canRedo}
+              title="Redo"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => onRedo?.()}
+            >
+              <RedoIcon />
+            </button>
+          </>
+        ) : null}
+
+        {strokeCount > 0 && (onTidy || onFormalizeToCad) ? (
+          <>
+            <div className={css.divider} aria-hidden />
+            {onTidy ? (
+              <button
+                type="button"
+                className={css.tool}
+                data-testid="sketch-tidy"
+                aria-label="Tidy"
+                disabled={formalizing}
+                title="Tidy — soften ink, stays hand-drawn"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onTidy}
+              >
+                <TidyIcon />
+              </button>
+            ) : null}
+            {onFormalizeToCad ? (
+              <button
+                type="button"
+                className={`${css.tool}${formalizing ? ` ${css.toolActive}` : ""}`}
+                data-testid="sketch-convert-cad"
+                aria-label="Formalize to CAD"
+                disabled={formalizing}
+                aria-busy={formalizing}
+                title={
+                  formalizing
+                    ? "Translating sketch to CAD with AI…"
+                    : "Formalize to CAD — translate freehand to CAD ghosts"
+                }
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onFormalizeToCad}
+              >
+                <FormalizeIcon />
+              </button>
+            ) : null}
+          </>
+        ) : null}
 
         {tipOpen ? (
           <div
