@@ -1365,17 +1365,10 @@ function PanelView({
             </KitButton>
           </div>
         ) : (
-          <div
+          <button
+            type="button"
             className={css.panelContent}
             onClick={() => setEditing(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setEditing(true);
-              }
-            }}
-            role="button"
-            tabIndex={0}
           >
             {panel.heading ? (
               <h3 className={css.panelHeading}>{panel.heading}</h3>
@@ -1386,7 +1379,7 @@ function PanelView({
             {!panel.heading && !panel.body ? (
               <p className={css.panelPlaceholder}>Click to edit</p>
             ) : null}
-          </div>
+          </button>
         )}
         <ResizeHandles onPointerDown={onPointerDown} />
         <PanelActions onRemove={onRemove} />
