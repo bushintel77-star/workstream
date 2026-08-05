@@ -19,7 +19,7 @@
   gap: var(--s-2);
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--ws-frame) 86%, transparent);
+  background: color-mix(in srgb, var(--ws-frame) 92%, transparent);
   border: 1px solid var(--ws-frame-hair);
   box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--hc-ink) 70%, transparent);
   backdrop-filter: blur(16px) saturate(1.2);
@@ -33,13 +33,35 @@
   animation: contextCardIn 200ms var(--ws-ease, ease) both;
 }
 
-/* Inherit the frame's flat control language for anything nested here. */
+/* Inherit the frame's flat control language for anything nested here.
+   The card sits on the dark frame (--ws-frame), so nested chrome must use
+   frame ink tokens, not the light-mode --hc-* tokens the breadcrumb defaults
+   to. Without this override the segments render dark-on-dark = invisible. */
 .card :global(button) {
   color: var(--ws-frame-ink-dim);
+  border-color: var(--ws-frame-hair);
+  background: var(--ws-frame-wash);
 }
 
 .card :global(button:hover) {
   color: var(--ws-frame-ink);
+  background: color-mix(in srgb, var(--ws-frame-ink) 14%, transparent);
+}
+
+.card :global(.contextStrip-module__mode),
+.card :global([class*="contextStrip"][class*="mode"]) {
+  color: var(--ws-frame-ink);
+}
+
+.card :global([class*="contextStrip"][class*="segment"]) {
+  color: var(--ws-frame-ink-dim);
+  border-color: var(--ws-frame-hair);
+  background: var(--ws-frame-wash);
+}
+
+.card :global([class*="contextStrip"][class*="segment"]:hover) {
+  color: var(--ws-frame-ink);
+  background: color-mix(in srgb, var(--ws-frame-ink) 14%, transparent);
 }
 
 @keyframes contextCardIn {

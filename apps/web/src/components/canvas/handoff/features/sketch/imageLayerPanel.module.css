@@ -130,7 +130,7 @@
 .empty {
   margin: 0;
   font-size: var(--text-xs);
-  color: var(--ws-frame-ink-faint);
+  color: var(--ws-frame-ink-dim);
   line-height: 1.5;
 }
 
