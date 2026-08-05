@@ -1862,6 +1862,7 @@ export function HandoffDesignStudio({
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
   const quoteRailOpen = ui.rightDataPanel === "quote";
+  const hasCostedLines = estimate.lines.some((l) => l.total > 0);
   const draftSurface = chrome.draftSurface;
   const ghostsLaneOpen = draftSurface && ui.ghostReviewOpen;
   const rightLaneBusy = ui.rightDataPanel != null || ghostsLaneOpen;
@@ -2750,9 +2751,30 @@ export function HandoffDesignStudio({
   useEffect(() => {
     if (ui.mode === "quote") {
       requestMode("cad");
-      studio.setUi({ rightDataPanel: "quote" });
+      // Only open the rail if estimation has produced costed lines.
+      // Otherwise the rail has nothing to show — the header cost chip
+      // handles the empty state.
+      if (hasCostedLines) {
+        studio.setUi({ rightDataPanel: "quote" });
+      }
     }
-  }, [ui.mode, requestMode, studio]);
+  }, [ui.mode, requestMode, studio, hasCostedLines]);
+
+  /**
+   * Auto-close the cost rail when estimation is empty (all items removed or
+   * none yet placed). The rail only overlays when there are costed lines —
+   * the header cost chip handles the empty state. Guarded with a ref to
+   * avoid re-triggering when studio reference changes between renders.
+   */
+  const quoteRailClosedRef = useRef(false);
+  useEffect(() => {
+    if (quoteRailOpen && !hasCostedLines && !quoteRailClosedRef.current) {
+      quoteRailClosedRef.current = true;
+      studio.setUi({ rightDataPanel: null });
+    } else if (hasCostedLines) {
+      quoteRailClosedRef.current = false;
+    }
+  }, [quoteRailOpen, hasCostedLines, studio]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3089,18 +3111,20 @@ export function HandoffDesignStudio({
       onSelect: () => studio.setUi({ cmdOpen: true }),
     });
 
-    // Cost / quote
-    items.push({
-      id: "live-cost",
-      label: quoteRailOpen ? "Close live cost" : "Live cost",
-      testId: "live-cost-top",
-      active: quoteRailOpen,
-      onSelect: () =>
-        studio.setUi({
-          ...withRightDataPanel("quote"),
-          utilityPanel: null,
-        }),
-    });
+    // Cost / quote — only available once estimation has costed lines
+    if (hasCostedLines || quoteRailOpen) {
+      items.push({
+        id: "live-cost",
+        label: quoteRailOpen ? "Close live cost" : "Live cost",
+        testId: "live-cost-top",
+        active: quoteRailOpen,
+        onSelect: () =>
+          studio.setUi({
+            ...withRightDataPanel("quote"),
+            utilityPanel: null,
+          }),
+      });
+    }
 
     // View / data
     if (chrome.structureRail || chrome.compact) {
@@ -3166,6 +3190,7 @@ export function HandoffDesignStudio({
     chrome.compact,
     chrome.structureRail,
     hasCostedBom,
+    hasCostedLines,
     instrumentsVisible,
     layersOpen,
     openStudioSheetPage,
@@ -5773,11 +5798,12 @@ export function HandoffDesignStudio({
 
         {/*
           * Progressive cost rail — lives in the right data lane alongside the
-          * drawing, not as a mode takeover. Three stages: seed (empty),
-          * estimation (items placed), quote (expandable to full QuoteBuilder).
-          * Dark frame language matches the header.
+          * drawing, not as a mode takeover. Only renders once estimation has
+          * produced costed lines — the seed/empty state is handled by the
+          * header cost chip, not this rail. Dark frame language matches the
+          * header.
           */}
-        {quoteRailOpen && planOn && !ui.frameOn ? (
+        {quoteRailOpen && planOn && !ui.frameOn && hasCostedLines ? (
           <RightDataLane
             testId="right-data-lane-quote"
             onClose={() => studio.setUi({ rightDataPanel: null })}

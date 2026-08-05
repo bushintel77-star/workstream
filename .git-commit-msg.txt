@@ -1,0 +1,21 @@
+fix(web): gate Live Cost Rail on settled estimation
+
+The rail was rendering a big seed card on empty canvases and staying open
+as a persistent panel regardless of whether estimation had produced
+anything. It now only overlays when the project has finished its
+estimation phase — i.e. there are costed lines with real totals.
+
+- Removed the seed/empty stage entirely. The header cost chip already
+  handles the "no items yet" case — the rail has nothing to add there.
+- Added hasCostedLines guard on the rail render: no costed lines, no rail.
+- Added auto-close effect: if items are cleared while the rail is open,
+  it closes itself. Guarded with a ref to avoid the infinite update loop
+  that a naive useEffect + setUi caused.
+- Gated all entry points: the View menu "Live cost" item only appears
+  when there are costed lines (or the rail is already open). The legacy
+  ?mode=quote redirect only opens the rail if estimation has settled.
+- Removed dead seed CSS (.seedBody, .seedHint, .seedCta).
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>
