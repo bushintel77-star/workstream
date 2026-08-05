@@ -2643,47 +2643,52 @@ export function useStudioState(opts: UseStudioStateOpts) {
     }) => {
       if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
       setUi({ canopyScanning: true, aiBusy: "scanning" });
-      let apiClusters: GhostPlacementSuggestion[] | undefined;
-      if (projectId) {
-        try {
-          const { scanDesignGhostsAction } = await import(
-            "../../../../app/actions"
-          );
-          const res = await scanDesignGhostsAction(projectId);
-          if (res?.suggestions?.length) {
-            apiClusters = res.suggestions;
+      try {
+        let apiClusters: GhostPlacementSuggestion[] | undefined;
+        if (projectId) {
+          try {
+            const { scanDesignGhostsAction } = await import(
+              "../../../../app/actions"
+            );
+            const res = await scanDesignGhostsAction(projectId);
+            if (res?.suggestions?.length) {
+              apiClusters = res.suggestions;
+            }
+          } catch {
+            /* colour heuristic fallback */
           }
-        } catch {
-          /* colour heuristic fallback */
         }
+        mutate((snap, idn) => {
+          // Fold the aerial's capture date (when known) into the canopy reason
+          // so the plan tooltip reads "Detected from 2023 imagery" — honest
+          // dating, not an undated indicative circle.
+          const captureDate = snap.imageLayers.find(
+            (l) => l.capture_date,
+          )?.capture_date;
+          const proposed = proposeFromCanopyImage(
+            image,
+            idn,
+            apiClusters,
+            captureDate,
+          );
+          return {
+            snap: {
+              ...snap,
+              items: mergeAiProposals(snap, proposed.items, ["canopy"]),
+            },
+            idn: proposed.idn,
+          };
+        });
+      } catch {
+        /* Canopy proposal may fail on empty/no-drawing imagery */
+      } finally {
+        // Quiet merge — do not force Coach + Review open (screenshot chrome collision)
+        setUi({
+          canopyScanning: false,
+          aiBusy: "idle",
+          ghostIdx: 0,
+        });
       }
-      mutate((snap, idn) => {
-        // Fold the aerial's capture date (when known) into the canopy reason
-        // so the plan tooltip reads "Detected from 2023 imagery" — honest
-        // dating, not an undated indicative circle.
-        const captureDate = snap.imageLayers.find(
-          (l) => l.capture_date,
-        )?.capture_date;
-        const proposed = proposeFromCanopyImage(
-          image,
-          idn,
-          apiClusters,
-          captureDate,
-        );
-        return {
-          snap: {
-            ...snap,
-            items: mergeAiProposals(snap, proposed.items, ["canopy"]),
-          },
-          idn: proposed.idn,
-        };
-      });
-      // Quiet merge — do not force Coach + Review open (screenshot chrome collision)
-      setUi({
-        canopyScanning: false,
-        aiBusy: "idle",
-        ghostIdx: 0,
-      });
     },
     [
       mutate,

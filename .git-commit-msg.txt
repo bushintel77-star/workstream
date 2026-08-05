@@ -1,15 +1,12 @@
-fix(ts): remove any from sentry.ts and mobile auth catch blocks
+fix(web): always clear canopy scan state, even on empty/no-drawing imagery
 
-TypeScript scan found the only remaining real `any` annotations in the
-repo outside comments:
+The AI canopy scan set `canopyScanning: false` only after `proposeFromCanopyImage`
+and `mutate` completed successfully. If the image had no drawing or the colour
+heuristic failed, those calls could throw and the "AI scanning aerial for
+canopy…" pill would spin forever.
 
-- `apps/web/src/lib/sentry.ts`: replaced `any` with a narrow
-  `SentryModule` interface, keeping the optional `import("..." as string)`
-  pattern so the uninstalled dependency does not fail typecheck.
-- `apps/mobile/app/(auth)/sign-in.tsx`: replaced `catch (err: any)` with
-  `isClerkAPIResponseError(err)` from `@clerk/clerk-expo`.
-- `apps/mobile/app/(auth)/sign-up.tsx`: replaced both `catch (err: any)`
-  blocks with the Clerk guard.
+Wrapped the whole `ingestCanopyImage` body in `try/finally` so the scan flag
+and `aiBusy` always reset, regardless of whether any proposals were produced.
 
 Generated with [Devin](https://devin.ai)
 
