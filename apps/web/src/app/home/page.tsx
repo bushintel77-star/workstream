@@ -90,7 +90,7 @@ export default async function HomePage() {
                 <span>{new Intl.DateTimeFormat("en-AU", { day: "2-digit", month: "short", year: "numeric" }).format(new Date())}</span>
               </div>
             </div>
-            <h1 className={home.mastheadTitle}>STUDIOK</h1>
+            <h1 className={home.mastheadTitle}>Workstream</h1>
             <div className={home.dimLine} aria-hidden />
           </header>
 

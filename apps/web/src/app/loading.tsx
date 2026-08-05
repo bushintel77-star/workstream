@@ -18,7 +18,7 @@ export default function DashboardLoading() {
                 <span>1:200</span>
               </div>
             </div>
-            <h1 className={home.mastheadTitle}>STUDIOK</h1>
+            <h1 className={home.mastheadTitle}>Workstream</h1>
             <div className={home.dimLine} aria-hidden />
           </header>
         </aside>
