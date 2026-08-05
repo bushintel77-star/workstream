@@ -5,6 +5,7 @@ import {
   createWrightsTier1Project,
   handoffStudio,
   openCommandPalette,
+  seedPoolWithoutBarrier,
 } from "./helpers";
 
 /**
@@ -179,7 +180,14 @@ test.describe("Canvas dialog focus trap", () => {
       page,
       request,
     }) => {
-      const { projectId } = await createWrightsTier1Project(request);
+      // Seed a pool with no barrier — this triggers the required safety waiver
+      // disclaimer (board-liability.ts: poolUnbarriered), so the share popup
+      // opens SafetyWaiverConfirm on "Share new revision".
+      const { projectId } = await createWrightsTier1Project(request, {
+        seedCanvas: false,
+      });
+      await seedPoolWithoutBarrier(request, projectId);
+
       await page.goto(`/projects/${projectId}?mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
@@ -189,27 +197,12 @@ test.describe("Canvas dialog focus trap", () => {
       const popup = page.getByTestId("share-revision-popup");
       await expect(popup).toBeVisible();
 
-      // The safety waiver confirm is triggered by clicking "Share new
-      // revision" when a safety disclaimer with hardConfirm is inferred.
-      // If no waiver opens, this test is skipped — the nested-dialog gating
-      // only applies when both dialogs are present.
-      const waiverVisible = await page
-        .getByTestId("safety-waiver-confirm")
-        .count();
-
-      if (waiverVisible === 0) {
-        // Try to trigger the waiver by clicking "Share new revision".
-        const issueBtn = page.getByTestId("share-new-revision");
-        if ((await issueBtn.count()) > 0 && (await issueBtn.isEnabled())) {
-          await issueBtn.click();
-          const waiver = page.getByTestId("safety-waiver-confirm");
-          if ((await waiver.count()) === 0) {
-            test.skip(true, "No safety waiver triggered for this project");
-          }
-        } else {
-          test.skip(true, "No safety waiver triggered for this project");
-        }
-      }
+      // Click "Share new revision" to trigger the safety waiver confirm.
+      const issueBtn = page.getByTestId("share-new-revision");
+      await expect(issueBtn).toBeVisible();
+      await issueBtn.click();
+      const waiver = page.getByTestId("safety-waiver-confirm");
+      await expect(waiver).toBeVisible({ timeout: 15_000 });
 
       // Both dialogs are open: Escape should close the waiver, not the popup.
       await page.keyboard.press("Escape");

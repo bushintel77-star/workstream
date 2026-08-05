@@ -102,7 +102,7 @@ export function SheetComposeDock({
     >
       <div className={css.peel} ref={peelRef} data-testid="sheet-compose-peel" role="dialog">
         <div className={css.peelHead}>
-          <p className={css.peelKicker}>Sheet</p>
+          <h2 className={css.peelKicker}>Sheet</h2>
           <div className={css.peelHeadActions}>
             <button
               type="button"

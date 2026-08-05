@@ -25,7 +25,7 @@ export function SiteSwitcher({ open, siteIdx, onClose, onPick }: Props) {
       aria-label="Demo lot presets"
     >
       <div className={css.head}>
-        <p className={css.kicker}>Demo lots</p>
+        <h2 className={css.kicker}>Demo lots</h2>
         <button type="button" className={css.close} onClick={onClose}>
           Close
         </button>

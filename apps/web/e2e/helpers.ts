@@ -147,6 +147,35 @@ export async function seedElevationGarden(
   expect(res.ok()).toBeTruthy();
 }
 
+/**
+ * Seed a pool placement with no barrier — triggers the required safety waiver
+ * disclaimer (board-liability.ts: `poolUnbarriered = pools.length > 0 &&
+ * barriers.length === 0`), so the share popup opens SafetyWaiverConfirm on
+ * "Share new revision". Used by canvas-dialog-focus-trap.spec.ts to exercise
+ * the nested-dialog Escape gating.
+ */
+export async function seedPoolWithoutBarrier(
+  request: APIRequestContext,
+  projectId: string,
+) {
+  const res = await request.put(`${API}/projects/${projectId}/design-canvas`, {
+    data: {
+      placements: [
+        {
+          id: randomUUID(),
+          symbol_id: "pool",
+          x_pct: 50,
+          y_pct: 50,
+          rotation_deg: 0,
+          scale: 1,
+        },
+      ],
+      strokes: [],
+    },
+  });
+  expect(res.ok()).toBeTruthy();
+}
+
 type SeedProjectOpts = {
   address: string;
   lat?: number;
