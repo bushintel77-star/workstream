@@ -1,12 +1,18 @@
-fix(web): always clear canopy scan state, even on empty/no-drawing imagery
+feat(web): premium freehand ink with perfect-freehand
 
-The AI canopy scan set `canopyScanning: false` only after `proposeFromCanopyImage`
-and `mutate` completed successfully. If the image had no drawing or the colour
-heuristic failed, those calls could throw and the "AI scanning aerial for
-canopy…" pill would spin forever.
+- Installed `perfect-freehand` (MIT) for smooth, hand-drawn stroke outlines.
+- Added `apps/web/src/lib/freehandPath.ts` utility wrapping the algorithm
+  into an SVG `d` string for percent-coordinate strokes.
+- Updated `SketchBoard` to render live and committed strokes through
+  `perfect-freehand` instead of the straight-line `strokePointsToPathD`.
+- Added `FreehandLayer` component and mounted it in CAD mode so ink stays
+  visible without re-mounting the full sketch pad.
+- Updated `PresentSurface` and `SharePlanSvg` to use `perfect-freehand`
+  strokes for plan crops and shared plan SVGs; snapshot now carries
+  `widthPx` and `color` so the premium path has styling data.
 
-Wrapped the whole `ingestCanopyImage` body in `try/finally` so the scan flag
-and `aiBusy` always reset, regardless of whether any proposals were produced.
+This gives landscape annotations a premium hand-drawn look while keeping
+sketch mode, CAD view, presentation crops, and share exports consistent.
 
 Generated with [Devin](https://devin.ai)
 

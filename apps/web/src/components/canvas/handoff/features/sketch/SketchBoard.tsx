@@ -7,7 +7,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { strokePointsToPathD } from "@workstream/domain";
+import { freehandPath } from "@/lib/freehandPath";
 import type { SketchStroke } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import {
@@ -242,13 +242,18 @@ export function SketchBoard({
         preserveAspectRatio="none"
       >
         {all.map((s) => {
-          const d = strokePointsToPathD(
-            s.points.map((p) => ({ x_pct: p.x, y_pct: p.y })),
-            size.w,
-            size.h,
-            s.widthPx ?? (s.id === "__live" ? 1.9 : 2.1),
-            { raw: true },
-          );
+          const scaleX = size.w / 100;
+          const scaleY = size.h / 100;
+          const points = s.points.map((p) => ({
+            x: p.x * scaleX,
+            y: p.y * scaleY,
+          }));
+          const d = freehandPath(points, {
+            size: (s.widthPx ?? (s.id === "__live" ? 1.9 : 2.1)) * scaleX * 0.5,
+            thinning: 0.7,
+            smoothing: 0.7,
+            streamline: 0.5,
+          });
           if (!d) return null;
           return (
             <path

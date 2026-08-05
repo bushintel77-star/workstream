@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { DesignCanvas } from "@workstream/contracts";
+import { freehandPath } from "@/lib/freehandPath";
 import { SEMANTIC_LIGHT, mixOnHex } from "../../styles/colorTokens";
 import css from "./sharePlan.module.css";
 
@@ -112,18 +113,19 @@ export function SharePlanSvg({ canvas, address }: Props) {
         />
       ) : null}
       {strokes.map((s) => {
-        const d = s.points
-          .map((p, i) => `${i === 0 ? "M" : "L"}${p.x_pct} ${p.y_pct}`)
-          .join(" ");
+        const points = s.points.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+        const d = freehandPath(points, {
+          size: Math.max(0.2, (s.width_px ?? 2) * 0.15),
+          thinning: 0.7,
+          smoothing: 0.7,
+          streamline: 0.5,
+        });
+        if (!d) return null;
         return (
           <path
             key={s.id}
             d={d}
-            fill="none"
-            stroke={s.color || L.proposedStroke}
-            strokeWidth={Math.max(0.2, (s.width_px ?? 2) / 20)}
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            fill={s.color || L.proposedStroke}
           />
         );
       })}

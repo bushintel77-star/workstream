@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { freehandPath } from "@/lib/freehandPath";
 import type {
   CreatePresentationDocumentInput,
   ImageLayer,
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/kit";
 import css from "./present.module.css";
 import { DeckInspectorDock } from "./DeckInspectorDock";
+import type { SketchStroke } from "../../studioCatalog";
 
 /**
  * Lightweight serializable snapshot of the plan for rendering plan crops.
@@ -51,7 +53,7 @@ export type PlanSnapshot = {
     y: number;
     outlinePct?: { x: number; y: number }[];
   }[];
-  strokes: { id: string; points: { x: number; y: number }[] }[];
+  strokes: SketchStroke[];
   northBearing?: number;
   /** Epoch-ms revision of the canvas — matches PlanCropRef.canvas_revision. */
   revision: number;
@@ -1673,17 +1675,19 @@ function PlanCropSvg({
       })}
       {snapshot.strokes.map((stroke) => {
         if (stroke.points.length < 2) return null;
-        const d = stroke.points
-          .map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`)
-          .join(" ");
+        const d = freehandPath(stroke.points, {
+          size: (stroke.widthPx ?? 2) * 0.15,
+          thinning: 0.7,
+          smoothing: 0.7,
+          streamline: 0.5,
+        });
+        if (!d) return null;
         return (
           <path
             key={stroke.id}
             d={d}
-            fill="none"
-            style={{ stroke: "var(--proposed-stroke)" }}
-            strokeWidth="0.3"
-            opacity="0.6"
+            fill={stroke.color ?? "var(--proposed-stroke)"}
+            opacity="0.75"
           />
         );
       })}

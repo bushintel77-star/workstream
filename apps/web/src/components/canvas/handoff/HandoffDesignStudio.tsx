@@ -126,6 +126,7 @@ import { ClimateBedWash } from "./features/shade/ClimateBedWash";
 import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { BuildableAreaOverlay } from "./features/buildableArea/BuildableAreaOverlay";
 import { SketchBoard } from "./features/sketch/SketchBoard";
+import { FreehandLayer } from "./features/sketch/FreehandLayer";
 import { ImageLayerSlot } from "./features/sketch/ImageLayerSlot";
 import { ImageLayerPanel } from "./features/sketch/ImageLayerPanel";
 import { rasterizeStrokesToPng } from "./features/sketch/rasterizeStrokes";
@@ -3784,6 +3785,8 @@ export function HandoffDesignStudio({
               strokes: studio.strokes.map((s) => ({
                 id: s.id,
                 points: s.points.map((p) => ({ x: p.x, y: p.y })),
+                widthPx: s.widthPx,
+                color: s.color,
               })),
               revision: ui.savedTick ?? 0,
             }}
@@ -4324,11 +4327,7 @@ export function HandoffDesignStudio({
                   />
                 ) : null}
                 {ui.mode === "cad" && studio.strokes.length > 0 ? (
-                  <SketchBoard
-                    readOnly
-                    strokes={studio.strokes}
-                    darkOn={darkLens}
-                  />
+                  <FreehandLayer strokes={studio.strokes} />
                 ) : null}
                 {planOn && !ui.frameOn ? (
                   <>
