@@ -423,7 +423,7 @@ export function ClientShareTwin({ snapshot }: Props) {
       }
     };
     // Mount once per canvas identity — controls mutate via refs.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount once per canvas identity
   }, [canvas?.id, webglOk]);
 
   useEffect(() => {

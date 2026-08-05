@@ -1343,7 +1343,7 @@ export function HandoffDesignStudio({
       ...(prefs.snap != null ? { gridSnap: prefs.snap } : {}),
     });
     // once per project mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per project mount (grid prefs)
   }, [projectId]);
 
   /** Restore fit-sheet / elevation prefs for this project session. */
@@ -1354,7 +1354,7 @@ export function HandoffDesignStudio({
       ...(prefs.frameOn != null ? { frameOn: prefs.frameOn } : {}),
       ...(prefs.sheetElevOn != null ? { sheetElevOn: prefs.sheetElevOn } : {}),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per project mount (fit-sheet prefs)
   }, [projectId]);
 
   useEffect(() => {
@@ -1369,7 +1369,7 @@ export function HandoffDesignStudio({
     const prefs = loadLifecyclePhasePrefs(projectId);
     if (!prefs) return;
     studio.setUi({ lifecyclePhase: prefs });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per project mount (lifecycle phase)
   }, [projectId]);
 
   useEffect(() => {

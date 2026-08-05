@@ -75,7 +75,7 @@ export function DraftGridStudio({
       onPreviewFormation(null);
       onPreviewInk(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup-only unmount effect
   }, []);
 
   const stopCycle = () => {

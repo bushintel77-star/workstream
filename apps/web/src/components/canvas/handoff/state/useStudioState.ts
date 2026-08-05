@@ -2248,7 +2248,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       cancelled = true;
     };
     // once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once on mount
   }, []);
 
   const updateBoundary = useCallback(
@@ -3864,7 +3864,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     // Persist accepted geometry + site frame — ghosts must not rewrite canvas.
     // Keyed on content, not on callback identity: saveNow/setUi are deliberately
     // out of the deps so a re-render cannot restart the debounce.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content, not callback identity
   }, [persistKey, saveRetryNonce]);
 
   const finishTrace = useCallback(
