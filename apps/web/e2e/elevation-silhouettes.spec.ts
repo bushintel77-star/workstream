@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  clickHeaderViewItem,
   createSurveyProject,
   handoffStudio,
   seedElevationGarden,
@@ -154,7 +155,7 @@ test.describe("Garden elevation silhouettes", () => {
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
-    await page.getByTestId("fit-sheet-top").click();
+    await clickHeaderViewItem(page, "fit-sheet-top");
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 10_000,
     });

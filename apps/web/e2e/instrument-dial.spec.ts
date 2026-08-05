@@ -4,6 +4,7 @@ import {
   createSurveyProject,
   handoffStudio,
   expectToolDock,
+  openCommandPalette,
   takeScreenshot,
 } from "./helpers";
 
@@ -100,7 +101,7 @@ test.describe("Instrument reform — dock + selection dial", () => {
     await expect(page.getByTestId("selection-dial")).toBeVisible({
       timeout: 5_000,
     });
-    await page.getByTestId("canvas-command-top").click();
+    await openCommandPalette(page);
     const tiltCmd = page.getByTestId("canvas-command-tilt-view");
     if (await tiltCmd.isVisible().catch(() => false)) {
       await tiltCmd.click();

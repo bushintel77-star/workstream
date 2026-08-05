@@ -28,7 +28,7 @@ test.describe("Render 1 presentation screenshots", () => {
     ).toBe(0);
 
     // Fit sheet A3
-    await page.getByTestId("fit-sheet-top").click();
+    await clickHeaderViewItem(page, "fit-sheet-top");
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 15_000,
     });
@@ -39,7 +39,7 @@ test.describe("Render 1 presentation screenshots", () => {
       await paperA3.click();
     }
     await takeScreenshot(page, "render1-fit-a3");
-    await page.getByTestId("fit-sheet-top").click();
+    await clickHeaderViewItem(page, "fit-sheet-top");
 
     // Night board
     await clickHeaderViewItem(page, "dark-canvas-top");

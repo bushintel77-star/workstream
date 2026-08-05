@@ -23,11 +23,9 @@ export function handoffStudio(page: Page) {
   return page.getByTestId("handoff-design-studio");
 }
 
-/** Open the global command palette through its visible user control. */
+/** Open the global command palette through the View menu. */
 export async function openCommandPalette(page: Page) {
-  const trigger = page.getByTestId("canvas-command-top");
-  await expect(trigger).toBeVisible({ timeout: 15_000 });
-  await trigger.click();
+  await clickHeaderViewItem(page, "canvas-command-top");
   await expect(page.getByTestId("canvas-command-palette")).toBeVisible({
     timeout: 15_000,
   });
@@ -59,7 +57,7 @@ export async function summonCanvasInstruments(page: Page) {
   if ((await peek.count()) > 0) {
     await peek.click();
   } else {
-    await page.getByTestId("pointer-settings-top").click({ force: true });
+    await clickHeaderViewItem(page, "pointer-settings-top");
   }
   await expect(dock.or(strip)).toBeVisible({ timeout: 10_000 });
 }

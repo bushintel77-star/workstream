@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import { clickHeaderViewItem, createSurveyProject, handoffStudio } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -15,14 +15,13 @@ test.describe("Fit sheet presentation compose", () => {
     await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
-    await page.getByTestId("fit-sheet-top").click();
+    await clickHeaderViewItem(page, "fit-sheet-top");
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 10_000,
     });
 
     // Canvas-first: no compose chrome until the header icon is pressed.
     await expect(page.getByTestId("sheet-compose-dock")).toHaveCount(0);
-    await expect(page.getByTestId("sheet-compose-top")).toBeVisible();
 
     // Brochure lands on the paper without summoning compose.
     await expect(page.getByTestId("sheet-on-quote_total")).toBeVisible({
@@ -31,7 +30,7 @@ test.describe("Fit sheet presentation compose", () => {
     await expect(page.getByTestId("sheet-on-honesty_footer")).toHaveCount(0);
     await expect(page.getByTestId("sheet-zone-face")).toBeVisible();
 
-    await page.getByTestId("sheet-compose-top").click();
+    await clickHeaderViewItem(page, "sheet-compose-top");
     await expect(page.getByTestId("sheet-compose-dock")).toBeVisible();
     await expect(page.getByTestId("sheet-compose-peel")).toBeVisible();
     await expect(page.locator("select")).toHaveCount(0);

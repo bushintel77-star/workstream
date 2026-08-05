@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio, takeScreenshot } from "./helpers";
+import {
+  clickHeaderViewItem,
+  createSurveyProject,
+  handoffStudio,
+  takeScreenshot,
+} from "./helpers";
 
 /**
  * Two-zoom screenshot pack per mode for camera-chrome sign-off.
@@ -66,10 +71,7 @@ test.describe("Camera chrome screenshot pack", () => {
 
     // Fit sheet
     await page.goto(`/projects/${projectId}?mode=cad`);
-    await expect(page.getByTestId("fit-sheet-top")).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.getByTestId("fit-sheet-top").click();
+    await clickHeaderViewItem(page, "fit-sheet-top");
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 15_000,
     });

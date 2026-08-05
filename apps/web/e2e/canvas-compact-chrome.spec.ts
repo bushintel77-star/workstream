@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import { clickHeaderViewItem, createSurveyProject, handoffStudio } from "./helpers";
 
 async function openSketch(page: Page, projectId: string) {
   await page.goto(`/projects/${projectId}?mode=sketch`);
@@ -52,7 +52,7 @@ test.describe("Compact canvas-first chrome", () => {
     await openSketch(page, projectId);
     await expect(handoffStudio(page)).toHaveAttribute("data-compact", "0");
     await expect(page.getByTestId("tool-dock")).toHaveCount(0);
-    await page.getByTestId("pointer-settings-top").click({ force: true });
+    await clickHeaderViewItem(page, "pointer-settings-top");
     await expect(page.getByTestId("tool-dock")).toBeVisible();
     await expect(page.getByTestId("contextual-tool-strip")).toHaveCount(0);
     // Desktop fork — no phone FAB / bottom sheet chrome.

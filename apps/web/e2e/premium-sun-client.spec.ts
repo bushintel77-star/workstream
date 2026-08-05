@@ -41,7 +41,7 @@ test.describe("Premium sun + client", () => {
       );
     }
 
-    await page.getByTestId("client-view-top").click();
+    await clickHeaderViewItem(page, "client-view-top");
     await expect(page.getByTestId("studio-board")).toHaveAttribute(
       "data-client",
       "1",

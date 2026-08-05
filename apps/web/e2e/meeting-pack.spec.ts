@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  clickHeaderViewItem,
   createSurveyProject,
   expectToolDock,
   handoffStudio,
@@ -27,13 +28,15 @@ test.describe("Meeting pack", () => {
       timeout: 5_000,
     });
 
-    await page.getByTestId("client-view-top").click();
+    await clickHeaderViewItem(page, "client-view-top");
     await expect(page.getByTestId("studio-board")).toHaveAttribute(
       "data-client",
       "1",
       { timeout: 5_000 },
     );
+    await page.getByTestId("header-view-menu").click();
     await expect(page.getByTestId("meeting-pack-print")).toBeVisible();
+    await page.keyboard.press("Escape");
     await expect(page.getByTestId("client-meeting-caption")).toBeVisible();
     await expect(page.getByTestId("client-meeting-caption")).toContainText(
       "schemes A",

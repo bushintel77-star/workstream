@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { handoffStudio } from "./helpers";
+import { clickHeaderViewItem, handoffStudio } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -105,13 +105,10 @@ test.describe("Client share acceptance", () => {
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     // Fit sheet stamp — open fit sheet and assert Accepted.
-    const fitBtn = page.getByTestId("fit-sheet-top");
-    if (await fitBtn.isEnabled()) {
-      await fitBtn.click();
-      await expect(page.getByTestId("fit-sheet-share-stamp")).toHaveText(
-        /Rev A · Accepted/,
-        { timeout: 15_000 },
-      );
-    }
+    await clickHeaderViewItem(page, "fit-sheet-top");
+    await expect(page.getByTestId("fit-sheet-share-stamp")).toHaveText(
+      /Rev A · Accepted/,
+      { timeout: 15_000 },
+    );
   });
 });

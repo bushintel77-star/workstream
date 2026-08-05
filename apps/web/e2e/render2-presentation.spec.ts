@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  clickHeaderViewItem,
   createSurveyProject,
   handoffStudio,
   openCommandPalette,
@@ -84,7 +85,7 @@ test.describe("Render 2 presentation + annotations", () => {
     await takeScreenshot(page, "render2-presentation");
 
     // Fit sheet annotated
-    await page.getByTestId("fit-sheet-top").click();
+    await clickHeaderViewItem(page, "fit-sheet-top");
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 15_000,
     });
