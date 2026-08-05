@@ -51,7 +51,7 @@ export function MarginStrip({
       <div
         className={`${css.strip}${dark ? ` ${css.stripDark}` : ""}`}
         data-frame-rail="bottom"
-        role="contentinfo"
+        role="region"
         aria-label="Board margin"
         data-testid="margin-strip-body"
       >

@@ -48,6 +48,7 @@ export function Tier1TopBar({
         data-client-view={clientView ? "true" : "false"}
         data-compact={compact ? "true" : "false"}
         data-testid="tier1-top-bar"
+        role="banner"
         aria-label={ariaLabel}
       >
         <div className={css.zoneLeft}>{left}</div>
