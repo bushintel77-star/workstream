@@ -1,12 +1,15 @@
-fix(web): convert present panel div to real button
+fix(web): restructure ServicesLedger row as real button
 
-The presentation panel used a `<div role="button" tabIndex={0}>` with a
-hand-rolled `onKeyDown`. Replaced it with a native `<button type="button">`
-so keyboard/screen-reader activation works without custom code, and reset
-button default styling in CSS.
+The services ledger row was a `<div role="button" tabIndex={0}>` with an
+`<input type="checkbox">` nested inside it. Nesting interactive elements is
+invalid HTML and breaks keyboard/screen-reader interaction.
 
-Also verified all 247 native `<button>` elements in `apps/web/src` already
-have an explicit `type` attribute.
+Now the row is a `<li>` grid containing:
+- an `<input type="checkbox">` in the first column for show/hide, and
+- a `<button type="button">` in the second column for focus/isolate.
+
+The button gets focus-visible styling, the checkbox is centered in its
+column, and the row hover/focused states are preserved on the `<li>`.
 
 Generated with [Devin](https://devin.ai)
 

@@ -72,35 +72,31 @@ function Section({
           const hidden = Boolean(hiddenIds[row.id]);
           const focused = focusedIds?.includes(row.id) ?? false;
           return (
-            <li key={row.id}>
-              <div
-                className={css.row}
+            <li
+              key={row.id}
+              className={css.row}
+              data-focused={focused ? "true" : "false"}
+              data-hidden={hidden ? "true" : "false"}
+            >
+              <input
+                type="checkbox"
+                className={css.tick}
+                data-testid={`services-ledger-tick-${row.id}`}
+                checked={!hidden}
+                disabled={locked}
+                aria-label={`${hidden ? "Show" : "Hide"} ${row.label}`}
+                onChange={() => onToggleVisible(row.id)}
+              />
+              <button
+                type="button"
+                className={css.rowBtn}
                 data-testid={`services-ledger-row-${row.kind}`}
-                data-focused={focused ? "true" : "false"}
-                data-hidden={hidden ? "true" : "false"}
-                role="button"
-                tabIndex={0}
                 onClick={(e) => {
-                  const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+                  const additive =
+                    e.shiftKey || e.metaKey || e.ctrlKey;
                   onFocus(row.id, additive);
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onFocus(row.id, e.shiftKey);
-                  }
-                }}
               >
-                <input
-                  type="checkbox"
-                  className={css.tick}
-                  data-testid={`services-ledger-tick-${row.id}`}
-                  checked={!hidden}
-                  disabled={locked}
-                  aria-label={`${hidden ? "Show" : "Hide"} ${row.label}`}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={() => onToggleVisible(row.id)}
-                />
                 <div className={css.body}>
                   <div className={css.top}>
                     <span className={css.label}>
@@ -113,7 +109,7 @@ function Section({
                   </div>
                   <span className={css.detail}>{row.detail}</span>
                 </div>
-              </div>
+              </button>
             </li>
           );
         })}

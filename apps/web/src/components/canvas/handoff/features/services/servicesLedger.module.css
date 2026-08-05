@@ -67,13 +67,25 @@
   border-radius: var(--r-md);
   background: var(--hc-glass-soft);
   color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
   transition:
     border-color var(--hc-motion, 180ms) ease,
     background-color var(--hc-motion, 180ms) ease,
     box-shadow var(--hc-motion, 180ms) ease;
+}
+
+.rowBtn {
+  display: flex;
+  align-items: center;
+  min-height: 100%;
+  width: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .row::before {
@@ -105,7 +117,7 @@
   opacity: 0.46;
 }
 
-.row:focus-visible {
+.rowBtn:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--hc-danger) 35%, transparent);
   outline-offset: 1px;
 }
@@ -123,6 +135,7 @@
     inset 0 1px 2px var(--hc-neu-shadow),
     0 0 0 1px var(--hc-neu-light);
   cursor: pointer;
+  justify-self: center;
 }
 
 .tick::after {
@@ -341,6 +354,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .row,
   .row::before,
   .tick::after,
