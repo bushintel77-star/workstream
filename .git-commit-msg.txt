@@ -1,14 +1,15 @@
-fix(web): guard useChromeIdle from infinite update loop and clipboard permission errors
+fix(ts): remove any from sentry.ts and mobile auth catch blocks
 
-- useChromeIdle.ts: functional setIdle updates, useCallback for
-  markActive/startIdleTimer, only re-render when idle actually flips.
-  Previously setIdle(false) was called on every pointer/scroll/wheel
-  event and on every effect re-run, causing a Maximum update depth
-  exceeded loop.
-- ShareSurface.tsx + ShareRevisionPopup.tsx: wrap
-  navigator.clipboard.writeText in an inner try/catch so a
-  NotAllowedError no longer surfaces as a runtime exception; the link
-  is still generated and shown for manual copy.
+TypeScript scan found the only remaining real `any` annotations in the
+repo outside comments:
+
+- `apps/web/src/lib/sentry.ts`: replaced `any` with a narrow
+  `SentryModule` interface, keeping the optional `import("..." as string)`
+  pattern so the uninstalled dependency does not fail typecheck.
+- `apps/mobile/app/(auth)/sign-in.tsx`: replaced `catch (err: any)` with
+  `isClerkAPIResponseError(err)` from `@clerk/clerk-expo`.
+- `apps/mobile/app/(auth)/sign-up.tsx`: replaced both `catch (err: any)`
+  blocks with the Clerk guard.
 
 Generated with [Devin](https://devin.ai)
 
