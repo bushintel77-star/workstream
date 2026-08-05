@@ -32,6 +32,9 @@ type Props = {
   onBack: () => void;
   onOpenLibrary?: () => void;
   onFit?: () => void;
+  /** When true, renders inside the LiveCostRail — no absolute positioning,
+   * uses dark frame tokens instead of light --hc-invert. */
+  embeddedInRail?: boolean;
 };
 
 /**
@@ -46,6 +49,7 @@ export function QuoteBuilder({
   onBack,
   onOpenLibrary,
   onFit,
+  embeddedInRail = false,
 }: Props) {
   const {
     loaded,
@@ -76,8 +80,9 @@ export function QuoteBuilder({
 
   return (
     <div
-      className={`${css.root}${compact ? ` ${css.rootCompact}` : ""}`}
+      className={`${css.root}${compact ? ` ${css.rootCompact}` : ""}${embeddedInRail ? ` ${css.rootEmbedded}` : ""}`}
       data-testid="quote-surface"
+      data-embedded={embeddedInRail ? "1" : "0"}
     >
       <header className={css.top}>
         <div className={css.topMain}>

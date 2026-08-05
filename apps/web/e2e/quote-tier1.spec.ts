@@ -1,9 +1,27 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
+  clickHeaderViewItem,
   createCarltonControlProject,
   createWrightsTier1Project,
   handoffStudio,
 } from "./helpers";
+
+/**
+ * Opens the Live Cost Rail alongside the CAD drawing, then expands it to the
+ * full QuoteBuilder so the Tier-1 ledger and target are rendered.
+ */
+async function openQuoteBuilder(page: Page, projectId: string) {
+  await page.goto(`/projects/${projectId}?mode=cad`);
+  await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+  await clickHeaderViewItem(page, "live-cost-top");
+  await expect(page.getByTestId("live-cost-rail")).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.getByTestId("live-cost-rail-expand").click();
+  await expect(page.getByTestId("quote-surface")).toBeVisible({
+    timeout: 15_000,
+  });
+}
 
 /**
  * Kept Tier-1 Quote smoke — Wrights Terrace address gate + savings ledger
@@ -19,15 +37,7 @@ test.describe("Tier-1 Quote ledger", () => {
   }) => {
     const { projectId } = await createWrightsTier1Project(request);
 
-    await page.goto(`/projects/${projectId}?mode=quote`);
-    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
-    await expect(handoffStudio(page)).toHaveAttribute(
-      "data-canvas-mode",
-      "quote",
-    );
-    await expect(page.getByTestId("quote-surface")).toBeVisible({
-      timeout: 15_000,
-    });
+    await openQuoteBuilder(page, projectId);
     await expect(page.getByTestId("quote-empty-state")).toHaveCount(0);
     await expect(page.getByTestId("tier1-quote-ledger")).toBeVisible({
       timeout: 15_000,
@@ -43,11 +53,7 @@ test.describe("Tier-1 Quote ledger", () => {
   }) => {
     const { projectId } = await createCarltonControlProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=quote`);
-    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId("quote-surface")).toBeVisible({
-      timeout: 15_000,
-    });
+    await openQuoteBuilder(page, projectId);
     await expect(page.getByTestId("tier1-quote-ledger")).toHaveCount(0);
   });
 });

@@ -1,5 +1,9 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import {
+  clickHeaderViewItem,
+  createSurveyProject,
+  handoffStudio,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -42,14 +46,18 @@ async function seedDesignCanvas(request: APIRequestContext, projectId: string) {
 }
 
 async function openQuote(page: Page, projectId: string) {
-  await page.goto(`/projects/${projectId}?mode=quote`);
+  await page.goto(`/projects/${projectId}?mode=cad`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+  await clickHeaderViewItem(page, "live-cost-top");
+  await expect(page.getByTestId("live-cost-rail")).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 test.describe("Quote left ToolDock", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test("ToolDock is visible in quote and a design tool exits to CAD", async ({
+  test("ToolDock is visible alongside the Live Cost Rail and closing the rail returns to CAD", async ({
     page,
     request,
   }) => {
@@ -57,13 +65,13 @@ test.describe("Quote left ToolDock", () => {
     await seedDesignCanvas(request, projectId);
     await openQuote(page, projectId);
 
-    // Quote overlay is open and the left ToolDock is reachable.
-    await expect(page.getByTestId("quote-surface")).toBeVisible();
+    // Live Cost Rail is open and the left ToolDock is reachable.
+    await expect(page.getByTestId("live-cost-rail")).toBeVisible();
     await expect(page.getByTestId("tool-dock")).toBeVisible();
 
-    // Clicking the Select tool returns to CAD with the drawing visible.
-    await page.getByTestId("canvas-tool-select").click();
-    await expect(page.getByTestId("quote-surface")).toHaveCount(0, {
+    // Closing the rail returns to CAD with the drawing visible.
+    await page.getByTestId("live-cost-rail-close").click();
+    await expect(page.getByTestId("live-cost-rail")).toHaveCount(0, {
       timeout: 10_000,
     });
     await expect(page.getByTestId("zoom-world")).toBeVisible();

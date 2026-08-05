@@ -1,5 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
+  clickHeaderViewItem,
   createCarltonControlProject,
   createWrightsTier1Project,
   handoffStudio,
@@ -7,6 +8,23 @@ import {
 } from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
+
+/**
+ * Opens the Live Cost Rail alongside the CAD drawing, then expands it to the
+ * full QuoteBuilder so the Tier-1 ledger and target are rendered.
+ */
+async function openQuoteBuilder(page: Page, projectId: string) {
+  await page.goto(`/projects/${projectId}?mode=cad`);
+  await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+  await clickHeaderViewItem(page, "live-cost-top");
+  await expect(page.getByTestId("live-cost-rail")).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.getByTestId("live-cost-rail-expand").click();
+  await expect(page.getByTestId("quote-surface")).toBeVisible({
+    timeout: 15_000,
+  });
+}
 
 /**
  * Fortune-500 Tier-1 kept smokes — Quote ledger, portal payload, share honesty.
@@ -18,11 +36,7 @@ test.describe("Fortune-500 Tier-1 Quote + portal", () => {
   }) => {
     const { projectId } = await createWrightsTier1Project(request);
 
-    await page.goto(`/projects/${projectId}?mode=quote`);
-    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId("quote-surface")).toBeVisible({
-      timeout: 15_000,
-    });
+    await openQuoteBuilder(page, projectId);
     await expect(page.getByTestId("tier1-quote-ledger")).toBeVisible({
       timeout: 15_000,
     });
@@ -68,11 +82,7 @@ test.describe("Fortune-500 Tier-1 Quote + portal", () => {
     request,
   }) => {
     const { projectId } = await createCarltonControlProject(request);
-    await page.goto(`/projects/${projectId}?mode=quote`);
-    await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId("quote-surface")).toBeVisible({
-      timeout: 15_000,
-    });
+    await openQuoteBuilder(page, projectId);
     await expect(page.getByTestId("tier1-quote-ledger")).toHaveCount(0);
   });
 
@@ -136,8 +146,8 @@ test.describe("Fortune-500 Tier-1 Quote + portal", () => {
     const pageA = await ctxA.newPage();
     const pageB = await ctxB.newPage();
 
-    await pageA.goto(`/projects/${a.projectId}?mode=quote`);
-    await pageB.goto(`/projects/${b.projectId}?mode=quote`);
+    await openQuoteBuilder(pageA, a.projectId);
+    await openQuoteBuilder(pageB, b.projectId);
 
     await expect(pageA.getByTestId("tier1-quote-ledger")).toBeVisible({
       timeout: 20_000,

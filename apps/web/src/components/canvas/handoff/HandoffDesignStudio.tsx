@@ -108,7 +108,7 @@ import {
 import { sunDateFromPreset } from "./features/sunGrowth/sunDatePreset";
 import { UtilityDrawer } from "./features/utilityDrawer/UtilityDrawer";
 import { PermitTodosPanel } from "./features/permitTodos/PermitTodosPanel";
-import { QuoteSurface } from "./features/tier1/QuoteSurface";
+import { LiveCostRail } from "./features/quote/LiveCostRail";
 import { ElevationBoard } from "./features/elevation/ElevationBoard";
 import {
   TraceOverlay,
@@ -290,6 +290,12 @@ import { useBoardReport } from "../../../lib/use-board-report";
 import { useBoardTelemetry } from "../../../lib/use-board-telemetry";
 import { telemetryBoardPoints } from "@workstream/domain";
 import css from "./handoffStudio.module.css";
+
+const audChip = new Intl.NumberFormat("en-AU", {
+  style: "currency",
+  currency: "AUD",
+  maximumFractionDigits: 0,
+}).format;
 
 type Props = {
   projectId: string;
@@ -1855,6 +1861,7 @@ export function HandoffDesignStudio({
   const treesMetaOpen = ui.rightDataPanel === "trees";
   const sitesOpen = ui.rightDataPanel === "sites";
   const checklistOpen = ui.rightDataPanel === "checklist";
+  const quoteRailOpen = ui.rightDataPanel === "quote";
   const draftSurface = chrome.draftSurface;
   const ghostsLaneOpen = draftSurface && ui.ghostReviewOpen;
   const rightLaneBusy = ui.rightDataPanel != null || ghostsLaneOpen;
@@ -2736,6 +2743,17 @@ export function HandoffDesignStudio({
     }
   }, [fallbackMode, openModes, requestMode, ui.mode]);
 
+  /*
+   * Quote is now a lane panel, not a mode. If someone navigates to
+   * ?mode=quote (legacy URL), redirect to CAD and open the cost rail.
+   */
+  useEffect(() => {
+    if (ui.mode === "quote") {
+      requestMode("cad");
+      studio.setUi({ rightDataPanel: "quote" });
+    }
+  }, [ui.mode, requestMode, studio]);
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -3071,6 +3089,19 @@ export function HandoffDesignStudio({
       onSelect: () => studio.setUi({ cmdOpen: true }),
     });
 
+    // Cost / quote
+    items.push({
+      id: "live-cost",
+      label: quoteRailOpen ? "Close live cost" : "Live cost",
+      testId: "live-cost-top",
+      active: quoteRailOpen,
+      onSelect: () =>
+        studio.setUi({
+          ...withRightDataPanel("quote"),
+          utilityPanel: null,
+        }),
+    });
+
     // View / data
     if (chrome.structureRail || chrome.compact) {
       items.push({
@@ -3139,6 +3170,7 @@ export function HandoffDesignStudio({
     layersOpen,
     openStudioSheetPage,
     projectId,
+    quoteRailOpen,
     runTiltView,
     setFitSheetOn,
     setInstrumentsSummoned,
@@ -3469,6 +3501,25 @@ export function HandoffDesignStudio({
                 />
               </div>
             ) : null}
+            {/*
+              * Live cost chip — compact total in the header right zone.
+              * Opens the cost rail in the right data lane. Hidden when the
+              * rail is already open, in focus mode, or when no items exist.
+              */}
+            {!ui.focusOn &&
+              !quoteRailOpen &&
+              !ui.clientView &&
+              estimate.lines.some((l) => l.total > 0) ? (
+              <button
+                type="button"
+                className={css.costChip}
+                data-testid="header-cost-chip"
+                onClick={() => studio.setUi({ rightDataPanel: "quote" })}
+                title="Open live cost rail"
+              >
+                {audChip(estimate.totalInclGst)}
+              </button>
+            ) : null}
             <UnifiedSaveStatus
               status={ui.mode === "present" ? deckSaveStatus : ui.saveStatus}
               savedTick={ui.mode === "present" ? deckSavedTick : ui.savedTick}
@@ -3661,53 +3712,12 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {ui.mode === "quote" && studio.boundary.length >= 3 ? (
-          <div className={css.quoteBackdrop} aria-hidden="true">
-            <svg
-              viewBox="0 0 100 100"
-              preserveAspectRatio="xMidYMid meet"
-              className={css.quoteBackdropPlan}
-            >
-              <path
-                d={`${studio.boundary.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")} Z`}
-                className={css.quoteBackdropBoundary}
-              />
-              {studio.building.length >= 3 ? (
-                <path
-                  d={`${studio.building.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")} Z`}
-                  className={css.quoteBackdropBuilding}
-                />
-              ) : null}
-            </svg>
-          </div>
-        ) : null}
-
-        {ui.mode === "quote" ? (
-          <CameraChrome
-            place={{ kind: "dock" }}
-            zIndex={52}
-            testId="quote-surface-chrome"
-          >
-            <QuoteSurface
-              address={projectAddress}
-              estimate={estimate}
-              onShare={(payload) => {
-                setShareQuoteFreeze(payload);
-                setSharePopupOpen(true);
-              }}
-              onBack={() => requestMode("cad")}
-              onOpenLibrary={() => {
-                requestMode("cad");
-                studio.setUi({
-                  leftAssetPanel: "expanded",
-                  addOpen: true,
-                  cmdOpen: true,
-                });
-              }}
-              onFit={() => setFitSheetOn(!ui.frameOn)}
-            />
-          </CameraChrome>
-        ) : null}
+        {/*
+          * Quote mode is now a lane panel (LiveCostRail), not a screen takeover.
+          * The old backdrop + QuoteSurface overlay is removed — the drawing
+          * stays visible alongside the cost rail. If someone navigates to
+          * ?mode=quote, redirect to CAD and open the rail.
+          */}
 
         {ui.mode === "share" ? (
           <ShareSurface
@@ -4432,8 +4442,7 @@ export function HandoffDesignStudio({
                   />
                 ) : null}
                 {(ui.mode === "cad" ||
-                  ui.mode === "sketch" ||
-                  ui.mode === "quote") &&
+                  ui.mode === "sketch") &&
                   !ui.frameOn ? (
                   <TrenchOverlay
                     trenches={studio.constructionTrenches.filter((t) => {
@@ -4818,17 +4827,14 @@ export function HandoffDesignStudio({
             night={darkLens}
             gridOn={gridStudioOpen}
             onTool={(t) => {
-              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(t);
             }}
             onMeasure={() => {
-              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
             onToggleGrid={() => {
-              if (ui.mode === "quote") requestMode("cad");
               setGridStudioOpen((v) => !v);
             }}
           />
@@ -4843,17 +4849,14 @@ export function HandoffDesignStudio({
             night={darkLens}
             gridOn={gridStudioOpen}
             onTool={(t) => {
-              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(t);
             }}
             onMeasure={() => {
-              if (ui.mode === "quote") requestMode("cad");
               setInstrumentsSummoned(true);
               studio.setTool(ui.tool === "measure" ? "select" : "measure");
             }}
             onToggleGrid={() => {
-              if (ui.mode === "quote") requestMode("cad");
               setGridStudioOpen((v) => !v);
             }}
           />
@@ -5027,7 +5030,7 @@ export function HandoffDesignStudio({
                     mitigated: { ...ui.mitigated, [id]: !ui.mitigated[id] },
                   })
                 }
-                onOpenQuote={() => requestMode("quote")}
+                onOpenQuote={() => studio.setUi({ rightDataPanel: "quote" })}
                 settling={
                   estimateSettling ||
                   ui.saveStatus === "saving" ||
@@ -5533,7 +5536,7 @@ export function HandoffDesignStudio({
                           },
                         })
                       }
-                      onOpenQuote={() => requestMode("quote")}
+                      onOpenQuote={() => studio.setUi({ rightDataPanel: "quote" })}
                     />
                   </div>
                 ) : null}
@@ -5768,6 +5771,39 @@ export function HandoffDesignStudio({
           </RightDataLane>
         ) : null}
 
+        {/*
+          * Progressive cost rail — lives in the right data lane alongside the
+          * drawing, not as a mode takeover. Three stages: seed (empty),
+          * estimation (items placed), quote (expandable to full QuoteBuilder).
+          * Dark frame language matches the header.
+          */}
+        {quoteRailOpen && planOn && !ui.frameOn ? (
+          <RightDataLane
+            testId="right-data-lane-quote"
+            onClose={() => studio.setUi({ rightDataPanel: null })}
+          >
+            <LiveCostRail
+              projectId={projectId}
+              address={projectAddress}
+              estimate={estimate}
+              estimateSettling={estimateSettling}
+              onShare={(payload) => {
+                setShareQuoteFreeze(payload);
+                setSharePopupOpen(true);
+              }}
+              onOpenLibrary={() => {
+                studio.setUi({
+                  leftAssetPanel: "expanded",
+                  addOpen: true,
+                  cmdOpen: true,
+                });
+              }}
+              onFit={() => setFitSheetOn(!ui.frameOn)}
+              onClose={() => studio.setUi({ rightDataPanel: null })}
+            />
+          </RightDataLane>
+        ) : null}
+
         <StudioCommandPalette
           open={ui.cmdOpen}
           query={ui.cmdQuery}
@@ -5861,7 +5897,7 @@ export function HandoffDesignStudio({
             studio.setUi({ arBirdseyeOn: !ui.arBirdseyeOn })
           }
           onArtboardPlan={() => selectArtboard("plan")}
-          onGoQuote={() => requestMode("quote")}
+          onGoQuote={() => studio.setUi({ rightDataPanel: "quote" })}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
           onTiltView={() => runTiltView()}
           onGardenViewpoint={runGardenViewpoint}

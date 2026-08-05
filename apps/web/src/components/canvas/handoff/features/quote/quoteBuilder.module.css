@@ -855,3 +855,269 @@
     animation: none;
   }
 }
+
+/* ---- Embedded in LiveCostRail — dark frame language, not light cream ---- */
+
+.rootEmbedded {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: 100%;
+  z-index: auto;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-left: none;
+  box-shadow: none;
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .top {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid var(--ws-frame-hair);
+}
+
+.rootEmbedded .h1 {
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .countBadge {
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
+  border: 1px solid var(--ws-frame-hair);
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .addr {
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .closeBtn {
+  background: transparent;
+  border: 1px solid var(--ws-frame-hair);
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .closeBtn:hover {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .actions button {
+  background: transparent;
+  border: 1px solid var(--ws-frame-hair);
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .actions button:hover {
+  background: var(--ws-frame-wash);
+  border-color: var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .primary {
+  background: color-mix(in srgb, var(--accent) 84%, var(--gray-l-900)) !important;
+  border-color: transparent !important;
+  color: var(--ws-frame-ink) !important;
+}
+
+.rootEmbedded .savePulse {
+  color: var(--ws-frame-ink-faint);
+}
+
+.rootEmbedded .orphanBanner {
+  background: color-mix(in srgb, var(--hc-warning) 18%, transparent);
+  color: var(--ws-frame-ink);
+  border-bottom: 1px solid var(--ws-frame-hair);
+}
+
+.rootEmbedded .body {
+  background: transparent;
+}
+
+.rootEmbedded .quotePane {
+  padding: 12px 14px;
+}
+
+.rootEmbedded .globalHeader {
+  color: var(--ws-frame-ink-faint);
+  border-bottom: 1px solid var(--ws-frame-hair);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.rootEmbedded .section>summary {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--ws-frame-hair) 60%, transparent);
+}
+
+.rootEmbedded .section>summary:hover {
+  background: var(--ws-frame-wash);
+}
+
+.rootEmbedded .chevron {
+  border-right-color: var(--ws-frame-ink-dim);
+  border-bottom-color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .sectionName {
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .sectionMeta {
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .row {
+  border-bottom: 1px solid color-mix(in srgb, var(--ws-frame-hair) 50%, transparent);
+}
+
+.rootEmbedded .row:hover {
+  background: color-mix(in srgb, var(--ws-frame-ink) 5%, transparent);
+}
+
+.rootEmbedded .lineCell {
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .lineCellUnit {
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .lineCellTotal {
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .lineExcluded {
+  color: var(--ws-frame-ink-faint);
+}
+
+.rootEmbedded .lineBadgeProv {
+  background: color-mix(in srgb, var(--hc-warning) 22%, transparent);
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .lineBadgeAlt {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .lineBadgeCustom {
+  background: color-mix(in srgb, var(--ws-frame-ink) 10%, transparent);
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .lineBadgeExcluded {
+  background: color-mix(in srgb, var(--hc-danger) 14%, transparent);
+  color: var(--hc-danger);
+}
+
+.rootEmbedded .lineBadgeEdited {
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .rowMenuBtn {
+  color: var(--ws-frame-ink-faint);
+}
+
+.rootEmbedded .rowMenuBtn:hover {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .rowMenu {
+  background: var(--ws-frame-raise);
+  border: 1px solid var(--ws-frame-hair);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.rootEmbedded .lineActionChip {
+  color: var(--ws-frame-ink-dim);
+  border: 1px solid var(--ws-frame-hair);
+}
+
+.rootEmbedded .lineActionChip:hover {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .lineActionChipActive {
+  background: var(--ws-frame-ink);
+  color: var(--ws-frame);
+  border-color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .lineInput {
+  color: var(--ws-frame-ink);
+  border-color: var(--ws-frame-hair);
+}
+
+.rootEmbedded .lineInput:hover {
+  background: color-mix(in srgb, var(--ws-frame-ink) 5%, transparent);
+}
+
+.rootEmbedded .lineInput:focus {
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
+  border-color: var(--ws-frame-hair);
+}
+
+.rootEmbedded .lineInputNotes::placeholder {
+  color: var(--ws-frame-ink-faint);
+}
+
+.rootEmbedded .honesty {
+  color: var(--ws-frame-ink-faint);
+}
+
+.rootEmbedded .totals {
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: 1px solid var(--ws-frame-hair);
+}
+
+.rootEmbedded .marginField input {
+  background: transparent;
+  border-color: var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .marginField input:focus {
+  border-color: var(--hc-accent);
+}
+
+.rootEmbedded .totalRow {
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .totalRow .mono {
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .totalGrand {
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .totalGrand .mono {
+  color: var(--ws-frame-ink);
+}
+
+.rootEmbedded .empty {
+  color: var(--ws-frame-ink-dim);
+}
+
+.rootEmbedded .skeleton {
+  background: color-mix(in srgb, var(--ws-frame-ink) 6%, transparent);
+}
+
+.rootEmbedded .pct {
+  color: var(--ws-frame-ink-faint);
+}

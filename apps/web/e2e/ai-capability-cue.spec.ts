@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import {
+  clickHeaderViewItem,
+  createSurveyProject,
+  handoffStudio,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -75,9 +79,14 @@ test.describe("AI capability cue", () => {
     const { projectId } = await createSurveyProject(request);
     await seedTracedEmptyLot(request, projectId);
 
-    // Quote is not a drawing surface, so no cue belongs there.
-    await page.goto(`/projects/${projectId}?mode=quote`);
+    // The Live Cost Rail (quote) is not a drawing surface, so no cue belongs
+    // there. Open the rail alongside CAD and confirm the cue stays hidden.
+    await page.goto(`/projects/${projectId}?mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+    await clickHeaderViewItem(page, "live-cost-top");
+    await expect(page.getByTestId("live-cost-rail")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByTestId("ai-capability-cue")).toBeHidden();
   });
 

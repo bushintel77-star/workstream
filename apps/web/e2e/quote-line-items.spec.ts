@@ -1,5 +1,9 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
-import { createSurveyProject, handoffStudio } from "./helpers";
+import {
+  clickHeaderViewItem,
+  createSurveyProject,
+  handoffStudio,
+} from "./helpers";
 
 const API = process.env.API_URL ?? "http://localhost:3001";
 
@@ -42,8 +46,17 @@ async function seedDesignCanvas(request: APIRequestContext, projectId: string) {
 }
 
 async function openQuote(page: Page, projectId: string) {
-  await page.goto(`/projects/${projectId}?mode=quote`);
+  await page.goto(`/projects/${projectId}?mode=cad`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
+  await clickHeaderViewItem(page, "live-cost-top");
+  await expect(page.getByTestId("live-cost-rail")).toBeVisible({
+    timeout: 15_000,
+  });
+  // Expand the rail to the full QuoteBuilder table view.
+  await page.getByTestId("live-cost-rail-expand").click();
+  await expect(page.getByTestId("quote-surface")).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 test.describe("Quote line items", () => {
@@ -61,8 +74,10 @@ test.describe("Quote line items", () => {
     await expect(page.getByTestId("quote-totals-bar")).toBeVisible();
     await expect(page.getByText("Total incl GST")).toBeVisible();
 
+    // The QuoteBuilder loads the quote doc + waits for estimate to settle.
+    // In the rail flow this starts after expand click, so allow more time.
     const firstRow = page.locator('[data-testid^="quote-line-"]').first();
-    await expect(firstRow).toBeVisible();
+    await expect(firstRow).toBeVisible({ timeout: 30_000 });
 
     // Section summary includes line count and a subtotal.
     const firstSection = page.locator("details").first();
@@ -98,8 +113,9 @@ test.describe("Quote line items mobile", () => {
 
     await expect(page.getByTestId("quote-surface")).toBeVisible();
 
+    // The QuoteBuilder loads the quote doc + waits for estimate to settle.
     const firstRow = page.locator('[data-testid^="quote-line-"]').first();
-    await expect(firstRow).toBeVisible();
+    await expect(firstRow).toBeVisible({ timeout: 30_000 });
 
     // Tap the mobile card to open the edit drawer.
     await firstRow.locator("button").first().click();

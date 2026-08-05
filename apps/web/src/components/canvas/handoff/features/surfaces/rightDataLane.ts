@@ -12,7 +12,8 @@ export type RightDataPanel =
   | "services"
   | "environment"
   | "site"
-  | "trees";
+  | "trees"
+  | "quote";
 
 /** Nominal panel width reserved into `--ws-safe-right` while a panel is open. */
 export const RIGHT_DATA_LANE_WIDTH_PX = 304;
