@@ -1,20 +1,14 @@
-fix(web): gate Live Cost Rail on settled estimation
+fix(web): guard useChromeIdle from infinite update loop and clipboard permission errors
 
-The rail was rendering a big seed card on empty canvases and staying open
-as a persistent panel regardless of whether estimation had produced
-anything. It now only overlays when the project has finished its
-estimation phase — i.e. there are costed lines with real totals.
-
-- Removed the seed/empty stage entirely. The header cost chip already
-  handles the "no items yet" case — the rail has nothing to add there.
-- Added hasCostedLines guard on the rail render: no costed lines, no rail.
-- Added auto-close effect: if items are cleared while the rail is open,
-  it closes itself. Guarded with a ref to avoid the infinite update loop
-  that a naive useEffect + setUi caused.
-- Gated all entry points: the View menu "Live cost" item only appears
-  when there are costed lines (or the rail is already open). The legacy
-  ?mode=quote redirect only opens the rail if estimation has settled.
-- Removed dead seed CSS (.seedBody, .seedHint, .seedCta).
+- useChromeIdle.ts: functional setIdle updates, useCallback for
+  markActive/startIdleTimer, only re-render when idle actually flips.
+  Previously setIdle(false) was called on every pointer/scroll/wheel
+  event and on every effect re-run, causing a Maximum update depth
+  exceeded loop.
+- ShareSurface.tsx + ShareRevisionPopup.tsx: wrap
+  navigator.clipboard.writeText in an inner try/catch so a
+  NotAllowedError no longer surfaces as a runtime exception; the link
+  is still generated and shown for manual copy.
 
 Generated with [Devin](https://devin.ai)
 

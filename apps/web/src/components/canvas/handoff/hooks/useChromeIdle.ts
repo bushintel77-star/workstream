@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const EVENTS = [
   "pointerdown",
@@ -29,6 +29,21 @@ export function useChromeIdle({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAt = useRef<number>(Date.now());
 
+  // Use functional updates so we only re-render when the value actually flips.
+  const startIdleTimer = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(
+      () => setIdle((wasIdle) => (wasIdle ? wasIdle : true)),
+      timeout,
+    );
+  }, [timeout]);
+
+  const markActive = useCallback(() => {
+    lastAt.current = Date.now();
+    setIdle((wasIdle) => (wasIdle ? false : wasIdle));
+    startIdleTimer();
+  }, [startIdleTimer]);
+
   useEffect(() => {
     if (disabled) {
       setIdle(false);
@@ -36,29 +51,25 @@ export function useChromeIdle({
       return;
     }
 
-    const markActive = () => {
-      lastAt.current = Date.now();
-      setIdle(false);
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setIdle(true), timeout);
-    };
+    // Start the first idle timer on mount / enable.
+    startIdleTimer();
 
-    // Start the first idle timer on mount.
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setIdle(true), timeout);
-
-    EVENTS.forEach((e) => document.addEventListener(e, markActive, {
-      passive: true,
-      capture: true,
-    } as AddEventListenerOptions));
+    EVENTS.forEach((e) =>
+      document.addEventListener(e, markActive, {
+        passive: true,
+        capture: true,
+      } as AddEventListenerOptions),
+    );
 
     return () => {
       if (timer.current) clearTimeout(timer.current);
-      EVENTS.forEach((e) => document.removeEventListener(e, markActive, {
-        capture: true,
-      } as EventListenerOptions));
+      EVENTS.forEach((e) =>
+        document.removeEventListener(e, markActive, {
+          capture: true,
+        } as EventListenerOptions),
+      );
     };
-  }, [timeout, disabled]);
+  }, [disabled, markActive, startIdleTimer]);
 
   return idle;
 }

@@ -226,9 +226,13 @@ export function ShareRevisionPopup({
           ];
         });
         onRevisionChange?.(result.revision);
-        await navigator.clipboard?.writeText(result.share_url);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 2200);
+        try {
+          await navigator.clipboard?.writeText(result.share_url);
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 2200);
+        } catch {
+          // Clipboard permission denied; still toast share success below.
+        }
         toast.show(
           `Rev ${result.revision.revision} shared — link copied`,
           "success",
@@ -352,9 +356,13 @@ export function ShareRevisionPopup({
               start(async () => {
                 try {
                   const url = shareUrlFor(active, shareBaseUrl);
-                  await navigator.clipboard?.writeText(url);
-                  setCopied(true);
-                  window.setTimeout(() => setCopied(false), 2200);
+                  try {
+                    await navigator.clipboard?.writeText(url);
+                    setCopied(true);
+                    window.setTimeout(() => setCopied(false), 2200);
+                  } catch {
+                    // Clipboard permission denied; continue with the URL.
+                  }
                   toast.show("Link copied", "success");
                 } catch (e) {
                   setError(

@@ -110,9 +110,14 @@ export function ShareSurface({
                   try {
                     const url = await copyPortalLinkAction(projectId);
                     setLink(url);
-                    await navigator.clipboard?.writeText(url);
-                    setCopied(true);
-                    window.setTimeout(() => setCopied(false), 2200);
+                    try {
+                      await navigator.clipboard?.writeText(url);
+                      setCopied(true);
+                      window.setTimeout(() => setCopied(false), 2200);
+                    } catch {
+                      // Clipboard permission denied or no secure context -
+                      // the link is still set below for manual copy.
+                    }
                   } catch (e) {
                     setError(
                       e instanceof Error
