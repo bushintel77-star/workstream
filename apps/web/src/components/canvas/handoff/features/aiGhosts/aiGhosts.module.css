@@ -6,11 +6,11 @@
   width: min(520px, calc(100vw - 48px));
   padding: var(--s-3) var(--s-3);
   border-radius: var(--r-xl);
-  border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 86%, transparent);
   backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 14px 44px color-mix(in srgb, var(--hc-ink) 25%, transparent);
-  color: var(--hc-ink);
+  box-shadow: 0 14px 44px color-mix(in srgb, #000 32%, transparent);
+  color: var(--ws-frame-ink);
   font-family: var(--font-body);
   animation: ccIn 0.22s ease-out;
 }
@@ -46,7 +46,7 @@
   padding: var(--s-2) var(--s-2);
   border: 1px solid transparent;
   border-radius: 9px;
-  background: transparent;
+  background: color-mix(in srgb, var(--ws-frame-ink) 6%, transparent);
   color: inherit;
   cursor: pointer;
   text-align: left;
@@ -55,12 +55,12 @@
 }
 
 .row:hover {
-  background: var(--hc-line-soft);
+  background: color-mix(in srgb, var(--ws-frame-ink) 12%, transparent);
 }
 
 .row[data-active="true"] {
-  border-color: var(--hc-line);
-  background: var(--hc-accent-wash);
+  border-color: var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame-raise) 20%, transparent);
 }
 
 .row[data-stale="true"] .rowTitle {
@@ -74,7 +74,7 @@
 
 .rowMeta {
   font-size: var(--text-micro);
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", monospace;
 }
 
@@ -86,7 +86,7 @@
   overflow: auto;
   max-height: 300px;
   padding: 2px 2px 2px var(--s-2);
-  border-left: 1px solid var(--hc-line-soft);
+  border-left: 1px solid var(--ws-frame-hair);
 }
 
 .detailHead {
@@ -109,7 +109,7 @@
   font-weight: 650;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", monospace;
 }
 
@@ -121,7 +121,7 @@
   margin: 0;
   font-size: var(--text-xs);
   line-height: 1.45;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .impact {
@@ -129,7 +129,7 @@
   font-size: var(--text-xs);
   font-weight: 600;
   font-family: "IBM Plex Mono", monospace;
-  color: var(--hc-success);
+  color: color-mix(in srgb, var(--ws-frame-ink) 80%, var(--hc-success));
 }
 
 .confBtn {
@@ -150,14 +150,14 @@
   font-size: var(--text-xs);
   font-weight: 650;
   font-family: "IBM Plex Mono", monospace;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
 }
 
 .confTrack {
   display: block;
   height: 6px;
   border-radius: var(--hc-r-pill);
-  background: var(--hc-line-soft);
+  background: color-mix(in srgb, var(--ws-frame-ink) 12%, transparent);
   overflow: hidden;
 }
 
@@ -188,7 +188,7 @@
   gap: var(--s-2);
   font-size: var(--text-micro);
   font-family: "IBM Plex Mono", monospace;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .factorPct {
@@ -198,7 +198,7 @@
 .factorBar {
   height: 4px;
   border-radius: var(--hc-r-pill);
-  background: var(--hc-line-soft);
+  background: color-mix(in srgb, var(--ws-frame-ink) 12%, transparent);
   overflow: hidden;
 }
 
@@ -222,9 +222,9 @@
   min-height: 44px;
   padding: 0 12px;
   border-radius: var(--r-lg);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
-  color: var(--hc-ink);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
+  color: var(--ws-frame-ink);
   font: inherit;
   font-size: var(--text-xs);
   font-weight: 650;
@@ -238,7 +238,7 @@
   flex-wrap: wrap;
   gap: var(--s-1);
   margin-top: 8px;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-nano);
 }
@@ -248,8 +248,8 @@
   padding: 0 var(--s-3);
   border: 1px solid color-mix(in srgb, var(--hc-danger) 22%, transparent);
   border-radius: var(--hc-r-pill);
-  background: var(--hc-glass-soft);
-  color: var(--hc-ink-muted);
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
+  color: var(--ws-frame-ink-dim);
   font: inherit;
   font-size: var(--text-micro);
   cursor: pointer;
@@ -257,18 +257,18 @@
 
 .rejectReasons button:hover {
   border-color: color-mix(in srgb, var(--hc-danger) 48%, transparent);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
 }
 
 .accept {
   border-color: color-mix(in srgb, var(--hc-success) 40%, transparent);
   background: color-mix(in srgb, var(--hc-success) 12%, transparent);
-  color: var(--hc-success);
+  color: color-mix(in srgb, var(--ws-frame-ink) 80%, var(--hc-success));
 }
 
 .reject:hover,
 .ask:hover {
-  background: var(--hc-line-soft);
+  background: color-mix(in srgb, var(--ws-frame-ink) 14%, transparent);
 }
 
 .empty {
@@ -280,8 +280,9 @@
   width: min(360px, calc(100vw - 48px));
   padding: var(--s-3) var(--s-4);
   border-radius: var(--r-xl);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 86%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
 }
 
 .emptyTitle {
@@ -294,7 +295,7 @@
   margin: 0;
   font-size: var(--text-xs);
   line-height: 1.45;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   max-width: 36ch;
 }
 
@@ -305,7 +306,7 @@
 
   .detail {
     border-left: none;
-    border-top: 1px solid var(--hc-line-soft);
+    border-top: 1px solid var(--ws-frame-hair);
     padding-left: 2px;
     padding-top: var(--s-2);
   }
