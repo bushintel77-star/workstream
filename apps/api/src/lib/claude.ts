@@ -32,10 +32,14 @@ import { setActiveTelemetryAttributes } from "./telemetry";
 import { dissectPlan } from "./plan-dissect";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
-const DESIGN_MODEL = "claude-opus-4-7";
-const AUDIT_MODEL = "claude-sonnet-4-6";
-const VISION_MODEL = "claude-sonnet-4-6";
+const ANTHROPIC_VERSION =
+  process.env.ANTHROPIC_VERSION ?? "2023-06-01";
+const DESIGN_MODEL =
+  process.env.CLAUDE_DESIGN_MODEL ?? "claude-opus-4-7";
+const AUDIT_MODEL =
+  process.env.CLAUDE_AUDIT_MODEL ?? "claude-sonnet-4-6";
+const VISION_MODEL =
+  process.env.CLAUDE_VISION_MODEL ?? "claude-sonnet-4-6";
 
 export type { DesignProposal };
 

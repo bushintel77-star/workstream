@@ -9,8 +9,10 @@ import { fetchWithRetry } from "./http";
 import { setActiveTelemetryAttributes } from "./telemetry";
 
 const MESSAGES_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
-const DICTATION_MODEL = "claude-sonnet-4-6";
+const ANTHROPIC_VERSION =
+  process.env.ANTHROPIC_VERSION ?? "2023-06-01";
+const DICTATION_MODEL =
+  process.env.CLAUDE_VISION_MODEL ?? "claude-sonnet-4-6";
 
 const GRID_SOIL_SYSTEM = `You are **Grid & Soil**, an elite, invisible build-phase co-pilot embedded in a Curtis & Co landscape architecture app. You are activated halfway through a physical site build and are speaking to the lead operator.
 
@@ -96,10 +98,10 @@ export type LedgerEntry = {
   id: string;
   material_type: string;
   measurement_type:
-    | "area_sqm"
-    | "volume_cum"
-    | "linear_meters"
-    | "unit_count";
+  | "area_sqm"
+  | "volume_cum"
+  | "linear_meters"
+  | "unit_count";
   quantity: number;
   zone: string | null;
   created_at: string;

@@ -31,6 +31,14 @@ const EnvSchema = z.object({
   /* AI */
   ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
   OPENAI_API_KEY: z.string().startsWith("sk-").optional(),
+  /** Anthropic API version header. Override only when Anthropic ships a breaking version. */
+  ANTHROPIC_VERSION: z.string().default("2023-06-01"),
+  /** Model for design generation (the heavy proposal engine). */
+  CLAUDE_DESIGN_MODEL: z.string().default("claude-opus-4-7"),
+  /** Model for audit / compliance review. */
+  CLAUDE_AUDIT_MODEL: z.string().default("claude-sonnet-4-6"),
+  /** Model for vision tasks (ghosts, OCR, sketch assist, dictation). */
+  CLAUDE_VISION_MODEL: z.string().default("claude-sonnet-4-6"),
 
   /* Geo — Mapbox optional (geocode/aerial). Vicmap cadastral is keyless WFS. */
   MAPBOX_TOKEN: z.string().optional(),

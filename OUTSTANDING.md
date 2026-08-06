@@ -418,6 +418,58 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
       scale to check against yet (00-DISCOVERY §4.1 — the ink-tier scale is
       still unbuilt). Freezing the count stops it growing while that lands.
 
+## Production placeholders — hardcoded data shipping in live paths
+
+Found 2026-08-05. Each is a stable interface returning canned data today,
+with a documented path to a real adapter. None block first paying customer
+(the quotes are honest about what's behind them), but all need product
+investment before scale.
+
+- [x] **Claude model names hardcoded** — `DESIGN_MODEL`, `AUDIT_MODEL`,
+      `VISION_MODEL`, `DICTATION_MODEL` were `const` strings in `claude.ts`
+      and `dictation.ts`. **Fixed**: moved to env vars
+      (`CLAUDE_DESIGN_MODEL`, `CLAUDE_AUDIT_MODEL`, `CLAUDE_VISION_MODEL`,
+      `ANTHROPIC_VERSION`) with current values as defaults. Models can now
+      be swapped without redeploying code.
+- [ ] **Supplier price feeds (`suppliers.ts`)** — `fetchPrices()` returns
+      canned `DEV` prices for all 7 suppliers (Bunnings, Boral, Holcim,
+      Andersons, ANL, Online Plants AU, Speciality Trees). The
+      `SUPPLIERS_LIVE` flag is checked but no real adapters exist. Every
+      quote that touches supplier pricing uses these hardcoded rates.
+      **Production replacement**: trade-account scraper or PDF rate-sheet
+      OCR ingestion via Claude.
+- [ ] **Melbourne trade catalog (`live-trade-sourcing.ts`)** —
+      `MELBOURNE_TRADE_CATALOG` is a static array of ~30 hardcoded
+      wholesale offers (Dinsan, Plantmark, Warners, Speciality Trees) with
+      fixed prices and `hubKmFromPrahran` distances. Comment: "Not live
+      Plantmark/Dinsan APIs (Stage 2)." The `solveLiveTradeEstimate`
+      function calculates against this catalog but the result is never
+      displayed (see `_trade` above). **Production replacement**: live
+      nursery trade APIs or periodic catalog sync.
+- [ ] **Plant biogenic carbon coefficients (`carbon.ts`)** — 7 plant SKUs
+      are marked `source: "stub"` — rough biogenic uptake estimates. The
+      quote footer discloses this: "Plant biogenic uptake is a lifecycle
+      stub — replace with EPDs when supplier data is available."
+      **Production replacement**: Environmental Product Declarations from
+      nurseries/suppliers.
+- [ ] **Polygon difference (`geometry.ts`)** — `subtractPolygon()` returns
+      the outer ring unchanged; the inner polygon (house) is ignored.
+      Comment: "Implementing a full polygon-clipping (Vatti,
+      Greiner-Hormann) is meaningful work." Survey-job works around this
+      by using the title polygon with house-as-inner-ring. **Production
+      replacement**: proper polygon clipping algorithm (martinez, vatti,
+      or a library like polygon-clipping).
+- [ ] **Survey utilities stub (`preemptive-risk.ts`)** —
+      `// Utility stub - reserved when survey utilities land.` The function
+      returns early without checking for underground utilities. **Production
+      replacement**: survey utility detection when the survey utilities
+      feature lands.
+- [ ] **Print line-weight scaling (`lineWeight.ts`)** —
+      `TODO(print): map the ladder through sheetScaleDenom so 1:100 and
+      1:200` — line weights don't scale with print zoom. Already documented
+      as P3 above. **Production replacement**: implement the scale-aware
+      ladder.
+
 ## Aerial Design Studio (separate track)
 
 See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md),
