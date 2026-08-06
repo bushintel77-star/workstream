@@ -21,8 +21,6 @@ co-pilot for Curtis & Co (Melbourne).
   `https://api-production-a8ff1.up.railway.app`. API durability volume
   `api-volume` mounts at `/repo/apps/api/data`
   (`CONSTRUCT_PERSIST_PATH=…/store.json`, `CONSTRUCT_SQLITE_PATH=…/store.sqlite3`).
-  Fly.io syd configs remain in-repo as legacy; do not treat Fly as the live
-  target unless product explicitly switches back.
 
 ## Conventions
 

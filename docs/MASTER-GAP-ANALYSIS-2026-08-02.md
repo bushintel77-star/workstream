@@ -359,10 +359,10 @@ node scripts/check-handoff-chrome-colors.mjs   # hex gate
 
 | Action | Where |
 |--------|-------|
-| Clerk live + Fly/Railway secrets | API + web |
-| Redis URL + worker scale | Railway/Fly |
-| Sentry DSNs | Both apps |
-| Single API machine | `flyctl scale count 1` |
+| Clerk live + Railway variables | API + web |
+| Redis URL + worker scale | Railway |
+| Sentry DSNs | Both services |
+| Single API instance | Keep API replica count at 1 |
 | EAS init + Apple/Google credentials | `apps/mobile` |
 | Branch protection on `main` | GitHub Settings (Pro) |
 | External keys (OpenAI, Anthropic, Mapbox, Stripe, OTEL) | Fly/Railway secrets |

@@ -66,7 +66,7 @@ export default function PrivacyPage() {
 
       <h2 className={s.sectionHeading}>Where it lives</h2>
       <p>
-        Workstream runs on Fly.io in the Sydney (syd) region. Recordings and
+        Workstream runs on Railway. Recordings and
         outputs are stored on attached SSD volumes; backups follow our internal
         retention schedule (90 days for recordings, 7 years for accounting
         artefacts to meet ATO requirements).

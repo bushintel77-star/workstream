@@ -1,11 +1,13 @@
 # Production human ops runbook
 
-Generated 2026-07-21T00:38:19Z for branch
-`cursor/workstream-gold-standard-rebuild-1f48` through `814a3cb`.
+Generated 2026-07-21, updated 2026-08-05 for the Railway migration.
 
 These steps require live platform access or credentials. Do not commit real
 secret values to this repository. Run commands from the repository root unless a
 section says otherwise.
+
+Railway services: `api-production-a8ff1` (API) and `web-production-3c194` (web).
+Set variables through the Railway dashboard or `railway variables set`.
 
 ## Section 1 - Clerk authentication (P0)
 
@@ -16,42 +18,38 @@ section says otherwise.
 3. Auth methods: Email and Google.
 4. Copy the live Secret Key (`sk_live_...`) and Publishable Key (`pk_live_...`).
 
-### Step 2: Set Fly secrets
+### Step 2: Set Railway variables
 
 The API needs the server secret. The web app needs the server secret plus the
 public publishable key used by Clerk middleware and client components.
 
-```bash
-flyctl secrets set \
-  CLERK_SECRET_KEY="sk_live_PASTE_HERE" \
-  AUTH_REQUIRED=true \
-  PUBLIC_API_URL="https://construct-api.fly.dev" \
-  CORS_ORIGIN="https://construct-web.fly.dev" \
-  -a construct-api
+On the API service (`api-production-a8ff1`):
 
-flyctl secrets set \
-  CLERK_SECRET_KEY="sk_live_PASTE_HERE" \
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_PASTE_HERE" \
-  AUTH_REQUIRED=true \
-  -a construct-web
+```
+CLERK_SECRET_KEY=sk_live_PASTE_HERE
+AUTH_REQUIRED=true
+PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
+CORS_ORIGIN=https://web-production-3c194.up.railway.app
+```
+
+On the web service (`web-production-3c194`):
+
+```
+CLERK_SECRET_KEY=sk_live_PASTE_HERE
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_PASTE_HERE
+AUTH_REQUIRED=true
 ```
 
 ### Step 3: Redeploy web
 
-`NEXT_PUBLIC_*` values are build-time values for the web image.
-
-```bash
-flyctl deploy --config apps/web/fly.toml \
-  --dockerfile apps/web/Dockerfile \
-  -a construct-web \
-  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev \
-  --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_PASTE_HERE
-```
+`NEXT_PUBLIC_*` values are build-time values for the web image. Trigger a
+redeploy from the Railway dashboard or with the Railway CLI so the new
+publishable key is baked in.
 
 ### Step 4: Verify
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/dashboard
+curl -s -o /dev/null -w "%{http_code}\n" https://web-production-3c194.up.railway.app/dashboard
 ```
 
 Expect a Clerk redirect or sign-in response for unauthenticated access when
@@ -61,45 +59,41 @@ Expect a Clerk redirect or sign-in response for unauthenticated access when
 
 ### Step 1: Provision Redis
 
-Option A - Upstash, recommended for Fly:
+Option A - Upstash:
 
 1. Go to https://upstash.com.
 2. Create a Redis database in or near Sydney.
 3. Copy the Redis URL (`rediss://...`).
 
-Option B - Fly Redis:
+Option B - Railway Redis plugin:
 
-```bash
-flyctl redis create --name workstream-redis --region syd
+1. In the Railway project, add a Redis plugin.
+2. Copy the `rediss://...` connection string from the plugin variables.
+
+### Step 2: Set variable on the API service
+
+```
+REDIS_URL=rediss://PASTE_HERE
 ```
 
-### Step 2: Set secret
+### Step 3: Enable the worker process
 
-```bash
-flyctl secrets set REDIS_URL="rediss://PASTE_HERE" -a construct-api
-```
-
-### Step 3: Scale worker process
-
-```bash
-flyctl scale count worker=1 -a construct-api
-```
+Run the worker as a separate Railway service or as a worker process within the
+API service, sharing the same image. The worker entrypoint is
+`node dist/worker.js`.
 
 ### Step 4: Verify
 
-```bash
-flyctl logs -a construct-api | grep "worker"
-```
-
-Expect a BullMQ worker start message.
+Tail the API/worker logs in the Railway dashboard and expect a BullMQ worker
+start message.
 
 ## Section 3 - Sentry error monitoring (P0)
 
 ### Step 1: Create Sentry projects
 
 1. Go to https://sentry.io.
-2. Create a Node.js project for `construct-api`.
-3. Create a Next.js project for `construct-web`.
+2. Create a Node.js project for the API.
+3. Create a Next.js project for the web.
 4. Copy both DSNs.
 
 ### Step 2: Install web package when enabling browser capture
@@ -108,31 +102,29 @@ Expect a BullMQ worker start message.
 pnpm --filter @workstream/web add @sentry/nextjs
 ```
 
-### Step 3: Set secrets
+### Step 3: Set variables on both Railway services
 
-```bash
-flyctl secrets set SENTRY_DSN="https://PASTE_API_DSN@sentry.io/PROJECT" -a construct-api
-flyctl secrets set SENTRY_DSN="https://PASTE_WEB_DSN@sentry.io/PROJECT" -a construct-web
+On the API service:
+
+```
+SENTRY_DSN=https://PASTE_API_DSN@sentry.io/PROJECT
 ```
 
-### Step 4: Redeploy both apps
+On the web service:
 
-```bash
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api
-flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web \
-  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+```
+SENTRY_DSN=https://PASTE_WEB_DSN@sentry.io/PROJECT
 ```
 
-## Section 4 - Single API machine (P0)
+### Step 4: Redeploy both services
+
+Trigger a redeploy on both Railway services so the new DSNs take effect.
+
+## Section 4 - Single API instance (P0)
 
 Keep the JSON snapshot store single-writer until the database migration lands.
-
-```bash
-flyctl scale count 1 -a construct-api
-flyctl status -a construct-api
-```
-
-Expect one running API machine for `construct-api`.
+In Railway, set the API service's replica count to 1 while the store is
+single-writer SQLite.
 
 ## Section 5 - Mobile EAS distribution (P1)
 
@@ -148,7 +140,7 @@ This writes the real EAS `projectId` into `apps/mobile/app.json`.
 ### Step 2: Set EAS production environment
 
 ```bash
-eas env:create --environment production --name EXPO_PUBLIC_API_URL --value https://construct-api.fly.dev
+eas env:create --environment production --name EXPO_PUBLIC_API_URL --value https://api-production-a8ff1.up.railway.app
 eas env:create --environment production --name EXPO_PUBLIC_AUTH_REQUIRED --value true
 eas env:create --environment production --name EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY --value pk_live_PASTE_HERE
 ```
@@ -185,18 +177,16 @@ eas submit --platform android
 
 ## Section 6 - External API keys (P1)
 
-Set live AI, map, portal, Stripe, and telemetry secrets on the API app.
+Set live AI, map, portal, Stripe, and telemetry variables on the API service.
 
-```bash
-flyctl secrets set \
-  OPENAI_API_KEY="sk-PASTE_HERE" \
-  ANTHROPIC_API_KEY="sk-ant-PASTE_HERE" \
-  MAPBOX_TOKEN="pk.PASTE_HERE" \
-  STRIPE_SECRET_KEY="sk_live_PASTE_HERE" \
-  STRIPE_WEBHOOK_SECRET="whsec_PASTE_HERE" \
-  WORKSTREAM_PORTAL_SECRET="$(openssl rand -hex 32)" \
-  OTEL_EXPORTER_OTLP_ENDPOINT="https://PASTE_OTLP_COLLECTOR_BASE_URL" \
-  -a construct-api
+```
+OPENAI_API_KEY=sk-PASTE_HERE
+ANTHROPIC_API_KEY=sk-ant-PASTE_HERE
+MAPBOX_TOKEN=pk.PASTE_HERE
+STRIPE_SECRET_KEY=sk_live_PASTE_HERE
+STRIPE_WEBHOOK_SECRET=whsec_PASTE_HERE
+WORKSTREAM_PORTAL_SECRET=<openssl rand -hex 32>
+OTEL_EXPORTER_OTLP_ENDPOINT=https://PASTE_OTLP_COLLECTOR_BASE_URL
 ```
 
 Do not hardcode the OpenTelemetry endpoint. Use the endpoint issued by the
@@ -227,33 +217,29 @@ Backblaze B2:
 3. Create an application key scoped to the bucket with read/write access.
 4. Copy the S3 endpoint, region, key ID, and application key.
 
-### Step 2: Set Fly secrets
+### Step 2: Set variables on the API service
 
-```bash
-flyctl secrets set \
-  LITESTREAM_BUCKET="workstream-dr" \
-  LITESTREAM_S3_ENDPOINT="https://PASTE_ENDPOINT" \
-  LITESTREAM_S3_REGION="auto" \
-  LITESTREAM_ACCESS_KEY_ID="PASTE_ACCESS_KEY_ID" \
-  LITESTREAM_SECRET_ACCESS_KEY="PASTE_SECRET_ACCESS_KEY" \
-  -a construct-api
+```
+LITESTREAM_BUCKET=workstream-dr
+LITESTREAM_S3_ENDPOINT=https://PASTE_ENDPOINT
+LITESTREAM_S3_REGION=auto
+LITESTREAM_ACCESS_KEY_ID=PASTE_ACCESS_KEY_ID
+LITESTREAM_SECRET_ACCESS_KEY=PASTE_SECRET_ACCESS_KEY
 ```
 
-### Step 3: Add sidecar after SQLite is live
+### Step 3: Add a backup process after SQLite is live
 
-```toml
-[processes]
-  app = "node dist/server.js"
-  worker = "node dist/worker.js"
-  backup = "litestream replicate -config /etc/litestream.yml"
+Run Litestream as a separate Railway service (or worker process within the API
+service) sharing the API image, with entrypoint:
+
+```
+litestream replicate -config /etc/litestream.yml
 ```
 
-### Step 4: Scale and verify
+### Step 4: Verify
 
-```bash
-flyctl scale count backup=1 -a construct-api
-flyctl logs -a construct-api | grep "litestream"
-```
+Tail the backup service logs in the Railway dashboard and expect Litestream
+replication messages.
 
 ## Section 8 - Branch protection (P1)
 
@@ -277,9 +263,9 @@ Requires GitHub Pro for private repositories.
 
 ```bash
 pnpm run ci
-curl -sS https://construct-api.fly.dev/healthz
-curl -sS https://construct-api.fly.dev/readyz
-curl -sS -o /dev/null -w "%{http_code}\n" https://construct-api.fly.dev/uploads/test.mp3
+curl -sS https://api-production-a8ff1.up.railway.app/healthz
+curl -sS https://api-production-a8ff1.up.railway.app/readyz
+curl -sS -o /dev/null -w "%{http_code}\n" https://api-production-a8ff1.up.railway.app/uploads/test.mp3
 ```
 
 Expect API health and ready checks to return `ok`. The protected upload probe

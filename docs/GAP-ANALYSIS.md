@@ -29,13 +29,13 @@ Last reviewed: 2026-05-24. Current matrix: `docs/GAP-ANALYSIS-CURRENT.md`.
 
 See `.github/workflows/ci.yml`, `pnpm run ci`, `docker-compose.yml`.
 
-**Human:** GitHub secret `FLY_API_TOKEN`, branch protection (Pro plan).
+**Human:** branch protection (GitHub Pro plan).
 
 ## 2. Production runtime (P0)
 
-| Item | Code | Fly / ops |
+| Item | Code | Railway / ops |
 | --- | --- | --- |
-| Volume persistence | `[mounts]` in `apps/api/fly.toml` | `fly scale count 1 -a construct-api` |
+| Volume persistence | Railway volume `api-volume` → `/repo/apps/api/data` | Keep one API replica while single-writer SQLite |
 | Protected static files | `apps/api/src/routes/protected-files.ts` | Redeploy api after merge |
 | Worker snapshot reload | `store.reloadSnapshot()` in `queue.ts` | `REDIS_URL` + worker process |
 | Per-request owner secrets | `owner-secrets.ts` AsyncLocalStorage | Shipped |
@@ -68,7 +68,7 @@ See `.github/workflows/ci.yml`, `pnpm run ci`, `docker-compose.yml`.
 
 See `OUTSTANDING.md`. Highest leverage next:
 
-1. Clerk + Redis + Sentry Fly secrets (human).
+1. Clerk + Redis + Sentry Railway variables (human).
 2. Mobile TestFlight (`eas init`).
 3. Design studio Phase 6 AI assist (proposal only).
 4. Brochure output (product spec TBD).
@@ -78,8 +78,8 @@ See `OUTSTANDING.md`. Highest leverage next:
 
 | Action | Where |
 | --- | --- |
-| Clerk on Fly | `flyctl secrets set CLERK_*` |
-| Redis worker | `REDIS_URL` + `fly scale count worker=1` |
+| Clerk on Railway | Set `CLERK_*` on both services |
+| Redis worker | `REDIS_URL` + enable worker process |
 | Sentry | DSN + `@sentry/nextjs` on web |
 | Branch protection | GitHub Settings |
 | EAS / Apple credentials | `apps/mobile` |
@@ -88,7 +88,7 @@ See `OUTSTANDING.md`. Highest leverage next:
 
 ```bash
 pnpm run ci
-curl -sS https://construct-api.fly.dev/healthz
+curl -sS https://api-production-a8ff1.up.railway.app/healthz
 # Protected file (expect 401 without auth):
-curl -sS -o /dev/null -w "%{http_code}" https://construct-api.fly.dev/uploads/test.mp3
+curl -sS -o /dev/null -w "%{http_code}" https://api-production-a8ff1.up.railway.app/uploads/test.mp3
 ```

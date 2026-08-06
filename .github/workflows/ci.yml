@@ -89,7 +89,7 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
-          tags: construct-api:ci
+          tags: workstream-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -107,7 +107,7 @@ jobs:
           context: .
           file: apps/web/Dockerfile
           push: false
-          tags: construct-web:ci
+          tags: workstream-web:ci
           build-args: |
             NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
           cache-from: type=gha

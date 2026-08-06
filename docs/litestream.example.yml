@@ -10,7 +10,7 @@ dbs:
     replicas:
       - type: s3
         bucket: ${LITESTREAM_BUCKET}
-        path: construct-api/workstream.sqlite
+        path: workstream-api/workstream.sqlite
         endpoint: ${LITESTREAM_S3_ENDPOINT}
         region: ${LITESTREAM_S3_REGION}
         access-key-id: ${LITESTREAM_ACCESS_KEY_ID}

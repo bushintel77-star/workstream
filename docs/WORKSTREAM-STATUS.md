@@ -8,7 +8,7 @@ Generated 2026-07-21T00:38:19Z for branch
 - Current gap matrix regenerated at `docs/GAP-ANALYSIS-CURRENT.md` with unique
   rows, branch/commit context, and the literal `pnpm ci` result.
 - Human ops runbook rebuilt at `docs/HUMAN-OPS-RUNBOOK.md` with copy-paste
-  sections for Clerk, Redis, Sentry, Fly scale, EAS, external keys, Stripe,
+  sections for Clerk, Redis, Sentry, Railway scale, EAS, external keys, Stripe,
   OpenTelemetry, Litestream, branch protection, and verification.
 - Dashboard register stylesheet rebuilt after merge corruption so filters,
   cards, action menus, empty/error states, and delete undo styles are valid CSS.
@@ -25,14 +25,14 @@ Generated 2026-07-21T00:38:19Z for branch
 
 ## Still human-owned
 
-- Clerk live application and Fly secrets for `construct-api` and `construct-web`.
-- Redis URL and Fly worker process scale-up.
+- Clerk live application and Railway variables for the API and web services.
+- Redis URL and Railway worker process scale-up.
 - Sentry DSNs and optional web `@sentry/nextjs` enablement.
-- Single API machine scale command for JSON snapshot consistency.
+- Single API instance for JSON snapshot consistency.
 - EAS init plus Apple and Google distribution credentials.
 - Branch protection on `main` after GitHub Pro is enabled.
 - External OpenAI, Anthropic, Mapbox, Stripe, portal, OpenTelemetry, and future
-  Litestream object-store secrets.
+  Litestream object-store variables.
 
 ## Product status
 
@@ -65,9 +65,9 @@ Result: 106 Vitest files, 446 tests passing.
 Live smoke checks:
 
 ```bash
-curl -sS https://construct-api.fly.dev/healthz
-curl -sS https://construct-api.fly.dev/readyz
-curl -sS -o /dev/null -w "%{http_code}\n" https://construct-api.fly.dev/uploads/test.mp3
+curl -sS https://api-production-a8ff1.up.railway.app/healthz
+curl -sS https://api-production-a8ff1.up.railway.app/readyz
+curl -sS -o /dev/null -w "%{http_code}\n" https://api-production-a8ff1.up.railway.app/uploads/test.mp3
 ```
 
 Result: health `ok`, ready `ok`, protected upload probe `404` because the test

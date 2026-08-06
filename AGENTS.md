@@ -35,7 +35,6 @@ Continuous integration gate: `pnpm run ci` (installs frozen lockfile, checks mob
 
 API durability today is the Railway volume `api-volume` → `/repo/apps/api/data`
 (`CONSTRUCT_PERSIST_PATH=…/store.json`, `CONSTRUCT_SQLITE_PATH=…/store.sqlite3`).
-Fly.io configs remain legacy — do not assume Fly is live unless product switches back.
 
 ### End of build (mandatory)
 

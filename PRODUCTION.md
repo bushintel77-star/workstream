@@ -1,49 +1,50 @@
 # Workstream — production
 
-Live stack (May 2026). Product: **Workstream**. Studio on artefacts: **Curtis & Co**.
+Live stack. Product: **Workstream**. Studio on artefacts: **Curtis & Co**.
 
 ## URLs
 
 | Surface | URL |
 |---------|-----|
-| API | https://construct-api.fly.dev |
-| Web portal | https://construct-web.fly.dev |
-| API health | https://construct-api.fly.dev/healthz |
-| API ready | https://construct-api.fly.dev/readyz |
+| API | https://api-production-a8ff1.up.railway.app |
+| Web portal | https://web-production-3c194.up.railway.app |
+| API health | https://api-production-a8ff1.up.railway.app/healthz |
+| API ready | https://api-production-a8ff1.up.railway.app/readyz |
 
-Fly app names remain `construct-api` / `construct-web` until cutover to `workstream-*` (see [CONSOLIDATION.md](CONSOLIDATION.md)).
+Railway services: `web-production-3c194` (web) and `api-production-a8ff1`
+(API). API durability volume `api-volume` mounts at
+`/repo/apps/api/data` (`CONSTRUCT_PERSIST_PATH=…/store.json`,
+`CONSTRUCT_SQLITE_PATH=…/store.sqlite3`).
 
-Current web build configuration points `NEXT_PUBLIC_API_URL` at the Railway API
-while the Fly API remains documented for the production Fly runbook and smoke
-checks. Pick one API target during cutover and keep `apps/web/fly.toml`, CI, and
-EAS env values aligned.
-
-`apps/api/fly.toml` sets `PORTAL_BASE_URL=https://construct-web.fly.dev` so
-magic links and deposit checkout callbacks resolve to the live client portal.
-Override it only when a custom portal domain is live.
+`PORTAL_BASE_URL` defaults to the Railway web host so magic links and
+deposit checkout callbacks resolve to the live client portal. Override it
+only when a custom portal domain is live.
 
 ## Current auth mode
 
-`AUTH_REQUIRED=false` on both Fly apps — open operator loop with shared `dev-user` until Clerk keys are provisioned. The web shell now shows a persistent dev-mode banner whenever this fallback is active.
+`AUTH_REQUIRED=false` — open operator loop with shared `dev-user` until
+Clerk keys are provisioned. The web shell shows a persistent dev-mode
+banner whenever this fallback is active.
 
-To lock down:
+To lock down, set in the Railway dashboard (or `railway variables` CLI):
 
-```bash
-flyctl secrets set \
-  CLERK_SECRET_KEY="sk_live_…" \
-  AUTH_REQUIRED=true \
-  PUBLIC_API_URL="https://construct-api.fly.dev" \
-  CORS_ORIGIN="https://construct-web.fly.dev" \
-  -a construct-api
-
-flyctl secrets set \
-  CLERK_SECRET_KEY="sk_live_…" \
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_…" \
-  AUTH_REQUIRED=true \
-  -a construct-web
+```
+CLERK_SECRET_KEY=sk_live_…
+AUTH_REQUIRED=true
+PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
+CORS_ORIGIN=https://web-production-3c194.up.railway.app
 ```
 
-Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time for middleware).
+On the web service:
+
+```
+CLERK_SECRET_KEY=sk_live_…
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_…
+AUTH_REQUIRED=true
+```
+
+Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time
+for middleware).
 
 ## Operator loop (automated)
 
@@ -54,43 +55,42 @@ Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time for m
 
 ## Secrets still needed for full AI + maps
 
-| Secret | App | Effect if missing |
-|--------|-----|-------------------|
-| `OPENAI_API_KEY` | construct-api | Canned transcript |
-| `ANTHROPIC_API_KEY` | construct-api | Mock design/audit |
-| `MAPBOX_TOKEN` | construct-api | Mock survey imagery |
-| `STRIPE_SECRET_KEY` | construct-api | Deposit checkout uses dev fallback |
-| `STRIPE_WEBHOOK_SECRET` | construct-api | Stripe webhooks accept dev-mode unsigned payloads |
+| Secret | Service | Effect if missing |
+|--------|---------|-------------------|
+| `OPENAI_API_KEY` | API | Canned transcript |
+| `ANTHROPIC_API_KEY` | API | Mock design/audit |
+| `MAPBOX_TOKEN` | API | Mock survey imagery |
+| `STRIPE_SECRET_KEY` | API | Deposit checkout uses dev fallback |
+| `STRIPE_WEBHOOK_SECRET` | API | Stripe webhooks accept dev-mode unsigned payloads |
 | `CLERK_*` | both | Dev-user mode (current) |
-| `PUBLIC_API_URL` | construct-api | API readiness and generated absolute URLs may be incorrect |
-| `CORS_ORIGIN` | construct-api | Browser calls from the web app may be rejected |
-| `WORKSTREAM_PORTAL_SECRET` | construct-api | Rotate from legacy `CONSTRUCT_PORTAL_SECRET` |
-| `PORTAL_BASE_URL` | construct-api | Set in `apps/api/fly.toml`; override only for a custom portal domain |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | construct-api | OpenTelemetry spans stay local/no-op |
-| `REDIS_URL` | construct-api | Pipeline runs inline instead of worker queue |
+| `PUBLIC_API_URL` | API | API readiness and generated absolute URLs may be incorrect |
+| `CORS_ORIGIN` | API | Browser calls from the web app may be rejected |
+| `WORKSTREAM_PORTAL_SECRET` | API | Rotate from legacy `CONSTRUCT_PORTAL_SECRET` |
+| `PORTAL_BASE_URL` | API | Defaults to Railway web host; override only for a custom portal domain |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | API | OpenTelemetry spans stay local/no-op |
+| `REDIS_URL` | API | Pipeline runs inline instead of worker queue |
 | `SENTRY_DSN` | both | Errors are logged but not reported to Sentry |
-| `LITESTREAM_*` | construct-api | No object-store disaster-recovery replica |
+| `LITESTREAM_*` | API | No object-store disaster-recovery replica |
 
 ## Human ops runbook
 
-Use [docs/HUMAN-OPS-RUNBOOK.md](docs/HUMAN-OPS-RUNBOOK.md) for copy-paste steps covering Clerk, Redis, Sentry, OpenTelemetry, EAS, Litestream, and branch protection.
+Use [docs/HUMAN-OPS-RUNBOOK.md](docs/HUMAN-OPS-RUNBOOK.md) for copy-paste
+steps covering Clerk, Redis, Sentry, OpenTelemetry, EAS, Litestream, and
+branch protection.
 
-Local verification uses `pnpm run ci`. Literal `pnpm ci` is not implemented by
-pnpm 9.15.4 in this workspace.
+Local verification uses `pnpm run ci`. Literal `pnpm ci` is not implemented
+by pnpm 9.15.4 in this workspace.
 
-## Deploy (one command)
+## Deploy
 
-```powershell
-.\scripts\deploy-fly.ps1
-```
-
-Or per app from repo root:
+Railway deploys automatically on push to `main`. To deploy manually or
+from a branch, use the Railway CLI:
 
 ```bash
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api
-flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web \
-  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+railway up
 ```
+
+Or trigger a redeploy from the Railway dashboard.
 
 ## Mobile production build
 
@@ -101,7 +101,7 @@ eas build --platform ios --profile production
 
 Set in EAS production env:
 
-- `EXPO_PUBLIC_API_URL=https://construct-api.fly.dev`
+- `EXPO_PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app`
 - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (when auth enabled)
 - `EXPO_PUBLIC_AUTH_REQUIRED=true` (after Clerk cutover)
 
@@ -111,10 +111,10 @@ Bundle ID: `com.curtisandco.workstream`
 
 ```bash
 pnpm run ci
-curl -s https://construct-api.fly.dev/healthz
-curl -s https://construct-api.fly.dev/readyz
-curl -s -o /dev/null -w "%{http_code}\n" https://construct-web.fly.dev/
-curl -s -o /dev/null -w "%{http_code}\n" https://construct-api.fly.dev/uploads/test.mp3
+curl -s https://api-production-a8ff1.up.railway.app/healthz
+curl -s https://api-production-a8ff1.up.railway.app/readyz
+curl -s -o /dev/null -w "%{http_code}\n" https://web-production-3c194.up.railway.app/
+curl -s -o /dev/null -w "%{http_code}\n" https://api-production-a8ff1.up.railway.app/uploads/test.mp3
 ```
 
 Expect API health/ready `ok`, web `200`/redirect, and protected uploads to

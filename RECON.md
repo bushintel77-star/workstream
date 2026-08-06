@@ -10,17 +10,14 @@ Phase 1 undercounted deploy targets. The repo has **three** surfaces, not two:
 
 | App | Production | This brief |
 |-----|------------|------------|
-| `apps/api` | `construct-api.fly.dev` | Aerial static URL from `mapbox.ts` / survey |
-| `apps/web` | `construct-web.fly.dev` | **All studio UI work here** |
+| `apps/api` | `api-production-a8ff1.up.railway.app` | Aerial static URL from `mapbox.ts` / survey |
+| `apps/web` | `web-production-3c194.up.railway.app` | **All studio UI work here** |
 | `apps/mobile` | EAS / Expo | Separate `design-studio/[id]` — out of scope |
 
-**CI:** On `main` push, workflow deploys API + web. GitHub `FLY_API_TOKEN` / `BROKKER` is
-currently scoped to API only — web step fails with `unauthorized`. **Human fixes token**
-(see `DEPLOY.md`); agents must **not** edit `.github/workflows/ci.yml` or Fly secrets as
-part of this redesign.
+**CI:** On `main` push, Railway auto-deploys API + web. Agents must **not** edit
+`.github/workflows/ci.yml` as part of this redesign.
 
-Until CI web deploy works, each `apps/web` phase may need a manual `flyctl deploy` for
-`construct-web` after merge.
+Railway auto-deploys on push to `main`; no manual deploy step is needed.
 
 ## Product decisions (2026-05-22)
 
@@ -118,7 +115,7 @@ Aegis / Workstream tokens only. Studio chrome uses glass panels (`backdrop-filte
 
 After sign-in, open a project that has a **completed survey** (aerial required):
 
-`https://construct-web.fly.dev/projects/<PROJECT_ID>/design/studio`
+`https://web-production-3c194.up.railway.app/projects/<PROJECT_ID>/design/studio`
 
 Example pattern — replace `<PROJECT_ID>` from the dashboard project link.
 

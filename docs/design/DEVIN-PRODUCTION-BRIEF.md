@@ -138,7 +138,7 @@ way, write the decision down.
   obstacle to route around.
 - **Do not touch `canvas-contrast-aa.spec.ts` coverage.** WCAG 2.2 AA on the canvas was fixed
   (23 failures across 22 rules) and the gate is at zero. Keep it there.
-- **No destructive production action** — no deploys, no secret changes, no `flyctl` — without
+- **No destructive production action** — no deploys, no secret changes, no `railway` CLI — without
   explicit authorisation in the same conversation.
 
 ## How to work

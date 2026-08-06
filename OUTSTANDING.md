@@ -8,25 +8,23 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P0 — Blocks first paying customer
 
-- [x] **Persistence on Fly** — `[mounts]` block live in
-      [apps/api/fly.toml](apps/api/fly.toml) against `construct_data_v2`.
+- [x] **Persistence on Railway** — volume `api-volume` mounts at
+      `/repo/apps/api/data`. Configured in the Railway dashboard.
 - [x] **SQLite write-through journal** — `packages/db/src/sqlite-persist.ts`
       (Node 22 `node:sqlite`, WAL). In-memory store retained for jobs/tests;
       JSON snapshot retired from the hot path (first-boot import +
       `exportSnapshot` escape hatch). Railway:
       `CONSTRUCT_SQLITE_PATH=/repo/apps/api/data/store.sqlite3` on `api-volume`.
-- [ ] **Single API machine** — human must run
-      `flyctl scale count 1 -a construct-api` after deploy to keep the
-      JSON snapshot store single-writer. (Railway: keep one API replica while
-      the store is single-writer SQLite.)
+- [ ] **Single API instance** — keep one API replica on Railway while
+      the JSON snapshot store is single-writer SQLite.
 - [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
       `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
-      dev mode unchanged. Still needs Clerk Fly secrets set on `construct-web`
+      dev mode unchanged. Still needs Clerk secrets set on the web service
       (`CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
-- [x] **CORS_ORIGIN** Fly secret on construct-api → `https://construct-web.fly.dev`
+- [x] **CORS_ORIGIN** on the API service → `https://web-production-3c194.up.railway.app`
 - [x] **NEXT_PUBLIC_API_URL** baked into web Docker build + CI `--build-arg`.
 - [x] **Build automation** — `pnpm run ci`, `pnpm build:docker`,
-      `docker-compose.yml`, `scripts/deploy-fly.*`, CI smoke tests,
+      `docker-compose.yml`, CI smoke tests,
       `workflow_dispatch` deploy. Local CI now includes mobile placeholder,
       portal Edge, typecheck, lint, and Vitest gates (`0369689`).
 - [x] **Secret scanning** — gitleaks GitHub Action at
@@ -36,7 +34,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `validateStripeKey()`; rejects bad keys with Stripe's own error message.
 - [x] **Sentry scaffold (code)** — API [`sentry.ts`](apps/api/src/lib/sentry.ts) +
       web [`instrumentation.ts`](apps/web/src/instrumentation.ts). **Human:** set
-      `SENTRY_DSN` on both Fly apps + `pnpm add @sentry/nextjs` on web when enabling.
+      `SENTRY_DSN` on both Railway services + `pnpm add @sentry/nextjs` on web when enabling.
 
 ## P1 — Quality + scale
 
@@ -44,12 +42,12 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `app.json` no longer contains the EAS init placeholder and CI guards against
       reintroducing it. **Human:** run EAS init and provide Apple/Google credentials.
 - [x] **BullMQ + Redis (code path)** — worker in [`queue.ts`](apps/api/src/lib/queue.ts),
-      `[processes] worker` in `fly.toml`, pipeline enqueues when `REDIS_URL` set.
-      **Human:** provision Upstash/Fly Redis + `fly scale count worker=1`.
+      pipeline enqueues when `REDIS_URL` set.
+      **Human:** provision Upstash/Redis + enable the worker process.
 - [x] **Litestream -> R2/B2 (SQLite-ready documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
       + [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
-      **Human:** bucket credentials + Fly sidecar after the SQLite migration.
-- [x] **CI deploy job** — split `deploy-api` + `deploy-web`; `FLY_API_WEB` wired.
+      **Human:** bucket credentials + sidecar after the SQLite migration.
+- [x] **CI deploy job** — Railway auto-deploy on push to `main` is wired.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions.
 - [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
       from API). Enable manually: Settings → Branches → require CI green.
@@ -91,9 +89,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Audio compression** — mobile walkthrough uses `LOW_QUALITY` recording preset.
 - [x] **Edge runtime** for `/portal/*` pages.
 - [x] **Portal hero image** — `hero_url` from survey aerial on quote portal payload.
-- [x] **Portal checkout production URLs** — `PORTAL_BASE_URL` is set in
-      [`apps/api/fly.toml`](apps/api/fly.toml), production defaults to
-      `construct-web`, and quote/deposit amounts render with cents.
+- [x] **Portal checkout production URLs** — `PORTAL_BASE_URL` defaults to
+      the Railway web host, and quote/deposit amounts render with cents.
 - [x] **Activity audit trail** — `GET /projects/:id/activity` and `GET /settings/activity`;
       logs project delete/restore, filing delete, crew, catalog, integration, SKU link.
 - [x] **Soft delete + audit trail** — tombstone + undo on projects; audit log on destructive actions.
@@ -128,7 +125,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Local docker-compose** — [docker-compose.yml](docker-compose.yml).
 - [ ] Bundle-size budget in CI.
 - [ ] PostgreSQL migration once the data model stabilises.
-- [ ] Multi-region Fly deploy for HA.
+- [ ] Multi-region Railway deploy for HA.
 - [ ] **`moduleResolution: node` (node10) removal in TypeScript 7.** Source is
       [`tsconfig.node.json`](tsconfig.node.json) line 5, inherited by `apps/api`
       and `packages/{contracts,db,cad,domain}`. Harmless today — TS 5.9.3 exits 0
@@ -493,18 +490,16 @@ See [`AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md`](AERIAL_DESIGN_STUDIO_AGENT_BRIEF.md)
 
 | Action | Command / where |
 |--------|-----------------|
-| Clerk on Fly | Runbook Section 1: API `CLERK_SECRET_KEY`, web `CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `AUTH_REQUIRED=true` |
-| API base/CORS | Runbook Section 1: `PUBLIC_API_URL=https://construct-api.fly.dev`, `CORS_ORIGIN=https://construct-web.fly.dev` |
-| Sentry DSN | Runbook Section 3: `flyctl secrets set SENTRY_DSN=...` on both apps |
-| Redis worker | Runbook Section 2: `REDIS_URL` + `flyctl scale count worker=1 -a construct-api` |
+| Clerk on Railway | Runbook Section 1: API `CLERK_SECRET_KEY`, web `CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `AUTH_REQUIRED=true` |
+| API base/CORS | Runbook Section 1: `PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app`, `CORS_ORIGIN=https://web-production-3c194.up.railway.app` |
+| Sentry DSN | Runbook Section 3: set `SENTRY_DSN` on both Railway services |
+| Redis worker | Runbook Section 2: `REDIS_URL` + enable the worker process |
 | Stripe / portal / OTEL | Runbook Section 6: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WORKSTREAM_PORTAL_SECRET`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | EAS project | Runbook Section 5: `cd apps/mobile && npx eas-cli init` plus store credentials |
 | Litestream | Runbook Section 7 after SQLite migration |
 | Branch protection | Runbook Section 8, GitHub repo Settings (Pro plan) |
-| Fly tokens | `FLY_API_TOKEN` + `FLY_API_WEB` — **done** |
 
 ## Sandbox-blocked actions (need the user)
 
-- `flyctl scale count 1 -a construct-api` (if not already)
-- `flyctl secrets set ...` commands from the runbook, then redeploy where noted
+- Set Railway service variables from the runbook, then redeploy where noted
 - Valid Apple / Google credentials for EAS submit
