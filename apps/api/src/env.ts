@@ -124,7 +124,7 @@ export function loadEnv(logger: {
 
     if (!parsed.data.SENTRY_DSN) {
       logger.warn(
-        "SENTRY_DSN unset — error reporting disabled until you add it to Fly secrets.",
+        "SENTRY_DSN unset — error reporting disabled until you add it to your deploy secrets.",
       );
     }
 

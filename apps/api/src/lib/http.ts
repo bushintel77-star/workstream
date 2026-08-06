@@ -30,7 +30,7 @@ export type FetchRetryOptions = {
   };
 };
 
-const DEFAULT_USER_AGENT = "Workstream/1.0 (+https://construct-api.fly.dev)";
+const DEFAULT_USER_AGENT = "Workstream/1.0 (+https://api-production-a8ff1.up.railway.app)";
 
 const defaultRetryOn = (status: number): boolean =>
   status === 408 || status === 429 || (status >= 500 && status <= 599);
@@ -182,10 +182,10 @@ export async function fetchWithRetry(
         };
 
       try {
-      const res = await fetchWithRetryAttempt(input, init, opts);
-      setTelemetryAttributes(span, {
-        "http.response.status_code": res.status,
-      });
+        const res = await fetchWithRetryAttempt(input, init, opts);
+        setTelemetryAttributes(span, {
+          "http.response.status_code": res.status,
+        });
         if (!res.ok) {
           span.setStatus({ code: SpanStatusCode.ERROR });
           endSpan();
@@ -197,7 +197,7 @@ export async function fetchWithRetry(
         res.formData = wrapBodyReader(res, "formData", res.formData.bind(res));
         res.json = wrapBodyReader(res, "json", res.json.bind(res));
         res.text = wrapBodyReader(res, "text", res.text.bind(res));
-      return res;
+        return res;
       } catch (err) {
         endSpan(err);
         throw err;

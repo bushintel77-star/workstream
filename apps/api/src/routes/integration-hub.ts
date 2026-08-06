@@ -142,7 +142,7 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
         to: to_email,
         projectAddress: "Integration test — 1 Test St, Melbourne VIC",
         clientName: "Test client",
-        quoteUrl: "https://workstream-web.fly.dev",
+        quoteUrl: "https://web-production-3c194.up.railway.app",
       });
       await fastify.store.appendIntegrationEvent(ownerId, {
         project_id: null,

@@ -14,7 +14,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 export type PortalScope = "quote_view" | "deposit_checkout" | "change_request";
 
 const LOCAL_PORTAL_BASE_URL = "http://localhost:3002";
-const PRODUCTION_PORTAL_BASE_URL = "https://construct-web.fly.dev";
+const PRODUCTION_PORTAL_BASE_URL = "https://web-production-3c194.up.railway.app";
 
 export function portalBaseUrl(): string {
   return (

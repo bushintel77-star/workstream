@@ -86,6 +86,6 @@ describe("portal tokens", () => {
     delete process.env.PORTAL_BASE_URL;
     process.env.NODE_ENV = "production";
 
-    expect(portalBaseUrl()).toBe("https://construct-web.fly.dev");
+    expect(portalBaseUrl()).toBe("https://web-production-3c194.up.railway.app");
   });
 });
