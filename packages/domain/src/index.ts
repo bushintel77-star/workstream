@@ -97,3 +97,5 @@ export * from './irrigation-assist';
 export * from './resource-pool';
 export * from './design-branch';
 export * from './apply-shadow-alt';
+export * from './stroke-recognize';
+export * from './structured-stroke-conflict';

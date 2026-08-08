@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { LandscapeFeature } from "@workstream/contracts";
+import { useEffect, useMemo, useState } from "react";
+import type { LandscapeFeature, SpatialObject } from "@workstream/contracts";
 import {
+  assessStructuredStrokeConflicts,
   buildLandscapeFeatureFromStroke,
   defaultStructuredToolProps,
   type StructuredToolKind,
@@ -15,9 +16,16 @@ type Props = {
   active: boolean;
   onFeature: (feature: LandscapeFeature) => void;
   paper?: boolean;
+  /** Live spatial facts for TRP / conflict preview while drafting. */
+  spatialFacts?: SpatialObject[];
 };
 
-export function StructuredToolOverlay({ active, onFeature, paper }: Props) {
+export function StructuredToolOverlay({
+  active,
+  onFeature,
+  paper,
+  spatialFacts = [],
+}: Props) {
   const [kind, setKind] = useState<StructuredToolKind | null>(null);
   const [draft, setDraft] = useState<Array<{ x_pct: number; y_pct: number }>>(
     [],
@@ -29,6 +37,11 @@ export function StructuredToolOverlay({ active, onFeature, paper }: Props) {
       setDraft([]);
     }
   }, [active]);
+
+  const conflicts = useMemo(() => {
+    if (!kind || draft.length === 0) return [];
+    return assessStructuredStrokeConflicts(draft, spatialFacts, kind);
+  }, [kind, draft, spatialFacts]);
 
   useEffect(() => {
     if (!kind) return;
@@ -51,6 +64,7 @@ export function StructuredToolOverlay({ active, onFeature, paper }: Props) {
 
   const props = kind ? defaultStructuredToolProps(kind) : null;
   const minPts = kind === "bed" ? 3 : 2;
+  const critical = conflicts.some((c) => c.severity === "critical");
 
   return (
     <>
@@ -84,13 +98,19 @@ export function StructuredToolOverlay({ active, onFeature, paper }: Props) {
             {draft.length > 0 ? (
               <polyline
                 fill={kind === "bed" ? "rgba(194,69,95,0.12)" : "none"}
-                stroke="#C2455F"
+                stroke={critical ? "#9E3049" : "#C2455F"}
                 strokeWidth="0.6"
                 points={draft.map((p) => `${p.x_pct},${p.y_pct}`).join(" ")}
               />
             ) : null}
             {draft.map((p, i) => (
-              <circle key={i} cx={p.x_pct} cy={p.y_pct} r="0.9" fill="#C2455F" />
+              <circle
+                key={i}
+                cx={p.x_pct}
+                cy={p.y_pct}
+                r="0.9"
+                fill={critical ? "#9E3049" : "#C2455F"}
+              />
             ))}
           </svg>
         </div>
@@ -125,6 +145,14 @@ export function StructuredToolOverlay({ active, onFeature, paper }: Props) {
         ) : (
           <p className={css.hint}>Pick ditch, path, wall or bed.</p>
         )}
+        {conflicts[0] ? (
+          <p
+            className={`${css.conflict}${critical ? ` ${css.conflictCritical}` : ""}`}
+            data-testid="structured-tool-conflict"
+          >
+            {conflicts[0].title}: {conflicts[0].detail}
+          </p>
+        ) : null}
       </div>
     </>
   );

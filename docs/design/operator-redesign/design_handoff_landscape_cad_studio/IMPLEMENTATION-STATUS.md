@@ -112,7 +112,8 @@ Legend: **Done** · **Partial** · **Not started**
 | Instant Planner (cost / labour / conflicts / Add to Main Quote) | **Done** | PDF §4.3 — glance chips + promote. |
 | Next-best-option chip (shadow ledger) | **Done** | `NextBestOptionChip` + `proposeShadowAlternatives`. |
 | Freeze / variation branches | **Done** | Freeze stores canvas payload; activate restores + refreshes BOM. |
-| Structured tools (ditch / path / wall / bed) | **Done** | Features feed BOM + `LandscapeFeaturesLayer` on plan. |
+| Structured tools (ditch / path / wall / bed) | **Done** | Live TRP conflict preview while drafting; features on plan + BOM. |
+| Freehand stroke → structured feature | **Partial** | `recognizeStroke` + Assist “Convert freehand strokes”. |
 | Hero detail overlay | **Done** | Plan magnifier markers + Three.js overlay. |
 | Irrigation / lighting assist + leftover pool | **Done** | Assist persists zones/lights; `/resource-pool` + presentation pack. |
 | Shadow ledger Apply | **Done** | `applyShadowAlternative` mutates canvas + resave. |

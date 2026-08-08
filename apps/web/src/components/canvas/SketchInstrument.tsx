@@ -13,6 +13,7 @@ import type {
   BrushRecipe,
   CatalogPlacement,
   CatalogSymbol,
+  DesignCanvas,
   GhostPlacementSuggestion,
 } from "@workstream/contracts";
 import {
@@ -34,7 +35,12 @@ import {
   markStaleGhostsNearEdit,
   type StudioAiSuggestion,
 } from "@workstream/domain";
-import { saveDesignCanvasAction, scanDesignGhostsAction, designAssistAction } from "../../app/actions";
+import {
+  getDesignCanvasAction,
+  saveDesignCanvasAction,
+  scanDesignGhostsAction,
+  designAssistAction,
+} from "../../app/actions";
 import type { RateCardItem } from "../../lib/api";
 import type { StaticMapView } from "../../lib/mapView";
 import type { CanvasViewLayers } from "../../lib/canvas-view-layers";
@@ -65,6 +71,8 @@ type Props = {
   rateCard: RateCardItem[];
   initialPlacements: CatalogPlacement[];
   onPlacementCount?: (n: number) => void;
+  /** Fired after a successful persist with the full canvas (preserves features/irrigation). */
+  onCanvasSaved?: (canvas: DesignCanvas) => void;
   /** Aerial map frame — sizes ghosts in real metres. */
   mapView?: StaticMapView | null;
   worldWidthPx?: number;
@@ -191,6 +199,7 @@ export function SketchInstrument({
   rateCard,
   initialPlacements,
   onPlacementCount,
+  onCanvasSaved,
   mapView = null,
   worldWidthPx = 900,
   worldHeightPx = 640,
@@ -319,13 +328,17 @@ export function SketchInstrument({
   const persist = useCallback(async () => {
     setSaveStatus("saving");
     try {
-      await saveDesignCanvasAction(
+      // Preserve irrigation / features / strokes / annotations already on canvas.
+      const existing = await getDesignCanvasAction(projectId);
+      const saved = await saveDesignCanvasAction(
         projectId,
         placementsRef.current,
-        [],
-        [],
-        [],
+        existing?.strokes ?? [],
+        existing?.irrigation_zones ?? [],
+        existing?.annotations ?? [],
+        existing?.features ?? [],
       );
+      onCanvasSaved?.(saved.canvas);
       requestOrchestrationRefresh();
       setSaveStatus("saved");
       setLastSavedAt(new Date());
@@ -348,7 +361,7 @@ export function SketchInstrument({
       );
       return false;
     }
-  }, [projectId, toast]);
+  }, [onCanvasSaved, projectId, toast]);
 
   const pushPlacementHistory = useCallback(() => {
     historyRef.current = pushHistorySnapshot(

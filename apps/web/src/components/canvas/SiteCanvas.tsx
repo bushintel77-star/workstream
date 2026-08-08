@@ -1372,6 +1372,7 @@ function SiteCanvasInner({
         <StructuredToolOverlay
           active
           paper={showFitSheet}
+          spatialFacts={orchWorld?.spatial_facts ?? []}
           onFeature={(feature) => {
             void (async () => {
               const base = liveCanvas ?? sketch?.canvas;
@@ -1754,6 +1755,10 @@ function SiteCanvasInner({
                               []
                             }
                             onPlacementCount={setSketchCount}
+                            onCanvasSaved={(c) => {
+                              setLiveCanvas(c);
+                              bumpOrchestration();
+                            }}
                             mapView={mapView}
                             worldWidthPx={worldSize.width}
                             worldHeightPx={worldSize.height}
@@ -1873,6 +1878,10 @@ function SiteCanvasInner({
                         []
                       }
                       onPlacementCount={setSketchCount}
+                      onCanvasSaved={(c) => {
+                        setLiveCanvas(c);
+                        bumpOrchestration();
+                      }}
                       mapView={mapView}
                       worldWidthPx={worldSize.width}
                       worldHeightPx={worldSize.height}

@@ -8,9 +8,11 @@ import type {
   ProjectOrchestrationWorld,
 } from "@workstream/contracts";
 import {
+  featureFromRecognizedStroke,
   matchLeftoversToBom,
   proposeIrrigationAssist,
   proposeLightingAssist,
+  recognizeStroke,
 } from "@workstream/domain";
 import {
   listLeftoversAction,
@@ -96,6 +98,38 @@ export function StudioAssistPanel({
     });
   };
 
+  const convertStrokes = () => {
+    const strokes = canvas.strokes ?? [];
+    if (strokes.length === 0) {
+      setPoolNote("No freehand strokes to convert — draw markup first.");
+      return;
+    }
+    startTransition(async () => {
+      const nextFeatures = [...(canvas.features ?? [])];
+      let converted = 0;
+      for (const stroke of strokes) {
+        const rec = recognizeStroke(stroke);
+        if (!rec || rec.confidence < 0.55) continue;
+        nextFeatures.push(featureFromRecognizedStroke(stroke, rec));
+        converted += 1;
+      }
+      if (converted === 0) {
+        setPoolNote("No strokes recognised as ditch/path/wall/bed.");
+        return;
+      }
+      const res = await saveDesignCanvasAction(
+        projectId,
+        canvas.placements,
+        canvas.strokes ?? [],
+        canvas.irrigation_zones ?? [],
+        canvas.annotations ?? [],
+        nextFeatures,
+      );
+      onCanvasSaved?.(res.canvas);
+      setPoolNote(`Converted ${converted} stroke(s) to CAD features.`);
+    });
+  };
+
   const applyLighting = () => {
     if (lighting.length === 0) return;
     startTransition(async () => {
@@ -173,6 +207,16 @@ export function StudioAssistPanel({
       </button>
       {open ? (
         <div className={css.panel}>
+          <p className={css.kicker}>Sketch to CAD</p>
+          <button
+            type="button"
+            className={css.btn}
+            disabled={pending}
+            data-testid="assist-convert-strokes"
+            onClick={convertStrokes}
+          >
+            Convert freehand strokes
+          </button>
           <p className={css.kicker}>Irrigation & lighting</p>
           <button
             type="button"
