@@ -278,6 +278,31 @@ export type PresentationDocumentStatus = z.infer<
   typeof PresentationDocumentStatusSchema
 >;
 
+/**
+ * Frozen estimate readout captured at Issue. Widgets read this after issue
+ * instead of live board totals — live figures become a fixed snapshot.
+ */
+export const PresentationEstimateSnapshotSchema = z.object({
+  totalInclGst: z.number(),
+  materialsExGst: z.number(),
+  gst: z.number(),
+  hardscapeM2: z.number(),
+  excavateM3: z.number(),
+  lines: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      unit: z.string(),
+      qty: z.number(),
+      total: z.number(),
+    }),
+  ),
+  captured_at: z.string().datetime(),
+});
+export type PresentationEstimateSnapshot = z.infer<
+  typeof PresentationEstimateSnapshotSchema
+>;
+
 export const PresentationDocumentSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
@@ -293,6 +318,8 @@ export const PresentationDocumentSchema = z.object({
   updated_at: z.string().datetime(),
   /** Set when the deck is issued (frozen). Issued decks freeze by default. */
   issued_at: z.string().datetime().nullable().optional(),
+  /** Estimate frozen at issue — widgets prefer this over live board data. */
+  estimate_snapshot: PresentationEstimateSnapshotSchema.nullable().optional(),
 });
 export type PresentationDocument = z.infer<
   typeof PresentationDocumentSchema
@@ -317,6 +344,7 @@ export const UpdatePresentationDocumentInputSchema = z.object({
   theme: PresentationDocumentThemeSchema.partial().optional(),
   status: PresentationDocumentStatusSchema.optional(),
   pages: z.array(PresentationPageSchema).optional(),
+  estimate_snapshot: PresentationEstimateSnapshotSchema.nullable().optional(),
 });
 export type UpdatePresentationDocumentInput = z.infer<
   typeof UpdatePresentationDocumentInputSchema

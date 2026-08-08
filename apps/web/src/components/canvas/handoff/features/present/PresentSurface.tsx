@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/kit";
 import css from "./present.module.css";
 import { DeckInspectorDock } from "./DeckInspectorDock";
+import { CameraChrome } from "../../CameraChrome";
 import type { SketchStroke } from "../../studioCatalog";
 
 /**
@@ -291,9 +292,10 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
     void loadDocuments();
   }, [loadDocuments]);
 
-  // Debounced autosave when activeDoc changes
+  // Debounced autosave when activeDoc changes (issued decks are frozen)
   useEffect(() => {
     if (!activeDoc) return;
+    if (activeDoc.status === "issued") return;
     setSaveStatus("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
@@ -355,13 +357,14 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   };
 
   const updateDoc = (patch: Partial<PresentationDocument>) => {
-    setActiveDoc((prev) =>
-      prev ? { ...prev, ...patch, updated_at: new Date().toISOString() } : prev,
-    );
+    setActiveDoc((prev) => {
+      if (!prev || prev.status === "issued") return prev;
+      return { ...prev, ...patch, updated_at: new Date().toISOString() };
+    });
   };
 
   const updatePage = (pageId: string, patch: Partial<PresentationPage>) => {
-    if (!activeDoc) return;
+    if (!activeDoc || activeDoc.status === "issued") return;
     updateDoc({
       pages: activeDoc.pages.map((p) =>
         p.id === pageId ? { ...p, ...patch } : p,
@@ -370,7 +373,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   };
 
   const addPage = () => {
-    if (!activeDoc) return;
+    if (!activeDoc || activeDoc.status === "issued") return;
     const page: PresentationPage = {
       id: crypto.randomUUID(),
       order: activeDoc.pages.length,
@@ -396,8 +399,9 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
     kind: PresentationPanel["kind"],
     opts?: { layer?: ImageLayer; widgetType?: PresentationWidgetType },
   ) => {
+    if (!activeDoc || activeDoc.status === "issued") return;
     const panel = newPanel(kind, opts);
-    const page = activeDoc?.pages[activePageIndex];
+    const page = activeDoc.pages[activePageIndex];
     if (!page) return;
     // Stagger new panels so they don't overlap exactly
     const offset = page.panels.length * 5;
@@ -447,6 +451,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   // --- Plan dissection (Phase 2) ---
 
   const handleDissect = () => {
+    if (!activeDoc || activeDoc.status === "issued") return;
     setDissecting(true);
     setError(null);
     startTransition(async () => {
@@ -465,7 +470,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
 
   const acceptGhost = (index: number) => {
     const ghost = ghosts[index];
-    if (!ghost || !activeDoc) return;
+    if (!ghost || !activeDoc || activeDoc.status === "issued") return;
     const page = activeDoc.pages[activePageIndex];
     if (!page) return;
     const panel: PresentationPanel = {
@@ -554,7 +559,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   // --- AI editorial formatting (Phase 3) ---
 
   const handleFormat = () => {
-    if (!activeDoc) return;
+    if (!activeDoc || activeDoc.status === "issued") return;
     const page = activeDoc.pages[activePageIndex];
     if (!page || page.panels.length === 0) return;
     setFormatting(true);
@@ -618,44 +623,60 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
     if (formatGhosts.length <= 1) setFormatReviewOpen(false);
   };
 
-  // --- Apply template (Phase 4) — format + accept all in one action ---
+  // --- Apply template — same Format ghosts; never silent-write ---
 
   const handleApplyTemplate = () => {
-    if (!activeDoc) return;
-    const page = activeDoc.pages[activePageIndex];
-    if (!page || page.panels.length === 0) return;
-    setFormatting(true);
-    setError(null);
+    handleFormat();
+  };
+
+  const handleIssue = () => {
+    if (!activeDoc || activeDoc.status === "issued") return;
+    if (
+      !confirm(
+        "Issue this deck? Edits will be blocked and live quote figures freeze as a snapshot.",
+      )
+    ) {
+      return;
+    }
     startTransition(async () => {
       try {
-        const req: PresentationFormatRequest = {
-          deliverable_type: activeDoc.deliverable_type,
-          template_id: activeDoc.template_id,
-          panels: page.panels.map((p) => {
-            const base: PresentationFormatRequest["panels"][number] = {
-              id: p.id,
-              kind: p.kind,
-            };
-            if (p.kind === "plan_crop") base.reason = p.ref.reason;
-            if (p.kind === "widget") base.widget_type = p.widget.type;
-            if (p.kind === "text") base.role = p.role;
-            return base;
-          }),
-        };
-        const result = await formatPageClient(projectId, req);
-        if (result.ghosts.length > 0) {
-          const rectMap = new Map(result.ghosts.map((g) => [g.id, g.rect]));
-          updatePage(page.id, {
-            panels: page.panels.map((p) => {
-              const rect = rectMap.get(p.id);
-              return rect ? ({ ...p, rect } as PresentationPanel) : p;
-            }),
-          });
-        }
+        const snapshot = estimate
+          ? {
+              totalInclGst: estimate.totalInclGst,
+              materialsExGst: estimate.materialsExGst,
+              gst: estimate.gst,
+              hardscapeM2: estimate.hardscapeM2,
+              excavateM3: estimate.excavateM3,
+              lines: estimate.lines,
+              captured_at: new Date().toISOString(),
+            }
+          : null;
+        const updated = await updatePresentationDocumentClient(
+          projectId,
+          activeDoc.id,
+          {
+            status: "issued",
+            estimate_snapshot: snapshot,
+            title: activeDoc.title,
+            deliverable_type: activeDoc.deliverable_type,
+            template_id: activeDoc.template_id,
+            theme: activeDoc.theme,
+            pages: activeDoc.pages,
+          },
+        );
+        setActiveDoc(updated);
+        setDocuments((prev) =>
+          prev.map((d) => (d.id === updated.id ? updated : d)),
+        );
+        setDeckSettingsOpen(false);
+        setGhostReviewOpen(false);
+        setFormatReviewOpen(false);
+        setGhosts([]);
+        setFormatGhosts([]);
+        setSaveStatus("saved");
+        setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Template apply failed");
-      } finally {
-        setFormatting(false);
+        setError(err instanceof Error ? err.message : "Could not issue deck");
       }
     });
   };
@@ -682,6 +703,23 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
         : surfaceState === "locked"
           ? "Locked — this deck is issued; edits are blocked"
           : "Ready — compose pages and panels";
+
+  const isLocked = activeDoc?.status === "issued";
+  const draftingSuspended =
+    isLocked || ghostReviewOpen || formatReviewOpen;
+  const widgetEstimate =
+    isLocked && activeDoc?.estimate_snapshot
+      ? {
+          totalInclGst: activeDoc.estimate_snapshot.totalInclGst,
+          materialsExGst: activeDoc.estimate_snapshot.materialsExGst,
+          gst: activeDoc.estimate_snapshot.gst,
+          lines: activeDoc.estimate_snapshot.lines,
+          hardscapeM2: activeDoc.estimate_snapshot.hardscapeM2,
+          excavateM3: activeDoc.estimate_snapshot.excavateM3,
+        }
+      : isLocked
+        ? null
+        : estimate;
 
   return (
     <div
@@ -767,6 +805,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
               aria-expanded={deckSettingsOpen}
               aria-label="Deck settings"
               data-testid="deck-settings-toggle"
+              disabled={isLocked}
             >
               Deck settings
             </KitButton>
@@ -778,56 +817,82 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
             >
               Print
             </KitButton>
+            {isLocked ? (
+              <span className={css.issuedBadge} data-testid="present-issued-badge">
+                Issued
+              </span>
+            ) : (
+              <KitButton
+                variant="accent"
+                size="sm"
+                onClick={handleIssue}
+                disabled={pending}
+                data-testid="issue-deck-btn"
+              >
+                Issue
+              </KitButton>
+            )}
           </div>
-          <DeckInspectorDock
-            open={deckSettingsOpen}
-            onClose={() => setDeckSettingsOpen(false)}
-            title={activeDoc.title}
-            onTitleChange={(title) => updateDoc({ title })}
-            deliverableType={activeDoc.deliverable_type}
-            onDeliverableTypeChange={(value) =>
-              updateDoc({
-                deliverable_type: value as PresentationDeliverableType,
-              })
-            }
-            templateId={activeDoc.template_id}
-            onTemplateIdChange={(value) =>
-              updateDoc({
-                template_id: value as PresentationTemplateId,
-              })
-            }
-            palette={activeDoc.theme.palette}
-            onPaletteChange={(value) =>
-              updateDoc({
-                theme: {
-                  ...activeDoc.theme,
-                  palette: value as PresentationPalette,
-                },
-              })
-            }
-            font={activeDoc.theme.font}
-            onFontChange={(value) =>
-              updateDoc({
-                theme: {
-                  ...activeDoc.theme,
-                  font: value as PresentationFont,
-                },
-              })
-            }
-            deliverableOptions={Object.entries(DELIVERABLE_LABELS)}
-            templateOptions={Object.entries(TEMPLATE_LABELS)}
-            paletteOptions={Object.entries(PALETTE_LABELS)}
-            fontOptions={Object.entries(FONT_LABELS)}
-          />
+          {deckSettingsOpen && !isLocked ? (
+            <CameraChrome
+              place={{ kind: "dock" }}
+              zIndex={40}
+              testId="present-deck-settings-chrome"
+            >
+              <DeckInspectorDock
+                open={deckSettingsOpen}
+                onClose={() => setDeckSettingsOpen(false)}
+                title={activeDoc.title}
+                onTitleChange={(title) => updateDoc({ title })}
+                deliverableType={activeDoc.deliverable_type}
+                onDeliverableTypeChange={(value) =>
+                  updateDoc({
+                    deliverable_type: value as PresentationDeliverableType,
+                  })
+                }
+                templateId={activeDoc.template_id}
+                onTemplateIdChange={(value) =>
+                  updateDoc({
+                    template_id: value as PresentationTemplateId,
+                  })
+                }
+                palette={activeDoc.theme.palette}
+                onPaletteChange={(value) =>
+                  updateDoc({
+                    theme: {
+                      ...activeDoc.theme,
+                      palette: value as PresentationPalette,
+                    },
+                  })
+                }
+                font={activeDoc.theme.font}
+                onFontChange={(value) =>
+                  updateDoc({
+                    theme: {
+                      ...activeDoc.theme,
+                      font: value as PresentationFont,
+                    },
+                  })
+                }
+                deliverableOptions={Object.entries(DELIVERABLE_LABELS)}
+                templateOptions={Object.entries(TEMPLATE_LABELS)}
+                paletteOptions={Object.entries(PALETTE_LABELS)}
+                fontOptions={Object.entries(FONT_LABELS)}
+              />
+            </CameraChrome>
+          ) : null}
 
           <div className={css.pageArea}>
             {currentPage ? (
               <PageCanvas
                 key={currentPage.id}
                 page={currentPage}
+                palette={activeDoc.theme.palette}
+                font={activeDoc.theme.font}
+                locked={draftingSuspended}
                 imageLayers={imageLayers}
                 planSnapshot={planSnapshot}
-                estimate={estimate}
+                estimate={widgetEstimate}
                 materials={materials}
                 onAddPanel={(kind, opts) =>
                   addPanel(currentPage.id, kind, opts)
@@ -852,26 +917,37 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                 onDissect={handleDissect}
                 dissecting={dissecting}
                 ghostReviewOpen={ghostReviewOpen}
-                setGhostReviewOpen={setGhostReviewOpen}
                 ghosts={ghosts}
                 onAcceptGhost={acceptGhost}
                 onAcceptAllGhosts={acceptAllGhosts}
                 onRejectGhost={rejectGhost}
+                onRejectAllGhosts={() => {
+                  setGhosts([]);
+                  setGhostReviewOpen(false);
+                }}
                 onFormat={handleFormat}
                 onApplyTemplate={handleApplyTemplate}
                 formatting={formatting}
                 formatReviewOpen={formatReviewOpen}
-                setFormatReviewOpen={setFormatReviewOpen}
                 formatGhosts={formatGhosts}
                 formatRationale={formatRationale}
                 onAcceptFormatGhost={acceptFormatGhost}
                 onAcceptAllFormatGhosts={acceptAllFormatGhosts}
                 onRejectFormatGhost={rejectFormatGhost}
+                onRejectAllFormatGhosts={() => {
+                  setFormatGhosts([]);
+                  setFormatReviewOpen(false);
+                }}
               />
             ) : (
               <div className={css.noPage}>
                 <p>No pages. Add one to start composing.</p>
-                <KitButton variant="default" size="md" onClick={addPage}>
+                <KitButton
+                  variant="default"
+                  size="md"
+                  onClick={addPage}
+                  disabled={isLocked}
+                >
                   Add page
                 </KitButton>
               </div>
@@ -891,7 +967,12 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
             <span className={css.pageCount}>
               {activeDoc.pages.length} page{activeDoc.pages.length === 1 ? "" : "s"}
             </span>
-            <KitButton variant="secondary" size="sm" onClick={addPage}>
+            <KitButton
+              variant="secondary"
+              size="sm"
+              onClick={addPage}
+              disabled={isLocked}
+            >
               Add page
             </KitButton>
           </div>
@@ -917,6 +998,10 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
 
 type PageCanvasProps = {
   page: PresentationPage;
+  palette: PresentationPalette;
+  font: PresentationFont;
+  /** Issued freeze or open ghost review — drafting tools yield. */
+  locked: boolean;
   imageLayers: ImageLayer[];
   planSnapshot: PlanSnapshot | null;
   estimate: EstimateSnapshot | null;
@@ -939,25 +1024,28 @@ type PageCanvasProps = {
   onDissect: () => void;
   dissecting: boolean;
   ghostReviewOpen: boolean;
-  setGhostReviewOpen: (open: boolean) => void;
   ghosts: PresentationDissectGhost[];
   onAcceptGhost: (index: number) => void;
   onAcceptAllGhosts: () => void;
   onRejectGhost: (index: number) => void;
+  onRejectAllGhosts: () => void;
   onFormat: () => void;
   onApplyTemplate: () => void;
   formatting: boolean;
   formatReviewOpen: boolean;
-  setFormatReviewOpen: (open: boolean) => void;
   formatGhosts: PresentationFormatGhost[];
   formatRationale: string;
   onAcceptFormatGhost: (panelId: string) => void;
   onAcceptAllFormatGhosts: () => void;
   onRejectFormatGhost: (panelId: string) => void;
+  onRejectAllFormatGhosts: () => void;
 };
 
 function PageCanvas({
   page,
+  palette,
+  font,
+  locked,
   imageLayers,
   planSnapshot,
   estimate,
@@ -977,25 +1065,34 @@ function PageCanvas({
   onDissect,
   dissecting,
   ghostReviewOpen,
-  setGhostReviewOpen,
   ghosts,
   onAcceptGhost,
   onAcceptAllGhosts,
   onRejectGhost,
+  onRejectAllGhosts,
   onFormat,
   onApplyTemplate,
   formatting,
   formatReviewOpen,
-  setFormatReviewOpen,
   formatGhosts,
   formatRationale,
   onAcceptFormatGhost,
   onAcceptAllFormatGhosts,
   onRejectFormatGhost,
+  onRejectAllFormatGhosts,
 }: PageCanvasProps) {
   return (
-    <div className={css.pageCanvas} data-testid="present-page-canvas">
-      <div className={css.pagePaper} data-testid="present-page-paper">
+    <div
+      className={css.pageCanvas}
+      data-testid="present-page-canvas"
+      data-drafting-suspended={locked ? "1" : "0"}
+    >
+      <div
+        className={css.pagePaper}
+        data-testid="present-page-paper"
+        data-palette={palette}
+        data-font={font}
+      >
         {page.panels
           .slice()
           .sort((a, b) => a.z_index - b.z_index)
@@ -1003,6 +1100,7 @@ function PageCanvas({
             <PanelView
               key={panel.id}
               panel={panel}
+              locked={locked}
               planSnapshot={planSnapshot}
               estimate={estimate}
               materials={materials}
@@ -1030,18 +1128,29 @@ function PageCanvas({
           />
         ) : null}
       </div>
-      <div className={css.panelAddBar}>
+      <div className={css.panelAddBar} aria-disabled={locked || undefined}>
         <KitButton
           variant="secondary"
           size="sm"
           onClick={() => onAddPanel("text")}
+          disabled={locked}
         >
           Add text
         </KitButton>
         <KitButton
           variant="secondary"
           size="sm"
+          onClick={() => onAddPanel("plan_crop")}
+          disabled={locked}
+          data-testid="add-plan-crop-btn"
+        >
+          Add plan crop
+        </KitButton>
+        <KitButton
+          variant="secondary"
+          size="sm"
           onClick={() => onAddPanel("swatch_board")}
+          disabled={locked}
         >
           Add swatch board
         </KitButton>
@@ -1050,6 +1159,7 @@ function PageCanvas({
           size="sm"
           onClick={() => setImagePickerOpen(!imagePickerOpen)}
           aria-expanded={imagePickerOpen}
+          disabled={locked}
         >
           Add image
         </KitButton>
@@ -1058,6 +1168,7 @@ function PageCanvas({
           size="sm"
           onClick={() => setWidgetPickerOpen(!widgetPickerOpen)}
           aria-expanded={widgetPickerOpen}
+          disabled={locked}
         >
           Add widget
         </KitButton>
@@ -1066,7 +1177,7 @@ function PageCanvas({
           variant="accent"
           size="sm"
           onClick={onDissect}
-          disabled={dissecting}
+          disabled={locked || dissecting}
           loading={dissecting}
           data-testid="dissect-plan-btn"
         >
@@ -1076,7 +1187,7 @@ function PageCanvas({
           variant="outline"
           size="sm"
           onClick={onFormat}
-          disabled={formatting || page.panels.length === 0}
+          disabled={locked || formatting || page.panels.length === 0}
           loading={formatting}
           data-testid="format-page-btn"
         >
@@ -1086,14 +1197,14 @@ function PageCanvas({
           variant="destructive"
           size="sm"
           onClick={onApplyTemplate}
-          disabled={formatting || page.panels.length === 0}
+          disabled={locked || formatting || page.panels.length === 0}
           data-testid="apply-template-btn"
         >
           Apply template
         </KitButton>
       </div>
 
-      {imagePickerOpen ? (
+      {imagePickerOpen && !locked ? (
         <ImagePicker
           layers={imageLayers}
           onPick={(layer) => {
@@ -1104,7 +1215,7 @@ function PageCanvas({
         />
       ) : null}
 
-      {widgetPickerOpen ? (
+      {widgetPickerOpen && !locked ? (
         <WidgetPicker
           onPick={(widgetType) => {
             onAddPanel("widget", { widgetType });
@@ -1120,7 +1231,7 @@ function PageCanvas({
           onAccept={onAcceptGhost}
           onAcceptAll={onAcceptAllGhosts}
           onReject={onRejectGhost}
-          onClose={() => setGhostReviewOpen(false)}
+          onClose={onRejectAllGhosts}
         />
       ) : null}
 
@@ -1131,7 +1242,7 @@ function PageCanvas({
           onAccept={onAcceptFormatGhost}
           onAcceptAll={onAcceptAllFormatGhosts}
           onReject={onRejectFormatGhost}
-          onClose={() => setFormatReviewOpen(false)}
+          onClose={onRejectAllFormatGhosts}
         />
       ) : null}
     </div>
@@ -1240,6 +1351,7 @@ type DragState = {
 
 type PanelViewProps = {
   panel: PresentationPanel;
+  locked?: boolean;
   planSnapshot: PlanSnapshot | null;
   estimate: EstimateSnapshot | null;
   materials: MaterialSwatch[];
@@ -1256,6 +1368,7 @@ type PanelViewProps = {
 
 function PanelView({
   panel,
+  locked = false,
   planSnapshot,
   estimate,
   materials,
@@ -1281,10 +1394,15 @@ function PanelView({
     }
   }, []);
 
+  useEffect(() => {
+    if (locked) setEditing(false);
+  }, [locked]);
+
   const onPointerDown = (
     e: React.PointerEvent,
     mode: DragState["mode"],
   ) => {
+    if (locked) return;
     // Don't start drag when clicking inside edit fields
     if (editing && mode === "move") {
       const target = e.target as HTMLElement;
@@ -1397,7 +1515,9 @@ function PanelView({
           <button
             type="button"
             className={css.panelContent}
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              if (!locked) setEditing(true);
+            }}
           >
             {panel.heading ? (
               <h3 className={css.panelHeading}>{panel.heading}</h3>
@@ -1767,14 +1887,14 @@ function GhostReview({
           size="sm"
           className={css.ghostReviewClose}
           onClick={onClose}
-          aria-label="Close review"
+          aria-label="Reject all proposals"
         >
-          Close
+          Reject all
         </KitButton>
       </div>
       {ghosts.length === 0 ? (
         <p className={css.ghostReviewEmpty}>
-          No ghosts left. Dissect again for more, or close.
+          No ghosts left. Dissect again for more proposals.
         </p>
       ) : (
         <>
@@ -1914,7 +2034,7 @@ function WidgetLiveContent({
   if (!estimate) {
     return (
       <p className={css.panelPlaceholder}>
-        No estimate data — cost something on the drawing first.
+        No estimate snapshot — cost the board before issuing, or reopen a draft deck.
       </p>
     );
   }
@@ -1963,10 +2083,14 @@ function WidgetLiveContent({
       );
     case "honesty_footer":
       return (
-        <p className={css.widgetText}>
-          Indicative pricing only. Final quote subject to site conditions,
-          survey verification, and council approvals.
-        </p>
+        <div className={css.widgetLive}>
+          <p className={css.widgetText}>
+            Indicative pricing only. Final quote subject to site conditions.
+          </p>
+          <p className={css.widgetSub}>
+            Concept sketch for estimating — not a construction drawing.
+          </p>
+        </div>
       );
   }
 }
@@ -2056,9 +2180,9 @@ function FormatReview({
           size="sm"
           className={css.ghostReviewClose}
           onClick={onClose}
-          aria-label="Close review"
+          aria-label="Reject all layout proposals"
         >
-          Close
+          Reject all
         </KitButton>
       </div>
       {rationale ? (
@@ -2066,7 +2190,7 @@ function FormatReview({
       ) : null}
       {ghosts.length === 0 ? (
         <p className={css.ghostReviewEmpty}>
-          No proposals left. Format again or close.
+          No proposals left. Format again for a new layout pass.
         </p>
       ) : (
         <>

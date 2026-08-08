@@ -2084,7 +2084,9 @@ export function HandoffDesignStudio({
     ui.ghostReviewOpen ||
     ui.rightDataPanel != null ||
     headerViewMenuOpen ||
-    studioSheetVisible;
+    studioSheetVisible ||
+    /* Present owns the viewport — suspend studio idle recession while composing. */
+    ui.mode === "present";
   const idle = useChromeIdle({
     timeout: 6000,
     disabled: idleDisabled,

@@ -19,12 +19,14 @@
   width: 280px;
   display: flex;
   flex-direction: column;
-  background: var(--tier1-bar-bg);
+  /* Frost dialect via CameraChrome portal — not blush chrome. */
+  background: var(--hc-glass, var(--tier1-bar-bg));
+  backdrop-filter: blur(16px);
   border-radius: var(--r-md, 8px);
   box-shadow:
     0 4px 16px color-mix(in srgb, #000 30%, transparent),
     0 1px 3px color-mix(in srgb, #000 20%, transparent),
-    inset 0 0 0 1px var(--tier1-bar-line);
+    inset 0 0 0 1px var(--hc-glass-border, var(--tier1-bar-line));
   z-index: 20;
   pointer-events: auto;
   animation: dockSlideIn 180ms var(--ws-ease, ease) both;

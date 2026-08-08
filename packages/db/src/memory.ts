@@ -336,6 +336,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         ],
         created_at: now,
         updated_at: now,
+        issued_at: null,
+        estimate_snapshot: null,
       };
       _presentationDocuments.push(doc);
       flush();
@@ -352,6 +354,21 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       );
       if (!doc) return null;
       const now = new Date().toISOString();
+      const issuing =
+        input.status === "issued" && doc.status !== "issued";
+      const contentMutation =
+        input.title !== undefined ||
+        input.deliverable_type !== undefined ||
+        input.template_id !== undefined ||
+        input.theme !== undefined ||
+        input.pages !== undefined;
+      /* Issued decks are terminal — only the Issue transition may write
+       * content (to stamp estimate_snapshot). Later edits are refused. */
+      if (doc.status === "issued" && (contentMutation || input.estimate_snapshot !== undefined)) {
+        const err = new Error("Deck is issued; edits are blocked");
+        (err as Error & { statusCode?: number }).statusCode = 409;
+        throw err;
+      }
       if (input.title !== undefined) doc.title = input.title;
       if (input.deliverable_type !== undefined)
         doc.deliverable_type = input.deliverable_type;
@@ -372,6 +389,12 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         }
       }
       if (input.pages !== undefined) doc.pages = input.pages;
+      if (input.estimate_snapshot !== undefined) {
+        doc.estimate_snapshot = input.estimate_snapshot;
+      } else if (issuing && doc.estimate_snapshot == null) {
+        /* Issue without a snapshot still freezes — widgets show empty honesty. */
+        doc.estimate_snapshot = null;
+      }
       doc.updated_at = now;
       flush();
       return structuredClone(doc);

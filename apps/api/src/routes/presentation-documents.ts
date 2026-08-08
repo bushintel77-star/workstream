@@ -109,16 +109,35 @@ export default async function presentationDocumentRoutes(
           issues: parsed.error.issues,
         });
       }
-      const doc = await fastify.store.updatePresentationDocument(
-        ownerId,
-        projectId,
-        docId,
-        parsed.data,
-      );
-      if (!doc) {
-        return reply.code(404).send(DOC_NOT_FOUND_BODY);
+      try {
+        const doc = await fastify.store.updatePresentationDocument(
+          ownerId,
+          projectId,
+          docId,
+          parsed.data,
+        );
+        if (!doc) {
+          return reply.code(404).send(DOC_NOT_FOUND_BODY);
+        }
+        return reply.send({ document: doc });
+      } catch (err) {
+        const status =
+          err instanceof Error &&
+          "statusCode" in err &&
+          typeof (err as { statusCode?: number }).statusCode === "number"
+            ? (err as { statusCode: number }).statusCode
+            : 500;
+        if (status === 409) {
+          return reply.code(409).send({
+            error:
+              err instanceof Error
+                ? err.message
+                : "Deck is issued; edits are blocked",
+          });
+        }
+        request.log.error({ err }, "presentation document update failed");
+        return reply.code(500).send({ error: "Update failed" });
       }
-      return reply.send({ document: doc });
     },
   );
 

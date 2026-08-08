@@ -362,10 +362,16 @@
 }
 
 .pagePaper {
+  /* Content theme vars — palette/font apply to page paper only, never chrome. */
+  --pv-content-font: "Fraunces", "IBM Plex Serif", Georgia, serif;
+  --pv-accent: var(--text-primary);
+
   position: relative;
   width: min(100%, 800px);
   aspect-ratio: 420 / 297;
   background: var(--pv-paper);
+  color: var(--pv-ink);
+  font-family: var(--pv-content-font);
   border: 0;
   border-radius: var(--r-sm);
   box-shadow:
@@ -376,6 +382,74 @@
     0 8px 16px color-mix(in srgb, var(--text-primary) 3%, transparent),
     0 16px 32px color-mix(in srgb, var(--text-primary) 2%, transparent);
   overflow: hidden;
+}
+
+.pagePaper[data-palette="stone"] {
+  --pv-paper: var(--gray-l-25);
+  --pv-ink: var(--gray-l-900);
+  --pv-ink-muted: var(--gray-l-700);
+  --pv-plan-bg: var(--gray-l-100);
+  --pv-accent: var(--gray-l-800);
+}
+
+.pagePaper[data-palette="sage"] {
+  --pv-paper: color-mix(in srgb, var(--gray-l-25) 88%, #7a8f6a);
+  --pv-ink: color-mix(in srgb, var(--gray-l-900) 82%, #2f4a32);
+  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 70%, #4a6b4e);
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 90%, #c5d4b8);
+  --pv-accent: #4a6b4e;
+}
+
+.pagePaper[data-palette="ink"] {
+  --pv-paper: var(--gray-l-900);
+  --pv-ink: var(--gray-l-50);
+  --pv-ink-muted: var(--gray-l-300);
+  --pv-plan-bg: var(--gray-l-800);
+  --pv-accent: var(--gray-l-100);
+}
+
+.pagePaper[data-palette="blush"] {
+  /* Warm accent on page content only — never studio chrome. */
+  --pv-paper: color-mix(in srgb, var(--gray-l-25) 86%, #e8c4b8);
+  --pv-ink: color-mix(in srgb, var(--gray-l-900) 88%, #5c2e28);
+  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 75%, #8a4a42);
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 88%, #f0d6ce);
+  --pv-accent: #b33a32;
+}
+
+.pagePaper[data-palette="parchment"] {
+  --pv-paper: var(--sheet-paper, var(--gray-l-50));
+  --pv-ink: var(--sheet-ink, var(--gray-l-900));
+  --pv-ink-muted: var(--sheet-ink-muted, var(--gray-l-700));
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 85%, #e8dfc8);
+  --pv-accent: color-mix(in srgb, var(--gray-l-800) 80%, #6b5a3e);
+}
+
+.pagePaper[data-font="fraunces"] {
+  --pv-content-font: "Fraunces", "IBM Plex Serif", Georgia, serif;
+}
+
+.pagePaper[data-font="sora"] {
+  --pv-content-font: "Sora", "IBM Plex Sans", system-ui, sans-serif;
+}
+
+.pagePaper[data-font="inter"] {
+  --pv-content-font: "Inter", "IBM Plex Sans", system-ui, sans-serif;
+}
+
+.pagePaper[data-font="handwritten"] {
+  --pv-content-font: var(--font-hand), "Architects Daughter", cursive;
+}
+
+.issuedBadge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 8px;
 }
 
 .pageEmpty {
@@ -392,6 +466,15 @@
   display: flex;
   gap: var(--s-2);
   align-items: center;
+}
+
+.pageCanvas[data-drafting-suspended="1"] .panelRemove,
+.pageCanvas[data-drafting-suspended="1"] .resizeHandle {
+  display: none;
+}
+
+.pageCanvas[data-drafting-suspended="1"] .panel {
+  cursor: default;
 }
 
 .addBarSep {
