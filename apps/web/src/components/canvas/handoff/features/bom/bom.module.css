@@ -185,7 +185,7 @@
 .quoteError {
   margin: 0;
   font-size: var(--text-micro);
-  color: var(--danger, #a11);
+  color: var(--hc-danger, var(--danger));
 }
 
 .foot {

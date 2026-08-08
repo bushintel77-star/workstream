@@ -18,7 +18,7 @@
   margin: 0;
   padding: 0.55rem 0.9rem;
   border-radius: var(--hc-r-control, 8px);
-  background: color-mix(in srgb, var(--ws-frame, #fffbfc) 92%, transparent);
+  background: color-mix(in srgb, var(--ws-frame, var(--hc-paper)) 92%, transparent);
   border: 1px solid var(--ws-frame-hair, rgba(36, 19, 24, 0.14));
   font-size: 0.75rem;
   font-weight: 600;
