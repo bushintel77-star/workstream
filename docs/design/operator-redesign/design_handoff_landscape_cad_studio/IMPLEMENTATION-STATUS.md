@@ -115,7 +115,7 @@ Legend: **Done** · **Partial** · **Not started**
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Live BOM dock | **Done** | `LiveBomHud`. |
+| Live BOM dock | **Done** | Handoff `LiveBomDock` Instant Planner + labour chip; Assist / shadow / structured tools via `InstantPlannerChrome`. |
 | Cost delta for AI | **Done** | Ghost cost hints + mutation HUD on accept. |
 | Mitigation schedule lines | **Done** | `buildAcceptedMitigationLines()` into orchestration live BOM. |
 

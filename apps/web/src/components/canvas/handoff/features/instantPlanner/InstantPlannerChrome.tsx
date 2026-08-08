@@ -18,6 +18,7 @@ import {
   strokesToCanvas,
 } from "../../state/canvasBridge";
 import type { SketchStroke, StudioItem } from "../../studioCatalog";
+import { LandscapeFeaturesLayer } from "./LandscapeFeaturesLayer";
 import { NextBestOptionChip } from "./NextBestOptionChip";
 import { StudioAssistPanel } from "./StudioAssistPanel";
 import { StructuredToolOverlay } from "./StructuredToolOverlay";
@@ -51,6 +52,7 @@ export function InstantPlannerChrome({
   onCanvasApplied,
 }: Props) {
   const [world, setWorld] = useState<ProjectOrchestrationWorld | null>(null);
+  const [planFeatures, setPlanFeatures] = useState<LandscapeFeature[]>([]);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -79,7 +81,14 @@ export function InstantPlannerChrome({
       irrigation_zones: irrigationZones ?? [],
       annotations: annotations ?? [],
       image_layers: imageLayers ?? [],
-      features: itemsToFeatures(items),
+      features: (() => {
+        const fromItems = itemsToFeatures(items);
+        const byId = new Set(fromItems.map((f) => f.id));
+        return [
+          ...fromItems,
+          ...planFeatures.filter((f) => !byId.has(f.id)),
+        ];
+      })(),
       construction_trenches: constructionTrenches ?? [],
       updated_at: new Date().toISOString(),
     };
@@ -92,15 +101,21 @@ export function InstantPlannerChrome({
     annotations,
     imageLayers,
     constructionTrenches,
+    planFeatures,
   ]);
 
   if (!active) return null;
+
+  const applyCanvas = (next: DesignCanvas) => {
+    setPlanFeatures(next.features ?? []);
+    onCanvasApplied(next);
+  };
 
   const onApplyShadow = (alt: ShadowAlternative) => {
     startTransition(async () => {
       try {
         const res = await applyShadowAlternativeAction(projectId, alt.id);
-        onCanvasApplied(res.canvas);
+        applyCanvas(res.canvas);
         const next = await getOrchestrationAction(projectId);
         setWorld(next);
       } catch {
@@ -123,12 +138,13 @@ export function InstantPlannerChrome({
         [...(canvas.features ?? []), feature],
         canvas.construction_trenches,
       );
-      onCanvasApplied(res.canvas);
+      applyCanvas(res.canvas);
     });
   };
 
   return (
     <div className={css.layer} data-testid="instant-planner-chrome">
+      <LandscapeFeaturesLayer features={planFeatures} paper={paper} />
       <NextBestOptionChip
         world={world}
         paper={paper}
@@ -139,7 +155,7 @@ export function InstantPlannerChrome({
         world={world}
         canvas={canvas}
         paper={paper}
-        onCanvasSaved={onCanvasApplied}
+        onCanvasSaved={applyCanvas}
       />
       <StructuredToolOverlay
         active={structuredTools}
