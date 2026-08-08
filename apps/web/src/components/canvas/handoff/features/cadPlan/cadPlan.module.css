@@ -627,7 +627,7 @@
 
 .machineAccessCallout {
   composes: councilPathLabel;
-  opacity: 0.7;
+  /* Reuse councilPathLabel's 0.55 — do not invent a new opacity step. */
   font-weight: 600;
 }
 
@@ -1285,7 +1285,7 @@ button.missingBuildingCue:focus-visible {
   font-weight: 700;
   font-style: normal;
   font-size: 0.95em;
-  opacity: 0.75;
+  opacity: var(--cad-honesty-mark, 0.9);
 }
 
 /* Sketch-formalized regions — drawn shape rendered as plan geometry. */

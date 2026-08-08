@@ -45,7 +45,7 @@
 .dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--hc-r-pill);
   background: var(--tier1-bar-ink-muted);
   box-shadow:
     inset 0 1px 1px color-mix(in srgb, #000 40%, transparent),
@@ -81,7 +81,7 @@
 
 @keyframes savePulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: var(--save-pulse-mid, 0.5); }
 }
 
 /* -- Saved state: solid green lamp — reassures quality -- */

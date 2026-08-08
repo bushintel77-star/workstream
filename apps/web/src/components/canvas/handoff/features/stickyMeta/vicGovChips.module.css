@@ -64,7 +64,7 @@
  * drawing, not the chrome. Hover or any input restores full opacity.
  */
 :global([data-idle="true"]) .row {
-  opacity: 0.5;
+  opacity: var(--vic-chip-idle, 0.5);
 }
 
 :global([data-idle="true"]) .row:hover {
@@ -153,7 +153,6 @@
   top: auto;
   right: auto;
   left: auto;
-  z-index: auto;
   flex: 0 0 auto;
   min-width: 0;
   max-width: 100%;

@@ -13,7 +13,9 @@
   border: 1px solid var(--ws-frame-hair);
   box-shadow: 0 12px 40px color-mix(in srgb, var(--hc-ink) 40%, transparent);
   color: var(--ws-frame-ink);
-  z-index: 40;
+  z-index: var(--ws-z-dock);
+  --db-row-muted: 0.55;
+  --db-meta: 0.7;
 }
 
 .head {
@@ -82,13 +84,13 @@
 
 .row[data-status="merged"],
 .row[data-status="abandoned"] {
-  opacity: 0.55;
+  opacity: var(--db-row-muted);
 }
 
 .meta {
   display: block;
   font-size: 0.8rem;
-  opacity: 0.7;
+  opacity: var(--db-meta);
 }
 
 .actions {
