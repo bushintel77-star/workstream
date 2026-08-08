@@ -1,69 +1,96 @@
+import { randomUUID } from "node:crypto";
 import { test, expect } from "@playwright/test";
 
-test.describe("Dashboard — filter, sort, search", () => {
-  test("dashboard renders with project grid", async ({ page }) => {
+const API = process.env.API_URL ?? "http://localhost:3001";
+
+/**
+ * Dashboard — seed N projects; hard-expect search empty / match / Dialog delete + undo.
+ * Filter chips and sort buttons were removed from live /home (editorial redesign);
+ * those soft branches are gone — this file covers the surfaces that ship today.
+ */
+test.describe("Dashboard — search, delete, undo", () => {
+  test("seeded projects: search empty/match, Dialog delete, Undo restores", async ({
+    page,
+    request,
+  }) => {
+    const run = randomUUID().slice(0, 8);
+    const seeds = [
+      { name: `E2E Alpha ${run}`, street: "101 Filter St" },
+      { name: `E2E Beta ${run}`, street: "202 Sort Ave" },
+      { name: `E2E Gamma ${run}`, street: "303 Search Rd" },
+    ];
+    for (const s of seeds) {
+      const create = await request.post(`${API}/projects/`, {
+        data: {
+          address: `${s.name}, ${s.street}, Melbourne VIC 3000`,
+          lat: -37.8136,
+          lng: 144.9631,
+        },
+      });
+      expect(create.ok()).toBeTruthy();
+    }
+
     await page.goto("/home");
     await expect(page).toHaveURL(/\/home/);
-    // Should have project cards or empty state
-    const grid = page.locator('[class*="projectGrid"], [class*="emptyState"]').first();
-    await expect(grid).toBeVisible({ timeout: 15_000 });
-  });
 
-  test("search input filters projects", async ({ page }) => {
-    await page.goto("/home");
-    // Find search input
-    const search = page.locator('input[type="search"], input[placeholder*="search" i], input[aria-label*="search" i]').first();
-    if (await search.isVisible({ timeout: 10_000 }).catch(() => false)) {
-      await search.fill("zzz-nonexistent-project");
-      // Should show no-results state
-      await expect(page.getByText(/no matching/i).or(page.locator('[class*="noResults"]'))).toBeVisible({ timeout: 5_000 });
-      // Clear search
-      await search.clear();
-    }
-  });
+    const search = page.getByRole("searchbox", { name: "Search projects" });
+    await expect(search).toBeVisible({ timeout: 15_000 });
 
-  test("status filter chips toggle", async ({ page }) => {
-    await page.goto("/home");
-    // Find status filter buttons
-    const filterBtns = page.locator('button[aria-pressed], [class*="statusFilter"] button').first();
-    if (await filterBtns.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      const initialPressed = await filterBtns.getAttribute("aria-pressed");
-      await filterBtns.click();
-      const afterClick = await filterBtns.getAttribute("aria-pressed");
-      expect(initialPressed).not.toBe(afterClick);
-    }
-  });
+    const cardName = (label: string) =>
+      page.locator('[class*="cardName"]', { hasText: label });
 
-  test("sort buttons cycle", async ({ page }) => {
-    await page.goto("/home");
-    // Find sort buttons
-    const sortBtns = page.locator('button[aria-pressed][class*="sort"], [class*="sortBtn"]').first();
-    if (await sortBtns.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await sortBtns.click();
-      // Should still be on the dashboard
-      await expect(page).toHaveURL(/\/home/);
-    }
-  });
+    await expect(cardName(seeds[0]!.name)).toBeVisible();
+    await expect(cardName(seeds[1]!.name)).toBeVisible();
+    await expect(cardName(seeds[2]!.name)).toBeVisible();
 
-  test("delete dialog appears (not window.confirm)", async ({ page }) => {
-    await page.goto("/home");
-    // Find an Actions popover trigger
-    const actionsTrigger = page.getByText("Actions").first();
-    if (await actionsTrigger.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await actionsTrigger.click();
-      // Popover menu should appear
-      await expect(page.getByTestId("popover-menu")).toBeVisible({ timeout: 3_000 });
-      // Click Delete
-      const deleteBtn = page.getByTestId("popover-menu").getByText("Delete").first();
-      if (await deleteBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-        await deleteBtn.click();
-        // Dialog should appear (not window.confirm)
-        await expect(page.getByTestId("dialog-panel")).toBeVisible({ timeout: 5_000 });
-        await expect(page.getByText("Delete project?")).toBeVisible();
-        // Cancel
-        await page.getByText("Cancel").click();
-        await expect(page.getByTestId("dialog-panel")).not.toBeVisible({ timeout: 3_000 });
-      }
-    }
+    await search.fill("zzz-nonexistent-project");
+    await expect(
+      page.getByRole("heading", { name: "No matching projects" }),
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(cardName(seeds[0]!.name)).toHaveCount(0);
+
+    await search.fill(seeds[0]!.street);
+    await expect(cardName(seeds[0]!.name)).toBeVisible({ timeout: 5_000 });
+    await expect(cardName(seeds[1]!.name)).toHaveCount(0);
+    await expect(cardName(seeds[2]!.name)).toHaveCount(0);
+
+    await search.clear();
+    await expect(cardName(seeds[1]!.name)).toBeVisible({ timeout: 5_000 });
+
+    const deleteBtn = page.getByRole("button", {
+      name: `Delete ${seeds[1]!.name}`,
+    });
+    await expect(deleteBtn).toBeVisible();
+    await deleteBtn.click();
+
+    const dialog = page.getByTestId("dialog-panel");
+    await expect(dialog).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText("Delete project?")).toBeVisible();
+    await expect(
+      dialog.getByText(seeds[1]!.name, { exact: true }),
+    ).toBeVisible();
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(cardName(seeds[1]!.name)).toBeVisible();
+
+    await deleteBtn.click();
+    await expect(dialog).toBeVisible({ timeout: 5_000 });
+    await dialog.getByRole("button", { name: "Delete" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(cardName(seeds[1]!.name)).toHaveCount(0);
+
+    const toastRegion = page.locator("[aria-live]").filter({
+      hasText: "Project deleted",
+    });
+    await expect(toastRegion).toBeVisible({ timeout: 10_000 });
+    await expect(
+      toastRegion.getByRole("button", { name: "Undo" }),
+    ).toBeVisible();
+    await toastRegion.getByRole("button", { name: "Undo" }).click();
+
+    await expect(cardName(seeds[1]!.name)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Project restored")).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
