@@ -54,6 +54,7 @@ import { NextBestOptionChip } from "./NextBestOptionChip";
 import { DesignBranchStrip } from "./DesignBranchStrip";
 import { HeroDetailOverlay, type HeroFeatureTarget } from "./HeroDetailOverlay";
 import { HeroFeatureMarkers } from "./HeroFeatureMarkers";
+import { LandscapeFeaturesLayer } from "./LandscapeFeaturesLayer";
 import { StructuredToolOverlay } from "./StructuredToolOverlay";
 import { StudioAssistPanel } from "./StudioAssistPanel";
 import { ComplianceDock } from "./ComplianceDock";
@@ -1722,57 +1723,82 @@ function SiteCanvasInner({
                       cadDoc?.height_m ?? boundary?.height_m ?? null
                     }
                     designOverlay={
-                      mode === "sketch" && sketch ? (
-                        <SketchInstrument
-                          projectId={projectId}
-                          symbols={sketch.symbols}
-                          rateCard={sketch.rateCard}
-                          initialPlacements={sketch.canvas?.placements ?? []}
-                          onPlacementCount={setSketchCount}
-                          mapView={mapView}
-                          worldWidthPx={worldSize.width}
-                          worldHeightPx={worldSize.height}
-                          tier1={tier1}
-                          chromeHost={sketchChromeHost}
-                          onArmedChange={setSketchArmed}
-                          onDraftCad={draftFitSheet}
-                          showRibbon={sketchPaintOpen}
-                          viewLayers={viewLayers}
-                          onToggleViewLayer={(key) =>
-                            setViewLayers((prev) => ({
-                              ...prev,
-                              [key]: !prev[key],
-                            }))
+                      <>
+                        <LandscapeFeaturesLayer
+                          features={
+                            (liveCanvas ?? sketch?.canvas)?.features ?? []
                           }
-                          onRegisterCommands={(api) => {
-                            sketchCommandsRef.current = api;
-                          }}
-                          measureActive={measureActive}
-                          onToggleMeasure={() => setMeasureActive((v) => !v)}
-                          onGoToQuote={() => setMode("quote")}
-                          showGhostSuggestions={viewLayers.ghostSuggestions}
-                          selectMode={
-                            canvasTool === "edit" && !sketchArmed
+                          paper={showFitSheet}
+                          onSelect={(f) =>
+                            setHeroFeature({
+                              id: f.id,
+                              title: f.metadata.friendly_name ?? "Feature",
+                              kind: f.metadata.layer === "softscape_beds"
+                                ? "planting"
+                                : f.metadata.layer === "structure"
+                                  ? "wall"
+                                  : "path",
+                              depth_m: f.material_fill?.depth_m,
+                              material: f.material_fill?.sku,
+                            })
                           }
                         />
-                      ) : mode === "quote" ||
-                        mode === "cad" ||
-                        mode === "share" ? (
-                        <SheetAnchorsOverlay
-                          widthM={
-                            cadDoc?.width_m ?? boundary?.width_m ?? 1
-                          }
-                          heightM={
-                            cadDoc?.height_m ?? boundary?.height_m ?? 1
-                          }
-                          qsRows={
-                            mode === "quote" || mode === "share"
-                              ? survey?.rows
-                              : null
-                          }
-                          overlays={orchWorld?.overlays ?? null}
-                        />
-                      ) : null
+                        {mode === "sketch" && sketch ? (
+                          <SketchInstrument
+                            projectId={projectId}
+                            symbols={sketch.symbols}
+                            rateCard={sketch.rateCard}
+                            initialPlacements={
+                              liveCanvas?.placements ??
+                              sketch.canvas?.placements ??
+                              []
+                            }
+                            onPlacementCount={setSketchCount}
+                            mapView={mapView}
+                            worldWidthPx={worldSize.width}
+                            worldHeightPx={worldSize.height}
+                            tier1={tier1}
+                            chromeHost={sketchChromeHost}
+                            onArmedChange={setSketchArmed}
+                            onDraftCad={draftFitSheet}
+                            showRibbon={sketchPaintOpen}
+                            viewLayers={viewLayers}
+                            onToggleViewLayer={(key) =>
+                              setViewLayers((prev) => ({
+                                ...prev,
+                                [key]: !prev[key],
+                              }))
+                            }
+                            onRegisterCommands={(api) => {
+                              sketchCommandsRef.current = api;
+                            }}
+                            measureActive={measureActive}
+                            onToggleMeasure={() => setMeasureActive((v) => !v)}
+                            onGoToQuote={() => setMode("quote")}
+                            showGhostSuggestions={viewLayers.ghostSuggestions}
+                            selectMode={
+                              canvasTool === "edit" && !sketchArmed
+                            }
+                          />
+                        ) : mode === "quote" ||
+                          mode === "cad" ||
+                          mode === "share" ? (
+                          <SheetAnchorsOverlay
+                            widthM={
+                              cadDoc?.width_m ?? boundary?.width_m ?? 1
+                            }
+                            heightM={
+                              cadDoc?.height_m ?? boundary?.height_m ?? 1
+                            }
+                            qsRows={
+                              mode === "quote" || mode === "share"
+                                ? survey?.rows
+                                : null
+                            }
+                            overlays={orchWorld?.overlays ?? null}
+                          />
+                        ) : null}
+                      </>
                     }
                   />
                 </ArchitecturalSheet>
@@ -1819,12 +1845,33 @@ function SiteCanvasInner({
                   {mapView && lotRing.length >= 3 ? (
                     <TitleParcelOverlay lotRing={lotRing} mapView={mapView} />
                   ) : null}
+                  <LandscapeFeaturesLayer
+                    features={(liveCanvas ?? sketch?.canvas)?.features ?? []}
+                    paper={showFitSheet}
+                    onSelect={(f) =>
+                      setHeroFeature({
+                        id: f.id,
+                        title: f.metadata.friendly_name ?? "Feature",
+                        kind: f.metadata.layer === "softscape_beds"
+                          ? "planting"
+                          : f.metadata.layer === "structure"
+                            ? "wall"
+                            : "path",
+                        depth_m: f.material_fill?.depth_m,
+                        material: f.material_fill?.sku,
+                      })
+                    }
+                  />
                   {mode === "sketch" && sketch ? (
                     <SketchInstrument
                       projectId={projectId}
                       symbols={sketch.symbols}
                       rateCard={sketch.rateCard}
-                      initialPlacements={sketch.canvas?.placements ?? []}
+                      initialPlacements={
+                        liveCanvas?.placements ??
+                        sketch.canvas?.placements ??
+                        []
+                      }
                       onPlacementCount={setSketchCount}
                       mapView={mapView}
                       worldWidthPx={worldSize.width}

@@ -8,7 +8,7 @@ import type {
   ProjectOrchestrationWorld,
 } from "@workstream/contracts";
 import {
-  matchLeftoversToNeed,
+  matchLeftoversToBom,
   proposeIrrigationAssist,
   proposeLightingAssist,
 } from "@workstream/domain";
@@ -46,8 +46,8 @@ export function StudioAssistPanel({
     [world],
   );
   const leftoverHint = useMemo(
-    () => matchLeftoversToNeed(pool, "STONE-DEC", 0.5),
-    [pool],
+    () => matchLeftoversToBom(pool, world?.live_bom ?? []),
+    [pool, world?.live_bom],
   );
 
   useEffect(() => {
@@ -210,8 +210,8 @@ export function StudioAssistPanel({
           {poolNote ? <p className={css.meta}>{poolNote}</p> : null}
           {leftoverHint ? (
             <p className={css.chip} data-testid="leftover-chip">
-              Leftover: {leftoverHint.qty} {leftoverHint.unit}{" "}
-              {leftoverHint.label}
+              Use leftover {leftoverHint.cover_qty} {leftoverHint.leftover.unit}{" "}
+              {leftoverHint.leftover.label} on {leftoverHint.bom_line.label}
             </p>
           ) : null}
           <p className={css.kicker}>Presentation</p>

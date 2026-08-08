@@ -1,4 +1,4 @@
-import type { LeftoverStock } from "@workstream/contracts";
+import type { BomLine, LeftoverStock } from "@workstream/contracts";
 
 /** Register pack excess when ordered qty exceeds job need. */
 export function registerLeftover(args: {
@@ -37,4 +37,60 @@ export function matchLeftoversToNeed(
     .sort((a, b) => b.qty - a.qty);
   const hit = matches.find((l) => l.qty + 1e-9 >= needQty * 0.25);
   return hit ?? null;
+}
+
+export type LeftoverBomMatch = {
+  leftover: LeftoverStock;
+  bom_line: BomLine;
+  cover_qty: number;
+};
+
+/**
+ * Match workspace leftovers against primary/secondary BOM material lines.
+ * Prefers exact SKU, then label token overlap (stone / mulch / pave).
+ */
+export function matchLeftoversToBom(
+  leftovers: LeftoverStock[],
+  liveBom: BomLine[],
+): LeftoverBomMatch | null {
+  if (leftovers.length === 0 || liveBom.length === 0) return null;
+  const materialLines = liveBom.filter(
+    (l) =>
+      (l.tier === "primary" || l.tier === "secondary") &&
+      l.qty > 0 &&
+      l.unit !== "hr" &&
+      l.unit !== "hour",
+  );
+  for (const line of materialLines) {
+    if (line.sku) {
+      const hit = matchLeftoversToNeed(leftovers, line.sku, line.qty);
+      if (hit) {
+        return {
+          leftover: hit,
+          bom_line: line,
+          cover_qty: Math.min(hit.qty, line.qty),
+        };
+      }
+    }
+    const label = line.label.toLowerCase();
+    const fuzzy = leftovers.find((l) => {
+      if (l.qty <= 0) return false;
+      const ll = l.label.toLowerCase();
+      const sku = l.sku.toLowerCase();
+      return (
+        (label.includes("stone") && (ll.includes("stone") || sku.includes("stone"))) ||
+        (label.includes("mulch") && (ll.includes("mulch") || sku.includes("mulch"))) ||
+        (label.includes("pav") &&
+          (ll.includes("pav") || sku.includes("pave") || sku.includes("stone")))
+      );
+    });
+    if (fuzzy) {
+      return {
+        leftover: fuzzy,
+        bom_line: line,
+        cover_qty: Math.min(fuzzy.qty, line.qty),
+      };
+    }
+  }
+  return null;
 }
