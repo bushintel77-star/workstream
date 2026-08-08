@@ -69,6 +69,13 @@ export const SHEET_WIDGET_LIBRARY: Array<{
       defaultSlot: "title_meta",
       defaultEmphasis: "standard",
     },
+    {
+      type: "ops_schedule",
+      label: "Ops schedule",
+      detail: "Planting / trench / lighting / material peel",
+      defaultSlot: "side_stack",
+      defaultEmphasis: "quiet",
+    },
   ];
 
 export const SHEET_THEME_SWATCHES: Array<{
@@ -384,7 +391,8 @@ export function reflowSheetWidgets(pack: PresentationPack): PresentationPack {
     savings_ledger: 2,
     zone_summary: 3,
     material_swatches: 4,
-    honesty_footer: 5,
+    ops_schedule: 5,
+    honesty_footer: 6,
   };
   const preferredSlot: Record<PresentationWidgetType, PresentationSlot> = {
     caption: "title_meta",
@@ -392,6 +400,7 @@ export function reflowSheetWidgets(pack: PresentationPack): PresentationPack {
     savings_ledger: "side_stack",
     zone_summary: "side_stack",
     material_swatches: "footer_band",
+    ops_schedule: "side_stack",
     honesty_footer: "footer_band",
   };
 

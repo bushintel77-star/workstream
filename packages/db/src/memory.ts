@@ -29,6 +29,17 @@ import {
   openSqliteJournal,
   type SqliteJournal,
 } from "./sqlite-persist";
+import {
+  commitRevision,
+  createBranchFromRevision,
+  ensureMainBranch,
+  getBranch,
+  getRevision,
+  getTipCanvas,
+  writeTipCanvas,
+  type DesignVcsArrays,
+} from "./design-vcs";
+import { MAIN_DESIGN_BRANCH_NAME } from "@workstream/contracts";
 
 export const SYSTEM_OWNER = "system";
 
@@ -95,8 +106,20 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _quoteDocs: QuoteDoc[] = [];
   const _presentationDocuments: import("@workstream/contracts").PresentationDocument[] =
     [];
+  const _designBranches: import("@workstream/contracts").DesignBranch[] = [];
+  const _designRevisions: import("@workstream/contracts").DesignRevision[] = [];
+  const _documentationPackages: import("@workstream/contracts").DocumentationPackage[] =
+    [];
   const _operatorPlantProfiles: OperatorPlantProfile[] = [];
   let seeded = false;
+
+  function vcsArrays(): DesignVcsArrays {
+    return {
+      branches: _designBranches,
+      revisions: _designRevisions,
+      canvases: _designCanvases,
+    };
+  }
 
   function logActivity(
     ownerId: string,
@@ -147,6 +170,9 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _shareRevisions,
     _quoteDocs,
     _presentationDocuments,
+    _designBranches,
+    _designRevisions,
+    _documentationPackages,
     _operatorPlantProfiles,
   };
 
@@ -1401,23 +1427,21 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return structuredClone(row);
     },
 
-    async getDesignCanvas(ownerId, projectId) {
+    async getDesignCanvas(ownerId, projectId, opts) {
       const project = _projects.find(
         (p) => p.id === projectId && p.owner_id === ownerId,
       );
       if (!project) return null;
-      const canvas = _designCanvases.find((c) => c.project_id === projectId);
-      if (!canvas) return null;
-      return {
-        ...canvas,
-        irrigation_zones: canvas.irrigation_zones ?? [],
-        construction_trenches: canvas.construction_trenches ?? [],
-        annotations: canvas.annotations ?? [],
-        image_layers: canvas.image_layers ?? [],
-        features: canvas.features ?? [],
-        presentation_pack: canvas.presentation_pack,
-        lifecycle_phase: canvas.lifecycle_phase,
-      };
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const branch = opts?.branchId
+        ? getBranch(arrays, ownerId, projectId, opts.branchId)
+        : main;
+      if (!branch) return null;
+      const tip = getTipCanvas(arrays, branch);
+      if (!tip) return null;
+      flush();
+      return tip;
     },
 
     async listCatalogSymbols(ownerId) {
@@ -1456,70 +1480,313 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return true;
     },
 
-    async upsertDesignCanvas(ownerId, projectId, input) {
+    async upsertDesignCanvas(ownerId, projectId, input, opts) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const branchId = opts?.branchId ?? input.branch_id;
+      const branch = branchId
+        ? getBranch(arrays, ownerId, projectId, branchId)
+        : main;
+      if (!branch) throw new Error(`Design branch not found: ${branchId}`);
+      if (branch.status !== "open") {
+        throw new Error(`Design branch is ${branch.status}`);
+      }
+      const { branch_id: _branchId, ...canvasInput } = input;
+      const canvas = writeTipCanvas(arrays, branch, canvasInput);
+      flush();
+      return canvas;
+    },
+
+    async listDesignBranches(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      const arrays = vcsArrays();
+      ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      flush();
+      return _designBranches
+        .filter((b) => b.owner_id === ownerId && b.project_id === projectId)
+        .sort((a, b) => {
+          if (a.name === MAIN_DESIGN_BRANCH_NAME) return -1;
+          if (b.name === MAIN_DESIGN_BRANCH_NAME) return 1;
+          return a.name.localeCompare(b.name, "en-AU");
+        })
+        .map((b) => structuredClone(b));
+    },
+
+    async getDesignBranch(ownerId, projectId, branchId) {
+      const arrays = vcsArrays();
+      ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const branch = getBranch(arrays, ownerId, projectId, branchId);
+      flush();
+      return branch ? structuredClone(branch) : null;
+    },
+
+    async createDesignBranch(ownerId, projectId, input, authorId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, authorId);
+      const name = input.name.trim();
+      if (name.toLowerCase() === MAIN_DESIGN_BRANCH_NAME) {
+        throw new Error("Branch name 'main' is reserved");
+      }
+      if (
+        _designBranches.some(
+          (b) =>
+            b.project_id === projectId &&
+            b.owner_id === ownerId &&
+            b.name.toLowerCase() === name.toLowerCase() &&
+            b.status === "open",
+        )
+      ) {
+        throw new Error(`Branch already open: ${name}`);
+      }
+      let from = input.from_revision_id
+        ? getRevision(arrays, input.from_revision_id)
+        : getRevision(arrays, main.tip_revision_id);
+      if (!from || from.project_id !== projectId) {
+        throw new Error("from_revision_id not found");
+      }
+      const created = createBranchFromRevision(
+        arrays,
+        ownerId,
+        projectId,
+        name,
+        from,
+        authorId,
+      );
+      logActivity(
+        ownerId,
+        projectId,
+        "design.branch_created",
+        `Design branch "${name}" created`,
+        created.branch.id,
+      );
+      flush();
+      return {
+        branch: structuredClone(created.branch),
+        revision: structuredClone(created.revision),
+      };
+    },
+
+    async commitDesignBranch(ownerId, projectId, branchId, input, authorId) {
+      const arrays = vcsArrays();
+      const branch = getBranch(arrays, ownerId, projectId, branchId);
+      if (!branch) throw new Error(`Design branch not found: ${branchId}`);
+      if (branch.status !== "open") {
+        throw new Error(`Design branch is ${branch.status}`);
+      }
+      const { branch_id: _b, ...canvasInput } = input.canvas;
+      const revision = commitRevision(
+        arrays,
+        branch,
+        authorId,
+        input.message ?? "Checkpoint",
+        canvasInput,
+      );
+      flush();
+      return structuredClone(revision);
+    },
+
+    async abandonDesignBranch(ownerId, projectId, branchId) {
+      const arrays = vcsArrays();
+      const branch = getBranch(arrays, ownerId, projectId, branchId);
+      if (!branch) return null;
+      if (branch.name === MAIN_DESIGN_BRANCH_NAME) {
+        throw new Error("Cannot abandon main");
+      }
+      if (branch.status !== "open") return structuredClone(branch);
+      branch.status = "abandoned";
+      branch.updated_at = new Date().toISOString();
+      logActivity(
+        ownerId,
+        projectId,
+        "design.abandoned",
+        `Design branch "${branch.name}" abandoned`,
+        branch.id,
+      );
+      flush();
+      return structuredClone(branch);
+    },
+
+    async getDesignRevision(ownerId, projectId, revisionId) {
+      const rev = _designRevisions.find(
+        (r) =>
+          r.id === revisionId &&
+          r.owner_id === ownerId &&
+          r.project_id === projectId,
+      );
+      return rev ? structuredClone(rev) : null;
+    },
+
+    async diffDesignBranches(ownerId, projectId, leftBranchId, rightBranchId) {
+      const arrays = vcsArrays();
+      ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const left = getBranch(arrays, ownerId, projectId, leftBranchId);
+      const right = getBranch(arrays, ownerId, projectId, rightBranchId);
+      const leftTip = left ? getTipCanvas(arrays, left) : null;
+      const rightTip = right ? getTipCanvas(arrays, right) : null;
+      let base: import("@workstream/contracts").DesignCanvas | null = null;
+      const baseId = right?.base_revision_id ?? left?.base_revision_id;
+      if (baseId) {
+        const rev = getRevision(arrays, baseId);
+        if (rev) base = rev.canvas;
+      }
+      return { left: leftTip, right: rightTip, base };
+    },
+
+    async mergeDesignBranch(ownerId, projectId, sourceBranchId, input, authorId) {
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, authorId);
+      const source = getBranch(arrays, ownerId, projectId, sourceBranchId);
+      if (!source) throw new Error("Source branch not found");
+      if (source.status !== "open") {
+        throw new Error(`Source branch is ${source.status}`);
+      }
+      const intoId = input.into_branch_id ?? main.id;
+      const into = getBranch(arrays, ownerId, projectId, intoId);
+      if (!into) throw new Error("Target branch not found");
+      if (into.status !== "open") {
+        throw new Error(`Target branch is ${into.status}`);
+      }
+
+      const baseRev = source.base_revision_id
+        ? getRevision(arrays, source.base_revision_id)
+        : null;
+      const oursTip = getTipCanvas(arrays, into);
+      const theirsTip = getTipCanvas(arrays, source);
+      if (!oursTip || !theirsTip || !baseRev) {
+        throw new Error("Missing merge tips or base revision");
+      }
+
+      const { mergeDesignCanvas } = await import("@workstream/domain");
+      const merged = mergeDesignCanvas({
+        base: baseRev.canvas,
+        ours: oursTip,
+        theirs: theirsTip,
+        resolutions: input.resolutions ?? {},
+      });
+      if (!merged.ok) {
+        return { ok: false as const, conflicts: merged.conflicts };
+      }
+
+      const revision = commitRevision(
+        arrays,
+        into,
+        authorId,
+        input.message ?? `Merge ${source.name}`,
+        {
+          placements: merged.canvas.placements,
+          strokes: merged.canvas.strokes,
+          irrigation_zones: merged.canvas.irrigation_zones,
+          construction_trenches: merged.canvas.construction_trenches,
+          annotations: merged.canvas.annotations,
+          image_layers: merged.canvas.image_layers,
+          features: merged.canvas.features,
+          site_frame: merged.canvas.site_frame,
+          presentation_pack: merged.canvas.presentation_pack,
+          lifecycle_phase: merged.canvas.lifecycle_phase,
+          artboard_ids: merged.canvas.artboard_ids,
+        },
+      );
+      source.status = "merged";
+      source.updated_at = new Date().toISOString();
+      logActivity(
+        ownerId,
+        projectId,
+        "design.merged",
+        `Merged "${source.name}" into "${into.name}"`,
+        source.id,
+      );
+      flush();
+      return {
+        ok: true as const,
+        branch: structuredClone(into),
+        revision: structuredClone(revision),
+        canvas: structuredClone(revision.canvas),
+      };
+    },
+
+    async listDocumentationPackages(ownerId, projectId) {
+      return _documentationPackages
+        .filter((p) => p.owner_id === ownerId && p.project_id === projectId)
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+        .map((p) => structuredClone(p));
+    },
+
+    async getDocumentationPackage(ownerId, projectId, packId) {
+      const pack = _documentationPackages.find(
+        (p) =>
+          p.id === packId &&
+          p.owner_id === ownerId &&
+          p.project_id === projectId,
+      );
+      return pack ? structuredClone(pack) : null;
+    },
+
+    async createDocumentationPackage(ownerId, projectId, input) {
       const project = _projects.find(
         (p) => p.id === projectId && p.owner_id === ownerId,
       );
       if (!project) throw new Error(`Project not found: ${projectId}`);
       const now = new Date().toISOString();
-      const existing = _designCanvases.find((c) => c.project_id === projectId);
-      if (existing) {
-        existing.placements = input.placements;
-        if (input.strokes !== undefined) existing.strokes = input.strokes;
-        if (input.irrigation_zones !== undefined) {
-          existing.irrigation_zones = input.irrigation_zones;
-        }
-        if (input.construction_trenches !== undefined) {
-          existing.construction_trenches = input.construction_trenches;
-        }
-        if (input.annotations !== undefined) {
-          existing.annotations = input.annotations;
-        }
-        if (input.image_layers !== undefined) {
-          existing.image_layers = input.image_layers;
-        }
-        if (input.features !== undefined) {
-          existing.features = input.features;
-        }
-        if (input.site_frame !== undefined) {
-          existing.site_frame = input.site_frame;
-        }
-        if (input.presentation_pack !== undefined) {
-          existing.presentation_pack = input.presentation_pack;
-        }
-        if (input.lifecycle_phase !== undefined) {
-          existing.lifecycle_phase = input.lifecycle_phase;
-        }
-        existing.updated_at = now;
-        flush();
-        return {
-          ...existing,
-          features: existing.features ?? [],
-          site_frame: existing.site_frame,
-          construction_trenches: existing.construction_trenches ?? [],
-          image_layers: existing.image_layers ?? [],
-          presentation_pack: existing.presentation_pack,
-          lifecycle_phase: existing.lifecycle_phase,
-        };
-      }
-      const canvas: import("@workstream/contracts").DesignCanvas = {
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const pack: import("@workstream/contracts").DocumentationPackage = {
         id: crypto.randomUUID(),
         project_id: projectId,
-        placements: input.placements,
-        strokes: input.strokes ?? [],
-        irrigation_zones: input.irrigation_zones ?? [],
-        construction_trenches: input.construction_trenches ?? [],
-        annotations: input.annotations ?? [],
-        image_layers: input.image_layers ?? [],
-        features: input.features ?? [],
-        site_frame: input.site_frame,
-        presentation_pack: input.presentation_pack,
-        lifecycle_phase: input.lifecycle_phase,
+        owner_id: ownerId,
+        title: input.title ?? "Documentation pack",
+        status: "draft",
+        design_revision_id:
+          input.design_revision_id ?? main.tip_revision_id,
+        schedules: input.schedules ?? [],
+        presentation_document_ids: input.presentation_document_ids ?? [],
+        quote_total_incl_gst: null,
+        created_at: now,
         updated_at: now,
+        issued_at: null,
       };
-      _designCanvases.push(canvas);
+      _documentationPackages.push(pack);
       flush();
-      return canvas;
+      return structuredClone(pack);
+    },
+
+    async issueDocumentationPackage(ownerId, projectId, packId, input) {
+      const pack = _documentationPackages.find(
+        (p) =>
+          p.id === packId &&
+          p.owner_id === ownerId &&
+          p.project_id === projectId,
+      );
+      if (!pack) return null;
+      if (pack.status === "issued") {
+        throw new Error("Documentation package already issued");
+      }
+      const now = new Date().toISOString();
+      pack.status = "issued";
+      pack.issued_at = now;
+      pack.updated_at = now;
+      if (input.quote_total_incl_gst !== undefined) {
+        pack.quote_total_incl_gst = input.quote_total_incl_gst;
+      }
+      logActivity(
+        ownerId,
+        projectId,
+        "documentation.issued",
+        `Documentation pack "${pack.title}" issued`,
+        pack.id,
+      );
+      flush();
+      return structuredClone(pack);
     },
 
     async getCadDocument(ownerId, projectId) {

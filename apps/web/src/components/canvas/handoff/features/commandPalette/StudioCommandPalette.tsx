@@ -75,7 +75,9 @@ function commandGroup(cmd: StudioCommand): StudioCommandGroup {
     id === "buildable-area" ||
     id === "save-scheme" ||
     id === "quote" ||
-    id === "measures"
+    id === "measures" ||
+    id === "design-branches" ||
+    id === "ops-schedules"
   ) {
     return "Design";
   }
@@ -147,6 +149,10 @@ type Props = {
   onArtboardPlan?: () => void;
   /** Cycle ASLA/SILA lifecycle phase. */
   onCycleLifecyclePhase?: () => void;
+  /** Open async design branch switcher (VCS). */
+  onOpenDesignBranches?: () => void;
+  /** Open landscape-ops schedules dock. */
+  onOpenOpsSchedules?: () => void;
 };
 
 function matches(cmd: StudioCommand, q: string) {
@@ -199,6 +205,8 @@ export function StudioCommandPalette({
   onScanCanopy,
   onArtboardPlan,
   onCycleLifecyclePhase,
+  onOpenDesignBranches,
+  onOpenOpsSchedules,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -412,6 +420,32 @@ export function StudioCommandPalette({
         keywords: "fit sheet a3 a4 paper frame",
         run: onToggleFitSheet,
       },
+      ...(onOpenDesignBranches
+        ? [
+          {
+            id: "design-branches",
+            label: "Design branches",
+            detail:
+              "Async design VCS — create Option branches, diff vs Main, merge with Accept",
+            keywords:
+              "branch checkout merge diff main option vcs version control design branch",
+            run: onOpenDesignBranches,
+          } satisfies StudioCommand,
+        ]
+        : []),
+      ...(onOpenOpsSchedules
+        ? [
+          {
+            id: "ops-schedules",
+            label: "Ops schedules",
+            detail:
+              "Planting, trench dig, lighting VA, material — export CSV / issue pack",
+            keywords:
+              "planting schedule nursery trench dig lighting va cable material bom csv documentation pack",
+            run: onOpenOpsSchedules,
+          } satisfies StudioCommand,
+        ]
+        : []),
       ...(onToggleInkLegend
         ? [
           {
@@ -655,6 +689,8 @@ export function StudioCommandPalette({
     onScanCanopy,
     onArtboardPlan,
     onCycleLifecyclePhase,
+    onOpenDesignBranches,
+    onOpenOpsSchedules,
     onTiltView,
     onGardenViewpoint,
     onSaveScheme,

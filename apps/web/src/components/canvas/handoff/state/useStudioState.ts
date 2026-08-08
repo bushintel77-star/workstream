@@ -3417,6 +3417,39 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.ui.buildingSource,
   ]);
 
+  /** Replace ops geometry from a design-branch tip (async VCS checkout). */
+  const loadBranchCanvas = useCallback(
+    (canvas: import("@workstream/contracts").DesignCanvas | null) => {
+      if (!canvas) return;
+      const frameOverlay = siteFrameToSnapshot(canvas.site_frame);
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          ...frameOverlay,
+          building: frameOverlay.building ?? snap.building,
+          items: featuresOntoItems(
+            placementsToItems(canvas.placements ?? []),
+            canvas.features ?? [],
+          ),
+          strokes: canvasToStrokes(canvas.strokes ?? []),
+          irrigationZones: canvas.irrigation_zones ?? [],
+          constructionTrenches: canvas.construction_trenches ?? [],
+          annotations: canvas.annotations ?? [],
+          imageLayers: canvas.image_layers ?? [],
+          presentationPack:
+            canvas.presentation_pack ?? emptyPresentationPack(),
+        },
+      }));
+      if (canvas.lifecycle_phase) {
+        setUi({ lifecyclePhase: canvas.lifecycle_phase });
+      }
+      setUi({
+        assistReply: "Checked out design branch tip — autosave targets this tip.",
+      });
+    },
+    [mutate, setUi],
+  );
+
   const acceptAllTrenchGhosts = useCallback(() => {
     mutate((snap) => ({
       snap: {
@@ -3735,6 +3768,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
         presentation_pack:
           state.doc.presentationPack ?? emptyPresentationPack(),
         lifecycle_phase: state.ui.lifecyclePhase,
+        artboard_ids: ["plan", "fit", "elev-N", "elev-E", "elev-S", "elev-W"],
       });
       saveRevisionRef.current += 1;
       setUi({
@@ -4345,6 +4379,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     commitService,
     commitZone,
     runAutoTrench,
+    loadBranchCanvas,
     acceptAllTrenchGhosts,
     rejectAllTrenchGhosts,
     toggleServiceFeatureVisible,

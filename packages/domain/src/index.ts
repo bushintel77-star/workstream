@@ -157,3 +157,8 @@ export * from './lv-lighting';
 export * from './design-lifecycle';
 export * from './irrigation-uniformity';
 export * from './plan-metres';
+export * from './design-canvas-diff';
+export * from './design-canvas-merge';
+export * from './ops-schedules';
+export * from './store-zip';
+export * from './schedule-callouts';

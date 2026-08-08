@@ -710,6 +710,8 @@ export const PresentationWidgetTypeSchema = z.enum([
   "material_swatches",
   "caption",
   "honesty_footer",
+  /** Landscape-ops schedule peel on Fit / Present. */
+  "ops_schedule",
 ]);
 export type PresentationWidgetType = z.infer<
   typeof PresentationWidgetTypeSchema
@@ -835,6 +837,14 @@ export const DesignCanvasSchema = z.object({
   presentation_pack: PresentationPackSchema.optional(),
   /** Operator-set ASLA/SILA lifecycle phase for the board. */
   lifecycle_phase: DesignLifecyclePhaseSchema.optional(),
+  /**
+   * Persisted artboard set beyond session (plan / fit / elev-*).
+   * Async VCS: lives on the branch tip with the rest of DesignCanvas.
+   */
+  artboard_ids: z
+    .array(z.enum(["plan", "fit", "elev-N", "elev-E", "elev-S", "elev-W"]))
+    .max(8)
+    .optional(),
   updated_at: z.string().datetime(),
 });
 export type DesignCanvas = z.infer<typeof DesignCanvasSchema>;
@@ -850,5 +860,11 @@ export const UpsertDesignCanvasSchema = z.object({
   site_frame: DesignSiteFrameSchema.optional(),
   presentation_pack: PresentationPackSchema.optional(),
   lifecycle_phase: DesignLifecyclePhaseSchema.optional(),
+  artboard_ids: z
+    .array(z.enum(["plan", "fit", "elev-N", "elev-E", "elev-S", "elev-W"]))
+    .max(8)
+    .optional(),
+  /** Active design branch tip to write (omit = main). */
+  branch_id: z.string().uuid().optional(),
 });
 export type UpsertDesignCanvasInput = z.infer<typeof UpsertDesignCanvasSchema>;

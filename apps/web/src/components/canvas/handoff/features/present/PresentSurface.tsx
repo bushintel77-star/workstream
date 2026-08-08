@@ -145,6 +145,7 @@ const WIDGET_LABELS: Record<PresentationWidgetType, string> = {
   material_swatches: "Material swatches",
   caption: "Caption",
   honesty_footer: "Honesty footer",
+  ops_schedule: "Ops schedule",
 };
 
 const WIDGET_SLOTS: Record<PresentationWidgetType, PresentationSlot> = {
@@ -154,6 +155,7 @@ const WIDGET_SLOTS: Record<PresentationWidgetType, PresentationSlot> = {
   material_swatches: "footer_band",
   caption: "footer_band",
   honesty_footer: "footer_band",
+  ops_schedule: "side_stack",
 };
 
 function newPanel(
@@ -2090,6 +2092,15 @@ function WidgetLiveContent({
           <p className={css.widgetSub}>
             Concept sketch for estimating — not a construction drawing.
           </p>
+        </div>
+      );
+    case "ops_schedule":
+      return (
+        <div className={css.widgetLive} data-testid="widget-live-ops-schedule">
+          <span className={css.widgetValue}>Ops schedules</span>
+          <span className={css.widgetSub}>
+            Planting · trench · lighting · material — confirm on site
+          </span>
         </div>
       );
   }

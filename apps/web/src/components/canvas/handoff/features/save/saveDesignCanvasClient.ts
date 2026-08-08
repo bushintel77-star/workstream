@@ -31,10 +31,22 @@ export async function saveDesignCanvasClient(
     construction_trenches?: DesignCanvas["construction_trenches"];
     presentation_pack?: DesignCanvas["presentation_pack"];
     lifecycle_phase?: DesignCanvas["lifecycle_phase"];
+    artboard_ids?: DesignCanvas["artboard_ids"];
+    branch_id?: string;
   },
 ): Promise<SaveDesignCanvasClientResult> {
   if (!projectId.trim()) {
     throw new Error("Missing project — cannot save site plan");
+  }
+
+  let branchId = body.branch_id;
+  if (!branchId && typeof sessionStorage !== "undefined") {
+    try {
+      branchId =
+        sessionStorage.getItem(`ws-design-branch:${projectId}`) ?? undefined;
+    } catch {
+      /* ignore */
+    }
   }
 
   let res: Response;
@@ -42,7 +54,10 @@ export async function saveDesignCanvasClient(
     res = await fetch(`/api/projects/${projectId}/design-canvas`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        ...body,
+        ...(branchId ? { branch_id: branchId } : {}),
+      }),
       cache: "no-store",
     });
   } catch (err) {

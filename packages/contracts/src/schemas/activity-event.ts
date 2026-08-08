@@ -9,6 +9,10 @@ export const ActivityActionSchema = z.enum([
   "catalog_symbol.deleted",
   "integration.deleted",
   "sku_link.deleted",
+  "design.branch_created",
+  "design.merged",
+  "design.abandoned",
+  "documentation.issued",
 ]);
 export type ActivityAction = z.infer<typeof ActivityActionSchema>;
 

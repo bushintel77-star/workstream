@@ -41,6 +41,8 @@ type Props = {
   onClearFocus: () => void;
   onShowAll: () => void;
   onFocusChecked: () => void;
+  /** Peel open trench dig / lighting schedules (branch tip). */
+  onOpenSchedule?: () => void;
 };
 
 function Section({
@@ -141,6 +143,7 @@ export function ServicesLedger({
   onClearFocus,
   onShowAll,
   onFocusChecked,
+  onOpenSchedule,
 }: Props) {
   const rows = useMemo(
     () =>
@@ -240,6 +243,19 @@ export function ServicesLedger({
           />
         </>
       )}
+
+      {onOpenSchedule ? (
+        <div className={css.actions}>
+          <button
+            type="button"
+            className={css.actionBtn}
+            data-testid="services-ledger-schedule"
+            onClick={onOpenSchedule}
+          >
+            Schedule
+          </button>
+        </div>
+      ) : null}
 
       <div className={css.actions}>
         <button

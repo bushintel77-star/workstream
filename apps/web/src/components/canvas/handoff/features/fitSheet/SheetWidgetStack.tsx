@@ -167,6 +167,13 @@ function renderBody(
           {widget.text ?? "Concept presentation"}
         </p>
       );
+    case "ops_schedule":
+      return (
+        <p className={css.sheetDetail} data-testid="sheet-ops-schedule">
+          {widget.text?.trim() ||
+            "Planting · trench · lighting · material — confirm on site"}
+        </p>
+      );
     case "honesty_footer":
       // Legacy packs may still store these — never surface as sheet cards.
       return null;

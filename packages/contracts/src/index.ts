@@ -29,5 +29,7 @@ export * from "./schemas/landscape-feature";
 export * from "./schemas/assembly-recipe";
 export * from "./schemas/share-revision";
 export * from "./schemas/presentation-document";
+export * from "./schemas/design-branch";
+export * from "./schemas/documentation-package";
 export * from "./schemas/board-telemetry";
 export * from "./schemas/operator-profile";

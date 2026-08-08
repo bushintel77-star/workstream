@@ -6,6 +6,7 @@ import {
   listProjectFilesClient,
   uploadProjectFileClient,
 } from "../sitePack/projectFilesClient";
+import { rasterizePdfFirstPage } from "./pdfPageUnderlay";
 import css from "./imageLayerPanel.module.css";
 
 type Props = {
@@ -20,6 +21,13 @@ type Props = {
 
 function isImageMime(mime: string) {
   return /^image\/(jpeg|png|webp|jpg)/i.test(mime);
+}
+
+function isPdf(file: File) {
+  return (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  );
 }
 
 function fitWidthPercent(naturalAspect: number): number {
@@ -75,20 +83,35 @@ export function ImageLayerPanel({
 
   const insertFile = useCallback(
     async (file: File) => {
-      if (!isImageMime(file.type)) return;
       setBusy(true);
       try {
-        const [{ uri, id, title }, { naturalAspect }] = await Promise.all([
-          uploadProjectFileClient(projectId, file, {
+        let uploadFile = file;
+        let naturalAspect = 1.5;
+        let layerName = file.name;
+        if (isPdf(file)) {
+          const raster = await rasterizePdfFirstPage(file);
+          uploadFile = new File([raster.blob], raster.fileName, {
+            type: "image/png",
+          });
+          naturalAspect = raster.naturalAspect;
+          layerName = `${file.name} · page 1`;
+        } else if (!isImageMime(file.type)) {
+          return;
+        } else {
+          naturalAspect = (await loadImageMeta(file)).naturalAspect;
+        }
+        const { uri, id, title } = await uploadProjectFileClient(
+          projectId,
+          uploadFile,
+          {
             kind: "reference",
-            title: file.name,
-          }),
-          loadImageMeta(file),
-        ]);
+            title: layerName,
+          },
+        );
         onAdd({
           id: crypto.randomUUID(),
           project_file_id: id,
-          name: title || file.name,
+          name: title || layerName,
           uri,
           natural_aspect: naturalAspect,
           x_pct: 50,
@@ -169,7 +192,7 @@ export function ImageLayerPanel({
           disabled={busy}
           onClick={() => inputRef.current?.click()}
         >
-          Upload image
+          Upload image or PDF
         </button>
         <button
           type="button"
@@ -182,7 +205,7 @@ export function ImageLayerPanel({
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,application/pdf,.pdf"
           data-testid="image-layer-upload"
           className={css.fileInput}
           onChange={(e) => {

@@ -57,6 +57,14 @@ import type {
   UpdatePresentationDocumentInput,
   OperatorPlantProfile,
   OperatorPlantProfileInput,
+  DesignBranch,
+  DesignRevision,
+  CreateDesignBranchInput,
+  CommitDesignBranchInput,
+  MergeDesignBranchInput,
+  DocumentationPackage,
+  CreateDocumentationPackageInput,
+  IssueDocumentationPackageInput,
 } from "@workstream/contracts";
 
 export type {
@@ -116,6 +124,14 @@ export type {
   UpdatePresentationDocumentInput,
   OperatorPlantProfile,
   OperatorPlantProfileInput,
+  DesignBranch,
+  DesignRevision,
+  CreateDesignBranchInput,
+  CommitDesignBranchInput,
+  MergeDesignBranchInput,
+  DocumentationPackage,
+  CreateDocumentationPackageInput,
+  IssueDocumentationPackageInput,
 };
 
 export type TelemetryReadingInput = Omit<
@@ -333,12 +349,91 @@ export interface Store {
   getDesignCanvas(
     ownerId: string,
     projectId: string,
+    opts?: { branchId?: string },
   ): Promise<DesignCanvas | null>;
   upsertDesignCanvas(
     ownerId: string,
     projectId: string,
     input: UpsertDesignCanvasInput,
+    opts?: { branchId?: string },
   ): Promise<DesignCanvas>;
+  listDesignBranches(
+    ownerId: string,
+    projectId: string,
+  ): Promise<DesignBranch[]>;
+  getDesignBranch(
+    ownerId: string,
+    projectId: string,
+    branchId: string,
+  ): Promise<DesignBranch | null>;
+  createDesignBranch(
+    ownerId: string,
+    projectId: string,
+    input: CreateDesignBranchInput,
+    authorId: string,
+  ): Promise<{ branch: DesignBranch; revision: DesignRevision }>;
+  commitDesignBranch(
+    ownerId: string,
+    projectId: string,
+    branchId: string,
+    input: CommitDesignBranchInput,
+    authorId: string,
+  ): Promise<DesignRevision>;
+  abandonDesignBranch(
+    ownerId: string,
+    projectId: string,
+    branchId: string,
+  ): Promise<DesignBranch | null>;
+  getDesignRevision(
+    ownerId: string,
+    projectId: string,
+    revisionId: string,
+  ): Promise<DesignRevision | null>;
+  diffDesignBranches(
+    ownerId: string,
+    projectId: string,
+    leftBranchId: string,
+    rightBranchId: string,
+  ): Promise<{
+    left: DesignCanvas | null;
+    right: DesignCanvas | null;
+    base: DesignCanvas | null;
+  }>;
+  mergeDesignBranch(
+    ownerId: string,
+    projectId: string,
+    sourceBranchId: string,
+    input: MergeDesignBranchInput,
+    authorId: string,
+  ): Promise<
+    | { ok: true; branch: DesignBranch; revision: DesignRevision; canvas: DesignCanvas }
+    | {
+        ok: false;
+        conflicts: Array<{ kind: string; id: string; label: string }>;
+      }
+  >;
+  listDocumentationPackages(
+    ownerId: string,
+    projectId: string,
+  ): Promise<DocumentationPackage[]>;
+  getDocumentationPackage(
+    ownerId: string,
+    projectId: string,
+    packId: string,
+  ): Promise<DocumentationPackage | null>;
+  createDocumentationPackage(
+    ownerId: string,
+    projectId: string,
+    input: CreateDocumentationPackageInput & {
+      schedules: DocumentationPackage["schedules"];
+    },
+  ): Promise<DocumentationPackage>;
+  issueDocumentationPackage(
+    ownerId: string,
+    projectId: string,
+    packId: string,
+    input: IssueDocumentationPackageInput,
+  ): Promise<DocumentationPackage | null>;
   getCadDocument(
     ownerId: string,
     projectId: string,

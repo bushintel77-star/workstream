@@ -171,6 +171,12 @@ import { SelectionFocusVeil } from "./features/selectionFocus/SelectionFocusVeil
 import { DialHintPill } from "./features/selectionDial/DialHintPill";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
 import { BoardInkLegend } from "./features/inkLegend/BoardInkLegend";
+import { DesignBranchDock } from "./features/designBranch/DesignBranchDock";
+import {
+  readDesignBranchId,
+  writeDesignBranchId,
+} from "./features/designBranch/designBranchPrefs";
+import { OpsSchedulesDock } from "./features/opsSchedules/OpsSchedulesDock";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
 import { IrrigationUniformityWash } from "./features/zones/IrrigationUniformityWash";
 import { IrrigationUniformityDock } from "./features/zones/IrrigationUniformityDock";
@@ -557,6 +563,13 @@ export function HandoffDesignStudio({
   const [instrumentsSummoned, setInstrumentsSummoned] = useState(false);
   /** Board ink legend — summoned frost dock (View / Cmd+K). */
   const [inkLegendOpen, setInkLegendOpen] = useState(false);
+  /** Async design VCS branch switcher. */
+  const [designBranchOpen, setDesignBranchOpen] = useState(false);
+  const [activeDesignBranchId, setActiveDesignBranchId] = useState<
+    string | null
+  >(null);
+  /** Landscape-ops schedules + documentation pack. */
+  const [opsSchedulesOpen, setOpsSchedulesOpen] = useState(false);
   /** Shared-rev frost toast — dismissible; not a sticky slab. */
   const [shareBannerDismissed, setShareBannerDismissed] = useState(false);
   /** Drafting grid controls — toggled from the tool dock (not a separate cluster). */
@@ -601,6 +614,30 @@ export function HandoffDesignStudio({
       window.removeEventListener("keyup", onUp);
     };
   }, []);
+
+  /** Restore checked-out design branch tip after reload. */
+  useEffect(() => {
+    const branchId = readDesignBranchId(projectId);
+    if (!branchId) return;
+    setActiveDesignBranchId(branchId);
+    let cancelled = false;
+    void fetch(`/api/projects/${projectId}/design-branches/${branchId}/checkout`, {
+      method: "POST",
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json: { canvas?: import("@workstream/contracts").DesignCanvas } | null) => {
+        if (cancelled || !json?.canvas) return;
+        studio.loadBranchCanvas(json.canvas);
+      })
+      .catch(() => {
+        /* keep SSR main tip */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally once on mount for this project.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- checkout restore
+  }, [projectId]);
 
   const [pointerMarkId, setPointerMarkId] = useState<PointerMarkId>("spade");
   /**
@@ -4926,6 +4963,63 @@ export function HandoffDesignStudio({
           <BoardInkLegend onClose={() => setInkLegendOpen(false)} />
         ) : null}
 
+        <DesignBranchDock
+          projectId={projectId}
+          open={designBranchOpen}
+          activeBranchId={activeDesignBranchId}
+          onClose={() => setDesignBranchOpen(false)}
+          onCheckout={(branchId, canvas) => {
+            setActiveDesignBranchId(branchId);
+            writeDesignBranchId(projectId, branchId);
+            studio.loadBranchCanvas(canvas);
+            setDesignBranchOpen(false);
+          }}
+        />
+
+        <OpsSchedulesDock
+          projectId={projectId}
+          open={opsSchedulesOpen}
+          onClose={() => setOpsSchedulesOpen(false)}
+          onProposeCallouts={() => {
+            void import("@workstream/domain").then(
+              ({
+                proposeScheduleCalloutGhosts,
+                acceptScheduleCalloutGhosts,
+              }) => {
+                const ghosts = proposeScheduleCalloutGhosts({
+                  placements: studio.items
+                    .filter((i) => i.symbolId)
+                    .map((i) => ({
+                      id: i.id,
+                      symbol_id: i.symbolId!,
+                      x_pct: i.x,
+                      y_pct: i.y,
+                      rotation_deg: i.rot ?? 0,
+                      scale: i.scale ?? 1,
+                    })),
+                  construction_trenches: studio.constructionTrenches,
+                  annotations: studio.annotations,
+                });
+                if (ghosts.length === 0) {
+                  studio.setUi({
+                    assistReply: "No schedule callouts to propose on this tip.",
+                  });
+                  return;
+                }
+                /* Ghost-until-accept: operator Confirm via toast path → write now as Accept. */
+                const notes = acceptScheduleCalloutGhosts(ghosts);
+                for (const n of notes) {
+                  studio.addAnnotation(n);
+                }
+                studio.setUi({
+                  assistReply: `Accepted ${notes.length} schedule callouts on the plan.`,
+                });
+                setOpsSchedulesOpen(false);
+              },
+            );
+          }}
+        />
+
         {ui.addOpen &&
           ui.armed === "exist" &&
           !selectedLive &&
@@ -5369,6 +5463,10 @@ export function HandoffDesignStudio({
               onFocus={studio.focusServiceFeature}
               onClearFocus={studio.clearServiceFocus}
               onShowAll={studio.showAllServiceFeatures}
+              onOpenSchedule={() => {
+                setOpsSchedulesOpen(true);
+                studio.setUi({ rightDataPanel: null });
+              }}
               onFocusChecked={() => {
                 const rows = buildServiceLedgerRows({
                   services: studio.services,
@@ -5902,6 +6000,14 @@ export function HandoffDesignStudio({
           onToggleFitSheet={() => setFitSheetOn(!ui.frameOn)}
           onToggleInkLegend={() => {
             setInkLegendOpen((v) => !v);
+            studio.setUi({ cmdOpen: false, cmdQuery: "" });
+          }}
+          onOpenDesignBranches={() => {
+            setDesignBranchOpen(true);
+            studio.setUi({ cmdOpen: false, cmdQuery: "" });
+          }}
+          onOpenOpsSchedules={() => {
+            setOpsSchedulesOpen(true);
             studio.setUi({ cmdOpen: false, cmdQuery: "" });
           }}
           onCycleLifecyclePhase={() => {
