@@ -66,11 +66,24 @@ export function StudioAssistPanel({
 
   const applyIrrigation = () => {
     startTransition(async () => {
+      const softArea =
+        world?.spatial_facts
+          .filter((f) => f.layer === "softscape" || f.layer === "irrigation")
+          .reduce((s, f) => s + f.area_m2, 0) ?? 90;
       const zones: IrrigationZone[] = proposeIrrigationAssist({
-        openAreaM2:
-          world?.spatial_facts.reduce((s, f) => s + f.area_m2, 0) ?? 90,
+        openAreaM2: softArea,
       });
-      const nextZones = [...(canvas.irrigation_zones ?? []), ...zones];
+      // Replace prior assist zones (by name) instead of stacking duplicates.
+      const kept = (canvas.irrigation_zones ?? []).filter(
+        (z) =>
+          !z.name.toLowerCase().includes("drip zone") &&
+          !z.name.toLowerCase().startsWith("assist:"),
+      );
+      const tagged = zones.map((z) => ({
+        ...z,
+        name: z.name.startsWith("Assist:") ? z.name : `Assist: ${z.name}`,
+      }));
+      const nextZones = [...kept, ...tagged];
       const res = await saveDesignCanvasAction(
         projectId,
         canvas.placements,
