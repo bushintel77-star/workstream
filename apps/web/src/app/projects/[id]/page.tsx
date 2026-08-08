@@ -1,85 +1,122 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { SiteCanvas } from "../../../components/canvas/SiteCanvas";
 import {
-  getCadDocumentApi,
+  isDesignLifecyclePhase,
+  isSeedSurveyLot,
+  resolveOutdoorAreaM2,
+  suggestPhaseFromProjectStatus,
+} from "@workstream/domain";
+import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
+import { StudioSkeleton } from "../../../components/canvas/handoff/StudioSkeleton";
+import {
+  getCadastralTitle,
   getDesignCanvas,
   getProject,
-  getSiteBoundaryApi,
   getSurvey,
-  listCatalogSymbols,
   listOutputs,
-  listRateCard,
 } from "../../../lib/api";
 import { requireSignedIn } from "../../../lib/auth";
+import {
+  resolveCanvasMode,
+  type CanvasProgress,
+} from "../../../lib/canvas-mode";
+import type { StudioMode } from "../../../components/canvas/handoff/studioCatalog";
 
 export const dynamic = "force-dynamic";
 
+function resolveAreaM2(args: {
+  titleLotM2: number | null | undefined;
+  titleHouseM2: number | null | undefined;
+  survey: Awaited<ReturnType<typeof getSurvey>> | null;
+  canvas: Awaited<ReturnType<typeof getDesignCanvas>> | null;
+}): number | null {
+  const survey = args.survey;
+  const frame = args.canvas?.site_frame;
+  const seedLot = survey
+    ? isSeedSurveyLot({
+      lot_area_m2: survey.lot_area_m2,
+      measurements: survey.measurements,
+    })
+    : false;
+  const resolved = resolveOutdoorAreaM2({
+    garden_area_m2: survey?.garden_area_m2,
+    lot_area_m2: args.titleLotM2 ?? survey?.lot_area_m2,
+    house_area_m2: args.titleHouseM2 ?? survey?.house_area_m2,
+    seedLot,
+    boundary: frame?.boundary,
+    building: frame?.building,
+    scaleM: frame?.board_width_m ?? null,
+  });
+  return resolved.outdoor_m2;
+}
+
 export default async function ProjectCanvasPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ mode?: string }>;
 }) {
   await requireSignedIn();
   const { id } = await params;
-  const [project, survey, cad, canvas, boundaryRes, outputs] =
-    await Promise.all([
-      getProject(id),
-      getSurvey(id).catch(() => null),
-      getCadDocumentApi(id).catch(() => ({
-        document: null,
-        svg: null,
-        ghost_count: 0,
-      })),
-      getDesignCanvas(id).catch(() => null),
-      getSiteBoundaryApi(id).catch(() => ({ boundary: null })),
-      listOutputs(id).catch(() => []),
-    ]);
-
+  const sp = await searchParams;
+  const project = await getProject(id);
   if (!project) notFound();
 
-  const quoteOutput = outputs.find((o) => o.kind === "quote");
+  /* Canvas hydrate must fail closed — treating network/5xx as "empty board"
+   * lets autosave overwrite a real drawing with []. Survey/title/outputs
+   * remain best-effort for first paint. */
+  const canvas = await getDesignCanvas(id);
+  const [survey, outputs, titleBlock] = await Promise.all([
+    getSurvey(id).catch(() => null),
+    listOutputs(id).catch(() => []),
+    getCadastralTitle(id).catch(() => null),
+  ]);
 
-  let sketch = null;
-  if (survey) {
-    const [symbols, rateCard] = await Promise.all([
-      listCatalogSymbols(),
-      listRateCard(),
-    ]);
-    sketch = {
-      aerialUri: survey.aerial_uri,
-      lotRing: survey.title_polygon.coordinates[0] as [number, number][],
-      houseRing: (survey.house_polygon?.coordinates?.[0] ?? []) as [
-        number,
-        number,
-      ][],
-      symbols,
-      rateCard,
-      canvas,
-      surveyMetrics: {
-        garden_area_m2: survey.garden_area_m2,
-        lot_area_m2: survey.lot_area_m2,
-        house_area_m2: survey.house_area_m2,
-        lat: project.lat,
-        lng: project.lng,
-      },
-    };
-  }
+  const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
+  const progress: CanvasProgress = {
+    hasAerial: Boolean(survey?.aerial_uri),
+    hasSketch: (canvas?.strokes?.length ?? 0) > 0,
+    hasCad:
+      (canvas?.placements?.length ?? 0) > 0 ||
+      Boolean(canvas?.site_frame?.boundary?.length),
+    hasQuote: Boolean(quoteOut),
+  };
+  /** Clamp locked deep-links before first paint — avoids cad→survey flash. */
+  const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
 
   return (
-    <Suspense fallback={null}>
-      <SiteCanvas
+    <Suspense fallback={<StudioSkeleton />}>
+      <HandoffDesignStudio
         projectId={id}
         projectAddress={project.address}
+        projectLat={project.lat ?? null}
+        projectLng={project.lng ?? null}
         aerialUri={survey?.aerial_uri ?? null}
-        initialDocument={cad.document}
-        initialSvg={cad.svg}
-        initialGhostCount={cad.ghost_count}
-        initialBoundary={boundaryRes.boundary}
-        sketch={sketch}
-        quoteUrl={quoteOutput?.uri ?? null}
-        hasQuote={Boolean(quoteOutput)}
-        key={canvas?.updated_at ?? id}
+        areaM2={resolveAreaM2({
+          titleLotM2: titleBlock?.lotAreaM2,
+          titleHouseM2: titleBlock?.houseAreaM2,
+          survey,
+          canvas,
+        })}
+        initialMode={initialMode}
+        initialPlacements={canvas?.placements ?? []}
+        initialStrokes={canvas?.strokes ?? []}
+        initialSiteFrame={canvas?.site_frame ?? null}
+        initialIrrigationZones={canvas?.irrigation_zones ?? []}
+        initialConstructionTrenches={canvas?.construction_trenches ?? []}
+        initialAnnotations={canvas?.annotations ?? []}
+        initialImageLayers={canvas?.image_layers ?? []}
+        initialFeatures={canvas?.features ?? []}
+        initialPresentationPack={canvas?.presentation_pack ?? null}
+        initialLifecyclePhase={
+          isDesignLifecyclePhase(canvas?.lifecycle_phase)
+            ? canvas.lifecycle_phase
+            : suggestPhaseFromProjectStatus(project.status)
+        }
+        hasQuote={Boolean(quoteOut)}
+        quotePortalUri={quoteOut?.uri ?? null}
+        initialTitleBlock={titleBlock}
       />
     </Suspense>
   );

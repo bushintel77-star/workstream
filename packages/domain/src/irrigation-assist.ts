@@ -20,6 +20,7 @@ export function proposeIrrigationAssist(args: {
     {
       id: id(),
       name: "Rear drip zone",
+      kind: "drip",
       points: [
         { x_pct: 22, y_pct: 55 },
         { x_pct: 78, y_pct: 55 },
@@ -34,6 +35,7 @@ export function proposeIrrigationAssist(args: {
     zones.push({
       id: id(),
       name: "Front drip zone",
+      kind: "drip",
       points: [
         { x_pct: 18, y_pct: 12 },
         { x_pct: 70, y_pct: 12 },

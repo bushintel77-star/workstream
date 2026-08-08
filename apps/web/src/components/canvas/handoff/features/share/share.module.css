@@ -1,0 +1,109 @@
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-chrome);
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
+  backdrop-filter: none;
+}
+
+.card {
+  width: min(420px, 100%);
+  padding: var(--s-5) var(--s-5);
+  border-radius: var(--hc-r-glass);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass);
+  box-shadow: 0 14px 44px var(--hc-neu-shadow);
+  font-family: var(--font-body);
+  color: var(--hc-ink);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.lead {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--hc-ink-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.primary,
+.secondary,
+.ghost {
+  min-height: 40px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-lg);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary {
+  border: 1px solid var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--canvas);
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.secondary {
+  border: 1px solid var(--hc-line);
+  background: transparent;
+  color: var(--hc-ink);
+}
+
+.ghost {
+  border: none;
+  background: transparent;
+  color: var(--hc-ink-muted);
+  align-self: flex-start;
+  padding-left: 0;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--hc-ink);
+}
+
+.defer {
+  margin: 4px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  line-height: 1.35;
+  color: var(--hc-ink-faint);
+}

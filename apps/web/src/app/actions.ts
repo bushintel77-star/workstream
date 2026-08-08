@@ -2,25 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  createCrewApi,
   createOverrideApi,
   createProjectApi,
   geocodePreviewApi,
   geocodeSearchApi,
   createTaskApi,
-  deleteCrewApi,
-  deleteIntegrationApi,
+  listTasks,
   deleteProjectApi,
   restoreProjectApi,
   getAudit,
   getDesign,
   getProject,
+  listProjects,
   getSurvey,
   saveDesignCanvasApi,
-  createCatalogSymbolApi,
-  deleteCatalogSymbolApi,
   type CatalogPlacement,
-  type CreateCatalogSymbolInput,
   type DesignCanvas,
   listCostings,
   listRecordings,
@@ -32,20 +28,48 @@ import {
   runDevelopFromSketchPipeline,
   runOutput,
   runSurvey,
-  setIntegrationApi,
-  updateRateCardItemApi,
   updateTaskStatusApi,
-  type CrewRole,
   type OutputKind,
   type TaskPriority,
   type TaskStatus,
+  getQuoteDocApi,
+  upsertQuoteDocApi,
 } from "../lib/api";
+import type { UpsertQuoteDocInput } from "@workstream/contracts";
 
 function wrapApiError(err: unknown, fallback: string): Error {
-  return new Error(err instanceof Error ? err.message : fallback);
+  if (!(err instanceof Error)) return new Error(fallback);
+  const m = err.message;
+  if (
+    /Couldn't reach|timed out|fetch failed|ECONNREFUSED|ENOTFOUND|API 5\d\d/i.test(
+      m,
+    )
+  ) {
+    return new Error(fallback);
+  }
+  const apiError = m.match(/"error"\s*:\s*"([^"]{1,160})"/);
+  if (apiError?.[1] && !/internal error/i.test(apiError[1])) {
+    return new Error(apiError[1]);
+  }
+  if (/API 4\d\d/.test(m) || m.length > 160 || m.includes("<")) {
+    return new Error(fallback);
+  }
+  return new Error(m || fallback);
+}
+
+function isPlausibleEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 /* -- Projects --------------------------------------------------------- */
+
+export async function listProjectsAction() {
+  try {
+    return await listProjects();
+  } catch (err) {
+    throw wrapApiError(err, "Could not load sites");
+  }
+}
 
 export async function geocodeSearchAction(query: string) {
   try {
@@ -80,7 +104,7 @@ export async function geocodePreviewAction(lat: number, lng: number) {
   }
 }
 
-/** Create project, run survey, return id for client redirect. */
+/** Create project, run survey, return id + Vicmap lot for locate loader. */
 export async function createProjectWithSurveyAction(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   if (address.length < 5) {
@@ -89,11 +113,19 @@ export async function createProjectWithSurveyAction(formData: FormData) {
   const { lat, lng } = parseProjectCoords(formData);
   try {
     const project = await createProjectApi({ address, lat, lng });
-    await runSurvey(project.id);
+    const survey = await runSurvey(project.id);
     revalidatePath("/");
     revalidatePath(`/projects/${project.id}`);
     revalidatePath(`/projects/${project.id}/survey`);
-    return { projectId: project.id };
+    const ring = survey.title_polygon?.coordinates?.[0] as
+      | [number, number][]
+      | undefined;
+    return {
+      projectId: project.id,
+      aerialUri: survey.aerial_uri,
+      titleRing: ring && ring.length >= 4 ? ring : null,
+      lotAreaM2: survey.lot_area_m2 ?? null,
+    };
   } catch (err) {
     throw wrapApiError(err, "Could not create project");
   }
@@ -101,9 +133,15 @@ export async function createProjectWithSurveyAction(formData: FormData) {
 
 export async function createProjectAction(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
-  if (address.length < 5) return;
+  if (address.length < 5) {
+    throw new Error("Enter a full site address (at least 5 characters)");
+  }
   const { lat, lng } = parseProjectCoords(formData);
-  await createProjectApi({ address, lat, lng });
+  try {
+    await createProjectApi({ address, lat, lng });
+  } catch (err) {
+    throw wrapApiError(err, "Could not create project");
+  }
   revalidatePath("/");
 }
 
@@ -149,15 +187,23 @@ export async function pollProjectProgressAction(projectId: string) {
 
 export async function deleteProjectAction(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
-  if (!id) return;
-  await deleteProjectApi(id);
+  if (!id) throw new Error("Missing project");
+  try {
+    await deleteProjectApi(id);
+  } catch (err) {
+    throw wrapApiError(err, "Could not delete project");
+  }
   revalidatePath("/");
 }
 
 export async function restoreProjectAction(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
-  if (!id) return;
-  await restoreProjectApi(id);
+  if (!id) throw new Error("Missing project");
+  try {
+    await restoreProjectApi(id);
+  } catch (err) {
+    throw wrapApiError(err, "Could not restore project");
+  }
   revalidatePath("/");
 }
 
@@ -180,17 +226,44 @@ export async function saveDesignCanvasAction(
   placements: CatalogPlacement[],
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
-  annotations: DesignCanvas["annotations"] = [],
-  features?: import("@workstream/contracts").LandscapeFeature[],
+  annotations?: DesignCanvas["annotations"],
+  imageLayers?: DesignCanvas["image_layers"],
+  siteFrame?: DesignCanvas["site_frame"],
+  features?: DesignCanvas["features"],
+  constructionTrenches?: DesignCanvas["construction_trenches"],
 ) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot save site plan");
+  }
+  const { UpsertDesignCanvasSchema } = await import("@workstream/contracts");
+  const parsed = UpsertDesignCanvasSchema.safeParse({
+    placements,
+    strokes,
+    irrigation_zones: irrigationZones,
+    ...(annotations != null ? { annotations } : {}),
+    ...(imageLayers != null ? { image_layers: imageLayers } : {}),
+    ...(siteFrame != null ? { site_frame: siteFrame } : {}),
+    ...(features != null ? { features } : {}),
+    ...(constructionTrenches != null
+      ? { construction_trenches: constructionTrenches }
+      : {}),
+  });
+  if (!parsed.success) {
+    throw new Error(
+      parsed.error.issues[0]?.message ?? "Site plan failed validation",
+    );
+  }
   try {
     const result = await saveDesignCanvasApi(
       projectId,
-      placements,
-      strokes,
-      irrigationZones,
-      annotations,
-      features,
+      parsed.data.placements,
+      parsed.data.strokes ?? [],
+      parsed.data.irrigation_zones ?? [],
+      parsed.data.annotations,
+      parsed.data.image_layers,
+      parsed.data.site_frame,
+      parsed.data.features,
+      parsed.data.construction_trenches,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);
@@ -201,6 +274,18 @@ export async function saveDesignCanvasAction(
     return result;
   } catch (err) {
     throw wrapApiError(err, "Failed to save site plan");
+  }
+}
+
+export async function formalizeSketchToCadAction(
+  projectId: string,
+  body: import("@workstream/contracts").SketchToCadRequest,
+) {
+  const { formalizeSketchToCadApi } = await import("../lib/api");
+  try {
+    return await formalizeSketchToCadApi(projectId, body);
+  } catch (err) {
+    throw wrapApiError(err, "AI sketch → CAD translation failed");
   }
 }
 
@@ -219,6 +304,91 @@ export async function designAssistAction(projectId: string, message: string) {
     return await designAssistApi(projectId, message.trim());
   } catch (err) {
     throw wrapApiError(err, "AI sketch assist failed");
+  }
+}
+
+/**
+ * Cross-artefact board findings. Server action so the studio hook never imports
+ * lib/api (Clerk / async_hooks breaks the web Docker build — ref f0239bc).
+ */
+export async function designFindingsAction(projectId: string) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot load board findings");
+  }
+  const { designFindingsApi } = await import("../lib/api");
+  try {
+    return await designFindingsApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Board findings failed");
+  }
+}
+
+/**
+ * Sustainability read-out + export disclaimers over the same board. Server
+ * action for the same reason as the findings — the studio hook must never
+ * import lib/api (ref f0239bc).
+ */
+export async function designBoardReportAction(projectId: string) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot load the board report");
+  }
+  const { designBoardReportApi } = await import("../lib/api");
+  try {
+    return await designBoardReportApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Board report failed");
+  }
+}
+
+/** Live twin telemetry — measured samples for the Live telemetry overlay. */
+export async function designTelemetryAction(projectId: string) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot load telemetry");
+  }
+  const { designTelemetryApi } = await import("../lib/api");
+  try {
+    return await designTelemetryApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Telemetry load failed");
+  }
+}
+
+export async function ingestDesignTelemetryAction(
+  projectId: string,
+  body: import("@workstream/contracts").IngestTelemetryRequest,
+) {
+  if (!projectId.trim()) {
+    throw new Error("Missing project — cannot ingest telemetry");
+  }
+  const { ingestDesignTelemetryApi } = await import("../lib/api");
+  try {
+    return await ingestDesignTelemetryApi(projectId, body);
+  } catch (err) {
+    throw wrapApiError(err, "Telemetry ingest failed");
+  }
+}
+
+/** Open-Meteo forecast for the Env boundary rail weather icons. */
+export async function getWeatherAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { getWeather } = await import("../lib/api");
+  try {
+    return await getWeather(projectId);
+  } catch {
+    return null;
+  }
+}
+
+/** Architectural title block · Vicmap cadastral for the selected address. */
+export async function lookupCadastralTitleAction(
+  projectId: string,
+  address?: string,
+) {
+  const { getCadastralTitle } = await import("../lib/api");
+  try {
+    return await getCadastralTitle(projectId, address);
+  } catch (err) {
+    throw wrapApiError(err, "Cadastral title lookup failed");
   }
 }
 
@@ -272,43 +442,6 @@ export async function getOrchestrationAction(projectId: string) {
     return await getOrchestrationApi(projectId);
   } catch (err) {
     throw wrapApiError(err, "Orchestration world failed");
-  }
-}
-
-export async function listDesignBranchesAction(projectId: string) {
-  const { listDesignBranchesApi } = await import("../lib/api");
-  try {
-    return await listDesignBranchesApi(projectId);
-  } catch (err) {
-    throw wrapApiError(err, "List design branches failed");
-  }
-}
-
-export async function freezeDesignBranchAction(
-  projectId: string,
-  input: import("@workstream/contracts").FreezeDesignBranchInput,
-) {
-  const { freezeDesignBranchApi } = await import("../lib/api");
-  try {
-    const result = await freezeDesignBranchApi(projectId, input);
-    revalidatePath(`/projects/${projectId}`);
-    return result;
-  } catch (err) {
-    throw wrapApiError(err, "Freeze design branch failed");
-  }
-}
-
-export async function activateDesignBranchAction(
-  projectId: string,
-  branchId: string,
-) {
-  const { activateDesignBranchApi } = await import("../lib/api");
-  try {
-    const result = await activateDesignBranchApi(projectId, branchId);
-    revalidatePath(`/projects/${projectId}`);
-    return result;
-  } catch (err) {
-    throw wrapApiError(err, "Activate design branch failed");
   }
 }
 
@@ -372,8 +505,11 @@ export async function applyShadowAlternativeAction(
       next.placements,
       next.strokes ?? [],
       next.irrigation_zones ?? [],
-      next.annotations ?? [],
-      next.features ?? [],
+      next.annotations,
+      next.image_layers,
+      next.site_frame,
+      next.features,
+      next.construction_trenches,
     );
     revalidatePath(`/projects/${projectId}`);
     return { canvas: saved.canvas, note };
@@ -481,12 +617,36 @@ export async function acceptCadAction(
 }
 
 export async function downloadCadDxfAction(projectId: string): Promise<string> {
-  const { downloadCadDxfApi } = await import("../lib/api");
+  const { downloadCadDxfApi, ensureCadApi } = await import("../lib/api");
   try {
+    // Ensure calibrated metre sheet exists (stamps site frame when present).
+    await ensureCadApi(projectId);
     const blob = await downloadCadDxfApi(projectId);
     return await blob.text();
   } catch (err) {
     throw wrapApiError(err, "DXF download failed");
+  }
+}
+
+export async function downloadCadGltfAction(projectId: string): Promise<string> {
+  const { downloadCadGltfApi, ensureCadApi } = await import("../lib/api");
+  try {
+    await ensureCadApi(projectId);
+    const blob = await downloadCadGltfApi(projectId);
+    return await blob.text();
+  } catch (err) {
+    throw wrapApiError(err, "glTF download failed");
+  }
+}
+
+export async function downloadCadSyncAction(projectId: string): Promise<string> {
+  const { downloadCadSyncApi, ensureCadApi } = await import("../lib/api");
+  try {
+    await ensureCadApi(projectId);
+    const blob = await downloadCadSyncApi(projectId);
+    return await blob.text();
+  } catch (err) {
+    throw wrapApiError(err, "CAD sync manifest download failed");
   }
 }
 
@@ -537,6 +697,64 @@ export async function autoTraceBoundaryAction(projectId: string) {
     return result;
   } catch (err) {
     throw wrapApiError(err, "Boundary auto-trace failed");
+  }
+}
+
+export async function hydrateKeylessAction(
+  projectId: string,
+  kinds?: Array<
+    | "planning"
+    | "bushfire"
+    | "contour"
+    | "flood"
+    | "heritage"
+    | "easement"
+    | "urban_tree"
+    | "water_corp"
+    | "road_casement"
+    | "acid_sulfate"
+    | "wetland"
+  >,
+) {
+  const { hydrateKeylessApi } = await import("../lib/api");
+  try {
+    const result = await hydrateKeylessApi(projectId, kinds);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "KEYLESS hydrate failed");
+  }
+}
+
+/** Site boundary for co-registering KEYLESS canvas-metre rings (server-only). */
+export async function getSiteBoundaryAction(projectId: string) {
+  const { getSiteBoundaryApi } = await import("../lib/api");
+  try {
+    return await getSiteBoundaryApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Boundary load failed");
+  }
+}
+
+/** Council drainage GeoJSON → canvas-metre lines (server-only). */
+export async function ingestStormwaterGeoJsonAction(
+  projectId: string,
+  geojson: unknown,
+) {
+  const { ingestStormwaterGeoJsonApi } = await import("../lib/api");
+  try {
+    return await ingestStormwaterGeoJsonApi(projectId, geojson);
+  } catch (err) {
+    throw wrapApiError(err, "Stormwater GeoJSON ingest failed");
+  }
+}
+
+export async function listProjectFilesAction(projectId: string) {
+  const { listProjectFiles } = await import("../lib/api");
+  try {
+    return await listProjectFiles(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Project files list failed");
   }
 }
 
@@ -685,9 +903,13 @@ export async function createOverrideAction(formData: FormData) {
     finding_index < 0 ||
     reason.length < 8
   ) {
-    return;
+    throw new Error("Override needs a finding and a reason (8+ characters)");
   }
-  await createOverrideApi(projectId, { finding_index, reason });
+  try {
+    await createOverrideApi(projectId, { finding_index, reason });
+  } catch (err) {
+    throw wrapApiError(err, "Could not save override");
+  }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/audit`);
 }
@@ -699,12 +921,25 @@ export async function createTaskAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const assignee = String(formData.get("assignee_name") ?? "").trim();
   const priority = String(formData.get("priority") ?? "medium") as TaskPriority;
-  if (!projectId || !title) return;
-  await createTaskApi(projectId, {
-    title,
-    assignee_name: assignee || null,
-    priority,
-  });
+  const sourceRaw = String(formData.get("source") ?? "manual");
+  const source =
+    sourceRaw === "design" || sourceRaw === "dictation" ? sourceRaw : "manual";
+  const technical = String(formData.get("technical_specifications") ?? "").trim();
+  if (!projectId || !title) {
+    throw new Error("Task needs a title");
+  }
+  try {
+    await createTaskApi(projectId, {
+      title,
+      assignee_name: assignee || null,
+      priority,
+      source,
+      technical_specifications: technical || null,
+    });
+  } catch (err) {
+    throw wrapApiError(err, "Could not create task");
+  }
+  revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/tasks`);
 }
 
@@ -712,157 +947,70 @@ export async function updateTaskStatusAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const taskId = String(formData.get("taskId") ?? "");
   const status = String(formData.get("status") ?? "") as TaskStatus;
-  if (!projectId || !taskId || !status) return;
-  await updateTaskStatusApi(projectId, taskId, status);
+  if (!projectId || !taskId || !status) {
+    throw new Error("Missing task update fields");
+  }
+  try {
+    await updateTaskStatusApi(projectId, taskId, status);
+  } catch (err) {
+    throw wrapApiError(err, "Could not update task");
+  }
+  revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/tasks`);
 }
 
-/* -- Crew ------------------------------------------------------------- */
-
-export async function createCrewAction(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const role = String(formData.get("role") ?? "tradesperson") as CrewRole;
-  const phone = String(formData.get("phone") ?? "").trim() || null;
-  const email = String(formData.get("email") ?? "").trim() || null;
-  const rateRaw = String(formData.get("hourly_rate") ?? "0");
-  const hourly_rate = Number.isFinite(Number(rateRaw)) ? Number(rateRaw) : 0;
-  if (!name) return;
-  await createCrewApi({ name, role, phone, email, hourly_rate });
-  revalidatePath("/settings/crew");
-}
-
-export async function deleteCrewAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  if (!id) return;
-  await deleteCrewApi(id);
-  revalidatePath("/settings/crew");
-}
-
-/* -- Design assets (catalog) ------------------------------------------ */
-
-export async function createCatalogSymbolAction(formData: FormData) {
-  const label = String(formData.get("label") ?? "").trim();
-  const category = String(
-    formData.get("category") ?? "planting",
-  ) as CreateCatalogSymbolInput["category"];
-  const path_d = String(formData.get("path_d") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const rate_card_sku = String(formData.get("rate_card_sku") ?? "").trim();
-  const preview_bg = String(formData.get("preview_bg") ?? "").trim();
-  const accent = String(formData.get("accent") ?? "").trim();
-  if (!label || !path_d) throw new Error("Label and SVG path are required");
-  const input: CreateCatalogSymbolInput = {
-    label,
-    category,
-    path_d,
-  };
-  if (description) input.description = description;
-  if (rate_card_sku) input.rate_card_sku = rate_card_sku;
-  if (preview_bg) input.preview_bg = preview_bg;
-  if (accent) input.accent = accent;
-  try {
-    await createCatalogSymbolApi(input);
-  } catch (err) {
-    throw wrapApiError(err, "Failed to upload design asset");
+/**
+ * Sync design-sourced permit / compliance todos from the live canvas.
+ * Creates missing drafts; cancels pending design tasks whose trigger no longer applies.
+ */
+export async function syncDesignTodosAction(
+  projectId: string,
+  proposed: Array<{
+    title: string;
+    priority?: TaskPriority;
+    technical_specifications?: string | null;
+    trigger_id: string;
+  }>,
+): Promise<{ tasks: Awaited<ReturnType<typeof listTasks>>; created: number }> {
+  if (!projectId) return { tasks: [], created: 0 };
+  const { diffDesignTodos, encodeDesignTodoSpec } = await import(
+    "@workstream/domain"
+  );
+  const existing = await listTasks(projectId);
+  const drafts = proposed.map((p) => ({
+    trigger_id: p.trigger_id,
+    title: p.title,
+    priority: p.priority ?? ("medium" as TaskPriority),
+    source: "design" as const,
+    technical_specifications:
+      p.technical_specifications ??
+      encodeDesignTodoSpec(p.trigger_id, p.title),
+  }));
+  const { toCreate, toCancelIds } = diffDesignTodos(existing, drafts);
+  let created = 0;
+  for (const draft of toCreate) {
+    await createTaskApi(projectId, {
+      title: draft.title,
+      priority: draft.priority,
+      source: "design",
+      technical_specifications: draft.technical_specifications ?? null,
+    });
+    created += 1;
   }
-  revalidatePath("/settings/design-assets");
-}
-
-export async function deleteCatalogSymbolAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  if (!id.startsWith("custom-")) return;
-  try {
-    await deleteCatalogSymbolApi(id);
-  } catch (err) {
-    throw wrapApiError(err, "Failed to delete design asset");
+  for (const id of toCancelIds) {
+    await updateTaskStatusApi(projectId, id, "cancelled");
   }
-  revalidatePath("/settings/design-assets");
-}
-
-/* -- Rate card -------------------------------------------------------- */
-
-export async function updateRateAction(formData: FormData) {
-  const sku = String(formData.get("sku") ?? "");
-  const rateRaw = String(formData.get("rate") ?? "");
-  const rate = Number(rateRaw);
-  if (!sku || !Number.isFinite(rate) || rate < 0) return;
-  await updateRateCardItemApi(sku, { rate });
-  revalidatePath("/settings/rate-card");
-}
-
-/* -- Integrations ----------------------------------------------------- */
-
-export async function setIntegrationAction(formData: FormData) {
-  const key = String(formData.get("key") ?? "").trim();
-  const value = String(formData.get("value") ?? "").trim();
-  if (!key || !value) throw new Error("Key and value are required");
-  try {
-    await setIntegrationApi(key, value);
-  } catch (err) {
-    throw wrapApiError(err, "Could not save integration");
+  const tasks = await listTasks(projectId);
+  if (created > 0 || toCancelIds.length > 0) {
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/tasks`);
   }
-  revalidatePath("/settings");
+  return { tasks, created };
 }
 
-export async function clearIntegrationAction(formData: FormData) {
-  const key = String(formData.get("key") ?? "").trim();
-  if (!key) throw new Error("Missing integration key");
-  try {
-    await deleteIntegrationApi(key);
-  } catch (err) {
-    throw wrapApiError(err, "Could not clear integration");
-  }
-  revalidatePath("/settings");
-}
-
-export async function testIntegrationAction(
-  channel: string,
-  toEmail?: string,
-): Promise<{ ok: boolean; detail: string }> {
-  const { testIntegrationApi } = await import("../lib/api");
-  const result = await testIntegrationApi(channel, toEmail);
-  revalidatePath("/settings");
-  return result;
-}
-
-export async function upgradePlanAction(plan: "lite" | "studio"): Promise<void> {
-  const { upgradeWorkspacePlanApi } = await import("../lib/api");
-  await upgradeWorkspacePlanApi(plan);
-  revalidatePath("/settings");
-  revalidatePath("/settings/license");
-}
-
-export async function startStudioCheckoutAction(): Promise<{
-  checkout_url: string;
-  mode: "live" | "dev_fallback";
-}> {
-  const { startStudioCheckoutApi } = await import("../lib/api");
-  const result = await startStudioCheckoutApi();
-  revalidatePath("/settings/license");
-  return result;
-}
-
-export async function startSeatCheckoutAction(extraSeats = 1): Promise<{
-  checkout_url: string;
-  mode: "live" | "dev_fallback";
-  seat_limit: number;
-}> {
-  const { startSeatCheckoutApi } = await import("../lib/api");
-  const result = await startSeatCheckoutApi(extraSeats);
-  revalidatePath("/settings/license");
-  return result;
-}
-
-export async function inviteWorkspaceMemberAction(userId: string): Promise<void> {
-  const { inviteWorkspaceMemberApi } = await import("../lib/api");
-  await inviteWorkspaceMemberApi(userId);
-  revalidatePath("/settings/license");
-}
-
-export async function removeWorkspaceMemberAction(userId: string): Promise<void> {
-  const { removeWorkspaceMemberApi } = await import("../lib/api");
-  await removeWorkspaceMemberApi(userId);
-  revalidatePath("/settings/license");
+export async function listProjectTasksAction(projectId: string) {
+  if (!projectId) return [];
+  return listTasks(projectId);
 }
 
 export type PortalLinkState = {
@@ -893,26 +1041,66 @@ export async function copyPortalLinkAction(projectId: string): Promise<string> {
   return portal_url;
 }
 
+export async function listShareRevisionsAction(projectId: string) {
+  const { listShareRevisionsApi } = await import("../lib/api");
+  try {
+    return await listShareRevisionsApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not load share revisions");
+  }
+}
+
+export async function createShareRevisionAction(
+  projectId: string,
+  quoteLines: Array<{
+    id: string;
+    label: string;
+    unit: string;
+    qty: number;
+    total: number;
+  }>,
+  totalInclGst: number,
+) {
+  const { createShareRevisionApi } = await import("../lib/api");
+  try {
+    const result = await createShareRevisionApi(projectId, {
+      quoteLines,
+      totalInclGst,
+    });
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Could not create share link");
+  }
+}
+
 export async function saveProjectClientAction(formData: FormData): Promise<void> {
   const projectId = String(formData.get("projectId") ?? "").trim();
   if (!projectId) throw new Error("Missing project");
   const { updateProjectClientApi } = await import("../lib/api");
   const client_name = String(formData.get("client_name") ?? "").trim() || null;
   const rawEmail = String(formData.get("client_email") ?? "").trim();
+  if (rawEmail && !isPlausibleEmail(rawEmail)) {
+    throw new Error("Enter a valid client email address");
+  }
   const client_email = rawEmail || null;
   const rawStage = String(formData.get("crm_stage") ?? "").trim();
   const crm_stage =
     rawStage === "enquiry" ||
-    rawStage === "quote_sent" ||
-    rawStage === "won" ||
-    rawStage === "lost"
+      rawStage === "quote_sent" ||
+      rawStage === "won" ||
+      rawStage === "lost"
       ? rawStage
       : null;
-  await updateProjectClientApi(projectId, {
-    client_name,
-    client_email,
-    crm_stage,
-  });
+  try {
+    await updateProjectClientApi(projectId, {
+      client_name,
+      client_email,
+      crm_stage,
+    });
+  } catch (err) {
+    throw wrapApiError(err, "Could not save client details");
+  }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/outputs`);
 }
@@ -926,14 +1114,43 @@ export async function syncQuotePackAction(formData: FormData): Promise<{
   if (!projectId) throw new Error("Missing project");
   const { syncProjectIntegrationsApi } = await import("../lib/api");
   const to_email = String(formData.get("to_email") ?? "").trim() || undefined;
+  if (to_email && !isPlausibleEmail(to_email)) {
+    throw new Error("Enter a valid email address");
+  }
   const client_name =
     String(formData.get("client_name") ?? "").trim() || undefined;
   const include_portal = formData.get("include_portal") === "1";
-  const result = await syncProjectIntegrationsApi(projectId, {
-    to_email,
-    client_name,
-    include_portal,
-  });
-  revalidatePath(`/projects/${projectId}/outputs`);
-  return result;
+  try {
+    const result = await syncProjectIntegrationsApi(projectId, {
+      to_email,
+      client_name,
+      include_portal,
+    });
+    revalidatePath(`/projects/${projectId}/outputs`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Could not sync quote pack");
+  }
+}
+
+/** QuoteDoc — client hooks must use these actions (lib/api is server-only). */
+export async function getQuoteDocAction(projectId: string) {
+  try {
+    return await getQuoteDocApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not load quote");
+  }
+}
+
+export async function upsertQuoteDocAction(
+  projectId: string,
+  body: UpsertQuoteDocInput,
+) {
+  try {
+    const saved = await upsertQuoteDocApi(projectId, body);
+    revalidatePath(`/projects/${projectId}`);
+    return saved;
+  } catch (err) {
+    throw wrapApiError(err, "Could not save quote");
+  }
 }

@@ -7,7 +7,7 @@
 
 - **Repo:** Workstream / Aegis monorepo — **not** the Curtis brand spec in §1 below (that
   block is legacy; superseded by product decision **B**).
-- **Studio code:** `apps/web` only → deploys to **`construct-web`** on Fly.io. See
+- **Studio code:** `apps/web` only → deploys to **`web-production-3c194`** on Railway. See
   `RECON.md` and `DEPLOY.md`.
 - **Three deploy surfaces:** `apps/api`, `apps/web`, `apps/mobile` — not two. Do not
   assume studio ships via API or mobile.
@@ -15,10 +15,8 @@
   single `--accent` (`#C2410C`), ≤3% signal surface (Save + armed mode). Walkthrough §3.2.
 - **Mapbox:** Static aerial image only; scale from `apps/web/src/lib/mapView.ts`. No
   Mapbox GL.
-- **CI / infra (out of scope):** Do **not** change `.github/workflows/ci.yml`, GitHub
-  secrets, or `fly.toml` to “fix” deploy. Known issue: CI token cannot deploy
-  `construct-web` — human regenerates Fly token with both-app scope. Manual web deploy:
-  `DEPLOY.md`.
+- **CI / infra (out of scope):** Do **not** change `.github/workflows/ci.yml` or
+  Railway service config to "fix" deploy. Railway auto-deploys on push to `main`.
 - **Phase 6 AI:** Skip implementation this run; write approach to `PROPOSAL.md` only if
   scheduled. `ANTHROPIC_API_KEY` on API is optional future plumbing, not a green light.
 
@@ -98,7 +96,7 @@ substitute for a draftsperson. The redesign must make that limit legible, not hi
 - 3D / immersive / photoreal rendering.
 - Backend / API changes beyond the saved-plan payload shape.
 - Authentication, routing outside the Studio + Design pages.
-- **CI, Fly.io secrets, workflow edits** — deploy token scope is human/infra (`DEPLOY.md`).
+- **CI, Railway service config, workflow edits** — deploy is human/infra (`DEPLOY.md`).
 - **Mobile** `apps/mobile` design studio — separate surface; do not block web phases on it.
 
 ---

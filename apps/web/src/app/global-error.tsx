@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { KitButton } from "../components/ui/kit";
 import s from "../styles/app.module.css";
+import "../styles/globals.css";
 
 export default function GlobalError({
   error,
@@ -10,6 +13,12 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    void import("../lib/sentry").then(({ captureWebError }) => {
+      captureWebError(error, { boundary: "global", digest: error.digest });
+    });
+  }, [error]);
+
   return (
     <html lang="en-AU">
       <body className={s.globalErrorBody}>
@@ -19,7 +28,7 @@ export default function GlobalError({
               Workstream
               <span className={s.brandSub}>Hard error</span>
             </div>
-            <Link href="/" className={s.crumb}>
+            <Link href="/home" className={s.crumb}>
               ← Projects
             </Link>
           </header>
@@ -35,10 +44,10 @@ export default function GlobalError({
           ) : null}
 
           <div className={s.actionBar}>
-            <button type="button" className={s.btn} onClick={() => reset()}>
+            <KitButton variant="secondary" size="sm" onClick={() => reset()}>
               Reload
-            </button>
-            <Link href="/" className={s.btnGhost}>
+            </KitButton>
+            <Link href="/home" className={s.crumb}>
               Back to projects
             </Link>
           </div>

@@ -1,0 +1,110 @@
+.root {
+  position: absolute;
+  right: calc(var(--ws-safe-right, 12px) + 8px);
+  bottom: calc(var(--ws-safe-bottom, 12px) + 52px);
+  z-index: var(--ws-z-chrome);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-1);
+  min-width: 88px;
+  padding: var(--s-2);
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-neu-raised);
+  box-shadow: var(--hc-neu-out-sm, 0 1px 0 color-mix(in srgb, var(--hc-paper) 55%, transparent));
+  pointer-events: auto;
+}
+
+.heading {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted);
+}
+
+.steps {
+  display: flex;
+  gap: 2px;
+}
+
+.stepBtn {
+  flex: 1;
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: var(--hc-ink);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stepBtnActive {
+  background: var(--hc-neu-in);
+  border-color: var(--hc-line-soft);
+}
+
+.actions {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.iconBtn {
+  flex: 1;
+  min-height: 36px;
+  min-width: 36px;
+  border: 1px solid var(--hc-line-soft);
+  border-radius: var(--hc-r-panel);
+  background: var(--hc-neu-raised);
+  color: var(--hc-ink);
+  font-size: var(--text-base);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: var(--hc-invert);
+}
+
+.reset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-1);
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--hc-danger) 35%, transparent);
+  border-radius: var(--hc-r-panel);
+  background: var(--hc-glass);
+  color: var(--hc-ink);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.deg {
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-ink-muted);
+  font-weight: 600;
+}
+
+.northIdle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--hc-ink-muted);
+}
+
+@media (min-width: 900px) {
+  .root {
+    bottom: calc(var(--ws-safe-bottom, 12px) + 24px);
+  }
+}

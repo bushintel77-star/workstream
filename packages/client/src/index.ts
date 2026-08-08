@@ -50,7 +50,12 @@ export class WorkstreamClient {
   async geocodePreview(
     lat: number,
     lng: number,
-  ): Promise<{ aerial_uri: string; lat: number; lng: number }> {
+  ): Promise<{
+    neighbourhood_uri: string;
+    aerial_uri: string;
+    lat: number;
+    lng: number;
+  }> {
     return this.request(
       "GET",
       `/geocode/preview?lat=${lat}&lng=${lng}`,
@@ -231,6 +236,7 @@ export class WorkstreamClient {
         temp_max_c: number;
         temp_min_c: number;
         wind_max_kph: number;
+        humidity_pct: number | null;
       }>;
       rain_within_24h: boolean;
       wind_warning: boolean;
@@ -490,9 +496,7 @@ export class WorkstreamClient {
   }
 
   async getAudit(projectId: string): Promise<Audit | null> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    const headers: Record<string, string> = {};
     if (this.options.getToken) {
       const token = await this.options.getToken();
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -536,9 +540,7 @@ export class WorkstreamClient {
   }
 
   async getDesign(projectId: string): Promise<Design | null> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    const headers: Record<string, string> = {};
     if (this.options.getToken) {
       const token = await this.options.getToken();
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -659,9 +661,7 @@ export class WorkstreamClient {
   }
 
   async getSurvey(projectId: string): Promise<Survey | null> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    const headers: Record<string, string> = {};
     if (this.options.getToken) {
       const token = await this.options.getToken();
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -726,9 +726,12 @@ export class WorkstreamClient {
     path: string,
     body?: unknown
   ): Promise<T> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    // Fastify rejects `Content-Type: application/json` with an empty body.
+    // Only set the header when we actually serialize a payload.
+    const headers: Record<string, string> = {};
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/json";
+    }
 
     if (this.options.getToken) {
       const token = await this.options.getToken();
@@ -740,7 +743,7 @@ export class WorkstreamClient {
     const res = await fetch(`${this.options.baseUrl}${path}`, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
     if (!res.ok) {

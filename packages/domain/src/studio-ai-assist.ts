@@ -52,7 +52,7 @@ export function buildSketchCanvasAiSuggestions(
     out.push({
       id: "tier1-ribbon",
       priority: "high",
-      title: "Tier-1 massing",
+      title: "Architectural massing",
       detail: "Lock front entry + rear courtyard, then promote quote.",
       action: "place",
       symbol_id: "hornbeam-pleached",
@@ -136,7 +136,7 @@ export function buildStudioAiSuggestions(
     out.push({
       id: "tier1-massing",
       priority: "high",
-      title: "Tier-1 architectural massing",
+      title: "Architectural massing",
       detail:
         "36 Wrights Terrace: front entry bluestone + specimen anchors, rear courtyard discipline. Save the sketch, then open Quote for zones and workbook savings.",
       action: "quote",
@@ -240,7 +240,7 @@ export function buildGhostPlacementSuggestions(input: {
       x_pct: 28,
       y_pct: 62,
       confidence: 0.88,
-      reason: "Tier-1 front entry — formal pleached screen along lacework",
+      reason: "Front entry — formal pleached screen along lacework",
     });
   }
 
@@ -278,7 +278,7 @@ export function buildGhostPlacementSuggestions(input: {
         x_pct: 72,
         y_pct: 58,
         confidence: 0.8,
-        reason: "Tier-1 rear courtyard — mass-planted ground plane",
+        reason: "Rear courtyard — mass-planted ground plane",
       });
     }
   }

@@ -183,19 +183,28 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
   return { lat, lng };
 }
 
+export type AerialImageOpts = {
+  /** Drop a Mapbox Static pin on the geocode centre (confirm-lot UX). */
+  pin?: boolean;
+};
+
 export function aerialImageUrl(
   lat: number,
   lng: number,
   width = 600,
   height = 600,
   zoom = 19,
+  opts: AerialImageOpts = {},
 ): string {
   const token = getOwnerEnv("MAPBOX_TOKEN");
+  // Curtis terracotta — readable on satellite without competing with roofs.
+  const overlay = opts.pin ? `pin-l+c45c26(${lng},${lat})/` : "";
   if (!token) {
-    return `https://placeholder.aerial/satellite/${lat},${lng}?z=${zoom}&w=${width}&h=${height}`;
+    const pinQ = opts.pin ? "&pin=1" : "";
+    return `https://placeholder.aerial/satellite/${lat},${lng}?z=${zoom}&w=${width}&h=${height}${pinQ}`;
   }
   return (
-    `${MAPBOX_STATIC_URL}/${lng},${lat},${zoom},0/${width}x${height}@2x` +
+    `${MAPBOX_STATIC_URL}/${overlay}${lng},${lat},${zoom},0/${width}x${height}@2x` +
     `?access_token=${token}`
   );
 }

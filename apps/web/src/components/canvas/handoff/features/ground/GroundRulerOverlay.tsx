@@ -1,0 +1,99 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  pickMetricStepM,
+  visibleMetresFromScale,
+} from "./groundMetrics";
+import css from "./tactileGround.module.css";
+
+type Props = {
+  zoom: number;
+  focusX: number;
+  focusY: number;
+  /**
+   * Drag-to-pan offset, in % of board size — mirrors `.zoomWorld`'s
+   * `translate()` in px. Ticks live outside the transformed world, so this
+   * is the one place the pan offset must be applied explicitly.
+   */
+  panXPct?: number;
+  panYPct?: number;
+  /**
+   * Metres across 100% of the board — the SAME `scaleM` the dimension engine
+   * (edge lengths, lot area) reads. Free plan passes the fitted `boardWidthM`;
+   * Fit sheet passes the print-plot scale. Never a hardcoded 1:100 denominator
+   * or the ruler prints one metre scale while the boundary labels read another.
+   */
+  scaleM: number;
+  darkOn?: boolean;
+};
+
+type Tick = {
+  metres: number;
+  screenPct: number;
+};
+
+/**
+ * Fixed-frame metric ruler. The mesh remains drawing content inside
+ * `.zoomWorld`; labels are viewport instruments and must never inherit its
+ * scale or translation.
+ */
+export function GroundRulerOverlay({
+  zoom,
+  focusX,
+  focusY,
+  panXPct = 0,
+  panYPct = 0,
+  scaleM,
+  darkOn = false,
+}: Props) {
+  const stepM = pickMetricStepM(visibleMetresFromScale(scaleM, zoom));
+  const stepPct = (stepM / scaleM) * 100;
+
+  const ticks = useMemo(() => {
+    const horizontal: Tick[] = [];
+    const vertical: Tick[] = [];
+
+    for (let worldPct = stepPct; worldPct < 100; worldPct += stepPct) {
+      const metres = Math.round((worldPct / 100) * scaleM);
+      const x = focusX + (worldPct - focusX) * zoom + panXPct;
+      const y = focusY + (worldPct - focusY) * zoom + panYPct;
+
+      // Keep labels clear of clipped board corners.
+      if (x >= 2 && x <= 98) horizontal.push({ metres, screenPct: x });
+      if (y >= 2 && y <= 98) vertical.push({ metres, screenPct: y });
+    }
+
+    return { horizontal, vertical };
+  }, [focusX, focusY, panXPct, panYPct, scaleM, stepPct, zoom]);
+
+  return (
+    <div
+      className={`${css.rulerOverlay}${darkOn ? ` ${css.rulerOverlayDark}` : ""}`}
+      data-testid="ground-ruler-overlay"
+      data-step-m={stepM}
+      aria-hidden
+    >
+      <div className={css.rulerLeft}>
+        {ticks.vertical.map((tick) => (
+          <span
+            key={`left-${tick.metres}`}
+            style={{ top: `${tick.screenPct}%` }}
+          >
+            {tick.metres} m
+          </span>
+        ))}
+      </div>
+      <div className={css.rulerBottom}>
+        {ticks.horizontal.map((tick) => (
+          <span
+            key={`bottom-${tick.metres}`}
+            style={{ left: `${tick.screenPct}%` }}
+          >
+            {tick.metres} m
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -4,7 +4,7 @@
  *
  *   1. Sign up at sentry.io, create a Node.js project, copy the DSN.
  *   2. `pnpm --filter @workstream/api add @sentry/node`
- *   3. `flyctl secrets set SENTRY_DSN=… -a construct-api`
+ *   3. Set SENTRY_DSN in your deploy secrets (Railway dashboard or CLI).
  *   4. Redeploy.
  *
  * The dynamic import keeps @sentry/node out of the bundle when DSN is
@@ -31,7 +31,10 @@ export async function initSentry(): Promise<void> {
       dsn,
       environment: process.env.NODE_ENV ?? "production",
       tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
-      release: process.env.FLY_MACHINE_VERSION,
+      release:
+        process.env.RAILWAY_GIT_COMMIT_SHA ??
+        process.env.SENTRY_RELEASE ??
+        process.env.BUILD_SHA,
     });
     sentryReady = true;
   } catch (err) {
@@ -45,8 +48,8 @@ export function captureError(err: unknown, context?: Record<string, unknown>): v
     try {
       const Sentry: { captureException?: (err: unknown, ctx: unknown) => void } | null =
         await import("@sentry/node" as string).catch(
-        () => null,
-      );
+          () => null,
+        );
       Sentry?.captureException?.(err, { extra: context });
     } catch {
       /* swallow */

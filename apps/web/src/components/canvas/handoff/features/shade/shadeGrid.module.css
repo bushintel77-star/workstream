@@ -1,0 +1,27 @@
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-wash);
+  pointer-events: none;
+}
+
+.cell {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 4%, transparent);
+}
+
+.legend {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  margin: 0;
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 16%, transparent);
+  background: color-mix(in srgb, var(--hc-paper) 90%, transparent);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-pico);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hc-ink-muted);
+}

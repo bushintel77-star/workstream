@@ -1,0 +1,200 @@
+.hub {
+  /* Position owned by RightDataLane when measures are open. */
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-2);
+  max-height: none;
+  pointer-events: none;
+}
+
+.hub > * {
+  pointer-events: auto;
+}
+
+.hubDismiss {
+  align-self: flex-end;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-glass);
+  backdrop-filter: none;
+  box-shadow: var(--hc-elev-1);
+  color: var(--hc-ink-muted);
+  font-size: var(--text-base);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+  transition:
+    opacity 140ms var(--ws-ease, ease),
+    color 140ms var(--ws-ease, ease);
+}
+
+.hubDismiss:hover {
+  opacity: 1;
+  color: var(--hc-ink);
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 34px;
+  padding: 0 var(--s-3) 0 var(--s-2);
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--hc-line);
+  background: var(--hc-glass);
+  backdrop-filter: none;
+  box-shadow: var(--hc-elev, 0 8px 28px var(--hc-neu-shadow));
+  font: inherit;
+  cursor: pointer;
+  color: var(--hc-ink);
+  opacity: 0.72;
+  transition:
+    opacity 180ms var(--ws-ease, ease),
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.tab:hover {
+  opacity: 1;
+  border-color: var(--hc-line);
+}
+
+.tabActive {
+  opacity: 1;
+  border-color: var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--hc-invert);
+}
+
+.tabActive .tabLabel {
+  color: var(--hc-invert);
+}
+
+.shield,
+.dollar,
+.leaf {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  flex: none;
+}
+
+.shieldOk {
+  background: var(--hc-line-soft);
+  color: var(--hc-ink);
+}
+
+.shieldWarn {
+  background: var(--hc-line-soft);
+  color: var(--hc-ink);
+}
+
+.tabActive .shieldOk,
+.tabActive .shieldWarn {
+  background: color-mix(in srgb, var(--hc-invert) 16%, transparent);
+  color: var(--hc-invert);
+}
+
+.dollar,
+.leaf {
+  background: var(--hc-line-soft);
+  color: var(--hc-ink);
+}
+
+.tabActive .dollar,
+.tabActive .leaf {
+  background: color-mix(in srgb, var(--hc-invert) 16%, transparent);
+  color: var(--hc-invert);
+}
+
+.tabLabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--hc-fs-3);
+  font-weight: 600;
+  color: var(--hc-ink-muted);
+}
+
+.councilSidecar {
+  margin: 0 0 var(--s-2);
+  padding: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-micro);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--hc-ink-muted);
+  line-height: 1.35;
+}
+
+.sheet {
+  width: min(260px, calc(100vw - 40px));
+  max-height: min(420px, calc(100vh - 160px));
+  overflow: auto;
+  border-radius: var(--hc-r-dock, 16px);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass);
+  backdrop-filter: none;
+  box-shadow: var(--hc-elev, 0 8px 28px var(--hc-neu-shadow));
+  display: flex;
+  flex-direction: column;
+}
+
+.sheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3) 0;
+}
+
+.sheetTitle {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--hc-ink-faint);
+}
+
+.sheetClose {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: var(--hc-ink-muted);
+  font-size: var(--text-md);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sheetBody {
+  padding: 4px 0 8px;
+}
+
+.sheetBody :global([data-testid="compliance-dock"]),
+.sheetBody :global([data-testid="live-bom-hud"]) {
+  position: static;
+  width: auto;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  backdrop-filter: none;
+  padding: var(--s-2) var(--s-3) var(--s-3);
+}

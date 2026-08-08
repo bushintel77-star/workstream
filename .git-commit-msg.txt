@@ -1,0 +1,16 @@
+fix(web): restructure ServicesLedger row as real button
+
+The services ledger row was a `<div role="button" tabIndex={0}>` with an
+`<input type="checkbox">` nested inside it. Nesting interactive elements is
+invalid HTML and breaks keyboard/screen-reader interaction.
+
+Now the row is a `<li>` grid containing:
+- an `<input type="checkbox">` in the first column for show/hide, and
+- a `<button type="button">` in the second column for focus/isolate.
+
+The button gets focus-visible styling, the checkbox is centered in its
+column, and the row hover/focused states are preserved on the `<li>`.
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>

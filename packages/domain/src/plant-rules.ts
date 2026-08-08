@@ -19,7 +19,7 @@ export function validateSpecies(
   palette: { species: string }[],
 ): { valid: boolean; reason?: string } {
   if (isBlocklisted(species)) {
-    return { valid: false, reason: 'Blocklisted: outside Curtis & Co design philosophy' };
+    return { valid: false, reason: 'Blocklisted: outside studio design philosophy' };
   }
   if (!palette.some((p) => p.species.toLowerCase() === species.toLowerCase())) {
     return { valid: false, reason: 'Unknown species: not in approved palette' };

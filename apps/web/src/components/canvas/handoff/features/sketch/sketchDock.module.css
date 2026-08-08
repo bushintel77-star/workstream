@@ -1,0 +1,198 @@
+/*
+ * Sketch dock — one frosted pill at the bottom of the board.
+ * Icon-only tools, popover tip grades, room for colour / layers / image later.
+ */
+
+.dock {
+  position: absolute;
+  left: 50%;
+  bottom: var(--ws-stack-gap);
+  transform: translateX(-50%);
+  z-index: var(--ws-z-dock);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: 26px;
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  pointer-events: auto;
+}
+
+/*
+ * Dormant — the pen tool is not armed, so drags fall through to grab-pan and
+ * these controls are a re-arm affordance rather than a live toolbar. The dock
+ * recedes instead of holding full presence over the drawing
+ * (docs/STUDIO-STYLING-AND-UX.md — chrome is quiet until summoned).
+ *
+ * Opacity and lift only. `pointer-events` deliberately stays on: clicking any
+ * tool is the documented way to re-arm (SketchBoard `onActivate`). Full presence
+ * returns on hover AND focus-within, so the affordance is never hidden from
+ * either pointer or keyboard (checklist item 16).
+ */
+.dock[data-active="0"] {
+  opacity: 0.62;
+  box-shadow: 0 6px 18px -12px color-mix(in srgb, var(--hc-ink) 55%, transparent);
+  transition:
+    opacity 160ms var(--ws-ease, ease),
+    box-shadow 160ms var(--ws-ease, ease);
+}
+
+.dock[data-active="0"]:hover,
+.dock[data-active="0"]:focus-within {
+  opacity: 1;
+  box-shadow: 0 14px 36px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock[data-active="0"] {
+    transition: none;
+  }
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--hc-r-pop);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
+  cursor: pointer;
+  transition:
+    background 140ms var(--ws-ease, ease),
+    color 140ms var(--ws-ease, ease),
+    box-shadow 140ms var(--ws-ease, ease);
+}
+
+.tool:hover:not(:disabled) {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+.toolActive,
+.toolActive:hover:not(:disabled) {
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  color: var(--ws-frame-ink);
+}
+
+.tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tool:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 2px;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  margin: 0 4px;
+  background: var(--ws-frame-hair);
+  opacity: 0.7;
+}
+
+/* Tip grade popover — a small frosted pill above the dock. */
+.tipPopover {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  z-index: var(--ws-z-contextual);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--s-1);
+  border-radius: var(--hc-r-glass);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 92%, transparent);
+  box-shadow: 0 10px 28px -8px color-mix(in srgb, var(--hc-ink) 65%, transparent);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+.tip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--r-lg);
+  background: transparent;
+  color: var(--ws-frame-ink-dim);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-micro);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background 140ms var(--ws-ease, ease),
+    color 140ms var(--ws-ease, ease);
+}
+
+.tip:hover:not(:disabled) {
+  color: var(--ws-frame-ink);
+  background: var(--ws-frame-wash);
+}
+
+.tipActive,
+.tipActive:hover:not(:disabled) {
+  color: var(--ws-frame-ink);
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+}
+
+.tip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tipDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.tipDot[data-grade="medium"] {
+  width: 7px;
+  height: 7px;
+}
+
+.tipDot[data-grade="marker"] {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+@media (max-width: 640px) {
+  .dock {
+    max-width: 96%;
+  }
+
+  .tipPopover {
+    left: auto;
+    right: 8px;
+    transform: none;
+  }
+}

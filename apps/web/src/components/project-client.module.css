@@ -9,7 +9,7 @@
 }
 
 .stageLegend {
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   margin-bottom: var(--s-2);
 }
@@ -27,7 +27,7 @@
   border: 1px solid color-mix(in srgb, var(--ink-tertiary) 35%, transparent);
   background: var(--surface-elevated);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
   color: var(--ink-secondary);
@@ -45,13 +45,13 @@
 }
 
 .syncNote {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--ink-secondary);
   margin: 0 0 var(--s-4);
 }
 
 .footnote {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
   margin: var(--s-3) 0 0;
 }

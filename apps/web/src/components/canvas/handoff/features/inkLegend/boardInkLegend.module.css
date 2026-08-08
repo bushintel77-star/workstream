@@ -1,0 +1,36 @@
+.root {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: var(--ws-z-interact);
+  width: min(168px, calc(100vw - 48px));
+  padding: 10px 12px;
+}
+
+.list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.swatch {
+  width: 14px;
+  height: 3px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  color: var(--hc-ink-muted);
+}

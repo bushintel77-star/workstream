@@ -15,6 +15,8 @@ import {
   editCadDocument,
   ensureCadDocument,
   exportCadDxf,
+  exportCadGltf,
+  exportCadSync,
   generateCadDocument,
   getCadWithSvg,
 } from "../lib/cad-job";
@@ -63,6 +65,64 @@ export default async function cadRoutes(fastify: FastifyInstance) {
           .send(dxf);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD export failed";
+        return reply.code(404).send({ error: message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/:projectId/cad.gltf",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      try {
+        const gltf = await exportCadGltf(fastify.store, ownerId, projectId);
+        return reply
+          .header("content-type", "model/gltf+json; charset=utf-8")
+          .header(
+            "content-disposition",
+            `attachment; filename="workstream-${projectId.slice(0, 8)}.gltf"`,
+          )
+          .send(gltf);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "glTF export failed";
+        return reply.code(404).send({ error: message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/:projectId/cad.sync.json",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) {
+        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      }
+      try {
+        const manifest = await exportCadSync(
+          fastify.store,
+          ownerId,
+          projectId,
+        );
+        return reply
+          .header("content-type", "application/json; charset=utf-8")
+          .header(
+            "content-disposition",
+            `attachment; filename="workstream-${projectId.slice(0, 8)}.sync.json"`,
+          )
+          .send(manifest);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "CAD sync manifest failed";
         return reply.code(404).send({ error: message });
       }
     },

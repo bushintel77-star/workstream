@@ -38,26 +38,30 @@ export function Tier1SavingsLedger({
     variant === "compact" ? `${lg.wrap} ${lg.wrapCompact}` : lg.wrap;
 
   return (
-    <section className={wrapClass} aria-labelledby="tier1-ledger-heading">
+    <section
+      className={wrapClass}
+      aria-labelledby="tier1-ledger-heading"
+      data-testid="tier1-quote-ledger"
+    >
       <h2 id="tier1-ledger-heading" className={lg.heading}>
         {heading}
       </h2>
       {showTarget ? (
-        <p className={lg.target}>
+        <p className={lg.target} data-testid="tier1-quote-target">
           Target quote {aud(savings.target_total_inc_gst)} incl. GST · net saving{" "}
           {aud(Math.abs(savings.net_inc_gst))} vs cottage-scatter scope
         </p>
       ) : null}
       <div className={lg.ledger}>
         <div className={lg.col}>
-          <span className={lg.kicker}>Removed</span>
+          <span className={lg.kicker}>Simplified</span>
           <span className={lg.amount}>{aud(savings.removed_ex)}</span>
           <p className={lg.note}>
             Cottage perennials, ferns, organic mulch, redundant irrigation zone.
           </p>
         </div>
         <div className={lg.col}>
-          <span className={lg.kicker}>Deployed</span>
+          <span className={lg.kicker}>Reinvested</span>
           <span className={lg.amount}>{aud(savings.deployed_ex)}</span>
           <p className={lg.note}>
             Cycas anchors, Buxus structure, Mondo grid, bluestone screenings, deck

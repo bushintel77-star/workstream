@@ -2,24 +2,7 @@ import type { Store } from "@workstream/db";
 import type { GeoJsonPolygon, Survey } from "@workstream/contracts";
 import { edgeLengths, polygonArea } from "@workstream/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
-import {
-  fetchBuildingPolygon,
-  fetchTitlePolygon,
-  isVicmapEnabled,
-} from "./vicmap";
-
-const METERS_PER_DEG_LAT = 110_540;
-const FRONTAGE_M = 15;
-const DEPTH_M = 40;
-const HOUSE_W_M = 8;
-const HOUSE_D_M = 12;
-const HOUSE_FRONT_SETBACK_M = 5;
-
-function metersToDegrees(lat: number) {
-  const latDeg = 1 / METERS_PER_DEG_LAT;
-  const lngDeg = 1 / (METERS_PER_DEG_LAT * Math.cos((lat * Math.PI) / 180));
-  return { latDeg, lngDeg };
-}
+import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
 
 type SurveyGeometry = {
   title_polygon: GeoJsonPolygon;
@@ -36,51 +19,17 @@ type SurveyGeometry = {
   }>;
 };
 
-function buildMockGeometry(center: { lat: number; lng: number }): SurveyGeometry {
-  const { latDeg, lngDeg } = metersToDegrees(center.lat);
-
-  const halfFront = (FRONTAGE_M / 2) * lngDeg;
-  const halfDepth = (DEPTH_M / 2) * latDeg;
-  const south = center.lat - halfDepth;
-  const north = center.lat + halfDepth;
-  const west = center.lng - halfFront;
-  const east = center.lng + halfFront;
-
-  const lotRing: [number, number][] = [
-    [west, south],
-    [east, south],
-    [east, north],
-    [west, north],
-    [west, south],
-  ];
-
-  const houseHalfW = (HOUSE_W_M / 2) * lngDeg;
-  const houseSouth = south + HOUSE_FRONT_SETBACK_M * latDeg;
-  const houseNorth = houseSouth + HOUSE_D_M * latDeg;
-  const houseWest = center.lng - houseHalfW;
-  const houseEast = center.lng + houseHalfW;
-
-  const houseRing: [number, number][] = [
-    [houseWest, houseSouth],
-    [houseEast, houseSouth],
-    [houseEast, houseNorth],
-    [houseWest, houseNorth],
-    [houseWest, houseSouth],
-  ];
-
+/** Aerial-only survey when Vicmap misses — Mapbox still grounds Trace / Calibrate. */
+function buildAerialOnlyGeometry(): SurveyGeometry {
+  const empty: GeoJsonPolygon = { type: "Polygon", coordinates: [] };
   return {
-    title_polygon: { type: "Polygon", coordinates: [lotRing] },
-    house_polygon: { type: "Polygon", coordinates: [houseRing] },
-    garden_polygon: { type: "Polygon", coordinates: [lotRing, houseRing] },
-    lot_area_m2: FRONTAGE_M * DEPTH_M,
-    house_area_m2: HOUSE_W_M * HOUSE_D_M,
-    garden_area_m2: FRONTAGE_M * DEPTH_M - HOUSE_W_M * HOUSE_D_M,
-    measurements: [
-      { edge_id: "front", length_m: FRONTAGE_M, bearing_deg: 90, label: "Frontage" },
-      { edge_id: "east", length_m: DEPTH_M, bearing_deg: 0, label: "East boundary" },
-      { edge_id: "back", length_m: FRONTAGE_M, bearing_deg: 270, label: "Rear" },
-      { edge_id: "west", length_m: DEPTH_M, bearing_deg: 180, label: "West boundary" },
-    ],
+    title_polygon: empty,
+    house_polygon: empty,
+    garden_polygon: empty,
+    lot_area_m2: 0,
+    house_area_m2: 0,
+    garden_area_m2: 0,
+    measurements: [],
   };
 }
 
@@ -106,7 +55,8 @@ async function buildVicmapGeometry(center: {
   lat: number;
   lng: number;
 }): Promise<SurveyGeometry | null> {
-  const titlePoly = await fetchTitlePolygon(center.lat, center.lng);
+  const titleParcel = await fetchTitleParcel(center.lat, center.lng);
+  const titlePoly = titleParcel?.polygon ?? null;
   if (!titlePoly) return null;
 
   const titleRing = titlePoly.coordinates[0];
@@ -125,30 +75,23 @@ async function buildVicmapGeometry(center: {
       ? Math.round(polygonArea(housePoly.coordinates[0]))
       : 0;
 
-  const fallbackHouse: GeoJsonPolygon = {
+  // The Vicmap building layer is existing-site context. If no footprint is
+  // returned, preserve that uncertainty — never invent an architectural box.
+  const house: GeoJsonPolygon = housePoly ?? {
     type: "Polygon",
-    coordinates: [
-      [
-        [center.lng - 0.00005, center.lat - 0.00005],
-        [center.lng + 0.00005, center.lat - 0.00005],
-        [center.lng + 0.00005, center.lat + 0.00005],
-        [center.lng - 0.00005, center.lat + 0.00005],
-        [center.lng - 0.00005, center.lat - 0.00005],
-      ],
-    ],
+    coordinates: [],
   };
-
-  const house = housePoly ?? fallbackHouse;
+  const houseRing = housePoly?.coordinates[0];
 
   return {
     title_polygon: titlePoly,
     house_polygon: house,
     garden_polygon: {
       type: "Polygon",
-      coordinates: [titleRing, house.coordinates[0]],
+      coordinates: houseRing ? [titleRing, houseRing] : [titleRing],
     },
     lot_area_m2: Math.max(1, lotArea),
-    house_area_m2: Math.max(1, houseArea),
+    house_area_m2: Math.max(0, houseArea),
     garden_area_m2: Math.max(1, lotArea - houseArea),
     measurements: buildMeasurements(titleRing),
   };
@@ -170,18 +113,20 @@ export async function runSurvey(
       : await geocodeAddress(project.address);
 
   let geometry: SurveyGeometry | null = null;
-  if (isVicmapEnabled()) {
-    try {
-      geometry = await buildVicmapGeometry(center);
-    } catch (err) {
-      console.warn("[survey] Vicmap fetch failed, falling back to mock:", err);
-    }
+  try {
+    geometry = await buildVicmapGeometry(center);
+  } catch (err) {
+    console.warn(
+      "[survey] Vicmap WFS failed — aerial only (Trace title on Mapbox):",
+      err,
+    );
   }
   if (!geometry) {
-    geometry = buildMockGeometry(center);
+    geometry = buildAerialOnlyGeometry();
   }
 
-  const aerial_uri = aerialImageUrl(center.lat, center.lng, 800, 480, 19);
+  // Match locate-loader lot altitude — canvas design perspective.
+  const aerial_uri = aerialImageUrl(center.lat, center.lng, 800, 480, 20);
 
   const survey = await store.upsertSurvey(ownerId, projectId, {
     aerial_uri,

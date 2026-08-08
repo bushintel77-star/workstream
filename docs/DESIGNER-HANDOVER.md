@@ -2,7 +2,9 @@
 
 **Audience:** Product / UI designer redesigning operator web layout and the aerial design studio.  
 **Product:** Workstream (operator) · **Client brand:** Curtis & Co (quotes & portal only)  
-**Last updated:** 2026-05-21
+**Last updated:** 2026-05-21 (accent colour, typography, and §6 studio spec corrected 2026-08-05 — see notes inline)
+
+**2026-08-05 correction note:** This doc predates the current studio implementation (`HandoffDesignStudio`, built from `docs/design/operator-redesign/`). The accent colour and typography claims below were wrong and are fixed in place. Section 6 describes an earlier `DesignStudio.tsx` component architecture that no longer exists in the codebase — rather than rewrite 170 lines of interaction spec for a system I haven't independently re-verified end-to-end, I've flagged it clearly and pointed to where the current equivalent lives. Personas, business context, and product principles elsewhere in this doc were not found to be wrong and are untouched. Fully verified current spec: `docs/design/UIUX-DESIGNER-HANDOFF-SPEC.md`.
 
 Companion specs: [DESIGNER-HANDOVER.md](./DESIGNER-HANDOVER.md) · [DESIGN-HANDOVER-FORMAT.md](./DESIGN-HANDOVER-FORMAT.md) · [QUOTE_WORKFLOW.md](./QUOTE_WORKFLOW.md) · [UI-FOCUS.md](./UI-FOCUS.md) · [CAPTURE.md](./CAPTURE.md)
 
@@ -33,13 +35,13 @@ These are product decisions, not suggestions:
 
 1. **Workflow 1 — concept sketch, not true CAD** — The design studio is a back-of-envelope tool with CAD-*inspired* chrome (ribbon, pan/zoom, layers). It must never read as construction-grade or survey-accurate. Copy and visual treatment must reinforce “estimate / concept only”. Stage 2 may add survey geometry later without rewriting this principle for Workflow 1.
 2. **2D top-down only** — Aerial + symbols on a flat plan. No 3D, isometric, photoreal, or tilt.
-3. **Single accent colour** — `--accent` (`#C2410C` light / `#FB923C` dark) on **≤3% of surface**: Save CTA + armed Place/Draw mode only. Everything else is achromatic ink + surfaces.
+3. **Single accent colour** — `--accent` (`#5A789B`, a muted blueprint slate — corrected 2026-08-05, was `#C2410C`/`#FB923C`) on **≤3% of surface**: Save CTA + armed Place/Draw mode only. Everything else is achromatic ink + surfaces.
 4. **CSS variables only** — No hex literals in component CSS. Tokens live in `apps/web/src/styles/globals.css`; shared primitives in `app.module.css`.
 5. **Curtis palette species** — Off-palette plants are rejected in product logic (hornbeam, Lomandra, bluestone, etc.). Custom SVG uploads merge into the library via Settings.
 6. **AU locale** — en-AU, AUD, GST, Stonnington/Yarra heritage overlays, AS 4970 tree protection (TRP).
 7. **Mobile-first operator** — 44px min tap targets, 16px input font, sticky bottom CTAs on phones.
 
-**Typography (current shipped):** Inter Display (headlines), Inter (body), JetBrains Mono (codes, coords, metrics). An older agent brief referenced Cormorant/DM Mono — **superseded** by the Workstream token set above.
+**Typography (corrected 2026-08-05 — verified against `apps/web/src/styles/globals.css`):** IBM Plex Mono (display/financial), IBM Plex Sans (body/UI), IBM Plex Serif (portal documents), Architects Daughter (hand-lettered plan annotations only). This doc previously claimed Inter Display/Inter/JetBrains Mono, and before that Cormorant/DM Mono — neither matches the shipped app.
 
 ---
 
@@ -143,6 +145,9 @@ Canonical sequence on **Design** page (`QuoteWorkflowSteps`):
 ---
 
 ## 6. Design studio — product spec
+
+> **⚠️ Component architecture below is superseded (flagged 2026-08-05, not rewritten).**
+> Everything in §6.3–§6.14 describes the earlier `DesignStudio.tsx` / `DesignAssetPalette.tsx` / `ScaleBar.tsx` implementation. All three files are confirmed deleted from the codebase. The studio that actually ships today is `HandoffDesignStudio` (`apps/web/src/components/canvas/handoff/`) — a six-mode-lens gallery-frame architecture, not the single-page asset-rail layout described below. I haven't re-derived §6's interaction model, asset library, mass-planting/irrigation flows, or save payload against the current implementation in this pass — that's real research, not a token/colour fix. For what's verified current, see `docs/design/UIUX-DESIGNER-HANDOFF-SPEC.md` §4 (studio architecture) and §15.4 (full feature-by-feature component inventory, confirmed against the live code 2026-08-05). Treat §6 below as historical context for *why* the studio exists, not as a spec of what's on screen.
 
 ### 6.1 Purpose
 
@@ -363,13 +368,12 @@ Shared primitives: `apps/web/src/styles/app.module.css`
 
 | Asset | Location |
 | --- | --- |
-| Live reference | https://construct-web.fly.dev/projects/{id}/design |
-| Design tokens | `apps/web/src/styles/globals.css` |
-| Studio layout CSS | `apps/web/src/components/designStudio.module.css` |
-| Asset rail CSS | `apps/web/src/components/studio/designAssetPalette.module.css` |
-| Symbol glyphs | `packages/domain/src/catalog-assets.ts` |
-| Studio components | `apps/web/src/components/studio/*` |
-| E2E flows (QA) | `apps/web/e2e/design-studio.spec.ts` |
+| Live reference | https://web-production-3c194.up.railway.app/projects/{id}/design (corrected 2026-08-05 — was a fly.dev URL) |
+| Design tokens | `apps/web/src/styles/globals.css` + `color-tokens.css` |
+| Studio layout CSS | `apps/web/src/components/canvas/handoff/handoffStudio.module.css` (corrected 2026-08-05 — `designStudio.module.css` no longer exists) |
+| Studio components | `apps/web/src/components/canvas/handoff/` — see `docs/design/UIUX-DESIGNER-HANDOFF-SPEC.md` §15.4 for the full component list (corrected 2026-08-05 — `components/studio/*` was the old asset-rail implementation, now mostly deleted) |
+| Symbol glyphs | `packages/domain/src/catalog-assets.ts` (not re-verified this pass) |
+| E2E flows (QA) | `apps/web/e2e/design-studio.spec.ts` still exists but wasn't checked against the current studio in this pass — don't assume it covers `HandoffDesignStudio` without looking |
 
 **Suggested Figma structure:**
 

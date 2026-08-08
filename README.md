@@ -3,9 +3,8 @@
 Voice-first landscape design and build co-pilot for **Curtis & Co** (Melbourne).
 
 **Naming:** the product is **Workstream** everywhere in UI and docs. Curtis & Co
-stays on client-facing quotes and portal pages. Legacy Fly app hostnames
-(`construct-api`, `construct-web`) and mobile bundle IDs (`com.curtisandco.construct`)
-are unchanged until the next deploy / store submission so production does not break.
+stays on client-facing quotes and portal pages. The mobile bundle ID is
+`com.curtisandco.workstream`.
 
 Tim walks a site and talks. By the time he's at the car the survey, design,
 costing, audit and quote are ready — Stonnington stormwater pack drafted,
@@ -15,14 +14,14 @@ MYOB invoice queued, Mick on his way with the trencher.
 
 | Surface | Tech | Where |
 |---|---|---|
-| **Operator API** | Fastify (Node 22), pino, Zod | [apps/api](apps/api/) → `construct-api.fly.dev` |
-| **Operator web** | Next.js 15 (App Router), server actions, PWA | [apps/web](apps/web/) → `construct-web.fly.dev` |
+| **Operator API** | Fastify (Node 22), pino, Zod | [apps/api](apps/api/) → `api-production-a8ff1.up.railway.app` |
+| **Operator web** | Next.js 15 (App Router), server actions, PWA | [apps/web](apps/web/) → `web-production-3c194.up.railway.app` |
 | **Operator mobile** | Expo / React Native, expo-router | [apps/mobile](apps/mobile/) → not yet distributed |
 | **Schemas** | Zod | [packages/contracts](packages/contracts/) |
 | **Store** | In-memory with JSON snapshot flush | [packages/db](packages/db/) |
 | **Domain logic** | Costing, geometry, carbon | [packages/domain](packages/domain/) |
 
-Deployed on **Fly.io** (Sydney). Auth optional via Clerk; without it the API
+Deployed on **Railway**. Auth optional via Clerk; without it the API
 runs as `dev-user`.
 
 ## Getting started
@@ -74,27 +73,26 @@ the **Project hub** and surfaces the single next-step CTA on mobile.
 
 ## Deploying
 
-**CI (automatic):** push to `main` runs typecheck, tests, Docker builds, then
-deploys `construct-api` + `construct-web` when the Fly token secret is set.
-Manual re-deploy: Actions → CI → **Run workflow** → enable **Deploy to Fly**.
+**CI:** push to `main` runs typecheck, tests, Playwright, and Docker builds.
+Railway deploys automatically on push to `main`.
 
 **Local / script:**
 
 ```bash
-pnpm ci                    # mirror GitHub typecheck + test
+pnpm run ci                # mirror GitHub typecheck + test
 pnpm build:docker          # both images
 docker compose up --build  # localhost :3001 / :3002
-pnpm deploy:fly            # scripts/deploy-fly (needs flyctl auth)
+railway up                 # manual deploy (needs Railway CLI auth)
 ```
 
-See [DEPLOY.md](DEPLOY.md) for first-time Fly provisioning and secrets.
+See [PRODUCTION.md](PRODUCTION.md) for production URLs, secrets, and smoke
+checks.
 
 ### Persistence
 
 The JSON snapshot at `apps/api/data/store.json` is the source of truth.
-**Persistence currently requires re-enabling the volume mount** in
-[apps/api/fly.toml](apps/api/fly.toml) and running on a single machine.
-Without that, the API restarts wipe state.
+The Railway volume `api-volume` mounts at `/repo/apps/api/data`; keep the API
+on one instance until the database migration lands.
 
 ## Outstanding
 

@@ -40,10 +40,10 @@ export function Button({
 
   const textColor =
     variant === 'primary'
-      ? tokens.color.ink.inverted
+      ? tokens.color.surface.inverted
       : variant === 'secondary'
         ? tokens.color.ink.primary
-        : tokens.color.accent.default;
+        : tokens.color.accent.bright;
 
   return (
     <Pressable

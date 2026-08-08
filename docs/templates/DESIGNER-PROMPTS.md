@@ -16,7 +16,7 @@ Before you draw anything, read these repo docs in order:
 1. docs/DESIGNER-HANDOVER.md — product context, workflow, studio spec, tokens, what is deferred
 2. docs/DESIGN-HANDOVER-FORMAT.md — how to structure Figma and what we need at handback
 
-Live reference: https://construct-web.fly.dev
+Live reference: https://web-production-3c194.up.railway.app
 Design studio: open any project → Design → Open design studio
 
 Your job:
@@ -77,7 +77,7 @@ Hard rules:
 - Tokens align to globals.css; document deltas
 - 44px touch targets, WCAG AA, sentence case, en-AU
 
-Reference: https://construct-web.fly.dev/projects → Design → Design studio
+Reference: https://web-production-3c194.up.railway.app/projects → Design → Design studio
 ```
 
 ---

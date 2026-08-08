@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppNav } from "./AppNav";
 import s from "../styles/app.module.css";
 
 type Props = {
@@ -13,16 +14,14 @@ export function NotFoundView({
 }: Props) {
   return (
     <main className={s.pageNarrow}>
-      <header className={s.masthead}>
-        <div className={s.brand}>
-          {title}
-          <span className={s.brandSub}>Workstream</span>
-        </div>
-        <Link href="/" className={s.crumb}>
-          ← Projects
+      <AppNav summary={null} />
+      <div className={s.empty}>
+        <h1 className={s.headline}>{title}</h1>
+        <p className={s.lede}>{message}</p>
+        <Link href="/home" className={s.crumb}>
+          Go to dashboard
         </Link>
-      </header>
-      <div className={s.empty}>{message}</div>
+      </div>
     </main>
   );
 }

@@ -31,6 +31,8 @@ function layerForCategory(
       return "structure";
     case "water":
       return "irrigation";
+    case "lighting":
+      return "lighting";
     case "furniture":
       return "other";
     default:
@@ -129,9 +131,12 @@ export function spatialFactsFromCanvas(
       // % of a ~30 m garden edge as rough scale when survey metres unknown
       length += Math.hypot(b.x_pct - a.x_pct, b.y_pct - a.y_pct) * 0.3;
     }
+    const kind = zone.kind ?? "drip";
+    const isLight =
+      kind === "lighting" || kind === "lighting_conduit";
     out.push({
       id: `irrigation:${zone.id}`,
-      layer: "irrigation",
+      layer: isLight ? "lighting" : "irrigation",
       label: zone.name || "Irrigation zone",
       source: "irrigation",
       area_m2: 0,

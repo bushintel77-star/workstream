@@ -222,3 +222,100 @@ export function sunMarkerOnPlanPercent(
     Math.max(4, Math.min(96, y)),
   ];
 }
+
+/**
+ * Indicative plan shadow cast from solar azimuth/altitude.
+ * Board is north-up, y-down. Azimuth 0° = north (same as `sunPositionAt`).
+ * Shadow runs opposite the sun — Melbourne noon → south (+y).
+ */
+export type BoardShadowCast = {
+  /** Dwelling polygon translate in board % */
+  dxPct: number;
+  dyPct: number;
+  /** Glyph ellipse offset as fraction of canopy radius */
+  dxFactor: number;
+  dyFactor: number;
+  /** Indicative shadow length in metres (eave / tan(alt)) */
+  lengthM: number;
+  altitude_deg: number;
+  azimuth_deg: number;
+};
+
+export type BoardShadowOpts = {
+  /** 0.55 plant · 0.85 +5yr · 1 mature */
+  growthScale?: number;
+  /** Assumed casting height in metres (dwelling eave default). */
+  heightM?: number;
+  /** Board width in metres for % mapping (default 110). */
+  boardWidthM?: number;
+};
+
+export function boardShadowCast(
+  azimuthDeg: number,
+  altitudeDeg: number,
+  opts: BoardShadowOpts = {},
+): BoardShadowCast {
+  const growth = opts.growthScale ?? 1;
+  const heightM = opts.heightM ?? 5;
+  const boardM = opts.boardWidthM ?? 110;
+  const az = Number.isFinite(azimuthDeg) ? azimuthDeg : 0;
+  const alt = Number.isFinite(altitudeDeg) ? altitudeDeg : 0;
+
+  if (alt <= 2) {
+    return {
+      dxPct: 0,
+      dyPct: 0,
+      dxFactor: 0,
+      dyFactor: 0,
+      lengthM: 0,
+      altitude_deg: alt,
+      azimuth_deg: az,
+    };
+  }
+
+  const altRad = toRad(Math.min(78, Math.max(2.5, alt)));
+  const lengthM =
+    Math.round(
+      Math.min(16, Math.max(0.9, heightM / Math.tan(altRad))) * growth * 10,
+    ) / 10;
+
+  // Opposite sun on north-up / y-down board.
+  const rad = toRad(az);
+  const sx = -Math.sin(rad);
+  const sy = Math.cos(rad);
+
+  const dwellingPct = Math.min(
+    3.2,
+    Math.max(0.28, (lengthM / boardM) * 100 * 0.4),
+  );
+  const glyphFactor = Math.min(0.55, Math.max(0.14, 0.1 + (lengthM / 14) * 0.42));
+
+  return {
+    dxPct: Math.round(sx * dwellingPct * 100) / 100,
+    dyPct: Math.round(sy * dwellingPct * 100) / 100,
+    dxFactor: Math.round(sx * glyphFactor * 1000) / 1000,
+    dyFactor: Math.round(sy * glyphFactor * 1000) / 1000,
+    lengthM,
+    altitude_deg: alt,
+    azimuth_deg: az,
+  };
+}
+
+/**
+ * Convert a true-north solar azimuth (0° = true north, as `sunPositionAt`
+ * returns) into a board azimuth for a board whose up direction (screen-up)
+ * points at compass bearing `northBearingDeg` (the `DesignSiteFrame.north_bearing`
+ * convention). `boardShadowCast` expects a board azimuth (0° = board-up), so
+ * overshadowing on a rotated board must pass its azimuth through here first.
+ * A north-up board (bearing 0 / omitted) makes this a no-op. This is the single
+ * orientation adjustment shared by dwelling sun/shade and neighbour massing.
+ */
+export function boardAzimuthDeg(
+  trueAzimuthDeg: number,
+  northBearingDeg = 0,
+): number {
+  const t = Number.isFinite(trueAzimuthDeg) ? trueAzimuthDeg : 0;
+  const n = Number.isFinite(northBearingDeg) ? northBearingDeg : 0;
+  const a = (((t - n) % 360) + 360) % 360;
+  return Math.round(a * 10) / 10;
+}

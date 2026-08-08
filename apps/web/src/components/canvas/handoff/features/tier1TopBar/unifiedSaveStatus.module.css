@@ -1,0 +1,118 @@
+/**
+ * Unified save status — instrument-panel indicator lamp.
+ *
+ * Tactile treatment: the dot is a small recessed lamp that lights up
+ * (green for saved, amber pulse for saving, red for error). The chip
+ * itself is a flat engraved plate on the dark-slate bar — no card shadow,
+ * just a hairline inset bezel. Depth on the dot only, where it communicates
+ * state; the label stays flat.
+ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  background: transparent;
+  color: var(--tier1-bar-ink-muted);
+  font-family: var(--font-body, inherit);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--tier1-bar-line);
+  transition:
+    color 160ms var(--ws-ease, ease),
+    box-shadow 160ms var(--ws-ease, ease);
+}
+
+.chip:hover:not(:disabled) {
+  color: var(--tier1-bar-ink);
+  box-shadow: inset 0 0 0 1px var(--tier1-bar-line-strong);
+}
+
+.chip:disabled {
+  cursor: default;
+}
+
+/*
+ * The dot is the indicator lamp — a small recessed circle that lights up.
+ * Saved = solid green lamp; Saving = amber pulse; Error = red lamp.
+ * The inset shadow gives it depth (pressed into the panel).
+ */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tier1-bar-ink-muted);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, #000 40%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--tier1-bar-bg) 50%, transparent);
+  flex: none;
+  transition: background 200ms var(--ws-ease, ease);
+}
+
+.rev {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tier1-bar-ink-muted);
+  letter-spacing: 0.02em;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+/* -- Saving state: amber lamp with subtle pulse — confirms activity -- */
+.chipSaving {
+  color: var(--tier1-bar-ink);
+}
+
+.chipSaving .dot {
+  background: var(--warn);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, #000 30%, transparent),
+    0 0 6px 0 color-mix(in srgb, var(--warn) 60%, transparent);
+  animation: savePulse 1.4s var(--ws-ease, ease) infinite;
+}
+
+@keyframes savePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* -- Saved state: solid green lamp — reassures quality -- */
+.chipSaved .dot {
+  background: var(--ok);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, #000 30%, transparent),
+    0 0 4px 0 color-mix(in srgb, var(--ok) 40%, transparent);
+}
+
+.chipSaved:hover:not(:disabled) .dot {
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, #000 30%, transparent),
+    0 0 6px 0 color-mix(in srgb, var(--ok) 60%, transparent);
+}
+
+/* -- Error state: red lamp — urgent, needs attention -- */
+.chipError {
+  color: var(--block);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--block) 40%, transparent);
+}
+
+.chipError .dot {
+  background: var(--block);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, #000 30%, transparent),
+    0 0 6px 0 color-mix(in srgb, var(--block) 50%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipSaving .dot {
+    animation: none;
+  }
+}

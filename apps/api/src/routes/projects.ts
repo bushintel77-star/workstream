@@ -30,7 +30,12 @@ export default async function projectRoutes(fastify: FastifyInstance) {
       fastify.store,
       request.userId!,
       project,
-    ).catch(() => {});
+    ).catch((err) => {
+      request.log.warn(
+        { err, projectId: project.id },
+        "integration dispatch on project create failed",
+      );
+    });
     return reply.code(201).send({ project });
   });
 

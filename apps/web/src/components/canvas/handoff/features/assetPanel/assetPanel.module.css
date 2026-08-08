@@ -1,0 +1,612 @@
+/*
+ * Unified left asset panel — Fill rail grows in place into library / Path Grammar.
+ * Same left gutter slot as the former SwatchTray (left: 68px).
+ */
+
+/*
+ * Collapsed: seated IN the gallery frame's left band — paints nothing, because
+ * the frame is already the surface. Expanded / placing: lifts off as a dark
+ * translucent panel reaching over the plan.
+ */
+.panel {
+  --ink: var(--ws-frame-ink);
+  --ink-soft: var(--ws-frame-ink-dim);
+  --ink-faint: var(--ws-frame-ink-faint);
+  --glass: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  --line: var(--ws-frame-hair);
+  --elev: 0 16px 40px -10px color-mix(in srgb, var(--hc-ink) 72%, transparent);
+  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--ws-z-annotate);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: var(--font-body);
+  pointer-events: auto;
+  max-height: min(72vh, 640px);
+  animation: panelIn var(--hc-motion, 180ms) var(--ease) both;
+}
+
+/* Night lens keeps one frame language — the frame is already dark. */
+.panelNight {
+  color: var(--ws-frame-ink);
+}
+
+/*
+ * Lifted states reach over the plan, so they need their own surface: dark
+ * translucent to match the frame, never light drywall on a dark mount.
+ */
+.panel[data-state="expanded"],
+.panel[data-state="placing"] {
+  left: var(--ws-frame-left);
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-1);
+  border-radius: var(--hc-r-pop);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  border: 1px solid var(--ws-frame-hair);
+  box-shadow: var(--elev);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 var(--dock-rail-collapsed-w, 56px);
+  width: var(--dock-rail-collapsed-w, 56px);
+}
+
+/* Collapsed rail is exactly the frame band — no overhang onto the plan. */
+.panel[data-state="collapsed"] {
+  max-width: var(--ws-frame-left);
+}
+
+.panel[data-state="collapsed"] .rail {
+  flex-basis: var(--ws-frame-left);
+  width: var(--ws-frame-left);
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-femto);
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+/* Flat frame language — the swatch colour chip is the only fill. */
+.swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: var(--ws-frame-tap, 40px);
+  min-width: var(--ws-frame-tap, 40px);
+  max-width: 100%;
+  min-height: var(--ws-frame-tap, 40px);
+  padding: var(--s-1) 2px;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--hc-motion, 180ms) var(--ease),
+    color var(--hc-motion, 180ms) var(--ease);
+}
+
+.swatch:hover {
+  background: var(--ws-frame-wash);
+  color: var(--ink);
+}
+
+.swatch:active {
+  background: var(--ws-frame-wash);
+}
+
+.swatchOn,
+.swatchOn:hover {
+  background: var(--ws-frame-wash);
+  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  color: var(--ink);
+}
+
+.swatchOn .chip {
+  transform: scale(0.9);
+}
+
+.chip {
+  width: 24px;
+  height: 18px;
+  border-radius: var(--hc-r-control);
+  background: var(--wash, color-mix(in srgb, var(--planting-retain-stroke) 55%, transparent));
+  box-shadow: inset 0 0 0 1px var(--hc-line);
+  transition: transform var(--hc-motion, 180ms) var(--ease);
+}
+
+.label {
+  font-size: 7.5px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.divider {
+  width: 60%;
+  height: 1px;
+  background: var(--hc-line-soft, var(--hc-line));
+}
+
+.tool {
+  color: var(--ink-soft);
+}
+
+.toolGlyph {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  width: min(280px, 58vw);
+  min-width: 200px;
+  margin-left: var(--s-1);
+  padding-left: 8px;
+  border-left: 1px solid var(--hc-line-soft);
+  min-height: 0;
+}
+
+.libraryHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-bottom: var(--s-1);
+}
+
+.libraryHead .search {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.pinBtn {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-glass-soft);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pinBtn:hover {
+  color: var(--ink);
+}
+
+.pinBtnOn {
+  color: var(--ink);
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow),
+      inset -2px -2px 5px var(--hc-neu-light));
+}
+
+.placingHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-bottom: var(--s-1);
+}
+
+.backBtn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--text-base);
+  cursor: pointer;
+}
+
+.backBtn:hover {
+  color: var(--ink);
+  background: var(--hc-glass-soft);
+}
+
+.placingKicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.search {
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: var(--s-1);
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ws-frame) 55%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1.2;
+}
+
+.search::placeholder {
+  color: var(--ink-faint);
+}
+
+.search:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--hc-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--ws-frame) 72%, transparent);
+}
+
+.search:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 2px;
+}
+
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-bottom: 8px;
+}
+
+.filterMeta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+.filterChip {
+  min-height: 24px;
+  padding: 0 7px;
+  border-radius: var(--hc-r-control);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-femto, 9px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.filterChip[data-active="true"] {
+  background: color-mix(in srgb, var(--hc-accent) 18%, transparent);
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--hc-accent) 45%, transparent);
+}
+
+.scroll {
+  max-height: min(324px, 52vh);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Super-thin scrub rail — catalogue glass pane. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--hc-line) transparent;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--hc-line);
+  border-radius: var(--hc-r-pill);
+}
+
+.pinnedLabel {
+  margin: 0 0 4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.section+.section {
+  border-top: 1px solid var(--hc-line-soft);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  width: 100%;
+  min-height: 28px;
+  padding: var(--s-1) var(--s-1);
+  border: none;
+  border-radius: var(--hc-r-panel);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--text-micro);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sectionHead:hover {
+  background: var(--hc-glass-soft);
+  color: var(--ink);
+}
+
+.sectionHead[aria-expanded="true"] {
+  color: var(--ink);
+}
+
+.chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid currentColor;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  transition: transform 140ms var(--ease);
+}
+
+.chevron[data-open="1"] {
+  transform: rotate(90deg);
+}
+
+.count {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px var(--s-1);
+  border-radius: var(--hc-r-pill, 999px);
+  background: var(--hc-glass-soft);
+  color: var(--ink-faint);
+  font-size: var(--hc-fs-1);
+  font-weight: 600;
+  font-family: "IBM Plex Mono", monospace;
+  text-align: center;
+}
+
+.tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding: var(--s-1) 2px var(--s-3);
+}
+
+.tile {
+  flex: 0 0 auto;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--s-1);
+  width: 88px;
+  min-height: 72px;
+  padding: var(--s-2) var(--s-2);
+  border-radius: var(--hc-r-control);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tile:hover {
+  background: color-mix(in srgb, var(--hc-glass) 55%, transparent);
+  color: var(--ink);
+}
+
+.tileOn {
+  background: color-mix(in srgb, var(--hc-success, var(--ok)) 14%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--hc-success, var(--hc-accent));
+  color: var(--ink);
+}
+
+.glyph {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+
+.glyph svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.tileLabel {
+  font-size: var(--text-micro);
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: left;
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tileBotanical {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: var(--ink-faint);
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.tileScale {
+  width: 100%;
+  height: 2px;
+  margin-top: 2px;
+  border-radius: var(--hc-r-pill);
+  background: var(--hc-line-soft);
+  overflow: hidden;
+}
+
+.tileScaleFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--hc-ink-muted);
+  max-width: 100%;
+}
+
+.tileSeasons {
+  display: flex;
+  gap: var(--s-1);
+  margin-top: 2px;
+}
+
+.tileSeasonDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hc-line);
+}
+
+.tileSeasonDot[data-on="1"] {
+  background: var(--planting-new-stroke, var(--hc-success));
+}
+
+.tileSeasonDot[data-kind="sun"][data-on="1"] {
+  background: var(--hc-signal, var(--signal));
+}
+
+.tileSeasonDot[data-kind="water"][data-on="1"] {
+  background: var(--water-stroke, var(--proposed-stroke));
+}
+
+.empty {
+  margin: 0;
+  padding: var(--s-1) 2px;
+  font-size: var(--hc-fs-3);
+  color: var(--ink-faint);
+}
+
+.craftRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-bottom: var(--s-1);
+}
+
+.craftChip {
+  min-height: 40px;
+  padding: 0 var(--s-2);
+  border-radius: var(--hc-r-pill);
+  border: 1px solid var(--hc-line-soft);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-micro);
+  cursor: pointer;
+}
+
+.craftChip[data-active="true"] {
+  background: var(--ink);
+  color: var(--hc-invert);
+  border-color: var(--ink);
+}
+
+.craftFoot {
+  margin: 4px 0 0;
+  font-size: var(--text-micro);
+  color: var(--ink-soft);
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translate(-6px, -50%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+:global(.rootPrecision) .panel {
+  background: var(--hc-glass);
+  box-shadow: var(--hc-elev-2);
+  border: 1px solid var(--hc-line);
+}
+
+:global(.rootPrecision) .swatch {
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid var(--hc-line-soft);
+}
+
+:global(.rootPrecision) .swatchOn {
+  border-color: var(--ink);
+  box-shadow: var(--hc-neu-in,
+      inset 2px 2px 5px var(--hc-neu-shadow));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+
+  .swatch,
+  .chip,
+  .chevron {
+    transition: none;
+  }
+}

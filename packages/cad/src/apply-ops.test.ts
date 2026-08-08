@@ -63,6 +63,29 @@ describe("@workstream/cad", () => {
     );
   });
 
+  it("replace_entity restores a deleted entity by id", () => {
+    const { document: withLine } = applyCadOps(baseDoc(), [
+      {
+        op: "add_line",
+        layer: "HARDSCAPE",
+        start: { x: 1, y: 1 },
+        end: { x: 4, y: 4 },
+        ghost: false,
+      },
+    ]);
+    const entity = withLine.entities[0]!;
+    const { document: deleted } = applyCadOps(withLine, [
+      { op: "delete_entity", entity_id: entity.id },
+    ]);
+    expect(deleted.entities).toHaveLength(0);
+    const { document: restored, applied } = applyCadOps(deleted, [
+      { op: "replace_entity", entity },
+    ]);
+    expect(applied).toBe(1);
+    expect(restored.entities).toHaveLength(1);
+    expect(restored.entities[0]!.id).toBe(entity.id);
+  });
+
   it("exports DXF with LAYER and ENTITIES", () => {
     const { document } = applyCadOps(baseDoc(), [
       {

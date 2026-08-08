@@ -6,6 +6,8 @@ export const ProjectFileKindSchema = z.enum([
   "site_photo",
   "permit",
   "reference",
+  "byda",
+  "council_drain",
   "other",
 ]);
 export type ProjectFileKind = z.infer<typeof ProjectFileKindSchema>;
@@ -16,6 +18,8 @@ export const PROJECT_FILE_KIND_LABEL: Record<ProjectFileKind, string> = {
   site_photo: "Site photo",
   permit: "Permit",
   reference: "Reference",
+  byda: "BYDA plan",
+  council_drain: "Council drainage",
   other: "Other",
 };
 

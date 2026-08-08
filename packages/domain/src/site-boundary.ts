@@ -333,6 +333,51 @@ export function gisSnapTargets(
   );
 }
 
+/**
+ * Project a GeoJSON Polygon (EPSG:4326) into the same canvas-metre frame as
+ * a SiteBoundary (`geo_reference.canvas_origin_geo`). Used to co-register
+ * Vicmap/survey house footprints with the title ring.
+ */
+export function geoJsonPolygonToCanvasMetres(
+  polygon: GeoJsonPolygon,
+  origin: GeoCoords,
+): Array<{ x: number; y: number }> {
+  const ring = polygon.coordinates[0];
+  if (!ring || ring.length < 3) return [];
+  return openRing(ring).map(([lng, lat]) =>
+    geoToCanvasMetres({ lng, lat }, origin),
+  );
+}
+
+/**
+ * Project a GeoJSON LineString / MultiLineString into canvas metres.
+ * Used for Vicmap Property easement lines (CurvePropertyType).
+ */
+export function geoJsonLineToCanvasMetres(
+  geometry:
+    | { type: "LineString"; coordinates: LngLat[] }
+    | { type: "MultiLineString"; coordinates: LngLat[][] },
+  origin: GeoCoords,
+): Array<Array<{ x: number; y: number }>> {
+  const lines: LngLat[][] =
+    geometry.type === "LineString"
+      ? [geometry.coordinates]
+      : geometry.coordinates;
+  return lines
+    .map((line) =>
+      line
+        .filter(
+          (p): p is LngLat =>
+            Array.isArray(p) &&
+            p.length >= 2 &&
+            Number.isFinite(p[0]) &&
+            Number.isFinite(p[1]),
+        )
+        .map(([lng, lat]) => geoToCanvasMetres({ lng, lat }, origin)),
+    )
+    .filter((line) => line.length >= 2);
+}
+
 export function boundaryToGeoJsonPolygon(
   boundary: SiteBoundary,
 ): GeoJsonPolygon {

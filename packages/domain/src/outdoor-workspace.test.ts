@@ -30,4 +30,14 @@ describe("outdoorWorkspaceSpan", () => {
     expect(span.outdoor_area_m2).toBe(400);
     expect(span.width_m * span.height_m).toBeGreaterThan(200);
   });
+
+  it("does not invent an 80 m² lot when area is unknown", () => {
+    const span = outdoorWorkspaceSpan({
+      titleRing: null,
+      garden_area_m2: 0,
+    });
+    expect(span.outdoor_area_m2).toBe(0);
+    expect(span.width_m).toBe(0);
+    expect(span.height_m).toBe(0);
+  });
 });

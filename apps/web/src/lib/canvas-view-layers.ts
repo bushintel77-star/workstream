@@ -5,7 +5,7 @@ export type CanvasViewLayers = {
   ghostSuggestions: boolean;
   shade: boolean;
   easements: boolean;
-  /** 1.5 m council setback ring (council layer bucket). */
+  /** 1.5 m council setback ring overlay. */
   setback: boolean;
 };
 

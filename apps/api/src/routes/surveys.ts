@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runSurvey } from "../lib/survey-job";
+import { runPipelineJobWithTelemetry } from "../lib/queue";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function surveyRoutes(fastify: FastifyInstance) {
@@ -15,15 +16,19 @@ export default async function surveyRoutes(fastify: FastifyInstance) {
         return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       }
       try {
-        const survey = await runSurvey(fastify.store, ownerId, projectId);
+        const survey = await runPipelineJobWithTelemetry(
+          { kind: "survey", ownerId, projectId },
+          async () => await runSurvey(fastify.store, ownerId, projectId),
+        );
         return reply.code(201).send({ survey });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Survey failed";
+        const message =
+          err instanceof Error ? err.message : "Survey failed";
         if (message.startsWith("Project not found")) {
           return reply.code(404).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Survey failed" });
       }
     },
   );

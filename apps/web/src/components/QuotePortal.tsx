@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Tier1SavingsLedger } from "./tier1";
+import { KitButton } from "./ui/kit";
 import styles from "../app/portal/quote/[token]/quote.module.css";
 
 export type PortalCosting = {
@@ -19,6 +19,8 @@ export type PortalCosting = {
     is_provisional: boolean;
     sku?: string;
   }>;
+  /** Non-costed written assumptions — machine access, derived-level provenance. */
+  assumptions?: string[];
 };
 
 export type PortalQuoteData = {
@@ -56,7 +58,7 @@ const SCENARIOS = [
   {
     id: "standard",
     label: "Standard",
-    note: "Tier-1 redesign as specified. Curtis recommended scope.",
+    note: "Recommended scope — architectural massing as specified.",
   },
   {
     id: "buffer",
@@ -92,6 +94,12 @@ export function QuotePortal({
     allCostings.find((c) => c.scenario === "standard") ??
     allCostings[0] ??
     null;
+  const activeScenarioLabel =
+    SCENARIOS.find((item) => item.id === active?.scenario)?.label ??
+    active?.scenario.replace(/(^|-)([a-z])/g, (_match, prefix: string, letter: string) =>
+      `${prefix ? " " : ""}${letter.toUpperCase()}`,
+    ) ??
+    "selected";
 
   const generated = useMemo(
     () =>
@@ -122,12 +130,11 @@ export function QuotePortal({
         <section className={styles.hero}>
           {data.hero_url ? (
             <div className={styles.heroVisual}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={data.hero_url} alt="Site aerial" />
             </div>
           ) : null}
           <span className={styles.kicker}>
-            {tier1 ? "Tier-1 architectural massing" : "Prepared for your garden"}
+            {tier1 ? "Architectural massing" : "Prepared for your garden"}
           </span>
           <h1 className={styles.address}>{project.address}</h1>
           {tier1 && (
@@ -142,7 +149,14 @@ export function QuotePortal({
         {survey && (
           <section className={styles.summary}>
             <Metric label="Lot" value={`${survey.lot_area_m2} m²`} />
-            <Metric label="House" value={`${survey.house_area_m2} m²`} />
+            <Metric
+              label="Existing dwelling"
+              value={
+                survey.house_area_m2 > 0
+                  ? `${survey.house_area_m2} m²`
+                  : "Not available"
+              }
+            />
             <Metric label="Garden" value={`${survey.garden_area_m2} m²`} />
           </section>
         )}
@@ -214,6 +228,19 @@ export function QuotePortal({
                   </span>
                 </div>
 
+                {active.assumptions && active.assumptions.length > 0 ? (
+                  <div className={styles.assumptions}>
+                    <p className={styles.assumptionsKicker}>
+                      Quote assumptions
+                    </p>
+                    <ul>
+                      {active.assumptions.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
                 <table className={styles.lineItems}>
                   <thead>
                     <tr>
@@ -251,24 +278,33 @@ export function QuotePortal({
         <section className={styles.acceptSection}>
           {active ? (
             <>
-              <Link
-                href={`/portal/deposit/${token}`}
-                className={styles.acceptButton}
+              <KitButton
+                as="a"
+                href={
+                  data.deposit_url
+                    ? `${data.deposit_url}${data.deposit_url.includes("?") ? "&" : "?"}scenario=${encodeURIComponent(active.scenario)}`
+                    : `/portal/deposit/${token}?scenario=${encodeURIComponent(active.scenario)}`
+                }
+                variant="accent"
+                size="lg"
+                data-testid="portal-deposit-cta"
+                data-scenario={active.scenario}
               >
                 Accept &amp; pay {aud2(active.total * 0.2)} deposit
-              </Link>
+              </KitButton>
               <p className={styles.acceptNote}>
-                A 20% deposit secures your garden on the Standard scenario.
-                Balance billed in stages as works progress.
+                A 20% deposit secures your garden on the {activeScenarioLabel}{" "}
+                scenario ({active.scenario}). Balance billed in stages as works
+                progress.
               </p>
             </>
           ) : (
             <>
-              <span className={styles.acceptButtonDisabled}>
+              <KitButton variant="secondary" size="lg" disabled>
                 Deposit unavailable
-              </span>
+              </KitButton>
               <p className={styles.acceptNote}>
-                Curtis &amp; Co will issue the deposit link once the quote total
+                Workstream will issue the deposit link once the quote total
                 is confirmed.
               </p>
             </>

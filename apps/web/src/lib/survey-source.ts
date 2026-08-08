@@ -1,13 +1,10 @@
 import type { Survey } from "./api";
+import { isSeedSurveyLot } from "@workstream/domain";
 
-/** Mock survey uses fixed 15×40 m lot and edge ids front/east/back/west. */
+/** Legacy 15×40 seed survey — areas are fiction; Trace the title instead. */
 export function isMockSurveyLot(survey: Survey): boolean {
-  const ids = new Set(survey.measurements.map((m) => m.edge_id));
-  return (
-    survey.lot_area_m2 === 600 &&
-    ids.has("front") &&
-    ids.has("east") &&
-    ids.has("back") &&
-    ids.has("west")
-  );
+  return isSeedSurveyLot({
+    lot_area_m2: survey.lot_area_m2,
+    measurements: survey.measurements,
+  });
 }

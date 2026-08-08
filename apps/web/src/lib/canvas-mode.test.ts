@@ -43,7 +43,7 @@ describe("canvas progressive disclosure", () => {
         hasCad: false,
         hasQuote: false,
       }),
-    ).toBe("cad");
+    ).toBe("sketch");
   });
 
   it("keeps CAD unlocked with or without sketch placements", () => {

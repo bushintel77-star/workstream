@@ -1,0 +1,56 @@
+---
+description: End-of-build gate — never call work finished without verification
+alwaysApply: true
+---
+
+# End of build
+
+A feature/fix is **not finished** when the code is written. It is finished when
+the gate below has been executed (or an item is explicitly waived with a reason).
+
+## Gate (in order)
+
+1. **Typecheck** — `pnpm typecheck` (or package filter) green.
+2. **Unit tests** — run the tests you touched / added; green.
+3. **Kept smoke** — if the change has a regression risk (canvas camera, cream,
+   deploy-critical UI), a Playwright or scripted probe must **exist and pass**,
+   not merely be authored. Writing `e2e/*.spec.ts` without a green run ≠ done.
+4. **Commit + push** — only when the user asked to ship / finish / PR; then push
+   so Railway (or CI) can deploy.
+5. **Live check** — when the job includes deploy or “live”, probe the deployed
+   URL (or CI status) for the commit / behaviour. Code on `main` without a live
+   check is incomplete if live was in scope.
+
+## Hard rules
+
+- Do **not** say “done”, “shipped”, or “Phase closed” if any in-scope gate step
+  failed, hung, or was skipped.
+- A hung webServer / e2e / curl is a **blocker**, not a footnote. Retry with
+  `reuseExistingServer` (start API/web yourself) or fix the hang, then re-run.
+- One-off probe scripts that get deleted are not a substitute for a kept smoke
+  when the gap analysis called for CI/e2e.
+- Prefer: fail the gate loudly over a green narrative with missing evidence.
+
+## Canvas-specific (Workstream)
+
+- Phase 0 cream/zoom: parchment outside camera + `aerial-image-slot`
+  `data-hide-paper="1"` — covered by `e2e/canvas-cream-zoom.spec.ts`.
+- View rotate: pointer/wheel must use inverse camera (`clientToBoardPct`); do
+  not ship rotate without that path verified.
+- **Camera chrome (gates B+C):** frosted / dock / HUD UI MUST render through
+  `CameraChrome` (portals to `camera-chrome-root` sibling of `.zoomWorld`,
+  stamps `data-camera-chrome`). Kept detector:
+  `e2e/canvas-chrome-detector.spec.ts` — must stay at **zero**
+  `[data-testid=zoom-world] [data-camera-chrome]` after zoom-out. Do not use
+  `scale(1/--studio-zoom)` as a substitute. See `docs/STUDIO-STYLING-AND-UX.md`
+  § Camera parenting.
+- **Nested chrome portals:** a component rendered inside a `FrameDrawer` must
+  NOT wrap itself in `CameraChrome` — the drawer already portals. A second
+  portal escapes the drawer and drops the component on the drawing with whatever
+  absolute offset its CSS still carries (this is what parked the Sheets strip
+  mid-plan and ate elevation callout clicks). Cover:
+  `e2e/elevation-callout-hit.spec.ts`.
+- **Contrast:** `e2e/canvas-contrast-aa.spec.ts` must stay at zero WCAG AA text
+  failures across all five modes. When touching ink tokens or any translucent
+  chrome surface, run it — it flattens the composited background, so it catches
+  what eyeballing a token value cannot.

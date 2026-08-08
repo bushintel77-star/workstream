@@ -1,0 +1,102 @@
+.card {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  z-index: var(--ws-z-chrome);
+  width: min(236px, calc(100% - 96px));
+  padding: var(--s-2) var(--s-2) var(--s-2);
+  border: 1px solid var(--hc-line-soft);
+  border-radius: var(--hc-r-panel, 14px);
+  background: var(--hc-glass-soft);
+  backdrop-filter: none;
+  box-shadow: var(--hc-elev-1);
+  color: var(--hc-ink);
+  cursor: pointer;
+  opacity: 0.88;
+  text-align: left;
+  transition:
+    opacity var(--hc-motion, 180ms) var(--ws-ease, ease),
+    transform var(--hc-motion, 180ms) var(--ws-ease, ease);
+}
+
+.card:hover,
+.card:focus-visible {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+
+.kicker,
+.open,
+.label,
+.value {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.kicker {
+  font-size: var(--text-pico);
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.open {
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--hc-ink-muted);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+.metric {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  overflow: hidden;
+  font-size: 7.5px;
+  letter-spacing: 0.02em;
+  color: var(--hc-ink-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  overflow: hidden;
+  font-size: var(--text-micro);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--hc-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .card {
+    right: 8px;
+    top: 8px;
+    width: min(210px, calc(100% - 76px));
+    padding: var(--s-2) var(--s-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

@@ -4,12 +4,12 @@ The repo has **three deploy surfaces**:
 
 | Surface | Where it runs | What you run |
 | --- | --- | --- |
-| `apps/api` (Fastify) | Fly.io `construct-api`, Sydney | `flyctl deploy` (see below) |
-| `apps/web` (Next.js) | Fly.io `construct-web`, Sydney | `flyctl deploy` (see below) |
+| `apps/api` (Fastify) | Railway `api-production-a8ff1` | Push to `main` (auto-deploy) or `railway up` |
+| `apps/web` (Next.js) | Railway `web-production-3c194` | Push to `main` (auto-deploy) or `railway up` |
 | `apps/mobile` (Expo Router) | Expo / EAS Build | `eas build` / `eas submit` |
 
 **Aerial Design Studio** and operator studio UI live in **`apps/web`**
-(`https://construct-web.fly.dev`). API + mobile are separate targets.
+(`https://web-production-3c194.up.railway.app`). API + mobile are separate targets.
 
 The contracts, db, domain, ui, and client packages have no deploy
 target — they're consumed by the apps at build time.
@@ -18,60 +18,52 @@ target — they're consumed by the apps at build time.
 
 ```bash
 gh --version      # GitHub CLI, authed with repo + workflow scopes
-flyctl version    # ≥ 0.4 for `--copy-config`
+railway version   # Railway CLI
 node --version    # ≥ 22
 pnpm --version    # ≥ 9.15
 ```
 
-You also need a Fly.io account on the `tgarbis@yahoo.com.au` org (or
-update `app =` in `apps/api/fly.toml`).
+You also need a Railway account with access to the Workstream project.
 
-## First-time API provision
+## Railway setup
 
-```bash
-# 1. Create the Fly app (no VMs yet)
-flyctl launch \
-  --no-deploy \
-  --copy-config \
-  --config apps/api/fly.toml \
-  --name construct-api \
-  --region syd
-
-# 2. Create the persistent volume for data/store.json and data/outputs/
-flyctl volumes create construct_data \
-  --region syd \
-  --size 1 \
-  --config apps/api/fly.toml
-
-# 3. Set the required + optional secrets
-flyctl secrets set \
-  CORS_ORIGIN="https://construct-web.fly.dev" \
-  PUBLIC_API_URL="https://construct-api.fly.dev" \
-  --config apps/api/fly.toml
-
-# Optional — without these the API runs in dev-fallback mode
-flyctl secrets set \
-  CLERK_SECRET_KEY="sk_…" \
-  MAPBOX_TOKEN="pk.…" \
-  ANTHROPIC_API_KEY="sk-ant-…" \
-  OPENAI_API_KEY="sk-…" \
-  VICMAP_ENABLED="true" \
-  --config apps/api/fly.toml
-
-# 4. First deploy
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile
-```
-
-Subsequent deploys:
+The Railway project already exists. To connect a fresh checkout:
 
 ```bash
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api
-
-flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web \
-  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+railway link
 ```
 
-Set on **construct-web** (runtime): `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+Set variables through the Railway dashboard or CLI. On the API service
+(`api-production-a8ff1`):
+
+```
+CORS_ORIGIN=https://web-production-3c194.up.railway.app
+PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
+```
+
+Optional — without these the API runs in dev-fallback mode:
+
+```
+CLERK_SECRET_KEY=sk_…
+MAPBOX_TOKEN=pk.…
+ANTHROPIC_API_KEY=sk-ant-…
+OPENAI_API_KEY=sk-…
+```
+
+Vicmap Property/buildings use keyless DELWP GeoServer WFS — no VICMAP secret.
+
+The API durability volume `api-volume` mounts at `/repo/apps/api/data`.
+
+Set on the web service (`web-production-3c194`): `CLERK_SECRET_KEY`,
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+
+## Deploys
+
+Railway auto-deploys on push to `main`. To deploy manually:
+
+```bash
+railway up
+```
 
 ## Mobile (Expo)
 
@@ -93,7 +85,7 @@ eas submit -p android
 Set the EAS env vars to point at the deployed API:
 
 ```
-EXPO_PUBLIC_API_URL=https://construct-api.fly.dev
+EXPO_PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
 EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_…
 ```
 
@@ -107,29 +99,12 @@ production.
 
 1. `pnpm install --frozen-lockfile`
 2. `pnpm typecheck` + `pnpm test`
-3. `docker build` for `apps/api/Dockerfile` and `apps/web/Dockerfile` (web
-   passes `NEXT_PUBLIC_API_URL=https://construct-api.fly.dev`)
-4. On `main` push: `flyctl deploy` both apps + smoke `curl` health checks
+3. Playwright e2e
+4. `docker build` for `apps/api/Dockerfile` and `apps/web/Dockerfile`
 
-**CI web deploy `unauthorized`:** Use **two per-app deploy tokens** in GitHub
-secrets (regenerate with `flyctl tokens create deploy -a <app>`):
+Railway handles the deploy from `main` automatically.
 
-| Secret | Fly app |
-|--------|---------|
-| `FLY_API_TOKEN` (or legacy `BROKKER`) | `construct-api` |
-| `FLY_API_WEB` | `construct-web` |
-
-CI job `deploy construct-web` reads `FLY_API_WEB` first. Tokens must be deploy-scoped
-for the named app on the same Fly org. Until both secrets are valid, deploy web from
-a machine with `flyctl auth login`:
-
-```bash
-flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
-  -a construct-web --remote-only \
-  --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
-```
-
-Local mirror: `pnpm ci` and `pnpm build:docker`. Full gap audit:
+Local mirror: `pnpm run ci` and `pnpm build:docker`. Full gap audit:
 [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md).
 
 ## Local dev

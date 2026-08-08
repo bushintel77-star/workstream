@@ -1,0 +1,1684 @@
+/*
+ * Present workspace — instrument-dial styling.
+ *
+ * Layered shadow treatment: thin inset outline (1px hairline) + 5-6 stacked
+ * shadow layers building from tight ambient contact to soft diffuse falloff.
+ * The effect reads as a physical component you could reach out and touch —
+ * like a real dial or instrument bezel sitting on a panel.
+ *
+ * Shadow recipe (applied to elevated surfaces — page paper, panels, overlays):
+ *   1. inset 0 0 0 1px hairline  — the thin outline edge
+ *   2. 0 1px 2px  — tight contact shadow (the surface meeting the desk)
+ *   3. 0 2px 4px  — ambient occlusion band
+ *   4. 0 4px 8px  — near diffuse
+ *   5. 0 8px 16px — mid diffuse
+ *   6. 0 16px 32px — far diffuse falloff
+ *
+ * All layers use color-mix with --ink-primary at low opacity so they adapt
+ * to light/dark mode automatically.
+ */
+
+.root {
+  /*
+   * Present material palette — the working-drawing "paper document" surface.
+   * Defined once here (single source) and derived from the v2 neutral tokens,
+   * not raw hex: the studio retired the warm blush/umber light palette
+   * (see docs/STUDIO-STYLING-AND-UX.md § Forbidden looks), so paper/ink read
+   * as neutral sheet tokens. One place to re-theme the whole workspace.
+   */
+  --pv-paper: var(--gray-l-25);
+  --pv-plan-bg: var(--gray-l-100);
+  --pv-ink: var(--text-primary);
+  --pv-ink-muted: var(--text-secondary);
+  --pv-ink-faint: var(--text-muted);
+  --pv-ink-hint: var(--text-muted);
+  --pv-print-line: var(--border);
+  --pv-r-chip: var(--r-sm);
+  --pv-r-hair: var(--r-sm);
+
+  position: absolute;
+  inset: 0;
+  display: flex;
+  background: var(--gray-l-50);
+  z-index: 10;
+}
+
+/* -- Sidebar (document list) -- */
+
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: var(--gray-l-0);
+  border-right: 1px solid var(--gray-l-200);
+  overflow-y: auto;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.surfaceBanner {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--gray-l-100) 80%, transparent);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.surfaceBanner[data-state="ghost"] {
+  border-color: color-mix(in srgb, var(--proposed-stroke) 40%, var(--border));
+  color: var(--text-primary);
+}
+
+.surfaceBanner[data-state="locked"] {
+  border-color: color-mix(in srgb, var(--existing-stroke) 35%, var(--border));
+}
+
+.surfaceBanner[data-state="empty"] {
+  color: var(--text-muted);
+}
+
+.backBtn {
+  padding: var(--s-1) var(--s-3);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--gray-l-100);
+  color: var(--text-secondary);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.backBtn:hover {
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 80%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
+.sidebarTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.createBtn {
+  padding: var(--s-2) var(--s-4);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--text-primary);
+  color: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 20%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 16%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 4px 8px color-mix(in srgb, var(--text-primary) 6%, transparent);
+  transition: box-shadow 160ms var(--ease);
+}
+
+.createBtn:hover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 30%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 20%, transparent),
+    0 2px 6px color-mix(in srgb, var(--text-primary) 14%, transparent),
+    0 6px 16px color-mix(in srgb, var(--text-primary) 10%, transparent);
+}
+
+.createBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: inset 0 0 0 1px var(--border, rgba(27, 28, 30, 0.2));
+}
+
+.error {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--gray-l-0));
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 20%, transparent);
+}
+
+.docList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.docList li {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-1);
+}
+
+.docItem {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-2) var(--s-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  min-height: 44px;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition:
+    background 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.docItem:hover {
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
+}
+
+.docItemActive {
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 70%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.docTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.docDelete {
+  flex: none;
+  padding: var(--s-1) var(--s-2);
+  font-size: 11px;
+  font-family: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  min-height: 44px;
+  align-self: center;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.docDelete:hover {
+  color: var(--color-danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 30%, transparent);
+}
+
+.empty {
+  padding: var(--s-3);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* -- Workspace (composer) -- */
+
+.workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  background: var(--gray-l-0);
+  border-bottom: 1px solid var(--gray-l-200);
+  flex-wrap: wrap;
+}
+
+.toolbarTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titleInput {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--gray-l-100);
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--text-primary) 4%, transparent);
+  transition: box-shadow 140ms var(--ease);
+}
+
+.titleInput:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 90%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.select {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--gray-l-100);
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 90%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--text-primary) 4%, transparent);
+  transition: box-shadow 140ms var(--ease);
+}
+
+.select:hover {
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 0 0 1px var(--text-primary),
+    inset 0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.saveStatus {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* -- Page canvas -- */
+
+.pageArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-5);
+  /* Extra bottom padding so the scrollable canvas content (page paper +
+     panelAddBar pills) terminates above the .pageNav pagination bar, not
+     behind it. Audit 1.1/1.2 — bottom bar was obscuring canvas content. */
+  padding-bottom: calc(var(--s-5) + 72px);
+  overflow: auto;
+  background: var(--gray-l-100);
+}
+
+.pageCanvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.pagePaper {
+  /* Content theme vars — palette/font apply to page paper only, never chrome. */
+  --pv-content-font: "Fraunces", "IBM Plex Serif", Georgia, serif;
+  --pv-accent: var(--text-primary);
+
+  position: relative;
+  width: min(100%, 800px);
+  aspect-ratio: 420 / 297;
+  background: var(--pv-paper);
+  color: var(--pv-ink);
+  font-family: var(--pv-content-font);
+  border: 0;
+  border-radius: var(--r-sm);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 4px 8px color-mix(in srgb, var(--text-primary) 4%, transparent),
+    0 8px 16px color-mix(in srgb, var(--text-primary) 3%, transparent),
+    0 16px 32px color-mix(in srgb, var(--text-primary) 2%, transparent);
+  overflow: hidden;
+}
+
+.pagePaper[data-palette="stone"] {
+  --pv-paper: var(--gray-l-25);
+  --pv-ink: var(--gray-l-900);
+  --pv-ink-muted: var(--gray-l-700);
+  --pv-plan-bg: var(--gray-l-100);
+  --pv-accent: var(--gray-l-800);
+}
+
+.pagePaper[data-palette="sage"] {
+  --pv-paper: color-mix(in srgb, var(--gray-l-25) 88%, var(--sage-l-400));
+  --pv-ink: color-mix(in srgb, var(--gray-l-900) 82%, var(--forest-l-600));
+  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 70%, var(--sprout-l-500));
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 90%, var(--sage-l-400));
+  --pv-accent: var(--sprout-l-500);
+}
+
+.pagePaper[data-palette="ink"] {
+  --pv-paper: var(--gray-l-900);
+  --pv-ink: var(--gray-l-50);
+  --pv-ink-muted: var(--gray-l-300);
+  --pv-plan-bg: var(--gray-l-800);
+  --pv-accent: var(--gray-l-100);
+}
+
+.pagePaper[data-palette="blush"] {
+  /* Warm accent on page content only — never studio chrome. */
+  --pv-paper: color-mix(in srgb, var(--gray-l-25) 86%, var(--crimson-l-600));
+  --pv-ink: color-mix(in srgb, var(--gray-l-900) 88%, var(--crimson-l-600));
+  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 75%, var(--crimson-l-600));
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 88%, var(--crimson-l-600));
+  --pv-accent: var(--crimson-l-600);
+}
+
+.pagePaper[data-palette="parchment"] {
+  --pv-paper: var(--sheet-paper, var(--gray-l-50));
+  --pv-ink: var(--sheet-ink, var(--gray-l-900));
+  --pv-ink-muted: var(--sheet-ink-muted, var(--gray-l-700));
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 88%, var(--gray-l-200));
+  --pv-accent: var(--gray-l-800);
+}
+
+.pagePaper[data-font="fraunces"] {
+  --pv-content-font: "Fraunces", "IBM Plex Serif", Georgia, serif;
+}
+
+.pagePaper[data-font="sora"] {
+  --pv-content-font: "Sora", "IBM Plex Sans", system-ui, sans-serif;
+}
+
+.pagePaper[data-font="inter"] {
+  --pv-content-font: "Inter", "IBM Plex Sans", system-ui, sans-serif;
+}
+
+.pagePaper[data-font="handwritten"] {
+  --pv-content-font: var(--font-hand), "Architects Daughter", cursive;
+}
+
+.issuedBadge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 8px;
+}
+
+.pageEmpty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.panelAddBar {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+}
+
+.pageCanvas[data-drafting-suspended="1"] .panelRemove,
+.pageCanvas[data-drafting-suspended="1"] .resizeHandle {
+  display: none;
+}
+
+.pageCanvas[data-drafting-suspended="1"] .panel {
+  cursor: default;
+}
+
+.addBarSep {
+  height: 24px;
+  margin: 0 4px;
+}
+
+.addPanelBtn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--gray-l-0);
+  color: var(--text-secondary);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.addPanelBtn:hover {
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 80%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 2px 6px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+/* -- Panel -- */
+
+.panel {
+  position: absolute;
+  border: 0;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  cursor: move;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 4%, transparent);
+  transition: box-shadow 160ms var(--ease);
+}
+
+.panel:hover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 80%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
+    0 2px 6px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 4px 12px color-mix(in srgb, var(--text-primary) 4%, transparent);
+}
+
+.panelContent {
+  width: 100%;
+  height: 100%;
+  padding: var(--s-3);
+  overflow: auto;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.panelHeading {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pv-ink);
+}
+
+.panelBody {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--pv-ink);
+}
+
+.panelPlaceholder {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pv-ink-hint);
+  font-style: italic;
+}
+
+.panelEdit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  width: 100%;
+  height: 100%;
+}
+
+.panelHeadingInput {
+  padding: var(--s-1) var(--s-2);
+  font-size: 15px;
+  font-family: inherit;
+  background: rgba(0, 0, 0, 0.04);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  color: var(--pv-ink);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.panelBodyInput {
+  flex: 1;
+  padding: var(--s-1) var(--s-2);
+  font-size: 14px;
+  font-family: inherit;
+  background: rgba(0, 0, 0, 0.04);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  color: var(--pv-ink);
+  resize: none;
+  min-height: 60px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.panelDoneBtn {
+  align-self: flex-start;
+  padding: var(--s-1) var(--s-3);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--pv-ink);
+  color: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.panelRemove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  background: rgba(229, 72, 77, 0.1);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  color: var(--color-danger);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent);
+  z-index: 6;
+}
+
+.panel:hover .panelRemove {
+  opacity: 1;
+}
+
+/* -- Resize handles -- */
+
+.resizeHandle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--gray-l-0);
+  border: 0;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 90%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.panel:hover .resizeHandle {
+  opacity: 1;
+}
+
+.resizeNw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.resizeNe {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.resizeSw {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.resizeSe {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}
+
+/* -- Image panel -- */
+
+.panelImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* -- Widget panel -- */
+
+.widgetChrome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-2);
+  background: rgba(0, 0, 0, 0.03);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  height: 100%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.widgetType {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pv-ink-faint);
+}
+
+.widgetText {
+  margin: 0;
+  font-size: 14px;
+  color: var(--pv-ink);
+}
+
+/* -- Pickers (image + widget) -- */
+
+.picker {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90%, 480px);
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-md);
+  z-index: 100;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 4px 8px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 8px 16px color-mix(in srgb, var(--text-primary) 4%, transparent),
+    0 16px 32px color-mix(in srgb, var(--text-primary) 3%, transparent);
+}
+
+.pickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-2) var(--s-3);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
+}
+
+.pickerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pickerClose {
+  padding: var(--s-1) var(--s-2);
+  font-size: 12px;
+  font-family: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.pickerClose:hover {
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 70%, transparent);
+}
+
+.pickerList {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 8px 12px;
+  background: var(--gray-l-100);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 4%, transparent);
+  transition: box-shadow 140ms var(--ease);
+}
+
+.pickerItem:hover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 80%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
+    0 2px 6px color-mix(in srgb, var(--text-primary) 5%, transparent);
+}
+
+.pickerThumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--pv-r-chip);
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
+}
+
+.pickerLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pickerEmpty {
+  padding: var(--s-4);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* -- Page nav -- */
+
+.pageNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--gray-l-0) 92%, transparent),
+      color-mix(in srgb, var(--gray-l-0) 80%, transparent));
+  border-top: 0;
+  /* Strict stacking context — pagination bar sits above canvas content
+     without masking interactive elements. Audit 1.1. */
+  position: relative;
+  z-index: 5;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent),
+    0 -1px 2px color-mix(in srgb, var(--text-primary) 3%, transparent);
+}
+
+.pageTabs {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.pageTab {
+  padding: var(--s-1) var(--s-3);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--gray-l-100);
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 4%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.pageTab:hover {
+  color: var(--text-secondary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.pageTabActive {
+  background: var(--text-primary);
+  color: var(--gray-l-0);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 20%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.pageCount {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.addPageBtn {
+  padding: var(--s-1) var(--s-4);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--gray-l-100);
+  color: var(--text-secondary);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 4%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.addPageBtn:hover {
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+/* -- Empty workspace -- */
+
+.emptyWorkspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+}
+
+.emptyLead {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.noPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* -- Plan dissection (Phase 2) -- */
+
+.dissectBtn {
+  padding: var(--s-1) var(--s-3);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--color-danger);
+  color: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 16%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-danger) 10%, transparent),
+    0 4px 8px color-mix(in srgb, var(--color-danger) 6%, transparent);
+  transition: box-shadow 160ms var(--ease);
+}
+
+.dissectBtn:hover:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 35%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 20%, transparent),
+    0 2px 6px color-mix(in srgb, var(--color-danger) 14%, transparent),
+    0 6px 16px color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.dissectBtn:disabled {
+  opacity: 0.4;
+  cursor: wait;
+  box-shadow: inset 0 0 0 1px var(--border, rgba(27, 28, 30, 0.2));
+}
+
+/* -- Plan crop SVG -- */
+
+.planCropSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: var(--pv-plan-bg);
+}
+
+.planCropLabel {
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  font-size: 10px;
+  color: var(--pv-ink-muted);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 1px 4px;
+  border-radius: var(--pv-r-hair);
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* -- Ghost review overlay -- */
+
+.ghostReview {
+  position: absolute;
+  bottom: 60px;
+  right: 16px;
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-md);
+  z-index: 100;
+  padding: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 4px 8px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 8px 16px color-mix(in srgb, var(--text-primary) 4%, transparent),
+    0 16px 32px color-mix(in srgb, var(--text-primary) 3%, transparent);
+}
+
+.ghostReviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ghostReviewTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ghostReviewClose {
+  padding: 2px 8px;
+  font-size: 12px;
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent);
+}
+
+.ghostReviewEmpty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.ghostAcceptAll {
+  padding: var(--s-1) var(--s-3);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-danger);
+  color: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  align-self: flex-start;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.ghostList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.ghostItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-2);
+  background: var(--gray-l-100);
+  border: 0;
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
+}
+
+.ghostInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ghostLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ghostReason {
+  font-size: 11px;
+  color: var(--color-danger);
+  text-transform: capitalize;
+}
+
+.ghostCrop {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.ghostActions {
+  display: flex;
+  gap: var(--s-1);
+  flex-shrink: 0;
+}
+
+.ghostAcceptBtn {
+  padding: var(--s-1) var(--s-2);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-danger);
+  color: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.ghostRejectBtn {
+  padding: var(--s-1) var(--s-2);
+  font-size: 11px;
+  background: none;
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  cursor: pointer;
+  color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent);
+}
+
+/* -- Tablet+ -- */
+
+@media (min-width: 768px) {
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+
+  .pagePaper {
+    width: 800px;
+  }
+}
+
+.printBtn {
+  padding: var(--s-1) var(--s-3);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--gray-l-0);
+  color: var(--text-secondary);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  min-height: 44px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.printBtn:hover {
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 80%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 2px 6px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+/* -- Swatch board catalog wiring -- */
+
+.swatchGrid {
+  display: grid;
+  gap: var(--s-1);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.swatchCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  background: rgba(255, 255, 255, 0.6);
+  min-height: 0;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.swatchChip {
+  display: block;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 20px;
+  border-radius: var(--pv-r-hair);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.swatchLabel {
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--pv-ink-faint);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.swatchCaption {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--pv-ink-faint);
+  font-style: italic;
+}
+
+.swatchEditBtn {
+  position: absolute;
+  bottom: 4px;
+  right: 28px;
+  padding: var(--s-1) var(--s-2);
+  font-size: 10px;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.9);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  color: var(--pv-ink-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 5;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.panel[data-panel-kind="swatch_board"]:hover .swatchEditBtn {
+  opacity: 1;
+}
+
+.swatchPicker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  width: 240px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-md);
+  z-index: 100;
+  padding: var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 4px 8px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 8px 16px color-mix(in srgb, var(--text-primary) 4%, transparent),
+    0 16px 32px color-mix(in srgb, var(--text-primary) 3%, transparent);
+}
+
+.swatchPickerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.swatchPickerTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.swatchPickerClose {
+  padding: var(--s-1) var(--s-2);
+  font-size: 11px;
+  font-family: inherit;
+  background: var(--color-danger);
+  color: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.swatchPickerEmpty {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.swatchPickerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.swatchPickerItem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-1) var(--s-2);
+  font-family: inherit;
+  font-size: 12px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition:
+    background 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.swatchPickerItem[data-selected="1"] {
+  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 70%, transparent);
+}
+
+.swatchPickerItem .swatchChip {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  min-height: 24px;
+}
+
+.swatchPickerItem .swatchLabel {
+  flex: 1;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+.swatchPickerCheck {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+/* -- Phase 2 stretch: stale detection + sync -- */
+
+.panel[data-stale="1"] {
+  box-shadow:
+    inset 0 0 0 1px var(--color-warning),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 4%, transparent);
+}
+
+.syncBtn {
+  position: absolute;
+  top: 4px;
+  right: 60px;
+  padding: var(--s-1) var(--s-2);
+  font-size: 10px;
+  font-family: inherit;
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--gray-l-0));
+  border: 0;
+  border-radius: var(--pv-r-chip);
+  color: var(--color-warning);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 5;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-warning) 25%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.panel[data-stale="1"]:hover .syncBtn {
+  opacity: 1;
+}
+
+/* -- Phase 3: editorial formatting -- */
+
+.formatBtn {
+  padding: var(--s-1) var(--s-3);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--gray-l-0);
+  color: var(--text-secondary);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 40%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
+  transition:
+    color 140ms var(--ease),
+    box-shadow 140ms var(--ease);
+}
+
+.formatBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 60%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 2px 6px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.formatBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: inset 0 0 0 1px var(--border, rgba(27, 28, 30, 0.2));
+}
+
+.templateBtn {
+  padding: var(--s-1) var(--s-3);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--color-danger);
+  color: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-danger) 8%, transparent),
+    0 4px 8px color-mix(in srgb, var(--color-danger) 5%, transparent);
+  transition: box-shadow 160ms var(--ease);
+}
+
+.templateBtn:hover:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 35%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 16%, transparent),
+    0 2px 6px color-mix(in srgb, var(--color-danger) 12%, transparent),
+    0 6px 16px color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.templateBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: inset 0 0 0 1px var(--border, rgba(27, 28, 30, 0.2));
+}
+
+.panel[data-format-pending="1"] {
+  box-shadow:
+    inset 0 0 0 2px var(--color-danger),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 4%, transparent);
+}
+
+.formatReview {
+  position: absolute;
+  bottom: 60px;
+  right: 16px;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: var(--gray-l-0);
+  border: 0;
+  border-radius: var(--r-md);
+  z-index: 100;
+  padding: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 4px 8px color-mix(in srgb, var(--text-primary) 5%, transparent),
+    0 8px 16px color-mix(in srgb, var(--text-primary) 4%, transparent),
+    0 16px 32px color-mix(in srgb, var(--text-primary) 3%, transparent);
+}
+
+.formatRationale {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  padding: var(--s-1) var(--s-2);
+  background: var(--gray-l-100);
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
+}
+
+/* -- Phase 4: live widget content -- */
+
+.widgetLive {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.widgetValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--pv-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.widgetSub {
+  font-size: 11px;
+  color: var(--pv-ink-faint);
+}
+
+/* -- Template slot visual preview (format ghost overlay) -- */
+
+.formatGhostLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.formatGhostBox {
+  position: absolute;
+  border: 2px dashed var(--color-danger);
+  border-radius: var(--pv-r-chip);
+  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--s-1);
+  pointer-events: auto;
+  cursor: pointer;
+  min-width: 60px;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+.formatGhostRationale {
+  font-size: 9px;
+  line-height: 1.3;
+  color: var(--color-danger);
+  background: var(--gray-l-0);
+  padding: 2px 4px;
+  border-radius: var(--pv-r-hair);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 50%, transparent);
+}
+
+.formatGhostActions {
+  display: flex;
+  gap: var(--s-1);
+  justify-content: flex-end;
+}
+
+.formatGhostAccept,
+.formatGhostReject {
+  padding: 2px 8px;
+  font-size: 10px;
+  font-family: inherit;
+  border: 0;
+  border-radius: var(--pv-r-hair);
+  cursor: pointer;
+  background: var(--gray-l-0);
+  color: var(--text-secondary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border, rgba(27, 28, 30, 0.2)) 60%, transparent);
+}
+
+.formatGhostAccept {
+  background: var(--color-danger);
+  color: var(--gray-l-0);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.formatGhostAccept:hover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 35%, transparent),
+    0 1px 4px color-mix(in srgb, var(--color-danger) 14%, transparent);
+}
+
+.formatGhostReject:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-strong, rgba(27, 28, 30, 0.4)) 70%, transparent);
+}
+
+/* -- Print media (Phase 1a — print-to-PDF) -- */
+
+@media print {
+  .root {
+    position: static;
+    background: var(--gray-l-0);
+  }
+
+  .sidebar,
+  .toolbar,
+  .panelAddBar,
+  .pageNav,
+  .ghostReview,
+  .formatReview,
+  .formatGhostLayer,
+  .picker {
+    display: none !important;
+  }
+
+  .workspace {
+    display: block;
+    overflow: visible;
+  }
+
+  .pageArea {
+    padding: 0;
+    overflow: visible;
+    background: var(--gray-l-0);
+  }
+
+  .pageCanvas {
+    gap: 0;
+  }
+
+  .pagePaper {
+    width: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    page-break-after: always;
+  }
+
+  .panel {
+    border: 1px solid var(--pv-print-line);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .panelRemove,
+  .resizeHandle,
+  .syncBtn {
+    display: none !important;
+  }
+
+  .panel:hover .panelRemove,
+  .panel:hover .resizeHandle,
+  .panel:hover .syncBtn {
+    opacity: 0 !important;
+  }
+}

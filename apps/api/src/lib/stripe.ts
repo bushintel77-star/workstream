@@ -134,7 +134,7 @@ export async function createDepositSession(
   if (!isStripeLive()) {
     return {
       session_id: `dev-cs-${Date.now()}`,
-      checkout_url: `https://workstream-web.fly.dev/portal/dev-checkout/${Date.now()}`,
+      checkout_url: `https://web-production-3c194.up.railway.app/portal/dev-checkout/${Date.now()}`,
       deposit_amount_aud: depositAud,
       mode: "dev_fallback",
     };
@@ -160,6 +160,7 @@ export async function createDepositSession(
     form.set("metadata[owner_id]", args.owner_id);
   }
   form.set("metadata[deposit_pct]", String(pct));
+  form.set("metadata[scenario]", args.costing.scenario);
 
   const secretKey = getOwnerEnv("STRIPE_SECRET_KEY");
   if (!secretKey) {

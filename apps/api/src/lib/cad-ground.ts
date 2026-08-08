@@ -12,7 +12,7 @@ export function parseMapboxStaticAerial(uri: string): {
   height: number;
 } | null {
   const match = uri.match(
-    /\/static\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
+    /\/static\/(?:[^/]+\/)?(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
   );
   if (!match) return null;
   return {
@@ -47,12 +47,13 @@ function titleRing(survey: Survey): LngLat[] | null {
 
 /**
  * CAD template size from outdoor (title/garden) area on the aerial survey.
- * Prefer lot title bbox metres; fall back to aerial frame, then ?garden area.
+ * Prefer lot title bbox metres; fall back to aerial frame, then ≈garden area.
  */
 export function groundSpanFromSurvey(survey: Survey): {
   width_m: number;
   height_m: number;
   outdoor_area_m2: number;
+  fromAerial: boolean;
 } {
   const outdoor = outdoorWorkspaceSpan({
     titleRing: titleRing(survey),
@@ -62,7 +63,7 @@ export function groundSpanFromSurvey(survey: Survey): {
 
   // Title/garden footprint is the CAD workspace when it looks like a real lot.
   if (outdoor.width_m >= 4 && outdoor.height_m >= 4) {
-    return outdoor;
+    return { ...outdoor, fromAerial: false };
   }
 
   const aerial = aerialSpanMetres(survey);
@@ -70,8 +71,9 @@ export function groundSpanFromSurvey(survey: Survey): {
     return {
       ...aerial,
       outdoor_area_m2: outdoor.outdoor_area_m2,
+      fromAerial: true,
     };
   }
 
-  return outdoor;
+  return { ...outdoor, fromAerial: false };
 }

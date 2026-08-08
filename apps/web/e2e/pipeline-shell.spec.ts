@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { pipelineShell } from "./helpers";
+import { handoffStudio, pipelineShell } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 test.describe("One canvas modes", () => {
   let projectId: string;
@@ -22,33 +22,45 @@ test.describe("One canvas modes", () => {
     expect(survey.ok()).toBeTruthy();
   });
 
-  test("project root is site canvas with mode strip", async ({ page }) => {
+  test("project root is handoff studio with mode strip", async ({ page }) => {
     await page.goto(`/projects/${projectId}`);
-    await expect(page.getByTestId("site-canvas")).toBeVisible({
+    await expect(handoffStudio(page)).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible();
     await expect(pipelineShell(page)).toHaveCount(0);
   });
 
-  test("mode strip progressive disclosure unlocks after survey", async ({
-    page,
-  }) => {
-    await page.goto(`/projects/${projectId}`);
+  test("mode strip switches Survey → Sketch → CAD", async ({ page }) => {
+    // After survey job, empty `?mode=` suggests CAD — pin Survey first.
+    await page.goto(`/projects/${projectId}?mode=survey`);
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible({
       timeout: 30_000,
     });
-    // Aerial from beforeAll → Sketch unlocked; CAD stays gated until sketch.
+    await expect(page.getByTestId("canvas-mode-survey")).toBeVisible();
     await expect(page.getByTestId("canvas-mode-sketch")).toBeVisible();
-    await expect(page.getByTestId("canvas-mode-cad")).toHaveAttribute(
-      "aria-disabled",
-      "true",
+    await expect(page.getByTestId("canvas-mode-cad")).toBeVisible();
+    await expect(handoffStudio(page)).toHaveAttribute(
+      "data-canvas-mode",
+      "survey",
     );
+
     await page.getByTestId("canvas-mode-sketch").click();
     await expect(page).toHaveURL(/mode=sketch/);
-    await expect(page.getByTestId("site-canvas")).toHaveAttribute(
+    await expect(handoffStudio(page)).toHaveAttribute(
       "data-canvas-mode",
       "sketch",
+    );
+
+    await page.getByTestId("canvas-mode-cad").click();
+    await expect(page).toHaveURL(/mode=cad/);
+    await expect(handoffStudio(page)).toHaveAttribute("data-canvas-mode", "cad");
+
+    await page.getByTestId("canvas-mode-survey").click();
+    await expect(page).toHaveURL(/mode=survey/);
+    await expect(handoffStudio(page)).toHaveAttribute(
+      "data-canvas-mode",
+      "survey",
     );
   });
 
@@ -57,7 +69,7 @@ test.describe("One canvas modes", () => {
     await expect(page).toHaveURL(
       new RegExp(`/projects/${projectId}\\?mode=sketch`),
     );
-    await expect(page.getByTestId("site-canvas")).toBeVisible({
+    await expect(handoffStudio(page)).toBeVisible({
       timeout: 30_000,
     });
   });

@@ -1,0 +1,35 @@
+.pill {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  z-index: var(--ws-z-frame);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 8px 12px;
+  border-radius: var(--hc-r-pill);
+  background: var(--hc-frost);
+  border: 1px solid var(--hc-line-soft);
+  box-shadow: 0 6px 20px var(--hc-neu-shadow);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--hc-ink);
+  pointer-events: auto;
+}
+
+.pill button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  min-width: 28px;
+  min-height: 28px;
+  font-size: var(--text-base);
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.pill button:hover {
+  opacity: 1;
+}

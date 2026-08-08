@@ -45,8 +45,26 @@ import type {
   ActivityEvent,
   ActivityAction,
   OrchestrationOverlayRecord,
-  DesignBranchSnapshot,
-  FreezeDesignBranchInput,
+  ShareRevision,
+  CreateShareRevisionInput,
+  ShareDecisionInput,
+  ShareSnapshot,
+  QuoteDoc,
+  UpsertQuoteDocInput,
+  TelemetryReading,
+  PresentationDocument,
+  CreatePresentationDocumentInput,
+  UpdatePresentationDocumentInput,
+  OperatorPlantProfile,
+  OperatorPlantProfileInput,
+  DesignBranch,
+  DesignRevision,
+  CreateDesignBranchInput,
+  CommitDesignBranchInput,
+  MergeDesignBranchInput,
+  DocumentationPackage,
+  CreateDocumentationPackageInput,
+  IssueDocumentationPackageInput,
   LeftoverStock,
   RegisterLeftoverInput,
 } from "@workstream/contracts";
@@ -98,7 +116,30 @@ export type {
   ActivityEvent,
   ActivityAction,
   OrchestrationOverlayRecord,
+  ShareRevision,
+  CreateShareRevisionInput,
+  ShareDecisionInput,
+  ShareSnapshot,
+  TelemetryReading,
+  PresentationDocument,
+  CreatePresentationDocumentInput,
+  UpdatePresentationDocumentInput,
+  OperatorPlantProfile,
+  OperatorPlantProfileInput,
+  DesignBranch,
+  DesignRevision,
+  CreateDesignBranchInput,
+  CommitDesignBranchInput,
+  MergeDesignBranchInput,
+  DocumentationPackage,
+  CreateDocumentationPackageInput,
+  IssueDocumentationPackageInput,
 };
+
+export type TelemetryReadingInput = Omit<
+  TelemetryReading,
+  "id" | "created_at" | "project_id"
+>;
 
 export type PhotoMeasurementInput = Omit<
   PhotoMeasurement,
@@ -188,6 +229,12 @@ export interface Store {
     input: AuditInput,
   ): Promise<Audit>;
   getAudit(ownerId: string, projectId: string): Promise<Audit | null>;
+  getQuoteDoc(ownerId: string, projectId: string): Promise<QuoteDoc | null>;
+  upsertQuoteDoc(
+    ownerId: string,
+    projectId: string,
+    input: UpsertQuoteDocInput,
+  ): Promise<QuoteDoc>;
   upsertOutput(
     ownerId: string,
     projectId: string,
@@ -247,6 +294,15 @@ export interface Store {
     ownerId: string,
     projectId: string,
   ): Promise<PhotoMeasurement[]>;
+  createTelemetryReading(
+    ownerId: string,
+    projectId: string,
+    input: TelemetryReadingInput,
+  ): Promise<TelemetryReading>;
+  listTelemetryReadings(
+    ownerId: string,
+    projectId: string,
+  ): Promise<TelemetryReading[]>;
   listIntegrations(ownerId: string): Promise<IntegrationSecret[]>;
   getIntegration(
     ownerId: string,
@@ -295,12 +351,91 @@ export interface Store {
   getDesignCanvas(
     ownerId: string,
     projectId: string,
+    opts?: { branchId?: string },
   ): Promise<DesignCanvas | null>;
   upsertDesignCanvas(
     ownerId: string,
     projectId: string,
     input: UpsertDesignCanvasInput,
+    opts?: { branchId?: string },
   ): Promise<DesignCanvas>;
+  listDesignBranches(
+    ownerId: string,
+    projectId: string,
+  ): Promise<DesignBranch[]>;
+  getDesignBranch(
+    ownerId: string,
+    projectId: string,
+    branchId: string,
+  ): Promise<DesignBranch | null>;
+  createDesignBranch(
+    ownerId: string,
+    projectId: string,
+    input: CreateDesignBranchInput,
+    authorId: string,
+  ): Promise<{ branch: DesignBranch; revision: DesignRevision }>;
+  commitDesignBranch(
+    ownerId: string,
+    projectId: string,
+    branchId: string,
+    input: CommitDesignBranchInput,
+    authorId: string,
+  ): Promise<DesignRevision>;
+  abandonDesignBranch(
+    ownerId: string,
+    projectId: string,
+    branchId: string,
+  ): Promise<DesignBranch | null>;
+  getDesignRevision(
+    ownerId: string,
+    projectId: string,
+    revisionId: string,
+  ): Promise<DesignRevision | null>;
+  diffDesignBranches(
+    ownerId: string,
+    projectId: string,
+    leftBranchId: string,
+    rightBranchId: string,
+  ): Promise<{
+    left: DesignCanvas | null;
+    right: DesignCanvas | null;
+    base: DesignCanvas | null;
+  }>;
+  mergeDesignBranch(
+    ownerId: string,
+    projectId: string,
+    sourceBranchId: string,
+    input: MergeDesignBranchInput,
+    authorId: string,
+  ): Promise<
+    | { ok: true; branch: DesignBranch; revision: DesignRevision; canvas: DesignCanvas }
+    | {
+        ok: false;
+        conflicts: Array<{ kind: string; id: string; label: string }>;
+      }
+  >;
+  listDocumentationPackages(
+    ownerId: string,
+    projectId: string,
+  ): Promise<DocumentationPackage[]>;
+  getDocumentationPackage(
+    ownerId: string,
+    projectId: string,
+    packId: string,
+  ): Promise<DocumentationPackage | null>;
+  createDocumentationPackage(
+    ownerId: string,
+    projectId: string,
+    input: CreateDocumentationPackageInput & {
+      schedules: DocumentationPackage["schedules"];
+    },
+  ): Promise<DocumentationPackage>;
+  issueDocumentationPackage(
+    ownerId: string,
+    projectId: string,
+    packId: string,
+    input: IssueDocumentationPackageInput,
+  ): Promise<DocumentationPackage | null>;
   getCadDocument(
     ownerId: string,
     projectId: string,
@@ -360,20 +495,53 @@ export interface Store {
     projectId: string,
     input: Pick<OrchestrationOverlayRecord, "dismissed_ids" | "accepted_ids">,
   ): Promise<OrchestrationOverlayRecord>;
-  listDesignBranches(
+  listShareRevisions(
     ownerId: string,
     projectId: string,
-  ): Promise<DesignBranchSnapshot[]>;
-  freezeDesignBranch(
+  ): Promise<ShareRevision[]>;
+  getShareRevisionByToken(token: string): Promise<ShareRevision | null>;
+  createShareRevision(
     ownerId: string,
     projectId: string,
-    input: FreezeDesignBranchInput,
-  ): Promise<DesignBranchSnapshot>;
-  activateDesignBranch(
+    snapshot: ShareSnapshot,
+  ): Promise<ShareRevision | null>;
+  recordShareDecision(
+    token: string,
+    input: ShareDecisionInput,
+  ): Promise<
+    | { ok: true; revision: ShareRevision }
+    | { ok: false; reason: "not_found" | "superseded" | "already_decided" }
+  >;
+  listPresentationDocuments(
     ownerId: string,
     projectId: string,
-    branchId: string,
-  ): Promise<DesignBranchSnapshot | null>;
+  ): Promise<PresentationDocument[]>;
+  getPresentationDocument(
+    ownerId: string,
+    projectId: string,
+    docId: string,
+  ): Promise<PresentationDocument | null>;
+  createPresentationDocument(
+    ownerId: string,
+    projectId: string,
+    input: CreatePresentationDocumentInput,
+  ): Promise<PresentationDocument>;
+  updatePresentationDocument(
+    ownerId: string,
+    projectId: string,
+    docId: string,
+    input: UpdatePresentationDocumentInput,
+  ): Promise<PresentationDocument | null>;
+  deletePresentationDocument(
+    ownerId: string,
+    projectId: string,
+    docId: string,
+  ): Promise<boolean>;
+  getOperatorPlantProfile(ownerId: string): Promise<OperatorPlantProfile | null>;
+  upsertOperatorPlantProfile(
+    ownerId: string,
+    input: OperatorPlantProfileInput,
+  ): Promise<OperatorPlantProfile>;
   listLeftovers(ownerId: string): Promise<LeftoverStock[]>;
   registerLeftover(
     ownerId: string,

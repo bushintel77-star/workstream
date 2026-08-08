@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import styles from "./toast-host.module.css";
 
 type ToastKind = "info" | "success" | "error";
@@ -74,8 +82,10 @@ export function ToastHost({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const value = useMemo(() => ({ show }), [show]);
+
   return (
-    <ToastContext.Provider value={{ show }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div
         aria-live={toasts.some((t) => t.kind === "error") ? "assertive" : "polite"}
@@ -118,14 +128,12 @@ function ToastItem({
   );
 }
 
+const NOOP_TOAST: ToastContextValue = {
+  show: () => {
+    /* no-op outside ToastHost */
+  },
+};
+
 export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) {
-    return {
-      show: () => {
-        /* no-op */
-      },
-    };
-  }
-  return ctx;
+  return useContext(ToastContext) ?? NOOP_TOAST;
 }

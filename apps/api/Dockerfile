@@ -47,6 +47,7 @@ WORKDIR /repo
 
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV NODE_OPTIONS=--experimental-sqlite
 
 # Bring across the workspace manifest + built artefacts
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./

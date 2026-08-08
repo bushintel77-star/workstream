@@ -10,8 +10,8 @@ pnpm typecheck
 pnpm test
 
 if ($Docker) {
-  $apiUrl = "https://construct-api.fly.dev"
-  docker build -f apps/api/Dockerfile -t construct-api:local .
-  docker build -f apps/web/Dockerfile --build-arg "NEXT_PUBLIC_API_URL=$apiUrl" -t construct-web:local .
-  Write-Host "Docker images: construct-api:local, construct-web:local"
+  $apiUrl = "https://api-production-a8ff1.up.railway.app"
+  docker build -f apps/api/Dockerfile -t workstream-api:local .
+  docker build -f apps/web/Dockerfile --build-arg "NEXT_PUBLIC_API_URL=$apiUrl" -t workstream-web:local .
+  Write-Host "Docker images: workstream-api:local, workstream-web:local"
 }

@@ -7,7 +7,7 @@ import {
 import { requireAuth } from "../plugins/auth";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 import {
-  autoTraceSiteBoundary,
+  autoTraceSiteBoundaryWithBuilding,
   getSiteBoundaryDoc,
   ingestBoundaryGeoJson,
   lockSiteBoundaryDoc,
@@ -78,13 +78,13 @@ export default async function boundaryRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: body.error.flatten() });
       }
       try {
-        const boundary = await autoTraceSiteBoundary(
+        const result = await autoTraceSiteBoundaryWithBuilding(
           fastify.store,
           ownerId,
           projectId,
           body.data.prefer_gis,
         );
-        return reply.code(201).send({ boundary });
+        return reply.code(201).send(result);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Auto-trace failed";
@@ -177,6 +177,43 @@ export default async function boundaryRoutes(fastify: FastifyInstance) {
       if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       const ok = await resetSiteBoundaryDoc(fastify.store, ownerId, projectId);
       return reply.send({ deleted: ok });
+    },
+  );
+
+  /** Council drainage GeoJSON → canvas-metre lines for BYDA-style digitise. */
+  fastify.post(
+    "/:projectId/stormwater-geojson",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      const body = request.body as { geojson?: unknown } | null;
+      if (
+        body == null ||
+        typeof body !== "object" ||
+        body.geojson == null ||
+        (typeof body.geojson !== "object" && typeof body.geojson !== "string")
+      ) {
+        return reply.code(400).send({ error: "geojson required" });
+      }
+      try {
+        const { ingestStormwaterGeoJson } = await import(
+          "../lib/stormwater-ingest"
+        );
+        const result = await ingestStormwaterGeoJson(
+          fastify.store,
+          ownerId,
+          projectId,
+          body.geojson,
+        );
+        return reply.code(201).send(result);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Stormwater ingest failed";
+        return reply.code(400).send({ error: message });
+      }
     },
   );
 }

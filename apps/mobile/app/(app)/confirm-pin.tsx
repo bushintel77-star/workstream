@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -13,6 +12,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { tokens } from "@workstream/ui";
 import { useWorkstreamApi } from "../../src/lib/api";
 
+/**
+ * First-create locate loader only — reopening a project never hits this route.
+ */
 export default function ConfirmPinScreen() {
   const router = useRouter();
   const api = useWorkstreamApi();
@@ -26,66 +28,75 @@ export default function ConfirmPinScreen() {
   const lngN = Number(lng);
   const coordsOk = Number.isFinite(latN) && Number.isFinite(lngN);
 
+  const started = useRef(false);
+  const [phase, setPhase] = useState<
+    "locating" | "measuring" | "ready" | "error"
+  >("locating");
   const [aerialUri, setAerialUri] = useState<string | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const status =
+    phase === "locating"
+      ? "Locating your property…"
+      : phase === "measuring"
+        ? "Measuring up the property…"
+        : phase === "ready"
+          ? "Opening site…"
+          : "Could not open site";
+
   useEffect(() => {
-    if (!coordsOk) {
-      setLoadingPreview(false);
-      return;
-    }
+    if (!coordsOk || !address?.trim() || started.current) return;
+    started.current = true;
     let cancelled = false;
-    (async () => {
-      setLoadingPreview(true);
+
+    void (async () => {
+      const t0 = Date.now();
       try {
-        const preview = await api.geocodePreview(latN, lngN);
-        if (!cancelled) setAerialUri(preview.aerial_uri);
-      } catch {
-        if (!cancelled) setAerialUri(null);
-      } finally {
-        if (!cancelled) setLoadingPreview(false);
+        const previewPromise = api
+          .geocodePreview(latN, lngN)
+          .catch(() => null);
+        const createPromise = api.createProject({
+          address: address.trim(),
+          lat: latN,
+          lng: lngN,
+        });
+
+        const preview = await previewPromise;
+        if (cancelled) return;
+        if (preview?.aerial_uri) setAerialUri(preview.aerial_uri);
+
+        const locateWait = 900 - (Date.now() - t0);
+        if (locateWait > 0) {
+          await new Promise((r) => setTimeout(r, locateWait));
+        }
+        if (cancelled) return;
+        setPhase("measuring");
+
+        const measureStart = Date.now();
+        const project = await createPromise;
+        if (cancelled) return;
+
+        const measureWait = 1400 - (Date.now() - measureStart);
+        if (measureWait > 0) {
+          await new Promise((r) => setTimeout(r, measureWait));
+        }
+        if (cancelled) return;
+
+        setPhase("ready");
+        await new Promise((r) => setTimeout(r, 500));
+        if (cancelled) return;
+        router.replace(`/(app)/project/${project.id}`);
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Failed to create project");
+        setPhase("error");
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [api, coordsOk, latN, lngN]);
-
-  async function createAndRecord() {
-    if (!address?.trim() || !coordsOk) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const project = await api.createProject({
-        address: address.trim(),
-        lat: latN,
-        lng: lngN,
-      });
-      router.replace(`/(app)/recording?projectId=${project.id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create project");
-      setSubmitting(false);
-    }
-  }
-
-  async function createOnly() {
-    if (!address?.trim() || !coordsOk) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const project = await api.createProject({
-        address: address.trim(),
-        lat: latN,
-        lng: lngN,
-      });
-      router.replace(`/(app)/project/${project.id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create project");
-      setSubmitting(false);
-    }
-  }
+  }, [address, api, coordsOk, latN, lngN, router]);
 
   if (!address || !coordsOk) {
     return (
@@ -102,66 +113,33 @@ export default function ConfirmPinScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.kicker}>CONFIRM SITE</Text>
-        <Text style={styles.heading}>Does the pin look right?</Text>
+      <View style={styles.content}>
+        <Text style={styles.kicker}>NEW SITE</Text>
+        <Text style={styles.heading}>{status}</Text>
         <Text style={styles.address}>{address}</Text>
-        <Text style={styles.coords}>
-          {latN.toFixed(5)}, {lngN.toFixed(5)}
+        <Text style={styles.lede}>
+          Vicmap title on aerial — the view you design from.
         </Text>
 
         <View style={styles.aerialFrame}>
-          {loadingPreview ? (
-            <ActivityIndicator color={tokens.color.accent.default} />
-          ) : aerialUri ? (
+          {aerialUri ? (
             <Image
               source={{ uri: aerialUri }}
               style={styles.aerial}
               resizeMode="cover"
-              accessibilityLabel="Satellite preview of the site"
+              accessibilityLabel="Locating property aerial"
             />
           ) : (
-            <Text style={styles.aerialFallback}>
-              Aerial preview unavailable. You can still continue — survey will
-              geocode the address.
-            </Text>
+            <ActivityIndicator color={tokens.color.accent.default} />
           )}
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <Pressable
-          style={[styles.primaryBtn, submitting && styles.btnBusy]}
-          onPress={createAndRecord}
-          disabled={submitting}
-          accessibilityRole="button"
-          accessibilityLabel="Confirm pin and start recording"
-        >
-          {submitting ? (
-            <ActivityIndicator color={tokens.color.ink.inverted} />
-          ) : (
-            <Text style={styles.primaryBtnText}>Looks right — record →</Text>
-          )}
-        </Pressable>
-        <Pressable
-          style={styles.secondaryBtn}
-          onPress={createOnly}
-          disabled={submitting}
-          accessibilityRole="button"
-          accessibilityLabel="Confirm pin without recording"
-        >
-          <Text style={styles.secondaryBtnText}>Confirm, record later</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => router.back()}
-          disabled={submitting}
-          accessibilityRole="button"
-          accessibilityLabel="Adjust address"
-        >
-          <Text style={styles.ghost}>Adjust address</Text>
-        </Pressable>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {phase === "error" ? (
+          <Pressable onPress={() => router.back()} accessibilityRole="button">
+            <Text style={styles.link}>Go back</Text>
+          </Pressable>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -173,6 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.surface.base,
   },
   content: {
+    flex: 1,
     paddingHorizontal: tokens.space[5],
     paddingTop: tokens.space[5],
     gap: tokens.space[3],
@@ -197,13 +176,15 @@ const styles = StyleSheet.create({
     color: tokens.color.ink.primary,
   },
   address: {
-    fontSize: tokens.type.body.fontSize,
+    fontSize: tokens.type.title.fontSize,
+    lineHeight: tokens.type.title.lineHeight,
+    fontWeight: tokens.type.title.fontWeight,
     color: tokens.color.ink.primary,
   },
-  coords: {
-    fontSize: tokens.type.caption.fontSize,
-    color: tokens.color.ink.tertiary,
-    fontVariant: ["tabular-nums"],
+  lede: {
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
+    color: tokens.color.ink.secondary,
   },
   aerialFrame: {
     marginTop: tokens.space[2],
@@ -213,62 +194,22 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.surface.sunken,
     borderWidth: 1,
     borderColor: tokens.color.line.hairline,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
   },
   aerial: {
     width: "100%",
     height: "100%",
   },
-  aerialFallback: {
-    padding: tokens.space[4],
-    fontSize: tokens.type.caption.fontSize,
-    color: tokens.color.ink.secondary,
-    textAlign: "center",
-  },
   error: {
-    fontSize: tokens.type.caption.fontSize,
     color: tokens.color.semantic.block,
+    fontSize: tokens.type.body.fontSize,
   },
   link: {
-    color: tokens.color.accent.default,
-    fontWeight: "600",
-  },
-  footer: {
-    paddingHorizontal: tokens.space[5],
-    paddingBottom: tokens.space[4],
-    gap: tokens.space[3],
-  },
-  primaryBtn: {
-    height: 56,
-    borderRadius: tokens.radius.md,
-    backgroundColor: tokens.color.accent.default,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  btnBusy: { opacity: 0.85 },
-  primaryBtnText: {
+    color: tokens.color.ink.secondary,
     fontSize: tokens.type.body.fontSize,
-    fontWeight: "600",
-    color: tokens.color.ink.inverted,
-  },
-  secondaryBtn: {
-    height: 48,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
-    borderColor: tokens.color.line.strong,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  secondaryBtnText: {
-    fontSize: tokens.type.body.fontSize,
-    fontWeight: "600",
-    color: tokens.color.ink.primary,
-  },
-  ghost: {
     textAlign: "center",
-    fontSize: tokens.type.caption.fontSize,
-    color: tokens.color.ink.tertiary,
-    paddingVertical: tokens.space[2],
+    minHeight: 44,
+    paddingTop: 12,
   },
 });

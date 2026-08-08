@@ -1,0 +1,130 @@
+.dock {
+  position: absolute;
+  top: 4.5rem;
+  right: 1rem;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(70vh, 36rem);
+  overflow: auto;
+  padding: 0.85rem 1rem 1rem;
+  border-radius: var(--hc-r-pop, 12px);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  border: 1px solid var(--ws-frame-hair);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--hc-ink) 40%, transparent);
+  color: var(--ws-frame-ink);
+  z-index: 40;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.close,
+.btn,
+.btnGhost {
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--hc-r-control, 8px);
+  border: 1px solid var(--ws-frame-hair);
+  background: transparent;
+  color: inherit;
+  padding: 0.35rem 0.65rem;
+}
+
+.btn {
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
+}
+
+.createRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.input {
+  flex: 1;
+  font: inherit;
+  font-size: 16px;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--hc-r-control, 8px);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 55%, transparent);
+  color: inherit;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ws-frame-hair) 70%, transparent);
+}
+
+.row[data-status="merged"],
+.row[data-status="abandoned"] {
+  opacity: 0.55;
+}
+
+.meta {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.error {
+  color: var(--hc-danger);
+  font-size: 0.85rem;
+}
+
+.diff,
+.conflicts {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ws-frame-hair);
+}
+
+.diff h3,
+.conflicts h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.conflictRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.conflictRow select {
+  font: inherit;
+  font-size: 16px;
+  padding: 0.35rem;
+  border-radius: var(--hc-r-control, 8px);
+}

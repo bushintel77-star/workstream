@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { KitButton } from "../components/ui/kit";
 import s from "../styles/app.module.css";
 
 export default function ErrorBoundary({
@@ -10,6 +12,12 @@ export default function ErrorBoundary({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    void import("../lib/sentry").then(({ captureWebError }) => {
+      captureWebError(error, { boundary: "app", digest: error.digest });
+    });
+  }, [error]);
+
   return (
     <main className={s.pageNarrow}>
       <header className={s.masthead}>
@@ -17,10 +25,17 @@ export default function ErrorBoundary({
           Something went wrong
           <span className={s.brandSub}>Workstream</span>
         </div>
-        <Link href="/" className={s.crumb}>
+        <Link href="/home" className={s.crumb}>
           ← Projects
         </Link>
       </header>
+
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden style={{ opacity: 0.3, marginBottom: 16 }}>
+        <circle cx="32" cy="32" r="28" stroke="var(--ink-tertiary)" strokeWidth="1.5" />
+        <line x1="32" y1="32" x2="48" y2="16" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
+        <line x1="32" y1="32" x2="20" y2="48" stroke="var(--ink-secondary)" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="32" cy="32" r="3" fill="var(--accent)" />
+      </svg>
 
       <h1 className={s.headline}>That didn&apos;t land.</h1>
       <p className={s.lede}>
@@ -29,15 +44,15 @@ export default function ErrorBoundary({
         through.
       </p>
 
-      {error.digest && (
+      {error.digest ? (
         <p className={`${s.mono} ${s.dim} ${s.tiny}`}>ref: {error.digest}</p>
-      )}
+      ) : null}
 
       <div className={s.actionBar}>
-        <button type="button" className={s.btn} onClick={() => reset()}>
+        <KitButton variant="secondary" size="sm" onClick={() => reset()}>
           Try again
-        </button>
-        <Link href="/" className={s.btnGhost}>
+        </KitButton>
+        <Link href="/home" className={s.crumb}>
           Back to projects
         </Link>
       </div>

@@ -1,0 +1,149 @@
+/*
+ * Live measures — matte sidecar dock (no frosted haze).
+ */
+
+.rail {
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --glass: var(--hc-glass);
+  --glass-border: var(--hc-line);
+  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+
+  /* Position owned by RightDataLane — was absolute right/top. */
+  width: 100%;
+  max-height: min(52vh, 480px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-2) var(--s-2);
+  border-radius: var(--hc-r-panel, 14px);
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: none;
+  box-shadow: var(--hc-elev-1);
+  color: var(--ink);
+  pointer-events: auto;
+  overflow: hidden;
+  opacity: 0.92;
+  transition: opacity var(--hc-motion, 180ms) var(--ease);
+}
+
+.rail:hover,
+.rail[data-expanded="true"] {
+  opacity: 1;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.summary {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-micro);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.srLive {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  min-height: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.groupTitle {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--hc-fs-1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  min-height: 20px;
+  padding: 2px 0;
+  border-radius: 4px;
+}
+
+.flash {
+  background: var(--hc-accent-wash);
+}
+
+.label {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.value {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-micro);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    transition: none;
+  }
+}

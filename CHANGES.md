@@ -37,7 +37,7 @@ Last updated: 2026-05-21.
 ## Verification
 
 ```bash
-pnpm ci
+pnpm run ci
 pnpm test:e2e   # design-studio.spec.ts
 ```
 

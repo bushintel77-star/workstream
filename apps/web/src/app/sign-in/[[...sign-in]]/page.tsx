@@ -8,19 +8,19 @@ export const dynamic = "force-dynamic";
 
 export default function SignInPage() {
   if (!clerkEnabled) {
-    redirect("/");
+    redirect("/home");
   }
   return (
     <main className={s.pageNarrow}>
       <header className={s.masthead}>
         <div className={s.brand}>
-          Curtis &amp; Co
+          Workstream
           <span className={s.brandSub}>Workstream · Sign in</span>
         </div>
       </header>
       <SignIn />
       <p className={s.meta}>
-        <Link href="/">← Back to projects</Link>
+        <Link href="/home">← Back to projects</Link>
       </p>
     </main>
   );

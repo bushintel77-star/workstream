@@ -1,0 +1,78 @@
+.root {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  z-index: var(--ws-z-veil);
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  max-width: calc(100% - 24px);
+  min-height: 44px;
+  overflow-x: auto;
+  transform: translateX(-50%);
+  color: var(--hc-ink-muted);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-nano);
+  font-variant-numeric: tabular-nums;
+  scrollbar-width: none;
+}
+
+.rootHeader {
+  position: static;
+  top: auto;
+  left: auto;
+  transform: none;
+  z-index: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 32px;
+  padding: 0;
+}
+
+.root::-webkit-scrollbar {
+  display: none;
+}
+
+.mode {
+  flex: none;
+  padding: 0 var(--s-2);
+  color: var(--hc-ink);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.segment {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 44px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--hc-line-soft);
+  border-radius: var(--hc-r-control);
+  background: var(--hc-glass-soft);
+  box-shadow: var(--hc-elev-1);
+  color: var(--hc-ink-muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--hc-motion) var(--ws-ease),
+    color var(--hc-motion) var(--ws-ease);
+}
+
+.segment:hover {
+  background: var(--hc-glass);
+  color: var(--hc-ink);
+}
+
+.isolated {
+  border-color: color-mix(in srgb, var(--hc-danger) 32%, var(--hc-line-soft));
+  color: var(--hc-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}

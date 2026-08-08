@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useSignUp } from "@clerk/clerk-expo";
+import { isClerkAPIResponseError, useSignUp } from "@clerk/clerk-expo";
 import { tokens } from "@workstream/ui";
 
 export default function SignUpScreen() {
@@ -37,8 +37,12 @@ export default function SignUpScreen() {
       await signUp.create({ emailAddress: email, password });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Sign up failed");
+    } catch (err) {
+      setError(
+        isClerkAPIResponseError(err)
+          ? err.errors[0]?.message ?? "Sign up failed"
+          : "Sign up failed",
+      );
     } finally {
       setLoading(false);
     }
@@ -54,8 +58,12 @@ export default function SignUpScreen() {
       if (result.createdSessionId) {
         await setActive({ session: result.createdSessionId });
       }
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Verification failed");
+    } catch (err) {
+      setError(
+        isClerkAPIResponseError(err)
+          ? err.errors[0]?.message ?? "Verification failed"
+          : "Verification failed",
+      );
     } finally {
       setLoading(false);
     }

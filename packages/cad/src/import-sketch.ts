@@ -5,19 +5,7 @@ import type {
   DesignCanvas,
 } from "@workstream/contracts";
 import { DEFAULT_CAD_LAYERS } from "./defaults";
-
-function pctToMetres(
-  x_pct: number,
-  y_pct: number,
-  width_m: number,
-  height_m: number,
-): { x: number; y: number } {
-  // CAD Y-up: screen top (y_pct=0) ? high Y
-  return {
-    x: (x_pct / 100) * width_m,
-    y: ((100 - y_pct) / 100) * height_m,
-  };
-}
+import { pctToCadMetres, stampSiteFrameToCad } from "./stamp-site-frame";
 
 function layerForSymbol(symbolId: string): string {
   const id = symbolId.toLowerCase();
@@ -44,7 +32,8 @@ function layerForSymbol(symbolId: string): string {
 
 /**
  * Promote Workflow 1 DesignCanvas into a Stage 2 CadDocument (committed sketch-ref).
- * Placements ? INSERT blocks; strokes ? SKETCH-REF polylines; irrigation ? IRRIGATION.
+ * Placements → INSERT blocks; strokes → SKETCH-REF polylines; irrigation → IRRIGATION.
+ * Site frame rings are stamped in the same metre frame.
  */
 export function importSketchToCad(args: {
   projectId: string;
@@ -66,7 +55,7 @@ export function importSketchToCad(args: {
         entities: [],
       });
     }
-    const pos = pctToMetres(p.x_pct, p.y_pct, width_m, height_m);
+    const pos = pctToCadMetres(p.x_pct, p.y_pct, width_m, height_m);
     entities.push({
       id: crypto.randomUUID(),
       kind: "insert",
@@ -90,7 +79,7 @@ export function importSketchToCad(args: {
       verification_state: "VERIFIED",
       closed: false,
       points: stroke.points.map((pt) =>
-        pctToMetres(pt.x_pct, pt.y_pct, width_m, height_m),
+        pctToCadMetres(pt.x_pct, pt.y_pct, width_m, height_m),
       ),
     });
   }
@@ -105,11 +94,11 @@ export function importSketchToCad(args: {
       verification_state: "VERIFIED",
       closed: false,
       points: zone.points.map((pt) =>
-        pctToMetres(pt.x_pct, pt.y_pct, width_m, height_m),
+        pctToCadMetres(pt.x_pct, pt.y_pct, width_m, height_m),
       ),
     });
     const mid = zone.points[Math.floor(zone.points.length / 2)]!;
-    const pos = pctToMetres(mid.x_pct, mid.y_pct, width_m, height_m);
+    const pos = pctToCadMetres(mid.x_pct, mid.y_pct, width_m, height_m);
     entities.push({
       id: crypto.randomUUID(),
       kind: "text",
@@ -124,51 +113,26 @@ export function importSketchToCad(args: {
   }
 
   for (const ann of canvas.annotations ?? []) {
-    const pos = pctToMetres(ann.x_pct, ann.y_pct, width_m, height_m);
-    if (ann.kind === "text") {
-      entities.push({
-        id: crypto.randomUUID(),
-        kind: "text",
-        layer: "ANNOTATION",
-        ghost: false,
-        verification_state: "VERIFIED",
-        position: pos,
-        height: 0.35,
-        value: ann.text || "Note",
-        rotation_deg: 0,
-      });
-    } else if (
-      (ann.kind === "dimension" || ann.kind === "arrow") &&
-      ann.x2_pct != null &&
-      ann.y2_pct != null
-    ) {
-      const p2 = pctToMetres(ann.x2_pct, ann.y2_pct, width_m, height_m);
-      if (ann.kind === "dimension") {
-        entities.push({
-          id: crypto.randomUUID(),
-          kind: "dimension",
-          layer: "DIMENSIONS",
-          ghost: false,
-          verification_state: "VERIFIED",
-          p1: pos,
-          p2,
-          offset: 0.5,
-        });
-      } else {
-        entities.push({
-          id: crypto.randomUUID(),
-          kind: "line",
-          layer: "ANNOTATION",
-          ghost: false,
-          verification_state: "VERIFIED",
-          start: pos,
-          end: p2,
-        });
-      }
-    }
+    const pos = pctToCadMetres(
+      ann.notePos.x,
+      ann.notePos.y,
+      width_m,
+      height_m,
+    );
+    entities.push({
+      id: crypto.randomUUID(),
+      kind: "text",
+      layer: "ANNOTATION",
+      ghost: false,
+      verification_state: "VERIFIED",
+      position: pos,
+      height: 0.35,
+      value: ann.text || "Note",
+      rotation_deg: 0,
+    });
   }
 
-  return {
+  const base: CadDocument = {
     id: crypto.randomUUID(),
     project_id: projectId,
     version: 1,
@@ -183,4 +147,6 @@ export function importSketchToCad(args: {
     source_sketch_id: canvas.id,
     updated_at: now,
   };
+
+  return stampSiteFrameToCad(base, canvas);
 }

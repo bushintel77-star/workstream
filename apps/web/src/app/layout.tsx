@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 import { ToastHost } from "../components/ToastHost";
-import { clerkEnabled, isDevAuthMode } from "../lib/auth";
+import { clerkEnabled } from "../lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
-  title: "Workstream — Curtis & Co",
+  title: "Workstream",
   description:
-    "Voice-first landscape design and build co-pilot. Curtis & Co, Melbourne.",
+    "Voice-first landscape design and build co-pilot. Melbourne.",
   metadataBase: new URL(
     process.env.PORTAL_BASE_URL ?? "http://localhost:3002",
   ),
@@ -20,12 +20,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/apple-touch-icon.svg" }],
+    apple: [{ url: "/apple-touch-icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
-    title: "Workstream — Curtis & Co",
+    title: "Workstream",
     description:
-      "Voice-first landscape design and build co-pilot. Curtis & Co, Melbourne.",
+      "Voice-first landscape design and build co-pilot. Melbourne.",
     type: "website",
     locale: "en_AU",
   },
@@ -38,7 +38,6 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: [{ color: "#F6E6ED" }],
 };
 
 export default function RootLayout({
@@ -46,6 +45,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const shell = <>{children}</>;
+
   return (
     <html lang="en-AU">
       <head>
@@ -56,25 +57,24 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Fraunces:opsz,wght@9..144,400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body
+        data-build={
+          process.env.NEXT_PUBLIC_BUILD_SHA ??
+          process.env.RAILWAY_GIT_COMMIT_SHA ??
+          process.env.VERCEL_GIT_COMMIT_SHA ??
+          "dev"
+        }
+      >
         {clerkEnabled ? (
           <ClerkProvider>
-            <ToastHost>{children}</ToastHost>
+            <ToastHost>{shell}</ToastHost>
           </ClerkProvider>
         ) : (
-          <ToastHost>
-            {isDevAuthMode() ? (
-              <div className="dev-mode-banner" role="status">
-                Dev mode — auth disabled. Do not use this environment for
-                client work.
-              </div>
-            ) : null}
-            {children}
-          </ToastHost>
+          <ToastHost>{shell}</ToastHost>
         )}
       </body>
     </html>

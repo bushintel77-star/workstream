@@ -108,10 +108,153 @@ export type IngestBoundaryGeoJsonInput = z.infer<
   typeof IngestBoundaryGeoJsonSchema
 >;
 
+/**
+ * Indicative easement polyline auto-traced from Vicmap WFS.
+ * Points are canvas metres sharing the boundary's canvas_origin_geo, so a
+ * client that projects boundary vertices can project these with the same
+ * transform. Ephemeral — returned alongside auto-trace, never persisted.
+ */
+export const SiteEasementSchema = z.object({
+  points: z.array(CanvasMetreCoordsSchema).min(2),
+  status: z.string().nullable(),
+  source: z.literal("vicmap"),
+});
+export type SiteEasement = z.infer<typeof SiteEasementSchema>;
+
 export const BoundaryAutoTraceRequestSchema = z.object({
   /** Prefer municipal GIS (Vicmap) when available; else survey title ring. */
   prefer_gis: z.boolean().default(true),
 });
 export type BoundaryAutoTraceRequest = z.infer<
   typeof BoundaryAutoTraceRequestSchema
+>;
+
+/** Canvas-metre dwelling verts co-registered with the auto-traced title. */
+export const BoundaryAutoTraceBuildingSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+/** Vicmap easement LineString projected into boundary canvas metres. */
+export const BoundaryAutoTraceEasementLineSchema = z.object({
+  points: z.array(BoundaryAutoTraceBuildingSchema).min(2),
+  pfi: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+});
+
+/**
+ * Neighbour building footprint co-registered with the title (canvas metres) plus
+ * an indicative massing height for sun/overshadowing. Height is usually absent —
+ * Vicmap rarely carries it — so a default storey assumption applies downstream.
+ */
+export const BoundaryAutoTraceNeighbourSchema = z.object({
+  ring: z.array(BoundaryAutoTraceBuildingSchema).min(3),
+  height_m: z.number().positive().nullable().optional(),
+});
+
+/** Vicmap urban tree point co-registered with the title (indicative canopy). */
+export const BoundaryAutoTraceUrbanTreeSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  canopy_radius_m: z.number().positive().nullable().optional(),
+  height_m: z.number().positive().nullable().optional(),
+  label: z.string().nullable().optional(),
+});
+
+export const BoundaryAutoTraceResponseSchema = z.object({
+  boundary: SiteBoundarySchema,
+  /**
+   * Existing dwelling in the same canvas-metre frame as `boundary.vertices`.
+   * Empty when Vicmap/survey has no building footprint.
+   */
+  building_canvas: z.array(BoundaryAutoTraceBuildingSchema).default([]),
+  building_source: z.enum(["vicmap"]).nullable().default(null),
+  /**
+   * Vicmap Property easement lines (subset) co-registered with the title.
+   * Hydrated onto Services corridors — not closed hatch rings.
+   */
+  easement_lines_canvas: z
+    .array(BoundaryAutoTraceEasementLineSchema)
+    .default([]),
+  easement_source: z.enum(["vicmap"]).nullable().default(null),
+  /**
+   * Vicmap urban tree points (subset) — ghost `exist` seed only.
+   * Never invent DBH; TPZ stays operator-measured on site.
+   */
+  urban_trees_canvas: z.array(BoundaryAutoTraceUrbanTreeSchema).default([]),
+  urban_trees_source: z.enum(["vicmap"]).nullable().default(null),
+  /**
+   * Vicmap neighbour building footprints around the title (buffered INTERSECTS),
+   * co-registered in canvas metres, for sun/overshadowing. Subject dwelling
+   * excluded. Height usually absent — default storey assumption applies later.
+   */
+  neighbour_buildings_canvas: z
+    .array(BoundaryAutoTraceNeighbourSchema)
+    .default([]),
+  neighbour_buildings_source: z.enum(["vicmap"]).nullable().default(null),
+});
+export type BoundaryAutoTraceResponse = z.infer<
+  typeof BoundaryAutoTraceResponseSchema
+>;
+
+/** KEYLESS Vicmap overlay hydrate (planning / bushfire / contour…). */
+export const KeylessHydrateRequestSchema = z.object({
+  kinds: z
+    .array(
+      z.enum([
+        "planning",
+        "bushfire",
+        "contour",
+        "flood",
+        "heritage",
+        "easement",
+        "urban_tree",
+        "water_corp",
+        "road_casement",
+        "acid_sulfate",
+        "wetland",
+      ]),
+    )
+    .default([
+      "planning",
+      "bushfire",
+      "contour",
+      "flood",
+      "heritage",
+      "water_corp",
+      "road_casement",
+    ]),
+});
+export type KeylessHydrateRequest = z.infer<typeof KeylessHydrateRequestSchema>;
+
+export const KeylessHydrateRingSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+export const KeylessHydrateOverlaySchema = z.object({
+  kind: z.enum([
+    "planning",
+    "bushfire",
+    "contour",
+    "flood",
+    "heritage",
+    "easement",
+    "urban_tree",
+    "water_corp",
+    "road_casement",
+    "acid_sulfate",
+    "wetland",
+  ]),
+  rings: z.array(z.array(KeylessHydrateRingSchema)),
+  label: z.string().nullable(),
+  fetched_at: z.string().datetime(),
+});
+
+export const KeylessHydrateResponseSchema = z.object({
+  overlays_canvas: z.array(KeylessHydrateOverlaySchema),
+  source: z.enum(["vicmap", "empty"]),
+});
+export type KeylessHydrateResponse = z.infer<
+  typeof KeylessHydrateResponseSchema
 >;

@@ -15,38 +15,32 @@ import type { Project, ProjectStatus } from "@workstream/contracts";
 import { tokens } from "@workstream/ui";
 import { useWorkstreamApi } from "../../src/lib/api";
 
-const STATUS_TONE: Record<
-  ProjectStatus,
-  { label: string; tone: "neutral" | "accent" | "ok" }
-> = {
-  draft: { label: "Draft", tone: "neutral" },
-  recording: { label: "Recording", tone: "accent" },
-  processing: { label: "Processing", tone: "accent" },
-  survey_review: { label: "Survey review", tone: "accent" },
-  design_review: { label: "Design review", tone: "accent" },
-  cost_review: { label: "Cost review", tone: "accent" },
-  audit: { label: "Audit", tone: "accent" },
-  outputs: { label: "Outputs", tone: "ok" },
-  complete: { label: "Complete", tone: "ok" },
+const STATUS_LABEL: Record<ProjectStatus, string> = {
+  draft: "Draft",
+  recording: "Recording",
+  processing: "Processing",
+  survey_review: "Survey review",
+  design_review: "Design review",
+  cost_review: "Cost review",
+  audit: "Audit",
+  outputs: "Outputs",
+  complete: "Complete",
 };
 
-function statusStyle(tone: "neutral" | "accent" | "ok") {
-  if (tone === "ok") {
-    return {
-      bg: "rgba(21,128,61,0.12)",
-      fg: tokens.color.semantic.ok,
-    };
-  }
-  if (tone === "accent") {
-    return {
-      bg: tokens.color.accent.soft,
-      fg: tokens.color.accent.ink,
-    };
-  }
-  return {
-    bg: tokens.color.surface.sunken,
-    fg: tokens.color.ink.secondary,
-  };
+const STATUS_DOT: Record<ProjectStatus, string> = {
+  draft: tokens.color.ink.tertiary,
+  recording: tokens.color.accent.bright,
+  processing: tokens.color.accent.bright,
+  survey_review: tokens.color.accent.bright,
+  design_review: tokens.color.accent.bright,
+  cost_review: tokens.color.accent.bright,
+  audit: tokens.color.accent.bright,
+  outputs: tokens.color.semantic.ok,
+  complete: tokens.color.semantic.ok,
+};
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
 }
 
 export default function HomeScreen() {
@@ -77,7 +71,7 @@ export default function HomeScreen() {
 
   const confirmDelete = useCallback(
     (project: Project) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
       Alert.alert(
         "Delete project?",
         `${project.address}\n\nThe project moves to trash and can be restored from the web dashboard.`,
@@ -89,7 +83,7 @@ export default function HomeScreen() {
             onPress: async () => {
               Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Warning,
-              ).catch(() => {});
+              ).catch(() => { });
               try {
                 await api.deleteProject(project.id);
                 setProjects((prev) =>
@@ -110,41 +104,45 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Workstream</Text>
-        <View style={styles.headerRow}>
-          <Text style={styles.subtitle}>
-            {loading ? "—" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}${projects.length > 0 ? "  ·  long-press to delete" : ""}`}
-          </Text>
-          <Pressable
-            onPress={() => router.push("/(app)/settings")}
-            accessibilityRole="link"
-            accessibilityLabel="Open settings"
-            hitSlop={12}
-          >
-            <Text style={styles.settingsLink}>Settings</Text>
-          </Pressable>
-        </View>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      {/* Masthead */}
+      <View style={styles.masthead}>
+        <Text style={styles.mastheadMark}>CURTIS &amp; CO</Text>
+        <Text style={styles.mastheadSub}>Workstream</Text>
+      </View>
+
+      <View style={styles.rule} />
+
+      {/* Index header */}
+      <View style={styles.indexHeader}>
+        <Text style={styles.indexLabel}>
+          {loading ? "Loading" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
+        </Text>
+        <Pressable
+          onPress={() => router.push("/(app)/settings")}
+          hitSlop={16}
+          accessibilityRole="link"
+          accessibilityLabel="Open settings"
+        >
+          <Text style={styles.indexAction}>Settings</Text>
+        </Pressable>
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={tokens.color.accent.default} />
+          <ActivityIndicator size="small" color={tokens.color.ink.tertiary} />
         </View>
       ) : error ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={load}>
+          <Pressable onPress={load} hitSlop={16}>
             <Text style={styles.retry}>Retry</Text>
           </Pressable>
         </View>
       ) : projects.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyKicker}>NEW STUDIO</Text>
-          <Text style={styles.emptyText}>
-            Start a project by entering an address. The walkthrough is the
-            brief.
+        <View style={styles.empty}>
+          <Text style={styles.emptyBody}>
+            Start a project by entering an address.{"\n"}The walkthrough is the brief.
           </Text>
         </View>
       ) : (
@@ -152,173 +150,281 @@ export default function HomeScreen() {
           data={projects}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }) => {
-            const meta = STATUS_TONE[item.status];
-            const palette = statusStyle(meta.tone);
+          ItemSeparatorComponent={() => <View style={styles.rowRule} />}
+          renderItem={({ item, index }) => {
+            const statusLabel = STATUS_LABEL[item.status];
+            const dotColor = STATUS_DOT[item.status];
+            const date = new Date(item.created_at).toLocaleDateString("en-AU", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
             return (
               <Pressable
                 style={({ pressed }) => [
-                  styles.card,
-                  pressed && { backgroundColor: tokens.color.surface.sunken },
+                  styles.row,
+                  pressed && styles.rowPressed,
                 ]}
                 onPress={() => router.push(`/(app)/project/${item.id}`)}
                 onLongPress={() => confirmDelete(item)}
-                delayLongPress={350}
+                delayLongPress={400}
                 accessibilityRole="button"
-                accessibilityLabel={`${item.address}, ${STATUS_TONE[item.status].label}`}
+                accessibilityLabel={`${item.address}, ${statusLabel}`}
                 accessibilityHint="Double tap to open, long press to delete"
               >
-                <Text style={styles.cardAddress} numberOfLines={2}>
-                  {item.address}
+                {/* Index number — architectural drawing reference */}
+                <Text style={styles.rowIndex} allowFontScaling={false}>
+                  {pad2(index + 1)}
                 </Text>
-                <View style={styles.cardMetaRow}>
-                  <View
-                    style={[styles.statusPill, { backgroundColor: palette.bg }]}
-                  >
-                    <Text style={[styles.statusPillText, { color: palette.fg }]}>
-                      {meta.label.toUpperCase()}
-                    </Text>
-                  </View>
-                  <Text style={styles.cardDate}>
-                    {new Date(item.created_at).toLocaleDateString("en-AU", {
-                      day: "numeric",
-                      month: "short",
-                    })}
+
+                {/* Address — editorial hero text */}
+                <View style={styles.rowBody}>
+                  <Text style={styles.rowAddress} numberOfLines={2}>
+                    {item.address}
                   </Text>
+                  <View style={styles.rowMeta}>
+                    <View style={styles.statusGroup}>
+                      <View style={[styles.statusDot, { backgroundColor: dotColor }]} />
+                      <Text style={styles.statusText}>{statusLabel}</Text>
+                    </View>
+                    <Text style={styles.rowDate}>{date}</Text>
+                  </View>
                 </View>
+
+                {/* Arrow — minimal directional cue */}
+                <Text style={styles.rowArrow} allowFontScaling={false}>
+                  {"\u2192"}
+                </Text>
               </Pressable>
             );
           }}
         />
       )}
 
-      <Pressable
-        style={styles.fab}
-        onPress={() => router.push("/(app)/new-project")}
-        accessibilityRole="button"
-        accessibilityLabel="New project"
-      >
-        <Text style={styles.fabIcon}>+</Text>
-      </Pressable>
+      {/* Bottom bar — replaces FAB with an editorial footer */}
+      <View style={styles.footer}>
+        <View style={styles.footerRule} />
+        <Pressable
+          style={({ pressed }) => [
+            styles.footerButton,
+            pressed && styles.footerButtonPressed,
+          ]}
+          onPress={() => router.push("/(app)/new-project")}
+          accessibilityRole="button"
+          accessibilityLabel="New project"
+        >
+          <Text style={styles.footerPlus}>+</Text>
+          <Text style={styles.footerLabel}>New project</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
+
+const HAIRLINE = tokens.color.line.hairline;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: tokens.color.surface.base,
   },
-  header: {
+
+  // --- Masthead ---
+  masthead: {
     paddingHorizontal: tokens.space[5],
     paddingTop: tokens.space[4],
-    paddingBottom: tokens.space[2],
+    paddingBottom: tokens.space[3],
   },
-  headerRow: {
+  mastheadMark: {
+    fontFamily: tokens.font.mono,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1.6,
+    color: tokens.color.ink.secondary,
+  },
+  mastheadSub: {
+    fontFamily: tokens.font.serif,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "400",
+    color: tokens.color.ink.primary,
+    marginTop: 2,
+  },
+
+  rule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: HAIRLINE,
+    marginHorizontal: tokens.space[5],
+  },
+
+  // --- Index header ---
+  indexHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: tokens.space[1],
+    paddingHorizontal: tokens.space[5],
+    paddingVertical: tokens.space[3],
   },
-  title: {
-    fontSize: tokens.type.displayL.fontSize,
-    fontWeight: tokens.type.displayL.fontWeight,
+  indexLabel: {
+    fontFamily: tokens.font.mono,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.8,
+    color: tokens.color.ink.tertiary,
+    textTransform: "uppercase",
+  },
+  indexAction: {
+    fontFamily: tokens.font.mono,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.8,
+    color: tokens.color.ink.secondary,
+    textTransform: "uppercase",
+  },
+
+  // --- List ---
+  list: {
+    paddingHorizontal: tokens.space[5],
+    paddingBottom: tokens.space[8],
+  },
+  rowRule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: HAIRLINE,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: tokens.space[4],
+    gap: tokens.space[3],
+    minHeight: 72,
+  },
+  rowPressed: {
+    opacity: 0.5,
+  },
+  rowIndex: {
+    fontFamily: tokens.font.mono,
+    fontSize: 11,
+    fontWeight: "500",
+    lineHeight: 22,
+    color: tokens.color.ink.tertiary,
+    minWidth: 24,
+    paddingTop: 2,
+    fontVariant: ["tabular-nums"],
+  },
+  rowBody: {
+    flex: 1,
+    gap: 6,
+  },
+  rowAddress: {
+    fontFamily: tokens.font.serif,
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "400",
     color: tokens.color.ink.primary,
-    letterSpacing: tokens.type.displayL.letterSpacing,
   },
-  subtitle: {
-    fontSize: tokens.type.caption.fontSize,
-    fontWeight: tokens.type.caption.fontWeight,
+  rowMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.space[3],
+  },
+  statusGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontFamily: tokens.font.mono,
+    fontSize: 11,
+    fontWeight: "500",
+    letterSpacing: 0.3,
     color: tokens.color.ink.secondary,
   },
-  settingsLink: {
-    fontSize: tokens.type.caption.fontSize,
-    fontWeight: "600",
-    color: tokens.color.accent.default,
+  rowDate: {
+    fontFamily: tokens.font.mono,
+    fontSize: 11,
+    fontWeight: "400",
+    color: tokens.color.ink.tertiary,
+    fontVariant: ["tabular-nums"],
   },
+  rowArrow: {
+    fontFamily: tokens.font.mono,
+    fontSize: 16,
+    fontWeight: "300",
+    lineHeight: 24,
+    color: tokens.color.ink.tertiary,
+    paddingTop: 2,
+  },
+
+  // --- Center / empty / error ---
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: tokens.space[5],
     gap: tokens.space[3],
   },
-  emptyKicker: {
-    fontSize: tokens.type.micro.fontSize,
-    fontWeight: tokens.type.micro.fontWeight,
-    letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
+  empty: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: tokens.space[6],
   },
-  emptyText: {
-    fontSize: tokens.type.body.fontSize,
-    lineHeight: tokens.type.body.lineHeight,
+  emptyBody: {
+    fontFamily: tokens.font.serif,
+    fontSize: 17,
+    lineHeight: 26,
     color: tokens.color.ink.secondary,
     textAlign: "center",
-    maxWidth: 280,
   },
   errorText: {
+    fontFamily: tokens.font.body,
     fontSize: tokens.type.body.fontSize,
     color: tokens.color.semantic.block,
     textAlign: "center",
   },
   retry: {
-    fontSize: tokens.type.body.fontSize,
+    fontFamily: tokens.font.mono,
+    fontSize: 12,
     fontWeight: "600",
-    color: tokens.color.accent.default,
+    letterSpacing: 0.5,
+    color: tokens.color.accent.bright,
+    textTransform: "uppercase",
   },
-  list: {
-    paddingHorizontal: tokens.space[5],
-    paddingBottom: 96,
-    gap: tokens.space[2],
+
+  // --- Footer ---
+  footer: {
+    paddingBottom: tokens.space[6],
   },
-  card: {
-    backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.lg,
-    borderWidth: 1,
-    borderColor: tokens.color.line.hairline,
-    padding: tokens.space[4],
-    gap: tokens.space[2],
+  footerRule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: HAIRLINE,
   },
-  cardAddress: {
-    fontSize: tokens.type.title.fontSize,
-    fontWeight: tokens.type.title.fontWeight,
-    color: tokens.color.ink.primary,
-  },
-  cardMetaRow: {
+  footerButton: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  statusPill: {
-    paddingHorizontal: tokens.space[2],
-    paddingVertical: 2,
-    borderRadius: tokens.radius.pill,
-  },
-  statusPillText: {
-    fontSize: tokens.type.micro.fontSize,
-    fontWeight: tokens.type.micro.fontWeight,
-    letterSpacing: tokens.type.micro.letterSpacing,
-  },
-  cardDate: {
-    fontSize: tokens.type.caption.fontSize,
-    color: tokens.color.ink.tertiary,
-    fontVariant: ["tabular-nums"],
-  },
-  fab: {
-    position: "absolute",
-    bottom: tokens.space[6],
-    right: tokens.space[5],
-    width: 56,
-    height: 56,
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.color.accent.default,
     justifyContent: "center",
-    alignItems: "center",
-    ...tokens.elevation[2],
+    gap: tokens.space[2],
+    paddingVertical: tokens.space[4],
   },
-  fabIcon: {
-    fontSize: 28,
-    color: tokens.color.ink.inverted,
-    lineHeight: 30,
+  footerButtonPressed: {
+    opacity: 0.5,
+  },
+  footerPlus: {
+    fontFamily: tokens.font.mono,
+    fontSize: 18,
+    fontWeight: "300",
+    color: tokens.color.ink.primary,
+  },
+  footerLabel: {
+    fontFamily: tokens.font.mono,
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 1,
+    color: tokens.color.ink.primary,
+    textTransform: "uppercase",
   },
 });

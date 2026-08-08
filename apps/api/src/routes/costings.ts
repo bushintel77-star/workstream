@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runCosting } from "../lib/cost-job";
 import { runSketchCosting } from "../lib/sketch-cost-job";
+import { runPipelineJobWithTelemetry } from "../lib/queue";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function costingRoutes(fastify: FastifyInstance) {
@@ -16,10 +17,14 @@ export default async function costingRoutes(fastify: FastifyInstance) {
         return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       }
       try {
-        const costings = await runCosting(fastify.store, ownerId, projectId);
+        const costings = await runPipelineJobWithTelemetry(
+          { kind: "costing", ownerId, projectId },
+          async () => await runCosting(fastify.store, ownerId, projectId),
+        );
         return reply.code(201).send({ costings });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Costing failed";
+        const message =
+          err instanceof Error ? err.message : "Costing failed";
         if (message.startsWith("Design is required")) {
           return reply.code(409).send({ error: message });
         }
@@ -27,7 +32,7 @@ export default async function costingRoutes(fastify: FastifyInstance) {
           return reply.code(404).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Costing failed" });
       }
     },
   );
@@ -60,7 +65,7 @@ export default async function costingRoutes(fastify: FastifyInstance) {
           return reply.code(409).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Sketch estimate failed" });
       }
     },
   );

@@ -93,10 +93,9 @@ See `packages/contracts/src/schemas/catalog.ts`:
 
 ## Deploy note
 
-After pulling, redeploy API so `/catalog` and `/projects/:id/design-canvas` are
-live:
+After pulling, Railway auto-deploys both services on push to `main`. To deploy
+manually:
 
-```powershell
-flyctl deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile -a construct-api --remote-only
-flyctl deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile -a construct-web --remote-only --build-arg NEXT_PUBLIC_API_URL=https://construct-api.fly.dev
+```bash
+railway up
 ```

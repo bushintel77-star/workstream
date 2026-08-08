@@ -18,7 +18,7 @@ export default async function QuotePage({
         <span className={styles.kicker}>LINK EXPIRED OR INVALID</span>
         <h1 className={styles.errorHeading}>This link has expired. Contact your landscaper.</h1>
         <p className={styles.errorBody}>
-          Curtis &amp; Co can issue a fresh secure quote link from the project.
+          We can issue a fresh secure quote link from the project.
         </p>
       </main>
     );

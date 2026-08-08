@@ -1,0 +1,115 @@
+/**
+ * Tier-1 unified top bar — dark-slate header surface.
+ *
+ * Swiss/International Typographic Style: hairline dividers (no shadows),
+ * grid-based layout, limited palette, mono for data labels. The dark slate
+ * is mode-agnostic (always dark, like a VS Code titlebar).
+ *
+ * The gallery frame is already dark grey; this bar paints the consolidated
+ * 3-zone surface using --tier1-* tokens defined in handoffStudio.module.css.
+ */
+
+.bar {
+  position: absolute;
+  top: 0;
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  height: var(--ws-frame-top);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  pointer-events: auto;
+  z-index: var(--ws-z-annotate);
+  flex-wrap: nowrap;
+  overflow: visible;
+  transition: opacity 220ms var(--ws-ease, ease);
+}
+
+.barCompact {
+  gap: 0;
+}
+
+/*
+ * Header stays persistent through idle — it carries identity, mode tabs
+ * and global actions (navigation, not on-canvas tools).
+ */
+:global([data-idle="true"]) .bar {
+  opacity: 1;
+}
+
+:global([data-idle="true"]) .bar:hover,
+.bar:hover {
+  opacity: 1;
+}
+
+/* Client presentation view: the frame empties out completely. */
+.bar[data-client-view="true"] {
+  display: none;
+}
+
+/* -- Zones -- */
+
+.zoneLeft {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  padding-right: var(--s-3);
+  border-right: 1px solid var(--tier1-bar-line);
+  color: var(--tier1-bar-ink);
+  overflow: hidden;
+}
+
+/* On narrower desktop widths, hide the cadastral meta first — the brand
+   name + address carry identity; meta is supplementary. */
+@media (max-width: 1100px) {
+  .zoneLeft :global([data-testid="header-cadastral-meta"]) {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .zoneLeft {
+    padding-right: var(--s-2);
+  }
+}
+
+.zoneCenter {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+  min-width: 0;
+  padding: 0 var(--s-3);
+  color: var(--tier1-bar-ink);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.zoneCenter::-webkit-scrollbar {
+  display: none;
+}
+
+.zoneRight {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding-left: var(--s-3);
+  border-left: 1px solid var(--tier1-bar-line);
+  color: var(--tier1-bar-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+}

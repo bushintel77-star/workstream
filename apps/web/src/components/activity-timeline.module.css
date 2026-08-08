@@ -27,13 +27,13 @@
 }
 
 .action {
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--ink-primary);
 }
 
 .when {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -42,7 +42,7 @@
 
 .detail {
   margin: var(--s-1) 0 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--ink-secondary);
 }

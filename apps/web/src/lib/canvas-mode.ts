@@ -4,6 +4,7 @@ export type CanvasMode =
   | "cad"
   | "elevation"
   | "quote"
+  | "present"
   | "share";
 
 export const CANVAS_MODES: Array<{ id: CanvasMode; label: string }> = [
@@ -12,6 +13,7 @@ export const CANVAS_MODES: Array<{ id: CanvasMode; label: string }> = [
   { id: "cad", label: "CAD" },
   { id: "elevation", label: "Elevation" },
   { id: "quote", label: "Quote" },
+  { id: "present", label: "Present" },
   { id: "share", label: "Share" },
 ];
 
@@ -25,7 +27,8 @@ export type CanvasProgress = {
 /**
  * Progressive unlock:
  * Sketch + CAD both open after aerial/title (CAD is the Fit sheet line-draw surface).
- * Quote needs accepted CAD; Share needs persisted quote.
+ * Quote needs accepted CAD; Present opens with CAD too (so the deck composer is
+ * available for layout even before costing); Share needs a live costed BOM.
  */
 export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
   const open = new Set<CanvasMode>(["survey"]);
@@ -34,14 +37,20 @@ export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
     open.add("cad");
     open.add("elevation");
   }
-  if (progress.hasCad) open.add("quote");
-  if (progress.hasQuote) open.add("share");
+  if (progress.hasCad) {
+    open.add("quote");
+    open.add("present");
+  }
+  if (progress.hasQuote) {
+    open.add("share");
+  }
   return open;
 }
 
 /** Suggested next mode for empty `?mode=` or after completing a step. */
 export function suggestedMode(progress: CanvasProgress): CanvasMode {
   if (!progress.hasAerial) return "survey";
+  if (!progress.hasSketch) return "sketch";
   if (!progress.hasCad) return "cad";
   if (!progress.hasQuote) return "quote";
   return "share";
@@ -49,7 +58,7 @@ export function suggestedMode(progress: CanvasProgress): CanvasMode {
 
 export function parseCanvasMode(raw: string | null | undefined): CanvasMode | null {
   const v = (raw ?? "").toLowerCase();
-  if (v === "survey" || v === "sketch" || v === "cad" || v === "elevation" || v === "quote" || v === "share") {
+  if (v === "survey" || v === "sketch" || v === "cad" || v === "elevation" || v === "quote" || v === "present" || v === "share") {
     return v;
   }
   return null;

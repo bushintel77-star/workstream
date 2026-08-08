@@ -31,10 +31,17 @@ const EnvSchema = z.object({
   /* AI */
   ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
   OPENAI_API_KEY: z.string().startsWith("sk-").optional(),
+  /** Anthropic API version header. Override only when Anthropic ships a breaking version. */
+  ANTHROPIC_VERSION: z.string().default("2023-06-01"),
+  /** Model for design generation (the heavy proposal engine). */
+  CLAUDE_DESIGN_MODEL: z.string().default("claude-opus-4-7"),
+  /** Model for audit / compliance review. */
+  CLAUDE_AUDIT_MODEL: z.string().default("claude-sonnet-4-6"),
+  /** Model for vision tasks (ghosts, OCR, sketch assist, dictation). */
+  CLAUDE_VISION_MODEL: z.string().default("claude-sonnet-4-6"),
 
-  /* Geo */
+  /* Geo — Mapbox optional (geocode/aerial). Vicmap cadastral is keyless WFS. */
   MAPBOX_TOKEN: z.string().optional(),
-  VICMAP_ENABLED: z.enum(["true", "false"]).optional(),
 
   /* Payments */
   STRIPE_SECRET_KEY: z
@@ -117,8 +124,15 @@ export function loadEnv(logger: {
 
     if (!parsed.data.SENTRY_DSN) {
       logger.warn(
-        "SENTRY_DSN unset — error reporting disabled until you add it to Fly secrets.",
+        "SENTRY_DSN unset — error reporting disabled until you add it to your deploy secrets.",
       );
+    }
+
+    if (parsed.data.CORS_ORIGIN === "*") {
+      logger.error(
+        "CORS_ORIGIN=* is not allowed in production when credentials are enabled. Set an explicit allowlist.",
+      );
+      process.exit(1);
     }
 
     const aiKeys = [

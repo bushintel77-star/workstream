@@ -1,0 +1,39 @@
+.veil {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 150ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  cursor: default;
+  outline: none;
+}
+
+.veil:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 2px;
+}
+
+.veilShown {
+  opacity: 1;
+}
+
+.wash {
+  /* Day blush wash — ink at ~10% (token-driven). */
+  fill: color-mix(in srgb, var(--hc-ink) 10%, transparent);
+}
+
+.veilNight .wash {
+  /*
+   * Dolphin night wash — prefer paper/invert mix over raw hex.
+   * Targets ~color-mix(in srgb, var(--hc-ink) 34%, transparent) feel.
+   */
+  fill: color-mix(in srgb, var(--hc-invert) 34%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .veil {
+    transition: none;
+  }
+}

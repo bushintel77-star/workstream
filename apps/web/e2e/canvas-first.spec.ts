@@ -1,14 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { pipelineShell } from "./helpers";
+import { handoffStudio, pipelineShell } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
- * Canvas-first progressive disclosure: Sketch shows Instant Planner strip;
- * CAD exposes Walk + compact costing; Share hides Live BOM.
+ * Canvas-first progressive disclosure: Sketch has no Live BOM;
+ * CAD exposes utility Live cost; Share hides floating cost chrome.
  */
 test.describe("Canvas-first mode chrome", () => {
-  test("Sketch Instant Planner; Paint disclosure; CAD Walk mounts", async ({
+  test("Sketch and idle CAD hide cost chrome; Share stays locked before quote", async ({
     page,
     request,
   }) => {
@@ -31,47 +31,34 @@ test.describe("Canvas-first mode chrome", () => {
     expect(pipeline.ok()).toBeTruthy();
 
     await page.goto(`/projects/${projectId}`);
-    await expect(page.getByTestId("site-canvas")).toBeVisible({
+    await expect(handoffStudio(page)).toBeVisible({
       timeout: 30_000,
     });
     await expect(pipelineShell(page)).toHaveCount(0);
 
-    // Title reveal may gate docks — open Fit sheet if present.
-    const openFit = page.getByTestId("start-cad-drawing");
-    if (await openFit.isVisible().catch(() => false)) {
-      await openFit.click();
-    }
-
     await page.getByTestId("canvas-mode-sketch").click();
     await expect(page).toHaveURL(/mode=sketch/);
-
-    await expect(page.getByTestId("live-bom-hud")).toBeVisible({
+    await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByTestId("cad-dock")).toHaveCount(0);
-
-    const paint = page.getByTestId("sketch-paint-open");
-    if (await paint.isVisible().catch(() => false)) {
-      await expect(paint).toHaveText(/Paint/i);
-      await paint.click();
-      await expect(paint).toHaveText(/Hide brushes/i);
-    }
+    await expect(page.getByTestId("live-bom-hud")).toHaveCount(0);
 
     await page.getByTestId("canvas-mode-cad").click();
     await expect(page).toHaveURL(/mode=cad/);
-    await expect(page.getByTestId("cad-dock")).toBeVisible({
+    await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByTestId("cad-walk")).toBeVisible();
-    // Warm-mounted clay host (inactive until Walk toggled)
-    await expect(page.getByTestId("clay-walkthrough")).toBeAttached();
+    // Utility drawer exposes Live cost when CAD chrome is on
+    const bomTab = page.getByTestId("utility-tab-bom");
+    if (await bomTab.isVisible().catch(() => false)) {
+      await bomTab.click();
+      await expect(page.getByTestId("live-bom-hud")).toBeVisible({
+        timeout: 10_000,
+      });
+    }
 
-    await page.getByTestId("cad-walk").click();
-    await expect(page.getByTestId("clay-exit-walk")).toBeVisible();
-    await page.getByTestId("clay-exit-walk").click();
-    // Exit chip stays through the Walk cross-fade (~560ms), then unmounts.
-    await expect(page.getByTestId("clay-exit-walk")).toHaveCount(0, {
-      timeout: 2500,
-    });
+    // Progressive disclosure: Share is unavailable until a quote is persisted.
+    await expect(page.getByTestId("canvas-mode-share")).toBeDisabled();
+    await expect(page.getByTestId("live-bom-hud")).toHaveCount(0);
   });
 });

@@ -1,0 +1,168 @@
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-annotate);
+  display: flex;
+  flex-direction: column;
+  background: var(--sheet-paper);
+  padding: 40px var(--s-5) var(--s-4);
+  /*
+   * The plan thumbnail floats over the top-right of this board, so the header
+   * row and the drawing both have to keep that column clear. Mirror the card's
+   * own width (planThumbnail.module.css .card) and add a gutter, rather than
+   * restating the clearance as a literal in three places — it had already
+   * drifted to 180px/28vw here and 176px/27vw on the stage.
+   */
+  --elev-thumb-w: min(148px, 24vw);
+  --elev-thumb-reserve: calc(var(--elev-thumb-w) + var(--s-4));
+}
+
+/*
+ * Night — elevation joins the dark lens (dolphin field, chalk marks).
+ * Chrome ink rides the --hc-* token set, which the studio root already flips;
+ * the SVG geometry resolves its own paint through semanticForTheme(dark), so
+ * both halves of the board change theme together.
+ */
+.rootNight {
+  background:
+    linear-gradient(180deg, var(--hc-paper) 0%, var(--hc-invert) 100%);
+  color: var(--hc-ink);
+}
+
+.rootNight .toggle,
+.rootNight .tracePlan {
+  border-color: color-mix(in srgb, var(--hc-paper) 28%, transparent);
+  color: var(--hc-ink);
+}
+
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+  padding-right: var(--elev-thumb-reserve);
+}
+
+.toggle,
+.tracePlan {
+  min-height: 28px;
+  padding: 0 var(--s-2);
+  border-radius: 0;
+  border: 1px solid var(--hc-line);
+  background: transparent;
+  color: var(--hc-ink);
+  font: inherit;
+  font-size: var(--hc-fs-3);
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.tracePlan {
+  border-color: var(--hc-ink);
+  background: var(--hc-ink);
+  color: var(--sheet-paper);
+}
+
+.toggle:focus-visible,
+.tracePlan:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 2px;
+}
+
+.widthChip {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--hc-fs-2);
+  font-weight: 500;
+  color: var(--hc-ink-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.north {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-4);
+  font-family: var(--font-mono);
+  font-size: var(--hc-fs-2);
+  color: var(--hc-ink-muted);
+  z-index: var(--ws-z-interact);
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+  width: 100%;
+  padding: var(--s-1) var(--elev-thumb-reserve) var(--s-2) var(--s-1);
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+}
+
+.hud {
+  position: absolute;
+  inset: var(--s-1) var(--elev-thumb-reserve) var(--s-2) var(--s-1);
+  pointer-events: none;
+  z-index: var(--ws-z-annotate);
+}
+
+.tick {
+  position: absolute;
+  transform: translate(-100%, -50%);
+  font-family: var(--font-mono);
+  font-size: var(--hc-fs-1);
+  font-weight: 500;
+  color: var(--hc-ink-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Architectural callout — ink string, no pill / shadow */
+.label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -2px;
+  max-width: 160px;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hc-ink);
+  font-family: var(--font-mono);
+  font-size: var(--hc-fs-2);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  box-shadow: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.label:hover,
+.labelActive {
+  color: var(--hc-ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: transparent;
+  border: none;
+}
+
+/* Callouts are real controls, so keyboard focus gets the house ring rather than
+   relying on the UA default over cream paper. */
+.label:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 2px;
+}

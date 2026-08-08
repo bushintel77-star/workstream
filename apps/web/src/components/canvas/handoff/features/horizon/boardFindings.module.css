@@ -1,0 +1,204 @@
+/* Board findings — cross-artefact advisories. Right-of-canvas so they do not
+   collide with the left-anchored preemptive horizon stack. Mobile-first. */
+
+.stack {
+  position: absolute;
+  right: calc(var(--ws-safe-right, 16px) + 8px);
+  top: calc(var(--ws-safe-top, 48px) + 52px);
+  z-index: var(--ws-z-interact);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: min(300px, calc(100% - 96px));
+  pointer-events: none;
+}
+
+.embedded {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: 100%;
+  pointer-events: auto;
+}
+
+.stack>* {
+  pointer-events: auto;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--hc-r-pop);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-invert);
+  box-shadow: var(--hc-elev-2);
+  font-family: var(--font-body);
+  color: var(--hc-ink);
+  animation: bfIn 180ms ease both;
+}
+
+.info {
+  border-color: var(--hc-line-soft);
+}
+
+/* Severity = border + 24x2 accent bar, never a card-wide tint. See the same
+   note in preemptiveHorizon.module.css: the tint cost every label its AA
+   headroom (cite/kicker measured 3.64:1 on blush, 4.23:1 on amber). */
+.watch,
+.critical {
+  background: var(--hc-invert);
+}
+
+.watch::before,
+.critical::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 2px;
+}
+
+.watch {
+  border-color: color-mix(in srgb, var(--hc-warning) 45%, transparent);
+}
+
+.watch::before {
+  background: var(--hc-warning);
+}
+
+.critical {
+  border-color: color-mix(in srgb, var(--hc-danger) 45%, transparent);
+}
+
+.critical::before {
+  background: var(--hc-danger);
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--hc-fs-1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.detail {
+  margin: 4px 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--hc-ink-muted);
+}
+
+.cite {
+  margin: var(--s-1) 0 0;
+  font-size: var(--hc-fs-2);
+  line-height: 1.35;
+  color: var(--hc-ink-faint);
+}
+
+.citeLabel {
+  font-family: "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.basis {
+  font-weight: 650;
+  color: var(--hc-ink-muted);
+}
+
+/* Weight the evidence visually: survey fact reads solid, estimate reads soft. */
+.basis[data-basis="vicmap"] {
+  color: var(--hc-ink);
+}
+
+.basis[data-basis="derived"],
+.basis[data-basis="seed"] {
+  font-style: italic;
+  color: var(--hc-ink-faint);
+}
+
+.gaps {
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--hc-r-pop);
+  border: 1px dashed var(--hc-line-soft);
+  /* Dashed border already separates this block; the 6% wash only cost the
+     kicker its AA headroom (4.43:1). */
+  background: var(--hc-invert);
+}
+
+.gapsKicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--hc-fs-1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.gapsList {
+  margin: var(--s-1) 0 0;
+  padding: 0 0 0 1.1em;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--hc-ink-muted);
+}
+
+.gapsList li+li {
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: 8px;
+}
+
+.show,
+.dismiss {
+  min-height: 28px;
+  padding: 0 var(--s-2);
+  border-radius: var(--hc-r-panel);
+  font: inherit;
+  font-size: var(--hc-fs-3);
+  font-weight: 650;
+  cursor: pointer;
+  border: 1px solid var(--hc-line);
+  background: transparent;
+  color: var(--hc-ink-muted);
+}
+
+.show {
+  border-color: color-mix(in srgb, var(--hc-ink) 28%, transparent);
+  color: var(--hc-ink);
+}
+
+@keyframes bfIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 900px) {
+  .stack {
+    width: 320px;
+  }
+}

@@ -1,0 +1,675 @@
+/*
+ * shadcn/ui-style component kit — "Figma kit" aesthetic.
+ *
+ * Clean variants, focus rings, subtle shadows, instrument-dial quality.
+ * All colours via var(--*) tokens; no raw hex. Dark-mode aware via the
+ * existing prefers-color-scheme tokens in globals.css.
+ *
+ * Shadow recipe (elevated surfaces):
+ *   inset 0 0 0 1px hairline  — thin outline edge
+ *   0 1px 2px  ink @ 5-8%     — tight contact
+ *   0 2px 4px  ink @ 4-6%     — ambient occlusion
+ *   0 4px 8px  ink @ 3-5%     — near diffuse
+ *   0 8px 16px ink @ 2-4%     — mid diffuse
+ *   0 16px 32px ink @ 2-3%    — far falloff
+ */
+
+/* ---- Button ---- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-body, inherit);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background 140ms var(--ease, ease),
+    box-shadow 140ms var(--ease, ease),
+    color 140ms var(--ease, ease),
+    transform 80ms var(--ease, ease);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ink-primary, #fff) 40%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--ink-primary, #fff) 20%, transparent);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Sizes */
+.btn[data-size="sm"] {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: var(--text-xs, 12px);
+}
+
+.btn[data-size="md"] {
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: var(--text-sm, 14px);
+}
+
+.btn[data-size="lg"] {
+  min-height: 48px;
+  padding: 0 20px;
+  font-size: var(--text-base, 16px);
+}
+
+.btn[data-size="icon"] {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0;
+  font-size: var(--text-sm, 14px);
+}
+
+.btn[data-fullwidth="1"] {
+  width: 100%;
+}
+
+/* Variants */
+.btn[data-variant="default"] {
+  background: var(--ink-primary, #fff);
+  color: var(--surface-elevated);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ink-primary, #fff) 20%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--ink-primary, #fff) 8%, transparent);
+}
+
+.btn[data-variant="default"]:hover:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ink-primary, #fff) 30%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 16%, transparent),
+    0 2px 6px color-mix(in srgb, var(--ink-primary, #fff) 12%, transparent),
+    0 4px 12px color-mix(in srgb, var(--ink-primary, #fff) 8%, transparent);
+}
+
+.btn[data-variant="secondary"] {
+  background: var(--surface-elevated);
+  color: var(--ink-secondary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 70%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 4%, transparent);
+}
+
+.btn[data-variant="secondary"]:hover:not(:disabled) {
+  color: var(--ink-primary, #fff);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 80%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 8%, transparent),
+    0 2px 6px color-mix(in srgb, var(--ink-primary, #fff) 5%, transparent);
+}
+
+.btn[data-variant="outline"] {
+  background: transparent;
+  color: var(--ink-secondary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 60%, transparent);
+}
+
+.btn[data-variant="outline"]:hover:not(:disabled) {
+  color: var(--ink-primary, #fff);
+  background: color-mix(in srgb, var(--ink-primary, #fff) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 90%, transparent);
+}
+
+.btn[data-variant="ghost"] {
+  background: transparent;
+  color: var(--ink-tertiary);
+  box-shadow: inset 0 0 0 1px transparent;
+}
+
+.btn[data-variant="ghost"]:hover:not(:disabled) {
+  color: var(--ink-primary, #fff);
+  background: color-mix(in srgb, var(--ink-primary, #fff) 6%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 50%, transparent);
+}
+
+.btn[data-variant="destructive"] {
+  background: var(--color-danger);
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 16%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-danger) 10%, transparent),
+    0 4px 8px color-mix(in srgb, var(--color-danger) 6%, transparent);
+}
+
+.btn[data-variant="destructive"]:hover:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 35%, transparent),
+    0 1px 2px color-mix(in srgb, var(--color-danger) 20%, transparent),
+    0 2px 6px color-mix(in srgb, var(--color-danger) 14%, transparent),
+    0 6px 16px color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.btn[data-variant="accent"] {
+  background: var(--accent);
+  color: var(--ink-inverted, #fff);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--accent) 8%, transparent),
+    0 4px 8px color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.btn[data-variant="accent"]:hover:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 1px 2px color-mix(in srgb, var(--accent) 16%, transparent),
+    0 2px 6px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 6px 16px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* Loading spinner */
+.btnSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: kitSpin 0.6s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes kitSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Toggle ---- */
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs, 12px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink-tertiary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 60%, transparent);
+  transition:
+    color 140ms var(--ease, ease),
+    background 140ms var(--ease, ease),
+    box-shadow 140ms var(--ease, ease);
+}
+
+.toggle[data-size="sm"] {
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.toggle[data-size="md"] {
+  min-height: 34px;
+  padding: 0 13px;
+}
+
+.toggle:hover {
+  color: var(--ink-secondary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 70%, transparent);
+}
+
+.toggle[data-active="1"] {
+  color: var(--ink-primary, #fff);
+  background: color-mix(in srgb, var(--ink-primary, #fff) 8%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 80%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ink-primary, #fff) 6%, transparent);
+}
+
+.toggle:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ink-primary, #fff) 40%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--ink-primary, #fff) 20%, transparent);
+}
+
+/* ---- Select ---- */
+
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body, inherit);
+  font-weight: 500;
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  cursor: pointer;
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 70%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 3%, transparent);
+  transition:
+    color 140ms var(--ease, ease),
+    box-shadow 140ms var(--ease, ease);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%237a8088' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.select[data-size="sm"] {
+  min-height: 32px;
+  padding: 0 30px 0 10px;
+  font-size: var(--text-xs, 12px);
+}
+
+.select[data-size="md"] {
+  min-height: 40px;
+  padding: 0 30px 0 12px;
+  font-size: var(--text-sm, 14px);
+}
+
+.select:hover {
+  color: var(--ink-primary, #fff);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 80%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 5%, transparent);
+}
+
+.select:focus-visible {
+  outline: none;
+  color: var(--ink-primary, #fff);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 90%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--ink-primary, #fff) 15%, transparent);
+}
+
+.select option {
+  background: var(--surface-elevated);
+  color: var(--ink-primary, #fff);
+}
+
+/* ---- Tabs ---- */
+
+.tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-md, 8px);
+  background: color-mix(in srgb, var(--ink-primary, #fff) 4%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 40%, transparent);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  min-height: 30px;
+  font-family: var(--font-body, inherit);
+  font-size: var(--text-xs, 12px);
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  cursor: pointer;
+  transition:
+    color 140ms var(--ease, ease),
+    background 140ms var(--ease, ease),
+    box-shadow 140ms var(--ease, ease);
+}
+
+.tab:hover {
+  color: var(--ink-secondary);
+}
+
+.tab[data-active="1"] {
+  color: var(--ink-primary, #fff);
+  background: var(--surface-elevated);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 60%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 6%, transparent),
+    0 2px 4px color-mix(in srgb, var(--ink-primary, #fff) 4%, transparent);
+}
+
+.tabBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-primary, #fff) 10%, transparent);
+  color: var(--ink-tertiary);
+}
+
+.tab[data-active="1"] .tabBadge {
+  background: color-mix(in srgb, var(--ink-primary, #fff) 15%, transparent);
+  color: var(--ink-secondary);
+}
+
+/* ---- Separator ---- */
+
+.separator {
+  background: color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 60%, transparent);
+}
+
+.separator[data-orientation="horizontal"] {
+  width: 100%;
+  height: 1px;
+}
+
+.separator[data-orientation="vertical"] {
+  width: 1px;
+  height: 100%;
+  align-self: stretch;
+}
+
+/* ---- Input / Textarea ---- */
+
+.input,
+.textarea {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body, inherit);
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  background: var(--surface-sunken);
+  color: var(--ink-primary, #fff);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 70%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 3%, transparent);
+  transition: box-shadow 140ms var(--ease, ease);
+}
+
+.input[data-size="sm"],
+.textarea[data-size="sm"] {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: var(--text-xs, 12px);
+}
+
+.input[data-size="md"],
+.textarea[data-size="md"] {
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: var(--text-sm, 14px);
+}
+
+.textarea {
+  padding: 8px 12px;
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 90%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 5%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--ink-primary, #fff) 12%, transparent);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--ink-tertiary);
+}
+
+/* ---- Sheet (slide-over) ---- */
+
+.sheetScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: color-mix(in srgb, #000 40%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: kitSheetScrimIn 160ms var(--ease, ease) both;
+}
+
+@keyframes kitSheetScrimIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.sheet {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--surface-elevated) 96%, transparent),
+      color-mix(in srgb, var(--surface-elevated) 88%, transparent));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 60%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink-primary, #fff) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--ink-primary, #fff) 6%, transparent),
+    0 4px 8px color-mix(in srgb, var(--ink-primary, #fff) 5%, transparent),
+    0 8px 16px color-mix(in srgb, var(--ink-primary, #fff) 4%, transparent),
+    0 16px 32px color-mix(in srgb, var(--ink-primary, #fff) 3%, transparent);
+  outline: none;
+  max-height: 85vh;
+  overflow: hidden;
+}
+
+.sheet[data-side="right"] {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 90vw;
+  border-radius: var(--r-lg, 10px) 0 0 var(--r-lg, 10px);
+  animation: kitSheetInRight 220ms var(--ease, ease) both;
+}
+
+.sheet[data-side="left"] {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  max-width: 90vw;
+  border-radius: 0 var(--r-lg, 10px) var(--r-lg, 10px) 0;
+  animation: kitSheetInLeft 220ms var(--ease, ease) both;
+}
+
+.sheet[data-side="bottom"] {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 60vh;
+  border-radius: var(--r-lg, 10px) var(--r-lg, 10px) 0 0;
+  animation: kitSheetInBottom 220ms var(--ease, ease) both;
+}
+
+@keyframes kitSheetInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes kitSheetInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes kitSheetInBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 50%, transparent);
+}
+
+.sheetTitle {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-md, 15px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-primary, #fff);
+}
+
+.sheetClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r-sm, 6px);
+  background: transparent;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 50%, transparent);
+  transition:
+    color 140ms var(--ease, ease),
+    box-shadow 140ms var(--ease, ease);
+}
+
+.sheetClose:hover {
+  color: var(--ink-primary, #fff);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-strong, rgba(255, 255, 255, 0.18)) 70%, transparent);
+}
+
+.sheetBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  font-size: var(--text-sm, 14px);
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+
+.sheetFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 50%, transparent);
+}
+
+/* ---- Tooltip ---- */
+
+.tooltipRoot {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltipContent {
+  position: absolute;
+  z-index: 1100;
+  padding: 4px 8px;
+  font-size: var(--text-xs, 12px);
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: var(--r-sm, 6px);
+  background: var(--surface-elevated);
+  color: var(--ink-secondary);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 60%, transparent),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms var(--ease, ease) 60ms;
+}
+
+.tooltipRoot:hover .tooltipContent,
+.tooltipRoot:focus-within .tooltipContent {
+  opacity: 1;
+}
+
+.tooltipRoot[data-side="top"] .tooltipContent {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltipRoot[data-side="bottom"] .tooltipContent {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltipRoot[data-side="left"] .tooltipContent {
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.tooltipRoot[data-side="right"] .tooltipContent {
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .btn,
+  .toggle,
+  .select,
+  .tab,
+  .input,
+  .textarea,
+  .sheet,
+  .sheetScrim,
+  .tooltipContent,
+  .btnSpinner {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,222 @@
+/* Always-dark AR stage — uses dark gray scale from color-tokens (not blush). */
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ws-z-fullscreen);
+  display: flex;
+  flex-direction: column;
+  background: var(--gray-d-0);
+  color: var(--gray-d-900);
+  font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--gray-d-100);
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+  background:
+    radial-gradient(ellipse at 30% 20%, var(--gray-d-200) 0%, transparent 55%),
+    var(--gray-d-150);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--gray-d-800);
+}
+
+.overlayHost {
+  position: absolute;
+  inset: 8%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.overlayHost:active {
+  cursor: grabbing;
+}
+
+.plan {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.boundary {
+  fill: none;
+  stroke: color-mix(in srgb, var(--gray-l-0) 70%, transparent);
+  stroke-width: 0.45;
+  stroke-dasharray: 1.2 0.8;
+}
+
+.building {
+  fill: color-mix(in srgb, var(--gray-d-0) 55%, transparent);
+  stroke: var(--gray-l-0);
+  stroke-width: 0.55;
+}
+
+.plant {
+  fill: color-mix(in srgb, var(--planting-new-stroke) 75%, transparent);
+  stroke: var(--planting-retain-stroke);
+  stroke-width: 0.2;
+}
+
+.hard {
+  fill: color-mix(in srgb, var(--bluestone-l-400) 55%, transparent);
+  stroke: var(--border-strong);
+  stroke-width: 0.2;
+}
+
+.other {
+  fill: color-mix(in srgb, var(--signal) 55%, transparent);
+  stroke: var(--signal-ink);
+  stroke-width: 0.2;
+}
+
+.dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid color-mix(in srgb, var(--gray-l-0) 12%, transparent);
+  background: color-mix(in srgb, var(--gray-d-100) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.kicker {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-d-500);
+}
+
+.close {
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  border-radius: var(--hc-r-panel);
+  background: transparent;
+  color: var(--gray-d-800);
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.address {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.honesty {
+  margin: 2px 0 0;
+  font-size: var(--text-micro);
+  line-height: 1.4;
+  font-style: italic;
+  color: var(--gray-d-500);
+}
+
+.align {
+  margin: 4px 0 0;
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+
+.align[data-band="poor"] {
+  color: var(--warning);
+}
+
+.align[data-band="fair"] {
+  color: var(--gray-d-800);
+}
+
+.align[data-band="good"] {
+  color: var(--planting-new-stroke);
+}
+
+.muted {
+  font-weight: 500;
+  color: var(--gray-d-500);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: 8px;
+}
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+  flex: 1;
+  font-size: var(--text-micro);
+  color: var(--gray-d-500);
+}
+
+.slider input {
+  width: 100%;
+  accent-color: var(--signal);
+}
+
+.toggle {
+  min-height: 36px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--hc-r-panel);
+  border: 1px solid color-mix(in srgb, var(--gray-l-0) 18%, transparent);
+  background: color-mix(in srgb, var(--gray-d-150) 80%, transparent);
+  color: var(--gray-d-900);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.tip {
+  margin: var(--s-1) 0 0;
+  font-size: var(--text-micro);
+  line-height: 1.35;
+  color: var(--gray-d-400);
+}
+
+@media (min-width: 720px) {
+  .root {
+    flex-direction: row;
+  }
+
+  .stage {
+    flex: 1;
+  }
+
+  .dock {
+    width: min(320px, 38vw);
+    border-top: none;
+    border-left: 1px solid color-mix(in srgb, var(--gray-l-0) 12%, transparent);
+  }
+}

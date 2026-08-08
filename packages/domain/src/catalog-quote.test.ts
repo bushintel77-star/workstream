@@ -31,7 +31,9 @@ describe("formatSitePlanQuoteSection", () => {
       ],
       strokes: [],
       irrigation_zones: [],
+      construction_trenches: [],
       annotations: [],
+      image_layers: [],
       features: [],
       updated_at: new Date().toISOString(),
     };

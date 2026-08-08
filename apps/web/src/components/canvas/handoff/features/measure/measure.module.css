@@ -1,0 +1,80 @@
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-interact);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.line {
+  stroke: color-mix(in srgb, var(--text-primary) 82%, transparent);
+  stroke-width: 1.1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.dot {
+  fill: var(--text-primary);
+  stroke: var(--canvas);
+  stroke-width: 0.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.label {
+  /*
+   * Portaled via CameraChrome — no camera-space transform / counter-scale
+   * needed. The container's translate(-50%, -140%) is applied via the
+   * portal's transform when placed at a projected point.
+   */
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--hc-fs-3);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  background: var(--hc-glass);
+  border: 1px solid var(--hc-line);
+  backdrop-filter: none;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--hc-r-control);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--hc-elev-1);
+}
+
+.labelLive {
+  box-shadow:
+    var(--hc-elev-1),
+    0 0 0 5px var(--hc-accent-wash);
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: var(--ws-z-dock);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  color: var(--hc-ink-muted);
+  background: var(--hc-glass-soft);
+  border: 1px solid var(--hc-line-soft);
+  backdrop-filter: none;
+  border-radius: var(--hc-r-control);
+  padding: var(--s-1) var(--s-2);
+  pointer-events: none;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .labelLive {
+    box-shadow: var(--hc-elev-1);
+  }
+}

@@ -38,8 +38,26 @@
 | **Geometry** | Metres from aerial-frame origin (`CadDocument`); Y-up. |
 | **AI** | Claude emits `CadOp[]`; `@workstream/cad` applies ops. All AI geometry is **ghost** until Accept. |
 | **Layers** | SKETCH-REF, PLANTING, HARDSCAPE, STRUCTURES, WATER, IRRIGATION, TRP, ANNOTATION, DIMENSIONS, PERMITS. |
-| **Export** | SVG preview in-app; **DXF for LibreCAD**. |
+| **Export** | SVG preview in-app; **DXF for LibreCAD**; **glTF 2.0** (extruded proxies). Working plan metres — confirm on site. |
 | **Workflow 1 link** | Import sketch → inserts + stroke polylines; upgrade via `/design/cad`. |
+
+**Phase 1 gate (shipped):** calibrated plan-metre frame (`site_frame.board_width_m` preferred over survey/aerial span), site boundary/building/easements stamped into `CadDocument`, Share **Download DXF**.
+
+**Phase 2 gate (shipped):** `cadDocumentToGltf` + Share **Download glTF** — extruded STRUCTURES / planting cylinders; not Nanite, not USD.
+
+**Phase 3 gate (shipped):** `cad.sync.json` live-sync manifest + stable `symbol_id` / entity IDs on glTF extras for an external UE5 importer. Nanite/Lumen stay in Unreal — Workstream publishes the metre contract.
+
+**Phase 4 gate (shipped):** twin telemetry ingest (`POST/GET …/design/telemetry`) for soil moisture, thermal comfort, flow, sediment + studio **Live telemetry** toggle (Cmd+K). Demo seeds labelled `demo` — not sensor fact.
+
+**Phase 5 gate (shipped):** twin performance alerts — `sediment_buildup` / `vegetation_stress` board findings when readings cross indicative thresholds; merge into `GET …/design/findings`.
+
+**Phase 6 gate (shipped):** on-site **AR bird's-eye** overlay (Cmd+K / share twin) with building **footprint occlusion**, pan/rotate/scale calibrate, indicative IoU align score. Not Vision Pro / city-twin chroma-key — confirm on site.
+
+**Workflow 1 §4 (shipped):** temporal growth scrub draws canopy + root rings on the plan; crowded discs tint at Year 10 alongside findings.
+
+**Workflow 1 §3 artboards (shipped):** session Sheets strip — Plan / Fit / Elev N·E·S·W viewports (CameraChrome). Persisted multi-sheet pasteboard remains later.
+
+**Workflow 1 Fit Sheet pens (shipped):** `technical` / `hand_drawn` (Rough.js) / `grey_wash` / `watercolour` + Atmosphere pigments + deep chalk theme; technical CAD furniture (scale bar, status stamp, hatch key, elev A–A′ / RL); Dark concept seed; brochure elev pick by dwelling span. Growth Year 1/5/10 rings draw on the Fit plan via the board scrub. **2026 UX:** idle Fit is paper-only (Sheets strip off); compose CameraChrome peel; furniture technical-pen only.
 
 **Migration principle:** Workflow 1 canvases remain valid forever. Stage 2 opens as *Upgrade to AI CAD* — no silent coercion of sketch geometry.
 
@@ -77,4 +95,4 @@ When reviewing a PR, ask:
 - [ ] Does this stay in **percent + indicative** geometry? → Workflow 1 OK.
 - [ ] Does it require **metre grid origin or DXF layers**? → Stage 2 only; do not bolt onto `DesignCanvas` without schema brief.
 
-See also: [DESIGNER-HANDOVER.md](./DESIGNER-HANDOVER.md) §2, [STUDIO-SITE-INTELLIGENCE.md](./STUDIO-SITE-INTELLIGENCE.md), `PROPOSAL.md` (AI ghosts).
+See also: [DESIGNER-HANDOVER.md](./DESIGNER-HANDOVER.md) §2, [STUDIO-SITE-INTELLIGENCE.md](./STUDIO-SITE-INTELLIGENCE.md), `PROPOSAL.md` (AI ghosts), [CANVAS-FIRST-SPATIAL-ENGINE-SDS.md](./CANVAS-FIRST-SPATIAL-ENGINE-SDS.md).

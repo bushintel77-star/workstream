@@ -21,9 +21,12 @@ export const SurveySchema = z.object({
   title_polygon: GeoJsonPolygonSchema,
   house_polygon: GeoJsonPolygonSchema,
   garden_polygon: GeoJsonPolygonSchema,
-  lot_area_m2: z.number().positive(),
-  house_area_m2: z.number().positive(),
-  garden_area_m2: z.number().positive(),
+  /** Zero means title area unknown — never invent a seed lot. */
+  lot_area_m2: z.number().nonnegative(),
+  /** Zero means the existing-house outline is unavailable — never fabricate it. */
+  house_area_m2: z.number().nonnegative(),
+  /** Zero means outdoor / garden area unknown — Trace the title on the aerial. */
+  garden_area_m2: z.number().nonnegative(),
   measurements: z.array(MeasurementSchema),
 });
 export type Survey = z.infer<typeof SurveySchema>;

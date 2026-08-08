@@ -10,7 +10,7 @@ type Props = {
   onTogglePresentation: () => void;
 };
 
-const WEB_BASE = process.env.EXPO_PUBLIC_WEB_URL ?? "https://construct-web.fly.dev";
+const WEB_BASE = process.env.EXPO_PUBLIC_WEB_URL ?? "https://web-production-3c194.up.railway.app";
 
 export function MobileSketchTopbar({
   projectId,

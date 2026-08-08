@@ -1,0 +1,8 @@
+.plan {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: block;
+  background: var(--sheet-paper, var(--canvas));
+  border-radius: 12px;
+  border: 1px solid var(--line-hairline);
+}

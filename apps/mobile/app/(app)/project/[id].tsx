@@ -258,7 +258,7 @@ export default function ProjectDetailScreen() {
       setAudit(a);
       setOutputs(outs);
       setOverrides(ovs);
-      api.getWeather(id).then((w) => setWeather(w.forecast)).catch(() => {});
+      api.getWeather(id).then((w) => setWeather(w.forecast)).catch(() => { });
       api
         .getSiteContext(id)
         .then((r) => setSiteContext(r.context))
@@ -276,7 +276,7 @@ export default function ProjectDetailScreen() {
   const handleAdvanceStatus = useCallback(
     async (next: Project["status"]) => {
       if (!id) return;
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
       try {
         const p = await api.updateProjectStatus(id, next);
         setProject(p);
@@ -323,7 +323,7 @@ export default function ProjectDetailScreen() {
 
   const handleRunPipeline = useCallback(async () => {
     if (!id) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
     stopPipelinePolling();
     setPipelineRunning(true);
     setPipelineSlow(false);
@@ -450,14 +450,14 @@ export default function ProjectDetailScreen() {
       });
       Haptics.notificationAsync(
         Haptics.NotificationFeedbackType.Success,
-      ).catch(() => {});
+      ).catch(() => { });
       setOverrides((prev) => [result.override, ...prev]);
       setAudit(result.audit);
       closeOverride();
     } catch (e) {
       Haptics.notificationAsync(
         Haptics.NotificationFeedbackType.Error,
-      ).catch(() => {});
+      ).catch(() => { });
       setError(e instanceof Error ? e.message : "Override failed");
     } finally {
       setOverrideSaving(false);
@@ -479,7 +479,7 @@ export default function ProjectDetailScreen() {
       const invoice = await api.myobDraftInvoice(id);
       Haptics.notificationAsync(
         Haptics.NotificationFeedbackType.Success,
-      ).catch(() => {});
+      ).catch(() => { });
       setMyobInvoice({
         invoice_number: invoice.invoice_number,
         mode: invoice.mode,
@@ -487,7 +487,7 @@ export default function ProjectDetailScreen() {
       });
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-        () => {},
+        () => { },
       );
       setError(e instanceof Error ? e.message : "MYOB send failed");
     } finally {
@@ -674,311 +674,318 @@ export default function ProjectDetailScreen() {
         </View>
       ) : (
         <>
-        <ScrollView contentContainerStyle={[styles.content, styles.contentDockPad]}>
-          {error && (
-            <View style={styles.inlineErrorBanner}>
-              <Text style={styles.inlineErrorText}>{error}</Text>
-              <Pressable
-                onPress={handleRunPipeline}
-                style={styles.inlineErrorAction}
-                accessibilityRole="button"
-                accessibilityLabel="Retry pipeline"
-              >
-                <Text style={styles.inlineErrorActionText}>Retry</Text>
-              </Pressable>
-            </View>
-          )}
-
-          {pipelineRunning && (
-            <PipelineProgress
-              survey={survey != null}
-              design={design != null}
-              costings={costings.length > 0}
-              audit={audit != null}
-              slow={pipelineSlow}
-            />
-          )}
-
-          <ProjectTitleHero
-            address={project.address}
-            survey={survey}
-            siteContext={siteContext}
-            weather={weather}
-            motionEnabled={motionEnabled}
-          />
-
-          <SiteHotLinks
-            projectId={id!}
-            address={project.address}
-            clientName={project.client_name}
-            lat={project.lat}
-            lng={project.lng}
-            openTaskCount={openTaskCount}
-            envelope={envelope}
-            standardTotal={standardCosting?.total ?? null}
-            onShowOutstanding={() => setSheetOpen(true)}
-            onSketch={() =>
-              router.push({
-                pathname: "/(app)/design-studio/[id]",
-                params: { id: id! },
-              })
-            }
-            onFiling={() =>
-              router.push({
-                pathname: "/(app)/filing/[id]",
-                params: { id: id! },
-              })
-            }
-            onReachClient={handleWhatsApp}
-          />
-
-          {survey ? (
-            <>
-              <View style={styles.summaryCard}>
-                <View style={styles.metricsLedger}>
-                  <LedgerRow label="Lot" value={`${survey.lot_area_m2} m²`} />
-                  <LedgerRow label="House" value={`${survey.house_area_m2} m²`} />
-                  <LedgerRow label="Garden" value={`${survey.garden_area_m2} m²`} />
-                  <View style={styles.ledgerDivider} />
-                  <LedgerRow
-                    label="Frontage"
-                    value={`${metresFormat(summary?.frontage ?? 0)} m`}
-                  />
-                  <LedgerRow
-                    label="Depth"
-                    value={`${metresFormat(summary?.depth ?? 0)} m`}
-                  />
-                </View>
-
-                <View style={styles.surveyActions}>
-                  <Pressable
-                    style={styles.primaryBtn}
-                    onPress={() => void handleAdvanceStatus("design_review")}
-                    disabled={
-                      project.status !== "survey_review" &&
-                      project.status !== "processing"
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel="Confirm survey looks right"
-                  >
-                    <Text style={styles.primaryBtnText}>Looks right →</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.secondaryBtn}
-                    onPress={handleRunSurvey}
-                    disabled={surveyRunning}
-                    accessibilityRole="button"
-                    accessibilityLabel="Re-run survey"
-                  >
-                    <Text style={styles.secondaryBtnText}>
-                      {surveyRunning ? "Re-running…" : "Adjust"}
-                    </Text>
-                  </Pressable>
-                </View>
+          <ScrollView contentContainerStyle={[styles.content, styles.contentDockPad]}>
+            {error && (
+              <View style={styles.inlineErrorBanner}>
+                <Text style={styles.inlineErrorText}>{error}</Text>
+                <Pressable
+                  onPress={handleRunPipeline}
+                  style={styles.inlineErrorAction}
+                  accessibilityRole="button"
+                  accessibilityLabel="Retry pipeline"
+                >
+                  <Text style={styles.inlineErrorActionText}>Retry</Text>
+                </Pressable>
               </View>
-            </>
-          ) : (
-            <View style={styles.intakeCard}>
-              <Text style={styles.kicker}>NEXT STEP</Text>
-              <Text style={styles.intakeBody}>
-                Spin a site yarn first — we transcribe it and map the backyard.
-                Design, costing and audit come after, when you are ready.
+            )}
+
+            {pipelineRunning && (
+              <PipelineProgress
+                survey={survey != null}
+                design={design != null}
+                costings={costings.length > 0}
+                audit={audit != null}
+                slow={pipelineSlow}
+              />
+            )}
+
+            <ProjectTitleHero
+              address={project.address}
+              survey={survey}
+              siteContext={siteContext}
+              weather={weather}
+              motionEnabled={motionEnabled}
+            />
+
+            <SiteHotLinks
+              projectId={id!}
+              address={project.address}
+              clientName={project.client_name}
+              lat={project.lat}
+              lng={project.lng}
+              openTaskCount={openTaskCount}
+              envelope={envelope}
+              standardTotal={standardCosting?.total ?? null}
+              onShowOutstanding={() => setSheetOpen(true)}
+              onSketch={() =>
+                router.push({
+                  pathname: "/(app)/design-studio/[id]",
+                  params: { id: id! },
+                })
+              }
+              onFiling={() =>
+                router.push({
+                  pathname: "/(app)/filing/[id]",
+                  params: { id: id! },
+                })
+              }
+              onReachClient={handleWhatsApp}
+            />
+
+            {survey ? (
+              <>
+                <View style={styles.summaryCard}>
+                  <View style={styles.metricsLedger}>
+                    <LedgerRow label="Lot" value={`${survey.lot_area_m2} m²`} />
+                    <LedgerRow
+                      label="Existing house"
+                      value={
+                        survey.house_area_m2 > 0
+                          ? `${survey.house_area_m2} m²`
+                          : "Not available"
+                      }
+                    />
+                    <LedgerRow label="Garden" value={`${survey.garden_area_m2} m²`} />
+                    <View style={styles.ledgerDivider} />
+                    <LedgerRow
+                      label="Frontage"
+                      value={`${metresFormat(summary?.frontage ?? 0)} m`}
+                    />
+                    <LedgerRow
+                      label="Depth"
+                      value={`${metresFormat(summary?.depth ?? 0)} m`}
+                    />
+                  </View>
+
+                  <View style={styles.surveyActions}>
+                    <Pressable
+                      style={styles.primaryBtn}
+                      onPress={() => void handleAdvanceStatus("design_review")}
+                      disabled={
+                        project.status !== "survey_review" &&
+                        project.status !== "processing"
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel="Confirm survey looks right"
+                    >
+                      <Text style={styles.primaryBtnText}>Looks right →</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.secondaryBtn}
+                      onPress={handleRunSurvey}
+                      disabled={surveyRunning}
+                      accessibilityRole="button"
+                      accessibilityLabel="Re-run survey"
+                    >
+                      <Text style={styles.secondaryBtnText}>
+                        {surveyRunning ? "Re-running…" : "Adjust"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </>
+            ) : (
+              <View style={styles.intakeCard}>
+                <Text style={styles.kicker}>NEXT STEP</Text>
+                <Text style={styles.intakeBody}>
+                  Spin a site yarn first — we transcribe it and map the backyard.
+                  Design, costing and audit come after, when you are ready.
+                </Text>
+                <Pressable
+                  style={styles.primaryBtnLarge}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(app)/recording",
+                      params: { projectId: id },
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel="Start recording walkthrough"
+                >
+                  <Text style={styles.primaryBtnText}>Start recording →</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.secondaryBtnFull}
+                  onPress={handleRunPipeline}
+                  disabled={pipelineRunning || !latest?.transcript}
+                  accessibilityRole="button"
+                  accessibilityLabel="Re-run automated pipeline"
+                >
+                  <Text style={styles.secondaryBtnText}>
+                    {pipelineRunning
+                      ? "Re-running pipeline…"
+                      : latest?.transcript
+                        ? "Re-run pipeline"
+                        : "Record first, then pipeline runs"}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+
+            {survey && (
+              <DesignSection
+                projectId={id}
+                design={design}
+                running={designRunning}
+                onRun={handleRunDesign}
+              />
+            )}
+
+            {design && (
+              <CostSection
+                costings={costings}
+                scenario={scenario}
+                onScenarioChange={setScenario}
+                running={costingRunning}
+                onRun={handleRunCosting}
+              />
+            )}
+
+            {costings.length > 0 && (
+              <AuditSection
+                audit={audit}
+                overrides={overrides}
+                running={auditRunning}
+                onRun={handleRunAudit}
+                onOverride={openOverride}
+              />
+            )}
+
+            {audit?.passed && (
+              <OutputsSection
+                outputs={outputs}
+                running={outputRunning}
+                onRun={handleRunOutput}
+              />
+            )}
+
+            {audit?.passed && (
+              <View style={styles.myobCard}>
+                <Text style={styles.cardLabel}>MYOB</Text>
+                {myobInvoice ? (
+                  <>
+                    <Text style={styles.myobSuccess}>
+                      Draft invoice {myobInvoice.invoice_number} created
+                    </Text>
+                    <Text style={styles.myobMeta}>
+                      {myobInvoice.mode === "live" ? "Live MYOB" : "Dev fallback"}
+                      {" · "}
+                      {new Intl.NumberFormat("en-AU", {
+                        style: "currency",
+                        currency: "AUD",
+                        maximumFractionDigits: 0,
+                      }).format(myobInvoice.total_incl_gst)}{" "}
+                      incl. GST
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.intakeBody}>
+                    Drafts a sales invoice on the linked MYOB company file from
+                    the Standard scenario costing. GST-coded, customer auto-
+                    linked.
+                  </Text>
+                )}
+                <Pressable
+                  style={[
+                    styles.primaryBtnLarge,
+                    myobSending && { opacity: 0.85 },
+                  ]}
+                  onPress={handleSendToMyob}
+                  disabled={myobSending}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send quote to MYOB"
+                >
+                  <Text style={styles.primaryBtnText}>
+                    {myobSending
+                      ? "Sending…"
+                      : myobInvoice
+                        ? "Resend to MYOB"
+                        : "Send to MYOB →"}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+
+            {latest?.transcript ? (
+              <View style={styles.transcriptCard}>
+                <Text style={styles.cardLabel}>WALKTHROUGH TRANSCRIPT</Text>
+                <Text style={styles.transcript}>{latest.transcript}</Text>
+                {latest.transcription_confidence != null && (
+                  <Text style={styles.confidence}>
+                    Confidence ·{" "}
+                    {Math.round(latest.transcription_confidence * 100)}%
+                  </Text>
+                )}
+              </View>
+            ) : latest && !latest.transcript ? (
+              <View style={styles.transcriptCard}>
+                <ActivityIndicator color={tokens.color.accent.default} />
+                <Text style={styles.processing}>Transcribing walkthrough…</Text>
+              </View>
+            ) : null}
+
+            <Pressable
+              style={styles.recordButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/(app)/recording",
+                  params: { projectId: project.id },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={
+                latest ? "Record walkthrough again" : "Start walkthrough"
+              }
+            >
+              <Text style={styles.recordButtonText}>
+                {latest ? "Record again" : "Start walkthrough"}
               </Text>
+            </Pressable>
+
+            {survey && (
               <Pressable
-                style={styles.primaryBtnLarge}
+                style={styles.buildModeButton}
                 onPress={() =>
                   router.push({
-                    pathname: "/(app)/recording",
-                    params: { projectId: id },
+                    pathname: "/(app)/grid-soil",
+                    params: { projectId: project.id },
                   })
                 }
                 accessibilityRole="button"
-                accessibilityLabel="Start recording walkthrough"
+                accessibilityLabel="Open Grid and Soil build mode"
               >
-                <Text style={styles.primaryBtnText}>Start recording →</Text>
+                <Text style={styles.buildModeKicker}>BUILD MODE</Text>
+                <Text style={styles.buildModeTitle}>Grid &amp; Soil →</Text>
+                <Text style={styles.buildModeBody}>
+                  On-site dictation. Tasks and material ledger update as you
+                  speak.
+                </Text>
               </Pressable>
+            )}
+
+            {survey && (
               <Pressable
-                style={styles.secondaryBtnFull}
-                onPress={handleRunPipeline}
-                disabled={pipelineRunning || !latest?.transcript}
+                style={styles.measurePhotoButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(app)/measure-photo",
+                    params: { projectId: project.id },
+                  })
+                }
                 accessibilityRole="button"
-                accessibilityLabel="Re-run automated pipeline"
+                accessibilityLabel="Measure from photo"
               >
-                <Text style={styles.secondaryBtnText}>
-                  {pipelineRunning
-                    ? "Re-running pipeline…"
-                    : latest?.transcript
-                      ? "Re-run pipeline"
-                      : "Record first, then pipeline runs"}
+                <Text style={styles.measurePhotoKicker}>VISION</Text>
+                <Text style={styles.measurePhotoTitle}>
+                  Measure from photo →
+                </Text>
+                <Text style={styles.measurePhotoBody}>
+                  Snap or pick a site photo. Claude extracts dimensions,
+                  confidence-scored against the reference you provide.
                 </Text>
               </Pressable>
-            </View>
-          )}
-
-          {survey && (
-            <DesignSection
-              projectId={id}
-              design={design}
-              running={designRunning}
-              onRun={handleRunDesign}
-            />
-          )}
-
-          {design && (
-            <CostSection
-              costings={costings}
-              scenario={scenario}
-              onScenarioChange={setScenario}
-              running={costingRunning}
-              onRun={handleRunCosting}
-            />
-          )}
-
-          {costings.length > 0 && (
-            <AuditSection
-              audit={audit}
-              overrides={overrides}
-              running={auditRunning}
-              onRun={handleRunAudit}
-              onOverride={openOverride}
-            />
-          )}
-
-          {audit?.passed && (
-            <OutputsSection
-              outputs={outputs}
-              running={outputRunning}
-              onRun={handleRunOutput}
-            />
-          )}
-
-          {audit?.passed && (
-            <View style={styles.myobCard}>
-              <Text style={styles.cardLabel}>MYOB</Text>
-              {myobInvoice ? (
-                <>
-                  <Text style={styles.myobSuccess}>
-                    Draft invoice {myobInvoice.invoice_number} created
-                  </Text>
-                  <Text style={styles.myobMeta}>
-                    {myobInvoice.mode === "live" ? "Live MYOB" : "Dev fallback"}
-                    {" · "}
-                    {new Intl.NumberFormat("en-AU", {
-                      style: "currency",
-                      currency: "AUD",
-                      maximumFractionDigits: 0,
-                    }).format(myobInvoice.total_incl_gst)}{" "}
-                    incl. GST
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.intakeBody}>
-                  Drafts a sales invoice on the linked MYOB company file from
-                  the Standard scenario costing. GST-coded, customer auto-
-                  linked.
-                </Text>
-              )}
-              <Pressable
-                style={[
-                  styles.primaryBtnLarge,
-                  myobSending && { opacity: 0.85 },
-                ]}
-                onPress={handleSendToMyob}
-                disabled={myobSending}
-                accessibilityRole="button"
-                accessibilityLabel="Send quote to MYOB"
-              >
-                <Text style={styles.primaryBtnText}>
-                  {myobSending
-                    ? "Sending…"
-                    : myobInvoice
-                      ? "Resend to MYOB"
-                      : "Send to MYOB →"}
-                </Text>
-              </Pressable>
-            </View>
-          )}
-
-          {latest?.transcript ? (
-            <View style={styles.transcriptCard}>
-              <Text style={styles.cardLabel}>WALKTHROUGH TRANSCRIPT</Text>
-              <Text style={styles.transcript}>{latest.transcript}</Text>
-              {latest.transcription_confidence != null && (
-                <Text style={styles.confidence}>
-                  Confidence ·{" "}
-                  {Math.round(latest.transcription_confidence * 100)}%
-                </Text>
-              )}
-            </View>
-          ) : latest && !latest.transcript ? (
-            <View style={styles.transcriptCard}>
-              <ActivityIndicator color={tokens.color.accent.default} />
-              <Text style={styles.processing}>Transcribing walkthrough…</Text>
-            </View>
-          ) : null}
-
-          <Pressable
-            style={styles.recordButton}
-            onPress={() =>
-              router.push({
-                pathname: "/(app)/recording",
-                params: { projectId: project.id },
-              })
-            }
-            accessibilityRole="button"
-            accessibilityLabel={
-              latest ? "Record walkthrough again" : "Start walkthrough"
-            }
-          >
-            <Text style={styles.recordButtonText}>
-              {latest ? "Record again" : "Start walkthrough"}
-            </Text>
-          </Pressable>
-
-          {survey && (
-            <Pressable
-              style={styles.buildModeButton}
-              onPress={() =>
-                router.push({
-                  pathname: "/(app)/grid-soil",
-                  params: { projectId: project.id },
-                })
-              }
-              accessibilityRole="button"
-              accessibilityLabel="Open Grid and Soil build mode"
-            >
-              <Text style={styles.buildModeKicker}>BUILD MODE</Text>
-              <Text style={styles.buildModeTitle}>Grid &amp; Soil →</Text>
-              <Text style={styles.buildModeBody}>
-                On-site dictation. Tasks and material ledger update as you
-                speak.
-              </Text>
-            </Pressable>
-          )}
-
-          {survey && (
-            <Pressable
-              style={styles.measurePhotoButton}
-              onPress={() =>
-                router.push({
-                  pathname: "/(app)/measure-photo",
-                  params: { projectId: project.id },
-                })
-              }
-              accessibilityRole="button"
-              accessibilityLabel="Measure from photo"
-            >
-              <Text style={styles.measurePhotoKicker}>VISION</Text>
-              <Text style={styles.measurePhotoTitle}>
-                Measure from photo →
-              </Text>
-              <Text style={styles.measurePhotoBody}>
-                Snap or pick a site photo. Claude extracts dimensions,
-                confidence-scored against the reference you provide.
-              </Text>
-            </Pressable>
-          )}
-        </ScrollView>
+            )}
+          </ScrollView>
 
           <ProjectBottomChrome
             next={siteNext}
@@ -1322,6 +1329,8 @@ const OUTPUT_ORDER: OutputKind[] = [
   "daily_site_report",
   "permit_stonnington_stormwater",
   "permit_yarra_heritage",
+  "establishment_calendar",
+  "handover_pack",
 ];
 const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
   task_list: { title: "Task list", sub: "Site sequence for the crew" },
@@ -1341,6 +1350,14 @@ const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
     sub: "Pre-filled draft application",
   },
   brochure: { title: "Brochure", sub: "Client concept brochure with aerial hero" },
+  establishment_calendar: {
+    title: "Establishment calendar",
+    sub: "Planting windows + watering schedule",
+  },
+  handover_pack: {
+    title: "Handover pack",
+    sub: "Care notes, irrigation, lighting, warranty",
+  },
 };
 
 function OutputsSection({
@@ -1892,7 +1909,7 @@ const styles = StyleSheet.create({
   inlineErrorAction: {
     paddingHorizontal: tokens.space[3],
     paddingVertical: tokens.space[2],
-    minHeight: 36,
+    minHeight: 44,
     borderRadius: tokens.radius.sm,
     backgroundColor: tokens.color.semantic.block,
     justifyContent: "center",

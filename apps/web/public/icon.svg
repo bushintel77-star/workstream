@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<!-- LS trademark only — favicon / tab icon. Full lockup: /ls-lockup.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LS">
   <rect width="512" height="512" rx="96" fill="#18181B"/>
-  <g transform="translate(120 120)" fill="none" stroke="#FAFAF7" stroke-width="18" stroke-linecap="square">
-    <path d="M0 272 L0 0 L272 0"/>
-    <path d="M68 204 L68 68 L204 68"/>
-    <path d="M136 136 L272 136 L272 272 L136 272 L136 136"/>
+  <g fill="none" stroke="#FAFAF7" stroke-linecap="square" stroke-linejoin="miter">
+    <path stroke-width="22" d="M 104 104 L 104 408 L 408 408"/>
+    <path stroke-width="22" d="M 340 180 A 50 50 0 0 0 280 256 A 50 50 0 0 1 340 332"/>
   </g>
-  <circle cx="392" cy="392" r="28" fill="#C2410C"/>
 </svg>

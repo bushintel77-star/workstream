@@ -14,10 +14,6 @@ function authRequired(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
-export function isDevAuthMode(): boolean {
-  return !authRequired() && !clerkEnabled;
-}
-
 export function isClerkRequired(): boolean {
   return authRequired() && !clerkEnabled;
 }
@@ -26,7 +22,7 @@ export async function requireSignedIn(): Promise<{ userId: string }> {
   if (!clerkEnabled) {
     if (isClerkRequired()) {
       throw new Error(
-        "CLERK_SECRET_KEY is required in production. Configure Clerk on construct-web.",
+        "CLERK_SECRET_KEY is required in production. Configure Clerk on the web service.",
       );
     }
     return { userId: process.env.DEV_USER_ID ?? "dev-user" };

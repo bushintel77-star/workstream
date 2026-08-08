@@ -3,7 +3,7 @@ import { clerkPlugin, getAuth } from '@clerk/fastify';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { assertAuthConfigured, isAuthRequired } from '../lib/auth-config';
 import { bindOwnerSecrets } from '../lib/owner-secrets';
-import { annotateActiveSpan } from '../lib/telemetry';
+import { annotateActiveSpan, setTelemetryAttributes } from '../lib/telemetry';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -47,6 +47,9 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
       throw err;
     }
     await bindOwnerSecrets(request.server.store, DEV_USER_ID);
+    if (request.telemetrySpan) {
+      setTelemetryAttributes(request.telemetrySpan, { "operator.id": DEV_USER_ID });
+    }
     annotateActiveSpan({ "operator.id": DEV_USER_ID });
     return;
   }
@@ -76,6 +79,9 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
     throw err;
   }
   await bindOwnerSecrets(request.server.store, auth.userId);
+  if (request.telemetrySpan) {
+    setTelemetryAttributes(request.telemetrySpan, { "operator.id": auth.userId });
+  }
   annotateActiveSpan({ "operator.id": auth.userId });
 }
 

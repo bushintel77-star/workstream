@@ -1,135 +1,163 @@
+/* Minimal product landing — one composition, brand first.
+ * All colours resolve through the shared token system so the dark
+ * landing stage flows into the rest of the app. */
+
 .page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: var(--s-7) var(--s-5) var(--s-8);
+  position: relative;
+  min-height: 100dvh;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--surface-deep);
+  color: var(--ink-inverted);
+  font-family: var(--font-body);
 }
 
-.masthead {
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(105deg,
+      color-mix(in srgb, var(--surface-deep) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface-deep) 55%, transparent) 42%,
+      color-mix(in srgb, var(--surface-deep) 20%, transparent) 100%),
+    radial-gradient(90% 70% at 100% 0%,
+      color-mix(in srgb, var(--crimson-d-500) 18%, transparent),
+      transparent 55%);
+}
+
+.copy {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: var(--s-4);
-  border-bottom: 2px solid var(--ink-primary);
-  margin-bottom: var(--s-8);
-  gap: var(--s-5);
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  padding-bottom: max(clamp(2.5rem, 7vw, 4.5rem),
+      calc(1.5rem + env(safe-area-inset-bottom, 0px)));
+  max-width: 40rem;
 }
 
 .brand {
-  font-family: var(--font-display);
-  font-size: 22px;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(2.75rem, 9vw, 4.75rem);
   font-weight: 600;
-  letter-spacing: -0.01em;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.brandSub {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ink-tertiary);
-}
-
-.kicker {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.hero {
-  margin-bottom: var(--s-8);
-  max-width: 720px;
-}
-
-.eyebrow {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ink-tertiary);
-  margin-bottom: var(--s-4);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: rise 0.7s var(--ease-emphasis, cubic-bezier(0.16, 1, 0.3, 1)) 0.1s forwards;
 }
 
 .headline {
-  font-family: var(--font-display);
-  font-size: clamp(40px, 7vw, 72px);
-  line-height: 1.05;
-  letter-spacing: -0.025em;
-  font-weight: 600;
-  margin: 0 0 var(--s-5);
-  color: var(--ink-primary);
+  margin: 0;
+  max-width: 18ch;
+  font-family: var(--font-body);
+  font-size: clamp(1.15rem, 2.8vw, 1.45rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--ink-inverted) 62%, transparent);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: rise 0.7s var(--ease-emphasis, cubic-bezier(0.16, 1, 0.3, 1)) 0.28s forwards;
 }
 
 .lede {
-  font-size: 18px;
-  line-height: 1.6;
-  color: var(--ink-secondary);
   margin: 0;
-  max-width: 600px;
+  max-width: 32ch;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink-inverted) 38%, transparent);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: rise 0.7s var(--ease-emphasis, cubic-bezier(0.16, 1, 0.3, 1)) 0.42s forwards;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--s-5);
-  margin-bottom: var(--s-8);
-}
-
-.feature {
-  padding: var(--s-5);
-  background: var(--surface-elevated);
-  border-radius: var(--r-lg);
-  border: 1px solid var(--line-hairline);
+.cta {
   display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  transition:
-    box-shadow var(--dur-base) var(--ease),
-    transform var(--dur-base) var(--ease);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: rise 0.7s var(--ease-emphasis, cubic-bezier(0.16, 1, 0.3, 1)) 0.55s forwards;
 }
 
-.feature:hover {
-  box-shadow: var(--elev-1);
-  transform: translateY(-1px);
-}
-
-.featureKicker {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.featureTitle {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  margin: 0;
-  color: var(--ink-primary);
-}
-
-.featureBody {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--ink-secondary);
-}
-
-.colophon {
+.foot {
+  position: relative;
+  z-index: 1;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  padding-top: var(--s-5);
-  border-top: 1px solid var(--line-hairline);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  gap: 0.75rem;
+  padding: 1rem clamp(1.5rem, 5vw, 3.5rem) calc(1rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid color-mix(in srgb, var(--ink-inverted) 8%, transparent);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-tertiary);
+  color: color-mix(in srgb, var(--ink-inverted) 38%, transparent);
+}
+
+.foot a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.foot a:hover {
+  color: color-mix(in srgb, var(--ink-inverted) 62%, transparent);
+}
+
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .brand,
+  .headline,
+  .lede,
+  .cta {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .copy {
+    justify-content: center;
+    padding-top: clamp(3rem, 8vh, 6rem);
+  }
+
+  .stage::after {
+    background:
+      linear-gradient(100deg,
+        color-mix(in srgb, var(--surface-deep) 92%, transparent) 0%,
+        color-mix(in srgb, var(--surface-deep) 45%, transparent) 38%,
+        color-mix(in srgb, var(--surface-deep) 8%, transparent) 70%,
+        transparent 100%),
+      radial-gradient(70% 60% at 85% 20%,
+        color-mix(in srgb, var(--crimson-d-500) 20%, transparent),
+        transparent 55%);
+  }
 }

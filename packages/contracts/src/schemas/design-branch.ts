@@ -1,65 +1,86 @@
 import { z } from "zod";
-import {
-  CanvasAnnotationSchema,
-  CanvasStrokeSchema,
-  CatalogPlacementSchema,
-  IrrigationZoneSchema,
-} from "./catalog";
-import { LandscapeFeatureSchema } from "./landscape-feature";
+import { DesignCanvasSchema, UpsertDesignCanvasSchema } from "./catalog";
 
-/** Frozen canvas payload restored when a branch is activated. */
-export const DesignBranchCanvasSnapshotSchema = z.object({
-  placements: z.array(CatalogPlacementSchema),
-  strokes: z.array(CanvasStrokeSchema).default([]),
-  irrigation_zones: z.array(IrrigationZoneSchema).default([]),
-  annotations: z.array(CanvasAnnotationSchema).default([]),
-  features: z.array(LandscapeFeatureSchema).default([]),
-});
-export type DesignBranchCanvasSnapshot = z.infer<
-  typeof DesignBranchCanvasSnapshotSchema
->;
+/**
+ * Async design VCS — named branches over DesignCanvas tips.
+ * See docs plan: landscape-ops + async design VCS (1A).
+ * CadDocument is not branched; formalize from merged main only.
+ */
 
-/** Frozen design/quote snapshot for lightweight variation branching (PDF §4.5). */
-export const DesignBranchSnapshotSchema = z.object({
+export const DesignBranchStatusSchema = z.enum([
+  "open",
+  "merged",
+  "abandoned",
+]);
+export type DesignBranchStatus = z.infer<typeof DesignBranchStatusSchema>;
+
+/** Reserved name for the primary tip. */
+export const MAIN_DESIGN_BRANCH_NAME = "main";
+
+export const DesignRevisionSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
-  name: z.string().min(1).max(120),
-  parent_id: z.string().uuid().nullable().optional(),
+  owner_id: z.string().min(1),
+  branch_id: z.string().uuid(),
+  /** Prior revision on this branch (null = genesis). */
+  parent_id: z.string().uuid().nullable(),
+  label: z.string().trim().max(80).optional(),
+  message: z.string().trim().max(500).default(""),
+  canvas: DesignCanvasSchema,
   created_at: z.string().datetime(),
-  bom_total: z.number().nonnegative().default(0),
-  labour_hours: z.number().nonnegative().default(0),
-  thumbnail_note: z.string().max(240).optional(),
-  canvas_fingerprint: z.string().default(""),
-  canvas: DesignBranchCanvasSnapshotSchema.optional(),
-  is_frozen: z.boolean().default(true),
-  active: z.boolean().default(false),
+  author_id: z.string().min(1),
 });
-export type DesignBranchSnapshot = z.infer<typeof DesignBranchSnapshotSchema>;
+export type DesignRevision = z.infer<typeof DesignRevisionSchema>;
 
-export const FreezeDesignBranchInputSchema = z.object({
-  name: z.string().min(1).max(120),
-  bom_total: z.number().nonnegative().optional(),
-  labour_hours: z.number().nonnegative().optional(),
-  thumbnail_note: z.string().max(240).optional(),
-  canvas_fingerprint: z.string().optional(),
-  parent_id: z.string().uuid().nullable().optional(),
-  canvas: DesignBranchCanvasSnapshotSchema.optional(),
+export const DesignBranchSchema = z.object({
+  id: z.string().uuid(),
+  project_id: z.string().uuid(),
+  owner_id: z.string().min(1),
+  name: z.string().trim().min(1).max(80),
+  /** Revision this branch forked from (null for main genesis). */
+  base_revision_id: z.string().uuid().nullable(),
+  tip_revision_id: z.string().uuid(),
+  status: DesignBranchStatusSchema.default("open"),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 });
-export type FreezeDesignBranchInput = z.infer<
-  typeof FreezeDesignBranchInputSchema
+export type DesignBranch = z.infer<typeof DesignBranchSchema>;
+
+export const CreateDesignBranchInputSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  /** Fork from this revision; omit = current main tip. */
+  from_revision_id: z.string().uuid().optional(),
+});
+export type CreateDesignBranchInput = z.infer<
+  typeof CreateDesignBranchInputSchema
 >;
 
-export const ActivateDesignBranchInputSchema = z.object({
+export const CommitDesignBranchInputSchema = z.object({
+  message: z.string().trim().max(500).optional(),
+  canvas: UpsertDesignCanvasSchema,
+});
+export type CommitDesignBranchInput = z.infer<
+  typeof CommitDesignBranchInputSchema
+>;
+
+export const MergeDesignBranchInputSchema = z.object({
+  /** Target branch — defaults to main when omitted. */
+  into_branch_id: z.string().uuid().optional(),
+  /**
+   * Conflict resolutions keyed by entity id.
+   * ours = keep into-branch; theirs = take from feature; both = duplicate theirs with new id.
+   */
+  resolutions: z
+    .record(z.enum(["ours", "theirs", "both"]))
+    .optional()
+    .default({}),
+  message: z.string().trim().max(500).optional(),
+});
+export type MergeDesignBranchInput = z.infer<
+  typeof MergeDesignBranchInputSchema
+>;
+
+export const DesignBranchCheckoutSchema = z.object({
   branch_id: z.string().uuid(),
 });
-export type ActivateDesignBranchInput = z.infer<
-  typeof ActivateDesignBranchInputSchema
->;
-
-export const ListDesignBranchesResponseSchema = z.object({
-  branches: z.array(DesignBranchSnapshotSchema),
-  active_id: z.string().uuid().nullable(),
-});
-export type ListDesignBranchesResponse = z.infer<
-  typeof ListDesignBranchesResponseSchema
->;
+export type DesignBranchCheckout = z.infer<typeof DesignBranchCheckoutSchema>;

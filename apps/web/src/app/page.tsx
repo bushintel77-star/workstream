@@ -1,79 +1,52 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { listProjects, type ProjectStatus } from "../lib/api";
-import { requireSignedIn } from "../lib/auth";
-import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
-import { WorkflowPreviewStrip } from "../components/WorkflowPreviewStrip";
-import home from "./home.module.css";
+import { PlanHeroVisual } from "../components/landing/PlanHeroVisual";
+import { KitButton } from "../components/ui/kit";
+import css from "./landing.module.css";
 
-export const dynamic = "force-dynamic";
-
-/** Canvas-stage labels — not the old pipeline hub names. */
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  draft: "Survey",
-  recording: "Survey",
-  processing: "Survey",
-  survey_review: "Sketch",
-  design_review: "CAD",
-  cost_review: "Quote",
-  audit: "Quote",
-  outputs: "Share",
-  complete: "Share",
+export const metadata: Metadata = {
+  title: "Workstream",
+  description:
+    "Landscape design studio. Survey, sketch, CAD, and quote on one board.",
+  robots: { index: true, follow: true },
 };
 
-export default async function HomePage() {
-  await requireSignedIn();
-  let projects: Awaited<ReturnType<typeof listProjects>> = [];
-  let loadError: string | null = null;
-  try {
-    projects = await listProjects();
-  } catch (err) {
-    loadError = err instanceof Error ? err.message : "Could not reach the API.";
-  }
-
+/**
+ * Public landing — brand-first, one composition. Operator register lives at /home.
+ */
+export default function LandingPage() {
   return (
-    <main className={home.page}>
-      <WorkflowPreviewStrip />
-      <header className={home.hero}>
-        <p className={home.kicker}>Workstream</p>
-        <h1 className={home.brand}>Curtis &amp; Co</h1>
-        <p className={home.lede}>
-          Type an address. Get a concept, working drawing, and live estimate —
-          then share the quote.
+    <main className={css.page} data-testid="workstream-landing">
+      <div className={css.stage}>
+        <PlanHeroVisual />
+      </div>
+
+      <div className={css.copy}>
+        <p className={css.brand}>Workstream</p>
+        <h1 className={css.headline}>Garden design that starts on the site.</h1>
+        <p className={css.lede}>
+          Survey, sketch, CAD, and quote — one board.
         </p>
-        <div className={home.composer}>
-          <NewProjectAddressForm />
+        <div className={css.cta}>
+          <KitButton
+            as="a"
+            href="/home"
+            variant="secondary"
+            size="lg"
+            data-testid="landing-enter-studio"
+          >
+            Enter studio
+          </KitButton>
+          <KitButton as="a" href="/home#new-project" variant="outline" size="lg">
+            New address
+          </KitButton>
         </div>
-      </header>
+      </div>
 
-      {loadError ? (
-        <p className={home.error} role="alert">
-          {loadError}
-        </p>
-      ) : null}
-
-      <section className={home.list} aria-labelledby="sites-heading">
-        <h2 id="sites-heading" className={home.listTitle}>
-          Sites
-        </h2>
-        {projects.length === 0 ? (
-          <p className={home.empty}>
-            Start with an address — about two minutes to a shareable quote.
-          </p>
-        ) : (
-          <ul className={home.ul}>
-            {projects.map((p) => (
-              <li key={p.id}>
-                <Link className={home.row} href={`/projects/${p.id}`}>
-                  <span className={home.addr}>{p.address}</span>
-                  <span className={home.meta}>
-                    {STATUS_LABEL[p.status] ?? p.status}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <footer className={css.foot}>
+        <span>Workstream · Melbourne</span>
+        <Link href="/legal/privacy">Privacy</Link>
+      </footer>
     </main>
   );
 }

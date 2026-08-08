@@ -63,8 +63,9 @@ export function staticImageMercatorBounds(
 
 /** Parse Mapbox static satellite URL produced by apps/api mapbox.ts */
 export function parseMapboxStaticAerial(uri: string): StaticMapView | null {
+  // Optional Static Images overlay (e.g. pin-l+c45c26(lng,lat)/) before centre.
   const match = uri.match(
-    /\/static\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
+    /\/static\/(?:[^/]+\/)?(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
   );
   if (!match) return null;
   return {

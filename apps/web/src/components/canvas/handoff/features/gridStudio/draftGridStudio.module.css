@@ -1,0 +1,130 @@
+/* Micro grid studio — original blush frost */
+
+.root {
+  --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  --ink: var(--hc-ink);
+  --ink-soft: var(--hc-ink-muted);
+  --glass: var(--hc-glass-soft);
+  --glass-border: var(--hc-line);
+  --elev: var(--hc-elev, 0 8px 28px var(--hc-neu-shadow));
+  position: absolute;
+  z-index: var(--ws-z-chrome);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: var(--s-1);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: none;
+  box-shadow: var(--elev);
+  opacity: 0.72;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 240ms var(--ease),
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.root[data-awake="true"] {
+  opacity: 0.92;
+  background: var(--hc-glass-soft);
+}
+
+.face {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--hc-r-panel);
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--ink);
+}
+
+.face:hover {
+  background: var(--hc-invert);
+}
+
+.glyph {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.tray {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition:
+    max-width 260ms var(--ease),
+    opacity 200ms var(--ease),
+    margin 200ms var(--ease);
+  margin-left: 0;
+}
+
+.root[data-awake="true"] .tray {
+  max-width: 120px;
+  opacity: 1;
+  pointer-events: auto;
+  margin-left: 4px;
+}
+
+.ink {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--glass-border);
+  background: var(--ink);
+  cursor: pointer;
+  flex: none;
+}
+
+.ink:hover {
+  outline: 1px solid color-mix(in srgb, var(--hc-danger) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.grain,
+.snap {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--hc-r-control);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-xs);
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+.grain:hover,
+.snap:hover {
+  background: var(--hc-invert);
+  color: var(--ink);
+}
+
+.snapOn {
+  color: var(--hc-danger);
+  background: var(--hc-accent-wash);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .root,
+  .tray {
+    transition: none;
+  }
+}

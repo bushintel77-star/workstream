@@ -225,3 +225,70 @@ Use these as the pixel-accuracy reference alongside the live HTML (which remains
 - `image-slot.js` — internal reference for the aerial drag-and-drop image placeholder's fill-state attribute (`data-filled`) and shadow-DOM `img` element, which the canopy-detection feature depends on.
 - `support.js` — internal template runtime, reference only.
 - `screenshots/` — 10 full-page PNGs, see above.
+
+---
+
+## Gap audit (2026)
+
+**Binding audit:** [TIER1-AI-CANVAS-GAP-AUDIT.md](./TIER1-AI-CANVAS-GAP-AUDIT.md) — tier-1 · AI-first · canvas-first CAD landscape scorecard, gold-standard logic, and P0–P3 gaps vs the live `HandoffDesignStudio` mount.
+
+---
+
+## UX/UI execution mandate — Canvas-First (binding)
+
+Treat cognitive load and visual aesthetic as **strict technical requirements**,
+not polish. Full binding copy also lives in [`docs/CANVAS-FIRST-UX.md`](../../../CANVAS-FIRST-UX.md).
+
+### Overarching goal
+
+Maintain a calm, low-cognitive-load, non-technical interface. Complex geospatial
+and financial math must remain completely abstracted behind a minimalist,
+progressive workspace.
+
+### 1. Strict progressive disclosure (state-machine UI)
+
+- **Action:** Ban monolithic, AutoCAD-style tool ribbons.
+- **Implementation:** Chrome renders only for the active state
+  (**Survey → Sketch → CAD → Quote**). In Sketch, completely hide Quantity
+  Survey and Live BOM. Surface only tools relevant to the active context.
+- **Code:** `resolveHandoffChrome` in
+  `apps/web/src/components/canvas/handoff/state/handoffChrome.ts`.
+
+### 2. Abstracted complexity (the invisible engine)
+
+- **Action:** Hide parametric variables from the primary user loop.
+- **Implementation:** The operator draws a shape, tags it “Bluestone,” and the
+  Live cost HUD updates via the background estimate engine. Nested assembly
+  (excavation, CR6, tippers) and recipe depths live under **Advanced** only —
+  never in the primary canvas loop.
+
+### 3. Unobtrusive floating HUDs
+
+- **Action:** Maximize workable canvas area.
+- **Implementation:** Floating, semi-transparent, collapsible HUDs (utility
+  indicator tabs + Live cost) instead of heavy fixed sidebars. The parchment /
+  aerial plane bleeds under chrome; Fit sheet freezes floating cost chrome.
+
+### 4. Visual calm & muted aesthetics
+
+- **Action:** Standardize Fit sheet paper mode and Digital Clay aesthetics.
+- **Implementation:** Cream canvases, sharp dark ink vectors, low-saturation UI
+  highlights via CSS variables. Cross-fade 2D ↔ 3D Walk where mounted — no hard
+  cuts.
+
+### 5. Human-in-the-loop friction reduction
+
+- **Action:** AI interactions feel like a conversation, not a database query.
+- **Implementation:** AI Ghost / coach / horizon use natural-language microcopy
+  and binary actions (**Accept / Reject**, **Yes, add it / Not now**) — no
+  primary-path coordinate tables or BOM recipe editors.
+
+### Acceptance (engineering)
+
+| Check | Pass when |
+| --- | --- |
+| Sketch | No Live BOM / QS / horizon cards visible |
+| CAD primary | Live cost shows total + material tags only |
+| Advanced | Nested assembly / tippers behind disclosure |
+| Trace/Edit | Utility sheets auto-collapse |
+| AI | Accept / Reject (or Yes / Not now) without data tables |

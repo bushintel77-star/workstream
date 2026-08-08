@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runProjectAudit } from "../lib/audit-job";
+import { runPipelineJobWithTelemetry } from "../lib/queue";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function auditRoutes(fastify: FastifyInstance) {
@@ -15,10 +16,14 @@ export default async function auditRoutes(fastify: FastifyInstance) {
         return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       }
       try {
-        const audit = await runProjectAudit(fastify.store, ownerId, projectId);
+        const audit = await runPipelineJobWithTelemetry(
+          { kind: "audit", ownerId, projectId },
+          async () => await runProjectAudit(fastify.store, ownerId, projectId),
+        );
         return reply.code(201).send({ audit });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Audit failed";
+        const message =
+          err instanceof Error ? err.message : "Audit failed";
         if (
           message.startsWith("Design is required") ||
           message.startsWith("Costing is required")
@@ -29,7 +34,7 @@ export default async function auditRoutes(fastify: FastifyInstance) {
           return reply.code(404).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Audit failed" });
       }
     },
   );

@@ -1,8 +1,10 @@
 # Litestream backup setup
 
-Workstream still persists to `/repo/apps/api/data/store.json` on the single API
-machine. Litestream is a disaster-recovery layer only until the SQLite/Postgres
-migration lands.
+Workstream still persists to `/repo/apps/api/data/store.json` on a single API
+instance. Litestream replicates SQLite WAL files, not arbitrary JSON snapshots,
+so this is a SQLite-ready disaster-recovery configuration for the planned
+SQLite migration. Do not enable the sidecar until the API writes
+`/repo/apps/api/data/workstream.sqlite`.
 
 ## Cloudflare R2
 
@@ -15,16 +17,14 @@ migration lands.
    - Secret access key
    - S3 endpoint: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
 
-Set Fly secrets:
+Set on the API Railway service (`api-production-a8ff1`):
 
-```bash
-flyctl secrets set \
-  LITESTREAM_BUCKET="workstream-dr" \
-  LITESTREAM_S3_ENDPOINT="https://PASTE_ACCOUNT_ID.r2.cloudflarestorage.com" \
-  LITESTREAM_S3_REGION="auto" \
-  LITESTREAM_ACCESS_KEY_ID="PASTE_R2_ACCESS_KEY_ID" \
-  LITESTREAM_SECRET_ACCESS_KEY="PASTE_R2_SECRET_ACCESS_KEY" \
-  -a construct-api
+```
+LITESTREAM_BUCKET=workstream-dr
+LITESTREAM_S3_ENDPOINT=https://PASTE_ACCOUNT_ID.r2.cloudflarestorage.com
+LITESTREAM_S3_REGION=auto
+LITESTREAM_ACCESS_KEY_ID=PASTE_R2_ACCESS_KEY_ID
+LITESTREAM_SECRET_ACCESS_KEY=PASTE_R2_SECRET_ACCESS_KEY
 ```
 
 ## Backblaze B2
@@ -38,47 +38,35 @@ flyctl secrets set \
    - S3 endpoint for the bucket region, for example `https://s3.us-west-004.backblazeb2.com`
    - Region, for example `us-west-004`
 
-Set Fly secrets:
+Set on the API Railway service:
 
-```bash
-flyctl secrets set \
-  LITESTREAM_BUCKET="workstream-dr" \
-  LITESTREAM_S3_ENDPOINT="https://s3.PASTE_REGION.backblazeb2.com" \
-  LITESTREAM_S3_REGION="PASTE_REGION" \
-  LITESTREAM_ACCESS_KEY_ID="PASTE_B2_KEY_ID" \
-  LITESTREAM_SECRET_ACCESS_KEY="PASTE_B2_APPLICATION_KEY" \
-  -a construct-api
+```
+LITESTREAM_BUCKET=workstream-dr
+LITESTREAM_S3_ENDPOINT=https://s3.PASTE_REGION.backblazeb2.com
+LITESTREAM_S3_REGION=PASTE_REGION
+LITESTREAM_ACCESS_KEY_ID=PASTE_B2_KEY_ID
+LITESTREAM_SECRET_ACCESS_KEY=PASTE_B2_APPLICATION_KEY
 ```
 
-## Fly sidecar wiring
+## Railway backup process wiring
 
 Copy `docs/litestream.example.yml` into the API image as
 `/etc/litestream.yml`, install the Litestream binary in `apps/api/Dockerfile`,
-then add a worker process that runs beside the API app:
+then run a backup process that runs beside the API after SQLite is live. On
+Railway, run Litestream as a separate service (or as a worker process within
+the API service) sharing the API image, with entrypoint:
 
-```toml
-[processes]
-  app = "node dist/server.js"
-  worker = "node dist/worker.js"
-  backup = "litestream replicate -config /etc/litestream.yml"
+```
+litestream replicate -config /etc/litestream.yml
 ```
 
-Scale the sidecar after secrets are set:
+Verify replication by tailing the backup service logs in the Railway dashboard
+and expecting Litestream replication messages. A one-off restore probe:
 
 ```bash
-flyctl scale count backup=1 -a construct-api
+litestream restore -config docs/litestream.example.yml -if-replica-exists /tmp/workstream.sqlite
 ```
 
-Verify replication:
-
-```bash
-flyctl logs -a construct-api | grep litestream
-litestream restore -config docs/litestream.example.yml -if-replica-exists /tmp/workstream-store.json
-```
-
-Do not scale the API app above one machine while JSON snapshot persistence is
-active. The current consistency command remains:
-
-```bash
-flyctl scale count 1 -a construct-api
-```
+Do not scale the API above one instance while JSON snapshot persistence is
+active. Keep the API service replica count at 1 until the SQLite migration
+lands.

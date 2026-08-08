@@ -25,17 +25,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--ink-tertiary);
 }
 
 .stepDone {
-  color: #15803d;
+  color: var(--ok);
   font-weight: 700;
 }
 
 .stepLink {
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--ink-primary);
   text-decoration: none;
@@ -71,7 +71,7 @@
 .copyInput {
   flex: 1;
   min-width: 200px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--ink-tertiary) 35%, transparent);
   border-radius: 8px;
@@ -93,10 +93,10 @@
   gap: 2px;
   padding: var(--s-3) 0;
   border-bottom: 1px solid color-mix(in srgb, var(--ink-tertiary) 15%, transparent);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .eventMeta {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-tertiary);
 }

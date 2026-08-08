@@ -18,4 +18,16 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
 startCommand = "node apps/web/server.js"
 
-# deploy bump 2026-07-19 03:28
+# deploy bump 2026-07-19 06:26 — studio visual fidelity (flora/isolith/trade)
+
+# deploy bump 2026-07-19 14:48 — CAD/survey/sketch prototype fix
+
+# deploy bump 2026-07-19 14:53 — single-owner plane
+
+# deploy bump 2026-07-19 14:58 — sheet spacing / chrome hierarchy
+
+# deploy bump 2026-07-19 15:06 — drop Stage labels
+
+# deploy bump 2026-07-19 15:10 — gold-standard polish
+
+# deploy bump 2026-07-20 09:20 — outdoor clamp, instrument carousel, grid studio

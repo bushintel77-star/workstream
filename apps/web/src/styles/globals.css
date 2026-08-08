@@ -1,46 +1,112 @@
 /* Workstream — Design Studio v4
- * Curtis & Co operator chrome — blush field, brand red accent. */
+ * Curtis & Co operator chrome — dark grey gallery frame, cream plan is the subject.
+ * Unified with @workstream/ui tokens (packages/ui/src/tokens.ts).
+ * Plan/CAD colour system: color-tokens.css (v2 semantic tokens). */
+
+@import "./color-tokens.css";
 
 :root {
-  /* surfaces */
-  --surface-base: #f6eaed;
-  --surface-elevated: #fffbfb;
-  --surface-sunken: #eadfe5;
-  --surface-inverted: #241318;
-  --surface-overlay: #fffbfb;
-  --surface-inset: #fff6f8;
-  --surface-panel: #fffbfb;
+  /* surfaces — dark grey gallery mount; chrome recedes so colour belongs to the plan */
+  --surface-base: #14171C;
+  --surface-elevated: #1B1E24;
+  --surface-sunken: #0F1115;
+  --surface-inverted: #E8E9EC;
+  --surface-overlay: #20242B;
+  --surface-inset: #0F1115;
+  --surface-panel: #1B1E24;
+  /* deep — same as base now; kept for portal/hero gradient compat */
+  --surface-deep: #14171C;
 
-  /* ink */
-  --ink-primary: #241318;
-  --ink-secondary: #7a5560;
-  --ink-tertiary: #b08a95;
-  --ink-inverted: #fff6f8;
+  /* Client-presentation dark chrome (portal/quote/confirm-pin/share) — one
+     identity, aliased to the same brand tokens used everywhere else. No
+     separate blush/plum palette: --surface-deep + --accent are the only
+     dark-chrome + hero-colour vocabulary in the app. */
+  --portal-surface-0: var(--surface-deep);
+  --portal-surface-1: color-mix(in srgb, var(--surface-deep) 82%, white);
+  --portal-surface-2: color-mix(in srgb, var(--surface-deep) 78%, black);
+  --portal-glow-a: color-mix(in srgb, var(--accent-bright) 40%, transparent);
+  --portal-glow-b: color-mix(in srgb, var(--accent-bright) 12%, transparent);
+  --portal-ink-inverted: var(--ink-inverted);
+  --portal-hairline: color-mix(in srgb, var(--ink-inverted) 16%, transparent);
+  --portal-accent: var(--accent-bright);
+  --portal-accent-bright: var(--accent-bright);
+  /* Portal sheet stays light — it's the client document on dark chrome */
+  --portal-sheet: #FAFAF8;
+  --portal-sheet-ink: #1B1E23;
+  /* Client-twin viewer chrome (light frosted panel — same ink/accent as the
+     rest of the app, not a separate sub-brand). */
+  --portal-ink-muted: var(--ink-secondary);
+  --portal-ink-strong: var(--ink-primary);
+  --portal-accent-muted: var(--accent);
 
-  /* lines */
-  --line-hairline: rgba(36, 19, 24, 0.12);
-  --line-subtle: rgba(36, 19, 24, 0.07);
-  --line-strong: rgba(36, 19, 24, 0.18);
-  --line-ink: #241318;
+  /* ink — light text on dark surfaces */
+  --ink-primary: #E8E9EC;
+  --ink-secondary: #9AA0AC;
+  --ink-tertiary: #7A8088;
+  --ink-inverted: #1B1E23;
 
-  /* accent — brand red */
-  --accent: #c2455f;
-  --accent-soft: #ffd3de;
-  --accent-ink: #9e3049;
-  --accent-bright: #c2455f;
-  --accent-water: #9b7b8f;
+  /* lines — dark grey hairlines on dark surfaces */
+  --line-hairline: rgba(232, 233, 236, 0.10);
+  --line-subtle: rgba(232, 233, 236, 0.05);
+  --line-strong: rgba(232, 233, 236, 0.18);
+  --line-ink: #E8E9EC;
 
-  /* semantic */
-  --ok: #1f8a5a;
-  --warn: #e8b84b;
-  --block: #b42318;
-  --info: #8b6b7a;
+  /* accent — muted blueprint slate.
+     Kept distinct from canvas cobalt (#2450c7 proposed) + easement slate
+     (#5b7fbf) so chrome never reads as plan geometry. */
+  --accent: #5A789B;
+  --accent-soft: #1E2A38;
+  --accent-ink: #8BA4C4;
+  --accent-bright: #7B9BC4;
+  --accent-water: #8a94a0;
 
-  /* type — editorial display + calm ops body */
-  --font-display: "Fraunces", "Georgia", serif;
-  --font-body: "Sora", "Segoe UI", sans-serif;
-  --font-serif: "Fraunces", "Georgia", serif;
-  --font-mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+  /* signal — the single technical-annotation spark ("issued for permitting"
+     orange). One hero element per surface, never on the canvas
+     (canvas keeps crimson=existing / cobalt=proposed / amber=warning). */
+  --signal: #e65416;
+  --signal-ink: #231206;
+  --signal-soft: color-mix(in srgb, #e65416 16%, transparent);
+
+  /* semantic — brightened for dark surface contrast */
+  --ok: #4C9662;
+  --warn: #D4A017;
+  --block: #C4463B;
+  --info: #6E93E0;
+
+  /* type — Aegis professional-services families */
+  --font-display: "IBM Plex Mono", monospace;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-serif: "IBM Plex Serif", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-hand: "Architects Daughter", cursive;
+
+  /* type scale — 1.125 ratio, all components reference these.
+     Sub-micro sizes (nano/pico/femto) are for dense canvas chrome:
+     scale labels, HUD chips, annotations. SI-prefix order: femto < pico < nano < micro. */
+  --text-femto: 7px;
+  --text-pico: 8px;
+  --text-nano: 9px;
+  --text-micro: 10px;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-3xl: 42px;
+  --text-femto-lh: 10px;
+  --text-pico-lh: 11px;
+  --text-nano-lh: 12px;
+  --text-micro-lh: 14px;
+  --text-xs-lh: 16px;
+  --text-sm-lh: 18px;
+  --text-base-lh: 22px;
+  --text-md-lh: 24px;
+  --text-lg-lh: 28px;
+  --text-xl-lh: 32px;
+  --text-2xl-lh: 38px;
+  --text-3xl-lh: 48px;
 
   /* Aegis aliases */
   --color-obsidian: var(--surface-base);
@@ -53,7 +119,8 @@
   --color-text-primary: var(--ink-primary);
   --color-text-secondary: var(--ink-secondary);
   --color-text-tertiary: var(--ink-tertiary);
-  --color-liquid-cobalt: var(--accent);
+  /* Plan proposed — not blush accent (v2 semantic) */
+  --color-liquid-cobalt: var(--cobalt-l-600);
   --color-success: var(--ok);
   --color-warning: var(--warn);
   --color-danger: var(--block);
@@ -71,25 +138,25 @@
   --s-7: 48px;
   --s-8: 64px;
 
-  /* radii — subtle soft edges, never hard square frames */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
-  --r-canvas: 16px;
+  /* radii — sharp, minimal; crisp edges, not toy-soft */
+  --r-sm: 5px;
+  --r-md: 7px;
+  --r-lg: 10px;
+  --r-xl: 14px;
+  --r-canvas: 8px;
   --r-pill: 999px;
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
 
-  /* depth — hairline first; almost no shadow */
+  /* depth — dark surface glass lift */
   --elev-0: none;
-  --elev-1: none;
-  --elev-2: none;
+  --elev-1: 0 8px 28px rgba(0, 0, 0, 0.28);
+  --elev-2: 0 14px 44px rgba(0, 0, 0, 0.36);
   --elev-inset: none;
   --elev-rim: none;
-  --shadow-sm: none;
-  --shadow-md: none;
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.32);
 
   --border-default: var(--line-hairline);
   --surface-raised: var(--surface-elevated);
@@ -104,15 +171,23 @@
   --dur-base: 260ms;
   --dur-slow: 480ms;
 
-  --studio-topbar-h: 40px;
-  --studio-toolrail-w: 40px;
-  --studio-toolrail-expanded-w: 160px;
-  --studio-rightrail-open-w: 260px;
-  --studio-statusbar-h: 20px;
-  --studio-transition: 180ms var(--ease);
-  --studio-ribbon-h: 28px;
-  --studio-context-strip-h: 28px;
-  --studio-canvas-inset: 8px;
+  --studio-topbar-h: 34px;
+  --studio-toolrail-w: 38px;
+  --studio-toolrail-expanded-w: 152px;
+  --studio-rightrail-open-w: 248px;
+  --studio-statusbar-h: 18px;
+  --studio-transition: 160ms var(--ease);
+  --studio-ribbon-h: 24px;
+  --studio-context-strip-h: 24px;
+  --studio-canvas-inset: 10px;
+
+  /* Canvas-first asset dock — collapsed rail / mobile sheet peek */
+  --dock-rail-collapsed-w: 56px;
+  --sheet-peek-h: 72px;
+
+  /* Quote builder markers (derive from semantic tokens) */
+  --quote-provisional: color-mix(in srgb, var(--warn) 55%, transparent);
+  --quote-margin-accent: color-mix(in srgb, var(--accent) 3%, transparent);
 
   --overlay-shade: color-mix(in srgb, var(--warn) 38%, transparent);
   --overlay-trp: color-mix(in srgb, var(--ok) 38%, transparent);
@@ -122,6 +197,29 @@
 
   --shell-max: 1080px;
   --content-max: 760px;
+
+  /* density — desk default; onsite bumps target size + line contrast */
+  --control-h: 32px;
+  --tap-min: 36px;
+  --border-weight: 1px;
+}
+
+/* On-site density — larger targets and firmer lines for daylight and gloves.
+   Opt in with [data-density="onsite"]; also auto on touch unless desk is forced. */
+[data-density="onsite"] {
+  --control-h: 44px;
+  --tap-min: 48px;
+  --border-weight: 1.5px;
+  --line-hairline: rgba(27, 28, 30, 0.2);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  :root:not([data-density="desk"]) {
+    --control-h: 44px;
+    --tap-min: 48px;
+    --border-weight: 1.5px;
+    --line-hairline: rgba(27, 28, 30, 0.2);
+  }
 }
 
 * {
@@ -138,7 +236,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: var(--text-base);
   line-height: 1.5;
   color: var(--ink-primary);
   background: var(--surface-base);
@@ -155,35 +253,7 @@ body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   background-color: var(--surface-base);
-  background-image:
-    radial-gradient(
-      ellipse 70% 45% at 100% 0%,
-      color-mix(in srgb, var(--accent) 14%, transparent),
-      transparent 58%
-    ),
-    radial-gradient(
-      ellipse 50% 40% at 0% 100%,
-      color-mix(in srgb, var(--accent-bright) 10%, transparent),
-      transparent 55%
-    );
-  background-attachment: fixed;
-}
-
-.dev-mode-banner {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  padding: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--color-border-strong);
-  background: color-mix(in srgb, var(--color-warning) 18%, var(--surface-elevated));
-  color: var(--color-text-primary);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  background-image: none;
 }
 
 button,
@@ -195,10 +265,11 @@ a {
 input,
 textarea,
 select {
-  font-size: 16px;
+  font-size: var(--text-base);
 }
 
 @media (hover: none) and (pointer: coarse) {
+
   button:active,
   [role="button"]:active,
   a:active {
@@ -212,9 +283,11 @@ a {
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease);
 }
+
 a:hover {
   color: var(--accent);
 }
+
 a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
@@ -226,6 +299,7 @@ button {
   font-size: inherit;
   cursor: pointer;
 }
+
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
@@ -242,6 +316,7 @@ button:focus-visible {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -253,6 +328,7 @@ button:focus-visible {
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -264,6 +340,7 @@ button:focus-visible {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -277,11 +354,51 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Fit sheet print — when the studio is in fit-sheet mode, it owns the page.
+ * Hide every other element (nav, toasts) via :has() scoping so
+ * printing any non-studio page is unaffected.
+ */
+@media print {
+
+  html:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]),
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: hidden !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) * {
+    visibility: hidden;
+  }
+
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"],
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"] * {
+    visibility: visible;
+  }
+
+  /*
+   * The plan/ground is painted with CSS backgrounds — browsers drop those
+   * unless "Background graphics" is ticked, which printed a sheet with an
+   * EMPTY plot. Force colour output for the studio subtree so the working
+   * drawing always survives print / Save as PDF.
+   */
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"],
+  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"] * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }

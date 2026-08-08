@@ -29,7 +29,8 @@ export default async function overrideRoutes(fastify: FastifyInstance) {
         );
         return reply.code(201).send(result);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Override failed";
+        const message =
+          err instanceof Error ? err.message : "Override failed";
         if (
           message.startsWith("Project not found") ||
           message.startsWith("Audit not found")
@@ -44,7 +45,7 @@ export default async function overrideRoutes(fastify: FastifyInstance) {
           return reply.code(409).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Override failed" });
       }
     },
   );

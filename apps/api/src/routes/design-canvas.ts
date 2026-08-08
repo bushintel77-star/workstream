@@ -16,7 +16,10 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
       if (!project) {
         return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
       }
-      const canvas = await fastify.store.getDesignCanvas(ownerId, projectId);
+      const q = request.query as { branch_id?: string };
+      const canvas = await fastify.store.getDesignCanvas(ownerId, projectId, {
+        branchId: q.branch_id,
+      });
       if (!canvas) {
         return reply.send({
           canvas: {
@@ -25,19 +28,22 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
             placements: [],
             strokes: [],
             annotations: [],
+            image_layers: [],
             features: [],
+            site_frame: null,
+            presentation_pack: null,
             updated_at: null,
           },
           quote: null,
         });
       }
-      return reply.send({ canvas, quote: null });
+      return reply.send({ canvas, quote: null, branch_id: q.branch_id ?? null });
     },
   );
 
   fastify.put(
     "/:projectId/design-canvas",
-    { preHandler: requireAuth },
+    { preHandler: requireAuth, bodyLimit: 10 * 1024 * 1024 },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
@@ -55,6 +61,7 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
         ownerId,
         projectId,
         parsed.data,
+        { branchId: parsed.data.branch_id },
       );
 
       // Auto quotation from sketch pins + outdoor (garden) area on survey.

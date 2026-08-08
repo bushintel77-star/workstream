@@ -14,6 +14,7 @@ export type CadEntityLite = {
   end?: { x: number; y: number };
   position?: { x: number; y: number };
   center?: { x: number; y: number };
+  radius?: number;
   block_name?: string;
 };
 
@@ -84,6 +85,13 @@ export type BoundaryVertexLite = {
   canvas_coords: { x: number; y: number };
   geo_coords: { lng: number; lat: number };
   is_master_reference?: boolean;
+};
+
+/** Indicative Vicmap easement polyline in the boundary's canvas-metre frame. */
+export type SiteEasementLite = {
+  points: Array<{ x: number; y: number }>;
+  status: string | null;
+  source: "vicmap";
 };
 
 export type SiteBoundaryLite = {

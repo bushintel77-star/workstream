@@ -1,0 +1,4514 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  assessPlantingPlacement,
+  buildIndicativeShadeGrid,
+  countNearbyCanopy,
+  defaultSitePackChase,
+  developLoopTip,
+  digToolsUnlocked,
+  evaluateStudioCompliance,
+  fixturesFromPlacements,
+  makeIndicativeDrainageRun,
+  makePathCorridor,
+  nextSchemeLetter,
+  pathWidthToGlyphScale,
+  plantingConflictSummary,
+  prepareSitePackTip,
+  proposeLandscapeServiceZones,
+  symbolMatureHeightM,
+  zoneKindShortLabel,
+  FLORA_HEIGHT_BY_FORM,
+  hardscapeWhy,
+  isFloraStudioForm,
+  proposeAutoTrenches,
+  rankCurtisFloraCandidates,
+  snapshotScheme,
+  sunHoursAtPct,
+  tidySketchStrokes,
+  type AspectTag,
+  type FloraCandidate,
+  type GhostPlacementSuggestion,
+  type PathFilletLockM,
+  type PathWidthLockM,
+  type SoilTag,
+  addSheetWidget,
+  applySheetTemplate,
+  clearPresentationPack,
+  emptyPresentationPack,
+  moveSheetWidget,
+  reflowSheetWidgets,
+  removeSheetWidget,
+  setSheetAtmosphere,
+  setSheetPen,
+  setSheetTheme,
+  type StudioComplianceItem,
+  type StudioHorizonCard,
+} from "@workstream/domain";
+import type {
+  CanvasAnnotation,
+  CatalogPlacement,
+  CanvasStroke,
+  ConstructionTrench,
+  DesignSiteFrame,
+  ImageLayer,
+  IrrigationZone,
+  IrrigationZoneKind,
+  LandscapeFeature,
+  AtmospherePigment,
+  PresentationPack,
+  PresentationPen,
+  PresentationSlot,
+  PresentationTheme,
+  PresentationWidgetType,
+} from "@workstream/contracts";
+import {
+  classifySaveError,
+  saveDesignCanvasClient,
+} from "../features/save/saveDesignCanvasClient";
+import { useStudioEstimate } from "../../../../lib/use-studio-estimate";
+import type { StudioEstimateArgs } from "../../../../lib/studio-estimate-worker-types";
+import {
+  collapseLeftAssetUnlessPinned,
+  type LeftAssetPanel,
+  type LeftAssetRestore,
+} from "../features/assetPanel/leftAssetPanel";
+import { pushRecentAssetType } from "../features/assetPanel/assetCommandRank";
+import { playMaterialFoley } from "../features/ambient/materialFoley";
+import {
+  sunDateFromPreset,
+  type SunDatePreset,
+} from "../features/sunGrowth/sunDatePreset";
+import type { RightDataPanel } from "../features/surfaces/rightDataLane";
+import { buildWorkableSiteSchedule } from "../geometry/workableCanvas";
+import {
+  BY_TYPE,
+  STUDIO_SITES,
+  WRIGHTS_SEED,
+  type DesignSchemeSnapshot,
+  type DrainageRun,
+  type HardscapeEdgeType,
+  type PathCorridor,
+  type SketchStroke,
+  type StudioItem,
+  type StudioItemType,
+  type StudioMode,
+  type StudioTool,
+} from "../studioCatalog";
+import type { PaperSize, PctPoint } from "../geometry";
+import { classifySurveyCorridor } from "../geometry/surveyCorridor";
+import { filterKeylessRingsToBoard } from "../geometry/keylessRingClip";
+import { rejectOversizedDwelling } from "../geometry/dwellingPlausibility";
+import { pointInPolygon } from "../geometry/polygon";
+import {
+  constrainAssetCentre,
+  outdoorFocusView,
+  sanitizeItemsToOutdoor,
+} from "../geometry/outdoorClamp";
+import {
+  GRID_STEP_PCT,
+  snapClockRotationDeg,
+  snapToGridPct,
+} from "../geometry/snap";
+import { resolveSiteAddress } from "./resolveSiteAddress";
+import { markStaleGhostsNearEdit } from "./staleGhosts";
+import {
+  canvasToStrokes,
+  featuresOntoItems,
+  itemsToFeatures,
+  itemsToPlacements,
+  placementsToItems,
+  resolveHydratedBuilding,
+  siteFrameToSnapshot,
+  snapshotToSiteFrame,
+  strokesToCanvas,
+  withContractIds,
+} from "./canvasBridge";
+import {
+  acceptAllProposals,
+  acceptProposal,
+  buildHandoffCoaching,
+  draftStatus,
+  maybeAutoProposeAfterCommit,
+  mergeAiProposals,
+  proposeFromAssistQuery,
+  proposeFromCadSuggestions,
+  proposeFromCanopyImage,
+  proposeFromStrokes,
+  proposeLayoutFromSnapshot,
+  proposalsFromApiSuggestions,
+  rejectProposal,
+} from "./studioAiEngine";
+import {
+  DEFAULT_LAYER_OPACITY,
+  DESIGN_LAYER_PRESET,
+  SURVEY_LAYER_PRESET,
+  type GrowthStage,
+  type LayerKey,
+  type LayerOpacity,
+  type StudioSnapshot,
+  type TraceTarget,
+} from "./studioTypes";
+import {
+  isSurveyServicesTool,
+  lockServicesOnMode,
+  surveyServicesAuthoringAllowed,
+} from "./servicesLock";
+import {
+  applyAutoTraceParcelSnap,
+  type AutoTraceParcelInput,
+} from "../geometry/parcelHydrate";
+import type { DesignBuildingSource } from "@workstream/contracts";
+import {
+  clampVegetationElevationScale,
+  clearBoundaryLikeSketches,
+  isSpatialCorrectionQuery,
+  isStage1FoundationQuery,
+  sieveVegetationItems,
+} from "./spatialCorrection";
+import { isDraftingPlate } from "./studioPlane";
+import { boardScaleM } from "../features/ground/groundMetrics";
+import {
+  SHEET_SCALE_STEPS,
+  type SheetScaleDenom,
+} from "../geometry/sheetContentView";
+import {
+  classifyHistoryProvenance,
+  type HistoryProvenance,
+} from "./historyProvenance";
+import {
+  buildSessionRejectionPrompt,
+  filterProposalsBySessionRejections,
+  type RejectionReason,
+  type SessionRejectionHint,
+} from "./sessionRejectionHints";
+
+/** Stable autosave fingerprint for Fit-sheet presentation_pack. */
+export function presentationPackPersistKey(
+  pack: PresentationPack | null | undefined,
+): string {
+  if (!pack) return "";
+  const widgets = (pack.widgets ?? [])
+    .map(
+      (w) =>
+        `${w.id}:${w.type}:${w.slot}:${w.order}:${w.style?.accent ?? ""}:${w.style?.emphasis ?? ""}:${w.text ?? ""}`,
+    )
+    .join("|");
+  return `${pack.theme}:${pack.pen ?? "technical"}:${pack.atmosphere ?? "graphite"}:${pack.template_id ?? ""}:${widgets}`;
+}
+
+function toComplianceItems(items: StudioItem[]): StudioComplianceItem[] {
+  return items.map((i) => {
+    const d = BY_TYPE[i.t];
+    return {
+      id: i.id,
+      t: i.t,
+      x: i.x,
+      y: i.y,
+      scale: i.scale,
+      ghost: i.ghost,
+      dbhM: i.dbhM ?? d.dbhM,
+      canopyM: d.canopyM,
+      wPx: d.w,
+      hPx: d.h,
+      areaKind: d.area ?? "none",
+    };
+  });
+}
+
+const MAX_HIST = 40;
+
+type Doc = StudioSnapshot & {
+  idn: number;
+  hist: StudioSnapshot[];
+  redo: StudioSnapshot[];
+  histProvenance: HistoryProvenance[];
+  redoProvenance: HistoryProvenance[];
+};
+
+type Ui = {
+  mode: StudioMode;
+  tool: StudioTool;
+  locked: boolean;
+  frameOn: boolean;
+  paper: PaperSize;
+  sheetElevOn: boolean;
+  darkOn: boolean;
+  focusOn: boolean;
+  clientView: boolean;
+  rightDataPanel: RightDataPanel | null;
+  /**
+   * Left asset panel — null = collapsed Fill rail; expanded = library;
+   * placing = Path Grammar. Exclusive with rightDataPanel when non-null.
+   */
+  leftAssetPanel: LeftAssetPanel;
+  /** Restore Expanded filters/scroll when backing out of Placing. */
+  leftAssetRestore: LeftAssetRestore | null;
+  /** Pin expanded library so place / canvas interact do not auto-collapse. */
+  leftAssetPinned: boolean;
+  /** Session place recents for command-palette ranking. */
+  recentAssetTypes: StudioItemType[];
+  layerOpacity: LayerOpacity;
+  isolatedLayer: LayerKey | null;
+  /**
+   * Per-feature Services ledger hide map (id → true = hidden).
+   * Session-only; ticks freeze when servicesLocked.
+   */
+  serviceFeatureHidden: Record<string, boolean>;
+  /** Focused service/design feature ids — others fall away. Esc clears. */
+  focusedServiceIds: string[] | null;
+  /** Legacy — always false; survey-only services authoring. */
+  servicesEdit: boolean;
+  /** Survey services frozen after Quote / Share entry. */
+  servicesLocked: boolean;
+  setbackOn: boolean;
+  /** Buildable area wash — site minus every exclusion, with attribution. */
+  buildableAreaOn: boolean;
+  /** Indicative sun-hours mesh on the % board. */
+  shadeOn: boolean;
+  growth: GrowthStage;
+  sunMin: number;
+  sunDatePreset: SunDatePreset;
+  elevLook: "N" | "S" | "E" | "W";
+  selectedId: string | null;
+  groupIds: string[];
+  hoverId: string | null;
+  ghostIdx: number;
+  factorsOpen: boolean;
+  ghostReviewOpen: boolean;
+  /** First reject opens optional session-only steering reasons. */
+  rejectReasonId: string | null;
+  cmdOpen: boolean;
+  cmdQuery: string;
+  addOpen: boolean;
+  armed: StudioItemType | null;
+  /** Catalog symbol for armed place — preserves lighting fixtures. */
+  armedSymbolId: string | null;
+  /**
+   * Low-voltage lighting workspace — session engineering + beam theatre.
+   * Not a mode tab; summoned from Lighting zone / library.
+   */
+  lightingWorkspaceOn: boolean;
+  lightingKelvin: number;
+  lightingWireGauge: import("@workstream/contracts").LvWireGauge;
+  lightingTransformerVa: number;
+  /**
+   * ASLA/SILA lifecycle phase — soft expected-detail tip + durable on canvas.
+   * Distinct from mode (survey/sketch/cad) and ProjectStatus (pipeline).
+   */
+  lifecyclePhase: import("@workstream/contracts").DesignLifecyclePhase;
+  /** Spray distribution uniformity wash — session only. */
+  irrigationUniformityOn: boolean;
+  /** Live twin telemetry overlay — session only. */
+  liveTelemetryOn: boolean;
+  /** On-site bird's-eye AR overlay — session only. */
+  arBirdseyeOn: boolean;
+  mitigated: Record<string, boolean>;
+  coachStep: number;
+  drawPoly: PctPoint[] | null;
+  drawCursor: PctPoint | null;
+  traceTarget: TraceTarget;
+  zoneKind: IrrigationZoneKind;
+  /**
+   * When set, next Servc commit lands as a typed BYDA asset (not a generic
+   * corridor / title easement). Cleared after commit or Esc.
+   */
+  bydaDraftKind: import("@workstream/contracts").BydaAssetKind | null;
+  /** Drafting grid grain for snap + visible mesh. */
+  gridGrain: "fine" | "medium" | "coarse";
+  /** Magnetic grid snap while dragging / nudging. */
+  gridSnap: boolean;
+  /** Visual mesh formation (ortho / dots / diamond / veil). */
+  gridFormation: "ortho" | "dots" | "diamond" | "veil";
+  /** Mesh ink — eye comfort + optional signal accent. */
+  gridInk: "charcoal" | "slate" | "paper" | "mist" | "signal";
+  /** Active Paint swatch (Mac Paint–style fill). */
+  paintSwatch: StudioItemType;
+  siteIdx: number;
+  /**
+   * True once the operator has explicitly picked a demo site from the switcher.
+   * Until then `siteIdx` is only a seed-geometry index and must NOT override the
+   * real project address — see `siteAddress` below.
+   *
+   * Optional so the parallel `StudioUiState` in `studioTypes.ts` stays
+   * structurally compatible; absent is treated as "not explicit".
+   */
+  siteExplicit?: boolean;
+  canopyScanning: boolean;
+  /** Increment to request a one-shot canopy scan from the loaded aerial. */
+  canopyScanRequest: number;
+  sunPlay: boolean;
+  zoom: number;
+  /** Zoom origin on the board (%) — outdoor remnant centre after Fit. */
+  focusX: number;
+  focusY: number;
+  /**
+   * Drag-to-pan offset in px, applied as `translate()` alongside the zoom
+   * `scale()` — independent of focusX/focusY (which anchor zoom, not pan).
+   * Always 0 while `frameOn` (Fit sheet owns its own fixed layout).
+   */
+  panX: number;
+  panY: number;
+  /**
+   * CAD camera rotation (deg clockwise from north-up). Geometry coords never
+   * change — only the viewport transform. Increment steps only (15/45/90).
+   */
+  viewRotationDeg: number;
+  /** Active CAD view-rotation step size. */
+  viewRotationStepDeg: 15 | 45 | 90;
+  /**
+   * View-only tilt lens (deg). 0 = flat / identical to pre-feature camera.
+   * Ctrl/Cmd+drag continuous 0→60; Cmd+K / client view settle at 55.
+   */
+  tiltDeg: number;
+  savedTick: number;
+  /** Monotonic canvas revision after each successful autosave. */
+  saveRevision: number;
+  aerialUri: string | null;
+  aiBusy: "idle" | "scanning" | "assisting";
+  coachOpen: boolean;
+  /** Last natural-language assist reply shown in the coach rail. */
+  assistReply: string | null;
+  /** Right-hand utility drawer sheet: compliance | bom | sustainability | closed. */
+  utilityPanel: "compliance" | "bom" | "sustainability" | null;
+  /** Brief setback / TPZ / easement tip after a preemptive snap. */
+  councilTip: string | null;
+  /** Council label from Vicmap title block — drives multi-council compliance profile. */
+  councilLabel: string | null;
+  /** Authored DBH (m) for next existing-tree placement — drives AS 4970 TPZ. */
+  existDbhM: number;
+  /**
+   * Fit-sheet architectural scale denominator (1:N).
+   * Snaps along SHEET_SCALE_STEPS — canvas is the print sheet.
+   */
+  sheetScaleDenom: SheetScaleDenom;
+  /**
+   * Optional board-width metres from survey Calib (two known points).
+   * When set, overrides sheetScaleDenom-derived scale for dims / fall %.
+   */
+  boardWidthM: number | null;
+  /**
+   * Parchment underlay strength when aerial is present (0 = survey-sharp,
+   * 1 = soft drafting table). Canvas-first: peel, don't void.
+   */
+  parchmentPeel: number;
+  /** Durable DesignCanvas autosave status. */
+  saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
+  /** Set when saveStatus is error — drives honest toast copy. */
+  saveErrorKind: "unreachable" | "stale_client" | "rejected" | null;
+  /** Inline Flora Ring session (planting Add click). */
+  floraSession: {
+    x: number;
+    y: number;
+    candidates: FloraCandidate[];
+    activeIdx: number;
+    maxHeightM: number;
+  } | null;
+  /** Locked residential path width for next paving/deck place. */
+  pathWidthM: PathWidthLockM;
+  /** Edge detailing for next paving/deck place. */
+  edgeType: HardscapeEdgeType;
+  /** Corner fillet lock (m) for next paving/deck place. */
+  pathFilletM: PathFilletLockM;
+  /** Soft planting palette filters (kit dock + Flora Ring). */
+  plantingSoil: SoilTag;
+  plantingAspect: AspectTag;
+  /** Indices into doc.levels selected for an indicative drainage run. */
+  drainageLevelIdx: number[];
+  /** Session A/B/C scheme snapshots (shared title frame). */
+  schemes: DesignSchemeSnapshot[];
+  activeSchemeId: string | null;
+  /**
+   * Stage 1 CAD title overlay — Vicmap snap + charcoal boundary.
+   * AI intelligence layer stays underneath (not purged).
+   */
+  foundationCleanse: boolean;
+  /**
+   * Title CAD nodes locked (no drag). Unlock to snap/drag vertices;
+   * Lock commits Vicmap/manual geometry with edge metadata.
+   */
+  titleBoundaryLocked: boolean;
+  /** Provenance of the active title polygon. */
+  boundarySource: "vicmap" | "manual" | "seed";
+  /** Provenance of the existing-dwelling ring (never "seed" once cleared). */
+  buildingSource: DesignBuildingSource;
+  /**
+   * After Stage 1 / aerial purge — block re-injection of project aerial
+   * until the operator explicitly drops imagery again.
+   */
+  aerialSuppressed: boolean;
+  /** Prepare site pack chase list — persisted on site_frame.site_pack. */
+  sitePackChase: Array<{
+    id: string;
+    label: string;
+    done: boolean;
+    href?: string;
+  }>;
+  digOverrideAt: string | null;
+  digOverrideNote: string | null;
+};
+
+/** Prahran / Stonnington demo centroid for indicative shade grid. */
+const FLORA_SHADE_LAT = -37.849;
+const FLORA_SHADE_LNG = 144.993;
+
+type State = {
+  doc: Doc;
+  ui: Ui;
+  /** Per-site snapshots so switching restores full drawing state. */
+  siteSnaps: StudioSnapshot[];
+};
+
+type Action =
+  | { type: "mutate"; fn: (snap: StudioSnapshot, idn: number) => { snap: StudioSnapshot; idn?: number } }
+  | { type: "undo" }
+  | { type: "redo" }
+  | { type: "setUi"; patch: Partial<Ui> }
+  | { type: "setMode"; mode: StudioMode }
+  | { type: "setLayerOpacity"; key: LayerKey; value: number }
+  | { type: "switchSite"; idx: number }
+  | { type: "resetSite" }
+  | {
+    type: "silentIds";
+    items: StudioItem[];
+    strokes: SketchStroke[];
+  };
+
+/** Move an item's centroid — its drawn region outline travels with it. */
+function itemMovedTo(i: StudioItem, x: number, y: number): StudioItem {
+  const dx = x - i.x;
+  const dy = y - i.y;
+  const outlinePct =
+    i.outlinePct && (dx !== 0 || dy !== 0)
+      ? i.outlinePct.map((p) => ({ x: p.x + dx, y: p.y + dy }))
+      : i.outlinePct;
+  return { ...i, x, y, ...(outlinePct ? { outlinePct } : {}) };
+}
+
+function cloneSnap(s: StudioSnapshot): StudioSnapshot {
+  return JSON.parse(JSON.stringify(s)) as StudioSnapshot;
+}
+
+function snapOf(doc: Doc): StudioSnapshot {
+  return {
+    boundary: doc.boundary,
+    building: doc.building,
+    items: doc.items,
+    easements: doc.easements,
+    strokes: doc.strokes,
+    levels: doc.levels,
+    drainageRuns: doc.drainageRuns ?? [],
+    pathCorridors: doc.pathCorridors ?? [],
+    services: doc.services,
+    bydaAssets: doc.bydaAssets ?? [],
+    keylessOverlays: doc.keylessOverlays ?? [],
+    irrigationZones: doc.irrigationZones ?? [],
+    constructionTrenches: doc.constructionTrenches ?? [],
+    annotations: doc.annotations ?? [],
+    imageLayers: doc.imageLayers ?? [],
+    presentationPack: doc.presentationPack ?? emptyPresentationPack(),
+  };
+}
+
+function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot {
+  return {
+    boundary: seed.boundary.map((p) => ({ ...p })),
+    building: seed.building.map((p) => ({ ...p })),
+    items: seed.items.map((i) => ({ ...i })),
+    easements: [],
+    strokes: [],
+    levels: [],
+    drainageRuns: [],
+    pathCorridors: [],
+    services: [],
+    bydaAssets: [],
+    keylessOverlays: [],
+    irrigationZones: [],
+    constructionTrenches: [],
+    annotations: (seed.annotations ?? []).map((a) => ({
+      ...a,
+      anchor: { ...a.anchor },
+      notePos: { ...a.notePos },
+    })),
+    imageLayers: [],
+    presentationPack: emptyPresentationPack(),
+  };
+}
+
+function initialState(opts: {
+  mode: StudioMode;
+  placements?: CatalogPlacement[];
+  strokes?: CanvasStroke[];
+  siteFrame?: DesignSiteFrame | null;
+  irrigationZones?: IrrigationZone[];
+  constructionTrenches?: ConstructionTrench[];
+  annotations?: CanvasAnnotation[];
+  imageLayers?: ImageLayer[];
+  features?: LandscapeFeature[];
+  presentationPack?: PresentationPack | null;
+  lifecyclePhase?: import("@workstream/contracts").DesignLifecyclePhase;
+  /** Live project — never boot with the demo dwelling parallelogram. */
+  liveProject?: boolean;
+}): State {
+  const seed = WRIGHTS_SEED;
+  const siteSnaps = STUDIO_SITES.map((s) => seedToSnap(s.seed));
+  const base = seedToSnap(seed);
+  const frameOverlay = siteFrameToSnapshot(opts.siteFrame);
+  const liveProject = Boolean(opts.liveProject);
+  const hasCanvas =
+    (opts.placements?.length ?? 0) > 0 ||
+    (opts.strokes?.length ?? 0) > 0 ||
+    (opts.irrigationZones?.length ?? 0) > 0 ||
+    (opts.constructionTrenches?.length ?? 0) > 0 ||
+    (opts.annotations?.length ?? 0) > 0 ||
+    (opts.imageLayers?.length ?? 0) > 0 ||
+    Boolean(frameOverlay.boundary);
+  const buildingRaw = resolveHydratedBuilding(
+    opts.siteFrame,
+    frameOverlay.building,
+    base.building,
+    { liveProject },
+  );
+  const healBoundary =
+    frameOverlay.boundary && frameOverlay.boundary.length >= 3
+      ? frameOverlay.boundary
+      : null;
+  const building = healBoundary
+    ? rejectOversizedDwelling(healBoundary, buildingRaw)
+    : buildingRaw;
+  const buildingSource: DesignBuildingSource =
+    building.length < 3
+      ? "empty"
+      : frameOverlay.buildingSource
+        ? frameOverlay.buildingSource
+        : "traced";
+  const snap: StudioSnapshot = hasCanvas
+    ? {
+      ...base,
+      ...frameOverlay,
+      building,
+      items: featuresOntoItems(
+        placementsToItems(opts.placements ?? []),
+        opts.features ?? [],
+      ),
+      strokes: canvasToStrokes(opts.strokes ?? []),
+      easements: frameOverlay.easements ?? base.easements,
+      services: frameOverlay.services ?? base.services,
+      levels: frameOverlay.levels ?? base.levels,
+      bydaAssets: frameOverlay.bydaAssets ?? base.bydaAssets,
+      keylessOverlays: frameOverlay.keylessOverlays ?? base.keylessOverlays,
+      irrigationZones: opts.irrigationZones ?? [],
+      constructionTrenches: opts.constructionTrenches ?? [],
+      annotations: opts.annotations ?? [],
+      imageLayers: opts.imageLayers ?? [],
+      presentationPack:
+        opts.presentationPack ?? emptyPresentationPack(),
+    }
+    : liveProject
+      ? {
+        ...base,
+        building: [],
+        presentationPack:
+          opts.presentationPack ?? emptyPresentationPack(),
+      }
+      : {
+        ...base,
+        presentationPack:
+          opts.presentationPack ?? emptyPresentationPack(),
+      };
+  const outdoorSafe: StudioSnapshot = {
+    ...snap,
+    items: sanitizeItemsToOutdoor(snap.items, snap.boundary, snap.building),
+  };
+  return {
+    doc: {
+      ...outdoorSafe,
+      idn: 20,
+      hist: [],
+      redo: [],
+      histProvenance: [],
+      redoProvenance: [],
+    },
+    siteSnaps,
+    ui: {
+      mode: opts.mode,
+      tool: "select",
+      locked: false,
+      frameOn: false,
+      paper: "a3",
+      sheetElevOn: false,
+      darkOn: false,
+      focusOn: false,
+      clientView: false,
+      rightDataPanel: null,
+      leftAssetPanel: null,
+      leftAssetRestore: null,
+      leftAssetPinned: false,
+      recentAssetTypes: [],
+      layerOpacity: { ...DEFAULT_LAYER_OPACITY },
+      isolatedLayer: null,
+      setbackOn: false,
+      buildableAreaOn: false,
+      shadeOn: false,
+      growth: "mature",
+      sunMin: 12 * 60 + 26,
+      sunDatePreset: "today",
+      elevLook: "N",
+      selectedId: null,
+      groupIds: [],
+      hoverId: null,
+      ghostIdx: 0,
+      factorsOpen: false,
+      ghostReviewOpen: false,
+      rejectReasonId: null,
+      cmdOpen: false,
+      cmdQuery: "",
+      addOpen: false,
+      armed: null,
+      armedSymbolId: null,
+      lightingWorkspaceOn: false,
+      lightingKelvin: 2700,
+      lightingWireGauge: "12/2",
+      lightingTransformerVa: 200,
+      lifecyclePhase: opts.lifecyclePhase ?? "concept",
+      irrigationUniformityOn: false,
+      liveTelemetryOn: false,
+      arBirdseyeOn: false,
+      mitigated: {},
+      coachStep: -1,
+      drawPoly: null,
+      drawCursor: null,
+      traceTarget: "boundary",
+      zoneKind: "drip",
+      bydaDraftKind: null,
+      gridGrain: "medium",
+      gridSnap: true,
+      gridFormation: "ortho",
+      gridInk: "charcoal",
+      paintSwatch: "lawn",
+      siteIdx: 0,
+      siteExplicit: false,
+      canopyScanning: false,
+      canopyScanRequest: 0,
+      sunPlay: false,
+      zoom: 1,
+      focusX: 50,
+      focusY: 50,
+      panX: 0,
+      panY: 0,
+      viewRotationDeg: 0,
+      viewRotationStepDeg: 15,
+      tiltDeg: 0,
+      savedTick: 0,
+      saveRevision: hasCanvas ? 1 : 0,
+      aerialUri: null,
+      aiBusy: "idle",
+      coachOpen: false,
+      assistReply: null,
+      utilityPanel: null,
+      councilTip: null,
+      councilLabel: null,
+      existDbhM: BY_TYPE.exist.dbhM ?? 0.45,
+      servicesEdit: false,
+      servicesLocked: false,
+      serviceFeatureHidden: {},
+      focusedServiceIds: null,
+      sheetScaleDenom: 100,
+      // Persisted board scale (Vicmap fit / calibration) — else 110 m default.
+      boardWidthM: frameOverlay.boardWidthM ?? null,
+      parchmentPeel: 0.42,
+      saveStatus: hasCanvas ? "saved" : "idle",
+      saveErrorKind: null,
+      floraSession: null,
+      pathWidthM: 1.2,
+      edgeType: "sawn",
+      pathFilletM: 0.3,
+      plantingSoil: "any",
+      plantingAspect: "any",
+      drainageLevelIdx: [],
+      schemes: [],
+      activeSchemeId: null,
+      foundationCleanse: false,
+      titleBoundaryLocked: false,
+      boundarySource: "seed",
+      buildingSource,
+      // Never auto-inject Mapbox/survey static aerial — optional upload only
+      // (matches curtis-co prototype: parchment drafting plate by default).
+      aerialSuppressed: true,
+      sitePackChase: (opts.siteFrame?.site_pack?.chase ?? []).map((c) => ({
+        id: c.id,
+        label: c.label,
+        done: Boolean(c.done),
+        ...(c.href ? { href: c.href } : {}),
+      })),
+      digOverrideAt: opts.siteFrame?.site_pack?.dig_override_at ?? null,
+      digOverrideNote: opts.siteFrame?.site_pack?.dig_override_note ?? null,
+    },
+  };
+}
+
+export type UseStudioStateOpts = {
+  initialMode?: StudioMode;
+  projectId: string;
+  address: string;
+  aerialUri?: string | null;
+  /** Surveyed outdoor m² when known — omit rather than invent. */
+  outdoorM2?: number;
+  initialPlacements?: CatalogPlacement[];
+  initialStrokes?: CanvasStroke[];
+  /** Durable title/survey frame from DesignCanvas.site_frame. */
+  initialSiteFrame?: DesignSiteFrame | null;
+  /** Authored drip / lighting zones from DesignCanvas.irrigation_zones. */
+  initialIrrigationZones?: IrrigationZone[];
+  /** Construction trenches from DesignCanvas.construction_trenches. */
+  initialConstructionTrenches?: ConstructionTrench[];
+  /** Hand-lettered notes from DesignCanvas.annotations. */
+  initialAnnotations?: CanvasAnnotation[];
+  /** Imported photo / plan underlays from DesignCanvas.image_layers. */
+  initialImageLayers?: ImageLayer[];
+  /** Persisted region outlines from DesignCanvas.features. */
+  initialFeatures?: LandscapeFeature[];
+  /** Fit-sheet compose pack from DesignCanvas.presentation_pack. */
+  initialPresentationPack?: PresentationPack | null;
+  /** ASLA/SILA phase from canvas or project-status suggestion. */
+  initialLifecyclePhase?: import("@workstream/contracts").DesignLifecyclePhase;
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "mutate": {
+      const before = snapOf(state.doc);
+      const result = action.fn(cloneSnap(before), state.doc.idn);
+      const provenance = classifyHistoryProvenance(
+        before.items,
+        result.snap.items,
+      );
+      const nextItems = markStaleGhostsNearEdit(before.items, result.snap.items);
+      const hist = [...state.doc.hist, before].slice(-MAX_HIST);
+      return {
+        ...state,
+        doc: {
+          ...result.snap,
+          items: nextItems,
+          idn: result.idn ?? state.doc.idn,
+          hist,
+          redo: [],
+          histProvenance: [...state.doc.histProvenance, provenance].slice(
+            -MAX_HIST,
+          ),
+          redoProvenance: [],
+        },
+      };
+    }
+    case "undo": {
+      if (state.doc.hist.length === 0) return state;
+      const hist = [...state.doc.hist];
+      const prev = hist.pop()!;
+      const histProvenance = [...state.doc.histProvenance];
+      const provenance = histProvenance.pop() ?? "manual";
+      const current = snapOf(state.doc);
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          ...prev,
+          hist,
+          redo: [...state.doc.redo, current].slice(-MAX_HIST),
+          histProvenance,
+          redoProvenance: [
+            ...state.doc.redoProvenance,
+            provenance,
+          ].slice(-MAX_HIST),
+        },
+      };
+    }
+    case "redo": {
+      if (state.doc.redo.length === 0) return state;
+      const redo = [...state.doc.redo];
+      const next = redo.pop()!;
+      const redoProvenance = [...state.doc.redoProvenance];
+      const provenance = redoProvenance.pop() ?? "manual";
+      const current = snapOf(state.doc);
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          ...next,
+          hist: [...state.doc.hist, current].slice(-MAX_HIST),
+          redo,
+          histProvenance: [
+            ...state.doc.histProvenance,
+            provenance,
+          ].slice(-MAX_HIST),
+          redoProvenance,
+        },
+      };
+    }
+    case "setUi":
+      return { ...state, ui: { ...state.ui, ...action.patch } };
+    case "setMode": {
+      // Stage 1 keeps CAD title overlay across tabs — AI layer stays available.
+      const enteringSurvey = action.mode === "survey";
+      const leavingSurvey = state.ui.mode === "survey" && action.mode !== "survey";
+      const servicesLocked =
+        state.ui.servicesLocked || lockServicesOnMode(action.mode);
+      let layerOpacity = state.ui.layerOpacity;
+      if (enteringSurvey && !state.ui.foundationCleanse) {
+        layerOpacity = { ...SURVEY_LAYER_PRESET };
+      }
+      if (leavingSurvey && !state.ui.foundationCleanse) {
+        layerOpacity = { ...DESIGN_LAYER_PRESET };
+      }
+      // CAD / sketch are parchment drafting plates — no aerial underlay.
+      // Survey may keep an optional user-uploaded screenshot only.
+      const drafting = isDraftingPlate(action.mode);
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          mode: action.mode,
+          layerOpacity,
+          isolatedLayer: null,
+          drawPoly: null,
+          drawCursor: null,
+          servicesEdit: false,
+          servicesLocked,
+          // The checklist is survey-specific and collapsed by default
+          // (STUDIO-STYLING-AND-UX §6 item 7). Close it when leaving survey;
+          // do not force it open on entry — the progress pill in the frame
+          // band is the entry point.
+          rightDataPanel:
+            !enteringSurvey && state.ui.rightDataPanel === "checklist"
+              ? null
+              : state.ui.rightDataPanel,
+          // Asset panel only lives in CAD/sketch — collapse on mode leave.
+          ...(action.mode === "cad" || action.mode === "sketch"
+            ? {}
+            : { leftAssetPanel: null, leftAssetRestore: null }),
+          ...(drafting
+            ? { aerialUri: null, aerialSuppressed: true }
+            : action.mode === "survey"
+              ? { aerialSuppressed: true }
+              : {}),
+          // Every mode enters on the Select ground state — the pen arms via
+          // the pad's Pen chip, node handles live in Select (tool owns the click).
+          tool: "select",
+        },
+      };
+    }
+    case "setLayerOpacity":
+      if (action.key === "services" && state.ui.servicesLocked) {
+        return state;
+      }
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          layerOpacity: {
+            ...state.ui.layerOpacity,
+            [action.key]: action.value,
+          },
+        },
+      };
+    case "switchSite": {
+      const idx = action.idx;
+      if (idx < 0 || idx >= state.siteSnaps.length || idx === state.ui.siteIdx) {
+        return { ...state, ui: { ...state.ui, rightDataPanel: null } };
+      }
+      const siteSnaps = [...state.siteSnaps];
+      siteSnaps[state.ui.siteIdx] = cloneSnap(snapOf(state.doc));
+      const next = cloneSnap(siteSnaps[idx]!);
+      const safeItems = sanitizeItemsToOutdoor(
+        next.items,
+        next.boundary,
+        next.building,
+      );
+      const focus = outdoorFocusView(next.boundary, next.building, 110);
+      return {
+        ...state,
+        siteSnaps,
+        doc: {
+          ...next,
+          items: safeItems,
+          idn: state.doc.idn,
+          hist: [],
+          redo: [],
+          histProvenance: [],
+          redoProvenance: [],
+        },
+        ui: {
+          ...state.ui,
+          siteIdx: idx,
+          siteExplicit: true,
+          rightDataPanel: null,
+          selectedId: null,
+          drawPoly: null,
+          drawCursor: null,
+          ghostIdx: 0,
+          focusX: focus.focusX,
+          focusY: focus.focusY,
+          zoom: focus.zoom,
+        },
+      };
+    }
+    case "resetSite": {
+      const seed = STUDIO_SITES[state.ui.siteIdx]?.seed ?? WRIGHTS_SEED;
+      const next = seedToSnap(seed);
+      const before = snapOf(state.doc);
+      return {
+        ...state,
+        doc: {
+          ...next,
+          idn: state.doc.idn,
+          hist: [...state.doc.hist, before].slice(-MAX_HIST),
+          redo: [],
+          histProvenance: [
+            ...state.doc.histProvenance,
+            "manual" as HistoryProvenance,
+          ].slice(-MAX_HIST),
+          redoProvenance: [],
+        },
+        ui: {
+          ...state.ui,
+          selectedId: null,
+          drawPoly: null,
+          drawCursor: null,
+          mitigated: {},
+          ghostIdx: 0,
+        },
+      };
+    }
+    case "silentIds":
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          items: action.items,
+          strokes: action.strokes,
+        },
+      };
+    default:
+      return state;
+  }
+}
+
+export function useStudioState(opts: UseStudioStateOpts) {
+  const {
+    initialMode = "cad",
+    projectId,
+    address,
+    aerialUri: aerialProp = null,
+    outdoorM2,
+    initialPlacements = [],
+    initialStrokes = [],
+    initialSiteFrame = null,
+    initialIrrigationZones = [],
+    initialConstructionTrenches = [],
+    initialAnnotations = [],
+    initialImageLayers = [],
+    initialFeatures = [],
+    initialPresentationPack = null,
+    initialLifecyclePhase = "concept",
+  } = opts;
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    initialState({
+      mode: initialMode,
+      placements: initialPlacements,
+      strokes: initialStrokes,
+      siteFrame: initialSiteFrame,
+      irrigationZones: initialIrrigationZones,
+      constructionTrenches: initialConstructionTrenches,
+      annotations: initialAnnotations,
+      imageLayers: initialImageLayers,
+      features: initialFeatures,
+      presentationPack: initialPresentationPack,
+      lifecyclePhase: initialLifecyclePhase,
+      liveProject: Boolean(projectId),
+    }),
+  );
+  const bootstrapped = useRef(false);
+  const skipPersist = useRef(true);
+  const [saveRetryNonce, setSaveRetryNonce] = useState(0);
+  const [sessionRejectionHints, setSessionRejectionHints] = useState<
+    SessionRejectionHint[]
+  >([]);
+  const addressRef = useRef(address);
+  addressRef.current = address;
+  const outdoorRef = useRef(outdoorM2);
+  outdoorRef.current = outdoorM2;
+  const projectIdRef = useRef(projectId);
+  projectIdRef.current = projectId;
+  const saveRevisionRef = useRef(state.ui.saveRevision);
+
+  useEffect(() => {
+    if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
+    if (aerialProp && !state.ui.aerialUri) {
+      dispatch({ type: "setUi", patch: { aerialUri: aerialProp } });
+    }
+  }, [
+    aerialProp,
+    state.ui.aerialUri,
+    state.ui.aerialSuppressed,
+    state.ui.foundationCleanse,
+  ]);
+
+  const mutate = useCallback(
+    (fn: (snap: StudioSnapshot, idn: number) => { snap: StudioSnapshot; idn?: number }) => {
+      dispatch({ type: "mutate", fn });
+    },
+    [],
+  );
+
+  const setUi = useCallback((patch: Partial<Ui>) => {
+    dispatch({ type: "setUi", patch });
+  }, []);
+
+  /** Soften freehand ink in place — stays hand-drawn, never CAD symbols. */
+  const tidySketches = useCallback(() => {
+    mutate((snap) => {
+      if (snap.strokes.length === 0) return { snap };
+      return {
+        snap: {
+          ...snap,
+          strokes: tidySketchStrokes(snap.strokes),
+        },
+      };
+    });
+    setUi({
+      assistReply:
+        "Sketch tidied — still hand-drawn. Formalize to CAD when you want symbols on the plan.",
+      coachOpen: false,
+    });
+  }, [mutate, setUi]);
+
+  const interpretSketches = useCallback(() => {
+    const strokeCount = state.doc.strokes.length;
+    if (strokeCount === 0) {
+      setUi({
+        assistReply: "Sketch on the plan first — then formalize to CAD when ready.",
+        coachOpen: false,
+      });
+      return 0;
+    }
+    let count = 0;
+    mutate((snap, idn) => {
+      const proposed = proposeFromStrokes(snap, idn);
+      count = proposed.count;
+      if (proposed.count === 0) {
+        return { snap, idn };
+      }
+      return {
+        snap: {
+          ...snap,
+          items: mergeAiProposals(snap, proposed.items, ["sketch"]),
+        },
+        idn: proposed.idn,
+      };
+    });
+    setUi({
+      mode: "cad",
+      tool: "select",
+      ghostIdx: 0,
+      ghostReviewOpen: count > 0,
+      coachOpen: false,
+      assistReply:
+        count > 0
+          ? `Formalized ${count} sketch${count === 1 ? "" : "es"} into suggested CAD assets. Each stroke stays visible as a reference — adjust, accept, or reject before it becomes plan geometry.`
+          : "No convertible strokes — draw a path, bed, or canopy mark first.",
+    });
+    return count;
+  }, [mutate, setUi, state.doc.strokes.length]);
+
+  /**
+   * Apply AI CAD suggestions (from the server vision pipeline) as reviewable
+   * ghosts. Mirrors interpretSketches but the interpretation was done by Claude.
+   */
+  const applyCadSuggestions = useCallback(
+    (
+      suggestions: Array<{
+        id: string;
+        symbol_id: string;
+        x_pct: number;
+        y_pct: number;
+        confidence: number;
+        reason: string;
+        scale_hint?: number;
+        rot_deg?: number;
+        outline_pct?: Array<{ x_pct: number; y_pct: number }>;
+      }>,
+      opts?: { source?: "vision" | "heuristic" },
+    ) => {
+      let count = 0;
+      mutate((snap, idn) => {
+        const proposed = proposeFromCadSuggestions(snap, idn, suggestions);
+        count = proposed.count;
+        if (proposed.count === 0) return { snap, idn };
+        return {
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, proposed.items, ["sketch"]),
+          },
+          idn: proposed.idn,
+        };
+      });
+      const engine = opts?.source === "vision" ? "AI" : "quick";
+      setUi({
+        mode: "cad",
+        tool: "select",
+        ghostIdx: 0,
+        ghostReviewOpen: count > 0,
+        coachOpen: false,
+        assistReply:
+          count > 0
+            ? `Translated ${count} sketch element${count === 1 ? "" : "s"} into CAD (${engine}) — review sun, setback, and envelope, then accept.`
+            : "No convertible strokes — draw a path, bed, or canopy mark first.",
+      });
+      return count;
+    },
+    [mutate, setUi],
+  );
+
+  const setMode = useCallback(
+    (mode: StudioMode) => {
+      // Sketch → CAD AI translation is owned by runFormalizeToCad in the
+      // studio shell (vision pipeline). Do not auto-run the local heuristic here.
+      dispatch({ type: "setMode", mode });
+    },
+    [],
+  );
+
+  const setLayerOpacity = useCallback((key: LayerKey, value: number) => {
+    dispatch({ type: "setLayerOpacity", key, value });
+  }, []);
+
+  const undo = useCallback(() => dispatch({ type: "undo" }), []);
+  const redo = useCallback(() => dispatch({ type: "redo" }), []);
+
+  const ghosts = state.doc.items.filter((i) => i.ghost);
+  const ghostCount = ghosts.length;
+  const curGhost =
+    ghostCount === 0
+      ? null
+      : ghosts[
+      (((state.ui.ghostIdx % ghostCount) + ghostCount) % ghostCount)
+      ]!;
+
+  const acceptGhost = useCallback(
+    (id: string) => {
+      const ghost = state.doc.items.find((i) => i.id === id);
+      mutate((snap) => ({ snap: acceptProposal(snap, id) }));
+      if (state.ui.rejectReasonId === id) setUi({ rejectReasonId: null });
+      if (ghost) playMaterialFoley(ghost.t);
+    },
+    [mutate, setUi, state.doc.items, state.ui.rejectReasonId],
+  );
+
+  const rejectGhost = useCallback(
+    (id: string) => {
+      if (state.ui.rejectReasonId !== id) {
+        setUi({ rejectReasonId: id, ghostReviewOpen: true });
+        return;
+      }
+      mutate((snap) => ({ snap: rejectProposal(snap, id) }));
+      setUi({ rejectReasonId: null });
+    },
+    [mutate, setUi, state.ui.rejectReasonId],
+  );
+
+  const rejectGhostWithReason = useCallback(
+    (id: string, reason: RejectionReason) => {
+      const ghost = state.doc.items.find((item) => item.id === id && item.ghost);
+      if (ghost) {
+        setSessionRejectionHints((hints) => [
+          ...hints,
+          {
+            reason,
+            type: ghost.t,
+            x: ghost.x,
+            y: ghost.y,
+            note: ghost.why,
+          },
+        ]);
+      }
+      mutate((snap) => ({ snap: rejectProposal(snap, id) }));
+      setUi({ rejectReasonId: null });
+    },
+    [mutate, setUi, state.doc.items],
+  );
+
+  const acceptAllGhosts = useCallback(() => {
+    mutate((snap) => ({ snap: acceptAllProposals(snap) }));
+  }, [mutate]);
+
+  const dismissFlora = useCallback(() => {
+    setUi({ floraSession: null });
+  }, [setUi]);
+
+  const setFloraActiveIdx = useCallback(
+    (activeIdx: number) => {
+      const session = state.ui.floraSession;
+      if (!session) return;
+      setUi({
+        floraSession: {
+          ...session,
+          activeIdx: Math.max(
+            0,
+            Math.min(session.candidates.length - 1, activeIdx),
+          ),
+        },
+      });
+    },
+    [setUi, state.ui.floraSession],
+  );
+
+  const acceptFlora = useCallback(
+    (candidate: FloraCandidate) => {
+      const session = state.ui.floraSession;
+      if (!session) return;
+      const form = candidate.studioForm;
+      let tip: string | null = null;
+      let px = session.x;
+      let py = session.y;
+      const scaleM = state.ui.boardWidthM ?? 110;
+      const guardItems = state.doc.items.map((it) => ({
+        id: it.id,
+        t: it.t,
+        x: it.x,
+        y: it.y,
+        scale: it.scale,
+        ghost: it.ghost,
+        dbhM: it.dbhM,
+        canopyM: BY_TYPE[it.t]?.canopyM,
+      }));
+      const conflicts = assessPlantingPlacement({
+        xPct: px,
+        yPct: py,
+        canopySpreadM: candidate.canopySpreadM,
+        items: guardItems,
+        scaleM,
+      });
+      const summary = plantingConflictSummary(conflicts);
+      if (summary.blocked) {
+        setUi({
+          councilTip: summary.tip,
+          setbackOn: true,
+        });
+        return;
+      }
+      if (summary.tip) tip = summary.tip;
+      mutate((snap, idn) => {
+        const placed = constrainAssetCentre(
+          px,
+          py,
+          form,
+          snap.boundary,
+          snap.building,
+        );
+        px = placed.x;
+        py = placed.y;
+        if (placed.snapped) tip = placed.reason;
+        const inEasement = (snap.easements ?? []).some(
+          (ring) => ring.length >= 3 && pointInPolygon({ x: px, y: py }, ring),
+        );
+        if (inEasement) {
+          tip =
+            "Inside easement hatch — confirm title / council before excavation";
+        }
+        const scale = Math.max(
+          0.45,
+          Math.min(1.25, candidate.canopySpreadM / 5),
+        );
+        const id = crypto.randomUUID();
+        const item: StudioItem = {
+          id,
+          t: form,
+          x: px,
+          y: py,
+          rot: 0,
+          scale,
+          ghost: false,
+          why: candidate.why,
+          conf: candidate.score,
+        };
+        let next: StudioSnapshot = {
+          ...snap,
+          items: [...snap.items, item],
+        };
+        let nextIdn = idn + 1;
+        const follow = maybeAutoProposeAfterCommit(
+          next,
+          addressRef.current,
+          nextIdn,
+        );
+        if (follow) {
+          next = {
+            ...next,
+            items: mergeAiProposals(next, follow.items, ["layout"]),
+          };
+          nextIdn = follow.idn;
+        }
+        return { snap: next, idn: nextIdn };
+      });
+      playMaterialFoley(form);
+      setUi({
+        floraSession: null,
+        armed: null,
+        addOpen: false,
+        tool: "select",
+        ghostReviewOpen: true,
+        coachOpen: false,
+        setbackOn: tip ? true : state.ui.setbackOn,
+        councilTip: tip,
+      });
+    },
+    [
+      mutate,
+      setUi,
+      state.ui.floraSession,
+      state.ui.setbackOn,
+      state.ui.boardWidthM,
+      state.doc.items,
+    ],
+  );
+
+  const placeArmed = useCallback(
+    (x: number, y: number) => {
+      const painting = state.ui.tool === "paint";
+      const armed = painting ? state.ui.paintSwatch : state.ui.armed;
+      if (!armed) return;
+
+      // Planting Add → Flora Ring (AI intelligence layer — available in Stage 1)
+      if (!painting && isFloraStudioForm(armed)) {
+        const cells = buildIndicativeShadeGrid(
+          FLORA_SHADE_LAT,
+          FLORA_SHADE_LNG,
+          sunDateFromPreset(state.ui.sunDatePreset, state.ui.sunMin),
+        );
+        const sunHours = sunHoursAtPct(x, y, cells);
+        const nearby = countNearbyCanopy(x, y, state.doc.items);
+        const maxHeightM = FLORA_HEIGHT_BY_FORM[armed];
+        const candidates = rankCurtisFloraCandidates({
+          address: addressRef.current,
+          sunHours,
+          nearbyCanopyCount: nearby,
+          maxHeightM,
+          preferredForm: armed,
+          soil: state.ui.plantingSoil,
+          aspect: state.ui.plantingAspect,
+        });
+        setUi({
+          floraSession: {
+            x,
+            y,
+            candidates,
+            activeIdx: 0,
+            maxHeightM,
+          },
+          addOpen: false,
+        });
+        return;
+      }
+
+      let tip: string | null = null;
+      mutate((snap, idn) => {
+        const placed = constrainAssetCentre(
+          x,
+          y,
+          armed,
+          snap.boundary,
+          snap.building,
+        );
+        const px = placed.x;
+        const py = placed.y;
+        if (placed.snapped) tip = placed.reason;
+        const inEasement = (snap.easements ?? []).some(
+          (ring) => ring.length >= 3 && pointInPolygon({ x: px, y: py }, ring),
+        );
+        if (inEasement) {
+          tip =
+            "Inside easement hatch — confirm title / council before excavation";
+        }
+        let dbhM: number | undefined;
+        if (armed === "exist") {
+          const n = state.ui.existDbhM;
+          if (Number.isFinite(n) && n > 0) dbhM = n;
+        }
+        const id = crypto.randomUUID();
+        const hard =
+          armed === "paving" || armed === "deck"
+            ? {
+              pathWidthM: state.ui.pathWidthM,
+              edgeType: state.ui.edgeType,
+              pathFilletM: state.ui.pathFilletM,
+              scale: pathWidthToGlyphScale(state.ui.pathWidthM),
+              why: hardscapeWhy(
+                state.ui.pathWidthM,
+                state.ui.edgeType,
+                state.ui.pathFilletM,
+              ),
+            }
+            : null;
+        const symbolId =
+          !painting && state.ui.armedSymbolId?.trim()
+            ? state.ui.armedSymbolId.trim()
+            : undefined;
+        /*
+         * Height rides with the symbol, never alone — an unpaired heightM
+         * cannot survive persistence (canvasBridge.test.ts documents why).
+         */
+        const heightM = symbolId ? symbolMatureHeightM(symbolId) : null;
+        const item: StudioItem = {
+          id,
+          t: armed,
+          x: px,
+          y: py,
+          rot: 0,
+          scale: hard?.scale ?? (painting ? 1 : 0.7),
+          ghost: false,
+          ...(symbolId ? { symbolId } : {}),
+          ...(heightM != null ? { heightM } : {}),
+          ...(dbhM != null ? { dbhM } : {}),
+          ...(hard
+            ? {
+              pathWidthM: hard.pathWidthM,
+              edgeType: hard.edgeType,
+              pathFilletM: hard.pathFilletM,
+              why: hard.why,
+            }
+            : {}),
+        };
+        let next: StudioSnapshot = {
+          ...snap,
+          items: [...snap.items, item],
+        };
+        let nextIdn = idn + 1;
+        if (!painting && !state.ui.foundationCleanse) {
+          const follow = maybeAutoProposeAfterCommit(
+            next,
+            addressRef.current,
+            nextIdn,
+          );
+          if (follow) {
+            next = {
+              ...next,
+              items: mergeAiProposals(next, follow.items, ["layout"]),
+            };
+            nextIdn = follow.idn;
+          }
+        }
+        return { snap: next, idn: nextIdn };
+      });
+      playMaterialFoley(armed);
+      const collapse = collapseLeftAssetUnlessPinned({
+        panel: state.ui.leftAssetPanel,
+        pinned: state.ui.leftAssetPinned,
+      });
+      // Paint stays armed (Mac Paint bucket); Add disarms after place.
+      setUi({
+        armed: painting ? state.ui.armed : null,
+        armedSymbolId: painting ? state.ui.armedSymbolId : null,
+        addOpen: false,
+        tool: painting ? "paint" : "select",
+        ghostReviewOpen: painting ? state.ui.ghostReviewOpen : !state.ui.foundationCleanse,
+        coachOpen: false,
+        setbackOn: tip ? true : state.ui.setbackOn,
+        councilTip: tip,
+        recentAssetTypes: pushRecentAssetType(
+          state.ui.recentAssetTypes,
+          armed,
+        ),
+        ...(collapse ?? {}),
+      });
+    },
+    [
+      mutate,
+      setUi,
+      state.doc.items,
+      state.ui.armed,
+      state.ui.armedSymbolId,
+      state.ui.existDbhM,
+      state.ui.foundationCleanse,
+      state.ui.ghostReviewOpen,
+      state.ui.leftAssetPanel,
+      state.ui.leftAssetPinned,
+      state.ui.paintSwatch,
+      state.ui.pathWidthM,
+      state.ui.edgeType,
+      state.ui.pathFilletM,
+      state.ui.plantingSoil,
+      state.ui.plantingAspect,
+      state.ui.recentAssetTypes,
+      state.ui.setbackOn,
+      state.ui.sunMin,
+      state.ui.sunDatePreset,
+      state.ui.tool,
+    ],
+  );
+
+  /**
+   * Four-tier Spatial Correction NLP pipeline:
+   * aerial suppress → vegetation sieve → elev scale clamp → Vicmap boundary snap.
+   */
+  const runSpatialCorrection = useCallback(async () => {
+    const notes: string[] = [];
+    setUi({
+      aerialUri: null,
+      parchmentPeel: 1,
+      aiBusy: "assisting",
+      cmdOpen: false,
+      coachOpen: false,
+      assistReply: "Running spatial correction…",
+    });
+    notes.push("Aerial off · parchment sheet");
+
+    const sieved = sieveVegetationItems(state.doc.items);
+    const clamped = clampVegetationElevationScale(sieved.items);
+    if (sieved.removed > 0) {
+      notes.push(`Sieved ${sieved.removed} overlapping vegetation`);
+    }
+    if (clamped.clamped > 0) {
+      notes.push(`Clamped ${clamped.clamped} oversized elevation scales`);
+    }
+    mutate((snap) => ({
+      snap: { ...snap, items: clamped.items },
+    }));
+
+    let boundarySnapped = false;
+    if (projectId) {
+      try {
+        const { autoTraceBoundaryAction } = await import(
+          "../../../../app/actions"
+        );
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
+        const keepTraced = state.ui.buildingSource === "traced";
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (applied) {
+          mutate((snap) => {
+            const again = applyAutoTraceParcelSnap({
+              snap,
+              res,
+              keepTracedBuilding: keepTraced,
+            });
+            if (!again) return { snap };
+            return {
+              snap: {
+                ...snap,
+                ...again.snap,
+                ...(again.services ? { services: again.services } : {}),
+              },
+            };
+          });
+          boundarySnapped = true;
+          setUi({
+            boundarySource: applied.boundarySource,
+            buildingSource: applied.buildingSource,
+            aerialSuppressed: true,
+            ...(applied.fit.boardWidthM != null
+              ? { boardWidthM: applied.fit.boardWidthM }
+              : {}),
+          });
+          notes.push(
+            `Boundary snapped to ${res.boundary.source_kind === "vicmap"
+              ? "Vicmap parcel"
+              : "title polygon"
+            }`,
+          );
+          notes.push(
+            applied.buildingSource === "vicmap"
+              ? "Vicmap dwelling hydrated"
+              : applied.buildingSource === "traced"
+                ? "kept traced dwelling"
+                : "dwelling cleared (trace Existing dwelling)",
+          );
+          if (applied.easementSource === "vicmap" && applied.services?.length) {
+            notes.push(
+              `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            );
+          }
+        }
+      } catch {
+        notes.push("Vicmap parcel unavailable — kept drawn boundary");
+      }
+    } else {
+      notes.push("No project id — cadastral snap skipped");
+    }
+
+    setUi({
+      aiBusy: "idle",
+      locked: false,
+      aerialUri: null,
+      aerialSuppressed: true,
+      assistReply: `Spatial correction complete. ${notes.join(" · ")}${boundarySnapped ? "" : ""
+        }`,
+    });
+  }, [mutate, projectId, setUi, state.doc, state.ui.buildingSource]);
+
+  /**
+   * Stage 1 CAD title overlay:
+   * Vicmap snap → charcoal CAD boundary with snap/drag/lock + edge metadata.
+   * AI intelligence layer is preserved underneath (ghosts, flora, coach).
+   */
+  const runStage1FoundationCleanse = useCallback(async () => {
+    const notes: string[] = [];
+    setUi({
+      aerialUri: null,
+      parchmentPeel: 1,
+      foundationCleanse: true,
+      aerialSuppressed: true,
+      titleBoundaryLocked: false,
+      aiBusy: "assisting",
+      cmdOpen: false,
+      coachOpen: false,
+      frameOn: false,
+      locked: false,
+      sheetScaleDenom: 100,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      mode: "survey",
+      tool: "select",
+      layerOpacity: {
+        survey: 0.35,
+        boundary: 1,
+        council: 0.25,
+        vegetation: 0.4,
+        services: 0.6,
+        notes: 0.5,
+      },
+      assistReply: "Snapping Vicmap title…",
+    });
+    notes.push("Title boundary live");
+
+    // Clear only title-trace sketches — keep design strokes / AI items
+    const sketches = clearBoundaryLikeSketches(
+      state.doc.strokes,
+      state.doc.boundary,
+      { clearAll: false },
+    );
+    if (sketches.cleared > 0) {
+      notes.push(`Cleared ${sketches.cleared} title-trace sketches`);
+      mutate((snap) => ({
+        snap: { ...snap, strokes: sketches.strokes },
+      }));
+    }
+
+    let snapped = false;
+    if (projectId) {
+      try {
+        const { autoTraceBoundaryAction } = await import(
+          "../../../../app/actions"
+        );
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
+        const keepTraced = state.ui.buildingSource === "traced";
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (applied) {
+          mutate((snap) => {
+            const again = applyAutoTraceParcelSnap({
+              snap,
+              res,
+              keepTracedBuilding: keepTraced,
+            });
+            if (!again) return { snap };
+            return {
+              snap: {
+                ...snap,
+                ...again.snap,
+                ...(again.services ? { services: again.services } : {}),
+              },
+            };
+          });
+          snapped = true;
+          setUi({
+            boundarySource: applied.boundarySource,
+            buildingSource: applied.buildingSource,
+            ...(applied.fit.boardWidthM != null
+              ? { boardWidthM: applied.fit.boardWidthM }
+              : {}),
+          });
+          notes.push(
+            res.boundary.source_kind === "vicmap"
+              ? "Vicmap parcel snapped"
+              : "Title polygon snapped",
+          );
+          if (applied.buildingSource === "vicmap") {
+            notes.push("Vicmap dwelling hydrated");
+          } else if (applied.buildingSource === "empty") {
+            notes.push("Dwelling unavailable — Trace → Existing dwelling");
+          }
+          if (applied.easementSource === "vicmap" && applied.services?.length) {
+            notes.push(
+              `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            );
+          }
+        }
+      } catch {
+        notes.push("Vicmap unavailable — drag title nodes");
+      }
+    } else {
+      notes.push("Drag title nodes to refine");
+    }
+
+    setUi({
+      aiBusy: "idle",
+      locked: false,
+      tool: "select",
+      foundationCleanse: true,
+      titleBoundaryLocked: snapped,
+      // Open Fit sheet working drawing — schedule + outside CAD dims
+      frameOn: true,
+      leftAssetPanel: null,
+      leftAssetRestore: null,
+      aerialSuppressed: true,
+      aerialUri: null,
+      assistReply: notes.join(" · "),
+    });
+  }, [mutate, projectId, setUi, state.doc, state.ui.buildingSource]);
+
+  const setTitleBoundaryLocked = useCallback(
+    (titleBoundaryLocked: boolean) => {
+      setUi({
+        titleBoundaryLocked,
+        tool: "select",
+        locked: false,
+        assistReply: titleBoundaryLocked
+          ? "Title locked"
+          : "Title unlocked — drag nodes to refine",
+      });
+    },
+    [setUi],
+  );
+
+  const exitStage1Foundation = useCallback(() => {
+    setUi({
+      foundationCleanse: false,
+      titleBoundaryLocked: false,
+      locked: false,
+      tool: "select",
+      aerialSuppressed: true,
+      aerialUri: null,
+      layerOpacity: { ...DESIGN_LAYER_PRESET },
+      assistReply: null,
+    });
+  }, [setUi]);
+
+  const askAi = useCallback(
+    async (query: string) => {
+      const q = query.trim();
+      if (!q) return;
+      if (isStage1FoundationQuery(q)) {
+        await runStage1FoundationCleanse();
+        return;
+      }
+      if (isSpatialCorrectionQuery(q)) {
+        await runSpatialCorrection();
+        return;
+      }
+      setUi({
+        aiBusy: "assisting",
+        cmdOpen: false,
+        cmdQuery: "",
+        coachOpen: false,
+        assistReply: null,
+      });
+      try {
+        if (projectId) {
+          const { designAssistAction } = await import("../../../../app/actions");
+          const promptedQuery =
+            buildSessionRejectionPrompt(sessionRejectionHints) + q;
+          const res = await designAssistAction(projectId, promptedQuery);
+          if (res?.suggestions?.length) {
+            mutate((snap, idn) => {
+              const mapped = proposalsFromApiSuggestions(
+                res.suggestions,
+                idn,
+                "assist",
+              );
+              return {
+                snap: {
+                  ...snap,
+                  items: mergeAiProposals(snap, mapped.items, ["assist"]),
+                },
+                idn: mapped.idn,
+              };
+            });
+            setUi({
+              aiBusy: "idle",
+              ghostIdx: 0,
+              ghostReviewOpen: true,
+              assistReply: res.reply?.trim() || null,
+            });
+            return;
+          }
+          if (res?.reply?.trim()) {
+            setUi({ assistReply: res.reply.trim() });
+          }
+        }
+      } catch {
+        /* fall through to geometry assist */
+      }
+      mutate((snap, idn) => {
+        const local = proposeFromAssistQuery(snap, q, idn);
+        return {
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, local.items, ["assist"]),
+          },
+          idn: local.idn,
+        };
+      });
+      setUi({
+        aiBusy: "idle",
+        ghostIdx: 0,
+        ghostReviewOpen: true,
+        assistReply: `Local assist for “${q}” — accept ghosts to commit.`,
+      });
+    },
+    [
+      mutate,
+      projectId,
+      runSpatialCorrection,
+      runStage1FoundationCleanse,
+      sessionRejectionHints,
+      setUi,
+    ],
+  );
+
+  const scanGhosts = useCallback(async (): Promise<number> => {
+    setUi({ aiBusy: "scanning", canopyScanning: true, coachOpen: false });
+    let placed = 0;
+    try {
+      if (projectId) {
+        const { scanDesignGhostsAction } = await import(
+          "../../../../app/actions"
+        );
+        const res = await scanDesignGhostsAction(projectId);
+        if (res?.suggestions?.length) {
+          mutate((snap, idn) => {
+            const mapped = proposalsFromApiSuggestions(
+              res.suggestions,
+              idn,
+              "scan",
+            );
+            const layout = proposeLayoutFromSnapshot(
+              snap,
+              addressRef.current,
+              mapped.idn,
+            );
+            const filtered = filterProposalsBySessionRejections(
+              [...mapped.items, ...layout.items],
+              sessionRejectionHints,
+            );
+            placed = filtered.length;
+            const merged = mergeAiProposals(
+              snap,
+              filtered,
+              ["scan", "layout"],
+            );
+            return { snap: { ...snap, items: merged }, idn: layout.idn };
+          });
+          setUi({
+            aiBusy: "idle",
+            canopyScanning: false,
+            ghostIdx: 0,
+            ghostReviewOpen: true,
+          });
+          return placed;
+        }
+      }
+    } catch {
+      /* layout fallback */
+    }
+    mutate((snap, idn) => {
+      const layout = proposeLayoutFromSnapshot(snap, addressRef.current, idn);
+      const filtered = filterProposalsBySessionRejections(
+        layout.items,
+        sessionRejectionHints,
+      );
+      placed = filtered.length;
+      return {
+        snap: {
+          ...snap,
+          items: mergeAiProposals(snap, filtered, ["layout", "scan"]),
+        },
+        idn: layout.idn,
+      };
+    });
+    setUi({
+      aiBusy: "idle",
+      canopyScanning: false,
+      ghostIdx: 0,
+      ghostReviewOpen: true,
+    });
+    return placed;
+  }, [mutate, projectId, sessionRejectionHints, setUi]);
+
+  /**
+   * AI propose: LV conduit trenches to house + watering (agg drain or spray).
+   * Merges into irrigation_zones — operator keeps or redraws (HITL).
+   */
+  const proposeLandscapeServices = useCallback(() => {
+    const live = state.doc.items.filter((i) => !i.ghost);
+    const proposal = proposeLandscapeServiceZones({
+      building: state.doc.building.map((p) => ({ x: p.x, y: p.y })),
+      boundary: state.doc.boundary.map((p) => ({ x: p.x, y: p.y })),
+      items: live.map((i) => ({
+        t: i.t,
+        x: i.x,
+        y: i.y,
+        symbolId: i.symbolId,
+      })),
+      fixtures: fixturesFromPlacements(
+        live
+          .filter((i) => i.symbolId)
+          .map((i) => ({
+            symbol_id: i.symbolId!,
+            x_pct: i.x,
+            y_pct: i.y,
+          })),
+      ),
+      zones: (state.doc.irrigationZones ?? []).map((z) => ({
+        kind: z.kind,
+        points: z.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+      })),
+    });
+    if (proposal.zones.length === 0) {
+      setUi({
+        mode: "cad",
+        tool: "zone",
+        councilTip: proposal.tip,
+      });
+      return proposal;
+    }
+    mutate((snap) => {
+      const start = (snap.irrigationZones ?? []).length;
+      const added: IrrigationZone[] = proposal.zones.map((z, i) => ({
+        id: crypto.randomUUID(),
+        name: z.name || `${zoneKindShortLabel(z.kind)} ${start + i + 1}`,
+        kind: z.kind,
+        points: z.points.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+        emitter_spacing_cm: z.emitter_spacing_cm ?? 30,
+        emitter_flow_lph: z.emitter_flow_lph ?? 2,
+        ...(z.fixture_spacing_m != null
+          ? { fixture_spacing_m: z.fixture_spacing_m }
+          : {}),
+      }));
+      return {
+        snap: {
+          ...snap,
+          irrigationZones: [...(snap.irrigationZones ?? []), ...added],
+        },
+      };
+    });
+    setUi({
+      mode: "cad",
+      tool: "pan",
+      rightDataPanel: "measures",
+      ghostReviewOpen: false,
+      leftAssetPanel: null,
+      utilityPanel: "bom",
+      councilTip: proposal.tip,
+    });
+    return proposal;
+  }, [
+    mutate,
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.items,
+    state.doc.irrigationZones,
+  ]);
+
+  /**
+   * Cmd+K Develop site — scan ghosts, tip for scheme/flora, summon Live BOM.
+   * HITL: never auto-accepts geometry.
+   */
+  const runDevelopLoop = useCallback(async () => {
+    const placed = await scanGhosts();
+    const services = proposeLandscapeServices();
+    setUi({
+      mode: "cad",
+      rightDataPanel: "measures",
+      ghostReviewOpen: false,
+      leftAssetPanel: null,
+      utilityPanel: "bom",
+      councilTip: [
+        developLoopTip({
+          ghostCount: placed,
+          schemeCount: state.ui.schemes.length,
+        }),
+        services.zones.length > 0
+          ? "Lighting trench + watering on plan"
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    });
+  }, [
+    proposeLandscapeServices,
+    scanGhosts,
+    setUi,
+    state.ui.schemes.length,
+  ]);
+
+  /**
+   * Quiet Vicmap title hydrate — snaps parcel once without opening AI chrome.
+   * Then KEYLESS planning / bushfire / contour / flood / heritage washes.
+   */
+  useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
+    if (!projectId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const {
+          autoTraceBoundaryAction,
+          hydrateKeylessAction,
+          getSiteBoundaryAction,
+        } = await import("../../../../app/actions");
+        const {
+          applyCanvasMetresTransform,
+          fitCanvasMetresRing,
+        } = await import("../geometry/geoToPct");
+        const res = (await autoTraceBoundaryAction(
+          projectId,
+        )) as AutoTraceParcelInput;
+        if (cancelled) return;
+        // Boot hydrate always prefers Vicmap/survey house (or empty).
+        // Persisted seed-warped dwellings must not win over cadastral truth.
+        // Operator traces after boot are protected via buildingSource === "traced"
+        // on later spatial-correction / Stage 1 snaps.
+        const keepTraced =
+          state.ui.buildingSource === "traced" &&
+          state.doc.building.length >= 3 &&
+          Boolean(initialSiteFrame?.building_source === "traced");
+        const applied = applyAutoTraceParcelSnap({
+          snap: state.doc,
+          res,
+          keepTracedBuilding: keepTraced,
+        });
+        if (!applied) return;
+        const scaleM = applied.fit.boardWidthM ?? 110;
+        const focus = outdoorFocusView(
+          applied.snap.boundary,
+          applied.snap.building,
+          scaleM,
+        );
+        mutate((snap) => {
+          const again = applyAutoTraceParcelSnap({
+            snap,
+            res,
+            keepTracedBuilding: keepTraced,
+          });
+          if (!again) return { snap };
+          return {
+            snap: {
+              ...snap,
+              ...again.snap,
+              ...(again.services ? { services: again.services } : {}),
+            },
+          };
+        });
+        setUi({
+          boundarySource: applied.boundarySource,
+          buildingSource: applied.buildingSource,
+          focusX: focus.focusX,
+          focusY: focus.focusY,
+          zoom: focus.zoom,
+          panX: 0,
+          panY: 0,
+          ...(applied.fit.boardWidthM != null
+            ? { boardWidthM: applied.fit.boardWidthM }
+            : {}),
+          ...(applied.easementSource === "vicmap" && applied.services?.length
+            ? {
+              councilTip: `Vicmap easement lines hydrated (${applied.services.length}) — subset; confirm title`,
+            }
+            : {}),
+        });
+
+        // KEYLESS washes + urban tree ghosts — same title transform when available.
+        // Boundary fetch goes through a server action (never import server-only api).
+        let transform = applied.fit.transform;
+        if (!transform) {
+          try {
+            const bound = await getSiteBoundaryAction(projectId);
+            const verts = [...(bound.boundary?.vertices ?? [])]
+              .sort((a, b) => a.sequence_index - b.sequence_index)
+              .map((v) => v.canvas_coords);
+            transform = fitCanvasMetresRing(verts).transform;
+          } catch {
+            transform = null;
+          }
+        }
+        try {
+          const keyless = await hydrateKeylessAction(projectId);
+          if (!cancelled && transform && keyless.overlays_canvas.length > 0) {
+            const t = transform;
+            mutate((snap) => ({
+              snap: {
+                ...snap,
+                keylessOverlays: keyless.overlays_canvas.map((ov) => ({
+                  kind: ov.kind,
+                  label: ov.label ?? undefined,
+                  fetched_at: ov.fetched_at,
+                  /* Never clampPct — authority districts would become a full-board rect. */
+                  rings: filterKeylessRingsToBoard(
+                    ov.rings.map((ring) =>
+                      applyCanvasMetresTransform(ring, t).map((p) => ({
+                        x_pct: p.x,
+                        y_pct: p.y,
+                      })),
+                    ),
+                  ),
+                })),
+              },
+            }));
+          }
+          // Contour-derived levels — merge into studio levels as fallback.
+          if (!cancelled && keyless.derived_levels && keyless.derived_levels.length > 0) {
+            const derived = keyless.derived_levels;
+            mutate((snap) => {
+              const existing = snap.levels ?? [];
+              // Only add derived levels at corners that don't already have a level nearby.
+              const newLevels = [
+                ...existing,
+                ...derived
+                  .filter(
+                    (d) =>
+                      !existing.some(
+                        (lv) =>
+                          Math.hypot(lv.x - d.x_pct, lv.y - d.y_pct) < 2,
+                      ),
+                  )
+                  .map((d) => ({
+                    x: d.x_pct,
+                    y: d.y_pct,
+                    z: d.z_m,
+                    source: "vicmap_contour" as const,
+                  })),
+              ];
+              return {
+                snap: {
+                  ...snap,
+                  levels: newLevels,
+                },
+              };
+            });
+          }
+        } catch {
+          /* KEYLESS optional — title still valid */
+        }
+        // P2 — Vicmap urban trees → exist ghosts (HITL; never invent DBH).
+        const trees = res.urban_trees_canvas ?? [];
+        if (
+          !cancelled &&
+          transform &&
+          res.urban_trees_source === "vicmap" &&
+          trees.length > 0
+        ) {
+          const { mergeUrbanTreeGhosts } = await import("./urbanTreeIngest");
+          const boardM = applied.fit.boardWidthM ?? 110;
+          const t = transform;
+          let treeCount = 0;
+          mutate((snap, idn) => {
+            const merged = mergeUrbanTreeGhosts({
+              snap,
+              trees,
+              transform: t,
+              boardWidthM: boardM,
+              idn,
+            });
+            treeCount = merged.count;
+            return { snap: merged.snap, idn: merged.idn };
+          });
+          if (treeCount > 0) {
+            setUi({
+              ghostIdx: 0,
+              ghostReviewOpen: true,
+              councilTip: `${treeCount} Vicmap tree ghost${treeCount === 1 ? "" : "s"} — measure DBH on site for TPZ`,
+            });
+          }
+        }
+      } catch {
+        /* keep seed boundary — dwelling already empty on live projects */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once on mount
+  }, []);
+
+  const updateBoundary = useCallback(
+    (boundary: PctPoint[]) => {
+      // Stage 1: title nodes editable when unlocked; ignore global lock.
+      if (state.ui.foundationCleanse) {
+        if (state.ui.titleBoundaryLocked) return;
+      } else if (state.ui.locked) {
+        return;
+      }
+      mutate((snap) => ({ snap: { ...snap, boundary } }));
+      setUi({ boundarySource: "manual" });
+    },
+    [
+      mutate,
+      setUi,
+      state.ui.foundationCleanse,
+      state.ui.locked,
+      state.ui.titleBoundaryLocked,
+    ],
+  );
+
+  const updateBuilding = useCallback(
+    (building: PctPoint[]) => {
+      if (state.ui.locked) return;
+      mutate((snap) => ({ snap: { ...snap, building } }));
+      setUi({
+        buildingSource: building.length >= 3 ? "traced" : "empty",
+      });
+    },
+    [mutate, setUi, state.ui.locked],
+  );
+
+  const moveItem = useCallback(
+    (id: string, x: number, y: number) => {
+      if (state.ui.locked) return;
+      let tip: string | null = null;
+      mutate((snap) => {
+        const target = snap.items.find((i) => i.id === id);
+        let px = x;
+        let py = y;
+        if (target && !target.ghost) {
+          const placed = constrainAssetCentre(
+            px,
+            py,
+            target.t,
+            snap.boundary,
+            snap.building,
+          );
+          px = placed.x;
+          py = placed.y;
+          if (placed.snapped) tip = placed.reason;
+        }
+        return {
+          snap: {
+            ...snap,
+            items: snap.items.map((i) =>
+              i.id === id && !i.ghost ? itemMovedTo(i, px, py) : i,
+            ),
+          },
+        };
+      });
+      if (tip) setUi({ councilTip: tip, setbackOn: true });
+    },
+    [mutate, setUi, state.ui.locked],
+  );
+
+  const transformItem = useCallback(
+    (id: string, patch: Partial<Pick<StudioItem, "rot" | "scale" | "x" | "y">>) => {
+      if (state.ui.locked) return;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) => {
+            if (i.id !== id || i.ghost) return i;
+            const moved =
+              patch.x != null || patch.y != null
+                ? itemMovedTo(i, patch.x ?? i.x, patch.y ?? i.y)
+                : i;
+            const next = { ...moved, ...patch };
+            if (next.scale != null) {
+              next.scale = Math.max(0.35, Math.min(2.5, next.scale));
+            }
+            if (next.rot != null) {
+              let r = next.rot % 360;
+              if (r < 0) r += 360;
+              next.rot = r;
+            }
+            return next;
+          }),
+        },
+      }));
+    },
+    [mutate, state.ui.locked],
+  );
+
+  const nudgeSelected = useCallback(
+    (dx: number, dy: number) => {
+      const ids =
+        state.ui.groupIds.length > 0
+          ? state.ui.groupIds
+          : state.ui.selectedId
+            ? [state.ui.selectedId]
+            : [];
+      if (ids.length === 0 || state.ui.locked) return;
+      const set = new Set(ids);
+      const step = state.ui.gridSnap
+        ? GRID_STEP_PCT[state.ui.gridGrain]
+        : null;
+      const stepDx = step != null ? Math.sign(dx || 1) * (dx === 0 ? 0 : step) : dx;
+      const stepDy = step != null ? Math.sign(dy || 1) * (dy === 0 ? 0 : step) : dy;
+      // When grid snap is on, ignore fine nudge size — move one cell per key.
+      const ndx = step != null ? (dx === 0 ? 0 : stepDx) : dx;
+      const ndy = step != null ? (dy === 0 ? 0 : stepDy) : dy;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) => {
+            if (!set.has(i.id) || i.ghost) return i;
+            let next = {
+              x: Math.max(0, Math.min(100, i.x + ndx)),
+              y: Math.max(0, Math.min(100, i.y + ndy)),
+            };
+            if (step != null) {
+              next = snapToGridPct(next, step);
+            }
+            const placed = constrainAssetCentre(
+              next.x,
+              next.y,
+              i.t,
+              snap.boundary,
+              snap.building,
+            );
+            return itemMovedTo(i, placed.x, placed.y);
+          }),
+        },
+      }));
+    },
+    [
+      mutate,
+      state.ui.gridGrain,
+      state.ui.gridSnap,
+      state.ui.groupIds,
+      state.ui.locked,
+      state.ui.selectedId,
+    ],
+  );
+
+  const moveGroup = useCallback(
+    (ids: string[], dx: number, dy: number) => {
+      if (state.ui.locked || ids.length === 0) return;
+      const set = new Set(ids);
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) => {
+            if (!set.has(i.id) || i.ghost) return i;
+            const placed = constrainAssetCentre(
+              Math.max(0, Math.min(100, i.x + dx)),
+              Math.max(0, Math.min(100, i.y + dy)),
+              i.t,
+              snap.boundary,
+              snap.building,
+            );
+            return itemMovedTo(i, placed.x, placed.y);
+          }),
+        },
+      }));
+    },
+    [mutate, state.ui.locked],
+  );
+
+  const setSelection = useCallback(
+    (selectedId: string | null, groupIds: string[] = []) => {
+      setUi({ selectedId, groupIds });
+    },
+    [setUi],
+  );
+
+  const deleteSelected = useCallback(() => {
+    if (state.ui.locked) return;
+    const ids =
+      state.ui.groupIds.length > 0
+        ? state.ui.groupIds
+        : state.ui.selectedId
+          ? [state.ui.selectedId]
+          : [];
+    if (ids.length === 0) return;
+    const set = new Set(ids);
+    const removable = state.doc.items.filter(
+      (i) => set.has(i.id) && !i.ghost,
+    );
+    if (removable.length === 0) return;
+    const drop = new Set(removable.map((i) => i.id));
+    mutate((snap) => ({
+      snap: { ...snap, items: snap.items.filter((i) => !drop.has(i.id)) },
+    }));
+    setUi({ selectedId: null, groupIds: [] });
+  }, [
+    mutate,
+    setUi,
+    state.doc.items,
+    state.ui.groupIds,
+    state.ui.locked,
+    state.ui.selectedId,
+  ]);
+
+  const changeSelectedType = useCallback(
+    (t: StudioItemType) => {
+      const id = state.ui.selectedId;
+      if (!id || state.ui.locked) return;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost ? { ...i, t } : i,
+          ),
+        },
+      }));
+      playMaterialFoley(t);
+    },
+    [mutate, state.ui.locked, state.ui.selectedId],
+  );
+
+  /** Paint bucket — retag a symbol with the active swatch. */
+  const paintItem = useCallback(
+    (id: string) => {
+      if (state.ui.locked) return;
+      const t = state.ui.paintSwatch;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost ? { ...i, t } : i,
+          ),
+        },
+      }));
+      playMaterialFoley(t);
+    },
+    [mutate, state.ui.locked, state.ui.paintSwatch],
+  );
+
+  const duplicateSelected = useCallback(() => {
+    if (state.ui.locked) return;
+    const id = state.ui.selectedId;
+    if (!id) return;
+    const src = state.doc.items.find((i) => i.id === id && !i.ghost);
+    if (!src) return;
+    const newId = crypto.randomUUID();
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        items: [
+          ...snap.items,
+          {
+            ...src,
+            id: newId,
+            x: Math.min(96, src.x + 3),
+            y: Math.min(96, src.y + 3),
+            ghost: false,
+          },
+        ],
+      },
+    }));
+    setUi({ selectedId: newId, groupIds: [newId] });
+    playMaterialFoley(src.t);
+  }, [
+    mutate,
+    setUi,
+    state.doc.items,
+    state.ui.locked,
+    state.ui.selectedId,
+  ]);
+
+  /** Clock-face rotate (±1 hour = 30°) for the selection. */
+  const rotateSelectedClock = useCallback(
+    (hours: number) => {
+      const ids =
+        state.ui.groupIds.length > 0
+          ? state.ui.groupIds
+          : state.ui.selectedId
+            ? [state.ui.selectedId]
+            : [];
+      if (ids.length === 0 || state.ui.locked) return;
+      const set = new Set(ids);
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) => {
+            if (!set.has(i.id) || i.ghost) return i;
+            return {
+              ...i,
+              rot: snapClockRotationDeg(i.rot + hours * 30),
+            };
+          }),
+        },
+      }));
+    },
+    [
+      mutate,
+      state.ui.groupIds,
+      state.ui.locked,
+      state.ui.selectedId,
+    ],
+  );
+
+  const patchSelectedDbh = useCallback(
+    (dbhM: number) => {
+      const id = state.ui.selectedId;
+      if (!id || state.ui.locked) return;
+      if (!Number.isFinite(dbhM) || dbhM <= 0) return;
+      const next = Math.min(2, Math.max(0.05, dbhM));
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost && i.t === "exist"
+              ? { ...i, dbhM: next, stemDbhM: undefined }
+              : i,
+          ),
+        },
+      }));
+      setUi({ existDbhM: next });
+    },
+    [mutate, setUi, state.ui.locked, state.ui.selectedId],
+  );
+
+  const patchSelectedStems = useCallback(
+    (stemDbhM: number[]) => {
+      const id = state.ui.selectedId;
+      if (!id || state.ui.locked) return;
+      const clean = stemDbhM
+        .map((n) => Math.min(2, Math.max(0.05, n)))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      if (clean.length === 0) return;
+      const combined =
+        clean.length === 1
+          ? clean[0]!
+          : Math.sqrt(clean.reduce((acc, d) => acc + d * d, 0));
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost && i.t === "exist"
+              ? {
+                  ...i,
+                  dbhM: combined,
+                  stemDbhM: clean.length > 1 ? clean : undefined,
+                }
+              : i,
+          ),
+        },
+      }));
+      setUi({ existDbhM: combined });
+    },
+    [mutate, setUi, state.ui.locked, state.ui.selectedId],
+  );
+
+  const snapSheetScale = useCallback(
+    (dir: 1 | -1) => {
+      const cur = state.ui.sheetScaleDenom;
+      const idx = SHEET_SCALE_STEPS.indexOf(cur);
+      const next =
+        SHEET_SCALE_STEPS[
+        Math.max(0, Math.min(SHEET_SCALE_STEPS.length - 1, idx + dir))
+        ]!;
+      setUi({ sheetScaleDenom: next });
+    },
+    [setUi, state.ui.sheetScaleDenom],
+  );
+
+  const setSheetScale = useCallback(
+    (sheetScaleDenom: SheetScaleDenom) => {
+      setUi({ sheetScaleDenom });
+    },
+    [setUi],
+  );
+
+  const cycleGhost = useCallback(
+    (dir: 1 | -1 = 1) => {
+      if (ghostCount === 0) return;
+      setUi({
+        ghostIdx: state.ui.ghostIdx + dir,
+        ghostReviewOpen: true,
+        coachOpen: false,
+      });
+    },
+    [ghostCount, setUi, state.ui.ghostIdx],
+  );
+
+  const ingestCanopyGhosts = useCallback(
+    (ghosts: StudioItem[]) => {
+      // Prefer raw image path via engine; this accepts pre-mapped items from AerialSlot.
+      mutate((snap, idn) => {
+        const add = ghosts.map((g) => ({
+          ...g,
+          id: crypto.randomUUID(),
+          ghost: true as const,
+        }));
+        return {
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, add, ["canopy"]),
+          },
+          idn: idn + add.length,
+        };
+      });
+      setUi({
+        ghostIdx: 0,
+        ghostReviewOpen: true,
+        coachOpen: false,
+        canopyScanning: false,
+      });
+    },
+    [mutate, setUi],
+  );
+
+  const ingestCanopyImage = useCallback(
+    async (image: {
+      width: number;
+      height: number;
+      data: ArrayLike<number>;
+    }) => {
+      if (state.ui.foundationCleanse || state.ui.aerialSuppressed) return;
+      setUi({ canopyScanning: true, aiBusy: "scanning" });
+      try {
+        let apiClusters: GhostPlacementSuggestion[] | undefined;
+        if (projectId) {
+          try {
+            const { scanDesignGhostsAction } = await import(
+              "../../../../app/actions"
+            );
+            const res = await scanDesignGhostsAction(projectId);
+            if (res?.suggestions?.length) {
+              apiClusters = res.suggestions;
+            }
+          } catch {
+            /* colour heuristic fallback */
+          }
+        }
+        mutate((snap, idn) => {
+          // Fold the aerial's capture date (when known) into the canopy reason
+          // so the plan tooltip reads "Detected from 2023 imagery" — honest
+          // dating, not an undated indicative circle.
+          const captureDate = snap.imageLayers.find(
+            (l) => l.capture_date,
+          )?.capture_date;
+          const proposed = proposeFromCanopyImage(
+            image,
+            idn,
+            apiClusters,
+            captureDate,
+          );
+          return {
+            snap: {
+              ...snap,
+              items: mergeAiProposals(snap, proposed.items, ["canopy"]),
+            },
+            idn: proposed.idn,
+          };
+        });
+      } catch {
+        /* Canopy proposal may fail on empty/no-drawing imagery */
+      } finally {
+        // Quiet merge — do not force Coach + Review open (screenshot chrome collision)
+        setUi({
+          canopyScanning: false,
+          aiBusy: "idle",
+          ghostIdx: 0,
+        });
+      }
+    },
+    [
+      mutate,
+      projectId,
+      setUi,
+      state.ui.aerialSuppressed,
+      state.ui.foundationCleanse,
+    ],
+  );
+
+  const setStrokes = useCallback(
+    (strokes: SketchStroke[]) => {
+      mutate((snap) => ({ snap: { ...snap, strokes } }));
+    },
+    [mutate],
+  );
+
+  const setImageLayers = useCallback(
+    (imageLayers: ImageLayer[]) => {
+      mutate((snap) => ({ snap: { ...snap, imageLayers } }));
+    },
+    [mutate],
+  );
+
+  const addImageLayer = useCallback(
+    (layer: ImageLayer) => {
+      mutate((snap) => ({
+        snap: { ...snap, imageLayers: [...snap.imageLayers, layer] },
+      }));
+    },
+    [mutate],
+  );
+
+  const updateImageLayer = useCallback(
+    (id: string, patch: Partial<ImageLayer>) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          imageLayers: snap.imageLayers.map((l) =>
+            l.id === id ? { ...l, ...patch } : l
+          ),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const removeImageLayer = useCallback(
+    (id: string) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          imageLayers: snap.imageLayers.filter((l) => l.id !== id),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const addSpotLevel = useCallback(
+    (x: number, y: number, z: number) => {
+      if (
+        !surveyServicesAuthoringAllowed({
+          mode: state.ui.mode,
+          servicesLocked: state.ui.servicesLocked,
+        })
+      ) {
+        return;
+      }
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          levels: [...(snap.levels ?? []), { x, y, z }],
+        },
+      }));
+    },
+    [mutate, state.ui.mode, state.ui.servicesLocked],
+  );
+
+  const toggleDrainageLevelIdx = useCallback(
+    (idx: number) => {
+      const cur = state.ui.drainageLevelIdx;
+      const next = cur.includes(idx)
+        ? cur.filter((i) => i !== idx)
+        : [...cur, idx].slice(-6);
+      setUi({ drainageLevelIdx: next });
+    },
+    [setUi, state.ui.drainageLevelIdx],
+  );
+
+  const commitDrainageRun = useCallback(() => {
+    const levels = state.doc.levels ?? [];
+    const pts = state.ui.drainageLevelIdx
+      .map((i) => levels[i])
+      .filter((lv): lv is NonNullable<typeof lv> => Boolean(lv))
+      .map((lv) => ({ x: lv.x, y: lv.y, z: lv.z }));
+    const run = makeIndicativeDrainageRun(pts);
+    if (!run) {
+      setUi({
+        councilTip: "Select at least two spot RLs to form a drainage run",
+      });
+      return;
+    }
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        drainageRuns: [...(snap.drainageRuns ?? []), run as DrainageRun],
+      },
+    }));
+    setUi({
+      drainageLevelIdx: [],
+      councilTip: "Indicative drainage run added — confirm falls on site",
+    });
+  }, [
+    mutate,
+    setUi,
+    state.doc.levels,
+    state.ui.drainageLevelIdx,
+  ]);
+
+  const saveDesignScheme = useCallback(() => {
+    const letter = nextSchemeLetter(state.ui.schemes);
+    if (!letter) {
+      setUi({ councilTip: "Schemes A–C are full — switch or clear one first" });
+      return;
+    }
+    const scheme = snapshotScheme(
+      letter,
+      state.doc.items,
+      state.doc.pathCorridors ?? [],
+    ) as DesignSchemeSnapshot;
+    setUi({
+      schemes: [...state.ui.schemes, scheme],
+      activeSchemeId: scheme.id,
+      councilTip: `${scheme.name} saved under this title boundary`,
+    });
+  }, [setUi, state.doc.items, state.doc.pathCorridors, state.ui.schemes]);
+
+  const activateDesignScheme = useCallback(
+    (schemeId: string) => {
+      const scheme = state.ui.schemes.find((s) => s.id === schemeId);
+      if (!scheme) return;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: scheme.items.map((it) => ({ ...it })),
+          pathCorridors: (scheme.pathCorridors ?? []).map((c) => ({ ...c })),
+        },
+      }));
+      setUi({
+        activeSchemeId: schemeId,
+        selectedId: null,
+        groupIds: [],
+        councilTip: `${scheme.name} active`,
+      });
+    },
+    [mutate, setUi, state.ui.schemes],
+  );
+
+  const beginPathDraft = useCallback(() => {
+    const mat =
+      state.ui.armed === "deck" || state.ui.paintSwatch === "deck"
+        ? "deck"
+        : "paving";
+    setUi({
+      tool: "path",
+      armed: mat,
+      drawPoly: [],
+      drawCursor: null,
+      addOpen: false,
+      leftAssetPanel: "placing",
+      rightDataPanel: null,
+      councilTip: "Path — click centreline · Enter (≥2 pts) · Esc cancel",
+    });
+  }, [setUi, state.ui.armed, state.ui.paintSwatch]);
+
+  const finishPathCorridor = useCallback(
+    (pts: PctPoint[]) => {
+      if (state.ui.locked) return;
+      const material =
+        state.ui.armed === "deck" ? "deck" : ("paving" as const);
+      const corridor = makePathCorridor({
+        points: pts,
+        material,
+        pathWidthM: state.ui.pathWidthM,
+        edgeType: state.ui.edgeType,
+        pathFilletM: state.ui.pathFilletM,
+        scaleM: state.ui.boardWidthM ?? 110,
+      });
+      if (!corridor) {
+        setUi({
+          councilTip: "Path needs at least two centreline points",
+          drawPoly: null,
+          drawCursor: null,
+          tool: "pan",
+          ...(state.ui.leftAssetPinned
+            ? { leftAssetPanel: "expanded" as const }
+            : { leftAssetPanel: null, leftAssetRestore: null }),
+        });
+        return;
+      }
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          pathCorridors: [
+            ...(snap.pathCorridors ?? []),
+            corridor as PathCorridor,
+          ],
+        },
+      }));
+      setUi({
+        drawPoly: null,
+        drawCursor: null,
+        tool: "select",
+        addOpen: false,
+        recentAssetTypes: pushRecentAssetType(
+          state.ui.recentAssetTypes,
+          material,
+        ),
+        ...(state.ui.leftAssetPinned
+          ? { leftAssetPanel: "expanded" as const }
+          : { leftAssetPanel: null, leftAssetRestore: null }),
+        councilTip: corridor.why,
+      });
+    },
+    [
+      mutate,
+      setUi,
+      state.ui.armed,
+      state.ui.boardWidthM,
+      state.ui.edgeType,
+      state.ui.leftAssetPinned,
+      state.ui.locked,
+      state.ui.pathFilletM,
+      state.ui.pathWidthM,
+      state.ui.recentAssetTypes,
+    ],
+  );
+
+  const commitService = useCallback(
+    (ring: PctPoint[]) => {
+      if (
+        !surveyServicesAuthoringAllowed({
+          mode: state.ui.mode,
+          servicesLocked: state.ui.servicesLocked,
+        })
+      ) {
+        return;
+      }
+      const bydaKind = state.ui.bydaDraftKind;
+      if (bydaKind) {
+        if (ring.length < 2) return;
+        mutate((snap) => ({
+          snap: {
+            ...snap,
+            bydaAssets: [
+              ...(snap.bydaAssets ?? []),
+              {
+                id: crypto.randomUUID(),
+                kind: bydaKind,
+                source: "byda" as const,
+                ring: ring.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+              },
+            ],
+          },
+        }));
+        setUi({ bydaDraftKind: null });
+        return;
+      }
+      const classified = classifySurveyCorridor(ring);
+      if (!classified) return;
+      mutate((snap) => {
+        if (classified.kind === "easement") {
+          return {
+            snap: {
+              ...snap,
+              easements: [...(snap.easements ?? []), classified.ring],
+            },
+          };
+        }
+        return {
+          snap: {
+            ...snap,
+            services: [...(snap.services ?? []), classified.ring],
+          },
+        };
+      });
+    },
+    [
+      mutate,
+      setUi,
+      state.ui.mode,
+      state.ui.servicesLocked,
+      state.ui.bydaDraftKind,
+    ],
+  );
+
+  const commitZone = useCallback(
+    (points: PctPoint[], kind: IrrigationZoneKind) => {
+      if (points.length < 2) return;
+      const n = (state.doc.irrigationZones ?? []).length + 1;
+      const label = zoneKindShortLabel(kind);
+      const lighting =
+        kind === "lighting" || kind === "lighting_conduit";
+      const zone: IrrigationZone = {
+        id: crypto.randomUUID(),
+        name: `${label} ${n}`,
+        kind,
+        points: points.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+        emitter_spacing_cm: kind === "spray" ? 350 : 30,
+        emitter_flow_lph: kind === "spray" ? 40 : 2,
+        ...((lighting || kind === "spray") && {
+          fixture_spacing_m: kind === "spray" ? 3.5 : 2.5,
+        }),
+        ...(lighting
+          ? {
+            wire_gauge: state.ui.lightingWireGauge,
+            transformer_va: state.ui.lightingTransformerVa,
+          }
+          : {}),
+      };
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          irrigationZones: [...(snap.irrigationZones ?? []), zone],
+        },
+      }));
+      setUi({
+        tool: "select",
+        ...(lighting ? { lightingWorkspaceOn: true } : {}),
+      });
+    },
+    [
+      mutate,
+      setUi,
+      state.doc.irrigationZones,
+      state.ui.lightingWireGauge,
+      state.ui.lightingTransformerVa,
+    ],
+  );
+
+  /**
+   * Landscape-architect auto trench — irrig main/laterals, lighting conduit,
+   * drainage from authored zones + french drains. Ghosts until Accept.
+   */
+  const runAutoTrench = useCallback(() => {
+    const bydaCount = (state.doc.bydaAssets ?? []).filter(
+      (a) => a.ring.length >= 2,
+    ).length;
+    if (
+      !digToolsUnlocked({
+        bydaAssetCount: bydaCount,
+        digOverrideAt: state.ui.digOverrideAt,
+      })
+    ) {
+      setUi({
+        assistReply:
+          "Dig gate — upload BYDA plans and digitise assets (Servc + BYDA kind), or stamp an explicit dig override in Services. Vicmap easements are not dig clearance.",
+        coachOpen: true,
+        rightDataPanel: "services",
+        ghostReviewOpen: false,
+        leftAssetPanel: null,
+      });
+      return;
+    }
+    const scaleM =
+      state.ui.boardWidthM ?? boardScaleM(state.ui.sheetScaleDenom);
+    const proposals = proposeAutoTrenches({
+      zones: state.doc.irrigationZones ?? [],
+      items: (state.doc.items ?? []).map((i) => ({
+        id: i.id,
+        t: i.t,
+        x: i.x,
+        y: i.y,
+        ghost: i.ghost,
+        dbhM: i.dbhM,
+      })),
+      easements: (state.doc.easements ?? []).map((r) =>
+        r.map((p) => ({ x: p.x, y: p.y })),
+      ),
+      services: (state.doc.services ?? []).map((r) =>
+        r.map((p) => ({ x: p.x, y: p.y })),
+      ),
+      boundary: state.doc.boundary.map((p) => ({ x: p.x, y: p.y })),
+      building: state.doc.building.map((p) => ({ x: p.x, y: p.y })),
+      scaleM,
+      asGhosts: true,
+    });
+    if (proposals.length === 0) {
+      setUi({
+        assistReply:
+          "Auto trench needs a drip or lighting zone, or french-drain symbols — draw zones first, then run again.",
+        coachOpen: true,
+      });
+      return;
+    }
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: [
+          ...(snap.constructionTrenches ?? []).filter((t) => !t.ghost),
+          ...proposals,
+        ],
+      },
+    }));
+    setUi({
+      assistReply: `${proposals.length} trench proposal${proposals.length === 1 ? "" : "s"} — Accept to commit dig paths (indicative; BYDA before excavation).`,
+      coachOpen: true,
+    });
+  }, [
+    mutate,
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.bydaAssets,
+    state.doc.easements,
+    state.doc.irrigationZones,
+    state.doc.items,
+    state.doc.services,
+    state.ui.boardWidthM,
+    state.ui.digOverrideAt,
+    state.ui.sheetScaleDenom,
+  ]);
+
+  const stampDigOverride = useCallback(
+    (note?: string) => {
+      const at = new Date().toISOString();
+      setUi({
+        digOverrideAt: at,
+        digOverrideNote: note?.trim() || "Operator dig override — BYDA pending",
+        councilTip:
+          "Dig override stamped — Auto trench unlocked. Still lodge BYDA before excavation.",
+      });
+    },
+    [setUi],
+  );
+
+  const toggleSitePackChase = useCallback(
+    (id: string) => {
+      const next = state.ui.sitePackChase.map((c) =>
+        c.id === id ? { ...c, done: !c.done } : c,
+      );
+      setUi({ sitePackChase: next });
+    },
+    [setUi, state.ui.sitePackChase],
+  );
+
+  const ingestStormwaterGeoJson = useCallback(
+    async (geojson: unknown) => {
+      if (!projectId) return;
+      const { ingestStormwaterGeoJsonAction } = await import(
+        "../../../../app/actions"
+      );
+      const {
+        applyCanvasMetresTransform,
+        fitCanvasMetresRing,
+      } = await import("../geometry/geoToPct");
+      const { getSiteBoundaryAction } = await import("../../../../app/actions");
+      const result = await ingestStormwaterGeoJsonAction(projectId, geojson);
+      if (result.lines_canvas.length === 0) {
+        setUi({
+          councilTip: "No LineString features in GeoJSON — check council export",
+        });
+        return;
+      }
+      const bound = await getSiteBoundaryAction(projectId);
+      const verts = [...(bound.boundary?.vertices ?? [])]
+        .sort((a, b) => a.sequence_index - b.sequence_index)
+        .map((v) => v.canvas_coords);
+      const fit = fitCanvasMetresRing(verts);
+      if (!fit.transform) {
+        setUi({ councilTip: "Need title boundary before stormwater GeoJSON" });
+        return;
+      }
+      const t = fit.transform;
+      mutate((snap) => {
+        const added = result.lines_canvas.map((line) => {
+          const pct = applyCanvasMetresTransform(line.points, t);
+          return {
+            id: crypto.randomUUID(),
+            kind: "stormwater" as const,
+            source: "traced" as const,
+            ring: pct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+          };
+        });
+        return {
+          snap: {
+            ...snap,
+            bydaAssets: [...(snap.bydaAssets ?? []), ...added],
+          },
+        };
+      });
+      setUi({
+        councilTip: `${result.lines_canvas.length} council drain line${result.lines_canvas.length === 1 ? "" : "s"} digitised — confirm before dig`,
+        rightDataPanel: "services",
+        ghostReviewOpen: false,
+        leftAssetPanel: null,
+      });
+    },
+    [mutate, projectId, setUi],
+  );
+
+  const runPrepareSitePack = useCallback(async (opts?: {
+    councilLabel?: string | null;
+  }) => {
+    if (!projectId) {
+      setUi({
+        assistReply: "Open a live project to prepare the site pack",
+        coachOpen: true,
+      });
+      return;
+    }
+    setUi({ aiBusy: "scanning", cmdOpen: false, cmdQuery: "" });
+    try {
+      const {
+        autoTraceBoundaryAction,
+        hydrateKeylessAction,
+        getSiteBoundaryAction,
+      } = await import("../../../../app/actions");
+      const {
+        applyCanvasMetresTransform,
+        fitCanvasMetresRing,
+      } = await import("../geometry/geoToPct");
+      const { mergeUrbanTreeGhosts } = await import("./urbanTreeIngest");
+      const res = (await autoTraceBoundaryAction(
+        projectId,
+      )) as AutoTraceParcelInput & {
+        urban_trees_canvas?: Array<{
+          x: number;
+          y: number;
+          canopy_radius_m?: number | null;
+          height_m?: number | null;
+          label?: string | null;
+        }>;
+        urban_trees_source?: "vicmap" | null;
+      };
+      const keepTraced =
+        state.ui.buildingSource === "traced" &&
+        state.doc.building.length >= 3;
+      const applied = applyAutoTraceParcelSnap({
+        snap: state.doc,
+        res,
+        keepTracedBuilding: keepTraced,
+      });
+      const titleOk = Boolean(applied);
+      let transform = applied?.fit.transform ?? null;
+      if (applied) {
+        mutate((snap) => {
+          const again = applyAutoTraceParcelSnap({
+            snap,
+            res,
+            keepTracedBuilding: keepTraced,
+          });
+          if (!again) return { snap };
+          return {
+            snap: {
+              ...snap,
+              ...again.snap,
+              ...(again.services ? { services: again.services } : {}),
+            },
+          };
+        });
+        setUi({
+          boundarySource: applied.boundarySource,
+          buildingSource: applied.buildingSource,
+          ...(applied.fit.boardWidthM != null
+            ? { boardWidthM: applied.fit.boardWidthM }
+            : {}),
+        });
+      }
+      if (!transform) {
+        const bound = await getSiteBoundaryAction(projectId);
+        const verts = [...(bound.boundary?.vertices ?? [])]
+          .sort((a, b) => a.sequence_index - b.sequence_index)
+          .map((v) => v.canvas_coords);
+        transform = fitCanvasMetresRing(verts).transform;
+      }
+      let overlayCount = 0;
+      try {
+        const keyless = await hydrateKeylessAction(projectId);
+        overlayCount = keyless.overlays_canvas.length;
+        if (transform && overlayCount > 0) {
+          const t = transform;
+          mutate((snap) => ({
+            snap: {
+              ...snap,
+              keylessOverlays: keyless.overlays_canvas.map((ov) => ({
+                kind: ov.kind,
+                label: ov.label ?? undefined,
+                fetched_at: ov.fetched_at,
+                /* Never clampPct — authority districts would become a full-board rect. */
+                rings: filterKeylessRingsToBoard(
+                  ov.rings.map((ring) =>
+                    applyCanvasMetresTransform(ring, t).map((p) => ({
+                      x_pct: p.x,
+                      y_pct: p.y,
+                    })),
+                  ),
+                ),
+              })),
+            },
+          }));
+        }
+        // Contour-derived levels — merge into studio levels as fallback.
+        if (keyless.derived_levels && keyless.derived_levels.length > 0) {
+          const derived = keyless.derived_levels;
+          mutate((snap) => {
+            const existing = snap.levels ?? [];
+            const newLevels = [
+              ...existing,
+              ...derived
+                .filter(
+                  (d) =>
+                    !existing.some(
+                      (lv) =>
+                        Math.hypot(lv.x - d.x_pct, lv.y - d.y_pct) < 2,
+                    ),
+                )
+                .map((d) => ({
+                  x: d.x_pct,
+                  y: d.y_pct,
+                  z: d.z_m,
+                  source: "vicmap_contour" as const,
+                })),
+            ];
+            return {
+              snap: {
+                ...snap,
+                levels: newLevels,
+              },
+            };
+          });
+        }
+      } catch {
+        /* overlays optional */
+      }
+      let treeGhostCount = 0;
+      const trees = res.urban_trees_canvas ?? [];
+      if (transform && res.urban_trees_source === "vicmap" && trees.length > 0) {
+        const boardM = applied?.fit.boardWidthM ?? state.ui.boardWidthM ?? 110;
+        const t = transform;
+        mutate((snap, idn) => {
+          const merged = mergeUrbanTreeGhosts({
+            snap,
+            trees,
+            transform: t,
+            boardWidthM: boardM,
+            idn,
+          });
+          treeGhostCount = merged.count;
+          return { snap: merged.snap, idn: merged.idn };
+        });
+      }
+      const chase = defaultSitePackChase({
+        councilLabel: opts?.councilLabel ?? null,
+      });
+      const tip = prepareSitePackTip({
+        titleOk,
+        overlayCount,
+        treeGhostCount,
+        chasePending: chase.filter((c) => !c.done).length,
+      });
+      setUi({
+        aiBusy: "idle",
+        sitePackChase: chase,
+        ghostIdx: 0,
+        ghostReviewOpen: treeGhostCount > 0,
+        assistReply: tip,
+        coachOpen: true,
+        councilTip: tip,
+        mode: "survey",
+        shadeOn: true,
+        rightDataPanel: treeGhostCount > 0 ? null : "services",
+        leftAssetPanel: null,
+      });
+    } catch (err) {
+      setUi({
+        aiBusy: "idle",
+        assistReply:
+          err instanceof Error
+            ? err.message
+            : "Prepare site pack failed — check pin / network",
+        coachOpen: true,
+      });
+    }
+  }, [
+    mutate,
+    projectId,
+    setUi,
+    state.doc,
+    state.ui.boardWidthM,
+    state.ui.buildingSource,
+  ]);
+
+  /** Replace ops geometry from a design-branch tip (async VCS checkout). */
+  const loadBranchCanvas = useCallback(
+    (canvas: import("@workstream/contracts").DesignCanvas | null) => {
+      if (!canvas) return;
+      const frameOverlay = siteFrameToSnapshot(canvas.site_frame);
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          ...frameOverlay,
+          building: frameOverlay.building ?? snap.building,
+          items: featuresOntoItems(
+            placementsToItems(canvas.placements ?? []),
+            canvas.features ?? [],
+          ),
+          strokes: canvasToStrokes(canvas.strokes ?? []),
+          irrigationZones: canvas.irrigation_zones ?? [],
+          constructionTrenches: canvas.construction_trenches ?? [],
+          annotations: canvas.annotations ?? [],
+          imageLayers: canvas.image_layers ?? [],
+          presentationPack:
+            canvas.presentation_pack ?? emptyPresentationPack(),
+        },
+      }));
+      if (canvas.lifecycle_phase) {
+        setUi({ lifecyclePhase: canvas.lifecycle_phase });
+      }
+      setUi({
+        assistReply: "Checked out design branch tip — autosave targets this tip.",
+      });
+    },
+    [mutate, setUi],
+  );
+
+  const acceptAllTrenchGhosts = useCallback(() => {
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: (snap.constructionTrenches ?? []).map((t) =>
+          t.ghost ? { ...t, ghost: undefined } : t,
+        ),
+      },
+    }));
+    setUi({ assistReply: "Trench paths accepted — in live BOM as excavate lm." });
+  }, [mutate, setUi]);
+
+  const rejectAllTrenchGhosts = useCallback(() => {
+    mutate((snap) => ({
+      snap: {
+        ...snap,
+        constructionTrenches: (snap.constructionTrenches ?? []).filter(
+          (t) => !t.ghost,
+        ),
+      },
+    }));
+    setUi({ assistReply: "Trench proposals dismissed." });
+  }, [mutate, setUi]);
+
+  const toggleServiceFeatureVisible = useCallback(
+    (id: string) => {
+      if (state.ui.servicesLocked) return;
+      const next = { ...state.ui.serviceFeatureHidden };
+      if (next[id]) delete next[id];
+      else next[id] = true;
+      setUi({ serviceFeatureHidden: next });
+    },
+    [setUi, state.ui.serviceFeatureHidden, state.ui.servicesLocked],
+  );
+
+  const focusServiceFeature = useCallback(
+    (id: string, additive: boolean) => {
+      const cur = state.ui.focusedServiceIds;
+      if (!additive) {
+        if (cur?.length === 1 && cur[0] === id) {
+          setUi({ focusedServiceIds: null, isolatedLayer: null });
+          return;
+        }
+        setUi({ focusedServiceIds: [id], isolatedLayer: "services" });
+        return;
+      }
+      const set = new Set(cur ?? []);
+      if (set.has(id)) set.delete(id);
+      else set.add(id);
+      const ids = [...set];
+      setUi({
+        focusedServiceIds: ids.length > 0 ? ids : null,
+        isolatedLayer: ids.length > 0 ? "services" : null,
+      });
+    },
+    [setUi, state.ui.focusedServiceIds],
+  );
+
+  const clearServiceFocus = useCallback(() => {
+    setUi({ focusedServiceIds: null, isolatedLayer: null });
+  }, [setUi]);
+
+  const showAllServiceFeatures = useCallback(() => {
+    if (state.ui.servicesLocked) return;
+    setUi({ serviceFeatureHidden: {} });
+  }, [setUi, state.ui.servicesLocked]);
+
+  const focusVisibleServiceFeatures = useCallback(
+    (visibleIds: string[]) => {
+      if (visibleIds.length === 0) {
+        setUi({ focusedServiceIds: null, isolatedLayer: null });
+        return;
+      }
+      setUi({
+        focusedServiceIds: visibleIds,
+        isolatedLayer: "services",
+      });
+    },
+    [setUi],
+  );
+
+  const addAnnotation = useCallback(
+    (ann: CanvasAnnotation) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          annotations: [...(snap.annotations ?? []), ann],
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const updateAnnotationNotePos = useCallback(
+    (id: string, notePos: { x: number; y: number }) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          annotations: (snap.annotations ?? []).map((a) =>
+            a.id === id ? { ...a, notePos } : a,
+          ),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const removeAnnotation = useCallback(
+    (id: string): CanvasAnnotation | null => {
+      const existing = (state.doc.annotations ?? []).find((a) => a.id === id);
+      if (!existing) return null;
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          annotations: (snap.annotations ?? []).filter((a) => a.id !== id),
+        },
+      }));
+      return existing;
+    },
+    [mutate, state.doc.annotations],
+  );
+
+  const patchPresentationPack = useCallback(
+    (fn: (pack: PresentationPack) => PresentationPack) => {
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          presentationPack: fn(
+            snap.presentationPack ?? emptyPresentationPack(),
+          ),
+        },
+      }));
+    },
+    [mutate],
+  );
+
+  const applyPresentationTemplate = useCallback(
+    (templateId: string) => {
+      patchPresentationPack(() => applySheetTemplate(templateId));
+    },
+    [patchPresentationPack],
+  );
+
+  const setPresentationTheme = useCallback(
+    (theme: PresentationTheme) => {
+      patchPresentationPack((pack) => setSheetTheme(pack, theme));
+    },
+    [patchPresentationPack],
+  );
+
+  const setPresentationPen = useCallback(
+    (pen: PresentationPen) => {
+      patchPresentationPack((pack) => setSheetPen(pack, pen));
+    },
+    [patchPresentationPack],
+  );
+
+  const setPresentationAtmosphere = useCallback(
+    (atmosphere: AtmospherePigment) => {
+      patchPresentationPack((pack) => setSheetAtmosphere(pack, atmosphere));
+    },
+    [patchPresentationPack],
+  );
+
+  const addPresentationWidget = useCallback(
+    (type: PresentationWidgetType) => {
+      patchPresentationPack((pack) => addSheetWidget(pack, type));
+    },
+    [patchPresentationPack],
+  );
+
+  const movePresentationWidget = useCallback(
+    (widgetId: string, slot: PresentationSlot) => {
+      patchPresentationPack((pack) => moveSheetWidget(pack, widgetId, slot));
+    },
+    [patchPresentationPack],
+  );
+
+  const removePresentationWidget = useCallback(
+    (widgetId: string) => {
+      patchPresentationPack((pack) => removeSheetWidget(pack, widgetId));
+    },
+    [patchPresentationPack],
+  );
+
+  const reflowPresentationPack = useCallback(() => {
+    patchPresentationPack((pack) => reflowSheetWidgets(pack));
+  }, [patchPresentationPack]);
+
+  const clearPresentationWidgets = useCallback(() => {
+    patchPresentationPack((pack) => clearPresentationPack(pack));
+  }, [patchPresentationPack]);
+
+  const restoreAnnotation = useCallback(
+    (ann: CanvasAnnotation) => {
+      mutate((snap) => {
+        if ((snap.annotations ?? []).some((a) => a.id === ann.id)) {
+          return { snap };
+        }
+        return {
+          snap: {
+            ...snap,
+            annotations: [...(snap.annotations ?? []), ann],
+          },
+        };
+      });
+    },
+    [mutate],
+  );
+
+  const switchSite = useCallback(
+    (idx: number) => {
+      // Demo site carousel is not a live-project affordance — never swap in
+      // Armadale/Wrights seed dwellings over a cadastral canvas.
+      if (projectId) return;
+      dispatch({ type: "switchSite", idx });
+    },
+    [projectId],
+  );
+
+  const resetSite = useCallback(() => {
+    if (projectId) {
+      // Clear operator drawing; keep cadastral boundary + Vicmap dwelling.
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: [],
+          strokes: [],
+          irrigationZones: [],
+          constructionTrenches: [],
+          annotations: [],
+          imageLayers: snap.imageLayers,
+          easements: [],
+          services: [],
+          bydaAssets: [],
+          levels: [],
+        },
+      }));
+      setUi({
+        selectedId: null,
+        groupIds: [],
+        drawPoly: null,
+        drawCursor: null,
+        mitigated: {},
+        ghostIdx: 0,
+        ghostReviewOpen: false,
+        bydaDraftKind: null,
+      });
+      return;
+    }
+    dispatch({ type: "resetSite" });
+  }, [mutate, projectId, setUi]);
+
+  const bumpSaved = useCallback(() => {
+    saveRevisionRef.current += 1;
+    setUi({
+      savedTick: Date.now(),
+      saveStatus: "saved",
+      saveRevision: saveRevisionRef.current,
+    });
+  }, [setUi]);
+
+  const saveNow = useCallback(async (): Promise<void> => {
+    const fixed = withContractIds({
+      items: state.doc.items,
+      strokes: state.doc.strokes,
+    });
+    if (fixed.remapped) {
+      // Remap is local bookkeeping — do not schedule a second autosave.
+      skipPersist.current = true;
+      dispatch({
+        type: "silentIds",
+        items: fixed.items,
+        strokes: fixed.strokes,
+      });
+    }
+    const placements = itemsToPlacements(fixed.items);
+    const canvasStrokes = strokesToCanvas(fixed.strokes);
+    const features = itemsToFeatures(fixed.items);
+    const siteFrame = snapshotToSiteFrame({
+      boundary: state.doc.boundary,
+      building: state.doc.building,
+      easements: state.doc.easements ?? [],
+      services: state.doc.services ?? [],
+      levels: state.doc.levels ?? [],
+      bydaAssets: state.doc.bydaAssets ?? [],
+      keylessOverlays: state.doc.keylessOverlays ?? [],
+      boardWidthM: state.ui.boardWidthM,
+      buildingSource: state.ui.buildingSource,
+      sitePack: {
+        chase: state.ui.sitePackChase,
+        ...(state.ui.digOverrideAt
+          ? {
+            dig_override_at: state.ui.digOverrideAt,
+            dig_override_note: state.ui.digOverrideNote ?? undefined,
+          }
+          : {}),
+      },
+      machineAccessOverrideMm: state.doc.machineAccessOverrideMm,
+      machineAccessSource: state.doc.machineAccessSource,
+    });
+    setUi({ saveStatus: "saving", saveErrorKind: null });
+    try {
+      const acceptedTrenches = (state.doc.constructionTrenches ?? []).filter(
+        (t) => !t.ghost,
+      );
+      await saveDesignCanvasClient(projectIdRef.current, {
+        placements,
+        strokes: canvasStrokes,
+        irrigation_zones: state.doc.irrigationZones ?? [],
+        annotations: state.doc.annotations ?? [],
+        image_layers: state.doc.imageLayers ?? [],
+        site_frame: siteFrame,
+        features,
+        construction_trenches: acceptedTrenches,
+        presentation_pack:
+          state.doc.presentationPack ?? emptyPresentationPack(),
+        lifecycle_phase: state.ui.lifecyclePhase,
+        artboard_ids: ["plan", "fit", "elev-N", "elev-E", "elev-S", "elev-W"],
+      });
+      saveRevisionRef.current += 1;
+      setUi({
+        saveStatus: "saved",
+        savedTick: Date.now(),
+        saveRevision: saveRevisionRef.current,
+        saveErrorKind: null,
+      });
+    } catch (err) {
+      const kind = classifySaveError(err);
+      console.error("saveNow failed", err);
+      setUi({
+        saveStatus: "error",
+        saveErrorKind: kind,
+      });
+      // Rethrow the original error so the autosave retry loop can classify
+      // unreachable vs rejected (a generic wrap always looked like "rejected").
+      throw err instanceof Error ? err : new Error(String(err));
+    }
+  }, [
+    setUi,
+    state.ui.lifecyclePhase,
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.easements,
+    state.doc.irrigationZones,
+    state.doc.constructionTrenches,
+    state.doc.annotations,
+    state.doc.imageLayers,
+    state.doc.presentationPack,
+    state.doc.items,
+    state.doc.levels,
+    state.doc.services,
+    state.doc.bydaAssets,
+    state.doc.keylessOverlays,
+    state.doc.strokes,
+    state.ui.boardWidthM,
+    state.ui.buildingSource,
+    state.ui.digOverrideAt,
+    state.ui.digOverrideNote,
+    state.ui.sitePackChase,
+    state.doc.machineAccessOverrideMm,
+    state.doc.machineAccessSource,
+  ]);
+
+  /**
+   * What counts as a change worth persisting — a content hash of the accepted
+   * document, ghosts excluded.
+   *
+   * This was previously twelve inline `.map().join()` expressions in the
+   * autosave effect's dependency array, which the exhaustive-deps rule cannot
+   * statically check (it reported all twelve). Naming it makes the persist
+   * trigger reviewable in one place and keeps the effect's deps comparable.
+   */
+  const persistKey = useMemo(
+    () =>
+      [
+        state.doc.items.filter((i) => !i.ghost).length,
+        state.doc.items
+          .filter((i) => !i.ghost)
+          .map(
+            (i) =>
+              `${i.id}:${i.x}:${i.y}:${i.scale}:${i.rot}:${i.t}:${i.dbhM ?? ""}`,
+          )
+          .join("|"),
+        state.doc.strokes
+          .map(
+            (s) =>
+              `${s.id}:${s.widthPx ?? ""}:${s.color ?? ""}:${s.points.map((p) => `${p.x},${p.y}`).join(";")}`,
+          )
+          .join("|"),
+        state.doc.strokes.length,
+        state.doc.boundary.map((p) => `${p.x},${p.y}`).join("|"),
+        state.doc.building.map((p) => `${p.x},${p.y}`).join("|"),
+        (state.doc.easements ?? [])
+          .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
+          .join("/"),
+        (state.doc.services ?? [])
+          .map((r) => r.map((p) => `${p.x},${p.y}`).join(";"))
+          .join("/"),
+        (state.doc.levels ?? []).map((lv) => `${lv.x},${lv.y},${lv.z}`).join("|"),
+        (state.doc.irrigationZones ?? [])
+          .map(
+            (z) =>
+              `${z.id}:${z.kind ?? "drip"}:${z.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+          )
+          .join("/"),
+        (state.doc.constructionTrenches ?? [])
+          .filter((t) => !t.ghost)
+          .map(
+            (t) =>
+              `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+          )
+          .join("/"),
+        (state.doc.annotations ?? [])
+          .map(
+            (a) =>
+              `${a.id}:${a.text}:${a.notePos.x},${a.notePos.y}:${a.anchor.kind === "item" ? a.anchor.itemId : `${a.anchor.x},${a.anchor.y}`}`,
+          )
+          .join("/"),
+        // Fit-sheet compose — theme / template / widgets must flush with canvas.
+        presentationPackPersistKey(state.doc.presentationPack),
+        state.ui.lifecyclePhase,
+      ].join("~"),
+    [
+      state.doc.items,
+      state.doc.strokes,
+      state.doc.boundary,
+      state.doc.building,
+      state.doc.easements,
+      state.doc.services,
+      state.doc.levels,
+      state.doc.irrigationZones,
+      state.doc.constructionTrenches,
+      state.doc.annotations,
+      state.doc.presentationPack,
+      state.ui.lifecyclePhase,
+    ],
+  );
+
+  /** Durable DesignCanvas autosave — ghosts excluded; debounced after mutate. */
+  useEffect(() => {
+    if (skipPersist.current) {
+      skipPersist.current = false;
+      return;
+    }
+    const backoffMs = [2_000, 8_000, 30_000];
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      const persist = async (attempt: number): Promise<void> => {
+        if (cancelled) return;
+        try {
+          await saveNow();
+        } catch (err) {
+          if (cancelled) return;
+          const kind = classifySaveError(err);
+          // Stale Server Action / deploy mismatch won't heal on retry — stop.
+          if (kind === "stale_client") {
+            setUi({ saveStatus: "error", saveErrorKind: kind });
+            return;
+          }
+          if (attempt < backoffMs.length) {
+            setUi({ saveStatus: "retrying", saveErrorKind: kind });
+            await new Promise((r) =>
+              window.setTimeout(r, backoffMs[attempt - 1] ?? 2_000),
+            );
+            return persist(attempt + 1);
+          }
+          setUi({
+            saveStatus: "error",
+            saveErrorKind: kind,
+          });
+        }
+      };
+      void persist(1);
+    }, 1100);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+    // Persist accepted geometry + site frame — ghosts must not rewrite canvas.
+    // Keyed on content, not on callback identity: saveNow/setUi are deliberately
+    // out of the deps so a re-render cannot restart the debounce.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content, not callback identity
+  }, [persistKey, saveRetryNonce]);
+
+  const finishTrace = useCallback(
+    (pts: PctPoint[]) => {
+      if (pts.length < 3 || state.ui.locked) {
+        setUi({ drawPoly: null, drawCursor: null });
+        return;
+      }
+      const target = state.ui.traceTarget;
+      mutate((snap, idn) => {
+        let next: StudioSnapshot = {
+          ...snap,
+          [target]: pts.map((p) => ({ ...p })),
+        };
+        let nextIdn = idn;
+        if (!state.ui.foundationCleanse) {
+          const follow = maybeAutoProposeAfterCommit(
+            next,
+            addressRef.current,
+            nextIdn,
+          );
+          if (follow) {
+            next = {
+              ...next,
+              items: mergeAiProposals(next, follow.items, ["layout"]),
+            };
+            nextIdn = follow.idn;
+          }
+        }
+        return { snap: next, idn: nextIdn };
+      });
+      setUi({
+        drawPoly: null,
+        drawCursor: null,
+        tool: "select",
+        ...(target === "boundary" ? { boundarySource: "manual" as const } : {}),
+        ...(target === "building"
+          ? { buildingSource: "traced" as const }
+          : {}),
+      });
+    },
+    [
+      mutate,
+      setUi,
+      state.ui.foundationCleanse,
+      state.ui.locked,
+      state.ui.traceTarget,
+    ],
+  );
+
+  const cancelTrace = useCallback(() => {
+    if (state.ui.tool === "path") {
+      setUi({
+        drawPoly: null,
+        drawCursor: null,
+        tool: "select",
+        addOpen: false,
+        leftAssetPanel: null,
+        leftAssetRestore: null,
+      });
+      return;
+    }
+    setUi({ drawPoly: null, drawCursor: null });
+  }, [setUi, state.ui.tool]);
+
+  const pushTracePoint = useCallback(
+    (p: PctPoint) => {
+      if (state.ui.locked) return;
+      const cur = state.ui.drawPoly ?? [];
+      setUi({ drawPoly: [...cur, p], drawCursor: null });
+    },
+    [setUi, state.ui.drawPoly, state.ui.locked],
+  );
+
+  const popTracePoint = useCallback(() => {
+    const cur = state.ui.drawPoly;
+    if (!cur) return;
+    if (cur.length <= 1) setUi({ drawPoly: null, drawCursor: null });
+    else setUi({ drawPoly: cur.slice(0, -1) });
+  }, [setUi, state.ui.drawPoly]);
+
+  /** Precedence rule and its regression history live in `resolveSiteAddress`. */
+  const siteAddress = resolveSiteAddress({
+    projectAddress: address,
+    siteIdx: state.ui.siteIdx,
+    siteExplicit: state.ui.siteExplicit,
+  });
+
+  const coaching = useMemo(
+    () => buildHandoffCoaching(snapOf(state.doc), siteAddress, ghostCount),
+    [ghostCount, siteAddress, state.doc],
+  );
+
+  /**
+   * Phase 1 workable canvas — Turf boolean lot − building − easements /
+   * closed services / existing hardscape, in local metres (origin 0,0).
+   */
+  const siteSchedule = useMemo(() => {
+    const scaleM = state.ui.boardWidthM ?? 110;
+    if (state.doc.boundary.length < 3) {
+      return null;
+    }
+    return buildWorkableSiteSchedule({
+      boundary: state.doc.boundary,
+      building: state.doc.building,
+      easements: state.doc.easements ?? [],
+      services: state.doc.services ?? [],
+      items: state.doc.items,
+      scaleM,
+    });
+  }, [
+    state.doc.boundary,
+    state.doc.building,
+    state.doc.easements,
+    state.doc.services,
+    state.doc.items,
+    state.ui.boardWidthM,
+  ]);
+
+  const workableOutdoorM2 =
+    siteSchedule != null && siteSchedule.outdoorAreaM2 > 0
+      ? siteSchedule.outdoorAreaM2
+      : outdoorRef.current != null && outdoorRef.current > 0
+        ? outdoorRef.current
+        : 0;
+
+  /** Continuous council inspector — recomputes on every geometry commit. */
+  const compliance = useMemo(
+    () =>
+      evaluateStudioCompliance({
+        outdoorM2: workableOutdoorM2,
+        boundary: state.doc.boundary,
+        items: toComplianceItems(state.doc.items),
+        lgaCode: state.ui.councilLabel,
+      }),
+    [state.doc.boundary, state.doc.items, workableOutdoorM2, state.ui.councilLabel],
+  );
+
+  const estimateArgs = useMemo((): StudioEstimateArgs => {
+    const scaleM =
+      state.ui.boardWidthM ?? boardScaleM(state.ui.sheetScaleDenom);
+    return {
+      outdoorM2: workableOutdoorM2,
+      boundary: state.doc.boundary,
+      items: toComplianceItems(state.doc.items),
+      accessConstrained: workableOutdoorM2 > 400,
+      scaleM,
+      irrigationZones: state.doc.irrigationZones ?? [],
+      constructionTrenches: (state.doc.constructionTrenches ?? []).filter(
+        (t) => !t.ghost,
+      ),
+      metaByType: Object.fromEntries(
+        (Object.keys(BY_TYPE) as StudioItemType[]).map((t) => {
+          const d = BY_TYPE[t];
+          return [
+            t,
+            {
+              rate: d.rate,
+              wPx: d.w,
+              hPx: d.h,
+              areaKind: d.area ?? "none",
+              heightM: d.heightM,
+              lin: d.lin,
+              existing: d.existing,
+              dbhM: d.dbhM,
+              canopyM: d.canopyM,
+            },
+          ];
+        }),
+      ),
+    };
+  }, [
+    state.doc.boundary,
+    state.doc.items,
+    state.doc.irrigationZones,
+    state.doc.constructionTrenches,
+    state.ui.boardWidthM,
+    state.ui.sheetScaleDenom,
+    workableOutdoorM2,
+  ]);
+
+  /**
+   * Phase 3 parametric BOM — sync seed + Web Worker settle so drag stays fluid.
+   */
+  const { estimate, settling: estimateSettling } =
+    useStudioEstimate(estimateArgs);
+
+  const acceptHorizonCard = useCallback(
+    (card: StudioHorizonCard) => {
+      if (!card.suggestType || card.x == null || card.y == null) {
+        setUi({ mitigated: { ...state.ui.mitigated, [card.id]: true } });
+        return;
+      }
+      mutate((snap, idn) => {
+        const placed = constrainAssetCentre(
+          card.x!,
+          card.y!,
+          card.suggestType!,
+          snap.boundary,
+          snap.building,
+        );
+        const id = crypto.randomUUID();
+        const item: StudioItem = {
+          id,
+          t: card.suggestType!,
+          x: placed.x,
+          y: placed.y,
+          rot: 0,
+          scale: 0.75,
+          ghost: true,
+          why: card.detail,
+          conf: 0.88,
+        };
+        return {
+          snap: {
+            ...snap,
+            items: mergeAiProposals(snap, [item], ["layout"]),
+          },
+          idn: idn + 1,
+        };
+      });
+      setUi({
+        mitigated: { ...state.ui.mitigated, [card.id]: true },
+        ghostReviewOpen: true,
+        coachOpen: false,
+        utilityPanel: "bom",
+      });
+    },
+    [mutate, setUi, state.ui.mitigated],
+  );
+
+  /** Fit zoom + origin to the outdoor garden remnant (lot − house). */
+  const fitOutdoorView = useCallback(() => {
+    const scaleM = state.ui.boardWidthM ?? 110;
+    const focus = outdoorFocusView(
+      state.doc.boundary,
+      state.doc.building,
+      scaleM,
+    );
+    setUi({
+      focusX: focus.focusX,
+      focusY: focus.focusY,
+      zoom: focus.zoom,
+      panX: 0,
+      panY: 0,
+    });
+  }, [
+    setUi,
+    state.doc.boundary,
+    state.doc.building,
+    state.ui.boardWidthM,
+  ]);
+
+  /** Zoom camera to the current selection (or outdoor remnant if empty). */
+  const fitSelectionView = useCallback(() => {
+    const ids =
+      state.ui.groupIds.length > 0
+        ? state.ui.groupIds
+        : state.ui.selectedId
+          ? [state.ui.selectedId]
+          : [];
+    const pts = state.doc.items
+      .filter((i) => ids.includes(i.id) && !i.ghost)
+      .map((i) => ({ x: i.x, y: i.y }));
+    if (pts.length === 0) {
+      fitOutdoorView();
+      return;
+    }
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    const span = Math.max(maxX - minX, maxY - minY, 4);
+    const FIT_ZOOM_MAX = 16;
+    const zoom = Math.max(
+      1,
+      Math.min(FIT_ZOOM_MAX, Number((90 / span).toFixed(2))),
+    );
+    setUi({
+      focusX: Number(midX.toFixed(2)),
+      focusY: Number(midY.toFixed(2)),
+      zoom,
+      panX: 0,
+      panY: 0,
+    });
+  }, [
+    fitOutdoorView,
+    setUi,
+    state.doc.items,
+    state.ui.groupIds,
+    state.ui.selectedId,
+  ]);
+
+  useEffect(() => {
+    if (!state.ui.councilTip) return;
+    const t = window.setTimeout(
+      () => setUi({ councilTip: null }),
+      4200,
+    );
+    return () => window.clearTimeout(t);
+  }, [setUi, state.ui.councilTip]);
+
+  const status = draftStatus(ghostCount, state.ui.aiBusy);
+
+  const ai = useMemo(
+    () => ({
+      status,
+      coaching,
+      pending: ghosts,
+      pendingCount: ghostCount,
+      current: curGhost,
+      busy: state.ui.aiBusy,
+      scan: scanGhosts,
+      develop: runDevelopLoop,
+      prepareSitePack: runPrepareSitePack,
+      proposeServices: proposeLandscapeServices,
+      assist: askAi,
+      accept: acceptGhost,
+      reject: rejectGhost,
+      rejectWithReason: rejectGhostWithReason,
+      rejectReasonId: state.ui.rejectReasonId,
+      acceptAll: acceptAllGhosts,
+      cycle: cycleGhost,
+      ingestCanopy: ingestCanopyGhosts,
+      ingestCanopyImage,
+      interpretSketches,
+      tidySketches,
+      openReview: () => setUi({ ghostReviewOpen: true }),
+      openCoach: () => setUi({ ghostReviewOpen: true }),
+    }),
+    [
+      acceptAllGhosts,
+      acceptGhost,
+      askAi,
+      coaching,
+      curGhost,
+      cycleGhost,
+      ghostCount,
+      ghosts,
+      ingestCanopyGhosts,
+      ingestCanopyImage,
+      interpretSketches,
+      tidySketches,
+      rejectGhost,
+      rejectGhostWithReason,
+      proposeLandscapeServices,
+      runDevelopLoop,
+      runPrepareSitePack,
+      scanGhosts,
+      setUi,
+      state.ui.aiBusy,
+      state.ui.rejectReasonId,
+      status,
+    ],
+  );
+
+  return {
+    boundary: state.doc.boundary,
+    building: state.doc.building,
+    items: state.doc.items,
+    easements: state.doc.easements,
+    strokes: state.doc.strokes,
+    levels: state.doc.levels ?? [],
+    drainageRuns: state.doc.drainageRuns ?? [],
+    pathCorridors: state.doc.pathCorridors ?? [],
+    services: state.doc.services ?? [],
+    bydaAssets: state.doc.bydaAssets ?? [],
+    keylessOverlays: state.doc.keylessOverlays ?? [],
+    irrigationZones: state.doc.irrigationZones ?? [],
+    constructionTrenches: state.doc.constructionTrenches ?? [],
+    annotations: state.doc.annotations ?? [],
+    imageLayers: state.doc.imageLayers ?? [],
+    presentationPack:
+      state.doc.presentationPack ?? emptyPresentationPack(),
+    machineAccessOverrideMm: state.doc.machineAccessOverrideMm,
+    machineAccessSource: state.doc.machineAccessSource,
+    canUndo: state.doc.hist.length > 0,
+    canRedo: state.doc.redo.length > 0,
+    undoDepth: state.doc.hist.length,
+    redoDepth: state.doc.redo.length,
+    undoProvenance: state.doc.histProvenance,
+    ui: state.ui,
+    siteAddress,
+    siteMeta: STUDIO_SITES[state.ui.siteIdx]?.meta ?? STUDIO_SITES[0]!.meta,
+    ghosts,
+    ghostCount,
+    curGhost,
+    compliance,
+    estimate,
+    estimateSettling,
+    workableOutdoorM2,
+    siteSchedule,
+    acceptHorizonCard,
+    fitOutdoorView,
+    fitSelectionView,
+    ai,
+    mutate,
+    setUi,
+    setMode,
+    interpretSketches,
+    applyCadSuggestions,
+    tidySketches,
+    setLayerOpacity,
+    undo,
+    redo,
+    acceptGhost,
+    rejectGhost,
+    acceptAllGhosts,
+    placeArmed,
+    acceptFlora,
+    dismissFlora,
+    setFloraActiveIdx,
+    askAi,
+    runSpatialCorrection,
+    runStage1FoundationCleanse,
+    exitStage1Foundation,
+    setTitleBoundaryLocked,
+    scanGhosts,
+    runDevelopLoop,
+    runPrepareSitePack,
+    stampDigOverride,
+    toggleSitePackChase,
+    ingestStormwaterGeoJson,
+    proposeLandscapeServices,
+    cycleGhost,
+    ingestCanopyGhosts,
+    ingestCanopyImage,
+    setStrokes,
+    setImageLayers,
+    addImageLayer,
+    updateImageLayer,
+    removeImageLayer,
+    addSpotLevel,
+    toggleDrainageLevelIdx,
+    commitDrainageRun,
+    saveDesignScheme,
+    activateDesignScheme,
+    beginPathDraft,
+    finishPathCorridor,
+    commitService,
+    commitZone,
+    runAutoTrench,
+    loadBranchCanvas,
+    acceptAllTrenchGhosts,
+    rejectAllTrenchGhosts,
+    toggleServiceFeatureVisible,
+    focusServiceFeature,
+    clearServiceFocus,
+    showAllServiceFeatures,
+    focusVisibleServiceFeatures,
+    addAnnotation,
+    updateAnnotationNotePos,
+    removeAnnotation,
+    restoreAnnotation,
+    applyPresentationTemplate,
+    setPresentationTheme,
+    setPresentationPen,
+    setPresentationAtmosphere,
+    addPresentationWidget,
+    movePresentationWidget,
+    removePresentationWidget,
+    reflowPresentationPack,
+    clearPresentationWidgets,
+    switchSite,
+    resetSite,
+    retrySave: () => setSaveRetryNonce((n) => n + 1),
+    bumpSaved,
+    saveNow,
+    moveItem,
+    transformItem,
+    nudgeSelected,
+    moveGroup,
+    setSelection,
+    deleteSelected,
+    changeSelectedType,
+    paintItem,
+    duplicateSelected,
+    rotateSelectedClock,
+    patchSelectedDbh,
+    patchSelectedStems,
+    snapSheetScale,
+    setSheetScale,
+    updateBoundary,
+    updateBuilding,
+    finishTrace,
+    cancelTrace,
+    pushTracePoint,
+    popTracePoint,
+    setTraceTarget: (traceTarget: TraceTarget) =>
+      setUi({ traceTarget, drawPoly: null, drawCursor: null }),
+    setTool: (tool: StudioTool) => {
+      if (isSurveyServicesTool(tool)) {
+        if (
+          !surveyServicesAuthoringAllowed({
+            mode: state.ui.mode,
+            servicesLocked: state.ui.servicesLocked,
+          })
+        ) {
+          return;
+        }
+      }
+      if (tool === "reset") {
+        resetSite();
+        setUi({
+          tool: "select",
+          addOpen: false,
+          leftAssetPanel: null,
+          leftAssetRestore: null,
+          drawPoly: null,
+          drawCursor: null,
+          tiltDeg: 0,
+        });
+        return;
+      }
+      if (tool === "lock") {
+        const nextLocked = !state.ui.locked;
+        setUi({
+          tool: nextLocked ? "lock" : "select",
+          locked: nextLocked,
+          addOpen: false,
+          leftAssetPanel: null,
+          leftAssetRestore: null,
+          drawPoly: null,
+          drawCursor: null,
+          tiltDeg: 0,
+        });
+        return;
+      }
+      {
+        const leavingDraft =
+          state.ui.tool === "add" ||
+          state.ui.tool === "paint" ||
+          state.ui.tool === "path";
+        const collapseAsset =
+          (tool === "select" || tool === "pan" || tool === "measure") &&
+          leavingDraft;
+        setUi({
+          tool,
+          locked: false,
+          addOpen: tool === "add",
+          armed: tool === "add" ? state.ui.armed : null,
+          paintSwatch:
+            tool === "paint"
+              ? state.ui.paintSwatch || "lawn"
+              : state.ui.paintSwatch,
+          drawPoly: tool === "trace" ? state.ui.drawPoly : null,
+          drawCursor: tool === "trace" ? state.ui.drawCursor : null,
+          // Command-first: ADD arms without forcing the library open.
+          // Keep Path Grammar placing; collapse Expanded when leaving draft tools.
+          // Paint still summons the inventory peel (main canvas-first).
+          ...(tool === "add"
+            ? {
+              rightDataPanel: null,
+              leftAssetPanel: "expanded" as const,
+            }
+            : tool === "paint"
+              ? {
+                leftAssetPanel: "expanded" as const,
+                rightDataPanel: null,
+              }
+              : collapseAsset
+                ? {
+                  leftAssetPanel: null,
+                  leftAssetRestore: null,
+                  leftAssetPinned: false,
+                }
+                : {}),
+        });
+      }
+    },
+    setPaper: (paper: PaperSize) => setUi({ paper }),
+  };
+}
+
+export type StudioController = ReturnType<typeof useStudioState>;

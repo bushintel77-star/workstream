@@ -9,6 +9,10 @@ import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
 import { assertAuthConfigured } from './lib/auth-config';
 import { captureError, initSentry } from './lib/sentry';
+import {
+  registerErrorHandlers,
+  registerProcessGuards,
+} from './lib/http-errors';
 import { initTelemetry, registerRouteTelemetry, shutdownTelemetry } from './lib/telemetry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
@@ -31,6 +35,7 @@ import myobRoutes from './routes/myob';
 import crewRoutes from './routes/crew';
 import weatherRoutes from './routes/weather';
 import siteContextRoutes from './routes/site-context';
+import cadastralTitleRoutes from './routes/cadastral-title';
 import measurementRoutes from './routes/measurements';
 import supplierRoutes from './routes/suppliers';
 import aerialRoutes from './routes/aerial';
@@ -38,25 +43,53 @@ import xeroRoutes from './routes/xero';
 import carbonRoutes from './routes/carbon';
 import catalogRoutes from './routes/catalog';
 import designCanvasRoutes from './routes/design-canvas';
+import quoteDocRoutes from './routes/quote-doc';
 import designGhostsRoutes from './routes/design-ghosts';
+import designSketchCadRoutes from './routes/design-sketch-cad';
 import designAssistRoutes from './routes/design-assist';
+import designFindingsRoutes from './routes/design-findings';
+import designBoardReportRoutes from './routes/design-board-report';
+import designTelemetryRoutes from './routes/design-telemetry';
 import cadRoutes from './routes/cad';
 import boundaryRoutes from './routes/boundary';
+import keylessRoutes from './routes/keyless';
 import orchestrationRoutes from './routes/orchestration';
-import designBranchRoutes from './routes/design-branches';
 import resourcePoolRoutes from './routes/resource-pool';
 import presentationPackRoutes from './routes/presentation-pack';
 import projectFileRoutes from './routes/project-files';
 import activityRoutes from './routes/activity';
 import portalRoutes from './routes/portal';
+import shareRoutes from './routes/share';
+import presentationDocumentRoutes from './routes/presentation-documents';
+import designBranchRoutes from './routes/design-branches';
+import opsScheduleRoutes from './routes/ops-schedules';
+import documentationPackageRoutes from './routes/documentation-packages';
 import stripeWebhookRoutes from './routes/stripe-webhook';
 import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from './routes/integration-hub';
 import protectedFileRoutes from './routes/protected-files';
-import configRoutes from './routes/config';
-
-const server = Fastify({ logger: true });
+const server = Fastify({
+  /* Railway (and most PaaS) terminate TLS at the edge — trust X-Forwarded-*
+   * so req.ip / rate-limit keys reflect the client, not the proxy hop. */
+  trustProxy: true,
+  logger: {
+    redact: {
+      paths: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "req.headers['x-portal-token']",
+        "req.body.password",
+        "req.body.token",
+        "req.body.value",
+        "req.body.secret",
+        "req.body.api_key",
+        "req.body.apiKey",
+      ],
+      remove: true,
+    },
+  },
+});
 
 loadEnv({
   warn: (m) => server.log.warn(m),
@@ -75,7 +108,15 @@ function resolveCorsOrigin(): boolean | string | string[] {
     }
     return true; // dev convenience
   }
-  if (raw === "*") return true;
+  if (raw === "*") {
+    if (process.env.NODE_ENV === "production") {
+      server.log.error(
+        "CORS_ORIGIN=* is refused in production (credentials:true). Set an explicit allowlist.",
+      );
+      return false;
+    }
+    return true;
+  }
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
@@ -93,12 +134,9 @@ async function start() {
   await server.register(rateLimit, {
     max: Number(process.env.RATE_LIMIT_MAX ?? 300),
     timeWindow: process.env.RATE_LIMIT_WINDOW ?? "1 minute",
-    keyGenerator: (req) => {
-      /* Prefer authenticated user, fall back to remote IP. Keeps a
-       * shared office on Tim's WiFi from collectively tripping the
-       * limit when one ratbag automates the dashboard. */
-      return req.userId ?? req.ip;
-    },
+    /* Auth runs after this plugin, so userId is rarely set here. With
+     * trustProxy, req.ip is the client — the correct global bucket. */
+    keyGenerator: (req) => req.ip,
     skipOnError: true,
     enableDraftSpec: true,
   });
@@ -119,7 +157,6 @@ async function start() {
   registerRouteTelemetry(server);
   await server.register(protectedFileRoutes);
   await server.register(healthRoutes);
-  await server.register(configRoutes, { prefix: '/config' });
   await server.register(projectRoutes, { prefix: '/projects' });
   await server.register(recordingRoutes, { prefix: '/projects' });
   await server.register(surveyRoutes, { prefix: '/projects' });
@@ -136,6 +173,7 @@ async function start() {
   await server.register(crewRoutes, { prefix: '/crew' });
   await server.register(weatherRoutes, { prefix: '/projects' });
   await server.register(siteContextRoutes, { prefix: '/projects' });
+  await server.register(cadastralTitleRoutes, { prefix: '/projects' });
   await server.register(measurementRoutes, { prefix: '/projects' });
   await server.register(supplierRoutes, { prefix: '/suppliers' });
   await server.register(aerialRoutes, { prefix: '/projects' });
@@ -143,17 +181,27 @@ async function start() {
   await server.register(carbonRoutes, { prefix: '/projects' });
   await server.register(catalogRoutes, { prefix: '/catalog' });
   await server.register(designCanvasRoutes, { prefix: '/projects' });
+  await server.register(quoteDocRoutes, { prefix: '/projects' });
   await server.register(designGhostsRoutes, { prefix: '/projects' });
+  await server.register(designSketchCadRoutes, { prefix: '/projects' });
   await server.register(designAssistRoutes, { prefix: '/projects' });
+  await server.register(designFindingsRoutes, { prefix: '/projects' });
+  await server.register(designBoardReportRoutes, { prefix: '/projects' });
+  await server.register(designTelemetryRoutes, { prefix: '/projects' });
   await server.register(cadRoutes, { prefix: '/projects' });
   await server.register(boundaryRoutes, { prefix: '/projects' });
+  await server.register(keylessRoutes, { prefix: '/projects' });
   await server.register(orchestrationRoutes, { prefix: '/projects' });
-  await server.register(designBranchRoutes, { prefix: '/projects' });
-  await server.register(presentationPackRoutes, { prefix: '/projects' });
-  await server.register(resourcePoolRoutes);
   await server.register(projectFileRoutes, { prefix: '/projects' });
   await server.register(activityRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);
+  await server.register(shareRoutes);
+  await server.register(presentationDocumentRoutes, { prefix: '/projects' });
+  await server.register(designBranchRoutes, { prefix: '/projects' });
+  await server.register(opsScheduleRoutes, { prefix: '/projects' });
+  await server.register(documentationPackageRoutes, { prefix: '/projects' });
+  await server.register(presentationPackRoutes, { prefix: '/projects' });
+  await server.register(resourcePoolRoutes);
   await server.register(stripeWebhookRoutes);
   await server.register(settingsRoutes, { prefix: '/settings' });
   await server.register(integrationHubRoutes, { prefix: '/integrations' });
@@ -171,19 +219,8 @@ async function start() {
 
 initTelemetry();
 void initSentry();
-
-server.setErrorHandler((err: Error & { statusCode?: number }, request, reply) => {
-  captureError(err, {
-    method: request.method,
-    url: request.url,
-    requestId: request.id,
-  });
-  request.log.error(err);
-  if (!reply.sent) {
-    const status = err.statusCode && err.statusCode >= 400 ? err.statusCode : 500;
-    reply.code(status).send({ error: err.message || "Internal error" });
-  }
-});
+registerErrorHandlers(server);
+registerProcessGuards(server);
 
 start().catch((err) => {
   server.log.error(err);

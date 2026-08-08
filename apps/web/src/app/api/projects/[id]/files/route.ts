@@ -4,6 +4,27 @@ import { getApiUrl, upstreamAuthHeaders } from "../../../../../lib/upstream-api"
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+export async function GET(
+  _req: NextRequest,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  const { id } = await ctx.params;
+  const upstream = `${getApiUrl()}/projects/${id}/files`;
+  const headers = await upstreamAuthHeaders();
+  const res = await fetch(upstream, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+  const text = await res.text();
+  return new NextResponse(text, {
+    status: res.status,
+    headers: {
+      "content-type": res.headers.get("content-type") ?? "application/json",
+    },
+  });
+}
+
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },

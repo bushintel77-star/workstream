@@ -1,0 +1,83 @@
+/**
+ * Transient context readout — a dark translucent panel that floats just above
+ * the frame's bottom band. Same premium dark language as the frame so summoned
+ * surfaces read as part of the instrument, not as a light drywall slab.
+ * Transient by construction: only mounts while context is actually active.
+ */
+.card {
+  position: absolute;
+  left: calc(var(--ws-frame-left) + 4px);
+  /*
+   * Lift clear of the bottom stamp band — the site-address caption
+   * (TactileGround .siteCue, safe-bottom + 28) and the edge ruler labels
+   * live in the low gutter; anchoring the panel just above them stops the
+   * three from stacking into one bottom-left smudge.
+   */
+  bottom: var(--ws-gutter-3, calc(var(--ws-safe-bottom, 36px) + 52px));
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--ws-frame) 92%, transparent);
+  border: 1px solid var(--ws-frame-hair);
+  box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--hc-ink) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  color: var(--ws-frame-ink);
+  pointer-events: auto;
+  z-index: var(--ws-z-chrome);
+  max-width: min(720px, calc(100% - var(--ws-frame-left) - 180px));
+  flex-wrap: nowrap;
+  overflow: hidden;
+  animation: contextCardIn 200ms var(--ws-ease, ease) both;
+}
+
+/* Inherit the frame's flat control language for anything nested here.
+   The card sits on the dark frame (--ws-frame), so nested chrome must use
+   frame ink tokens, not the light-mode --hc-* tokens the breadcrumb defaults
+   to. Without this override the segments render dark-on-dark = invisible. */
+.card :global(button) {
+  color: var(--ws-frame-ink-dim);
+  border-color: var(--ws-frame-hair);
+  background: var(--ws-frame-wash);
+}
+
+.card :global(button:hover) {
+  color: var(--ws-frame-ink);
+  background: color-mix(in srgb, var(--ws-frame-ink) 14%, transparent);
+}
+
+.card :global(.contextStrip-module__mode),
+.card :global([class*="contextStrip"][class*="mode"]) {
+  color: var(--ws-frame-ink);
+}
+
+.card :global([class*="contextStrip"][class*="segment"]) {
+  color: var(--ws-frame-ink-dim);
+  border-color: var(--ws-frame-hair);
+  background: var(--ws-frame-wash);
+}
+
+.card :global([class*="contextStrip"][class*="segment"]:hover) {
+  color: var(--ws-frame-ink);
+  background: color-mix(in srgb, var(--ws-frame-ink) 14%, transparent);
+}
+
+@keyframes contextCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

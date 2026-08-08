@@ -88,9 +88,9 @@ const styles = StyleSheet.create({
   },
   pill: {
     minWidth: 52,
-    height: 40,
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    minHeight: 44,
+    borderRadius: tokens.radius.canvas,
+    paddingHorizontal: tokens.space[3],
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: tokens.color.surface.sunken,

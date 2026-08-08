@@ -1,0 +1,321 @@
+/*
+ * Vic-gov status chip row — replaces stacked Env/Services/Site/Trees cards.
+ * Header strip (default) or legacy on-canvas dock.
+ *
+ * Gallery frame (§0.1): this rail floats over the cream plan, so it is dark
+ * translucent like the frame — never light frost drywall on a dark mount.
+ */
+
+.row {
+  /*
+   * Local ink aliases now resolve to the frame's light ink, so anything nested
+   * in the rail that still reads --hc-ink* inherits frame values.
+   */
+  --hc-ink: var(--ws-frame-ink);
+  --hc-ink-muted: var(--ws-frame-ink-dim);
+  --hc-ink-faint: var(--ws-frame-ink-faint);
+  --hc-line-soft: var(--ws-frame-hair);
+  position: absolute;
+  /* Clear of the top frame band. Each cluster anchors to its own frame corner
+     (see .title / .context) — never a single full-width bar across the plan,
+     which collided with the right data lane and clipped the tail chip. */
+  top: calc(var(--ws-frame-top, 46px) + 12px);
+  z-index: var(--ws-z-sticky);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  /* A corner cluster is a handful of chips — cap it well short of centre so the
+     two clusters never meet over the canvas. */
+  max-width: min(420px, calc((100vw - var(--ws-frame-left, 48px) - var(--ws-frame-right, 14px)) / 2 - 40px));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  pointer-events: auto;
+  border: 1px solid var(--ws-frame-hair);
+  border-radius: 13px;
+  /*
+   * Premium instrument-dial face — a milled carbon/plastic bezel, not flat
+   * frost. Top-lit gradient reads as a dial you could touch; the layered
+   * shadow stack gives it real depth off the plan:
+   *   · outer drop      — floats the cluster above the cream board
+   *   · inset top hair   — a lit top edge (the milled highlight)
+   *   · inset base shade — the recessed lower lip
+   */
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ws-frame-ink) 6%, transparent) 0%,
+      transparent 42%),
+    color-mix(in srgb, var(--ws-frame) 90%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow:
+    0 16px 38px -12px color-mix(in srgb, var(--hc-ink) 74%, transparent),
+    0 2px 6px -2px color-mix(in srgb, var(--hc-ink) 50%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ws-frame-ink) 18%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--hc-ink) 40%, transparent);
+  animation: railIn var(--hc-motion, 180ms) cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: opacity var(--ws-dur-1, 120ms) var(--ws-ease-out, ease);
+}
+
+/*
+ * Idle recession — match the tool dock / top bar / header rail behaviour so the
+ * only always-on frost over the plan fades when the operator is looking at the
+ * drawing, not the chrome. Hover or any input restores full opacity.
+ */
+:global([data-idle="true"]) .row {
+  opacity: 0.5;
+}
+
+:global([data-idle="true"]) .row:hover {
+  opacity: 1;
+}
+
+/*
+ * Overflow affordance. The cluster is capped by `max-width` and scrolls with its
+ * scrollbar hidden, so without this the tail chip is cut mid-word with nothing to
+ * signal that more exists — the only recovery was the native `title` tooltip,
+ * which is neither keyboard- nor touch-reachable.
+ *
+ * Scoped to `[data-overflow="true"]` (published by VicGovStatusChipRow via
+ * ResizeObserver) so a row that fits keeps its crisp last-chip corner, and
+ * suppressed at `[data-scroll-end="true"]` so the fade means "there is more this
+ * way" rather than being permanent decoration.
+ */
+.row[data-overflow="true"]:not([data-scroll-end="true"]) {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+}
+
+/* Title / planning cluster — top-left frame corner. */
+.title {
+  left: calc(var(--ws-frame-left, 48px) + 12px);
+}
+
+/* Site context / authorities cluster — top-right frame corner. */
+.context {
+  right: calc(var(--ws-frame-right, 14px) + 12px);
+}
+
+/*
+ * Lane open — only the right (context) cluster is at risk of the right data
+ * lane. Reserve the lane width and pull it in; the left (title) cluster is
+ * unaffected and stays put.
+ */
+.context[data-lane="busy"] {
+  right: var(--ws-lane-reserve, calc(min(304px, calc(100vw - 40px)) + 16px));
+  max-width: min(360px,
+      calc(100vw - var(--ws-frame-left, 48px) - var(--ws-lane-reserve, 320px) - 24px));
+}
+
+/* Phone — clusters drop out of the frame corners and flow in the chip band
+   above the tool dock / sheet, each a scroller. */
+:global([data-testid="handoff-design-studio"][data-layout="phone"]) .row {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  z-index: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(560px, 42vw);
+  border-radius: var(--hc-r-control);
+  border-right: 1px solid var(--ws-frame-hair);
+  /* Seated in the frame band: same dark surface, flat — no plastic in-shadow. */
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  animation: none;
+  border: 1px solid var(--ws-frame-hair);
+}
+
+:global([data-testid="handoff-design-studio"][data-layout="phone"]) .row[data-lane="busy"] {
+  right: 0;
+  left: 0;
+  max-width: 100%;
+  bottom: calc(var(--ws-safe-bottom, 360px) + 4px);
+}
+
+/*
+ * Inside a FrameDrawer — the clusters must flow inside the drawer panel, not
+ * escape to the frame corners. Before this override, the chips used
+ * position: absolute to paint at the viewport corners regardless of whether
+ * the drawer was open, which is the same class of escape bug as the ArtboardStrip
+ * fix in ebf1872. The root cause was nested CameraChrome: the chip row wrapped
+ * itself in its own CameraChrome (placement="dock"), which portals to
+ * camera-chrome-root — a sibling of .zoomWorld — escaping the FrameDrawer
+ * entirely. The fix switches to placement="header" (no CameraChrome wrap) and
+ * this override makes the clusters flow as flex items inside the drawer.
+ */
+:global([data-testid="frame-drawer-site-meta"]) .row {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  z-index: auto;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  margin-bottom: var(--s-2);
+  border-radius: var(--hc-r-control);
+  /* Seated in the drawer: same dark surface, flat — no plastic in-shadow. */
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  animation: none;
+}
+
+:global([data-testid="frame-drawer-site-meta"]) .row:last-child {
+  margin-bottom: 0;
+}
+
+/* The lane-busy cap is irrelevant inside a drawer — the drawer is the lane. */
+:global([data-testid="frame-drawer-site-meta"]) .context[data-lane="busy"] {
+  right: auto;
+  max-width: 100%;
+}
+
+.chip {
+  appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s-1);
+  min-width: 76px;
+  min-height: 40px;
+  padding: var(--s-1) var(--s-3);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ws-frame-ink-dim);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
+    color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease);
+}
+
+/* Hairline seams engraved between chips — a single crisp rule, not per-chip. */
+.chip+.chip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--ws-frame-hair);
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.chip:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.chip:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.chip:hover {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+.chip[data-active="true"] {
+  background: var(--ws-frame-wash);
+  color: var(--ws-frame-ink);
+}
+
+/* Active accent — a lit top bar, matching the tool rail's signal language. */
+.chip[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 0;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--proposed-stroke, var(--hc-success));
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 7.5px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ws-frame-ink-faint);
+}
+
+.face {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--hc-fs-3);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--ws-frame-ink);
+  white-space: nowrap;
+  max-width: 104px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Status tones — map to plan semantic tokens. The plan tokens are dark-on-cream
+ * values, so on the dark panel they are lifted toward frame ink to stay legible;
+ * the semantic hue is unchanged.
+ */
+/* 70% of a dark-on-cream plan colour only reaches 3.52:1 on the dark frame;
+   45% keeps the hue reading while clearing AA. */
+.chip[data-status="ok"] .face {
+  color: color-mix(in srgb,
+      var(--proposed-stroke, var(--hc-success)) 45%,
+      var(--ws-frame-ink));
+}
+
+.chip[data-status="flag"] .face,
+.chip[data-status="warn"] .face {
+  color: color-mix(in srgb,
+      var(--existing-stroke, var(--hc-danger)) 45%,
+      var(--ws-frame-ink));
+}
+
+.chip[data-status="muted"] .face {
+  color: var(--ws-frame-ink-faint);
+}
+
+.chip[data-status="pending"] .face {
+  color: var(--ws-frame-ink-faint);
+  opacity: 0.75;
+}
+
+@keyframes railIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+}

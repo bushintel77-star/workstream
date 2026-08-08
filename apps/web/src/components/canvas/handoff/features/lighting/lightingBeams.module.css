@@ -1,0 +1,14 @@
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: var(--ws-z-annotate);
+  mix-blend-mode: screen;
+}
+
+.cone {
+  opacity: 0.28;
+}

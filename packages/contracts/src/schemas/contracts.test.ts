@@ -9,12 +9,14 @@ import {
   AuditSchema,
   CostingSchema,
   CreateOverrideInputSchema,
+  CreatePresentationDocumentInputSchema,
   CreateProjectInputSchema,
   CreateTaskInputSchema,
   DesignSchema,
   OutputSchema,
   PhotoMeasurementSchema,
   PlantPaletteSchema,
+  PresentationDocumentSchema,
   ProjectSchema,
   RateCardSchema,
   RecordingSchema,
@@ -93,6 +95,44 @@ describe("SurveySchema", () => {
       measurements: [
         { edge_id: "front", length_m: 15, bearing_deg: 180 },
       ],
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it("represents an unavailable existing-house outline without invented geometry", () => {
+    const ok = SurveySchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      aerial_uri: "https://example.com/aerial.jpg",
+      title_polygon: {
+        type: "Polygon",
+        coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]],
+      },
+      house_polygon: { type: "Polygon", coordinates: [] },
+      garden_polygon: {
+        type: "Polygon",
+        coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]],
+      },
+      lot_area_m2: 600,
+      house_area_m2: 0,
+      garden_area_m2: 600,
+      measurements: [],
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it("allows zero lot/garden when Vicmap missed — aerial Trace is the redundancy", () => {
+    const ok = SurveySchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      aerial_uri: "https://example.com/aerial.jpg",
+      title_polygon: { type: "Polygon", coordinates: [] },
+      house_polygon: { type: "Polygon", coordinates: [] },
+      garden_polygon: { type: "Polygon", coordinates: [] },
+      lot_area_m2: 0,
+      house_area_m2: 0,
+      garden_area_m2: 0,
+      measurements: [],
     });
     expect(ok.success).toBe(true);
   });
@@ -315,6 +355,181 @@ describe("ActivityEventSchema", () => {
         subject_id: UUID,
         detail: 'Crew member "Alex Site" removed',
         created_at: ISO,
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe("PresentationDocumentSchema", () => {
+  it("accepts a minimal deck with one blank page", () => {
+    const ok = PresentationDocumentSchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      owner_id: "dev-user",
+      title: "Wrights Terrace — concept deck",
+      deliverable_type: "deck",
+      template_id: "editorial_classic",
+      theme: {
+        palette: "stone",
+        highlight_colour: "#b33a32",
+        font: "fraunces",
+        pen: "technical",
+      },
+      status: "draft",
+      pages: [
+        {
+          id: UUID,
+          order: 0,
+          paper_size: "a3",
+          orientation: "landscape",
+          title_block: {
+            title: "Wrights Terrace",
+            subtitle: "Landscape concept plan",
+            practice: "Curtis & Co",
+            revision: "A",
+            date_label: "",
+            scale_label: "1:100 @ A3",
+          },
+          margins: { top_mm: 15, right_mm: 15, bottom_mm: 15, left_mm: 15 },
+          panels: [],
+        },
+      ],
+      created_at: ISO,
+      updated_at: ISO,
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it("accepts a page with plan_crop, text, and widget panels", () => {
+    const ok = PresentationDocumentSchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      owner_id: "dev-user",
+      pages: [
+        {
+          id: UUID,
+          order: 0,
+          panels: [
+            {
+              id: UUID,
+              kind: "plan_crop",
+              rect: { x_pct: 5, y_pct: 10, w_pct: 60, h_pct: 70 },
+              z_index: 0,
+              ref: {
+                canvas_revision: 3,
+                crop: { x_pct: 0, y_pct: 0, w_pct: 100, h_pct: 100 },
+                reason: "overview",
+                label: "Site overview",
+                synced: true,
+              },
+            },
+            {
+              id: UUID,
+              kind: "text",
+              rect: { x_pct: 70, y_pct: 5, w_pct: 25, h_pct: 20 },
+              z_index: 1,
+              heading: "Design narrative",
+              body: "The north terrace becomes the hero...",
+              role: "body",
+            },
+            {
+              id: UUID,
+              kind: "widget",
+              rect: { x_pct: 70, y_pct: 30, w_pct: 25, h_pct: 15 },
+              z_index: 2,
+              widget: {
+                id: UUID,
+                type: "quote_total",
+                slot: "side_stack",
+                order: 0,
+                style: { accent: "ink", emphasis: "hero" },
+              },
+            },
+          ],
+        },
+      ],
+      created_at: ISO,
+      updated_at: ISO,
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it("rejects an unknown template_id", () => {
+    const bad = PresentationDocumentSchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      owner_id: "dev-user",
+      template_id: "curtis-client-brochure",
+      pages: [{ id: UUID, order: 0, panels: [] }],
+      created_at: ISO,
+      updated_at: ISO,
+    });
+    expect(bad.success).toBe(false);
+  });
+
+  it("rejects an invalid highlight colour", () => {
+    const bad = PresentationDocumentSchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      owner_id: "dev-user",
+      theme: { highlight_colour: "red" },
+      pages: [{ id: UUID, order: 0, panels: [] }],
+      created_at: ISO,
+      updated_at: ISO,
+    });
+    expect(bad.success).toBe(false);
+  });
+
+  it("rejects a document with no pages", () => {
+    const bad = PresentationDocumentSchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      owner_id: "dev-user",
+      pages: [],
+      created_at: ISO,
+      updated_at: ISO,
+    });
+    expect(bad.success).toBe(false);
+  });
+
+  it("rejects an unknown panel kind", () => {
+    const bad = PresentationDocumentSchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      owner_id: "dev-user",
+      pages: [
+        {
+          id: UUID,
+          order: 0,
+          panels: [
+            {
+              id: UUID,
+              kind: "render",
+              rect: { x_pct: 0, y_pct: 0, w_pct: 100, h_pct: 100 },
+              z_index: 0,
+            },
+          ],
+        },
+      ],
+      created_at: ISO,
+      updated_at: ISO,
+    });
+    expect(bad.success).toBe(false);
+  });
+});
+
+describe("CreatePresentationDocumentInputSchema", () => {
+  it("accepts an empty body (all fields optional)", () => {
+    expect(CreatePresentationDocumentInputSchema.safeParse({}).success).toBe(
+      true,
+    );
+  });
+
+  it("accepts a deliverable type + template", () => {
+    expect(
+      CreatePresentationDocumentInputSchema.safeParse({
+        deliverable_type: "quotation",
+        template_id: "editorial_schedule",
       }).success,
     ).toBe(true);
   });

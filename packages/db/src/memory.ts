@@ -17,14 +17,37 @@ import type {
   SkuLink,
   Survey,
   Task,
+  TelemetryReading,
+  OperatorPlantProfile,
 } from "./types";
+import type { QuoteDoc } from "@workstream/contracts";
 import type { Store } from "./types";
+import { mkdirSync, renameSync, writeFileSync } from "fs";
+import { dirname } from "path";
 import { loadSnapshotInto, makeFlusher } from "./persist";
+import {
+  openSqliteJournal,
+  type SqliteJournal,
+} from "./sqlite-persist";
+import {
+  commitRevision,
+  createBranchFromRevision,
+  ensureMainBranch,
+  getBranch,
+  getRevision,
+  getTipCanvas,
+  writeTipCanvas,
+  type DesignVcsArrays,
+} from "./design-vcs";
+import { MAIN_DESIGN_BRANCH_NAME } from "@workstream/contracts";
 
 export const SYSTEM_OWNER = "system";
 
 export type CreateStoreOptions = {
+  /** Legacy JSON snapshot path (export escape hatch / first-boot import). */
   persistPath?: string;
+  /** SQLite write-through journal. When set, replaces JSON flush on the hot path. */
+  sqlitePath?: string;
 };
 
 export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
@@ -43,7 +66,11 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   _projectMyobLinks: ProjectMyobLink[];
   _crew: CrewMember[];
   _photoMeasurements: PhotoMeasurement[];
+  _telemetryReadings: TelemetryReading[];
+  _operatorPlantProfiles: OperatorPlantProfile[];
   _loadSnapshot: () => boolean;
+  _sqlite?: SqliteJournal;
+  _exportSnapshot: (path: string) => void;
 } {
   const _projects: Project[] = [];
   const _recordings: Recording[] = [];
@@ -60,6 +87,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _projectMyobLinks: ProjectMyobLink[] = [];
   const _crew: CrewMember[] = [];
   const _photoMeasurements: PhotoMeasurement[] = [];
+  const _telemetryReadings: TelemetryReading[] = [];
   const _integrations: IntegrationSecret[] = [];
   const _workspaceBilling: import("./types").WorkspaceBilling[] = [];
   const _workspaceMembers: import("./types").WorkspaceMember[] = [];
@@ -69,15 +97,30 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _cadDocuments: import("@workstream/contracts").CadDocument[] = [];
   const _orchestrationOverlays: import("@workstream/contracts").OrchestrationOverlayRecord[] =
     [];
-  const _designBranches: import("@workstream/contracts").DesignBranchSnapshot[] =
-    [];
-  const _leftovers: import("@workstream/contracts").LeftoverStock[] = [];
   const _siteBoundaries: import("@workstream/contracts").SiteBoundary[] = [];
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
   > = [];
   const _activityEvents: import("./types").ActivityEvent[] = [];
+  const _shareRevisions: import("./types").ShareRevision[] = [];
+  const _quoteDocs: QuoteDoc[] = [];
+  const _presentationDocuments: import("@workstream/contracts").PresentationDocument[] =
+    [];
+  const _designBranches: import("@workstream/contracts").DesignBranch[] = [];
+  const _designRevisions: import("@workstream/contracts").DesignRevision[] = [];
+  const _documentationPackages: import("@workstream/contracts").DocumentationPackage[] =
+    [];
+  const _operatorPlantProfiles: OperatorPlantProfile[] = [];
+  const _leftovers: import("@workstream/contracts").LeftoverStock[] = [];
   let seeded = false;
+
+  function vcsArrays(): DesignVcsArrays {
+    return {
+      branches: _designBranches,
+      revisions: _designRevisions,
+      canvases: _designCanvases,
+    };
+  }
 
   function logActivity(
     ownerId: string,
@@ -113,6 +156,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _projectMyobLinks,
     _crew,
     _photoMeasurements,
+    _telemetryReadings,
     _integrations,
     _workspaceBilling,
     _workspaceMembers,
@@ -121,18 +165,51 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _designCanvases,
     _cadDocuments,
     _orchestrationOverlays,
-    _designBranches,
-    _leftovers,
     _siteBoundaries,
     _catalogCustom,
     _activityEvents,
+    _shareRevisions,
+    _quoteDocs,
+    _presentationDocuments,
+    _designBranches,
+    _designRevisions,
+    _documentationPackages,
+    _operatorPlantProfiles,
+    _leftovers,
   };
 
-  const flush = opts.persistPath
-    ? makeFlusher(opts.persistPath, arrays as Record<string, unknown[]>)
-    : () => {};
+  const journal: SqliteJournal | undefined = opts.sqlitePath
+    ? openSqliteJournal(opts.sqlitePath)
+    : undefined;
+
+  // Bind arrays to the journal (empty DB → no-op load, arraysRef set).
+  if (journal) {
+    journal.loadInto(arrays as Record<string, unknown[]>);
+  }
+
+  const flush = journal
+    ? () => journal.flush()
+    : opts.persistPath
+      ? makeFlusher(opts.persistPath, arrays as Record<string, unknown[]>)
+      : () => { };
 
   const loadSnapshot = (): boolean => {
+    if (journal) {
+      const fromSqlite = journal.loadInto(arrays as Record<string, unknown[]>);
+      if (!fromSqlite && opts.persistPath) {
+        journal.importJsonSnapshotIfEmpty(opts.persistPath);
+      }
+      for (const link of _skuLinks) {
+        const row = link as SkuLink & { construct_sku?: string };
+        if (!row.rate_card_sku && row.construct_sku) {
+          row.rate_card_sku = row.construct_sku;
+        }
+      }
+      if (_rateCard.length > 0 && _plantPalette.length > 0) {
+        seeded = true;
+      }
+      return fromSqlite || journal.recordCount() > 0 || _projects.length > 0;
+    }
     if (!opts.persistPath) return false;
     const loaded = loadSnapshotInto(
       opts.persistPath,
@@ -168,7 +245,22 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _projectMyobLinks,
     _crew,
     _photoMeasurements,
+    _telemetryReadings,
+    _operatorPlantProfiles,
     _loadSnapshot: loadSnapshot,
+    _sqlite: journal,
+    _exportSnapshot: (path: string) => {
+      if (journal) {
+        journal.exportSnapshot(path);
+        return;
+      }
+      const snapshot: Record<string, unknown[]> = {};
+      for (const [k, v] of Object.entries(arrays)) snapshot[k] = v;
+      mkdirSync(dirname(path), { recursive: true });
+      const tmp = `${path}.tmp`;
+      writeFileSync(tmp, JSON.stringify(snapshot, null, 2), "utf8");
+      renameSync(tmp, path);
+    },
 
     async seedDefaults() {
       if (seeded) return;
@@ -177,6 +269,204 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _plantPalette.push(...seedPlantPalette());
       seeded = true;
       flush();
+    },
+
+    async getOperatorPlantProfile(ownerId) {
+      const row = _operatorPlantProfiles.find((p) => p.owner_id === ownerId);
+      return row ? structuredClone(row) : null;
+    },
+
+    async upsertOperatorPlantProfile(ownerId, input) {
+      const existing = _operatorPlantProfiles.find(
+        (p) => p.owner_id === ownerId,
+      );
+      const now = new Date().toISOString();
+      if (existing) {
+        existing.machines = input.machines;
+        existing.updated_at = now;
+        flush();
+        return structuredClone(existing);
+      }
+      const profile: OperatorPlantProfile = {
+        owner_id: ownerId,
+        machines: input.machines,
+        updated_at: now,
+      };
+      _operatorPlantProfiles.push(profile);
+      flush();
+      return structuredClone(profile);
+    },
+
+    async listLeftovers(ownerId) {
+      return _leftovers
+        .filter((l) => l.owner_id === ownerId)
+        .map((l) => structuredClone(l))
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+    },
+
+    async registerLeftover(ownerId, input) {
+      const { registerLeftover } = await import("@workstream/domain");
+      const row = registerLeftover({
+        orderQty: input.order_qty,
+        usedQty: input.used_qty,
+        sku: input.sku,
+        label: input.label,
+        unit: input.unit,
+        sourceProjectId: input.source_project_id,
+        ownerId,
+      });
+      if (!row) return null;
+      _leftovers.push(row);
+      flush();
+      return structuredClone(row);
+    },
+
+    async listPresentationDocuments(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      return _presentationDocuments
+        .filter((d) => d.project_id === projectId)
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+        .map((d) => structuredClone(d));
+    },
+
+    async getPresentationDocument(ownerId, projectId, docId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const doc = _presentationDocuments.find(
+        (d) => d.id === docId && d.project_id === projectId,
+      );
+      return doc ? structuredClone(doc) : null;
+    },
+
+    async createPresentationDocument(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const now = new Date().toISOString();
+      const doc: import("@workstream/contracts").PresentationDocument = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        owner_id: ownerId,
+        title: input.title ?? "Untitled deck",
+        deliverable_type: input.deliverable_type ?? "deck",
+        template_id: input.template_id ?? "editorial_classic",
+        theme: {
+          palette: input.theme?.palette ?? "stone",
+          highlight_colour: input.theme?.highlight_colour ?? "#b33a32",
+          font: input.theme?.font ?? "fraunces",
+          pen: input.theme?.pen ?? "technical",
+        },
+        status: "draft",
+        pages: [
+          {
+            id: crypto.randomUUID(),
+            order: 0,
+            paper_size: "a3",
+            orientation: "landscape",
+            title_block: {
+              title: "",
+              subtitle: "",
+              practice: "",
+              revision: "",
+              date_label: "",
+              scale_label: "",
+            },
+            margins: {
+              top_mm: 15,
+              right_mm: 15,
+              bottom_mm: 15,
+              left_mm: 15,
+            },
+            panels: [],
+          },
+        ],
+        created_at: now,
+        updated_at: now,
+        issued_at: null,
+        estimate_snapshot: null,
+      };
+      _presentationDocuments.push(doc);
+      flush();
+      return structuredClone(doc);
+    },
+
+    async updatePresentationDocument(ownerId, projectId, docId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const doc = _presentationDocuments.find(
+        (d) => d.id === docId && d.project_id === projectId,
+      );
+      if (!doc) return null;
+      const now = new Date().toISOString();
+      const issuing =
+        input.status === "issued" && doc.status !== "issued";
+      const contentMutation =
+        input.title !== undefined ||
+        input.deliverable_type !== undefined ||
+        input.template_id !== undefined ||
+        input.theme !== undefined ||
+        input.pages !== undefined;
+      /* Issued decks are terminal — only the Issue transition may write
+       * content (to stamp estimate_snapshot). Later edits are refused. */
+      if (doc.status === "issued" && (contentMutation || input.estimate_snapshot !== undefined)) {
+        const err = new Error("Deck is issued; edits are blocked");
+        (err as Error & { statusCode?: number }).statusCode = 409;
+        throw err;
+      }
+      if (input.title !== undefined) doc.title = input.title;
+      if (input.deliverable_type !== undefined)
+        doc.deliverable_type = input.deliverable_type;
+      if (input.template_id !== undefined) doc.template_id = input.template_id;
+      if (input.theme !== undefined) {
+        doc.theme = {
+          palette: input.theme.palette ?? doc.theme.palette,
+          highlight_colour:
+            input.theme.highlight_colour ?? doc.theme.highlight_colour,
+          font: input.theme.font ?? doc.theme.font,
+          pen: input.theme.pen ?? doc.theme.pen,
+        };
+      }
+      if (input.status !== undefined) {
+        doc.status = input.status;
+        if (input.status === "issued" && !doc.issued_at) {
+          doc.issued_at = now;
+        }
+      }
+      if (input.pages !== undefined) doc.pages = input.pages;
+      if (input.estimate_snapshot !== undefined) {
+        doc.estimate_snapshot = input.estimate_snapshot;
+      } else if (issuing && doc.estimate_snapshot == null) {
+        /* Issue without a snapshot still freezes — widgets show empty honesty. */
+        doc.estimate_snapshot = null;
+      }
+      doc.updated_at = now;
+      flush();
+      return structuredClone(doc);
+    },
+
+    async deletePresentationDocument(ownerId, projectId, docId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return false;
+      const idx = _presentationDocuments.findIndex(
+        (d) => d.id === docId && d.project_id === projectId,
+      );
+      if (idx < 0) return false;
+      _presentationDocuments.splice(idx, 1);
+      flush();
+      return true;
     },
 
     async listProjects(ownerId) {
@@ -549,6 +839,45 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return _audits.find((a) => a.design_id === design.id) ?? null;
     },
 
+    async getQuoteDoc(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      return _quoteDocs.find((q) => q.project_id === projectId) ?? null;
+    },
+
+    async upsertQuoteDoc(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const design = _designs.find((d) => d.project_id === projectId);
+      const updated_at = new Date().toISOString();
+      const existing = _quoteDocs.find((q) => q.project_id === projectId);
+      if (existing) {
+        Object.assign(existing, {
+          ...input,
+          project_id: projectId,
+          design_id: input.design_id ?? design?.id ?? existing.design_id,
+          updated_at,
+        });
+        flush();
+        return existing;
+      }
+      const doc: QuoteDoc = {
+        project_id: projectId,
+        design_id: input.design_id ?? design?.id ?? null,
+        overrides: input.overrides ?? [],
+        custom_lines: input.custom_lines ?? [],
+        margin: input.margin ?? { global_pct: 0, by_section: {} },
+        updated_at,
+      };
+      _quoteDocs.push(doc);
+      flush();
+      return doc;
+    },
+
     async upsertOutput(ownerId, projectId, kind, input) {
       const project = _projects.find(
         (p) => p.id === projectId && p.owner_id === ownerId
@@ -820,6 +1149,36 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           (a, b) =>
             new Date(b.created_at).getTime() -
             new Date(a.created_at).getTime(),
+        );
+    },
+
+    async createTelemetryReading(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const row: TelemetryReading = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        ...input,
+        created_at: new Date().toISOString(),
+      };
+      _telemetryReadings.push(row);
+      flush();
+      return row;
+    },
+
+    async listTelemetryReadings(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      return _telemetryReadings
+        .filter((m) => m.project_id === projectId)
+        .sort(
+          (a, b) =>
+            new Date(b.observed_at).getTime() -
+            new Date(a.observed_at).getTime(),
         );
     },
 
@@ -1097,113 +1456,21 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return structuredClone(row);
     },
 
-    async listDesignBranches(ownerId, projectId) {
-      const project = _projects.find(
-        (p) => p.id === projectId && p.owner_id === ownerId,
-      );
-      if (!project) return [];
-      return _designBranches
-        .filter((b) => b.project_id === projectId)
-        .map((b) => structuredClone(b))
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
-    },
-
-    async freezeDesignBranch(ownerId, projectId, input) {
-      const project = _projects.find(
-        (p) => p.id === projectId && p.owner_id === ownerId,
-      );
-      if (!project) throw new Error(`Project not found: ${projectId}`);
-      for (const b of _designBranches) {
-        if (b.project_id === projectId) b.active = false;
-      }
-      const {
-        canvasSnapshotFromDesignCanvas,
-        createFrozenBranch,
-      } = await import("@workstream/domain");
-      let canvas = input.canvas;
-      if (!canvas) {
-        const current = _designCanvases.find((c) => c.project_id === projectId);
-        if (current) {
-          canvas = canvasSnapshotFromDesignCanvas(current);
-        }
-      }
-      const branch = createFrozenBranch({
-        projectId,
-        input: { ...input, canvas },
-      });
-      _designBranches.push(branch);
-      flush();
-      return structuredClone(branch);
-    },
-
-    async activateDesignBranch(ownerId, projectId, branchId) {
+    async getDesignCanvas(ownerId, projectId, opts) {
       const project = _projects.find(
         (p) => p.id === projectId && p.owner_id === ownerId,
       );
       if (!project) return null;
-      const target = _designBranches.find(
-        (b) => b.project_id === projectId && b.id === branchId,
-      );
-      if (!target) return null;
-      for (const b of _designBranches) {
-        if (b.project_id === projectId) b.active = b.id === branchId;
-      }
-      if (target.canvas) {
-        await this.upsertDesignCanvas(ownerId, projectId, {
-          placements: target.canvas.placements,
-          strokes: target.canvas.strokes,
-          irrigation_zones: target.canvas.irrigation_zones,
-          annotations: target.canvas.annotations,
-          features: target.canvas.features,
-        });
-      }
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const branch = opts?.branchId
+        ? getBranch(arrays, ownerId, projectId, opts.branchId)
+        : main;
+      if (!branch) return null;
+      const tip = getTipCanvas(arrays, branch);
+      if (!tip) return null;
       flush();
-      return structuredClone(target);
-    },
-
-    async listLeftovers(ownerId) {
-      return _leftovers
-        .filter((l) => l.owner_id === ownerId)
-        .map((l) => structuredClone(l))
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
-    },
-
-    async registerLeftover(ownerId, input) {
-      const { registerLeftover } = await import("@workstream/domain");
-      const row = registerLeftover({
-        orderQty: input.order_qty,
-        usedQty: input.used_qty,
-        sku: input.sku,
-        label: input.label,
-        unit: input.unit,
-        sourceProjectId: input.source_project_id,
-        ownerId,
-      });
-      if (!row) return null;
-      _leftovers.push(row);
-      flush();
-      return structuredClone(row);
-    },
-
-    async getDesignCanvas(ownerId, projectId) {
-      const project = _projects.find(
-        (p) => p.id === projectId && p.owner_id === ownerId,
-      );
-      if (!project) return null;
-      const canvas = _designCanvases.find((c) => c.project_id === projectId);
-      if (!canvas) return null;
-      return {
-        ...canvas,
-        irrigation_zones: canvas.irrigation_zones ?? [],
-        annotations: canvas.annotations ?? [],
-        features: canvas.features ?? [],
-      };
+      return tip;
     },
 
     async listCatalogSymbols(ownerId) {
@@ -1242,42 +1509,313 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return true;
     },
 
-    async upsertDesignCanvas(ownerId, projectId, input) {
+    async upsertDesignCanvas(ownerId, projectId, input, opts) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const branchId = opts?.branchId ?? input.branch_id;
+      const branch = branchId
+        ? getBranch(arrays, ownerId, projectId, branchId)
+        : main;
+      if (!branch) throw new Error(`Design branch not found: ${branchId}`);
+      if (branch.status !== "open") {
+        throw new Error(`Design branch is ${branch.status}`);
+      }
+      const { branch_id: _branchId, ...canvasInput } = input;
+      const canvas = writeTipCanvas(arrays, branch, canvasInput);
+      flush();
+      return canvas;
+    },
+
+    async listDesignBranches(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      const arrays = vcsArrays();
+      ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      flush();
+      return _designBranches
+        .filter((b) => b.owner_id === ownerId && b.project_id === projectId)
+        .sort((a, b) => {
+          if (a.name === MAIN_DESIGN_BRANCH_NAME) return -1;
+          if (b.name === MAIN_DESIGN_BRANCH_NAME) return 1;
+          return a.name.localeCompare(b.name, "en-AU");
+        })
+        .map((b) => structuredClone(b));
+    },
+
+    async getDesignBranch(ownerId, projectId, branchId) {
+      const arrays = vcsArrays();
+      ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const branch = getBranch(arrays, ownerId, projectId, branchId);
+      flush();
+      return branch ? structuredClone(branch) : null;
+    },
+
+    async createDesignBranch(ownerId, projectId, input, authorId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, authorId);
+      const name = input.name.trim();
+      if (name.toLowerCase() === MAIN_DESIGN_BRANCH_NAME) {
+        throw new Error("Branch name 'main' is reserved");
+      }
+      if (
+        _designBranches.some(
+          (b) =>
+            b.project_id === projectId &&
+            b.owner_id === ownerId &&
+            b.name.toLowerCase() === name.toLowerCase() &&
+            b.status === "open",
+        )
+      ) {
+        throw new Error(`Branch already open: ${name}`);
+      }
+      let from = input.from_revision_id
+        ? getRevision(arrays, input.from_revision_id)
+        : getRevision(arrays, main.tip_revision_id);
+      if (!from || from.project_id !== projectId) {
+        throw new Error("from_revision_id not found");
+      }
+      const created = createBranchFromRevision(
+        arrays,
+        ownerId,
+        projectId,
+        name,
+        from,
+        authorId,
+      );
+      logActivity(
+        ownerId,
+        projectId,
+        "design.branch_created",
+        `Design branch "${name}" created`,
+        created.branch.id,
+      );
+      flush();
+      return {
+        branch: structuredClone(created.branch),
+        revision: structuredClone(created.revision),
+      };
+    },
+
+    async commitDesignBranch(ownerId, projectId, branchId, input, authorId) {
+      const arrays = vcsArrays();
+      const branch = getBranch(arrays, ownerId, projectId, branchId);
+      if (!branch) throw new Error(`Design branch not found: ${branchId}`);
+      if (branch.status !== "open") {
+        throw new Error(`Design branch is ${branch.status}`);
+      }
+      const { branch_id: _b, ...canvasInput } = input.canvas;
+      const revision = commitRevision(
+        arrays,
+        branch,
+        authorId,
+        input.message ?? "Checkpoint",
+        canvasInput,
+      );
+      flush();
+      return structuredClone(revision);
+    },
+
+    async abandonDesignBranch(ownerId, projectId, branchId) {
+      const arrays = vcsArrays();
+      const branch = getBranch(arrays, ownerId, projectId, branchId);
+      if (!branch) return null;
+      if (branch.name === MAIN_DESIGN_BRANCH_NAME) {
+        throw new Error("Cannot abandon main");
+      }
+      if (branch.status !== "open") return structuredClone(branch);
+      branch.status = "abandoned";
+      branch.updated_at = new Date().toISOString();
+      logActivity(
+        ownerId,
+        projectId,
+        "design.abandoned",
+        `Design branch "${branch.name}" abandoned`,
+        branch.id,
+      );
+      flush();
+      return structuredClone(branch);
+    },
+
+    async getDesignRevision(ownerId, projectId, revisionId) {
+      const rev = _designRevisions.find(
+        (r) =>
+          r.id === revisionId &&
+          r.owner_id === ownerId &&
+          r.project_id === projectId,
+      );
+      return rev ? structuredClone(rev) : null;
+    },
+
+    async diffDesignBranches(ownerId, projectId, leftBranchId, rightBranchId) {
+      const arrays = vcsArrays();
+      ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const left = getBranch(arrays, ownerId, projectId, leftBranchId);
+      const right = getBranch(arrays, ownerId, projectId, rightBranchId);
+      const leftTip = left ? getTipCanvas(arrays, left) : null;
+      const rightTip = right ? getTipCanvas(arrays, right) : null;
+      let base: import("@workstream/contracts").DesignCanvas | null = null;
+      const baseId = right?.base_revision_id ?? left?.base_revision_id;
+      if (baseId) {
+        const rev = getRevision(arrays, baseId);
+        if (rev) base = rev.canvas;
+      }
+      return { left: leftTip, right: rightTip, base };
+    },
+
+    async mergeDesignBranch(ownerId, projectId, sourceBranchId, input, authorId) {
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, authorId);
+      const source = getBranch(arrays, ownerId, projectId, sourceBranchId);
+      if (!source) throw new Error("Source branch not found");
+      if (source.status !== "open") {
+        throw new Error(`Source branch is ${source.status}`);
+      }
+      const intoId = input.into_branch_id ?? main.id;
+      const into = getBranch(arrays, ownerId, projectId, intoId);
+      if (!into) throw new Error("Target branch not found");
+      if (into.status !== "open") {
+        throw new Error(`Target branch is ${into.status}`);
+      }
+
+      const baseRev = source.base_revision_id
+        ? getRevision(arrays, source.base_revision_id)
+        : null;
+      const oursTip = getTipCanvas(arrays, into);
+      const theirsTip = getTipCanvas(arrays, source);
+      if (!oursTip || !theirsTip || !baseRev) {
+        throw new Error("Missing merge tips or base revision");
+      }
+
+      const { mergeDesignCanvas } = await import("@workstream/domain");
+      const merged = mergeDesignCanvas({
+        base: baseRev.canvas,
+        ours: oursTip,
+        theirs: theirsTip,
+        resolutions: input.resolutions ?? {},
+      });
+      if (!merged.ok) {
+        return { ok: false as const, conflicts: merged.conflicts };
+      }
+
+      const revision = commitRevision(
+        arrays,
+        into,
+        authorId,
+        input.message ?? `Merge ${source.name}`,
+        {
+          placements: merged.canvas.placements,
+          strokes: merged.canvas.strokes,
+          irrigation_zones: merged.canvas.irrigation_zones,
+          construction_trenches: merged.canvas.construction_trenches,
+          annotations: merged.canvas.annotations,
+          image_layers: merged.canvas.image_layers,
+          features: merged.canvas.features,
+          site_frame: merged.canvas.site_frame,
+          presentation_pack: merged.canvas.presentation_pack,
+          lifecycle_phase: merged.canvas.lifecycle_phase,
+          artboard_ids: merged.canvas.artboard_ids,
+        },
+      );
+      source.status = "merged";
+      source.updated_at = new Date().toISOString();
+      logActivity(
+        ownerId,
+        projectId,
+        "design.merged",
+        `Merged "${source.name}" into "${into.name}"`,
+        source.id,
+      );
+      flush();
+      return {
+        ok: true as const,
+        branch: structuredClone(into),
+        revision: structuredClone(revision),
+        canvas: structuredClone(revision.canvas),
+      };
+    },
+
+    async listDocumentationPackages(ownerId, projectId) {
+      return _documentationPackages
+        .filter((p) => p.owner_id === ownerId && p.project_id === projectId)
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+        .map((p) => structuredClone(p));
+    },
+
+    async getDocumentationPackage(ownerId, projectId, packId) {
+      const pack = _documentationPackages.find(
+        (p) =>
+          p.id === packId &&
+          p.owner_id === ownerId &&
+          p.project_id === projectId,
+      );
+      return pack ? structuredClone(pack) : null;
+    },
+
+    async createDocumentationPackage(ownerId, projectId, input) {
       const project = _projects.find(
         (p) => p.id === projectId && p.owner_id === ownerId,
       );
       if (!project) throw new Error(`Project not found: ${projectId}`);
       const now = new Date().toISOString();
-      const existing = _designCanvases.find((c) => c.project_id === projectId);
-      if (existing) {
-        existing.placements = input.placements;
-        if (input.strokes !== undefined) existing.strokes = input.strokes;
-        if (input.irrigation_zones !== undefined) {
-          existing.irrigation_zones = input.irrigation_zones;
-        }
-        if (input.annotations !== undefined) {
-          existing.annotations = input.annotations;
-        }
-        if (input.features !== undefined) {
-          existing.features = input.features;
-        }
-        existing.updated_at = now;
-        flush();
-        return { ...existing, features: existing.features ?? [] };
-      }
-      const canvas: import("@workstream/contracts").DesignCanvas = {
+      const arrays = vcsArrays();
+      const main = ensureMainBranch(arrays, ownerId, projectId, ownerId);
+      const pack: import("@workstream/contracts").DocumentationPackage = {
         id: crypto.randomUUID(),
         project_id: projectId,
-        placements: input.placements,
-        strokes: input.strokes ?? [],
-        irrigation_zones: input.irrigation_zones ?? [],
-        annotations: input.annotations ?? [],
-        features: input.features ?? [],
+        owner_id: ownerId,
+        title: input.title ?? "Documentation pack",
+        status: "draft",
+        design_revision_id:
+          input.design_revision_id ?? main.tip_revision_id,
+        schedules: input.schedules ?? [],
+        presentation_document_ids: input.presentation_document_ids ?? [],
+        quote_total_incl_gst: null,
+        created_at: now,
         updated_at: now,
+        issued_at: null,
       };
-      _designCanvases.push(canvas);
+      _documentationPackages.push(pack);
       flush();
-      return canvas;
+      return structuredClone(pack);
+    },
+
+    async issueDocumentationPackage(ownerId, projectId, packId, input) {
+      const pack = _documentationPackages.find(
+        (p) =>
+          p.id === packId &&
+          p.owner_id === ownerId &&
+          p.project_id === projectId,
+      );
+      if (!pack) return null;
+      if (pack.status === "issued") {
+        throw new Error("Documentation package already issued");
+      }
+      const now = new Date().toISOString();
+      pack.status = "issued";
+      pack.issued_at = now;
+      pack.updated_at = now;
+      if (input.quote_total_incl_gst !== undefined) {
+        pack.quote_total_incl_gst = input.quote_total_incl_gst;
+      }
+      logActivity(
+        ownerId,
+        projectId,
+        "documentation.issued",
+        `Documentation pack "${pack.title}" issued`,
+        pack.id,
+      );
+      flush();
+      return structuredClone(pack);
     },
 
     async getCadDocument(ownerId, projectId) {
@@ -1467,6 +2005,83 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _projectMyobLinks.push(link);
       flush();
       return link;
+    },
+
+    async listShareRevisions(ownerId, projectId) {
+      return _shareRevisions
+        .filter(
+          (r) => r.owner_id === ownerId && r.project_id === projectId,
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
+        .map((r) => structuredClone(r));
+    },
+
+    async getShareRevisionByToken(token) {
+      const row = _shareRevisions.find((r) => r.token === token);
+      return row ? structuredClone(row) : null;
+    },
+
+    async createShareRevision(ownerId, projectId, snapshot) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId && !p.deleted_at,
+      );
+      if (!project) return null;
+
+      const { nextShareRevisionLetter } = await import("@workstream/contracts");
+      const { randomBytes } = await import("node:crypto");
+
+      const existing = _shareRevisions.filter(
+        (r) => r.owner_id === ownerId && r.project_id === projectId,
+      );
+      for (const row of existing) {
+        if (row.status === "shared") {
+          row.status = "superseded";
+        }
+      }
+
+      const token = randomBytes(32).toString("base64url");
+      const row: import("./types").ShareRevision = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        owner_id: ownerId,
+        revision: nextShareRevisionLetter(existing.length),
+        token,
+        status: "shared",
+        created_at: new Date().toISOString(),
+        snapshot: structuredClone(snapshot),
+      };
+      _shareRevisions.push(row);
+      flush();
+      return structuredClone(row);
+    },
+
+    async recordShareDecision(token, input) {
+      const row = _shareRevisions.find((r) => r.token === token);
+      if (!row) return { ok: false as const, reason: "not_found" as const };
+      if (row.status === "superseded") {
+        return { ok: false as const, reason: "superseded" as const };
+      }
+      if (row.status === "accepted" || row.status === "declined") {
+        return { ok: false as const, reason: "already_decided" as const };
+      }
+      if (row.status !== "shared") {
+        return { ok: false as const, reason: "not_found" as const };
+      }
+
+      const clientName = input.clientName.trim();
+      const note = input.note?.trim();
+      row.status = input.kind === "accepted" ? "accepted" : "declined";
+      row.decision = {
+        kind: input.kind,
+        clientName,
+        ...(note ? { note } : {}),
+        decidedAt: new Date().toISOString(),
+      };
+      flush();
+      return { ok: true as const, revision: structuredClone(row) };
     },
   };
 }
