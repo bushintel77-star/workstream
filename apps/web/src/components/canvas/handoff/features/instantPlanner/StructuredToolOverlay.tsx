@@ -103,19 +103,23 @@ export function StructuredToolOverlay({
           <svg className={css.svg} viewBox="0 0 100 100" preserveAspectRatio="none">
             {draft.length > 0 ? (
               <polyline
-                fill={kind === "bed" ? "rgba(194,69,95,0.12)" : "none"}
-                stroke={critical ? "#9E3049" : "#C2455F"}
-                strokeWidth="0.6"
+                className={[
+                  css.draftStroke,
+                  kind === "bed" ? css.draftStrokeBed : "",
+                  critical ? css.draftStrokeCritical : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 points={draft.map((p) => `${p.x_pct},${p.y_pct}`).join(" ")}
               />
             ) : null}
             {draft.map((p, i) => (
               <circle
                 key={i}
+                className={css.draftPoint}
                 cx={p.x_pct}
                 cy={p.y_pct}
                 r="0.9"
-                fill={critical ? "#9E3049" : "#C2455F"}
               />
             ))}
           </svg>

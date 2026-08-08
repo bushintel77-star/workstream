@@ -19,23 +19,23 @@
 
 .shape {
   pointer-events: fill;
-  fill: rgba(194, 69, 95, 0.14);
-  stroke: #c2455f;
+  fill: color-mix(in srgb, var(--hc-danger) 14%, transparent);
+  stroke: var(--hc-danger);
   stroke-width: 0.45;
 }
 
 .soft {
-  fill: rgba(31, 138, 90, 0.16);
-  stroke: #1f8a5a;
+  fill: color-mix(in srgb, var(--hc-success) 16%, transparent);
+  stroke: var(--hc-success);
 }
 
 .hard {
-  fill: rgba(194, 69, 95, 0.12);
+  fill: color-mix(in srgb, var(--hc-danger) 12%, transparent);
 }
 
 .line {
   fill: none;
-  stroke: #c2455f;
+  stroke: var(--hc-danger);
   stroke-width: 0.7;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -46,22 +46,22 @@
 }
 
 .wall {
-  stroke: #241318;
+  stroke: var(--hc-ink);
   stroke-width: 0.95;
 }
 
 .paper .shape {
-  fill: color-mix(in srgb, var(--paper-ink, #241318) 10%, transparent);
-  stroke: var(--paper-ink, #241318);
+  fill: color-mix(in srgb, var(--hc-ink) 10%, transparent);
+  stroke: var(--hc-ink);
 }
 
 .paper .soft {
-  fill: color-mix(in srgb, #1f8a5a 14%, transparent);
-  stroke: #1f8a5a;
+  fill: color-mix(in srgb, var(--hc-success) 14%, transparent);
+  stroke: var(--hc-success);
 }
 
 .paper .line {
-  stroke: var(--paper-ink, #241318);
+  stroke: var(--hc-ink);
 }
 
 .shape:hover,

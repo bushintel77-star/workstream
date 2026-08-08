@@ -11,12 +11,12 @@
 
 .paper .toggle,
 .paper .panel {
-  background: color-mix(in srgb, var(--paper, #faf6f2) 96%, transparent);
-  border-color: var(--paper-rule, rgba(36, 19, 24, 0.18));
+  background: color-mix(in srgb, var(--sheet-paper, var(--hc-paper)) 96%, transparent);
+  border-color: var(--hc-line);
 }
 
 .toggle {
-  border: 1px solid rgba(36, 19, 24, 0.12);
+  border: 1px solid var(--hc-line);
   border-radius: var(--hc-r-pill, 999px);
   min-height: 44px;
   padding: 0.4rem 0.9rem;
@@ -24,17 +24,17 @@
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  background: rgba(255, 251, 252, 0.94);
-  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.12);
+  background: var(--hc-glass-soft);
+  box-shadow: 0 4px 14px var(--hc-neu-shadow);
 }
 
 .panel {
   width: min(16rem, calc(100vw - 1.5rem));
   padding: 0.7rem 0.8rem;
   border-radius: var(--hc-r-pop, 14px);
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 251, 252, 0.96);
-  box-shadow: 0 10px 28px rgba(42, 23, 29, 0.16);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass);
+  box-shadow: 0 10px 28px var(--hc-neu-shadow);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -46,7 +46,7 @@
   font-size: 8.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #b08a95;
+  color: var(--hc-ink-faint);
 }
 
 .btn {
@@ -58,14 +58,14 @@
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  background: var(--ink, #241318);
-  color: #faf4f6;
+  background: var(--hc-ink);
+  color: var(--hc-invert);
 }
 
 .meta {
   margin: 0;
   font-size: 0.65rem;
-  color: var(--ink-soft, #6b5660);
+  color: var(--hc-ink-muted);
   line-height: 1.35;
 }
 
@@ -75,5 +75,5 @@
   padding: 0.3rem 0.65rem;
   font-size: 0.65rem;
   font-weight: 600;
-  background: color-mix(in srgb, var(--blush, #e9a8ba) 22%, #fff);
+  background: var(--hc-accent-wash);
 }

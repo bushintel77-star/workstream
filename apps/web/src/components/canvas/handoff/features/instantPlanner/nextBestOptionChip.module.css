@@ -12,18 +12,18 @@
 
 .paper .chip,
 .paper .panel {
-  background: color-mix(in srgb, var(--paper, #faf6f2) 96%, transparent);
-  border-color: var(--paper-rule, rgba(36, 19, 24, 0.18));
-  color: var(--paper-ink, #241318);
+  background: color-mix(in srgb, var(--sheet-paper, var(--hc-paper)) 96%, transparent);
+  border-color: var(--hc-line);
+  color: var(--hc-ink);
 }
 
 .prominent .chip {
-  box-shadow: 0 6px 18px rgba(42, 23, 29, 0.22);
+  box-shadow: 0 6px 18px var(--hc-neu-shadow);
   transform: scale(1.02);
 }
 
 .chip {
-  border: 1px solid rgba(36, 19, 24, 0.12);
+  border: 1px solid var(--hc-line);
   border-radius: var(--hc-r-pill, 999px);
   padding: 0.4rem 0.85rem;
   min-height: 44px;
@@ -31,20 +31,20 @@
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  background: rgba(255, 251, 252, 0.92);
+  background: var(--hc-glass);
   backdrop-filter: blur(12px);
-  color: var(--ink, #241318);
-  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.12);
+  color: var(--hc-ink);
+  box-shadow: 0 4px 14px var(--hc-neu-shadow);
 }
 
 .panel {
   width: 100%;
   padding: 0.7rem 0.8rem;
   border-radius: var(--hc-r-pop, 14px);
-  border: 1px solid rgba(36, 19, 24, 0.1);
-  background: rgba(255, 251, 252, 0.96);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass);
   backdrop-filter: blur(16px);
-  box-shadow: 0 10px 28px rgba(42, 23, 29, 0.18);
+  box-shadow: 0 10px 28px var(--hc-neu-shadow);
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -59,7 +59,7 @@
 .hint {
   margin: 0;
   font-size: 0.65rem;
-  color: var(--ink-soft, #6b5660);
+  color: var(--hc-ink-muted);
 }
 
 .actions,
@@ -78,19 +78,19 @@
   font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
-  background: color-mix(in srgb, #fff 90%, var(--pink-soft, #fdf0f5));
-  color: var(--ink, #24181e);
+  background: color-mix(in srgb, var(--hc-paper) 90%, var(--hc-accent-wash));
+  color: var(--hc-ink);
 }
 
 .btnPrimary {
-  background: var(--ink, #24181e);
-  color: #faf4f6;
+  background: var(--hc-ink);
+  color: var(--hc-invert);
 }
 
 .prefBtn {
   border: none;
   background: transparent;
-  color: var(--ink-faint, #9a8590);
+  color: var(--hc-ink-faint);
   font: inherit;
   font-size: 0.6rem;
   font-weight: 600;
