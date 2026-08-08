@@ -4,7 +4,7 @@
   z-index: var(--ws-z-fullscreen);
   display: grid;
   place-items: center;
-  background: rgba(20, 12, 16, 0.55);
+  background: color-mix(in srgb, var(--hc-ink) 55%, transparent);
   backdrop-filter: blur(8px);
   animation: heroIn 250ms ease-in-out;
 }
@@ -23,9 +23,10 @@
   max-width: calc(100vw - 1.5rem);
   max-height: min(78vh, 40rem);
   border-radius: var(--hc-r-pop, 16px);
-  background: #fffbfc;
-  border: 1px solid rgba(36, 19, 24, 0.12);
-  box-shadow: 0 18px 48px rgba(20, 12, 16, 0.35);
+  background: var(--hc-paper);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--hc-ink) 35%, transparent);
+  color: var(--hc-ink);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -37,7 +38,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(36, 19, 24, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--hc-ink) 8%, transparent);
 }
 
 .title {
@@ -48,7 +49,7 @@
 }
 
 .back {
-  border: 1px solid rgba(36, 19, 24, 0.14);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 14%, transparent);
   border-radius: var(--hc-r-control, 10px);
   min-height: 44px;
   padding: 0.4rem 0.85rem;
@@ -56,7 +57,8 @@
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  background: #fff;
+  background: var(--hc-paper);
+  color: var(--hc-ink);
 }
 
 .body {
@@ -68,7 +70,7 @@
 
 .canvas {
   min-height: 16rem;
-  background: #1a1416;
+  background: var(--hc-ink);
 }
 
 .canvas canvas {
@@ -82,7 +84,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  border-left: 1px solid rgba(36, 19, 24, 0.08);
+  border-left: 1px solid color-mix(in srgb, var(--hc-ink) 8%, transparent);
 }
 
 .sliderLabel {
@@ -91,7 +93,7 @@
   gap: 0.35rem;
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--ink-soft, #6b5660);
+  color: var(--hc-ink-muted);
 }
 
 .sliderLabel input {
@@ -106,7 +108,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
-  color: var(--ink, #241318);
+  color: var(--hc-ink);
   padding: 0.35rem 0;
   min-height: 44px;
 }
@@ -120,7 +122,7 @@
 }
 
 .specs dt {
-  color: var(--ink-faint, #9a8590);
+  color: var(--hc-ink-faint);
   font-weight: 600;
 }
 
@@ -137,6 +139,6 @@
   }
   .side {
     border-left: none;
-    border-top: 1px solid rgba(36, 19, 24, 0.08);
+    border-top: 1px solid color-mix(in srgb, var(--hc-ink) 8%, transparent);
   }
 }

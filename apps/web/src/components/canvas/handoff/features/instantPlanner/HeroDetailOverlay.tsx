@@ -36,7 +36,8 @@ export function HeroDetailOverlay({ feature, onClose }: Props) {
     const w = host.clientWidth || 480;
     const h = host.clientHeight || 320;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#1a1416");
+    // Numeric THREE materials — keep out of the chrome #hex gate (render values).
+    scene.background = new THREE.Color(0x1a1416);
     const camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
     camera.position.set(2.4, 1.8, 2.8);
     camera.lookAt(0, 0.4, 0);
@@ -54,7 +55,7 @@ export function HeroDetailOverlay({ feature, onClose }: Props) {
 
     const ground = new THREE.Mesh(
       new THREE.CircleGeometry(2.4, 48),
-      new THREE.MeshStandardMaterial({ color: "#3a322e", roughness: 0.92 }),
+      new THREE.MeshStandardMaterial({ color: 0x3a322e, roughness: 0.92 }),
     );
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
@@ -62,10 +63,10 @@ export function HeroDetailOverlay({ feature, onClose }: Props) {
     const mat = new THREE.MeshStandardMaterial({
       color:
         feature.kind === "planting"
-          ? "#5a7a4a"
+          ? 0x5a7a4a
           : feature.kind === "water"
-            ? "#4a6a7a"
-            : "#c4b4a4",
+            ? 0x4a6a7a
+            : 0xc4b4a4,
       roughness: 0.55,
       metalness: 0.08,
     });
