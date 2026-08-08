@@ -1754,6 +1754,11 @@ function SiteCanvasInner({
                               sketch.canvas?.placements ??
                               []
                             }
+                            initialStrokes={
+                              liveCanvas?.strokes ??
+                              sketch.canvas?.strokes ??
+                              []
+                            }
                             onPlacementCount={setSketchCount}
                             onCanvasSaved={(c) => {
                               setLiveCanvas(c);
@@ -1875,6 +1880,11 @@ function SiteCanvasInner({
                       initialPlacements={
                         liveCanvas?.placements ??
                         sketch.canvas?.placements ??
+                        []
+                      }
+                      initialStrokes={
+                        liveCanvas?.strokes ??
+                        sketch.canvas?.strokes ??
                         []
                       }
                       onPlacementCount={setSketchCount}

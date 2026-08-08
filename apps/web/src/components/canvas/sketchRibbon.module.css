@@ -38,6 +38,11 @@
   color: var(--ink, #24181e);
 }
 
+.cmdBtnActive {
+  background: var(--ink, #241318);
+  color: #faf4f6;
+}
+
 .saveStatus {
   flex: 1;
   text-align: center;

@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import type {
   BrushRecipe,
+  CanvasStroke,
   CatalogPlacement,
   CatalogSymbol,
   DesignCanvas,
@@ -70,6 +71,7 @@ type Props = {
   symbols: CatalogSymbol[];
   rateCard: RateCardItem[];
   initialPlacements: CatalogPlacement[];
+  initialStrokes?: CanvasStroke[];
   onPlacementCount?: (n: number) => void;
   /** Fired after a successful persist with the full canvas (preserves features/irrigation). */
   onCanvasSaved?: (canvas: DesignCanvas) => void;
@@ -198,6 +200,7 @@ export function SketchInstrument({
   symbols,
   rateCard,
   initialPlacements,
+  initialStrokes = [],
   onPlacementCount,
   onCanvasSaved,
   mapView = null,
@@ -223,6 +226,10 @@ export function SketchInstrument({
   const placementsRef = useRef<CatalogPlacement[]>(initialPlacements);
   const mutationFsmRef = useRef(createMutationFsm());
   const paintRef = useRef<PaintSession | null>(null);
+  const inkDraftRef = useRef<Array<{ x_pct: number; y_pct: number }> | null>(
+    null,
+  );
+  const strokesRef = useRef<CanvasStroke[]>(initialStrokes);
   const heuristicAtRef = useRef(0);
   const dragRef = useRef<{
     ids: string[];
@@ -250,6 +257,11 @@ export function SketchInstrument({
   const [assistReply, setAssistReply] = useState<string | null>(null);
   const [commandOpen, setCommandOpen] = useState(false);
   const [armedRecipe, setArmedRecipe] = useState<BrushRecipe | null>(null);
+  const [inkMode, setInkMode] = useState(false);
+  const [strokes, setStrokes] = useState<CanvasStroke[]>(initialStrokes);
+  const [inkDraft, setInkDraft] = useState<
+    Array<{ x_pct: number; y_pct: number }> | null
+  >(null);
   const [swatchHistory, setSwatchHistory] = useState<BrushRecipe[]>([]);
   const [cursorPct, setCursorPct] = useState<{ x: number; y: number } | null>(
     null,
@@ -293,8 +305,12 @@ export function SketchInstrument({
   }, [placements, onPlacementCount]);
 
   useEffect(() => {
-    onArmedChange?.(armedRecipe != null);
-  }, [armedRecipe, onArmedChange]);
+    onArmedChange?.(armedRecipe != null || inkMode);
+  }, [armedRecipe, inkMode, onArmedChange]);
+
+  useEffect(() => {
+    strokesRef.current = strokes;
+  }, [strokes]);
 
   const clientToPct = useCallback((clientX: number, clientY: number) => {
     const el = layerRef.current;
@@ -333,7 +349,7 @@ export function SketchInstrument({
       const saved = await saveDesignCanvasAction(
         projectId,
         placementsRef.current,
-        existing?.strokes ?? [],
+        strokesRef.current,
         existing?.irrigation_zones ?? [],
         existing?.annotations ?? [],
         existing?.features ?? [],
@@ -423,8 +439,21 @@ export function SketchInstrument({
   }, [persist]);
 
   const armBrush = useCallback((recipe: BrushRecipe) => {
+    setInkMode(false);
+    inkDraftRef.current = null;
+    setInkDraft(null);
     setArmedRecipe(recipe);
     setSwatchHistory((h) => pushSwatchHistory(h, recipe));
+  }, []);
+
+  const toggleInkMode = useCallback(() => {
+    setInkMode((prev) => {
+      const next = !prev;
+      if (next) setArmedRecipe(null);
+      return next;
+    });
+    inkDraftRef.current = null;
+    setInkDraft(null);
   }, []);
 
   const stampFromRecipe = useCallback(
@@ -861,6 +890,16 @@ export function SketchInstrument({
     const target = e.target as HTMLElement;
     if (target.closest("[data-placement-id]")) return;
 
+    if (inkMode) {
+      e.stopPropagation();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      setArmedRecipe(null);
+      const pt = clientToPct(e.clientX, e.clientY);
+      inkDraftRef.current = [pt];
+      setInkDraft([pt]);
+      return;
+    }
+
     if (armedRecipe) {
       e.stopPropagation();
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -890,6 +929,17 @@ export function SketchInstrument({
   const onPointerMove = (e: React.PointerEvent) => {
     const pt = clientToPct(e.clientX, e.clientY);
     setCursorPct({ x: pt.x_pct, y: pt.y_pct });
+
+    if (inkDraftRef.current) {
+      e.stopPropagation();
+      const last = inkDraftRef.current[inkDraftRef.current.length - 1]!;
+      if (Math.hypot(pt.x_pct - last.x_pct, pt.y_pct - last.y_pct) < 0.6) {
+        return;
+      }
+      inkDraftRef.current = [...inkDraftRef.current, pt];
+      setInkDraft(inkDraftRef.current);
+      return;
+    }
 
     if (paintRef.current?.active) {
       e.stopPropagation();
@@ -997,6 +1047,30 @@ export function SketchInstrument({
       }
       return;
     }
+    if (inkDraftRef.current) {
+      const pts = inkDraftRef.current;
+      inkDraftRef.current = null;
+      setInkDraft(null);
+      if (pts.length >= 2) {
+        const stroke: CanvasStroke = {
+          id: crypto.randomUUID(),
+          points: pts,
+          color: "#241318",
+          width_px: 2.5,
+        };
+        setStrokes((prev) => {
+          const next = [...prev, stroke];
+          strokesRef.current = next;
+          return next;
+        });
+        setDirty(true);
+        void persist();
+      }
+      if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+      return;
+    }
     if (paintRef.current?.active) {
       endPaint();
       if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
@@ -1055,14 +1129,42 @@ export function SketchInstrument({
     <>
       <div
         ref={layerRef}
-        className={`${css.layer} ${armedRecipe ? css.layerArmed : ""} ${selectMode && !armedRecipe ? css.layerSelect : ""} ${showGhostSuggestions && (ephemeralGhosts.length > 0 || ghostScanning) ? css.layerGhosts : ""}`}
+        className={`${css.layer} ${armedRecipe || inkMode ? css.layerArmed : ""} ${inkMode ? css.layerInk : ""} ${selectMode && !armedRecipe && !inkMode ? css.layerSelect : ""} ${showGhostSuggestions && (ephemeralGhosts.length > 0 || ghostScanning) ? css.layerGhosts : ""}`}
         data-testid="sketch-instrument"
-        data-armed={armedRecipe ? "1" : undefined}
+        data-armed={armedRecipe || inkMode ? "1" : undefined}
+        data-ink={inkMode ? "1" : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        <svg
+          className={css.inkSvg}
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden
+          data-testid="sketch-ink-layer"
+        >
+          {strokes.map((s) =>
+            s.points.length < 2 ? null : (
+              <polyline
+                key={s.id}
+                className={css.inkStroke}
+                points={s.points
+                  .map((p) => `${p.x_pct},${p.y_pct}`)
+                  .join(" ")}
+                stroke={s.color}
+                strokeWidth={s.width_px * 0.08}
+              />
+            ),
+          )}
+          {inkDraft && inkDraft.length >= 2 ? (
+            <polyline
+              className={css.inkStrokeDraft}
+              points={inkDraft.map((p) => `${p.x_pct},${p.y_pct}`).join(" ")}
+            />
+          ) : null}
+        </svg>
         {alignGuides?.x != null ? (
           <div
             className={css.alignGuideV}
@@ -1192,7 +1294,10 @@ export function SketchInstrument({
                 symbolById={symbolById}
                 aiSuggestions={aiSuggestions}
                 onArm={armSymbol}
-                onSelectSwatch={(r) => setArmedRecipe(r)}
+                onSelectSwatch={(r) => {
+                  setInkMode(false);
+                  setArmedRecipe(r);
+                }}
                 onToggleCopy={(id, key) => {
                   setSwatchHistory((prev) =>
                     prev.map((r) => (r.id === id ? { ...r, [key]: !r[key] } : r)),
@@ -1213,6 +1318,8 @@ export function SketchInstrument({
                   showGhostSuggestions &&
                   (ephemeralGhosts.length > 0 || ghostScanning)
                 }
+                inkMode={inkMode}
+                onToggleInk={toggleInkMode}
               />
             );
             if (chromeHost) return createPortal(ribbon, chromeHost);

@@ -8,11 +8,39 @@ export type StructuredStrokeConflict = {
 
 const PCT_TO_M = 0.35;
 
-/** Live conflict check for an in-progress structured stroke vs trees / TRP. */
+/** Indicative underground service corridors in % canvas space (not DBYD). */
+export type IndicativeUtilityCorridor = {
+  id: string;
+  label: string;
+  /** Axis-aligned band: y from y0..y1 across x 8..92 */
+  y0: number;
+  y1: number;
+};
+
+export function buildIndicativeUtilityCorridorsPct(): IndicativeUtilityCorridor[] {
+  return [
+    {
+      id: "util-gas",
+      label: "Indicative gas / service corridor",
+      y0: 46,
+      y1: 54,
+    },
+  ];
+}
+
+function pointInUtilityBand(
+  pt: { x_pct: number; y_pct: number },
+  band: IndicativeUtilityCorridor,
+): boolean {
+  return pt.x_pct >= 8 && pt.x_pct <= 92 && pt.y_pct >= band.y0 && pt.y_pct <= band.y1;
+}
+
+/** Live conflict check for an in-progress structured stroke vs trees / TRP / utilities. */
 export function assessStructuredStrokeConflicts(
   draft: Array<{ x_pct: number; y_pct: number }>,
   facts: SpatialObject[],
   kind: "ditch" | "path" | "wall" | "bed",
+  utilities: IndicativeUtilityCorridor[] = buildIndicativeUtilityCorridorsPct(),
 ): StructuredStrokeConflict[] {
   if (draft.length === 0) return [];
   const out: StructuredStrokeConflict[] = [];
@@ -42,14 +70,19 @@ export function assessStructuredStrokeConflicts(
     if (out.length > 0) break;
   }
 
-  if (kind === "wall") {
-    const height = 0.9;
-    if (height > 1.2) {
-      out.push({
-        severity: "critical",
-        title: "Retaining height",
-        detail: "Wall profile exceeds 1.2 m engineer threshold.",
-      });
+  if (kind === "ditch" || kind === "wall") {
+    for (const pt of draft) {
+      for (const u of utilities) {
+        if (pointInUtilityBand(pt, u)) {
+          out.push({
+            severity: "critical",
+            title: "Underground service",
+            detail: `${u.label} — confirm locate before excavating (indicative only).`,
+          });
+          break;
+        }
+      }
+      if (out.some((c) => c.title === "Underground service")) break;
     }
   }
 

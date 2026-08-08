@@ -6,6 +6,7 @@ import {
   assessStructuredStrokeConflicts,
   buildLandscapeFeatureFromStroke,
   defaultStructuredToolProps,
+  estimateStructuredStrokeCost,
   type StructuredToolKind,
 } from "@workstream/domain";
 import css from "./structuredToolOverlay.module.css";
@@ -42,6 +43,11 @@ export function StructuredToolOverlay({
     if (!kind || draft.length === 0) return [];
     return assessStructuredStrokeConflicts(draft, spatialFacts, kind);
   }, [kind, draft, spatialFacts]);
+
+  const microCost = useMemo(() => {
+    if (!kind) return null;
+    return estimateStructuredStrokeCost(kind, draft);
+  }, [kind, draft]);
 
   useEffect(() => {
     if (!kind) return;
@@ -145,6 +151,19 @@ export function StructuredToolOverlay({
         ) : (
           <p className={css.hint}>Pick ditch, path, wall or bed.</p>
         )}
+        {microCost ? (
+          <p className={css.microCost} data-testid="structured-tool-micro-cost">
+            ~{new Intl.NumberFormat("en-AU", {
+              style: "currency",
+              currency: "AUD",
+              maximumFractionDigits: 0,
+            }).format(microCost.cost_aud)}{" "}
+            · {microCost.length_m.toFixed(1)} m
+            {microCost.area_m2 > 0
+              ? ` · ${microCost.area_m2.toFixed(1)} m²`
+              : ""}
+          </p>
+        ) : null}
         {conflicts[0] ? (
           <p
             className={`${css.conflict}${critical ? ` ${css.conflictCritical}` : ""}`}

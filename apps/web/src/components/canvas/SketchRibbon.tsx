@@ -35,6 +35,8 @@ type Props = {
   assistPending: boolean;
   assistInputRef?: RefObject<HTMLTextAreaElement | null>;
   ghostsActive?: boolean;
+  inkMode?: boolean;
+  onToggleInk?: () => void;
 };
 
 const TABS: Array<{ id: SketchRibbonTab; label: string }> = [
@@ -87,6 +89,8 @@ export function SketchRibbon({
   assistPending,
   assistInputRef,
   ghostsActive = false,
+  inkMode = false,
+  onToggleInk,
 }: Props) {
   const [tab, setTab] = useState<SketchRibbonTab>("essentials");
   const [query, setQuery] = useState("");
@@ -128,6 +132,18 @@ export function SketchRibbon({
         <span className={css.saveStatus} data-testid="sketch-save-status">
           {saveStatusLabel}
         </span>
+        {onToggleInk ? (
+          <button
+            type="button"
+            className={`${css.cmdBtn}${inkMode ? ` ${css.cmdBtnActive}` : ""}`}
+            onClick={onToggleInk}
+            aria-pressed={inkMode}
+            title="Freehand ink for stroke-to-CAD"
+            data-testid="sketch-ink-toggle"
+          >
+            Ink
+          </button>
+        ) : null}
         <button
           type="button"
           className={css.cmdBtn}

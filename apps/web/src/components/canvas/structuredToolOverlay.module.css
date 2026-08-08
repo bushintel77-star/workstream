@@ -60,6 +60,14 @@
   color: var(--ink-soft, #6b5660);
 }
 
+.microCost {
+  margin: 0;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ink, #241318);
+}
+
 .conflict {
   margin: 0;
   font-size: 0.65rem;

@@ -27,4 +27,16 @@ describe("assessStructuredStrokeConflicts", () => {
     );
     expect(conflicts[0]?.severity).toBe("critical");
   });
+
+  it("flags ditch crossing indicative utility corridor", () => {
+    const conflicts = assessStructuredStrokeConflicts(
+      [
+        { x_pct: 40, y_pct: 50 },
+        { x_pct: 55, y_pct: 50 },
+      ],
+      [],
+      "ditch",
+    );
+    expect(conflicts.some((c) => c.title === "Underground service")).toBe(true);
+  });
 });
