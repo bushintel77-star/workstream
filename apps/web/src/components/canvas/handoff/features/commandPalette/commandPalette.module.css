@@ -6,25 +6,33 @@
   align-items: flex-start;
   justify-content: center;
   padding: 12vh 16px 16px;
-  background: var(--hc-line);
-  backdrop-filter: none;
+  background: color-mix(in srgb, var(--hc-ink) 28%, transparent);
+  backdrop-filter: blur(2px);
 }
 
 .panel {
+  --ink: var(--ws-frame-ink);
+  --ink-soft: var(--ws-frame-ink-dim);
+  --ink-faint: var(--ws-frame-ink-faint);
+  --glass: color-mix(in srgb, var(--ws-frame) 90%, transparent);
+  --line: var(--ws-frame-hair);
+
   width: min(520px, 100%);
-  border-radius: var(--r-xl);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-invert);
-  box-shadow: 0 18px 48px var(--hc-neu-shadow);
+  border-radius: var(--hc-r-pop, 12px);
+  border: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  box-shadow: 0 18px 48px -12px color-mix(in srgb, var(--hc-ink) 70%, transparent);
   overflow: hidden;
   font-family: var(--font-body);
-  color: var(--hc-ink);
+  color: var(--ink);
 }
 
 .input {
   width: 100%;
   border: none;
-  border-bottom: 1px solid var(--hc-line-soft);
+  border-bottom: 1px solid var(--line);
   padding: var(--s-3) var(--s-4);
   font: inherit;
   font-size: var(--text-sm);
@@ -39,7 +47,7 @@
 }
 
 .input::placeholder {
-  color: var(--hc-ink-faint);
+  color: var(--ink-faint);
 }
 
 .list {
@@ -57,7 +65,7 @@
   font-size: var(--text-nano);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ink-faint);
   pointer-events: none;
 }
 
@@ -69,7 +77,8 @@
   width: 100%;
   padding: var(--s-2) var(--s-3);
   border: none;
-  border-radius: var(--r-lg);
+  border-radius: var(--hc-r-control);
+  border-left: 2px solid transparent;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -79,7 +88,8 @@
 
 .row[data-active="true"],
 .row:hover {
-  background: color-mix(in srgb, var(--hc-ink) 5%, transparent);
+  background: color-mix(in srgb, var(--hc-accent) 12%, transparent);
+  border-left-color: var(--hc-accent);
 }
 
 .label {
@@ -89,12 +99,12 @@
 
 .detail {
   font-size: var(--text-xs);
-  color: var(--hc-ink-muted);
+  color: var(--ink-soft);
   line-height: 1.35;
 }
 
 .empty {
   padding: 16px 12px;
   font-size: var(--text-xs);
-  color: var(--hc-ink-muted);
+  color: var(--ink-soft);
 }

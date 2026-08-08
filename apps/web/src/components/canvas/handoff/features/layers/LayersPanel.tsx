@@ -164,7 +164,7 @@ export function LayersPanel({
         </span>
       </label>
       <label className={css.switchRow} data-testid="layers-buildable-area-toggle">
-        <span className={css.switchText}>Buildable area envelope</span>
+        <span className={css.switchText}>Pin buildable area</span>
         <span className={css.switch} data-on={buildableAreaOn ? "true" : "false"}>
           <input
             type="checkbox"

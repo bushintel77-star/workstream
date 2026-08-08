@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { computeBuildableArea } from "./buildable-area";
+import {
+  computeBuildableArea,
+  distanceToBuildableEdgeM,
+  pointInBuildableRemnant,
+} from "./buildable-area";
 import type { BoardPctPoint } from "./buildable-area";
 
 const BOARD_WIDTH_M = 40; // 100% = 40 m
@@ -202,5 +206,30 @@ describe("computeBuildableArea", () => {
     expect(result.buildable_m2).toBeLessThan(1100);
     expect(result.buildable_m2).toBeGreaterThan(900);
     expect(result.exclusions.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("pointInBuildableRemnant / distanceToBuildableEdgeM", () => {
+  const remnant: BoardPctPoint[][] = [
+    [
+      { x_pct: 10, y_pct: 10 },
+      { x_pct: 90, y_pct: 10 },
+      { x_pct: 90, y_pct: 90 },
+      { x_pct: 10, y_pct: 90 },
+    ],
+  ];
+
+  it("detects points inside the remnant", () => {
+    expect(pointInBuildableRemnant(50, 50, remnant)).toBe(true);
+    expect(pointInBuildableRemnant(5, 50, remnant)).toBe(false);
+  });
+
+  it("reports zero distance inside and metres outside", () => {
+    expect(distanceToBuildableEdgeM(50, 50, remnant, BOARD_WIDTH_M)).toBe(0);
+    // 5% left of left edge at x=10 → 5% of 40 m = 2.0 m
+    expect(distanceToBuildableEdgeM(5, 50, remnant, BOARD_WIDTH_M)).toBeCloseTo(
+      2,
+      0,
+    );
   });
 });

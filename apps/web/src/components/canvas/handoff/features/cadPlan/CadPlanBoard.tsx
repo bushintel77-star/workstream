@@ -314,6 +314,8 @@ type Props = {
   onCadHandleInteract?: () => void;
   /** Hover affordance on handles / insert nodes — drives context cursor. */
   onBoardCursor?: (mode: "default" | "move" | "add" | "paint") => void;
+  /** Board pointer in % — buildable-area live validation chip. */
+  onBoardCursorPct?: (pct: PctPoint | null) => void;
   /**
    * Start a viewport pan drag from a pointer origin. Select+drag on empty
    * board pans (Alt/Option+drag still marquee-selects); Space / middle-drag
@@ -444,6 +446,7 @@ export function CadPlanBoard({
   onEmptyClick,
   onCadHandleInteract,
   onBoardCursor,
+  onBoardCursorPct,
   onPanDrag,
   onInertToolClick,
   fidelity = "draft",
@@ -523,6 +526,9 @@ export function CadPlanBoard({
     }
     onBoardCursor(cursorMode);
   }, [cursorMode, tool, onBoardCursor]);
+  useEffect(() => {
+    onBoardCursorPct?.(cursorPct);
+  }, [cursorPct, onBoardCursorPct]);
   const gridStep = GRID_STEP_PCT[gridGrain];
   const showDraftGrid =
     !frameOn &&

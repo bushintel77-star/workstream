@@ -125,6 +125,11 @@ import { SunMarkerPip } from "./features/shade/SunMarkerPip";
 import { ClimateBedWash } from "./features/shade/ClimateBedWash";
 import { KeylessOverlayWash } from "./features/keyless/KeylessOverlayWash";
 import { BuildableAreaOverlay } from "./features/buildableArea/BuildableAreaOverlay";
+import { shouldAutoShowBuildableArea } from "./features/buildableArea/buildableAreaPolicy";
+import {
+  readBuildableAreaPin,
+  writeBuildableAreaPin,
+} from "./features/buildableArea/buildableAreaPrefs";
 import { SketchBoard } from "./features/sketch/SketchBoard";
 import { FreehandLayer } from "./features/sketch/FreehandLayer";
 import { ImageLayerSlot } from "./features/sketch/ImageLayerSlot";
@@ -655,6 +660,11 @@ export function HandoffDesignStudio({
   const [boardCursor, setBoardCursor] = useState<
     "default" | "move" | "add" | "paint" | null
   >(null);
+  /** Board pointer % from CadPlanBoard — buildable live chip. */
+  const [boardCursorPct, setBoardCursorPct] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [sketchChrome, setSketchChrome] = useState<{
     tool: "pen" | "eraser";
     tip: import("./features/sketch/sketchCursors").SketchTipGrade;
@@ -1405,6 +1415,18 @@ export function HandoffDesignStudio({
     });
   }, [projectId, ui.frameOn, ui.sheetElevOn]);
 
+  /** Restore buildable-area pin for this project session. */
+  useEffect(() => {
+    if (readBuildableAreaPin(projectId)) {
+      studio.setUi({ buildableAreaOn: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per project mount (buildable pin)
+  }, [projectId]);
+
+  useEffect(() => {
+    writeBuildableAreaPin(projectId, ui.buildableAreaOn);
+  }, [projectId, ui.buildableAreaOn]);
+
   /** Session phase override wins over the canvas/status boot value. */
   useEffect(() => {
     const prefs = loadLifecyclePhasePrefs(projectId);
@@ -2151,6 +2173,21 @@ export function HandoffDesignStudio({
    * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
    */
   const scaleM = ui.boardWidthM ?? BOARD_WIDTH_M_AT_100;
+
+  const trenchDrafting = useMemo(
+    () => (studio.constructionTrenches ?? []).some((t) => t.ghost),
+    [studio.constructionTrenches],
+  );
+  const highStakesBuildable = shouldAutoShowBuildableArea({
+    tool: ui.tool,
+    armed: ui.tool === "paint" ? ui.paintSwatch : ui.armed,
+    armedSymbolId: ui.armedSymbolId,
+    trenchDrafting,
+  });
+  const buildableAreaVisible =
+    (ui.buildableAreaOn || highStakesBuildable) &&
+    !ui.frameOn &&
+    !ui.focusOn;
 
   const lvRuns = useMemo(() => {
     const boardW = scaleM > 0 ? scaleM : 110;
@@ -4006,7 +4043,8 @@ export function HandoffDesignStudio({
                   boundary={studio.boundary}
                 />
                 <BuildableAreaOverlay
-                  active={ui.buildableAreaOn && !ui.frameOn && !ui.focusOn}
+                  active={buildableAreaVisible}
+                  pinned={ui.buildableAreaOn}
                   boundary={studio.boundary}
                   building={studio.building}
                   easements={studio.easements ?? []}
@@ -4015,6 +4053,13 @@ export function HandoffDesignStudio({
                   items={studio.items}
                   setbackM={compliance.setbackM}
                   boardWidthM={scaleM}
+                  cursorPct={boardCursorPct ?? ui.drawCursor}
+                  showValidation={
+                    highStakesBuildable || ui.buildableAreaOn
+                  }
+                  onPinChange={(pinned) =>
+                    studio.setUi({ buildableAreaOn: pinned })
+                  }
                 />
                 <SunCastOverlay
                   active={
@@ -4190,6 +4235,7 @@ export function HandoffDesignStudio({
                   eyedropArmed={eyedropArmed}
                   onEyedrop={pickStyle}
                   onBoardCursor={setBoardCursor}
+                  onBoardCursorPct={setBoardCursorPct}
                   onPanDrag={startBoardPan}
                   onInertToolClick={onInertToolClick}
                   fidelity={fidelity}

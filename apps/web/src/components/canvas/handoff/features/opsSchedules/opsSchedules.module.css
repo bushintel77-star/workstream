@@ -6,12 +6,13 @@
   max-height: min(72vh, 40rem);
   overflow: auto;
   padding: 0.85rem 1rem 1rem;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--surface-frost, #f7f3ee) 90%, transparent);
-  backdrop-filter: blur(14px);
-  border: 1px solid color-mix(in srgb, var(--ink, #1c1917) 12%, transparent);
-  box-shadow: 0 12px 40px color-mix(in srgb, #1c1917 12%, transparent);
-  color: var(--ink, #1c1917);
+  border-radius: var(--hc-r-pop, 12px);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  border: 1px solid var(--ws-frame-hair);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--hc-ink) 40%, transparent);
+  color: var(--ws-frame-ink);
   z-index: 40;
 }
 
@@ -34,15 +35,15 @@
 .tabOn {
   font: inherit;
   cursor: pointer;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--ink, #1c1917) 18%, transparent);
+  border-radius: var(--hc-r-control, 8px);
+  border: 1px solid var(--ws-frame-hair);
   background: transparent;
   color: inherit;
   padding: 0.35rem 0.65rem;
 }
 
 .btn {
-  background: color-mix(in srgb, var(--ink, #1c1917) 8%, transparent);
+  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
 }
 
 .tabs {
@@ -53,7 +54,7 @@
 }
 
 .tabOn {
-  background: color-mix(in srgb, var(--ink, #1c1917) 12%, transparent);
+  background: color-mix(in srgb, var(--ws-frame-ink) 12%, transparent);
 }
 
 .honesty,
@@ -65,7 +66,7 @@
 }
 
 .error {
-  color: #9b2c2c;
+  color: var(--hc-danger);
   opacity: 1;
 }
 
@@ -84,7 +85,7 @@
 .table td {
   text-align: left;
   padding: 0.3rem 0.4rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--ink, #1c1917) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ws-frame-hair) 70%, transparent);
   white-space: nowrap;
 }
 

@@ -5,13 +5,14 @@
   z-index: var(--ws-z-interact);
   width: min(240px, calc(100vw - 28px));
   padding: var(--s-3) var(--s-3);
-  border-radius: var(--hc-r-panel, 14px);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
-  backdrop-filter: none;
-  box-shadow: var(--hc-elev-2);
+  border-radius: var(--hc-r-pop, 12px);
+  border: 1px solid var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  box-shadow: 0 14px 36px -12px color-mix(in srgb, var(--hc-ink) 55%, transparent);
   font-family: var(--font-body);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -25,27 +26,28 @@
   background: transparent;
   backdrop-filter: none;
   box-shadow: none;
+  color: inherit;
 }
 
 .meta {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-nano);
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
   line-height: 1.35;
 }
 
 .shadowHead {
   margin-top: 4px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: var(--hc-fs-1);
-  letter-spacing: 0.08em;
+  font-size: var(--text-femto, 9px);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint, var(--hc-ink-faint));
 }
 
 .shadowLine span:first-child {
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
   font-size: var(--hc-fs-3);
 }
 
@@ -58,11 +60,12 @@
 
 .kicker {
   margin: 0;
-  font-size: var(--text-nano);
-  letter-spacing: 0.14em;
+  font-size: var(--text-femto, 9px);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint, var(--hc-ink-faint));
   font-family: "IBM Plex Mono", monospace;
+  font-weight: 650;
 }
 
 .total {
@@ -70,13 +73,18 @@
   background: transparent;
   padding: 0;
   text-align: left;
-  font: inherit;
-  font-size: var(--text-lg);
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  color: var(--hc-ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ws-frame-ink, var(--hc-ink));
   cursor: pointer;
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.total:hover {
+  color: color-mix(in srgb, var(--ws-frame-ink) 88%, var(--hc-accent));
 }
 
 .totalPulse {
@@ -85,9 +93,14 @@
 }
 
 .gst {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--hc-ink-muted);
+  display: inline-block;
+  margin-left: 4px;
+  font-size: var(--text-micro);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
+  vertical-align: middle;
 }
 
 .lines {
@@ -106,7 +119,7 @@
 .amt {
   font-family: "IBM Plex Mono", monospace;
   font-variant-numeric: tabular-nums;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
 }
 
 .chips {
@@ -120,9 +133,9 @@
   min-height: 28px;
   padding: 0 var(--s-2);
   border-radius: var(--hc-r-control);
-  border: 1px dashed var(--hc-line);
-  background: var(--hc-line-soft);
-  color: var(--hc-ink);
+  border: 1px dashed var(--ws-frame-hair);
+  background: color-mix(in srgb, var(--ws-frame-ink) 6%, transparent);
+  color: var(--ws-frame-ink);
   font: inherit;
   font-size: var(--text-micro);
   font-weight: 650;
@@ -131,16 +144,16 @@
 
 .chip[data-on="true"] {
   border-style: solid;
-  border-color: var(--hc-ink);
-  background: var(--hc-ink);
-  color: var(--hc-invert);
+  border-color: var(--ws-frame-ink);
+  background: var(--ws-frame-ink);
+  color: var(--ws-frame);
 }
 
 .foot {
   margin: 0;
   font-size: var(--text-micro);
   line-height: 1.4;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
 }
 
 .advanced {
@@ -155,7 +168,7 @@
   padding: 0 8px;
   border: none;
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
   font: inherit;
   font-size: var(--hc-fs-3);
   font-weight: 650;
@@ -169,5 +182,5 @@
   flex-direction: column;
   gap: var(--s-1);
   padding-top: 2px;
-  border-top: 1px solid var(--hc-line-soft);
+  border-top: 1px solid var(--ws-frame-hair);
 }

@@ -494,3 +494,114 @@ function labelForOverlay(
   };
   return labels[kind] ?? `${kind} overlay`;
 }
+
+/** Ray-cast point-in-polygon in board % (Y-down planar). */
+export function pointInBoardPctRing(
+  x_pct: number,
+  y_pct: number,
+  ring: BoardPctPoint[],
+): boolean {
+  const pts = openRing(
+    ring.map((p) => [p.x_pct, p.y_pct] as [number, number]),
+  );
+  if (pts.length < 3) return false;
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i]![0];
+    const yi = pts[i]![1];
+    const xj = pts[j]![0];
+    const yj = pts[j]![1];
+    const intersect =
+      yi > y_pct !== yj > y_pct &&
+      x_pct < ((xj - xi) * (y_pct - yi)) / (yj - yi + 1e-15) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+/** True when the board-% point lies in any buildable remnant polygon. */
+export function pointInBuildableRemnant(
+  x_pct: number,
+  y_pct: number,
+  polygons: BoardPctPoint[][],
+): boolean {
+  for (const ring of polygons) {
+    if (ring.length >= 3 && pointInBoardPctRing(x_pct, y_pct, ring)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function distPointToSegmentPct(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  if (len2 < 1e-12) return Math.hypot(px - ax, py - ay);
+  let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+/**
+ * Shortest distance from a board-% point to the remnant perimeter, in metres.
+ * Inside the remnant returns 0.
+ */
+export function distanceToBuildableEdgeM(
+  x_pct: number,
+  y_pct: number,
+  polygons: BoardPctPoint[][],
+  boardWidthM: number,
+): number {
+  if (!(boardWidthM > 0) || polygons.length === 0) return 0;
+  if (pointInBuildableRemnant(x_pct, y_pct, polygons)) return 0;
+  let bestPct = Infinity;
+  for (const ring of polygons) {
+    const pts = openRing(
+      ring.map((p) => [p.x_pct, p.y_pct] as [number, number]),
+    );
+    if (pts.length < 2) continue;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i]!;
+      const b = pts[(i + 1) % pts.length]!;
+      const d = distPointToSegmentPct(x_pct, y_pct, a[0], a[1], b[0], b[1]);
+      if (d < bestPct) bestPct = d;
+    }
+  }
+  if (!Number.isFinite(bestPct)) return 0;
+  return Math.round(((bestPct / 100) * boardWidthM) * 10) / 10;
+}
+
+/** Index of the perimeter segment nearest the point (for violation highlight). */
+export function nearestBuildableSegmentIndex(
+  x_pct: number,
+  y_pct: number,
+  polygons: BoardPctPoint[][],
+): { polygonIndex: number; segmentIndex: number } | null {
+  let best = Infinity;
+  let hit: { polygonIndex: number; segmentIndex: number } | null = null;
+  for (let pi = 0; pi < polygons.length; pi++) {
+    const ring = polygons[pi]!;
+    const pts = openRing(
+      ring.map((p) => [p.x_pct, p.y_pct] as [number, number]),
+    );
+    if (pts.length < 2) continue;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i]!;
+      const b = pts[(i + 1) % pts.length]!;
+      const d = distPointToSegmentPct(x_pct, y_pct, a[0], a[1], b[0], b[1]);
+      if (d < best) {
+        best = d;
+        hit = { polygonIndex: pi, segmentIndex: i };
+      }
+    }
+  }
+  return hit;
+}

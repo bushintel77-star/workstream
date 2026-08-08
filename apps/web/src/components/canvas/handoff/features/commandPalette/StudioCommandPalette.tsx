@@ -515,11 +515,11 @@ export function StudioCommandPalette({
         ? [
           {
             id: "buildable-area",
-            label: "Buildable area envelope",
+            label: "Pin buildable area",
             detail:
-              "Setback lines, TPZ rings, easement exclusion — the compliant buildable footprint",
+              "Pin the setback laser — also auto-shows for deck, paving, drain and trench tools",
             keywords:
-              "buildable area envelope setback tpz easement compliance footprint boundary",
+              "buildable area envelope setback tpz easement compliance footprint boundary pin",
             run: onToggleBuildableArea,
           } satisfies StudioCommand,
         ]
