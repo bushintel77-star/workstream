@@ -1,293 +1,242 @@
-# Present mode — designer feature & UI inventory
+# Present mode — designer brief
 
-**Audience:** Graphic / UI designer (operator Present surface)  
-**Product:** Workstream — Curtis & Co landscape co-pilot  
+**Title:** Refactoring the authoring surface — canvas-first UI & AI orchestration for quotation / meeting-deck assembly  
+**Audience:** Frontend graphic designer  
+**Product:** Workstream operator studio (Curtis & Co landscape co-pilot)  
 **Surface:** `/projects/[id]?mode=present` → `PresentSurface`  
 **Platform:** Desktop-first web (`apps/web`)  
 **Date:** 2026-08-09  
-**Status:** Feature inventory + design brief (Workflow 1)
+**Scope:** Workflow 1 (indicative CAD → meeting deck). Stage 2 survey-grade CAD is out of scope.
 
-**Read with:**  
-[`STUDIO-STYLING-AND-UX.md`](../STUDIO-STYLING-AND-UX.md) · [`DESIGNER-FEATURE-INVENTORY.md`](../DESIGNER-FEATURE-INVENTORY.md) · [`TIER1-2026-FRONTEND-DESIGN-SPEC.md`](./TIER1-2026-FRONTEND-DESIGN-SPEC.md) · [`CAD-AI-2026-UX.md`](../CAD-AI-2026-UX.md)
+**Pair with (required):** [`STUDIO-STYLING-AND-UX.md`](../STUDIO-STYLING-AND-UX.md) — binding gallery frame, frost docks, tokens, forbidden looks.  
+**Also:** [`DESIGNER-FEATURE-INVENTORY.md`](../DESIGNER-FEATURE-INVENTORY.md) · [`CAD-AI-2026-UX.md`](../CAD-AI-2026-UX.md) · [`TIER1-2026-FRONTEND-DESIGN-SPEC.md`](./TIER1-2026-FRONTEND-DESIGN-SPEC.md)
 
 ---
 
-## 1. What Present is (and is not)
+## 1. Positioning
+
+Enterprise AEC SaaS has moved to a **canvas-first** authoring model: multi-modal AI may propose inside a spatial workbench, while the operator keeps total authorial control.
+
+Present is that workbench for **document assembly** — synthesizing Phase 1 indicative CAD geometry, financial ledgers, and aesthetic tokens into coherent client deliverables.
 
 | Present **is** | Present **is not** |
 |----------------|--------------------|
-| Operator **meeting-deck authoring** — compose pages for a client conversation | **Client presentation** (View → Client presentation) — chrome-off theatre on the plan |
-| Live-bound panels from the CAD board + estimate | **Share** — client portal URL + liability gate |
-| Ghost-until-accept AI (Dissect / Format) | A second CAD canvas or Fit sheet |
-| Printable / screen-shareable page paper | The Quote live-cost rail (right lane on CAD) |
+| Active **assembly workbench** for meeting decks / quotation pages | **Client presentation** (View → Client presentation) — chrome-off share-screen theatre |
+| Operator authoring of pages, panels, and AI-reviewed layouts | **Share** — client portal URL + liability gate |
+| Live-bound plan crops + estimate widgets (until issue) | A second CAD drafting canvas or Fit sheet |
+| Desktop-first web composition | Stage 2 survey-grade CAD / paper space |
 
 One sentence: **Present turns the working drawing into a client-facing deck the operator builds page by page.**
 
 ---
 
-## 2. Product law for this surface
+## 2. Core identity — the disappearing interface
 
-1. **Sentence case** labels; **AU locale** (en-AU, AUD, GST).
-2. **AI is ghost until Accept** — Dissect / Format proposals never silent-write into the deck.
-3. **Summoned chrome** — Deck settings is a dock, not a permanent slab over the page paper.
-4. **Honesty** — live widgets (quote totals, etc.) stay indicative; footer honesty language is first-class.
-5. **Identity** — Present workspace uses a **paper / instrument** composition (page on a workbench), while the surrounding studio frame stays the dark gallery mount. Do not restyle Present as blush-pink chrome, purple glow, or dashboard card soup.
-6. **Fonts in product:** Fraunces (display) · Sora (UI) · IBM Plex Mono (meta). Deck theme may also offer Inter / Hand-written as content fonts.
+**Product law:** *The drawing is the product.*
+
+- Application chrome must never appear as a fixed opaque slab parked on the plan or page paper.
+- Progressive disclosure + idle recession: idle rails fade after ~6 seconds (studio frame; Present suspends idle while docks / reviews are open).
+- Visual identity: **dark grey gallery frame** · **cream / parchment page paper** · **frost docks**.
+- Retired / forbidden: blush-pink page washes as studio chrome, purple glows, default Inter/Roboto as the product UI stack, dashboard card soup.
+- Sentence case labels · AU locale (en-AU, AUD, GST) · WCAG AA text on composited chrome.
 
 ---
 
-## 3. Unlock & entry
+## 3. Architectural gateway — CAD binding & unlock
+
+Present is a viewport onto a **reactive** studio store. The authoring surface stays locked until underlying CAD geometry is accepted.
 
 | Gate | Behaviour |
 |------|-----------|
-| Unlock | Accepted CAD geometry exists (placements, strokes, or zones) |
-| Locked tab copy | “Accept CAD geometry before presenting.” |
-| Entry | Mode strip **Present**, or `?mode=present` |
-| Exit | **Back** → returns to CAD |
+| Locked | Mode tab disabled |
+| Locked copy | `Accept CAD geometry before presenting.` |
+| Unlocked | Accepted CAD exists (placements, strokes, or zones) — Present binds to live plan snapshot + estimate |
 
-Surface banner states (`data-surface-state` / `data-testid="present-surface-banner"`):
+**Engineering truth (for designers):** Plan crops are **%-coordinate board snapshots** of the handoff parchment plan (boundary, building, items, strokes) — not a separate WebGL CAD viewport. Design them as live plan windows on paper, not as a second 3D engine.
 
-| State | When | Designer note |
-|-------|------|----------------|
-| `empty` | No deck selected / none exist | Empty workspace + “New deck” CTA |
-| `ready` | Draft deck open, no AI review | Normal compose |
-| `ghost` | Dissect or Format review open | Ghost review overlays page |
-| `locked` | Deck `status = issued` | Issued / freeze treatment — edits blocked |
+In AEC terms: spatial geometry → material quantification → estimate → widgets. Present must not pretend to invent geometry the board does not have.
 
 ---
 
-## 4. User logic flow (operator)
+## 4. Spatial ergonomics — two dialects (never mix)
 
-```text
-CAD unlocked
-  → Present tab
-  → New deck  (or pick existing)
-  → Add page (if needed)
-  → Compose panels (text / plan crop / image / swatches / widgets)
-  → Optional: Dissect plan  → Accept / Reject crop ghosts
-  → Optional: Format page   → Accept / Reject layout ghosts
-  → Optional: Apply template
-  → Deck settings (title, deliverable, template, palette, font)
-  → Print  (meeting pack)
-  → Issue  (freeze → locked)   [status path]
-```
+Frost / glass UI lives **outside** the zoom/rotate camera (`CameraChrome` → `camera-chrome-root`). Never parent glass inside `.zoomWorld`.
+
+| Component | Placement | Visual dialect |
+|-----------|-----------|----------------|
+| **Gallery frame** (top / side / bottom bands) | Outer studio shell | Flat monochrome IDE icons — transparent rest, `--ws-frame-wash` hover, `--ws-frame-ink-*` glyphs. No plastic chips in the frame. |
+| **Deck settings dock** | Summoned right inspector | Frost / dark translucent inspector (`--hc-glass` / frame-mix). Title, Deliverable, Template, Palette, Font. |
+| **Add / AI toolbars** | Over the Present workspace (not a sticky idle ribbon on the page) | Calm kit buttons; summoned pickers. |
+| **Page paper (active canvas)** | Central viewport | Pure rendering surface — cream/parchment sheet (`--sheet-*` kinship). The artwork. |
+| **Ghost reviews** | Overlay when Dissect / Format runs | Elevated review cards — Accept / Reject / Accept all. |
 
 ---
 
-## 5. Screen inventory (regions to design)
+## 5. Content primitives — live data assembly
 
-Design **one composition**: left rail + page stage + bottom page nav. Not a multi-dashboard.
+Panels ingest data from unlocked CAD geometry and the live estimation engine.
 
-### 5.1 Shell
+| Panel | Data source & behaviour |
+|-------|-------------------------|
+| **Text** | Operator strings; theme typography (see §8) |
+| **Plan crop** | Live board snapshot bound to accepted CAD (%-coords); label / reason from Dissect; sync when board revision moves |
+| **Image** | Canvas image layers (import in Sketch/CAD first if empty) |
+| **Swatch board** | Material chips from placed board materials; columns + caption |
+| **Widget** | Live subscription to estimate / materials until the deck is issued |
 
-| Region | Role | Contents |
-|--------|------|----------|
-| **Surface root** | Full takeover inside studio board area | `data-testid="present-surface"` |
-| **State banner** | One-line mode status | Empty / ready / ghost / locked copy |
-| **Sidebar** (~260px) | Deck library | Back, title “Present”, New deck, deck list, delete |
-| **Workspace** | Active deck | Toolbar + page area + page nav |
-| **Empty workspace** | No deck selected | Lead + New deck |
+### Widgets
 
-### 5.2 Deck sidebar
+| Widget | Intent |
+|--------|--------|
+| Quote total | Synchronised AUD total incl. GST |
+| Savings ledger | Indicative ledger lines |
+| Zone summary | Zone / area metrics |
+| Material swatches | Live finish chips |
+| Caption | Short editorial caption |
+| Honesty footer | Explicit disclaimer — e.g. indicative pricing / *Concept sketch for estimating — not a construction drawing.* |
 
-| Element | Spec |
-|---------|------|
-| Back | Ghost button → CAD |
-| Title | “Present” |
-| New deck | Primary CTA |
-| Deck row | Title + deliverable label + “— issued” when locked |
-| Delete | Per-row destructive (warn / reversible preference) |
-| Empty list | “No decks yet. Create one to start.” |
-
-### 5.3 Deck toolbar (active deck)
-
-| Control | Spec |
-|---------|------|
-| Deck title | Live title readout |
-| Deck settings | Toggles summoned inspector dock |
-| Print | Browser print |
-
-### 5.4 Deck settings dock (summoned)
-
-| Field | Options (labels) |
-|-------|------------------|
-| Title | Free text |
-| Deliverable | Client deck · Quotation · Mood board · Concept sketch |
-| Template | Editorial classic · Editorial minimal · Editorial feature · Editorial schedule |
-| Palette | Stone · Sage · Ink · Blush · Parchment |
-| Font | Fraunces · Sora · Inter · Hand-written |
-
-**Design ask:** One dock language (dark translucent / high-contrast inspector), close control, field hierarchy. Not a second browser settings page.
-
-### 5.5 Page stage
-
-| Element | Spec |
-|---------|------|
-| Page paper | Single page artboard — the hero of Present |
-| Panels | Freely placed rectangles on the page (% layout) |
-| Add bar | Add text · Add plan crop · Add swatch board · Add image · Add widget |
-| AI bar | Dissect plan · Format page · Apply template |
-| Pickers | Image picker · Widget picker (popovers) |
-| Ghost reviews | Dissect review · Format review (Accept / Accept all / Reject / Close) |
-
-### 5.6 Page nav
-
-| Element | Spec |
-|---------|------|
-| Page tabs | 1 · 2 · 3 … |
-| Count | “N pages” |
-| Add page | Secondary |
+Widgets read as **instrument readouts**, not marketing stat pills.
 
 ---
 
-## 6. Panel types (content inventory)
+## 6. AI orchestration — Dissect, Format, human gate
 
-Each panel is a **kind** with a rect on the page (`x/y/w/h %`, z-index).
+AI is a **spatial intern**. All proposals are ephemeral **ghosts**. AI must never silent-write into the deck.
 
-| Kind | Purpose | Designer notes |
-|------|---------|----------------|
-| **text** | Heading + body | Roles: body (and heading emphasis). Editable in place. |
-| **plan_crop** | Crop of live CAD plan | Shows boundary/building/items/strokes from plan snapshot; label + reason from Dissect; “sync crop” when board revision moves |
-| **image** | Photo / underlay from canvas image layers | Empty picker if no layers — copy: import in Sketch/CAD first |
-| **swatch_board** | Material chips from live board | Columns (default 3), toggle swatches, caption |
-| **widget** | Live data tile | Bound to estimate / materials — see §7 |
+**Human gate (Accept XOR Reject before advance):** drafting tools yield while a review is open; the operator must Accept, Accept all, or Reject before returning to ready compose.
 
-### Panel chrome (per panel)
+### AI Dissect
 
-Design selected / hover / drag / resize / bring-to-front / remove affordances. Keep handles calm — instrument bezel, not game HUD.
+1. Operator triggers **Dissect plan**.  
+2. System proposes plan-crop ghosts (label, reason, crop rect).  
+3. Operator **Accept** (one) · **Accept all** · **Reject**.  
+4. Accepted ghosts become `plan_crop` panels.
 
----
-
-## 7. Live widgets
-
-| Widget | Slot hint | Content |
-|--------|-----------|---------|
-| Quote total | title_meta | Total incl. GST (AUD) |
-| Savings ledger | side_stack | Indicative savings / ledger lines |
-| Zone summary | side_stack | Zone metrics from estimate |
-| Material swatches | footer_band | Live material chips |
-| Caption | footer_band | Short caption text |
-| Honesty footer | footer_band | Indicative pricing disclaimer |
-
-Widgets must read as **live instrument readouts**, not marketing stats pills.
-
----
-
-## 8. AI flows (ghost theatre)
-
-Same human-in-the-loop law as CAD ghosts.
-
-### 8.1 Dissect plan
-
-1. Operator clicks **Dissect plan**.  
-2. API returns crop proposals (`label`, `reason`, crop rect).  
-3. **Ghost review** lists proposals.  
-4. Accept → becomes `plan_crop` panel(s). Reject → discard. Accept all → batch.
-
-### 8.2 Format page
+### AI Format
 
 1. Requires ≥1 panel on the page.  
-2. **Format page** proposes new rects / placement.  
-3. **Format review** shows rationale + per-panel Accept / Reject.  
-4. Accept writes layout; never auto-applies without Accept.
+2. **Format page** proposes layout rects from the selected Template.  
+3. Layout ghosts appear; operator Accept / Reject per panel or Accept all.  
+4. Never auto-apply without Accept.
 
-### 8.3 Apply template
+### Apply template
 
-Template-driven layout pass (destructive-adjacent — treat as strong confirm visually). Disabled when page has no panels.
+Template-driven layout pass — treat visually as a strong / careful action (can reshape the page).
 
-**Design ask:** Distinct ghost language for Present (editorial paper ghosts) vs CAD board ghosts — related family, not identical.
+**Design ask:** Present ghosts should feel editorial (paper overlays), related to but distinct from CAD board ghosts.
 
 ---
 
-## 9. Deliverable × template matrix (design variants)
+## 7. Deliverables, templates, palettes
 
-Design **cover + 2 interior page samples** for each deliverable × at least two templates.
+Hardcoded hex in shipped chrome is forbidden; resolve via CSS variables (`--hc-*`, `--ws-frame-*`, `--sheet-*`, semantic aliases).
+
+### Deliverable types
 
 | Deliverable | Intent |
 |-------------|--------|
 | Client deck | Meeting narrative — plan crops + story text |
 | Quotation | Price-forward — quote widgets + honesty |
-| Mood board | Material / image heavy — swatches + images |
+| Mood board | Material / image heavy |
 | Concept sketch | Early intent — sketch-forward imagery + light copy |
 
-| Template | Layout character |
-|----------|------------------|
-| Editorial classic | Balanced title + body + side stack |
-| Editorial minimal | Sparse margins, one hero crop |
-| Editorial feature | Large plan / image feature |
-| Editorial schedule | Denser meta + lists |
+### Grid templates
 
-| Palette | Mood (use product tokens; no raw hex in ship) |
-|---------|-----------------------------------------------|
-| Stone | Neutral grey stone |
-| Sage | Soft green landscape |
-| Ink | High-contrast dark editorial |
-| Blush | Warm accent (content theme only — not studio chrome blush) |
-| Parchment | Cream paper kinship with Fit sheet |
+| Template | Character |
+|----------|-----------|
+| Editorial classic | Print margins, multi-column balance |
+| Editorial minimal | Expansive negative space, aggressive alignment |
+| Editorial feature | Visual impact — plan crops may feel feature-bleed |
+| Editorial schedule | Dense tabular / widget + swatch structure |
 
----
+### Palettes (content theme — not studio chrome)
 
-## 10. States & edge cases (must design)
-
-| State | UI |
-|-------|-----|
-| Locked mode (no CAD yet) | Mode tab disabled + lock copy |
-| Empty Present (no decks) | Banner `empty` + empty workspace CTA |
-| Deck with no pages | “No pages. Add one…” |
-| Image picker empty | Import guidance |
-| Dissect / Format busy | Loading on buttons |
-| Ghost review open | Banner `ghost` + review panel |
-| Issued / locked | Banner `locked`; issued badge on list; no edit affordances |
-| Autosave | Uses studio UnifiedSaveStatus (do not invent a second save pill) |
-| Error | Inline error in sidebar (validation / network) |
+| Palette | Mood |
+|---------|------|
+| Stone | High-contrast greys |
+| Sage | Muted landscape greens |
+| Ink | Deep saturated dark editorial |
+| Blush | Warm accent **on the page content only** — never reintroduce blush-pink as studio chrome |
+| Parchment | Warm beige / cream kinship with Fit sheet |
 
 ---
 
-## 11. Visual dialects on Present
+## 8. Typography
 
-| Layer | Dialect |
-|-------|---------|
-| Studio outer frame (mode strip still visible) | Flat frame IDE icons |
-| Present sidebar + toolbar | Instrument / kit buttons — calm, dense enough for ops |
-| Deck settings dock | Summoned dark translucent inspector |
-| Page paper | Light printable sheet — the artwork |
-| Ghost reviews | Frost / elevated review cards over the page |
-| Live widgets | Mono meta + clear AUD figures |
-
-Do **not** park a permanent opaque settings column on top of the page paper.
+| Face | Role |
+|------|------|
+| **Fraunces** | Display / primary headers where used |
+| **Sora** | Core UI and interface labels |
+| **IBM Plex Mono** | Meta, financial ledgers, CAD-adjacent labels |
+| **Inter** | Optional deck content font (theme picker) |
+| **Architects Daughter** (`Hand-written` theme / `--font-hand`) | Hand-lettered presentation DNA on content — **never** chrome or HUD |
 
 ---
 
-## 12. Related surfaces (do not merge in this brief)
+## 9. Finite states & user logic flow
 
-| Surface | Relationship |
-|---------|--------------|
-| **Client presentation** | Chrome-off plan theatre for screen share — separate View toggle |
-| **Fit sheet** | Cream working drawing on the plan — toggle **F**, not Present |
-| **Quote / Live cost** | Right-lane BOM on CAD — feeds widgets, not Present itself |
-| **Share / portal** | After costed quote — client URL, not deck authoring |
-| **Print meeting pack** | Also available from Client presentation chrome |
+Deck lifecycle is a small, deterministic state machine — avoid inventing parallel modes.
+
+| State | Meaning | Designer treatment |
+|-------|---------|-------------------|
+| **Empty** | Present unlocked; no deck selected | Banner + empty workspace + New deck |
+| **Ready** | Draft deck open; composing | Normal page + toolbars; autosave → top-bar save chip |
+| **Ghost** | Dissect or Format review open | Banner `ghost`; review overlay; drafting suspended until Accept/Reject |
+| **Locked** | Deck issued | Banner `locked`; issued badge; freeze treatment — edits blocked; live figures read as fixed snapshot |
+
+### Operator flow
+
+```text
+Accept CAD geometry
+  → Present tab unlocks
+  → New deck (or select existing)
+  → Add pages
+  → Compose panels (text · crops · images · swatches · widgets)
+  → Optional: Dissect → Accept/Reject ghosts
+  → Optional: Format → Accept/Reject layout ghosts
+  → Deck settings (title · deliverable · template · palette · font)
+  → Print meeting pack
+  → Issue → Locked (terminal freeze)
+```
+
+```mermaid
+flowchart TD
+  A[CAD accepted] --> B[Present unlocks]
+  B --> C{Deck?}
+  C -->|No| D[Empty — New deck]
+  C -->|Yes| E[Ready — compose]
+  D --> E
+  E --> F{AI?}
+  F -->|Dissect/Format| G[Ghost — Accept or Reject]
+  G --> E
+  F -->|No| H[Settings / Print]
+  H --> I{Issue?}
+  I -->|Yes| J[Locked]
+  I -->|No| E
+```
 
 ---
 
-## 13. Suggested designer deliverables (Present pack)
+## 10. Screen inventory (regions to design)
 
-Ship as one Figma / FigJam pack named **Present mode — meeting deck**.
+One composition: sidebar + page stage + bottom nav — not a multi-dashboard.
 
-1. **Shell wire + hi-fi** — sidebar + page + nav (empty / ready / locked).  
-2. **Deck settings dock** — open / closed, all field types.  
-3. **Page paper system** — margins, type scale, panel chrome (rest / select / resize).  
-4. **Panel kit** — text, plan crop, image, swatch board, each widget type.  
-5. **Add + AI toolbar** — rest / hover / loading / disabled.  
-6. **Ghost review** — Dissect list + Format list (Accept / Reject / Accept all).  
-7. **Deliverable samples** — 4 deliverables × 2 templates (cover + interior).  
-8. **Palette swatches** — 5 themes applied to one sample page.  
-9. **Print preview** — A4/Letter page frame for meeting pack.  
-10. **Motion notes** — dock in, ghost arrive, page tab change (2–3 intentional motions).
+| Region | Contents |
+|--------|----------|
+| Surface banner | empty · ready · ghost · locked copy |
+| Sidebar (~260px) | Back · Present · New deck · deck list · delete |
+| Toolbar | Deck title · Deck settings · Print |
+| Deck settings dock | Title · Deliverable · Template · Palette · Font |
+| Page paper | Panels + select/resize chrome |
+| Add bar | Add text · plan crop · swatch board · image · widget |
+| AI bar | Dissect plan · Format page · Apply template |
+| Pickers | Image picker · Widget picker |
+| Ghost reviews | Dissect list · Format list |
+| Page nav | Tabs · count · Add page |
 
 ---
 
-## 14. Copy bank (sentence case)
+## 11. Copy bank (sentence case)
 
 | Context | Copy |
 |---------|------|
@@ -299,34 +248,65 @@ Ship as one Figma / FigJam pack named **Present mode — meeting deck**.
 | Empty workspace | Select a deck or create one to start composing. |
 | No pages | No pages. Add one to start composing. |
 | Image empty | No image layers on the canvas. Import a photo or plan underlay in Sketch or CAD mode first. |
-| Honesty (widgets) | Indicative pricing only. Final quote subject to site conditions… |
+| Board honesty | Concept sketch for estimating — not a construction drawing. |
+| Widget honesty | Indicative pricing only. Final quote subject to site conditions. |
 | AI | Dissect plan · Format page · Apply template |
 | Ghost actions | Accept · Accept all · Reject |
 
 ---
 
-## 15. Engineering anchors
+## 12. Designer deliverable pack (Figma)
+
+**Pack name:** Present mode — meeting deck assembly  
+
+1. Shell wire + hi-fi — empty / ready / locked  
+2. Deck settings dock — all fields  
+3. Page paper system — margins, type scale, panel chrome  
+4. Panel kit — text, plan crop, image, swatch board, each widget  
+5. Add + AI toolbars — rest / hover / loading / disabled  
+6. Ghost reviews — Dissect + Format  
+7. Deliverable samples — 4 deliverables × 2 templates (cover + interior)  
+8. Palette applied samples — Stone / Sage / Ink / Blush / Parchment on one page  
+9. Print preview — A4 / Letter  
+10. Motion notes — dock in, ghost arrive, page tab (2–3 intentional motions)
+
+---
+
+## 13. Related surfaces (do not merge)
+
+| Surface | Relationship |
+|---------|--------------|
+| Client presentation | Chrome-off plan theatre |
+| Fit sheet (**F**) | Cream working drawing on the plan |
+| Quote / Live cost | Right-lane BOM on CAD — feeds widgets |
+| Share / portal | Client URL after costed quote |
+
+---
+
+## 14. Engineering anchors
 
 | Area | Path |
 |------|------|
 | Surface | `apps/web/src/components/canvas/handoff/features/present/PresentSurface.tsx` |
 | Deck settings | `…/present/DeckInspectorDock.tsx` |
-| Styles | `…/present/present.module.css`, `deckInspectorDock.module.css` |
+| Styles | `present.module.css`, `deckInspectorDock.module.css` |
 | Contracts | `packages/contracts/src/schemas/presentation-document.ts` |
-| API | `apps/api/src/routes/presentation-documents.ts` |
+| Unlock | `apps/web/src/lib/canvas-mode.ts` |
 | E2E | `apps/web/e2e/present-surface-state.spec.ts` |
-| Unlock | `apps/web/src/lib/canvas-mode.ts` (`hasCad` → Present) |
+| Binding styling law | `docs/STUDIO-STYLING-AND-UX.md` |
 
 ---
 
-## 16. Out of scope for this Present pack
+## 15. Out of scope
 
-- Redesigning the CAD board, Fit sheet, or Quote rail  
-- R3F / 3D deck stage  
+- Redesigning CAD, Fit sheet, or Quote rail in this pack  
+- R3F / WebGL as Present’s primary page renderer  
 - Real-time multi-user co-editing  
 - Client portal quote/deposit screens (separate pack)  
 - Stage 2 survey-grade sheet export  
 
 ---
 
-*End of Present mode designer feature spec.*
+By enforcing rigid visual dialects, retiring chrome blush, constraining typography, and gating AI through Accept/Reject, Present remains a disciplined assembly engine for professional landscape architecture workflows — not a chatbot and not a second CAD.
+
+*End of Present mode designer brief.*
