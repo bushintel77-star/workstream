@@ -19,11 +19,13 @@ export type HeroFeatureTarget = {
 type Props = {
   feature: HeroFeatureTarget | null;
   onClose: () => void;
+  /** Freeze current tip as a named client option (design-branch VCS). */
+  onFreeze?: () => void;
 };
 
 const OPEN_MS = 250;
 
-export function HeroDetailOverlay({ feature, onClose }: Props) {
+export function HeroDetailOverlay({ feature, onClose, onFreeze }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [sunDeg, setSunDeg] = useState(42);
   const [specsOpen, setSpecsOpen] = useState(false);
@@ -116,14 +118,26 @@ export function HeroDetailOverlay({ feature, onClose }: Props) {
       <div className={css.modal} role="dialog" aria-modal="true" aria-label={feature.title}>
         <div className={css.top}>
           <p className={css.title}>{feature.title}</p>
-          <button
-            type="button"
-            className={css.back}
-            data-testid="hero-back-to-plan"
-            onClick={onClose}
-          >
-            Back to Plan
-          </button>
+          <div className={css.topActions}>
+            {onFreeze ? (
+              <button
+                type="button"
+                className={css.freeze}
+                data-testid="hero-freeze"
+                onClick={onFreeze}
+              >
+                Freeze option
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={css.back}
+              data-testid="hero-back-to-plan"
+              onClick={onClose}
+            >
+              Back to Plan
+            </button>
+          </div>
         </div>
         <div className={css.body}>
           <div className={css.canvas} ref={hostRef} />

@@ -14,8 +14,9 @@ import {
 } from "../../../../../app/actions";
 import {
   itemsToFeatures,
-  itemsToPlacements,
+  mergeCanvasFeatures,
   strokesToCanvas,
+  itemsToPlacements,
 } from "../../state/canvasBridge";
 import type { SketchStroke, StudioItem } from "../../studioCatalog";
 import {
@@ -40,6 +41,7 @@ type Props = {
   annotations: DesignCanvas["annotations"];
   imageLayers: DesignCanvas["image_layers"];
   constructionTrenches: DesignCanvas["construction_trenches"];
+  landscapeFeatures?: LandscapeFeature[];
   onCanvasApplied: (canvas: DesignCanvas) => void;
 };
 
@@ -54,11 +56,15 @@ export function InstantPlannerChrome({
   annotations,
   imageLayers,
   constructionTrenches,
+  landscapeFeatures = [],
   onCanvasApplied,
 }: Props) {
   const [world, setWorld] = useState<ProjectOrchestrationWorld | null>(null);
-  const [planFeatures, setPlanFeatures] = useState<LandscapeFeature[]>([]);
+  const [planFeatures, setPlanFeatures] = useState<LandscapeFeature[]>(
+    landscapeFeatures,
+  );
   const [hero, setHero] = useState<HeroFeatureTarget | null>(null);
+  const [freezeNote, setFreezeNote] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -77,21 +83,14 @@ export function InstantPlannerChrome({
     };
   }, [active, projectId]);
 
-  // Hydrate plan features from items when the studio board changes.
+  // Keep chrome features aligned with studio snapshot (load / checkout / save).
   useEffect(() => {
     if (!active) return;
-    const fromItems = itemsToFeatures(items);
-    setPlanFeatures((prev) => {
-      const byId = new Map(prev.map((f) => [f.id, f]));
-      for (const f of fromItems) byId.set(f.id, f);
-      return [...byId.values()];
-    });
-  }, [active, items]);
+    setPlanFeatures(landscapeFeatures);
+  }, [active, landscapeFeatures]);
 
   const canvas = useMemo((): DesignCanvas | null => {
     if (!active) return null;
-    const fromItems = itemsToFeatures(items);
-    const byId = new Set(fromItems.map((f) => f.id));
     return {
       id: "00000000-0000-4000-8000-000000000001",
       project_id: projectId,
@@ -100,10 +99,7 @@ export function InstantPlannerChrome({
       irrigation_zones: irrigationZones ?? [],
       annotations: annotations ?? [],
       image_layers: imageLayers ?? [],
-      features: [
-        ...fromItems,
-        ...planFeatures.filter((f) => !byId.has(f.id)),
-      ],
+      features: mergeCanvasFeatures(itemsToFeatures(items), planFeatures),
       construction_trenches: constructionTrenches ?? [],
       updated_at: new Date().toISOString(),
     };
@@ -157,6 +153,35 @@ export function InstantPlannerChrome({
     });
   };
 
+  const freezeClientOption = () => {
+    setFreezeNote(null);
+    startTransition(async () => {
+      const stamp = new Date().toLocaleString("en-AU", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      try {
+        const res = await fetch(`/api/projects/${projectId}/design-branches`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: `Option — ${stamp}` }),
+        });
+        if (!res.ok) {
+          const j = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(j.error || "Freeze failed");
+        }
+        setFreezeNote("Client option frozen as a design branch.");
+        setHero(null);
+      } catch (err) {
+        setFreezeNote(
+          err instanceof Error ? err.message : "Could not freeze option",
+        );
+      }
+    });
+  };
+
   return (
     <div className={css.layer} data-testid="instant-planner-chrome">
       <LandscapeFeaturesLayer features={planFeatures} paper={paper} />
@@ -183,7 +208,16 @@ export function InstantPlannerChrome({
         spatialFacts={world?.spatial_facts ?? []}
         onFeature={onStructuredFeature}
       />
-      <HeroDetailOverlay feature={hero} onClose={() => setHero(null)} />
+      <HeroDetailOverlay
+        feature={hero}
+        onClose={() => setHero(null)}
+        onFreeze={freezeClientOption}
+      />
+      {freezeNote ? (
+        <p className={css.toast} role="status">
+          {freezeNote}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -229,6 +229,28 @@ export function featuresOntoItems(
   });
 }
 
+/** Features that are not mirrored by a studio item id (structured Instant Planner). */
+export function orphanLandscapeFeatures(
+  features: LandscapeFeature[],
+  items: StudioItem[],
+): LandscapeFeature[] {
+  if (features.length === 0) return [];
+  const itemIds = new Set(items.map((i) => i.id));
+  return features.filter((f) => !itemIds.has(f.id));
+}
+
+/** Merge item-derived outlines with structured extras (extras lose on id clash). */
+export function mergeCanvasFeatures(
+  fromItems: LandscapeFeature[],
+  extras: LandscapeFeature[],
+): LandscapeFeature[] {
+  const byId = new Map(fromItems.map((f) => [f.id, f]));
+  for (const f of extras) {
+    if (!byId.has(f.id)) byId.set(f.id, f);
+  }
+  return [...byId.values()];
+}
+
 export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
   return strokes.map((s) => ({
     id: ensureUuid(s.id),

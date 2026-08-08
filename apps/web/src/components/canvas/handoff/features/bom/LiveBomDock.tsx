@@ -1,14 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { formatLabourChip, type StudioEstimateReport } from "@workstream/domain";
+import { cadQuoteAction } from "../../../../../app/actions";
 import css from "./bom.module.css";
 
 type Props = {
+  projectId?: string;
   estimate: StudioEstimateReport;
   mitigated: Record<string, boolean>;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
+  /** After promoting live cost into the main quote document. */
+  onQuotePromoted?: () => void;
   embedded?: boolean;
   /** Soft skeletal pulse while estimate / save settles (Canvas-First). */
   settling?: boolean;
@@ -39,14 +43,18 @@ function friendlyPrimary(label: string): string {
  * Nested assembly / labour / tippers stay under Advanced (Canvas-First).
  */
 export function LiveBomDock({
+  projectId,
   estimate,
   mitigated,
   onMitigate,
   onOpenQuote,
+  onQuotePromoted,
   embedded = false,
   settling = false,
 }: Props) {
   const [advanced, setAdvanced] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const primary = estimate.lines.filter((l) => l.tier === "primary");
   const shadowed = estimate.lines.filter((l) => l.tier !== "primary");
   const horizonChips = estimate.horizon.filter((h) => !mitigated[h.id]);
@@ -81,23 +89,38 @@ export function LiveBomDock({
     }
   };
 
+  const addToMainQuote = () => {
+    if (!projectId) {
+      onOpenQuote();
+      return;
+    }
+    setQuoteError(null);
+    startTransition(async () => {
+      try {
+        await cadQuoteAction(projectId, "standard");
+        onQuotePromoted?.();
+        onOpenQuote();
+      } catch (err) {
+        setQuoteError(
+          err instanceof Error ? err.message : "Could not add to main quote",
+        );
+      }
+    });
+  };
+
   return (
     <aside
       className={`${css.dock}${embedded ? ` ${css.embedded}` : ""}`}
       data-testid="live-bom-hud"
     >
-      {!embedded ? (
-        <div className={css.head}>
-          <p className={css.kicker}>Instant Planner</p>
-          {labourChip !== "—" ? (
-            <span className={css.labourChip} data-testid="instant-planner-labour">
-              {labourChip}
-            </span>
-          ) : null}
-        </div>
-      ) : (
+      <div className={css.head}>
         <p className={css.kicker}>Instant Planner</p>
-      )}
+        {labourChip !== "—" ? (
+          <span className={css.labourChip} data-testid="instant-planner-labour">
+            {labourChip}
+          </span>
+        ) : null}
+      </div>
       <button
         type="button"
         className={`${css.total}${settling ? ` ${css.totalPulse}` : ""}`}
@@ -171,6 +194,20 @@ export function LiveBomDock({
             </button>
           ))}
         </div>
+      ) : null}
+      <button
+        type="button"
+        className={css.addQuote}
+        data-testid="instant-planner-add-to-main-quote"
+        disabled={pending || !projectId}
+        onClick={addToMainQuote}
+      >
+        {pending ? "Adding…" : "Add to Main Quote"}
+      </button>
+      {quoteError ? (
+        <p className={css.quoteError} role="alert">
+          {quoteError}
+        </p>
       ) : null}
       <p className={css.foot}>Indicative — not a formal tender</p>
     </aside>

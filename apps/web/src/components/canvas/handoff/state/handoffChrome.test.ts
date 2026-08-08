@@ -41,9 +41,9 @@ describe("resolveTopHint", () => {
 });
 
 describe("resolveHandoffChrome", () => {
-  it("hides Live BOM and floating consumer docks in Sketch", () => {
+  it("keeps Instant Planner chrome in Sketch without the data lane", () => {
     const c = resolveHandoffChrome({ ...base, mode: "sketch" });
-    expect(c.liveBom).toBe(false);
+    expect(c.liveBom).toBe(true);
     expect(c.utilityDrawer).toBe(false);
     expect(c.aiSidecar).toBe(false);
     expect(c.structureRail).toBe(true);

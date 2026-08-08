@@ -302,7 +302,8 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     aiSidecar: utility || mode === "quote",
     /** Right data lane affordance — Layers etc. available, collapsed until opened. */
     structureRail: plan && !compact,
-    liveBom: cadLike || mode === "quote",
+    /** Instant Planner chrome — CAD/Quote, and Sketch for assist + structured tools. */
+    liveBom: cadLike || mode === "quote" || mode === "sketch",
     horizon: horizonOn,
     horizonBoard: horizonOn && !compact,
     inboxSheet: horizonOn && compact,

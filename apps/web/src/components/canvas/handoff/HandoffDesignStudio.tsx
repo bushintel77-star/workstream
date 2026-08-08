@@ -5037,6 +5037,7 @@ export function HandoffDesignStudio({
             annotations={studio.annotations}
             imageLayers={studio.imageLayers}
             constructionTrenches={studio.constructionTrenches}
+            landscapeFeatures={studio.landscapeFeatures}
             onCanvasApplied={(canvas) => {
               studio.loadBranchCanvas(canvas);
             }}
@@ -5215,6 +5216,11 @@ export function HandoffDesignStudio({
                   })
                 }
                 onOpenQuote={() => studio.setUi({ rightDataPanel: "quote" })}
+                onQuotePromoted={() =>
+                  studio.setUi({
+                    assistReply: "Live cost promoted to main quote.",
+                  })
+                }
                 settling={
                   estimateSettling ||
                   ui.saveStatus === "saving" ||
@@ -5711,6 +5717,7 @@ export function HandoffDesignStudio({
                     <p className={sheetCss.pageKicker}>Instant Planner</p>
                     <LiveBomDock
                       embedded
+                      projectId={projectId}
                       estimate={estimate}
                       mitigated={ui.mitigated}
                       settling={
@@ -5727,6 +5734,11 @@ export function HandoffDesignStudio({
                         })
                       }
                       onOpenQuote={() => studio.setUi({ rightDataPanel: "quote" })}
+                      onQuotePromoted={() =>
+                        studio.setUi({
+                          assistReply: "Live cost promoted to main quote.",
+                        })
+                      }
                     />
                   </div>
                 ) : null}

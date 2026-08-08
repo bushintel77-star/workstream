@@ -6,6 +6,7 @@ import type {
   DesignBydaAsset,
   DesignKeylessOverlay,
   BydaAssetKind,
+  LandscapeFeature,
   PresentationPack,
   ImageLayer,
 } from "@workstream/contracts";
@@ -67,6 +68,11 @@ export type StudioSnapshot = {
   annotations: CanvasAnnotation[];
   /** Imported photo / plan underlays — DesignCanvas.image_layers. */
   imageLayers: ImageLayer[];
+  /**
+   * Structured Instant Planner features not mirrored by catalog items.
+   * Item-linked outlines still live on StudioItem.outlinePct.
+   */
+  landscapeFeatures?: LandscapeFeature[];
   /** Fit-sheet compose pack — DesignCanvas.presentation_pack. */
   presentationPack?: PresentationPack;
   /** Operator-measured side-corridor width (mm) — wins over computed. */

@@ -117,6 +117,8 @@ import {
   canvasToStrokes,
   featuresOntoItems,
   itemsToFeatures,
+  mergeCanvasFeatures,
+  orphanLandscapeFeatures,
   itemsToPlacements,
   placementsToItems,
   resolveHydratedBuilding,
@@ -507,6 +509,7 @@ function snapOf(doc: Doc): StudioSnapshot {
     constructionTrenches: doc.constructionTrenches ?? [],
     annotations: doc.annotations ?? [],
     imageLayers: doc.imageLayers ?? [],
+    landscapeFeatures: doc.landscapeFeatures ?? [],
     presentationPack: doc.presentationPack ?? emptyPresentationPack(),
   };
 }
@@ -532,6 +535,7 @@ function seedToSnap(seed: (typeof STUDIO_SITES)[number]["seed"]): StudioSnapshot
       notePos: { ...a.notePos },
     })),
     imageLayers: [],
+    landscapeFeatures: [],
     presentationPack: emptyPresentationPack(),
   };
 }
@@ -583,15 +587,16 @@ function initialState(opts: {
       : frameOverlay.buildingSource
         ? frameOverlay.buildingSource
         : "traced";
+  const hydratedItems = featuresOntoItems(
+    placementsToItems(opts.placements ?? []),
+    opts.features ?? [],
+  );
   const snap: StudioSnapshot = hasCanvas
     ? {
       ...base,
       ...frameOverlay,
       building,
-      items: featuresOntoItems(
-        placementsToItems(opts.placements ?? []),
-        opts.features ?? [],
-      ),
+      items: hydratedItems,
       strokes: canvasToStrokes(opts.strokes ?? []),
       easements: frameOverlay.easements ?? base.easements,
       services: frameOverlay.services ?? base.services,
@@ -602,6 +607,10 @@ function initialState(opts: {
       constructionTrenches: opts.constructionTrenches ?? [],
       annotations: opts.annotations ?? [],
       imageLayers: opts.imageLayers ?? [],
+      landscapeFeatures: orphanLandscapeFeatures(
+        opts.features ?? [],
+        hydratedItems,
+      ),
       presentationPack:
         opts.presentationPack ?? emptyPresentationPack(),
     }
@@ -3422,20 +3431,25 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (canvas: import("@workstream/contracts").DesignCanvas | null) => {
       if (!canvas) return;
       const frameOverlay = siteFrameToSnapshot(canvas.site_frame);
+      const nextItems = featuresOntoItems(
+        placementsToItems(canvas.placements ?? []),
+        canvas.features ?? [],
+      );
       mutate((snap) => ({
         snap: {
           ...snap,
           ...frameOverlay,
           building: frameOverlay.building ?? snap.building,
-          items: featuresOntoItems(
-            placementsToItems(canvas.placements ?? []),
-            canvas.features ?? [],
-          ),
+          items: nextItems,
           strokes: canvasToStrokes(canvas.strokes ?? []),
           irrigationZones: canvas.irrigation_zones ?? [],
           constructionTrenches: canvas.construction_trenches ?? [],
           annotations: canvas.annotations ?? [],
           imageLayers: canvas.image_layers ?? [],
+          landscapeFeatures: orphanLandscapeFeatures(
+            canvas.features ?? [],
+            nextItems,
+          ),
           presentationPack:
             canvas.presentation_pack ?? emptyPresentationPack(),
         },
@@ -3728,7 +3742,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
     }
     const placements = itemsToPlacements(fixed.items);
     const canvasStrokes = strokesToCanvas(fixed.strokes);
-    const features = itemsToFeatures(fixed.items);
+    const features = mergeCanvasFeatures(
+      itemsToFeatures(fixed.items),
+      state.doc.landscapeFeatures ?? [],
+    );
     const siteFrame = snapshotToSiteFrame({
       boundary: state.doc.boundary,
       building: state.doc.building,
@@ -3798,6 +3815,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.doc.constructionTrenches,
     state.doc.annotations,
     state.doc.imageLayers,
+    state.doc.landscapeFeatures,
     state.doc.presentationPack,
     state.doc.items,
     state.doc.levels,
@@ -3869,6 +3887,12 @@ export function useStudioState(opts: UseStudioStateOpts) {
               `${a.id}:${a.text}:${a.notePos.x},${a.notePos.y}:${a.anchor.kind === "item" ? a.anchor.itemId : `${a.anchor.x},${a.anchor.y}`}`,
           )
           .join("/"),
+        (state.doc.landscapeFeatures ?? [])
+          .map(
+            (f) =>
+              `${f.id}:${f.geometry.points.map((p) => `${p.pct.x_pct},${p.pct.y_pct}`).join(";")}`,
+          )
+          .join("/"),
         // Fit-sheet compose — theme / template / widgets must flush with canvas.
         presentationPackPersistKey(state.doc.presentationPack),
         state.ui.lifecyclePhase,
@@ -3884,6 +3908,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       state.doc.irrigationZones,
       state.doc.constructionTrenches,
       state.doc.annotations,
+      state.doc.landscapeFeatures,
       state.doc.presentationPack,
       state.ui.lifecyclePhase,
     ],
@@ -4309,6 +4334,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     constructionTrenches: state.doc.constructionTrenches ?? [],
     annotations: state.doc.annotations ?? [],
     imageLayers: state.doc.imageLayers ?? [],
+    landscapeFeatures: state.doc.landscapeFeatures ?? [],
     presentationPack:
       state.doc.presentationPack ?? emptyPresentationPack(),
     machineAccessOverrideMm: state.doc.machineAccessOverrideMm,
