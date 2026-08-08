@@ -41,19 +41,14 @@ type Props = {
 };
 
 /**
- * Progressive cost rail — lives in the right data lane alongside the drawing.
+ * Progressive cost rail — right data lane alongside the drawing.
  *
- * Only renders once estimation has produced costed lines (the canvas has
- * assets with real totals). The seed/empty state is handled by the header
- * cost chip, not this rail — the rail never opens on an empty canvas.
+ * Stages:
+ *   0. Empty — unlocked Quote with no priced lines yet (prompt to place)
+ *   1. Estimation — running total, top items, margin, mini totals
+ *   2. Quote — full QuoteBuilder (Expand)
  *
- * Two stages of substance:
- *   1. Estimation (items placed, settled): running total, line count, top
- *      items, margin, mini totals
- *   2. Quote (Expand tapped): full QuoteBuilder slides out as a wider drawer
- *
- * The drawing is never hidden — the rail is a lane panel, not a mode takeover.
- * Wears the same dark grey frame language as the header (--ws-frame tokens).
+ * Lane panel, not a mode takeover. Dark frame language (--ws-frame tokens).
  */
 export function LiveCostRail({
   projectId,
@@ -99,8 +94,8 @@ export function LiveCostRail({
     [resolved.sections],
   );
 
-  // Stage 3 — expanded QuoteBuilder drawer
-  if (expanded) {
+  // Expanded QuoteBuilder drawer (only useful once lines exist)
+  if (expanded && lineCount > 0) {
     return (
       <div className={css.expandedWrap} data-testid="live-cost-rail-expanded">
         <QuoteBuilder
@@ -115,6 +110,67 @@ export function LiveCostRail({
           embeddedInRail
         />
       </div>
+    );
+  }
+
+  if (lineCount === 0) {
+    return (
+      <aside
+        className={css.rail}
+        data-testid="live-cost-rail"
+        data-stage="empty"
+      >
+        <header className={css.railHead}>
+          <div className={css.railHeadMain}>
+            <p className={css.kicker}>Live cost</p>
+            <button
+              type="button"
+              className={css.closeBtn}
+              aria-label="Close cost rail"
+              data-testid="live-cost-rail-close"
+              onClick={onClose}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className={css.total} data-testid="live-cost-rail-total">
+            {audFull(0)}
+            <span className={css.totalSuffix}>incl. GST</span>
+          </p>
+        </header>
+        <div className={css.estimationBody} data-testid="live-cost-rail-empty">
+          <p className={css.emptyLead}>
+            Place priced assets on the plan to build the live BOM.
+          </p>
+          <p className={css.emptyHint}>
+            Use Add, Cmd+K, or Scan — ghosts stay free until you Accept.
+          </p>
+          {onOpenLibrary ? (
+            <div className={css.actions}>
+              <button
+                type="button"
+                className={css.expandBtn}
+                data-testid="live-cost-rail-place"
+                onClick={onOpenLibrary}
+              >
+                Place assets
+              </button>
+            </div>
+          ) : null}
+        </div>
+        <p className={css.honesty}>Indicative — confirm before tender</p>
+      </aside>
     );
   }
 

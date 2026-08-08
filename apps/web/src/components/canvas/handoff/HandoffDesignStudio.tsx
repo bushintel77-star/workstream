@@ -2750,36 +2750,17 @@ export function HandoffDesignStudio({
   }, [fallbackMode, openModes, requestMode, ui.mode]);
 
   /*
-   * Quote is now a lane panel, not a mode. If someone navigates to
-   * ?mode=quote (legacy URL), redirect to CAD and open the cost rail.
+   * Quote is a lane panel, not a mode takeover. ?mode=quote (and the Quote
+   * tab) redirect to CAD and always summon the live-cost rail — including
+   * the empty “place priced assets” state. Never auto-dismiss on empty:
+   * that made Quote look broken after unlock.
    */
   useEffect(() => {
     if (ui.mode === "quote") {
       requestMode("cad");
-      // Only open the rail if estimation has produced costed lines.
-      // Otherwise the rail has nothing to show — the header cost chip
-      // handles the empty state.
-      if (hasCostedLines) {
-        studio.setUi({ rightDataPanel: "quote" });
-      }
+      studio.setUi({ rightDataPanel: "quote", utilityPanel: null });
     }
-  }, [ui.mode, requestMode, studio, hasCostedLines]);
-
-  /**
-   * Auto-close the cost rail when estimation is empty (all items removed or
-   * none yet placed). The rail only overlays when there are costed lines —
-   * the header cost chip handles the empty state. Guarded with a ref to
-   * avoid re-triggering when studio reference changes between renders.
-   */
-  const quoteRailClosedRef = useRef(false);
-  useEffect(() => {
-    if (quoteRailOpen && !hasCostedLines && !quoteRailClosedRef.current) {
-      quoteRailClosedRef.current = true;
-      studio.setUi({ rightDataPanel: null });
-    } else if (hasCostedLines) {
-      quoteRailClosedRef.current = false;
-    }
-  }, [quoteRailOpen, hasCostedLines, studio]);
+  }, [ui.mode, requestMode, studio]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3115,20 +3096,18 @@ export function HandoffDesignStudio({
       onSelect: () => studio.setUi({ cmdOpen: true }),
     });
 
-    // Cost / quote — only available once estimation has costed lines
-    if (hasCostedLines || quoteRailOpen) {
-      items.push({
-        id: "live-cost",
-        label: quoteRailOpen ? "Close live cost" : "Live cost",
-        testId: "live-cost-top",
-        active: quoteRailOpen,
-        onSelect: () =>
-          studio.setUi({
-            ...withRightDataPanel("quote"),
-            utilityPanel: null,
-          }),
-      });
-    }
+    // Cost / quote — always summonable once CAD unlocks Quote mode
+    items.push({
+      id: "live-cost",
+      label: quoteRailOpen ? "Close live cost" : "Live cost",
+      testId: "live-cost-top",
+      active: quoteRailOpen,
+      onSelect: () =>
+        studio.setUi({
+          ...withRightDataPanel("quote"),
+          utilityPanel: null,
+        }),
+    });
 
     // View / data
     if (chrome.structureRail || chrome.compact) {
@@ -3194,7 +3173,6 @@ export function HandoffDesignStudio({
     chrome.compact,
     chrome.structureRail,
     hasCostedBom,
-    hasCostedLines,
     inkLegendOpen,
     instrumentsVisible,
     layersOpen,
@@ -3533,21 +3511,25 @@ export function HandoffDesignStudio({
             ) : null}
             {/*
               * Live cost chip — compact total in the header right zone.
-              * Opens the cost rail in the right data lane. Hidden when the
-              * rail is already open, in focus mode, or when no items exist.
+              * Opens the cost rail. Shown once Quote is unlocked (has CAD),
+              * including $0 so empty boards still have a clear entry.
               */}
             {!ui.focusOn &&
               !quoteRailOpen &&
               !ui.clientView &&
-              estimate.lines.some((l) => l.total > 0) ? (
+              openModes.has("quote") ? (
               <button
                 type="button"
                 className={css.costChip}
                 data-testid="header-cost-chip"
-                onClick={() => studio.setUi({ rightDataPanel: "quote" })}
+                onClick={() =>
+                  studio.setUi({ rightDataPanel: "quote", utilityPanel: null })
+                }
                 title="Open live cost rail"
               >
-                {audChip(estimate.totalInclGst)}
+                {hasCostedLines
+                  ? audChip(estimate.totalInclGst)
+                  : "Quote"}
               </button>
             ) : null}
             <UnifiedSaveStatus
@@ -5813,13 +5795,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {/*
-          * Progressive cost rail — lives in the right data lane alongside the
-          * drawing, not as a mode takeover. Only renders once estimation has
-          * produced costed lines — the seed/empty state is handled by the
-          * header cost chip, not this rail. Dark frame language matches the
-          * header.
+          * Progressive cost rail — right data lane alongside the drawing.
+          * Opens empty or costed; empty state prompts placing priced assets.
           */}
-        {quoteRailOpen && planOn && !ui.frameOn && hasCostedLines ? (
+        {quoteRailOpen && planOn && !ui.frameOn ? (
           <RightDataLane
             testId="right-data-lane-quote"
             onClose={() => studio.setUi({ rightDataPanel: null })}

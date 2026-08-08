@@ -7,7 +7,7 @@
 **Date:** 2026-08-09  
 **Canonical studio:** `/projects/[id]?mode=…` → `HandoffDesignStudio`
 
-**Read with:** [`STUDIO-STYLING-AND-UX.md`](./STUDIO-STYLING-AND-UX.md) · [`CAD-AI-2026-UX.md`](./CAD-AI-2026-UX.md) · [`design/UIUX-DESIGNER-HANDOFF-SPEC.md`](./design/UIUX-DESIGNER-HANDOFF-SPEC.md) · [`design/TIER1-2026-FRONTEND-DESIGN-SPEC.md`](./design/TIER1-2026-FRONTEND-DESIGN-SPEC.md) · [`design/TIER1-2026-SPEC-GAP-CHECKLIST.md`](./design/TIER1-2026-SPEC-GAP-CHECKLIST.md)
+**Read with:** [`STUDIO-STYLING-AND-UX.md`](./STUDIO-STYLING-AND-UX.md) · [`CAD-AI-2026-UX.md`](./CAD-AI-2026-UX.md) · [`design/UIUX-DESIGNER-HANDOFF-SPEC.md`](./design/UIUX-DESIGNER-HANDOFF-SPEC.md) · [`design/TIER1-2026-FRONTEND-DESIGN-SPEC.md`](./design/TIER1-2026-FRONTEND-DESIGN-SPEC.md) · [`design/TIER1-2026-SPEC-GAP-CHECKLIST.md`](./design/TIER1-2026-SPEC-GAP-CHECKLIST.md) · **Present pack:** [`design/PRESENT-MODE-DESIGNER-FEATURE-SPEC.md`](./design/PRESENT-MODE-DESIGNER-FEATURE-SPEC.md)
 
 Ignore stale visual briefs: `DESIGNER-HANDOVER.md`, `EXTERNAL-DESIGNER-BRIEF.md` (old fonts / blush chrome).
 
@@ -71,7 +71,7 @@ Legacy project sub-pages (`/overview`, `/tasks`, `/design/cad`, etc.) **redirect
 | **CAD** | Design geometry | Add / Paint / Zone, asset panel, selection orbit + dial, AI ghosts, trenches, zones, TPZ rings |
 | **Elevation** | Section read | Elevation board, silhouettes, callouts, plan thumbs, viewpoint strip |
 | **Quote** | Indicative price | Quote builder / live cost rail; services ledger **locked** |
-| **Present** | Meeting deck | Present surface — pages, swatches, format ghosts |
+| **Present** | Meeting deck | Present surface — pages, swatches, format ghosts — full pack: [`PRESENT-MODE-DESIGNER-FEATURE-SPEC.md`](./design/PRESENT-MODE-DESIGNER-FEATURE-SPEC.md) |
 | **Share** | Client handoff | Share surface — promote quote, portal URL, revision + liability gate |
 
 **Locked-tab copy (when mode unavailable):**
@@ -252,7 +252,7 @@ Fonts: IBM Plex Mono / Sans / Serif · hand = Architects Daughter
 3. **Tool dock + sketch dock** — chip states, hover, phone compact  
 4. **Board legend** — existing vs proposed vs planting vs easement vs BYDA  
 5. **Fit sheet A3/A4** — cream paper, title block furniture, elevation strip  
-6. **Quote / Share / Present** — three distinct client-adjacent compositions  
+6. **Quote / Share / Present** — three distinct client-adjacent compositions (Present detail pack: [`PRESENT-MODE-DESIGNER-FEATURE-SPEC.md`](./design/PRESENT-MODE-DESIGNER-FEATURE-SPEC.md))  
 7. **Portal quote + deposit** — printable light sheet  
 8. **Empty / locked / ghost / error** states for modes and AI accept flow  
 
