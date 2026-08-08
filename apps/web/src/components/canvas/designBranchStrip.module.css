@@ -1,0 +1,125 @@
+.strip {
+  position: absolute;
+  left: 0.75rem;
+  top: 4.5rem;
+  z-index: 37;
+  width: min(14rem, calc(100vw - 1.5rem));
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  box-shadow: 0 8px 24px rgba(42, 23, 29, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.paper {
+  background: color-mix(in srgb, var(--paper, #faf6f2) 96%, transparent);
+  border-color: var(--paper-rule, rgba(36, 19, 24, 0.18));
+  color: var(--paper-ink, #241318);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.kicker {
+  margin: 0;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b08a95;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.35rem 0.65rem;
+  min-height: 36px;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: color-mix(in srgb, #fff 90%, var(--pink-soft, #fdf0f5));
+  color: var(--ink, #24181e);
+}
+
+.btnPrimary {
+  background: var(--ink, #24181e);
+  color: #faf4f6;
+}
+
+.nameRow {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(36, 19, 24, 0.14);
+  padding: 0.35rem 0.55rem;
+  background: #fff;
+  color: inherit;
+}
+
+.thumbs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 9rem;
+  overflow: auto;
+}
+
+.thumb {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(36, 19, 24, 0.08);
+  border-radius: 10px;
+  padding: 0.4rem 0.5rem;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.thumbActive {
+  box-shadow: inset 0 0 0 1.5px var(--ink, #241318);
+}
+
+.thumbName {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.thumbMeta {
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 0.6rem;
+  color: var(--ink-soft, #6b5660);
+}
+
+.empty {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--ink-soft, #6b5660);
+}
+
+@media (max-width: 720px) {
+  .strip {
+    display: none;
+  }
+}

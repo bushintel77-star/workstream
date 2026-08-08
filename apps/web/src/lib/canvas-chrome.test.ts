@@ -28,10 +28,10 @@ describe("resolveCanvasChrome", () => {
     expect(c.sketchDock).toBe(false);
   });
 
-  it("Sketch: paint dock only — no Live BOM / Walk / CAD dock", () => {
+  it("Sketch: paint dock + Instant Planner; no Walk / CAD dock", () => {
     const c = resolveCanvasChrome({ ...base, mode: "sketch" });
     expect(c.sketchDock).toBe(true);
-    expect(c.liveBom).toBe(false);
+    expect(c.liveBom).toBe(true);
     expect(c.walk).toBe(false);
     expect(c.cadDock).toBe(false);
     expect(c.quoteDock).toBe(false);

@@ -108,7 +108,13 @@ Legend: **Done** · **Partial** · **Not started**
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Live BOM dock | **Done** | `LiveBomHud`. |
+| Live BOM dock | **Done** | `LiveBomHud` — Instant Planner strip (Sketch + CAD + Quote). |
+| Instant Planner (cost / labour / conflicts / Add to Main Quote) | **Done** | PDF §4.3 — glance chips + promote. |
+| Next-best-option chip (shadow ledger) | **Done** | `NextBestOptionChip` + `proposeShadowAlternatives`. |
+| Freeze / variation branches | **Done** | `DesignBranchStrip` + `/design-branches` API. |
+| Structured tools (ditch / path / wall / bed) | **Done** | `StructuredToolOverlay` → `LandscapeFeature`. |
+| Hero detail overlay | **Done** | `HeroDetailOverlay` (Three.js + sun slider). |
+| Irrigation / lighting assist + leftover pool | **Partial** | `StudioAssistPanel` + domain assist/pool. |
 | Cost delta for AI | **Partial** | Optimistic mutation HUD. |
 | Mitigation schedule lines | **Partial** | Overlay accept → orchestration. |
 

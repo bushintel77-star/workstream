@@ -43,6 +43,7 @@ import designAssistRoutes from './routes/design-assist';
 import cadRoutes from './routes/cad';
 import boundaryRoutes from './routes/boundary';
 import orchestrationRoutes from './routes/orchestration';
+import designBranchRoutes from './routes/design-branches';
 import projectFileRoutes from './routes/project-files';
 import activityRoutes from './routes/activity';
 import portalRoutes from './routes/portal';
@@ -145,6 +146,7 @@ async function start() {
   await server.register(cadRoutes, { prefix: '/projects' });
   await server.register(boundaryRoutes, { prefix: '/projects' });
   await server.register(orchestrationRoutes, { prefix: '/projects' });
+  await server.register(designBranchRoutes, { prefix: '/projects' });
   await server.register(projectFileRoutes, { prefix: '/projects' });
   await server.register(activityRoutes, { prefix: '/projects' });
   await server.register(portalRoutes);

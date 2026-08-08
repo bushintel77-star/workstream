@@ -257,6 +257,52 @@
   color: var(--ink-soft, #6b5660);
 }
 
+.glanceRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.glanceChip,
+.glanceChipMuted {
+  border: none;
+  border-radius: 999px;
+  padding: 0.22rem 0.55rem;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--blush, #e9a8ba) 18%, #fff);
+  color: var(--ink, #24181e);
+}
+
+button.glanceChip {
+  cursor: pointer;
+}
+
+.glanceCritical {
+  background: color-mix(in srgb, #c97878 30%, #fff);
+}
+
+.glanceChipMuted {
+  background: transparent;
+  color: var(--ink-faint, #9a8590);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blush, #e9a8ba) 22%, transparent);
+}
+
+.primaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.primaryActions .btn {
+  min-height: 44px;
+  padding: 0.45rem 0.75rem;
+}
+
 @media (max-width: 720px) {
   .hud {
     right: 0.5rem;

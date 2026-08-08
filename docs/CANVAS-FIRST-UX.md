@@ -11,8 +11,8 @@ Calm, low-cognitive-load, non-technical interface. Geospatial and financial math
 
 - Ban monolithic AutoCAD-style tool ribbons.
 - Chrome renders only for the active mode: **Survey → Sketch → CAD → Quote → Share**.
-- Sketch: no Quantity Survey sheet, no Live BOM HUD, no Walk primary CTA.
-- CAD: Fit sheet + line / verify / Walk; Live BOM as compact floating strip.
+- Sketch: Instant Planner (collapsed cost / labour / conflict strip); no full QS sheet; no Walk primary CTA.
+- CAD: Fit sheet + line / verify / Walk; Instant Planner as compact floating strip.
 - Quote: Fit sheet + promote; QS / Build schedules only under **Ledger**.
 
 ## 2. Abstracted complexity (invisible engine)
@@ -24,7 +24,7 @@ Calm, low-cognitive-load, non-technical interface. Geospatial and financial math
 ## 3. Unobtrusive floating HUDs
 
 - No heavy fixed sidebars for costing.
-- Live BOM is floating, collapsible, paper-ink when Fit sheet is on.
+- Instant Planner (Live BOM) is floating, collapsible, paper-ink when Fit sheet is on.
 - MapLibre / clay Walk bleed edge-to-edge; chrome floats over the canvas.
 
 ## 4. Visual calm & muted aesthetics
@@ -55,7 +55,7 @@ Do not show empty skeleton placeholders instead of a number when an optimistic e
 | Mode | Allowed chrome | Forbidden |
 | --- | --- | --- |
 | Survey | Title / Lock / Open Fit sheet | Live BOM, QS, Walk primary, brush ribbon |
-| Sketch | Paint disclosure → brushes; Draft Fit sheet | Live BOM, QS schedule, CAD line dock |
+| Sketch | Paint disclosure → brushes; Draft Fit sheet; Instant Planner strip | Full QS schedule, CAD line dock |
 | CAD | Accept / Line / Walk; compact Live BOM | Full QS sheet auto-open; recipe depth editors |
 | Quote | Promote; Ledger disclosure for QS/Build | Always-on schedule overlay |
 | Share | Copy/Open portal + Walk; Fit sheet under More | Live BOM, Tier-1 ledger, edit ribbons |

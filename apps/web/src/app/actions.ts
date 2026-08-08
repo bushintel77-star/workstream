@@ -181,6 +181,7 @@ export async function saveDesignCanvasAction(
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations: DesignCanvas["annotations"] = [],
+  features?: import("@workstream/contracts").LandscapeFeature[],
 ) {
   try {
     const result = await saveDesignCanvasApi(
@@ -189,6 +190,7 @@ export async function saveDesignCanvasAction(
       strokes,
       irrigationZones,
       annotations,
+      features,
     );
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/projects/${projectId}/design`);
@@ -270,6 +272,43 @@ export async function getOrchestrationAction(projectId: string) {
     return await getOrchestrationApi(projectId);
   } catch (err) {
     throw wrapApiError(err, "Orchestration world failed");
+  }
+}
+
+export async function listDesignBranchesAction(projectId: string) {
+  const { listDesignBranchesApi } = await import("../lib/api");
+  try {
+    return await listDesignBranchesApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "List design branches failed");
+  }
+}
+
+export async function freezeDesignBranchAction(
+  projectId: string,
+  input: import("@workstream/contracts").FreezeDesignBranchInput,
+) {
+  const { freezeDesignBranchApi } = await import("../lib/api");
+  try {
+    const result = await freezeDesignBranchApi(projectId, input);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Freeze design branch failed");
+  }
+}
+
+export async function activateDesignBranchAction(
+  projectId: string,
+  branchId: string,
+) {
+  const { activateDesignBranchApi } = await import("../lib/api");
+  try {
+    const result = await activateDesignBranchApi(projectId, branchId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Activate design branch failed");
   }
 }
 

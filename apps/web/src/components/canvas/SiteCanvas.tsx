@@ -12,8 +12,11 @@ import {
   useTransition,
   Suspense,
 } from "react";
-import type { CatalogSymbol } from "@workstream/contracts";
-import type { ProjectOrchestrationWorld } from "@workstream/contracts";
+import type {
+  CatalogSymbol,
+  LandscapeFeature,
+  ProjectOrchestrationWorld,
+} from "@workstream/contracts";
 import {
   isTier1WrightsTerrace,
   buildBoundaryFromGeoRing,
@@ -21,6 +24,7 @@ import {
   emptyHistoryStacks,
   pushHistorySnapshot,
   redoHistory,
+  summarizeLabourHours,
   undoHistory,
 } from "@workstream/domain";
 import {
@@ -39,10 +43,16 @@ import {
   resetBoundaryAction,
   runSurveyAction,
   saveBoundaryAction,
+  saveDesignCanvasAction,
   unlockBoundaryAction,
 } from "../../app/actions";
 import { FirstRunGuide } from "./FirstRunGuide";
 import { LiveBomHud } from "./LiveBomHud";
+import { NextBestOptionChip } from "./NextBestOptionChip";
+import { DesignBranchStrip } from "./DesignBranchStrip";
+import { HeroDetailOverlay, type HeroFeatureTarget } from "./HeroDetailOverlay";
+import { StructuredToolOverlay } from "./StructuredToolOverlay";
+import { StudioAssistPanel } from "./StudioAssistPanel";
 import { ComplianceDock } from "./ComplianceDock";
 import { CanvasToolRail, type CanvasTool } from "./CanvasToolRail";
 import { ElevationProfile } from "./ElevationProfile";
@@ -292,6 +302,13 @@ function SiteCanvasInner({
   });
   const [orchRefresh, setOrchRefresh] = useState(0);
   const [orchWorld, setOrchWorld] = useState<ProjectOrchestrationWorld | null>(
+    null,
+  );
+  const [liveCanvas, setLiveCanvas] = useState<DesignCanvas | null>(
+    () => sketch?.canvas ?? null,
+  );
+  const [freezeNonce, setFreezeNonce] = useState(0);
+  const [heroFeature, setHeroFeature] = useState<HeroFeatureTarget | null>(
     null,
   );
   const [showGuide, setShowGuide] = useState(
@@ -1281,10 +1298,112 @@ function SiteCanvasInner({
           projectId={projectId}
           refreshKey={orchRefresh}
           paper={showFitSheet}
-          compact={mode === "cad"}
+          compact={mode === "cad" || mode === "sketch"}
           onWorld={setOrchWorld}
+          onQuoteAdded={(result) => {
+            setQuoteHtml(result.html);
+            setShowQuoteOverlay(true);
+            if (result.portalUri) {
+              setQuotePersisted(true);
+              setPortalLink(result.portalUri);
+            }
+            bumpOrchestration();
+          }}
+          onFreezeBranch={() => setFreezeNonce((n) => n + 1)}
         />
       ) : null}
+
+      {showLiveBom && !focusChrome && !clientView ? (
+        <>
+          <NextBestOptionChip
+            world={orchWorld}
+            paper={showFitSheet}
+            onApply={() => {
+              setStatus("Alternative noted — adjust geometry or materials, then re-estimate.");
+            }}
+          />
+          <DesignBranchStrip
+            projectId={projectId}
+            bomTotal={orchWorld?.bom_total ?? 0}
+            labourHours={
+              orchWorld ? summarizeLabourHours(orchWorld.live_bom) : 0
+            }
+            canvasFingerprint={orchWorld?.fingerprint ?? ""}
+            paper={showFitSheet}
+            freezeNonce={freezeNonce}
+          />
+        </>
+      ) : null}
+
+      {(mode === "sketch" || mode === "cad") &&
+      !focusChrome &&
+      !clientView &&
+      !titleRevealActive ? (
+        <StructuredToolOverlay
+          active
+          paper={showFitSheet}
+          onFeature={(feature) => {
+            void (async () => {
+              const base = liveCanvas ?? sketch?.canvas;
+              if (!base) {
+                setStatus("Save a sketch placement first, then draw structured tools.");
+                return;
+              }
+              const features: LandscapeFeature[] = [
+                ...(base.features ?? []),
+                feature,
+              ];
+              try {
+                const res = await saveDesignCanvasAction(
+                  projectId,
+                  base.placements,
+                  base.strokes ?? [],
+                  base.irrigation_zones ?? [],
+                  base.annotations ?? [],
+                  features,
+                );
+                setLiveCanvas(res.canvas);
+                bumpOrchestration();
+                setStatus(`${feature.metadata.friendly_name ?? "Feature"} added`);
+                setHeroFeature({
+                  id: feature.id,
+                  title: feature.metadata.friendly_name ?? "Feature",
+                  kind: feature.metadata.layer === "softscape_beds"
+                    ? "planting"
+                    : feature.metadata.layer === "structure"
+                      ? "wall"
+                      : "path",
+                  depth_m: feature.material_fill?.depth_m,
+                  material: feature.material_fill?.sku,
+                });
+              } catch {
+                setError("Could not save structured feature");
+              }
+            })();
+          }}
+        />
+      ) : null}
+
+      {(mode === "sketch" || mode === "cad" || mode === "quote") &&
+      !focusChrome &&
+      !clientView ? (
+        <StudioAssistPanel
+          projectId={projectId}
+          world={orchWorld}
+          canvas={liveCanvas ?? sketch?.canvas ?? null}
+          paper={showFitSheet}
+          onCanvasSaved={(c) => {
+            setLiveCanvas(c);
+            bumpOrchestration();
+            setStatus("Irrigation assist applied");
+          }}
+        />
+      ) : null}
+
+      <HeroDetailOverlay
+        feature={heroFeature}
+        onClose={() => setHeroFeature(null)}
+      />
 
       {mode === "sketch" && !sketch ? (
         <div className={css.shareSheet}>
@@ -2453,7 +2572,7 @@ function SiteCanvasInner({
                       })
                     }
                   >
-                    Promote live BOM → quote
+                    Add to Main Quote
                   </button>
                 )}
                 <button

@@ -9,7 +9,12 @@ import type {
   ProjectOrchestrationWorld,
 } from "@workstream/contracts";
 import {
+  formatLabourChip,
+  summarizeLabourHours,
+} from "@workstream/domain";
+import {
   acceptOrchestrationOverlayAction,
+  cadQuoteAction,
   dismissOrchestrationOverlayAction,
   getOrchestrationAction,
 } from "../../app/actions";
@@ -55,6 +60,13 @@ type Props = {
   /** Slim CAD strip: total only until expanded. */
   compact?: boolean;
   onWorld?: (world: ProjectOrchestrationWorld | null) => void;
+  /** After Add to Main Quote succeeds. */
+  onQuoteAdded?: (result: {
+    html: string;
+    portalUri?: string;
+  }) => void;
+  /** Secondary freeze control (Phase C). */
+  onFreezeBranch?: () => void;
 };
 
 function groupByTier(lines: BomLine[]): Map<BomTier, BomLine[]> {
@@ -74,6 +86,8 @@ export function LiveBomHud({
   paper = false,
   compact = false,
   onWorld,
+  onQuoteAdded,
+  onFreezeBranch,
 }: Props) {
   const router = useRouter();
   const [world, setWorld] = useState<ProjectOrchestrationWorld | null>(null);
@@ -87,6 +101,7 @@ export function LiveBomHud({
     pendingPrecise: false,
   });
   const [pending, startTransition] = useTransition();
+  const quoteBusy = useRef(false);
 
   const load = useCallback(() => {
     startTransition(async () => {
@@ -127,20 +142,44 @@ export function LiveBomHud({
       ? (workerTotal ?? world?.bom_total ?? mutationHud.optimisticCost)
       : (world?.bom_total ?? workerTotal ?? mutationHud.optimisticCost);
 
+  const labourHours = world ? summarizeLabourHours(world.live_bom) : 0;
+  const riskCount = world?.risks.length ?? 0;
+  const criticalCount =
+    world?.risks.filter((r) => r.severity === "critical").length ?? 0;
+
   const hudClass = `${css.hud}${mutating ? ` ${css.hudMutating}` : ""}${
     skeletal ? ` ${css.hudSkeletal}` : ""
   }${paper ? ` ${css.hudPaper}` : ""}${compact ? ` ${css.hudCompact}` : ""}`;
+
+  const addToMainQuote = () => {
+    if (quoteBusy.current) return;
+    quoteBusy.current = true;
+    startTransition(async () => {
+      try {
+        const res = await cadQuoteAction(projectId, "standard");
+        onQuoteAdded?.({
+          html: res.html,
+          portalUri: res.output?.uri,
+        });
+        requestOrchestrationRefresh();
+        router.refresh();
+      } finally {
+        quoteBusy.current = false;
+      }
+    });
+  };
 
   if (!world || world.spatial_facts.length === 0) {
     return (
       <aside
         className={hudClass}
         data-testid="live-bom-hud"
+        data-instant-planner="1"
         data-mutation-phase={mutationHud.phase}
         data-skeletal={skeletal ? "1" : undefined}
         data-paper={paper ? "1" : undefined}
       >
-        <p className={css.kicker}>Live BOM</p>
+        <p className={css.kicker}>Instant Planner</p>
         {(mutating || skeletal) && displayTotal != null ? (
           <p
             className={`${css.total} ${css.totalPending}${skeletal ? ` ${css.skeletalPulse}` : ""}`}
@@ -150,7 +189,7 @@ export function LiveBomHud({
           </p>
         ) : (
           <p className={css.empty}>
-            Draft or draw on Fit sheet - preemptive materials appear here.
+            Draw on the canvas — cost, labour and conflicts appear here.
           </p>
         )}
       </aside>
@@ -168,13 +207,14 @@ export function LiveBomHud({
     <aside
       className={hudClass}
       data-testid="live-bom-hud"
+      data-instant-planner="1"
       data-mutation-phase={mutationHud.phase}
       data-skeletal={skeletal ? "1" : undefined}
       data-paper={paper ? "1" : undefined}
     >
       <div className={css.summary}>
         <div>
-          <p className={css.kicker}>Live BOM / preemptive</p>
+          <p className={css.kicker}>Instant Planner</p>
           <p
             className={`${css.total} ${skeletal || mutating ? css.totalPending : ""} ${skeletal ? css.skeletalPulse : ""} ${settled ? css.totalSettle : ""}`}
           >
@@ -189,8 +229,49 @@ export function LiveBomHud({
           className={css.toggle}
           onClick={() => setExpanded((v) => !v)}
         >
-          {expanded ? "Hide lines" : `${world.live_bom.length} lines`}
+          {expanded ? "Hide" : `${world.live_bom.length} lines`}
         </button>
+      </div>
+
+      <div className={css.glanceRow} data-testid="instant-planner-glance">
+        <span className={css.glanceChip} title="Indicative labour hours">
+          {formatLabourChip(labourHours)}
+        </span>
+        {riskCount > 0 ? (
+          <button
+            type="button"
+            className={`${css.glanceChip} ${criticalCount > 0 ? css.glanceCritical : ""}`}
+            title="Open conflicts"
+            onClick={() => setExpanded(true)}
+          >
+            {riskCount} conflict{riskCount === 1 ? "" : "s"}
+          </button>
+        ) : (
+          <span className={css.glanceChipMuted}>Clear</span>
+        )}
+      </div>
+
+      <div className={css.primaryActions}>
+        <button
+          type="button"
+          className={`${css.btn} ${css.btnPrimary}`}
+          data-testid="add-to-main-quote"
+          disabled={pending}
+          onClick={addToMainQuote}
+        >
+          Add to Main Quote
+        </button>
+        {onFreezeBranch ? (
+          <button
+            type="button"
+            className={css.btn}
+            data-testid="freeze-branch"
+            disabled={pending}
+            onClick={onFreezeBranch}
+          >
+            Freeze
+          </button>
+        ) : null}
       </div>
 
       {expanded && world.risks.length > 0 ? (

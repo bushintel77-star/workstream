@@ -69,6 +69,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _cadDocuments: import("@workstream/contracts").CadDocument[] = [];
   const _orchestrationOverlays: import("@workstream/contracts").OrchestrationOverlayRecord[] =
     [];
+  const _designBranches: import("@workstream/contracts").DesignBranchSnapshot[] =
+    [];
   const _siteBoundaries: import("@workstream/contracts").SiteBoundary[] = [];
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
@@ -118,6 +120,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _designCanvases,
     _cadDocuments,
     _orchestrationOverlays,
+    _designBranches,
     _siteBoundaries,
     _catalogCustom,
     _activityEvents,
@@ -1090,6 +1093,51 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _orchestrationOverlays.push(row);
       flush();
       return structuredClone(row);
+    },
+
+    async listDesignBranches(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return [];
+      return _designBranches
+        .filter((b) => b.project_id === projectId)
+        .map((b) => structuredClone(b))
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+    },
+
+    async freezeDesignBranch(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      for (const b of _designBranches) {
+        if (b.project_id === projectId) b.active = false;
+      }
+      const { createFrozenBranch } = await import("@workstream/domain");
+      const branch = createFrozenBranch({ projectId, input });
+      _designBranches.push(branch);
+      flush();
+      return structuredClone(branch);
+    },
+
+    async activateDesignBranch(ownerId, projectId, branchId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const target = _designBranches.find(
+        (b) => b.project_id === projectId && b.id === branchId,
+      );
+      if (!target) return null;
+      for (const b of _designBranches) {
+        if (b.project_id === projectId) b.active = b.id === branchId;
+      }
+      flush();
+      return structuredClone(target);
     },
 
     async getDesignCanvas(ownerId, projectId) {

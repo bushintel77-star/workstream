@@ -60,7 +60,12 @@ export function resolveCanvasChrome(input: ChromeInput): CanvasChrome {
     elevationDock: mode === "elevation",
     quoteDock: mode === "quote",
     shareDock: mode === "share",
-    liveBom: mode === "cad" || mode === "quote" || mode === "elevation",
+    /** Instant Planner strip — Sketch + CAD + Quote + Elevation (PDF §4.3). */
+    liveBom:
+      mode === "sketch" ||
+      mode === "cad" ||
+      mode === "quote" ||
+      mode === "elevation",
     complianceDock:
       mode === "survey" ||
       mode === "cad" ||

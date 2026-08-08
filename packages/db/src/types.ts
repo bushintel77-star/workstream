@@ -45,6 +45,8 @@ import type {
   ActivityEvent,
   ActivityAction,
   OrchestrationOverlayRecord,
+  DesignBranchSnapshot,
+  FreezeDesignBranchInput,
 } from "@workstream/contracts";
 
 export type {
@@ -356,6 +358,20 @@ export interface Store {
     projectId: string,
     input: Pick<OrchestrationOverlayRecord, "dismissed_ids" | "accepted_ids">,
   ): Promise<OrchestrationOverlayRecord>;
+  listDesignBranches(
+    ownerId: string,
+    projectId: string,
+  ): Promise<DesignBranchSnapshot[]>;
+  freezeDesignBranch(
+    ownerId: string,
+    projectId: string,
+    input: FreezeDesignBranchInput,
+  ): Promise<DesignBranchSnapshot>;
+  activateDesignBranch(
+    ownerId: string,
+    projectId: string,
+    branchId: string,
+  ): Promise<DesignBranchSnapshot | null>;
   seedDefaults(): Promise<void>;
 }
 

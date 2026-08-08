@@ -8,6 +8,9 @@ import type {
   DesignCanvas,
   DesignAssistResponse,
   DesignGhostsResponse,
+  FreezeDesignBranchInput,
+  LandscapeFeature,
+  ListDesignBranchesResponse,
   ProjectOrchestrationWorld,
 } from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
@@ -351,6 +354,7 @@ export async function saveDesignCanvasApi(
   strokes: DesignCanvas["strokes"] = [],
   irrigationZones: DesignCanvas["irrigation_zones"] = [],
   annotations: DesignCanvas["annotations"] = [],
+  features?: LandscapeFeature[],
 ): Promise<{ canvas: DesignCanvas; quote: SketchQuoteSummary | null }> {
   const body = await apiPut<{
     canvas: DesignCanvas;
@@ -360,8 +364,37 @@ export async function saveDesignCanvasApi(
     strokes,
     irrigation_zones: irrigationZones,
     annotations,
+    ...(features !== undefined ? { features } : {}),
   });
   return { canvas: body.canvas, quote: body.quote ?? null };
+}
+
+export async function listDesignBranchesApi(
+  projectId: string,
+): Promise<ListDesignBranchesResponse> {
+  return apiGet<ListDesignBranchesResponse>(
+    `/projects/${projectId}/design-branches`,
+  );
+}
+
+export async function freezeDesignBranchApi(
+  projectId: string,
+  input: FreezeDesignBranchInput,
+): Promise<ListDesignBranchesResponse> {
+  return apiPost<ListDesignBranchesResponse>(
+    `/projects/${projectId}/design-branches/freeze`,
+    input,
+  );
+}
+
+export async function activateDesignBranchApi(
+  projectId: string,
+  branchId: string,
+): Promise<ListDesignBranchesResponse> {
+  return apiPost<ListDesignBranchesResponse>(
+    `/projects/${projectId}/design-branches/activate`,
+    { branch_id: branchId },
+  );
 }
 
 export async function scanDesignGhostsApi(

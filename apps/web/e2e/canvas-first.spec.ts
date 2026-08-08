@@ -4,11 +4,11 @@ import { pipelineShell } from "./helpers";
 const API = process.env.API_URL ?? "http://localhost:3001";
 
 /**
- * Canvas-first progressive disclosure: Sketch has no Live BOM;
+ * Canvas-first progressive disclosure: Sketch shows Instant Planner strip;
  * CAD exposes Walk + compact costing; Share hides Live BOM.
  */
 test.describe("Canvas-first mode chrome", () => {
-  test("Sketch hides Live BOM; Paint disclosure; CAD Walk mounts", async ({
+  test("Sketch Instant Planner; Paint disclosure; CAD Walk mounts", async ({
     page,
     request,
   }) => {
@@ -45,7 +45,9 @@ test.describe("Canvas-first mode chrome", () => {
     await page.getByTestId("canvas-mode-sketch").click();
     await expect(page).toHaveURL(/mode=sketch/);
 
-    await expect(page.getByTestId("live-bom-hud")).toHaveCount(0);
+    await expect(page.getByTestId("live-bom-hud")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByTestId("cad-dock")).toHaveCount(0);
 
     const paint = page.getByTestId("sketch-paint-open");
