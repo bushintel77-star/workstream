@@ -393,11 +393,11 @@
 }
 
 .pagePaper[data-palette="sage"] {
-  --pv-paper: color-mix(in srgb, var(--gray-l-25) 88%, #7a8f6a);
-  --pv-ink: color-mix(in srgb, var(--gray-l-900) 82%, #2f4a32);
-  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 70%, #4a6b4e);
-  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 90%, #c5d4b8);
-  --pv-accent: #4a6b4e;
+  --pv-paper: color-mix(in srgb, var(--gray-l-25) 88%, var(--sage-l-400));
+  --pv-ink: color-mix(in srgb, var(--gray-l-900) 82%, var(--forest-l-600));
+  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 70%, var(--sprout-l-500));
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 90%, var(--sage-l-400));
+  --pv-accent: var(--sprout-l-500);
 }
 
 .pagePaper[data-palette="ink"] {
@@ -410,19 +410,19 @@
 
 .pagePaper[data-palette="blush"] {
   /* Warm accent on page content only — never studio chrome. */
-  --pv-paper: color-mix(in srgb, var(--gray-l-25) 86%, #e8c4b8);
-  --pv-ink: color-mix(in srgb, var(--gray-l-900) 88%, #5c2e28);
-  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 75%, #8a4a42);
-  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 88%, #f0d6ce);
-  --pv-accent: #b33a32;
+  --pv-paper: color-mix(in srgb, var(--gray-l-25) 86%, var(--crimson-l-600));
+  --pv-ink: color-mix(in srgb, var(--gray-l-900) 88%, var(--crimson-l-600));
+  --pv-ink-muted: color-mix(in srgb, var(--gray-l-700) 75%, var(--crimson-l-600));
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 88%, var(--crimson-l-600));
+  --pv-accent: var(--crimson-l-600);
 }
 
 .pagePaper[data-palette="parchment"] {
   --pv-paper: var(--sheet-paper, var(--gray-l-50));
   --pv-ink: var(--sheet-ink, var(--gray-l-900));
   --pv-ink-muted: var(--sheet-ink-muted, var(--gray-l-700));
-  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 85%, #e8dfc8);
-  --pv-accent: color-mix(in srgb, var(--gray-l-800) 80%, #6b5a3e);
+  --pv-plan-bg: color-mix(in srgb, var(--gray-l-100) 88%, var(--gray-l-200));
+  --pv-accent: var(--gray-l-800);
 }
 
 .pagePaper[data-font="fraunces"] {
@@ -1626,7 +1626,6 @@
   .root {
     position: static;
     background: var(--gray-l-0);
-    z-index: auto;
   }
 
   .sidebar,
