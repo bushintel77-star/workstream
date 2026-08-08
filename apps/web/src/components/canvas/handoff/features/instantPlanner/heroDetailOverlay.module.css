@@ -48,10 +48,6 @@
   font-weight: 600;
 }
 
-<<<<<<< Updated upstream
-.back {
-  border: 1px solid color-mix(in srgb, var(--hc-ink) 14%, transparent);
-=======
 .topActions {
   display: flex;
   flex-wrap: wrap;
@@ -61,8 +57,7 @@
 
 .back,
 .freeze {
-  border: 1px solid rgba(36, 19, 24, 0.14);
->>>>>>> Stashed changes
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 14%, transparent);
   border-radius: var(--hc-r-control, 10px);
   min-height: 44px;
   padding: 0.4rem 0.85rem;
@@ -75,9 +70,9 @@
 }
 
 .freeze {
-  background: color-mix(in srgb, #241318 92%, #fff);
-  color: #fffbfc;
-  border-color: #241318;
+  background: color-mix(in srgb, var(--hc-ink) 92%, var(--hc-paper));
+  color: var(--hc-paper);
+  border-color: var(--hc-ink);
 }
 
 .body {
