@@ -5,6 +5,33 @@
 
 ---
 
+## Refresh — 2026-08-08 (e2e P0 close)
+
+Supersedes the Aug 2 e2e scorecard claims below (those still say settings /
+dashboard / deposit have zero e2e). Spec count is now **56+** Playwright files
+under `apps/web/e2e` (52 on the morning refresh + four new kept smokes).
+
+### P0s closed this refresh
+
+| Gap | Spec | Quality |
+|-----|------|---------|
+| Services ledger ticks / focus | `services-ledger-focus.spec.ts` | Kept smoke — Cmd+K open, tick, focus, clear |
+| Auto trench → ghost → Accept | `auto-trench-ghost.spec.ts` | Kept smoke — distinct from propose-services |
+| View rotate + inverse pointer | `view-rotate-pointer.spec.ts` | Kept smoke — 90° CW + `clientToBoardPct` place |
+| Portal deposit token page | `portal-deposit-token.spec.ts` | Kept smoke — mint token, preview copy, success/cancel |
+| Dashboard hard + undo toast | `dashboard-filter-sort.spec.ts` | Hardened — seed N, search empty/match, Dialog delete + Undo |
+| Settings crew / rate / suppliers / license | `settings-pages.spec.ts` | Hardened — web UI routes 404 (removed `9a29992`); crew CRUD + rate-card/suppliers/license via API |
+
+### Still open (not this batch)
+
+- P1: Survey Level / Calib / tree tools; Fit sheet hotkey F; address → confirm-pin UI; ghost Accept seed guarantee
+- P2: Mode keys 1/2/3/4; unsaved-changes guard
+- Web settings pages remain deleted — restore UI before form/Dialog e2e can return
+
+Canvas companion: `e2e-gap-analysis-2026-08-08.canvas.tsx`.
+
+---
+
 ## 1. SCREEN INVENTORY (36 routes)
 
 ### Public surfaces (4)
