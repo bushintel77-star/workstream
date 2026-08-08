@@ -68,6 +68,18 @@
   font-weight: 650;
 }
 
+.labourChip {
+  margin: 0;
+  border-radius: var(--hc-r-pill, 999px);
+  padding: 0.2rem 0.55rem;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano, 10px);
+  font-weight: 650;
+  color: var(--ws-frame-ink, var(--hc-ink));
+  background: color-mix(in srgb, var(--ws-frame) 70%, #fff);
+  border: 1px solid var(--ws-frame-hair);
+}
+
 .total {
   border: none;
   background: transparent;

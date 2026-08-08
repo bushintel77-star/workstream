@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { StudioEstimateReport } from "@workstream/domain";
+import { useMemo, useState } from "react";
+import { formatLabourChip, type StudioEstimateReport } from "@workstream/domain";
 import css from "./bom.module.css";
 
 type Props = {
@@ -50,6 +50,19 @@ export function LiveBomDock({
   const primary = estimate.lines.filter((l) => l.tier === "primary");
   const shadowed = estimate.lines.filter((l) => l.tier !== "primary");
   const horizonChips = estimate.horizon.filter((h) => !mitigated[h.id]);
+  const labourChip = useMemo(() => {
+    let hours = 0;
+    for (const line of estimate.lines) {
+      if (line.tier !== "labour") continue;
+      const unit = line.unit.toLowerCase();
+      if (unit === "hr" || unit === "hour" || unit === "hrs" || unit === "h") {
+        hours += line.qty;
+      } else if (unit === "ea") {
+        hours += line.qty * 0.5;
+      }
+    }
+    return formatLabourChip(Math.round(hours * 10) / 10);
+  }, [estimate.lines]);
 
   const horizonLabel = (kind: (typeof horizonChips)[number]["kind"]) => {
     switch (kind) {
@@ -75,10 +88,15 @@ export function LiveBomDock({
     >
       {!embedded ? (
         <div className={css.head}>
-          <p className={css.kicker}>Live cost</p>
+          <p className={css.kicker}>Instant Planner</p>
+          {labourChip !== "—" ? (
+            <span className={css.labourChip} data-testid="instant-planner-labour">
+              {labourChip}
+            </span>
+          ) : null}
         </div>
       ) : (
-        <p className={css.kicker}>Live cost</p>
+        <p className={css.kicker}>Instant Planner</p>
       )}
       <button
         type="button"

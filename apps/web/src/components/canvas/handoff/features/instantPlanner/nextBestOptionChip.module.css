@@ -1,0 +1,108 @@
+﻿.wrap {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 5.5rem;
+  z-index: var(--ws-z-dock);
+  max-width: min(18rem, calc(100vw - 1.5rem));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.paper .chip,
+.paper .panel {
+  background: color-mix(in srgb, var(--paper, #faf6f2) 96%, transparent);
+  border-color: var(--paper-rule, rgba(36, 19, 24, 0.18));
+  color: var(--paper-ink, #241318);
+}
+
+.prominent .chip {
+  box-shadow: 0 6px 18px rgba(42, 23, 29, 0.22);
+  transform: scale(1.02);
+}
+
+.chip {
+  border: 1px solid rgba(36, 19, 24, 0.12);
+  border-radius: var(--hc-r-pill, 999px);
+  padding: 0.4rem 0.85rem;
+  min-height: 44px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255, 251, 252, 0.92);
+  backdrop-filter: blur(12px);
+  color: var(--ink, #241318);
+  box-shadow: 0 4px 14px rgba(42, 23, 29, 0.12);
+}
+
+.panel {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--hc-r-pop, 14px);
+  border: 1px solid rgba(36, 19, 24, 0.1);
+  background: rgba(255, 251, 252, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 28px rgba(42, 23, 29, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.detail {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.65rem;
+  color: var(--ink-soft, #6b5660);
+}
+
+.actions,
+.prefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.btn {
+  border: none;
+  border-radius: var(--hc-r-control, 12px);
+  padding: 0.4rem 0.7rem;
+  min-height: 40px;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: color-mix(in srgb, #fff 90%, var(--pink-soft, #fdf0f5));
+  color: var(--ink, #24181e);
+}
+
+.btnPrimary {
+  background: var(--ink, #24181e);
+  color: #faf4f6;
+}
+
+.prefBtn {
+  border: none;
+  background: transparent;
+  color: var(--ink-faint, #9a8590);
+  font: inherit;
+  font-size: 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 720px) {
+  .wrap {
+    left: 0.5rem;
+    bottom: 8.5rem;
+  }
+}

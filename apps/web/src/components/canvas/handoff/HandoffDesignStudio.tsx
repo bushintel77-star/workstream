@@ -144,6 +144,7 @@ import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
 import { CanvasToolCard } from "./features/toolDock/CanvasToolCard";
 import { CanvasContextCard } from "./features/toolDock/CanvasContextCard";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
+import { InstantPlannerChrome } from "./features/instantPlanner/InstantPlannerChrome";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import {
   nicheToolsForZone,
@@ -5022,6 +5023,26 @@ export function HandoffDesignStudio({
           }}
         />
 
+        {chrome.liveBom && !ui.clientView && !ui.focusOn ? (
+          <InstantPlannerChrome
+            projectId={projectId}
+            active
+            paper={ui.frameOn || ui.mode === "cad" || ui.mode === "quote"}
+            structuredTools={
+              ui.mode === "sketch" || ui.mode === "cad"
+            }
+            items={studio.items}
+            strokes={studio.strokes}
+            irrigationZones={studio.irrigationZones}
+            annotations={studio.annotations}
+            imageLayers={studio.imageLayers}
+            constructionTrenches={studio.constructionTrenches}
+            onCanvasApplied={(canvas) => {
+              studio.loadBranchCanvas(canvas);
+            }}
+          />
+        ) : null}
+
         <OpsSchedulesDock
           projectId={projectId}
           open={opsSchedulesOpen}
@@ -5687,7 +5708,7 @@ export function HandoffDesignStudio({
               <div data-testid="studio-sheet-data">
                 {chrome.liveBom ? (
                   <div className={sheetCss.bomEmbed} data-testid="studio-sheet-live-bom">
-                    <p className={sheetCss.pageKicker}>Live cost</p>
+                    <p className={sheetCss.pageKicker}>Instant Planner</p>
                     <LiveBomDock
                       embedded
                       estimate={estimate}

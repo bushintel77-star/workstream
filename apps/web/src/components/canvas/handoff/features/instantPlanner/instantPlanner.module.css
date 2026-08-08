@@ -1,0 +1,10 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--ws-z-dock);
+}
+
+.layer > * {
+  pointer-events: auto;
+}
