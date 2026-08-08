@@ -665,8 +665,30 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
     activeDoc?.pages[activeDoc.pages.length - 1] ??
     null;
 
+  const surfaceState =
+    ghostReviewOpen || formatReviewOpen
+      ? "ghost"
+      : !activeDoc
+        ? "empty"
+        : activeDoc.status === "issued"
+          ? "locked"
+          : "ready";
+
+  const surfaceCopy =
+    surfaceState === "ghost"
+      ? "Ghost review — accept or reject proposals before issuing"
+      : surfaceState === "empty"
+        ? "Empty — create a deck to start composing"
+        : surfaceState === "locked"
+          ? "Locked — this deck is issued; edits are blocked"
+          : "Ready — compose pages and panels";
+
   return (
-    <div className={css.root} data-testid="present-surface">
+    <div
+      className={css.root}
+      data-testid="present-surface"
+      data-surface-state={surfaceState}
+    >
       <div className={css.sidebar}>
         <div className={css.sidebarHeader}>
           <KitButton variant="ghost" size="sm" onClick={onBack} aria-label="Back to CAD">
@@ -674,6 +696,13 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
           </KitButton>
           <h2 className={css.sidebarTitle}>Present</h2>
         </div>
+        <p
+          className={css.surfaceBanner}
+          data-testid="present-surface-banner"
+          data-state={surfaceState}
+        >
+          {surfaceCopy}
+        </p>
 
         <KitButton
           variant="default"
@@ -868,7 +897,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
           </div>
         </div>
       ) : (
-        <div className={css.emptyWorkspace}>
+        <div className={css.emptyWorkspace} data-testid="present-empty-workspace">
           <p className={css.emptyLead}>
             Select a deck or create one to start composing.
           </p>

@@ -55,8 +55,13 @@ export async function fetchPortalQuote(
 
 export async function createDepositCheckout(
   token: string,
+  scenario?: string,
 ): Promise<DepositCheckout> {
-  const res = await fetch(`${API_URL}/portal/deposit/${token}`, {
+  const qs =
+    scenario && ["lean", "standard", "buffer"].includes(scenario)
+      ? `?scenario=${encodeURIComponent(scenario)}`
+      : "";
+  const res = await fetch(`${API_URL}/portal/deposit/${token}${qs}`, {
     method: "POST",
     cache: "no-store",
   });

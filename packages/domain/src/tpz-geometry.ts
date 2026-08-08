@@ -1,4 +1,6 @@
-/** Lot-metre TPZ circle for MapLibre / sheet overlays. */
+/** Lot-metre TPZ / NRZ circle for MapLibre / sheet overlays. */
+
+import { nrzRadiusFromDbhCm } from "./as4970-protection-zones";
 
 export type TpzCircle = {
   id: string;
@@ -35,11 +37,11 @@ export function tpzCirclesFromPctAnchors(
 }
 
 /**
- * AS 4970 indicative TPZ radius from DBH (cm): R = 12 × DBH(m), min 2 m.
+ * AS 4970-2025 NRZ radius from DBH (cm) — legacy TPZ name kept for callers.
+ * R = clamp(12 × DBH(m), 2 m, 15 m).
  */
 export function tpzRadiusFromDbhCm(dbhCm: number): number {
-  if (!Number.isFinite(dbhCm) || dbhCm <= 0) return 0;
-  return Math.max(2, (dbhCm / 100) * 12);
+  return nrzRadiusFromDbhCm(dbhCm);
 }
 
 /** Approximate a circle as a closed lng/lat ring around a centre. */

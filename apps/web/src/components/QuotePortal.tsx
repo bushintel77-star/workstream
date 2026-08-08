@@ -280,15 +280,22 @@ export function QuotePortal({
             <>
               <KitButton
                 as="a"
-                href={`/portal/deposit/${token}`}
+                href={
+                  data.deposit_url
+                    ? `${data.deposit_url}${data.deposit_url.includes("?") ? "&" : "?"}scenario=${encodeURIComponent(active.scenario)}`
+                    : `/portal/deposit/${token}?scenario=${encodeURIComponent(active.scenario)}`
+                }
                 variant="accent"
                 size="lg"
+                data-testid="portal-deposit-cta"
+                data-scenario={active.scenario}
               >
                 Accept &amp; pay {aud2(active.total * 0.2)} deposit
               </KitButton>
               <p className={styles.acceptNote}>
-                A 20% deposit secures your garden on the {activeScenarioLabel} scenario.
-                Balance billed in stages as works progress.
+                A 20% deposit secures your garden on the {activeScenarioLabel}{" "}
+                scenario ({active.scenario}). Balance billed in stages as works
+                progress.
               </p>
             </>
           ) : (

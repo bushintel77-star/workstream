@@ -5,7 +5,7 @@ import {
   handoffStudio,
 } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 async function seedDesignCanvas(request: APIRequestContext, projectId: string) {
   const seed = await request.put(`${API}/projects/${projectId}/design-canvas`, {

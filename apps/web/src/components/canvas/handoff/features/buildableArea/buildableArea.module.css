@@ -42,7 +42,7 @@
   font-weight: 700;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  color: var(--hc-buildable, #4a9);
+  color: var(--hc-buildable, var(--ok));
 }
 
 .headlineLabel {

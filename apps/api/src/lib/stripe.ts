@@ -160,6 +160,7 @@ export async function createDepositSession(
     form.set("metadata[owner_id]", args.owner_id);
   }
   form.set("metadata[deposit_pct]", String(pct));
+  form.set("metadata[scenario]", args.costing.scenario);
 
   const secretKey = getOwnerEnv("STRIPE_SECRET_KEY");
   if (!secretKey) {

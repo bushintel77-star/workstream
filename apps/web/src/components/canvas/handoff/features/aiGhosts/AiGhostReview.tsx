@@ -288,7 +288,12 @@ export function AiGhostReview({
         {expanded ? <Factors factors={factors} /> : null}
 
         <div className={styles.actions}>
-          <button type="button" className={styles.accept} onClick={() => onAccept(selected.id)}>
+          <button
+            type="button"
+            className={styles.accept}
+            data-testid="ghost-accept"
+            onClick={() => onAccept(selected.id)}
+          >
             Accept (A / Enter)
           </button>
           <button type="button" className={styles.reject} onClick={() => onReject(selected.id)}>

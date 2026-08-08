@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { clickHeaderViewItem, createSurveyProject, handoffStudio } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
  * Fit-sheet presentation compose — header-summoned peel (canvas-first).

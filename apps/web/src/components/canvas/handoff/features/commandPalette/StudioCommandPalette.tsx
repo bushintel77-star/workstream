@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { BydaAssetKind } from "@workstream/contracts";
 import {
   BY_TYPE,
@@ -12,13 +12,75 @@ import { rankAssetCommands } from "../assetPanel/assetCommandRank";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import css from "./commandPalette.module.css";
 
+/** Tier-1 Cmd+K catalogue groups (designer inventory). */
+export type StudioCommandGroup =
+  | "AI"
+  | "Site"
+  | "BYDA"
+  | "Design"
+  | "View"
+  | "Place";
+
+const GROUP_ORDER: StudioCommandGroup[] = [
+  "AI",
+  "Site",
+  "BYDA",
+  "Design",
+  "View",
+  "Place",
+];
+
 export type StudioCommand = {
   id: string;
   label: string;
   detail: string;
   keywords: string;
+  group?: StudioCommandGroup;
   run: () => void;
 };
+
+function commandGroup(cmd: StudioCommand): StudioCommandGroup {
+  if (cmd.group) return cmd.group;
+  const id = cmd.id;
+  if (id.startsWith("arm-")) return "Place";
+  if (id.startsWith("byda-")) return "BYDA";
+  if (
+    id === "ask-ai" ||
+    id === "scan-ghosts" ||
+    id === "develop-site" ||
+    id === "scan-canopy" ||
+    id === "propose-services" ||
+    id === "auto-trench"
+  ) {
+    return "AI";
+  }
+  if (
+    id === "title-boundary" ||
+    id === "spatial-correction" ||
+    id === "prepare-site-pack" ||
+    id === "services-ledger" ||
+    id === "environment" ||
+    id === "site-meta" ||
+    id === "trees-meta"
+  ) {
+    return "Site";
+  }
+  if (
+    id === "convert-sketch" ||
+    id === "annotate" ||
+    id === "lifecycle-phase" ||
+    id === "irrigation-uniformity" ||
+    id === "live-telemetry" ||
+    id === "ar-birdseye" ||
+    id === "buildable-area" ||
+    id === "save-scheme" ||
+    id === "quote" ||
+    id === "measures"
+  ) {
+    return "Design";
+  }
+  return "View";
+}
 
 type Props = {
   open: boolean;
@@ -52,6 +114,8 @@ type Props = {
   onArmByda?: (kind: BydaAssetKind) => void;
   onConvertSketch?: () => void;
   onToggleFitSheet: () => void;
+  /** Summon / dismiss the board ink legend (existing / proposed / BYDA). */
+  onToggleInkLegend?: () => void;
   onGoQuote: () => void;
   onToggleFocus: () => void;
   /** Tilt lens — animates to the settle angle (view-only). */
@@ -116,6 +180,7 @@ export function StudioCommandPalette({
   onArmByda,
   onConvertSketch,
   onToggleFitSheet,
+  onToggleInkLegend,
   onGoQuote,
   onToggleFocus,
   onTiltView,
@@ -347,6 +412,19 @@ export function StudioCommandPalette({
         keywords: "fit sheet a3 a4 paper frame",
         run: onToggleFitSheet,
       },
+      ...(onToggleInkLegend
+        ? [
+          {
+            id: "ink-legend",
+            label: "Ink legend",
+            detail:
+              "Existing / proposed / planting / easement / BYDA stroke colours",
+            keywords:
+              "ink legend existing proposed planting easement byda colour stroke plan",
+            run: onToggleInkLegend,
+          } satisfies StudioCommand,
+        ]
+        : []),
       ...(onCycleLifecyclePhase
         ? [
           {
@@ -536,7 +614,16 @@ export function StudioCommandPalette({
 
     // Workflow commands keep substring match; place rows are pre-ranked.
     const workflow = base.filter((c) => matches(c, query));
-    return [...workflow, ...arm];
+    const merged = [...workflow, ...arm];
+    // Idle catalogue: AI · Site · BYDA · Design · View · Place.
+    if (!query.trim()) {
+      return merged.sort(
+        (a, b) =>
+          GROUP_ORDER.indexOf(commandGroup(a)) -
+          GROUP_ORDER.indexOf(commandGroup(b)),
+      );
+    }
+    return merged;
   }, [
     dataOpen,
     mode,
@@ -559,6 +646,7 @@ export function StudioCommandPalette({
     onArmByda,
     onToggleData,
     onToggleFitSheet,
+    onToggleInkLegend,
     onToggleFocus,
     onToggleIrrigationUniformity,
     onToggleLiveTelemetry,
@@ -643,24 +731,40 @@ export function StudioCommandPalette({
           role="listbox"
           aria-label="Command results"
         >
-          {filtered.map((cmd, i) => (
-            <li key={cmd.id} role="presentation">
-              <button
-                type="button"
-                id={`canvas-command-${cmd.id}`}
-                className={css.row}
-                role="option"
-                aria-selected={i === active}
-                data-testid={`canvas-command-${cmd.id}`}
-                data-active={i === active ? "true" : "false"}
-                onMouseEnter={() => setActive(i)}
-                onClick={() => runAt(i)}
-              >
-                <span className={css.label}>{cmd.label}</span>
-                <span className={css.detail}>{cmd.detail}</span>
-              </button>
-            </li>
-          ))}
+          {filtered.map((cmd, i) => {
+            const group = commandGroup(cmd);
+            const prev = i > 0 ? commandGroup(filtered[i - 1]!) : null;
+            const showGroup = !query.trim() && group !== prev;
+            return (
+              <Fragment key={cmd.id}>
+                {showGroup ? (
+                  <li
+                    className={css.group}
+                    role="presentation"
+                    data-testid={`cmd-group-${group.toLowerCase()}`}
+                  >
+                    {group}
+                  </li>
+                ) : null}
+                <li role="presentation">
+                  <button
+                    type="button"
+                    id={`canvas-command-${cmd.id}`}
+                    className={css.row}
+                    role="option"
+                    aria-selected={i === active}
+                    data-testid={`canvas-command-${cmd.id}`}
+                    data-active={i === active ? "true" : "false"}
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => runAt(i)}
+                  >
+                    <span className={css.label}>{cmd.label}</span>
+                    <span className={css.detail}>{cmd.detail}</span>
+                  </button>
+                </li>
+              </Fragment>
+            );
+          })}
           {filtered.length === 0 ? (
             <li className={css.empty} role="option" aria-disabled="true">
               No matching commands

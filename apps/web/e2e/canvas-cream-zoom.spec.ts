@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { handoffStudio } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 async function zoomWorldScale(page: import("@playwright/test").Page) {
   const transform = await page

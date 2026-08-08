@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { handoffStudio, pipelineShell } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 test.describe("One canvas modes", () => {
   let projectId: string;

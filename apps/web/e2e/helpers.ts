@@ -4,7 +4,8 @@ import path from "node:path";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+/** Prefer 127.0.0.1 — `localhost` can resolve to ::1 while the API binds IPv4. */
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /** Canonical Tier-1 Wrights address (proposal v3 / workbook lock). */
 export const TIER1_WRIGHTS_ADDRESS =

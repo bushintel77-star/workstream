@@ -19,12 +19,12 @@
   width: 280px;
   display: flex;
   flex-direction: column;
-  background: var(--tier1-bar-bg, #1E2229);
+  background: var(--tier1-bar-bg);
   border-radius: var(--r-md, 8px);
   box-shadow:
     0 4px 16px color-mix(in srgb, #000 30%, transparent),
     0 1px 3px color-mix(in srgb, #000 20%, transparent),
-    inset 0 0 0 1px var(--tier1-bar-line, #2A2F38);
+    inset 0 0 0 1px var(--tier1-bar-line);
   z-index: 20;
   pointer-events: auto;
   animation: dockSlideIn 180ms var(--ws-ease, ease) both;
@@ -52,7 +52,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--s-3, 12px) var(--s-4, 16px);
-  border-bottom: 1px solid var(--tier1-bar-line, #2A2F38);
+  border-bottom: 1px solid var(--tier1-bar-line);
 }
 
 .dockTitle {
@@ -61,7 +61,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--tier1-bar-ink-muted, #9CA3AF);
+  color: var(--tier1-bar-ink-muted);
 }
 
 .dockClose {
@@ -73,7 +73,7 @@
   border: 0;
   border-radius: var(--r-sm, 6px);
   background: transparent;
-  color: var(--tier1-bar-ink-muted, #9CA3AF);
+  color: var(--tier1-bar-ink-muted);
   cursor: pointer;
   box-shadow: inset 0 0 0 1px transparent;
   transition:
@@ -82,13 +82,13 @@
 }
 
 .dockClose:hover {
-  color: var(--tier1-bar-ink, #F9FAFB);
-  box-shadow: inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150);
+  color: var(--tier1-bar-ink);
+  box-shadow: inset 0 0 0 1px var(--tier1-bar-line-strong);
 }
 
 .dockClose:active {
   box-shadow:
-    inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150),
+    inset 0 0 0 1px var(--tier1-bar-line-strong),
     inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
 }
 
@@ -111,7 +111,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--tier1-bar-ink-muted, #9CA3AF);
+  color: var(--tier1-bar-ink-muted);
 }
 
 /*
@@ -123,14 +123,14 @@
   padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
-  background: var(--tier1-bar-active-bg, #11151C);
+  background: var(--tier1-bar-active-bg);
   border: 0;
   border-radius: var(--r-sm, 6px);
-  color: var(--tier1-bar-ink, #F9FAFB);
+  color: var(--tier1-bar-ink);
   cursor: pointer;
   min-height: 44px;
   box-shadow:
-    inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150),
+    inset 0 0 0 1px var(--tier1-bar-line-strong),
     inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
   transition: box-shadow 140ms var(--ws-ease, ease);
   -webkit-appearance: none;
@@ -143,46 +143,46 @@
 
 .select:hover {
   box-shadow:
-    inset 0 0 0 1px var(--tier1-bar-focus-ring, #6B7280),
+    inset 0 0 0 1px var(--tier1-bar-focus-ring),
     inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
 }
 
 .select:focus {
   outline: none;
   box-shadow:
-    inset 0 0 0 1px var(--tier1-bar-focus-ring, #6B7280),
+    inset 0 0 0 1px var(--tier1-bar-focus-ring),
     inset 0 1px 2px color-mix(in srgb, #000 30%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--tier1-bar-focus-ring, #6B7280) 40%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--tier1-bar-focus-ring) 40%, transparent);
 }
 
 .select option {
-  background: var(--tier1-bar-bg, #1E2229);
-  color: var(--tier1-bar-ink, #F9FAFB);
+  background: var(--tier1-bar-bg);
+  color: var(--tier1-bar-ink);
 }
 
 .input {
   padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
-  background: var(--tier1-bar-active-bg, #11151C);
+  background: var(--tier1-bar-active-bg);
   border: 0;
   border-radius: var(--r-sm, 6px);
-  color: var(--tier1-bar-ink, #F9FAFB);
+  color: var(--tier1-bar-ink);
   min-height: 44px;
   box-shadow:
-    inset 0 0 0 1px var(--tier1-bar-line-strong, #3A4150),
+    inset 0 0 0 1px var(--tier1-bar-line-strong),
     inset 0 1px 2px color-mix(in srgb, #000 30%, transparent);
   transition: box-shadow 140ms var(--ws-ease, ease);
 }
 
 .input::placeholder {
-  color: var(--tier1-bar-ink-muted, #9CA3AF);
+  color: var(--tier1-bar-ink-muted);
 }
 
 .input:focus {
   outline: none;
   box-shadow:
-    inset 0 0 0 1px var(--tier1-bar-focus-ring, #6B7280),
+    inset 0 0 0 1px var(--tier1-bar-focus-ring),
     inset 0 1px 2px color-mix(in srgb, #000 30%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--tier1-bar-focus-ring, #6B7280) 40%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--tier1-bar-focus-ring) 40%, transparent);
 }

@@ -119,7 +119,7 @@ test.describe("Tilt lens", () => {
     // Fixture a traced dwelling so the extrusion gate does not depend on
     // Vicmap building coverage (many CBD pins have title but no building).
     const canvas = await request.put(
-      `${process.env.API_URL ?? "http://localhost:3001"}/projects/${projectId}/design-canvas`,
+      `${process.env.API_URL ?? "http://127.0.0.1:3001"}/projects/${projectId}/design-canvas`,
       {
         data: {
           placements: [],

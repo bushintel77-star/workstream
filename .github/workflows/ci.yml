@@ -39,6 +39,16 @@ jobs:
 
       - run: pnpm web:check-portal-edge
 
+      - run: pnpm web:check-handoff-colors
+
+      - run: pnpm web:check-studio-dialect
+
+      - run: node scripts/check-tier1-2026-spec-gap.mjs --require
+
+      - run: pnpm web:check-reachability
+
+      - run: pnpm web:check-css-scales
+
       - run: pnpm typecheck
 
       - run: pnpm lint
@@ -48,7 +58,8 @@ jobs:
   e2e:
     name: playwright e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Full suite (~52+ specs) exceeds 25m on ubuntu — tip cancelled at gate.
+    timeout-minutes: 45
     needs: typecheck
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     env:

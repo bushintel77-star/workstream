@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
+import { computeAs4970ProtectionZones } from "@workstream/domain";
 import { BY_TYPE, type StudioItem } from "../../studioCatalog";
 import { polygonAreaM2, type PctPoint } from "../../geometry";
+import kit from "../chromeKit/summonedDock.module.css";
 import css from "./compliance.module.css";
 import { CSS_TOKEN } from "../../../../../styles/colorTokens";
 
@@ -67,6 +69,19 @@ export function ComplianceDock({
     const outdoorOk = site >= 40;
     const pass = [outdoorOk, permeableOk, canopyOk].filter(Boolean).length;
 
+    const existTrees = live.filter((i) => i.t === "exist");
+    let maxNrzM = 0;
+    let maxSrzM = 0;
+    for (const t of existTrees) {
+      const stems =
+        t.stemDbhM && t.stemDbhM.length > 0
+          ? t.stemDbhM
+          : [t.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45];
+      const z = computeAs4970ProtectionZones(stems);
+      maxNrzM = Math.max(maxNrzM, z.nrz_radius_m);
+      maxSrzM = Math.max(maxSrzM, z.srz_radius_m);
+    }
+
     return {
       site,
       permeablePct,
@@ -76,17 +91,20 @@ export function ComplianceDock({
       outdoorOk,
       pass,
       total: 3,
+      existCount: existTrees.length,
+      maxNrzM,
+      maxSrzM,
     };
   }, [boundary, items, outdoorM2, scaleM]);
 
   return (
     <aside
-      className={`${css.dock}${embedded ? ` ${css.embedded}` : ""}`}
+      className={`${embedded ? "" : `${kit.dock} `}${css.dock}${embedded ? ` ${css.embedded}` : ""}`}
       data-testid="compliance-dock"
     >
       {!embedded ? (
-        <div className={css.head}>
-          <p className={css.kicker}>Compliance</p>
+        <div className={`${kit.head} ${css.head}`}>
+          <p className={`${kit.kicker} ${css.kicker}`}>Compliance</p>
           <span className={css.passPill}>
             {stats.pass}/{stats.total}
           </span>
@@ -121,6 +139,15 @@ export function ComplianceDock({
           <div className={css.barTick} style={{ left: "15%" }} />
         </div>
       </div>
+      {stats.existCount > 0 ? (
+        <div data-testid="compliance-as4970">
+          <p className={css.metricKey}>AS 4970-2025 · existing trees</p>
+          <p className={css.metricVal}>
+            {stats.existCount} · max NRZ {stats.maxNrzM.toFixed(1)} m · SRZ{" "}
+            {stats.maxSrzM.toFixed(1)} m
+          </p>
+        </div>
+      ) : null}
     </aside>
   );
 }

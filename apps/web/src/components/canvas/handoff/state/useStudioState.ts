@@ -2569,12 +2569,43 @@ export function useStudioState(opts: UseStudioStateOpts) {
           ...snap,
           items: snap.items.map((i) =>
             i.id === id && !i.ghost && i.t === "exist"
-              ? { ...i, dbhM: next }
+              ? { ...i, dbhM: next, stemDbhM: undefined }
               : i,
           ),
         },
       }));
       setUi({ existDbhM: next });
+    },
+    [mutate, setUi, state.ui.locked, state.ui.selectedId],
+  );
+
+  const patchSelectedStems = useCallback(
+    (stemDbhM: number[]) => {
+      const id = state.ui.selectedId;
+      if (!id || state.ui.locked) return;
+      const clean = stemDbhM
+        .map((n) => Math.min(2, Math.max(0.05, n)))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      if (clean.length === 0) return;
+      const combined =
+        clean.length === 1
+          ? clean[0]!
+          : Math.sqrt(clean.reduce((acc, d) => acc + d * d, 0));
+      mutate((snap) => ({
+        snap: {
+          ...snap,
+          items: snap.items.map((i) =>
+            i.id === id && !i.ghost && i.t === "exist"
+              ? {
+                  ...i,
+                  dbhM: combined,
+                  stemDbhM: clean.length > 1 ? clean : undefined,
+                }
+              : i,
+          ),
+        },
+      }));
+      setUi({ existDbhM: combined });
     },
     [mutate, setUi, state.ui.locked, state.ui.selectedId],
   );
@@ -4350,6 +4381,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     duplicateSelected,
     rotateSelectedClock,
     patchSelectedDbh,
+    patchSelectedStems,
     snapSheetScale,
     setSheetScale,
     updateBoundary,

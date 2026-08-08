@@ -170,6 +170,7 @@ import { SelectionDial } from "./features/selectionDial/SelectionDial";
 import { SelectionFocusVeil } from "./features/selectionFocus/SelectionFocusVeil";
 import { DialHintPill } from "./features/selectionDial/DialHintPill";
 import { ExistTreeInspector } from "./features/selectionRing/ExistTreeInspector";
+import { BoardInkLegend } from "./features/inkLegend/BoardInkLegend";
 import { ZoneOverlay } from "./features/zones/ZoneOverlay";
 import { IrrigationUniformityWash } from "./features/zones/IrrigationUniformityWash";
 import { IrrigationUniformityDock } from "./features/zones/IrrigationUniformityDock";
@@ -286,6 +287,7 @@ import {
 import { useToast } from "../../ToastHost";
 import { useChromeIdle } from "./hooks/useChromeIdle";
 import { suggestedMode, unlockedModes } from "../../../lib/canvas-mode";
+import { lockReasonForMode as resolveModeLockReason } from "../../../lib/modeLockCopy";
 import { useBoardFindings } from "../../../lib/use-board-findings";
 import { useBoardReport } from "../../../lib/use-board-report";
 import { useBoardTelemetry } from "../../../lib/use-board-telemetry";
@@ -553,6 +555,8 @@ export function HandoffDesignStudio({
   });
   /** Instruments open only when summoned (margin click / hub), not on select. */
   const [instrumentsSummoned, setInstrumentsSummoned] = useState(false);
+  /** Board ink legend — summoned frost dock (View / Cmd+K). */
+  const [inkLegendOpen, setInkLegendOpen] = useState(false);
   /** Shared-rev frost toast — dismissible; not a sticky slab. */
   const [shareBannerDismissed, setShareBannerDismissed] = useState(false);
   /** Drafting grid controls — toggled from the tool dock (not a separate cluster). */
@@ -2802,17 +2806,8 @@ export function HandoffDesignStudio({
     setShareBannerDismissed(false);
   }, [openSharedRev?.revision]);
 
-  const lockReasonForMode = (mode: StudioMode): string | null => {
-    if (openModes.has(mode)) return null;
-    if (mode === "sketch" || mode === "cad" || mode === "elevation") {
-      return "Complete survey and title boundary first.";
-    }
-    if (mode === "quote") return "Accept CAD geometry before quoting.";
-    if (mode === "present")
-      return "Accept CAD geometry before presenting.";
-    if (mode === "share") return "Cost something on the drawing before sharing.";
-    return "Complete the previous stage first.";
-  };
+  const lockReasonForMode = (mode: StudioMode): string | null =>
+    resolveModeLockReason(mode, openModes);
   /**
    * Instrument + inventory home — margin pin only (never lot core).
    */
@@ -3058,6 +3053,14 @@ export function HandoffDesignStudio({
       onSelect: () => setFitSheetOn(!ui.frameOn),
     });
 
+    items.push({
+      id: "ink-legend",
+      label: inkLegendOpen ? "Hide ink legend" : "Ink legend",
+      testId: "board-ink-legend-top",
+      active: inkLegendOpen,
+      onSelect: () => setInkLegendOpen((v) => !v),
+    });
+
     if (ui.frameOn && !ui.clientView) {
       items.push({
         id: "sheet-compose",
@@ -3192,6 +3195,7 @@ export function HandoffDesignStudio({
     chrome.structureRail,
     hasCostedBom,
     hasCostedLines,
+    inkLegendOpen,
     instrumentsVisible,
     layersOpen,
     openStudioSheetPage,
@@ -4923,9 +4927,19 @@ export function HandoffDesignStudio({
             yPct={selectedLive.y}
             cam={planCam}
             dbhM={selectedLive.dbhM ?? ui.existDbhM}
+            stemDbhM={selectedLive.stemDbhM}
             locked={ui.locked}
             onDbhM={studio.patchSelectedDbh}
+            onStemDbhM={studio.patchSelectedStems}
           />
+        ) : null}
+
+        {inkLegendOpen &&
+          planOn &&
+          !ui.focusOn &&
+          !ui.clientView &&
+          !ui.frameOn ? (
+          <BoardInkLegend onClose={() => setInkLegendOpen(false)} />
         ) : null}
 
         {ui.addOpen &&
@@ -5905,6 +5919,10 @@ export function HandoffDesignStudio({
             formalizing ? undefined : () => void runFormalizeToCad()
           }
           onToggleFitSheet={() => setFitSheetOn(!ui.frameOn)}
+          onToggleInkLegend={() => {
+            setInkLegendOpen((v) => !v);
+            studio.setUi({ cmdOpen: false, cmdQuery: "" });
+          }}
           onCycleLifecyclePhase={() => {
             const idx = DESIGN_LIFECYCLE_PHASES.indexOf(ui.lifecyclePhase);
             const next =

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
  * Settings — web UI routes were removed in 9a29992 (crew/rate-card/suppliers/

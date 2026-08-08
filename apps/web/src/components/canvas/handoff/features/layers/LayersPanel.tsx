@@ -2,6 +2,7 @@
 
 import { ITEM_LAYER, type LayerKey, type LayerOpacity } from "../../state/studioTypes";
 import type { StudioItem } from "../../studioCatalog";
+import kit from "../chromeKit/summonedDock.module.css";
 import css from "./layers.module.css";
 
 const LAYERS: Array<{ key: LayerKey; label: string; hint: string }> = [
@@ -66,10 +67,20 @@ export function LayersPanel({
   const locked = new Set(lockedLayers);
 
   return (
-    <div className={css.panel} data-testid="layers-panel" role="dialog" aria-label="Layers">
-      <div className={css.head}>
-        <h2 className={css.kicker}>Layers</h2>
-        <button type="button" className={css.close} onClick={onClose} aria-label="Close layers">
+    <div
+      className={`${kit.dock} ${css.panel}`}
+      data-testid="layers-panel"
+      role="dialog"
+      aria-label="Layers"
+    >
+      <div className={`${kit.head} ${css.head}`}>
+        <h2 className={`${kit.kicker} ${css.kicker}`}>Layers</h2>
+        <button
+          type="button"
+          className={`${kit.close} ${css.close}`}
+          onClick={onClose}
+          aria-label="Close layers"
+        >
           Close
         </button>
       </div>

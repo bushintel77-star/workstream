@@ -667,6 +667,22 @@ export function extractPolylines(geom: RawGeometry | undefined): Coord[][] {
   return [];
 }
 
+function propNumFinite(
+  props: Record<string, unknown> | undefined,
+  ...keys: string[]
+): number | null {
+  if (!props) return null;
+  for (const k of keys) {
+    const v = props[k];
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) return v;
+    if (typeof v === "string" && v.trim()) {
+      const n = Number.parseFloat(v);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  }
+  return null;
+}
+
 export function extractVicmapParcelAttrs(
   props: Record<string, unknown> | undefined,
   lotAreaM2: number,
@@ -689,6 +705,16 @@ export function extractVicmapParcelAttrs(
       "lga_code",
     ),
     lotAreaM2: lotAreaM2 > 0 ? lotAreaM2 : null,
+    // DCM / Vicmap HPU — only when the WFS feature actually carries it.
+    hpuM: propNumFinite(
+      props,
+      "HPU",
+      "hpu",
+      "HORIZONTAL_POSITIONAL_UNCERTAINTY",
+      "horizontal_positional_uncertainty",
+      "POS_UNCERTAINTY",
+      "pos_uncertainty",
+    ),
   };
 }
 

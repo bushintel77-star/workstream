@@ -1,9 +1,10 @@
 /**
  * Live existing-tree readout for the sticky Trees card.
  * Existing / protected trees are `t === "exist"` and not AI ghosts. When any
- * carry an authored DBH we flag indicative AS 4970 TPZ (12 × DBH, min 2 m).
+ * carry an authored DBH we flag indicative AS 4970-2025 NRZ.
  */
 
+import { nrzRadiusFromDbhM } from "@workstream/domain";
 import type { StudioItem } from "../../studioCatalog";
 
 export type ExistTree = {
@@ -11,13 +12,13 @@ export type ExistTree = {
   x: number;
   y: number;
   dbhM: number | null;
-  /** Indicative AS 4970 TPZ radius (m) when DBH is known. */
+  /** Indicative AS 4970-2025 NRZ radius (m) when DBH is known. */
   tpzRadiusM: number | null;
 };
 
 export type TreesLiveMeta = {
   count: number;
-  /** Existing trees with an authored DBH — drive TPZ rings. */
+  /** Existing trees with an authored DBH — drive NRZ rings. */
   tpzCount: number;
   trees: ExistTree[];
   /** One-line face copy (no emoji — icon sits beside). */
@@ -26,7 +27,7 @@ export type TreesLiveMeta = {
 };
 
 function tpzRadiusM(dbhM: number): number {
-  return Math.max(2, 12 * dbhM);
+  return nrzRadiusFromDbhM(dbhM);
 }
 
 export function selectExistTrees(items: StudioItem[]): ExistTree[] {
@@ -57,8 +58,8 @@ export function buildTreesLiveMeta(args: {
     count === 0
       ? "No survey trees · Exist tool"
       : tpzCount > 0
-        ? `${tpzCount} TPZ · AS 4970 12×DBH`
-        : "No DBH · survey to set TPZ";
+        ? `${tpzCount} NRZ · AS 4970-2025`
+        : "No DBH · survey to set NRZ";
 
   return { count, tpzCount, trees, face, detail };
 }

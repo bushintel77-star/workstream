@@ -63,20 +63,42 @@ export function withContractIds(args: {
   return { items, strokes, remapped };
 }
 
-/** Pack optional authored DBH into placement label for durable round-trip. */
+/** Pack optional authored DBH / multi-stem into placement label for round-trip. */
 function placementLabel(i: StudioItem): string {
-  if (i.t === "exist" && i.dbhM != null && Number.isFinite(i.dbhM)) {
-    return `exist:dbh=${i.dbhM}`;
+  if (i.t !== "exist") return i.t;
+  const stems = (i.stemDbhM ?? []).filter((d) => Number.isFinite(d) && d > 0);
+  if (stems.length > 1) {
+    return `exist:stems=${stems.join(",")}`;
+  }
+  const dbh = stems[0] ?? i.dbhM;
+  if (dbh != null && Number.isFinite(dbh)) {
+    return `exist:dbh=${dbh}`;
   }
   return i.t;
 }
 
-function dbhFromLabel(label: string | undefined): number | undefined {
+function stemsFromLabel(label: string | undefined): number[] | undefined {
   if (!label) return undefined;
-  const m = /^exist:dbh=([\d.]+)$/.exec(label);
-  if (!m) return undefined;
-  const n = Number.parseFloat(m[1]!);
-  return Number.isFinite(n) && n > 0 ? n : undefined;
+  const multi = /^exist:stems=([\d.,]+)$/.exec(label);
+  if (multi) {
+    const stems = multi[1]!
+      .split(",")
+      .map((s) => Number.parseFloat(s))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    return stems.length > 0 ? stems : undefined;
+  }
+  const single = /^exist:dbh=([\d.]+)$/.exec(label);
+  if (!single) return undefined;
+  const n = Number.parseFloat(single[1]!);
+  return Number.isFinite(n) && n > 0 ? [n] : undefined;
+}
+
+function dbhFromLabel(label: string | undefined): number | undefined {
+  const stems = stemsFromLabel(label);
+  if (!stems?.length) return undefined;
+  if (stems.length === 1) return stems[0];
+  const sumSq = stems.reduce((acc, d) => acc + d * d, 0);
+  return Math.sqrt(sumSq);
 }
 
 /** Accepted (non-ghost) items → catalog placements. */
@@ -111,6 +133,7 @@ export function placementsToItems(
 ): StudioItem[] {
   return placements.map((p) => {
     const t = mapSymbolToStudioType(p.symbol_id);
+    const stemDbhM = t === "exist" ? stemsFromLabel(p.label) : undefined;
     const dbhM = t === "exist" ? dbhFromLabel(p.label) : undefined;
     const heightM = symbolMatureHeightM(p.symbol_id);
     return {
@@ -123,6 +146,7 @@ export function placementsToItems(
       ghost: false,
       symbolId: p.symbol_id,
       ...(dbhM != null ? { dbhM } : {}),
+      ...(stemDbhM && stemDbhM.length > 1 ? { stemDbhM } : {}),
       ...(heightM != null ? { heightM } : {}),
       // Hydrate tree provenance — a Vicmap tree or detected canopy keeps its
       // source after a reload so the plan/elevation/share still distinguish it.

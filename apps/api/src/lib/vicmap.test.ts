@@ -140,6 +140,14 @@ describe("extractVicmapParcelAttrs", () => {
     const attrs = extractVicmapParcelAttrs(undefined, 0);
     expect(attrs.pfi).toBeNull();
     expect(attrs.lotAreaM2).toBeNull();
+    expect(attrs.hpuM).toBeNull();
+  });
+
+  it("reads HPU when Vicmap supplies it — never invents", () => {
+    const withHpu = extractVicmapParcelAttrs({ HPU: 1.25, spi: "1\\PS1" }, 200);
+    expect(withHpu.hpuM).toBe(1.25);
+    const without = extractVicmapParcelAttrs({ spi: "1\\PS1" }, 200);
+    expect(without.hpuM).toBeNull();
   });
 });
 

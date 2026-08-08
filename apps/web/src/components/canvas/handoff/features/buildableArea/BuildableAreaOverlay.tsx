@@ -144,7 +144,7 @@ export function BuildableAreaOverlay({
               <rect
                 width="3"
                 height="3"
-                fill="var(--hc-buildable, #4a9)"
+                fill="var(--hc-buildable, var(--ok))"
                 fillOpacity="0.06"
               />
             </pattern>
@@ -159,7 +159,7 @@ export function BuildableAreaOverlay({
                   key={`buildable-${i}`}
                   points={domainPtsAttr(ring)}
                   fill="url(#ws-buildable-fill)"
-                  stroke="var(--hc-buildable, #4a9)"
+                  stroke="var(--hc-buildable, var(--ok))"
                   strokeWidth="0.3"
                   strokeOpacity="0.5"
                   strokeDasharray="0.8 0.6"

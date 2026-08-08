@@ -7,6 +7,7 @@ import type { BoardCamera } from "../../geometry/cameraPointer";
 import { CameraChrome } from "../../CameraChrome";
 import { CSS_TOKEN } from "../../../../../styles/colorTokens";
 import { weightFor } from "../render/lineWeight";
+import kit from "../chromeKit/summonedDock.module.css";
 import css from "./trenches.module.css";
 
 type Props = {
@@ -151,7 +152,7 @@ export function TrenchOverlay({
 
       {ghosts.length > 0 && onAcceptAll && onRejectAll ? (
         <CameraChrome>
-          <div className={css.review} data-testid="trench-ghost-review">
+          <div className={`${kit.dock} ${css.review}`} data-testid="trench-ghost-review">
             <span>
               {ghosts.length} trench proposal{ghosts.length === 1 ? "" : "s"}
             </span>

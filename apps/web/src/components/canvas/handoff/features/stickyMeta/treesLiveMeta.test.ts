@@ -26,8 +26,8 @@ describe("buildTreesLiveMeta", () => {
     expect(meta.count).toBe(2);
     expect(meta.tpzCount).toBe(1);
     expect(meta.face).toBe("Trees · 2");
-    expect(meta.detail).toMatch(/1 TPZ · AS 4970/);
-    // AS 4970 TPZ = 12 × 0.45 = 5.4 m
+    expect(meta.detail).toMatch(/1 NRZ · AS 4970-2025/);
+    // AS 4970-2025 NRZ = 12 × 0.45 = 5.4 m
     expect(meta.trees[0]?.tpzRadiusM).toBeCloseTo(5.4, 5);
   });
 

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { createSurveyProject, handoffStudio, expectToolDock } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
  * Kept smoke for docs/INTERACTION-LOGIC.md — the click contract.

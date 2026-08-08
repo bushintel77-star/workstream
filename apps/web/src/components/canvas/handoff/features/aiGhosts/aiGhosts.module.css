@@ -9,7 +9,7 @@
   border: 1px solid var(--ws-frame-hair);
   background: color-mix(in srgb, var(--ws-frame) 86%, transparent);
   backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 14px 44px color-mix(in srgb, #000 32%, transparent);
+  box-shadow: 0 14px 44px color-mix(in srgb, var(--hc-neu-shadow) 70%, transparent);
   color: var(--ws-frame-ink);
   font-family: var(--font-body);
   animation: ccIn 0.22s ease-out;

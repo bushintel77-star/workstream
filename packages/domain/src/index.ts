@@ -69,6 +69,7 @@ export * from './rectangle-completion';
 export * from './stale-ghosts';
 export * from './canopy-clusters';
 export * from './tpz-geometry';
+export * from './as4970-protection-zones';
 export * from './planting-place-guard';
 export * from './planting-palette-filter';
 export * from './hardscape-grammar';

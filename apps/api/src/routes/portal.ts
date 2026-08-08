@@ -121,9 +121,18 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     const project = await fastify.store.getProject(ownerId, projectId);
     if (!project) return reply.code(404).send({ error: "Project not found" });
     const costings = await fastify.store.listCostings(ownerId, projectId);
-    const standard =
-      costings.find((c) => c.scenario === "standard") ?? costings[0];
-    if (!standard) {
+    const q = request.query as { scenario?: string };
+    const wanted =
+      q.scenario === "lean" ||
+      q.scenario === "standard" ||
+      q.scenario === "buffer"
+        ? q.scenario
+        : "standard";
+    const costing =
+      costings.find((c) => c.scenario === wanted) ??
+      costings.find((c) => c.scenario === "standard") ??
+      costings[0];
+    if (!costing) {
       return reply
         .code(409)
         .send({ error: "Costing required before deposit." });
@@ -134,13 +143,16 @@ export default async function portalRoutes(fastify: FastifyInstance) {
       await bindOwnerSecrets(fastify.store, ownerId);
       const session = await createDepositSession({
         project,
-        costing: standard,
+        costing,
         owner_id: ownerId,
         deposit_pct: Number(process.env.DEPOSIT_PCT ?? 20),
         success_url: `${portalBase}/portal/deposit-success`,
         cancel_url: `${portalBase}/portal/deposit-cancel`,
       });
-      return reply.send({ session });
+      return reply.send({
+        session,
+        scenario: costing.scenario,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Stripe failed";
       request.log.error(err);

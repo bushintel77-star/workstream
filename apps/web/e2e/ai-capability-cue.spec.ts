@@ -5,7 +5,7 @@ import {
   handoffStudio,
 } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
  * Kept probe for the AI capability cue — the only surface that tells an

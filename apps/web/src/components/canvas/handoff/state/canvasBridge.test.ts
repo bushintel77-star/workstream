@@ -228,6 +228,52 @@ describe("site_frame bridge", () => {
     expect(back[1]!.source).toBe("canopy");
   });
 
+  it("never persists ghost items (silent-write guard)", () => {
+    const placements = itemsToPlacements([
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        t: "canopy",
+        x: 40,
+        y: 40,
+        rot: 0,
+        scale: 1,
+        ghost: true,
+        why: "AI proposal",
+      },
+      {
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        t: "deck",
+        x: 50,
+        y: 50,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+      },
+    ]);
+    expect(placements).toHaveLength(1);
+    expect(placements[0]!.id).toBe("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+  });
+
+  it("round-trips multi-stem DBH via placement label", () => {
+    const placements = itemsToPlacements([
+      {
+        id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        t: "exist",
+        x: 30,
+        y: 30,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        dbhM: Math.sqrt(0.3 * 0.3 + 0.25 * 0.25),
+        stemDbhM: [0.3, 0.25],
+      },
+    ]);
+    expect(placements[0]!.label).toMatch(/^exist:stems=/);
+    const back = placementsToItems(placements)[0]!;
+    expect(back.stemDbhM).toEqual([0.3, 0.25]);
+    expect(back.dbhM).toBeCloseTo(Math.sqrt(0.3 * 0.3 + 0.25 * 0.25), 5);
+  });
+
   it("omits source on the wire when the item has no provenance (operator)", () => {
     const placements = itemsToPlacements([
       {

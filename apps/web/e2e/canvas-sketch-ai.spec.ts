@@ -6,7 +6,7 @@ import {
   pipelineShell,
 } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
  * Seed a lot frame so heuristic CAD layout can propose without waiting on
@@ -176,7 +176,7 @@ test.describe("Canvas sketch AI", () => {
       .toBeGreaterThan(0);
   });
 
-  test("A / Enter accepts a pending ghost onto the board", async ({
+  test("Accept commits a pending ghost onto the board (no silent-write)", async ({
     page,
     request,
   }) => {
@@ -193,33 +193,27 @@ test.describe("Canvas sketch AI", () => {
 
     await openCommandPalette(page);
     await page.getByTestId("canvas-command-scan-ghosts").click();
-    await expect
-      .poll(
-        async () =>
-          (await page.getByTestId("cad-ghost-review").count()) +
-          (await page.getByTestId("studio-ghost").count()),
-        { timeout: 30_000 },
-      )
-      .toBeGreaterThan(0);
 
-    // Prefer on-plan ghosts for keyboard accept; fall back to review chip.
-    let before = await page.getByTestId("studio-ghost").count();
-    if (before === 0) {
-      const review = page.getByTestId("cad-ghost-review").first();
-      if ((await review.count()) > 0) {
-        await review.click();
-        before = await page.getByTestId("studio-ghost").count();
-      }
-    }
-    if (before === 0) {
-      test.skip();
-      return;
-    }
-    await page.keyboard.press("a");
+    const review = page.getByTestId("cad-ghost-review");
+    await expect(review).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("studio-ghost").first()).toBeVisible({
+      timeout: 15_000,
+    });
+
+    const beforeGhosts = await page.getByTestId("studio-ghost").count();
+    const beforeLive = await page.getByTestId("studio-item").count();
+    expect(beforeGhosts).toBeGreaterThan(0);
+
+    await page.getByTestId("ghost-accept").click();
     await expect
       .poll(async () => page.getByTestId("studio-ghost").count(), {
         timeout: 15_000,
       })
-      .toBeLessThan(before);
+      .toBeLessThan(beforeGhosts);
+    await expect
+      .poll(async () => page.getByTestId("studio-item").count(), {
+        timeout: 15_000,
+      })
+      .toBeGreaterThan(beforeLive);
   });
 });

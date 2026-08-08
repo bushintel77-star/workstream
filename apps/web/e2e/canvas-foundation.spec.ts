@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { handoffStudio, openCommandPalette } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 test.describe("Canvas foundation honesty", () => {
   test("real title without building never displays the demo footprint", async ({

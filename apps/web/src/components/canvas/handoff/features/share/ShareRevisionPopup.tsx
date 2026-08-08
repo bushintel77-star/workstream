@@ -15,6 +15,7 @@ import { useFocusTrap } from "@/lib/use-focus-trap";
 import { ExportLiabilityPrompt } from "./ExportLiabilityPrompt";
 import { SafetyWaiverConfirm } from "./SafetyWaiverConfirm";
 import { resolveShareLiabilityGate } from "./shareLiabilityGate";
+import kit from "../chromeKit/summonedDock.module.css";
 import css from "./shareRevisionPopup.module.css";
 
 type QuoteLine = {
@@ -322,13 +323,13 @@ export function ShareRevisionPopup({
 
   return (
     <div
-      className={css.popup}
+      className={`${kit.dock} ${css.popup}`}
       ref={panelRef}
       role="dialog"
       aria-label="Share with client"
       data-testid="share-revision-popup"
     >
-      <p className={css.kicker}>Share</p>
+      <p className={`${kit.kicker} ${css.kicker}`}>Share</p>
       <h2 className={css.title}>
         {active ? formatStatus(active) : "Share with client"}
       </h2>

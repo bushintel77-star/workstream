@@ -9,8 +9,12 @@
   --hc-ink-faint: var(--text-muted);
   --hc-paper: var(--gray-l-0);
   --hc-invert: var(--gray-l-25);
-  --hc-glass: color-mix(in srgb, var(--gray-l-0) 97%, transparent);
-  --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 94%, transparent);
+  /*
+   * Frost AA floor (Tier-1 2026): blur alone is not enough over CAD ink.
+   * Keep glass ≥ ~92% opaque cream + hairline (--hc-line) via --hc-elev-*.
+   */
+  --hc-glass: color-mix(in srgb, var(--gray-l-0) 96%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 92%, transparent);
   --hc-line: color-mix(in srgb, var(--text-primary) 14%, transparent);
   --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
   --hc-signal: var(--signal);
@@ -65,14 +69,14 @@
    * surface, ink, dividers, active backlight, and focus ring. Single source
    * for Tier1TopBar + DeckInspectorDock.
    */
-  --tier1-bar-bg: #1E2229;
-  --tier1-bar-ink: #F9FAFB;
-  --tier1-bar-ink-muted: #9CA3AF;
-  --tier1-bar-line: #2A2F38;
-  --tier1-bar-line-strong: #3A4150;
-  --tier1-bar-active-bg: #11151C;
-  --tier1-bar-active-ink: #F9FAFB;
-  --tier1-bar-focus-ring: #6B7280;
+  --tier1-bar-bg: var(--surface-elevated);
+  --tier1-bar-ink: var(--ink-primary);
+  --tier1-bar-ink-muted: var(--ink-secondary);
+  --tier1-bar-line: var(--line-subtle, var(--surface-panel));
+  --tier1-bar-line-strong: var(--line, var(--surface-overlay));
+  --tier1-bar-active-bg: var(--surface-deep);
+  --tier1-bar-active-ink: var(--ink-primary);
+  --tier1-bar-focus-ring: var(--ink-tertiary);
 
   --sheet-paper: var(--gray-l-25);
   --sheet-ink: var(--text-primary);

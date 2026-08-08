@@ -7,7 +7,7 @@ import {
   takeScreenshot,
 } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 test.describe("Selection focus veil", () => {
   test("veil docks above board, persists hop, click clears, chrome gate", async ({

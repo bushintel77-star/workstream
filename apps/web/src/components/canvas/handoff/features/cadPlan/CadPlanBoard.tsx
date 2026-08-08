@@ -671,7 +671,10 @@ export function CadPlanBoard({
   const existTpz = existTrees
     .filter((it) => canDeriveTpz(it.source))
     .map((it) => {
-      const dbhM = it.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45;
+      const dbhM =
+        it.stemDbhM && it.stemDbhM.length > 0
+          ? it.stemDbhM
+          : (it.dbhM ?? BY_TYPE.exist.dbhM ?? 0.45);
       return { it, dbhM, tpz: tpzRadiusPct(dbhM, scaleM) };
     });
   const vegetationVisual = resolveLayerVisual(
@@ -1960,16 +1963,16 @@ export function CadPlanBoard({
             </polygon>
           ) : null}
           {existTpz.map(({ it, tpz }) => {
-            const dbh = it.dbhM ?? 0.45;
-            const tpzM = Math.max(2, 12 * dbh);
             return (
               <g
                 key={`tpz-${it.id}`}
                 opacity={councilVisual.opacity * underlayOp}
                 data-testid="exist-tpz-ring"
                 data-tpz-state="zone"
+                data-nrz-m={tpz.radiusM.toFixed(1)}
+                data-srz-m={tpz.srzRadiusM.toFixed(1)}
               >
-                {/* Tree protection as a readable council zone — not a text card */}
+                {/* NRZ (notional root zone) — dashed, existing-stroke family */}
                 <ellipse
                   cx={it.x}
                   cy={it.y}
@@ -1979,7 +1982,21 @@ export function CadPlanBoard({
                   vectorEffect="non-scaling-stroke"
                 >
                   <title>
-                    {`Tree protection zone · AS 4970 · TPZ ≈ ${tpzM.toFixed(1)} m (12 × DBH)`}
+                    {`Notional root zone · AS 4970-2025 · NRZ ≈ ${tpz.radiusM.toFixed(1)} m`}
+                  </title>
+                </ellipse>
+                {/* SRZ (structural root zone) — tighter dashed ring */}
+                <ellipse
+                  cx={it.x}
+                  cy={it.y}
+                  rx={tpz.srzRxPct}
+                  ry={tpz.srzRxPct * 0.78}
+                  className={css.srzZone}
+                  data-testid="exist-srz-ring"
+                  vectorEffect="non-scaling-stroke"
+                >
+                  <title>
+                    {`Structural root zone · AS 4970-2025 · SRZ ≈ ${tpz.srzRadiusM.toFixed(1)} m`}
                   </title>
                 </ellipse>
               </g>

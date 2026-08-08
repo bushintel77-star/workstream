@@ -435,11 +435,20 @@
   fill: color-mix(in srgb,
       var(--planting-retain-stroke) var(--fill-tpz),
       var(--canvas));
-  stroke: var(--planting-retain-stroke);
+  stroke: var(--existing-stroke, var(--planting-retain-stroke));
   stroke-width: 1.15;
   stroke-dasharray: 5 3.5;
   pointer-events: painted;
   transition: fill 200ms ease, stroke 200ms ease;
+}
+
+/* AS 4970-2025 SRZ — mechanical stability core inside NRZ */
+.srzZone {
+  fill: color-mix(in srgb, var(--existing-stroke) 12%, var(--canvas));
+  stroke: var(--existing-stroke);
+  stroke-width: 1.35;
+  stroke-dasharray: 2.5 2;
+  pointer-events: none;
 }
 
 .tpzZone:hover {

@@ -5,7 +5,7 @@ import {
   summonCanvasInstruments,
 } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 const EASEMENT_RING = [
   { x_pct: 70, y_pct: 10 },

@@ -271,13 +271,13 @@ function bydaLegendLines(
     }
   }
   const STROKE: Record<DesignBydaAsset["kind"], string> = {
-    sewer: "#7a4a2a",
-    stormwater: "#2a7ab8",
-    water: "#3a7ac0",
-    gas: "#c8a23a",
-    power: "#c83a3a",
-    nbn: "#7a3ac8",
-    other: "#8a7a6a",
+    sewer: "var(--apwa-sewer)",
+    stormwater: "var(--apwa-water)",
+    water: "var(--apwa-water)",
+    gas: "var(--apwa-gas)",
+    power: "var(--apwa-electric)",
+    nbn: "var(--apwa-comms)",
+    other: "var(--ink-tertiary)",
   };
   const DASH: Record<DesignBydaAsset["kind"], string> = {
     sewer: "5 1.5 1.5 1.5",

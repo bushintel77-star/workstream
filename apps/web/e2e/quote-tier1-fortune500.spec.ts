@@ -7,7 +7,7 @@ import {
   TIER1_WRIGHTS_ADDRESS,
 } from "./helpers";
 
-const API = process.env.API_URL ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
  * Opens the Live Cost Rail alongside the CAD drawing, then expands it to the

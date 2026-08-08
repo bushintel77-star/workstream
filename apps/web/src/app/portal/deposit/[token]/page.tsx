@@ -6,11 +6,14 @@ export const runtime = "edge";
 
 export default async function DepositPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ scenario?: string }>;
 }) {
   const { token } = await params;
-  const result = await createDepositCheckout(token);
+  const { scenario } = await searchParams;
+  const result = await createDepositCheckout(token, scenario);
 
   // Live Stripe → redirect straight to the hosted Checkout
   if (result.session?.checkout_url && result.session.mode === "live") {

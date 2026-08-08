@@ -6,12 +6,14 @@ import { defineConfig, devices } from "@playwright/test";
  * LIVE_E2E=1 to opt into remote base URLs.
  */
 const LIVE = process.env.LIVE_E2E === "1";
+// Prefer 127.0.0.1 — Node/Windows often resolve `localhost` to ::1 while
+// the API binds IPv4 only (ECONNREFUSED ::1:3001 in e2e helpers).
 const API_URL = LIVE
-  ? (process.env.API_URL ?? "http://localhost:3001")
-  : "http://localhost:3001";
+  ? (process.env.API_URL ?? "http://127.0.0.1:3001")
+  : (process.env.API_URL ?? "http://127.0.0.1:3001");
 const WEB_URL = LIVE
-  ? (process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3002")
-  : "http://localhost:3002";
+  ? (process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3002")
+  : (process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3002");
 
 export default defineConfig({
   testDir: "./e2e",

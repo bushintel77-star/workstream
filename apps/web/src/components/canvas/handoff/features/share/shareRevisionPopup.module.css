@@ -9,12 +9,6 @@
   z-index: var(--ws-z-dock);
   width: min(340px, calc(100vw - 24px));
   padding: var(--s-4) var(--s-4);
-  border-radius: var(--r-xl);
-  border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass);
-  box-shadow: 0 14px 44px var(--hc-neu-shadow);
-  font-family: var(--font-body, "Sora", system-ui, sans-serif);
-  color: var(--hc-ink);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);

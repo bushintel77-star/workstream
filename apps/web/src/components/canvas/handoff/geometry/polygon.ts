@@ -1,4 +1,7 @@
-import { workableCanvasM2 } from "@workstream/domain";
+import {
+  computeAs4970ProtectionZones,
+  workableCanvasM2,
+} from "@workstream/domain";
 import type { EdgeSegment, PctPoint, SiteSchedule } from "./types";
 
 /** Shoelace area in percent-space squared (not metres). */
@@ -157,17 +160,21 @@ export function edgeSegments(
 }
 
 /**
- * AS 4970 indicative TPZ radius in metres from DBH (m): R = 12 × DBH, min 2 m.
+ * AS 4970-2025 NRZ radius in metres from DBH (m): clamp(12 × DBH, 2–15).
  * Return radius as % of board width for ellipse rx (ry adjusted by aspect).
  */
 export function tpzRadiusPct(
-  dbhM: number,
+  dbhM: number | number[],
   scaleM: number,
-): { rxPct: number; radiusM: number } {
-  const radiusM = Math.max(2, 12 * dbhM);
+): { rxPct: number; radiusM: number; srzRadiusM: number; srzRxPct: number } {
+  const z = computeAs4970ProtectionZones(dbhM);
+  const radiusM = z.nrz_radius_m;
+  const srzRadiusM = z.srz_radius_m;
   return {
     radiusM,
-    rxPct: (radiusM / scaleM) * 100,
+    rxPct: scaleM > 0 ? (radiusM / scaleM) * 100 : 0,
+    srzRadiusM,
+    srzRxPct: scaleM > 0 ? (srzRadiusM / scaleM) * 100 : 0,
   };
 }
 

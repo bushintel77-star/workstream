@@ -82,10 +82,13 @@ describe("polygon metrics", () => {
     }
   });
 
-  it("AS 4970 TPZ for 450 mm DBH is 5.4 m (12×0.45)", () => {
-    const { radiusM, rxPct } = tpzRadiusPct(0.45, SCALE);
+  it("AS 4970-2025 NRZ for 450 mm DBH is 5.4 m with SRZ inside", () => {
+    const { radiusM, rxPct, srzRadiusM, srzRxPct } = tpzRadiusPct(0.45, SCALE);
     expect(radiusM).toBeCloseTo(5.4, 5);
     expect(rxPct).toBeCloseTo((5.4 / SCALE) * 100, 5);
+    expect(srzRadiusM).toBeGreaterThanOrEqual(1.5);
+    expect(srzRadiusM).toBeLessThan(radiusM);
+    expect(srzRxPct).toBeLessThan(rxPct);
   });
 
   it("point-in-polygon detects interior of a square", () => {

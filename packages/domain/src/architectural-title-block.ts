@@ -16,6 +16,11 @@ export type VicmapParcelAttrs = {
   lgaCode?: string | null;
   /** Lot area from parcel geometry (m²). */
   lotAreaM2?: number | null;
+  /**
+   * Horizontal Positional Uncertainty (metres) when Vicmap supplies it.
+   * Never invent — null when the attribute is absent.
+   */
+  hpuM?: number | null;
 };
 
 export type ArchitecturalTitleBlockInput = {
@@ -48,6 +53,8 @@ export type ArchitecturalTitleBlock = {
   metaLine: string;
   /** Fit-sheet notes body opener. */
   notesLine: string;
+  /** Vicmap HPU (m) when present — for honesty chip; null otherwise. */
+  hpuM: number | null;
 };
 
 const LGA_NAMES: Record<string, string> = {
@@ -142,6 +149,11 @@ export function buildArchitecturalTitleBlock(
         ? "Survey parcel · confirm on title"
         : "Indicative parcel · confirm Vicmap / title";
 
+  const hpuM =
+    parcel?.hpuM != null && Number.isFinite(parcel.hpuM) && parcel.hpuM > 0
+      ? parcel.hpuM
+      : null;
+
   const parts: string[] = [];
   if (sourceKind === "vicmap") parts.push("Vicmap");
   else if (sourceKind === "survey") parts.push("Survey");
@@ -151,10 +163,18 @@ export function buildArchitecturalTitleBlock(
   if (propNum) parts.push(`Prop ${propNum}`);
   if (councilLabel) parts.push(councilLabel.replace(/^City of /, ""));
   if (lotAreaM2 != null) parts.push(`${lotAreaM2.toLocaleString("en-AU")} m²`);
+  if (hpuM != null) {
+    parts.push(`HPU ±${hpuM.toFixed(1)} m`);
+  }
+
+  const hpuNote =
+    hpuM != null
+      ? ` Boundary accuracy ±${hpuM.toFixed(1)} m (Vicmap HPU) — confirm on site.`
+      : "";
 
   const notesLine =
     sourceKind === "vicmap"
-      ? `${sourceLabel}${parcelRef ? ` · ${spi ? "SPI" : "PFI"} ${parcelRef}` : ""}${councilLabel ? ` · ${councilLabel}` : ""}. Dimensions in metres — working drawing, indicative only, not for construction.`
+      ? `${sourceLabel}${parcelRef ? ` · ${spi ? "SPI" : "PFI"} ${parcelRef}` : ""}${councilLabel ? ` · ${councilLabel}` : ""}. Dimensions in metres — working drawing, indicative only, not for construction.${hpuNote}`
       : `${sourceLabel}. Dimensions in metres — working drawing, indicative only, not for construction. Confirm on site / title / locate.`;
 
   return {
@@ -170,5 +190,6 @@ export function buildArchitecturalTitleBlock(
     propNum,
     metaLine: parts.join(" · "),
     notesLine,
+    hpuM,
   };
 }

@@ -5,13 +5,6 @@
   z-index: var(--ws-z-interact);
   width: min(220px, calc(100vw - 100px));
   padding: var(--s-3) var(--s-3);
-  border-radius: var(--hc-r-panel, 14px);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
-  backdrop-filter: none;
-  box-shadow: var(--hc-elev-2);
-  font-family: var(--font-body);
-  color: var(--hc-ink);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);

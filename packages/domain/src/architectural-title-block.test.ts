@@ -42,5 +42,22 @@ describe("buildArchitecturalTitleBlock", () => {
     });
     expect(block.sourceKind).toBe("indicative");
     expect(block.notesLine).toMatch(/confirm/i);
+    expect(block.hpuM).toBeNull();
+  });
+
+  it("surfaces Vicmap HPU in meta and notes when present", () => {
+    const block = buildArchitecturalTitleBlock({
+      address: "12 Wrights Terrace, Prahran VIC 3181",
+      vicmapHit: true,
+      parcel: {
+        spi: "3\\LP218573",
+        lgaCode: "363",
+        lotAreaM2: 412,
+        hpuM: 1.5,
+      },
+    });
+    expect(block.hpuM).toBe(1.5);
+    expect(block.metaLine).toContain("HPU ±1.5 m");
+    expect(block.notesLine).toContain("Boundary accuracy ±1.5 m");
   });
 });

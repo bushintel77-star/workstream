@@ -50,6 +50,17 @@
   overflow: auto;
 }
 
+.group {
+  margin: 8px 8px 2px;
+  padding: 4px 8px 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+  pointer-events: none;
+}
+
 .row {
   display: flex;
   flex-direction: column;

@@ -2,9 +2,15 @@
  * Preemptive "invisible council inspector" for the Design Studio handoff board.
  *
  * Runs as a pure background evaluation on every geometry commit — no Calculate
- * button. Tuned for Melbourne residential gardens + AS 4970 TPZ.
+ * button. Tuned for Melbourne residential gardens + AS 4970-2025 NRZ/SRZ.
  * Multi-council profiles via `councilProfileFor(lgaCode)`.
  */
+
+import {
+  classifyAs4970Encroachment,
+  nrzRadiusFromDbhM,
+  srzRadiusFromTrunkM,
+} from "./as4970-protection-zones";
 
 export type CouncilProfile = {
   id: string;
@@ -119,7 +125,7 @@ export const STONNINGTON_PERMEABLE_MIN_PCT = 20;
 export const STONNINGTON_CANOPY_TARGET_PCT = 15;
 /** @deprecated Use councilProfileFor(lgaCode).setbackM */
 export const COUNCIL_SETBACK_M = 1.5;
-/** AS 4970 TPZ encroachment watch threshold (indicative). */
+/** AS 4970-2025 NRZ encroachment watch threshold (indicative minor tier). */
 export const TPZ_ENCROACH_WARN_PCT = 10;
 
 export type StudioComplianceItemType =
@@ -221,7 +227,7 @@ function canopyCoverM2(it: StudioComplianceItem): number {
 function tpzRadiusM(it: StudioComplianceItem): number {
   const dbh = it.dbhM ?? (it.t === "exist" ? 0.45 : 0);
   if (dbh <= 0) return 0;
-  return Math.max(2, 12 * dbh);
+  return nrzRadiusFromDbhM(dbh);
 }
 
 function pctToM(dxPct: number, scaleM: number): number {
@@ -399,13 +405,14 @@ export function evaluateStudioCompliance(args: {
     }
   }
 
-  // AS 4970 TPZ vs hardscape intersection (indicative % of TPZ disc).
+  // AS 4970-2025 NRZ/SRZ vs hardscape (indicative % of NRZ disc).
   const trees = live.filter((i) => i.t === "exist" || i.t === "canopy");
   for (const tree of trees) {
     const dbh =
       tree.dbhM ??
       (tree.t === "exist" ? 0.45 : tree.t === "canopy" ? 0.35 : 0);
     const tpzR = tpzRadiusM({ ...tree, dbhM: dbh });
+    const srzR = srzRadiusFromTrunkM(dbh);
     if (tpzR <= 0) continue;
     const tpzArea = Math.PI * tpzR * tpzR;
     for (const hard of live.filter((i) => HARD.has(i.t))) {
@@ -417,25 +424,39 @@ export function evaluateStudioCompliance(args: {
       const hardR = Math.sqrt(hardArea / Math.PI);
       if (distM > tpzR + hardR) continue;
       let encroachPct = approximateDiscOverlapPct(tpzR, hardR, distM);
-      // Centre-inside TPZ: floor at a meaningful watch level when discs touch.
+      // Centre-inside NRZ: floor at a meaningful watch level when discs touch.
       if (distM < tpzR && encroachPct < TPZ_ENCROACH_WARN_PCT) {
         encroachPct = Math.max(
           encroachPct,
           Math.min(40, ((tpzR - distM) / tpzR) * 35),
         );
       }
-      if (encroachPct < TPZ_ENCROACH_WARN_PCT) continue;
+      const intrudesSrz = distM < srzR + hardR * 0.35;
+      const tier = classifyAs4970Encroachment({
+        nrzAreaEncroachPct: encroachPct,
+        intrudesSrz,
+      });
+      if (tier === "none") continue;
+      if (tier === "minor" && encroachPct < TPZ_ENCROACH_WARN_PCT) continue;
       const severity =
-        encroachPct >= 20 ? ("critical" as const) : ("watch" as const);
+        tier === "major" ? ("critical" as const) : ("watch" as const);
+      const tierLabel =
+        tier === "major"
+          ? "Major"
+          : tier === "moderate"
+            ? "Moderate"
+            : "Minor";
       alerts.push({
         id: `tpz-${tree.id}-${hard.id}`,
         severity,
         code: "tpz",
-        title: `TPZ encroachment ${Math.round(encroachPct)}% (AS 4970)`,
+        title: `${tierLabel} NRZ encroachment ${Math.round(encroachPct)}% (AS 4970-2025)`,
         detail:
-          encroachPct >= 15
-            ? `Excavation / hardscape compromises ~${Math.round(encroachPct)}% of the existing tree root zone — structural arborist report required.`
-            : `Hardscape intersects the TPZ (~${Math.round(encroachPct)}% of ${tpzArea.toFixed(0)} m² ring). Shift clear or accept TRP mitigation.`,
+          tier === "major"
+            ? intrudesSrz
+              ? `Hardscape intrudes the SRZ (≈${srzR.toFixed(1)} m) — structural arborist report required.`
+              : `Excavation / hardscape compromises ~${Math.round(encroachPct)}% of the NRZ — structural arborist report required.`
+            : `Hardscape intersects the NRZ (~${Math.round(encroachPct)}% of ${tpzArea.toFixed(0)} m² ring; SRZ ≈${srzR.toFixed(1)} m). Shift clear or accept TRP mitigation.`,
         sourceIds: [tree.id, hard.id],
       });
     }
