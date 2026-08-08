@@ -128,6 +128,13 @@ export function loadEnv(logger: {
       );
     }
 
+    if (parsed.data.CORS_ORIGIN === "*") {
+      logger.error(
+        "CORS_ORIGIN=* is not allowed in production when credentials are enabled. Set an explicit allowlist.",
+      );
+      process.exit(1);
+    }
+
     const aiKeys = [
       parsed.data.OPENAI_API_KEY,
       parsed.data.ANTHROPIC_API_KEY,

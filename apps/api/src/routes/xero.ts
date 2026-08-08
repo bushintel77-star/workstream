@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
 import {
   draftInvoiceFromCosting,
@@ -7,6 +8,10 @@ import {
   listItems,
 } from "../lib/xero";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
+
+const XeroInvoiceBodySchema = z.object({
+  contact_id: z.string().min(1),
+});
 
 export default async function xeroRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -62,10 +67,14 @@ export default async function xeroRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const ownerId = request.userId!;
-      const { contact_id } = (request.body ?? {}) as { contact_id?: string };
-      if (!contact_id) {
-        return reply.code(400).send({ error: "contact_id required" });
+      const parsed = XeroInvoiceBodySchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "Validation failed",
+          issues: parsed.error.issues,
+        });
       }
+      const { contact_id } = parsed.data;
 
       const project = await getOwnedProject(fastify.store, ownerId, projectId);
       if (!project) {
@@ -89,9 +98,8 @@ export default async function xeroRoutes(fastify: FastifyInstance) {
         });
         return reply.code(201).send({ invoice });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Invoice failed";
-        request.log.error(err);
-        return reply.code(502).send({ error: message });
+        request.log.error({ err }, "Invoice failed");
+        return reply.code(502).send({ error: "Invoice failed" });
       }
     },
   );

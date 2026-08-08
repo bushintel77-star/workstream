@@ -38,7 +38,27 @@ import {
 import type { UpsertQuoteDocInput } from "@workstream/contracts";
 
 function wrapApiError(err: unknown, fallback: string): Error {
-  return new Error(err instanceof Error ? err.message : fallback);
+  if (!(err instanceof Error)) return new Error(fallback);
+  const m = err.message;
+  if (
+    /Couldn't reach|timed out|fetch failed|ECONNREFUSED|ENOTFOUND|API 5\d\d/i.test(
+      m,
+    )
+  ) {
+    return new Error(fallback);
+  }
+  const apiError = m.match(/"error"\s*:\s*"([^"]{1,160})"/);
+  if (apiError?.[1] && !/internal error/i.test(apiError[1])) {
+    return new Error(apiError[1]);
+  }
+  if (/API 4\d\d/.test(m) || m.length > 160 || m.includes("<")) {
+    return new Error(fallback);
+  }
+  return new Error(m || fallback);
+}
+
+function isPlausibleEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 /* -- Projects --------------------------------------------------------- */
@@ -113,9 +133,15 @@ export async function createProjectWithSurveyAction(formData: FormData) {
 
 export async function createProjectAction(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
-  if (address.length < 5) return;
+  if (address.length < 5) {
+    throw new Error("Enter a full site address (at least 5 characters)");
+  }
   const { lat, lng } = parseProjectCoords(formData);
-  await createProjectApi({ address, lat, lng });
+  try {
+    await createProjectApi({ address, lat, lng });
+  } catch (err) {
+    throw wrapApiError(err, "Could not create project");
+  }
   revalidatePath("/");
 }
 
@@ -161,15 +187,23 @@ export async function pollProjectProgressAction(projectId: string) {
 
 export async function deleteProjectAction(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
-  if (!id) return;
-  await deleteProjectApi(id);
+  if (!id) throw new Error("Missing project");
+  try {
+    await deleteProjectApi(id);
+  } catch (err) {
+    throw wrapApiError(err, "Could not delete project");
+  }
   revalidatePath("/");
 }
 
 export async function restoreProjectAction(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
-  if (!id) return;
-  await restoreProjectApi(id);
+  if (!id) throw new Error("Missing project");
+  try {
+    await restoreProjectApi(id);
+  } catch (err) {
+    throw wrapApiError(err, "Could not restore project");
+  }
   revalidatePath("/");
 }
 
@@ -796,9 +830,13 @@ export async function createOverrideAction(formData: FormData) {
     finding_index < 0 ||
     reason.length < 8
   ) {
-    return;
+    throw new Error("Override needs a finding and a reason (8+ characters)");
   }
-  await createOverrideApi(projectId, { finding_index, reason });
+  try {
+    await createOverrideApi(projectId, { finding_index, reason });
+  } catch (err) {
+    throw wrapApiError(err, "Could not save override");
+  }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/audit`);
 }
@@ -814,14 +852,20 @@ export async function createTaskAction(formData: FormData) {
   const source =
     sourceRaw === "design" || sourceRaw === "dictation" ? sourceRaw : "manual";
   const technical = String(formData.get("technical_specifications") ?? "").trim();
-  if (!projectId || !title) return;
-  await createTaskApi(projectId, {
-    title,
-    assignee_name: assignee || null,
-    priority,
-    source,
-    technical_specifications: technical || null,
-  });
+  if (!projectId || !title) {
+    throw new Error("Task needs a title");
+  }
+  try {
+    await createTaskApi(projectId, {
+      title,
+      assignee_name: assignee || null,
+      priority,
+      source,
+      technical_specifications: technical || null,
+    });
+  } catch (err) {
+    throw wrapApiError(err, "Could not create task");
+  }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/tasks`);
 }
@@ -830,8 +874,14 @@ export async function updateTaskStatusAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const taskId = String(formData.get("taskId") ?? "");
   const status = String(formData.get("status") ?? "") as TaskStatus;
-  if (!projectId || !taskId || !status) return;
-  await updateTaskStatusApi(projectId, taskId, status);
+  if (!projectId || !taskId || !status) {
+    throw new Error("Missing task update fields");
+  }
+  try {
+    await updateTaskStatusApi(projectId, taskId, status);
+  } catch (err) {
+    throw wrapApiError(err, "Could not update task");
+  }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/tasks`);
 }
@@ -957,6 +1007,9 @@ export async function saveProjectClientAction(formData: FormData): Promise<void>
   const { updateProjectClientApi } = await import("../lib/api");
   const client_name = String(formData.get("client_name") ?? "").trim() || null;
   const rawEmail = String(formData.get("client_email") ?? "").trim();
+  if (rawEmail && !isPlausibleEmail(rawEmail)) {
+    throw new Error("Enter a valid client email address");
+  }
   const client_email = rawEmail || null;
   const rawStage = String(formData.get("crm_stage") ?? "").trim();
   const crm_stage =
@@ -966,11 +1019,15 @@ export async function saveProjectClientAction(formData: FormData): Promise<void>
       rawStage === "lost"
       ? rawStage
       : null;
-  await updateProjectClientApi(projectId, {
-    client_name,
-    client_email,
-    crm_stage,
-  });
+  try {
+    await updateProjectClientApi(projectId, {
+      client_name,
+      client_email,
+      crm_stage,
+    });
+  } catch (err) {
+    throw wrapApiError(err, "Could not save client details");
+  }
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/outputs`);
 }
@@ -984,16 +1041,23 @@ export async function syncQuotePackAction(formData: FormData): Promise<{
   if (!projectId) throw new Error("Missing project");
   const { syncProjectIntegrationsApi } = await import("../lib/api");
   const to_email = String(formData.get("to_email") ?? "").trim() || undefined;
+  if (to_email && !isPlausibleEmail(to_email)) {
+    throw new Error("Enter a valid email address");
+  }
   const client_name =
     String(formData.get("client_name") ?? "").trim() || undefined;
   const include_portal = formData.get("include_portal") === "1";
-  const result = await syncProjectIntegrationsApi(projectId, {
-    to_email,
-    client_name,
-    include_portal,
-  });
-  revalidatePath(`/projects/${projectId}/outputs`);
-  return result;
+  try {
+    const result = await syncProjectIntegrationsApi(projectId, {
+      to_email,
+      client_name,
+      include_portal,
+    });
+    revalidatePath(`/projects/${projectId}/outputs`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Could not sync quote pack");
+  }
 }
 
 /** QuoteDoc — client hooks must use these actions (lib/api is server-only). */

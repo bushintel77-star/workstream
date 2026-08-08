@@ -185,6 +185,8 @@ export function openSqliteJournal(sqlitePath: string): SqliteJournal {
       } catch {
         /* ignore */
       }
+      /* Surface durability failures loudly — callers leave RAM ahead of disk. */
+      console.error("[sqlite-persist] flush failed; in-memory state may diverge from disk", err);
       throw err;
     }
   };

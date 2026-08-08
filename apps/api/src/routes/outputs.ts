@@ -46,7 +46,8 @@ export default async function outputRoutes(fastify: FastifyInstance) {
         );
         return reply.code(201).send({ output });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Output failed";
+        const message =
+          err instanceof Error ? err.message : "Output failed";
         if (
           message.startsWith("Survey is required") ||
           message.startsWith("Design is required") ||
@@ -60,7 +61,7 @@ export default async function outputRoutes(fastify: FastifyInstance) {
           return reply.code(404).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Output failed" });
       }
     },
   );

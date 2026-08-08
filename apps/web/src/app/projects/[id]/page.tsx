@@ -60,15 +60,18 @@ export default async function ProjectCanvasPage({
   await requireSignedIn();
   const { id } = await params;
   const sp = await searchParams;
-  const [project, survey, canvas, outputs, titleBlock] = await Promise.all([
-    getProject(id),
+  const project = await getProject(id);
+  if (!project) notFound();
+
+  /* Canvas hydrate must fail closed — treating network/5xx as "empty board"
+   * lets autosave overwrite a real drawing with []. Survey/title/outputs
+   * remain best-effort for first paint. */
+  const canvas = await getDesignCanvas(id);
+  const [survey, outputs, titleBlock] = await Promise.all([
     getSurvey(id).catch(() => null),
-    getDesignCanvas(id).catch(() => null),
     listOutputs(id).catch(() => []),
     getCadastralTitle(id).catch(() => null),
   ]);
-
-  if (!project) notFound();
 
   const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
   const progress: CanvasProgress = {

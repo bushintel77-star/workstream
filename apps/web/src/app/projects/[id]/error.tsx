@@ -17,7 +17,9 @@ export default function ProjectStudioError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[studio]", error.digest ?? error.message, error);
+    void import("../../../lib/sentry").then(({ captureWebError }) => {
+      captureWebError(error, { boundary: "studio", digest: error.digest });
+    });
   }, [error]);
 
   return (

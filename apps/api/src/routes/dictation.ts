@@ -34,12 +34,13 @@ export default async function dictationRoutes(fastify: FastifyInstance) {
         );
         return reply.send(result);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Dictation failed";
+        const message =
+          err instanceof Error ? err.message : "Dictation failed";
         if (message.startsWith("Project not found")) {
           return reply.code(404).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Dictation failed" });
       }
     },
   );

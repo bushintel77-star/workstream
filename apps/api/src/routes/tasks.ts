@@ -48,12 +48,13 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         void notifyTaskAssignment(fastify.store, request.userId!, task);
         return reply.code(201).send({ task });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Create failed";
+        const message =
+          err instanceof Error ? err.message : "Create failed";
         if (message.startsWith("Project not found")) {
           return reply.code(404).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Create failed" });
       }
     },
   );

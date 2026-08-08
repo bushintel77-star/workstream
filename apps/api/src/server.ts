@@ -9,6 +9,10 @@ import websocket from '@fastify/websocket';
 import { loadEnv } from './env';
 import { assertAuthConfigured } from './lib/auth-config';
 import { captureError, initSentry } from './lib/sentry';
+import {
+  registerErrorHandlers,
+  registerProcessGuards,
+} from './lib/http-errors';
 import { initTelemetry, registerRouteTelemetry, shutdownTelemetry } from './lib/telemetry';
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
@@ -60,7 +64,27 @@ import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from './routes/integration-hub';
 import protectedFileRoutes from './routes/protected-files';
-const server = Fastify({ logger: true });
+const server = Fastify({
+  /* Railway (and most PaaS) terminate TLS at the edge — trust X-Forwarded-*
+   * so req.ip / rate-limit keys reflect the client, not the proxy hop. */
+  trustProxy: true,
+  logger: {
+    redact: {
+      paths: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "req.headers['x-portal-token']",
+        "req.body.password",
+        "req.body.token",
+        "req.body.value",
+        "req.body.secret",
+        "req.body.api_key",
+        "req.body.apiKey",
+      ],
+      remove: true,
+    },
+  },
+});
 
 loadEnv({
   warn: (m) => server.log.warn(m),
@@ -79,7 +103,15 @@ function resolveCorsOrigin(): boolean | string | string[] {
     }
     return true; // dev convenience
   }
-  if (raw === "*") return true;
+  if (raw === "*") {
+    if (process.env.NODE_ENV === "production") {
+      server.log.error(
+        "CORS_ORIGIN=* is refused in production (credentials:true). Set an explicit allowlist.",
+      );
+      return false;
+    }
+    return true;
+  }
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
@@ -97,12 +129,9 @@ async function start() {
   await server.register(rateLimit, {
     max: Number(process.env.RATE_LIMIT_MAX ?? 300),
     timeWindow: process.env.RATE_LIMIT_WINDOW ?? "1 minute",
-    keyGenerator: (req) => {
-      /* Prefer authenticated user, fall back to remote IP. Keeps a
-       * shared office on Tim's WiFi from collectively tripping the
-       * limit when one ratbag automates the dashboard. */
-      return req.userId ?? req.ip;
-    },
+    /* Auth runs after this plugin, so userId is rarely set here. With
+     * trustProxy, req.ip is the client — the correct global bucket. */
+    keyGenerator: (req) => req.ip,
     skipOnError: true,
     enableDraftSpec: true,
   });
@@ -180,19 +209,8 @@ async function start() {
 
 initTelemetry();
 void initSentry();
-
-server.setErrorHandler((err: Error & { statusCode?: number }, request, reply) => {
-  captureError(err, {
-    method: request.method,
-    url: request.url,
-    requestId: request.id,
-  });
-  request.log.error(err);
-  if (!reply.sent) {
-    const status = err.statusCode && err.statusCode >= 400 ? err.statusCode : 500;
-    reply.code(status).send({ error: err.message || "Internal error" });
-  }
-});
+registerErrorHandlers(server);
+registerProcessGuards(server);
 
 start().catch((err) => {
   server.log.error(err);

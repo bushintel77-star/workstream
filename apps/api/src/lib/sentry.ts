@@ -31,7 +31,10 @@ export async function initSentry(): Promise<void> {
       dsn,
       environment: process.env.NODE_ENV ?? "production",
       tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
-      release: process.env.FLY_MACHINE_VERSION,
+      release:
+        process.env.RAILWAY_GIT_COMMIT_SHA ??
+        process.env.SENTRY_RELEASE ??
+        process.env.BUILD_SHA,
     });
     sentryReady = true;
   } catch (err) {

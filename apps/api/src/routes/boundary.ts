@@ -189,8 +189,13 @@ export default async function boundaryRoutes(fastify: FastifyInstance) {
       const ownerId = request.userId!;
       const project = await getOwnedProject(fastify.store, ownerId, projectId);
       if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      const body = request.body as { geojson?: unknown };
-      if (body?.geojson == null) {
+      const body = request.body as { geojson?: unknown } | null;
+      if (
+        body == null ||
+        typeof body !== "object" ||
+        body.geojson == null ||
+        (typeof body.geojson !== "object" && typeof body.geojson !== "string")
+      ) {
         return reply.code(400).send({ error: "geojson required" });
       }
       try {

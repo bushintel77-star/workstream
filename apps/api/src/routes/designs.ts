@@ -22,7 +22,8 @@ export default async function designRoutes(fastify: FastifyInstance) {
         );
         return reply.code(201).send({ design });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Design failed";
+        const message =
+          err instanceof Error ? err.message : "Design failed";
         if (message.startsWith("Project not found")) {
           return reply.code(404).send({ error: message });
         }
@@ -30,7 +31,7 @@ export default async function designRoutes(fastify: FastifyInstance) {
           return reply.code(409).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Design failed" });
       }
     },
   );

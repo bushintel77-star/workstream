@@ -154,9 +154,8 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         scenario: costing.scenario,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Stripe failed";
-      request.log.error(err);
-      return reply.code(502).send({ error: message });
+      request.log.error({ err }, "Stripe failed");
+      return reply.code(502).send({ error: "Stripe failed" });
     }
   });
 }

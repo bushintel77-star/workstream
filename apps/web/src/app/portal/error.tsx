@@ -1,11 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import styles from "./quote/[token]/quote.module.css";
 import { KitButton } from "../../components/ui/kit";
 
 export const runtime = "edge";
 
-export default function PortalError({ reset }: { reset: () => void }) {
+export default function PortalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error("[portal]", error.digest ?? error.message, error);
+  }, [error]);
+
   return (
     <main className={styles.errorPage}>
       <span className={styles.kicker}>PORTAL TEMPORARILY UNAVAILABLE</span>

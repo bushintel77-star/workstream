@@ -22,12 +22,13 @@ export default async function surveyRoutes(fastify: FastifyInstance) {
         );
         return reply.code(201).send({ survey });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Survey failed";
+        const message =
+          err instanceof Error ? err.message : "Survey failed";
         if (message.startsWith("Project not found")) {
           return reply.code(404).send({ error: message });
         }
         request.log.error(err);
-        return reply.code(500).send({ error: message });
+        return reply.code(500).send({ error: "Survey failed" });
       }
     },
   );

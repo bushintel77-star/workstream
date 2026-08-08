@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { createMemoryStore } from "@workstream/db";
 import multipart from "@fastify/multipart";
+import { registerErrorHandlers } from "../lib/http-errors";
 import healthRoutes from "../routes/health";
 import projectRoutes from "../routes/projects";
 import pipelineRoutes from "../routes/pipeline";
@@ -59,7 +60,8 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   const store = createMemoryStore();
   await store.seedDefaults();
 
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, trustProxy: true });
+  registerErrorHandlers(app);
   app.decorate("store", store);
   await app.register(multipart);
   await app.register(protectedFileRoutes);

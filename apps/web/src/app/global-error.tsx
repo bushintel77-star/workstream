@@ -14,7 +14,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[global]", error.digest ?? error.message, error);
+    void import("../lib/sentry").then(({ captureWebError }) => {
+      captureWebError(error, { boundary: "global", digest: error.digest });
+    });
   }, [error]);
 
   return (

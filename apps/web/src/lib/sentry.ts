@@ -38,9 +38,11 @@ export function captureWebError(
   err: unknown,
   context?: Record<string, unknown>,
 ): void {
-  if (!sentryReady) return;
+  console.error("[web]", context ?? {}, err);
   void (async () => {
     try {
+      if (!sentryReady) await initSentry();
+      if (!sentryReady) return;
       const Sentry = (await import("@sentry/nextjs" as string).catch(
         () => null,
       )) as SentryModule | null;

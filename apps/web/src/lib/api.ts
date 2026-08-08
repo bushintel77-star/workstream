@@ -21,6 +21,9 @@ import { operatorApiUrl } from "./public-env";
 
 const API_URL = operatorApiUrl();
 
+/** Default upstream budget — hangs should surface as operator errors, not spin forever. */
+const API_TIMEOUT_MS = Number(process.env.API_FETCH_TIMEOUT_MS ?? 30_000);
+
 async function apiHeaders(json = false): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
   if (json) headers["Content-Type"] = "application/json";
@@ -36,8 +39,31 @@ async function apiHeaders(json = false): Promise<Record<string, string>> {
   return headers;
 }
 
+function networkError(method: string, path: string, err: unknown): Error {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/timeout|aborted|TimeoutError/i.test(msg)) {
+    return new Error(`API timed out on ${method} ${path}`);
+  }
+  return new Error(`Couldn't reach the server on ${method} ${path}`);
+}
+
+async function apiFetch(
+  path: string,
+  init: RequestInit & { method?: string } = {},
+): Promise<Response> {
+  const method = init.method ?? "GET";
+  try {
+    return await fetch(`${API_URL}${path}`, {
+      ...init,
+      signal: init.signal ?? AbortSignal.timeout(API_TIMEOUT_MS),
+    });
+  } catch (err) {
+    throw networkError(method, path, err);
+  }
+}
+
 async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await apiFetch(path, {
     cache: "no-store",
     headers: await apiHeaders(),
   });
@@ -49,7 +75,7 @@ async function apiGet<T>(path: string): Promise<T> {
 }
 
 async function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await apiFetch(path, {
     method: "POST",
     headers: await apiHeaders(body != null),
     body: body ? JSON.stringify(body) : undefined,
@@ -63,7 +89,7 @@ async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 }
 
 async function apiPatch<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await apiFetch(path, {
     method: "PATCH",
     headers: await apiHeaders(true),
     body: JSON.stringify(body),
@@ -77,18 +103,12 @@ async function apiPatch<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function apiPut<T>(path: string, body: unknown): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}${path}`, {
-      method: "PUT",
-      headers: await apiHeaders(true),
-      body: JSON.stringify(body),
-      cache: "no-store",
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`Couldn't reach the server on PUT ${path}: ${msg}`);
-  }
+  const res = await apiFetch(path, {
+    method: "PUT",
+    headers: await apiHeaders(true),
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`API ${res.status} on PUT ${path}: ${text}`);
@@ -97,7 +117,7 @@ async function apiPut<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function apiDelete<T = void>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await apiFetch(path, {
     method: "DELETE",
     cache: "no-store",
     headers: await apiHeaders(),
@@ -543,7 +563,7 @@ export async function acceptCadApi(
 }
 
 export async function downloadCadDxfApi(projectId: string): Promise<Blob> {
-  const res = await fetch(`${API_URL}/projects/${projectId}/cad.dxf`, {
+  const res = await apiFetch(`/projects/${projectId}/cad.dxf`, {
     cache: "no-store",
     headers: await apiHeaders(),
   });
@@ -555,7 +575,7 @@ export async function downloadCadDxfApi(projectId: string): Promise<Blob> {
 }
 
 export async function downloadCadGltfApi(projectId: string): Promise<Blob> {
-  const res = await fetch(`${API_URL}/projects/${projectId}/cad.gltf`, {
+  const res = await apiFetch(`/projects/${projectId}/cad.gltf`, {
     cache: "no-store",
     headers: await apiHeaders(),
   });
@@ -567,7 +587,7 @@ export async function downloadCadGltfApi(projectId: string): Promise<Blob> {
 }
 
 export async function downloadCadSyncApi(projectId: string): Promise<Blob> {
-  const res = await fetch(`${API_URL}/projects/${projectId}/cad.sync.json`, {
+  const res = await apiFetch(`/projects/${projectId}/cad.sync.json`, {
     cache: "no-store",
     headers: await apiHeaders(),
   });
@@ -1591,7 +1611,7 @@ export type CreateShareRevisionResult =
 export async function getQuoteDocApi(
   projectId: string,
 ): Promise<import("@workstream/contracts").QuoteDoc | null> {
-  const res = await fetch(`${API_URL}/projects/${projectId}/quote-doc`, {
+  const res = await apiFetch(`/projects/${projectId}/quote-doc`, {
     headers: await apiHeaders(),
     cache: "no-store",
   });
@@ -1608,7 +1628,7 @@ export async function upsertQuoteDocApi(
   projectId: string,
   body: import("@workstream/contracts").UpsertQuoteDocInput,
 ): Promise<import("@workstream/contracts").QuoteDoc> {
-  const res = await fetch(`${API_URL}/projects/${projectId}/quote-doc`, {
+  const res = await apiFetch(`/projects/${projectId}/quote-doc`, {
     method: "PUT",
     headers: await apiHeaders(true),
     body: JSON.stringify(body),
@@ -1628,7 +1648,7 @@ export async function createShareRevisionApi(
   projectId: string,
   body: import("@workstream/contracts").CreateShareRevisionInput,
 ): Promise<CreateShareRevisionResult> {
-  const res = await fetch(`${API_URL}/projects/${projectId}/share-revisions`, {
+  const res = await apiFetch(`/projects/${projectId}/share-revisions`, {
     method: "POST",
     headers: await apiHeaders(true),
     body: JSON.stringify(body),
@@ -1693,7 +1713,7 @@ export async function setIntegrationApi(
   key: string,
   value: string,
 ): Promise<void> {
-  const res = await fetch(`${API_URL}/settings/integrations/${key}`, {
+  const res = await apiFetch(`/settings/integrations/${key}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ value }),
@@ -1774,7 +1794,7 @@ export async function uploadProjectFileApi(
   if (opts.kind) fd.append("kind", opts.kind);
   if (opts.title) fd.append("title", opts.title);
   const headers = await apiHeaders(false);
-  const res = await fetch(`${API_URL}/projects/${projectId}/files`, {
+  const res = await apiFetch(`/projects/${projectId}/files`, {
     method: "POST",
     headers,
     body: fd,

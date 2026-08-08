@@ -13,7 +13,9 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[app]", error.digest ?? error.message, error);
+    void import("../lib/sentry").then(({ captureWebError }) => {
+      captureWebError(error, { boundary: "app", digest: error.digest });
+    });
   }, [error]);
 
   return (

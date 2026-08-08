@@ -24,12 +24,15 @@ describe("API contract — projects", () => {
       buildSha: string;
       dbWritable: boolean;
       records: number;
+      dbPath?: string;
     };
     expect(body.status).toBe("ok");
     expect(body.ok).toBe(true);
     expect(typeof body.buildSha).toBe("string");
     expect(typeof body.dbWritable).toBe("boolean");
     expect(typeof body.records).toBe("number");
+    /* Public liveness must not disclose the on-disk SQLite path. */
+    expect(body.dbPath).toBeUndefined();
   });
 
   it("GET /readyz returns ok", async () => {
@@ -104,6 +107,13 @@ describe("API contract — projects", () => {
     const res = await app.inject({ method: "GET", url: "/readyz" });
     expect([200, 503]).toContain(res.statusCode);
     expect(res.json()).toHaveProperty("checks");
+  });
+
+  it("unknown routes return a stable 404 body", async () => {
+    ({ app } = await buildTestApp());
+    const res = await app.inject({ method: "GET", url: "/no-such-route" });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ error: "Not found" });
   });
 
   it("POST /projects/:id/pipeline honors Idempotency-Key", async () => {

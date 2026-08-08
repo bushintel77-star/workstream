@@ -45,7 +45,17 @@ function channelTo(channel: Channel, to: string): string {
 
 export async function send(args: SendArgs): Promise<SendResult> {
   if (!isTwilioLive()) {
-    console.log(`[notify:dev_fallback] (${args.channel}) → ${args.to}: ${args.body}`);
+    /* Never log full SMS/WhatsApp bodies or phone numbers in production —
+     * the fallback path still runs when Twilio env is missing. */
+    if (process.env.NODE_ENV !== "production") {
+      console.log(
+        `[notify:dev_fallback] (${args.channel}) → ${args.to}: ${args.body}`,
+      );
+    } else {
+      console.warn(
+        `[notify:dev_fallback] Twilio unset — dropped ${args.channel} (${args.body.length} chars)`,
+      );
+    }
     return {
       sid: `dev-msg-${Date.now()}`,
       mode: "dev_fallback",
