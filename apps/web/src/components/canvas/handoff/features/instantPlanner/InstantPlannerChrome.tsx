@@ -18,6 +18,11 @@ import {
   strokesToCanvas,
 } from "../../state/canvasBridge";
 import type { SketchStroke, StudioItem } from "../../studioCatalog";
+import {
+  HeroDetailOverlay,
+  type HeroFeatureTarget,
+} from "./HeroDetailOverlay";
+import { HeroFeatureMarkers } from "./HeroFeatureMarkers";
 import { LandscapeFeaturesLayer } from "./LandscapeFeaturesLayer";
 import { NextBestOptionChip } from "./NextBestOptionChip";
 import { StudioAssistPanel } from "./StudioAssistPanel";
@@ -53,6 +58,7 @@ export function InstantPlannerChrome({
 }: Props) {
   const [world, setWorld] = useState<ProjectOrchestrationWorld | null>(null);
   const [planFeatures, setPlanFeatures] = useState<LandscapeFeature[]>([]);
+  const [hero, setHero] = useState<HeroFeatureTarget | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -71,8 +77,21 @@ export function InstantPlannerChrome({
     };
   }, [active, projectId]);
 
+  // Hydrate plan features from items when the studio board changes.
+  useEffect(() => {
+    if (!active) return;
+    const fromItems = itemsToFeatures(items);
+    setPlanFeatures((prev) => {
+      const byId = new Map(prev.map((f) => [f.id, f]));
+      for (const f of fromItems) byId.set(f.id, f);
+      return [...byId.values()];
+    });
+  }, [active, items]);
+
   const canvas = useMemo((): DesignCanvas | null => {
     if (!active) return null;
+    const fromItems = itemsToFeatures(items);
+    const byId = new Set(fromItems.map((f) => f.id));
     return {
       id: "00000000-0000-4000-8000-000000000001",
       project_id: projectId,
@@ -81,14 +100,10 @@ export function InstantPlannerChrome({
       irrigation_zones: irrigationZones ?? [],
       annotations: annotations ?? [],
       image_layers: imageLayers ?? [],
-      features: (() => {
-        const fromItems = itemsToFeatures(items);
-        const byId = new Set(fromItems.map((f) => f.id));
-        return [
-          ...fromItems,
-          ...planFeatures.filter((f) => !byId.has(f.id)),
-        ];
-      })(),
+      features: [
+        ...fromItems,
+        ...planFeatures.filter((f) => !byId.has(f.id)),
+      ],
       construction_trenches: constructionTrenches ?? [],
       updated_at: new Date().toISOString(),
     };
@@ -119,7 +134,7 @@ export function InstantPlannerChrome({
         const next = await getOrchestrationAction(projectId);
         setWorld(next);
       } catch {
-        /* toast via assist reply path elsewhere if needed */
+        /* non-fatal */
       }
     });
   };
@@ -145,6 +160,11 @@ export function InstantPlannerChrome({
   return (
     <div className={css.layer} data-testid="instant-planner-chrome">
       <LandscapeFeaturesLayer features={planFeatures} paper={paper} />
+      <HeroFeatureMarkers
+        canvas={canvas}
+        world={world}
+        onOpen={setHero}
+      />
       <NextBestOptionChip
         world={world}
         paper={paper}
@@ -163,6 +183,7 @@ export function InstantPlannerChrome({
         spatialFacts={world?.spatial_facts ?? []}
         onFeature={onStructuredFeature}
       />
+      <HeroDetailOverlay feature={hero} onClose={() => setHero(null)} />
     </div>
   );
 }
