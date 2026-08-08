@@ -87,6 +87,10 @@ export default async function designBranchRoutes(fastify: FastifyInstance) {
       if (!activated) {
         return reply.code(404).send({ error: "Branch not found" });
       }
+      const { refreshOrchestration } = await import(
+        "../lib/material-orchestrator"
+      );
+      await refreshOrchestration(fastify.store, ownerId, projectId);
       const branches = await fastify.store.listDesignBranches(
         ownerId,
         projectId,

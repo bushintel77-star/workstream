@@ -29,7 +29,8 @@ describe("resource-pool", () => {
     const hit = matchLeftoversToNeed(
       [
         {
-          id: "a",
+          id: "00000000-0000-4000-8000-0000000000aa",
+          owner_id: "dev-user",
           sku: "STONE-DEC",
           label: "Stone",
           qty: 0.4,
@@ -40,6 +41,6 @@ describe("resource-pool", () => {
       "STONE-DEC",
       0.5,
     );
-    expect(hit?.id).toBe("a");
+    expect(hit?.sku).toBe("STONE-DEC");
   });
 });

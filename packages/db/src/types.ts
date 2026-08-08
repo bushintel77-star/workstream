@@ -47,6 +47,8 @@ import type {
   OrchestrationOverlayRecord,
   DesignBranchSnapshot,
   FreezeDesignBranchInput,
+  LeftoverStock,
+  RegisterLeftoverInput,
 } from "@workstream/contracts";
 
 export type {
@@ -372,6 +374,11 @@ export interface Store {
     projectId: string,
     branchId: string,
   ): Promise<DesignBranchSnapshot | null>;
+  listLeftovers(ownerId: string): Promise<LeftoverStock[]>;
+  registerLeftover(
+    ownerId: string,
+    input: RegisterLeftoverInput,
+  ): Promise<LeftoverStock | null>;
   seedDefaults(): Promise<void>;
 }
 

@@ -96,3 +96,4 @@ export * from './structured-tools';
 export * from './irrigation-assist';
 export * from './resource-pool';
 export * from './design-branch';
+export * from './apply-shadow-alt';

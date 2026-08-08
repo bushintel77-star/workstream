@@ -1,12 +1,4 @@
-export type LeftoverStock = {
-  id: string;
-  sku: string;
-  label: string;
-  qty: number;
-  unit: string;
-  source_project_id?: string;
-  created_at: string;
-};
+import type { LeftoverStock } from "@workstream/contracts";
 
 /** Register pack excess when ordered qty exceeds job need. */
 export function registerLeftover(args: {
@@ -16,6 +8,7 @@ export function registerLeftover(args: {
   label: string;
   unit?: string;
   sourceProjectId?: string;
+  ownerId?: string;
   idFactory?: () => string;
   now?: string;
 }): LeftoverStock | null {
@@ -23,6 +16,7 @@ export function registerLeftover(args: {
   if (excess < 0.05) return null;
   return {
     id: (args.idFactory ?? (() => crypto.randomUUID()))(),
+    owner_id: args.ownerId ?? "dev-user",
     sku: args.sku,
     label: args.label,
     qty: Math.round(excess * 1000) / 1000,

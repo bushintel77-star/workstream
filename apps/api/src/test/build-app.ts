@@ -30,6 +30,8 @@ import designCanvasRoutes from "../routes/design-canvas";
 import cadRoutes from "../routes/cad";
 import boundaryRoutes from "../routes/boundary";
 import designBranchRoutes from "../routes/design-branches";
+import resourcePoolRoutes from "../routes/resource-pool";
+import presentationPackRoutes from "../routes/presentation-pack";
 import projectFileRoutes from "../routes/project-files";
 import portalRoutes from "../routes/portal";
 import integrationHubRoutes, {
@@ -73,6 +75,8 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(cadRoutes, { prefix: "/projects" });
   await app.register(boundaryRoutes, { prefix: "/projects" });
   await app.register(designBranchRoutes, { prefix: "/projects" });
+  await app.register(presentationPackRoutes, { prefix: "/projects" });
+  await app.register(resourcePoolRoutes);
   await app.register(projectFileRoutes, { prefix: "/projects" });
   await app.register(geocodeRoutes, { prefix: "/geocode" });
   await app.register(crewRoutes, { prefix: "/crew" });

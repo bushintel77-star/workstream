@@ -71,6 +71,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     [];
   const _designBranches: import("@workstream/contracts").DesignBranchSnapshot[] =
     [];
+  const _leftovers: import("@workstream/contracts").LeftoverStock[] = [];
   const _siteBoundaries: import("@workstream/contracts").SiteBoundary[] = [];
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
@@ -121,6 +122,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _cadDocuments,
     _orchestrationOverlays,
     _designBranches,
+    _leftovers,
     _siteBoundaries,
     _catalogCustom,
     _activityEvents,
@@ -1117,8 +1119,21 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       for (const b of _designBranches) {
         if (b.project_id === projectId) b.active = false;
       }
-      const { createFrozenBranch } = await import("@workstream/domain");
-      const branch = createFrozenBranch({ projectId, input });
+      const {
+        canvasSnapshotFromDesignCanvas,
+        createFrozenBranch,
+      } = await import("@workstream/domain");
+      let canvas = input.canvas;
+      if (!canvas) {
+        const current = _designCanvases.find((c) => c.project_id === projectId);
+        if (current) {
+          canvas = canvasSnapshotFromDesignCanvas(current);
+        }
+      }
+      const branch = createFrozenBranch({
+        projectId,
+        input: { ...input, canvas },
+      });
       _designBranches.push(branch);
       flush();
       return structuredClone(branch);
@@ -1136,8 +1151,44 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       for (const b of _designBranches) {
         if (b.project_id === projectId) b.active = b.id === branchId;
       }
+      if (target.canvas) {
+        await this.upsertDesignCanvas(ownerId, projectId, {
+          placements: target.canvas.placements,
+          strokes: target.canvas.strokes,
+          irrigation_zones: target.canvas.irrigation_zones,
+          annotations: target.canvas.annotations,
+          features: target.canvas.features,
+        });
+      }
       flush();
       return structuredClone(target);
+    },
+
+    async listLeftovers(ownerId) {
+      return _leftovers
+        .filter((l) => l.owner_id === ownerId)
+        .map((l) => structuredClone(l))
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+    },
+
+    async registerLeftover(ownerId, input) {
+      const { registerLeftover } = await import("@workstream/domain");
+      const row = registerLeftover({
+        orderQty: input.order_qty,
+        usedQty: input.used_qty,
+        sku: input.sku,
+        label: input.label,
+        unit: input.unit,
+        sourceProjectId: input.source_project_id,
+        ownerId,
+      });
+      if (!row) return null;
+      _leftovers.push(row);
+      flush();
+      return structuredClone(row);
     },
 
     async getDesignCanvas(ownerId, projectId) {

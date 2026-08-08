@@ -1,4 +1,5 @@
 import type {
+  DesignBranchCanvasSnapshot,
   DesignBranchSnapshot,
   FreezeDesignBranchInput,
 } from "@workstream/contracts";
@@ -10,6 +11,9 @@ export function createFrozenBranch(args: {
   now?: string;
 }): DesignBranchSnapshot {
   const id = (args.idFactory ?? (() => crypto.randomUUID()))();
+  const canvas = args.input.canvas
+    ? structuredClone(args.input.canvas)
+    : undefined;
   return {
     id,
     project_id: args.projectId,
@@ -20,6 +24,7 @@ export function createFrozenBranch(args: {
     labour_hours: args.input.labour_hours ?? 0,
     thumbnail_note: args.input.thumbnail_note,
     canvas_fingerprint: args.input.canvas_fingerprint ?? "",
+    canvas,
     is_frozen: true,
     active: true,
   };
@@ -34,4 +39,20 @@ export function activateBranch(
     ...b,
     active: b.id === branchId,
   }));
+}
+
+export function canvasSnapshotFromDesignCanvas(canvas: {
+  placements: DesignBranchCanvasSnapshot["placements"];
+  strokes?: DesignBranchCanvasSnapshot["strokes"];
+  irrigation_zones?: DesignBranchCanvasSnapshot["irrigation_zones"];
+  annotations?: DesignBranchCanvasSnapshot["annotations"];
+  features?: DesignBranchCanvasSnapshot["features"];
+}): DesignBranchCanvasSnapshot {
+  return {
+    placements: structuredClone(canvas.placements),
+    strokes: structuredClone(canvas.strokes ?? []),
+    irrigation_zones: structuredClone(canvas.irrigation_zones ?? []),
+    annotations: structuredClone(canvas.annotations ?? []),
+    features: structuredClone(canvas.features ?? []),
+  };
 }

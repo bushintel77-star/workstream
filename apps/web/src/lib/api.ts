@@ -10,8 +10,11 @@ import type {
   DesignGhostsResponse,
   FreezeDesignBranchInput,
   LandscapeFeature,
+  LeftoverStock,
   ListDesignBranchesResponse,
+  ListLeftoversResponse,
   ProjectOrchestrationWorld,
+  RegisterLeftoverInput,
 } from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
 import { operatorApiUrl } from "./public-env";
@@ -395,6 +398,24 @@ export async function activateDesignBranchApi(
     `/projects/${projectId}/design-branches/activate`,
     { branch_id: branchId },
   );
+}
+
+export async function listLeftoversApi(): Promise<ListLeftoversResponse> {
+  return apiGet<ListLeftoversResponse>(`/resource-pool`);
+}
+
+export async function registerLeftoverApi(
+  input: RegisterLeftoverInput,
+): Promise<LeftoverStock> {
+  return apiPost<LeftoverStock>(`/resource-pool`, input);
+}
+
+export async function presentationPackApi(projectId: string): Promise<{
+  brochure_uri: string | null;
+  quote_uri: string | null;
+  notes: string[];
+}> {
+  return apiPost(`/projects/${projectId}/presentation-pack`, {});
 }
 
 export async function scanDesignGhostsApi(

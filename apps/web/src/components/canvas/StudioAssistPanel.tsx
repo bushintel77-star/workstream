@@ -1,22 +1,24 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type {
   DesignCanvas,
   IrrigationZone,
+  LeftoverStock,
   ProjectOrchestrationWorld,
 } from "@workstream/contracts";
 import {
   matchLeftoversToNeed,
   proposeIrrigationAssist,
   proposeLightingAssist,
-  registerLeftover,
-  type LeftoverStock,
 } from "@workstream/domain";
-import { saveDesignCanvasAction } from "../../app/actions";
+import {
+  listLeftoversAction,
+  presentationPackAction,
+  registerLeftoverAction,
+  saveDesignCanvasAction,
+} from "../../app/actions";
 import css from "./studioAssistPanel.module.css";
-
-const POOL_KEY = "ws-resource-pool";
 
 type Props = {
   projectId: string;
@@ -25,21 +27,6 @@ type Props = {
   paper?: boolean;
   onCanvasSaved?: (canvas: DesignCanvas) => void;
 };
-
-function readPool(): LeftoverStock[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(POOL_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as LeftoverStock[];
-  } catch {
-    return [];
-  }
-}
-
-function writePool(items: LeftoverStock[]) {
-  window.localStorage.setItem(POOL_KEY, JSON.stringify(items));
-}
 
 export function StudioAssistPanel({
   projectId,
@@ -50,22 +37,38 @@ export function StudioAssistPanel({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [pool, setPool] = useState<LeftoverStock[]>([]);
+  const [packNotes, setPackNotes] = useState<string[] | null>(null);
   const [poolNote, setPoolNote] = useState<string | null>(null);
+
   const lighting = useMemo(
     () => (world ? proposeLightingAssist(world.spatial_facts) : []),
     [world],
   );
-  const leftoverHint = useMemo(() => {
-    const pool = readPool();
-    return matchLeftoversToNeed(pool, "STONE-DEC", 0.5);
-  }, [open, poolNote]);
+  const leftoverHint = useMemo(
+    () => matchLeftoversToNeed(pool, "STONE-DEC", 0.5),
+    [pool],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    startTransition(async () => {
+      try {
+        const res = await listLeftoversAction();
+        setPool(res.leftovers);
+      } catch {
+        setPool([]);
+      }
+    });
+  }, [open]);
 
   if (!canvas) return null;
 
   const applyIrrigation = () => {
     startTransition(async () => {
       const zones: IrrigationZone[] = proposeIrrigationAssist({
-        openAreaM2: world?.spatial_facts.reduce((s, f) => s + f.area_m2, 0) ?? 90,
+        openAreaM2:
+          world?.spatial_facts.reduce((s, f) => s + f.area_m2, 0) ?? 90,
       });
       const nextZones = [...(canvas.irrigation_zones ?? []), ...zones];
       const res = await saveDesignCanvasAction(
@@ -80,18 +83,66 @@ export function StudioAssistPanel({
     });
   };
 
-  const registerDemoLeftover = () => {
-    const left = registerLeftover({
-      orderQty: 1,
-      usedQty: 0.75,
-      sku: "STONE-DEC",
-      label: "Decorative stone",
-      sourceProjectId: projectId,
+  const applyLighting = () => {
+    if (lighting.length === 0) return;
+    startTransition(async () => {
+      const placements = [
+        ...canvas.placements,
+        ...lighting.map((l) => ({
+          id: crypto.randomUUID(),
+          symbol_id: "path-light",
+          x_pct: l.x_pct,
+          y_pct: l.y_pct,
+          rotation_deg: 0,
+          scale: 1,
+          label: l.fixture,
+        })),
+      ];
+      const res = await saveDesignCanvasAction(
+        projectId,
+        placements,
+        canvas.strokes ?? [],
+        canvas.irrigation_zones ?? [],
+        canvas.annotations ?? [],
+        canvas.features ?? [],
+      );
+      onCanvasSaved?.(res.canvas);
     });
-    if (!left) return;
-    const pool = readPool();
-    writePool([left, ...pool].slice(0, 20));
-    setPoolNote(`${left.qty} t ${left.label} available across jobs`);
+  };
+
+  const registerDemoLeftover = () => {
+    startTransition(async () => {
+      try {
+        const row = await registerLeftoverAction({
+          order_qty: 1,
+          used_qty: 0.75,
+          sku: "STONE-DEC",
+          label: "Decorative stone",
+          unit: "t",
+          source_project_id: projectId,
+        });
+        setPool((prev) => [row, ...prev]);
+        setPoolNote(`${row.qty} t ${row.label} available across jobs`);
+      } catch {
+        setPoolNote("Could not register leftover");
+      }
+    });
+  };
+
+  const runPresentationPack = () => {
+    startTransition(async () => {
+      try {
+        const res = await presentationPackAction(projectId);
+        setPackNotes(res.notes);
+        if (res.brochure_uri) {
+          window.open(res.brochure_uri, "_blank", "noopener,noreferrer");
+        } else if (res.quote_uri) {
+          window.open(res.quote_uri, "_blank", "noopener,noreferrer");
+        }
+      } catch {
+        setPackNotes(["Presentation pack unavailable — finish design pipeline first."]);
+      }
+    });
   };
 
   return (
@@ -119,16 +170,26 @@ export function StudioAssistPanel({
           >
             First-pass irrigation
           </button>
+          <button
+            type="button"
+            className={css.btn}
+            disabled={pending || lighting.length === 0}
+            data-testid="assist-lighting"
+            onClick={applyLighting}
+          >
+            Place lighting assist ({lighting.length})
+          </button>
           <p className={css.meta}>
             {lighting.length > 0
-              ? `${lighting.length} lighting points near trees (preview)`
-              : "Place trees to unlock lighting assist preview"}
+              ? `${lighting.length} uplights near trees`
+              : "Place trees to unlock lighting assist"}
           </p>
           <p className={css.kicker}>Resource pool</p>
           <button
             type="button"
             className={css.btn}
             data-testid="assist-leftover"
+            disabled={pending}
             onClick={registerDemoLeftover}
           >
             Register leftover stone
@@ -136,14 +197,27 @@ export function StudioAssistPanel({
           {poolNote ? <p className={css.meta}>{poolNote}</p> : null}
           {leftoverHint ? (
             <p className={css.chip} data-testid="leftover-chip">
-              Leftover: {leftoverHint.qty} {leftoverHint.unit} {leftoverHint.label}
+              Leftover: {leftoverHint.qty} {leftoverHint.unit}{" "}
+              {leftoverHint.label}
             </p>
           ) : null}
           <p className={css.kicker}>Presentation</p>
-          <p className={css.meta}>
-            Elevations, sun studies and quote share from the mode strip — same
-            commercial truth as Instant Planner.
-          </p>
+          <button
+            type="button"
+            className={css.btn}
+            disabled={pending}
+            data-testid="assist-presentation-pack"
+            onClick={runPresentationPack}
+          >
+            Generate presentation pack
+          </button>
+          {packNotes
+            ? packNotes.map((n) => (
+                <p key={n} className={css.meta}>
+                  {n}
+                </p>
+              ))
+            : null}
         </div>
       ) : null}
     </div>

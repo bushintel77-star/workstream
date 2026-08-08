@@ -142,6 +142,58 @@ export function spatialFactsFromCanvas(
     });
   }
 
+  for (const feature of canvas.features ?? []) {
+    const pts = feature.geometry.points.map((v) => v.pct);
+    let length = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1]!;
+      const b = pts[i]!;
+      length += Math.hypot(b.x_pct - a.x_pct, b.y_pct - a.y_pct) * 0.3;
+    }
+    let area = 0;
+    if (feature.geometry.type === "Polygon" && pts.length >= 3) {
+      let sum = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i]!;
+        const b = pts[(i + 1) % pts.length]!;
+        sum += a.x_pct * b.y_pct - b.x_pct * a.y_pct;
+      }
+      // %² → indicative m² (0.3 m per %)
+      area = Math.abs(sum) / 2 * 0.09;
+    }
+    const layer: SpatialLayer =
+      feature.metadata.layer === "softscape_beds"
+        ? "softscape"
+        : feature.metadata.layer === "structure"
+          ? "structure"
+          : feature.metadata.layer === "irrigation"
+            ? "irrigation"
+            : "hardscape";
+    const depth = feature.material_fill?.depth_m;
+    const mid = pts[Math.floor(pts.length / 2)] ?? pts[0];
+    out.push({
+      id: `feature:${feature.id}`,
+      layer,
+      label: feature.metadata.friendly_name ?? "Landscape feature",
+      symbol_id: feature.material_fill?.sku,
+      source: "placement",
+      area_m2: Math.round(area * 100) / 100,
+      length_m: Math.round(length * 100) / 100,
+      depth_m: depth,
+      height_m:
+        feature.metadata.friendly_name?.toLowerCase().includes("wall")
+          ? 0.9
+          : undefined,
+      volume_m3:
+        area > 0 && depth
+          ? Math.round(area * depth * 100) / 100
+          : undefined,
+      count: 1,
+      x_pct: mid?.x_pct,
+      y_pct: mid?.y_pct,
+    });
+  }
+
   return out;
 }
 

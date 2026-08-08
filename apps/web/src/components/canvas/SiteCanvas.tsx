@@ -42,6 +42,8 @@ import {
   lockBoundaryAction,
   resetBoundaryAction,
   runSurveyAction,
+  applyShadowAlternativeAction,
+  getDesignCanvasAction,
   saveBoundaryAction,
   saveDesignCanvasAction,
   unlockBoundaryAction,
@@ -51,6 +53,7 @@ import { LiveBomHud } from "./LiveBomHud";
 import { NextBestOptionChip } from "./NextBestOptionChip";
 import { DesignBranchStrip } from "./DesignBranchStrip";
 import { HeroDetailOverlay, type HeroFeatureTarget } from "./HeroDetailOverlay";
+import { HeroFeatureMarkers } from "./HeroFeatureMarkers";
 import { StructuredToolOverlay } from "./StructuredToolOverlay";
 import { StudioAssistPanel } from "./StudioAssistPanel";
 import { ComplianceDock } from "./ComplianceDock";
@@ -1318,8 +1321,21 @@ function SiteCanvasInner({
           <NextBestOptionChip
             world={orchWorld}
             paper={showFitSheet}
-            onApply={() => {
-              setStatus("Alternative noted — adjust geometry or materials, then re-estimate.");
+            onApply={(alt) => {
+              void (async () => {
+                try {
+                  const res = await applyShadowAlternativeAction(
+                    projectId,
+                    alt.id,
+                  );
+                  setLiveCanvas(res.canvas);
+                  bumpOrchestration();
+                  setStatus(res.note);
+                  router.refresh();
+                } catch {
+                  setError("Could not apply alternative");
+                }
+              })();
             }}
           />
           <DesignBranchStrip
@@ -1331,6 +1347,19 @@ function SiteCanvasInner({
             canvasFingerprint={orchWorld?.fingerprint ?? ""}
             paper={showFitSheet}
             freezeNonce={freezeNonce}
+            onBranchActivated={() => {
+              void (async () => {
+                try {
+                  const next = await getDesignCanvasAction(projectId);
+                  setLiveCanvas(next);
+                  bumpOrchestration();
+                  setStatus("Variation branch restored");
+                  router.refresh();
+                } catch {
+                  setError("Could not reload branch canvas");
+                }
+              })();
+            }}
           />
         </>
       ) : null}
@@ -1397,6 +1426,16 @@ function SiteCanvasInner({
             bumpOrchestration();
             setStatus("Irrigation assist applied");
           }}
+        />
+      ) : null}
+
+      {(mode === "sketch" || mode === "cad" || mode === "quote") &&
+      !titleRevealActive &&
+      !walkMode ? (
+        <HeroFeatureMarkers
+          canvas={liveCanvas ?? sketch?.canvas ?? null}
+          world={orchWorld}
+          onOpen={setHeroFeature}
         />
       ) : null}
 

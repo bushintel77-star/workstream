@@ -1,4 +1,23 @@
 import { z } from "zod";
+import {
+  CanvasAnnotationSchema,
+  CanvasStrokeSchema,
+  CatalogPlacementSchema,
+  IrrigationZoneSchema,
+} from "./catalog";
+import { LandscapeFeatureSchema } from "./landscape-feature";
+
+/** Frozen canvas payload restored when a branch is activated. */
+export const DesignBranchCanvasSnapshotSchema = z.object({
+  placements: z.array(CatalogPlacementSchema),
+  strokes: z.array(CanvasStrokeSchema).default([]),
+  irrigation_zones: z.array(IrrigationZoneSchema).default([]),
+  annotations: z.array(CanvasAnnotationSchema).default([]),
+  features: z.array(LandscapeFeatureSchema).default([]),
+});
+export type DesignBranchCanvasSnapshot = z.infer<
+  typeof DesignBranchCanvasSnapshotSchema
+>;
 
 /** Frozen design/quote snapshot for lightweight variation branching (PDF §4.5). */
 export const DesignBranchSnapshotSchema = z.object({
@@ -11,6 +30,7 @@ export const DesignBranchSnapshotSchema = z.object({
   labour_hours: z.number().nonnegative().default(0),
   thumbnail_note: z.string().max(240).optional(),
   canvas_fingerprint: z.string().default(""),
+  canvas: DesignBranchCanvasSnapshotSchema.optional(),
   is_frozen: z.boolean().default(true),
   active: z.boolean().default(false),
 });
@@ -23,6 +43,7 @@ export const FreezeDesignBranchInputSchema = z.object({
   thumbnail_note: z.string().max(240).optional(),
   canvas_fingerprint: z.string().optional(),
   parent_id: z.string().uuid().nullable().optional(),
+  canvas: DesignBranchCanvasSnapshotSchema.optional(),
 });
 export type FreezeDesignBranchInput = z.infer<
   typeof FreezeDesignBranchInputSchema

@@ -17,6 +17,8 @@ type Props = {
   paper?: boolean;
   /** Imperative freeze trigger from Instant Planner. */
   freezeNonce?: number;
+  /** Called after a branch is activated and canvas restored. */
+  onBranchActivated?: () => void;
 };
 
 export function DesignBranchStrip({
@@ -26,6 +28,7 @@ export function DesignBranchStrip({
   canvasFingerprint = "",
   paper = false,
   freezeNonce = 0,
+  onBranchActivated,
 }: Props) {
   const [branches, setBranches] = useState<DesignBranchSnapshot[]>([]);
   const [pending, startTransition] = useTransition();
@@ -126,6 +129,7 @@ export function DesignBranchStrip({
                       b.id,
                     );
                     setBranches(res.branches);
+                    onBranchActivated?.();
                   })
                 }
               >
