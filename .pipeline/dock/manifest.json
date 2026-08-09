@@ -1,20 +1,8 @@
 {
-  "schema": 1,
-  "updated": "2026-08-09T15:18:49.729Z",
-  "current_branch": "feat/web-instant-planner-onsite-density",
-  "main_sha": "75c9e33",
-  "origin_main_sha": "75c9e33",
-  "railway_api_sha": "163227a",
-  "railway_web_sha": "unknown",
   "items": [
     {
-      "id": "a11y-pass",
-      "title": "Accessibility pass (web + mobile)",
-      "spec": "P1-P3 a11y items from OUTSTANDING.md",
-      "stage": "coded",
-      "location": "working-directory",
-      "patch": "patches/working-directory.patch",
-      "hash": "DB16B3CA2F91F07F28519010EE084FC10598F7A2940F2B028796616C6E64E5B7",
+      "depends_on": [],
+      "blocks": [],
       "files": [
         "OUTSTANDING.md",
         "apps/web/src/app/projects/[id]/page.tsx",
@@ -29,48 +17,51 @@
         "apps/mobile/src/components/sketch/MobileSketchStatusBar.tsx",
         "apps/mobile/src/components/studio/DesignAssetPalette.tsx"
       ],
-      "depends_on": [],
-      "blocks": [],
       "saddle": {
-        "direction": "Commit to a branch, typecheck, lint, then merge to main.",
+        "direction": ": \"Commit to a branch, typecheck, lint, then merge to main.",
         "next_action": "git checkout -b feat/a11y-pass && git add -A && commit",
         "context": "P1-P3 a11y items complete. Web: main landmark, QuoteBuilder section, CompactModeNav list, aria-keyshortcuts. Mobile: toolbar labels, status live regions, asset palette tablist, canvas symbol labels."
       },
+      "id": "a11y-pass",
+      "title": "Accessibility pass (web + mobile)",
+      "spec": "P1-P3 a11y items from OUTSTANDING.md",
+      "stage": "coded",
+      "location": "working-directory",
+      "patch": "patches/working-directory.patch",
+      "hash": "DB16B3CA2F91F07F28519010EE084FC10598F7A2940F2B028796616C6E64E5B7",
       "relevance": "high"
     },
     {
-      "id": "irrigation-edit-loop-domain",
-      "title": "§4.7 Irrigation/lighting edit loop — domain logic + tests",
-      "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.7",
-      "stage": "merged",
-      "location": "main",
-      "patch": "patches/working-directory.patch",
-      "hash": "DB16B3CA2F91F07F28519010EE084FC10598F7A2940F2B028796616C6E64E5B7",
-      "files": [
-        "packages/domain/src/irrigation-assist.ts",
-        "packages/domain/src/irrigation-assist.test.ts"
-      ],
       "depends_on": [
         "supplier-rate-sheet-loading"
       ],
       "blocks": [
         "irrigation-edit-loop-ui"
       ],
+      "files": [
+        "packages/domain/src/irrigation-assist.ts",
+        "packages/domain/src/irrigation-assist.test.ts"
+      ],
       "saddle": {
-        "direction": "Commit domain logic + tests to a branch. UI depends on this. Cannot ship without the UI from stash@{2}.",
+        "direction": ": \"Commit domain logic + tests to a branch. UI depends on this. Cannot ship without the UI from stash@{2}.",
         "next_action": "git checkout -b feat/irrigation-edit-loop && git add packages/domain/src/irrigation-assist.* && commit",
         "context": "346 lines: isAssistIrrigationZone, listAssistIrrigationZones, isAssistLightingPlacement, clampEmitterSpacingCm, setAssistEmitterSpacing, scaleAssistPipeRuns, nudgeAssistLuminaires, estimateIrrigationAssistLive, estimateLightingAssistLive, assistLightingPlacementLabel. Full test coverage."
       },
-      "relevance": "low"
-    },
-    {
-      "id": "irrigation-edit-loop-ui",
-      "title": "§4.7 Irrigation/lighting edit loop — UI (StudioAssistPanel)",
+      "id": "irrigation-edit-loop-domain",
+      "title": "§4.7 Irrigation/lighting edit loop — domain logic + tests",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.7",
       "stage": "coded",
-      "location": "stash@{2}",
-      "patch": "patches/stash-2.patch",
-      "hash": "5DB6905FFCC4BC209A126E180AAEBD2EB728FA1E46178076B22430B517D207E6",
+      "location": "working-directory",
+      "patch": "patches/working-directory.patch",
+      "hash": "DB16B3CA2F91F07F28519010EE084FC10598F7A2940F2B028796616C6E64E5B7",
+      "relevance": "critical"
+    },
+    {
+      "depends_on": [
+        "irrigation-edit-loop-domain",
+        "supplier-rate-sheet-loading"
+      ],
+      "blocks": [],
       "files": [
         "apps/web/src/components/canvas/handoff/features/assist/StudioAssistPanel.tsx",
         "apps/web/src/components/canvas/handoff/features/assist/studioAssistPanel.module.css",
@@ -84,44 +75,58 @@
         "packages/domain/src/canvas-mode.ts",
         "packages/domain/src/canvas-mode.test.ts"
       ],
-      "depends_on": [
-        "irrigation-edit-loop-domain",
-        "supplier-rate-sheet-loading"
-      ],
-      "blocks": [],
       "saddle": {
-        "direction": "Apply stash-2.patch on top of the irrigation-edit-loop branch. Wires emitter spacing slider to setAssistEmitterSpacing, pipe-run scaling to scaleAssistPipeRuns, luminaire nudge to nudgeAssistLuminaires. Shows live coverage_pct and cost_aud.",
+        "direction": ": \"Apply stash-2.patch on top of the irrigation-edit-loop branch. Wires emitter spacing slider to setAssistEmitterSpacing, pipe-run scaling to scaleAssistPipeRuns, luminaire nudge to nudgeAssistLuminaires. Shows live coverage_pct and cost_aud.",
         "next_action": "git apply .pipeline/dock/patches/stash-2.patch on the feat/irrigation-edit-loop branch",
         "context": "327 lines of UI + supporting changes. The StudioAssistPanel manages draftZones, draftLights, canvasAssistZones, canvasAssistLights, liveIrrigation, liveLighting state."
       },
+      "id": "irrigation-edit-loop-ui",
+      "title": "§4.7 Irrigation/lighting edit loop — UI (StudioAssistPanel)",
+      "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.7",
+      "stage": "coded",
+      "location": "stash@{2}",
+      "patch": "patches/stash-2.patch",
+      "hash": "5DB6905FFCC4BC209A126E180AAEBD2EB728FA1E46178076B22430B517D207E6",
       "relevance": "critical"
     },
     {
-      "id": "supplier-rate-sheet-loading",
-      "title": "Supplier rate-sheet loading (honest feed/honesty fields)",
-      "spec": "AI-CAD.md orchestration + §4.7 live cost",
-      "stage": "committed",
-      "location": "branch",
-      "patch": "patches/stash-2.patch",
-      "hash": "5DB6905FFCC4BC209A126E180AAEBD2EB728FA1E46178076B22430B517D207E6",
-      "files": [
-        "apps/api/src/routes/suppliers.ts",
-        "packages/domain/src/env.ts",
-        ".env.example"
-      ],
       "depends_on": [],
       "blocks": [
         "irrigation-edit-loop-domain",
         "irrigation-edit-loop-ui"
       ],
+      "files": [
+        "apps/api/src/routes/suppliers.ts",
+        "packages/domain/src/env.ts",
+        ".env.example"
+      ],
       "saddle": {
-        "direction": "Part of stash@{2}. Adds feed field, honesty field, rate-sheet file loading from SUPPLIERS_RATE_SHEET_DIR, dev_canned vs rate_sheet mode. Needed for honest pricing in live estimates.",
+        "direction": ": \"Part of stash@{2}. Adds feed field, honesty field, rate-sheet file loading from SUPPLIERS_RATE_SHEET_DIR, dev_canned vs rate_sheet mode. Needed for honest pricing in live estimates.",
         "next_action": "Applied together with irrigation-edit-loop-ui when stash-2.patch is applied",
         "context": "230 lines in suppliers.ts. Without this, live cost estimates use canned dev prices instead of real supplier rate sheets."
       },
+      "id": "supplier-rate-sheet-loading",
+      "title": "Supplier rate-sheet loading (honest feed/honesty fields)",
+      "spec": "AI-CAD.md orchestration + §4.7 live cost",
+      "stage": "coded",
+      "location": "stash@{2}",
+      "patch": "patches/stash-2.patch",
+      "hash": "5DB6905FFCC4BC209A126E180AAEBD2EB728FA1E46178076B22430B517D207E6",
       "relevance": "critical"
     },
     {
+      "depends_on": [],
+      "blocks": [
+        "elevation-honesty-empty-state"
+      ],
+      "files": [
+        "apps/web/src/components/canvas/handoff/HandoffDesignStudio.tsx"
+      ],
+      "saddle": {
+        "direction": ": \"Apply stash-0.patch. Wires parseElevationLook, onOpenElevations callback, ?mode=elevation&look=N URL sync. Part of the elevation presentation flow.",
+        "next_action": "git apply .pipeline/dock/patches/stash-0.patch on a feat/elevation-mode branch",
+        "context": "~69 lines. Enables deep-linking to specific elevation views."
+      },
       "id": "elevation-mode-wiring",
       "title": "Elevation mode URL sync + onOpenElevations callback",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.9 + UIUX-DESIGNER-HANDOFF-SPEC.md",
@@ -129,51 +134,44 @@
       "location": "stash@{0}",
       "patch": "patches/stash-0.patch",
       "hash": "33ED2EE9BCEC811CBB620F8BBD9EF5E3FB19E0C24DC1E3B4DD4BB81E6F62D2E6",
-      "files": [
-        "apps/web/src/components/canvas/handoff/HandoffDesignStudio.tsx"
-      ],
-      "depends_on": [],
-      "blocks": [
-        "elevation-honesty-empty-state"
-      ],
-      "saddle": {
-        "direction": "Apply stash-0.patch. Wires parseElevationLook, onOpenElevations callback, ?mode=elevation&look=N URL sync. Part of the elevation presentation flow.",
-        "next_action": "git apply .pipeline/dock/patches/stash-0.patch on a feat/elevation-mode branch",
-        "context": "~69 lines. Enables deep-linking to specific elevation views."
-      },
       "relevance": "medium"
     },
     {
-      "id": "elevation-honesty-empty-state",
-      "title": "Elevation honesty caption + empty state",
-      "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.9",
-      "stage": "coded",
-      "location": "stash@{0} + stash@{1}",
-      "patches": [
-        "patches/stash-0.patch",
-        "patches/stash-1.patch"
+      "depends_on": [
+        "elevation-mode-wiring"
       ],
-      "hashes": [
-        "33ED2EE9BCEC811CBB620F8BBD9EF5E3FB19E0C24DC1E3B4DD4BB81E6F62D2E6",
-        "80361FC7A09D3E98658777175FCF8CD98494D5931F7C20FD842E1EA29564CBAA"
-      ],
+      "blocks": [],
       "files": [
         "apps/web/src/components/canvas/handoff/features/elevation/ElevationBoard.tsx",
         "apps/web/src/components/canvas/handoff/features/elevation/elevation.module.css",
         "apps/web/src/components/canvas/handoff/features/assist/studioAssistPanel.module.css"
       ],
-      "depends_on": [
-        "elevation-mode-wiring"
-      ],
-      "blocks": [],
       "saddle": {
-        "direction": "Apply stash-0.patch then stash-1.patch. Adds honesty caption ('Indicative elevation...'), empty state ('No standing profiles yet...'), data-elev-empty attribute.",
+        "direction": ": \"Apply stash-0.patch then stash-1.patch. Adds honesty caption ('Indicative elevation...'), empty state ('No standing profiles yet...'), data-elev-empty attribute.",
         "next_action": "git apply both patches on the elevation branch",
         "context": "~50 lines across ElevationBoard.tsx and elevation.module.css. Required by the honesty principle in the design spec."
       },
+      "id": "elevation-honesty-empty-state",
+      "title": "Elevation honesty caption + empty state",
+      "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.9",
+      "stage": "coded",
+      "location": "stash@{0} + stash@{1}",
       "relevance": "medium"
     },
     {
+      "depends_on": [
+        "supplier-rate-sheet-loading"
+      ],
+      "blocks": [],
+      "files": [
+        "packages/domain/src/output-generators.ts",
+        "packages/domain/src/output-job.ts"
+      ],
+      "saddle": {
+        "direction": ": \"Part of stash@{0}. Adds overlayQuoteLinesWithSupplierPrices integration to output-generators. Overlays real supplier prices onto quote lines.",
+        "next_action": "Applied with stash-0.patch, but needs supplier-rate-sheet-loading from stash@{2} first",
+        "context": "~22 lines. Without supplier rate-sheet loading, this overlay has nothing to overlay."
+      },
       "id": "supplier-order-overlay-prices",
       "title": "Supplier order overlay prices (output-generators)",
       "spec": "AI-CAD.md orchestration",
@@ -181,167 +179,125 @@
       "location": "stash@{0}",
       "patch": "patches/stash-0.patch",
       "hash": "33ED2EE9BCEC811CBB620F8BBD9EF5E3FB19E0C24DC1E3B4DD4BB81E6F62D2E6",
-      "files": [
-        "packages/domain/src/output-generators.ts",
-        "packages/domain/src/output-job.ts"
-      ],
-      "depends_on": [
-        "supplier-rate-sheet-loading"
-      ],
-      "blocks": [],
-      "saddle": {
-        "direction": "Part of stash@{0}. Adds overlayQuoteLinesWithSupplierPrices integration to output-generators. Overlays real supplier prices onto quote lines.",
-        "next_action": "Applied with stash-0.patch, but needs supplier-rate-sheet-loading from stash@{2} first",
-        "context": "~22 lines. Without supplier rate-sheet loading, this overlay has nothing to overlay."
-      },
       "relevance": "medium"
     },
     {
+      "depends_on": [],
+      "blocks": [],
+      "files": [],
+      "saddle": {
+        "direction": ": \"On main but not deployed. Railway API is 5 commits behind. Will go live on next deploy.",
+        "next_action": "No action needed until deploy. Verify live after Railway picks up main.",
+        "context": "HeroDetailOverlay elevated to match Workstream design DNA. Committed at 05f97b8, merged at 76bc677."
+      },
       "id": "hero-overlay-polish",
       "title": "§4.8 Hero Detail Overlay — 3D polish",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.8",
       "stage": "merged",
       "location": "main",
       "main_commit": "05f97b8",
-      "depends_on": [],
-      "blocks": [],
-      "saddle": {
-        "direction": "On main but not deployed. Railway API is 5 commits behind. Will go live on next deploy.",
-        "next_action": "No action needed until deploy. Verify live after Railway picks up main.",
-        "context": "HeroDetailOverlay elevated to match Workstream design DNA. Committed at 05f97b8, merged at 76bc677."
-      },
       "relevance": "low"
     },
     {
+      "depends_on": [],
+      "blocks": [],
+      "files": [],
+      "saddle": {
+        "direction": ": \"On main but not deployed. Fully implemented: proposeShadowAlternatives, applyShadowAlternative, NextBestOptionChip with intensity prefs.",
+        "next_action": "No action needed until deploy.",
+        "context": "Shadow ledger complete. Solar lighting, permeable paving, setback geometry alternatives. Off/subtle/prominent intensity."
+      },
       "id": "shadow-ledger",
       "title": "§4.4 Next-Best-Option Chip (Shadow Ledger)",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.4",
       "stage": "merged",
       "location": "main",
-      "depends_on": [],
-      "blocks": [],
-      "saddle": {
-        "direction": "On main but not deployed. Fully implemented: proposeShadowAlternatives, applyShadowAlternative, NextBestOptionChip with intensity prefs.",
-        "next_action": "No action needed until deploy.",
-        "context": "Shadow ledger complete. Solar lighting, permeable paving, setback geometry alternatives. Off/subtle/prominent intensity."
-      },
       "relevance": "low"
     },
     {
+      "depends_on": [],
+      "blocks": [
+        "branch-tree"
+      ],
+      "files": [],
+      "saddle": {
+        "direction": ": \"On main but not deployed. Issuing a presentation deck freezes quote figures and blocks edits.",
+        "next_action": "No action needed until deploy.",
+        "context": "Partial §4.5. Freeze exists, branch tree of thumbnails does not."
+      },
       "id": "freeze-snapshot",
       "title": "§4.5 Freeze quote snapshot (issue deck)",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.5",
       "stage": "merged",
       "location": "main",
-      "depends_on": [],
-      "blocks": [
-        "branch-tree"
-      ],
-      "saddle": {
-        "direction": "On main but not deployed. Issuing a presentation deck freezes quote figures and blocks edits.",
-        "next_action": "No action needed until deploy.",
-        "context": "Partial §4.5. Freeze exists, branch tree of thumbnails does not."
-      },
       "relevance": "low"
     },
     {
-      "id": "branch-tree",
-      "title": "§4.5 Branch tree of thumbnails (variation explorer)",
-      "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.5",
-      "stage": "spec",
-      "location": "none",
       "depends_on": [
         "freeze-snapshot",
         "irrigation-edit-loop-ui"
       ],
       "blocks": [],
+      "files": [],
       "saddle": {
-        "direction": "Not started. Spec calls for lightweight visual tree of thumbnails for exploring variations from frozen states. Needs design work before coding.",
+        "direction": ": \"Not started. Spec calls for lightweight visual tree of thumbnails for exploring variations from frozen states. Needs design work before coding.",
         "next_action": "Design the branch tree UI. Consider how it relates to existing VariationFilmstrip.",
         "context": "Spec: 'Branching is lightweight and visual — a simple tree of thumbnails rather than a complex Git-style interface.'"
       },
-      "relevance": "low"
+      "id": "branch-tree",
+      "title": "§4.5 Branch tree of thumbnails (variation explorer)",
+      "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.5",
+      "stage": "spec",
+      "location": "none",
+      "relevance": "low",
+      "patch": "patches/stash-8.patch",
+      "hash": "EF0D76EADED067A7D9DEE178A09A8830653881FBA81A602EEC2B8F0576DC1977"
     }
   ],
   "stale": [
     {
-      "stash": "stash@{3}",
+      "stash": ": stash@{3}",
       "patch": "patches/stash-3.patch",
       "hash": "91D6828F6843AA40F10AB3476ADC4293C77D1C5E94EF48E1A035B6BB7331D2EA",
       "note": "CSS tweaks + design doc. Likely superseded."
     },
     {
-      "stash": "stash@{4}",
+      "stash": ": stash@{4}",
       "patch": "patches/stash-4.patch",
       "hash": "9429D3A07795BD3D1E0E4F27B1EAB11004DF76F969149698D7D6E5BA63DAF79D",
       "note": "GeoSiteMap.tsx — file deleted on main. Stale."
     },
     {
-      "stash": "stash@{5}",
+      "stash": ": stash@{5}",
       "patch": "patches/stash-5.patch",
       "hash": "D736435EECDB9E92D6B21D92783F6A5DB07CAD6E0E1245098EF183DBCD37D208",
       "note": "Touches deleted files (DraftingAssist, SiteCanvas, SketchRibbon). Stale."
     },
     {
-      "stash": "stash@{6}",
+      "stash": ": stash@{6}",
       "patch": "patches/stash-6.patch",
       "hash": "9856D7D4651AE4512941270CBD09D326E1B3E5E395BF0A80500EC60CA167FE26",
       "note": "Touches deleted files (AiCadStudio, DesignStudio, ProjectPipelineShell). Stale."
     },
     {
-      "stash": "stash@{7}",
+      "stash": ": stash@{7}",
       "patch": "patches/stash-7.patch",
       "hash": "C6FB5CEDCEEAEF5A99A06B3371A95C2E7080C863042B095449E003C2372429BD",
       "note": "Touches deleted files. Stale."
     },
     {
-      "stash": "stash@{8}",
+      "stash": ": stash@{8}",
       "patch": "patches/stash-8.patch",
       "hash": "EF0D76EADED067A7D9DEE178A09A8830653881FBA81A602EEC2B8F0576DC1977",
       "note": "server.ts trivial change. Stale."
     }
   ],
-  "transitions": [
-    {
-      "timestamp": "2026-08-09T15:18:31.597Z",
-      "event": "item-advanced",
-      "itemId": "irrigation-edit-loop-domain",
-      "changes": []
-    },
-    {
-      "timestamp": "2026-08-09T15:18:35.172Z",
-      "event": "item-advanced",
-      "itemId": "supplier-rate-sheet-loading",
-      "changes": []
-    },
-    {
-      "timestamp": "2026-08-09T15:18:45.849Z",
-      "event": "new-spec",
-      "itemId": null,
-      "changes": [
-        {
-          "itemId": "irrigation-edit-loop-domain",
-          "newRelevance": "critical",
-          "reason": "New spec Landscape_CAD_AI_App_Design_Specification.pdf §4.10 directly references this item"
-        },
-        {
-          "itemId": "irrigation-edit-loop-ui",
-          "newRelevance": "critical",
-          "reason": "New spec Landscape_CAD_AI_App_Design_Specification.pdf §4.10 directly references this item"
-        }
-      ]
-    },
-    {
-      "timestamp": "2026-08-09T15:18:49.728Z",
-      "event": "item-advanced",
-      "itemId": "irrigation-edit-loop-domain",
-      "changes": [
-        {
-          "itemId": "irrigation-edit-loop-domain",
-          "newRelevance": "low",
-          "reason": "Merged: no longer at risk of loss"
-        }
-      ]
-    }
-  ]
+  "schema": 1,
+  "updated": "2026-08-09T23:50:00+10:00",
+  "current_branch": "feat/web-instant-planner-onsite-density",
+  "main_sha": "75c9e33",
+  "origin_main_sha": "75c9e33",
+  "railway_api_sha": "163227a",
+  "railway_web_sha": "unknown",
+  "transitions": []
 }
