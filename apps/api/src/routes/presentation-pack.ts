@@ -19,10 +19,15 @@ const PackResponseSchema = z.object({
   checklist: z.array(ChecklistItemSchema),
 });
 
+/** Canvas-native deep links — not fake brochure PDFs (PDF §4.9 honesty). */
+function studioLink(projectId: string, query: string): string {
+  return `/projects/${projectId}?${query}`;
+}
+
 /**
  * Generate client presentation pack from the same commercial truth
  * (brochure + quote + plant schedule when pipeline prerequisites exist).
- * Elevations / sun-cast remain studio-native — checklist points operators there.
+ * Elevations / sun-cast / freeze point at handoff canvas deep links.
  */
 export default async function presentationPackRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -92,6 +97,10 @@ export default async function presentationPackRoutes(fastify: FastifyInstance) {
         );
       }
 
+      const sunCastUri = studioLink(projectId, "mode=cad&shade=1");
+      const elevationsUri = studioLink(projectId, "mode=elevation");
+      const freezeUri = studioLink(projectId, "mode=cad&branches=1");
+
       const checklist = [
         {
           id: "brochure",
@@ -118,14 +127,14 @@ export default async function presentationPackRoutes(fastify: FastifyInstance) {
         {
           id: "elevations",
           label: "Elevations and simple sections",
-          status: "studio" as const,
-          uri: null,
+          status: "ready" as const,
+          uri: elevationsUri,
         },
         {
           id: "sun-cast",
           label: "Sun-cast / overshadow (hero overlay + sun tools)",
-          status: "studio" as const,
-          uri: null,
+          status: "ready" as const,
+          uri: sunCastUri,
         },
         {
           id: "supplier",
@@ -136,30 +145,22 @@ export default async function presentationPackRoutes(fastify: FastifyInstance) {
         {
           id: "freeze",
           label: "Frozen quote snapshot via design branches",
-          status: "studio" as const,
-          uri: null,
+          status: "ready" as const,
+          uri: freezeUri,
         },
       ];
 
       notes.push(
-        "Elevations, sun-cast and freeze remain on the handoff canvas (Elevation mode, hero overlay, Design branches).",
+        "Elevations, sun-cast and freeze open on the handoff canvas (deep links) — not separate brochure pages.",
       );
-
       if (!brochureUri && !quoteUri && !scheduleUri) {
-        return reply.code(422).send(
-          PackResponseSchema.parse({
-            brochure_uri: null,
-            quote_uri: null,
-            schedule_uri: null,
-            notes:
-              notes.length > 0
-                ? notes
-                : ["Run survey + design before presentation pack."],
-            checklist,
-          }),
+        notes.push(
+          "PDF outputs need survey + design pipeline — canvas sun-cast / elevations / freeze links still work.",
         );
       }
 
+      // Always 200 when checklist has canvas-native links — do not 422 away
+      // the only honest sun-cast / elevation affordance (PDF §4.9).
       return reply.send(
         PackResponseSchema.parse({
           brochure_uri: brochureUri,

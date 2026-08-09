@@ -137,6 +137,33 @@ test.describe("Instant Planner handoff", () => {
     await expect(page.getByTestId("studio-assist-panel")).toBeVisible();
     await expect(page.getByTestId("assist-irrigation-preview")).toBeVisible();
     await expect(page.getByTestId("assist-presentation-pack")).toBeVisible();
+    // Leftover HUD parks over Assist — dismiss so the pack CTA is clickable.
+    const leftoverDismiss = page.getByRole("button", { name: "Dismiss" });
+    if (await leftoverDismiss.isVisible().catch(() => false)) {
+      await leftoverDismiss.click();
+    }
+    const packBtn = page.getByTestId("assist-presentation-pack");
+    await expect(packBtn).toBeEnabled({ timeout: 30_000 });
+    await packBtn.click();
+    await expect(page.getByTestId("assist-pack-checklist")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByTestId("assist-pack-open-sun-cast")).toBeVisible();
+    await page.getByTestId("assist-pack-open-sun-cast").click();
+    await expect(page.getByTestId("handoff-design-studio")).toHaveAttribute(
+      "data-shade",
+      "1",
+      { timeout: 10_000 },
+    );
+    await expect(page.getByTestId("right-data-lane-environment")).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Re-open Assist for leftover chip assert (sun-cast nav dismisses the panel).
+    await openCommandPalette(page);
+    await page.getByLabel("Search assets").fill("instant planner assist");
+    await page.getByTestId("canvas-command-planner-assist").click();
+    await expect(page.getByTestId("studio-assist-panel")).toBeVisible();
 
     // Leftover chip may appear in assist and/or as peripheral HUD alert.
     const leftoverHud = page.getByTestId("leftover-alert-chip");

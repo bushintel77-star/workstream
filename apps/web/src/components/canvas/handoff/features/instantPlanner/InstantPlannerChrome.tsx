@@ -28,7 +28,10 @@ import { HeroFeatureMarkers } from "./HeroFeatureMarkers";
 import { LandscapeFeaturesLayer } from "./LandscapeFeaturesLayer";
 import { LeftoverAlertChip } from "./LeftoverAlertChip";
 import { NextBestOptionChip } from "./NextBestOptionChip";
-import { StudioAssistPanel } from "./StudioAssistPanel";
+import {
+  StudioAssistPanel,
+  type StudioPackNavTarget,
+} from "./StudioAssistPanel";
 import { StructuredToolOverlay } from "./StructuredToolOverlay";
 import css from "./instantPlanner.module.css";
 
@@ -45,6 +48,8 @@ type Props = {
   onStructuredToolsOpenChange?: (open: boolean) => void;
   /** Open design-branch dock after freeze (PDF §4.5 clarity). */
   onOpenBranches?: () => void;
+  /** Presentation-pack checklist → canvas surfaces (PDF §4.9). */
+  onStudioPackNav?: (target: StudioPackNavTarget) => void;
   items: StudioItem[];
   strokes: SketchStroke[];
   irrigationZones: DesignCanvas["irrigation_zones"];
@@ -65,6 +70,7 @@ export function InstantPlannerChrome({
   onAssistOpenChange,
   onStructuredToolsOpenChange,
   onOpenBranches,
+  onStudioPackNav,
   items,
   strokes,
   irrigationZones,
@@ -258,6 +264,7 @@ export function InstantPlannerChrome({
               paper={paper}
               onCanvasSaved={applyCanvas}
               onDismiss={() => onAssistOpenChange?.(false)}
+              onStudioPackNav={onStudioPackNav}
             />
           ) : null}
           {showStructured ? (

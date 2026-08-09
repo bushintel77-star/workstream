@@ -2539,6 +2539,24 @@ export function HandoffDesignStudio({
     [studio, searchParams, pathname],
   );
 
+  /** Deep links from presentation-pack checklist (PDF §4.9). */
+  useEffect(() => {
+    const shade = searchParams.get("shade");
+    if (shade === "1" || shade === "true") {
+      studio.setUi({
+        shadeOn: true,
+        ...withRightDataPanel("environment"),
+        utilityPanel: null,
+      });
+    }
+    const branches = searchParams.get("branches");
+    if (branches === "1" || branches === "true") {
+      setDesignBranchOpen(true);
+    }
+    // Intentionally keyed on the query string — apply once per deep-link change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- studio.setUi stable enough; avoid re-firing on every ui tick
+  }, [searchParams]);
+
   /**
    * Sketch → CAD: rasterize the raw freehand ink and run the Claude vision
    * pipeline server-side, then apply the returned CAD elements as reviewable
@@ -3386,6 +3404,7 @@ export function HandoffDesignStudio({
       data-compact={chrome.compact ? "1" : "0"}
       data-compliance={compliance.canvasSignal}
       data-fit-sheet={ui.frameOn ? "1" : "0"}
+      data-shade={ui.shadeOn ? "1" : "0"}
       data-lighting-workspace={ui.lightingWorkspaceOn ? "1" : "0"}
       data-paper={ui.paper}
       data-right-lane={rightLaneBusy ? "1" : "0"}
@@ -5039,6 +5058,40 @@ export function HandoffDesignStudio({
             onAssistOpenChange={setPlannerAssistOpen}
             onStructuredToolsOpenChange={setStructuredToolsOpen}
             onOpenBranches={() => setDesignBranchOpen(true)}
+            onStudioPackNav={(target) => {
+              setPlannerAssistOpen(false);
+              if (target === "sun-cast") {
+                syncModeUrl("cad");
+                studio.setUi({
+                  shadeOn: true,
+                  ...withRightDataPanel("environment"),
+                  utilityPanel: null,
+                });
+                const next = new URLSearchParams(searchParams.toString());
+                next.set("mode", "cad");
+                next.set("shade", "1");
+                next.delete("branches");
+                window.history.replaceState(
+                  window.history.state,
+                  "",
+                  `${pathname}?${next.toString()}`,
+                );
+                return;
+              }
+              if (target === "elevations") {
+                syncModeUrl("elevation");
+                return;
+              }
+              setDesignBranchOpen(true);
+              const next = new URLSearchParams(searchParams.toString());
+              next.set("mode", "cad");
+              next.set("branches", "1");
+              window.history.replaceState(
+                window.history.state,
+                "",
+                `${pathname}?${next.toString()}`,
+              );
+            }}
             items={studio.items}
             strokes={studio.strokes}
             irrigationZones={studio.irrigationZones}

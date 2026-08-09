@@ -24,6 +24,8 @@ import {
 import type { PresentationPackChecklistItem } from "../../../../../lib/api";
 import css from "./studioAssistPanel.module.css";
 
+export type StudioPackNavTarget = "sun-cast" | "elevations" | "freeze";
+
 type Props = {
   projectId: string;
   world: ProjectOrchestrationWorld | null;
@@ -32,7 +34,13 @@ type Props = {
   onCanvasSaved?: (canvas: DesignCanvas) => void;
   /** Summoned panel — dismiss returns to idle canvas (no parked Assist chip). */
   onDismiss?: () => void;
+  /** Canvas-native pack checklist links (PDF §4.9 — no fake brochure). */
+  onStudioPackNav?: (target: StudioPackNavTarget) => void;
 };
+
+function isStudioPackNavId(id: string): id is StudioPackNavTarget {
+  return id === "sun-cast" || id === "elevations" || id === "freeze";
+}
 
 async function persistCanvas(
   projectId: string,
@@ -76,6 +84,7 @@ export function StudioAssistPanel({
   paper,
   onCanvasSaved,
   onDismiss,
+  onStudioPackNav,
 }: Props) {
   // Summoned via Cmd+K — panel open by default; Hide dismisses the summon.
   const [open, setOpen] = useState(true);
@@ -124,14 +133,20 @@ export function StudioAssistPanel({
 
   useEffect(() => {
     if (!open) return;
-    startTransition(async () => {
+    // Do not use useTransition here — that shared `pending` disables every
+    // Assist CTA (including Generate presentation pack) while leftovers load.
+    let cancelled = false;
+    void (async () => {
       try {
         const res = await listLeftoversAction();
-        setPool(res.leftovers);
+        if (!cancelled) setPool(res.leftovers);
       } catch {
-        setPool([]);
+        if (!cancelled) setPool([]);
       }
-    });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   if (!canvas) return null;
@@ -358,14 +373,47 @@ export function StudioAssistPanel({
           ) : null}
           {packChecklist && packChecklist.length > 0 ? (
             <ul className={css.checklist} data-testid="assist-pack-checklist">
-              {packChecklist.map((item) => (
-                <li key={item.id} data-status={item.status}>
-                  <span>{item.label}</span>
-                  <span className={css.checkStatus}>
-                    {checklistStatusLabel(item.status)}
-                  </span>
-                </li>
-              ))}
+              {packChecklist.map((item) => {
+                const studioNav =
+                  isStudioPackNavId(item.id) && Boolean(onStudioPackNav);
+                const external =
+                  Boolean(item.uri) &&
+                  /^https?:\/\//i.test(item.uri ?? "") &&
+                  !studioNav;
+                return (
+                  <li
+                    key={item.id}
+                    data-status={item.status}
+                    data-testid={`assist-pack-item-${item.id}`}
+                  >
+                    {studioNav ? (
+                      <button
+                        type="button"
+                        className={css.checkLink}
+                        data-testid={`assist-pack-open-${item.id}`}
+                        onClick={() => onStudioPackNav?.(item.id as StudioPackNavTarget)}
+                      >
+                        {item.label}
+                      </button>
+                    ) : external ? (
+                      <a
+                        className={css.checkLink}
+                        href={item.uri!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid={`assist-pack-open-${item.id}`}
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <span>{item.label}</span>
+                    )}
+                    <span className={css.checkStatus}>
+                      {checklistStatusLabel(item.status)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
           {packNotes

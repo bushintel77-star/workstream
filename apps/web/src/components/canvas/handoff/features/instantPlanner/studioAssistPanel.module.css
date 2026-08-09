@@ -122,3 +122,21 @@
 .checklist li[data-status="ready"] .checkStatus {
   color: var(--hc-ink);
 }
+
+.checkLink {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--hc-ink);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.checkLink:hover {
+  color: var(--hc-accent, var(--hc-ink));
+}
