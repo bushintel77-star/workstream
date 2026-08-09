@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+# post-checkout hook — fires after every git checkout
+# Records the context switch in the dock and snapshots any carried-over changes.
+#
+# This is the automatic cable for the parallelogram linkage.
+# It fires AFTER checkout (git has no pre-checkout hook), so it can't
+# prevent loss. But it does:
+# 1. Record every context switch in the dock's transition history
+# 2. Snapshot any uncommitted changes that carried over to the new branch
+# 3. Update the manifest's current_branch field
+#
+# For destructive operations (git reset --hard, git stash drop), the agent
+# must run `node .pipeline/dock/transition.mjs status` or invoke save-pipeline
+# BEFORE the operation. Git hooks cannot intercept those.
+
+. "$(dirname "$0")/_/h"
+
+# Don't run during rebase or merge — those are internal git operations
+if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
+  exit 0
+fi
+
+# Don't run if .pipeline doesn't exist (fresh clone before setup)
+if [ ! -d ".pipeline/dock" ]; then
+  exit 0
+fi
+
+# Snapshot working directory after checkout (captures carried-over changes)
+git diff > .pipeline/dock/patches/working-directory.patch 2>/dev/null
+
+# If the patch is empty, don't commit noise
+if [ -s .pipeline/dock/patches/working-directory.patch ]; then
+  # Update the manifest's current branch
+  BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+  node -e "
+    const fs = require('fs');
+    const p = '.pipeline/dock/manifest.json';
+    const m = JSON.parse(fs.readFileSync(p, 'utf8'));
+    m.current_branch = '$BRANCH';
+    m.updated = new Date().toISOString();
+    m.transitions = m.transitions || [];
+    m.transitions.push({
+      timestamp: new Date().toISOString(),
+      event: 'checkout',
+      itemId: null,
+      changes: [{ itemId: 'current_branch', newRelevance: '$BRANCH', reason: 'Context switch' }]
+    });
+    fs.writeFileSync(p, JSON.stringify(m, null, 2) + '\n', 'utf8');
+  " 2>/dev/null
+
+  git add .pipeline/dock/manifest.json .pipeline/dock/patches/working-directory.patch 2>/dev/null
+  git commit -m "chore(pipeline): auto-snapshot at checkout to $BRANCH" --no-verify 2>/dev/null
+fi
+
+exit 0
