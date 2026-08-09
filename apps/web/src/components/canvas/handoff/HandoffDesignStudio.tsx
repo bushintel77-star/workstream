@@ -49,6 +49,7 @@ import { LayersPanel } from "./features/layers/LayersPanel";
 import { ServicesLedger } from "./features/services/ServicesLedger";
 import { SitePackPanel } from "./features/sitePack/SitePackPanel";
 import {
+  deleteProjectFileClient,
   listProjectFilesClient,
   uploadProjectFileClient,
 } from "./features/sitePack/projectFilesClient";
@@ -5631,6 +5632,16 @@ export function HandoffDesignStudio({
                     studio.setUi({
                       councilTip: "BYDA upload failed — try PDF or JPEG/PNG",
                     });
+                  });
+              }}
+              onDeleteBydaFile={(fileId) => {
+                void deleteProjectFileClient(projectId, fileId)
+                  .then(() => {
+                    setBydaFiles((prev) => prev.filter((f) => f.id !== fileId));
+                    toast.show("File removed", "info", 4000);
+                  })
+                  .catch(() => {
+                    toast.show("Could not remove file — try again", "error");
                   });
               }}
               onIngestStormwaterFile={(file) => {

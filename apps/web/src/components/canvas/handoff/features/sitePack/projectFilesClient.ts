@@ -42,3 +42,16 @@ export async function uploadProjectFileClient(
   const body = (await res.json()) as { file: ProjectFile };
   return body.file;
 }
+
+export async function deleteProjectFileClient(
+  projectId: string,
+  fileId: string,
+): Promise<void> {
+  const res = await fetch(`/api/projects/${projectId}/files/${fileId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 204) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Delete file failed (${res.status}): ${text}`);
+  }
+}

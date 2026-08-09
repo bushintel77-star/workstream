@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { digToolsUnlocked } from "@workstream/domain";
+import { Dialog } from "../../../../ui";
+import { KitButton } from "../../../../ui/kit";
 import css from "./sitePack.module.css";
 
 export type ChaseItem = {
@@ -27,6 +30,7 @@ type Props = {
   onStampDigOverride: () => void;
   onIngestStormwaterFile: (file: File) => void;
   onUploadBydaFile: (file: File) => void;
+  onDeleteBydaFile: (fileId: string) => void;
 };
 
 /**
@@ -43,11 +47,13 @@ export function SitePackPanel({
   onStampDigOverride,
   onIngestStormwaterFile,
   onUploadBydaFile,
+  onDeleteBydaFile,
 }: Props) {
   const digOk = digToolsUnlocked({
     bydaAssetCount,
     digOverrideAt,
   });
+  const [confirmDelete, setConfirmDelete] = useState<BydaTrayFile | null>(null);
 
   return (
     <section
@@ -111,10 +117,19 @@ export function SitePackPanel({
         ) : (
           <ul className={css.fileList}>
             {bydaFiles.map((f) => (
-              <li key={f.id}>
+              <li key={f.id} className={css.fileRow}>
                 <a href={f.uri} target="_blank" rel="noreferrer">
                   {f.title}
                 </a>
+                <button
+                  type="button"
+                  className={css.fileDeleteBtn}
+                  onClick={() => setConfirmDelete(f)}
+                  aria-label={`Delete ${f.title}`}
+                  data-testid={`byda-file-delete-${f.id}`}
+                >
+                  Remove
+                </button>
               </li>
             ))}
           </ul>
@@ -170,6 +185,39 @@ export function SitePackPanel({
           />
         </label>
       </div>
+
+      <Dialog
+        open={confirmDelete != null}
+        onClose={() => setConfirmDelete(null)}
+        title="Remove file?"
+        destructive
+        footer={
+          <>
+            <KitButton variant="ghost" size="sm" onClick={() => setConfirmDelete(null)}>
+              Cancel
+            </KitButton>
+            <KitButton
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (confirmDelete) onDeleteBydaFile(confirmDelete.id);
+                setConfirmDelete(null);
+              }}
+            >
+              Remove
+            </KitButton>
+          </>
+        }
+      >
+        {confirmDelete ? (
+          <p>
+            <strong>{confirmDelete.title}</strong>
+            <br />
+            <br />
+            This permanently removes the file from the project. This cannot be undone.
+          </p>
+        ) : null}
+      </Dialog>
     </section>
   );
 }
