@@ -1,8 +1,15 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { formatLabourChip, type StudioEstimateReport } from "@workstream/domain";
-import { cadQuoteAction } from "../../../../../app/actions";
+import {
+  formatLabourChip,
+  proposeLeftoversFromEstimateLines,
+  type StudioEstimateReport,
+} from "@workstream/domain";
+import {
+  cadQuoteAction,
+  registerLeftoverAction,
+} from "../../../../../app/actions";
 import css from "./bom.module.css";
 
 type Props = {
@@ -98,6 +105,20 @@ export function LiveBomDock({
     startTransition(async () => {
       try {
         await cadQuoteAction(projectId, "standard");
+        // PDF §4.6 — pack-ceil excess registers into the workspace leftover pool.
+        const proposals = proposeLeftoversFromEstimateLines(estimate.lines);
+        await Promise.allSettled(
+          proposals.map((p) =>
+            registerLeftoverAction({
+              order_qty: p.orderQty,
+              used_qty: p.usedQty,
+              sku: p.sku,
+              label: p.label,
+              unit: p.unit,
+              source_project_id: projectId,
+            }),
+          ),
+        );
         onQuotePromoted?.();
         onOpenQuote();
       } catch (err) {

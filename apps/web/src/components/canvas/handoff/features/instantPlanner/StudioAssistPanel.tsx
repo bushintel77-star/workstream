@@ -19,7 +19,6 @@ import {
 import {
   listLeftoversAction,
   presentationPackAction,
-  registerLeftoverAction,
   saveDesignCanvasAction,
 } from "../../../../../app/actions";
 import type { PresentationPackChecklistItem } from "../../../../../lib/api";
@@ -211,25 +210,6 @@ export function StudioAssistPanel({
     });
   };
 
-  const registerDemoLeftover = () => {
-    startTransition(async () => {
-      try {
-        const row = await registerLeftoverAction({
-          order_qty: 1,
-          used_qty: 0.75,
-          sku: "STONE-DEC",
-          label: "Decorative stone",
-          unit: "t",
-          source_project_id: projectId,
-        });
-        setPool((prev) => [row, ...prev]);
-        setPoolNote(`${row.qty} t ${row.label} available across jobs`);
-      } catch {
-        setPoolNote("Could not register leftover");
-      }
-    });
-  };
-
   const runPresentationPack = () => {
     startTransition(async () => {
       try {
@@ -321,15 +301,10 @@ export function StudioAssistPanel({
             </p>
           ) : null}
           <p className={css.kicker}>Resource pool</p>
-          <button
-            type="button"
-            className={css.btn}
-            data-testid="assist-leftover"
-            disabled={pending}
-            onClick={registerDemoLeftover}
-          >
-            Register leftover stone
-          </button>
+          <p className={css.meta} data-testid="assist-leftover">
+            Pack leftovers register automatically when you Add to Main Quote
+            (bulk stone, base, mulch, sand).
+          </p>
           {poolNote ? <p className={css.meta}>{poolNote}</p> : null}
           {leftoverHint ? (
             <p className={css.chip} data-testid="leftover-chip">

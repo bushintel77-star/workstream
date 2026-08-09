@@ -3,6 +3,8 @@ import type { BomLine } from "@workstream/contracts";
 import {
   matchLeftoversToBom,
   matchLeftoversToNeed,
+  packSizeForMaterial,
+  proposeLeftoversFromEstimateLines,
   registerLeftover,
 } from "./resource-pool";
 
@@ -47,6 +49,41 @@ describe("resource-pool", () => {
       0.5,
     );
     expect(hit?.sku).toBe("STONE-DEC");
+  });
+
+  it("ceils bulk tonne lines to pack and proposes leftover", () => {
+    expect(packSizeForMaterial("Crushed rock base (CR6)", "t")).toBe(1);
+    const props = proposeLeftoversFromEstimateLines([
+      {
+        tier: "secondary",
+        label: "Crushed rock base (CR6)",
+        unit: "t",
+        qty: 0.72,
+      },
+      {
+        tier: "labour",
+        label: "Install paving",
+        unit: "hr",
+        qty: 4,
+      },
+    ]);
+    expect(props).toHaveLength(1);
+    expect(props[0]?.orderQty).toBe(1);
+    expect(props[0]?.usedQty).toBe(0.72);
+    expect(props[0]?.sku).toContain("CRUSHED");
+  });
+
+  it("skips lines already on a pack boundary", () => {
+    expect(
+      proposeLeftoversFromEstimateLines([
+        {
+          tier: "secondary",
+          label: "Crushed rock base (CR6)",
+          unit: "t",
+          qty: 2,
+        },
+      ]),
+    ).toEqual([]);
   });
 
   it("matches leftovers against live BOM lines", () => {
