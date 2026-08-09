@@ -19,6 +19,8 @@ type Props = {
   paper?: boolean;
   /** Live spatial facts for TRP / conflict preview while drafting. */
   spatialFacts?: SpatialObject[];
+  /** Summoned bar — Esc with no draft dismisses back to idle canvas. */
+  onDismiss?: () => void;
 };
 
 export function StructuredToolOverlay({
@@ -26,6 +28,7 @@ export function StructuredToolOverlay({
   onFeature,
   paper,
   spatialFacts = [],
+  onDismiss,
 }: Props) {
   const [kind, setKind] = useState<StructuredToolKind | null>(null);
   const [draft, setDraft] = useState<Array<{ x_pct: number; y_pct: number }>>(
@@ -50,13 +53,17 @@ export function StructuredToolOverlay({
   }, [kind, draft]);
 
   useEffect(() => {
-    if (!kind) return;
+    if (!active) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setKind(null);
-        setDraft([]);
+        if (kind || draft.length > 0) {
+          setKind(null);
+          setDraft([]);
+        } else {
+          onDismiss?.();
+        }
       }
-      if (e.key === "Enter" && draft.length >= 2) {
+      if (e.key === "Enter" && kind && draft.length >= 2) {
         const feature = buildLandscapeFeatureFromStroke({ kind, points: draft });
         onFeature(feature);
         setDraft([]);
@@ -64,7 +71,7 @@ export function StructuredToolOverlay({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [kind, draft, onFeature]);
+  }, [active, kind, draft, onFeature, onDismiss]);
 
   if (!active) return null;
 

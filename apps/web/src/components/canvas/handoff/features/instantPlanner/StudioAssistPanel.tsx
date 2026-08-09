@@ -28,6 +28,8 @@ type Props = {
   canvas: DesignCanvas | null;
   paper?: boolean;
   onCanvasSaved?: (canvas: DesignCanvas) => void;
+  /** Summoned panel — dismiss returns to idle canvas (no parked Assist chip). */
+  onDismiss?: () => void;
 };
 
 async function persistCanvas(
@@ -54,8 +56,10 @@ export function StudioAssistPanel({
   canvas,
   paper,
   onCanvasSaved,
+  onDismiss,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  // Summoned via Cmd+K — panel open by default; Hide dismisses the summon.
+  const [open, setOpen] = useState(true);
   const [pending, startTransition] = useTransition();
   const [pool, setPool] = useState<LeftoverStock[]>([]);
   const [packNotes, setPackNotes] = useState<string[] | null>(null);
@@ -202,7 +206,14 @@ export function StudioAssistPanel({
         type="button"
         className={css.toggle}
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (open) {
+            setOpen(false);
+            onDismiss?.();
+          } else {
+            setOpen(true);
+          }
+        }}
       >
         {open ? "Hide assist" : "Assist"}
       </button>

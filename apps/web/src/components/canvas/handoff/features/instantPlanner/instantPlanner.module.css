@@ -1,12 +1,10 @@
+/* Transparent board host — must not steal hits. Child board layers keep their
+   own pointer-events:none; HUD chrome is CameraChrome-portaled (not a child). */
 .layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: var(--ws-z-dock);
-}
-
-.layer > * {
-  pointer-events: auto;
+  z-index: var(--ws-z-annotate);
 }
 
 .toast {

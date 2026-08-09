@@ -109,6 +109,12 @@ test.describe("Instant Planner handoff", () => {
       )
       .toBeGreaterThan(beforeCount);
 
+    // Assist / structured tools are summon-only (no sticky idle chrome).
+    await openCommandPalette(page);
+    await page.getByLabel("Search assets").fill("instant planner assist");
+    await page.getByTestId("canvas-command-planner-assist").click();
+    await expect(page.getByTestId("studio-assist-panel")).toBeVisible();
+
     await openCommandPalette(page);
     await page.getByLabel("Search assets").fill("design branches");
     await page.getByTestId("canvas-command-design-branches").click();

@@ -571,6 +571,9 @@ export function HandoffDesignStudio({
   const [inkLegendOpen, setInkLegendOpen] = useState(false);
   /** Async design VCS branch switcher. */
   const [designBranchOpen, setDesignBranchOpen] = useState(false);
+  /** Instant Planner HUD — Cmd+K summon only (no sticky Assist / tools on idle). */
+  const [plannerAssistOpen, setPlannerAssistOpen] = useState(false);
+  const [structuredToolsOpen, setStructuredToolsOpen] = useState(false);
   const [activeDesignBranchId, setActiveDesignBranchId] = useState<
     string | null
   >(null);
@@ -1917,6 +1920,17 @@ export function HandoffDesignStudio({
     compact: compactAssetUi,
     lightingWorkspaceOn: ui.lightingWorkspaceOn,
   });
+  // Drop Instant Planner summons when leaving modes that host them.
+  useEffect(() => {
+    if (!chrome.liveBom) {
+      setPlannerAssistOpen(false);
+      setStructuredToolsOpen(false);
+      return;
+    }
+    if (ui.mode !== "sketch" && ui.mode !== "cad") {
+      setStructuredToolsOpen(false);
+    }
+  }, [chrome.liveBom, ui.mode]);
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
   const imageLayersOpen = ui.rightDataPanel === "image_layers";
@@ -5031,6 +5045,10 @@ export function HandoffDesignStudio({
             structuredTools={
               ui.mode === "sketch" || ui.mode === "cad"
             }
+            assistOpen={plannerAssistOpen}
+            structuredToolsOpen={structuredToolsOpen}
+            onAssistOpenChange={setPlannerAssistOpen}
+            onStructuredToolsOpenChange={setStructuredToolsOpen}
             items={studio.items}
             strokes={studio.strokes}
             irrigationZones={studio.irrigationZones}
@@ -6085,6 +6103,23 @@ export function HandoffDesignStudio({
             setDesignBranchOpen(true);
             studio.setUi({ cmdOpen: false, cmdQuery: "" });
           }}
+          onOpenPlannerAssist={
+            chrome.liveBom
+              ? () => {
+                  setPlannerAssistOpen(true);
+                  studio.setUi({ cmdOpen: false, cmdQuery: "" });
+                }
+              : undefined
+          }
+          onOpenStructuredTools={
+            chrome.liveBom &&
+            (ui.mode === "sketch" || ui.mode === "cad")
+              ? () => {
+                  setStructuredToolsOpen(true);
+                  studio.setUi({ cmdOpen: false, cmdQuery: "" });
+                }
+              : undefined
+          }
           onOpenOpsSchedules={() => {
             setOpsSchedulesOpen(true);
             studio.setUi({ cmdOpen: false, cmdQuery: "" });

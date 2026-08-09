@@ -12,6 +12,7 @@ import {
   getOrchestrationAction,
   saveDesignCanvasAction,
 } from "../../../../../app/actions";
+import { CameraChrome } from "../../CameraChrome";
 import {
   itemsToFeatures,
   mergeCanvasFeatures,
@@ -34,7 +35,13 @@ type Props = {
   projectId: string;
   active: boolean;
   paper?: boolean;
+  /** Mode allows structured tools — still summon-gated via structuredToolsOpen. */
   structuredTools?: boolean;
+  /** Cmd+K summon — never parked on idle canvas. */
+  assistOpen?: boolean;
+  structuredToolsOpen?: boolean;
+  onAssistOpenChange?: (open: boolean) => void;
+  onStructuredToolsOpenChange?: (open: boolean) => void;
   items: StudioItem[];
   strokes: SketchStroke[];
   irrigationZones: DesignCanvas["irrigation_zones"];
@@ -50,6 +57,10 @@ export function InstantPlannerChrome({
   active,
   paper = true,
   structuredTools = false,
+  assistOpen = false,
+  structuredToolsOpen = false,
+  onAssistOpenChange,
+  onStructuredToolsOpenChange,
   items,
   strokes,
   irrigationZones,
@@ -86,7 +97,16 @@ export function InstantPlannerChrome({
   // Keep chrome features aligned with studio snapshot (load / checkout / save).
   useEffect(() => {
     if (!active) return;
-    setPlanFeatures(landscapeFeatures);
+    setPlanFeatures((prev) => {
+      if (prev === landscapeFeatures) return prev;
+      if (
+        prev.length === landscapeFeatures.length &&
+        prev.every((f, i) => f.id === landscapeFeatures[i]?.id)
+      ) {
+        return prev;
+      }
+      return landscapeFeatures;
+    });
   }, [active, landscapeFeatures]);
 
   const canvas = useMemo((): DesignCanvas | null => {
@@ -182,42 +202,74 @@ export function InstantPlannerChrome({
     });
   };
 
+  const showStructured = structuredTools && structuredToolsOpen;
+  const showHud =
+    Boolean(freezeNote) || assistOpen || showStructured || Boolean(world);
+
   return (
-    <div className={css.layer} data-testid="instant-planner-chrome">
-      <LandscapeFeaturesLayer features={planFeatures} paper={paper} />
-      <HeroFeatureMarkers
-        canvas={canvas}
-        world={world}
-        onOpen={setHero}
-      />
-      <NextBestOptionChip
-        world={world}
-        paper={paper}
-        onApply={onApplyShadow}
-      />
-      <StudioAssistPanel
-        projectId={projectId}
-        world={world}
-        canvas={canvas}
-        paper={paper}
-        onCanvasSaved={applyCanvas}
-      />
-      <StructuredToolOverlay
-        active={structuredTools}
-        paper={paper}
-        spatialFacts={world?.spatial_facts ?? []}
-        onFeature={onStructuredFeature}
-      />
-      <HeroDetailOverlay
-        feature={hero}
-        onClose={() => setHero(null)}
-        onFreeze={freezeClientOption}
-      />
-      {freezeNote ? (
-        <p className={css.toast} role="status">
-          {freezeNote}
-        </p>
+    <>
+      {/* Plan geometry host (board space) — transparent, no hit steal. */}
+      <div className={css.layer} data-testid="instant-planner-chrome">
+        <LandscapeFeaturesLayer features={planFeatures} paper={paper} />
+        <HeroFeatureMarkers
+          canvas={canvas}
+          world={world}
+          onOpen={setHero}
+        />
+      </div>
+
+      {/* HUD — CameraChrome portals; assist / structured tools are summon-gated. */}
+      {showHud ? (
+        <CameraChrome
+          place={{ kind: "dock" }}
+          zIndex={36}
+          testId="instant-planner-hud-chrome"
+        >
+          <NextBestOptionChip
+            world={world}
+            paper={paper}
+            onApply={onApplyShadow}
+          />
+          {assistOpen ? (
+            <StudioAssistPanel
+              projectId={projectId}
+              world={world}
+              canvas={canvas}
+              paper={paper}
+              onCanvasSaved={applyCanvas}
+              onDismiss={() => onAssistOpenChange?.(false)}
+            />
+          ) : null}
+          {showStructured ? (
+            <StructuredToolOverlay
+              active
+              paper={paper}
+              spatialFacts={world?.spatial_facts ?? []}
+              onFeature={onStructuredFeature}
+              onDismiss={() => onStructuredToolsOpenChange?.(false)}
+            />
+          ) : null}
+          {freezeNote ? (
+            <p className={css.toast} role="status">
+              {freezeNote}
+            </p>
+          ) : null}
+        </CameraChrome>
       ) : null}
-    </div>
+
+      {hero ? (
+        <CameraChrome
+          place={{ kind: "dock" }}
+          zIndex={50}
+          testId="hero-detail-chrome"
+        >
+          <HeroDetailOverlay
+            feature={hero}
+            onClose={() => setHero(null)}
+            onFreeze={freezeClientOption}
+          />
+        </CameraChrome>
+      ) : null}
+    </>
   );
 }
