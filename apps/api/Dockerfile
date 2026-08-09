@@ -13,6 +13,7 @@ FROM node:${NODE_VERSION}-slim AS builder
 
 ARG PNPM_VERSION
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+RUN apt-get update && apt-get install -y git
 
 WORKDIR /repo
 
