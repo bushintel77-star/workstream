@@ -12,19 +12,62 @@
   width: 44px;
   height: 44px;
   border-radius: var(--hc-r-pill, 999px);
-  border: 1px solid color-mix(in srgb, var(--hc-ink) 16%, transparent);
-  background: color-mix(in srgb, var(--hc-paper) 92%, transparent);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--hc-ink) 18%, transparent);
-  font-size: 1rem;
+  border: 1px solid var(--hc-line, var(--hc-line-soft));
+  background: var(--hc-frost, var(--hc-glass-soft));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--hc-ink) 22%, transparent);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  font-size: 1.1rem;
+  font-weight: 300;
   line-height: 1;
   cursor: pointer;
   color: var(--hc-ink);
   display: grid;
   place-items: center;
   padding: 0;
+  transition: all 200ms var(--ws-ease, cubic-bezier(0.16, 1, 0.3, 1));
+  animation: markerIn 240ms var(--ws-ease, ease-out) both;
+}
+
+@keyframes markerIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .marker:hover {
   background: var(--hc-paper);
-  transform: translate(-50%, -50%) scale(1.06);
+  transform: translate(-50%, -50%) scale(1.12);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--hc-ink) 30%, transparent);
+  border-color: var(--hc-ink);
+}
+
+.marker:active {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+.marker:focus-visible {
+  outline: 2px solid var(--hc-ink);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker {
+    animation: none;
+    transition: none;
+  }
+
+  .marker:hover {
+    transform: translate(-50%, -50%);
+  }
+
+  .marker:active {
+    transform: translate(-50%, -50%);
+  }
 }
