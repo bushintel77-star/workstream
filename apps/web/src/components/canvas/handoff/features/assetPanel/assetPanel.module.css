@@ -429,33 +429,47 @@
   align-items: flex-start;
   justify-content: flex-start;
   gap: var(--s-1);
-  width: 88px;
-  min-height: 72px;
+  width: 92px;
+  min-height: 84px;
   padding: var(--s-2) var(--s-2);
-  border-radius: var(--hc-r-control);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--ink-soft);
+  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid var(--line, var(--hc-line-soft, var(--hc-line)));
+  background: color-mix(in srgb, var(--ws-frame) 45%, transparent);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
+  transition: all 160ms var(--ease);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--hc-ink) 18%, transparent);
 }
 
 .tile:hover {
-  background: color-mix(in srgb, var(--hc-glass) 55%, transparent);
-  color: var(--ink);
+  background: color-mix(in srgb, var(--ws-frame) 70%, transparent);
+  border-color: var(--ink-soft);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--hc-ink) 28%, transparent);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 2px;
 }
 
 .tileOn {
-  background: color-mix(in srgb, var(--hc-success, var(--ok)) 14%, transparent);
-  box-shadow: inset 0 0 0 1.5px var(--hc-success, var(--hc-accent));
+  background: color-mix(in srgb, var(--hc-success, var(--ok)) 16%, color-mix(in srgb, var(--ws-frame) 50%, transparent));
+  border-color: var(--hc-success, var(--hc-accent));
+  box-shadow: inset 0 0 0 1.5px var(--hc-success, var(--hc-accent)), 0 2px 8px color-mix(in srgb, var(--hc-success) 25%, transparent);
   color: var(--ink);
 }
 
 .glyph {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
+  border-radius: var(--hc-r-control, 8px);
+  background: color-mix(in srgb, var(--ws-frame) 60%, transparent);
+  border: 1px solid var(--hc-line-soft, var(--hc-line));
+  flex-shrink: 0;
 }
 
 .glyph svg {
@@ -466,13 +480,14 @@
 
 .tileLabel {
   font-size: var(--text-micro);
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.2;
   text-align: left;
-  max-width: 74px;
+  max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--ink);
 }
 
 .tileBotanical {
@@ -482,7 +497,7 @@
   line-height: 1.2;
   letter-spacing: 0.01em;
   color: var(--ink-faint);
-  max-width: 74px;
+  max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -491,10 +506,10 @@
 
 .tileScale {
   width: 100%;
-  height: 2px;
+  height: 3px;
   margin-top: 2px;
   border-radius: var(--hc-r-pill);
-  background: var(--hc-line-soft);
+  background: var(--hc-line-soft, var(--hc-line));
   overflow: hidden;
 }
 
@@ -502,7 +517,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--hc-ink-muted);
+  background: var(--ink-soft);
   max-width: 100%;
 }
 
@@ -513,10 +528,11 @@
 }
 
 .tileSeasonDot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--hc-line);
+  border: 1px solid var(--hc-line-soft, var(--hc-line));
 }
 
 .tileSeasonDot[data-on="1"] {
