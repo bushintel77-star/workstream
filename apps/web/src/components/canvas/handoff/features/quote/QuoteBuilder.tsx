@@ -144,7 +144,7 @@ export function QuoteBuilder({
       ) : null}
 
       <div className={css.body}>
-        <main className={css.quotePane}>
+        <section className={css.quotePane} aria-label="Quote">
           {tier1 && !estimateSettling ? (
             <Tier1SavingsLedger
               savings={TIER1_WRIGHTS_SAVINGS}
@@ -236,7 +236,7 @@ export function QuoteBuilder({
             marginPct={doc.margin.global_pct}
             onMarginPct={setMarginPct}
           />
-        </main>
+        </section>
       </div>
     </div>
   );

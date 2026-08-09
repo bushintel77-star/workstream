@@ -45,6 +45,7 @@ export function CompactModeNav({
         className={`${css.current} ${css.currentOn}`}
         data-testid={`canvas-mode-${current}`}
         aria-current="page"
+        aria-keyshortcuts={String(modes.indexOf(current) + 1)}
         title={`${current[0]!.toUpperCase() + current.slice(1)} mode`}
         onClick={() => setOpen(false)}
       >
@@ -62,7 +63,13 @@ export function CompactModeNav({
         ···
       </button>
       {open ? (
-        <div id={menuId} className={css.menu} role="menu" data-testid="canvas-mode-menu">
+        <div
+          id={menuId}
+          className={css.menu}
+          role="list"
+          aria-label="Workflow modes"
+          data-testid="canvas-mode-menu"
+        >
           {others.map((m) => {
             const lockReason = lockReasonForMode(m);
             const locked = Boolean(lockReason);
@@ -70,11 +77,11 @@ export function CompactModeNav({
               <button
                 key={m}
                 type="button"
-                role="menuitem"
                 className={css.menuItem}
                 data-testid={`canvas-mode-${m}`}
                 disabled={locked}
-                title={lockReason ?? undefined}
+                aria-disabled={locked}
+                title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
                 onClick={() => {
                   if (locked) return;
                   onRequestMode(m);

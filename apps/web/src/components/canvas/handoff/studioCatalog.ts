@@ -13,6 +13,19 @@ export type StudioItemType =
   | "frenchdrain"
   | "exist";
 
+/** Screen-reader labels for each placed item type (canvas text alternative). */
+export const STUDIO_ITEM_TYPE_LABEL: Record<StudioItemType, string> = {
+  canopy: "Canopy tree",
+  feature: "Feature tree",
+  paving: "Bluestone paving",
+  deck: "Decking",
+  lawn: "Turf",
+  hedge: "Hedge",
+  bed: "Planting bed",
+  frenchdrain: "French drain",
+  exist: "Existing tree",
+};
+
 export type HardscapeEdgeType = "sawn" | "soldier" | "spalled" | "soft";
 
 export type StudioItem = {

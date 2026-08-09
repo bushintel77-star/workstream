@@ -13,6 +13,7 @@ import {
   BY_TYPE,
   MODE_TABS,
   PAINT_SWATCHES,
+  STUDIO_ITEM_TYPE_LABEL,
   type StudioItemType,
   type StudioMode,
 } from "./studioCatalog";
@@ -2174,6 +2175,31 @@ export function HandoffDesignStudio({
   /** Prefer live project address; demo site switcher still re-queries Vicmap. */
   const displayAddress = studio.siteAddress || projectAddress;
   /**
+   * Screen-reader text alternative for the drawing surface. The board itself
+   * has no native semantics (it's a transformed div), so without this a screen
+   * reader user landing on the canvas hears nothing. Summarises site, mode,
+   * item count, and the current selection — the same state the status bar
+   * shows visually. `aria-roledescription` tells the reader this is a design
+   * canvas, not a generic image.
+   */
+  const canvasA11yLabel = useMemo(() => {
+    const modeLabel = ui.mode[0]!.toUpperCase() + ui.mode.slice(1);
+    const visibleItems = studio.items.filter((i) => !i.ghost);
+    const parts = [
+      `${modeLabel} mode design canvas`,
+      displayAddress || "Untitled site",
+      `${visibleItems.length} item${visibleItems.length === 1 ? "" : "s"}`,
+    ];
+    const sel = studio.items.find((i) => i.id === ui.selectedId);
+    if (sel) {
+      parts.push(`Selected: ${STUDIO_ITEM_TYPE_LABEL[sel.t] ?? sel.t}`);
+    }
+    if (ai.pendingCount > 0) {
+      parts.push(`${ai.pendingCount} AI suggestion${ai.pendingCount === 1 ? "" : "s"} pending`);
+    }
+    return parts.join(", ");
+  }, [ui.mode, ui.selectedId, studio.items, displayAddress, ai.pendingCount]);
+  /**
    * Free-plan metres stay at the calibrated / default board width.
    * Print 1:N (`sheetScaleDenom`) must not stretch live CAD maths.
    */
@@ -3577,7 +3603,7 @@ export function HandoffDesignStudio({
                 onRequestMode={requestMode}
               />
             ) : (
-              MODE_TABS.map((m) => {
+              MODE_TABS.map((m, idx) => {
                 const lockReason = lockReasonForMode(m);
                 const locked = Boolean(lockReason);
                 return (
@@ -3589,6 +3615,7 @@ export function HandoffDesignStudio({
                     disabled={locked}
                     aria-disabled={locked}
                     aria-current={ui.mode === m ? "page" : undefined}
+                    aria-keyshortcuts={idx < 9 ? String(idx + 1) : undefined}
                     title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
                     onClick={() => {
                       if (!locked) requestMode(m);
@@ -3755,6 +3782,9 @@ export function HandoffDesignStudio({
         data-client={ui.clientView ? "1" : "0"}
         data-focus-veil={selectionOrbitOn ? "1" : "0"}
         ref={boardRef}
+        role="group"
+        aria-roledescription="design canvas"
+        aria-label={canvasA11yLabel}
         style={{ cursor: effectiveCursor }}
       >
         {vicGovChipRow ? (
@@ -6193,18 +6223,18 @@ export function HandoffDesignStudio({
           onOpenPlannerAssist={
             chrome.liveBom
               ? () => {
-                  setPlannerAssistOpen(true);
-                  studio.setUi({ cmdOpen: false, cmdQuery: "" });
-                }
+                setPlannerAssistOpen(true);
+                studio.setUi({ cmdOpen: false, cmdQuery: "" });
+              }
               : undefined
           }
           onOpenStructuredTools={
             chrome.liveBom &&
-            (ui.mode === "sketch" || ui.mode === "cad")
+              (ui.mode === "sketch" || ui.mode === "cad")
               ? () => {
-                  setStructuredToolsOpen(true);
-                  studio.setUi({ cmdOpen: false, cmdQuery: "" });
-                }
+                setStructuredToolsOpen(true);
+                studio.setUi({ cmdOpen: false, cmdQuery: "" });
+              }
               : undefined
           }
           onOpenOpsSchedules={() => {

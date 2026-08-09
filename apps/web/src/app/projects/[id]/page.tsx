@@ -86,38 +86,40 @@ export default async function ProjectCanvasPage({
   const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
 
   return (
-    <Suspense fallback={<StudioSkeleton />}>
-      <HandoffDesignStudio
-        projectId={id}
-        projectAddress={project.address}
-        projectLat={project.lat ?? null}
-        projectLng={project.lng ?? null}
-        aerialUri={survey?.aerial_uri ?? null}
-        areaM2={resolveAreaM2({
-          titleLotM2: titleBlock?.lotAreaM2,
-          titleHouseM2: titleBlock?.houseAreaM2,
-          survey,
-          canvas,
-        })}
-        initialMode={initialMode}
-        initialPlacements={canvas?.placements ?? []}
-        initialStrokes={canvas?.strokes ?? []}
-        initialSiteFrame={canvas?.site_frame ?? null}
-        initialIrrigationZones={canvas?.irrigation_zones ?? []}
-        initialConstructionTrenches={canvas?.construction_trenches ?? []}
-        initialAnnotations={canvas?.annotations ?? []}
-        initialImageLayers={canvas?.image_layers ?? []}
-        initialFeatures={canvas?.features ?? []}
-        initialPresentationPack={canvas?.presentation_pack ?? null}
-        initialLifecyclePhase={
-          isDesignLifecyclePhase(canvas?.lifecycle_phase)
-            ? canvas.lifecycle_phase
-            : suggestPhaseFromProjectStatus(project.status)
-        }
-        hasQuote={Boolean(quoteOut)}
-        quotePortalUri={quoteOut?.uri ?? null}
-        initialTitleBlock={titleBlock}
-      />
-    </Suspense>
+    <main aria-label="Design canvas">
+      <Suspense fallback={<StudioSkeleton />}>
+        <HandoffDesignStudio
+          projectId={id}
+          projectAddress={project.address}
+          projectLat={project.lat ?? null}
+          projectLng={project.lng ?? null}
+          aerialUri={survey?.aerial_uri ?? null}
+          areaM2={resolveAreaM2({
+            titleLotM2: titleBlock?.lotAreaM2,
+            titleHouseM2: titleBlock?.houseAreaM2,
+            survey,
+            canvas,
+          })}
+          initialMode={initialMode}
+          initialPlacements={canvas?.placements ?? []}
+          initialStrokes={canvas?.strokes ?? []}
+          initialSiteFrame={canvas?.site_frame ?? null}
+          initialIrrigationZones={canvas?.irrigation_zones ?? []}
+          initialConstructionTrenches={canvas?.construction_trenches ?? []}
+          initialAnnotations={canvas?.annotations ?? []}
+          initialImageLayers={canvas?.image_layers ?? []}
+          initialFeatures={canvas?.features ?? []}
+          initialPresentationPack={canvas?.presentation_pack ?? null}
+          initialLifecyclePhase={
+            isDesignLifecyclePhase(canvas?.lifecycle_phase)
+              ? canvas.lifecycle_phase
+              : suggestPhaseFromProjectStatus(project.status)
+          }
+          hasQuote={Boolean(quoteOut)}
+          quotePortalUri={quoteOut?.uri ?? null}
+          initialTitleBlock={titleBlock}
+        />
+      </Suspense>
+    </main>
   );
 }
