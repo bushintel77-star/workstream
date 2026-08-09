@@ -23,8 +23,14 @@ export function MobileSketchTopbar({
   const studioUrl = `${WEB_BASE}/projects/${projectId}/design?studio=desktop`;
 
   return (
-    <View style={styles.wrap}>
-      <Pressable style={styles.back} onPress={onBack} accessibilityLabel="Back">
+    <View style={styles.wrap} accessibilityRole="header">
+      <Pressable
+        style={styles.back}
+        onPress={onBack}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        accessibilityHint="Return to the project screen"
+      >
         <Text style={styles.backText}>←</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={1}>
@@ -33,13 +39,31 @@ export function MobileSketchTopbar({
       <Pressable
         style={styles.studioBtn}
         onPress={() => void Linking.openURL(studioUrl)}
+        accessibilityRole="link"
+        accessibilityLabel="Open in Studio"
+        accessibilityHint="Open this project in the desktop design studio in your browser"
       >
         <Text style={styles.studioBtnText}>Open in Studio</Text>
       </Pressable>
-      <Pressable style={styles.iconBtn} onPress={onTogglePresentation}>
+      <Pressable
+        style={styles.iconBtn}
+        onPress={onTogglePresentation}
+        accessibilityRole="button"
+        accessibilityLabel={presentationMode ? "Exit presentation mode" : "Enter presentation mode"}
+        accessibilityHint="Hide the toolbars and show only the site plan"
+        accessibilityState={{ selected: presentationMode }}
+      >
         <Text style={styles.iconText}>{presentationMode ? "◉" : "◎"}</Text>
       </Pressable>
-      {syncLabel ? <Text style={styles.sync}>{syncLabel}</Text> : null}
+      {syncLabel ? (
+        <Text
+          style={styles.sync}
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={`Sync status: ${syncLabel}`}
+        >
+          {syncLabel}
+        </Text>
+      ) : null}
     </View>
   );
 }

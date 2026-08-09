@@ -28,7 +28,7 @@ export function MobileToolStrip({
   canRedo = false,
 }: Props) {
   return (
-    <View style={styles.wrap}>
+    <View style={styles.wrap} accessibilityRole="toolbar" accessibilityLabel="Sketch tools">
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {TOOLS.map((t) => (
           <Pressable
@@ -40,7 +40,10 @@ export function MobileToolStrip({
             ]}
             disabled={!t.enabled}
             onPress={() => t.enabled && onTool(t.id)}
-            accessibilityState={{ disabled: !t.enabled }}
+            accessibilityRole="button"
+            accessibilityLabel={`${t.label} tool`}
+            accessibilityHint={`Switch to ${t.label.toLowerCase()} mode`}
+            accessibilityState={{ disabled: !t.enabled, selected: active === t.id }}
           >
             <Text
               style={[
@@ -53,11 +56,15 @@ export function MobileToolStrip({
             </Text>
           </Pressable>
         ))}
-        <View style={styles.divider} />
+        <View style={styles.divider} accessibilityElementsHidden />
         <Pressable
           style={[styles.pill, !canUndo && styles.pillDisabled]}
           onPress={onUndo}
           disabled={!canUndo}
+          accessibilityRole="button"
+          accessibilityLabel="Undo"
+          accessibilityHint="Undo the last stroke or placement"
+          accessibilityState={{ disabled: !canUndo }}
         >
           <Text style={[styles.label, !canUndo && styles.labelDisabled]}>Undo</Text>
         </Pressable>
@@ -65,6 +72,10 @@ export function MobileToolStrip({
           style={[styles.pill, !canRedo && styles.pillDisabled]}
           onPress={onRedo}
           disabled={!canRedo}
+          accessibilityRole="button"
+          accessibilityLabel="Redo"
+          accessibilityHint="Redo the last undone stroke or placement"
+          accessibilityState={{ disabled: !canRedo }}
         >
           <Text style={[styles.label, !canRedo && styles.labelDisabled]}>Redo</Text>
         </Pressable>

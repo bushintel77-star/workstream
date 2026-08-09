@@ -15,12 +15,19 @@ export function MobileSketchStatusBar({
   tier1,
 }: Props) {
   return (
-    <View style={styles.wrap} accessibilityRole="summary">
+    <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`${symbolCount} symbols, ${strokeCount} strokes${syncLabel ? `, ${syncLabel}` : ""}${tier1 ? ", Tier-1 Wrights Terrace" : ""}`}>
       {tier1 ? <Text style={styles.tier1}>Tier-1 · Wrights Terrace</Text> : null}
       <Text style={styles.counts}>
         {symbolCount} symbols · {strokeCount} strokes
       </Text>
-      {syncLabel ? <Text style={styles.sync}>{syncLabel}</Text> : null}
+      {syncLabel ? (
+        <Text
+          style={styles.sync}
+          accessibilityLiveRegion="polite"
+        >
+          {syncLabel}
+        </Text>
+      ) : null}
     </View>
   );
 }

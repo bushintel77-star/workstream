@@ -53,22 +53,41 @@ export const MobileSketchBottomSheet = forwardRef<BottomSheet, Props>(
         <BottomSheetScrollView contentContainerStyle={styles.content}>
           <Text style={styles.sectionTitle}>AI hints</Text>
           <View style={styles.aiRow}>
-            <Pressable onPress={() => void onScan()} accessibilityRole="button">
+            <Pressable
+              onPress={() => void onScan()}
+              accessibilityRole="button"
+              accessibilityLabel={scanning ? "Scanning site for AI hints" : "Scan site for AI hints"}
+              accessibilityHint="Analyse the site aerial and suggest symbol placements"
+              accessibilityState={{ disabled: scanning }}
+            >
               <Text style={styles.aiBtn}>{scanning ? "Scanning…" : "Scan site"}</Text>
             </Pressable>
             {ghosts.length > 0 ? (
               <>
-                <Pressable onPress={onApplyGhosts} accessibilityRole="button">
+                <Pressable
+                  onPress={onApplyGhosts}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Apply ${ghosts.length} AI hint${ghosts.length === 1 ? "" : "s"}`}
+                  accessibilityHint="Accept all AI-suggested symbol placements onto the plan"
+                >
                   <Text style={styles.aiLink}>Apply {ghosts.length}</Text>
                 </Pressable>
-                <Pressable onPress={onClearGhosts} accessibilityRole="button">
+                <Pressable
+                  onPress={onClearGhosts}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear AI hints"
+                  accessibilityHint="Dismiss all AI-suggested placements without applying them"
+                >
                   <Text style={styles.aiLink}>Clear</Text>
                 </Pressable>
               </>
             ) : null}
           </View>
           {ghosts.length > 0 ? (
-            <Text style={styles.ghostHint}>
+            <Text
+              style={styles.ghostHint}
+              accessibilityLiveRegion="polite"
+            >
               {ghosts.length} ghost hint(s) — confirm before save.
             </Text>
           ) : null}

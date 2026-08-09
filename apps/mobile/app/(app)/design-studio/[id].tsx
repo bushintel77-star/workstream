@@ -87,6 +87,27 @@ export default function DesignStudioScreen() {
     [canvasSize.height, canvasSize.width],
   );
 
+  const canvasA11yLabel = useMemo(() => {
+    const modeLabel = mode[0]!.toUpperCase() + mode.slice(1);
+    const parts = [
+      `${modeLabel} mode site plan canvas`,
+      projectAddress || "Untitled site",
+      `${placements.length} symbol${placements.length === 1 ? "" : "s"}`,
+      `${strokes.length} stroke${strokes.length === 1 ? "" : "s"}`,
+    ];
+    if (selectedPlacementId) {
+      const sel = placements.find((p) => p.id === selectedPlacementId);
+      const sym = sel
+        ? symbols.find((s) => s.id === sel.symbol_id)
+        : undefined;
+      if (sym) parts.push(`Selected: ${sym.label}`);
+    }
+    if (ghosts.length > 0) {
+      parts.push(`${ghosts.length} AI hint${ghosts.length === 1 ? "" : "s"} pending`);
+    }
+    return parts.join(", ");
+  }, [mode, projectAddress, placements, strokes.length, selectedPlacementId, ghosts.length, symbols]);
+
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -273,7 +294,12 @@ export default function DesignStudioScreen() {
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.error}>Run survey first — site plan required.</Text>
-        <Pressable onPress={() => router.back()} accessibilityRole="button">
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          accessibilityHint="Return to the project screen"
+        >
           <Text style={styles.link}>Go back</Text>
         </Pressable>
       </SafeAreaView>
@@ -296,6 +322,8 @@ export default function DesignStudioScreen() {
             style={styles.presentationExit}
             onPress={() => setPresentation(false)}
             accessibilityRole="button"
+            accessibilityLabel="Exit presentation"
+            accessibilityHint="Restore the toolbars and editing controls"
           >
             <Text style={styles.presentationExitText}>Exit presentation</Text>
           </Pressable>
@@ -318,7 +346,13 @@ export default function DesignStudioScreen() {
           <Text style={styles.honesty}>Concept sketch — indicative geometry, not survey CAD</Text>
         ) : null}
         {measureLabel ? (
-          <Text style={styles.measureLabel}>{measureLabel}</Text>
+          <Text
+            style={styles.measureLabel}
+            accessibilityLiveRegion="polite"
+            accessibilityLabel={`Measurement: ${measureLabel}`}
+          >
+            {measureLabel}
+          </Text>
         ) : null}
         <GestureDetector gesture={drawGesture}>
           <Pressable
@@ -348,7 +382,9 @@ export default function DesignStudioScreen() {
                 setMeasureDraft(null);
               }
             }}
-            accessibilityLabel="Site plan canvas"
+            accessibilityRole="image"
+            accessibilityLabel={canvasA11yLabel}
+            accessibilityHint="Tap to place the selected symbol in Place mode, select a symbol in Select mode, or measure a distance in Measure mode."
           >
             <Image
               source={{ uri: survey.aerial_uri }}
@@ -398,6 +434,10 @@ export default function DesignStudioScreen() {
                     if (mode === "select") setSelectedPlacementId(p.id);
                   }}
                   disabled={mode !== "select"}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${sym.label}${selected ? ", selected" : ""}`}
+                  accessibilityHint="Double tap in Select mode to select this symbol on the plan."
+                  accessibilityState={{ selected, disabled: mode !== "select" }}
                 >
                   <DesignAssetGlyph symbol={sym} size="pin" />
                 </Pressable>
@@ -463,7 +503,15 @@ export default function DesignStudioScreen() {
           </>
         ) : null}
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? (
+          <Text
+            style={styles.error}
+            accessibilityLiveRegion="assertive"
+            accessibilityRole="alert"
+          >
+            {error}
+          </Text>
+        ) : null}
 
         {!presentation ? (
           <View style={styles.footer}>
@@ -477,6 +525,8 @@ export default function DesignStudioScreen() {
                 setGhosts([]);
               }}
               accessibilityRole="button"
+              accessibilityLabel="Clear all"
+              accessibilityHint="Remove all symbols, strokes, and AI hints from the plan"
             >
               <Text style={styles.ghostText}>Clear all</Text>
             </Pressable>
@@ -485,6 +535,9 @@ export default function DesignStudioScreen() {
               onPress={() => void save()}
               disabled={saving}
               accessibilityRole="button"
+              accessibilityLabel="Save plan"
+              accessibilityHint="Save the current plan and return to the project screen"
+              accessibilityState={{ disabled: saving }}
             >
               <Text style={styles.buttonText}>{saving ? "Saving…" : "Save plan"}</Text>
             </Pressable>

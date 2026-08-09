@@ -54,6 +54,8 @@ export function DesignAssetPalette({
         value={query}
         onChangeText={setQuery}
         editable={!disabled}
+        accessibilityLabel="Search assets"
+        accessibilityHint="Filter the symbol library by name"
       />
 
       <ScrollView
@@ -61,27 +63,36 @@ export function DesignAssetPalette({
         showsHorizontalScrollIndicator={false}
         style={styles.tabs}
         contentContainerStyle={styles.tabsInner}
+        accessibilityRole="tablist"
+        accessibilityLabel="Asset categories"
       >
-        {(["all", ...CATALOG_CATEGORY_ORDER] as CategoryFilter[]).map((cat) => (
-          <Pressable
-            key={cat}
-            style={[
-              styles.tab,
-              category === cat && styles.tabActive,
-            ]}
-            onPress={() => setCategory(cat)}
-            disabled={disabled}
-          >
-            <Text
+        {(["all", ...CATALOG_CATEGORY_ORDER] as CategoryFilter[]).map((cat) => {
+          const label = cat === "all" ? "All" : CATALOG_CATEGORY_LABELS[cat];
+          return (
+            <Pressable
+              key={cat}
               style={[
-                styles.tabText,
-                category === cat && styles.tabTextActive,
+                styles.tab,
+                category === cat && styles.tabActive,
               ]}
+              onPress={() => setCategory(cat)}
+              disabled={disabled}
+              accessibilityRole="tab"
+              accessibilityLabel={`${label} category`}
+              accessibilityHint={`Filter assets to ${label}`}
+              accessibilityState={{ selected: category === cat, disabled }}
             >
-              {cat === "all" ? "All" : CATALOG_CATEGORY_LABELS[cat]}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[
+                  styles.tabText,
+                  category === cat && styles.tabTextActive,
+                ]}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
       <View style={styles.grid}>
@@ -99,6 +110,8 @@ export function DesignAssetPalette({
               disabled={disabled}
               accessibilityRole="button"
               accessibilityLabel={sym.label}
+              accessibilityHint="Select this symbol, then tap the plan to place it"
+              accessibilityState={{ selected: active, disabled }}
             >
               <DesignAssetGlyph symbol={sym} size="lg" />
               <Text style={styles.cardLabel} numberOfLines={2}>
