@@ -25,7 +25,7 @@
     "prepare": "husky || true"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.2.12",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.4.0",
