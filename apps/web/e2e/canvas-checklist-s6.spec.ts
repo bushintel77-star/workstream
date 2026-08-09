@@ -89,6 +89,15 @@ const BOARD_SPANNING_ALLOWED = new Set([
   "frame-drawer-artboards",
   "frame-drawer-site-meta",
   "foundation-title-boundary",
+  // Instant Planner plan-geometry hosts (transparent, pointer-events none).
+  "instant-planner-chrome",
+  "landscape-features-layer",
+  "hero-feature-markers",
+  // CameraChrome portal shells (pointer-events none; paint is on children).
+  "instant-planner-hud-chrome",
+  "hero-detail-chrome",
+  "next-best-option-chrome",
+  "leftover-alert-chrome",
 ]);
 
 /**

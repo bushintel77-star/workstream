@@ -68,6 +68,18 @@
   font-weight: 650;
 }
 
+.labourChip {
+  margin: 0;
+  border-radius: var(--hc-r-pill, 999px);
+  padding: 0.2rem 0.55rem;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano, 10px);
+  font-weight: 650;
+  color: var(--ws-frame-ink, var(--hc-ink));
+  background: color-mix(in srgb, var(--ws-frame) 70%, #fff);
+  border: 1px solid var(--ws-frame-hair);
+}
+
 .total {
   border: none;
   background: transparent;
@@ -147,6 +159,33 @@
   border-color: var(--ws-frame-ink);
   background: var(--ws-frame-ink);
   color: var(--ws-frame);
+}
+
+.addQuote {
+  align-self: stretch;
+  min-height: 44px;
+  margin-top: var(--s-1);
+  border-radius: var(--hc-r-control, 8px);
+  border: 1px solid var(--ws-frame-ink);
+  background: var(--ws-frame-ink);
+  color: var(--ws-frame);
+  font: inherit;
+  font-size: var(--text-micro);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.addQuote:disabled {
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--ws-frame-ink) 40%, var(--ws-frame));
+  border-color: color-mix(in srgb, var(--ws-frame-ink) 40%, var(--ws-frame));
+  color: color-mix(in srgb, var(--ws-frame) 70%, var(--ws-frame-ink));
+}
+
+.quoteError {
+  margin: 0;
+  font-size: var(--text-micro);
+  color: var(--hc-danger, var(--danger));
 }
 
 .foot {

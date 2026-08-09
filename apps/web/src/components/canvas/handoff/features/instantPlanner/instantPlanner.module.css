@@ -1,0 +1,66 @@
+/* Transparent board host — must not steal hits. Child board layers keep their
+   own pointer-events:none; HUD chrome is CameraChrome-portaled (not a child). */
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--ws-z-annotate);
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: var(--ws-z-toast, 40);
+  margin: 0;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--hc-r-control, 8px);
+  background: color-mix(in srgb, var(--ws-frame, var(--hc-paper)) 92%, transparent);
+  border: 1px solid var(--ws-frame-hair, rgba(36, 19, 24, 0.14));
+  font-size: 0.75rem;
+  font-weight: 600;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  box-shadow: 0 8px 24px var(--hc-neu-shadow);
+}
+
+.toastText {
+  margin: 0;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.toastActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.toastBtn,
+.toastBtnGhost {
+  border: none;
+  border-radius: var(--hc-r-control, 12px);
+  min-height: 40px;
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toastBtn {
+  background: var(--hc-ink);
+  color: var(--hc-invert);
+}
+
+.toastBtnGhost {
+  background: transparent;
+  color: var(--hc-ink-muted);
+  border: 1px solid var(--hc-line-soft);
+}

@@ -89,8 +89,8 @@ export function DesignBranchDock({
     }
   }
 
-  async function createBranch() {
-    const name = newName.trim();
+  async function createBranch(nameOverride?: string) {
+    const name = (nameOverride ?? newName).trim();
     if (!name) return;
     setBusy(true);
     setError(null);
@@ -113,6 +113,17 @@ export function DesignBranchDock({
     } finally {
       setBusy(false);
     }
+  }
+
+  /** Instant Planner freeze → named VCS option from current tip. */
+  async function freezeClientOption() {
+    const stamp = new Date().toLocaleString("en-AU", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    await createBranch(`Option — ${stamp}`);
   }
 
   async function loadDiff(branchId: string) {
@@ -227,6 +238,16 @@ export function DesignBranchDock({
             data-testid="design-branch-create"
           >
             Create
+          </button>
+          <button
+            type="button"
+            className={css.btnGhost}
+            disabled={busy}
+            onClick={() => void freezeClientOption()}
+            title="Freeze current tip as a named client option"
+            data-testid="design-branch-freeze"
+          >
+            Freeze option
           </button>
         </div>
         <ul className={css.list}>

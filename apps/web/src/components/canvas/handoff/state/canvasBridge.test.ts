@@ -3,6 +3,8 @@ import {
   canvasToStrokes,
   featuresOntoItems,
   itemsToFeatures,
+  mergeCanvasFeatures,
+  orphanLandscapeFeatures,
   itemsToPlacements,
   placementsToItems,
   resolveHydratedBuilding,
@@ -454,6 +456,52 @@ describe("site_frame bridge", () => {
     expect(hydrated[0]!.outlinePct).toEqual(items[0]!.outlinePct);
     expect(hydrated[1]!.outlinePct).toBeUndefined();
     expect(hydrated[2]!.outlinePct).toBeUndefined();
+  });
+
+  it("keeps structured Instant Planner features that are not mirrored by items", () => {
+    const itemFeat = itemsToFeatures([
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        t: "bed",
+        x: 50,
+        y: 60,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+        outlinePct: [
+          { x: 40, y: 55 },
+          { x: 60, y: 55 },
+          { x: 60, y: 72 },
+          { x: 40, y: 72 },
+        ],
+      },
+    ])[0]!;
+    const orphan: typeof itemFeat = {
+      ...itemFeat,
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      metadata: {
+        ...itemFeat.metadata,
+        friendly_name: "Ditch A",
+      },
+    };
+    const items = [
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        t: "bed" as const,
+        x: 50,
+        y: 60,
+        rot: 0,
+        scale: 1,
+        ghost: false,
+      },
+    ];
+    expect(orphanLandscapeFeatures([itemFeat, orphan], items)).toEqual([
+      orphan,
+    ]);
+    expect(mergeCanvasFeatures([itemFeat], [orphan, itemFeat])).toEqual([
+      itemFeat,
+      orphan,
+    ]);
   });
 
   it("maps hardscape region types to the hardscape feature layer", () => {

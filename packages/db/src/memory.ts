@@ -111,6 +111,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _documentationPackages: import("@workstream/contracts").DocumentationPackage[] =
     [];
   const _operatorPlantProfiles: OperatorPlantProfile[] = [];
+  const _leftovers: import("@workstream/contracts").LeftoverStock[] = [];
   let seeded = false;
 
   function vcsArrays(): DesignVcsArrays {
@@ -174,6 +175,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _designRevisions,
     _documentationPackages,
     _operatorPlantProfiles,
+    _leftovers,
   };
 
   const journal: SqliteJournal | undefined = opts.sqlitePath
@@ -293,6 +295,33 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _operatorPlantProfiles.push(profile);
       flush();
       return structuredClone(profile);
+    },
+
+    async listLeftovers(ownerId) {
+      return _leftovers
+        .filter((l) => l.owner_id === ownerId)
+        .map((l) => structuredClone(l))
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+    },
+
+    async registerLeftover(ownerId, input) {
+      const { registerLeftover } = await import("@workstream/domain");
+      const row = registerLeftover({
+        orderQty: input.order_qty,
+        usedQty: input.used_qty,
+        sku: input.sku,
+        label: input.label,
+        unit: input.unit,
+        sourceProjectId: input.source_project_id,
+        ownerId,
+      });
+      if (!row) return null;
+      _leftovers.push(row);
+      flush();
+      return structuredClone(row);
     },
 
     async listPresentationDocuments(ownerId, projectId) {

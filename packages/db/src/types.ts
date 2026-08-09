@@ -65,6 +65,8 @@ import type {
   DocumentationPackage,
   CreateDocumentationPackageInput,
   IssueDocumentationPackageInput,
+  LeftoverStock,
+  RegisterLeftoverInput,
 } from "@workstream/contracts";
 
 export type {
@@ -540,6 +542,11 @@ export interface Store {
     ownerId: string,
     input: OperatorPlantProfileInput,
   ): Promise<OperatorPlantProfile>;
+  listLeftovers(ownerId: string): Promise<LeftoverStock[]>;
+  registerLeftover(
+    ownerId: string,
+    input: RegisterLeftoverInput,
+  ): Promise<LeftoverStock | null>;
   seedDefaults(): Promise<void>;
 }
 

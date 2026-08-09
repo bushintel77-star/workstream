@@ -144,6 +144,7 @@ import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
 import { CanvasToolCard } from "./features/toolDock/CanvasToolCard";
 import { CanvasContextCard } from "./features/toolDock/CanvasContextCard";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
+import { InstantPlannerChrome } from "./features/instantPlanner/InstantPlannerChrome";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
 import {
   nicheToolsForZone,
@@ -570,6 +571,9 @@ export function HandoffDesignStudio({
   const [inkLegendOpen, setInkLegendOpen] = useState(false);
   /** Async design VCS branch switcher. */
   const [designBranchOpen, setDesignBranchOpen] = useState(false);
+  /** Instant Planner HUD — Cmd+K summon only (no sticky Assist / tools on idle). */
+  const [plannerAssistOpen, setPlannerAssistOpen] = useState(false);
+  const [structuredToolsOpen, setStructuredToolsOpen] = useState(false);
   const [activeDesignBranchId, setActiveDesignBranchId] = useState<
     string | null
   >(null);
@@ -1916,6 +1920,17 @@ export function HandoffDesignStudio({
     compact: compactAssetUi,
     lightingWorkspaceOn: ui.lightingWorkspaceOn,
   });
+  // Drop Instant Planner summons when leaving modes that host them.
+  useEffect(() => {
+    if (!chrome.liveBom) {
+      setPlannerAssistOpen(false);
+      setStructuredToolsOpen(false);
+      return;
+    }
+    if (ui.mode !== "sketch" && ui.mode !== "cad") {
+      setStructuredToolsOpen(false);
+    }
+  }, [chrome.liveBom, ui.mode]);
   const measuresOpen = ui.rightDataPanel === "measures";
   const layersOpen = ui.rightDataPanel === "layers";
   const imageLayersOpen = ui.rightDataPanel === "image_layers";
@@ -5022,6 +5037,32 @@ export function HandoffDesignStudio({
           }}
         />
 
+        {chrome.liveBom && !ui.clientView && !ui.focusOn ? (
+          <InstantPlannerChrome
+            projectId={projectId}
+            active
+            paper={ui.frameOn || ui.mode === "cad" || ui.mode === "quote"}
+            structuredTools={
+              ui.mode === "sketch" || ui.mode === "cad"
+            }
+            assistOpen={plannerAssistOpen}
+            structuredToolsOpen={structuredToolsOpen}
+            onAssistOpenChange={setPlannerAssistOpen}
+            onStructuredToolsOpenChange={setStructuredToolsOpen}
+            onOpenBranches={() => setDesignBranchOpen(true)}
+            items={studio.items}
+            strokes={studio.strokes}
+            irrigationZones={studio.irrigationZones}
+            annotations={studio.annotations}
+            imageLayers={studio.imageLayers}
+            constructionTrenches={studio.constructionTrenches}
+            landscapeFeatures={studio.landscapeFeatures}
+            onCanvasApplied={(canvas) => {
+              studio.loadBranchCanvas(canvas);
+            }}
+          />
+        ) : null}
+
         <OpsSchedulesDock
           projectId={projectId}
           open={opsSchedulesOpen}
@@ -5194,6 +5235,11 @@ export function HandoffDesignStudio({
                   })
                 }
                 onOpenQuote={() => studio.setUi({ rightDataPanel: "quote" })}
+                onQuotePromoted={() =>
+                  studio.setUi({
+                    assistReply: "Live cost promoted to main quote.",
+                  })
+                }
                 settling={
                   estimateSettling ||
                   ui.saveStatus === "saving" ||
@@ -5687,9 +5733,10 @@ export function HandoffDesignStudio({
               <div data-testid="studio-sheet-data">
                 {chrome.liveBom ? (
                   <div className={sheetCss.bomEmbed} data-testid="studio-sheet-live-bom">
-                    <p className={sheetCss.pageKicker}>Live cost</p>
+                    <p className={sheetCss.pageKicker}>Instant Planner</p>
                     <LiveBomDock
                       embedded
+                      projectId={projectId}
                       estimate={estimate}
                       mitigated={ui.mitigated}
                       settling={
@@ -5706,6 +5753,11 @@ export function HandoffDesignStudio({
                         })
                       }
                       onOpenQuote={() => studio.setUi({ rightDataPanel: "quote" })}
+                      onQuotePromoted={() =>
+                        studio.setUi({
+                          assistReply: "Live cost promoted to main quote.",
+                        })
+                      }
                     />
                   </div>
                 ) : null}
@@ -6052,6 +6104,23 @@ export function HandoffDesignStudio({
             setDesignBranchOpen(true);
             studio.setUi({ cmdOpen: false, cmdQuery: "" });
           }}
+          onOpenPlannerAssist={
+            chrome.liveBom
+              ? () => {
+                  setPlannerAssistOpen(true);
+                  studio.setUi({ cmdOpen: false, cmdQuery: "" });
+                }
+              : undefined
+          }
+          onOpenStructuredTools={
+            chrome.liveBom &&
+            (ui.mode === "sketch" || ui.mode === "cad")
+              ? () => {
+                  setStructuredToolsOpen(true);
+                  studio.setUi({ cmdOpen: false, cmdQuery: "" });
+                }
+              : undefined
+          }
           onOpenOpsSchedules={() => {
             setOpsSchedulesOpen(true);
             studio.setUi({ cmdOpen: false, cmdQuery: "" });

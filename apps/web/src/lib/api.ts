@@ -12,7 +12,10 @@ import type {
   DesignTelemetryResponse,
   DesignGhostsResponse,
   IngestTelemetryRequest,
+  LeftoverStock,
+  ListLeftoversResponse,
   ProjectOrchestrationWorld,
+  RegisterLeftoverInput,
   SketchToCadRequest,
   SketchToCadResponse,
 } from "@workstream/contracts";
@@ -412,6 +415,33 @@ export async function saveDesignCanvasApi(
       : {}),
   });
   return { canvas: body.canvas, quote: body.quote ?? null };
+}
+
+export async function listLeftoversApi(): Promise<ListLeftoversResponse> {
+  return apiGet<ListLeftoversResponse>(`/resource-pool`);
+}
+
+export async function registerLeftoverApi(
+  input: RegisterLeftoverInput,
+): Promise<LeftoverStock> {
+  return apiPost<LeftoverStock>(`/resource-pool`, input);
+}
+
+export type PresentationPackChecklistItem = {
+  id: string;
+  label: string;
+  status: "generated" | "ready" | "studio" | "skipped";
+  uri?: string | null;
+};
+
+export async function presentationPackApi(projectId: string): Promise<{
+  brochure_uri: string | null;
+  quote_uri: string | null;
+  schedule_uri: string | null;
+  notes: string[];
+  checklist: PresentationPackChecklistItem[];
+}> {
+  return apiPost(`/projects/${projectId}/presentation-pack`, {});
 }
 
 export async function scanDesignGhostsApi(

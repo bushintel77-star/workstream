@@ -1,0 +1,30 @@
+﻿.layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-interact);
+  pointer-events: none;
+}
+
+.marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--hc-r-pill, 999px);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 16%, transparent);
+  background: color-mix(in srgb, var(--hc-paper) 92%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--hc-ink) 18%, transparent);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--hc-ink);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.marker:hover {
+  background: var(--hc-paper);
+  transform: translate(-50%, -50%) scale(1.06);
+}

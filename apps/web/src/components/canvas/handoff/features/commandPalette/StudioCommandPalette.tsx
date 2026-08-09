@@ -77,7 +77,9 @@ function commandGroup(cmd: StudioCommand): StudioCommandGroup {
     id === "quote" ||
     id === "measures" ||
     id === "design-branches" ||
-    id === "ops-schedules"
+    id === "ops-schedules" ||
+    id === "planner-assist" ||
+    id === "structured-tools"
   ) {
     return "Design";
   }
@@ -151,6 +153,10 @@ type Props = {
   onCycleLifecyclePhase?: () => void;
   /** Open async design branch switcher (VCS). */
   onOpenDesignBranches?: () => void;
+  /** Summon Instant Planner assist panel (sketch→CAD / irrigation / leftovers). */
+  onOpenPlannerAssist?: () => void;
+  /** Summon structured ditch/path/wall/bed tools. */
+  onOpenStructuredTools?: () => void;
   /** Open landscape-ops schedules dock. */
   onOpenOpsSchedules?: () => void;
 };
@@ -206,6 +212,8 @@ export function StudioCommandPalette({
   onArtboardPlan,
   onCycleLifecyclePhase,
   onOpenDesignBranches,
+  onOpenPlannerAssist,
+  onOpenStructuredTools,
   onOpenOpsSchedules,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -428,8 +436,33 @@ export function StudioCommandPalette({
             detail:
               "Async design VCS — create Option branches, diff vs Main, merge with Accept",
             keywords:
-              "branch checkout merge diff main option vcs version control design branch",
+              "branch checkout merge diff main option vcs version control design branch freeze",
             run: onOpenDesignBranches,
+          } satisfies StudioCommand,
+        ]
+        : []),
+      ...(onOpenPlannerAssist
+        ? [
+          {
+            id: "planner-assist",
+            label: "Instant Planner assist",
+            detail:
+              "Convert strokes, first-pass irrigation/lighting, leftovers, presentation pack",
+            keywords:
+              "instant planner assist convert strokes irrigation lighting leftover presentation pack",
+            run: onOpenPlannerAssist,
+          } satisfies StudioCommand,
+        ]
+        : []),
+      ...(onOpenStructuredTools
+        ? [
+          {
+            id: "structured-tools",
+            label: "Structured tools",
+            detail: "Ditch, path, wall, bed — stroke to CAD with live conflict preview",
+            keywords:
+              "structured tools ditch path wall bed stroke cad conflict micro cost",
+            run: onOpenStructuredTools,
           } satisfies StudioCommand,
         ]
         : []),
@@ -690,6 +723,8 @@ export function StudioCommandPalette({
     onArtboardPlan,
     onCycleLifecyclePhase,
     onOpenDesignBranches,
+    onOpenPlannerAssist,
+    onOpenStructuredTools,
     onOpenOpsSchedules,
     onTiltView,
     onGardenViewpoint,

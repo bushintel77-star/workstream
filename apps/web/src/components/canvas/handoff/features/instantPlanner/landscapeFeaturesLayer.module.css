@@ -1,0 +1,70 @@
+﻿.layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-annotate);
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.shape,
+.line {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.shape {
+  pointer-events: fill;
+  fill: color-mix(in srgb, var(--hc-danger) 14%, transparent);
+  stroke: var(--hc-danger);
+  stroke-width: 0.45;
+}
+
+.soft {
+  fill: color-mix(in srgb, var(--hc-success) 16%, transparent);
+  stroke: var(--hc-success);
+}
+
+.hard {
+  fill: color-mix(in srgb, var(--hc-danger) 12%, transparent);
+}
+
+.line {
+  fill: none;
+  stroke: var(--hc-danger);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.path {
+  stroke-dasharray: none;
+}
+
+.wall {
+  stroke: var(--hc-ink);
+  stroke-width: 0.95;
+}
+
+.paper .shape {
+  fill: color-mix(in srgb, var(--hc-ink) 10%, transparent);
+  stroke: var(--hc-ink);
+}
+
+.paper .soft {
+  fill: color-mix(in srgb, var(--hc-success) 14%, transparent);
+  stroke: var(--hc-success);
+}
+
+.paper .line {
+  stroke: var(--hc-ink);
+}
+
+.shape:hover,
+.line:hover {
+  filter: brightness(1.08);
+}

@@ -8,7 +8,7 @@
   },
   "apps/web/src/app/home.module.css": {
     "zIndex": 3,
-    "radius": 4
+    "radius": 3
   },
   "apps/web/src/app/landing.module.css": {
     "zIndex": 3
@@ -18,7 +18,7 @@
   },
   "apps/web/src/app/projects/[id]/project.module.css": {
     "zIndex": 1,
-    "radius": 14,
+    "radius": 10,
     "opacity": 2
   },
   "apps/web/src/components/app-nav.module.css": {
@@ -29,6 +29,10 @@
     "zIndex": 2,
     "radius": 2,
     "opacity": 2
+  },
+  "apps/web/src/components/canvas/handoff/StudioSkeleton.module.css": {
+    "radius": 3,
+    "opacity": 3
   },
   "apps/web/src/components/canvas/handoff/features/aerial/aerialSlot.module.css": {
     "radius": 1,
@@ -118,15 +122,10 @@
     "opacity": 4
   },
   "apps/web/src/components/canvas/handoff/features/quote/quoteBuilder.module.css": {
-    "radius": 1,
     "opacity": 1
   },
   "apps/web/src/components/canvas/handoff/features/render/annotations.module.css": {
     "radius": 1
-  },
-  "apps/web/src/components/canvas/handoff/features/save/canvasAutosave.module.css": {
-    "radius": 1,
-    "opacity": 1
   },
   "apps/web/src/components/canvas/handoff/features/selectionDial/dialHint.module.css": {
     "opacity": 1
@@ -187,9 +186,6 @@
   "apps/web/src/components/canvas/handoff/features/sunGrowth/sunGrowth.module.css": {
     "radius": 1
   },
-  "apps/web/src/components/canvas/handoff/features/surfaces/marginStrip.module.css": {
-    "opacity": 1
-  },
   "apps/web/src/components/canvas/handoff/features/surfaces/rightDataLane.module.css": {
     "zIndex": 1,
     "radius": 2
@@ -231,10 +227,6 @@
     "radius": 7,
     "opacity": 11
   },
-  "apps/web/src/components/canvas/handoff/StudioSkeleton.module.css": {
-    "radius": 3,
-    "opacity": 3
-  },
   "apps/web/src/components/canvas/siteCanvas.module.css": {
     "zIndex": 17,
     "radius": 15,
@@ -266,20 +258,6 @@
   "apps/web/src/components/spinner.module.css": {
     "radius": 1,
     "opacity": 1
-  },
-  "apps/web/src/components/studio/ghostCursor.module.css": {
-    "zIndex": 1,
-    "radius": 2,
-    "opacity": 2
-  },
-  "apps/web/src/components/studio/placement.module.css": {
-    "zIndex": 2,
-    "radius": 1
-  },
-  "apps/web/src/components/studio/swatchPad.module.css": {
-    "zIndex": 1,
-    "radius": 3,
-    "opacity": 2
   },
   "apps/web/src/components/toast-host.module.css": {
     "zIndex": 1,

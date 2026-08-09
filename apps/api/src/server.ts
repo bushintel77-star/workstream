@@ -54,6 +54,8 @@ import cadRoutes from './routes/cad';
 import boundaryRoutes from './routes/boundary';
 import keylessRoutes from './routes/keyless';
 import orchestrationRoutes from './routes/orchestration';
+import resourcePoolRoutes from './routes/resource-pool';
+import presentationPackRoutes from './routes/presentation-pack';
 import projectFileRoutes from './routes/project-files';
 import activityRoutes from './routes/activity';
 import portalRoutes from './routes/portal';
@@ -198,6 +200,8 @@ async function start() {
   await server.register(designBranchRoutes, { prefix: '/projects' });
   await server.register(opsScheduleRoutes, { prefix: '/projects' });
   await server.register(documentationPackageRoutes, { prefix: '/projects' });
+  await server.register(presentationPackRoutes, { prefix: '/projects' });
+  await server.register(resourcePoolRoutes);
   await server.register(stripeWebhookRoutes);
   await server.register(settingsRoutes, { prefix: '/settings' });
   await server.register(integrationHubRoutes, { prefix: '/integrations' });

@@ -47,6 +47,8 @@ import protectedFileRoutes from "../routes/protected-files";
 import designBranchRoutes from "../routes/design-branches";
 import opsScheduleRoutes from "../routes/ops-schedules";
 import documentationPackageRoutes from "../routes/documentation-packages";
+import resourcePoolRoutes from "../routes/resource-pool";
+import presentationPackRoutes from "../routes/presentation-pack";
 import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from "../routes/integration-hub";
@@ -110,6 +112,8 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(designBranchRoutes, { prefix: "/projects" });
   await app.register(opsScheduleRoutes, { prefix: "/projects" });
   await app.register(documentationPackageRoutes, { prefix: "/projects" });
+  await app.register(presentationPackRoutes, { prefix: "/projects" });
+  await app.register(resourcePoolRoutes);
   await app.register(stripeWebhookRoutes);
   await app.register(settingsRoutes, { prefix: "/settings" });
   await app.register(integrationHubRoutes, { prefix: "/integrations" });

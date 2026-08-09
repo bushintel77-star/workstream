@@ -47,6 +47,7 @@ type Props = {
   onOpenPanel: (panel: UtilityPanel) => void;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
+  onQuotePromoted?: () => void;
   /** Canvas-first: dismiss the whole summoned lane back to a quiet drawing. */
   onClose?: () => void;
   settling?: boolean;
@@ -74,6 +75,7 @@ export function UtilityDrawer({
   onOpenPanel,
   onMitigate,
   onOpenQuote,
+  onQuotePromoted,
   onClose,
   settling = false,
 }: Props) {
@@ -222,10 +224,12 @@ export function UtilityDrawer({
               />
             ) : (
               <LiveBomDock
+                projectId={projectId}
                 estimate={estimate}
                 mitigated={mitigated}
                 onMitigate={onMitigate}
                 onOpenQuote={onOpenQuote}
+                onQuotePromoted={onQuotePromoted}
                 settling={settling}
                 embedded
               />

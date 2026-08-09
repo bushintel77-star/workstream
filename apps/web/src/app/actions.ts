@@ -445,6 +445,79 @@ export async function getOrchestrationAction(projectId: string) {
   }
 }
 
+export async function listLeftoversAction() {
+  const { listLeftoversApi } = await import("../lib/api");
+  try {
+    return await listLeftoversApi();
+  } catch (err) {
+    throw wrapApiError(err, "List leftovers failed");
+  }
+}
+
+export async function registerLeftoverAction(
+  input: import("@workstream/contracts").RegisterLeftoverInput,
+) {
+  const { registerLeftoverApi } = await import("../lib/api");
+  try {
+    return await registerLeftoverApi(input);
+  } catch (err) {
+    throw wrapApiError(err, "Register leftover failed");
+  }
+}
+
+export async function presentationPackAction(projectId: string) {
+  const { presentationPackApi } = await import("../lib/api");
+  try {
+    const result = await presentationPackApi(projectId);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Presentation pack failed");
+  }
+}
+
+export async function getDesignCanvasAction(projectId: string) {
+  const { getDesignCanvas } = await import("../lib/api");
+  try {
+    return await getDesignCanvas(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Load design canvas failed");
+  }
+}
+
+export async function applyShadowAlternativeAction(
+  projectId: string,
+  altId: string,
+) {
+  const {
+    getDesignCanvas,
+    saveDesignCanvasApi,
+  } = await import("../lib/api");
+  const { applyShadowAlternative } = await import("@workstream/domain");
+  try {
+    const canvas = await getDesignCanvas(projectId);
+    if (!canvas) {
+      throw new Error("No design canvas to apply alternative");
+    }
+    const { canvas: next, note } = applyShadowAlternative(canvas, altId);
+    const saved = await saveDesignCanvasApi(
+      projectId,
+      next.placements,
+      next.strokes ?? [],
+      next.irrigation_zones ?? [],
+      next.annotations,
+      next.image_layers,
+      next.site_frame,
+      next.features,
+      next.construction_trenches,
+    );
+    revalidatePath(`/projects/${projectId}`);
+    return { canvas: saved.canvas, note };
+  } catch (err) {
+    throw wrapApiError(err, "Apply alternative failed");
+  }
+}
+
 export async function acceptOrchestrationOverlayAction(
   projectId: string,
   proposalId: string,

@@ -1,0 +1,158 @@
+﻿.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ws-z-fullscreen);
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--hc-ink) 55%, transparent);
+  backdrop-filter: blur(8px);
+  animation: heroIn 250ms ease-in-out;
+}
+
+@keyframes heroIn {
+  from {
+    transform: scale(0.98);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.modal {
+  width: min(66vw, 52rem);
+  max-width: calc(100vw - 1.5rem);
+  max-height: min(78vh, 40rem);
+  border-radius: var(--hc-r-pop, 16px);
+  background: var(--hc-paper);
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--hc-ink) 35%, transparent);
+  color: var(--hc-ink);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--hc-ink) 8%, transparent);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--display, "Fraunces", Georgia, serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.back,
+.freeze {
+  border: 1px solid color-mix(in srgb, var(--hc-ink) 14%, transparent);
+  border-radius: var(--hc-r-control, 10px);
+  min-height: 44px;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--hc-paper);
+  color: var(--hc-ink);
+}
+
+.freeze {
+  background: color-mix(in srgb, var(--hc-ink) 92%, var(--hc-paper));
+  color: var(--hc-paper);
+  border-color: var(--hc-ink);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  min-height: 16rem;
+  flex: 1;
+}
+
+.canvas {
+  min-height: 16rem;
+  background: var(--hc-ink);
+}
+
+.canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.side {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border-left: 1px solid color-mix(in srgb, var(--hc-ink) 8%, transparent);
+}
+
+.sliderLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--hc-ink-muted);
+}
+
+.sliderLabel input {
+  width: 100%;
+}
+
+.specsToggle {
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--hc-ink);
+  padding: 0.35rem 0;
+  min-height: 44px;
+}
+
+.specs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.72rem;
+}
+
+.specs dt {
+  color: var(--hc-ink-faint);
+  font-weight: 600;
+}
+
+.specs dd {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .modal {
+    width: calc(100vw - 1rem);
+  }
+  .body {
+    grid-template-columns: 1fr;
+  }
+  .side {
+    border-left: none;
+    border-top: 1px solid color-mix(in srgb, var(--hc-ink) 8%, transparent);
+  }
+}

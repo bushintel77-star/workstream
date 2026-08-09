@@ -1,0 +1,124 @@
+﻿.wrap {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 5.25rem;
+  z-index: var(--ws-z-dock);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.paper .toggle,
+.paper .panel {
+  background: color-mix(in srgb, var(--sheet-paper, var(--hc-paper)) 96%, transparent);
+  border-color: var(--hc-line);
+}
+
+.toggle {
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-pill, 999px);
+  min-height: 44px;
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--hc-glass-soft);
+  box-shadow: 0 4px 14px var(--hc-neu-shadow);
+}
+
+.panel {
+  width: min(16rem, calc(100vw - 1.5rem));
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--hc-r-pop, 14px);
+  border: 1px solid var(--hc-line-soft);
+  background: var(--hc-glass);
+  box-shadow: 0 10px 28px var(--hc-neu-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.kicker {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hc-ink-faint);
+}
+
+.btn {
+  border: none;
+  border-radius: var(--hc-r-control, 12px);
+  min-height: 44px;
+  padding: 0.4rem 0.7rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--hc-ink);
+  color: var(--hc-invert);
+}
+
+.meta {
+  margin: 0;
+  font-size: 0.65rem;
+  color: var(--hc-ink-muted);
+  line-height: 1.35;
+}
+
+.chip {
+  margin: 0;
+  border-radius: var(--hc-r-pill, 999px);
+  padding: 0.3rem 0.65rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: var(--hc-accent-wash);
+}
+
+.packLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.link {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--hc-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.checklist li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: var(--hc-ink-muted);
+}
+
+.checkStatus {
+  flex-shrink: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--hc-ink-faint);
+}
+
+.checklist li[data-status="generated"] .checkStatus,
+.checklist li[data-status="ready"] .checkStatus {
+  color: var(--hc-ink);
+}

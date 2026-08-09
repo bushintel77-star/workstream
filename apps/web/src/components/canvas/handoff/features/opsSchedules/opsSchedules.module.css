@@ -13,7 +13,8 @@
   border: 1px solid var(--ws-frame-hair);
   box-shadow: 0 12px 40px color-mix(in srgb, var(--hc-ink) 40%, transparent);
   color: var(--ws-frame-ink);
-  z-index: 40;
+  z-index: var(--ws-z-dock);
+  --ops-meta: 0.8;
 }
 
 .head {
@@ -62,7 +63,7 @@
 .error {
   font-size: 0.82rem;
   margin: 0 0 0.65rem;
-  opacity: 0.8;
+  opacity: var(--ops-meta);
 }
 
 .error {
