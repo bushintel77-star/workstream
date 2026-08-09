@@ -93,6 +93,11 @@ const BOARD_SPANNING_ALLOWED = new Set([
   "instant-planner-chrome",
   "landscape-features-layer",
   "hero-feature-markers",
+  // CameraChrome portal shells (pointer-events none; paint is on children).
+  "instant-planner-hud-chrome",
+  "hero-detail-chrome",
+  "next-best-option-chrome",
+  "leftover-alert-chrome",
 ]);
 
 /**

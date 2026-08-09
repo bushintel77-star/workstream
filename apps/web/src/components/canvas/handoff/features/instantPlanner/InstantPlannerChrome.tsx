@@ -213,11 +213,11 @@ export function InstantPlannerChrome({
   };
 
   const showStructured = structuredTools && structuredToolsOpen;
-  const showHud =
-    Boolean(freezeNote) ||
-    assistOpen ||
-    showStructured ||
-    Boolean(world);
+  // Only mount a HUD chrome shell when something summoned/ephemeral is open.
+  // Chips self-portal when they have content — never park an empty shell on
+  // idle (that failed §6 item 1 / 1b / 5 as a full-board bar).
+  const showSummonedHud =
+    Boolean(freezeNote) || assistOpen || showStructured;
 
   return (
     <>
@@ -231,23 +231,25 @@ export function InstantPlannerChrome({
         />
       </div>
 
-      {/* HUD — CameraChrome portals; assist / structured tools are summon-gated. */}
-      {showHud ? (
+      {/* Peripheral chips — each returns null (no CameraChrome) when idle. */}
+      <NextBestOptionChip
+        world={world}
+        paper={paper}
+        onApply={onApplyShadow}
+      />
+      <LeftoverAlertChip
+        world={world}
+        paper={paper}
+        onOpenAssist={() => onAssistOpenChange?.(true)}
+      />
+
+      {/* Summoned assist / structured tools / freeze toast. */}
+      {showSummonedHud ? (
         <CameraChrome
           place={{ kind: "dock" }}
           zIndex={36}
           testId="instant-planner-hud-chrome"
         >
-          <NextBestOptionChip
-            world={world}
-            paper={paper}
-            onApply={onApplyShadow}
-          />
-          <LeftoverAlertChip
-            world={world}
-            paper={paper}
-            onOpenAssist={() => onAssistOpenChange?.(true)}
-          />
           {assistOpen ? (
             <StudioAssistPanel
               projectId={projectId}

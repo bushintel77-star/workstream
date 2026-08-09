@@ -7,6 +7,7 @@ import type {
 } from "@workstream/contracts";
 import { matchLeftoversToBom } from "@workstream/domain";
 import { listLeftoversAction } from "../../../../../app/actions";
+import { CameraChrome } from "../../CameraChrome";
 import css from "./leftoverAlertChip.module.css";
 
 type Props = {
@@ -55,53 +56,60 @@ export function LeftoverAlertChip({
 
   const chipLabel = `Leftover ${match.cover_qty} ${match.leftover.unit} ${match.leftover.label}`;
 
+  // Portal only when a match exists — empty shells fail §6 idle geometry.
   return (
-    <div
-      className={`${css.wrap}${paper ? ` ${css.paper}` : ""}`}
-      data-testid="leftover-alert-chip"
+    <CameraChrome
+      place={{ kind: "dock" }}
+      zIndex={36}
+      testId="leftover-alert-chrome"
     >
-      <button
-        type="button"
-        className={css.chip}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+      <div
+        className={`${css.wrap}${paper ? ` ${css.paper}` : ""}`}
+        data-testid="leftover-alert-chip"
       >
-        {chipLabel}
-      </button>
-      {open ? (
-        <div className={css.panel} data-testid="leftover-alert-panel">
-          <p className={css.detail}>
-            {match.cover_qty} {match.leftover.unit} available from another job —
-            covers part of {match.bom_line.label}. Quiet pool match only; you
-            decide whether to use it.
-          </p>
-          <div className={css.actions}>
-            {onOpenAssist ? (
+        <button
+          type="button"
+          className={css.chip}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {chipLabel}
+        </button>
+        {open ? (
+          <div className={css.panel} data-testid="leftover-alert-panel">
+            <p className={css.detail}>
+              {match.cover_qty} {match.leftover.unit} available from another job —
+              covers part of {match.bom_line.label}. Quiet pool match only; you
+              decide whether to use it.
+            </p>
+            <div className={css.actions}>
+              {onOpenAssist ? (
+                <button
+                  type="button"
+                  className={`${css.btn} ${css.btnPrimary}`}
+                  data-testid="leftover-alert-open-assist"
+                  onClick={() => {
+                    onOpenAssist();
+                    setOpen(false);
+                  }}
+                >
+                  Open assist
+                </button>
+              ) : null}
               <button
                 type="button"
-                className={`${css.btn} ${css.btnPrimary}`}
-                data-testid="leftover-alert-open-assist"
+                className={css.btn}
                 onClick={() => {
-                  onOpenAssist();
+                  setDismissed(true);
                   setOpen(false);
                 }}
               >
-                Open assist
+                Dismiss
               </button>
-            ) : null}
-            <button
-              type="button"
-              className={css.btn}
-              onClick={() => {
-                setDismissed(true);
-                setOpen(false);
-              }}
-            >
-              Dismiss
-            </button>
+            </div>
           </div>
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+    </CameraChrome>
   );
 }
