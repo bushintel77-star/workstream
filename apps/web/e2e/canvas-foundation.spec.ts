@@ -50,7 +50,9 @@ test.describe("Canvas foundation honesty", () => {
       "Existing dwelling outline unavailable",
       { timeout: 15_000 },
     );
-    // Survey auto-opens the checklist; measures are summoned (Cmd+K), not parked.
+    // Checklist is collapsed by default (§6 item 7) — summon via progress pill.
+    await expect(page.getByTestId("right-data-lane-collapsed")).toHaveCount(1);
+    await page.getByTestId("survey-progress-pill").click();
     await expect(page.getByTestId("survey-checklist")).toBeVisible({
       timeout: 15_000,
     });

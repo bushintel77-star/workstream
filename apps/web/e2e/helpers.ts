@@ -159,9 +159,23 @@ export async function seedPoolWithoutBarrier(
   request: APIRequestContext,
   projectId: string,
 ) {
+  // Merge onto any existing canvas — a wipe to pool-only leaves Share disabled
+  // (no costed quote lines) and Playwright then burns the full test timeout.
+  const existing = await request.get(
+    `${API}/projects/${projectId}/design-canvas`,
+  );
+  expect(existing.ok()).toBeTruthy();
+  const body = (await existing.json()) as {
+    canvas?: {
+      placements?: Array<Record<string, unknown>>;
+      strokes?: unknown[];
+    };
+  };
+  const prior = body.canvas?.placements ?? [];
   const res = await request.put(`${API}/projects/${projectId}/design-canvas`, {
     data: {
       placements: [
+        ...prior,
         {
           id: randomUUID(),
           symbol_id: "pool",
@@ -171,7 +185,7 @@ export async function seedPoolWithoutBarrier(
           scale: 1,
         },
       ],
-      strokes: [],
+      strokes: body.canvas?.strokes ?? [],
     },
   });
   expect(res.ok()).toBeTruthy();

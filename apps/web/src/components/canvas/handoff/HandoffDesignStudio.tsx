@@ -455,6 +455,8 @@ export function HandoffDesignStudio({
   /** Phone vs desktop chrome — adaptive shell; board engines unchanged. */
   const studioLayout = useStudioLayout();
   const isPhoneLayout = studioLayout === "phone";
+  /** Compact fork — same viewport authority as data-layout (useStudioLayout). */
+  const compactAssetUi = isPhoneLayout;
   /**
    * Drag-to-pan — Space held (grab, armed) vs actively dragging (grabbing).
    * spaceHeldRef/panDragBaseRef back the gesture listeners so pan drags
@@ -704,8 +706,6 @@ export function HandoffDesignStudio({
     null,
   );
   const [assetFocusSearch, setAssetFocusSearch] = useState(false);
-  /** Compact fork: viewport ≤719 only — never coarse pointer or board inset width. */
-  const [compactAssetUi, setCompactAssetUi] = useState(false);
   const [studioSheetOpen, setStudioSheetOpen] = useState(false);
   const [studioSheetPage, setStudioSheetPage] =
     useState<StudioSheetPage>("assets");
@@ -715,21 +715,6 @@ export function HandoffDesignStudio({
     setEyedropArmed(false);
     studio.setUi({ paintSwatch: t, tool: "paint" });
   };
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const sync = () => {
-      setCompactAssetUi(window.innerWidth <= 719);
-    };
-    sync();
-    window.addEventListener("resize", sync);
-    const mq = window.matchMedia("(max-width: 719px)");
-    mq.addEventListener("change", sync);
-    return () => {
-      window.removeEventListener("resize", sync);
-      mq.removeEventListener("change", sync);
-    };
-  }, []);
 
   useEffect(() => {
     setPointerMarkId(loadPointerMarkId());
@@ -2159,6 +2144,8 @@ export function HandoffDesignStudio({
     ui.rightDataPanel != null ||
     headerViewMenuOpen ||
     studioSheetVisible ||
+    /* Client meeting keeps View (exit / print) — idle must not bury it. */
+    ui.clientView ||
     /* Present owns the viewport — suspend studio idle recession while composing. */
     ui.mode === "present";
   const idle = useChromeIdle({
@@ -3623,32 +3610,34 @@ export function HandoffDesignStudio({
                   : "Quote"}
               </button>
             ) : null}
-            <UnifiedSaveStatus
-              status={ui.mode === "present" ? deckSaveStatus : ui.saveStatus}
-              savedTick={ui.mode === "present" ? deckSavedTick : ui.savedTick}
-              revision={ui.mode === "present" ? deckRevision : ui.saveRevision}
-              errorKind={ui.mode === "present" ? null : ui.saveErrorKind}
-              onSave={() => {
-                void studio.saveNow().catch(() => {
-                  toast.show(
-                    "Canvas save failed. Try again before leaving.",
-                    "error",
-                  );
-                });
-              }}
-              onRetry={() => {
-                if (ui.saveErrorKind === "stale_client") {
-                  window.location.reload();
-                  return;
-                }
-                void studio.saveNow().catch(() => {
-                  toast.show(
-                    "Canvas save failed. Try again before leaving.",
-                    "error",
-                  );
-                });
-              }}
-            />
+            {!ui.clientView ? (
+              <UnifiedSaveStatus
+                status={ui.mode === "present" ? deckSaveStatus : ui.saveStatus}
+                savedTick={ui.mode === "present" ? deckSavedTick : ui.savedTick}
+                revision={ui.mode === "present" ? deckRevision : ui.saveRevision}
+                errorKind={ui.mode === "present" ? null : ui.saveErrorKind}
+                onSave={() => {
+                  void studio.saveNow().catch(() => {
+                    toast.show(
+                      "Canvas save failed. Try again before leaving.",
+                      "error",
+                    );
+                  });
+                }}
+                onRetry={() => {
+                  if (ui.saveErrorKind === "stale_client") {
+                    window.location.reload();
+                    return;
+                  }
+                  void studio.saveNow().catch(() => {
+                    toast.show(
+                      "Canvas save failed. Try again before leaving.",
+                      "error",
+                    );
+                  });
+                }}
+              />
+            ) : null}
             {!ui.clientView ? (
               <div className={css.shareWrap}>
                 <button

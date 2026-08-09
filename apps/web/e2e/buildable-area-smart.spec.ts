@@ -55,11 +55,68 @@ test.describe("Buildable area smart envelope", () => {
     await expect(overlay).toBeVisible();
     await expect(overlay).toHaveAttribute("data-pinned", "1");
 
-    const board = page.getByTestId("cad-plan-board");
-    const box = await board.boundingBox();
-    expect(box).toBeTruthy();
-    // Warm the board pointer path first (chip sits top-left in CameraChrome).
-    await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5);
+    // Board centre is often the dwelling / setback void — derive ok/danger from
+    // the laser polygon itself so demo footprints and Vicmap lots both pass.
+    const targets = await page.evaluate(() => {
+      const poly = document.querySelector(
+        '[data-testid="buildable-polygon"]',
+      ) as SVGPolygonElement | null;
+      const board = document.querySelector(
+        '[data-testid="cad-plan-board"]',
+      ) as HTMLElement | null;
+      if (!poly || !board) return null;
+      const pts = (poly.getAttribute("points") ?? "")
+        .trim()
+        .split(/\s+/)
+        .map((pair) => {
+          const [x, y] = pair.split(",").map(Number);
+          return { x, y };
+        })
+        .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+      if (pts.length < 3) return null;
+      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+      const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      const svg = poly.ownerSVGElement;
+      const ctm = poly.getScreenCTM();
+      if (!svg || !ctm) return null;
+      const toScreen = (x: number, y: number) => {
+        const p = svg.createSVGPoint();
+        p.x = x;
+        p.y = y;
+        const s = p.matrixTransform(ctm);
+        return { x: s.x, y: s.y };
+      };
+      const ok = toScreen(cx, cy);
+      const boardBox = board.getBoundingClientRect();
+      // Prefer a point in the lot that is outside the remnant (setback band).
+      // Fall back to the far board edge if the remnant fills the board.
+      const candidates = [
+        toScreen(
+          Math.min(...pts.map((p) => p.x)) - 2,
+          cy,
+        ),
+        toScreen(
+          Math.max(...pts.map((p) => p.x)) + 2,
+          cy,
+        ),
+        {
+          x: boardBox.x + boardBox.width * 0.97,
+          y: boardBox.y + boardBox.height * 0.55,
+        },
+      ];
+      const out =
+        candidates.find(
+          (c) =>
+            c.x >= boardBox.x &&
+            c.x <= boardBox.right &&
+            c.y >= boardBox.y &&
+            c.y <= boardBox.bottom,
+        ) ?? candidates[candidates.length - 1]!;
+      return { ok, out };
+    });
+    expect(targets).toBeTruthy();
+
+    await page.mouse.move(targets!.ok.x, targets!.ok.y);
     await expect
       .poll(
         async () =>
@@ -67,8 +124,7 @@ test.describe("Buildable area smart envelope", () => {
         { timeout: 8_000 },
       )
       .toBe("ok");
-    // Right edge past setback — avoid the left FILL panel (clears board cursor).
-    await page.mouse.move(box!.x + box!.width * 0.99, box!.y + box!.height * 0.55);
+    await page.mouse.move(targets!.out.x, targets!.out.y);
     await expect
       .poll(
         async () =>

@@ -46,9 +46,24 @@
   opacity: 1;
 }
 
-/* Client presentation view: the frame empties out completely. */
+/*
+ * Client presentation: hide identity + mode tabs, keep the right zone so
+ * View (exit client / print meeting pack) stays reachable. Hiding the whole
+ * bar made print + exit unreachable and hung meeting-pack e2e on a hidden
+ * header-view-menu.
+ */
 .bar[data-client-view="true"] {
+  justify-content: flex-end;
+}
+
+.bar[data-client-view="true"] .zoneLeft,
+.bar[data-client-view="true"] .zoneCenter {
   display: none;
+}
+
+.bar[data-client-view="true"] .zoneRight {
+  border-left: none;
+  padding-left: 0;
 }
 
 /* -- Zones -- */

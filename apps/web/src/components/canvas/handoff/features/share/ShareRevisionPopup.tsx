@@ -101,6 +101,9 @@ export function ShareRevisionPopup({
   const seenDecisionRef = useRef<string | null>(null);
   const primedRef = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  /** List/poll must not share `pending` with submit — that locked the CTA on
+   * "Sharing…" for the whole refresh and looked like a hung CI actionability wait. */
+  const refreshInFlight = useRef(false);
 
   const latest = revisions[0] ?? null;
   const currentOpen =
@@ -132,7 +135,9 @@ export function ShareRevisionPopup({
   }, [latest, quoteLines, totalInclGst, address, canvasFingerprint]);
 
   const refresh = () => {
-    start(async () => {
+    if (refreshInFlight.current) return;
+    refreshInFlight.current = true;
+    void (async () => {
       try {
         const data = await listShareRevisionsAction(projectId);
         setRevisions(data.revisions);
@@ -159,8 +164,10 @@ export function ShareRevisionPopup({
         primedRef.current = true;
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load shares");
+      } finally {
+        refreshInFlight.current = false;
       }
-    });
+    })();
   };
 
   useEffect(() => {

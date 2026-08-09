@@ -21,12 +21,16 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  timeout: 120_000,
+  timeout: 90_000,
+  // Cap actionability waits — a disabled/missing control must not burn the
+  // full test timeout twice (retry) and look like a CI "hang".
+  expect: { timeout: 12_000 },
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: WEB_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    actionTimeout: process.env.CI ? 20_000 : 0,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: LIVE

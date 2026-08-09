@@ -86,6 +86,7 @@ const BOARD_SPANNING_ALLOWED = new Set([
   "canvas-top-border-chrome",
   "tool-dock-chrome",
   "vic-gov-status-chrome",
+  "tier1-top-bar-chrome",
   "frame-drawer-artboards",
   "frame-drawer-site-meta",
   "foundation-title-boundary",
@@ -140,8 +141,14 @@ const BOARD_SPANNING_ALLOWED = new Set([
  */
 const COVERAGE_BASELINE: Record<string, number> = {
   survey: 4.1,
-  sketch: 7.9,
-  cad: 4.1,
+  // 4.4 — Instant Planner assist/structured tools are summon-only; idle sketch
+  // no longer parks a sticky HUD over the drawing (was 7.9). SketchDock still
+  // contributes ~2.4% when the mode mounts; CI sometimes measures ~2.5% when
+  // frost paint is thinner — both sit inside the stale/tolerance band.
+  sketch: 4.4,
+  // 2.3 — CAD idle dropped after Instant Planner cleanup (was 4.1). Local
+  // ~2.3%; CI has measured as low as ~0.7% depending on frost compositing.
+  cad: 2.3,
   elevation: 0.1,
 };
 

@@ -89,7 +89,7 @@ test.describe("Client share acceptance", () => {
       timeout: 15_000,
     });
     await expect(page.getByTestId("share-accept-followup")).toContainText(
-      "Curtis & Co will be in touch",
+      "We will be in touch",
     );
 
     const list = await request.get(

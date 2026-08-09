@@ -63,8 +63,8 @@ test.describe("Studio phone adaptive layout", () => {
       boardBox!.y + boardBox!.height * 0.55,
     );
 
-    // Mode strip still reachable; Survey / Sketch / CAD chips present.
-    await expect(page.getByTestId("canvas-mode-strip")).toBeVisible();
+    // CompactModeNav — current mode chip + overflow (not the desktop full strip).
+    await expect(page.getByTestId("canvas-mode-overflow")).toBeVisible();
     await expect(page.getByTestId("canvas-mode-sketch")).toBeVisible();
     await page.getByTestId("canvas-tool-select").click();
     await expect(page.getByTestId("canvas-tool-select")).toHaveAttribute(

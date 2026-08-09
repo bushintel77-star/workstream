@@ -180,11 +180,11 @@ test.describe("Canvas dialog focus trap", () => {
       page,
       request,
     }) => {
-      // Seed a pool with no barrier — this triggers the required safety waiver
-      // disclaimer (board-liability.ts: poolUnbarriered), so the share popup
-      // opens SafetyWaiverConfirm on "Share new revision".
+      // Costed seed keeps Share enabled (empty quoteLines disables the CTA and
+      // used to burn the full test timeout on actionability). Pool without a
+      // barrier triggers the required safety waiver (board-liability.ts).
       const { projectId } = await createWrightsTier1Project(request, {
-        seedCanvas: false,
+        seedCanvas: true,
       });
       await seedPoolWithoutBarrier(request, projectId);
 
@@ -197,9 +197,13 @@ test.describe("Canvas dialog focus trap", () => {
       const popup = page.getByTestId("share-revision-popup");
       await expect(popup).toBeVisible();
 
-      // Click "Share new revision" to trigger the safety waiver confirm.
+      // Liability report is async — wait for the safety row, then the CTA.
+      await expect(page.getByTestId("liability-safety_waiver")).toBeVisible({
+        timeout: 30_000,
+      });
       const issueBtn = page.getByTestId("share-new-revision");
-      await expect(issueBtn).toBeVisible();
+      await expect(issueBtn).toBeEnabled({ timeout: 15_000 });
+      await expect(issueBtn).toContainText(/safety/i, { timeout: 15_000 });
       await issueBtn.click();
       const waiver = page.getByTestId("safety-waiver-confirm");
       await expect(waiver).toBeVisible({ timeout: 15_000 });

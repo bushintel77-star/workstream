@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { clickHeaderViewItem, createSurveyProject, handoffStudio } from "./helpers";
+import { createSurveyProject, handoffStudio } from "./helpers";
 
 async function openSketch(page: Page, projectId: string) {
   await page.goto(`/projects/${projectId}?mode=sketch`);
@@ -51,8 +51,7 @@ test.describe("Compact canvas-first chrome", () => {
     await page.setViewportSize({ width: 960, height: 800 });
     await openSketch(page, projectId);
     await expect(handoffStudio(page)).toHaveAttribute("data-compact", "0");
-    await expect(page.getByTestId("tool-dock")).toHaveCount(0);
-    await clickHeaderViewItem(page, "pointer-settings-top");
+    // Desktop activity-bar dock is ambient chrome (persistent), not summon-gated.
     await expect(page.getByTestId("tool-dock")).toBeVisible();
     await expect(page.getByTestId("contextual-tool-strip")).toHaveCount(0);
     // Desktop fork — no phone FAB / bottom sheet chrome.

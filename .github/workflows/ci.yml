@@ -56,12 +56,17 @@ jobs:
       - run: pnpm test
 
   e2e:
-    name: playwright e2e
+    name: playwright e2e (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
-    # Full suite (~52+ specs) exceeds 25m on ubuntu — tip cancelled at gate.
-    timeout-minutes: 45
+    # Sharded — a single worker on ~126 tests was ~30m and looked "hung" when
+    # disabled controls burned the full 120s actionability wait (× retry).
+    timeout-minutes: 35
     needs: typecheck
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     env:
       CI: true
       AUTH_REQUIRED: "false"
@@ -83,7 +88,8 @@ jobs:
         run: pnpm --filter @workstream/web exec playwright install chromium --with-deps
       - name: Build API workspace deps for e2e
         run: pnpm exec turbo run build --filter=@workstream/api...
-      - run: pnpm test:e2e
+      - name: Run Playwright shard
+        run: pnpm --filter @workstream/web exec playwright test --shard=${{ matrix.shard }}/3
 
   build-api:
     name: build api docker image

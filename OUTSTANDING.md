@@ -166,15 +166,11 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `frame-drawer-variations` and that its parked box never overlaps the
       drawing.
 
-- [ ] **`meeting-pack.spec.ts` is stale — red on a clean tree.** `client view
-      exposes print + scheme thumbs + caption` fails at
-      `meeting-pack-print` → `toBeVisible()` with "hidden". Confirmed
-      pre-existing by stashing all local work and re-running against `HEAD`, so
-      it is not fallout from the drawer migration. The button's visibility is
-      governed by `.rootClient .headerTools` rules in
-      `handoffStudio.module.css` and `canvasTopBorder.module.css`. Same class as
-      `dashboard-filter-sort.spec.ts`: rewrite against current markup or delete
-      the assertion.
+- [x] **`meeting-pack.spec.ts` was stale — fixed.** Print lives in the View
+      menu under client view (not a parked `headerTools` chip). Spec now opens
+      the menu panel before asserting `meeting-pack-print`, and filters the
+      command palette before Save scheme so the click cannot burn the full
+      actionability timeout.
 - [x] **WCAG 2.2 AA text contrast on the canvas** — kept gate
       [`e2e/canvas-contrast-aa.spec.ts`](apps/web/e2e/canvas-contrast-aa.spec.ts)
       walks survey/sketch/cad/elevation/quote and flattens each text node's
