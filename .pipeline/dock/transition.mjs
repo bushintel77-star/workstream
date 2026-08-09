@@ -27,9 +27,31 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MANIFEST_PATH = resolve(__dirname, "manifest.json");
+const REPO_ROOT = resolve(__dirname, "..", "..");
+
+// ─── Git helpers ─────────────────────────────────────────────────
+function git(args, opts = {}) {
+  try {
+    return execSync(`git ${args}`, {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      ...opts,
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function gitLines(args) {
+  const out = git(args);
+  if (!out) return [];
+  return out.split("\n").filter(Boolean);
+}
 
 // ─── Relevance levels (ordered) ──────────────────────────────────
 const LEVELS = ["zero", "low", "medium", "high", "critical"];
@@ -39,6 +61,134 @@ const clampLevel = (l) => LEVELS[Math.max(0, Math.min(LEVELS.length - 1, l))];
 // ─── Stage ordering ──────────────────────────────────────────────
 const STAGES = ["spec", "coded", "committed", "merged", "pushed", "deployed", "verified"];
 const stageIndex = (s) => STAGES.indexOf(s);
+
+// ─── Verification layer (Simplex decision module) ────────────────
+// Intercepts stage transition claims and checks them against git
+// ground truth before admitting them. If the claim contradicts
+// reality, the event is refused.
+//
+// This is the miter circuit: compare manifest claim vs git reality.
+// This is the Simplex decision module: intercept, verify, refuse if false.
+// This is the inductive invariant: merged items must be on main.
+
+function verifyStageClaim(item, newStage, manifest) {
+  const errors = [];
+  const warnings = [];
+
+  // coded: files should exist in working directory or stash
+  if (newStage === "coded") {
+    if (item.location === "working-directory") {
+      const dirtyFiles = gitLines("diff --name-only");
+      const stashFiles = gitLines("stash list --format=%gd");
+      // Check if any of the item's files are in the working directory diff
+      const found = (item.files || []).some((f) => dirtyFiles.includes(f));
+      if (!found && dirtyFiles.length > 0) {
+        warnings.push(`Item claims working-directory but none of its files appear in git diff --name-only`);
+      }
+    }
+    // For stash locations, we can't easily verify which stash without more info
+    // This is a soft check — we warn but don't block
+  }
+
+  // committed: a branch should exist with these files changed
+  if (newStage === "committed") {
+    const branches = gitLines("branch --list");
+    // Check if any branch contains changes to the item's files
+    const itemFiles = item.files || [];
+    let foundOnBranch = false;
+    for (const branch of branches) {
+      const cleanBranch = branch.replace(/^\*?\s+/, "").trim();
+      if (!cleanBranch || cleanBranch === "main") continue;
+      const branchFiles = gitLines(`log --name-only --format="" ${cleanBranch} --not main`);
+      if (itemFiles.some((f) => branchFiles.includes(f))) {
+        foundOnBranch = true;
+        break;
+      }
+    }
+    if (!foundOnBranch) {
+      errors.push(`No branch found with changes to this item's files. Cannot claim committed.`);
+    }
+  }
+
+  // merged: the work must actually be on main
+  if (newStage === "merged") {
+    const itemFiles = item.files || [];
+    const dirtyFiles = gitLines("diff --name-only");
+    const dirtyStagedFiles = gitLines("diff --cached --name-only");
+
+    // If the item's files still appear in the working directory diff,
+    // the uncommitted changes are still there — they can't be merged
+    const stillDirty = itemFiles.filter(
+      (f) => dirtyFiles.includes(f) || dirtyStagedFiles.includes(f),
+    );
+
+    if (stillDirty.length > 0) {
+      errors.push(
+        `Files still have uncommitted changes in working directory: ${stillDirty.join(", ")}. ` +
+        `Cannot claim merged — these changes are not on main.`,
+      );
+    }
+
+    // Also check: if the item has a main_commit, verify it's on main
+    if (item.main_commit && stillDirty.length === 0) {
+      const mainLog = gitLines("log main --oneline");
+      const foundOnMain = mainLog.some((line) => line.includes(item.main_commit));
+      if (!foundOnMain) {
+        // The files aren't dirty but the specific commit isn't on main.
+        // Could be a squash merge — check if the files exist on main at all
+        const filesOnMain = gitLines(`ls-tree main --name-only`);
+        // This is a weak check — just because the file exists doesn't mean
+        // the specific changes are merged. But if the file isn't dirty AND
+        // exists on main, the changes might have been squash-merged.
+        warnings.push(
+          `main_commit ${item.main_commit} not found in git log main, ` +
+          `but files are not dirty. May have been squash-merged — verify manually.`,
+        );
+      }
+    }
+  }
+
+  // pushed: main must not be ahead of origin/main
+  if (newStage === "pushed") {
+    const ahead = git("rev-list --count origin/main..main");
+    if (ahead !== "0") {
+      errors.push(`main is ${ahead} commits ahead of origin/main. Cannot claim pushed.`);
+    }
+  }
+
+  // deployed: Railway live SHA must match main
+  if (newStage === "deployed") {
+    const mainSha = git("rev-parse --short main");
+    const railwaySha = manifest.railway_api_sha;
+    if (railwaySha && railwaySha !== "unknown" && mainSha && mainSha !== railwaySha) {
+      errors.push(`Railway API SHA (${railwaySha}) does not match main (${mainSha}). Cannot claim deployed.`);
+    }
+    if (!railwaySha || railwaySha === "unknown") {
+      warnings.push(`Railway API SHA is unknown — cannot verify deployment. Admitting with warning.`);
+    }
+  }
+
+  // verified: would require a live HTTP probe — out of scope for this function
+  if (newStage === "verified") {
+    warnings.push(`Verified stage requires a live HTTP probe. Verification layer cannot check this automatically.`);
+  }
+
+  return { errors, warnings };
+}
+
+// ─── Verify all items against current git state (drift detection) ─
+function verifyAllItems(manifest) {
+  const drift = [];
+  for (const item of manifest.items) {
+    if (stageIndex(item.stage) >= stageIndex("committed")) {
+      const { errors } = verifyStageClaim(item, item.stage, manifest);
+      if (errors.length > 0) {
+        drift.push({ itemId: item.id, stage: item.stage, errors });
+      }
+    }
+  }
+  return drift;
+}
 
 // ─── Transition rules ────────────────────────────────────────────
 // Each rule takes the manifest, the event, and returns a list of
@@ -375,6 +525,19 @@ function main() {
     } else {
       console.log("\nRelevance is consistent with dependency graph.");
     }
+    // Also run verification layer — check all committed+ items against git
+    const drift = verifyAllItems(manifest);
+    if (drift.length > 0) {
+      console.log("\nVerification layer — manifest/git drift:");
+      for (const d of drift) {
+        console.log(`  ${d.itemId} (claims ${d.stage}):`);
+        for (const e of d.errors) {
+          console.log(`    ✗ ${e}`);
+        }
+      }
+    } else {
+      console.log("Verification layer — all claims match git reality.");
+    }
     return;
   }
 
@@ -395,7 +558,51 @@ function main() {
     process.exit(1);
   }
 
-  // Compute transition
+  // ─── Verification layer: intercept and verify before admitting ──
+  if (event === "item-advanced" || event === "item-regressed") {
+    const item = manifest.items.find((i) => i.id === evt.itemId);
+    if (!item) {
+      console.error(`Verification: item "${evt.itemId}" not found in manifest. Refusing.`);
+      process.exit(1);
+    }
+    if (!evt.newStage || !STAGES.includes(evt.newStage)) {
+      console.error(`Verification: invalid stage "${evt.newStage}". Refusing.`);
+      process.exit(1);
+    }
+
+    // For item-advanced: verify the new stage claim against git
+    if (event === "item-advanced") {
+      const { errors, warnings } = verifyStageClaim(item, evt.newStage, manifest);
+
+      if (warnings.length > 0) {
+        for (const w of warnings) {
+          console.log(`  ⚠ ${w}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        console.error(`\n✗ VERIFICATION FAILED — event refused`);
+        console.error(`  Item: ${item.id}`);
+        console.error(`  Claimed stage: ${evt.newStage}`);
+        console.error(`  Current stage: ${item.stage}`);
+        for (const e of errors) {
+          console.error(`  ✗ ${e}`);
+        }
+        console.error(`\nThe manifest was NOT updated. The transition was NOT applied.`);
+        console.error(`Run 'node transition.mjs status' to see current state.`);
+        process.exit(1);
+      }
+
+      console.log(`  ✓ Verified: ${item.id} can advance to ${evt.newStage}`);
+    }
+
+    // For item-regressed: warn but allow (regression is a decision, not a claim)
+    if (event === "item-regressed") {
+      console.log(`  ⚠ Regression: ${item.id} ${item.stage} → ${evt.newStage} (not verified — regression is a decision)`);
+    }
+  }
+
+  // Compute transition (only reached if verification passed)
   const changes = transitionRules(manifest, evt);
 
   // Always apply (stage update happens even with no relevance changes)
