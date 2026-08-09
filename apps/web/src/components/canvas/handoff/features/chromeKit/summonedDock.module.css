@@ -1,16 +1,18 @@
 /**
  * Shared summoned-dock visual kit (Tier-1 designer deliverable).
- * Frost glass over the plan — never a fixed opaque slab.
+ * Dark frame frost over the plan — never a cream drywall slab.
  * Import classes into feature modules; do not re-declare glass/shadow.
  */
 
 .dock {
   border-radius: var(--hc-r-panel, 14px);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
-  box-shadow: var(--hc-elev-2);
+  border: 1px solid var(--ws-frame-hair);
+  background: var(--hc-frost);
+  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  box-shadow: var(--hc-frost-shadow);
   font-family: var(--font-body);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   pointer-events: auto;
 }
 
@@ -20,7 +22,7 @@
   font-size: var(--hc-fs-1, var(--text-nano));
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
 }
 
 .head {
@@ -41,20 +43,20 @@
   border: none;
   border-radius: var(--hc-r-control, 8px);
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .close:hover {
-  color: var(--hc-ink);
-  background: var(--hc-line-soft);
+  color: var(--ws-frame-ink);
+  background: var(--ws-frame-wash);
 }
 
 .meta {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-nano);
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }

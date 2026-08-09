@@ -73,7 +73,8 @@ suspended while any panel / palette / sheet is open.
 | Field / page | `--canvas` / `--sds-canvas-bg` | `--gray-l-50` |
 | Panel / dock plastic | `--hc-neu-surface` | `--panel` |
 | Raised chip | `--hc-neu-raised` | `--gray-l-25` |
-| Frost glass | `--hc-glass` / `--hc-glass-soft` | `color-mix` on `--gray-l-0` |
+| Frost glass (light / legacy) | `--hc-glass` / `--hc-glass-soft` | `color-mix` on `--gray-l-0` |
+| Frame frost (over-plan summons) | `--hc-frost` / `--hc-frost-shadow` | `color-mix` on `--ws-frame` |
 | Ink | `--hc-ink` | `--text-primary` |
 | Muted / faint | `--hc-ink-muted` / `--hc-ink-faint` | `--text-secondary` / `--text-muted` |
 | Lines | `--hc-line` / `--hc-line-soft` | mix of `--text-primary` |
@@ -100,16 +101,17 @@ swatch rail — not a second frost/glass dialect:
 | Surface | Treatment |
 | --- | --- |
 | Left swatch rail, header icon/tool chips, instruments hub & draft tools, autosave chip | `--hc-neu-raised` + `--hc-neu-out-sm`; armed/pressed = `--hc-neu-in` |
-| Large summoned panels (Layers, inventory popup, pointer sheet) | Soft frost `--hc-glass` + `--hc-elev-*` |
+| Large summoned panels (Layers, inventory popup, pointer sheet) | Frame frost `--hc-frost` + `--hc-frost-shadow` via `chromeKit/summonedDock` |
 | Control size | ~40–46 px dock chips (match left rail width) |
 
 Do not mix flat glass chips in the header with plastic chips on the left rail.
 
 ### Glass rule
 
-Large floating panels must read as **frost**, not drywall.
+Large floating panels must read as **frame frost**, not cream drywall.
 
-- Prefer `--hc-glass-soft` + `backdrop-filter` for popups and docks.
+- Prefer `--hc-frost` + `backdrop-filter` for over-plan summons (`chromeKit/summonedDock`).
+- `--hc-glass-soft` remains for light/off-plan surfaces only — not as the default dock slab.
 - Large surfaces must not sit at near-solid opacity (avoid `0.94+` full-width bars).
 - Idle / rest chrome fades toward transparent; engaged chrome may strengthen briefly.
 - Micro dock buttons use neumorphic plastic (see above), not glass.

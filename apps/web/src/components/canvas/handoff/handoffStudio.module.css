@@ -211,6 +211,13 @@
   --ws-frame-ink-faint: color-mix(in srgb, var(--gray-d-900) 62%, transparent);
   --ws-frame-hair: color-mix(in srgb, var(--gray-d-900) 12%, transparent);
   --ws-frame-wash: color-mix(in srgb, var(--gray-d-900) 10%, transparent);
+  /*
+   * Summoned frost over the plan — matches the gallery frame, not cream glass.
+   * Consumers that still say var(--hc-frost) without a prior definition used to
+   * fall through to light --hc-glass; this is the binding substrate.
+   */
+  --hc-frost: color-mix(in srgb, var(--ws-frame) 88%, transparent);
+  --hc-frost-shadow: 0 16px 40px -10px color-mix(in srgb, var(--gray-d-0) 55%, transparent);
   --ws-frame-top: 46px;
   --ws-frame-left: 48px;
   --ws-frame-right: 14px;
