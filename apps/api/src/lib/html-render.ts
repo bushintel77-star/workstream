@@ -25,6 +25,7 @@ const KIND_TITLE: Record<OutputKind, string> = {
   brochure: "Brochure",
   establishment_calendar: "Establishment Calendar",
   handover_pack: "Maintenance & Handover Pack",
+  supplier_order: "Supplier Order / Delivery Request",
 };
 
 const KIND_CLASS: Record<OutputKind, string> = {
@@ -38,6 +39,7 @@ const KIND_CLASS: Record<OutputKind, string> = {
   brochure: "tone-client",
   establishment_calendar: "tone-client",
   handover_pack: "tone-client",
+  supplier_order: "tone-tradeops",
 };
 
 function escapeHtml(s: string): string {

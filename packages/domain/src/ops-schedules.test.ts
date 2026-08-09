@@ -3,8 +3,10 @@ import {
   buildLightingSchedule,
   buildMaterialSchedule,
   buildPlantingSchedule,
+  buildSupplierOrderSheet,
   buildTrenchSchedule,
   plantingScheduleCsv,
+  supplierOrderSheetMarkdown,
 } from "./ops-schedules";
 
 describe("ops schedules", () => {
@@ -111,5 +113,53 @@ describe("ops schedules", () => {
       ],
     });
     expect(sched.rows[0]?.sku).toBe("PLT-HORN");
+    expect(sched.rows[0]?.supplier).toBeNull();
+  });
+
+  it("groups supplier order sheet by rate-card supplier", () => {
+    const sheet = buildSupplierOrderSheet({
+      lineItems: [
+        {
+          sku: "PLT-HORN",
+          label: "Pleached hornbeam",
+          unit: "ea",
+          qty: 4,
+          rate: 120,
+          total: 480,
+        },
+        {
+          sku: "PAV-BLUE",
+          label: "Bluestone paving",
+          unit: "m2",
+          qty: 12,
+          rate: 180,
+          total: 2160,
+        },
+      ],
+      rateCard: [
+        {
+          id: "00000000-0000-4000-8000-000000000001",
+          owner_id: "dev-user",
+          category: "planting",
+          sku: "PLT-HORN",
+          label: "Pleached hornbeam",
+          unit: "ea",
+          rate: 120,
+          supplier: "Speciality Trees",
+          effective_from: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    });
+    expect(sheet.line_count).toBe(2);
+    expect(sheet.groups[0]?.supplier).toBe("Speciality Trees");
+    expect(sheet.unassigned[0]?.sku).toBe("PAV-BLUE");
+    const md = supplierOrderSheetMarkdown(sheet, {
+      address: "12 Test St, Melbourne VIC 3000",
+      generatedOn: "2026-08-09",
+    });
+    expect(md).toContain("Supplier order / delivery request");
+    expect(md).toContain("Speciality Trees");
+    expect(md).toContain("Supplier TBA");
+    expect(md).toContain("Not a fake brochure");
   });
 });

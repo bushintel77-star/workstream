@@ -3,6 +3,7 @@ import {
   buildEstablishmentCalendarDoc,
   buildHandoverPackDoc,
   buildQuote,
+  buildSupplierOrderDoc,
 } from "./output-generators";
 import type { GeneratorArgs } from "./output-generators";
 
@@ -224,5 +225,15 @@ describe("buildHandoverPackDoc", () => {
     const md = buildHandoverPackDoc(argsWithPlantings());
     expect(md).toContain("Hardscape construction");
     expect(md).toContain("Plant material");
+  });
+});
+
+describe("buildSupplierOrderDoc", () => {
+  it("builds trade order / delivery request from firm quote lines", () => {
+    const md = buildSupplierOrderDoc(baseArgs());
+    expect(md).toContain("Supplier order / delivery request");
+    expect(md).toContain("PAV-BLUE");
+    expect(md).toContain("Delivery request");
+    expect(md).toContain("live quote");
   });
 });

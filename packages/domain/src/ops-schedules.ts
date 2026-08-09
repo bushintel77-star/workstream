@@ -96,12 +96,17 @@ export type MaterialScheduleRow = {
   rate: number;
   total: number;
   rate_source: "rate_card" | "quote_line";
+  /** Rate-card supplier when known; TBA when unset — never invent a trade account. */
+  supplier: string | null;
 };
 
 export type MaterialSchedule = {
   rows: MaterialScheduleRow[];
   honesty: string;
 };
+
+export const SUPPLIER_ORDER_HONESTY =
+  "Supplier order / delivery request from live quote lines — confirm availability and lead times with the trade account before placing.";
 
 const DEPTH_BAND: Record<ConstructionTrenchKind, string> = {
   irrig_main: "350–450 mm",
@@ -295,8 +300,12 @@ export function buildMaterialSchedule(input: {
   lineItems?: LineItem[];
   rateCard?: RateCard[];
 }): MaterialSchedule {
+  const bySku = new Map(
+    (input.rateCard ?? []).map((r) => [r.sku, r] as const),
+  );
   const rows: MaterialScheduleRow[] = [];
   for (const line of input.lineItems ?? []) {
+    const rate = bySku.get(line.sku);
     rows.push({
       sku: line.sku,
       label: line.label,
@@ -305,6 +314,7 @@ export function buildMaterialSchedule(input: {
       rate: line.rate,
       total: line.total,
       rate_source: "quote_line",
+      supplier: rate?.supplier?.trim() || null,
     });
   }
   if (rows.length === 0 && input.rateCard?.length) {
@@ -312,6 +322,124 @@ export function buildMaterialSchedule(input: {
   }
   rows.sort((a, b) => a.sku.localeCompare(b.sku, "en-AU"));
   return { rows, honesty: MATERIAL_SCHEDULE_HONESTY };
+}
+
+export type SupplierOrderGroup = {
+  supplier: string;
+  rows: MaterialScheduleRow[];
+};
+
+export type SupplierOrderSheet = {
+  groups: SupplierOrderGroup[];
+  unassigned: MaterialScheduleRow[];
+  honesty: string;
+  line_count: number;
+};
+
+/** Group live quote lines by rate-card supplier for trade order / delivery sheets. */
+export function buildSupplierOrderSheet(input: {
+  lineItems?: LineItem[];
+  rateCard?: RateCard[];
+}): SupplierOrderSheet {
+  const schedule = buildMaterialSchedule(input);
+  const bySupplier = new Map<string, MaterialScheduleRow[]>();
+  const unassigned: MaterialScheduleRow[] = [];
+  for (const row of schedule.rows) {
+    const supplier = row.supplier?.trim();
+    if (!supplier) {
+      unassigned.push(row);
+      continue;
+    }
+    const list = bySupplier.get(supplier) ?? [];
+    list.push(row);
+    bySupplier.set(supplier, list);
+  }
+  const groups = [...bySupplier.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, "en-AU"))
+    .map(([supplier, rows]) => ({ supplier, rows }));
+  return {
+    groups,
+    unassigned,
+    honesty: SUPPLIER_ORDER_HONESTY,
+    line_count: schedule.rows.length,
+  };
+}
+
+/** Markdown trade order / delivery request — same commercial truth as the quote. */
+export function supplierOrderSheetMarkdown(
+  sheet: SupplierOrderSheet,
+  meta: { address: string; generatedOn?: string },
+): string {
+  const lines: string[] = [];
+  const day = meta.generatedOn ?? new Date().toISOString().slice(0, 10);
+  lines.push(`# Supplier order / delivery request — ${meta.address}`);
+  lines.push("");
+  lines.push(`Generated ${day}.`);
+  lines.push("");
+  lines.push(`_${sheet.honesty}_`);
+  lines.push("");
+  if (sheet.line_count === 0) {
+    lines.push("_No quote / BOM lines to order yet._");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  const emitTable = (rows: MaterialScheduleRow[]) => {
+    lines.push("| SKU | Item | Qty | Unit | Indicative rate |");
+    lines.push("|-----|------|-----|------|-----------------|");
+    for (const r of rows) {
+      lines.push(
+        `| ${r.sku} | ${r.label} | ${r.qty} | ${r.unit} | ${r.rate.toFixed(2)} |`,
+      );
+    }
+    lines.push("");
+  };
+
+  for (const group of sheet.groups) {
+    lines.push(`## ${group.supplier}`);
+    lines.push("");
+    lines.push("### Order list");
+    lines.push("");
+    emitTable(group.rows);
+    lines.push("### Delivery request");
+    lines.push("");
+    lines.push(
+      `- Deliver to: ${meta.address} (confirm access, drop zone, and site contact).`,
+    );
+    lines.push(
+      `- Requested materials: ${group.rows.length} line(s) as listed above.`,
+    );
+    lines.push("- Preferred window: TBA — confirm with site supervisor.");
+    lines.push("- Note: quantities from live quote; confirm pack sizes before dispatch.");
+    lines.push("");
+  }
+
+  if (sheet.unassigned.length > 0) {
+    lines.push("## Supplier TBA");
+    lines.push("");
+    lines.push(
+      "Rate card has no supplier for these SKUs — assign a trade account before placing the order.",
+    );
+    lines.push("");
+    lines.push("### Order list");
+    lines.push("");
+    emitTable(sheet.unassigned);
+    lines.push("### Delivery request");
+    lines.push("");
+    lines.push(
+      `- Deliver to: ${meta.address} (confirm access, drop zone, and site contact).`,
+    );
+    lines.push(
+      `- Requested materials: ${sheet.unassigned.length} line(s) — supplier still TBA.`,
+    );
+    lines.push("- Preferred window: TBA — confirm with site supervisor.");
+    lines.push("");
+  }
+
+  lines.push(
+    "> Not a fake brochure. Lines come from the live quote / BOM. Live supplier price APIs are out of scope — confirm with the trade account.",
+  );
+  return lines.join("\n");
 }
 
 /** CSV helpers for schedule export. */
@@ -384,7 +512,7 @@ export function lightingScheduleCsv(sched: LightingSchedule): string {
 
 export function materialScheduleCsv(sched: MaterialSchedule): string {
   return scheduleToCsv(
-    ["sku", "label", "qty", "unit", "rate", "total", "rate_source"],
+    ["sku", "label", "qty", "unit", "rate", "total", "rate_source", "supplier"],
     sched.rows.map((r) => ({
       sku: r.sku,
       label: r.label,
@@ -393,6 +521,7 @@ export function materialScheduleCsv(sched: MaterialSchedule): string {
       rate: r.rate,
       total: r.total,
       rate_source: r.rate_source,
+      supplier: r.supplier,
     })),
   );
 }

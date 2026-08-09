@@ -15,8 +15,10 @@ import {
   buildEnvelopeBrief,
   buildEstablishmentCalendar,
   buildHandoverPack,
+  buildSupplierOrderSheet,
   formatSitePlanQuoteSection,
   isTier1WrightsTerrace,
+  supplierOrderSheetMarkdown,
   TIER1_WRIGHTS_SAVINGS,
   totalEmbodiedCarbon,
   type RateCardLookup,
@@ -684,6 +686,28 @@ export function buildHandoverPackDoc(args: Args): string {
   return lines.join("\n");
 }
 
+export function buildSupplierOrderDoc(args: Args): string {
+  const standard =
+    args.costings.find((c) => c.scenario === "standard") ?? args.costings[0];
+  if (!standard || standard.line_items.length === 0) {
+    throw new Error(
+      "Live quote / BOM lines are required before generating a supplier order.",
+    );
+  }
+  const sheet = buildSupplierOrderSheet({
+    lineItems: standard.line_items.filter((l) => !l.is_provisional),
+    rateCard: args.rateCard,
+  });
+  if (sheet.line_count === 0) {
+    throw new Error(
+      "No firm quote lines to order — resolve provisional items or add costed scope first.",
+    );
+  }
+  return supplierOrderSheetMarkdown(sheet, {
+    address: args.project.address,
+  });
+}
+
 export function generateForKind(kind: OutputKind, args: Args): string {
   switch (kind) {
     case "task_list":
@@ -706,5 +730,7 @@ export function generateForKind(kind: OutputKind, args: Args): string {
       return buildEstablishmentCalendarDoc(args);
     case "handover_pack":
       return buildHandoverPackDoc(args);
+    case "supplier_order":
+      return buildSupplierOrderDoc(args);
   }
 }

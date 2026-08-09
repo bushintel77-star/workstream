@@ -28,6 +28,8 @@ const NEEDS_DESIGN: OutputKind[] = [
   "permit_yarra_heritage",
 ];
 const NEEDS_AUDIT_PASS: OutputKind[] = ["quote"];
+/** Trade order sheet — live costing lines only (no brochure, no audit gate). */
+const NEEDS_COSTING_LINES: OutputKind[] = ["supplier_order"];
 
 export async function runOutput(
   store: Store,
@@ -63,6 +65,16 @@ export async function runOutput(
     if (audit && !audit.passed) {
       throw new Error(
         "Audit has blocking findings. Resolve or override before generating outputs.",
+      );
+    }
+  }
+  if (NEEDS_COSTING_LINES.includes(kind)) {
+    const standard =
+      costings.find((c) => c.scenario === "standard") ?? costings[0];
+    const firm = standard?.line_items.filter((l) => !l.is_provisional) ?? [];
+    if (firm.length === 0) {
+      throw new Error(
+        "Live quote / BOM lines are required before generating a supplier order.",
       );
     }
   }

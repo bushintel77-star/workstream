@@ -148,6 +148,13 @@ test.describe("Instant Planner handoff", () => {
     await expect(page.getByTestId("assist-pack-checklist")).toBeVisible({
       timeout: 30_000,
     });
+    await expect(page.getByTestId("assist-pack-item-supplier")).toHaveAttribute(
+      "data-status",
+      "skipped",
+    );
+    await expect(page.getByTestId("assist-pack-reason-supplier")).toContainText(
+      /No live quote|BOM lines/i,
+    );
     await expect(page.getByTestId("assist-pack-open-sun-cast")).toBeVisible();
     await page.getByTestId("assist-pack-open-sun-cast").click();
     await expect(page.getByTestId("handoff-design-studio")).toHaveAttribute(

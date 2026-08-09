@@ -24,7 +24,11 @@ import {
 import type { PresentationPackChecklistItem } from "../../../../../lib/api";
 import css from "./studioAssistPanel.module.css";
 
-export type StudioPackNavTarget = "sun-cast" | "elevations" | "freeze";
+export type StudioPackNavTarget =
+  | "sun-cast"
+  | "elevations"
+  | "freeze"
+  | "supplier";
 
 type Props = {
   projectId: string;
@@ -39,7 +43,18 @@ type Props = {
 };
 
 function isStudioPackNavId(id: string): id is StudioPackNavTarget {
-  return id === "sun-cast" || id === "elevations" || id === "freeze";
+  return (
+    id === "sun-cast" ||
+    id === "elevations" ||
+    id === "freeze" ||
+    id === "supplier"
+  );
+}
+
+/** Relative /projects/… deep links stay in-studio; absolute output HTML opens externally. */
+function isStudioRelativeUri(uri: string | null | undefined): boolean {
+  if (!uri) return false;
+  return uri.startsWith("/projects/");
 }
 
 async function persistCanvas(
@@ -98,6 +113,7 @@ export function StudioAssistPanel({
     brochure: string | null;
     quote: string | null;
     schedule: string | null;
+    supplier: string | null;
   } | null>(null);
   const [poolNote, setPoolNote] = useState<string | null>(null);
   const [assistMetric, setAssistMetric] = useState<string | null>(null);
@@ -235,10 +251,15 @@ export function StudioAssistPanel({
           brochure: res.brochure_uri,
           quote: res.quote_uri,
           schedule: res.schedule_uri ?? null,
+          supplier: res.supplier_uri ?? null,
         });
         const openUri =
-          res.brochure_uri || res.quote_uri || res.schedule_uri || null;
-        if (openUri) {
+          res.brochure_uri ||
+          res.quote_uri ||
+          res.schedule_uri ||
+          res.supplier_uri ||
+          null;
+        if (openUri && /^https?:\/\//i.test(openUri)) {
           window.open(openUri, "_blank", "noopener,noreferrer");
         }
       } catch {
@@ -369,29 +390,44 @@ export function StudioAssistPanel({
                   Open plant schedule
                 </a>
               ) : null}
+              {packLinks.supplier ? (
+                <a
+                  className={css.link}
+                  href={packLinks.supplier}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="assist-pack-link-supplier"
+                >
+                  Open supplier order
+                </a>
+              ) : null}
             </div>
           ) : null}
           {packChecklist && packChecklist.length > 0 ? (
             <ul className={css.checklist} data-testid="assist-pack-checklist">
               {packChecklist.map((item) => {
-                const studioNav =
-                  isStudioPackNavId(item.id) && Boolean(onStudioPackNav);
                 const external =
-                  Boolean(item.uri) &&
-                  /^https?:\/\//i.test(item.uri ?? "") &&
-                  !studioNav;
+                  Boolean(item.uri) && /^https?:\/\//i.test(item.uri ?? "");
+                const studioNav =
+                  isStudioPackNavId(item.id) &&
+                  Boolean(onStudioPackNav) &&
+                  (item.status === "ready" || item.status === "studio") &&
+                  (isStudioRelativeUri(item.uri) || !item.uri);
                 return (
                   <li
                     key={item.id}
                     data-status={item.status}
                     data-testid={`assist-pack-item-${item.id}`}
+                    title={item.reason ?? undefined}
                   >
                     {studioNav ? (
                       <button
                         type="button"
                         className={css.checkLink}
                         data-testid={`assist-pack-open-${item.id}`}
-                        onClick={() => onStudioPackNav?.(item.id as StudioPackNavTarget)}
+                        onClick={() =>
+                          onStudioPackNav?.(item.id as StudioPackNavTarget)
+                        }
                       >
                         {item.label}
                       </button>
@@ -411,6 +447,14 @@ export function StudioAssistPanel({
                     <span className={css.checkStatus}>
                       {checklistStatusLabel(item.status)}
                     </span>
+                    {item.reason && item.status === "skipped" ? (
+                      <span
+                        className={css.checkReason}
+                        data-testid={`assist-pack-reason-${item.id}`}
+                      >
+                        {item.reason}
+                      </span>
+                    ) : null}
                   </li>
                 );
               })}

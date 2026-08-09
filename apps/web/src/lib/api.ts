@@ -432,12 +432,14 @@ export type PresentationPackChecklistItem = {
   label: string;
   status: "generated" | "ready" | "studio" | "skipped";
   uri?: string | null;
+  reason?: string | null;
 };
 
 export async function presentationPackApi(projectId: string): Promise<{
   brochure_uri: string | null;
   quote_uri: string | null;
   schedule_uri: string | null;
+  supplier_uri: string | null;
   notes: string[];
   checklist: PresentationPackChecklistItem[];
 }> {
@@ -1032,7 +1034,10 @@ export type OutputKind =
   | "scope"
   | "daily_site_report"
   | "permit_stonnington_stormwater"
-  | "permit_yarra_heritage";
+  | "permit_yarra_heritage"
+  | "establishment_calendar"
+  | "handover_pack"
+  | "supplier_order";
 
 export type Output = {
   id: string;

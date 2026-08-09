@@ -581,6 +581,9 @@ export function HandoffDesignStudio({
   >(null);
   /** Landscape-ops schedules + documentation pack. */
   const [opsSchedulesOpen, setOpsSchedulesOpen] = useState(false);
+  const [opsSchedulesKind, setOpsSchedulesKind] = useState<
+    "planting" | "trench" | "lighting" | "material"
+  >("planting");
   /** Shared-rev frost toast — dismissible; not a sticky slab. */
   const [shareBannerDismissed, setShareBannerDismissed] = useState(false);
   /** Drafting grid controls — toggled from the tool dock (not a separate cluster). */
@@ -2552,6 +2555,23 @@ export function HandoffDesignStudio({
     const branches = searchParams.get("branches");
     if (branches === "1" || branches === "true") {
       setDesignBranchOpen(true);
+    }
+    const ops = searchParams.get("ops");
+    if (
+      ops === "planting" ||
+      ops === "trench" ||
+      ops === "lighting" ||
+      ops === "material"
+    ) {
+      setOpsSchedulesKind(ops);
+      setOpsSchedulesOpen(true);
+    }
+    const quote = searchParams.get("quote");
+    if (quote === "1" || quote === "true") {
+      studio.setUi({
+        ...withRightDataPanel("quote"),
+        utilityPanel: null,
+      });
     }
     // Intentionally keyed on the query string — apply once per deep-link change.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- studio.setUi stable enough; avoid re-firing on every ui tick
@@ -5071,6 +5091,8 @@ export function HandoffDesignStudio({
                 next.set("mode", "cad");
                 next.set("shade", "1");
                 next.delete("branches");
+                next.delete("ops");
+                next.delete("quote");
                 window.history.replaceState(
                   window.history.state,
                   "",
@@ -5080,6 +5102,27 @@ export function HandoffDesignStudio({
               }
               if (target === "elevations") {
                 syncModeUrl("elevation");
+                return;
+              }
+              if (target === "supplier") {
+                syncModeUrl("cad");
+                setOpsSchedulesKind("material");
+                setOpsSchedulesOpen(true);
+                studio.setUi({
+                  ...withRightDataPanel("quote"),
+                  utilityPanel: null,
+                });
+                const next = new URLSearchParams(searchParams.toString());
+                next.set("mode", "cad");
+                next.set("ops", "material");
+                next.set("quote", "1");
+                next.delete("shade");
+                next.delete("branches");
+                window.history.replaceState(
+                  window.history.state,
+                  "",
+                  `${pathname}?${next.toString()}`,
+                );
                 return;
               }
               setDesignBranchOpen(true);
@@ -5108,6 +5151,7 @@ export function HandoffDesignStudio({
         <OpsSchedulesDock
           projectId={projectId}
           open={opsSchedulesOpen}
+          initialKind={opsSchedulesKind}
           onClose={() => setOpsSchedulesOpen(false)}
           onProposeCallouts={() => {
             void import("@workstream/domain").then(

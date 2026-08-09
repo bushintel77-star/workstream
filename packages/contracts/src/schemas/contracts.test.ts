@@ -221,6 +221,9 @@ describe("OutputSchema", () => {
       "daily_site_report",
       "permit_stonnington_stormwater",
       "permit_yarra_heritage",
+      "establishment_calendar",
+      "handover_pack",
+      "supplier_order",
     ];
     for (const kind of kinds) {
       const ok = OutputSchema.safeParse({

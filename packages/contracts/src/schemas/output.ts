@@ -11,6 +11,8 @@ export const OutputKindSchema = z.enum([
   "permit_yarra_heritage",
   "establishment_calendar",
   "handover_pack",
+  /** Internal trade order / delivery request from live quote lines — not a brochure. */
+  "supplier_order",
 ]);
 export type OutputKind = z.infer<typeof OutputKindSchema>;
 

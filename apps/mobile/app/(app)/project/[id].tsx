@@ -1331,6 +1331,7 @@ const OUTPUT_ORDER: OutputKind[] = [
   "permit_yarra_heritage",
   "establishment_calendar",
   "handover_pack",
+  "supplier_order",
 ];
 const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
   task_list: { title: "Task list", sub: "Site sequence for the crew" },
@@ -1357,6 +1358,10 @@ const OUTPUT_LABEL: Record<OutputKind, { title: string; sub: string }> = {
   handover_pack: {
     title: "Handover pack",
     sub: "Care notes, irrigation, lighting, warranty",
+  },
+  supplier_order: {
+    title: "Supplier order",
+    sub: "Trade order / delivery request from live quote lines",
   },
 };
 
