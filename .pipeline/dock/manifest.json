@@ -18,7 +18,7 @@
         "apps/mobile/src/components/studio/DesignAssetPalette.tsx"
       ],
       "saddle": {
-        "direction": ": \"Commit to a branch, typecheck, lint, then merge to main.",
+        "direction": "Commit to a branch, typecheck, lint, then merge to main.",
         "next_action": "git checkout -b feat/a11y-pass && git add -A && commit",
         "context": "P1-P3 a11y items complete. Web: main landmark, QuoteBuilder section, CompactModeNav list, aria-keyshortcuts. Mobile: toolbar labels, status live regions, asset palette tablist, canvas symbol labels."
       },
@@ -43,7 +43,7 @@
         "packages/domain/src/irrigation-assist.test.ts"
       ],
       "saddle": {
-        "direction": ": \"Commit domain logic + tests to a branch. UI depends on this. Cannot ship without the UI from stash@{2}.",
+        "direction": "Commit domain logic + tests to a branch. UI depends on this. Cannot ship without the UI from stash@{2}.",
         "next_action": "git checkout -b feat/irrigation-edit-loop && git add packages/domain/src/irrigation-assist.* && commit",
         "context": "346 lines: isAssistIrrigationZone, listAssistIrrigationZones, isAssistLightingPlacement, clampEmitterSpacingCm, setAssistEmitterSpacing, scaleAssistPipeRuns, nudgeAssistLuminaires, estimateIrrigationAssistLive, estimateLightingAssistLive, assistLightingPlacementLabel. Full test coverage."
       },
@@ -76,7 +76,7 @@
         "packages/domain/src/canvas-mode.test.ts"
       ],
       "saddle": {
-        "direction": ": \"Apply stash-2.patch on top of the irrigation-edit-loop branch. Wires emitter spacing slider to setAssistEmitterSpacing, pipe-run scaling to scaleAssistPipeRuns, luminaire nudge to nudgeAssistLuminaires. Shows live coverage_pct and cost_aud.",
+        "direction": "Apply stash-2.patch on top of the irrigation-edit-loop branch. Wires emitter spacing slider to setAssistEmitterSpacing, pipe-run scaling to scaleAssistPipeRuns, luminaire nudge to nudgeAssistLuminaires. Shows live coverage_pct and cost_aud.",
         "next_action": "git apply .pipeline/dock/patches/stash-2.patch on the feat/irrigation-edit-loop branch",
         "context": "327 lines of UI + supporting changes. The StudioAssistPanel manages draftZones, draftLights, canvasAssistZones, canvasAssistLights, liveIrrigation, liveLighting state."
       },
@@ -101,7 +101,7 @@
         ".env.example"
       ],
       "saddle": {
-        "direction": ": \"Part of stash@{2}. Adds feed field, honesty field, rate-sheet file loading from SUPPLIERS_RATE_SHEET_DIR, dev_canned vs rate_sheet mode. Needed for honest pricing in live estimates.",
+        "direction": "Part of stash@{2}. Adds feed field, honesty field, rate-sheet file loading from SUPPLIERS_RATE_SHEET_DIR, dev_canned vs rate_sheet mode. Needed for honest pricing in live estimates.",
         "next_action": "Applied together with irrigation-edit-loop-ui when stash-2.patch is applied",
         "context": "230 lines in suppliers.ts. Without this, live cost estimates use canned dev prices instead of real supplier rate sheets."
       },
@@ -123,7 +123,7 @@
         "apps/web/src/components/canvas/handoff/HandoffDesignStudio.tsx"
       ],
       "saddle": {
-        "direction": ": \"Apply stash-0.patch. Wires parseElevationLook, onOpenElevations callback, ?mode=elevation&look=N URL sync. Part of the elevation presentation flow.",
+        "direction": "Apply stash-0.patch. Wires parseElevationLook, onOpenElevations callback, ?mode=elevation&look=N URL sync. Part of the elevation presentation flow.",
         "next_action": "git apply .pipeline/dock/patches/stash-0.patch on a feat/elevation-mode branch",
         "context": "~69 lines. Enables deep-linking to specific elevation views."
       },
@@ -147,7 +147,7 @@
         "apps/web/src/components/canvas/handoff/features/assist/studioAssistPanel.module.css"
       ],
       "saddle": {
-        "direction": ": \"Apply stash-0.patch then stash-1.patch. Adds honesty caption ('Indicative elevation...'), empty state ('No standing profiles yet...'), data-elev-empty attribute.",
+        "direction": "Apply stash-0.patch then stash-1.patch. Adds honesty caption ('Indicative elevation...'), empty state ('No standing profiles yet...'), data-elev-empty attribute.",
         "next_action": "git apply both patches on the elevation branch",
         "context": "~50 lines across ElevationBoard.tsx and elevation.module.css. Required by the honesty principle in the design spec."
       },
@@ -168,7 +168,7 @@
         "packages/domain/src/output-job.ts"
       ],
       "saddle": {
-        "direction": ": \"Part of stash@{0}. Adds overlayQuoteLinesWithSupplierPrices integration to output-generators. Overlays real supplier prices onto quote lines.",
+        "direction": "Part of stash@{0}. Adds overlayQuoteLinesWithSupplierPrices integration to output-generators. Overlays real supplier prices onto quote lines.",
         "next_action": "Applied with stash-0.patch, but needs supplier-rate-sheet-loading from stash@{2} first",
         "context": "~22 lines. Without supplier rate-sheet loading, this overlay has nothing to overlay."
       },
@@ -186,7 +186,7 @@
       "blocks": [],
       "files": [],
       "saddle": {
-        "direction": ": \"On main but not deployed. Railway API is 5 commits behind. Will go live on next deploy.",
+        "direction": "On main but not deployed. Railway API is 5 commits behind. Will go live on next deploy.",
         "next_action": "No action needed until deploy. Verify live after Railway picks up main.",
         "context": "HeroDetailOverlay elevated to match Workstream design DNA. Committed at 05f97b8, merged at 76bc677."
       },
@@ -203,7 +203,7 @@
       "blocks": [],
       "files": [],
       "saddle": {
-        "direction": ": \"On main but not deployed. Fully implemented: proposeShadowAlternatives, applyShadowAlternative, NextBestOptionChip with intensity prefs.",
+        "direction": "On main but not deployed. Fully implemented: proposeShadowAlternatives, applyShadowAlternative, NextBestOptionChip with intensity prefs.",
         "next_action": "No action needed until deploy.",
         "context": "Shadow ledger complete. Solar lighting, permeable paving, setback geometry alternatives. Off/subtle/prominent intensity."
       },
@@ -221,7 +221,7 @@
       ],
       "files": [],
       "saddle": {
-        "direction": ": \"On main but not deployed. Issuing a presentation deck freezes quote figures and blocks edits.",
+        "direction": "On main but not deployed. Issuing a presentation deck freezes quote figures and blocks edits.",
         "next_action": "No action needed until deploy.",
         "context": "Partial §4.5. Freeze exists, branch tree of thumbnails does not."
       },
@@ -240,7 +240,7 @@
       "blocks": [],
       "files": [],
       "saddle": {
-        "direction": ": \"Not started. Spec calls for lightweight visual tree of thumbnails for exploring variations from frozen states. Needs design work before coding.",
+        "direction": "Not started. Spec calls for lightweight visual tree of thumbnails for exploring variations from frozen states. Needs design work before coding.",
         "next_action": "Design the branch tree UI. Consider how it relates to existing VariationFilmstrip.",
         "context": "Spec: 'Branching is lightweight and visual — a simple tree of thumbnails rather than a complex Git-style interface.'"
       },

@@ -58,7 +58,7 @@ for (let i = 0; i < lines.length; i++) {
   }
 
   if (inSaddle && currentItem) {
-    if (trimmed.startsWith('direction:')) currentItem.saddle.direction = trimmed.substring(9).trim().replace(/^"|"$/g, '');
+    if (trimmed.startsWith('direction:')) currentItem.saddle.direction = trimmed.substring(10).trim().replace(/^"|"$/g, '');
     else if (trimmed.startsWith('next_action:')) currentItem.saddle.next_action = trimmed.substring(12).trim().replace(/^"|"$/g, '');
     else if (trimmed.startsWith('context:')) currentItem.saddle.context = trimmed.substring(8).trim().replace(/^"|"$/g, '');
     else if (!line.startsWith('      ')) { inSaddle = false; i--; continue; }
