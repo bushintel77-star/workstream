@@ -77,3 +77,48 @@
   font-weight: 600;
   background: var(--hc-accent-wash);
 }
+
+.packLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.link {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--hc-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.checklist li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: var(--hc-ink-muted);
+}
+
+.checkStatus {
+  flex-shrink: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--hc-ink-faint);
+}
+
+.checklist li[data-status="generated"] .checkStatus,
+.checklist li[data-status="ready"] .checkStatus {
+  color: var(--hc-ink);
+}

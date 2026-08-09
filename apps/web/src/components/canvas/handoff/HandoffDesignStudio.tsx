@@ -5049,6 +5049,7 @@ export function HandoffDesignStudio({
             structuredToolsOpen={structuredToolsOpen}
             onAssistOpenChange={setPlannerAssistOpen}
             onStructuredToolsOpenChange={setStructuredToolsOpen}
+            onOpenBranches={() => setDesignBranchOpen(true)}
             items={studio.items}
             strokes={studio.strokes}
             irrigationZones={studio.irrigationZones}

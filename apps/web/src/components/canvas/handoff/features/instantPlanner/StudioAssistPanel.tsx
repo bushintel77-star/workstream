@@ -13,6 +13,8 @@ import {
   proposeIrrigationAssist,
   proposeLightingAssist,
   recognizeStroke,
+  summariseIrrigationAssist,
+  summariseLightingAssist,
 } from "@workstream/domain";
 import {
   listLeftoversAction,
@@ -20,6 +22,7 @@ import {
   registerLeftoverAction,
   saveDesignCanvasAction,
 } from "../../../../../app/actions";
+import type { PresentationPackChecklistItem } from "../../../../../lib/api";
 import css from "./studioAssistPanel.module.css";
 
 type Props = {
@@ -50,6 +53,23 @@ async function persistCanvas(
   );
 }
 
+function checklistStatusLabel(
+  status: PresentationPackChecklistItem["status"],
+): string {
+  switch (status) {
+    case "generated":
+      return "Generated";
+    case "ready":
+      return "Ready";
+    case "studio":
+      return "On canvas";
+    case "skipped":
+      return "Skipped";
+    default:
+      return status;
+  }
+}
+
 export function StudioAssistPanel({
   projectId,
   world,
@@ -63,11 +83,40 @@ export function StudioAssistPanel({
   const [pending, startTransition] = useTransition();
   const [pool, setPool] = useState<LeftoverStock[]>([]);
   const [packNotes, setPackNotes] = useState<string[] | null>(null);
+  const [packChecklist, setPackChecklist] = useState<
+    PresentationPackChecklistItem[] | null
+  >(null);
+  const [packLinks, setPackLinks] = useState<{
+    brochure: string | null;
+    quote: string | null;
+    schedule: string | null;
+  } | null>(null);
   const [poolNote, setPoolNote] = useState<string | null>(null);
+  const [assistMetric, setAssistMetric] = useState<string | null>(null);
+
+  const softArea = useMemo(() => {
+    return (
+      world?.spatial_facts
+        .filter((f) => f.layer === "softscape" || f.layer === "irrigation")
+        .reduce((s, f) => s + f.area_m2, 0) ?? 90
+    );
+  }, [world]);
 
   const lighting = useMemo(
     () => (world ? proposeLightingAssist(world.spatial_facts) : []),
     [world],
+  );
+  const irrigationPreview = useMemo(
+    () => proposeIrrigationAssist({ openAreaM2: softArea }),
+    [softArea],
+  );
+  const irrigationSummary = useMemo(
+    () => summariseIrrigationAssist(irrigationPreview, softArea),
+    [irrigationPreview, softArea],
+  );
+  const lightingSummary = useMemo(
+    () => summariseLightingAssist(lighting),
+    [lighting],
   );
   const leftoverHint = useMemo(
     () => matchLeftoversToBom(pool, world?.live_bom ?? []),
@@ -90,10 +139,6 @@ export function StudioAssistPanel({
 
   const applyIrrigation = () => {
     startTransition(async () => {
-      const softArea =
-        world?.spatial_facts
-          .filter((f) => f.layer === "softscape" || f.layer === "irrigation")
-          .reduce((s, f) => s + f.area_m2, 0) ?? 90;
       const zones: IrrigationZone[] = proposeIrrigationAssist({
         openAreaM2: softArea,
       });
@@ -110,6 +155,9 @@ export function StudioAssistPanel({
         irrigation_zones: [...kept, ...tagged],
       });
       onCanvasSaved?.(res.canvas);
+      setAssistMetric(
+        `Irrigation placed — ${summariseIrrigationAssist(tagged, softArea).label}. Adjust emitters on the layer; cost updates with the live estimator.`,
+      );
     });
   };
 
@@ -157,6 +205,9 @@ export function StudioAssistPanel({
       ];
       const res = await persistCanvas(projectId, canvas, { placements });
       onCanvasSaved?.(res.canvas);
+      setAssistMetric(
+        `Lighting placed — ${lightingSummary.label}. Move fixtures freely; Instant Planner reflects coverage cost.`,
+      );
     });
   };
 
@@ -184,15 +235,23 @@ export function StudioAssistPanel({
       try {
         const res = await presentationPackAction(projectId);
         setPackNotes(res.notes);
-        if (res.brochure_uri) {
-          window.open(res.brochure_uri, "_blank", "noopener,noreferrer");
-        } else if (res.quote_uri) {
-          window.open(res.quote_uri, "_blank", "noopener,noreferrer");
+        setPackChecklist(res.checklist ?? []);
+        setPackLinks({
+          brochure: res.brochure_uri,
+          quote: res.quote_uri,
+          schedule: res.schedule_uri ?? null,
+        });
+        const openUri =
+          res.brochure_uri || res.quote_uri || res.schedule_uri || null;
+        if (openUri) {
+          window.open(openUri, "_blank", "noopener,noreferrer");
         }
       } catch {
         setPackNotes([
           "Presentation pack unavailable - finish design pipeline first.",
         ]);
+        setPackChecklist(null);
+        setPackLinks(null);
       }
     });
   };
@@ -230,6 +289,9 @@ export function StudioAssistPanel({
             Convert freehand strokes
           </button>
           <p className={css.kicker}>Irrigation and lighting</p>
+          <p className={css.meta} data-testid="assist-irrigation-preview">
+            Preview: {irrigationSummary.label}
+          </p>
           <button
             type="button"
             className={css.btn}
@@ -248,11 +310,16 @@ export function StudioAssistPanel({
           >
             Place lighting assist ({lighting.length})
           </button>
-          <p className={css.meta}>
+          <p className={css.meta} data-testid="assist-lighting-preview">
             {lighting.length > 0
-              ? `${lighting.length} uplights near trees`
+              ? `Preview: ${lightingSummary.label}`
               : "Place trees to unlock lighting assist"}
           </p>
+          {assistMetric ? (
+            <p className={css.chip} data-testid="assist-metric-chip">
+              {assistMetric}
+            </p>
+          ) : null}
           <p className={css.kicker}>Resource pool</p>
           <button
             type="button"
@@ -280,6 +347,52 @@ export function StudioAssistPanel({
           >
             Generate presentation pack
           </button>
+          {packLinks ? (
+            <div className={css.packLinks} data-testid="assist-pack-links">
+              {packLinks.brochure ? (
+                <a
+                  className={css.link}
+                  href={packLinks.brochure}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open brochure
+                </a>
+              ) : null}
+              {packLinks.quote ? (
+                <a
+                  className={css.link}
+                  href={packLinks.quote}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open quote
+                </a>
+              ) : null}
+              {packLinks.schedule ? (
+                <a
+                  className={css.link}
+                  href={packLinks.schedule}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open plant schedule
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+          {packChecklist && packChecklist.length > 0 ? (
+            <ul className={css.checklist} data-testid="assist-pack-checklist">
+              {packChecklist.map((item) => (
+                <li key={item.id} data-status={item.status}>
+                  <span>{item.label}</span>
+                  <span className={css.checkStatus}>
+                    {checklistStatusLabel(item.status)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {packNotes
             ? packNotes.map((n) => (
                 <p key={n} className={css.meta}>

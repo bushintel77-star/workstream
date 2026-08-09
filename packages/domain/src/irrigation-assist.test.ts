@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   proposeIrrigationAssist,
   proposeLightingAssist,
+  summariseIrrigationAssist,
+  summariseLightingAssist,
 } from "./irrigation-assist";
 
 describe("irrigation-assist", () => {
@@ -37,5 +39,34 @@ describe("irrigation-assist", () => {
     );
     expect(pts).toHaveLength(1);
     expect(pts[0]!.fixture).toMatch(/uplight/i);
+  });
+
+  it("summarises irrigation coverage and indicative cost", () => {
+    const zones = proposeIrrigationAssist({
+      openAreaM2: 140,
+      idFactory: (() => {
+        let n = 0;
+        return () => `z-${++n}`;
+      })(),
+    });
+    const summary = summariseIrrigationAssist(zones, 140);
+    expect(summary.zone_count).toBe(2);
+    expect(summary.open_area_m2).toBe(140);
+    expect(summary.cost_aud).toBeGreaterThan(0);
+    expect(summary.label).toMatch(/drip zone/i);
+  });
+
+  it("summarises lighting fixture cost", () => {
+    const summary = summariseLightingAssist([
+      {
+        id: "l1",
+        fixture: "Brass uplight",
+        x_pct: 40,
+        y_pct: 40,
+        count: 2,
+      },
+    ]);
+    expect(summary.fixture_count).toBe(2);
+    expect(summary.cost_aud).toBeGreaterThan(0);
   });
 });

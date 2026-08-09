@@ -26,6 +26,7 @@ import {
 } from "./HeroDetailOverlay";
 import { HeroFeatureMarkers } from "./HeroFeatureMarkers";
 import { LandscapeFeaturesLayer } from "./LandscapeFeaturesLayer";
+import { LeftoverAlertChip } from "./LeftoverAlertChip";
 import { NextBestOptionChip } from "./NextBestOptionChip";
 import { StudioAssistPanel } from "./StudioAssistPanel";
 import { StructuredToolOverlay } from "./StructuredToolOverlay";
@@ -42,6 +43,8 @@ type Props = {
   structuredToolsOpen?: boolean;
   onAssistOpenChange?: (open: boolean) => void;
   onStructuredToolsOpenChange?: (open: boolean) => void;
+  /** Open design-branch dock after freeze (PDF §4.5 clarity). */
+  onOpenBranches?: () => void;
   items: StudioItem[];
   strokes: SketchStroke[];
   irrigationZones: DesignCanvas["irrigation_zones"];
@@ -61,6 +64,7 @@ export function InstantPlannerChrome({
   structuredToolsOpen = false,
   onAssistOpenChange,
   onStructuredToolsOpenChange,
+  onOpenBranches,
   items,
   strokes,
   irrigationZones,
@@ -76,6 +80,7 @@ export function InstantPlannerChrome({
   );
   const [hero, setHero] = useState<HeroFeatureTarget | null>(null);
   const [freezeNote, setFreezeNote] = useState<string | null>(null);
+  const [freezeBranchOk, setFreezeBranchOk] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -175,6 +180,7 @@ export function InstantPlannerChrome({
 
   const freezeClientOption = () => {
     setFreezeNote(null);
+    setFreezeBranchOk(false);
     startTransition(async () => {
       const stamp = new Date().toLocaleString("en-AU", {
         day: "2-digit",
@@ -192,19 +198,26 @@ export function InstantPlannerChrome({
           const j = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(j.error || "Freeze failed");
         }
-        setFreezeNote("Client option frozen as a design branch.");
+        setFreezeNote(
+          "Client option frozen. Subsequent edits stay on the live tip; open Design branches to compare.",
+        );
+        setFreezeBranchOk(true);
         setHero(null);
       } catch (err) {
         setFreezeNote(
           err instanceof Error ? err.message : "Could not freeze option",
         );
+        setFreezeBranchOk(false);
       }
     });
   };
 
   const showStructured = structuredTools && structuredToolsOpen;
   const showHud =
-    Boolean(freezeNote) || assistOpen || showStructured || Boolean(world);
+    Boolean(freezeNote) ||
+    assistOpen ||
+    showStructured ||
+    Boolean(world);
 
   return (
     <>
@@ -230,6 +243,11 @@ export function InstantPlannerChrome({
             paper={paper}
             onApply={onApplyShadow}
           />
+          <LeftoverAlertChip
+            world={world}
+            paper={paper}
+            onOpenAssist={() => onAssistOpenChange?.(true)}
+          />
           {assistOpen ? (
             <StudioAssistPanel
               projectId={projectId}
@@ -250,9 +268,39 @@ export function InstantPlannerChrome({
             />
           ) : null}
           {freezeNote ? (
-            <p className={css.toast} role="status">
-              {freezeNote}
-            </p>
+            <div
+              className={css.toast}
+              role="status"
+              data-testid="instant-planner-freeze-toast"
+            >
+              <p className={css.toastText}>{freezeNote}</p>
+              <div className={css.toastActions}>
+                {freezeBranchOk && onOpenBranches ? (
+                  <button
+                    type="button"
+                    className={css.toastBtn}
+                    data-testid="instant-planner-view-branches"
+                    onClick={() => {
+                      onOpenBranches();
+                      setFreezeNote(null);
+                      setFreezeBranchOk(false);
+                    }}
+                  >
+                    View branches
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className={css.toastBtnGhost}
+                  onClick={() => {
+                    setFreezeNote(null);
+                    setFreezeBranchOk(false);
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
           ) : null}
         </CameraChrome>
       ) : null}
