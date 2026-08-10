@@ -267,6 +267,8 @@ type Ui = {
   setbackOn: boolean;
   /** Buildable area wash — site minus every exclusion, with attribution. */
   buildableAreaOn: boolean;
+  /** Pointer-mark settings sheet — summoned from Cmd+K, never a ribbon button. */
+  pointerSettingsOn: boolean;
   /** Indicative sun-hours mesh on the % board. */
   shadeOn: boolean;
   growth: GrowthStage;
@@ -659,6 +661,7 @@ function initialState(opts: {
       isolatedLayer: null,
       setbackOn: false,
       buildableAreaOn: false,
+      pointerSettingsOn: false,
       shadeOn: false,
       growth: "mature",
       sunMin: 12 * 60 + 26,
@@ -2606,10 +2609,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
           items: snap.items.map((i) =>
             i.id === id && !i.ghost && i.t === "exist"
               ? {
-                  ...i,
-                  dbhM: combined,
-                  stemDbhM: clean.length > 1 ? clean : undefined,
-                }
+                ...i,
+                dbhM: combined,
+                stemDbhM: clean.length > 1 ? clean : undefined,
+              }
               : i,
           ),
         },

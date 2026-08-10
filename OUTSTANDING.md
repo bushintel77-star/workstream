@@ -319,13 +319,22 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
       in the search row and drives the existing comparator. Covered by
       `dashboard-filter-sort.spec.ts`, which filters to the run's three seeds so
       name-order is deterministic against a shared store.
-- [ ] **`PointerMarkSettings` is never mounted.** A finished 91-line component
+- [x] **`PointerMarkSettings` is mounted.** A finished 91-line component
       with its own stylesheet, `data-testid="pointer-mark-settings"`, full
       `role="listbox"` / `aria-selected` a11y and passing unit tests. Nothing
-      imports it, so `_setPointerMarkPreview` (its `onPreview`) and the dropped
-      `savePointerMarkId` import (its `onMarkId`) have no caller and the drawing
-      cursor can never be changed. Restoring the mount is a Cmd+K decision per
-      `STUDIO-STYLING-AND-UX.md` §6 item 9 — the ribbon is a fixed budget.
+      imported it, so `_setPointerMarkPreview` (its `onPreview`) and the dropped
+      `savePointerMarkId` import (its `onMarkId`) had no caller and the drawing
+      cursor could never be changed. **Fixed**: summoned from Cmd+K
+      ("Pointer mark…"), which is what `STUDIO-STYLING-AND-UX.md` §6 item 9
+      prescribes — the fixed budget is the *top ribbon*, and item 10 names
+      Cmd+K as a sanctioned discovery surface, so this needed no new product
+      call. The panel is viewport-anchored frost, so it portals through
+      `CameraChrome place={{ kind: "frame" }}` (gate B) like `AssetPanel`.
+      Kept probe: `e2e/pointer-mark-settings.spec.ts` — asserts the sheet
+      paints, the choice persists across reload, and that it never lands inside
+      `zoom-world`. Verified red when the mount is forced closed, because the
+      reachability gate by its own admission cannot see an import that renders
+      behind an always-false condition.
 - [ ] **`_trade`** — `solveLiveTradeEstimate` is solved on every estimate change
       and never displayed. The calculation is real and owned by
       `@workstream/domain`; the display is missing.

@@ -163,8 +163,10 @@ import {
 import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import {
   loadPointerMarkId,
+  savePointerMarkId,
   type PointerMarkId,
 } from "./features/pointer/pointerMarks";
+import { PointerMarkSettings } from "./features/pointer/PointerMarkSettings";
 import { resolveStudioCursor } from "./features/pointer/resolveStudioCursor";
 import {
   HeaderViewMenu,
@@ -656,16 +658,8 @@ export function HandoffDesignStudio({
   }, [projectId]);
 
   const [pointerMarkId, setPointerMarkId] = useState<PointerMarkId>("spade");
-  /**
-   * Settings hover preview — persists only on click.
-   *
-   * `_setPointerMarkPreview` is unused because `PointerMarkSettings` (which owns
-   * the `onPreview` / `onMarkId` callbacks) is never mounted anywhere. The
-   * component, its stylesheet and its unit tests all exist; only the mount is
-   * missing, so the cursor mark can never be changed. Kept, not deleted — see
-   * OUTSTANDING.md.
-   */
-  const [pointerMarkPreview, _setPointerMarkPreview] =
+  /** Settings hover preview — skim only; the click path persists. */
+  const [pointerMarkPreview, setPointerMarkPreview] =
     useState<PointerMarkId | null>(null);
   /** Handle hover from CadPlanBoard — move / add / paint affordances. */
   const [boardCursor, setBoardCursor] = useState<
@@ -6277,6 +6271,9 @@ export function HandoffDesignStudio({
           onScanCanopy={() =>
             studio.setUi({ canopyScanRequest: ui.canopyScanRequest + 1 })
           }
+          onPointerSettings={() =>
+            studio.setUi({ pointerSettingsOn: !ui.pointerSettingsOn })
+          }
           onArtboardPlan={() => selectArtboard("plan")}
           onGoQuote={() => studio.setUi({ rightDataPanel: "quote" })}
           onToggleFocus={() => studio.setUi({ focusOn: !ui.focusOn })}
@@ -6306,6 +6303,27 @@ export function HandoffDesignStudio({
             studio.setUi({ cmdOpen: false, cmdQuery: "" });
             if (ui.selectedId) studio.fitSelectionView();
             else studio.fitOutdoorView();
+          }}
+        />
+
+        {/*
+          Selected chip tracks the kept mark, not the hover — the preview is
+          the live cursor (studioCursor), which is what "skim then commit"
+          means here. Closing clears the preview so the cursor cannot stay
+          stuck on a mark the operator never committed to.
+        */}
+        <PointerMarkSettings
+          open={ui.pointerSettingsOn}
+          markId={pointerMarkId}
+          onPreview={setPointerMarkPreview}
+          onMarkId={(id) => {
+            setPointerMarkId(id);
+            savePointerMarkId(id);
+            setPointerMarkPreview(null);
+          }}
+          onClose={() => {
+            setPointerMarkPreview(null);
+            studio.setUi({ pointerSettingsOn: false });
           }}
         />
 

@@ -147,6 +147,8 @@ type Props = {
   onToggleBuildableArea?: () => void;
   /** Trigger a one-shot canopy scan from the loaded aerial. */
   onScanCanopy?: () => void;
+  /** Summon the pointer-mark settings sheet (drawing cursor). */
+  onPointerSettings?: () => void;
   /** Open the Plan artboard viewport. */
   onArtboardPlan?: () => void;
   /** Cycle ASLA/SILA lifecycle phase. */
@@ -209,6 +211,7 @@ export function StudioCommandPalette({
   onToggleArBirdseye,
   onToggleBuildableArea,
   onScanCanopy,
+  onPointerSettings,
   onArtboardPlan,
   onCycleLifecyclePhase,
   onOpenDesignBranches,
@@ -570,6 +573,19 @@ export function StudioCommandPalette({
           } satisfies StudioCommand,
         ]
         : []),
+      ...(onPointerSettings
+        ? [
+          {
+            id: "pointer-settings",
+            label: "Pointer mark…",
+            detail:
+              "Choose the idle drafting cursor — hover to preview, click to keep",
+            keywords:
+              "pointer mark cursor settings spade fork rake crosshair drafting preferences",
+            run: onPointerSettings,
+          } satisfies StudioCommand,
+        ]
+        : []),
       ...(onArtboardPlan
         ? [
           {
@@ -720,6 +736,7 @@ export function StudioCommandPalette({
     onToggleArBirdseye,
     onToggleBuildableArea,
     onScanCanopy,
+    onPointerSettings,
     onArtboardPlan,
     onCycleLifecyclePhase,
     onOpenDesignBranches,

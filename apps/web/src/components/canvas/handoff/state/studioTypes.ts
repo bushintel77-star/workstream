@@ -129,6 +129,8 @@ export type StudioUiState = {
   setbackOn: boolean;
   /** Buildable area wash — site minus every exclusion, with attribution. */
   buildableAreaOn: boolean;
+  /** Pointer-mark settings sheet — summoned from Cmd+K, never a ribbon button. */
+  pointerSettingsOn: boolean;
   growth: GrowthStage;
   /** Minutes past midnight Melb-ish; handoff uses sunMin */
   sunMin: number;

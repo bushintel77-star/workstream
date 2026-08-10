@@ -39,10 +39,6 @@ const SRC = "apps/web/src";
  */
 const ALLOW = new Map([
   [
-    "PointerMarkSettings",
-    "Never mounted, so the drawing cursor cannot be changed. Restoring it is a Cmd+K decision per STUDIO-STYLING-AND-UX.md §6 item 9.",
-  ],
-  [
     "StudioCoachMarks",
     "Never mounted, so first-run onboarding has never appeared. Three-step tour with cc_coach_done localStorage gating, ready to wire.",
   ],
