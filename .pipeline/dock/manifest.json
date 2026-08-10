@@ -25,11 +25,11 @@
       "id": "a11y-pass",
       "title": "Accessibility pass (web + mobile)",
       "spec": "P1-P3 a11y items from OUTSTANDING.md",
-      "stage": "coded",
-      "location": "working-directory",
+      "stage": "merged",
+      "location": "main",
       "patch": "patches/working-directory.patch",
       "hash": "DB16B3CA2F91F07F28519010EE084FC10598F7A2940F2B028796616C6E64E5B7",
-      "relevance": "high"
+      "relevance": "low"
     },
     {
       "depends_on": [
@@ -50,8 +50,8 @@
       "id": "irrigation-edit-loop-domain",
       "title": "§4.7 Irrigation/lighting edit loop — domain logic + tests",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.7",
-      "stage": "coded",
-      "location": "working-directory",
+      "stage": "merged",
+      "location": "main",
       "patch": "patches/working-directory.patch",
       "hash": "DB16B3CA2F91F07F28519010EE084FC10598F7A2940F2B028796616C6E64E5B7",
       "relevance": "critical"
@@ -83,8 +83,8 @@
       "id": "irrigation-edit-loop-ui",
       "title": "§4.7 Irrigation/lighting edit loop — UI (StudioAssistPanel)",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.7",
-      "stage": "coded",
-      "location": "stash@{2}",
+      "stage": "merged",
+      "location": "main",
       "patch": "patches/stash-2.patch",
       "hash": "5DB6905FFCC4BC209A126E180AAEBD2EB728FA1E46178076B22430B517D207E6",
       "relevance": "critical"
@@ -108,11 +108,11 @@
       "id": "supplier-rate-sheet-loading",
       "title": "Supplier rate-sheet loading (honest feed/honesty fields)",
       "spec": "AI-CAD.md orchestration + §4.7 live cost",
-      "stage": "coded",
-      "location": "stash@{2}",
+      "stage": "merged",
+      "location": "main",
       "patch": "patches/stash-2.patch",
       "hash": "5DB6905FFCC4BC209A126E180AAEBD2EB728FA1E46178076B22430B517D207E6",
-      "relevance": "critical"
+      "relevance": "low"
     },
     {
       "depends_on": [],
@@ -130,11 +130,11 @@
       "id": "elevation-mode-wiring",
       "title": "Elevation mode URL sync + onOpenElevations callback",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.9 + UIUX-DESIGNER-HANDOFF-SPEC.md",
-      "stage": "coded",
-      "location": "stash@{0}",
+      "stage": "merged",
+      "location": "main",
       "patch": "patches/stash-0.patch",
       "hash": "33ED2EE9BCEC811CBB620F8BBD9EF5E3FB19E0C24DC1E3B4DD4BB81E6F62D2E6",
-      "relevance": "medium"
+      "relevance": "low"
     },
     {
       "depends_on": [
@@ -154,9 +154,9 @@
       "id": "elevation-honesty-empty-state",
       "title": "Elevation honesty caption + empty state",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.9",
-      "stage": "coded",
-      "location": "stash@{0} + stash@{1}",
-      "relevance": "medium"
+      "stage": "merged",
+      "location": "main",
+      "relevance": "low"
     },
     {
       "depends_on": [
@@ -175,11 +175,11 @@
       "id": "supplier-order-overlay-prices",
       "title": "Supplier order overlay prices (output-generators)",
       "spec": "AI-CAD.md orchestration",
-      "stage": "coded",
-      "location": "stash@{0}",
+      "stage": "merged",
+      "location": "main",
       "patch": "patches/stash-0.patch",
       "hash": "33ED2EE9BCEC811CBB620F8BBD9EF5E3FB19E0C24DC1E3B4DD4BB81E6F62D2E6",
-      "relevance": "medium"
+      "relevance": "low"
     },
     {
       "depends_on": [],
@@ -293,10 +293,10 @@
     }
   ],
   "schema": 1,
-  "updated": "2026-08-09T17:47:01.803Z",
-  "current_branch": "feat/web-instant-planner-onsite-density",
-  "main_sha": "75c9e33",
-  "origin_main_sha": "75c9e33",
+  "updated": "2026-08-10T15:36:11.095Z",
+  "current_branch": "main",
+  "main_sha": "220d544",
+  "origin_main_sha": "90bfae4",
   "railway_api_sha": "163227a",
   "railway_web_sha": "unknown",
   "transitions": [
@@ -311,6 +311,105 @@
       "event": "item-advanced",
       "itemId": "elevation-mode-wiring",
       "changes": []
+    },
+    {
+      "timestamp": "2026-08-10T15:36:10.478Z",
+      "event": "item-advanced",
+      "itemId": "irrigation-edit-loop-domain",
+      "changes": [
+        {
+          "itemId": "irrigation-edit-loop-domain",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T15:36:10.580Z",
+      "event": "item-advanced",
+      "itemId": "irrigation-edit-loop-ui",
+      "changes": [
+        {
+          "itemId": "irrigation-edit-loop-ui",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T15:36:10.682Z",
+      "event": "item-advanced",
+      "itemId": "supplier-rate-sheet-loading",
+      "changes": [
+        {
+          "itemId": "irrigation-edit-loop-domain",
+          "newRelevance": "critical",
+          "reason": "All dependencies committed — ready to proceed"
+        },
+        {
+          "itemId": "irrigation-edit-loop-ui",
+          "newRelevance": "critical",
+          "reason": "All dependencies committed — ready to proceed"
+        },
+        {
+          "itemId": "supplier-rate-sheet-loading",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T15:36:10.782Z",
+      "event": "item-advanced",
+      "itemId": "a11y-pass",
+      "changes": [
+        {
+          "itemId": "a11y-pass",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T15:36:10.883Z",
+      "event": "item-advanced",
+      "itemId": "elevation-mode-wiring",
+      "changes": [
+        {
+          "itemId": "elevation-honesty-empty-state",
+          "newRelevance": "critical",
+          "reason": "All dependencies committed — ready to proceed"
+        },
+        {
+          "itemId": "elevation-mode-wiring",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T15:36:10.990Z",
+      "event": "item-advanced",
+      "itemId": "elevation-honesty-empty-state",
+      "changes": [
+        {
+          "itemId": "elevation-honesty-empty-state",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T15:36:11.094Z",
+      "event": "item-advanced",
+      "itemId": "supplier-order-overlay-prices",
+      "changes": [
+        {
+          "itemId": "supplier-order-overlay-prices",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
     }
   ]
 }
