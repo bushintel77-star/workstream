@@ -3,6 +3,7 @@ import {
   LINE_WEIGHT,
   ROLE_WEIGHT,
   nearestRung,
+  printWeightFor,
   weightFor,
   type DrawingRole,
   type LineWeightName,
@@ -34,6 +35,21 @@ describe("line-weight ladder", () => {
     // ladder (0.4)". If this fails, the doc and the code have diverged.
     expect(LINE_WEIGHT.thin).toBe(0.4);
     expect(weightFor("leader")).toBe(0.4);
+  });
+});
+
+describe("print scaling", () => {
+  it("scales every rung by the sheet denominator", () => {
+    expect(printWeightFor("thin", 100)).toBe(0.4);
+    expect(printWeightFor("thin", 200)).toBe(0.2);
+    expect(printWeightFor("heavy", 50)).toBeCloseTo(2.24);
+  });
+
+  it("preserves hierarchy ratios and ignores invalid denominators", () => {
+    expect(printWeightFor("heavy", 200) / printWeightFor("thin", 200)).toBe(
+      LINE_WEIGHT.heavy / LINE_WEIGHT.thin,
+    );
+    expect(printWeightFor("medium", 0)).toBe(LINE_WEIGHT.medium);
   });
 });
 

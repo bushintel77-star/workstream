@@ -488,7 +488,7 @@ investment before scale.
       returns early without checking for underground utilities. **Production
       replacement**: survey utility detection when the survey utilities
       feature lands.
-- [ ] **Print line-weight scaling (`lineWeight.ts`)** —
+- [x] **Print line-weight scaling (`lineWeight.ts`)** —
       `TODO(print): map the ladder through sheetScaleDenom so 1:100 and
       1:200` — line weights don't scale with print zoom. Already documented
       as P3 above. **Production replacement**: implement the scale-aware

@@ -144,9 +144,20 @@ export function nearestRung(value: number): LineWeightName {
   return best;
 }
 
-/*
- * TODO(print): map the ladder through `sheetScaleDenom` so 1:100 and 1:200
- * output preserve relative hierarchy instead of collapsing to hairlines.
- * Needs a measured pass against the fit-sheet plate — see
- * docs/design/DEVIN-PRODUCTION-BRIEF.md.
+/**
+ * Resolve a screen rung for a printed sheet scale.
+ *
+ * The reference board is 1:100. A 1:200 plot halves the physical stroke
+ * contribution while preserving every ratio in the hierarchy; a 1:50 plot
+ * doubles it. Invalid denominators fall back to the reference scale.
  */
+export function printWeightFor(
+  rung: LineWeightName,
+  sheetScaleDenom: number,
+  referenceDenom = 100,
+): number {
+  if (!(sheetScaleDenom > 0) || !(referenceDenom > 0)) {
+    return LINE_WEIGHT[rung];
+  }
+  return LINE_WEIGHT[rung] * (referenceDenom / sheetScaleDenom);
+}
